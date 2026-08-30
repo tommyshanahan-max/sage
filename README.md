@@ -109,6 +109,20 @@ blank and delete `docker/sites/landing.caddy`. The IDE is unaffected.
 
 ## Setup
 
+For the live `tomscoding.com` deployment, `env.tomscoding` already holds the
+domains, contact address and the memory and CPU sizing for a 4 GB box. Copy it
+and append the two passwords, so there is no text editor to navigate:
+
+```bash
+cp env.tomscoding .env
+echo "TOMSCODING_PASSWORD=your-passphrase" >> .env
+echo "TOMSCODING_PASSWORD_2=her-passphrase" >> .env
+```
+
+`.env` is gitignored; the preset carries no secrets. For any other deployment,
+start from `.env.example` instead.
+
+
 On the VPS:
 
 ```bash
