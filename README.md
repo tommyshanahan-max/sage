@@ -181,8 +181,12 @@ empty. Clear `COMPOSE_PROFILES` and the container is never created at all.
 
 What is **not** separated, and is worth knowing before you hand out the URL:
 
-- **The VPS.** A heavy build on one seat slows the other. The memory limits
-  stop one from taking the host down, but they don't stop it hogging CPU.
+- **The VPS.** Both seats share the CPU. They carry relative weights —
+  `TOMSCODING_CPU_SHARES` at 1024 against 512 for the second seat — so when
+  both are busy at once the primary gets roughly two thirds. These are weights,
+  not caps: an idle seat gives up its share completely, so a quiet box is never
+  slowed by them. Caddy is deliberately left at the default weight, since a
+  starved proxy makes both seats look dead.
 - **The IP and the domain.** If the address is blocked, both seats go down.
 - **The Anthropic key.** Both containers get the same `ANTHROPIC_API_KEY`, so
   usage bills together and shares rate limits. Give the second seat its own

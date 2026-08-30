@@ -27,6 +27,12 @@ services:
       - "8080"
     networks:
       - tomscoding
+    # A relative weight, not a cap. It only has any effect while both seats
+    # want CPU at the same moment: then the scheduler splits time in
+    # proportion to these numbers. Whenever one seat is idle the other gets
+    # the whole box, which is why this is shares rather than a hard quota —
+    # a quota would throttle a seat even on an otherwise empty machine.
+    cpu_shares: ${TOMSCODING_CPU_SHARES:-1024}
     # The IDE terminal runs real builds; give it room but don't let it OOM the box.
     deploy:
       resources:
@@ -68,6 +74,10 @@ services:
       - "8080"
     networks:
       - tomscoding
+    # Half the primary's weight: under contention this seat gets roughly a
+    # third of the CPU and the primary two thirds. With the primary idle it
+    # still gets everything available.
+    cpu_shares: ${TOMSCODING_CPU_SHARES_2:-512}
     deploy:
       resources:
         limits:
