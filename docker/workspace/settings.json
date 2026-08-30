@@ -1,0 +1,16 @@
+{
+  "workbench.startupEditor": "none",
+  "workbench.tips.enabled": false,
+  "workbench.colorTheme": "Default Dark Modern",
+  "task.allowAutomaticTasks": "on",
+  "terminal.integrated.fontSize": 14,
+  "terminal.integrated.scrollback": 20000,
+  "terminal.integrated.persistentSessionScrollback": 20000,
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "editor.minimap.enabled": false,
+  "editor.wordWrap": "on",
+  "git.openRepositoryInParentFolders": "always",
+  "update.mode": "none",
+  "telemetry.telemetryLevel": "off"
+}

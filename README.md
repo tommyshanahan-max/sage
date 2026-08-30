@@ -124,11 +124,20 @@ make up
 First start pulls images and builds the workspace; give it a few minutes.
 Then open `https://your.domain` and log in with `SAGE_PASSWORD`.
 
-In the IDE's terminal:
+The workspace opens straight onto a terminal with Claude Code already running
+— no welcome page, no editor tab. On the very first run it will ask you to log
+in, unless you set `ANTHROPIC_API_KEY` in `.env`.
 
-```bash
-claude          # log in on first run, unless you set ANTHROPIC_API_KEY
-```
+That default assumes you drive this by talking to the agent rather than by
+editing files yourself. The editor is still there when you want it, for reading
+a file or looking over a diff, but it isn't what greets you.
+
+To change it, edit `projects/.vscode/tasks.json` inside the workspace (delete
+it to get a plain editor on startup) or the settings at
+`~/.local/share/code-server/User/settings.json`. Both are seeded from the image
+on first start only, so your edits survive `make rebuild`. The flip side: if
+you already have a volume from an earlier run, a rebuild will *not* introduce
+them — copy them in by hand or start from a fresh volume.
 
 ## Day to day
 
