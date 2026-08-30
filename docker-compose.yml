@@ -1,0 +1,63 @@
+name: sage
+
+services:
+  workspace:
+    build:
+      context: ./docker/workspace
+    image: sage-workspace:latest
+    container_name: sage-workspace
+    restart: unless-stopped
+    command:
+      - --bind-addr
+      - 0.0.0.0:8080
+      - --disable-telemetry
+      - --disable-update-check
+      - /home/coder/projects
+    environment:
+      PASSWORD: ${SAGE_PASSWORD:?set SAGE_PASSWORD in .env}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GIT_AUTHOR_NAME: ${GIT_AUTHOR_NAME:-}
+      GIT_AUTHOR_EMAIL: ${GIT_AUTHOR_EMAIL:-}
+      GIT_COMMITTER_NAME: ${GIT_AUTHOR_NAME:-}
+      GIT_COMMITTER_EMAIL: ${GIT_AUTHOR_EMAIL:-}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - home:/home/coder
+    expose:
+      - "8080"
+    networks:
+      - sage
+    # The IDE terminal runs real builds; give it room but don't let it OOM the box.
+    deploy:
+      resources:
+        limits:
+          memory: ${SAGE_WORKSPACE_MEMORY:-3g}
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: sage-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SAGE_DOMAIN: ${SAGE_DOMAIN:?set SAGE_DOMAIN in .env}
+      SAGE_ACME_EMAIL: ${SAGE_ACME_EMAIL:?set SAGE_ACME_EMAIL in .env}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./docker/conf.d:/etc/caddy/conf.d:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - workspace
+    networks:
+      - sage
+
+networks:
+  sage:
+    driver: bridge
+
+volumes:
+  home:
+  caddy_data:
+  caddy_config:

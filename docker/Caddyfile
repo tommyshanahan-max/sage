@@ -1,0 +1,38 @@
+{
+	email {$SAGE_ACME_EMAIL}
+
+	servers {
+		# HTTP/3 runs over UDP/443. On long-haul routes into Japan that path is
+		# frequently lossy or rate-limited, and browsers pay a stalled handshake
+		# before falling back to TCP. Pinning h1/h2 keeps the connection on TCP,
+		# which is what actually stays up.
+		protocols h1 h2
+	}
+}
+
+{$SAGE_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+
+	# Drop optional overlays here (extra auth, IP allowlists, more routes).
+	# A glob that matches nothing is fine, so this stays a no-op by default.
+	import /etc/caddy/conf.d/*.caddy
+
+	# code-server holds one websocket open for the life of an editor session.
+	# Caddy upgrades and streams it transparently, with no idle timeout on
+	# proxied connections by default, so this needs no extra configuration.
+	reverse_proxy workspace:8080
+
+	log {
+		output file /data/access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
