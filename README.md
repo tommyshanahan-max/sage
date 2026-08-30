@@ -65,8 +65,9 @@ useful regardless of which agent you run in it.
 
 - A VPS in Tokyo. 2 vCPU / 4 GB is comfortable; 1 vCPU / 2 GB works for light
   use. Ubuntu 22.04 or 24.04.
-- A domain name with an A record pointing at the VPS, in place *before* first
-  boot — Let's Encrypt validates over HTTP and will fail without it.
+- A domain name with an A record pointing straight at the VPS, in place
+  *before* first boot — Let's Encrypt validates over HTTP and will fail without
+  it. Keep DNS unproxied (grey cloud on Cloudflare); see `docs/networking.md`.
 - Ports 80 and 443 open (`install/bootstrap.sh` handles the firewall).
 
 On provider choice: budget VPS lines (Vultr, Linode, DigitalOcean Tokyo) route

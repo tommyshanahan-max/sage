@@ -43,12 +43,16 @@ secret with no rate limiting of its own. Putting basic auth in front of it in
 Caddy means an attacker needs two secrets, and the failures show up in Caddy's
 access log where fail2ban can see them. See `docker/conf.d/README.md`.
 
-**An identity proxy, if you want this done properly.** Cloudflare Access or
-Tailscale in front of the domain replaces the shared password with real SSO and
-device posture. This is the strongest option available. Note that Cloudflare's
-routing from mainland China is inconsistent, so measure it with `make doctor`
-before committing to it — a security control you cannot connect through is not
-a control you will keep.
+**An identity proxy — but not Cloudflare's.** Putting Tailscale in front of
+this replaces the shared password with real SSO and device identity, and is the
+strongest option available. The box then needs no public HTTPS port at all.
+
+Do **not** reach for Cloudflare Access here, which is the obvious-looking
+choice. Access requires Cloudflare's proxy (the orange cloud) to be on, and
+Cloudflare's free-tier edge is badly degraded from mainland China — enabling
+the proxy on a working domain is one of the most common ways it abruptly stops
+loading there. You would be trading a working deployment for a better auth
+story. Tailscale gets you the auth story without touching the path.
 
 **A scoped API key.** If you set `ANTHROPIC_API_KEY` in `.env`, it sits in the
 container environment where anything running there can read it. Use a key

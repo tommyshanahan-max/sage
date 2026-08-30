@@ -57,6 +57,11 @@ If the bad hop is inside your provider's network, that is a support ticket
 worth filing. If it is at the international boundary, no amount of tuning
 fixes it; change the route.
 
+**Keep DNS unproxied.** The A record must point straight at the VPS IP. If
+your registrar is Cloudflare, leave the cloud grey (DNS-only). Turning the
+proxy on routes you through an edge that performs poorly from mainland China
+and is a common cause of a working site going dark.
+
 **Nothing connects at all, from any network.** Check the VPS is alive from
 somewhere else — an uptime monitor, or SSH from a different country. If the
 server is fine and only your path is broken, the IP is the variable.
@@ -64,7 +69,10 @@ server is fine and only your path is broken, the IP is the variable.
 ## Rotating the IP
 
 Most providers will assign a new address, or you can rebuild in a different
-datacentre. Because the state is in Docker volumes, moving is cheap:
+datacentre. Try this **twice** before drawing conclusions: some hosts hand back
+addresses that were already blocked, so one bad new IP proves nothing.
+
+Because the state is in Docker volumes, moving is cheap:
 
 ```bash
 make backup                         # on the old VPS
