@@ -43,9 +43,14 @@ services:
     environment:
       SAGE_DOMAIN: ${SAGE_DOMAIN:?set SAGE_DOMAIN in .env}
       SAGE_ACME_EMAIL: ${SAGE_ACME_EMAIL:?set SAGE_ACME_EMAIL in .env}
+      # Unset is fine: the landing site block falls back to localhost, which
+      # binds nothing public and requests no certificate.
+      SAGE_LANDING_DOMAIN: ${SAGE_LANDING_DOMAIN:-}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./docker/conf.d:/etc/caddy/conf.d:ro
+      - ./docker/sites:/etc/caddy/sites:ro
+      - ./landing:/srv/landing:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

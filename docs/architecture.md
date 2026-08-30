@@ -24,7 +24,13 @@ Two containers on one Docker network. Only Caddy is reachable from outside.
 
 ## caddy
 
-Terminates TLS and proxies everything to the workspace. Chosen over nginx for
+Serves two sites. `tomscoding.com` is a static landing page read from a
+read-only bind mount of `landing/` — no application, no container, just files.
+`code.tomscoding.com` is the IDE, proxied to the workspace. Separate site
+blocks, separate certificates; a request to the landing hostname has no path
+to the workspace at all.
+
+Terminates TLS and proxies the IDE site to the workspace. Chosen over nginx for
 one reason: it obtains and renews Let's Encrypt certificates itself, with no
 cron job and no certbot. Certificates and account keys live in the `caddy_data`
 volume, so a rebuild does not re-issue and burn rate limit.

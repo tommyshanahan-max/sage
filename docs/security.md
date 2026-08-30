@@ -10,6 +10,11 @@ Scanners find new hostnames within hours of a certificate being issued — every
 Let's Encrypt certificate is published to public Certificate Transparency logs.
 Your domain is not obscure, and it will be probed.
 
+That is also why the landing page's link to `/ide` costs you nothing in
+practice: the IDE's hostname is public the moment its certificate issues,
+whether or not anything links to it. Removing the link buys obscurity you never
+had. The password is the control; treat it as the only one.
+
 ## The things that actually matter
 
 **A generated password, not an invented one.** `make password` gives you 24

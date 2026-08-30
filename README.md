@@ -65,9 +65,11 @@ useful regardless of which agent you run in it.
 
 - A VPS in Tokyo. 2 vCPU / 4 GB is comfortable; 1 vCPU / 2 GB works for light
   use. Ubuntu 22.04 or 24.04.
-- A domain name with an A record pointing straight at the VPS, in place
+- A domain with **two** A records pointing straight at the VPS, both in place
   *before* first boot — Let's Encrypt validates over HTTP and will fail without
-  it. Keep DNS unproxied (grey cloud on Cloudflare); see `docs/networking.md`.
+  them. One for the landing page (`tomscoding.com`) and one for the IDE
+  (`code.tomscoding.com`). Keep DNS unproxied (grey cloud on Cloudflare); see
+  `docs/networking.md`.
 - Ports 80 and 443 open (`install/bootstrap.sh` handles the firewall).
 
 On provider choice: budget VPS lines (Vultr, Linode, DigitalOcean Tokyo) route
@@ -76,6 +78,34 @@ Providers selling a China-optimised line — CN2 GIA, or a domestic cloud's
 Japan region with an accelerated backbone — cost several times more and are
 dramatically steadier at 20:00–24:00 local. Start cheap, run `make doctor` for
 a week, and upgrade only if the evening numbers are bad.
+
+## Two hostnames
+
+The deployment serves two separate sites from one Caddy process:
+
+| Hostname | What it is |
+|---|---|
+| `tomscoding.com` | A static landing page from `landing/`. Public. |
+| `code.tomscoding.com` | The IDE. Password-gated. |
+
+They are separate site blocks with separate certificates, and the landing page
+is plain files on disk — it cannot reach the workspace container. The only link
+between them is the `/ide` redirect on the landing site, which sends you to the
+IDE's hostname; the real domain is filled in from `SAGE_DOMAIN`, so no hostname
+is hardcoded in the HTML.
+
+Giving code-server a whole hostname rather than a sub-path is deliberate.
+Serving it under `/ide/` on a shared hostname means rewriting paths on a
+websocket, which is the kind of thing that works until it doesn't.
+
+Edit `landing/index.html` freely — it is intentionally one self-contained file
+with no build step. Keep it that way: it has no web fonts, no CDN, and no
+analytics, because Google Fonts and most CDNs are unreachable from mainland
+China, and one blocked stylesheet is enough to leave a visitor on an unstyled
+page. Same-origin only.
+
+If you don't want a public front door at all, leave `SAGE_LANDING_DOMAIN`
+blank and delete `docker/sites/landing.caddy`. The IDE is unaffected.
 
 ## Setup
 
@@ -126,8 +156,10 @@ to git, and run `make backup` before anything risky.
 ```
 docker-compose.yml        two services: caddy (TLS, proxy) and workspace (IDE)
 docker/Caddyfile          TLS termination, websocket proxying, security headers
-docker/conf.d/            optional Caddy overlays (extra auth, IP allowlist)
+docker/sites/             additional site blocks — ships the landing page
+docker/conf.d/            optional overlays on the IDE site (extra auth, allowlist)
 docker/workspace/         the IDE image: code-server + node + claude CLI
+landing/                  the public landing page, static and self-contained
 install/bootstrap.sh      one-shot VPS preparation
 scripts/doctor.sh         client-side network diagnostics
 ```

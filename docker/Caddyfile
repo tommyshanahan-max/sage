@@ -10,6 +10,10 @@
 	}
 }
 
+# Additional site blocks, one file per hostname. Ships with the landing page;
+# a glob matching nothing is fine, so removing it is safe.
+import /etc/caddy/sites/*.caddy
+
 {$SAGE_DOMAIN} {
 	encode zstd gzip
 

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tom Shanahan</title>
+<meta name="description" content="Personal site.">
+<!--
+  Everything here is inline and self-hosted on purpose. No web fonts, no CDN,
+  no analytics. Google Fonts and most CDNs are unreachable from mainland China,
+  and a single blocked stylesheet is enough to leave a visitor staring at an
+  unstyled page or a spinner. Same-origin only: that is the whole trick.
+-->
+<style>
+  :root {
+    --bg: #fbfaf8;
+    --panel: #ffffff;
+    --ink: #1a1a1a;
+    --muted: #6b6b6b;
+    --line: #e5e2dc;
+    --accent: #1a1a1a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131313;
+      --panel: #1b1b1b;
+      --ink: #ececec;
+      --muted: #9a9a9a;
+      --line: #2c2c2c;
+      --accent: #ececec;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.25rem;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", sans-serif;
+  }
+  main { width: 100%; max-width: 34rem; }
+  h1 {
+    margin: 0 0 .4rem;
+    font-size: clamp(1.6rem, 5vw, 2.1rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .lede { margin: 0 0 2.25rem; color: var(--muted); }
+  .card {
+    display: block;
+    padding: 1.15rem 1.3rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color .15s ease, transform .15s ease;
+  }
+  .card:hover, .card:focus-visible {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card h2 {
+    margin: 0 0 .2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .card h2 span[aria-hidden] { color: var(--muted); font-weight: 400; }
+  .card p { margin: 0; color: var(--muted); font-size: .925rem; }
+  footer {
+    margin-top: 2.25rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: .85rem;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Tom Shanahan</h1>
+  <p class="lede">Writing software, mostly.</p>
+
+  <a class="card" href="/ide">
+    <h2>Workspace <span aria-hidden="true">&rarr;</span></h2>
+    <p>Development environment. Sign-in required.</p>
+  </a>
+
+  <footer>Get in touch by email.</footer>
+</main>
+</body>
+</html>
