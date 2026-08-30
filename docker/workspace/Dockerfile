@@ -49,7 +49,8 @@ WORKDIR /home/coder
 # code-server is launched against this directory. It must exist in the image so
 # that the first `docker compose up` seeds it into the named volume.
 RUN mkdir -p /home/coder/projects/.vscode \
-             /home/coder/.local/share/code-server/User
+             /home/coder/.local/share/code-server/User \
+             /home/coder/.claude
 
 # Open on a terminal with Claude Code already running, rather than on a
 # welcome page. The editor is here for reading files and reviewing diffs; the
@@ -58,6 +59,14 @@ RUN mkdir -p /home/coder/projects/.vscode \
 # and a rebuild will not overwrite your changes.
 COPY --chown=coder:coder settings.json /home/coder/.local/share/code-server/User/settings.json
 COPY --chown=coder:coder tasks.json /home/coder/projects/.vscode/tasks.json
+
+# User-level instructions, applying to every project opened in this workspace
+# rather than to one repository. Seeded on first start; edit it in place
+# afterwards. Derived from the plain-conversation prompt in the journey repo,
+# with that app's apparatus removed and its rules about not inventing
+# specifics translated to a context where the consequence is a broken deploy
+# rather than a wrong answer.
+COPY --chown=coder:coder CLAUDE.md /home/coder/.claude/CLAUDE.md
 
 # code-server listens on 8080; only Caddy talks to it, never the public internet.
 EXPOSE 8080

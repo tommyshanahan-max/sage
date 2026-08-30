@@ -154,6 +154,19 @@ Your work lives in the `home` Docker volume and survives `make down`,
 reboots, and image rebuilds. It does **not** survive destroying the VPS — push
 to git, and run `make backup` before anything risky.
 
+## How the agent behaves here
+
+`docker/workspace/CLAUDE.md` is seeded to `~/.claude/CLAUDE.md` and applies to
+every project opened in the workspace, not just this one. It sets the working
+manner: match answer length to the question, never invent a file path or claim
+something ran when it didn't, explain changes in plain language rather than
+assuming the diff gets read, and say what will be lost before doing anything
+destructive.
+
+It is short on purpose — a long instructions file is followed less reliably
+than a short one. Edit it in place in the workspace; like the settings above,
+it is seeded from the image once and then yours.
+
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — what each piece does and why
