@@ -33,6 +33,46 @@ services:
         limits:
           memory: ${TOMSCODING_WORKSPACE_MEMORY:-3g}
 
+  # A second, fully separate seat. Same image, own home volume, own password,
+  # own hostname — the two workspaces cannot see each other's files, terminals
+  # or editor state. Runs only when COMPOSE_PROFILES includes seat2 (set in
+  # .env), so a single-seat deployment spends nothing on it.
+  #
+  # Same build context and image tag as the primary on purpose: the layer cache
+  # makes the second build instant, and it removes any ordering assumption
+  # about which service tags the image first.
+  workspace-2:
+    profiles: ["seat2"]
+    build:
+      context: ./docker/workspace
+    image: tomscoding-workspace:latest
+    container_name: tomscoding-workspace-2
+    restart: unless-stopped
+    command:
+      - --bind-addr
+      - 0.0.0.0:8080
+      - --disable-telemetry
+      - --disable-update-check
+      - /home/coder/projects
+    environment:
+      # Not marked required here. Compose interpolates every service before it
+      # filters by profile, so a `:?` on this would break single-seat
+      # deployments that never start this container. `make up` checks it
+      # instead, where the check can be conditional on the profile.
+      PASSWORD: ${TOMSCODING_PASSWORD_2:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - home_2:/home/coder
+    expose:
+      - "8080"
+    networks:
+      - tomscoding
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_WORKSPACE_2_MEMORY:-1500m}
+
   caddy:
     image: caddy:2-alpine
     container_name: tomscoding-caddy
@@ -46,6 +86,7 @@ services:
       # Unset is fine: the landing site block falls back to localhost, which
       # binds nothing public and requests no certificate.
       TOMSCODING_LANDING_DOMAIN: ${TOMSCODING_LANDING_DOMAIN:-}
+      TOMSCODING_DOMAIN_2: ${TOMSCODING_DOMAIN_2:-}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./docker/conf.d:/etc/caddy/conf.d:ro
@@ -64,5 +105,6 @@ networks:
 
 volumes:
   home:
+  home_2:
   caddy_data:
   caddy_config:

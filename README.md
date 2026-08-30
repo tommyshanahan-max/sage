@@ -167,6 +167,33 @@ It is short on purpose — a long instructions file is followed less reliably
 than a short one. Edit it in place in the workspace; like the settings above,
 it is seeded from the image once and then yours.
 
+## A second seat
+
+Another person gets their own container, their own home volume, their own
+password and their own hostname. They cannot see your files, your terminal or
+your editor state, and you cannot see theirs — this is a second machine that
+happens to share a box, not a second login to yours.
+
+Enable it in `.env`: keep `COMPOSE_PROFILES=seat2`, set `TOMSCODING_DOMAIN_2`
+to a hostname with its own A record, and set `TOMSCODING_PASSWORD_2` to a
+freshly generated password. `make up` refuses to start if that password is
+empty. Clear `COMPOSE_PROFILES` and the container is never created at all.
+
+What is **not** separated, and is worth knowing before you hand out the URL:
+
+- **The VPS.** A heavy build on one seat slows the other. The memory limits
+  stop one from taking the host down, but they don't stop it hogging CPU.
+- **The IP and the domain.** If the address is blocked, both seats go down.
+- **The Anthropic key.** Both containers get the same `ANTHROPIC_API_KEY`, so
+  usage bills together and shares rate limits. Give the second seat its own
+  key if you ever want those separated.
+
+Two seats want more RAM than one. On a 4 GB box drop the limits to `2g` and
+`1g`; 8 GB is a great deal more comfortable.
+
+`make shell-2` gets you into the second seat, and `make backup` snapshots both
+home volumes.
+
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — what each piece does and why

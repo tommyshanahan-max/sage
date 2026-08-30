@@ -1,0 +1,18 @@
+# Second seat. A separate hostname reaching a separate container with its own
+# home volume — not a second login to the same machine.
+#
+# Inert until TOMSCODING_DOMAIN_2 is set: unset, this binds an internal
+# .localhost name and requests no certificate. Starting the container is
+# controlled separately, by COMPOSE_PROFILES in .env.
+{$TOMSCODING_DOMAIN_2:seat2.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+
+	reverse_proxy workspace-2:8080
+}

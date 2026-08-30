@@ -17,6 +17,13 @@ had. The password is the control; treat it as the only one.
 
 ## The things that actually matter
 
+**Every seat's password generated, not invented.** A second seat doubles the
+number of root-capable shells on this box, and the deployment is only as strong
+as the weaker of the two passwords — a memorable one on the second seat
+compromises the first, since both containers hold the same API key and sit on
+the same host. Generate each with `make password`, and don't reuse one across
+seats.
+
 **A generated password, not an invented one.** `make password` gives you 24
 random bytes. A password you thought of is guessable at a rate you will not
 notice in a log file.

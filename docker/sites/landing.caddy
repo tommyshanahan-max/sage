@@ -3,9 +3,12 @@
 # serving it.
 #
 # Don't want a landing page? Delete this file and leave TOMSCODING_LANDING_DOMAIN
-# unset. The default below binds localhost, so an unset variable is inert
-# rather than a startup error.
-{$TOMSCODING_LANDING_DOMAIN:localhost} {
+# unset. The fallback below binds a .localhost name, which Caddy treats as
+# internal — no ACME, nothing public. It must stay distinct from the fallback
+# in workspace-2.caddy: two site blocks sharing one address is a hard startup
+# failure, so a plain `localhost` in both would break every deployment that
+# configured neither.
+{$TOMSCODING_LANDING_DOMAIN:landing.localhost} {
 	encode zstd gzip
 
 	header {
