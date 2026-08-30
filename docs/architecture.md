@@ -10,7 +10,7 @@ Two containers on one Docker network. Only Caddy is reachable from outside.
       ┌─────▼──────┐
       │   caddy    │  TLS termination, ACME, websocket proxy
       └─────┬──────┘
-            │  sage network (internal only)
+            │  tomscoding network (internal only)
       ┌─────▼──────────────────────────────┐
       │            workspace               │
       │  code-server  :8080                │
@@ -62,7 +62,7 @@ Caddy, which requires authentication.
 history, the Claude Code credential store, editor settings, installed
 extensions — is inside it and persists across restarts and image rebuilds.
 
-Memory is capped (`SAGE_WORKSPACE_MEMORY`, default 3g) so a runaway build in
+Memory is capped (`TOMSCODING_WORKSPACE_MEMORY`, default 3g) so a runaway build in
 the IDE terminal cannot take the host down with it and lock you out.
 
 ## Why this shape
@@ -82,7 +82,7 @@ muscle memory transfer unchanged.
 
 ## Extending it
 
-Add a service to `docker-compose.yml` on the `sage` network, then drop a
+Add a service to `docker-compose.yml` on the `tomscoding` network, then drop a
 `.caddy` file in `docker/conf.d/` to route to it. For example, a Postgres for
 local development needs no Caddy entry at all — reach it from the workspace at
 `postgres:5432` and leave it off the internet.

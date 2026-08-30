@@ -1,5 +1,5 @@
 {
-	email {$SAGE_ACME_EMAIL}
+	email {$TOMSCODING_ACME_EMAIL}
 
 	servers {
 		# HTTP/3 runs over UDP/443. On long-haul routes into Japan that path is
@@ -14,7 +14,7 @@
 # a glob matching nothing is fine, so removing it is safe.
 import /etc/caddy/sites/*.caddy
 
-{$SAGE_DOMAIN} {
+{$TOMSCODING_DOMAIN} {
 	encode zstd gzip
 
 	header {

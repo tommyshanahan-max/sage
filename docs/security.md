@@ -78,7 +78,7 @@ sudo journalctl -u ssh --since '24 hours ago' | grep -i 'failed\|invalid'
 
 Repeated 401s from addresses you do not recognise are normal background noise.
 A *successful* login you did not make means the password is compromised:
-`make down`, rotate `SAGE_PASSWORD`, rotate the API key, rotate any git
+`make down`, rotate `TOMSCODING_PASSWORD`, rotate the API key, rotate any git
 credentials in the volume, then `make up`.
 
 ## If the machine is compromised

@@ -1,4 +1,4 @@
-# Sage workspace: browser IDE + agentic CLI, running on your own VPS.
+# Tom's Coding workspace: browser IDE + agentic CLI, running on your own VPS.
 FROM codercom/code-server:latest
 
 USER root

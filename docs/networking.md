@@ -94,7 +94,7 @@ The workspace's files are in a Docker volume, so get a shell in the container:
 
 ```bash
 ssh you@your.domain
-cd sage && make shell
+cd tomscoding && make shell
 tmux new -A -s work      # attach, or create if absent
 claude
 ```

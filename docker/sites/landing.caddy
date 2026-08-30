@@ -2,10 +2,10 @@
 # separate site block — it shares nothing with the workspace but the process
 # serving it.
 #
-# Don't want a landing page? Delete this file and leave SAGE_LANDING_DOMAIN
+# Don't want a landing page? Delete this file and leave TOMSCODING_LANDING_DOMAIN
 # unset. The default below binds localhost, so an unset variable is inert
 # rather than a startup error.
-{$SAGE_LANDING_DOMAIN:localhost} {
+{$TOMSCODING_LANDING_DOMAIN:localhost} {
 	encode zstd gzip
 
 	header {
@@ -18,7 +18,7 @@
 	# Keeps the HTML free of any hardcoded hostname: the page links to /ide,
 	# and the real IDE domain is filled in here from the environment.
 	@ide path /ide /ide/
-	redir @ide https://{$SAGE_DOMAIN}/
+	redir @ide https://{$TOMSCODING_DOMAIN}/
 
 	root * /srv/landing
 	file_server

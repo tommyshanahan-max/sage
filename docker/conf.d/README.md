@@ -6,7 +6,7 @@ default deployment ships this directory empty.
 
 ## Add a second authentication factor
 
-code-server already requires `SAGE_PASSWORD`. To require HTTP basic auth in
+code-server already requires `TOMSCODING_PASSWORD`. To require HTTP basic auth in
 front of it as well, create `auth.caddy`:
 
 ```

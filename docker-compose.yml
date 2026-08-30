@@ -1,11 +1,11 @@
-name: sage
+name: tomscoding
 
 services:
   workspace:
     build:
       context: ./docker/workspace
-    image: sage-workspace:latest
-    container_name: sage-workspace
+    image: tomscoding-workspace:latest
+    container_name: tomscoding-workspace
     restart: unless-stopped
     command:
       - --bind-addr
@@ -14,7 +14,7 @@ services:
       - --disable-update-check
       - /home/coder/projects
     environment:
-      PASSWORD: ${SAGE_PASSWORD:?set SAGE_PASSWORD in .env}
+      PASSWORD: ${TOMSCODING_PASSWORD:?set TOMSCODING_PASSWORD in .env}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GIT_AUTHOR_NAME: ${GIT_AUTHOR_NAME:-}
       GIT_AUTHOR_EMAIL: ${GIT_AUTHOR_EMAIL:-}
@@ -26,26 +26,26 @@ services:
     expose:
       - "8080"
     networks:
-      - sage
+      - tomscoding
     # The IDE terminal runs real builds; give it room but don't let it OOM the box.
     deploy:
       resources:
         limits:
-          memory: ${SAGE_WORKSPACE_MEMORY:-3g}
+          memory: ${TOMSCODING_WORKSPACE_MEMORY:-3g}
 
   caddy:
     image: caddy:2-alpine
-    container_name: sage-caddy
+    container_name: tomscoding-caddy
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     environment:
-      SAGE_DOMAIN: ${SAGE_DOMAIN:?set SAGE_DOMAIN in .env}
-      SAGE_ACME_EMAIL: ${SAGE_ACME_EMAIL:?set SAGE_ACME_EMAIL in .env}
+      TOMSCODING_DOMAIN: ${TOMSCODING_DOMAIN:?set TOMSCODING_DOMAIN in .env}
+      TOMSCODING_ACME_EMAIL: ${TOMSCODING_ACME_EMAIL:?set TOMSCODING_ACME_EMAIL in .env}
       # Unset is fine: the landing site block falls back to localhost, which
       # binds nothing public and requests no certificate.
-      SAGE_LANDING_DOMAIN: ${SAGE_LANDING_DOMAIN:-}
+      TOMSCODING_LANDING_DOMAIN: ${TOMSCODING_LANDING_DOMAIN:-}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./docker/conf.d:/etc/caddy/conf.d:ro
@@ -56,10 +56,10 @@ services:
     depends_on:
       - workspace
     networks:
-      - sage
+      - tomscoding
 
 networks:
-  sage:
+  tomscoding:
     driver: bridge
 
 volumes:

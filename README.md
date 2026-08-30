@@ -1,4 +1,4 @@
-# Sage
+# Tom's Coding
 
 A self-hosted coding environment on a VPS you own, reachable from a normal
 browser over HTTPS. Built for the case where a VPN is unreliable and you want
@@ -91,7 +91,7 @@ The deployment serves two separate sites from one Caddy process:
 They are separate site blocks with separate certificates, and the landing page
 is plain files on disk — it cannot reach the workspace container. The only link
 between them is the `/ide` redirect on the landing site, which sends you to the
-IDE's hostname; the real domain is filled in from `SAGE_DOMAIN`, so no hostname
+IDE's hostname; the real domain is filled in from `TOMSCODING_DOMAIN`, so no hostname
 is hardcoded in the HTML.
 
 Giving code-server a whole hostname rather than a sub-path is deliberate.
@@ -104,7 +104,7 @@ analytics, because Google Fonts and most CDNs are unreachable from mainland
 China, and one blocked stylesheet is enough to leave a visitor on an unstyled
 page. Same-origin only.
 
-If you don't want a public front door at all, leave `SAGE_LANDING_DOMAIN`
+If you don't want a public front door at all, leave `TOMSCODING_LANDING_DOMAIN`
 blank and delete `docker/sites/landing.caddy`. The IDE is unaffected.
 
 ## Setup
@@ -112,8 +112,8 @@ blank and delete `docker/sites/landing.caddy`. The IDE is unaffected.
 On the VPS:
 
 ```bash
-git clone https://github.com/tommyshanahan-max/sage.git
-cd sage
+git clone https://github.com/tommyshanahan-max/tomscoding.git
+cd tomscoding
 sudo bash install/bootstrap.sh          # docker, firewall, fail2ban, BBR
 cp .env.example .env
 make password                            # generate a real password
@@ -122,7 +122,7 @@ make up
 ```
 
 First start pulls images and builds the workspace; give it a few minutes.
-Then open `https://your.domain` and log in with `SAGE_PASSWORD`.
+Then open `https://your.domain` and log in with `TOMSCODING_PASSWORD`.
 
 The workspace opens straight onto a terminal with Claude Code already running
 — no welcome page, no editor tab. On the very first run it will ask you to log

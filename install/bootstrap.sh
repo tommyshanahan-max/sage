@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prepare a fresh Ubuntu 22.04/24.04 VPS to run Sage.
+# Prepare a fresh Ubuntu 22.04/24.04 VPS to run this workspace.
 # Run as root on the VPS:  sudo bash install/bootstrap.sh
 set -euo pipefail
 
@@ -22,7 +22,7 @@ log "Enabling BBR congestion control"
 # Japan see steady background loss, so CUBIC spends most of its time backed off.
 # BBR paces on measured bandwidth and round-trip time instead, which is the
 # difference between a usable and an unusable editor session on a lossy path.
-cat > /etc/sysctl.d/99-sage-network.conf <<'SYSCTL'
+cat > /etc/sysctl.d/99-tomscoding-network.conf <<'SYSCTL'
 net.core.default_qdisc = fq
 net.ipv4.tcp_congestion_control = bbr
 net.ipv4.tcp_slow_start_after_idle = 0
@@ -32,7 +32,7 @@ net.ipv4.tcp_rmem = 4096 87380 16777216
 net.ipv4.tcp_wmem = 4096 65536 16777216
 net.ipv4.tcp_mtu_probing = 1
 SYSCTL
-sysctl --quiet --load /etc/sysctl.d/99-sage-network.conf
+sysctl --quiet --load /etc/sysctl.d/99-tomscoding-network.conf
 
 active_cc=$(sysctl -n net.ipv4.tcp_congestion_control)
 if [[ $active_cc == "bbr" ]]; then
@@ -90,7 +90,7 @@ cat <<'NEXT'
      Confirm it has propagated before continuing:  dig +short your.domain
   2. cp .env.example .env  &&  edit .env
   3. make up
-  4. Open https://your.domain and log in with SAGE_PASSWORD.
+  4. Open https://your.domain and log in with TOMSCODING_PASSWORD.
 
   This script did NOT change your SSH configuration. Hardening it is worth
   doing by hand, so you can verify a second session still works before you

@@ -11,7 +11,7 @@ help: ## Show this help
 up: ## Build if needed and start everything
 	test -f .env || { echo "no .env — run: cp .env.example .env && \$$EDITOR .env"; exit 1; }
 	$(COMPOSE) up -d --build
-	echo "up. https://$$(grep -E '^SAGE_DOMAIN=' .env | cut -d= -f2-)"
+	echo "up. https://$$(grep -E '^TOMSCODING_DOMAIN=' .env | cut -d= -f2-)"
 
 down: ## Stop everything (volumes are kept)
 	$(COMPOSE) down
@@ -38,7 +38,7 @@ shell: ## Open a shell in the workspace container
 claude: ## Run the Claude Code CLI in the workspace
 	$(COMPOSE) exec workspace claude
 
-password: ## Generate a strong password for SAGE_PASSWORD
+password: ## Generate a strong password for TOMSCODING_PASSWORD
 	openssl rand -base64 24
 
 backup: ## Snapshot the workspace home volume to ./backups

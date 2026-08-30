@@ -6,7 +6,7 @@ set -uo pipefail
 
 DOMAIN="${1:-}"
 if [[ -z $DOMAIN && -f .env ]]; then
-  DOMAIN=$(grep -E '^SAGE_DOMAIN=' .env | cut -d= -f2- | tr -d '"'"'"' ')
+  DOMAIN=$(grep -E '^TOMSCODING_DOMAIN=' .env | cut -d= -f2- | tr -d '"'"'"' ')
 fi
 [[ -n $DOMAIN ]] || { echo "usage: bash scripts/doctor.sh <domain>" >&2; exit 1; }
 
