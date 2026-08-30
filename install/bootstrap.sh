@@ -15,7 +15,10 @@ export DEBIAN_FRONTEND=noninteractive
 log "Updating base packages"
 apt-get update -qq
 apt-get upgrade -y -qq
-apt-get install -y -qq ca-certificates curl gnupg ufw fail2ban unattended-upgrades
+# git and make are not in Ubuntu's cloud image. git is needed to fetch this
+# repo in the first place, make to run it — without them the deploy stops at
+# "command not found" after everything else has succeeded.
+apt-get install -y -qq ca-certificates curl git gnupg make ufw fail2ban unattended-upgrades
 
 log "Enabling BBR congestion control"
 # The default (CUBIC) collapses its window hard on loss. Long-haul links into
