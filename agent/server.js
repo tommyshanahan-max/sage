@@ -9,13 +9,12 @@
 // needs no special handling in the reverse proxy.
 
 import express from "express";
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 
 const PORT = process.env.PORT || 3000;
 const WORKSPACE = process.env.AGENT_WORKSPACE || "/workspace";
 const MODEL = process.env.AGENT_MODEL || undefined;
-const USER = process.env.AGENT_USER || "tom";
 const PASSWORD = process.env.AGENT_PASSWORD || "";
 
 if (!process.env.ANTHROPIC_API_KEY) {
@@ -58,40 +57,157 @@ material. That is a different context and it does not belong here.`;
 
 const app = express();
 
-// Without a password this page would hand an agent — and the API key behind
-// it — to anyone who found the hostname, which every issued certificate
-// publishes. Refusing to serve is the safe failure; `make up` checks for the
-// password too, so this should never be what you hit.
+// ---------------------------------------------------------------------------
+// Sessions
+//
+// This used to be HTTP basic auth, which iOS Safari does not hold on to: put
+// the phone down, the tab gets reclaimed, and the dialog is back. There is no
+// cookie in basic auth, so there is nothing for the browser to remember.
+//
+// A signed cookie fixes that. The signing key is derived from the password, so
+// there is no second secret to manage — and changing the password invalidates
+// every existing session, which is the behaviour you want from a password
+// change anyway.
+// ---------------------------------------------------------------------------
+const SESSION_DAYS = 30;
+const COOKIE = "sage_session";
+const KEY = createHash("sha256").update("sage-session:" + PASSWORD).digest();
+
 function safeEqual(a, b) {
   const x = Buffer.from(a);
   const y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
 }
 
-app.use((req, res, next) => {
-  if (req.path === "/healthz") return next();
+const sign = (payload) =>
+  createHmac("sha256", KEY).update(payload).digest("base64url");
+
+function issue() {
+  const expires = Date.now() + SESSION_DAYS * 86400_000;
+  const payload = String(expires);
+  return payload + "." + sign(payload);
+}
+
+function valid(token) {
+  if (typeof token !== "string") return false;
+  const cut = token.lastIndexOf(".");
+  if (cut < 1) return false;
+  const payload = token.slice(0, cut);
+  const mac = token.slice(cut + 1);
+  if (!safeEqual(mac, sign(payload))) return false;
+  const expires = Number(payload);
+  return Number.isFinite(expires) && expires > Date.now();
+}
+
+// express does not parse cookies without another dependency, and one header
+// split is cheaper than the dependency.
+function cookie(req, name) {
+  const raw = req.headers.cookie;
+  if (!raw) return null;
+  for (const part of raw.split(";")) {
+    const eq = part.indexOf("=");
+    if (eq > -1 && part.slice(0, eq).trim() === name) {
+      return decodeURIComponent(part.slice(eq + 1).trim());
+    }
+  }
+  return null;
+}
+
+function loginPage(failed) {
+  return `<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sage</title>
+<style>
+  :root{--paper:#eef1f5;--card:#fbfcfd;--ink:#10192b;--muted:#7d8ba0;
+    --rule:#dae0e9;--gold:#a8761f;--down:#a8442f;
+    --serif:ui-serif,"New York",Georgia,serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --paper:#0e1219;--card:#161b24;--ink:#e8ecf3;--muted:#77839a;
+    --rule:#242b36;--gold:#d9a94e;--down:#e08a72}}
+  :root[data-theme="dark"]{--paper:#0e1219;--card:#161b24;--ink:#e8ecf3;
+    --muted:#77839a;--rule:#242b36;--gold:#d9a94e;--down:#e08a72}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;padding:1.5rem;
+    background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:16px;-webkit-font-smoothing:antialiased}
+  form{width:100%;max-width:20rem;background:var(--card);border:1px solid var(--rule);
+    border-radius:12px;padding:1.6rem 1.5rem;display:flex;flex-direction:column;gap:.9rem}
+  h1{margin:0;font-family:var(--serif);font-style:italic;font-weight:400;
+    font-size:2rem;line-height:1;color:var(--gold)}
+  p{margin:0;font-size:.85rem;color:var(--muted)}
+  p.bad{color:var(--down)}
+  input{font:inherit;color:var(--ink);background:var(--paper);
+    border:1px solid var(--rule);border-radius:9px;padding:.65rem .8rem;width:100%}
+  input:focus{outline:2px solid var(--gold);outline-offset:-1px;border-color:transparent}
+  button{font:inherit;font-weight:600;font-size:.9rem;cursor:pointer;color:#fff;
+    background:var(--gold);border:0;border-radius:9px;padding:.7rem 1rem}
+</style></head><body>
+<form method="post" action="/login">
+  <h1>Sage</h1>
+  ${failed ? '<p class="bad">That password was not right.</p>'
+           : "<p>Signed in for 30 days on this device.</p>"}
+  <input type="password" name="password" autocomplete="current-password"
+         placeholder="Password" autofocus required>
+  <button type="submit">Sign in</button>
+</form></body></html>`;
+}
+
+app.get("/healthz", (_req, res) => res.json({ ok: true }));
+
+app.use(express.urlencoded({ extended: false, limit: "16kb" }));
+
+// Without a password this page would hand an agent — and the API key behind
+// it — to anyone who found the hostname, which every issued certificate
+// publishes. Refusing to serve is the safe failure; `make up` checks for the
+// password too, so this should never be what you hit.
+app.use((_req, res, next) => {
   if (!PASSWORD) {
     return res.status(503).type("text/plain")
       .send("AGENT_PASSWORD is not set on the server. Refusing to serve.");
   }
-  const header = req.headers.authorization || "";
-  if (header.startsWith("Basic ")) {
-    const [user, ...rest] = Buffer.from(header.slice(6), "base64")
-      .toString("utf8").split(":");
-    // Compare both halves every time; bailing early on a wrong username
-    // would leak which half was wrong.
-    const okUser = safeEqual(user || "", USER);
-    const okPass = safeEqual(rest.join(":"), PASSWORD);
-    if (okUser && okPass) return next();
+  next();
+});
+
+app.get("/login", (req, res) => {
+  if (valid(cookie(req, COOKIE))) return res.redirect("/");
+  res.type("html").send(loginPage(false));
+});
+
+app.post("/login", async (req, res) => {
+  if (safeEqual(String(req.body?.password ?? ""), PASSWORD)) {
+    res.cookie(COOKIE, issue(), {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: SESSION_DAYS * 86400_000,
+    });
+    return res.redirect("/");
   }
-  res.set("WWW-Authenticate", 'Basic realm="Tom\'s Coding", charset="UTF-8"');
-  res.status(401).type("text/plain").send("Authentication required.");
+  // A short pause on failure. Not a rate limiter, but it turns an unlimited
+  // guessing rate into a bounded one at no cost to a correct sign-in.
+  await new Promise((r) => setTimeout(r, 600));
+  res.status(401).type("html").send(loginPage(true));
+});
+
+app.post("/logout", (_req, res) => {
+  res.clearCookie(COOKIE, { path: "/" });
+  res.redirect("/login");
+});
+
+app.use((req, res, next) => {
+  if (valid(cookie(req, COOKIE))) return next();
+  // An expired session on a background request should fail loudly rather than
+  // hand the page a login form it would try to render as a reply.
+  if (req.path.startsWith("/api/")) {
+    return res.status(401).json({ error: "session expired" });
+  }
+  res.redirect("/login");
 });
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static("public"));
-
-app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 app.post("/api/chat", async (req, res) => {
   const { prompt, sessionId } = req.body ?? {};

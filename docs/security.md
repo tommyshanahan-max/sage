@@ -53,6 +53,12 @@ sudo sshd -t && sudo systemctl reload ssh
 Two things sit behind that one password: an agent that runs commands, and your
 Anthropic API key. Whoever gets in spends your money and edits your workspace.
 
+Sign-in sets a signed cookie good for thirty days, rather than HTTP basic auth,
+because iOS drops basic credentials the moment it reclaims a tab. The signing
+key is derived from the password, so changing the password signs every device
+out — which is what you want after losing a phone. **Sign out** in the masthead
+does the same for one device.
+
 The key is never sent to the browser — it stays in the container and is used
 server-side — so a visitor cannot read it, only spend it. Give that key its own
 spend limit in the Anthropic console. That limit is the only hard ceiling on

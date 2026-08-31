@@ -140,7 +140,6 @@ services:
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       AGENT_MODEL: ${TOMSCODING_AGENT_MODEL:-}
-      AGENT_USER: ${TOMSCODING_AGENT_USER:-tom}
       AGENT_PASSWORD: ${TOMSCODING_AGENT_PASSWORD:-}
       # Same home as the IDE, so the SDK picks up ~/.claude/CLAUDE.md — the
       # agent works to the same instructions as the CLI rather than to none.

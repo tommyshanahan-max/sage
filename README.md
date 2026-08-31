@@ -301,6 +301,12 @@ Enable it in `.env`: add `agent` to `COMPOSE_PROFILES`, set
 `TOMSCODING_AGENT_PASSWORD`, and set `ANTHROPIC_API_KEY`. `make up` refuses to
 start without the last two.
 
+Sign-in is a form, and it sets a signed cookie good for thirty days. It was
+HTTP basic auth first, which is wrong for a phone: iOS holds no cookie for
+basic credentials, so putting the handset down and picking it up meant typing
+the password again. The signing key derives from the password, so there is no
+second secret to keep and changing the password signs every device out.
+
 Replies stream as Server-Sent Events rather than over a websocket — plain HTTP
 over TCP, which needs nothing special from the proxy and holds up better on
 this route.

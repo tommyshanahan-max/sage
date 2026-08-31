@@ -161,6 +161,9 @@
   <span class="by">powered by Claude</span>
   <span class="status" id="status">ready</span>
   <button type="button" id="reset">New conversation</button>
+  <form method="post" action="/logout" style="display:contents">
+    <button type="submit">Sign out</button>
+  </form>
 </header>
 
 <main id="log">
@@ -274,6 +277,11 @@ async function send(prompt) {
   } catch (e) {
     thread.append(el("div", "err", "Could not reach the server: " + e.message));
     setBusy(false, "ready");
+    return;
+  }
+  if (res.status === 401) {
+    // The session lapsed mid-visit; the login page is a redirect away.
+    window.location.href = "/login";
     return;
   }
   if (!res.ok || !res.body) {
