@@ -48,6 +48,14 @@ sudo sshd -t && sudo systemctl reload ssh
 # now open a SECOND terminal and confirm you can still log in
 ```
 
+## The browser, if you enable it
+
+It has its own password and its own hostname, but it is a browser someone else
+could drive if they got in — logged into whatever you left logged in. Give it a
+password as strong as the workspaces', and sign out of anything that matters
+before you stop using it. Treat its saved sessions the way you would treat
+saved passwords on a shared machine.
+
 ## Worth adding
 
 **A second authentication factor.** code-server's password is a single shared

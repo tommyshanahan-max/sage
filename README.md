@@ -212,6 +212,26 @@ Two seats want more RAM than one. On a 4 GB box drop the limits to `2g` and
 `make shell-2` gets you into the second seat, and `make backup` snapshots both
 home volumes.
 
+## A browser on the VPS
+
+Optional. Runs a real Firefox on the server and streams its screen to you over
+HTTPS, so pages are fetched from Tokyo rather than from wherever you are. The
+practical value is not having to reach for a second device when a site loads on
+one and not the other.
+
+Enable it in `.env`: add `browser` to `COMPOSE_PROFILES` (comma-separated —
+`COMPOSE_PROFILES=seat2,browser`), set `TOMSCODING_BROWSER_DOMAIN` to a
+hostname with its own A record, and set `TOMSCODING_BROWSER_PASSWORD`. `make up`
+refuses to start without that password.
+
+It streams over TCP by way of KasmVNC. The WebRTC-based alternatives look
+better on a good link but run over UDP, which is the weaker transport on this
+route — the same reason HTTP/3 is off.
+
+A browser is the heaviest thing on this box. On 4 GB the ceilings over-commit
+(2g + 1g + 1g plus the host); ceilings are not reservations and there is swap,
+so light use is fine, but sustained slowness is the box asking for 8 GB.
+
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — what each piece does and why

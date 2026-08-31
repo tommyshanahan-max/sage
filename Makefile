@@ -14,6 +14,10 @@ up: ## Build if needed and start everything
 	  && { echo "seat2 is enabled but TOMSCODING_PASSWORD_2 is empty."; \
 	       echo "Run 'make password' and set it, or clear COMPOSE_PROFILES for a single seat."; \
 	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*browser' .env && ! grep -qE '^TOMSCODING_BROWSER_PASSWORD=.+' .env \
+	  && { echo "browser is enabled but TOMSCODING_BROWSER_PASSWORD is empty."; \
+	       echo "Add one, or drop 'browser' from COMPOSE_PROFILES."; \
+	       exit 1; } || true
 	$(COMPOSE) up -d --build
 	echo "up. https://$$(grep -E '^TOMSCODING_DOMAIN=' .env | cut -d= -f2-)"
 

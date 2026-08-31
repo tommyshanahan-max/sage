@@ -83,6 +83,43 @@ services:
         limits:
           memory: ${TOMSCODING_WORKSPACE_2_MEMORY:-1500m}
 
+  # A real browser running on the VPS, with its screen delivered to you over
+  # HTTPS. Pages are fetched from Tokyo, so anything the server can reach, you
+  # can reach — without a second device.
+  #
+  # KasmVNC (what this image serves) streams over HTTP and WebSocket, i.e. TCP.
+  # That matters here: the WebRTC-based alternatives are lower latency on a good
+  # link but run over UDP, which is the unreliable transport on this route.
+  #
+  # Off unless COMPOSE_PROFILES includes "browser" — a browser is the heaviest
+  # thing on this box and most days you will not want it running.
+  browser:
+    profiles: ["browser"]
+    image: lscr.io/linuxserver/firefox:latest
+    container_name: tomscoding-browser
+    restart: unless-stopped
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: ${TZ:-Asia/Shanghai}
+      # The image's own HTTP basic auth. Checked by make up, same as the seats.
+      CUSTOM_USER: ${TOMSCODING_BROWSER_USER:-tom}
+      PASSWORD: ${TOMSCODING_BROWSER_PASSWORD:-}
+    volumes:
+      - browser_config:/config
+    # Browsers put tab memory in /dev/shm and Docker's 64 MB default is far too
+    # small — without this, pages crash rather than load slowly.
+    shm_size: "1gb"
+    expose:
+      - "3000"
+    networks:
+      - tomscoding
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_BROWSER_MEMORY:-1g}
+    cpu_shares: ${TOMSCODING_BROWSER_CPU_SHARES:-512}
+
   caddy:
     image: caddy:2-alpine
     container_name: tomscoding-caddy
@@ -97,6 +134,7 @@ services:
       # binds nothing public and requests no certificate.
       TOMSCODING_LANDING_DOMAIN: ${TOMSCODING_LANDING_DOMAIN:-}
       TOMSCODING_DOMAIN_2: ${TOMSCODING_DOMAIN_2:-}
+      TOMSCODING_BROWSER_DOMAIN: ${TOMSCODING_BROWSER_DOMAIN:-}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./docker/conf.d:/etc/caddy/conf.d:ro
@@ -116,5 +154,6 @@ networks:
 volumes:
   home:
   home_2:
+  browser_config:
   caddy_data:
   caddy_config:

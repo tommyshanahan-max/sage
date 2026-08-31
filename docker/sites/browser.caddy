@@ -1,0 +1,20 @@
+# The browser, on its own hostname. Inert until TOMSCODING_BROWSER_DOMAIN is
+# set: unset, this binds an internal .localhost name and requests no
+# certificate. Distinct from the other fallbacks on purpose — two site blocks
+# sharing an address is a startup failure, not a warning.
+#
+# Starting the container is separate, via COMPOSE_PROFILES in .env.
+{$TOMSCODING_BROWSER_DOMAIN:browser.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+
+	# KasmVNC holds a websocket open for the whole session, which Caddy proxies
+	# transparently with no idle timeout.
+	reverse_proxy browser:3000
+}
