@@ -65,11 +65,11 @@ useful regardless of which agent you run in it.
 
 - A VPS in Tokyo. 2 vCPU / 4 GB is comfortable; 1 vCPU / 2 GB works for light
   use. Ubuntu 22.04 or 24.04.
-- A domain with **two** A records pointing straight at the VPS, both in place
-  *before* first boot — Let's Encrypt validates over HTTP and will fail without
-  them. One for the landing page (`tomscoding.com`) and one for the IDE
-  (`code.tomscoding.com`). Keep DNS unproxied (grey cloud on Cloudflare); see
-  `docs/networking.md`.
+- A domain with an A record for **each service you enable**, all pointing
+  straight at the VPS and all in place *before* first boot — Let's Encrypt
+  validates each hostname over HTTP and fails without them. The full set is
+  listed under Hostnames below; the minimum is one, for the IDE. Keep DNS
+  unproxied (grey cloud on Cloudflare); see `docs/networking.md`.
 - Ports 80 and 443 open (`install/bootstrap.sh` handles the firewall).
 
 On provider choice: budget VPS lines (Vultr, Linode, DigitalOcean Tokyo) route
@@ -79,20 +79,30 @@ Japan region with an accelerated backbone — cost several times more and are
 dramatically steadier at 20:00–24:00 local. Start cheap, run `make doctor` for
 a week, and upgrade only if the evening numbers are bad.
 
-## Two hostnames
+## Hostnames
 
-The deployment serves two separate sites from one Caddy process:
+One Caddy process serves every site, each on its own hostname with its own
+certificate:
 
-| Hostname | What it is |
-|---|---|
-| `tomscoding.com` | A static landing page from `landing/`. Public. |
-| `code.tomscoding.com` | The IDE. Password-gated. |
+| Hostname | What it is | Required |
+|---|---|---|
+| `code.tomscoding.com` | The IDE | yes |
+| `tomscoding.com` | Launcher page from `landing/` | no |
+| `her.tomscoding.com` | Second seat | no |
+| `browser.tomscoding.com` | Firefox running on the VPS | no |
+| `agent.tomscoding.com` | Agent chat app | no |
 
-They are separate site blocks with separate certificates, and the landing page
-is plain files on disk — it cannot reach the workspace container. The only link
-between them is the `/ide` redirect on the landing site, which sends you to the
-IDE's hostname; the real domain is filled in from `TOMSCODING_DOMAIN`, so no hostname
-is hardcoded in the HTML.
+Each optional one needs its A record, its `.env` entry, and — for the three
+that run containers — its Compose profile. An optional service you have not
+configured costs nothing and serves nothing.
+
+They are separate site blocks, and the launcher is plain files on disk: it
+cannot reach any container. The only connection is its redirects, which fill
+in the real hostnames from the environment so none is hardcoded in the HTML.
+
+Run `make check` after changing any of them. It resolves every site address
+the way Caddy does and fails on an empty or duplicated one — both of which
+stop Caddy serving *anything*, not just the site at fault.
 
 Giving code-server a whole hostname rather than a sub-path is deliberate.
 Serving it under `/ide/` on a shared hostname means rewriting paths on a
@@ -280,12 +290,15 @@ and it is not built yet.
 ## Layout
 
 ```
-docker-compose.yml        two services: caddy (TLS, proxy) and workspace (IDE)
+docker-compose.yml        caddy, the workspaces, and the optional browser/agent
 docker/Caddyfile          TLS termination, websocket proxying, security headers
-docker/sites/             additional site blocks — ships the landing page
+docker/sites/             one site block per hostname
 docker/conf.d/            optional overlays on the IDE site (extra auth, allowlist)
 docker/workspace/         the IDE image: code-server + node + claude CLI
-landing/                  the public landing page, static and self-contained
+agent/                    the agent chat app: server, UI, image
+landing/                  the launcher page, static and self-contained
+env.tomscoding            this deployment's settings, minus the secrets
 install/bootstrap.sh      one-shot VPS preparation
+scripts/check-sites.py    verifies every site address resolves and is unique
 scripts/doctor.sh         client-side network diagnostics
 ```
