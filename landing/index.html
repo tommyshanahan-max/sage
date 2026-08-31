@@ -6,173 +6,304 @@
 <title>Tom's Coding</title>
 <meta name="description" content="Personal workspace.">
 <!--
-  Everything here is inline and self-hosted on purpose. No web fonts, no CDN,
-  no analytics. Google Fonts and most CDNs are unreachable from mainland China,
-  and a single blocked stylesheet is enough to leave a visitor staring at an
-  unstyled page or a spinner. Same-origin only: that is the whole trick.
+  No web fonts, no CDN, no analytics, no external anything. Google Fonts and
+  most CDNs are unreachable from mainland China, and one blocked stylesheet
+  leaves a visitor on an unstyled page. Every byte here is same-origin.
+
+  The display face is ui-serif — New York on Apple devices, Georgia elsewhere.
+  Character without a download.
 -->
 <style>
-  :root {
-    --bg: #f6f6f4;
-    --panel: #ffffff;
-    --ink: #16171a;
-    --ink-2: #4d5158;
-    --muted: #868b93;
-    --line: #e4e3de;
-    --accent: #2f5fd0;
-    --accent-soft: #e9eefb;
-    --ok: #1d7a4d;
+  :root{
+    --paper:#eef1f5;
+    --card:#fbfcfd;
+    --card-2:#f4f6f9;
+    --ink:#10192b;
+    --ink-2:#45536b;
+    --muted:#7d8ba0;
+    --rule:#dae0e9;
+    --gold:#a8761f;
+    --gold-soft:#f6efdf;
+    --live:#1f7a55;
+    --live-soft:#e2f1ea;
+    --down:#a8442f;
+    --down-soft:#f8e9e5;
+    --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
+           "Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB",
+           "Microsoft YaHei",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #121316;
-      --panel: #1a1c20;
-      --ink: #e9ebee;
-      --ink-2: #adb2ba;
-      --muted: #787d85;
-      --line: #272a2f;
-      --accent: #7aa2ff;
-      --accent-soft: #1a2338;
-      --ok: #4fc98a;
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0e1219;
+      --card:#161b24;
+      --card-2:#1b2029;
+      --ink:#e8ecf3;
+      --ink-2:#a6b1c2;
+      --muted:#77839a;
+      --rule:#242b36;
+      --gold:#d9a94e;
+      --gold-soft:#2a2213;
+      --live:#4fc48c;
+      --live-soft:#122a20;
+      --down:#e08a72;
+      --down-soft:#2c1a16;
     }
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    min-height: 100vh;
-    padding: clamp(2.5rem, 8vw, 5rem) clamp(1.1rem, 5vw, 2rem) 4rem;
-    background: var(--bg);
-    color: var(--ink);
-    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-          "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB",
-          "Microsoft YaHei", sans-serif;
-    -webkit-text-size-adjust: 100%;
-  }
-  main { max-width: 46rem; margin: 0 auto; }
-
-  header { margin-bottom: 2.75rem; }
-  h1 {
-    margin: 0 0 .3rem;
-    font-size: clamp(1.7rem, 5vw, 2.2rem);
-    font-weight: 600;
-    letter-spacing: -.022em;
-  }
-  .lede { margin: 0; color: var(--muted); }
-
-  h2 {
-    font-size: .73rem;
-    font-weight: 600;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin: 0 0 .9rem;
+  :root[data-theme="dark"]{
+    --paper:#0e1219; --card:#161b24; --card-2:#1b2029; --ink:#e8ecf3;
+    --ink-2:#a6b1c2; --muted:#77839a; --rule:#242b36; --gold:#d9a94e;
+    --gold-soft:#2a2213; --live:#4fc48c; --live-soft:#122a20;
+    --down:#e08a72; --down-soft:#2c1a16;
   }
 
-  .grid {
-    display: grid;
-    gap: .75rem;
-    grid-template-columns: 1fr;
-    margin-bottom: 2.5rem;
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;min-height:100vh;
+    padding:clamp(2.75rem,8vw,6rem) clamp(1.1rem,5vw,2rem) 4rem;
+    background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:16px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
   }
-  @media (min-width: 34rem) { .grid { grid-template-columns: 1fr 1fr; } }
+  main{max-width:41rem;margin:0 auto;display:flex;flex-direction:column;gap:2.5rem}
 
-  .tile {
-    display: block;
-    padding: 1.05rem 1.15rem;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 11px;
-    text-decoration: none;
-    color: inherit;
-    transition: border-color .15s ease, transform .15s ease;
+  /* ---------- masthead: the link is the thesis ---------- */
+  .mast{display:flex;flex-direction:column;gap:1.4rem}
+  h1{
+    margin:0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(2.4rem,8vw,3.6rem);line-height:1;letter-spacing:-.02em;
   }
-  .tile:hover, .tile:focus-visible { border-color: var(--accent); transform: translateY(-1px); }
-  .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .tile h3 {
-    margin: 0 0 .2rem;
-    font-size: .98rem;
-    font-weight: 600;
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: .75rem;
-  }
-  .tile h3 span { color: var(--muted); font-weight: 400; font-size: .9em; }
-  .tile p { margin: 0; color: var(--muted); font-size: .875rem; line-height: 1.5; }
-  .tile code {
-    display: block;
-    margin-top: .55rem;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: .76rem;
-    color: var(--accent);
-  }
+  h1 em{font-style:italic;color:var(--gold)}
 
-  .note {
-    border: 1px solid var(--line);
-    border-left: 3px solid var(--accent);
-    border-radius: 0 9px 9px 0;
-    background: var(--panel);
-    padding: .95rem 1.15rem;
-    color: var(--ink-2);
-    font-size: .9rem;
+  .link{
+    display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;
+    padding:.8rem 1rem;border:1px solid var(--rule);border-radius:10px;
+    background:var(--card);
   }
-  .note strong { color: var(--ink); font-weight: 600; }
+  .pulse{
+    width:9px;height:9px;border-radius:50%;flex:none;
+    background:var(--muted);box-shadow:0 0 0 0 transparent;
+  }
+  .pulse.live{background:var(--live);animation:beat 2.6s ease-out infinite}
+  .pulse.down{background:var(--down)}
+  @keyframes beat{
+    0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--live) 55%,transparent)}
+    70%,100%{box-shadow:0 0 0 7px transparent}
+  }
+  .link .where{font-size:.9rem;color:var(--ink-2)}
+  .link .rtt{
+    margin-left:auto;font-family:var(--mono);font-variant-numeric:tabular-nums;
+    font-size:1.05rem;color:var(--ink);
+  }
+  .link .rtt small{font-size:.68em;color:var(--muted);margin-left:.15rem}
+  .link button{
+    font:inherit;font-size:.78rem;color:var(--muted);background:none;
+    border:1px solid var(--rule);border-radius:6px;padding:.2rem .55rem;cursor:pointer;
+  }
+  .link button:hover{color:var(--gold);border-color:var(--gold)}
+  .link button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
-  footer {
-    margin-top: 3rem;
-    padding-top: 1.1rem;
-    border-top: 1px solid var(--line);
-    color: var(--muted);
-    font-size: .82rem;
+  /* ---------- services ---------- */
+  h2{
+    margin:0 0 .85rem;font-family:var(--sans);font-size:.7rem;font-weight:600;
+    letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
   }
-  @media (prefers-reduced-motion: reduce) { .tile { transition: none; } }
+  .rows{display:flex;flex-direction:column;gap:.6rem}
+  .row{
+    display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;
+    padding:1rem 1.15rem;background:var(--card);
+    border:1px solid var(--rule);border-radius:11px;
+    text-decoration:none;color:inherit;
+    transition:border-color .16s ease,transform .16s ease,background .16s ease;
+  }
+  .row:hover,.row:focus-visible{border-color:var(--gold);transform:translateY(-1px)}
+  .row:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .row .name{
+    font-family:var(--serif);font-size:1.22rem;line-height:1.25;letter-spacing:-.01em;
+    display:flex;align-items:baseline;gap:.5rem;
+  }
+  .row .name .arrow{font-family:var(--sans);font-size:.8rem;color:var(--muted)}
+  .row:hover .name .arrow{color:var(--gold)}
+  .row .desc{font-size:.85rem;color:var(--muted);margin-top:.15rem;line-height:1.45}
+  .row .host{
+    display:block;font-family:var(--mono);font-size:.74rem;color:var(--ink-2);
+    margin-top:.45rem;
+  }
+  .state{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;flex:none}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+  .dot.live{background:var(--live)}
+  .dot.down{background:var(--down)}
+  .tag{
+    font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+    padding:.15rem .4rem;border-radius:3px;color:var(--muted);
+    background:var(--card-2);border:1px solid var(--rule);white-space:nowrap;
+  }
+  .tag.live{color:var(--live);background:var(--live-soft);border-color:currentColor}
+  .tag.down{color:var(--down);background:var(--down-soft);border-color:currentColor}
+
+  /* ---------- footnote ---------- */
+  .note{
+    border-top:1px solid var(--rule);padding-top:1.35rem;
+    font-size:.83rem;color:var(--muted);line-height:1.6;
+  }
+  .note b{color:var(--ink-2);font-weight:600}
+  .note code{font-family:var(--mono);font-size:.92em;color:var(--gold)}
+
+  @media (prefers-reduced-motion:reduce){
+    .pulse.live{animation:none}
+    .row{transition:none}
+  }
 </style>
 </head>
 <body>
 <main>
 
-  <header>
-    <h1>Tom's Coding</h1>
-    <p class="lede">Everything runs on one server in Tokyo.</p>
-  </header>
+  <div class="mast">
+    <h1>Tom's <em>Coding</em></h1>
 
-  <h2>Workspaces</h2>
-  <div class="grid">
-    <a class="tile" href="/ide">
-      <h3>Workspace <span>&rarr;</span></h3>
-      <p>Editor and terminal, with Claude Code already running.</p>
-      <code>code.tomscoding.com</code>
-    </a>
-    <a class="tile" href="/seat2">
-      <h3>Second seat <span>&rarr;</span></h3>
-      <p>A separate workspace. Own files, own terminal.</p>
-      <code>her.tomscoding.com</code>
-    </a>
+    <div class="link">
+      <span class="pulse" id="pulse" aria-hidden="true"></span>
+      <span class="where" id="where">Measuring the link to Tokyo&hellip;</span>
+      <span class="rtt" id="rtt">&mdash;</span>
+      <button type="button" id="again">Again</button>
+    </div>
   </div>
 
-  <h2>Tools</h2>
-  <div class="grid">
-    <a class="tile" href="/browser">
-      <h3>Browser <span>&rarr;</span></h3>
-      <p>Firefox running in Tokyo. Pages load from there, not from here.</p>
-      <code>browser.tomscoding.com</code>
-    </a>
-    <a class="tile" href="/agent">
-      <h3>Agent <span>&rarr;</span></h3>
-      <p>Chat interface for Claude, with file and command access.</p>
-      <code>agent.tomscoding.com</code>
-    </a>
-  </div>
+  <section>
+    <h2>Workspaces</h2>
+    <div class="rows" id="workspaces"></div>
+  </section>
+
+  <section>
+    <h2>Tools</h2>
+    <div class="rows" id="tools"></div>
+  </section>
 
   <p class="note">
-    <strong>Instagram, WhatsApp and the rest live inside the browser</strong>, not
-    here — they refuse to be embedded in another site, and a link from this page
-    would load from wherever you are rather than from Tokyo. Open the browser and
-    use its bookmarks toolbar.
+    <b>Instagram, WhatsApp and the rest live inside the browser</b>, not here. Both refuse
+    to be embedded in another page, and a link from here would load from wherever you are
+    rather than from Tokyo &mdash; which is the whole point. Bookmark them in the browser
+    instead.
+    <br><br>
+    The figure above is a real HTTP round trip to the server, measured from this device,
+    not a ping. Sign-in is required on every service; a green dot means the machine
+    answered, not that you're logged in.
   </p>
 
-  <footer>Sign-in required on every one of these.</footer>
-
 </main>
+
+<script>
+// One place to change if the domain ever moves.
+const SERVICES = {
+  workspaces: [
+    { name: "Workspace",   host: "code.tomscoding.com",
+      desc: "Editor and terminal, with Claude Code already running." },
+    { name: "Second seat", host: "her.tomscoding.com",
+      desc: "A separate workspace. Own files, own terminal." },
+  ],
+  tools: [
+    { name: "Browser",     host: "browser.tomscoding.com",
+      desc: "Firefox running in Tokyo. Pages load from there, not from here." },
+    { name: "Agent",       host: "agent.tomscoding.com",
+      desc: "Chat interface for Claude, with file and command access." },
+  ],
+};
+
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+};
+
+function renderRow(svc) {
+  const a = el("a", "row");
+  a.href = "https://" + svc.host;
+
+  const left = el("div");
+  const name = el("div", "name");
+  name.append(el("span", null, svc.name), el("span", "arrow", "→"));
+  left.append(name, el("p", "desc", svc.desc), el("code", "host", svc.host));
+
+  const state = el("div", "state");
+  const dot = el("span", "dot");
+  const tag = el("span", "tag", "checking");
+  state.append(dot, tag);
+
+  a.append(left, state);
+  return { a, dot, tag };
+}
+
+// A no-cors request tells us the machine answered without letting us read the
+// reply. That is exactly the right amount of information for a status dot: an
+// auth prompt is a successful response, so "live" means reachable, not signed in.
+async function probe(host, timeoutMs = 8000) {
+  const control = new AbortController();
+  const timer = setTimeout(() => control.abort(), timeoutMs);
+  const started = performance.now();
+  try {
+    await fetch("https://" + host + "/?_=" + Date.now(), {
+      mode: "no-cors", cache: "no-store", signal: control.signal,
+    });
+    return { ok: true, ms: Math.round(performance.now() - started) };
+  } catch {
+    return { ok: false, ms: null };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const rows = [];
+for (const [section, list] of Object.entries(SERVICES)) {
+  const target = document.getElementById(section);
+  for (const svc of list) {
+    const r = renderRow(svc);
+    target.append(r.a);
+    rows.push({ ...r, host: svc.host });
+  }
+}
+
+const pulse = document.getElementById("pulse");
+const where = document.getElementById("where");
+const rtt   = document.getElementById("rtt");
+const again = document.getElementById("again");
+
+async function measure() {
+  pulse.className = "pulse";
+  where.textContent = "Measuring the link to Tokyo…";
+  rtt.textContent = "—";
+  for (const r of rows) {
+    r.dot.className = "dot";
+    r.tag.className = "tag";
+    r.tag.textContent = "checking";
+  }
+
+  const results = await Promise.all(rows.map(async (r) => {
+    const res = await probe(r.host);
+    r.dot.className = "dot " + (res.ok ? "live" : "down");
+    r.tag.className = "tag " + (res.ok ? "live" : "down");
+    r.tag.textContent = res.ok ? "live" : "no answer";
+    return res;
+  }));
+
+  // The first request pays for DNS and the TLS handshake, so the fastest of the
+  // set is the closest thing to a true round trip on a warm connection.
+  const times = results.filter((r) => r.ok).map((r) => r.ms);
+  if (!times.length) {
+    pulse.className = "pulse down";
+    where.textContent = "No answer from Tokyo";
+    rtt.innerHTML = "&mdash;";
+    return;
+  }
+  pulse.className = "pulse live";
+  where.textContent = "Tokyo · " + times.length + " of " + rows.length + " answering";
+  rtt.innerHTML = Math.min(...times) + "<small>ms</small>";
+}
+
+again.addEventListener("click", measure);
+measure();
+</script>
 </body>
 </html>

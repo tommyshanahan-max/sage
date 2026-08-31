@@ -108,10 +108,25 @@ Giving code-server a whole hostname rather than a sub-path is deliberate.
 Serving it under `/ide/` on a shared hostname means rewriting paths on a
 websocket, which is the kind of thing that works until it doesn't.
 
-The landing page is a launcher: a tile per service, each linking to a short
-path (`/ide`, `/seat2`, `/browser`, `/agent`) that Caddy redirects to the real
-hostname from the environment. No hostname is hardcoded in the HTML, so moving
-to another domain touches `.env` and nothing else.
+The landing page is a launcher, and it is live: on load it makes a `no-cors`
+request to each service and reports which answered and how long the round trip
+took. That figure is the one thing about this deployment worth putting on its
+front page — it is the link across the water, measured from wherever the reader
+is standing, rather than a number someone typed in.
+
+A `no-cors` probe tells you the machine answered without letting you read the
+reply, which is the right amount of information for a status dot: an auth
+prompt is a successful response, so a green dot means reachable, not signed in.
+
+Hostnames live in one `SERVICES` object at the top of the script — the probes
+need absolute URLs, so they cannot come from Caddy the way the old redirects
+did. Moving domains means editing that object. The `/ide`, `/browser` and
+friends redirects stay in `docker/sites/landing.caddy` for anyone typing them
+directly.
+
+There are no web fonts. The display face is `ui-serif`, which resolves to New
+York on Apple devices and Georgia elsewhere — character with nothing
+downloaded, which is the only kind available when Google Fonts is unreachable.
 
 Sites like Instagram and WhatsApp are deliberately **not** tiles. They refuse
 to be embedded in another page, and a plain link would load from wherever the
