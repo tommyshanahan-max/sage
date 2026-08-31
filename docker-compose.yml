@@ -120,6 +120,37 @@ services:
           memory: ${TOMSCODING_BROWSER_MEMORY:-1g}
     cpu_shares: ${TOMSCODING_BROWSER_CPU_SHARES:-512}
 
+  # A chat interface of our own, in front of the Claude Agent SDK. The browser
+  # talks only to this container; this container calls Anthropic with an API
+  # key. Nothing about the agent reaches the internet from the viewer's side.
+  #
+  # Off unless COMPOSE_PROFILES includes "agent", and useless without
+  # ANTHROPIC_API_KEY — `make up` checks for it.
+  agent:
+    profiles: ["agent"]
+    build:
+      context: ./agent
+    image: tomscoding-agent:latest
+    container_name: tomscoding-agent
+    restart: unless-stopped
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AGENT_MODEL: ${TOMSCODING_AGENT_MODEL:-}
+      AGENT_USER: ${TOMSCODING_AGENT_USER:-tom}
+      AGENT_PASSWORD: ${TOMSCODING_AGENT_PASSWORD:-}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - agent_workspace:/workspace
+    expose:
+      - "3000"
+    networks:
+      - tomscoding
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_AGENT_MEMORY:-1g}
+    cpu_shares: ${TOMSCODING_AGENT_CPU_SHARES:-512}
+
   caddy:
     image: caddy:2-alpine
     container_name: tomscoding-caddy
@@ -135,6 +166,7 @@ services:
       TOMSCODING_LANDING_DOMAIN: ${TOMSCODING_LANDING_DOMAIN:-}
       TOMSCODING_DOMAIN_2: ${TOMSCODING_DOMAIN_2:-}
       TOMSCODING_BROWSER_DOMAIN: ${TOMSCODING_BROWSER_DOMAIN:-}
+      TOMSCODING_AGENT_DOMAIN: ${TOMSCODING_AGENT_DOMAIN:-}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./docker/conf.d:/etc/caddy/conf.d:ro
@@ -155,5 +187,6 @@ volumes:
   home:
   home_2:
   browser_config:
+  agent_workspace:
   caddy_data:
   caddy_config:

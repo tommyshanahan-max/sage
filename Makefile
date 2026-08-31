@@ -18,6 +18,14 @@ up: ## Build if needed and start everything
 	  && { echo "browser is enabled but TOMSCODING_BROWSER_PASSWORD is empty."; \
 	       echo "Add one, or drop 'browser' from COMPOSE_PROFILES."; \
 	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*agent' .env && ! grep -qE '^TOMSCODING_AGENT_PASSWORD=.+' .env \
+	  && { echo "agent is enabled but TOMSCODING_AGENT_PASSWORD is empty."; \
+	       echo "That page drives an agent with your API key — it needs a password."; \
+	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*agent' .env && ! grep -qE '^ANTHROPIC_API_KEY=.+' .env \
+	  && { echo "agent is enabled but ANTHROPIC_API_KEY is empty."; \
+	       echo "The agent has nothing to authenticate with and every turn will fail."; \
+	       exit 1; } || true
 	$(COMPOSE) up -d --build
 	echo "up. https://$$(grep -E '^TOMSCODING_DOMAIN=' .env | cut -d= -f2-)"
 

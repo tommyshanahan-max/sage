@@ -232,6 +232,35 @@ A browser is the heaviest thing on this box. On 4 GB the ceilings over-commit
 (2g + 1g + 1g plus the host); ceilings are not reservations and there is swap,
 so light use is fine, but sustained slowness is the box asking for 8 GB.
 
+## The agent chat app
+
+Optional, and the reason it exists is worth stating plainly: Claude Code's
+browser sign-in checks where *you* are, and there are places that check
+refuses. An API key does not — it is presented by the server, from Tokyo. This
+app is a chat interface that uses one.
+
+`agent/` is a small Node server in front of the
+[Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk), which is Claude
+Code as a library: the agent loop, context management, and the built-in tools
+(read, write, edit, bash, search) all come from it. The app supplies a UI, a
+session, and streaming; it does not reimplement the agent.
+
+Enable it in `.env`: add `agent` to `COMPOSE_PROFILES`, set
+`TOMSCODING_AGENT_DOMAIN` to a hostname with its own A record, set
+`TOMSCODING_AGENT_PASSWORD`, and set `ANTHROPIC_API_KEY`. `make up` refuses to
+start without the last two.
+
+Replies stream as Server-Sent Events rather than over a websocket — plain HTTP
+over TCP, which needs nothing special from the proxy and holds up better on
+this route.
+
+**What it can do to your files.** Tools run without pausing to ask. The
+container is the boundary: the agent sees `/workspace` (its own volume) and
+nothing else — not the IDE seats, not the host, not journey. That volume starts
+empty, so early on there is little to lose; as it fills, that stops being true.
+An approval step before writes and commands is the obvious next thing to build,
+and it is not built yet.
+
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — what each piece does and why

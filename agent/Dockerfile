@@ -1,0 +1,31 @@
+# The agent app: a chat UI in front of the Claude Agent SDK.
+FROM node:22-slim
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# The Agent SDK drives the Claude Code harness, which shells out for its Bash,
+# Glob and Grep tools. Without these the agent starts and then fails the first
+# time it tries to look at anything.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      git \
+      ripgrep \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY package.json ./
+RUN npm install --omit=dev --no-fund --no-audit
+
+COPY server.js ./
+COPY public ./public
+
+# The directory the agent reads and writes. Mounted as a volume in compose so
+# the work survives rebuilds.
+RUN mkdir -p /workspace
+ENV AGENT_WORKSPACE=/workspace \
+    NODE_ENV=production \
+    PORT=3000
+
+EXPOSE 3000
+CMD ["node", "server.js"]

@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tom's Coding</title>
+<!--
+  No web fonts, no CDN, no analytics. Google Fonts and most CDNs are
+  unreachable from mainland China, and one blocked stylesheet is enough to
+  leave a visitor on an unstyled page. Everything here is same-origin.
+-->
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --panel: #ffffff;
+    --ink: #17181a;
+    --ink-2: #4a4d52;
+    --muted: #83878e;
+    --line: #e3e3df;
+    --accent: #2f5fd0;
+    --accent-soft: #eaeffb;
+    --user-bg: #eef1f6;
+    --danger: #a8341f;
+    --danger-soft: #fbeae6;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131417;
+      --panel: #1a1c20;
+      --ink: #e8eaed;
+      --ink-2: #b0b5bd;
+      --muted: #7e848d;
+      --line: #292c31;
+      --accent: #7aa2ff;
+      --accent-soft: #1b2438;
+      --user-bg: #22262d;
+      --danger: #f0907a;
+      --danger-soft: #2c1a16;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", sans-serif;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    flex: none;
+    padding: .85rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    display: flex;
+    align-items: baseline;
+    gap: .7rem;
+  }
+  header h1 { margin: 0; font-size: .95rem; font-weight: 600; letter-spacing: -.01em; }
+  header span { font-size: .8rem; color: var(--muted); }
+  header button {
+    margin-left: auto; font: inherit; font-size: .8rem;
+    background: none; border: 1px solid var(--line); color: var(--ink-2);
+    padding: .25rem .6rem; border-radius: 6px; cursor: pointer;
+  }
+  header button:hover { border-color: var(--accent); color: var(--accent); }
+
+  #log { flex: 1; overflow-y: auto; padding: 1.5rem 1.25rem 2rem; }
+  .thread { max-width: 46rem; margin: 0 auto; display: flex; flex-direction: column; gap: 1.35rem; }
+
+  .msg { display: flex; flex-direction: column; gap: .4rem; }
+  .msg.user { align-items: flex-end; }
+  .bubble {
+    background: var(--user-bg); padding: .65rem .9rem; border-radius: 12px;
+    max-width: 85%; white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  .assistant .body { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
+  .assistant .body:empty::after {
+    content: "▍"; color: var(--muted); animation: blink 1.1s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .assistant .body:empty::after { animation: none; } }
+
+  /* Tool activity: one compact line each, expandable. The point is to make it
+     visible what the agent actually did without burying the reply in it. */
+  details.tool {
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--panel); font-size: .875rem;
+  }
+  details.tool > summary {
+    cursor: pointer; padding: .45rem .7rem; list-style: none;
+    display: flex; gap: .5rem; align-items: baseline; color: var(--ink-2);
+  }
+  details.tool > summary::-webkit-details-marker { display: none; }
+  details.tool > summary b { font-weight: 600; color: var(--ink); flex: none; }
+  details.tool > summary code {
+    font-family: var(--mono); font-size: .82em; color: var(--muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  details.tool pre {
+    margin: 0; padding: .6rem .7rem; border-top: 1px solid var(--line);
+    font-family: var(--mono); font-size: .8rem; line-height: 1.5;
+    overflow-x: auto; color: var(--ink-2); white-space: pre-wrap;
+    overflow-wrap: anywhere; max-height: 22rem; overflow-y: auto;
+  }
+  .err {
+    border: 1px solid var(--danger); background: var(--danger-soft);
+    color: var(--danger); border-radius: 8px; padding: .6rem .8rem;
+    font-size: .9rem; white-space: pre-wrap;
+  }
+  .empty { color: var(--muted); text-align: center; padding: 4rem 1rem; }
+  .empty p { margin: 0 0 .4rem; }
+
+  footer {
+    flex: none; border-top: 1px solid var(--line);
+    background: var(--panel); padding: .85rem 1.25rem 1.1rem;
+  }
+  .composer { max-width: 46rem; margin: 0 auto; display: flex; gap: .6rem; align-items: flex-end; }
+  textarea {
+    flex: 1; resize: none; font: inherit; color: var(--ink);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: .65rem .8rem; max-height: 12rem; min-height: 2.9rem;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+  #send {
+    font: inherit; font-weight: 600; font-size: .9rem; cursor: pointer;
+    background: var(--accent); color: #fff; border: 0;
+    border-radius: 10px; padding: .7rem 1.15rem;
+  }
+  #send:disabled { opacity: .45; cursor: default; }
+  .hint { max-width: 46rem; margin: .5rem auto 0; font-size: .76rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Tom's Coding</h1>
+  <span id="status">ready</span>
+  <button id="reset" type="button">New conversation</button>
+</header>
+
+<main id="log">
+  <div class="thread" id="thread">
+    <div class="empty" id="empty">
+      <p>Ask for something and it will be built.</p>
+      <p>Files live in the workspace on the server.</p>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <form class="composer" id="composer">
+    <textarea id="input" rows="1" placeholder="What would you like to do?" autofocus></textarea>
+    <button id="send" type="submit">Send</button>
+  </form>
+  <p class="hint">Enter to send · Shift+Enter for a new line</p>
+</footer>
+
+<script>
+const thread  = document.getElementById("thread");
+const empty   = document.getElementById("empty");
+const input   = document.getElementById("input");
+const sendBtn = document.getElementById("send");
+const status  = document.getElementById("status");
+
+let sessionId = null;
+let busy = false;
+
+// Friendlier names than the raw tool identifiers, and the one input field
+// worth showing on the summary line for each.
+const TOOLS = {
+  Read:     ["Read",     i => i.file_path],
+  Write:    ["Wrote",    i => i.file_path],
+  Edit:     ["Edited",   i => i.file_path],
+  Bash:     ["Ran",      i => i.command],
+  Glob:     ["Searched", i => i.pattern],
+  Grep:     ["Searched", i => i.pattern],
+  WebFetch: ["Fetched",  i => i.url],
+  WebSearch:["Searched the web", i => i.query],
+};
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+}
+
+function scroll() {
+  const log = document.getElementById("log");
+  log.scrollTop = log.scrollHeight;
+}
+
+function addUser(text) {
+  empty?.remove();
+  const wrap = el("div", "msg user");
+  wrap.append(el("div", "bubble", text));
+  thread.append(wrap);
+  scroll();
+}
+
+function startAssistant() {
+  const wrap = el("div", "msg assistant");
+  const body = el("div", "body", "");
+  wrap.append(body);
+  thread.append(wrap);
+  scroll();
+  return { wrap, body };
+}
+
+function addTool(wrap, body, name, inputObj) {
+  const [label, pick] = TOOLS[name] || [name, () => ""];
+  let detail = "";
+  try { detail = pick(inputObj || {}) || ""; } catch { detail = ""; }
+
+  const d = el("details", "tool");
+  const s = el("summary");
+  s.append(el("b", null, label));
+  s.append(el("code", null, String(detail)));
+  d.append(s);
+  d.append(el("pre", null, JSON.stringify(inputObj, null, 2)));
+
+  // Tool activity belongs before the text still being written, so the reply
+  // stays at the bottom where the eye already is.
+  wrap.insertBefore(d, body);
+  scroll();
+  return d;
+}
+
+function addError(text) {
+  thread.append(el("div", "err", text));
+  scroll();
+}
+
+function setBusy(state, label) {
+  busy = state;
+  sendBtn.disabled = state;
+  status.textContent = label;
+}
+
+async function send(prompt) {
+  addUser(prompt);
+  const { wrap, body } = startAssistant();
+  setBusy(true, "working…");
+
+  // Tool results arrive separately from the calls they belong to, so keep a
+  // map from tool_use id to its <details> element to attach the output.
+  const pending = new Map();
+
+  let res;
+  try {
+    res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, sessionId }),
+    });
+  } catch (e) {
+    addError("Could not reach the server: " + e.message);
+    setBusy(false, "ready");
+    return;
+  }
+
+  if (!res.ok || !res.body) {
+    addError("Server returned " + res.status + ".");
+    setBusy(false, "ready");
+    return;
+  }
+
+  const reader  = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  const handle = (event, data) => {
+    if (event === "session") { sessionId = data.sessionId; return; }
+    if (event === "text")    { body.textContent += data.text; scroll(); return; }
+    if (event === "tool_use") {
+      pending.set(data.id, addTool(wrap, body, data.name, data.input));
+      return;
+    }
+    if (event === "tool_result") {
+      const d = pending.get(data.toolUseId);
+      if (!d) return;
+      const out = typeof data.content === "string"
+        ? data.content
+        : JSON.stringify(data.content, null, 2);
+      d.append(el("pre", null, out));
+      return;
+    }
+    if (event === "error") { addError(data.message); return; }
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // SSE frames are separated by a blank line. Anything after the last blank
+    // line is a partial frame and stays in the buffer for the next chunk.
+    const frames = buffer.split("\n\n");
+    buffer = frames.pop();
+
+    for (const frame of frames) {
+      let event = "message", payload = "";
+      for (const line of frame.split("\n")) {
+        if (line.startsWith("event:")) event = line.slice(6).trim();
+        else if (line.startsWith("data:")) payload += line.slice(5).trim();
+      }
+      if (!payload) continue;
+      try { handle(event, JSON.parse(payload)); } catch { /* ignore a malformed frame */ }
+    }
+  }
+
+  if (!body.textContent) body.textContent = "(no reply)";
+  setBusy(false, "ready");
+  input.focus();
+}
+
+document.getElementById("composer").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (!text || busy) return;
+  input.value = "";
+  input.style.height = "auto";
+  send(text);
+});
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    document.getElementById("composer").requestSubmit();
+  }
+});
+
+input.addEventListener("input", () => {
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 192) + "px";
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+  if (busy) return;
+  sessionId = null;
+  thread.replaceChildren();
+  const e = el("div", "empty");
+  e.append(el("p", null, "New conversation. The workspace is unchanged."));
+  thread.append(e);
+  input.focus();
+});
+</script>
+</body>
+</html>

@@ -48,6 +48,20 @@ sudo sshd -t && sudo systemctl reload ssh
 # now open a SECOND terminal and confirm you can still log in
 ```
 
+## The agent app, if you enable it
+
+Two things sit behind that one password: an agent that runs commands, and your
+Anthropic API key. Whoever gets in spends your money and edits your workspace.
+
+The key is never sent to the browser — it stays in the container and is used
+server-side — so a visitor cannot read it, only spend it. Give that key its own
+spend limit in the Anthropic console. That limit is the only hard ceiling on
+what a compromise costs you.
+
+Tools run without approval. The blast radius is the `agent_workspace` volume,
+which no other container mounts. That is a real boundary, but it is the only
+one: within it, the agent can do anything you could.
+
 ## The browser, if you enable it
 
 It has its own password and its own hostname, but it is a browser someone else
