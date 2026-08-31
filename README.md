@@ -314,6 +314,20 @@ turn dies instantly with an exit code and nothing explaining why. The build
 runs `command -v claude` so a missing CLI fails the build rather than the
 first message someone sends.
 
+**Both are pinned, and they have to move together.** The SDK and the CLI ship
+in lockstep on a shared build number: SDK `0.3.251` goes with CLI `2.1.251`.
+Installed but mismatched fails exactly like missing — an immediate exit code
+with nothing to read — so `agent/package.json` and `CLAUDE_CLI_VERSION` in
+`agent/Dockerfile` are changed as a pair, never one alone.
+
+Two more things the app has to get right, both of which fail silently
+otherwise. `permissionMode: "bypassPermissions"` is refused unless
+`allowDangerouslySkipPermissions` is set with it, and it is refused outright
+when the process is root — which is one of the reasons the container runs as
+uid 1000. And the SDK's child process writes its real errors to stderr, which
+is discarded unless the `stderr` callback asks for it; the app keeps the last
+few lines so a failure can name its cause instead of reporting an exit code.
+
 **It is called Sage**, and it inherits journey's plain-conversation voice —
 appended to Claude Code's own system prompt rather than replacing it, since
 the preset is what makes the tools work. What is deliberately left behind is

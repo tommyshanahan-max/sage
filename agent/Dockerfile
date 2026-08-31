@@ -17,8 +17,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # exit code and no explanation. `command -v` fails the build if the binary is
 # not on PATH, so a missing CLI surfaces here rather than on the first message
 # someone sends.
-RUN npm install -g --no-fund --no-audit @anthropic-ai/claude-code \
-    && command -v claude
+#
+# Pinned, and pinned to *this* number for a reason: the SDK and the CLI ship in
+# lockstep, sharing a build number — SDK 0.3.251 goes with CLI 2.1.251. Having
+# them installed but mismatched fails exactly like having no CLI at all: an
+# immediate exit code and nothing to read. Change this and package.json
+# together, never one alone.
+ARG CLAUDE_CLI_VERSION=2.1.251
+RUN npm install -g --no-fund --no-audit "@anthropic-ai/claude-code@${CLAUDE_CLI_VERSION}" \
+    && command -v claude \
+    && claude --version
 
 WORKDIR /app
 

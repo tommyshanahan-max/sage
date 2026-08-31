@@ -236,6 +236,17 @@ app.post("/api/chat", async (req, res) => {
 
   send("session", { sessionId: id });
 
+  // The SDK spawns the Claude Code CLI as a child process. When that child
+  // refuses to start, the SDK reports only its exit code — the reason is on
+  // the child's stderr, which is discarded unless something asks for it. Keep
+  // the last few lines so a failure can say what actually went wrong instead
+  // of "exited with code 1".
+  const stderrTail = [];
+  // A failed run reports itself twice: once as a result message carrying the
+  // readable reason, and again as a throw. Show the first and suppress the
+  // second rather than putting the same failure on screen twice.
+  let reportedError = false;
+
   try {
     const options = {
       cwd: WORKSPACE,
@@ -244,21 +255,57 @@ app.post("/api/chat", async (req, res) => {
       systemPrompt: { type: "preset", preset: "claude_code", append: SAGE_VOICE },
       // Every tool runs without stopping to ask, on the same files the editor
       // opens. Git is what protects them — see the README.
+      //
+      // bypassPermissions is refused unless allowDangerouslySkipPermissions is
+      // set with it. Without the second flag the CLI exits before it does any
+      // work, which surfaces as an exit code and nothing else.
       permissionMode: "bypassPermissions",
+      allowDangerouslySkipPermissions: true,
+      stderr: (data) => {
+        process.stderr.write(data);
+        stderrTail.push(data);
+        if (stderrTail.length > 40) stderrTail.shift();
+      },
       ...(MODEL ? { model: MODEL } : {}),
       ...(isNewSession ? { sessionId: id } : { resume: id }),
     };
 
+    // The SDK yields transcript messages, not rendered pieces: an assistant
+    // turn arrives as one message whose `content` is a list of blocks, and
+    // tool output comes back as a *user* message carrying tool_result blocks,
+    // because that is how the conversation is recorded. The events this sends
+    // on are the flat ones the page knows how to draw.
     for await (const message of query({ prompt, options })) {
       switch (message.type) {
-        case "text":
-          send("text", { text: message.text });
+        case "assistant":
+          for (const block of message.message?.content ?? []) {
+            if (block.type === "text") {
+              send("text", { text: block.text });
+            } else if (block.type === "tool_use") {
+              send("tool_use", { id: block.id, name: block.name, input: block.input });
+            }
+          }
           break;
-        case "tool_use":
-          send("tool_use", { id: message.id, name: message.name, input: message.input });
+        case "user":
+          for (const block of message.message?.content ?? []) {
+            if (block.type === "tool_result") {
+              send("tool_result", {
+                toolUseId: block.tool_use_id,
+                content: block.content,
+              });
+            }
+          }
           break;
-        case "tool_result":
-          send("tool_result", { toolUseId: message.tool_use_id, content: message.content });
+        case "result":
+          // `subtype: "success"` only means the run completed its own loop —
+          // it is still set on a turn that ended in an API error, so is_error
+          // is the field that decides. Its `result` text is the readable one
+          // ("Authentication error", a rate limit), which is why it is
+          // preferred over the exception that follows it.
+          if (message.is_error || message.subtype !== "success") {
+            reportedError = true;
+            send("error", { message: message.result || `run ended: ${message.subtype}` });
+          }
           break;
         default:
           break; // other message types carry nothing this UI renders
@@ -268,8 +315,13 @@ app.post("/api/chat", async (req, res) => {
   } catch (err) {
     console.error("agent turn failed:", err);
     // The browser shows this verbatim. A real error someone can read beats a
-    // spinner that never resolves.
-    send("error", { message: err?.message || String(err) });
+    // spinner that never resolves — and beats an exit code with no cause, so
+    // whatever the CLI said on its way out goes with it.
+    if (!reportedError) {
+      const detail = stderrTail.join("").trim().split("\n").slice(-8).join("\n");
+      const base = err?.message || String(err);
+      send("error", { message: detail ? `${base}\n\n${detail}` : base });
+    }
   } finally {
     res.end();
   }
