@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor password fix-browser
+.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor password fix-browser instructions
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -34,6 +34,19 @@ down: ## Stop everything (volumes are kept)
 
 restart: ## Restart all services
 	$(COMPOSE) restart
+
+instructions: ## Update the agent instructions in the running workspace
+	@# The image seeds these into the home volume on first start only, and the
+	@# volume masks the image path from then on — so a rebuild leaves a running
+	@# deployment on whatever it was first given. This copies the current files
+	@# over the top. Sage reads the same volume, so it picks them up too, with
+	@# no restart needed.
+	@echo "this overwrites ~/.claude/CLAUDE.md and ~/.claude/tomscoding.md in the workspace."
+	@echo "any edits made to them in the IDE will be lost."
+	@printf 'continue? [y/N] ' && read a && [ "$$a" = y ]
+	$(COMPOSE) cp docker/workspace/CLAUDE.md workspace:/home/coder/.claude/CLAUDE.md
+	$(COMPOSE) cp docker/workspace/tomscoding.md workspace:/home/coder/.claude/tomscoding.md
+	@echo "done. new conversations pick these up; existing ones need a fresh start."
 
 fix-browser: ## Restart the browser after a black screen
 	$(COMPOSE) restart browser

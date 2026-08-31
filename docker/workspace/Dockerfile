@@ -66,7 +66,16 @@ COPY --chown=coder:coder tasks.json /home/coder/projects/.vscode/tasks.json
 # with that app's apparatus removed and its rules about not inventing
 # specifics translated to a context where the consequence is a broken deploy
 # rather than a wrong answer.
+#
+# Background on the deployment itself sits alongside it, rather than inside it,
+# so that CLAUDE.md stays short enough to carry in every turn while the detail
+# is there to be read when a question actually needs it.
+#
+# Seeded on first start ONLY — the named volume masks this path once it exists,
+# so a rebuild will not update either file on a running deployment. Use
+# `make instructions` to push changes across.
 COPY --chown=coder:coder CLAUDE.md /home/coder/.claude/CLAUDE.md
+COPY --chown=coder:coder tomscoding.md /home/coder/.claude/tomscoding.md
 
 # code-server listens on 8080; only Caddy talks to it, never the public internet.
 EXPOSE 8080

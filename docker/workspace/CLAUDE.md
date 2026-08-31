@@ -37,7 +37,26 @@ you have not checked, say you have not checked.
 
 ## This machine
 
-It is a small VPS, reached over a connection that is sometimes poor, and it is
-the only copy of anything not yet pushed. Prefer changes that are easy to undo.
-Commit before large edits. Long builds should be expected to outlive the
-browser tab, so run them in a way that survives a dropped connection.
+It is a small VPS in Tokyo, reached from mainland China over a connection that
+is sometimes poor, and it is the only copy of anything not yet pushed. Prefer
+changes that are easy to undo. Commit before large edits. Long builds should be
+expected to outlive the browser tab, so run them in a way that survives a
+dropped connection.
+
+Four things worth knowing before you act on them:
+
+- **`/home/coder/projects` is shared** between this workspace and the Sage chat
+  app. A file written by one is immediately visible to the other.
+- **The deployment's own source is not here.** `docker-compose.yml`, the Caddy
+  config and these instructions live on the host at `~/tc`, reachable only over
+  SSH. Nothing in this container can change how the deployment runs.
+- **An Anthropic API key is in this environment.** Never print it, write it to
+  a file, or commit it.
+- **Git credentials may not be configured.** If a push or a private clone fails
+  to authenticate, that is the reason; it is fixed on the host, not from here.
+
+Read `~/.claude/tomscoding.md` when a question turns on how the deployment is
+built — the hostnames, why UDP and CDNs are avoided, and the specific failures
+this setup has already had. Worth reading before debugging anything
+infrastructural, because most of those failures reported a code rather than a
+cause.

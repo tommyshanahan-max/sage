@@ -213,8 +213,27 @@ assuming the diff gets read, and say what will be lost before doing anything
 destructive.
 
 It is short on purpose — a long instructions file is followed less reliably
-than a short one. Edit it in place in the workspace; like the settings above,
-it is seeded from the image once and then yours.
+than a short one, and this one is carried in every turn.
+
+The background that does not fit that budget sits beside it in
+`~/.claude/tomscoding.md`: what runs on which hostname, why UDP and CDNs are
+avoided on this route, where the deployment's own source lives (on the host,
+not in the workspace — a thing agents reliably get wrong), and the failures
+this setup has already had. `CLAUDE.md` points at it, so it is read when a
+question actually needs it rather than on every message.
+
+Both are seeded from the image **once**, on first start. The named volume
+masks the image path from then on, so a rebuild will not update a running
+deployment — that is what keeps your own edits safe. To push changed versions
+across:
+
+```bash
+make instructions
+```
+
+It asks first, because it overwrites whatever is there. Sage reads the same
+volume, so it picks the new files up with no restart; conversations already in
+progress keep the old ones until you start a fresh one.
 
 ## A second seat
 
