@@ -234,7 +234,12 @@ app.post("/api/chat", async (req, res) => {
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   };
 
-  send("session", { sessionId: id });
+  // The session id is deliberately NOT sent yet. It is only real once a run
+  // has actually created it, and announcing it up front means a turn that
+  // fails still leaves the browser holding an id. Every later message then
+  // asks to resume a session that was never created, and the run returns
+  // nothing at all — a first failure quietly poisoning every turn after it,
+  // until someone reloads the page. It goes out with `done` instead.
 
   // The SDK spawns the Claude Code CLI as a child process. When that child
   // refuses to start, the SDK reports only its exit code — the reason is on
@@ -311,6 +316,10 @@ app.post("/api/chat", async (req, res) => {
           break; // other message types carry nothing this UI renders
       }
     }
+    // Now it exists, so the browser can safely ask to resume it next time —
+    // unless the run reported an error, in which case there may be nothing
+    // worth resuming and a fresh session is the better next turn.
+    if (!reportedError) send("session", { sessionId: id });
     send("done", {});
   } catch (err) {
     console.error("agent turn failed:", err);
