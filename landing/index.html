@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tom Shanahan</title>
-<meta name="description" content="Personal site.">
+<title>Tom's Coding</title>
+<meta name="description" content="Personal workspace.">
 <!--
   Everything here is inline and self-hosted on purpose. No web fonts, no CDN,
   no analytics. Google Fonts and most CDNs are unreachable from mainland China,
@@ -13,91 +13,166 @@
 -->
 <style>
   :root {
-    --bg: #fbfaf8;
+    --bg: #f6f6f4;
     --panel: #ffffff;
-    --ink: #1a1a1a;
-    --muted: #6b6b6b;
-    --line: #e5e2dc;
-    --accent: #1a1a1a;
+    --ink: #16171a;
+    --ink-2: #4d5158;
+    --muted: #868b93;
+    --line: #e4e3de;
+    --accent: #2f5fd0;
+    --accent-soft: #e9eefb;
+    --ok: #1d7a4d;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #131313;
-      --panel: #1b1b1b;
-      --ink: #ececec;
-      --muted: #9a9a9a;
-      --line: #2c2c2c;
-      --accent: #ececec;
+    :root:not([data-theme="light"]) {
+      --bg: #121316;
+      --panel: #1a1c20;
+      --ink: #e9ebee;
+      --ink-2: #adb2ba;
+      --muted: #787d85;
+      --line: #272a2f;
+      --accent: #7aa2ff;
+      --accent-soft: #1a2338;
+      --ok: #4fc98a;
     }
   }
   * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem 1.25rem;
+    padding: clamp(2.5rem, 8vw, 5rem) clamp(1.1rem, 5vw, 2rem) 4rem;
     background: var(--bg);
     color: var(--ink);
-    font: 16px/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
           "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB",
           "Microsoft YaHei", sans-serif;
+    -webkit-text-size-adjust: 100%;
   }
-  main { width: 100%; max-width: 34rem; }
+  main { max-width: 46rem; margin: 0 auto; }
+
+  header { margin-bottom: 2.75rem; }
   h1 {
-    margin: 0 0 .4rem;
-    font-size: clamp(1.6rem, 5vw, 2.1rem);
+    margin: 0 0 .3rem;
+    font-size: clamp(1.7rem, 5vw, 2.2rem);
     font-weight: 600;
-    letter-spacing: -0.02em;
+    letter-spacing: -.022em;
   }
-  .lede { margin: 0 0 2.25rem; color: var(--muted); }
-  .card {
+  .lede { margin: 0; color: var(--muted); }
+
+  h2 {
+    font-size: .73rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 .9rem;
+  }
+
+  .grid {
+    display: grid;
+    gap: .75rem;
+    grid-template-columns: 1fr;
+    margin-bottom: 2.5rem;
+  }
+  @media (min-width: 34rem) { .grid { grid-template-columns: 1fr 1fr; } }
+
+  .tile {
     display: block;
-    padding: 1.15rem 1.3rem;
-    border: 1px solid var(--line);
-    border-radius: 10px;
+    padding: 1.05rem 1.15rem;
     background: var(--panel);
-    color: inherit;
+    border: 1px solid var(--line);
+    border-radius: 11px;
     text-decoration: none;
+    color: inherit;
     transition: border-color .15s ease, transform .15s ease;
   }
-  .card:hover, .card:focus-visible {
-    border-color: var(--accent);
-    transform: translateY(-1px);
-  }
-  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .card h2 {
+  .tile:hover, .tile:focus-visible { border-color: var(--accent); transform: translateY(-1px); }
+  .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tile h3 {
     margin: 0 0 .2rem;
-    font-size: 1rem;
+    font-size: .98rem;
     font-weight: 600;
     display: flex;
+    align-items: baseline;
     justify-content: space-between;
-    gap: 1rem;
+    gap: .75rem;
   }
-  .card h2 span[aria-hidden] { color: var(--muted); font-weight: 400; }
-  .card p { margin: 0; color: var(--muted); font-size: .925rem; }
+  .tile h3 span { color: var(--muted); font-weight: 400; font-size: .9em; }
+  .tile p { margin: 0; color: var(--muted); font-size: .875rem; line-height: 1.5; }
+  .tile code {
+    display: block;
+    margin-top: .55rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .76rem;
+    color: var(--accent);
+  }
+
+  .note {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 9px 9px 0;
+    background: var(--panel);
+    padding: .95rem 1.15rem;
+    color: var(--ink-2);
+    font-size: .9rem;
+  }
+  .note strong { color: var(--ink); font-weight: 600; }
+
   footer {
-    margin-top: 2.25rem;
+    margin-top: 3rem;
     padding-top: 1.1rem;
     border-top: 1px solid var(--line);
     color: var(--muted);
-    font-size: .85rem;
+    font-size: .82rem;
   }
+  @media (prefers-reduced-motion: reduce) { .tile { transition: none; } }
 </style>
 </head>
 <body>
 <main>
-  <h1>Tom Shanahan</h1>
-  <p class="lede">Writing software, mostly.</p>
 
-  <a class="card" href="/ide">
-    <h2>Workspace <span aria-hidden="true">&rarr;</span></h2>
-    <p>Development environment. Sign-in required.</p>
-  </a>
+  <header>
+    <h1>Tom's Coding</h1>
+    <p class="lede">Everything runs on one server in Tokyo.</p>
+  </header>
 
-  <footer>Get in touch by email.</footer>
+  <h2>Workspaces</h2>
+  <div class="grid">
+    <a class="tile" href="/ide">
+      <h3>Workspace <span>&rarr;</span></h3>
+      <p>Editor and terminal, with Claude Code already running.</p>
+      <code>code.tomscoding.com</code>
+    </a>
+    <a class="tile" href="/seat2">
+      <h3>Second seat <span>&rarr;</span></h3>
+      <p>A separate workspace. Own files, own terminal.</p>
+      <code>her.tomscoding.com</code>
+    </a>
+  </div>
+
+  <h2>Tools</h2>
+  <div class="grid">
+    <a class="tile" href="/browser">
+      <h3>Browser <span>&rarr;</span></h3>
+      <p>Firefox running in Tokyo. Pages load from there, not from here.</p>
+      <code>browser.tomscoding.com</code>
+    </a>
+    <a class="tile" href="/agent">
+      <h3>Agent <span>&rarr;</span></h3>
+      <p>Chat interface for Claude, with file and command access.</p>
+      <code>agent.tomscoding.com</code>
+    </a>
+  </div>
+
+  <p class="note">
+    <strong>Instagram, WhatsApp and the rest live inside the browser</strong>, not
+    here — they refuse to be embedded in another site, and a link from this page
+    would load from wherever you are rather than from Tokyo. Open the browser and
+    use its bookmarks toolbar.
+  </p>
+
+  <footer>Sign-in required on every one of these.</footer>
+
 </main>
 </body>
 </html>

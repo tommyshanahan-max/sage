@@ -98,6 +98,16 @@ Giving code-server a whole hostname rather than a sub-path is deliberate.
 Serving it under `/ide/` on a shared hostname means rewriting paths on a
 websocket, which is the kind of thing that works until it doesn't.
 
+The landing page is a launcher: a tile per service, each linking to a short
+path (`/ide`, `/seat2`, `/browser`, `/agent`) that Caddy redirects to the real
+hostname from the environment. No hostname is hardcoded in the HTML, so moving
+to another domain touches `.env` and nothing else.
+
+Sites like Instagram and WhatsApp are deliberately **not** tiles. They refuse
+to be embedded in another page, and a plain link would load from wherever the
+reader is rather than from Tokyo — defeating the point. They belong in the
+remote browser's own bookmarks toolbar, where the request originates in Tokyo.
+
 Edit `landing/index.html` freely — it is intentionally one self-contained file
 with no build step. Keep it that way: it has no web fonts, no CDN, and no
 analytics, because Google Fonts and most CDNs are unreachable from mainland

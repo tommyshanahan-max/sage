@@ -18,10 +18,24 @@
 		-Server
 	}
 
-	# Keeps the HTML free of any hardcoded hostname: the page links to /ide,
-	# and the real IDE domain is filled in here from the environment.
+	# Keeps the HTML free of hardcoded hostnames: the page links to short paths
+	# and the real domains are filled in here from the environment. Moving the
+	# deployment to another domain then touches .env and nothing else.
+	#
+	# A path whose service is not configured redirects to that service's
+	# internal .localhost fallback and lands nowhere, which is the honest
+	# outcome — the tile is for something this deployment does not run.
 	@ide path /ide /ide/
 	redir @ide https://{$TOMSCODING_DOMAIN}/
+
+	@seat2 path /seat2 /seat2/
+	redir @seat2 https://{$TOMSCODING_DOMAIN_2}/
+
+	@browser path /browser /browser/
+	redir @browser https://{$TOMSCODING_BROWSER_DOMAIN}/
+
+	@agent path /agent /agent/
+	redir @agent https://{$TOMSCODING_AGENT_DOMAIN}/
 
 	root * /srv/landing
 	file_server
