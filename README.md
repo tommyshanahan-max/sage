@@ -267,6 +267,34 @@ A browser is the heaviest thing on this box. On 4 GB the ceilings over-commit
 (2g + 1g + 1g plus the host); ceilings are not reservations and there is swap,
 so light use is fine, but sustained slowness is the box asking for 8 GB.
 
+### When it goes black
+
+The page loads, you sign in, and you get a black rectangle. That is Firefox
+having been killed while the container carried on running — the web server is
+still there to answer, but there is no browser behind it to draw anything.
+
+It is a memory failure, not a network one. Tab contents live in `/dev/shm`,
+which counts against the container's memory ceiling rather than sitting outside
+it, so `TOMSCODING_BROWSER_SHM` and `TOMSCODING_BROWSER_MEMORY` are one budget:
+set the first equal to the second and a few heavy tabs can spend all of it.
+The preset now keeps shm at half the ceiling.
+
+The container reports its own health by looking for a running Firefox rather
+than by probing the HTTP port, which would answer perfectly through exactly
+this failure. Compose does not act on health by itself, so a small `autoheal`
+container watches for the unhealthy status and restarts the browser — roughly
+a minute from black screen to working page, without you doing anything.
+
+To do it by hand: `make fix-browser`. To see whether the watchdog is on it:
+
+```bash
+docker compose ps                    # browser shows healthy / unhealthy
+docker compose logs --tail=20 autoheal
+```
+
+The watchdog makes the symptom self-clearing. It does not make the box bigger,
+and repeated restarts are the argument for 8 GB.
+
 ## The agent chat app
 
 Optional, and the reason it exists is worth stating plainly: Claude Code's

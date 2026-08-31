@@ -86,6 +86,27 @@ password as strong as the workspaces', and sign out of anything that matters
 before you stop using it. Treat its saved sessions the way you would treat
 saved passwords on a shared machine.
 
+## The watchdog that comes with the browser
+
+Enabling the browser profile also starts `autoheal`, which restarts the browser
+when its health check reports Firefox has died. It needs `/var/run/docker.sock`,
+and that is worth being clear about: **the Docker socket is root on the host.**
+A container holding it can start any other container, mount any path, and read
+any volume — including the one with your API key. Mounting it read-only changes
+nothing; the flag protects the socket file, not the API behind it.
+
+It is accepted here for a narrow reason: this container publishes no port, has
+no route in from the internet, and runs one fixed job. Nothing reaches it
+except the daemon it talks to. That makes it a much smaller exposure than the
+password-protected shells already on this box. What it does add is a supply
+chain: the risk is code running *inside this container*, so it is now a third
+party's image that can reach root on the host. Do not give it a port, extra
+mounts, or anything else to do.
+
+Turn it off by dropping `browser` from `COMPOSE_PROFILES`, or by removing the
+`autoheal` service; the browser then still works, and a black screen becomes
+`make fix-browser` again.
+
 ## Worth adding
 
 **A second authentication factor.** code-server's password is a single shared

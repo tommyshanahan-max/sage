@@ -108,8 +108,12 @@ services:
     volumes:
       - browser_config:/config
     # Browsers put tab memory in /dev/shm and Docker's 64 MB default is far too
-    # small — without this, pages crash rather than load slowly.
-    shm_size: "1gb"
+    # small — without this, pages crash rather than load slowly. But shm counts
+    # against the container's memory limit, so this and the ceiling below are
+    # one budget, not two: 1g of shm against a 1g ceiling lets a few heavy tabs
+    # fill the whole allowance on their own, and the kernel then kills Firefox
+    # while the container keeps running. That is what a black screen is.
+    shm_size: ${TOMSCODING_BROWSER_SHM:-512m}
     expose:
       - "3000"
     networks:
@@ -119,6 +123,61 @@ services:
         limits:
           memory: ${TOMSCODING_BROWSER_MEMORY:-1g}
     cpu_shares: ${TOMSCODING_BROWSER_CPU_SHARES:-512}
+    # The failure mode is Firefox dying while the container stays up: the web
+    # server keeps answering, so you get a black screen rather than an error.
+    # Probing the HTTP port would report healthy through exactly that. This
+    # walks /proc for a firefox process instead — the thing that actually went
+    # away — written against /proc rather than pgrep because the image is not
+    # guaranteed to carry procps.
+    #
+    # It reads comm and exe, never cmdline: this check's own command line
+    # contains the word "firefox", so a cmdline match would find itself and
+    # report healthy forever.
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'for p in /proc/[0-9]*; do case "$$(cat $$p/comm 2>/dev/null)" in firefox*) exit 0;; esac; case "$$(readlink $$p/exe 2>/dev/null)" in */firefox*) exit 0;; esac; done; exit 1'
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      # A cold start brings up a desktop session before the browser appears.
+      start_period: 120s
+    labels:
+      # Read by autoheal, below. Nothing else acts on health status.
+      autoheal: "true"
+
+  # Compose, unlike Swarm, does nothing when a container goes unhealthy — it
+  # records the status and leaves it running. This is the small daemon that
+  # acts on it: every 30s it asks Docker for unhealthy containers labelled
+  # autoheal=true and restarts them. In practice that is the same
+  # `docker compose restart browser` you would otherwise type, done for you.
+  #
+  # It needs the Docker socket, which is root on the host — mounting it into a
+  # container gives that container full control of the daemon. That is accepted
+  # here because this one publishes no port, has no inbound path and has a
+  # fixed job; it is not somewhere to add things casually. See docs/security.md.
+  autoheal:
+    profiles: ["browser"]
+    # Pinned, not :latest. Everything else here can float; a container holding
+    # the Docker socket should not change under you without your saying so.
+    image: willfarrell/autoheal:1.2.0
+    container_name: tomscoding-autoheal
+    restart: unless-stopped
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: autoheal
+      AUTOHEAL_INTERVAL: 30
+      # Leave a restarted container alone long enough to come back, so a slow
+      # start is never read as a second failure and restarted again.
+      AUTOHEAL_START_PERIOD: 120
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - tomscoding
+    deploy:
+      resources:
+        limits:
+          memory: 64m
 
   # A chat interface of our own, in front of the Claude Agent SDK. The browser
   # talks only to this container; this container calls Anthropic with an API

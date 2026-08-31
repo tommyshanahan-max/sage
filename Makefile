@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor password
+.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor password fix-browser
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -34,6 +34,10 @@ down: ## Stop everything (volumes are kept)
 
 restart: ## Restart all services
 	$(COMPOSE) restart
+
+fix-browser: ## Restart the browser after a black screen
+	$(COMPOSE) restart browser
+	@echo "give it a minute, then reload https://$$(grep -E '^TOMSCODING_BROWSER_DOMAIN=' .env | cut -d= -f2-)"
 
 reload: ## Reload Caddy config without dropping connections
 	$(COMPOSE) exec caddy caddy reload --config /etc/caddy/Caddyfile
