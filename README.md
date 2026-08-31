@@ -289,12 +289,25 @@ Replies stream as Server-Sent Events rather than over a websocket — plain HTTP
 over TCP, which needs nothing special from the proxy and holds up better on
 this route.
 
-**What it can do to your files.** Tools run without pausing to ask. The
-container is the boundary: the agent sees `/workspace` (its own volume) and
-nothing else — not the IDE seats, not the host, not journey. That volume starts
-empty, so early on there is little to lose; as it fills, that stops being true.
-An approval step before writes and commands is the obvious next thing to build,
-and it is not built yet.
+**It works on the same files as the IDE.** The agent mounts the workspace's
+home volume and runs in `/home/coder/projects` — the directory code-server
+opens. Ask it to change something and the file changes under the editor, where
+you can read what it did.
+
+That is deliberate, and it replaced an earlier design where the agent had a
+private volume of its own. Isolation sounded safer, but it made the agent
+useless: it could code, never on anything that mattered. Git is what protects
+the files here, and it protects them better than a wall between containers did.
+
+It runs as uid 1000, the workspace's own user, so files it creates stay
+editable in the editor rather than arriving owned by root. It shares
+`/home/coder` as its home too, which means the SDK loads the same
+`~/.claude/CLAUDE.md` the CLI does — one set of working instructions, not two.
+
+**Tools run without pausing to ask.** Commit before anything large. An approval
+step before writes and commands is the obvious next thing to build, and it is
+not built yet. The second seat keeps its own separate volume and is not
+reachable from here.
 
 ## Documentation
 

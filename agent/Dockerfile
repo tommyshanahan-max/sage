@@ -20,9 +20,9 @@ RUN npm install --omit=dev --no-fund --no-audit
 COPY server.js ./
 COPY public ./public
 
-# The directory the agent reads and writes. Mounted as a volume in compose so
-# the work survives rebuilds.
-RUN mkdir -p /workspace
+# Compose mounts the IDE's home volume and points AGENT_WORKSPACE at the
+# projects directory inside it, so the agent and the editor see one set of
+# files. This default only applies if the container is run without that.
 ENV AGENT_WORKSPACE=/workspace \
     NODE_ENV=production \
     PORT=3000

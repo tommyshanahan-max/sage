@@ -133,14 +133,25 @@ services:
     image: tomscoding-agent:latest
     container_name: tomscoding-agent
     restart: unless-stopped
+    # Runs as the workspace's own user so that files the agent creates are
+    # owned by `coder` and stay editable in the IDE. Root-owned files in a
+    # shared workspace look fine until the editor refuses to save.
+    user: "1000:1000"
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       AGENT_MODEL: ${TOMSCODING_AGENT_MODEL:-}
       AGENT_USER: ${TOMSCODING_AGENT_USER:-tom}
       AGENT_PASSWORD: ${TOMSCODING_AGENT_PASSWORD:-}
+      # Same home as the IDE, so the SDK picks up ~/.claude/CLAUDE.md — the
+      # agent works to the same instructions as the CLI rather than to none.
+      HOME: /home/coder
+      AGENT_WORKSPACE: /home/coder/projects
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
-      - agent_workspace:/workspace
+      # The same volume the IDE uses, not a private one. An agent that cannot
+      # reach your projects can code, but never on anything you care about;
+      # git is what protects the files, not a wall between containers.
+      - home:/home/coder
     expose:
       - "3000"
     networks:
@@ -161,8 +172,6 @@ services:
     environment:
       TOMSCODING_DOMAIN: ${TOMSCODING_DOMAIN:?set TOMSCODING_DOMAIN in .env}
       TOMSCODING_ACME_EMAIL: ${TOMSCODING_ACME_EMAIL:?set TOMSCODING_ACME_EMAIL in .env}
-      # Unset is fine: the landing site block falls back to localhost, which
-      # binds nothing public and requests no certificate.
       # The fallbacks live here, not in the Caddyfile. Caddy's {$VAR:default}
       # substitutes the default only when the variable is *unset* — a variable
       # that is set to an empty string stays empty, and an empty site address
@@ -195,6 +204,5 @@ volumes:
   home:
   home_2:
   browser_config:
-  agent_workspace:
   caddy_data:
   caddy_config:

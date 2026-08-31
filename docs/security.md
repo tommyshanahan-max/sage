@@ -58,9 +58,19 @@ server-side — so a visitor cannot read it, only spend it. Give that key its ow
 spend limit in the Anthropic console. That limit is the only hard ceiling on
 what a compromise costs you.
 
-Tools run without approval. The blast radius is the `agent_workspace` volume,
-which no other container mounts. That is a real boundary, but it is the only
-one: within it, the agent can do anything you could.
+**Tools run without approval, on your real files.** The agent shares the IDE's
+home volume, so it reads and writes the same projects you edit in the editor.
+That is the point — an agent walled off from your work can only ever act on
+files you do not care about — but it means a bad turn can delete work, not just
+its own scratch space.
+
+What protects those files is git, not container isolation. Commit before
+anything large and a mistake costs a `git checkout`. Leave work uncommitted for
+a day and it is genuinely at risk. That is the trade, and it is the same one
+you accept every time you run the CLI in the IDE terminal.
+
+The second seat is untouched by this — it has its own separate volume, and the
+agent cannot see it.
 
 ## The browser, if you enable it
 
