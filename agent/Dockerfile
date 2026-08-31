@@ -12,6 +12,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ripgrep \
     && rm -rf /var/lib/apt/lists/*
 
+# The Agent SDK does not bundle the Claude Code CLI — it spawns one it expects
+# to find already installed, and without it every turn dies instantly with an
+# exit code and no explanation. `command -v` fails the build if the binary is
+# not on PATH, so a missing CLI surfaces here rather than on the first message
+# someone sends.
+RUN npm install -g --no-fund --no-audit @anthropic-ai/claude-code \
+    && command -v claude
+
 WORKDIR /app
 
 COPY package.json ./

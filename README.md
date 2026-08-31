@@ -280,6 +280,12 @@ Code as a library: the agent loop, context management, and the built-in tools
 (read, write, edit, bash, search) all come from it. The app supplies a UI, a
 session, and streaming; it does not reimplement the agent.
 
+The image installs the Claude Code CLI alongside the SDK. The SDK does not
+bundle it — it spawns one it expects to find on PATH — and without it every
+turn dies instantly with an exit code and nothing explaining why. The build
+runs `command -v claude` so a missing CLI fails the build rather than the
+first message someone sends.
+
 **It is called Sage**, and it inherits journey's plain-conversation voice —
 appended to Claude Code's own system prompt rather than replacing it, since
 the preset is what makes the tools work. What is deliberately left behind is
