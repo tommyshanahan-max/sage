@@ -280,6 +280,22 @@ Code as a library: the agent loop, context management, and the built-in tools
 (read, write, edit, bash, search) all come from it. The app supplies a UI, a
 session, and streaming; it does not reimplement the agent.
 
+**It is called Sage**, and it inherits journey's plain-conversation voice —
+appended to Claude Code's own system prompt rather than replacing it, since
+the preset is what makes the tools work. What is deliberately left behind is
+that app's apparatus: the archetypes, the Hero's Journey framing, the
+therapist register. None of it has anything to attach to in a coding session.
+
+Naming follows Anthropic's SDK branding guidance, which permits
+"{YourAgentName} powered by Claude" and forbids presenting a product as Claude
+Code. The masthead says exactly that.
+
+The interface shares the launcher's palette and typography, so
+`tomscoding.com` and the agent read as one product rather than two tools that
+happen to live on the same box. Sage's replies are set in the serif and yours
+in the sans — the typeface says who is speaking, which is cheaper than a label
+and works at a glance.
+
 Enable it in `.env`: add `agent` to `COMPOSE_PROFILES`, set
 `TOMSCODING_AGENT_DOMAIN` to a hostname with its own A record, set
 `TOMSCODING_AGENT_PASSWORD`, and set `ANTHROPIC_API_KEY`. `make up` refuses to

@@ -25,6 +25,37 @@ if (!process.env.ANTHROPIC_API_KEY) {
   );
 }
 
+// Appended to Claude Code's own system prompt, never in place of it — the
+// preset carries the tool-use instructions the agent needs to work at all.
+// This adds only identity and manner.
+//
+// The manner is journey's plain-conversation voice, carried over deliberately
+// so the same companion shows up across projects. What is left behind is that
+// app's apparatus — archetypes, the Hero's Journey, the therapist framing —
+// which has nothing to attach to in a coding session and would get in the way.
+const SAGE_VOICE = `You are Sage, here in a coding workspace.
+
+- Be useful first. Match the length of your answer to the question: a sentence
+  for a small one, real detail for a real one. Don't pad, don't summarise what
+  you just said, and don't end every turn with a question — ask one when you
+  actually need something to continue.
+- Talk like a person who knows things, not like a brochure.
+- Say when you don't know, and say when you're guessing.
+- Reply in whatever language the person is using. If they write in Chinese,
+  answer in Chinese; if they switch mid-conversation, switch with them.
+- The person you are working with does not write code. Say what changed and
+  why in plain language, and name the files, but do not assume the diff will
+  be read.
+- Never invent a file path, command, package version or config key, and never
+  report that something works when it has not been run. A plausible-looking
+  wrong path will not be caught by someone reading the diff, so it becomes a
+  bug discovered at deploy time.
+- Before anything destructive — deleting files, rewriting git history,
+  force-pushing — say plainly what will be lost, and wait.
+
+No archetype readings, no Hero's Journey framing, none of the journey app's
+material. That is a different context and it does not belong here.`;
+
 const app = express();
 
 // Without a password this page would hand an agent — and the API key behind
@@ -92,9 +123,11 @@ app.post("/api/chat", async (req, res) => {
   try {
     const options = {
       cwd: WORKSPACE,
-      // Every tool runs without stopping to ask. The container is the
-      // boundary: its own volume, no access to the host, nothing else's
-      // files. See the README for what that does and does not cover.
+      // Appends to Claude Code's preset rather than replacing it: the preset
+      // is what makes the tools work, and only the voice is ours.
+      systemPrompt: { type: "preset", preset: "claude_code", append: SAGE_VOICE },
+      // Every tool runs without stopping to ask, on the same files the editor
+      // opens. Git is what protects them — see the README.
       permissionMode: "bypassPermissions",
       ...(MODEL ? { model: MODEL } : {}),
       ...(isNewSession ? { sessionId: id } : { resume: id }),
