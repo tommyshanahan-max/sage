@@ -163,10 +163,18 @@ services:
       TOMSCODING_ACME_EMAIL: ${TOMSCODING_ACME_EMAIL:?set TOMSCODING_ACME_EMAIL in .env}
       # Unset is fine: the landing site block falls back to localhost, which
       # binds nothing public and requests no certificate.
-      TOMSCODING_LANDING_DOMAIN: ${TOMSCODING_LANDING_DOMAIN:-}
-      TOMSCODING_DOMAIN_2: ${TOMSCODING_DOMAIN_2:-}
-      TOMSCODING_BROWSER_DOMAIN: ${TOMSCODING_BROWSER_DOMAIN:-}
-      TOMSCODING_AGENT_DOMAIN: ${TOMSCODING_AGENT_DOMAIN:-}
+      # The fallbacks live here, not in the Caddyfile. Caddy's {$VAR:default}
+      # substitutes the default only when the variable is *unset* — a variable
+      # that is set to an empty string stays empty, and an empty site address
+      # is a config error that stops Caddy serving anything at all, including
+      # the sites that were configured correctly. Compose cannot omit a
+      # variable conditionally, so it supplies a real hostname instead.
+      # These are .localhost names: Caddy treats them as internal, never takes
+      # them to Let's Encrypt, and they must stay distinct from each other.
+      TOMSCODING_LANDING_DOMAIN: ${TOMSCODING_LANDING_DOMAIN:-landing.localhost}
+      TOMSCODING_DOMAIN_2: ${TOMSCODING_DOMAIN_2:-seat2.localhost}
+      TOMSCODING_BROWSER_DOMAIN: ${TOMSCODING_BROWSER_DOMAIN:-browser.localhost}
+      TOMSCODING_AGENT_DOMAIN: ${TOMSCODING_AGENT_DOMAIN:-agent.localhost}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./docker/conf.d:/etc/caddy/conf.d:ro

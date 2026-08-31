@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup doctor password
+.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor password
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -69,6 +69,9 @@ backup: ## Snapshot every workspace home volume to ./backups
 	       -c 'tar czf /backup/home2-$$(date +%Y%m%d-%H%M%S).tar.gz -C /home/coder .' \
 	  || true
 	ls -lh backups | tail -n 5
+
+check: ## Verify every Caddy site resolves to a usable, unique address
+	python3 scripts/check-sites.py
 
 doctor: ## Check the path between you and the VPS
 	bash scripts/doctor.sh
