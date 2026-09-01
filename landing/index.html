@@ -235,7 +235,15 @@ const SERVICES = {
   //   { name: "Sage", host: "sage-aesthetic.vercel.app",
   //     url: "https://sage-aesthetic.vercel.app/social",
   //     desc: "…", external: true },
-  apps: [],
+  //
+  // `desc` is optional and deliberately absent below — better no line than a
+  // guessed one on your own front page. Add one to each when you have the
+  // words for it.
+  apps: [
+    { name: "Fern Social",  host: "fernsocial.io",    external: true },
+    { name: "Sage Journey", host: "sagejourney.io",   external: true },
+    { name: "Liuxuesheng",  host: "liuxuesheng.help", external: true },
+  ],
 };
 
 const el = (tag, cls, text) => {
@@ -256,7 +264,11 @@ function renderRow(svc) {
   const left = el("div");
   const name = el("div", "name");
   name.append(el("span", null, svc.name), el("span", "arrow", "→"));
-  left.append(name, el("p", "desc", svc.desc), el("code", "host", svc.host));
+  left.append(name);
+  // Optional: a tile with nothing useful to say is better with the line left
+  // out than with an empty one holding the space open.
+  if (svc.desc) left.append(el("p", "desc", svc.desc));
+  left.append(el("code", "host", svc.host));
 
   const state = el("div", "state");
   const dot = el("span", "dot");
