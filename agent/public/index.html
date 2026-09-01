@@ -66,6 +66,70 @@
     color:var(--gold);font-style:italic;
   }
   .by{font-size:.72rem;color:var(--muted)}
+
+  /* Past conversations.
+     A panel over the thread rather than a column beside it: this is read on a
+     phone as often as a laptop, and a sidebar there either squeezes the
+     conversation or hides itself anyway. Over-and-away keeps one behaviour on
+     both. */
+  #path{
+    position:fixed;inset:0;z-index:20;overflow-y:auto;
+    background:var(--paper);
+    padding:1rem 1rem calc(2rem + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling:touch;
+  }
+  .path-head{
+    display:flex;align-items:baseline;gap:.75rem;
+    max-width:44rem;margin:0 auto .9rem;
+  }
+  .path-head h2{
+    font-family:var(--serif);font-size:1.35rem;font-weight:500;margin:0;
+    letter-spacing:-.01em;
+  }
+  .path-head button{margin-left:auto}
+  #path-list{max-width:44rem;margin:0 auto;display:flex;flex-direction:column;gap:.6rem}
+  .entry{
+    background:var(--card);border:1px solid var(--rule);border-radius:12px;
+    padding:.85rem .95rem;
+  }
+  .entry h3{
+    font-family:var(--serif);font-size:1rem;font-weight:500;margin:0;
+    letter-spacing:-.01em;line-height:1.35;
+  }
+  .entry .when{font-size:.72rem;color:var(--muted);margin:.2rem 0 0}
+  /* Not called .opening: the welcome block already owns that name and styles it
+     centred with heading spacing, which a card excerpt inherited. */
+  .entry .excerpt{
+    font-size:.82rem;color:var(--ink-2);margin:.45rem 0 0;line-height:1.5;
+  }
+  .entry .acts{display:flex;gap:.5rem;margin-top:.7rem}
+  .entry .acts button{flex:1;font-size:.76rem;padding:.45rem .6rem}
+  .entry .acts .go{
+    color:var(--gold);border-color:var(--gold-line);background:var(--gold-soft);
+  }
+  .analysis{
+    margin-top:.65rem;background:var(--card-2);border-radius:10px;
+    padding:.75rem .8rem;display:flex;flex-direction:column;gap:.7rem;
+  }
+  /* display:flex above outranks the browser's own rule for [hidden], so an
+     unopened analysis showed as an empty grey bar under every card. */
+  .analysis[hidden]{display:none}
+  .analysis h4{
+    font-family:var(--sans);font-size:.66rem;font-weight:700;margin:0;
+    text-transform:uppercase;letter-spacing:.07em;color:var(--gold);
+  }
+  .analysis p{font-size:.82rem;line-height:1.55;margin:.2rem 0 0;color:var(--ink-2)}
+  .analysis .lead p{color:var(--ink);font-weight:500}
+  /* The one section people act on, so it is the one that is boxed. */
+  .analysis .note{
+    background:var(--gold-soft);border:1px solid var(--gold-line);
+    border-radius:8px;padding:.55rem .6rem;
+  }
+  .path-empty,.path-error{
+    font-size:.85rem;color:var(--muted);line-height:1.6;
+    max-width:44rem;margin:0 auto;
+  }
+  .path-error{color:var(--down)}
   .status{margin-left:auto;font-size:.76rem;color:var(--muted);
     font-variant-numeric:tabular-nums}
   header button{
@@ -160,11 +224,26 @@
   <span class="mark">Sage</span>
   <span class="by">powered by Claude</span>
   <span class="status" id="status">ready</span>
+  <button type="button" id="path-toggle" aria-expanded="false">Path</button>
   <button type="button" id="reset">New conversation</button>
   <form method="post" action="/logout" style="display:contents">
     <button type="submit">Sign out</button>
   </form>
 </header>
+
+<!--
+  Past conversations. One list, following the same reading as journey's Path
+  tab: the conversations are the history, so there is no second place to look.
+  Hidden until asked for — the thing you came here to do is talk, and a
+  permanent sidebar on a phone takes the screen away from that.
+-->
+<section id="path" hidden aria-label="Past conversations">
+  <div class="path-head">
+    <h2>Path</h2>
+    <button type="button" id="path-close" aria-label="Close">Close</button>
+  </div>
+  <div id="path-list"></div>
+</section>
 
 <main id="log">
   <div class="thread" id="thread">
@@ -354,6 +433,158 @@ input.addEventListener("keydown", (e) => {
 input.addEventListener("input", () => {
   input.style.height = "auto";
   input.style.height = Math.min(input.scrollHeight, 192) + "px";
+});
+
+// ---------------------------------------------------------------------------
+// Path — past conversations
+// ---------------------------------------------------------------------------
+
+const pathPanel  = document.getElementById("path");
+const pathList   = document.getElementById("path-list");
+const pathToggle = document.getElementById("path-toggle");
+
+function whenText(iso) {
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return "";
+  const mins = Math.round((Date.now() - then.getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + " min ago";
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return hours + "h ago";
+  const days = Math.round(hours / 24);
+  if (days === 1) return "yesterday";
+  if (days < 7) return days + " days ago";
+  return then.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+// Reopens a conversation: the turns are drawn back into the thread and the id
+// is put back, so the next message continues it rather than starting over.
+async function resume(id) {
+  if (busy) return;
+  setBusy(true, "opening…");
+  try {
+    const res = await fetch("/api/conversations/" + encodeURIComponent(id));
+    if (!res.ok) throw new Error("that conversation could not be opened");
+    const data = await res.json();
+
+    thread.replaceChildren();
+    for (const turn of data.turns) {
+      if (turn.role === "user") {
+        addYou(turn.text);
+      } else {
+        const { body } = startSage();
+        body.textContent = turn.text;
+      }
+    }
+    // Only now — a half-drawn thread with a live id would let the next message
+    // continue a conversation the reader cannot see.
+    sessionId = id;
+    closePath();
+    input.focus();
+    scroll();
+  } catch (err) {
+    alert(err.message || "could not open that conversation");
+  } finally {
+    setBusy(false, "ready");
+  }
+}
+
+// The analysis is a model call, so it happens on request and the result is
+// kept. Asking twice costs nothing; the server only regenerates when the
+// conversation has moved on since.
+async function analyse(id, host, button) {
+  if (host.dataset.loaded === "1") { host.hidden = !host.hidden; return; }
+  host.hidden = false;
+  host.replaceChildren(el("p", null, "Reading back through the conversation…"));
+  button.disabled = true;
+  try {
+    const res = await fetch("/api/conversations/" + encodeURIComponent(id) + "/analysis", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+    const data = await res.json();
+    if (!res.ok || !data.analysis) throw new Error(data.error || "analysis failed");
+
+    const a = data.analysis;
+    host.replaceChildren();
+    const section = (cls, heading, text) => {
+      const d = el("div", cls);
+      d.append(el("h4", null, heading), el("p", null, text));
+      host.append(d);
+    };
+    section("lead", "Summary", a.summary);
+    section(null, "What changed", a.changed);
+    section(null, "Still open", a.open);
+    section("note", "Worth noting", a.worthNoting);
+    host.dataset.loaded = "1";
+  } catch (err) {
+    // Named, not silent — a blank card reads as a broken feature.
+    host.replaceChildren(el("p", "path-error", err.message || "analysis failed"));
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function renderEntry(c) {
+  const card = el("div", "entry");
+  card.append(el("h3", null, c.title));
+  card.append(el("p", "when", whenText(c.updatedAt)));
+  // Shown only when the title came from somewhere else, so the same sentence
+  // never appears twice in one card.
+  if (c.opening && c.opening !== c.title) {
+    card.append(el("p", "excerpt", c.opening));
+  }
+
+  const acts = el("div", "acts");
+  const go = el("button", "go", "Continue");
+  go.type = "button";
+  const dig = el("button", null, "Analysis");
+  dig.type = "button";
+  acts.append(go, dig);
+  card.append(acts);
+
+  const host = el("div", "analysis");
+  host.hidden = true;
+  card.append(host);
+
+  go.addEventListener("click", () => resume(c.id));
+  dig.addEventListener("click", () => analyse(c.id, host, dig));
+  return card;
+}
+
+async function openPath() {
+  pathPanel.hidden = false;
+  pathToggle.setAttribute("aria-expanded", "true");
+  pathList.replaceChildren(el("p", "path-empty", "Looking…"));
+  try {
+    const res = await fetch("/api/conversations");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "could not read past conversations");
+    if (!data.conversations.length) {
+      pathList.replaceChildren(
+        el("p", "path-empty",
+          "Nothing here yet. Conversations appear once you've had one — they're kept on the server, so this list is the same on your phone and your laptop.")
+      );
+      return;
+    }
+    pathList.replaceChildren(...data.conversations.map(renderEntry));
+  } catch (err) {
+    pathList.replaceChildren(el("p", "path-error", err.message || "could not read past conversations"));
+  }
+}
+
+function closePath() {
+  pathPanel.hidden = true;
+  pathToggle.setAttribute("aria-expanded", "false");
+}
+
+pathToggle.addEventListener("click", () => {
+  pathPanel.hidden ? openPath() : closePath();
+});
+document.getElementById("path-close").addEventListener("click", closePath);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !pathPanel.hidden) closePath();
 });
 
 document.getElementById("reset").addEventListener("click", () => {

@@ -357,6 +357,34 @@ Naming follows Anthropic's SDK branding guidance, which permits
 "{YourAgentName} powered by Claude" and forbids presenting a product as Claude
 Code. The masthead says exactly that.
 
+### Past conversations
+
+**Path**, in the masthead. One list — the conversations *are* the history, so
+there is no second place to look. Each entry has **Continue**, which draws the
+thread back and carries it on, and **Analysis**, which reads it back and returns
+four sections: what it was about, what changed, what is still open, and one
+thing worth remembering.
+
+Nothing new is recorded to make this work. Claude Code already writes every
+session to disk as it goes, so the list covers conversations that happened
+before the feature existed. It also means history is **server-side**: the same
+list appears on your phone and your laptop, and clearing browser data doesn't
+touch it.
+
+Analysis costs a model call, so it runs only when asked and the result is kept.
+Asking again is free; it regenerates only when the conversation has moved on
+since — a fingerprint of the turns decides, not a timestamp.
+
+`agent/lib/conversations.js` holds the part worth reusing: what counts as a
+conversation, how a title is chosen, when an analysis is stale. It has no
+Express in it and no UI, and talks to a store with four operations — `list`,
+`get`, `readAnalysis`, `writeAnalysis`. Here that store reads transcript files;
+elsewhere it could be `localStorage` or a table. Porting the feature to another
+app means writing an adapter and a view, not reimplementing the rules.
+
+Listing never opens a whole transcript — they reach tens of megabytes. Titles
+and recency come from the last 64 KB, the opening line from the first 256 KB.
+
 The interface shares the launcher's palette and typography, so
 `tomscoding.com` and the agent read as one product rather than two tools that
 happen to live on the same box. Sage's replies are set in the serif and yours

@@ -11,9 +11,21 @@
 import express from "express";
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { query } from "@anthropic-ai/claude-agent-sdk";
+import {
+  createFileStore,
+  ANALYSIS_PROMPT,
+  parseAnalysis,
+  transcriptForAnalysis,
+  fingerprint,
+} from "./lib/conversations.js";
 
 const PORT = process.env.PORT || 3000;
 const WORKSPACE = process.env.AGENT_WORKSPACE || "/workspace";
+const HOME = process.env.HOME || "/home/coder";
+
+// Past conversations. The store is the only part of this that knows where
+// transcripts live; swap it and the rest is unchanged. See lib/conversations.js.
+const conversations = createFileStore({ home: HOME, cwd: WORKSPACE });
 const MODEL = process.env.AGENT_MODEL || undefined;
 const PASSWORD = process.env.AGENT_PASSWORD || "";
 
@@ -208,6 +220,88 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static("public"));
+
+// --------------------------------------------------------------------------
+// Past conversations
+// --------------------------------------------------------------------------
+
+// The list. Cheap by construction — see lib/conversations.js on why this never
+// opens a whole transcript.
+app.get("/api/conversations", async (_req, res) => {
+  try {
+    res.json({ conversations: await conversations.list() });
+  } catch (err) {
+    console.error("listing conversations failed:", err);
+    res.status(500).json({ error: "could not read past conversations" });
+  }
+});
+
+// One conversation, as turns, for reading back before continuing it.
+app.get("/api/conversations/:id", async (req, res) => {
+  try {
+    const found = await conversations.get(req.params.id);
+    if (!found) return res.status(404).json({ error: "no such conversation" });
+    res.json(found);
+  } catch (err) {
+    console.error("reading a conversation failed:", err);
+    res.status(500).json({ error: "could not read that conversation" });
+  }
+});
+
+// Analysis, on request only. It costs a model call, so it is never part of
+// loading the list or opening a conversation — the same reason the summary in
+// journey is generated on reset rather than mid-turn: nobody should wait on it
+// who did not ask for it.
+app.post("/api/conversations/:id/analysis", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const found = await conversations.get(id);
+    if (!found) return res.status(404).json({ error: "no such conversation" });
+
+    const print = fingerprint(found.turns);
+
+    // Cached unless the conversation has moved on since. Re-reading a
+    // conversation should not quietly spend money; continuing one and asking
+    // again should not hand back an analysis that predates the new work.
+    const cached = await conversations.readAnalysis(id);
+    if (cached && cached.fingerprint === print && !req.body?.refresh) {
+      return res.json({ analysis: cached, cached: true });
+    }
+
+    let text = "";
+    for await (const message of query({
+      prompt: `${ANALYSIS_PROMPT}\n\n---\n\n${transcriptForAnalysis(found.turns)}`,
+      options: {
+        cwd: WORKSPACE,
+        // No tools and no preset: this reads a transcript and returns JSON. A
+        // harness that can edit files is the wrong shape for it, and slower.
+        systemPrompt: "You return only the JSON object you were asked for.",
+        allowedTools: [],
+        ...(MODEL ? { model: MODEL } : {}),
+      },
+    })) {
+      if (message.type === "assistant") {
+        for (const block of message.message?.content ?? []) {
+          if (block.type === "text") text += block.text;
+        }
+      }
+    }
+
+    const analysis = parseAnalysis(text);
+    if (!analysis) {
+      // Say so rather than rendering a card with empty rows. A visible failure
+      // is recoverable; a blank one looks like the feature is broken.
+      return res.status(502).json({ error: "the analysis came back unreadable — try again" });
+    }
+
+    const record = { ...analysis, fingerprint: print };
+    await conversations.writeAnalysis(id, record);
+    res.json({ analysis: record, cached: false });
+  } catch (err) {
+    console.error("analysis failed:", err);
+    res.status(500).json({ error: err?.message || "analysis failed" });
+  }
+});
 
 app.post("/api/chat", async (req, res) => {
   const { prompt, sessionId } = req.body ?? {};
