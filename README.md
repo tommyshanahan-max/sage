@@ -392,6 +392,12 @@ talked into.
 recording every repo, branch, commit and the date — so neither of you ever has to
 ask which version is on screen. Their mockups survive a sync.
 
+**Documents** sits beside Mockups: named files from the snapshot, rendered as
+readable pages. `TOMSCODING_PARTNER_DOCS` lists them one per line as
+`path=Title`. A list, not a folder scan — a `docs/` directory holds working
+notes as readily as anything meant for someone else, and under a scan every new
+file publishes itself. The button only appears when there is something in it.
+
 Sign-in takes a **username and password**. Set `TOMSCODING_PARTNER_USER` to
 their name; Sage greets them by it. The username is not much of a secret and is
 not what keeps anyone out — it makes the seat read as an account rather than a

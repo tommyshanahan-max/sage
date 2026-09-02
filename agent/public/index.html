@@ -72,7 +72,7 @@
      phone as often as a laptop, and a sidebar there either squeezes the
      conversation or hides itself anyway. Over-and-away keeps one behaviour on
      both. */
-  #path,#mockups{
+  #path,#mockups,#docs{
     position:fixed;inset:0;z-index:20;overflow-y:auto;
     background:var(--paper);
     padding:1rem 1rem calc(2rem + env(safe-area-inset-bottom));
@@ -87,7 +87,7 @@
     letter-spacing:-.01em;
   }
   .path-head button{margin-left:auto}
-  #path-list,#mockups-list{max-width:44rem;margin:0 auto;display:flex;flex-direction:column;gap:.6rem}
+  #path-list,#mockups-list,#docs-list{max-width:44rem;margin:0 auto;display:flex;flex-direction:column;gap:.6rem}
   .entry{
     background:var(--card);border:1px solid var(--rule);border-radius:12px;
     padding:.85rem .95rem;
@@ -284,6 +284,7 @@
   <span class="by">powered by Claude</span>
   <span class="status" id="status">ready</span>
   <button type="button" id="path-toggle" aria-expanded="false">Path</button>
+  <button type="button" id="docs-toggle" aria-expanded="false" hidden>Documents</button>
   <button type="button" id="mockups-toggle" aria-expanded="false" hidden>Mockups</button>
   <button type="button" id="reset">New conversation</button>
   <form method="post" action="/logout" style="display:contents">
@@ -309,6 +310,14 @@
   What a partner has made. Same panel shape as Path: over the thread rather
   than beside it, so it behaves the same on a phone.
 -->
+<section id="docs" hidden aria-label="Documents">
+  <div class="path-head">
+    <h2>Documents</h2>
+    <button type="button" id="docs-close" aria-label="Close">Close</button>
+  </div>
+  <div id="docs-list"></div>
+</section>
+
 <section id="mockups" hidden aria-label="Mockups">
   <div class="path-head">
     <h2>Mockups</h2>
@@ -534,6 +543,9 @@ fetch("/api/seat")
     seatRole = d.role || "owner";
     if (seatRole === "partner") {
       mockupsToggle.hidden = false;
+      // Only offered when there is something in it — an empty panel on the
+      // masthead is a promise the seat does not keep.
+      if (d.hasDocs) docsToggle.hidden = false;
       // Past conversations are the owner's; a partner seat has its own
       // transcripts but no reason for a Path tab, and the route is theirs
       // alone anyway.
@@ -548,6 +560,52 @@ fetch("/api/seat")
     }
   })
   .catch(() => {});
+
+const docsToggle = document.getElementById("docs-toggle");
+const docsPanel  = document.getElementById("docs");
+const docsList   = document.getElementById("docs-list");
+
+async function openDocs() {
+  docsPanel.hidden = false;
+  docsToggle.setAttribute("aria-expanded", "true");
+  docsList.replaceChildren(el("p", "path-empty", "Looking…"));
+  try {
+    const res = await fetch("/api/docs");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "could not read the documents");
+    if (!data.docs.length) {
+      docsList.replaceChildren(
+        el("p", "path-empty", "No documents have been shared yet.")
+      );
+      return;
+    }
+    docsList.replaceChildren(
+      ...data.docs.map((d) => {
+        const a = el("a", "entry");
+        a.href = "/docs/" + encodeURIComponent(d.id);
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.append(el("h3", null, d.title));
+        // The path, not a date: which file this is matters more than when it
+        // was last touched, and it is what to name in a reply.
+        a.append(el("p", "when", d.rel));
+        return a;
+      })
+    );
+  } catch (err) {
+    docsList.replaceChildren(el("p", "path-error", err.message || "could not read the documents"));
+  }
+}
+
+function closeDocs() {
+  docsPanel.hidden = true;
+  docsToggle.setAttribute("aria-expanded", "false");
+}
+
+docsToggle.addEventListener("click", () => {
+  docsPanel.hidden ? openDocs() : closeDocs();
+});
+document.getElementById("docs-close").addEventListener("click", closeDocs);
 
 async function openMockups() {
   mockupsPanel.hidden = false;

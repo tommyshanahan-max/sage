@@ -261,6 +261,12 @@ services:
       HOME: /work/home
       AGENT_WORKSPACE: /work
       AGENT_MOCKUPS_DIR: /work/mockups
+      # Documents he may read, named one by one. A list, never a folder scan:
+      # a docs directory holds working notes as readily as it holds anything
+      # meant for someone else, and under a scan every new file publishes
+      # itself. See lib/docs.js.
+      AGENT_DOCS_ROOT: /work/app
+      AGENT_DOCS: ${TOMSCODING_PARTNER_DOCS:-}
       ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
       AGENT_VOICE_ID: ${TOMSCODING_AGENT_VOICE_ID:-}
       TZ: ${TZ:-Asia/Shanghai}

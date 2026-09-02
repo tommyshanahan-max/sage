@@ -34,6 +34,7 @@ import {
   PARTNER_TOOLS,
   PARTNER_VOICE,
 } from "./lib/role.js";
+import { parseDocList, listDocs, readDoc, renderMarkdown } from "./lib/docs.js";
 
 const PORT = process.env.PORT || 3000;
 const WORKSPACE = process.env.AGENT_WORKSPACE || "/workspace";
@@ -42,6 +43,12 @@ const HOME = process.env.HOME || "/home/coder";
 // Past conversations. The store is the only part of this that knows where
 // transcripts live; swap it and the rest is unchanged. See lib/conversations.js.
 const conversations = createFileStore({ home: HOME, cwd: WORKSPACE });
+
+// Documents a partner may read, named one by one. Resolved once at startup
+// against the snapshot root — see lib/docs.js on why this is a list and never a
+// directory scan.
+const DOCS_ROOT = process.env.AGENT_DOCS_ROOT || "/work/app";
+const DOCS = parseDocList(process.env.AGENT_DOCS, DOCS_ROOT);
 const MODEL = process.env.AGENT_MODEL || undefined;
 const PASSWORD = process.env.AGENT_PASSWORD || "";
 // Optional. Set it and the form asks for a username too; leave it unset and the
@@ -260,6 +267,77 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.static("public"));
 
 // --------------------------------------------------------------------------
+// Documents (partner seats only)
+//
+// Read-only, from the snapshot, and only the ones named in AGENT_DOCS.
+// --------------------------------------------------------------------------
+
+app.get("/api/docs", async (_req, res) => {
+  if (!isPartner) return res.status(404).json({ error: "not this seat" });
+  try {
+    res.json({ docs: await listDocs(DOCS) });
+  } catch (err) {
+    console.error("listing documents failed:", err);
+    res.status(500).json({ error: "could not read the documents" });
+  }
+});
+
+app.get("/docs/:id", async (req, res) => {
+  if (!isPartner) return res.status(404).send("Not found");
+  const doc = await readDoc(DOCS, req.params.id);
+  if (!doc) return res.status(404).send("Not found");
+
+  const isMarkdown = /\.(md|markdown)$/i.test(doc.rel);
+  const body = isMarkdown
+    ? renderMarkdown(doc.text)
+    // Anything else is shown as-is, escaped, rather than guessed at.
+    : `<pre>${doc.text.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</pre>`;
+
+  res.set("Content-Type", "text/html; charset=utf-8")
+    .set(
+      "Content-Security-Policy",
+      "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; " +
+        "form-action 'none'; base-uri 'none'; frame-ancestors 'self'"
+    )
+    .set("Cache-Control", "no-store")
+    .send(`<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${doc.title}</title><style>
+  :root{--paper:#eef1f5;--card:#fbfcfd;--ink:#10192b;--ink-2:#45536b;--muted:#7d8ba0;
+    --rule:#dae0e9;--gold:#a8761f;
+    --serif:ui-serif,"New York",Georgia,serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --paper:#0e1219;--card:#161b24;--ink:#e8ecf3;--ink-2:#a6b1c2;--muted:#77839a;
+    --rule:#242b36;--gold:#d9a94e}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  main{max-width:42rem;margin:0 auto;padding:clamp(1.5rem,5vw,3rem) 1.2rem 5rem}
+  .src{font-size:.72rem;color:var(--muted);font-family:var(--mono);margin:0 0 1.6rem}
+  h1,h2,h3,h4{font-family:var(--serif);font-weight:500;line-height:1.25;
+    letter-spacing:-.01em;margin:2rem 0 .6rem}
+  h1{font-size:1.9rem;margin-top:0}h2{font-size:1.4rem}h3{font-size:1.12rem}h4{font-size:1rem}
+  p,li{color:var(--ink-2)}
+  ul,ol{padding-left:1.3rem}
+  li{margin:.25rem 0}
+  code{font-family:var(--mono);font-size:.86em;background:var(--card);
+    border:1px solid var(--rule);border-radius:4px;padding:.08em .32em}
+  pre{background:var(--card);border:1px solid var(--rule);border-radius:9px;
+    padding:.85rem 1rem;overflow-x:auto}
+  pre code{border:0;background:none;padding:0;font-size:.82rem;line-height:1.55}
+  blockquote{margin:1rem 0;padding-left:1rem;border-left:2px solid var(--gold-line,var(--rule));
+    color:var(--muted)}
+  hr{border:0;border-top:1px solid var(--rule);margin:2rem 0}
+  a{color:var(--gold)}
+</style></head><body><main>
+<p class="src">${doc.rel}</p>
+${body}
+</main></body></html>`);
+});
+
+// --------------------------------------------------------------------------
 // Mockups (partner seats only)
 //
 // Everything a partner produces lands here, and nowhere else, because nowhere
@@ -325,7 +403,8 @@ app.get("/mockups/:name", async (req, res) => {
 // What kind of seat this is, so the page can dress itself accordingly. Not a
 // permission check — nothing is gated on what the browser is told here; the
 // routes above check the role themselves.
-app.get("/api/seat", (_req, res) => res.json({ role: ROLE, project: PROJECT_LABEL }));
+app.get("/api/seat", (_req, res) =>
+  res.json({ role: ROLE, project: PROJECT_LABEL, hasDocs: DOCS.length > 0 }));
 
 app.get("/api/voice", (_req, res) => res.json({ available: isSpeechConfigured() }));
 
