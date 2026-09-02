@@ -240,6 +240,9 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
     const today = dayKey(Date.now(), tz);
     const keys = daysBack(today, span, tz);
 
+    const top = (m) =>
+      [...m].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([name, count]) => ({ name, count }));
+
     const pages = new Map();
     const uses = new Map();
     const places = new Map();
@@ -266,11 +269,15 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
         // counters that are supposed to agree eventually do not.
         returning: Math.max(0, d.n - d.fresh),
         seconds: d.dwellVisits ? Math.round(d.dwellSeconds / d.dwellVisits) : 0,
+        // Per day as well as summed over the range. A range total says a place
+        // or a code mattered; only the day says which afternoon it mattered on,
+        // and that is the column somebody matches against their own memory of
+        // what they posted and when.
+        places: top(d.places),
+        sources: top(d.sources),
+        vias: top(d.vias),
       };
     });
-
-    const top = (m) =>
-      [...m].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([name, count]) => ({ name, count }));
 
     // How many of everyone ever seen have come back on a later day.
     //

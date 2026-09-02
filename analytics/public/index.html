@@ -173,6 +173,30 @@
      Given its own section rather than a column, because it is the one panel
      here that answers a decision — who to work with — rather than describing
      what happened. */
+  /* ---------- day by day ----------
+     The raw rows. Everything else on this page is a summary of these, and a
+     summary is the wrong tool for "which afternoon did that come from". */
+  .rows{width:100%;overflow-x:auto}
+  table.days{border-collapse:collapse;width:100%;font-size:.84rem}
+  table.days th{
+    text-align:left;font-weight:600;font-size:.68rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);padding:0 .8rem .5rem 0;
+    border-bottom:1px solid var(--rule);white-space:nowrap;
+  }
+  table.days td{
+    padding:.5rem .8rem .5rem 0;border-bottom:1px solid var(--rule);
+    vertical-align:top;color:var(--ink-2);
+  }
+  table.days tr:last-child td{border-bottom:0}
+  table.days .d{font-family:var(--mono);color:var(--muted);white-space:nowrap}
+  table.days .num{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600}
+  table.days .quiet td{color:var(--muted)}
+  table.days .bits{display:flex;flex-wrap:wrap;gap:.3rem}
+  table.days .bit{
+    background:var(--card-2);border:1px solid var(--rule);border-radius:5px;
+    padding:.05rem .4rem;white-space:nowrap;
+  }
+  table.days .bit b{font-variant-numeric:tabular-nums;color:var(--ink)}
   .who-sent{border-color:var(--jade)}
   .who-sent ol{margin:0}
   .howto{
@@ -326,6 +350,19 @@
   </div>
 
   </div>
+
+  <section>
+    <h2>Day by day</h2>
+    <div class="rows">
+      <table class="days">
+        <thead><tr>
+          <th>Day</th><th>People</th><th>New</th><th>Back</th>
+          <th>Where</th><th>How</th><th>Via</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
 
   <p class="note">
     <b>One person means one browser.</b> Counting is a random id this site puts in
@@ -541,6 +578,7 @@ async function load() {
   drawGrowth(data.series);
   drawReturn(data);
   drawChart(data.series);
+  drawRows(data.series);
   drawVias(data.vias || [], data.sites || []);
   drawList(document.getElementById("places"), data.places || []);
   drawList(document.getElementById("sources"), data.sources || []);
@@ -581,6 +619,48 @@ function drawApp(app, series) {
     + "different measurements rather than a trend.";
 }
 
+// The rows the rest of the page summarises.
+//
+// A range total tells you a place or a code mattered. It cannot tell you which
+// afternoon, and that is the column somebody matches against their own memory
+// of what they posted and where — which is how a name gets attached to a
+// number without anything about a person being recorded to do it.
+//
+// Newest first: the question is almost always about today or yesterday.
+function drawRows(series) {
+  const body = document.getElementById("rows");
+  body.replaceChildren();
+
+  const bits = (items) => {
+    const box = el("span", "bits");
+    if (!items || !items.length) { box.append(el("span", null, "—")); return box; }
+    for (const it of items.slice(0, 4)) {
+      const b = el("span", "bit");
+      b.append(document.createTextNode(it.name + " "), el("b", null, String(it.count)));
+      box.append(b);
+    }
+    return box;
+  };
+
+  for (const d of [...series].reverse()) {
+    const tr = el("tr", d.devices ? null : "quiet");
+    const cell = (child, cls) => {
+      const td = document.createElement("td");
+      if (cls) td.className = cls;
+      td.append(typeof child === "string" ? document.createTextNode(child) : child);
+      tr.append(td);
+    };
+    cell(d.day, "d");
+    cell(String(d.devices), "num");
+    cell(String(d.fresh), "num");
+    cell(String(d.returning ?? 0), "num");
+    cell(bits(d.places));
+    cell(bits(d.sources));
+    cell(bits(d.vias));
+    body.append(tr);
+  }
+}
+
 // Who sent them, and — when nobody has yet — how to make that answerable.
 //
 // This panel is empty until share links are actually used, and an empty panel
@@ -596,24 +676,14 @@ function drawVias(vias, sites) {
   const host = sites[0] || "your-site";
   const line = (code) => `https://${host}/?via=${code}`;
 
-  howto.innerHTML = (vias.length
-    ? "<b>One code per person.</b> Give each influencer, group or poster its own link "
-      + "and this becomes a ranked list of who actually brings people."
-    : "<b>Nothing to show yet — no share links have been used.</b> The referrer cannot "
-      + "answer this: WeChat sends none, so an influencer's post and a stranger's "
-      + "forward are the same <b>direct</b> arrival. A code in the link can, because it "
-      + "travels inside the address."
-    )
+  howto.innerHTML = (vias.length ? "" : "<b>No share links used yet.</b> ")
+    + "One link per person or group — WeChat strips referrers, so this is the only thing "
+    + "that tells one share from another."
     + '<div class="lines">'
-    + [["mia", "an influencer"], ["wechat-uni-group", "a group chat"], ["poster-a", "a printed poster"]]
-        .map(([code, who]) => `<span><code>${line(code)}</code> &nbsp;${who}</span>`).join("")
+    + ["mia", "wechat-uni-group", "poster-a"]
+        .map((code) => `<span><code>${line(code)}</code></span>`).join("")
     + "</div>"
-    + "Counted on first arrival, so somebody who comes through Mia's link is Mia's "
-    + "whatever they do next. A forwarded code still credits whoever posted it first — "
-    + "they caused the arrival. <code>?s=</code> works too, if you want it shorter."
-    + "<br><br><b>This covers the site only.</b> A code on an app link is counted by the "
-    + "app's own counter, not this one — worth adding there, since the app link is the "
-    + "one that gets shared.";
+    + "First arrival wins. Site only — an app link is the app's counter to record.";
 }
 
 // The app's own two charts, drawn by the same renderers as the site's.
