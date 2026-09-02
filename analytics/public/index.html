@@ -384,7 +384,10 @@ function drawSpans() {
 
 async function load() {
   drawSpans();
-  const res = await fetch("/api/stats?days=" + span, { cache: "no-store" });
+  // Relative, not rooted. This page is served both at the root of its own
+  // hostname and one level down when a seat proxies it, and a leading slash
+  // works in exactly one of those.
+  const res = await fetch("api/stats?days=" + span, { cache: "no-store" });
   if (res.status === 401) { location.href = "/login"; return; }
   const data = await res.json();
 

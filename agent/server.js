@@ -451,10 +451,48 @@ app.get("/api/numbers", async (_req, res) => {
       returnRate: data.returnRate,
       // Just enough for a sparkline. The full picture is a click away.
       series: (data.series || []).map((d) => d.devices),
-      link: NUMBERS_LINK,
+      // Its own hostname if one is configured, otherwise the proxy above —
+      // which is always there when the counter is, so the readout is never a
+      // link to nowhere.
+      link: NUMBERS_LINK || "/numbers/",
     });
   } catch (err) {
     res.status(502).json({ error: err.message || "could not reach the counter" });
+  }
+});
+
+// The counter's own dashboard, served through this seat.
+//
+// The alternative was a public hostname for it, and that turned out to be the
+// worse of the two. It needs a DNS record and a certificate before anything
+// can be read at all, it needs its own password to not be world-readable, and
+// having set one you now have two passwords for one product. None of that buys
+// anything: the only person who should see these numbers is already signed in
+// here, on a seat that already checks who they are.
+//
+// So this forwards instead. Same authentication as everything else on this
+// origin, owner seat only, GET only — the dashboard reads, it never writes,
+// and a proxy that will only forward reads cannot be turned into one that
+// writes by asking it differently.
+app.get(/^\/numbers(\/.*)?$/, async (req, res) => {
+  if (isPartner || !NUMBERS_URL) return res.status(404).send("Not found");
+  // Without the trailing slash the page's relative fetches resolve one level
+  // too high and the dashboard loads with no data in it.
+  if (req.path === "/numbers") return res.redirect(301, "/numbers/");
+
+  const tail = req.path.slice("/numbers".length) || "/";
+  const query = req.url.slice(req.path.length);
+  try {
+    const upstream = await fetch(NUMBERS_URL + tail + query, {
+      headers: NUMBERS_TOKEN ? { authorization: "Bearer " + NUMBERS_TOKEN } : {},
+      signal: AbortSignal.timeout(10_000),
+    });
+    res.status(upstream.status);
+    const type = upstream.headers.get("content-type");
+    if (type) res.set("content-type", type);
+    res.send(Buffer.from(await upstream.arrayBuffer()));
+  } catch (err) {
+    res.status(502).send("The counter could not be reached: " + (err.message || "unknown"));
   }
 });
 
