@@ -50,6 +50,13 @@ const conversations = createFileStore({ home: HOME, cwd: WORKSPACE });
 // directory scan.
 const DOCS_ROOT = process.env.AGENT_DOCS_ROOT || "/work/app";
 const DOCS = parseDocList(process.env.AGENT_DOCS, DOCS_ROOT);
+// The live application, shown beside the conversation. Optional: unset, the
+// page is exactly as it was and no preview is offered. It is only ever put in
+// an iframe's src, so an address that refuses framing costs a blank pane and
+// nothing else — which is why the panel always carries an Open link too.
+const APP_URL = /^https?:\/\//i.test(process.env.AGENT_APP_URL || "")
+  ? process.env.AGENT_APP_URL.trim()
+  : "";
 const MODEL = process.env.AGENT_MODEL || undefined;
 const PASSWORD = process.env.AGENT_PASSWORD || "";
 // Optional. Set it and the form asks for a username too; leave it unset and the
@@ -405,7 +412,7 @@ app.get("/mockups/:name", async (req, res) => {
 // permission check — nothing is gated on what the browser is told here; the
 // routes above check the role themselves.
 app.get("/api/seat", (_req, res) =>
-  res.json({ role: ROLE, project: PROJECT_LABEL, hasDocs: DOCS.length > 0 }));
+  res.json({ role: ROLE, project: PROJECT_LABEL, hasDocs: DOCS.length > 0, appUrl: APP_URL }));
 
 app.get("/api/voice", (_req, res) => res.json({ available: isSpeechConfigured() }));
 

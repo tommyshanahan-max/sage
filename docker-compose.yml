@@ -267,6 +267,8 @@ services:
       # itself. See lib/docs.js.
       AGENT_DOCS_ROOT: /work/app
       AGENT_DOCS: ${TOMSCODING_PARTNER_DOCS:-}
+      # The live app, shown beside the conversation. Optional.
+      AGENT_APP_URL: ${TOMSCODING_PARTNER_APP_URL:-}
       ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
       AGENT_VOICE_ID: ${TOMSCODING_AGENT_VOICE_ID:-}
       TZ: ${TZ:-Asia/Shanghai}
@@ -317,6 +319,7 @@ services:
       AGENT_MOCKUPS_DIR: /work/mockups
       AGENT_DOCS_ROOT: /work/app
       AGENT_DOCS: ${TOMSCODING_PARTNER2_DOCS:-}
+      AGENT_APP_URL: ${TOMSCODING_PARTNER2_APP_URL:-}
       ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
       AGENT_VOICE_ID: ${TOMSCODING_AGENT_VOICE_ID:-}
       TZ: ${TZ:-Asia/Shanghai}
