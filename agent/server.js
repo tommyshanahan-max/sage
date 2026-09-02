@@ -572,37 +572,57 @@ app.post("/api/chat", async (req, res) => {
   // readable reason, and again as a throw. Show the first and suppress the
   // second rather than putting the same failure on screen twice.
   let reportedError = false;
+  // Whether any of the reply has reached the browser. A retry is only safe
+  // before the first byte — after that it would draw the answer twice.
+  let streamed = false;
+  // What the failure said, so the caller can tell one kind from another.
+  let lastReason = "";
 
-  try {
+  // The CLI keeps conversations on disk and refuses to resume one it cannot
+  // find. That happens for an ordinary reason: the container was recreated —
+  // a password change, a `make up` — while a tab was open, and the tab goes on
+  // asking to resume a session that is no longer there. Every later message
+  // then fails identically, and the only way out is knowing to press "New
+  // conversation", which nobody should have to know.
+  const MISSING_SESSION = /No conversation found with session/i;
+
+  const baseOptions = {
+    cwd: WORKSPACE,
+    // Appends to Claude Code's preset rather than replacing it: the preset
+    // is what makes the tools work, and only the voice is ours.
+    systemPrompt: {
+      type: "preset",
+      preset: "claude_code",
+      append: isPartner ? PARTNER_VOICE : SAGE_VOICE,
+    },
+    // Every tool runs without stopping to ask, on the same files the editor
+    // opens. Git is what protects them — see the README.
+    //
+    // bypassPermissions is refused unless allowDangerouslySkipPermissions is
+    // set with it. Without the second flag the CLI exits before it does any
+    // work, which surfaces as an exit code and nothing else.
+    permissionMode: "bypassPermissions",
+    allowDangerouslySkipPermissions: true,
+    // A partner seat gets a short list rather than everything. This is not
+    // what stops them changing the application — the read-only mount is —
+    // but it keeps the agent from spending turns discovering that a tool it
+    // reached for has nothing to act on. See lib/role.js.
+    ...(isPartner ? { allowedTools: PARTNER_TOOLS } : {}),
+    stderr: (data) => {
+      process.stderr.write(data);
+      stderrTail.push(data);
+      if (stderrTail.length > 40) stderrTail.shift();
+    },
+    ...(MODEL ? { model: MODEL } : {}),
+  };
+
+  /** One run. Returns "ok", "missing" (the session is gone) or "failed". */
+  async function attempt(runId, fresh) {
+    reportedError = false;
+    lastReason = "";
     const options = {
-      cwd: WORKSPACE,
-      // Appends to Claude Code's preset rather than replacing it: the preset
-      // is what makes the tools work, and only the voice is ours.
-      systemPrompt: {
-        type: "preset",
-        preset: "claude_code",
-        append: isPartner ? PARTNER_VOICE : SAGE_VOICE,
-      },
-      // Every tool runs without stopping to ask, on the same files the editor
-      // opens. Git is what protects them — see the README.
-      //
-      // bypassPermissions is refused unless allowDangerouslySkipPermissions is
-      // set with it. Without the second flag the CLI exits before it does any
-      // work, which surfaces as an exit code and nothing else.
-      permissionMode: "bypassPermissions",
-      allowDangerouslySkipPermissions: true,
-      // A partner seat gets a short list rather than everything. This is not
-      // what stops them changing the application — the read-only mount is —
-      // but it keeps the agent from spending turns discovering that a tool it
-      // reached for has nothing to act on. See lib/role.js.
-      ...(isPartner ? { allowedTools: PARTNER_TOOLS } : {}),
-      stderr: (data) => {
-        process.stderr.write(data);
-        stderrTail.push(data);
-        if (stderrTail.length > 40) stderrTail.shift();
-      },
-      ...(MODEL ? { model: MODEL } : {}),
-      ...(isNewSession ? { sessionId: id } : { resume: id }),
+      ...baseOptions,
+      ...(fresh ? { sessionId: runId } : { resume: runId }),
     };
 
     // The SDK yields transcript messages, not rendered pieces: an assistant
@@ -610,57 +630,83 @@ app.post("/api/chat", async (req, res) => {
     // tool output comes back as a *user* message carrying tool_result blocks,
     // because that is how the conversation is recorded. The events this sends
     // on are the flat ones the page knows how to draw.
-    for await (const message of query({ prompt, options })) {
-      switch (message.type) {
-        case "assistant":
-          for (const block of message.message?.content ?? []) {
-            if (block.type === "text") {
-              send("text", { text: block.text });
-            } else if (block.type === "tool_use") {
-              send("tool_use", { id: block.id, name: block.name, input: block.input });
+    try {
+      for await (const message of query({ prompt, options })) {
+        switch (message.type) {
+          case "assistant":
+            for (const block of message.message?.content ?? []) {
+              if (block.type === "text") {
+                streamed = true;
+                send("text", { text: block.text });
+              } else if (block.type === "tool_use") {
+                streamed = true;
+                send("tool_use", { id: block.id, name: block.name, input: block.input });
+              }
             }
-          }
-          break;
-        case "user":
-          for (const block of message.message?.content ?? []) {
-            if (block.type === "tool_result") {
-              send("tool_result", {
-                toolUseId: block.tool_use_id,
-                content: block.content,
-              });
+            break;
+          case "user":
+            for (const block of message.message?.content ?? []) {
+              if (block.type === "tool_result") {
+                streamed = true;
+                send("tool_result", {
+                  toolUseId: block.tool_use_id,
+                  content: block.content,
+                });
+              }
             }
-          }
-          break;
-        case "result":
-          // `subtype: "success"` only means the run completed its own loop —
-          // it is still set on a turn that ended in an API error, so is_error
-          // is the field that decides. Its `result` text is the readable one
-          // ("Authentication error", a rate limit), which is why it is
-          // preferred over the exception that follows it.
-          if (message.is_error || message.subtype !== "success") {
-            reportedError = true;
-            send("error", { message: message.result || `run ended: ${message.subtype}` });
-          }
-          break;
-        default:
-          break; // other message types carry nothing this UI renders
+            break;
+          case "result":
+            // `subtype: "success"` only means the run completed its own loop —
+            // it is still set on a turn that ended in an API error, so is_error
+            // is the field that decides. Its `result` text is the readable one
+            // ("Authentication error", a rate limit), which is why it is
+            // preferred over the exception that follows it.
+            if (message.is_error || message.subtype !== "success") {
+              reportedError = true;
+              lastReason = message.result || `run ended: ${message.subtype}`;
+            }
+            break;
+          default:
+            break; // other message types carry nothing this UI renders
+        }
       }
-    }
-    // Now it exists, so the browser can safely ask to resume it next time —
-    // unless the run reported an error, in which case there may be nothing
-    // worth resuming and a fresh session is the better next turn.
-    if (!reportedError) send("session", { sessionId: id });
-    send("done", {});
-  } catch (err) {
-    console.error("agent turn failed:", err);
-    // The browser shows this verbatim. A real error someone can read beats a
-    // spinner that never resolves — and beats an exit code with no cause, so
-    // whatever the CLI said on its way out goes with it.
-    if (!reportedError) {
+    } catch (err) {
+      console.error("agent turn failed:", err);
+      reportedError = true;
       const detail = stderrTail.join("").trim().split("\n").slice(-8).join("\n");
       const base = err?.message || String(err);
-      send("error", { message: detail ? `${base}\n\n${detail}` : base });
+      lastReason = detail ? `${base}\n\n${detail}` : base;
     }
+
+    if (!reportedError) return "ok";
+    return MISSING_SESSION.test(lastReason) ? "missing" : "failed";
+  }
+
+  try {
+    let runId = id;
+    let outcome = await attempt(runId, isNewSession);
+
+    // The one retry. Only when the session is genuinely gone and nothing has
+    // been drawn yet, so the reader sees a normal reply rather than an error
+    // they have to act on. The turn's own words are kept; only the thread it
+    // was going to continue is lost, and that thread no longer exists.
+    if (outcome === "missing" && !streamed) {
+      console.warn(`session ${runId} is gone; starting a fresh one`);
+      runId = randomUUID();
+      outcome = await attempt(runId, true);
+    }
+
+    if (outcome === "ok") {
+      // Now it exists, so the browser can safely ask to resume it next time —
+      // and if this was a recovery, the id it gets back is the new one.
+      send("session", { sessionId: runId });
+    } else {
+      // The browser shows this verbatim. A real error someone can read beats a
+      // spinner that never resolves — and beats an exit code with no cause, so
+      // whatever the CLI said on its way out goes with it.
+      send("error", { message: lastReason || "the run ended without saying why" });
+    }
+    send("done", {});
   } finally {
     res.end();
   }
