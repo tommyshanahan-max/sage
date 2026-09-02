@@ -32,6 +32,7 @@ import {
   MOCKUPS_DIR,
   PROJECT_LABEL,
   PARTNER_TOOLS,
+  PARTNER_DENIED,
   PARTNER_VOICE,
 } from "./lib/role.js";
 import { parseDocList, listDocs, readDoc, renderMarkdown } from "./lib/docs.js";
@@ -603,11 +604,12 @@ app.post("/api/chat", async (req, res) => {
     // work, which surfaces as an exit code and nothing else.
     permissionMode: "bypassPermissions",
     allowDangerouslySkipPermissions: true,
-    // A partner seat gets a short list rather than everything. This is not
-    // what stops them changing the application — the read-only mount is —
-    // but it keeps the agent from spending turns discovering that a tool it
-    // reached for has nothing to act on. See lib/role.js.
-    ...(isPartner ? { allowedTools: PARTNER_TOOLS } : {}),
+    // A partner seat is restricted by the DENY list, not the allow list.
+    // `allowedTools` only says "run these without asking", and this deployment
+    // runs in bypassPermissions, so on its own it restricts nothing at all —
+    // the seat had Bash until this was fixed, and `env` in that container
+    // prints ANTHROPIC_API_KEY. See lib/role.js.
+    ...(isPartner ? { allowedTools: PARTNER_TOOLS, disallowedTools: PARTNER_DENIED } : {}),
     stderr: (data) => {
       process.stderr.write(data);
       stderrTail.push(data);

@@ -102,9 +102,21 @@ partner changing your application. These are:
 - **That container has its own home volume**, not the workspace's. No
   `~/.claude`, no git identity, no credentials — nothing to push with and
   nowhere to push.
-- **No Bash and no fetching.** Bash on that seat would be a shell on the box
-  whatever the working directory is, and network access is how a mockup session
-  becomes an exfiltration one.
+- **No Bash and no fetching** — enforced by a *deny* list, and this is worth
+  being precise about because the first version of it did not work. Naming the
+  tools a seat may use in `allowedTools` restricts nothing: that field means
+  "run these without asking", and this deployment runs in `bypassPermissions`,
+  where everything is approved anyway. The seat had Bash, and a partner asking
+  to see the UI got a shell. `disallowedTools` is the field that actually
+  refuses.
+
+  What that exposed was not the application — the read-only mount held
+  throughout — but `ANTHROPIC_API_KEY`, which is in that container's
+  environment because the SDK needs it, and which `env` prints. Treat a shell
+  on any seat as equivalent to handing over that key.
+
+  The deny list is by name, so a tool added to the harness later is not covered
+  until it is listed. Re-read `agent/lib/role.js` when the CLI gains one.
 
 Verify the mount on the server rather than taking it on trust:
 

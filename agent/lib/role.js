@@ -38,6 +38,27 @@ export const PARTNER_NAME = process.env.AGENT_USER || "";
 // and produce a page is here; nothing else is.
 export const PARTNER_TOOLS = ["Read", "Glob", "Grep", "Write", "Edit", "TodoWrite"];
 
+/** What the seat must not have, named explicitly.
+ *
+ *  PARTNER_TOOLS on its own does nothing to restrict anything. `allowedTools`
+ *  is an auto-approval list — "do these without asking" — and this deployment
+ *  runs in bypassPermissions, which approves everything regardless. The seat
+ *  therefore had Bash, and a partner asked for the UI and got a shell.
+ *
+ *  That mattered for one reason above the rest: ANTHROPIC_API_KEY is in this
+ *  container's environment, because the SDK needs it, and `env` prints it. The
+ *  read-only mount was never the thing at risk — the key was.
+ *
+ *  A deny list is the mechanism that actually holds. Anything added to the
+ *  harness later is denied here by name or not at all, so this list is worth
+ *  re-reading whenever the CLI gains a tool. */
+export const PARTNER_DENIED = [
+  "Bash", "BashOutput", "KillShell",   // a shell reads the environment
+  "WebFetch", "WebSearch",             // and a fetch is how anything read leaves
+  "Task",                              // a subagent would carry neither limit
+  "NotebookEdit", "SlashCommand",
+];
+
 const WHO = PARTNER_NAME ? `${PARTNER_NAME}, a business partner,` : "a business partner";
 
 export const PARTNER_VOICE = `You are Sage, working with ${WHO} on ${PROJECT_LABEL}.
