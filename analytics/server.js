@@ -34,6 +34,13 @@ const OPEN = !PASSWORD;
 // The sites allowed to report. This is the whole of "whose numbers are these":
 // an origin not on the list is not recorded, so a page someone else puts your
 // snippet on cannot add itself to your dashboard.
+// A second way in, for one caller: the agent, showing today's numbers in its
+// own masthead. It cannot use the cookie — that is host-only to the stats
+// hostname — so it presents a shared token over the Docker network instead.
+// The token never reaches a browser, and without it configured this does
+// nothing at all.
+const INTERNAL_TOKEN = process.env.ANALYTICS_INTERNAL_TOKEN || "";
+
 const SITES = (process.env.ANALYTICS_SITES || "")
   .split(/[\s,]+/).map((s) => s.trim().toLowerCase()).filter(Boolean);
 
@@ -283,8 +290,16 @@ app.post("/logout", (_req, res) => {
   res.redirect("/login");
 });
 
+/** The shared token, compared in constant time like every other secret here. */
+function internalOk(req) {
+  if (!INTERNAL_TOKEN) return false;
+  const header = String(req.get("authorization") || "");
+  const given = header.startsWith("Bearer ") ? header.slice(7) : "";
+  return given.length > 0 && safeEqual(given, INTERNAL_TOKEN);
+}
+
 app.use((req, res, next) => {
-  if (OPEN || valid(cookie(req, COOKIE))) return next();
+  if (OPEN || valid(cookie(req, COOKIE)) || internalOk(req)) return next();
   if (req.path.startsWith("/api/")) return res.status(401).json({ error: "session expired" });
   res.redirect("/login");
 });

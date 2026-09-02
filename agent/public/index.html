@@ -162,6 +162,27 @@
   }
   .by{font-size:.72rem;color:var(--muted)}
 
+  /* ---------- today's numbers ----------
+     A readout, not a dashboard. Two figures and fourteen bars: enough to know
+     whether today is unusual, and a click away from the rest. */
+  .numbers{
+    display:flex;align-items:center;gap:.6rem;text-decoration:none;color:inherit;
+    padding:.2rem .55rem;border:1px solid var(--rule);border-radius:6px;
+  }
+  .numbers:hover{border-color:var(--gold)}
+  .numbers:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .numbers b{
+    font-family:var(--serif);font-size:1.05rem;font-weight:400;line-height:1;
+    font-variant-numeric:tabular-nums;color:var(--gold);
+  }
+  .numbers .k{font-size:.68rem;color:var(--muted);letter-spacing:.04em}
+  .spark{display:flex;align-items:flex-end;gap:1px;height:1.05rem}
+  .spark i{
+    width:3px;background:var(--gold-soft);border-top:1px solid var(--gold);
+    min-height:1px;display:block;
+  }
+  .spark i.today{background:var(--gold);border-color:var(--gold)}
+
   /* Past conversations.
      A panel over the thread rather than a column beside it: this is read on a
      phone as often as a laptop, and a sidebar there either squeezes the
@@ -378,6 +399,8 @@
   <span class="mark">Sage</span>
   <span class="by">powered by Claude</span>
   <span class="status" id="status">ready</span>
+  <a class="numbers" id="numbers" hidden target="_blank" rel="noopener"
+     title="Today's numbers — click for the rest"></a>
   <button type="button" id="path-toggle" aria-expanded="false">Path</button>
   <button type="button" id="docs-toggle" aria-expanded="false" hidden>Documents</button>
   <button type="button" id="mockups-toggle" aria-expanded="false" hidden>Mockups</button>
@@ -794,6 +817,51 @@ input.addEventListener("input", () => {
 // server checks the role on every route that matters, because a browser is not
 // somewhere to keep a permission.
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Today's numbers
+//
+// Owner seat only, and quiet about failure: a counter having a bad minute must
+// not put an error in the masthead of a page somebody is trying to work in. If
+// it cannot be read, the readout simply is not there.
+// ---------------------------------------------------------------------------
+const numbersBox = document.getElementById("numbers");
+
+async function drawNumbers() {
+  let d;
+  try {
+    const res = await fetch("/api/numbers");
+    if (!res.ok) throw new Error("no");
+    d = await res.json();
+  } catch {
+    numbersBox.hidden = true;
+    return;
+  }
+
+  const spark = el("span", "spark");
+  const peak = Math.max(1, ...d.series);
+  d.series.forEach((n, i) => {
+    const bar = el("i");
+    bar.style.height = Math.max(1, Math.round((n / peak) * 17)) + "px";
+    if (i === d.series.length - 1) bar.className = "today";
+    spark.append(bar);
+  });
+
+  numbersBox.replaceChildren(
+    el("b", null, String(d.today.devices)),
+    el("span", "k", "today"),
+    el("b", null, String(d.today.fresh)),
+    el("span", "k", "new"),
+    spark
+  );
+  numbersBox.href = d.link || "#";
+  numbersBox.hidden = false;
+}
+
+drawNumbers();
+// Slow on purpose. This is a glance, not a live feed, and the figure only
+// changes when somebody opens the app.
+setInterval(drawNumbers, 5 * 60_000);
 
 // ---------------------------------------------------------------------------
 // The stage

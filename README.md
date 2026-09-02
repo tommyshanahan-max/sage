@@ -628,6 +628,23 @@ lx("translate");
 That is the whole API. `lx()` is defined by the snippet and is safe to call
 before it loads only if you guard it (`window.lx && lx("translate")`).
 
+### Today's numbers in Sage
+
+Sage's masthead carries a readout — people today, first-timers, and fourteen
+days of bars — that opens the full dashboard. Owner seat only: a partner is
+shown the app and their own mockups, and how the business is doing is not
+theirs.
+
+The page cannot fetch it. The counter is a different hostname with its own
+sign-in, and that cookie is host-only, so a browser on the agent's origin has
+no way to read it. The agent fetches it server-side over the Docker network
+instead — a container name, so the request never leaves the box — and
+identifies itself with `TOMSCODING_STATS_INTERNAL_TOKEN`, compared in constant
+time and never sent to a browser. Unset, the readout is not drawn.
+
+It fails quietly on purpose. A counter having a bad minute must not put an
+error in the masthead of a page somebody is trying to work in.
+
 ### What "a person" means here
 
 One browser. The counter puts a random id in that browser's own storage — no

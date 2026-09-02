@@ -420,6 +420,43 @@ app.get("/mockups/:name", async (req, res) => {
 app.get("/api/seat", (_req, res) =>
   res.json({ role: ROLE, project: PROJECT_LABEL, hasDocs: DOCS.length > 0, appUrl: APP_URL }));
 
+// ---------------------------------------------------------------------------
+// Today's numbers, in the masthead
+//
+// Fetched here rather than by the page: the counter lives on its own hostname
+// with its own sign-in, and that cookie is host-only, so a browser on this
+// origin cannot read it. This server can — the two containers share a Docker
+// network — and it presents a shared token the browser never sees.
+//
+// Owner seat only. A partner is shown the app and their mockups; how the
+// business is doing is not theirs.
+// ---------------------------------------------------------------------------
+const NUMBERS_URL = process.env.AGENT_NUMBERS_URL || "";
+const NUMBERS_TOKEN = process.env.AGENT_NUMBERS_TOKEN || "";
+const NUMBERS_LINK = process.env.AGENT_NUMBERS_LINK || "";
+
+app.get("/api/numbers", async (_req, res) => {
+  if (isPartner || !NUMBERS_URL) return res.status(404).json({ error: "not this seat" });
+  try {
+    // Short timeout on purpose. This is decoration in a masthead; a counter
+    // having a bad minute must not make the chat page feel broken.
+    const upstream = await fetch(NUMBERS_URL + "/api/stats?days=14", {
+      headers: NUMBERS_TOKEN ? { authorization: "Bearer " + NUMBERS_TOKEN } : {},
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!upstream.ok) throw new Error("counter said " + upstream.status);
+    const data = await upstream.json();
+    res.json({
+      today: data.today,
+      // Just enough for a sparkline. The full picture is a click away.
+      series: (data.series || []).map((d) => d.devices),
+      link: NUMBERS_LINK,
+    });
+  } catch (err) {
+    res.status(502).json({ error: err.message || "could not reach the counter" });
+  }
+});
+
 app.get("/api/voice", (_req, res) => res.json({ available: isSpeechConfigured() }));
 
 // Sage's own words, spoken. Nothing is passed but the text she already wrote.

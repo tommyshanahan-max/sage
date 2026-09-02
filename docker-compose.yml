@@ -206,6 +206,12 @@ services:
       # only reason it is reachable at all.
       ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
       AGENT_VOICE_ID: ${TOMSCODING_AGENT_VOICE_ID:-}
+      # Today's numbers in the masthead. Reached over the Docker network, so
+      # this is the container name rather than the public hostname — the
+      # request never leaves the box.
+      AGENT_NUMBERS_URL: ${TOMSCODING_AGENT_NUMBERS_URL:-}
+      AGENT_NUMBERS_TOKEN: ${TOMSCODING_STATS_INTERNAL_TOKEN:-}
+      AGENT_NUMBERS_LINK: ${TOMSCODING_STATS_DOMAIN:+https://${TOMSCODING_STATS_DOMAIN}}
       # Same home as the IDE, so the SDK picks up ~/.claude/CLAUDE.md — the
       # agent works to the same instructions as the CLI rather than to none.
       HOME: /home/coder
@@ -424,6 +430,9 @@ services:
       # in half, which is the busiest part of it.
       ANALYTICS_TZ: ${TZ:-Asia/Shanghai}
       ANALYTICS_RETAIN_DAYS: ${TOMSCODING_STATS_RETAIN_DAYS:-400}
+      # Lets the agent read the numbers for its masthead, over the Docker
+      # network. Never sent to a browser.
+      ANALYTICS_INTERNAL_TOKEN: ${TOMSCODING_STATS_INTERNAL_TOKEN:-}
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - analytics_data:/data
