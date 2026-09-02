@@ -161,7 +161,7 @@ app.post("/e", express.json({ limit: "2kb" }), (req, res) => {
   if (overRate(req.ip)) return res.status(204).end();
 
   const device = clean(req.body?.d, 40);
-  const kind = req.body?.k === "use" ? "use" : "page";
+  const kind = ["use", "dwell"].includes(req.body?.k) ? req.body.k : "page";
   const name = clean(req.body?.n, 120);
   // A device id shaped like anything else is a client that is not ours.
   if (!/^[A-Za-z0-9_-]{8,40}$/.test(device) || !name) return res.status(204).end();
@@ -204,6 +204,28 @@ const SNIPPET = `/* first-party, one random id in this browser's own storage */
   /* Call lx("translate") from anywhere to count a function being used. */
   window.lx = function (name) { send("use", name); };
   send("page", location.pathname);
+
+  /* How long this visit lasted, sent once at the end as a single number of
+     seconds. Only time the page was actually visible counts — a tab left open
+     in the background is not a visit — and nothing about when it happened is
+     sent, because the server keeps a running total and a count and never a
+     record of one person's evening. */
+  var since = Date.now(), visible = 0, done = false;
+  function stop() {
+    if (document.visibilityState === "hidden" && since) {
+      visible += Date.now() - since; since = 0;
+    } else if (document.visibilityState === "visible" && !since) {
+      since = Date.now();
+    }
+  }
+  document.addEventListener("visibilitychange", stop);
+  function finish() {
+    if (done) return; done = true;
+    if (since) visible += Date.now() - since;
+    var seconds = Math.round(visible / 1000);
+    if (seconds > 0 && seconds <= 1800) send("dwell", String(seconds));
+  }
+  addEventListener("pagehide", finish);
 })();
 `;
 

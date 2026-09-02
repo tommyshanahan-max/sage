@@ -75,6 +75,14 @@
     padding:1.1rem 1.2rem .8rem;overflow-x:auto;
   }
   .chart{display:flex;align-items:flex-end;gap:3px;height:150px;min-width:max-content}
+  #growth{width:100%;height:180px;display:block;overflow:visible}
+  #growth .area{fill:var(--jade-soft)}
+  #growth .line{fill:none;stroke:var(--jade);stroke-width:2;
+    stroke-linejoin:round;stroke-linecap:round}
+  #growth .grid{stroke:var(--rule);stroke-width:1}
+  #growth .tick{fill:var(--muted);font-family:var(--mono);font-size:11px}
+  #growth .end{fill:var(--jade)}
+  .growth-note{margin:.7rem 0 0;font-size:.78rem;color:var(--muted)}
   .bar{
     width:22px;flex:none;display:flex;flex-direction:column;justify-content:flex-end;
     height:100%;border-radius:3px 3px 0 0;overflow:hidden;background:transparent;
@@ -156,7 +164,17 @@
       <div class="stat accent"><span class="n" id="n-users">—</span><span class="k">People</span></div>
       <div class="stat"><span class="n" id="n-new">—</span><span class="k">First time</span></div>
       <div class="stat"><span class="n" id="n-events">—</span><span class="k">Actions</span></div>
+      <div class="stat"><span class="n" id="n-time">—</span><span class="k">Average visit</span></div>
       <div class="stat"><span class="n" id="n-known">—</span><span class="k">Known devices</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Growth <span id="growth-span" style="text-transform:none;letter-spacing:0"></span></h2>
+    <div class="chartwrap">
+      <svg id="growth" viewBox="0 0 720 180" preserveAspectRatio="none"
+           role="img" aria-label="Total people, cumulative"></svg>
+      <p class="growth-note" id="growth-note"></p>
     </div>
   </section>
 
@@ -195,6 +213,11 @@
     total to show and none is shown. Pages and functions <i>are</i> summed over the
     range, because those are actions, and two of them are two.
     <br><br>
+    <b>Average visit</b> is how long the page was actually on screen — time in a
+    background tab does not count, and anything past half an hour is dropped as a
+    tab left open rather than counted as a very long visit. It is kept as a running
+    total and a count, never as one person's visit.
+    <br><br>
     <b>Nothing here is finer than a day.</b> The browser's id is hashed before it
     touches disk, and no time of day is written next to it — so these files record
     how many people came, never when any one of them was here.
@@ -210,6 +233,12 @@ const el = (tag, cls, text) => {
   return n;
 };
 const fmt = (n) => n.toLocaleString("en-US");
+/** A visit length people can read. Seconds under a minute, then m:ss. */
+const duration = (s) => {
+  if (!s) return "—";
+  if (s < 60) return s + "s";
+  return Math.floor(s / 60) + "m " + String(s % 60).padStart(2, "0") + "s";
+};
 
 let span = Number(localStorage.getItem("lx_span")) || 14;
 
@@ -227,6 +256,51 @@ function drawList(target, items) {
     li.append(fill, el("span", "label", item.name), el("span", "count", fmt(item.count)));
     target.append(li);
   }
+}
+
+/** Total people, accumulated. The daily bars below say whether today was busy;
+ *  this says whether the thing is growing, which is a different question and
+ *  the one that actually decides anything. Built from first-timers per day,
+ *  which is the only figure that can be added up without counting anyone
+ *  twice. */
+function drawGrowth(series) {
+  const svg = document.getElementById("growth");
+  const note = document.getElementById("growth-note");
+  const NS = "http://www.w3.org/2000/svg";
+  svg.replaceChildren();
+
+  let total = 0;
+  const points = series.map((d) => (total += d.fresh));
+  const peak = Math.max(1, total);
+  const W = 720, H = 180, PAD_L = 44, PAD_B = 22, PAD_T = 10;
+  const x = (i) => PAD_L + (i / Math.max(1, series.length - 1)) * (W - PAD_L - 8);
+  const y = (v) => PAD_T + (1 - v / peak) * (H - PAD_T - PAD_B);
+
+  const add = (tag, attrs, text) => {
+    const n = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    if (text !== undefined) n.textContent = text;
+    svg.append(n);
+    return n;
+  };
+
+  // Two gridlines and their labels, each naming a value the chart reaches.
+  for (const v of [peak, Math.round(peak / 2)]) {
+    add("line", { class: "grid", x1: PAD_L, x2: W - 8, y1: y(v), y2: y(v) });
+    add("text", { class: "tick", x: 0, y: y(v) + 4 }, String(v));
+  }
+  add("text", { class: "tick", x: PAD_L, y: H - 4 }, series[0]?.day.slice(5) || "");
+  add("text", { class: "tick", x: W - 8, y: H - 4, "text-anchor": "end" },
+      series[series.length - 1]?.day.slice(5) || "");
+
+  const line = points.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  add("path", { class: "area", d: `${line} L${x(points.length - 1).toFixed(1)},${y(0)} L${x(0).toFixed(1)},${y(0)} Z` });
+  add("path", { class: "line", d: line });
+  add("circle", { class: "end", cx: x(points.length - 1), cy: y(total), r: 4 });
+
+  const added = total - (points[0] ?? 0);
+  note.textContent = `${fmt(total)} people in total over these ${series.length} days` +
+    (added > 0 ? ` · ${fmt(added)} of them arrived after the first day` : "");
 }
 
 function drawChart(series) {
@@ -293,8 +367,11 @@ async function load() {
   document.getElementById("n-users").textContent = fmt(data.today.devices);
   document.getElementById("n-new").textContent = fmt(data.today.fresh);
   document.getElementById("n-events").textContent = fmt(data.today.events);
+  document.getElementById("n-time").textContent = duration(data.today.seconds);
   document.getElementById("n-known").textContent = fmt(data.knownDevices);
 
+  document.getElementById("growth-span").textContent = "· last " + data.span + " days";
+  drawGrowth(data.series);
   drawChart(data.series);
   drawList(document.getElementById("pages"), data.pages);
   drawList(document.getElementById("uses"), data.uses);

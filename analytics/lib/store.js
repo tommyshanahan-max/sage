@@ -69,6 +69,12 @@ const emptyDay = () => ({
   events: 0,
   pages: new Map(),
   uses: new Map(),
+  // How long a visit lasts, as two running sums and nothing else. An average
+  // needs a total and a count; it does not need to know that one person stayed
+  // eleven minutes, and storing that would be the per-person record the rule
+  // above forbids. Divided at read time.
+  dwellSeconds: 0,
+  dwellVisits: 0,
 });
 
 const bump = (map, key, by = 1) => map.set(key, (map.get(key) || 0) + by);
@@ -118,6 +124,8 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
           events: saved.events || 0,
           pages: new Map(Object.entries(saved.pages || {})),
           uses: new Map(Object.entries(saved.uses || {})),
+          dwellSeconds: saved.dwellSeconds || 0,
+          dwellVisits: saved.dwellVisits || 0,
         });
       } catch { /* unreadable day: leave it out rather than guess at it */ }
     }
@@ -158,7 +166,18 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
       d.n = d.ids.size;
     }
     d.events++;
-    if (kind === "page") bump(d.pages, name);
+    if (kind === "dwell") {
+      // `name` is a whole number of seconds. Anything past half an hour is
+      // dropped rather than clamped: a tab left open is not a thirty-minute
+      // visit, and clamping it still lets one stale tab set the average for a
+      // day of two-minute ones. A value we know is wrong is better left out
+      // than trimmed to a value that is merely less wrong.
+      const seconds = parseInt(name, 10) || 0;
+      if (seconds > 0 && seconds <= 1800) {
+        d.dwellSeconds += seconds;
+        d.dwellVisits++;
+      }
+    } else if (kind === "page") bump(d.pages, name);
     else bump(d.uses, name);
     // `site` decided whether this was counted at all; it is not kept. One
     // dimension nobody asked for is one more thing to justify later.
@@ -174,13 +193,20 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
     const pages = new Map();
     const uses = new Map();
     let events = 0;
+    let dwellSeconds = 0;
+    let dwellVisits = 0;
     const series = keys.map((key) => {
       const d = days.get(key);
       if (!d) return { day: key, devices: 0, fresh: 0, events: 0 };
       for (const [k, v] of d.pages) bump(pages, k, v);
       for (const [k, v] of d.uses) bump(uses, k, v);
       events += d.events;
-      return { day: key, devices: d.n, fresh: d.fresh, events: d.events };
+      dwellSeconds += d.dwellSeconds;
+      dwellVisits += d.dwellVisits;
+      return {
+        day: key, devices: d.n, fresh: d.fresh, events: d.events,
+        seconds: d.dwellVisits ? Math.round(d.dwellSeconds / d.dwellVisits) : 0,
+      };
     });
 
     const top = (m) =>
@@ -193,7 +219,11 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
         devices: t ? t.n : 0,
         fresh: t ? t.fresh : 0,
         events: t ? t.events : 0,
+        seconds: t && t.dwellVisits ? Math.round(t.dwellSeconds / t.dwellVisits) : 0,
       },
+      // The range's average is weighted by visits rather than by day: five
+      // hundred visits on Saturday should not count the same as four on Monday.
+      averageSeconds: dwellVisits ? Math.round(dwellSeconds / dwellVisits) : 0,
       span,
       series,
       events,
@@ -217,6 +247,8 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
         events: d.events,
         pages: Object.fromEntries(d.pages),
         uses: Object.fromEntries(d.uses),
+        dwellSeconds: d.dwellSeconds,
+        dwellVisits: d.dwellVisits,
       });
     }
     dirtyDays = new Set();
