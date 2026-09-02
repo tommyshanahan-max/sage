@@ -20,6 +20,12 @@ const TZ = process.env.ANALYTICS_TZ || "Asia/Shanghai";
 const RETAIN = Number(process.env.ANALYTICS_RETAIN_DAYS || 400);
 const USER = process.env.ANALYTICS_USER || "";
 const PASSWORD = process.env.ANALYTICS_PASSWORD || "";
+// No password set means the dashboard is open to anyone who finds the hostname,
+// and every hostname is published the moment its certificate issues. That is a
+// deliberate choice, not an accident, so it is honoured rather than refused —
+// but the page says so on its face, and setting a password closes it again with
+// no other change.
+const OPEN = !PASSWORD;
 
 // The sites allowed to report. This is the whole of "whose numbers are these":
 // an origin not on the list is not recorded, so a page someone else puts your
@@ -202,13 +208,6 @@ app.get("/lx.js", (_req, res) => {
 
 app.use(express.urlencoded({ extended: false, limit: "16kb" }));
 
-app.use((_req, res, next) => {
-  if (!PASSWORD) {
-    return res.status(503).type("text/plain")
-      .send("ANALYTICS_PASSWORD is not set on the server. Refusing to serve.");
-  }
-  next();
-});
 
 function loginPage(failed) {
   return `<!doctype html><html lang="en"><head>
@@ -249,11 +248,15 @@ function loginPage(failed) {
 }
 
 app.get("/login", (req, res) => {
-  if (valid(cookie(req, COOKIE))) return res.redirect("/");
+  if (OPEN || valid(cookie(req, COOKIE))) return res.redirect("/");
   res.type("html").send(loginPage(false));
 });
 
 app.post("/login", async (req, res) => {
+  // With no password configured there is nothing to check and nothing a cookie
+  // would prove, so no session is issued rather than one signed with an empty
+  // secret — a key derived from "" is a key everybody has.
+  if (OPEN) return res.redirect("/");
   const userOk = !USER || safeEqual(String(req.body?.username ?? "").trim(), USER);
   const passOk = safeEqual(String(req.body?.password ?? ""), PASSWORD);
   if (userOk && passOk) {
@@ -275,7 +278,7 @@ app.post("/logout", (_req, res) => {
 });
 
 app.use((req, res, next) => {
-  if (valid(cookie(req, COOKIE))) return next();
+  if (OPEN || valid(cookie(req, COOKIE))) return next();
   if (req.path.startsWith("/api/")) return res.status(401).json({ error: "session expired" });
   res.redirect("/login");
 });
@@ -283,7 +286,7 @@ app.use((req, res, next) => {
 app.get("/api/stats", (req, res) => {
   const span = Math.min(Math.max(Number(req.query.days) || 14, 1), 90);
   res.set("Cache-Control", "no-store");
-  res.json({ ...store.report(span), tz: TZ, sites: SITES });
+  res.json({ ...store.report(span), tz: TZ, sites: SITES, open: OPEN });
 });
 
 app.use(express.static("public"));
@@ -293,6 +296,9 @@ app.use(express.static("public"));
 const loaded = await store.load();
 console.log(`analytics: ${loaded.days} days, ${loaded.devices} devices known`);
 console.log(`counting for: ${SITES.join(", ") || "(nothing — set ANALYTICS_SITES)"}`);
+console.log(OPEN
+  ? "dashboard: OPEN — no ANALYTICS_PASSWORD set, anyone with the hostname can read it"
+  : "dashboard: password required");
 
 // Written on a timer rather than per event: the append to the log already made
 // each event durable, and these two files are derived from it.

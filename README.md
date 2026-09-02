@@ -566,8 +566,18 @@ and a certificate error on the front door reads as the company being broken.
 ## The counter
 
 How many people used it today, how many of them had never been before, and
-which pages and functions they used. `numbers.liuxuesheng.io`, its own
-password, `analytics` in `COMPOSE_PROFILES`.
+which pages and functions they used. `numbers.liuxuesheng.io`, `analytics` in
+`COMPOSE_PROFILES`.
+
+**The dashboard's password is optional.** Set `TOMSCODING_STATS_PASSWORD` and it
+signs in like every other seat here; leave it empty and the page is open to
+anyone with the address, and says so in a banner across the top while that is
+true. Open is a choice and is treated as one — `make up` prints a note rather
+than refusing — but be clear about what it means: hostnames are published to
+public Certificate Transparency logs the moment a certificate issues, so "nobody
+knows the URL" is not a control. The data itself holds no personal information,
+so what is exposed is business information: your traffic, your growth, and which
+features people actually use.
 
 **A site reports with one script tag**, served by the counter itself so there is
 no build step and nothing to keep in sync:

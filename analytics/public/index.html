@@ -26,6 +26,7 @@
     }
   }
   *{box-sizing:border-box}
+  [hidden]{display:none !important}
   html{-webkit-text-size-adjust:100%}
   body{
     margin:0;min-height:100vh;
@@ -116,6 +117,14 @@
   }
   .empty{font-size:.85rem;color:var(--muted);margin:0}
 
+  .open-note{
+    display:flex;gap:.6rem;align-items:baseline;
+    padding:.7rem 1rem;border-radius:9px;font-size:.82rem;
+    color:var(--seal);background:var(--card);border:1px solid currentColor;
+  }
+  .open-note b{font-weight:600}
+  .open-note span{color:var(--muted)}
+
   .note{
     border-top:1px solid var(--rule);padding-top:1.2rem;
     font-size:.8rem;color:var(--muted);line-height:1.6;
@@ -130,8 +139,16 @@
   <header>
     <h1>Numbers</h1>
     <span class="sites" id="sites"></span>
-    <form method="post" action="/logout"><button class="plain" type="submit">Sign out</button></form>
+    <form method="post" action="/logout" id="signout" hidden>
+      <button class="plain" type="submit">Sign out</button>
+    </form>
   </header>
+
+  <p class="open-note" id="open-note" hidden>
+    <b>Open.</b>
+    <span>No password is set, so anyone with this address can read these numbers.
+    Set <code>TOMSCODING_STATS_PASSWORD</code> to close it.</span>
+  </p>
 
   <section>
     <h2>Today <span id="today-day" style="text-transform:none;letter-spacing:0"></span></h2>
@@ -268,6 +285,8 @@ async function load() {
   if (res.status === 401) { location.href = "/login"; return; }
   const data = await res.json();
 
+  document.getElementById("open-note").hidden = !data.open;
+  document.getElementById("signout").hidden = !!data.open;
   document.getElementById("sites").textContent = data.sites.join("  ·  ");
   document.getElementById("today-day").textContent = "· " + data.today.day;
   document.getElementById("n-users").textContent = fmt(data.today.devices);

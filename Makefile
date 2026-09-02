@@ -43,9 +43,7 @@ up: ## Build if needed and start everything
 	       echo "Run 'make partner-sync-2' first — it decides which repos and versions they see."; \
 	       exit 1; } || true
 	@grep -q '^COMPOSE_PROFILES=.*analytics' .env && ! grep -qE '^TOMSCODING_STATS_PASSWORD=.+' .env \
-	  && { echo "analytics is enabled but TOMSCODING_STATS_PASSWORD is empty."; \
-	       echo "That dashboard is how your product is doing — it needs a password."; \
-	       exit 1; } || true
+	  && echo "note: no TOMSCODING_STATS_PASSWORD — the numbers page will be open to anyone with the address." || true
 	@grep -q '^COMPOSE_PROFILES=.*analytics' .env && ! grep -qE '^TOMSCODING_STATS_SITES=.+' .env \
 	  && { echo "analytics is enabled but TOMSCODING_STATS_SITES is empty."; \
 	       echo "Nothing would be counted: a page whose origin is not listed is ignored."; \

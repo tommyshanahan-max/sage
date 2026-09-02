@@ -182,11 +182,21 @@ from the open internet, which is why it is its own container and not a route on
 the agent. A public endpoint sharing a process with your API key and a
 partner's seat would be a poor trade for one fewer container.
 
-**Collection is public; everything else is not.** Two paths answer without a
-password — the snippet, and the endpoint that receives an event. The dashboard,
-and the API behind it, need the same signed cookie as every other seat here,
-and the stats hostname is the only place either is reachable. The brand page
-proxies the two public paths and nothing else.
+**Collection is public.** Two paths answer without a password — the snippet, and
+the endpoint that receives an event. The brand page proxies those two and
+nothing else; the dashboard is not reachable from that hostname at all.
+
+**The dashboard's password is optional, and is currently not set.** With one, it
+takes the same signed cookie as every other seat. Without one it is open to
+anyone with the address, and the page carries a banner saying so. Do not treat
+the hostname as the secret: every certificate issued is published to public
+Certificate Transparency logs, and scanners read them within hours.
+
+What an open dashboard exposes is business information, not personal
+information — there is nothing in the data that identifies anyone. It is your
+traffic, your growth rate, and which features are actually used, readable by a
+competitor, a partner, or anyone who follows a link. That is the trade. Set
+`TOMSCODING_STATS_PASSWORD` and it closes with no other change.
 
 **Whose numbers these are is an allow-list.** `TOMSCODING_STATS_SITES` decides,
 and the origin is taken from the request rather than the body — a page can
