@@ -252,6 +252,8 @@
         <div class="stat accent"><span class="n" id="a-count">&mdash;</span><span class="k">People, ever</span></div>
         <div class="stat accent"><span class="n" id="a-today">&mdash;</span><span class="k">New today</span></div>
         <div class="stat"><span class="n" id="a-week">&mdash;</span><span class="k">New this week</span></div>
+        <div class="stat"><span class="n" id="a-active">&mdash;</span><span class="k">Used it today</span></div>
+        <div class="stat accent"><span class="n" id="a-back">&mdash;</span><span class="k">Came back today</span></div>
       </div>
       <p class="thin" id="app-note"></p>
     </section>
@@ -272,6 +274,7 @@
         <div class="axis" id="app-axis"></div>
         <div class="legend">
           <span><i class="swatch fresh"></i>first time</span>
+          <span><i class="swatch returning"></i>been before</span>
           <span class="spans" id="app-spans"></span>
         </div>
       </div>
@@ -594,6 +597,8 @@ function drawApp(app, series) {
     document.getElementById("a-count").textContent = "\u2014";
     document.getElementById("a-today").textContent = "\u2014";
     document.getElementById("a-week").textContent = "\u2014";
+    document.getElementById("a-active").textContent = "\u2014";
+    document.getElementById("a-back").textContent = "\u2014";
     note.innerHTML = "<b>Not reading the app.</b> Set <code>TOMSCODING_APP_COUNT_URL</code> "
       + "to the app's count endpoint and this fills in.";
     return;
@@ -601,15 +606,24 @@ function drawApp(app, series) {
   document.getElementById("a-count").textContent = fmt(app.count);
   document.getElementById("a-today").textContent = fmt(app.today);
   document.getElementById("a-week").textContent = fmt(app.week);
+  document.getElementById("a-active").textContent = fmt(app.activeToday);
+  document.getElementById("a-back").textContent = fmt(app.returningToday);
   try {
     document.getElementById("tab-app-host").textContent = new URL(app.url).hostname;
   } catch { /* leave the markup's default */ }
-  note.innerHTML = "<b>Three numbers, and that is all there is.</b> The app keeps its own "
-    + "count on its own box, because a page in mainland China cannot rely on reaching "
-    + "anything else &mdash; which is the whole reason these are two counters and not one. "
-    + "It reports how many browsers have ever opened it, and how many of those were new "
-    + "today and this week. No growth curve, no time on page, no per-feature counts: it "
-    + "does not record them, so nothing here can show them."
+  const hasBack = app.activeToday || app.returningToday;
+  note.innerHTML = "<b>The app counts itself.</b> On its own box, because a page in mainland "
+    + "China cannot rely on reaching anything else &mdash; which is the whole reason these "
+    + "are two counters and not one."
+    + (hasBack
+      ? " <b>Came back</b> is people who used it today and had used it before, so it only "
+        + "becomes meaningful the day after an arrival: everyone who turned up for the first "
+        + "time today counts as new, not returning, and cannot return until tomorrow. A low "
+        + "figure on the day of a share is arithmetic, not a verdict."
+      : " It reports arrivals only &mdash; whether anyone comes back is not recorded on that "
+        + "side yet.")
+    + " Still no time on page and no per-feature counts: the app does not record them, so "
+    + "nothing here can show them."
     + "<br><br><b>These are never added to the site's.</b> Somebody who read the poster and "
     + "somebody who used the app are not two of the same thing."
     + "<br><br><b>Nothing before 2 September 2026 is comparable.</b> Until then a device was "
@@ -713,11 +727,20 @@ function drawAppCharts(series) {
     },
   });
 
-  drawChart(series.map((d) => ({ ...d, devices: d.fresh, events: 0 })), {
+  // Stacked like the site's now that the app reports returns: the bar is
+  // everyone who used it that day, with the new half picked out. Days recorded
+  // before the app reported returns have active === 0, so the bar falls back to
+  // arrivals rather than drawing a day that had people as empty.
+  drawChart(series.map((d) => ({
+    ...d,
+    devices: Math.max(d.active || 0, d.fresh || 0),
+    events: 0,
+  })), {
     chart: "app-chart",
     axis: "app-axis",
     title: (d) => d.sampled
-      ? `${d.day} · ${d.fresh} new · ${d.count} in total`
+      ? `${d.day} · ${Math.max(d.active || 0, d.fresh)} used it · ${d.fresh} new` +
+        (d.back ? ` · ${d.back} came back` : "") + ` · ${d.count} in total`
       : `${d.day} · not recorded`,
   });
 

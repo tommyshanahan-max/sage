@@ -428,6 +428,11 @@ async function appCount(force = false) {
         count: Number(d.count) || 0,
         today: Number(d.today) || 0,
         week: Number(d.week) || 0,
+        // Added on the app's side after this was first written. Absent from an
+        // older deployment, which is why every field is defaulted rather than
+        // assumed: the two services ship separately and always will.
+        activeToday: Number(d.activeToday) || 0,
+        returningToday: Number(d.returningToday) || 0,
         url: APP_COUNT_URL,
       },
     };

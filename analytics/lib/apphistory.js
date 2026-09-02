@@ -51,14 +51,21 @@ export function createAppHistory({ dir, tz = "Asia/Shanghai" }) {
   /** One sample. Called on every successful read of the app's endpoint; the
    *  highest figure seen in a day wins, since the count only ever rises and a
    *  later sample is simply a better one. */
-  function record({ count, today }) {
+  function record({ count, today, activeToday, returningToday }) {
     const day = dayKey(Date.now(), tz);
     const prev = days.get(day);
     const next = {
       count: Math.max(count || 0, prev?.count || 0),
       fresh: Math.max(today || 0, prev?.fresh || 0),
+      // How many used it today at all, and how many of those had been before.
+      // Kept per day for the same reason as the total: the app reports only
+      // today's figure, so yesterday's exists nowhere unless it was written
+      // down while it was still today.
+      active: Math.max(activeToday || 0, prev?.active || 0),
+      back: Math.max(returningToday || 0, prev?.back || 0),
     };
-    if (prev && prev.count === next.count && prev.fresh === next.fresh) return;
+    if (prev && prev.count === next.count && prev.fresh === next.fresh
+        && prev.active === next.active && prev.back === next.back) return;
     days.set(day, next);
     dirty = true;
   }
@@ -77,7 +84,13 @@ export function createAppHistory({ dir, tz = "Asia/Shanghai" }) {
     return keys.map((day) => {
       const v = days.get(day);
       if (v) carried = v.count;
-      return { day, count: carried, fresh: v ? v.fresh : 0, sampled: !!v };
+      return {
+        day, count: carried,
+        fresh: v ? v.fresh : 0,
+        active: v ? (v.active || 0) : 0,
+        back: v ? (v.back || 0) : 0,
+        sampled: !!v,
+      };
     });
   }
 
