@@ -205,12 +205,29 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
       dwellVisits += d.dwellVisits;
       return {
         day: key, devices: d.n, fresh: d.fresh, events: d.events,
+        // Everybody there that day who had been before. Derived rather than
+        // counted separately: the two numbers must always add up, and two
+        // counters that are supposed to agree eventually do not.
+        returning: Math.max(0, d.n - d.fresh),
         seconds: d.dwellVisits ? Math.round(d.dwellSeconds / d.dwellVisits) : 0,
       };
     });
 
     const top = (m) =>
       [...m].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([name, count]) => ({ name, count }));
+
+    // How many of everyone ever seen have come back on a later day.
+    //
+    // Free: the device index already holds a first day and a last day for each
+    // browser, and the two differing IS the fact of having returned. No new
+    // event, no new field, and nothing per-person that was not already there
+    // for the "is this person new" question.
+    //
+    // It is deliberately "came back at all" rather than a cohort curve. At
+    // this size a next-day figure would be three people and a rounding error,
+    // and the honest question early on is whether anybody returns.
+    let returned = 0;
+    for (const [, seen] of devices) if (seen[1] > seen[0]) returned++;
 
     const t = days.get(today);
     return {
@@ -219,8 +236,12 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
         devices: t ? t.n : 0,
         fresh: t ? t.fresh : 0,
         events: t ? t.events : 0,
+        returning: t ? Math.max(0, t.n - t.fresh) : 0,
         seconds: t && t.dwellVisits ? Math.round(t.dwellSeconds / t.dwellVisits) : 0,
       },
+      // Of everyone ever counted, how many have been back on another day.
+      returned,
+      returnRate: devices.size ? returned / devices.size : 0,
       // The range's average is weighted by visits rather than by day: five
       // hundred visits on Saturday should not count the same as four on Monday.
       averageSeconds: dwellVisits ? Math.round(dwellSeconds / dwellVisits) : 0,

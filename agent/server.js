@@ -448,6 +448,7 @@ app.get("/api/numbers", async (_req, res) => {
     const data = await upstream.json();
     res.json({
       today: data.today,
+      returnRate: data.returnRate,
       // Just enough for a sparkline. The full picture is a click away.
       series: (data.series || []).map((d) => d.devices),
       link: NUMBERS_LINK,

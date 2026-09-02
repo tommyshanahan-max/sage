@@ -83,6 +83,14 @@
   #growth .tick{fill:var(--muted);font-family:var(--mono);font-size:11px}
   #growth .end{fill:var(--jade)}
   .growth-note{margin:.7rem 0 0;font-size:.78rem;color:var(--muted)}
+  .retention{
+    margin:.85rem 0 0;padding-top:.8rem;border-top:1px solid var(--rule);
+    display:flex;align-items:baseline;gap:.6rem;font-size:.88rem;color:var(--ink-2);
+  }
+  .retention b{
+    font-family:var(--serif);font-weight:400;font-size:1.7rem;line-height:1;
+    color:var(--jade);font-variant-numeric:tabular-nums;
+  }
   .bar{
     width:22px;flex:none;display:flex;flex-direction:column;justify-content:flex-end;
     height:100%;border-radius:3px 3px 0 0;overflow:hidden;background:transparent;
@@ -163,6 +171,7 @@
     <div class="today">
       <div class="stat accent"><span class="n" id="n-users">—</span><span class="k">People</span></div>
       <div class="stat"><span class="n" id="n-new">—</span><span class="k">First time</span></div>
+      <div class="stat accent"><span class="n" id="n-back">—</span><span class="k">Came back</span></div>
       <div class="stat"><span class="n" id="n-events">—</span><span class="k">Actions</span></div>
       <div class="stat"><span class="n" id="n-time">—</span><span class="k">Average visit</span></div>
       <div class="stat"><span class="n" id="n-known">—</span><span class="k">Known devices</span></div>
@@ -175,6 +184,7 @@
       <svg id="growth" viewBox="0 0 720 180" preserveAspectRatio="none"
            role="img" aria-label="Total people, cumulative"></svg>
       <p class="growth-note" id="growth-note"></p>
+      <p class="retention" id="retention"></p>
     </div>
   </section>
 
@@ -212,6 +222,11 @@
     on Monday and Tuesday is one person, not two — so there is no honest weekly
     total to show and none is shown. Pages and functions <i>are</i> summed over the
     range, because those are actions, and two of them are two.
+    <br><br>
+    <b>Came back</b> counts people who were here today and had been before. The
+    percentage beside the growth curve is a different question — of everyone ever
+    counted, how many have returned on <i>any</i> later day. Both come from the same
+    two dates already kept per browser, so neither needed anything new recorded.
     <br><br>
     <b>Average visit</b> is how long the page was actually on screen — time in a
     background tab does not count, and anything past half an hour is dropped as a
@@ -303,6 +318,19 @@ function drawGrowth(series) {
     (added > 0 ? ` · ${fmt(added)} of them arrived after the first day` : "");
 }
 
+/** Return rate, next to the growth it qualifies. Growth without return is a
+ *  leaky bucket, and the two numbers are only meaningful read together. */
+function drawReturn(data) {
+  const box = document.getElementById("retention");
+  const pct = Math.round(data.returnRate * 100);
+  box.replaceChildren(
+    el("b", null, pct + "%"),
+    el("span", null,
+      `of the ${fmt(data.knownDevices)} people ever counted have come back on another day` +
+      ` — ${fmt(data.returned)} of them`)
+  );
+}
+
 function drawChart(series) {
   const chart = document.getElementById("chart");
   const axis = document.getElementById("axis");
@@ -366,12 +394,14 @@ async function load() {
   document.getElementById("today-day").textContent = "· " + data.today.day;
   document.getElementById("n-users").textContent = fmt(data.today.devices);
   document.getElementById("n-new").textContent = fmt(data.today.fresh);
+  document.getElementById("n-back").textContent = fmt(data.today.returning);
   document.getElementById("n-events").textContent = fmt(data.today.events);
   document.getElementById("n-time").textContent = duration(data.today.seconds);
   document.getElementById("n-known").textContent = fmt(data.knownDevices);
 
   document.getElementById("growth-span").textContent = "· last " + data.span + " days";
   drawGrowth(data.series);
+  drawReturn(data);
   drawChart(data.series);
   drawList(document.getElementById("pages"), data.pages);
   drawList(document.getElementById("uses"), data.uses);
