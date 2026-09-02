@@ -47,6 +47,7 @@ if [ "$SEAT" = "1" ]; then
   LEGACY_REPO="${TOMSCODING_PARTNER_REPO:-$(from_env TOMSCODING_PARTNER_REPO)}"
   LEGACY_BRANCH="${TOMSCODING_PARTNER_BRANCH:-main}"
   EXCLUDE="${TOMSCODING_PARTNER_EXCLUDE:-$(from_env TOMSCODING_PARTNER_EXCLUDE)}"
+  INCLUDE="${TOMSCODING_PARTNER_INCLUDE:-$(from_env TOMSCODING_PARTNER_INCLUDE)}"
 else
   DEST="partner/source-$SEAT"
   VARNAME="TOMSCODING_PARTNER${SEAT}_REPOS"
@@ -56,6 +57,8 @@ else
   LEGACY_BRANCH="main"
   EXCLUDE="$(eval echo "\${TOMSCODING_PARTNER${SEAT}_EXCLUDE:-}")"
   [ -z "$EXCLUDE" ] && EXCLUDE="$(from_env "TOMSCODING_PARTNER${SEAT}_EXCLUDE")"
+  INCLUDE="$(eval echo "\${TOMSCODING_PARTNER${SEAT}_INCLUDE:-}")"
+  [ -z "$INCLUDE" ] && INCLUDE="$(from_env "TOMSCODING_PARTNER${SEAT}_INCLUDE")"
 fi
 
 # Preferred: a list. Comma- or newline-separated, each entry `<url>#<branch>`,
@@ -136,6 +139,41 @@ while IFS= read -r entry; do
   #
   # Deleted, not hidden. A file that is not there cannot be read, asked for, or
   # talked out of anybody.
+  # An allow list, when one is set, and it runs before the deny list.
+  #
+  # EXCLUDE names what to hold back and is right for a partner: you have read
+  # the repository, you know which few files are yours alone, and everything
+  # else is theirs to see. It is the wrong shape for a stranger. A deny list
+  # fails open — every file added to that repository next month arrives in the
+  # snapshot unless somebody remembers to name it — and "somebody remembers" is
+  # not a security property.
+  #
+  # INCLUDE fails closed instead. Name the files a prospective partner should
+  # have, and a new file is absent by default rather than present by default.
+  # For a link that can be forwarded, that is the only defensible default.
+  kept=""
+  if [ -n "$INCLUDE" ]; then
+    keep="$TMP/keep-$folder"
+    mkdir -p "$keep"
+    while IFS= read -r rel; do
+      rel="$(echo "$rel" | xargs)"
+      [ -z "$rel" ] && continue
+      case "$rel" in /*|*..*) echo "  skipping unsafe include '$rel'" >&2; continue;; esac
+      if [ -e "$TMP/next/$folder/$rel" ]; then
+        mkdir -p "$keep/$(dirname "$rel")"
+        cp -a "$TMP/next/$folder/$rel" "$keep/$rel"
+        kept="$kept $rel"
+        echo "  kept $folder/$rel"
+      else
+        # Loud, because a typo here silently produces an empty snapshot, and an
+        # empty snapshot looks exactly like a working one until somebody opens it.
+        echo "  WARNING: '$rel' is not in $folder — nothing kept for it" >&2
+      fi
+    done < <(printf '%s\n' "$INCLUDE" | tr ',' '\n')
+    rm -rf "${TMP:?}/next/$folder"
+    mv "$keep" "$TMP/next/$folder"
+  fi
+
   withheld=""
   while IFS= read -r rel; do
     rel="$(echo "$rel" | xargs)"
@@ -154,6 +192,9 @@ while IFS= read -r entry; do
   # Recorded rather than quietly done. Someone reading this snapshot should be
   # able to tell it is not the whole repository.
   [ -n "$withheld" ] && printf '  withheld%s\n' "$withheld" >> "$MANIFEST"
+  # Said plainly on the snapshot itself. Somebody reading it should not be able
+  # to mistake a handful of chosen files for the repository.
+  [ -n "$kept" ] && printf '  only these files:%s\n' "$kept" >> "$MANIFEST"
   printf '\n' >> "$MANIFEST"
   echo "  -> $folder  ($commit — $subject)"
   count=$((count + 1))

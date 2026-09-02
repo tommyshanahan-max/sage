@@ -34,6 +34,8 @@ import {
   PARTNER_TOOLS,
   PARTNER_DENIED,
   PARTNER_VOICE,
+  PROSPECT_VOICE,
+  isProspect,
 } from "./lib/role.js";
 import { parseDocList, listDocs, readDoc, renderMarkdown } from "./lib/docs.js";
 
@@ -703,7 +705,7 @@ app.post("/api/chat", express.json({ limit: "24mb" }), async (req, res) => {
     systemPrompt: {
       type: "preset",
       preset: "claude_code",
-      append: isPartner ? PARTNER_VOICE : SAGE_VOICE,
+      append: isProspect ? PROSPECT_VOICE : isPartner ? PARTNER_VOICE : SAGE_VOICE,
     },
     // Every tool runs without stopping to ask, on the same files the editor
     // opens. Git is what protects them — see the README.

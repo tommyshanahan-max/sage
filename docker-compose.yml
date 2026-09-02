@@ -314,7 +314,12 @@ services:
     restart: unless-stopped
     user: "1000:1000"
     environment:
-      AGENT_ROLE: partner
+      # "partner" or "prospect". Same limits either way — the mounts and the
+      # deny list do not change — but a prospect seat is a link given to
+      # somebody deciding whether to work with you at all, so Sage makes the
+      # case for the product and refuses the commercial questions that are the
+      # owner's to answer.
+      AGENT_ROLE: ${TOMSCODING_PARTNER2_ROLE:-partner}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       AGENT_MODEL: ${TOMSCODING_AGENT_MODEL:-}
       AGENT_USER: ${TOMSCODING_PARTNER2_USER:-}
