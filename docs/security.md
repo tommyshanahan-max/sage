@@ -121,6 +121,18 @@ writes a `SNAPSHOT.txt` recording each one's commit. Nothing the partner does
 advances it, and there is no path from their seat to your workspace, your
 repositories or your other projects.
 
+**Two lists, and the second is the one that gets forgotten.**
+`TOMSCODING_PARTNER_REPOS` decides which repositories reach that machine.
+`TOMSCODING_PARTNER_EXCLUDE` decides which files inside them are deleted before
+the snapshot goes into place. Both are needed, because a repository is rarely
+written for one audience — the same repo can hold the README you want a partner
+to read and the document about what share to offer him.
+
+**Naming documents in `TOMSCODING_PARTNER_DOCS` is not a control.** That panel
+is a convenience for opening a file in one click. The agent can read anything on
+that disk when asked, so the only reliable way to not show a file is for it not
+to be there.
+
 **That list is the access control.** A repository not on it was never cloned, so
 it is not on that machine — there is nothing to find, no credential that would
 fetch it, and no network route to where it lives. This is the difference between

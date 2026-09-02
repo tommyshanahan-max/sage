@@ -46,6 +46,7 @@ if [ "$SEAT" = "1" ]; then
   REPOS="${TOMSCODING_PARTNER_REPOS:-$(from_env TOMSCODING_PARTNER_REPOS)}"
   LEGACY_REPO="${TOMSCODING_PARTNER_REPO:-$(from_env TOMSCODING_PARTNER_REPO)}"
   LEGACY_BRANCH="${TOMSCODING_PARTNER_BRANCH:-main}"
+  EXCLUDE="${TOMSCODING_PARTNER_EXCLUDE:-$(from_env TOMSCODING_PARTNER_EXCLUDE)}"
 else
   DEST="partner/source-$SEAT"
   VARNAME="TOMSCODING_PARTNER${SEAT}_REPOS"
@@ -53,6 +54,8 @@ else
   [ -z "$REPOS" ] && REPOS="$(from_env "$VARNAME")"
   LEGACY_REPO=""
   LEGACY_BRANCH="main"
+  EXCLUDE="$(eval echo "\${TOMSCODING_PARTNER${SEAT}_EXCLUDE:-}")"
+  [ -z "$EXCLUDE" ] && EXCLUDE="$(from_env "TOMSCODING_PARTNER${SEAT}_EXCLUDE")"
 fi
 
 # Preferred: a list. Comma- or newline-separated, each entry `<url>#<branch>`,
@@ -122,8 +125,36 @@ while IFS= read -r entry; do
   subject="$(git -C "$TMP/next/$folder" log -1 --format=%s)"
   rm -rf "$TMP/next/$folder/.git"
 
-  printf '%s\n  repo    %s\n  branch  %s\n  commit  %s\n  subject %s\n\n' \
+  # Held back before the snapshot is ever put in place.
+  #
+  # The repository list decides which repositories are on that machine; this
+  # decides which files within them are. Both are needed, because a repository
+  # is rarely all one audience: study-pal's README is exactly what a partner
+  # should read, and its TODO.md discusses what share to give that same
+  # partner. Listing one in AGENT_DOCS and not the other was never enough — the
+  # documents panel is a convenience, and the agent can read anything on disk.
+  #
+  # Deleted, not hidden. A file that is not there cannot be read, asked for, or
+  # talked out of anybody.
+  withheld=""
+  while IFS= read -r rel; do
+    rel="$(echo "$rel" | xargs)"
+    [ -z "$rel" ] && continue
+    case "$rel" in /*|*..*) echo "  skipping unsafe exclude '$rel'" >&2; continue;; esac
+    target="$TMP/next/$folder/$rel"
+    if [ -e "$target" ]; then
+      rm -rf "$target"
+      withheld="$withheld $rel"
+      echo "  withheld $folder/$rel"
+    fi
+  done < <(printf '%s\n' "$EXCLUDE" | tr ',' '\n')
+
+  printf '%s\n  repo    %s\n  branch  %s\n  commit  %s\n  subject %s\n' \
     "$folder" "$url" "$branch" "$commit" "$subject" >> "$MANIFEST"
+  # Recorded rather than quietly done. Someone reading this snapshot should be
+  # able to tell it is not the whole repository.
+  [ -n "$withheld" ] && printf '  withheld%s\n' "$withheld" >> "$MANIFEST"
+  printf '\n' >> "$MANIFEST"
   echo "  -> $folder  ($commit — $subject)"
   count=$((count + 1))
 done < <(printf '%s\n' "$REPOS" | tr ',' '\n')
