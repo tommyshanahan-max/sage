@@ -570,6 +570,10 @@ async function send(prompt) {
   if (!body.textContent) body.textContent = "(no reply)";
   setBusy(false, "ready");
   input.focus();
+  // A mockup made during that turn shows itself. Asking for a change and then
+  // being told to go and find the result is the kind of small friction that
+  // makes a review tool feel like homework.
+  showNewMockup();
   // Said aloud without being asked for. A conversation where you tap to hear
   // each answer is not a conversation — and the circle stops her at any point.
   speak(body.textContent);
@@ -635,6 +639,38 @@ function stageLoad(url, label, isApp) {
   showStage(true);
 }
 
+/** Loads the newest mockup into the stage if the last turn produced one.
+ *
+ *  Compared against what was there before rather than counted: a turn that
+ *  edits an existing mockup is the commonest case after the first, and a count
+ *  would miss it entirely. */
+let knownMockups = new Map();
+
+async function readMockups() {
+  try {
+    const res = await fetch("/api/mockups");
+    if (!res.ok) return null;
+    const data = await res.json();
+    return new Map((data.mockups || []).map((m) => [m.name, m.updatedAt]));
+  } catch {
+    return null;                      // not a partner seat, or nothing to read
+  }
+}
+
+async function showNewMockup() {
+  if (stage.hidden && window.innerWidth < 960) return;   // do not hijack a phone
+  const now = await readMockups();
+  if (!now) return;
+
+  let newest = null;
+  for (const [name, when] of now) {
+    if (knownMockups.get(name) === when) continue;       // unchanged
+    if (!newest || when > newest.when) newest = { name, when };
+  }
+  knownMockups = now;
+  if (newest) stageLoad("/mockups/" + encodeURIComponent(newest.name), newest.name, false);
+}
+
 stageToggle.addEventListener("click", () => showStage(stage.hidden));
 document.getElementById("stage-close").addEventListener("click", () => showStage(false));
 document.getElementById("stage-reload").addEventListener("click", () => {
@@ -668,6 +704,9 @@ fetch("/api/seat")
         if (saved !== null) want = saved === "1";
       } catch { /* private window */ }
       showStage(want);
+      // A baseline, so the first turn of a session does not present something
+      // made last week as if it had just appeared.
+      readMockups().then((m) => { if (m) knownMockups = m; });
     }
     if (seatRole === "partner") {
       mockupsToggle.hidden = false;
