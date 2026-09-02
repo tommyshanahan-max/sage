@@ -210,6 +210,27 @@
       </div>
       <p class="thin" id="app-note"></p>
     </section>
+
+    <section>
+      <h2>Growth <span id="app-growth-span" style="text-transform:none;letter-spacing:0"></span></h2>
+      <div class="chartwrap">
+        <svg id="app-growth" viewBox="0 0 720 180" preserveAspectRatio="none"
+             role="img" aria-label="How many people have ever used the app, over time"></svg>
+        <p class="growth-note" id="app-growth-note"></p>
+      </div>
+    </section>
+
+    <section>
+      <h2>New each day</h2>
+      <div class="chartwrap">
+        <div class="chart" id="app-chart"></div>
+        <div class="axis" id="app-axis"></div>
+        <div class="legend">
+          <span><i class="swatch fresh"></i>first time</span>
+          <span class="spans" id="app-spans"></span>
+        </div>
+      </div>
+    </section>
   </div>
 
   <div id="view-site" role="tabpanel" aria-labelledby="tab-site" hidden>
@@ -327,15 +348,22 @@ function drawList(target, items) {
  *  the one that actually decides anything. Built from first-timers per day,
  *  which is the only figure that can be added up without counting anyone
  *  twice. */
-function drawGrowth(series) {
-  const svg = document.getElementById("growth");
-  const note = document.getElementById("growth-note");
+// One renderer, two products. The site's curve is built by accumulating each
+// day's first-timers; the app reports a running total instead, so `absolute`
+// plots what it said rather than a sum of what it never reported. Same axes,
+// same shape, same reading — a second chart style would make the two look like
+// different kinds of fact.
+function drawGrowth(series, opts = {}) {
+  const svg = document.getElementById(opts.svg || "growth");
+  const note = document.getElementById(opts.note || "growth-note");
   const NS = "http://www.w3.org/2000/svg";
   svg.replaceChildren();
 
   let total = 0;
-  const points = series.map((d) => (total += d.fresh));
-  const peak = Math.max(1, total);
+  const points = opts.absolute
+    ? series.map((d) => (total = d.count))
+    : series.map((d) => (total += d.fresh));
+  const peak = Math.max(1, ...points);
   const W = 720, H = 180, PAD_L = 44, PAD_B = 22, PAD_T = 10;
   const x = (i) => PAD_L + (i / Math.max(1, series.length - 1)) * (W - PAD_L - 8);
   const y = (v) => PAD_T + (1 - v / peak) * (H - PAD_T - PAD_B);
@@ -363,8 +391,10 @@ function drawGrowth(series) {
   add("circle", { class: "end", cx: x(points.length - 1), cy: y(total), r: 4 });
 
   const added = total - (points[0] ?? 0);
-  note.textContent = `${fmt(total)} people in total over these ${series.length} days` +
-    (added > 0 ? ` · ${fmt(added)} of them arrived after the first day` : "");
+  note.textContent = opts.noteText
+    ? opts.noteText(total, added, series)
+    : `${fmt(total)} people in total over these ${series.length} days` +
+      (added > 0 ? ` · ${fmt(added)} of them arrived after the first day` : "");
 }
 
 /** Return rate, next to the growth it qualifies. Growth without return is a
@@ -380,17 +410,18 @@ function drawReturn(data) {
   );
 }
 
-function drawChart(series) {
-  const chart = document.getElementById("chart");
-  const axis = document.getElementById("axis");
+function drawChart(series, opts = {}) {
+  const chart = document.getElementById(opts.chart || "chart");
+  const axis = document.getElementById(opts.axis || "axis");
   chart.replaceChildren();
   axis.replaceChildren();
   const max = Math.max(1, ...series.map((d) => d.devices));
 
   for (const day of series) {
     const bar = el("div", "bar");
-    bar.title = day.day + " · " + day.devices + " people, " + day.fresh +
-                " first time, " + day.events + " actions";
+    bar.title = opts.title ? opts.title(day)
+      : day.day + " · " + day.devices + " people, " + day.fresh +
+        " first time, " + day.events + " actions";
     if (!day.devices) {
       bar.append(el("div", "zero"));
     } else {
@@ -440,7 +471,7 @@ async function load() {
   if (res.status === 401) { location.href = "/login"; return; }
   const data = await res.json();
 
-  drawApp(data.app);
+  drawApp(data.app, data.appSeries || []);
   // Open, and reachable without signing in anywhere. Behind a seat's proxy the
   // second half is false, so the warning would be too.
   document.getElementById("open-note").hidden = !data.open || data.proxied;
@@ -463,8 +494,9 @@ async function load() {
 }
 
 // The app's three numbers, and an honest account of why there are only three.
-function drawApp(app) {
+function drawApp(app, series) {
   const note = document.getElementById("app-note");
+  drawAppCharts(series);
   if (!app) {
     document.getElementById("a-count").textContent = "\u2014";
     document.getElementById("a-today").textContent = "\u2014";
@@ -492,6 +524,47 @@ function drawApp(app) {
     + "the app and left was never counted. The total carries that gap forward permanently. "
     + "Treat the earlier figures as a floor, and any before-and-after comparison as two "
     + "different measurements rather than a trend.";
+}
+
+// The app's own two charts, drawn by the same renderers as the site's.
+//
+// The app reports a running total and today's arrivals, and nothing else. So
+// the curve plots the total it reported, and the bars show only first-timers —
+// there is no returning half to stack, because the app does not report one.
+// The legend says "first time" alone rather than showing an empty swatch for a
+// number nobody has.
+function drawAppCharts(series) {
+  const sampled = series.filter((d) => d.sampled);
+  document.getElementById("app-growth-span").textContent =
+    "· last " + series.length + " days";
+
+  drawGrowth(series, {
+    svg: "app-growth",
+    note: "app-growth-note",
+    absolute: true,
+    noteText: (total) => {
+      if (!sampled.length) return "Nothing recorded yet — the first reading lands within the hour.";
+      const since = sampled[0].day;
+      return `${fmt(total)} people have used the app in total` +
+        ` · recorded daily since ${since}` +
+        (sampled.length < series.length
+          ? ", so the flat stretch before that is missing history rather than a quiet week"
+          : "");
+    },
+  });
+
+  drawChart(series.map((d) => ({ ...d, devices: d.fresh, events: 0 })), {
+    chart: "app-chart",
+    axis: "app-axis",
+    title: (d) => d.sampled
+      ? `${d.day} · ${d.fresh} new · ${d.count} in total`
+      : `${d.day} · not recorded`,
+  });
+
+  const box = document.getElementById("app-spans");
+  box.textContent = sampled.length
+    ? "recording since " + sampled[0].day
+    : "not recording yet";
 }
 
 // Which product is on screen. The app leads, because it is the one people use.

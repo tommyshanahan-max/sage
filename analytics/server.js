@@ -17,6 +17,7 @@
 import express from "express";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { createStore } from "./lib/store.js";
+import { createAppHistory } from "./lib/apphistory.js";
 
 const PORT = process.env.PORT || 3000;
 const DIR = process.env.ANALYTICS_DIR || "/data";
@@ -45,6 +46,7 @@ const SITES = (process.env.ANALYTICS_SITES || "")
   .split(/[\s,]+/).map((s) => s.trim().toLowerCase()).filter(Boolean);
 
 const store = createStore({ dir: DIR, tz: TZ, retainDays: RETAIN });
+const appHistory = createAppHistory({ dir: DIR, tz: TZ });
 
 // ---------------------------------------------------------------------------
 // Sessions — the same shape as the agent's, for the same reasons. iOS drops
@@ -349,9 +351,9 @@ const APP_COUNT_URL = process.env.ANALYTICS_APP_COUNT_URL || "";
 const APP_CACHE_MS = 60_000;
 let appCache = { at: 0, value: null };
 
-async function appCount() {
+async function appCount(force = false) {
   if (!APP_COUNT_URL) return null;
-  if (Date.now() - appCache.at < APP_CACHE_MS) return appCache.value;
+  if (!force && Date.now() - appCache.at < APP_CACHE_MS) return appCache.value;
   try {
     const r = await fetch(APP_COUNT_URL, { signal: AbortSignal.timeout(4000) });
     if (!r.ok) throw new Error("app said " + r.status);
@@ -368,6 +370,9 @@ async function appCount() {
         url: APP_COUNT_URL,
       },
     };
+    // Written down, because this answer has no past in it and the sequence of
+    // them is the only place a growth curve can come from.
+    appHistory.record(appCache.value);
   } catch {
     // Keep the last good figure for one cache window rather than blinking the
     // section out of existence over a single bad request.
@@ -381,6 +386,7 @@ app.get("/api/stats", async (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({
     ...store.report(span), tz: TZ, sites: SITES, open: OPEN, app: await appCount(),
+    appSeries: appHistory.series(span),
     // Whether this reached us through a seat rather than off the open
     // hostname. Only the agent holds the internal token, and it only forwards
     // for a signed-in owner — so "no password here" is true of this service
@@ -396,6 +402,11 @@ app.use(express.static("public"));
 // ---------------------------------------------------------------------------
 
 const loaded = await store.load();
+const appDays = await appHistory.load();
+if (APP_COUNT_URL) {
+  console.log(`app history: ${appDays} days recorded`);
+  appCount().catch(() => {});   // one sample at boot, so today has a point
+}
 console.log(`analytics: ${loaded.days} days, ${loaded.devices} devices known`);
 console.log(`counting for: ${SITES.join(", ") || "(nothing — set ANALYTICS_SITES)"}`);
 console.log(OPEN
@@ -405,6 +416,15 @@ console.log(OPEN
 // The only thing that writes. Study Pal's docs/PRIVACY.md forbids per-person
 // timestamps, so there is no event log to append to — an event updates a day's
 // totals in memory, and a day is the finest grain that reaches disk.
+// Sampled on a timer as well as on demand. Left to the dashboard's own
+// requests, the series would have a gap for every day nobody happened to look
+// — which is exactly the quiet week whose shape you would want to see later.
+if (APP_COUNT_URL) {
+  setInterval(() => {
+    appCount(true).catch(() => {});
+  }, 3600_000).unref();
+}
+setInterval(() => appHistory.flush().catch((e) => console.error("app history:", e.message)), 30_000).unref();
 setInterval(() => store.flush().catch((e) => console.error("flush:", e.message)), 10_000).unref();
 setInterval(() => store.prune().catch((e) => console.error("prune:", e.message)), 6 * 3600_000).unref();
 
