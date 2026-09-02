@@ -324,9 +324,14 @@
   .composer{max-width:44rem;margin:0 auto;display:flex;gap:.6rem;align-items:flex-end}
   textarea{
     flex:1;resize:none;font:inherit;color:var(--ink);background:var(--paper);
-    border:1px solid var(--rule);border-radius:10px;padding:.65rem .85rem;
-    min-height:2.9rem;max-height:12rem;
+    /* Larger than the page's body text, not smaller. This is the one field
+       the whole page exists for, and a composer set at 16px reads as a form
+       field rather than as somewhere to think. */
+    font-size:1.12rem;line-height:1.5;
+    border:1px solid var(--rule);border-radius:10px;padding:.7rem .9rem;
+    min-height:3.1rem;max-height:12rem;
   }
+  textarea::placeholder{font-size:1.02rem}
   textarea:focus{outline:2px solid var(--gold);outline-offset:-1px;border-color:transparent}
   #send{
     font:inherit;font-weight:600;font-size:.88rem;cursor:pointer;color:#fff;
@@ -807,7 +812,7 @@ input.addEventListener("keydown", (e) => {
 
 input.addEventListener("input", () => {
   input.style.height = "auto";
-  input.style.height = Math.min(input.scrollHeight, 192) + "px";
+  input.style.height = Math.min(input.scrollHeight, 220) + "px";
 });
 
 // ---------------------------------------------------------------------------
