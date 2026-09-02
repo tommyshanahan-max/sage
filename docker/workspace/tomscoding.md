@@ -48,9 +48,10 @@ reachable only through Caddy.
 | `agent.tomscoding.com` | Sage — a chat interface over the Claude Agent SDK |
 | `partner.tomscoding.com` | A partner seat: the same Sage, one read-only snapshot, mockups only |
 | `liuxuesheng.io` | The Liuxuesheng brand homepage, plus the door to the partner seats |
+| `numbers.liuxuesheng.io` | The counter: people per day, and what they used |
 
 Optional services are Compose profiles (`seat2`, `browser`, `agent`,
-`partner`, `partner2`) enabled in `.env`, so a deployment that wants only the
+`partner`, `partner2`, `analytics`) enabled in `.env`, so a deployment that wants only the
 IDE spends nothing on the rest. `liuxuesheng.io` is not one of them — it is a
 static page Caddy serves from disk, with no container behind it.
 

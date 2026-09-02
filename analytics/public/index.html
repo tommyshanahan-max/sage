@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Numbers</title>
+<!--
+  Same constraints as every other page here: no web fonts, no CDN, no
+  analytics library. It would be a strange dashboard that loaded a tracker.
+-->
+<style>
+  :root{
+    --paper:#f2f0ea; --card:#fbfaf7; --card-2:#f1efe8; --ink:#1a1c1a;
+    --ink-2:#4c5350; --muted:#828b87; --rule:#e0ddd3;
+    --jade:#1f6b52; --jade-soft:#e4efea; --seal:#a8342a;
+    --serif:ui-serif,"New York",Georgia,"Songti SC","Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
+           "Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#12140f; --card:#1a1d18; --card-2:#20241e; --ink:#eceee6;
+      --ink-2:#aab2a9; --muted:#7c857c; --rule:#2a2f27;
+      --jade:#5cc39c; --jade-soft:#12261f; --seal:#d9705f;
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;min-height:100vh;
+    padding:clamp(1.5rem,4vw,3rem) clamp(1rem,4vw,2rem) 4rem;
+    background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:16px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  main{max-width:52rem;margin:0 auto;display:flex;flex-direction:column;gap:2rem}
+
+  header{display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap}
+  h1{margin:0;font-family:var(--serif);font-weight:400;font-size:2rem;line-height:1}
+  header .sites{font-family:var(--mono);font-size:.76rem;color:var(--muted)}
+  header form{margin-left:auto}
+  .plain{
+    font:inherit;font-size:.78rem;color:var(--muted);background:none;
+    border:1px solid var(--rule);border-radius:6px;padding:.25rem .7rem;cursor:pointer;
+  }
+  .plain:hover{color:var(--jade);border-color:var(--jade)}
+  .plain:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+
+  h2{
+    margin:0 0 .85rem;font-family:var(--sans);font-size:.7rem;font-weight:600;
+    letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
+  }
+
+  /* ---------- today ---------- */
+  .today{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.7rem}
+  .stat{
+    background:var(--card);border:1px solid var(--rule);border-radius:11px;
+    padding:1.1rem 1.2rem;
+  }
+  .stat .n{
+    font-family:var(--serif);font-size:2.6rem;line-height:1;letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;display:block;
+  }
+  .stat.accent .n{color:var(--jade)}
+  .stat .k{
+    display:block;margin-top:.4rem;font-size:.7rem;font-weight:600;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  }
+
+  /* ---------- the chart ---------- */
+  .chartwrap{
+    background:var(--card);border:1px solid var(--rule);border-radius:11px;
+    padding:1.1rem 1.2rem .8rem;overflow-x:auto;
+  }
+  .chart{display:flex;align-items:flex-end;gap:3px;height:150px;min-width:max-content}
+  .bar{
+    width:22px;flex:none;display:flex;flex-direction:column;justify-content:flex-end;
+    height:100%;border-radius:3px 3px 0 0;overflow:hidden;background:transparent;
+  }
+  .bar .returning{background:var(--jade-soft);border:1px solid var(--jade);border-bottom:0}
+  .bar .fresh{background:var(--jade)}
+  .bar .zero{height:2px;background:var(--rule)}
+  .axis{
+    display:flex;gap:3px;margin-top:.45rem;min-width:max-content;
+    font-family:var(--mono);font-size:.6rem;color:var(--muted);
+  }
+  .axis span{width:22px;flex:none;text-align:center}
+  .legend{
+    display:flex;gap:1rem;margin-top:.8rem;font-size:.74rem;color:var(--muted);
+    align-items:center;flex-wrap:wrap;
+  }
+  .swatch{width:10px;height:10px;border-radius:2px;display:inline-block;
+    margin-right:.35rem;vertical-align:-1px}
+  .swatch.fresh{background:var(--jade)}
+  .swatch.returning{background:var(--jade-soft);border:1px solid var(--jade)}
+  .legend .spans{margin-left:auto;display:flex;gap:.35rem}
+  .spans button[aria-pressed="true"]{color:var(--jade);border-color:var(--jade)}
+
+  /* ---------- lists ---------- */
+  .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(17rem,1fr));gap:1.5rem}
+  ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.3rem}
+  li{
+    display:grid;grid-template-columns:1fr auto;gap:.8rem;align-items:center;
+    padding:.5rem .8rem;background:var(--card);border:1px solid var(--rule);
+    border-radius:8px;position:relative;overflow:hidden;
+  }
+  li .fill{position:absolute;inset:0 auto 0 0;background:var(--jade-soft);z-index:0}
+  li .label{
+    position:relative;z-index:1;font-family:var(--mono);font-size:.8rem;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  li .count{
+    position:relative;z-index:1;font-variant-numeric:tabular-nums;
+    font-size:.85rem;color:var(--ink-2);
+  }
+  .empty{font-size:.85rem;color:var(--muted);margin:0}
+
+  .note{
+    border-top:1px solid var(--rule);padding-top:1.2rem;
+    font-size:.8rem;color:var(--muted);line-height:1.6;
+  }
+  .note b{color:var(--ink-2);font-weight:600}
+  .note code{font-family:var(--mono);font-size:.92em;color:var(--jade)}
+</style>
+</head>
+<body>
+<main>
+
+  <header>
+    <h1>Numbers</h1>
+    <span class="sites" id="sites"></span>
+    <form method="post" action="/logout"><button class="plain" type="submit">Sign out</button></form>
+  </header>
+
+  <section>
+    <h2>Today <span id="today-day" style="text-transform:none;letter-spacing:0"></span></h2>
+    <div class="today">
+      <div class="stat accent"><span class="n" id="n-users">—</span><span class="k">People</span></div>
+      <div class="stat"><span class="n" id="n-new">—</span><span class="k">First time</span></div>
+      <div class="stat"><span class="n" id="n-events">—</span><span class="k">Actions</span></div>
+      <div class="stat"><span class="n" id="n-known">—</span><span class="k">Known devices</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Every day</h2>
+    <div class="chartwrap">
+      <div class="chart" id="chart"></div>
+      <div class="axis" id="axis"></div>
+      <div class="legend">
+        <span><i class="swatch fresh"></i>first time</span>
+        <span><i class="swatch returning"></i>been before</span>
+        <span class="spans" id="spans"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="two">
+    <section>
+      <h2>Pages, most used</h2>
+      <ol id="pages"></ol>
+    </section>
+    <section>
+      <h2>Functions, most used</h2>
+      <ol id="uses"></ol>
+    </section>
+  </div>
+
+  <p class="note">
+    <b>One person means one browser.</b> Counting is a random id this site puts in
+    that browser's own storage — no account, no IP address kept, no third party,
+    nothing that follows anyone anywhere else. The same person on a phone and a
+    laptop is two; someone who clears their storage is new again.
+    <br><br>
+    <b>Days are not added up.</b> The bars are people per day, and the same person
+    on Monday and Tuesday is one person, not two — so there is no honest weekly
+    total to show and none is shown. Pages and functions <i>are</i> summed over the
+    range, because those are actions, and two of them are two.
+    <br><br>
+    A function is counted when the app calls <code>lx("name")</code>. Nothing else
+    is recorded.
+  </p>
+
+</main>
+
+<script>
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+};
+const fmt = (n) => n.toLocaleString("en-US");
+
+let span = Number(localStorage.getItem("lx_span")) || 14;
+
+function drawList(target, items) {
+  target.replaceChildren();
+  if (!items.length) {
+    target.append(el("p", "empty", "Nothing yet."));
+    return;
+  }
+  const max = items[0].count || 1;
+  for (const item of items) {
+    const li = el("li");
+    const fill = el("span", "fill");
+    fill.style.width = Math.max(2, (item.count / max) * 100) + "%";
+    li.append(fill, el("span", "label", item.name), el("span", "count", fmt(item.count)));
+    target.append(li);
+  }
+}
+
+function drawChart(series) {
+  const chart = document.getElementById("chart");
+  const axis = document.getElementById("axis");
+  chart.replaceChildren();
+  axis.replaceChildren();
+  const max = Math.max(1, ...series.map((d) => d.devices));
+
+  for (const day of series) {
+    const bar = el("div", "bar");
+    bar.title = day.day + " · " + day.devices + " people, " + day.fresh +
+                " first time, " + day.events + " actions";
+    if (!day.devices) {
+      bar.append(el("div", "zero"));
+    } else {
+      // Two stacked pieces, so "new" is read off the same bar as the total
+      // rather than from a second chart the eye has to reconcile.
+      const returning = day.devices - day.fresh;
+      const rHeight = (returning / max) * 100;
+      const fHeight = (day.fresh / max) * 100;
+      if (returning > 0) {
+        const r = el("div", "returning");
+        r.style.height = rHeight + "%";
+        bar.append(r);
+      }
+      if (day.fresh > 0) {
+        const f = el("div", "fresh");
+        f.style.height = fHeight + "%";
+        bar.append(f);
+      }
+    }
+    chart.append(bar);
+    axis.append(el("span", null, day.day.slice(8)));
+  }
+}
+
+function drawSpans() {
+  const box = document.getElementById("spans");
+  box.replaceChildren();
+  for (const n of [7, 14, 30, 90]) {
+    const b = el("button", "plain", n + "d");
+    b.type = "button";
+    b.setAttribute("aria-pressed", String(n === span));
+    b.addEventListener("click", () => {
+      span = n;
+      localStorage.setItem("lx_span", String(n));
+      load();
+    });
+    box.append(b);
+  }
+}
+
+async function load() {
+  drawSpans();
+  const res = await fetch("/api/stats?days=" + span, { cache: "no-store" });
+  if (res.status === 401) { location.href = "/login"; return; }
+  const data = await res.json();
+
+  document.getElementById("sites").textContent = data.sites.join("  ·  ");
+  document.getElementById("today-day").textContent = "· " + data.today.day;
+  document.getElementById("n-users").textContent = fmt(data.today.devices);
+  document.getElementById("n-new").textContent = fmt(data.today.fresh);
+  document.getElementById("n-events").textContent = fmt(data.today.events);
+  document.getElementById("n-known").textContent = fmt(data.knownDevices);
+
+  drawChart(data.series);
+  drawList(document.getElementById("pages"), data.pages);
+  drawList(document.getElementById("uses"), data.uses);
+}
+
+load();
+// Left open on a second screen, this should not go stale. Cheap: one small
+// JSON document, and the server answers it from memory.
+setInterval(load, 60_000);
+</script>
+</body>
+</html>

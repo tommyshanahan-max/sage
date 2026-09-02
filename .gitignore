@@ -2,6 +2,9 @@
 backups/
 *.log
 
+# Installed by the Docker build, and by hand when testing a service locally.
+node_modules/
+
 # Local state, never committed: the partner snapshot and their mockups.
 partner/source/
 partner/source-*/

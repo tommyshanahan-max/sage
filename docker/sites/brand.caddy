@@ -29,13 +29,32 @@
 	@seat2 path /admin/2 /admin/2/
 	redir @seat2 https://{$TOMSCODING_PARTNER2_DOMAIN}/
 
-	root * /srv/brand
-	# The page reads the brand name, the app's address and the seats' names out
-	# of the environment, so moving any of them is a .env change. Everything it
-	# substitutes is configuration written by the owner — no request data
-	# reaches the template.
-	templates
-	file_server
+	@numbers path /admin/numbers /admin/numbers/
+	redir @numbers https://{$TOMSCODING_STATS_DOMAIN}/
+
+	# The counter's two public paths, and only those two. The dashboard is not
+	# reachable from this hostname at all — it lives on the stats hostname
+	# behind a password, and there is nothing to be gained by having a second
+	# door to it on the page everybody can see.
+	#
+	# Same origin as the page, so reporting a visit needs no CORS preflight and
+	# no third-party request, on a connection where every extra round trip is
+	# one that can fail.
+	@count path /a/e /a/lx.js
+	handle @count {
+		uri strip_prefix /a
+		reverse_proxy analytics:3000
+	}
+
+	# Everything else is the page itself. It reads the brand name, the app's
+	# address and the seats' names out of the environment, so moving any of them
+	# is a .env change. Everything substituted is configuration written by the
+	# owner — no request data reaches the template.
+	handle {
+		root * /srv/brand
+		templates
+		file_server
+	}
 }
 
 # The apex is the brand, www redirects to it. A homepage people type or paste is

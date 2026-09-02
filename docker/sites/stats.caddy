@@ -1,0 +1,26 @@
+# The counter's dashboard, on its own hostname and behind its own password.
+# Inert until TOMSCODING_STATS_DOMAIN is set: unset, it binds an internal
+# .localhost name, distinct from every other fallback, and requests no
+# certificate.
+#
+# Starting the container is separate, via COMPOSE_PROFILES in .env.
+#
+# The collection endpoint is reachable here too, which is what lets a site that
+# is not the brand page — the app on its own domain — report to it. That is
+# guarded in the service by an allow-list of origins, not here: Caddy cannot
+# tell one page's POST from another's, and the origin check belongs where the
+# decision is made.
+{$TOMSCODING_STATS_DOMAIN:stats.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		# Numbers about real people, on a page nobody should be linking to.
+		X-Robots-Tag "noindex, nofollow"
+		-Server
+	}
+
+	reverse_proxy analytics:3000
+}

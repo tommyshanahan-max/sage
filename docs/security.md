@@ -175,6 +175,39 @@ door someone can recognise as theirs. If a partner's name should not be public,
 set `TOMSCODING_PARTNER_USER` to something neutral — the page shows whatever
 that says, and the seat still checks it at sign-in.
 
+## The counter
+
+The only endpoint in this deployment that answers an unauthenticated request
+from the open internet, which is why it is its own container and not a route on
+the agent. A public endpoint sharing a process with your API key and a
+partner's seat would be a poor trade for one fewer container.
+
+**Collection is public; everything else is not.** Two paths answer without a
+password — the snippet, and the endpoint that receives an event. The dashboard,
+and the API behind it, need the same signed cookie as every other seat here,
+and the stats hostname is the only place either is reachable. The brand page
+proxies the two public paths and nothing else.
+
+**Whose numbers these are is an allow-list.** `TOMSCODING_STATS_SITES` decides,
+and the origin is taken from the request rather than the body — a page can
+claim anything in a POST, but it cannot forge the Origin the browser sends. An
+origin that is not listed is dropped. CORS echoes one allowed origin at a time,
+never a wildcard.
+
+**What is stored about a person: one random id they generated.** No IP address,
+no user agent, no account, no third party, nothing cross-site. The user agent is
+read to skip crawlers and then thrown away; the address is used for a rate
+limit held in memory for a minute. If that ever changes, this paragraph is the
+promise being broken.
+
+**Names are sanitised before they are written.** A page reports the path it is
+on and the function name it calls. Control characters are stripped, because
+these land in a JSONL file where a newline in a value would put a second,
+forged record on the next line.
+
+**The dashboard is `noindex`,** and it should not be linked to from anywhere
+public. It is business data about real usage, behind one password.
+
 ## The watchdog that comes with the browser
 
 Enabling the browser profile also starts `autoheal`, which restarts the browser

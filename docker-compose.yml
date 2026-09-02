@@ -362,12 +362,14 @@ services:
       TOMSCODING_PARTNER2_DOMAIN: ${TOMSCODING_PARTNER2_DOMAIN:-partner2.localhost}
       TOMSCODING_BRAND_DOMAIN: ${TOMSCODING_BRAND_DOMAIN:-brand.localhost}
       TOMSCODING_BRAND_WWW: ${TOMSCODING_BRAND_WWW:-www.brand.localhost}
+      TOMSCODING_STATS_DOMAIN: ${TOMSCODING_STATS_DOMAIN:-stats.localhost}
       # Read by the brand page's template rather than by a site address, so an
       # empty value here is harmless — the page falls back in its own markup.
       TOMSCODING_BRAND_APP_DOMAIN: ${TOMSCODING_BRAND_APP_DOMAIN:-}
       TOMSCODING_BRAND_NAME: ${TOMSCODING_BRAND_NAME:-}
       TOMSCODING_BRAND_HANZI: ${TOMSCODING_BRAND_HANZI:-}
       TOMSCODING_BRAND_TAGLINE: ${TOMSCODING_BRAND_TAGLINE:-}
+      TOMSCODING_BRAND_BLURB: ${TOMSCODING_BRAND_BLURB:-}
       # The seats' names appear on the brand page's admin list, so a person
       # sees their own name on the door rather than a numbered slot.
       TOMSCODING_PARTNER_USER: ${TOMSCODING_PARTNER_USER:-}
@@ -389,6 +391,49 @@ services:
       - partner_net
       - partner2_net
 
+  # The counter.
+  #
+  # Its own container rather than a route on the agent: this is the one endpoint
+  # here that has to answer an unauthenticated request from the open internet,
+  # and the agent is a password away from an API key and a partner's seat.
+  #
+  # Caddy reaches it two ways — the whole app on the stats hostname, behind a
+  # password, and just the two public paths under /a/ on the brand page, so a
+  # page can report without the dashboard being on that origin at all.
+  analytics:
+    profiles: ["analytics"]
+    build:
+      context: ./analytics
+    image: tomscoding-analytics:latest
+    container_name: tomscoding-analytics
+    restart: unless-stopped
+    # Not root. The image creates /data owned by this uid, and Docker carries
+    # that ownership into a fresh named volume — without it the first write to
+    # a root-owned volume fails and every count is silently lost.
+    user: "1000:1000"
+    environment:
+      ANALYTICS_USER: ${TOMSCODING_STATS_USER:-}
+      ANALYTICS_PASSWORD: ${TOMSCODING_STATS_PASSWORD:-}
+      # The sites allowed to report. An origin not on this list is not counted,
+      # which is what stops someone else's page appearing in your numbers.
+      ANALYTICS_SITES: ${TOMSCODING_STATS_SITES:-}
+      # "Today" means the owner's day. A UTC boundary in Asia cuts the evening
+      # in half, which is the busiest part of it.
+      ANALYTICS_TZ: ${TZ:-Asia/Shanghai}
+      ANALYTICS_RETAIN_DAYS: ${TOMSCODING_STATS_RETAIN_DAYS:-400}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - analytics_data:/data
+    expose:
+      - "3000"
+    networks:
+      - tomscoding
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_STATS_MEMORY:-256m}
+    cpu_shares: ${TOMSCODING_STATS_CPU_SHARES:-128}
+
 networks:
   tomscoding:
     driver: bridge
@@ -409,3 +454,4 @@ volumes:
   browser_config:
   caddy_data:
   caddy_config:
+  analytics_data:

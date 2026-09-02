@@ -93,6 +93,7 @@ certificate:
 | `agent.tomscoding.com` | Agent chat app | no |
 | `partner.tomscoding.com` | A partner seat | no |
 | `liuxuesheng.io` | A brand homepage, from `brand/` | no |
+| `numbers.liuxuesheng.io` | The counter's dashboard | no |
 
 Each optional one needs its A record and its `.env` entry; the ones that run
 containers need their Compose profile too. The two static pages — the launcher
@@ -518,8 +519,17 @@ reachable from here.
 
 ## The brand homepage
 
-`liuxuesheng.io` — a public page with the brand on it, a link to the live app
-at `liuxuesheng.help`, and an **Admin** list holding the partner seats.
+`liuxuesheng.io` — a public page with the brand on it, and one **Admin** button
+in the top right. The page itself is branding and nothing else; the app, the
+partner seats and the numbers all live behind that button, because a homepage
+for students should not have a staff door in the middle of it.
+
+The panel is a `<dialog>` rather than a hand-rolled overlay, which buys the
+parts that are easy to get wrong: Escape closes it, focus stays inside it while
+it is open, and the page behind it goes inert. The app's reachability is probed
+the first time the panel opens, not on page load — a request that leaves the
+browser on every visit, for a status dot nobody is looking at, is not worth
+making on a connection this page exists to accommodate.
 
 It has no container and no Compose profile. Caddy serves `brand/` from disk,
 so it costs nothing to run, has no session, and cannot be signed in to. Give it
@@ -553,6 +563,74 @@ row appears only once `TOMSCODING_PARTNER2_DOMAIN` is set to a real hostname.
 paste is different from a service hostname — someone will write the `www` in,
 and a certificate error on the front door reads as the company being broken.
 
+## The counter
+
+How many people used it today, how many of them had never been before, and
+which pages and functions they used. `numbers.liuxuesheng.io`, its own
+password, `analytics` in `COMPOSE_PROFILES`.
+
+**A site reports with one script tag**, served by the counter itself so there is
+no build step and nothing to keep in sync:
+
+```html
+<script src="https://numbers.liuxuesheng.io/lx.js" defer></script>
+```
+
+On the brand page it is `/a/lx.js` instead — same file, same origin, so
+reporting a visit costs no preflight and no third-party request. Page views are
+counted on their own. To count a feature, call it by name where the feature
+happens:
+
+```js
+lx("translate");
+```
+
+That is the whole API. `lx()` is defined by the snippet and is safe to call
+before it loads only if you guard it (`window.lx && lx("translate")`).
+
+### What "a person" means here
+
+One browser. The counter puts a random id in that browser's own storage — no
+account, no IP address kept, no user agent kept, no third party, nothing that
+follows anyone to another site. The consequences are real and worth stating
+rather than papering over: the same person on a phone and a laptop is two, and
+someone who clears their storage is new again. Counting people properly needs
+accounts, and this product does not have them.
+
+**Days are never added up.** The dashboard shows visitors per day and no weekly
+total, because the same person on Monday and Tuesday is one person and no
+stored count can tell you that. Pages and functions *are* summed across a
+range — those are actions, and two of them are two.
+
+### What stops it counting the wrong things
+
+- **An allow-list of origins.** `TOMSCODING_STATS_SITES` decides whose numbers
+  these are. The origin is read from the request, not from the body — a page
+  can claim anything in a POST but cannot forge the Origin the browser sends —
+  and an origin that is not on the list is dropped.
+- **Crawlers.** Most never run scripts, so they never arrive. The ones that do
+  name themselves, and that name is used to skip them and then thrown away.
+- **A ceiling per address**, so one bored visitor with a loop cannot invent a
+  thousand page views.
+
+### Where it keeps things
+
+A directory in a named volume, no database:
+
+```
+2026-09-02.jsonl          every event, appended — the durable record
+2026-09-02.summary.json   that day's totals — the index
+devices.json              id -> first day seen, last day seen
+```
+
+On boot only today's log is replayed; earlier days come back from their
+summaries, which is what keeps start-up flat as the log grows. `devices.json`
+is the only thing that spans days and exists for exactly one question — is this
+person new — which a single day cannot answer, and which the retained logs
+would answer wrongly for someone returning after the window.
+
+Raw logs are pruned at `TOMSCODING_STATS_RETAIN_DAYS`. Summaries are kept.
+
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — what each piece does and why
@@ -570,6 +648,7 @@ docker/workspace/         the IDE image: code-server + node + claude CLI
 agent/                    the agent chat app: server, UI, image
 landing/                  the launcher page, static and self-contained
 brand/                    the brand homepage, rendered by Caddy from .env
+analytics/                the counter: collection endpoint, store, dashboard
 env.tomscoding            this deployment's settings, minus the secrets
 install/bootstrap.sh      one-shot VPS preparation
 scripts/check-sites.py    verifies every site address resolves and is unique
