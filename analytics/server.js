@@ -9,6 +9,10 @@
 // involved. One first-party random id per browser, kept in that browser's own
 // localStorage, is the whole of the identity model — which is why "users" here
 // means devices, and always will.
+//
+// That id is hashed before it reaches disk and nothing is stored at a finer
+// grain than a day, per Study Pal's docs/PRIVACY.md. See lib/store.js, which
+// is where those two decisions actually live.
 
 import express from "express";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
@@ -141,7 +145,7 @@ app.options("/e", (req, res) => {
   res.status(204).end();
 });
 
-app.post("/e", express.json({ limit: "2kb" }), async (req, res) => {
+app.post("/e", express.json({ limit: "2kb" }), (req, res) => {
   const site = siteOf(req);
   if (!site) return res.status(204).end();       // not a site we count
   cors(req, res);
@@ -156,7 +160,9 @@ app.post("/e", express.json({ limit: "2kb" }), async (req, res) => {
   if (!/^[A-Za-z0-9_-]{8,40}$/.test(device) || !name) return res.status(204).end();
 
   try {
-    await store.record({ device, kind, name, site });
+    // Counts in memory; the timer below is the only thing that writes. The id
+    // is hashed inside the store and is never written in the form it arrived.
+    store.record({ device, kind, name, site });
   } catch (err) {
     console.error("record failed:", err.message);
   }
@@ -300,8 +306,9 @@ console.log(OPEN
   ? "dashboard: OPEN — no ANALYTICS_PASSWORD set, anyone with the hostname can read it"
   : "dashboard: password required");
 
-// Written on a timer rather than per event: the append to the log already made
-// each event durable, and these two files are derived from it.
+// The only thing that writes. Study Pal's docs/PRIVACY.md forbids per-person
+// timestamps, so there is no event log to append to — an event updates a day's
+// totals in memory, and a day is the finest grain that reaches disk.
 setInterval(() => store.flush().catch((e) => console.error("flush:", e.message)), 10_000).unref();
 setInterval(() => store.prune().catch((e) => console.error("prune:", e.message)), 6 * 3600_000).unref();
 

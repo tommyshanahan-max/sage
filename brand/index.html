@@ -89,11 +89,56 @@
     color:rgba(251,246,238,.9);max-width:34ch;
   }
 
+  /* ---------- the way in ----------
+     A disc, because pressing a disc is what the app itself is: Talk opens on
+     one. The gesture the homepage asks for is the gesture the product answers
+     with, which is worth more than a button that says Get Started. */
+  .go{
+    display:flex;justify-content:center;
+    padding:clamp(2.6rem,7vw,4rem) clamp(1.4rem,6vw,2.5rem) clamp(1rem,3vw,1.5rem);
+  }
+  .go a{
+    width:clamp(11rem,34vw,14rem);aspect-ratio:1;border-radius:50%;
+    background:var(--red);color:var(--ink-on-red);text-decoration:none;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.45rem;text-align:center;padding:1rem;
+    transition:background .16s ease,transform .16s ease;
+  }
+  .go a:hover{background:var(--red-deep);transform:translateY(-2px)}
+  .go a:focus-visible{outline:3px solid var(--red);outline-offset:4px}
+  .go .press{
+    font-family:var(--serif);font-size:clamp(1.25rem,3.6vw,1.55rem);
+    line-height:1.15;max-width:9ch;
+  }
+  .go .host{
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.02em;
+    color:rgba(251,246,238,.85);
+  }
+
+  /* ---------- the problem ----------
+     One sentence, at the size of a headline, because it is the whole argument
+     and everything below it is detail. */
+  .problem{
+    max-width:46rem;margin:0 auto;
+    padding:clamp(3rem,8vw,4.5rem) clamp(1.4rem,6vw,2.5rem) clamp(2rem,5vw,3rem);
+  }
+  .problem p{
+    margin:0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.8rem,5.5vw,2.9rem);line-height:1.15;letter-spacing:-.01em;
+    max-width:20ch;
+  }
+  .problem em{font-style:normal;color:var(--red)}
+
   /* ---------- what it does ----------
      Off the red and onto paper. Four paragraphs of body copy on a saturated
      field is a poster, not a page — the red does the announcing, and the
-     reading happens here. Words are Study Pal's own, from its README; change
-     them together or the two drift. */
+     reading happens here.
+     
+     Short sentences and large type are a finding, not a preference: six in ten
+     international students in China come from elsewhere in Asia, so English is
+     a second language for most readers of this page. PITCH.md draws the
+     conclusion — plain words, large type, no idiom. The copy here is taken
+     from it rather than written. */
   .features{
     max-width:46rem;margin:0 auto;
     padding:clamp(2.6rem,7vw,4rem) clamp(1.4rem,6vw,2.5rem) clamp(3rem,8vw,4.5rem);
@@ -115,15 +160,20 @@
     content:"";display:block;width:1.6rem;height:2px;
     background:var(--red);margin:.55rem 0 .7rem;
   }
-  .feature p{margin:0;color:var(--ink-2);font-size:.97rem;line-height:1.6}
+  .feature p{margin:0;color:var(--ink-2);font-size:1.06rem;line-height:1.55}
 
-  .closing{
-    margin:clamp(2.2rem,6vw,3.2rem) 0 0;padding-top:clamp(1.6rem,4vw,2rem);
-    border-top:1px solid var(--rule);
-    font-family:var(--serif);font-size:clamp(1.1rem,3.2vw,1.35rem);
-    line-height:1.45;color:var(--ink);max-width:34ch;
+  /* The trust line gets its own band. It is the one claim on the page a
+     reader might not believe, so it is not buried in a paragraph. */
+  .trust{
+    background:var(--cream-2);
+    padding:clamp(2.2rem,6vw,3.2rem) clamp(1.4rem,6vw,2.5rem);
   }
-  .closing b{font-weight:400;color:var(--red)}
+  .trust p{
+    max-width:46rem;margin:0 auto;
+    font-family:var(--serif);font-size:clamp(1.3rem,3.8vw,1.7rem);
+    line-height:1.4;color:var(--ink);
+  }
+  .trust b{font-weight:400;color:var(--red)}
 
   .foot{
     max-width:46rem;margin:0 auto;
@@ -172,21 +222,7 @@
   .row .name .arrow{font-family:var(--sans);font-size:.8rem;color:var(--muted)}
   .row:hover .name .arrow{color:var(--red)}
   .row .desc{font-size:.82rem;color:var(--muted);margin:.15rem 0 0;line-height:1.45}
-  .row .host{
-    display:block;font-family:var(--mono);font-size:.72rem;color:var(--ink-2);
-    margin-top:.4rem;
-  }
   .state{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;flex:none}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
-  .dot.live{background:var(--live)}
-  .dot.down{background:var(--muted)}
-  .tag{
-    font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
-    padding:.15rem .4rem;border-radius:3px;color:var(--muted);
-    background:var(--cream-2);border:1px solid var(--rule);white-space:nowrap;
-  }
-  .tag.live{color:var(--live);background:var(--live-soft);border-color:currentColor}
-  .tag.down{color:var(--muted);background:var(--cream-2);border-color:var(--rule)}
   .who{
     font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
     color:var(--red);background:var(--cream-2);border:1px solid currentColor;
@@ -223,53 +259,46 @@
   </div>
 </div>
 
+<div class="go">
+  <a href="/app">
+    <span class="press">Press here to open it</span>
+    <span class="host">{{or (env "TOMSCODING_BRAND_APP_DOMAIN") "liuxuesheng.help"}}</span>
+  </a>
+</div>
+
+<section class="problem">
+  <p>You land, and the alphabet is gone. <em>Not the language &mdash; the alphabet.</em></p>
+</section>
+
 <section class="features">
   <h2>What it does</h2>
   <ol class="feature-list">
 
     <li class="feature">
       <h3>Talk</h3>
-      <p>
-        Press the disc, speak English, and it says the Chinese out loud &mdash; and
-        the other way back. The direction is worked out from what you said, so
-        there is no toggle to hunt for while you are holding a phone across a
-        counter.
-      </p>
+      <p>Press, speak English, and it speaks the Chinese aloud. And back again.</p>
     </li>
 
     <li class="feature">
       <h3>Camera</h3>
-      <p>
-        Point it at a menu, a notice, a form. It reads the page and tells you what
-        it says.
-      </p>
+      <p>Point it at a menu or a notice.</p>
     </li>
 
     <li class="feature">
       <h3>Study</h3>
-      <p>
-        Every sentence you have ever needed, kept on the phone and grouped by day,
-        with flashcards built from the ones you starred. Not a textbook deck &mdash;
-        the Chinese your own life actually required.
-      </p>
+      <p>Every sentence you have needed, kept on your phone.</p>
     </li>
 
     <li class="feature">
       <h3>Nearby</h3>
-      <p>
-        The places on this street, with their Chinese names, the pinyin, and what
-        they are. Big enough to hold up to a taxi driver, and one tap from being
-        spoken aloud or kept in your phrases.
-      </p>
+      <p>The places on this street, in Chinese. Big enough to hold up to a driver.</p>
     </li>
 
   </ol>
+</section>
 
-  <p class="closing">
-    Any phrase can be sent to somebody else. <b>The sentence travels inside the
-    link</b> &mdash; so what arrives is the phrase itself, hearable and keepable,
-    not a screenshot of Chinese they cannot use.
-  </p>
+<section class="trust">
+  <p><b>No accounts.</b> Your phrases stay on your phone.</p>
 </section>
 
 <footer class="foot">
@@ -283,26 +312,6 @@
       <h2 id="admin-title">Admin</h2>
       <button type="button" class="close" id="close">Close</button>
     </div>
-
-    <section>
-      <h3>The app</h3>
-      <div class="rows">
-        <a class="row" id="app-link" href="/app">
-          <div>
-            <div class="name">
-              <span>{{or (env "TOMSCODING_BRAND_NAME") "Liuxuesheng"}}</span>
-              <span class="arrow">&rarr;</span>
-            </div>
-            <p class="desc">The live app.</p>
-            <code class="host">{{or (env "TOMSCODING_BRAND_APP_DOMAIN") "liuxuesheng.help"}}</code>
-          </div>
-          <div class="state">
-            <span class="dot" id="app-dot"></span>
-            <span class="tag" id="app-tag">checking</span>
-          </div>
-        </a>
-      </div>
-    </section>
 
     {{if ne (env "TOMSCODING_STATS_DOMAIN") "stats.localhost"}}
     <section>
@@ -382,39 +391,6 @@ close.addEventListener("click", () => admin.close());
 // contents, which is the cheapest correct way to close on click-outside.
 admin.addEventListener("click", (e) => { if (e.target === admin) admin.close(); });
 
-// The app's address is on the link Caddy rendered, and /app redirects to it, so
-// the page works the same whether the reader clicks it or this reads it.
-const link = document.getElementById("app-link");
-const dot = document.getElementById("app-dot");
-const tag = document.getElementById("app-tag");
-
-// Probed once the panel is first opened rather than on load: a request that
-// leaves the browser on every page view, for a status dot nobody is looking at,
-// is not worth making — least of all on a connection this page exists to
-// accommodate.
-let probed = false;
-open.addEventListener("click", async () => {
-  if (probed) return;
-  probed = true;
-  const control = new AbortController();
-  const timer = setTimeout(() => control.abort(), 8000);
-  try {
-    const u = new URL(link.href, location.origin);
-    u.searchParams.set("_", Date.now());
-    // A no-cors request tells us the app answered without letting us read the
-    // reply — the right amount of information for a status dot.
-    await fetch(u, { mode: "no-cors", cache: "no-store", signal: control.signal });
-    dot.className = "dot live";
-    tag.className = "tag live";
-    tag.textContent = "live";
-  } catch {
-    dot.className = "dot down";
-    tag.className = "tag down";
-    tag.textContent = "no answer";
-  } finally {
-    clearTimeout(timer);
-  }
-});
 </script>
 {{if ne (env "TOMSCODING_STATS_DOMAIN") "stats.localhost"}}
 <!-- Counts this page the same way the app is counted: one first-party random
