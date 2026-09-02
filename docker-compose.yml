@@ -290,6 +290,52 @@ services:
           memory: ${TOMSCODING_PARTNER_MEMORY:-768m}
     cpu_shares: ${TOMSCODING_PARTNER_CPU_SHARES:-256}
 
+  # A second partner seat. Same image, own everything: own login, own snapshot,
+  # own mockups, own hostname. The two cannot see each other's work or each
+  # other's repositories — which is the reason to run two containers rather
+  # than two accounts in one.
+  #
+  # Same shape as workspace-2 next to workspace, for the same reason: when a
+  # second one is a copy rather than a fork, a fix to either is a fix to both.
+  partner-2:
+    profiles: ["partner2"]
+    build:
+      context: ./agent
+    image: tomscoding-agent:latest
+    container_name: tomscoding-partner-2
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      AGENT_ROLE: partner
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AGENT_MODEL: ${TOMSCODING_AGENT_MODEL:-}
+      AGENT_USER: ${TOMSCODING_PARTNER2_USER:-}
+      AGENT_PASSWORD: ${TOMSCODING_PARTNER2_PASSWORD:-}
+      AGENT_PROJECT_LABEL: ${TOMSCODING_PARTNER2_PROJECT:-the project}
+      HOME: /work/home
+      AGENT_WORKSPACE: /work
+      AGENT_MOCKUPS_DIR: /work/mockups
+      AGENT_DOCS_ROOT: /work/app
+      AGENT_DOCS: ${TOMSCODING_PARTNER2_DOCS:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      AGENT_VOICE_ID: ${TOMSCODING_AGENT_VOICE_ID:-}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ./partner/source-2:/work/app:ro
+      - partner2_mockups:/work/mockups
+      - partner2_home:/work/home
+    expose:
+      - "3000"
+    networks:
+      # Its own network, not the first partner's. Two seats that cannot reach
+      # the estate should not be able to reach each other either.
+      - partner2_net
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_PARTNER2_MEMORY:-768m}
+    cpu_shares: ${TOMSCODING_PARTNER2_CPU_SHARES:-256}
+
   caddy:
     image: caddy:2-alpine
     container_name: tomscoding-caddy
@@ -313,6 +359,7 @@ services:
       TOMSCODING_BROWSER_DOMAIN: ${TOMSCODING_BROWSER_DOMAIN:-browser.localhost}
       TOMSCODING_AGENT_DOMAIN: ${TOMSCODING_AGENT_DOMAIN:-agent.localhost}
       TOMSCODING_PARTNER_DOMAIN: ${TOMSCODING_PARTNER_DOMAIN:-partner.localhost}
+      TOMSCODING_PARTNER2_DOMAIN: ${TOMSCODING_PARTNER2_DOMAIN:-partner2.localhost}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./docker/conf.d:/etc/caddy/conf.d:ro
@@ -327,6 +374,7 @@ services:
       # and the seat has no path onward.
       - tomscoding
       - partner_net
+      - partner2_net
 
 networks:
   tomscoding:
@@ -335,12 +383,16 @@ networks:
   # the partner joins nothing else.
   partner_net:
     driver: bridge
+  partner2_net:
+    driver: bridge
 
 volumes:
   home:
   home_2:
   partner_mockups:
   partner_home:
+  partner2_mockups:
+  partner2_home:
   browser_config:
   caddy_data:
   caddy_config:

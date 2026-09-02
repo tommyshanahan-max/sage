@@ -1,0 +1,20 @@
+# The second partner seat, on its own hostname. Inert until TOMSCODING_PARTNER_DOMAIN
+# is set: unset, this binds an internal .localhost name and requests no
+# certificate. Distinct from the other fallbacks on purpose — two site blocks
+# sharing an address is a startup failure, not a warning.
+#
+# Starting the container is separate, via COMPOSE_PROFILES in .env.
+{$TOMSCODING_PARTNER2_DOMAIN:partner2.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+
+	# Same streaming behaviour as the agent seat: Caddy passes Server-Sent
+	# Events through unbuffered, so a reply appears as it is written.
+	reverse_proxy partner-2:3000
+}

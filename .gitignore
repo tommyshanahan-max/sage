@@ -4,5 +4,6 @@ backups/
 
 # Local state, never committed: the partner snapshot and their mockups.
 partner/source/
+partner/source-*/
 partner/source.*/
 mockups/

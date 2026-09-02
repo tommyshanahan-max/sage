@@ -126,8 +126,10 @@ it is not on that machine — there is nothing to find, no credential that would
 fetch it, and no network route to where it lives. This is the difference between
 "not shown" and "not present", and only the second one survives someone trying.
 
-**It sits on its own Docker network**, with only Caddy on it. It cannot resolve
-`workspace`, `agent` or `browser`, let alone reach them. Its session cookie sets
+**Each seat sits on its own Docker network**, with only Caddy on it. A partner
+cannot resolve `workspace`, `agent` or `browser`, let alone reach them — and a
+second partner is on a *different* network again, so two seats that cannot reach
+the estate cannot reach each other either. Its session cookie sets
 no domain, so it is host-only and cannot be replayed against your other
 hostnames.
 

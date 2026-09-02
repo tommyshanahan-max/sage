@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor password fix-browser instructions partner-sync partner-mockups
+.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor password fix-browser instructions partner-sync partner-sync-2 partner-mockups
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -34,6 +34,14 @@ up: ## Build if needed and start everything
 	  && { echo "partner is enabled but there is no snapshot yet."; \
 	       echo "Run 'make partner-sync' first — it decides which repos and versions they see."; \
 	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*partner2' .env && ! grep -qE '^TOMSCODING_PARTNER2_PASSWORD=.+' .env \
+	  && { echo "partner2 is enabled but TOMSCODING_PARTNER2_PASSWORD is empty."; \
+	       echo "That seat is someone else's access to your work — it needs its own password."; \
+	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*partner2' .env && [ ! -d partner/source-2 ] \
+	  && { echo "partner2 is enabled but it has no snapshot yet."; \
+	       echo "Run 'make partner-sync-2' first — it decides which repos and versions they see."; \
+	       exit 1; } || true
 	$(COMPOSE) up -d --build
 	echo "up. https://$$(grep -E '^TOMSCODING_DOMAIN=' .env | cut -d= -f2-)"
 
@@ -44,13 +52,18 @@ restart: ## Restart all services
 	$(COMPOSE) restart
 
 partner-sync: ## Replace the snapshot the partner seat can see
-	bash scripts/partner-sync.sh
+	bash scripts/partner-sync.sh 1
 
-partner-mockups: ## Copy the partner's mockups out to ./mockups for review
-	@mkdir -p mockups
-	$(COMPOSE) cp partner:/work/mockups/. mockups/ 2>/dev/null \
-	  || { echo "no partner seat running, or nothing made yet."; exit 0; }
-	@ls -lh mockups 2>/dev/null | tail -n +2 || true
+partner-sync-2: ## Same, for the second partner seat
+	bash scripts/partner-sync.sh 2
+
+partner-mockups: ## Copy every partner's mockups out to ./mockups for review
+	@mkdir -p mockups/partner mockups/partner-2
+	@$(COMPOSE) cp partner:/work/mockups/. mockups/partner/ 2>/dev/null \
+	  || echo "  (seat 1: not running, or nothing made yet)"
+	@$(COMPOSE) cp partner-2:/work/mockups/. mockups/partner-2/ 2>/dev/null \
+	  || echo "  (seat 2: not running, or nothing made yet)"
+	@find mockups -name '*.html' -printf '%TY-%Tm-%Td %TH:%TM  %p\n' 2>/dev/null | sort -r || true
 
 instructions: ## Update the agent instructions in the running workspace
 	@# The image seeds these into the home volume on first start only, and the

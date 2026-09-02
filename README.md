@@ -408,6 +408,15 @@ Enable it with `partner` in `COMPOSE_PROFILES`, a password, an A record, and the
 repo list. `make up` refuses to start the seat without a password or before a
 first sync.
 
+**A second partner** is `partner2` in `COMPOSE_PROFILES` and the
+`TOMSCODING_PARTNER2_*` settings, synced with `make partner-sync-2`. Own login,
+own snapshot, own mockups, own hostname, own Docker network — the two cannot see
+each other's work or each other's repositories. That separation is the reason to
+run two containers rather than two accounts in one; several people who *should*
+share everything would be the other design, and is not built.
+
+Each seat costs about 768 MB. One is comfortable on 4 GB, two wants 8.
+
 ### Voice
 
 A circle at the left of the composer. Tap it and Sage listens; tap again and

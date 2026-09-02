@@ -19,7 +19,23 @@
 # sentence, and that is worth more than the convenience of keeping it.
 set -euo pipefail
 
-DEST="partner/source"
+# Which seat. `partner-sync` is the first; `partner-sync-2` passes 2. One script
+# for both, so a fix to either is a fix to both — the failure mode with two
+# copies is that they quietly stop agreeing.
+SEAT="${1:-1}"
+if [ "$SEAT" = "1" ]; then
+  DEST="partner/source"
+  REPOS="${TOMSCODING_PARTNER_REPOS:-}"
+  LEGACY_REPO="${TOMSCODING_PARTNER_REPO:-}"
+  LEGACY_BRANCH="${TOMSCODING_PARTNER_BRANCH:-main}"
+  VARNAME="TOMSCODING_PARTNER_REPOS"
+else
+  DEST="partner/source-$SEAT"
+  REPOS="$(eval echo "\${TOMSCODING_PARTNER${SEAT}_REPOS:-}")"
+  LEGACY_REPO=""
+  LEGACY_BRANCH="main"
+  VARNAME="TOMSCODING_PARTNER${SEAT}_REPOS"
+fi
 
 # Preferred: a list. Comma- or newline-separated, each entry `<url>#<branch>`,
 # optionally `<url>#<branch>=<folder>` when you want to name the folder
@@ -28,19 +44,18 @@ DEST="partner/source"
 #   TOMSCODING_PARTNER_REPOS="https://github.com/you/a.git#main,https://github.com/you/b.git#spike"
 #
 # The older single-repository pair still works and means the same thing.
-REPOS="${TOMSCODING_PARTNER_REPOS:-}"
-if [ -z "$REPOS" ] && [ -n "${TOMSCODING_PARTNER_REPO:-}" ]; then
-  REPOS="${TOMSCODING_PARTNER_REPO}#${TOMSCODING_PARTNER_BRANCH:-main}"
+if [ -z "$REPOS" ] && [ -n "$LEGACY_REPO" ]; then
+  REPOS="${LEGACY_REPO}#${LEGACY_BRANCH}"
 fi
 
 if [ -z "$REPOS" ]; then
-  cat >&2 <<'MSG'
-Nothing configured, so nothing was changed.
+  cat >&2 <<MSG
+Nothing configured for seat $SEAT, so nothing was changed.
 
 Set this in .env — one entry per repository you are willing to show, as
 url#branch, separated by commas or newlines:
 
-  TOMSCODING_PARTNER_REPOS="https://github.com/you/journey.git#aesthetic-spike"
+  $VARNAME="https://github.com/you/journey.git#aesthetic-spike"
 
 This list is the access decision. A repository that is not in it is not on that
 machine at all, so there is nothing to reach, guess at, or be talked into.
