@@ -23,18 +23,36 @@ set -euo pipefail
 # for both, so a fix to either is a fix to both — the failure mode with two
 # copies is that they quietly stop agreeing.
 SEAT="${1:-1}"
+
+# Settings come from .env, and this script is the one thing here that runs
+# outside docker compose — so nothing has loaded them. `make` does not read
+# .env; compose does, for itself.
+#
+# Read rather than sourced. `.` on .env would let the shell expand a `$` or a
+# backtick inside a value, and one of the values in there is a password
+# somebody generated. A password is exactly the string you do not want a shell
+# to interpret.
+#
+# An environment variable still wins, so `TOMSCODING_PARTNER_REPOS=... make
+# partner-sync` behaves as it always did.
+from_env() {
+  [ -f .env ] || return 0
+  # Last assignment wins, matching how compose reads the same file.
+  sed -n "s/^[[:space:]]*$1=//p" .env | tail -n 1 | sed -e 's/^"//' -e 's/"$//'
+}
 if [ "$SEAT" = "1" ]; then
   DEST="partner/source"
-  REPOS="${TOMSCODING_PARTNER_REPOS:-}"
-  LEGACY_REPO="${TOMSCODING_PARTNER_REPO:-}"
-  LEGACY_BRANCH="${TOMSCODING_PARTNER_BRANCH:-main}"
   VARNAME="TOMSCODING_PARTNER_REPOS"
+  REPOS="${TOMSCODING_PARTNER_REPOS:-$(from_env TOMSCODING_PARTNER_REPOS)}"
+  LEGACY_REPO="${TOMSCODING_PARTNER_REPO:-$(from_env TOMSCODING_PARTNER_REPO)}"
+  LEGACY_BRANCH="${TOMSCODING_PARTNER_BRANCH:-main}"
 else
   DEST="partner/source-$SEAT"
-  REPOS="$(eval echo "\${TOMSCODING_PARTNER${SEAT}_REPOS:-}")"
+  VARNAME="TOMSCODING_PARTNER${SEAT}_REPOS"
+  REPOS="$(eval echo "\${$VARNAME:-}")"
+  [ -z "$REPOS" ] && REPOS="$(from_env "$VARNAME")"
   LEGACY_REPO=""
   LEGACY_BRANCH="main"
-  VARNAME="TOMSCODING_PARTNER${SEAT}_REPOS"
 fi
 
 # Preferred: a list. Comma- or newline-separated, each entry `<url>#<branch>`,

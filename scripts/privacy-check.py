@@ -236,21 +236,40 @@ def registrable(host):
     return ".".join(parts[-2:]) if len(parts) >= 2 else host
 
 
+def from_env(key, default=""):
+    """One setting out of .env, read rather than sourced.
+
+    `make` does not load .env — only docker compose does, for itself — so
+    anything here that runs outside compose has to read the file. Read, never
+    sourced: a `$` or a backtick inside a value would be expanded by a shell,
+    and one of the values in that file is a password somebody generated."""
+    env = REPO / ".env"
+    if not env.exists():
+        return os.environ.get(key, default)
+    # An environment variable still wins, so a one-off override works.
+    if os.environ.get(key):
+        return os.environ[key]
+    value = default
+    for line in env.read_text().splitlines():
+        m = re.match(rf"^\s*{re.escape(key)}\s*=\s*(.*?)\s*$", line)
+        if m:                                   # last assignment wins, as compose does
+            value = m.group(1).strip().strip('"').strip("'")
+    return value
+
+
 def domains_from_env():
     """Every hostname configured in .env, reduced to the domains behind them."""
     env = REPO / ".env"
-    if not env.exists():
-        return []
     found = []
-    for line in env.read_text().splitlines():
-        m = re.match(r"^\s*([A-Z_0-9]*DOMAIN[A-Z_0-9]*)\s*=\s*(.+?)\s*$", line)
-        if not m:
-            continue
-        value = m.group(2).strip().strip('"').strip("'")
-        if value and "." in value and not value.endswith(".localhost"):
-            found.append(registrable(value))
-    extra = os.environ.get("TOMSCODING_PRIVACY_DOMAINS", "")
-    for name in re.split(r"[\s,]+", extra):
+    if env.exists():
+        for line in env.read_text().splitlines():
+            m = re.match(r"^\s*([A-Z_0-9]*DOMAIN[A-Z_0-9]*)\s*=\s*(.+?)\s*$", line)
+            if not m:
+                continue
+            value = m.group(2).strip().strip('"').strip("'")
+            if value and "." in value and not value.endswith(".localhost"):
+                found.append(registrable(value))
+    for name in re.split(r"[\s,]+", from_env("TOMSCODING_PRIVACY_DOMAINS")):
         if name.strip():
             found.append(registrable(name.strip()))
     return sorted(set(found))
@@ -290,7 +309,7 @@ def main():
         print()
 
     repos = [r for r in re.split(r"[\s,]+",
-             os.environ.get("TOMSCODING_PRIVACY_REPOS", "")) if r.strip()]
+             from_env("TOMSCODING_PRIVACY_REPOS")) if r.strip()]
     if repos:
         print(f"{BOLD}Repositories{OFF}")
         print(f"{DIM}Asked without a token, so this is what a stranger sees.{OFF}\n")
