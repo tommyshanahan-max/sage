@@ -392,9 +392,16 @@ close.addEventListener("click", () => admin.close());
 admin.addEventListener("click", (e) => { if (e.target === admin) admin.close(); });
 
 </script>
-{{if ne (env "TOMSCODING_STATS_DOMAIN") "stats.localhost"}}
+{{if env "TOMSCODING_STATS_SITES"}}
 <!-- Counts this page the same way the app is counted: one first-party random
-     id in this browser's own storage, no third party, nothing cross-site. -->
+     id in this browser's own storage, no third party, nothing cross-site.
+
+     Gated on the allow-list rather than on the dashboard's hostname. Counting
+     and reading the counts are separate things that switch on at separate
+     times: the counter runs on the Docker network from the day it starts, and
+     a public hostname for the dashboard may never exist. An empty allow-list
+     is the one condition under which a report here would be refused anyway,
+     so it is the honest question to ask. -->
 <script src="/a/lx.js" defer></script>
 {{end}}
 </body>

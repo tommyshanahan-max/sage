@@ -372,6 +372,10 @@ services:
       TOMSCODING_BRAND_DOMAIN: ${TOMSCODING_BRAND_DOMAIN:-brand.localhost}
       TOMSCODING_BRAND_WWW: ${TOMSCODING_BRAND_WWW:-www.brand.localhost}
       TOMSCODING_STATS_DOMAIN: ${TOMSCODING_STATS_DOMAIN:-stats.localhost}
+      # Not an address — the brand page's template reads it to decide whether
+      # to include the counting snippet at all. Empty means nothing is counted,
+      # which is exactly when the snippet should not be on the page.
+      TOMSCODING_STATS_SITES: ${TOMSCODING_STATS_SITES:-}
       # Read by the brand page's template rather than by a site address, so an
       # empty value here is harmless — the page falls back in its own markup.
       TOMSCODING_BRAND_APP_DOMAIN: ${TOMSCODING_BRAND_APP_DOMAIN:-}
