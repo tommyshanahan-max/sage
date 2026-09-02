@@ -1,75 +1,30 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{or (env "TOMSCODING_BRAND_NAME") "Liuxuesheng"}}</title>
-<meta name="description" content="For students studying far from home.">
-<!--
-  The brand's public homepage, and the only page in this deployment meant for
-  people who were never given a password. Everything on it is public: treat it
-  the way you would treat a printed flyer.
-
-  The page is branding. Everything operational — the app, the seats, the
-  numbers — is behind the ADMIN button, because a homepage for students should
-  not have a staff door in the middle of it.
-
-  Same constraints as the landing page: no web fonts, no CDN, no external
-  anything. A blocked stylesheet from behind the Great Firewall leaves a
-  visitor on an unstyled page, and this one is aimed squarely at people on that
-  side of it.
-
-  Caddy renders this through its `templates` directive, so the brand name, the
-  app's address and the seats' names come from .env rather than from here.
-  Because of that, a doubled opening brace is reserved and must not appear
-  anywhere else on this page — not in the CSS, the script, or a comment.
--->
 <style>
+  /* A brand page, so it commits to one look rather than answering the
+     viewer's theme. Red is not a colour choice here that a dark mode could
+     reasonably invert — it is the brand, and a cream-on-charcoal version of
+     this page would be a different company. */
   :root{
-    --paper:#f2f0ea;
-    --card:#fbfaf7;
-    --card-2:#f1efe8;
-    --ink:#1a1c1a;
-    --ink-2:#4c5350;
-    --muted:#828b87;
-    --rule:#e0ddd3;
-    --jade:#1f6b52;
-    --jade-soft:#e4efea;
-    --seal:#a8342a;
+    --red:#c22b21;
+    --red-deep:#a3211a;
+    --cream:#faf4ea;
+    --cream-2:#f0e6d8;
+    --ink-on-red:#fbf6ee;
+    --paper:#f5f1e8;
+    --card:#fdfbf6;
+    --ink:#1a1613;
+    --ink-2:#544c45;
+    --muted:#8a8078;
+    --rule:#e2dacd;
+    --disc:#121110;
     --live:#1f6b52;
     --live-soft:#e4efea;
-    --down:#a8442f;
-    --down-soft:#f6e9e5;
     --serif:ui-serif,"New York",Georgia,"Songti SC","Noto Serif SC","Times New Roman",serif;
     --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
            "Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB",
            "Microsoft YaHei",sans-serif;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
-  @media (prefers-color-scheme:dark){
-    :root:not([data-theme="light"]){
-      --paper:#12140f;
-      --card:#1a1d18;
-      --card-2:#20241e;
-      --ink:#eceee6;
-      --ink-2:#aab2a9;
-      --muted:#7c857c;
-      --rule:#2a2f27;
-      --jade:#5cc39c;
-      --jade-soft:#12261f;
-      --seal:#d9705f;
-      --live:#5cc39c;
-      --live-soft:#12261f;
-      --down:#e08a72;
-      --down-soft:#2c1a16;
-    }
-  }
-  :root[data-theme="dark"]{
-    --paper:#12140f; --card:#1a1d18; --card-2:#20241e; --ink:#eceee6;
-    --ink-2:#aab2a9; --muted:#7c857c; --rule:#2a2f27; --jade:#5cc39c;
-    --jade-soft:#12261f; --seal:#d9705f; --live:#5cc39c; --live-soft:#12261f;
-    --down:#e08a72; --down-soft:#2c1a16;
-  }
+  :root{color-scheme:light}
 
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
@@ -82,57 +37,107 @@
   [hidden]{display:none !important}
 
   /* ---------- the admin door ----------
-     Top right, above everything, and the same size on a phone. It is the only
-     control on the page, so it can afford to be plain. */
+     On the red field, so it is drawn in cream rather than in the brand colour
+     it is sitting on. */
   .admin-open{
     position:fixed;top:clamp(.9rem,2.5vw,1.6rem);right:clamp(.9rem,2.5vw,1.6rem);
     z-index:20;font:inherit;font-weight:600;font-size:.72rem;letter-spacing:.16em;
-    text-transform:uppercase;color:var(--ink-2);background:var(--card);
-    border:1px solid var(--rule);border-radius:8px;padding:.7rem 1.15rem;
-    cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.05);
-    transition:color .16s ease,border-color .16s ease;
+    text-transform:uppercase;color:var(--ink-on-red);background:transparent;
+    border:1px solid rgba(251,246,238,.45);border-radius:8px;padding:.7rem 1.15rem;
+    cursor:pointer;transition:background .16s ease,border-color .16s ease;
   }
-  .admin-open:hover{color:var(--jade);border-color:var(--jade)}
-  .admin-open:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+  .admin-open:hover{background:rgba(251,246,238,.12);border-color:var(--ink-on-red)}
+  .admin-open:focus-visible{outline:2px solid var(--ink-on-red);outline-offset:3px}
 
-  /* ---------- branding ----------
-     This is the part to replace with real brand work. It is laid out as a
-     single held page rather than a scroll of sections, because that is what a
-     name and a sentence deserve until there is more to say. */
+  /* ---------- the red field ---------- */
   .hero{
-    min-height:100vh;min-height:100svh;
-    display:flex;flex-direction:column;justify-content:center;
-    gap:clamp(1.4rem,4vw,2.2rem);
+    background:var(--red);color:var(--ink-on-red);
+    padding:clamp(3.5rem,10vw,6rem) clamp(1.4rem,6vw,3rem) clamp(3.5rem,9vw,5.5rem);
+  }
+  .hero-inner{
     max-width:46rem;margin:0 auto;
-    padding:clamp(4.5rem,12vw,7rem) clamp(1.4rem,6vw,2.5rem) clamp(3rem,8vw,5rem);
+    display:flex;flex-direction:column;gap:clamp(1.5rem,4vw,2.2rem);
   }
+
+  /* The disc. Drawn rather than fetched — an image here would be one more
+     request on a connection this page exists to accommodate, and this is two
+     shapes and three glyphs. */
+  .disc{
+    width:clamp(9rem,26vw,15rem);aspect-ratio:1;border-radius:50%;
+    background:var(--disc);color:var(--cream);
+    display:grid;place-items:center;flex:none;
+  }
+  .disc span{
+    font-family:var(--serif);font-weight:400;
+    font-size:clamp(2.1rem,6vw,3.4rem);line-height:1;letter-spacing:.04em;
+    display:flex;align-items:center;gap:.32em;
+  }
+  .disc .heart{color:var(--red);font-size:.85em}
+
   .mark{
-    font-family:var(--serif);font-size:clamp(1rem,3vw,1.15rem);
-    letter-spacing:.55em;color:var(--seal);margin:0;
+    margin:0;font-size:clamp(.72rem,2.2vw,.82rem);font-weight:600;
+    letter-spacing:.22em;text-transform:uppercase;color:rgba(251,246,238,.82);
   }
+  .mark .hanzi{font-family:var(--serif);letter-spacing:.14em;text-transform:none}
   h1{
     margin:0;font-family:var(--serif);font-weight:400;
-    font-size:clamp(3rem,13vw,6rem);line-height:.95;letter-spacing:-.03em;
+    font-size:clamp(2.5rem,8.5vw,4.6rem);line-height:1.02;letter-spacing:-.02em;
+    max-width:16ch;
   }
-  .tagline{
-    margin:0;font-family:var(--serif);font-size:clamp(1.25rem,4vw,1.9rem);
-    line-height:1.35;color:var(--ink-2);max-width:26ch;
+  .blurb{
+    margin:0;font-size:clamp(1.05rem,3vw,1.3rem);line-height:1.55;
+    color:rgba(251,246,238,.9);max-width:34ch;
   }
-  .rule{width:3.5rem;height:1px;background:var(--rule);margin:.4rem 0}
-  .blurb{margin:0;font-size:1rem;color:var(--muted);max-width:44ch}
+
+  /* ---------- what it does ----------
+     Off the red and onto paper. Four paragraphs of body copy on a saturated
+     field is a poster, not a page — the red does the announcing, and the
+     reading happens here. Words are Study Pal's own, from its README; change
+     them together or the two drift. */
+  .features{
+    max-width:46rem;margin:0 auto;
+    padding:clamp(2.6rem,7vw,4rem) clamp(1.4rem,6vw,2.5rem) clamp(3rem,8vw,4.5rem);
+  }
+  .features h2{
+    margin:0 0 clamp(1.6rem,4vw,2.4rem);
+    font-family:var(--sans);font-size:.7rem;font-weight:600;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--red);
+  }
+  .feature-list{list-style:none;margin:0;padding:0;display:grid;gap:clamp(1.5rem,4vw,2.1rem)}
+  @media (min-width:44rem){
+    .feature-list{grid-template-columns:1fr 1fr;gap:2.2rem 3rem}
+  }
+  .feature h3{
+    margin:0 0 .4rem;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.5rem,4.5vw,1.9rem);line-height:1.1;letter-spacing:-.01em;
+  }
+  .feature h3::after{
+    content:"";display:block;width:1.6rem;height:2px;
+    background:var(--red);margin:.55rem 0 .7rem;
+  }
+  .feature p{margin:0;color:var(--ink-2);font-size:.97rem;line-height:1.6}
+
+  .closing{
+    margin:clamp(2.2rem,6vw,3.2rem) 0 0;padding-top:clamp(1.6rem,4vw,2rem);
+    border-top:1px solid var(--rule);
+    font-family:var(--serif);font-size:clamp(1.1rem,3.2vw,1.35rem);
+    line-height:1.45;color:var(--ink);max-width:34ch;
+  }
+  .closing b{font-weight:400;color:var(--red)}
+
   .foot{
-    margin-top:auto;padding-top:2.5rem;font-size:.78rem;color:var(--muted);
+    max-width:46rem;margin:0 auto;
+    padding:0 clamp(1.4rem,6vw,2.5rem) clamp(2.5rem,6vw,3.5rem);
+    font-size:.78rem;color:var(--muted);
     display:flex;gap:1.2rem;flex-wrap:wrap;
   }
-  .foot a{color:var(--muted)}
-  .foot a:hover{color:var(--jade)}
 
   /* ---------- the admin panel ---------- */
   dialog{
     width:min(34rem,calc(100vw - 2rem));
     max-height:min(46rem,calc(100vh - 3rem));
     padding:0;border:1px solid var(--rule);border-radius:14px;
-    background:var(--card-2);color:var(--ink);overflow:auto;
+    background:var(--cream-2);color:var(--ink);overflow:auto;
     box-shadow:0 18px 50px rgba(0,0,0,.22);
   }
   dialog::backdrop{background:rgba(12,16,12,.55)}
@@ -143,12 +148,12 @@
     margin-left:auto;font:inherit;font-size:.78rem;color:var(--muted);background:none;
     border:1px solid var(--rule);border-radius:6px;padding:.25rem .7rem;cursor:pointer;
   }
-  .close:hover{color:var(--jade);border-color:var(--jade)}
-  .close:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+  .close:hover{color:var(--red);border-color:var(--red)}
+  .close:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 
-  h3{
+  .panel h3{
     margin:0 0 .7rem;font-family:var(--sans);font-size:.66rem;font-weight:600;
-    letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
+    letter-spacing:.15em;text-transform:uppercase;color:var(--red);
   }
   .rows{display:flex;flex-direction:column;gap:.55rem}
   .row{
@@ -158,14 +163,14 @@
     text-decoration:none;color:inherit;
     transition:border-color .16s ease,transform .16s ease;
   }
-  .row:hover,.row:focus-visible{border-color:var(--jade);transform:translateY(-1px)}
-  .row:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+  .row:hover,.row:focus-visible{border-color:var(--red);transform:translateY(-1px)}
+  .row:focus-visible{outline:2px solid var(--red);outline-offset:2px}
   .row .name{
     font-family:var(--serif);font-size:1.1rem;line-height:1.25;
     display:flex;align-items:baseline;gap:.5rem;
   }
   .row .name .arrow{font-family:var(--sans);font-size:.8rem;color:var(--muted)}
-  .row:hover .name .arrow{color:var(--jade)}
+  .row:hover .name .arrow{color:var(--red)}
   .row .desc{font-size:.82rem;color:var(--muted);margin:.15rem 0 0;line-height:1.45}
   .row .host{
     display:block;font-family:var(--mono);font-size:.72rem;color:var(--ink-2);
@@ -174,17 +179,17 @@
   .state{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;flex:none}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
   .dot.live{background:var(--live)}
-  .dot.down{background:var(--down)}
+  .dot.down{background:var(--muted)}
   .tag{
     font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
     padding:.15rem .4rem;border-radius:3px;color:var(--muted);
-    background:var(--card-2);border:1px solid var(--rule);white-space:nowrap;
+    background:var(--cream-2);border:1px solid var(--rule);white-space:nowrap;
   }
   .tag.live{color:var(--live);background:var(--live-soft);border-color:currentColor}
-  .tag.down{color:var(--down);background:var(--down-soft);border-color:currentColor}
+  .tag.down{color:var(--muted);background:var(--cream-2);border-color:var(--rule)}
   .who{
     font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
-    color:var(--jade);background:var(--jade-soft);border:1px solid currentColor;
+    color:var(--red);background:var(--cream-2);border:1px solid currentColor;
     border-radius:3px;padding:.15rem .4rem;
   }
   .panel .note{
@@ -200,15 +205,76 @@
 <button type="button" class="admin-open" id="open" aria-haspopup="dialog">Admin</button>
 
 <div class="hero">
-  <p class="mark">{{or (env "TOMSCODING_BRAND_HANZI") "留学生"}}</p>
-  <h1>{{or (env "TOMSCODING_BRAND_NAME") "Liuxuesheng"}}</h1>
-  <p class="tagline">{{or (env "TOMSCODING_BRAND_TAGLINE") "For students studying far from home."}}</p>
-  <div class="rule"></div>
-  <p class="blurb">{{or (env "TOMSCODING_BRAND_BLURB") "Coming soon."}}</p>
-  <div class="foot">
-    <span>&copy; {{or (env "TOMSCODING_BRAND_NAME") "Liuxuesheng"}}</span>
+  <div class="hero-inner">
+
+    <div class="disc" role="img" aria-label="I love Beijing">
+      <span aria-hidden="true">I<i class="heart">&#9829;</i>BJ</span>
+    </div>
+
+    <p class="mark">
+      <span class="hanzi">{{or (env "TOMSCODING_BRAND_HANZI") "留学生"}}</span>
+      &nbsp;&middot;&nbsp; Study Pal
+    </p>
+
+    <h1>{{or (env "TOMSCODING_BRAND_TAGLINE") "The app that speaks for you in China."}}</h1>
+
+    <p class="blurb">{{or (env "TOMSCODING_BRAND_BLURB") "Live at liuxuesheng.help. No app store, no account, no VPN — it loads inside the mainland, and it is being used today."}}</p>
+
   </div>
 </div>
+
+<section class="features">
+  <h2>What it does</h2>
+  <ol class="feature-list">
+
+    <li class="feature">
+      <h3>Talk</h3>
+      <p>
+        Press the disc, speak English, and it says the Chinese out loud &mdash; and
+        the other way back. The direction is worked out from what you said, so
+        there is no toggle to hunt for while you are holding a phone across a
+        counter.
+      </p>
+    </li>
+
+    <li class="feature">
+      <h3>Camera</h3>
+      <p>
+        Point it at a menu, a notice, a form. It reads the page and tells you what
+        it says.
+      </p>
+    </li>
+
+    <li class="feature">
+      <h3>Study</h3>
+      <p>
+        Every sentence you have ever needed, kept on the phone and grouped by day,
+        with flashcards built from the ones you starred. Not a textbook deck &mdash;
+        the Chinese your own life actually required.
+      </p>
+    </li>
+
+    <li class="feature">
+      <h3>Nearby</h3>
+      <p>
+        The places on this street, with their Chinese names, the pinyin, and what
+        they are. Big enough to hold up to a taxi driver, and one tap from being
+        spoken aloud or kept in your phrases.
+      </p>
+    </li>
+
+  </ol>
+
+  <p class="closing">
+    Any phrase can be sent to somebody else. <b>The sentence travels inside the
+    link</b> &mdash; so what arrives is the phrase itself, hearable and keepable,
+    not a screenshot of Chinese they cannot use.
+  </p>
+</section>
+
+<footer class="foot">
+  <span>&copy; {{or (env "TOMSCODING_BRAND_NAME") "Liuxuesheng"}}</span>
+</footer>
 
 <dialog id="admin" aria-labelledby="admin-title">
   <div class="panel">
