@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor password fix-browser instructions partner-sync partner-sync-2 partner-mockups
+.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 partner-mockups
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -128,3 +128,9 @@ check: ## Verify every Caddy site resolves to a usable, unique address
 
 doctor: ## Check the path between you and the VPS
 	bash scripts/doctor.sh
+
+privacy: ## Show what public records say about who runs these sites
+	@# Reads .env for the domains, then asks public registries. Nothing is
+	@# changed and nothing is sent anywhere — it is the same lookup a stranger
+	@# would do, run by you, on you.
+	python3 scripts/privacy-check.py

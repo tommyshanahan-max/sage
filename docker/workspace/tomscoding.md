@@ -72,6 +72,33 @@ happen to share a history. If something is genuinely common, copy it.
 The partner seat shows a snapshot of that repository, taken by
 `make partner-sync` on the host and by nothing else.
 
+**There are two machines, not one.** `tomscoding.com` is this box,
+45.77.8.166. `liuxuesheng.help`, `fernsocial.io` and `sagejourney.io` all
+resolve to 45.32.58.178 — an older box where Fern and Study Pal still share one
+container behind one Caddy. Study Pal's own `TODO.md` calls cutting
+`liuxuesheng.help` over to its own container an open task, keeping the `.data`
+volume so the device count survives. Do not assume a hostname here is served
+from here.
+
+**Study Pal's `docs/PRIVACY.md` is the standing brief on all of this** — what
+the product protects, and how attribution would actually happen. Read it before
+proposing anything that adds a server, a third party, or a way for one user to
+see another. `make privacy` in this repo checks the parts of it that are
+checkable from outside.
+
+**No third-party analytics, ever.** That is Study Pal's own rule, and it is why
+its device count is a file on its box rather than a script from somewhere else.
+The counter in this deployment was built to the same rule — first-party id,
+nothing sent to anyone, counts on disk — so it fits. Do not propose Plausible,
+Umami, GA or any hosted alternative as a simplification; the constraint is the
+design.
+
+**Brendan's Documents panel lists `README.md` and nothing else.** `TODO.md` in
+that repo is about registration privacy, what the hosting provider discloses
+under legal process, and what share a partner should get — it is the owner's
+side of a negotiation with the person that seat belongs to. It must not be
+added to `TOMSCODING_PARTNER_DOCS`.
+
 ## Where things are, exactly
 
 This trips up an agent working here, so be precise about it:

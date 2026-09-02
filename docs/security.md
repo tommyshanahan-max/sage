@@ -266,6 +266,42 @@ visible on your billing page. Do not reuse your local development key.
 and register it per-repository as a deploy key. Do not copy your laptop's key
 onto the VPS — it authorises far more than this box needs.
 
+## Who these sites are registered to
+
+```bash
+make privacy
+```
+
+The same lookups a stranger would do, run by you, on you: whether each domain's
+registrant is redacted, who the address block belongs to, whether reverse DNS
+names anybody, and which hostnames Certificate Transparency has already
+published. Read-only, over RDAP rather than port-43 WHOIS so it works from
+anywhere, and it sends nothing anywhere.
+
+Worth running after registering a domain, after moving one, and now and again
+otherwise. Registrar privacy is free at Porkbun and on by default — but "should
+be on" and "is on" are different claims, and only one of them is checkable.
+
+**The repository check is the one that matters most.** A public repo's commits
+carry a real name and email, and its README names the domains — a searchable
+link between the two that needs no legal process to follow. It is also a
+one-way door: going private later stops new discovery but does not unpublish
+what was already fetched, forked or archived. It is asked without a token
+deliberately, so the answer is what a stranger sees rather than what you see.
+
+**What it cannot tell you, and no lookup can.** The hosting account is billed to
+a real card and is disclosable under legal process; that is true of every
+provider of this kind. And none of it changes the position of somebody
+physically in China running a site aimed at people there, which is a larger
+fact than any registration detail. `docs/PRIVACY.md` in the study-pal repo
+works through the rest, and is right that the social footprint is larger than
+the technical one.
+
+**A company is not a privacy tool and may be the opposite** — most company
+registers publish their directors, so forming one can publish the name that
+registrar privacy was hiding. Decide it on business grounds, and check what the
+register discloses first.
+
 ## Checking on it
 
 ```bash

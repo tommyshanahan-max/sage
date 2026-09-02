@@ -662,5 +662,6 @@ analytics/                the counter: collection endpoint, store, dashboard
 env.tomscoding            this deployment's settings, minus the secrets
 install/bootstrap.sh      one-shot VPS preparation
 scripts/check-sites.py    verifies every site address resolves and is unique
+scripts/privacy-check.py  what public records say about who runs these sites
 scripts/doctor.sh         client-side network diagnostics
 ```
