@@ -379,7 +379,16 @@ async function appCount() {
 app.get("/api/stats", async (req, res) => {
   const span = Math.min(Math.max(Number(req.query.days) || 14, 1), 90);
   res.set("Cache-Control", "no-store");
-  res.json({ ...store.report(span), tz: TZ, sites: SITES, open: OPEN, app: await appCount() });
+  res.json({
+    ...store.report(span), tz: TZ, sites: SITES, open: OPEN, app: await appCount(),
+    // Whether this reached us through a seat rather than off the open
+    // hostname. Only the agent holds the internal token, and it only forwards
+    // for a signed-in owner — so "no password here" is true of this service
+    // and false of the page the person is actually looking at. The banner that
+    // says otherwise has to know the difference, or it warns about an exposure
+    // that is not there, and a warning that is wrong once is ignored after.
+    proxied: internalOk(req),
+  });
 });
 
 app.use(express.static("public"));

@@ -441,7 +441,9 @@ async function load() {
   const data = await res.json();
 
   drawApp(data.app);
-  document.getElementById("open-note").hidden = !data.open;
+  // Open, and reachable without signing in anywhere. Behind a seat's proxy the
+  // second half is false, so the warning would be too.
+  document.getElementById("open-note").hidden = !data.open || data.proxied;
   document.getElementById("signout").hidden = !!data.open;
   document.getElementById("sites").textContent = data.sites.join("  ·  ");
   document.getElementById("today-day").textContent = "· " + data.today.day;
