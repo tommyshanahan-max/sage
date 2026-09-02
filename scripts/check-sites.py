@@ -39,8 +39,10 @@ def site_addresses(env):
     """Resolve each site block's address the way Caddy actually does."""
     sites = []
     for path in sorted((REPO / "docker" / "sites").glob("*.caddy")):
-        match = re.search(r"^\{\$([A-Z_0-9]+)(?::([^}]*))?\}\s*\{", path.read_text(), re.M)
-        if match:
+        # Every block in the file, not just the first. A file can hold more than
+        # one — the brand's apex and its www redirect live together — and a
+        # second block whose address collides fails exactly as hard as a first.
+        for match in re.finditer(r"^\{\$([A-Z_0-9]+)(?::([^}]*))?\}\s*\{", path.read_text(), re.M):
             var, default = match.group(1), match.group(2)
             value = env[var] if var in env else (default or "")
             sites.append((path.name, var, value))

@@ -91,10 +91,14 @@ certificate:
 | `her.tomscoding.com` | Second seat | no |
 | `browser.tomscoding.com` | Firefox running on the VPS | no |
 | `agent.tomscoding.com` | Agent chat app | no |
+| `partner.tomscoding.com` | A partner seat | no |
+| `liuxuesheng.io` | A brand homepage, from `brand/` | no |
 
-Each optional one needs its A record, its `.env` entry, and — for the three
-that run containers — its Compose profile. An optional service you have not
-configured costs nothing and serves nothing.
+Each optional one needs its A record and its `.env` entry; the ones that run
+containers need their Compose profile too. The two static pages — the launcher
+and the brand homepage — need no profile, because there is no container behind
+either. An optional service you have not configured costs nothing and serves
+nothing.
 
 They are separate site blocks, and the launcher is plain files on disk: it
 cannot reach any container. The only connection is its redirects, which fill
@@ -512,6 +516,43 @@ step before writes and commands is the obvious next thing to build, and it is
 not built yet. The second seat keeps its own separate volume and is not
 reachable from here.
 
+## The brand homepage
+
+`liuxuesheng.io` — a public page with the brand on it, a link to the live app
+at `liuxuesheng.help`, and an **Admin** list holding the partner seats.
+
+It has no container and no Compose profile. Caddy serves `brand/` from disk,
+so it costs nothing to run, has no session, and cannot be signed in to. Give it
+an A record, set `TOMSCODING_BRAND_DOMAIN`, and `make up`.
+
+**The admin list is links, not a login.** Each seat still asks for its own
+username and password on its own hostname, and that is the only place a
+password is ever typed. Routing someone by name from a public page is not a
+control and is not built as one — the seat's password is the control. Putting a
+password box here would mean credentials crossing an extra origin to buy
+nothing.
+
+Everything on the page is public. Do not put anything on it you would not print
+on a flyer.
+
+**Caddy renders it.** The brand name, the app's address and the seats' names are
+substituted from `.env` through Caddy's `templates` directive, so a rename is a
+config change rather than an edit. Two consequences worth knowing:
+
+- **A doubled opening brace is reserved anywhere in that file** — CSS, script
+  or comment. Go's template parser reads the whole file, not just the parts you
+  meant as template.
+- **`templates` is text substitution, not HTML escaping.** Configured values
+  land in element text, never in an attribute or a JavaScript string, so a
+  stray quote in a tagline cannot break the page. Keep it that way.
+
+A seat that is not configured is left out rather than shown broken: the second
+row appears only once `TOMSCODING_PARTNER2_DOMAIN` is set to a real hostname.
+
+`www` redirects to the apex from its own site block. A homepage people type or
+paste is different from a service hostname — someone will write the `www` in,
+and a certificate error on the front door reads as the company being broken.
+
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — what each piece does and why
@@ -528,6 +569,7 @@ docker/conf.d/            optional overlays on the IDE site (extra auth, allowli
 docker/workspace/         the IDE image: code-server + node + claude CLI
 agent/                    the agent chat app: server, UI, image
 landing/                  the launcher page, static and self-contained
+brand/                    the brand homepage, rendered by Caddy from .env
 env.tomscoding            this deployment's settings, minus the secrets
 install/bootstrap.sh      one-shot VPS preparation
 scripts/check-sites.py    verifies every site address resolves and is unique

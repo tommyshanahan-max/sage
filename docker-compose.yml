@@ -360,11 +360,24 @@ services:
       TOMSCODING_AGENT_DOMAIN: ${TOMSCODING_AGENT_DOMAIN:-agent.localhost}
       TOMSCODING_PARTNER_DOMAIN: ${TOMSCODING_PARTNER_DOMAIN:-partner.localhost}
       TOMSCODING_PARTNER2_DOMAIN: ${TOMSCODING_PARTNER2_DOMAIN:-partner2.localhost}
+      TOMSCODING_BRAND_DOMAIN: ${TOMSCODING_BRAND_DOMAIN:-brand.localhost}
+      TOMSCODING_BRAND_WWW: ${TOMSCODING_BRAND_WWW:-www.brand.localhost}
+      # Read by the brand page's template rather than by a site address, so an
+      # empty value here is harmless — the page falls back in its own markup.
+      TOMSCODING_BRAND_APP_DOMAIN: ${TOMSCODING_BRAND_APP_DOMAIN:-}
+      TOMSCODING_BRAND_NAME: ${TOMSCODING_BRAND_NAME:-}
+      TOMSCODING_BRAND_HANZI: ${TOMSCODING_BRAND_HANZI:-}
+      TOMSCODING_BRAND_TAGLINE: ${TOMSCODING_BRAND_TAGLINE:-}
+      # The seats' names appear on the brand page's admin list, so a person
+      # sees their own name on the door rather than a numbered slot.
+      TOMSCODING_PARTNER_USER: ${TOMSCODING_PARTNER_USER:-}
+      TOMSCODING_PARTNER2_USER: ${TOMSCODING_PARTNER2_USER:-}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./docker/conf.d:/etc/caddy/conf.d:ro
       - ./docker/sites:/etc/caddy/sites:ro
       - ./landing:/srv/landing:ro
+      - ./brand:/srv/brand:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

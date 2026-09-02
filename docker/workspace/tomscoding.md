@@ -46,9 +46,30 @@ reachable only through Caddy.
 | `her.tomscoding.com` | A second, fully separate workspace |
 | `browser.tomscoding.com` | Firefox running on the VPS, screen streamed |
 | `agent.tomscoding.com` | Sage — a chat interface over the Claude Agent SDK |
+| `partner.tomscoding.com` | A partner seat: the same Sage, one read-only snapshot, mockups only |
+| `liuxuesheng.io` | The Liuxuesheng brand homepage, plus the door to the partner seats |
 
-Optional services are Compose profiles (`seat2`, `browser`, `agent`) enabled
-in `.env`, so a deployment that wants only the IDE spends nothing on the rest.
+Optional services are Compose profiles (`seat2`, `browser`, `agent`,
+`partner`, `partner2`) enabled in `.env`, so a deployment that wants only the
+IDE spends nothing on the rest. `liuxuesheng.io` is not one of them — it is a
+static page Caddy serves from disk, with no container behind it.
+
+## Liuxuesheng, and the seat that shows it
+
+**Study Pal is the product; Liuxuesheng is the brand it goes out under.** The
+live app is at `liuxuesheng.help`; `liuxuesheng.io` is the homepage in front of
+it. Both are the same product, and neither runs in this deployment yet.
+
+**It has its own repository now: `tommyshanahan-max/study-pal`, branch `main`.**
+It used to be a route called `/talk` inside Fern (`journey.git`, branch
+`aesthetic-spike`) and it is not there any more — every old `/talk/*` address
+308-redirects, because phrases people already shared carry those links inside
+WeChat messages nobody is going to edit. Do not reach back into the Fern repo
+for it, and do not import between the two: they are separate products that
+happen to share a history. If something is genuinely common, copy it.
+
+The partner seat shows a snapshot of that repository, taken by
+`make partner-sync` on the host and by nothing else.
 
 ## Where things are, exactly
 

@@ -149,6 +149,32 @@ authenticated session is otherwise a way to call these APIs.
 **A password is still one shared secret.** Everything under *Worth adding*
 below applies here too, and more so: this one is held by someone else.
 
+## The brand homepage
+
+The one page here with no password on it, which makes it the one page where a
+mistake is published rather than merely exposed.
+
+**Nothing is authenticated on it and nothing should be.** The Admin list is a
+set of links to the seats; each seat asks for its own username and password on
+its own hostname. Do not add a password box to this page: credentials would
+then cross an extra origin, and a form that forwards a password is a phishing
+target wearing your own domain.
+
+**It has no container.** Caddy serves files from `brand/`, read-only. There is
+no session, no upload path, and nothing to compromise beyond the files
+themselves — which is why the page is safe to leave open to the world.
+
+**Caddy renders it with `templates`, which does not escape.** Every value it
+substitutes comes from `.env`, written by you, and lands in element text rather
+than in an attribute or a JavaScript string, so a stray quote produces odd
+copy rather than markup. Keep new values in text positions. No request data
+reaches the template, and it must not start to.
+
+**Naming a seat on it publishes that person's name.** That is the trade for a
+door someone can recognise as theirs. If a partner's name should not be public,
+set `TOMSCODING_PARTNER_USER` to something neutral — the page shows whatever
+that says, and the seat still checks it at sign-in.
+
 ## The watchdog that comes with the browser
 
 Enabling the browser profile also starts `autoheal`, which restarts the browser
