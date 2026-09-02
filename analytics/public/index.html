@@ -642,12 +642,23 @@ function drawApp(app, series) {
   const appHow = document.getElementById("app-vias-howto");
   drawList(appVias, (app && app.vias) || []);
   appVias.hidden = !(app && app.vias);
-  appHow.innerHTML = (app && app.vias)
-    ? "One code per person or group. First arrival wins."
-    : "<b>Not reported by the app.</b> A code in the app's own links &mdash; "
-      + "<code>liuxuesheng.help/?via=mia</code> &mdash; is the only thing that survives "
-      + "WeChat, which strips referrers. It is the app link that gets shared, so this is "
-      + "the panel that would actually answer who brings users.";
+  // The app's own hostname, from the endpoint being read, so the links are the
+  // ones to actually paste rather than an example to adapt. A wrong host here
+  // is a link that silently counts nothing, which is the failure that looks
+  // most like success.
+  let appHost = "liuxuesheng.help";
+  try { if (app && app.url) appHost = new URL(app.url).hostname; } catch { /* keep it */ }
+
+  appHow.innerHTML = (app && app.vias
+      ? "<b>One code per person or group.</b> First arrival wins."
+      : "<b>Not reported by the app yet.</b> These links work the moment the app records "
+        + "the code &mdash; the one signal that survives WeChat, which strips referrers. "
+        + "The app link is the one that gets shared, so this is where the question is "
+        + "actually answered.")
+    + '<div class="lines">'
+    + ["mia", "wechat-uni-group", "poster-a"]
+        .map((code) => `<span><code>https://${appHost}/?via=${code}</code></span>`).join("")
+    + "</div>";
   if (!app) {
     document.getElementById("a-count").textContent = "\u2014";
     document.getElementById("a-today").textContent = "\u2014";
