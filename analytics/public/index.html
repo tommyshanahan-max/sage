@@ -169,6 +169,27 @@
     margin:1.4rem 0 0;padding:1rem 1.1rem;background:var(--jade-soft);
     border-radius:10px;font-size:.82rem;color:var(--ink-2);line-height:1.65;
   }
+  /* ---------- who sent them ----------
+     Given its own section rather than a column, because it is the one panel
+     here that answers a decision — who to work with — rather than describing
+     what happened. */
+  .who-sent{border-color:var(--jade)}
+  .who-sent ol{margin:0}
+  .howto{
+    margin:1.1rem 0 0;padding:1rem 1.1rem;background:var(--card-2);
+    border:1px dashed var(--rule);border-radius:10px;
+    font-size:.84rem;color:var(--ink-2);line-height:1.7;
+  }
+  .howto b{color:var(--ink)}
+  .howto code{
+    font-family:var(--mono);font-size:.92em;color:var(--jade);
+    background:var(--card);border:1px solid var(--rule);border-radius:5px;
+    padding:.1rem .35rem;white-space:nowrap;
+  }
+  .howto .lines{
+    display:flex;flex-direction:column;gap:.4rem;margin:.7rem 0 0;
+    overflow-x:auto;
+  }
   .thin b{color:var(--ink)}
   .note b{color:var(--ink-2);font-weight:600}
   .note code{font-family:var(--mono);font-size:.92em;color:var(--jade)}
@@ -267,6 +288,12 @@
         <span class="spans" id="spans"></span>
       </div>
     </div>
+  </section>
+
+  <section class="who-sent">
+    <h2>Who sent them</h2>
+    <ol id="vias"></ol>
+    <div class="howto" id="vias-howto"></div>
   </section>
 
   <div class="two">
@@ -514,6 +541,7 @@ async function load() {
   drawGrowth(data.series);
   drawReturn(data);
   drawChart(data.series);
+  drawVias(data.vias || [], data.sites || []);
   drawList(document.getElementById("places"), data.places || []);
   drawList(document.getElementById("sources"), data.sources || []);
   drawList(document.getElementById("pages"), data.pages);
@@ -551,6 +579,41 @@ function drawApp(app, series) {
     + "the app and left was never counted. The total carries that gap forward permanently. "
     + "Treat the earlier figures as a floor, and any before-and-after comparison as two "
     + "different measurements rather than a trend.";
+}
+
+// Who sent them, and — when nobody has yet — how to make that answerable.
+//
+// This panel is empty until share links are actually used, and an empty panel
+// that explains nothing is worse than no panel: it reads as a broken feature
+// rather than an unused one. So the empty state is the instructions, with the
+// real hostname in them rather than a placeholder to be adapted.
+function drawVias(vias, sites) {
+  const list = document.getElementById("vias");
+  const howto = document.getElementById("vias-howto");
+  drawList(list, vias);
+  list.hidden = !vias.length;
+
+  const host = sites[0] || "your-site";
+  const line = (code) => `https://${host}/?via=${code}`;
+
+  howto.innerHTML = (vias.length
+    ? "<b>One code per person.</b> Give each influencer, group or poster its own link "
+      + "and this becomes a ranked list of who actually brings people."
+    : "<b>Nothing to show yet — no share links have been used.</b> The referrer cannot "
+      + "answer this: WeChat sends none, so an influencer's post and a stranger's "
+      + "forward are the same <b>direct</b> arrival. A code in the link can, because it "
+      + "travels inside the address."
+    )
+    + '<div class="lines">'
+    + [["mia", "an influencer"], ["wechat-uni-group", "a group chat"], ["poster-a", "a printed poster"]]
+        .map(([code, who]) => `<span><code>${line(code)}</code> &nbsp;${who}</span>`).join("")
+    + "</div>"
+    + "Counted on first arrival, so somebody who comes through Mia's link is Mia's "
+    + "whatever they do next. A forwarded code still credits whoever posted it first — "
+    + "they caused the arrival. <code>?s=</code> works too, if you want it shorter."
+    + "<br><br><b>This covers the site only.</b> A code on an app link is counted by the "
+    + "app's own counter, not this one — worth adding there, since the app link is the "
+    + "one that gets shared.";
 }
 
 // The app's own two charts, drawn by the same renderers as the site's.

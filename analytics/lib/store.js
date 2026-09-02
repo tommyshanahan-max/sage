@@ -101,6 +101,22 @@ const emptyDay = () => ({
   // referrer at all, so a link pasted into a group shows up as direct — which,
   // given how this is actually spreading, is a finding rather than a gap.
   sources: new Map(),
+  // Who sent them: a code carried in the link itself, ?via=mia.
+  //
+  // This exists because the referrer cannot answer it. WeChat's browser sends
+  // none, so an influencer posting the link and a stranger forwarding it are
+  // the same "direct" arrival — and telling those apart is the whole question
+  // when deciding who to work with.
+  //
+  // A distinct link per person answers it, and works exactly where referrers
+  // do not, because the code is inside the URL that travels. It describes the
+  // link, never the visitor: nothing personal is added by counting it.
+  //
+  // First touch, by construction — counted on first sighting, so somebody who
+  // arrives through Mia's link on Monday is Mia's, whatever they click after.
+  // A code forwarded onward still credits the person who first posted it,
+  // which is the honest answer: they caused the arrival.
+  vias: new Map(),
 });
 
 const bump = (map, key, by = 1) => map.set(key, (map.get(key) || 0) + by);
@@ -154,6 +170,7 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
           dwellVisits: saved.dwellVisits || 0,
           places: new Map(Object.entries(saved.places || {})),
           sources: new Map(Object.entries(saved.sources || {})),
+          vias: new Map(Object.entries(saved.vias || {})),
         });
       } catch { /* unreadable day: leave it out rather than guess at it */ }
     }
@@ -174,7 +191,7 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
 
   /** Records one event. `device` is the browser's own id and is hashed here —
    *  it is not stored, passed on, or logged in the form it arrived in. */
-  function record({ device, kind, name, site, place, source, at = Date.now() }) {
+  function record({ device, kind, name, site, place, source, via, at = Date.now() }) {
     const id = hashId(device);
     const day = dayKey(at, tz);
     const d = dayOf(day);
@@ -196,6 +213,7 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
       // reads four pages into four Londoners.
       if (place) bump(d.places, place);
       if (source) bump(d.sources, source);
+      if (via) bump(d.vias, via);
     }
     d.events++;
     if (kind === "dwell") {
@@ -226,6 +244,7 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
     const uses = new Map();
     const places = new Map();
     const sources = new Map();
+    const vias = new Map();
     let events = 0;
     let dwellSeconds = 0;
     let dwellVisits = 0;
@@ -236,6 +255,7 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
       for (const [k, v] of d.uses) bump(uses, k, v);
       for (const [k, v] of d.places) bump(places, k, v);
       for (const [k, v] of d.sources) bump(sources, k, v);
+      for (const [k, v] of d.vias) bump(vias, k, v);
       events += d.events;
       dwellSeconds += d.dwellSeconds;
       dwellVisits += d.dwellVisits;
@@ -288,6 +308,7 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
       uses: top(uses),
       places: top(places),
       sources: top(sources),
+      vias: top(vias),
       knownDevices: devices.size,
     };
   }
@@ -310,6 +331,7 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
         dwellVisits: d.dwellVisits,
         places: Object.fromEntries(d.places),
         sources: Object.fromEntries(d.sources),
+        vias: Object.fromEntries(d.vias),
       });
     }
     dirtyDays = new Set();

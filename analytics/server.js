@@ -195,13 +195,19 @@ app.post("/e", express.json({ limit: "2kb" }), (req, res) => {
     ? String(req.body.z).slice(0, 40)
     : "";
   const source = hostOf(req.body?.r);
+  // A share code from the link. Deliberately narrow: it is displayed on a
+  // dashboard and typed by hand into links, so letters, digits, dash and
+  // underscore only, and short enough to read in a list.
+  const via = /^[A-Za-z0-9_-]{1,24}$/.test(req.body?.v || "")
+    ? String(req.body.v).toLowerCase()
+    : "";
   // A device id shaped like anything else is a client that is not ours.
   if (!/^[A-Za-z0-9_-]{8,40}$/.test(device) || !name) return res.status(204).end();
 
   try {
     // Counts in memory; the timer below is the only thing that writes. The id
     // is hashed inside the store and is never written in the form it arrived.
-    store.record({ device, kind, name, site, place, source });
+    store.record({ device, kind, name, site, place, source, via });
   } catch (err) {
     console.error("record failed:", err.message);
   }
@@ -223,11 +229,12 @@ const SNIPPET = `/* first-party, one random id in this browser's own storage */
     }
   } catch (e) { return; }   /* storage refused: count nobody rather than guess */
 
-  function send(k, n, z, r) {
+  function send(k, n, z, r, v) {
     try {
       var body = { d: id, k: k, n: String(n).slice(0, 120) };
       if (z) body.z = z;
       if (r) body.r = String(r).slice(0, 300);
+      if (v) body.v = String(v).slice(0, 24);
       fetch(base + "/e", {
         method: "POST", keepalive: true, mode: "cors", credentials: "omit",
         headers: { "content-type": "application/json" },
@@ -251,7 +258,15 @@ const SNIPPET = `/* first-party, one random id in this browser's own storage */
      The referrer is passed whole and reduced to a bare host by the server. */
   var place = "";
   try { place = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}
-  send("page", location.pathname, place, document.referrer);
+  /* Who sent them, from the link they followed: ?via=mia. This is the one
+     signal that survives WeChat, which strips referrers — so it is the only
+     way to tell one person's share from another's. */
+  var via = "";
+  try {
+    var q = new URLSearchParams(location.search);
+    via = q.get("via") || q.get("s") || "";
+  } catch (e) {}
+  send("page", location.pathname, place, document.referrer, via);
 
   /* How long this visit lasted, sent once at the end as a single number of
      seconds. Only time the page was actually visible counts — a tab left open
