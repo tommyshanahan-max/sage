@@ -152,34 +152,45 @@
 
   /* ---------- masthead ---------- */
   header{
-    flex:none;display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;
-    padding:.9rem clamp(1rem,4vw,1.6rem);
+    flex:none;display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;
+    padding:1.15rem clamp(1rem,4vw,1.8rem);
     background:var(--card);border-bottom:1px solid var(--rule);
   }
   .mark{
-    font-family:var(--serif);font-size:1.4rem;line-height:1;letter-spacing:-.01em;
+    font-family:var(--serif);font-size:2.1rem;line-height:1;letter-spacing:-.015em;
     color:var(--gold);font-style:italic;
   }
-  .by{font-size:.72rem;color:var(--muted)}
+  .by{font-size:.86rem;color:var(--muted)}
 
   /* ---------- today's numbers ----------
-     A readout, not a dashboard. Two figures and fourteen bars: enough to know
-     whether today is unusual, and a click away from the rest. */
+     A control, not a caption. This is the number the owner opens the page
+     wanting to know, so it is the second thing on the masthead and it is
+     obviously pressable. */
   .numbers{
-    display:flex;align-items:center;gap:.6rem;text-decoration:none;color:inherit;
-    padding:.2rem .55rem;border:1px solid var(--rule);border-radius:6px;
+    display:flex;align-items:center;gap:1rem;text-decoration:none;color:inherit;
+    padding:.5rem .95rem .5rem 1.05rem;
+    background:var(--gold-soft);border:1px solid var(--gold-line);
+    border-radius:11px;transition:transform .14s ease,box-shadow .14s ease;
   }
-  .numbers:hover{border-color:var(--gold)}
-  .numbers:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .numbers:hover{transform:translateY(-1px);box-shadow:0 2px 10px rgba(0,0,0,.08)}
+  .numbers:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+  .numbers .pair{display:flex;flex-direction:column;line-height:1}
   .numbers b{
-    font-family:var(--serif);font-size:1.05rem;font-weight:400;line-height:1;
+    font-family:var(--serif);font-size:2rem;font-weight:400;line-height:1;
     font-variant-numeric:tabular-nums;color:var(--gold);
   }
-  .numbers .k{font-size:.68rem;color:var(--muted);letter-spacing:.04em}
-  .spark{display:flex;align-items:flex-end;gap:1px;height:1.05rem}
+  .numbers .k{
+    font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);margin-top:.3rem;
+  }
+  .numbers .go{
+    font-size:.78rem;color:var(--gold);letter-spacing:.03em;
+    display:flex;align-items:center;gap:.3rem;white-space:nowrap;
+  }
+  .spark{display:flex;align-items:flex-end;gap:2px;height:2.1rem}
   .spark i{
-    width:3px;background:var(--gold-soft);border-top:1px solid var(--gold);
-    min-height:1px;display:block;
+    width:4px;background:var(--card);border:1px solid var(--gold-line);
+    border-bottom:0;min-height:2px;display:block;border-radius:1px 1px 0 0;
   }
   .spark i.today{background:var(--gold);border-color:var(--gold)}
 
@@ -254,8 +265,8 @@
   .status{margin-left:auto;font-size:.76rem;color:var(--muted);
     font-variant-numeric:tabular-nums}
   header button{
-    font:inherit;font-size:.76rem;color:var(--ink-2);background:none;
-    border:1px solid var(--rule);border-radius:6px;padding:.22rem .6rem;cursor:pointer;
+    font:inherit;font-size:.95rem;color:var(--ink-2);background:none;
+    border:1px solid var(--rule);border-radius:8px;padding:.45rem .95rem;cursor:pointer;
   }
   header button:hover{color:var(--gold);border-color:var(--gold)}
   header button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -852,12 +863,16 @@ async function drawNumbers() {
     spark.append(bar);
   });
 
+  const pair = (n, label) => {
+    const box = el("span", "pair");
+    box.append(el("b", null, String(n)), el("span", "k", label));
+    return box;
+  };
   numbersBox.replaceChildren(
-    el("b", null, String(d.today.devices)),
-    el("span", "k", "today"),
-    el("b", null, String(d.today.fresh)),
-    el("span", "k", "new"),
-    spark
+    pair(d.today.devices, "people today"),
+    pair(d.today.fresh, "first time"),
+    spark,
+    el("span", "go", "Analytics →")
   );
   numbersBox.href = d.link || "#";
   numbersBox.hidden = false;
