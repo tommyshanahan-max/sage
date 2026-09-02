@@ -253,6 +253,7 @@ services:
       AGENT_ROLE: partner
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       AGENT_MODEL: ${TOMSCODING_AGENT_MODEL:-}
+      AGENT_USER: ${TOMSCODING_PARTNER_USER:-Brendan}
       AGENT_PASSWORD: ${TOMSCODING_PARTNER_PASSWORD:-}
       AGENT_PROJECT_LABEL: ${TOMSCODING_PARTNER_PROJECT:-Liuxuesheng}
       # Its own home, deliberately empty of everything: no ~/.claude from the

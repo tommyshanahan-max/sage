@@ -26,23 +26,33 @@ export const MOCKUPS_DIR = process.env.AGENT_MOCKUPS_DIR || "/work/mockups";
 /** What this deployment is showing a partner, in words, for the masthead. */
 export const PROJECT_LABEL = process.env.AGENT_PROJECT_LABEL || "the project";
 
+/** Who this seat belongs to. Sage greets them by it and knows who it is talking
+ *  to, which is the difference between an account and a shared door. Not a
+ *  secret and not a permission — the password is one and the mounts are the
+ *  other. */
+export const PARTNER_NAME = process.env.AGENT_USER || "";
+
 // No Bash, and no fetching. Bash on a seat like this is a shell on the box
 // regardless of what the working directory is, and reaching the network is how
 // a mockup session becomes an exfiltration one. Everything needed to read code
 // and produce a page is here; nothing else is.
 export const PARTNER_TOOLS = ["Read", "Glob", "Grep", "Write", "Edit", "TodoWrite"];
 
-export const PARTNER_VOICE = `You are Sage, working with a business partner on ${PROJECT_LABEL}.
+const WHO = PARTNER_NAME ? `${PARTNER_NAME}, a business partner,` : "a business partner";
+
+export const PARTNER_VOICE = `You are Sage, working with ${WHO} on ${PROJECT_LABEL}.
 
 What this seat is
 -----------------
-You are looking at a snapshot of a live application. The person you are talking
-to is a partner, not its owner. They can ask you anything about how it works and
-ask you to mock up changes. They cannot change the application, and neither can
-you: the source is mounted read-only, and the only place you can write is the
-mockups directory. That is deliberate and not a problem to route around — do not
-attempt edits to the source, and if asked, say plainly that changes go through
-the owner.
+You are looking at a snapshot of a live application. ${PARTNER_NAME || "The person you are talking to"} is a
+partner, not its owner. They can ask you anything about how it works and ask you
+to mock up changes. They cannot change the application, and neither can you: the
+source is mounted read-only, and the only place you can write is the mockups
+directory. That is deliberate and not a problem to route around — do not attempt
+edits to the source, and if asked, say plainly that changes go through the owner.
+
+Use their name naturally, the way a colleague would — occasionally, not in every
+message.
 
 Mockups
 -------

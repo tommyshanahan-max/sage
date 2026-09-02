@@ -44,6 +44,16 @@ const HOME = process.env.HOME || "/home/coder";
 const conversations = createFileStore({ home: HOME, cwd: WORKSPACE });
 const MODEL = process.env.AGENT_MODEL || undefined;
 const PASSWORD = process.env.AGENT_PASSWORD || "";
+// Optional. Set it and the form asks for a username too; leave it unset and the
+// page is exactly as it was — which is why the owner's seat is unchanged while a
+// partner's asks for both.
+//
+// A username is not much of a secret: it is guessable, and it is not what keeps
+// anyone out. It earns its place on a seat held by someone else for two other
+// reasons — it reads as an account rather than a shared door, and it leaves
+// room for a second partner later without every one of them typing the same
+// thing.
+const USER = process.env.AGENT_USER || "";
 
 if (!process.env.ANTHROPIC_API_KEY) {
   console.error(
@@ -99,7 +109,12 @@ const app = express();
 // ---------------------------------------------------------------------------
 const SESSION_DAYS = 30;
 const COOKIE = "sage_session";
-const KEY = createHash("sha256").update("sage-session:" + PASSWORD).digest();
+// Derived from both, so changing either signs every device out. The no-username
+// form is kept byte-identical to what it was, so adding this feature does not
+// quietly sign out a seat that never had a username.
+const KEY = createHash("sha256")
+  .update(USER ? `sage-session:${USER}:${PASSWORD}` : "sage-session:" + PASSWORD)
+  .digest();
 
 function safeEqual(a, b) {
   const x = Buffer.from(a);
@@ -173,10 +188,12 @@ function loginPage(failed) {
 </style></head><body>
 <form method="post" action="/login">
   <h1>Sage</h1>
-  ${failed ? '<p class="bad">That password was not right.</p>'
+  ${failed ? `<p class="bad">${USER ? "That username and password did not match." : "That password was not right."}</p>`
            : "<p>Signed in for 30 days on this device.</p>"}
+  ${USER ? `<input type="text" name="username" autocomplete="username"
+         placeholder="Username" autofocus required>` : ""}
   <input type="password" name="password" autocomplete="current-password"
-         placeholder="Password" autofocus required>
+         placeholder="Password"${USER ? "" : " autofocus"} required>
   <button type="submit">Sign in</button>
 </form></body></html>`;
 }
@@ -203,7 +220,12 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  if (safeEqual(String(req.body?.password ?? ""), PASSWORD)) {
+  // Both are checked every time, and both with a timing-safe comparison. A
+  // username checked with === would answer "does this account exist?" a little
+  // faster than it answers "is this password right?".
+  const userOk = !USER || safeEqual(String(req.body?.username ?? "").trim(), USER);
+  const passOk = safeEqual(String(req.body?.password ?? ""), PASSWORD);
+  if (userOk && passOk) {
     res.cookie(COOKIE, issue(), {
       httpOnly: true,
       secure: true,

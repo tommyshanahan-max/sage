@@ -382,13 +382,25 @@ make partner-sync      # replaces what they see with TOMSCODING_PARTNER_BRANCH
 make partner-mockups   # copies their mockups out to ./mockups for review
 ```
 
-`partner-sync` clones the branch, strips its `.git`, and writes a `SNAPSHOT.txt`
-recording repo, branch, commit and date — so neither of you ever has to ask
-which version is on screen. Their mockups survive a sync.
+`TOMSCODING_PARTNER_REPOS` lists what they are allowed to see — one entry per
+line as `url#branch`, as many as you like. Each lands in its own folder, so Sage
+sees them side by side. **That list is the access decision:** a repository not on
+it is not on the machine at all, so there is nothing to reach, guess at, or be
+talked into.
 
-Enable it with `partner` in `COMPOSE_PROFILES`, a password, an A record, and
-`TOMSCODING_PARTNER_REPO` / `_BRANCH`. `make up` refuses to start the seat
-without a password or before a first sync.
+`partner-sync` clones each one, strips its `.git`, and writes a `SNAPSHOT.txt`
+recording every repo, branch, commit and the date — so neither of you ever has to
+ask which version is on screen. Their mockups survive a sync.
+
+Sign-in takes a **username and password**. Set `TOMSCODING_PARTNER_USER` to
+their name; Sage greets them by it. The username is not much of a secret and is
+not what keeps anyone out — it makes the seat read as an account rather than a
+shared door, and leaves room for a second partner later. The owner's own seat is
+unchanged and still asks for a password only.
+
+Enable it with `partner` in `COMPOSE_PROFILES`, a password, an A record, and the
+repo list. `make up` refuses to start the seat without a password or before a
+first sync.
 
 ### Voice
 

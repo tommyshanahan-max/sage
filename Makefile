@@ -32,7 +32,7 @@ up: ## Build if needed and start everything
 	       exit 1; } || true
 	@grep -q '^COMPOSE_PROFILES=.*partner' .env && [ ! -d partner/source ] \
 	  && { echo "partner is enabled but there is no snapshot yet."; \
-	       echo "Run 'make partner-sync' first — it decides which version they see."; \
+	       echo "Run 'make partner-sync' first — it decides which repos and versions they see."; \
 	       exit 1; } || true
 	$(COMPOSE) up -d --build
 	echo "up. https://$$(grep -E '^TOMSCODING_DOMAIN=' .env | cut -d= -f2-)"

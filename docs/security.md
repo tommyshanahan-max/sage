@@ -116,10 +116,25 @@ Both should fail — "Read-only file system", then "No such file". If either
 succeeds, stop and fix it before giving anyone the password.
 
 **The snapshot only moves when you move it.** `make partner-sync` replaces
-`partner/source` with a chosen branch and writes a `SNAPSHOT.txt` recording
-which commit that was. Nothing the partner does advances it, and there is no
-path from their seat to your workspace, your repositories or your other
-projects.
+`partner/source` with the repositories listed in `TOMSCODING_PARTNER_REPOS` and
+writes a `SNAPSHOT.txt` recording each one's commit. Nothing the partner does
+advances it, and there is no path from their seat to your workspace, your
+repositories or your other projects.
+
+**That list is the access control.** A repository not on it was never cloned, so
+it is not on that machine — there is nothing to find, no credential that would
+fetch it, and no network route to where it lives. This is the difference between
+"not shown" and "not present", and only the second one survives someone trying.
+
+**It sits on its own Docker network**, with only Caddy on it. It cannot resolve
+`workspace`, `agent` or `browser`, let alone reach them. Its session cookie sets
+no domain, so it is host-only and cannot be replayed against your other
+hostnames.
+
+**Sign-in takes a username and a password**, both compared in constant time. The
+username is not the control — it is guessable — but the seat reads as an account
+rather than a shared door, and the cookie key is derived from both, so changing
+either signs that person out everywhere.
 
 **What they do get.** Your API key is spent on their turns — they cannot read
 it, but they can cost you money, so give that key a spend limit. They can read
