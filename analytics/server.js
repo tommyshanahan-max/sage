@@ -408,6 +408,23 @@ app.use((req, res, next) => {
 // service down on the day it matters. Failure is soft: no app figure is a
 // dashboard with one section missing, not a dashboard that will not load.
 // ---------------------------------------------------------------------------
+/** {name: count} from another service, ranked, cleaned and capped.
+ *
+ *  Another service's JSON, rendered on this page: taken as a shape rather than
+ *  trusted as one. Anything that is not a plain object of name to number comes
+ *  back empty, which the panel then reports as "not measured" — the honest
+ *  reading, and the same one as a field that was never sent. */
+function counts(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const out = Object.entries(raw)
+    .filter(([k, v]) => typeof k === "string" && k.length <= 60 && Number.isFinite(Number(v)))
+    .map(([name, count]) => ({ name: name.replace(/[\x00-\x1f\x7f]/g, "").slice(0, 60), count: Number(count) }))
+    .filter((e) => e.name && e.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 12);
+  return out.length ? out : null;
+}
+
 const APP_COUNT_URL = process.env.ANALYTICS_APP_COUNT_URL || "";
 const APP_CACHE_MS = 60_000;
 let appCache = { at: 0, value: null };
@@ -433,6 +450,19 @@ async function appCount(force = false) {
         // assumed: the two services ship separately and always will.
         activeToday: Number(d.activeToday) || 0,
         returningToday: Number(d.returningToday) || 0,
+        // The same three breakdowns the site keeps, if the app reports them.
+        //
+        // Absent today and the panels say so rather than showing nothing: an
+        // empty section reads as a broken feature, and the distinction between
+        // "nobody came from there" and "that is not measured on that side" is
+        // the whole difference between a finding and a gap.
+        //
+        // Shape is deliberately the app's own to choose — an object of name to
+        // count — because that is what its store already holds and asking it to
+        // reshape for us would be asking for a bug.
+        places: counts(d.places),
+        sources: counts(d.sources),
+        vias: counts(d.vias),
         url: APP_COUNT_URL,
       },
     };

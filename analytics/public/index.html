@@ -258,6 +258,25 @@
       <p class="thin" id="app-note"></p>
     </section>
 
+    <section class="who-sent">
+      <h2>Who sent them</h2>
+      <ol id="app-vias"></ol>
+      <div class="howto" id="app-vias-howto"></div>
+    </section>
+
+    <div class="two">
+      <section>
+        <h2>Where they are</h2>
+        <ol id="app-places"></ol>
+        <p class="thin" id="app-places-note"></p>
+      </section>
+      <section>
+        <h2>How they arrived</h2>
+        <ol id="app-sources"></ol>
+        <p class="thin" id="app-sources-note"></p>
+      </section>
+    </div>
+
     <section>
       <h2>Growth <span id="app-growth-span" style="text-transform:none;letter-spacing:0"></span></h2>
       <div class="chartwrap">
@@ -590,9 +609,45 @@ async function load() {
 }
 
 // The app's three numbers, and an honest account of why there are only three.
+// When a breakdown is not reported, say which of the two silences it is.
+//
+// An empty list can mean "nobody came from anywhere" or "that is not measured
+// over there", and those are opposite facts: one is a finding, the other is a
+// gap to go and close. A panel that renders the same in both cases is the kind
+// of thing somebody quotes in a meeting.
+function drawAppBreakdown(id, items, missing) {
+  const list = document.getElementById(id);
+  const note = document.getElementById(id + "-note");
+  drawList(list, items || []);
+  list.hidden = !items;
+  if (note) note.innerHTML = items ? "" : missing;
+  if (note) note.hidden = !!items;
+}
+
 function drawApp(app, series) {
   const note = document.getElementById("app-note");
   drawAppCharts(series);
+
+  const notYet = (what) => "<b>Not reported by the app.</b> " + what
+    + " The app keeps its own count in its own codebase, so this fills in when "
+    + "that side sends the field &mdash; the panel is here rather than hidden so "
+    + "the difference between <i>nobody</i> and <i>not measured</i> stays visible.";
+
+  drawAppBreakdown("app-places", app && app.places,
+    notYet("Where the app's users are, from the browser's own timezone."));
+  drawAppBreakdown("app-sources", app && app.sources,
+    notYet("Which site linked them to the app."));
+
+  const appVias = document.getElementById("app-vias");
+  const appHow = document.getElementById("app-vias-howto");
+  drawList(appVias, (app && app.vias) || []);
+  appVias.hidden = !(app && app.vias);
+  appHow.innerHTML = (app && app.vias)
+    ? "One code per person or group. First arrival wins."
+    : "<b>Not reported by the app.</b> A code in the app's own links &mdash; "
+      + "<code>liuxuesheng.help/?via=mia</code> &mdash; is the only thing that survives "
+      + "WeChat, which strips referrers. It is the app link that gets shared, so this is "
+      + "the panel that would actually answer who brings users.";
   if (!app) {
     document.getElementById("a-count").textContent = "\u2014";
     document.getElementById("a-today").textContent = "\u2014";
