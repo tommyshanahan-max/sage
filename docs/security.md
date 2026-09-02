@@ -86,6 +86,52 @@ password as strong as the workspaces', and sign out of anything that matters
 before you stop using it. Treat its saved sessions the way you would treat
 saved passwords on a shared machine.
 
+## The partner seat
+
+The only part of this deployment designed for somebody who is not you, and the
+only one where "cannot" has to mean cannot.
+
+**The controls are structural, not instructions.** The agent's tool list is
+shortened and its prompt says what the seat is for, but neither is what stops a
+partner changing your application. These are:
+
+- **The source is bind-mounted `:ro`.** A write to it fails in the kernel. It
+  does not matter what the agent was asked, told, or persuaded to do.
+- **The only writable path is the mockups volume.** There is nowhere else to
+  put anything.
+- **That container has its own home volume**, not the workspace's. No
+  `~/.claude`, no git identity, no credentials — nothing to push with and
+  nowhere to push.
+- **No Bash and no fetching.** Bash on that seat would be a shell on the box
+  whatever the working directory is, and network access is how a mockup session
+  becomes an exfiltration one.
+
+Verify the mount on the server rather than taking it on trust:
+
+```bash
+docker compose exec partner sh -c 'echo x > /work/app/probe 2>&1; ls /work/app/probe 2>&1'
+```
+
+Both should fail — "Read-only file system", then "No such file". If either
+succeeds, stop and fix it before giving anyone the password.
+
+**The snapshot only moves when you move it.** `make partner-sync` replaces
+`partner/source` with a chosen branch and writes a `SNAPSHOT.txt` recording
+which commit that was. Nothing the partner does advances it, and there is no
+path from their seat to your workspace, your repositories or your other
+projects.
+
+**What they do get.** Your API key is spent on their turns — they cannot read
+it, but they can cost you money, so give that key a spend limit. They can read
+the whole snapshot, so do not sync a branch containing anything you would not
+show them; check for committed `.env` files first. And their mockups are served
+from your origin, so those pages are sent with a `Content-Security-Policy` that
+permits no network of any kind — an agent-written page on the same origin as an
+authenticated session is otherwise a way to call these APIs.
+
+**A password is still one shared secret.** Everything under *Worth adding*
+below applies here too, and more so: this one is held by someone else.
+
 ## The watchdog that comes with the browser
 
 Enabling the browser profile also starts `autoheal`, which restarts the browser

@@ -72,7 +72,7 @@
      phone as often as a laptop, and a sidebar there either squeezes the
      conversation or hides itself anyway. Over-and-away keeps one behaviour on
      both. */
-  #path{
+  #path,#mockups{
     position:fixed;inset:0;z-index:20;overflow-y:auto;
     background:var(--paper);
     padding:1rem 1rem calc(2rem + env(safe-area-inset-bottom));
@@ -87,7 +87,7 @@
     letter-spacing:-.01em;
   }
   .path-head button{margin-left:auto}
-  #path-list{max-width:44rem;margin:0 auto;display:flex;flex-direction:column;gap:.6rem}
+  #path-list,#mockups-list{max-width:44rem;margin:0 auto;display:flex;flex-direction:column;gap:.6rem}
   .entry{
     background:var(--card);border:1px solid var(--rule);border-radius:12px;
     padding:.85rem .95rem;
@@ -125,6 +125,11 @@
     background:var(--gold-soft);border:1px solid var(--gold-line);
     border-radius:8px;padding:.55rem .6rem;
   }
+  a.entry{display:block;text-decoration:none;color:inherit}
+  a.entry:hover{border-color:var(--gold-line)}
+  a.entry:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  a.entry h3{color:var(--gold)}
+
   .path-empty,.path-error{
     font-size:.85rem;color:var(--muted);line-height:1.6;
     max-width:44rem;margin:0 auto;
@@ -279,6 +284,7 @@
   <span class="by">powered by Claude</span>
   <span class="status" id="status">ready</span>
   <button type="button" id="path-toggle" aria-expanded="false">Path</button>
+  <button type="button" id="mockups-toggle" aria-expanded="false" hidden>Mockups</button>
   <button type="button" id="reset">New conversation</button>
   <form method="post" action="/logout" style="display:contents">
     <button type="submit">Sign out</button>
@@ -297,6 +303,18 @@
     <button type="button" id="path-close" aria-label="Close">Close</button>
   </div>
   <div id="path-list"></div>
+</section>
+
+<!--
+  What a partner has made. Same panel shape as Path: over the thread rather
+  than beside it, so it behaves the same on a phone.
+-->
+<section id="mockups" hidden aria-label="Mockups">
+  <div class="path-head">
+    <h2>Mockups</h2>
+    <button type="button" id="mockups-close" aria-label="Close">Close</button>
+  </div>
+  <div id="mockups-list"></div>
 </section>
 
 <main id="log">
@@ -496,6 +514,83 @@ input.addEventListener("input", () => {
   input.style.height = "auto";
   input.style.height = Math.min(input.scrollHeight, 192) + "px";
 });
+
+// ---------------------------------------------------------------------------
+// Which seat this is
+//
+// Only ever changes how the page dresses itself. Nothing is gated on it — the
+// server checks the role on every route that matters, because a browser is not
+// somewhere to keep a permission.
+// ---------------------------------------------------------------------------
+
+let seatRole = "owner";
+const mockupsToggle = document.getElementById("mockups-toggle");
+const mockupsPanel  = document.getElementById("mockups");
+const mockupsList   = document.getElementById("mockups-list");
+
+fetch("/api/seat")
+  .then((r) => r.json())
+  .then((d) => {
+    seatRole = d.role || "owner";
+    if (seatRole === "partner") {
+      mockupsToggle.hidden = false;
+      // Past conversations are the owner's; a partner seat has its own
+      // transcripts but no reason for a Path tab, and the route is theirs
+      // alone anyway.
+      pathToggle.hidden = true;
+      document.title = "Sage · " + (d.project || "review");
+      const lead = document.querySelector("#opening p");
+      if (lead) {
+        lead.textContent =
+          "Ask about " + (d.project || "the app") + ", or ask for a mockup of a change. " +
+          "Mockups appear under Mockups above. Nothing here changes the real thing.";
+      }
+    }
+  })
+  .catch(() => {});
+
+async function openMockups() {
+  mockupsPanel.hidden = false;
+  mockupsToggle.setAttribute("aria-expanded", "true");
+  mockupsList.replaceChildren(el("p", "path-empty", "Looking…"));
+  try {
+    const res = await fetch("/api/mockups");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "could not read the mockups folder");
+    if (!data.mockups.length) {
+      mockupsList.replaceChildren(
+        el("p", "path-empty",
+          "Nothing yet. Ask Sage for a mockup of a change and it will appear here.")
+      );
+      return;
+    }
+    mockupsList.replaceChildren(
+      ...data.mockups.map((m) => {
+        // A link rather than a button: it opens a page, and a new tab keeps
+        // the conversation where it was.
+        const a = el("a", "entry");
+        a.href = "/mockups/" + encodeURIComponent(m.name);
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.append(el("h3", null, m.name.replace(/\.html$/, "").replace(/[-_]/g, " ")));
+        a.append(el("p", "when", whenText(m.updatedAt)));
+        return a;
+      })
+    );
+  } catch (err) {
+    mockupsList.replaceChildren(el("p", "path-error", err.message || "could not read the mockups folder"));
+  }
+}
+
+function closeMockups() {
+  mockupsPanel.hidden = true;
+  mockupsToggle.setAttribute("aria-expanded", "false");
+}
+
+mockupsToggle.addEventListener("click", () => {
+  mockupsPanel.hidden ? openMockups() : closeMockups();
+});
+document.getElementById("mockups-close").addEventListener("click", closeMockups);
 
 // ---------------------------------------------------------------------------
 // Voice

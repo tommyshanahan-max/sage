@@ -357,6 +357,39 @@ Naming follows Anthropic's SDK branding guidance, which permits
 "{YourAgentName} powered by Claude" and forbids presenting a product as Claude
 Code. The masthead says exactly that.
 
+### A seat for a business partner
+
+`partner.tomscoding.com`, its own password. Inside, the same Sage — but reading
+one project and able to write only mockups.
+
+They ask about the app, or ask for a change; Sage builds it as a single
+self-contained HTML page in a **Mockups** panel they can open. You collect those
+with `make partner-mockups` and decide what becomes real. Nothing they do
+reaches your code.
+
+**That last sentence is enforced, not promised.** The source is bind-mounted
+read-only, so a write to it fails in the kernel regardless of what the agent was
+asked. The only writable path is the mockups volume. That container has its own
+home with no git identity in it — nothing to push with, nowhere to push. No
+Bash, because Bash on that seat is a shell on the box whatever the working
+directory says. See `docs/security.md`, including the one command that verifies
+the mount rather than trusting it.
+
+**The snapshot only moves when you move it:**
+
+```bash
+make partner-sync      # replaces what they see with TOMSCODING_PARTNER_BRANCH
+make partner-mockups   # copies their mockups out to ./mockups for review
+```
+
+`partner-sync` clones the branch, strips its `.git`, and writes a `SNAPSHOT.txt`
+recording repo, branch, commit and date — so neither of you ever has to ask
+which version is on screen. Their mockups survive a sync.
+
+Enable it with `partner` in `COMPOSE_PROFILES`, a password, an A record, and
+`TOMSCODING_PARTNER_REPO` / `_BRANCH`. `make up` refuses to start the seat
+without a password or before a first sync.
+
 ### Voice
 
 A circle at the left of the composer. Tap it and Sage listens; tap again and

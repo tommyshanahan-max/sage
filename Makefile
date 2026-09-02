@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor password fix-browser instructions
+.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor password fix-browser instructions partner-sync partner-mockups
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -26,6 +26,14 @@ up: ## Build if needed and start everything
 	  && { echo "agent is enabled but ANTHROPIC_API_KEY is empty."; \
 	       echo "The agent has nothing to authenticate with and every turn will fail."; \
 	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*partner' .env && ! grep -qE '^TOMSCODING_PARTNER_PASSWORD=.+' .env \
+	  && { echo "partner is enabled but TOMSCODING_PARTNER_PASSWORD is empty."; \
+	       echo "That seat is someone else's access to your work — it needs its own password."; \
+	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*partner' .env && [ ! -d partner/source ] \
+	  && { echo "partner is enabled but there is no snapshot yet."; \
+	       echo "Run 'make partner-sync' first — it decides which version they see."; \
+	       exit 1; } || true
 	$(COMPOSE) up -d --build
 	echo "up. https://$$(grep -E '^TOMSCODING_DOMAIN=' .env | cut -d= -f2-)"
 
@@ -34,6 +42,15 @@ down: ## Stop everything (volumes are kept)
 
 restart: ## Restart all services
 	$(COMPOSE) restart
+
+partner-sync: ## Replace the snapshot the partner seat can see
+	bash scripts/partner-sync.sh
+
+partner-mockups: ## Copy the partner's mockups out to ./mockups for review
+	@mkdir -p mockups
+	$(COMPOSE) cp partner:/work/mockups/. mockups/ 2>/dev/null \
+	  || { echo "no partner seat running, or nothing made yet."; exit 0; }
+	@ls -lh mockups 2>/dev/null | tail -n +2 || true
 
 instructions: ## Update the agent instructions in the running workspace
 	@# The image seeds these into the home volume on first start only, and the

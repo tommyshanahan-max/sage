@@ -226,6 +226,58 @@ services:
           memory: ${TOMSCODING_AGENT_MEMORY:-1g}
     cpu_shares: ${TOMSCODING_AGENT_CPU_SHARES:-512}
 
+  # A seat for someone who is not you.
+  #
+  # Same image as the agent, configured as a partner: it can read a snapshot of
+  # one project and write mockups, and that is the whole of it. The limits are
+  # in this block, not in a prompt —
+  #
+  #   * the source is bind-mounted `:ro`, so a write to it fails at the kernel
+  #   * the only writable path is the mockups volume
+  #   * its home is its own volume, not the workspace's, so there are no git
+  #     credentials in it and nothing to push with
+  #   * no host ports, same as everything else — only Caddy can reach it
+  #
+  # The snapshot only moves when you move it: `make partner-sync` replaces it
+  # with a chosen branch and records which commit that was. Nothing the partner
+  # does can advance it, and nothing you do here reaches your workspace.
+  partner:
+    profiles: ["partner"]
+    build:
+      context: ./agent
+    image: tomscoding-agent:latest
+    container_name: tomscoding-partner
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      AGENT_ROLE: partner
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AGENT_MODEL: ${TOMSCODING_AGENT_MODEL:-}
+      AGENT_PASSWORD: ${TOMSCODING_PARTNER_PASSWORD:-}
+      AGENT_PROJECT_LABEL: ${TOMSCODING_PARTNER_PROJECT:-Liuxuesheng}
+      # Its own home, deliberately empty of everything: no ~/.claude from the
+      # workspace, no git identity, no API keys but the one above.
+      HOME: /work/home
+      AGENT_WORKSPACE: /work
+      AGENT_MOCKUPS_DIR: /work/mockups
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      AGENT_VOICE_ID: ${TOMSCODING_AGENT_VOICE_ID:-}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      # The snapshot. Read-only is the control; everything else is convenience.
+      - ./partner/source:/work/app:ro
+      - partner_mockups:/work/mockups
+      - partner_home:/work/home
+    expose:
+      - "3000"
+    networks:
+      - tomscoding
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_PARTNER_MEMORY:-768m}
+    cpu_shares: ${TOMSCODING_PARTNER_CPU_SHARES:-256}
+
   caddy:
     image: caddy:2-alpine
     container_name: tomscoding-caddy
@@ -248,6 +300,7 @@ services:
       TOMSCODING_DOMAIN_2: ${TOMSCODING_DOMAIN_2:-seat2.localhost}
       TOMSCODING_BROWSER_DOMAIN: ${TOMSCODING_BROWSER_DOMAIN:-browser.localhost}
       TOMSCODING_AGENT_DOMAIN: ${TOMSCODING_AGENT_DOMAIN:-agent.localhost}
+      TOMSCODING_PARTNER_DOMAIN: ${TOMSCODING_PARTNER_DOMAIN:-partner.localhost}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./docker/conf.d:/etc/caddy/conf.d:ro
@@ -267,6 +320,8 @@ networks:
 volumes:
   home:
   home_2:
+  partner_mockups:
+  partner_home:
   browser_config:
   caddy_data:
   caddy_config:

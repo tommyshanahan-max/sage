@@ -10,6 +10,8 @@
 
 import express from "express";
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { readdir, readFile, stat } from "node:fs/promises";
+import path from "node:path";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import {
   createFileStore,
@@ -24,6 +26,14 @@ import {
   transcribe,
   MAX_STT_BYTES,
 } from "./lib/speech.js";
+import {
+  ROLE,
+  isPartner,
+  MOCKUPS_DIR,
+  PROJECT_LABEL,
+  PARTNER_TOOLS,
+  PARTNER_VOICE,
+} from "./lib/role.js";
 
 const PORT = process.env.PORT || 3000;
 const WORKSPACE = process.env.AGENT_WORKSPACE || "/workspace";
@@ -228,12 +238,73 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.static("public"));
 
 // --------------------------------------------------------------------------
+// Mockups (partner seats only)
+//
+// Everything a partner produces lands here, and nowhere else, because nowhere
+// else is writable. These routes let them list what they have made and open it.
+// --------------------------------------------------------------------------
+
+// A mockup name is used to build a path, so it is matched against a shape
+// rather than cleaned. A sanitised name that still resolves somewhere is worse
+// than a refused one.
+const isMockupName = (n) => typeof n === "string" && /^[A-Za-z0-9._-]{1,120}\.html$/.test(n);
+
+app.get("/api/mockups", async (_req, res) => {
+  if (!isPartner) return res.status(404).json({ error: "not this seat" });
+  try {
+    const names = (await readdir(MOCKUPS_DIR)).filter(isMockupName);
+    const items = await Promise.all(
+      names.map(async (name) => {
+        const info = await stat(path.join(MOCKUPS_DIR, name));
+        return { name, updatedAt: info.mtime.toISOString(), bytes: info.size };
+      })
+    );
+    items.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    res.json({ mockups: items });
+  } catch (err) {
+    if (err.code === "ENOENT") return res.json({ mockups: [] });
+    console.error("listing mockups failed:", err);
+    res.status(500).json({ error: "could not read the mockups folder" });
+  }
+});
+
+app.get("/mockups/:name", async (req, res) => {
+  if (!isPartner) return res.status(404).send("Not found");
+  const { name } = req.params;
+  if (!isMockupName(name)) return res.status(404).send("Not found");
+  try {
+    const html = await readFile(path.join(MOCKUPS_DIR, name), "utf8");
+    res
+      .set("Content-Type", "text/html; charset=utf-8")
+      // A mockup is a page written by an agent and served from this origin,
+      // which would otherwise let it call these APIs with the viewer's own
+      // session. It is allowed to be a page and nothing else: no network of
+      // any kind, no framing of anything.
+      .set(
+        "Content-Security-Policy",
+        "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; " +
+          "font-src data:; script-src 'unsafe-inline'; form-action 'none'; " +
+          "base-uri 'none'; frame-ancestors 'self'"
+      )
+      .set("Cache-Control", "no-store")
+      .send(html);
+  } catch {
+    res.status(404).send("Not found");
+  }
+});
+
+// --------------------------------------------------------------------------
 // Voice
 // --------------------------------------------------------------------------
 
 // Whether to offer a microphone at all. The page asks once on load; with no key
 // configured it simply does not draw the circle, because an absent key must
 // look like a feature that isn't switched on, not one that is broken.
+// What kind of seat this is, so the page can dress itself accordingly. Not a
+// permission check — nothing is gated on what the browser is told here; the
+// routes above check the role themselves.
+app.get("/api/seat", (_req, res) => res.json({ role: ROLE, project: PROJECT_LABEL }));
+
 app.get("/api/voice", (_req, res) => res.json({ available: isSpeechConfigured() }));
 
 // Sage's own words, spoken. Nothing is passed but the text she already wrote.
@@ -406,7 +477,11 @@ app.post("/api/chat", async (req, res) => {
       cwd: WORKSPACE,
       // Appends to Claude Code's preset rather than replacing it: the preset
       // is what makes the tools work, and only the voice is ours.
-      systemPrompt: { type: "preset", preset: "claude_code", append: SAGE_VOICE },
+      systemPrompt: {
+        type: "preset",
+        preset: "claude_code",
+        append: isPartner ? PARTNER_VOICE : SAGE_VOICE,
+      },
       // Every tool runs without stopping to ask, on the same files the editor
       // opens. Git is what protects them — see the README.
       //
@@ -415,6 +490,11 @@ app.post("/api/chat", async (req, res) => {
       // work, which surfaces as an exit code and nothing else.
       permissionMode: "bypassPermissions",
       allowDangerouslySkipPermissions: true,
+      // A partner seat gets a short list rather than everything. This is not
+      // what stops them changing the application — the read-only mount is —
+      // but it keeps the agent from spending turns discovering that a tool it
+      // reached for has nothing to act on. See lib/role.js.
+      ...(isPartner ? { allowedTools: PARTNER_TOOLS } : {}),
       stderr: (data) => {
         process.stderr.write(data);
         stderrTail.push(data);
