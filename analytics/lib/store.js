@@ -75,6 +75,32 @@ const emptyDay = () => ({
   // above forbids. Divided at read time.
   dwellSeconds: 0,
   dwellVisits: 0,
+  // Where in the world, at the coarseness a browser volunteers it.
+  //
+  // This is the browser's own IANA timezone — "Europe/London" — and not a
+  // lookup of the network address. The address is never read, so the promise
+  // that none is kept stays literally true, and no database of anybody's
+  // addresses has to exist on this box to make the chart work.
+  //
+  // For this product it is also the better signal. A student in Manchester on
+  // a Chinese VPN geolocates to China and has their clock set to London, and
+  // London is the fact the business turns on.
+  //
+  // Counted once per device per day, on first sighting, so somebody who opens
+  // six pages is one person in one place rather than six.
+  places: new Map(),
+  // How they arrived: the host that linked here, or "direct".
+  //
+  // The host, never the full address. A referring URL can carry a query string
+  // with somebody's search terms or session in it, and none of that is needed
+  // to answer "is this WeChat or is this Google". Recorded on first sighting
+  // like place, so a person who arrives once and reads four pages is one
+  // arrival from one source.
+  //
+  // Expect a great deal of "direct". WeChat's in-app browser usually sends no
+  // referrer at all, so a link pasted into a group shows up as direct — which,
+  // given how this is actually spreading, is a finding rather than a gap.
+  sources: new Map(),
 });
 
 const bump = (map, key, by = 1) => map.set(key, (map.get(key) || 0) + by);
@@ -126,6 +152,8 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
           uses: new Map(Object.entries(saved.uses || {})),
           dwellSeconds: saved.dwellSeconds || 0,
           dwellVisits: saved.dwellVisits || 0,
+          places: new Map(Object.entries(saved.places || {})),
+          sources: new Map(Object.entries(saved.sources || {})),
         });
       } catch { /* unreadable day: leave it out rather than guess at it */ }
     }
@@ -146,7 +174,7 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
 
   /** Records one event. `device` is the browser's own id and is hashed here —
    *  it is not stored, passed on, or logged in the form it arrived in. */
-  function record({ device, kind, name, site, at = Date.now() }) {
+  function record({ device, kind, name, site, place, source, at = Date.now() }) {
     const id = hashId(device);
     const day = dayKey(at, tz);
     const d = dayOf(day);
@@ -164,6 +192,10 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
     if (!d.ids.has(id)) {
       d.ids.add(id);
       d.n = d.ids.size;
+      // On first sighting only. Counting every event would make a person who
+      // reads four pages into four Londoners.
+      if (place) bump(d.places, place);
+      if (source) bump(d.sources, source);
     }
     d.events++;
     if (kind === "dwell") {
@@ -192,6 +224,8 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
 
     const pages = new Map();
     const uses = new Map();
+    const places = new Map();
+    const sources = new Map();
     let events = 0;
     let dwellSeconds = 0;
     let dwellVisits = 0;
@@ -200,6 +234,8 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
       if (!d) return { day: key, devices: 0, fresh: 0, events: 0 };
       for (const [k, v] of d.pages) bump(pages, k, v);
       for (const [k, v] of d.uses) bump(uses, k, v);
+      for (const [k, v] of d.places) bump(places, k, v);
+      for (const [k, v] of d.sources) bump(sources, k, v);
       events += d.events;
       dwellSeconds += d.dwellSeconds;
       dwellVisits += d.dwellVisits;
@@ -250,6 +286,8 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
       events,
       pages: top(pages),
       uses: top(uses),
+      places: top(places),
+      sources: top(sources),
       knownDevices: devices.size,
     };
   }
@@ -270,6 +308,8 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
         uses: Object.fromEntries(d.uses),
         dwellSeconds: d.dwellSeconds,
         dwellVisits: d.dwellVisits,
+        places: Object.fromEntries(d.places),
+        sources: Object.fromEntries(d.sources),
       });
     }
     dirtyDays = new Set();

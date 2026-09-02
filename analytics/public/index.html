@@ -271,6 +271,24 @@
 
   <div class="two">
     <section>
+      <h2>Where they are</h2>
+      <ol id="places"></ol>
+      <p class="thin">The browser's own clock setting, not a lookup of the network
+      address &mdash; so a student in Manchester behind a Chinese VPN reads as
+      London, which is the true fact. One count per person per day.</p>
+    </section>
+    <section>
+      <h2>How they arrived</h2>
+      <ol id="sources"></ol>
+      <p class="thin">The site that linked here, host only. <b>Direct</b> means no
+      referrer was sent &mdash; a pasted link, a typed address, or WeChat's browser,
+      which sends none at all. With a link spreading through group chats, expect
+      most of it to sit there.</p>
+    </section>
+  </div>
+
+  <div class="two">
+    <section>
       <h2>Pages, most used</h2>
       <ol id="pages"></ol>
     </section>
@@ -287,6 +305,13 @@
     that browser's own storage — no account, no IP address kept, no third party,
     nothing that follows anyone anywhere else. The same person on a phone and a
     laptop is two; someone who clears their storage is new again.
+    <br><br>
+    <b>Two things are recorded about arrival</b>, both once per person per day and
+    both coarse: the browser's own timezone, and the host that linked here. The
+    timezone is asked of the browser, not derived from a network address — the
+    address is never read, which is why the line above stays true and why no
+    database of anybody's addresses exists on this machine. Neither is kept
+    against a person: they are day totals, the same as everything else here.
     <br><br>
     <b>Days are not added up.</b> The bars are people per day, and the same person
     on Monday and Tuesday is one person, not two — so there is no honest weekly
@@ -489,6 +514,8 @@ async function load() {
   drawGrowth(data.series);
   drawReturn(data);
   drawChart(data.series);
+  drawList(document.getElementById("places"), data.places || []);
+  drawList(document.getElementById("sources"), data.sources || []);
   drawList(document.getElementById("pages"), data.pages);
   drawList(document.getElementById("uses"), data.uses);
 }

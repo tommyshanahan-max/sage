@@ -143,6 +143,24 @@ function overRate(ip) {
 // used to decide whether to count, and is never stored.
 const BOT = /bot|crawl|spider|slurp|headless|preview|monitor|curl|wget|python-requests/i;
 
+
+/** The host of a referring URL, or "direct" when there was none.
+ *
+ *  The host and nothing else. A referring address can carry a query string
+ *  holding somebody's search terms or a session token, and none of that is
+ *  needed to tell WeChat from Google. Anything unparseable is treated as no
+ *  referrer rather than guessed at. */
+function hostOf(raw) {
+  const value = String(raw || "").slice(0, 300);
+  if (!value) return "direct";
+  try {
+    const host = new URL(value).hostname.toLowerCase().replace(/^www\./, "");
+    return /^[a-z0-9.\-]{1,60}$/.test(host) ? host : "direct";
+  } catch {
+    return "direct";
+  }
+}
+
 // Control characters stripped before anything is written: these names end up in
 // a log file and on a dashboard, and a stray newline in one would put a second
 // forged record on the next line of a JSONL file.
@@ -165,13 +183,25 @@ app.post("/e", express.json({ limit: "2kb" }), (req, res) => {
   const device = clean(req.body?.d, 40);
   const kind = ["use", "dwell"].includes(req.body?.k) ? req.body.k : "page";
   const name = clean(req.body?.n, 120);
+
+  // Where they are, and how they got here. Both are volunteered by the page,
+  // both are coarse, and both are recorded once per device per day rather than
+  // per event — see lib/store.js for why each is shaped the way it is.
+  //
+  // Validated to a shape rather than trusted: these strings are rendered on a
+  // dashboard, and "it came from our own snippet" is not a guarantee about
+  // what arrives at a public endpoint.
+  const place = /^[A-Za-z][A-Za-z0-9_+\-]*(\/[A-Za-z0-9_+\-]+){0,2}$/.test(req.body?.z || "")
+    ? String(req.body.z).slice(0, 40)
+    : "";
+  const source = hostOf(req.body?.r);
   // A device id shaped like anything else is a client that is not ours.
   if (!/^[A-Za-z0-9_-]{8,40}$/.test(device) || !name) return res.status(204).end();
 
   try {
     // Counts in memory; the timer below is the only thing that writes. The id
     // is hashed inside the store and is never written in the form it arrived.
-    store.record({ device, kind, name, site });
+    store.record({ device, kind, name, site, place, source });
   } catch (err) {
     console.error("record failed:", err.message);
   }
@@ -193,19 +223,35 @@ const SNIPPET = `/* first-party, one random id in this browser's own storage */
     }
   } catch (e) { return; }   /* storage refused: count nobody rather than guess */
 
-  function send(k, n) {
+  function send(k, n, z, r) {
     try {
+      var body = { d: id, k: k, n: String(n).slice(0, 120) };
+      if (z) body.z = z;
+      if (r) body.r = String(r).slice(0, 300);
       fetch(base + "/e", {
         method: "POST", keepalive: true, mode: "cors", credentials: "omit",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ d: id, k: k, n: String(n).slice(0, 120) }),
+        body: JSON.stringify(body),
       }).catch(function () {});
     } catch (e) {}
   }
 
   /* Call lx("translate") from anywhere to count a function being used. */
   window.lx = function (name) { send("use", name); };
-  send("page", location.pathname);
+
+  /* Where the clock says this browser is, and who linked here. Sent with the
+     first event only, since the server counts them once per device per day.
+
+     The timezone rather than the network address: nothing here reads an IP, so
+     "no address kept" stays literally true and no database of anybody's
+     addresses needs to exist to draw the map. It is also the better answer —
+     a student in Manchester behind a Chinese VPN has a London clock, and
+     London is the true fact.
+
+     The referrer is passed whole and reduced to a bare host by the server. */
+  var place = "";
+  try { place = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}
+  send("page", location.pathname, place, document.referrer);
 
   /* How long this visit lasted, sent once at the end as a single number of
      seconds. Only time the page was actually visible counts — a tab left open
