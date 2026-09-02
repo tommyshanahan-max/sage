@@ -63,11 +63,25 @@
      One column below 60rem. A phone cannot usefully hold both, and a stage
      squeezed to a third of a narrow screen shows nothing worth seeing — so it
      becomes a full-width panel there instead, opened from the masthead. */
-  .split{flex:1;min-height:0;display:flex}
+  .split{flex:1;min-height:0;display:flex;--stage-w:min(46%,44rem)}
   .side{flex:1;min-width:0;display:flex;flex-direction:column}
 
+  /* The divider. A reviewer wants the app large while looking at it and small
+     while typing about it, and that is a per-minute decision, not a per-app
+     one — so it is a handle rather than a setting. */
+  .grip{
+    flex:none;width:9px;cursor:col-resize;position:relative;
+    background:transparent;touch-action:none;
+  }
+  .grip::after{
+    content:"";position:absolute;inset:0 4px;background:var(--rule);
+    transition:background .12s ease;
+  }
+  .grip:hover::after,.grip.dragging::after{background:var(--gold)}
+  .grip:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+
   #stage{
-    flex:none;width:min(46%,44rem);min-width:22rem;
+    flex:none;width:var(--stage-w);min-width:16rem;
     border-left:1px solid var(--rule);background:var(--card);
     display:flex;flex-direction:column;
   }
@@ -100,7 +114,41 @@
       position:fixed;inset:0;z-index:40;width:auto;min-width:0;
       border-left:0;
     }
+    .grip{display:none}
   }
+
+  /* ---------- attached screenshots ---------- */
+  .attached{
+    max-width:44rem;margin:0 auto .55rem;display:flex;gap:.5rem;flex-wrap:wrap;
+  }
+  .attached figure{margin:0;position:relative;line-height:0}
+  .attached img{
+    height:4.2rem;width:auto;max-width:8rem;object-fit:cover;display:block;
+    border:1px solid var(--rule);border-radius:9px;
+  }
+  .attached .drop{
+    position:absolute;top:-.4rem;right:-.4rem;width:1.3rem;height:1.3rem;
+    border-radius:50%;border:1px solid var(--rule);background:var(--card);
+    color:var(--ink-2);font:inherit;font-size:.7rem;line-height:1;cursor:pointer;
+    display:grid;place-items:center;padding:0;
+  }
+  .attached .drop:hover{color:var(--down);border-color:var(--down)}
+  .clip{
+    flex:none;align-self:flex-end;font:inherit;font-size:1rem;
+    color:var(--ink-2);background:var(--card);border:1px solid var(--rule);
+    border-radius:10px;width:2.6rem;height:2.6rem;cursor:pointer;
+  }
+  .clip:hover{color:var(--gold);border-color:var(--gold)}
+  .clip:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  /* A whole-window target, because dragging a screenshot at a small strip is
+     a worse experience than the feature is worth. */
+  body.dropping::after{
+    content:"Drop the screenshot";position:fixed;inset:0;z-index:60;
+    background:color-mix(in srgb,var(--paper) 82%,transparent);
+    border:2px dashed var(--gold);color:var(--gold);
+    display:grid;place-items:center;font-family:var(--serif);font-size:1.5rem;
+  }
+  .said img{max-width:min(100%,18rem);border-radius:10px;display:block;margin-top:.5rem}
 
   /* ---------- masthead ---------- */
   header{
@@ -387,7 +435,11 @@
 </main>
 
 <footer>
+  <div class="attached" id="attached" hidden></div>
   <form class="composer" id="composer">
+    <button id="clip" type="button" class="clip"
+            aria-label="Attach a screenshot" title="Attach a screenshot">&#128247;</button>
+    <input id="file" type="file" accept="image/*" multiple hidden>
     <!-- Drawn only if a voice key is configured. See /api/voice. -->
     <button id="mic" type="button" class="mic" hidden
             aria-label="Speak to Sage" title="Speak to Sage">
@@ -399,6 +451,9 @@
   <p class="hint">Enter to send · Shift+Enter for a new line</p>
 </footer>
 </div><!-- /.side -->
+
+<div class="grip" id="grip" role="separator" aria-orientation="vertical"
+     tabindex="0" aria-label="Resize the preview" hidden></div>
 
 <!--
   The stage. Whatever is being talked about, beside the talking: the live app
@@ -455,10 +510,17 @@ const scroll = () => {
   log.scrollTop = log.scrollHeight;
 };
 
-function addYou(text) {
+function addYou(text, pictures = []) {
   opening?.remove();
   const wrap = el("div", "msg you");
-  wrap.append(el("div", "said", text));
+  const said = el("div", "said", text);
+  for (const p of pictures) {
+    const img = el("img");
+    img.src = p.url;
+    img.alt = "Attached screenshot";
+    said.append(img);
+  }
+  wrap.append(said);
   thread.append(wrap);
   scroll();
 }
@@ -496,7 +558,13 @@ function setBusy(state, label) {
 }
 
 async function send(prompt) {
-  addYou(prompt);
+  // Taken before the request, and cleared straight away: a second message
+  // typed while the first is in flight must not carry the first one's picture.
+  const pictures = attached;
+  attached = [];
+  drawAttached();
+
+  addYou(prompt, pictures);
   const { wrap, body } = startSage();
   setBusy(true, "working…");
 
@@ -509,7 +577,11 @@ async function send(prompt) {
     res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, sessionId }),
+      body: JSON.stringify({
+        prompt: prompt || "What do you make of this?",
+        sessionId,
+        images: pictures.map(({ mediaType, data }) => ({ mediaType, data })),
+      }),
     });
   } catch (e) {
     thread.append(el("div", "err", "Could not reach the server: " + e.message));
@@ -579,10 +651,125 @@ async function send(prompt) {
   speak(body.textContent);
 }
 
+// ---------------------------------------------------------------------------
+// Screenshots
+//
+// The same move Study Pal makes with its camera: a picture is often the
+// shortest way to say what is wrong. Here it is a screenshot rather than a
+// menu — "this bit", with the bit attached.
+//
+// Three ways in, because people reach for different ones: paste (a Mac
+// screenshot goes straight to the clipboard, which makes this the common
+// path), drag onto the window, or the button.
+// ---------------------------------------------------------------------------
+const MAX_ATTACHED = 4;
+const attachedBox = document.getElementById("attached");
+let attached = [];   // { mediaType, data, url }
+
+/** Shrinks a picture before it is sent.
+ *
+ *  A retina screenshot is several megabytes and none of that resolution
+ *  survives being read, so sending it whole would cost a minute on this
+ *  connection to no purpose. 1568px on the long side is the size above which
+ *  the model gains nothing. */
+function shrink(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("could not read that file"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("that did not look like an image"));
+      img.onload = () => {
+        const scale = Math.min(1, 1568 / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        // JPEG for photographs and screenshots alike: a screenshot as PNG is
+        // several times larger, and this is being looked at, not archived.
+        const url = canvas.toDataURL("image/jpeg", 0.82);
+        resolve({ mediaType: "image/jpeg", data: url.split(",")[1], url });
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function drawAttached() {
+  attachedBox.hidden = attached.length === 0;
+  attachedBox.replaceChildren(
+    ...attached.map((a, i) => {
+      const fig = el("figure");
+      const img = el("img");
+      img.src = a.url;
+      img.alt = "Attached screenshot";
+      const drop = el("button", "drop", "×");
+      drop.type = "button";
+      drop.title = "Remove";
+      drop.setAttribute("aria-label", "Remove this screenshot");
+      drop.addEventListener("click", () => { attached.splice(i, 1); drawAttached(); });
+      fig.append(img, drop);
+      return fig;
+    })
+  );
+}
+
+async function attach(files) {
+  for (const file of files) {
+    if (attached.length >= MAX_ATTACHED) break;
+    if (!/^image\//.test(file.type)) continue;
+    try {
+      attached.push(await shrink(file));
+    } catch (err) {
+      thread.append(el("div", "err", err.message));
+    }
+  }
+  drawAttached();
+}
+
+document.getElementById("clip").addEventListener("click", () =>
+  document.getElementById("file").click());
+document.getElementById("file").addEventListener("change", (e) => {
+  attach(e.target.files);
+  e.target.value = "";           // so the same file can be picked again
+});
+
+// Paste. The Mac screenshot shortcut puts the picture on the clipboard, so
+// this is the path most people will actually use.
+input.addEventListener("paste", (e) => {
+  const files = [...(e.clipboardData?.items || [])]
+    .filter((i) => i.kind === "file" && /^image\//.test(i.type))
+    .map((i) => i.getAsFile())
+    .filter(Boolean);
+  if (files.length) { e.preventDefault(); attach(files); }
+});
+
+// Drag onto the window. Counted rather than toggled: dragging over a child
+// element fires leave on the parent, and a flag alone leaves the overlay stuck.
+let dragDepth = 0;
+addEventListener("dragover", (e) => e.preventDefault());
+addEventListener("dragenter", (e) => {
+  if (![...(e.dataTransfer?.types || [])].includes("Files")) return;
+  dragDepth++;
+  document.body.classList.add("dropping");
+});
+addEventListener("dragleave", () => {
+  if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove("dropping"); }
+});
+addEventListener("drop", (e) => {
+  e.preventDefault();
+  dragDepth = 0;
+  document.body.classList.remove("dropping");
+  if (e.dataTransfer?.files?.length) attach(e.dataTransfer.files);
+});
+
 document.getElementById("composer").addEventListener("submit", (e) => {
   e.preventDefault();
   const text = input.value.trim();
-  if (!text || busy) return;
+  // A screenshot on its own is a fair message — "look at this" is implied.
+  if ((!text && !attached.length) || busy) return;
   input.value = "";
   input.style.height = "auto";
   send(text);
@@ -626,6 +813,7 @@ let appUrl = "";
 
 function showStage(on) {
   stage.hidden = !on;
+  document.getElementById("grip").hidden = !on;
   stageToggle.setAttribute("aria-pressed", String(on));
   try { localStorage.setItem("sage_stage", on ? "1" : "0"); } catch { /* private window */ }
 }
@@ -670,6 +858,63 @@ async function showNewMockup() {
   knownMockups = now;
   if (newest) stageLoad("/mockups/" + encodeURIComponent(newest.name), newest.name, false);
 }
+
+// --- the divider ------------------------------------------------------------
+//
+// Drag to resize, double-click to minimise, and the width is remembered. A
+// reviewer wants the app large while looking at it and small while typing
+// about it, and that is a decision they make every minute — so it is a handle,
+// not a setting.
+const split = document.querySelector(".split");
+const grip  = document.getElementById("grip");
+
+function setStageWidth(px) {
+  const min = 16 * 16;                                  // 16rem, the pane's own floor
+  const max = Math.max(min, window.innerWidth - 22 * 16); // leave the thread readable
+  const w = Math.min(Math.max(px, min), max);
+  split.style.setProperty("--stage-w", w + "px");
+  try { localStorage.setItem("sage_stage_w", String(w)); } catch { /* private window */ }
+}
+
+try {
+  const saved = Number(localStorage.getItem("sage_stage_w"));
+  if (saved > 0) split.style.setProperty("--stage-w", saved + "px");
+} catch { /* private window */ }
+
+grip.addEventListener("pointerdown", (e) => {
+  // Deliberately no preventDefault here. It suppresses the click events that
+  // follow, and the double-click below is how this handle is minimised —
+  // which is exactly the bug the first version of this had. Selection is
+  // stopped with a style instead, and touch scrolling by touch-action in CSS.
+  grip.setPointerCapture(e.pointerId);
+  grip.classList.add("dragging");
+  document.body.style.userSelect = "none";
+  // While dragging, the iframe would otherwise swallow the pointer the moment
+  // it crosses into the app.
+  frame.style.pointerEvents = "none";
+});
+grip.addEventListener("pointermove", (e) => {
+  if (!grip.classList.contains("dragging")) return;
+  setStageWidth(window.innerWidth - e.clientX);
+});
+const endDrag = () => {
+  grip.classList.remove("dragging");
+  document.body.style.userSelect = "";
+  frame.style.pointerEvents = "";
+};
+grip.addEventListener("pointerup", endDrag);
+grip.addEventListener("pointercancel", endDrag);
+
+// Double-click is the divider's own way of saying minimise, and the keyboard
+// gets the same thing through the handle being focusable.
+grip.addEventListener("dblclick", () => showStage(stage.hidden));
+grip.addEventListener("keydown", (e) => {
+  const step = e.shiftKey ? 120 : 32;
+  const now = stage.getBoundingClientRect().width;
+  if (e.key === "ArrowLeft") { e.preventDefault(); setStageWidth(now + step); }
+  else if (e.key === "ArrowRight") { e.preventDefault(); setStageWidth(now - step); }
+  else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showStage(stage.hidden); }
+});
 
 stageToggle.addEventListener("click", () => showStage(stage.hidden));
 document.getElementById("stage-close").addEventListener("click", () => showStage(false));

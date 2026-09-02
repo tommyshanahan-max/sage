@@ -271,7 +271,13 @@ app.use((req, res, next) => {
   res.redirect("/login");
 });
 
-app.use(express.json({ limit: "1mb" }));
+// A screenshot is the one thing sent here that is not text. Everything else
+// keeps the small limit — a route that accepts megabytes is a route worth
+// aiming at, so only the one that needs it gets them.
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;      // what the API accepts per image
+const MAX_IMAGES = 4;
+app.use((req, res, next) =>
+  req.path === "/api/chat" ? next() : express.json({ limit: "1mb" })(req, res, next));
 app.use(express.static("public"));
 
 // --------------------------------------------------------------------------
@@ -538,7 +544,7 @@ app.post("/api/conversations/:id/analysis", async (req, res) => {
   }
 });
 
-app.post("/api/chat", async (req, res) => {
+app.post("/api/chat", express.json({ limit: "24mb" }), async (req, res) => {
   const { prompt, sessionId } = req.body ?? {};
   if (typeof prompt !== "string" || !prompt.trim()) {
     return res.status(400).json({ error: "prompt is required" });
@@ -547,6 +553,22 @@ app.post("/api/chat", async (req, res) => {
   // A session id is minted on the first turn and echoed back to the browser,
   // which returns it on every later turn. That is what carries the
   // conversation forward — without it each message would start from nothing.
+  // Screenshots. The page shrinks them before sending — a phone photograph is
+  // several megabytes and none of that resolution survives being read anyway —
+  // but a client is not a control, so the sizes are checked again here.
+  const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+  const images = [];
+  for (const item of Array.isArray(req.body?.images) ? req.body.images : []) {
+    if (images.length >= MAX_IMAGES) break;
+    const mediaType = String(item?.mediaType || "").toLowerCase();
+    const data = String(item?.data || "");
+    if (!IMAGE_TYPES.includes(mediaType)) continue;
+    if (!/^[A-Za-z0-9+/=]+$/.test(data)) continue;
+    // Base64 carries four characters for every three bytes.
+    if ((data.length * 3) / 4 > MAX_IMAGE_BYTES) continue;
+    images.push({ mediaType, data });
+  }
+
   const isNewSession = !sessionId;
   const id = sessionId || randomUUID();
 
@@ -639,8 +661,34 @@ app.post("/api/chat", async (req, res) => {
     // tool output comes back as a *user* message carrying tool_result blocks,
     // because that is how the conversation is recorded. The events this sends
     // on are the flat ones the page knows how to draw.
+    // A plain string is the SDK's simple path and stays the simple path. With
+    // an image the prompt becomes a one-message stream instead, because that
+    // is the only shape that can carry content blocks: an SDKUserMessage whose
+    // message is an Anthropic MessageParam, exactly as the Messages API takes
+    // them. The picture goes first — a question reads better after the thing
+    // it is about.
+    const input = images.length
+      ? (async function* () {
+          yield {
+            type: "user",
+            parent_tool_use_id: null,
+            session_id: runId,
+            message: {
+              role: "user",
+              content: [
+                ...images.map((i) => ({
+                  type: "image",
+                  source: { type: "base64", media_type: i.mediaType, data: i.data },
+                })),
+                { type: "text", text: prompt },
+              ],
+            },
+          };
+        })()
+      : prompt;
+
     try {
-      for await (const message of query({ prompt, options })) {
+      for await (const message of query({ prompt: input, options })) {
         switch (message.type) {
           case "assistant":
             for (const block of message.message?.content ?? []) {

@@ -563,6 +563,33 @@ row appears only once `TOMSCODING_PARTNER2_DOMAIN` is set to a real hostname.
 paste is different from a service hostname — someone will write the `www` in,
 and a certificate error on the front door reads as the company being broken.
 
+### The stage, and screenshots
+
+A reviewer's seat splits: conversation on the left, the live app in a frame on
+the right, set with `TOMSCODING_PARTNER_APP_URL`. Mockups open in that same
+frame rather than a new tab, and one made during a turn shows itself as the
+turn ends — asking for a change and then being told to go and find the result
+is what makes a review tool feel like homework.
+
+The divider drags, double-clicks to minimise, and remembers its width. That is
+a decision a reviewer makes every minute rather than once, so it is a handle
+and not a setting. **Do not `preventDefault()` on its `pointerdown`** — it
+suppresses the click events that follow, and the double-click is one of them.
+That was the first version's bug.
+
+Screenshots attach three ways: paste, drag onto the window, or the button.
+Paste is the one that matters — a Mac screenshot goes to the clipboard, so
+that is the path people actually use. Pictures are scaled to 1568px on the
+long side and re-encoded as JPEG in the browser before they are sent: above
+that size the model gains nothing, and a retina screenshot is several megabytes
+across a link this deployment exists to accommodate.
+
+They reach the SDK as an Anthropic `MessageParam` with image content blocks,
+which means the prompt becomes a one-message async iterable rather than a
+string — that is the only shape that carries blocks. A plain text turn stays a
+plain string. Only `/api/chat` takes a large body; every other route keeps the
+small limit, because a route that accepts megabytes is a route worth aiming at.
+
 ## The counter
 
 How many people used it today, how many of them had never been before, and
