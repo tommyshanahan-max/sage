@@ -357,6 +357,32 @@ Naming follows Anthropic's SDK branding guidance, which permits
 "{YourAgentName} powered by Claude" and forbids presenting a product as Claude
 Code. The masthead says exactly that.
 
+### Voice
+
+A circle at the left of the composer. Tap it and Sage listens; tap again and
+what you said arrives as text in the box — **not sent automatically**, because a
+mis-heard word is easy to fix before it becomes a turn and impossible after.
+Sage speaks her replies without being asked, and tapping the circle mid-sentence
+cuts her off *and* starts listening, which is what "actually, hang on—" looks
+like as a gesture.
+
+Carried over from journey's spec §20.1, and load-bearing: **the speech provider
+never generates a word of its own.** It is handed the exact text Sage already
+produced — no system prompt, no history — and hands back audio. On the way in it
+transcribes and returns text, which then travels the ordinary chat path exactly
+as typed text would. Speaking and typing are one conversation arriving through
+two doors. Give that module a prompt and the guarantee is gone.
+
+The browser never contacts the speech provider; this server does, from Tokyo.
+That is the only reason it works from where you are.
+
+Optional. Add `ELEVENLABS_API_KEY` to `.env` and the circle appears; leave it
+out and Sage is text-only with nothing else changed — a missing key must look
+like a feature that is switched off, not one that is broken.
+`TOMSCODING_AGENT_VOICE_ID` picks the voice.
+
+Nothing is stored: audio is forwarded, transcribed, and dropped.
+
 ### Past conversations
 
 **Path**, in the masthead. One list — the conversations *are* the history, so

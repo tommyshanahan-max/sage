@@ -18,6 +18,12 @@ import {
   transcriptForAnalysis,
   fingerprint,
 } from "./lib/conversations.js";
+import {
+  isSpeechConfigured,
+  synthesize,
+  transcribe,
+  MAX_STT_BYTES,
+} from "./lib/speech.js";
 
 const PORT = process.env.PORT || 3000;
 const WORKSPACE = process.env.AGENT_WORKSPACE || "/workspace";
@@ -220,6 +226,55 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static("public"));
+
+// --------------------------------------------------------------------------
+// Voice
+// --------------------------------------------------------------------------
+
+// Whether to offer a microphone at all. The page asks once on load; with no key
+// configured it simply does not draw the circle, because an absent key must
+// look like a feature that isn't switched on, not one that is broken.
+app.get("/api/voice", (_req, res) => res.json({ available: isSpeechConfigured() }));
+
+// Sage's own words, spoken. Nothing is passed but the text she already wrote.
+app.post("/api/voice/tts", async (req, res) => {
+  if (!isSpeechConfigured()) return res.status(503).json({ error: "voice is not configured" });
+  const text = req.body?.text;
+  if (typeof text !== "string" || !text.trim()) {
+    return res.status(400).json({ error: "text is required" });
+  }
+  try {
+    const audio = await synthesize(text);
+    res.set("Content-Type", "audio/mpeg").set("Cache-Control", "no-store").send(audio);
+  } catch (err) {
+    console.error("tts failed:", err.detail || err);
+    // Voice is an enhancement. A failure here should cost the reply nothing —
+    // the page keeps the text and stays quiet.
+    res.status(err.status || 502).json({ error: err.message || "speech failed" });
+  }
+});
+
+// Audio arrives as a raw body rather than a multipart form: one content type,
+// no parser to add, and the browser is sending a single blob anyway.
+app.post(
+  "/api/voice/stt",
+  express.raw({ type: ["audio/*", "video/webm"], limit: MAX_STT_BYTES }),
+  async (req, res) => {
+    if (!isSpeechConfigured()) return res.status(503).json({ error: "voice is not configured" });
+    if (!Buffer.isBuffer(req.body) || !req.body.length) {
+      return res.status(400).json({ error: "no audio received" });
+    }
+    try {
+      const text = await transcribe(req.body, req.get("content-type") || "audio/webm");
+      // Empty is a real answer: nothing intelligible was said. The page is
+      // expected to do nothing rather than send a blank message.
+      res.json({ text });
+    } catch (err) {
+      console.error("stt failed:", err.detail || err);
+      res.status(err.status || 502).json({ error: err.message || "could not transcribe that" });
+    }
+  }
+);
 
 // --------------------------------------------------------------------------
 // Past conversations

@@ -213,6 +213,60 @@
   }
   #send:disabled{opacity:.45;cursor:default}
   #send:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+  /* The circle. A round target at the left of the composer, sized to a thumb
+     rather than a cursor — this gets used on a phone at least as often as a
+     laptop, and 44px is the smallest a touch target should be. */
+  .mic{
+    flex:none;width:2.9rem;height:2.9rem;min-width:44px;min-height:44px;
+    border-radius:50%;cursor:pointer;padding:0;
+    display:grid;place-items:center;
+    background:var(--card);border:1px solid var(--rule);
+    transition:border-color .15s,background .15s,transform .15s;
+  }
+  .mic[hidden]{display:none}
+  .mic:hover{border-color:var(--gold-line)}
+  .mic:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .mic-dot{
+    width:.62rem;height:.62rem;border-radius:50%;background:var(--muted);
+    transition:background .15s,transform .15s;
+  }
+  .mic:hover .mic-dot{background:var(--gold)}
+
+  /* Listening. The ring pulses rather than the dot: a dot that grows and
+     shrinks reads as a loading spinner, a ring opening outward reads as
+     something receiving. */
+  .mic.live{border-color:var(--gold);background:var(--gold-soft)}
+  .mic.live .mic-dot{background:var(--gold);transform:scale(1.25)}
+  .mic.live::after{
+    content:"";position:absolute;width:2.9rem;height:2.9rem;border-radius:50%;
+    border:1px solid var(--gold);animation:ring 1.6s ease-out infinite;
+  }
+  .mic{position:relative}
+  @keyframes ring{
+    from{transform:scale(1);opacity:.55}
+    to{transform:scale(1.45);opacity:0}
+  }
+
+  /* Sending the audio up. Not a spinner — the circle stays the circle. */
+  .mic.thinking .mic-dot{background:var(--gold);animation:fade 1s ease-in-out infinite alternate}
+  @keyframes fade{from{opacity:.35}to{opacity:1}}
+
+  /* While Sage is speaking, the circle becomes the way to cut her off.
+     Tapping it stops her AND starts listening, which is what
+     "actually, hang on—" looks like as a gesture. */
+  .mic.speaking{border-color:var(--gold);background:var(--gold-soft)}
+  .mic.speaking .mic-dot{
+    width:.7rem;height:.7rem;border-radius:2px;background:var(--gold);
+  }
+
+  .mic.denied{opacity:.5}
+
+  @media (prefers-reduced-motion:reduce){
+    .mic.live::after{animation:none;opacity:.5}
+    .mic.thinking .mic-dot{animation:none}
+    .mic{transition:none}
+  }
   .hint{max-width:44rem;margin:.5rem auto 0;font-size:.74rem;color:var(--muted)}
 
   @media (prefers-reduced-motion:reduce){.sage .body:empty::after{animation:none}}
@@ -257,6 +311,11 @@
 
 <footer>
   <form class="composer" id="composer">
+    <!-- Drawn only if a voice key is configured. See /api/voice. -->
+    <button id="mic" type="button" class="mic" hidden
+            aria-label="Speak to Sage" title="Speak to Sage">
+      <span class="mic-dot" aria-hidden="true"></span>
+    </button>
     <textarea id="input" rows="1" placeholder="What would you like to do?" autofocus></textarea>
     <button id="send" type="submit">Send</button>
   </form>
@@ -412,6 +471,9 @@ async function send(prompt) {
   if (!body.textContent) body.textContent = "(no reply)";
   setBusy(false, "ready");
   input.focus();
+  // Said aloud without being asked for. A conversation where you tap to hear
+  // each answer is not a conversation — and the circle stops her at any point.
+  speak(body.textContent);
 }
 
 document.getElementById("composer").addEventListener("submit", (e) => {
@@ -433,6 +495,126 @@ input.addEventListener("keydown", (e) => {
 input.addEventListener("input", () => {
   input.style.height = "auto";
   input.style.height = Math.min(input.scrollHeight, 192) + "px";
+});
+
+// ---------------------------------------------------------------------------
+// Voice
+//
+// Speaking and typing are the same conversation arriving through two doors.
+// What the microphone produces is text, and it travels the ordinary path from
+// there — same agent, same tools, same everything. The voice provider is never
+// asked to think.
+// ---------------------------------------------------------------------------
+
+const mic = document.getElementById("mic");
+let recorder = null;
+let chunks = [];
+let speech = null;      // the audio element currently speaking, if any
+let voiceReady = false;
+
+// Offered only when the server has a key. An absent one should look like a
+// feature that is switched off, not one that is broken.
+fetch("/api/voice")
+  .then((r) => r.json())
+  .then((d) => {
+    voiceReady = !!d.available;
+    mic.hidden = !voiceReady;
+  })
+  .catch(() => {});
+
+function micState(cls) {
+  mic.classList.remove("live", "thinking", "speaking");
+  if (cls) mic.classList.add(cls);
+}
+
+/** Cuts Sage off mid-sentence and leaves it there. */
+function stopSpeaking() {
+  if (!speech) return;
+  speech.pause();
+  speech.src = "";
+  speech = null;
+  micState(null);
+}
+
+/** Sage says her reply aloud. Silence on failure: a voice that does not
+ *  arrive should cost the reply nothing, and the text is already on screen. */
+async function speak(text) {
+  if (!voiceReady || !text.trim()) return;
+  try {
+    const res = await fetch("/api/voice/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) return;
+    const url = URL.createObjectURL(await res.blob());
+    stopSpeaking();
+    speech = new Audio(url);
+    micState("speaking");
+    speech.addEventListener("ended", () => { URL.revokeObjectURL(url); stopSpeaking(); });
+    // Autoplay can be refused until the page has been interacted with. Not
+    // worth a dialog — the reply is already readable.
+    await speech.play().catch(() => stopSpeaking());
+  } catch {
+    stopSpeaking();
+  }
+}
+
+async function startListening() {
+  // Cutting Sage off happens first, before the permission prompt or anything
+  // else. Someone reaching for the circle mid-sentence wants the talking to
+  // stop now, not once the browser has finished asking about microphones.
+  stopSpeaking();
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    chunks = [];
+    recorder = new MediaRecorder(stream);
+    recorder.addEventListener("dataavailable", (e) => { if (e.data.size) chunks.push(e.data); });
+    recorder.addEventListener("stop", async () => {
+      // The track has to be released explicitly or the browser keeps showing
+      // a recording indicator long after this is finished with it.
+      stream.getTracks().forEach((t) => t.stop());
+      const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+      recorder = null;
+      if (!blob.size) { micState(null); return; }
+      micState("thinking");
+      try {
+        const res = await fetch("/api/voice/stt", {
+          method: "POST",
+          headers: { "Content-Type": blob.type },
+          body: blob,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "could not transcribe that");
+        const text = (data.text || "").trim();
+        micState(null);
+        // Nothing intelligible. Say nothing and send nothing — a blank message
+        // to the agent is worse than silence.
+        if (!text) return;
+        input.value = text;
+        input.dispatchEvent(new Event("input"));
+        // Not sent automatically: a mis-heard word is easy to fix before it
+        // becomes a turn, and impossible after.
+        input.focus();
+      } catch (err) {
+        micState(null);
+        setBusy(false, err.message || "could not transcribe that");
+      }
+    });
+    recorder.start();
+    micState("live");
+  } catch {
+    // Permission refused, or no microphone. Not worth a dialog — the keyboard
+    // is right there.
+    mic.classList.add("denied");
+    mic.title = "Microphone unavailable";
+  }
+}
+
+mic.addEventListener("click", () => {
+  if (recorder) { recorder.stop(); return; }
+  if (busy) { stopSpeaking(); return; }
+  startListening();
 });
 
 // ---------------------------------------------------------------------------
