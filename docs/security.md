@@ -282,6 +282,13 @@ Worth running after registering a domain, after moving one, and now and again
 otherwise. Registrar privacy is free at Porkbun and on by default — but "should
 be on" and "is on" are different claims, and only one of them is checkable.
 
+**Only `liuxuesheng.help` is public facing.** Everything else on this box is
+infrastructure behind a password. That makes a public repository worse rather
+than better: `README.md` here is a table of every one of those hostnames, what
+each is, and the fact that each is a password away from a shell. Certificate
+Transparency already publishes the names; the repository supplies what they
+are, and the commits supply who runs them.
+
 **The repository check is the one that matters most.** A public repo's commits
 carry a real name and email, and its README names the domains — a searchable
 link between the two that needs no legal process to follow. It is also a

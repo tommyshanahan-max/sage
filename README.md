@@ -93,7 +93,7 @@ certificate:
 | `agent.tomscoding.com` | Agent chat app | no |
 | `partner.tomscoding.com` | A partner seat | no |
 | `liuxuesheng.io` | A brand homepage, from `brand/` | no |
-| `numbers.liuxuesheng.io` | The counter's dashboard | no |
+| `numbers.tomscoding.com` | The counter's dashboard | no |
 
 Each optional one needs its A record and its `.env` entry; the ones that run
 containers need their Compose profile too. The two static pages — the launcher
@@ -566,7 +566,7 @@ and a certificate error on the front door reads as the company being broken.
 ## The counter
 
 How many people used it today, how many of them had never been before, and
-which pages and functions they used. `numbers.liuxuesheng.io`, `analytics` in
+which pages and functions they used. `numbers.tomscoding.com`, `analytics` in
 `COMPOSE_PROFILES`.
 
 **The dashboard's password is optional.** Set `TOMSCODING_STATS_PASSWORD` and it
@@ -583,11 +583,14 @@ features people actually use.
 no build step and nothing to keep in sync:
 
 ```html
-<script src="https://numbers.liuxuesheng.io/lx.js" defer></script>
+<script src="https://numbers.tomscoding.com/lx.js" defer></script>
 ```
 
 On the brand page it is `/a/lx.js` instead — same file, same origin, so
-reporting a visit costs no preflight and no third-party request. Page views are
+reporting a visit costs no preflight and no third-party request. The app at
+`liuxuesheng.help` is on a different machine entirely, so it uses the absolute
+form above; that is what the origin allow-list and the single-origin CORS echo
+are for, and it works today without waiting for any cutover. Page views are
 counted on their own. To count a feature, call it by name where the feature
 happens:
 

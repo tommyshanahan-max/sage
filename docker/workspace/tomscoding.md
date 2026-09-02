@@ -48,7 +48,12 @@ reachable only through Caddy.
 | `agent.tomscoding.com` | Sage — a chat interface over the Claude Agent SDK |
 | `partner.tomscoding.com` | A partner seat: the same Sage, one read-only snapshot, mockups only |
 | `liuxuesheng.io` | The Liuxuesheng brand homepage, plus the door to the partner seats |
-| `numbers.liuxuesheng.io` | The counter: people per day, and what they used |
+
+**Only `liuxuesheng.help` is public facing.** Everything else here is
+infrastructure with a password on it, including the brand homepage until it is
+launched. Do not put usage dashboards, admin tools or anything operational on a
+public-facing hostname.
+| `numbers.tomscoding.com` | The counter: people per day, and what they used |
 
 Optional services are Compose profiles (`seat2`, `browser`, `agent`,
 `partner`, `partner2`, `analytics`) enabled in `.env`, so a deployment that wants only the
