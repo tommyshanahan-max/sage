@@ -437,6 +437,10 @@ services:
       # Lets the agent read the numbers for its masthead, over the Docker
       # network. Never sent to a browser.
       ANALYTICS_INTERNAL_TOKEN: ${TOMSCODING_STATS_INTERNAL_TOKEN:-}
+      # The app's own count, read from its public endpoint and shown beside
+      # this counter's — never merged into it. The app counts itself because a
+      # page in mainland China cannot rely on reaching anything else.
+      ANALYTICS_APP_COUNT_URL: ${TOMSCODING_APP_COUNT_URL:-}
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - analytics_data:/data

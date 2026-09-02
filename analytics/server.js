@@ -326,10 +326,60 @@ app.use((req, res, next) => {
   res.redirect("/login");
 });
 
-app.get("/api/stats", (req, res) => {
+// ---------------------------------------------------------------------------
+// The app's own count
+//
+// Two products are being counted here and they are not the same product. This
+// service counts the brand page, which is a poster: somebody read it. The app
+// counts the app, which is the thing people actually use, and it keeps its own
+// count on its own box because a page in mainland China cannot reliably reach
+// a third-party host — that constraint is why there are two counters rather
+// than one, and it is not going away.
+//
+// So this reads the app's public endpoint rather than trying to merge the two
+// stores. The numbers stay separate and stay labelled. Added together they
+// would be a figure that describes neither.
+//
+// Cached, because the dashboard is refreshed by a person clicking, and a page
+// that fans out to another service on every click is a page that takes that
+// service down on the day it matters. Failure is soft: no app figure is a
+// dashboard with one section missing, not a dashboard that will not load.
+// ---------------------------------------------------------------------------
+const APP_COUNT_URL = process.env.ANALYTICS_APP_COUNT_URL || "";
+const APP_CACHE_MS = 60_000;
+let appCache = { at: 0, value: null };
+
+async function appCount() {
+  if (!APP_COUNT_URL) return null;
+  if (Date.now() - appCache.at < APP_CACHE_MS) return appCache.value;
+  try {
+    const r = await fetch(APP_COUNT_URL, { signal: AbortSignal.timeout(4000) });
+    if (!r.ok) throw new Error("app said " + r.status);
+    const d = await r.json();
+    // Only the three fields, and only as numbers. This is another service's
+    // JSON: taking exactly what is expected keeps a change over there from
+    // becoming a surprise in here.
+    appCache = {
+      at: Date.now(),
+      value: {
+        count: Number(d.count) || 0,
+        today: Number(d.today) || 0,
+        week: Number(d.week) || 0,
+        url: APP_COUNT_URL,
+      },
+    };
+  } catch {
+    // Keep the last good figure for one cache window rather than blinking the
+    // section out of existence over a single bad request.
+    if (Date.now() - appCache.at > APP_CACHE_MS * 5) appCache = { at: Date.now(), value: null };
+  }
+  return appCache.value;
+}
+
+app.get("/api/stats", async (req, res) => {
   const span = Math.min(Math.max(Number(req.query.days) || 14, 1), 90);
   res.set("Cache-Control", "no-store");
-  res.json({ ...store.report(span), tz: TZ, sites: SITES, open: OPEN });
+  res.json({ ...store.report(span), tz: TZ, sites: SITES, open: OPEN, app: await appCount() });
 });
 
 app.use(express.static("public"));

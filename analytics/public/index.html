@@ -145,6 +145,31 @@
     border-top:1px solid var(--rule);padding-top:1.2rem;
     font-size:.8rem;color:var(--muted);line-height:1.6;
   }
+  /* ---------- which product ----------
+     Two counters, never added together. The toggle is the honest way to show
+     them: one at a time, each labelled, so a number is always attached to the
+     thing it counts. */
+  .which{
+    display:flex;gap:.3rem;margin:0 0 1.6rem;padding:.28rem;
+    background:var(--card-2);border:1px solid var(--rule);border-radius:11px;
+    width:fit-content;
+  }
+  .which button{
+    font:inherit;font-weight:600;font-size:.9rem;color:var(--muted);
+    background:none;border:0;border-radius:8px;padding:.5rem 1.15rem;cursor:pointer;
+  }
+  .which button[aria-selected="true"]{background:var(--card);color:var(--ink);
+    box-shadow:0 1px 3px rgba(0,0,0,.07)}
+  .which button:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+  .which .tag{
+    display:block;font-weight:400;font-size:.7rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);margin-top:.15rem;
+  }
+  .thin{
+    margin:1.4rem 0 0;padding:1rem 1.1rem;background:var(--jade-soft);
+    border-radius:10px;font-size:.82rem;color:var(--ink-2);line-height:1.65;
+  }
+  .thin b{color:var(--ink)}
   .note b{color:var(--ink-2);font-weight:600}
   .note code{font-family:var(--mono);font-size:.92em;color:var(--jade)}
 </style>
@@ -166,6 +191,28 @@
     Set <code>TOMSCODING_STATS_PASSWORD</code> to close it.</span>
   </p>
 
+  <div class="which" role="tablist" aria-label="Which product">
+    <button type="button" id="tab-app" role="tab" aria-selected="true" aria-controls="view-app">
+      The app<span class="tag" id="tab-app-host">liuxuesheng.help</span>
+    </button>
+    <button type="button" id="tab-site" role="tab" aria-selected="false" aria-controls="view-site">
+      The site<span class="tag" id="tab-site-host">liuxuesheng.io</span>
+    </button>
+  </div>
+
+  <div id="view-app" role="tabpanel" aria-labelledby="tab-app">
+    <section>
+      <h2>The app <span id="app-day" style="text-transform:none;letter-spacing:0"></span></h2>
+      <div class="today">
+        <div class="stat accent"><span class="n" id="a-count">&mdash;</span><span class="k">People, ever</span></div>
+        <div class="stat accent"><span class="n" id="a-today">&mdash;</span><span class="k">New today</span></div>
+        <div class="stat"><span class="n" id="a-week">&mdash;</span><span class="k">New this week</span></div>
+      </div>
+      <p class="thin" id="app-note"></p>
+    </section>
+  </div>
+
+  <div id="view-site" role="tabpanel" aria-labelledby="tab-site" hidden>
   <section>
     <h2>Today <span id="today-day" style="text-transform:none;letter-spacing:0"></span></h2>
     <div class="today">
@@ -210,6 +257,8 @@
       <h2>Functions, most used</h2>
       <ol id="uses"></ol>
     </section>
+  </div>
+
   </div>
 
   <p class="note">
@@ -391,6 +440,7 @@ async function load() {
   if (res.status === 401) { location.href = "/login"; return; }
   const data = await res.json();
 
+  drawApp(data.app);
   document.getElementById("open-note").hidden = !data.open;
   document.getElementById("signout").hidden = !!data.open;
   document.getElementById("sites").textContent = data.sites.join("  ·  ");
@@ -409,6 +459,52 @@ async function load() {
   drawList(document.getElementById("pages"), data.pages);
   drawList(document.getElementById("uses"), data.uses);
 }
+
+// The app's three numbers, and an honest account of why there are only three.
+function drawApp(app) {
+  const note = document.getElementById("app-note");
+  if (!app) {
+    document.getElementById("a-count").textContent = "\u2014";
+    document.getElementById("a-today").textContent = "\u2014";
+    document.getElementById("a-week").textContent = "\u2014";
+    note.innerHTML = "<b>Not reading the app.</b> Set <code>TOMSCODING_APP_COUNT_URL</code> "
+      + "to the app's count endpoint and this fills in.";
+    return;
+  }
+  document.getElementById("a-count").textContent = fmt(app.count);
+  document.getElementById("a-today").textContent = fmt(app.today);
+  document.getElementById("a-week").textContent = fmt(app.week);
+  try {
+    document.getElementById("tab-app-host").textContent = new URL(app.url).hostname;
+  } catch { /* leave the markup's default */ }
+  note.innerHTML = "<b>Three numbers, and that is all there is.</b> The app keeps its own "
+    + "count on its own box, because a page in mainland China cannot rely on reaching "
+    + "anything else &mdash; which is the whole reason these are two counters and not one. "
+    + "It reports how many browsers have ever opened it, and how many of those were new "
+    + "today and this week. No growth curve, no time on page, no per-feature counts: it "
+    + "does not record them, so nothing here can show them."
+    + "<br><br><b>These are never added to the site's.</b> Somebody who read the poster and "
+    + "somebody who used the app are not two of the same thing.";
+}
+
+// Which product is on screen. The app leads, because it is the one people use.
+const tabs = [
+  [document.getElementById("tab-app"), document.getElementById("view-app")],
+  [document.getElementById("tab-site"), document.getElementById("view-site")],
+];
+function show(which) {
+  tabs.forEach(([tab, view], i) => {
+    const on = i === which;
+    tab.setAttribute("aria-selected", String(on));
+    view.hidden = !on;
+  });
+  try { localStorage.setItem("lx_view", String(which)); } catch { /* fine */ }
+}
+tabs.forEach(([tab], i) => tab.addEventListener("click", () => show(i)));
+try {
+  const saved = parseInt(localStorage.getItem("lx_view"), 10);
+  if (saved === 1) show(1);
+} catch { /* fine */ }
 
 load();
 // Left open on a second screen, this should not go stale. Cheap: one small

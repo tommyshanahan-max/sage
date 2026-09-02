@@ -187,6 +187,16 @@
     font-size:.78rem;color:var(--gold);letter-spacing:.03em;
     display:flex;align-items:center;gap:.3rem;white-space:nowrap;
   }
+  /* Two products, kept apart. A hairline and a word each, because a number
+     with no subject is worse than no number: "2" and "2" side by side read as
+     one figure counted twice. */
+  .numbers .cut{width:1px;align-self:stretch;background:var(--gold-line);margin:0 .15rem}
+  .numbers .who{
+    font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--gold);opacity:.75;margin-bottom:.28rem;
+  }
+  .numbers .grp{display:flex;flex-direction:column}
+  .numbers .grp .row{display:flex;gap:1rem}
   .spark{display:flex;align-items:flex-end;gap:2px;height:2.1rem}
   .spark i{
     width:4px;background:var(--card);border:1px solid var(--gold-line);
@@ -868,13 +878,30 @@ async function drawNumbers() {
     box.append(el("b", null, String(n)), el("span", "k", label));
     return box;
   };
-  numbersBox.replaceChildren(
-    pair(d.today.devices, "people today"),
-    pair(d.today.fresh, "first time"),
-    pair(d.today.returning, "came back"),
+  // A labelled group per product. They are never added together — one counts
+  // people who used the app, the other people who read the page about it, and
+  // a single figure covering both would answer neither question.
+  const group = (who, pairs) => {
+    const box = el("span", "grp");
+    const row = el("span", "row");
+    pairs.forEach((p) => row.append(p));
+    box.append(el("span", "who", who), row);
+    return box;
+  };
+
+  const parts = [];
+  if (d.app) {
+    parts.push(
+      group("The app", [pair(d.app.count, "people, ever"), pair(d.app.today, "new today")]),
+      el("span", "cut")
+    );
+  }
+  parts.push(
+    group("The site", [pair(d.today.devices, "today"), pair(d.today.returning, "came back")]),
     spark,
     el("span", "go", "Analytics →")
   );
+  numbersBox.replaceChildren(...parts);
   numbersBox.href = d.link || "#";
   numbersBox.hidden = false;
 }

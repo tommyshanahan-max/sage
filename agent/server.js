@@ -448,6 +448,10 @@ app.get("/api/numbers", async (_req, res) => {
     const data = await upstream.json();
     res.json({
       today: data.today,
+      // The app's own count, passed through rather than fetched again here.
+      // One service reads it, one service caches it; two would eventually
+      // disagree about the same number, which is worse than not having it.
+      app: data.app || null,
       returnRate: data.returnRate,
       // Just enough for a sparkline. The full picture is a click away.
       series: (data.series || []).map((d) => d.devices),
