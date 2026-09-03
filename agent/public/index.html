@@ -1505,6 +1505,9 @@ let projectsRoot = "";
 // reasonable thing to want.
 let projects = [];
 let fallbackApp = "";
+// Whether this seat may make and remove projects. The routes check the seat
+// themselves; this only stops a partner being shown doors that are locked.
+let canEdit = true;
 let picked = "";
 try { picked = localStorage.getItem("sage_project") || ""; } catch { /* private window */ }
 // Which project the turn in flight was started for, and one picked while that
@@ -1590,13 +1593,15 @@ function projectTile(p, mark) {
   if (p.name === picked) card.classList.add("picked");
   pick.addEventListener("click", () => pickProject(p));
 
-  const del = el("button", "del", "\u00d7");
-  del.type = "button";
-  del.title = "Delete " + p.name;
-  del.setAttribute("aria-label", "Delete " + p.name);
-  del.addEventListener("click", () => removeProject(p));
-
-  card.append(pick, del);
+  card.append(pick);
+  if (canEdit) {
+    const del = el("button", "del", "\u00d7");
+    del.type = "button";
+    del.title = "Delete " + p.name;
+    del.setAttribute("aria-label", "Delete " + p.name);
+    del.addEventListener("click", () => removeProject(p));
+    card.append(del);
+  }
   return card;
 }
 
@@ -1734,6 +1739,7 @@ async function loadProjects() {
     projectsRoot = data.root || "";
     projects = data.projects || [];
     fallbackApp = data.fallbackApp || "";
+    canEdit = data.canEdit !== false;
     stageProj.hidden = false;
     // An App tab is worth drawing if anything at all has an address, whether
     // that is the seat's default or one project's own.
@@ -1744,18 +1750,26 @@ async function loadProjects() {
     // reload.
     const said = document.getElementById("projects-note")?.textContent || "";
     const head = el("div", "projects-head");
-    const add = el("button", "", "New project");
-    add.type = "button";
-    add.addEventListener("click", newProject);
-    head.append(add);
+    if (canEdit) {
+      const add = el("button", "", "New project");
+      add.type = "button";
+      add.addEventListener("click", newProject);
+      head.append(add);
+    } else {
+      // A partner's list is their snapshot: what they were given, and the whole
+      // of it. Said out loud, because a panel that lists two things is
+      // ambiguous between "these two" and "these two so far".
+      head.append(el("span", "projects-note", "What this seat can see. It changes when Tom syncs it."));
+    }
     const note = el("p", "projects-note", said);
     note.id = "projects-note";
 
     if (!data.projects.length) {
       projectsPane.replaceChildren(head, note,
-        el("p", "projects-empty",
-          "Nothing in " + projectsRoot + " yet. Make one above, or clone a repository " +
-          "into it from the IDE terminal.")
+        el("p", "projects-empty", canEdit
+          ? "Nothing in " + projectsRoot + " yet. Make one above, or clone a repository " +
+            "into it from the IDE terminal."
+          : "Nothing has been shared with this seat yet.")
       );
     } else {
       const marks = monograms(data.projects.map((p) => p.name));

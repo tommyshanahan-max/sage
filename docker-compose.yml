@@ -319,6 +319,22 @@ services:
       # argued out of it. Not passed to the owner's seat: he is not asked for a
       # word before publishing his own catalogue.
       AGENT_PUBLISH_WORD: ${TOMSCODING_PARTNER_PUBLISH_WORD:-}
+      # The numbers, granted the same way as the desk. Set
+      # TOMSCODING_PARTNER_NUMBERS=1 to show this seat the readout and the full
+      # dashboard behind it; delete the line to take it back.
+      #
+      # Note what the second and third variables do: the address and the shared
+      # token are passed ONLY while the grant is on, so with it off this
+      # container cannot reach the counter at all — the seat check is code, and
+      # code gets edited, but an absent credential cannot be argued with.
+      #
+      # Be clear what this hands over. Not just today's count: where people are,
+      # how they arrived, which share link sent them, day by day, for both
+      # products. For a marketing partner that is the job; for anyone else it is
+      # the business's state of health.
+      AGENT_NUMBERS: ${TOMSCODING_PARTNER_NUMBERS:-}
+      AGENT_NUMBERS_URL: ${TOMSCODING_PARTNER_NUMBERS:+${TOMSCODING_AGENT_NUMBERS_URL}}
+      AGENT_NUMBERS_TOKEN: ${TOMSCODING_PARTNER_NUMBERS:+${TOMSCODING_STATS_INTERNAL_TOKEN}}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       AGENT_MODEL: ${TOMSCODING_AGENT_MODEL:-}
       AGENT_USER: ${TOMSCODING_PARTNER_USER:-Brendan}

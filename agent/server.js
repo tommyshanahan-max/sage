@@ -35,6 +35,7 @@ import {
   PROJECT_LABEL,
   PARTNER_TOOLS,
   canWriteStories,
+  canSeeNumbers,
   OWNER_CLEARANCE,
   PARTNER_DENIED,
   PARTNER_VOICE,
@@ -423,9 +424,16 @@ app.get("/api/mockups", async (_req, res) => {
 // why clicking a project writes its full path into the message box rather than
 // its name.
 //
-// Owner seat only. A partner sees one project, read-only, and it is already
-// on their screen — the point of that seat is that the rest of the workspace
-// does not exist for it.
+// Both seats, different roots. The owner gets the workspace; a partner gets
+// their snapshot, which is the list of repositories they were given and nothing
+// else. That is worth drawing rather than hiding: a panel showing exactly the
+// two projects a partner can see is the boundary made visible, and they can
+// already read those directories — the tiles publish nothing new.
+//
+// What a partner does not get is the buttons. Creating and deleting are owner
+// routes and stay owner routes; their snapshot is mounted read-only, so the
+// filesystem would refuse anyway, but a control that cannot work should not be
+// drawn.
 // ---------------------------------------------------------------------------
 
 /** A one-line description, if the project happens to carry one. Best effort:
@@ -532,9 +540,12 @@ const PROJECT_APPS = new Map(
 );
 
 app.get("/api/projects", async (_req, res) => {
-  if (isPartner) return res.status(404).json({ error: "not this seat" });
+  // A partner's projects are the repositories in their snapshot, not the
+  // contents of their container's working directory — which also holds the
+  // mockups folder, and that is not a project.
+  const root = isPartner ? DOCS_ROOT : WORKSPACE;
   try {
-    const entries = await readdir(WORKSPACE, { withFileTypes: true });
+    const entries = await readdir(root, { withFileTypes: true });
     const dirs = entries
       // Dotfiles are configuration, not projects, and a symlink out of the
       // workspace is not a project either.
@@ -543,7 +554,7 @@ app.get("/api/projects", async (_req, res) => {
 
     const items = await Promise.all(
       dirs.map(async (e) => {
-        const dir = path.join(WORKSPACE, e.name);
+        const dir = path.join(root, e.name);
         let touchedAt = "";
         let git = false;
         try {
@@ -560,7 +571,11 @@ app.get("/api/projects", async (_req, res) => {
           what: await describe(dir),
           // Empty when this project has nowhere to be seen running. The page
           // says so rather than showing a blank frame.
-          app: PROJECT_APPS.get(e.name) || "",
+          // A partner's seat has one address for one product, so its own app
+          // is the right answer for anything in their snapshot. The owner's
+          // seat has many projects and one default, which is why only this
+          // side falls back.
+          app: PROJECT_APPS.get(e.name) || (isPartner ? APP_URL : ""),
         };
       })
     );
@@ -569,9 +584,12 @@ app.get("/api/projects", async (_req, res) => {
     // list that reorders itself between visits is one you have to re-read.
     items.sort((a, b) => a.name.localeCompare(b.name));
     res.set("Cache-Control", "no-store");
-    res.json({ root: WORKSPACE, projects: items, fallbackApp: APP_URL });
+    // canEdit says whether to draw New project and the delete buttons. The
+    // routes check the seat themselves; this only stops a partner being shown
+    // doors that are locked.
+    res.json({ root, projects: items, fallbackApp: APP_URL, canEdit: !isPartner });
   } catch (err) {
-    if (err.code === "ENOENT") return res.json({ root: WORKSPACE, projects: [] });
+    if (err.code === "ENOENT") return res.json({ root, projects: [], canEdit: !isPartner });
     console.error("listing projects failed:", err);
     res.status(500).json({ error: "could not read the workspace" });
   }
@@ -730,15 +748,17 @@ app.get("/api/changes", async (_req, res) => {
 // origin cannot read it. This server can — the two containers share a Docker
 // network — and it presents a shared token the browser never sees.
 //
-// Owner seat only. A partner is shown the app and their mockups; how the
-// business is doing is not theirs.
+// The owner always; a partner only while AGENT_NUMBERS is granted. See
+// canSeeNumbers in lib/role.js — the token is not in that container unless the
+// grant is on, so this check and the missing credential have to both fail
+// before anything is served.
 // ---------------------------------------------------------------------------
 const NUMBERS_URL = process.env.AGENT_NUMBERS_URL || "";
 const NUMBERS_TOKEN = process.env.AGENT_NUMBERS_TOKEN || "";
 const NUMBERS_LINK = process.env.AGENT_NUMBERS_LINK || "";
 
 app.get("/api/numbers", async (_req, res) => {
-  if (isPartner || !NUMBERS_URL) return res.status(404).json({ error: "not this seat" });
+  if (!canSeeNumbers || !NUMBERS_URL) return res.status(404).json({ error: "not this seat" });
   try {
     // Short timeout on purpose. This is decoration in a masthead; a counter
     // having a bad minute must not make the chat page feel broken.
@@ -781,7 +801,7 @@ app.get("/api/numbers", async (_req, res) => {
 // and a proxy that will only forward reads cannot be turned into one that
 // writes by asking it differently.
 app.get(/^\/numbers(\/.*)?$/, async (req, res) => {
-  if (isPartner || !NUMBERS_URL) return res.status(404).send("Not found");
+  if (!canSeeNumbers || !NUMBERS_URL) return res.status(404).send("Not found");
   // Without the trailing slash the page's relative fetches resolve one level
   // too high and the dashboard loads with no data in it.
   if (req.path === "/numbers") return res.redirect(301, "/numbers/");

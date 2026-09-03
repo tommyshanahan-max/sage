@@ -286,5 +286,24 @@ Manner
 // all. Two locks, because a seat check is code and code gets edited, while an
 // absent secret cannot be argued with.
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// The numbers, and who is shown them
+//
+// The owner always. A partner only when AGENT_NUMBERS is set — the same shape
+// as the story desk, and for the same reason: this is a grant with a date on
+// it, not a property of being a partner, and it comes back off with one line.
+//
+// Worth being clear about what the grant hands over, because "analytics" sounds
+// smaller than it is. It is not only the count in the masthead: it opens the
+// whole dashboard — where people are, how they arrived, which share link sent
+// them, day by day, for both products. For a marketing partner that is the job.
+// For anyone else it is the business's state of health, and it is not theirs.
+//
+// As with the desk, compose passes the internal token ONLY while the grant is
+// on, so with it off the credential is not in that container at all.
+// ---------------------------------------------------------------------------
+export const canSeeNumbers =
+  ROLE === "owner" || (ROLE === "partner" && process.env.AGENT_NUMBERS === "1");
+
 export const canWriteStories =
   ROLE === "owner" || (ROLE === "partner" && process.env.AGENT_STORIES === "1");

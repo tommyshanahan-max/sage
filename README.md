@@ -520,6 +520,32 @@ approval would mean their publish landing in a queue you release — a different
 feature, and a bigger one. Use a different string from the owner's clearance
 word, since the partner has to be told this one.
 
+### What a partner sees of the workspace, and of the numbers
+
+The Projects panel is on both seats now, with different roots. The owner's lists
+the workspace; a partner's lists **their snapshot** — the repositories they were
+given, and the whole of it. That is worth drawing rather than hiding: a panel
+showing exactly the projects a partner can see is the boundary made visible, and
+they could already read those directories, so the tiles publish nothing new. The
+panel says so out loud, because a list of two things is otherwise ambiguous
+between "these two" and "these two so far".
+
+They do not get the buttons. **New project** and the delete corners are drawn
+only where `canEdit` is true, and the routes behind them are owner-only
+regardless — the snapshot is mounted read-only, so the filesystem would refuse
+anyway, but a control that cannot work should not be drawn.
+
+The numbers are a grant, `TOMSCODING_PARTNER_NUMBERS=1`, in the same shape as
+the story desk: the counter's address and shared token are passed to that
+container **only while the grant is on**, so with it off the seat cannot reach
+the counter even if the check were edited away. Two locks, and one of them is
+not code.
+
+Grant it deliberately. It is not just today's count — it opens the whole
+dashboard: where people are, how they arrived, which share link sent them, day
+by day, for both products. For a marketing partner that is precisely the job.
+For anyone else it is the state of the business.
+
 ### A seat for a business partner
 
 `partner.tomscoding.com`, its own password. Inside, the same Sage — but reading
