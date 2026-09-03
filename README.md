@@ -423,6 +423,33 @@ invites the wrong assumption:
 - **It lives in `.env`, never in this repository,** which is public. Unset,
   there is no word and the seat behaves as it always did.
 
+### A word before it reaches readers
+
+A partner can write stories. Publishing one puts it in front of readers, and
+that is a different act — so `TOMSCODING_PARTNER_PUBLISH_WORD`, when set, is
+asked for on a partner seat before anything reaches the live catalogue.
+
+Enforced by the route, not by the page and not by Sage's instructions. A check
+in the browser is one the browser can skip — that route is reachable with a
+`fetch` from the console — and a check in a prompt is one that can be argued
+with. This one is neither: no word, no call, whatever the page or the agent
+believes. The desk asks for it when the route refuses, retries once, and does
+not keep it, so the next publish asks again.
+
+Two actions are gated: publishing a series, and deleting one. Saving a draft
+and uploading cover art are not — those are preparing a story rather than
+shipping it, and asking for a word twelve times while somebody writes twelve
+beats teaches them to keep it in the clipboard, which is worse than not asking.
+The owner's seat is never asked.
+
+Be clear about what it buys, because "password" suggests more than it does. It
+stops an unconsidered or unilateral publish, which is the real worry with a
+live catalogue and someone else's hands. It is **not** the owner approving each
+publish: it is a shared secret, so once the partner knows it they keep it. Real
+approval would mean their publish landing in a queue you release — a different
+feature, and a bigger one. Use a different string from the owner's clearance
+word, since the partner has to be told this one.
+
 ### A seat for a business partner
 
 `partner.tomscoding.com`, its own password. Inside, the same Sage — but reading

@@ -652,6 +652,55 @@ const ownerOnly = (req, res, next) => {
   next();
 };
 
+// ---------------------------------------------------------------------------
+// The publish word
+//
+// A partner can write stories; publishing one puts it in front of readers, and
+// that is a different act. So a seat that is not the owner's is asked for a
+// word before anything reaches the live catalogue.
+//
+// Checked here and not in the page, and not in a prompt. A check in the browser
+// is a check the browser can skip — the route is reachable with a fetch from
+// the console — and a check in Sage's instructions is a check that can be
+// argued with. This one is neither: no word, no call, whatever the page or the
+// agent believes.
+//
+// What it is and is not, plainly. It stops an unconsidered or unilateral
+// publish, which is the thing you actually worry about with a live catalogue
+// and someone else's hands. It is not per-publish approval by the owner: it is
+// a shared secret, so once the partner knows it they keep it. Real approval
+// would mean the partner's publish landing in a queue for the owner to
+// release, which is a different feature and a bigger one.
+//
+// Two write actions are gated, being the two that change what a reader sees on
+// purpose: publishing a series, and deleting one. Saving a draft and uploading
+// cover art are part of preparing a story, not shipping it, so they are not —
+// asking for a word twelve times while somebody writes twelve beats would
+// teach them to keep it in the clipboard, which is worse than not asking.
+//
+// Unset, nothing is asked and the desk behaves exactly as it did.
+// ---------------------------------------------------------------------------
+const PUBLISH_WORD = (process.env.AGENT_PUBLISH_WORD || "").trim();
+
+const publishGate = (req, res, next) => {
+  // The owner is not asked for a word before publishing his own catalogue.
+  if (!isPartner) return next();
+  if (!PUBLISH_WORD) return next();
+  // A draft save comes through the same route as a publish. Only the publish
+  // is gated, which is why this reads the body rather than the method.
+  if (req.method === "PUT" && !req.body?.published) return next();
+
+  const given = String(req.get("x-publish-word") || "");
+  if (given && safeEqual(given, PUBLISH_WORD)) return next();
+
+  // 401 with a flag the desk understands, so it can ask rather than showing
+  // somebody a refusal they have no way to act on.
+  return res.status(401).json({
+    error: "This goes live to readers. Enter the publish word.",
+    needWord: true,
+  });
+};
+
 app.get("/sp/series", ownerOnly, async (_req, res) => {
   const r = await studypal.call("/api/series");
   res.status(r.status).json(r.body);
@@ -668,12 +717,12 @@ app.get("/sp/usage", ownerOnly, async (_req, res) => {
   res.status(r.status).json(r.body);
 });
 
-app.put("/sp/series", ownerOnly, async (req, res) => {
+app.put("/sp/series", ownerOnly, publishGate, async (req, res) => {
   const r = await studypal.call("/api/series", { method: "PUT", body: req.body ?? {} });
   res.status(r.status).json(r.body);
 });
 
-app.delete("/sp/series", ownerOnly, async (req, res) => {
+app.delete("/sp/series", ownerOnly, publishGate, async (req, res) => {
   // The id travels in the query string upstream, so it is encoded here rather
   // than interpolated — an id is user input even when a slug pattern says it
   // should not be.

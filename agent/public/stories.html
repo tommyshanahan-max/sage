@@ -305,15 +305,55 @@ function toast(message, bad) {
   setTimeout(() => t.remove(), bad ? 6000 : 2600);
 }
 
+// The word this seat is asked for before anything reaches readers. Held for one
+// call and then forgotten: a variable that survived would turn "enter it before
+// it goes live" into "enter it once a day", which is not what it is for.
+let publishWord = "";
+
 async function api(path, options) {
-  const res = await fetch(path, options);
+  const opts = { ...(options || {}) };
+  if (publishWord) {
+    opts.headers = { ...(opts.headers || {}), "x-publish-word": publishWord };
+  }
+  const res = await fetch(path, opts);
   let body = null;
   try { body = await res.json(); } catch { /* an empty or non-JSON reply */ }
   if (!res.ok) {
     const why = body?.error || res.status + " from the story desk";
-    throw new Error(why);
+    const err = new Error(why);
+    // Carried on the error so the caller can ask for the word rather than
+    // showing a refusal nobody can act on.
+    if (body?.needWord) err.needWord = true;
+    throw err;
   }
   return body;
+}
+
+/** Runs something that may be gated. On a first refusal it asks for the word
+ *  and tries once more; a second refusal is a wrong word and says so.
+ *
+ *  The seat that needs no word never sees any of this — the first attempt
+ *  succeeds and nothing is asked. */
+async function guarded(run) {
+  try {
+    return await run();
+  } catch (err) {
+    if (!err.needWord) throw err;
+    const given = window.prompt(
+      "This goes live to readers.\n\nEnter the publish word to continue:"
+    );
+    if (!given || !given.trim()) throw new Error("Not published — no word entered");
+    publishWord = given.trim();
+    try {
+      return await run();
+    } catch (again) {
+      if (again.needWord) throw new Error("That word was not right — nothing was published");
+      throw again;
+    } finally {
+      // Deliberately not kept. The next publish asks again.
+      publishWord = "";
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -720,11 +760,11 @@ async function save(publish, tab) {
   if (publish) payload.published = true;
 
   try {
-    await api("/sp/series", {
+    await guarded(() => api("/sp/series", {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
-    });
+    }));
     current.published = payload.published;
     toast(publish
       ? (EMBEDDED ? "Published — see it on the right" : "Published — opening the app")
@@ -779,7 +819,8 @@ $("delete").addEventListener("click", async () => {
   if (!id) return;
   if (!confirm("Delete “" + ($("f-title").value || id) + "”?\n\nA built-in series reverts to the version in Study Pal's code rather than vanishing.")) return;
   try {
-    await api("/sp/series?id=" + encodeURIComponent(id), { method: "DELETE" });
+    await guarded(() =>
+      api("/sp/series?id=" + encodeURIComponent(id), { method: "DELETE" }));
     toast("Deleted");
     backToList();
   } catch (err) { toast(err.message, true); }
