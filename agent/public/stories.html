@@ -708,9 +708,9 @@ async function tryBeat(ep, button, out) {
 // Saving means a writer started. Publishing means somebody decided it was
 // ready. Share a button and half-written stories reach readers.
 // ---------------------------------------------------------------------------
-async function save(publish) {
+async function save(publish, tab) {
   const payload = collect();
-  if (!payload.id) return toast("An id is required", true);
+  if (!payload.id) { tab?.close(); return toast("An id is required", true); }
   if (publish) payload.published = true;
 
   try {
@@ -720,17 +720,34 @@ async function save(publish) {
       body: JSON.stringify(payload),
     });
     current.published = payload.published;
-    toast(publish ? "Published — readers see this now" : "Draft saved");
+    toast(publish ? "Published — opening the app" : "Draft saved");
     $("edit-note").innerHTML = publish
       ? "<b>On the shelf.</b> Readers see this version."
       : "<b>Saved as a draft.</b> Readers still see the last published version, if there is one.";
+
+    if (publish && tab) {
+      const where = await api("/sp/where").catch(() => null);
+      if (where?.shelf) tab.location = where.shelf;
+      else tab.close();
+    }
   } catch (err) {
+    // The tab was opened on the click and is now pointing at nothing. Close it
+    // rather than leaving a blank window as the only sign anything happened.
+    tab?.close();
     toast(err.message, true);
   }
 }
 
 $("save").addEventListener("click", () => save(false));
-$("publish").addEventListener("click", () => save(true));
+
+// Publishing opens the readers' copy so somebody can look at what they just
+// did. The tab is opened HERE, inside the click, and navigated afterwards:
+// a window.open on the far side of an await has lost the user gesture and is
+// blocked as a popup, which is a silent failure rather than a visible one.
+$("publish").addEventListener("click", () => {
+  const tab = window.open("", "_blank");
+  save(true, tab);
+});
 
 $("add-beat").addEventListener("click", () => {
   current.episodes.push({

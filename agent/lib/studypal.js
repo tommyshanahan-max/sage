@@ -22,6 +22,11 @@ const KEY = process.env.STUDYPAL_ADMIN_KEY || "";
 
 export const configured = () => Boolean(KEY);
 
+/** Where the reader-facing app lives, so the desk can send somebody to look at
+ *  what they just published. Read from here rather than typed into the page:
+ *  one place already knows it, and two would eventually disagree. */
+export const base = () => BASE;
+
 /** One upstream call. Returns the status and the parsed body, and never throws
  *  for an HTTP error — the caller passes both on, so a 401 from Study Pal
  *  arrives as a 401 here rather than as a 500 that hides it. */

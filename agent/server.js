@@ -550,6 +550,12 @@ app.get("/sp/series", ownerOnly, async (_req, res) => {
   res.status(r.status).json(r.body);
 });
 
+// Where the readers' copy lives, so publishing can show it rather than
+// describe it. The front door is what the spec names as live; if a series has
+// its own address, this is the one line that would change.
+app.get("/sp/where", ownerOnly, (_req, res) =>
+  res.json({ base: studypal.base(), shelf: studypal.base() + "/drama" }));
+
 app.get("/sp/usage", ownerOnly, async (_req, res) => {
   const r = await studypal.call("/api/usage?app=studypal");
   res.status(r.status).json(r.body);
