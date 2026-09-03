@@ -324,6 +324,12 @@ app.get("/video.html", (req, res, next) => {
   next();
 });
 
+// The reel desk, on the same rule as the video page it is built around.
+app.get("/reel.html", (req, res, next) => {
+  if (!videoDoor()) return res.status(404).send("Not found");
+  next();
+});
+
 app.use(express.static("public"));
 
 // --------------------------------------------------------------------------
@@ -810,6 +816,110 @@ app.get("/api/video/:id/file", async (req, res) => {
   res.sendFile(file, { headers: { "Cache-Control": "no-store" } }, (err) => {
     if (err && !res.headersSent) res.status(404).send("Not found");
   });
+});
+
+// ---------------------------------------------------------------------------
+// The reel
+//
+// The story desk over Study Pal's catalogue, done again for a project that has
+// no catalogue — because microdrama does not have a backend, it has a folder.
+//
+// So the series is a file: `series.json` at the top of the project, next to the
+// clips it refers to. That makes the whole thing portable in the way a database
+// row is not — the folder holds the structure, the beats and the shots, and it
+// goes into git with everything else.
+//
+// One series per project, deliberately. Study Pal's desk is a shelf because
+// Study Pal publishes a catalogue; this is a workbench for the series being
+// made. A second series is a second project, which is a directory, which is a
+// button that already exists.
+// ---------------------------------------------------------------------------
+
+const REEL_FILE = "series.json";
+
+/** The empty twelve, in the shape Study Pal's own series actually use.
+ *
+ *  Not invented: this is the structure read back off the live catalogue — three
+ *  episodes in act one, five in act two, four in act three, with these
+ *  functions in this order. A romance pays off in act three, which is why it is
+ *  3/5/4 and not an even split.
+ *
+ *  Kept on this side rather than in the page so a reel created by an agent and
+ *  one created by a person come out the same. */
+function blankReel() {
+  const shape = [
+    [1, "inciting incident"], [1, "debate"], [1, "act one turn"],
+    [2, "rising"], [2, "pinch"], [2, "midpoint"], [2, "false victory"], [2, "all is lost"],
+    [3, "dark night"], [3, "complication"], [3, "climax"], [3, "resolution"],
+  ];
+  return {
+    title: "",
+    premise: "",
+    look: "",
+    episodes: shape.map(([act, fn], i) => ({
+      n: i + 1, act, function: fn, title: "", beat: "", hook: "", clip: "", jobId: "",
+    })),
+  };
+}
+
+function reelPath(name) {
+  const dir = projectPath(String(name || ""));
+  return dir ? path.join(dir, REEL_FILE) : null;
+}
+
+app.get("/api/reel", async (req, res) => {
+  if (!canMakeVideo) return res.status(404).json({ error: "not this seat" });
+  const file = reelPath(req.query.project);
+  if (!file) return res.status(400).json({ error: "pick a project" });
+  try {
+    const reel = JSON.parse(await readFile(file, "utf8"));
+    res.set("Cache-Control", "no-store");
+    res.json({ reel, file });
+  } catch (err) {
+    // A project with no series yet is the ordinary case, not an error: it gets
+    // the empty twelve and writes the file on the first save.
+    if (err.code === "ENOENT") return res.json({ reel: blankReel(), file });
+    res.status(500).json({ error: "could not read it: " + (err.code || err.message) });
+  }
+});
+
+app.put("/api/reel", async (req, res) => {
+  if (!canMakeVideo) return res.status(404).json({ error: "not this seat" });
+  const file = reelPath(req.body?.project);
+  if (!file) return res.status(400).json({ error: "pick a project" });
+
+  const sent = req.body?.reel;
+  if (!sent || !Array.isArray(sent.episodes)) {
+    return res.status(400).json({ error: "that is not a reel" });
+  }
+  // Rebuilt field by field rather than written as received. This file is read
+  // back by this server and by whatever the project becomes, so it should hold
+  // what it is meant to hold and not whatever a page happened to send.
+  const reel = {
+    title: String(sent.title || "").slice(0, 200),
+    premise: String(sent.premise || "").slice(0, 4000),
+    look: String(sent.look || "").slice(0, 2000),
+    episodes: sent.episodes.slice(0, 60).map((e, i) => ({
+      n: Number(e?.n) || i + 1,
+      act: [1, 2, 3].includes(Number(e?.act)) ? Number(e.act) : 1,
+      function: String(e?.function || "").slice(0, 60),
+      title: String(e?.title || "").slice(0, 200),
+      beat: String(e?.beat || "").slice(0, 4000),
+      hook: String(e?.hook || "").slice(0, 400),
+      clip: String(e?.clip || "").slice(0, 1000),
+      // The job the clip came from. Kept because the file path alone cannot be
+      // played back — the page streams a clip through /api/video/:id/file, so
+      // without this a reloaded reel shows the path and no picture.
+      jobId: String(e?.jobId || "").slice(0, 64),
+    })),
+    savedAt: new Date().toISOString(),
+  };
+  try {
+    await writeFile(file, JSON.stringify(reel, null, 2) + "\n", "utf8");
+    res.json({ ok: true, file, episodes: reel.episodes.length });
+  } catch (err) {
+    res.status(500).json({ error: "could not save it: " + (err.code || err.message) });
+  }
 });
 
 app.get("/mockups/:name", async (req, res) => {

@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reel</title>
+<style>
+  /* The story desk's palette, because this is the same job in a different
+     place: twelve beats, three acts, and now a shot against each one. */
+  :root{
+    --paper:#eef1f5; --card:#fbfcfd; --card-2:#f4f6f9;
+    --ink:#10192b; --ink-2:#45536b; --muted:#7d8ba0; --rule:#dae0e9;
+    --gold:#a8761f; --gold-soft:#f6efdf; --gold-line:#e6d3ab;
+    --good:#1f6b52; --good-soft:#e4efea;
+    --down:#a8442f; --down-soft:#f8e9e5;
+    --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
+           "Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB",
+           "Microsoft YaHei",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0e1219; --card:#161b24; --card-2:#1b2029; --ink:#e8ecf3;
+      --ink-2:#a6b1c2; --muted:#77839a; --rule:#242b36;
+      --gold:#d9a94e; --gold-soft:#2a2213; --gold-line:#4b3d1d;
+      --good:#5cc39c; --good-soft:#12261f;
+      --down:#e08a72; --down-soft:#2c1a16;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0e1219; --card:#161b24; --card-2:#1b2029; --ink:#e8ecf3;
+    --ink-2:#a6b1c2; --muted:#77839a; --rule:#242b36;
+    --gold:#d9a94e; --gold-soft:#2a2213; --gold-line:#4b3d1d;
+    --good:#5cc39c; --good-soft:#12261f;
+    --down:#e08a72; --down-soft:#2c1a16;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.55;padding:1.1rem clamp(.9rem,3vw,1.6rem) 4rem;
+  }
+  .wrap{max-width:58rem;margin:0 auto}
+  header{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;margin-bottom:.9rem}
+  h1{font-family:var(--serif);font-size:1.5rem;font-weight:500;margin:0;letter-spacing:-.01em}
+  .sub{font-size:.78rem;color:var(--muted)}
+  .grow{flex:1}
+  button,select,input,textarea{font:inherit}
+  .btn{
+    color:var(--ink-2);background:none;border:1px solid var(--rule);
+    border-radius:8px;padding:.4rem .8rem;cursor:pointer;font-size:.84rem;
+  }
+  .btn:hover{color:var(--gold);border-color:var(--gold)}
+  .btn.go{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:500}
+  .btn.go:hover{filter:brightness(1.06);color:#fff}
+  .btn.small{font-size:.78rem;padding:.3rem .6rem}
+  .btn:disabled{opacity:.45;cursor:default;filter:none}
+
+  .panel{
+    background:var(--card);border:1px solid var(--rule);border-radius:14px;
+    padding:1rem;margin-bottom:1rem;
+  }
+  label{display:block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:.3rem}
+  input,select,textarea{
+    width:100%;background:var(--card-2);color:var(--ink);
+    border:1px solid var(--rule);border-radius:9px;padding:.5rem .65rem;
+  }
+  textarea{resize:vertical;line-height:1.5}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
+  .cols{display:grid;gap:.7rem;grid-template-columns:1fr 1fr}
+  @media (max-width:44rem){ .cols{grid-template-columns:1fr} }
+
+  /* ---- the shape bar: three acts, at a glance ---- */
+  .shape{display:flex;gap:.35rem;margin:.6rem 0 0}
+  .shape i{
+    height:.4rem;border-radius:2px;background:var(--rule);flex:1;
+  }
+  .shape i.a1{background:var(--gold)}
+  .shape i.a2{background:var(--good)}
+  .shape i.a3{background:var(--down)}
+  .shape i.filled{opacity:1}
+  .shape i:not(.filled){opacity:.25}
+  .legend{font-size:.72rem;color:var(--muted);margin:.4rem 0 0}
+
+  /* ---- one episode ---- */
+  .beat{
+    background:var(--card);border:1px solid var(--rule);border-radius:14px;
+    padding:.85rem;margin-bottom:.7rem;display:grid;
+    grid-template-columns:2.2rem 1fr;gap:.8rem;align-items:start;
+  }
+  .beat > .n{
+    font-family:var(--serif);font-size:1.5rem;color:var(--gold);
+    text-align:center;line-height:1.2;
+  }
+  .beat .act{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);text-align:center;display:block}
+  .beat .body{display:grid;gap:.5rem;min-width:0}
+  .beat .row{display:grid;gap:.5rem;grid-template-columns:1fr 6rem 11rem}
+  @media (max-width:44rem){ .beat .row{grid-template-columns:1fr} }
+  .tools{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+  .out{
+    background:var(--card-2);border:1px solid var(--rule);border-radius:10px;
+    padding:.6rem .7rem;font-size:.85rem;
+  }
+  .out video{width:9rem;border-radius:9px;background:#000;display:block}
+  .out .where{font-family:var(--mono);font-size:.71rem;color:var(--ink-2);
+    margin:.35rem 0 0;overflow-wrap:anywhere}
+  .out .waiting{color:var(--muted);margin:0}
+  .out .bad{color:var(--down);margin:0}
+  .has-clip{border-color:var(--gold-line)}
+
+  .bar{
+    position:sticky;bottom:0;background:var(--paper);
+    padding:.7rem 0 0;margin-top:.4rem;
+    display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;
+    border-top:1px solid var(--rule);
+  }
+  .note{font-size:.76rem;color:var(--muted);margin:0}
+  .note.bad{color:var(--down)}
+  .note.ok{color:var(--good)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Reel</h1>
+  <span class="sub" id="sub">Twelve episodes, three acts, a shot against each one.</span>
+  <span class="grow"></span>
+  <select id="project" style="width:auto"></select>
+  <button class="btn" id="reload" type="button">Reload</button>
+</header>
+
+<div class="panel">
+  <div class="cols">
+    <div>
+      <label for="title">Series</label>
+      <input id="title" placeholder="Wudaokou">
+    </div>
+    <div>
+      <label for="look">The look</label>
+      <input id="look" placeholder="Night, neon, handheld, close on faces">
+    </div>
+  </div>
+  <div style="margin-top:.7rem">
+    <label for="premise">Premise</label>
+    <textarea id="premise" rows="2" placeholder="Who this is about and what they want."></textarea>
+  </div>
+  <div class="shape" id="shape"></div>
+  <p class="legend" id="legend"></p>
+</div>
+
+<div id="beats"></div>
+
+<div class="bar">
+  <button class="btn go" id="save" type="button">Save</button>
+  <button class="btn" id="filmall" type="button">Film every empty beat</button>
+  <p class="note" id="status"></p>
+</div>
+
+</div>
+<script type="module">
+import { FUNCTIONS, checkShape } from "./three-act.js";
+
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+};
+
+let reel = null;
+let project = "";
+let dirty = false;
+
+function say(text, kind) {
+  const n = $("status");
+  n.className = "note" + (kind ? " " + kind : "");
+  n.textContent = text;
+}
+
+async function api(path, options) {
+  const res = await fetch(path, options);
+  let body = null;
+  try { body = await res.json(); } catch { /* empty */ }
+  if (!res.ok) throw new Error(body?.error || res.status + " from the server");
+  return body;
+}
+
+// ---------------------------------------------------------------------------
+// The shape bar
+//
+// Twelve segments coloured by act, filled where the beat is written. It answers
+// the question nobody can answer from inside the writing — is act three long
+// enough to land — without making anyone count.
+// ---------------------------------------------------------------------------
+function drawShape() {
+  const bar = $("shape");
+  bar.replaceChildren(...reel.episodes.map((e) => {
+    const i = el("i", "a" + (e.act || 1));
+    if ((e.beat || "").trim()) i.classList.add("filled");
+    return i;
+  }));
+
+  const findings = checkShape(reel.episodes);
+  const bad = (findings.checks || []).filter((c) => !c.ok);
+  const written = reel.episodes.filter((e) => (e.beat || "").trim()).length;
+  const filmed = reel.episodes.filter((e) => (e.clip || "").trim()).length;
+  $("legend").textContent =
+    `${written} of ${reel.episodes.length} written · ${filmed} filmed · ` +
+    `acts ${findings.perAct.join("/")}` +
+    (bad.length ? " · " + bad[0].text : " · shape is fine");
+}
+
+// ---------------------------------------------------------------------------
+// The episodes
+// ---------------------------------------------------------------------------
+function drawBeats() {
+  const box = $("beats");
+  box.replaceChildren(...reel.episodes.map((ep, i) => {
+    const row = el("div", "beat");
+    if ((ep.clip || "").trim()) row.classList.add("has-clip");
+
+    const num = el("div", "n", String(ep.n ?? i + 1));
+    num.append(el("span", "act", "act " + (ep.act || 1)));
+    row.append(num);
+
+    const body = el("div", "body");
+    const top = el("div", "row");
+
+    const title = el("input");
+    title.placeholder = "Episode title";
+    title.value = ep.title || "";
+    title.addEventListener("input", () => { ep.title = title.value; dirty = true; });
+
+    const act = el("select");
+    for (const a of [1, 2, 3]) {
+      const o = el("option", null, "Act " + a);
+      o.value = String(a);
+      act.append(o);
+    }
+    act.value = String(ep.act || 1);
+    act.addEventListener("change", () => { ep.act = Number(act.value); dirty = true; drawShape(); drawBeats(); });
+
+    const fn = el("select");
+    for (const f of FUNCTIONS) {
+      const o = el("option", null, f);
+      o.value = f;
+      fn.append(o);
+    }
+    fn.value = FUNCTIONS.includes(ep.function) ? ep.function : FUNCTIONS[0];
+    fn.addEventListener("change", () => { ep.function = fn.value; dirty = true; });
+
+    top.append(title, act, fn);
+
+    const beat = el("textarea");
+    beat.rows = 2;
+    beat.placeholder = "What happens in this episode.";
+    beat.value = ep.beat || "";
+    beat.addEventListener("input", () => { ep.beat = beat.value; dirty = true; drawShape(); });
+
+    const hook = el("input");
+    hook.placeholder = "The hook — the line that makes them tap the next one.";
+    hook.value = ep.hook || "";
+    hook.addEventListener("input", () => { ep.hook = hook.value; dirty = true; });
+
+    const tools = el("div", "tools");
+    const film = el("button", "btn small", (ep.clip ? "Film it again" : "Film it"));
+    tools.append(film);
+
+    const out = el("div", "out");
+    out.hidden = true;
+
+    if (ep.clip) {
+      out.hidden = false;
+      showClip(out, ep.clip, ep.jobId);
+    }
+    film.addEventListener("click", () => film1(ep, film, out, row));
+
+    body.append(top, beat, hook, tools, out);
+    row.append(body);
+    return row;
+  }));
+  drawShape();
+}
+
+/** A clip that already exists, drawn from what the reel remembers. The player
+ *  needs a job id; without one — a reel written by hand, say — the path is
+ *  still worth showing, because it is where the file is. */
+function showClip(out, file, jobId) {
+  out.replaceChildren();
+  if (jobId) {
+    const v = document.createElement("video");
+    v.src = "/api/video/" + encodeURIComponent(jobId) + "/file";
+    v.controls = true;
+    v.preload = "metadata";
+    v.playsInline = true;
+    out.append(v);
+  }
+  out.append(el("p", "where", file));
+}
+
+// ---------------------------------------------------------------------------
+// Filming
+// ---------------------------------------------------------------------------
+function promptFor(ep) {
+  return [
+    ($("title").value || "").trim(),
+    "episode " + (ep.n || ""),
+    (ep.beat || "").trim(),
+    ($("look").value || "").trim(),
+  ].filter(Boolean).join(" — ");
+}
+
+async function film1(ep, button, out, row) {
+  const beat = (ep.beat || "").trim();
+  if (beat.length < 8) { say("Write the beat first — that is the prompt", "bad"); return false; }
+
+  button.disabled = true;
+  const was = button.textContent;
+  button.textContent = "Filming…";
+  out.hidden = false;
+  out.replaceChildren(el("p", "waiting", "Generating — a minute or two."));
+
+  try {
+    const started = await api("/api/video", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        prompt: promptFor(ep),
+        ratio: "9:16", seconds: 5, resolution: "720p",
+        watermark: true, project,
+      }),
+    });
+    const id = started.job.id;
+
+    for (let i = 0; i < 90; i++) {
+      await new Promise((r) => setTimeout(r, 5000));
+      let job;
+      try { job = (await api("/api/video/" + encodeURIComponent(id))).job; } catch { continue; }
+      if (job.status === "running") continue;
+      if (job.status === "failed") throw new Error(job.error || "the provider could not make it");
+
+      // Remembered on the episode, which is the whole difference from the Video
+      // page: this file belongs to *this* beat, and the reel is the record of
+      // that. Saved immediately — a clip that cost money should not be lost to
+      // a closed tab.
+      ep.clip = job.file || "";
+      ep.jobId = id;
+      row.classList.add("has-clip");
+      showClip(out, ep.clip, id);
+      button.textContent = "Film it again";
+      await save(true);
+      drawShape();
+      return true;
+    }
+    throw new Error("still going after several minutes — look at the Video page");
+  } catch (err) {
+    out.replaceChildren(el("p", "bad", err.message || "could not film it"));
+    return false;
+  } finally {
+    button.disabled = false;
+    if (button.textContent === "Filming…") button.textContent = was;
+  }
+}
+
+/** Every beat that is written and has no clip yet, one at a time.
+ *
+ *  Deliberately sequential. The daily ceiling is small, generation is the one
+ *  thing here that costs per press, and firing twelve at once turns a mistake
+ *  in the premise into twelve mistakes. */
+async function filmAll() {
+  const todo = reel.episodes.filter((e) => (e.beat || "").trim() && !(e.clip || "").trim());
+  if (!todo.length) { say("Nothing to film — every written beat has a clip", "ok"); return; }
+  if (!window.confirm(`Film ${todo.length} beat${todo.length === 1 ? "" : "s"}, one after another?`)) return;
+
+  $("filmall").disabled = true;
+  let made = 0;
+  for (const ep of todo) {
+    say(`Filming episode ${ep.n} — ${made} of ${todo.length} done`);
+    const rows = document.querySelectorAll(".beat");
+    const row = rows[reel.episodes.indexOf(ep)];
+    const button = row.querySelector(".tools .btn");
+    const out = row.querySelector(".out");
+    const ok = await film1(ep, button, out, row);
+    if (!ok) { say(`Stopped at episode ${ep.n}`, "bad"); break; }
+    made++;
+  }
+  $("filmall").disabled = false;
+  if (made) say(`${made} filmed`, "ok");
+}
+
+// ---------------------------------------------------------------------------
+// Loading and saving
+// ---------------------------------------------------------------------------
+async function load() {
+  if (!project) return;
+  try {
+    const data = await api("/api/reel?project=" + encodeURIComponent(project));
+    reel = data.reel;
+    $("title").value = reel.title || "";
+    $("premise").value = reel.premise || "";
+    $("look").value = reel.look || "";
+    $("sub").textContent = data.file;
+    dirty = false;
+    drawBeats();
+    say("");
+  } catch (err) {
+    say(err.message || "could not read it", "bad");
+  }
+}
+
+async function save(quiet) {
+  if (!project || !reel) return;
+  reel.title = $("title").value;
+  reel.premise = $("premise").value;
+  reel.look = $("look").value;
+  try {
+    const out = await api("/api/reel", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ project, reel }),
+    });
+    dirty = false;
+    if (!quiet) say("Saved to " + out.file, "ok");
+  } catch (err) {
+    say(err.message || "could not save it", "bad");
+  }
+}
+
+async function loadProjects() {
+  const sel = $("project");
+  sel.replaceChildren();
+  try {
+    const data = await api("/api/projects");
+    let picked = "";
+    try { picked = localStorage.getItem("sage_reel_project") || localStorage.getItem("sage_project") || ""; } catch { /* private */ }
+    for (const p of data.projects || []) {
+      const o = el("option", null, p.name);
+      o.value = p.name;
+      if (p.name === picked) o.selected = true;
+      sel.append(o);
+    }
+    project = sel.value || "";
+  } catch {
+    say("No projects to write into — make one in Sage first", "bad");
+  }
+}
+
+$("project").addEventListener("change", async () => {
+  if (dirty && !window.confirm("Unsaved changes here will be lost. Switch anyway?")) {
+    $("project").value = project;
+    return;
+  }
+  project = $("project").value;
+  try { localStorage.setItem("sage_reel_project", project); } catch { /* private */ }
+  await load();
+});
+$("save").addEventListener("click", () => save(false));
+$("reload").addEventListener("click", load);
+$("filmall").addEventListener("click", filmAll);
+for (const id of ["title", "premise", "look"]) {
+  $(id).addEventListener("input", () => { dirty = true; });
+}
+window.addEventListener("beforeunload", (e) => { if (dirty) e.preventDefault(); });
+
+await loadProjects();
+await load();
+</script>
+</body>
+</html>

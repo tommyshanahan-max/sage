@@ -527,6 +527,34 @@ URL, the model and the path are configuration rather than constants, and why a
 failure surfaces the upstream status and body verbatim instead of a friendly
 message: a shape mismatch should be diagnosable from one attempt.
 
+### The reel — one series, in the project
+
+**Reel** is the story desk done again for a project that has no catalogue.
+Study Pal has a backend, so its desk writes to an API; microdrama has a folder,
+so this one writes a file: `series.json` at the top of the project, beside the
+clips it refers to. The folder holds the structure, the beats and the shots, and
+goes into git with everything else — which a database row does not.
+
+It opens as the twelve you actually use, read off the live catalogue rather than
+invented: **three in act one, five in act two, four in act three**, with the
+functions in order from *inciting incident* to *resolution*. A romance pays off
+in act three, which is why it is 3/5/4 and not an even split.
+
+Each episode has **Film it**, and the clip is remembered *on that episode* —
+which is the whole difference from the Video page. There, a clip is something
+you made; here it belongs to a beat. The reel saves itself the moment one lands,
+because a clip that cost money should not be lost to a closed tab. The job id is
+stored beside the path, since the path alone cannot be played back.
+
+The bar under the panel is the shape at a glance: twelve segments coloured by
+act, filled where a beat is written, with the count and whatever the three-act
+check has to say. **Film every empty beat** does the written ones in sequence,
+never in parallel — the daily ceiling is small, and firing twelve at once turns
+one mistake in the premise into twelve.
+
+One series per project, deliberately. A second series is a second project, which
+is a directory, which is a button that already exists.
+
 ### Filming a beat from the desk
 
 Each episode in the story desk has a **Make the clip** button beside "Try this
@@ -1016,6 +1044,7 @@ docker/conf.d/            optional overlays on the IDE site (extra auth, allowli
 docker/workspace/         the IDE image: code-server + node + claude CLI
 agent/                    the agent chat app: server, UI, image
 agent/lib/video.js        Seedance generation: tasks, polling, saving to a project
+agent/public/reel.html    one series per project, twelve beats, a clip against each
 landing/                  the launcher page, static and self-contained
 brand/                    the brand homepage, rendered by Caddy from .env
 analytics/                the counter: collection endpoint, store, dashboard
