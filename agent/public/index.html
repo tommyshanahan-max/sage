@@ -919,6 +919,19 @@ function setBusy(state, label) {
   } else {
     status.textContent = label || "";
   }
+
+  // A project pressed mid-turn goes now. Here rather than at the end of the
+  // streaming function because a turn can also end by failing, and a queued
+  // pick that only fires on the happy path is the same silence as before.
+  // Deferred by a tick so this call finishes before the next turn starts.
+  if (!state) {
+    workingOn = "";
+    if (queuedPick) {
+      const next = queuedPick;
+      queuedPick = null;
+      setTimeout(() => pickProject(next), 0);
+    }
+  }
 }
 
 async function send(prompt) {
@@ -1494,6 +1507,13 @@ let projects = [];
 let fallbackApp = "";
 let picked = "";
 try { picked = localStorage.getItem("sage_project") || ""; } catch { /* private window */ }
+// Which project the turn in flight was started for, and one picked while that
+// turn was running. Both exist because of a double-click: the first press sends,
+// the second lands mid-turn, and what happened then was a note written into a
+// panel the reader had already navigated away from. Nothing visible, and a
+// promise — "will be next" — that nothing kept.
+let workingOn = "";
+let queuedPick = null;
 
 /** Where to look at the selected project.
  *
@@ -1608,12 +1628,21 @@ function pickProject(p) {
   }
 
   if (busy) {
-    projectsNote("Sage is mid-turn — " + p.name + " is selected and will be next.");
+    // The second half of a double-click, or an impatient second press on the
+    // project already being opened. Sending it again would ask the same
+    // question twice.
+    if (p.name === workingOn) return;
+    // Anything else waits, and then actually goes — the message appears in the
+    // conversation when the current turn ends, which is the feedback. A later
+    // pick replaces an earlier one; only the last thing pressed is meant.
+    queuedPick = p;
+    projectsNote(p.name + " is next — it opens as soon as this turn finishes.");
     return;
   }
   // On a phone the panel is the whole screen, so a reply arriving behind it is
   // a reply nobody sees.
   if (window.innerWidth < 960) showStage(false);
+  workingOn = p.name;
   send("Work in " + p.path + " from now on. Open it, and tell me briefly what it is " +
        "and what state it's in.");
 }
