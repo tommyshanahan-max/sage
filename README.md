@@ -541,6 +541,15 @@ container **only while the grant is on**, so with it off the seat cannot reach
 the counter even if the check were edited away. Two locks, and one of them is
 not code.
 
+The grant alone was not enough, and the failure was silent. That seat sits on a
+network of its own so it can resolve nothing — so the flag was set, the token
+was in the container, and the counter's address simply did not exist for it. The
+fix reaches in rather than letting the seat out: the **counter** joins the
+partner network, which adds exactly one reachable address to that seat. Putting
+the partner on the main network instead would have handed it `workspace`,
+`agent` and everything else by name, which is what that network exists to
+prevent.
+
 Grant it deliberately. It is not just today's count — it opens the whole
 dashboard: where people are, how they arrived, which share link sent them, day
 by day, for both products. For a marketing partner that is precisely the job.

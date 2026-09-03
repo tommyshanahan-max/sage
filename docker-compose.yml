@@ -531,6 +531,22 @@ services:
       - "3000"
     networks:
       - tomscoding
+      # And the partner network, so a seat granted the numbers can actually
+      # reach the counter. The grant alone was not enough: that seat is on a
+      # network of its own precisely so it can resolve nothing, and the readout
+      # failed silently because the address did not exist for it.
+      #
+      # This is the narrow way round. The alternative — putting the partner on
+      # the main network — would hand it `workspace`, `agent` and every other
+      # service by name, which is what that network exists to prevent. Reaching
+      # in from this side adds exactly one reachable address to that seat and
+      # leaves the rest unresolvable.
+      #
+      # Attached whether or not the grant is on, because a network cannot be
+      # switched by a variable. That costs nothing: /api/stats needs the shared
+      # token, which compose passes only while the grant is on, and the
+      # collection endpoint is public to any browser already.
+      - partner_net
     deploy:
       resources:
         limits:
@@ -540,8 +556,10 @@ services:
 networks:
   tomscoding:
     driver: bridge
-  # A network of two: Caddy and the partner seat. Nothing else joins it, and
-  # the partner joins nothing else.
+  # Caddy, the partner seat, and the counter — the last of those so a seat
+  # granted the numbers can read them. The partner still joins nothing else, and
+  # nothing else joins this: `workspace`, `agent` and the second partner remain
+  # names that do not resolve from in there, which is the whole point.
   partner_net:
     driver: bridge
   partner2_net:
