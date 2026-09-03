@@ -856,6 +856,7 @@ function blankReel() {
     title: "",
     premise: "",
     look: "",
+    seconds: 10,
     episodes: shape.map(([act, fn], i) => ({
       n: i + 1, act, function: fn, title: "", beat: "", hook: "", clip: "", jobId: "",
     })),
@@ -899,6 +900,10 @@ app.put("/api/reel", async (req, res) => {
     title: String(sent.title || "").slice(0, 200),
     premise: String(sent.premise || "").slice(0, 4000),
     look: String(sent.look || "").slice(0, 2000),
+    // How long each shot runs. On the series rather than the episode: a run
+    // where one beat is five seconds and the next is fifteen reads as a
+    // mistake, not a choice.
+    seconds: Math.min(30, Math.max(4, Number(sent.seconds) || 5)),
     episodes: sent.episodes.slice(0, 60).map((e, i) => ({
       n: Number(e?.n) || i + 1,
       act: [1, 2, 3].includes(Number(e?.act)) ? Number(e.act) : 1,

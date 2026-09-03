@@ -141,8 +141,23 @@
     </div>
     <div>
       <label for="look">The look</label>
-      <input id="look" placeholder="Night, neon, handheld, close on faces">
+      <input id="look" placeholder="Beijing, Chinese street signs, Mandarin, night, neon, handheld">
     </div>
+  </div>
+  <p class="note" style="margin:.5rem 0 0">
+    Put the place and the language in <b>The look</b> — it is appended to every
+    shot. Without it the model defaults to a western street: say Beijing,
+    Chinese signage, Mandarin.
+  </p>
+  <div style="margin-top:.7rem;max-width:16rem">
+    <label for="seconds">Seconds per shot</label>
+    <select id="seconds">
+      <option value="5">5 — a glance</option>
+      <option value="8">8</option>
+      <option value="10" selected>10 — a moment</option>
+      <option value="12">12</option>
+      <option value="15">15 — a beat that lands</option>
+    </select>
   </div>
   <div style="margin-top:.7rem">
     <label for="premise">Premise</label>
@@ -331,7 +346,7 @@ async function film1(ep, button, out, row) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         prompt: promptFor(ep),
-        ratio: "9:16", seconds: 5, resolution: "720p",
+        ratio: "9:16", seconds: Number($("seconds").value) || 10, resolution: "720p",
         watermark: true, project,
       }),
     });
@@ -404,6 +419,7 @@ async function load() {
     $("title").value = reel.title || "";
     $("premise").value = reel.premise || "";
     $("look").value = reel.look || "";
+    $("seconds").value = String(reel.seconds || 10);
     $("sub").textContent = data.file;
     dirty = false;
     drawBeats();
@@ -418,6 +434,7 @@ async function save(quiet) {
   reel.title = $("title").value;
   reel.premise = $("premise").value;
   reel.look = $("look").value;
+  reel.seconds = Number($("seconds").value) || 10;
   try {
     const out = await api("/api/reel", {
       method: "PUT",
@@ -462,7 +479,7 @@ $("project").addEventListener("change", async () => {
 $("save").addEventListener("click", () => save(false));
 $("reload").addEventListener("click", load);
 $("filmall").addEventListener("click", filmAll);
-for (const id of ["title", "premise", "look"]) {
+for (const id of ["title", "premise", "look", "seconds"]) {
   $(id).addEventListener("input", () => { dirty = true; });
 }
 window.addEventListener("beforeunload", (e) => { if (dirty) e.preventDefault(); });
