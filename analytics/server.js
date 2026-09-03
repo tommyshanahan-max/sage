@@ -425,6 +425,21 @@ function counts(raw) {
   return out.length ? out : null;
 }
 
+/** {day: {name: count}} from another service, cleaned the same way.
+ *
+ *  Days are kept in order and capped: a dashboard showing ninety rows of a
+ *  table nobody scrolls is worse than one showing fourteen. */
+function byDay(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const out = Object.entries(raw)
+    .filter(([day]) => /^\d{4}-\d{2}-\d{2}$/.test(day))
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-30)
+    .map(([day, m]) => ({ day, uses: counts(m) || [] }))
+    .filter((d) => d.uses.length);
+  return out.length ? out : null;
+}
+
 const APP_COUNT_URL = process.env.ANALYTICS_APP_COUNT_URL || "";
 const APP_CACHE_MS = 60_000;
 let appCache = { at: 0, value: null };
@@ -463,6 +478,12 @@ async function appCount(force = false) {
         places: counts(d.places),
         sources: counts(d.sources),
         vias: counts(d.vias),
+        // Which features were used, today and per day. The only figure here
+        // that describes what the product is for rather than how many opened
+        // it — a count of arrivals cannot tell you that people came to speak
+        // rather than to read.
+        uses: counts(d.uses),
+        usesByDay: byDay(d.usesByDay),
         url: APP_COUNT_URL,
       },
     };

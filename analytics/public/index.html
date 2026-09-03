@@ -173,6 +173,33 @@
      Given its own section rather than a column, because it is the one panel
      here that answers a decision — who to work with — rather than describing
      what happened. */
+  /* ---------- what people used ----------
+     A ranked bar per feature. Length carries the value, so one hue does the
+     whole job — a second colour here would encode nothing and imply something. */
+  .bars{display:flex; flex-direction:column; gap:.55rem; margin:.2rem 0 0}
+  .bar-row{display:grid; grid-template-columns:6.5rem 1fr 3rem; align-items:center; gap:.9rem}
+  .bar-row .name{font-size:.92rem; color:var(--ink); font-weight:500}
+  .bar-row .track{
+    background:var(--card-2); border-radius:6px; height:2rem; overflow:hidden;
+  }
+  .bar-row .fill{
+    /* Blockified explicitly. The track is a grid item and gets blockified for
+       free; its child does not, and an inline span ignores width and height —
+       which renders as an empty chart rather than as an error. */
+    display:block;
+    background:var(--jade); height:100%; border-radius:6px; min-width:4px;
+    transition:width .3s ease;
+  }
+  .bar-row .val{
+    text-align:right; font-family:var(--mono); font-size:.95rem;
+    color:var(--ink); font-variant-numeric:tabular-nums;
+  }
+  .bars-empty{color:var(--muted); font-size:.86rem; margin:.4rem 0 0}
+  @media (max-width:32rem){
+    .bar-row{grid-template-columns:5rem 1fr 2.4rem; gap:.6rem}
+    .bar-row .name{font-size:.84rem}
+  }
+
   /* ---------- day by day ----------
      The raw rows. Everything else on this page is a summary of these, and a
      summary is the wrong tool for "which afternoon did that come from". */
@@ -256,6 +283,18 @@
         <div class="stat accent"><span class="n" id="a-back">&mdash;</span><span class="k">Came back today</span></div>
       </div>
       <p class="thin" id="app-note"></p>
+    </section>
+
+    <section>
+      <h2>What people used <span id="uses-span" style="text-transform:none;letter-spacing:0"></span></h2>
+      <div class="bars" id="app-uses"></div>
+      <p class="bars-empty" id="app-uses-note"></p>
+      <div class="rows" id="app-uses-rows" hidden>
+        <table class="days">
+          <thead><tr id="app-uses-head"></tr></thead>
+          <tbody id="app-uses-body"></tbody>
+        </table>
+      </div>
     </section>
 
     <section class="who-sent">
@@ -624,9 +663,82 @@ function drawAppBreakdown(id, items, missing) {
   if (note) note.hidden = !!items;
 }
 
+// What people used, ranked, and the same numbers per day underneath.
+//
+// This is the one figure that says what the product is FOR. Arrivals tell you
+// how many opened it; only this tells you they came to speak rather than to
+// read — which is a different product from the one anybody was describing.
+function drawUses(uses, byDay) {
+  const box = document.getElementById("app-uses");
+  const note = document.getElementById("app-uses-note");
+  const rows = document.getElementById("app-uses-rows");
+  box.replaceChildren();
+
+  if (!uses || !uses.length) {
+    note.hidden = false;
+    note.innerHTML = "<b>Not reported by the app yet.</b> Which features get used is "
+      + "the only number here that says what the product is for &mdash; arrivals cannot "
+      + "tell you whether people came to speak or to read.";
+    rows.hidden = true;
+    document.getElementById("uses-span").textContent = "";
+    return;
+  }
+  note.hidden = true;
+
+  const total = uses.reduce((n, u) => n + u.count, 0);
+  document.getElementById("uses-span").textContent = "· " + fmt(total) + " in all";
+  const peak = Math.max(1, ...uses.map((u) => u.count));
+
+  for (const u of uses) {
+    const row = el("div", "bar-row");
+    const track = el("span", "track");
+    const fill = el("span", "fill");
+    // Against the largest, not the total: the question is which feature leads,
+    // and shares of a total compress everything below the top one into nothing.
+    fill.style.width = Math.max(1, (u.count / peak) * 100) + "%";
+    track.append(fill);
+    row.append(el("span", "name", u.name), track, el("span", "val", fmt(u.count)));
+    box.append(row);
+  }
+
+  // The per-day table, when the app sends one. Columns come from the ranked
+  // list above so the reading order is the same in both.
+  if (!byDay || !byDay.length) { rows.hidden = true; return; }
+  const cols = uses.map((u) => u.name);
+  const head = document.getElementById("app-uses-head");
+  const body = document.getElementById("app-uses-body");
+  head.replaceChildren();
+  body.replaceChildren();
+
+  const th = (t) => { const n = document.createElement("th"); n.textContent = t; return n; };
+  head.append(th("Day"), ...cols.map(th), th("Total"));
+
+  for (const d of [...byDay].reverse()) {
+    const by = Object.fromEntries(d.uses.map((u) => [u.name, u.count]));
+    const tr = document.createElement("tr");
+    const td = (t, cls) => {
+      const n = document.createElement("td");
+      if (cls) n.className = cls;
+      n.textContent = t;
+      tr.append(n);
+    };
+    td(d.day, "d");
+    let sum = 0;
+    for (const c of cols) {
+      const v = by[c] || 0;
+      sum += v;
+      td(v ? String(v) : "—", v ? "num" : null);
+    }
+    td(String(sum), "num");
+    body.append(tr);
+  }
+  rows.hidden = false;
+}
+
 function drawApp(app, series) {
   const note = document.getElementById("app-note");
   drawAppCharts(series);
+  drawUses(app && app.uses, app && app.usesByDay);
 
   const notYet = (what) => "<b>Not reported by the app.</b> " + what
     + " The app keeps its own count in its own codebase, so this fills in when "
@@ -688,8 +800,10 @@ function drawApp(app, series) {
         + "figure on the day of a share is arithmetic, not a verdict."
       : " It reports arrivals only &mdash; whether anyone comes back is not recorded on that "
         + "side yet.")
-    + " Still no time on page and no per-feature counts: the app does not record them, so "
-    + "nothing here can show them."
+    + (app.uses
+      ? " Per-feature counts are reported and shown above; time on page still is not."
+      : " Still no time on page and no per-feature counts: the app does not record them, "
+        + "so nothing here can show them.")
     + "<br><br><b>These are never added to the site's.</b> Somebody who read the poster and "
     + "somebody who used the app are not two of the same thing."
     + "<br><br><b>Nothing before 2 September 2026 is comparable.</b> Until then a device was "
