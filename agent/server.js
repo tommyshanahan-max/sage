@@ -10,7 +10,9 @@
 
 import express from "express";
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
-import { readdir, readFile, stat } from "node:fs/promises";
+import { mkdir, readdir, readFile, rename, stat, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import path from "node:path";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import {
@@ -445,6 +447,62 @@ async function describe(dir) {
   return "";
 }
 
+const run = promisify(execFile);
+
+/** A project name that is a single directory and nothing else.
+ *
+ *  Not a general path check with a `..` test bolted on: this is the only
+ *  argument that decides which directory gets created — or moved to the trash —
+ *  so it is an allow list of shapes, and everything outside it is refused. */
+const okName = (n) =>
+  typeof n === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(n) && n !== ".." && !n.includes("/");
+
+/** The absolute path for a project, or null. The name is validated first, so
+ *  this is belt and braces — but the thing it guards against is a delete
+ *  outside the workspace, and that is worth two checks. */
+function projectPath(name) {
+  if (!okName(name)) return null;
+  const dir = path.resolve(WORKSPACE, name);
+  if (dir !== path.join(WORKSPACE, name)) return null;
+  if (!dir.startsWith(WORKSPACE + path.sep)) return null;
+  return dir;
+}
+
+/** What would be lost. Deleting a directory on this box is final — there are no
+ *  VPS backups yet — so before anything moves, this asks git what is in there
+ *  that is not anywhere else.
+ *
+ *  Three answers matter, and they are different sizes of loss: no git at all
+ *  means nothing has ever been saved elsewhere; commits that are on no remote
+ *  mean the work exists only here; uncommitted edits mean it is not even in the
+ *  local history. Anything git cannot answer is reported as unknown rather than
+ *  as safe. */
+async function whatWouldBeLost(dir) {
+  const out = { git: false, remote: false, uncommitted: 0, unpushed: 0, unknown: false };
+  try {
+    await stat(path.join(dir, ".git"));
+    out.git = true;
+  } catch {
+    return out;                       // not a checkout: nothing is anywhere else
+  }
+  const git = (args) => run("git", ["-C", dir, ...args], { timeout: 5000 });
+  try {
+    const { stdout } = await git(["remote"]);
+    out.remote = Boolean(stdout.trim());
+  } catch { out.unknown = true; }
+  try {
+    const { stdout } = await git(["status", "--porcelain"]);
+    out.uncommitted = stdout.split("\n").filter((l) => l.trim()).length;
+  } catch { out.unknown = true; }
+  try {
+    // Commits reachable from a branch and from no remote-tracking branch. With
+    // no remote configured every commit qualifies, which is the right answer.
+    const { stdout } = await git(["log", "--branches", "--not", "--remotes", "--format=%h"]);
+    out.unpushed = stdout.split("\n").filter((l) => l.trim()).length;
+  } catch { out.unknown = true; }
+  return out;
+}
+
 app.get("/api/projects", async (_req, res) => {
   if (isPartner) return res.status(404).json({ error: "not this seat" });
   try {
@@ -479,6 +537,89 @@ app.get("/api/projects", async (_req, res) => {
     if (err.code === "ENOENT") return res.json({ root: WORKSPACE, projects: [] });
     console.error("listing projects failed:", err);
     res.status(500).json({ error: "could not read the workspace" });
+  }
+});
+
+// A new project. A directory in the workspace with a README in it — not a git
+// repository, because `git init` on somebody's behalf decides things (a branch
+// name, whether this is even meant to be a repository) that are theirs to
+// decide, and Sage can do it in one sentence when asked.
+app.post("/api/projects", async (req, res) => {
+  if (isPartner) return res.status(404).json({ error: "not this seat" });
+  const name = String(req.body?.name || "").trim();
+  const dir = projectPath(name);
+  if (!dir) {
+    return res.status(400).json({
+      error: "Letters, numbers, dot, dash and underscore; up to 64 characters.",
+    });
+  }
+  try {
+    await stat(dir);
+    return res.status(409).json({ error: "There is already a project called " + name });
+  } catch { /* good: it does not exist */ }
+  try {
+    await mkdir(dir, { recursive: false });
+    await writeFile(
+      path.join(dir, "README.md"),
+      "# " + name + "\n\nStarted " + new Date().toISOString().slice(0, 10) + " from Sage.\n",
+      "utf8"
+    );
+    res.status(201).json({ name, path: dir });
+  } catch (err) {
+    console.error("creating a project failed:", err);
+    res.status(500).json({ error: "could not create it: " + err.code });
+  }
+});
+
+// Deleting one.
+//
+// It moves to `.trash` inside the workspace rather than being removed. The
+// rename is atomic and on the same filesystem, the directory is out of the way
+// and out of the listing, and it can be moved back by hand — which matters more
+// than usual here, because this box has no backups and a delete would otherwise
+// be the end of it.
+//
+// Two things have to be true before it moves: the exact name typed back, and
+// either nothing unsaved in there or an explicit second press. The first press
+// answers "what would I lose", which is the question somebody deleting a
+// directory cannot answer from memory.
+app.post("/api/projects/delete", async (req, res) => {
+  if (isPartner) return res.status(404).json({ error: "not this seat" });
+  const name = String(req.body?.name || "").trim();
+  const confirm = String(req.body?.confirm || "").trim();
+  const force = Boolean(req.body?.force);
+
+  const dir = projectPath(name);
+  if (!dir) return res.status(400).json({ error: "not a project name" });
+  if (confirm !== name) {
+    return res.status(400).json({ error: "Type the project's name to confirm." });
+  }
+  try {
+    if (!(await stat(dir)).isDirectory()) throw new Error("not a directory");
+  } catch {
+    return res.status(404).json({ error: "There is no project called " + name });
+  }
+
+  const lost = await whatWouldBeLost(dir);
+  const risky = !lost.git || lost.unknown || lost.uncommitted > 0 || lost.unpushed > 0;
+  if (risky && !force) {
+    // 409, with the reasons, so the page can say what is about to be lost
+    // instead of asking "are you sure?" about nothing in particular.
+    return res.status(409).json({ error: "there is work here that is not anywhere else", lost });
+  }
+
+  const trash = path.join(WORKSPACE, ".trash");
+  // Colons are legal on Linux but make a directory annoying to type at, and
+  // somebody restoring one of these will be typing it.
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const to = path.join(trash, name + "-" + stamp);
+  try {
+    await mkdir(trash, { recursive: true });
+    await rename(dir, to);
+    res.json({ name, movedTo: to, lost });
+  } catch (err) {
+    console.error("deleting a project failed:", err);
+    res.status(500).json({ error: "could not move it to the trash: " + err.code });
   }
 });
 

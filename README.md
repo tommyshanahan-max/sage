@@ -399,6 +399,38 @@ unambiguous and the name demonstrably is not.
 Owner seat only. A partner has one project, read-only, already on their screen;
 that the rest of the workspace exists is not something that seat is told.
 
+### Starting and deleting a project
+
+**New project** makes a directory in the workspace with a README in it —
+`/home/coder/projects/<name>`, inside the `home` volume, the same folder the
+editor opens. Not a git repository: `git init` decides things (a branch name,
+whether this is meant to be a repository at all) that are the owner's to
+decide, and Sage can do it in a sentence when asked.
+
+Deleting is the one that needed care, because a delete on that box is final —
+there are no VPS backups yet. So it is not a delete. The directory **moves to
+`.trash` inside the workspace**: a rename, atomic and on the same filesystem,
+out of the listing and recoverable by hand.
+
+Two things have to be true before it moves. The name has to be typed back,
+which is the difference between a slip and a decision. And the server asks git
+what is in there that is nowhere else — no repository at all, no remote,
+commits on no remote, uncommitted edits — and refuses on a first press if it
+finds any, returning what it found so the page can say what would be lost.
+"Are you sure?" about nothing in particular teaches people to press yes.
+
+### One line instead of ten
+
+A turn that read six files and ran four commands used to put ten rows of paths
+and shell into the conversation, and the answer arrived underneath a wall of
+machinery nobody wanted to read. The steps now collapse into a single line —
+"6 steps" — that opens on all of them, and the reply is what is on screen.
+
+While a turn is running that line says what is happening now, because a page
+that goes quiet for forty seconds reads as broken. Nothing is discarded: the
+steps are what you check when an answer looks wrong, and they are one click
+away.
+
 ### Whose material this is, and the word
 
 Sage hedged. Asked about visitors, or a partner's seat, or anything that
