@@ -279,8 +279,12 @@ app.use((req, res, next) => {
 // aiming at, so only the one that needs it gets them.
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;      // what the API accepts per image
 const MAX_IMAGES = 4;
+// A cover is an image and does not fit the small limit either. Named
+// individually rather than raised for everything: a route that accepts
+// megabytes is a route worth aiming at, so only the two that need them get them.
+const BIG_BODY = new Set(["/api/chat", "/sp/cover"]);
 app.use((req, res, next) =>
-  req.path === "/api/chat" ? next() : express.json({ limit: "1mb" })(req, res, next));
+  BIG_BODY.has(req.path) ? next() : express.json({ limit: "1mb" })(req, res, next));
 // The story desk's page, before the static handler that would otherwise serve
 // it to anyone signed in. Its routes already refuse a partner seat, but a page
 // that loads and then fails every call still tells that seat the feature
@@ -563,6 +567,26 @@ app.delete("/sp/series", ownerOnly, async (req, res) => {
   const id = String(req.query.id || "");
   if (!id) return res.status(400).json({ error: "id is required" });
   const r = await studypal.call("/api/series?id=" + encodeURIComponent(id), { method: "DELETE" });
+  res.status(r.status).json(r.body);
+});
+
+// Cover art.
+//
+// The endpoint on the other side does not exist yet — the spec lists it as the
+// missing piece for adding a series end to end. This is written to the shape
+// that side should implement: POST /api/cover with { id, image }, where image
+// is a base64 JPEG with no data-URL prefix. Until it exists the call fails and
+// the page offers the finished file for download instead, so the cropping work
+// is not wasted on a round trip that cannot complete.
+app.post("/sp/cover", ownerOnly, express.json({ limit: "8mb" }), async (req, res) => {
+  const id = String(req.body?.id || "");
+  const image = String(req.body?.image || "");
+  if (!/^[a-z0-9-]{1,64}$/.test(id)) return res.status(400).json({ error: "bad series id" });
+  if (!image) return res.status(400).json({ error: "no image" });
+  // Roughly: base64 is four characters per three bytes.
+  if (image.length * 0.75 > 6 * 1024 * 1024) return res.status(413).json({ error: "cover too large" });
+
+  const r = await studypal.call("/api/cover", { method: "POST", body: { id, image }, timeoutMs: 30_000 });
   res.status(r.status).json(r.body);
 });
 

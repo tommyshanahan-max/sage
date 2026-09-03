@@ -108,6 +108,41 @@
              text-transform:none; letter-spacing:0; color:var(--ink-2); font-weight:400}
   .check-row input{width:auto}
 
+  /* ---------- cover art ----------
+     A drop target that shows the crop rather than describing it. The frame is
+     the shape the card will be, so what is on screen is what ships. */
+  .cover{display:grid; gap:.8rem; grid-template-columns:auto 1fr; align-items:start}
+  @media (max-width:34rem){ .cover{grid-template-columns:1fr} }
+  .drop{
+    width:11rem; aspect-ratio:1; border:2px dashed var(--rule); border-radius:12px;
+    background:var(--card-2); display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:.8rem; cursor:pointer; overflow:hidden; position:relative;
+    color:var(--muted); font-size:.78rem; line-height:1.4;
+  }
+  .drop.tall{aspect-ratio:3/4}
+  .drop.wide{aspect-ratio:16/9; width:16rem}
+  .drop:hover,.drop.over{border-color:var(--gold); color:var(--gold)}
+  .drop img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+  .cover-side{display:grid; gap:.55rem; align-content:start}
+  .ratios{display:flex; gap:.35rem}
+  .ratios button{
+    text-transform:none; letter-spacing:0;
+    background:var(--card); border:1px solid var(--rule); border-radius:7px;
+    padding:.25rem .6rem; font-size:.76rem; color:var(--ink-2);
+  }
+  .ratios button[aria-pressed="true"]{
+    background:var(--gold-soft); border-color:var(--gold); color:var(--gold); font-weight:600;
+  }
+  .cover-where{
+    /* The label rule uppercases its contents, which is right for a field name
+       and wrong for a path — a file path in the wrong case is one somebody
+       types wrong. Reset here rather than loosening the rule for everything. */
+    text-transform:none; letter-spacing:0;
+    font-family:var(--mono); font-size:.74rem; color:var(--muted);
+    background:var(--card-2); border:1px solid var(--rule); border-radius:6px;
+    padding:.25rem .45rem; overflow-x:auto; white-space:nowrap;
+  }
+
   /* ---------- the three-act check ---------- */
   .shape{
     background:var(--card); border:1px solid var(--rule); border-radius:12px;
@@ -196,8 +231,26 @@
         <textarea id="f-blurb"></textarea></label>
       <label class="wide">Cast — the two people, described once, used in every episode
         <textarea id="f-cast"></textarea></label>
-      <label class="wide">
-        <span class="check-row"><input type="checkbox" id="f-cover"> Cover art exists at /series/&lt;id&gt;/cover.jpg</span>
+      <label class="wide">Cover art
+        <div class="cover">
+          <div class="drop" id="drop" tabindex="0" role="button"
+               aria-label="Drop a cover image here, or click to choose one">
+            <span id="drop-hint">Drop an image<br>or click to choose</span>
+          </div>
+          <div class="cover-side">
+            <div class="ratios" id="ratios">
+              <button type="button" data-r="square" aria-pressed="true">Square</button>
+              <button type="button" data-r="tall" aria-pressed="false">3:4</button>
+              <button type="button" data-r="wide" aria-pressed="false">16:9</button>
+            </div>
+            <div style="display:flex; gap:.5rem; flex-wrap:wrap">
+              <button type="button" class="btn small" id="cover-up" disabled>Send to Study Pal</button>
+              <button type="button" class="btn small" id="cover-dl" disabled>Download cover.jpg</button>
+            </div>
+            <div class="cover-where" id="cover-where">public/series/&lt;id&gt;/cover.jpg</div>
+            <span class="check-row"><input type="checkbox" id="f-cover"> Art is in place on the server</span>
+          </div>
+        </div>
       </label>
     </div>
 
@@ -329,9 +382,154 @@ function openEditor(series) {
   $("f-blurb").value = current.blurb || "";
   $("f-cast").value = current.cast || "";
   $("f-cover").checked = Boolean(current.cover);
+  coverBlob = null; lastPicked = null;
+  $("cover-up").disabled = true; $("cover-dl").disabled = true;
+  coverBox().replaceChildren(Object.assign(document.createElement("span"),
+    { id: "drop-hint", innerHTML: "Drop an image<br>or click to choose" }));
+  showCoverPath();
   $("edit-note").innerHTML = "";
 
   drawBeats();
+}
+
+// ---------------------------------------------------------------------------
+// Cover art
+//
+// Cropped and resized here rather than on the way in, so what the writer sees
+// in the frame is exactly the file that ships — a server-side crop would be a
+// second opinion about which part of the photograph mattered.
+//
+// The upload endpoint does not exist on the other side yet; the spec lists it
+// as the missing piece. So the finished file is also offered as a download,
+// named and with its destination path shown. The work of choosing and framing
+// an image survives either way, which is the point.
+// ---------------------------------------------------------------------------
+const RATIOS = { square: [1, 1], tall: [3, 4], wide: [16, 9] };
+let coverRatio = "square";
+let coverBlob = null;
+
+function coverBox() { return document.getElementById("drop"); }
+
+function setRatio(name) {
+  coverRatio = name;
+  const box = coverBox();
+  box.classList.remove("tall", "wide");
+  if (name !== "square") box.classList.add(name);
+  document.querySelectorAll("#ratios button").forEach((b) => {
+    b.setAttribute("aria-pressed", String(b.dataset.r === name));
+  });
+  if (lastPicked) renderCover(lastPicked);
+}
+
+let lastPicked = null;
+
+/** Draw the image into the chosen frame, cover-fitting and centred, then keep
+ *  the result as a JPEG. 1200 on the long edge: sharp on a retina card and a
+ *  fraction of the megabytes a phone photograph arrives as. */
+function renderCover(img) {
+  lastPicked = img;
+  const [rw, rh] = RATIOS[coverRatio];
+  const long = 1200;
+  const W = rw >= rh ? long : Math.round((long * rw) / rh);
+  const H = rh >= rw ? long : Math.round((long * rh) / rw);
+
+  const c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  const ctx = c.getContext("2d");
+  const scale = Math.max(W / img.width, H / img.height);
+  const dw = img.width * scale, dh = img.height * scale;
+  ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+
+  c.toBlob((blob) => {
+    coverBlob = blob;
+    const box = coverBox();
+    box.replaceChildren();
+    const preview = document.createElement("img");
+    preview.src = URL.createObjectURL(blob);
+    preview.alt = "";
+    box.append(preview);
+    $("cover-up").disabled = false;
+    $("cover-dl").disabled = false;
+  }, "image/jpeg", 0.86);
+}
+
+function pickCover(file) {
+  if (!file || !/^image\//.test(file.type)) return toast("That is not an image", true);
+  const img = new Image();
+  img.onload = () => renderCover(img);
+  img.onerror = () => toast("Could not read that image", true);
+  img.src = URL.createObjectURL(file);
+}
+
+function wireCover() {
+  const box = coverBox();
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.hidden = true;
+  document.body.append(input);
+
+  box.addEventListener("click", () => input.click());
+  box.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); }
+  });
+  input.addEventListener("change", () => { if (input.files[0]) pickCover(input.files[0]); });
+
+  ["dragenter", "dragover"].forEach((t) => box.addEventListener(t, (e) => {
+    e.preventDefault(); box.classList.add("over");
+  }));
+  ["dragleave", "drop"].forEach((t) => box.addEventListener(t, (e) => {
+    e.preventDefault(); box.classList.remove("over");
+  }));
+  box.addEventListener("drop", (e) => pickCover(e.dataTransfer?.files?.[0]));
+
+  document.querySelectorAll("#ratios button").forEach((b) => {
+    b.addEventListener("click", () => setRatio(b.dataset.r));
+  });
+
+  $("cover-dl").addEventListener("click", () => {
+    if (!coverBlob) return;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(coverBlob);
+    a.download = "cover.jpg";
+    a.click();
+    toast("Put it at " + ($("cover-where").textContent));
+  });
+
+  $("cover-up").addEventListener("click", async () => {
+    const id = $("f-id").value.trim();
+    if (!id) return toast("Give the series an id first", true);
+    if (!coverBlob) return;
+    const button = $("cover-up");
+    button.disabled = true;
+    const was = button.textContent;
+    button.textContent = "Sending…";
+    try {
+      const image = await new Promise((ok) => {
+        const r = new FileReader();
+        r.onload = () => ok(String(r.result).split(",")[1]);
+        r.readAsDataURL(coverBlob);
+      });
+      await api("/sp/cover", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id, image }),
+      });
+      $("f-cover").checked = true;
+      toast("Cover sent");
+    } catch (err) {
+      // Expected until that endpoint exists. Say which it is rather than
+      // "failed", because one of these is a bug and the other is a Tuesday.
+      toast("Study Pal has no cover endpoint yet — use Download instead", true);
+      $("edit-note").innerHTML = "<b>Cover upload is not available on Study Pal yet.</b> "
+        + "Download the file and place it at <code>" + $("cover-where").textContent
+        + "</code> in that repo. The endpoint this expects is "
+        + "<code>POST /api/cover</code> with <code>{ id, image }</code>, image being base64 JPEG.";
+    } finally {
+      button.disabled = false;
+      button.textContent = was;
+    }
+  });
 }
 
 function collect() {
@@ -569,6 +767,13 @@ $("new").addEventListener("click", () => openEditor({
   cover: false, published: false, planned: 12, episodes: blankBeats(12),
 }));
 
+function showCoverPath() {
+  const id = $("f-id").value.trim() || "<id>";
+  $("cover-where").textContent = "public/series/" + id + "/cover.jpg";
+}
+$("f-id").addEventListener("input", showCoverPath);
+
+wireCover();
 loadList();
 </script>
 </body>
