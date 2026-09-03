@@ -207,7 +207,7 @@
     <span class="spacer"></span>
     <button class="btn" id="back" hidden>← All stories</button>
     <button class="btn primary" id="new">New series</button>
-    <a class="btn" href="/">← Sage</a>
+    <a class="btn" href="/" id="to-sage">← Sage</a>
   </header>
 
   <!-- the shelf -->
@@ -283,6 +283,12 @@ import { FUNCTIONS, checkShape, blankBeats } from "./three-act.js";
 // behind a shared secret with no CORS headers, so the seat's server proxies
 // them and the key never reaches this page — see agent/lib/studypal.js.
 // ---------------------------------------------------------------------------
+
+// Inside Sage's writing panel, or on its own page. The difference is only what
+// happens after a publish: embedded, the stage beside us shows it; standalone,
+// a tab does. Everything else is identical, which is the point of there being
+// one page rather than two.
+const EMBEDDED = new URLSearchParams(location.search).get("embed") === "1";
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -720,15 +726,24 @@ async function save(publish, tab) {
       body: JSON.stringify(payload),
     });
     current.published = payload.published;
-    toast(publish ? "Published — opening the app" : "Draft saved");
+    toast(publish
+      ? (EMBEDDED ? "Published — see it on the right" : "Published — opening the app")
+      : "Draft saved");
     $("edit-note").innerHTML = publish
       ? "<b>On the shelf.</b> Readers see this version."
       : "<b>Saved as a draft.</b> Readers still see the last published version, if there is one.";
 
-    if (publish && tab) {
+    if (publish) {
       const where = await api("/sp/where").catch(() => null);
-      if (where?.shelf) tab.location = where.shelf;
-      else tab.close();
+      if (EMBEDDED) {
+        // Inside Sage: hand it to the stage beside us rather than opening a
+        // tab. Watching it appear there is the whole reason for writing here.
+        tab?.close();
+        if (where?.shelf) parent.postMessage({ type: "story-published", url: where.shelf }, location.origin);
+      } else if (tab) {
+        if (where?.shelf) tab.location = where.shelf;
+        else tab.close();
+      }
     }
   } catch (err) {
     // The tab was opened on the click and is now pointing at nothing. Close it
@@ -745,7 +760,9 @@ $("save").addEventListener("click", () => save(false));
 // a window.open on the far side of an await has lost the user gesture and is
 // blocked as a popup, which is a silent failure rather than a visible one.
 $("publish").addEventListener("click", () => {
-  const tab = window.open("", "_blank");
+  // Embedded, the stage next door does the showing and a second window would
+  // be the thing this arrangement exists to avoid.
+  const tab = EMBEDDED ? null : window.open("", "_blank");
   save(true, tab);
 });
 
@@ -789,6 +806,13 @@ function showCoverPath() {
   $("cover-where").textContent = "public/series/" + id + "/cover.jpg";
 }
 $("f-id").addEventListener("input", showCoverPath);
+
+if (EMBEDDED) {
+  // Already inside Sage — a link back to it would reload this page into
+  // itself, which is the sort of thing that only reads as broken.
+  $("to-sage").hidden = true;
+  document.querySelector(".wrap").style.padding = ".9rem 1rem 3rem";
+}
 
 wireCover();
 loadList();

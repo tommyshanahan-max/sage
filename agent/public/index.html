@@ -64,7 +64,28 @@
      squeezed to a third of a narrow screen shows nothing worth seeing — so it
      becomes a full-width panel there instead, opened from the masthead. */
   .split{flex:1;min-height:0;display:flex;--stage-w:min(46%,44rem)}
-  .side{flex:1;min-width:0;display:flex;flex-direction:column}
+  .side{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+
+  /* ---------- the story panel ----------
+     Over the conversation, not over the stage. The whole point is to write on
+     the left and watch it appear on the right, so the preview must stay
+     visible — a modal across the middle of the screen would cover the one
+     thing this is for. */
+  .writer{
+    position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;
+    background:var(--paper);border-right:1px solid var(--rule);
+  }
+  .writer .head{
+    display:flex;align-items:center;gap:.7rem;padding:.6rem .9rem;
+    border-bottom:1px solid var(--rule);background:var(--card);
+  }
+  .writer .head b{font-family:var(--serif);font-weight:400;font-size:1.15rem}
+  .writer .head .grow{flex:1}
+  .writer iframe{flex:1;width:100%;border:0;min-height:0;background:var(--paper)}
+  /* display:flex above outranks the browser's own rule for [hidden] — the same
+     trap as .analysis and .mic, and it fails as a panel that covers the page
+     rather than as an error. */
+  .writer[hidden]{display:none}
 
   /* The divider. A reviewer wants the app large while looking at it and small
      while typing about it, and that is a per-minute decision, not a per-app
@@ -433,6 +454,7 @@
   <span class="status" id="status">ready</span>
   <a class="numbers" id="numbers" hidden target="_blank" rel="noopener"
      title="Today's numbers — click for the rest"></a>
+  <button type="button" id="write-toggle" hidden aria-expanded="false">New story</button>
   <a id="stories-link" href="/stories.html" hidden
      style="text-decoration:none">Stories</a>
   <button type="button" id="path-toggle" aria-expanded="false">Path</button>
@@ -507,6 +529,19 @@
   </form>
   <p class="hint">Enter to send · Shift+Enter for a new line</p>
 </footer>
+<!-- The story desk, embedded rather than rebuilt. One editor, one three-act
+     check, one set of rules — a second copy of a twelve-beat form would drift
+     from this one inside a week, and the drift would be silent. -->
+<div class="writer" id="writer" hidden aria-label="Write a story">
+  <div class="head">
+    <b>Story</b>
+    <span class="grow"></span>
+    <button type="button" id="writer-full">Open full page</button>
+    <button type="button" id="writer-close">Close</button>
+  </div>
+  <iframe id="writer-frame" title="Story editor"></iframe>
+</div>
+
 </div><!-- /.side -->
 
 <div class="grip" id="grip" role="separator" aria-orientation="vertical"
@@ -1040,6 +1075,50 @@ grip.addEventListener("keydown", (e) => {
   else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showStage(stage.hidden); }
 });
 
+// ---------------------------------------------------------------------------
+// Writing a story beside the app it appears in
+//
+// The desk is loaded rather than rebuilt: same page, same editor, same
+// three-act rules. It sits over the conversation and never over the stage,
+// because watching the story appear on the right is the entire reason for
+// writing it here instead of on its own page.
+//
+// The embedded copy tells us when something is published; we point the stage
+// at the readers' shelf and reload it. Same origin, so the message is ours —
+// and checked against this window's origin anyway, since a frame is a place
+// other people's pages can end up.
+// ---------------------------------------------------------------------------
+const writer      = document.getElementById("writer");
+const writerFrame = document.getElementById("writer-frame");
+const writeToggle = document.getElementById("write-toggle");
+
+function showWriter(on) {
+  writer.hidden = !on;
+  writeToggle.setAttribute("aria-expanded", String(on));
+  writeToggle.textContent = on ? "Hide story" : "New story";
+  // Loaded on first open rather than at page load: most sessions never write a
+  // story, and an iframe that fetches a catalogue nobody asked for is a cost
+  // paid by everybody for the benefit of a few.
+  if (on && !writerFrame.src) writerFrame.src = "/stories.html?embed=1";
+}
+
+writeToggle.addEventListener("click", () => showWriter(writer.hidden));
+document.getElementById("writer-close").addEventListener("click", () => showWriter(false));
+document.getElementById("writer-full").addEventListener("click", () => {
+  window.open("/stories.html", "_blank", "noopener");
+});
+
+window.addEventListener("message", (e) => {
+  if (e.origin !== window.location.origin) return;
+  if (e.data?.type !== "story-published" || !e.data.url) return;
+  // Cache-busted, because the shelf the writer is about to inspect is exactly
+  // the page a browser is most likely to have kept.
+  const url = e.data.url + (e.data.url.includes("?") ? "&" : "?") + "t=" + Date.now();
+  let host = "the app";
+  try { host = new URL(e.data.url).host; } catch { /* keep the fallback */ }
+  stageLoad(url, host, true);
+});
+
 stageToggle.addEventListener("click", () => showStage(stage.hidden));
 document.getElementById("stage-close").addEventListener("click", () => showStage(false));
 document.getElementById("stage-reload").addEventListener("click", () => {
@@ -1079,7 +1158,10 @@ fetch("/api/seat")
     }
     // The story desk. Owner seat only — the routes behind it check the same
     // thing, so this only hides a door that is already locked.
-    if (seatRole === "owner") document.getElementById("stories-link").hidden = false;
+    if (seatRole === "owner") {
+      document.getElementById("stories-link").hidden = false;
+      document.getElementById("write-toggle").hidden = false;
+    }
 
     if (seatRole === "partner") {
       mockupsToggle.hidden = false;
