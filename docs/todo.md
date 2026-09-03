@@ -43,6 +43,19 @@ deployment since the beginning, through several people's hands.
 updated, `make up`. The revoke is the half that matters; a new key alongside a
 live old one is not a rotation.
 
+### Rotate the BytePlus Ark key
+
+**What.** `TOMSCODING_ARK_API_KEY` in `.env`, the ByteDance video generation key.
+
+**Why it matters.** The first one created, `ark-ca0ba3c3-…`, was pasted into a
+terminal as a command by accident and appears in a screenshot. Treat it as
+public. It is the one key here that spends money directly — a leaked key is
+somebody else's video generation on your account, and the daily ceiling in this
+platform does not apply to anyone calling BytePlus straight.
+
+**Done looks like.** New key in the BytePlus console, old one deleted there,
+`.env` updated, `make up`. Deleting the old one is the half that matters.
+
 ### Rotate Study Pal's admin key
 
 **What.** `TOMSCODING_STUDYPAL_KEY` in `.env`, which the story desk uses to
