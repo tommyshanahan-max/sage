@@ -7,6 +7,11 @@ node_modules/
 __pycache__/
 *.pyc
 
+# Written by `make up` at deploy time, read by the agent: the list of commits
+# that are actually running on this box. Generated from git, so committing it
+# would mean a file whose content is a description of the commit before it.
+.platform-state/
+
 # Local state, never committed: the partner snapshot and their mockups.
 partner/source/
 partner/source-*/

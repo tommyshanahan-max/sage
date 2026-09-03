@@ -117,6 +117,12 @@ This trips up an agent working here, so be precise about it:
   instructions lives on the *host*, at `~/tc`, reachable only over SSH. Do not
   go looking for `docker-compose.yml` in the workspace; it is not there, and
   changes to the deployment cannot be made from inside it.
+- **Sage is told what changed, though.** Each deploy writes a digest of the
+  commits it is deploying — subjects, dates, changed paths — and that goes
+  into Sage's context. So Sage knows the platform's recent history without
+  being able to read the repository, and knows nothing about a commit made
+  since the last deploy. If someone says they changed something and it is not
+  in that list, they are probably right; it has not been deployed here yet.
 - **The second seat is invisible.** It has its own volume and its own
   password. Nothing in this container can see or affect it.
 

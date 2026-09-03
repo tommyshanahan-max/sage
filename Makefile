@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 partner-mockups
+.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 partner-mockups whats-new
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -48,6 +48,11 @@ up: ## Build if needed and start everything
 	  && { echo "analytics is enabled but TOMSCODING_STATS_SITES is empty."; \
 	       echo "Nothing would be counted: a page whose origin is not listed is ignored."; \
 	       exit 1; } || true
+	@# Stamp what is being deployed before deploying it, so the agent's copy
+	@# of "recent changes" is the commits that are actually running. Never
+	@# fatal: a box without python3, or a tarball instead of a checkout, should
+	@# still deploy.
+	-@python3 scripts/whats-new.py || true
 	$(COMPOSE) up -d --build
 	echo "up. https://$$(grep -E '^TOMSCODING_DOMAIN=' .env | cut -d= -f2-)"
 
@@ -122,6 +127,12 @@ backup: ## Snapshot every workspace home volume to ./backups
 	       -c 'tar czf /backup/home2-$$(date +%Y%m%d-%H%M%S).tar.gz -C /home/coder .' \
 	  || true
 	ls -lh backups | tail -n 5
+
+whats-new: ## Tell the agent what changed, without a restart
+	@# `make up` does this as part of a deploy. Run it on its own after a
+	@# `git pull` when you want Sage current but have no reason to rebuild:
+	@# the file is re-read on its next turn, so nothing needs restarting.
+	python3 scripts/whats-new.py
 
 check: ## Verify every Caddy site resolves to a usable, unique address
 	python3 scripts/check-sites.py

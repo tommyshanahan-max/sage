@@ -234,7 +234,7 @@
      phone as often as a laptop, and a sidebar there either squeezes the
      conversation or hides itself anyway. Over-and-away keeps one behaviour on
      both. */
-  #path,#mockups,#docs{
+  #path,#mockups,#docs,#whatsnew{
     position:fixed;inset:0;z-index:20;overflow-y:auto;
     background:var(--paper);
     padding:1rem 1rem calc(2rem + env(safe-area-inset-bottom));
@@ -249,7 +249,36 @@
     letter-spacing:-.01em;
   }
   .path-head button{margin-left:auto}
-  #path-list,#mockups-list,#docs-list{max-width:44rem;margin:0 auto;display:flex;flex-direction:column;gap:.6rem}
+  #path-list,#mockups-list,#docs-list,#new-list{max-width:44rem;margin:0 auto;display:flex;flex-direction:column;gap:.6rem}
+
+  /* ---------- what's new ----------
+     A count, not a badge with a number in a circle: the useful question is
+     "has anything moved since I last looked", and a word answers it without
+     needing to be decoded. The dot is the whole of the decoration. */
+  #new-toggle.has-new{
+    border-color:var(--gold-line);background:var(--gold-soft);color:var(--gold);
+  }
+  #new-toggle.has-new::before{
+    content:"";display:inline-block;width:.42rem;height:.42rem;border-radius:50%;
+    background:var(--gold);margin-right:.42rem;vertical-align:.06em;
+  }
+  /* The deploy stamp, above the list. Dated rather than described: "running
+     ec262e0" means nothing on its own, and "deployed 3h ago" means everything. */
+  .deployed{
+    max-width:44rem;margin:0 auto .9rem;font-size:.78rem;color:var(--muted);
+    display:flex;flex-wrap:wrap;gap:.5rem .9rem;align-items:baseline;
+  }
+  .deployed code{
+    font-size:.74rem;background:var(--gold-soft);border:1px solid var(--gold-line);
+    border-radius:5px;padding:.05rem .35rem;color:var(--gold);
+  }
+  /* Changed paths. Lowercased explicitly: .entry sits inside a panel whose
+     labels are uppercased, and a file path in capitals is unreadable. */
+  .touched{
+    font-size:.72rem;color:var(--muted);margin:.45rem 0 0;line-height:1.5;
+    text-transform:none;word-break:break-word;
+  }
+  .entry.unseen{border-left:2px solid var(--gold)}
   .entry{
     background:var(--card);border:1px solid var(--rule);border-radius:12px;
     padding:.85rem .95rem;
@@ -458,6 +487,7 @@
   <span class="status" id="status">ready</span>
   <a class="numbers" id="numbers" hidden target="_blank" rel="noopener"
      title="Today's numbers — click for the rest"></a>
+  <button type="button" id="new-toggle" hidden aria-expanded="false">What&rsquo;s new</button>
   <button type="button" id="write-toggle" hidden aria-expanded="false">New story</button>
   <a id="stories-link" href="/stories.html" hidden
      style="text-decoration:none">Stories</a>
@@ -495,6 +525,19 @@
     <button type="button" id="docs-close" aria-label="Close">Close</button>
   </div>
   <div id="docs-list"></div>
+</section>
+
+<!--
+  What changed on the platform. Sage is one service in a deployment it cannot
+  see the repository of, so a deploy used to be invisible from in here — to it
+  and to whoever was reading. This is the deploy's own account of itself.
+-->
+<section id="whatsnew" hidden aria-label="What&rsquo;s new">
+  <div class="path-head">
+    <h2>What&rsquo;s new</h2>
+    <button type="button" id="new-close" aria-label="Close">Close</button>
+  </div>
+  <div id="new-list"></div>
 </section>
 
 <section id="mockups" hidden aria-label="Mockups">
@@ -1593,6 +1636,114 @@ document.getElementById("path-close").addEventListener("click", closePath);
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !pathPanel.hidden) closePath();
 });
+
+// ---------------------------------------------------------------------------
+// What's new
+//
+// Sage runs in a container that mounts your projects and not the repository of
+// the platform around it, so until this existed a deploy was invisible from in
+// here: the agent could not say what had changed and neither could this page.
+// `make up` writes a digest of the commits it is deploying and the agent reads
+// it into its own context; this shows the same list to you.
+//
+// "New" is per browser, kept in localStorage as the newest commit you have
+// seen. Not on the server: whether Tom has read a changelog on his phone is
+// not state worth a file, and it must survive being wrong — a cleared browser
+// showing one stale "new" is the whole cost.
+// ---------------------------------------------------------------------------
+const newToggle = document.getElementById("new-toggle");
+const newPanel = document.getElementById("whatsnew");
+const newList = document.getElementById("new-list");
+const SEEN_KEY = "sage:seen-commit";
+
+// Private windows and blocked site data both make this throw rather than
+// return null, and a masthead button is not worth a broken page.
+const seenGet = () => { try { return localStorage.getItem(SEEN_KEY) || ""; } catch { return ""; } };
+const seenSet = (v) => { try { localStorage.setItem(SEEN_KEY, v); } catch { /* fine */ } };
+
+let changes = null;
+
+/** How many of these commits are newer than the last one this browser saw.
+ *  A sha that is no longer in the list — a rebase, or more than 12 commits
+ *  since — counts as everything, which is the honest answer. */
+function unseenCount(commits) {
+  const seen = seenGet();
+  if (!seen) return 0; // First visit is not news; it is just history.
+  const at = commits.findIndex((c) => c.short === seen);
+  return at === -1 ? commits.length : at;
+}
+
+function paintToggle() {
+  if (!changes || !changes.commits.length) { newToggle.hidden = true; return; }
+  const n = unseenCount(changes.commits);
+  newToggle.hidden = false;
+  newToggle.classList.toggle("has-new", n > 0);
+  newToggle.textContent = n > 0 ? (n === 1 ? "1 new change" : n + " new changes") : "What\u2019s new";
+}
+
+async function loadChanges() {
+  try {
+    const res = await fetch("/api/changes");
+    if (!res.ok) return;            // Not this seat, or nothing stamped yet.
+    const data = await res.json();
+    if (!Array.isArray(data.commits) || !data.commits.length) return;
+    changes = data;
+    paintToggle();
+  } catch { /* a masthead extra; never an error on screen */ }
+}
+
+function renderChanges() {
+  const unseen = unseenCount(changes.commits);
+  // Spans rather than one run of text: the row wraps on a narrow screen, and a
+  // line that begins with a separator reads as a mistake.
+  const head = el("p", "deployed");
+  const when = el("span", "", "Deployed " + (whenText(changes.deployedAt) || "at an unknown time") + " \u00b7 running ");
+  const sha = document.createElement("code");
+  sha.textContent = changes.head;
+  when.append(sha);
+  head.append(when);
+  if (changes.branch) head.append(el("span", "", changes.branch));
+  if (changes.dirty) head.append(el("span", "", "with uncommitted edits on the box"));
+
+  const rows = changes.commits.map((c, i) => {
+    const card = el("article", "entry" + (i < unseen ? " unseen" : ""));
+    card.append(el("h3", "", c.subject));
+    card.append(el("p", "when", [whenText(c.date), c.short].filter(Boolean).join(" \u00b7 ")));
+    if (c.files.length) {
+      const more = c.fileCount > c.files.length ? ", +" + (c.fileCount - c.files.length) + " more" : "";
+      card.append(el("p", "touched", c.files.join(", ") + more));
+    }
+    return card;
+  });
+
+  newList.replaceChildren(head, ...rows);
+}
+
+function openNew() {
+  if (!changes) return;
+  newPanel.hidden = false;
+  newToggle.setAttribute("aria-expanded", "true");
+  renderChanges();
+  // Marked read on open, not on close: the list is on screen, and a panel
+  // dismissed with Escape is still a panel that was read.
+  seenSet(changes.commits[0].short);
+  paintToggle();
+}
+
+function closeNew() {
+  newPanel.hidden = true;
+  newToggle.setAttribute("aria-expanded", "false");
+}
+
+newToggle.addEventListener("click", () => {
+  newPanel.hidden ? openNew() : closeNew();
+});
+document.getElementById("new-close").addEventListener("click", closeNew);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !newPanel.hidden) closeNew();
+});
+
+loadChanges();
 
 document.getElementById("reset").addEventListener("click", () => {
   if (busy) return;

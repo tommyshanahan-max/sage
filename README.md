@@ -202,6 +202,7 @@ make doctor      # diagnose a slow or dead connection (run from your laptop)
 make backup      # snapshot the home volume to ./backups
 make rebuild     # rebuild the workspace image, picking up new CLI versions
 make reload      # apply Caddy config changes with no downtime
+make whats-new   # tell Sage what changed, without a deploy
 ```
 
 Your work lives in the `home` Docker volume and survives `make down`,
@@ -645,6 +646,34 @@ time and never sent to a browser. Unset, the readout is not drawn.
 It fails quietly on purpose. A counter having a bad minute must not put an
 error in the masthead of a page somebody is trying to work in.
 
+### What changed, in Sage and on the page
+
+Sage runs in a container that mounts your projects and not this repository, so
+a deploy used to be invisible from inside it. Ask it what changed yesterday and
+it had nothing to answer with — the platform around it is a thing it cannot see
+the source of.
+
+`make up` now writes `.platform-state/changes.json`: the last twenty-five
+commits it is deploying, with dates and changed paths. Compose mounts that one
+directory into the agent read-only, and the agent reads it fresh on every turn,
+so a `make up` mid-conversation is picked up without a restart.
+
+It is a digest and not a bind-mount of the repository on purpose. Mounting the
+repository would have told the agent everything it needed and also handed it
+`.env` — every key on the box, both partner passwords, Study Pal's admin key.
+Commit subjects and file paths carry none of that.
+
+The same list is on the page, behind a **What's new** button in the masthead
+that counts what has arrived since this browser last looked (kept in
+`localStorage`, so it is per-device and nothing is stored server-side). Owner
+seat only, like the numbers: the platform's commit history describes how the
+box is built, which is not a partner's to read.
+
+Two limits worth knowing. The list is stamped at deploy time, so a commit
+pushed but not deployed is not in it — the agent is told to believe you over
+the list. And `make whats-new` refreshes it on its own after a `git pull`, if
+you want Sage current without a rebuild.
+
 ### What "a person" means here
 
 One browser. The counter puts a random id in that browser's own storage — no
@@ -711,4 +740,5 @@ install/bootstrap.sh      one-shot VPS preparation
 scripts/check-sites.py    verifies every site address resolves and is unique
 scripts/privacy-check.py  what public records say about who runs these sites
 scripts/doctor.sh         client-side network diagnostics
+scripts/whats-new.py      stamps the deploy's commit list for the agent to read
 ```

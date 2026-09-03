@@ -39,6 +39,7 @@ import {
   isProspect,
 } from "./lib/role.js";
 import * as studypal from "./lib/studypal.js";
+import * as changes from "./lib/changes.js";
 import { parseDocList, listDocs, readDoc, renderMarkdown } from "./lib/docs.js";
 
 const PORT = process.env.PORT || 3000;
@@ -449,6 +450,25 @@ app.get("/api/seat", (_req, res) =>
   }));
 
 // ---------------------------------------------------------------------------
+// What changed on the platform
+//
+// The same digest that goes into the system prompt, for the page to list. Owner
+// seat only: the platform's commit history is a description of how this box is
+// built, including which services exist and what they are for, and a seat held
+// by someone else has no business reading it.
+//
+// 404 rather than 403 when there is nothing to show, matching /api/numbers —
+// a seat that cannot have this should not learn that it exists.
+// ---------------------------------------------------------------------------
+app.get("/api/changes", async (_req, res) => {
+  if (isPartner) return res.status(404).json({ error: "not this seat" });
+  const state = await changes.summary();
+  if (!state) return res.status(404).json({ error: "no digest" });
+  res.set("Cache-Control", "no-store");
+  res.json(state);
+});
+
+// ---------------------------------------------------------------------------
 // Today's numbers, in the masthead
 //
 // Fetched here rather than by the page: the counter lives on its own hostname
@@ -812,6 +832,11 @@ app.post("/api/chat", express.json({ limit: "24mb" }), async (req, res) => {
   // conversation", which nobody should have to know.
   const MISSING_SESSION = /No conversation found with session/i;
 
+  // Recent platform history, read fresh per turn so a deploy mid-conversation
+  // is picked up without anyone restarting anything. Owner seat only — see
+  // /api/changes above on why a partner is not told how this box is built.
+  const platformBrief = isPartner || isProspect ? "" : await changes.brief();
+
   const baseOptions = {
     cwd: WORKSPACE,
     // Appends to Claude Code's preset rather than replacing it: the preset
@@ -819,7 +844,11 @@ app.post("/api/chat", express.json({ limit: "24mb" }), async (req, res) => {
     systemPrompt: {
       type: "preset",
       preset: "claude_code",
-      append: isProspect ? PROSPECT_VOICE : isPartner ? PARTNER_VOICE : SAGE_VOICE,
+      append: isProspect
+        ? PROSPECT_VOICE
+        : isPartner
+          ? PARTNER_VOICE
+          : SAGE_VOICE + platformBrief,
     },
     // Every tool runs without stopping to ask, on the same files the editor
     // opens. Git is what protects them — see the README.
