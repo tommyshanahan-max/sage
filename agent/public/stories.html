@@ -220,7 +220,9 @@
 
 </div>
 
-<script>
+<script type="module">
+import { FUNCTIONS, checkShape, blankBeats } from "./three-act.js";
+
 // ---------------------------------------------------------------------------
 // The story desk.
 //
@@ -228,12 +230,6 @@
 // behind a shared secret with no CORS headers, so the seat's server proxies
 // them and the key never reaches this page — see agent/lib/studypal.js.
 // ---------------------------------------------------------------------------
-
-const FUNCTIONS = [
-  "ordinary world", "inciting incident", "debate", "act one turn", "rising",
-  "pinch", "midpoint", "false victory", "complication", "all is lost",
-  "dark night", "climax", "resolution",
-];
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -314,30 +310,6 @@ function drawShelf() {
 // The editor
 // ---------------------------------------------------------------------------
 let current = null;
-
-/** A blank run of beats, numbered and roughly assigned to acts.
- *
- *  Assigned rather than left empty because an empty grid invites twelve beats
- *  of act two — which is the shape the check below exists to catch, and it is
- *  cheaper to start right than to be told off afterwards. Proportions are
- *  roughly a quarter, a half, a quarter, with the turns near 25%, 50% and 70%. */
-function blankBeats(n) {
-  const out = [];
-  for (let i = 1; i <= n; i++) {
-    const at = i / n;
-    const act = at <= 0.3 ? 1 : at <= 0.72 ? 2 : 3;
-    let fn = "rising";
-    if (i === 1) fn = "ordinary world";
-    else if (at <= 0.18) fn = "inciting incident";
-    else if (Math.abs(at - 0.25) < 0.5 / n) fn = "act one turn";
-    else if (Math.abs(at - 0.5) < 0.5 / n) fn = "midpoint";
-    else if (Math.abs(at - 0.72) < 0.5 / n) fn = "all is lost";
-    else if (i === n) fn = "resolution";
-    else if (i === n - 1) fn = "climax";
-    out.push({ n: i, act, function: fn, title: "", beat: "", hook: "" });
-  }
-  return out;
-}
 
 function openEditor(series) {
   current = JSON.parse(JSON.stringify(series));
@@ -450,66 +422,33 @@ function drawBeats() {
 }
 
 // ---------------------------------------------------------------------------
-// The three-act check
+// The three-act check, rendered
 //
-// The reason this is a screen rather than a text file. Anyone can type twelve
-// boxes; what a writer cannot see while writing is whether the shape is right.
-// Computed live from the beats, never stored.
+// The rules live in three-act.js and are shared with Study Pal's own writing
+// screen — the same judgements, rendered however each side likes. Sharing the
+// markup instead would have meant sharing a design system, which is how one
+// module becomes two that disagree.
 // ---------------------------------------------------------------------------
 function drawShape() {
-  const eps = current.episodes;
-  const n = eps.length;
+  const { n, perAct, checks } = checkShape(current.episodes);
   const bar = $("acts");
-  const checks = $("checks");
+  const list = $("checks");
   bar.replaceChildren();
-  checks.replaceChildren();
+  list.replaceChildren();
   if (!n) return;
 
-  const per = [1, 2, 3].map((a) => eps.filter((e) => Number(e.act) === a).length);
-  per.forEach((count, i) => {
+  perAct.forEach((count, i) => {
     if (!count) return;
-    const seg = el("span", "a" + (i + 1), count ? "Act " + (i + 1) + " · " + count : "");
+    const seg = el("span", "a" + (i + 1), "Act " + (i + 1) + " · " + count);
     seg.style.width = (count / n) * 100 + "%";
     bar.append(seg);
   });
 
-  const at = (fn) => {
-    const i = eps.findIndex((e) => e.function === fn);
-    return i < 0 ? null : (i + 1) / n;
-  };
-  const pct = (v) => Math.round(v * 100) + "%";
-
-  const add = (ok, text) => {
-    const row = el("div", "chk" + (ok ? "" : " bad"));
-    row.append(el("span", "dot"), el("span", null, text));
-    checks.append(row);
-  };
-
-  const third = per[2] / n;
-  add(third >= 0.18,
-    third >= 0.18
-      ? "Act three is " + pct(third) + " of the run"
-      : "Act three is only " + pct(third) + " — the ending has no room");
-
-  const mid = at("midpoint");
-  add(mid !== null && Math.abs(mid - 0.5) <= 0.12,
-    mid === null ? "No midpoint — nothing turns"
-      : Math.abs(mid - 0.5) <= 0.12 ? "Midpoint at " + pct(mid)
-      : "Midpoint at " + pct(mid) + " — too far from halfway");
-
-  const turn = at("act one turn");
-  add(turn !== null && turn <= 0.35,
-    turn === null ? "No act one turn"
-      : turn <= 0.35 ? "Act one turns at " + pct(turn)
-      : "Act one turns at " + pct(turn) + " — too late in");
-
-  add(at("all is lost") !== null,
-    at("all is lost") !== null ? "Act two has a bottom" : "No all is lost — act two never bottoms out");
-
-  add(at("climax") !== null, at("climax") !== null ? "There is a climax" : "No climax");
-
-  const empty = eps.filter((e) => !(e.beat || "").trim()).length;
-  add(empty === 0, empty ? empty + " beats still empty" : "Every beat written");
+  for (const c of checks) {
+    const row = el("div", "chk" + (c.ok ? "" : " bad"));
+    row.append(el("span", "dot"), el("span", null, c.text));
+    list.append(row);
+  }
 }
 
 // ---------------------------------------------------------------------------
