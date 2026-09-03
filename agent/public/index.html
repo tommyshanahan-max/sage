@@ -86,6 +86,10 @@
      trap as .analysis and .mic, and it fails as a panel that covers the page
      rather than as an error. */
   .writer[hidden]{display:none}
+  /* Wide. The editor is a twelve-row form and the conversation column is not
+     always enough of a page for it. Fixed to the split's own box rather than
+     the viewport, so it covers the preview and nothing above it. */
+  .writer.wide{position:fixed}
 
   /* The divider. A reviewer wants the app large while looking at it and small
      while typing about it, and that is a per-minute decision, not a per-app
@@ -536,6 +540,7 @@
   <div class="head">
     <b>Story</b>
     <span class="grow"></span>
+    <button type="button" id="writer-wide" aria-pressed="false">Wider</button>
     <button type="button" id="writer-full">Open full page</button>
     <button type="button" id="writer-close">Close</button>
   </div>
@@ -1051,6 +1056,9 @@ grip.addEventListener("pointerdown", (e) => {
   // While dragging, the iframe would otherwise swallow the pointer the moment
   // it crosses into the app.
   frame.style.pointerEvents = "none";
+  // The story panel has an iframe too, and it sits directly under the pointer
+  // for most of a leftward drag.
+  writerFrame.style.pointerEvents = "none";
 });
 grip.addEventListener("pointermove", (e) => {
   if (!grip.classList.contains("dragging")) return;
@@ -1060,6 +1068,7 @@ const endDrag = () => {
   grip.classList.remove("dragging");
   document.body.style.userSelect = "";
   frame.style.pointerEvents = "";
+  writerFrame.style.pointerEvents = "";
 };
 grip.addEventListener("pointerup", endDrag);
 grip.addEventListener("pointercancel", endDrag);
@@ -1100,7 +1109,37 @@ function showWriter(on) {
   // story, and an iframe that fetches a catalogue nobody asked for is a cost
   // paid by everybody for the benefit of a few.
   if (on && !writerFrame.src) writerFrame.src = "/stories.html?embed=1";
+  if (on) {
+    try { if (localStorage.getItem("sage_writer_wide") === "1") setWide(true); } catch { /* fine */ }
+    placeWide();
+  }
 }
+
+// Wider, for the twelve-row form. Measured from the split rather than assumed
+// from the viewport: the masthead's height changes with the numbers readout and
+// with how the buttons wrap, and a guessed offset would put the panel over it.
+const wideBtn = document.getElementById("writer-wide");
+
+function placeWide() {
+  if (!writer.classList.contains("wide")) return;
+  const r = document.querySelector(".split").getBoundingClientRect();
+  Object.assign(writer.style, {
+    top: r.top + "px", left: r.left + "px",
+    width: r.width + "px", height: r.height + "px",
+  });
+}
+
+function setWide(on) {
+  writer.classList.toggle("wide", on);
+  wideBtn.setAttribute("aria-pressed", String(on));
+  wideBtn.textContent = on ? "Narrower" : "Wider";
+  if (on) placeWide();
+  else writer.removeAttribute("style");
+  try { localStorage.setItem("sage_writer_wide", on ? "1" : "0"); } catch { /* private window */ }
+}
+
+wideBtn.addEventListener("click", () => setWide(!writer.classList.contains("wide")));
+window.addEventListener("resize", placeWide);
 
 writeToggle.addEventListener("click", () => showWriter(writer.hidden));
 document.getElementById("writer-close").addEventListener("click", () => showWriter(false));
