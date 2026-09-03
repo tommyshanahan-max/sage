@@ -274,12 +274,18 @@
   .path-error{color:var(--down)}
   .status{margin-left:auto;font-size:.76rem;color:var(--muted);
     font-variant-numeric:tabular-nums}
-  header button{
+  /* The story desk's link is an anchor, not a button — it goes to a page
+     rather than doing something here. It should still look like the rest of
+     the masthead, so it joins the selector instead of getting a second set of
+     rules that drift apart. */
+  header button,header #stories-link{
     font:inherit;font-size:.95rem;color:var(--ink-2);background:none;
     border:1px solid var(--rule);border-radius:8px;padding:.45rem .95rem;cursor:pointer;
   }
-  header button:hover{color:var(--gold);border-color:var(--gold)}
-  header button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  header button:hover,header #stories-link:hover{color:var(--gold);border-color:var(--gold)}
+  header button:focus-visible,header #stories-link:focus-visible{
+    outline:2px solid var(--gold);outline-offset:2px;
+  }
 
   /* ---------- thread ---------- */
   #log{flex:1;overflow-y:auto;padding:clamp(1.4rem,4vw,2.2rem) clamp(1rem,4vw,1.6rem) 2.5rem}
@@ -427,6 +433,8 @@
   <span class="status" id="status">ready</span>
   <a class="numbers" id="numbers" hidden target="_blank" rel="noopener"
      title="Today's numbers — click for the rest"></a>
+  <a id="stories-link" href="/stories.html" hidden
+     style="text-decoration:none">Stories</a>
   <button type="button" id="path-toggle" aria-expanded="false">Path</button>
   <button type="button" id="docs-toggle" aria-expanded="false" hidden>Documents</button>
   <button type="button" id="mockups-toggle" aria-expanded="false" hidden>Mockups</button>
@@ -1069,6 +1077,10 @@ fetch("/api/seat")
       // made last week as if it had just appeared.
       readMockups().then((m) => { if (m) knownMockups = m; });
     }
+    // The story desk. Owner seat only — the routes behind it check the same
+    // thing, so this only hides a door that is already locked.
+    if (seatRole === "owner") document.getElementById("stories-link").hidden = false;
+
     if (seatRole === "partner") {
       mockupsToggle.hidden = false;
       // Only offered when there is something in it — an empty panel on the

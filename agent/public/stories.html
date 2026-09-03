@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stories · Study Pal</title>
+<style>
+  /* Study Pal's story desk, in this seat's own palette. Same tokens as the
+     chat page — one product, and a second colour scheme in the same seat would
+     read as a different application. */
+  :root{
+    --paper:#eef1f5; --card:#fbfcfd; --card-2:#f4f6f9;
+    --ink:#10192b; --ink-2:#45536b; --muted:#7d8ba0; --rule:#dae0e9;
+    --gold:#a8761f; --gold-soft:#f6efdf; --gold-line:#e6d3ab;
+    --good:#1f6b52; --good-soft:#e4efea;
+    --down:#a8442f; --down-soft:#f8e9e5;
+    --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
+           "Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB",
+           "Microsoft YaHei",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0e1219; --card:#161b24; --card-2:#1b2029; --ink:#e8ecf3;
+      --ink-2:#a6b1c2; --muted:#77839a; --rule:#242b36;
+      --gold:#d9a94e; --gold-soft:#2a2213; --gold-line:#4b3d1d;
+      --good:#5cc39c; --good-soft:#12261f;
+      --down:#e08a72; --down-soft:#2c1a16;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0e1219; --card:#161b24; --card-2:#1b2029; --ink:#e8ecf3;
+    --ink-2:#a6b1c2; --muted:#77839a; --rule:#242b36;
+    --gold:#d9a94e; --gold-soft:#2a2213; --gold-line:#4b3d1d;
+    --good:#5cc39c; --good-soft:#12261f;
+    --down:#e08a72; --down-soft:#2c1a16;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:16px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:64rem; margin:0 auto; padding:1.4rem 1.2rem 5rem}
+
+  header.top{
+    display:flex; align-items:center; gap:1rem; flex-wrap:wrap;
+    padding-bottom:1rem; border-bottom:1px solid var(--rule); margin-bottom:1.6rem;
+  }
+  .mark{font-family:var(--serif); font-size:2rem; line-height:1; color:var(--gold)}
+  .sub{color:var(--muted); font-size:.9rem}
+  .spacer{flex:1}
+
+  button{font:inherit; cursor:pointer}
+  .btn{
+    background:var(--card); color:var(--ink); border:1px solid var(--rule);
+    border-radius:9px; padding:.5rem .9rem; font-size:.88rem; font-weight:500;
+  }
+  .btn:hover{border-color:var(--gold-line)}
+  .btn.primary{background:var(--gold); border-color:var(--gold); color:#fff}
+  .btn.publish{background:var(--good); border-color:var(--good); color:#fff}
+  .btn.danger{color:var(--down); border-color:var(--rule)}
+  .btn:disabled{opacity:.5; cursor:default}
+  .btn.small{padding:.3rem .6rem; font-size:.78rem}
+
+  h2{font-family:var(--serif); font-weight:400; font-size:1.5rem; margin:0 0 .8rem}
+
+  /* ---------- the shelf ---------- */
+  .shelf{display:grid; gap:.7rem; grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))}
+  .card{
+    background:var(--card); border:1px solid var(--rule); border-radius:12px;
+    padding:.9rem 1rem; text-align:left; width:100%;
+  }
+  .card:hover{border-color:var(--gold-line)}
+  .card .t{font-family:var(--serif); font-size:1.15rem; line-height:1.2}
+  .card .zh{color:var(--ink-2); font-size:.92rem; margin-top:.1rem}
+  .card .meta{
+    display:flex; gap:.45rem; flex-wrap:wrap; margin-top:.6rem;
+    font-size:.72rem; color:var(--muted);
+  }
+  .pill{
+    border:1px solid var(--rule); border-radius:99px; padding:.05rem .5rem;
+    background:var(--card-2);
+  }
+  .pill.on{background:var(--good-soft); border-color:var(--good); color:var(--good); font-weight:600}
+  .pill.off{color:var(--muted)}
+  .pill.draft{background:var(--gold-soft); border-color:var(--gold-line); color:var(--gold); font-weight:600}
+
+  /* ---------- the editor ---------- */
+  .fields{
+    display:grid; gap:.7rem; grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));
+    background:var(--card); border:1px solid var(--rule); border-radius:12px;
+    padding:1rem; margin-bottom:1rem;
+  }
+  .fields .wide{grid-column:1 / -1}
+  label{display:flex; flex-direction:column; gap:.25rem; font-size:.72rem;
+        letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600}
+  input,textarea,select{
+    font:inherit; font-size:.92rem; color:var(--ink); background:var(--paper);
+    border:1px solid var(--rule); border-radius:8px; padding:.45rem .6rem;
+    text-transform:none; letter-spacing:0; font-weight:400; width:100%;
+  }
+  textarea{resize:vertical; min-height:3.2rem; line-height:1.45}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--gold); outline-offset:1px}
+  .check-row{display:flex; align-items:center; gap:.5rem; font-size:.85rem;
+             text-transform:none; letter-spacing:0; color:var(--ink-2); font-weight:400}
+  .check-row input{width:auto}
+
+  /* ---------- the three-act check ---------- */
+  .shape{
+    background:var(--card); border:1px solid var(--rule); border-radius:12px;
+    padding:1rem; margin-bottom:1rem;
+  }
+  .acts{display:flex; height:2.2rem; border-radius:8px; overflow:hidden; margin-bottom:.8rem}
+  .acts span{
+    display:flex; align-items:center; justify-content:center; color:#fff;
+    font-size:.75rem; font-weight:600; min-width:2px;
+  }
+  .acts .a1{background:var(--gold)}
+  .acts .a2{background:var(--ink-2)}
+  .acts .a3{background:var(--good)}
+  .checks{display:grid; gap:.35rem; grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))}
+  .chk{display:flex; align-items:baseline; gap:.5rem; font-size:.85rem; color:var(--ink-2)}
+  .chk .dot{
+    flex:none; width:.62rem; height:.62rem; border-radius:50%; margin-top:.35rem;
+    background:var(--good);
+  }
+  .chk.bad .dot{background:var(--down)}
+  .chk.bad{color:var(--down)}
+
+  /* ---------- beats ---------- */
+  .beat{
+    background:var(--card); border:1px solid var(--rule); border-radius:12px;
+    padding:.85rem 1rem; margin-bottom:.6rem;
+    display:grid; gap:.6rem; grid-template-columns:3.2rem 1fr;
+  }
+  .beat .n{
+    font-family:var(--serif); font-size:1.6rem; color:var(--muted); line-height:1;
+    padding-top:.2rem;
+  }
+  .beat .body{display:grid; gap:.55rem}
+  .beat .row{display:grid; gap:.55rem; grid-template-columns:1fr 6rem 11rem}
+  @media (max-width:44rem){ .beat .row{grid-template-columns:1fr} }
+  .tried{
+    background:var(--card-2); border:1px solid var(--rule); border-radius:9px;
+    padding:.7rem .85rem; font-size:.9rem; line-height:1.6;
+  }
+  .tried .line{margin:0 0 .25rem}
+  .tried .who{color:var(--gold); font-weight:600}
+  .tried .waiting{color:var(--muted); font-style:italic}
+
+  .toast{
+    position:fixed; left:50%; bottom:1.2rem; transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); border-radius:99px;
+    padding:.5rem 1.1rem; font-size:.86rem; box-shadow:0 4px 18px rgba(0,0,0,.2);
+    z-index:20;
+  }
+  .toast.bad{background:var(--down); color:#fff}
+  .note{color:var(--muted); font-size:.85rem; margin:.4rem 0 1.2rem}
+  .note b{color:var(--ink-2)}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <span class="mark">Stories</span>
+    <span class="sub" id="where">Study Pal</span>
+    <span class="spacer"></span>
+    <button class="btn" id="back" hidden>← All stories</button>
+    <button class="btn primary" id="new">New series</button>
+    <a class="btn" href="/">← Sage</a>
+  </header>
+
+  <!-- the shelf -->
+  <section id="list">
+    <div class="shelf" id="shelf"></div>
+    <p class="note" id="list-note"></p>
+  </section>
+
+  <!-- the editor -->
+  <section id="editor" hidden>
+    <div class="fields">
+      <label class="wide">Title<input id="f-title" placeholder="Autumn in Wudaokou"></label>
+      <label>Chinese title<input id="f-zh" placeholder="五道口的秋天"></label>
+      <label>Id (permanent)<input id="f-id" placeholder="wudaokou"></label>
+      <label>Teaches
+        <select id="f-lang"><option value="zh">Chinese</option><option value="en">English</option></select>
+      </label>
+      <label>Category<input id="f-cat" placeholder="Campus romance"></label>
+      <label>Planned episodes<input id="f-planned" type="number" min="1" max="60"></label>
+      <label class="wide">Blurb — what makes somebody press play
+        <textarea id="f-blurb"></textarea></label>
+      <label class="wide">Cast — the two people, described once, used in every episode
+        <textarea id="f-cast"></textarea></label>
+      <label class="wide">
+        <span class="check-row"><input type="checkbox" id="f-cover"> Cover art exists at /series/&lt;id&gt;/cover.jpg</span>
+      </label>
+    </div>
+
+    <div class="shape">
+      <div class="acts" id="acts"></div>
+      <div class="checks" id="checks"></div>
+    </div>
+
+    <div id="beats"></div>
+
+    <div style="display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1rem">
+      <button class="btn primary" id="save">Save draft</button>
+      <button class="btn publish" id="publish">Publish</button>
+      <button class="btn" id="add-beat">Add a beat</button>
+      <span class="spacer"></span>
+      <button class="btn danger" id="delete">Delete</button>
+    </div>
+    <p class="note" id="edit-note"></p>
+  </section>
+
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// The story desk.
+//
+// Every call goes to this origin. Study Pal's endpoints are on another host
+// behind a shared secret with no CORS headers, so the seat's server proxies
+// them and the key never reaches this page — see agent/lib/studypal.js.
+// ---------------------------------------------------------------------------
+
+const FUNCTIONS = [
+  "ordinary world", "inciting incident", "debate", "act one turn", "rising",
+  "pinch", "midpoint", "false victory", "complication", "all is lost",
+  "dark night", "climax", "resolution",
+];
+
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+};
+const $ = (id) => document.getElementById(id);
+
+function toast(message, bad) {
+  document.querySelectorAll(".toast").forEach((t) => t.remove());
+  const t = el("div", "toast" + (bad ? " bad" : ""), message);
+  document.body.append(t);
+  setTimeout(() => t.remove(), bad ? 6000 : 2600);
+}
+
+async function api(path, options) {
+  const res = await fetch(path, options);
+  let body = null;
+  try { body = await res.json(); } catch { /* an empty or non-JSON reply */ }
+  if (!res.ok) {
+    const why = body?.error || res.status + " from the story desk";
+    throw new Error(why);
+  }
+  return body;
+}
+
+// ---------------------------------------------------------------------------
+// The shelf
+// ---------------------------------------------------------------------------
+let all = [];
+
+async function loadList() {
+  $("list-note").textContent = "Reading the catalogue…";
+  try {
+    const data = await api("/sp/series");
+    // The payload's shape is the other side's to choose; take the array
+    // wherever it is rather than assuming one wrapper.
+    all = Array.isArray(data) ? data
+        : Array.isArray(data?.series) ? data.series
+        : Array.isArray(data?.items) ? data.items : [];
+    drawShelf();
+  } catch (err) {
+    $("list-note").innerHTML = "<b>Could not read the catalogue.</b> " + err.message;
+    $("shelf").replaceChildren();
+  }
+}
+
+function drawShelf() {
+  const shelf = $("shelf");
+  shelf.replaceChildren();
+
+  for (const s of all) {
+    const written = (s.episodes || []).filter((e) => (e.beat || "").trim()).length;
+    const card = el("button", "card");
+    card.append(el("div", "t", s.title || s.id || "Untitled"));
+    if (s.zh) card.append(el("div", "zh", s.zh));
+
+    const meta = el("div", "meta");
+    meta.append(el("span", "pill", s.lang === "en" ? "teaches English" : "teaches Chinese"));
+    if (s.cat) meta.append(el("span", "pill", s.cat));
+    meta.append(el("span", "pill", written + " of " + (s.planned || written) + " beats"));
+    meta.append(el("span", "pill " + (s.published ? "on" : "draft"),
+      s.published ? "on the shelf" : "draft"));
+    if (!s.cover) meta.append(el("span", "pill off", "no cover"));
+    card.append(meta);
+
+    card.addEventListener("click", () => openEditor(s));
+    shelf.append(card);
+  }
+
+  $("list-note").innerHTML = all.length
+    ? "<b>" + all.length + " series.</b> Drafts are visible here and not to readers."
+    : "<b>Nothing yet.</b> Start one with <i>New series</i>.";
+}
+
+// ---------------------------------------------------------------------------
+// The editor
+// ---------------------------------------------------------------------------
+let current = null;
+
+/** A blank run of beats, numbered and roughly assigned to acts.
+ *
+ *  Assigned rather than left empty because an empty grid invites twelve beats
+ *  of act two — which is the shape the check below exists to catch, and it is
+ *  cheaper to start right than to be told off afterwards. Proportions are
+ *  roughly a quarter, a half, a quarter, with the turns near 25%, 50% and 70%. */
+function blankBeats(n) {
+  const out = [];
+  for (let i = 1; i <= n; i++) {
+    const at = i / n;
+    const act = at <= 0.3 ? 1 : at <= 0.72 ? 2 : 3;
+    let fn = "rising";
+    if (i === 1) fn = "ordinary world";
+    else if (at <= 0.18) fn = "inciting incident";
+    else if (Math.abs(at - 0.25) < 0.5 / n) fn = "act one turn";
+    else if (Math.abs(at - 0.5) < 0.5 / n) fn = "midpoint";
+    else if (Math.abs(at - 0.72) < 0.5 / n) fn = "all is lost";
+    else if (i === n) fn = "resolution";
+    else if (i === n - 1) fn = "climax";
+    out.push({ n: i, act, function: fn, title: "", beat: "", hook: "" });
+  }
+  return out;
+}
+
+function openEditor(series) {
+  current = JSON.parse(JSON.stringify(series));
+  current.episodes = current.episodes || [];
+  $("list").hidden = true;
+  $("editor").hidden = false;
+  $("back").hidden = false;
+  $("new").hidden = true;
+  $("where").textContent = current.title || "New series";
+
+  $("f-title").value = current.title || "";
+  $("f-zh").value = current.zh || "";
+  $("f-id").value = current.id || "";
+  $("f-lang").value = current.lang === "en" ? "en" : "zh";
+  $("f-cat").value = current.cat || "";
+  $("f-planned").value = current.planned || current.episodes.length || 12;
+  $("f-blurb").value = current.blurb || "";
+  $("f-cast").value = current.cast || "";
+  $("f-cover").checked = Boolean(current.cover);
+  $("edit-note").innerHTML = "";
+
+  drawBeats();
+}
+
+function collect() {
+  return {
+    id: $("f-id").value.trim(),
+    title: $("f-title").value.trim(),
+    zh: $("f-zh").value.trim(),
+    lang: $("f-lang").value,
+    cat: $("f-cat").value.trim(),
+    blurb: $("f-blurb").value.trim(),
+    cast: $("f-cast").value.trim(),
+    cover: $("f-cover").checked,
+    published: Boolean(current.published),
+    soon: Boolean(current.soon),
+    planned: Number($("f-planned").value) || current.episodes.length,
+    episodes: current.episodes,
+  };
+}
+
+function drawBeats() {
+  const box = $("beats");
+  box.replaceChildren();
+
+  current.episodes.forEach((ep, i) => {
+    const row = el("div", "beat");
+    row.append(el("div", "n", String(ep.n ?? i + 1)));
+
+    const body = el("div", "body");
+    const top = el("div", "row");
+
+    const title = el("input");
+    title.placeholder = "Episode title";
+    title.value = ep.title || "";
+    title.addEventListener("input", () => { ep.title = title.value; });
+
+    const act = el("select");
+    for (const a of [1, 2, 3]) {
+      const o = el("option", null, "Act " + a);
+      o.value = String(a);
+      act.append(o);
+    }
+    act.value = String(ep.act || 1);
+    act.addEventListener("change", () => { ep.act = Number(act.value); drawShape(); });
+
+    const fn = el("select");
+    for (const f of FUNCTIONS) {
+      const o = el("option", null, f);
+      o.value = f;
+      fn.append(o);
+    }
+    fn.value = FUNCTIONS.includes(ep.function) ? ep.function : "rising";
+    fn.addEventListener("change", () => { ep.function = fn.value; drawShape(); });
+
+    top.append(title, act, fn);
+
+    const beat = el("textarea");
+    beat.placeholder = "What happens in this episode.";
+    beat.value = ep.beat || "";
+    beat.addEventListener("input", () => { ep.beat = beat.value; drawShape(); });
+
+    const hook = el("input");
+    hook.placeholder = "The hook — the line that makes them tap the next one.";
+    hook.value = ep.hook || "";
+    hook.addEventListener("input", () => { ep.hook = hook.value; });
+
+    const tools = el("div", "row");
+    tools.style.gridTemplateColumns = "auto auto 1fr";
+    const tryIt = el("button", "btn small", "Try this beat");
+    const drop = el("button", "btn small danger", "Remove");
+    tools.append(tryIt, drop, el("span"));
+
+    const out = el("div", "tried");
+    out.hidden = true;
+
+    tryIt.addEventListener("click", () => tryBeat(ep, tryIt, out));
+    drop.addEventListener("click", () => {
+      current.episodes.splice(i, 1);
+      current.episodes.forEach((e, k) => { e.n = k + 1; });
+      drawBeats();
+    });
+
+    body.append(top, beat, hook, tools, out);
+    row.append(body);
+    box.append(row);
+  });
+
+  drawShape();
+}
+
+// ---------------------------------------------------------------------------
+// The three-act check
+//
+// The reason this is a screen rather than a text file. Anyone can type twelve
+// boxes; what a writer cannot see while writing is whether the shape is right.
+// Computed live from the beats, never stored.
+// ---------------------------------------------------------------------------
+function drawShape() {
+  const eps = current.episodes;
+  const n = eps.length;
+  const bar = $("acts");
+  const checks = $("checks");
+  bar.replaceChildren();
+  checks.replaceChildren();
+  if (!n) return;
+
+  const per = [1, 2, 3].map((a) => eps.filter((e) => Number(e.act) === a).length);
+  per.forEach((count, i) => {
+    if (!count) return;
+    const seg = el("span", "a" + (i + 1), count ? "Act " + (i + 1) + " · " + count : "");
+    seg.style.width = (count / n) * 100 + "%";
+    bar.append(seg);
+  });
+
+  const at = (fn) => {
+    const i = eps.findIndex((e) => e.function === fn);
+    return i < 0 ? null : (i + 1) / n;
+  };
+  const pct = (v) => Math.round(v * 100) + "%";
+
+  const add = (ok, text) => {
+    const row = el("div", "chk" + (ok ? "" : " bad"));
+    row.append(el("span", "dot"), el("span", null, text));
+    checks.append(row);
+  };
+
+  const third = per[2] / n;
+  add(third >= 0.18,
+    third >= 0.18
+      ? "Act three is " + pct(third) + " of the run"
+      : "Act three is only " + pct(third) + " — the ending has no room");
+
+  const mid = at("midpoint");
+  add(mid !== null && Math.abs(mid - 0.5) <= 0.12,
+    mid === null ? "No midpoint — nothing turns"
+      : Math.abs(mid - 0.5) <= 0.12 ? "Midpoint at " + pct(mid)
+      : "Midpoint at " + pct(mid) + " — too far from halfway");
+
+  const turn = at("act one turn");
+  add(turn !== null && turn <= 0.35,
+    turn === null ? "No act one turn"
+      : turn <= 0.35 ? "Act one turns at " + pct(turn)
+      : "Act one turns at " + pct(turn) + " — too late in");
+
+  add(at("all is lost") !== null,
+    at("all is lost") !== null ? "Act two has a bottom" : "No all is lost — act two never bottoms out");
+
+  add(at("climax") !== null, at("climax") !== null ? "There is a climax" : "No climax");
+
+  const empty = eps.filter((e) => !(e.beat || "").trim()).length;
+  add(empty === 0, empty ? empty + " beats still empty" : "Every beat written");
+}
+
+// ---------------------------------------------------------------------------
+// Trying one beat
+//
+// A beat that reads well and generates thin dialogue is worth finding out about
+// at episode one rather than episode twelve. It is a model call: slow on
+// purpose, so the button says so rather than appearing to have done nothing.
+// ---------------------------------------------------------------------------
+async function tryBeat(ep, button, out) {
+  const id = $("f-id").value.trim();
+  if (!id) return toast("Give the series an id first", true);
+
+  button.disabled = true;
+  const was = button.textContent;
+  button.textContent = "Writing…";
+  out.hidden = false;
+  out.replaceChildren(el("p", "line waiting", "Writing this beat — about ten seconds."));
+
+  try {
+    // Saved first, so the beat being tried is the beat on the box rather than
+    // the one in this browser. Generating from unsaved text tests something
+    // nobody can reproduce.
+    await api("/sp/series", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(collect()),
+    });
+
+    const data = await api("/sp/episode", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ series: id, episode: ep.n, level: 2 }),
+    });
+
+    const lines = data?.lines || data?.dialogue || data?.script || [];
+    out.replaceChildren();
+    if (!lines.length) {
+      out.append(el("p", "line waiting", "It answered, but with no lines in it."));
+    }
+    for (const line of lines) {
+      const p = el("p", "line");
+      const who = line.who || line.speaker || line.name;
+      if (who) p.append(el("span", "who", who + " "));
+      p.append(document.createTextNode(line.zh || line.text || line.line || String(line)));
+      out.append(p);
+    }
+  } catch (err) {
+    out.replaceChildren(el("p", "line waiting", "Could not write it: " + err.message));
+  } finally {
+    button.disabled = false;
+    button.textContent = was;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Saving, and publishing, which are deliberately two buttons
+//
+// Saving means a writer started. Publishing means somebody decided it was
+// ready. Share a button and half-written stories reach readers.
+// ---------------------------------------------------------------------------
+async function save(publish) {
+  const payload = collect();
+  if (!payload.id) return toast("An id is required", true);
+  if (publish) payload.published = true;
+
+  try {
+    await api("/sp/series", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    current.published = payload.published;
+    toast(publish ? "Published — readers see this now" : "Draft saved");
+    $("edit-note").innerHTML = publish
+      ? "<b>On the shelf.</b> Readers see this version."
+      : "<b>Saved as a draft.</b> Readers still see the last published version, if there is one.";
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+
+$("save").addEventListener("click", () => save(false));
+$("publish").addEventListener("click", () => save(true));
+
+$("add-beat").addEventListener("click", () => {
+  current.episodes.push({
+    n: current.episodes.length + 1, act: 3, function: "rising",
+    title: "", beat: "", hook: "",
+  });
+  drawBeats();
+});
+
+$("delete").addEventListener("click", async () => {
+  const id = $("f-id").value.trim();
+  if (!id) return;
+  if (!confirm("Delete “" + ($("f-title").value || id) + "”?\n\nA built-in series reverts to the version in Study Pal's code rather than vanishing.")) return;
+  try {
+    await api("/sp/series?id=" + encodeURIComponent(id), { method: "DELETE" });
+    toast("Deleted");
+    backToList();
+  } catch (err) { toast(err.message, true); }
+});
+
+function backToList() {
+  $("editor").hidden = true;
+  $("list").hidden = false;
+  $("back").hidden = true;
+  $("new").hidden = false;
+  $("where").textContent = "Study Pal";
+  current = null;
+  loadList();
+}
+$("back").addEventListener("click", backToList);
+
+$("new").addEventListener("click", () => openEditor({
+  id: "", title: "", zh: "", lang: "zh", cat: "", blurb: "", cast: "",
+  cover: false, published: false, planned: 12, episodes: blankBeats(12),
+}));
+
+loadList();
+</script>
+</body>
+</html>

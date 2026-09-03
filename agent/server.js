@@ -37,6 +37,7 @@ import {
   PROSPECT_VOICE,
   isProspect,
 } from "./lib/role.js";
+import * as studypal from "./lib/studypal.js";
 import { parseDocList, listDocs, readDoc, renderMarkdown } from "./lib/docs.js";
 
 const PORT = process.env.PORT || 3000;
@@ -280,6 +281,16 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024;      // what the API accepts per image
 const MAX_IMAGES = 4;
 app.use((req, res, next) =>
   req.path === "/api/chat" ? next() : express.json({ limit: "1mb" })(req, res, next));
+// The story desk's page, before the static handler that would otherwise serve
+// it to anyone signed in. Its routes already refuse a partner seat, but a page
+// that loads and then fails every call still tells that seat the feature
+// exists and invites the question. A door that is not theirs should not be
+// visible, let alone open onto an error.
+app.get("/stories.html", (req, res, next) => {
+  if (isPartner) return res.status(404).send("Not found");
+  next();
+});
+
 app.use(express.static("public"));
 
 // --------------------------------------------------------------------------
@@ -507,6 +518,61 @@ app.get(/^\/numbers(\/.*)?$/, async (req, res) => {
   } catch (err) {
     res.status(502).send("The counter could not be reached: " + (err.message || "unknown"));
   }
+});
+
+// ---------------------------------------------------------------------------
+// Study Pal's story desk
+//
+// A proxy, because those endpoints are secret-gated and send no CORS headers —
+// see agent/lib/studypal.js for why that is right rather than an oversight.
+//
+// Owner seat only. The spec these implement assumes one login means one class
+// of person; here it does not. Three roles sit behind the same sign-in, and a
+// bare "is signed in" check would give a business partner and a prospective one
+// write and publish rights over a live catalogue. The container is the boundary,
+// so whoever holds THIS seat's password is in and the other seats are not,
+// whatever anyone types.
+// ---------------------------------------------------------------------------
+const ownerOnly = (req, res, next) => {
+  if (isPartner) return res.status(404).json({ error: "not this seat" });
+  if (!studypal.configured()) {
+    return res.status(503).json({ error: "STUDYPAL_ADMIN_KEY is not set on this box" });
+  }
+  next();
+};
+
+app.get("/sp/series", ownerOnly, async (_req, res) => {
+  const r = await studypal.call("/api/series");
+  res.status(r.status).json(r.body);
+});
+
+app.get("/sp/usage", ownerOnly, async (_req, res) => {
+  const r = await studypal.call("/api/usage?app=studypal");
+  res.status(r.status).json(r.body);
+});
+
+app.put("/sp/series", ownerOnly, async (req, res) => {
+  const r = await studypal.call("/api/series", { method: "PUT", body: req.body ?? {} });
+  res.status(r.status).json(r.body);
+});
+
+app.delete("/sp/series", ownerOnly, async (req, res) => {
+  // The id travels in the query string upstream, so it is encoded here rather
+  // than interpolated — an id is user input even when a slug pattern says it
+  // should not be.
+  const id = String(req.query.id || "");
+  if (!id) return res.status(400).json({ error: "id is required" });
+  const r = await studypal.call("/api/series?id=" + encodeURIComponent(id), { method: "DELETE" });
+  res.status(r.status).json(r.body);
+});
+
+app.post("/sp/episode", ownerOnly, async (req, res) => {
+  const r = await studypal.call("/api/episode", {
+    method: "POST",
+    body: req.body ?? {},
+    timeoutMs: studypal.GENERATE_TIMEOUT_MS,
+  });
+  res.status(r.status).json(r.body);
 });
 
 app.get("/api/voice", (_req, res) => res.json({ available: isSpeechConfigured() }));

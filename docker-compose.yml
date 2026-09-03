@@ -212,6 +212,13 @@ services:
       AGENT_NUMBERS_URL: ${TOMSCODING_AGENT_NUMBERS_URL:-}
       AGENT_NUMBERS_TOKEN: ${TOMSCODING_STATS_INTERNAL_TOKEN:-}
       AGENT_NUMBERS_LINK: ${TOMSCODING_STATS_DOMAIN:+https://${TOMSCODING_STATS_DOMAIN}}
+      # Study Pal's admin key, for the story desk. Deliberately on THIS service
+      # and not on the partner seats below: they run the same image, and a
+      # variable added to the wrong block is a business partner with publish
+      # rights over a live catalogue. The route checks the seat as well — two
+      # locks, because this one is easy to copy-paste into the wrong place.
+      STUDYPAL_ADMIN_KEY: ${TOMSCODING_STUDYPAL_KEY:-}
+      STUDYPAL_BASE: ${TOMSCODING_PARTNER_APP_URL:-https://liuxuesheng.help}
       # Same home as the IDE, so the SDK picks up ~/.claude/CLAUDE.md — the
       # agent works to the same instructions as the CLI rather than to none.
       HOME: /home/coder
