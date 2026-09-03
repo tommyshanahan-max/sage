@@ -496,6 +496,13 @@ app.get(/^\/numbers(\/.*)?$/, async (req, res) => {
     res.status(upstream.status);
     const type = upstream.headers.get("content-type");
     if (type) res.set("content-type", type);
+    // Forwarding only the content type left the response with no caching
+    // headers at all, and a response with none gets heuristically cached —
+    // browsers invent a lifetime from Last-Modified. The dashboard then goes
+    // stale in a way that survives a deploy AND a reload, which reads as "the
+    // new panel never shipped" rather than as a cache. It is a few kilobytes
+    // of numbers that are wrong the moment they are old, so never store it.
+    res.set("Cache-Control", "no-store, must-revalidate");
     res.send(Buffer.from(await upstream.arrayBuffer()));
   } catch (err) {
     res.status(502).send("The counter could not be reached: " + (err.message || "unknown"));
