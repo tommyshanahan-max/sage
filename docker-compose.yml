@@ -264,6 +264,15 @@ services:
     user: "1000:1000"
     environment:
       AGENT_ROLE: partner
+      # The story desk, granted rather than inherent. Set
+      # TOMSCODING_PARTNER_STORIES=1 to let this seat write and publish stories;
+      # delete the line to take it back. Note what the second variable does: the
+      # key is passed ONLY while the grant is on, so with it off the credential
+      # is not in this container at all. The route checks the flag too — code
+      # can be edited, but an absent secret cannot be argued with.
+      AGENT_STORIES: ${TOMSCODING_PARTNER_STORIES:-}
+      STUDYPAL_ADMIN_KEY: ${TOMSCODING_PARTNER_STORIES:+${TOMSCODING_STUDYPAL_KEY}}
+      STUDYPAL_BASE: ${TOMSCODING_PARTNER_APP_URL:-https://liuxuesheng.help}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       AGENT_MODEL: ${TOMSCODING_AGENT_MODEL:-}
       AGENT_USER: ${TOMSCODING_PARTNER_USER:-Brendan}

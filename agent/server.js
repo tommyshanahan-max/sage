@@ -32,6 +32,7 @@ import {
   MOCKUPS_DIR,
   PROJECT_LABEL,
   PARTNER_TOOLS,
+  canWriteStories,
   PARTNER_DENIED,
   PARTNER_VOICE,
   PROSPECT_VOICE,
@@ -290,8 +291,13 @@ app.use((req, res, next) =>
 // that loads and then fails every call still tells that seat the feature
 // exists and invites the question. A door that is not theirs should not be
 // visible, let alone open onto an error.
+// One expression decides all three: whether the page is served, whether the
+// routes answer, and whether the masthead draws the button. Split them and you
+// get the combination where a seat can open a desk it cannot use.
+const deskOpen = () => canWriteStories && studypal.configured();
+
 app.get("/stories.html", (req, res, next) => {
-  if (isPartner) return res.status(404).send("Not found");
+  if (!deskOpen()) return res.status(404).send("Not found");
   next();
 });
 
@@ -435,7 +441,12 @@ app.get("/mockups/:name", async (req, res) => {
 // permission check — nothing is gated on what the browser is told here; the
 // routes above check the role themselves.
 app.get("/api/seat", (_req, res) =>
-  res.json({ role: ROLE, project: PROJECT_LABEL, hasDocs: DOCS.length > 0, appUrl: APP_URL }));
+  res.json({
+    role: ROLE, project: PROJECT_LABEL, hasDocs: DOCS.length > 0, appUrl: APP_URL,
+    // Whether to offer the desk. Not the permission — the routes decide that —
+    // only whether to draw a door this seat can actually open.
+    stories: deskOpen(),
+  }));
 
 // ---------------------------------------------------------------------------
 // Today's numbers, in the masthead
@@ -538,7 +549,7 @@ app.get(/^\/numbers(\/.*)?$/, async (req, res) => {
 // whatever anyone types.
 // ---------------------------------------------------------------------------
 const ownerOnly = (req, res, next) => {
-  if (isPartner) return res.status(404).json({ error: "not this seat" });
+  if (!canWriteStories) return res.status(404).json({ error: "not this seat" });
   if (!studypal.configured()) {
     return res.status(503).json({ error: "STUDYPAL_ADMIN_KEY is not set on this box" });
   }

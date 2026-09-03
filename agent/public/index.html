@@ -1158,7 +1158,10 @@ fetch("/api/seat")
     }
     // The story desk. Owner seat only — the routes behind it check the same
     // thing, so this only hides a door that is already locked.
-    if (seatRole === "owner") {
+    // The desk is a grant now, not a role — a partner seat can be given it and
+    // have it taken back. The server says whether this seat has it; asking the
+    // role here would draw a door that the routes then refuse to open.
+    if (d.stories) {
       document.getElementById("stories-link").hidden = false;
       document.getElementById("write-toggle").hidden = false;
     }

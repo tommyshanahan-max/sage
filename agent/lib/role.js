@@ -180,3 +180,22 @@ Manner
 - Concrete over adjectival. What it does beats what it is like.
 - Never oversell. Enthusiasm is fine; claims are checkable.
 - Say when you are guessing.`;
+
+// ---------------------------------------------------------------------------
+// The story desk, and who is let into it
+//
+// The owner's seat always. A partner seat only when AGENT_STORIES is set, which
+// is a deliberate grant with a date on it rather than a property of being a
+// partner — Brendan has it while he is writing stories, and it comes off with
+// one line in .env when he is not.
+//
+// The prospect seat never. Somebody deciding whether to work with you does not
+// get to publish to readers, and that is not a setting.
+//
+// The key is the other half: compose passes it to a partner ONLY when this flag
+// is set, so when the grant is off the credential is not in that container at
+// all. Two locks, because a seat check is code and code gets edited, while an
+// absent secret cannot be argued with.
+// ---------------------------------------------------------------------------
+export const canWriteStories =
+  ROLE === "owner" || (ROLE === "partner" && process.env.AGENT_STORIES === "1");
