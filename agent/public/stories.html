@@ -183,6 +183,16 @@
     padding:.7rem .85rem; font-size:.9rem; line-height:1.6;
   }
   .tried .line{margin:0 0 .25rem}
+  /* A clip made for a beat, shown against the beat it is for. Small: this is
+     a check that the shot works, not a viewing experience — the full-size
+     version is on the Video page and in the project. */
+  .tried video{
+    width:9rem; border-radius:9px; background:#000; display:block; margin-top:.4rem;
+  }
+  .tried .where{
+    font-family:var(--mono); font-size:.72rem; color:var(--ink-2);
+    margin:.35rem 0 0; overflow-wrap:anywhere;
+  }
   .tried .who{color:var(--gold); font-weight:600}
   .tried .waiting{color:var(--muted); font-style:italic}
 
@@ -360,6 +370,10 @@ async function guarded(run) {
 // The shelf
 // ---------------------------------------------------------------------------
 let all = [];
+// Whether this seat may generate video. The desk and the video routes are
+// separate grants — a partner can have the desk without it — so the button is
+// drawn from what the server says rather than assumed from being here at all.
+let canVideo = false;
 
 async function loadList() {
   $("list-note").textContent = "Reading the catalogue…";
@@ -642,15 +656,18 @@ function drawBeats() {
     hook.addEventListener("input", () => { ep.hook = hook.value; });
 
     const tools = el("div", "row");
-    tools.style.gridTemplateColumns = "auto auto 1fr";
+    tools.style.gridTemplateColumns = "auto auto auto 1fr";
     const tryIt = el("button", "btn small", "Try this beat");
+    const film = el("button", "btn small", "Make the clip");
     const drop = el("button", "btn small danger", "Remove");
-    tools.append(tryIt, drop, el("span"));
+    tools.append(tryIt, film, drop, el("span"));
+    if (!canVideo) film.hidden = true;
 
     const out = el("div", "tried");
     out.hidden = true;
 
     tryIt.addEventListener("click", () => tryBeat(ep, tryIt, out));
+    film.addEventListener("click", () => makeClip(ep, film, out));
     drop.addEventListener("click", () => {
       current.episodes.splice(i, 1);
       current.episodes.forEach((e, k) => { e.n = k + 1; });
@@ -702,6 +719,74 @@ function drawShape() {
 // at episode one rather than episode twelve. It is a model call: slow on
 // purpose, so the button says so rather than appearing to have done nothing.
 // ---------------------------------------------------------------------------
+/** Generates the clip for one beat.
+ *
+ *  The prompt is the beat itself, prefixed with the series and episode number.
+ *  That prefix is doing two jobs: it gives the model the setting, and it makes
+ *  the clip findable afterwards — the Video page lists jobs by prompt, so
+ *  "Wudaokou — episode 3 — …" identifies itself without this desk having to
+ *  write anything into the catalogue. Nothing here adds a field to the series,
+ *  because that payload belongs to Study Pal's schema and not to this page.
+ */
+async function makeClip(ep, button, out) {
+  const beat = (ep.beat || "").trim();
+  if (beat.length < 8) return toast("Write the beat first — that is the prompt", true);
+
+  const parts = [($("f-title").value || "").trim(), "episode " + (ep.n || ""), beat];
+  const prompt = parts.filter(Boolean).join(" — ");
+  let project = "";
+  try { project = localStorage.getItem("sage_project") || ""; } catch { /* private window */ }
+
+  button.disabled = true;
+  const was = button.textContent;
+  button.textContent = "Filming…";
+  out.hidden = false;
+  out.replaceChildren(el("p", "line waiting", "Generating — a minute or two."));
+
+  try {
+    const started = await api("/api/video", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        prompt,
+        ratio: "9:16", seconds: 5, resolution: "720p",
+        watermark: true, project,
+      }),
+    });
+
+    // Polled here rather than left to the Video page: the point of the button
+    // is watching the beat you just wrote turn into a shot.
+    const id = started.job.id;
+    for (let i = 0; i < 90; i++) {
+      await new Promise((r) => setTimeout(r, 5000));
+      let job;
+      try {
+        job = (await api("/api/video/" + encodeURIComponent(id))).job;
+      } catch {
+        continue;                       // a bad minute is not a failed job
+      }
+      if (job.status === "running") continue;
+      if (job.status === "failed") throw new Error(job.error || "the provider could not make it");
+
+      out.replaceChildren();
+      const v = document.createElement("video");
+      v.src = "/api/video/" + encodeURIComponent(id) + "/file";
+      v.controls = true;
+      v.preload = "metadata";
+      v.playsInline = true;
+      out.append(v);
+      out.append(el("p", "where", job.file || ""));
+      return;
+    }
+    throw new Error("still going after several minutes — check the Video page");
+  } catch (err) {
+    out.replaceChildren(el("p", "line waiting", "Could not film it: " + err.message));
+  } finally {
+    button.disabled = false;
+    button.textContent = was;
+  }
+}
+
 async function tryBeat(ep, button, out) {
   const id = $("f-id").value.trim();
   if (!id) return toast("Give the series an id first", true);
@@ -855,7 +940,19 @@ if (EMBEDDED) {
   document.querySelector(".wrap").style.padding = ".9rem 1rem 3rem";
 }
 
+/** Whether this seat may film. Asked once; the button is redrawn with the
+ *  beats, so a slow answer only means the first draw has it hidden. */
+async function askSeat() {
+  try {
+    const res = await fetch("/api/seat");
+    if (!res.ok) return;
+    canVideo = Boolean((await res.json()).video);
+    if (canVideo && !$("beats").hidden) drawBeats();
+  } catch { /* no button, which is the safe direction */ }
+}
+
 wireCover();
+askSeat();
 loadList();
 </script>
 </body>

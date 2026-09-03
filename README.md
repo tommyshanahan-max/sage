@@ -527,6 +527,24 @@ URL, the model and the path are configuration rather than constants, and why a
 failure surfaces the upstream status and body verbatim instead of a friendly
 message: a shape mismatch should be diagnosable from one attempt.
 
+### Filming a beat from the desk
+
+Each episode in the story desk has a **Make the clip** button beside "Try this
+beat". It sends that beat straight to Seedance and plays the result against the
+beat it came from — which is the point: watching the thing you just wrote turn
+into a shot, rather than copying text into another page.
+
+Two decisions worth knowing. The prompt is the beat prefixed with the series
+title and episode number, which gives the model the setting *and* makes the clip
+findable afterwards — the Video page lists jobs by prompt, so
+"Wudaokou — episode 3 — …" identifies itself. And **nothing is written into the
+series**: that payload belongs to Study Pal's schema, and a desk that quietly
+adds fields to somebody else's catalogue is a desk that breaks their validation
+one day. The association lives in the prompt instead.
+
+The button is drawn from `/api/seat`, not from being on this page: the desk and
+video are separate grants, and a partner can have one without the other.
+
 ### Whose material this is, and the word
 
 Sage hedged. Asked about visitors, or a partner's seat, or anything that
