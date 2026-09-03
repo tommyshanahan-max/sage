@@ -36,6 +36,7 @@ import {
   PARTNER_TOOLS,
   canWriteStories,
   canSeeNumbers,
+  canMakeVideo,
   OWNER_CLEARANCE,
   PARTNER_DENIED,
   PARTNER_VOICE,
@@ -44,6 +45,7 @@ import {
 } from "./lib/role.js";
 import * as studypal from "./lib/studypal.js";
 import * as changes from "./lib/changes.js";
+import * as video from "./lib/video.js";
 import { parseDocList, listDocs, readDoc, renderMarkdown } from "./lib/docs.js";
 
 const PORT = process.env.PORT || 3000;
@@ -303,6 +305,22 @@ const deskOpen = () => canWriteStories && studypal.configured();
 
 app.get("/stories.html", (req, res, next) => {
   if (!deskOpen()) return res.status(404).send("Not found");
+  next();
+});
+
+// Video's door opens on a different rule from the desk's, deliberately.
+//
+// For the owner it is drawn whether or not a key is configured, because the
+// owner is the person who can add one and being told exactly what is missing is
+// how you discover a feature that needs one line of .env. A 404 there just
+// looks like the feature does not exist.
+//
+// For a partner both have to hold. That seat cannot fix a missing key, so a
+// page explaining how would be a door opening onto somebody else's problem.
+const videoDoor = () => canMakeVideo && (!isPartner || video.configured());
+
+app.get("/video.html", (req, res, next) => {
+  if (!videoDoor()) return res.status(404).send("Not found");
   next();
 });
 
@@ -678,6 +696,117 @@ app.post("/api/projects/delete", async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// Video
+//
+// The point of putting this here rather than leaving it to a browser tab on the
+// provider's own site: the finished clip lands **in the project it is for**.
+// A video generated somewhere else has to be found, downloaded, renamed and
+// carried across, and that is the step where things end up in Downloads and
+// never reach the app.
+//
+// So the owner's clips are written into the selected project — under `public/`
+// when the project has one, since that is what a web app serves — and are in
+// git with everything else. A partner's go to their mockups folder, which is
+// the only place that seat can write.
+// ---------------------------------------------------------------------------
+
+/** Where a finished clip belongs. Never a path from the browser: the browser
+ *  names a *project*, and this decides the directory. */
+async function videoTarget(name) {
+  if (isPartner) return { dir: path.join(MOCKUPS_DIR, "video"), label: "your mockups" };
+
+  const dir = projectPath(String(name || ""));
+  if (!dir) return { dir: path.join(process.env.AGENT_VIDEO_DIR || WORKSPACE, "clips"), label: "the video folder" };
+  try {
+    // A web project serves out of public/; anything else gets a folder of its
+    // own at the top so it is obvious what it is.
+    await stat(path.join(dir, "public"));
+    return { dir: path.join(dir, "public", "ai"), label: name + "/public/ai" };
+  } catch {
+    return { dir: path.join(dir, "ai"), label: name + "/ai" };
+  }
+}
+
+app.get("/api/video", async (_req, res) => {
+  if (!canMakeVideo) return res.status(404).json({ error: "not this seat" });
+  if (!video.configured()) {
+    return res.json({ configured: false, reason: "ARK_API_KEY is not set on this box" });
+  }
+  res.set("Cache-Control", "no-store");
+  res.json({
+    configured: true,
+    model: video.model(),
+    budget: await video.budget(),
+    jobs: await video.list(),
+  });
+});
+
+app.post("/api/video", async (req, res) => {
+  if (!canMakeVideo) return res.status(404).json({ error: "not this seat" });
+  if (!video.configured()) return res.status(503).json({ error: "ARK_API_KEY is not set on this box" });
+
+  const prompt = String(req.body?.prompt || "").trim();
+  if (prompt.length < 4) return res.status(400).json({ error: "say what the shot is" });
+  if (prompt.length > 2000) return res.status(400).json({ error: "that prompt is too long" });
+
+  // Constrained here rather than trusted from the page: these end up in a
+  // string sent to the provider, and an unexpected value there is somebody
+  // else's parser deciding what to do with it.
+  const RATIOS = ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "adaptive"];
+  const RESOLUTIONS = ["480p", "720p", "1080p"];
+  const ratio = RATIOS.includes(req.body?.ratio) ? req.body.ratio : "9:16";
+  const resolution = RESOLUTIONS.includes(req.body?.resolution) ? req.body.resolution : "720p";
+  const seconds = Math.min(30, Math.max(4, Number(req.body?.seconds) || 5));
+  const watermark = req.body?.watermark !== false;
+  const firstFrame = /^https?:\/\//i.test(req.body?.firstFrame || "") ? req.body.firstFrame.trim() : "";
+
+  const target = await videoTarget(req.body?.project);
+  try {
+    const job = await video.start({
+      prompt, ratio, seconds, resolution, watermark, firstFrame,
+      project: isPartner ? "" : String(req.body?.project || ""),
+      saveTo: target.dir,
+    });
+    res.status(202).json({ job, where: target.label });
+  } catch (err) {
+    // Our own ceiling is 429, not 502. A bad gateway sends somebody to the
+    // provider's status page for a decision this box made.
+    if (err.overBudget) return res.status(429).json({ error: err.message });
+    console.error("starting a generation failed:", err);
+    res.status(502).json({ error: err.message || "could not start it" });
+  }
+});
+
+app.get("/api/video/:id", async (req, res) => {
+  if (!canMakeVideo) return res.status(404).json({ error: "not this seat" });
+  const job = await video.poll(String(req.params.id));
+  if (!job) return res.status(404).json({ error: "no such job" });
+  res.set("Cache-Control", "no-store");
+  res.json({ job });
+});
+
+// The clip itself, so it can be watched without leaving the seat. sendFile
+// rather than a read: it handles range requests, and a <video> element that
+// cannot seek is a video element people think is broken.
+app.get("/api/video/:id/file", async (req, res) => {
+  if (!canMakeVideo) return res.status(404).send("Not found");
+  const job = await video.find(String(req.params.id));
+  if (!job?.file) return res.status(404).send("Not found");
+
+  // The path came from this server, but it has been through a JSON file since,
+  // so it is checked against the roots this seat may serve from rather than
+  // trusted for having been ours once.
+  const roots = [WORKSPACE, MOCKUPS_DIR, process.env.AGENT_VIDEO_DIR || ""].filter(Boolean).map((r) => path.resolve(r));
+  const file = path.resolve(job.file);
+  if (!roots.some((r) => file === r || file.startsWith(r + path.sep))) {
+    return res.status(404).send("Not found");
+  }
+  res.sendFile(file, { headers: { "Cache-Control": "no-store" } }, (err) => {
+    if (err && !res.headersSent) res.status(404).send("Not found");
+  });
+});
+
 app.get("/mockups/:name", async (req, res) => {
   if (!isPartner) return res.status(404).send("Not found");
   const { name } = req.params;
@@ -719,6 +848,8 @@ app.get("/api/seat", (_req, res) =>
     // Whether to offer the desk. Not the permission — the routes decide that —
     // only whether to draw a door this seat can actually open.
     stories: deskOpen(),
+    // Whether to draw the door. The page is served on the same expression.
+    video: videoDoor(),
   }));
 
 // ---------------------------------------------------------------------------

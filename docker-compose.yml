@@ -237,6 +237,26 @@ services:
       # host port and is not reachable from a browser, so an inferred address
       # would be exactly the plausible wrong URL that becomes a bug report.
       AGENT_PROJECT_APPS: ${TOMSCODING_PROJECT_APPS:-}
+      # Video generation — Seedance, on ByteDance's international arm.
+      #
+      # BytePlus rather than Volcengine: the mainland console wants a Chinese
+      # entity and real-name verification, and the international one takes a
+      # foreign company and an ordinary card. Same models either way.
+      #
+      # The base URL and the model are configuration and not constants because
+      # the API shape here was assembled from secondary sources — the official
+      # reference was unreachable when this was written — so a change on their
+      # side should be a line in .env, not a deploy.
+      ARK_API_KEY: ${TOMSCODING_ARK_API_KEY:-}
+      ARK_BASE: ${TOMSCODING_ARK_BASE:-https://ark.ap-southeast.bytepluses.com}
+      ARK_VIDEO_MODEL: ${TOMSCODING_ARK_VIDEO_MODEL:-seedance-1-0-lite-t2v-250428}
+      # Job records and the day's counter. The videos themselves are written
+      # into the project they are for, not here.
+      AGENT_VIDEO_DIR: /home/coder/.sage/video
+      # A ceiling on clips per day. This is the one feature that costs real
+      # money per press, and a retry loop with no ceiling is an invoice rather
+      # than a message.
+      AGENT_VIDEO_DAILY_LIMIT: ${TOMSCODING_VIDEO_DAILY_LIMIT:-20}
       # The word the owner's seat asks for when it reaches a decision that is
       # his rather than its own. Not a permission — this seat could already do
       # everything, and a partner seat still cannot whatever it is told, because
@@ -332,6 +352,19 @@ services:
       # how they arrived, which share link sent them, day by day, for both
       # products. For a marketing partner that is the job; for anyone else it is
       # the business's state of health.
+      # Video generation, granted the same way. The reason here is money rather
+      # than secrecy: every press costs at the provider, and a seat held by
+      # someone else spending on your card is a decision, not a default. The
+      # key is passed only while the grant is on, so with it off that container
+      # cannot generate anything even if the check were edited away.
+      AGENT_VIDEO: ${TOMSCODING_PARTNER_VIDEO:-}
+      ARK_API_KEY: ${TOMSCODING_PARTNER_VIDEO:+${TOMSCODING_ARK_API_KEY}}
+      ARK_BASE: ${TOMSCODING_ARK_BASE:-https://ark.ap-southeast.bytepluses.com}
+      ARK_VIDEO_MODEL: ${TOMSCODING_ARK_VIDEO_MODEL:-seedance-1-0-lite-t2v-250428}
+      # Its own state directory and its own ceiling — a partner's clips do not
+      # come out of the owner's day.
+      AGENT_VIDEO_DIR: /work/mockups/.video
+      AGENT_VIDEO_DAILY_LIMIT: ${TOMSCODING_PARTNER_VIDEO_LIMIT:-6}
       AGENT_NUMBERS: ${TOMSCODING_PARTNER_NUMBERS:-}
       AGENT_NUMBERS_URL: ${TOMSCODING_PARTNER_NUMBERS:+${TOMSCODING_AGENT_NUMBERS_URL}}
       AGENT_NUMBERS_TOKEN: ${TOMSCODING_PARTNER_NUMBERS:+${TOMSCODING_STATS_INTERNAL_TOKEN}}

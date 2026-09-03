@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Video</title>
+<style>
+  /* Same tokens as the chat page and the story desk. One product; a third
+     colour scheme in the same seat would read as a third application. */
+  :root{
+    --paper:#eef1f5; --card:#fbfcfd; --card-2:#f4f6f9;
+    --ink:#10192b; --ink-2:#45536b; --muted:#7d8ba0; --rule:#dae0e9;
+    --gold:#a8761f; --gold-soft:#f6efdf; --gold-line:#e6d3ab;
+    --good:#1f6b52; --good-soft:#e4efea;
+    --down:#a8442f; --down-soft:#f8e9e5;
+    --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
+           "Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB",
+           "Microsoft YaHei",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0e1219; --card:#161b24; --card-2:#1b2029; --ink:#e8ecf3;
+      --ink-2:#a6b1c2; --muted:#77839a; --rule:#242b36;
+      --gold:#d9a94e; --gold-soft:#2a2213; --gold-line:#4b3d1d;
+      --good:#5cc39c; --good-soft:#12261f;
+      --down:#e08a72; --down-soft:#2c1a16;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0e1219; --card:#161b24; --card-2:#1b2029; --ink:#e8ecf3;
+    --ink-2:#a6b1c2; --muted:#77839a; --rule:#242b36;
+    --gold:#d9a94e; --gold-soft:#2a2213; --gold-line:#4b3d1d;
+    --good:#5cc39c; --good-soft:#12261f;
+    --down:#e08a72; --down-soft:#2c1a16;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.55;
+    padding:1.1rem clamp(.9rem,3vw,1.6rem) 3rem;
+  }
+  .wrap{max-width:52rem;margin:0 auto}
+  header{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;margin-bottom:.3rem}
+  h1{font-family:var(--serif);font-size:1.5rem;font-weight:500;margin:0;letter-spacing:-.01em}
+  .sub{font-size:.78rem;color:var(--muted)}
+  .sub b{color:var(--ink-2);font-weight:500}
+  .grow{flex:1}
+  button,select,input,textarea{font:inherit}
+  .btn{
+    color:var(--ink-2);background:none;border:1px solid var(--rule);
+    border-radius:8px;padding:.4rem .8rem;cursor:pointer;font-size:.84rem;
+  }
+  .btn:hover{color:var(--gold);border-color:var(--gold)}
+  .btn.go{
+    background:var(--gold);border-color:var(--gold);color:#fff;font-weight:500;
+  }
+  .btn.go:hover{filter:brightness(1.06);color:#fff}
+  .btn:disabled{opacity:.45;cursor:default;filter:none}
+
+  .panel{
+    background:var(--card);border:1px solid var(--rule);border-radius:14px;
+    padding:1rem;margin:1rem 0;
+  }
+  label{display:block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:.3rem}
+  textarea,input[type=url],select{
+    width:100%;background:var(--card-2);color:var(--ink);
+    border:1px solid var(--rule);border-radius:9px;padding:.6rem .7rem;
+  }
+  textarea{min-height:6.5rem;resize:vertical;line-height:1.5}
+  textarea:focus,input:focus,select:focus{outline:2px solid var(--gold);outline-offset:1px}
+  .row{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.8rem}
+  .row > div{flex:1 1 8rem;min-width:0}
+  .check{display:flex;align-items:flex-start;gap:.5rem;margin-top:.8rem;font-size:.82rem;color:var(--ink-2)}
+  .check input{margin-top:.25rem}
+  .check span small{display:block;color:var(--muted);font-size:.75rem;line-height:1.45}
+  .actions{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:1rem}
+  .note{font-size:.76rem;color:var(--muted);margin:.5rem 0 0}
+  .note.bad{color:var(--down)}
+
+  .clip{
+    background:var(--card);border:1px solid var(--rule);border-radius:14px;
+    padding:.85rem;margin-bottom:.75rem;display:flex;gap:.9rem;align-items:flex-start;
+  }
+  .clip video{
+    width:9rem;flex:none;border-radius:10px;background:#000;display:block;
+  }
+  .clip .body{flex:1;min-width:0}
+  .clip h3{font-size:.92rem;font-weight:500;margin:0 0 .2rem;line-height:1.4;
+    overflow-wrap:anywhere}
+  .clip .meta{font-size:.73rem;color:var(--muted);font-variant-numeric:tabular-nums}
+  .clip .where{font-family:var(--mono);font-size:.72rem;color:var(--ink-2);
+    margin-top:.35rem;overflow-wrap:anywhere}
+  .pill{
+    display:inline-block;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
+    border-radius:999px;padding:.1rem .45rem;border:1px solid var(--rule);color:var(--muted);
+  }
+  .pill.run{color:var(--gold);border-color:var(--gold-line);background:var(--gold-soft)}
+  .pill.ok{color:var(--good);border-color:var(--good);background:var(--good-soft)}
+  .pill.bad{color:var(--down);border-color:var(--down);background:var(--down-soft)}
+  .empty{color:var(--muted);font-size:.85rem}
+  @media (prefers-reduced-motion:no-preference){
+    .pill.run{animation:pulse 1.6s ease-in-out infinite}
+    @keyframes pulse{50%{opacity:.55}}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Video</h1>
+  <span class="sub" id="sub"></span>
+  <span class="grow"></span>
+  <button class="btn" id="refresh" type="button">Refresh</button>
+</header>
+
+<div class="panel" id="form" hidden>
+  <label for="prompt">The shot</label>
+  <textarea id="prompt" placeholder="A student stands outside a noodle shop in the rain at night, neon reflecting in the puddles. She checks her phone, then looks up. Close on her face."></textarea>
+
+  <div class="row">
+    <div>
+      <label for="ratio">Shape</label>
+      <select id="ratio">
+        <option value="9:16" selected>9:16 — vertical</option>
+        <option value="16:9">16:9 — wide</option>
+        <option value="1:1">1:1 — square</option>
+        <option value="4:3">4:3</option>
+        <option value="3:4">3:4</option>
+        <option value="21:9">21:9 — cinema</option>
+        <option value="adaptive">Let it choose</option>
+      </select>
+    </div>
+    <div>
+      <label for="seconds">Seconds</label>
+      <select id="seconds">
+        <option>4</option><option selected>5</option><option>8</option>
+        <option>10</option><option>12</option><option>15</option>
+      </select>
+    </div>
+    <div>
+      <label for="resolution">Size</label>
+      <select id="resolution">
+        <option value="480p">480p — cheapest</option>
+        <option value="720p" selected>720p</option>
+        <option value="1080p">1080p</option>
+      </select>
+    </div>
+    <div>
+      <label for="project">Goes into</label>
+      <select id="project"></select>
+    </div>
+  </div>
+
+  <div style="margin-top:.8rem">
+    <label for="first">Opening frame (optional image URL)</label>
+    <input id="first" type="url" placeholder="https://…/character.jpg">
+    <p class="note">This is how a character stays the same person across shots.
+      Generate the face once, then start every clip from it — describing them in
+      the prompt drifts by the third episode.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" id="watermark" checked>
+    <span>Mark it as AI-generated
+      <small>China requires generated video shown there to carry a visible mark
+      as well as embedded metadata. Leave this on unless you have a reason and
+      have checked it.</small></span>
+  </div>
+
+  <div class="actions">
+    <button class="btn go" id="make" type="button">Generate</button>
+    <span class="note" id="left"></span>
+  </div>
+  <p class="note bad" id="err" hidden></p>
+</div>
+
+<p class="note" id="off" hidden></p>
+
+<div id="list"></div>
+
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+};
+
+let jobs = [];
+// Ids being polled, so a list redraw does not start a second timer for the same
+// job. Two pollers on one job is how a page ends up making four requests a
+// second at three in the morning.
+const watching = new Set();
+
+function when(iso) {
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return "";
+  const mins = Math.round((Date.now() - then.getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + " min ago";
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return hours + "h ago";
+  return then.toLocaleDateString();
+}
+
+const mb = (n) => (n >= 1024 * 1024 ? (n / 1024 / 1024).toFixed(1) + " MB" : Math.round(n / 1024) + " KB");
+
+function card(job) {
+  const row = el("div", "clip");
+  row.dataset.id = job.id;
+
+  if (job.status === "done" && job.file) {
+    const v = document.createElement("video");
+    v.src = "/api/video/" + encodeURIComponent(job.id) + "/file";
+    v.controls = true;
+    v.preload = "metadata";
+    v.playsInline = true;
+    row.append(v);
+  }
+
+  const body = el("div", "body");
+  body.append(el("h3", "", job.prompt || "(no prompt)"));
+
+  const meta = el("p", "meta");
+  const pill = el("span", "pill " + (job.status === "done" ? "ok" : job.status === "failed" ? "bad" : "run"),
+    job.status === "done" ? "ready" : job.status === "failed" ? "failed" : "generating");
+  meta.append(pill, document.createTextNode(" "));
+  meta.append(document.createTextNode(
+    [when(job.startedAt), [job.ratio, job.seconds && job.seconds + "s", job.resolution].filter(Boolean).join(" · "),
+     job.bytes ? mb(job.bytes) : ""].filter(Boolean).join("  ·  ")
+  ));
+  body.append(meta);
+
+  if (job.status === "done" && job.file) body.append(el("p", "where", job.file));
+  if (job.error) body.append(el("p", "note bad", job.error));
+  row.append(body);
+  return row;
+}
+
+function draw() {
+  const list = $("list");
+  if (!jobs.length) {
+    list.replaceChildren(el("p", "empty", "Nothing generated yet."));
+    return;
+  }
+  list.replaceChildren(...jobs.map(card));
+  for (const job of jobs) if (job.status === "running") watch(job.id);
+}
+
+/** Polls one job until it settles. Five seconds: a generation takes tens of
+ *  seconds to minutes, so anything faster is asking a question whose answer
+ *  cannot have changed. */
+function watch(id) {
+  if (watching.has(id)) return;
+  watching.add(id);
+  const tick = async () => {
+    try {
+      const res = await fetch("/api/video/" + encodeURIComponent(id));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "could not read that job");
+      const at = jobs.findIndex((j) => j.id === id);
+      if (at !== -1) jobs[at] = { ...jobs[at], ...data.job };
+      if (data.job.status === "running") return setTimeout(tick, 5000);
+      watching.delete(id);
+      await load();
+    } catch {
+      // A bad minute is not a failed job; ask again rather than declaring one.
+      setTimeout(tick, 8000);
+    }
+  };
+  setTimeout(tick, 3000);
+}
+
+async function load() {
+  try {
+    const res = await fetch("/api/video");
+    if (!res.ok) throw new Error("not this seat");
+    const data = await res.json();
+    if (!data.configured) {
+      $("off").hidden = false;
+      $("off").textContent =
+        (data.reason || "Video generation is not configured on this box.") +
+        " Add an ARK_API_KEY from BytePlus ModelArk and run make up.";
+      return;
+    }
+    $("form").hidden = false;
+    $("sub").innerHTML = "Seedance, on BytePlus — model <b>" + data.model + "</b>";
+    const b = data.budget || {};
+    $("left").textContent = b.limit
+      ? b.left + " of " + b.limit + " left today"
+      : "";
+    $("make").disabled = b.left === 0;
+    jobs = data.jobs || [];
+    draw();
+  } catch {
+    $("off").hidden = false;
+    $("off").textContent = "Video is not available on this seat.";
+  }
+}
+
+/** The projects, so a clip can be told where it belongs. Reuses the same route
+ *  the chat page's panel does rather than a second list that could disagree. */
+async function loadProjects() {
+  const sel = $("project");
+  sel.replaceChildren();
+  try {
+    const res = await fetch("/api/projects");
+    if (!res.ok) throw new Error("no projects here");
+    const data = await res.json();
+    let picked = "";
+    try { picked = localStorage.getItem("sage_project") || ""; } catch { /* private window */ }
+    for (const p of data.projects || []) {
+      const o = document.createElement("option");
+      o.value = p.name;
+      o.textContent = p.name;
+      if (p.name === picked) o.selected = true;
+      sel.append(o);
+    }
+    if (!sel.children.length) throw new Error("empty");
+  } catch {
+    const o = document.createElement("option");
+    o.value = "";
+    o.textContent = "the video folder";
+    sel.append(o);
+  }
+}
+
+$("make").addEventListener("click", async () => {
+  const prompt = $("prompt").value.trim();
+  $("err").hidden = true;
+  if (prompt.length < 4) { $("err").hidden = false; $("err").textContent = "Say what the shot is."; return; }
+
+  $("make").disabled = true;
+  const was = $("make").textContent;
+  $("make").textContent = "Starting…";
+  try {
+    const res = await fetch("/api/video", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        prompt,
+        ratio: $("ratio").value,
+        seconds: Number($("seconds").value),
+        resolution: $("resolution").value,
+        firstFrame: $("first").value.trim(),
+        watermark: $("watermark").checked,
+        project: $("project").value,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "could not start it");
+    $("prompt").value = "";
+    await load();
+  } catch (err) {
+    $("err").hidden = false;
+    $("err").textContent = err.message || "could not start it";
+  } finally {
+    $("make").textContent = was;
+    $("make").disabled = false;
+  }
+});
+
+$("refresh").addEventListener("click", load);
+loadProjects();
+load();
+</script>
+</body>
+</html>

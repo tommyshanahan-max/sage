@@ -441,12 +441,14 @@
      rather than doing something here. It should still look like the rest of
      the masthead, so it joins the selector instead of getting a second set of
      rules that drift apart. */
-  header button,header #stories-link{
+  header button,header #stories-link,header #video-link{
     font:inherit;font-size:.85rem;color:var(--ink-2);background:none;
     border:1px solid var(--rule);border-radius:8px;padding:.36rem .7rem;cursor:pointer;
     white-space:nowrap;
   }
-  header button:hover,header #stories-link:hover{color:var(--gold);border-color:var(--gold)}
+  header button:hover,header #stories-link:hover,header #video-link:hover{
+    color:var(--gold);border-color:var(--gold)
+  }
   #more-toggle{padding:.36rem .55rem;letter-spacing:.05em}
   .more{position:relative;display:flex}
   .more-menu{
@@ -461,7 +463,8 @@
   .more-menu[hidden]{display:none}
   .more-menu button{width:100%;text-align:left}
   .more-menu form{display:contents}
-  header button:focus-visible,header #stories-link:focus-visible{
+  header button:focus-visible,header #stories-link:focus-visible,
+  header #video-link:focus-visible{
     outline:2px solid var(--gold);outline-offset:2px;
   }
 
@@ -644,6 +647,8 @@
   <button type="button" id="write-toggle" hidden aria-expanded="false">New story</button>
   <a id="stories-link" href="/stories.html" hidden
      style="text-decoration:none">Stories</a>
+  <a id="video-link" href="/video.html" hidden
+     style="text-decoration:none">Video</a>
   <button type="button" id="path-toggle" aria-expanded="false">Path</button>
   <button type="button" id="docs-toggle" aria-expanded="false" hidden>Documents</button>
   <button type="button" id="mockups-toggle" aria-expanded="false" hidden>Mockups</button>
@@ -1872,6 +1877,9 @@ fetch("/api/seat")
       document.getElementById("stories-link").hidden = false;
       document.getElementById("write-toggle").hidden = false;
     }
+    // The video desk. Same rule as the story desk — the page and the routes
+    // check the same thing, so this only hides a door that is already shut.
+    if (d.video) document.getElementById("video-link").hidden = false;
 
     if (seatRole === "partner") {
       mockupsToggle.hidden = false;

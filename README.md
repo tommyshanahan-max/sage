@@ -477,6 +477,56 @@ that goes quiet for forty seconds reads as broken. Nothing is discarded: the
 steps are what you check when an answer looks wrong, and they are one click
 away.
 
+### Making video, into the project it is for
+
+**Video** in the masthead generates clips with ByteDance's Seedance through
+BytePlus ModelArk. BytePlus rather than Volcengine because the mainland console
+wants a Chinese entity and real-name verification and the international one
+takes a foreign company and a card; the models are the same either way. The
+Chinese models are also the right ones for this: trained on the vertical,
+fast-cut, close-on-faces format, and a fraction of the per-second cost of the
+Western APIs.
+
+The reason it lives here rather than in a browser tab on the provider's site is
+where the file lands. **A finished clip is written into the project it is for**
+— under `public/ai/` when the project has a `public/`, since that is what a web
+app serves — so it is in git with everything else and the app can reference it
+immediately. Generated somewhere else, a clip has to be found, downloaded,
+renamed and carried across, and that is the step where things end up in
+Downloads and never reach the app. A partner's clips go to their mockups folder,
+which is the only place that seat can write.
+
+Two details that matter more than they look:
+
+- **The opening frame.** Give it an image URL and that image becomes the first
+  frame. This is how a character stays the same person across shots: generate
+  the face once, then start every clip from it. Describing someone in the
+  prompt drifts by the third episode.
+- **The AI mark is on by default.** China requires generated video shown there
+  to carry a visible label as well as embedded metadata. The checkbox is
+  explicit rather than relying on a provider default, because that is not a
+  decision to make by omission.
+
+A daily ceiling (`TOMSCODING_VIDEO_DAILY_LIMIT`) applies to every seat including
+the owner's. This is the one feature that costs real money on every press, and a
+retry loop without a ceiling is an invoice rather than a message. Hitting it
+answers 429 — our own limit — rather than 502, so nobody goes looking at a
+provider status page for a decision this box made.
+
+The API is asynchronous: post a task, poll, then the finished video sits behind
+a URL that expires. It is downloaded rather than linked, because a page linking
+to it works this afternoon and is a dead embed next week — the worst kind of
+broken, since nobody notices for a month.
+
+**One caveat, stated plainly.** `docs.byteplus.com` was unreachable from the
+machine this was written on, so the request and response shapes are assembled
+from secondary sources rather than read off the official reference. They are
+what every third-party wrapper agrees on, and they are exercised end to end
+against a stand-in — but the first real call is the test. That is why the base
+URL, the model and the path are configuration rather than constants, and why a
+failure surfaces the upstream status and body verbatim instead of a friendly
+message: a shape mismatch should be diagnosable from one attempt.
+
 ### Whose material this is, and the word
 
 Sage hedged. Asked about visitors, or a partner's seat, or anything that
@@ -947,6 +997,7 @@ docker/sites/             one site block per hostname
 docker/conf.d/            optional overlays on the IDE site (extra auth, allowlist)
 docker/workspace/         the IDE image: code-server + node + claude CLI
 agent/                    the agent chat app: server, UI, image
+agent/lib/video.js        Seedance generation: tasks, polling, saving to a project
 landing/                  the launcher page, static and self-contained
 brand/                    the brand homepage, rendered by Caddy from .env
 analytics/                the counter: collection endpoint, store, dashboard

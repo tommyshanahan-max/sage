@@ -305,5 +305,20 @@ Manner
 export const canSeeNumbers =
   ROLE === "owner" || (ROLE === "partner" && process.env.AGENT_NUMBERS === "1");
 
+// ---------------------------------------------------------------------------
+// Video generation, and who may spend on it
+//
+// The owner always; a partner only when AGENT_VIDEO is granted. Same shape as
+// the desk and the numbers, and here the reason is money rather than secrecy:
+// every press costs real cents at the provider, and a seat held by someone else
+// spending on your card is a decision, not a default.
+//
+// The daily cap in lib/video.js applies to whoever is generating, owner
+// included. A ceiling is not distrust; it is the thing that turns a retry loop
+// from an invoice into a message.
+// ---------------------------------------------------------------------------
+export const canMakeVideo =
+  ROLE === "owner" || (ROLE === "partner" && process.env.AGENT_VIDEO === "1");
+
 export const canWriteStories =
   ROLE === "owner" || (ROLE === "partner" && process.env.AGENT_STORIES === "1");
