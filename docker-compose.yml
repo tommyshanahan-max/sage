@@ -225,6 +225,18 @@ services:
       # read as a site refusing to be framed. Defaulted rather than left unset,
       # because the answer for this deployment is not in doubt.
       AGENT_APP_URL: ${TOMSCODING_AGENT_APP_URL:-https://liuxuesheng.help}
+      # Where each project can be seen running, as name=url pairs. Clicking a
+      # project opens its own app rather than the seat's one address — which
+      # could only ever be right for one project. A project with no entry falls
+      # back to AGENT_APP_URL, and the panel says so rather than showing a blank
+      # frame.
+      #
+      #   TOMSCODING_PROJECT_APPS="study-pal=https://liuxuesheng.help"
+      #
+      # A map and not a guess: a dev server started inside that container has no
+      # host port and is not reachable from a browser, so an inferred address
+      # would be exactly the plausible wrong URL that becomes a bug report.
+      AGENT_PROJECT_APPS: ${TOMSCODING_PROJECT_APPS:-}
       # The word the owner's seat asks for when it reaches a decision that is
       # his rather than its own. Not a permission — this seat could already do
       # everything, and a partner seat still cannot whatever it is told, because

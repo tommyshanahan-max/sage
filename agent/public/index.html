@@ -162,6 +162,9 @@
     transition:border-color .14s ease,transform .14s ease;
   }
   .proj:hover{border-color:var(--gold);transform:translateY(-1px)}
+  /* The one being worked on. A filled edge rather than a whole card in gold:
+     the grid still has to read as a grid. */
+  .proj.picked{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
   /* The card is a div now, because it holds two buttons and a button inside a
      button is not a thing. The picker is the whole card; delete sits on top of
      its corner. */
@@ -1404,7 +1407,15 @@ document.getElementById("stage-reload").addEventListener("click", () => {
   frame.src = frame.src;
 });
 stageApp.addEventListener("click", () => {
-  if (appUrl) stageLoad(appUrl, new URL(appUrl).host, true);
+  // The selected project's address, falling back to the seat's own.
+  const url = appFor(picked);
+  if (url) return stageLoad(url, picked || new URL(url).host, true);
+  stageShowProjects();
+  projectsNote(
+    picked
+      ? picked + " has no address to be seen at yet."
+      : "Pick a project and its app opens here."
+  );
 });
 stageProj.addEventListener("click", stageShowProjects);
 
@@ -1422,6 +1433,26 @@ stageProj.addEventListener("click", stageShowProjects);
 // the path is unambiguous and the name demonstrably is not.
 // ---------------------------------------------------------------------------
 let projectsRoot = "";
+// Which project is being worked on. Kept per browser, because it is a view
+// preference and not a fact about the box: two tabs open on two projects is a
+// reasonable thing to want.
+let projects = [];
+let fallbackApp = "";
+let picked = "";
+try { picked = localStorage.getItem("sage_project") || ""; } catch { /* private window */ }
+
+/** Where to look at the selected project.
+ *
+ *  No falling back to the seat's default once something is selected. The
+ *  default is only right when nothing has been picked — showing Study Pal
+ *  because studdy-buddy has no address of its own is precisely the confusion
+ *  the per-project map exists to remove. With nothing selected, the seat's own
+ *  address is still the sensible thing to open. */
+function appFor(name) {
+  if (!name) return fallbackApp || "";
+  const p = projects.find((x) => x.name === name);
+  return (p && p.app) || "";
+}
 
 /** The initials of the name's words, up to three — or its first two letters
  *  when it has only one word. */
@@ -1461,6 +1492,7 @@ function hueOf(name) {
 
 function projectTile(p, mark) {
   const card = el("div", "proj");
+  card.dataset.name = p.name;
   const pick = el("button", "pick");
   pick.type = "button";
 
@@ -1481,18 +1513,8 @@ function projectTile(p, mark) {
   pick.append(when);
 
   pick.title = p.path;
-  pick.addEventListener("click", () => {
-    // The path, not the name. This is the entire point of the feature.
-    input.value = "Let's work in " + p.path + ". ";
-    // On a phone the panel covers the screen, composer included, so a click
-    // that fills a box you cannot see is a click that did nothing.
-    if (window.innerWidth < 960) showStage(false);
-    input.focus();
-    input.setSelectionRange(input.value.length, input.value.length);
-    // The textarea sizes itself on its own input event, which setting .value
-    // does not fire.
-    input.dispatchEvent(new Event("input"));
-  });
+  if (p.name === picked) card.classList.add("picked");
+  pick.addEventListener("click", () => pickProject(p));
 
   const del = el("button", "del", "\u00d7");
   del.type = "button";
@@ -1502,6 +1524,44 @@ function projectTile(p, mark) {
 
   card.append(pick, del);
   return card;
+}
+
+/** Clicking a project opens it: Sage is put to work in that folder, and the
+ *  App tab follows to that project's address.
+ *
+ *  It sends rather than filling the box. "Click a project" should be the whole
+ *  action — a click that types something for you and then waits is a click that
+ *  did half a job. Nothing is sent while a turn is running, so an accidental
+ *  press during one costs nothing. */
+function pickProject(p) {
+  picked = p.name;
+  try { localStorage.setItem("sage_project", picked); } catch { /* private window */ }
+  for (const card of projectsPane.querySelectorAll(".proj")) {
+    card.classList.toggle("picked", card.dataset.name === picked);
+  }
+
+  // The app for this project, if it has one. Done before the turn starts so
+  // the panel changes immediately rather than after a reply.
+  const url = appFor(p.name);
+  if (url) {
+    stageApp.hidden = false;
+    if (window.innerWidth >= 960) stageLoad(url, p.name, true);
+  } else {
+    projectsNote(
+      p.name + " has no address to be seen at. Add one with AGENT_PROJECT_APPS " +
+      "and it will open here."
+    );
+  }
+
+  if (busy) {
+    projectsNote("Sage is mid-turn — " + p.name + " is selected and will be next.");
+    return;
+  }
+  // On a phone the panel is the whole screen, so a reply arriving behind it is
+  // a reply nobody sees.
+  if (window.innerWidth < 960) showStage(false);
+  send("Work in " + p.path + " from now on. Open it, and tell me briefly what it is " +
+       "and what state it's in.");
 }
 
 /** Deleting one, in two steps that are both about the same question: what is
@@ -1589,7 +1649,12 @@ async function loadProjects() {
     if (!res.ok) return;                    // not this seat
     const data = await res.json();
     projectsRoot = data.root || "";
+    projects = data.projects || [];
+    fallbackApp = data.fallbackApp || "";
     stageProj.hidden = false;
+    // An App tab is worth drawing if anything at all has an address, whether
+    // that is the seat's default or one project's own.
+    if (fallbackApp || projects.some((p) => p.app)) stageApp.hidden = false;
 
     // Rebuilt on every load, so the note has to be re-made with it. Its text
     // is carried across: it is usually reporting the thing that caused the

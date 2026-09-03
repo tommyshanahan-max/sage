@@ -503,6 +503,34 @@ async function whatWouldBeLost(dir) {
   return out;
 }
 
+// Where each project can be seen running.
+//
+// One address per seat was never going to answer "open this project's app" —
+// clicking `journey` cannot sensibly show Study Pal. So AGENT_PROJECT_APPS maps
+// a project to its own address, and AGENT_APP_URL stays as the fallback for a
+// project with no entry.
+//
+//   AGENT_PROJECT_APPS="study-pal=https://liuxuesheng.help,journey=https://..."
+//
+// A map rather than a guess. A dev server started inside this container is not
+// reachable from a browser — there are no host ports and only Caddy is exposed
+// — so inferring an address would produce exactly the plausible wrong URL that
+// turns into a bug report.
+const PROJECT_APPS = new Map(
+  String(process.env.AGENT_PROJECT_APPS || "")
+    .split(/[\n,]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const at = entry.indexOf("=");
+      if (at === -1) return null;
+      const name = entry.slice(0, at).trim();
+      const url = entry.slice(at + 1).trim();
+      return name && /^https?:\/\//i.test(url) ? [name, url] : null;
+    })
+    .filter(Boolean)
+);
+
 app.get("/api/projects", async (_req, res) => {
   if (isPartner) return res.status(404).json({ error: "not this seat" });
   try {
@@ -524,7 +552,16 @@ app.get("/api/projects", async (_req, res) => {
         try {
           git = (await stat(path.join(dir, ".git"))).isDirectory();
         } catch { /* not a checkout */ }
-        return { name: e.name, path: dir, git, touchedAt, what: await describe(dir) };
+        return {
+          name: e.name,
+          path: dir,
+          git,
+          touchedAt,
+          what: await describe(dir),
+          // Empty when this project has nowhere to be seen running. The page
+          // says so rather than showing a blank frame.
+          app: PROJECT_APPS.get(e.name) || "",
+        };
       })
     );
 
@@ -532,7 +569,7 @@ app.get("/api/projects", async (_req, res) => {
     // list that reorders itself between visits is one you have to re-read.
     items.sort((a, b) => a.name.localeCompare(b.name));
     res.set("Cache-Control", "no-store");
-    res.json({ root: WORKSPACE, projects: items });
+    res.json({ root: WORKSPACE, projects: items, fallbackApp: APP_URL });
   } catch (err) {
     if (err.code === "ENOENT") return res.json({ root: WORKSPACE, projects: [] });
     console.error("listing projects failed:", err);

@@ -372,10 +372,22 @@ be framed, which is what the note under it says. It now defaults to the live
 app, so it works with no `.env` change; set `TOMSCODING_AGENT_APP_URL` to point
 it somewhere else.
 
-One address per seat. A project tile therefore cannot open "that project's app"
-— there is only one — so clicking a tile names the project and leaves the tab
-alone. Per-project previews would need a name-to-URL map, which is a thing to
-write down rather than infer.
+`TOMSCODING_PROJECT_APPS` maps a project to its own address —
+`study-pal=https://liuxuesheng.help,journey=https://...` — so **App** follows
+whatever project is selected. A project with no entry says so; it does not fall
+back to another project's app, since showing Study Pal because studdy-buddy has
+no address is exactly the confusion the map exists to remove. `AGENT_APP_URL`
+is what opens when nothing is selected.
+
+A map and not a guess. A dev server started inside the agent container has no
+host port and cannot be reached from a browser, so an inferred address would be
+a plausible wrong URL rather than a preview. Making dev servers reachable needs
+a hostname through Caddy, which is a DNS record and a separate piece of work.
+
+Clicking a project **is** the action: it selects the project, sends Sage to work
+in that folder, and swings the App tab to that project's address in one press. A
+click that types something for you and then waits has done half a job. The
+selection is kept per browser, so two tabs can sit on two projects.
 
 ### What is in the workspace
 
