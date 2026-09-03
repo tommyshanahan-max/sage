@@ -431,6 +431,28 @@ commits on no remote, uncommitted edits — and refuses on a first press if it
 finds any, returning what it found so the page can say what would be lost.
 "Are you sure?" about nothing in particular teaches people to press yes.
 
+### The masthead, when a seat carries everything
+
+A partner seat with the numbers granted carries seven controls plus the
+readout, and at the original spacing they wrapped to a second row — which costs
+height on every screen to solve a problem only the fullest seat has. Three
+changes, in order of how much they were missed:
+
+- Everything is a little smaller: the wordmark, the buttons, the gaps, the
+  padding. The readout is a tenth smaller throughout — figures, labels, padding
+  and gaps scaled together, so it reads as the same object rather than a
+  shrunken font in the same box.
+- **New conversation** and **Sign out** moved behind a `⋯` menu. Neither is
+  pressed often — one starts over, one leaves — and a control used twice a day
+  does not earn permanent width beside the ones used every minute.
+- Below 90rem the byline goes, and below 84rem the sparkline; both come back on
+  a wide screen. The sparkline is the one part of the readout whose absence
+  costs nothing, since the figures beside it say the same thing and the full
+  chart is one press away.
+
+One row down to 1280px, where it used to wrap at 1512. Below that it wraps, as
+flex should.
+
 ### What she says she is doing
 
 "working…" is what a progress bar says. The status line's only job is to prove

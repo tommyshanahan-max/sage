@@ -270,53 +270,68 @@
   .said img{max-width:min(100%,18rem);border-radius:10px;display:block;margin-top:.5rem}
 
   /* ---------- masthead ---------- */
+  /* Tight on purpose. A partner seat with the numbers granted carries seven
+     controls plus the readout, and at the old spacing they wrapped to a second
+     row — which costs height on every screen to solve a problem only the widest
+     seat has. Everything here is a little smaller rather than anything being
+     removed. */
   header{
-    flex:none;display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;
-    padding:1.15rem clamp(1rem,4vw,1.8rem);
+    flex:none;display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;
+    padding:.7rem clamp(.8rem,3vw,1.4rem);
     background:var(--card);border-bottom:1px solid var(--rule);
   }
   .mark{
-    font-family:var(--serif);font-size:2.1rem;line-height:1;letter-spacing:-.015em;
+    font-family:var(--serif);font-size:1.75rem;line-height:1;letter-spacing:-.015em;
     color:var(--gold);font-style:italic;
   }
-  .by{font-size:.86rem;color:var(--muted)}
+  .by{font-size:.78rem;color:var(--muted)}
+  /* What goes when the row runs out of width, in the order it can be spared.
+     The byline is a line about who made this rather than a control; the
+     sparkline is the one part of the readout whose absence costs nothing,
+     since the figures beside it say the same thing and the full chart is one
+     press away. Both come back on a wide screen. */
+  @media (max-width:90rem){ .by{display:none} }
+  @media (max-width:84rem){ .spark{display:none} }
 
   /* ---------- today's numbers ----------
      A control, not a caption. This is the number the owner opens the page
      wanting to know, so it is the second thing on the masthead and it is
      obviously pressable. */
+  /* A tenth smaller than it was, everywhere at once: the figures, the labels,
+     the padding and the gaps all scaled together, so it reads as the same
+     object rather than a shrunken font in the same box. */
   .numbers{
-    display:flex;align-items:center;gap:1rem;text-decoration:none;color:inherit;
-    padding:.5rem .95rem .5rem 1.05rem;
+    display:flex;align-items:center;gap:.9rem;text-decoration:none;color:inherit;
+    padding:.45rem .85rem .45rem .95rem;
     background:var(--gold-soft);border:1px solid var(--gold-line);
-    border-radius:11px;transition:transform .14s ease,box-shadow .14s ease;
+    border-radius:10px;transition:transform .14s ease,box-shadow .14s ease;
   }
   .numbers:hover{transform:translateY(-1px);box-shadow:0 2px 10px rgba(0,0,0,.08)}
   .numbers:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   .numbers .pair{display:flex;flex-direction:column;line-height:1}
   .numbers b{
-    font-family:var(--serif);font-size:2rem;font-weight:400;line-height:1;
+    font-family:var(--serif);font-size:1.8rem;font-weight:400;line-height:1;
     font-variant-numeric:tabular-nums;color:var(--gold);
   }
   .numbers .k{
-    font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
-    color:var(--muted);margin-top:.3rem;
+    font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);margin-top:.27rem;
   }
   .numbers .go{
-    font-size:.78rem;color:var(--gold);letter-spacing:.03em;
-    display:flex;align-items:center;gap:.3rem;white-space:nowrap;
+    font-size:.7rem;color:var(--gold);letter-spacing:.03em;
+    display:flex;align-items:center;gap:.27rem;white-space:nowrap;
   }
   /* Two products, kept apart. A hairline and a word each, because a number
      with no subject is worse than no number: "2" and "2" side by side read as
      one figure counted twice. */
   .numbers .cut{width:1px;align-self:stretch;background:var(--gold-line);margin:0 .15rem}
   .numbers .who{
-    font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;
-    color:var(--gold);opacity:.75;margin-bottom:.28rem;
+    font-size:.56rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--gold);opacity:.75;margin-bottom:.25rem;
   }
   .numbers .grp{display:flex;flex-direction:column}
-  .numbers .grp .row{display:flex;gap:1rem}
-  .spark{display:flex;align-items:flex-end;gap:2px;height:2.1rem}
+  .numbers .grp .row{display:flex;gap:.9rem}
+  .spark{display:flex;align-items:flex-end;gap:2px;height:1.9rem}
   .spark i{
     width:4px;background:var(--card);border:1px solid var(--gold-line);
     border-bottom:0;min-height:2px;display:block;border-radius:1px 1px 0 0;
@@ -427,10 +442,25 @@
      the masthead, so it joins the selector instead of getting a second set of
      rules that drift apart. */
   header button,header #stories-link{
-    font:inherit;font-size:.95rem;color:var(--ink-2);background:none;
-    border:1px solid var(--rule);border-radius:8px;padding:.45rem .95rem;cursor:pointer;
+    font:inherit;font-size:.85rem;color:var(--ink-2);background:none;
+    border:1px solid var(--rule);border-radius:8px;padding:.36rem .7rem;cursor:pointer;
+    white-space:nowrap;
   }
   header button:hover,header #stories-link:hover{color:var(--gold);border-color:var(--gold)}
+  #more-toggle{padding:.36rem .55rem;letter-spacing:.05em}
+  .more{position:relative;display:flex}
+  .more-menu{
+    position:absolute;top:calc(100% + .45rem);right:0;z-index:60;
+    display:flex;flex-direction:column;gap:.35rem;padding:.4rem;
+    background:var(--card);border:1px solid var(--rule);border-radius:10px;
+    box-shadow:0 10px 28px rgba(0,0,0,.22);min-width:11rem;
+  }
+  /* display:flex above outranks the browser's own [hidden] rule — the same
+     trap as the writer panel, the analysis block, the microphone and the
+     preview panel. Any element here that sets display needs this beside it. */
+  .more-menu[hidden]{display:none}
+  .more-menu button{width:100%;text-align:left}
+  .more-menu form{display:contents}
   header button:focus-visible,header #stories-link:focus-visible{
     outline:2px solid var(--gold);outline-offset:2px;
   }
@@ -618,10 +648,19 @@
   <button type="button" id="docs-toggle" aria-expanded="false" hidden>Documents</button>
   <button type="button" id="mockups-toggle" aria-expanded="false" hidden>Mockups</button>
   <button type="button" id="stage-toggle" aria-pressed="false" hidden>Preview</button>
-  <button type="button" id="reset">New conversation</button>
-  <form method="post" action="/logout" style="display:contents">
-    <button type="submit">Sign out</button>
-  </form>
+  <!-- The two that were costing a second row. Neither is pressed often — one
+       starts over, one leaves — and a control used twice a day does not earn
+       permanent width next to the ones used every minute. -->
+  <div class="more">
+    <button type="button" id="more-toggle" aria-expanded="false" aria-haspopup="true"
+            aria-label="More" title="More">&#8943;</button>
+    <div class="more-menu" id="more-menu" hidden>
+      <button type="button" id="reset">New conversation</button>
+      <form method="post" action="/logout">
+        <button type="submit">Sign out</button>
+      </form>
+    </div>
+  </div>
 </header>
 
 <!--
@@ -2330,6 +2369,27 @@ document.addEventListener("keydown", (e) => {
 });
 
 loadChanges();
+
+// The overflow menu. Closes on a press outside it and on Escape, because a
+// menu that only closes by pressing the thing that opened it is a menu people
+// leave open.
+const moreToggle = document.getElementById("more-toggle");
+const moreMenu = document.getElementById("more-menu");
+
+function showMore(on) {
+  moreMenu.hidden = !on;
+  moreToggle.setAttribute("aria-expanded", String(on));
+}
+moreToggle.addEventListener("click", (e) => {
+  e.stopPropagation();
+  showMore(moreMenu.hidden);
+});
+document.addEventListener("click", (e) => {
+  if (!moreMenu.hidden && !moreMenu.contains(e.target)) showMore(false);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !moreMenu.hidden) showMore(false);
+});
 
 document.getElementById("reset").addEventListener("click", () => {
   if (busy) return;
