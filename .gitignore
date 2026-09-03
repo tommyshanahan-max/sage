@@ -12,3 +12,9 @@ partner/source/
 partner/source-*/
 partner/source.*/
 mockups/
+
+# npm writes this when dependencies are installed for local testing. The
+# images build from package.json alone, so a committed lock is never used —
+# it only drifts from what actually ships.
+agent/package-lock.json
+analytics/package-lock.json
