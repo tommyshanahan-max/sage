@@ -31,6 +31,10 @@
            "Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB",
            "Microsoft YaHei",sans-serif;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    /* Project tiles. The hue comes from the project's own name, so each one
+       keeps its colour between visits; only the lightness changes with the
+       theme, which is why these are three numbers and not six colours. */
+    --tile-sat:34%; --tile-bg-l:90%; --tile-fg-l:30%;
   }
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
@@ -38,6 +42,7 @@
       --ink-2:#a6b1c2; --muted:#77839a; --rule:#242b36; --gold:#d9a94e;
       --gold-soft:#2a2213; --gold-line:#4b3d1d; --said:#1e242f;
       --down:#e08a72; --down-soft:#2c1a16;
+      --tile-sat:30%; --tile-bg-l:22%; --tile-fg-l:74%;
     }
   }
   :root[data-theme="dark"]{
@@ -45,6 +50,7 @@
     --ink-2:#a6b1c2; --muted:#77839a; --rule:#242b36; --gold:#d9a94e;
     --gold-soft:#2a2213; --gold-line:#4b3d1d; --said:#1e242f;
     --down:#e08a72; --down-soft:#2c1a16;
+    --tile-sat:30%; --tile-bg-l:22%; --tile-fg-l:74%;
   }
 
   *{box-sizing:border-box}
@@ -126,6 +132,55 @@
   .stage-head button:hover,.stage-head a:hover{color:var(--gold);border-color:var(--gold)}
   .stage-head button[aria-pressed="true"]{color:var(--gold);border-color:var(--gold)}
   #frame{flex:1;width:100%;border:0;background:var(--paper)}
+
+  /* ---------- what is in the workspace ----------
+     The panel's other tab, and the whole of it when no app is configured. It
+     exists because a name is a poor identifier for a person and a good one for
+     an agent: "study pal" matched three directories and none of them the one
+     meant, so here they are, and clicking one writes its full path into the
+     message box.
+
+     Both of these need the explicit [hidden] rule. `display:grid` and
+     `display:flex` outrank the UA stylesheet's [hidden], so without it the
+     inactive tab renders on top of the active one — the same trap the writer
+     panel and the microphone hit before this. */
+  #projects{
+    flex:1;min-height:0;overflow-y:auto;padding:.8rem;
+    display:grid;gap:.55rem;align-content:start;
+    grid-template-columns:repeat(auto-fill,minmax(8.5rem,1fr));
+  }
+  #frame[hidden],#projects[hidden]{display:none}
+  .proj{
+    font:inherit;text-align:left;cursor:pointer;
+    background:var(--card-2);border:1px solid var(--rule);border-radius:12px;
+    padding:.6rem .65rem;display:flex;flex-direction:column;gap:.3rem;
+    transition:border-color .14s ease,transform .14s ease;
+  }
+  .proj:hover{border-color:var(--gold);transform:translateY(-1px)}
+  .proj:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .proj .glyph{
+    width:2.1rem;height:2.1rem;border-radius:8px;display:flex;
+    align-items:center;justify-content:center;
+    font-family:var(--serif);font-size:.86rem;letter-spacing:.02em;
+    background:hsl(var(--h) var(--tile-sat) var(--tile-bg-l));
+    color:hsl(var(--h) var(--tile-sat) var(--tile-fg-l));
+  }
+  .proj .pname{
+    font-size:.8rem;color:var(--ink);font-weight:500;line-height:1.25;
+    word-break:break-word;
+  }
+  .proj .pwhat{
+    font-size:.7rem;color:var(--ink-2);line-height:1.35;
+    /* Two lines and then stop. A README first line can be a paragraph, and a
+       tile that grows to fit one drags every tile in its row with it. */
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .proj .pwhen{font-size:.66rem;color:var(--muted);font-variant-numeric:tabular-nums}
+  .proj .pwhen b{color:var(--gold);font-weight:400}
+  .projects-empty{
+    grid-column:1/-1;font-size:.78rem;color:var(--muted);line-height:1.5;margin:0;
+  }
   /* A site may refuse to be framed, and the frame then just sits there empty
      with no event worth trusting. Rather than guess, the way out is always on
      screen: the address, and a link that opens it properly. */
@@ -602,7 +657,8 @@
 -->
 <aside id="stage" hidden aria-label="Preview">
   <div class="stage-head">
-    <button type="button" id="stage-app" aria-pressed="true">App</button>
+    <button type="button" id="stage-app" aria-pressed="true" hidden>App</button>
+    <button type="button" id="stage-projects" aria-pressed="false" hidden>Projects</button>
     <span class="what" id="stage-what"></span>
     <button type="button" id="stage-reload" title="Reload">Reload</button>
     <a id="stage-open" href="#" target="_blank" rel="noopener noreferrer">Open</a>
@@ -610,7 +666,9 @@
   </div>
   <iframe id="frame" title="Preview"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
-  <p class="stage-note">
+  <!-- The other tab: what is actually in the workspace. -->
+  <div id="projects" hidden aria-label="Projects in the workspace"></div>
+  <p class="stage-note" id="stage-note">
     Blank? Some sites refuse to be shown inside another page. Use <b>Open</b>.
   </p>
 </aside>
@@ -1016,6 +1074,11 @@ const frame       = document.getElementById("frame");
 const stageWhat   = document.getElementById("stage-what");
 const stageOpen   = document.getElementById("stage-open");
 const stageApp    = document.getElementById("stage-app");
+const stageProj   = document.getElementById("stage-projects");
+const projectsPane= document.getElementById("projects");
+const stageNote   = document.getElementById("stage-note");
+const stageReload = document.getElementById("stage-reload");
+const stageOpenLink = document.getElementById("stage-open");
 let appUrl = "";
 
 function showStage(on) {
@@ -1031,6 +1094,28 @@ function stageLoad(url, label, isApp) {
   stageWhat.textContent = label;
   stageOpen.href = url;
   stageApp.setAttribute("aria-pressed", String(!!isApp));
+  stageProj.setAttribute("aria-pressed", "false");
+  // Reload and Open act on the frame, so they belong to this tab and not the
+  // other one. Hiding them beats leaving two controls that do nothing.
+  frame.hidden = false;
+  projectsPane.hidden = true;
+  stageNote.hidden = false;
+  stageReload.hidden = false;
+  stageOpenLink.hidden = false;
+  showStage(true);
+}
+
+/** The other tab. Nothing is loaded here — the list is already in the DOM —
+ *  so this only swaps which of the two panes is showing. */
+function stageShowProjects() {
+  frame.hidden = true;
+  projectsPane.hidden = false;
+  stageNote.hidden = true;
+  stageReload.hidden = true;
+  stageOpenLink.hidden = true;
+  stageApp.setAttribute("aria-pressed", "false");
+  stageProj.setAttribute("aria-pressed", "true");
+  stageWhat.textContent = projectsRoot;
   showStage(true);
 }
 
@@ -1211,6 +1296,131 @@ document.getElementById("stage-reload").addEventListener("click", () => {
 stageApp.addEventListener("click", () => {
   if (appUrl) stageLoad(appUrl, new URL(appUrl).host, true);
 });
+stageProj.addEventListener("click", stageShowProjects);
+
+// ---------------------------------------------------------------------------
+// What is in the workspace
+//
+// Asked to "help me edit the study pal app", Sage listed the workspace, found
+// three directories with study in the name, and said none of them was it. That
+// was the right answer and no use to anybody: the person could not see what was
+// there to name it precisely, and could not see that what they wanted was not
+// there at all.
+//
+// So the panel that would otherwise be empty holds the projects. Clicking one
+// writes its **full path** into the message box rather than its name, because
+// the path is unambiguous and the name demonstrably is not.
+// ---------------------------------------------------------------------------
+let projectsRoot = "";
+
+/** The initials of the name's words, up to three — or its first two letters
+ *  when it has only one word. */
+function monogram(name) {
+  const words = name.split(/[-_. ]+/).filter(Boolean);
+  if (words.length >= 2) {
+    return words.slice(0, 3).map((w) => w[0]).join("").toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
+
+/** Initials collide — sage-aesthetic and study-app are both SA — and two tiles
+ *  showing the same letters is the one thing an icon must not do. Resolved
+ *  within the panel, which is the only place it matters: lengthen the loser
+ *  with letters from its own first word until it is distinct. */
+function monograms(names) {
+  const used = new Set();
+  const out = new Map();
+  for (const name of names) {
+    let m = monogram(name);
+    const flat = name.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+    let take = 2;
+    while (used.has(m) && take <= flat.length) m = flat.slice(0, take++);
+    used.add(m);
+    out.set(name, m);
+  }
+  return out;
+}
+
+/** A hue from the name, so a project keeps its colour between visits. Any
+ *  cheap spread will do; this is not a hash anything depends on. */
+function hueOf(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return h;
+}
+
+function projectTile(p, mark) {
+  const card = el("button", "proj");
+  card.type = "button";
+
+  const glyph = el("span", "glyph", mark);
+  glyph.style.setProperty("--h", String(hueOf(p.name)));
+  glyph.setAttribute("aria-hidden", "true");
+  card.append(glyph, el("span", "pname", p.name));
+  if (p.what) card.append(el("span", "pwhat", p.what));
+
+  const when = el("span", "pwhen");
+  when.textContent = whenText(p.touchedAt) || "";
+  if (p.git) {
+    if (when.textContent) when.append(document.createTextNode(" \u00b7 "));
+    const g = document.createElement("b");
+    g.textContent = "git";
+    when.append(g);
+  }
+  card.append(when);
+
+  card.title = p.path;
+  card.addEventListener("click", () => {
+    // The path, not the name. This is the entire point of the feature.
+    input.value = "Let's work in " + p.path + ". ";
+    // On a phone the panel covers the screen, composer included, so a click
+    // that fills a box you cannot see is a click that did nothing.
+    if (window.innerWidth < 960) showStage(false);
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+    // The textarea sizes itself on its own input event, which setting .value
+    // does not fire.
+    input.dispatchEvent(new Event("input"));
+  });
+  return card;
+}
+
+async function loadProjects() {
+  try {
+    const res = await fetch("/api/projects");
+    if (!res.ok) return;                    // not this seat
+    const data = await res.json();
+    projectsRoot = data.root || "";
+    stageProj.hidden = false;
+
+    if (!data.projects.length) {
+      projectsPane.replaceChildren(
+        el("p", "projects-empty",
+          "Nothing in " + projectsRoot + " yet. Clone a repository into it from the " +
+          "IDE terminal and it will show up here.")
+      );
+    } else {
+      const marks = monograms(data.projects.map((p) => p.name));
+      projectsPane.replaceChildren(
+        ...data.projects.map((p) => projectTile(p, marks.get(p.name)))
+      );
+    }
+
+    // With no app configured the panel had no reason to exist and was never
+    // drawn. Now it has one, so it opens on this tab instead.
+    if (!appUrl) {
+      stageToggle.hidden = false;
+      stageToggle.textContent = "Projects";
+      let want = window.innerWidth >= 960;
+      try {
+        const saved = localStorage.getItem("sage_stage");
+        if (saved !== null) want = saved === "1";
+      } catch { /* private window */ }
+      stageShowProjects();
+      showStage(want);
+    }
+  } catch { /* a side panel; never an error on screen */ }
+}
 
 let seatRole = "owner";
 const mockupsToggle = document.getElementById("mockups-toggle");
@@ -1224,6 +1434,7 @@ fetch("/api/seat")
     appUrl = d.appUrl || "";
     if (appUrl) {
       stageToggle.hidden = false;
+      stageApp.hidden = false;
       stageLoad(appUrl, new URL(appUrl).host, true);
       // Open by default on a wide screen, because a preview nobody notices is
       // a preview nobody uses. Closed on a phone, where it would take the
@@ -1238,6 +1449,9 @@ fetch("/api/seat")
       // made last week as if it had just appeared.
       readMockups().then((m) => { if (m) knownMockups = m; });
     }
+    // The workspace list. After appUrl is known, because with an app configured
+    // this is the panel's second tab, and without one it is the whole panel.
+    loadProjects();
     // The story desk. Owner seat only — the routes behind it check the same
     // thing, so this only hides a door that is already locked.
     // The desk is a grant now, not a role — a partner seat can be given it and

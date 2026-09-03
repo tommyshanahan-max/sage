@@ -363,6 +363,28 @@ Naming follows Anthropic's SDK branding guidance, which permits
 "{YourAgentName} powered by Claude" and forbids presenting a product as Claude
 Code. The masthead says exactly that.
 
+### What is in the workspace
+
+Asked to "help me edit the study pal app", Sage listed the workspace, found
+three directories with *study* in the name, said none of them was obviously it,
+and stopped. That was the right answer and no use to anybody: there was no way
+to see what was there in order to name it precisely, and no way to see that the
+thing being asked about was not in the workspace at all.
+
+So the preview panel has a second tab, **Projects** — and when no
+`AGENT_APP_URL` is configured it is the whole panel rather than an empty pane.
+Every top-level directory in the workspace as a tile: a monogram in a colour
+taken from the name, so a project looks the same on every visit; whether it is
+a git checkout; when it was last touched; and its own one-line description,
+read from `package.json` or the first heading of its README.
+
+Clicking a tile writes the project's **full path** into the message box and
+puts the cursor after it. That is the point of the whole feature — the path is
+unambiguous and the name demonstrably is not.
+
+Owner seat only. A partner has one project, read-only, already on their screen;
+that the rest of the workspace exists is not something that seat is told.
+
 ### Whose material this is, and the word
 
 Sage hedged. Asked about visitors, or a partner's seat, or anything that

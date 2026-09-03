@@ -407,6 +407,81 @@ app.get("/api/mockups", async (_req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// What is in the workspace
+//
+// This exists because of a real failure. Asked to "help me edit the study pal
+// app", Sage listed the workspace, found three directories with study in the
+// name and none of them the one meant, and said so — correctly, and unhelpfully.
+// The person could not see what was there to name it precisely, and neither
+// could they see that the thing they wanted was not there at all.
+//
+// So: the projects, on screen, in the panel that would otherwise be empty. A
+// name is a poor identifier for a person and a good one for an agent, which is
+// why clicking a project writes its full path into the message box rather than
+// its name.
+//
+// Owner seat only. A partner sees one project, read-only, and it is already
+// on their screen — the point of that seat is that the rest of the workspace
+// does not exist for it.
+// ---------------------------------------------------------------------------
+
+/** A one-line description, if the project happens to carry one. Best effort:
+ *  a project with neither file is listed with no subtitle, which is fine. */
+async function describe(dir) {
+  try {
+    const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
+    const desc = typeof pkg.description === "string" ? pkg.description.trim() : "";
+    if (desc) return desc.slice(0, 120);
+  } catch { /* no package.json, or not JSON */ }
+  try {
+    // The first heading of the README, which is what a repository calls itself.
+    // Read a slice rather than the file: a README can be the largest thing in
+    // the project and only its first line is wanted.
+    const handle = await readFile(path.join(dir, "README.md"), "utf8");
+    const head = handle.split("\n").find((l) => /^#\s+\S/.test(l));
+    if (head) return head.replace(/^#\s+/, "").trim().slice(0, 120);
+  } catch { /* no README */ }
+  return "";
+}
+
+app.get("/api/projects", async (_req, res) => {
+  if (isPartner) return res.status(404).json({ error: "not this seat" });
+  try {
+    const entries = await readdir(WORKSPACE, { withFileTypes: true });
+    const dirs = entries
+      // Dotfiles are configuration, not projects, and a symlink out of the
+      // workspace is not a project either.
+      .filter((e) => e.isDirectory() && !e.name.startsWith("."))
+      .slice(0, 80);
+
+    const items = await Promise.all(
+      dirs.map(async (e) => {
+        const dir = path.join(WORKSPACE, e.name);
+        let touchedAt = "";
+        let git = false;
+        try {
+          touchedAt = (await stat(dir)).mtime.toISOString();
+        } catch { /* raced with a delete */ }
+        try {
+          git = (await stat(path.join(dir, ".git"))).isDirectory();
+        } catch { /* not a checkout */ }
+        return { name: e.name, path: dir, git, touchedAt, what: await describe(dir) };
+      })
+    );
+
+    // Alphabetical, not by date. This is a list you look a name up in, and a
+    // list that reorders itself between visits is one you have to re-read.
+    items.sort((a, b) => a.name.localeCompare(b.name));
+    res.set("Cache-Control", "no-store");
+    res.json({ root: WORKSPACE, projects: items });
+  } catch (err) {
+    if (err.code === "ENOENT") return res.json({ root: WORKSPACE, projects: [] });
+    console.error("listing projects failed:", err);
+    res.status(500).json({ error: "could not read the workspace" });
+  }
+});
+
 app.get("/mockups/:name", async (req, res) => {
   if (!isPartner) return res.status(404).send("Not found");
   const { name } = req.params;
