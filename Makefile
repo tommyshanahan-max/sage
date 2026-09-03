@@ -48,11 +48,12 @@ up: ## Build if needed and start everything
 	  && { echo "analytics is enabled but TOMSCODING_STATS_SITES is empty."; \
 	       echo "Nothing would be counted: a page whose origin is not listed is ignored."; \
 	       exit 1; } || true
-	@# Stamp what is being deployed before deploying it, so the agent's copy
-	@# of "recent changes" is the commits that are actually running. Never
-	@# fatal: a box without python3, or a tarball instead of a checkout, should
-	@# still deploy.
-	-@python3 scripts/whats-new.py || true
+	@# Stamp what is being deployed before deploying it, so the agent's copy of
+	@# "recent changes" is the commits that are actually running. Not fatal — a
+	@# tarball instead of a checkout should still deploy — but it says so out
+	@# loud when it fails. The first version of this swallowed its own error and
+	@# wrote nothing on the box for a whole deploy without anyone noticing.
+	@sh scripts/whats-new.sh 	  || echo "note: could not stamp the commit list; Sage will not know what changed"
 	$(COMPOSE) up -d --build
 	echo "up. https://$$(grep -E '^TOMSCODING_DOMAIN=' .env | cut -d= -f2-)"
 
@@ -132,7 +133,7 @@ whats-new: ## Tell the agent what changed, without a restart
 	@# `make up` does this as part of a deploy. Run it on its own after a
 	@# `git pull` when you want Sage current but have no reason to rebuild:
 	@# the file is re-read on its next turn, so nothing needs restarting.
-	python3 scripts/whats-new.py
+	sh scripts/whats-new.sh
 
 check: ## Verify every Caddy site resolves to a usable, unique address
 	python3 scripts/check-sites.py

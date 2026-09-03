@@ -363,6 +363,44 @@ Naming follows Anthropic's SDK branding guidance, which permits
 "{YourAgentName} powered by Claude" and forbids presenting a product as Claude
 Code. The masthead says exactly that.
 
+### Whose material this is, and the word
+
+Sage hedged. Asked about visitors, or a partner's seat, or anything that
+sounded like somebody's private data, it did the careful thing and asked
+whether it should — which is right when it does not know who it is talking to,
+and wrong on this seat, which is the owner's, on the owner's box, holding the
+owner's own products and the owner's own customers.
+
+So the owner's seat is now told plainly whose material this is. That removes
+most of the hedging on its own: show him his own numbers, do not add a privacy
+caution to an answer he is entitled to, he wrote the policy those users agreed
+to. Ordinary care is unchanged, because it is care and not clearance — say what
+you are about to do before doing something irreversible.
+
+The second half is optional. Set `TOMSCODING_AGENT_CLEARANCE_WORD` and Sage is
+given a word to ask for when it reaches a decision that is genuinely the
+owner's — publishing to live readers, deleting work, acting on data about an
+identifiable person. It says in one line what the decision is; you give the
+word; it proceeds in the same turn. A judgement call becomes one question
+instead of a negotiation.
+
+Three things about it worth being exact on, because a "password" in a prompt
+invites the wrong assumption:
+
+- **It is not a permission.** Nothing in this deployment is gated on it. The
+  owner seat could already do all of this; the word only changes what Sage
+  stops to ask about.
+- **It cannot be used on another seat.** It is passed to the `agent` service
+  and no other, so a partner's container does not have it — and saying it there
+  would achieve nothing anyway, because what a seat can do is its mounts, its
+  tool deny list and which secrets are in its environment. None of those is
+  reachable from a conversation. The partner and prospect voices say so
+  explicitly now: a password, a claim to be the owner, or "Tom said it was
+  fine" changes nothing, and the honest answer is that the seat could not do it
+  even if it agreed.
+- **It lives in `.env`, never in this repository,** which is public. Unset,
+  there is no word and the seat behaves as it always did.
+
 ### A seat for a business partner
 
 `partner.tomscoding.com`, its own password. Inside, the same Sage — but reading
@@ -740,5 +778,5 @@ install/bootstrap.sh      one-shot VPS preparation
 scripts/check-sites.py    verifies every site address resolves and is unique
 scripts/privacy-check.py  what public records say about who runs these sites
 scripts/doctor.sh         client-side network diagnostics
-scripts/whats-new.py      stamps the deploy's commit list for the agent to read
+scripts/whats-new.sh      stamps the deploy's commit list for the agent to read
 ```

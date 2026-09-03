@@ -10,7 +10,7 @@
 // in it, holding every secret on the box. So `make up` writes a digest —
 // commit subjects, dates, changed paths, nothing sensitive — and compose
 // mounts only the directory that digest is in, read-only. See
-// scripts/whats-new.py.
+// scripts/whats-new.sh.
 //
 // Unset AGENT_PLATFORM_DIR and every function here returns empty, which is
 // exactly how the agent behaved before this existed.

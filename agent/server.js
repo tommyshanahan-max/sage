@@ -33,6 +33,7 @@ import {
   PROJECT_LABEL,
   PARTNER_TOOLS,
   canWriteStories,
+  OWNER_CLEARANCE,
   PARTNER_DENIED,
   PARTNER_VOICE,
   PROSPECT_VOICE,
@@ -848,7 +849,7 @@ app.post("/api/chat", express.json({ limit: "24mb" }), async (req, res) => {
         ? PROSPECT_VOICE
         : isPartner
           ? PARTNER_VOICE
-          : SAGE_VOICE + platformBrief,
+          : SAGE_VOICE + OWNER_CLEARANCE + platformBrief,
     },
     // Every tool runs without stopping to ask, on the same files the editor
     // opens. Git is what protects them — see the README.

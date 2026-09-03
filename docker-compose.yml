@@ -219,6 +219,14 @@ services:
       # locks, because this one is easy to copy-paste into the wrong place.
       STUDYPAL_ADMIN_KEY: ${TOMSCODING_STUDYPAL_KEY:-}
       STUDYPAL_BASE: ${TOMSCODING_PARTNER_APP_URL:-https://liuxuesheng.help}
+      # The word the owner's seat asks for when it reaches a decision that is
+      # his rather than its own. Not a permission — this seat could already do
+      # everything, and a partner seat still cannot whatever it is told, because
+      # the limits are mounts and a tool deny list. It exists so a judgement
+      # call is one question instead of a negotiation. Deliberately NOT on the
+      # partner seats below: they run the same image, and a seat that could be
+      # talked into another seat's access is the one thing this design is for.
+      AGENT_CLEARANCE_WORD: ${TOMSCODING_AGENT_CLEARANCE_WORD:-}
       # Where the deploy leaves its account of what changed. `make up` writes
       # .platform-state/changes.json and mounts that directory below, so the
       # agent knows the platform's recent history instead of waking up with no
