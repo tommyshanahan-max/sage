@@ -249,7 +249,11 @@ services:
       # side should be a line in .env, not a deploy.
       ARK_API_KEY: ${TOMSCODING_ARK_API_KEY:-}
       ARK_BASE: ${TOMSCODING_ARK_BASE:-https://ark.ap-southeast.bytepluses.com}
-      ARK_VIDEO_MODEL: ${TOMSCODING_ARK_VIDEO_MODEL:-seedance-1-0-lite-t2v-250428}
+      # An endpoint id (`ep-m-…`), not a model name. A model name is refused even
+      # when the console says the model is activated — see env.tomscoding for
+      # the two error messages and where to find the endpoint. No default,
+      # because a wrong default here looks like a working configuration.
+      ARK_VIDEO_MODEL: ${TOMSCODING_ARK_VIDEO_MODEL:-}
       # Job records and the day's counter. The videos themselves are written
       # into the project they are for, not here.
       AGENT_VIDEO_DIR: /home/coder/.sage/video
@@ -360,7 +364,7 @@ services:
       AGENT_VIDEO: ${TOMSCODING_PARTNER_VIDEO:-}
       ARK_API_KEY: ${TOMSCODING_PARTNER_VIDEO:+${TOMSCODING_ARK_API_KEY}}
       ARK_BASE: ${TOMSCODING_ARK_BASE:-https://ark.ap-southeast.bytepluses.com}
-      ARK_VIDEO_MODEL: ${TOMSCODING_ARK_VIDEO_MODEL:-seedance-1-0-lite-t2v-250428}
+      ARK_VIDEO_MODEL: ${TOMSCODING_ARK_VIDEO_MODEL:-}
       # Its own state directory and its own ceiling — a partner's clips do not
       # come out of the owner's day.
       AGENT_VIDEO_DIR: /work/mockups/.video

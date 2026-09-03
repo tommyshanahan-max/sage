@@ -731,7 +731,10 @@ async function videoTarget(name) {
 app.get("/api/video", async (_req, res) => {
   if (!canMakeVideo) return res.status(404).json({ error: "not this seat" });
   if (!video.configured()) {
-    return res.json({ configured: false, reason: "ARK_API_KEY is not set on this box" });
+    return res.json({
+      configured: false,
+      reason: "ARK_API_KEY and ARK_VIDEO_MODEL (an ep-m-\u2026 endpoint id) must both be set on this box",
+    });
   }
   res.set("Cache-Control", "no-store");
   res.json({
@@ -744,7 +747,9 @@ app.get("/api/video", async (_req, res) => {
 
 app.post("/api/video", async (req, res) => {
   if (!canMakeVideo) return res.status(404).json({ error: "not this seat" });
-  if (!video.configured()) return res.status(503).json({ error: "ARK_API_KEY is not set on this box" });
+  if (!video.configured()) {
+    return res.status(503).json({ error: "video is not configured on this box" });
+  }
 
   const prompt = String(req.body?.prompt || "").trim();
   if (prompt.length < 4) return res.status(400).json({ error: "say what the shot is" });

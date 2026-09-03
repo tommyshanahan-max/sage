@@ -41,13 +41,24 @@ const KEY = (process.env.ARK_API_KEY || "").trim();
 // ap-southeast is BytePlus's international region. The mainland equivalent is
 // https://ark.cn-beijing.volces.com — same paths, different account system.
 const BASE = (process.env.ARK_BASE || "https://ark.ap-southeast.bytepluses.com").replace(/\/+$/, "");
-const MODEL = process.env.ARK_VIDEO_MODEL || "seedance-1-0-lite-t2v-250428";
+// An endpoint id, `ep-m-…`, and not a model name.
+//
+// Both forms of the model name are refused, and neither refusal says why:
+// with its version suffix Ark answers "has not activated the model", without
+// one "does not exist" — and both appear while the console shows the model
+// Activated. Activating a model creates a preset inference endpoint, and the
+// endpoint is what the API resolves. It is listed under Inference -> Online
+// inference, beneath the model id.
+//
+// No fallback value on purpose. A default that looks plausible and is wrong
+// costs longer to diagnose than an empty one, which simply says it is unset.
+const MODEL = (process.env.ARK_VIDEO_MODEL || "").trim();
 
 /** Where job records and the day's counter live. Not the videos themselves —
  *  those go into the project they belong to, which is the whole point. */
 const STATE_DIR = process.env.AGENT_VIDEO_DIR || "";
 
-export const configured = () => Boolean(KEY && STATE_DIR);
+export const configured = () => Boolean(KEY && MODEL && STATE_DIR);
 export const model = () => MODEL;
 
 // A ceiling, per day, per seat. Video generation is the one thing here that
