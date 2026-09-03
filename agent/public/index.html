@@ -816,7 +816,7 @@ function workBlock(wrap, body) {
 
   const d = el("details", "work");
   const s = el("summary");
-  s.append(el("b", "count", "Working"), el("code", "doing", ""));
+  s.append(el("b", "count", lastMood || "working"), el("code", "doing", ""));
   const list = el("div", "steps");
   d.append(s, list);
   d._list = list;
@@ -861,10 +861,64 @@ function addTool(wrap, body, name, inputObj) {
   return d;
 }
 
+// What Sage says she is doing.
+//
+// "working…" is what a progress bar says. These are what a person says, and the
+// only thing the line has to do is prove the page has not died — so it may as
+// well have a voice. Edit the list; nothing depends on the contents.
+const MOODS = [
+  "just chilling",
+  "astral travelling",
+  "smoko break",
+  "spacing out",
+  "off with the fairies",
+  "having a think",
+  "down a rabbit hole",
+  "consulting the oracle",
+  "somewhere else entirely",
+  "in the zone",
+];
+
+// A different one each turn, and a new one every so often within a long turn —
+// a line that never changes for two minutes reads as a page that has hung,
+// which is the one thing this is here to disprove. Slow enough not to be a
+// fidget.
+const MOOD_EVERY_MS = 9000;
+let moodTimer = null;
+let lastMood = "";
+
+function mood() {
+  // Never the same twice running: the point is that it moved.
+  let pick = lastMood;
+  while (pick === lastMood && MOODS.length > 1) {
+    pick = MOODS[Math.floor(Math.random() * MOODS.length)];
+  }
+  lastMood = pick;
+  return pick;
+}
+
+/** Sets the masthead line, and the work block's if there is one. */
+function sayMood() {
+  const m = mood();
+  status.textContent = m;
+  const count = document.querySelector("details.work:not(.done) > summary .count");
+  if (count) count.textContent = m;
+}
+
+/** Busy with no label runs the moods. A label given explicitly is used as-is —
+ *  "opening…" while a past conversation loads is telling you something a mood
+ *  would not. */
 function setBusy(state, label) {
   busy = state;
   sendBtn.disabled = state;
-  status.textContent = label;
+  clearInterval(moodTimer);
+  moodTimer = null;
+  if (state && !label) {
+    sayMood();
+    moodTimer = setInterval(sayMood, MOOD_EVERY_MS);
+  } else {
+    status.textContent = label || "";
+  }
 }
 
 async function send(prompt) {
@@ -876,7 +930,7 @@ async function send(prompt) {
 
   addYou(prompt, pictures);
   const { wrap, body } = startSage();
-  setBusy(true, "working…");
+  setBusy(true);
 
   // Tool results arrive separately from the calls they belong to, so keep a
   // map from tool_use id to its <details> element to attach the output.

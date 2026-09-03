@@ -431,6 +431,18 @@ commits on no remote, uncommitted edits — and refuses on a first press if it
 finds any, returning what it found so the page can say what would be lost.
 "Are you sure?" about nothing in particular teaches people to press yes.
 
+### What she says she is doing
+
+"working…" is what a progress bar says. The status line's only job is to prove
+the page has not died, so it may as well have a voice: *smoko break*, *astral
+travelling*, *spacing out*, *off with the fairies*. A different one each turn,
+and a new one every nine seconds inside a long turn — a line that has not moved
+in two minutes reads as a hang, which is the one thing it exists to disprove.
+Never the same twice running, because the point is that it moved.
+
+The list is `MOODS` at the top of the page's script. Nothing depends on what is
+in it; add your own.
+
 ### One line instead of ten
 
 A turn that read six files and ran four commands used to put ten rows of paths
