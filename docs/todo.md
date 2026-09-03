@@ -54,6 +54,53 @@ Treat any secret that has been in one as public.
 **Done looks like.** New key generated on Study Pal's side, `.env` updated,
 `make up`, old key rejected by the app.
 
+### Get the microdrama repo onto GitHub
+
+**Where this got to, 4 September, ~1am.** `microdrama` and `studybox` do not
+exist on GitHub — `github.com/tommyshanahan-max?tab=repositories` lists only
+sage, study-pal, journey, sage-aesthetic and THE-MESS. Several dead ends chased
+this as a permissions problem: the Claude app's repository list, four
+fine-grained tokens, `make partner-sync` failing with "Repository not found".
+None of that was the cause and none of it needs changing.
+
+**The twelve-episode story structure exists**, but on the Mac rather than on
+GitHub — most likely inside the Study Pal working copy, which `HANDOFF.md` puts
+at `~/Downloads/study-pal`. A `git remote add` run in the home folder failed
+with "not a git repository"; it has to run in the folder that holds the work.
+
+**Done looks like,** in order:
+
+1. `github.com/new` → `microdrama`, private, **tick "Add a README file"**. The
+   README matters: it creates `main`, and `make partner-sync` clones
+   `--branch main`, so an empty repo fails even once it exists.
+2. Find the folder with the story-structure work and push it there.
+3. Add `microdrama` to the Claude GitHub app's repository list, so a session can
+   write to it.
+4. Then, in one go: `make partner-sync` gives Brendan the repo, and cloning it
+   into `/home/coder/projects` puts the icon in Sage next to study-pal.
+
+`.env` on the box already names `microdrama` in `TOMSCODING_PARTNER_REPOS`, so
+`make partner-sync` will keep failing until step 1 is done. The failure is clean
+— the script builds the new snapshot in a temporary directory and only swaps it
+in at the end, so Brendan's existing copy is untouched.
+
+### Seedance belongs to microdrama, not to the platform
+
+The Seedance client went into the platform first, which is the wrong shape: Sage
+should be a client of a product, the way the story desk proxies to Study Pal's
+own API rather than reimplementing it. As built, the ByteDance key would sit in
+the platform's `.env` and the microdrama app itself could not generate anything
+— only a person sitting in a seat could.
+
+It is inert as it stands: without `TOMSCODING_ARK_API_KEY` there is no button,
+the page 404s to a partner, and the routes refuse. So nothing is running and
+nothing needs undoing in a hurry.
+
+**Done looks like:** `agent/lib/video.js` moves into the microdrama repo, which
+owns the key, the model, the prompt format and the spend ceiling, and exposes an
+admin API in the same shape as Study Pal's (`x-admin-secret`). The platform
+keeps the page and gains a `/md/*` proxy in place of the client.
+
 ## Soon
 
 ### Backups of the box
