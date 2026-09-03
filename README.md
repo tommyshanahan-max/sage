@@ -867,6 +867,7 @@ Raw logs are pruned at `TOMSCODING_STATS_RETAIN_DAYS`. Summaries are kept.
 - [`docs/architecture.md`](docs/architecture.md) — what each piece does and why
 - [`docs/networking.md`](docs/networking.md) — keeping the link usable, and what to do when it isn't
 - [`docs/security.md`](docs/security.md) — this box has a public shell on it; read this
+- [`docs/todo.md`](docs/todo.md) — what is known to need doing, and what it costs to leave
 
 ## Layout
 
@@ -886,4 +887,5 @@ scripts/check-sites.py    verifies every site address resolves and is unique
 scripts/privacy-check.py  what public records say about who runs these sites
 scripts/doctor.sh         client-side network diagnostics
 scripts/whats-new.sh      stamps the deploy's commit list for the agent to read
+docs/todo.md              open items, with what each one costs if left
 ```
