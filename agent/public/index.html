@@ -116,6 +116,12 @@
     border-left:1px solid var(--rule);background:var(--card);
     display:flex;flex-direction:column;
   }
+  /* Close did nothing without this. `display:flex` above outranks the browser's
+     own [hidden] rule, so setting .hidden on the panel had no effect at all —
+     the fourth time this file has hit the same trap, after the writer panel,
+     the analysis block and the microphone. Any element here that sets display
+     needs its own [hidden] rule beside it. */
+  #stage[hidden]{display:none}
   .stage-head{
     flex:none;display:flex;align-items:center;gap:.5rem;
     padding:.5rem .7rem;border-bottom:1px solid var(--rule);

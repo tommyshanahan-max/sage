@@ -363,6 +363,20 @@ Naming follows Anthropic's SDK branding guidance, which permits
 "{YourAgentName} powered by Claude" and forbids presenting a product as Claude
 Code. The masthead says exactly that.
 
+### The live app beside the conversation
+
+`AGENT_APP_URL` puts the running application in the panel next to the chat. It
+was never set on the owner's seat — the tab was drawn unconditionally, `appUrl`
+was always empty, and the blank frame that produced read as a site refusing to
+be framed, which is what the note under it says. It now defaults to the live
+app, so it works with no `.env` change; set `TOMSCODING_AGENT_APP_URL` to point
+it somewhere else.
+
+One address per seat. A project tile therefore cannot open "that project's app"
+— there is only one — so clicking a tile names the project and leaves the tab
+alone. Per-project previews would need a name-to-URL map, which is a thing to
+write down rather than infer.
+
 ### What is in the workspace
 
 Asked to "help me edit the study pal app", Sage listed the workspace, found
