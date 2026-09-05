@@ -37,9 +37,6 @@ COPY server.js ./
 COPY lib ./lib
 COPY public ./public
 
-# Compose mounts the IDE's home volume and points AGENT_WORKSPACE at the
-# projects directory inside it, so the agent and the editor see one set of
-# files. This default only applies if the container is run without that.
 # Social's shared store, created here rather than left to Docker.
 #
 # Compose mounts a named volume at this path and runs these containers as
@@ -51,6 +48,9 @@ COPY public ./public
 # image.
 RUN mkdir -p /srv/social && chown 1000:1000 /srv/social
 
+# Compose mounts the IDE's home volume and points AGENT_WORKSPACE at the
+# projects directory inside it, so the agent and the editor see one set of
+# files. This default only applies if the container is run without that.
 ENV AGENT_WORKSPACE=/workspace \
     NODE_ENV=production \
     PORT=3000
