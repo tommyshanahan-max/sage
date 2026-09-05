@@ -98,6 +98,11 @@ export function clean(raw) {
       // pretending it was never sent loses the only record of it.
       to: known.has(String(s.to)) ? String(s.to) : "",
       points: String(s.points || "").slice(0, 80),
+      // The uploaded file, if there is one. Checked against the shape this
+      // server generates rather than kept as written: it goes into a URL, and
+      // an id from a file somebody edited by hand is an id that could point
+      // anywhere.
+      media: /^[a-f0-9]{20}\.[a-z0-9]{2,4}$/.test(String(s.media || "")) ? String(s.media) : "",
       passedOn: Boolean(s.passedOn),
       at: String(s.at || ""),
     });

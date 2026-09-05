@@ -292,7 +292,7 @@ const MAX_IMAGES = 4;
 // A cover is an image and does not fit the small limit either. Named
 // individually rather than raised for everything: a route that accepts
 // megabytes is a route worth aiming at, so only the two that need them get them.
-const BIG_BODY = new Set(["/api/chat", "/sp/cover"]);
+const BIG_BODY = new Set(["/api/chat", "/sp/cover", "/api/social/media"]);
 app.use((req, res, next) =>
   BIG_BODY.has(req.path) ? next() : express.json({ limit: "1mb" })(req, res, next));
 // The story desk's page, before the static handler that would otherwise serve
@@ -864,9 +864,51 @@ app.get("/api/video/:id/file", async (req, res) => {
 // series.json — a project's relationships travel with the project, and there
 // is no global list to keep in step with anything.
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Where the file lives, and why it is not beside the code
+//
+// It was, and that was wrong twice over.
+//
+// A partner's snapshot is mounted read-only — that is the isolation control,
+// not an inconvenience — so a file written into the project directory could
+// not be written at all from the seat this panel was built for. It opened,
+// looked correct, and failed on the first save.
+//
+// And the two seats do not agree on what the project is called. The owner has
+// study-pal; the partner has the same product mounted as app. Keyed by
+// directory they would keep two files about one product and each would look
+// complete.
+//
+// So it lives in a volume both seats share, keyed by the app it is about
+// rather than by the folder it is opened from — the host of the project's
+// address, which is the one name both seats already agree on. A project with
+// no address falls back to its directory name, which is exactly the case where
+// there is no second seat to disagree with.
+// ---------------------------------------------------------------------------
+const SOCIAL_DIR = process.env.AGENT_SOCIAL_DIR || "";
 const SOCIAL_FILE = "social.json";
 
+/** A filename that is the same on every seat looking at the same product. */
+function socialKey(name) {
+  const mapped = PROJECT_APPS.get(String(name || "")) || APP_URL || "";
+  if (mapped) {
+    try {
+      // Host only: a trailing slash or a path would make one product look like
+      // two, and a host cannot contain a path separator.
+      const host = new URL(mapped).host.toLowerCase();
+      if (/^[a-z0-9.:-]{1,80}$/.test(host)) return host;
+    } catch { /* fall through to the directory name */ }
+  }
+  return okName(name) ? String(name) : "";
+}
+
 function socialPath(name) {
+  if (SOCIAL_DIR) {
+    const key = socialKey(name);
+    return key ? path.join(SOCIAL_DIR, key + ".json") : null;
+  }
+  // No shared directory configured: the old behaviour, beside the project.
+  // Kept so a deployment that has not added the volume still works, single-seat.
   const dir = projectPath(String(name || ""));
   return dir ? path.join(dir, SOCIAL_FILE) : null;
 }
@@ -1027,6 +1069,97 @@ app.get("/api/social", async (req, res) => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// The file itself
+//
+// A share is usually a thing rather than a sentence — a clip, a poster, a
+// screenshot — and until now the panel could only name what kind of thing it
+// was. Recording "Clip" beside a caption and keeping no clip is a filing
+// cabinet with the documents left out.
+//
+// Stored in the same shared volume as the rest of Social, so both seats see
+// one library, and served back through this server rather than from a public
+// path: these are unreleased drafts as often as they are anything, and a
+// guessable URL on the open internet is not where they belong.
+//
+// Bounded on purpose. Type is checked against a short list rather than trusted
+// from the client, the extension is derived from that list rather than from
+// the filename, and the id is generated here — three ways a filename could
+// otherwise decide where a file lands.
+// ---------------------------------------------------------------------------
+const MEDIA_KINDS = new Map([
+  ["image/jpeg", "jpg"], ["image/png", "png"], ["image/gif", "gif"],
+  ["image/webp", "webp"], ["video/mp4", "mp4"], ["video/quicktime", "mov"],
+  ["video/webm", "webm"],
+]);
+const MEDIA_MAX = 25 * 1024 * 1024;
+
+const mediaDir = (name) => {
+  const key = socialKey(name);
+  return SOCIAL_DIR && key ? path.join(SOCIAL_DIR, "media", key) : null;
+};
+
+app.post("/api/social/media", express.json({ limit: "36mb" }), async (req, res) => {
+  if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
+  const dir = mediaDir(req.query.project);
+  if (!dir) {
+    return res.status(400).json({
+      error: SOCIAL_DIR ? "pick a project" : "no shared store on this box (AGENT_SOCIAL_DIR)",
+    });
+  }
+
+  const type = String(req.body?.type || "");
+  const ext = MEDIA_KINDS.get(type);
+  if (!ext) {
+    return res.status(415).json({
+      error: "that file type is not accepted — images and mp4, mov or webm video",
+    });
+  }
+  // Base64 with no data-URL prefix, the same shape /sp/cover takes.
+  const raw = String(req.body?.data || "");
+  if (!raw) return res.status(400).json({ error: "no file" });
+  let buf;
+  try { buf = Buffer.from(raw, "base64"); }
+  catch { return res.status(400).json({ error: "could not read the file" }); }
+  if (!buf.length) return res.status(400).json({ error: "the file is empty" });
+  if (buf.length > MEDIA_MAX) {
+    return res.status(413).json({ error: "too big — 25 MB is the limit" });
+  }
+
+  const id = randomUUID().replace(/-/g, "").slice(0, 20) + "." + ext;
+  try {
+    await mkdir(dir, { recursive: true });
+    const file = path.join(dir, id);
+    await writeFile(file + ".tmp", buf);
+    await rename(file + ".tmp", file);
+    res.json({ id, type, bytes: buf.length });
+  } catch (err) {
+    res.status(500).json({ error: "could not store it: " + (err.code || err.message) });
+  }
+});
+
+app.get("/api/social/media/:id", async (req, res) => {
+  if (!socialDoor()) return res.status(404).send("Not found");
+  const dir = mediaDir(req.query.project);
+  // The id is generated here and is hex plus one extension, so anything else
+  // is not one of ours — checked rather than joined and hoped for, since a
+  // path separator in this position is how a media route becomes a file
+  // browser.
+  const id = String(req.params.id || "");
+  if (!dir || !/^[a-f0-9]{20}\.[a-z0-9]{2,4}$/.test(id)) return res.status(404).send("Not found");
+  const type = [...MEDIA_KINDS].find(([, e]) => id.endsWith("." + e))?.[0];
+  res.sendFile(path.join(dir, id), {
+    headers: {
+      "Content-Type": type || "application/octet-stream",
+      // Private: these are drafts, and a shared cache is not the place for them.
+      "Cache-Control": "private, max-age=300",
+      // The file is served from this origin and rendered in this page; nothing
+      // here should ever be interpreted as a document.
+      "X-Content-Type-Options": "nosniff",
+    },
+  }, (err) => { if (err && !res.headersSent) res.status(404).send("Not found"); });
+});
+
 app.put("/api/social", async (req, res) => {
   if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
   const file = socialPath(req.query.project);
@@ -1044,6 +1177,8 @@ app.put("/api/social", async (req, res) => {
   }
 
   try {
+    // The shared directory may not exist on the first write of a fresh volume.
+    if (SOCIAL_DIR) await mkdir(SOCIAL_DIR, { recursive: true });
     // Written through a temporary file and renamed, so an interrupted save
     // leaves the previous version rather than half of this one.
     const tmp = file + ".tmp";

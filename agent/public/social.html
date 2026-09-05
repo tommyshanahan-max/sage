@@ -116,6 +116,23 @@
      for it — the line under it does the rest, once, instead of every reader
      guessing separately. */
   .hint{margin:.4rem 0 0;font-size:.76rem;color:var(--muted);line-height:1.5}
+  /* The file. A drop target that is also a button, because half the people
+     using this are on a phone where there is nothing to drop. */
+  .drop{display:flex;align-items:center;gap:.9rem;padding:.8rem .9rem;cursor:pointer;
+    border:2px dashed var(--rule);border-radius:12px;background:var(--sunk);width:100%;
+    text-align:left;color:var(--ink-2)}
+  .drop:hover,.drop.over{border-color:var(--blue);color:var(--blue)}
+  .drop .big{font-size:1.5rem;line-height:1}
+  .drop .say{font-size:.86rem;font-weight:600;display:block}
+  .drop .sub{font-size:.75rem;color:var(--muted);display:block}
+  .shot-prev{margin-top:.6rem;display:flex;gap:.8rem;align-items:flex-start}
+  .shot-prev img,.shot-prev video{width:8rem;height:6rem;object-fit:cover;border-radius:10px;
+    background:var(--sunk);display:block}
+  .shot-prev .drop-off{font:inherit;font-size:.78rem;font-weight:600;color:var(--muted);
+    background:none;border:0;cursor:pointer;padding:.2rem 0}
+  .shot-prev .drop-off:hover{color:var(--red)}
+  .post .media{width:100%;display:block;background:var(--sunk)}
+  .post .media img,.post .media video{width:100%;display:block;max-height:22rem;object-fit:cover}
   .via{font-family:var(--mono);font-size:.75rem;color:var(--blue);background:var(--blue-soft);
     display:inline-block;padding:.4rem .75rem;border-radius:9px;word-break:break-all;
     border:0;cursor:pointer;text-align:left}
@@ -244,6 +261,20 @@
           <div class="kinds" id="kinds"></div>
         </div>
         <div class="grp">
+          <span class="lab">The file</span>
+          <button class="drop" type="button" id="drop">
+            <span class="big" aria-hidden="true">⬆</span>
+            <span>
+              <span class="say">Choose an image or a video</span>
+              <span class="sub">Or drag one here. Up to 25 MB.</span>
+            </span>
+          </button>
+          <input type="file" id="file" hidden
+                 accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/webm">
+          <div class="shot-prev" id="prev" hidden></div>
+          <p class="hint" id="filehint"></p>
+        </div>
+        <div class="grp">
           <span class="lab">What it says</span>
           <textarea id="body" placeholder="Write it, or paste what you are sending."></textarea>
         </div>
@@ -339,6 +370,10 @@ let state = { people: [], posts: [], base: "", arrivals: null, counter: false,
 // match it is dropped below.
 const OTHER = "__somewhere_else__";
 let kind = "clip", forCode = "", tab = "share", query = "", opened = "";
+// The uploaded file for the share being written: { id, type }. Uploaded when
+// chosen rather than when recorded, so a slow upload happens while somebody is
+// still typing rather than after they have pressed the button.
+let media = null;
 
 function fail(msg) { const e = $("err"); e.hidden = !msg; e.textContent = msg || ""; }
 
@@ -495,7 +530,7 @@ function drawShare() {
   const url = linkFor(forCode, $("points").value);
   $("linkgrp").hidden = !url;
   $("link").textContent = url;
-  $("record").disabled = !$("body").value.trim();
+  $("record").disabled = !$("body").value.trim() && !media;
   $("sharenote").innerHTML = state.base
     ? "<b>The link carries who shared it and which part of the app it is for.</b> WeChat strips "
       + "referrers, so a code in the address is the only signal that survives being "
@@ -505,15 +540,81 @@ function drawShare() {
       + "in <code>AGENT_PROJECT_APPS</code>. Everything else on this page still works.";
 }
 
+// ---- the file -------------------------------------------------------------
+const MEDIA_MAX = 25 * 1024 * 1024;
+
+function drawPrev() {
+  const box = $("prev");
+  box.replaceChildren();
+  box.hidden = !media;
+  $("drop").hidden = Boolean(media);
+  if (!media) return;
+  const url = "/api/social/media/" + media.id + "?project=" + encodeURIComponent(PROJECT);
+  const el2 = media.type.startsWith("video/")
+    ? Object.assign(document.createElement("video"), { src: url, muted: true, controls: true })
+    : Object.assign(document.createElement("img"), { src: url, alt: "" });
+  const off = el("button", "drop-off", "Remove");
+  off.type = "button";
+  off.addEventListener("click", () => { media = null; drawPrev(); });
+  box.append(el2, off);
+}
+
+async function upload(file) {
+  if (!file) return;
+  if (file.size > MEDIA_MAX) {
+    return fail("That file is " + Math.round(file.size / 1048576) + " MB. The limit is 25 MB.");
+  }
+  $("filehint").textContent = "Uploading…";
+  try {
+    // Read as base64 rather than posted as a form: the server takes JSON
+    // everywhere else and one body shape is one thing to get wrong.
+    const data = await new Promise((ok, no) => {
+      const r = new FileReader();
+      r.onload = () => ok(String(r.result).split(",")[1] || "");
+      r.onerror = () => no(new Error("could not read the file"));
+      r.readAsDataURL(file);
+    });
+    const r = await fetch("/api/social/media?project=" + encodeURIComponent(PROJECT), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: file.type, data }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || "upload failed");
+    media = { id: d.id, type: d.type };
+    // The kind follows the file rather than being asked for twice.
+    kind = d.type.startsWith("video/") ? "clip" : "image";
+    fail("");
+    $("filehint").textContent = "";
+    drawKinds();
+    drawPrev();
+  } catch (e) {
+    $("filehint").textContent = "";
+    fail(e.message);
+  }
+}
+
+$("drop").addEventListener("click", () => $("file").click());
+$("file").addEventListener("change", (e) => upload(e.target.files?.[0]));
+for (const ev of ["dragenter", "dragover"]) {
+  $("drop").addEventListener(ev, (e) => { e.preventDefault(); $("drop").classList.add("over"); });
+}
+for (const ev of ["dragleave", "drop"]) {
+  $("drop").addEventListener(ev, (e) => { e.preventDefault(); $("drop").classList.remove("over"); });
+}
+$("drop").addEventListener("drop", (e) => upload(e.dataTransfer?.files?.[0]));
+
 $("record").addEventListener("click", () => {
   const body = $("body").value.trim();
-  if (!body) return;
+  if (!body && !media) return;
   state.posts.unshift({
     id: String(Date.now()) + Math.random().toString(36).slice(2, 7),
     body, kind, to: forCode, points: $("points").value.trim(),
+    media: media ? media.id : "",
     passedOn: false, at: new Date().toISOString().slice(0, 10),
   });
   $("body").value = ""; $("points").value = "";
+  media = null; drawPrev();
   // Shut afterwards: the share is recorded and the wall below is where the
   // answer to "did that work" lives.
   openCompose(false);
@@ -529,7 +630,9 @@ function openCompose(on) {
 }
 $("opener").addEventListener("click", () => openCompose(true));
 $("shut").addEventListener("click", () => openCompose(false));
-$("body").addEventListener("input", () => { $("record").disabled = !$("body").value.trim(); });
+$("body").addEventListener("input", () => {
+  $("record").disabled = !$("body").value.trim() && !media;
+});
 $("points").addEventListener("input", () => {
   // The link redraws, but not the list — rebuilding it mid-keystroke would
   // steal focus back to the select on every character.
@@ -564,7 +667,19 @@ function drawFeed() {
     const who = person(s.to);
     const icon = (KINDS.find((k) => k[0] === s.kind) || KINDS[3])[1];
     const a = el("article", "post " + (who ? "tone-" + who.tone : "tone-blue"));
-    const shot = el("div", "shot", icon);
+    // The thing itself where there is one, and the coloured block only where
+    // there is not: a wall of identical gradients is a filing system, and a
+    // wall of the actual clips is a library.
+    let shot;
+    if (s.media) {
+      shot = el("div", "media");
+      const url = "/api/social/media/" + s.media + "?project=" + encodeURIComponent(PROJECT);
+      shot.append(/\.(mp4|mov|webm)$/.test(s.media)
+        ? Object.assign(document.createElement("video"), { src: url, controls: true, preload: "metadata" })
+        : Object.assign(document.createElement("img"), { src: url, alt: "", loading: "lazy" }));
+    } else {
+      shot = el("div", "shot", icon);
+    }
     const inn = el("div", "in");
     const by = el("div", "byline");
     by.append(el("i", null, (who ? who.name : "?").slice(0, 1).toUpperCase()),

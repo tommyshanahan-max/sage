@@ -279,6 +279,8 @@ services:
       # agent works to the same instructions as the CLI rather than to none.
       HOME: /home/coder
       AGENT_WORKSPACE: /home/coder/projects
+      # The same store the partner seats write. One product, one file.
+      AGENT_SOCIAL_DIR: /srv/social
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
       # The same volume the IDE uses, not a private one. An agent that cannot
@@ -293,6 +295,10 @@ services:
       # the partner passwords, Study Pal's admin key. A digest with commit
       # subjects and paths in it carries none of that.
       - ./.platform-state:/srv/platform:ro
+      # Social's store, the same volume the partner seats mount. Writable here
+      # and there: both seats manage the same product, and neither is the
+      # authority over who it is shared with.
+      - social_data:/srv/social
     expose:
       - "3000"
     networks:
@@ -382,6 +388,11 @@ services:
       HOME: /work/home
       AGENT_WORKSPACE: /work
       AGENT_MOCKUPS_DIR: /work/mockups
+      # Social's store. Shared with the owner's seat on purpose: both are
+      # managing one product, and a snapshot mounted read-only cannot hold it
+      # anyway. Keyed inside by the app's address, so the two seats agree on
+      # the file whatever their own project directory happens to be called.
+      AGENT_SOCIAL_DIR: /srv/social
       # Documents he may read, named one by one. A list, never a folder scan:
       # a docs directory holds working notes as readily as it holds anything
       # meant for someone else, and under a scan every new file publishes
@@ -398,6 +409,7 @@ services:
       - ./partner/source:/work/app:ro
       - partner_mockups:/work/mockups
       - partner_home:/work/home
+      - social_data:/srv/social
     expose:
       - "3000"
     networks:
@@ -443,6 +455,11 @@ services:
       HOME: /work/home
       AGENT_WORKSPACE: /work
       AGENT_MOCKUPS_DIR: /work/mockups
+      # Social's store. Shared with the owner's seat on purpose: both are
+      # managing one product, and a snapshot mounted read-only cannot hold it
+      # anyway. Keyed inside by the app's address, so the two seats agree on
+      # the file whatever their own project directory happens to be called.
+      AGENT_SOCIAL_DIR: /srv/social
       AGENT_DOCS_ROOT: /work/app
       AGENT_DOCS: ${TOMSCODING_PARTNER2_DOCS:-}
       AGENT_APP_URL: ${TOMSCODING_PARTNER2_APP_URL:-}
@@ -453,6 +470,7 @@ services:
       - ./partner/source-2:/work/app:ro
       - partner2_mockups:/work/mockups
       - partner2_home:/work/home
+      - social_data:/srv/social
     expose:
       - "3000"
     networks:
@@ -621,6 +639,11 @@ networks:
     driver: bridge
 
 volumes:
+  # Who each product is shared with, and what has gone out. Shared between the
+  # owner's seat and the partner seats rather than living in a project
+  # directory: a partner's snapshot is read-only, and the two seats call the
+  # same product by different directory names.
+  social_data:
   home:
   home_2:
   partner_mockups:
