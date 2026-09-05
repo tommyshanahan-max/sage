@@ -319,7 +319,7 @@
           <p class="hint" id="hint-points"></p>
         </div>
         <div class="grp" id="fromgrp" hidden>
-          <span class="lab">Posts to the feed as</span>
+          <span class="lab">Shared from</span>
           <select id="from"></select>
           <p class="hint" id="fromhint"></p>
         </div>
@@ -626,7 +626,7 @@ function drawFrom() {
   fromId = pick.value;
   $("fromhint").textContent = pick.value
     ? "The feed shows this account as the author."
-    : "Pick the account this posts from.";
+    : "You operate several accounts. Pick the one this is shared from.";
 }
 
 $("from").addEventListener("change", () => { fromId = $("from").value; drawFrom(); });
