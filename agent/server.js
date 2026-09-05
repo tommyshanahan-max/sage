@@ -1011,6 +1011,19 @@ app.get("/api/social", async (req, res) => {
     counter: Boolean(NUMBERS_URL),
     arrivals: await arrivals(),
     destinations: await destinations(),
+    // Whether the project on screen is the one the Study Pal credentials point
+    // at. The catalogue and the user list belong to that app and to no other,
+    // and this panel follows whichever project is open — so without this,
+    // opening it on a second project shows somebody else's series under that
+    // project's name. Compared by host: the same app can be configured with or
+    // without a trailing slash, and a string compare would call those two
+    // different products.
+    sameApp: (() => {
+      const mapped = PROJECT_APPS.get(String(req.query.project || "")) || APP_URL || "";
+      if (!mapped || !studypal.configured()) return false;
+      try { return new URL(mapped).host === new URL(studypal.base()).host; }
+      catch { return false; }
+    })(),
   });
 });
 

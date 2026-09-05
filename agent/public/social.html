@@ -327,7 +327,7 @@ const KINDS = [["clip","🎬","Clip"],["image","🖼","Image"],
 const TONES = ["green","red","amber","violet","blue"];
 
 let state = { people: [], posts: [], base: "", arrivals: null, counter: false,
-              destinations: { episodes: [], screens: [] } };
+              sameApp: false, destinations: { episodes: [], screens: [] } };
 // The one option that is not a destination: it opens the typed field instead.
 //
 // A plain string, and deliberately. The first version used a NUL character on
@@ -914,6 +914,16 @@ function drawCatalogue() {
 $("cq").addEventListener("input", (e) => { cquery = e.target.value.trim(); drawCatalogue(); });
 
 function draw() {
+  // The two tabs that read the app rather than this project's own file. Drawn
+  // only where they mean something: the catalogue and the users belong to the
+  // app these credentials point at, and this panel opens against whichever
+  // project is selected. A tab that shows another product's content under this
+  // project's name is worse than an absent tab.
+  for (const k of ["content", "users"]) {
+    $("t-" + k).hidden = !state.sameApp;
+    if (!state.sameApp && tab === k) show("share");
+  }
+
   const n = state.people.length, s = state.posts.length;
   $("title").textContent = PROJECT || "Social";
   $("ava").textContent = (PROJECT || "?").slice(0, 2).toUpperCase();
