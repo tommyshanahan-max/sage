@@ -207,6 +207,15 @@
   .send:hover{background:var(--blue);color:#fff}
   .send:disabled{opacity:.55;cursor:default;background:var(--sunk);
     border-color:var(--rule);color:var(--muted)}
+  /* The one green control on the wall. Green because it is the only action
+     that ends with something being true rather than filed: everything else
+     here records, defers or removes. */
+  .let{font:inherit;font-size:.73rem;font-weight:700;padding:.22rem .7rem;
+    border-radius:99px;cursor:pointer;border:1px solid var(--green);
+    background:rgba(42,157,99,.1);color:var(--green)}
+  .let:hover{background:var(--green);color:#fff}
+  .let:disabled{opacity:.55;cursor:default;background:var(--sunk);
+    border-color:var(--rule);color:var(--muted)}
   .tick{font:inherit;font-size:.72rem;font-weight:700;padding:.15rem .55rem;border-radius:99px;
     cursor:pointer;border:1px solid var(--rule);background:var(--card);color:var(--muted)}
   .tick[aria-pressed=true]{background:rgba(42,157,99,.13);border-color:var(--green);color:var(--green)}
@@ -1450,6 +1459,36 @@ const NEEDS_A_PERSON = ["reported", "held"];
 
 let reports = null, listening = false;
 
+/** Let a held post through.
+ *
+ *  The answer the app was asking for when it held it. Marking one read says a
+ *  person looked; this says what they decided. Without it the queue only ever
+ *  grows, because two of its three exits are "not yet" and "no". */
+async function releaseToApp(appId, what, btn) {
+  if (!confirm("Publish this to Study Pal?\n\n" + String(what).slice(0, 120)
+    + "\n\nIt goes live on the app's feed. Readers will see it.")) return;
+  if (btn) { btn.disabled = true; btn.textContent = "Publishing…"; }
+  try {
+    const r = await fetch("/api/social/app-post/release?id=" + encodeURIComponent(appId)
+      + "&project=" + encodeURIComponent(PROJECT), {
+      method: "POST",
+      headers: publishWord ? { "x-publish-word": publishWord } : {},
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 401 && d.needWord) {
+      const word = window.prompt(d.error || "This goes live to readers. Enter the publish word.");
+      if (!word) { if (btn) { btn.disabled = false; btn.textContent = "Publish it"; } return; }
+      publishWord = word;
+      return releaseToApp(appId, what, btn);
+    }
+    if (!r.ok) throw new Error(d.error || "the server said " + r.status);
+    await loadFeedback();
+  } catch (e) {
+    fail("Could not publish it: " + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = "Publish it"; }
+  }
+}
+
 /** Ask the app to take a post down.
  *
  *  A real delete over there, not a hidden row here: leaving it live in front
@@ -1601,6 +1640,15 @@ function drawReports() {
     if (r.reason) inn.append(el("div", "why", r.reason));
 
     const meta = el("div", "meta");
+    // The decision, on the two states that are asking for one. First, and the
+    // only green thing on the wall: of the three exits from this queue it is
+    // the one that finishes the job the app started when it held the post.
+    if (r.event === "held" || r.event === "refused") {
+      const ok = el("button", "let", "Publish it");
+      ok.type = "button";
+      ok.addEventListener("click", () => releaseToApp(r.id, r.body || "this post", ok));
+      meta.append(ok);
+    }
     // Only held cards carry the mark. Published and removed are the app's last
     // word and there is nothing to decide.
     if (NEEDS_A_PERSON.includes(r.event)) {
@@ -1911,6 +1959,15 @@ function openReport(r) {
   }
 
   const acts = el("div", "acts");
+  if (r.event === "held" || r.event === "refused") {
+    const ok = el("button", "let", "Publish it");
+    ok.type = "button";
+    ok.addEventListener("click", async () => {
+      await releaseToApp(r.id, r.body || "this post", ok);
+      closeSheet();
+    });
+    acts.append(ok);
+  }
   if (NEEDS_A_PERSON.includes(r.event)) {
     const b = el("button", "tick", r.reviewed ? "Put it back on the list" : "I looked at it");
     b.type = "button";

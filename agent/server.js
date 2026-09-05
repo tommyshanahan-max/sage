@@ -2177,6 +2177,73 @@ app.get("/sp/queue", async (_req, res) => {
   res.status(r.status).json(r.body);
 });
 
+// Letting a held post through.
+//
+// The third answer, and until now the missing one. A held post is Study Pal's
+// own check saying it could not judge this either way and wants a person — and
+// the panel could record that a person had looked, or take the post down, but
+// not the thing the person was asked for. Fourteen posts sat in that gap.
+//
+// Study Pal does not serve this yet. Specified in docs/for-studypal-publish.md
+// beside the delete; until it exists the answer is a 501 and the row is
+// untouched, so nothing is ever marked live that is not.
+//
+// Behind the publish word, like sending and deleting: this puts a post in front
+// of readers, which is the most consequential of the three.
+app.post("/api/social/app-post/release", publishGate, async (req, res) => {
+  if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
+  if (!studypal.configured()) {
+    return res.status(503).json({ error: "this seat has no Study Pal credentials" });
+  }
+  const appId = String(req.query.id || "");
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(appId)) {
+    return res.status(400).json({ error: "bad post id" });
+  }
+
+  const r = await studypal.call("/api/feed/release?id=" + encodeURIComponent(appId),
+    { method: "POST" });
+
+  if (r.status === 404 || r.status === 405) {
+    return res.status(501).json({
+      error: "The app has no way to release a held post yet — see docs/for-studypal-publish.md.",
+    });
+  }
+  if (r.status < 200 || r.status >= 300) {
+    return res.status(502).json({
+      error: "the app refused it: " + (r.body?.error || r.body?.raw || "said " + r.status),
+    });
+  }
+
+  // Live over there, so the record here says so. Marked published rather than
+  // deleted from the queue: what happened to a post is the thing this file is
+  // for, and "was held and then let through" is a more useful history than a
+  // row that quietly stops being held.
+  const fbFile = feedbackPath();
+  if (fbFile) {
+    const run = hookQueue.then(async () => {
+      let stored = { reports: [] };
+      try {
+        stored = social.cleanFeedback(JSON.parse(await readFile(fbFile, "utf8")));
+      } catch (err) { if (err.code !== "ENOENT") return; }
+      if (!stored.reports.some((x) => x.id === appId)) return;
+      const next = social.cleanFeedback({
+        reports: stored.reports.map((x) => (x.id === appId
+          ? { ...x, event: "published", at: new Date().toISOString(),
+              reason: "", reviewed: true, reviewedBy: x.reviewedBy || SEAT_NAME }
+          : x)),
+      });
+      await mkdir(SOCIAL_DIR, { recursive: true });
+      const tmp = fbFile + ".tmp";
+      await writeFile(tmp, JSON.stringify(next, null, 2) + "\n", "utf8");
+      await rename(tmp, fbFile);
+    });
+    hookQueue = run.catch(() => {});
+    await run.catch(() => {});
+  }
+
+  res.json({ ok: true, id: appId });
+});
+
 // Taking a post back out of the app.
 //
 // A real delete over there, not a hidden row here. Removing it from this

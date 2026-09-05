@@ -60,6 +60,32 @@ Any 2xx means you have it. `400` for a bad request, `401` for a bad key,
 possibly sent" and says so on the row rather than guessing — a post silently
 sent twice is worse than one a person has to check.
 
+## Letting a held post through
+
+```
+POST https://liuxuesheng.help/api/feed/release?id=<post id>
+x-admin-secret: <STUDYPAL_ADMIN_KEY>
+```
+
+**The one that is actually urgent.** Holding a post asks a person a question,
+and until this exists there is nowhere for them to answer it. The admin can
+record that somebody looked, and it can delete — but it cannot do the thing the
+hold was asking for. Fourteen posts are sitting in that gap right now, and the
+number only goes up.
+
+Any 2xx means it is live. The panel then marks its own record published rather
+than dropping the row: "was held and then let through" is a more useful history
+than a row that quietly stops being held.
+
+`404` or `405` is read as not built yet, answered with a `501`, and **nothing
+on this side changes** — a post is never shown as live because a button was
+pressed at it.
+
+Also offered on a refused post, for the same reason: the model turning
+something away is a judgement, and a person overruling it is exactly what an
+admin is for. If a refusal is final on your side and cannot be released, say
+so and the button comes off those cards.
+
 ## Taking a post down
 
 ```
@@ -176,8 +202,12 @@ side ever sends you is one you minted.
 
 `POST /api/feed` second. That is the one that makes the panel publish.
 
-`DELETE /api/feed` third. Small, and the admin cannot take anything down
-without it — the button is built and returns 501 today.
+`POST /api/feed/release` third, and arguably it should be second: every held
+post is a person waiting, the queue only grows, and the button is built and
+returns 501 today.
+
+`DELETE /api/feed` fourth. Small, and the admin cannot take anything down
+without it — also built, also 501.
 
 `GET /api/users` last, from `for-studypal-users.md`. It turns the roster into a
 view of your list rather than a record of what was created through it, and it
