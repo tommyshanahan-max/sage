@@ -570,7 +570,14 @@ services:
       # because it is the same app and a second key is a second thing to
       # rotate. Unset, the panels report a switch that is off rather than a
       # product nobody uses.
-      ANALYTICS_APP_USAGE_URL: ${TOMSCODING_APP_USAGE_URL:-}
+      #
+      # Defaulted rather than left blank, because .env on a running box was
+      # copied from the preset once and does not grow a new line when the
+      # preset does. A setting that only works after somebody edits a file on
+      # the server is a setting that is off — which looks exactly like a
+      # product nobody uses. Overridable in .env for any other deployment,
+      # and the key below is still the lock: no key, no read.
+      ANALYTICS_APP_USAGE_URL: ${TOMSCODING_APP_USAGE_URL:-https://liuxuesheng.help/api/usage?app=studypal}
       ANALYTICS_APP_USAGE_KEY: ${TOMSCODING_STUDYPAL_KEY:-}
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
