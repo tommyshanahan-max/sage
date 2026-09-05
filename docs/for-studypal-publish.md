@@ -6,14 +6,13 @@ things nobody sent.
 
 ## Where it stands
 
-The panel on tomscoding composes a post — words, an image or a clip, and which
-account it goes out from — and can only write it down. Every row on its wall
-carries the line *"recorded here — not yet delivered to the app"*, because
-there is nothing on your side to deliver it to.
+`POST /api/feed` is live and working — a post composed in the panel reached the
+feed and came back with an id, and the webhook reported it published under the
+same id. Both directions are wired to each other, not just each working alone.
 
-The webhook in `for-studypal-hook.md` runs the other way: you telling us a post
-was published, held or removed. That half works end to end. This is the half
-that gives it something to report on.
+What follows is the rest: creating an account, taking a post down, and reading
+the user list. Each is built on this side and each returns a 501 until the
+matching route exists over there.
 
 ## The route
 
@@ -60,6 +59,30 @@ Any 2xx means you have it. `400` for a bad request, `401` for a bad key,
 `413` for a file over the limit. Anything else this side treats as "unknown,
 possibly sent" and says so on the row rather than guessing — a post silently
 sent twice is worse than one a person has to check.
+
+## Taking a post down
+
+```
+DELETE https://liuxuesheng.help/api/feed?id=<post id>
+x-admin-secret: <STUDYPAL_ADMIN_KEY>
+```
+
+The id is the one you returned from `POST /api/feed`, which is also the one
+you send on the webhook. Any 2xx means it is off the feed. `404` on an id you
+have never seen is fine and is treated as success — the post is not there,
+which is what was asked for.
+
+Until this exists the answer here is a `501` and **nothing on this side
+changes**: the panel does not mark a post as pulled when it is still live. A
+button that hides a row locally while the post stays in front of readers is
+worse than no button, because somebody would believe it was gone.
+
+When it lands, deleting on this side does two things. A post this panel sent
+loses its app id and goes back to being a draft that can be shared again —
+usually what somebody who just deleted it wants next. A post that only exists
+here as a webhook report is marked removed rather than dropped, for the same
+reason your own `removed` events are kept: "was taken down" is a different
+fact from "never existed".
 
 ## Creating an account
 
@@ -132,9 +155,12 @@ side ever sends you is one you minted.
 
 `POST /api/feed` second. That is the one that makes the panel publish.
 
+`DELETE /api/feed` third. Small, and the admin cannot take anything down
+without it — the button is built and returns 501 today.
+
 `GET /api/users` last, from `for-studypal-users.md`. It turns the roster into a
 view of your list rather than a record of what was created through it, and it
-is the only one of the three nothing is blocked on.
+is the only one nothing is blocked on.
 
 Related: `for-studypal-hook.md` (the inbound half, working),
 `for-studypal-users.md` (the user list).

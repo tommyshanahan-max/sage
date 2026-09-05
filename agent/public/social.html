@@ -153,30 +153,9 @@
   .go:disabled{opacity:.45;cursor:default}
 
   /* ---- feed ---- */
-  /* What the app reported. A row rather than a card on the wall: these are
-     statuses to read down, and the coloured edge is the status. */
-  .reports{display:flex;flex-direction:column;gap:.7rem;margin:0 0 1.6rem}
-  .rep{display:flex;gap:.85rem;align-items:flex-start;background:var(--card);
-    border-radius:14px;padding:.8rem .9rem;box-shadow:var(--shadow);
-    border:1px solid var(--rule);border-left:4px solid var(--tone,var(--rule))}
-  .rep.done{opacity:.6}
-  .rep img{width:4.5rem;height:4.5rem;object-fit:cover;border-radius:10px;
-    background:var(--sunk);flex:none;display:block}
-  .rep .in2{flex:1;min-width:0}
-  .rep .st2{font-size:.62rem;font-weight:800;letter-spacing:.11em;
-    text-transform:uppercase;color:var(--tone,var(--muted))}
-  .rep p{margin:.3rem 0 0;font-size:.87rem;line-height:1.5;overflow-wrap:anywhere}
-  .rep .why{margin-top:.45rem;font-size:.78rem;color:var(--muted);line-height:1.5}
-  .rep .when{font-size:.72rem;color:var(--muted);margin-top:.4rem}
-  .rep .mini{font:inherit;font-size:.76rem;font-weight:600;cursor:pointer;
-    margin-top:.55rem;padding:.3rem .7rem;border-radius:99px;background:var(--sunk);
-    border:1px solid var(--rule);color:var(--muted)}
-  .rep .mini:hover{border-color:var(--blue);color:var(--blue)}
-  /* Where a photo will not load. Same footprint as the image, so a row
-     that loses its picture does not change shape. */
-  .rep .nophoto{width:4.5rem;height:4.5rem;border-radius:10px;flex:none;
-    background:var(--sunk);border:1px dashed var(--rule);display:grid;
-    place-items:center;font-size:.68rem;color:var(--muted)}
+  /* The app's posts render on the wall's own tiles — see .post. They were
+     rows with a thumbnail, which made the app's content look like log entries
+     beside the content composed here. */
   #reported + h2{margin-top:1.6rem}
   .masonry{columns:2;column-gap:1rem}
   @media (max-width:44rem){.masonry{columns:1}}
@@ -207,6 +186,13 @@
   .meta{padding-top:.5rem;border-top:1px solid var(--rule);display:flex;gap:.7rem;
     font-size:.73rem;color:var(--muted);align-items:center;flex-wrap:wrap}
   .meta b{color:var(--ink);font-variant-numeric:tabular-nums}
+  /* Why a post was held, or why it was pulled. Quieter than the caption and
+     louder than the timestamp: it is the reason somebody is looking. */
+  .post .why{font-size:.78rem;color:var(--muted);line-height:1.5;
+    padding-left:.6rem;border-left:2px solid var(--tone,var(--rule))}
+  /* Two removes on one row. Only the first gets pushed right, or the second
+     would be shoved off the end of the card. */
+  .meta .del + .del{margin-left:0}
   /* Delivered, and not delivered. The green states a fact about the app, so
      it is the only thing on the row allowed to look like a confirmation. */
   .meta .sent{color:var(--green);font-weight:600;overflow-wrap:anywhere}
@@ -223,6 +209,11 @@
   .tick[aria-pressed=true]{background:rgba(42,157,99,.13);border-color:var(--green);color:var(--green)}
   .del{margin-left:auto;border:0;background:none;color:var(--muted);cursor:pointer;font-size:.73rem}
   .del:hover{color:var(--red)}
+  /* The one that reaches into the app. It sits beside a remove that only
+     touches this box, and two greys side by side make the consequential one
+     look like the harmless one. */
+  .del.pull{color:var(--red);opacity:.75}
+  .del.pull:hover{opacity:1;text-decoration:underline}
 
   /* ---- people ---- */
   .searchbar{display:flex;gap:.55rem;align-items:center;background:var(--card);
@@ -410,7 +401,7 @@
          answering, and one row of it — held — is work somebody has to do. -->
     <section id="reported" hidden>
       <h2 id="rephead">From the app</h2>
-      <div class="reports" id="reports"></div>
+      <div class="masonry" id="reports"></div>
       <p class="thin" id="repnote"></p>
     </section>
     <h2 id="feedhead">What has gone out</h2>
@@ -973,7 +964,7 @@ function drawFeed() {
     // post nobody can attribute is worth noticing on the wall.
     by.append(el("i", from ? null : "none", (from || "?").slice(0, 1).toUpperCase()),
       el("b", from ? null : "dim", from || "No account picked"),
-      el("span", null, " · " + (s.at || "undated")
+      el("span", null, " · " + when(s.at)
         + (s.by ? " · recorded by " + s.by : "")));
     inn.append(by, el("p", "cap", s.body));
     if (s.points) { const t = el("div", "tagrow"); t.append(el("span", "tag", s.points)); inn.append(t); }
@@ -1010,7 +1001,16 @@ function drawFeed() {
       send.addEventListener("click", () => publish(s.id, send));
       meta.append(send);
     }
-    const del = el("button", "del", "Remove");
+    // Two different removes, and they are not interchangeable. This one drops
+    // the row from this box's record. The other takes the post off the app's
+    // feed, and only exists once there is something on the feed to take off.
+    if (s.appId) {
+      const pull = el("button", "del pull", "Delete from app");
+      pull.type = "button";
+      pull.addEventListener("click", () => removeFromApp(s.appId, s.body || "this post", pull));
+      meta.append(pull);
+    }
+    const del = el("button", "del", s.appId ? "Remove here" : "Remove");
     del.type = "button";
     del.addEventListener("click", () => {
       state.posts = state.posts.filter((x) => x.id !== s.id); save();
@@ -1155,10 +1155,58 @@ $("q").addEventListener("input", (e) => { query = e.target.value.trim(); drawPeo
 // box's record of having looked and nothing more — releasing a held post is
 // Study Pal's decision, made in Study Pal.
 // ---------------------------------------------------------------------------
+/** A timestamp somebody can read.
+ *
+ *  The app sends full ISO and the wall's own posts store a plain date, so the
+ *  two rendered as "2026-09-05T13:00:36.100Z" beside "2026-09-05" — one of
+ *  them a machine's answer to a question nobody asked. Anything that will not
+ *  parse is shown exactly as it arrived rather than guessed at. */
+function when(v) {
+  const raw = String(v || "");
+  if (!raw) return "undated";
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  const day = d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  // A date with no time in it is a date, and 00:00 would be an invention.
+  return /\d\d:\d\d/.test(raw)
+    ? day + ", " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    : day;
+}
+
 const EVENT_TONE = { published: "green", held: "amber", removed: "red" };
 const EVENT_WORD = { published: "Published", held: "Held for review", removed: "Removed" };
 
 let reports = null, listening = false;
+
+/** Ask the app to take a post down.
+ *
+ *  A real delete over there, not a hidden row here: leaving it live in front
+ *  of readers while the admin that manages it shows nothing is worse than
+ *  having no button, because somebody would believe it was gone. */
+async function removeFromApp(appId, what, btn) {
+  if (!confirm("Delete this from Study Pal?\n\n" + String(what).slice(0, 120)
+    + "\n\nIt comes off the app's feed. Readers stop seeing it.")) return;
+  if (btn) { btn.disabled = true; btn.textContent = "Deleting…"; }
+  try {
+    const r = await fetch("/api/social/app-post?id=" + encodeURIComponent(appId)
+      + "&project=" + encodeURIComponent(PROJECT), {
+      method: "DELETE",
+      headers: publishWord ? { "x-publish-word": publishWord } : {},
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 401 && d.needWord) {
+      const word = window.prompt(d.error || "This changes what readers see. Enter the publish word.");
+      if (!word) { if (btn) { btn.disabled = false; btn.textContent = "Delete from app"; } return; }
+      publishWord = word;
+      return removeFromApp(appId, what, btn);
+    }
+    if (!r.ok) throw new Error(d.error || "the server said " + r.status);
+    await Promise.all([loadFeedback(), load()]);
+  } catch (e) {
+    fail("Could not delete it: " + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = "Delete from app"; }
+  }
+}
 
 async function loadFeedback() {
   try {
@@ -1218,9 +1266,14 @@ function drawReports() {
 
   for (const r of sorted) {
     const tone = EVENT_TONE[r.event] || "blue";
-    const row = el("div", "rep tone-" + tone + (r.reviewed ? " done" : ""));
+    const card = el("article", "post tone-" + tone + (r.reviewed ? " done" : ""));
 
+    // The thing itself, at the size the wall below uses. These were rows with
+    // a thumbnail, which made the app's own posts look like log entries beside
+    // the ones composed here — the same content, rendered as if it mattered
+    // less.
     if (r.photo && state.base) {
+      const box = el("div", "media");
       // An id at the app, fetched from its public endpoint. Encoded into the
       // query rather than pasted into a path: a slash in an id would otherwise
       // change which URL is called.
@@ -1228,30 +1281,40 @@ function drawReports() {
         src: state.base.replace(/\/+$/, "") + "/api/public-media?id=" + encodeURIComponent(r.photo),
         alt: "", loading: "lazy",
       });
-      img.addEventListener("error", () => {
-        img.replaceWith(el("div", "nophoto", "no photo"));
-      });
-      row.append(img);
+      // A photo the app cannot serve leaves a broken-image glyph where the
+      // picture should be, which reads as a fault in this panel rather than a
+      // missing file over there.
+      img.addEventListener("error", () => box.replaceWith(el("div", "shot", "🖼")));
+      box.append(img);
+      card.append(box);
+    } else {
+      card.append(el("div", "shot", r.body ? "📝" : "·"));
     }
 
-    const inn = el("div", "in2");
-    inn.append(el("div", "st2", EVENT_WORD[r.event] || r.event));
-    if (r.body) inn.append(el("p", null, r.body));
+    const inn = el("div", "in");
+
+    // The state, where the account name sits on the wall's tiles. It is what
+    // this card is about — the post is the app's, the news is what happened
+    // to it.
+    const by = el("div", "byline");
+    by.append(el("i", null, EVENT_WORD[r.event].slice(0, 1)),
+      el("b", null, EVENT_WORD[r.event] || r.event));
+    const who = r.fromName || roster().find((u) => u.id === r.fromId)?.name || r.fromId;
+    by.append(el("span", null, [when(r.at), who && "from " + who].filter(Boolean).join(" · ")));
+    inn.append(by);
+
+    if (r.body) inn.append(el("p", "cap", r.body));
+    // Why it was held, or why it was removed. The whole value of a held card
+    // is knowing what to look at.
     if (r.reason) inn.append(el("div", "why", r.reason));
 
-    const who = r.fromName
-      || roster().find((u) => u.id === r.fromId)?.name
-      || r.fromId;
-    inn.append(el("div", "when",
-      [r.at || "undated", who && "from " + who,
-       r.reviewed && ("looked at" + (r.reviewedBy ? " by " + r.reviewedBy : ""))]
-        .filter(Boolean).join(" · ")));
-
-    // Only held rows carry the mark. Published and removed are the app's last
+    const meta = el("div", "meta");
+    // Only held cards carry the mark. Published and removed are the app's last
     // word and there is nothing to decide.
     if (r.event === "held") {
-      const b = el("button", "mini", r.reviewed ? "Put it back on the list" : "I looked at it");
+      const b = el("button", "tick", r.reviewed ? "Put it back on the list" : "I looked at it");
       b.type = "button";
+      b.setAttribute("aria-pressed", String(Boolean(r.reviewed)));
       b.addEventListener("click", async () => {
         b.disabled = true;
         try {
@@ -1269,14 +1332,23 @@ function drawReports() {
           b.textContent = "Could not save it: " + e.message;
         }
       });
-      inn.append(b);
+      meta.append(b);
     }
-    row.append(inn);
-    box.append(row);
-  }
+    if (r.reviewed) meta.append(el("span", null, "looked at" + (r.reviewedBy ? " by " + r.reviewedBy : "")));
 
-  // The subtitle counts what is held, and this is the only place that knows.
-  draw();
+    // Taking it out of the app. Not on a post the app has already removed —
+    // there is nothing left to delete.
+    if (r.event !== "removed") {
+      const del = el("button", "del pull", "Delete from app");
+      del.type = "button";
+      del.addEventListener("click", () => removeFromApp(r.id, r.body || "this post", del));
+      meta.append(del);
+    }
+    inn.append(meta);
+
+    card.append(inn);
+    box.append(card);
+  }
 
   note.innerHTML = "<b>The app talking back.</b> Held means Study Pal's own check "
     + "could not judge the post either way and asked for a person. Marking one read "

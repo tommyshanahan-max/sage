@@ -2065,6 +2065,96 @@ app.post("/api/social/publish", publishGate, async (req, res) => {
   res.json({ ok: true, post: saved });
 });
 
+// Taking a post back out of the app.
+//
+// A real delete over there, not a hidden row here. Removing it from this
+// panel alone would leave it live in front of readers while the admin that
+// manages it showed nothing — which is worse than having no button, because
+// somebody would believe it was gone.
+//
+// Study Pal does not serve this yet — specified in docs/for-studypal-publish.md
+// alongside the two that landed today. Until it does the answer is a 501 and
+// nothing here changes, so the panel never claims a post was pulled when it
+// is still up.
+//
+// Behind the publish word for the same reason sending is: this changes what
+// the app's readers see.
+app.delete("/api/social/app-post", publishGate, async (req, res) => {
+  if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
+  if (!studypal.configured()) {
+    return res.status(503).json({ error: "this seat has no Study Pal credentials" });
+  }
+  const appId = String(req.query.id || "");
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(appId)) {
+    return res.status(400).json({ error: "bad post id" });
+  }
+
+  const r = await studypal.call("/api/feed?id=" + encodeURIComponent(appId), { method: "DELETE" });
+  if (r.status === 404 || r.status === 405) {
+    return res.status(501).json({
+      error: "The app has no way to delete a post yet — see docs/for-studypal-publish.md.",
+    });
+  }
+  if (r.status < 200 || r.status >= 300) {
+    return res.status(502).json({
+      error: "the app refused it: " + (r.body?.error || r.body?.raw || "said " + r.status),
+    });
+  }
+
+  // Gone over there, so this side stops saying it is live. Two files can carry
+  // the id and both are updated: the post we sent, and the report the app sent
+  // back about it.
+  const project = String(req.query.project || "");
+  const postFile = socialPath(project);
+  if (postFile) {
+    try {
+      const stored = social.clean(JSON.parse(await readFile(postFile, "utf8")));
+      if (stored.posts.some((p) => p.appId === appId)) {
+        const next = social.clean({
+          ...stored,
+          posts: stored.posts.map((p) => (p.appId === appId
+            // The appId is cleared rather than kept, because it no longer
+            // names anything: the row goes back to being a draft that can be
+            // shared again, which is what somebody who deleted it wants next
+            // more often than not.
+            ? { ...p, appId: "", sentAt: "", sendNote: "Removed from the app." }
+            : p)),
+        });
+        const tmp = postFile + ".tmp";
+        await writeFile(tmp, JSON.stringify(next, null, 2) + "\n", "utf8");
+        await rename(tmp, postFile);
+      }
+    } catch (err) { if (err.code !== "ENOENT") throw err; }
+  }
+
+  const fbFile = feedbackPath();
+  if (fbFile) {
+    const run = hookQueue.then(async () => {
+      let stored = { reports: [] };
+      try {
+        stored = social.cleanFeedback(JSON.parse(await readFile(fbFile, "utf8")));
+      } catch (err) { if (err.code !== "ENOENT") return; }
+      if (!stored.reports.some((x) => x.id === appId)) return;
+      // Marked removed rather than dropped, for the reason the webhook keeps
+      // removed rows: "was taken down" is a different fact from "never
+      // existed", and deleting the row would state the second.
+      const next = social.cleanFeedback({
+        reports: stored.reports.map((x) => (x.id === appId
+          ? { ...x, event: "removed", at: new Date().toISOString(), reason: "Removed from this panel." }
+          : x)),
+      });
+      await mkdir(SOCIAL_DIR, { recursive: true });
+      const tmp = fbFile + ".tmp";
+      await writeFile(tmp, JSON.stringify(next, null, 2) + "\n", "utf8");
+      await rename(tmp, fbFile);
+    });
+    hookQueue = run.catch(() => {});
+    await run.catch(() => {});
+  }
+
+  res.json({ ok: true, id: appId });
+});
+
 app.delete("/sp/series", ownerOnly, publishGate, async (req, res) => {
   // The id travels in the query string upstream, so it is encoded here rather
   // than interpolated — an id is user input even when a slug pattern says it
