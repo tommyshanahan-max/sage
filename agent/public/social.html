@@ -216,6 +216,10 @@
   .let:hover{background:var(--green);color:#fff}
   .let:disabled{opacity:.55;cursor:default;background:var(--sunk);
     border-color:var(--rule);color:var(--muted)}
+  /* Why the button did nothing, on the card rather than at the top of a page
+     that has scrolled away. */
+  .meta .said{flex-basis:100%;font-size:.74rem;color:var(--red);line-height:1.45;
+    margin-top:.2rem}
   .tick{font:inherit;font-size:.72rem;font-weight:700;padding:.15rem .55rem;border-radius:99px;
     cursor:pointer;border:1px solid var(--rule);background:var(--card);color:var(--muted)}
   .tick[aria-pressed=true]{background:rgba(42,157,99,.13);border-color:var(--green);color:var(--green)}
@@ -1459,6 +1463,24 @@ const NEEDS_A_PERSON = ["reported", "held"];
 
 let reports = null, listening = false;
 
+/** Say why, next to the thing that did not happen.
+ *
+ *  These buttons live on a wall that scrolls, and the error line is at the top
+ *  of the page. Pressing one and being told nothing — because the explanation
+ *  is four screens up — is indistinguishable from a button that does not work,
+ *  which is how the first press of Publish it read. */
+function sayHere(btn, message, retryLabel) {
+  if (!btn) return;
+  const row = btn.parentElement;
+  if (row) {
+    let note = row.querySelector(".said");
+    if (!note) { note = el("span", "said"); row.append(note); }
+    note.textContent = message;
+  }
+  btn.disabled = false;
+  btn.textContent = retryLabel;
+}
+
 /** Let a held post through.
  *
  *  The answer the app was asking for when it held it. Marking one read says a
@@ -1484,8 +1506,9 @@ async function releaseToApp(appId, what, btn) {
     if (!r.ok) throw new Error(d.error || "the server said " + r.status);
     await loadFeedback();
   } catch (e) {
+    // On the card, where the press was, as well as in the banner.
+    sayHere(btn, e.message, "Publish it");
     fail("Could not publish it: " + e.message);
-    if (btn) { btn.disabled = false; btn.textContent = "Publish it"; }
   }
 }
 
@@ -1514,8 +1537,8 @@ async function removeFromApp(appId, what, btn) {
     if (!r.ok) throw new Error(d.error || "the server said " + r.status);
     await Promise.all([loadFeedback(), load()]);
   } catch (e) {
+    sayHere(btn, e.message, "Delete from app");
     fail("Could not delete it: " + e.message);
-    if (btn) { btn.disabled = false; btn.textContent = "Delete from app"; }
   }
 }
 
