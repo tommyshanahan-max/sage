@@ -18,8 +18,12 @@ cost weeks for nothing.
 
 ## What ships
 
-Talk, Translate, Ask, Camera. The four things that are native, demonstrate
-well, and photograph well for a listing.
+Talk, Translate, Ask, Camera, and everything that lives on the device —
+history, phrases, flashcards, the profile. Those work offline, which is a real
+argument against the "this is just a website" rejection and worth keeping
+whole.
+
+Nothing where one person's content reaches another person's screen.
 
 ## What does not, and why
 
@@ -42,8 +46,23 @@ work in exchange for a screen nobody is going to look at in a pitch. It goes in
 1.1, once report and block exist. `for-studypal-appstore.md` has the detail for
 when that day comes; the admin side of report is already built and waiting.
 
-**One thing to get right:** the feed must be *absent* from the native build,
-not linked out of it. A button that opens the feed in Safari puts you back in
+**And the same goes for faces.** `ShareFace` — the opted-in photos that appear
+on other people's screens — is user-generated content in exactly the sense the
+guideline means: a picture of a real person, shown to strangers. Cutting the
+feed and leaving this in does not solve the problem. A reviewer who finds
+photos of people with no way to report one has found the same violation by
+another door.
+
+It is a smaller cut than the feed and the same reasoning applies: opt-in, well
+built, worth keeping on the web, and out of the native build until report and
+block exist.
+
+Anything else where one person's content reaches another person's screen goes
+too. The test is not "is it a feed", it is "can a stranger's words or picture
+appear in front of me".
+
+**One thing to get right:** the feed and faces must be *absent* from the native
+build, not linked out of it. A button that opens the feed in Safari puts you back in
 scope, and reviewers notice. One codebase with the routes unreachable in the
 native build, not a fork.
 
