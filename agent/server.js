@@ -45,6 +45,7 @@ import {
 } from "./lib/role.js";
 import * as studypal from "./lib/studypal.js";
 import * as changes from "./lib/changes.js";
+import * as numbers from "./lib/numbers.js";
 import * as video from "./lib/video.js";
 import { parseDocList, listDocs, readDoc, renderMarkdown } from "./lib/docs.js";
 
@@ -1411,6 +1412,16 @@ app.post("/api/chat", express.json({ limit: "24mb" }), async (req, res) => {
   // /api/changes above on why a partner is not told how this box is built.
   const platformBrief = isPartner || isProspect ? "" : await changes.brief();
 
+  // The figures, for any seat allowed them — the owner always, a partner while
+  // the grant is on, a prospect never. Read per turn like the platform digest
+  // above, and for the same reason: a number that was true when the container
+  // started is not a number, and a conversation outlives a deploy.
+  //
+  // canSeeNumbers rather than !isPartner: this is the one thing on the seat
+  // that a partner can be given deliberately, and gating it on being the owner
+  // would hand Brendan a dashboard and a Sage who will not read it to him.
+  const numbersBrief = canSeeNumbers ? await numbers.brief() : "";
+
   const baseOptions = {
     cwd: WORKSPACE,
     // Appends to Claude Code's preset rather than replacing it: the preset
@@ -1421,8 +1432,8 @@ app.post("/api/chat", express.json({ limit: "24mb" }), async (req, res) => {
       append: isProspect
         ? PROSPECT_VOICE
         : isPartner
-          ? PARTNER_VOICE
-          : SAGE_VOICE + OWNER_CLEARANCE + platformBrief,
+          ? PARTNER_VOICE + numbersBrief
+          : SAGE_VOICE + OWNER_CLEARANCE + platformBrief + numbersBrief,
     },
     // Every tool runs without stopping to ask, on the same files the editor
     // opens. Git is what protects them — see the README.
