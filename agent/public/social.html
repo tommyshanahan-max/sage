@@ -186,10 +186,20 @@
   .shot{height:5.5rem;display:grid;place-items:center;color:#fff;font-size:1.8rem;
     background:linear-gradient(135deg,var(--tone,var(--blue)),var(--blue))}
   .post .in{padding:.8rem .9rem;display:flex;flex-direction:column;gap:.5rem}
-  .byline{display:flex;align-items:center;gap:.4rem;font-size:.76rem;font-weight:600}
+  /* Wraps, because these cards sit in narrow columns and a name plus a date
+     plus who recorded it does not fit one line at two columns. Without it
+     the name squeezes into a two-line stack beside a full-width date. */
+  .byline{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;
+    font-size:.76rem;font-weight:600}
   .byline i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;
     font-size:.6rem;font-weight:800;color:#fff;background:var(--tone,var(--muted))}
   .byline span{color:var(--muted);font-weight:400}
+  .byline b{font-weight:700}
+  /* A post with no account on it. Hollow rather than coloured: the dot is
+     the account's colour everywhere else, and filling it here would give
+     an unattributed post the look of an attributed one. */
+  .byline i.none{background:none;border:1px dashed var(--rule);color:var(--muted)}
+  .byline b.dim{color:var(--muted);font-weight:600}
   .cap{margin:0;font-size:.84rem;color:var(--ink-2);line-height:1.45;white-space:pre-wrap}
   .tagrow{display:flex;gap:.35rem;flex-wrap:wrap}
   .tag{font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:99px;
@@ -862,12 +872,18 @@ function drawFeed() {
   $("feedhead").textContent = state.posts.length
     ? "What has gone out · " + state.posts.length : "What has gone out";
   for (const s of state.posts) {
-    // The audience, as recorded. Read from the share itself rather than looked
-    // up: the name was stored precisely so the row still reads after the
-    // account is gone from the app.
-    const who = s.toName ? { name: s.toName, tone: "blue" } : null;
+    // The account it is shared from. Read from the share itself first — the
+    // name was stored beside the id precisely so the row still reads after the
+    // account is renamed or removed — and looked up on the roster only to fill
+    // in a post recorded before there was a roster to pick from.
+    //
+    // This used to lead with the audience, and said "Everyone" on every row.
+    // The audience was the parked idea; the account is the live one, and it
+    // was buried in the small print behind the date.
+    const acc = roster().find((u) => u.id === s.fromId);
+    const from = s.fromName || acc?.name || "";
     const icon = (KINDS.find((k) => k[0] === s.kind) || KINDS[3])[1];
-    const a = el("article", "post " + (who ? "tone-" + who.tone : "tone-blue"));
+    const a = el("article", "post tone-" + (acc?.tone || "blue"));
     // The thing itself where there is one, and the coloured block only where
     // there is not: a wall of identical gradients is a filing system, and a
     // wall of the actual clips is a library.
@@ -883,13 +899,18 @@ function drawFeed() {
     }
     const inn = el("div", "in");
     const by = el("div", "byline");
-    // Two names, and they are different questions: who it went to, and who
-    // sent it. One seat made both obvious; two seats made neither.
-    by.append(el("i", null, (who ? who.name : "∀").slice(0, 1).toUpperCase()),
-      document.createTextNode(who ? who.name : "Everyone"),
+    // Two names, and they are different questions: the account a reader of the
+    // feed sees above the post, and the person at this keyboard who made it.
+    // One seat made both obvious; two seats made neither. The account leads,
+    // because it is the one thing that varies about anything made here.
+    //
+    // No account picked says so, rather than borrowing a word that means
+    // something else. It is a real state — nothing forces the field — and a
+    // post nobody can attribute is worth noticing on the wall.
+    by.append(el("i", from ? null : "none", (from || "?").slice(0, 1).toUpperCase()),
+      el("b", from ? null : "dim", from || "No account picked"),
       el("span", null, " · " + (s.at || "undated")
-        + (s.fromName ? " · as " + s.fromName : "")
-        + (s.by ? " · by " + s.by : "")));
+        + (s.by ? " · recorded by " + s.by : "")));
     inn.append(by, el("p", "cap", s.body));
     if (s.points) { const t = el("div", "tagrow"); t.append(el("span", "tag", s.points)); inn.append(t); }
 
