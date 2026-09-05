@@ -262,10 +262,24 @@ export const seedAccounts = () => cleanAccounts({
 // went out, and there is no reading of our own file that would reveal it.
 // ---------------------------------------------------------------------------
 
-// The three the webhook sends, plus the one only the board reports: a post the
-// model turned away. Listed here so a hook that starts sending it is accepted
-// rather than dropped as unknown.
-export const EVENTS = ["published", "held", "removed", "refused"];
+// What can happen to a post.
+//
+// Three the webhook sends, one only the board reports (a post the model turned
+// away), and one that comes from a person rather than a check: a reader
+// reported it.
+//
+// That last one is not a nicety. An app with a public feed cannot be on the App
+// Store without a way to report a post, and a report nobody sees is the same as
+// no report — Apple's reviewers test it, and the guideline expects action
+// within a day. So a reported post arrives here, in the one place somebody is
+// already looking at held ones, and counts as work until it is dealt with.
+export const EVENTS = ["published", "held", "removed", "refused", "reported"];
+
+// The two families of field, named once. Splitting them by hand at each use is
+// how `note` ended up being read as a caption on two events and as nothing on
+// the rest.
+const CAPTION = ["body", "text", "caption", "content", "note"];
+const WHY = ["why", "reason", "detail", "report"];
 
 /** Wide enough for an id the app minted however it likes, narrow enough to be
  *  safe in a URL and a filename. */
@@ -320,9 +334,14 @@ export function cleanReport(raw) {
     //
     // Held and removed keep their reason, because both have a real one: why a
     // person is needed, and why it came down.
-    body: (event === "published" || event === "refused"
-      ? pick("body", "text", "caption", "content", "reason", "note", "why", "detail")
-      : pick("body", "text", "caption", "content")
+    // The words. `note` is a caption on every event, not only on the two where
+    // it was first seen — a reported post that lost its text was the cost of
+    // scoping it. The reason-shaped fields fold in on a published post only,
+    // because a published post has no reason and text arriving in one of those
+    // is the caption under another name.
+    body: (event === "published"
+      ? pick(...CAPTION, ...WHY)
+      : pick(...CAPTION)
     ).slice(0, 2000),
     // An id at the app, fetched from its public-media endpoint. Kept as an
     // opaque string and encoded into a query parameter when used — never
@@ -333,7 +352,14 @@ export function cleanReport(raw) {
     // Why it was held, when the app says. The whole value of a held card is
     // knowing what to look at — and only a held card has one, which is why the
     // words above take these fields on every other event.
-    reason: event === "published" ? "" : pick("why", "reason", "detail").slice(0, 400),
+    // Why it was held, refused, taken down — or, on a report, what the person
+    // reporting it said. Their words, not a category: "this is the wrong
+    // photo of my restaurant" is the whole story and a dropdown would lose it.
+    reason: event === "published" ? "" : pick(...WHY).slice(0, 400),
+    // Who reported it, where the app says. Not shown beside the post — the
+    // point of a report is that it is acted on, not that the reporter is
+    // identified to whoever they reported.
+    reportedBy: event === "reported" ? String(post.by ?? raw.by ?? "").slice(0, 64) : "",
     // Cleared by a person here, not by the app: this is our record of having
     // looked, and the app has no way to know we did.
     reviewed: Boolean(raw.reviewed),

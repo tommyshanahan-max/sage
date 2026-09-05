@@ -55,6 +55,9 @@
   .tab{font-size:.82rem;font-weight:600;padding:.35rem .85rem;border-radius:99px;cursor:pointer;
     background:var(--card);border:1px solid var(--rule);color:var(--ink-2)}
   .tab[aria-selected=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+  /* A report has a clock on it in a way nothing else here does. */
+  .tab.urgent{border-color:var(--red);color:var(--red)}
+  .tab.urgent[aria-selected=true]{background:var(--red);border-color:var(--red);color:#fff}
 
   .tone-green{--tone:var(--green)} .tone-red{--tone:var(--red)}
   .tone-amber{--tone:var(--amber)} .tone-violet{--tone:var(--violet)}
@@ -212,8 +215,12 @@
   /* The one that reaches into the app. It sits beside a remove that only
      touches this box, and two greys side by side make the consequential one
      look like the harmless one. */
-  .del.pull{color:var(--red);opacity:.75}
-  .del.pull:hover{opacity:1;text-decoration:underline}
+  /* Called danger, not pull: pull was the name for a while, and then the
+     floating Sage button took the same class — so every delete on every card
+     was being positioned fixed in the corner, on top of it. Two meanings for
+     one class name is a bug waiting for the second meaning. */
+  .del.danger{color:var(--red);opacity:.75}
+  .del.danger:hover{opacity:1;text-decoration:underline}
 
   /* ---- people ---- */
   .searchbar{display:flex;gap:.55rem;align-items:center;background:var(--card);
@@ -1253,7 +1260,7 @@ function drawFeed() {
     // the row from this box's record. The other takes the post off the app's
     // feed, and only exists once there is something on the feed to take off.
     if (s.appId) {
-      const pull = el("button", "del pull", "Delete from app");
+      const pull = el("button", "del danger", "Delete from app");
       pull.type = "button";
       pull.addEventListener("click", () => removeFromApp(s.appId, s.body || "this post", pull));
       meta.append(pull);
@@ -1425,12 +1432,21 @@ function when(v) {
     : day;
 }
 
-const EVENT_TONE = { published: "green", held: "amber", refused: "red", removed: "violet" };
+const EVENT_TONE = { published: "green", held: "amber", reported: "red",
+                     refused: "red", removed: "violet" };
 const EVENT_WORD = { published: "Published", held: "Held for review",
                      // Turned away by the app's own check. Distinct from held,
                      // which is a question, and from removed, which is a
                      // decision somebody made after it was live.
-                     refused: "Refused", removed: "Removed" };
+                     refused: "Refused", removed: "Removed",
+                     // A person objected to a post that is live. The only
+                     // state here that came from a reader rather than a
+                     // check, and the only one with somebody waiting.
+                     reported: "Reported" };
+// The two that are somebody's job rather than somebody's record. Reported
+// leads: a held post is a question the app could not answer, a reported one is
+// a person saying something is wrong while it is still in front of readers.
+const NEEDS_A_PERSON = ["reported", "held"];
 
 let reports = null, listening = false;
 
@@ -1480,7 +1496,12 @@ async function loadFeedback() {
 
 /** Held and not yet looked at. The count that means somebody has a job. */
 const heldCount = () =>
-  feedItems().filter((r) => isOwnPost(r) && r.event === "held" && !r.reviewed).length;
+  feedItems().filter((r) => isOwnPost(r) && NEEDS_A_PERSON.includes(r.event) && !r.reviewed).length;
+
+/** Reports on their own, because they are the ones with a clock on them: an
+ *  app with a public feed is expected to act on a report within a day. */
+const reportCount = () =>
+  feedItems().filter((r) => isOwnPost(r) && r.event === "reported" && !r.reviewed).length;
 
 function drawReports() {
   const wrap = $("reported");
@@ -1508,15 +1529,29 @@ function drawReports() {
   wrap.hidden = false;
 
   const held = heldCount();
-  // On the tab too, because held is work and somebody sitting on the Share tab
+  const reported = reportCount();
+  // On the tab too, because this is work and somebody sitting on the Share tab
   // writing the next post would otherwise never learn there is any.
   $("t-feed").textContent = held ? "Feed · " + held : "Feed";
-  $("rephead").textContent = held
-    ? "From the app · " + held + " waiting on you"
-    : "From the app · " + list.length;
+  $("t-feed").classList.toggle("urgent", reported > 0);
+  $("rephead").textContent = reported
+    // Named rather than folded into the total. A report is a person waiting,
+    // and "3 waiting on you" reads the same whether it is three held posts or
+    // three complaints, which are not the same thing at all.
+    ? "From the app · " + reported + (reported === 1 ? " report" : " reports")
+      + (held > reported ? " and " + (held - reported) + " held" : "")
+    : held
+      ? "From the app · " + held + " waiting on you"
+      : "From the app · " + list.length;
 
-  // Held first, unreviewed before reviewed, then everything else newest first.
-  const rank = (r) => (r.event === "held" && !r.reviewed ? 0 : r.event === "held" ? 1 : 2);
+  // Reports first, then held, unreviewed before reviewed, then everything else
+  // newest first. A reported post is live and somebody has objected to it; a
+  // held one is not live and nobody is waiting.
+  const rank = (r) => {
+    if (!NEEDS_A_PERSON.includes(r.event)) return 4;
+    const first = r.event === "reported" ? 0 : 2;
+    return r.reviewed ? first + 1 : first;
+  };
   const sorted = [...list].sort((a, b) =>
     rank(a) - rank(b) || (b.at || "").localeCompare(a.at || ""));
 
@@ -1560,14 +1595,15 @@ function drawReports() {
     inn.append(by);
 
     if (r.body) inn.append(el("p", "cap", r.body));
-    // Why it was held, or why it was removed. The whole value of a held card
-    // is knowing what to look at.
+    // Why it was held or taken down — or, on a report, what the reader said.
+    // Their words verbatim: "that is my restaurant and I did not agree to it"
+    // is the whole story, and a category would lose it.
     if (r.reason) inn.append(el("div", "why", r.reason));
 
     const meta = el("div", "meta");
     // Only held cards carry the mark. Published and removed are the app's last
     // word and there is nothing to decide.
-    if (r.event === "held") {
+    if (NEEDS_A_PERSON.includes(r.event)) {
       const b = el("button", "tick", r.reviewed ? "Put it back on the list" : "I looked at it");
       b.type = "button";
       b.setAttribute("aria-pressed", String(Boolean(r.reviewed)));
@@ -1595,7 +1631,7 @@ function drawReports() {
     // Taking it out of the app. Not on a post the app has already removed —
     // there is nothing left to delete.
     if (r.event !== "removed") {
-      const del = el("button", "del pull", "Delete from app");
+      const del = el("button", "del danger", "Delete from app");
       del.type = "button";
       del.addEventListener("click", () => removeFromApp(r.id, r.body || "this post", del));
       meta.append(del);
@@ -1816,6 +1852,7 @@ function openReport(r) {
   if (r.event !== "published") {
     facts.append(fact(r.event === "held" ? "Why it was held"
       : r.event === "refused" ? "Why it was refused"
+      : r.event === "reported" ? "What the reader said"
       : "Why it came down", r.reason, "wide"));
   }
   facts.append(
@@ -1874,7 +1911,7 @@ function openReport(r) {
   }
 
   const acts = el("div", "acts");
-  if (r.event === "held") {
+  if (NEEDS_A_PERSON.includes(r.event)) {
     const b = el("button", "tick", r.reviewed ? "Put it back on the list" : "I looked at it");
     b.type = "button";
     b.setAttribute("aria-pressed", String(Boolean(r.reviewed)));
@@ -1908,7 +1945,9 @@ function openReport(r) {
     acts.append(a);
   }
   if (r.event !== "removed") {
-    const del = el("button", "del pull", "Delete from app");
+    const del = el("button", "del danger",
+      // On a report the button is the answer to the report, not a tidy-up.
+      r.event === "reported" ? "Take it down" : "Delete from app");
     del.type = "button";
     del.addEventListener("click", async () => {
       await removeFromApp(r.id, r.body || "this post", del);
@@ -1967,7 +2006,7 @@ function openShare(p) {
     acts.append(send);
   }
   if (p.appId) {
-    const pull = el("button", "del pull", "Delete from app");
+    const pull = el("button", "del danger", "Delete from app");
     pull.type = "button";
     pull.addEventListener("click", async () => {
       await removeFromApp(p.appId, p.body || "this post", pull);
