@@ -262,12 +262,39 @@
      seal made every headline figure look like a fault. */
   .bars.people .fill{background:var(--bronze)}
   .bars.has-who .bar-row{grid-template-columns:6.5rem 1fr 3rem 4.6rem}
+  /* The shape of the last fortnight, beside the total for it.
+     A total cannot tell a feature that spiked once and died from one climbing
+     steadily — both arrive as the same number — and which of the two it is
+     changes what you do next. Its own column rather than a line drawn inside
+     the bar, which would be read as part of the bar. */
+  .bars.has-trend .bar-row{grid-template-columns:6.5rem 1fr 3rem 4.4rem}
+  .bars.has-trend.has-who .bar-row{grid-template-columns:6.5rem 1fr 3rem 4.4rem 4.6rem}
+  .bar-row .spark{display:block;width:100%;height:22px;overflow:visible}
+  /* Not rank-weighted the way the bars are. The bar already says how big; this
+     says which way, and a faded line says that worse without saying anything
+     new. */
+  .bar-row .spark .ar{fill:var(--jade-soft)}
+  .bar-row .spark .ln{
+    fill:none;stroke:var(--jade-2);stroke-width:1.6;
+    stroke-linejoin:round;stroke-linecap:round;
+  }
+  .bar-row .spark .dot{fill:var(--jade)}
+  /* The trend drops before the people count does: it is the widest thing that
+     is not the bar, and it degrades the most gracefully — the day table below
+     carries the same history in full. */
+  @media (max-width:45rem){
+    .bar-row .spark{display:none}
+    .bars.has-trend .bar-row{grid-template-columns:6.5rem 1fr 3rem}
+    .bars.has-trend.has-who .bar-row{grid-template-columns:6.5rem 1fr 3rem 4.6rem}
+  }
   /* A figure that cannot be anything but zero yet is not a finding, and must
      not be read as one. Dimmed and dashed rather than printed as a hard 0. */
   .stat.pending .n{color:var(--muted); font-weight:500}
   @media (max-width:32rem){
     .bar-row{grid-template-columns:5rem 1fr 2.4rem; gap:.6rem}
     .bars.has-who .bar-row{grid-template-columns:5rem 1fr 2.4rem 3.6rem}
+    .bars.has-trend .bar-row{grid-template-columns:5rem 1fr 2.4rem}
+    .bars.has-trend.has-who .bar-row{grid-template-columns:5rem 1fr 2.4rem 3.6rem}
     .bar-row .name{font-size:.84rem}
   }
 
@@ -580,6 +607,70 @@ const fmt = (n) => n.toLocaleString("en-US");
  *  Stepping the weight down the list makes the ranking visible before any of
  *  the numbers are read, and floors well short of invisible: the last bar is
  *  still a value somebody may care about, not a ghost. */
+const SVGNS = "http://www.w3.org/2000/svg";
+
+/** One feature's daily counts, across every day reported, oldest first.
+ *
+ *  A day where a feature was not used is absent from the payload rather than
+ *  present as a zero — the server drops empty counts — so the gap has to be
+ *  filled here. Read straight through, a feature used on two days out of ten
+ *  would draw a ten-point line out of two points and look continuous. */
+function seriesFor(name, byDay) {
+  return byDay.map((d) => {
+    const hit = d.uses.find((u) => u.name === name);
+    return hit ? hit.count : 0;
+  });
+}
+
+/** A sparkline, or null when there is not enough history to draw an honest one.
+ *
+ *  Two points is a line between two points; it will always look like a trend
+ *  and is never evidence of one. Below three days this draws nothing and the
+ *  caption says why, which is the same rule the retention tiles follow: a
+ *  figure that cannot mean anything yet should be absent, not faint. */
+function sparkline(series) {
+  if (!series || series.length < 3) return null;
+  const hi = Math.max(...series);
+  // Every day zero. A flat line along the floor reads as "measured, and
+  // nothing happened", which is true, but it is indistinguishable from a
+  // rendering fault — and the bar beside it already says the total is nothing.
+  if (!hi) return null;
+
+  const w = 62, h = 22, pad = 2, n = series.length;
+  const x = (i) => pad + (i / (n - 1)) * (w - pad * 2);
+  const y = (v) => h - pad - (v / hi) * (h - pad * 2);
+  const pts = series.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" L");
+
+  const svg = document.createElementNS(SVGNS, "svg");
+  svg.setAttribute("class", "spark");
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  svg.setAttribute("preserveAspectRatio", "none");
+  // Described rather than left as decoration: a screen reader gets the shape
+  // in words, since it cannot get it any other way.
+  svg.setAttribute("role", "img");
+  const last = series[n - 1], first = series[0];
+  svg.setAttribute("aria-label", `Over ${n} days: ${first} to ${last}`);
+
+  const area = document.createElementNS(SVGNS, "path");
+  area.setAttribute("class", "ar");
+  area.setAttribute("d", `M${pad},${h - pad} L${pts} L${w - pad},${h - pad} Z`);
+
+  const line = document.createElementNS(SVGNS, "path");
+  line.setAttribute("class", "ln");
+  line.setAttribute("d", `M${pts}`);
+
+  // The latest day, marked. Without it the eye has to work out which end is
+  // now, and half the time it guesses the wrong one.
+  const dot = document.createElementNS(SVGNS, "circle");
+  dot.setAttribute("class", "dot");
+  dot.setAttribute("cx", x(n - 1));
+  dot.setAttribute("cy", y(last));
+  dot.setAttribute("r", 1.9);
+
+  svg.append(area, line, dot);
+  return svg;
+}
+
 function rankWeight(el, index, total) {
   if (total <= 1) return;
   // A short list spends the whole ramp in two or three steps, which leaves its
@@ -795,6 +886,7 @@ function drawUses(uses, byDay, devices, deviceDays, unit) {
   const rows = document.getElementById("app-uses-rows");
   box.replaceChildren();
   box.classList.remove("has-who");
+  box.classList.remove("has-trend");
   // Blanking the text leaves the panel it is painted on, which reads as a
   // rendering fault rather than as an absent caption.
   unitNote.textContent = "";
@@ -825,6 +917,18 @@ function drawUses(uses, byDay, devices, deviceDays, unit) {
   const who = new Map((devices || []).map((d) => [d.name, d.count]));
   if (who.size) box.classList.add("has-who");
 
+  // Trends need the per-day history, which arrives in the same payload and
+  // until now was only ever rendered as the table below.
+  const days = Array.isArray(byDay) ? byDay : [];
+  const trends = new Map();
+  for (const u of uses) {
+    const line = sparkline(seriesFor(u.name, days));
+    if (line) trends.set(u.name, line);
+  }
+  // The column exists only if something can be drawn in it. An empty column
+  // across every row is a layout with a hole in it, not a chart with no data.
+  if (trends.size) box.classList.add("has-trend");
+
   for (const [i, u] of uses.entries()) {
     const row = el("div", "bar-row");
     const track = el("span", "track");
@@ -835,6 +939,11 @@ function drawUses(uses, byDay, devices, deviceDays, unit) {
     rankWeight(fill, i, uses.length);
     track.append(fill);
     row.append(el("span", "name", u.name), track, el("span", "val", fmt(u.count)));
+    if (trends.size) {
+      // A feature with no drawable history still needs its cell, or every row
+      // below it shifts one column left.
+      row.append(trends.get(u.name) || el("span", "spark"));
+    }
     if (who.size) {
       // A feature with calls but no device figure is not a zero — the device
       // window is shorter than the lifetime totals, so it is simply outside it.
@@ -852,7 +961,14 @@ function drawUses(uses, byDay, devices, deviceDays, unit) {
         + (deviceDays ? ", over the last " + deviceDays + " days" : "")
         + " &mdash; a shorter span than the totals, which are for all time, so the two "
         + "are not a ratio and dividing them gives a number about neither."
-      : "How many separate people that is, this endpoint does not say.");
+      : "How many separate people that is, this endpoint does not say.")
+    + (box.classList.contains("has-trend")
+      ? " The line is that feature's last " + (byDay ? byDay.length : 0) + " days, "
+        + "scaled to its own busiest day rather than to the busiest feature &mdash; "
+        + "it is there to say which way something is going, not how it compares."
+      : " Trend lines appear once there are three days of history to draw one from; "
+        + "two points are a line between two points and will look like a trend whatever "
+        + "the feature is doing.");
 
   // The per-day table, when the app sends one. Columns come from the ranked
   // list above so the reading order is the same in both.
