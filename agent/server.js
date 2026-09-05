@@ -1672,6 +1672,15 @@ app.get("/api/numbers", async (_req, res) => {
       returnRate: data.returnRate,
       // Just enough for a sparkline. The full picture is a click away.
       series: (data.series || []).map((d) => d.devices),
+      // The app's own figures per day, which is what the readouts beside them
+      // are counting. Trimmed to the four the counter actually keeps a daily
+      // record of, plus whether that day was sampled at all: a day nobody
+      // recorded carries the previous total forward, and a line drawn through
+      // carried days would show a measurement that was never taken.
+      appSeries: (data.appSeries || []).map((d) => ({
+        count: d.count, fresh: d.fresh, active: d.active, back: d.back,
+        sampled: Boolean(d.sampled),
+      })),
       // Its own hostname if one is configured, otherwise the proxy above —
       // which is always there when the counter is, so the readout is never a
       // link to nowhere.

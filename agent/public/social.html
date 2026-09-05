@@ -296,6 +296,10 @@
   .counts .n b{font-size:1.5rem;font-weight:700;line-height:1;
     font-variant-numeric:tabular-nums;color:var(--ink)}
   .counts .n b.dim{color:var(--muted);font-weight:600}
+  .counts .n .top{display:flex;align-items:center;gap:.45rem}
+  /* The line takes the accent, the figure keeps the ink: the number is the
+     fact and the line is where it has been. */
+  .counts .spark{display:block;flex:none;color:var(--blue);opacity:.7}
   .counts .n span{font-size:.6rem;font-weight:700;letter-spacing:.11em;
     text-transform:uppercase;color:var(--muted)}
   .counts a{margin-left:auto;align-self:center;font-size:.76rem;font-weight:700;
@@ -1848,6 +1852,54 @@ function rawBlock(obj) {
 // rather than a zero. "Nobody came back today" and "the counter did not answer"
 // are opposite facts and a 0 states the wrong one.
 // ---------------------------------------------------------------------------
+/** A line through a handful of days, or nothing.
+ *
+ *  Nothing in three cases, all of them the same principle: a line is a claim
+ *  about a shape, and these would each be a claim nobody can support. Under
+ *  three points there is no shape. All-equal — including all-zero — is a flat
+ *  line that reads as "steady" when it usually means "not measured yet". And a
+ *  peak of zero has no height to draw against.
+ *
+ *  Scaled to its own range rather than to the others', because these five count
+ *  different things: a hundred and twenty-six people and nine returns on one
+ *  scale would leave four flat lines and one curve. */
+function spark(values) {
+  const v = (values || []).filter((x) => typeof x === "number" && Number.isFinite(x));
+  if (v.length < 3) return null;
+  const hi = Math.max(...v), lo = Math.min(...v);
+  if (hi === lo || hi <= 0) return null;
+
+  const W = 46, H = 16, P = 1.5;
+  const x = (i) => (i / (v.length - 1)) * W;
+  const y = (n) => H - P - ((n - lo) / (hi - lo)) * (H - P * 2);
+  const pts = v.map((n, i) => x(i).toFixed(1) + "," + y(n).toFixed(1));
+
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+  svg.setAttribute("class", "spark");
+  svg.setAttribute("aria-hidden", "true");
+
+  const line = document.createElementNS(ns, "polyline");
+  line.setAttribute("points", pts.join(" "));
+  line.setAttribute("fill", "none");
+  line.setAttribute("stroke", "currentColor");
+  line.setAttribute("stroke-width", "1.4");
+  line.setAttribute("stroke-linejoin", "round");
+  line.setAttribute("stroke-linecap", "round");
+  svg.append(line);
+
+  // The end of the line, which is where the figure beside it comes from.
+  const dot = document.createElementNS(ns, "circle");
+  dot.setAttribute("cx", x(v.length - 1).toFixed(1));
+  dot.setAttribute("cy", y(v[v.length - 1]).toFixed(1));
+  dot.setAttribute("r", "1.7");
+  dot.setAttribute("fill", "currentColor");
+  svg.append(dot);
+  return svg;
+}
+
 async function loadCounts() {
   let d;
   try {
@@ -1864,19 +1916,39 @@ async function loadCounts() {
 
   const box = $("counts");
   box.replaceChildren();
-  const n = (v, label) => {
+
+  // The daily record behind each figure. Only days the counter actually
+  // sampled: a day nobody recorded carries the previous total forward, and a
+  // line drawn through carried days shows a measurement that was never taken.
+  const days = (d.appSeries || []).filter((x) => x.sampled);
+  const col = (key) => days.map((x) => Number(x[key]) || 0);
+  // "New this week" has no daily field of its own — it is seven days of new
+  // people added up. Computed as a trailing sum so the line is the same
+  // quantity as the number above it, rather than a different one that happens
+  // to look like a trend.
+  const weekly = () => {
+    const f = col("fresh");
+    if (f.length < 7) return [];
+    return f.map((_, i) => (i < 6 ? null : f.slice(i - 6, i + 1).reduce((a, b) => a + b, 0)))
+      .filter((v) => v !== null);
+  };
+
+  const n = (v, label, series) => {
     const c = el("div", "n");
     const known = typeof v === "number" && Number.isFinite(v);
-    c.append(el("b", known ? null : "dim", known ? String(v) : "—"),
-      el("span", null, label));
+    const top = el("div", "top");
+    top.append(el("b", known ? null : "dim", known ? String(v) : "—"));
+    const line = spark(series);
+    if (line) top.append(line);
+    c.append(top, el("span", null, label));
     return c;
   };
   box.append(
-    n(app.count, "people, ever"),
-    n(app.today, "new today"),
-    n(app.week, "new this week"),
-    n(app.activeToday, "used it today"),
-    n(app.returningToday, "came back today"),
+    n(app.count, "people, ever", col("count")),
+    n(app.today, "new today", col("fresh")),
+    n(app.week, "new this week", weekly()),
+    n(app.activeToday, "used it today", col("active")),
+    n(app.returningToday, "came back today", col("back")),
   );
   if (d.link) {
     const a = document.createElement("a");
