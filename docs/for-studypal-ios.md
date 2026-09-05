@@ -6,9 +6,10 @@ over-scoped for it.
 
 ## The goal, stated plainly
 
-The web app stays as it is. It works inside the mainland, it needs no account
-and no VPN, and that is most of the reason it exists — the README says so in
-its second line and that has not changed.
+**The web app does not change.** Not one screen, not one route. It works inside
+the mainland, it needs no account and no VPN, and that is most of the reason it
+exists — the README says so in its second line and that has not changed. Every
+"cut" and "excluded" below means *from the iOS build*, and never from the site.
 
 The iOS build is a shop window. It exists so that Study Pal can be found in the
 App Store, which is what makes it real to an investor. Nobody will open it in a
@@ -22,8 +23,17 @@ well, and photograph well for a listing.
 
 ## What does not, and why
 
-**The social feed.** Not because it is unfinished — because an app with a
-public feed must carry, and be seen to carry, four things: a content filter, a
+**The social feed — from the iOS build only.**
+
+Read that twice before touching anything. The feed stays on the web, live,
+exactly as it is. Nothing about liuxuesheng.help changes. This is a build
+configuration for one distribution channel, not a decision to remove a working
+feature that people are using today. If a change to this would delete feed code,
+delete a route, or take a screen off the website, it is the wrong change.
+
+Excluded from the native build, then. Not because the feed is unfinished —
+because an app with a public feed must carry, and be seen to carry, four
+things: a content filter, a
 way to report a post, a way to block a user, and published contact details.
 Reviewers test the report button. The clock on acting on a report is a day.
 
