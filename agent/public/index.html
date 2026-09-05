@@ -473,6 +473,23 @@
   #log{flex:1;overflow-y:auto;padding:clamp(1.4rem,4vw,2.2rem) clamp(1rem,4vw,1.6rem) 2.5rem}
   .thread{max-width:44rem;margin:0 auto;display:flex;flex-direction:column;gap:1.5rem}
 
+  /* What to do next, as things you can press.
+     A seat that cannot edit the source has a narrow set of useful next moves,
+     and typing one out is friction on a review tool. These are Sage's own
+     suggestions, so they are phrased as the message they will send. */
+  .nexts{display:flex;flex-wrap:wrap;gap:.4rem;margin:.15rem 0 .1rem}
+  .nextbtn{
+    font:inherit;font-size:.82rem;line-height:1.3;text-align:left;cursor:pointer;
+    padding:.4rem .8rem;border-radius:99px;
+    background:var(--card);color:var(--ink-2);border:1px solid var(--rule);
+  }
+  .nextbtn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+  .nextbtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  /* Last turn's suggestions are stale the moment a new one starts. Dimmed and
+     inert rather than removed, so the thread still reads as a record of what
+     was offered. */
+  .nexts.spent .nextbtn{opacity:.45;pointer-events:none}
+
   .msg{display:flex;flex-direction:column;gap:.45rem}
   .msg.you{align-items:flex-end}
   .said{
@@ -981,6 +998,62 @@ function setBusy(state, label) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// "What next", offered rather than typed
+//
+// Sage ends a turn with a single line naming a few next moves. It is stripped
+// from the reply before anything is shown — the marker is never visible, not
+// even for the instant between arriving and being cleaned up, because the text
+// is re-rendered from the raw stream on every chunk rather than appended to.
+//
+// Tolerant on the way in and strict on the way out: a model will sometimes
+// bold the marker or wrap it in a code fence, and a suggestion that arrives
+// malformed should cost the user nothing. Anything unparseable simply means no
+// buttons, never a marker left sitting in the reply.
+// ---------------------------------------------------------------------------
+const NEXT_LINE = /\n?\s*(?:\*\*|`)?\[next\](?:\*\*|`)?\s*([^\n]*)/i;
+
+/** A marker still arriving. Text is re-rendered on every chunk, so without
+ *  this the opening bracket and the first letters of the word appear for a
+ *  frame or two at the end of an otherwise finished reply. Matches only a
+ *  prefix of the marker at the very end of the string, so a line that genuinely
+ *  ends in a bracket loses it for one chunk and gets it back on the next. */
+const NEXT_PARTIAL = /\n?\s*\[(?:n(?:e(?:x(?:t)?)?)?)?$/;
+
+/** The reply as it should be read, with the marker line removed. */
+const withoutNext = (raw) =>
+  raw.replace(NEXT_LINE, "").replace(NEXT_PARTIAL, "").trimEnd();
+
+/** The offered moves, or []. Capped and trimmed: four pills is a menu, ten is
+ *  a wall, and a suggestion longer than a short sentence is not a button. */
+function nextMoves(raw) {
+  const hit = raw.match(NEXT_LINE);
+  if (!hit || !hit[1]) return [];
+  return hit[1].split("|")
+    .map((t) => t.trim().replace(/^[-*\s]+/, ""))
+    .filter((t) => t.length > 1 && t.length <= 80)
+    .slice(0, 4);
+}
+
+function drawNexts(wrap, moves) {
+  if (!moves.length) return;
+  // Anything still offered from an earlier turn is now history.
+  for (const old of thread.querySelectorAll(".nexts")) old.classList.add("spent");
+  const row = el("div", "nexts");
+  for (const move of moves) {
+    const b = el("button", "nextbtn", move);
+    b.type = "button";
+    b.addEventListener("click", () => {
+      if (busy) return;
+      row.classList.add("spent");
+      send(move);
+    });
+    row.append(b);
+  }
+  wrap.append(row);
+  scroll();
+}
+
 async function send(prompt) {
   // Taken before the request, and cleared straight away: a second message
   // typed while the first is in flight must not carry the first one's picture.
@@ -1027,9 +1100,18 @@ async function send(prompt) {
   const decoder = new TextDecoder();
   let buffer = "";
 
+  // The reply as it arrived, kept apart from the reply as it is shown. The
+  // marker is only ever in the first of those two.
+  let raw = "";
+
   const handle = (event, data) => {
     if (event === "session")  { sessionId = data.sessionId; return; }
-    if (event === "text")     { body.textContent += data.text; scroll(); return; }
+    if (event === "text")     {
+      raw += data.text;
+      body.textContent = withoutNext(raw);
+      scroll();
+      return;
+    }
     if (event === "tool_use") { pending.set(data.id, addTool(wrap, body, data.name, data.input)); return; }
     if (event === "tool_result") {
       const d = pending.get(data.toolUseId);
@@ -1065,6 +1147,7 @@ async function send(prompt) {
 
   if (!body.textContent) body.textContent = "(no reply)";
   finishWork(wrap);
+  drawNexts(wrap, nextMoves(raw));
   setBusy(false, "ready");
   input.focus();
   // A mockup made during that turn shows itself. Asking for a change and then
