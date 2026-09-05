@@ -297,7 +297,13 @@
   /* Except on the app tab, where the last line is a note that already keeps a
      right-hand gutter for the button — so the clearance underneath buys
      nothing and costs the phone the height it was reserving. */
-  body.on-app main{padding-bottom:1.1rem}
+  body.on-app main{padding-bottom:1.1rem;gap:.55rem}
+  /* Tight above the phone. Every row of chrome between the figures and the
+     app is a row the phone pays for in scale, and on this tab the address and
+     the two buttons are a caption, not a toolbar. */
+  body.on-app .appbar{margin-bottom:.35rem}
+  body.on-app .appbar .where{font-size:.72rem}
+  body.on-app .counts{margin-bottom:.4rem}
   .pull{position:fixed;right:1.2rem;bottom:1.2rem;z-index:40;
     display:flex;align-items:center;gap:.5rem;cursor:pointer;font:inherit;
     padding:.7rem 1.1rem;border-radius:99px;border:0;color:#fff;font-weight:700;
@@ -2190,6 +2196,11 @@ function showApp() {
  *  Never scaled up past 1: a phone rendered larger than a phone is a mockup of
  *  a tablet nobody owns. */
 const PHONE_W = 390, PHONE_H = 844;
+// How far down it is allowed to go. Below this the phone stops being something
+// somebody can read and becomes a thumbnail of itself, and a thumbnail that
+// fits is worth less than a phone that scrolls: fitting was never the point,
+// seeing the app was. A short window scrolls a little instead.
+const PHONE_MIN = 0.9;
 
 function fitPhone() {
   const frame = $("frame"), phone = $("phone");
@@ -2198,7 +2209,7 @@ function fitPhone() {
   // masthead and the toolbar above it are all accounted for without any of
   // their heights being written down twice.
   const top = frame.getBoundingClientRect().top;
-  const room = Math.max(240, window.innerHeight - top - 90);
+  const room = Math.max(240, window.innerHeight - top - 62);
   // Width matters too, once Sage takes half the window.
   const wide = Math.max(200, frame.parentElement.clientWidth);
   const set = (k) => {
@@ -2208,15 +2219,17 @@ function fitPhone() {
   };
 
   let k = Math.min(1, room / PHONE_H, wide / PHONE_W);
+  // Width is a hard limit — a phone wider than its column is clipped, not
+  // small. Height is not: it is only how much scrolling there is.
+  k = Math.max(k, Math.min(PHONE_MIN, wide / PHONE_W));
   set(k);
 
-  // Then take back whatever still hangs off the bottom. The gutter above is a
-  // guess at the note and the padding under the frame; this is the measurement.
-  // One pass, because the only thing that changes between them is the frame's
-  // own height and it is now known.
+  // Then take back whatever still hangs off the bottom, down to the floor and
+  // no further. The gutter above is a guess at the note and the padding under
+  // the frame; this is the measurement.
   const over = document.documentElement.scrollHeight - window.innerHeight;
-  if (over > 1 && k > 0.35) {
-    set(Math.max(0.35, (PHONE_H * k - over) / PHONE_H));
+  if (over > 1 && k > PHONE_MIN) {
+    set(Math.max(PHONE_MIN, (PHONE_H * k - over) / PHONE_H));
   }
 }
 
