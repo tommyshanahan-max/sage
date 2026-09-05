@@ -285,6 +285,27 @@
   .add:hover{border-color:var(--blue);color:var(--blue)}
 
   /* ---- the detail sheet ---- */
+  /* The app's own figures, in the masthead of the panel that manages it.
+     Quiet: this is context for the work below, not the point of the page —
+     the full picture is one click away and says so. */
+  .counts{display:flex;gap:1.6rem;flex-wrap:wrap;align-items:baseline;
+    margin:0 0 1.4rem;padding:.9rem 1.1rem;border-radius:14px;
+    background:var(--card);box-shadow:var(--shadow);border:1px solid var(--rule)}
+  .counts[hidden]{display:none}
+  .counts .n{display:flex;flex-direction:column;gap:.15rem}
+  .counts .n b{font-size:1.5rem;font-weight:700;line-height:1;
+    font-variant-numeric:tabular-nums;color:var(--ink)}
+  .counts .n b.dim{color:var(--muted);font-weight:600}
+  .counts .n span{font-size:.6rem;font-weight:700;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--muted)}
+  .counts a{margin-left:auto;align-self:center;font-size:.76rem;font-weight:700;
+    color:var(--blue);text-decoration:none}
+  .counts a:hover{text-decoration:underline}
+  @media (max-width:44rem){
+    .counts{gap:1.1rem;padding:.8rem .9rem}
+    .counts .n b{font-size:1.2rem}
+    .counts a{margin-left:0;flex-basis:100%}
+  }
   .sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;
     justify-content:center;padding:2rem 1rem;overflow:auto;
     background:rgba(17,24,33,.42);backdrop-filter:blur(2px)}
@@ -349,6 +370,10 @@
       <button class="tab" role="tab" id="t-users" aria-selected="false">Users</button>
     </div>
   </header>
+
+  <!-- How the app is doing, read from the counter. Hidden entirely on a seat
+       without numbers access — an empty band would be worse than none. -->
+  <div class="counts" id="counts" hidden></div>
 
   <p class="err" id="err" hidden></p>
 
@@ -1805,6 +1830,63 @@ function rawBlock(obj) {
   return d;
 }
 
+
+// ---------------------------------------------------------------------------
+// How the app is doing
+//
+// The same figures the counter's own page shows, in the masthead of the panel
+// that manages the app's content. Somebody deciding what to post next wants to
+// know whether anyone is there; making them open another tab for it means they
+// mostly do not look.
+//
+// Read through this server's /api/numbers, which is gated on the numbers grant
+// rather than on this panel's own door: a seat without that grant gets a 404
+// and this band simply never appears. An empty band saying nothing would be
+// worse than no band — it would imply the figures are zero.
+//
+// Every figure here is a measured one, so a missing value renders as a dash
+// rather than a zero. "Nobody came back today" and "the counter did not answer"
+// are opposite facts and a 0 states the wrong one.
+// ---------------------------------------------------------------------------
+async function loadCounts() {
+  let d;
+  try {
+    const r = await fetch("/api/numbers");
+    // 404 is the ordinary answer on a seat without the grant. Not an error,
+    // and not worth a line on the page.
+    if (r.status === 404) return;
+    if (!r.ok) return;
+    d = await r.json();
+  } catch { return; }
+
+  const app = d && d.app;
+  if (!app) return;
+
+  const box = $("counts");
+  box.replaceChildren();
+  const n = (v, label) => {
+    const c = el("div", "n");
+    const known = typeof v === "number" && Number.isFinite(v);
+    c.append(el("b", known ? null : "dim", known ? String(v) : "—"),
+      el("span", null, label));
+    return c;
+  };
+  box.append(
+    n(app.count, "people, ever"),
+    n(app.today, "new today"),
+    n(app.week, "new this week"),
+    n(app.activeToday, "used it today"),
+    n(app.returningToday, "came back today"),
+  );
+  if (d.link) {
+    const a = document.createElement("a");
+    a.href = d.link; a.target = "_blank"; a.rel = "noreferrer";
+    a.textContent = "Numbers →";
+    box.append(a);
+  }
+  box.hidden = false;
+}
+
 // ---- tabs -----------------------------------------------------------------
 const TABS = { share: "v-share", feed: "v-feed", people: "v-people",
                content: "v-content", users: "v-users" };
@@ -1837,6 +1919,8 @@ loadFeedback().catch(() => {});
 // fires on a change, so a panel built on it alone shows what happened since it
 // was wired up and nothing before that.
 loadBoard().catch(() => {});
+// And how the app is doing, for the seat that is allowed to know.
+loadCounts().catch(() => {});
 
 // ---------------------------------------------------------------------------
 // The accounts a post is shared from
