@@ -12,7 +12,15 @@
   :root{
     --paper:#f2f0ea; --card:#fbfaf7; --card-2:#f1efe8; --ink:#1a1c1a;
     --ink-2:#4c5350; --muted:#828b87; --rule:#e0ddd3;
-    --jade:#1f6b52; --jade-soft:#e4efea; --seal:#a8342a;
+    --jade:#1f6b52; --jade-soft:#e4efea;
+    /* Jade counts. The seal warns, and only warns.
+       Colouring a category red was tried here and reverted: red reads as
+       "broken" on a dashboard whatever you intend it to mean, so a headline
+       figure in it looks like a fault, and the same 117 appeared green at the
+       top of the page and red halfway down. A category colour must not carry a
+       verdict. The unit distinction is carried by form instead — see
+       .bars.people below. */
+    --seal:#9c3a2c; --seal-soft:#f4e6e2;
     --serif:ui-serif,"New York",Georgia,"Songti SC","Times New Roman",serif;
     --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
            "Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;
@@ -22,7 +30,8 @@
     :root:not([data-theme="light"]){
       --paper:#12140f; --card:#1a1d18; --card-2:#20241e; --ink:#eceee6;
       --ink-2:#aab2a9; --muted:#7c857c; --rule:#2a2f27;
-      --jade:#5cc39c; --jade-soft:#12261f; --seal:#d9705f;
+      --jade:#5cc39c; --jade-soft:#12261f;
+      --seal:#e08a76; --seal-soft:#2a1a16;
     }
   }
   *{box-sizing:border-box}
@@ -184,9 +193,22 @@
      under a heading there is nothing to separate it from, and the two margins
      stack into a gap that reads as a missing element. */
   h2 + .thin{margin-top:0}
+  /* Was a filled tint, and there are six of these on the app tab alone. Six
+     filled blocks is not emphasis, it is a background — and it put commentary
+     in the same visual register as the figures it annotates. A rule down the
+     side keeps it findable and quiet: filled means data, unfilled means
+     somebody talking about the data. */
   .thin{
-    margin:1.4rem 0 0;padding:1rem 1.1rem;background:var(--jade-soft);
-    border-radius:10px;font-size:.82rem;color:var(--ink-2);line-height:1.65;
+    margin:1.4rem 0 0;padding:.1rem 0 .1rem 1.1rem;
+    border-left:2px solid var(--rule);
+    font-size:.82rem;color:var(--ink-2);line-height:1.65;
+  }
+  /* The exception, and the reason to keep a filled variant at all: this one is
+     not commentary, it is the reason figures are missing right now. It should
+     stop the eye, so it gets the seal and a fill. */
+  #app-usage-off{
+    padding:1rem 1.1rem;border-left:3px solid var(--seal);
+    border-radius:0 10px 10px 0;background:var(--seal-soft);color:var(--ink);
   }
   /* ---------- who sent them ----------
      Given its own section rather than a column, because it is the one panel
@@ -219,6 +241,14 @@
   .bar-row .who{
     text-align:right; font-family:var(--mono); font-size:.78rem; white-space:nowrap;
     color:var(--muted); font-variant-numeric:tabular-nums;
+  }
+  /* Bars counting people rather than calls or views. Marked out by fill rather
+     than by hue: a second colour here would either fight the accent or imply a
+     verdict, while an outline reads plainly as "same family, different unit"
+     and survives both themes without a second palette to keep balanced. */
+  .bars.people .fill{
+    background:var(--jade-soft);
+    box-shadow:inset 0 0 0 1.5px var(--jade);
   }
   .bars.has-who .bar-row{grid-template-columns:6.5rem 1fr 3rem 4.6rem}
   /* A figure that cannot be anything but zero yet is not a finding, and must
@@ -351,7 +381,7 @@
     <section>
       <h2>When they first arrived
         <span id="arrivals-span" style="text-transform:none;letter-spacing:0"></span></h2>
-      <div class="bars" id="app-arrivals"></div>
+      <div class="bars people" id="app-arrivals"></div>
       <p class="thin" id="app-arrivals-note"></p>
     </section>
 
