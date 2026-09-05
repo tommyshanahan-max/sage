@@ -77,6 +77,27 @@ changes**: the panel does not mark a post as pulled when it is still live. A
 button that hides a row locally while the post stays in front of readers is
 worse than no button, because somebody would believe it was gone.
 
+### The authorisation question, which is the actual blocker
+
+Deletion over there is authorised by a **per-post secret**, and that secret was
+deliberately dropped from `/api/public` — for a good reason, stated when it was
+dropped: it authorises deletion, and there is no reason for another box to hold
+one for every post forever. That reasoning holds and this is not asking for it
+back.
+
+What it means, though, is that there is currently no way for an admin to delete
+anything. The per-post secret is the only key that opens the door, and the one
+box that would need it correctly does not have it.
+
+The fix is a second door, not a copy of the first: **`DELETE /api/feed` accepts
+the admin key**, the same `x-admin-secret` that already publishes. Publishing is
+the more consequential of the two — it puts something in front of readers, where
+deletion only takes it away — so a key trusted with the first is not being
+over-trusted with the second.
+
+Per-post secrets stay exactly as they are, for whoever holds them. This adds an
+admin path beside them and copies nothing.
+
 When it lands, deleting on this side does two things. A post this panel sent
 loses its app id and goes back to being a draft that can be shared again —
 usually what somebody who just deleted it wants next. A post that only exists

@@ -310,6 +310,21 @@
     .counts .n b{font-size:1.2rem}
     .counts a{margin-left:0;flex-basis:100%}
   }
+  /* The app, in a frame. */
+  .appbar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem}
+  .appbar .where{font-family:var(--mono);font-size:.78rem;color:var(--muted);
+    flex:1;min-width:12rem;overflow-wrap:anywhere}
+  .appbar .mini{font:inherit;font-size:.76rem;font-weight:600;cursor:pointer;
+    padding:.32rem .8rem;border-radius:99px;background:var(--card);
+    border:1px solid var(--rule);color:var(--muted);text-decoration:none}
+  .appbar .mini:hover{border-color:var(--blue);color:var(--blue)}
+  /* A phone-shaped window, because that is what the app is. A full-width
+     frame would show a mobile layout stretched across a desktop and look
+     like a fault in the app rather than in the frame. */
+  .frame{background:var(--card);border-radius:18px;box-shadow:var(--shadow);
+    border:1px solid var(--rule);overflow:hidden;
+    width:min(26rem,100%);height:min(70vh,46rem);margin:0 auto}
+  .frame iframe{width:100%;height:100%;border:0;display:block;background:var(--sunk)}
   .sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;
     justify-content:center;padding:2rem 1rem;overflow:auto;
     background:rgba(17,24,33,.42);backdrop-filter:blur(2px)}
@@ -372,6 +387,11 @@
       <button class="tab" role="tab" id="t-people" aria-selected="false" hidden>People</button>
       <button class="tab" role="tab" id="t-content" aria-selected="false">Content</button>
       <button class="tab" role="tab" id="t-users" aria-selected="false">Users</button>
+      <!-- The app itself. Last, because it is the thing being managed rather
+           than a way of managing it — but present, because deciding what to
+           post next while looking at a list of ids is a worse job than doing
+           it while looking at the feed. -->
+      <button class="tab" role="tab" id="t-app" aria-selected="false">The app</button>
     </div>
   </header>
 
@@ -532,6 +552,18 @@
     <p class="none" id="usersnone" hidden></p>
     <div style="margin-top:.9rem"><button class="add" type="button" id="addaccount">+ Add an account</button></div>
     <p class="thin" id="usersnote"></p>
+  </section>
+
+  <!-- ============ THE APP ============ -->
+  <section id="v-app" hidden>
+    <div class="appbar">
+      <span class="where" id="appwhere"></span>
+      <button class="mini" type="button" id="appreload">Reload</button>
+      <a class="mini" id="appopen" target="_blank" rel="noreferrer">Open in a tab</a>
+    </div>
+    <div class="frame"><iframe id="appframe" title="Study Pal"
+      referrerpolicy="no-referrer"></iframe></div>
+    <p class="thin" id="appnote"></p>
   </section>
 
   <!-- ============ PEOPLE ============ -->
@@ -818,10 +850,13 @@ function drawShare() {
   // like it does is the whole risk of the panel: it writes things down, and
   // nothing has reached the app.
   // One destination and one variable, said where somebody is about to use it.
+  // No longer "recorded for now". Study Pal takes a post, so this sends one.
+  // The old line survived the day it stopped being true, which is the ordinary
+  // fate of a sentence about something not being built yet.
   $("sharenote").innerHTML = "<b>One destination, one constraint.</b> Everything here "
     + "goes to Study Pal's social feed; the only choice is the account it posts from. "
-    + "Recorded on this box for now \u2014 Study Pal has no way to receive a post yet, "
-    + "and when it does, what is on this form is what gets sent.";
+    + "Recording it sends it, and the app answers with the post's id \u2014 which is "
+    + "how the wall below knows what happened to it afterwards.";
 }
 
 // ---- the file -------------------------------------------------------------
@@ -1959,9 +1994,51 @@ async function loadCounts() {
   box.hidden = false;
 }
 
+// ---------------------------------------------------------------------------
+// The app, in a frame
+//
+// The thing being managed, beside the tools that manage it. Deciding what to
+// post next while looking at a list of ids is a worse job than doing it while
+// looking at the feed the post will land in.
+//
+// A frame rather than only a link, and a phone-shaped one: the app is a phone
+// app, and a full-width frame would stretch a mobile layout across a desktop
+// and look like a fault in the app rather than in the frame.
+//
+// The link stays regardless. A site is entitled to refuse being shown inside
+// another page, and many do — the frame then renders blank with nothing to say
+// for itself, so the note says it for it and the button beside it always works.
+// ---------------------------------------------------------------------------
+let appShown = false;
+
+function showApp() {
+  const base = String(state.base || "").replace(/\/+$/, "");
+  $("appwhere").textContent = base || "no address for this project";
+  $("appopen").href = base || "#";
+  $("appopen").hidden = !base;
+  $("appnote").innerHTML = base
+    ? "<b>The app as a reader sees it.</b> Blank frame? A site is entitled to refuse "
+      + "being shown inside another page, and there is no way to tell from here that "
+      + "it has \u2014 use <b>Open in a tab</b>."
+    : "<b>No address for this project.</b> The frame needs to know where the app is, "
+      + "which comes from the project's own mapping.";
+  if (!base) { $("appframe").removeAttribute("src"); return; }
+  // Once. Re-pointing it on every tab press would reload the whole app each
+  // time somebody glanced at it.
+  if (!appShown) { $("appframe").src = base; appShown = true; }
+}
+
+$("appreload").addEventListener("click", () => {
+  const base = String(state.base || "").replace(/\/+$/, "");
+  if (!base) return;
+  // A cache-buster rather than iframe.contentWindow.location.reload(), which a
+  // cross-origin frame does not permit.
+  $("appframe").src = base + (base.includes("?") ? "&" : "?") + "r=" + Date.now();
+});
+
 // ---- tabs -----------------------------------------------------------------
 const TABS = { share: "v-share", feed: "v-feed", people: "v-people",
-               content: "v-content", users: "v-users" };
+               content: "v-content", users: "v-users", app: "v-app" };
 function show(name) {
   tab = TABS[name] ? name : "share";
   for (const [k, id] of Object.entries(TABS)) $(id).hidden = k !== tab;
@@ -1977,6 +2054,10 @@ for (const k of Object.keys(TABS)) $("t-" + k).addEventListener("click", () => {
   // Re-read rather than read once: a delivery can land while the panel is
   // open, and the tab press is exactly when somebody wants it current.
   if (k === "feed") { loadFeedback(); loadBoard(); }
+  // The frame is loaded on the first visit rather than with the page: an
+  // iframe pointing at the app fetches the whole app, and a panel nobody has
+  // opened should not be doing that.
+  if (k === "app") showApp();
 });
 
 // Both read at startup rather than only when the Users tab is opened: the
