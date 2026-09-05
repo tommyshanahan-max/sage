@@ -266,7 +266,7 @@
         <span class="plus" aria-hidden="true">+</span>
         <span>
           <span class="say">Make something</span>
-          <span class="sub">A clip, an image or a note, addressed to somebody</span>
+          <span class="sub">Goes to the social feed in Study Pal</span>
         </span>
       </button>
       <!-- Also retired with the People tab: adding a name here made sense when
@@ -307,19 +307,27 @@
           <span class="lab">What it says</span>
           <textarea id="body" placeholder="Write it, or paste what you are sending."></textarea>
         </div>
-        <div class="grp">
+        <!-- No destination field. Everything made here goes to Study Pal's
+             social feed, so a menu of thirty screens and episodes was asking a
+             question with one answer. Hidden rather than deleted: the selector
+             is built from the app's real catalogue and would be the right
+             control again the day anything here can go somewhere else. -->
+        <div class="grp" hidden>
           <span class="lab">Where it goes in the app</span>
           <select id="points-pick"></select>
-          <input type="text" id="points" hidden
-                 placeholder="Name the part of the app it belongs to">
+          <input type="text" id="points" hidden>
           <p class="hint" id="hint-points"></p>
         </div>
         <div class="grp" id="fromgrp" hidden>
-          <span class="lab">Posts as</span>
+          <span class="lab">Posts to the feed as</span>
           <select id="from"></select>
           <p class="hint" id="fromhint"></p>
         </div>
-        <div class="grp">
+        <!-- And no audience. A post on a social feed is for whoever reads the
+             feed; picking one user was the last of the borrowed ideas from the
+             forwarding model. The one thing that varies is the account it goes
+             out from, which is the field above. -->
+        <div class="grp" hidden>
           <span class="lab">Who it is for</span>
           <div class="forrow" id="forrow"></div>
         </div>
@@ -588,10 +596,21 @@ function drawFrom() {
   const grp = $("fromgrp");
   const pick = $("from");
   const list = Array.isArray(users) ? users : [];
-  // Nothing to choose from is not a menu. The field stays hidden and the share
-  // records without one, which is what happens today anyway.
-  grp.hidden = !list.length;
-  if (!list.length) return;
+  // The only thing that varies about a post now, so it is always shown — even
+  // with nothing to choose yet, because an absent field would leave the form
+  // looking like it has no author at all rather than one it cannot name.
+  grp.hidden = false;
+  if (!list.length) {
+    pick.replaceChildren();
+    const only = document.createElement("option");
+    only.value = ""; only.textContent = "No account yet";
+    pick.append(only);
+    pick.disabled = true;
+    $("fromhint").innerHTML = "The account this posts from is the one thing that varies, "
+      + "and Study Pal serves no user list yet. See <code>docs/for-studypal-users.md</code>.";
+    return;
+  }
+  pick.disabled = false;
 
   pick.replaceChildren();
   const blank = document.createElement("option");
@@ -606,8 +625,8 @@ function drawFrom() {
   pick.value = list.some((u) => u.id === fromId) ? fromId : "";
   fromId = pick.value;
   $("fromhint").textContent = pick.value
-    ? "Readers see this account's name, not yours."
-    : "Recorded here only. Choose an account to say who it goes out as.";
+    ? "The feed shows this account as the author."
+    : "Pick the account this posts from.";
 }
 
 $("from").addEventListener("change", () => { fromId = $("from").value; drawFrom(); });
@@ -622,10 +641,11 @@ function drawShare() {
   // Said plainly, because the gap between what this does and what it looks
   // like it does is the whole risk of the panel: it writes things down, and
   // nothing has reached the app.
-  $("sharenote").innerHTML = "<b>Recorded here, not yet delivered.</b> This writes down "
-    + "what you made, who it is for and which part of the app it belongs to. Study Pal "
-    + "has no way to receive it yet — when that repository builds one, everything "
-    + "recorded here is what gets sent.";
+  // One destination and one variable, said where somebody is about to use it.
+  $("sharenote").innerHTML = "<b>One destination, one constraint.</b> Everything here "
+    + "goes to Study Pal's social feed; the only choice is the account it posts from. "
+    + "Recorded on this box for now \u2014 Study Pal has no way to receive a post yet, "
+    + "and when it does, what is on this form is what gets sent.";
 }
 
 // ---- the file -------------------------------------------------------------
@@ -699,11 +719,10 @@ $("record").addEventListener("click", () => {
     id: String(Date.now()) + Math.random().toString(36).slice(2, 7),
     body, kind, to: forCode, points: $("points").value.trim(),
     media: media ? media.id : "",
-    // Who in the app it is for: their id, and their name alongside. The id
-    // survives a rename; the name survives the account being deleted, which is
-    // the only way this record still reads a year from now.
-    to: forCode,
-    toName: (Array.isArray(users) ? users : []).find((u) => u.id === forCode)?.name || "",
+    // No audience: a feed post is for the feed. The field stays in the stored
+    // shape so older records still read, and nothing new writes it.
+    to: "",
+    toName: "",
     // Both names again, for the account it goes out as.
     fromId,
     fromName: (Array.isArray(users) ? users : []).find((u) => u.id === fromId)?.name || "",
