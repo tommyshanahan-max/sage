@@ -207,7 +207,7 @@
       <span class="plus" aria-hidden="true">+</span>
       <span>
         <span class="say">Make something</span>
-        <span class="sub">Write it, choose which screen it opens, and address it to somebody</span>
+        <span class="sub">Write it, say which part of the app it is for, and address it to somebody</span>
       </span>
     </button>
     <div class="compose" id="composer" hidden>
@@ -225,10 +225,10 @@
           <textarea id="body" placeholder="Write it, or paste what you are sending."></textarea>
         </div>
         <div class="grp">
-          <span class="lab">Which screen it opens</span>
+          <span class="lab">Where it goes in the app</span>
           <select id="points-pick"></select>
           <input type="text" id="points" hidden
-                 placeholder="Type it exactly as the app knows it">
+                 placeholder="Name the part of the app it belongs to">
           <p class="hint" id="hint-points"></p>
         </div>
         <div class="grp">
@@ -433,12 +433,16 @@ function drawPoints() {
   pick.hidden = empty;
   if (empty) $("points").hidden = false;
 
+  // Placement, not navigation. The field was written as "which screen the link
+  // opens", which is the same value described from the wrong end: everything
+  // made here is going to the app, so the question is which part of it this
+  // belongs to, not where a visitor is steered afterwards.
   $("hint-points").innerHTML = empty
-    ? "Where somebody arrives when they tap the link. Nothing is reporting the "
-      + "app's screens yet, so type it: <b>ep 3</b> lands them on that episode, "
-      + "and blank lands them on the home screen."
-    : "Where somebody arrives when they tap the link. The home screen means they "
-      + "have to go and find the thing you sent them.";
+    ? "Which part of the app this belongs to &mdash; an episode, or a screen. "
+      + "Nothing is reporting the app's parts yet, so type it: <b>ep 3</b> for "
+      + "the third episode. Leave it blank for the app in general."
+    : "Which part of the app this belongs to. Leave it on the home screen if it "
+      + "is about the app in general rather than one episode or feature.";
 }
 
 function drawShare() {
@@ -448,7 +452,7 @@ function drawShare() {
   $("link").textContent = url;
   $("record").disabled = !$("body").value.trim();
   $("sharenote").innerHTML = state.base
-    ? "<b>The link carries who shared it and which screen it opens.</b> WeChat strips "
+    ? "<b>The link carries who shared it and which part of the app it is for.</b> WeChat strips "
       + "referrers, so a code in the address is the only signal that survives being "
       + "forwarded. Recording a share here does not post it — it writes down that you "
       + "sent it, so the link and the result stay attached to each other."
