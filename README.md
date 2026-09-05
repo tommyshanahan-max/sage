@@ -178,6 +178,18 @@ make up
 First start pulls images and builds the workspace; give it a few minutes.
 Then open `https://your.domain` and log in with `TOMSCODING_PASSWORD`.
 
+To ship changes afterwards, use `make deploy` rather than `make up`. The
+difference matters more than it looks: `up` builds what is on the server's
+disk and never fetches, so running it after pushing to GitHub rebuilds every
+image, recreates the containers, prints a wall of success and ships nothing.
+Nothing in that output says the code is old. `deploy` fast-forwards the
+checkout first and stops if it cannot, then hands over to `up`.
+
+One line in the output is worth watching either way: a service whose code
+actually changed says `Recreated`. One that says `Running` was left alone,
+because neither its image nor its environment moved — which after a deploy you
+believe shipped something is the sign that it did not.
+
 The workspace opens straight onto a terminal with Claude Code already running
 — no welcome page, no editor tab. On the very first run it will ask you to log
 in, unless you set `ANTHROPIC_API_KEY` in `.env`.

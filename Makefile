@@ -3,12 +3,38 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 partner-mockups whats-new
+.PHONY: help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 partner-mockups whats-new
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
 
-up: ## Build if needed and start everything
+deploy: ## Fetch the latest commits, then build and start everything
+	@# Why this exists, given that 'up' is one word shorter.
+	@#
+	@# 'up' builds what is on this disk. It does not fetch, and there is nothing
+	@# in its output that says so: the images all rebuild, every container
+	@# reports Running or Recreated, and a deploy that shipped nothing looks
+	@# exactly like one that shipped everything. That cost an afternoon once,
+	@# with the new code sitting on GitHub and three people reading a page that
+	@# could not have contained it.
+	@#
+	@# --ff-only rather than a merge: a deploy is not the place to resolve a
+	@# conflict, and a checkout that has drifted should say so and stop rather
+	@# than build something nobody wrote.
+	@git rev-parse --git-dir >/dev/null 2>&1 \
+	  || { echo "not a git checkout — you are in $$(pwd)."; \
+	       echo "Run this in the folder holding .env on the server, not on your laptop."; \
+	       exit 1; }
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	  echo "fetching origin/$$branch"; \
+	  git pull --ff-only origin "$$branch" \
+	  || { echo; echo "could not fast-forward $$branch."; \
+	       echo "Either this checkout has local commits, or the work is on another branch."; \
+	       echo "Check with: git status -sb && git log --oneline -3"; \
+	       exit 1; }
+	@$(MAKE) --no-print-directory up
+
+up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	test -f .env || { echo "no .env — run: cp .env.example .env && \$$EDITOR .env"; exit 1; }
 	@grep -q '^COMPOSE_PROFILES=.*seat2' .env && ! grep -qE '^TOMSCODING_PASSWORD_2=.+' .env \
 	  && { echo "seat2 is enabled but TOMSCODING_PASSWORD_2 is empty."; \
