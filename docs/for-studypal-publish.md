@@ -61,28 +61,50 @@ Any 2xx means you have it. `400` for a bad request, `401` for a bad key,
 possibly sent" and says so on the row rather than guessing — a post silently
 sent twice is worse than one a person has to check.
 
-## The account id
+## Creating an account
 
-This is the part that needs a decision on your side, and it is worth reading
-before implementing.
+```
+POST https://liuxuesheng.help/api/users
+x-admin-secret: <STUDYPAL_ADMIN_KEY>
+Content-Type: application/json
 
-The panel keeps a roster of the accounts being operated — today Tom, Brendan,
-Samantha and Wen Wen, with the ids `tom`, `brendan`, `samantha`, `wen-wen`. It
-keeps that roster **because you serve no user list** (see
-`for-studypal-users.md`). Those ids were slugged from names on this side, which
-means they are almost certainly not your ids.
+{ "name": "Wen Wen", "handle": "wenwen" }
+```
 
-Two ways out, and either is fine:
+Reply:
 
-1. **Serve `/api/users`.** Then the panel picks from your real accounts, sends
-   your real id, and the roster becomes a fallback for accounts you do not know
-   about yet. This is the better answer and it is already specified.
-2. **Accept these slugs** and map them on your side. Quicker, and it works
-   until somebody adds an account whose name does not slug the same way.
+```json
+{ "id": "usr_7c1a", "name": "Wen Wen", "handle": "wenwen" }
+```
 
-If you take the second, say so and this side will stop presenting the ids as
-provisional. If `account` names something you do not recognise, reply `400`
-with the id in the message — better than publishing it under the wrong name.
+`name` is required, `handle` optional. **The id in the reply is what this side
+stores** — the roster row is keyed by your id from the moment it is created, so
+the `account` field on `/api/feed` is always an id you minted.
+
+This is what makes the account question go away. It was going to need a mapping
+table, or a slug convention neither side could change; instead the admin panel
+asks you to create the account and takes your answer.
+
+Refuse it properly when you should — a duplicate, a name you will not accept —
+with a non-2xx and an `error` string. Nothing is created on this side when you
+refuse, deliberately: two lists that disagree from the first row are worse than
+a failed button. `404` or `405` is read as "not built yet" rather than a
+refusal, and the account is created here alone and marked as not being in the
+app.
+
+## The account id on existing rows
+
+Four accounts already exist on this side — Tom, Brendan, Samantha and Wen Wen,
+with the slugged ids `tom`, `brendan`, `samantha`, `wen-wen`. They were created
+before there was anywhere to create them, so they are the one batch that will
+not have your ids.
+
+Easiest fix once `POST /api/users` is live: they get removed here and made
+again through it. Nothing is lost — no post has been delivered yet. Say the
+word and this side will do that rather than asking you to accept four slugs.
+
+If `account` on `/api/feed` names something you do not recognise, reply `400`
+with the id in the message. Better than publishing under the wrong name.
 
 ## What this side already does
 
@@ -104,9 +126,15 @@ happened to it.
 
 ## Order of work, if it helps
 
-`POST /api/feed` first — it unblocks the whole loop and the account question
-can be answered with option 2 in an afternoon. `GET /api/users` after, which
-turns the roster from a claim into a confirmed list and removes the mapping.
+`POST /api/users` first. It is the smaller of the two and it removes the
+account question from `/api/feed` entirely — with it in place, every id this
+side ever sends you is one you minted.
+
+`POST /api/feed` second. That is the one that makes the panel publish.
+
+`GET /api/users` last, from `for-studypal-users.md`. It turns the roster into a
+view of your list rather than a record of what was created through it, and it
+is the only one of the three nothing is blocked on.
 
 Related: `for-studypal-hook.md` (the inbound half, working),
 `for-studypal-users.md` (the user list).

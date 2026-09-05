@@ -1276,10 +1276,19 @@ app.put("/api/social", async (req, res) => {
   let already = new Map();
   try {
     const prior = social.clean(JSON.parse(await readFile(file, "utf8")));
-    already = new Map(prior.posts.map((s) => [s.id, s.by]));
+    already = new Map(prior.posts.map((s) => [s.id, s]));
   } catch { /* nothing recorded yet */ }
   for (const s of next.posts) {
-    s.by = already.has(s.id) ? (already.get(s.id) || "") : SEAT_NAME;
+    const was = already.get(s.id);
+    s.by = was ? (was.by || "") : SEAT_NAME;
+    // What the app called it, and when it took it. Written only by the route
+    // that did the sending, never carried in from the page — the page PUTs the
+    // whole list, so a field it could set is a field it could set on any post.
+    // A page claiming a post was delivered when it was not is the one lie this
+    // panel must not be able to tell.
+    s.appId = was ? (was.appId || "") : "";
+    s.sentAt = was ? (was.sentAt || "") : "";
+    s.sendNote = was ? (was.sendNote || "") : "";
   }
   // Two people on one code means two links that cannot be told apart, which
   // makes every figure downstream wrong in a way nothing would report.
@@ -1806,6 +1815,254 @@ app.get("/sp/usage", ownerOnly, async (_req, res) => {
 app.put("/sp/series", ownerOnly, publishGate, async (req, res) => {
   const r = await studypal.call("/api/series", { method: "PUT", body: req.body ?? {} });
   res.status(r.status).json(r.body);
+});
+
+// ---------------------------------------------------------------------------
+// Creating an account, in the app as well as here
+//
+// The roster started as a list kept on this box, because the app served no
+// users and the Share form had nothing to post from. A name written down here
+// and a name the app knows about were two different things, and the panel said
+// so on every row.
+//
+// This closes that. A new account is created in Study Pal first and the id it
+// gives back is the id stored here — so the account a post is shared from is
+// an account the app actually has, and /api/feed can be handed a real id
+// rather than a slug somebody has to map.
+//
+// Its own route rather than a branch inside the PUT, because it is the one
+// account operation that reaches outside this box: it takes the publish word
+// on a partner seat, and editing a note or removing a row should not.
+//
+// If the app has no route yet, the account is still created here and marked as
+// not in the app. That is the honest halfway state — the roster keeps working,
+// and the row says which of the two kinds it is instead of implying it is the
+// stronger one.
+// ---------------------------------------------------------------------------
+app.post("/api/social/accounts/new", publishGate, async (req, res) => {
+  if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
+  const project = String(req.query.project || "");
+  const file = accountsPath(project);
+  if (!file) return res.status(400).json({ error: "pick a project" });
+
+  const name = String(req.body?.name || "").trim().slice(0, 80);
+  if (!name) return res.status(400).json({ error: "it needs a name" });
+  const handle = String(req.body?.handle || "").trim().replace(/^@+/, "").slice(0, 40);
+  const note = String(req.body?.note || "").slice(0, 400);
+  const tone = ["green", "amber", "violet", "blue", "red"].includes(req.body?.tone)
+    ? req.body.tone : "blue";
+
+  let stored = { accounts: [] };
+  try {
+    stored = social.cleanAccounts(JSON.parse(await readFile(file, "utf8")));
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      return res.status(500).json({ error: "could not read the roster: " + (err.code || err.message) });
+    }
+    // Nothing written yet means the seed is what is on screen, so it is what
+    // the new account joins. Otherwise adding one to an untouched box would
+    // silently delete the other four.
+    stored = social.seedAccounts();
+  }
+
+  // Only where the credentials point at the project on screen. Creating an
+  // account in Study Pal because somebody added one to a different project's
+  // roster is the wrong app getting a new user.
+  const mapped = PROJECT_APPS.get(project) || APP_URL || "";
+  let sameApp = false;
+  try { sameApp = Boolean(mapped) && new URL(mapped).host === new URL(studypal.base()).host; }
+  catch { sameApp = false; }
+
+  let id = "", inApp = false, note2 = "";
+  if (sameApp && studypal.configured()) {
+    const r = await studypal.call("/api/users", { method: "POST", body: { name, handle } });
+    const got = String(r.body?.id ?? r.body?.userId ?? "").slice(0, 64);
+    if (r.status >= 200 && r.status < 300 && got && social.okAccountId(got)) {
+      id = got;
+      inApp = true;
+    } else if (r.status === 404 || r.status === 405) {
+      // No route over there yet. Named rather than reported as a failure: the
+      // account is still worth having, and this is a missing feature on the
+      // other side rather than something anybody here did wrong.
+      note2 = "The app has no way to create an account yet, so this one is kept here only. "
+        + "See docs/for-studypal-publish.md.";
+    } else {
+      // A real refusal — a duplicate name, a bad key — is the app's answer and
+      // nothing is created on either side. Making it here anyway would leave
+      // two lists that disagree from the first row.
+      return res.status(r.status === 401 ? 502 : r.status).json({
+        error: "the app refused it: " + (r.body?.error || r.body?.raw || "said " + r.status),
+      });
+    }
+  } else if (!studypal.configured()) {
+    note2 = "This seat has no Study Pal credentials, so the account is kept here only.";
+  } else {
+    note2 = "This project is not the app the credentials point at, so the account is kept here only.";
+  }
+
+  if (!id) {
+    id = social.idFrom(name);
+    if (!id) {
+      return res.status(400).json({
+        error: "that name gives no id — it has no Latin letters or digits, and the app "
+          + "did not supply one. Add a handle in Latin script and use that as the name.",
+      });
+    }
+  }
+  if (stored.accounts.some((a) => a.id === id)) {
+    return res.status(409).json({ error: `there is already an account with the id "${id}"` });
+  }
+
+  const next = social.cleanAccounts({
+    accounts: [...stored.accounts, {
+      id, name, handle, note, tone, inApp,
+      addedAt: new Date().toISOString(), addedBy: SEAT_NAME,
+    }],
+  });
+
+  try {
+    if (SOCIAL_DIR) await mkdir(SOCIAL_DIR, { recursive: true });
+    const tmp = file + ".tmp";
+    await writeFile(tmp, JSON.stringify(next, null, 2) + "\n", "utf8");
+    await rename(tmp, file);
+  } catch (err) {
+    return res.status(500).json({
+      error: (inApp ? "the app created it, but this box could not record that: " : "could not save it: ")
+        + (err.code || err.message),
+    });
+  }
+  res.json({ ok: true, id, inApp, note: note2, ...next });
+});
+
+// ---------------------------------------------------------------------------
+// Sending a post to the app
+//
+// The outbound half. Everything else in Social records; this is the one route
+// that makes something leave the box.
+//
+// Placed with the other /sp routes rather than beside the social ones, because
+// it needs publishGate, and a gate referenced before its own definition is a
+// route that throws at startup rather than at use.
+//
+// Study Pal does not serve this yet — the shape is specified in
+// docs/for-studypal-publish.md and this is written to it. Until it exists the
+// call comes back 404 and the row says so, which is the honest failure: the
+// post stays filed, nothing is lost, and nobody is told something was
+// delivered that was not.
+//
+// The publish word applies. This puts words and a picture in front of the
+// app's readers under one of its accounts' names, which is exactly what that
+// gate is for — a partner seat publishing to a live audience. The owner is not
+// asked for a word before publishing his own product.
+// ---------------------------------------------------------------------------
+const SEND_TYPES = new Map([...MEDIA_KINDS].map(([type, ext]) => [ext, type]));
+
+app.post("/api/social/publish", publishGate, async (req, res) => {
+  if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
+  if (!studypal.configured()) {
+    return res.status(503).json({ error: "this seat has no Study Pal credentials" });
+  }
+
+  const project = String(req.query.project || "");
+  const file = socialPath(project);
+  if (!file) return res.status(400).json({ error: "pick a project" });
+
+  // The credentials point at one app, and this panel follows whichever project
+  // is open. Without this, sending from a second project would publish its
+  // posts into Study Pal's feed under Study Pal's accounts.
+  const mapped = PROJECT_APPS.get(project) || APP_URL || "";
+  let sameApp = false;
+  try { sameApp = Boolean(mapped) && new URL(mapped).host === new URL(studypal.base()).host; }
+  catch { sameApp = false; }
+  if (!sameApp) {
+    return res.status(400).json({ error: "this project is not the app these credentials point at" });
+  }
+
+  let stored;
+  try {
+    stored = social.clean(JSON.parse(await readFile(file, "utf8")));
+  } catch (err) {
+    return res.status(err.code === "ENOENT" ? 404 : 500)
+      .json({ error: "could not read the posts: " + (err.code || err.message) });
+  }
+
+  const post = stored.posts.find((p) => p.id === String(req.body?.id || ""));
+  if (!post) return res.status(404).json({ error: "no such post" });
+  if (post.appId) {
+    // Not an error, and not a second send. Somebody pressed twice, or two
+    // seats pressed at once, and the right answer to both is the post they
+    // already have.
+    return res.json({ ok: true, already: true, post });
+  }
+  if (!post.fromId) {
+    return res.status(400).json({ error: "pick the account this is shared from first" });
+  }
+  if (!post.body && !post.media) {
+    return res.status(400).json({ error: "nothing to send — no words and no file" });
+  }
+
+  const form = new FormData();
+  form.set("account", post.fromId);
+  if (post.body) form.set("body", post.body);
+
+  if (post.media) {
+    const dir = mediaDir(project);
+    if (!dir) return res.status(503).json({ error: "no shared store on this box" });
+    // The id was checked into this shape when it was stored, and is checked
+    // again here rather than trusted: it is about to become a path.
+    if (!/^[a-f0-9]{20}\.[a-z0-9]{2,4}$/.test(post.media)) {
+      return res.status(400).json({ error: "the file on this post is not one we wrote" });
+    }
+    const ext = post.media.split(".").pop();
+    const type = SEND_TYPES.get(ext) || "application/octet-stream";
+    let bytes;
+    try {
+      bytes = await readFile(path.join(dir, post.media));
+    } catch (err) {
+      return res.status(err.code === "ENOENT" ? 410 : 500)
+        .json({ error: "could not read the file: " + (err.code || err.message) });
+    }
+    form.set("file", new Blob([bytes], { type }), post.media);
+  }
+
+  const r = await studypal.callForm("/api/feed", form, { timeoutMs: studypal.PUBLISH_TIMEOUT_MS });
+
+  // The id the app gives it back. This is the join with the webhook — without
+  // it the two halves are two unrelated lists — so a 2xx that carries no id is
+  // treated as a failure rather than quietly filed as a success.
+  const appId = String(r.body?.id ?? r.body?.postId ?? "").slice(0, 64);
+  const ok = r.status >= 200 && r.status < 300 && appId;
+
+  const note = ok ? "" : (r.status === 404
+    ? "The app has no /api/feed yet — see docs/for-studypal-publish.md."
+    : (String(r.body?.error || r.body?.raw || "the app said " + r.status)).slice(0, 300));
+
+  // Written down either way. A failed send that leaves no trace is a row
+  // somebody presses again tomorrow having forgotten why it did not work.
+  const next = social.clean({
+    ...stored,
+    posts: stored.posts.map((p) => (p.id === post.id
+      ? { ...p, appId: ok ? appId : "", sentAt: ok ? new Date().toISOString() : "", sendNote: note }
+      : p)),
+  });
+  try {
+    if (SOCIAL_DIR) await mkdir(SOCIAL_DIR, { recursive: true });
+    const tmp = file + ".tmp";
+    await writeFile(tmp, JSON.stringify(next, null, 2) + "\n", "utf8");
+    await rename(tmp, file);
+  } catch (err) {
+    // The post may well have landed. Say that rather than reporting a clean
+    // failure somebody would answer by pressing send again.
+    return res.status(500).json({
+      error: (ok ? "the app took it, but this box could not record that: " : "could not save it: ")
+        + (err.code || err.message),
+      sent: ok,
+    });
+  }
+
+  const saved = next.posts.find((p) => p.id === post.id);
+  if (!ok) return res.status(r.status === 404 ? 501 : 502).json({ error: note, post: saved });
+  res.json({ ok: true, post: saved });
 });
 
 app.delete("/sp/series", ownerOnly, publishGate, async (req, res) => {

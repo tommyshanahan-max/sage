@@ -207,6 +207,17 @@
   .meta{padding-top:.5rem;border-top:1px solid var(--rule);display:flex;gap:.7rem;
     font-size:.73rem;color:var(--muted);align-items:center;flex-wrap:wrap}
   .meta b{color:var(--ink);font-variant-numeric:tabular-nums}
+  /* Delivered, and not delivered. The green states a fact about the app, so
+     it is the only thing on the row allowed to look like a confirmation. */
+  .meta .sent{color:var(--green);font-weight:600;overflow-wrap:anywhere}
+  .meta .failed{color:var(--red);flex:1;min-width:0;line-height:1.4}
+  /* The one control on the wall that reaches outside this box, so it does not
+     look like the Remove beside it. */
+  .send{font:inherit;font-size:.73rem;font-weight:700;padding:.22rem .7rem;border-radius:99px;
+    cursor:pointer;border:1px solid var(--blue);background:var(--blue-soft);color:var(--blue)}
+  .send:hover{background:var(--blue);color:#fff}
+  .send:disabled{opacity:.55;cursor:default;background:var(--sunk);
+    border-color:var(--rule);color:var(--muted)}
   .tick{font:inherit;font-size:.72rem;font-weight:700;padding:.15rem .55rem;border-radius:99px;
     cursor:pointer;border:1px solid var(--rule);background:var(--card);color:var(--muted)}
   .tick[aria-pressed=true]{background:rgba(42,157,99,.13);border-color:var(--green);color:var(--green)}
@@ -805,8 +816,11 @@ $("drop").addEventListener("drop", (e) => upload(e.dataTransfer?.files?.[0]));
 $("record").addEventListener("click", () => {
   const body = $("body").value.trim();
   if (!body && !media) return;
+  // Held rather than inlined: the send that follows needs to name the post it
+  // just filed.
+  const id = String(Date.now()) + Math.random().toString(36).slice(2, 7);
   state.posts.unshift({
-    id: String(Date.now()) + Math.random().toString(36).slice(2, 7),
+    id,
     body, kind, to: forCode, points: $("points").value.trim(),
     media: media ? media.id : "",
     // No audience: a feed post is for the feed. The field stays in the stored
@@ -823,8 +837,58 @@ $("record").addEventListener("click", () => {
   // Shut afterwards: the share is recorded and the wall below is where the
   // answer to "did that work" lives.
   openCompose(false);
-  save();
+  // Filed first, then pushed. In that order because filing is this box's own
+  // record and must not depend on another service answering: a post that is
+  // written down and not sent can be sent again from the row, and a post that
+  // was sent and not written down is one nobody can find.
+  save().then(() => { if (id && fromId) publish(id); });
 });
+
+// ---------------------------------------------------------------------------
+// Sending a post to the app
+//
+// The one thing on this page that leaves the box. Everything else records.
+//
+// Study Pal does not serve /api/feed yet — the shape is written up in
+// docs/for-studypal-publish.md and this is built to it. Until it exists the
+// answer is a 501 and the row says the app has no route, which is the honest
+// failure: the post stays filed and nothing claims to have been delivered.
+// ---------------------------------------------------------------------------
+async function publish(id, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = "Sending…"; }
+  try {
+    const r = await fetch("/api/social/publish?project=" + encodeURIComponent(PROJECT), {
+      method: "POST",
+      headers: Object.assign({ "Content-Type": "application/json" },
+        // The publish word, where a seat has been asked for one. Held for the
+        // page's lifetime only — never stored, because a word kept in a
+        // browser is a word that no longer gates anything.
+        publishWord ? { "x-publish-word": publishWord } : {}),
+      body: JSON.stringify({ id }),
+    });
+    const d = await r.json().catch(() => ({}));
+
+    // The gate, asking. Not an error to report — a question to put, once, and
+    // then the same send again.
+    if (r.status === 401 && d.needWord) {
+      const word = window.prompt(d.error || "This goes live to readers. Enter the publish word.");
+      if (!word) { if (btn) { btn.disabled = false; btn.textContent = "Share to Study Pal"; } return; }
+      publishWord = word;
+      return publish(id, btn);
+    }
+
+    // The row carries the outcome either way: the server writes the reason on
+    // the post, so re-reading is what shows it rather than a message that
+    // disappears on the next draw.
+    await load();
+    if (!r.ok && !d.post) fail(d.error || "could not send it");
+  } catch (e) {
+    fail("could not send it: " + e.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+let publishWord = "";
 // Open and shut. The + used to double as the save button, which made the
 // biggest thing on the panel do the least obvious of the two things it could.
 function openCompose(on) {
@@ -915,12 +979,37 @@ function drawFeed() {
     if (s.points) { const t = el("div", "tagrow"); t.append(el("span", "tag", s.points)); inn.append(t); }
 
     const meta = el("div", "meta");
-    const arrived = arrivedFor(s.to);
+    // Delivered, or not, and why not. Three states and they read differently
+    // on purpose: filed and never sent, sent and the app has it, and tried and
+    // refused. The last one used to be indistinguishable from the first, which
+    // meant a row somebody had already pressed looked identical to one nobody
+    // had touched.
+    if (s.appId) {
+      meta.append(el("span", "sent", "delivered to the app · " + s.appId));
+    } else if (s.sendNote) {
+      meta.append(el("span", "failed", s.sendNote));
+    } else if (!s.fromId) {
+      // Nothing to share it as. Said here rather than offering a button that
+      // can only come back refused — the server checks this too, but a control
+      // whose only outcome is an error should not be on the row.
+      meta.append(el("span", null, "recorded here — needs an account before it can be shared"));
+    } else {
+      meta.append(el("span", null, "recorded here — not sent yet"));
+    }
+
     // No "passed on" tick and no arrivals figure: both belonged to the reading
-    // where somebody outside forwarded a link. Content that goes to a user
-    // inside the app is either delivered or it is not, and that is the app's
-    // answer to give, not something to tick here.
-    meta.append(el("span", null, "recorded here — not yet delivered to the app"));
+    // where somebody outside forwarded a link. What happened to a post after
+    // it lands is the app's answer to give, and it gives it — that is what the
+    // reports above this wall are.
+    if (!s.appId && s.fromId) {
+      // Named for where it goes, not for what it does to this box. "Send" was
+      // this side's word for it; the person pressing it is thinking about the
+      // app's feed, and the account above the button is whose feed it lands in.
+      const send = el("button", "send", s.sendNote ? "Try again" : "Share to Study Pal");
+      send.type = "button";
+      send.addEventListener("click", () => publish(s.id, send));
+      meta.append(send);
+    }
     const del = el("button", "del", "Remove");
     del.type = "button";
     del.addEventListener("click", () => {
@@ -1352,21 +1441,61 @@ $("accsave").addEventListener("click", async () => {
     return;
   }
 
-  const row = { id, name: name.slice(0, 80), handle: $("acchandle").value.trim().replace(/^@+/, ""),
+  const row = { name: name.slice(0, 80), handle: $("acchandle").value.trim().replace(/^@+/, ""),
                 note: $("accnote").value.trim(), tone: accTone };
-  const next = editing ? kept.map((a) => (a.id === id ? { ...a, ...row } : a)) : [...kept, row];
+
   try {
     $("accsave").disabled = true;
-    await saveAccounts(next);
+    // Two different operations behind one button. An edit is this box's own
+    // record and stays here. A new account is created in the app first, and
+    // the id it gives back is the one stored — so the account a post is shared
+    // from is an account the app actually has.
+    const made = editing
+      ? (await saveAccounts(kept.map((a) => (a.id === id ? { ...a, ...row } : a))), id)
+      : await createAccount(row);
     $("acced").hidden = true; editing = null;
     // A new account is almost always the one about to be used.
-    if (!$("from").disabled) { fromId = id; drawShare(); }
+    if (!$("from").disabled) { fromId = made; drawShare(); }
   } catch (e) {
-    $("acchint").textContent = "Could not save it: " + e.message;
+    $("acchint").textContent = e.message;
   } finally {
     $("accsave").disabled = false;
   }
 });
+
+/** Create one, in the app as well as here.
+ *
+ *  Returns the id the account ended up with, which is the app's own id when the
+ *  app minted it and a slug from the name when it could not. The difference is
+ *  visible on the row afterwards rather than swallowed — an account the app
+ *  knows about and one only this box knows about are different things, and the
+ *  Share form's whole job is naming the first kind. */
+async function createAccount(row) {
+  const r = await fetch("/api/social/accounts/new?project=" + encodeURIComponent(PROJECT), {
+    method: "POST",
+    headers: Object.assign({ "Content-Type": "application/json" },
+      publishWord ? { "x-publish-word": publishWord } : {}),
+    body: JSON.stringify(row),
+  });
+  const d = await r.json().catch(() => ({}));
+
+  // The gate, asking. Creating an account puts a name in front of the app's
+  // readers as surely as a post does.
+  if (r.status === 401 && d.needWord) {
+    const word = window.prompt(d.error || "This creates an account in the app. Enter the publish word.");
+    if (!word) throw new Error("Not created — no publish word.");
+    publishWord = word;
+    return createAccount(row);
+  }
+  if (!r.ok) throw new Error(d.error || "Could not create it: the server said " + r.status);
+
+  accounts = Array.isArray(d.accounts) ? d.accounts : accounts;
+  // Whatever the server could not do over there, said once, where the person
+  // who just pressed the button is looking.
+  accountsNote = d.note ? "<b>Kept here only.</b> " + d.note : "";
+  drawUsers(); drawShare();
+  return d.id;
+}
 
 /** Same rule as the server's idFrom, so the id the page shows is the id that
  *  gets stored. Kept in step by hand rather than shared, because this file is
@@ -1412,7 +1541,8 @@ function drawUsers() {
     card.append(el("div", "src",
       u.source === "both" ? "Confirmed by the app"
         : u.source === "app" ? "The app's own"
-        : "Kept here"));
+        : u.inApp ? "Created in the app"
+        : "Kept here only"));
 
     // Figures only where the app sent some. Three dashes under an account
     // this box invented is a row of empty boxes saying nothing.

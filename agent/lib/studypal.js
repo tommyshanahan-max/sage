@@ -62,3 +62,42 @@ export async function call(path, { method = "GET", body, timeoutMs = 15_000 } = 
 // which is a median — the tail is what times out, so this gets its own budget
 // rather than the one sized for reading a counter.
 export const GENERATE_TIMEOUT_MS = 45_000;
+
+/** One upstream call carrying a file.
+ *
+ *  Separate from `call` because the two differ in the one thing that matters
+ *  here: `call` sets its own content-type, and multipart's content-type
+ *  carries a boundary that only the FormData encoder knows. Setting it by hand
+ *  produces a request the other side cannot parse, and the failure looks like
+ *  a bad payload rather than a bad header.
+ *
+ *  Multipart rather than base64 JSON, unlike the cover route: a cover is a
+ *  small image, this carries video to 25 MB, and base64 makes that a 33 MB
+ *  body for no gain. */
+export async function callForm(path, form, { method = "POST", timeoutMs = 60_000 } = {}) {
+  if (!KEY) return { status: 503, body: { error: "STUDYPAL_ADMIN_KEY is not set" } };
+
+  try {
+    const r = await fetch(BASE + path, {
+      method,
+      // No content-type: fetch derives it from the FormData, boundary and all.
+      headers: { "x-admin-secret": KEY },
+      body: form,
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    const text = await r.text();
+    let parsed;
+    try { parsed = text ? JSON.parse(text) : null; } catch { parsed = { raw: text.slice(0, 2000) }; }
+    return { status: r.status, body: parsed };
+  } catch (err) {
+    const timedOut = err?.name === "TimeoutError" || /aborted/i.test(err?.message || "");
+    return {
+      status: 504,
+      body: { error: timedOut ? `no answer within ${timeoutMs / 1000}s` : (err?.message || "could not reach Study Pal") },
+    };
+  }
+}
+
+// A clip can be 25 MB and the upload is the slow part, so this gets a budget
+// sized for the file rather than the one sized for reading a counter.
+export const PUBLISH_TIMEOUT_MS = 120_000;

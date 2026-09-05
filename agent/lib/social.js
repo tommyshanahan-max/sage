@@ -116,6 +116,16 @@ export function clean(raw) {
       fromId: String(s.fromId || "").slice(0, 64),
       fromName: String(s.fromName || "").slice(0, 80),
       passedOn: Boolean(s.passedOn),
+      // What the app called it, once it has it. Absent until the post is sent
+      // and set only by the server that sent it — this is the id the webhook
+      // reports against, so a page that could write it could make any post
+      // claim to be any other.
+      appId: String(s.appId || "").slice(0, 64),
+      sentAt: String(s.sentAt || "").slice(0, 40),
+      // Why the last attempt did not land. Kept rather than shown once and
+      // forgotten: somebody comes back to a row hours later and the reason it
+      // is still sitting there is the thing they need.
+      sendNote: String(s.sendNote || "").slice(0, 300),
       at: String(s.at || ""),
     });
   }
@@ -200,6 +210,11 @@ export function cleanAccounts(raw) {
       handle: String(a.handle || "").replace(/^@+/, "").slice(0, 40),
       note: String(a.note || "").slice(0, 400),
       tone: ["green", "amber", "violet", "blue", "red"].includes(a.tone) ? a.tone : "blue",
+      // Whether this account exists in the app, because this box put it there.
+      // A third fact, and not the same as the merge with /api/users: that says
+      // the app reports it today, this says we created it. Both can be true;
+      // either alone is worth saying differently.
+      inApp: Boolean(a.inApp),
       addedAt: String(a.addedAt || ""),
       // Which seat wrote it down. Stamped by the server for the same reason
       // `by` is on a post: two people share this file.
