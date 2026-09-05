@@ -53,8 +53,23 @@
     letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
   }
 
+  /* Even air between the sections inside a tab, matching main's own rhythm.
+     They are plain blocks and were leaning on their last paragraph's bottom
+     margin for separation — so a section ending in a chart or a bar list ran
+     straight into the next heading.
+
+     The [hidden] guard is not optional and is the sixth time this file has
+     needed one: display:flex outranks the user-agent stylesheet's [hidden]
+     rule, so without it the closed tab renders underneath the open one. */
+  [role=tabpanel]{display:flex;flex-direction:column;gap:2rem}
+  [role=tabpanel][hidden]{display:none}
+
   /* ---------- today ---------- */
   .today{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.7rem}
+  /* Six figures, and auto-fit lays them out five-and-one at this width, which
+     strands the last one in a row of its own. Three across divides evenly. */
+  #app-stayed{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media (max-width:640px){ #app-stayed{grid-template-columns:repeat(2,minmax(0,1fr))} }
   .stat{
     background:var(--card);border:1px solid var(--rule);border-radius:11px;
     padding:1.1rem 1.2rem;
@@ -195,8 +210,19 @@
     color:var(--ink); font-variant-numeric:tabular-nums;
   }
   .bars-empty{color:var(--muted); font-size:.86rem; margin:.4rem 0 0}
+  /* How many people, beside how many times. A fourth column only when the app
+     reports it, because a permanently empty one reads as a broken layout. */
+  .bar-row .who{
+    text-align:right; font-family:var(--mono); font-size:.78rem; white-space:nowrap;
+    color:var(--muted); font-variant-numeric:tabular-nums;
+  }
+  .bars.has-who .bar-row{grid-template-columns:6.5rem 1fr 3rem 4.6rem}
+  /* A figure that cannot be anything but zero yet is not a finding, and must
+     not be read as one. Dimmed and dashed rather than printed as a hard 0. */
+  .stat.pending .n{color:var(--muted); font-weight:500}
   @media (max-width:32rem){
     .bar-row{grid-template-columns:5rem 1fr 2.4rem; gap:.6rem}
+    .bars.has-who .bar-row{grid-template-columns:5rem 1fr 2.4rem 3.6rem}
     .bar-row .name{font-size:.84rem}
   }
 
@@ -289,12 +315,40 @@
       <h2>What people used <span id="uses-span" style="text-transform:none;letter-spacing:0"></span></h2>
       <div class="bars" id="app-uses"></div>
       <p class="bars-empty" id="app-uses-note"></p>
+      <p class="thin" id="app-uses-unit"></p>
       <div class="rows" id="app-uses-rows" hidden>
         <table class="days">
           <thead><tr id="app-uses-head"></tr></thead>
           <tbody id="app-uses-body"></tbody>
         </table>
       </div>
+    </section>
+
+    <section>
+      <h2>Which screens they opened
+        <span id="screens-span" style="text-transform:none;letter-spacing:0"></span></h2>
+      <div class="bars" id="app-screens"></div>
+      <p class="bars-empty" id="app-screens-note"></p>
+    </section>
+
+    <section>
+      <h2>Who stayed <span id="stayed-span" style="text-transform:none;letter-spacing:0"></span></h2>
+      <div class="today" id="app-stayed">
+        <div class="stat accent"><span class="n" id="r-total">&mdash;</span><span class="k">People, ever</span></div>
+        <div class="stat accent"><span class="n" id="r-back">&mdash;</span><span class="k">Ever came back</span></div>
+        <div class="stat"><span class="n" id="r-once">&mdash;</span><span class="k">Came once only</span></div>
+        <div class="stat" id="r-regular-box"><span class="n" id="r-regular">&mdash;</span><span class="k">Regulars</span></div>
+        <div class="stat" id="r-week-box"><span class="n" id="r-week">&mdash;</span><span class="k">Still here after a week</span></div>
+        <div class="stat" id="r-month-box"><span class="n" id="r-month">&mdash;</span><span class="k">Still here after a month</span></div>
+      </div>
+      <p class="thin" id="app-stayed-note"></p>
+    </section>
+
+    <section>
+      <h2>When they first arrived
+        <span id="arrivals-span" style="text-transform:none;letter-spacing:0"></span></h2>
+      <div class="bars" id="app-arrivals"></div>
+      <p class="thin" id="app-arrivals-note"></p>
     </section>
 
     <section class="who-sent">
@@ -668,11 +722,14 @@ function drawAppBreakdown(id, items, missing) {
 // This is the one figure that says what the product is FOR. Arrivals tell you
 // how many opened it; only this tells you they came to speak rather than to
 // read — which is a different product from the one anybody was describing.
-function drawUses(uses, byDay) {
+function drawUses(uses, byDay, devices, deviceDays, unit) {
   const box = document.getElementById("app-uses");
   const note = document.getElementById("app-uses-note");
+  const unitNote = document.getElementById("app-uses-unit");
   const rows = document.getElementById("app-uses-rows");
   box.replaceChildren();
+  box.classList.remove("has-who");
+  unitNote.textContent = "";
 
   if (!uses || !uses.length) {
     note.hidden = false;
@@ -686,8 +743,18 @@ function drawUses(uses, byDay) {
   note.hidden = true;
 
   const total = uses.reduce((n, u) => n + u.count, 0);
-  document.getElementById("uses-span").textContent = "· " + fmt(total) + " in all";
+  // "Times", not a bare number. The app's own payload labels this unit "calls,
+  // not devices" and it is the single most misreadable figure on the page: 350
+  // speaks under a heading about people reads as 350 speakers, which is wrong
+  // by however many times the keenest user pressed the button.
+  document.getElementById("uses-span").textContent = "· " + fmt(total) + " times in all";
   const peak = Math.max(1, ...uses.map((u) => u.count));
+
+  // How many people, where the app reports it. Two columns rather than a choice
+  // between them: times-used says what the product is for, people-who-used says
+  // how wide that is, and each is the wrong answer to the other's question.
+  const who = new Map((devices || []).map((d) => [d.name, d.count]));
+  if (who.size) box.classList.add("has-who");
 
   for (const u of uses) {
     const row = el("div", "bar-row");
@@ -698,8 +765,23 @@ function drawUses(uses, byDay) {
     fill.style.width = Math.max(1, (u.count / peak) * 100) + "%";
     track.append(fill);
     row.append(el("span", "name", u.name), track, el("span", "val", fmt(u.count)));
+    if (who.size) {
+      // A feature with calls but no device figure is not a zero — the device
+      // window is shorter than the lifetime totals, so it is simply outside it.
+      const n = who.get(u.name);
+      row.append(el("span", "who", n === undefined ? "" : fmt(n) + " ppl"));
+    }
     box.append(row);
   }
+
+  unitNote.innerHTML = "<b>Bars count times used, not people.</b> "
+    + (unit ? "The app labels this figure &ldquo;" + unit + "&rdquo;. " : "")
+    + (who.size
+      ? "The grey figure beside each bar is how many separate people used it"
+        + (deviceDays ? ", over the last " + deviceDays + " days" : "")
+        + " &mdash; a shorter span than the totals, which are for all time, so the two "
+        + "are not a ratio and dividing them gives a number about neither."
+      : "How many separate people that is, this endpoint does not say.");
 
   // The per-day table, when the app sends one. Columns come from the ranked
   // list above so the reading order is the same in both.
@@ -735,10 +817,180 @@ function drawUses(uses, byDay) {
   rows.hidden = false;
 }
 
+// A ranked bar list, for the panels that are only ever a ranking. Same shape as
+// the feature bars above without the second column, since nothing else on this
+// page has a people-count to sit beside it.
+function drawBars(id, items, empty, span, spanText) {
+  const box = document.getElementById(id);
+  const note = document.getElementById(id + "-note");
+  box.replaceChildren();
+  if (span) document.getElementById(span).textContent = "";
+  if (!items || !items.length) {
+    note.hidden = false;
+    note.innerHTML = empty;
+    return;
+  }
+  note.hidden = true;
+  const peak = Math.max(1, ...items.map((i) => i.count));
+  if (span && spanText) document.getElementById(span).textContent = spanText(items);
+  for (const i of items) {
+    const row = el("div", "bar-row");
+    const track = el("span", "track");
+    const fill = el("span", "fill");
+    fill.style.width = Math.max(1, (i.count / peak) * 100) + "%";
+    track.append(fill);
+    row.append(el("span", "name", i.name), track, el("span", "val", fmt(i.count)));
+    box.append(row);
+  }
+}
+
+// Which screens got opened. Distinct from the feature bars: opening the speaking
+// screen and pressing speak are different acts, and the gap between the two is
+// the most useful thing on this page — a screen with views and no calls is a
+// screen people look at and back out of.
+function drawScreens(screens) {
+  drawBars("app-screens", screens,
+    "<b>Not reported by the app yet.</b> Screen views say which parts of the app "
+    + "people go looking at, as opposed to which parts they actually use &mdash; "
+    + "the difference between the two is where a feature is failing.",
+    "screens-span",
+    (items) => "· " + fmt(items.reduce((n, i) => n + i.count, 0)) + " views");
+}
+
+/** Whole days between an ISO day and today, or null if there is no start. */
+function daysSince(day) {
+  if (!day) return null;
+  const then = Date.parse(day + "T00:00:00Z");
+  if (!Number.isFinite(then)) return null;
+  return Math.floor((Date.now() - then) / 86_400_000);
+}
+
+// Who stayed.
+//
+// The one section on this page where a zero is usually not a fact about the
+// product. `stillAfterWeek` cannot be anything but zero until somebody has had
+// a week in which to still be here, and on a four-day-old app that is a
+// property of the calendar, not of the app. Printed as a hard 0 next to a real
+// figure it reads as "nobody came back", which is the opposite of unknown.
+//
+// So each window is checked against the age of the app first, and one that has
+// not had time to fill shows a dash and says when it starts to mean something.
+function drawStayed(people) {
+  const note = document.getElementById("app-stayed-note");
+  const span = document.getElementById("stayed-span");
+  const set = (id, value) => { document.getElementById(id).textContent = value; };
+  const pending = (boxId, id, ready, value, waitingFor) => {
+    const box = document.getElementById(boxId);
+    box.classList.toggle("pending", !ready);
+    set(id, ready ? fmt(value) : "—");
+    return ready ? null : waitingFor;
+  };
+
+  if (!people) {
+    span.textContent = "";
+    for (const id of ["r-total", "r-back", "r-once", "r-regular", "r-week", "r-month"]) set(id, "—");
+    note.innerHTML = "<b>Not reading the app's usage endpoint.</b> Set "
+      + "<code>TOMSCODING_APP_USAGE_URL</code> and <code>TOMSCODING_STUDYPAL_KEY</code> "
+      + "and this fills in. The key stays on this box &mdash; the endpoint is gated by a "
+      + "shared secret, so it is read here and never sent to the page.";
+    return;
+  }
+
+  set("r-total", fmt(people.total));
+  set("r-back", fmt(people.returned));
+  set("r-once", fmt(people.onceOnly));
+
+  const age = daysSince(people.firstFrom);
+  const waits = [
+    // A regular is somebody who keeps coming back across separate days, so the
+    // app has to have counted separate days before anyone can be one. On a
+    // product this young that zero is the calendar talking, not the audience —
+    // the same reason the week is dashed, and it clears on the same day.
+    pending("r-regular-box", "r-regular", age === null || age >= 7, people.regular, "regulars"),
+    pending("r-week-box", "r-week", age === null || age >= 7, people.afterWeek, "a week"),
+    pending("r-month-box", "r-month", age === null || age >= 30, people.afterMonth, "a month"),
+  ].filter(Boolean);
+
+  // The headline reading, stated rather than left to be worked out. Of everyone
+  // who has ever opened it, this many opened it again — the honest measure of
+  // whether the thing is worth coming back to, and the one that matters more
+  // than the total.
+  const rate = people.total ? Math.round((people.returned / people.total) * 100) : 0;
+  span.textContent = "· " + fmt(people.returned) + " of " + fmt(people.total)
+    + " ever came back, " + rate + "%";
+
+  let text = "<b>Lifetime, not a window.</b> Everyone who has ever opened the app is in "
+    + "these figures, which is why they cannot be divided into the feature bars above &mdash; "
+    + "those cover a shorter span.";
+  if (age !== null) {
+    text += " The app has been recording arrivals for <b>" + age + " day"
+      + (age === 1 ? "" : "s") + "</b>.";
+  }
+  if (waits.length) {
+    text += " " + (waits.length === 1 ? "One figure is" : waits.length + " figures are")
+      + " dashed rather than shown as zero &mdash; " + waits.join(", ")
+      + " &mdash; because nobody has yet had that long in which to still be here. "
+      + "A zero printed there reads as a verdict on the product when it is one about the calendar.";
+  }
+  note.innerHTML = text;
+}
+
+// When everyone first turned up.
+//
+// This is the app's own memory rather than this service's diary, and it reaches
+// back further: the diary in lib/apphistory.js starts the day it shipped, while
+// this is every arrival the app itself has ever recorded. Where the two disagree
+// about a day, the app is the one that was there.
+function drawArrivals(arrivals) {
+  const box = document.getElementById("app-arrivals");
+  const note = document.getElementById("app-arrivals-note");
+  const span = document.getElementById("arrivals-span");
+  box.replaceChildren();
+  span.textContent = "";
+
+  if (!arrivals || (!arrivals.days.length && !arrivals.undated)) {
+    note.innerHTML = "<b>Not reported by the app yet.</b> This is the app's own record of "
+      + "when each person first arrived, which reaches back further than the daily diary "
+      + "this service keeps &mdash; that one starts the day it shipped.";
+    return;
+  }
+
+  const rows = arrivals.days.map((d) => ({ name: d.day.slice(5), count: d.count }));
+  // Arrivals the app could not date. Kept and labelled rather than dropped: it
+  // is part of the total everything else is read against, and a curve quietly
+  // missing five people is a curve that does not add up to the headline.
+  if (arrivals.undated) rows.push({ name: "not dated", count: arrivals.undated });
+
+  const peak = Math.max(1, ...rows.map((r) => r.count));
+  const total = rows.reduce((n, r) => n + r.count, 0);
+  span.textContent = "· " + fmt(total) + " people in all";
+
+  for (const r of rows) {
+    const row = el("div", "bar-row");
+    const track = el("span", "track");
+    const fill = el("span", "fill");
+    fill.style.width = Math.max(1, (r.count / peak) * 100) + "%";
+    track.append(fill);
+    row.append(el("span", "name", r.name), track, el("span", "val", fmt(r.count)));
+    box.append(row);
+  }
+
+  note.innerHTML = "<b>First arrivals, by the day they landed.</b> The app's own record, so "
+    + "it covers days before this dashboard was watching."
+    + (arrivals.undated
+      ? " <b>" + fmt(arrivals.undated) + "</b> arrived before the app started keeping the date; "
+        + "they are counted here rather than dropped, so the column adds up to the total above."
+      : "");
+}
+
 function drawApp(app, series) {
   const note = document.getElementById("app-note");
   drawAppCharts(series);
-  drawUses(app && app.uses, app && app.usesByDay);
+  drawUses(app && app.uses, app && app.usesByDay,
+    app && app.devices, app && app.deviceDays, app && app.unit);
+  drawScreens(app && app.screens);
+  drawStayed(app && app.people);
+  drawArrivals(app && app.arrivals);
 
   const notYet = (what) => "<b>Not reported by the app.</b> " + what
     + " The app keeps its own count in its own codebase, so this fills in when "

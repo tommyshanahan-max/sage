@@ -440,6 +440,119 @@ function byDay(raw) {
   return out.length ? out : null;
 }
 
+// ---------------------------------------------------------------------------
+// The app's second endpoint: what was actually done in it
+//
+// /api/count is public and answers "how many people". /api/usage is secret-
+// gated and answers "and what did they do" — which features were called, on
+// which days, how many distinct devices called them, and how many of the
+// people ever came back. It is the richer of the two by a long way, and it is
+// the one the app's own dashboard has been showing while this page showed five
+// numbers.
+//
+// Read here rather than by the browser for the usual reason: it wants an
+// x-admin-secret header, and a secret that reaches a page is a published
+// secret. This service holds the key, the browser holds none.
+//
+// Soft-failing on its own. A usage read that fails must not lose the count —
+// the two are separate requests to separate endpoints and either can have a
+// bad minute, so the panels degrade one at a time rather than together.
+//
+// ---------------------------------------------------------------------------
+// Three things this payload will mislead you about if taken at face value
+//
+//   1. `totals` and `byDay` count CALLS, not people. The app says so in its own
+//      `unit` field. Rendered under a heading about people they inflate
+//      everything — 350 speaks is not 350 speakers. `devices` is the same
+//      breakdown counted in people, so both are carried through and the page
+//      shows them side by side rather than picking one and hoping.
+//   2. `regular` and `stillAfterWeek` read 0 while the app is younger than the
+//      window they measure, and that is arithmetic rather than a finding.
+//      `firstFrom` below is the app's first recorded arrival, so the page can
+//      tell the difference between "nobody stayed" and "nobody could have yet".
+//   3. `devices` is a 14-day window and `people` is lifetime. Divide one by the
+//      other and you get a retention rate that quietly drops everyone who
+//      arrived a fortnight ago. They are kept apart and labelled with their
+//      own spans.
+// ---------------------------------------------------------------------------
+
+/** A day-keyed map of plain numbers, in order, plus whatever did not carry a
+ *  date. The app reports arrivals it could not date under `unknown`; dropping
+ *  that key would quietly shrink the total the same rows are read against, so
+ *  it comes back separately rather than being filtered away. */
+function dayCounts(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const days = [];
+  let undated = 0;
+  for (const [key, value] of Object.entries(raw)) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(key)) days.push({ day: key, count: n });
+    else undated += n;
+  }
+  days.sort((a, b) => a.day.localeCompare(b.day));
+  if (!days.length && !undated) return null;
+  return { days: days.slice(-90), undated };
+}
+
+/** The retention block, as numbers or not at all. Every field defaulted: the
+ *  two services ship separately, so a field added over there arrives here as a
+ *  missing one for as long as it takes to deploy this side. */
+function retention(raw, firstFrom) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const n = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  const total = n(raw.total);
+  if (!total) return null;
+  return {
+    total,
+    returned: n(raw.returnedAtLeastOnce),
+    onceOnly: n(raw.onceOnly),
+    regular: n(raw.regular),
+    afterWeek: n(raw.stillAfterWeek),
+    afterMonth: n(raw.stillAfterMonth),
+    // The earliest arrival the app has on record, so the page can say how old
+    // the product is and therefore which of the windows above have had time to
+    // fill. Without it a structural zero and a disappointing one look identical.
+    firstFrom,
+  };
+}
+
+const APP_USAGE_URL = process.env.ANALYTICS_APP_USAGE_URL || "";
+const APP_USAGE_KEY = process.env.ANALYTICS_APP_USAGE_KEY || "";
+
+async function appUsage() {
+  if (!APP_USAGE_URL || !APP_USAGE_KEY) return null;
+  const r = await fetch(APP_USAGE_URL, {
+    headers: { "x-admin-secret": APP_USAGE_KEY },
+    signal: AbortSignal.timeout(6000),
+  });
+  if (!r.ok) throw new Error("usage said " + r.status);
+  const d = await r.json();
+
+  const arrivals = dayCounts(d.people?.firstSeen);
+  const firstFrom = arrivals?.days?.[0]?.day || null;
+
+  return {
+    // What the app itself calls the unit, quoted rather than assumed. If that
+    // sentence ever changes over there, the page repeats the new one.
+    unit: typeof d.unit === "string" ? d.unit.slice(0, 80) : "calls, not devices",
+    uses: counts(d.totals),
+    usesByDay: byDay(d.byDay),
+    // The same features counted in people instead of calls, over the window the
+    // app keeps them for. Its own span, carried with it, because it is not the
+    // span anything else on this page uses.
+    devices: counts(d.devices?.totals),
+    deviceDays: Number(d.devices?.windowDays) || 0,
+    screens: counts(d.screens?.totals),
+    people: retention(d.people, firstFrom),
+    // When everyone who has ever used it first turned up. This reaches back
+    // before the diary in lib/apphistory.js does — that file records what the
+    // app said on the days this service was running, while these are the app's
+    // own memory of arrivals it saw before anyone here was watching.
+    arrivals,
+  };
+}
+
 const APP_COUNT_URL = process.env.ANALYTICS_APP_COUNT_URL || "";
 const APP_CACHE_MS = 60_000;
 let appCache = { at: 0, value: null };
@@ -447,10 +560,27 @@ let appCache = { at: 0, value: null };
 async function appCount(force = false) {
   if (!APP_COUNT_URL) return null;
   if (!force && Date.now() - appCache.at < APP_CACHE_MS) return appCache.value;
+  // Both endpoints at once, and settled rather than awaited in turn: the count
+  // is the one this section cannot do without, so a usage read that hangs must
+  // not hold it up and a usage read that fails must not lose it.
+  const [gotCount, gotUsage] = await Promise.allSettled([
+    (async () => {
+      const r = await fetch(APP_COUNT_URL, { signal: AbortSignal.timeout(4000) });
+      if (!r.ok) throw new Error("app said " + r.status);
+      return r.json();
+    })(),
+    appUsage(),
+  ]);
+  const use = gotUsage.status === "fulfilled" ? gotUsage.value : null;
+  if (gotUsage.status === "rejected") {
+    // Said out loud in the log rather than swallowed. A wrong or rotated admin
+    // key fails as a 401 here and as three silent empty panels on the page,
+    // and the page cannot tell you which of those it is looking at.
+    console.error("app usage:", gotUsage.reason?.message || gotUsage.reason);
+  }
   try {
-    const r = await fetch(APP_COUNT_URL, { signal: AbortSignal.timeout(4000) });
-    if (!r.ok) throw new Error("app said " + r.status);
-    const d = await r.json();
+    if (gotCount.status === "rejected") throw gotCount.reason;
+    const d = gotCount.value;
     // Only the three fields, and only as numbers. This is another service's
     // JSON: taking exactly what is expected keeps a change over there from
     // becoming a surprise in here.
@@ -482,8 +612,22 @@ async function appCount(force = false) {
         // that describes what the product is for rather than how many opened
         // it — a count of arrivals cannot tell you that people came to speak
         // rather than to read.
-        uses: counts(d.uses),
-        usesByDay: byDay(d.usesByDay),
+        //
+        // Two sources, in that order of preference. The count endpoint was
+        // sending these before the usage one existed; usage sends the fuller
+        // version. Falling back rather than replacing means a box where the
+        // admin key is not set keeps exactly what it had.
+        uses: (use && use.uses) || counts(d.uses),
+        usesByDay: (use && use.usesByDay) || byDay(d.usesByDay),
+        // Everything below comes from the secret-gated endpoint alone, so it is
+        // null on a box with no key — which the page reports as a switch that
+        // is off, not as a product nobody uses.
+        unit: use ? use.unit : null,
+        devices: use ? use.devices : null,
+        deviceDays: use ? use.deviceDays : 0,
+        screens: use ? use.screens : null,
+        people: use ? use.people : null,
+        arrivals: use ? use.arrivals : null,
         url: APP_COUNT_URL,
       },
     };

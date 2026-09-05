@@ -561,6 +561,17 @@ services:
       # this counter's — never merged into it. The app counts itself because a
       # page in mainland China cannot rely on reaching anything else.
       ANALYTICS_APP_COUNT_URL: ${TOMSCODING_APP_COUNT_URL:-}
+      # The app's second endpoint: which features were called, on how many
+      # days, by how many separate people, and how many of them ever came
+      # back. Everything the count endpoint cannot say.
+      #
+      # Secret-gated, so it is read here and never by a browser — the same key
+      # the agent uses for the story desk, reused rather than issued twice
+      # because it is the same app and a second key is a second thing to
+      # rotate. Unset, the panels report a switch that is off rather than a
+      # product nobody uses.
+      ANALYTICS_APP_USAGE_URL: ${TOMSCODING_APP_USAGE_URL:-}
+      ANALYTICS_APP_USAGE_KEY: ${TOMSCODING_STUDYPAL_KEY:-}
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - analytics_data:/data
