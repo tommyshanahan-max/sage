@@ -462,7 +462,17 @@
      trap as the writer panel, the analysis block, the microphone and the
      preview panel. Any element here that sets display needs this beside it. */
   .more-menu[hidden]{display:none}
-  .more-menu button{width:100%;text-align:left}
+  .more-menu button,.more-menu a{width:100%;text-align:left}
+  /* The menu holds a mix of buttons and links once a partner's tools are moved
+     into it. Matched rather than left to the browser, which would otherwise
+     underline half the list and not the other half. */
+  .more-menu a{
+    display:block;text-decoration:none;font:inherit;font-size:.78rem;
+    color:var(--ink-2);background:none;border:1px solid var(--rule);
+    border-radius:6px;padding:.25rem .7rem;
+  }
+  .more-menu a:hover{color:var(--gold);border-color:var(--gold)}
+  .more-menu .rule{height:1px;background:var(--rule);margin:.15rem 0}
   .more-menu form{display:contents}
   header button:focus-visible,header #stories-link:focus-visible,
   header #video-link:focus-visible,header #reel-link:focus-visible{
@@ -2012,6 +2022,19 @@ fetch("/api/seat")
       if (seatRole === "partner") setTimeout(() => { if (picked) openSocial(); }, 0);
     }
 
+    // ---------------------------------------------------------------------
+    // The partner's seat
+    //
+    // Eight masthead controls were laid out for the owner, where they are
+    // eight different jobs. On a partner seat they are one job — look at the
+    // work, talk about it, mock up a change — and that seat now opens onto
+    // Social, which is not among them. A row of doors mostly leading somewhere
+    // this seat has no reason to go reads as clutter and gets ignored
+    // wholesale, including the two that matter.
+    //
+    // So they are moved, not removed: everything granted stays reachable under
+    // the ⋯, and the row keeps the figures and the panel toggle.
+    // ---------------------------------------------------------------------
     if (seatRole === "partner") {
       mockupsToggle.hidden = false;
       // Only offered when there is something in it — an empty panel on the
@@ -2026,7 +2049,26 @@ fetch("/api/seat")
       if (lead) {
         lead.textContent =
           "Ask about " + (d.project || "the app") + ", or ask for a mockup of a change. " +
-          "Mockups appear under Mockups above. Nothing here changes the real thing.";
+          "Mockups are under the \u22ef menu. Nothing here changes the real thing.";
+      }
+
+      // Last, once every toggle above has been decided: fold this seat's tools
+      // into the ⋯ menu. Placed here rather than earlier because the controls
+      // it moves are un-hidden a few lines up, and run before them it saw
+      // everything still hidden and moved nothing.
+      const menu = document.getElementById("more-menu");
+      const stow = [];
+      for (const id of ["write-toggle", "stories-link", "video-link",
+                        "reel-link", "docs-toggle", "mockups-toggle"]) {
+        const node = document.getElementById(id);
+        // Only what this seat actually holds. A grant it was never given stays
+        // hidden, and stowing it would put a dead entry in the menu.
+        if (node && !node.hidden) stow.push(node);
+      }
+      if (stow.length) {
+        const rule = el("div", "rule");
+        menu.prepend(rule);
+        for (const node of stow) menu.insertBefore(node, rule);
       }
     }
   })
