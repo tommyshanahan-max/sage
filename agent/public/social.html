@@ -456,7 +456,15 @@
            with ?via= codes — is a real feature that may come back, and it is
            cheaper to unhide than to rebuild. -->
       <button class="tab" role="tab" id="t-people" aria-selected="false" hidden>People</button>
-      <button class="tab" role="tab" id="t-content" aria-selected="false">Content</button>
+      <!-- Content retired. It listed the drama catalogue — series and episodes
+           with a "share this" beside each — which was the reading where a post
+           pointed at a part of the app. That went when the model settled: a
+           post goes to the feed and the only variable is the account. So the
+           tab listed somebody else's work with a button that no longer meant
+           anything. Hidden rather than torn out, like People before it: the
+           reader is written and correct, and unhiding it is cheaper than
+           rebuilding it if the desk ever wants a browser here. -->
+      <button class="tab" role="tab" id="t-content" aria-selected="false" hidden>Content</button>
       <button class="tab" role="tab" id="t-users" aria-selected="false">Users</button>
       <!-- The app itself. Last, because it is the thing being managed rather
            than a way of managing it — but present, because deciding what to
@@ -2726,8 +2734,11 @@ function draw() {
   // without Study Pal's credentials would leave that field permanently empty
   // with no way to fill it, which is exactly the seat that needs it most. The
   // app's half of the list is what the credentials gate, and roster() gates it.
-  $("t-content").hidden = !state.sameApp;
-  if (!state.sameApp && tab === "content") show("share");
+  // Retired above; nothing un-hides it. Left as a line rather than deleted so
+  // the rule it used to carry is still written down: the catalogue belongs to
+  // the app these credentials point at, and this panel follows whichever
+  // project is open.
+  if (tab === "content") show("share");
 
   const n = state.people.length, s = state.posts.length;
   $("title").textContent = PROJECT || "Social";
