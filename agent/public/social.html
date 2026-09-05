@@ -97,8 +97,12 @@
   .kbtn[aria-pressed=true]{border-color:var(--blue);background:var(--blue-soft);color:var(--blue)}
   .k-clip .ic{background:var(--violet)} .k-image .ic{background:var(--amber)}
   .k-poster .ic{background:var(--red)} .k-text .ic{background:var(--green)}
-  textarea,input[type=text]{width:100%;padding:.55rem .7rem;font:inherit;font-size:.9rem;
+  textarea,input[type=text],select{width:100%;padding:.55rem .7rem;font:inherit;font-size:.9rem;
     color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:9px}
+  /* The typed field survives behind the list. A destination the app has and
+     has not yet reported would otherwise be unreachable, and a list that
+     cannot be escaped is worse than the box it replaced. */
+  #points{margin-top:.5rem}
   textarea{min-height:5rem;resize:vertical}
   .forrow{display:flex;gap:.5rem;flex-wrap:wrap}
   .pchip{display:flex;align-items:center;gap:.45rem;padding:.3rem .85rem .3rem .3rem;cursor:pointer;
@@ -222,11 +226,10 @@
         </div>
         <div class="grp">
           <span class="lab">Which screen it opens</span>
-          <input type="text" id="points"
-                 placeholder="Leave blank to open the home screen">
-          <p class="hint">Where somebody arrives when they tap the link. Type
-            <b>ep 3</b> and they land on that episode. Leave it blank and they land
-            on the app's home screen and have to find it themselves.</p>
+          <select id="points-pick"></select>
+          <input type="text" id="points" hidden
+                 placeholder="Type it exactly as the app knows it">
+          <p class="hint" id="hint-points"></p>
         </div>
         <div class="grp">
           <span class="lab">Who it is for</span>
@@ -278,7 +281,18 @@ const KINDS = [["clip","🎬","Clip"],["image","🖼","Image"],
                ["poster","📄","Poster"],["text","📝","Words"]];
 const TONES = ["green","red","amber","violet","blue"];
 
-let state = { people: [], posts: [], base: "", arrivals: null, counter: false };
+let state = { people: [], posts: [], base: "", arrivals: null, counter: false,
+              destinations: { episodes: [], screens: [] } };
+// The one option that is not a destination: it opens the typed field instead.
+//
+// A plain string, and deliberately. The first version used a NUL character on
+// the reasoning that no screen could ever be named one — but an option value
+// goes through the DOM, and the browser rewrites a NUL to a replacement
+// character, so the value read back never equalled the constant and the typed
+// field could not be opened at all. A sentinel has to survive the round trip
+// before it has to be unlikely; anything arriving from the app that happens to
+// match it is dropped below.
+const OTHER = "__somewhere_else__";
 let kind = "clip", forCode = "", tab = "share", query = "", opened = "";
 
 function fail(msg) { const e = $("err"); e.hidden = !msg; e.textContent = msg || ""; }
@@ -366,14 +380,75 @@ function drawFor() {
   box.append(none);
 }
 
+/** The list of places a share can land, built from what the app actually has.
+ *
+ *  Rebuilt on every draw rather than once, because the selection has to survive
+ *  it: somebody who picked episode three and then typed in the caption box must
+ *  not find the destination reset underneath them. */
+function drawPoints() {
+  const pick = $("points-pick");
+  const current = $("points").value.trim();
+  const d = state.destinations || { episodes: [], screens: [] };
+  pick.replaceChildren();
+
+  const opt = (value, label) => {
+    const o = document.createElement("option");
+    o.value = value; o.textContent = label;
+    return o;
+  };
+  const group = (label, rows) => {
+    if (!rows.length) return null;
+    const g = document.createElement("optgroup");
+    g.label = label;
+    for (const r of rows) g.append(opt(r.value, r.label));
+    return g;
+  };
+
+  // The app's own names, minus anything colliding with the sentinel: two
+  // options with one value is a list where picking one selects the other.
+  const real = (rows) => (rows || []).filter((r) => r && r.value !== OTHER);
+
+  pick.append(opt("", "The home screen"));
+  const eps = group("Episodes", real(d.episodes));
+  if (eps) pick.append(eps);
+  const scr = group("Screens and features", real(d.screens));
+  if (scr) pick.append(scr);
+  pick.append(opt(OTHER, "Somewhere else…"));
+
+  // A value typed before the list existed, or one the app has stopped
+  // reporting, still has to show as chosen rather than silently becoming the
+  // home screen — which would change where a share lands without saying so.
+  const known = [...pick.querySelectorAll("option")].some((o) => o.value === current);
+  if (current && !known) {
+    pick.value = OTHER;
+    $("points").hidden = false;
+  } else {
+    pick.value = current;
+    $("points").hidden = pick.value !== OTHER;
+  }
+
+  // Nothing to choose between: one option is a menu with a single item, which
+  // is a worse way of saying "the home screen" than the sentence below it.
+  const empty = !real(d.episodes).length && !real(d.screens).length;
+  pick.hidden = empty;
+  if (empty) $("points").hidden = false;
+
+  $("hint-points").innerHTML = empty
+    ? "Where somebody arrives when they tap the link. Nothing is reporting the "
+      + "app's screens yet, so type it: <b>ep 3</b> lands them on that episode, "
+      + "and blank lands them on the home screen."
+    : "Where somebody arrives when they tap the link. The home screen means they "
+      + "have to go and find the thing you sent them.";
+}
+
 function drawShare() {
-  drawKinds(); drawFor();
+  drawKinds(); drawFor(); drawPoints();
   const url = linkFor(forCode, $("points").value);
   $("linkgrp").hidden = !url;
   $("link").textContent = url;
   $("record").disabled = !$("body").value.trim();
   $("sharenote").innerHTML = state.base
-    ? "<b>The link carries who shared it and what it points at.</b> WeChat strips "
+    ? "<b>The link carries who shared it and which screen it opens.</b> WeChat strips "
       + "referrers, so a code in the address is the only signal that survives being "
       + "forwarded. Recording a share here does not post it — it writes down that you "
       + "sent it, so the link and the result stay attached to each other."
@@ -406,7 +481,24 @@ function openCompose(on) {
 $("opener").addEventListener("click", () => openCompose(true));
 $("shut").addEventListener("click", () => openCompose(false));
 $("body").addEventListener("input", () => { $("record").disabled = !$("body").value.trim(); });
-$("points").addEventListener("input", drawShare);
+$("points").addEventListener("input", () => {
+  // The link redraws, but not the list — rebuilding it mid-keystroke would
+  // steal focus back to the select on every character.
+  $("linkgrp").hidden = !linkFor(forCode, $("points").value);
+  $("link").textContent = linkFor(forCode, $("points").value);
+});
+$("points-pick").addEventListener("change", () => {
+  const v = $("points-pick").value;
+  if (v === OTHER) {
+    $("points").hidden = false;
+    $("points").value = "";
+    $("points").focus();
+  } else {
+    $("points").hidden = true;
+    $("points").value = v;
+  }
+  drawShare();
+});
 $("link").addEventListener("click", async () => {
   try { await navigator.clipboard.writeText($("link").textContent); $("link").textContent += "  ✓"; }
   catch { /* a browser that refuses the clipboard still shows the text to select */ }

@@ -915,6 +915,72 @@ async function arrivals() {
   }
 }
 
+/** Where a share can send somebody, for the page to offer as a list.
+ *
+ *  Typed into a box, this field was the least understood thing on the panel:
+ *  it asks for a destination inside somebody else's app, and nothing on screen
+ *  said which destinations exist. A list answers that by existing.
+ *
+ *  Two sources, both already reachable, both optional. Episodes come from the
+ *  catalogue, which needs the story-desk grant — a seat without it gets the
+ *  screens and no episodes rather than an error. Screens and features come from
+ *  the counter, and are the app's own names for its parts because they are what
+ *  it reports having been used.
+ *
+ *  Every one of them is a suggestion, never a constraint: the page keeps a way
+ *  to type something not on the list, since a destination that exists and is
+ *  not yet reported would otherwise be unreachable. */
+async function destinations() {
+  const out = { episodes: [], screens: [] };
+
+  if (canWriteStories && studypal.configured()) {
+    try {
+      const r = await studypal.call("/api/series");
+      // The payload's shape is the other side's to choose — take the array
+      // wherever it is, the same reading the story desk already uses.
+      const body = r.body;
+      const list = Array.isArray(body) ? body
+        : Array.isArray(body?.series) ? body.series
+        : Array.isArray(body?.items) ? body.items : [];
+      for (const series of list.slice(0, 20)) {
+        const eps = Array.isArray(series?.episodes) ? series.episodes : [];
+        for (const ep of eps.slice(0, 40)) {
+          const n = Number(ep?.n);
+          const title = String(ep?.title || "").trim();
+          if (!Number.isFinite(n)) continue;
+          out.episodes.push({
+            // What goes in the link, and what a person reads. Kept apart: the
+            // value has to survive a URL and the label has to be recognisable.
+            value: "ep " + n,
+            label: "Episode " + n + (title ? " · " + title : ""),
+            series: String(series?.title || "").slice(0, 60),
+          });
+        }
+      }
+    } catch { /* no catalogue is a shorter list, not a failure */ }
+  }
+
+  if (NUMBERS_URL) {
+    try {
+      const r = await fetch(NUMBERS_URL + "/api/stats?days=30", {
+        headers: NUMBERS_TOKEN ? { authorization: "Bearer " + NUMBERS_TOKEN } : {},
+        signal: AbortSignal.timeout(4000),
+      });
+      if (r.ok) {
+        const d = await r.json();
+        const names = new Set();
+        for (const row of [...(d.app?.screens || []), ...(d.app?.uses || [])]) {
+          const name = String(row?.name || "").trim();
+          if (name && name.length <= 40) names.add(name);
+        }
+        out.screens = [...names].slice(0, 24).map((name) => ({ value: name, label: name }));
+      }
+    } catch { /* same */ }
+  }
+
+  return out;
+}
+
 app.get("/api/social", async (req, res) => {
   if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
   const file = socialPath(req.query.project);
@@ -944,6 +1010,7 @@ app.get("/api/social", async (req, res) => {
     // opposite facts and would otherwise render identically.
     counter: Boolean(NUMBERS_URL),
     arrivals: await arrivals(),
+    destinations: await destinations(),
   });
 });
 
