@@ -46,23 +46,30 @@ work in exchange for a screen nobody is going to look at in a pitch. It goes in
 1.1, once report and block exist. `for-studypal-appstore.md` has the detail for
 when that day comes; the admin side of report is already built and waiting.
 
-**And the same goes for faces.** `ShareFace` — the opted-in photos that appear
-on other people's screens — is user-generated content in exactly the sense the
-guideline means: a picture of a real person, shown to strangers. Cutting the
-feed and leaving this in does not solve the problem. A reviewer who finds
-photos of people with no way to report one has found the same violation by
-another door.
+**And faces — all three parts of it.** `ShareFace`, `FacesHere`, and the photo
+on the profile that feeds them.
 
-It is a smaller cut than the feed and the same reasoning applies: opt-in, well
-built, worth keeping on the web, and out of the native build until report and
-block exist.
+The middle two are the App Store question: a photo uploaded by one person and
+shown to another is user-generated content by the plainest reading, and a
+reviewer who finds photos of people with no way to report one has found the
+same violation the feed would have been. It is arguable — there are no names,
+no links and no way to reach anybody, and 1.2's requirements presume an
+interactive surface this does not have. But it is a small feature, and being
+arguable is itself the problem when the argument happens under a review clock.
+
+The profile photo goes with them for a different reason: its only real payoff
+is being shareable. Without the switch it is a picture of yourself, shown to
+yourself. That is not worth keeping in a build shaped around what a reviewer
+will ask about, and it comes back the day social does.
+
+All three stay on the web, working, unchanged.
 
 Anything else where one person's content reaches another person's screen goes
 too. The test is not "is it a feed", it is "can a stranger's words or picture
 appear in front of me".
 
-**One thing to get right:** the feed and faces must be *absent* from the native
-build, not linked out of it. A button that opens the feed in Safari puts you back in
+**One thing to get right:** the feed and all three parts of faces must be
+*absent* from the native build, not linked out of it. A button that opens the feed in Safari puts you back in
 scope, and reviewers notice. One codebase with the routes unreachable in the
 native build, not a fork.
 
