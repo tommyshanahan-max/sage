@@ -1379,11 +1379,7 @@ async function drawNumbers() {
   );
   numbersBox.replaceChildren(...parts);
   numbersBox.href = d.link || "#";
-  // Not in the drawer. The panel this opens on top of carries the same figures
-  // in its own masthead, in more detail and with a line under each — two copies
-  // of one number a few hundred pixels apart is not twice as much information,
-  // it is one number and a question about which to trust.
-  numbersBox.hidden = BARE;
+  numbersBox.hidden = false;
 }
 
 drawNumbers();
@@ -1425,6 +1421,17 @@ let appUrl = "";
  *  than it looks — otherwise a visit inside the drawer would leave the stage
  *  closed the next time somebody opened Sage properly. */
 const BARE = new URLSearchParams(location.search).has("bare");
+
+// Not in the drawer. The panel this opens beside carries the same figures in
+// its own masthead, in more detail and with a line under each — two copies of
+// one number a few hundred pixels apart is not twice the information, it is one
+// number and a question about which to trust.
+//
+// Removed from the document rather than hidden by whichever code path happens
+// to run: hiding relies on the renderer running at all, and on nothing showing
+// it again afterwards. Neither is a thing to rely on — the Preview button on
+// this same page is un-hidden from three separate places.
+if (BARE) document.getElementById("numbers")?.remove();
 
 function showStage(on) {
   // Bare means bare. Nothing opens the stage, including the code that restores

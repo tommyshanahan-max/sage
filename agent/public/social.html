@@ -306,16 +306,18 @@
      asking for a change to a screen while that screen is covered up. So it
      takes a column and the page keeps the rest, which on the app tab puts the
      phone and the conversation side by side. */
-  .drawer{position:fixed;top:0;right:0;bottom:0;z-index:60;
+  /* On the left, with the work on the right. The conversation is the thing you
+     bring to the panel rather than the other way round, and English reads from
+     the left — the aside belongs where a margin note belongs. */
+  .drawer{position:fixed;top:0;left:0;bottom:0;z-index:60;
     width:min(34rem,46vw);display:flex}
   .drawer[hidden]{display:none}
   .drawerbox{background:var(--card);width:100%;height:100%;
-    border-left:1px solid var(--rule);box-shadow:-14px 0 40px rgba(17,24,33,.13);
+    border-right:1px solid var(--rule);box-shadow:14px 0 40px rgba(17,24,33,.13);
     display:flex;flex-direction:column;overflow:hidden}
   /* The page gives up the width rather than sliding under it. Content half
      covered by a panel is content somebody has to close the panel to read. */
-  body.with-sage{padding-right:calc(min(34rem,46vw) + 1.2rem)}
-  body.with-sage .pull{right:calc(min(34rem,46vw) + 1.2rem)}
+  body.with-sage{padding-left:calc(min(34rem,46vw) + 1.2rem)}
   /* Too narrow to be two things at once: back to a sheet over the top, which
      is the honest answer on a phone. */
   @media (max-width:64rem){
@@ -323,8 +325,7 @@
       background:rgba(17,24,33,.42);backdrop-filter:blur(2px)}
     .drawerbox{width:min(60rem,100%);height:min(88vh,54rem);border-left:0;
       border-radius:0 0 20px 20px;box-shadow:0 24px 60px rgba(17,24,33,.3)}
-    body.with-sage{padding-right:clamp(.8rem,2.5vw,1.8rem)}
-    body.with-sage .pull{right:1.2rem}
+    body.with-sage{padding-left:clamp(.8rem,2.5vw,1.8rem)}
   }
   .drawerhd{display:flex;align-items:center;gap:.7rem;padding:.8rem 1.1rem;
     border-bottom:1px solid var(--rule);flex:none}
