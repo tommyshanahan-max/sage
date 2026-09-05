@@ -876,9 +876,28 @@ function socialPath(name) {
  *  Null and zero are different answers and the page renders them differently.
  *  Today this is always null: Study Pal does not keep the ?via= code a visitor
  *  arrives with, so nothing on this box can know. See docs/for-studypal-via.md
- *  — when that lands, this starts returning figures and no page changes. */
+ *  — when that lands, this starts returning figures and no page changes.
+ *
+ *  Open to every seat this panel is open to, rather than gated on the numbers
+ *  grant like the dashboard is. This is a deliberate widening and it is a
+ *  narrow one: a count of arrivals per share code, for the project already on
+ *  screen. It is not the dashboard — /numbers/ and the masthead readout still
+ *  check canSeeNumbers, so nothing else about how the product is doing comes
+ *  with it.
+ *
+ *  The reason to widen it is that the figure is the point of the panel. Sent
+ *  and passed-on say what you did; arrived is the only one that says whether it
+ *  worked, and a collaborator panel that shows somebody their own effort and
+ *  withholds the result is a worse tool than no panel.
+ *
+ *  Note what this does NOT do on its own. The credential is the other lock:
+ *  compose passes AGENT_NUMBERS_URL to a partner only while
+ *  TOMSCODING_PARTNER_NUMBERS is set, so a seat without that grant has no
+ *  address to ask and this returns null however the check reads. That is the
+ *  two-lock arrangement working as intended, and the page says which of the
+ *  two silences it is looking at. */
 async function arrivals() {
-  if (!canSeeNumbers || !NUMBERS_URL) return null;
+  if (!socialDoor() || !NUMBERS_URL) return null;
   try {
     const r = await fetch(NUMBERS_URL + "/api/stats?days=30", {
       headers: NUMBERS_TOKEN ? { authorization: "Bearer " + NUMBERS_TOKEN } : {},
@@ -919,9 +938,11 @@ app.get("/api/social", async (req, res) => {
     // otherwise the seat default. A wrong host here is a link that silently
     // counts nothing, which is the failure that looks most like success.
     base: PROJECT_APPS.get(String(req.query.project || "")) || APP_URL || "",
-    // Whether this seat is shown figures at all, so the page can say "not your
-    // seat" rather than "nobody came" — opposite facts, identical rendering.
-    canSeeNumbers,
+    // Whether this seat can reach the counter at all. Not the same question as
+    // "are there figures": one is a seat without the address, the other is a
+    // product that is not recording. The page says which, because they are
+    // opposite facts and would otherwise render identically.
+    counter: Boolean(NUMBERS_URL),
     arrivals: await arrivals(),
   });
 });

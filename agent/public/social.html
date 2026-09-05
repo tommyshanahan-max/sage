@@ -236,7 +236,7 @@ const KINDS = [["clip","🎬","A clip"],["image","🖼","An image"],
                ["poster","📄","A poster"],["text","📝","Just words"]];
 const TONES = ["green","red","amber","violet","blue"];
 
-let state = { people: [], posts: [], base: "", arrivals: null, canSeeNumbers: false };
+let state = { people: [], posts: [], base: "", arrivals: null, counter: false };
 let kind = "clip", forCode = "", tab = "share", query = "", opened = "";
 
 function fail(msg) { const e = $("err"); e.hidden = !msg; e.textContent = msg || ""; }
@@ -433,15 +433,17 @@ function drawPeople() {
 
     if (opened === p.code) {
       const note = el("p", "thin");
-      note.innerHTML = arrived === null
-        ? (state.canSeeNumbers
-            ? "<b>Arrivals are not measured yet.</b> Study Pal does not keep the "
-              + "<code>?via=</code> code a visitor arrives with, so nothing on this box can "
-              + "know. The dash is not a nought — see <code>docs/for-studypal-via.md</code>."
-            : "<b>Figures are not shown on this seat.</b> Sent and passed-on are recorded "
-              + "here; arrivals come from the counter, which this seat is not given.")
-        : "<b>" + arrived + " arrived through this code.</b> Passed-on is something you tick "
-          + "when you see it happen — no API reports a forward.";
+      // Three different silences, and they need three different people to act.
+      note.innerHTML = arrived !== null
+        ? "<b>" + arrived + " arrived through this code.</b> Passed-on is something you tick "
+          + "when you see it happen — no API reports a forward."
+        : state.counter
+          ? "<b>Arrivals are not measured yet.</b> Study Pal does not keep the "
+            + "<code>?via=</code> code a visitor arrives with, so nothing on this box can "
+            + "know. The dash is not a nought — see <code>docs/for-studypal-via.md</code>."
+          : "<b>This seat cannot reach the counter.</b> Everything else here is recorded "
+            + "locally and works; arrivals need the counter's address, which is granted "
+            + "seat by seat.";
       d.append(note);
       const row = el("div", "row2");
       const rename = el("button", "add", "Rename or edit");
