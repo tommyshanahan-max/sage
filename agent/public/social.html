@@ -294,6 +294,10 @@
      that sits on the last line of the page is a control that hides the thing
      somebody scrolled down to read. */
   main{padding-bottom:5rem}
+  /* Except on the app tab, where the last line is a note that already keeps a
+     right-hand gutter for the button — so the clearance underneath buys
+     nothing and costs the phone the height it was reserving. */
+  body.on-app main{padding-bottom:1.1rem}
   .pull{position:fixed;right:1.2rem;bottom:1.2rem;z-index:40;
     display:flex;align-items:center;gap:.5rem;cursor:pointer;font:inherit;
     padding:.7rem 1.1rem;border-radius:99px;border:0;color:#fff;font-weight:700;
@@ -387,15 +391,15 @@
      the bottom.
      So the height leads and the width follows from 390x844, which is the
      shape of the device this is built for. What fits, fits properly. */
+  /* Sized by fitPhone(), which measures what is left of the window. The
+     border and the rounding live here so the scaled page is clipped by a
+     phone-shaped edge rather than spilling past one. */
   .frame{background:var(--card);border-radius:18px;box-shadow:var(--shadow);
-    border:1px solid var(--rule);overflow:hidden;margin:0 auto;
-    aspect-ratio:390/844;height:min(78vh,52rem);width:auto}
-  /* Where the window is too short to give a phone its height, width leads
-     instead and the frame simply gets shorter than a real one — better than a
-     sliver of a phone nobody can read. */
-  @media (max-height:44rem){
-    .frame{height:auto;width:min(22rem,100%);aspect-ratio:390/700}
-  }
+    border:1px solid var(--rule);overflow:hidden;margin:0 auto}
+  /* A real phone, then shrunk. 390x844 is the device; the scale is only how
+     much of the window there is to show it in. */
+  .phone{width:390px;height:844px;transform-origin:top left}
+  .phone iframe{width:100%;height:100%;border:0;display:block;background:var(--sunk)}
   .frame iframe{width:100%;height:100%;border:0;display:block;background:var(--sunk)}
   .sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;
     justify-content:center;padding:2rem 1rem;overflow:auto;
@@ -650,9 +654,16 @@
          unless it is granted them. Without this, pressing to talk inside the
          panel fails in a way that looks like the app is broken rather than
          like the frame is. The browser still asks the person first. -->
-    <div class="frame"><iframe id="appframe" title="Study Pal"
-      allow="microphone; camera; clipboard-write; geolocation"
-      referrerpolicy="no-referrer"></iframe></div>
+    <!-- The app renders at a real phone's size and is scaled to fit, rather
+         than being given a small viewport and laying itself out for one. Two
+         different pictures: the second is what the app looks like on a narrow
+         screen, the first is what it looks like on a phone. Only one of those
+         is the thing being reviewed. -->
+    <div class="frame" id="frame">
+      <div class="phone" id="phone"><iframe id="appframe" title="Study Pal"
+        allow="microphone; camera; clipboard-write; geolocation"
+        referrerpolicy="no-referrer"></iframe></div>
+    </div>
     <p class="thin" id="appnote"></p>
   </section>
 
@@ -2164,7 +2175,52 @@ function showApp() {
   // Once. Re-pointing it on every tab press would reload the whole app each
   // time somebody glanced at it.
   if (!appShown) { $("appframe").src = base; appShown = true; }
+  // After the panel is visible, or the measurement is taken against a hidden
+  // element and comes back as zero.
+  requestAnimationFrame(fitPhone);
 }
+
+/** Fit the whole phone into whatever is left of the window.
+ *
+ *  The app is 390x844 whatever happens; this only decides how much of it is
+ *  visible at once. Scaling beats shrinking the viewport, because a narrower
+ *  viewport makes the app lay itself out differently — which is a picture of
+ *  the app on a small screen, not a picture of the app.
+ *
+ *  Never scaled up past 1: a phone rendered larger than a phone is a mockup of
+ *  a tablet nobody owns. */
+const PHONE_W = 390, PHONE_H = 844;
+
+function fitPhone() {
+  const frame = $("frame"), phone = $("phone");
+  if (!frame || frame.offsetParent === null) return;
+  // Measured from where the frame actually starts, so the counts band, the
+  // masthead and the toolbar above it are all accounted for without any of
+  // their heights being written down twice.
+  const top = frame.getBoundingClientRect().top;
+  const room = Math.max(240, window.innerHeight - top - 90);
+  // Width matters too, once Sage takes half the window.
+  const wide = Math.max(200, frame.parentElement.clientWidth);
+  const set = (k) => {
+    phone.style.transform = "scale(" + k + ")";
+    frame.style.width = Math.round(PHONE_W * k) + "px";
+    frame.style.height = Math.round(PHONE_H * k) + "px";
+  };
+
+  let k = Math.min(1, room / PHONE_H, wide / PHONE_W);
+  set(k);
+
+  // Then take back whatever still hangs off the bottom. The gutter above is a
+  // guess at the note and the padding under the frame; this is the measurement.
+  // One pass, because the only thing that changes between them is the frame's
+  // own height and it is now known.
+  const over = document.documentElement.scrollHeight - window.innerHeight;
+  if (over > 1 && k > 0.35) {
+    set(Math.max(0.35, (PHONE_H * k - over) / PHONE_H));
+  }
+}
+
+addEventListener("resize", fitPhone);
 
 $("appreload").addEventListener("click", () => {
   const base = String(state.base || "").replace(/\/+$/, "");
@@ -2193,6 +2249,9 @@ function openDrawer(on) {
   d.hidden = !on;
   // The page gives up the width; it is not slid under.
   document.body.classList.toggle("with-sage", Boolean(on));
+  // The page just gained or lost a third of its width, and the phone is sized
+  // to what is left of it.
+  requestAnimationFrame(fitPhone);
   const pull = $("pull");
   pull.setAttribute("aria-expanded", String(Boolean(on)));
   // The same button both ways round. Docked, there is no backdrop to click, so
@@ -2221,6 +2280,7 @@ const TABS = { share: "v-share", feed: "v-feed", people: "v-people",
                content: "v-content", users: "v-users", app: "v-app" };
 function show(name) {
   tab = TABS[name] ? name : "share";
+  document.body.classList.toggle("on-app", tab === "app");
   for (const [k, id] of Object.entries(TABS)) $(id).hidden = k !== tab;
   for (const k of Object.keys(TABS)) $("t-" + k).setAttribute("aria-selected", String(k === tab));
 }
