@@ -284,6 +284,36 @@
     color:var(--muted);font-size:.85rem;font-weight:600;cursor:pointer;width:100%}
   .add:hover{border-color:var(--blue);color:var(--blue)}
 
+  /* ---- Sage, on a pull ---- */
+  /* Bottom right, out of the way of a wall that is read top to bottom, and
+     fixed so it does not scroll away from somebody halfway down it. */
+  .pull{position:fixed;right:1.2rem;bottom:1.2rem;z-index:40;
+    display:flex;align-items:center;gap:.5rem;cursor:pointer;font:inherit;
+    padding:.7rem 1.1rem;border-radius:99px;border:0;color:#fff;font-weight:700;
+    font-size:.86rem;background:linear-gradient(140deg,var(--blue),#5478d8);
+    box-shadow:0 8px 22px rgba(63,104,216,.3)}
+  .pull:hover{transform:translateY(-1px)}
+  .pull .glyph{font-size:1rem;line-height:1}
+  /* Comes down from the top, because that is where it used to live. */
+  .drawer{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;
+    align-items:flex-start;background:rgba(17,24,33,.42);backdrop-filter:blur(2px)}
+  .drawer[hidden]{display:none}
+  .drawerbox{background:var(--card);width:min(60rem,100%);height:min(88vh,54rem);
+    border-radius:0 0 20px 20px;box-shadow:0 24px 60px rgba(17,24,33,.3);
+    display:flex;flex-direction:column;overflow:hidden}
+  .drawerhd{display:flex;align-items:center;gap:.7rem;padding:.8rem 1.1rem;
+    border-bottom:1px solid var(--rule);flex:none}
+  .drawerhd h2{margin:0;font-size:1rem}
+  .drawerhd .mini{margin-left:auto;font-size:.76rem;font-weight:600;
+    color:var(--muted);text-decoration:none;padding:.3rem .7rem;border-radius:99px;
+    border:1px solid var(--rule)}
+  .drawerhd .mini:hover{border-color:var(--blue);color:var(--blue)}
+  .drawerbox iframe{flex:1;width:100%;border:0;display:block;background:var(--sunk)}
+  @media (max-width:34rem){
+    .pull{right:.8rem;bottom:.8rem;padding:.6rem .9rem}
+    .drawerbox{height:92vh;border-radius:0}
+  }
+
   /* ---- the detail sheet ---- */
   /* The app's own figures, in the masthead of the panel that manages it.
      Quiet: this is context for the work below, not the point of the page —
@@ -578,6 +608,28 @@
     <p class="thin" id="peoplenote"></p>
   </section>
 </main>
+
+<!-- Sage, on a pull.
+     The panel is the job on this seat and the conversation is the aside, which
+     is the other way round from how it was. So Sage is not gone, it is one
+     press away and holds its place while it is closed. -->
+<div class="drawer" id="drawer" hidden>
+  <div class="drawerbox" role="dialog" aria-modal="true" aria-label="Sage">
+    <div class="drawerhd">
+      <h2>Sage</h2>
+      <!-- Without ?bare: a tab has room for the stage, and somebody opening
+           Sage properly should get all of it. -->
+      <a class="mini" href="/sage" target="_blank" rel="noreferrer">Open in a tab</a>
+      <button class="shut" type="button" id="drawershut">Close</button>
+    </div>
+    <iframe id="sageframe" title="Sage"></iframe>
+  </div>
+</div>
+
+<button class="pull" type="button" id="pull" aria-controls="drawer" aria-expanded="false">
+  <span class="glyph" aria-hidden="true">✦</span>
+  <span>Sage</span>
+</button>
 
 <!-- Everything known about one post. A sheet rather than an expanding card,
      because the interesting case is a wall of twenty and the answer to "what
@@ -2034,6 +2086,41 @@ $("appreload").addEventListener("click", () => {
   // A cache-buster rather than iframe.contentWindow.location.reload(), which a
   // cross-origin frame does not permit.
   $("appframe").src = base + (base.includes("?") ? "&" : "?") + "r=" + Date.now();
+});
+
+// ---------------------------------------------------------------------------
+// Sage, on a pull
+//
+// This page is the job on the partner seat now and Sage is the aside, which is
+// the reverse of how it was. So the conversation is one press away rather than
+// gone — and it keeps its place while it is closed: the frame is loaded once
+// and hidden, never re-pointed, because a chat that resets every time somebody
+// shuts the drawer is a chat nobody uses twice.
+//
+// Framed from /sage rather than /, which on this seat now redirects here and
+// would frame this page inside itself.
+// ---------------------------------------------------------------------------
+let sageLoaded = false;
+
+function openDrawer(on) {
+  const d = $("drawer");
+  d.hidden = !on;
+  $("pull").setAttribute("aria-expanded", String(Boolean(on)));
+  // Hidden rather than unmounted, so the conversation survives being closed.
+  // ?bare — the conversation without its own stage. Sage remembers which
+  // panel it had open, and without this it reopens this page inside the
+  // drawer inside this page.
+  if (on && !sageLoaded) { $("sageframe").src = "/sage?bare=1"; sageLoaded = true; }
+  if (on) $("drawershut").focus();
+}
+
+$("pull").addEventListener("click", () => openDrawer(true));
+$("drawershut").addEventListener("click", () => openDrawer(false));
+// The backdrop closes it; the box does not, or a click inside the chat would.
+$("drawer").addEventListener("click", (e) => { if (e.target === $("drawer")) openDrawer(false); });
+document.addEventListener("keydown", (e) => {
+  // Only when nothing else is open on top of it.
+  if (e.key === "Escape" && !$("drawer").hidden && $("sheet").hidden) openDrawer(false);
 });
 
 // ---- tabs -----------------------------------------------------------------

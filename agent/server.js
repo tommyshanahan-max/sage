@@ -441,6 +441,64 @@ app.get("/reel.html", (req, res, next) => {
 // the rest of the seat.
 const socialDoor = () => !isProspect;
 
+// ---------------------------------------------------------------------------
+// Which page a seat lands on
+//
+// The two seats have two different jobs, and until now both opened on the same
+// page. The owner's job is the platform, so Sage is the right front door there.
+// The partner's job is the app — its content, its accounts, its queue of held
+// posts — and that is the admin panel, not a chat window with the panel behind
+// a menu.
+//
+// So the partner's "/" is the panel and Sage is one pull away inside it. The
+// owner's "/" is unchanged.
+//
+// A redirect rather than serving the panel's file at "/", so the address bar
+// says which page this is. Two pages reachable at one URL is the kind of thing
+// that reads as a bug the first time somebody copies a link and it opens
+// something else.
+// ---------------------------------------------------------------------------
+
+/** The project a partner seat opens on.
+ *
+ *  One seat, one product — a partner's snapshot holds the repositories they
+ *  were given and nothing else, so the first is the right answer and there is
+ *  usually only one. Read at each landing rather than cached: a snapshot is
+ *  rebuilt by a deploy, and a name cached across one would send somebody to a
+ *  project that no longer exists. */
+async function firstProject() {
+  try {
+    const entries = await readdir(isPartner ? DOCS_ROOT : WORKSPACE, { withFileTypes: true });
+    const dirs = entries
+      .filter((e) => e.isDirectory() && !e.name.startsWith("."))
+      .map((e) => e.name)
+      .sort((a, b) => a.localeCompare(b));
+    return dirs[0] || "";
+  } catch { return ""; }
+}
+
+app.get("/", async (_req, res, next) => {
+  // Only the seat whose job this is, and only where the panel is open at all.
+  if (!isPartner || !socialDoor()) return next();
+  const project = await firstProject();
+  // Nothing in the snapshot yet: Sage, rather than a panel that would open on
+  // an error. A seat with no project has nothing for this page to manage.
+  if (!project) return next();
+  res.redirect("/social.html?project=" + encodeURIComponent(project));
+});
+
+// Sage, at a name of its own.
+//
+// It needs one now: on a partner seat "/" is the panel, so the panel cannot
+// reach Sage by framing "/" without framing itself. Served on both seats, so
+// the address means the same thing on each and a link works wherever it is
+// pasted.
+app.get("/sage", (_req, res) => {
+  res.sendFile(path.resolve("public/index.html"), {
+    headers: { "Cache-Control": "no-cache" },
+  }, (err) => { if (err && !res.headersSent) res.status(404).send("Not found"); });
+});
+
 app.get("/social.html", (req, res, next) => {
   if (!socialDoor()) return res.status(404).send("Not found");
   next();

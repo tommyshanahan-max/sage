@@ -1409,10 +1409,28 @@ const stageReload = document.getElementById("stage-reload");
 const stageOpenLink = document.getElementById("stage-open");
 let appUrl = "";
 
+/** Whether this page is itself inside a panel.
+ *
+ *  The admin panel frames Sage in a drawer, and Sage remembers which stage it
+ *  had open — so it reopened the admin panel inside the drawer inside the
+ *  admin panel. Nesting a page in itself is not a state anything here should
+ *  try to render.
+ *
+ *  So the frame asks for a bare Sage: the conversation and nothing beside it.
+ *  The flag also stops the stage being written to storage, which matters more
+ *  than it looks — otherwise a visit inside the drawer would leave the stage
+ *  closed the next time somebody opened Sage properly. */
+const BARE = new URLSearchParams(location.search).has("bare");
+
 function showStage(on) {
+  // Bare means bare. Nothing opens the stage, including the code that restores
+  // it from last time.
+  if (BARE) on = false;
   stage.hidden = !on;
   document.getElementById("grip").hidden = !on;
   stageToggle.setAttribute("aria-pressed", String(on));
+  // Not written while bare: this visit is a drawer, not a preference.
+  if (BARE) return;
   try { localStorage.setItem("sage_stage", on ? "1" : "0"); } catch { /* private window */ }
 }
 
@@ -1636,6 +1654,18 @@ window.addEventListener("message", (e) => {
   stageLoad(url, host, true);
 });
 
+// Three separate places un-hide this button, so hiding it once here would be
+// undone by whichever ran last. The property itself is closed instead — the
+// same shape of mistake as guarding two of three toggles and shipping it
+// half-done.
+if (BARE) {
+  Object.defineProperty(stageToggle, "hidden", {
+    get: () => true,
+    set: () => {},
+    configurable: true,
+  });
+  stageToggle.setAttribute("hidden", "");
+}
 stageToggle.addEventListener("click", () => showStage(stage.hidden));
 document.getElementById("stage-close").addEventListener("click", () => showStage(false));
 document.getElementById("stage-reload").addEventListener("click", () => {
@@ -2075,10 +2105,16 @@ fetch("/api/seat")
       document.title = "Sage · " + (d.project || "review");
       const lead = document.querySelector("#opening p");
       if (lead) {
-        lead.textContent =
-          "Manage what goes out to " + (d.project || "the app") + " in Social, on the right. " +
-          "Or ask for a change to the app itself and it appears as a mockup under the " +
-          "\u22ef menu.";
+        // Two readings of where this page sits, and the sentence has to match
+        // the one that is true. Opened on its own, the panel is elsewhere and
+        // this points at it. Opened in the panel's drawer, the panel is the
+        // page around this one and "on the right" is a direction to nothing.
+        lead.textContent = BARE
+          ? "Ask for a change to " + (d.project || "the app") + " and it appears as a "
+            + "mockup under the \u22ef menu. Close this to go back to the panel."
+          : "Manage what goes out to " + (d.project || "the app") + " in Social, on the right. "
+            + "Or ask for a change to the app itself and it appears as a mockup under the "
+            + "\u22ef menu.";
       }
 
       // Last, once every toggle above has been decided: fold this seat's tools
