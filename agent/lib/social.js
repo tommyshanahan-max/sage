@@ -262,7 +262,10 @@ export const seedAccounts = () => cleanAccounts({
 // went out, and there is no reading of our own file that would reveal it.
 // ---------------------------------------------------------------------------
 
-export const EVENTS = ["published", "held", "removed"];
+// The three the webhook sends, plus the one only the board reports: a post the
+// model turned away. Listed here so a hook that starts sending it is accepted
+// rather than dropped as unknown.
+export const EVENTS = ["published", "held", "removed", "refused"];
 
 /** Wide enough for an id the app minted however it likes, narrow enough to be
  *  safe in a URL and a filename. */
@@ -317,7 +320,7 @@ export function cleanReport(raw) {
     //
     // Held and removed keep their reason, because both have a real one: why a
     // person is needed, and why it came down.
-    body: (event === "published"
+    body: (event === "published" || event === "refused"
       ? pick("body", "text", "caption", "content", "reason", "note", "why", "detail")
       : pick("body", "text", "caption", "content")
     ).slice(0, 2000),
@@ -330,7 +333,7 @@ export function cleanReport(raw) {
     // Why it was held, when the app says. The whole value of a held card is
     // knowing what to look at — and only a held card has one, which is why the
     // words above take these fields on every other event.
-    reason: event === "published" ? "" : pick("reason", "note", "why", "detail").slice(0, 400),
+    reason: event === "published" ? "" : pick("why", "reason", "detail").slice(0, 400),
     // Cleared by a person here, not by the app: this is our record of having
     // looked, and the app has no way to know we did.
     reviewed: Boolean(raw.reviewed),

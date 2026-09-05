@@ -101,3 +101,33 @@ export async function callForm(path, form, { method = "POST", timeoutMs = 60_000
 // A clip can be 25 MB and the upload is the slow part, so this gets a budget
 // sized for the file rather than the one sized for reading a counter.
 export const PUBLISH_TIMEOUT_MS = 120_000;
+
+/** A call whose secret travels in the query string.
+ *
+ *  Study Pal's /api/public takes it that way rather than in a header. Not this
+ *  side's choice, and worth one note rather than a silent accommodation: a
+ *  secret in a query string is a secret in a proxy log and in a browser's
+ *  history, which is exactly why this is called from the server and never from
+ *  the page. The key stays on the box either way.
+ *
+ *  Encoded rather than concatenated: a key with a + or an & in it would
+ *  otherwise arrive as a different key, and the failure would look like a
+ *  wrong secret rather than a mangled one. */
+export async function callWithKeyInQuery(path, { timeoutMs = 20_000 } = {}) {
+  if (!KEY) return { status: 503, body: { error: "STUDYPAL_ADMIN_KEY is not set" } };
+  const sep = path.includes("?") ? "&" : "?";
+  const url = BASE + path + sep + "secret=" + encodeURIComponent(KEY);
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    const text = await r.text();
+    let parsed;
+    try { parsed = text ? JSON.parse(text) : null; } catch { parsed = { raw: text.slice(0, 2000) }; }
+    return { status: r.status, body: parsed };
+  } catch (err) {
+    const timedOut = err?.name === "TimeoutError" || /aborted/i.test(err?.message || "");
+    return {
+      status: 504,
+      body: { error: timedOut ? `no answer within ${timeoutMs / 1000}s` : (err?.message || "could not reach Study Pal") },
+    };
+  }
+}

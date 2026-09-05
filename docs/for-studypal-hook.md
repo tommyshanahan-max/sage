@@ -101,3 +101,31 @@ Once it exists, what is on the form is what gets sent, and this webhook closes
 the loop by reporting what happened to it.
 
 Related: `for-studypal-users.md` — the user list this panel still cannot read.
+
+## The board, which is the better source
+
+Since this was written, `GET /api/public?queue=1&secret=…` landed on the app
+side and the panel now reads it. It returns the whole board — `posts` (held),
+`live`, `refused` — with the full row on each: `handle`, `note`, `zh`/`py`/`en`,
+`lat`/`lon`, `photo`, `clip`, `topic`, `re`, `like`, `state`, and `why` on
+anything turned away.
+
+That is strictly more than this webhook carries, and it is the primary source
+now. The hook is still worth having and is still read, for the two things a
+poll cannot give: it wakes the panel when something changes rather than on the
+next refresh, and it is what stamps when this box first heard about a post,
+which is the only way a delivery backing up would ever be visible.
+
+Both are merged on the post id. Where they disagree about a post's state, the
+board wins — a row that says what it is now beats a notification about what
+happened to it once.
+
+Two things worth saying back:
+
+- `why` on a refusal is the most useful field either side added. A refusal used
+  to leave no trace at all, so "why could I not post this" was a question with
+  no answer anywhere; the panel now shows it on the card and in the detail
+  sheet.
+- Replies and likes arriving as ordinary rows joined by `re` and `like` works
+  well and needs no change. The panel keeps them off the wall and assembles
+  each post's thread and like count from the same response.

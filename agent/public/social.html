@@ -310,6 +310,14 @@
   .fact.wide{grid-column:1/-1}
   .sheetbox .acts{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.2rem;
     padding-top:.9rem;border-top:1px solid var(--rule)}
+  .thread{margin-top:1.3rem;padding-top:.9rem;border-top:1px solid var(--rule)}
+  .thread h3{margin:0 0 .6rem;font-size:.62rem;font-weight:700;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--muted)}
+  .reply{padding:.55rem 0;border-bottom:1px solid var(--rule)}
+  .reply:last-child{border-bottom:0}
+  .reply b{font-size:.8rem}
+  .reply span{font-size:.74rem;color:var(--muted);font-weight:400}
+  .reply p{margin:.2rem 0 0;font-size:.85rem;line-height:1.45}
   .sheetbox details{margin-top:1rem}
   .sheetbox summary{cursor:pointer;font-size:.76rem;font-weight:700;color:var(--muted)}
   .sheetbox pre{margin:.6rem 0 0;padding:.8rem;border-radius:10px;background:var(--sunk);
@@ -1224,8 +1232,12 @@ function when(v) {
     : day;
 }
 
-const EVENT_TONE = { published: "green", held: "amber", removed: "red" };
-const EVENT_WORD = { published: "Published", held: "Held for review", removed: "Removed" };
+const EVENT_TONE = { published: "green", held: "amber", refused: "red", removed: "violet" };
+const EVENT_WORD = { published: "Published", held: "Held for review",
+                     // Turned away by the app's own check. Distinct from held,
+                     // which is a question, and from removed, which is a
+                     // decision somebody made after it was live.
+                     refused: "Refused", removed: "Removed" };
 
 let reports = null, listening = false;
 
@@ -1275,7 +1287,7 @@ async function loadFeedback() {
 
 /** Held and not yet looked at. The count that means somebody has a job. */
 const heldCount = () =>
-  (reports || []).filter((r) => r.event === "held" && !r.reviewed).length;
+  feedItems().filter((r) => isOwnPost(r) && r.event === "held" && !r.reviewed).length;
 
 function drawReports() {
   const wrap = $("reported");
@@ -1283,7 +1295,7 @@ function drawReports() {
   const note = $("repnote");
   box.replaceChildren();
 
-  const list = reports || [];
+  const list = feedItems().filter(isOwnPost);
   // Nothing reported and nothing listening are opposite facts. With the hook
   // configured and quiet, the section stays out of the way; with no secret
   // set it says so, because that is a deployment that will silently miss
@@ -1419,6 +1431,138 @@ function drawReports() {
 }
 
 
+
+// ---------------------------------------------------------------------------
+// The app's whole board
+//
+// The webhook tells us when one post changes. This is everything the app holds
+// — held, live and refused — with the full row on each, and it is the better
+// source for all of it: the hook only fires on a change, so a panel built on
+// the hook alone shows whatever happened since it was wired up and nothing
+// before that.
+//
+// So the two are merged. The board says what exists and what is in it; the
+// hook contributes the two facts the board has no way to know — when this box
+// first heard, and whether somebody here has looked at a held one.
+//
+// The refused rows are the reason this is worth doing beyond completeness. A
+// post the model turned away used to leave no trace at all, so "why could I
+// not post this" had no answer anywhere. It does now, and this is the only
+// place a person can read it.
+// ---------------------------------------------------------------------------
+let board = null, boardNote = "";
+
+async function loadBoard() {
+  try {
+    const r = await fetch("/sp/queue");
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 404 || r.status === 501) {
+      board = [];
+      boardNote = "The app does not serve its board yet, so this is only what the "
+        + "webhook has reported since it was wired up.";
+    } else if (!r.ok) {
+      throw new Error(d.error || "the app said " + r.status);
+    } else {
+      board = boardRows(d);
+      boardNote = "";
+    }
+  } catch (e) {
+    board = [];
+    boardNote = "Could not read the app's board: " + e.message;
+  }
+  drawReports();
+}
+
+/** The three arrays, flattened into the shape this page already draws.
+ *
+ *  Tolerant about which array carries what, because the names describe the
+ *  app's own model rather than this one: `posts` is the held queue there, and
+ *  reading it as "all posts" would put every live post back in the review pile. */
+function boardRows(d) {
+  const out = [];
+  const take = (rows, event) => {
+    for (const p of (Array.isArray(rows) ? rows : [])) {
+      if (!p || typeof p !== "object") continue;
+      const id = String(p.id ?? "");
+      if (!id) continue;
+      out.push({
+        id,
+        // The app's own state wins where it sends one — these arrays are a
+        // grouping, and a row that says something different about itself is
+        // the more specific answer.
+        event: ["published", "held", "removed", "refused"].includes(String(p.state))
+          ? String(p.state) : event,
+        at: String(p.at || ""),
+        body: String(p.note ?? p.en ?? p.zh ?? "").slice(0, 2000),
+        // Kept apart from the caption rather than folded into it: three
+        // scripts of the same sentence is a thing worth seeing as three.
+        zh: String(p.zh || ""), py: String(p.py || ""), en: String(p.en || ""),
+        photo: String(p.photo || ""),
+        clip: String(p.clip || ""),
+        // The app names an account by handle here, not by the id the webhook
+        // sends. Both are kept: one joins to the roster, the other is what a
+        // reader of the feed actually sees.
+        handle: String(p.handle || ""),
+        fromId: String(p.userId ?? p.handle ?? ""),
+        fromName: String(p.userName || ""),
+        topic: String(p.topic || ""),
+        re: String(p.re || ""),
+        like: String(p.like || ""),
+        lat: p.lat, lon: p.lon,
+        // Why the model turned it away. The whole point of the refused array.
+        reason: String(p.why || ""),
+        state: String(p.state || ""),
+        src: "app",
+      });
+    }
+  };
+  take(d?.posts, "held");
+  take(d?.live, "published");
+  take(d?.refused, "refused");
+  return out;
+}
+
+/** Whether a row is a post in its own right.
+ *
+ *  Replies and likes arrive in the same arrays as posts — a reply is a row
+ *  pointing at another with `re`, a like is a row whose whole content is
+ *  `like`. Drawn as top-level cards they fill the wall with fragments and a
+ *  busy post buries everything else under its own likes. They are not dropped:
+ *  threadFor() puts them back where they belong, inside the post they are
+ *  about. */
+const isOwnPost = (r) => !r.re && !r.like;
+
+/** Board and hook as one list, keyed by post id. */
+function feedItems() {
+  const byId = new Map();
+  for (const r of (reports || [])) byId.set(r.id, { ...r, src: "hook" });
+  for (const b of (board || [])) {
+    const was = byId.get(b.id);
+    byId.set(b.id, {
+      ...(was || {}), ...b,
+      // Two facts the board cannot know, because they are this box's own.
+      seenAt: was?.seenAt || "",
+      reviewed: Boolean(was?.reviewed),
+      reviewedBy: was?.reviewedBy || "",
+      src: was ? "both" : "app",
+    });
+  }
+  return [...byId.values()];
+}
+
+/** Replies and likes, assembled from the board.
+ *
+ *  Both come through as ordinary rows joined by `re` and `like`, so a post's
+ *  thread and its like count are already in the one response — they only have
+ *  to be looked up the other way round. */
+function threadFor(id) {
+  const rows = board || [];
+  return {
+    replies: rows.filter((r) => r.re && r.re === id),
+    likes: rows.filter((r) => r.like && r.like === id).length,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Everything known about one post
 //
@@ -1471,19 +1615,70 @@ function openReport(r) {
 
   const pad = el("div", "pad");
   const facts = el("dl", "facts");
+  const thread = threadFor(r.id);
+  // Why the model held or refused it. First, and full width, because on those
+  // states it is the only thing on this sheet somebody came to read — and
+  // absent entirely on a published post, which has no reason by definition. A
+  // dash under "Reason" on every live post is a row that exists to say nothing.
+  if (r.event !== "published") {
+    facts.append(fact(r.event === "held" ? "Why it was held"
+      : r.event === "refused" ? "Why it was refused"
+      : "Why it came down", r.reason, "wide"));
+  }
   facts.append(
     fact("What it says", r.body, "wide"),
-    fact(r.event === "held" ? "Why it was held" : "Reason", r.reason, "wide"),
     fact("Status", EVENT_WORD[r.event] || r.event),
     fact("Post id in the app", r.id, "mono"),
     fact("When the app says", when(r.at)),
     fact("When this box heard", when(r.seenAt)),
-    fact("Account id", r.fromId, "mono"),
-    fact("Account name", r.fromName || roster().find((u) => u.id === r.fromId)?.name),
+    fact("Handle", r.handle && "@" + r.handle),
+    // Only where it is something other than the handle already above it.
+    fact("Account name", (() => {
+      const n = r.fromName || roster().find((u) => u.id === r.fromId)?.name || "";
+      return n && n !== r.handle ? n : "";
+    })()),
+    fact("Topic", r.topic),
+  );
+  // The same sentence in three scripts, kept apart rather than folded into the
+  // caption: seeing them as three is the point of the app storing them as three.
+  if (r.zh || r.py || r.en) {
+    facts.append(fact("Chinese", r.zh, "wide"), fact("Pinyin", r.py, "wide"),
+      fact("English", r.en, "wide"));
+  }
+  // Where it was taken. Only when the app sent both halves — one coordinate
+  // is not a place.
+  if (typeof r.lat === "number" && typeof r.lon === "number") {
+    facts.append(fact("Where", r.lat.toFixed(5) + ", " + r.lon.toFixed(5), "mono"));
+  }
+  facts.append(
     fact("Photo id", r.photo, "mono"),
+    fact("Clip id", r.clip, "mono"),
+    // What this post is: an answer to another, an approval of one, or its own
+    // thing. Shown as ids because that is what joins them.
+    fact("Answers", r.re, "mono"),
+    fact("Approves of", r.like, "mono"),
+    fact("Replies", thread.replies.length || ""),
+    fact("Likes", thread.likes || ""),
     fact("Looked at", r.reviewed ? "yes" + (r.reviewedBy ? ", by " + r.reviewedBy : "") : ""),
+    fact("Known from", r.src === "both" ? "the board and the webhook"
+      : r.src === "app" ? "the app's board" : "the webhook only"),
   );
   pad.append(facts);
+
+  // The thread itself, where there is one. Assembled from rows joined by `re`,
+  // which is how the app sends a reply — an ordinary post pointing at another.
+  if (thread.replies.length) {
+    const box = el("div", "thread");
+    box.append(el("h3", null, thread.replies.length === 1 ? "1 reply" : thread.replies.length + " replies"));
+    for (const rep of thread.replies) {
+      const row = el("div", "reply");
+      row.append(el("b", null, rep.handle ? "@" + rep.handle : rep.fromName || "someone"),
+        el("span", null, " · " + when(rep.at)));
+      if (rep.body) row.append(el("p", null, rep.body));
+      box.append(row);
+    }
+    pad.append(box);
+  }
 
   const acts = el("div", "acts");
   if (r.event === "held") {
@@ -1627,7 +1822,7 @@ for (const k of Object.keys(TABS)) $("t-" + k).addEventListener("click", () => {
   if (k === "users" && users === null) loadUsers();
   // Re-read rather than read once: a delivery can land while the panel is
   // open, and the tab press is exactly when somebody wants it current.
-  if (k === "feed") loadFeedback();
+  if (k === "feed") { loadFeedback(); loadBoard(); }
 });
 
 // Both read at startup rather than only when the Users tab is opened: the
@@ -1638,6 +1833,10 @@ loadUsers().catch(() => {});
 // And what the app has said back, so the Feed tab shows a count of what is
 // waiting before somebody presses it.
 loadFeedback().catch(() => {});
+// And the app's whole board, which is the fuller of the two: the hook only
+// fires on a change, so a panel built on it alone shows what happened since it
+// was wired up and nothing before that.
+loadBoard().catch(() => {});
 
 // ---------------------------------------------------------------------------
 // The accounts a post is shared from
@@ -1695,11 +1894,14 @@ async function saveAccounts(next) {
  *  worth more than the row of dashes that stood here before it. */
 function appSeen() {
   const m = new Map();
-  for (const r of (reports || [])) {
-    const id = String(r.fromId || "");
+  for (const r of feedItems()) {
+    const id = String(r.fromId || r.handle || "");
     if (!id) continue;
-    const e = m.get(id) || { id, name: "", posts: 0, held: 0, last: "" };
-    e.posts += 1;
+    const e = m.get(id) || { id, name: "", posts: 0, said: 0, held: 0, last: "" };
+    // Posts and everything else counted apart. An account with two posts and
+    // forty likes is doing something different from one with forty posts, and
+    // a single figure covering both says neither.
+    if (isOwnPost(r)) e.posts += 1; else e.said += 1;
     if (r.event === "held") e.held += 1;
     if (r.fromName && !e.name) e.name = r.fromName;
     if ((r.at || "") > e.last) e.last = r.at || "";
@@ -1734,7 +1936,7 @@ function roster() {
     const was = byId.get(id);
     byId.set(id, { tone: "blue", ...(was || {}), id,
                    name: was?.name || seen.name || id,
-                   posts: seen.posts, held: seen.held, lastPost: seen.last,
+                   posts: seen.posts, said: seen.said, held: seen.held, lastPost: seen.last,
                    source: was ? was.source : "seen" });
   }
   return [...byId.values()];
@@ -1916,6 +2118,7 @@ function drawUsers() {
     // wrapped onto two, which made a row of four figures taller than the name
     // above it.
     if (u.posts) cells.push(cell(u.posts, "posts"));
+    if (u.said) cells.push(cell(u.said, "replies"));
     if (u.held) cells.push(cell(u.held, "held"));
     if (u.lastPost) cells.push(cell(when(u.lastPost).split(",")[0], "last"));
     if (u.sessions !== undefined && u.sessions !== null) cells.push(cell(u.sessions, "sessions"));

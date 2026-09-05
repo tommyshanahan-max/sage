@@ -2080,6 +2080,36 @@ app.post("/api/social/publish", publishGate, async (req, res) => {
   res.json({ ok: true, post: saved });
 });
 
+// The app's own record of every post it holds.
+//
+// Richer than the webhook by a long way. The hook says what happened to one
+// post; this is the whole board — held, live and refused — with the full row
+// on each: the words in three scripts, where it was taken, what it answers,
+// what it approves of, and on anything the model turned away, why.
+//
+// That last one matters more than it looks. A refusal used to leave no trace
+// at all, so "why could I not post this" was a question with no answer
+// anywhere. It is on the record now, and this is the only surface that shows
+// it to a person.
+//
+// Read here rather than from the page, like everything else on that side: the
+// secret travels in the query string, and a query string reaches a browser's
+// history and every proxy in between. It stays on the box.
+//
+// Proxied whole rather than reshaped. This side's job is to render it, and a
+// field this panel does not read today is a field it can read tomorrow without
+// a second deploy over there — the sheet already shows the raw record for
+// exactly that reason.
+app.get("/sp/queue", async (_req, res) => {
+  if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
+  if (!studypal.configured()) {
+    return res.status(503).json({ error: "this seat has no Study Pal credentials" });
+  }
+  const r = await studypal.callWithKeyInQuery("/api/public?queue=1");
+  res.set("Cache-Control", "no-store");
+  res.status(r.status).json(r.body);
+});
+
 // Taking a post back out of the app.
 //
 // A real delete over there, not a hidden row here. Removing it from this
