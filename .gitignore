@@ -16,7 +16,11 @@ __pycache__/
 partner/source/
 partner/source-*/
 partner/source.*/
-mockups/
+# Anchored to the root. Unanchored it matched any directory of that name at any
+# depth, which silently swallowed docs/mockups/ — a design decision that looked
+# committed and was not. What this is actually protecting is the copy-out
+# target of `make partner-mockups`, which is only ever ./mockups.
+/mockups/
 
 # npm writes this when dependencies are installed for local testing. The
 # images build from package.json alone, so a committed lock is never used —

@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Social</title>
+<style>
+  :root{
+    --bg:#eef0f4; --card:#fcfcfd; --sunk:#f2f4f8; --ink:#151b28; --ink-2:#4e5968;
+    --muted:#8a939f; --rule:#e3e6ec;
+    --shadow:0 1px 2px rgba(20,26,40,.04),0 6px 18px rgba(20,26,40,.05);
+    --rail:#1c2230; --rail-2:#2a3242;
+    --blue:#3f68d8; --blue-soft:#e8ecf7;
+    --wechat:#2a9d63; --red:#d4485c; --amber:#d99038; --violet:#7268c4;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
+           "Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+    --bg:#0b0e15; --card:#141924; --sunk:#1b212d; --ink:#e9edf5; --ink-2:#a3b0c4;
+    --muted:#6f7d92; --rule:#232b39;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.32);
+    --rail:#11151d; --rail-2:#1d2432; --blue:#5c8dff; --blue-soft:#18233d;
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
+    display:grid;grid-template-columns:72px 1fr;min-height:100vh}
+
+  /* ---- rail ---- */
+  .rail{background:var(--rail);display:flex;flex-direction:column;align-items:center;
+    padding:1rem 0;gap:.35rem;position:sticky;top:0;height:100vh}
+  .mark{color:#fff;font-size:.62rem;font-weight:800;letter-spacing:.06em;
+    text-align:center;line-height:1.15;margin-bottom:1rem;opacity:.85}
+  .rbtn{width:48px;height:48px;border-radius:14px;border:0;cursor:pointer;background:transparent;
+    color:#93a0b5;display:grid;place-items:center;gap:0;font-size:1.15rem;position:relative}
+  .rbtn small{display:block;font-size:.5rem;font-weight:700;letter-spacing:.05em;
+    text-transform:uppercase;margin-top:.1rem}
+  .rbtn:hover{background:var(--rail-2);color:#dbe3ef}
+  .rbtn.on{background:var(--blue);color:#fff}
+  .rail .spacer{flex:1}
+
+  main{padding:clamp(1rem,2.5vw,1.9rem) clamp(.9rem,2.5vw,2rem) 4rem;min-width:0}
+  .wrap{max-width:62rem;margin:0 auto;display:flex;flex-direction:column;gap:1.1rem}
+  .card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:1.15rem 1.3rem}
+  h2{margin:0 0 .9rem;font-size:.7rem;font-weight:700;letter-spacing:.13em;
+     text-transform:uppercase;color:var(--muted)}
+  .view[hidden]{display:none}
+
+  /* ---- identity ---- */
+  .top{display:grid;grid-template-columns:auto 1fr auto;gap:1.2rem;align-items:center}
+  .ava{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;
+    font-size:1.35rem;font-weight:800;color:#fff;
+    background:linear-gradient(140deg,var(--blue),var(--violet))}
+  .who h1{margin:0;font-size:1.15rem;font-weight:700;letter-spacing:-.01em}
+  .who p{margin:.05rem 0 0;font-size:.82rem;color:var(--muted)}
+  .big{display:flex;gap:1.6rem}
+  .big div{text-align:right}
+  .big .n{display:block;font-size:1.5rem;font-weight:800;letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;line-height:1.1}
+  .big .k{font-size:.62rem;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+
+  /* ---- channels ---- */
+  .chans{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.9rem}
+  .chan{text-align:center}
+  .ring{width:70px;height:70px;border-radius:50%;margin:0 auto;display:grid;place-items:center;
+    background:var(--card);border:2px solid var(--c)}
+  .ring .v{font-size:1rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  .ring .u{font-size:.54rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .chan .lbl{margin-top:.45rem;font-size:.76rem;font-weight:600;color:var(--ink-2)}
+  .chan svg{display:block;width:100%;max-width:118px;height:24px;margin:.25rem auto 0;overflow:visible}
+
+  /* ---- compose ---- */
+  .compose{display:grid;grid-template-columns:auto 1fr;gap:1.6rem;align-items:start}
+  .plus{width:88px;height:88px;border-radius:50%;border:0;cursor:pointer;margin-top:.2rem;
+    background:linear-gradient(140deg,var(--blue),#5478d8);color:#fff;font-size:2.3rem;font-weight:300;
+    display:grid;place-items:center;box-shadow:0 6px 16px rgba(63,104,216,.24);line-height:1}
+  .grp + .grp{margin-top:1.25rem}
+  .grp > .lab{display:block;margin:0 0 .55rem;font-size:.66rem;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .mediarow{display:flex;gap:.7rem;flex-wrap:wrap}
+  .mbtn{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;
+    font-size:1.1rem;border:0;cursor:pointer;color:#fff}
+  .mbtn.reel{background:var(--violet)} .mbtn.up{background:var(--amber)}
+  .mbtn.cam{background:var(--red)} .mbtn.txt{background:var(--wechat)}
+  .mcap{font-size:.78rem;color:var(--muted);margin:.6rem 0 0}
+  .forrow{display:flex;gap:.55rem;flex-wrap:wrap}
+  .pchip{display:flex;align-items:center;gap:.5rem;padding:.34rem .95rem .34rem .34rem;
+    border-radius:99px;background:var(--sunk);font-size:.82rem;font-weight:600;
+    border:1.5px solid transparent;cursor:pointer}
+  .pchip.on{border-color:var(--blue);background:var(--blue-soft);color:var(--blue)}
+  .pchip i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+    font-size:.66rem;font-weight:800;color:#fff;font-style:normal;background:var(--ink-2)}
+  .via{font-family:var(--mono);font-size:.76rem;color:var(--blue);background:var(--blue-soft);
+    display:inline-block;padding:.42rem .8rem;border-radius:9px;word-break:break-all}
+
+  /* ---- feed ---- */
+  .feedhead{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.2rem}
+  .feedhead h2{margin:0}
+  .fchips{display:flex;gap:.4rem;margin-left:auto;flex-wrap:wrap}
+  .fchip{font-size:.75rem;font-weight:600;padding:.25rem .7rem;border-radius:99px;cursor:pointer;
+    background:var(--card);border:1px solid var(--rule);color:var(--ink-2)}
+  .fchip.on{background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}
+  .masonry{columns:3;column-gap:1.1rem}
+  @media (max-width:60rem){.masonry{columns:2}}
+  @media (max-width:38rem){.masonry{columns:1}}
+  .post{break-inside:avoid;margin:0 0 1.1rem;background:var(--card);border-radius:18px;
+    box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+  .shot{display:grid;place-items:center;color:#fff;font-size:2.2rem}
+  .s1{background:linear-gradient(135deg,#6f68c0,#3f68d8)}
+  .s2{background:linear-gradient(135deg,#d99038,#cf5560)}
+  .s3{background:linear-gradient(135deg,#2f9d68,#2e9c99)}
+  .s4{background:linear-gradient(135deg,#4f7fb8,#6f68c0)}
+  .post .in{padding:.85rem .95rem;display:flex;flex-direction:column;gap:.55rem;flex:1}
+  .byline{display:flex;align-items:center;gap:.45rem;font-size:.78rem;font-weight:600}
+  .byline i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-style:normal;
+    font-size:.62rem;font-weight:800;color:#fff}
+  .byline span{color:var(--muted);font-weight:400}
+  .cap{margin:0;font-size:.85rem;color:var(--ink-2);line-height:1.45}
+  .tags{display:flex;gap:.4rem;flex-wrap:wrap}
+  .tag{font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:99px;
+    background:var(--blue-soft);color:var(--blue)}
+  .tag.feat{background:rgba(114,104,196,.12);color:var(--violet)}
+  .meta{margin-top:auto;padding-top:.55rem;border-top:1px solid var(--rule);
+    display:flex;gap:.85rem;font-size:.74rem;color:var(--muted);align-items:center}
+  .meta b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .meta .go{margin-left:auto;color:var(--blue);font-weight:700;cursor:pointer}
+
+  /* ---- people ---- */
+  .searchbar{display:flex;gap:.6rem;align-items:center;background:var(--card);
+    border:1px solid var(--rule);border-radius:12px;padding:.6rem .85rem;box-shadow:var(--shadow)}
+  .searchbar input{flex:1;border:0;background:none;font:inherit;font-size:.92rem;color:var(--ink);outline:none}
+  .searchbar input::placeholder{color:var(--muted)}
+  .filters{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.8rem}
+  .people{display:grid;grid-template-columns:repeat(auto-fill,minmax(15.5rem,1fr));gap:1rem;margin-top:1rem}
+  .mate{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:1rem 1.1rem;
+    cursor:pointer;border:1.5px solid transparent}
+  .mate:hover{border-color:var(--blue)}
+  .mate.on{border-color:var(--blue);background:var(--blue-soft)}
+  .mate .hd{display:flex;align-items:center;gap:.65rem}
+  .mate .hd i{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
+    font-style:normal;font-size:.9rem;font-weight:800;color:#fff;flex:none}
+  .mate h3{margin:0;font-size:.95rem;font-weight:700}
+  .mate .ch{font-size:.73rem;color:var(--muted)}
+  .flow{display:flex;align-items:center;gap:.4rem;margin:.85rem 0 0}
+  .flow .st{flex:1;text-align:center}
+  .flow .st b{display:block;font-size:1.05rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+  .flow .st span{font-size:.56rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+  .flow .ar{color:var(--muted);font-size:.78rem}
+  .pill{display:inline-block;margin-top:.75rem;font-size:.7rem;font-weight:700;
+    padding:.2rem .6rem;border-radius:99px}
+  .pill.hot{background:rgba(42,157,99,.12);color:var(--wechat)}
+  .pill.warm{background:rgba(217,144,56,.14);color:var(--amber)}
+  .pill.cold{background:rgba(212,72,92,.11);color:var(--red)}
+  .none{color:var(--muted);font-size:.88rem;padding:1.4rem 0;text-align:center}
+
+  /* one person, opened */
+  .sheet{margin-top:1.1rem}
+  .sheet .hdr{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+  .sheet .hdr i{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+    font-style:normal;font-size:1.05rem;font-weight:800;color:#fff;flex:none}
+  .sheet h3{margin:0;font-size:1.05rem;font-weight:700}
+  .sheet .ch{font-size:.78rem;color:var(--muted)}
+  .acts{margin-left:auto;display:flex;gap:.5rem;flex-wrap:wrap}
+  .act{font:inherit;font-size:.8rem;font-weight:600;padding:.42rem .9rem;border-radius:10px;
+    cursor:pointer;border:1px solid var(--rule);background:var(--card);color:var(--ink-2)}
+  .act.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+  .sheet .strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(7rem,1fr));gap:.7rem;margin:1rem 0 0}
+  .sq{background:var(--sunk);border-radius:12px;padding:.7rem .8rem}
+  .sq b{display:block;font-size:1.3rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+  .sq span{font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .theirs{margin-top:1rem}
+  .row{display:grid;grid-template-columns:2.6rem 1fr auto;gap:.75rem;align-items:center;
+    padding:.55rem 0;border-top:1px solid var(--rule)}
+  .row .th{width:2.6rem;height:2rem;border-radius:8px;display:grid;place-items:center;font-size:1rem;color:#fff}
+  .row .t{font-size:.86rem;font-weight:600}
+  .row .m{font-size:.72rem;color:var(--muted)}
+  .row .r{font-family:var(--mono);font-size:.8rem;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .foot{font-size:.8rem;color:var(--muted);margin:1rem 0 0}
+  .foot b{color:var(--ink-2)}
+</style>
+</head>
+<body>
+
+<nav class="rail">
+  <div class="mark">SP</div>
+  <button class="rbtn on" data-view="home" type="button">⌂<small>Home</small></button>
+  <button class="rbtn" data-view="feed" type="button">▦<small>Feed</small></button>
+  <button class="rbtn" data-view="people" type="button">☺<small>People</small></button>
+  <div class="spacer"></div>
+  <button class="rbtn" type="button">⚙<small>Set</small></button>
+</nav>
+
+<main>
+  <!-- ================= HOME ================= -->
+  <div class="wrap view" id="v-home">
+    <section class="card top">
+      <div class="ava">SP</div>
+      <div class="who">
+        <h1>Study Pal · 留学生</h1>
+        <p>119 people · 9% come back · 3 collaborators sharing</p>
+      </div>
+      <div class="big">
+        <div><span class="n">104</span><span class="k">arrived via</span></div>
+        <div><span class="n">7</span><span class="k">reshares</span></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Where they came from</h2>
+      <div class="chans" id="chans"></div>
+    </section>
+
+    <section class="card">
+      <h2>Make something</h2>
+      <div class="compose">
+        <button class="plus" type="button">+</button>
+        <div>
+          <div class="grp">
+            <span class="lab">Start with</span>
+            <div class="mediarow">
+              <button class="mbtn reel" type="button" title="From the Reel">🎬</button>
+              <button class="mbtn up" type="button" title="Upload">📎</button>
+              <button class="mbtn cam" type="button" title="From your phone">📱</button>
+              <button class="mbtn txt" type="button" title="Just write it">📝</button>
+            </div>
+            <p class="mcap">From the Reel, an upload, your phone, or just write it</p>
+          </div>
+          <div class="grp">
+            <span class="lab">For</span>
+            <div class="forrow">
+              <span class="pchip on"><i>M</i>Mia</span>
+              <span class="pchip"><i style="background:var(--wechat)">W</i>Uni group</span>
+              <span class="pchip"><i style="background:var(--amber)">P</i>Poster A</span>
+              <span class="pchip"><i style="background:var(--muted)">?</i>Nobody</span>
+            </div>
+          </div>
+          <div class="grp">
+            <span class="lab">Their link</span>
+            <div class="via">liuxuesheng.help/?via=mia&amp;to=ep3</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="feedhead"><h2>Latest</h2></div>
+      <div class="masonry" id="latest"></div>
+    </section>
+  </div>
+
+  <!-- ================= FEED ================= -->
+  <div class="wrap view" id="v-feed" hidden>
+    <div class="feedhead">
+      <h2>Everything that has gone out</h2>
+      <div class="fchips" id="fchips"></div>
+    </div>
+    <div class="masonry" id="feed"></div>
+  </div>
+
+  <!-- ================= PEOPLE ================= -->
+  <div class="wrap view" id="v-people" hidden>
+    <section>
+      <div class="searchbar">
+        <span>🔍</span>
+        <input id="q" placeholder="Find someone — by name, channel or code" autocomplete="off">
+      </div>
+      <div class="filters" id="pfilters"></div>
+      <div class="people" id="people"></div>
+      <div class="none" id="nonefound" hidden>Nobody matches that.</div>
+    </section>
+    <section class="card sheet" id="sheet" hidden></section>
+    <p class="foot"><b>Sent → reshared → arrived.</b> Only the last one is flattering.
+      Nine sent and six passed on is a relationship; four sent and one passed on is a
+      conversation you need to have.</p>
+  </div>
+</main>
+
+<script>
+const SVG="http://www.w3.org/2000/svg";
+const el=(t,c,x)=>{const n=document.createElement(t);if(c)n.className=c;if(x!==undefined)n.textContent=x;return n;};
+
+function spark(series,colour){
+  const w=100,h=24,p=2,n=series.length,hi=Math.max(1,...series);
+  const x=i=>p+(i/(n-1))*(w-p*2), y=v=>h-p-(v/hi)*(h-p*2);
+  const pts=series.map((v,i)=>x(i).toFixed(1)+","+y(v).toFixed(1)).join(" L");
+  const s=document.createElementNS(SVG,"svg");
+  s.setAttribute("viewBox",`0 0 ${w} ${h}`); s.setAttribute("preserveAspectRatio","none");
+  const a=document.createElementNS(SVG,"path");
+  a.setAttribute("d",`M${p},${h-p} L${pts} L${w-p},${h-p} Z`);
+  a.setAttribute("fill",colour); a.setAttribute("opacity",".13");
+  const l=document.createElementNS(SVG,"path");
+  l.setAttribute("d",`M${pts}`); l.setAttribute("fill","none"); l.setAttribute("stroke",colour);
+  l.setAttribute("stroke-width","2"); l.setAttribute("stroke-linejoin","round");
+  l.setAttribute("stroke-linecap","round");
+  const d=document.createElementNS(SVG,"circle");
+  d.setAttribute("cx",x(n-1)); d.setAttribute("cy",y(series[n-1]));
+  d.setAttribute("r","2.4"); d.setAttribute("fill",colour);
+  s.append(a,l,d); return s;
+}
+
+// ---- data -----------------------------------------------------------------
+const PEOPLE=[
+  {id:"mia",name:"Mia",ch:"WeChat · 小红书",c:"var(--wechat)",code:"mia",
+   sent:9,reshared:6,arrived:41,state:["hot","sharing weekly"],last:"2 hours ago",
+   s:[1,2,3,3,5,4,6,7,6,8]},
+  {id:"uni",name:"WeChat uni group",ch:"~180 members",c:"var(--red)",code:"wechat-uni-group",
+   sent:4,reshared:1,arrived:58,state:["warm","quiet since 2 Sep"],last:"yesterday",
+   s:[0,0,12,20,14,6,3,2,1,1]},
+  {id:"poster",name:"Poster A",ch:"Print · campus boards",c:"var(--amber)",code:"poster-a",
+   sent:1,reshared:0,arrived:5,state:["cold","not moving"],last:"26 Aug",
+   s:[0,1,1,1,0,1,0,0,1,0]},
+  {id:"lin",name:"Lin",ch:"小红书",c:"var(--violet)",code:"lin",
+   sent:3,reshared:2,arrived:14,state:["warm","started this week"],last:"4 Sep",
+   s:[0,0,0,0,1,2,3,3,4,4]},
+  {id:"office",name:"Agent office · 深圳",ch:"WeChat work",c:"var(--blue)",code:"sz-office",
+   sent:2,reshared:0,arrived:0,state:["cold","no arrivals yet"],last:"1 Sep",
+   s:[0,0,0,0,0,0,0,0,0,0]},
+];
+const POSTS=[
+  {id:1,cls:"s1",ic:"🎬",who:"mia",when:"2 hours ago",h:"9rem",
+   cap:"秋季申请季快到了 —— 三分钟看懂时间线。",tags:[["ep 3 · GPA 换算",""],["Nearby","feat"]],n:12,rs:2},
+  {id:2,cls:"s2",ic:"🖼",who:"uni",when:"yesterday",h:"11rem",
+   cap:"秋季申请季海报，转发给还没开始的同学。",tags:[["ep 1 · 申请时间线",""]],n:31,rs:1},
+  {id:3,cls:"s3",ic:"📄",who:"mia",when:"3 Sep",h:"8rem",
+   cap:"三分钟看懂 GPA 换算，附对照表。",tags:[["ep 3 · GPA 换算",""],["Speak","feat"]],n:18,rs:3},
+  {id:4,cls:"s4",ic:"🎬",who:"lin",when:"4 Sep",h:"12rem",
+   cap:"第二集：找学校这件事没有你想的那么难。",tags:[["ep 2 · 找学校",""],["Nearby","feat"]],n:14,rs:2},
+  {id:5,cls:"s2",ic:"🖼",who:"poster",when:"26 Aug",h:"9rem",
+   cap:"校园海报 A —— 扫码进小程序。",tags:[["Home","feat"]],n:5,rs:0},
+  {id:6,cls:"s1",ic:"📄",who:"mia",when:"28 Aug",h:"7rem",
+   cap:"雅思和托福，哪个更适合你？",tags:[["ep 5 · 语言考试",""]],n:24,rs:1},
+];
+const byId=Object.fromEntries(PEOPLE.map(p=>[p.id,p]));
+
+// ---- channels -------------------------------------------------------------
+const CH=[
+  {v:"41",u:"arrived",lbl:"WeChat · Mia",c:"var(--wechat)",s:[1,2,3,3,5,4,6,7,6,8]},
+  {v:"58",u:"arrived",lbl:"Uni group",c:"var(--red)",s:[0,0,12,20,14,6,3,2,1,1]},
+  {v:"5",u:"arrived",lbl:"Poster A",c:"var(--amber)",s:[0,1,1,1,0,1,0,0,1,0]},
+  {v:"119",u:"people",lbl:"The app, all in",c:"var(--blue)",s:[3,9,14,22,31,44,58,79,98,119]},
+];
+const cbox=document.getElementById("chans");
+for(const c of CH){
+  const d=el("div","chan"); d.style.setProperty("--c",c.c);
+  d.innerHTML=`<div class="ring"><div><div class="v">${c.v}</div><div class="u">${c.u}</div></div></div>
+    <div class="lbl">${c.lbl}</div>`;
+  d.append(spark(c.s,c.c)); cbox.append(d);
+}
+
+// ---- feed -----------------------------------------------------------------
+function postCard(p){
+  const who=byId[p.who];
+  const a=el("article","post");
+  a.innerHTML=`<div class="shot ${p.cls}" style="height:${p.h}">${p.ic}</div>
+    <div class="in">
+      <div class="byline"><i style="background:${who.c}">${who.name[0]}</i>${who.name}<span>· ${p.when}</span></div>
+      <p class="cap">${p.cap}</p>
+      <div class="tags">${p.tags.map(([t,k])=>`<span class="tag ${k}">${t}</span>`).join("")}</div>
+      <div class="meta"><b>${p.n}</b> arrived · <b>${p.rs}</b> reshared <span class="go">Open →</span></div>
+    </div>`;
+  return a;
+}
+function drawFeed(box,list){ box.replaceChildren(); for(const p of list) box.append(postCard(p)); }
+drawFeed(document.getElementById("latest"),POSTS.slice(0,3));
+
+let feedFilter="all";
+const FCHIPS=[["all","Everyone"],...PEOPLE.map(p=>[p.id,p.name])];
+const fbox=document.getElementById("fchips");
+function drawFchips(){
+  fbox.replaceChildren();
+  for(const [id,label] of FCHIPS){
+    const b=el("button","fchip"+(feedFilter===id?" on":""),label);
+    b.type="button";
+    b.addEventListener("click",()=>{feedFilter=id;drawFchips();
+      drawFeed(document.getElementById("feed"),
+        POSTS.filter(p=>feedFilter==="all"||p.who===feedFilter));});
+    fbox.append(b);
+  }
+}
+drawFchips();
+drawFeed(document.getElementById("feed"),POSTS);
+
+// ---- people ---------------------------------------------------------------
+let pFilter="all", picked=null, query="";
+const PFILTERS=[["all","Everyone"],["hot","Sharing"],["warm","Slowing"],["cold","Stalled"]];
+const pfbox=document.getElementById("pfilters");
+function drawPfilters(){
+  pfbox.replaceChildren();
+  for(const [id,label] of PFILTERS){
+    const b=el("button","fchip"+(pFilter===id?" on":""),label);
+    b.type="button";
+    b.addEventListener("click",()=>{pFilter=id;drawPfilters();drawPeople();});
+    pfbox.append(b);
+  }
+}
+function matches(p){
+  if(pFilter!=="all"&&p.state[0]!==pFilter) return false;
+  if(!query) return true;
+  const q=query.toLowerCase();
+  return p.name.toLowerCase().includes(q)||p.ch.toLowerCase().includes(q)||p.code.includes(q);
+}
+function drawPeople(){
+  const box=document.getElementById("people");
+  const list=PEOPLE.filter(matches);
+  box.replaceChildren();
+  document.getElementById("nonefound").hidden=list.length>0;
+  for(const p of list){
+    const d=el("div","mate"+(picked===p.id?" on":""));
+    d.innerHTML=`<div class="hd"><i style="background:${p.c}">${p.name[0]}</i>
+        <div><h3>${p.name}</h3><div class="ch">${p.ch}</div></div></div>
+      <div class="flow">
+        <div class="st"><b>${p.sent}</b><span>sent</span></div><span class="ar">→</span>
+        <div class="st"><b>${p.reshared}</b><span>reshared</span></div><span class="ar">→</span>
+        <div class="st"><b>${p.arrived}</b><span>arrived</span></div>
+      </div>
+      <span class="pill ${p.state[0]}">${p.state[1]}</span>`;
+    d.addEventListener("click",()=>{picked=picked===p.id?null:p.id;drawPeople();drawSheet();});
+    box.append(d);
+  }
+}
+function drawSheet(){
+  const sheet=document.getElementById("sheet");
+  if(!picked){ sheet.hidden=true; return; }
+  const p=byId[picked];
+  const theirs=POSTS.filter(x=>x.who===p.id);
+  sheet.hidden=false;
+  sheet.innerHTML=`<div class="hdr">
+      <i style="background:${p.c}">${p.name[0]}</i>
+      <div><h3>${p.name}</h3><div class="ch">${p.ch} · last activity ${p.last}</div></div>
+      <div class="acts">
+        <button class="act" type="button">Copy their link</button>
+        <button class="act pri" type="button">Share something with them</button>
+      </div>
+    </div>
+    <div class="strip">
+      <div class="sq"><b>${p.sent}</b><span>sent them</span></div>
+      <div class="sq"><b>${p.reshared}</b><span>they reshared</span></div>
+      <div class="sq"><b>${p.arrived}</b><span>arrived</span></div>
+      <div class="sq"><b>${p.sent?Math.round(p.reshared/p.sent*100):0}%</b><span>pass-on rate</span></div>
+    </div>
+    <div class="theirs"><h2 style="margin-bottom:.2rem">What they have shared</h2></div>`;
+  const list=sheet.querySelector(".theirs");
+  if(!theirs.length){ list.append(el("p","none","Nothing yet.")); }
+  for(const t of theirs){
+    const r=el("div","row");
+    r.innerHTML=`<div class="th ${t.cls}">${t.ic}</div>
+      <div><div class="t">${t.cap}</div><div class="m">${t.when} · ${t.tags[0][0]}</div></div>
+      <div class="r">${t.n}</div>`;
+    list.append(r);
+  }
+}
+document.getElementById("q").addEventListener("input",(e)=>{query=e.target.value.trim();drawPeople();});
+drawPfilters(); drawPeople();
+
+// ---- rail -----------------------------------------------------------------
+const VIEWS={home:"v-home",feed:"v-feed",people:"v-people"};
+function show(name){
+  if(!VIEWS[name]) name="home";
+  for(const o of document.querySelectorAll(".rbtn")) o.classList.toggle("on",o.dataset.view===name);
+  for(const [k,id] of Object.entries(VIEWS)) document.getElementById(id).hidden = k!==name;
+  if(location.hash.slice(1)!==name) history.replaceState(null,"","#"+name);
+}
+for(const b of document.querySelectorAll(".rbtn[data-view]")){
+  b.addEventListener("click",()=>{ show(b.dataset.view); window.scrollTo({top:0}); });
+}
+// Deep-linkable, so a view can be sent to somebody rather than described.
+show(location.hash.slice(1)||"home");
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+</script>
+</body>
+</html>
