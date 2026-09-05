@@ -180,6 +180,10 @@
     display:block;font-weight:400;font-size:.7rem;letter-spacing:.08em;
     text-transform:uppercase;color:var(--muted);margin-top:.15rem;
   }
+  /* Its top margin exists to separate it from whatever it annotates. Directly
+     under a heading there is nothing to separate it from, and the two margins
+     stack into a gap that reads as a missing element. */
+  h2 + .thin{margin-top:0}
   .thin{
     margin:1.4rem 0 0;padding:1rem 1.1rem;background:var(--jade-soft);
     border-radius:10px;font-size:.82rem;color:var(--ink-2);line-height:1.65;
@@ -308,7 +312,6 @@
         <div class="stat"><span class="n" id="a-active">&mdash;</span><span class="k">Used it today</span></div>
         <div class="stat accent"><span class="n" id="a-back">&mdash;</span><span class="k">Came back today</span></div>
       </div>
-      <p class="thin" id="app-note"></p>
       <p class="thin" id="app-usage-off" hidden></p>
     </section>
 
@@ -391,6 +394,11 @@
           <span class="spans" id="app-spans"></span>
         </div>
       </div>
+    </section>
+
+    <section>
+      <h2>How to read these</h2>
+      <p class="thin" id="app-note"></p>
     </section>
   </div>
 
