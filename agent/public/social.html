@@ -273,8 +273,11 @@
     background:none;border:0;white-space:nowrap}
   .ep .use:hover{text-decoration:underline}
 
-  .thin{margin:.9rem 0 0;padding:.1rem 0 .1rem 1rem;border-left:2px solid var(--rule);
+  /* The right-hand gutter is for the button that floats over the corner. These
+     notes are the last thing in every panel, so they are what it lands on. */
+  .thin{margin:.9rem 0 0;padding:.1rem 10rem .1rem 1rem;border-left:2px solid var(--rule);
     font-size:.8rem;color:var(--ink-2);line-height:1.6}
+  @media (max-width:44rem){ .thin{padding-right:1rem} }
   .thin code{font-family:var(--mono);font-size:.88em}
   .err{background:rgba(212,72,92,.1);border-left:3px solid var(--red);border-radius:0 9px 9px 0;
     padding:.7rem .9rem;font-size:.84rem;margin:0 0 1rem}
@@ -298,13 +301,31 @@
     box-shadow:0 8px 22px rgba(63,104,216,.3)}
   .pull:hover{transform:translateY(-1px)}
   .pull .glyph{font-size:1rem;line-height:1}
-  /* Comes down from the top, because that is where it used to live. */
-  .drawer{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;
-    align-items:flex-start;background:rgba(17,24,33,.42);backdrop-filter:blur(2px)}
+  /* Docked, not laid over. A modal Sage hid whatever it was opened from, which
+     is the wrong way round for a conversation about the thing behind it —
+     asking for a change to a screen while that screen is covered up. So it
+     takes a column and the page keeps the rest, which on the app tab puts the
+     phone and the conversation side by side. */
+  .drawer{position:fixed;top:0;right:0;bottom:0;z-index:60;
+    width:min(34rem,46vw);display:flex}
   .drawer[hidden]{display:none}
-  .drawerbox{background:var(--card);width:min(60rem,100%);height:min(88vh,54rem);
-    border-radius:0 0 20px 20px;box-shadow:0 24px 60px rgba(17,24,33,.3);
+  .drawerbox{background:var(--card);width:100%;height:100%;
+    border-left:1px solid var(--rule);box-shadow:-14px 0 40px rgba(17,24,33,.13);
     display:flex;flex-direction:column;overflow:hidden}
+  /* The page gives up the width rather than sliding under it. Content half
+     covered by a panel is content somebody has to close the panel to read. */
+  body.with-sage{padding-right:calc(min(34rem,46vw) + 1.2rem)}
+  body.with-sage .pull{right:calc(min(34rem,46vw) + 1.2rem)}
+  /* Too narrow to be two things at once: back to a sheet over the top, which
+     is the honest answer on a phone. */
+  @media (max-width:64rem){
+    .drawer{inset:0;width:auto;justify-content:center;align-items:flex-start;
+      background:rgba(17,24,33,.42);backdrop-filter:blur(2px)}
+    .drawerbox{width:min(60rem,100%);height:min(88vh,54rem);border-left:0;
+      border-radius:0 0 20px 20px;box-shadow:0 24px 60px rgba(17,24,33,.3)}
+    body.with-sage{padding-right:clamp(.8rem,2.5vw,1.8rem)}
+    body.with-sage .pull{right:1.2rem}
+  }
   .drawerhd{display:flex;align-items:center;gap:.7rem;padding:.8rem 1.1rem;
     border-bottom:1px solid var(--rule);flex:none}
   .drawerhd h2{margin:0;font-size:1rem}
@@ -336,9 +357,15 @@
   .counts .spark{display:block;flex:none;color:var(--blue);opacity:.7}
   .counts .n span{font-size:.6rem;font-weight:700;letter-spacing:.11em;
     text-transform:uppercase;color:var(--muted)}
-  .counts a{margin-left:auto;align-self:center;font-size:.76rem;font-weight:700;
-    color:var(--blue);text-decoration:none}
-  .counts a:hover{text-decoration:underline}
+  .counts .more{margin-left:auto;align-self:center;font:inherit;font-size:.76rem;
+    font-weight:700;cursor:pointer;color:var(--blue);background:var(--blue-soft);
+    border:1px solid transparent;border-radius:99px;padding:.32rem .85rem}
+  .counts .more:hover{border-color:var(--blue)}
+  .numbersview{margin:-.6rem 0 0;border-radius:14px;overflow:hidden;
+    background:var(--card);border:1px solid var(--rule);box-shadow:var(--shadow);
+    height:min(70vh,44rem)}
+  .numbersview[hidden]{display:none}
+  .numbersview iframe{width:100%;height:100%;border:0;display:block;background:var(--sunk)}
   @media (max-width:44rem){
     .counts{gap:1.1rem;padding:.8rem .9rem}
     .counts .n b{font-size:1.2rem}
@@ -442,6 +469,11 @@
   <!-- How the app is doing, read from the counter. Hidden entirely on a seat
        without numbers access — an empty band would be worse than none. -->
   <div class="counts" id="counts" hidden></div>
+
+  <!-- The counter's own dashboard, underneath the figures it summarises. -->
+  <div class="numbersview" id="numbersview" hidden>
+    <iframe id="numbersframe" title="Numbers"></iframe>
+  </div>
 
   <p class="err" id="err" hidden></p>
 
@@ -2056,13 +2088,39 @@ async function loadCounts() {
     n(app.activeToday, "used it today", col("active")),
     n(app.returningToday, "came back today", col("back")),
   );
+  // The full picture, in place. It was a link to another tab, which is a poor
+  // trade for five figures somebody is already looking at: they lose the panel
+  // to see more of the same thing. It opens underneath instead, and closes
+  // again.
   if (d.link) {
-    const a = document.createElement("a");
-    a.href = d.link; a.target = "_blank"; a.rel = "noreferrer";
-    a.textContent = "Numbers →";
-    box.append(a);
+    numbersLink = d.link;
+    const b = el("button", "more", "Numbers");
+    b.type = "button";
+    b.setAttribute("aria-expanded", "false");
+    b.setAttribute("aria-controls", "numbersview");
+    b.addEventListener("click", () => showNumbers($("numbersview").hidden));
+    box.append(b);
   }
   box.hidden = false;
+}
+
+let numbersLink = "", numbersLoaded = false;
+
+function showNumbers(on) {
+  const view = $("numbersview");
+  view.hidden = !on;
+  const b = $("counts").querySelector(".more");
+  if (b) {
+    b.setAttribute("aria-expanded", String(Boolean(on)));
+    b.textContent = on ? "Hide numbers" : "Numbers";
+  }
+  // Loaded on the first open, and never re-pointed: the dashboard is another
+  // service and re-fetching it every time somebody collapsed the panel would
+  // put this page's fidgeting on its request log.
+  if (on && !numbersLoaded && numbersLink) {
+    $("numbersframe").src = numbersLink;
+    numbersLoaded = true;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -2124,7 +2182,13 @@ let sageLoaded = false;
 function openDrawer(on) {
   const d = $("drawer");
   d.hidden = !on;
-  $("pull").setAttribute("aria-expanded", String(Boolean(on)));
+  // The page gives up the width; it is not slid under.
+  document.body.classList.toggle("with-sage", Boolean(on));
+  const pull = $("pull");
+  pull.setAttribute("aria-expanded", String(Boolean(on)));
+  // The same button both ways round. Docked, there is no backdrop to click, so
+  // the way in has to be the way out or somebody hunts for the Close.
+  pull.lastElementChild.textContent = on ? "Hide Sage" : "Sage";
   // Hidden rather than unmounted, so the conversation survives being closed.
   // ?bare — the conversation without its own stage. Sage remembers which
   // panel it had open, and without this it reopens this page inside the
@@ -2133,9 +2197,10 @@ function openDrawer(on) {
   if (on) $("drawershut").focus();
 }
 
-$("pull").addEventListener("click", () => openDrawer(true));
+$("pull").addEventListener("click", () => openDrawer($("drawer").hidden));
 $("drawershut").addEventListener("click", () => openDrawer(false));
-// The backdrop closes it; the box does not, or a click inside the chat would.
+// The backdrop closes it, where there is one — below 64rem the rail becomes a
+// sheet again. The box never does, or a click inside the chat would.
 $("drawer").addEventListener("click", (e) => { if (e.target === $("drawer")) openDrawer(false); });
 document.addEventListener("keydown", (e) => {
   // Only when nothing else is open on top of it.
