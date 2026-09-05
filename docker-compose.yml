@@ -281,6 +281,13 @@ services:
       AGENT_WORKSPACE: /home/coder/projects
       # The same store the partner seats write. One product, one file.
       AGENT_SOCIAL_DIR: /srv/social
+      # What Study Pal presents in x-studypal-secret when it reports a post
+      # published, held or removed. No secret set means the hook refuses every
+      # delivery rather than accepting an unsigned one — see the note over the
+      # route in agent/server.js. Set on all three seats because the app posts
+      # to whichever hostname it was given, and all three share the volume the
+      # reports land in.
+      STUDYPAL_WEBHOOK_SECRET: ${TOMSCODING_STUDYPAL_WEBHOOK_SECRET:-}
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
       # The same volume the IDE uses, not a private one. An agent that cannot
@@ -393,6 +400,13 @@ services:
       # anyway. Keyed inside by the app's address, so the two seats agree on
       # the file whatever their own project directory happens to be called.
       AGENT_SOCIAL_DIR: /srv/social
+      # What Study Pal presents in x-studypal-secret when it reports a post
+      # published, held or removed. No secret set means the hook refuses every
+      # delivery rather than accepting an unsigned one — see the note over the
+      # route in agent/server.js. Set on all three seats because the app posts
+      # to whichever hostname it was given, and all three share the volume the
+      # reports land in.
+      STUDYPAL_WEBHOOK_SECRET: ${TOMSCODING_STUDYPAL_WEBHOOK_SECRET:-}
       # Documents he may read, named one by one. A list, never a folder scan:
       # a docs directory holds working notes as readily as it holds anything
       # meant for someone else, and under a scan every new file publishes
@@ -460,6 +474,13 @@ services:
       # anyway. Keyed inside by the app's address, so the two seats agree on
       # the file whatever their own project directory happens to be called.
       AGENT_SOCIAL_DIR: /srv/social
+      # What Study Pal presents in x-studypal-secret when it reports a post
+      # published, held or removed. No secret set means the hook refuses every
+      # delivery rather than accepting an unsigned one — see the note over the
+      # route in agent/server.js. Set on all three seats because the app posts
+      # to whichever hostname it was given, and all three share the volume the
+      # reports land in.
+      STUDYPAL_WEBHOOK_SECRET: ${TOMSCODING_STUDYPAL_WEBHOOK_SECRET:-}
       AGENT_DOCS_ROOT: /work/app
       AGENT_DOCS: ${TOMSCODING_PARTNER2_DOCS:-}
       AGENT_APP_URL: ${TOMSCODING_PARTNER2_APP_URL:-}

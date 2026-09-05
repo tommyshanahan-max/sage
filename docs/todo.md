@@ -67,6 +67,30 @@ Treat any secret that has been in one as public.
 **Done looks like.** New key generated on Study Pal's side, `.env` updated,
 `make up`, old key rejected by the app.
 
+### Rotate the Study Pal webhook secret
+
+**What.** `TOMSCODING_STUDYPAL_WEBHOOK_SECRET` in `.env` on this box, and
+`PUBLIC_WEBHOOK_SECRET` in `/root/fern/deploy/fern/.env` on Study Pal's box
+(`45.32.58.178`). They are one shared value and both have to change together.
+
+**Why it matters.** The value in use was read back out of Study Pal's `.env` in a
+terminal that was screenshotted into a chat transcript. Transcripts are stored;
+treat any secret that has been in one as public.
+
+What this secret protects is narrower than the other three, and worth being
+precise about rather than alarmed: it is the only lock on
+`POST /api/studypal-hook`, which is mounted above the sign-in gate because the
+caller is a server with no cookie to present. Somebody holding it can write
+rows into the panel's feedback file — invent a held post, mark something as
+published that never was. It grants nothing else: no read of anything, no
+session, no other route. The harm is a panel that reports things that did not
+happen, which is a real harm for a surface whose whole job is telling you what
+did.
+
+**Done looks like.** A new value generated (`openssl rand -base64 32`), set in
+both `.env` files, both sides restarted, and a test delivery accepted. Do not
+paste the new value into a chat.
+
 ### Get the microdrama repo onto GitHub
 
 **Where this got to, 4 September, ~1am.** `microdrama` and `studybox` do not
