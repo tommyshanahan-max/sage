@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Social</title>
+<!--
+  Who this project shares its work with, and what has gone to them.
+
+  Same constraints as every other page here: one file, no web fonts, no CDN,
+  no build step. It is shown inside the stage as often as it is opened on its
+  own, so the layout has to work at 24rem and at 70rem without a rail eating
+  a third of the narrow case.
+
+  What is real: people, their codes, the links, what was sent, and whether it
+  was passed on. What is not: arrivals. Study Pal does not keep the ?via= code
+  a visitor lands with, so nothing on this box can know — and the page says
+  "not measured" rather than nought, because those are opposite facts.
+-->
+<style>
+  :root{
+    --bg:#eef0f4; --card:#fcfcfd; --sunk:#f2f4f8; --ink:#151b28; --ink-2:#4e5968;
+    --muted:#8a939f; --rule:#e3e6ec;
+    --shadow:0 1px 2px rgba(20,26,40,.04),0 6px 18px rgba(20,26,40,.05);
+    --blue:#3f68d8; --blue-soft:#e8ecf7;
+    --green:#2a9d63; --red:#d4485c; --amber:#d99038; --violet:#7268c4;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
+           "Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+    --bg:#0b0e15; --card:#141924; --sunk:#1b212d; --ink:#e9edf5; --ink-2:#a3b0c4;
+    --muted:#6f7d92; --rule:#232b39;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.32);
+    --blue:#5c8dff; --blue-soft:#18233d;
+  }}
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
+    padding:clamp(.9rem,2.5vw,1.8rem) clamp(.8rem,2.5vw,1.8rem) 4rem}
+  main{max-width:62rem;margin:0 auto;display:flex;flex-direction:column;gap:1.05rem}
+  .card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:1.05rem 1.15rem}
+  h2{margin:0 0 .85rem;font-size:.68rem;font-weight:700;letter-spacing:.13em;
+     text-transform:uppercase;color:var(--muted)}
+  button{font:inherit}
+
+  header{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+  .ava{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none;
+    font-size:1rem;font-weight:800;color:#fff;
+    background:linear-gradient(140deg,var(--blue),var(--violet))}
+  header h1{margin:0;font-size:1.1rem;font-weight:700;letter-spacing:-.01em}
+  header p{margin:.05rem 0 0;font-size:.8rem;color:var(--muted)}
+  .tabs{display:flex;gap:.35rem;margin-left:auto;flex-wrap:wrap}
+  .tab{font-size:.82rem;font-weight:600;padding:.35rem .85rem;border-radius:99px;cursor:pointer;
+    background:var(--card);border:1px solid var(--rule);color:var(--ink-2)}
+  .tab[aria-selected=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+
+  .tone-green{--tone:var(--green)} .tone-red{--tone:var(--red)}
+  .tone-amber{--tone:var(--amber)} .tone-violet{--tone:var(--violet)}
+  .tone-blue{--tone:var(--blue)}
+
+  /* ---- compose ---- */
+  .compose{display:grid;grid-template-columns:auto 1fr;gap:1.3rem;align-items:start}
+  @media (max-width:34rem){.compose{grid-template-columns:1fr}}
+  .plus{width:76px;height:76px;border-radius:50%;border:0;cursor:pointer;margin-top:.15rem;
+    background:linear-gradient(140deg,var(--blue),#5478d8);color:#fff;font-size:2rem;font-weight:300;
+    display:grid;place-items:center;box-shadow:0 6px 16px rgba(63,104,216,.24);line-height:1}
+  .grp + .grp{margin-top:1.1rem}
+  .grp > .lab{display:block;margin:0 0 .5rem;font-size:.64rem;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .kinds{display:flex;gap:.55rem;flex-wrap:wrap}
+  .kbtn{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;
+    font-size:1.05rem;border:2px solid transparent;cursor:pointer;color:#fff}
+  .kbtn[aria-pressed=true]{border-color:var(--ink)}
+  .k-clip{background:var(--violet)} .k-image{background:var(--amber)}
+  .k-poster{background:var(--red)} .k-text{background:var(--green)}
+  textarea,input[type=text]{width:100%;padding:.55rem .7rem;font:inherit;font-size:.9rem;
+    color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:9px}
+  textarea{min-height:5rem;resize:vertical}
+  .forrow{display:flex;gap:.5rem;flex-wrap:wrap}
+  .pchip{display:flex;align-items:center;gap:.45rem;padding:.3rem .85rem .3rem .3rem;cursor:pointer;
+    border-radius:99px;background:var(--sunk);font-size:.8rem;font-weight:600;
+    border:1.5px solid transparent;color:var(--ink-2)}
+  .pchip[aria-pressed=true]{border-color:var(--blue);background:var(--blue-soft);color:var(--blue)}
+  .pchip i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+    font-size:.62rem;font-weight:800;color:#fff;font-style:normal;background:var(--tone,var(--muted))}
+  .via{font-family:var(--mono);font-size:.75rem;color:var(--blue);background:var(--blue-soft);
+    display:inline-block;padding:.4rem .75rem;border-radius:9px;word-break:break-all;
+    border:0;cursor:pointer;text-align:left}
+  .go{margin-top:1.1rem;font-size:.88rem;font-weight:700;padding:.55rem 1.3rem;border-radius:10px;
+    border:0;cursor:pointer;background:var(--blue);color:#fff}
+  .go:disabled{opacity:.45;cursor:default}
+
+  /* ---- feed ---- */
+  .masonry{columns:2;column-gap:1rem}
+  @media (max-width:44rem){.masonry{columns:1}}
+  @media (min-width:70rem){.masonry{columns:3}}
+  .post{break-inside:avoid;margin:0 0 1rem;background:var(--card);border-radius:16px;
+    box-shadow:var(--shadow);overflow:hidden}
+  .shot{height:5.5rem;display:grid;place-items:center;color:#fff;font-size:1.8rem;
+    background:linear-gradient(135deg,var(--tone,var(--blue)),var(--blue))}
+  .post .in{padding:.8rem .9rem;display:flex;flex-direction:column;gap:.5rem}
+  .byline{display:flex;align-items:center;gap:.4rem;font-size:.76rem;font-weight:600}
+  .byline i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;
+    font-size:.6rem;font-weight:800;color:#fff;background:var(--tone,var(--muted))}
+  .byline span{color:var(--muted);font-weight:400}
+  .cap{margin:0;font-size:.84rem;color:var(--ink-2);line-height:1.45;white-space:pre-wrap}
+  .tagrow{display:flex;gap:.35rem;flex-wrap:wrap}
+  .tag{font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:99px;
+    background:var(--blue-soft);color:var(--blue)}
+  .meta{padding-top:.5rem;border-top:1px solid var(--rule);display:flex;gap:.7rem;
+    font-size:.73rem;color:var(--muted);align-items:center;flex-wrap:wrap}
+  .meta b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .tick{font:inherit;font-size:.72rem;font-weight:700;padding:.15rem .55rem;border-radius:99px;
+    cursor:pointer;border:1px solid var(--rule);background:var(--card);color:var(--muted)}
+  .tick[aria-pressed=true]{background:rgba(42,157,99,.13);border-color:var(--green);color:var(--green)}
+  .del{margin-left:auto;border:0;background:none;color:var(--muted);cursor:pointer;font-size:.73rem}
+  .del:hover{color:var(--red)}
+
+  /* ---- people ---- */
+  .searchbar{display:flex;gap:.55rem;align-items:center;background:var(--card);
+    border:1px solid var(--rule);border-radius:11px;padding:.5rem .75rem;box-shadow:var(--shadow)}
+  .searchbar input{flex:1;border:0;background:none;font-size:.9rem;padding:0;outline:none}
+  .people{display:grid;grid-template-columns:repeat(auto-fill,minmax(14.5rem,1fr));gap:.9rem;margin-top:.9rem}
+  .mate{background:var(--card);border-radius:15px;box-shadow:var(--shadow);padding:.9rem 1rem;
+    border:1.5px solid transparent;cursor:pointer}
+  .mate:hover{border-color:var(--blue)}
+  .mate[aria-expanded=true]{border-color:var(--blue);background:var(--blue-soft)}
+  .mate .hd{display:flex;align-items:center;gap:.6rem}
+  .mate .hd i{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none;
+    font-style:normal;font-size:.85rem;font-weight:800;color:#fff;background:var(--tone,var(--muted))}
+  .mate h3{margin:0;font-size:.92rem;font-weight:700}
+  .mate .ch{font-size:.72rem;color:var(--muted)}
+  .flow{display:flex;align-items:center;gap:.35rem;margin:.8rem 0 0}
+  .flow .st{flex:1;text-align:center}
+  .flow .st b{display:block;font-size:1rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+  .flow .st b.dim{color:var(--muted);font-weight:600}
+  .flow .st span{font-size:.55rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .flow .ar{color:var(--muted);font-size:.75rem}
+  .code{margin-top:.6rem;font-family:var(--mono);font-size:.7rem;color:var(--blue)}
+  .none{color:var(--muted);font-size:.86rem;padding:1.2rem 0;text-align:center}
+
+  .thin{margin:.9rem 0 0;padding:.1rem 0 .1rem 1rem;border-left:2px solid var(--rule);
+    font-size:.8rem;color:var(--ink-2);line-height:1.6}
+  .thin code{font-family:var(--mono);font-size:.88em}
+  .err{background:rgba(212,72,92,.1);border-left:3px solid var(--red);border-radius:0 9px 9px 0;
+    padding:.7rem .9rem;font-size:.84rem;margin:0 0 1rem}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+  @media (max-width:34rem){.row2{grid-template-columns:1fr}}
+  .add{border:1px dashed var(--rule);background:none;border-radius:15px;padding:.9rem;
+    color:var(--muted);font-size:.85rem;font-weight:600;cursor:pointer;width:100%}
+  .add:hover{border-color:var(--blue);color:var(--blue)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="ava" id="ava">·</div>
+    <div>
+      <h1 id="title">Social</h1>
+      <p id="sub">Loading…</p>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="t-share"  aria-selected="true">Share</button>
+      <button class="tab" role="tab" id="t-feed"   aria-selected="false">Feed</button>
+      <button class="tab" role="tab" id="t-people" aria-selected="false">People</button>
+    </div>
+  </header>
+
+  <p class="err" id="err" hidden></p>
+
+  <!-- ============ SHARE ============ -->
+  <section class="card" id="v-share">
+    <h2>Make something</h2>
+    <div class="compose">
+      <button class="plus" type="button" id="save">+</button>
+      <div>
+        <div class="grp">
+          <span class="lab">What it is</span>
+          <div class="kinds" id="kinds"></div>
+        </div>
+        <div class="grp">
+          <span class="lab">What it says</span>
+          <textarea id="body" placeholder="Write it, or paste what you are sending."></textarea>
+        </div>
+        <div class="grp">
+          <span class="lab">What it points at</span>
+          <input type="text" id="points" placeholder="ep 3 · GPA 换算, or a feature name">
+        </div>
+        <div class="grp">
+          <span class="lab">Who it is for</span>
+          <div class="forrow" id="forrow"></div>
+        </div>
+        <div class="grp" id="linkgrp" hidden>
+          <span class="lab">Their link — press to copy</span>
+          <button class="via" type="button" id="link"></button>
+        </div>
+        <button class="go" type="button" id="record" disabled>Record the share</button>
+      </div>
+    </div>
+    <p class="thin" id="sharenote"></p>
+  </section>
+
+  <!-- ============ FEED ============ -->
+  <section id="v-feed" hidden>
+    <h2 id="feedhead">What has gone out</h2>
+    <div class="masonry" id="feed"></div>
+    <p class="none" id="feednone" hidden>Nothing recorded yet. The first share you
+      record here shows up on this wall.</p>
+  </section>
+
+  <!-- ============ PEOPLE ============ -->
+  <section id="v-people" hidden>
+    <div class="searchbar">
+      <span aria-hidden="true">🔍</span>
+      <input type="text" id="q" placeholder="Find someone — by name, channel or code">
+    </div>
+    <div class="people" id="people"></div>
+    <p class="none" id="peoplenone" hidden>Nobody matches that.</p>
+    <div style="margin-top:.9rem"><button class="add" type="button" id="addperson">+ Add someone</button></div>
+    <p class="thin" id="peoplenote"></p>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
+  if (x !== undefined) n.textContent = x; return n; };
+
+// The project is in the query string, because this page is opened from the
+// stage against whichever project is selected — not from a global setting.
+const PROJECT = new URLSearchParams(location.search).get("project") || "";
+
+const KINDS = [["clip","🎬","A clip"],["image","🖼","An image"],
+               ["poster","📄","A poster"],["text","📝","Just words"]];
+const TONES = ["green","red","amber","violet","blue"];
+
+let state = { people: [], posts: [], base: "", arrivals: null, canSeeNumbers: false };
+let kind = "clip", forCode = "", tab = "share", query = "", opened = "";
+
+function fail(msg) { const e = $("err"); e.hidden = !msg; e.textContent = msg || ""; }
+
+async function load() {
+  if (!PROJECT) return fail("No project. Open this from a project in the workspace.");
+  try {
+    const r = await fetch("/api/social?project=" + encodeURIComponent(PROJECT));
+    const d = await r.json();
+    if (!r.ok) return fail(d.error || "Could not load it.");
+    state = { ...state, ...d };
+    fail("");
+    draw();
+  } catch (e) { fail("Could not reach the server: " + e.message); }
+}
+
+async function save() {
+  try {
+    const r = await fetch("/api/social?project=" + encodeURIComponent(PROJECT), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ people: state.people, posts: state.posts }),
+    });
+    const d = await r.json();
+    if (!r.ok) return fail(d.error || "Could not save it.");
+    state.people = d.people; state.posts = d.posts;
+    fail("");
+    draw();
+  } catch (e) { fail("Could not save: " + e.message); }
+}
+
+const person = (code) => state.people.find((p) => p.code === code) || null;
+
+/** Sent and passed-on, counted off the posts rather than stored beside them:
+ *  two counters kept in step drift the first time one of them throws. */
+function tally(code) {
+  let sent = 0, passed = 0;
+  for (const s of state.posts) if (s.to === code) { sent += 1; if (s.passedOn) passed += 1; }
+  return { sent, passed };
+}
+
+/** Arrivals for a code, or null when nothing measures them. Null and nought
+ *  are opposite facts and render differently everywhere below. */
+const arrivedFor = (code) => (state.arrivals ? (state.arrivals[code] || 0) : null);
+
+function linkFor(code, points) {
+  const root = (state.base || "").replace(/\/+$/, "");
+  if (!root || !code) return "";
+  const q = new URLSearchParams({ via: code });
+  if (points) q.set("to", points.trim().slice(0, 60));
+  return root + "/?" + q;
+}
+
+// ---- share ----------------------------------------------------------------
+function drawKinds() {
+  const box = $("kinds"); box.replaceChildren();
+  for (const [id, icon, label] of KINDS) {
+    const b = el("button", "kbtn k-" + id, icon);
+    b.type = "button"; b.title = label;
+    b.setAttribute("aria-pressed", String(kind === id));
+    b.addEventListener("click", () => { kind = id; drawKinds(); });
+    box.append(b);
+  }
+}
+
+function drawFor() {
+  const box = $("forrow"); box.replaceChildren();
+  if (!state.people.length) {
+    box.append(el("span", "none", "Nobody yet — add someone on the People tab."));
+  }
+  for (const p of state.people) {
+    const b = el("button", "pchip tone-" + p.tone);
+    b.type = "button";
+    b.setAttribute("aria-pressed", String(forCode === p.code));
+    b.append(el("i", null, p.name.slice(0, 1).toUpperCase()), document.createTextNode(p.name));
+    b.addEventListener("click", () => { forCode = forCode === p.code ? "" : p.code; drawShare(); });
+    box.append(b);
+  }
+  const none = el("button", "pchip");
+  none.type = "button";
+  none.setAttribute("aria-pressed", String(forCode === ""));
+  none.append(el("i", null, "?"), document.createTextNode("Nobody in particular"));
+  none.addEventListener("click", () => { forCode = ""; drawShare(); });
+  box.append(none);
+}
+
+function drawShare() {
+  drawKinds(); drawFor();
+  const url = linkFor(forCode, $("points").value);
+  $("linkgrp").hidden = !url;
+  $("link").textContent = url;
+  $("record").disabled = !$("body").value.trim();
+  $("sharenote").innerHTML = state.base
+    ? "<b>The link carries who shared it and what it points at.</b> WeChat strips "
+      + "referrers, so a code in the address is the only signal that survives being "
+      + "forwarded. Recording a share here does not post it — it writes down that you "
+      + "sent it, so the link and the result stay attached to each other."
+    : "<b>No address for this project.</b> Links cannot be built until one is mapped "
+      + "in <code>AGENT_PROJECT_APPS</code>. Everything else on this page still works.";
+}
+
+$("record").addEventListener("click", () => {
+  const body = $("body").value.trim();
+  if (!body) return;
+  state.posts.unshift({
+    id: String(Date.now()) + Math.random().toString(36).slice(2, 7),
+    body, kind, to: forCode, points: $("points").value.trim(),
+    passedOn: false, at: new Date().toISOString().slice(0, 10),
+  });
+  $("body").value = ""; $("points").value = "";
+  save();
+});
+$("save").addEventListener("click", () => $("record").click());
+$("body").addEventListener("input", () => { $("record").disabled = !$("body").value.trim(); });
+$("points").addEventListener("input", drawShare);
+$("link").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("link").textContent); $("link").textContent += "  ✓"; }
+  catch { /* a browser that refuses the clipboard still shows the text to select */ }
+  setTimeout(drawShare, 900);
+});
+
+// ---- feed -----------------------------------------------------------------
+function drawFeed() {
+  const box = $("feed"); box.replaceChildren();
+  $("feednone").hidden = state.posts.length > 0;
+  $("feedhead").textContent = state.posts.length
+    ? "What has gone out · " + state.posts.length : "What has gone out";
+  for (const s of state.posts) {
+    const who = person(s.to);
+    const icon = (KINDS.find((k) => k[0] === s.kind) || KINDS[3])[1];
+    const a = el("article", "post " + (who ? "tone-" + who.tone : "tone-blue"));
+    const shot = el("div", "shot", icon);
+    const inn = el("div", "in");
+    const by = el("div", "byline");
+    by.append(el("i", null, (who ? who.name : "?").slice(0, 1).toUpperCase()),
+      document.createTextNode(who ? who.name : "Nobody in particular"),
+      el("span", null, " · " + (s.at || "undated")));
+    inn.append(by, el("p", "cap", s.body));
+    if (s.points) { const t = el("div", "tagrow"); t.append(el("span", "tag", s.points)); inn.append(t); }
+
+    const meta = el("div", "meta");
+    const arrived = arrivedFor(s.to);
+    if (who) {
+      const tick = el("button", "tick", s.passedOn ? "passed on" : "mark passed on");
+      tick.type = "button";
+      tick.setAttribute("aria-pressed", String(s.passedOn));
+      tick.addEventListener("click", () => { s.passedOn = !s.passedOn; save(); });
+      meta.append(tick);
+    }
+    meta.append(el("span", null, arrived === null ? "arrivals not measured" : arrived + " arrived"));
+    const del = el("button", "del", "Remove");
+    del.type = "button";
+    del.addEventListener("click", () => {
+      state.posts = state.posts.filter((x) => x.id !== s.id); save();
+    });
+    meta.append(del);
+    inn.append(meta);
+    a.append(shot, inn);
+    box.append(a);
+  }
+}
+
+// ---- people ---------------------------------------------------------------
+function drawPeople() {
+  const box = $("people"); box.replaceChildren();
+  const q = query.toLowerCase();
+  const list = state.people.filter((p) => !q
+    || p.name.toLowerCase().includes(q) || p.channel.toLowerCase().includes(q) || p.code.includes(q));
+  $("peoplenone").hidden = list.length > 0 || !state.people.length;
+
+  for (const p of list) {
+    const t = tally(p.code);
+    const arrived = arrivedFor(p.code);
+    const d = el("div", "mate tone-" + p.tone);
+    d.setAttribute("aria-expanded", String(opened === p.code));
+    const hd = el("div", "hd");
+    hd.append(el("i", null, p.name.slice(0, 1).toUpperCase()));
+    const nm = el("div");
+    nm.append(el("h3", null, p.name), el("div", "ch", p.channel || "no channel noted"));
+    hd.append(nm);
+    d.append(hd);
+
+    const flow = el("div", "flow");
+    const step = (n, label, dim) => {
+      const s = el("div", "st");
+      const b = el("b", dim ? "dim" : null, n);
+      s.append(b, el("span", null, label));
+      return s;
+    };
+    flow.append(step(t.sent, "sent"), el("span", "ar", "→"),
+      step(t.passed, "passed on"), el("span", "ar", "→"),
+      step(arrived === null ? "—" : arrived, "arrived", arrived === null));
+    d.append(flow, el("div", "code", "?via=" + p.code));
+
+    if (opened === p.code) {
+      const note = el("p", "thin");
+      note.innerHTML = arrived === null
+        ? (state.canSeeNumbers
+            ? "<b>Arrivals are not measured yet.</b> Study Pal does not keep the "
+              + "<code>?via=</code> code a visitor arrives with, so nothing on this box can "
+              + "know. The dash is not a nought — see <code>docs/for-studypal-via.md</code>."
+            : "<b>Figures are not shown on this seat.</b> Sent and passed-on are recorded "
+              + "here; arrivals come from the counter, which this seat is not given.")
+        : "<b>" + arrived + " arrived through this code.</b> Passed-on is something you tick "
+          + "when you see it happen — no API reports a forward.";
+      d.append(note);
+      const row = el("div", "row2");
+      const rename = el("button", "add", "Rename or edit");
+      rename.type = "button";
+      rename.addEventListener("click", (e) => { e.stopPropagation(); editPerson(p); });
+      const drop = el("button", "add", "Remove");
+      drop.type = "button";
+      drop.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const t2 = tally(p.code);
+        const warn = t2.sent
+          ? `${p.name} has ${t2.sent} share${t2.sent === 1 ? "" : "s"} recorded. Those stay on the `
+            + `wall and keep the code, because the links are already out there. Remove them?`
+          : `Remove ${p.name}?`;
+        if (!confirm(warn)) return;
+        state.people = state.people.filter((x) => x.code !== p.code);
+        opened = "";
+        save();
+      });
+      row.append(rename, drop);
+      d.append(row);
+    }
+    d.addEventListener("click", () => { opened = opened === p.code ? "" : p.code; drawPeople(); });
+    box.append(d);
+  }
+
+  $("peoplenote").innerHTML = "<b>Sent → passed on → arrived.</b> Only the last one is out "
+    + "of your hands, and it is the one that says whether any of this worked. Passed-on is "
+    + "an observation you record rather than a measurement: nothing reports a WeChat forward, "
+    + "and a figure that looks automatic and is not would be worse than ticking a box.";
+}
+
+function editPerson(existing) {
+  const name = prompt("Their name", existing ? existing.name : "");
+  if (name === null || !name.trim()) return;
+  const suggested = existing ? existing.code
+    : name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
+  const code = prompt(
+    "Their code. It goes in every link they share, so keep it short and never change it "
+    + "once links are out.\n\nLetters, digits and hyphens only.", suggested);
+  if (code === null) return;
+  if (!/^[a-z0-9][a-z0-9-]{0,31}$/.test(code)) {
+    return fail('"' + code + '" is not a usable code — lowercase letters, digits and hyphens.');
+  }
+  if (state.people.some((p) => p.code === code && p !== existing)) {
+    return fail("Somebody already has the code " + code + ".");
+  }
+  const channel = prompt("Where do they share? (WeChat, 小红书, print…)",
+    existing ? existing.channel : "") ?? "";
+  if (existing) {
+    // The code changing means every link already sent stops matching. Said
+    // plainly rather than prevented: it is occasionally the right thing to do.
+    if (existing.code !== code && tally(existing.code).sent
+        && !confirm("Changing the code breaks every link already sent under the old one. Continue?")) return;
+    const wasCode = existing.code;
+    Object.assign(existing, { name: name.trim(), code, channel: channel.trim() });
+    for (const s of state.posts) if (s.to === wasCode) s.to = code;
+  } else {
+    state.people.push({
+      code, name: name.trim(), channel: channel.trim(), note: "",
+      tone: TONES[state.people.length % TONES.length],
+      addedAt: new Date().toISOString().slice(0, 10),
+    });
+  }
+  save();
+}
+$("addperson").addEventListener("click", () => editPerson(null));
+$("q").addEventListener("input", (e) => { query = e.target.value.trim(); drawPeople(); });
+
+// ---- tabs -----------------------------------------------------------------
+const TABS = { share: "v-share", feed: "v-feed", people: "v-people" };
+function show(name) {
+  tab = TABS[name] ? name : "share";
+  for (const [k, id] of Object.entries(TABS)) $(id).hidden = k !== tab;
+  for (const k of Object.keys(TABS)) $("t-" + k).setAttribute("aria-selected", String(k === tab));
+}
+for (const k of Object.keys(TABS)) $("t-" + k).addEventListener("click", () => show(k));
+
+function draw() {
+  const n = state.people.length, s = state.posts.length;
+  $("title").textContent = PROJECT || "Social";
+  $("ava").textContent = (PROJECT || "?").slice(0, 2).toUpperCase();
+  $("sub").textContent = n
+    ? `${n} ${n === 1 ? "person" : "people"} · ${s} share${s === 1 ? "" : "s"} recorded`
+    : "Nobody yet — start on the People tab";
+  drawShare(); drawFeed(); drawPeople();
+}
+
+show(new URLSearchParams(location.search).get("tab") || "share");
+load();
+</script>
+</body>
+</html>

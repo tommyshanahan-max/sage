@@ -791,6 +791,7 @@
   <div class="stage-head">
     <button type="button" id="stage-app" aria-pressed="true" hidden>App</button>
     <button type="button" id="stage-projects" aria-pressed="false" hidden>Projects</button>
+    <button type="button" id="stage-social" aria-pressed="false" hidden>Social</button>
     <span class="what" id="stage-what"></span>
     <button type="button" id="stage-reload" title="Reload">Reload</button>
     <a id="stage-open" href="#" target="_blank" rel="noopener noreferrer">Open</a>
@@ -1385,6 +1386,7 @@ const stageWhat   = document.getElementById("stage-what");
 const stageOpen   = document.getElementById("stage-open");
 const stageApp    = document.getElementById("stage-app");
 const stageProj   = document.getElementById("stage-projects");
+const stageSocial = document.getElementById("stage-social");
 const projectsPane= document.getElementById("projects");
 const stageNote   = document.getElementById("stage-note");
 const stageReload = document.getElementById("stage-reload");
@@ -1403,8 +1405,9 @@ function stageLoad(url, label, isApp) {
   frame.src = url;
   stageWhat.textContent = label;
   stageOpen.href = url;
-  stageApp.setAttribute("aria-pressed", String(!!isApp));
+  stageApp.setAttribute("aria-pressed", String(isApp === true));
   stageProj.setAttribute("aria-pressed", "false");
+  stageSocial.setAttribute("aria-pressed", String(isApp === "social"));
   // Reload and Open act on the frame, so they belong to this tab and not the
   // other one. Hiding them beats leaving two controls that do nothing.
   frame.hidden = false;
@@ -1425,8 +1428,29 @@ function stageShowProjects() {
   stageOpenLink.hidden = true;
   stageApp.setAttribute("aria-pressed", "false");
   stageProj.setAttribute("aria-pressed", "true");
+  stageSocial.setAttribute("aria-pressed", "false");
   stageWhat.textContent = projectsRoot;
   showStage(true);
+}
+
+// ---------------------------------------------------------------------------
+// Social, in the stage
+//
+// Against the project that is open, because who a project shares its work with
+// is a property of that project — journey's collaborators are not Study Pal's.
+// So the panel follows the selection rather than being a place of its own, and
+// picking a different project changes what it shows.
+//
+// Served from this origin, so it sits in the frame the way a mockup does and
+// keeps the seat's own sign-in. Nothing is proxied and no address is guessed.
+// ---------------------------------------------------------------------------
+function openSocial() {
+  if (!picked) {
+    projectsNote("Pick a project first — the people it shares with belong to it.");
+    stageShowProjects();
+    return;
+  }
+  stageLoad("/social.html?project=" + encodeURIComponent(picked), picked + " · social", "social");
 }
 
 /** Loads the newest mockup into the stage if the last turn produced one.
@@ -1603,6 +1627,8 @@ document.getElementById("stage-reload").addEventListener("click", () => {
   // so its own document is not reachable from here.
   frame.src = frame.src;
 });
+stageSocial.addEventListener("click", openSocial);
+
 stageApp.addEventListener("click", () => {
   // The selected project's address, falling back to the seat's own.
   const url = appFor(picked);
@@ -1968,6 +1994,16 @@ fetch("/api/seat")
     if (d.video) {
       document.getElementById("video-link").hidden = false;
       document.getElementById("reel-link").hidden = false;
+    }
+    // Social. A tab rather than a link, because it belongs to whichever project
+    // is open and a link would have to guess which one that is.
+    if (d.social) {
+      stageSocial.hidden = false;
+      // On a partner seat it is the panel, not a tab on it. That seat exists to
+      // work with the people this project shares with; the live app is a click
+      // away and this is not. Deferred by a tick so the project list has loaded
+      // and there is a selection for it to open against.
+      if (seatRole === "partner") setTimeout(() => { if (picked) openSocial(); }, 0);
     }
 
     if (seatRole === "partner") {

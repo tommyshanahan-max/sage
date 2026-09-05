@@ -47,6 +47,7 @@ import * as studypal from "./lib/studypal.js";
 import * as changes from "./lib/changes.js";
 import * as numbers from "./lib/numbers.js";
 import * as video from "./lib/video.js";
+import * as social from "./lib/social.js";
 import { parseDocList, listDocs, readDoc, renderMarkdown } from "./lib/docs.js";
 
 const PORT = process.env.PORT || 3000;
@@ -328,6 +329,26 @@ app.get("/video.html", (req, res, next) => {
 // The reel desk, on the same rule as the video page it is built around.
 app.get("/reel.html", (req, res, next) => {
   if (!videoDoor()) return res.status(404).send("Not found");
+  next();
+});
+
+// Social's door.
+//
+// Open to the owner and to a partner; closed to a prospect. That is a wider
+// rule than the story desk's, and deliberately: this panel does not publish to
+// readers and cannot change the catalogue. It records who a project shares its
+// work with and what went to them, which is exactly the job a partner seat
+// exists for.
+//
+// What it does NOT open is the figures. Arrivals come from the counter, and
+// that stays behind canSeeNumbers like everything else — a partner without
+// that grant gets the panel, the people and the links, and dashes where the
+// numbers would be. One page, two amounts of it, decided by the same flag as
+// the rest of the seat.
+const socialDoor = () => !isProspect;
+
+app.get("/social.html", (req, res, next) => {
+  if (!socialDoor()) return res.status(404).send("Not found");
   next();
 });
 
@@ -836,6 +857,103 @@ app.get("/api/video/:id/file", async (req, res) => {
 // button that already exists.
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Social: who a project shares with, and what has gone to them
+//
+// Stored beside the code it belongs to, the same call as the reel's
+// series.json — a project's relationships travel with the project, and there
+// is no global list to keep in step with anything.
+// ---------------------------------------------------------------------------
+const SOCIAL_FILE = "social.json";
+
+function socialPath(name) {
+  const dir = projectPath(String(name || ""));
+  return dir ? path.join(dir, SOCIAL_FILE) : null;
+}
+
+/** Arrivals per code, from the counter, or null when nothing measures them.
+ *
+ *  Null and zero are different answers and the page renders them differently.
+ *  Today this is always null: Study Pal does not keep the ?via= code a visitor
+ *  arrives with, so nothing on this box can know. See docs/for-studypal-via.md
+ *  — when that lands, this starts returning figures and no page changes. */
+async function arrivals() {
+  if (!canSeeNumbers || !NUMBERS_URL) return null;
+  try {
+    const r = await fetch(NUMBERS_URL + "/api/stats?days=30", {
+      headers: NUMBERS_TOKEN ? { authorization: "Bearer " + NUMBERS_TOKEN } : {},
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!r.ok) throw new Error("counter said " + r.status);
+    const d = await r.json();
+    const vias = d.app?.vias;
+    if (!Array.isArray(vias) || !vias.length) return null;
+    return Object.fromEntries(vias.map((v) => [v.name, v.count]));
+  } catch {
+    // A counter having a bad minute is not a reason to fail the page. The
+    // figures go missing for a moment, which is what missing figures look like.
+    return null;
+  }
+}
+
+app.get("/api/social", async (req, res) => {
+  if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
+  const file = socialPath(req.query.project);
+  if (!file) return res.status(400).json({ error: "pick a project" });
+
+  let stored = social.blank();
+  try {
+    stored = social.clean(JSON.parse(await readFile(file, "utf8")));
+  } catch (err) {
+    // A project with nothing yet is the ordinary case, not an error.
+    if (err.code !== "ENOENT") {
+      return res.status(500).json({ error: "could not read it: " + (err.code || err.message) });
+    }
+  }
+
+  res.set("Cache-Control", "no-store");
+  res.json({
+    ...stored,
+    file,
+    // Where a share points people: the project's own address if one is mapped,
+    // otherwise the seat default. A wrong host here is a link that silently
+    // counts nothing, which is the failure that looks most like success.
+    base: PROJECT_APPS.get(String(req.query.project || "")) || APP_URL || "",
+    // Whether this seat is shown figures at all, so the page can say "not your
+    // seat" rather than "nobody came" — opposite facts, identical rendering.
+    canSeeNumbers,
+    arrivals: await arrivals(),
+  });
+});
+
+app.put("/api/social", async (req, res) => {
+  if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
+  const file = socialPath(req.query.project);
+  if (!file) return res.status(400).json({ error: "pick a project" });
+
+  const next = social.clean(req.body ?? {});
+  // Two people on one code means two links that cannot be told apart, which
+  // makes every figure downstream wrong in a way nothing would report.
+  const codes = new Set();
+  for (const p of next.people) {
+    if (codes.has(p.code)) {
+      return res.status(400).json({ error: `two people share the code "${p.code}"` });
+    }
+    codes.add(p.code);
+  }
+
+  try {
+    // Written through a temporary file and renamed, so an interrupted save
+    // leaves the previous version rather than half of this one.
+    const tmp = file + ".tmp";
+    await writeFile(tmp, JSON.stringify(next, null, 2) + "\n", "utf8");
+    await rename(tmp, file);
+    res.json({ ok: true, file, ...next });
+  } catch (err) {
+    res.status(500).json({ error: "could not save it: " + (err.code || err.message) });
+  }
+});
+
 const REEL_FILE = "series.json";
 
 /** The empty twelve, in the shape Study Pal's own series actually use.
@@ -971,6 +1089,9 @@ app.get("/api/seat", (_req, res) =>
     stories: deskOpen(),
     // Whether to draw the door. The page is served on the same expression.
     video: videoDoor(),
+    // Social. Same expression as the page and the routes, so a seat cannot end
+    // up with a tab that opens onto a 404.
+    social: socialDoor(),
   }));
 
 // ---------------------------------------------------------------------------
