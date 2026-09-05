@@ -245,7 +245,13 @@
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="t-share"  aria-selected="true">Share</button>
       <button class="tab" role="tab" id="t-feed"   aria-selected="false">Feed</button>
-      <button class="tab" role="tab" id="t-people" aria-selected="false">People</button>
+      <!-- People retired: the audience is the app's users, and a list of
+           names kept on this box was never one of them. The tab, its view and
+           its editor stay in the file rather than being torn out, because the
+           other reading of this panel — outside collaborators sharing inward,
+           with ?via= codes — is a real feature that may come back, and it is
+           cheaper to unhide than to rebuild. -->
+      <button class="tab" role="tab" id="t-people" aria-selected="false" hidden>People</button>
       <button class="tab" role="tab" id="t-content" aria-selected="false">Content</button>
       <button class="tab" role="tab" id="t-users" aria-selected="false">Users</button>
     </div>
@@ -263,7 +269,9 @@
           <span class="sub">A clip, an image or a note, addressed to somebody</span>
         </span>
       </button>
-      <button class="alt" type="button" id="addhere">
+      <!-- Also retired with the People tab: adding a name here made sense when
+           the audience lived on this box. It does not now. -->
+      <button class="alt" type="button" id="addhere" hidden>
         <span class="ring2" aria-hidden="true">👤</span>
         <span>
           <span class="say">Add someone</span>
@@ -469,25 +477,41 @@ function drawKinds() {
   }
 }
 
+/** Who inside the app this is for.
+ *
+ *  The app's own users, not a list kept here. That distinction is the whole
+ *  shape of this panel: content is made here and goes to people using Study
+ *  Pal, and a name that only exists on this box could never be one of them.
+ *
+ *  "Everyone" is always offered and is the ordinary case — most content is for
+ *  the audience rather than for one person. It is also what keeps the form
+ *  usable while the app serves no user list at all. */
 function drawFor() {
   const box = $("forrow"); box.replaceChildren();
-  if (!state.people.length) {
-    box.append(el("span", "none", "Nobody yet — add someone on the People tab."));
-  }
-  for (const p of state.people) {
-    const b = el("button", "pchip tone-" + p.tone);
+  const list = Array.isArray(users) ? users : [];
+
+  const everyone = el("button", "pchip");
+  everyone.type = "button";
+  everyone.setAttribute("aria-pressed", String(forCode === ""));
+  everyone.append(el("i", null, "∀"), document.createTextNode("Everyone"));
+  everyone.addEventListener("click", () => { forCode = ""; drawShare(); });
+  box.append(everyone);
+
+  for (const u of list) {
+    const name = u.name || u.handle || u.id || "unknown";
+    const b = el("button", "pchip tone-blue");
     b.type = "button";
-    b.setAttribute("aria-pressed", String(forCode === p.code));
-    b.append(el("i", null, p.name.slice(0, 1).toUpperCase()), document.createTextNode(p.name));
-    b.addEventListener("click", () => { forCode = forCode === p.code ? "" : p.code; drawShare(); });
+    b.setAttribute("aria-pressed", String(forCode === u.id));
+    b.append(el("i", null, String(name).slice(0, 1).toUpperCase()), document.createTextNode(name));
+    b.addEventListener("click", () => { forCode = forCode === u.id ? "" : u.id; drawShare(); });
     box.append(b);
   }
-  const none = el("button", "pchip");
-  none.type = "button";
-  none.setAttribute("aria-pressed", String(forCode === ""));
-  none.append(el("i", null, "?"), document.createTextNode("Nobody in particular"));
-  none.addEventListener("click", () => { forCode = ""; drawShare(); });
-  box.append(none);
+
+  if (!list.length) {
+    // Said once, where somebody would otherwise wonder where the users are.
+    box.append(el("span", "none",
+      users === null ? "Reading the app's users…" : "The app serves no user list yet."));
+  }
 }
 
 /** The list of places a share can land, built from what the app actually has.
@@ -590,17 +614,18 @@ $("from").addEventListener("change", () => { fromId = $("from").value; drawFrom(
 
 function drawShare() {
   drawKinds(); drawFor(); drawPoints(); drawFrom();
-  const url = linkFor(forCode, $("points").value);
-  $("linkgrp").hidden = !url;
-  $("link").textContent = url;
+  // No share link. It carried a ?via= code for somebody outside forwarding it
+  // inward; the audience here is inside the app already, and a user id in that
+  // position would be an address that means nothing to anyone.
+  $("linkgrp").hidden = true;
   $("record").disabled = !$("body").value.trim() && !media;
-  $("sharenote").innerHTML = state.base
-    ? "<b>The link carries who shared it and which part of the app it is for.</b> WeChat strips "
-      + "referrers, so a code in the address is the only signal that survives being "
-      + "forwarded. Recording a share here does not post it — it writes down that you "
-      + "sent it, so the link and the result stay attached to each other."
-    : "<b>No address for this project.</b> Links cannot be built until one is mapped "
-      + "in <code>AGENT_PROJECT_APPS</code>. Everything else on this page still works.";
+  // Said plainly, because the gap between what this does and what it looks
+  // like it does is the whole risk of the panel: it writes things down, and
+  // nothing has reached the app.
+  $("sharenote").innerHTML = "<b>Recorded here, not yet delivered.</b> This writes down "
+    + "what you made, who it is for and which part of the app it belongs to. Study Pal "
+    + "has no way to receive it yet — when that repository builds one, everything "
+    + "recorded here is what gets sent.";
 }
 
 // ---- the file -------------------------------------------------------------
@@ -674,8 +699,12 @@ $("record").addEventListener("click", () => {
     id: String(Date.now()) + Math.random().toString(36).slice(2, 7),
     body, kind, to: forCode, points: $("points").value.trim(),
     media: media ? media.id : "",
-    // Both names, because an id survives a rename and a name survives the
-    // account being removed from the app entirely.
+    // Who in the app it is for: their id, and their name alongside. The id
+    // survives a rename; the name survives the account being deleted, which is
+    // the only way this record still reads a year from now.
+    to: forCode,
+    toName: (Array.isArray(users) ? users : []).find((u) => u.id === forCode)?.name || "",
+    // Both names again, for the account it goes out as.
     fromId,
     fromName: (Array.isArray(users) ? users : []).find((u) => u.id === fromId)?.name || "",
     passedOn: false, at: new Date().toISOString().slice(0, 10),
@@ -705,8 +734,9 @@ $("body").addEventListener("input", () => {
 $("points").addEventListener("input", () => {
   // The link redraws, but not the list — rebuilding it mid-keystroke would
   // steal focus back to the select on every character.
-  $("linkgrp").hidden = !linkFor(forCode, $("points").value);
-  $("link").textContent = linkFor(forCode, $("points").value);
+  // The link is gone with the forwarding model; only the button state still
+  // depends on what has been typed.
+  $("record").disabled = !$("body").value.trim() && !media;
 });
 $("points-pick").addEventListener("change", () => {
   const v = $("points-pick").value;
@@ -733,7 +763,10 @@ function drawFeed() {
   $("feedhead").textContent = state.posts.length
     ? "What has gone out · " + state.posts.length : "What has gone out";
   for (const s of state.posts) {
-    const who = person(s.to);
+    // The audience, as recorded. Read from the share itself rather than looked
+    // up: the name was stored precisely so the row still reads after the
+    // account is gone from the app.
+    const who = s.toName ? { name: s.toName, tone: "blue" } : null;
     const icon = (KINDS.find((k) => k[0] === s.kind) || KINDS[3])[1];
     const a = el("article", "post " + (who ? "tone-" + who.tone : "tone-blue"));
     // The thing itself where there is one, and the coloured block only where
@@ -753,8 +786,8 @@ function drawFeed() {
     const by = el("div", "byline");
     // Two names, and they are different questions: who it went to, and who
     // sent it. One seat made both obvious; two seats made neither.
-    by.append(el("i", null, (who ? who.name : "?").slice(0, 1).toUpperCase()),
-      document.createTextNode(who ? who.name : "Nobody in particular"),
+    by.append(el("i", null, (who ? who.name : "∀").slice(0, 1).toUpperCase()),
+      document.createTextNode(who ? who.name : "Everyone"),
       el("span", null, " · " + (s.at || "undated")
         + (s.fromName ? " · as " + s.fromName : "")
         + (s.by ? " · by " + s.by : "")));
@@ -763,14 +796,11 @@ function drawFeed() {
 
     const meta = el("div", "meta");
     const arrived = arrivedFor(s.to);
-    if (who) {
-      const tick = el("button", "tick", s.passedOn ? "passed on" : "mark passed on");
-      tick.type = "button";
-      tick.setAttribute("aria-pressed", String(s.passedOn));
-      tick.addEventListener("click", () => { s.passedOn = !s.passedOn; save(); });
-      meta.append(tick);
-    }
-    meta.append(el("span", null, arrived === null ? "arrivals not measured" : arrived + " arrived"));
+    // No "passed on" tick and no arrivals figure: both belonged to the reading
+    // where somebody outside forwarded a link. Content that goes to a user
+    // inside the app is either delivered or it is not, and that is the app's
+    // answer to give, not something to tick here.
+    meta.append(el("span", null, "recorded here — not yet delivered to the app"));
     const del = el("button", "del", "Remove");
     del.type = "button";
     del.addEventListener("click", () => {
@@ -1124,9 +1154,9 @@ function draw() {
   const n = state.people.length, s = state.posts.length;
   $("title").textContent = PROJECT || "Social";
   $("ava").textContent = (PROJECT || "?").slice(0, 2).toUpperCase();
-  $("sub").textContent = n
-    ? `${n} ${n === 1 ? "person" : "people"} · ${s} share${s === 1 ? "" : "s"} recorded`
-    : "Nobody yet — start on the People tab";
+  const u = Array.isArray(users) ? users.length : 0;
+  $("sub").textContent = `${s} ${s === 1 ? "post" : "posts"} recorded`
+    + (u ? ` · ${u} ${u === 1 ? "user" : "users"} in the app` : " · no user list yet");
   drawShare(); drawFeed(); drawPeople();
 }
 

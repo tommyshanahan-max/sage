@@ -84,7 +84,6 @@ export function clean(raw) {
   }
 
   const posts = Array.isArray(raw.posts) ? raw.posts : [];
-  const known = new Set(out.people.map((p) => p.code));
   for (const s of posts) {
     if (!s || typeof s !== "object") continue;
     const body = String(s.body || "").slice(0, 2000);
@@ -93,10 +92,13 @@ export function clean(raw) {
       id: String(s.id || "").slice(0, 40) || String(Date.now()) + Math.random().toString(36).slice(2, 7),
       body,
       kind: ["clip", "image", "text", "poster"].includes(s.kind) ? s.kind : "text",
-      // A share addressed to somebody who has since been removed keeps the
-      // code rather than the person: the link is already out there, and
-      // pretending it was never sent loses the only record of it.
-      to: known.has(String(s.to)) ? String(s.to) : "",
+      // Who in the app it was for. An id from the app's own user list, kept
+      // whatever that list says today: an account can be deleted over there
+      // and the share still happened. The name is stored beside it for the
+      // same reason — an id alone stops meaning anything the moment the
+      // account it pointed at is gone.
+      to: String(s.to || "").slice(0, 64),
+      toName: String(s.toName || "").slice(0, 80),
       points: String(s.points || "").slice(0, 80),
       // The uploaded file, if there is one. Checked against the shape this
       // server generates rather than kept as written: it goes into a URL, and
