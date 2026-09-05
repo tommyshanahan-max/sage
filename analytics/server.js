@@ -521,12 +521,21 @@ const APP_USAGE_URL = process.env.ANALYTICS_APP_USAGE_URL || "";
 const APP_USAGE_KEY = process.env.ANALYTICS_APP_USAGE_KEY || "";
 
 async function appUsage() {
-  if (!APP_USAGE_URL || !APP_USAGE_KEY) return null;
+  // Told apart on purpose. A missing key is a switch nobody turned on; a
+  // rejected one is a secret that was rotated on the other side and not here.
+  // Both render as empty panels, and they need opposite work — so the page is
+  // told which, rather than the two of us reading a screenshot for it.
+  if (!APP_USAGE_KEY) throw Object.assign(new Error("no admin key on this box"), { off: true });
+  if (!APP_USAGE_URL) throw Object.assign(new Error("no usage address set"), { off: true });
   const r = await fetch(APP_USAGE_URL, {
     headers: { "x-admin-secret": APP_USAGE_KEY },
     signal: AbortSignal.timeout(6000),
   });
-  if (!r.ok) throw new Error("usage said " + r.status);
+  // Named rather than numbered where the number has an obvious cause. 401 is
+  // the one that will actually happen, and "the app refused the key" is the
+  // sentence that gets it fixed.
+  if (r.status === 401 || r.status === 403) throw new Error("the app refused the key");
+  if (!r.ok) throw new Error("the app answered " + r.status);
   const d = await r.json();
 
   const arrivals = dayCounts(d.people?.firstSeen);
@@ -572,11 +581,14 @@ async function appCount(force = false) {
     appUsage(),
   ]);
   const use = gotUsage.status === "fulfilled" ? gotUsage.value : null;
+  // Why there is no usage, in a form the page can print. Never the key itself
+  // and never the address with it — a diagnostic that leaks the thing it is
+  // diagnosing is worse than no diagnostic.
+  let usageWhy = null;
   if (gotUsage.status === "rejected") {
-    // Said out loud in the log rather than swallowed. A wrong or rotated admin
-    // key fails as a 401 here and as three silent empty panels on the page,
-    // and the page cannot tell you which of those it is looking at.
-    console.error("app usage:", gotUsage.reason?.message || gotUsage.reason);
+    const err = gotUsage.reason;
+    usageWhy = { off: Boolean(err?.off), reason: String(err?.message || "could not be read").slice(0, 120) };
+    console.error("app usage:", usageWhy.reason);
   }
   try {
     if (gotCount.status === "rejected") throw gotCount.reason;
@@ -628,6 +640,7 @@ async function appCount(force = false) {
         screens: use ? use.screens : null,
         people: use ? use.people : null,
         arrivals: use ? use.arrivals : null,
+        usageWhy,
         url: APP_COUNT_URL,
       },
     };

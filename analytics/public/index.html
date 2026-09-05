@@ -309,6 +309,7 @@
         <div class="stat accent"><span class="n" id="a-back">&mdash;</span><span class="k">Came back today</span></div>
       </div>
       <p class="thin" id="app-note"></p>
+      <p class="thin" id="app-usage-off" hidden></p>
     </section>
 
     <section>
@@ -729,13 +730,16 @@ function drawUses(uses, byDay, devices, deviceDays, unit) {
   const rows = document.getElementById("app-uses-rows");
   box.replaceChildren();
   box.classList.remove("has-who");
+  // Blanking the text leaves the panel it is painted on, which reads as a
+  // rendering fault rather than as an absent caption.
   unitNote.textContent = "";
+  unitNote.hidden = true;
 
   if (!uses || !uses.length) {
     note.hidden = false;
-    note.innerHTML = "<b>Not reported by the app yet.</b> Which features get used is "
-      + "the only number here that says what the product is for &mdash; arrivals cannot "
-      + "tell you whether people came to speak or to read.";
+    note.innerHTML = "<b>Nothing to rank.</b> Which features get used is the only number "
+      + "here that says what the product is for &mdash; arrivals cannot tell you whether "
+      + "people came to speak or to read.";
     rows.hidden = true;
     document.getElementById("uses-span").textContent = "";
     return;
@@ -774,6 +778,7 @@ function drawUses(uses, byDay, devices, deviceDays, unit) {
     box.append(row);
   }
 
+  unitNote.hidden = false;
   unitNote.innerHTML = "<b>Bars count times used, not people.</b> "
     + (unit ? "The app labels this figure &ldquo;" + unit + "&rdquo;. " : "")
     + (who.size
@@ -817,6 +822,36 @@ function drawUses(uses, byDay, devices, deviceDays, unit) {
   rows.hidden = false;
 }
 
+/** Why the usage panels are empty, in the words the person can act on.
+ *
+ *  Three silences that look identical and need opposite work: nobody switched
+ *  it on, the key was refused, or the app had a bad minute. A panel that
+ *  renders the same for all three sends somebody to check the wrong thing. */
+function usageAbsence(app) {
+  const why = app && app.usageWhy;
+  if (!app) return null;
+  // Reading fine. Nothing to explain, and a banner that appears when nothing is
+  // wrong is a banner people learn to scroll past.
+  if (app.uses && app.people) return null;
+  if (!why) {
+    // No explanation at all means this dashboard predates the code that sends
+    // one — which is itself the answer, and the most likely one right after a
+    // deploy that did not take.
+    return "<b>This dashboard has not been updated.</b> The version running here does not "
+      + "read the app's usage endpoint at all. Deploy again and check that the analytics "
+      + "container says <i>Recreated</i> rather than <i>Running</i> &mdash; Running means the "
+      + "new code never reached it.";
+  }
+  if (why.off) {
+    return "<b>Not switched on here.</b> " + why.reason + ". The endpoint is gated by Study "
+      + "Pal's admin secret, so it is read on this box and never by a browser; set "
+      + "<code>TOMSCODING_STUDYPAL_KEY</code> in <code>.env</code> and these fill in.";
+  }
+  return "<b>The app's usage endpoint could not be read:</b> " + why.reason + ". If it refused "
+    + "the key, the secret was rotated on that side and not here &mdash; that is a change to "
+    + "make in <code>.env</code>, not a fault in the app.";
+}
+
 // A ranked bar list, for the panels that are only ever a ranking. Same shape as
 // the feature bars above without the second column, since nothing else on this
 // page has a people-count to sit beside it.
@@ -850,9 +885,9 @@ function drawBars(id, items, empty, span, spanText) {
 // screen people look at and back out of.
 function drawScreens(screens) {
   drawBars("app-screens", screens,
-    "<b>Not reported by the app yet.</b> Screen views say which parts of the app "
-    + "people go looking at, as opposed to which parts they actually use &mdash; "
-    + "the difference between the two is where a feature is failing.",
+    "<b>Nothing to rank.</b> Screen views say which parts of the app people go "
+    + "looking at, as opposed to which parts they actually use &mdash; the difference "
+    + "between the two is where a feature is failing.",
     "screens-span",
     (items) => "· " + fmt(items.reduce((n, i) => n + i.count, 0)) + " views");
 }
@@ -875,7 +910,7 @@ function daysSince(day) {
 //
 // So each window is checked against the age of the app first, and one that has
 // not had time to fill shows a dash and says when it starts to mean something.
-function drawStayed(people) {
+function drawStayed(people, absent) {
   const note = document.getElementById("app-stayed-note");
   const span = document.getElementById("stayed-span");
   const set = (id, value) => { document.getElementById(id).textContent = value; };
@@ -889,10 +924,9 @@ function drawStayed(people) {
   if (!people) {
     span.textContent = "";
     for (const id of ["r-total", "r-back", "r-once", "r-regular", "r-week", "r-month"]) set(id, "—");
-    note.innerHTML = "<b>Not reading the app's usage endpoint.</b> Set "
-      + "<code>TOMSCODING_APP_USAGE_URL</code> and <code>TOMSCODING_STUDYPAL_KEY</code> "
-      + "and this fills in. The key stays on this box &mdash; the endpoint is gated by a "
-      + "shared secret, so it is read here and never sent to the page.";
+    note.innerHTML = (absent ? "" : "<b>Not reported.</b> ")
+      + "Of everyone who ever opened the app, how many opened it again is the figure worth "
+      + "watching &mdash; more than the total, which only ever rises.";
     return;
   }
 
@@ -949,9 +983,9 @@ function drawArrivals(arrivals) {
   span.textContent = "";
 
   if (!arrivals || (!arrivals.days.length && !arrivals.undated)) {
-    note.innerHTML = "<b>Not reported by the app yet.</b> This is the app's own record of "
-      + "when each person first arrived, which reaches back further than the daily diary "
-      + "this service keeps &mdash; that one starts the day it shipped.";
+    note.innerHTML = "<b>No arrivals to plot.</b> This is the app's own record of when each "
+      + "person first arrived, and it reaches back further than the daily diary this service "
+      + "keeps &mdash; that one starts the day it shipped.";
     return;
   }
 
@@ -986,10 +1020,21 @@ function drawArrivals(arrivals) {
 function drawApp(app, series) {
   const note = document.getElementById("app-note");
   drawAppCharts(series);
+  // Worked out once and handed to all four, so one silence gets one account of
+  // itself rather than four panels each guessing separately.
+  // Said once, at the top, where the reader already is when a figure turns out
+  // to be missing. The panels below then only have to say what they would have
+  // shown — the same explanation repeated under four headings is noise, and
+  // noise is what gets skipped.
+  const absence = usageAbsence(app);
+  const offNote = document.getElementById("app-usage-off");
+  offNote.innerHTML = absence || "";
+  offNote.hidden = !absence;
+
   drawUses(app && app.uses, app && app.usesByDay,
     app && app.devices, app && app.deviceDays, app && app.unit);
   drawScreens(app && app.screens);
-  drawStayed(app && app.people);
+  drawStayed(app && app.people, Boolean(absence));
   drawArrivals(app && app.arrivals);
 
   const notYet = (what) => "<b>Not reported by the app.</b> " + what
@@ -1054,8 +1099,10 @@ function drawApp(app, series) {
         + "side yet.")
     + (app.uses
       ? " Per-feature counts are reported and shown above; time on page still is not."
-      : " Still no time on page and no per-feature counts: the app does not record them, "
-        + "so nothing here can show them.")
+      : " Per-feature counts are not reaching this page &mdash; see the panels below for why. "
+        + "The app does record them; this said otherwise for as long as nobody had asked it, "
+        + "which is a different and much more embarrassing kind of wrong. Time on page it "
+        + "genuinely does not record.")
     + "<br><br><b>These are never added to the site's.</b> Somebody who read the poster and "
     + "somebody who used the app are not two of the same thing."
     + "<br><br><b>Nothing before 2 September 2026 is comparable.</b> Until then a device was "
