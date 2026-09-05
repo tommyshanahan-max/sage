@@ -65,10 +65,22 @@
      the page whether or not anybody was about to write anything — which pushed
      the feed and the people below the fold on the seat that opens straight
      onto this. The + is the whole of the closed state. */
+  /* Two things can be made here and the + only ever offered one. They sit
+     side by side rather than behind a menu: two options is not a menu, it is
+     two buttons, and a menu would hide the one nobody thinks to look for. */
+  .openrow{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
   .opener{display:flex;align-items:center;gap:1rem;cursor:pointer;background:none;
-    border:0;padding:0;text-align:left;color:inherit;font:inherit;width:100%}
+    border:0;padding:0;text-align:left;color:inherit;font:inherit;flex:1;min-width:14rem}
   .opener .say{display:block;font-size:1rem;font-weight:700}
   .opener .sub{display:block;font-size:.82rem;color:var(--muted)}
+  .alt{display:flex;align-items:center;gap:.7rem;cursor:pointer;font:inherit;
+    padding:.7rem .95rem;border-radius:14px;text-align:left;
+    background:var(--sunk);border:1px solid var(--rule);color:var(--ink-2)}
+  .alt:hover{border-color:var(--blue);color:var(--blue)}
+  .alt .ring2{width:38px;height:38px;border-radius:50%;flex:none;display:grid;
+    place-items:center;font-size:1.1rem;background:var(--card);border:1px solid var(--rule)}
+  .alt .say{display:block;font-size:.92rem;font-weight:700}
+  .alt .sub{display:block;font-size:.76rem;color:var(--muted)}
   /* One column. It was two while the + lived inside it; with the + moved out
      to the opener the first column had nothing in it and sized to content,
      which squeezed every field to half the panel. */
@@ -243,13 +255,22 @@
 
   <!-- ============ SHARE ============ -->
   <section class="card" id="v-share">
-    <button class="opener" type="button" id="opener" aria-expanded="false" aria-controls="composer">
-      <span class="plus" aria-hidden="true">+</span>
-      <span>
-        <span class="say">Make something</span>
-        <span class="sub">Write it, say which part of the app it is for, and address it to somebody</span>
-      </span>
-    </button>
+    <div class="openrow" id="openrow">
+      <button class="opener" type="button" id="opener" aria-expanded="false" aria-controls="composer">
+        <span class="plus" aria-hidden="true">+</span>
+        <span>
+          <span class="say">Make something</span>
+          <span class="sub">A clip, an image or a note, addressed to somebody</span>
+        </span>
+      </button>
+      <button class="alt" type="button" id="addhere">
+        <span class="ring2" aria-hidden="true">👤</span>
+        <span>
+          <span class="say">Add someone</span>
+          <span class="sub">Somebody who shares your work</span>
+        </span>
+      </button>
+    </div>
     <div class="compose" id="composer" hidden>
       <div style="display:flex;align-items:center;margin-bottom:.9rem">
         <h2 style="margin:0">Make something</h2>
@@ -284,6 +305,11 @@
           <input type="text" id="points" hidden
                  placeholder="Name the part of the app it belongs to">
           <p class="hint" id="hint-points"></p>
+        </div>
+        <div class="grp" id="fromgrp" hidden>
+          <span class="lab">Posts as</span>
+          <select id="from"></select>
+          <p class="hint" id="fromhint"></p>
         </div>
         <div class="grp">
           <span class="lab">Who it is for</span>
@@ -374,6 +400,10 @@ let kind = "clip", forCode = "", tab = "share", query = "", opened = "";
 // chosen rather than when recorded, so a slow upload happens while somebody is
 // still typing rather than after they have pressed the button.
 let media = null;
+// Which of the app's accounts the share goes out as. Empty until Study Pal
+// serves a user list; the field hides itself rather than offering a menu of
+// nothing.
+let fromId = "";
 
 function fail(msg) { const e = $("err"); e.hidden = !msg; e.textContent = msg || ""; }
 
@@ -525,8 +555,41 @@ function drawPoints() {
       + "is about the app in general rather than one episode or feature.";
 }
 
+/** The account a share is published under, from the app's own user list.
+ *
+ *  Not the same as the person it is addressed to, and not the same as the seat
+ *  that recorded it. Three names get confused the moment two people share one
+ *  panel, so each has its own field and its own word for what it means. */
+function drawFrom() {
+  const grp = $("fromgrp");
+  const pick = $("from");
+  const list = Array.isArray(users) ? users : [];
+  // Nothing to choose from is not a menu. The field stays hidden and the share
+  // records without one, which is what happens today anyway.
+  grp.hidden = !list.length;
+  if (!list.length) return;
+
+  pick.replaceChildren();
+  const blank = document.createElement("option");
+  blank.value = ""; blank.textContent = "No account — just recorded here";
+  pick.append(blank);
+  for (const u of list) {
+    const o = document.createElement("option");
+    o.value = u.id || "";
+    o.textContent = u.name || u.handle || u.id || "unknown";
+    pick.append(o);
+  }
+  pick.value = list.some((u) => u.id === fromId) ? fromId : "";
+  fromId = pick.value;
+  $("fromhint").textContent = pick.value
+    ? "Readers see this account's name, not yours."
+    : "Recorded here only. Choose an account to say who it goes out as.";
+}
+
+$("from").addEventListener("change", () => { fromId = $("from").value; drawFrom(); });
+
 function drawShare() {
-  drawKinds(); drawFor(); drawPoints();
+  drawKinds(); drawFor(); drawPoints(); drawFrom();
   const url = linkFor(forCode, $("points").value);
   $("linkgrp").hidden = !url;
   $("link").textContent = url;
@@ -611,6 +674,10 @@ $("record").addEventListener("click", () => {
     id: String(Date.now()) + Math.random().toString(36).slice(2, 7),
     body, kind, to: forCode, points: $("points").value.trim(),
     media: media ? media.id : "",
+    // Both names, because an id survives a rename and a name survives the
+    // account being removed from the app entirely.
+    fromId,
+    fromName: (Array.isArray(users) ? users : []).find((u) => u.id === fromId)?.name || "",
     passedOn: false, at: new Date().toISOString().slice(0, 10),
   });
   $("body").value = ""; $("points").value = "";
@@ -624,7 +691,9 @@ $("record").addEventListener("click", () => {
 // biggest thing on the panel do the least obvious of the two things it could.
 function openCompose(on) {
   $("composer").hidden = !on;
-  $("opener").hidden = on;
+  // The whole row, not just the +: leaving "Add someone" beside an open form
+  // offers a second thing to start before the first is finished.
+  $("openrow").hidden = on;
   $("opener").setAttribute("aria-expanded", String(on));
   if (on) $("body").focus();
 }
@@ -682,9 +751,13 @@ function drawFeed() {
     }
     const inn = el("div", "in");
     const by = el("div", "byline");
+    // Two names, and they are different questions: who it went to, and who
+    // sent it. One seat made both obvious; two seats made neither.
     by.append(el("i", null, (who ? who.name : "?").slice(0, 1).toUpperCase()),
       document.createTextNode(who ? who.name : "Nobody in particular"),
-      el("span", null, " · " + (s.at || "undated")));
+      el("span", null, " · " + (s.at || "undated")
+        + (s.fromName ? " · as " + s.fromName : "")
+        + (s.by ? " · by " + s.by : "")));
     inn.append(by, el("p", "cap", s.body));
     if (s.points) { const t = el("div", "tagrow"); t.append(el("span", "tag", s.points)); inn.append(t); }
 
@@ -822,6 +895,10 @@ function editPerson(existing) {
   save();
 }
 $("addperson").addEventListener("click", () => editPerson(null));
+// The same action from the Share tab, where somebody notices they have nobody
+// to address a share to. It lands them on People afterwards, because that is
+// where the person they just made now lives.
+$("addhere").addEventListener("click", () => { show("people"); editPerson(null); });
 $("q").addEventListener("input", (e) => { query = e.target.value.trim(); drawPeople(); });
 
 // ---- tabs -----------------------------------------------------------------
@@ -840,6 +917,11 @@ for (const k of Object.keys(TABS)) $("t-" + k).addEventListener("click", () => {
   if (k === "content" && catalogue === null) loadCatalogue();
   if (k === "users" && users === null) loadUsers();
 });
+
+// Read once at startup rather than only when the Users tab is opened: the
+// "posts as" field is on the Share tab, and a field that appears only after
+// somebody happens to visit another tab is a field nobody finds.
+loadUsers().then(drawFrom).catch(() => {});
 
 // ---------------------------------------------------------------------------
 // The app's users

@@ -103,6 +103,16 @@ export function clean(raw) {
       // an id from a file somebody edited by hand is an id that could point
       // anywhere.
       media: /^[a-f0-9]{20}\.[a-z0-9]{2,4}$/.test(String(s.media || "")) ? String(s.media) : "",
+      // Which seat recorded it. Stamped by the server, never taken from the
+      // page — see the note at the PUT route. Two people share this file now
+      // and "who did this" stops being obvious the moment they both use it.
+      by: String(s.by || "").slice(0, 40),
+      // Which of the app's accounts it goes out as. A different question from
+      // `by`: one is the person at the keyboard, the other is the name a
+      // reader sees. Kept as the app's own id, with the name alongside so the
+      // record still reads after somebody is renamed on that side.
+      fromId: String(s.fromId || "").slice(0, 64),
+      fromName: String(s.fromName || "").slice(0, 80),
       passedOn: Boolean(s.passedOn),
       at: String(s.at || ""),
     });

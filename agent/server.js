@@ -34,6 +34,7 @@ import {
   MOCKUPS_DIR,
   PROJECT_LABEL,
   PARTNER_TOOLS,
+  PARTNER_NAME,
   canWriteStories,
   canSeeNumbers,
   canMakeVideo,
@@ -885,6 +886,11 @@ app.get("/api/video/:id/file", async (req, res) => {
 // no address falls back to its directory name, which is exactly the case where
 // there is no second seat to disagree with.
 // ---------------------------------------------------------------------------
+// What this seat is called on a shared file. The partner's own name where one
+// is configured, since that is what the other person will be looking for;
+// otherwise the role, which is at least true.
+const SEAT_NAME = (PARTNER_NAME || (isPartner ? "Partner" : "Tom")).slice(0, 40);
+
 const SOCIAL_DIR = process.env.AGENT_SOCIAL_DIR || "";
 const SOCIAL_FILE = "social.json";
 
@@ -1166,6 +1172,22 @@ app.put("/api/social", async (req, res) => {
   if (!file) return res.status(400).json({ error: "pick a project" });
 
   const next = social.clean(req.body ?? {});
+
+  // Who recorded each share.
+  //
+  // Taken from this seat rather than from the page, and only for shares that
+  // are new: the page sends the whole list back on every save, so a seat that
+  // could set this field freely could rewrite the history of who did what. So
+  // an id already on disk keeps the name it was stored with, whatever arrives,
+  // and anything new is stamped here.
+  let already = new Map();
+  try {
+    const prior = social.clean(JSON.parse(await readFile(file, "utf8")));
+    already = new Map(prior.posts.map((s) => [s.id, s.by]));
+  } catch { /* nothing recorded yet */ }
+  for (const s of next.posts) {
+    s.by = already.has(s.id) ? (already.get(s.id) || "") : SEAT_NAME;
+  }
   // Two people on one code means two links that cannot be told apart, which
   // makes every figure downstream wrong in a way nothing would report.
   const codes = new Set();

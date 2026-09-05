@@ -57,6 +57,20 @@ sitting on a second box.
 If the six mockup users already exist in the repository, serving them through
 this shape is the whole task.
 
+## What the panel does with it
+
+Two things, and the second is why the shape matters.
+
+It lists and searches them, which is the obvious one.
+
+And it fills the **Posts as** field on the share form. A share carries three
+different names and they are constantly confused: who it is addressed to (a
+collaborator who will pass it on), who recorded it (the seat at the keyboard),
+and who it goes out as (one of these accounts). The third is what a reader
+sees. Both the id and the name are stored against the share -- the id survives
+a rename, the name survives the account being deleted -- so the record still
+reads years later either way.
+
 ## What is already built on this side
 
 - `GET /sp/users` proxies to it, owner-gated, admin key never leaving the box.
