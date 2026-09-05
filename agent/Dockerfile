@@ -40,6 +40,17 @@ COPY public ./public
 # Compose mounts the IDE's home volume and points AGENT_WORKSPACE at the
 # projects directory inside it, so the agent and the editor see one set of
 # files. This default only applies if the container is run without that.
+# Social's shared store, created here rather than left to Docker.
+#
+# Compose mounts a named volume at this path and runs these containers as
+# 1000:1000. Docker creates a fresh named volume owned by root, and a non-root
+# process then cannot write to it -- which surfaces as EACCES on the first
+# save, long after the deploy has reported success. Creating the directory in
+# the image with the right owner makes Docker carry that ownership into the
+# volume instead. Same trick, and the same reason, as /data in the analytics
+# image.
+RUN mkdir -p /srv/social && chown 1000:1000 /srv/social
+
 ENV AGENT_WORKSPACE=/workspace \
     NODE_ENV=production \
     PORT=3000
