@@ -107,6 +107,11 @@
   .pchip[aria-pressed=true]{border-color:var(--blue);background:var(--blue-soft);color:var(--blue)}
   .pchip i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
     font-size:.62rem;font-weight:800;color:#fff;font-style:normal;background:var(--tone,var(--muted))}
+  /* A label carries a few words. Where those were not enough — "what it points
+     at" was read as a question rather than as a field, by the person who asked
+     for it — the line under it does the rest, once, instead of every reader
+     guessing separately. */
+  .hint{margin:.4rem 0 0;font-size:.76rem;color:var(--muted);line-height:1.5}
   .via{font-family:var(--mono);font-size:.75rem;color:var(--blue);background:var(--blue-soft);
     display:inline-block;padding:.4rem .75rem;border-radius:9px;word-break:break-all;
     border:0;cursor:pointer;text-align:left}
@@ -198,7 +203,7 @@
       <span class="plus" aria-hidden="true">+</span>
       <span>
         <span class="say">Make something</span>
-        <span class="sub">Write it, point it at something, and address it to somebody</span>
+        <span class="sub">Write it, choose which screen it opens, and address it to somebody</span>
       </span>
     </button>
     <div class="compose" id="composer" hidden>
@@ -216,8 +221,12 @@
           <textarea id="body" placeholder="Write it, or paste what you are sending."></textarea>
         </div>
         <div class="grp">
-          <span class="lab">What it points at</span>
-          <input type="text" id="points" placeholder="ep 3 · GPA 换算, or a feature name">
+          <span class="lab">Which screen it opens</span>
+          <input type="text" id="points"
+                 placeholder="Leave blank to open the home screen">
+          <p class="hint">Where somebody arrives when they tap the link. Type
+            <b>ep 3</b> and they land on that episode. Leave it blank and they land
+            on the app's home screen and have to find it themselves.</p>
         </div>
         <div class="grp">
           <span class="lab">Who it is for</span>
