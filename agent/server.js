@@ -1371,6 +1371,23 @@ app.get("/sp/series", ownerOnly, async (_req, res) => {
 app.get("/sp/where", ownerOnly, (_req, res) =>
   res.json({ base: studypal.base(), shelf: studypal.base() + "/drama" }));
 
+// The app's own users, for the admin to look up.
+//
+// Study Pal does not serve this yet — the endpoint is specified in
+// docs/for-studypal-users.md and this is written to that shape. Until it
+// exists the call comes back 404 and the panel says so plainly, which is a
+// better answer than an empty list: nobody can tell an app with no users from
+// an app that does not report them.
+//
+// Proxied like everything else on this side, so the admin key stays on the box
+// and no user record passes through a browser that is not already signed in.
+app.get("/sp/users", ownerOnly, async (req, res) => {
+  const q = String(req.query.q || "").slice(0, 80);
+  const path = "/api/users" + (q ? "?q=" + encodeURIComponent(q) : "");
+  const r = await studypal.call(path);
+  res.status(r.status).json(r.body);
+});
+
 app.get("/sp/usage", ownerOnly, async (_req, res) => {
   const r = await studypal.call("/api/usage?app=studypal");
   res.status(r.status).json(r.body);

@@ -171,6 +171,27 @@
   .flow .ar{color:var(--muted);font-size:.75rem}
   .code{margin-top:.6rem;font-family:var(--mono);font-size:.7rem;color:var(--blue)}
   .none{color:var(--muted);font-size:.86rem;padding:1.2rem 0;text-align:center}
+  /* The catalogue, as it is on the other side. Read here and edited there:
+     one writer for one shelf, or two surfaces eventually disagree about what
+     is published. */
+  .series{background:var(--card);border-radius:15px;box-shadow:var(--shadow);
+    padding:.9rem 1rem;margin-top:.9rem}
+  .series .hd{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap}
+  .series h3{margin:0;font-size:.98rem;font-weight:700}
+  .series .st{font-size:.7rem;font-weight:700;padding:.15rem .55rem;border-radius:99px}
+  .series .st.live{background:rgba(42,157,99,.12);color:var(--green)}
+  .series .st.draft{background:var(--sunk);color:var(--muted)}
+  .series .meta{margin-left:auto;font-size:.74rem;color:var(--muted);
+    font-variant-numeric:tabular-nums}
+  .eps{margin:.7rem 0 0;display:flex;flex-direction:column}
+  .ep{display:grid;grid-template-columns:2.6rem 1fr auto;gap:.7rem;align-items:baseline;
+    padding:.4rem 0;border-top:1px solid var(--rule);font-size:.85rem}
+  .ep .n{font-family:var(--mono);font-size:.76rem;color:var(--muted)}
+  .ep .ti{font-weight:600}
+  .ep .bt{color:var(--muted);font-size:.78rem}
+  .ep .use{font-family:var(--mono);font-size:.74rem;color:var(--blue);cursor:pointer;
+    background:none;border:0;white-space:nowrap}
+  .ep .use:hover{text-decoration:underline}
 
   .thin{margin:.9rem 0 0;padding:.1rem 0 .1rem 1rem;border-left:2px solid var(--rule);
     font-size:.8rem;color:var(--ink-2);line-height:1.6}
@@ -196,6 +217,8 @@
       <button class="tab" role="tab" id="t-share"  aria-selected="true">Share</button>
       <button class="tab" role="tab" id="t-feed"   aria-selected="false">Feed</button>
       <button class="tab" role="tab" id="t-people" aria-selected="false">People</button>
+      <button class="tab" role="tab" id="t-content" aria-selected="false">Content</button>
+      <button class="tab" role="tab" id="t-users" aria-selected="false">Users</button>
     </div>
   </header>
 
@@ -251,6 +274,28 @@
     <div class="masonry" id="feed"></div>
     <p class="none" id="feednone" hidden>Nothing recorded yet. The first share you
       record here shows up on this wall.</p>
+  </section>
+
+  <!-- ============ CONTENT ============ -->
+  <section id="v-content" hidden>
+    <div class="searchbar">
+      <span aria-hidden="true">🔍</span>
+      <input type="text" id="cq" placeholder="Search the catalogue — series or episode">
+    </div>
+    <div id="catalogue"></div>
+    <p class="none" id="catnone" hidden></p>
+    <p class="thin" id="catnote"></p>
+  </section>
+
+  <!-- ============ USERS ============ -->
+  <section id="v-users" hidden>
+    <div class="searchbar">
+      <span aria-hidden="true">🔍</span>
+      <input type="text" id="uq" placeholder="Search the app's users — name or handle">
+    </div>
+    <div class="people" id="users"></div>
+    <p class="none" id="usersnone" hidden></p>
+    <p class="thin" id="usersnote"></p>
   </section>
 
   <!-- ============ PEOPLE ============ -->
@@ -665,13 +710,208 @@ $("addperson").addEventListener("click", () => editPerson(null));
 $("q").addEventListener("input", (e) => { query = e.target.value.trim(); drawPeople(); });
 
 // ---- tabs -----------------------------------------------------------------
-const TABS = { share: "v-share", feed: "v-feed", people: "v-people" };
+const TABS = { share: "v-share", feed: "v-feed", people: "v-people",
+               content: "v-content", users: "v-users" };
 function show(name) {
   tab = TABS[name] ? name : "share";
   for (const [k, id] of Object.entries(TABS)) $(id).hidden = k !== tab;
   for (const k of Object.keys(TABS)) $("t-" + k).setAttribute("aria-selected", String(k === tab));
 }
-for (const k of Object.keys(TABS)) $("t-" + k).addEventListener("click", () => show(k));
+for (const k of Object.keys(TABS)) $("t-" + k).addEventListener("click", () => {
+  show(k);
+  // Read once, when first asked for. The catalogue is another service's and
+  // fetching it on every tab press would put this panel's browsing habits on
+  // somebody else's request log.
+  if (k === "content" && catalogue === null) loadCatalogue();
+  if (k === "users" && users === null) loadUsers();
+});
+
+// ---------------------------------------------------------------------------
+// The app's users
+//
+// Read from Study Pal, never stored here. An admin panel that kept its own
+// copy of somebody else's user list would be a second place for it to be wrong
+// and a second place for it to leak.
+//
+// The endpoint does not exist yet — see docs/for-studypal-users.md. Until it
+// does this says so, rather than rendering an empty list: an app with no users
+// and an app that does not report them are opposite facts and an empty grid
+// states the wrong one.
+// ---------------------------------------------------------------------------
+let users = null, uquery = "";
+
+async function loadUsers() {
+  const note = $("usersnote");
+  try {
+    const r = await fetch("/sp/users");
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 404) {
+      users = [];
+      note.innerHTML = "<b>The app does not serve a user list yet.</b> The panel is "
+        + "built and waiting for it &mdash; the shape it expects is written up in "
+        + "<code>docs/for-studypal-users.md</code>. This is a dash, not a zero: "
+        + "nobody can tell an app with no users from one that does not report them.";
+      drawUsers();
+      return;
+    }
+    if (!r.ok) throw new Error(d.error || "the app said " + r.status);
+    users = Array.isArray(d) ? d : Array.isArray(d?.users) ? d.users : [];
+    note.innerHTML = "<b>Read from the app, never stored here.</b> A second copy of "
+      + "somebody else's user list is a second place for it to be wrong and a second "
+      + "place for it to leak.";
+    drawUsers();
+  } catch (e) {
+    users = [];
+    note.innerHTML = "<b>Could not read the users.</b> " + e.message;
+    drawUsers();
+  }
+}
+
+function drawUsers() {
+  const box = $("users");
+  const none = $("usersnone");
+  box.replaceChildren();
+  if (users === null) { none.hidden = false; none.textContent = "Reading…"; return; }
+
+  const q = uquery.toLowerCase();
+  const hit = (t) => String(t || "").toLowerCase().includes(q);
+  const list = users.filter((u) => !q || hit(u.name) || hit(u.handle) || hit(u.id));
+  none.hidden = list.length > 0;
+  if (!list.length) {
+    none.textContent = users.length ? "Nobody matches that." : "No users to show.";
+    return;
+  }
+
+  for (const u of list) {
+    const name = u.name || u.handle || u.id || "unknown";
+    const card = el("div", "mate tone-blue");
+    const hd = el("div", "hd");
+    hd.append(el("i", null, String(name).slice(0, 1).toUpperCase()));
+    const who = el("div");
+    who.append(el("h3", null, name));
+    who.append(el("div", "ch", [u.handle, u.id].filter(Boolean).join(" · ") || ""));
+    hd.append(who);
+    card.append(hd);
+
+    // Whatever the app chose to send, and nothing invented to fill a gap.
+    const flow = el("div", "flow");
+    const cell = (v, k) => { const c = el("div", "st");
+      c.append(el("b", v === undefined || v === null ? "dim" : null,
+        v === undefined || v === null ? "—" : String(v)), el("span", null, k));
+      return c; };
+    flow.append(cell(u.sessions, "sessions"), cell(u.joined, "joined"), cell(u.lastSeen, "last seen"));
+    card.append(flow);
+    if (u.note) card.append(el("div", "code", String(u.note).slice(0, 120)));
+    box.append(card);
+  }
+}
+
+$("uq").addEventListener("input", (e) => { uquery = e.target.value.trim(); drawUsers(); });
+
+// ---------------------------------------------------------------------------
+// The catalogue, read from the app rather than kept here
+//
+// What the other repository has actually published: series, their episodes,
+// and whether each is live. Read-only on purpose — the story desk is where a
+// series is written and published, and two surfaces writing one shelf is how
+// they end up disagreeing about what is on it. This one answers "what is
+// there", which is the question an admin asks far more often than "change it".
+// ---------------------------------------------------------------------------
+let catalogue = null, cquery = "";
+
+async function loadCatalogue() {
+  const note = $("catnote");
+  try {
+    const r = await fetch("/sp/series");
+    if (r.status === 404) {
+      catalogue = [];
+      note.innerHTML = "<b>Not on this seat.</b> Reading the catalogue needs the story-desk "
+        + "grant, which this seat has not been given.";
+      drawCatalogue();
+      return;
+    }
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || "the app said " + r.status);
+    // The payload's shape is the other side's to choose — take the array
+    // wherever it is, the same reading the story desk uses.
+    catalogue = Array.isArray(d) ? d
+      : Array.isArray(d?.series) ? d.series
+      : Array.isArray(d?.items) ? d.items : [];
+    note.innerHTML = "<b>Read from the app, not from here.</b> This is what Study Pal "
+      + "has published. Writing a series is the story desk's job — one writer for one "
+      + "shelf, or the two eventually disagree about what is live.";
+    drawCatalogue();
+  } catch (e) {
+    catalogue = [];
+    note.innerHTML = "<b>Could not read the catalogue.</b> " + e.message;
+    drawCatalogue();
+  }
+}
+
+function drawCatalogue() {
+  const box = $("catalogue");
+  const none = $("catnone");
+  box.replaceChildren();
+  if (catalogue === null) { none.hidden = false; none.textContent = "Reading the catalogue…"; return; }
+
+  const q = cquery.toLowerCase();
+  const hit = (t) => String(t || "").toLowerCase().includes(q);
+  const list = catalogue.filter((se) => !q
+    || hit(se.title) || hit(se.id)
+    || (Array.isArray(se.episodes) && se.episodes.some((e) => hit(e.title) || hit(e.beat))));
+
+  none.hidden = list.length > 0;
+  if (!list.length) {
+    none.textContent = catalogue.length
+      ? "Nothing in the catalogue matches that."
+      : "The catalogue is empty, or this seat cannot read it.";
+    return;
+  }
+
+  for (const se of list) {
+    const eps = Array.isArray(se.episodes) ? se.episodes : [];
+    // Matching on the series name shows all of it; matching on an episode
+    // shows the ones that matched, since a hit buried in twelve rows is a
+    // search result nobody finds.
+    const seriesHit = !q || hit(se.title) || hit(se.id);
+    const shown = seriesHit ? eps : eps.filter((e) => hit(e.title) || hit(e.beat));
+    const written = eps.filter((e) => String(e.beat || "").trim()).length;
+
+    const card = el("div", "series");
+    const hd = el("div", "hd");
+    hd.append(el("h3", null, se.title || se.id || "Untitled"));
+    hd.append(el("span", "st " + (se.published ? "live" : "draft"),
+      se.published ? "live" : "draft"));
+    hd.append(el("span", "meta", written + " of " + eps.length + " written"));
+    card.append(hd);
+
+    const list2 = el("div", "eps");
+    for (const e of shown) {
+      const row = el("div", "ep");
+      row.append(el("span", "n", "ep " + (e.n ?? "?")));
+      const mid = el("div");
+      mid.append(el("div", "ti", e.title || "(untitled)"));
+      if (e.beat) mid.append(el("div", "bt", String(e.beat).slice(0, 140)));
+      row.append(mid);
+      // The one thing this tab does besides answer: hand an episode straight to
+      // the share form, which is the reason somebody looked it up.
+      const use = el("button", "use", "Share this →");
+      use.type = "button";
+      use.addEventListener("click", () => {
+        $("points").value = "ep " + (e.n ?? "");
+        openCompose(true);
+        show("share");
+        drawShare();
+      });
+      row.append(use);
+      list2.append(row);
+    }
+    card.append(list2);
+    box.append(card);
+  }
+}
+
+$("cq").addEventListener("input", (e) => { cquery = e.target.value.trim(); drawCatalogue(); });
 
 function draw() {
   const n = state.people.length, s = state.posts.length;
