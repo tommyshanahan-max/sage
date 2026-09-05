@@ -229,6 +229,99 @@ function loginPage(failed) {
 
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
+// ---------------------------------------------------------------------------
+// What Study Pal says happened — the webhook
+//
+// Mounted here, above the sign-in gate, because the caller is a server and has
+// no cookie to present. That is the whole reason this route is different, so
+// it carries its own lock instead: a shared secret in x-studypal-secret,
+// compared in constant time, and no secret configured means the route refuses
+// rather than accepts.
+//
+// The lock is the only thing standing between this and anyone who finds the
+// hostname, so nothing else about the request is trusted: the body is small-
+// capped, the shape is normalised in lib/social.js rather than stored as sent,
+// and an id that is not an id is dropped rather than written to a filename.
+//
+// Study Pal posts { event, at, post } where event is published, held or
+// removed. Held is the one that is work: the app's own check could not judge
+// it either way, so a person here has to look.
+// ---------------------------------------------------------------------------
+const HOOK_SECRET = process.env.STUDYPAL_WEBHOOK_SECRET || "";
+
+/** Which app's file this belongs to. The same key the panel resolves for the
+ *  Study Pal project, so what arrives here is what that project reads back.
+ *  Study Pal's own address first: on a seat that has the credentials that is
+ *  the definitive answer, and AGENT_APP_URL is the partner seat's version of
+ *  the same fact. */
+function hookKey() {
+  for (const url of [studypal.base(), APP_URL]) {
+    if (!url) continue;
+    try {
+      const host = new URL(url).host.toLowerCase();
+      if (/^[a-z0-9.:-]{1,80}$/.test(host)) return host;
+    } catch { /* try the next one */ }
+  }
+  return "";
+}
+
+const feedbackPath = () => {
+  const key = hookKey();
+  return SOCIAL_DIR && key ? path.join(SOCIAL_DIR, key + ".feedback.json") : null;
+};
+
+// Deliveries arrive whenever the app decides, and two at once through a
+// read-modify-write would leave whichever finished second as the only one
+// stored. One chain, so they queue instead.
+let hookQueue = Promise.resolve();
+
+app.post("/api/studypal-hook", express.json({ limit: "256kb" }), async (req, res) => {
+  if (!HOOK_SECRET) {
+    return res.status(503).json({ error: "STUDYPAL_WEBHOOK_SECRET is not set on this server" });
+  }
+  const sent = String(req.headers["x-studypal-secret"] || "");
+  if (!safeEqual(sent, HOOK_SECRET)) {
+    // No detail. A wrong secret and a malformed body should not be
+    // distinguishable from outside.
+    return res.status(401).json({ error: "no" });
+  }
+
+  const file = feedbackPath();
+  if (!file) {
+    return res.status(503).json({ error: "no shared store on this box (AGENT_SOCIAL_DIR)" });
+  }
+
+  const report = social.cleanReport(req.body ?? {});
+  if (!report) return res.status(400).json({ error: "need { event, post: { id } }" });
+
+  const run = hookQueue.then(async () => {
+    let stored = { reports: [] };
+    try {
+      stored = social.cleanFeedback(JSON.parse(await readFile(file, "utf8")));
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
+    }
+    const next = social.withReport(stored, report);
+    await mkdir(SOCIAL_DIR, { recursive: true });
+    const tmp = file + ".tmp";
+    await writeFile(tmp, JSON.stringify(next, null, 2) + "\n", "utf8");
+    await rename(tmp, file);
+    return next.reports.length;
+  });
+  // The queue must survive a failed delivery, or one bad write stops every
+  // later one.
+  hookQueue = run.catch(() => {});
+
+  try {
+    await run;
+    res.json({ ok: true, id: report.id, event: report.event });
+  } catch (err) {
+    // 500 rather than a quiet ok: the other side should retry.
+    res.status(500).json({ error: "could not record it: " + (err.code || err.message) });
+  }
+});
+
+
 app.use(express.urlencoded({ extended: false, limit: "16kb" }));
 
 // Without a password this page would hand an agent — and the API key behind
@@ -1207,6 +1300,153 @@ app.put("/api/social", async (req, res) => {
     await writeFile(tmp, JSON.stringify(next, null, 2) + "\n", "utf8");
     await rename(tmp, file);
     res.json({ ok: true, file, ...next });
+  } catch (err) {
+    res.status(500).json({ error: "could not save it: " + (err.code || err.message) });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// The accounts a post is shared from
+//
+// Kept beside social.json in the same shared, app-keyed store, so both seats
+// operating one product see one roster. Separate file rather than a field on
+// social.json, because the two are written on different rhythms — a share is
+// recorded many times a day, an account is added once — and a save of one
+// should never be able to lose the other.
+//
+// See the note over cleanAccounts in lib/social.js for why a roster lives on
+// this side at all while the app serves no user list.
+// ---------------------------------------------------------------------------
+function accountsPath(name) {
+  if (SOCIAL_DIR) {
+    const key = socialKey(name);
+    return key ? path.join(SOCIAL_DIR, key + ".accounts.json") : null;
+  }
+  const dir = projectPath(String(name || ""));
+  return dir ? path.join(dir, "social-accounts.json") : null;
+}
+
+app.get("/api/social/accounts", async (req, res) => {
+  if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
+  const file = accountsPath(req.query.project);
+  if (!file) return res.status(400).json({ error: "pick a project" });
+
+  let stored = null;
+  try {
+    stored = social.cleanAccounts(JSON.parse(await readFile(file, "utf8")));
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      return res.status(500).json({ error: "could not read it: " + (err.code || err.message) });
+    }
+  }
+  // Nothing written yet: hand back the seed without saving it. The first edit
+  // writes the file, so a box nobody has touched keeps no state, and a roster
+  // somebody has emptied on purpose stays empty rather than refilling itself.
+  const seeded = stored === null;
+  if (seeded) stored = social.seedAccounts();
+
+  res.set("Cache-Control", "no-store");
+  res.json({ ...stored, file, seeded });
+});
+
+app.put("/api/social/accounts", async (req, res) => {
+  if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
+  const file = accountsPath(req.query.project);
+  if (!file) return res.status(400).json({ error: "pick a project" });
+
+  const next = social.cleanAccounts(req.body ?? {});
+
+  // Who wrote each one down, stamped here for the reason a post's `by` is
+  // stamped: the page sends the whole roster back on every save, so an id
+  // already on disk keeps what it was stored with, and only new rows take this
+  // seat's name.
+  let already = new Map();
+  try {
+    const prior = social.cleanAccounts(JSON.parse(await readFile(file, "utf8")));
+    already = new Map(prior.accounts.map((a) => [a.id, a]));
+  } catch { /* nothing written yet */ }
+  for (const a of next.accounts) {
+    const was = already.get(a.id);
+    a.addedBy = was ? (was.addedBy || "") : SEAT_NAME;
+    a.addedAt = was ? (was.addedAt || a.addedAt) : (a.addedAt || new Date().toISOString());
+  }
+
+  try {
+    if (SOCIAL_DIR) await mkdir(SOCIAL_DIR, { recursive: true });
+    const tmp = file + ".tmp";
+    await writeFile(tmp, JSON.stringify(next, null, 2) + "\n", "utf8");
+    await rename(tmp, file);
+    res.json({ ok: true, file, ...next });
+  } catch (err) {
+    res.status(500).json({ error: "could not save it: " + (err.code || err.message) });
+  }
+});
+
+// What the app reported, for the panel to render.
+//
+// Behind the sign-in gate, unlike the webhook that writes it: the hook is a
+// server calling in with a secret, this is a person reading. Same file.
+app.get("/api/social/feedback", async (_req, res) => {
+  if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
+  const file = feedbackPath();
+  // No shared store, or no app address to key it by: an empty list with the
+  // reason, rather than an error. The panel works without this — it is the
+  // app talking back, not the panel's own record.
+  if (!file) return res.json({ reports: [], listening: false });
+
+  let stored = { reports: [] };
+  try {
+    stored = social.cleanFeedback(JSON.parse(await readFile(file, "utf8")));
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      return res.status(500).json({ error: "could not read it: " + (err.code || err.message) });
+    }
+  }
+  res.set("Cache-Control", "no-store");
+  // Whether the hook could accept a delivery at all. Nothing reported and
+  // nothing listening are opposite facts and the page says which.
+  res.json({ ...stored, listening: Boolean(HOOK_SECRET), file });
+});
+
+// Marking a held post as looked at.
+//
+// Ours to record and not the app's to know: this says a person here read it,
+// which is exactly the thing the app asked for when it held the post. It does
+// not change anything on that side — releasing a held post is Study Pal's
+// call, made in Study Pal.
+app.post("/api/social/feedback/reviewed", async (req, res) => {
+  if (!socialDoor()) return res.status(404).json({ error: "not this seat" });
+  const file = feedbackPath();
+  if (!file) return res.status(503).json({ error: "no shared store on this box" });
+
+  const id = String(req.body?.id || "");
+  const on = req.body?.reviewed !== false;
+
+  const run = hookQueue.then(async () => {
+    let stored = { reports: [] };
+    try {
+      stored = social.cleanFeedback(JSON.parse(await readFile(file, "utf8")));
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
+    }
+    if (!stored.reports.some((r) => r.id === id)) return null;
+    const next = social.cleanFeedback({
+      reports: stored.reports.map((r) => (r.id === id
+        ? { ...r, reviewed: on, reviewedBy: on ? SEAT_NAME : "" }
+        : r)),
+    });
+    await mkdir(SOCIAL_DIR, { recursive: true });
+    const tmp = file + ".tmp";
+    await writeFile(tmp, JSON.stringify(next, null, 2) + "\n", "utf8");
+    await rename(tmp, file);
+    return next;
+  });
+  hookQueue = run.catch(() => {});
+
+  try {
+    const next = await run;
+    if (!next) return res.status(404).json({ error: "no such report" });
+    res.json({ ok: true, ...next });
   } catch (err) {
     res.status(500).json({ error: "could not save it: " + (err.code || err.message) });
   }

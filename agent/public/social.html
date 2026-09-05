@@ -153,6 +153,31 @@
   .go:disabled{opacity:.45;cursor:default}
 
   /* ---- feed ---- */
+  /* What the app reported. A row rather than a card on the wall: these are
+     statuses to read down, and the coloured edge is the status. */
+  .reports{display:flex;flex-direction:column;gap:.7rem;margin:0 0 1.6rem}
+  .rep{display:flex;gap:.85rem;align-items:flex-start;background:var(--card);
+    border-radius:14px;padding:.8rem .9rem;box-shadow:var(--shadow);
+    border:1px solid var(--rule);border-left:4px solid var(--tone,var(--rule))}
+  .rep.done{opacity:.6}
+  .rep img{width:4.5rem;height:4.5rem;object-fit:cover;border-radius:10px;
+    background:var(--sunk);flex:none;display:block}
+  .rep .in2{flex:1;min-width:0}
+  .rep .st2{font-size:.62rem;font-weight:800;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--tone,var(--muted))}
+  .rep p{margin:.3rem 0 0;font-size:.87rem;line-height:1.5;overflow-wrap:anywhere}
+  .rep .why{margin-top:.45rem;font-size:.78rem;color:var(--muted);line-height:1.5}
+  .rep .when{font-size:.72rem;color:var(--muted);margin-top:.4rem}
+  .rep .mini{font:inherit;font-size:.76rem;font-weight:600;cursor:pointer;
+    margin-top:.55rem;padding:.3rem .7rem;border-radius:99px;background:var(--sunk);
+    border:1px solid var(--rule);color:var(--muted)}
+  .rep .mini:hover{border-color:var(--blue);color:var(--blue)}
+  /* Where a photo will not load. Same footprint as the image, so a row
+     that loses its picture does not change shape. */
+  .rep .nophoto{width:4.5rem;height:4.5rem;border-radius:10px;flex:none;
+    background:var(--sunk);border:1px dashed var(--rule);display:grid;
+    place-items:center;font-size:.68rem;color:var(--muted)}
+  #reported + h2{margin-top:1.6rem}
   .masonry{columns:2;column-gap:1rem}
   @media (max-width:44rem){.masonry{columns:1}}
   @media (min-width:70rem){.masonry{columns:3}}
@@ -192,6 +217,20 @@
     font-style:normal;font-size:.85rem;font-weight:800;color:#fff;background:var(--tone,var(--muted))}
   .mate h3{margin:0;font-size:.92rem;font-weight:700}
   .mate .ch{font-size:.72rem;color:var(--muted)}
+  /* Edit and remove, on the rows this box owns. Quiet by default: they sit on
+     every card and a pair of loud buttons per card would out-shout the names,
+     which are what somebody came to this tab to read. */
+  /* Which side a row came from. A pill, not a stat cell: the stat cells are
+     sized for numbers and a two-word phrase in one wraps across its label. */
+  .mate .src{display:inline-block;margin-top:.6rem;padding:.18rem .6rem;border-radius:99px;
+    font-size:.68rem;font-weight:700;letter-spacing:.03em;
+    background:var(--sunk);color:var(--muted);border:1px solid var(--rule)}
+  .mate .acts{display:flex;gap:.5rem;margin-top:.7rem}
+  .mate .mini{font:inherit;font-size:.76rem;font-weight:600;cursor:pointer;
+    padding:.3rem .7rem;border-radius:99px;background:var(--sunk);
+    border:1px solid var(--rule);color:var(--muted)}
+  .mate .mini:hover{border-color:var(--blue);color:var(--blue)}
+  .mate .mini.danger:hover{border-color:var(--red);color:var(--red)}
   .flow{display:flex;align-items:center;gap:.35rem;margin:.8rem 0 0}
   .flow .st{flex:1;text-align:center}
   .flow .st b{display:block;font-size:1rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
@@ -269,13 +308,15 @@
           <span class="sub">Goes to the social feed in Study Pal</span>
         </span>
       </button>
-      <!-- Also retired with the People tab: adding a name here made sense when
-           the audience lived on this box. It does not now. -->
-      <button class="alt" type="button" id="addhere" hidden>
+      <!-- The second of the two things you can start here. It made no sense
+           while the only names on this box were collaborators; it makes sense
+           again now that the roster is the accounts a post goes out from, and
+           an empty roster is the one thing that stops the form working. -->
+      <button class="alt" type="button" id="addhere">
         <span class="ring2" aria-hidden="true">👤</span>
         <span>
-          <span class="say">Add someone</span>
-          <span class="sub">Somebody who shares your work</span>
+          <span class="say">Add an account</span>
+          <span class="sub">Another name to share from</span>
         </span>
       </button>
     </div>
@@ -343,6 +384,14 @@
 
   <!-- ============ FEED ============ -->
   <section id="v-feed" hidden>
+    <!-- What Study Pal reported back, above the wall rather than mixed into
+         it. The wall is a record of what was made here; this is the app
+         answering, and one row of it — held — is work somebody has to do. -->
+    <section id="reported" hidden>
+      <h2 id="rephead">From the app</h2>
+      <div class="reports" id="reports"></div>
+      <p class="thin" id="repnote"></p>
+    </section>
     <h2 id="feedhead">What has gone out</h2>
     <div class="masonry" id="feed"></div>
     <p class="none" id="feednone" hidden>Nothing recorded yet. The first share you
@@ -364,10 +413,41 @@
   <section id="v-users" hidden>
     <div class="searchbar">
       <span aria-hidden="true">🔍</span>
-      <input type="text" id="uq" placeholder="Search the app's users — name or handle">
+      <input type="text" id="uq" placeholder="Search accounts — name or handle">
     </div>
+
+    <!-- The editor for one account. One form for new and existing both, since
+         the fields are the same and two forms drift apart. -->
+    <div class="card" id="acced" hidden>
+      <div style="display:flex;align-items:center;margin-bottom:.9rem">
+        <h2 style="margin:0" id="accedhead">New account</h2>
+        <button class="shut" type="button" id="accshut">Close</button>
+      </div>
+      <div class="grp">
+        <span class="lab">Name</span>
+        <input type="text" id="accname" placeholder="The name a reader sees above the post">
+        <p class="hint" id="acchint"></p>
+      </div>
+      <div class="row2">
+        <div class="grp">
+          <span class="lab">Handle in the app</span>
+          <input type="text" id="acchandle" placeholder="Optional — how the app names it">
+        </div>
+        <div class="grp">
+          <span class="lab">Colour</span>
+          <div class="kinds" id="acctones"></div>
+        </div>
+      </div>
+      <div class="grp">
+        <span class="lab">Note</span>
+        <textarea id="accnote" placeholder="Optional — who this account is for and what it posts."></textarea>
+      </div>
+      <button class="go" type="button" id="accsave">Save the account</button>
+    </div>
+
     <div class="people" id="users"></div>
     <p class="none" id="usersnone" hidden></p>
+    <div style="margin-top:.9rem"><button class="add" type="button" id="addaccount">+ Add an account</button></div>
     <p class="thin" id="usersnote"></p>
   </section>
 
@@ -595,7 +675,7 @@ function drawPoints() {
 function drawFrom() {
   const grp = $("fromgrp");
   const pick = $("from");
-  const list = Array.isArray(users) ? users : [];
+  const list = roster();
   // The only thing that varies about a post now, so it is always shown — even
   // with nothing to choose yet, because an absent field would leave the form
   // looking like it has no author at all rather than one it cannot name.
@@ -606,8 +686,8 @@ function drawFrom() {
     only.value = ""; only.textContent = "No account yet";
     pick.append(only);
     pick.disabled = true;
-    $("fromhint").innerHTML = "The account this posts from is the one thing that varies, "
-      + "and Study Pal serves no user list yet. See <code>docs/for-studypal-users.md</code>.";
+    $("fromhint").innerHTML = "Nothing to share from yet. Add an account on the "
+      + "<b>Users</b> tab and it becomes a choice here.";
     return;
   }
   pick.disabled = false;
@@ -725,7 +805,7 @@ $("record").addEventListener("click", () => {
     toName: "",
     // Both names again, for the account it goes out as.
     fromId,
-    fromName: (Array.isArray(users) ? users : []).find((u) => u.id === fromId)?.name || "",
+    fromName: roster().find((u) => u.id === fromId)?.name || "",
     passedOn: false, at: new Date().toISOString().slice(0, 10),
   });
   $("body").value = ""; $("points").value = "";
@@ -944,11 +1024,155 @@ function editPerson(existing) {
   save();
 }
 $("addperson").addEventListener("click", () => editPerson(null));
-// The same action from the Share tab, where somebody notices they have nobody
-// to address a share to. It lands them on People afterwards, because that is
-// where the person they just made now lives.
-$("addhere").addEventListener("click", () => { show("people"); editPerson(null); });
+// The second + option is no longer this one's. It belongs to the account
+// roster now — that listener is further down. Left unbound here rather than
+// rebound, because People is parked and a second listener on one button fires
+// as well as the first, not instead of it: this was opening the parked editor
+// underneath the live one.
 $("q").addEventListener("input", (e) => { query = e.target.value.trim(); drawPeople(); });
+
+
+// ---------------------------------------------------------------------------
+// What the app reported back
+//
+// The other direction from everything else on this page. Study Pal posts to
+// /api/studypal-hook when something is published, held or removed, and this
+// reads what that wrote.
+//
+// Held is the only one that is work. The app's own check could not judge the
+// post either way and asked for a person, so held rows sort to the top and
+// stay there until somebody here says they looked. Marking one read is this
+// box's record of having looked and nothing more — releasing a held post is
+// Study Pal's decision, made in Study Pal.
+// ---------------------------------------------------------------------------
+const EVENT_TONE = { published: "green", held: "amber", removed: "red" };
+const EVENT_WORD = { published: "Published", held: "Held for review", removed: "Removed" };
+
+let reports = null, listening = false;
+
+async function loadFeedback() {
+  try {
+    const r = await fetch("/api/social/feedback");
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "the server said " + r.status);
+    reports = Array.isArray(d.reports) ? d.reports : [];
+    listening = Boolean(d.listening);
+  } catch {
+    reports = [];
+    listening = false;
+  }
+  drawReports();
+}
+
+/** Held and not yet looked at. The count that means somebody has a job. */
+const heldCount = () =>
+  (reports || []).filter((r) => r.event === "held" && !r.reviewed).length;
+
+function drawReports() {
+  const wrap = $("reported");
+  const box = $("reports");
+  const note = $("repnote");
+  box.replaceChildren();
+
+  const list = reports || [];
+  // Nothing reported and nothing listening are opposite facts. With the hook
+  // configured and quiet, the section stays out of the way; with no secret
+  // set it says so, because that is a deployment that will silently miss
+  // everything the app sends.
+  if (!list.length) {
+    wrap.hidden = listening;
+    if (!listening) {
+      $("rephead").textContent = "From the app";
+      note.innerHTML = "<b>Not listening yet.</b> Study Pal posts to "
+        + "<code>/api/studypal-hook</code> when a post is published, held or removed, "
+        + "and this box has no <code>STUDYPAL_WEBHOOK_SECRET</code> set — so anything "
+        + "it sends is refused. Nothing here is a zero; it is a line that is not "
+        + "plugged in.";
+    }
+    return;
+  }
+  wrap.hidden = false;
+
+  const held = heldCount();
+  // On the tab too, because held is work and somebody sitting on the Share tab
+  // writing the next post would otherwise never learn there is any.
+  $("t-feed").textContent = held ? "Feed · " + held : "Feed";
+  $("rephead").textContent = held
+    ? "From the app · " + held + " waiting on you"
+    : "From the app · " + list.length;
+
+  // Held first, unreviewed before reviewed, then everything else newest first.
+  const rank = (r) => (r.event === "held" && !r.reviewed ? 0 : r.event === "held" ? 1 : 2);
+  const sorted = [...list].sort((a, b) =>
+    rank(a) - rank(b) || (b.at || "").localeCompare(a.at || ""));
+
+  for (const r of sorted) {
+    const tone = EVENT_TONE[r.event] || "blue";
+    const row = el("div", "rep tone-" + tone + (r.reviewed ? " done" : ""));
+
+    if (r.photo && state.base) {
+      // An id at the app, fetched from its public endpoint. Encoded into the
+      // query rather than pasted into a path: a slash in an id would otherwise
+      // change which URL is called.
+      const img = Object.assign(document.createElement("img"), {
+        src: state.base.replace(/\/+$/, "") + "/api/public-media?id=" + encodeURIComponent(r.photo),
+        alt: "", loading: "lazy",
+      });
+      img.addEventListener("error", () => {
+        img.replaceWith(el("div", "nophoto", "no photo"));
+      });
+      row.append(img);
+    }
+
+    const inn = el("div", "in2");
+    inn.append(el("div", "st2", EVENT_WORD[r.event] || r.event));
+    if (r.body) inn.append(el("p", null, r.body));
+    if (r.reason) inn.append(el("div", "why", r.reason));
+
+    const who = r.fromName
+      || roster().find((u) => u.id === r.fromId)?.name
+      || r.fromId;
+    inn.append(el("div", "when",
+      [r.at || "undated", who && "from " + who,
+       r.reviewed && ("looked at" + (r.reviewedBy ? " by " + r.reviewedBy : ""))]
+        .filter(Boolean).join(" · ")));
+
+    // Only held rows carry the mark. Published and removed are the app's last
+    // word and there is nothing to decide.
+    if (r.event === "held") {
+      const b = el("button", "mini", r.reviewed ? "Put it back on the list" : "I looked at it");
+      b.type = "button";
+      b.addEventListener("click", async () => {
+        b.disabled = true;
+        try {
+          const res = await fetch("/api/social/feedback/reviewed", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: r.id, reviewed: !r.reviewed }),
+          });
+          const d = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(d.error || "the server said " + res.status);
+          reports = Array.isArray(d.reports) ? d.reports : reports;
+          drawReports();
+        } catch (e) {
+          b.disabled = false;
+          b.textContent = "Could not save it: " + e.message;
+        }
+      });
+      inn.append(b);
+    }
+    row.append(inn);
+    box.append(row);
+  }
+
+  // The subtitle counts what is held, and this is the only place that knows.
+  draw();
+
+  note.innerHTML = "<b>The app talking back.</b> Held means Study Pal's own check "
+    + "could not judge the post either way and asked for a person. Marking one read "
+    + "is this box's note that somebody looked — releasing it is Study Pal's call, "
+    + "made in Study Pal.";
+}
 
 // ---- tabs -----------------------------------------------------------------
 const TABS = { share: "v-share", feed: "v-feed", people: "v-people",
@@ -965,94 +1189,287 @@ for (const k of Object.keys(TABS)) $("t-" + k).addEventListener("click", () => {
   // somebody else's request log.
   if (k === "content" && catalogue === null) loadCatalogue();
   if (k === "users" && users === null) loadUsers();
+  // Re-read rather than read once: a delivery can land while the panel is
+  // open, and the tab press is exactly when somebody wants it current.
+  if (k === "feed") loadFeedback();
 });
 
-// Read once at startup rather than only when the Users tab is opened: the
-// "posts as" field is on the Share tab, and a field that appears only after
-// somebody happens to visit another tab is a field nobody finds.
-loadUsers().then(drawFrom).catch(() => {});
+// Both read at startup rather than only when the Users tab is opened: the
+// "shared from" field is on the Share tab, and a field that fills in only
+// after somebody happens to visit another tab is a field nobody finds.
+loadAccounts().catch(() => {});
+loadUsers().catch(() => {});
+// And what the app has said back, so the Feed tab shows a count of what is
+// waiting before somebody presses it.
+loadFeedback().catch(() => {});
 
 // ---------------------------------------------------------------------------
-// The app's users
+// The accounts a post is shared from
 //
-// Read from Study Pal, never stored here. An admin panel that kept its own
-// copy of somebody else's user list would be a second place for it to be wrong
-// and a second place for it to leak.
+// Two lists meet here and they are not the same list.
 //
-// The endpoint does not exist yet — see docs/for-studypal-users.md. Until it
-// does this says so, rather than rendering an empty list: an app with no users
-// and an app that does not report them are opposite facts and an empty grid
-// states the wrong one.
+//   - The roster kept on this box: the accounts being operated. Editable, and
+//     the only reason the Share form has anything to pick from today.
+//   - The app's own users, from /sp/users. Read-only, and authoritative — but
+//     Study Pal does not serve them yet (docs/for-studypal-users.md).
+//
+// They are merged on id, and each row says which side it came from. That is
+// the honest rendering: an account written down here is a claim, an account
+// the app confirms is a fact, and drawing them identically would state the
+// stronger of the two about both.
 // ---------------------------------------------------------------------------
-let users = null, uquery = "";
+let accounts = null, accountsNote = "", editing = null, uquery = "";
 
-async function loadUsers() {
-  const note = $("usersnote");
+async function loadAccounts() {
   try {
-    const r = await fetch("/sp/users");
+    const r = await fetch("/api/social/accounts?project=" + encodeURIComponent(PROJECT));
     const d = await r.json().catch(() => ({}));
-    if (r.status === 404) {
-      users = [];
-      note.innerHTML = "<b>The app does not serve a user list yet.</b> The panel is "
-        + "built and waiting for it &mdash; the shape it expects is written up in "
-        + "<code>docs/for-studypal-users.md</code>. This is a dash, not a zero: "
-        + "nobody can tell an app with no users from one that does not report them.";
-      drawUsers();
-      return;
-    }
-    if (!r.ok) throw new Error(d.error || "the app said " + r.status);
-    users = Array.isArray(d) ? d : Array.isArray(d?.users) ? d.users : [];
-    note.innerHTML = "<b>Read from the app, never stored here.</b> A second copy of "
-      + "somebody else's user list is a second place for it to be wrong and a second "
-      + "place for it to leak.";
-    drawUsers();
+    if (!r.ok) throw new Error(d.error || "the server said " + r.status);
+    accounts = Array.isArray(d.accounts) ? d.accounts : [];
+    accountsNote = d.seeded
+      ? "<b>Nothing saved yet, so this is the starting roster.</b> Edit or remove any "
+        + "of it and the change is written down; nothing puts a removed account back."
+      : "";
   } catch (e) {
-    users = [];
-    note.innerHTML = "<b>Could not read the users.</b> " + e.message;
-    drawUsers();
+    accounts = [];
+    accountsNote = "<b>Could not read the roster.</b> " + e.message;
+  }
+  drawUsers(); drawShare();
+}
+
+async function saveAccounts(next) {
+  const r = await fetch("/api/social/accounts?project=" + encodeURIComponent(PROJECT), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accounts: next }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || "the server said " + r.status);
+  accounts = Array.isArray(d.accounts) ? d.accounts : [];
+  accountsNote = "";
+  drawUsers(); drawShare();
+}
+
+/** The two lists as one, keyed by id. The app wins on any field it serves: it
+ *  is the side that decides what an account is actually called. */
+function roster() {
+  const byId = new Map();
+  for (const a of (Array.isArray(accounts) ? accounts : [])) {
+    byId.set(a.id, { ...a, source: "kept" });
+  }
+  // Only when the credentials point at the project on screen. Otherwise this
+  // would merge Study Pal's users into a second project's roster and label
+  // them confirmed, which is the one thing the source field exists to prevent.
+  for (const u of (state.sameApp && Array.isArray(users) ? users : [])) {
+    const id = String(u.id || "");
+    if (!id) continue;
+    const was = byId.get(id);
+    byId.set(id, { tone: "blue", ...(was || {}), ...u, id,
+                   name: u.name || was?.name || id,
+                   source: was ? "both" : "app" });
+  }
+  return [...byId.values()];
+}
+
+// ---- the editor -----------------------------------------------------------
+
+function openAccount(id) {
+  // Null id means a new one. The same form either way, so the two cannot
+  // drift apart in what they accept.
+  const row = id ? roster().find((a) => a.id === id) : null;
+  editing = row ? row.id : null;
+  $("accedhead").textContent = row ? "Edit " + (row.name || row.id) : "New account";
+  $("accname").value = row?.name || "";
+  $("acchandle").value = row?.handle || "";
+  $("accnote").value = row?.note || "";
+  accTone = row?.tone || TONES[roster().length % TONES.length];
+  drawAccTones();
+  $("acced").hidden = false;
+  $("acchint").textContent = row
+    ? "Saved as " + row.id + ". The id does not change with the name — a post already "
+      + "recorded points at it."
+    : "";
+  $("accname").focus();
+}
+
+let accTone = "blue";
+function drawAccTones() {
+  const box = $("acctones"); box.replaceChildren();
+  for (const t of TONES) {
+    const b = el("button", "pchip tone-" + t);
+    b.type = "button";
+    b.setAttribute("aria-pressed", String(t === accTone));
+    b.append(el("i", null, ""), document.createTextNode(t));
+    b.addEventListener("click", () => { accTone = t; drawAccTones(); });
+    box.append(b);
   }
 }
+
+$("addaccount").addEventListener("click", () => openAccount(null));
+$("accshut").addEventListener("click", () => { $("acced").hidden = true; editing = null; });
+
+// The same thing from the Share tab, where somebody notices the roster is
+// short at the moment they are about to need it.
+$("addhere").addEventListener("click", () => { show("users"); openAccount(null); });
+
+$("accsave").addEventListener("click", async () => {
+  const name = $("accname").value.trim();
+  if (!name) { $("acchint").textContent = "It needs a name."; return; }
+
+  // The id is slugged from the name for a new account and never touched
+  // again: a post already recorded points at it, and an id that follows a
+  // rename is a record that quietly changes what it says.
+  const id = editing || slug(name);
+  if (!id) {
+    $("acchint").textContent = "That name gives no id — it has no Latin letters or digits. "
+      + "Add a handle in Latin script and use that as the name, or write it both ways.";
+    return;
+  }
+  const kept = Array.isArray(accounts) ? accounts : [];
+  if (!editing && kept.some((a) => a.id === id)) {
+    $("acchint").textContent = "There is already an account called that.";
+    return;
+  }
+
+  const row = { id, name: name.slice(0, 80), handle: $("acchandle").value.trim().replace(/^@+/, ""),
+                note: $("accnote").value.trim(), tone: accTone };
+  const next = editing ? kept.map((a) => (a.id === id ? { ...a, ...row } : a)) : [...kept, row];
+  try {
+    $("accsave").disabled = true;
+    await saveAccounts(next);
+    $("acced").hidden = true; editing = null;
+    // A new account is almost always the one about to be used.
+    if (!$("from").disabled) { fromId = id; drawShare(); }
+  } catch (e) {
+    $("acchint").textContent = "Could not save it: " + e.message;
+  } finally {
+    $("accsave").disabled = false;
+  }
+});
+
+/** Same rule as the server's idFrom, so the id the page shows is the id that
+ *  gets stored. Kept in step by hand rather than shared, because this file is
+ *  served as-is and does not import. */
+const slug = (name) => String(name || "").toLowerCase()
+  .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+
+// ---- the list -------------------------------------------------------------
 
 function drawUsers() {
   const box = $("users");
   const none = $("usersnone");
+  const note = $("usersnote");
   box.replaceChildren();
-  if (users === null) { none.hidden = false; none.textContent = "Reading…"; return; }
+  if (accounts === null) { none.hidden = false; none.textContent = "Reading…"; return; }
 
+  const all = roster();
   const q = uquery.toLowerCase();
   const hit = (t) => String(t || "").toLowerCase().includes(q);
-  const list = users.filter((u) => !q || hit(u.name) || hit(u.handle) || hit(u.id));
+  const list = all.filter((u) => !q || hit(u.name) || hit(u.handle) || hit(u.id));
+
   none.hidden = list.length > 0;
   if (!list.length) {
-    none.textContent = users.length ? "Nobody matches that." : "No users to show.";
-    return;
+    none.textContent = all.length ? "Nothing matches that."
+      : "No accounts yet. Add one and it becomes a choice on the Share form.";
   }
 
   for (const u of list) {
-    const name = u.name || u.handle || u.id || "unknown";
-    const card = el("div", "mate tone-blue");
+    const name = u.name || u.handle || u.id;
+    const card = el("div", "mate tone-" + (u.tone || "blue"));
     const hd = el("div", "hd");
     hd.append(el("i", null, String(name).slice(0, 1).toUpperCase()));
     const who = el("div");
     who.append(el("h3", null, name));
-    who.append(el("div", "ch", [u.handle, u.id].filter(Boolean).join(" · ") || ""));
+    who.append(el("div", "ch", [u.handle && "@" + u.handle, u.id].filter(Boolean).join(" · ")));
     hd.append(who);
     card.append(hd);
 
-    // Whatever the app chose to send, and nothing invented to fill a gap.
-    const flow = el("div", "flow");
-    const cell = (v, k) => { const c = el("div", "st");
-      c.append(el("b", v === undefined || v === null ? "dim" : null,
-        v === undefined || v === null ? "—" : String(v)), el("span", null, k));
-      return c; };
-    flow.append(cell(u.sessions, "sessions"), cell(u.joined, "joined"), cell(u.lastSeen, "last seen"));
-    card.append(flow);
-    if (u.note) card.append(el("div", "code", String(u.note).slice(0, 120)));
+    // Where this row comes from. A pill rather than a figure cell: the stat
+    // cells hold numbers, and a phrase in one wraps onto its own label. Said
+    // on every row rather than once at the bottom, because the two kinds sit
+    // side by side and mean different things.
+    card.append(el("div", "src",
+      u.source === "both" ? "Confirmed by the app"
+        : u.source === "app" ? "The app's own"
+        : "Kept here"));
+
+    // Figures only where the app sent some. Three dashes under an account
+    // this box invented is a row of empty boxes saying nothing.
+    if (u.source !== "kept" && (u.sessions !== undefined || u.lastSeen !== undefined)) {
+      const flow = el("div", "flow");
+      const cell = (v, k) => { const c = el("div", "st");
+        const dim = v === undefined || v === null || v === "";
+        c.append(el("b", dim ? "dim" : null, dim ? "—" : String(v)), el("span", null, k));
+        return c; };
+      flow.append(cell(u.sessions, "sessions"), cell(u.lastSeen, "last seen"));
+      card.append(flow);
+    }
+
+    if (u.note) card.append(el("div", "code", String(u.note).slice(0, 160)));
+
+    // Only what this box owns can be edited from this box.
+    if (u.source !== "app") {
+      const bar = el("div", "acts");
+      const edit = el("button", "mini", "Edit");
+      edit.type = "button";
+      edit.addEventListener("click", () => openAccount(u.id));
+      const drop = el("button", "mini danger", "Remove");
+      drop.type = "button";
+      drop.addEventListener("click", async () => {
+        // Removing an account does not touch a post already shared from it:
+        // the post stored the name alongside the id for exactly this.
+        if (!confirm("Remove " + name + " from the roster? Posts already shared from "
+          + "it keep the name they recorded.")) return;
+        try { await saveAccounts((accounts || []).filter((a) => a.id !== u.id)); }
+        catch (e) { alert("Could not remove it: " + e.message); }
+      });
+      bar.append(edit, drop);
+      card.append(bar);
+    }
     box.append(card);
   }
+
+  const app = Array.isArray(users) ? users.length : 0;
+  note.innerHTML = (accountsNote ? accountsNote + " " : "")
+    + (app
+      ? "<b>Confirmed against the app.</b> Any row the app also serves is checked "
+        + "against its own record; the rest are kept here only."
+      : "<b>Kept here, because the app serves no user list yet.</b> These are the "
+        + "accounts you operate, written down on this side so the Share form has "
+        + "something to post from. The shape the app should serve is in "
+        + "<code>docs/for-studypal-users.md</code>, and the day it does, a row it "
+        + "confirms says so.");
 }
 
 $("uq").addEventListener("input", (e) => { uquery = e.target.value.trim(); drawUsers(); });
+
+// ---------------------------------------------------------------------------
+// The app's own users
+//
+// Read from Study Pal and never stored here. The roster above is this box's
+// own list and says so; this is the other side's, and the two are merged in
+// roster() on the id they share.
+//
+// The endpoint does not exist yet — see docs/for-studypal-users.md. A 404 is
+// not an empty app, so it is not drawn as one.
+// ---------------------------------------------------------------------------
+let users = null;
+
+async function loadUsers() {
+  try {
+    const r = await fetch("/sp/users");
+    const d = await r.json().catch(() => ({}));
+    // 404 is the expected answer today and not worth an error on the page:
+    // the roster below it works without this.
+    if (r.status === 404) { users = []; drawUsers(); return; }
+    if (!r.ok) throw new Error(d.error || "the app said " + r.status);
+    users = Array.isArray(d) ? d : Array.isArray(d?.users) ? d.users : [];
+  } catch {
+    users = [];
+  }
+  drawUsers();
+  drawShare();
+}
 
 // ---------------------------------------------------------------------------
 // The catalogue, read from the app rather than kept here
@@ -1161,21 +1578,29 @@ $("cq").addEventListener("input", (e) => { cquery = e.target.value.trim(); drawC
 
 function draw() {
   // The two tabs that read the app rather than this project's own file. Drawn
-  // only where they mean something: the catalogue and the users belong to the
-  // app these credentials point at, and this panel opens against whichever
-  // project is selected. A tab that shows another product's content under this
-  // project's name is worse than an absent tab.
-  for (const k of ["content", "users"]) {
-    $("t-" + k).hidden = !state.sameApp;
-    if (!state.sameApp && tab === k) show("share");
-  }
+  // only where it means something: the catalogue belongs to the app these
+  // credentials point at, and this panel opens against whichever project is
+  // selected. A tab that shows another product's content under this project's
+  // name is worse than an absent tab.
+  //
+  // Users is no longer one of them. It was, while that tab showed only the
+  // app's own list — but it now holds this project's roster of accounts, which
+  // is kept here, keyed per project like everything else on this page, and is
+  // the only thing the Share form has to post from. Hiding it on a seat
+  // without Study Pal's credentials would leave that field permanently empty
+  // with no way to fill it, which is exactly the seat that needs it most. The
+  // app's half of the list is what the credentials gate, and roster() gates it.
+  $("t-content").hidden = !state.sameApp;
+  if (!state.sameApp && tab === "content") show("share");
 
   const n = state.people.length, s = state.posts.length;
   $("title").textContent = PROJECT || "Social";
   $("ava").textContent = (PROJECT || "?").slice(0, 2).toUpperCase();
-  const u = Array.isArray(users) ? users.length : 0;
+  const a = roster().length;
+  const held = heldCount();
   $("sub").textContent = `${s} ${s === 1 ? "post" : "posts"} recorded`
-    + (u ? ` · ${u} ${u === 1 ? "user" : "users"} in the app` : " · no user list yet");
+    + ` · ${a} ${a === 1 ? "account" : "accounts"}`
+    + (held ? ` · ${held} held for review` : "");
   drawShare(); drawFeed(); drawPeople();
 }
 
