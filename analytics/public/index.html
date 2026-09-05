@@ -10,9 +10,23 @@
 -->
 <style>
   :root{
-    --paper:#f2f0ea; --card:#fbfaf7; --card-2:#f1efe8; --ink:#1a1c1a;
-    --ink-2:#4c5350; --muted:#828b87; --rule:#e0ddd3;
-    --jade:#1f6b52; --jade-soft:#e4efea;
+    /* Porcelain rather than cream, and a real gap between ground and card.
+       The old pair sat nine points apart, so the cards did not read as
+       objects on a surface — they read as slightly paler background, and a
+       dashboard whose panels do not separate has no structure to look at.
+       The ground is cooled towards celadon, which is the same material world
+       as the jade and stops the page reading as the default warm-cream-and-
+       serif that every generated dashboard arrives in. */
+    --paper:#e6ebe7; --card:#fdfdfc; --card-2:#eef2ef; --ink:#141814;
+    --ink-2:#485049; --muted:#7c857e; --rule:#d2dad4;
+    /* Three steps of the accent, so a bar chart can encode rank in weight as
+       well as in length, and the leading figure is the darkest thing on the
+       page rather than one of eight identical blocks. */
+    --jade:#0f5a45; --jade-2:#3f8c73; --jade-soft:#dfece7;
+    /* The second data family. Bronze sits beside jade in the same material
+       world, is plainly not the accent, and — unlike red — carries no verdict,
+       which is the whole reason the first attempt at this was reverted. */
+    --bronze:#8a6524; --bronze-soft:#f0e8d9;
     /* Jade counts. The seal warns, and only warns.
        Colouring a category red was tried here and reverted: red reads as
        "broken" on a dashboard whatever you intend it to mean, so a headline
@@ -28,9 +42,10 @@
   }
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
-      --paper:#12140f; --card:#1a1d18; --card-2:#20241e; --ink:#eceee6;
-      --ink-2:#aab2a9; --muted:#7c857c; --rule:#2a2f27;
-      --jade:#5cc39c; --jade-soft:#12261f;
+      --paper:#0f120f; --card:#191d19; --card-2:#212621; --ink:#eaeee9;
+      --ink-2:#a8b2a9; --muted:#7b857d; --rule:#2b322c;
+      --jade:#5cc39c; --jade-2:#3d8b71; --jade-soft:#12261f;
+      --bronze:#c9a068; --bronze-soft:#241d12;
       --seal:#e08a76; --seal-soft:#2a1a16;
     }
   }
@@ -242,14 +257,10 @@
     text-align:right; font-family:var(--mono); font-size:.78rem; white-space:nowrap;
     color:var(--muted); font-variant-numeric:tabular-nums;
   }
-  /* Bars counting people rather than calls or views. Marked out by fill rather
-     than by hue: a second colour here would either fight the accent or imply a
-     verdict, while an outline reads plainly as "same family, different unit"
-     and survives both themes without a second palette to keep balanced. */
-  .bars.people .fill{
-    background:var(--jade-soft);
-    box-shadow:inset 0 0 0 1.5px var(--jade);
-  }
+  /* Bars counting people rather than calls or views. Bronze, not red: the
+     distinction is a unit, not a verdict, and the first attempt at this in
+     seal made every headline figure look like a fault. */
+  .bars.people .fill{background:var(--bronze)}
   .bars.has-who .bar-row{grid-template-columns:6.5rem 1fr 3rem 4.6rem}
   /* A figure that cannot be anything but zero yet is not a finding, and must
      not be read as one. Dimmed and dashed rather than printed as a hard 0. */
@@ -561,6 +572,22 @@ const el = (tag, cls, text) => {
   return n;
 };
 const fmt = (n) => n.toLocaleString("en-US");
+
+/** Weight a bar by its rank as well as its length.
+ *
+ *  Eight bars in one flat colour encode order nowhere except in the figures at
+ *  the end of each row, so the eye has to read all eight to find the leader.
+ *  Stepping the weight down the list makes the ranking visible before any of
+ *  the numbers are read, and floors well short of invisible: the last bar is
+ *  still a value somebody may care about, not a ghost. */
+function rankWeight(el, index, total) {
+  if (total <= 1) return;
+  // A short list spends the whole ramp in two or three steps, which leaves its
+  // last bar as faint as the eighth of eight — too quiet for a value that may
+  // be third of three. So the floor rises as the list shortens.
+  const floor = total <= 4 ? 0.62 : 0.45;
+  el.style.opacity = String(1 - (index / (total - 1)) * (1 - floor));
+}
 /** A visit length people can read. Seconds under a minute, then m:ss. */
 const duration = (s) => {
   if (!s) return "—";
@@ -798,13 +825,14 @@ function drawUses(uses, byDay, devices, deviceDays, unit) {
   const who = new Map((devices || []).map((d) => [d.name, d.count]));
   if (who.size) box.classList.add("has-who");
 
-  for (const u of uses) {
+  for (const [i, u] of uses.entries()) {
     const row = el("div", "bar-row");
     const track = el("span", "track");
     const fill = el("span", "fill");
     // Against the largest, not the total: the question is which feature leads,
     // and shares of a total compress everything below the top one into nothing.
     fill.style.width = Math.max(1, (u.count / peak) * 100) + "%";
+    rankWeight(fill, i, uses.length);
     track.append(fill);
     row.append(el("span", "name", u.name), track, el("span", "val", fmt(u.count)));
     if (who.size) {
@@ -906,11 +934,12 @@ function drawBars(id, items, empty, span, spanText) {
   note.hidden = true;
   const peak = Math.max(1, ...items.map((i) => i.count));
   if (span && spanText) document.getElementById(span).textContent = spanText(items);
-  for (const i of items) {
+  for (const [n, i] of items.entries()) {
     const row = el("div", "bar-row");
     const track = el("span", "track");
     const fill = el("span", "fill");
     fill.style.width = Math.max(1, (i.count / peak) * 100) + "%";
+    rankWeight(fill, n, items.length);
     track.append(fill);
     row.append(el("span", "name", i.name), track, el("span", "val", fmt(i.count)));
     box.append(row);
@@ -1037,6 +1066,9 @@ function drawArrivals(arrivals) {
   const total = rows.reduce((n, r) => n + r.count, 0);
   span.textContent = "· " + fmt(total) + " people in all";
 
+  // No rank weighting here, unlike the ranked lists above: these are in date
+  // order, so fading down the list would say the first day mattered most and
+  // the most recent one least, which is the opposite of true.
   for (const r of rows) {
     const row = el("div", "bar-row");
     const track = el("span", "track");
