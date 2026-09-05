@@ -477,10 +477,13 @@
      A seat that cannot edit the source has a narrow set of useful next moves,
      and typing one out is friction on a review tool. These are Sage's own
      suggestions, so they are phrased as the message they will send. */
-  .nexts{display:flex;flex-wrap:wrap;gap:.4rem;margin:.15rem 0 .1rem}
+  .nexts{display:flex;flex-wrap:wrap;gap:.5rem;margin:.35rem 0 .2rem}
+  /* A target, not a footnote. These were sized like metadata and they are the
+     main way this seat is driven — 44px of height is the smallest thing a
+     thumb hits reliably, and the text should be readable at arm's length. */
   .nextbtn{
-    font:inherit;font-size:.82rem;line-height:1.3;text-align:left;cursor:pointer;
-    padding:.4rem .8rem;border-radius:99px;
+    font:inherit;font-size:1rem;line-height:1.35;text-align:left;cursor:pointer;
+    padding:.62rem 1.1rem;border-radius:99px;min-height:44px;
     background:var(--card);color:var(--ink-2);border:1px solid var(--rule);
   }
   .nextbtn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
@@ -498,8 +501,11 @@
     white-space:pre-wrap;overflow-wrap:anywhere;font-size:.95rem;
   }
   /* Serif for Sage, sans for you — the typeface says who is speaking. */
+  /* Sized up. This is read across a room and on a phone, and it is the one
+     thing on the page anybody is actually reading — the tool rows, the
+     masthead and the buttons are all furniture around it. */
   .sage .body{
-    font-family:var(--serif);font-size:1.06rem;line-height:1.62;
+    font-family:var(--serif);font-size:1.2rem;line-height:1.6;
     white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink);
   }
   .sage .body:empty::after{

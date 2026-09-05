@@ -121,3 +121,50 @@ mv "$OUT.tmp" "$OUT"
 SHORT=$(git -C "$ROOT" rev-parse --short HEAD)
 COUNTED=$(git -C "$ROOT" log "-n$COUNT" --pretty=format:x | wc -l | tr -d ' ')
 echo "whats-new: $((COUNTED + 1)) commits, head $SHORT"
+
+# ---------------------------------------------------------------------------
+# The reasoning, and the notes
+#
+# The digest above carries subjects. A subject says what changed and never why,
+# and the why is the part that stops the next person — or the next session —
+# undoing a decision on purpose made for a reason nobody recorded. It is
+# already written: it is in the commit bodies, and in docs/.
+#
+# Both are copied here rather than inlined into the agent's prompt. Twenty-five
+# commit bodies and four documents on every turn would be thousands of tokens
+# spent whether or not anything needed them; as files they cost nothing until
+# something is actually asked. The agent already has this directory mounted
+# read-only, so no new access is granted by either.
+#
+# Nothing sensitive is involved. Every file copied is committed to the
+# repository and none of it is `.env`, which is why the repository itself is
+# still not mounted.
+# ---------------------------------------------------------------------------
+
+MSG_DIR="$OUT_DIR/commits"
+# Rebuilt rather than added to: a commit that has dropped off the end of the
+# window should stop being described as recent, and an append-only directory
+# would keep growing until it was the whole history.
+rm -rf "$MSG_DIR"
+mkdir -p "$MSG_DIR"
+# `git log --pretty=format` writes no trailing newline, so a plain `read` loses
+# the last commit -- the oldest one, silently, every time. The `|| [ -n ]` keeps
+# it.
+git -C "$ROOT" log "-n$COUNT" --pretty=format:'%h' | while IFS= read -r short || [ -n "$short" ]; do
+  [ -n "$short" ] || continue
+  # %B is the whole message, subject and body, exactly as written.
+  git -C "$ROOT" log -1 --pretty=format:'%h  %aI  %an%n%n%B' "$short" \
+    > "$MSG_DIR/$short.txt" 2>/dev/null || true
+done
+
+DOC_DIR="$OUT_DIR/docs"
+rm -rf "$DOC_DIR"
+if [ -d "$ROOT/docs" ]; then
+  # -R because docs/ has subdirectories, and the mockups in them are worth
+  # reading too: a mockup is an argument about how something should work.
+  cp -R "$ROOT/docs" "$DOC_DIR" 2>/dev/null || true
+fi
+
+MSGS=$(ls -1 "$MSG_DIR" 2>/dev/null | wc -l | tr -d ' ')
+DOCS=$(find "$DOC_DIR" -type f 2>/dev/null | wc -l | tr -d ' ')
+echo "whats-new: $MSGS commit messages, $DOCS documents"

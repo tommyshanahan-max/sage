@@ -61,20 +61,42 @@
   .tone-blue{--tone:var(--blue)}
 
   /* ---- compose ---- */
-  .compose{display:grid;grid-template-columns:auto 1fr;gap:1.3rem;align-items:start}
-  @media (max-width:34rem){.compose{grid-template-columns:1fr}}
-  .plus{width:76px;height:76px;border-radius:50%;border:0;cursor:pointer;margin-top:.15rem;
+  /* Shut until asked for. The form is five fields and it was the first thing on
+     the page whether or not anybody was about to write anything — which pushed
+     the feed and the people below the fold on the seat that opens straight
+     onto this. The + is the whole of the closed state. */
+  .opener{display:flex;align-items:center;gap:1rem;cursor:pointer;background:none;
+    border:0;padding:0;text-align:left;color:inherit;font:inherit;width:100%}
+  .opener .say{display:block;font-size:1rem;font-weight:700}
+  .opener .sub{display:block;font-size:.82rem;color:var(--muted)}
+  /* One column. It was two while the + lived inside it; with the + moved out
+     to the opener the first column had nothing in it and sized to content,
+     which squeezed every field to half the panel. */
+  .compose{display:block}
+  .plus{width:76px;height:76px;border-radius:50%;border:0;cursor:pointer;flex:none;
     background:linear-gradient(140deg,var(--blue),#5478d8);color:#fff;font-size:2rem;font-weight:300;
-    display:grid;place-items:center;box-shadow:0 6px 16px rgba(63,104,216,.24);line-height:1}
+    display:grid;place-items:center;box-shadow:0 6px 16px rgba(63,104,216,.24);line-height:1;
+    transition:transform .18s ease}
+  .opener:hover .plus{transform:scale(1.04)}
+  .shut{margin-left:auto;font-size:.8rem;font-weight:600;color:var(--muted);
+    background:none;border:0;cursor:pointer;padding:.3rem .5rem}
+  .shut:hover{color:var(--blue)}
   .grp + .grp{margin-top:1.1rem}
   .grp > .lab{display:block;margin:0 0 .5rem;font-size:.64rem;font-weight:700;
     letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-  .kinds{display:flex;gap:.55rem;flex-wrap:wrap}
-  .kbtn{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;
-    font-size:1.05rem;border:2px solid transparent;cursor:pointer;color:#fff}
-  .kbtn[aria-pressed=true]{border-color:var(--ink)}
-  .k-clip{background:var(--violet)} .k-image{background:var(--amber)}
-  .k-poster{background:var(--red)} .k-text{background:var(--green)}
+  /* Four coloured squares with an emoji in each said nothing about what they
+     were for. Bigger, and labelled: a picture of a clapperboard is not the word
+     "clip" to somebody who has not been told it is. */
+  .kinds{display:flex;gap:.6rem;flex-wrap:wrap}
+  .kbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.25rem;
+    width:5.4rem;padding:.7rem .4rem;border-radius:14px;cursor:pointer;
+    background:var(--sunk);border:2px solid var(--rule);color:var(--ink-2)}
+  .kbtn .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
+    font-size:1.1rem;color:#fff}
+  .kbtn .nm{font-size:.76rem;font-weight:700;letter-spacing:.01em}
+  .kbtn[aria-pressed=true]{border-color:var(--blue);background:var(--blue-soft);color:var(--blue)}
+  .k-clip .ic{background:var(--violet)} .k-image .ic{background:var(--amber)}
+  .k-poster .ic{background:var(--red)} .k-text .ic{background:var(--green)}
   textarea,input[type=text]{width:100%;padding:.55rem .7rem;font:inherit;font-size:.9rem;
     color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:9px}
   textarea{min-height:5rem;resize:vertical}
@@ -172,9 +194,18 @@
 
   <!-- ============ SHARE ============ -->
   <section class="card" id="v-share">
-    <h2>Make something</h2>
-    <div class="compose">
-      <button class="plus" type="button" id="save">+</button>
+    <button class="opener" type="button" id="opener" aria-expanded="false" aria-controls="composer">
+      <span class="plus" aria-hidden="true">+</span>
+      <span>
+        <span class="say">Make something</span>
+        <span class="sub">Write it, point it at something, and address it to somebody</span>
+      </span>
+    </button>
+    <div class="compose" id="composer" hidden>
+      <div style="display:flex;align-items:center;margin-bottom:.9rem">
+        <h2 style="margin:0">Make something</h2>
+        <button class="shut" type="button" id="shut">Close</button>
+      </div>
       <div>
         <div class="grp">
           <span class="lab">What it is</span>
@@ -232,8 +263,10 @@ const el = (t, c, x) => { const n = document.createElement(t); if (c) n.classNam
 // stage against whichever project is selected — not from a global setting.
 const PROJECT = new URLSearchParams(location.search).get("project") || "";
 
-const KINDS = [["clip","🎬","A clip"],["image","🖼","An image"],
-               ["poster","📄","A poster"],["text","📝","Just words"]];
+// Labels rather than titles: a tooltip is not a label on a touchscreen, and
+// this panel is read on a phone as often as not.
+const KINDS = [["clip","🎬","Clip"],["image","🖼","Image"],
+               ["poster","📄","Poster"],["text","📝","Words"]];
 const TONES = ["green","red","amber","violet","blue"];
 
 let state = { people: [], posts: [], base: "", arrivals: null, counter: false };
@@ -294,9 +327,10 @@ function linkFor(code, points) {
 function drawKinds() {
   const box = $("kinds"); box.replaceChildren();
   for (const [id, icon, label] of KINDS) {
-    const b = el("button", "kbtn k-" + id, icon);
-    b.type = "button"; b.title = label;
+    const b = el("button", "kbtn k-" + id);
+    b.type = "button";
     b.setAttribute("aria-pressed", String(kind === id));
+    b.append(el("span", "ic", icon), el("span", "nm", label));
     b.addEventListener("click", () => { kind = id; drawKinds(); });
     box.append(b);
   }
@@ -347,9 +381,21 @@ $("record").addEventListener("click", () => {
     passedOn: false, at: new Date().toISOString().slice(0, 10),
   });
   $("body").value = ""; $("points").value = "";
+  // Shut afterwards: the share is recorded and the wall below is where the
+  // answer to "did that work" lives.
+  openCompose(false);
   save();
 });
-$("save").addEventListener("click", () => $("record").click());
+// Open and shut. The + used to double as the save button, which made the
+// biggest thing on the panel do the least obvious of the two things it could.
+function openCompose(on) {
+  $("composer").hidden = !on;
+  $("opener").hidden = on;
+  $("opener").setAttribute("aria-expanded", String(on));
+  if (on) $("body").focus();
+}
+$("opener").addEventListener("click", () => openCompose(true));
+$("shut").addEventListener("click", () => openCompose(false));
 $("body").addEventListener("input", () => { $("record").disabled = !$("body").value.trim(); });
 $("points").addEventListener("input", drawShare);
 $("link").addEventListener("click", async () => {

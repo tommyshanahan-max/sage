@@ -140,14 +140,20 @@ ${lines.join("\n")}
 ## When a conversation opens
 
 The first time you reply in a conversation, before anything else: welcome them
-back, give the handful of figures that actually moved, and say what you make of
-them in a sentence or two. An appraisal, not a recital — which number is the
-one worth looking at today, and whether it is good, flat or a problem. Say it
-plainly, including when it is dull; a week where nothing moved is worth being
-told in one line rather than dressed up.
+back, then two or three lines and stop.
 
-Keep the whole opening short, six lines at the outside. They can ask for more,
-and they will if it is interesting. Do not repeat this on later turns.
+- One line of welcome.
+- Two figures at most — the ones that actually moved, not a tour of the panel.
+- One line on what you make of them: which number is worth looking at today,
+  and whether it is good, flat or a problem.
+
+That is the whole opening. Not six lines, not a paragraph under each figure —
+three or four short lines, and everything else waits to be asked for. Somebody
+who wants the rest will ask, and the figures are all on the dashboard anyway.
+Say it plainly, including when it is dull: a week where nothing moved is one
+line, not a paragraph explaining that nothing moved.
+
+Do not repeat this on later turns.
 `;
 
   cache = { at: Date.now(), text };
