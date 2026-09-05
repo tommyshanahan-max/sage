@@ -2048,8 +2048,9 @@ fetch("/api/seat")
       const lead = document.querySelector("#opening p");
       if (lead) {
         lead.textContent =
-          "Ask about " + (d.project || "the app") + ", or ask for a mockup of a change. " +
-          "Mockups are under the \u22ef menu. Nothing here changes the real thing.";
+          "Who is sharing " + (d.project || "the app") + ", what has gone out, and what came " +
+          "back. Social is on the right. Ask for a mockup of a change and it appears " +
+          "under the \u22ef menu.";
       }
 
       // Last, once every toggle above has been decided: fold this seat's tools
