@@ -1995,8 +1995,14 @@ fetch("/api/seat")
     appUrl = d.appUrl || "";
     if (appUrl) {
       stageToggle.hidden = false;
-      stageApp.hidden = false;
-      stageLoad(appUrl, new URL(appUrl).host, true);
+      // The third and last place this tab is drawn, and the one that was
+      // missed: a partner seat has a default address whether or not any
+      // project maps one, so guarding the other two left the tab showing
+      // anyway. Social opens below instead, once a project is chosen.
+      if (seatRole !== "partner") {
+        stageApp.hidden = false;
+        stageLoad(appUrl, new URL(appUrl).host, true);
+      }
       // Open by default on a wide screen, because a preview nobody notices is
       // a preview nobody uses. Closed on a phone, where it would take the
       // whole screen away from the conversation.
