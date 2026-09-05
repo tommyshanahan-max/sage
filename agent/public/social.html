@@ -287,6 +287,10 @@
   /* ---- Sage, on a pull ---- */
   /* Bottom right, out of the way of a wall that is read top to bottom, and
      fixed so it does not scroll away from somebody halfway down it. */
+  /* Room under everything for the button that floats over it. A fixed control
+     that sits on the last line of the page is a control that hides the thing
+     somebody scrolled down to read. */
+  main{padding-bottom:5rem}
   .pull{position:fixed;right:1.2rem;bottom:1.2rem;z-index:40;
     display:flex;align-items:center;gap:.5rem;cursor:pointer;font:inherit;
     padding:.7rem 1.1rem;border-radius:99px;border:0;color:#fff;font-weight:700;
@@ -348,12 +352,22 @@
     padding:.32rem .8rem;border-radius:99px;background:var(--card);
     border:1px solid var(--rule);color:var(--muted);text-decoration:none}
   .appbar .mini:hover{border-color:var(--blue);color:var(--blue)}
-  /* A phone-shaped window, because that is what the app is. A full-width
-     frame would show a mobile layout stretched across a desktop and look
-     like a fault in the app rather than in the frame. */
+  /* A phone, at a phone's proportions. Not a guess at a width with a
+     comfortable height under it: the app lays itself out to whatever viewport
+     it is given, and a box 26rem wide by 70vh tall is a phone that is too
+     short, which crops the thing every screen ends with — the buttons along
+     the bottom.
+     So the height leads and the width follows from 390x844, which is the
+     shape of the device this is built for. What fits, fits properly. */
   .frame{background:var(--card);border-radius:18px;box-shadow:var(--shadow);
-    border:1px solid var(--rule);overflow:hidden;
-    width:min(26rem,100%);height:min(70vh,46rem);margin:0 auto}
+    border:1px solid var(--rule);overflow:hidden;margin:0 auto;
+    aspect-ratio:390/844;height:min(78vh,52rem);width:auto}
+  /* Where the window is too short to give a phone its height, width leads
+     instead and the frame simply gets shorter than a real one — better than a
+     sliver of a phone nobody can read. */
+  @media (max-height:44rem){
+    .frame{height:auto;width:min(22rem,100%);aspect-ratio:390/700}
+  }
   .frame iframe{width:100%;height:100%;border:0;display:block;background:var(--sunk)}
   .sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;
     justify-content:center;padding:2rem 1rem;overflow:auto;
@@ -591,7 +605,12 @@
       <button class="mini" type="button" id="appreload">Reload</button>
       <a class="mini" id="appopen" target="_blank" rel="noreferrer">Open in a tab</a>
     </div>
+    <!-- The app asks for the microphone and the camera; a frame gets neither
+         unless it is granted them. Without this, pressing to talk inside the
+         panel fails in a way that looks like the app is broken rather than
+         like the frame is. The browser still asks the person first. -->
     <div class="frame"><iframe id="appframe" title="Study Pal"
+      allow="microphone; camera; clipboard-write; geolocation"
       referrerpolicy="no-referrer"></iframe></div>
     <p class="thin" id="appnote"></p>
   </section>

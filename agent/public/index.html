@@ -1379,7 +1379,11 @@ async function drawNumbers() {
   );
   numbersBox.replaceChildren(...parts);
   numbersBox.href = d.link || "#";
-  numbersBox.hidden = false;
+  // Not in the drawer. The panel this opens on top of carries the same figures
+  // in its own masthead, in more detail and with a line under each — two copies
+  // of one number a few hundred pixels apart is not twice as much information,
+  // it is one number and a question about which to trust.
+  numbersBox.hidden = BARE;
 }
 
 drawNumbers();
