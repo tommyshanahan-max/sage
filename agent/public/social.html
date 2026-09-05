@@ -283,6 +283,40 @@
   .add{border:1px dashed var(--rule);background:none;border-radius:15px;padding:.9rem;
     color:var(--muted);font-size:.85rem;font-weight:600;cursor:pointer;width:100%}
   .add:hover{border-color:var(--blue);color:var(--blue)}
+
+  /* ---- the detail sheet ---- */
+  .sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;
+    justify-content:center;padding:2rem 1rem;overflow:auto;
+    background:rgba(17,24,33,.42);backdrop-filter:blur(2px)}
+  /* The UA rule for [hidden] is display:none, and the rule above outranks it.
+     Every flex or grid element on this page needs this said explicitly. */
+  .sheet[hidden]{display:none}
+  .sheetbox{background:var(--card);border-radius:18px;box-shadow:0 24px 60px rgba(17,24,33,.28);
+    width:min(46rem,100%);overflow:hidden}
+  .sheethd{display:flex;align-items:center;gap:.6rem;padding:1rem 1.1rem .8rem}
+  .sheethd h2{margin:0;font-size:1.05rem}
+  .sheetbox .full{width:100%;display:block;max-height:26rem;object-fit:contain;
+    background:var(--sunk)}
+  .sheetbox .pad{padding:1rem 1.1rem 1.2rem}
+  /* Label above value, not beside it: several of these are ids and URLs that
+     are longer than any sensible label column. */
+  .facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(13rem,1fr));
+    gap:.9rem 1.2rem;margin:0}
+  .fact dt{font-size:.62rem;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 .2rem}
+  .fact dd{margin:0;font-size:.85rem;line-height:1.45;overflow-wrap:anywhere}
+  .fact dd.dim{color:var(--muted)}
+  .fact dd.mono{font-family:var(--mono);font-size:.78rem}
+  .fact.wide{grid-column:1/-1}
+  .sheetbox .acts{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.2rem;
+    padding-top:.9rem;border-top:1px solid var(--rule)}
+  .sheetbox details{margin-top:1rem}
+  .sheetbox summary{cursor:pointer;font-size:.76rem;font-weight:700;color:var(--muted)}
+  .sheetbox pre{margin:.6rem 0 0;padding:.8rem;border-radius:10px;background:var(--sunk);
+    font-family:var(--mono);font-size:.72rem;line-height:1.5;overflow:auto;max-height:20rem}
+  /* The tiles say they can be opened. */
+  .post{cursor:pointer}
+  .post .meta button{cursor:pointer}
 </style>
 </head>
 <body>
@@ -475,6 +509,19 @@
     <p class="thin" id="peoplenote"></p>
   </section>
 </main>
+
+<!-- Everything known about one post. A sheet rather than an expanding card,
+     because the interesting case is a wall of twenty and the answer to "what
+     is this one" should not push the other nineteen around. -->
+<div class="sheet" id="sheet" hidden>
+  <div class="sheetbox" role="dialog" aria-modal="true" aria-labelledby="sheethead">
+    <div class="sheethd">
+      <h2 id="sheethead">Post</h2>
+      <button class="shut" type="button" id="sheetshut">Close</button>
+    </div>
+    <div id="sheetbody"></div>
+  </div>
+</div>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -1017,6 +1064,10 @@ function drawFeed() {
     });
     meta.append(del);
     inn.append(meta);
+    a.addEventListener("click", (e) => {
+      if (e.target.closest("button, a")) return;
+      openShare(s);
+    });
     a.append(shot, inn);
     box.append(a);
   }
@@ -1346,14 +1397,217 @@ function drawReports() {
     }
     inn.append(meta);
 
+    card.addEventListener("click", (e) => {
+      if (e.target.closest("button, a")) return;
+      openReport(r);
+    });
     card.append(inn);
     box.append(card);
   }
+
+  // The subtitle counts what is held, and the Users tab counts posts per
+  // account off these same reports, so both are redrawn when they land.
+  // Lost when the row renderer became a tile renderer — the call sat in
+  // the middle of the block that was replaced.
+  draw();
+  drawUsers();
 
   note.innerHTML = "<b>The app talking back.</b> Held means Study Pal's own check "
     + "could not judge the post either way and asked for a person. Marking one read "
     + "is this box's note that somebody looked — releasing it is Study Pal's call, "
     + "made in Study Pal.";
+}
+
+
+// ---------------------------------------------------------------------------
+// Everything known about one post
+//
+// Two kinds of thing land here and they are not the same record:
+//
+//   - a report, which is the app telling us what happened to a post it holds;
+//   - a share, which is what this panel composed, plus whether it was sent.
+//
+// Both are laid out the same way — every field this box stores, including the
+// empty ones. An absent field shown as a dash says "nothing here", which is a
+// different and more useful answer than a field that is simply not rendered:
+// somebody looking at a post that will not send needs to see that the account
+// is blank, not to notice that a row they have never seen is missing.
+// ---------------------------------------------------------------------------
+
+/** One label and value. Empty renders as a dash rather than disappearing. */
+function fact(label, value, cls) {
+  const d = el("div", "fact" + (cls && cls.includes("wide") ? " wide" : ""));
+  d.append(el("dt", null, label));
+  const empty = value === undefined || value === null || value === "";
+  d.append(el("dd", (empty ? "dim " : "") + (cls || "").replace("wide", "").trim(),
+    empty ? "—" : String(value)));
+  return d;
+}
+
+function closeSheet() {
+  $("sheet").hidden = true;
+  document.removeEventListener("keydown", sheetKeys);
+}
+function sheetKeys(e) { if (e.key === "Escape") closeSheet(); }
+
+$("sheetshut").addEventListener("click", closeSheet);
+// The backdrop closes it; the box does not, or a click on a caption would.
+$("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
+
+/** The app's report on one of its own posts. */
+function openReport(r) {
+  const body = $("sheetbody"); body.replaceChildren();
+  $("sheethead").textContent = EVENT_WORD[r.event] || r.event;
+
+  const photoUrl = r.photo && state.base
+    ? state.base.replace(/\/+$/, "") + "/api/public-media?id=" + encodeURIComponent(r.photo)
+    : "";
+  if (photoUrl) {
+    const img = Object.assign(document.createElement("img"),
+      { className: "full", src: photoUrl, alt: "", loading: "lazy" });
+    img.addEventListener("error", () => img.remove());
+    body.append(img);
+  }
+
+  const pad = el("div", "pad");
+  const facts = el("dl", "facts");
+  facts.append(
+    fact("What it says", r.body, "wide"),
+    fact(r.event === "held" ? "Why it was held" : "Reason", r.reason, "wide"),
+    fact("Status", EVENT_WORD[r.event] || r.event),
+    fact("Post id in the app", r.id, "mono"),
+    fact("When the app says", when(r.at)),
+    fact("When this box heard", when(r.seenAt)),
+    fact("Account id", r.fromId, "mono"),
+    fact("Account name", r.fromName || roster().find((u) => u.id === r.fromId)?.name),
+    fact("Photo id", r.photo, "mono"),
+    fact("Looked at", r.reviewed ? "yes" + (r.reviewedBy ? ", by " + r.reviewedBy : "") : ""),
+  );
+  pad.append(facts);
+
+  const acts = el("div", "acts");
+  if (r.event === "held") {
+    const b = el("button", "tick", r.reviewed ? "Put it back on the list" : "I looked at it");
+    b.type = "button";
+    b.setAttribute("aria-pressed", String(Boolean(r.reviewed)));
+    b.addEventListener("click", async () => {
+      b.disabled = true;
+      try {
+        const res = await fetch("/api/social/feedback/reviewed", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: r.id, reviewed: !r.reviewed }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d.error || "the server said " + res.status);
+        reports = Array.isArray(d.reports) ? d.reports : reports;
+        drawReports();
+        closeSheet();
+      } catch (e) {
+        b.disabled = false;
+        b.textContent = "Could not save it: " + e.message;
+      }
+    });
+    acts.append(b);
+  }
+  if (photoUrl) {
+    // The photo at full size, on the app's own domain. A link rather than a
+    // bigger image: the useful version of "let me see it properly" is the
+    // browser's own image view.
+    const a = document.createElement("a");
+    a.className = "send"; a.href = photoUrl; a.target = "_blank"; a.rel = "noreferrer";
+    a.textContent = "Open the photo";
+    acts.append(a);
+  }
+  if (r.event !== "removed") {
+    const del = el("button", "del pull", "Delete from app");
+    del.type = "button";
+    del.addEventListener("click", async () => {
+      await removeFromApp(r.id, r.body || "this post", del);
+      closeSheet();
+    });
+    acts.append(del);
+  }
+  pad.append(acts);
+  pad.append(rawBlock(r));
+  body.append(pad);
+
+  $("sheet").hidden = false;
+  document.addEventListener("keydown", sheetKeys);
+  $("sheetshut").focus();
+}
+
+/** A share composed here, and what became of it. */
+function openShare(p) {
+  const body = $("sheetbody"); body.replaceChildren();
+  $("sheethead").textContent = p.appId ? "Delivered" : "Recorded here";
+
+  if (p.media) {
+    const url = "/api/social/media/" + p.media + "?project=" + encodeURIComponent(PROJECT);
+    body.append(/\.(mp4|mov|webm)$/.test(p.media)
+      ? Object.assign(document.createElement("video"),
+          { className: "full", src: url, controls: true, preload: "metadata" })
+      : Object.assign(document.createElement("img"),
+          { className: "full", src: url, alt: "", loading: "lazy" }));
+  }
+
+  const pad = el("div", "pad");
+  const facts = el("dl", "facts");
+  const acc = roster().find((u) => u.id === p.fromId);
+  facts.append(
+    fact("What it says", p.body, "wide"),
+    fact("Shared from", p.fromName || acc?.name),
+    fact("Account id", p.fromId, "mono"),
+    fact("Kind", (KINDS.find((k) => k[0] === p.kind) || [])[2] || p.kind),
+    fact("Recorded by", p.by),
+    fact("Recorded", when(p.at)),
+    // The two ids, side by side, because "which post is this over there" is
+    // the question this sheet exists to answer.
+    fact("Id on this box", p.id, "mono"),
+    fact("Post id in the app", p.appId, "mono"),
+    fact("Delivered", when(p.sentAt)),
+    fact("File", p.media, "mono"),
+    fact("Last send result", p.sendNote || (p.appId ? "delivered" : "not sent yet"), "wide"),
+  );
+  pad.append(facts);
+
+  const acts = el("div", "acts");
+  if (!p.appId && p.fromId) {
+    const send = el("button", "send", p.sendNote ? "Try again" : "Share to Study Pal");
+    send.type = "button";
+    send.addEventListener("click", async () => { await publish(p.id, send); closeSheet(); });
+    acts.append(send);
+  }
+  if (p.appId) {
+    const pull = el("button", "del pull", "Delete from app");
+    pull.type = "button";
+    pull.addEventListener("click", async () => {
+      await removeFromApp(p.appId, p.body || "this post", pull);
+      closeSheet();
+    });
+    acts.append(pull);
+  }
+  pad.append(acts);
+  pad.append(rawBlock(p));
+  body.append(pad);
+
+  $("sheet").hidden = false;
+  document.addEventListener("keydown", sheetKeys);
+  $("sheetshut").focus();
+}
+
+/** The record exactly as it is stored.
+ *
+ *  Folded away, because it is for the case where the fields above do not
+ *  explain what happened — a field arriving under a name this panel does not
+ *  read, most likely, which is the failure the laid-out view cannot show by
+ *  construction. */
+function rawBlock(obj) {
+  const d = document.createElement("details");
+  d.append(Object.assign(document.createElement("summary"), { textContent: "Everything stored" }));
+  d.append(Object.assign(document.createElement("pre"),
+    { textContent: JSON.stringify(obj, null, 2) }));
+  return d;
 }
 
 // ---- tabs -----------------------------------------------------------------
@@ -1432,8 +1686,30 @@ async function saveAccounts(next) {
   drawUsers(); drawShare();
 }
 
-/** The two lists as one, keyed by id. The app wins on any field it serves: it
- *  is the side that decides what an account is actually called. */
+/** What the app's own reports say about each account.
+ *
+ *  Not a user list — it is every account the app has published, held or removed
+ *  a post from, counted off the webhook. Derived rather than asked for, because
+ *  Study Pal serves no /api/users yet and this is real activity from the app
+ *  either way: an account with eleven posts is doing something, and that is
+ *  worth more than the row of dashes that stood here before it. */
+function appSeen() {
+  const m = new Map();
+  for (const r of (reports || [])) {
+    const id = String(r.fromId || "");
+    if (!id) continue;
+    const e = m.get(id) || { id, name: "", posts: 0, held: 0, last: "" };
+    e.posts += 1;
+    if (r.event === "held") e.held += 1;
+    if (r.fromName && !e.name) e.name = r.fromName;
+    if ((r.at || "") > e.last) e.last = r.at || "";
+    m.set(id, e);
+  }
+  return m;
+}
+
+/** The lists as one, keyed by id. The app wins on any field it serves: it is
+ *  the side that decides what an account is actually called. */
 function roster() {
   const byId = new Map();
   for (const a of (Array.isArray(accounts) ? accounts : [])) {
@@ -1449,6 +1725,17 @@ function roster() {
     byId.set(id, { tone: "blue", ...(was || {}), ...u, id,
                    name: u.name || was?.name || id,
                    source: was ? "both" : "app" });
+  }
+  // And whatever the app's own reports reveal. An id here that is on neither
+  // list is an account posting through the app that this panel has never been
+  // told about — worth showing rather than dropping, because it is the only
+  // evidence of it that exists on this box.
+  for (const [id, seen] of appSeen()) {
+    const was = byId.get(id);
+    byId.set(id, { tone: "blue", ...(was || {}), id,
+                   name: was?.name || seen.name || id,
+                   posts: seen.posts, held: seen.held, lastPost: seen.last,
+                   source: was ? was.source : "seen" });
   }
   return [...byId.values()];
 }
@@ -1613,18 +1900,28 @@ function drawUsers() {
     card.append(el("div", "src",
       u.source === "both" ? "Confirmed by the app"
         : u.source === "app" ? "The app's own"
+        : u.source === "seen" ? "Seen posting in the app"
         : u.inApp ? "Created in the app"
         : "Kept here only"));
 
-    // Figures only where the app sent some. Three dashes under an account
-    // this box invented is a row of empty boxes saying nothing.
-    if (u.source !== "kept" && (u.sessions !== undefined || u.lastSeen !== undefined)) {
+    // Figures where there are any. Two sources: what /api/users sends when it
+    // exists, and what the webhook has already said. A cell is left out rather
+    // than shown as a dash — a row of dashes under every account was a table
+    // of things nobody knows.
+    const cells = [];
+    const cell = (v, k) => { const c = el("div", "st");
+      c.append(el("b", null, String(v)), el("span", null, k)); return c; };
+    // Short labels and a short date. These cells are a third of a narrow card
+    // wide: "posts in the app" wrapped onto three lines and a full timestamp
+    // wrapped onto two, which made a row of four figures taller than the name
+    // above it.
+    if (u.posts) cells.push(cell(u.posts, "posts"));
+    if (u.held) cells.push(cell(u.held, "held"));
+    if (u.lastPost) cells.push(cell(when(u.lastPost).split(",")[0], "last"));
+    if (u.sessions !== undefined && u.sessions !== null) cells.push(cell(u.sessions, "sessions"));
+    if (cells.length) {
       const flow = el("div", "flow");
-      const cell = (v, k) => { const c = el("div", "st");
-        const dim = v === undefined || v === null || v === "";
-        c.append(el("b", dim ? "dim" : null, dim ? "—" : String(v)), el("span", null, k));
-        return c; };
-      flow.append(cell(u.sessions, "sessions"), cell(u.lastSeen, "last seen"));
+      flow.append(...cells);
       card.append(flow);
     }
 
@@ -1653,15 +1950,20 @@ function drawUsers() {
   }
 
   const app = Array.isArray(users) ? users.length : 0;
+  const seen = appSeen().size;
   note.innerHTML = (accountsNote ? accountsNote + " " : "")
     + (app
       ? "<b>Confirmed against the app.</b> Any row the app also serves is checked "
         + "against its own record; the rest are kept here only."
-      : "<b>Kept here, because the app serves no user list yet.</b> These are the "
-        + "accounts you operate, written down on this side so the Share form has "
-        + "something to post from. The shape the app should serve is in "
-        + "<code>docs/for-studypal-users.md</code>, and the day it does, a row it "
-        + "confirms says so.");
+      : "<b>The app serves no user list yet</b> (<code>docs/for-studypal-users.md</code>), "
+        + "so the names here are ones written down on this side. "
+        + (seen
+          ? "The figures are not. They are counted off what the app has actually "
+            + "reported through the webhook, so they say what an account has really "
+            + "done even while nothing yet says who it is."
+          : "There are no figures either, because the app has reported no posts "
+            + "through the webhook yet. That is a line not carrying anything yet, "
+            + "not a set of accounts that have done nothing."));
 }
 
 $("uq").addEventListener("input", (e) => { uquery = e.target.value.trim(); drawUsers(); });

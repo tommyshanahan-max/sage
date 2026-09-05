@@ -308,16 +308,29 @@ export function cleanReport(raw) {
     // stamping it again on every read would make every report look like it had
     // just arrived, which is the opposite of what it is for.
     seenAt: String(raw.seenAt || post.seenAt || new Date().toISOString()).slice(0, 40),
-    body: pick("body", "text", "caption", "content").slice(0, 2000),
+    // The words. On a published post the fields that would carry a reason are
+    // read as the words too: a published post has no reason to be held, so
+    // text arriving in one of those is the post's own caption. That is not a
+    // guess about one payload — `note` is as natural a name for a caption as
+    // it is for an explanation, and reading it only as the second rendered
+    // real captions as muted asides under a left bar.
+    //
+    // Held and removed keep their reason, because both have a real one: why a
+    // person is needed, and why it came down.
+    body: (event === "published"
+      ? pick("body", "text", "caption", "content", "reason", "note", "why", "detail")
+      : pick("body", "text", "caption", "content")
+    ).slice(0, 2000),
     // An id at the app, fetched from its public-media endpoint. Kept as an
     // opaque string and encoded into a query parameter when used — never
     // pasted into a path, where a slash would change which URL is called.
     photo: pick("photo", "image", "media").slice(0, 200),
     fromId: pick("fromId", "userId", "user", "accountId", "author", "from").slice(0, 64),
     fromName: pick("fromName", "userName", "authorName", "name").slice(0, 80),
-    // Why it was held, when the app says. The whole value of a held row is
-    // knowing what to look at.
-    reason: pick("reason", "note", "why", "detail").slice(0, 400),
+    // Why it was held, when the app says. The whole value of a held card is
+    // knowing what to look at — and only a held card has one, which is why the
+    // words above take these fields on every other event.
+    reason: event === "published" ? "" : pick("reason", "note", "why", "detail").slice(0, 400),
     // Cleared by a person here, not by the app: this is our record of having
     // looked, and the app has no way to know we did.
     reviewed: Boolean(raw.reviewed),

@@ -446,7 +446,22 @@ app.get("/social.html", (req, res, next) => {
   next();
 });
 
-app.use(express.static("public"));
+// The pages, and the assets beside them.
+//
+// HTML is served must-revalidate. Not because caching is wrong — the browser
+// should keep the file — but because the default here is to keep it without
+// asking, and a page it kept for an hour is a page somebody reads a deploy
+// into: three times this evening a change was on the box, correct, and
+// invisible, and the conclusion each time was that the code was broken. A
+// conditional request costs one round trip and removes that entirely.
+//
+// Everything else keeps the default. An image is not going to change under
+// the same name.
+app.use(express.static("public", {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(".html")) res.set("Cache-Control", "no-cache");
+  },
+}));
 
 // --------------------------------------------------------------------------
 // Documents (partner seats only)
@@ -2090,12 +2105,25 @@ app.delete("/api/social/app-post", publishGate, async (req, res) => {
   }
 
   const r = await studypal.call("/api/feed?id=" + encodeURIComponent(appId), { method: "DELETE" });
-  if (r.status === 404 || r.status === 405) {
+
+  // 405 is the only unambiguous "not built": the path exists and the method
+  // does not.
+  if (r.status === 405) {
     return res.status(501).json({
       error: "The app has no way to delete a post yet — see docs/for-studypal-publish.md.",
     });
   }
-  if (r.status < 200 || r.status >= 300) {
+  // 404 means the app has no post with that id, and that is the state being
+  // asked for. It is the ordinary answer for a row that never reached the feed
+  // — a report written by hand while testing the webhook, or a post the app
+  // dropped — and treating it as a failure leaves those rows undeletable.
+  //
+  // It is also what a server with no such route would say, and the two cannot
+  // be told apart from here. So the local record is cleared either way and the
+  // reply says what is actually known: the app does not have it. That sentence
+  // is true in both readings, where "deleted it" would be true in only one.
+  const missing = r.status === 404;
+  if (!missing && (r.status < 200 || r.status >= 300)) {
     return res.status(502).json({
       error: "the app refused it: " + (r.body?.error || r.body?.raw || "said " + r.status),
     });
@@ -2117,7 +2145,10 @@ app.delete("/api/social/app-post", publishGate, async (req, res) => {
             // names anything: the row goes back to being a draft that can be
             // shared again, which is what somebody who deleted it wants next
             // more often than not.
-            ? { ...p, appId: "", sentAt: "", sendNote: "Removed from the app." }
+            ? { ...p, appId: "", sentAt: "",
+                sendNote: missing
+                  ? "Cleared here — the app had no post with this id."
+                  : "Removed from the app." }
             : p)),
         });
         const tmp = postFile + ".tmp";
@@ -2140,7 +2171,10 @@ app.delete("/api/social/app-post", publishGate, async (req, res) => {
       // existed", and deleting the row would state the second.
       const next = social.cleanFeedback({
         reports: stored.reports.map((x) => (x.id === appId
-          ? { ...x, event: "removed", at: new Date().toISOString(), reason: "Removed from this panel." }
+          ? { ...x, event: "removed", at: new Date().toISOString(),
+              reason: missing
+                ? "Cleared here — Study Pal had no post with this id."
+                : "Removed from this panel." }
           : x)),
       });
       await mkdir(SOCIAL_DIR, { recursive: true });
@@ -2152,7 +2186,15 @@ app.delete("/api/social/app-post", publishGate, async (req, res) => {
     await run.catch(() => {});
   }
 
-  res.json({ ok: true, id: appId });
+  res.json({
+    ok: true,
+    id: appId,
+    missing,
+    note: missing
+      ? "Study Pal has no post with that id — it never reached the feed, or was already gone. "
+        + "Cleared from this panel."
+      : "",
+  });
 });
 
 app.delete("/sp/series", ownerOnly, publishGate, async (req, res) => {
