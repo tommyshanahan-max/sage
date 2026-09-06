@@ -63,6 +63,25 @@ const HOOK_SECRET = (process.env.BOARD_HOOK_SECRET || "").trim();
 // first thing somebody tests it with.
 const AUTO = process.env.BOARD_AUTO_PUBLISH === "1";
 
+/* How many separate people have to report a post before it comes down on its
+ * own, pending somebody reading it.
+ *
+ * Two is a compromise and worth naming as one. Higher, and something genuinely
+ * harmful sits up until a person happens to look, which on a board read in
+ * another timezone can be all night. Lower — one — and any single reader can
+ * hide anybody's post, which is a weapon rather than a safeguard.
+ *
+ * Nothing is deleted either way. An auto-hidden post goes to the top of the
+ * queue with its reasons attached and one press puts it back, so a false
+ * report costs a post a few hours and never costs it its existence. */
+const REPORTS_TO_HIDE = Math.max(1, Number(process.env.BOARD_REPORTS_TO_HIDE || 2));
+
+/* A person a reader can reach who is not this software. Apple asks for one
+ * wherever people's words appear in front of each other, and it is the right
+ * thing on a board regardless. Unset, the page says nothing rather than
+ * printing an address that bounces. */
+const CONTACT = (process.env.BOARD_CONTACT || "").trim();
+
 const safeEqual = (a, b) => {
   const x = Buffer.from(String(a)), y = Buffer.from(String(b));
   return x.length === y.length && timingSafeEqual(x, y);
@@ -105,6 +124,10 @@ function tell(event, post) {
 }
 
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
+
+// Who to write to when something is wrong that a report does not cover. Read
+// by the page, which prints nothing at all when there is no answer here.
+app.get("/api/contact", (_req, res) => res.json({ contact: CONTACT }));
 
 /* The page itself, with its own address written into it.
  *
@@ -231,6 +254,63 @@ app.delete("/api/post", express.json(), async (req, res) => {
 // ---------------------------------------------------------------------------
 // Posting, from the board itself
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Reporting
+// ---------------------------------------------------------------------------
+
+/* Somebody says this should not be up.
+ *
+ * A report is stored as an ordinary row pointing at the post, the same shape as
+ * a reply or a like, so there is no second store to keep in step and the admin
+ * queue reads it with the code it already has.
+ *
+ * It is deliberately cheap to file and impossible to file twice: pressing the
+ * button again from the same browser replaces the reason rather than adding to
+ * the count. The count is what decides whether something comes down, so it
+ * counts people, not presses.
+ */
+app.post("/api/report", express.json({ limit: "64kb" }), async (req, res) => {
+  const id = String(req.body?.id || "");
+  const why = String(req.body?.why || "").trim().slice(0, 400);
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!/^[a-f0-9]{20}$/.test(id)) return res.status(400).json({ error: "no such post" });
+  if (!me) return res.status(400).json({ error: "no" });
+
+  const out = await change((board) => {
+    const post = board.posts.find((x) => x.id === id);
+    // The same answer whether the post is missing or already gone, so this
+    // cannot be used to ask which ids exist.
+    if (!post || post.state === "removed") return null;
+
+    // One report per person per post. A second press is a correction, not a
+    // second voice.
+    const mine = board.posts.find((x) => x.report === id && x.by === me);
+    if (mine) { mine.why = why; mine.at = new Date().toISOString(); }
+    else {
+      board.posts.push(store.cleanPost({
+        id: store.newId(), at: new Date().toISOString(),
+        state: "held", report: id, why, by: me,
+      }));
+    }
+
+    const { count } = store.reportsFor(board.posts, id);
+    // Enough separate people have said so. Down it comes, pending a person —
+    // and it keeps its reasons, because the person about to look needs them.
+    if (count >= REPORTS_TO_HIDE && post.state === "published") {
+      post.state = "held";
+      post.why = "Taken down by " + count + " reports, waiting for somebody to read it.";
+      return { post, count, hidden: true };
+    }
+    return { post, count, hidden: false };
+  });
+
+  if (!out) return res.status(404).json({ error: "no such post" });
+  // The admin hears about it either way. A single report on a board this size
+  // is worth a person's attention, whether or not it crossed the line.
+  tell(out.hidden ? "held" : "reported", { ...out.post, why: why || out.post.why });
+  res.json({ ok: true, hidden: out.hidden });
+});
+
 app.post("/api/post", express.json({ limit: "36mb" }), async (req, res) => {
   const note = String(req.body?.note || "").trim().slice(0, 2000);
   const handle = String(req.body?.handle || "").trim().replace(/^@+/, "").slice(0, 40);
@@ -282,11 +362,25 @@ app.get("/api/public", admin, async (req, res) => {
     return res.json({ posts: board.posts.filter((p) => p.state === "published") });
   }
   res.set("Cache-Control", "no-store");
+
+  // Reports are rows pointing at posts, so they are filtered out of every list
+  // here — a queue full of one-line pointers is a queue nobody reads — and
+  // folded back on as counts and reasons against the post they concern.
+  const real = board.posts.filter(store.isOwnPost);
+  const withReports = (p) => {
+    const { count, why } = store.reportsFor(board.posts, p.id);
+    return count ? { ...p, reports: count, reportedFor: why } : p;
+  };
+
   res.json({
-    posts: board.posts.filter((p) => p.state === "held"),
-    live: board.posts.filter((p) => p.state === "published"),
-    refused: board.posts.filter((p) => p.state === "refused"),
-    removed: board.posts.filter((p) => p.state === "removed"),
+    // Held, most-reported first. A post that was up and got objected to needs
+    // reading before one that has never been seen: somebody is already looking
+    // at the first kind.
+    posts: real.filter((p) => p.state === "held").map(withReports)
+      .sort((a, b) => (b.reports || 0) - (a.reports || 0)),
+    live: real.filter((p) => p.state === "published").map(withReports),
+    refused: real.filter((p) => p.state === "refused"),
+    removed: real.filter((p) => p.state === "removed"),
   });
 });
 
@@ -326,6 +420,10 @@ app.post("/api/feed/release", admin, async (req, res) => {
     p.state = "published";
     p.why = "";
     p.at = p.at || new Date().toISOString();
+    // Putting a reported post back clears what was said about it. Without this
+    // the old reports still count, and the next single report hides it again —
+    // so a decision already made would be overturned by one person.
+    board.posts = board.posts.filter((x) => x.report !== id);
     return p;
   });
   if (!post) return res.status(404).json({ error: "no such post" });

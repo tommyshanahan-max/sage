@@ -199,6 +199,17 @@
     border-radius:50%;border:0;background:rgba(28,26,22,.72);color:#fff;
     font-size:1.1rem;line-height:1;display:grid;place-items:center}
   .said{margin:.85rem 0 0;font-size:.92rem;line-height:1.5;color:var(--ink-2)}
+  .hint{margin:0 0 .9rem;font-size:.86rem;line-height:1.55;color:var(--muted)}
+  .reasons{display:flex;gap:.4rem;flex-wrap:wrap;margin:0 0 .8rem}
+  .reasons button{border:1px solid var(--line);background:var(--raise);color:var(--ink);
+    border-radius:99px;padding:.45rem .9rem;font-size:.88rem;line-height:1}
+  .reasons button[aria-pressed="true"]{background:var(--red);border-color:var(--red);
+    color:var(--red-ink)}
+  .alsoblock{display:flex;align-items:flex-start;gap:.6rem;margin:.85rem 0 0;
+    font-size:.9rem;line-height:1.45;color:var(--ink-2);cursor:pointer}
+  .alsoblock input{margin:.15rem 0 0;flex:0 0 auto;width:1.05rem;height:1.05rem;
+    accent-color:var(--red)}
+  .alsoblock b{font-weight:400;color:var(--ink)}
   .said.bad{color:var(--red)}
 
   .foot{margin:2.5rem 0 0;padding-top:1.3rem;border-top:1px solid var(--line);
@@ -226,15 +237,37 @@
   <div class="none" id="none" hidden></div>
 
   <p class="foot">
-    Everything is read by a person before it goes up. Nothing is kept about you
-    but a random number your browser made up, hashed before it is written down —
-    enough to take your own post back, and nothing else.
+    Everything is read by a person before it goes up, and a person reads every
+    report. Nothing is kept about you but a random number your browser made up,
+    hashed before it is written down — enough to take your own post back, and
+    nothing else. Anyone you hide is hidden on this phone only, and forgotten if
+    you clear your browsing data.
+    <span id="contact" hidden></span>
   </p>
 </main>
 
 <button class="fab" id="fab" aria-label="Put something up">
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
 </button>
+
+<div class="sheet" id="reportsheet" hidden>
+  <form class="card" id="reportform">
+    <h2 id="reporttitle">Report this post</h2>
+    <p class="hint">A person reads every report. Say what is wrong with it — one
+      line is enough, and it is the thing that decides what happens next.</p>
+    <div class="reasons" id="reasons"></div>
+    <textarea id="why" rows="2" placeholder="Anything else worth knowing…"></textarea>
+    <label class="alsoblock">
+      <input type="checkbox" id="alsoblock">
+      <span>Also hide everything from <b id="blockwho"></b> on this phone</span>
+    </label>
+    <div class="row">
+      <button class="ghost" type="button" id="reportshut">Cancel</button>
+      <button class="go" type="submit">Report it</button>
+    </div>
+    <p class="said" id="reportsaid" hidden></p>
+  </form>
+</div>
 
 <div class="sheet" id="sheet" hidden>
   <form class="card" id="ask">
@@ -344,6 +377,7 @@ const ICON = {
   like: "M12 20s-7-4.6-7-9.4A4 4 0 0 1 12 8a4 4 0 0 1 7-.6c0 4.8-7 12.6-7 12.6Z",
   remove: "M4 7h16 M10 11v6 M14 11v6 M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12 M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2",
   share: "M18 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z M6 15a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z M18 22a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z M8.2 11.4l7.6-4 M8.2 13.6l7.6 4",
+  flag: "M5 21V4 M5 4h11l-2 3.5L16 11H5",
 };
 function icon(name) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -380,6 +414,22 @@ let posts = [], topic = "";
 let photo = null;             // { data, type }
 let liked = new Set();        // what this browser has already liked
 try { liked = new Set(JSON.parse(localStorage.getItem("board:liked") || "[]")); } catch { /* fine */ }
+
+/* People this reader does not want to see, kept in this browser and nowhere
+ * else. There are no accounts here, so a block cannot be a thing done TO
+ * somebody — it is a thing done to your own copy of the board. That is the
+ * honest version and it has a property the server-side kind does not: it
+ * cannot be used as a weapon, because nobody else is affected by it.
+ *
+ * It is per-browser, and it goes when site data goes. Said plainly on the
+ * page rather than quietly true. */
+let blocked = new Set();
+try { blocked = new Set(JSON.parse(localStorage.getItem("board:blocked") || "[]")); } catch { /* fine */ }
+const saveBlocked = () => {
+  try { localStorage.setItem("board:blocked", JSON.stringify([...blocked])); } catch { /* fine */ }
+};
+let reported = new Set();
+try { reported = new Set(JSON.parse(localStorage.getItem("board:reported") || "[]")); } catch { /* fine */ }
 
 /** Short, the way a feed reads it — "56m", "2h". A date once it is old enough
  *  that "how long ago" has stopped being the useful answer. */
@@ -442,7 +492,11 @@ function draw() {
     : "Anyone can read. Anyone can post.";
 
   const box = $("board"); fill(box);
-  const list = posts.filter((p) => !topic || p.topic === topic);
+  const list = posts.filter((p) => (!topic || p.topic === topic)
+    && !blocked.has((p.handle || "").toLowerCase())
+    // Somebody who has said they should not be looking at this should stop
+    // looking at it now, not once a person gets round to the queue.
+    && !reported.has(p.id));
 
   $("none").hidden = list.length > 0;
   if (!list.length) {
@@ -542,6 +596,12 @@ function card(p) {
     });
   }
 
+  if (!p.mine) {
+    const rep = act("flag", reported.has(p.id) ? "Reported" : "Report");
+    rep.disabled = reported.has(p.id);
+    rep.addEventListener("click", () => openReport(p));
+  }
+
   const share = act("share", "Share");
   share.addEventListener("click", async () => {
     const url = location.origin + "/#" + p.id;
@@ -639,6 +699,91 @@ function say(msg, bad) {
   s.classList.toggle("bad", Boolean(bad));
 }
 
+// ---- reporting -------------------------------------------------------------
+
+/* The reasons offered, and why these five.
+ *
+ * A free text box alone gets "this is bad" and nothing actionable. A list alone
+ * cannot describe what somebody actually saw. Both, with the list first,
+ * because the list is what makes a report legible in three seconds at the top
+ * of a queue — and the four categories below are the ones that would actually
+ * get a post taken down here. "I disagree with this" is not one of them, on
+ * purpose. */
+const REASONS = [
+  "Asking for money",
+  "Abuse or harassment",
+  "Spam or an advert",
+  "Not safe for a public board",
+  "Somebody's private details",
+];
+let reporting = null, reason = "";
+
+function openReport(p) {
+  reporting = p; reason = "";
+  $("reporttitle").textContent = "Report " + (p.handle ? p.handle + "'s post" : "this post");
+  $("blockwho").textContent = p.handle || "them";
+  $("alsoblock").checked = false;
+  $("why").value = "";
+  $("reportsaid").hidden = true;
+
+  const box = $("reasons"); fill(box);
+  for (const r of REASONS) {
+    const b = el("button", null, r);
+    b.type = "button";
+    b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", () => {
+      reason = reason === r ? "" : r;
+      for (const other of box.children) {
+        other.setAttribute("aria-pressed", String(other.textContent === reason));
+      }
+    });
+    box.append(b);
+  }
+  $("reportsheet").hidden = false;
+}
+$("reportshut").addEventListener("click", () => { $("reportsheet").hidden = true; });
+$("reportsheet").addEventListener("click", (e) => {
+  if (e.target === $("reportsheet")) $("reportsheet").hidden = true;
+});
+
+$("reportform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const said = $("reportsaid");
+  const why = [reason, $("why").value.trim()].filter(Boolean).join(" — ");
+  if (!why) {
+    said.hidden = false; said.classList.add("bad");
+    said.textContent = "Pick a reason, or write one. A report with nothing in it cannot be acted on.";
+    return;
+  }
+  const p = reporting;
+  // Blocking is this browser's own business and needs no server, so it happens
+  // whether or not the report goes through.
+  if ($("alsoblock").checked && p.handle) { blocked.add(p.handle.toLowerCase()); saveBlocked(); }
+
+  try {
+    const r = await fetch("/api/report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: p.id, why, device }),
+    });
+    if (!r.ok) throw new Error();
+    reported.add(p.id);
+    try { localStorage.setItem("board:reported", JSON.stringify([...reported])); } catch { /* fine */ }
+  } catch (err) {
+    said.hidden = false; said.classList.add("bad");
+    said.textContent = "That did not send. Try once more — and it is already hidden from you either way.";
+    // Not sending is not a reason to keep showing it to the person who
+    // objected, so it goes from their copy regardless.
+    reported.add(p.id);
+    await load();
+    return;
+  }
+  said.hidden = false; said.classList.remove("bad");
+  said.textContent = "Sent. A person reads every one of these.";
+  await load();
+  setTimeout(() => { $("reportsheet").hidden = true; }, 1800);
+});
+
 // ---- putting something up --------------------------------------------------
 function openSheet(open) {
   $("sheet").hidden = !open;
@@ -663,7 +808,11 @@ document.addEventListener("focusout", (e) => {
 }, true);
 $("shut").addEventListener("click", () => openSheet(false));
 $("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) openSheet(false); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") openSheet(false); });
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  openSheet(false);
+  $("reportsheet").hidden = true;
+});
 
 $("pickpic").addEventListener("click", () => $("pic").click());
 $("shotoff").addEventListener("click", () => { photo = null; $("shot").hidden = true; $("pic").value = ""; });
@@ -705,6 +854,20 @@ $("ask").addEventListener("submit", async (e) => {
   // and somebody who is not told that assumes it failed and posts it again.
   say("Got it. Somebody reads everything before it goes up — it will appear once they have.");
 });
+
+/* A person a reader can reach who is not this software. Printed only when the
+   server was given one — an address that bounces is worse than none. */
+fetch("/api/contact").then((r) => r.json()).then((d) => {
+  if (!d || !d.contact) return;
+  const box = $("contact");
+  box.hidden = false;
+  box.append(document.createTextNode(" Something wrong that a report cannot cover? "));
+  const a = document.createElement("a");
+  a.href = /@/.test(d.contact) ? "mailto:" + d.contact : d.contact;
+  a.textContent = d.contact;
+  a.style.color = "inherit";
+  box.append(a, document.createTextNode("."));
+}).catch(() => { /* no contact set: say nothing */ });
 
 load();
 </script>

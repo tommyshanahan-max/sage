@@ -60,12 +60,16 @@ export function cleanPost(raw) {
     lat: typeof raw.lat === "number" ? Math.round(raw.lat * 1e4) / 1e4 : null,
     lon: typeof raw.lon === "number" ? Math.round(raw.lon * 1e4) / 1e4 : null,
     // A reply points at a post; a like is a row whose whole content is the
-    // pointer. Both are ordinary posts, joined on these.
+    // pointer. A report is the third of these: a row saying somebody thinks
+    // this should not be up, with their reason in `why`. All three are
+    // ordinary posts, joined on these, so nothing here needs a second store.
     re: /^[a-f0-9]{20}$/.test(String(raw.re || "")) ? String(raw.re) : "",
     like: /^[a-f0-9]{20}$/.test(String(raw.like || "")) ? String(raw.like) : "",
-    // Why it was held, refused or taken down. Empty on a published post,
-    // because a published post has no reason.
-    why: raw.state === "published" ? "" : s(raw.why, 400),
+    report: /^[a-f0-9]{20}$/.test(String(raw.report || "")) ? String(raw.report) : "",
+    // Why it was held, refused or taken down — and on a report, why somebody
+    // flagged it. Emptied on a published post, because a published post has no
+    // reason to give; a report keeps its own, since the reason IS the report.
+    why: (raw.state === "published" && !raw.report) ? "" : s(raw.why, 400),
     // Which device wrote it. A hash, never the id itself: it answers "is this
     // the same person again" without answering "who".
     by: s(raw.by, 64),
@@ -115,7 +119,9 @@ export async function save(file, board) {
 /** What a post is, for a reader. A reply and a like are rows in the same list
  *  as posts; drawn as their own cards they fill a board with fragments and one
  *  busy post buries everything under its own likes. */
-export const isOwnPost = (p) => !p.re && !p.like;
+/** A post in its own right, rather than a row that points at one. Replies,
+ *  likes and reports are all rows about somebody else's post. */
+export const isOwnPost = (p) => !p.re && !p.like && !p.report;
 
 /** A post's thread and its like count, assembled from the same list. */
 export function threadFor(posts, id) {
@@ -123,4 +129,20 @@ export function threadFor(posts, id) {
     replies: posts.filter((p) => p.re === id && p.state === "published"),
     likes: posts.filter((p) => p.like === id).length,
   };
+}
+
+/** Who has reported a post, counted by device rather than by row.
+ *
+ *  By device because the number is used to decide whether to take something
+ *  down, and one person pressing Report four times is one person's opinion.
+ *  Counting rows would let anybody hide anything on their own. */
+export function reportsFor(posts, id) {
+  const who = new Set();
+  const why = [];
+  for (const p of posts) {
+    if (p.report !== id) continue;
+    if (p.by) who.add(p.by);
+    if (p.why) why.push(p.why);
+  }
+  return { count: who.size, why };
 }
