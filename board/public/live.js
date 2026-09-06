@@ -45,7 +45,17 @@ export function drawLive(box, posts) {
   for (const p of posts.slice(0, 4)) {
     const a = el("a", "post");
     a.href = "/feed#" + p.id;
-    a.append(el("div", "av", (String(p.handle || "?").trim()[0] || "?").toLowerCase()));
+    // Their face where they have one, their initial where they do not. Drawn
+    // letter-first and replaced on load, so a slow or failed image leaves a
+    // filled circle rather than an empty one — this is the first thing a
+    // stranger sees of the board and it should never be four grey holes.
+    const av = el("div", "av", (String(p.handle || "?").trim()[0] || "?").toLowerCase());
+    if (p.face) {
+      const img = Object.assign(document.createElement("img"),
+        { src: "/api/public-media?id=" + encodeURIComponent(p.face), alt: "", loading: "lazy" });
+      img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
+    }
+    a.append(av);
 
     const m = el("div", "m");
     if (p.topic) {

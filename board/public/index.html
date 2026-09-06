@@ -286,8 +286,12 @@
   .post{display:flex;gap:.9rem;padding:1.35rem 0;border-bottom:1px solid var(--hair)}
   .av{width:3.4rem;height:3.4rem;border-radius:50%;flex:0 0 auto;
     background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;
-    font-family:var(--serif);font-size:1.35rem;line-height:1;
+    font-family:var(--serif);font-size:1.35rem;line-height:1;overflow:hidden;
     box-shadow:0 0 0 3px var(--paper),0 0 0 4px var(--accent-soft)}
+  /* A photograph fills the circle rather than sitting in it. Without the crop
+     a portrait arrives as a tall image squeezed into a round box, which is the
+     one way a real face can look worse than a letter. */
+  .av img{width:100%;height:100%;object-fit:cover;display:block}
   .body{flex:1;min-width:0}
 
   .eyebrow{display:flex;align-items:center;gap:.45rem;margin:0 0 .3rem}
@@ -949,9 +953,25 @@ function draw() {
   for (const p of list) box.append(card(p));
 }
 
+/* Somebody's face beside what they said, falling back to their initial.
+ *
+ * The letter is not a placeholder for a missing image, it is what most people
+ * on this board have: a face is optional here and always will be. So the
+ * letter is drawn first and the picture replaces it, rather than an empty
+ * circle waiting on a request that may fail — and if the picture does fail,
+ * the letter is already there and nothing flickers. */
+function face(p) {
+  const av = el("div", "av", initial(p.handle));
+  if (!p.face) return av;
+  const img = Object.assign(document.createElement("img"),
+    { src: "/api/public-media?id=" + encodeURIComponent(p.face), alt: "", loading: "lazy" });
+  img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
+  return av;
+}
+
 function card(p) {
   const row = el("article", "post" + (p.looking ? " isjoin" : ""));
-  row.append(el("div", "av", initial(p.handle)));
+  row.append(face(p));
 
   const body = el("div", "body");
 

@@ -320,11 +320,35 @@ app.get("/api/board", async (req, res) => {
         .filter(Boolean).map((h) => h.toLowerCase()))
     : new Set();
 
+  /* The face to draw beside each post.
+   *
+   * A post carries a handle and the photograph belongs to the profile, so the
+   * feed drew a letter in a circle for everybody — including people who had
+   * put a picture up, which made the board look like nobody had bothered.
+   * Joined here for the same reason the follow list is: the two halves are on
+   * this side, and shipping the whole people list to the browser to do it
+   * there would hand out a directory nobody asked for.
+   *
+   * Matched on the device hash where there is one, because that is who
+   * actually wrote it, and only falling back to the name for older posts made
+   * before the hash was stored. Nothing published is exposed by this that the
+   * profile page does not already show.
+   */
+  const byHash = new Map(), byName = new Map();
+  for (const q of board.people) {
+    if (q.state !== "published" || q.photoState !== "published" || !q.photo) continue;
+    if (q.by) byHash.set(q.by, q.photo);
+    if (q.handle) byName.set(q.handle.toLowerCase(), q.photo);
+  }
+  const faceFor = (p) =>
+    (p.by && byHash.get(p.by)) || byName.get(String(p.handle || "").toLowerCase()) || "";
+
   res.json({
     following: [...mineFollows],
     posts: live.filter(store.isOwnPost).map((p) => ({
       ...p,
       ...store.threadFor(live, p.id),
+      face: faceFor(p),
       // Not whose it is — only whether it is yours. The hash is ours, and
       // handing it back would let anybody who collects two pages of this
       // board work out which posts came from the same person.
