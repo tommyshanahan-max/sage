@@ -821,6 +821,38 @@ app.use(express.static("public", {
 }));
 
 await mkdir(DIR, { recursive: true });
+
+/* ---------------------------------------------------------------------------
+ * Profiles made before the words and the picture were separate states
+ *
+ * `state` on a person defaults to "held", and until the split there was
+ * nothing in this file that ever set it to anything else — only the photo had
+ * a way through the queue. So every profile made before that change is held
+ * for ever: its own page says "No profile yet", it is absent from the
+ * directory, and no action anybody can take will move it, because there is no
+ * route that publishes a person's words on their own.
+ *
+ * That makes the migration safe to state plainly: a held person is a legacy
+ * row, never a moderator's decision, because no moderator was ever given the
+ * button. Nothing here promotes a photograph — `photoState` is untouched, so a
+ * face still waits for somebody to look at it.
+ *
+ * Runs once. After the first pass every row is published and the loop finds
+ * nothing, so it costs one read of a file already being read.
+ * ------------------------------------------------------------------------- */
+{
+  const board = await store.load(FILE);
+  const stuck = board.people.filter((q) => q.state !== "published" && q.handle);
+  if (stuck.length) {
+    const ids = new Set(stuck.map((q) => q.id));
+    await change((b) => {
+      for (const q of b.people) if (ids.has(q.id)) q.state = "published";
+      return true;
+    });
+    console.log(`published ${stuck.length} profile(s) held only because they predate the split`);
+  }
+}
+
 app.listen(PORT, () => {
   console.log(`board on :${PORT}, data in ${DIR}`);
   if (!KEY) console.error("BOARD_ADMIN_KEY is not set — the admin routes will refuse everything.");
