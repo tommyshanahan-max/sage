@@ -459,10 +459,12 @@ export const STRINGS = {
   // ---- your own profile ----------------------------------------------------
   "me.addPhoto":       ["Add your photo", "加上你的照片"],
   "me.addCover":       ["Add a cover", "加个封面"],
-  "me.newHere":        ["You are new here", "你是新来的"],
+  "me.newHere":        ["Looking for someone to study with?", "在找一起学习的人吗？"],
+  // Says what the list IS, before a button offers to put you on it. "Put me on
+  // the list" means nothing if nobody has said what the list is for.
   "me.setUp": [
-    "Put a face and a name to it. One tap, and people know who is asking.",
-    "加上照片和名字。点一下，别人就知道是谁在问。",
+    "There is a list of people looking for someone to study with — their campus, and which days they are free. Say who you are and they can find you. Your name goes on anything you put up, too.",
+    "这里有一份名单，都是在找学习搭子的人——写着学校，还有哪几天有空。说说你是谁，他们就能找到你。你发的内容上也会显示你的名字。",
   ],
   "me.edit":           ["Edit", "编辑"],
   "me.working":        ["One moment…", "稍等…"],
