@@ -88,11 +88,45 @@
     border:1px solid var(--rule);box-shadow:var(--shadow);height:min(76vh,50rem)}
   .frame iframe{width:100%;height:100%;border:0;display:block;background:var(--sunk)}
 
-  /* The assistant, one pull away rather than in front of the work. */
-  .pull{position:fixed;right:1.2rem;bottom:1.2rem;z-index:20;display:flex;
-    align-items:center;gap:.5rem;padding:.7rem 1.1rem;border-radius:99px;
-    background:var(--blue);color:#fff;text-decoration:none;font-size:.88rem;
-    font-weight:700;box-shadow:0 6px 18px rgba(63,104,216,.3)}
+  /* The assistant, one pull away rather than a page you navigate to.
+     Three addresses to remember was two too many. */
+  .pull{position:fixed;right:1.2rem;bottom:1.2rem;z-index:40;display:flex;
+    align-items:center;gap:.5rem;cursor:pointer;font:inherit;border:0;
+    padding:.7rem 1.1rem;border-radius:99px;color:#fff;font-weight:700;
+    font-size:.88rem;background:linear-gradient(140deg,var(--blue),#5478d8);
+    box-shadow:0 8px 22px rgba(63,104,216,.3)}
+  .pull:hover{transform:translateY(-1px)}
+
+  /* Docked, not laid over. A conversation about the thing behind it should not
+     cover the thing behind it — asking for a change to a screen while that
+     screen is hidden. So it takes a column and the page keeps the rest. */
+  .drawer{position:fixed;top:0;left:0;bottom:0;z-index:60;
+    width:min(34rem,46vw);display:flex}
+  .drawer[hidden]{display:none}
+  .drawerbox{background:var(--card);width:100%;height:100%;
+    border-right:1px solid var(--rule);box-shadow:14px 0 40px rgba(17,24,33,.13);
+    display:flex;flex-direction:column;overflow:hidden}
+  body.with-sage{padding-left:calc(min(34rem,46vw) + 1.2rem)}
+  /* Too narrow to be two things at once: back to a sheet over the top, which
+     is the honest answer on a phone. */
+  @media (max-width:64rem){
+    .drawer{inset:0;width:auto;justify-content:center;align-items:flex-start;
+      background:rgba(17,24,33,.42)}
+    .drawerbox{width:min(60rem,100%);height:min(88vh,54rem);border-right:0;
+      border-radius:0 0 20px 20px;box-shadow:0 24px 60px rgba(17,24,33,.3)}
+    body.with-sage{padding-left:clamp(.8rem,2.5vw,1.8rem)}
+  }
+  .drawerhd{display:flex;align-items:center;gap:.7rem;padding:.8rem 1.1rem;
+    border-bottom:1px solid var(--rule);flex:none}
+  .drawerhd h2{margin:0;font-size:1rem}
+  .drawerhd .mini{margin-left:auto;font-size:.76rem;font-weight:600;
+    color:var(--muted);text-decoration:none;padding:.3rem .7rem;border-radius:99px;
+    border:1px solid var(--rule)}
+  .drawerhd .mini:hover{border-color:var(--blue);color:var(--blue)}
+  .drawerhd .shut{font-size:.8rem;font-weight:600;color:var(--muted);
+    background:none;border:0;cursor:pointer;padding:.3rem .5rem}
+  .drawerhd .shut:hover{color:var(--blue)}
+  .drawerbox iframe{flex:1;width:100%;border:0;display:block;background:var(--sunk)}
 </style>
 </head>
 <body>
@@ -125,7 +159,23 @@
   </section>
 </main>
 
-<a class="pull" id="pull" href="/sage">✦ <span id="pullname">Sage</span></a>
+<button class="pull" id="pull" type="button" aria-expanded="false" aria-controls="drawer">
+  ✦ <span id="pullname">Sage</span>
+</button>
+
+<div class="drawer" id="drawer" hidden>
+  <div class="drawerbox" role="dialog" aria-label="The assistant">
+    <div class="drawerhd">
+      <h2 id="drawername">Sage</h2>
+      <a class="mini" id="drawerout" href="/sage" target="_blank" rel="noreferrer">Open in a tab</a>
+      <button class="shut" type="button" id="drawershut">Close</button>
+    </div>
+    <!-- Loaded the first time it is opened, not on every page load: it is a
+         model session and starting one nobody asked for is a turn nobody
+         wanted to pay for. -->
+    <iframe id="sageframe" title="The assistant"></iframe>
+  </div>
+</div>
 
 <script type="module">
 const $ = (id) => document.getElementById(id);
@@ -326,10 +376,30 @@ async function load() {
   }
 }
 
+/* ---- the assistant, docked ------------------------------------------------ */
+let SAGE_LOADED = false;
+function sage(on) {
+  $("drawer").hidden = !on;
+  document.body.classList.toggle("with-sage", Boolean(on));
+  $("pull").setAttribute("aria-expanded", String(Boolean(on)));
+  if (on && !SAGE_LOADED) { $("sageframe").src = "/sage?bare=1"; SAGE_LOADED = true; }
+  // Coming back from a conversation, the queue may have moved — it can act on
+  // it now. Cheap, and it stops the panel disagreeing with what was just done.
+  if (!on) load();
+}
+$("pull").addEventListener("click", () => sage($("drawer").hidden));
+$("drawershut").addEventListener("click", () => sage(false));
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("drawer").hidden) sage(false);
+});
+
 fetch("/api/seat").then((r) => r.json()).then((d) => {
   BASE = (d && d.feedBase) || "";
   if (d && d.project) { $("title").textContent = d.project; document.title = d.project; }
-  if (d && d.assistant) $("pullname").textContent = d.assistant;
+  if (d && d.assistant) {
+    $("pullname").textContent = d.assistant;
+    $("drawername").textContent = d.assistant;
+  }
   load();
 }).catch(load);
 </script>

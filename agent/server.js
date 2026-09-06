@@ -489,10 +489,11 @@ async function firstProject() {
   } catch { return ""; }
 }
 
-app.get("/", async (_req, res, next) => {
-  // The seat that runs The Feed opens on the queue, because that is its job:
-  // the one thing on that seat which is a task rather than a number.
-  if (isFeedSeat && feed.configured()) return res.redirect("/queue");
+app.get("/", async (req, res, next) => {
+  // The seat that runs The Feed opens on its panel, because that is its job.
+  // Served here rather than redirected: a redirect would put a second address
+  // in the bar, and having several was the confusing part.
+  if (isFeedSeat && feed.configured()) { req.url = "/queue.html"; return next(); }
   // Only the seat whose job this is, and only where the panel is open at all.
   if (!isPartner || !socialDoor()) return next();
   const project = await firstProject();
@@ -530,6 +531,19 @@ app.get("/social.html", (req, res, next) => {
  * Moderation is a person's decision anyway. Sage explains and proposes; the
  * releasing happens here, by somebody looking at it. */
 app.get(["/queue", "/queue.html"], (req, res, next) => {
+  if (!isFeedSeat || !feed.configured()) return res.status(404).send("Not found");
+  // One address. /queue keeps working because it has been handed out, but the
+  // panel lives at "/" — three addresses for one seat was two too many, and
+  // the assistant is a drawer on the panel now rather than a page you navigate
+  // away to and have to find your way back from.
+  if (req.path !== "/queue.html") return res.redirect(301, "/");
+  next();
+});
+
+/* The panel itself. Reached through "/" above, which redirects here for the
+ * static file — so the address in the bar stays "/" and there is one thing to
+ * remember. */
+app.get("/__panel", (req, res, next) => {
   if (!isFeedSeat || !feed.configured()) return res.status(404).send("Not found");
   req.url = "/queue.html";
   next();
