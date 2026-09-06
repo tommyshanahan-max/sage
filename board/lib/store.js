@@ -216,6 +216,73 @@ export function cleanFollow(raw) {
 export const followersOf = (follows, id) =>
   follows.reduce((n, f) => n + (f.who === id ? 1 : 0), 0);
 
+/* ---------------------------------------------------------------------------
+ * A note: one private message from one person to one other.
+ *
+ * WHY THIS EXISTS, AND WHY IT IS THE ONLY PLACE A CONTACT DETAIL IS ALLOWED
+ *
+ * The board strips WeChat ids, phone numbers and emails out of everything
+ * public, and it is right to: anyone can read a board without posting, so a
+ * public contact detail becomes a standing list of newly-arrived foreign
+ * students that anybody can harvest and nobody can take back.
+ *
+ * But the study-buddy list is a list of people who want to be contacted, and
+ * for weeks it had no way for anyone to do it. A directory you cannot act on
+ * gives somebody nothing to come back for.
+ *
+ * A note is the narrow way through. It goes to exactly one person, it is never
+ * on the board, and there is no thread to abuse: you send one, they either
+ * answer with theirs or they never do, and after that the two of them are
+ * talking on WeChat like everyone here already is. Nobody broadcasts anything,
+ * and an exchange takes both of them agreeing.
+ *
+ * WHAT IS NOT DONE TO A NOTE, and it is worth being explicit
+ *
+ * It is not held for review, because a private message read by a moderator
+ * before delivery is not a private message. It is not filtered for contact
+ * details, because carrying one is the entire point.
+ *
+ * What holds instead is that a note is reportable by the person who received
+ * it. Reporting hands the text to the queue — and that is the only way a note
+ * is ever read by anybody but the two people concerned.
+ * ------------------------------------------------------------------------- */
+export function cleanNote(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = String(raw.id || "");
+  if (!/^[a-f0-9]{20}$/.test(id)) return null;
+  const s = (v, n) => String(v ?? "").slice(0, n);
+  const by = s(raw.by, 64), to = s(raw.to, 64);
+  // A note with nobody at one end of it is not a note.
+  if (!by || !to || by === to) return null;
+  return {
+    id,
+    at: s(raw.at, 40) || new Date().toISOString(),
+    by, to,
+    // Which post it answers, where there was one. A note can also come from a
+    // profile, and then there is nothing to point at.
+    re: /^[a-f0-9]{20}$/.test(String(raw.re || "")) ? String(raw.re) : "",
+    // Short on purpose. It is an introduction and a way to reach somebody, not
+    // a chat: the conversation is meant to leave here.
+    text: s(raw.text, 600),
+    // Read by the person it was sent to. Only ever set by them.
+    seen: Boolean(raw.seen),
+    // Somebody said this should not have been sent. Carries their words.
+    report: s(raw.report, 400),
+  };
+}
+
+/** Notes for one person, both directions, newest first. */
+export const notesFor = (notes, me) =>
+  !me ? [] : notes.filter((n) => n.by === me || n.to === me)
+    .sort((a, b) => (b.at || "").localeCompare(a.at || ""));
+
+/** How many they have sent today, for the cap. Counted rather than stored, so
+ *  there is no second number to keep in step. */
+export function sentToday(notes, me, now = new Date()) {
+  const day = now.toISOString().slice(0, 10);
+  return notes.filter((n) => n.by === me && String(n.at).slice(0, 10) === day).length;
+}
+
 export function cleanBoard(raw) {
   const rows = Array.isArray(raw) ? raw : Array.isArray(raw?.posts) ? raw.posts : [];
   const seen = new Set();
@@ -250,7 +317,17 @@ export function cleanBoard(raw) {
     follows.push(f);
   }
 
-  return { posts, people, follows };
+  const seenN = new Set();
+  const notes = [];
+  for (const r of (Array.isArray(raw?.notes) ? raw.notes : [])) {
+    const n = cleanNote(r);
+    if (!n || seenN.has(n.id)) continue;
+    seenN.add(n.id);
+    notes.push(n);
+  }
+  notes.sort((a, b) => (b.at || "").localeCompare(a.at || ""));
+
+  return { posts, people, follows, notes };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an
