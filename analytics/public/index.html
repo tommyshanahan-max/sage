@@ -342,6 +342,24 @@
   .thin b{color:var(--ink)}
   .note b{color:var(--ink-2);font-weight:600}
   .note code{font-family:var(--mono);font-size:.92em;color:var(--jade)}
+
+  /* Making one of these links, rather than remembering the syntax. The codes
+     are typed into chat apps and read off posters, so the box refuses
+     everything the server would refuse rather than letting a link go out that
+     quietly counts as untagged. */
+  .builder{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.9rem 0 0}
+  .builder label{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .builder select,.builder input{font:inherit;font-size:.9rem;padding:.4rem .6rem;
+    border:1px solid var(--rule);border-radius:8px;background:var(--card);color:var(--ink)}
+  .builder input{min-width:11rem}
+  .builder output{flex:1 1 16rem;min-width:0;font-family:var(--mono);
+    font-size:.84rem;padding:.4rem .6rem;border-radius:8px;background:var(--card-2);
+    color:var(--ink-2);overflow-x:auto;white-space:nowrap}
+  .builder output.bad{color:var(--seal)}
+  .builder button{font:inherit;font-size:.86rem;font-weight:600;padding:.42rem 1rem;
+    border-radius:99px;border:1px solid var(--rule);background:var(--card);
+    color:var(--ink);cursor:pointer}
+  .builder button:disabled{opacity:.45;cursor:default}
 </style>
 </head>
 <body>
@@ -510,6 +528,15 @@
     <h2>Who sent them</h2>
     <ol id="vias"></ol>
     <div class="howto" id="vias-howto"></div>
+    <div class="builder">
+      <label for="via-site">Link to</label>
+      <select id="via-site"></select>
+      <label for="via-code">Tagged</label>
+      <input id="via-code" type="text" maxlength="24" placeholder="wechat-group-1"
+             autocapitalize="off" autocorrect="off" spellcheck="false">
+      <output id="via-out"></output>
+      <button type="button" id="via-copy">Copy</button>
+    </div>
   </section>
 
   <div class="two">
@@ -1413,12 +1440,78 @@ function drawVias(vias, sites) {
 
   howto.innerHTML = (vias.length ? "" : "<b>No share links used yet.</b> ")
     + "One link per person or group — WeChat strips referrers, so this is the only thing "
-    + "that tells one share from another."
+    + "that tells one share from another. It says which <i>link</i> somebody used, never "
+    + "who they are: a code shared into a group of forty arrives forty times."
     + '<div class="lines">'
     + ["mia", "wechat-uni-group", "poster-a"]
         .map((code) => `<span><code>${line(code)}</code></span>`).join("")
     + "</div>"
     + "First arrival wins. Site only — an app link is the app's counter to record.";
+
+  buildVia(sites);
+}
+
+/* Making one of these links.
+ *
+ * The syntax is three characters and still worth a box, because the failure is
+ * silent: a link with a typo'd parameter, or a code the server will not accept,
+ * counts as untagged and nothing anywhere says so. By the time the list is
+ * empty the posters are printed.
+ *
+ * So the same rule the server applies is applied here, before the link exists:
+ * letters, digits, dash and underscore, up to 24. Anything else and there is no
+ * link to copy rather than a link that will not count. */
+function buildVia(sites) {
+  const pick = document.getElementById("via-site");
+  const code = document.getElementById("via-code");
+  const out = document.getElementById("via-out");
+  const copy = document.getElementById("via-copy");
+  if (!pick || pick.dataset.ready) { if (pick) paint(); return; }
+
+  const hosts = (sites && sites.length ? sites : ["your-site"]);
+  for (const h of hosts) {
+    const o = document.createElement("option");
+    o.value = h; o.textContent = h;
+    pick.append(o);
+  }
+  pick.dataset.ready = "1";
+
+  function paint() {
+    const raw = code.value.trim().toLowerCase();
+    const ok = /^[a-z0-9_-]{1,24}$/.test(raw);
+    out.classList.toggle("bad", Boolean(raw) && !ok);
+    if (!raw) {
+      out.textContent = "Type a name for this link — who you are giving it to.";
+      copy.disabled = true;
+      return;
+    }
+    if (!ok) {
+      out.textContent = "Letters, numbers, dash and underscore only.";
+      copy.disabled = true;
+      return;
+    }
+    out.textContent = `https://${pick.value}/?via=${raw}`;
+    copy.disabled = false;
+  }
+
+  code.addEventListener("input", paint);
+  pick.addEventListener("change", paint);
+  copy.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(out.textContent);
+      copy.textContent = "Copied";
+    } catch {
+      // Refused, or no clipboard on this browser. Selecting it is the answer
+      // that always works, and saying nothing would look like a dead button.
+      const r = document.createRange();
+      r.selectNodeContents(out);
+      const sel = getSelection();
+      sel.removeAllRanges(); sel.addRange(r);
+      copy.textContent = "Select and copy";
+    }
+    setTimeout(() => { copy.textContent = "Copy"; }, 2000);
+  });
+  paint();
 }
 
 // The app's own two charts, drawn by the same renderers as the site's.
