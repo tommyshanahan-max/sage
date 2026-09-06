@@ -1,0 +1,45 @@
+# The Board — a noticeboard for people living in and visiting China.
+#
+# The one hostname here whose readers were never given anything: no password,
+# no account, no app. Somebody forwards the link into a WeChat chat and it opens
+# where it lands.
+#
+# Inert until TOMSCODING_BOARD_DOMAIN is set: unset, it binds an internal
+# .localhost name and requests no certificate. That fallback must stay distinct
+# from every other one — two site blocks sharing an address is a startup
+# failure, not a warning, and it takes every other site on this box down with
+# it. `make up` refuses a board domain equal to the brand domain for exactly
+# that reason.
+{$TOMSCODING_BOARD_DOMAIN:board.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		# Not same-origin. A board is meant to be forwarded, and a referrer
+		# stripped to nothing makes every arrival look like it came from
+		# nowhere — which is the one question worth being able to answer about
+		# a link that spreads by being passed on.
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# WeChat's crawler fetches this once, runs no JavaScript, and builds the
+	# card people see in the chat from what comes back. It is not a browser and
+	# it does not retry, so nothing here may be behind a redirect.
+	#
+	# The app answers "/" itself rather than serving a static file, because the
+	# share card needs its own absolute address written into it and the server
+	# only learns that from the request.
+	handle {
+		reverse_proxy board:8080
+	}
+}
+
+# The www redirects to the apex. Somebody will type it, and a certificate error
+# on the front door of a consumer product reads as the company being broken.
+# Its own block, because Caddy substitutes one variable per address; unset, it
+# binds a distinct .localhost name and does nothing.
+{$TOMSCODING_BOARD_WWW:www.board.localhost} {
+	redir https://{$TOMSCODING_BOARD_DOMAIN}{uri} permanent
+}

@@ -82,6 +82,26 @@ up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	       exit 1; } || true
 	@grep -q '^COMPOSE_PROFILES=.*board' .env && ! grep -qE '^TOMSCODING_BOARD_SALT=.+' .env \
 	  && echo "note: no TOMSCODING_BOARD_SALT — device hashes are unsalted, so a hash is a lookup away from the id it came from." || true
+	@# Two Caddy site blocks on one address is a startup failure, and Caddy
+	@# failing to start takes every site on this box with it — the seats, the
+	@# agent, the app's counter. The likeliest way to cause it is moving a
+	@# hostname from one product to another and setting the new one before
+	@# clearing the old. Caught here, where the cost is a message, rather than
+	@# on the box, where the cost is everything being down.
+	@b=$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | cut -d= -f2- | tr -d '"' ); \
+	 n=$$(grep -E '^TOMSCODING_BRAND_DOMAIN=' .env | cut -d= -f2- | tr -d '"' ); \
+	 if [ -n "$$b" ] && [ "$$b" = "$$n" ]; then \
+	   echo "TOMSCODING_BOARD_DOMAIN and TOMSCODING_BRAND_DOMAIN are both $$b."; \
+	   echo "Caddy would refuse to start and take every site here down with it."; \
+	   echo "Move the brand to its own hostname first, deploy, and give this one"; \
+	   echo "to the board after that has come up."; \
+	   exit 1; \
+	 fi
+	@grep -qE '^TOMSCODING_BOARD_DOMAIN=.+' .env && ! grep -q '^COMPOSE_PROFILES=.*board' .env \
+	  && { echo "TOMSCODING_BOARD_DOMAIN is set but 'board' is not in COMPOSE_PROFILES."; \
+	       echo "Caddy would answer that hostname with a 502: a certificate, a public"; \
+	       echo "address, and nothing behind it."; \
+	       exit 1; } || true
 	@# Stamp what is being deployed before deploying it, so the agent's copy of
 	@# "recent changes" is the commits that are actually running. Not fatal — a
 	@# tarball instead of a checkout should still deploy — but it says so out

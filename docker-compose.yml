@@ -530,6 +530,12 @@ services:
       TOMSCODING_PARTNER2_DOMAIN: ${TOMSCODING_PARTNER2_DOMAIN:-partner2.localhost}
       TOMSCODING_BRAND_DOMAIN: ${TOMSCODING_BRAND_DOMAIN:-brand.localhost}
       TOMSCODING_BRAND_WWW: ${TOMSCODING_BRAND_WWW:-www.brand.localhost}
+      # The Board's public hostname. Defaulted to a distinct .localhost the same
+      # way the brand's is: an unset door must still bind an address, and it
+      # must not be an address another block already claims — two site blocks
+      # sharing one is a startup failure that takes every site here down.
+      TOMSCODING_BOARD_DOMAIN: ${TOMSCODING_BOARD_DOMAIN:-board.localhost}
+      TOMSCODING_BOARD_WWW: ${TOMSCODING_BOARD_WWW:-www.board.localhost}
       TOMSCODING_STATS_DOMAIN: ${TOMSCODING_STATS_DOMAIN:-stats.localhost}
       # Not an address — the brand page's template reads it to decide whether
       # to include the counting snippet at all. Empty means nothing is counted,
