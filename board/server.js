@@ -637,6 +637,79 @@ app.post("/api/post", express.json({ limit: "36mb" }), async (req, res) => {
 // ---------------------------------------------------------------------------
 
 // Everything, grouped the way the panel reads it.
+// ---------------------------------------------------------------------------
+// What this board knows about itself
+//
+// Read by the counter on the numbers page, beside its own figures and never
+// merged into them. The two measure different things and the difference is the
+// point: the counter counts arrivals, from a snippet in the page; this counts
+// participation, from the record. A board can be busy and silent, or quiet and
+// full of people talking, and one number cannot say which.
+//
+// So the unit is stated in the response rather than assumed by the reader. It
+// is people who have put something up — not visitors, which this server has no
+// way to know, because it logs no page views and is not going to start.
+//
+// Public, like the counter's own collection endpoint, and safe to be: every
+// figure is a count. No handle, no id, no device hash and no post leaves here.
+// ---------------------------------------------------------------------------
+const TZ = process.env.TZ || "Asia/Shanghai";
+
+/** The owner's day, not UTC. A UTC boundary in Asia cuts the evening in half,
+ *  which is the busiest part of it. Same format and same reasoning as the
+ *  counter's own dayKey, so a figure here and a figure there mean one day. */
+const dayKey = (ts) => new Intl.DateTimeFormat("en-CA", {
+  timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit",
+}).format(new Date(ts));
+
+app.get("/api/count", async (_req, res) => {
+  const board = await store.load(FILE);
+  const today = dayKey(Date.now());
+  const weekAgo = dayKey(Date.now() - 6 * 86400_000);
+
+  /* Everything a person did, whichever kind of row it was. A reply and a like
+   * are participation as much as a post is, and a profile is somebody arriving
+   * — counting only top-level posts would call a board dead on the day it was
+   * busiest with answers. */
+  const acts = [
+    ...board.posts.map((p) => ({ by: p.by, at: p.at })),
+    ...board.people.map((q) => ({ by: q.by, at: q.at })),
+  ].filter((a) => a.by);
+
+  // First seen and last seen per person, in one pass.
+  const first = new Map(), last = new Map();
+  for (const a of acts) {
+    const d = dayKey(a.at);
+    if (!first.has(a.by) || d < first.get(a.by)) first.set(a.by, d);
+    if (!last.has(a.by) || d > last.get(a.by)) last.set(a.by, d);
+  }
+
+  const activeToday = [...last].filter(([, d]) => d === today).map(([by]) => by);
+  const real = board.posts.filter((p) => p.state === "published");
+
+  res.set("Cache-Control", "no-store");
+  res.json({
+    // Quoted by the panel rather than relabelled, so if this sentence changes
+    // the page repeats the new one instead of captioning it wrongly.
+    unit: "people who have posted, replied or made a profile — not visitors",
+    count: first.size,
+    today: activeToday.length,
+    week: [...last].filter(([, d]) => d >= weekAgo).length,
+    activeToday: activeToday.length,
+    // Somebody who was already here before today and came back. The figure
+    // that separates a board with readers from a board with one good week.
+    returningToday: activeToday.filter((by) => (first.get(by) || today) < today).length,
+    // What is actually on it, which is the other half of the same question.
+    posts: real.filter(store.isOwnPost).length,
+    replies: real.filter((p) => p.re).length,
+    profiles: board.people.filter((q) => q.state === "published").length,
+    // Waiting for somebody to read it. Not a vanity figure — it is the one
+    // number on this page that is a task rather than a result.
+    held: board.posts.filter((p) => p.state === "held" && store.isOwnPost(p)).length,
+    facesHeld: board.people.filter((q) => q.photoState !== "published" && (q.photo || q.cover)).length,
+  });
+});
+
 app.get("/api/public", admin, async (req, res) => {
   const board = await store.load(FILE);
   if (req.query.queue !== "1") {

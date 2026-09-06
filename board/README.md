@@ -89,6 +89,7 @@ server because the crawler runs no JavaScript.
 | `POST /api/face/release?id=` | admin | A profile photograph, looked at and allowed |
 | `DELETE /api/face?id=` | admin | Refuse one. The person stays, the picture goes |
 | `GET /api/users` | admin | Every handle that has posted |
+| `GET /api/count` | anyone | What this board knows about itself — people, posts, and what is waiting to be read |
 
 ## Pages
 
@@ -113,6 +114,7 @@ server because the crawler runs no JavaScript.
 | `BOARD_HOOK_URL` | A panel's webhook, so a held post appears in its queue without a refresh |
 | `BOARD_HOOK_SECRET` | What that webhook presents. No secret means every delivery is refused rather than accepted unsigned |
 | `BOARD_AUTO_PUBLISH` | `1` publishes without review. Do not |
+| `TZ` | Which day "today" means on `/api/count`. Default `Asia/Shanghai` — a UTC boundary in Asia cuts the evening in half |
 
 ## What is not built
 
