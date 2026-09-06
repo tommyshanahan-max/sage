@@ -174,7 +174,12 @@ async function page(file, req, res, next) {
  */
 const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
 app.get("/", (req, res, next) => page(ROOT_IS_BOARD ? "index.html" : "landing.html", req, res, next));
-app.get(["/board", "/board/", "/index.html"], (req, res, next) => page("index.html", req, res, next));
+app.get(["/feed", "/feed/", "/index.html"], (req, res, next) => page("index.html", req, res, next));
+/* /board was the address before this was called the Feed. Kept as a permanent
+ * redirect rather than deleted: links already sent into a WeChat chat cannot be
+ * edited, and a dead link is the one failure a shared board cannot recover
+ * from. It costs one line and never needs revisiting. */
+app.get(["/board", "/board/"], (req, res) => res.redirect(301, "/feed" + (req.url.split("?")[1] ? "?" + req.url.split("?")[1] : "")));
 app.get(["/about", "/landing.html"], (req, res, next) => page("landing.html", req, res, next));
 
 // ---------------------------------------------------------------------------

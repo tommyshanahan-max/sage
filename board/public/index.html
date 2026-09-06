@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>The Board</title>
+<title>The Feed</title>
 <!-- What WeChat puts on the card when somebody forwards this into a chat or
      onto Moments. WeChat's crawler reads the title, this description, and the
      first large image in the page — it does not run scripts, so all three have
@@ -11,10 +11,10 @@
      other platform reads. -->
 <meta name="description" content="A noticeboard for people living in and visiting China. Anyone can read, anyone can post. No account, no app to install.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="The Board">
+<meta property="og:title" content="The Feed">
 <meta property="og:description" content="A noticeboard for people living in and visiting China. Anyone can read, anyone can post.">
 <meta property="og:image" content="{{ORIGIN}}/share.png">
-<meta property="og:url" content="{{ORIGIN}}/">
+<meta property="og:url" content="{{ORIGIN}}/feed">
 <!-- WeChat on iOS caches aggressively against the URL, and a board is the one
      thing that must never be a day old. -->
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -346,7 +346,7 @@
 <main>
   <div class="top">
     <div class="mark"><img src="/share.png" alt="" width="400" height="400"
-      onerror="this.replaceWith(document.createTextNode('\u677F'))"></div>
+      onerror="this.replaceWith(document.createTextNode('\u52A8'))"></div>
     <div>
       <h1 id="boardname">The Board</h1>
       <p id="count">Anyone can read. Anyone can post.</p>
@@ -786,7 +786,7 @@ function card(p) {
   share.addEventListener("click", async () => {
     // The board, not the root: the root is the landing page, and somebody sent
     // this link because of the post, not because of the explanation.
-    const url = location.origin + "/board#" + p.id;
+    const url = location.origin + "/feed#" + p.id;
     const say = (words, hold) => {
       relabel(share, words);
       setTimeout(() => relabel(share, T("act.share")), hold || 2200);

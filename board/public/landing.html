@@ -237,7 +237,7 @@
       <span><b id="brandname">Liuxuesheng</b><small>留学生</small></span>
     </a>
     <span id="langslot" style="margin-left:auto;display:flex;gap:.6rem;align-items:center"></span>
-    <a class="go" id="navopen" href="/board">Open the board</a>
+    <a class="go" id="navopen" href="/feed">Open the feed</a>
   </div>
 </div>
 
@@ -254,7 +254,7 @@
     <p class="hanzi" id="hanzi"></p>
 
     <div class="cta">
-      <a class="btn" id="ctaopen" href="/board"></a>
+      <a class="btn" id="ctaopen" href="/feed"></a>
       <a class="btn ghost" id="ctahow" href="#how"></a>
     </div>
     <p class="under" id="under"></p>
@@ -268,7 +268,7 @@
       <h2 id="liveH2"></h2>
       <p class="sub" id="liveSub"></p>
       <div class="live" id="live"></div>
-      <div class="more"><a class="btn ghost" id="seeall" href="/board"></a></div>
+      <div class="more"><a class="btn ghost" id="seeall" href="/feed"></a></div>
     </div>
   </section>
 </div>
@@ -427,7 +427,7 @@ function drawLive(posts) {
   box.style.gridTemplateColumns = "";
   for (const p of posts.slice(0, 4)) {
     const a = el("a", "post");
-    a.href = "/board#" + p.id;
+    a.href = "/feed#" + p.id;
     a.append(el("div", "av", (String(p.handle || "?").trim()[0] || "?").toLowerCase()));
 
     const m = el("div", "m");
