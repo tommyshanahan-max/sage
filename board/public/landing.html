@@ -6,6 +6,16 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<!-- iOS reads these rather than the manifest for a home-screen install:
+     no browser chrome, and a name short enough not to be truncated under
+     the icon. -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="留学生">
 <title>Liuxuesheng — a meeting place for exchange students in China</title>
 <meta name="description" content="Find a study buddy, ask the question you are embarrassed to ask, and compare notes on how to actually get by. Nothing to install. No VPN.">
 
@@ -183,6 +193,7 @@
            have one address to be sent rather than two. It is a redirect to a
            seat with its own login; nothing here is reachable without it. -->
       <a class="adminlink" href="/admin" id="adminLink"></a>
+      <a class="adminlink" href="/privacy" id="privacyLink"></a>
     </div>
   </div>
 </footer>
@@ -238,6 +249,7 @@ function paint() {
   // site.title is "留学生" in Chinese — the same word the <small>
   // beneath it already carries, printed twice.
   for (const id of TEXT) $(id).textContent = T("site." + id);
+  $("privacyLink").textContent = T("pv.title");
   for (const [id, key] of Object.entries(SHOTS)) $(id).textContent = T(key);
   // The two-column list: its keys live under dd.* rather than site.*, since it
   // is content rather than chrome and reads as a block.
@@ -318,5 +330,23 @@ fetch("/api/contact")
   .catch(() => { /* no contact set: say nothing */ });
 </script>
 
+
+<script>
+/* Registering the worker.
+ *
+ * Classic script rather than a module so this runs before anything else and
+ * on browsers that do not do modules — the worker is what makes the board
+ * survive a bad connection, which is exactly the browser least likely to be
+ * new.
+ *
+ * Deferred to load: registration competes with the page's own requests, and
+ * the first paint matters more than the second visit.
+ */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => { /* not fatal */ });
+  });
+}
+</script>
 </body>
 </html>

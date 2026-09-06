@@ -193,6 +193,11 @@ app.get(["/about", "/landing.html"], (req, res, next) => page("landing.html", re
  * to another country to study are the one group who can say what that is
  * actually like without being paid to say it is worth it. */
 app.get(["/abroad", "/abroad/"], (req, res, next) => page("abroad.html", req, res, next));
+
+/* What is kept. Required by every app store and by law in most of the places
+ * this is read from — and worth having on its own terms, since the honest
+ * answer here is unusually short. */
+app.get(["/privacy", "/privacy/"], (req, res, next) => page("privacy.html", req, res, next));
 app.get(["/buddies", "/buddies/"], (req, res, next) => page("buddies.html", req, res, next));
 
 /* One person, at an address that can be sent to somebody.

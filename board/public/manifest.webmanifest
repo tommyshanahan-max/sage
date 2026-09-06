@@ -1,0 +1,22 @@
+{
+  "name": "Liuxuesheng 留学生",
+  "short_name": "留学生",
+  "description": "A meeting place for exchange students in China. Nothing to install. No account. No VPN.",
+  "start_url": "/feed",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EEF0F4",
+  "theme_color": "#EEF0F4",
+  "lang": "zh-Hans",
+  "dir": "ltr",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "The feed", "url": "/feed" },
+    { "name": "Study buddies", "url": "/buddies" }
+  ]
+}

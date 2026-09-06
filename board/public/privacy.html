@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>What is kept — Liuxuesheng</title>
+<meta name="description" content="There are no accounts here, so there is almost nothing to keep. This is the whole of it.">
+<meta name="robots" content="index">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="/site.css">
+<style>
+  /* A document, not a landing page: one column, wide margins, nothing moving. */
+  .doc{max-width:38rem;margin:0 auto;padding:2.6rem 1.25rem 5rem}
+  .doc h1{margin:0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.9rem,4.5vw,2.6rem);line-height:1.12;letter-spacing:-.015em}
+  .doc .when{margin:.7rem 0 0;font-size:.85rem;color:var(--muted)}
+  .doc .lede{margin:1.5rem 0 0;font-size:1.08rem;line-height:1.7;color:var(--ink-2)}
+  .doc h2{margin:2.6rem 0 0;font-family:var(--serif);font-weight:400;
+    font-size:1.3rem;line-height:1.25}
+  .doc p{margin:.85rem 0 0;line-height:1.75;color:var(--ink-2)}
+  .doc .contact{margin:2.6rem 0 0;padding:1.1rem 1.15rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:.9rem}
+  .doc .contact a{color:var(--accent)}
+  .doc .back{display:inline-block;margin:2.6rem 0 0;font-size:.9rem;
+    color:var(--muted);text-decoration:none;border-bottom:1px solid var(--hair)}
+  .doc .back:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap">
+    <a class="brand" href="/feed">
+      <i>留</i>
+      <span><b>Liuxuesheng</b><small>留学生</small></span>
+    </a>
+    <span id="langslot" style="margin-left:auto;display:flex;gap:.6rem;align-items:center"></span>
+  </div>
+</div>
+
+<div class="doc">
+  <h1 id="title"></h1>
+  <p class="when" id="updated"></p>
+  <p class="lede" id="lede"></p>
+
+  <h2 id="h1"></h2><p id="p1"></p><p id="p1b"></p>
+  <h2 id="h2"></h2><p id="p2"></p><p id="p2b"></p>
+  <h2 id="h3"></h2><p id="p3"></p><p id="p3b"></p>
+  <h2 id="h4"></h2><p id="p4"></p>
+  <h2 id="h5"></h2><p id="p5"></p>
+  <h2 id="h6"></h2><p id="p6"></p>
+  <h2 id="h7"></h2><p id="p7"></p>
+  <h2 id="h8"></h2><p id="p8"></p>
+
+  <div class="contact" id="contactbox"></div>
+  <a class="back" href="/feed" id="back"></a>
+</div>
+
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+
+const $ = (id) => document.getElementById(id);
+const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
+
+/* The date this document last changed, written into the page at build time
+ * rather than generated from today — a policy that always says it was updated
+ * today is a policy nobody can tell has changed. */
+const UPDATED = "2026-09-06";
+
+const KEYS = ["title","lede","h1","p1","p1b","h2","p2","p2b","h3","p3","p3b",
+  "h4","p4","h5","p5","h6","p6","h7","p7","h8","p8","back"];
+
+let CONTACT = "";
+
+function paint() {
+  for (const k of KEYS) $(k).textContent = T("pv." + k);
+  document.title = T("pv.title") + " — " + T("site.title");
+  $("updated").textContent = T("pv.updated", { d: UPDATED });
+
+  const box = $("contactbox");
+  fill(box);
+  if (CONTACT) {
+    const a = document.createElement("a");
+    // mailto only when it looks like an address; otherwise print it as text
+    // rather than build a link that goes nowhere.
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(CONTACT)) a.href = "mailto:" + CONTACT;
+    a.textContent = CONTACT;
+    box.append(a);
+  } else {
+    box.textContent = T("pv.noContact");
+  }
+}
+
+setLang(pickLang());
+$("langslot").append(langButton(paint));
+paint();
+
+fetch("/api/contact")
+  .then((r) => r.json())
+  .then((d) => { CONTACT = (d && d.contact) || ""; paint(); })
+  .catch(() => { /* the page stands without it */ });
+</script>
+</body>
+</html>

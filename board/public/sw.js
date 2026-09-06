@@ -1,46 +1,99 @@
-/* A service worker whose only job is to remove itself.
+/* The service worker. Two jobs, and the first one predates the second.
  *
- * WHY THIS FILE EXISTS AND WHY IT MUST NOT BE DELETED
+ * ---------------------------------------------------------------------------
+ * 1. CLEARING UP AFTER WHOEVER WAS HERE BEFORE — do not remove this
  *
- * A service worker belongs to an ORIGIN, not to an app. Whatever was served
- * here before this board keeps its worker registered in every browser that
- * ever loaded it: sitting in front of every request, serving its own cached
- * bundles, updating on its own schedule. Putting a different site on the same
- * hostname does not remove it. The people most likely to be hurt are the ones
- * who liked the old thing enough to add it to their home screen.
+ * A service worker belongs to an ORIGIN, not to an app. Whatever was served on
+ * this hostname before the board keeps its worker registered in every browser
+ * that ever loaded it: sitting in front of every request, serving its own
+ * cached bundles. Putting a different site on the same hostname does not
+ * remove it, and the people most likely to be hurt are the ones who liked the
+ * old thing enough to add it to their home screen.
  *
- * A browser checks /sw.js for a new version of whatever it has registered. So
- * this is the one file that can reach those installs — but only if it is
- * served at exactly this path, on that hostname, and differs from the old one.
- * It registers, takes over, throws away every cache on the origin, and
- * unregisters itself. After that the browser has no worker here and the board
- * is served the ordinary way.
+ * A browser checks /sw.js for a new version of whatever it has registered, so
+ * this file is the only thing that can reach those installs. It takes over and
+ * deletes every cache on the origin that is not its own — which is what the
+ * previous version of this file did before unregistering itself. It no longer
+ * unregisters, because the board now has its own use for a worker; the
+ * clearing-up half is unchanged and still runs first.
  *
- * It is harmless on an origin that never had one: nothing is registered, so
- * nothing ever asks for this, and the board itself never registers it.
+ * ---------------------------------------------------------------------------
+ * 2. MAKING THE BOARD SURVIVE A BAD CONNECTION
  *
- * Delete it and anyone still carrying the old worker keeps being served a dead
- * app from their own disk, with no way to know why and nothing they can do
- * about it short of clearing site data.
+ * NETWORK FIRST, ALWAYS. The cache is a fallback for when the network fails,
+ * never a shortcut when it works.
+ *
+ * This is the whole design and it is deliberate. A cache-first worker is how a
+ * page gets served from somebody's disk for weeks after it changed, with no
+ * way for them to know why — and on a board, where the entire content is other
+ * people's newest words, showing yesterday's copy quickly is worse than
+ * showing today's copy slowly. Offline is the only case where a stale answer
+ * beats no answer.
  */
 
-self.addEventListener("install", () => self.skipWaiting());
+const CACHE = "board-v1";
 
-self.addEventListener("activate", (event) => {
+// The shell: enough to open and be recognisable with no network. Deliberately
+// not the API — a cached /api/board is a cached set of somebody's posts, and
+// those go stale in minutes and may have been taken down since.
+const SHELL = [
+  "/feed", "/buddies", "/site.css", "/i18n.js", "/live.js",
+  "/favicon.png", "/icon-512.png",
+];
+
+self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
-    // Every cache on this origin, whoever wrote it. Enumerated rather than
-    // matched by prefix on purpose: the point is to leave nothing behind, and
-    // a prefix means knowing what the previous occupant called things.
-    for (const key of await caches.keys()) await caches.delete(key);
-    await self.registration.unregister();
-    // Reload whatever is open, so somebody looking at a stale page from the
-    // old app gets this one now rather than whenever they next happen back.
-    for (const client of await self.clients.matchAll({ type: "window" })) {
-      try { client.navigate(client.url); } catch { /* some clients cannot */ }
-    }
+    const cache = await caches.open(CACHE);
+    // Individually, and never fatal: one missing file must not stop the worker
+    // installing, or a typo here breaks the site for everyone who has it.
+    await Promise.all(SHELL.map((u) => cache.add(u).catch(() => {})));
+    await self.skipWaiting();
   })());
 });
 
-// Nothing is intercepted while this is briefly in control. Having no fetch
-// handler at all would behave the same way, but saying so is the point of the
-// file: it serves nothing, it only clears up.
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    // Job one. Every cache on this origin that is not this version's, whoever
+    // wrote it — the previous occupant's, and our own older ones.
+    for (const key of await caches.keys()) {
+      if (key !== CACHE) await caches.delete(key);
+    }
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET") return;
+
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+
+  // Never the API, and never media. A cached post is a post that may have been
+  // reported and taken down; serving it from a phone's disk would put back
+  // something a person decided to remove.
+  if (url.pathname.startsWith("/api/")) return;
+
+  event.respondWith((async () => {
+    try {
+      const fresh = await fetch(req);
+      // Only successful, complete responses are worth keeping. A 404 or an
+      // opaque redirect cached as the shell is how a site breaks silently.
+      if (fresh && fresh.ok && fresh.type === "basic") {
+        const copy = fresh.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+      }
+      return fresh;
+    } catch {
+      const hit = await caches.match(req);
+      if (hit) return hit;
+      // A navigation with nothing cached for it still deserves the app rather
+      // than the browser's offline page, if the shell is there.
+      if (req.mode === "navigate") {
+        const shell = await caches.match("/feed");
+        if (shell) return shell;
+      }
+      throw new Error("offline and nothing cached");
+    }
+  })());
+});

@@ -6,6 +6,16 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<!-- iOS reads these rather than the manifest for a home-screen install:
+     no browser chrome, and a name short enough not to be truncated under
+     the icon. -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="留学生">
 <title>在考虑出国 — 问问正在经历的人</title>
 <meta name="description" content="能问的人几乎都是靠说“值得”赚钱的。这里可以问真正去过的人，还有为了读书搬到中国来的外国学生。">
 
@@ -121,6 +131,7 @@
     <div class="col">
       <b id="footBack"></b>
       <a class="adminlink" href="/" id="footBackGo"></a>
+      <a class="adminlink" href="/privacy" id="privacyLink"></a>
     </div>
   </div>
 </footer>
@@ -161,6 +172,7 @@ function paint() {
   $("seeall").textContent = T("ab.seeAll");
   $("footAbout").textContent = T("site.footAbout");
   $("footBackGo").textContent = T("ab.footBackGo");
+  $("privacyLink").textContent = T("pv.title");
 
   const from = $("from");
   fill(from);
@@ -204,6 +216,24 @@ fetch("/api/board")
   .then((r) => r.json())
   .then((d) => { POSTS = (d && d.posts) || []; drawLive($("live"), POSTS); })
   .catch(() => drawLive($("live"), []));
+</script>
+
+<script>
+/* Registering the worker.
+ *
+ * Classic script rather than a module so this runs before anything else and
+ * on browsers that do not do modules — the worker is what makes the board
+ * survive a bad connection, which is exactly the browser least likely to be
+ * new.
+ *
+ * Deferred to load: registration competes with the page's own requests, and
+ * the first paint matters more than the second visit.
+ */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => { /* not fatal */ });
+  });
+}
 </script>
 </body>
 </html>

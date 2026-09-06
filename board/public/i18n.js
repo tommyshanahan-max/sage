@@ -203,6 +203,87 @@ export const STRINGS = {
   // about every time.
   "site.adminLink":    ["Admin", "管理"],
 
+  // ---------------------------------------------------------------------
+  // What is kept, and what is not.
+  //
+  // Required by every app store and by law in most places people will read
+  // this from. Written as sentences rather than clauses because the audience
+  // is nineteen and reading on a phone in their second language, and a policy
+  // nobody can read is a policy nobody agreed to.
+  // ---------------------------------------------------------------------
+  "pv.title":          ["What is kept", "我们保留什么"],
+  "pv.updated":        ["Last changed {d}", "最后修改于 {d}"],
+  "pv.lede": [
+    "Short version: there are no accounts here, so there is almost nothing to keep. What follows is the whole of it.",
+    "简单说：这里没有账号，所以几乎没有什么可保留的。下面就是全部。",
+  ],
+
+  "pv.h1":             ["Who you are, to us", "在我们这边，你是谁"],
+  "pv.p1": [
+    "Nobody. There is no sign-up, no email address, no phone number and no password. When you first open the board your browser makes up a random number and keeps it on your own device. We store a salted hash of that number against anything you post, which is just enough to let you delete your own things and not enough to say who you are.",
+    "谁也不是。这里不用注册，不要邮箱，不要手机号，也没有密码。你第一次打开的时候，浏览器会随机生成一个数字，存在你自己的设备上。我们只保存这个数字加盐之后的哈希值，用来把内容和你对应起来——刚好够你删掉自己发的，不足以说明你是谁。",
+  ],
+  "pv.p1b": [
+    "Clear your browser data, change phone or use a private window and that number is gone. You become a new person here, and your old posts and profile are no longer yours to delete. That is the cost of not asking who you are, and it is a deliberate trade.",
+    "清除浏览器数据、换手机、用无痕窗口，这个数字就没了。你在这里就成了一个新的人，之前发的内容和资料也不再由你控制。这是不问你是谁的代价，是我们有意做的取舍。",
+  ],
+
+  "pv.h2":             ["What you give us", "你给我们的"],
+  "pv.p2": [
+    "What you type and the photographs you choose to add. That is all. Posts and profiles are public — anyone can read them, and anyone can forward them. Do not put anything here you would mind a stranger seeing.",
+    "你输入的内容，以及你选择上传的照片。仅此而已。内容和个人资料都是公开的——任何人都能看到，也都能转发。不要在这里放你不希望陌生人看到的东西。",
+  ],
+  "pv.p2b": [
+    "Phone numbers, WeChat ids, emails and addresses are filtered out before anything is published. That is for your protection rather than ours, and it is a filter rather than a wall: do not rely on it to catch something you should not have typed.",
+    "手机号、微信号、邮箱和住址会在发布前被过滤掉。这是为了保护你，不是保护我们；而且它只是一道过滤，不是一堵墙——不要指望它替你拦下本来就不该输入的东西。",
+  ],
+
+  "pv.h3":             ["What we do not do", "我们不做的事"],
+  "pv.p3": [
+    "There are no third-party scripts on this site: no advertising network, no social widgets, no analytics from anybody else. Nothing here is sold, shared or handed to a partner. There is no advertising, so there is nothing to profile you for.",
+    "本站没有任何第三方脚本：没有广告网络，没有社交插件，也没有别家的统计代码。这里的任何内容都不会被出售、共享或交给合作方。这里没有广告，所以也没有给你画像的必要。",
+  ],
+  "pv.p3b": [
+    "Blocking somebody happens entirely on your own device and is never sent to us, which is why nobody can be told they were blocked and why it cannot be used against anyone.",
+    "屏蔽完全发生在你自己的设备上，不会传到我们这边——所以没有人会被告知自己被屏蔽了，这个功能也就无法被用来针对谁。",
+  ],
+
+  "pv.h4":             ["Photographs", "照片"],
+  "pv.p4": [
+    "A photograph is read by a person before it appears, because a picture is the one thing that cannot be taken back once somebody has saved it. Photographs are stored on the same server as everything else and are reachable by a link nobody can guess.",
+    "照片在出现之前会由人过目，因为照片是唯一一样别人一旦保存就收不回来的东西。照片和其他内容存在同一台服务器上，通过一个别人猜不到的链接访问。",
+  ],
+
+  "pv.h5":             ["Taking something back", "撤回内容"],
+  "pv.p5": [
+    "You can delete anything you posted, from the post itself, as long as you are on the same device and browser you posted from. Deleted posts stop being shown immediately. If you cannot reach something you put up — a new phone, cleared data — write to us and say which post it was, and we will take it down.",
+    "只要还在发布时用的那台设备和那个浏览器上，你就可以在内容本身上删掉自己发的任何东西，删除后会立即不再显示。如果你已经没办法操作了——换了手机、清了数据——写信告诉我们是哪一条，我们会帮你撤下。",
+  ],
+
+  "pv.h6":             ["Where it lives", "存在哪里"],
+  "pv.p6": [
+    "On one rented server, run by us. Not a cloud platform with other people's tools attached to it. Reports and posts waiting to be read are visible to whoever is moderating, which is a very small number of people.",
+    "在我们自己租的一台服务器上，由我们运行，而不是接了一堆第三方工具的云平台。举报和等待审核的内容，负责审核的人可以看到——这样的人非常少。",
+  ],
+
+  "pv.h7":             ["Children", "未成年人"],
+  "pv.p7": [
+    "This is for university students. It is not intended for anyone under sixteen, and we do not knowingly keep anything from them.",
+    "本站面向大学生，不面向十六岁以下的人，我们也不会有意保留他们的任何信息。",
+  ],
+
+  "pv.h8":             ["If something here is wrong", "如果这里有问题"],
+  "pv.p8": [
+    "Report any post from the post itself — a person reads every report. If the problem is bigger than one post, or it is about us, write to the address below.",
+    "任何一条内容都可以直接在内容上举报，每一条举报都由人来看。如果问题比一条内容更大，或者问题就出在我们身上，请写信到下面的地址。",
+  ],
+  "pv.noContact": [
+    "No address is set on this deployment yet.",
+    "本部署尚未设置联系地址。",
+  ],
+  "pv.back":           ["Back to the feed", "回到动态"],
+
+
   // The three screens, shown as phones on the landing page. Written rather
   // than screenshotted: no image to load over a mainland connection, the words
   // inside them change language with the rest of the page, and a drawing
