@@ -603,6 +603,13 @@ services:
       TOMSCODING_AGENT_DOMAIN: ${TOMSCODING_AGENT_DOMAIN:-agent.localhost}
       TOMSCODING_PARTNER_DOMAIN: ${TOMSCODING_PARTNER_DOMAIN:-partner.localhost}
       TOMSCODING_PARTNER2_DOMAIN: ${TOMSCODING_PARTNER2_DOMAIN:-partner2.localhost}
+      # Every hostname in docker/sites/*.caddy has to be named here too. A site
+      # block reads its domain from Caddy's OWN environment, so adding the file
+      # is only half of it: without this line the block binds its .localhost
+      # fallback, the real hostname matches no site, and the browser gets
+      # ERR_SSL_PROTOCOL_ERROR — a certificate was never requested, because as
+      # far as Caddy knew nobody had asked for that name.
+      TOMSCODING_FEED_DOMAIN: ${TOMSCODING_FEED_DOMAIN:-thefeed.localhost}
       TOMSCODING_BRAND_DOMAIN: ${TOMSCODING_BRAND_DOMAIN:-brand.localhost}
       TOMSCODING_BRAND_WWW: ${TOMSCODING_BRAND_WWW:-www.brand.localhost}
       # The Board's public hostname. Defaulted to a distinct .localhost the same

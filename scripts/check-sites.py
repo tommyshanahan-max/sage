@@ -44,11 +44,20 @@ def site_addresses(env):
         # second block whose address collides fails exactly as hard as a first.
         for match in re.finditer(r"^\{\$([A-Z_0-9]+)(?::([^}]*))?\}\s*\{", path.read_text(), re.M):
             var, default = match.group(1), match.group(2)
-            value = env[var] if var in env else (default or "")
-            sites.append((path.name, var, value))
+            # Whether Caddy is even told about this variable, kept separate from
+            # what it resolves to. A site block reads its address from Caddy's
+            # OWN environment; a variable that is not passed through in
+            # docker-compose.yml can only ever be its .localhost default, which
+            # is non-empty and unique and therefore passes every other check
+            # here. What the browser gets is ERR_SSL_PROTOCOL_ERROR, because no
+            # certificate was ever requested for a name Caddy never heard of.
+            known = var in env
+            value = env[var] if known else (default or "")
+            sites.append((path.name, var, value, known))
     main = re.search(r"^\{\$([A-Z_0-9]+)\}\s*\{", (REPO / "docker" / "Caddyfile").read_text(), re.M)
     if main:
-        sites.append(("Caddyfile", main.group(1), env.get(main.group(1), "")))
+        sites.append(("Caddyfile", main.group(1), env.get(main.group(1), ""),
+                      main.group(1) in env))
     return sites
 
 
@@ -59,8 +68,10 @@ def check(label, env_file):
         return False
 
     ok, seen = True, {}
-    for name, var, value in site_addresses(env):
-        if not value:
+    for name, var, value, known in site_addresses(env):
+        if not known:
+            note, ok = "NOT PASSED TO CADDY — add it to the caddy service", False
+        elif not value:
             note, ok = "EMPTY — Caddy would reject the whole config", False
         elif value in seen:
             note, ok = f"DUPLICATE of {seen[value]} — startup failure", False
