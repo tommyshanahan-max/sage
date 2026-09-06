@@ -198,6 +198,10 @@ export const STRINGS = {
     "没有网络字体，没有 CDN，没有第三方脚本或统计代码。全部由一台机器提供，因为一个要等国内访问不到的东西的页面，就是一个打不开的页面。",
   ],
   "site.footWrong":    ["Something wrong?", "发现问题？"],
+  // The way in for the people who run this. Public on purpose: the password is
+  // the gate, and a link nobody can find is a link its own team has to be told
+  // about every time.
+  "site.adminLink":    ["Admin", "管理"],
   "site.footWrongP":   ["Report any post from the feed itself — a person reads every one.",
                         "在动态里直接举报任何一条内容——每条都由人来看。"],
   "site.footAbout": [

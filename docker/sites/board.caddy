@@ -24,6 +24,18 @@
 		-Server
 	}
 
+	# The way in for the people who run this board, on the product's own
+	# domain so there is one address to hand somebody. Same shape as the
+	# brand page's /admin: a redirect, not a proxy, so the seat keeps its own
+	# origin — its cookies and its login stay unreachable from the public
+	# page, which is the point of it being a separate hostname at all.
+	#
+	# A seat that is not configured redirects to its internal .localhost
+	# fallback and lands nowhere. That is the honest outcome for a door that
+	# does not exist.
+	@admin path /admin /admin/
+	redir @admin https://{$TOMSCODING_FEED_DOMAIN}/
+
 	# WeChat's crawler fetches this once, runs no JavaScript, and builds the
 	# card people see in the chat from what comes back. It is not a browser and
 	# it does not retry, so nothing here may be behind a redirect.
