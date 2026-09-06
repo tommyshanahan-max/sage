@@ -82,6 +82,101 @@ export function cleanPost(raw) {
 export const hashDevice = (id, salt) =>
   id ? createHash("sha256").update(String(salt) + ":" + String(id)).digest("hex").slice(0, 32) : "";
 
+/* ---------------------------------------------------------------------------
+ * People
+ *
+ * A study-buddy profile. It is a different shape from a post and gets its own
+ * list rather than being forced into one: a post is a thing somebody said, a
+ * profile is a standing description of a person, and the two have almost no
+ * fields in common.
+ *
+ * WHAT A PROFILE MAY NOT CARRY, and why it is enforced here rather than asked
+ * for politely in the form.
+ *
+ * A searchable directory of foreign exchange students — many of them young,
+ * newly arrived, and not yet reading the language — is a useful thing and also
+ * exactly the shape of a targeting list. So a profile carries what MATCHES
+ * somebody (level, what they are working towards, which days, what they will
+ * trade, which campus) and nothing that FINDS them. No WeChat id, no phone, no
+ * email, no address, no room number, no timetable.
+ *
+ * People swap those privately once both sides have decided they want to. That
+ * is a decision made twice, by two people, off this server — which is the only
+ * version of it that is theirs.
+ *
+ * The check below is a filter, not a wall: somebody determined will get a
+ * WeChat id past it by spelling it out in words. It is here to stop the
+ * ordinary case, which is not an attacker but a nineteen-year-old pasting
+ * their number in because every other app asked them to.
+ * ------------------------------------------------------------------------- */
+
+/** Things that are somebody's way of being reached, in the forms people
+ *  actually type them. Matched loosely on purpose — a false positive costs a
+ *  sentence rewritten, a false negative costs a phone number on a public page. */
+const CONTACT_SHAPED = [
+  /\b[\w.+-]+@[\w-]+\.[a-z]{2,}\b/i,                 // an email
+  /(?:\+?86[\s-]?)?1[3-9]\d{9}/,                       // a mainland mobile
+  /\+\d[\d\s().-]{7,}/,                                 // any international number
+  // Split from the line below because \b is ASCII-only in JavaScript: it never
+  // matches beside a Chinese character, so \b微信\b can never fire. Caught by
+  // the test, not by reading — which is why the test exists.
+  /\b(?:wechat|weixin|vx|wx|qq|whatsapp|line|kakao|telegram|tg|instagram|ig|snap(?:chat)?)\b\s*[:：]?\s*[\w.@_-]{3,}/i,
+  /(?:微信|微信号|威信|扣扣|企鹅号)\s*[:：]?\s*[\w.@_-]{2,}/,
+  /\b(?:my|add)\s*(?:wechat|weixin|vx|wx|qq)\b/i,
+  /加\s*(?:微信|我|一下)/,
+  /(?:^|\s)@[\w.]{3,}/,                                 // an @handle for somewhere else
+  /\d{3,4}\s?(?:室|号楼|栋|单元)/,                        // a room or building number
+];
+
+/** Whether some text is asking to be contacted off the board. Returns the
+ *  first thing that matched, so the person can be told which bit to change
+ *  rather than being told "no" about the whole paragraph. */
+export function contactShaped(text) {
+  const t = String(text || "");
+  for (const re of CONTACT_SHAPED) {
+    const m = t.match(re);
+    if (m) return m[0].trim().slice(0, 60);
+  }
+  return "";
+}
+
+/** The levels offered. A closed list because it is what matching sorts on, and
+ *  free text turns "HSK 4" into four spellings that never meet. */
+export const LEVELS = ["Just starting", "HSK 1-2", "HSK 3", "HSK 4", "HSK 5", "HSK 6", "Beyond HSK"];
+
+export function cleanPerson(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = String(raw.id || "");
+  if (!/^[a-f0-9]{20}$/.test(id)) return null;
+  const s = (v, n) => String(v ?? "").slice(0, n);
+  const days = Array.isArray(raw.free)
+    ? [...new Set(raw.free.map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort()
+    : [];
+  return {
+    id,
+    at: s(raw.at, 40) || new Date().toISOString(),
+    state: STATES.includes(raw.state) ? raw.state : "held",
+    handle: s(raw.handle, 40).replace(/^@+/, ""),
+    level: LEVELS.includes(raw.level) ? raw.level : LEVELS[0],
+    // Where they study, as an area. Never a pin, never a live position: which
+    // campus is useful for matching, where somebody is right now is not, and it
+    // is the single most dangerous field a student app can have.
+    campus: s(raw.campus, 60),
+    // What they are working towards, in their own words. The thing somebody
+    // reads to decide whether to ask.
+    goal: s(raw.goal, 600),
+    trade: s(raw.trade, 120),
+    speaks: Array.isArray(raw.speaks)
+      ? raw.speaks.slice(0, 6).map((x) => s(x, 40)).filter(Boolean) : [],
+    free: days,
+    // How long they have been here — the one thing that says whether they are
+    // asking or answering.
+    here: s(raw.here, 40),
+    why: (raw.state === "published") ? "" : s(raw.why, 400),
+    by: s(raw.by, 64),
+  };
+}
+
 export function cleanBoard(raw) {
   const rows = Array.isArray(raw) ? raw : Array.isArray(raw?.posts) ? raw.posts : [];
   const seen = new Set();
@@ -93,7 +188,18 @@ export function cleanBoard(raw) {
     posts.push(p);
   }
   posts.sort((a, b) => (b.at || "").localeCompare(a.at || ""));
-  return { posts };
+
+  const seenP = new Set();
+  const people = [];
+  for (const r of (Array.isArray(raw?.people) ? raw.people : [])) {
+    const q = cleanPerson(r);
+    if (!q || seenP.has(q.id)) continue;
+    seenP.add(q.id);
+    people.push(q);
+  }
+  people.sort((a, b) => (b.at || "").localeCompare(a.at || ""));
+
+  return { posts, people };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an
