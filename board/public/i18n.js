@@ -574,6 +574,11 @@ export const STRINGS = {
   "bud.youAreIn":      ["You are in this list", "你在这个列表里"],
   "bud.takeMeOut":     ["Take me out", "把我移出"],
   "bud.putMeIn":       ["Put me in the list", "把我加进列表"],
+  // The sentence for a joining, written on the page rather than on the server,
+  // so it is in the language it is being read in.
+  "bud.joined":        ["is looking for someone to study with", "在找一起学习的人"],
+  "bud.joinedFree":    ["Free", "有空"],
+  "bud.joinedGo":      ["See the list", "看名单"],
   "bud.join":          ["Put me on the list", "把我加到名单上"],
   "bud.seeWho":        ["See who is looking", "看看谁在找"],
   "bud.lookingLabel":  ["I am looking for a study buddy", "我在找学习搭子"],

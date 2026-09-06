@@ -188,6 +188,25 @@
   /* ---- putting yourself on the list --------------------------------------
      The directory only ever lists people who said they were looking, and
      until now nothing could say it — so it could never have anybody in it. */
+  /* ---- somebody joining the list, on the board ----------------------------
+     Drawn as a card rather than a line of text: it is an introduction, and a
+     week of days says when somebody is free faster than a sentence does. */
+  /* On a joining the picture is an introduction, not the point — at full
+     height it pushed the thing the post is actually saying below the fold. */
+  .post.isjoin .pic{max-height:10rem;object-fit:cover}
+  .joined{margin:.55rem 0 0;padding:.75rem .85rem;border-radius:.7rem;
+    background:var(--accent-soft);border:1px solid var(--line)}
+  .joined .say{font-size:.92rem;line-height:1.5;color:var(--ink)}
+  .joined .say b{font-weight:400}
+  .joined .where{margin:.25rem 0 0;font-size:.82rem;color:var(--muted)}
+  .joined .wk{display:flex;gap:.25rem;margin:.5rem 0 0}
+  .joined .wk i{flex:1;text-align:center;font-style:normal;font-size:.7rem;
+    line-height:1.6;border-radius:.35rem;background:var(--paper);color:var(--muted)}
+  .joined .wk i.on{background:var(--accent);color:var(--accent-ink)}
+  .joined a{display:inline-block;margin:.6rem 0 0;font-size:.85rem;
+    color:var(--accent);text-decoration:none}
+  .joined a:hover{text-decoration:underline}
+
   .looking{margin:1rem 0 0;padding:.9rem 1rem;border-radius:.8rem;
     background:var(--raise);border:1px solid var(--line)}
   .looking label{display:flex;align-items:flex-start;gap:.6rem;cursor:pointer}
@@ -917,7 +936,7 @@ function draw() {
 }
 
 function card(p) {
-  const row = el("article", "post");
+  const row = el("article", "post" + (p.looking ? " isjoin" : ""));
   row.append(el("div", "av", initial(p.handle)));
 
   const body = el("div", "body");
@@ -956,6 +975,35 @@ function card(p) {
     img.addEventListener("error", () => img.remove());
     body.append(img);
   }
+  /* Somebody joining the study-buddy list.
+   *
+   * The sentence is written here rather than stored, so it is in whichever
+   * language this is being read in — the post carries the facts and nothing
+   * else. Their own words, where they wrote any, stay their own and appear
+   * below in the ordinary way. */
+  if (p.looking) {
+    const j = el("div", "joined");
+    const say = el("div", "say");
+    say.append(el("b", null, p.handle || T("board.someone")),
+      document.createTextNode(" " + T("bud.joined")));
+    j.append(say);
+    if (p.campus) j.append(el("div", "where", p.campus));
+    if (Array.isArray(p.free) && p.free.length) {
+      const wk = el("div", "wk");
+      const labels = T("bud.days").split(",");
+      for (let i = 0; i < 7; i++) {
+        const d = el("i", p.free.includes(i) ? "on" : "", (labels[i] || "").trim());
+        wk.append(d);
+      }
+      j.append(el("div", "where", T("bud.joinedFree")), wk);
+    }
+    const go = document.createElement("a");
+    go.href = "/buddies";
+    go.textContent = T("bud.joinedGo");
+    j.append(go);
+    body.append(j);
+  }
+
   if (p.note) body.append(el("p", "words", p.note));
   // The same thing in Chinese where somebody supplied it: the point of a board
   // for people who cannot read the signs is that the answer can be held up to

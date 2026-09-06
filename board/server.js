@@ -519,6 +519,10 @@ app.put("/api/me", express.json({ limit: "36mb" }), async (req, res) => {
       q = store.cleanPerson({ id: store.newId(), at: new Date().toISOString(), by: me });
       board.people.push(q);
     }
+    // Whether this save is somebody joining the list, rather than editing a
+    // profile they were already on it with. Read before the change, because
+    // after it there is no way to tell the two apart.
+    const joining = typeof req.body.looking === "boolean" && req.body.looking && !q.looking;
     if (typeof req.body.looking === "boolean") q.looking = req.body.looking;
     for (const k of ["handle", "level", "campus", "goal", "trade", "here"]) {
       if (req.body[k] !== undefined) q[k] = String(req.body[k]).slice(0, k === "goal" ? 600 : 120);
@@ -545,6 +549,36 @@ app.put("/api/me", express.json({ limit: "36mb" }), async (req, res) => {
     q.state = "published";
     const clean = store.cleanPerson(q);
     Object.assign(q, clean);
+
+    /* Joining the list says so on the board.
+     *
+     * It was silent: you ticked a box and the only place anything changed was
+     * a directory nobody had a reason to open. The board is where people
+     * already are, and somebody looking for a study partner is exactly what it
+     * is for.
+     *
+     * Held like everything else, and carrying their own picture so it is
+     * something to look at rather than a line of text. The sentence is NOT
+     * written here — the post carries the facts and the page writes the
+     * sentence in whichever language it is being read in. Their own words, if
+     * they wrote any, stay their own.
+     *
+     * Once. Editing your days later does not announce you again, because the
+     * board is not a log of somebody's settings. */
+    if (joining && q.handle) {
+      board.posts.push(store.cleanPost({
+        id: store.newId(),
+        at: new Date().toISOString(),
+        state: "held",
+        by: me,
+        handle: q.handle,
+        note: q.goal || "",
+        photo: q.photo || "",
+        looking: true,
+        campus: q.campus || "",
+        free: q.free || [],
+      }));
+    }
     return q;
   });
 

@@ -73,6 +73,21 @@ export function cleanPost(raw) {
     // Which device wrote it. A hash, never the id itself: it answers "is this
     // the same person again" without answering "who".
     by: s(raw.by, 64),
+
+    /* Somebody joining the study-buddy list, announced on the board.
+     *
+     * The facts rather than a sentence, and that is the whole point. A post
+     * saying "Marc is looking for a study buddy" would be in whichever
+     * language this server was written in, for ever, for every reader — the
+     * rule this codebase already keeps everywhere else is that prose chosen on
+     * the server is prose in one language. So the post carries what is true
+     * and the page writes the sentence, in whichever language it is being read
+     * in. The person's own words stay their own words in `note`. */
+    looking: Boolean(raw.looking),
+    campus: s(raw.campus, 60),
+    free: Array.isArray(raw.free)
+      ? [...new Set(raw.free.map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort()
+      : [],
   };
 }
 
