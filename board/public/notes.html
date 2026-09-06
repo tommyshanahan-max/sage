@@ -153,6 +153,8 @@
   .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--accent);
     flex:0 0 auto;margin-top:.5rem}
   .dot.spent{background:transparent}
+  a.av{color:var(--accent-ink);text-decoration:none}
+  .av.small{width:2.8rem;height:2.8rem;font-size:1.1rem;box-shadow:none}
 
   /* Answering, in place. There is only ever one answer, so a sheet with its
      own screen would be more ceremony than the thing deserves. */
@@ -240,6 +242,23 @@ function paint() {
 function row(n) {
   const box = el("div", "note" + (n.mine ? " mine" : ""));
   box.append(el("div", "dot" + (n.mine || n.seen ? " spent" : "")));
+
+  // Their face, and it opens them. A list of messages from names you cannot
+  // put a face to is the same problem the feed had.
+  if (n.handle) {
+    const av = Object.assign(document.createElement("a"), {
+      className: "av small",
+      href: "/p/" + encodeURIComponent(n.handle.toLowerCase()),
+      textContent: initial(n.handle),
+    });
+    av.setAttribute("aria-label", n.handle);
+    if (n.photo) {
+      const img = Object.assign(document.createElement("img"),
+        { src: "/api/public-media?id=" + encodeURIComponent(n.photo), alt: "", loading: "lazy" });
+      img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
+    }
+    box.append(av);
+  }
 
   const m = el("div", "m");
   const line = el("div", "line");

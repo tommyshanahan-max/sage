@@ -292,6 +292,7 @@
      a portrait arrives as a tall image squeezed into a round box, which is the
      one way a real face can look worse than a letter. */
   .av img{width:100%;height:100%;object-fit:cover;display:block}
+  a.av{color:var(--accent-ink);text-decoration:none}
   .body{flex:1;min-width:0}
 
   .eyebrow{display:flex;align-items:center;gap:.45rem;margin:0 0 .3rem}
@@ -961,7 +962,17 @@ function draw() {
  * circle waiting on a request that may fail — and if the picture does fail,
  * the letter is already there and nothing flickers. */
 function face(p) {
-  const av = el("div", "av", initial(p.handle));
+  // A link where there is somebody to open, a plain circle where there is not.
+  // The name beside it has always been a link and this was not, which is the
+  // wrong way round: the face is the bigger target and the one people press.
+  const av = p.handle
+    ? Object.assign(document.createElement("a"), {
+        className: "av",
+        href: "/p/" + encodeURIComponent(p.handle.toLowerCase()),
+        textContent: initial(p.handle),
+      })
+    : el("div", "av", initial(p.handle));
+  if (p.handle) av.setAttribute("aria-label", p.handle);
   if (!p.face) return av;
   const img = Object.assign(document.createElement("img"),
     { src: "/api/public-media?id=" + encodeURIComponent(p.face), alt: "", loading: "lazy" });
