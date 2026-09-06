@@ -859,20 +859,42 @@ function card(p) {
   return row;
 }
 
-/** One way in for everything anybody posts — a note, a reply, a like. */
+/** One way in for everything anybody posts — a note, a reply, a like.
+ *
+ *  A rejected fetch says only "Load failed" on Safari, which is true and
+ *  useless: it does not say whether the body was too big, the connection went,
+ *  or the server never answered. The size goes in the message, because on a
+ *  mobile connection that is nearly always the answer — and one retry, because
+ *  the other nearly-always answer is a blip on a link to Tokyo. */
 async function send(body, btn) {
-  try {
+  const payload = JSON.stringify({ ...body, device });
+  const mb = (payload.length / 1024 / 1024).toFixed(2);
+
+  const once = async () => {
     const r = await fetch("/api/post", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...body, device }),
+      body: payload,
     });
     const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.error || "it did not go");
+    if (!r.ok) throw new Error((d.error || "it did not go") + " (" + r.status + ")");
+    return d;
+  };
+
+  try {
+    let d;
+    try {
+      d = await once();
+    } catch (first) {
+      // Only a network failure is worth trying twice. A 4xx will say the same
+      // thing again and the wait is spent for nothing.
+      if (!/load failed|network|fetch/i.test(String(first && first.message))) throw first;
+      d = await once();
+    }
     if (body.like) await load();
     return d;
   } catch (e) {
-    if (btn) say(e.message, true);
+    if (btn) say((e && e.message || "?") + " · " + mb + " MB", true);
     return null;
   }
 }
@@ -1234,7 +1256,6 @@ async function shrink(file, max) {
     const canvas = document.createElement("canvas");
     canvas.width = w; canvas.height = h;
     canvas.getContext("2d").drawImage(src, 0, 0, w, h);
-    if (src.close) src.close();
     blob = await new Promise((ok) => canvas.toBlob(ok, "image/jpeg", 0.85));
   } catch { /* a canvas too large for this device, or a tainted one */ }
 
@@ -1244,7 +1265,35 @@ async function shrink(file, max) {
     if (file.size > 4 * 1024 * 1024) return { error: T("post.badPhoto") };
     return { data: await asBase64(file), type: file.type };
   }
-  return { data: await asBase64(blob), type: "image/jpeg" };
+
+  /* A hard ceiling, whatever the picture is.
+   *
+   * The route from a phone in China to a box in Tokyo drops packets, and a
+   * large POST over a lossy link does not fail cleanly — it stalls until the
+   * browser gives up and says "Load failed", which is indistinguishable from
+   * every other network fault. So rather than trusting one resize to be
+   * enough, this keeps going until the thing is small enough to arrive.
+   *
+   * A photograph nobody can upload is worth less than a slightly softer one
+   * that arrives. */
+  const CEILING = 900 * 1024;
+  let out = blob, side = Math.max(w, h), quality = 0.85;
+  for (let pass = 0; out.size > CEILING && pass < 4; pass++) {
+    side = Math.round(side * 0.75);
+    quality = Math.max(0.5, quality - 0.08);
+    try {
+      const bmp2 = await createImageBitmap(out).catch(() => null);
+      const cv = document.createElement("canvas");
+      const r2 = side / Math.max(w, h);
+      cv.width = Math.round(w * r2); cv.height = Math.round(h * r2);
+      cv.getContext("2d").drawImage(bmp2 || src, 0, 0, cv.width, cv.height);
+      if (bmp2 && bmp2.close) bmp2.close();
+      const next = await new Promise((ok) => cv.toBlob(ok, "image/jpeg", quality));
+      if (!next) break;
+      out = next;
+    } catch { break; }
+  }
+  return { data: await asBase64(out), type: "image/jpeg" };
 }
 
 function asBase64(file) {
@@ -1257,11 +1306,18 @@ function asBase64(file) {
 }
 
 async function saveMe(patch) {
-  const r = await fetch("/api/me", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...patch, device }),
-  });
+  const payload = JSON.stringify({ ...patch, device });
+  const mb = (payload.length / 1024 / 1024).toFixed(2);
+  let r;
+  try {
+    r = await fetch("/api/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+    });
+  } catch (e) {
+    return { error: (e && e.message || "?") + " · " + mb + " MB" };
+  }
   const d = await r.json().catch(() => ({}));
   if (!r.ok) {
     if (d.error === "contact") return { error: T("me.noContact", { what: d.what }) };
