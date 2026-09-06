@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Liuxuesheng — a meeting place for exchange students in China</title>
+<meta name="description" content="Find a study buddy, ask the question you are embarrassed to ask, and compare notes on how to actually get by. Nothing to install. No VPN.">
+
+<!-- The card WeChat, and everything else, builds when this link is forwarded.
+     The crawler fetches once and runs no JavaScript, so these are absolute and
+     already here — {{ORIGIN}} is filled in per request by the server, which
+     learns its own name from the request and nowhere else. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Liuxuesheng — for exchange students in China">
+<meta property="og:description" content="Somebody here worked it out last month. Study buddies, and notes on how to get by.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:url" content="{{ORIGIN}}/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="light dark">
+<style>
+  /* No web fonts. fonts.googleapis.com does not answer in the mainland, and a
+     page that waits on it is a page that does not load. */
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t1:#3F68D8; --t2:#2A9D63; --t3:#D99038; --t4:#7268C4; --t5:#D4485C; --t6:#2F8C9E;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --shadow:0 1px 2px rgba(21,27,40,.05),0 10px 30px rgba(21,27,40,.08);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.32);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.32);
+  }
+  /* display:flex and display:grid both outrank the user agent's [hidden] rule. */
+  [hidden]{display:none!important}
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  button{font:inherit;cursor:pointer}
+  img{max-width:100%}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+  .wrap{max-width:62rem;margin:0 auto;padding:0 1.25rem}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+  /* ---- masthead ---------------------------------------------------------- */
+  .top{border-bottom:1px solid var(--hair);background:var(--paper)}
+  .top .wrap{display:flex;align-items:center;gap:1rem;padding-top:.85rem;padding-bottom:.85rem}
+  .brand{display:flex;align-items:center;gap:.6rem;text-decoration:none}
+  .brand i{width:2.2rem;height:2.2rem;border-radius:50%;background:var(--accent);
+    color:var(--accent-ink);display:grid;place-items:center;font-family:var(--serif);
+    font-size:1.05rem;font-style:normal;flex:0 0 auto}
+  .brand b{font-family:var(--serif);font-weight:400;font-size:1.18rem;line-height:1.1}
+  .brand small{display:block;font-family:var(--sans);font-size:.64rem;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--muted);line-height:1.4}
+  .top .go{margin-left:auto;border:0;border-radius:99px;background:var(--accent);
+    color:var(--accent-ink);padding:.55rem 1.2rem;font-size:.92rem;text-decoration:none;
+    display:inline-block;white-space:nowrap}
+
+  /* ---- hero -------------------------------------------------------------- */
+  .hero{padding:3.4rem 0 2.6rem}
+  @media (max-width:700px){ .hero{padding:2.2rem 0 1.8rem} }
+  .kicker{display:flex;align-items:center;gap:.5rem;font-size:.72rem;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 1rem}
+  .kicker i{width:.45rem;height:.45rem;border-radius:50%;background:var(--accent);flex:0 0 auto}
+  h1{margin:0;font-family:var(--serif);font-weight:400;font-size:clamp(2.15rem,5.4vw,3.5rem);
+    line-height:1.08;letter-spacing:-.02em;max-width:20ch}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{margin:1.15rem 0 0;font-size:1.1rem;line-height:1.65;color:var(--ink-2);max-width:36rem}
+  .hanzi{margin:.85rem 0 0;font-family:var(--serif);font-size:1.02rem;color:var(--muted)}
+  .hanzi b{color:var(--ink-2);font-weight:400}
+  .cta{display:flex;flex-wrap:wrap;gap:.65rem;margin:1.7rem 0 0}
+  .btn{border:0;border-radius:99px;padding:.8rem 1.55rem;font-size:1rem;background:var(--accent);
+    color:var(--accent-ink);text-decoration:none;display:inline-block}
+  .btn.ghost{background:var(--raise);color:var(--ink);border:1px solid var(--line)}
+  .under{margin:.95rem 0 0;font-size:.85rem;color:var(--muted)}
+
+  /* ---- what is actually on it, live -------------------------------------- */
+  .band{background:var(--raise);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
+  section{padding:3rem 0}
+  .eyebrow{display:flex;align-items:center;gap:.9rem;margin:0 0 1.5rem}
+  .eyebrow span{font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
+    white-space:nowrap}
+  .eyebrow i{flex:1;height:1px;background:var(--line)}
+  h2{margin:0 0 .55rem;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.6rem,3.2vw,2.15rem);line-height:1.18}
+  .sub{margin:0 0 1.8rem;color:var(--ink-2);max-width:38rem;font-size:1rem}
+
+  .live{display:grid;gap:.85rem;grid-template-columns:repeat(2,1fr)}
+  @media (max-width:720px){ .live{grid-template-columns:1fr} }
+  .post{background:var(--card);border:1px solid var(--line);border-radius:.85rem;
+    padding:1.05rem 1.1rem;display:flex;gap:.8rem;align-items:flex-start;
+    text-decoration:none;color:inherit}
+  .post .av{width:2.6rem;height:2.6rem;border-radius:50%;flex:0 0 auto;background:var(--accent);
+    color:var(--accent-ink);display:grid;place-items:center;font-family:var(--serif);
+    font-size:1.05rem;line-height:1}
+  .post .m{flex:1;min-width:0}
+  .post .eb{display:flex;align-items:center;gap:.4rem;margin:0 0 .2rem}
+  .post .eb i{width:.4rem;height:.4rem;border-radius:50%;flex:0 0 auto}
+  .post .eb span{font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+  .post .who{display:flex;align-items:baseline;gap:.5rem}
+  .post .who b{font-family:var(--serif);font-weight:400;font-size:1.02rem;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .post .who time{margin-left:auto;color:var(--muted);font-size:.82rem;flex:0 0 auto}
+  .post p{margin:.3rem 0 0;font-family:var(--serif);font-size:1rem;line-height:1.5;
+    color:var(--ink-2);overflow-wrap:anywhere}
+  .empty{background:var(--card);border:1px dashed var(--line);border-radius:.85rem;
+    padding:2.2rem 1.2rem;text-align:center}
+  .empty b{display:block;font-family:var(--serif);font-weight:400;font-size:1.25rem;
+    margin:0 0 .35rem}
+  .empty p{margin:0 auto;max-width:26rem;font-size:.95rem;line-height:1.6;color:var(--ink-2)}
+  .more{margin:1.4rem 0 0;text-align:center}
+
+  /* ---- the three things --------------------------------------------------- */
+  .three{display:grid;gap:1rem;grid-template-columns:repeat(3,1fr)}
+  @media (max-width:820px){ .three{grid-template-columns:1fr} }
+  .thing{background:var(--card);border:1px solid var(--line);border-radius:.9rem;
+    padding:1.4rem 1.35rem}
+  .thing .n{font-family:var(--serif);font-size:.88rem;color:var(--accent);letter-spacing:.06em}
+  .thing h3{margin:.4rem 0 .4rem;font-family:var(--serif);font-weight:400;font-size:1.3rem;
+    line-height:1.2}
+  .thing p{margin:0;color:var(--ink-2);font-size:.94rem;line-height:1.6}
+  .thing .say{margin:.85rem 0 0;padding-top:.8rem;border-top:1px solid var(--hair);
+    font-family:var(--serif);font-size:.94rem;color:var(--muted)}
+
+  /* ---- how it is run ------------------------------------------------------ */
+  .rules{display:grid;gap:.9rem;grid-template-columns:repeat(2,1fr)}
+  @media (max-width:760px){ .rules{grid-template-columns:1fr} }
+  .rule{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:.7rem;padding:1.05rem 1.15rem}
+  .rule.warn{border-left-color:var(--t3)}
+  .rule h4{margin:0 0 .3rem;font-size:.71rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--accent)}
+  .rule.warn h4{color:var(--t3)}
+  .rule p{margin:0;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
+
+  footer{border-top:1px solid var(--hair);padding:2.4rem 0 3rem;color:var(--muted);
+    font-size:.85rem;line-height:1.7}
+  footer .wrap{display:flex;gap:1.6rem;flex-wrap:wrap;justify-content:space-between}
+  footer b{display:block;font-family:var(--serif);font-weight:400;color:var(--ink);
+    font-size:1rem;margin:0 0 .3rem}
+  footer .col{max-width:32rem}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <i>留</i>
+      <span><b>Liuxuesheng</b><small>留学生</small></span>
+    </a>
+    <a class="go" href="/board">Open the board</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="wrap">
+    <p class="kicker"><i></i>For exchange students in China</p>
+    <h1>Somebody here worked it out <em>last month</em>.</h1>
+    <p class="lede">A meeting place for exchange students: find a study buddy, ask
+      the question you are embarrassed to ask, and compare notes on how to
+      actually get by. Nothing to install. No account. No VPN.</p>
+    <p class="hanzi">留学生 · <b>liúxuéshēng</b> — a student studying abroad.
+      It is who this is for, so it is what it is called.</p>
+    <div class="cta">
+      <a class="btn" href="/board">Open the board</a>
+      <a class="btn ghost" href="#how">How it is run</a>
+    </div>
+    <p class="under">Every post is read by a person before it goes up.</p>
+  </div>
+</div>
+
+<div class="band">
+  <section>
+    <div class="wrap">
+      <div class="eyebrow"><span>On the board right now</span><i></i></div>
+      <h2>The last few days</h2>
+      <p class="sub">Live from the board itself, not a mock-up of one. Tap any of
+        them to read the rest.</p>
+      <div class="live" id="live"></div>
+      <div class="more"><a class="btn ghost" href="/board">See the whole board</a></div>
+    </div>
+  </section>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow"><span>Three things, one place</span><i></i></div>
+    <h2>The parts of being new here that nobody hands you</h2>
+    <p class="sub">Your university gives you a timetable and a dorm key.
+      Everything after that is worked out by asking somebody who arrived a term
+      earlier.</p>
+    <div class="three">
+      <div class="thing">
+        <span class="n">01</span>
+        <h3>Meet the people already here</h3>
+        <p>A board by campus and city. Who is around, what is on this week, who is
+          going. Arriving alone is the whole problem and it is the easiest one to
+          fix.</p>
+        <p class="say">“Anyone at Renmin going to the Gulou thing Thursday?”</p>
+      </div>
+      <div class="thing">
+        <span class="n">02</span>
+        <h3>Find a study buddy</h3>
+        <p>Say your level, what you are working towards and when you are free.
+          Most people want the same trade — their Chinese for your English — and
+          no app is needed to make that work, only a way to find each other.</p>
+        <p class="say">“HSK4 in March, Tuesdays, will trade for English.”</p>
+      </div>
+      <div class="thing">
+        <span class="n">03</span>
+        <h3>Compare notes on getting by</h3>
+        <p>The SIM without a bank card. Which gate is shut. What the label says.
+          What 微辣 really means. Small things that cost a week each to learn
+          alone and a minute to be told.</p>
+        <p class="say">“8 kuai, cash only, gone by ten.”</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="band">
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow"><span>How it is run</span><i></i></div>
+      <h2>A public board is a duty, not a feature</h2>
+      <p class="sub">These are decisions already made and already built, not
+        intentions. They are the reason this can carry other people's words at
+        all.</p>
+      <div class="rules">
+        <div class="rule">
+          <h4>Held by default</h4>
+          <p>Nothing appears until a person has read it. There is no model here
+            that can judge a post, and a board that publishes everything unread
+            will publish the first thing somebody tests it with.</p>
+        </div>
+        <div class="rule">
+          <h4>Report and block, on every post</h4>
+          <p>A person reads every report. Two separate people reporting something
+            takes it down pending review — counted by person, never by press, so
+            nobody can hide anything alone. Blocking happens in your own browser
+            and never reaches us.</p>
+        </div>
+        <div class="rule">
+          <h4>No accounts, nothing tracked</h4>
+          <p>No email, no phone number, no sign-in. A post is tied to a salted
+            hash of a random number your browser made up — enough to take your own
+            post back, and nothing else. No third party sees any of it.</p>
+        </div>
+        <div class="rule warn">
+          <h4>Nothing loaded from outside</h4>
+          <p>No web fonts, no CDN, no third-party script or pixel. Everything is
+            served from one machine, because a page that waits on something
+            unreachable from the mainland is a page that does not load.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="col">
+      <b>Liuxuesheng · 留学生</b>
+      A meeting place for exchange students in China. Read by a person before
+      anything appears. No accounts, no tracking, nothing loaded from outside.
+    </div>
+    <div class="col" id="reach">
+      <b>Something wrong?</b>
+      Report any post from the board itself — a person reads every one.
+      <span id="contact" hidden></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+var $ = function (id) { return document.getElementById(id); };
+function el(t, c, x) {
+  var n = document.createElement(t);
+  if (c) n.className = c;
+  if (x !== undefined) n.textContent = x;
+  return n;
+}
+/* replaceChildren is Chrome 86+, and WeChat's Android webview can be older than
+   that. Everything here sticks to what the oldest browser that will realistically
+   open this link already has. */
+function fill(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+var TDOT = ["--t1", "--t2", "--t3", "--t4", "--t5", "--t6"];
+function topicColour(name) {
+  var h = 0, s = String(name);
+  for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return "var(" + TDOT[h % TDOT.length] + ")";
+}
+function when(iso) {
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  var mins = Math.round((Date.now() - d.getTime()) / 60000);
+  if (mins < 1) return "now";
+  if (mins < 60) return mins + "m";
+  if (mins < 1440) return Math.round(mins / 60) + "h";
+  if (mins < 10080) return Math.round(mins / 1440) + "d";
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+
+/* The newest few, from the board itself.
+ *
+ * A landing page that describes a board while the board sits empty behind it is
+ * the thing nobody believes. This shows the actual posts, so the page is either
+ * evidence or it is honest about there being none yet. */
+function drawLive(posts) {
+  var box = $("live");
+  fill(box);
+  if (!posts.length) {
+    var e = el("div", "empty");
+    e.appendChild(el("b", null, "Nothing on the board yet."));
+    e.appendChild(el("p", null,
+      "It opened this week. The first thing anybody puts up appears here — and "
+      + "somebody reads everything before it does."));
+    box.appendChild(e);
+    box.style.gridTemplateColumns = "1fr";
+    return;
+  }
+  for (var i = 0; i < Math.min(posts.length, 4); i++) {
+    var p = posts[i];
+    var a = el("a", "post");
+    a.href = "/board#" + p.id;
+
+    var av = el("div", "av", (String(p.handle || "?").trim()[0] || "?").toLowerCase());
+    a.appendChild(av);
+
+    var m = el("div", "m");
+    if (p.topic) {
+      var eb = el("div", "eb");
+      var dot = el("i");
+      dot.style.background = topicColour(p.topic);
+      eb.appendChild(dot);
+      eb.appendChild(el("span", null, p.topic));
+      m.appendChild(eb);
+    }
+    var who = el("div", "who");
+    who.appendChild(el("b", null, p.handle || "someone"));
+    who.appendChild(el("time", null, when(p.at)));
+    m.appendChild(who);
+    if (p.note) {
+      var t = p.note.length > 150 ? p.note.slice(0, 150).replace(/\s+\S*$/, "") + "…" : p.note;
+      m.appendChild(el("p", null, t));
+    }
+    a.appendChild(m);
+    box.appendChild(a);
+  }
+}
+
+fetch("/api/board")
+  .then(function (r) { return r.json(); })
+  .then(function (d) { drawLive(d && d.posts ? d.posts : []); })
+  .catch(function () { drawLive([]); });
+
+fetch("/api/contact")
+  .then(function (r) { return r.json(); })
+  .then(function (d) {
+    if (!d || !d.contact) return;
+    var box = $("contact");
+    box.hidden = false;
+    box.appendChild(document.createTextNode(" For anything a report cannot cover: "));
+    var a = document.createElement("a");
+    a.href = /@/.test(d.contact) ? "mailto:" + d.contact : d.contact;
+    a.textContent = d.contact;
+    box.appendChild(a);
+    box.appendChild(document.createTextNode("."));
+  })
+  .catch(function () { /* no contact set: say nothing */ });
+</script>
+</body>
+</html>

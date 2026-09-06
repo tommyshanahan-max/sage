@@ -604,7 +604,9 @@ function card(p) {
 
   const share = act("share", "Share");
   share.addEventListener("click", async () => {
-    const url = location.origin + "/#" + p.id;
+    // The board, not the root: the root is the landing page, and somebody sent
+    // this link because of the post, not because of the explanation.
+    const url = location.origin + "/board#" + p.id;
     const say = (words, hold) => {
       share.lastChild.textContent = words;
       setTimeout(() => { share.lastChild.textContent = "Share"; }, hold || 2200);

@@ -141,10 +141,10 @@ app.get("/api/contact", (_req, res) => res.json({ contact: CONTACT }));
  * anything: it decides one string in a meta tag and nothing else. A forged
  * host makes a bad share card for the forger and changes nothing here.
  */
-let PAGE = null;
-app.get(["/", "/index.html"], async (req, res, next) => {
+const PAGES = new Map();
+async function page(file, req, res, next) {
   try {
-    if (PAGE === null) PAGE = await readFile("public/index.html", "utf8");
+    if (!PAGES.has(file)) PAGES.set(file, await readFile("public/" + file, "utf8"));
     const proto = String(req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0];
     const host = String(req.get("host") || "").replace(/[^A-Za-z0-9.:-]/g, "").slice(0, 253);
     const origin = host ? proto + "://" + host : "";
@@ -152,9 +152,28 @@ app.get(["/", "/index.html"], async (req, res, next) => {
     // A board is the one thing that must never be a day old, and WeChat on iOS
     // caches hard against the URL.
     res.set("Cache-Control", "no-cache");
-    res.send(PAGE.split("{{ORIGIN}}").join(origin));
+    res.send(PAGES.get(file).split("{{ORIGIN}}").join(origin));
   } catch (e) { next(e); }
-});
+}
+
+/* Two doors, and which is which matters.
+ *
+ * "/" is the landing page: what this is, who it is for, and how it is run —
+ * for somebody sent the address cold, who needs a reason before a feed. It
+ * carries the newest few posts live, so it is evidence rather than a
+ * description, and it is honest when there are none yet.
+ *
+ * "/board" is the board itself, and it is what every share link points at. A
+ * link forwarded into a chat was sent because of something ON the board, so it
+ * must open there rather than on a page explaining what a board is.
+ *
+ * BOARD_AT_ROOT=1 swaps them, for the day the board is busy enough that the
+ * feed is the better front door.
+ */
+const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
+app.get("/", (req, res, next) => page(ROOT_IS_BOARD ? "index.html" : "landing.html", req, res, next));
+app.get(["/board", "/board/", "/index.html"], (req, res, next) => page("index.html", req, res, next));
+app.get(["/about", "/landing.html"], (req, res, next) => page("landing.html", req, res, next));
 
 // ---------------------------------------------------------------------------
 // Media
