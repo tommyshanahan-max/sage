@@ -46,6 +46,23 @@
     --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.32);
   }
+  /* WHAT MOVES WHEN THE LANGUAGE DOES — the half of a translation that is not
+     words. Georgia has no Chinese glyphs and falls back per character
+     mid-sentence; CJK wants more room between lines and none between
+     characters; and Chinese has no case, so a tracked-out uppercase label
+     reads as broken rather than as a label. */
+  :root[data-lang="zh"]{
+    --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif;
+  }
+  :root[data-lang="zh"] body{line-height:1.8}
+  :root[data-lang="zh"] .kicker,
+  :root[data-lang="zh"] .eyebrow span,
+  :root[data-lang="zh"] .rule h4{text-transform:none;letter-spacing:.02em}
+  :root[data-lang="zh"] h1{letter-spacing:0;line-height:1.28;max-width:16ch}
+  :root[data-lang="zh"] .thing .n{letter-spacing:0}
+
   /* display:flex and display:grid both outrank the user agent's [hidden] rule. */
   [hidden]{display:none!important}
 
@@ -91,6 +108,27 @@
     color:var(--accent-ink);text-decoration:none;display:inline-block}
   .btn.ghost{background:var(--raise);color:var(--ink);border:1px solid var(--line)}
   .under{margin:.95rem 0 0;font-size:.85rem;color:var(--muted)}
+
+  .lang{border:1px solid var(--line);background:var(--raise);color:var(--ink-2);
+    border-radius:99px;padding:.45rem 1rem;font-size:.85rem;line-height:1;
+    white-space:nowrap}
+  .lang:hover{color:var(--ink);border-color:var(--muted)}
+
+  /* The one moving thing on the page. Real questions people arrive with,
+     cycling — because the fastest way to say what a board is for is to show
+     somebody asking. It holds a fixed height so nothing below it jumps, and
+     it stops entirely for anyone who asked for less motion. */
+  .asking{margin:1.9rem 0 0;padding:1rem 1.15rem;background:var(--raise);
+    border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:.7rem;max-width:32rem}
+  .asking b{display:block;font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 .4rem}
+  :root[data-lang="zh"] .asking b{text-transform:none;letter-spacing:.02em}
+  .asking q{display:block;font-family:var(--serif);font-size:1.18rem;
+    line-height:1.45;quotes:none;min-height:3.4rem;
+    transition:opacity .35s ease}
+  .asking q.fade{opacity:0}
+  @media (prefers-reduced-motion:reduce){ .asking q{transition:none} }
 
   /* ---- what is actually on it, live -------------------------------------- */
   .band{background:var(--raise);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
@@ -165,74 +203,54 @@
   <div class="wrap">
     <a class="brand" href="/">
       <i>留</i>
-      <span><b>Liuxuesheng</b><small>留学生</small></span>
+      <span><b id="brandname">Liuxuesheng</b><small>留学生</small></span>
     </a>
-    <a class="go" href="/board">Open the board</a>
+    <span id="langslot" style="margin-left:auto;display:flex;gap:.6rem;align-items:center"></span>
+    <a class="go" id="navopen" href="/board">Open the board</a>
   </div>
 </div>
 
 <div class="hero">
   <div class="wrap">
-    <p class="kicker"><i></i>For exchange students in China</p>
-    <h1>Somebody here worked it out <em>last month</em>.</h1>
-    <p class="lede">A meeting place for exchange students: find a study buddy, ask
-      the question you are embarrassed to ask, and compare notes on how to
-      actually get by. Nothing to install. No account. No VPN.</p>
-    <p class="hanzi">留学生 · <b>liúxuéshēng</b> — a student studying abroad.
-      It is who this is for, so it is what it is called.</p>
-    <div class="cta">
-      <a class="btn" href="/board">Open the board</a>
-      <a class="btn ghost" href="#how">How it is run</a>
+    <p class="kicker"><i></i><span id="kicker"></span></p>
+    <h1><span id="h1a"></span><em id="h1b"></em><span id="h1c"></span></h1>
+    <p class="lede" id="lede"></p>
+    <p class="hanzi" id="hanzi"></p>
+
+    <div class="asking">
+      <b id="askLead"></b>
+      <q id="asking"></q>
     </div>
-    <p class="under">Every post is read by a person before it goes up.</p>
+
+    <div class="cta">
+      <a class="btn" id="ctaopen" href="/board"></a>
+      <a class="btn ghost" id="ctahow" href="#how"></a>
+    </div>
+    <p class="under" id="under"></p>
   </div>
 </div>
 
 <div class="band">
   <section>
     <div class="wrap">
-      <div class="eyebrow"><span>On the board right now</span><i></i></div>
-      <h2>The last few days</h2>
-      <p class="sub">Live from the board itself, not a mock-up of one. Tap any of
-        them to read the rest.</p>
+      <div class="eyebrow"><span id="liveEyebrow"></span><i></i></div>
+      <h2 id="liveH2"></h2>
+      <p class="sub" id="liveSub"></p>
       <div class="live" id="live"></div>
-      <div class="more"><a class="btn ghost" href="/board">See the whole board</a></div>
+      <div class="more"><a class="btn ghost" id="seeall" href="/board"></a></div>
     </div>
   </section>
 </div>
 
 <section>
   <div class="wrap">
-    <div class="eyebrow"><span>Three things, one place</span><i></i></div>
-    <h2>The parts of being new here that nobody hands you</h2>
-    <p class="sub">Your university gives you a timetable and a dorm key.
-      Everything after that is worked out by asking somebody who arrived a term
-      earlier.</p>
+    <div class="eyebrow"><span id="threeEyebrow"></span><i></i></div>
+    <h2 id="threeH2"></h2>
+    <p class="sub" id="threeSub"></p>
     <div class="three">
-      <div class="thing">
-        <span class="n">01</span>
-        <h3>Meet the people already here</h3>
-        <p>A board by campus and city. Who is around, what is on this week, who is
-          going. Arriving alone is the whole problem and it is the easiest one to
-          fix.</p>
-        <p class="say">“Anyone at Renmin going to the Gulou thing Thursday?”</p>
-      </div>
-      <div class="thing">
-        <span class="n">02</span>
-        <h3>Find a study buddy</h3>
-        <p>Say your level, what you are working towards and when you are free.
-          Most people want the same trade — their Chinese for your English — and
-          no app is needed to make that work, only a way to find each other.</p>
-        <p class="say">“HSK4 in March, Tuesdays, will trade for English.”</p>
-      </div>
-      <div class="thing">
-        <span class="n">03</span>
-        <h3>Compare notes on getting by</h3>
-        <p>The SIM without a bank card. Which gate is shut. What the label says.
-          What 微辣 really means. Small things that cost a week each to learn
-          alone and a minute to be told.</p>
-        <p class="say">“8 kuai, cash only, gone by ten.”</p>
-      </div>
+      <div class="thing"><span class="n">01</span><h3 id="t1h"></h3><p id="t1p"></p><p class="say" id="t1s"></p></div>
+      <div class="thing"><span class="n">02</span><h3 id="t2h"></h3><p id="t2p"></p><p class="say" id="t2s"></p></div>
+      <div class="thing"><span class="n">03</span><h3 id="t3h"></h3><p id="t3p"></p><p class="say" id="t3s"></p></div>
     </div>
   </div>
 </section>
@@ -240,37 +258,14 @@
 <div class="band">
   <section id="how">
     <div class="wrap">
-      <div class="eyebrow"><span>How it is run</span><i></i></div>
-      <h2>A public board is a duty, not a feature</h2>
-      <p class="sub">These are decisions already made and already built, not
-        intentions. They are the reason this can carry other people's words at
-        all.</p>
+      <div class="eyebrow"><span id="howEyebrow"></span><i></i></div>
+      <h2 id="howH2"></h2>
+      <p class="sub" id="howSub"></p>
       <div class="rules">
-        <div class="rule">
-          <h4>Held by default</h4>
-          <p>Nothing appears until a person has read it. There is no model here
-            that can judge a post, and a board that publishes everything unread
-            will publish the first thing somebody tests it with.</p>
-        </div>
-        <div class="rule">
-          <h4>Report and block, on every post</h4>
-          <p>A person reads every report. Two separate people reporting something
-            takes it down pending review — counted by person, never by press, so
-            nobody can hide anything alone. Blocking happens in your own browser
-            and never reaches us.</p>
-        </div>
-        <div class="rule">
-          <h4>No accounts, nothing tracked</h4>
-          <p>No email, no phone number, no sign-in. A post is tied to a salted
-            hash of a random number your browser made up — enough to take your own
-            post back, and nothing else. No third party sees any of it.</p>
-        </div>
-        <div class="rule warn">
-          <h4>Nothing loaded from outside</h4>
-          <p>No web fonts, no CDN, no third-party script or pixel. Everything is
-            served from one machine, because a page that waits on something
-            unreachable from the mainland is a page that does not load.</p>
-        </div>
+        <div class="rule"><h4 id="r1h"></h4><p id="r1p"></p></div>
+        <div class="rule"><h4 id="r2h"></h4><p id="r2p"></p></div>
+        <div class="rule"><h4 id="r3h"></h4><p id="r3p"></p></div>
+        <div class="rule warn"><h4 id="r4h"></h4><p id="r4p"></p></div>
       </div>
     </div>
   </section>
@@ -278,116 +273,152 @@
 
 <footer>
   <div class="wrap">
+    <div class="col"><b>Liuxuesheng · 留学生</b><span id="footAbout"></span></div>
     <div class="col">
-      <b>Liuxuesheng · 留学生</b>
-      A meeting place for exchange students in China. Read by a person before
-      anything appears. No accounts, no tracking, nothing loaded from outside.
-    </div>
-    <div class="col" id="reach">
-      <b>Something wrong?</b>
-      Report any post from the board itself — a person reads every one.
+      <b id="footWrong"></b><span id="footWrongP"></span>
       <span id="contact" hidden></span>
     </div>
   </div>
 </footer>
 
-<script>
-var $ = function (id) { return document.getElementById(id); };
+<script type="module">
+import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
+
+const $ = (id) => document.getElementById(id);
 function el(t, c, x) {
-  var n = document.createElement(t);
+  const n = document.createElement(t);
   if (c) n.className = c;
   if (x !== undefined) n.textContent = x;
   return n;
 }
-/* replaceChildren is Chrome 86+, and WeChat's Android webview can be older than
-   that. Everything here sticks to what the oldest browser that will realistically
-   open this link already has. */
 function fill(node) { while (node.firstChild) node.removeChild(node.firstChild); }
 
-var TDOT = ["--t1", "--t2", "--t3", "--t4", "--t5", "--t6"];
+const TDOT = ["--t1", "--t2", "--t3", "--t4", "--t5", "--t6"];
 function topicColour(name) {
-  var h = 0, s = String(name);
-  for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  let h = 0;
+  for (const ch of String(name)) h = (h * 31 + ch.codePointAt(0)) >>> 0;
   return "var(" + TDOT[h % TDOT.length] + ")";
 }
-function when(iso) {
-  var d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  var mins = Math.round((Date.now() - d.getTime()) / 60000);
-  if (mins < 1) return "now";
-  if (mins < 60) return mins + "m";
-  if (mins < 1440) return Math.round(mins / 60) + "h";
-  if (mins < 10080) return Math.round(mins / 1440) + "d";
-  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+
+/* Every string on the page, in one function.
+ *
+ * A repaint rather than a DOM walk swapping text nodes: the page is written
+ * once, painted from the dictionary, and repainted on a language change. There
+ * is no second code path to go stale, which is the failure a bolted-on
+ * translation always eventually has. */
+const TEXT = ["kicker","h1a","h1b","h1c","lede","hanzi","askLead","under",
+  "liveEyebrow","liveH2","liveSub","threeEyebrow","threeH2","threeSub",
+  "t1h","t1p","t1s","t2h","t2p","t2s","t3h","t3p","t3s",
+  "howEyebrow","howH2","howSub","r1h","r1p","r2h","r2p","r3h","r3p","r4h","r4p",
+  "footAbout","footWrong","footWrongP"];
+
+function paint() {
+  document.title = T("site.title") + " — " + T("site.kicker");
+  $("brandname").textContent = T("site.title");
+  for (const id of TEXT) $(id).textContent = T("site." + id);
+  $("navopen").textContent = T("site.open");
+  $("ctaopen").textContent = T("site.open");
+  $("ctahow").textContent = T("site.how");
+  $("seeall").textContent = T("site.seeAll");
+  askNow(true);
+  drawLive(POSTS);
 }
 
-/* The newest few, from the board itself.
+/* ---- the one moving thing on the page --------------------------------------
  *
- * A landing page that describes a board while the board sits empty behind it is
- * the thing nobody believes. This shows the actual posts, so the page is either
- * evidence or it is honest about there being none yet. */
+ * Real questions, cycling. The fastest way to say what a board is for is to
+ * show somebody asking — a feature list says "you can ask questions", this
+ * says what the questions are.
+ *
+ * It stops for anyone who asked their system for less motion, and it stops
+ * when the tab is not being looked at, because a timer running in a background
+ * tab on a phone is somebody's battery. */
+const ASKS = ["site.ask1","site.ask2","site.ask3","site.ask4","site.ask5","site.ask6"];
+let askAt = 0, askTimer = null;
+const stillMotion = window.matchMedia
+  && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function askNow(immediate) {
+  const q = $("asking");
+  if (immediate) { q.textContent = T(ASKS[askAt]); return; }
+  q.classList.add("fade");
+  setTimeout(() => {
+    askAt = (askAt + 1) % ASKS.length;
+    q.textContent = T(ASKS[askAt]);
+    q.classList.remove("fade");
+  }, stillMotion ? 0 : 350);
+}
+function askRun(on) {
+  clearInterval(askTimer);
+  askTimer = null;
+  if (on && !stillMotion) askTimer = setInterval(() => askNow(false), 4200);
+}
+document.addEventListener("visibilitychange", () => askRun(!document.hidden));
+
+// ---- the newest few, live from the board ------------------------------------
+let POSTS = [];
+
 function drawLive(posts) {
-  var box = $("live");
+  const box = $("live");
   fill(box);
   if (!posts.length) {
-    var e = el("div", "empty");
-    e.appendChild(el("b", null, "Nothing on the board yet."));
-    e.appendChild(el("p", null,
-      "It opened this week. The first thing anybody puts up appears here — and "
-      + "somebody reads everything before it does."));
-    box.appendChild(e);
+    const e = el("div", "empty");
+    e.append(el("b", null, T("site.liveEmptyH")), el("p", null, T("site.liveEmptyP")));
+    box.append(e);
     box.style.gridTemplateColumns = "1fr";
     return;
   }
-  for (var i = 0; i < Math.min(posts.length, 4); i++) {
-    var p = posts[i];
-    var a = el("a", "post");
+  box.style.gridTemplateColumns = "";
+  for (const p of posts.slice(0, 4)) {
+    const a = el("a", "post");
     a.href = "/board#" + p.id;
+    a.append(el("div", "av", (String(p.handle || "?").trim()[0] || "?").toLowerCase()));
 
-    var av = el("div", "av", (String(p.handle || "?").trim()[0] || "?").toLowerCase());
-    a.appendChild(av);
-
-    var m = el("div", "m");
+    const m = el("div", "m");
     if (p.topic) {
-      var eb = el("div", "eb");
-      var dot = el("i");
+      const eb = el("div", "eb");
+      const dot = el("i");
       dot.style.background = topicColour(p.topic);
-      eb.appendChild(dot);
-      eb.appendChild(el("span", null, p.topic));
-      m.appendChild(eb);
+      eb.append(dot, el("span", null, p.topic));
+      m.append(eb);
     }
-    var who = el("div", "who");
-    who.appendChild(el("b", null, p.handle || "someone"));
-    who.appendChild(el("time", null, when(p.at)));
-    m.appendChild(who);
+    const who = el("div", "who");
+    who.append(el("b", null, p.handle || T("board.someone")), el("time", null, when(p.at)));
+    m.append(who);
     if (p.note) {
-      var t = p.note.length > 150 ? p.note.slice(0, 150).replace(/\s+\S*$/, "") + "…" : p.note;
-      m.appendChild(el("p", null, t));
+      const t = p.note.length > 150 ? p.note.slice(0, 150).replace(/\s+\S*$/, "") + "\u2026" : p.note;
+      m.append(el("p", null, t));
     }
-    a.appendChild(m);
-    box.appendChild(a);
+    a.append(m);
+    box.append(a);
   }
 }
 
+// ---- go ---------------------------------------------------------------------
+setLang(pickLang());
+$("langslot").append(langButton(paint));
+paint();
+askRun(true);
+
 fetch("/api/board")
-  .then(function (r) { return r.json(); })
-  .then(function (d) { drawLive(d && d.posts ? d.posts : []); })
-  .catch(function () { drawLive([]); });
+  .then((r) => r.json())
+  .then((d) => { POSTS = (d && d.posts) || []; drawLive(POSTS); })
+  .catch(() => drawLive([]));
 
 fetch("/api/contact")
-  .then(function (r) { return r.json(); })
-  .then(function (d) {
+  .then((r) => r.json())
+  .then((d) => {
     if (!d || !d.contact) return;
-    var box = $("contact");
+    const box = $("contact");
     box.hidden = false;
-    box.appendChild(document.createTextNode(" For anything a report cannot cover: "));
-    var a = document.createElement("a");
+    box.append(document.createTextNode(" " + T("board.contact") + " "));
+    const a = document.createElement("a");
     a.href = /@/.test(d.contact) ? "mailto:" + d.contact : d.contact;
     a.textContent = d.contact;
-    box.appendChild(a);
-    box.appendChild(document.createTextNode("."));
+    box.append(a, document.createTextNode("."));
   })
-  .catch(function () { /* no contact set: say nothing */ });
+  .catch(() => { /* no contact set: say nothing */ });
 </script>
+
 </body>
 </html>

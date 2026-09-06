@@ -204,6 +204,23 @@ export const STRINGS = {
   ],
   "site.langName":     ["中文", "English"],
 
+  /* The rotating line under the hero. Real questions people arrive with, in
+     the words they arrive with them in — not a feature list. The Chinese is
+     not a translation of the English here: a Chinese reader of this board is
+     more often somebody who could answer these than somebody asking them, so
+     the Chinese asks what they can help with. */
+  "site.ask1":         ["Where do I get a SIM without a Chinese bank card?",
+                        "没有国内银行卡，去哪儿办电话卡？"],
+  "site.ask2":         ["Which gate at Renmin is actually open?",
+                        "人大哪个门是开的？"],
+  "site.ask3":         ["What does 微辣 actually mean?", "微辣到底有多辣？"],
+  "site.ask4":         ["Is there anywhere to watch the game near Wudaokou?",
+                        "五道口附近哪里能看球？"],
+  "site.ask5":         ["Anyone else sitting HSK4 in March?", "还有谁三月考 HSK4？"],
+  "site.ask6":         ["How do I pay for this if I have no Alipay?",
+                        "没有支付宝怎么付款？"],
+  "site.askLead":      ["Somebody is asking, right now:", "现在就有人在问："],
+
   // ---- translate -----------------------------------------------------------
   "tr.open":           ["Translate", "翻译"],
   "tr.title":          ["Translate anything", "翻译"],
