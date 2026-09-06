@@ -182,6 +182,11 @@ export function cleanPerson(raw) {
     // because the words are useful long before the picture is: a profile can be
     // live and readable while its photograph is still waiting.
     photoState: STATES.includes(raw.photoState) ? raw.photoState : "held",
+    // Whether they want to be found. Off unless asked for: posting on the
+    // board must not put somebody in a directory of students, and one tap
+    // takes them back out. This is the difference between a board that has
+    // profiles and a board that is a list of people.
+    looking: raw.looking === true,
     why: (raw.state === "published") ? "" : s(raw.why, 400),
     by: s(raw.by, 64),
   };

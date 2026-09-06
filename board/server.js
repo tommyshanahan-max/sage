@@ -323,6 +323,45 @@ const shownPerson = (q, mine) => ({
   by: undefined,
 });
 
+/* Everybody looking for a study buddy.
+ *
+ * Public, and only what has been through a person: a directory of foreign
+ * students is the thing on this board most worth being careful with, so an
+ * unreviewed profile is not in it at all.
+ *
+ * Only people who have said they are looking. Posting on the board does not
+ * put you in here — being findable is a thing you choose, and one tap takes
+ * you back out.
+ */
+app.get("/api/people", async (req, res) => {
+  const board = await store.load(FILE);
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  res.set("Cache-Control", "no-store");
+  const live = board.people.filter((q) => q.state === "published" && q.looking && q.handle);
+  res.json({
+    people: live.map((q) => ({ ...shownPerson(q, q.by === me), mine: q.by === me })),
+  });
+});
+
+app.get("/api/person", async (req, res) => {
+  const want = String(req.query.handle || "").toLowerCase();
+  if (!want) return res.status(400).json({ error: "no" });
+  const board = await store.load(FILE);
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const q = board.people.find((x) =>
+    x.state === "published" && x.handle.toLowerCase() === want);
+  if (!q) return res.json({ person: null });
+  const live = board.posts.filter((p) => p.state === "published");
+  res.set("Cache-Control", "no-store");
+  res.json({
+    person: { ...shownPerson(q, q.by === me), mine: q.by === me },
+    // What they have actually put on the board, which is the only evidence a
+    // stranger has that a profile is a person.
+    posts: live.filter((p) => store.isOwnPost(p)
+      && (p.handle || "").toLowerCase() === want).slice(0, 5),
+  });
+});
+
 app.get("/api/me", async (req, res) => {
   const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
   const board = await store.load(FILE);
@@ -368,6 +407,7 @@ app.put("/api/me", express.json({ limit: "36mb" }), async (req, res) => {
       q = store.cleanPerson({ id: store.newId(), at: new Date().toISOString(), by: me });
       board.people.push(q);
     }
+    if (typeof req.body.looking === "boolean") q.looking = req.body.looking;
     for (const k of ["handle", "level", "campus", "goal", "trade", "here"]) {
       if (req.body[k] !== undefined) q[k] = String(req.body[k]).slice(0, k === "goal" ? 600 : 120);
     }
