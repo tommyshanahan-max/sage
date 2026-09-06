@@ -2216,7 +2216,7 @@ async function loadCounts() {
       .filter((v) => v !== null);
   };
 
-  const n = (v, label, series) => {
+  const n = (v, label, series, why) => {
     const c = el("div", "n");
     const known = typeof v === "number" && Number.isFinite(v);
     const top = el("div", "top");
@@ -2224,14 +2224,42 @@ async function loadCounts() {
     const line = spark(series);
     if (line) top.append(line);
     c.append(top, el("span", null, label));
+    if (why) c.title = why;
     return c;
   };
+
+  /* At least this many separate people did something in the app.
+   *
+   * The four figures beside it count a page being opened — tested by loading
+   * the marketing page in a fresh window and watching "people, ever" and "used
+   * it today" both go up by one, twice. So they answer "how many browsers
+   * loaded a page", which is a fair question and not the one their labels ask.
+   *
+   * This one comes from the features, each of which reports how many separate
+   * people called it. A page view cannot produce a `speak`. Taken as the
+   * largest single feature rather than the sum, because one person who speaks
+   * and translates is in two of those numbers and adding them would count them
+   * twice — so it is a floor, and the true figure is somewhere above it. */
+  const perFeature = (app.devices || []).map((x) => Number(x.count) || 0);
+  const didSomething = perFeature.length ? Math.max(...perFeature) : null;
+
   box.append(
-    n(app.count, "people, ever", col("count")),
-    n(app.today, "new today", col("fresh")),
+    n(app.count, "opened a page, ever", col("count"),
+      "Browsers that have loaded any page, the marketing page included — "
+      + "not people who used the app. Verified by testing."),
+    n(app.today, "new today", col("fresh"),
+      "First-time browsers today, on the same counting as the figure beside it."),
     n(app.week, "new this week", weekly()),
-    n(app.activeToday, "used it today", col("active")),
+    n(app.activeToday, "opened it today", col("active"),
+      "Also counts a page being loaded, so it is not a count of people who did "
+      + "anything. The feature figure is the one that answers that."),
     n(app.returningToday, "came back today", col("back")),
+    n(didSomething, "used a feature", null,
+      "At least this many separate people actually called a feature"
+      + (app.deviceDays ? `, over the last ${app.deviceDays} days` : "")
+      + ". A page view cannot produce one, so this figure is not inflated by "
+      + "them. A floor rather than a total: one person using two features is "
+      + "in both counts, so they are not added up."),
   );
   // The full picture, in place. It was a link to another tab, which is a poor
   // trade for five figures somebody is already looking at: they lose the panel
