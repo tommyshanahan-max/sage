@@ -316,10 +316,21 @@
      Three targets on the thumb's arc, the one you press most in the middle
      and larger than the other two — the shape a phone app has, because
      somebody arriving from WeChat has used a hundred of them. */
-  .bar{position:fixed;left:0;right:0;bottom:0;z-index:35;display:flex;
+  /* Held to the same column as the content.
+     Left and right at 0 is correct on a phone, where the column IS the
+     viewport. On a desktop window it drew a strip across the whole screen
+     under a narrow page, which reads as a stretched phone rather than as an
+     app. Same width as main, centred, with a border down each side once there
+     is room for one. */
+  .bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:35;
+    width:100%;max-width:34rem;display:flex;
     align-items:center;justify-content:space-around;
     padding:.35rem .5rem calc(.35rem + env(safe-area-inset-bottom));
     background:var(--paper);border-top:1px solid var(--line)}
+  @media (min-width:36rem){
+    .bar{border-left:1px solid var(--line);border-right:1px solid var(--line);
+      border-radius:1rem 1rem 0 0}
+  }
   .bar a,.bar button{flex:1;border:0;background:none;color:var(--muted);
     display:flex;flex-direction:column;align-items:center;gap:.15rem;
     padding:.45rem .3rem;font-size:.68rem;text-decoration:none;letter-spacing:.04em}
