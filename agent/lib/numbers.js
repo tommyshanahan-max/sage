@@ -159,3 +159,92 @@ Do not repeat this on later turns.
   cache = { at: Date.now(), text };
   return text;
 }
+
+// ---------------------------------------------------------------------------
+// The Feed's own figures
+//
+// Separate from brief() above, and the reason is not tidiness. That one reads
+// the shared counter, whose app slot holds ONE product — currently a different
+// one. Handing it to this seat would brief a Sage that must know nothing about
+// that product on that product's numbers, which is worse than no figures.
+//
+// So this reads the board's own /api/count: public, every field a count, and
+// about the thing this seat actually runs.
+//
+// The two measure different things and are never added together. The counter
+// counts arrivals from a snippet in the page; this counts participation from
+// the record. A board can be busy and silent, or quiet and full of people
+// talking, and neither figure alone says which.
+// ---------------------------------------------------------------------------
+let feedCache = { at: 0, text: null };
+
+/** The Feed's figures as a block for the system prompt, or "" if unreachable.
+ *
+ *  Never throws, for the same reason as brief(): the board having a bad minute
+ *  must not stop the seat answering. */
+export async function feedBrief(board) {
+  if (!board?.configured?.()) return "";
+  if (Date.now() - feedCache.at < TTL_MS) return feedCache.text || "";
+
+  const r = await board.call("/api/count", { timeoutMs: 4000 });
+  if (r.status < 200 || r.status >= 300 || !r.body || typeof r.body !== "object") {
+    // Cached empty for the window, so a board that is down does not get a
+    // request per turn on top of whatever is already wrong with it.
+    feedCache = { at: Date.now(), text: "" };
+    return "";
+  }
+  const d = r.body;
+  const n = (v) => Number(v) || 0;
+  // "1 posts" in a briefing is a small thing that makes every figure beside it
+  // look unchecked.
+  const many = (v, one, more) => `${n(v)} ${n(v) === 1 ? one : (more || one + "s")}`;
+  const waiting = n(d.held) + n(d.facesHeld);
+
+  const text = `
+
+# Where The Feed stands
+
+Read fresh at the start of this turn, from the board itself.
+
+- ${many(d.count, "person", "people")} ${n(d.count) === 1 ? "has" : "have"} put something up. ${n(d.today)} today, ${n(d.week)} in the last seven days.
+- ${n(d.returningToday)} of today's were here before today.
+- On the board now: ${many(d.posts, "post")}, ${many(d.replies, "reply", "replies")}, ${many(d.profiles, "profile")}.
+- Waiting to be read: ${many(d.held, "post")}, ${many(d.facesHeld, "photograph")}.
+
+## Reading them without being wrong
+
+- The unit is ${JSON.stringify(String(d.unit || "people who have put something up"))}.
+  These are not visitors. This server logs no page views, so it cannot tell you
+  how many people read the board — only how many wrote on it. If somebody asks
+  about traffic, say that plainly rather than offering this figure for it.
+- A total only ever rises, so it cannot tell you anything has gone wrong.
+  Whether people come back is the figure that can.
+- "Here before today" cannot include anybody who arrived today, so on the day
+  of a share it is low for arithmetic reasons rather than bad ones.
+- Where a figure needs more time than the board has had, say so rather than
+  reporting the zero. It is the calendar, not the audience.
+- Held is the one figure here that is a task rather than a result.${
+  waiting
+    ? ` There ${waiting === 1 ? "is" : "are"} ${waiting} waiting now — worth saying so.`
+    : ""
+}
+
+## When a conversation opens
+
+The first time you reply in a conversation, before anything else: two or three
+short lines and stop.
+
+- One line of welcome.
+- Two figures at most — the ones that actually moved, and anything waiting to
+  be read, which is the one that needs somebody rather than noting.
+- One line on what you make of them.
+
+Not six lines and not a paragraph under each figure. A week where nothing moved
+is one line, said plainly, not a paragraph explaining that nothing moved.
+
+Do not repeat this on later turns.
+`;
+
+  feedCache = { at: Date.now(), text };
+  return text;
+}

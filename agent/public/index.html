@@ -1367,18 +1367,31 @@ async function drawNumbers() {
 
   const parts = [];
   if (d.app) {
+    // Named by the server rather than hardcoded: a seat that runs its own
+    // product should say which one, and "The app" beside another product's
+    // figures is how a masthead tells a confident lie.
+    const pairs = [pair(d.app.count, "people, ever"), pair(d.app.today, "new today")];
+    // Only when there is something. A zero here is good news and does not
+    // need a slot; a number is a queue and does.
+    if (d.app.held) pairs.push(pair(d.app.held, "waiting"));
+    parts.push(group(d.appLabel || "The app", pairs));
+  }
+  // The site figures come from the shared counter, and a seat can be
+  // deliberately not reading it — in which case there is no site section, no
+  // sparkline and no link, rather than a row of zeros claiming nobody came.
+  if (d.today) {
+    if (parts.length) parts.push(el("span", "cut"));
     parts.push(
-      group("The app", [pair(d.app.count, "people, ever"), pair(d.app.today, "new today")]),
-      el("span", "cut")
+      group("The site", [pair(d.today.devices, "today"), pair(d.today.returning, "came back")]),
+      spark
     );
   }
-  parts.push(
-    group("The site", [pair(d.today.devices, "today"), pair(d.today.returning, "came back")]),
-    spark,
-    el("span", "go", "Analytics →")
-  );
+  if (!parts.length) { numbersBox.hidden = true; return; }
+  if (d.link) parts.push(el("span", "go", "Analytics →"));
   numbersBox.replaceChildren(...parts);
-  numbersBox.href = d.link || "#";
+  // Not a link to nowhere: without a dashboard behind it the readout is text.
+  if (d.link) numbersBox.href = d.link;
+  else numbersBox.removeAttribute("href");
   numbersBox.hidden = false;
 }
 

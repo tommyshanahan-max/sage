@@ -1714,6 +1714,37 @@ const NUMBERS_TOKEN = process.env.AGENT_NUMBERS_TOKEN || "";
 const NUMBERS_LINK = process.env.AGENT_NUMBERS_LINK || "";
 
 app.get("/api/numbers", async (_req, res) => {
+  /* The Feed's seat answers from its own product, not the shared counter.
+   *
+   * Same route and same envelope, so the masthead that already renders this
+   * needs no second code path — only the figures underneath are different.
+   * That counter has one app slot and it holds another product; passing it
+   * through here would put that product's numbers in this seat's masthead
+   * under this product's name. */
+  if (isFeedSeat && feed.configured()) {
+    const r = await feed.call("/api/count", { timeoutMs: 4000 });
+    if (r.status < 200 || r.status >= 300 || !r.body) {
+      return res.status(502).json({ error: "could not reach The Feed" });
+    }
+    const d = r.body;
+    return res.json({
+      appLabel: PROJECT_LABEL,
+      app: {
+        count: Number(d.count) || 0,
+        today: Number(d.today) || 0,
+        // The only figure here that is a task rather than a result, which is
+        // why it is in the masthead at all.
+        held: (Number(d.held) || 0) + (Number(d.facesHeld) || 0),
+      },
+      // No site figures and no sparkline: those come from the shared counter,
+      // and this seat is deliberately not reading it.
+      today: null,
+      series: [],
+      appSeries: [],
+      link: "",
+    });
+  }
+
   if (!canSeeNumbers || !NUMBERS_URL) return res.status(404).json({ error: "not this seat" });
   try {
     // Short timeout on purpose. This is decoration in a masthead; a counter
@@ -2688,6 +2719,19 @@ app.post("/api/chat", express.json({ limit: "24mb" }), async (req, res) => {
   // would hand Brendan a dashboard and a Sage who will not read it to him.
   const numbersBrief = canSeeNumbers ? await numbers.brief() : "";
 
+  /* The Feed's own figures, and deliberately NOT the shared counter's.
+   *
+   * That counter has one app slot and it holds a different product. Giving it
+   * to this seat would brief a Sage that must know nothing about that product
+   * on that product's numbers — worse than no figures, because it would be
+   * confidently wrong about which app it was describing.
+   *
+   * Read from the board itself, and not gated on the numbers grant: these are
+   * this seat's own product, the way a partner seat's mockups are its own. The
+   * grant is about being shown the estate's visitor dashboard, which is a
+   * different question. */
+  const feedNumbers = isFeedSeat ? await numbers.feedBrief(feed) : "";
+
   const baseOptions = {
     cwd: WORKSPACE,
     // Appends to Claude Code's preset rather than replacing it: the preset
@@ -2698,7 +2742,7 @@ app.post("/api/chat", express.json({ limit: "24mb" }), async (req, res) => {
       append: isProspect
         ? PROSPECT_VOICE
         : isFeedSeat
-          ? FEED_VOICE + numbersBrief
+          ? FEED_VOICE + feedNumbers + numbersBrief
           : isPartner
             ? PARTNER_VOICE + numbersBrief
             : SAGE_VOICE + OWNER_CLEARANCE + platformBrief + numbersBrief,
