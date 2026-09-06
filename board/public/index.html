@@ -442,7 +442,7 @@
     </div>
     <div class="row">
       <button class="ghost" type="button" id="pickpic">Photo</button>
-      <input type="file" id="pic" hidden accept="image/jpeg,image/png,image/webp,image/gif">
+      <input type="file" id="pic" hidden accept="image/*">
       <button class="ghost" type="button" id="shut">Cancel</button>
       <button class="go" type="submit" id="send">Put it up</button>
     </div>
@@ -996,12 +996,18 @@ $("shotoff").addEventListener("click", () => { photo = null; $("shot").hidden = 
 $("pic").addEventListener("change", async (e) => {
   const f = e.target.files && e.target.files[0];
   if (!f) return;
-  if (f.size > 25 * 1024 * 1024) return say(T("post.tooBig"), true);
-  const bytes = new Uint8Array(await f.arrayBuffer());
-  let bin = "";
-  // Chunked, because 20 MB spread as one argument list blows the stack.
-  for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
-  photo = { data: btoa(bin), type: f.type };
+  if (f.size > 40 * 1024 * 1024) return say(T("post.tooBig"), true);
+  // The same treatment a profile picture gets, and for the same three reasons
+  // — a photo straight off a phone is megabytes, is HEIC on an iPhone, and
+  // carries its rotation in metadata. This was fixed for profile photos and
+  // left here, which is why a post with a picture on it failed with the
+  // browser's own "Load failed" while one without went straight through.
+  //
+  // 1600 rather than 1000: a post's photograph is the content, and gets looked
+  // at properly. A face is 5.8rem across.
+  say(T("me.working"));
+  const shot = await shrink(f, 1600);
+  photo = { data: shot.data, type: shot.type };
   $("shotimg").src = URL.createObjectURL(f);
   $("shot").hidden = false;
   say("");
