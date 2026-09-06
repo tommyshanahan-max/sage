@@ -647,6 +647,66 @@ services:
           memory: ${TOMSCODING_STATS_MEMORY:-256m}
     cpu_shares: ${TOMSCODING_STATS_CPU_SHARES:-128}
 
+  # ---------------------------------------------------------------------------
+  # The Board
+  #
+  # A noticeboard for foreigners in China, standing alone: Study Pal's feed with
+  # nothing else attached. It starts empty and copies nothing — the posts on
+  # that side belong to the people who wrote them.
+  #
+  # It answers the admin panel's API to the letter, so setting that seat's
+  # TOMSCODING_PARTNER_APP_URL to http://board:8080 governs this board instead,
+  # with no change to a line of the panel. The one thing that does not carry
+  # over is the phone frame: that same variable is also the page the browser
+  # loads, and this address resolves only inside the box. The server-side half
+  # — queue, release, delete — is unaffected.
+  #
+  # No hostname yet, and no Caddy entry. Bring it up, look at it on the box
+  # through the panel, and give it an address when it has earned one — a public
+  # hostname is a certificate, a moderation duty and a thing to defend.
+  # ---------------------------------------------------------------------------
+  board:
+    build:
+      context: ./board
+    image: tomscoding-board:latest
+    container_name: tomscoding-board
+    restart: unless-stopped
+    # Off unless asked for, like every other optional service here. This box
+    # runs the thing people actually use; a new product does not get to come up
+    # on the next deploy because it happens to be in the file. Add `board` to
+    # COMPOSE_PROFILES in .env to switch it on.
+    profiles: ["board"]
+    user: "1000:1000"
+    environment:
+      BOARD_DIR: /data
+      # Without this the admin routes refuse everything, which is the safe
+      # failure: a board nobody can moderate is worse than one nobody can post
+      # to.
+      BOARD_ADMIN_KEY: ${TOMSCODING_BOARD_KEY:-}
+      # Salts the device hash. Without a salt the hash is a rainbow table away
+      # from the id it came from, which would make "nothing is stored about
+      # you" a claim rather than a fact.
+      BOARD_SALT: ${TOMSCODING_BOARD_SALT:-}
+      # Where a held post announces itself, so it reaches the panel's queue
+      # without anybody refreshing — the same webhook Study Pal posts to.
+      BOARD_HOOK_URL: ${TOMSCODING_BOARD_HOOK_URL:-}
+      BOARD_HOOK_SECRET: ${TOMSCODING_STUDYPAL_WEBHOOK_SECRET:-}
+    volumes:
+      - board_data:/data
+    expose:
+      - "8080"
+    networks:
+      - tomscoding
+      # And the partner network, so the admin panel on that seat can reach it.
+      # Same reason the counter joins: the grant is not enough on its own, the
+      # address has to resolve from in there.
+      - partner_net
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_BOARD_MEMORY:-256m}
+    cpu_shares: ${TOMSCODING_BOARD_CPU_SHARES:-128}
+
 networks:
   tomscoding:
     driver: bridge
@@ -660,6 +720,10 @@ networks:
     driver: bridge
 
 volumes:
+  # The Board's own posts and photographs. Its own volume, not shared with
+  # anything: this is a separate product and the day it moves to its own box is
+  # a day it should be one `docker volume` to carry.
+  board_data:
   # Who each product is shared with, and what has gone out. Shared between the
   # owner's seat and the partner seats rather than living in a project
   # directory: a partner's snapshot is read-only, and the two seats call the

@@ -74,6 +74,14 @@ up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	  && { echo "analytics is enabled but TOMSCODING_STATS_SITES is empty."; \
 	       echo "Nothing would be counted: a page whose origin is not listed is ignored."; \
 	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*board' .env && ! grep -qE '^TOMSCODING_BOARD_KEY=.+' .env \
+	  && { echo "board is enabled but TOMSCODING_BOARD_KEY is empty."; \
+	       echo "Every post lands held for a person to look at, and without this key"; \
+	       echo "there is no person: the admin routes refuse everything, so nothing"; \
+	       echo "could ever be released. Run 'make password' and put it in .env."; \
+	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*board' .env && ! grep -qE '^TOMSCODING_BOARD_SALT=.+' .env \
+	  && echo "note: no TOMSCODING_BOARD_SALT — device hashes are unsalted, so a hash is a lookup away from the id it came from." || true
 	@# Stamp what is being deployed before deploying it, so the agent's copy of
 	@# "recent changes" is the commits that are actually running. Not fatal — a
 	@# tarball instead of a checkout should still deploy — but it says so out

@@ -1039,6 +1039,50 @@ would answer wrongly for someone returning after the window.
 
 Raw logs are pruned at `TOMSCODING_STATS_RETAIN_DAYS`. Summaries are kept.
 
+## The Board
+
+A noticeboard for foreigners in China, standing on its own: the social side of
+Study Pal with nothing else attached — no lessons, no account, no app to
+install. Somebody posts a photograph and a line of text; everyone else reads
+it, replies, and says they have been there too.
+
+Off by default. Add `board` to `COMPOSE_PROFILES`, set `TOMSCODING_BOARD_KEY`
+and `TOMSCODING_BOARD_SALT` in `.env`, and `make up`.
+
+**It starts empty and copies nothing.** The posts on the app belong to the
+people who wrote them; this begins blank, with whichever accounts you operate.
+
+**Every post arrives held.** There is no model here that can judge one, so a
+person releases each by hand. That is deliberate: a board that publishes
+everything unread will publish the first thing somebody tests it with.
+`BOARD_AUTO_PUBLISH=1` turns that off, and should not be set on a public one.
+A like is the exception — it is a tally, not a statement, and holding one would
+put a queue in front of the cheapest thing anybody does here.
+
+**There are no accounts.** A post is tied to a salted hash of a random id the
+browser keeps, never stored in the clear. That is enough for "delete my own
+post" and nothing else, which is the whole of what it claims. Changing
+`BOARD_SALT` orphans every post from its author, so set it once and leave it.
+
+**It answers the admin panel's API to the letter** — `/api/public?queue=1`,
+`POST /api/feed`, `POST /api/feed/release`, `DELETE /api/feed`, `/api/users` —
+so setting that seat's `TOMSCODING_PARTNER_APP_URL` to `http://board:8080`
+governs this board from the panel already built, with no change to a line of
+it. One thing does not survive the swap: that variable is read twice, once by
+the server as the address it calls and once by the browser as the page it puts
+in the phone frame. `board:8080` resolves only inside the box, so the frame
+comes up blank while everything server-side works.
+
+**No hostname, no Caddy entry, not public.** Report and block are not built. A
+public address is a certificate, a moderation duty and a thing to defend; it
+should wait until those exist. Until then it is reachable from inside the box
+and from the admin panel, which is enough to look at it.
+
+It carries no web fonts and fetches nothing from outside the firewall, for the
+same reason the rest of this does: `fonts.googleapis.com` does not answer in
+the mainland, and a page that waits on it is a page that does not load.
+
+
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — what each piece does and why
@@ -1060,6 +1104,7 @@ agent/public/reel.html    one series per project, twelve beats, a clip against e
 landing/                  the launcher page, static and self-contained
 brand/                    the brand homepage, rendered by Caddy from .env
 analytics/                the counter: collection endpoint, store, dashboard
+board/                    the Board: public noticeboard, admin API, store
 env.tomscoding            this deployment's settings, minus the secrets
 install/bootstrap.sh      one-shot VPS preparation
 scripts/check-sites.py    verifies every site address resolves and is unique
