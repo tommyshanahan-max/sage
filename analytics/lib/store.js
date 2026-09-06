@@ -306,27 +306,65 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
     let returned = 0;
     for (const [, seen] of devices) if (seen[1] > seen[0]) returned++;
 
-    /* Regulars: been here on at least two different days, and here within the
-     * last seven.
+    /* How often people actually turn up.
      *
-     * "Ever returned" counts somebody who came twice in March and never again,
-     * which is a fact about the past and not about the audience. Adding "and
-     * recently" is the difference between a number that only goes up and one
-     * that can go down — and one that can go down is the only kind worth
-     * putting on a wall.
+     * The device index knows a first day and a last day, and that is all — so
+     * from it, "twice" and "twenty times" are the same record, and every
+     * loyalty figure built on it is really just "came back at least once"
+     * wearing a better name.
      *
-     * What it cannot say, and the page says so: whether somebody came twice or
-     * twenty times. Only a first day and a last day are kept per browser, on
-     * purpose, so two visits and twenty are the same record. This is the most
-     * that record can honestly support.
+     * The day files know more. Each keeps the set of hashed ids seen that day,
+     * so counting how many of the last seven days a browser appears in is a
+     * question the stored data can already answer exactly — no new field, no
+     * per-person history, and true retroactively rather than from today.
      *
-     * Seven days because it has to be long enough that a person with a life
-     * does not fall out of it for skipping a few days, and short enough that
-     * somebody who has actually gone does fall out. */
+     * Which makes an honest definition possible: somebody here on most days is
+     * a regular; somebody here on two days is somebody who came back once.
+     * They are different people and they were previously the same number. */
     const REGULAR_DAYS = 7;
-    const cutoff = daysBack(today, REGULAR_DAYS, tz)[0];
-    let regular = 0;
-    for (const [, seen] of devices) if (seen[1] > seen[0] && seen[1] >= cutoff) regular++;
+    const week = daysBack(today, REGULAR_DAYS, tz);
+    const cutoff = week[0];
+
+    // Days appeared on, per browser, within the window. Only browsers that
+    // appeared at all are in here.
+    const appearances = new Map();
+    for (const key of week) {
+      const d = days.get(key);
+      if (!d) continue;
+      for (const id of d.ids) appearances.set(id, (appearances.get(id) || 0) + 1);
+    }
+
+    // How many people were here on exactly one day, exactly two, and so on.
+    // The shape is the finding: a tall bar at 1 and nothing after it is a
+    // product people try once, whatever the totals say.
+    const spread = new Array(REGULAR_DAYS + 1).fill(0);
+    for (const [, n] of appearances) spread[Math.min(n, REGULAR_DAYS)]++;
+
+    // Most days: more than half of them — four of seven. Chosen so somebody
+    // with a life can miss three days and still count, while somebody who
+    // looked twice does not.
+    const MOST = Math.ceil(REGULAR_DAYS / 2);
+    let regular = 0, everyDay = 0;
+    for (const [, n] of appearances) {
+      if (n >= MOST) regular++;
+      if (n >= REGULAR_DAYS) everyDay++;
+    }
+
+    // People on a typical day, over the same window. Counted per day and
+    // averaged rather than summed: the same person on Monday and Tuesday is
+    // one person, and adding the days would say two.
+    let dayTotal = 0, daysCounted = 0;
+    for (const key of week) {
+      const d = days.get(key);
+      if (!d) continue;
+      dayTotal += d.n;
+      daysCounted++;
+    }
+
+    // Still the old figure, kept because it answers a different question:
+    // has anybody ever come back, ever. Useful early, and misleading later.
+    let returnedRecently = 0;
+    for (const [, seen] of devices) if (seen[1] > seen[0] && seen[1] >= cutoff) returnedRecently++;
 
     const t = days.get(today);
     return {
@@ -340,7 +378,28 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
       },
       // Of everyone ever counted, how many have been back on another day.
       returned,
-      // And of those, how many were here recently enough to still be here.
+      /* How often people turn up, over the last week. `regular` is the one
+       * worth reading: people here on most days, which is a different fact
+       * from "came back at least once" and was previously the same number. */
+      daily: {
+        days: REGULAR_DAYS,
+        from: cutoff,
+        // People here on most days of the week, and on every one of them.
+        regular,
+        everyDay,
+        mostDaysIs: MOST,
+        // People on a typical day. Averaged, never summed.
+        perDay: daysCounted ? Math.round((dayTotal / daysCounted) * 10) / 10 : 0,
+        // How many appeared on exactly one day, exactly two, and so on. Index
+        // is the number of days; spread[0] is always 0 and is there so the
+        // index reads as itself.
+        spread,
+        // Anybody at all in the window, which is what the spread adds up to.
+        anyone: [...appearances.keys()].length,
+        // Came back at least once and was here this week. The old figure,
+        // kept because it is the honest one while a product is days old.
+        returnedRecently,
+      },
       regular,
       regularDays: REGULAR_DAYS,
       regularFrom: cutoff,

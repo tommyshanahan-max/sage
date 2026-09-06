@@ -498,7 +498,8 @@
       <div class="stat"><span class="n" id="n-events">—</span><span class="k">Actions</span></div>
       <div class="stat"><span class="n" id="n-time">—</span><span class="k">Average visit</span></div>
       <div class="stat"><span class="n" id="n-known">—</span><span class="k">Known devices</span></div>
-      <div class="stat accent"><span class="n" id="n-regular">—</span><span class="k">Regulars</span></div>
+      <div class="stat accent"><span class="n" id="n-regular">—</span><span class="k">Here most days</span></div>
+      <div class="stat"><span class="n" id="n-perday">—</span><span class="k">People a day</span></div>
     </div>
   </section>
 
@@ -582,6 +583,12 @@
     </div>
   </section>
 
+  <section id="often-wrap" hidden>
+    <h2>How often people come back <span id="often-span" style="text-transform:none;letter-spacing:0"></span></h2>
+    <p class="thin" id="often-note"></p>
+    <div class="bars" id="often"></div>
+  </section>
+
   <section id="usedays-wrap" hidden>
     <h2>Functions, day by day</h2>
     <p class="thin">The list above is the range added up, which says a function
@@ -614,14 +621,15 @@
     total to show and none is shown. Pages and functions <i>are</i> summed over the
     range, because those are actions, and two of them are two.
     <br><br>
-    <b>Regulars</b> are browsers that have been here on at least two different
-    days and were here within the last week. It is the only figure here that can
-    go down, which is the point of it — everything else only ever rises, and a
-    number that cannot fall cannot tell you that something stopped working. It
-    deliberately cannot say whether somebody came twice or twenty times: only a
-    first day and a last day are kept per browser, so those two are the same
-    record, and a bigger claim than that would be invented. Pooled across every
-    site counted, like everything else on this page.
+    <b>Here most days</b> counts browsers that appeared on four or more of the
+    last seven days. It comes from which days each browser appears in, not from
+    a first-seen and last-seen pair — so it can tell twice apart from twenty,
+    which "ever came back" cannot. Someone who came back once is not a regular
+    user, and until now those were the same number. It is also the only figure
+    on this page that can go down, which is the point of it: everything else
+    only ever rises, and a number that cannot fall can never tell you that
+    something stopped working. Pooled across every site counted, like the rest
+    of this page.
     <br><br>
     <b>Came back</b> counts people who were here today and had been before. The
     percentage beside the growth curve is a different question — of everyone ever
@@ -807,19 +815,56 @@ function drawGrowth(series, opts = {}) {
       (added > 0 ? ` · ${fmt(added)} of them arrived after the first day` : "");
 }
 
+/** How often people actually turn up, which is a different question from
+ *  whether they ever came back.
+ *
+ *  The bar at one day is the one to read. A tall bar there and nothing after
+ *  it is a product people try once — and that shape is invisible in every
+ *  other figure on this page, because every other figure counts that person
+ *  exactly the same as somebody who comes daily.
+ */
+function drawOften(daily) {
+  const wrap = document.getElementById("often-wrap");
+  if (!daily || !daily.anyone) { if (wrap) wrap.hidden = true; return; }
+
+  const reg = document.getElementById("n-regular");
+  if (reg) {
+    reg.textContent = fmt(daily.regular);
+    reg.closest(".stat")?.setAttribute("title",
+      `Here on ${daily.mostDaysIs} or more of the last ${daily.days} days`);
+  }
+  const per = document.getElementById("n-perday");
+  if (per) {
+    per.textContent = daily.perDay ? String(daily.perDay) : "—";
+    per.closest(".stat")?.setAttribute("title",
+      `Averaged over the last ${daily.days} days, never summed`);
+  }
+
+  document.getElementById("often-span").textContent =
+    "· last " + daily.days + " days";
+  document.getElementById("often-note").textContent =
+    `Of the ${fmt(daily.anyone)} who came at all this week: `
+    + `${fmt(daily.regular)} on ${daily.mostDaysIs} days or more, `
+    + `${fmt(daily.everyDay)} every single day. `
+    + "Counted from which days each browser appears in, so it says twice apart "
+    + "from twenty — the one thing the older figures could not.";
+
+  // A row per number-of-days, one to seven. Drawn even where the count is
+  // zero: the gaps are as much of the shape as the bars.
+  const rows = [];
+  for (let n = 1; n < daily.spread.length; n++) {
+    rows.push({ name: n === 1 ? "1 day" : n + " days", count: daily.spread[n] });
+  }
+  drawList(document.getElementById("often"), rows);
+  wrap.hidden = false;
+}
+
 /** Return rate, next to the growth it qualifies. Growth without return is a
  *  leaky bucket, and the two numbers are only meaningful read together. */
 function drawReturn(data) {
   const box = document.getElementById("retention");
   const pct = Math.round(data.returnRate * 100);
-  // The tile lives beside today's figures rather than here, because it is a
-  // fact about now and not about the range the rest of this section describes.
-  const reg = document.getElementById("n-regular");
-  if (reg) {
-    reg.textContent = typeof data.regular === "number" ? fmt(data.regular) : "—";
-    reg.closest(".stat")?.setAttribute("title",
-      `On at least two different days, and here since ${data.regularFrom || "recently"}`);
-  }
+  drawOften(data.daily);
   box.replaceChildren(
     el("b", null, pct + "%"),
     el("span", null,

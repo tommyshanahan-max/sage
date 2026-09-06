@@ -33,13 +33,25 @@ const d = await r.json();
 console.log(`\nSites counted together: ${(d.sites || []).join(", ") || "(none)"}`);
 console.log(`Timezone: ${d.tz}`);
 
-// The figure worth reading first, because it is the only one that can fall.
-const known = d.knownDevices || 0;
-console.log(`\nREGULARS: ${d.regular ?? "—"} of ${known} browsers ever counted`);
-console.log(`  on at least two different days, and here since ${d.regularFrom || "—"}`);
-console.log(`  (${d.returned ?? "—"} have ever come back at all, whenever that was)`);
-console.log("  It cannot say twice from twenty times — only a first and a last");
-console.log("  day are kept per browser, so those are the same record.\n");
+// How often people turn up, which is the question the totals cannot answer.
+const dy = d.daily;
+if (dy && dy.anyone) {
+  console.log(`\nHOW OFTEN THEY COME, last ${dy.days} days (from ${dy.from})`);
+  console.log(`  ${dy.anyone} browsers came at all`);
+  console.log(`  ${dy.regular} of them on ${dy.mostDaysIs} days or more  <- regulars`);
+  console.log(`  ${dy.everyDay} of them on every single day`);
+  console.log(`  ${dy.perDay} people on a typical day (averaged, never summed)`);
+  console.log("");
+  for (let n = 1; n < dy.spread.length; n++) {
+    const c = dy.spread[n];
+    console.log("  " + String(n).padStart(2) + (n === 1 ? " day  " : " days ")
+      + String(c).padStart(5) + "  " + "#".repeat(Math.min(c, 50)));
+  }
+  console.log(`\n  (${d.returned ?? "—"} of ${d.knownDevices || 0} have ever come back at all,`);
+  console.log("   whenever that was — the figure that only goes up)\n");
+} else {
+  console.log("\nHOW OFTEN THEY COME: nobody at all in the last week.\n");
+}
 
 // ---- the site, day by day -------------------------------------------------
 console.log("SITE VISITS — every site above pooled, they are not stored apart");
