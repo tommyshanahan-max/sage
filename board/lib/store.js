@@ -172,6 +172,16 @@ export function cleanPerson(raw) {
     // How long they have been here — the one thing that says whether they are
     // asking or answering.
     here: s(raw.here, 40),
+    // A face and a cover. Both optional, both ids into the media store, and
+    // both held for a person the same way a post is: a photograph is the one
+    // thing on a profile that cannot be taken back once somebody has saved it,
+    // so it does not go public before somebody has looked.
+    photo: /^[a-f0-9]{20}$/.test(String(raw.photo || "")) ? String(raw.photo) : "",
+    cover: /^[a-f0-9]{20}$/.test(String(raw.cover || "")) ? String(raw.cover) : "",
+    // Whether those two have been through the queue. Kept apart from `state`
+    // because the words are useful long before the picture is: a profile can be
+    // live and readable while its photograph is still waiting.
+    photoState: STATES.includes(raw.photoState) ? raw.photoState : "held",
     why: (raw.state === "published") ? "" : s(raw.why, 400),
     by: s(raw.by, 64),
   };
@@ -210,7 +220,11 @@ export async function load(file) {
   try {
     return cleanBoard(JSON.parse(await readFile(file, "utf8")));
   } catch (err) {
-    if (err.code === "ENOENT") return { posts: [] };
+    // Through cleanBoard rather than a literal, so a board that does not exist
+    // yet has exactly the same shape as one that does. Returning { posts: [] }
+    // here meant every caller reading board.people on a fresh install crashed —
+    // and only on a fresh install, which is the worst time to find out.
+    if (err.code === "ENOENT") return cleanBoard({});
     throw err;
   }
 }

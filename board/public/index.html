@@ -109,6 +109,54 @@
     letter-spacing:-.01em;line-height:1.1}
   .top p{margin:.2rem 0 0;color:var(--muted);font-size:.86rem}
 
+  /* ---- your own profile, above the feed -----------------------------------
+     The shape every social profile has, and it is conventional on purpose:
+     somebody who has used a phone knows what a cover with a circle overlapping
+     its bottom edge is, and spends no attention learning it.
+     One departure: there is no Follow. Nobody follows anybody here — the
+     figures are what you have put IN, which is the only number that means
+     anything on a board. */
+  .me{margin:0 -1.15rem 1.5rem;background:var(--raise);
+    border-bottom:1px solid var(--hair)}
+  .cover{position:relative;height:8.5rem;background:var(--accent);overflow:hidden}
+  .cover img{width:100%;height:100%;object-fit:cover;display:block}
+  /* Without a cover photo: a quiet wash rather than a grey hole, so an empty
+     profile reads as new and not as broken. */
+  .cover.bare{background:linear-gradient(160deg,var(--accent),var(--t6))}
+  .cover button{position:absolute;right:.7rem;top:.7rem;border:0;
+    background:rgba(0,0,0,.34);color:#fff;border-radius:99px;
+    padding:.4rem .85rem;font-size:.8rem;backdrop-filter:blur(4px)}
+  .meface{display:flex;flex-direction:column;align-items:center;
+    padding:0 1.15rem 1.1rem;margin-top:-2.9rem}
+  /* The clip lives on the inner circle, not the button. With overflow:hidden
+     on the button itself the + badge — which sits deliberately outside the
+     circle's edge — was sliced in half. */
+  .meface .shot{position:relative;width:5.8rem;height:5.8rem;border-radius:50%;
+    background:var(--paper);color:var(--accent);display:grid;place-items:center;
+    font-family:var(--serif);font-size:2.2rem;line-height:1;
+    box-shadow:0 0 0 4px var(--raise);border:0;padding:0}
+  .meface .shot .in{position:absolute;inset:0;border-radius:50%;overflow:hidden;
+    display:grid;place-items:center}
+  .meface .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .meface .shot .plus{position:absolute;right:-1px;bottom:-1px;width:1.75rem;
+    height:1.75rem;border-radius:50%;background:var(--accent);color:var(--accent-ink);
+    display:grid;place-items:center;font-size:1.1rem;font-family:var(--sans);
+    box-shadow:0 0 0 3px var(--raise)}
+  .meface h2{margin:.7rem 0 0;font-family:var(--serif);font-weight:400;font-size:1.4rem;
+    line-height:1.15;text-align:center}
+  .meface .facts{margin:.25rem 0 0;font-size:.85rem;color:var(--muted);
+    text-align:center;display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
+  .meface .facts b{font-weight:400;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .meface .bio{margin:.7rem 0 0;font-family:var(--serif);font-size:1.02rem;
+    line-height:1.55;color:var(--ink-2);text-align:center;max-width:26rem}
+  .meface .pending{margin:.6rem 0 0;font-size:.8rem;color:var(--t3);text-align:center}
+  .meface .go{margin:.9rem 0 0;border:1px solid var(--line);background:var(--paper);
+    color:var(--ink);border-radius:99px;padding:.5rem 1.4rem;font-size:.9rem}
+  .meface .go.primary{background:var(--accent);border-color:var(--accent);
+    color:var(--accent-ink)}
+  .menote{margin:.5rem 0 0;font-size:.82rem;color:var(--muted);text-align:center;
+    max-width:24rem;line-height:1.5}
+
   /* ---- topics ------------------------------------------------------------ */
   .topics{display:flex;gap:.55rem;overflow-x:auto;padding:0 0 .35rem;
     margin:0 -1.15rem 1.5rem;padding-left:1.15rem;padding-right:1.15rem;
@@ -306,6 +354,8 @@
     <span id="langslot"></span>
   </div>
 
+  <div class="me" id="me" hidden></div>
+
   <div class="topics" id="topics"></div>
 
   <div class="rule"><span id="rulelabel">Everyone · Newest first</span><i></i></div>
@@ -319,6 +369,25 @@
 </main>
 
 <button class="tfab" id="tfab" aria-label="Translate">译</button>
+
+<div class="sheet" id="mesheet" hidden>
+  <form class="card" id="meform">
+    <h2 id="metitle"></h2>
+    <div class="field"><input id="mename" maxlength="40"></div>
+    <div class="field"><input id="mecampus" maxlength="60"></div>
+    <div class="field"><input id="mehere" maxlength="40"></div>
+    <textarea id="megoal" rows="3"></textarea>
+    <p class="menote" id="mewhy"></p>
+    <div class="row">
+      <button class="ghost" type="button" id="meshut"></button>
+      <button class="go" type="submit" id="mesave"></button>
+    </div>
+    <p class="said" id="mesaid" hidden></p>
+  </form>
+</div>
+
+<input type="file" id="mephoto" hidden accept="image/jpeg,image/png,image/webp">
+<input type="file" id="mecover" hidden accept="image/jpeg,image/png,image/webp">
 
 <div class="sheet" id="tsheet" hidden>
   <form class="card" id="tform">
@@ -1048,6 +1117,7 @@ $("tform").addEventListener("submit", async (e) => {
  * losing your place in a feed is what makes people not press it twice. */
 function repaint() {
   const y = window.scrollY;
+  drawMe();
   draw();
   window.scrollTo(0, y);
 }
@@ -1072,6 +1142,166 @@ fetch("/api/contact").then((r) => r.json()).then((d) => {
   a.style.color = "inherit";
   box.append(a, document.createTextNode("."));
 }).catch(() => { $("tfab").hidden = true; });
+
+/* ---- your own profile ------------------------------------------------------
+ *
+ * Drawn above the feed on every visit, whether or not there is one yet. A board
+ * where the first thing you see is your own face is a different thing from a
+ * board where you are anonymous until you post — and the empty state is the
+ * important one, because it is what everybody sees first. */
+let ME = null, MEPOSTS = 0, MEREPLIES = 0;
+
+function asBase64(file) {
+  return file.arrayBuffer().then((buf) => {
+    const bytes = new Uint8Array(buf);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
+    return btoa(bin);
+  });
+}
+
+async function saveMe(patch) {
+  const r = await fetch("/api/me", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...patch, device }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    if (d.error === "contact") return { error: T("me.noContact", { what: d.what }) };
+    return { error: T(d.error === "tooBig" ? "post.tooBig" : "err.general") };
+  }
+  ME = d.person;
+  drawMe();
+  return d;
+}
+
+function drawMe() {
+  const box = $("me");
+  fill(box);
+  box.hidden = false;
+
+  const cover = el("div", "cover" + (ME && ME.cover ? "" : " bare"));
+  if (ME && ME.cover) {
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/public-media?id=" + encodeURIComponent(ME.cover), alt: "" });
+    img.addEventListener("error", () => { img.remove(); cover.classList.add("bare"); });
+    cover.append(img);
+  }
+  const cb = el("button", null, T(ME && ME.cover ? "me.edit" : "me.addCover"));
+  cb.type = "button";
+  cb.addEventListener("click", () => $("mecover").click());
+  cover.append(cb);
+  box.append(cover);
+
+  const face = el("div", "meface");
+
+  // The photo control IS the avatar. Adding a face should be one tap on the
+  // thing that is missing one, not a trip through a settings screen.
+  const shot = el("button", "shot");
+  shot.type = "button";
+  shot.setAttribute("aria-label", T("me.addPhoto"));
+  const inner = el("span", "in");
+  if (ME && ME.photo) {
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/public-media?id=" + encodeURIComponent(ME.photo), alt: "" });
+    img.addEventListener("error", () => { img.remove(); inner.textContent = initial(ME && ME.handle); });
+    inner.append(img);
+  } else {
+    inner.textContent = initial(ME && ME.handle);
+  }
+  shot.append(inner, el("span", "plus", "+"));
+  shot.addEventListener("click", () => $("mephoto").click());
+  face.append(shot);
+
+  face.append(el("h2", null, (ME && ME.handle) || T("me.newHere")));
+
+  if (ME && (MEPOSTS || MEREPLIES || ME.campus || ME.here)) {
+    const facts = el("div", "facts");
+    if (ME.campus) facts.append(el("span", null, ME.campus));
+    if (ME.here) facts.append(el("span", null, ME.here));
+    if (MEPOSTS) { const x = el("span"); x.append(el("b", null, String(MEPOSTS)), document.createTextNode(" " + T("me.posts"))); facts.append(x); }
+    if (MEREPLIES) { const x = el("span"); x.append(el("b", null, String(MEREPLIES)), document.createTextNode(" " + T("me.replies"))); facts.append(x); }
+    face.append(facts);
+  }
+
+  if (ME && ME.goal) face.append(el("p", "bio", ME.goal));
+  if (ME && ME.photoPending) face.append(el("p", "pending", T("me.photoHeld")));
+
+  if (!ME || !ME.handle) {
+    face.append(el("p", "menote", T("me.setUp")));
+    const go = el("button", "go primary", T("me.addPhoto"));
+    go.type = "button";
+    go.addEventListener("click", () => $("mephoto").click());
+    face.append(go);
+  } else {
+    const go = el("button", "go", T("me.edit"));
+    go.type = "button";
+    go.addEventListener("click", openMe);
+    face.append(go);
+  }
+  box.append(face);
+}
+
+for (const [input, key] of [["mephoto", "photo"], ["mecover", "cover"]]) {
+  $(input).addEventListener("change", async (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.size > 25 * 1024 * 1024) { alert(T("post.tooBig")); return; }
+    let who = "";
+    try { who = localStorage.getItem("board:who") || ""; } catch { /* fine */ }
+    const out = await saveMe({
+      [key]: await asBase64(f), [key + "Type"]: f.type,
+      ...(ME && ME.handle ? {} : { handle: who }),
+    });
+    if (out.error) alert(out.error);
+    // No handle yet: the picture is up, so ask for the name while they are here.
+    else if (!ME || !ME.handle) openMe();
+  });
+}
+
+function openMe() {
+  $("metitle").textContent = T("me.editTitle");
+  $("mename").placeholder = T("me.name");
+  $("mecampus").placeholder = T("me.campus");
+  $("mehere").placeholder = T("me.here");
+  $("megoal").placeholder = T("me.goal");
+  $("mewhy").textContent = T("me.whyNoContact");
+  $("meshut").textContent = T("post.cancel");
+  $("mesave").textContent = T("me.save");
+  $("mename").value = (ME && ME.handle) || "";
+  $("mecampus").value = (ME && ME.campus) || "";
+  $("mehere").value = (ME && ME.here) || "";
+  $("megoal").value = (ME && ME.goal) || "";
+  $("mesaid").hidden = true;
+  $("mesheet").hidden = false;
+  $("mename").focus();
+}
+$("meshut").addEventListener("click", () => { $("mesheet").hidden = true; });
+$("mesheet").addEventListener("click", (e) => {
+  if (e.target === $("mesheet")) $("mesheet").hidden = true;
+});
+$("meform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const said = $("mesaid");
+  const handle = $("mename").value.trim();
+  if (!handle) { said.hidden = false; said.classList.add("bad"); said.textContent = T("post.needName"); return; }
+  const out = await saveMe({
+    handle, campus: $("mecampus").value.trim(),
+    here: $("mehere").value.trim(), goal: $("megoal").value.trim(),
+  });
+  if (out.error) { said.hidden = false; said.classList.add("bad"); said.textContent = out.error; return; }
+  // The name here is the name posts go out under, so the two stay in step.
+  try { localStorage.setItem("board:who", handle); } catch { /* fine */ }
+  said.hidden = false; said.classList.remove("bad"); said.textContent = T("me.saved");
+  setTimeout(() => { $("mesheet").hidden = true; }, 900);
+});
+
+fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
+  .then((r) => r.json())
+  .then((d) => { ME = d.person; MEPOSTS = d.posts || 0; MEREPLIES = d.replies || 0; drawMe(); })
+  .catch(() => drawMe());
 
 load();
 </script>

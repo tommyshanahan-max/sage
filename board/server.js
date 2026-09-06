@@ -302,6 +302,92 @@ app.post("/api/translate", express.json({ limit: "16kb" }), async (req, res) => 
 });
 
 // ---------------------------------------------------------------------------
+// People
+//
+// Your own profile, keyed to the browser rather than to an account. Opening
+// the board shows it at the top: a face you can add in one tap, a name, and
+// what you are working on. It is the difference between a noticeboard and a
+// place with people on it.
+//
+// There is no sign-in, so "yours" means posted from this browser — the same
+// salted hash that lets you take your own post back. One profile per browser.
+// ---------------------------------------------------------------------------
+
+const shownPerson = (q, mine) => ({
+  ...q,
+  // A photograph nobody has looked at yet is shown to its owner and to no one
+  // else. Words can be taken back; a face somebody has already saved cannot.
+  photo: (q.photoState === "published" || mine) ? q.photo : "",
+  cover: (q.photoState === "published" || mine) ? q.cover : "",
+  photoPending: mine && q.photoState !== "published" && Boolean(q.photo || q.cover),
+  by: undefined,
+});
+
+app.get("/api/me", async (req, res) => {
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const mine = me && board.people.find((q) => q.by === me);
+  if (!mine) return res.json({ person: null });
+  // How much they have put in, which is the only figure here worth showing.
+  // Not followers: there is nothing to follow, and a count of nothing is worse
+  // than no count.
+  const posts = board.posts.filter((p) => p.by === me && p.state === "published");
+  res.json({
+    person: shownPerson(mine, true),
+    posts: posts.filter(store.isOwnPost).length,
+    replies: posts.filter((p) => p.re).length,
+  });
+});
+
+app.put("/api/me", express.json({ limit: "36mb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+
+  const words = [req.body?.goal, req.body?.trade, req.body?.campus, req.body?.handle]
+    .filter(Boolean).join(" ");
+  // The one rule a profile here has, checked before anything is written.
+  const shaped = store.contactShaped(words);
+  if (shaped) return res.status(400).json({ error: "contact", what: shaped });
+
+  const shot = async (data, type) => {
+    if (!data) return null;
+    const buf = Buffer.from(String(data), "base64");
+    if (buf.length > 25 * 1024 * 1024) return { tooBig: true };
+    const id = await putMedia(buf, String(type || ""));
+    return id ? { id } : { badType: true };
+  };
+  const face = await shot(req.body?.photo, req.body?.photoType);
+  const back = await shot(req.body?.cover, req.body?.coverType);
+  if (face?.tooBig || back?.tooBig) return res.status(413).json({ error: "tooBig" });
+  if (face?.badType || back?.badType) return res.status(415).json({ error: "badType" });
+
+  const out = await change((board) => {
+    let q = board.people.find((x) => x.by === me);
+    if (!q) {
+      q = store.cleanPerson({ id: store.newId(), at: new Date().toISOString(), by: me });
+      board.people.push(q);
+    }
+    for (const k of ["handle", "level", "campus", "goal", "trade", "here"]) {
+      if (req.body[k] !== undefined) q[k] = String(req.body[k]).slice(0, k === "goal" ? 600 : 120);
+    }
+    if (Array.isArray(req.body.free)) q.free = req.body.free;
+    if (Array.isArray(req.body.speaks)) q.speaks = req.body.speaks;
+    // A new picture goes back into the queue. Changing your face is the same
+    // act as adding one, and a profile that could be edited past review would
+    // make the review pointless.
+    if (face?.id) { q.photo = face.id; q.photoState = "held"; }
+    if (back?.id) { q.cover = back.id; q.photoState = "held"; }
+    const clean = store.cleanPerson(q);
+    Object.assign(q, clean);
+    return q;
+  });
+
+  if (face?.id || back?.id) tell("held", { ...out, note: "New profile photo" });
+  res.json({ person: shownPerson(out, true) });
+});
+
+// ---------------------------------------------------------------------------
 // Reporting
 // ---------------------------------------------------------------------------
 
@@ -428,6 +514,10 @@ app.get("/api/public", admin, async (req, res) => {
     live: real.filter((p) => p.state === "published").map(withReports),
     refused: real.filter((p) => p.state === "refused"),
     removed: real.filter((p) => p.state === "removed"),
+    // Profile photographs waiting to be looked at. Their own list rather than
+    // mixed in with the posts: releasing a face is a different decision from
+    // releasing a sentence, and the panel should not have to tell them apart.
+    faces: board.people.filter((q) => q.photoState !== "published" && (q.photo || q.cover)),
   });
 });
 
@@ -480,6 +570,34 @@ app.post("/api/feed/release", admin, async (req, res) => {
 
 // Taking one down. Marked rather than deleted: "was taken down" is a different
 // fact from "never existed", and the second is what deleting the row would say.
+app.post("/api/face/release", admin, async (req, res) => {
+  const id = String(req.query.id || "");
+  const out = await change((board) => {
+    const q = board.people.find((x) => x.id === id);
+    if (!q) return null;
+    q.photoState = "published";
+    if (q.state !== "published") q.state = "published";
+    return q;
+  });
+  if (!out) return res.status(404).json({ error: "no such person" });
+  res.json({ ok: true, id });
+});
+
+app.delete("/api/face", admin, async (req, res) => {
+  const id = String(req.query.id || "");
+  const out = await change((board) => {
+    const q = board.people.find((x) => x.id === id);
+    if (!q) return null;
+    // Cleared rather than refused: the person is still here, the picture is
+    // simply gone, and they can put up a different one.
+    q.photo = ""; q.cover = ""; q.photoState = "refused";
+    q.why = String(req.query.why || "That photo was not put up.").slice(0, 400);
+    return q;
+  });
+  if (!out) return res.status(404).json({ error: "no such person" });
+  res.json({ ok: true, id });
+});
+
 app.delete("/api/feed", admin, async (req, res) => {
   const id = String(req.query.id || "");
   const post = await change((board) => {

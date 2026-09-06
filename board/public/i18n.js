@@ -243,6 +243,39 @@ export const STRINGS = {
   "dd.5a":             ["Carry some cash for the carts", "路边摊备点现金"],
   "dd.5b":             ["Assume everywhere takes a foreign card", "以为哪里都能刷外卡"],
 
+  // ---- your own profile ----------------------------------------------------
+  "me.addPhoto":       ["Add your photo", "加上你的照片"],
+  "me.addCover":       ["Add a cover", "加个封面"],
+  "me.newHere":        ["You are new here", "你是新来的"],
+  "me.setUp": [
+    "Put a face and a name to it. One tap, and people know who is asking.",
+    "加上照片和名字。点一下，别人就知道是谁在问。",
+  ],
+  "me.edit":           ["Edit", "编辑"],
+  "me.editTitle":      ["Your profile", "你的资料"],
+  "me.name":           ["Your name — what people see on your posts",
+                        "你的名字——别人在你的内容上看到的"],
+  "me.campus":         ["Campus or city — Renmin · Haidian", "学校或城市——人大 · 海淀"],
+  "me.goal":           ["What you are working on, in your own words…",
+                        "你在忙什么，用你自己的话说…"],
+  "me.here":           ["How long you have been here", "你来多久了"],
+  "me.posts":          ["posts", "条内容"],
+  "me.replies":        ["replies", "条回复"],
+  "me.save":           ["Save", "保存"],
+  "me.saved":          ["Saved.", "已保存。"],
+  "me.photoHeld": [
+    "Your photo is up for you, and waiting for a person before anybody else sees it.",
+    "你的照片你自己能看到，其他人要等有人过目之后才能看到。",
+  ],
+  "me.noContact": [
+    "Take out {what} — a profile here carries no way to contact you. Swap those privately once you have both decided.",
+    "请去掉 {what} —— 这里的资料不放联系方式。等你们都决定了，再私下交换。",
+  ],
+  "me.whyNoContact": [
+    "No phone, no WeChat, no email — a public list of students with contact details is the one thing this must never be.",
+    "不填手机、微信、邮箱——一份带联系方式的公开学生名单，是这里绝对不能变成的东西。",
+  ],
+
   // ---- translate -----------------------------------------------------------
   "tr.open":           ["Translate", "翻译"],
   "tr.title":          ["Translate anything", "翻译"],
