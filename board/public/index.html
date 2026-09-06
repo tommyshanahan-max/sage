@@ -386,8 +386,8 @@
   </form>
 </div>
 
-<input type="file" id="mephoto" hidden accept="image/jpeg,image/png,image/webp">
-<input type="file" id="mecover" hidden accept="image/jpeg,image/png,image/webp">
+<input type="file" id="mephoto" hidden accept="image/*">
+<input type="file" id="mecover" hidden accept="image/*">
 
 <div class="sheet" id="tsheet" hidden>
   <form class="card" id="tform">
@@ -1151,6 +1151,43 @@ fetch("/api/contact").then((r) => r.json()).then((d) => {
  * important one, because it is what everybody sees first. */
 let ME = null, MEPOSTS = 0, MEREPLIES = 0;
 
+/* A photograph, made fit to send.
+ *
+ * Three problems, one answer. An iPhone camera writes HEIC by default, which
+ * the server does not accept and which no browser but Safari can display. A
+ * photo off a modern phone is four or five megabytes, and base64 makes it a
+ * third bigger again — which on a Chinese mobile connection is the difference
+ * between a tap and a wait long enough to assume it failed. And a portrait
+ * held sideways carries its rotation in EXIF, which some renderers honour and
+ * some ignore.
+ *
+ * Drawing it to a canvas and re-encoding answers all three: whatever went in
+ * comes out as JPEG, at a sensible size, already the right way up —
+ * createImageBitmap applies the EXIF orientation rather than leaving it as
+ * metadata for somebody else to interpret.
+ *
+ * A profile picture does not need four thousand pixels across. */
+async function shrink(file, max) {
+  let bmp;
+  try {
+    bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    // An older webview, or a format it cannot decode. Send it as it came and
+    // let the server judge — better a slow success than a refusal we chose.
+    return { data: await asBase64(file), type: file.type };
+  }
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  canvas.getContext("2d").drawImage(bmp, 0, 0, w, h);
+  if (bmp.close) bmp.close();
+
+  const blob = await new Promise((ok) => canvas.toBlob(ok, "image/jpeg", 0.85));
+  if (!blob) return { data: await asBase64(file), type: file.type };
+  return { data: await asBase64(blob), type: "image/jpeg" };
+}
+
 function asBase64(file) {
   return file.arrayBuffer().then((buf) => {
     const bytes = new Uint8Array(buf);
@@ -1248,11 +1285,17 @@ for (const [input, key] of [["mephoto", "photo"], ["mecover", "cover"]]) {
     const f = e.target.files && e.target.files[0];
     e.target.value = "";
     if (!f) return;
-    if (f.size > 25 * 1024 * 1024) { alert(T("post.tooBig")); return; }
+    if (f.size > 40 * 1024 * 1024) { alert(T("post.tooBig")); return; }
     let who = "";
     try { who = localStorage.getItem("board:who") || ""; } catch { /* fine */ }
+    // Say something before the wait, not after. Re-encoding a large photo
+    // takes a moment on a phone, and a control that does nothing visible is a
+    // control somebody presses again.
+    const label = key === "cover" ? $("me").querySelector(".cover button") : null;
+    if (label) label.textContent = T("me.working");
+    const shot = await shrink(f, key === "cover" ? 1600 : 1000);
     const out = await saveMe({
-      [key]: await asBase64(f), [key + "Type"]: f.type,
+      [key]: shot.data, [key + "Type"]: shot.type,
       ...(ME && ME.handle ? {} : { handle: who }),
     });
     if (out.error) alert(out.error);

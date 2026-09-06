@@ -252,6 +252,7 @@ export const STRINGS = {
     "加上照片和名字。点一下，别人就知道是谁在问。",
   ],
   "me.edit":           ["Edit", "编辑"],
+  "me.working":        ["One moment…", "稍等…"],
   "me.editTitle":      ["Your profile", "你的资料"],
   "me.name":           ["Your name — what people see on your posts",
                         "你的名字——别人在你的内容上看到的"],
