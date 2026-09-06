@@ -94,8 +94,15 @@
   /* ---- hero -------------------------------------------------------------- */
   .hero{padding:3.4rem 0 2.6rem}
   @media (max-width:700px){ .hero{padding:2.2rem 0 1.8rem} }
-  .kicker{display:flex;align-items:center;gap:.5rem;font-size:.72rem;letter-spacing:.15em;
-    text-transform:uppercase;color:var(--muted);margin:0 0 1rem}
+  /* A label the way Co-Star sets one: tiny, tracked hard, with an underscore
+     where a space would be. Borrowed because it is a cheap piece of texture
+     that costs no colour and no image — and dropped entirely in Chinese,
+     where tracked-out characters read as broken rather than as a label. */
+  .kicker{display:flex;align-items:center;gap:.5rem;font-size:.7rem;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 1.6rem;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  :root[data-lang="zh"] .kicker{font-family:var(--sans);letter-spacing:.04em;
+    text-transform:none;font-size:.76rem}
   .kicker i{width:.45rem;height:.45rem;border-radius:50%;background:var(--accent);flex:0 0 auto}
   h1{margin:0;font-family:var(--serif);font-weight:400;font-size:clamp(2.15rem,5.4vw,3.5rem);
     line-height:1.08;letter-spacing:-.02em;max-width:20ch}
@@ -118,16 +125,20 @@
      cycling — because the fastest way to say what a board is for is to show
      somebody asking. It holds a fixed height so nothing below it jumps, and
      it stops entirely for anyone who asked for less motion. */
-  .asking{margin:1.9rem 0 0;padding:1rem 1.15rem;background:var(--raise);
-    border:1px solid var(--line);border-left:3px solid var(--accent);
-    border-radius:.7rem;max-width:32rem}
-  .asking b{display:block;font-size:.68rem;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 .4rem}
-  :root[data-lang="zh"] .asking b{text-transform:none;letter-spacing:.02em}
-  .asking q{display:block;font-family:var(--serif);font-size:1.18rem;
-    line-height:1.45;quotes:none;min-height:3.4rem;
-    transition:opacity .35s ease}
+  /* THE QUESTION IS THE HERO.
+     The single thing worth taking from Co-Star: their landing page is a
+     sentence, at size, with nothing propping it up. Ours has something better
+     than a sentence somebody wrote — a question somebody actually has. It was
+     in a bordered box under the headline, which is where you put a thing you
+     are not sure about. */
+  .asking{margin:0 0 1.4rem}
+  .asking q{display:block;font-family:var(--serif);quotes:none;
+    font-size:clamp(2rem,5.2vw,3.4rem);line-height:1.14;letter-spacing:-.02em;
+    max-width:19ch;min-height:2.4em;transition:opacity .4s ease}
+  :root[data-lang="zh"] .asking q{line-height:1.35;letter-spacing:0;max-width:15ch;
+    font-size:clamp(1.75rem,4.6vw,2.9rem)}
   .asking q.fade{opacity:0}
+  .asking .under{margin:.2rem 0 0;font-size:1.02rem;color:var(--ink-2)}
   @media (prefers-reduced-motion:reduce){ .asking q{transition:none} }
 
   /* ---- what is actually on it, live -------------------------------------- */
@@ -165,6 +176,26 @@
     margin:0 0 .35rem}
   .empty p{margin:0 auto;max-width:26rem;font-size:.95rem;line-height:1.6;color:var(--ink-2)}
   .more{margin:1.4rem 0 0;text-align:center}
+
+  /* The two-column list, taken as a shape from Co-Star's do/don't. It works
+     because the pairing does the explaining: neither column means much alone,
+     and together each line is a whole piece of advice in four words. */
+  .dd{border-top:1px solid var(--line)}
+  .ddhead{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;padding:.9rem 0 .5rem}
+  .ddhead span{font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .ddhead span:last-child{color:var(--t5)}
+  :root[data-lang="zh"] .ddhead span{font-family:var(--sans);letter-spacing:.04em;
+    text-transform:none;font-size:.78rem}
+  .ddrow{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;
+    padding:.85rem 0;border-top:1px solid var(--hair)}
+  .ddrow p{margin:0;font-family:var(--serif);font-size:1.06rem;line-height:1.4}
+  .ddrow p:last-child{color:var(--muted);text-decoration:line-through;
+    text-decoration-color:var(--t5);text-decoration-thickness:1px}
+  @media (max-width:560px){
+    .ddhead,.ddrow{gap:.9rem}
+    .ddrow p{font-size:.98rem}
+  }
 
   /* ---- the three things --------------------------------------------------- */
   .three{display:grid;gap:1rem;grid-template-columns:repeat(3,1fr)}
@@ -213,14 +244,14 @@
 <div class="hero">
   <div class="wrap">
     <p class="kicker"><i></i><span id="kicker"></span></p>
-    <h1><span id="h1a"></span><em id="h1b"></em><span id="h1c"></span></h1>
-    <p class="lede" id="lede"></p>
-    <p class="hanzi" id="hanzi"></p>
 
     <div class="asking">
-      <b id="askLead"></b>
       <q id="asking"></q>
+      <p class="under" id="askUnder"></p>
     </div>
+
+    <p class="lede" id="lede"></p>
+    <p class="hanzi" id="hanzi"></p>
 
     <div class="cta">
       <a class="btn" id="ctaopen" href="/board"></a>
@@ -241,6 +272,21 @@
     </div>
   </section>
 </div>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow"><span id="ddEyebrow"></span><i></i></div>
+    <h2 id="ddH2"></h2>
+    <div class="dd">
+      <div class="ddhead"><span id="ddDo"></span><span id="ddDont"></span></div>
+      <div class="ddrow"><p id="dd1a"></p><p id="dd1b"></p></div>
+      <div class="ddrow"><p id="dd2a"></p><p id="dd2b"></p></div>
+      <div class="ddrow"><p id="dd3a"></p><p id="dd3b"></p></div>
+      <div class="ddrow"><p id="dd4a"></p><p id="dd4b"></p></div>
+      <div class="ddrow"><p id="dd5a"></p><p id="dd5b"></p></div>
+    </div>
+  </div>
+</section>
 
 <section>
   <div class="wrap">
@@ -306,7 +352,7 @@ function topicColour(name) {
  * once, painted from the dictionary, and repainted on a language change. There
  * is no second code path to go stale, which is the failure a bolted-on
  * translation always eventually has. */
-const TEXT = ["kicker","h1a","h1b","h1c","lede","hanzi","askLead","under",
+const TEXT = ["kicker","lede","hanzi","askUnder","under",
   "liveEyebrow","liveH2","liveSub","threeEyebrow","threeH2","threeSub",
   "t1h","t1p","t1s","t2h","t2p","t2s","t3h","t3p","t3s",
   "howEyebrow","howH2","howSub","r1h","r1p","r2h","r2p","r3h","r3p","r4h","r4p",
@@ -316,6 +362,16 @@ function paint() {
   document.title = T("site.title") + " — " + T("site.kicker");
   $("brandname").textContent = T("site.title");
   for (const id of TEXT) $(id).textContent = T("site." + id);
+  // The two-column list: its keys live under dd.* rather than site.*, since it
+  // is content rather than chrome and reads as a block.
+  $("ddEyebrow").textContent = T("dd.eyebrow");
+  $("ddH2").textContent = T("dd.h2");
+  $("ddDo").textContent = T("dd.do");
+  $("ddDont").textContent = T("dd.dont");
+  for (let i = 1; i <= 5; i++) {
+    $("dd" + i + "a").textContent = T("dd." + i + "a");
+    $("dd" + i + "b").textContent = T("dd." + i + "b");
+  }
   $("navopen").textContent = T("site.open");
   $("ctaopen").textContent = T("site.open");
   $("ctahow").textContent = T("site.how");

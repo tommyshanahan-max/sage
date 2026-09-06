@@ -220,6 +220,28 @@ export const STRINGS = {
   "site.ask6":         ["How do I pay for this if I have no Alipay?",
                         "没有支付宝怎么付款？"],
   "site.askLead":      ["Somebody is asking, right now:", "现在就有人在问："],
+  "site.askUnder":     ["Somebody who arrived a term earlier already knows.",
+                        "早来一学期的人已经知道答案了。"],
+
+  /* The two-column list. Borrowed as a SHAPE from Co-Star's do/don't, filled
+     with the only content that earns it here: things that cost a week each to
+     work out alone and a second to be told. Every pair is a real mistake
+     somebody makes in their first fortnight. */
+  "dd.eyebrow":        ["Worth knowing before you arrive", "来之前值得知道的"],
+  "dd.h2":             ["A week each to learn alone. A second to be told.",
+                        "自己摸索要一周，别人说一句就一秒。"],
+  "dd.do":             ["Do", "该这么做"],
+  "dd.dont":           ["Don't", "别这么做"],
+  "dd.1a":             ["Get your SIM at the airport counter", "在机场柜台办电话卡"],
+  "dd.1b":             ["Wait until you are in town", "等进了市区再办"],
+  "dd.2a":             ["Say 不辣", "说不辣"],
+  "dd.2b":             ["Say 微辣 and hope", "说微辣然后祈祷"],
+  "dd.3a":             ["Screenshot the address in Chinese", "把中文地址截图"],
+  "dd.3b":             ["Try to say it out loud", "试着念出来"],
+  "dd.4a":             ["Ask the guard which gate is open", "问门卫哪个门开着"],
+  "dd.4b":             ["Trust the campus map", "相信校园地图"],
+  "dd.5a":             ["Carry some cash for the carts", "路边摊备点现金"],
+  "dd.5b":             ["Assume everywhere takes a foreign card", "以为哪里都能刷外卡"],
 
   // ---- translate -----------------------------------------------------------
   "tr.open":           ["Translate", "翻译"],
