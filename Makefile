@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people
+.PHONY: help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -183,6 +183,19 @@ feed-people: ## Put the demo people on The Feed (roster in scripts/people.json)
 	  --entrypoint node board \
 	  /seed/seed-people.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --people /seed/people.json $(if $(PHOTOS),--photos $(PHOTOS),)
+
+feed-posts: ## Give the demo people a history — posts, replies and likes
+	@# Run after `make feed-people`. Writes three weeks of posts dated back
+	@# through those weeks, and moves the joining announcements to match, so
+	@# the board reads as somewhere that has been running rather than
+	@# somewhere switched on this morning. Safe to run twice: it looks for
+	@# its own first lines on the board and stops if they are there.
+	@grep -qE '^TOMSCODING_BOARD_KEY=.+' .env \
+	  || { echo "TOMSCODING_BOARD_KEY is not set in .env — the board would refuse this."; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T \
+	  -v "$(CURDIR)/scripts:/seed:ro" \
+	  --entrypoint node board \
+	  /seed/seed-posts.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
 
 partner-mockups: ## Copy every seat's mockups out to ./mockups for review
 	@mkdir -p mockups/partner mockups/partner-2 mockups/thefeed

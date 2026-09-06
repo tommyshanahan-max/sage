@@ -809,16 +809,74 @@ app.post("/api/feed", admin, express.raw({ type: "multipart/form-data", limit: "
       if (!photo) return res.status(415).json({ error: "that kind of file is not accepted here" });
     }
 
+    // When it was written, if that is not now.
+    //
+    // The operator's route is the one place backdating belongs: transcribing
+    // something said elsewhere, or standing a demo board up with a history
+    // instead of twelve posts sharing one second. Bounded so a typo cannot
+    // park a post in 1970 or in next year, where it would sort above
+    // everything forever.
+    let at = new Date().toISOString();
+    if (parsed.fields.at) {
+      const asked = when(parsed.fields.at);
+      if (asked.error) return res.status(400).json({ error: asked.error });
+      at = asked.at;
+    }
+
+    // Whose it is. The device id is hashed here with this server's salt, the
+    // same as on the readers' route — the caller never learns the hash and
+    // never supplies one, so a post made this way counts toward the same
+    // person and nothing else can be claimed by asserting a `by`.
+    const by = parsed.fields.device
+      ? store.hashDevice(String(parsed.fields.device), SALT) : "";
+
     // Made by the operator rather than by a reader, so it goes straight up.
     // The admin is the review.
     const post = store.cleanPost({
-      id: store.newId(), at: new Date().toISOString(), state: "published",
-      handle: account, note, photo,
+      id: store.newId(), at, state: "published",
+      handle: account, note, photo, by,
+      re: String(parsed.fields.re || ""),
+      topic: String(parsed.fields.topic || "").slice(0, 40),
     });
     await change((board) => { board.posts.unshift(post); });
     tell("published", post);
     res.status(201).json({ id: post.id });
   });
+
+/* A time somebody supplied for a post, checked.
+ *
+ * Bounded at both ends: a post dated in the future sorts above everything for
+ * as long as it exists, and one dated in 1970 is almost always a typo rather
+ * than a memory. Neither is a thing an operator means to do. */
+function when(value) {
+  const t = new Date(String(value));
+  const ms = t.getTime();
+  if (!Number.isFinite(ms)) return { error: "at is not a date" };
+  if (ms > Date.now() + 60_000) return { error: "at is in the future" };
+  if (ms < Date.now() - 5 * 365 * 24 * 3600 * 1000) {
+    return { error: "at is more than five years ago" };
+  }
+  return { at: t.toISOString() };
+}
+
+// When a post says it was written.
+//
+// Correcting the clock, not the words — for something transcribed from
+// elsewhere, or a board being stood up with a history rather than with every
+// row sharing one second. Nothing else about the post is touched.
+app.post("/api/feed/when", admin, async (req, res) => {
+  const id = String(req.query.id || "");
+  const asked = when(req.query.at);
+  if (asked.error) return res.status(400).json({ error: asked.error });
+  const post = await change((board) => {
+    const p = board.posts.find((x) => x.id === id);
+    if (!p) return null;
+    p.at = asked.at;
+    return p;
+  });
+  if (!post) return res.status(404).json({ error: "no such post" });
+  res.json({ ok: true, id, at: post.at });
+});
 
 // Letting a held post through.
 app.post("/api/feed/release", admin, async (req, res) => {
