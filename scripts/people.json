@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Wen",
+    "rgb": [198, 76, 88],
+    "campus": "Peking University",
+    "here": "3rd year",
+    "free": [1, 4],
+    "goal": "Chinese Lit, grew up in Haidian. I'll trade Chinese for English practice, and I know which hutong cafes won't move you on after an hour."
+  },
+  {
+    "name": "Haoran",
+    "rgb": [58, 108, 178],
+    "campus": "Tsinghua",
+    "here": "2nd year",
+    "free": [2, 5],
+    "goal": "Computer science. Ask me anything about getting set up here — phone, bank, bikes, the apps that actually work. Happy to swap for English."
+  },
+  {
+    "name": "Xiaoya",
+    "rgb": [216, 138, 62],
+    "campus": "Tsinghua",
+    "here": "3rd year",
+    "free": [0, 3, 6],
+    "goal": "Design student. I like explaining things, so I don't mind being asked the same question twice. I want to practise speaking English out loud."
+  }
+]
