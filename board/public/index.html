@@ -24,29 +24,29 @@
      page that waits on it is a page that does not load. Everything here is a
      face the device already has, Chinese ones named first for Chinese text. */
   :root{
-    --paper:#F0EBE1; --raise:#F6F2EA; --ink:#1C1A16; --ink-2:#413C33;
-    --muted:#8A8377; --line:#DCD5C7; --hair:#E4DED2;
-    --red:#C0392B; --red-ink:#FFFFFF; --red-soft:#EFDDD8;
-    --t1:#C0392B; --t2:#2D6485; --t3:#8B3A62; --t4:#4A6B3A; --t5:#B4691A; --t6:#5B4A8A;
+    --paper:#EEF0F4; --raise:#F7F8FB; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t1:#3F68D8; --t2:#2A9D63; --t3:#D99038; --t4:#7268C4; --t5:#D4485C; --t6:#2F8C9E;
     --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
       "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
-    --shadow:0 2px 6px rgba(28,26,22,.09),0 10px 28px rgba(28,26,22,.10);
+    --shadow:0 2px 6px rgba(21,27,40,.07),0 10px 28px rgba(21,27,40,.09);
   }
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
-      --paper:#151310; --raise:#1E1B17; --ink:#F2EDE3; --ink-2:#CDC6B8;
-      --muted:#948C7E; --line:#2E2A24; --hair:#272420;
-      --red:#D4564A; --red-ink:#1A1512; --red-soft:#3A211D;
-      --t1:#D4564A; --t2:#6EA3C4; --t3:#C4759C; --t4:#89AD73; --t5:#D89440; --t6:#9A87C9;
+      --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
       --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
     }
   }
   :root[data-theme="dark"]{
-    --paper:#151310; --raise:#1E1B17; --ink:#F2EDE3; --ink-2:#CDC6B8;
-    --muted:#948C7E; --line:#2E2A24; --hair:#272420;
-    --red:#D4564A; --red-ink:#1A1512; --red-soft:#3A211D;
-    --t1:#D4564A; --t2:#6EA3C4; --t3:#C4759C; --t4:#89AD73; --t5:#D89440; --t6:#9A87C9;
+    --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
     --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
   }
 
@@ -62,12 +62,12 @@
   main{max-width:34rem;margin:0 auto;padding:1.5rem 1.15rem 9.5rem}
   img{max-width:100%}
   button{font:inherit;cursor:pointer}
-  :focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:4px}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 
   /* ---- masthead ---------------------------------------------------------- */
   .top{display:flex;align-items:center;gap:.9rem;margin:.5rem 0 1.6rem}
   .mark{width:4.1rem;height:4.1rem;border-radius:50%;flex:0 0 auto;overflow:hidden;
-    background:var(--red);color:var(--red-ink);display:grid;place-items:center;
+    background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;
     font-family:var(--serif);font-size:1.9rem;line-height:1;
     box-shadow:0 0 0 3px var(--paper),0 0 0 4px var(--line)}
   /* Also the share thumbnail. It is a real <img> rather than a background so
@@ -88,9 +88,9 @@
     white-space:nowrap;transition:background .12s,border-color .12s}
   .chip .dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--muted)}
   .chip .n{color:var(--muted);font-size:.86rem;font-variant-numeric:tabular-nums}
-  .chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--red-ink)}
-  .chip[aria-pressed="true"] .dot{background:var(--red-ink);opacity:.6}
-  .chip[aria-pressed="true"] .n{color:var(--red-ink);opacity:.75}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .chip[aria-pressed="true"] .dot{background:var(--accent-ink);opacity:.6}
+  .chip[aria-pressed="true"] .n{color:var(--accent-ink);opacity:.75}
 
   /* ---- the rule that names what you are looking at ----------------------- */
   .rule{display:flex;align-items:center;gap:.9rem;margin:0 0 .4rem}
@@ -101,9 +101,9 @@
   /* ---- a post ------------------------------------------------------------ */
   .post{display:flex;gap:.9rem;padding:1.35rem 0;border-bottom:1px solid var(--hair)}
   .av{width:3.4rem;height:3.4rem;border-radius:50%;flex:0 0 auto;
-    background:var(--red);color:var(--red-ink);display:grid;place-items:center;
+    background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;
     font-family:var(--serif);font-size:1.35rem;line-height:1;
-    box-shadow:0 0 0 3px var(--paper),0 0 0 4px var(--red-soft)}
+    box-shadow:0 0 0 3px var(--paper),0 0 0 4px var(--accent-soft)}
   .body{flex:1;min-width:0}
 
   .eyebrow{display:flex;align-items:center;gap:.45rem;margin:0 0 .3rem}
@@ -130,12 +130,12 @@
   .acts{display:flex;align-items:center;gap:1.15rem;margin:.85rem 0 0;flex-wrap:wrap}
   .acts button{display:inline-flex;align-items:center;gap:.4rem;border:0;
     background:none;color:var(--ink-2);font-size:.92rem;padding:.15rem 0}
-  .acts button:hover{color:var(--red)}
+  .acts button:hover{color:var(--accent)}
   .acts button[disabled]{opacity:.45;cursor:default}
   .acts svg{width:1rem;height:1rem;stroke:currentColor;fill:none;
     stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
   .acts .n{color:var(--muted);font-size:.86rem;font-variant-numeric:tabular-nums}
-  .acts .liked{color:var(--red)}
+  .acts .liked{color:var(--accent)}
   .acts .liked svg{fill:currentColor;stroke:currentColor}
 
   /* ---- the thread underneath --------------------------------------------- */
@@ -149,8 +149,8 @@
   .rbox input{flex:1;min-width:0;border:1px solid var(--line);background:var(--raise);
     border-radius:99px;padding:.5rem .9rem;font:inherit;font-size:.95rem;
     color:var(--ink);outline:none}
-  .rbox input:focus{border-color:var(--red)}
-  .rbox button{border:0;background:var(--red);color:var(--red-ink);border-radius:99px;
+  .rbox input:focus{border-color:var(--accent)}
+  .rbox button{border:0;background:var(--accent);color:var(--accent-ink);border-radius:99px;
     padding:.5rem 1.05rem;font-size:.9rem}
 
   /* ---- nothing there yet -------------------------------------------------- */
@@ -161,14 +161,14 @@
 
   /* ---- the + ------------------------------------------------------------- */
   .fab{position:fixed;right:1.2rem;bottom:1.6rem;width:4rem;height:4rem;
-    border-radius:50%;border:0;background:var(--red);color:var(--red-ink);
+    border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);
     box-shadow:var(--shadow);display:grid;place-items:center;z-index:30}
   .fab svg{width:1.7rem;height:1.7rem;stroke:currentColor;stroke-width:2;
     stroke-linecap:round;fill:none}
 
   /* ---- putting something up ---------------------------------------------- */
   .sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;
-    justify-content:center;background:rgba(28,26,22,.4)}
+    justify-content:center;background:rgba(21,27,40,.42)}
   .sheet .card{width:100%;max-width:34rem;background:var(--paper);
     border-radius:1.1rem 1.1rem 0 0;padding:1.3rem 1.15rem calc(1.3rem + env(safe-area-inset-bottom));
     box-shadow:var(--shadow);overflow-y:auto;
@@ -181,36 +181,36 @@
   .sheet textarea{width:100%;border:1px solid var(--line);background:var(--raise);
     border-radius:.7rem;padding:.85rem;font:inherit;font-family:var(--serif);
     font-size:1.08rem;line-height:1.55;color:var(--ink);resize:vertical;outline:none}
-  .sheet textarea:focus{border-color:var(--red)}
+  .sheet textarea:focus{border-color:var(--accent)}
   .field{display:flex;gap:.6rem;margin:.8rem 0 0}
   .field input,.field select{flex:1;min-width:0;border:1px solid var(--line);
     background:var(--raise);border-radius:99px;padding:.6rem .95rem;font:inherit;
     font-size:.95rem;color:var(--ink);outline:none}
-  .field input:focus,.field select:focus{border-color:var(--red)}
+  .field input:focus,.field select:focus{border-color:var(--accent)}
   .row{display:flex;align-items:center;gap:.6rem;margin:.9rem 0 0}
   .ghost{border:1px solid var(--line);background:var(--raise);color:var(--ink);
     border-radius:99px;padding:.6rem 1.1rem;font-size:.92rem}
-  .go{margin-left:auto;border:0;background:var(--red);color:var(--red-ink);
+  .go{margin-left:auto;border:0;background:var(--accent);color:var(--accent-ink);
     border-radius:99px;padding:.68rem 1.5rem;font-size:.98rem}
   .go[disabled]{opacity:.5;cursor:default}
   .shot{position:relative;margin:.8rem 0 0}
   .shot img{display:block;width:100%;border-radius:.7rem}
   .shot button{position:absolute;top:.5rem;right:.5rem;width:2rem;height:2rem;
-    border-radius:50%;border:0;background:rgba(28,26,22,.72);color:#fff;
+    border-radius:50%;border:0;background:rgba(21,27,40,.72);color:#fff;
     font-size:1.1rem;line-height:1;display:grid;place-items:center}
   .said{margin:.85rem 0 0;font-size:.92rem;line-height:1.5;color:var(--ink-2)}
   .hint{margin:0 0 .9rem;font-size:.86rem;line-height:1.55;color:var(--muted)}
   .reasons{display:flex;gap:.4rem;flex-wrap:wrap;margin:0 0 .8rem}
   .reasons button{border:1px solid var(--line);background:var(--raise);color:var(--ink);
     border-radius:99px;padding:.45rem .9rem;font-size:.88rem;line-height:1}
-  .reasons button[aria-pressed="true"]{background:var(--red);border-color:var(--red);
-    color:var(--red-ink)}
+  .reasons button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);
+    color:var(--accent-ink)}
   .alsoblock{display:flex;align-items:flex-start;gap:.6rem;margin:.85rem 0 0;
     font-size:.9rem;line-height:1.45;color:var(--ink-2);cursor:pointer}
   .alsoblock input{margin:.15rem 0 0;flex:0 0 auto;width:1.05rem;height:1.05rem;
-    accent-color:var(--red)}
+    accent-color:var(--accent)}
   .alsoblock b{font-weight:400;color:var(--ink)}
-  .said.bad{color:var(--red)}
+  .said.bad{color:var(--accent)}
 
   .foot{margin:2.5rem 0 0;padding-top:1.3rem;border-top:1px solid var(--line);
     color:var(--muted);font-size:.82rem;line-height:1.65}
