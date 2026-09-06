@@ -4,7 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>The Board</title>
-<meta name="description" content="A noticeboard for people living in and visiting China.">
+<!-- What WeChat puts on the card when somebody forwards this into a chat or
+     onto Moments. WeChat's crawler reads the title, this description, and the
+     first large image in the page — it does not run scripts, so all three have
+     to be in the served HTML. The og: tags cost nothing and are what every
+     other platform reads. -->
+<meta name="description" content="A noticeboard for people living in and visiting China. Anyone can read, anyone can post. No account, no app to install.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="The Board">
+<meta property="og:description" content="A noticeboard for people living in and visiting China. Anyone can read, anyone can post.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:url" content="{{ORIGIN}}/">
+<!-- WeChat on iOS caches aggressively against the URL, and a board is the one
+     thing that must never be a day old. -->
+<meta http-equiv="Cache-Control" content="no-cache">
 <meta name="color-scheme" content="light dark">
 <style>
   /* No web fonts. fonts.googleapis.com does not answer in the mainland, and a
@@ -53,10 +66,13 @@
 
   /* ---- masthead ---------------------------------------------------------- */
   .top{display:flex;align-items:center;gap:.9rem;margin:.5rem 0 1.6rem}
-  .mark{width:4.1rem;height:4.1rem;border-radius:50%;flex:0 0 auto;
+  .mark{width:4.1rem;height:4.1rem;border-radius:50%;flex:0 0 auto;overflow:hidden;
     background:var(--red);color:var(--red-ink);display:grid;place-items:center;
     font-family:var(--serif);font-size:1.9rem;line-height:1;
     box-shadow:0 0 0 3px var(--paper),0 0 0 4px var(--line)}
+  /* Also the share thumbnail. It is a real <img> rather than a background so
+     WeChat's crawler can find it — a CSS background is invisible to it. */
+  .mark img{width:100%;height:100%;display:block;object-fit:cover}
   .top h1{margin:0;font-family:var(--serif);font-size:1.85rem;font-weight:400;
     letter-spacing:-.01em;line-height:1.1}
   .top p{margin:.2rem 0 0;color:var(--muted);font-size:.86rem}
@@ -155,7 +171,12 @@
     justify-content:center;background:rgba(28,26,22,.4)}
   .sheet .card{width:100%;max-width:34rem;background:var(--paper);
     border-radius:1.1rem 1.1rem 0 0;padding:1.3rem 1.15rem calc(1.3rem + env(safe-area-inset-bottom));
-    box-shadow:var(--shadow);max-height:92vh;overflow-y:auto}
+    box-shadow:var(--shadow);overflow-y:auto;
+    /* Not 92vh. WeChat's toolbar is inside the viewport on Android and outside
+       it on iOS, so vh is wrong by about 60px in one direction or the other and
+       the bottom of this sheet ends up under the chrome. --vh is set from
+       innerHeight, which is the number that is actually true. */
+    max-height:calc(var(--vh, 1vh) * 92)}
   .sheet h2{margin:0 0 1rem;font-family:var(--serif);font-weight:400;font-size:1.35rem}
   .sheet textarea{width:100%;border:1px solid var(--line);background:var(--raise);
     border-radius:.7rem;padding:.85rem;font:inherit;font-family:var(--serif);
@@ -189,7 +210,8 @@
 <body>
 <main>
   <div class="top">
-    <div class="mark" aria-hidden="true">板</div>
+    <div class="mark"><img src="/share.png" alt="" width="400" height="400"
+      onerror="this.replaceWith(document.createTextNode('\u677F'))"></div>
     <div>
       <h1>The Board</h1>
       <p id="count">Anyone can read. Anyone can post.</p>
@@ -243,6 +265,77 @@
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
   if (x !== undefined) n.textContent = x; return n; };
+
+/* WHY THIS BLOCK EXISTS
+ *
+ * This board is meant to be forwarded into a WeChat chat and read where it
+ * lands. That means the browser is not Chrome: on Android WeChat renders in
+ * Tencent's X5 kernel, which trails Chrome by a long way and varies by
+ * WeChat version, and on iOS it is whatever WKWebView the phone shipped with.
+ *
+ * Four things this page used are too new for that. Each one fails silently —
+ * no error the reader would see, just a screen that does nothing — which is
+ * the worst way to be broken on someone else's phone in another country.
+ */
+
+const IN_WECHAT = /micromessenger/i.test(navigator.userAgent);
+
+/** Element.replaceChildren is Chrome 86. Old X5 does not have it, and the
+ *  board is drawn entirely through it, so without this the page renders once
+ *  and never updates again. */
+function fill(node, ...kids) {
+  while (node.firstChild) node.removeChild(node.firstChild);
+  for (const k of kids) if (k) node.appendChild(k);
+}
+
+/** crypto.randomUUID is Chrome 92 AND only exists in a secure context. Without
+ *  a fallback the id is never minted, which quietly costs somebody the ability
+ *  to take their own post down. */
+function uuid() {
+  try { if (crypto.randomUUID) return crypto.randomUUID(); } catch (e) { /* older */ }
+  try {
+    const b = new Uint8Array(16);
+    crypto.getRandomValues(b);
+    b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    const h = [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+    return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20);
+  } catch (e) { /* no crypto at all */ }
+  // Last resort. Weaker, and it only ever identifies this browser to itself.
+  return "x" + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+}
+
+/** navigator.clipboard needs a secure context and is refused outright inside
+ *  WeChat. The old textarea trick still works in every webview there is. */
+function copyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) { /* fall through */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:absolute;left:-9999px;top:0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);   // iOS ignores select() alone
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
+
+/* The real height of the window. WeChat's toolbar sits inside the viewport on
+   Android and outside it on iOS, so vh is wrong in one direction or the other
+   and a sheet sized in vh ends up under the chrome. */
+function setVH() {
+  document.documentElement.style.setProperty("--vh", (window.innerHeight / 100) + "px");
+}
+setVH();
+window.addEventListener("resize", setVH);
+window.addEventListener("orientationchange", setVH);
 
 /** The line icons on each post. Drawn here rather than pulled from anywhere:
  *  four paths are cheaper than a request that would not answer in the mainland. */
@@ -313,13 +406,13 @@ async function load() {
 }
 
 function drawTopics() {
-  const box = $("topics"); box.replaceChildren();
+  const box = $("topics"); fill(box);
   const counts = new Map();
   for (const p of posts) if (p.topic) counts.set(p.topic, (counts.get(p.topic) || 0) + 1);
 
   // The datalist in the compose sheet, so posting under an existing topic is
   // picking one rather than spelling it the same way by luck.
-  $("topiclist").replaceChildren(
+  fill($("topiclist"),
     ...[...counts.keys()].map((t) => Object.assign(document.createElement("option"), { value: t })));
 
   if (!counts.size) { box.hidden = true; return; }
@@ -348,12 +441,12 @@ function draw() {
     ? posts.length + (posts.length === 1 ? " post up" : " posts up") + ". Anyone can read. Anyone can post."
     : "Anyone can read. Anyone can post.";
 
-  const box = $("board"); box.replaceChildren();
+  const box = $("board"); fill(box);
   const list = posts.filter((p) => !topic || p.topic === topic);
 
   $("none").hidden = list.length > 0;
   if (!list.length) {
-    $("none").replaceChildren(
+    fill($("none"),
       el("b", null, posts.length ? "Nothing under that yet." : "The board is empty."),
       el("p", null, posts.length
         ? "Try Everyone, or put the first one up yourself."
@@ -411,8 +504,9 @@ function card(p) {
     return b;
   };
 
-  const reply = act("reply", p.replies?.length
-    ? p.replies.length + (p.replies.length === 1 ? " reply" : " replies")
+  const nrep = (p.replies || []).length;
+  const reply = act("reply", nrep
+    ? nrep + (nrep === 1 ? " reply" : " replies")
     : "Reply");
   reply.addEventListener("click", () => { thread.hidden = !thread.hidden; });
 
@@ -451,13 +545,26 @@ function card(p) {
   const share = act("share", "Share");
   share.addEventListener("click", async () => {
     const url = location.origin + "/#" + p.id;
-    const text = (p.note || "").slice(0, 120);
+    const say = (words, hold) => {
+      share.lastChild.textContent = words;
+      setTimeout(() => { share.lastChild.textContent = "Share"; }, hold || 2200);
+    };
+    // Inside WeChat there is no share sheet a page may open. The buttons in the
+    // ⋯ menu are the only way, and pretending otherwise gives somebody a button
+    // that does nothing. So: put the link on the clipboard, and say where the
+    // real control is. Sending the page itself needs an Official Account and
+    // the JS-SDK; until there is one, this is the honest version.
+    if (IN_WECHAT) {
+      say(copyText(url) ? "Copied — send it, or use ⋯ above" : "Use ⋯ top right to send this", 3600);
+      return;
+    }
     try {
-      if (navigator.share) { await navigator.share({ text, url }); return; }
-      await navigator.clipboard.writeText(url);
-      share.lastChild.textContent = "Link copied";
-      setTimeout(() => { share.lastChild.textContent = "Share"; }, 2000);
-    } catch { /* dismissed, or no clipboard: nothing to report */ }
+      if (navigator.share) {
+        await navigator.share({ title: "The Board", text: (p.note || "").slice(0, 120), url });
+        return;
+      }
+    } catch (e) { /* dismissed: not a failure, say nothing */ return; }
+    say(copyText(url) ? "Link copied" : "Could not copy — press and hold the address bar");
   });
 
   body.append(acts);
@@ -542,6 +649,18 @@ function openSheet(open) {
   }
 }
 $("fab").addEventListener("click", () => openSheet(true));
+
+/* WeChat on iOS scrolls the page to bring an input above the keyboard and then
+   does not scroll back when it closes, leaving the board sitting half off the
+   top of the screen with nothing to grab. Every browser gets this reset; it is
+   a no-op where the bug does not exist. */
+document.addEventListener("focusout", (e) => {
+  if (!e.target || !/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  setTimeout(() => {
+    window.scrollTo(0, Math.min(window.scrollY, document.body.scrollHeight));
+    document.body.scrollTop = document.body.scrollTop;
+  }, 120);
+}, true);
 $("shut").addEventListener("click", () => openSheet(false));
 $("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) openSheet(false); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") openSheet(false); });
@@ -549,7 +668,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") openSheet(
 $("pickpic").addEventListener("click", () => $("pic").click());
 $("shotoff").addEventListener("click", () => { photo = null; $("shot").hidden = true; $("pic").value = ""; });
 $("pic").addEventListener("change", async (e) => {
-  const f = e.target.files?.[0];
+  const f = e.target.files && e.target.files[0];
   if (!f) return;
   if (f.size > 25 * 1024 * 1024) return say("That photo is over 25 MB.", true);
   const bytes = new Uint8Array(await f.arrayBuffer());
@@ -573,7 +692,7 @@ $("ask").addEventListener("submit", async (e) => {
   $("send").disabled = true;
   const d = await send({
     note, handle: who, topic: $("topic").value.trim(),
-    photo: photo?.data, photoType: photo?.type,
+    photo: photo ? photo.data : "", photoType: photo ? photo.type : "",
   }, $("send"));
   $("send").disabled = false;
   if (!d) return;

@@ -106,6 +106,33 @@ function tell(event, post) {
 
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
+/* The page itself, with its own address written into it.
+ *
+ * A share card is built by a crawler that fetches the URL once and runs no
+ * JavaScript, so og:image has to be absolute and already in the HTML. The
+ * board does not know its own hostname until somebody asks for it — it could
+ * be behind any proxy, under any name — so the placeholder is filled per
+ * request from what the request itself says.
+ *
+ * The Host header is the client's to set, so this is never trusted for
+ * anything: it decides one string in a meta tag and nothing else. A forged
+ * host makes a bad share card for the forger and changes nothing here.
+ */
+let PAGE = null;
+app.get(["/", "/index.html"], async (req, res, next) => {
+  try {
+    if (PAGE === null) PAGE = await readFile("public/index.html", "utf8");
+    const proto = String(req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0];
+    const host = String(req.get("host") || "").replace(/[^A-Za-z0-9.:-]/g, "").slice(0, 253);
+    const origin = host ? proto + "://" + host : "";
+    res.set("Content-Type", "text/html; charset=utf-8");
+    // A board is the one thing that must never be a day old, and WeChat on iOS
+    // caches hard against the URL.
+    res.set("Cache-Control", "no-cache");
+    res.send(PAGE.split("{{ORIGIN}}").join(origin));
+  } catch (e) { next(e); }
+});
+
 // ---------------------------------------------------------------------------
 // Media
 //
