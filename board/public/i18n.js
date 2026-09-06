@@ -256,6 +256,11 @@ export const STRINGS = {
   "me.edit":           ["Edit", "编辑"],
   "me.working":        ["One moment…", "稍等…"],
   "me.myPage":         ["My page", "我的主页"],
+  "me.needPhoto": [
+    "Add a photo first — a profile here has a face on it.",
+    "先加一张照片——这里的资料都有照片。",
+  ],
+  "me.photoFirst":     ["Add your photo", "先加照片"],
   "nav.feed":          ["Feed", "动态"],
   "nav.profile":       ["Profile", "我的"],
   "nav.new":           ["Put something up", "发布"],
