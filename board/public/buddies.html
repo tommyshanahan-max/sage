@@ -263,7 +263,12 @@ function paint() {
 }
 
 function row(q) {
-  const a = el("div", "who");
+  // A link rather than a div: a directory you cannot open is a list of names.
+  const a = document.createElement("a");
+  a.className = "who";
+  a.href = "/p/" + encodeURIComponent((q.handle || "").toLowerCase());
+  a.style.textDecoration = "none";
+  a.style.color = "inherit";
 
   const av = el("div", "av");
   if (q.photo) {

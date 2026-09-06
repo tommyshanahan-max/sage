@@ -183,6 +183,55 @@ app.get(["/board", "/board/"], (req, res) => res.redirect(301, "/feed" + (req.ur
 app.get(["/about", "/landing.html"], (req, res, next) => page("landing.html", req, res, next));
 app.get(["/buddies", "/buddies/"], (req, res, next) => page("buddies.html", req, res, next));
 
+/* One person, at an address that can be sent to somebody.
+ *
+ * /p/<name>. A profile you cannot share is not a profile, and until this
+ * existed sharing yours sent people to /feed, where they saw their OWN empty
+ * profile and wondered what you meant.
+ *
+ * The card matters as much as the page. WeChat's crawler fetches this once and
+ * runs no JavaScript, so the name and the face have to be in the served HTML —
+ * which means this route reads the person before it answers, rather than
+ * serving a shell the browser fills in.
+ */
+app.get("/p/:handle", async (req, res, next) => {
+  try {
+    const want = String(req.params.handle || "").toLowerCase().slice(0, 40);
+    const board = await store.load(FILE);
+    const q = board.people.find((x) =>
+      x.state === "published" && x.handle.toLowerCase() === want);
+
+    if (!PAGES.has("person.html")) PAGES.set("person.html", await readFile("public/person.html", "utf8"));
+    const proto = String(req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0];
+    const host = String(req.get("host") || "").replace(/[^A-Za-z0-9.:-]/g, "").slice(0, 253);
+    const origin = host ? proto + "://" + host : "";
+
+    // Escaped, because these go into an HTML attribute and a handle is written
+    // by whoever signed up. A name is not markup.
+    const esc = (v) => String(v || "").replace(/[&<>"']/g,
+      (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+
+    const name = q ? q.handle : want;
+    const about = q
+      ? [q.campus, q.level, q.goal].filter(Boolean).join(" · ").slice(0, 160)
+      : "";
+    // Their own face on the card where there is one, so a shared profile looks
+    // like the person rather than like the site.
+    const card = (q && q.photo && q.photoState === "published")
+      ? origin + "/api/public-media?id=" + encodeURIComponent(q.photo)
+      : origin + "/share.png";
+
+    res.set("Content-Type", "text/html; charset=utf-8");
+    res.set("Cache-Control", "no-cache");
+    res.send(PAGES.get("person.html")
+      .split("{{ORIGIN}}").join(origin)
+      .split("{{HANDLE}}").join(esc(want))
+      .split("{{NAME}}").join(esc(name))
+      .split("{{ABOUT}}").join(esc(about))
+      .split("{{CARD}}").join(esc(card)));
+  } catch (e) { next(e); }
+});
+
 // ---------------------------------------------------------------------------
 // Media
 //

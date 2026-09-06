@@ -255,6 +255,7 @@ export const STRINGS = {
   ],
   "me.edit":           ["Edit", "编辑"],
   "me.working":        ["One moment…", "稍等…"],
+  "me.myPage":         ["My page", "我的主页"],
   "me.editTitle":      ["Your profile", "你的资料"],
   "me.name":           ["Your name — what people see on your posts",
                         "你的名字——别人在你的内容上看到的"],

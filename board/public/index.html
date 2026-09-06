@@ -674,7 +674,19 @@ function card(p) {
   }
 
   const line = el("div", "line");
-  line.append(el("b", null, p.handle || T("board.someone")));
+  // The name is a link to the person. It was plain text, which meant a feed
+  // full of people you could not open.
+  if (p.handle) {
+    const a = document.createElement("a");
+    a.href = "/p/" + encodeURIComponent(p.handle.toLowerCase());
+    a.textContent = p.handle;
+    a.style.textDecoration = "inherit";
+    const b = el("b");
+    b.append(a);
+    line.append(b);
+  } else {
+    line.append(el("b", null, T("board.someone")));
+  }
   const t = el("time", null, when(p.at));
   if (p.at) t.dateTime = p.at;
   line.append(t);
@@ -1422,7 +1434,9 @@ function drawMe() {
     go.addEventListener("click", openMe);
     const buds = el("a", "go primary", T("bud.open"));
     buds.href = "/buddies";
-    row.append(go, buds);
+    const mine = el("a", "go", T("me.myPage"));
+    mine.href = "/p/" + encodeURIComponent((ME.handle || "").toLowerCase());
+    row.append(go, mine, buds);
     face.append(row);
   }
   box.append(face);
