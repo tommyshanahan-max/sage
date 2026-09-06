@@ -50,6 +50,37 @@
     --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
   }
 
+  /* WHAT MOVES WHEN THE LANGUAGE DOES.
+     This is the half of a translation that is not words, and skipping it is
+     what makes a bilingual page look like an English page wearing Chinese.
+
+     The serif goes first. Georgia has no Chinese glyphs, so an English serif
+     on Chinese text falls back per-character mid-sentence — the single most
+     obvious tell there is. In Chinese the stack leads with faces the device
+     actually has.
+
+     Then the spacing. CJK wants more room between lines and none between
+     characters, so line-height goes up and letter-spacing goes to zero.
+
+     Then the labels. Chinese has no case, so text-transform:uppercase does
+     nothing, and letter-spacing meant to make Latin capitals read as a label
+     just pulls Chinese characters apart until they read as broken. */
+  :root[data-lang="zh"]{
+    --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC",
+      "STSong",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif;
+  }
+  :root[data-lang="zh"] body{line-height:1.75}
+  :root[data-lang="zh"] .words,
+  :root[data-lang="zh"] .rep p{line-height:1.8}
+  :root[data-lang="zh"] .eyebrow span,
+  :root[data-lang="zh"] .rule span{text-transform:none;letter-spacing:.02em;font-size:.76rem}
+  :root[data-lang="zh"] .line b{letter-spacing:0}
+  /* An en dash between two Chinese clauses is an English punctuation habit.
+     Nothing to do in CSS, but it is why several strings differ rather than
+     translate. */
+
   /* display:flex and display:grid both outrank the user agent's [hidden] rule,
      so anything laid out that way stays on screen when hidden. Said once here
      rather than remembered at seven call sites. */
@@ -66,6 +97,7 @@
 
   /* ---- masthead ---------------------------------------------------------- */
   .top{display:flex;align-items:center;gap:.9rem;margin:.5rem 0 1.6rem}
+  #langslot{margin-left:auto;flex:0 0 auto;display:flex}
   .mark{width:4.1rem;height:4.1rem;border-radius:50%;flex:0 0 auto;overflow:hidden;
     background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;
     font-family:var(--serif);font-size:1.9rem;line-height:1;
@@ -129,13 +161,25 @@
   /* ---- what you can do to it --------------------------------------------- */
   .acts{display:flex;align-items:center;gap:1.15rem;margin:.85rem 0 0;flex-wrap:wrap}
   .acts button{display:inline-flex;align-items:center;gap:.4rem;border:0;
-    background:none;color:var(--ink-2);font-size:.92rem;padding:.15rem 0}
+    background:none;color:var(--ink-2);font-size:.92rem;padding:.15rem 0;
+    /* A button holding only an icon is shorter than one holding text, and the
+       row centres them — which drops the bare icons a few pixels below the
+       labelled ones. One shared height puts every icon on the same line. */
+    min-height:1.5rem}
   .acts button:hover{color:var(--accent)}
   .acts button[disabled]{opacity:.45;cursor:default}
   .acts svg{width:1rem;height:1rem;stroke:currentColor;fill:none;
     stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
   .acts .n{color:var(--muted);font-size:.86rem;font-variant-numeric:tabular-nums}
   .acts .liked{color:var(--accent)}
+  /* On a 360px phone the English labels are ~30px wider than the row. Chinese
+     already fits — two characters says what six letters do — so this is one of
+     the places the two languages genuinely need different numbers. */
+  @media (max-width:380px){
+    .acts{gap:.8rem}
+    .acts button{font-size:.87rem}
+  }
+  .acts button[aria-pressed="true"]{color:var(--accent)}
   .acts .liked svg{fill:currentColor;stroke:currentColor}
 
   /* ---- the thread underneath --------------------------------------------- */
@@ -160,6 +204,38 @@
   .none p{margin:0;font-size:.95rem;line-height:1.6}
 
   /* ---- the + ------------------------------------------------------------- */
+  /* The language switch. In the masthead rather than in a menu: somebody who
+     cannot read the page cannot find a menu labelled in the language they
+     cannot read. */
+  .lang{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);
+    background:var(--raise);color:var(--ink-2);border-radius:99px;
+    padding:.42rem .9rem;font-size:.85rem;line-height:1}
+  .lang:hover{color:var(--ink);border-color:var(--muted)}
+
+  /* Translate, always in the same place. Above the +, smaller, because
+     posting is the primary thing and reading help is the constant one. */
+  .tfab{position:fixed;right:1.55rem;bottom:6.1rem;width:3.3rem;height:3.3rem;
+    border-radius:50%;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);box-shadow:var(--shadow);display:grid;place-items:center;
+    z-index:30;font-family:var(--serif);font-size:1.25rem;line-height:1}
+  .tfab:hover{border-color:var(--accent);color:var(--accent)}
+
+  .tout{margin:.9rem 0 0;padding:.9rem 1rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:.7rem}
+  .tout .said{margin:0;font-family:var(--serif);font-size:1.08rem;line-height:1.6;
+    color:var(--ink)}
+  .tout .py{margin:.35rem 0 0;font-size:.86rem;color:var(--muted)}
+  .tout .note{margin:.6rem 0 0;padding-top:.55rem;border-top:1px solid var(--line);
+    font-size:.86rem;line-height:1.55;color:var(--ink-2)}
+  .tout .note b{display:block;font-size:.66rem;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 .2rem;font-weight:600}
+  :root[data-lang="zh"] .tout .note b{text-transform:none;letter-spacing:.02em}
+  .tpost{margin:.6rem 0 0;padding:.7rem .85rem;background:var(--accent-soft);
+    border-radius:.6rem}
+  .tpost p{margin:0;font-family:var(--serif);font-size:1.02rem;line-height:1.6}
+  .tpost .py{margin:.3rem 0 0;font-family:var(--sans);font-size:.82rem;color:var(--muted)}
+  .tpost .note{margin:.4rem 0 0;font-family:var(--sans);font-size:.82rem;color:var(--ink-2)}
+
   .fab{position:fixed;right:1.2rem;bottom:1.6rem;width:4rem;height:4rem;
     border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);
     box-shadow:var(--shadow);display:grid;place-items:center;z-index:30}
@@ -224,9 +300,10 @@
     <div class="mark"><img src="/share.png" alt="" width="400" height="400"
       onerror="this.replaceWith(document.createTextNode('\u677F'))"></div>
     <div>
-      <h1>The Board</h1>
+      <h1 id="boardname">The Board</h1>
       <p id="count">Anyone can read. Anyone can post.</p>
     </div>
+    <span id="langslot"></span>
   </div>
 
   <div class="topics" id="topics"></div>
@@ -237,14 +314,24 @@
   <div class="none" id="none" hidden></div>
 
   <p class="foot">
-    Everything is read by a person before it goes up, and a person reads every
-    report. Nothing is kept about you but a random number your browser made up,
-    hashed before it is written down — enough to take your own post back, and
-    nothing else. Anyone you hide is hidden on this phone only, and forgotten if
-    you clear your browsing data.
-    <span id="contact" hidden></span>
+<span id="foottext"></span><span id="contact" hidden></span>
   </p>
 </main>
+
+<button class="tfab" id="tfab" aria-label="Translate">译</button>
+
+<div class="sheet" id="tsheet" hidden>
+  <form class="card" id="tform">
+    <h2 id="ttitle">Translate anything</h2>
+    <p class="hint" id="thint"></p>
+    <textarea id="tin" rows="3"></textarea>
+    <div class="row">
+      <button class="ghost" type="button" id="tshut">Cancel</button>
+      <button class="go" type="submit" id="tgo">Translate it</button>
+    </div>
+    <div class="tout" id="tout" hidden></div>
+  </form>
+</div>
 
 <button class="fab" id="fab" aria-label="Put something up">
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
@@ -294,7 +381,9 @@
   </form>
 </div>
 
-<script>
+<script type="module">
+import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
+
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
   if (x !== undefined) n.textContent = x; return n; };
@@ -378,6 +467,7 @@ const ICON = {
   remove: "M4 7h16 M10 11v6 M14 11v6 M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12 M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2",
   share: "M18 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z M6 15a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z M18 22a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z M8.2 11.4l7.6-4 M8.2 13.6l7.6 4",
   flag: "M5 21V4 M5 4h11l-2 3.5L16 11H5",
+  globe: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M3 12h18 M12 3c2.5 2.4 3.8 5.4 3.8 9S14.5 18.6 12 21c-2.5-2.4-3.8-5.4-3.8-9S9.5 5.4 12 3Z",
 };
 function icon(name) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -431,18 +521,6 @@ const saveBlocked = () => {
 let reported = new Set();
 try { reported = new Set(JSON.parse(localStorage.getItem("board:reported") || "[]")); } catch { /* fine */ }
 
-/** Short, the way a feed reads it — "56m", "2h". A date once it is old enough
- *  that "how long ago" has stopped being the useful answer. */
-function when(iso) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const mins = Math.round((Date.now() - d.getTime()) / 60000);
-  if (mins < 1) return "now";
-  if (mins < 60) return mins + "m";
-  if (mins < 60 * 24) return Math.round(mins / 60) + "h";
-  if (mins < 60 * 24 * 7) return Math.round(mins / 1440) + "d";
-  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
-}
 
 const initial = (name) => (String(name || "?").trim()[0] || "?").toLowerCase();
 
@@ -478,7 +556,7 @@ function drawTopics() {
     b.addEventListener("click", () => { topic = topic === value ? "" : value; draw(); });
     return b;
   };
-  box.append(chip("Everyone", ""));
+  box.append(chip(T("board.everyone"), ""));
   for (const [t, n] of [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) {
     box.append(chip(t, t, n, topicColour(t)));
   }
@@ -486,10 +564,11 @@ function drawTopics() {
 
 function draw() {
   drawTopics();
-  $("rulelabel").textContent = (topic || "Everyone") + " · Newest first";
+  $("rulelabel").textContent = T("board.newest", { topic: topic || T("board.everyone") });
+  $("boardname").textContent = T("board.name");
+  $("foottext").textContent = T("board.foot") + " ";
   $("count").textContent = posts.length
-    ? posts.length + (posts.length === 1 ? " post up" : " posts up") + ". Anyone can read. Anyone can post."
-    : "Anyone can read. Anyone can post.";
+    ? T("board.count", { n: posts.length }) : T("board.tagline");
 
   const box = $("board"); fill(box);
   const list = posts.filter((p) => (!topic || p.topic === topic)
@@ -501,10 +580,8 @@ function draw() {
   $("none").hidden = list.length > 0;
   if (!list.length) {
     fill($("none"),
-      el("b", null, posts.length ? "Nothing under that yet." : "The board is empty."),
-      el("p", null, posts.length
-        ? "Try Everyone, or put the first one up yourself."
-        : "The first thing anybody puts up appears here. Somebody reads everything before it does."));
+      el("b", null, T(posts.length ? "board.none.head" : "board.empty.head")),
+      el("p", null, T(posts.length ? "board.none.body" : "board.empty.body")));
     return;
   }
   for (const p of list) box.append(card(p));
@@ -525,7 +602,7 @@ function card(p) {
   }
 
   const line = el("div", "line");
-  line.append(el("b", null, p.handle || "someone"));
+  line.append(el("b", null, p.handle || T("board.someone")));
   const t = el("time", null, when(p.at));
   if (p.at) t.dateTime = p.at;
   line.append(t);
@@ -550,21 +627,28 @@ function card(p) {
   const thread = el("div", "thread");
   thread.hidden = true;
 
-  const act = (name, label) => {
+  const act = (name, label, iconOnly) => {
     const b = el("button");
     b.type = "button";
-    b.append(icon(name), el("span", null, label));
+    b.append(icon(name));
+    if (iconOnly) { b.setAttribute("aria-label", label); b.title = label; }
+    else b.append(el("span", null, label));
     acts.append(b);
     return b;
   };
+  // Only the label of a button that has one. Icon-only buttons say it in the
+  // aria-label, where a screen reader and a long-press both find it.
+  const relabel = (b, words) => {
+    if (b.lastChild && b.lastChild.nodeName === "SPAN") b.lastChild.textContent = words;
+    else { b.setAttribute("aria-label", words); b.title = words; }
+  };
 
   const nrep = (p.replies || []).length;
-  const reply = act("reply", nrep
-    ? nrep + (nrep === 1 ? " reply" : " replies")
-    : "Reply");
+  const reply = act("reply", !nrep ? T("act.reply")
+    : nrep === 1 ? T("act.reply1") : T("act.replies", { n: nrep }));
   reply.addEventListener("click", () => { thread.hidden = !thread.hidden; });
 
-  const like = act("like", "Like");
+  const like = act("like", T("act.like"));
   if (p.likes) like.append(el("span", "n", String(p.likes)));
   if (liked.has(p.id)) like.classList.add("liked");
   like.addEventListener("click", async () => {
@@ -580,9 +664,9 @@ function card(p) {
   // Only on your own. There are no accounts here, so the server decides this
   // from the browser's hash and sends back nothing but whether it is yours.
   if (p.mine) {
-    const rm = act("remove", "Remove");
+    const rm = act("remove", T("act.remove"));
     rm.addEventListener("click", async () => {
-      if (!confirm("Take this down? Replies underneath it stay.")) return;
+      if (!confirm(T("act.confirmRemove"))) return;
       rm.disabled = true;
       try {
         const r = await fetch("/api/post?id=" + encodeURIComponent(p.id), {
@@ -592,24 +676,51 @@ function card(p) {
         });
         if (!r.ok) throw new Error();
         await load();
-      } catch { rm.disabled = false; rm.lastChild.textContent = "Did not go — again?"; }
+      } catch { rm.disabled = false; relabel(rm, T("act.failed")); }
     });
   }
 
   if (!p.mine) {
-    const rep = act("flag", reported.has(p.id) ? "Reported" : "Report");
+    const rep = act("flag", T(reported.has(p.id) ? "act.reported" : "act.report"));
     rep.disabled = reported.has(p.id);
     rep.addEventListener("click", () => openReport(p));
   }
 
-  const share = act("share", "Share");
+  let transPanel = null;
+  if (translateOn) {
+    const tr = act("globe", T("tr.thisPost"), true);
+    const shown = el("div", "tpost");
+    shown.hidden = true;
+    tr.addEventListener("click", async () => {
+      if (!shown.hidden) {
+        shown.hidden = true; tr.removeAttribute("aria-pressed");
+        relabel(tr, T("tr.thisPost")); return;
+      }
+      const source = [p.note, p.zh].filter(Boolean).join("\n");
+      if (!source) return;
+      relabel(tr, T("tr.working"));
+      const out = await askTranslate(source);
+      if (!out.error) tr.setAttribute("aria-pressed", "true");
+      relabel(tr, out.error ? T("tr.thisPost") : T("tr.hide"));
+      fill(shown);
+      shown.hidden = false;
+      shown.append(el("p", null, out.error || out.text));
+      if (out.pinyin) shown.append(el("p", "py", out.pinyin));
+      if (out.note) shown.append(el("p", "note", out.note));
+    });
+    // Held here and appended after the action row below, not into it: .acts is
+    // a flex row, and a panel among the buttons wraps them.
+    transPanel = shown;
+  }
+
+  const share = act("share", T("act.share"), true);
   share.addEventListener("click", async () => {
     // The board, not the root: the root is the landing page, and somebody sent
     // this link because of the post, not because of the explanation.
     const url = location.origin + "/board#" + p.id;
     const say = (words, hold) => {
-      share.lastChild.textContent = words;
-      setTimeout(() => { share.lastChild.textContent = "Share"; }, hold || 2200);
+      relabel(share, words);
+      setTimeout(() => relabel(share, T("act.share")), hold || 2200);
     };
     // Inside WeChat there is no share sheet a page may open. The buttons in the
     // ⋯ menu are the only way, and pretending otherwise gives somebody a button
@@ -617,25 +728,26 @@ function card(p) {
     // real control is. Sending the page itself needs an Official Account and
     // the JS-SDK; until there is one, this is the honest version.
     if (IN_WECHAT) {
-      say(copyText(url) ? "Copied — send it, or use ⋯ above" : "Use ⋯ top right to send this", 3600);
+      say(T(copyText(url) ? "act.wxCopied" : "act.wxUseMenu"), 3600);
       return;
     }
     try {
       if (navigator.share) {
-        await navigator.share({ title: "The Board", text: (p.note || "").slice(0, 120), url });
+        await navigator.share({ title: T("board.name"), text: (p.note || "").slice(0, 120), url });
         return;
       }
     } catch (e) { /* dismissed: not a failure, say nothing */ return; }
-    say(copyText(url) ? "Link copied" : "Could not copy — press and hold the address bar");
+    say(T(copyText(url) ? "act.copied" : "act.copyFail"));
   });
 
   body.append(acts);
+  if (transPanel) body.append(transPanel);
 
   // ---- the thread, folded until asked for ---------------------------------
   for (const r of (p.replies || [])) {
     const rep = el("div", "rep");
     const rl = el("div", "line");
-    rl.append(el("b", null, r.handle || "someone"));
+    rl.append(el("b", null, r.handle || T("board.someone")));
     const rt = el("time", null, when(r.at));
     if (r.at) rt.dateTime = r.at;
     rl.append(rt);
@@ -645,26 +757,25 @@ function card(p) {
   }
   const rbox = el("div", "rbox");
   const rin = Object.assign(document.createElement("input"),
-    { placeholder: "Answer this…", maxLength: 2000 });
-  const rgo = el("button", null, "Send");
+    { placeholder: T("act.answer"), maxLength: 2000 });
+  const rgo = el("button", null, T("act.send"));
   rgo.type = "button";
   rgo.addEventListener("click", async () => {
     const words = rin.value.trim();
     if (!words) return;
     let who = "";
     try { who = localStorage.getItem("board:who") || ""; } catch { /* fine */ }
-    if (!who) { who = (prompt("Answer as — a name people will see") || "").trim(); }
+    if (!who) { who = (prompt(T("act.answerAs")) || "").trim(); }
     if (!who) return;
     try { localStorage.setItem("board:who", who); } catch { /* fine */ }
-    rgo.disabled = true; rgo.textContent = "…";
+    rgo.disabled = true; rgo.textContent = T("act.sending");
     const d = await send({ note: words, re: p.id, handle: who }, null);
-    rgo.disabled = false; rgo.textContent = "Send";
-    if (!d) { rgo.textContent = "Again?"; return; }
+    rgo.disabled = false; rgo.textContent = T("act.send");
+    if (!d) { rgo.textContent = T("act.again"); return; }
     rin.value = "";
     // Said on the spot. A reply that is held and does not say so reads as a
     // reply that failed, and gets typed again.
-    const said = el("p", "py", d.state === "published"
-      ? "Up." : "Sent — somebody reads replies before they go up.");
+    const said = el("p", "py", T(d.state === "published" ? "act.replyUp" : "act.replyHeld"));
     rbox.after(said);
     setTimeout(() => said.remove(), 6000);
   });
@@ -711,25 +822,20 @@ function say(msg, bad) {
  * of a queue — and the four categories below are the ones that would actually
  * get a post taken down here. "I disagree with this" is not one of them, on
  * purpose. */
-const REASONS = [
-  "Asking for money",
-  "Abuse or harassment",
-  "Spam or an advert",
-  "Not safe for a public board",
-  "Somebody's private details",
-];
+const REASON_KEYS = ["rep.r1", "rep.r2", "rep.r3", "rep.r4", "rep.r5"];
 let reporting = null, reason = "";
 
 function openReport(p) {
   reporting = p; reason = "";
-  $("reporttitle").textContent = "Report " + (p.handle ? p.handle + "'s post" : "this post");
+  $("reporttitle").textContent = p.handle ? T("rep.title", { who: p.handle }) : T("rep.titleAnon");
   $("blockwho").textContent = p.handle || "them";
   $("alsoblock").checked = false;
   $("why").value = "";
   $("reportsaid").hidden = true;
 
   const box = $("reasons"); fill(box);
-  for (const r of REASONS) {
+  for (const key of REASON_KEYS) {
+    const r = T(key);
     const b = el("button", null, r);
     b.type = "button";
     b.setAttribute("aria-pressed", "false");
@@ -754,7 +860,7 @@ $("reportform").addEventListener("submit", async (e) => {
   const why = [reason, $("why").value.trim()].filter(Boolean).join(" — ");
   if (!why) {
     said.hidden = false; said.classList.add("bad");
-    said.textContent = "Pick a reason, or write one. A report with nothing in it cannot be acted on.";
+    said.textContent = T("rep.needReason");
     return;
   }
   const p = reporting;
@@ -773,7 +879,7 @@ $("reportform").addEventListener("submit", async (e) => {
     try { localStorage.setItem("board:reported", JSON.stringify([...reported])); } catch { /* fine */ }
   } catch (err) {
     said.hidden = false; said.classList.add("bad");
-    said.textContent = "That did not send. Try once more — and it is already hidden from you either way.";
+    said.textContent = T("rep.failed");
     // Not sending is not a reason to keep showing it to the person who
     // objected, so it goes from their copy regardless.
     reported.add(p.id);
@@ -781,7 +887,7 @@ $("reportform").addEventListener("submit", async (e) => {
     return;
   }
   said.hidden = false; said.classList.remove("bad");
-  said.textContent = "Sent. A person reads every one of these.";
+  said.textContent = T("rep.sent");
   await load();
   setTimeout(() => { $("reportsheet").hidden = true; }, 1800);
 });
@@ -821,7 +927,7 @@ $("shotoff").addEventListener("click", () => { photo = null; $("shot").hidden = 
 $("pic").addEventListener("change", async (e) => {
   const f = e.target.files && e.target.files[0];
   if (!f) return;
-  if (f.size > 25 * 1024 * 1024) return say("That photo is over 25 MB.", true);
+  if (f.size > 25 * 1024 * 1024) return say(T("post.tooBig"), true);
   const bytes = new Uint8Array(await f.arrayBuffer());
   let bin = "";
   // Chunked, because 20 MB spread as one argument list blows the stack.
@@ -836,8 +942,8 @@ $("ask").addEventListener("submit", async (e) => {
   e.preventDefault();
   const note = $("note").value.trim();
   const who = $("who").value.trim();
-  if (!note && !photo) return say("Say something, or add a photo.", true);
-  if (!who) return say("Pick a name to post under.", true);
+  if (!note && !photo) return say(T("post.needWords"), true);
+  if (!who) return say(T("post.needName"), true);
   try { localStorage.setItem("board:who", who); } catch { /* fine */ }
 
   $("send").disabled = true;
@@ -854,7 +960,7 @@ $("ask").addEventListener("submit", async (e) => {
   if (d.state === "published") { openSheet(false); return; }
   // Said plainly and left on screen, because the post will not be on the board
   // and somebody who is not told that assumes it failed and posts it again.
-  say("Got it. Somebody reads everything before it goes up — it will appear once they have.");
+  say(T("post.held"));
 });
 
 /* A person a reader can reach who is not this software. Printed only when the
@@ -870,6 +976,102 @@ fetch("/api/contact").then((r) => r.json()).then((d) => {
   a.style.color = "inherit";
   box.append(a, document.createTextNode("."));
 }).catch(() => { /* no contact set: say nothing */ });
+
+/* ---- translate -------------------------------------------------------------
+ *
+ * Always in the same place, above the +. Reading help on a bilingual board is
+ * not an occasional need somebody goes looking for in a menu — it is the thing
+ * half the readers want on half the posts, so it gets a fixed position and
+ * never moves.
+ *
+ * The button is absent, not broken, when the server has no key for it. */
+let translateOn = false;
+
+function tsay(box, out) {
+  fill(box);
+  box.hidden = false;
+  box.append(el("p", "said", out.text));
+  if (out.pinyin) box.append(el("p", "py", out.pinyin));
+  if (out.note) {
+    const n = el("p", "note");
+    n.append(el("b", null, T("tr.note")), document.createTextNode(out.note));
+    box.append(n);
+  }
+}
+
+const TR_ERR = { "slow-down": "tr.slow", busy: "tr.busy", unconfigured: "tr.off" };
+
+async function askTranslate(text) {
+  const r = await fetch("/api/translate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, lang: lang(), device }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || d.error) return { error: T(TR_ERR[d.error] || "tr.failed") };
+  return d;
+}
+
+function openTranslate(prefill) {
+  $("ttitle").textContent = T("tr.title");
+  $("thint").textContent = T("tr.hint");
+  $("tin").placeholder = T("tr.placeholder");
+  $("tgo").textContent = T("tr.go");
+  $("tshut").textContent = T("post.cancel");
+  $("tin").value = prefill || "";
+  $("tout").hidden = true;
+  $("tsheet").hidden = false;
+  if (!prefill) $("tin").focus();
+}
+$("tfab").addEventListener("click", () => openTranslate(""));
+$("tshut").addEventListener("click", () => { $("tsheet").hidden = true; });
+$("tsheet").addEventListener("click", (e) => {
+  if (e.target === $("tsheet")) $("tsheet").hidden = true;
+});
+$("tform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = $("tin").value.trim();
+  const box = $("tout");
+  if (!text) { fill(box); box.hidden = false; box.append(el("p", "said", T("tr.empty"))); return; }
+  $("tgo").disabled = true; $("tgo").textContent = T("tr.working");
+  const out = await askTranslate(text);
+  $("tgo").disabled = false; $("tgo").textContent = T("tr.go");
+  if (out.error) { fill(box); box.hidden = false; box.append(el("p", "said", out.error)); return; }
+  tsay(box, out);
+});
+
+/* ---- the language switch ---------------------------------------------------
+ *
+ * A full repaint rather than walking the DOM swapping text: every string here
+ * is already produced by a function, so re-running them is both simpler and
+ * the only version that cannot go stale. The scroll position is kept, because
+ * losing your place in a feed is what makes people not press it twice. */
+function repaint() {
+  const y = window.scrollY;
+  draw();
+  window.scrollTo(0, y);
+}
+setLang(pickLang());
+$("langslot").append(langButton(repaint));
+
+fetch("/api/contact").then((r) => r.json()).then((d) => {
+  translateOn = Boolean(d && d.translate);
+  $("tfab").hidden = !translateOn;
+  // The board is already drawn by the time this answers, and whether each post
+  // gets a translate button depends on it. Without this the button appears or
+  // not depending on which of two fetches won, which is how one language ended
+  // up with five actions and the other four.
+  if (translateOn) repaint();
+  if (!d || !d.contact) return;
+  const box = $("contact");
+  box.hidden = false;
+  box.append(document.createTextNode(" " + T("board.contact") + " "));
+  const a = document.createElement("a");
+  a.href = /@/.test(d.contact) ? "mailto:" + d.contact : d.contact;
+  a.textContent = d.contact;
+  a.style.color = "inherit";
+  box.append(a, document.createTextNode("."));
+}).catch(() => { $("tfab").hidden = true; });
 
 load();
 </script>

@@ -57,6 +57,10 @@ export const STRINGS = {
   "act.report":        ["Report", "举报"],
   "act.reported":      ["Reported", "已举报"],
   "act.copied":        ["Link copied", "链接已复制"],
+  "act.copyFail":      ["Could not copy — press and hold the address bar",
+                        "复制失败——长按地址栏"],
+  "act.wxCopied":      ["Copied — send it, or use ⋯ above", "已复制——发送，或点右上角 ⋯"],
+  "act.wxUseMenu":     ["Use ⋯ top right to send this", "点右上角 ⋯ 发送"],
   "act.send":          ["Send", "发送"],
   "act.sending":       ["…", "…"],
   "act.again":         ["Again?", "再试一次？"],
@@ -199,6 +203,28 @@ export const STRINGS = {
     "在中国的留学生聚集地。所有内容发布前都由人过目。不用账号，不做追踪，不加载任何外部资源。",
   ],
   "site.langName":     ["中文", "English"],
+
+  // ---- translate -----------------------------------------------------------
+  "tr.open":           ["Translate", "翻译"],
+  "tr.title":          ["Translate anything", "翻译"],
+  "tr.hint": [
+    "Paste a sign, a menu, a message — or anything from the board. It works out which way round on its own.",
+    "把牌子、菜单、消息，或者留言板上的任何内容贴进来。方向会自动判断。",
+  ],
+  "tr.placeholder":    ["Type or paste it here…", "在这里输入或粘贴…"],
+  "tr.go":             ["Translate it", "翻译"],
+  "tr.working":        ["Working…", "翻译中…"],
+  "tr.thisPost":       ["Translate this", "翻译这条"],
+  "tr.original":       ["Original", "原文"],
+  "tr.hide":           ["Hide translation", "隐藏翻译"],
+  "tr.empty":          ["Put something in first.", "先输入点什么。"],
+  "tr.slow":           ["A lot of translating just happened. Try again in a moment.",
+                        "刚刚翻译得有点多。稍等一下再试。"],
+  "tr.busy":           ["Today's translating is used up. It resets tomorrow.",
+                        "今天的翻译次数用完了，明天恢复。"],
+  "tr.failed":         ["That did not come back. Try once more.", "没有返回结果。再试一次。"],
+  "tr.off":            ["Translation is not switched on here.", "这里没有开启翻译。"],
+  "tr.note":           ["Worth knowing", "值得注意"],
 
   // ---- what the server can say --------------------------------------------
   // The server returns these codes, never prose, because prose chosen on the
