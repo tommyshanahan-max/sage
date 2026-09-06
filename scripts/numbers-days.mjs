@@ -31,7 +31,15 @@ if (!r.ok) {
 const d = await r.json();
 
 console.log(`\nSites counted together: ${(d.sites || []).join(", ") || "(none)"}`);
-console.log(`Timezone: ${d.tz}\n`);
+console.log(`Timezone: ${d.tz}`);
+
+// The figure worth reading first, because it is the only one that can fall.
+const known = d.knownDevices || 0;
+console.log(`\nREGULARS: ${d.regular ?? "—"} of ${known} browsers ever counted`);
+console.log(`  on at least two different days, and here since ${d.regularFrom || "—"}`);
+console.log(`  (${d.returned ?? "—"} have ever come back at all, whenever that was)`);
+console.log("  It cannot say twice from twenty times — only a first and a last");
+console.log("  day are kept per browser, so those are the same record.\n");
 
 // ---- the site, day by day -------------------------------------------------
 console.log("SITE VISITS — every site above pooled, they are not stored apart");

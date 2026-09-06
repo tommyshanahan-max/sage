@@ -306,6 +306,28 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
     let returned = 0;
     for (const [, seen] of devices) if (seen[1] > seen[0]) returned++;
 
+    /* Regulars: been here on at least two different days, and here within the
+     * last seven.
+     *
+     * "Ever returned" counts somebody who came twice in March and never again,
+     * which is a fact about the past and not about the audience. Adding "and
+     * recently" is the difference between a number that only goes up and one
+     * that can go down — and one that can go down is the only kind worth
+     * putting on a wall.
+     *
+     * What it cannot say, and the page says so: whether somebody came twice or
+     * twenty times. Only a first day and a last day are kept per browser, on
+     * purpose, so two visits and twenty are the same record. This is the most
+     * that record can honestly support.
+     *
+     * Seven days because it has to be long enough that a person with a life
+     * does not fall out of it for skipping a few days, and short enough that
+     * somebody who has actually gone does fall out. */
+    const REGULAR_DAYS = 7;
+    const cutoff = daysBack(today, REGULAR_DAYS, tz)[0];
+    let regular = 0;
+    for (const [, seen] of devices) if (seen[1] > seen[0] && seen[1] >= cutoff) regular++;
+
     const t = days.get(today);
     return {
       today: {
@@ -318,6 +340,10 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
       },
       // Of everyone ever counted, how many have been back on another day.
       returned,
+      // And of those, how many were here recently enough to still be here.
+      regular,
+      regularDays: REGULAR_DAYS,
+      regularFrom: cutoff,
       returnRate: devices.size ? returned / devices.size : 0,
       // The range's average is weighted by visits rather than by day: five
       // hundred visits on Saturday should not count the same as four on Monday.

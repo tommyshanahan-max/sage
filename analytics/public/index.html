@@ -498,6 +498,7 @@
       <div class="stat"><span class="n" id="n-events">—</span><span class="k">Actions</span></div>
       <div class="stat"><span class="n" id="n-time">—</span><span class="k">Average visit</span></div>
       <div class="stat"><span class="n" id="n-known">—</span><span class="k">Known devices</span></div>
+      <div class="stat accent"><span class="n" id="n-regular">—</span><span class="k">Regulars</span></div>
     </div>
   </section>
 
@@ -612,6 +613,15 @@
     on Monday and Tuesday is one person, not two — so there is no honest weekly
     total to show and none is shown. Pages and functions <i>are</i> summed over the
     range, because those are actions, and two of them are two.
+    <br><br>
+    <b>Regulars</b> are browsers that have been here on at least two different
+    days and were here within the last week. It is the only figure here that can
+    go down, which is the point of it — everything else only ever rises, and a
+    number that cannot fall cannot tell you that something stopped working. It
+    deliberately cannot say whether somebody came twice or twenty times: only a
+    first day and a last day are kept per browser, so those two are the same
+    record, and a bigger claim than that would be invented. Pooled across every
+    site counted, like everything else on this page.
     <br><br>
     <b>Came back</b> counts people who were here today and had been before. The
     percentage beside the growth curve is a different question — of everyone ever
@@ -802,6 +812,14 @@ function drawGrowth(series, opts = {}) {
 function drawReturn(data) {
   const box = document.getElementById("retention");
   const pct = Math.round(data.returnRate * 100);
+  // The tile lives beside today's figures rather than here, because it is a
+  // fact about now and not about the range the rest of this section describes.
+  const reg = document.getElementById("n-regular");
+  if (reg) {
+    reg.textContent = typeof data.regular === "number" ? fmt(data.regular) : "—";
+    reg.closest(".stat")?.setAttribute("title",
+      `On at least two different days, and here since ${data.regularFrom || "recently"}`);
+  }
   box.replaceChildren(
     el("b", null, pct + "%"),
     el("span", null,
