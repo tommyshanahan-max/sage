@@ -192,6 +192,30 @@ export function cleanPerson(raw) {
   };
 }
 
+/* One person following another.
+ *
+ * A row, not a field on either side: a list on the follower grows unbounded
+ * and a list on the followed is a public roll-call of who is interested in
+ * whom. Rows are cheap to add, cheap to remove, and cheap to count without
+ * ever handing anybody the set.
+ *
+ * `by` is the follower's device hash, `who` is the followed person's id. The
+ * asymmetry is deliberate: a follower has no profile necessarily, and should
+ * not need one to read somebody. */
+export function cleanFollow(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const by = String(raw.by || "").slice(0, 64);
+  const who = String(raw.who || "");
+  if (!by || !/^[a-f0-9]{20}$/.test(who)) return null;
+  return { by, who, at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
+}
+
+/** How many people follow this person. A count, never the set — who follows
+ *  whom among foreign students is a social graph, and publishing one is a
+ *  different product from the one this is. */
+export const followersOf = (follows, id) =>
+  follows.reduce((n, f) => n + (f.who === id ? 1 : 0), 0);
+
 export function cleanBoard(raw) {
   const rows = Array.isArray(raw) ? raw : Array.isArray(raw?.posts) ? raw.posts : [];
   const seen = new Set();
@@ -214,7 +238,19 @@ export function cleanBoard(raw) {
   }
   people.sort((a, b) => (b.at || "").localeCompare(a.at || ""));
 
-  return { posts, people };
+  // Follows, deduplicated on the pair: pressing Follow twice is one follow.
+  const seenF = new Set();
+  const follows = [];
+  for (const r of (Array.isArray(raw?.follows) ? raw.follows : [])) {
+    const f = cleanFollow(r);
+    if (!f) continue;
+    const key = f.by + ":" + f.who;
+    if (seenF.has(key)) continue;
+    seenF.add(key);
+    follows.push(f);
+  }
+
+  return { posts, people, follows };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an

@@ -230,8 +230,36 @@ function paint() {
   }
   box.append(theirs);
 
+  // How many people follow them, under the name. A count and never a list:
+  // who follows whom among foreign students is a social graph, and this is
+  // not the product that publishes one.
+  if (q.followers) {
+    head.append(el("p", "where",
+      q.followers === 1 ? T("bud.followers1") : T("bud.followers", { n: q.followers })));
+  }
+
   const acts = el("div", "acts");
-  const feed = el("a", "primary", T("bud.back"));
+  if (!q.mine) {
+    const fol = el("button", q.following ? "" : "primary",
+      T(q.following ? "bud.following" : "bud.follow"));
+    fol.type = "button";
+    fol.addEventListener("click", async () => {
+      const want = !q.following;
+      fol.disabled = true;
+      try {
+        const d = await fetch("/api/follow", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ who: q.id, on: want, device }),
+        }).then((r) => r.json());
+        if (d && d.ok) { q.following = d.following; q.followers = d.count; paint(); return; }
+      } catch { /* fall through */ }
+      fol.disabled = false;
+      fol.textContent = T("act.again");
+    });
+    acts.append(fol);
+  }
+  const feed = el("a", null, T("bud.back"));
   feed.href = "/feed";
   acts.append(feed);
   if (!q.mine) {

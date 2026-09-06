@@ -288,7 +288,19 @@ app.get("/api/board", async (req, res) => {
   // either way, and a query string is the half that ends up in an access log.
   const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
+
+  /* The handles of everybody this reader follows, so the page can offer a feed
+   * that is only them. Resolved here rather than in the browser because the
+   * follow points at a person and a post carries a handle, and the join needs
+   * both lists — which the browser has no business holding. */
+  const mineFollows = me
+    ? new Set(board.follows.filter((f) => f.by === me)
+        .map((f) => (board.people.find((q) => q.id === f.who) || {}).handle)
+        .filter(Boolean).map((h) => h.toLowerCase()))
+    : new Set();
+
   res.json({
+    following: [...mineFollows],
     posts: live.filter(store.isOwnPost).map((p) => ({
       ...p,
       ...store.threadFor(live, p.id),
@@ -398,6 +410,27 @@ app.get("/api/people", async (req, res) => {
   });
 });
 
+/* Follow, and unfollow, which is the same button. */
+app.post("/api/follow", express.json({ limit: "8kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const who = String(req.body?.who || "");
+  if (!me || !/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "no" });
+  const on = req.body?.on !== false;
+
+  const out = await change((board) => {
+    const target = board.people.find((x) => x.id === who && x.state === "published");
+    if (!target) return null;
+    // Following yourself is not a thing anybody means to do.
+    if (target.by === me) return { count: store.followersOf(board.follows, who), following: false };
+    const had = board.follows.findIndex((f) => f.by === me && f.who === who);
+    if (on && had < 0) board.follows.push(store.cleanFollow({ by: me, who }));
+    if (!on && had >= 0) board.follows.splice(had, 1);
+    return { count: store.followersOf(board.follows, who), following: on };
+  });
+  if (!out) return res.status(404).json({ error: "no such person" });
+  res.json({ ok: true, ...out });
+});
+
 app.get("/api/person", async (req, res) => {
   const want = String(req.query.handle || "").toLowerCase();
   if (!want) return res.status(400).json({ error: "no" });
@@ -409,7 +442,14 @@ app.get("/api/person", async (req, res) => {
   const live = board.posts.filter((p) => p.state === "published");
   res.set("Cache-Control", "no-store");
   res.json({
-    person: { ...shownPerson(q, q.by === me), mine: q.by === me },
+    person: {
+      ...shownPerson(q, q.by === me),
+      mine: q.by === me,
+      followers: store.followersOf(board.follows, q.id),
+      // Whether YOU follow them. Never who else does — a count is a fact about
+      // a person, a list is a social graph.
+      following: Boolean(me) && board.follows.some((f) => f.by === me && f.who === q.id),
+    },
     // What they have actually put on the board, which is the only evidence a
     // stranger has that a profile is a person.
     posts: live.filter((p) => store.isOwnPost(p)
