@@ -16,6 +16,11 @@
  * person left in the queue stays in the queue, waiting for a human.
  *
  * Usage, on the server:
+ *   make feed-people
+ *
+ * That runs it inside the board's own container, which is the only place on
+ * the box with a node to run it: the host has Docker and nothing else. Calling
+ * it directly needs a runtime and the key:
  *   node scripts/seed-people.mjs https://liuxuesheng.io "$BOARD_KEY"
  *
  * With real pictures — a folder of image files named after the people, so

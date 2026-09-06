@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new
+.PHONY: help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -159,6 +159,30 @@ partner-sync-2: ## Same, for the second partner seat
 
 feed-sync: ## Replace the snapshot The Feed's seat can see
 	bash scripts/partner-sync.sh feed
+
+feed-people: ## Put the demo people on The Feed (roster in scripts/people.json)
+	@# Run inside the board's own container, not on the host. This box has
+	@# Docker and no node — everything here runs in an image — so a script
+	@# that needs a runtime has to borrow one, and the board's image already
+	@# has the right version of it.
+	@#
+	@# It reaches the board over the compose network by service name, which
+	@# also means this works before DNS, behind Caddy, and if the public
+	@# hostname is wrong. Read-only mount: the container runs the script and
+	@# cannot change it.
+	@#
+	@# Photographs, if you have them on the box: put the files in
+	@# scripts/photos named after the people (wen.jpg), then
+	@#   make feed-people PHOTOS=/seed/photos
+	@# Easier from a browser — the panel's People tab takes a file per person
+	@# and needs no shell at all.
+	@grep -qE '^TOMSCODING_BOARD_KEY=.+' .env \
+	  || { echo "TOMSCODING_BOARD_KEY is not set in .env — the board would refuse this."; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T \
+	  -v "$(CURDIR)/scripts:/seed:ro" \
+	  --entrypoint node board \
+	  /seed/seed-people.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --people /seed/people.json $(if $(PHOTOS),--photos $(PHOTOS),)
 
 partner-mockups: ## Copy every seat's mockups out to ./mockups for review
 	@mkdir -p mockups/partner mockups/partner-2 mockups/thefeed
