@@ -29,6 +29,10 @@
  * Anybody without a picture file gets a drawn one: a coloured disc with their
  * initial in it, which is meant to look like the placeholder it is.
  *
+ * Pictures do not have to come through here at all. The panel's People tab
+ * takes a file per person from a browser, which is the route to use when the
+ * photographs are on the machine you are sitting at rather than on the server.
+ *
  * Idempotent: run it twice and it recognises its own people and stops.
  * --------------------------------------------------------------------------- */
 

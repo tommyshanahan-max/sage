@@ -25,6 +25,40 @@ export const configured = () => Boolean(BASE && KEY);
  *  what they just released rather than describing it. */
 export const base = () => BASE;
 
+/** One upstream call carrying a body this side does not parse — a form with a
+ *  picture in it. The bytes and the content-type arrive from the browser and
+ *  leave untouched, so a photograph never has to be decoded, re-encoded or
+ *  held in a string on the way through.
+ *
+ *  Longer timeout than `call`: this is megabytes over a network, not a row. */
+export async function send(path, { method = "POST", contentType, body, timeoutMs = 60_000 } = {}) {
+  if (!configured()) {
+    return { status: 503, body: { error: "this seat has no Feed credentials" } };
+  }
+  try {
+    const r = await fetch(BASE + path, {
+      method,
+      headers: { "x-admin-secret": KEY, "content-type": contentType || "application/octet-stream" },
+      body,
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    const text = await r.text();
+    let parsed;
+    try { parsed = text ? JSON.parse(text) : null; } catch { parsed = { raw: text.slice(0, 2000) }; }
+    return { status: r.status, body: parsed };
+  } catch (err) {
+    const timedOut = err?.name === "TimeoutError" || /aborted/i.test(err?.message || "");
+    return {
+      status: 504,
+      body: {
+        error: timedOut
+          ? `no answer within ${timeoutMs / 1000}s — a large picture on a slow link`
+          : (err?.message || "could not reach The Feed"),
+      },
+    };
+  }
+}
+
 /** One upstream call. Returns the status and the parsed body, and never throws
  *  for an HTTP error — the caller passes both on, so a 401 from the board
  *  arrives here as a 401 rather than as a 500 that hides it. */

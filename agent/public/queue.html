@@ -81,6 +81,30 @@
   .acts button.bad:hover{border-color:var(--red);color:var(--red)}
   .acts button:disabled{opacity:.5;cursor:default}
   .said{margin:.55rem 0 0;font-size:.83rem;color:var(--muted)}
+
+  /* A person, and the picture they have. Wide row rather than a card stack:
+     the point of this list is comparing faces to names, and a column of
+     full-width cards puts one face on screen at a time. */
+  .person{display:flex;gap:.9rem;align-items:center}
+  .face{width:60px;height:60px;border-radius:50%;flex:0 0 auto;object-fit:cover;
+    background:var(--sunk);border:1px solid var(--rule);display:block}
+  .noface{width:60px;height:60px;border-radius:50%;flex:0 0 auto;display:grid;
+    place-items:center;background:var(--sunk);border:1px dashed var(--rule);
+    color:var(--muted);font-size:.6rem;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;text-align:center;line-height:1.2}
+  /* Flex shrinks a child to its longest word before it takes space from a
+     sibling, so the name column says how to share it. */
+  .pinfo{flex:1 1 auto;min-width:0}
+  .pname{font-weight:700}
+  .pmeta{font-size:.78rem;color:var(--muted)}
+  .pick{flex:0 0 auto;border:1px solid var(--rule);background:var(--sunk);
+    color:var(--ink-2);border-radius:99px;padding:.4rem 1rem;font-size:.85rem;
+    font-weight:600;cursor:pointer;display:inline-block}
+  .pick:hover{border-color:var(--blue);color:var(--blue)}
+  .pick input{display:none}
+  /* Dropping a file anywhere on the row works too, and has to look like it
+     does before the file is over it. */
+  .post.over{outline:2px dashed var(--blue);outline-offset:3px}
   .said.bad{color:var(--red)}
   .none{padding:2.2rem 1rem;text-align:center;color:var(--muted);font-size:.9rem;
     background:var(--card);border-radius:16px;box-shadow:var(--shadow)}
@@ -140,6 +164,7 @@
     <div class="tabs" role="tablist">
       <button class="tab" id="tab-queue" role="tab" aria-selected="true" aria-controls="pane-queue">Queue</button>
       <button class="tab" id="tab-live"  role="tab" aria-selected="false" aria-controls="pane-live">Live</button>
+      <button class="tab" id="tab-people" role="tab" aria-selected="false" aria-controls="pane-people">People</button>
       <button class="tab" id="tab-app"   role="tab" aria-selected="false" aria-controls="pane-app">The app</button>
     </div>
   </header>
@@ -152,6 +177,10 @@
 
   <section id="pane-live" role="tabpanel" aria-labelledby="tab-live" hidden>
     <div class="list" id="live"></div>
+  </section>
+
+  <section id="pane-people" role="tabpanel" aria-labelledby="tab-people" hidden>
+    <div class="list" id="people"></div>
   </section>
 
   <section id="pane-app" role="tabpanel" aria-labelledby="tab-app" hidden>
@@ -199,7 +228,7 @@ let ORIGIN = "";
 let LOADED_FRAME = false;
 
 /* ---- tabs ---------------------------------------------------------------- */
-const PANES = ["queue", "live", "app"];
+const PANES = ["queue", "live", "people", "app"];
 function show(which) {
   for (const k of PANES) {
     $("tab-" + k).setAttribute("aria-selected", String(k === which));
@@ -317,6 +346,129 @@ function drawFace(q) {
   return box;
 }
 
+/* ---- people, and the pictures they have ---------------------------------- */
+/* Why this exists: a photograph could only reach a profile by being uploaded
+ * from that person's own phone, in that person's own browser, with that
+ * person's device id in it. For anybody the operator made — the demo people,
+ * or somebody who wrote in because their upload failed — there was no way at
+ * all, and the answer was a shell on the server. This is that, as a button. */
+
+/* One person's picture, replaced. Not routed through act(): that reloads the
+ * whole panel on success, and after an upload the useful thing to see is the
+ * new face appearing in this row. */
+async function sendPhoto(row, id, file) {
+  const said = row.querySelector(".said");
+  said.classList.remove("bad");
+
+  // Refused here rather than after the upload. The board takes jpeg, png,
+  // webp and gif; sending it a HEIC off a Mac and reading the 415 two minutes
+  // later is a worse way to find that out.
+  if (!/^image\//.test(file.type)) {
+    said.classList.add("bad");
+    said.textContent = "That is not an image. If it came off an iPhone as HEIC, "
+      + "open it in Preview and export a JPEG.";
+    return;
+  }
+
+  said.textContent = `Sending ${file.name}…`;
+  row.classList.remove("over");
+  try {
+    const form = new FormData();
+    form.append("id", id);
+    form.append("file", file, file.name);
+    const r = await fetch("/api/feed/face", { method: "POST", body: form });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || ("the server said " + r.status));
+    said.textContent = "Done — it is on their profile now.";
+    await loadPeople();
+  } catch (err) {
+    said.classList.add("bad");
+    said.textContent = String(err.message || err);
+  }
+}
+
+function drawPerson(q) {
+  const box = el("div", "post " + (q.photo ? "tone-green" : "tone-amber"));
+  const row = el("div", "person");
+
+  if (q.photo) {
+    const img = document.createElement("img");
+    img.className = "face";
+    img.loading = "lazy";
+    img.alt = "";
+    // Cache-busted on the id, which changes every time a new file is stored,
+    // so a replaced picture does not keep showing the old one.
+    img.src = ORIGIN + "/api/public-media?id=" + encodeURIComponent(q.photo);
+    img.addEventListener("error", () => img.replaceWith(el("div", "noface", "would not load")));
+    row.append(img);
+  } else {
+    row.append(el("div", "noface", "no photo"));
+  }
+
+  const info = el("div", "pinfo");
+  info.append(el("div", "pname", q.handle || "somebody"));
+  const bits = [];
+  if (q.campus) bits.push(q.campus);
+  bits.push(q.looking ? "on the study buddy list" : "not on the list");
+  if (q.photoState && q.photoState !== "published" && q.photo) bits.push("photo waiting in the queue");
+  if (q.state !== "published") bits.push("profile not published");
+  info.append(el("div", "pmeta", bits.join(" · ")));
+  row.append(info);
+
+  // A label wrapping a hidden input: the same press, without a button that has
+  // to reach across to find the file box it belongs to.
+  const pick = el("label", "pick", q.photo ? "Replace photo" : "Add photo");
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.addEventListener("change", () => {
+    if (input.files && input.files[0]) sendPhoto(box, q.id, input.files[0]);
+    input.value = "";
+  });
+  pick.append(input);
+  row.append(pick);
+
+  box.append(row, el("div", "said"));
+
+  // Dragging a file onto the row does the same thing. Every default is
+  // cancelled, because a file dropped on a page the browser handles itself
+  // means navigating away from the panel to the image.
+  const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
+  box.addEventListener("dragover", (e) => { stop(e); box.classList.add("over"); });
+  box.addEventListener("dragleave", (e) => { stop(e); box.classList.remove("over"); });
+  box.addEventListener("drop", (e) => {
+    stop(e);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) sendPhoto(box, q.id, file);
+    else box.classList.remove("over");
+  });
+
+  return box;
+}
+
+/* Read on its own rather than inside load(): an upload changes one person and
+ * nothing else, and redrawing the queue underneath somebody who is working
+ * through it is its own small hostility. */
+async function loadPeople() {
+  const box = $("people");
+  try {
+    const r = await fetch("/api/feed/people", { cache: "no-store" });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || ("the server said " + r.status));
+    const people = d.people || [];
+    $("tab-people").textContent = "People" + (people.length ? " \u00b7 " + people.length : "");
+    fill(box);
+    if (!people.length) {
+      box.append(el("div", "none", "Nobody has made a profile yet."));
+      return;
+    }
+    for (const q of people) box.append(drawPerson(q));
+  } catch (err) {
+    fill(box);
+    box.append(el("div", "none", "Could not read the people: " + (err.message || err)));
+  }
+}
+
 /* ---- the figures --------------------------------------------------------- */
 function drawCounts(c) {
   const box = $("counts");
@@ -396,7 +548,7 @@ function sage(on) {
   if (on && !SAGE_LOADED) { $("sageframe").src = "/sage?bare=1"; SAGE_LOADED = true; }
   // Coming back from a conversation, the queue may have moved — it can act on
   // it now. Cheap, and it stops the panel disagreeing with what was just done.
-  if (!on) load();
+  if (!on) { load(); loadPeople(); }
 }
 $("pull").addEventListener("click", () => sage($("drawer").hidden));
 $("drawershut").addEventListener("click", () => sage(false));
@@ -415,7 +567,11 @@ fetch("/api/seat").then((r) => r.json()).then((d) => {
     $("drawername").textContent = d.assistant;
   }
   load();
-}).catch(load);
+  // After ORIGIN is known: the pictures in this list are served by the board,
+  // not by this seat, so a list drawn before the address is read draws every
+  // face as broken.
+  loadPeople();
+}).catch(() => { load(); loadPeople(); });
 </script>
 </body>
 </html>

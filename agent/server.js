@@ -2567,6 +2567,31 @@ app.delete("/api/feed/face", feedDoor, async (req, res) => {
   res.status(r.status).json(r.body);
 });
 
+/** Everybody on the board with a name, and the picture each of them has.
+ *  What the panel needs to offer a person to put a face to. */
+app.get("/api/feed/people", feedDoor, async (_req, res) => {
+  const r = await feed.call("/api/faces");
+  res.set("Cache-Control", "no-store");
+  res.status(r.status).json(r.body);
+});
+
+/** A picture chosen here, for somebody named here.
+ *
+ *  The form is passed through rather than parsed: this seat has no business
+ *  decoding a photograph, and a route that does is a route that can be made to
+ *  decode something else. It arrives as bytes and leaves as the same bytes. */
+app.post("/api/feed/face", feedDoor,
+  express.raw({ type: "multipart/form-data", limit: "36mb" }),
+  async (req, res) => {
+    if (!Buffer.isBuffer(req.body) || !req.body.length) {
+      return res.status(400).json({ error: "expected a form with a picture in it" });
+    }
+    const r = await feed.send("/api/face", {
+      contentType: req.get("content-type"), body: req.body,
+    });
+    res.status(r.status).json(r.body);
+  });
+
 app.get("/api/voice", (_req, res) => res.json({ available: isSpeechConfigured() }));
 
 // Sage's own words, spoken. Nothing is passed but the text she already wrote.

@@ -870,6 +870,54 @@ app.delete("/api/face", admin, async (req, res) => {
   res.json({ ok: true, id });
 });
 
+// Everybody with a name, so the panel can show a person and the picture they
+// have. Held profiles included: somebody whose words are still in the queue is
+// exactly who an operator might be about to put a face to.
+app.get("/api/faces", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  res.json({
+    people: board.people
+      .filter((q) => q.handle)
+      .map((q) => ({
+        id: q.id, handle: q.handle, campus: q.campus || "",
+        looking: Boolean(q.looking), state: q.state || "",
+        photoState: q.photoState || "", photo: q.photo || "",
+      }))
+      .sort((a, b) => a.handle.localeCompare(b.handle)),
+  });
+});
+
+// Putting a picture on somebody from the panel.
+//
+// It goes straight up. The queue exists to catch what a stranger uploads
+// before anyone has looked at it, and this is the opposite case: the operator
+// chose the file and chose the person, so there is nobody left to review it.
+// Their words are published with it, because a face on a profile the board
+// will not show anybody is a picture stored for nothing.
+app.post("/api/face", admin, express.raw({ type: "multipart/form-data", limit: "36mb" }),
+  async (req, res) => {
+    const parsed = multipart(req);
+    if (!parsed) return res.status(400).json({ error: "expected multipart/form-data" });
+    const id = String(parsed.fields.id || "").trim();
+    if (!parsed.file) return res.status(400).json({ error: "no picture in that form" });
+
+    const photo = await putMedia(parsed.file.buf, parsed.file.type);
+    if (!photo) return res.status(415).json({ error: "that kind of file is not accepted here" });
+
+    const out = await change((board) => {
+      const q = board.people.find((x) => x.id === id);
+      if (!q) return null;
+      q.photo = photo;
+      q.photoState = "published";
+      if (q.state !== "published") q.state = "published";
+      q.why = "";
+      return q;
+    });
+    if (!out) return res.status(404).json({ error: "no such person" });
+    res.json({ ok: true, id, photo, handle: out.handle });
+  });
+
 app.delete("/api/feed", admin, async (req, res) => {
   const id = String(req.query.id || "");
   const post = await change((board) => {
