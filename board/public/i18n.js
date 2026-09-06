@@ -472,6 +472,54 @@ export const STRINGS = {
     "先加一张照片——这里的资料都有照片。",
   ],
   "me.photoFirst":     ["Add your photo", "先加照片"],
+
+  // ---------------------------------------------------------------------
+  // The key.
+  //
+  // There are no accounts here, so there is nothing to sign into — but the
+  // random number the browser made up IS the person, and until now it lived
+  // only in that browser and could never be seen. Change phone and you were
+  // gone, with your posts and your profile no longer yours to delete.
+  //
+  // The key is that number, shown. Nothing new is stored and nothing personal
+  // is asked for; it is the one thing already there, made portable.
+  //
+  // The warning is not decoration. Whoever holds it is you, and there is no
+  // email to reset to and nobody to appeal to — which is the price of holding
+  // nothing about anybody.
+  // ---------------------------------------------------------------------
+  "key.title":         ["Your key", "你的钥匙"],
+  "key.body": [
+    "This is you. There is no account here and no password — this one line is how you get back in on a new phone. Save it somewhere, now.",
+    "这就是你。这里没有账号，也没有密码——换手机之后，就靠这一行回来。现在就存起来。",
+  ],
+  "key.warn": [
+    "Anyone who has it is you. Do not put it in a post.",
+    "谁拿到它，谁就是你。不要发在内容里。",
+  ],
+  "key.copy":          ["Copy", "复制"],
+  "key.copied":        ["Copied", "已复制"],
+  "key.show":          ["Show my key", "显示我的钥匙"],
+  "key.hide":          ["Hide it", "藏起来"],
+
+  "key.have":          ["Been here before?", "以前来过？"],
+  "key.enterTitle":    ["Paste your key", "粘贴你的钥匙"],
+  "key.enterBody": [
+    "From the phone you used before. You will become that person again — their posts, their profile, the people they follow.",
+    "从你以前用的手机上拿。粘贴之后，你就又是那个人了——他发的内容、他的资料、他关注的人。",
+  ],
+  "key.enterPlaceholder": ["Paste it here", "粘贴到这里"],
+  "key.go":            ["Use this key", "用这把钥匙"],
+  "key.cancel":        ["Cancel", "取消"],
+  "key.bad": [
+    "That does not look like a key from here. Check you copied all of it.",
+    "这看起来不像这里的钥匙。检查一下是不是复制全了。",
+  ],
+  "key.replaceWarn": [
+    "You have already put things up on this phone. Using another key leaves those behind, and you will need this phone's own key to get back to them.",
+    "你在这台手机上已经发过内容了。换成别的钥匙之后，那些就留在原处了——想回去，需要这台手机自己的钥匙。",
+  ],
+  "key.done":          ["Welcome back.", "欢迎回来。"],
   "nav.feed":          ["Feed", "动态"],
   "nav.profile":       ["Profile", "我的"],
   "nav.new":           ["Put something up", "发布"],

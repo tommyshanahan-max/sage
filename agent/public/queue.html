@@ -184,7 +184,18 @@ const el = (t, c, x) => { const n = document.createElement(t); if (c) n.classNam
 const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
 const when = (iso) => { const d = new Date(iso); return Number.isNaN(+d) ? "" : d.toLocaleString(); };
 
-let BASE = "";          // the reader-facing address, for images and the frame
+/* Two different things, and treating them as one broke both.
+ *
+ * APP is wherever the app should be OPENED — configured, and it may well point
+ * at a path rather than a bare host, because the useful page to land on is the
+ * feed rather than the front door. Appending "/feed" to it produced /feed/feed.
+ *
+ * ORIGIN is the scheme and host on their own, which is what an API path has to
+ * be joined to. Every photograph in this panel was being asked for at
+ * /feed/api/public-media and quietly failing, which is why they "would not
+ * load". */
+let APP = "";
+let ORIGIN = "";
 let LOADED_FRAME = false;
 
 /* ---- tabs ---------------------------------------------------------------- */
@@ -197,8 +208,8 @@ function show(which) {
   // The frame loads the first time it is asked for, not on every page load: it
   // is somebody else's page and it should not be fetched by a panel nobody
   // opened that tab on.
-  if (which === "app" && BASE && !LOADED_FRAME) {
-    $("appframe").src = BASE + "/feed";
+  if (which === "app" && APP && !LOADED_FRAME) {
+    $("appframe").src = APP;
     LOADED_FRAME = true;
   }
 }
@@ -237,10 +248,10 @@ function picture(box, id) {
   img.className = "shot";
   img.loading = "lazy";
   img.alt = "";
-  img.src = BASE + "/api/public-media?id=" + encodeURIComponent(id);
+  img.src = ORIGIN + "/api/public-media?id=" + encodeURIComponent(id);
   img.addEventListener("error", () => {
     const note = el("div", "missing",
-      "There is a photograph on this and it would not load from " + (BASE || "the app")
+      "There is a photograph on this and it would not load from " + (ORIGIN || "the app")
       + ". Do not release it until you have seen it.");
     img.replaceWith(note);
   });
@@ -327,9 +338,9 @@ function drawCounts(c) {
     // only one with a colour.
     n(waiting, "waiting", waiting ? "task" : null),
   );
-  if (BASE) {
+  if (APP) {
     const a = el("a", "more", "Open the feed");
-    a.href = BASE + "/feed"; a.target = "_blank"; a.rel = "noopener";
+    a.href = APP; a.target = "_blank"; a.rel = "noopener";
     box.append(a);
   }
   box.hidden = false;
@@ -394,7 +405,10 @@ document.addEventListener("keydown", (e) => {
 });
 
 fetch("/api/seat").then((r) => r.json()).then((d) => {
-  BASE = (d && d.feedBase) || "";
+  APP = (d && d.feedBase) || "";
+  // The host on its own, for API paths. Falls back to the string itself if it
+  // is not a URL we can parse, which is the honest failure rather than a crash.
+  try { ORIGIN = APP ? new URL(APP).origin : ""; } catch { ORIGIN = APP; }
   if (d && d.project) { $("title").textContent = d.project; document.title = d.project; }
   if (d && d.assistant) {
     $("pullname").textContent = d.assistant;

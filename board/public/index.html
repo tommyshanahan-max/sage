@@ -181,6 +181,24 @@
   .menote{margin:.5rem 0 0;font-size:.82rem;color:var(--muted);text-align:center;
     max-width:24rem;line-height:1.5}
 
+  /* ---- the key ------------------------------------------------------------
+     Shut by default. It is the one string here that is worth stealing, and a
+     secret printed on a screen somebody is holding in a lecture theatre is a
+     secret printed for whoever is behind them. */
+  .keybox{margin:1.2rem 0 0;padding-top:1rem;border-top:1px solid var(--hair)}
+  .keybox h3{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
+  .keybox p{margin:.4rem 0 0;font-size:.85rem;line-height:1.55;color:var(--ink-2)}
+  .keybox .warn{color:var(--accent)}
+  .keyval{display:flex;gap:.5rem;align-items:center;margin:.7rem 0 0}
+  .keyval code{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;
+    background:var(--raise);border:1px solid var(--line);border-radius:.5rem;
+    padding:.55rem .7rem;color:var(--ink)}
+  .keyrow{display:flex;gap:.5rem;margin:.7rem 0 0;flex-wrap:wrap}
+  .keyrow button{border:1px solid var(--line);background:var(--paper);color:var(--ink);
+    border-radius:99px;padding:.45rem 1rem;font-size:.88rem}
+  .keyrow button.go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
   /* The same avatar control, inside the editor sheet. Profile is reachable
      from the bar before a profile exists, so the form it opens has to be able
      to add the face it will not save without. */
@@ -539,6 +557,36 @@
       <button class="go" type="submit" id="mesave"></button>
     </div>
     <p class="said" id="mesaid" hidden></p>
+
+    <!-- The way back, on the screen somebody is already on when they are
+         setting themselves up. Shut until asked for. -->
+    <div class="keybox">
+      <h3 id="keytitle"></h3>
+      <p id="keybody"></p>
+      <div class="keyrow">
+        <button type="button" id="keyshow"></button>
+      </div>
+      <div id="keyopen" hidden>
+        <div class="keyval"><code id="keyval"></code></div>
+        <p class="warn" id="keywarn"></p>
+        <div class="keyrow"><button type="button" class="go" id="keycopy"></button></div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Coming back on a new phone. -->
+<div class="sheet" id="keysheet" hidden>
+  <form class="card" id="keyform">
+    <h2 id="keyEnterTitle"></h2>
+    <p class="hint" id="keyEnterBody"></p>
+    <div class="field"><input id="keyin" autocomplete="off" spellcheck="false"></div>
+    <p class="menote" id="keyReplace" hidden></p>
+    <div class="row">
+      <button class="ghost" type="button" id="keyshut"></button>
+      <button class="go" type="submit" id="keygo"></button>
+    </div>
+    <p class="said" id="keysaid" hidden></p>
   </form>
 </div>
 
