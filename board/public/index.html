@@ -337,10 +337,11 @@
     align-items:center;justify-content:space-around;
     padding:.35rem .5rem calc(.35rem + env(safe-area-inset-bottom));
     background:var(--paper);border-top:1px solid var(--line)}
-  @media (min-width:36rem){
+  @media (min-width:36rem) and (max-width:57.99rem){
     .bar{border-left:1px solid var(--line);border-right:1px solid var(--line);
       border-radius:1rem 1rem 0 0}
   }
+
   .bar a,.bar button{flex:1;border:0;background:none;color:var(--muted);
     display:flex;flex-direction:column;align-items:center;gap:.15rem;
     padding:.45rem .3rem;font-size:.68rem;text-decoration:none;letter-spacing:.04em}
@@ -353,6 +354,60 @@
     box-shadow:var(--shadow);margin-top:-1.1rem}
   .bar .new i svg{width:1.6rem;height:1.6rem;stroke-width:2.2}
   .bar .new span{margin-top:.1rem}
+
+  /* ---- the same nav, at the top, on a desktop -----------------------------
+   *
+   * One element, not two. A second copy in the markup would mean two sets of
+   * handlers and two things to keep in step, and the first symptom of that is
+   * a button that works on one size and not the other.
+   *
+   * A bar pinned to the bottom of a large screen is a phone idiom: it puts the
+   * navigation as far from the pointer as the window allows, and it is where
+   * nobody on a desktop looks for it. Above 58rem it becomes a row in the
+   * masthead instead — same buttons, same order, same code. */
+  @media (min-width:58rem){
+    /* Its own row, under the masthead.
+       Not beside the title: this column is 34rem wide, so a header holding the
+       mark, the name, three nav items and the language button has about eighty
+       pixels for the name — the title and the nav simply landed on top of each
+       other. A row of its own has room, and a nav under a masthead is what a
+       web app looks like anyway. */
+    .top{flex-wrap:wrap;margin-bottom:1.2rem}
+    .bar{position:static;transform:none;width:auto;max-width:none;
+      flex:0 0 100%;order:2;
+      margin:.15rem 0 0;padding:.5rem 0 0;background:none;border:0;
+      border-top:1px solid var(--hair);border-radius:0;
+      gap:.25rem;justify-content:flex-start}
+    /* Icon beside the label rather than above it: a row of tall stacks in a
+       header makes the header tall. */
+    .bar a,.bar button{flex:0 0 auto;flex-direction:row;gap:.4rem;
+      padding:.45rem .85rem;border-radius:99px;font-size:.88rem;
+      letter-spacing:0;color:var(--ink-2)}
+    .bar a:hover,.bar button:hover{background:var(--raise);color:var(--ink)}
+    .bar a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+    .bar svg{width:1.15rem;height:1.15rem}
+    /* The + stops being the big round thing lifted out of the bar and becomes
+       an ordinary primary button, because on a desktop it is not competing
+       with a thumb. */
+    .bar .new i{width:auto;height:auto;border-radius:0;background:none;
+      color:inherit;box-shadow:none;margin:0;display:inline-grid}
+    .bar .new i svg{width:1.15rem;height:1.15rem;stroke-width:2}
+    .bar .new{background:var(--accent);color:var(--accent-ink);
+      border-radius:99px;padding:.45rem 1rem}
+    .bar .new:hover{background:var(--accent);color:var(--accent-ink);filter:brightness(1.05)}
+    .bar .new span{margin:0}
+    /* The masthead was a two-item row and is a three-item row now. Without a
+       basis the title had none: flex shrinks a child to its longest word
+       before it takes space from a sibling, so "The Feed" broke over two lines
+       and the tagline came down in a five-line ribbon beside it. */
+    .top .name{flex:1 1 auto;min-width:0}
+    .top p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    /* The language button no longer needs to push itself right; the nav does. */
+    #langslot{margin-left:.5rem}
+    /* Nothing is pinned over the feed any more, so the space kept clear for it
+       is space wasted. */
+    main{padding-bottom:3rem}
+  }
 
   .fab{position:fixed;right:1.2rem;bottom:1.6rem;width:4rem;height:4rem;
     border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);
@@ -430,10 +485,24 @@
          a word. -->
     <div class="mark"><img src="/favicon.png" alt="" width="192" height="192"
       onerror="this.replaceWith(document.createTextNode('\u7559'))"></div>
-    <div>
+    <div class="name">
       <h1 id="boardname">The Board</h1>
       <p id="count">Anyone can read. Anyone can post.</p>
     </div>
+    <nav class="bar" id="bar">
+      <a href="/feed" id="navfeed" aria-current="page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        <span id="navfeedlabel">Feed</span>
+      </a>
+      <button class="new" id="fab" type="button">
+        <i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></i>
+        <span id="navnewlabel">Put something up</span>
+      </button>
+      <a href="#" id="navme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
+        <span id="navmelabel">Profile</span>
+      </a>
+    </nav>
     <span id="langslot"></span>
   </div>
 
@@ -489,20 +558,7 @@
   </form>
 </div>
 
-<nav class="bar" id="bar">
-  <a href="/feed" id="navfeed" aria-current="page">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-    <span id="navfeedlabel">Feed</span>
-  </a>
-  <button class="new" id="fab" type="button">
-    <i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></i>
-    <span id="navnewlabel">Put something up</span>
-  </button>
-  <a href="#" id="navme">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
-    <span id="navmelabel">Profile</span>
-  </a>
-</nav>
+
 
 <div class="sheet" id="reportsheet" hidden>
   <form class="card" id="reportform">
