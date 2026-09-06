@@ -2501,6 +2501,16 @@ app.get("/api/feed/queue", feedDoor, async (_req, res) => {
  *  described. */
 app.get("/api/feed/where", feedDoor, (_req, res) => res.json({ base: feed.base() }));
 
+/** What the board knows about itself: people, participation, and what is
+ *  waiting. Public over there, so no key travels for it — but proxied rather
+ *  than fetched from the page, because the page should not need to know the
+ *  app's address to draw its own masthead. */
+app.get("/api/feed/count", feedDoor, async (_req, res) => {
+  const r = await feed.call("/api/count");
+  res.set("Cache-Control", "no-store");
+  res.status(r.status).json(r.body);
+});
+
 const feedId = (v) => /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(String(v || ""));
 
 /** Letting a held post through to readers. */

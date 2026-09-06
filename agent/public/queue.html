@@ -3,85 +3,164 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The queue</title>
+<title>The Feed</title>
 <meta name="color-scheme" content="light dark">
 <style>
+  /* The same design system as the other panel — same tokens, same header, same
+     tab row, same counts strip. A second admin surface that looked like a
+     different product would be a second thing to learn for no reason. */
   :root{
-    --paper:#F6F4EF; --card:#FFFDF8; --ink:#1C1A17; --ink-2:#4A453D; --muted:#8B8579;
-    --line:#E4DFD4; --hair:#EEEAE1; --accent:#9A6B2F; --accent-ink:#fff;
-    --ok:#2F7D4F; --bad:#B4453A;
-    --serif:Georgia,"Songti SC","Noto Serif CJK SC",serif;
-    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Noto Sans SC",sans-serif;
+    --bg:#eef0f4; --card:#fcfcfd; --sunk:#f2f4f8; --ink:#151b28; --ink-2:#4e5968;
+    --muted:#8a939f; --rule:#e3e6ec;
+    --shadow:0 1px 2px rgba(20,26,40,.04),0 6px 18px rgba(20,26,40,.05);
+    --blue:#3f68d8; --blue-soft:#e8ecf7;
+    --green:#2a9d63; --red:#d4485c; --amber:#d99038; --violet:#7268c4;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
+           "Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;
   }
-  @media (prefers-color-scheme:dark){
-    :root{--paper:#14120F; --card:#1D1A16; --ink:#EFEAE1; --ink-2:#B8B1A4;
-      --muted:#8A8377; --line:#2C2822; --hair:#241F1A; --accent:#C79A5B;}
-  }
-  *{box-sizing:border-box;margin:0}
-  body{background:var(--paper);color:var(--ink);font-family:var(--sans);
-    font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:44rem;margin:0 auto;padding:2rem 1.15rem 5rem}
-  h1{font-family:var(--serif);font-weight:400;font-size:1.9rem;line-height:1.15}
-  .sub{margin:.4rem 0 0;color:var(--muted);font-size:.92rem}
-  .bar{display:flex;gap:.6rem;align-items:center;margin:1.4rem 0 0}
-  .bar button,.bar a{border:1px solid var(--line);background:var(--card);
-    color:var(--ink);border-radius:99px;padding:.45rem 1rem;font:inherit;
-    font-size:.9rem;text-decoration:none;cursor:pointer}
-  h2{margin:2.4rem 0 0;font-family:var(--serif);font-weight:400;font-size:1.25rem}
-  .none{margin:.8rem 0 0;color:var(--muted);font-size:.92rem}
-  .item{margin:.9rem 0 0;background:var(--card);border:1px solid var(--line);
-    border-radius:.85rem;padding:.95rem 1rem}
-  .item .who{font-size:.82rem;color:var(--muted)}
-  .item p{margin:.4rem 0 0;line-height:1.6;white-space:pre-wrap;word-break:break-word}
-  .item img{margin:.6rem 0 0;max-width:100%;max-height:16rem;border-radius:.5rem;
-    display:block;border:1px solid var(--hair)}
-  .flag{margin:.5rem 0 0;font-size:.85rem;color:var(--bad)}
-  .acts{display:flex;gap:.5rem;margin:.85rem 0 0;flex-wrap:wrap}
-  .acts button{border:1px solid var(--line);background:var(--paper);color:var(--ink);
-    border-radius:99px;padding:.4rem .95rem;font:inherit;font-size:.88rem;cursor:pointer}
-  .acts button.go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+    --bg:#0b0e15; --card:#141924; --sunk:#1b212d; --ink:#e9edf5; --ink-2:#a3b0c4;
+    --muted:#6f7d92; --rule:#232b39;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.32);
+    --blue:#5c8dff; --blue-soft:#18233d;
+  }}
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
+    padding:clamp(.9rem,2.5vw,1.8rem) clamp(.8rem,2.5vw,1.8rem) 5rem}
+  main{max-width:62rem;margin:0 auto;display:flex;flex-direction:column;gap:1.05rem}
+  button{font:inherit}
+
+  header{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+  .ava{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none;
+    font-size:1.25rem;color:#fff;background:linear-gradient(140deg,var(--blue),var(--violet))}
+  header h1{margin:0;font-size:1.1rem;font-weight:700;letter-spacing:-.01em}
+  header p{margin:.05rem 0 0;font-size:.8rem;color:var(--muted)}
+  .tabs{display:flex;gap:.35rem;margin-left:auto;flex-wrap:wrap}
+  .tab{font-size:.82rem;font-weight:600;padding:.35rem .85rem;border-radius:99px;cursor:pointer;
+    background:var(--card);border:1px solid var(--rule);color:var(--ink-2)}
+  .tab[aria-selected=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+  /* A reported post has a clock on it in a way a new one does not. */
+  .tab.urgent{border-color:var(--red);color:var(--red)}
+  .tab.urgent[aria-selected=true]{background:var(--red);border-color:var(--red);color:#fff}
+
+  .counts{display:flex;gap:1.6rem;flex-wrap:wrap;align-items:baseline;
+    padding:.9rem 1.1rem;border-radius:14px;background:var(--card);
+    box-shadow:var(--shadow);border:1px solid var(--rule)}
+  .counts .n{display:flex;flex-direction:column;gap:.15rem}
+  .counts .n b{font-size:1.5rem;font-weight:700;line-height:1;
+    font-variant-numeric:tabular-nums;color:var(--ink)}
+  .counts .n b.dim{color:var(--muted);font-weight:600}
+  .counts .n b.task{color:var(--amber)}
+  .counts .n span{font-size:.6rem;font-weight:700;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--muted)}
+  .counts .more{margin-left:auto;align-self:center;font-size:.76rem;font-weight:700;
+    cursor:pointer;color:var(--blue);background:var(--blue-soft);border:1px solid transparent;
+    border-radius:99px;padding:.32rem .85rem;text-decoration:none}
+  .counts .more:hover{border-color:var(--blue)}
+
+  .post{background:var(--card);border-radius:16px;box-shadow:var(--shadow);
+    padding:1rem 1.15rem;border-left:3px solid var(--tone,var(--rule))}
+  .list{display:flex;flex-direction:column;gap:.85rem}
+  .tone-amber{--tone:var(--amber)} .tone-red{--tone:var(--red)}
+  .tone-green{--tone:var(--green)} .tone-violet{--tone:var(--violet)}
+  .who{font-size:.78rem;color:var(--muted);display:flex;gap:.5rem;flex-wrap:wrap;
+    align-items:center}
+  .who b{font-weight:700;color:var(--ink-2)}
+  .body{margin:.45rem 0 0;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+  .shot{margin:.7rem 0 0;display:block;max-width:100%;max-height:18rem;border-radius:10px;
+    border:1px solid var(--rule)}
+  .missing{margin:.7rem 0 0;padding:.7rem .85rem;border-radius:10px;font-size:.85rem;
+    background:var(--sunk);border:1px dashed var(--rule);color:var(--muted)}
+  .flag{margin:.55rem 0 0;font-size:.85rem;color:var(--red)}
+  .acts{display:flex;gap:.5rem;margin:.9rem 0 0;flex-wrap:wrap}
+  .acts button{border:1px solid var(--rule);background:var(--sunk);color:var(--ink-2);
+    border-radius:99px;padding:.4rem 1rem;font-size:.85rem;font-weight:600;cursor:pointer}
+  .acts button.go{background:var(--blue);border-color:var(--blue);color:#fff}
+  .acts button.bad:hover{border-color:var(--red);color:var(--red)}
   .acts button:disabled{opacity:.5;cursor:default}
-  .said{margin:.6rem 0 0;font-size:.86rem;color:var(--muted)}
-  .said.bad{color:var(--bad)}
-  .faces{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(13rem,1fr))}
+  .said{margin:.55rem 0 0;font-size:.83rem;color:var(--muted)}
+  .said.bad{color:var(--red)}
+  .none{padding:2.2rem 1rem;text-align:center;color:var(--muted);font-size:.9rem;
+    background:var(--card);border-radius:16px;box-shadow:var(--shadow)}
+  .frame{border-radius:16px;overflow:hidden;background:var(--card);
+    border:1px solid var(--rule);box-shadow:var(--shadow);height:min(76vh,50rem)}
+  .frame iframe{width:100%;height:100%;border:0;display:block;background:var(--sunk)}
+
+  /* The assistant, one pull away rather than in front of the work. */
+  .pull{position:fixed;right:1.2rem;bottom:1.2rem;z-index:20;display:flex;
+    align-items:center;gap:.5rem;padding:.7rem 1.1rem;border-radius:99px;
+    background:var(--blue);color:#fff;text-decoration:none;font-size:.88rem;
+    font-weight:700;box-shadow:0 6px 18px rgba(63,104,216,.3)}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>The queue</h1>
-  <p class="sub" id="sub">Reading…</p>
-  <div class="bar">
-    <button id="reload" type="button">Reload</button>
-    <a id="applink" href="#" target="_blank" rel="noopener">Open the feed</a>
-    <a href="/sage" id="asksage">Ask Sage</a>
-  </div>
+<main>
+  <header>
+    <div class="ava">留</div>
+    <div>
+      <h1 id="title">The Feed</h1>
+      <p id="sub">Reading…</p>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tab-queue" role="tab" aria-selected="true" aria-controls="pane-queue">Queue</button>
+      <button class="tab" id="tab-live"  role="tab" aria-selected="false" aria-controls="pane-live">Live</button>
+      <button class="tab" id="tab-app"   role="tab" aria-selected="false" aria-controls="pane-app">The app</button>
+    </div>
+  </header>
 
-  <h2>Posts waiting</h2>
-  <div id="posts"></div>
+  <div class="counts" id="counts" hidden></div>
 
-  <h2>Photographs waiting</h2>
-  <div class="faces" id="faces"></div>
-</div>
+  <section id="pane-queue" role="tabpanel" aria-labelledby="tab-queue">
+    <div class="list" id="queue"></div>
+  </section>
+
+  <section id="pane-live" role="tabpanel" aria-labelledby="tab-live" hidden>
+    <div class="list" id="live"></div>
+  </section>
+
+  <section id="pane-app" role="tabpanel" aria-labelledby="tab-app" hidden>
+    <div class="frame"><iframe id="appframe" title="The Feed" src="about:blank"></iframe></div>
+  </section>
+</main>
+
+<a class="pull" id="pull" href="/sage">✦ <span id="pullname">Sage</span></a>
 
 <script type="module">
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
   if (x !== undefined) n.textContent = x; return n; };
 const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
+const when = (iso) => { const d = new Date(iso); return Number.isNaN(+d) ? "" : d.toLocaleString(); };
 
-let BASE = "";
+let BASE = "";          // the reader-facing address, for images and the frame
+let LOADED_FRAME = false;
 
-const when = (iso) => {
-  const d = new Date(iso);
-  return Number.isNaN(+d) ? "" : d.toLocaleString();
-};
+/* ---- tabs ---------------------------------------------------------------- */
+const PANES = ["queue", "live", "app"];
+function show(which) {
+  for (const k of PANES) {
+    $("tab-" + k).setAttribute("aria-selected", String(k === which));
+    $("pane-" + k).hidden = k !== which;
+  }
+  // The frame loads the first time it is asked for, not on every page load: it
+  // is somebody else's page and it should not be fetched by a panel nobody
+  // opened that tab on.
+  if (which === "app" && BASE && !LOADED_FRAME) {
+    $("appframe").src = BASE + "/feed";
+    LOADED_FRAME = true;
+  }
+}
+for (const k of PANES) $("tab-" + k).addEventListener("click", () => show(k));
 
+/* ---- acting -------------------------------------------------------------- */
 /* Every action asks first. Releasing puts something in front of readers and
- * removing takes it away from them; neither is a press worth making by
- * accident, and there is no undo on the first one. */
+ * taking it down takes it away from them; neither is a press worth making by
+ * accident, and there is no undo on the first. */
 async function act(btn, url, opts, confirmText) {
   if (confirmText && !window.confirm(confirmText)) return;
-  const row = btn.closest(".item");
+  const row = btn.closest(".post");
   const said = row.querySelector(".said");
   row.querySelectorAll("button").forEach((b) => { b.disabled = true; });
   said.classList.remove("bad");
@@ -90,8 +169,7 @@ async function act(btn, url, opts, confirmText) {
     const r = await fetch(url, opts);
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || ("the server said " + r.status));
-    row.remove();
-    load();
+    await load();
   } catch (err) {
     said.classList.add("bad");
     said.textContent = String(err.message || err);
@@ -99,59 +177,74 @@ async function act(btn, url, opts, confirmText) {
   }
 }
 
-function drawPost(p) {
-  const box = el("div", "item");
-  box.append(el("div", "who", (p.handle || "somebody") + " · " + when(p.at)
-    + (p.topic ? " · " + p.topic : "")));
-  if (p.note) box.append(el("p", null, p.note));
-  if (p.photo) {
-    const img = document.createElement("img");
-    img.src = BASE + "/api/public-media?id=" + encodeURIComponent(p.photo);
-    img.alt = "";
-    img.addEventListener("error", () => img.remove());
-    box.append(img);
-  }
-  // Why it is here, when it is here because somebody objected rather than
-  // because it is new. That is the more urgent of the two.
+/* A photograph, or an honest note that it could not be shown.
+ *
+ * The first version removed a broken image and left an empty card, which is
+ * the worst of both: nothing to look at and no sign that anything is missing.
+ * Deciding whether to publish a picture you cannot see is not a decision. */
+function picture(box, id) {
+  const img = document.createElement("img");
+  img.className = "shot";
+  img.loading = "lazy";
+  img.alt = "";
+  img.src = BASE + "/api/public-media?id=" + encodeURIComponent(id);
+  img.addEventListener("error", () => {
+    const note = el("div", "missing",
+      "There is a photograph on this and it would not load from " + (BASE || "the app")
+      + ". Do not release it until you have seen it.");
+    img.replaceWith(note);
+  });
+  box.append(img);
+}
+
+function drawPost(p, live) {
+  const box = el("div", "post " + (p.reports ? "tone-red" : live ? "tone-green" : "tone-amber"));
+  const who = el("div", "who");
+  who.append(el("b", null, p.handle || "somebody"), el("span", null, when(p.at)));
+  if (p.topic) who.append(el("span", null, "· " + p.topic));
+  box.append(who);
+  if (p.note) box.append(el("div", "body", p.note));
+  if (p.photo) picture(box, p.photo);
+  if (!p.note && !p.photo) box.append(el("div", "missing", "This post has no words and no picture."));
   if (p.reports) {
-    box.append(el("p", "flag", p.reports + (p.reports === 1 ? " person" : " people")
+    box.append(el("div", "flag", p.reports + (p.reports === 1 ? " person" : " people")
       + " reported this" + (p.reportedFor ? ": " + p.reportedFor : "")));
   }
 
   const acts = el("div", "acts");
-  const ok = el("button", "go", "Let it through");
-  ok.addEventListener("click", () => act(ok,
-    "/api/feed/release?id=" + encodeURIComponent(p.id), { method: "POST" },
-    "Put this in front of readers?"));
-  const no = el("button", null, "Take it down");
+  if (!live) {
+    const ok = el("button", "go", "Let it through");
+    ok.addEventListener("click", () => act(ok,
+      "/api/feed/release?id=" + encodeURIComponent(p.id), { method: "POST" },
+      "Put this in front of readers?"));
+    acts.append(ok);
+  }
+  const no = el("button", "bad", "Take it down");
   no.addEventListener("click", () => {
-    const why = window.prompt("Why? The person sees this.", "");
+    const why = window.prompt("Why? The person who wrote it sees this.", "");
     if (why === null) return;
     act(no, "/api/feed/post?id=" + encodeURIComponent(p.id)
       + (why ? "&why=" + encodeURIComponent(why) : ""), { method: "DELETE" });
   });
-  acts.append(ok, no);
-  box.append(acts, el("p", "said"));
+  acts.append(no);
+  box.append(acts, el("div", "said"));
   return box;
 }
 
 function drawFace(q) {
-  const box = el("div", "item");
-  box.append(el("div", "who", (q.handle || "somebody") + " · " + when(q.at)));
-  for (const id of [q.photo, q.cover]) {
-    if (!id) continue;
-    const img = document.createElement("img");
-    img.src = BASE + "/api/public-media?id=" + encodeURIComponent(id);
-    img.alt = "";
-    img.addEventListener("error", () => img.remove());
-    box.append(img);
-  }
+  const box = el("div", "post tone-violet");
+  const who = el("div", "who");
+  who.append(el("b", null, q.handle || "somebody"), el("span", null, when(q.at)),
+    el("span", null, "· profile photograph"));
+  box.append(who);
+  for (const id of [q.photo, q.cover]) if (id) picture(box, id);
+
   const acts = el("div", "acts");
   const ok = el("button", "go", "Let it through");
   ok.addEventListener("click", () => act(ok,
     "/api/feed/face/release?id=" + encodeURIComponent(q.id), { method: "POST" },
-    "Put this photograph in front of readers?"));
-  const no = el("button", null, "Refuse it");
+    "Put this photograph in front of readers? It cannot be taken back once somebody has saved it."));
+  const no = el("button", "bad", "Refuse it");
   no.addEventListener("click", () => {
     const why = window.prompt("Why? The person sees this.", "That photo was not put up.");
     if (why === null) return;
@@ -159,42 +252,86 @@ function drawFace(q) {
       + (why ? "&why=" + encodeURIComponent(why) : ""), { method: "DELETE" });
   });
   acts.append(ok, no);
-  box.append(acts, el("p", "said"));
+  box.append(acts, el("div", "said"));
   return box;
 }
 
-async function load() {
-  const posts = $("posts"), faces = $("faces");
-  try {
-    const r = await fetch("/api/feed/queue", { cache: "no-store" });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error || ("the server said " + r.status));
+/* ---- the figures --------------------------------------------------------- */
+function drawCounts(c) {
+  const box = $("counts");
+  fill(box);
+  const n = (v, label, cls) => {
+    const d = el("div", "n");
+    const known = typeof v === "number" && Number.isFinite(v);
+    d.append(el("b", known ? (cls || null) : "dim", known ? String(v) : "—"),
+             el("span", null, label));
+    return d;
+  };
+  const waiting = (c.held || 0) + (c.facesHeld || 0);
+  box.append(
+    n(c.count, "people, ever"),
+    n(c.today, "posted today"),
+    n(c.week, "this week"),
+    n(c.returningToday, "came back today"),
+    // The only figure here that is a task rather than a result, so it is the
+    // only one with a colour.
+    n(waiting, "waiting", waiting ? "task" : null),
+  );
+  if (BASE) {
+    const a = el("a", "more", "Open the feed");
+    a.href = BASE + "/feed"; a.target = "_blank"; a.rel = "noopener";
+    box.append(a);
+  }
+  box.hidden = false;
+}
 
-    fill(posts); fill(faces);
-    const held = d.posts || [], waiting = d.faces || [];
-    $("sub").textContent = held.length + (held.length === 1 ? " post" : " posts")
-      + " and " + waiting.length + (waiting.length === 1 ? " photograph" : " photographs")
-      + " waiting. " + (d.live || []).length + " live.";
-    if (!held.length) posts.append(el("p", "none", "Nothing waiting."));
-    else for (const p of held) posts.append(drawPost(p));
-    if (!waiting.length) faces.append(el("p", "none", "Nothing waiting."));
-    else for (const q of waiting) faces.append(drawFace(q));
+/* ---- loading ------------------------------------------------------------- */
+async function load() {
+  try {
+    const [qr, cr] = await Promise.all([
+      fetch("/api/feed/queue", { cache: "no-store" }),
+      fetch("/api/feed/count", { cache: "no-store" }).catch(() => null),
+    ]);
+    const d = await qr.json();
+    if (!qr.ok) throw new Error(d.error || ("the server said " + qr.status));
+
+    const held = d.posts || [], faces = d.faces || [], live = d.live || [];
+    const reported = held.filter((p) => p.reports).length;
+
+    $("tab-queue").textContent = "Queue" + (held.length + faces.length ? " · " + (held.length + faces.length) : "");
+    $("tab-queue").classList.toggle("urgent", reported > 0);
+    $("tab-live").textContent = "Live" + (live.length ? " · " + live.length : "");
+    $("sub").textContent = `${live.length} live · ${held.length + faces.length} waiting`
+      + (reported ? ` · ${reported} reported` : "");
+
+    const q = $("queue");
+    fill(q);
+    if (!held.length && !faces.length) {
+      q.append(el("div", "none", "Nothing waiting. Everything anybody has put up has been read."));
+    } else {
+      // Reported first: a held post is not live and nobody is waiting on it; a
+      // reported one is live and somebody has objected.
+      for (const p of [...held].sort((a, b) => (b.reports || 0) - (a.reports || 0))) q.append(drawPost(p, false));
+      for (const f of faces) q.append(drawFace(f));
+    }
+
+    const l = $("live");
+    fill(l);
+    if (!live.length) l.append(el("div", "none", "Nothing is live yet."));
+    else for (const p of live.slice(0, 60)) l.append(drawPost(p, true));
+
+    if (cr && cr.ok) drawCounts(await cr.json());
   } catch (err) {
     $("sub").textContent = "Could not read the queue: " + (err.message || err);
   }
 }
 
-$("reload").addEventListener("click", load);
-
 fetch("/api/seat").then((r) => r.json()).then((d) => {
   BASE = (d && d.feedBase) || "";
-  const a = $("applink");
-  if (BASE) a.href = BASE; else a.remove();
-  // Whatever the assistant on this seat is called, rather than a literal.
-  if (d && d.assistant) $("asksage").textContent = "Ask " + d.assistant;
-}).catch(() => {});
-
-load();
+  if (d && d.project) { $("title").textContent = d.project; document.title = d.project; }
+  if (d && d.assistant) $("pullname").textContent = d.assistant;
+  load();
+}).catch(load);
 </script>
 </body>
 </html>
