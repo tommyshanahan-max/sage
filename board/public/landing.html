@@ -220,6 +220,67 @@
   .rule.warn h4{color:var(--t3)}
   .rule p{margin:0;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
 
+  /* ---- the three screens, drawn -------------------------------------------
+     A phone is a rounded box with a bezel; what is inside is the real
+     interface at a quarter size, built from the same tokens as the app. No
+     image files: nothing to fetch over a slow connection, nothing to go stale
+     when the UI moves, and the words inside change language with the page. */
+  .shots{display:grid;gap:2.2rem;grid-template-columns:repeat(3,1fr);
+    margin:2.4rem 0 0;align-items:start}
+  @media (max-width:820px){ .shots{grid-template-columns:1fr;gap:2.8rem;
+    max-width:22rem;margin-left:auto;margin-right:auto} }
+  .shot{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .phone{width:100%;max-width:15.5rem;aspect-ratio:9/13;background:var(--card);
+    border:1px solid var(--line);border-radius:1.5rem;box-shadow:var(--shadow);
+    overflow:hidden;display:flex;flex-direction:column;position:relative}
+  /* The notch. One grey pill — enough to read as a phone, and nothing that
+     imitates a particular manufacturer's hardware. */
+  .phone::before{content:"";position:absolute;top:.45rem;left:50%;
+    transform:translateX(-50%);width:2.6rem;height:.28rem;border-radius:99px;
+    background:var(--line)}
+  .ph-top{padding:1.15rem .7rem .45rem;border-bottom:1px solid var(--hair);
+    display:flex;align-items:center;gap:.35rem}
+  .ph-top b{font-family:var(--serif);font-weight:400;font-size:.8rem;color:var(--ink)}
+  .ph-top i{margin-left:auto;width:1.1rem;height:.42rem;border-radius:99px;
+    background:var(--accent-soft)}
+  .ph-body{flex:1;overflow:hidden;padding:.5rem .55rem;display:flex;
+    flex-direction:column;gap:.42rem;text-align:left}
+  .ph-card{background:var(--raise);border:1px solid var(--hair);border-radius:.5rem;
+    padding:.42rem .5rem}
+  .ph-card p{margin:0;font-size:.58rem;line-height:1.45;color:var(--ink)}
+  .ph-card span{display:block;margin-top:.22rem;font-size:.48rem;color:var(--muted)}
+  /* The bar at the bottom of the real app: feed, a big +, profile. */
+  .ph-bar{border-top:1px solid var(--hair);padding:.35rem 0 .45rem;
+    display:flex;align-items:center;justify-content:space-around}
+  .ph-bar u{width:.75rem;height:.62rem;border-radius:.12rem;background:var(--line);
+    display:block}
+  .ph-bar em{width:1.35rem;height:1.35rem;border-radius:50%;background:var(--accent);
+    display:grid;place-items:center;color:var(--accent-ink);font-style:normal;
+    font-size:.8rem;line-height:1}
+  /* The profile screen: a cover, a round face over it, then facts. */
+  .ph-cover{height:2.5rem;background:linear-gradient(135deg,var(--accent),var(--t6))}
+  .ph-face{width:2.4rem;height:2.4rem;border-radius:50%;background:var(--raise);
+    border:2px solid var(--card);margin:-1.2rem auto 0;display:grid;
+    place-items:center;font-family:var(--serif);color:var(--accent);font-size:1rem}
+  .ph-name{margin:.3rem 0 0;text-align:center;font-family:var(--serif);
+    font-size:.68rem;color:var(--ink)}
+  .ph-facts{margin:.12rem 0 0;text-align:center;font-size:.5rem;color:var(--muted)}
+  .ph-bio{margin:.4rem .55rem 0;text-align:center;font-size:.55rem;line-height:1.5;
+    color:var(--ink-2)}
+  /* The directory: a row per person, with the days they are free. */
+  .ph-row{display:flex;align-items:center;gap:.4rem}
+  .ph-row b{width:1.15rem;height:1.15rem;border-radius:50%;background:var(--accent-soft);
+    color:var(--accent);display:grid;place-items:center;font-family:var(--serif);
+    font-weight:400;font-size:.55rem;flex:0 0 auto}
+  .ph-row div{min-width:0}
+  .ph-row p{margin:0;font-size:.58rem;color:var(--ink);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .ph-row span{display:block;font-size:.48rem;color:var(--muted)}
+  .shot b.cap{display:block;margin:1rem 0 .15rem;font-family:var(--serif);
+    font-weight:400;font-size:1.02rem;color:var(--ink)}
+  .shot p.cap{margin:0;font-size:.86rem;line-height:1.5;color:var(--muted);
+    max-width:17rem}
+
   footer{border-top:1px solid var(--hair);padding:2.4rem 0 3rem;color:var(--muted);
     font-size:.85rem;line-height:1.7}
   footer .wrap{display:flex;gap:1.6rem;flex-wrap:wrap;justify-content:space-between}
@@ -268,6 +329,66 @@
     <p class="under" id="under"></p>
   </div>
 </div>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow"><span id="shotEyebrow"></span><i></i></div>
+    <h2 id="shotH2"></h2>
+    <p class="sub" id="shotSub"></p>
+
+    <div class="shots">
+      <!-- The feed. Three cards and the bar underneath, which is the whole
+           screen: read, and press + to add to it. -->
+      <div class="shot">
+        <div class="phone">
+          <div class="ph-top"><b id="phFeedTitle"></b><i></i></div>
+          <div class="ph-body">
+            <div class="ph-card"><p id="phQ1"></p><span id="phQ1who"></span></div>
+            <div class="ph-card"><p id="phQ2"></p><span id="phQ2who"></span></div>
+            <div class="ph-card"><p id="phQ3"></p><span id="phQ3who"></span></div>
+          </div>
+          <div class="ph-bar"><u></u><em>+</em><u></u></div>
+        </div>
+        <b class="cap" id="shotFeed"></b>
+        <p class="cap" id="shotFeedP"></p>
+      </div>
+
+      <!-- Your own page: a cover, a face, a name, and one line about what you
+           are working on. Nothing is asked for beyond that. -->
+      <div class="shot">
+        <div class="phone">
+          <div class="ph-cover"></div>
+          <div class="ph-face">a</div>
+          <p class="ph-name" id="phMeName"></p>
+          <p class="ph-facts" id="phMeFacts"></p>
+          <p class="ph-bio" id="phMeBio"></p>
+          <div class="ph-body">
+            <div class="ph-card"><p id="phMeQ"></p><span id="phMeQwho"></span></div>
+          </div>
+          <div class="ph-bar"><u></u><em>+</em><u></u></div>
+        </div>
+        <b class="cap" id="shotMe"></b>
+        <p class="cap" id="shotMeP"></p>
+      </div>
+
+      <!-- The directory. A row per person and the days they are free, which
+           is the only thing anybody needs to know to ask. -->
+      <div class="shot">
+        <div class="phone">
+          <div class="ph-top"><b id="phBudsTitle"></b><i></i></div>
+          <div class="ph-body">
+            <div class="ph-row"><b>m</b><div><p id="phB1"></p><span id="phB1d"></span></div></div>
+            <div class="ph-row"><b>y</b><div><p id="phB2"></p><span id="phB2d"></span></div></div>
+            <div class="ph-row"><b>s</b><div><p id="phB3"></p><span id="phB3d"></span></div></div>
+          </div>
+          <div class="ph-bar"><u></u><em>+</em><u></u></div>
+        </div>
+        <b class="cap" id="shotBuds"></b>
+        <p class="cap" id="shotBudsP"></p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <div class="band">
   <section>
@@ -370,10 +491,31 @@ const TEXT = ["kicker","lede","hanzi","askUnder","under",
   "howEyebrow","howH2","howSub","r1h","r1p","r2h","r2p","r3h","r3p","r4h","r4p",
   "footAbout","footWrong","footWrongP","adminLink"];
 
+/* The drawn phones. Their own list because the ids do not match the keys
+ * one-for-one: the markup names an element for where it sits, the dictionary
+ * names a string for what it says, and forcing those to be the same word makes
+ * one of them wrong. */
+const SHOTS = {
+  shotEyebrow: "shot.eyebrow", shotH2: "shot.h2", shotSub: "shot.sub",
+  shotFeed: "shot.feed", shotFeedP: "shot.feedP",
+  shotMe: "shot.me", shotMeP: "shot.meP",
+  shotBuds: "shot.buds", shotBudsP: "shot.budsP",
+  phFeedTitle: "shot.feed", phBudsTitle: "shot.buds",
+  phQ1: "shot.q1", phQ1who: "shot.q1who",
+  phQ2: "shot.q2", phQ2who: "shot.q2who",
+  phQ3: "shot.q3", phQ3who: "shot.q3who",
+  phMeName: "shot.meName", phMeFacts: "shot.meFacts", phMeBio: "shot.meBio",
+  phMeQ: "shot.q1", phMeQwho: "shot.meReplies",
+  phB1: "shot.bud1", phB1d: "shot.bud1d",
+  phB2: "shot.bud2", phB2d: "shot.bud2d",
+  phB3: "shot.bud3", phB3d: "shot.bud3d",
+};
+
 function paint() {
   document.title = T("site.title") + " — " + T("site.kicker");
   $("brandname").textContent = T("site.title");
   for (const id of TEXT) $(id).textContent = T("site." + id);
+  for (const [id, key] of Object.entries(SHOTS)) $(id).textContent = T(key);
   // The two-column list: its keys live under dd.* rather than site.*, since it
   // is content rather than chrome and reads as a block.
   $("ddEyebrow").textContent = T("dd.eyebrow");

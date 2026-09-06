@@ -202,6 +202,46 @@ export const STRINGS = {
   // the gate, and a link nobody can find is a link its own team has to be told
   // about every time.
   "site.adminLink":    ["Admin", "管理"],
+
+  // The three screens, shown as phones on the landing page. Written rather
+  // than screenshotted: no image to load over a mainland connection, the words
+  // inside them change language with the rest of the page, and a drawing
+  // cannot go stale the way a PNG of last month's UI does.
+  "shot.eyebrow":      ["What it looks like", "长什么样"],
+  "shot.h2": [
+    "Three screens, and that is the whole thing.",
+    "三个页面，就是全部了。",
+  ],
+  "shot.sub": [
+    "No install, no account, no VPN. It opens where somebody sent it.",
+    "不用下载，不用注册，不用翻墙。别人发给你，点开就是。",
+  ],
+  "shot.feed":         ["The feed", "动态"],
+  "shot.feedP":        ["Ask, or answer somebody who asked.", "提问，或者回答别人的问题。"],
+  "shot.me":           ["Your page", "你的主页"],
+  "shot.meP":          ["A face and a name. Nothing else is asked.", "一张照片，一个名字。别的都不问。"],
+  "shot.buds":         ["Study buddies", "学习搭子"],
+  "shot.budsP":        ["Say you are looking, and see who else is.", "说一声你在找，看看谁也在找。"],
+
+  // The words inside the drawn phones. Short on purpose — they are read at
+  // about eight pixels and the point is the shape, not the sentence.
+  "shot.q1":           ["Where do I get a SIM without a Chinese bank card?",
+                        "没有国内银行卡，去哪儿办手机卡？"],
+  "shot.q1who":        ["Ana · 3 replies", "Ana · 3 条回复"],
+  "shot.q2":           ["Which gate at Renmin is open after 10?", "人大哪个门十点以后还开？"],
+  "shot.q2who":        ["Marc · 1 reply", "Marc · 1 条回复"],
+  "shot.q3":           ["Eight kuai, cash only, gone by ten.", "八块，只收现金，十点就没了。"],
+  "shot.q3who":        ["Yuki", "Yuki"],
+  "shot.meName":       ["Ana", "Ana"],
+  "shot.meFacts":      ["Renmin · 4 months here", "人大 · 来了四个月"],
+  "shot.meBio":        ["HSK 4 in March. Happy to read essays.", "三月考 HSK4。可以帮忙看作文。"],
+  "shot.meReplies":    ["3 replies", "3 条回复"],
+  "shot.bud1":         ["Marc · Tsinghua", "Marc · 清华"],
+  "shot.bud1d":        ["Tue · Thu", "周二 · 周四"],
+  "shot.bud2":         ["Yuki · Haidian", "Yuki · 海淀"],
+  "shot.bud2d":        ["Weekends", "周末"],
+  "shot.bud3":         ["Sofia · Beiwai", "Sofia · 北外"],
+  "shot.bud3d":        ["Mon · Wed · Fri", "周一 · 周三 · 周五"],
   "site.footWrongP":   ["Report any post from the feed itself — a person reads every one.",
                         "在动态里直接举报任何一条内容——每条都由人来看。"],
   "site.footAbout": [
