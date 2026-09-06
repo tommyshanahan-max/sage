@@ -782,6 +782,15 @@ services:
       # from the id it came from, which would make "nothing is stored about
       # you" a claim rather than a fact.
       BOARD_SALT: ${TOMSCODING_BOARD_SALT:-}
+      # A person a reader can reach who is not this software. Read by the app
+      # but never passed here until now, so the footer said nothing — the line
+      # existed in the code and could not appear on the page.
+      #
+      # Apple asks for exactly this on any app carrying other people's words
+      # (Guideline 1.2), and it is the right thing on a board regardless: the
+      # one route for somebody who cannot use the report button, or is
+      # reporting the board itself.
+      BOARD_CONTACT: ${TOMSCODING_BOARD_CONTACT:-}
       # Where a held post announces itself, so it reaches the panel's queue
       # without anybody refreshing — the same webhook Study Pal posts to.
       BOARD_HOOK_URL: ${TOMSCODING_BOARD_HOOK_URL:-}
