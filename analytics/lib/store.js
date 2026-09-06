@@ -253,7 +253,14 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
     let dwellVisits = 0;
     const series = keys.map((key) => {
       const d = days.get(key);
-      if (!d) return { day: key, devices: 0, fresh: 0, events: 0 };
+      // A day nothing happened on still answers with every field, empty.
+      // It used to answer with four of them, so a caller reading day.uses got
+      // a number on busy days and undefined on quiet ones — and the quiet days
+      // are exactly the ones somebody is looking at when they ask.
+      if (!d) {
+        return { day: key, devices: 0, fresh: 0, events: 0, returning: 0, seconds: 0,
+                 places: [], sources: [], vias: [], uses: [], pages: [] };
+      }
       for (const [k, v] of d.pages) bump(pages, k, v);
       for (const [k, v] of d.uses) bump(uses, k, v);
       for (const [k, v] of d.places) bump(places, k, v);
@@ -276,6 +283,13 @@ export function createStore({ dir, tz = "Asia/Shanghai", retainDays = 400 }) {
         places: top(d.places),
         sources: top(d.sources),
         vias: top(d.vias),
+        // What was used and what was opened, on this day rather than summed
+        // over the range. The day totals were already kept — the report simply
+        // never passed them on, so a feature's whole history collapsed into one
+        // number and there was no way to ask when it was used. A range total
+        // says a feature mattered; only the day says whether it still does.
+        uses: top(d.uses),
+        pages: top(d.pages),
       };
     });
 

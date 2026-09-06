@@ -554,6 +554,18 @@
     </div>
   </section>
 
+  <section id="usedays-wrap" hidden>
+    <h2>Functions, day by day</h2>
+    <p class="thin">The list above is the range added up, which says a function
+      mattered at some point. This says whether it still does.</p>
+    <div class="rows">
+      <table class="days">
+        <thead><tr id="usedays-head"></tr></thead>
+        <tbody id="usedays-body"></tbody>
+      </table>
+    </div>
+  </section>
+
   </div>
 
   <p class="note">
@@ -856,6 +868,7 @@ async function load() {
   drawList(document.getElementById("sources"), data.sources || []);
   drawList(document.getElementById("pages"), data.pages);
   drawList(document.getElementById("uses"), data.uses);
+  drawUseDays(data.uses, data.series);
 }
 
 // The app's three numbers, and an honest account of why there are only three.
@@ -1002,6 +1015,49 @@ function drawUses(uses, byDay, devices, deviceDays, unit) {
     body.append(tr);
   }
   rows.hidden = false;
+}
+
+/** Each function's count on each day, newest day first.
+ *
+ *  The columns come from the ranked list above, so the reading order is the
+ *  same in both and the eye does not have to re-learn the table. A function
+ *  with nothing on a day is a dash rather than a zero: at these numbers the
+ *  difference between "nobody used it" and "we stopped counting" is the whole
+ *  question, and a column of zeroes reads as the second.
+ */
+function drawUseDays(uses, series) {
+  const wrap = document.getElementById("usedays-wrap");
+  const head = document.getElementById("usedays-head");
+  const body = document.getElementById("usedays-body");
+  const days = Array.isArray(series) ? series : [];
+  const cols = (uses || []).map((u) => u.name).slice(0, 8);
+  if (!cols.length || !days.length) { wrap.hidden = true; return; }
+
+  head.replaceChildren();
+  body.replaceChildren();
+  const th = (t) => { const n = document.createElement("th"); n.textContent = t; return n; };
+  head.append(th("Day"), ...cols.map(th), th("Total"));
+
+  for (const d of [...days].reverse()) {
+    const by = Object.fromEntries((d.uses || []).map((u) => [u.name, u.count]));
+    const tr = document.createElement("tr");
+    const td = (t, cls) => {
+      const n = document.createElement("td");
+      if (cls) n.className = cls;
+      n.textContent = t;
+      tr.append(n);
+    };
+    td(d.day, "d");
+    let sum = 0;
+    for (const c of cols) {
+      const v = by[c] || 0;
+      sum += v;
+      td(v ? String(v) : "—", v ? "num" : null);
+    }
+    td(sum ? String(sum) : "—", sum ? "num" : null);
+    body.append(tr);
+  }
+  wrap.hidden = false;
 }
 
 /** Why the usage panels are empty, in the words the person can act on.

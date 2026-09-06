@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts
+.PHONY: help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -183,6 +183,19 @@ feed-people: ## Put the demo people on The Feed (roster in scripts/people.json)
 	  --entrypoint node board \
 	  /seed/seed-people.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --people /seed/people.json $(if $(PHOTOS),--photos $(PHOTOS),)
+
+numbers-days: ## What happened on which day, printed rather than drawn
+	@# Runs in a container built from the analytics image, so the token comes
+	@# from the environment rather than from anybody's clipboard, and reaches
+	@# the running service by name over the compose network.
+	@#
+	@# The dashboard's curve answers "is it going up". This answers "which
+	@# afternoon" — the question you have when a week's figures turn out to
+	@# be almost all from one of them.
+	@#   make numbers-days DAYS=30
+	$(COMPOSE) run --rm --no-deps -T \
+	  -v "$(CURDIR)/scripts:/seed:ro" \
+	  --entrypoint node analytics /seed/numbers-days.mjs $(or $(DAYS),14)
 
 feed-posts: ## Give the demo people a history — posts, replies and likes
 	@# Run after `make feed-people`. Writes three weeks of posts dated back
