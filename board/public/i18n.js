@@ -207,6 +207,92 @@ export const STRINGS = {
   // than screenshotted: no image to load over a mainland connection, the words
   // inside them change language with the rest of the page, and a drawing
   // cannot go stale the way a PNG of last month's UI does.
+  // ---------------------------------------------------------------------
+  // The second front door: students deciding whether to go abroad at all.
+  //
+  // Same board, same people, same queue — a different entrance. Splitting the
+  // data would have opened this one empty, and an empty board is what kills a
+  // community before it starts. The point is that they arrive somewhere that
+  // already has people on it, and that those people are the draw: foreigners
+  // who moved to another country to study are the one group who can answer
+  // "what is it actually like" without being paid to say yes.
+  //
+  // Written Chinese-first. These are the only strings here whose Chinese is
+  // the original and whose English is the translation.
+  // ---------------------------------------------------------------------
+  "ab.title":          ["Thinking about studying abroad", "在考虑出国"],
+  "ab.kicker":         ["For students deciding", "给还在决定的人"],
+  "ab.q1":             ["Is a one-year master's in the UK worth it?", "英国一年制硕士，值得吗？"],
+  "ab.q2":             ["What is it actually like living there alone?",
+                        "一个人在那边生活，到底是什么样？"],
+  "ab.q3":             ["Did anyone regret going?", "有人后悔去了吗？"],
+  "ab.q4":             ["How much is it really, all in?", "全部算下来，到底要多少钱？"],
+  "ab.q5":             ["Is my English good enough?", "我的英语，够用吗？"],
+  "ab.askUnder":       ["Ask somebody who is doing it.", "问问正在经历的人。"],
+  "ab.lede": [
+    "Everybody you can ask about this is paid to say yes. Here you can ask people who actually went — and people from the countries you are considering, who moved here to study and know exactly what that first month feels like.",
+    "能问的人，几乎都是靠说“值得”赚钱的。这里可以问真正去过的人——还有来自你在考虑的那些国家、为了读书搬到中国来的人。第一个月是什么滋味，他们最清楚。",
+  ],
+  "ab.ctaOpen":        ["Open the feed", "看看大家在说什么"],
+  "ab.ctaAsk":         ["Ask your question", "问你的问题"],
+  "ab.note": [
+    "No account. Nothing to install. A person reads everything before it appears.",
+    "不用注册，不用下载。所有内容都由人过目之后才出现。",
+  ],
+
+  "ab.whoEyebrow":     ["Who is already here", "这里都有谁"],
+  "ab.whoH2": [
+    "People who moved to another country to study. Ask them what it was like.",
+    "一群为了读书搬到另一个国家的人。问问他们当时是什么感觉。",
+  ],
+  "ab.whoSub": [
+    "They came here from Germany, Korea, France, Brazil. They queued for a residence permit, could not open a bank account, ate alone for a fortnight. That is the part nobody puts in a brochure, and it is the same everywhere.",
+    "他们从德国、韩国、法国、巴西来。排队办居留、办不下来银行卡、一个人吃了两个星期的饭。这些册子上不会写，而且在哪儿都一样。",
+  ],
+  "ab.swapH":          ["And it goes both ways", "而且是双向的"],
+  "ab.swapP": [
+    "They want Chinese, and someone to explain how anything here works. You want to know what a semester in their country is actually like. That is a fair swap, and it is what the study-buddy list is for.",
+    "他们想学中文，也想找个人问问这边的事情怎么弄。你想知道在他们那边读一学期到底是什么样。这是一次公平的交换——学习搭子那一栏，就是干这个用的。",
+  ],
+  "ab.budsGo":         ["Find someone to swap with", "找个人换一换"],
+
+  "ab.liveEyebrow":    ["On the feed right now", "动态里最新的"],
+  "ab.liveH2":         ["Not a mock-up", "不是样例"],
+  "ab.liveSub": [
+    "Live from the board itself. Tap any of them to read the rest.",
+    "直接来自动态本身。点开任意一条就能看全部。",
+  ],
+  "ab.seeAll":         ["See everything", "看全部"],
+
+  "ab.rulesEyebrow":   ["How it is run", "怎么管理"],
+  "ab.rulesH2": [
+    "The reason an answer here is worth reading",
+    "这里的回答值得看，是有原因的",
+  ],
+  "ab.r1h":            ["Nobody here is selling you anything", "这里没有人在向你推销"],
+  "ab.r1p": [
+    "No agency, no commission, no partner university with a quota to fill. Contact details are filtered out of posts, so nobody can turn a question into a sales lead.",
+    "没有中介，没有佣金，也没有哪所合作院校有名额要填。内容里的联系方式会被过滤掉，所以没人能把一个问题变成一条销售线索。",
+  ],
+  "ab.r2h":            ["A person reads everything first", "所有内容都先由人过目"],
+  "ab.r2p": [
+    "Nothing appears until somebody has read it. That is slower and it is the only way a board stays worth opening.",
+    "在有人看过之前，什么都不会出现。这样慢一些，但也只有这样，一个板块才值得一直打开。",
+  ],
+  "ab.r3h":            ["No account, and no tracking", "不用账号，也不做追踪"],
+  "ab.r3p": [
+    "No email, no phone number, no login. A post is tied to a random number your browser made up, hashed — just enough to let you take back your own.",
+    "不要邮箱，不要手机号，不用登录。一条内容只和你浏览器随机生成的一个数字的哈希绑定——刚好够你撤回自己发的，仅此而已。",
+  ],
+  "ab.r4h":            ["It loads here", "在国内打得开"],
+  "ab.r4p": [
+    "No web fonts, no CDN, no third-party scripts. Everything comes from one machine, because a page waiting on something outside is a page that does not open.",
+    "没有网络字体，没有 CDN，没有第三方脚本。全部由一台机器提供，因为一个要等墙外资源的页面，就是一个打不开的页面。",
+  ],
+
+  "ab.footBack":       ["Already studying in China?", "已经在中国读书了？"],
+  "ab.footBackGo":     ["That side is here", "那边在这里"],
+
   "shot.eyebrow":      ["What it looks like", "长什么样"],
   "shot.h2": [
     "Three screens, and that is the whole thing.",
@@ -424,13 +510,17 @@ export const STRINGS = {
  * says — a phone set to Chinese opens in Chinese, which for the audience this
  * is aimed at is right far more often than not. English is the fallback rather
  * than the default. */
-export function pickLang() {
+export function pickLang(fallback = "en") {
   try {
     const saved = localStorage.getItem("board:lang");
     if (saved === "en" || saved === "zh") return saved;
   } catch { /* private window */ }
   const nav = (navigator.languages || [navigator.language || ""]).join(",");
-  return /\bzh\b|zh-/i.test(nav) ? "zh" : "en";
+  if (/\bzh\b|zh-/i.test(nav)) return "zh";
+  // The fallback, so a page written for a Chinese audience can open in Chinese
+  // without overruling somebody who has already picked. A saved choice still
+  // wins above, which is the part that matters: the switch has to stick.
+  return fallback === "zh" ? "zh" : "en";
 }
 
 let LANG = "en";

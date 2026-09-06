@@ -181,6 +181,18 @@ app.get(["/feed", "/feed/", "/index.html"], (req, res, next) => page("index.html
  * from. It costs one line and never needs revisiting. */
 app.get(["/board", "/board/"], (req, res) => res.redirect(301, "/feed" + (req.url.split("?")[1] ? "?" + req.url.split("?")[1] : "")));
 app.get(["/about", "/landing.html"], (req, res, next) => page("landing.html", req, res, next));
+
+/* The second front door.
+ *
+ * Same board, same people, same queue — a different entrance, for students
+ * deciding whether to study abroad at all rather than students already here.
+ *
+ * Deliberately NOT a second deployment. Splitting the data would have opened
+ * this one empty, and an empty board is what kills a community before it
+ * starts. The people already here are the reason to come: foreigners who moved
+ * to another country to study are the one group who can say what that is
+ * actually like without being paid to say it is worth it. */
+app.get(["/abroad", "/abroad/"], (req, res, next) => page("abroad.html", req, res, next));
 app.get(["/buddies", "/buddies/"], (req, res, next) => page("buddies.html", req, res, next));
 
 /* One person, at an address that can be sent to somebody.

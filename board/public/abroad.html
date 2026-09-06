@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>在考虑出国 — 问问正在经历的人</title>
+<meta name="description" content="能问的人几乎都是靠说“值得”赚钱的。这里可以问真正去过的人，还有为了读书搬到中国来的外国学生。">
+
+<!-- The card WeChat builds when this link is forwarded. The crawler fetches
+     once and runs no JavaScript, so these are absolute and already here. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="在考虑出国？问问正在经历的人">
+<meta property="og:description" content="没有中介，没有佣金。这里有真正搬到另一个国家读书的人。">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="{{ORIGIN}}/abroad">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="/site.css">
+<style>
+  /* The only rules this page adds. Everything else is the shared sheet. */
+  .who{display:grid;gap:1.6rem;grid-template-columns:1.15fr 1fr;margin:2rem 0 0;
+    align-items:start}
+  @media (max-width:820px){ .who{grid-template-columns:1fr} }
+  .swap{background:var(--raise);border:1px solid var(--line);border-radius:1rem;
+    padding:1.5rem 1.4rem}
+  .swap h3{margin:0;font-family:var(--serif);font-weight:400;font-size:1.32rem;
+    line-height:1.2}
+  .swap p{margin:.75rem 0 0;color:var(--ink-2);line-height:1.65}
+  .swap .btn{margin-top:1.15rem}
+  /* The flags of nowhere in particular: initials of the places people here
+     actually came from, as a row of discs. Cheap texture, no image, and it
+     says "these are people" faster than a sentence does. */
+  .from{display:flex;gap:.5rem;flex-wrap:wrap;margin:1.3rem 0 0}
+  .from span{width:2.4rem;height:2.4rem;border-radius:50%;display:grid;
+    place-items:center;font-family:var(--serif);font-size:.92rem;
+    background:var(--accent-soft);color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap">
+    <a class="brand" href="/abroad">
+      <i>留</i>
+      <span><b id="brandname">Liuxuesheng</b><small>留学生</small></span>
+    </a>
+    <span id="langslot" style="margin-left:auto;display:flex;gap:.6rem;align-items:center"></span>
+    <a class="go" id="navopen" href="/feed"></a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="wrap">
+    <p class="kicker"><i></i><span id="kicker"></span></p>
+    <div class="asking">
+      <q id="asking"></q>
+      <p class="under" id="askUnder"></p>
+    </div>
+    <p class="lede" id="lede"></p>
+    <div class="cta">
+      <a class="btn" id="ctaopen" href="/feed"></a>
+      <a class="btn ghost" id="ctaask" href="/feed"></a>
+    </div>
+    <p class="under" id="note"></p>
+  </div>
+</div>
+
+<!-- The draw, and the reason this door exists at all: the people already here
+     are the answer to the question at the top of the page. -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow"><span id="whoEyebrow"></span><i></i></div>
+    <h2 id="whoH2"></h2>
+    <div class="who">
+      <div>
+        <p class="sub" id="whoSub"></p>
+        <div class="from" id="from" aria-hidden="true"></div>
+      </div>
+      <div class="swap">
+        <h3 id="swapH"></h3>
+        <p id="swapP"></p>
+        <a class="btn" id="budsGo" href="/buddies"></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="band">
+  <section>
+    <div class="wrap">
+      <div class="eyebrow"><span id="liveEyebrow"></span><i></i></div>
+      <h2 id="liveH2"></h2>
+      <p class="sub" id="liveSub"></p>
+      <div class="live" id="live"></div>
+      <div class="more"><a class="btn ghost" id="seeall" href="/feed"></a></div>
+    </div>
+  </section>
+</div>
+
+<section id="how">
+  <div class="wrap">
+    <div class="eyebrow"><span id="rulesEyebrow"></span><i></i></div>
+    <h2 id="rulesH2"></h2>
+    <div class="rules">
+      <div class="rule"><h4 id="r1h"></h4><p id="r1p"></p></div>
+      <div class="rule"><h4 id="r2h"></h4><p id="r2p"></p></div>
+      <div class="rule"><h4 id="r3h"></h4><p id="r3p"></p></div>
+      <div class="rule"><h4 id="r4h"></h4><p id="r4p"></p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="col"><b>Liuxuesheng · 留学生</b><span id="footAbout"></span></div>
+    <div class="col">
+      <b id="footBack"></b>
+      <a class="adminlink" href="/" id="footBackGo"></a>
+    </div>
+  </div>
+</footer>
+
+<script type="module">
+import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
+import { drawLive } from "/live.js";
+
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
+  if (x !== undefined) n.textContent = x; return n; };
+const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
+
+/* Chinese by default, because this page is written for people who read it.
+ * A saved choice still wins — the switch has to stick, or it is not a switch. */
+setLang(pickLang("zh"));
+
+const TEXT = ["kicker","askUnder","lede","note",
+  "whoEyebrow","whoH2","whoSub","swapH","swapP",
+  "liveEyebrow","liveH2","liveSub",
+  "rulesEyebrow","rulesH2","r1h","r1p","r2h","r2p","r3h","r3p","r4h","r4p",
+  "footBack"];
+
+// Where the people already here came from. Initials rather than flags: a flag
+// is a political object and this is a list of students.
+const FROM = ["DE","KR","FR","BR","IT","RU","TH","PL"];
+
+function paint() {
+  document.title = T("ab.title") + " — " + T("ab.askUnder");
+  // Not painted from the dictionary: a name is not translated, and
+  // site.title is "留学生" in Chinese — the same word the <small>
+  // beneath it already carries, printed twice.
+  for (const id of TEXT) $(id).textContent = T("ab." + id);
+  $("navopen").textContent = T("ab.ctaOpen");
+  $("ctaopen").textContent = T("ab.ctaOpen");
+  $("ctaask").textContent = T("ab.ctaAsk");
+  $("budsGo").textContent = T("ab.budsGo");
+  $("seeall").textContent = T("ab.seeAll");
+  $("footAbout").textContent = T("site.footAbout");
+  $("footBackGo").textContent = T("ab.footBackGo");
+
+  const from = $("from");
+  fill(from);
+  for (const c of FROM) from.append(el("span", null, c));
+
+  askNext(true);
+  drawLive($("live"), POSTS);
+}
+
+/* The rotating question. Same device as the other door and for the same
+ * reason: a feature list says "you can ask questions", a question says what
+ * they are. */
+const QS = ["ab.q1","ab.q2","ab.q3","ab.q4","ab.q5"];
+let qi = 0;
+const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function askNext(first) {
+  const q = $("asking");
+  if (first) { qi = 0; q.textContent = T(QS[0]); q.classList.remove("fade"); return; }
+  q.classList.add("fade");
+  setTimeout(() => {
+    qi = (qi + 1) % QS.length;
+    q.textContent = T(QS[qi]);
+    q.classList.remove("fade");
+  }, 320);
+}
+let askTimer = null;
+function askRun(on) {
+  clearInterval(askTimer);
+  askTimer = null;
+  if (on && !still) askTimer = setInterval(() => askNext(false), 4200);
+}
+document.addEventListener("visibilitychange", () => askRun(!document.hidden));
+askRun(true);
+
+let POSTS = [];
+
+$("langslot").append(langButton(() => { const y = window.scrollY; paint(); window.scrollTo(0, y); }));
+paint();
+
+fetch("/api/board")
+  .then((r) => r.json())
+  .then((d) => { POSTS = (d && d.posts) || []; drawLive($("live"), POSTS); })
+  .catch(() => drawLive($("live"), []));
+</script>
+</body>
+</html>
