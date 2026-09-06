@@ -39,6 +39,7 @@ took an evening.
 | `GET /api/board` | anyone | The published board, with threads and like counts |
 | `POST /api/post` | anyone | A post, a reply, or a like |
 | `GET /api/public-media?id=` | anyone | A photo, by an id nobody can guess |
+| `DELETE /api/post?id=` | anyone | Take back your own — matched on the browser's hash |
 | `GET /api/public?queue=1` | admin | Held, live, refused and removed |
 | `POST /api/feed` | admin | Post as an operated account (multipart) |
 | `POST /api/feed/release?id=` | admin | Let a held post through |
@@ -67,3 +68,21 @@ took an evening.
 
 Each of those is a deliberate absence rather than an oversight, and each is
 the next thing if this becomes real.
+
+## The look
+
+It is the app's, deliberately. Warm paper, brick red, a serif for names and
+words, uppercase letterspaced labels for the topic above each post, circular
+avatars carrying an initial, and the four actions in a row underneath — Reply,
+Like, Remove, Share. Somebody who uses the feed inside Study Pal should not
+have to learn a second thing here.
+
+Two departures, both because this is standing on its own. There is no
+"back to talk", because there is nothing to go back to. And Remove is on your
+own post rather than every post: in the app it sits behind an account, here it
+is matched on the salted hash of the random id your browser made up, which is
+the only thing this server knows about you.
+
+No web fonts. `fonts.googleapis.com` does not answer in the mainland, and a
+page that waits on it is a page that does not load — so every face named here
+is one the device already has, Chinese ones first for Chinese text.

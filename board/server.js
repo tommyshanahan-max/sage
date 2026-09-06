@@ -154,18 +154,51 @@ app.get("/api/public-media", async (req, res) => {
 // ---------------------------------------------------------------------------
 // The board, for readers
 // ---------------------------------------------------------------------------
-app.get("/api/board", async (_req, res) => {
+app.get("/api/board", async (req, res) => {
   const board = await store.load(FILE);
   const live = board.posts.filter((p) => p.state === "published");
+  // Which of these are the reader's own, so the page can offer to take one
+  // down. Sent as a header rather than a query string: it is the same secret
+  // either way, and a query string is the half that ends up in an access log.
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
   res.json({
     posts: live.filter(store.isOwnPost).map((p) => ({
       ...p,
       ...store.threadFor(live, p.id),
-      // The device hash is ours, not a reader's.
+      // Not whose it is — only whether it is yours. The hash is ours, and
+      // handing it back would let anybody who collects two pages of this
+      // board work out which posts came from the same person.
+      mine: Boolean(me) && p.by === me,
       by: undefined,
     })),
   });
+});
+
+// Taking down your own. There are no accounts here, so "yours" means posted
+// from this browser: the salted hash of the id it keeps, matched against the
+// one stored with the post. That is the whole of what the hash is for.
+//
+// Removed rather than deleted, the same as from the admin — "was taken down"
+// and "never existed" are different facts, and the replies underneath it were
+// written by other people.
+app.delete("/api/post", express.json(), async (req, res) => {
+  const id = String(req.query.id || req.body?.id || "");
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const post = await change((board) => {
+    const p = board.posts.find((x) => x.id === id);
+    // The same answer for a post that is not yours and a post that is not
+    // there. Telling them apart would make this an oracle for whether a given
+    // id exists.
+    if (!p || p.by !== me) return null;
+    p.state = "removed";
+    p.why = "Taken down by the person who posted it.";
+    return p;
+  });
+  if (!post) return res.status(404).json({ error: "no such post of yours" });
+  tell("removed", post);
+  res.json({ ok: true, id });
 });
 
 // ---------------------------------------------------------------------------

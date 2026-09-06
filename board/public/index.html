@@ -3,186 +3,309 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>The Board · for foreigners in China</title>
-<meta name="description" content="Practical questions and answers from people living in China. No account, no VPN.">
+<title>The Board</title>
+<meta name="description" content="A noticeboard for people living in and visiting China.">
+<meta name="color-scheme" content="light dark">
 <style>
-  /* No web fonts, deliberately.
-     fonts.googleapis.com is blocked in the mainland, and a page that waits on
-     it renders in a fallback after a timeout — or not at all. The whole reason
-     this exists is that it loads inside the firewall, so it carries nothing
-     that has to be fetched from outside it. The stacks below name Chinese
-     faces too, because half the text on this board is Chinese and a Latin-only
-     stack hands CJK to whatever the browser has lying around. */
+  /* No web fonts. fonts.googleapis.com does not answer in the mainland, and a
+     page that waits on it is a page that does not load. Everything here is a
+     face the device already has, Chinese ones named first for Chinese text. */
   :root{
-    --paper:#FAF9F6; --card:#FFFFFF; --ink:#17160F; --ink-2:#3D3A31;
-    --muted:#7A756B; --line:#E6E2D8; --jade:#1B6B4C; --jade-soft:#E8F1EC;
-    --pin:#B4691A; --shadow:0 1px 2px rgba(23,22,15,.05),0 8px 24px rgba(23,22,15,.05);
-    --serif:Georgia,"Songti SC","Times New Roman",serif;
+    --paper:#F0EBE1; --raise:#F6F2EA; --ink:#1C1A16; --ink-2:#413C33;
+    --muted:#8A8377; --line:#DCD5C7; --hair:#E4DED2;
+    --red:#C0392B; --red-ink:#FFFFFF; --red-soft:#EFDDD8;
+    --t1:#C0392B; --t2:#2D6485; --t3:#8B3A62; --t4:#4A6B3A; --t5:#B4691A; --t6:#5B4A8A;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
-      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",Roboto,Helvetica,Arial,sans-serif;
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --shadow:0 2px 6px rgba(28,26,22,.09),0 10px 28px rgba(28,26,22,.10);
   }
   @media (prefers-color-scheme:dark){
-    :root:not([data-theme=light]){
-      --paper:#141310; --card:#1D1B17; --ink:#F3F0E8; --ink-2:#CFC9BC;
-      --muted:#948D80; --line:#2C2924; --jade:#5CB98F; --jade-soft:#1B2A23;
-      --pin:#D89440; --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.28);
+    :root:not([data-theme="light"]){
+      --paper:#151310; --raise:#1E1B17; --ink:#F2EDE3; --ink-2:#CDC6B8;
+      --muted:#948C7E; --line:#2E2A24; --hair:#272420;
+      --red:#D4564A; --red-ink:#1A1512; --red-soft:#3A211D;
+      --t1:#D4564A; --t2:#6EA3C4; --t3:#C4759C; --t4:#89AD73; --t5:#D89440; --t6:#9A87C9;
+      --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
     }
   }
+  :root[data-theme="dark"]{
+    --paper:#151310; --raise:#1E1B17; --ink:#F2EDE3; --ink-2:#CDC6B8;
+    --muted:#948C7E; --line:#2E2A24; --hair:#272420;
+    --red:#D4564A; --red-ink:#1A1512; --red-soft:#3A211D;
+    --t1:#D4564A; --t2:#6EA3C4; --t3:#C4759C; --t4:#89AD73; --t5:#D89440; --t6:#9A87C9;
+    --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+  }
+
+  /* display:flex and display:grid both outrank the user agent's [hidden] rule,
+     so anything laid out that way stays on screen when hidden. Said once here
+     rather than remembered at seven call sites. */
+  [hidden]{display:none!important}
+
   *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
-    font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
-    padding:0 clamp(.9rem,3vw,1.5rem) 5rem}
-  main{max-width:44rem;margin:0 auto}
+    font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  main{max-width:34rem;margin:0 auto;padding:1.5rem 1.15rem 9.5rem}
+  img{max-width:100%}
+  button{font:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:4px}
 
-  header{padding:2.2rem 0 1.4rem}
-  h1{margin:0;font-family:var(--serif);font-size:clamp(1.9rem,5vw,2.6rem);
-    font-weight:400;letter-spacing:-.01em}
-  h1 b{font-weight:700}
-  .lede{margin:.5rem 0 0;color:var(--muted);font-size:.95rem;max-width:30rem}
+  /* ---- masthead ---------------------------------------------------------- */
+  .top{display:flex;align-items:center;gap:.9rem;margin:.5rem 0 1.6rem}
+  .mark{width:4.1rem;height:4.1rem;border-radius:50%;flex:0 0 auto;
+    background:var(--red);color:var(--red-ink);display:grid;place-items:center;
+    font-family:var(--serif);font-size:1.9rem;line-height:1;
+    box-shadow:0 0 0 3px var(--paper),0 0 0 4px var(--line)}
+  .top h1{margin:0;font-family:var(--serif);font-size:1.85rem;font-weight:400;
+    letter-spacing:-.01em;line-height:1.1}
+  .top p{margin:.2rem 0 0;color:var(--muted);font-size:.86rem}
 
-  /* Ask. The first thing, because a board nobody posts to is a page. */
-  .ask{background:var(--card);border:1px solid var(--line);border-radius:16px;
-    box-shadow:var(--shadow);padding:1rem;margin:0 0 1.6rem}
-  .ask textarea{width:100%;border:0;background:none;resize:vertical;min-height:3.4rem;
-    font:inherit;color:var(--ink);outline:none;padding:0}
-  .ask textarea::placeholder{color:var(--muted)}
-  .askrow{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.8rem;
-    padding-top:.8rem;border-top:1px solid var(--line)}
-  .who{flex:1;min-width:8rem;border:1px solid var(--line);background:var(--paper);
-    border-radius:99px;padding:.4rem .85rem;font:inherit;font-size:.86rem;
-    color:var(--ink);outline:none}
-  .who:focus{border-color:var(--jade)}
-  .pill{font:inherit;font-size:.82rem;font-weight:600;cursor:pointer;
-    border:1px solid var(--line);background:var(--paper);color:var(--ink-2);
-    border-radius:99px;padding:.42rem .9rem}
-  .pill:hover{border-color:var(--jade);color:var(--jade)}
-  .go{font:inherit;font-size:.86rem;font-weight:700;cursor:pointer;border:0;
-    background:var(--jade);color:#fff;border-radius:99px;padding:.5rem 1.2rem}
-  .go:disabled{opacity:.4;cursor:default}
-  .said{flex-basis:100%;font-size:.82rem;color:var(--jade);margin-top:.2rem}
-  .said.bad{color:var(--pin)}
-  .shot{margin-top:.8rem;position:relative;display:inline-block}
-  /* display:inline-block outranks the UA rule for [hidden], so the preview and
-     its remove button stayed on screen with no photo behind them. Every
-     element on this page that sets display needs this said explicitly. */
-  .shot[hidden]{display:none}
-  .said[hidden]{display:none}
-  #none[hidden]{display:none}
-  .shot img{max-height:9rem;border-radius:10px;display:block}
-  .shot button{position:absolute;top:.4rem;right:.4rem;border:0;cursor:pointer;
-    background:rgba(0,0,0,.6);color:#fff;border-radius:99px;width:1.6rem;height:1.6rem;
-    font:inherit;line-height:1}
+  /* ---- topics ------------------------------------------------------------ */
+  .topics{display:flex;gap:.55rem;overflow-x:auto;padding:0 0 .35rem;
+    margin:0 -1.15rem 1.5rem;padding-left:1.15rem;padding-right:1.15rem;
+    scrollbar-width:none}
+  .topics::-webkit-scrollbar{display:none}
+  .chip{display:inline-flex;align-items:center;gap:.45rem;flex:0 0 auto;
+    border:1px solid var(--line);background:var(--raise);color:var(--ink);
+    border-radius:99px;padding:.6rem 1.15rem;font-size:.98rem;line-height:1;
+    white-space:nowrap;transition:background .12s,border-color .12s}
+  .chip .dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--muted)}
+  .chip .n{color:var(--muted);font-size:.86rem;font-variant-numeric:tabular-nums}
+  .chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--red-ink)}
+  .chip[aria-pressed="true"] .dot{background:var(--red-ink);opacity:.6}
+  .chip[aria-pressed="true"] .n{color:var(--red-ink);opacity:.75}
 
-  /* Topics. A filter, and the only navigation on the page. */
-  .topics{display:flex;gap:.45rem;flex-wrap:wrap;margin:0 0 1.3rem}
-  .topics button{font:inherit;font-size:.8rem;font-weight:600;cursor:pointer;
-    border:1px solid var(--line);background:none;color:var(--muted);
-    border-radius:99px;padding:.3rem .8rem}
-  .topics button[aria-pressed=true]{background:var(--jade-soft);border-color:var(--jade);
-    color:var(--jade)}
+  /* ---- the rule that names what you are looking at ----------------------- */
+  .rule{display:flex;align-items:center;gap:.9rem;margin:0 0 .4rem}
+  .rule span{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);white-space:nowrap}
+  .rule i{flex:1;height:1px;background:var(--line)}
 
-  .post{background:var(--card);border:1px solid var(--line);border-radius:16px;
-    box-shadow:var(--shadow);margin:0 0 1rem;overflow:hidden}
-  .post img.pic{width:100%;display:block;max-height:26rem;object-fit:cover;background:var(--line)}
-  .in{padding:1rem}
-  .by{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap;font-size:.82rem}
-  .by b{font-size:.9rem}
-  .by span{color:var(--muted)}
-  .topic{font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
-    color:var(--jade);background:var(--jade-soft);border-radius:99px;padding:.1rem .55rem}
-  .words{margin:.5rem 0 0;font-size:1rem;line-height:1.6;white-space:pre-wrap;
+  /* ---- a post ------------------------------------------------------------ */
+  .post{display:flex;gap:.9rem;padding:1.35rem 0;border-bottom:1px solid var(--hair)}
+  .av{width:3.4rem;height:3.4rem;border-radius:50%;flex:0 0 auto;
+    background:var(--red);color:var(--red-ink);display:grid;place-items:center;
+    font-family:var(--serif);font-size:1.35rem;line-height:1;
+    box-shadow:0 0 0 3px var(--paper),0 0 0 4px var(--red-soft)}
+  .body{flex:1;min-width:0}
+
+  .eyebrow{display:flex;align-items:center;gap:.45rem;margin:0 0 .3rem}
+  .eyebrow i{width:.45rem;height:.45rem;border-radius:50%;flex:0 0 auto}
+  .eyebrow span{font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--muted)}
+
+  .line{display:flex;align-items:baseline;gap:.6rem}
+  .line b{font-family:var(--serif);font-weight:400;font-size:1.15rem;
+    text-decoration:underline;text-decoration-color:var(--line);
+    text-underline-offset:.28em;text-decoration-thickness:1px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .line time{margin-left:auto;color:var(--muted);font-size:.92rem;
+    font-variant-numeric:tabular-nums;flex:0 0 auto}
+
+  .words{margin:.45rem 0 0;font-family:var(--serif);font-size:1.12rem;
+    line-height:1.55;overflow-wrap:anywhere}
+  .zh{margin:.3rem 0 0;font-family:var(--serif);font-size:1.05rem;color:var(--ink-2)}
+  .py{margin:.15rem 0 0;font-size:.88rem;color:var(--muted)}
+  .pic{display:block;width:100%;border-radius:.7rem;margin:.65rem 0 0;
+    background:var(--raise)}
+
+  /* ---- what you can do to it --------------------------------------------- */
+  .acts{display:flex;align-items:center;gap:1.15rem;margin:.85rem 0 0;flex-wrap:wrap}
+  .acts button{display:inline-flex;align-items:center;gap:.4rem;border:0;
+    background:none;color:var(--ink-2);font-size:.92rem;padding:.15rem 0}
+  .acts button:hover{color:var(--red)}
+  .acts button[disabled]{opacity:.45;cursor:default}
+  .acts svg{width:1rem;height:1rem;stroke:currentColor;fill:none;
+    stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+  .acts .n{color:var(--muted);font-size:.86rem;font-variant-numeric:tabular-nums}
+  .acts .liked{color:var(--red)}
+  .acts .liked svg{fill:currentColor;stroke:currentColor}
+
+  /* ---- the thread underneath --------------------------------------------- */
+  .thread{margin:.9rem 0 0;padding-left:.95rem;border-left:2px solid var(--line)}
+  .rep{padding:.5rem 0}
+  .rep + .rep{border-top:1px solid var(--hair)}
+  .rep .line b{font-size:1rem}
+  .rep p{margin:.2rem 0 0;font-family:var(--serif);font-size:1rem;line-height:1.5;
     overflow-wrap:anywhere}
-  .zh{margin:.45rem 0 0;font-size:.95rem;color:var(--ink-2)}
-  .py{margin:.15rem 0 0;font-size:.85rem;color:var(--muted);font-style:italic}
-  .acts{display:flex;align-items:center;gap:.9rem;margin-top:.9rem;padding-top:.7rem;
-    border-top:1px solid var(--line);font-size:.82rem}
-  .acts button{font:inherit;font-size:.82rem;cursor:pointer;border:0;background:none;
-    color:var(--muted);padding:0}
-  .acts button:hover{color:var(--jade)}
-  .acts .n{font-variant-numeric:tabular-nums}
+  .rbox{display:flex;gap:.5rem;margin:.7rem 0 0}
+  .rbox input{flex:1;min-width:0;border:1px solid var(--line);background:var(--raise);
+    border-radius:99px;padding:.5rem .9rem;font:inherit;font-size:.95rem;
+    color:var(--ink);outline:none}
+  .rbox input:focus{border-color:var(--red)}
+  .rbox button{border:0;background:var(--red);color:var(--red-ink);border-radius:99px;
+    padding:.5rem 1.05rem;font-size:.9rem}
 
-  .replies{margin-top:.8rem;padding-top:.7rem;border-top:1px solid var(--line)}
-  .reply{padding:.45rem 0}
-  .reply + .reply{border-top:1px solid var(--line)}
-  .reply b{font-size:.85rem}
-  .reply span{font-size:.76rem;color:var(--muted)}
-  .reply p{margin:.15rem 0 0;font-size:.92rem;line-height:1.5}
-  .rbox{display:flex;gap:.5rem;margin-top:.6rem}
-  .rbox input{flex:1;border:1px solid var(--line);background:var(--paper);border-radius:99px;
-    padding:.4rem .85rem;font:inherit;font-size:.88rem;color:var(--ink);outline:none}
-  .rbox input:focus{border-color:var(--jade)}
+  /* ---- nothing there yet -------------------------------------------------- */
+  .none{padding:3.5rem .5rem;text-align:center;color:var(--muted)}
+  .none b{display:block;font-family:var(--serif);font-weight:400;font-size:1.3rem;
+    color:var(--ink);margin:0 0 .4rem}
+  .none p{margin:0;font-size:.95rem;line-height:1.6}
 
-  .none{text-align:center;color:var(--muted);padding:3rem 1rem;font-size:.95rem}
-  .foot{margin:2.5rem 0 0;padding-top:1.2rem;border-top:1px solid var(--line);
-    color:var(--muted);font-size:.82rem;line-height:1.6}
+  /* ---- the + ------------------------------------------------------------- */
+  .fab{position:fixed;right:1.2rem;bottom:1.6rem;width:4rem;height:4rem;
+    border-radius:50%;border:0;background:var(--red);color:var(--red-ink);
+    box-shadow:var(--shadow);display:grid;place-items:center;z-index:30}
+  .fab svg{width:1.7rem;height:1.7rem;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;fill:none}
+
+  /* ---- putting something up ---------------------------------------------- */
+  .sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;
+    justify-content:center;background:rgba(28,26,22,.4)}
+  .sheet .card{width:100%;max-width:34rem;background:var(--paper);
+    border-radius:1.1rem 1.1rem 0 0;padding:1.3rem 1.15rem calc(1.3rem + env(safe-area-inset-bottom));
+    box-shadow:var(--shadow);max-height:92vh;overflow-y:auto}
+  .sheet h2{margin:0 0 1rem;font-family:var(--serif);font-weight:400;font-size:1.35rem}
+  .sheet textarea{width:100%;border:1px solid var(--line);background:var(--raise);
+    border-radius:.7rem;padding:.85rem;font:inherit;font-family:var(--serif);
+    font-size:1.08rem;line-height:1.55;color:var(--ink);resize:vertical;outline:none}
+  .sheet textarea:focus{border-color:var(--red)}
+  .field{display:flex;gap:.6rem;margin:.8rem 0 0}
+  .field input,.field select{flex:1;min-width:0;border:1px solid var(--line);
+    background:var(--raise);border-radius:99px;padding:.6rem .95rem;font:inherit;
+    font-size:.95rem;color:var(--ink);outline:none}
+  .field input:focus,.field select:focus{border-color:var(--red)}
+  .row{display:flex;align-items:center;gap:.6rem;margin:.9rem 0 0}
+  .ghost{border:1px solid var(--line);background:var(--raise);color:var(--ink);
+    border-radius:99px;padding:.6rem 1.1rem;font-size:.92rem}
+  .go{margin-left:auto;border:0;background:var(--red);color:var(--red-ink);
+    border-radius:99px;padding:.68rem 1.5rem;font-size:.98rem}
+  .go[disabled]{opacity:.5;cursor:default}
+  .shot{position:relative;margin:.8rem 0 0}
+  .shot img{display:block;width:100%;border-radius:.7rem}
+  .shot button{position:absolute;top:.5rem;right:.5rem;width:2rem;height:2rem;
+    border-radius:50%;border:0;background:rgba(28,26,22,.72);color:#fff;
+    font-size:1.1rem;line-height:1;display:grid;place-items:center}
+  .said{margin:.85rem 0 0;font-size:.92rem;line-height:1.5;color:var(--ink-2)}
+  .said.bad{color:var(--red)}
+
+  .foot{margin:2.5rem 0 0;padding-top:1.3rem;border-top:1px solid var(--line);
+    color:var(--muted);font-size:.82rem;line-height:1.65}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 <main>
-  <header>
-    <h1>The <b>Board</b></h1>
-    <p class="lede">Practical questions, answered by people who worked it out last
-      month. No account. No VPN. Anyone can read; anyone can post.</p>
-  </header>
-
-  <form class="ask" id="ask">
-    <textarea id="note" rows="2"
-      placeholder="Ask something, or pass something on. Where to get a SIM without a Chinese bank card, which gate at Renmin, what the label says…"></textarea>
-    <div class="shot" id="shot" hidden><img id="shotimg" alt=""><button type="button" id="shotoff" aria-label="Remove the photo">×</button></div>
-    <div class="askrow">
-      <input class="who" id="who" maxlength="40" placeholder="Post as — a name people will see">
-      <button class="pill" type="button" id="pickpic">Photo</button>
-      <input type="file" id="pic" hidden accept="image/jpeg,image/png,image/webp,image/gif">
-      <button class="go" type="submit" id="send">Put it up</button>
-      <span class="said" id="said" hidden></span>
+  <div class="top">
+    <div class="mark" aria-hidden="true">板</div>
+    <div>
+      <h1>The Board</h1>
+      <p id="count">Anyone can read. Anyone can post.</p>
     </div>
-  </form>
+  </div>
 
   <div class="topics" id="topics"></div>
-  <div id="board"></div>
-  <p class="none" id="none" hidden></p>
 
-  <p class="foot" id="foot">
-    Everything here is read before it goes up. Nothing is stored about you but a
-    random number your browser made up, hashed before it is written down.
+  <div class="rule"><span id="rulelabel">Everyone · Newest first</span><i></i></div>
+
+  <div id="board"></div>
+  <div class="none" id="none" hidden></div>
+
+  <p class="foot">
+    Everything is read by a person before it goes up. Nothing is kept about you
+    but a random number your browser made up, hashed before it is written down —
+    enough to take your own post back, and nothing else.
   </p>
 </main>
+
+<button class="fab" id="fab" aria-label="Put something up">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<div class="sheet" id="sheet" hidden>
+  <form class="card" id="ask">
+    <h2>Put something up</h2>
+    <textarea id="note" rows="3"
+      placeholder="Where to get a SIM without a Chinese bank card, which gate at Renmin, what the label says, a good meal…"></textarea>
+    <div class="shot" id="shot" hidden>
+      <img id="shotimg" alt=""><button type="button" id="shotoff" aria-label="Remove the photo">×</button>
+    </div>
+    <div class="field">
+      <input id="who" maxlength="40" placeholder="Post as — a name people will see">
+    </div>
+    <div class="field">
+      <input id="topic" maxlength="40" list="topiclist" placeholder="Topic — optional">
+      <datalist id="topiclist"></datalist>
+    </div>
+    <div class="row">
+      <button class="ghost" type="button" id="pickpic">Photo</button>
+      <input type="file" id="pic" hidden accept="image/jpeg,image/png,image/webp,image/gif">
+      <button class="ghost" type="button" id="shut">Cancel</button>
+      <button class="go" type="submit" id="send">Put it up</button>
+    </div>
+    <p class="said" id="said" hidden></p>
+  </form>
+</div>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
   if (x !== undefined) n.textContent = x; return n; };
 
-// A random number this browser made up, so a reply can be tied to the post it
-// answers without anybody signing in. Hashed on the server before it is
-// written; it identifies a browser, never a person.
+/** The line icons on each post. Drawn here rather than pulled from anywhere:
+ *  four paths are cheaper than a request that would not answer in the mainland. */
+const ICON = {
+  reply: "M9 14 4 9l5-5 M4 9h8a8 8 0 0 1 8 8v3",
+  like: "M12 20s-7-4.6-7-9.4A4 4 0 0 1 12 8a4 4 0 0 1 7-.6c0 4.8-7 12.6-7 12.6Z",
+  remove: "M4 7h16 M10 11v6 M14 11v6 M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12 M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2",
+  share: "M18 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z M6 15a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z M18 22a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z M8.2 11.4l7.6-4 M8.2 13.6l7.6 4",
+};
+function icon(name) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  for (const d of ICON[name].trim().split(/\s+M/).map((s, i) => (i ? "M" + s : s))) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", d);
+    svg.append(path);
+  }
+  return svg;
+}
+
+/** A topic keeps its colour. Picked from the name rather than the order it
+ *  happens to appear in, so Food is the same red on every reader's screen and
+ *  stays that red when something else is posted above it. */
+const TDOT = ["--t1","--t2","--t3","--t4","--t5","--t6"];
+function topicColour(name) {
+  let h = 0;
+  for (const ch of String(name)) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+  return "var(" + TDOT[h % TDOT.length] + ")";
+}
+
+// A random number this browser made up. Hashed on the server before it is
+// written down; it identifies a browser, never a person, and the only thing it
+// buys is being able to take your own post back.
 let device = "";
 try {
   device = localStorage.getItem("board:device") || "";
   if (!device) { device = crypto.randomUUID(); localStorage.setItem("board:device", device); }
-  // The name is remembered too, because typing it every time is how a board
-  // ends up with one post per person.
-  $("who").value = localStorage.getItem("board:who") || "";
 } catch { /* private window: it still works, it just forgets */ }
 
 let posts = [], topic = "";
-let photo = null;   // { data, type }
+let photo = null;             // { data, type }
+let liked = new Set();        // what this browser has already liked
+try { liked = new Set(JSON.parse(localStorage.getItem("board:liked") || "[]")); } catch { /* fine */ }
 
-/** A time somebody can read. Relative for the first day, because "3 hours ago"
- *  is what a board is for and a date stamp is what an archive is for. */
+/** Short, the way a feed reads it — "56m", "2h". A date once it is old enough
+ *  that "how long ago" has stopped being the useful answer. */
 function when(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   const mins = Math.round((Date.now() - d.getTime()) / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return mins + "m ago";
-  if (mins < 60 * 24) return Math.round(mins / 60) + "h ago";
+  if (mins < 1) return "now";
+  if (mins < 60) return mins + "m";
+  if (mins < 60 * 24) return Math.round(mins / 60) + "h";
+  if (mins < 60 * 24 * 7) return Math.round(mins / 1440) + "d";
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
+const initial = (name) => (String(name || "?").trim()[0] || "?").toLowerCase();
+
 async function load() {
   try {
-    const r = await fetch("/api/board");
+    const r = await fetch("/api/board", { headers: device ? { "x-board-device": device } : {} });
     const d = await r.json();
     posts = Array.isArray(d.posts) ? d.posts : [];
   } catch { posts = []; }
@@ -193,102 +316,199 @@ function drawTopics() {
   const box = $("topics"); box.replaceChildren();
   const counts = new Map();
   for (const p of posts) if (p.topic) counts.set(p.topic, (counts.get(p.topic) || 0) + 1);
-  if (!counts.size) return;
-  const all = el("button", null, "Everything");
-  all.type = "button";
-  all.setAttribute("aria-pressed", String(topic === ""));
-  all.addEventListener("click", () => { topic = ""; draw(); });
-  box.append(all);
-  for (const [t, n] of [...counts].sort((a, b) => b[1] - a[1])) {
-    const b = el("button", null, t + " · " + n);
+
+  // The datalist in the compose sheet, so posting under an existing topic is
+  // picking one rather than spelling it the same way by luck.
+  $("topiclist").replaceChildren(
+    ...[...counts.keys()].map((t) => Object.assign(document.createElement("option"), { value: t })));
+
+  if (!counts.size) { box.hidden = true; return; }
+  box.hidden = false;
+
+  const chip = (label, value, n, colour) => {
+    const b = el("button", "chip");
     b.type = "button";
-    b.setAttribute("aria-pressed", String(topic === t));
-    b.addEventListener("click", () => { topic = topic === t ? "" : t; draw(); });
-    box.append(b);
+    b.setAttribute("aria-pressed", String(topic === value));
+    if (colour) { const i = el("i", "dot"); i.style.background = colour; b.append(i); }
+    b.append(el("span", null, label));
+    if (n !== undefined) b.append(el("span", "n", String(n)));
+    b.addEventListener("click", () => { topic = topic === value ? "" : value; draw(); });
+    return b;
+  };
+  box.append(chip("Everyone", ""));
+  for (const [t, n] of [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) {
+    box.append(chip(t, t, n, topicColour(t)));
   }
 }
 
 function draw() {
   drawTopics();
+  $("rulelabel").textContent = (topic || "Everyone") + " · Newest first";
+  $("count").textContent = posts.length
+    ? posts.length + (posts.length === 1 ? " post up" : " posts up") + ". Anyone can read. Anyone can post."
+    : "Anyone can read. Anyone can post.";
+
   const box = $("board"); box.replaceChildren();
   const list = posts.filter((p) => !topic || p.topic === topic);
+
   $("none").hidden = list.length > 0;
   if (!list.length) {
-    $("none").textContent = posts.length
-      ? "Nothing under that yet."
-      : "Nothing on the board yet. The first thing anyone puts up goes here.";
+    $("none").replaceChildren(
+      el("b", null, posts.length ? "Nothing under that yet." : "The board is empty."),
+      el("p", null, posts.length
+        ? "Try Everyone, or put the first one up yourself."
+        : "The first thing anybody puts up appears here. Somebody reads everything before it does."));
     return;
   }
+  for (const p of list) box.append(card(p));
+}
 
-  for (const p of list) {
-    const card = el("article", "post");
-    if (p.photo) {
-      const img = Object.assign(document.createElement("img"),
-        { className: "pic", src: "/api/public-media?id=" + encodeURIComponent(p.photo),
-          alt: "", loading: "lazy" });
-      img.addEventListener("error", () => img.remove());
-      card.append(img);
-    }
+function card(p) {
+  const row = el("article", "post");
+  row.append(el("div", "av", initial(p.handle)));
 
-    const inn = el("div", "in");
-    const by = el("div", "by");
-    by.append(el("b", null, "@" + (p.handle || "someone")), el("span", null, when(p.at)));
-    if (p.topic) by.append(el("span", "topic", p.topic));
-    inn.append(by);
+  const body = el("div", "body");
 
-    if (p.note) inn.append(el("p", "words", p.note));
-    // The same thing in Chinese, where somebody supplied it — the point of a
-    // board for people who cannot read the signs is that the answer can be
-    // shown to the person behind the counter.
-    if (p.zh) inn.append(el("p", "zh", p.zh));
-    if (p.py) inn.append(el("p", "py", p.py));
-
-    const acts = el("div", "acts");
-    const like = el("button", null, "▲ Useful");
-    like.type = "button";
-    like.addEventListener("click", () => send({ like: p.id }, like));
-    acts.append(like);
-    if (p.likes) acts.append(el("span", "n", String(p.likes)));
-    const reply = el("button", null,
-      p.replies?.length ? p.replies.length + (p.replies.length === 1 ? " reply" : " replies") : "Reply");
-    reply.type = "button";
-    acts.append(reply);
-    inn.append(acts);
-
-    // The thread, folded until asked for. A board is read by scanning, and
-    // every reply shown by default is a post pushed off the first screen.
-    const thread = el("div", "replies");
-    thread.hidden = true;
-    for (const r of (p.replies || [])) {
-      const row = el("div", "reply");
-      row.append(el("b", null, "@" + (r.handle || "someone")), el("span", null, " · " + when(r.at)));
-      if (r.note) row.append(el("p", null, r.note));
-      thread.append(row);
-    }
-    const rbox = el("div", "rbox");
-    const rin = Object.assign(document.createElement("input"),
-      { placeholder: "Answer this…", maxLength: 2000 });
-    const rgo = el("button", "pill", "Send");
-    rgo.type = "button";
-    rgo.addEventListener("click", () => {
-      const t = rin.value.trim();
-      if (!t) return;
-      send({ note: t, re: p.id, handle: $("who").value.trim() }, rgo, () => { rin.value = ""; });
-    });
-    rbox.append(rin, rgo);
-    thread.append(rbox);
-    reply.addEventListener("click", () => { thread.hidden = !thread.hidden; });
-    inn.append(thread);
-
-    card.append(inn);
-    box.append(card);
+  if (p.topic) {
+    const eb = el("div", "eyebrow");
+    const dot = el("i");
+    dot.style.background = topicColour(p.topic);
+    eb.append(dot, el("span", null, p.topic));
+    body.append(eb);
   }
+
+  const line = el("div", "line");
+  line.append(el("b", null, p.handle || "someone"));
+  const t = el("time", null, when(p.at));
+  if (p.at) t.dateTime = p.at;
+  line.append(t);
+  body.append(line);
+
+  if (p.photo) {
+    const img = Object.assign(document.createElement("img"),
+      { className: "pic", src: "/api/public-media?id=" + encodeURIComponent(p.photo),
+        alt: "", loading: "lazy" });
+    img.addEventListener("error", () => img.remove());
+    body.append(img);
+  }
+  if (p.note) body.append(el("p", "words", p.note));
+  // The same thing in Chinese where somebody supplied it: the point of a board
+  // for people who cannot read the signs is that the answer can be held up to
+  // the person behind the counter.
+  if (p.zh) body.append(el("p", "zh", p.zh));
+  if (p.py) body.append(el("p", "py", p.py));
+
+  // ---- the actions --------------------------------------------------------
+  const acts = el("div", "acts");
+  const thread = el("div", "thread");
+  thread.hidden = true;
+
+  const act = (name, label) => {
+    const b = el("button");
+    b.type = "button";
+    b.append(icon(name), el("span", null, label));
+    acts.append(b);
+    return b;
+  };
+
+  const reply = act("reply", p.replies?.length
+    ? p.replies.length + (p.replies.length === 1 ? " reply" : " replies")
+    : "Reply");
+  reply.addEventListener("click", () => { thread.hidden = !thread.hidden; });
+
+  const like = act("like", "Like");
+  if (p.likes) like.append(el("span", "n", String(p.likes)));
+  if (liked.has(p.id)) like.classList.add("liked");
+  like.addEventListener("click", async () => {
+    // One per browser. Not a rule anybody could enforce — it is a courtesy to
+    // the reader, so tapping twice does not read as two people.
+    if (liked.has(p.id)) return;
+    liked.add(p.id);
+    try { localStorage.setItem("board:liked", JSON.stringify([...liked])); } catch { /* fine */ }
+    like.classList.add("liked");
+    await send({ like: p.id }, null);
+  });
+
+  // Only on your own. There are no accounts here, so the server decides this
+  // from the browser's hash and sends back nothing but whether it is yours.
+  if (p.mine) {
+    const rm = act("remove", "Remove");
+    rm.addEventListener("click", async () => {
+      if (!confirm("Take this down? Replies underneath it stay.")) return;
+      rm.disabled = true;
+      try {
+        const r = await fetch("/api/post?id=" + encodeURIComponent(p.id), {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device }),
+        });
+        if (!r.ok) throw new Error();
+        await load();
+      } catch { rm.disabled = false; rm.lastChild.textContent = "Did not go — again?"; }
+    });
+  }
+
+  const share = act("share", "Share");
+  share.addEventListener("click", async () => {
+    const url = location.origin + "/#" + p.id;
+    const text = (p.note || "").slice(0, 120);
+    try {
+      if (navigator.share) { await navigator.share({ text, url }); return; }
+      await navigator.clipboard.writeText(url);
+      share.lastChild.textContent = "Link copied";
+      setTimeout(() => { share.lastChild.textContent = "Share"; }, 2000);
+    } catch { /* dismissed, or no clipboard: nothing to report */ }
+  });
+
+  body.append(acts);
+
+  // ---- the thread, folded until asked for ---------------------------------
+  for (const r of (p.replies || [])) {
+    const rep = el("div", "rep");
+    const rl = el("div", "line");
+    rl.append(el("b", null, r.handle || "someone"));
+    const rt = el("time", null, when(r.at));
+    if (r.at) rt.dateTime = r.at;
+    rl.append(rt);
+    rep.append(rl);
+    if (r.note) rep.append(el("p", null, r.note));
+    thread.append(rep);
+  }
+  const rbox = el("div", "rbox");
+  const rin = Object.assign(document.createElement("input"),
+    { placeholder: "Answer this…", maxLength: 2000 });
+  const rgo = el("button", null, "Send");
+  rgo.type = "button";
+  rgo.addEventListener("click", async () => {
+    const words = rin.value.trim();
+    if (!words) return;
+    let who = "";
+    try { who = localStorage.getItem("board:who") || ""; } catch { /* fine */ }
+    if (!who) { who = (prompt("Answer as — a name people will see") || "").trim(); }
+    if (!who) return;
+    try { localStorage.setItem("board:who", who); } catch { /* fine */ }
+    rgo.disabled = true; rgo.textContent = "…";
+    const d = await send({ note: words, re: p.id, handle: who }, null);
+    rgo.disabled = false; rgo.textContent = "Send";
+    if (!d) { rgo.textContent = "Again?"; return; }
+    rin.value = "";
+    // Said on the spot. A reply that is held and does not say so reads as a
+    // reply that failed, and gets typed again.
+    const said = el("p", "py", d.state === "published"
+      ? "Up." : "Sent — somebody reads replies before they go up.");
+    rbox.after(said);
+    setTimeout(() => said.remove(), 6000);
+  });
+  rbox.append(rin, rgo);
+  thread.append(rbox);
+  body.append(thread);
+
+  row.append(body);
+  return row;
 }
 
 /** One way in for everything anybody posts — a note, a reply, a like. */
-async function send(body, btn, after) {
-  const was = btn ? btn.textContent : "";
-  if (btn) { btn.disabled = true; btn.textContent = "…"; }
+async function send(body, btn) {
   try {
     const r = await fetch("/api/post", {
       method: "POST",
@@ -297,14 +517,11 @@ async function send(body, btn, after) {
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || "it did not go");
-    if (after) after();
-    await load();
+    if (body.like) await load();
     return d;
   } catch (e) {
-    say(e.message, true);
+    if (btn) say(e.message, true);
     return null;
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = was; }
   }
 }
 
@@ -315,20 +532,30 @@ function say(msg, bad) {
   s.classList.toggle("bad", Boolean(bad));
 }
 
-// ---- the photo ------------------------------------------------------------
+// ---- putting something up --------------------------------------------------
+function openSheet(open) {
+  $("sheet").hidden = !open;
+  if (open) {
+    try { $("who").value = localStorage.getItem("board:who") || ""; } catch { /* fine */ }
+    if (topic) $("topic").value = topic;
+    $("note").focus();
+  }
+}
+$("fab").addEventListener("click", () => openSheet(true));
+$("shut").addEventListener("click", () => openSheet(false));
+$("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) openSheet(false); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") openSheet(false); });
+
 $("pickpic").addEventListener("click", () => $("pic").click());
-$("shotoff").addEventListener("click", () => { photo = null; $("shot").hidden = true; });
+$("shotoff").addEventListener("click", () => { photo = null; $("shot").hidden = true; $("pic").value = ""; });
 $("pic").addEventListener("change", async (e) => {
   const f = e.target.files?.[0];
   if (!f) return;
   if (f.size > 25 * 1024 * 1024) return say("That photo is over 25 MB.", true);
-  const buf = await f.arrayBuffer();
+  const bytes = new Uint8Array(await f.arrayBuffer());
   let bin = "";
-  const bytes = new Uint8Array(buf);
-  // Chunked, because a 20 MB spread as one argument list blows the stack.
-  for (let i = 0; i < bytes.length; i += 8192) {
-    bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
-  }
+  // Chunked, because 20 MB spread as one argument list blows the stack.
+  for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
   photo = { data: btoa(bin), type: f.type };
   $("shotimg").src = URL.createObjectURL(f);
   $("shot").hidden = false;
@@ -343,18 +570,21 @@ $("ask").addEventListener("submit", async (e) => {
   if (!who) return say("Pick a name to post under.", true);
   try { localStorage.setItem("board:who", who); } catch { /* fine */ }
 
+  $("send").disabled = true;
   const d = await send({
-    note, handle: who,
+    note, handle: who, topic: $("topic").value.trim(),
     photo: photo?.data, photoType: photo?.type,
   }, $("send"));
+  $("send").disabled = false;
   if (!d) return;
-  $("note").value = "";
-  photo = null; $("shot").hidden = true;
-  // Said plainly, because the post will not be on the board and somebody who
-  // is not told that will assume it failed and post it again.
-  say(d.state === "published"
-    ? "Up on the board."
-    : "Got it — somebody reads everything before it goes up. It will appear once they have.");
+
+  $("note").value = ""; $("topic").value = "";
+  photo = null; $("shot").hidden = true; $("pic").value = "";
+  await load();
+  if (d.state === "published") { openSheet(false); return; }
+  // Said plainly and left on screen, because the post will not be on the board
+  // and somebody who is not told that assumes it failed and posts it again.
+  say("Got it. Somebody reads everything before it goes up — it will appear once they have.");
 });
 
 load();
