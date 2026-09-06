@@ -513,6 +513,19 @@ app.put("/api/me", express.json({ limit: "36mb" }), async (req, res) => {
     // make the review pointless.
     if (face?.id) { q.photo = face.id; q.photoState = "held"; }
     if (back?.id) { q.cover = back.id; q.photoState = "held"; }
+
+    /* THE WORDS GO UP; THE PICTURE WAITS.
+     *
+     * These were one state, and only the photo had a way through the queue —
+     * so a profile made of words alone was held for ever, with nothing in any
+     * queue to release. Its own page was blank, it was absent from the
+     * directory, and there was no action anybody could take to change that.
+     *
+     * Splitting them is the honest version of the rule already written here:
+     * words can be taken back and a face somebody has saved cannot. The words
+     * have already been through the one check that matters — no phone, no
+     * WeChat, no email — and a profile nobody can see is not a profile. */
+    q.state = "published";
     const clean = store.cleanPerson(q);
     Object.assign(q, clean);
     return q;
