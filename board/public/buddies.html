@@ -119,6 +119,37 @@
   .none button{border:0;background:var(--accent);color:var(--accent-ink);border-radius:99px;
     padding:.75rem 1.6rem;font-size:1rem}
 
+  /* A profile opens over the list rather than as its own page: you are
+     comparing people, and losing your place in the list to read one of them
+     is how somebody gives up halfway down. */
+  .sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;
+    background:rgba(21,27,40,.42)}
+  .sheet .card{width:100%;max-width:34rem;margin:0 auto;background:var(--paper);
+    border-radius:1.1rem 1.1rem 0 0;padding:1.4rem 1.15rem calc(1.4rem + env(safe-area-inset-bottom));
+    box-shadow:var(--shadow);max-height:88vh;overflow-y:auto}
+  .pf{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .pf .av{width:5.4rem;height:5.4rem;font-size:2.1rem;margin:0 0 .8rem}
+  .pf h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.6rem;line-height:1.15}
+  .pf .where{margin:.3rem 0 0;font-size:.9rem}
+  .pf .goal{margin:1rem 0 0;text-align:left;width:100%;font-size:1.06rem}
+  .fact{display:flex;gap:1rem;padding:.7rem 0;border-top:1px solid var(--hair);
+    align-items:baseline;width:100%;text-align:left}
+  .fact dt{flex:0 0 6.4rem;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);margin:0}
+  .fact dd{margin:0;flex:1;font-size:.95rem}
+  .facts{margin:1.1rem 0 0;width:100%}
+  .theirs{margin:1.2rem 0 0;width:100%;text-align:left}
+  .theirs h3{margin:0 0 .5rem;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);font-weight:600}
+  :root[data-lang="zh"] .theirs h3{text-transform:none;letter-spacing:.02em}
+  .theirs p{margin:0;padding:.6rem 0;border-top:1px solid var(--hair);
+    font-family:var(--serif);font-size:1rem;line-height:1.5;color:var(--ink-2)}
+  .theirs .no{color:var(--muted);font-family:var(--sans);font-size:.9rem}
+  .pfacts{display:flex;gap:.5rem;margin:1.3rem 0 0;flex-wrap:wrap;width:100%}
+  .pfacts button{flex:1;min-width:8rem;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);border-radius:99px;padding:.65rem 1rem;font-size:.9rem}
+  .pfacts button.warn{color:var(--t5);border-color:var(--line)}
+
   .safety{margin:2rem 0 0;padding:.95rem 1.05rem;background:var(--raise);
     border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
     font-size:.86rem;line-height:1.6;color:var(--ink-2)}
@@ -145,6 +176,11 @@
 
   <p class="safety" id="safety"></p>
 </main>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="card" id="card"></div>
+</div>
+<div id="tail"></div>
 
 <script type="module">
 import { T, lang, setLang, pickLang, langButton } from "/i18n.js";

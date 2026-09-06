@@ -1009,7 +1009,15 @@ $("pic").addEventListener("change", async (e) => {
   // 1600 rather than 1000: a post's photograph is the content, and gets looked
   // at properly. A face is 5.8rem across.
   say(T("me.working"));
-  const shot = await shrink(f, 1600);
+  let shot;
+  try {
+    shot = await shrink(f, 1600);
+  } catch (err) {
+    // Whatever went wrong, say what it was. A photo that silently does not
+    // attach is indistinguishable from an app that is broken.
+    return say(T("post.badPhoto") + " (" + (err && err.message || "?") + ")", true);
+  }
+  if (shot.error) return say(shot.error, true);
   photo = { data: shot.data, type: shot.type };
   $("shotimg").src = URL.createObjectURL(f);
   $("shot").hidden = false;
@@ -1177,23 +1185,65 @@ let ME = null, MEPOSTS = 0, MEREPLIES = 0;
  *
  * A profile picture does not need four thousand pixels across. */
 async function shrink(file, max) {
-  let bmp;
+  /* Getting the pixels, three ways.
+   *
+   * createImageBitmap is the good one — it decodes off the main thread and
+   * applies the EXIF rotation. But Safari has been fussy about the options
+   * argument, and an option it does not know can throw rather than be ignored.
+   * So: with options, then without, then an <img> element, which every browser
+   * that can show a photograph can do.
+   *
+   * The first version of this caught the throw and sent the file raw, which
+   * put it straight back into the bug it was written to fix — a silent
+   * fallback to the broken path is worse than no fallback at all. */
+  const draw = async () => {
+    try {
+      return await createImageBitmap(file, { imageOrientation: "from-image" });
+    } catch { /* Safari, probably the option */ }
+    try {
+      return await createImageBitmap(file);
+    } catch { /* no bitmap decoding at all */ }
+    // An <img> and an object URL. Slower, and it does not apply EXIF rotation
+    // on older browsers, but it produces pixels where the other two did not.
+    return await new Promise((ok, no) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); ok(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); no(new Error("decode")); };
+      img.src = url;
+    });
+  };
+
+  let src;
   try {
-    bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+    src = await draw();
   } catch {
-    // An older webview, or a format it cannot decode. Send it as it came and
-    // let the server judge — better a slow success than a refusal we chose.
+    // Nothing could read it — a HEIC in a browser that cannot decode HEIC is
+    // the real case. Say so rather than pushing 5 MB up a mobile connection
+    // and letting it time out.
+    return { error: T("post.badPhoto") };
+  }
+
+  const iw = src.width || src.naturalWidth, ih = src.height || src.naturalHeight;
+  if (!iw || !ih) return { error: T("post.badPhoto") };
+
+  const scale = Math.min(1, max / Math.max(iw, ih));
+  const w = Math.round(iw * scale), h = Math.round(ih * scale);
+  let blob = null;
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    canvas.getContext("2d").drawImage(src, 0, 0, w, h);
+    if (src.close) src.close();
+    blob = await new Promise((ok) => canvas.toBlob(ok, "image/jpeg", 0.85));
+  } catch { /* a canvas too large for this device, or a tainted one */ }
+
+  if (!blob) {
+    // The canvas did not give us a JPEG. Sending the original is only worth
+    // trying if it is small enough to arrive.
+    if (file.size > 4 * 1024 * 1024) return { error: T("post.badPhoto") };
     return { data: await asBase64(file), type: file.type };
   }
-  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
-  const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
-  const canvas = document.createElement("canvas");
-  canvas.width = w; canvas.height = h;
-  canvas.getContext("2d").drawImage(bmp, 0, 0, w, h);
-  if (bmp.close) bmp.close();
-
-  const blob = await new Promise((ok) => canvas.toBlob(ok, "image/jpeg", 0.85));
-  if (!blob) return { data: await asBase64(file), type: file.type };
   return { data: await asBase64(blob), type: "image/jpeg" };
 }
 
@@ -1306,7 +1356,15 @@ for (const [input, key] of [["mephoto", "photo"], ["mecover", "cover"]]) {
     // control somebody presses again.
     const label = key === "cover" ? $("me").querySelector(".cover button") : null;
     if (label) label.textContent = T("me.working");
-    const shot = await shrink(f, key === "cover" ? 1600 : 1000);
+    let shot;
+    try {
+      shot = await shrink(f, key === "cover" ? 1600 : 1000);
+    } catch (err) {
+      alert(T("post.badPhoto") + " (" + (err && err.message || "?") + ")");
+      drawMe();
+      return;
+    }
+    if (shot.error) { alert(shot.error); drawMe(); return; }
     const out = await saveMe({
       [key]: shot.data, [key + "Type"]: shot.type,
       ...(ME && ME.handle ? {} : { handle: who }),

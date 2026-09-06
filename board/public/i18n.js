@@ -86,7 +86,9 @@ export const STRINGS = {
   "post.go":           ["Put it up", "发布"],
   "post.needWords":    ["Say something, or add a photo.", "写点什么，或者加张照片。"],
   "post.needName":     ["Pick a name to post under.", "选一个发布用的名字。"],
-  "post.tooBig":       ["That photo is over 25 MB.", "这张照片超过 25 MB。"],
+  "post.tooBig":       ["That photo is too large.", "这张照片太大了。"],
+  "post.badPhoto":     ["That photo could not be read. Try another, or a screenshot of it.",
+                        "这张照片读不出来。换一张，或者截图后再试。"],
   "post.held": [
     "Got it. Somebody reads everything before it goes up — it will appear once they have.",
     "收到。所有内容都会先由人过目——看过之后就会出现。",
@@ -308,6 +310,13 @@ export const STRINGS = {
     "第一次见面选在学校或者公共场所，并且告诉别人你去哪儿。这里不该有人向你要钱、要押金或者要证件。",
   ],
   "bud.days":          ["M,T,W,T,F,S,S", "一,二,三,四,五,六,日"],
+  "bud.close":         ["Close", "关闭"],
+  "bud.noProfile":     ["No profile yet", "还没有资料"],
+  "bud.noProfileBody": ["{who} posts here but has not filled anything in.",
+                        "{who} 在这里发过内容，但还没有填写资料。"],
+  "bud.blockThem":     ["Hide {who}", "隐藏 {who}"],
+  "bud.blocked":       ["Hidden on this phone", "已在这台手机上隐藏"],
+  "bud.reportThem":    ["Report this profile", "举报这份资料"],
 
   // ---- translate -----------------------------------------------------------
   "tr.open":           ["Translate", "翻译"],
