@@ -181,6 +181,7 @@ app.get(["/feed", "/feed/", "/index.html"], (req, res, next) => page("index.html
  * from. It costs one line and never needs revisiting. */
 app.get(["/board", "/board/"], (req, res) => res.redirect(301, "/feed" + (req.url.split("?")[1] ? "?" + req.url.split("?")[1] : "")));
 app.get(["/about", "/landing.html"], (req, res, next) => page("landing.html", req, res, next));
+app.get(["/buddies", "/buddies/"], (req, res, next) => page("buddies.html", req, res, next));
 
 // ---------------------------------------------------------------------------
 // Media

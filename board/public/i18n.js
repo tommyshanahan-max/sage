@@ -277,6 +277,38 @@ export const STRINGS = {
     "不填手机、微信、邮箱——一份带联系方式的公开学生名单，是这里绝对不能变成的东西。",
   ],
 
+  // ---- finding a study buddy -----------------------------------------------
+  "bud.title":         ["Study buddies", "学习搭子"],
+  "bud.sub":           ["{n} people near you, looking", "附近有 {n} 个人在找"],
+  "bud.subOne":        ["1 person near you, looking", "附近有 1 个人在找"],
+  "bud.open":          ["Find a study buddy", "找个学习搭子"],
+  "bud.back":          ["Back to the feed", "回到动态"],
+  "bud.empty.head":    ["Nobody is looking yet.", "还没有人在找。"],
+  "bud.empty.body": [
+    "Say you are looking and you will be the first. Most people want the same trade — their Chinese for your English.",
+    "说一声你在找，你就是第一个。大多数人想要的是同一种交换——他们的中文换你的英文。",
+  ],
+  "bud.beFirst":       ["Say you are looking", "说你在找"],
+  "bud.youAreIn":      ["You are in this list", "你在这个列表里"],
+  "bud.takeMeOut":     ["Take me out", "把我移出"],
+  "bud.putMeIn":       ["Put me in the list", "把我加进列表"],
+  "bud.lookingLabel":  ["I am looking for a study buddy", "我在找学习搭子"],
+  "bud.lookingWhy": [
+    "Only people who ask to be listed appear here. Posting does not put you in it, and one tap takes you back out.",
+    "只有主动要求的人才会出现在这里。发内容不会把你加进来，点一下就能退出。",
+  ],
+  "bud.free":          ["Free", "有空"],
+  "bud.trades":        ["Trades", "可以交换"],
+  "bud.level":         ["Level", "水平"],
+  "bud.here":          ["Here", "来了"],
+  "bud.theirPosts":    ["On the feed", "发过的内容"],
+  "bud.nothingYet":    ["Nothing on the feed yet.", "还没有发过内容。"],
+  "bud.safety": [
+    "Meet on campus or somewhere public the first time, and tell somebody where you are going. Nobody here should be asking you for money, a deposit, or your documents.",
+    "第一次见面选在学校或者公共场所，并且告诉别人你去哪儿。这里不该有人向你要钱、要押金或者要证件。",
+  ],
+  "bud.days":          ["M,T,W,T,F,S,S", "一,二,三,四,五,六,日"],
+
   // ---- translate -----------------------------------------------------------
   "tr.open":           ["Translate", "翻译"],
   "tr.title":          ["Translate anything", "翻译"],

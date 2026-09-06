@@ -154,6 +154,9 @@
     color:var(--ink);border-radius:99px;padding:.5rem 1.4rem;font-size:.9rem}
   .meface .go.primary{background:var(--accent);border-color:var(--accent);
     color:var(--accent-ink)}
+  .meface .gorow{display:flex;gap:.5rem;margin:.9rem 0 0;flex-wrap:wrap;
+    justify-content:center}
+  .meface .gorow .go{margin:0;text-decoration:none;display:inline-block}
   .menote{margin:.5rem 0 0;font-size:.82rem;color:var(--muted);text-align:center;
     max-width:24rem;line-height:1.5}
 
@@ -1278,10 +1281,14 @@ function drawMe() {
     go.addEventListener("click", () => $("mephoto").click());
     face.append(go);
   } else {
+    const row = el("div", "gorow");
     const go = el("button", "go", T("me.edit"));
     go.type = "button";
     go.addEventListener("click", openMe);
-    face.append(go);
+    const buds = el("a", "go primary", T("bud.open"));
+    buds.href = "/buddies";
+    row.append(go, buds);
+    face.append(row);
   }
   box.append(face);
 }
