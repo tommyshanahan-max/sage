@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>The Feed</title>
 <!-- What WeChat puts on the card when somebody forwards this into a chat or
      onto Moments. WeChat's crawler reads the title, this description, and the
@@ -14,6 +17,8 @@
 <meta property="og:title" content="The Feed">
 <meta property="og:description" content="A noticeboard for people living in and visiting China. Anyone can read, anyone can post.">
 <meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta property="og:url" content="{{ORIGIN}}/feed">
 <!-- WeChat on iOS caches aggressively against the URL, and a board is the one
      thing that must never be a day old. -->
@@ -98,9 +103,15 @@
   /* ---- masthead ---------------------------------------------------------- */
   .top{display:flex;align-items:center;gap:.9rem;margin:.5rem 0 1.6rem}
   #langslot{margin-left:auto;flex:0 0 auto;display:flex}
+  /* The mark: a disc with 留 in it, at the same proportions everywhere it is
+     drawn. 0.52 of the diameter — a square glyph inscribed in a circle reaches
+     the edge at diameter/root2, so anything much past that touches — sans
+     rather than serif because it holds together at favicon size, and greyscale
+     antialiasing because subpixel rendering paints colour into the strokes. */
   .mark{width:4.1rem;height:4.1rem;border-radius:50%;flex:0 0 auto;overflow:hidden;
     background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;
-    font-family:var(--serif);font-size:1.9rem;line-height:1;
+    font-family:var(--sans);font-weight:500;font-size:2.13rem;line-height:1;
+    -webkit-font-smoothing:antialiased;
     box-shadow:0 0 0 3px var(--paper),0 0 0 4px var(--line)}
   /* Also the share thumbnail. It is a real <img> rather than a background so
      WeChat's crawler can find it — a CSS background is invisible to it. */
@@ -392,8 +403,12 @@
 <body>
 <main>
   <div class="top">
-    <div class="mark"><img src="/share.png" alt="" width="400" height="400"
-      onerror="this.replaceWith(document.createTextNode('\u52A8'))"></div>
+    <!-- The mark itself, square. This used to point at /share.png, which was a
+         400px square and is now a 1200x630 link card — a wide image in a round
+         container crops to a slice of the middle, which here is the middle of
+         a word. -->
+    <div class="mark"><img src="/favicon.png" alt="" width="192" height="192"
+      onerror="this.replaceWith(document.createTextNode('\u7559'))"></div>
     <div>
       <h1 id="boardname">The Board</h1>
       <p id="count">Anyone can read. Anyone can post.</p>
