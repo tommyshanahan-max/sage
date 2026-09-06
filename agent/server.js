@@ -443,7 +443,14 @@ app.get("/reel.html", (req, res, next) => {
 // that grant gets the panel, the people and the links, and dashes where the
 // numbers would be. One page, two amounts of it, decided by the same flag as
 // the rest of the seat.
-const socialDoor = () => !isProspect;
+/* The Social panel — who a project is shared with, and what has gone out.
+ *
+ * Not on the seat that runs The Feed. It is the wrong tool there twice over:
+ * it manages share codes and collaborators for a different product, and it is
+ * written in that product's vocabulary throughout — a seat told to know
+ * nothing about that app was showing a box explaining which of its webhooks
+ * was not plugged in. That seat's panel is the queue. */
+const socialDoor = () => !isProspect && !isFeedSeat;
 
 // ---------------------------------------------------------------------------
 // Which page a seat lands on
@@ -482,6 +489,9 @@ async function firstProject() {
 }
 
 app.get("/", async (_req, res, next) => {
+  // The seat that runs The Feed opens on the queue, because that is its job:
+  // the one thing on that seat which is a task rather than a number.
+  if (isFeedSeat && feed.configured()) return res.redirect("/queue");
   // Only the seat whose job this is, and only where the panel is open at all.
   if (!isPartner || !socialDoor()) return next();
   const project = await firstProject();
