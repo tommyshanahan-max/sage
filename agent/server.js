@@ -40,6 +40,7 @@ import {
   canMakeVideo,
   OWNER_CLEARANCE,
   PARTNER_DENIED,
+  AGENT_NAME,
   PARTNER_VOICE,
   PROSPECT_VOICE,
   FEED_VOICE,
@@ -1694,6 +1695,10 @@ app.get("/mockups/:name", async (req, res) => {
 app.get("/api/seat", (_req, res) =>
   res.json({
     role: ROLE, project: PROJECT_LABEL, hasDocs: DOCS.length > 0, appUrl: APP_URL,
+    // What the assistant here is called. The pages print it rather than
+    // holding a literal, so a seat renamed in .env is renamed everywhere it
+    // shows rather than in the two places somebody remembered.
+    assistant: AGENT_NAME,
     // Whether to offer the desk. Not the permission — the routes decide that —
     // only whether to draw a door this seat can actually open.
     stories: deskOpen(),

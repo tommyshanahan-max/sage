@@ -672,7 +672,7 @@
 <body>
 
 <header>
-  <span class="mark">Sage</span>
+  <span class="mark" id="assistantmark">Sage</span>
   <span class="by">powered by Claude</span>
   <span class="status" id="status">ready</span>
   <a class="numbers" id="numbers" hidden target="_blank" rel="noopener"
@@ -756,7 +756,7 @@
 <main id="log">
   <div class="thread" id="thread">
     <div class="opening" id="opening">
-      <h1>Sage</h1>
+      <h1 id="assistantname">Sage</h1>
       <p>Ask for something and it gets built. Files live in the workspace on the
       server — the same ones the editor opens.</p>
     </div>
@@ -771,7 +771,7 @@
     <input id="file" type="file" accept="image/*" multiple hidden>
     <!-- Drawn only if a voice key is configured. See /api/voice. -->
     <button id="mic" type="button" class="mic" hidden
-            aria-label="Speak to Sage" title="Speak to Sage">
+            aria-label="Speak to Sage" title="Speak to Sage" id="speakbtn">
       <span class="mic-dot" aria-hidden="true"></span>
     </button>
     <textarea id="input" rows="1" placeholder="What would you like to do?" autofocus></textarea>
@@ -1929,7 +1929,7 @@ async function removeProject(p) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "could not delete it");
     await loadProjects();
-    projectsNote(p.name + " moved to .trash on the server. Still on the box — say the word and Sage can put it back.");
+    projectsNote(p.name + " moved to .trash on the server. Still on the box — say the word and " + who() + " can put it back.");
   } catch (err) {
     projectsNote(err.message || "could not delete it");
   }
@@ -1945,7 +1945,7 @@ function projectsNote(text) {
 async function newProject() {
   const name = window.prompt(
     "New project.\n\nIt is created in the workspace on the server \u2014 the same folder the " +
-    "editor opens \u2014 with a README in it. Not a git repository yet; ask Sage when you want one.\n\nName:"
+    "editor opens \u2014 with a README in it. Not a git repository yet; ask " + who() + " when you want one.\n\nName:"
   );
   if (!name || !name.trim()) return;
   try {
@@ -2042,10 +2042,32 @@ const mockupsToggle = document.getElementById("mockups-toggle");
 const mockupsPanel  = document.getElementById("mockups");
 const mockupsList   = document.getElementById("mockups-list");
 
+/* What the assistant on this seat is called.
+ *
+ * Two seats are open at once on the same screen and both answered to "Sage",
+ * which is a way to tell the wrong one to do something — and the one that can
+ * moderate a live board is not the one to be unsure about. Painted from
+ * /api/seat rather than held as a literal, so renaming a seat in .env renames
+ * it everywhere it shows rather than in the places somebody remembered. */
+let ASSISTANT = "Sage";
+const who = () => ASSISTANT;
+function nameAssistant(n) {
+  if (!n || n === ASSISTANT) return;
+  ASSISTANT = n;
+  document.title = n;
+  for (const id of ["assistantmark", "assistantname"]) {
+    const node = document.getElementById(id);
+    if (node) node.textContent = n;
+  }
+  const speak = document.getElementById("speakbtn");
+  if (speak) { speak.setAttribute("aria-label", "Speak to " + n); speak.title = "Speak to " + n; }
+}
+
 fetch("/api/seat")
   .then((r) => r.json())
   .then((d) => {
     seatRole = d.role || "owner";
+    nameAssistant(d.assistant);
     appUrl = d.appUrl || "";
     if (appUrl) {
       stageToggle.hidden = false;
@@ -2126,7 +2148,7 @@ fetch("/api/seat")
       // transcripts but no reason for a Path tab, and the route is theirs
       // alone anyway.
       pathToggle.hidden = true;
-      document.title = "Sage · " + (d.project || "review");
+      document.title = who() + " · " + (d.project || "review");
       const lead = document.querySelector("#opening p");
       if (lead) {
         // Two readings of where this page sits, and the sentence has to match
@@ -2220,7 +2242,7 @@ async function openMockups() {
     if (!data.mockups.length) {
       mockupsList.replaceChildren(
         el("p", "path-empty",
-          "Nothing yet. Ask Sage for a mockup of a change and it will appear here.")
+          "Nothing yet. Ask " + who() + " for a mockup of a change and it will appear here.")
       );
       return;
     }
@@ -2666,7 +2688,7 @@ document.getElementById("reset").addEventListener("click", () => {
   sessionId = null;
   thread.replaceChildren();
   const o = el("div", "opening");
-  o.append(el("h1", null, "Sage"));
+  o.append(el("h1", null, who()));
   o.append(el("p", null, "New conversation. The workspace is unchanged."));
   thread.append(o);
   input.focus();

@@ -532,6 +532,12 @@ services:
       AGENT_USER: ${TOMSCODING_FEED_USER:-}
       AGENT_PASSWORD: ${TOMSCODING_FEED_PASSWORD:-}
       AGENT_PROJECT_LABEL: ${TOMSCODING_FEED_PROJECT:-The Feed}
+      # What the assistant here is called. Two seats are open at once on the
+      # same screen and both answering to "Sage" is a way to tell the wrong one
+      # to do something — and the one that can moderate a live board is not the
+      # one to be unsure about. Only a name: it changes nothing about what this
+      # seat can reach.
+      AGENT_NAME: ${TOMSCODING_FEED_ASSISTANT:-The Professor}
       # Its own home, empty of everything: no ~/.claude from the workspace, no
       # git identity, no API keys but the one above.
       HOME: /work/home

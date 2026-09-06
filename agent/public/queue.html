@@ -53,7 +53,7 @@
   <div class="bar">
     <button id="reload" type="button">Reload</button>
     <a id="applink" href="#" target="_blank" rel="noopener">Open the feed</a>
-    <a href="/sage">Ask Sage</a>
+    <a href="/sage" id="asksage">Ask Sage</a>
   </div>
 
   <h2>Posts waiting</h2>
@@ -190,6 +190,8 @@ fetch("/api/seat").then((r) => r.json()).then((d) => {
   BASE = (d && d.feedBase) || "";
   const a = $("applink");
   if (BASE) a.href = BASE; else a.remove();
+  // Whatever the assistant on this seat is called, rather than a literal.
+  if (d && d.assistant) $("asksage").textContent = "Ask " + d.assistant;
 }).catch(() => {});
 
 load();

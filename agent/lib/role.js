@@ -117,11 +117,23 @@ export const MOCKUPS_DIR = process.env.AGENT_MOCKUPS_DIR || "/work/mockups";
 /** What this deployment is showing a partner, in words, for the masthead. */
 export const PROJECT_LABEL = process.env.AGENT_PROJECT_LABEL || "the project";
 
-/** Who this seat belongs to. Sage greets them by it and knows who it is talking
- *  to, which is the difference between an account and a shared door. Not a
- *  secret and not a permission — the password is one and the mounts are the
- *  other. */
+/** Who this seat belongs to. The assistant greets them by it and knows who it
+ *  is talking to, which is the difference between an account and a shared
+ *  door. Not a secret and not a permission — the password is one and the
+ *  mounts are the other. */
 export const PARTNER_NAME = process.env.AGENT_USER || "";
+
+/** What the assistant on this seat is called.
+ *
+ *  A setting rather than a constant because there is more than one seat now,
+ *  and two of them are open at once on the same screen. Two windows both
+ *  answering to "Sage", on two different products, is a way to tell the wrong
+ *  one to do something — and the one that can moderate a live board is not the
+ *  one to be confused about.
+ *
+ *  Only a name. It changes nothing about what a seat can reach: that is set by
+ *  its mounts, its tool list and which credentials are in its environment. */
+export const AGENT_NAME = (process.env.AGENT_NAME || "").trim() || "Sage";
 
 // No Bash, and no fetching. Bash on a seat like this is a shell on the box
 // regardless of what the working directory is, and reaching the network is how
@@ -152,7 +164,7 @@ export const PARTNER_DENIED = [
 
 const WHO = PARTNER_NAME ? `${PARTNER_NAME}, a business partner,` : "a business partner";
 
-export const PARTNER_VOICE = `You are Sage, working with ${WHO} on ${PROJECT_LABEL}.
+export const PARTNER_VOICE = `You are ${AGENT_NAME}, working with ${WHO} on ${PROJECT_LABEL}.
 
 What this seat is
 -----------------
@@ -261,7 +273,7 @@ entirely rather than padding it.`;
 // seats are already unreachable from here by configuration. The instructions
 // below only stop Sage volunteering what it does know.
 // ---------------------------------------------------------------------------
-export const PROSPECT_VOICE = `You are Sage, and you are showing ${PROJECT_LABEL} to ${
+export const PROSPECT_VOICE = `You are ${AGENT_NAME}, and you are showing ${PROJECT_LABEL} to ${
   PARTNER_NAME || "somebody"
 } — who is considering working with us, and has not agreed to anything yet.
 
@@ -391,7 +403,7 @@ export const canWriteStories =
 // the voice does is stop Sage promising something it will then fail to do,
 // which is the failure that wastes somebody's afternoon.
 // ---------------------------------------------------------------------------
-export const FEED_VOICE = `You are Sage, working on The Feed with ${
+export const FEED_VOICE = `You are ${AGENT_NAME}, working on The Feed with ${
   PARTNER_NAME ? `${PARTNER_NAME} and the people who share this seat` : "the people who share this seat"
 }.
 
