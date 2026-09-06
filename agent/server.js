@@ -48,6 +48,7 @@ import {
 } from "./lib/role.js";
 import * as studypal from "./lib/studypal.js";
 import * as feed from "./lib/board.js";
+import { feedTools, FEED_TOOL_NAMES } from "./lib/feedtools.js";
 import * as changes from "./lib/changes.js";
 import * as numbers from "./lib/numbers.js";
 import * as video from "./lib/video.js";
@@ -504,6 +505,22 @@ app.get("/sage", (_req, res) => {
 
 app.get("/social.html", (req, res, next) => {
   if (!socialDoor()) return res.status(404).send("Not found");
+  next();
+});
+
+/* The queue, as a page.
+ *
+ * The routes for it existed before this did, which made them useless: this
+ * seat's Sage has no Bash and no fetch — deliberately, because a shell here
+ * reads ANTHROPIC_API_KEY out of the environment — so it could report what was
+ * waiting and had no way to act on it. It said so rather than pretending,
+ * which is the voice working, but the gap was mine.
+ *
+ * Moderation is a person's decision anyway. Sage explains and proposes; the
+ * releasing happens here, by somebody looking at it. */
+app.get(["/queue", "/queue.html"], (req, res, next) => {
+  if (!isFeedSeat || !feed.configured()) return res.status(404).send("Not found");
+  req.url = "/queue.html";
   next();
 });
 
@@ -1675,6 +1692,9 @@ app.get("/api/seat", (_req, res) =>
     // Social. Same expression as the page and the routes, so a seat cannot end
     // up with a tab that opens onto a 404.
     social: socialDoor(),
+    // The queue. Same expression as its page and its routes.
+    queue: isFeedSeat && feed.configured(),
+    feedBase: isFeedSeat ? APP_URL : "",
   }));
 
 // ---------------------------------------------------------------------------
@@ -2755,12 +2775,31 @@ app.post("/api/chat", express.json({ limit: "24mb" }), async (req, res) => {
     // work, which surfaces as an exit code and nothing else.
     permissionMode: "bypassPermissions",
     allowDangerouslySkipPermissions: true,
+    /* The queue, as five named operations.
+     *
+     * Only on the seat that runs The Feed, and only when it holds the
+     * credential. Narrower than a fetch in every direction: one host decided
+     * here rather than by the model, one credential that never enters the
+     * conversation, five verbs that cannot be pointed at anything else.
+     *
+     * The deny list is untouched — no Bash, no WebFetch, no Task. This adds a
+     * door to one room; it does not open the building. */
+    ...(isFeedSeat && feed.configured()
+      ? { mcpServers: { feed: feedTools(feed) } }
+      : {}),
     // A partner seat is restricted by the DENY list, not the allow list.
     // `allowedTools` only says "run these without asking", and this deployment
     // runs in bypassPermissions, so on its own it restricts nothing at all —
     // the seat had Bash until this was fixed, and `env` in that container
     // prints ANTHROPIC_API_KEY. See lib/role.js.
-    ...(isPartner ? { allowedTools: PARTNER_TOOLS, disallowedTools: PARTNER_DENIED } : {}),
+    ...(isPartner
+      ? {
+          allowedTools: isFeedSeat && feed.configured()
+            ? [...PARTNER_TOOLS, ...FEED_TOOL_NAMES]
+            : PARTNER_TOOLS,
+          disallowedTools: PARTNER_DENIED,
+        }
+      : {}),
     stderr: (data) => {
       process.stderr.write(data);
       stderrTail.push(data);

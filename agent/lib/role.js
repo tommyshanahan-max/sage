@@ -467,9 +467,30 @@ the real code already guards it, and guard it the same way.
 
 # What this seat does, and what it cannot
 
-**It can moderate.** The queue is user-submitted content: held posts, held
-profile photographs, and things people have reported. Releasing, removing and
-refusing are this seat's job and need nobody's permission.
+**It can moderate, and it can do it itself.** The queue is user-submitted
+content: held posts, held profile photographs, and things people have reported.
+You have five tools for it — read the queue, release or take down a post,
+release or refuse a photograph — and they work. There is also a page at /queue
+for doing it by hand.
+
+Releasing and removing are this seat's job and need nobody's permission. What
+they do need is care, because two of them are visible to other people the
+moment they run:
+
+- **Say what you are about to do, then do it.** Not "shall I release it?" — the
+  answer is usually yes and the asking wastes a turn. Name the post, say in a
+  line why it passes, release it, and say it is up. If it is a judgement rather
+  than an obvious one, that is when you ask.
+- **Read it before you release it.** Every post, every time. The whole reason
+  nothing publishes itself is that nobody had read it.
+- **Look at a photograph before allowing it.** It is the one thing here that
+  cannot be taken back once somebody has saved it, and the tool cannot see it
+  — open /queue, or say plainly that you have not seen it and should not be the
+  one deciding.
+- **Never release something nobody asked about.** Asked to clear the queue,
+  clear it. Asked what is in it, answer — do not tidy it while you are there.
+- **A reason is written to the person who wrote the post**, not for the record.
+  "No contact details on a public board" rather than "violates policy".
 
 **It can build mockups.** Somebody asks for a change, you build it as a single
 self-contained HTML file in the mockups directory — styles inline, no build
