@@ -572,6 +572,8 @@ export const STRINGS = {
   "bud.youAreIn":      ["You are in this list", "你在这个列表里"],
   "bud.takeMeOut":     ["Take me out", "把我移出"],
   "bud.putMeIn":       ["Put me in the list", "把我加进列表"],
+  "bud.join":          ["Put me on the list", "把我加到名单上"],
+  "bud.seeWho":        ["See who is looking", "看看谁在找"],
   "bud.lookingLabel":  ["I am looking for a study buddy", "我在找学习搭子"],
   "bud.lookingWhy": [
     "Only people who ask to be listed appear here. Posting does not put you in it, and one tap takes you back out.",

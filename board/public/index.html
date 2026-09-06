@@ -185,6 +185,26 @@
      Shut by default. It is the one string here that is worth stealing, and a
      secret printed on a screen somebody is holding in a lecture theatre is a
      secret printed for whoever is behind them. */
+  /* ---- putting yourself on the list --------------------------------------
+     The directory only ever lists people who said they were looking, and
+     until now nothing could say it — so it could never have anybody in it. */
+  .looking{margin:1rem 0 0;padding:.9rem 1rem;border-radius:.8rem;
+    background:var(--raise);border:1px solid var(--line)}
+  .looking label{display:flex;align-items:flex-start;gap:.6rem;cursor:pointer}
+  .looking input{margin:.2rem 0 0;flex:0 0 auto;width:1.05rem;height:1.05rem;
+    accent-color:var(--accent)}
+  .looking b{display:block;font-weight:400;font-size:.95rem;color:var(--ink)}
+  .looking .why{display:block;margin:.2rem 0 0;font-size:.8rem;line-height:1.5;
+    color:var(--muted)}
+  .freewrap{margin:.85rem 0 0}
+  .freewrap .lab{font-size:.78rem;color:var(--muted)}
+  .days{display:flex;gap:.35rem;margin:.4rem 0 0}
+  .days button{flex:1;border:1px solid var(--line);background:var(--paper);
+    color:var(--ink-2);border-radius:.5rem;padding:.4rem 0;font-size:.82rem;
+    line-height:1}
+  .days button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);
+    color:var(--accent-ink)}
+
   .keybox{margin:1.2rem 0 0;padding-top:1rem;border-top:1px solid var(--hair)}
   .keybox h3{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
   .keybox p{margin:.4rem 0 0;font-size:.85rem;line-height:1.55;color:var(--ink-2)}
@@ -551,6 +571,16 @@
     <div class="field"><input id="mecampus" maxlength="60"></div>
     <div class="field"><input id="mehere" maxlength="40"></div>
     <textarea id="megoal" rows="3"></textarea>
+    <div class="looking">
+      <label>
+        <input type="checkbox" id="melooking">
+        <span><b id="melookinglabel"></b><span class="why" id="melookingwhy"></span></span>
+      </label>
+      <div class="freewrap" id="mefreewrap" hidden>
+        <span class="lab" id="mefreelab"></span>
+        <div class="days" id="medays"></div>
+      </div>
+    </div>
     <p class="menote" id="mewhy"></p>
     <div class="row">
       <button class="ghost" type="button" id="meshut"></button>
@@ -1697,12 +1727,14 @@ function drawMe() {
   if (!ME || !ME.handle) {
     face.append(el("p", "menote", T("me.setUp")));
     const row = el("div", "gorow");
-    const go = el("button", "go primary", T("me.photoFirst"));
+    /* One real action. "Add your photo" sat directly under an avatar with a +
+     * on it that does the same thing, and it is the wrong ask anyway: the
+     * thing worth doing here is going on the list, which is what somebody
+     * arriving is actually for. The photo is asked for inside. */
+    const go = el("button", "go primary", T("bud.join"));
     go.type = "button";
-    go.addEventListener("click", () => $("mephoto").click());
-    // The directory is worth reading before you are in it — and this was the
-    // only screen with no way to reach it at all.
-    const buds = el("a", "go", T("bud.open"));
+    go.addEventListener("click", () => openMe(true));
+    const buds = el("a", "go", T("bud.seeWho"));
     buds.href = "/buddies";
     row.append(go, buds);
     face.append(row);
@@ -1771,7 +1803,32 @@ function drawMePic() {
 }
 $("mepicgo").addEventListener("click", () => $("mephoto").click());
 
-function openMe() {
+/* The days somebody is free, 0–6. Drawn rather than a row of checkboxes: seven
+ * of those is a wall of text, and a week reads as a shape. */
+let FREE = [];
+function drawDays() {
+  const box = $("medays");
+  fill(box);
+  const labels = T("bud.days").split(",");
+  for (let i = 0; i < 7; i++) {
+    const b = el("button", null, (labels[i] || "").trim());
+    b.type = "button";
+    b.setAttribute("aria-pressed", String(FREE.includes(i)));
+    b.addEventListener("click", () => {
+      FREE = FREE.includes(i) ? FREE.filter((d) => d !== i) : [...FREE, i].sort();
+      drawDays();
+    });
+    box.append(b);
+  }
+}
+function drawLooking() {
+  const on = $("melooking").checked;
+  $("mefreewrap").hidden = !on;
+  if (on) drawDays();
+}
+$("melooking").addEventListener("change", drawLooking);
+
+function openMe(joining) {
   $("metitle").textContent = T("me.editTitle");
   $("mename").placeholder = T("me.name");
   $("mecampus").placeholder = T("me.campus");
@@ -1784,6 +1841,15 @@ function openMe() {
   $("mecampus").value = (ME && ME.campus) || "";
   $("mehere").value = (ME && ME.here) || "";
   $("megoal").value = (ME && ME.goal) || "";
+  $("melookinglabel").textContent = T("bud.lookingLabel");
+  $("melookingwhy").textContent = T("bud.lookingWhy");
+  $("mefreelab").textContent = T("bud.free");
+  // Pressed "join the list", so it starts ticked — the button said what it was
+  // going to do and a form that then makes you do it again is a form arguing
+  // with its own button.
+  $("melooking").checked = joining === true || Boolean(ME && ME.looking);
+  FREE = (ME && Array.isArray(ME.free)) ? [...ME.free] : [];
+  drawLooking();
   $("mesaid").hidden = true;
   drawMePic();
   $("mesheet").hidden = false;
@@ -1814,6 +1880,7 @@ $("meform").addEventListener("submit", async (e) => {
   }
   const out = await saveMe({
     handle, campus: $("mecampus").value.trim(),
+    looking: $("melooking").checked, free: FREE,
     here: $("mehere").value.trim(), goal: $("megoal").value.trim(),
   });
   if (out.error) { said.hidden = false; said.classList.add("bad"); said.textContent = out.error; return; }
