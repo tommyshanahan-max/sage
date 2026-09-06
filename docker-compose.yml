@@ -504,6 +504,81 @@ services:
           memory: ${TOMSCODING_PARTNER2_MEMORY:-768m}
     cpu_shares: ${TOMSCODING_PARTNER2_CPU_SHARES:-256}
 
+  # The seat that runs The Feed.
+  #
+  # A third seat rather than a change to either partner seat, and the reason is
+  # the credential rather than the hostname: moderating The Feed used to mean
+  # being handed Study Pal's admin key, because one client spoke for both
+  # products. This one carries BOARD_ADMIN_KEY and nothing else, so it can reach
+  # The Feed's queue and cannot reach anything else on this box — not because a
+  # check says so, but because the credential is not in the container.
+  #
+  # Shared by more than one person, on its own hostname, so it keeps every
+  # partner limit: restricted tools, source mounted read-only, no git identity,
+  # only the mockups directory writable. Changes to the product are mocked up
+  # here and shipped by the owner from his own seat.
+  thefeed:
+    profiles: ["thefeed"]
+    build:
+      context: ./agent
+    image: tomscoding-agent:latest
+    container_name: tomscoding-thefeed
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      AGENT_ROLE: feed
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AGENT_MODEL: ${TOMSCODING_AGENT_MODEL:-}
+      AGENT_USER: ${TOMSCODING_FEED_USER:-}
+      AGENT_PASSWORD: ${TOMSCODING_FEED_PASSWORD:-}
+      AGENT_PROJECT_LABEL: ${TOMSCODING_FEED_PROJECT:-The Feed}
+      # Its own home, empty of everything: no ~/.claude from the workspace, no
+      # git identity, no API keys but the one above.
+      HOME: /work/home
+      AGENT_WORKSPACE: /work
+      AGENT_MOCKUPS_DIR: /work/mockups
+      # The queue. Its own product's address and its own product's key —
+      # deliberately not STUDYPAL_*, which is not set on this seat at all.
+      #
+      # Reached by service name over feed_net, not by the public hostname. The
+      # admin key then never leaves this estate to release a post, there is no
+      # round trip out to DNS and back through Caddy, and the queue keeps
+      # working on a day the certificate does not.
+      BOARD_BASE: ${TOMSCODING_FEED_BOARD_BASE:-http://board:8080}
+      BOARD_ADMIN_KEY: ${TOMSCODING_BOARD_KEY:-}
+      # The numbers, granted the same way as on a partner seat: the address and
+      # the token are passed ONLY while the grant is on, so with it off this
+      # container cannot reach the counter at all.
+      AGENT_NUMBERS: ${TOMSCODING_FEED_NUMBERS:-}
+      AGENT_NUMBERS_URL: ${TOMSCODING_FEED_NUMBERS:+${TOMSCODING_AGENT_NUMBERS_URL}}
+      AGENT_NUMBERS_TOKEN: ${TOMSCODING_FEED_NUMBERS:+${TOMSCODING_STATS_INTERNAL_TOKEN}}
+      # Documents they may read, named one by one. A list, never a folder scan:
+      # under a scan every new file publishes itself. See lib/docs.js.
+      AGENT_DOCS_ROOT: /work/app
+      AGENT_DOCS: ${TOMSCODING_FEED_DOCS:-}
+      # The live app, shown beside the conversation.
+      AGENT_APP_URL: ${TOMSCODING_FEED_APP_URL:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      AGENT_VOICE_ID: ${TOMSCODING_AGENT_VOICE_ID:-}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      # The snapshot. Read-only is the control; everything else is convenience.
+      - ./partner/source-feed:/work/app:ro
+      - feed_mockups:/work/mockups
+      - feed_home:/work/home
+    expose:
+      - "3000"
+    networks:
+      # Its own network. It reaches Caddy and the counter and nothing else —
+      # `workspace`, `agent`, `board` and the partner seats are names that do
+      # not resolve from in there.
+      - feed_net
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_FEED_MEMORY:-768m}
+    cpu_shares: ${TOMSCODING_FEED_CPU_SHARES:-256}
+
   caddy:
     image: caddy:2-alpine
     container_name: tomscoding-caddy
@@ -568,6 +643,9 @@ services:
       - tomscoding
       - partner_net
       - partner2_net
+      # And The Feed's seat, or its hostname proxies to a name that does not
+      # resolve — which Caddy reports as a 502 on a site that looks configured.
+      - feed_net
 
   # The counter.
   #
@@ -647,6 +725,10 @@ services:
       # token, which compose passes only while the grant is on, and the
       # collection endpoint is public to any browser already.
       - partner_net
+      # And The Feed's seat, on the same terms: a seat granted the numbers has
+      # to be able to resolve the counter, and the grant is still what decides
+      # whether it holds a token to ask with.
+      - feed_net
     deploy:
       resources:
         limits:
@@ -714,6 +796,11 @@ services:
       # Same reason the counter joins: the grant is not enough on its own, the
       # address has to resolve from in there.
       - partner_net
+      # And The Feed's own seat, which is the one that moderates it. Reached by
+      # service name rather than by its public address: the admin key then
+      # never leaves this estate to release a post, and the queue keeps working
+      # whatever DNS and the certificate are doing.
+      - feed_net
     deploy:
       resources:
         limits:
@@ -730,6 +817,11 @@ networks:
   partner_net:
     driver: bridge
   partner2_net:
+    driver: bridge
+  # The Feed's seat, Caddy and the counter. Same shape and same reason as
+  # partner_net: a seat that should reach nothing gets a network with nothing
+  # on it but the two things it is meant to talk to.
+  feed_net:
     driver: bridge
 
 volumes:
@@ -748,6 +840,8 @@ volumes:
   partner_home:
   partner2_mockups:
   partner2_home:
+  feed_mockups:
+  feed_home:
   browser_config:
   caddy_data:
   caddy_config:

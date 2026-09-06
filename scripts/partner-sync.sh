@@ -48,6 +48,17 @@ if [ "$SEAT" = "1" ]; then
   LEGACY_BRANCH="${TOMSCODING_PARTNER_BRANCH:-main}"
   EXCLUDE="${TOMSCODING_PARTNER_EXCLUDE:-$(from_env TOMSCODING_PARTNER_EXCLUDE)}"
   INCLUDE="${TOMSCODING_PARTNER_INCLUDE:-$(from_env TOMSCODING_PARTNER_INCLUDE)}"
+elif [ "$SEAT" = "feed" ]; then
+  # The seat that runs The Feed. Named rather than numbered because its
+  # settings are named for the product it manages, and a third seat called
+  # PARTNER3 would be a variable nobody could read six months from now.
+  DEST="partner/source-feed"
+  VARNAME="TOMSCODING_FEED_REPOS"
+  REPOS="${TOMSCODING_FEED_REPOS:-$(from_env TOMSCODING_FEED_REPOS)}"
+  LEGACY_REPO=""
+  LEGACY_BRANCH="main"
+  EXCLUDE="${TOMSCODING_FEED_EXCLUDE:-$(from_env TOMSCODING_FEED_EXCLUDE)}"
+  INCLUDE="${TOMSCODING_FEED_INCLUDE:-$(from_env TOMSCODING_FEED_INCLUDE)}"
 else
   DEST="partner/source-$SEAT"
   VARNAME="TOMSCODING_PARTNER${SEAT}_REPOS"

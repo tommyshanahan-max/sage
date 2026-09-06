@@ -1,88 +1,128 @@
-# The Board
+# The Feed
 
-A noticeboard for foreigners in China. Study Pal's feed with nothing else
-attached: somewhere to ask "where do I get a phone contract without a Chinese
-bank card" and be answered by somebody who did it last month.
+A noticeboard for foreign students in China. Somebody puts up a question or a
+find — where to get a SIM without a Chinese bank card, which gate at Renmin,
+what a label says, a good meal — and somebody who did it last month answers.
 
-**It starts empty.** No posts are copied from anywhere. The ones on Study Pal
-were written by people who signed up to that app, and moving their words and
-photographs into a different product is not a migration — it is a decision
-about somebody else's content, and not one this repository makes quietly.
+It is read and forwarded inside WeChat, which decides most of how it is built.
 
-## What it is
+## What a person is
 
-- Anyone can read. Anyone can post. No account, and nothing about a person is
-  stored but a random number their browser made up, hashed before it is
-  written down.
-- Everything new is **held** until somebody reads it. There is no model here
-  that can judge a post — Study Pal has one and it is theirs — so the honest
-  default is a person. `BOARD_AUTO_PUBLISH=1` turns that off, and should not
-  be set on anything public.
-- No web fonts. `fonts.googleapis.com` is blocked in the mainland, which is
-  the whole reason this is worth running at all; the page carries nothing it
-  has to fetch from outside the firewall.
+There are no accounts. A person is a salted hash of a random id their browser
+made up, so there is nothing to sign into, nothing to lose a password to, and
+nothing to breach. The cost is real and deliberate: somebody who changes phones
+is a new person.
 
-## It answers the admin panel's API exactly
+## The rules it rests on
 
-The panel at `partner.tomscoding.com` already governs a board — reading
-`/api/public?queue=1`, sending to `/api/feed`, releasing and deleting. Those
-routes are implemented here to the same contract, so pointing that panel's
-`STUDYPAL_BASE` at this service makes it govern this board **with no change to
-a line of it**.
+These are decisions rather than defaults, and each is load-bearing.
 
-That is not luck. The contract was written down in `docs/for-studypal-*.md`
-before either side was finished, which is why a second implementation of it
-took an evening.
+- **Nothing publishes itself.** Every post and every profile photograph is
+  held until a person reads it. No model here can judge a post, and a board
+  that publishes everything unread publishes the first thing somebody tests it
+  with. `BOARD_AUTO_PUBLISH=1` turns it off and should not be set on anything
+  public.
+- **Words can be taken back; a face somebody has saved cannot.** A profile's
+  words go up when they are saved; the photograph waits for review. Two
+  separate states, on purpose.
+- **A block never reaches the server.** With no accounts, a block is done to
+  your own copy — which is exactly why it cannot be turned into a weapon.
+- **Reports are counted by person, not by press.** Two distinct reporters hide
+  a post pending review; one person pressing twice is one report. Nothing is
+  deleted, and one press puts it back — so a false report costs a post a few
+  hours and never its existence.
+- **The count is public, the list never is.** How many people follow somebody
+  is a fact about them. Who follows whom, among foreign students, is a social
+  graph, and it does not leave this box.
+- **No contact details, anywhere.** Posts and profiles are filtered for phone
+  numbers, WeChat ids, emails and addresses. A filter, not a wall: it is aimed
+  at the nineteen-year-old pasting their WeChat id into a public board, not at
+  somebody determined to get around it.
+
+## Bilingual, not translated
+
+Every string is an English/Chinese pair on adjacent lines in
+`public/i18n.js`, so a half-written one is visible in the same diff. Two things
+follow, and both are easy to get wrong:
+
+- **Typography moves with the language.** The serif has no Chinese glyphs and
+  falls back per character mid-sentence. Chinese wants a taller line-height, no
+  letter-spacing and no uppercase — `text-transform: uppercase` does nothing to
+  Chinese, and tracked-out CJK reads as broken.
+- **The server returns codes, not prose.** Prose chosen on the server is prose
+  in whichever language the server was written in.
+
+There is also a translate button, on any post and on the UI itself, rate-capped
+and cached.
+
+No web fonts. `fonts.googleapis.com` does not answer in the mainland, and a
+page that waits on it is a page that does not load — so every face named here
+is one the device already has, Chinese ones first for Chinese text.
+
+## WeChat is the browser
+
+On Android it is an old Blink fork, not Chrome, and it varies by WeChat
+version; on iOS it is whatever WKWebView the phone shipped with. Anything too
+new fails silently, which is the worst way to be broken on somebody's phone in
+another country. `canvas.toBlob` is missing there, `createImageBitmap` throws
+on options Safari does not know, and a share card has to be rendered on the
+server because the crawler runs no JavaScript.
+
+## Routes
 
 | Route | Who | What |
 | --- | --- | --- |
-| `GET /api/board` | anyone | The published board, with threads and like counts |
+| `GET /api/board` | anyone | The published feed, with threads and like counts |
 | `POST /api/post` | anyone | A post, a reply, or a like |
-| `GET /api/public-media?id=` | anyone | A photo, by an id nobody can guess |
 | `DELETE /api/post?id=` | anyone | Take back your own — matched on the browser's hash |
-| `GET /api/public?queue=1` | admin | Held, live, refused and removed |
+| `GET /api/public-media?id=` | anyone | A photo, by an id nobody can guess |
+| `GET`/`PUT /api/me` | anyone | Your own profile |
+| `GET /api/person?handle=` | anyone | Somebody's public profile and recent posts |
+| `GET /api/people` | anyone | The study-buddy directory — opt-in only |
+| `POST /api/follow` | anyone | Follow or unfollow. Counts out, never lists |
+| `POST /api/report` | anyone | Report a post, and optionally block its author locally |
+| `POST /api/translate` | anyone | Any text, either direction, capped and cached |
+| `GET /api/public?queue=1` | admin | Held, live, refused, removed, and faces waiting |
 | `POST /api/feed` | admin | Post as an operated account (multipart) |
 | `POST /api/feed/release?id=` | admin | Let a held post through |
-| `DELETE /api/feed?id=` | admin | Take one down |
+| `DELETE /api/feed?id=` | admin | Take one down — marked, not deleted |
+| `POST /api/face/release?id=` | admin | A profile photograph, looked at and allowed |
+| `DELETE /api/face?id=` | admin | Refuse one. The person stays, the picture goes |
 | `GET /api/users` | admin | Every handle that has posted |
+
+## Pages
+
+| | |
+| --- | --- |
+| `/` | The landing page, or the feed itself when `BOARD_AT_ROOT=1` |
+| `/feed` | The feed: your own profile at the top, the posts under it, and a bar with Feed, +, Profile |
+| `/p/:handle` | A shareable profile, with its share card rendered on the server |
+| `/buddies` | The study-buddy directory. Opt-in, with free days and a safety note |
+| `/board` | A 301 to `/feed`, so links sent before the rename still open |
 
 ## Settings
 
 | | |
 | --- | --- |
-| `BOARD_DIR` | Where the board and its media are written. Default `/data` |
+| `BOARD_DIR` | Where the feed and its media are written. Default `/data` |
 | `BOARD_ADMIN_KEY` | The admin routes refuse everything without it |
 | `BOARD_SALT` | Salts the device hash. Unset means an unsalted hash, which is a rainbow table away from the id it came from |
-| `BOARD_HOOK_URL` | The admin panel's webhook, so a held post appears in its queue without a refresh |
-| `BOARD_HOOK_SECRET` | What that webhook expects in `x-studypal-secret` |
+| `BOARD_AT_ROOT` | `1` serves the feed at `/` instead of the landing page |
+| `BOARD_CONTACT` | A person a reader can reach who is not this software |
+| `BOARD_REPORTS_TO_HIDE` | How many separate people hide a post. Default 2 |
+| `BOARD_HOOK_URL` | A panel's webhook, so a held post appears in its queue without a refresh |
+| `BOARD_HOOK_SECRET` | What that webhook presents. No secret means every delivery is refused rather than accepted unsigned |
 | `BOARD_AUTO_PUBLISH` | `1` publishes without review. Do not |
 
 ## What is not built
 
-- **Report and block.** Required by the App Store for anything with a public
-  feed, and worth having regardless. See `docs/for-studypal-appstore.md`.
 - **A check that can judge a post.** Everything is held for a person. That is
   correct and it does not scale past a few dozen a day.
 - **Any notion of an account.** A handle is a name somebody typed. Two people
   can type the same one.
+- **A way to message somebody in the directory.** It is a directory of people
+  looking for someone to study with, and there is no way to say hello — which
+  is the one thing it exists for.
 
-Each of those is a deliberate absence rather than an oversight, and each is
-the next thing if this becomes real.
-
-## The look
-
-It is the app's, deliberately. Warm paper, brick red, a serif for names and
-words, uppercase letterspaced labels for the topic above each post, circular
-avatars carrying an initial, and the four actions in a row underneath — Reply,
-Like, Remove, Share. Somebody who uses the feed inside Study Pal should not
-have to learn a second thing here.
-
-Two departures, both because this is standing on its own. There is no
-"back to talk", because there is nothing to go back to. And Remove is on your
-own post rather than every post: in the app it sits behind an account, here it
-is matched on the salted hash of the random id your browser made up, which is
-the only thing this server knows about you.
-
-No web fonts. `fonts.googleapis.com` does not answer in the mainland, and a
-page that waits on it is a page that does not load — so every face named here
-is one the device already has, Chinese ones first for Chinese text.
+Each is a deliberate absence rather than an oversight, and each is the next
+thing worth doing.

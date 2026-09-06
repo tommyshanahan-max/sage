@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 partner-mockups whats-new
+.PHONY: help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -68,6 +68,26 @@ up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	  && { echo "partner2 is enabled but it has no snapshot yet."; \
 	       echo "Run 'make partner-sync-2' first — it decides which repos and versions they see."; \
 	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*thefeed' .env && ! grep -qE '^TOMSCODING_FEED_PASSWORD=.+' .env \
+	  && { echo "thefeed is enabled but TOMSCODING_FEED_PASSWORD is empty."; \
+	       echo "That seat moderates a live board — it needs its own password."; \
+	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*thefeed' .env && [ ! -d partner/source-feed ] \
+	  && { echo "thefeed is enabled but it has no snapshot yet."; \
+	       echo "Run 'make feed-sync' first — it decides which repos and versions that seat sees."; \
+	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*thefeed' .env && ! grep -qE '^TOMSCODING_BOARD_KEY=.+' .env \
+	  && { echo "thefeed is enabled but TOMSCODING_BOARD_KEY is empty."; \
+	       echo "That seat could not reach the queue — moderating is the job it exists for."; \
+	       exit 1; } || true
+	@grep -q '^COMPOSE_PROFILES=.*thefeed' .env \
+	  && grep -qE '^TOMSCODING_FEED_DOMAIN=' .env \
+	  && [ "$$(sed -n 's/^TOMSCODING_FEED_DOMAIN=//p' .env | tail -1 | tr -d '"')" \
+	     = "$$(sed -n 's/^TOMSCODING_PARTNER_DOMAIN=//p' .env | tail -1 | tr -d '"')" ] \
+	  && { echo "TOMSCODING_FEED_DOMAIN is the same as TOMSCODING_PARTNER_DOMAIN."; \
+	       echo "Two Caddy site blocks on one address is a startup failure, and it takes"; \
+	       echo "every site on this box down with it. Give the new seat its own hostname."; \
+	       exit 1; } || true
 	@grep -q '^COMPOSE_PROFILES=.*analytics' .env && ! grep -qE '^TOMSCODING_STATS_PASSWORD=.+' .env \
 	  && echo "note: no TOMSCODING_STATS_PASSWORD — the numbers page will be open to anyone with the address." || true
 	@grep -q '^COMPOSE_PROFILES=.*analytics' .env && ! grep -qE '^TOMSCODING_STATS_SITES=.+' .env \
@@ -123,12 +143,17 @@ partner-sync: ## Replace the snapshot the partner seat can see
 partner-sync-2: ## Same, for the second partner seat
 	bash scripts/partner-sync.sh 2
 
-partner-mockups: ## Copy every partner's mockups out to ./mockups for review
-	@mkdir -p mockups/partner mockups/partner-2
+feed-sync: ## Replace the snapshot The Feed's seat can see
+	bash scripts/partner-sync.sh feed
+
+partner-mockups: ## Copy every seat's mockups out to ./mockups for review
+	@mkdir -p mockups/partner mockups/partner-2 mockups/thefeed
 	@$(COMPOSE) cp partner:/work/mockups/. mockups/partner/ 2>/dev/null \
 	  || echo "  (seat 1: not running, or nothing made yet)"
 	@$(COMPOSE) cp partner-2:/work/mockups/. mockups/partner-2/ 2>/dev/null \
 	  || echo "  (seat 2: not running, or nothing made yet)"
+	@$(COMPOSE) cp thefeed:/work/mockups/. mockups/thefeed/ 2>/dev/null \
+	  || echo "  (the feed: not running, or nothing made yet)"
 	@find mockups -name '*.html' -printf '%TY-%Tm-%Td %TH:%TM  %p\n' 2>/dev/null | sort -r || true
 
 instructions: ## Update the agent instructions in the running workspace

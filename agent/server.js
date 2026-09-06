@@ -42,9 +42,12 @@ import {
   PARTNER_DENIED,
   PARTNER_VOICE,
   PROSPECT_VOICE,
+  FEED_VOICE,
+  isFeedSeat,
   isProspect,
 } from "./lib/role.js";
 import * as studypal from "./lib/studypal.js";
+import * as feed from "./lib/board.js";
 import * as changes from "./lib/changes.js";
 import * as numbers from "./lib/numbers.js";
 import * as video from "./lib/video.js";
@@ -2400,6 +2403,80 @@ app.post("/sp/episode", ownerOnly, async (req, res) => {
   res.status(r.status).json(r.body);
 });
 
+// ---------------------------------------------------------------------------
+// The Feed's queue
+//
+// User-submitted content, and this seat's actual job. Deliberately NOT behind
+// the publish word: the people on this seat are the moderators, and asking a
+// moderator for a password before every decision is how a queue stops being
+// read. The word guards changes to the product, and the product cannot be
+// changed from here at all — see lib/role.js.
+//
+// Every route refuses on a seat that is not configured for The Feed, rather
+// than on a role check alone. A seat without BOARD_ADMIN_KEY cannot reach the
+// board whatever any check here says, which is the control; the 404 is only so
+// the answer is honest rather than a timeout.
+// ---------------------------------------------------------------------------
+const feedDoor = (_req, res, next) => {
+  if (!feed.configured()) {
+    return res.status(404).json({ error: "this seat is not configured for The Feed" });
+  }
+  next();
+};
+
+/** Held posts, live posts, and profile photographs waiting to be looked at. */
+app.get("/api/feed/queue", feedDoor, async (_req, res) => {
+  const r = await feed.call("/api/public?queue=1");
+  res.set("Cache-Control", "no-store");
+  res.status(r.status).json(r.body);
+});
+
+/** Where the readers' copy lives, so a decision can be checked rather than
+ *  described. */
+app.get("/api/feed/where", feedDoor, (_req, res) => res.json({ base: feed.base() }));
+
+const feedId = (v) => /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(String(v || ""));
+
+/** Letting a held post through to readers. */
+app.post("/api/feed/release", feedDoor, async (req, res) => {
+  const id = String(req.query.id || "");
+  if (!feedId(id)) return res.status(400).json({ error: "bad post id" });
+  const r = await feed.call("/api/feed/release?id=" + encodeURIComponent(id), { method: "POST" });
+  res.status(r.status).json(r.body);
+});
+
+/** Taking one down. Marked rather than deleted over there: "was taken down" is
+ *  a different fact from "never existed". */
+app.delete("/api/feed/post", feedDoor, async (req, res) => {
+  const id = String(req.query.id || "");
+  if (!feedId(id)) return res.status(400).json({ error: "bad post id" });
+  const why = String(req.query.why || "").slice(0, 400);
+  const r = await feed.call(
+    "/api/feed?id=" + encodeURIComponent(id) + (why ? "&why=" + encodeURIComponent(why) : ""),
+    { method: "DELETE" });
+  res.status(r.status).json(r.body);
+});
+
+/** A profile photograph, looked at and allowed. */
+app.post("/api/feed/face/release", feedDoor, async (req, res) => {
+  const id = String(req.query.id || "");
+  if (!feedId(id)) return res.status(400).json({ error: "bad person id" });
+  const r = await feed.call("/api/face/release?id=" + encodeURIComponent(id), { method: "POST" });
+  res.status(r.status).json(r.body);
+});
+
+/** A photograph refused. The person stays; the picture is cleared, and they
+ *  can put up a different one. */
+app.delete("/api/feed/face", feedDoor, async (req, res) => {
+  const id = String(req.query.id || "");
+  if (!feedId(id)) return res.status(400).json({ error: "bad person id" });
+  const why = String(req.query.why || "").slice(0, 400);
+  const r = await feed.call(
+    "/api/face?id=" + encodeURIComponent(id) + (why ? "&why=" + encodeURIComponent(why) : ""),
+    { method: "DELETE" });
+  res.status(r.status).json(r.body);
+});
+
 app.get("/api/voice", (_req, res) => res.json({ available: isSpeechConfigured() }));
 
 // Sage's own words, spoken. Nothing is passed but the text she already wrote.
@@ -2620,9 +2697,11 @@ app.post("/api/chat", express.json({ limit: "24mb" }), async (req, res) => {
       preset: "claude_code",
       append: isProspect
         ? PROSPECT_VOICE
-        : isPartner
-          ? PARTNER_VOICE + numbersBrief
-          : SAGE_VOICE + OWNER_CLEARANCE + platformBrief + numbersBrief,
+        : isFeedSeat
+          ? FEED_VOICE + numbersBrief
+          : isPartner
+            ? PARTNER_VOICE + numbersBrief
+            : SAGE_VOICE + OWNER_CLEARANCE + platformBrief + numbersBrief,
     },
     // Every tool runs without stopping to ask, on the same files the editor
     // opens. Git is what protects them — see the README.
