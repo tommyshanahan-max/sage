@@ -129,6 +129,20 @@ up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	@# wrote nothing on the box for a whole deploy without anyone noticing.
 	@sh scripts/whats-new.sh 	  || echo "note: could not stamp the commit list; Sage will not know what changed"
 	$(COMPOSE) up -d --build
+	@# Caddy's site files are bind-mounted, so editing one changes nothing that
+	@# compose can see: the service definition is identical, the container is
+	@# left Running rather than recreated, and Caddy keeps serving the config it
+	@# loaded at boot. A new hostname or a new redirect then does not exist, and
+	@# the deploy that shipped it says every container is fine.
+	@#
+	@# So reload after every up. It is a no-op when nothing changed and it drops
+	@# no connections. It never fails the deploy: on a first run the container
+	@# may not be up yet, and a containers-are-started deploy reporting failure
+	@# because of that would be worse than the note it prints instead. A config
+	@# Caddy refuses is caught by `make check`, which is where that belongs.
+	@$(COMPOSE) exec -T caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null \
+	  && echo "caddy reloaded" \
+	  || echo "note: caddy not reloaded (not running yet?) — run 'make reload' if a site is missing"
 	echo "up. https://$$(grep -E '^TOMSCODING_DOMAIN=' .env | cut -d= -f2-)"
 
 down: ## Stop everything (volumes are kept)
