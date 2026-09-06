@@ -697,6 +697,13 @@ services:
       # without anybody refreshing — the same webhook Study Pal posts to.
       BOARD_HOOK_URL: ${TOMSCODING_BOARD_HOOK_URL:-}
       BOARD_HOOK_SECRET: ${TOMSCODING_STUDYPAL_WEBHOOK_SECRET:-}
+      # Tap anything on the board and find out what it says. The one thing here
+      # that costs money per use, so it is capped three ways in lib/translate.js
+      # — per browser, per day, and per request — and the button does not appear
+      # at all without a key, rather than appearing and failing.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      BOARD_TRANSLATE_BURST: ${TOMSCODING_BOARD_TRANSLATE_BURST:-30}
+      BOARD_TRANSLATE_DAY: ${TOMSCODING_BOARD_TRANSLATE_DAY:-2000}
     volumes:
       - board_data:/data
     expose:

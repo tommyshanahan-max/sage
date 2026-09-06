@@ -30,6 +30,7 @@ import { mkdir, readFile, writeFile, rename, stat } from "node:fs/promises";
 import { timingSafeEqual, randomUUID } from "node:crypto";
 import path from "node:path";
 import * as store from "./lib/store.js";
+import { translate, configured as translateReady } from "./lib/translate.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -127,7 +128,8 @@ app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 // Who to write to when something is wrong that a report does not cover. Read
 // by the page, which prints nothing at all when there is no answer here.
-app.get("/api/contact", (_req, res) => res.json({ contact: CONTACT }));
+app.get("/api/contact", (_req, res) =>
+  res.json({ contact: CONTACT, translate: translateReady() }));
 
 /* The page itself, with its own address written into it.
  *
@@ -273,6 +275,32 @@ app.delete("/api/post", express.json(), async (req, res) => {
 // ---------------------------------------------------------------------------
 // Posting, from the board itself
 // ---------------------------------------------------------------------------
+/* Tap anything and find out what it says.
+ *
+ * Public, because the board is public and a reader who has to sign in to read
+ * a sign is a reader who gives up. Rate limited by browser and capped for the
+ * day in lib/translate.js — a public endpoint that calls a model is a bill
+ * anybody can run up.
+ *
+ * The reader's own language comes from the page rather than a header, because
+ * somebody reading in Chinese on a phone set to English is the ordinary case
+ * here, not the exception.
+ */
+app.post("/api/translate", express.json({ limit: "16kb" }), async (req, res) => {
+  if (!translateReady()) return res.status(503).json({ error: "unconfigured" });
+  const out = await translate(String(req.body?.text || ""), {
+    lang: req.body?.lang === "zh" ? "zh" : "en",
+    by: store.hashDevice(String(req.body?.device || ""), SALT) || req.ip || "anon",
+  });
+  // A refusal is not a server fault: the caller is told which kind so the page
+  // can say "wait a moment" rather than "something went wrong".
+  if (out.error) {
+    const code = out.error === "slow-down" ? 429 : out.error === "unconfigured" ? 503 : 400;
+    return res.status(code).json(out);
+  }
+  res.json(out);
+});
+
 // ---------------------------------------------------------------------------
 // Reporting
 // ---------------------------------------------------------------------------
