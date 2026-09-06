@@ -264,6 +264,11 @@ export const STRINGS = {
   "bud.followers":     ["{n} following them", "{n} 人关注"],
   "bud.followers1":    ["1 person follows them", "1 人关注"],
   "feed.onlyFollowing":["People I follow", "我关注的"],
+  "post.orBuddy": [
+    "Looking for someone to study with?",
+    "在找一起学习的人？",
+  ],
+  "post.orBuddyGo":    ["Say so here instead", "到这里说一声"],
   "me.editTitle":      ["Your profile", "你的资料"],
   "me.name":           ["Your name — what people see on your posts",
                         "你的名字——别人在你的内容上看到的"],

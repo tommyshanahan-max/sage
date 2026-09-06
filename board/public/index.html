@@ -347,6 +347,10 @@
     border-radius:50%;border:0;background:rgba(21,27,40,.72);color:#fff;
     font-size:1.1rem;line-height:1;display:grid;place-items:center}
   .said{margin:.85rem 0 0;font-size:.92rem;line-height:1.5;color:var(--ink-2)}
+  .orbuddy{margin:1.1rem 0 0;padding-top:.9rem;border-top:1px solid var(--line);
+    font-size:.88rem;color:var(--muted);line-height:1.55}
+  .orbuddy a{color:var(--accent);text-decoration:none;white-space:nowrap}
+  .orbuddy a:hover{text-decoration:underline}
   .hint{margin:0 0 .9rem;font-size:.86rem;line-height:1.55;color:var(--muted)}
   .reasons{display:flex;gap:.4rem;flex-wrap:wrap;margin:0 0 .8rem}
   .reasons button{border:1px solid var(--line);background:var(--raise);color:var(--ink);
@@ -444,17 +448,16 @@
 <div class="sheet" id="reportsheet" hidden>
   <form class="card" id="reportform">
     <h2 id="reporttitle">Report this post</h2>
-    <p class="hint">A person reads every report. Say what is wrong with it — one
-      line is enough, and it is the thing that decides what happens next.</p>
+    <p class="hint" id="reporthint"></p>
     <div class="reasons" id="reasons"></div>
     <textarea id="why" rows="2" placeholder="Anything else worth knowing…"></textarea>
     <label class="alsoblock">
       <input type="checkbox" id="alsoblock">
-      <span>Also hide everything from <b id="blockwho"></b> on this phone</span>
+      <span><span id="blockpre"></span><b id="blockwho"></b><span id="blockpost"></span></span>
     </label>
     <div class="row">
-      <button class="ghost" type="button" id="reportshut">Cancel</button>
-      <button class="go" type="submit">Report it</button>
+      <button class="ghost" type="button" id="reportshut"></button>
+      <button class="go" type="submit" id="reportgo"></button>
     </div>
     <p class="said" id="reportsaid" hidden></p>
   </form>
@@ -462,7 +465,7 @@
 
 <div class="sheet" id="sheet" hidden>
   <form class="card" id="ask">
-    <h2>Put something up</h2>
+    <h2 id="posttitle">Put something up</h2>
     <textarea id="note" rows="3"
       placeholder="Where to get a SIM without a Chinese bank card, which gate at Renmin, what the label says, a good meal…"></textarea>
     <div class="shot" id="shot" hidden>
@@ -482,6 +485,16 @@
       <button class="go" type="submit" id="send">Put it up</button>
     </div>
     <p class="said" id="said" hidden></p>
+
+    <!-- The other thing somebody might mean by "put something up". Offered
+         here rather than behind a chooser in front of the +: posting is what
+         keeps a board alive and must not cost an extra tap, but "I am looking
+         for someone to study with" is a create action too, and this is the
+         moment it is on somebody's mind. -->
+    <p class="orbuddy">
+      <span id="orbuddytext"></span>
+      <a href="/buddies" id="orbuddygo"></a>
+    </p>
   </form>
 </div>
 
@@ -984,7 +997,15 @@ let reporting = null, reason = "";
 function openReport(p) {
   reporting = p; reason = "";
   $("reporttitle").textContent = p.handle ? T("rep.title", { who: p.handle }) : T("rep.titleAnon");
-  $("blockwho").textContent = p.handle || "them";
+  // The same omission as the compose sheet: these were static English in the
+  // markup, so a Chinese reader got a Chinese page with an English report box.
+  $("reporthint").textContent = T("rep.hint");
+  $("why").placeholder = T("rep.more");
+  $("blockpre").textContent = T("rep.alsoBlock");
+  $("blockpost").textContent = T("rep.alsoBlock2");
+  $("reportshut").textContent = T("post.cancel");
+  $("reportgo").textContent = T("rep.go");
+  $("blockwho").textContent = p.handle || T("board.someone");
   $("alsoblock").checked = false;
   $("why").value = "";
   $("reportsaid").hidden = true;
@@ -1050,6 +1071,19 @@ $("reportform").addEventListener("submit", async (e) => {
 
 // ---- putting something up --------------------------------------------------
 function openSheet(open) {
+  // Everything in the sheet, every time it opens. These were left as static
+  // English attributes in the markup, so the language switch moved the page
+  // around them and the compose box stayed in English — the exact failure the
+  // dictionary exists to prevent, hiding in the one place nothing painted.
+  $("posttitle").textContent = T("post.title");
+  $("note").placeholder = T("post.placeholder");
+  $("who").placeholder = T("post.as");
+  $("topic").placeholder = T("post.topic");
+  $("pickpic").textContent = T("post.photo");
+  $("shut").textContent = T("post.cancel");
+  $("send").textContent = T("post.go");
+  $("orbuddytext").textContent = T("post.orBuddy") + " ";
+  $("orbuddygo").textContent = T("post.orBuddyGo");
   $("sheet").hidden = !open;
   if (open) {
     try { $("who").value = localStorage.getItem("board:who") || ""; } catch { /* fine */ }
