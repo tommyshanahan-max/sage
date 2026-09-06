@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<!-- iOS reads these rather than the manifest for a home-screen install:
+     no browser chrome, and a name short enough not to be truncated under
+     the icon. -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="留学生">
+<title>Messages</title>
+<meta name="description" content="Introductions people sent you, and the ones you sent.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Messages">
+<meta property="og:description" content="One message, answered once, and then you carry on somewhere else.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="{{ORIGIN}}/notes">
+<meta name="robots" content="noindex">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t1:#3F68D8; --t2:#2A9D63; --t3:#D99038; --t4:#7268C4; --t5:#D4485C; --t6:#2F8C9E;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --shadow:0 2px 6px rgba(21,27,40,.07),0 10px 28px rgba(21,27,40,.09);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
+      --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
+    --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+  }
+  :root[data-lang="zh"]{
+    --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif;
+  }
+  :root[data-lang="zh"] body{line-height:1.75}
+  :root[data-lang="zh"] .rule span,
+  :root[data-lang="zh"] .fact dt{text-transform:none;letter-spacing:.02em}
+  [hidden]{display:none!important}
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  main{max-width:34rem;margin:0 auto;padding:1.4rem 1.15rem 5rem}
+  button{font:inherit;cursor:pointer}
+  a{color:inherit}
+  img{max-width:100%}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  .top{display:flex;align-items:center;gap:.8rem;margin:0 0 1.3rem}
+  .top h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.75rem;line-height:1.1}
+  .top p{margin:.15rem 0 0;font-size:.85rem;color:var(--muted)}
+  .back{border:0;background:none;color:var(--ink);padding:.2rem;margin-left:-.3rem;
+    display:grid;place-items:center;flex:0 0 auto}
+  .back svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round}
+  .lang{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1}
+
+  .rule{display:flex;align-items:center;gap:.9rem;margin:0 0 .3rem}
+  .rule span{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);white-space:nowrap}
+  .rule i{flex:1;height:1px;background:var(--line)}
+
+  /* A person in the list. The same row the feed uses, so the two read as one
+     product rather than two screens that happen to share a palette. */
+  .who{display:flex;gap:.9rem;padding:1.2rem 0;border-bottom:1px solid var(--hair);
+    width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;
+    align-items:flex-start}
+  .av{width:3.4rem;height:3.4rem;border-radius:50%;flex:0 0 auto;background:var(--accent);
+    color:var(--accent-ink);display:grid;place-items:center;font-family:var(--serif);
+    font-size:1.35rem;line-height:1;overflow:hidden;
+    box-shadow:0 0 0 3px var(--paper),0 0 0 4px var(--accent-soft)}
+  .av img{width:100%;height:100%;object-fit:cover;display:block}
+  .m{flex:1;min-width:0}
+  .nameline{display:flex;align-items:baseline;gap:.5rem}
+  .nameline b{font-family:var(--serif);font-weight:400;font-size:1.15rem;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nameline .lv{margin-left:auto;flex:0 0 auto;font-size:.72rem;letter-spacing:.05em;
+    border:1px solid var(--line);border-radius:99px;padding:.16rem .55rem;color:var(--muted)}
+  .where{margin:.15rem 0 0;font-size:.83rem;color:var(--muted)}
+  .goal{margin:.45rem 0 0;font-family:var(--serif);font-size:1rem;line-height:1.5;
+    color:var(--ink-2);overflow-wrap:anywhere}
+  .days{display:flex;gap:.25rem;margin:.55rem 0 0;flex-wrap:wrap}
+  .days b{width:1.75rem;height:1.75rem;display:grid;place-items:center;border-radius:.4rem;
+    font-size:.72rem;font-weight:500;background:var(--paper);border:1px solid var(--line);
+    color:var(--muted)}
+  .days b.on{background:var(--t2);border-color:var(--t2);color:#fff}
+
+  .none{padding:3rem .5rem;text-align:center;color:var(--muted)}
+  .none b{display:block;font-family:var(--serif);font-weight:400;font-size:1.3rem;
+    color:var(--ink);margin:0 0 .4rem}
+  .none p{margin:0 auto 1.3rem;max-width:26rem;font-size:.95rem;line-height:1.6}
+  .none button{border:0;background:var(--accent);color:var(--accent-ink);border-radius:99px;
+    padding:.75rem 1.6rem;font-size:1rem}
+
+  .safety{margin:2rem 0 0;padding:.95rem 1.05rem;background:var(--raise);
+    border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
+    font-size:.86rem;line-height:1.6;color:var(--ink-2)}
+
+  /* A note. Two shapes, not one with a modifier: what somebody sent you is a
+     thing to decide about, what you sent is a receipt. Making them look the
+     same made a page where you could not tell at a glance which was which. */
+  .note{padding:1.15rem 0;border-bottom:1px solid var(--hair);display:flex;gap:.9rem;
+    align-items:flex-start}
+  .note .m{flex:1 1 auto;min-width:0}
+  .note .line{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+  .note .line b{font-family:var(--serif);font-weight:400;font-size:1.08rem}
+  .note .line time{margin-left:auto;font-size:.78rem;color:var(--muted);flex:0 0 auto}
+  .note .text{margin:.45rem 0 0;font-family:var(--serif);font-size:1.02rem;line-height:1.55;
+    overflow-wrap:anywhere;white-space:pre-wrap}
+  .note.mine .text{color:var(--ink-2)}
+  .note .acts{display:flex;gap:.5rem;margin:.75rem 0 0;flex-wrap:wrap}
+  .note .acts button,.note .acts a{border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);border-radius:99px;padding:.5rem 1.05rem;font-size:.87rem;
+    text-decoration:none;display:inline-block}
+  .note .acts button.primary{background:var(--accent);border-color:var(--accent);
+    color:var(--accent-ink)}
+  .note .acts button.warn{color:var(--t5)}
+  .note .said{margin:.55rem 0 0;font-size:.83rem;color:var(--muted)}
+  .note .said.bad{color:var(--t5)}
+  /* Unread. A dot rather than a colour wash: the message is what should be
+     read, not the fact that it is new. */
+  .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--accent);
+    flex:0 0 auto;margin-top:.5rem}
+  .dot.spent{background:transparent}
+
+  /* Answering, in place. There is only ever one answer, so a sheet with its
+     own screen would be more ceremony than the thing deserves. */
+  .reply{margin:.75rem 0 0}
+  .reply textarea{width:100%;min-height:5.5rem;resize:vertical;font:inherit;
+    padding:.65rem .75rem;border-radius:.7rem;border:1px solid var(--line);
+    background:var(--raise);color:var(--ink)}
+  .reply .how{margin:.5rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
+</style>
+
+</head>
+<body>
+<main>
+  <div class="top">
+    <button class="back" id="back" aria-label="Back">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <div>
+      <h1 id="title"></h1>
+      <p id="sub"></p>
+    </div>
+    <span id="langslot"></span>
+  </div>
+
+  <div class="rule"><span id="rulelabel"></span><i></i></div>
+  <div id="list"></div>
+  <div class="none" id="none" hidden></div>
+
+  <p class="safety" id="safety"></p>
+</main>
+
+<script type="module">
+import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
+
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
+  if (x !== undefined) n.textContent = x; return n; };
+const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
+const initial = (name) => (String(name || "?").trim()[0] || "?").toLowerCase();
+
+let device = "";
+try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
+
+let NOTES = [], UNREAD = 0;
+
+async function load() {
+  try {
+    const d = await fetch("/api/notes", { cache: "no-store",
+      headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
+    NOTES = d.notes || [];
+    UNREAD = d.unread || 0;
+  } catch { NOTES = []; UNREAD = 0; }
+  paint();
+
+  /* Marked read after they are on the screen, not before. Doing it in the
+   * same breath as the fetch means a page that failed to render still
+   * counted as read, and the message is then gone from the count with
+   * nobody having seen it. */
+  if (UNREAD && device) {
+    fetch("/api/note/seen", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device }),
+    }).catch(() => { /* it stays unread, which is the safe way to be wrong */ });
+  }
+}
+
+function paint() {
+  $("title").textContent = T("note.inbox");
+  $("rulelabel").textContent = T("note.inbox");
+  $("safety").textContent = T("note.safety");
+  $("back").setAttribute("aria-label", T("bud.back"));
+  $("sub").textContent = UNREAD ? T("note.newOnes", { n: UNREAD }) : T("note.inboxSub");
+
+  const box = $("list");
+  fill(box);
+  $("none").hidden = NOTES.length > 0;
+  if (!NOTES.length) {
+    fill($("none"));
+    $("none").append(el("b", null, T("note.none")), el("p", null, T("note.noneBody")));
+    return;
+  }
+  for (const n of NOTES) box.append(row(n));
+}
+
+function row(n) {
+  const box = el("div", "note" + (n.mine ? " mine" : ""));
+  box.append(el("div", "dot" + (n.mine || n.seen ? " spent" : "")));
+
+  const m = el("div", "m");
+  const line = el("div", "line");
+  line.append(el("b", null,
+    T(n.mine ? "note.toThem" : "note.fromThem", { who: n.handle || "—" })));
+  const t = el("time", null, when(n.at));
+  t.dateTime = n.at;
+  line.append(t);
+  m.append(line, el("div", "text", n.text));
+
+  const acts = el("div", "acts");
+  if (n.handle) {
+    const go = el("a", null, T("note.openProfile"));
+    go.href = "/p/" + encodeURIComponent(n.handle.toLowerCase());
+    acts.append(go);
+  }
+
+  const said = el("p", "said");
+
+  // The one answer, if there is one to give.
+  if (n.canAnswer) {
+    const ans = el("button", "primary", T("note.answerIt"));
+    ans.type = "button";
+    ans.addEventListener("click", () => {
+      ans.remove();
+      const wrap = el("div", "reply");
+      const ta = document.createElement("textarea");
+      ta.maxLength = 600;
+      ta.placeholder = T("note.placeholder");
+      wrap.append(ta, el("p", "how", T("note.answerHow")));
+      const send = el("button", "primary", T("note.send"));
+      send.type = "button";
+      send.addEventListener("click", async () => {
+        const text = ta.value.trim();
+        if (!text) { ta.focus(); return; }
+        send.disabled = true;
+        said.classList.remove("bad");
+        said.textContent = T("note.sending");
+        try {
+          const r = await fetch("/api/note", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device, who: n.who, text }),
+          });
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(d.error || "no");
+          await load();
+        } catch (err) {
+          said.classList.add("bad");
+          const known = { profile: "note.needProfile", enough: "note.enough",
+                          gone: "note.gone", closed: "note.closed" };
+          said.textContent = T(known[String(err.message)] || "note.failed", { who: n.handle });
+          send.disabled = false;
+        }
+      });
+      const acts2 = el("div", "acts");
+      acts2.append(send);
+      wrap.append(acts2);
+      m.append(wrap);
+      ta.focus();
+    });
+    acts.append(ans);
+  }
+
+  // Reporting, and only on something you received. Reporting your own message
+  // is not a thing, and offering it would suggest it was.
+  if (!n.mine) {
+    if (n.reported) {
+      acts.append(el("span", null, T("note.reported")));
+    } else {
+      const rep = el("button", "warn", T("note.report"));
+      rep.type = "button";
+      rep.addEventListener("click", async () => {
+        const why = window.prompt(T("note.reportWhy"), "");
+        if (why === null) return;
+        rep.disabled = true;
+        try {
+          await fetch("/api/note/report", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device, id: n.id, why }),
+          });
+          said.textContent = T("note.reported");
+          rep.remove();
+        } catch {
+          rep.disabled = false;
+          said.classList.add("bad");
+          said.textContent = T("note.failed");
+        }
+      });
+      acts.append(rep);
+    }
+  }
+
+  m.append(acts, said);
+  box.append(m);
+  return box;
+}
+
+$("back").addEventListener("click", () => {
+  if (history.length > 1) history.back(); else location.href = "/feed";
+});
+
+setLang(pickLang());
+$("langslot").append(langButton(paint));
+load();
+</script>
+</body>
+</html>

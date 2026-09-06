@@ -253,6 +253,15 @@
     box-shadow:0 0 0 3px var(--paper)}
 
   /* ---- topics ------------------------------------------------------------ */
+  /* How many are waiting, on the tab itself. A number rather than a plain
+     dot: one introduction and nine are different situations, and the person
+     deciding whether to open it should not have to open it to find out. */
+  .bar .badge{position:absolute;top:.1rem;left:calc(50% + .35rem);min-width:1.05rem;
+    height:1.05rem;padding:0 .28rem;border-radius:99px;background:var(--t5);color:#fff;
+    font-size:.68rem;font-weight:700;font-style:normal;line-height:1.05rem;
+    text-align:center;box-shadow:0 0 0 2px var(--paper)}
+  .bar a{position:relative}
+
   .topics{display:flex;gap:.55rem;overflow-x:auto;padding:0 0 .35rem;
     margin:0 -1.15rem 1.5rem;padding-left:1.15rem;padding-right:1.15rem;
     scrollbar-width:none}
@@ -555,6 +564,11 @@
         <i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></i>
         <span id="navnewlabel">Put something up</span>
       </button>
+      <a href="/notes" id="navnotes">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
+        <span id="navnoteslabel">Messages</span>
+        <i class="badge" id="navnotesn" hidden></i>
+      </a>
       <a href="#" id="navme">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
         <span id="navmelabel">Profile</span>
@@ -1494,6 +1508,7 @@ $("tform").addEventListener("submit", async (e) => {
  * losing your place in a feed is what makes people not press it twice. */
 function paintNav() {
   $("navfeedlabel").textContent = T("nav.feed");
+  $("navnoteslabel").textContent = T("note.inbox");
   $("navnewlabel").textContent = T("nav.new");
   $("navmelabel").textContent = T("nav.profile");
   // Profile goes to your own page once you have one. Before that it opens the
@@ -1512,6 +1527,21 @@ function paintNav() {
       openMe();
     };
   }
+}
+
+/* How many introductions are waiting. Its own request rather than a field on
+ * the board: the board is public and cached at every layer, and a number that
+ * belongs to one browser has no business travelling with it. */
+async function countNotes() {
+  if (!device) return;
+  try {
+    const d = await fetch("/api/notes", { cache: "no-store",
+      headers: { "x-board-device": device } }).then((r) => r.json());
+    const n = (d && d.unread) || 0;
+    const badge = $("navnotesn");
+    badge.textContent = n > 9 ? "9+" : String(n);
+    badge.hidden = !n;
+  } catch { /* the tab is still a tab without a number on it */ }
 }
 
 function repaint() {
@@ -1944,6 +1974,7 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
   .catch(() => { drawMe(); paintNav(); });
 
 load();
+countNotes();
 </script>
 
 <script>

@@ -199,6 +199,10 @@ app.get(["/abroad", "/abroad/"], (req, res, next) => page("abroad.html", req, re
  * answer here is unusually short. */
 app.get(["/privacy", "/privacy/"], (req, res, next) => page("privacy.html", req, res, next));
 app.get(["/buddies", "/buddies/"], (req, res, next) => page("buddies.html", req, res, next));
+// Your own messages. noindex in the page, and it holds nothing without the
+// device id the browser sends — but a private page should not be in a sitemap
+// either way.
+app.get(["/notes", "/notes/"], (req, res, next) => page("notes.html", req, res, next));
 
 /* One person, at an address that can be sent to somebody.
  *
@@ -427,6 +431,177 @@ app.get("/api/people", async (req, res) => {
   });
 });
 
+/* ---------------------------------------------------------------------------
+ * Notes: one private message, answered once, and then it is over
+ *
+ * The list gives you somebody's campus and their free days and no way to say
+ * anything to them, which makes it a directory rather than an introduction.
+ * What it needed was the smallest thing that closes that gap without becoming
+ * a chat app on a board with no accounts.
+ *
+ * So: a mutual swap, shaped as a private reply. You write once. They may
+ * answer once. Whatever either of you put in those two messages — a WeChat id,
+ * usually — is how you carry on somewhere else. Then this thread is closed and
+ * neither of you can write again.
+ *
+ * Why closed rather than open:
+ *   - Two messages is exactly enough to trade contact details, which is the
+ *     whole job. A third is a conversation, and a conversation here would need
+ *     blocking, muting, deletion and everything else that follows.
+ *   - Nobody can be worn down. The person who did not answer is not written to
+ *     again, and "no answer" needs no button and costs nothing to say.
+ *   - There is no inbox to fill. The worst case for a person on the list is a
+ *     handful of unanswered introductions, not a stream.
+ *
+ * What is not here, deliberately: nothing is held for review, because a
+ * private message read by a moderator before delivery is not private; and
+ * contact details are not filtered out, because carrying one is the point.
+ * What holds instead is that the person who received a note can report it, and
+ * reporting is the only way anybody else ever reads it.
+ * ------------------------------------------------------------------------- */
+
+/* How many introductions one browser may send in a day. Low, because the
+ * failure this prevents is somebody writing to every woman on the list in one
+ * evening, and nobody with an honest reason to write needs more. */
+const NOTES_A_DAY = Math.max(1, Number(process.env.BOARD_NOTES_A_DAY || 5));
+
+/** Where a thread between two people has got to. The whole rule, in one place,
+ *  so the route and the page cannot disagree about it. */
+function threadState(notes, me, them) {
+  const between = notes.filter(
+    (n) => (n.by === me && n.to === them) || (n.by === them && n.to === me));
+  if (!between.length) return { can: true, why: "" };
+  if (between.length >= 2) return { can: false, why: "closed" };
+  // Exactly one. Only the person who received it may answer, and only now.
+  const one = between[0];
+  return one.to === me
+    ? { can: true, why: "answering", answering: one.id }
+    : { can: false, why: "waiting" };
+}
+
+/* Writing to somebody. */
+app.post("/api/note", express.json({ limit: "16kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const who = String(req.body?.who || "");
+  const text = String(req.body?.text || "").trim().slice(0, 600);
+  const re = String(req.body?.re || "");
+  if (!me) return res.status(400).json({ error: "no" });
+  if (!text) return res.status(400).json({ error: "empty" });
+  if (!/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "gone" });
+
+  const out = await change((board) => {
+    const target = board.people.find((x) => x.id === who && x.state === "published");
+    // The same answer for a person who does not exist and one who has taken
+    // themselves down, so this cannot be used to ask which ids are real.
+    if (!target) return { error: "gone" };
+    if (target.by === me) return { error: "self" };
+
+    // You need a profile to write to somebody. Not a rule for its own sake:
+    // an introduction from a name that does not exist is not one, and the
+    // person receiving it has nothing to decide about.
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine || !mine.handle) return { error: "profile" };
+
+    const state = threadState(board.notes, me, target.by);
+    if (!state.can) return { error: state.why };
+    if (!state.answering && store.sentToday(board.notes, me) >= NOTES_A_DAY) {
+      return { error: "enough" };
+    }
+
+    const note = store.cleanNote({
+      id: store.newId(), at: new Date().toISOString(),
+      by: me, to: target.by, re, text,
+    });
+    if (!note) return { error: "no" };
+    board.notes.push(note);
+    return { note, answering: Boolean(state.answering) };
+  });
+
+  if (out.error) {
+    const code = out.error === "gone" ? 404 : (out.error === "enough" ? 429 : 400);
+    return res.status(code).json({ error: out.error });
+  }
+  // Nothing is told to the panel. A note nobody reported is not the admin's to
+  // know about, and a webhook carrying one would make that untrue.
+  res.status(201).json({ ok: true, id: out.note.id, answering: out.answering });
+});
+
+/* Mine, both directions.
+ *
+ * The device id travels in a header rather than the query, because a query
+ * string is the part of a request that ends up in logs and referrers. */
+app.get("/api/notes", async (req, res) => {
+  const board = await store.load(FILE);
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  res.set("Cache-Control", "no-store");
+  if (!me) return res.json({ notes: [], unread: 0 });
+
+  // Whose it is, in the only terms a reader can use: a name and a face. The
+  // device hash on either end never leaves this function.
+  const name = (hash) => {
+    const q = board.people.find((x) => x.by === hash);
+    return q ? { who: q.id, handle: q.handle, photo: q.photoState === "published" ? q.photo : "" }
+             : { who: "", handle: "", photo: "" };
+  };
+
+  const notes = store.notesFor(board.notes, me).map((n) => {
+    const mine = n.by === me;
+    const them = name(mine ? n.to : n.by);
+    return {
+      id: n.id, at: n.at, text: n.text, re: n.re, mine,
+      ...them,
+      // Only ever shown to the person who received it: "they have read it" is
+      // a fact about the reader, and the sender is not owed it.
+      seen: mine ? undefined : n.seen,
+      reported: Boolean(n.report),
+      // Whether this can still be answered, so the page does not offer a box
+      // that the server will refuse.
+      canAnswer: !mine && threadState(board.notes, me, n.by).can,
+    };
+  });
+
+  res.json({ notes, unread: notes.filter((n) => !n.mine && !n.seen).length });
+});
+
+/* Read. Set by the person who received it and by nobody else. */
+app.post("/api/note/seen", express.json({ limit: "8kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  await change((board) => {
+    for (const n of board.notes) if (n.to === me) n.seen = true;
+  });
+  res.json({ ok: true });
+});
+
+/* Somebody says a note should not have been sent.
+ *
+ * This is the only route that puts a private message in front of the panel,
+ * and only the person who received it can press it. */
+app.post("/api/note/report", express.json({ limit: "16kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.id || "");
+  const why = String(req.body?.why || "").trim().slice(0, 400);
+  if (!me || !/^[a-f0-9]{20}$/.test(id)) return res.status(400).json({ error: "no" });
+
+  const out = await change((board) => {
+    const note = board.notes.find((n) => n.id === id && n.to === me);
+    if (!note) return null;
+    note.report = why || "Reported by the person who received it.";
+    // Written into the queue as a held post, so it lands in the same list the
+    // panel already reads and needs no second surface to be seen in. The text
+    // is carried, because a report nobody can read is not a report.
+    board.posts.push(store.cleanPost({
+      id: store.newId(), at: new Date().toISOString(), state: "held",
+      handle: "a private message", note: note.text, by: note.by,
+      why: "Reported by the person it was sent to: " + note.report,
+    }));
+    return note;
+  });
+  if (!out) return res.status(404).json({ error: "no such note" });
+  tell("reported", { id: out.id, note: out.text, why: out.report });
+  res.json({ ok: true });
+});
+
 /* Follow, and unfollow, which is the same button. */
 app.post("/api/follow", express.json({ limit: "8kb" }), async (req, res) => {
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
@@ -466,6 +641,10 @@ app.get("/api/person", async (req, res) => {
       // Whether YOU follow them. Never who else does — a count is a fact about
       // a person, a list is a social graph.
       following: Boolean(me) && board.follows.some((f) => f.by === me && f.who === q.id),
+      // Whether you may write to them, and whether this would be an answer.
+      // Decided here rather than on the page, so the button and the route
+      // cannot come to different conclusions about the same two people.
+      thread: (me && q.by !== me) ? threadState(board.notes, me, q.by) : { can: false, why: "" },
     },
     // What they have actually put on the board, which is the only evidence a
     // stranger has that a profile is a person.

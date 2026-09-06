@@ -136,6 +136,27 @@
     font-size:.86rem;line-height:1.6;color:var(--ink-2)}
 
   .none{padding:4rem 1.15rem;text-align:center;color:var(--muted)}
+
+  /* Writing to somebody. A sheet rather than a page: the profile behind it is
+     what you are deciding about, and losing sight of it to write two lines is
+     the wrong trade. */
+  .sheet{position:fixed;inset:0;z-index:60;display:grid;place-items:end center;
+    background:rgba(12,16,24,.42);padding:0}
+  .sheet .card{width:min(34rem,100%);background:var(--raise);color:var(--ink);
+    border-radius:18px 18px 0 0;padding:1.2rem 1.15rem calc(1.2rem + env(safe-area-inset-bottom));
+    box-shadow:0 -8px 40px rgba(12,16,24,.28);max-height:88vh;overflow:auto}
+  .sheet h2{margin:0 0 .35rem;font-size:1.05rem}
+  .sheet .how{margin:0 0 .8rem;font-size:.86rem;line-height:1.55;color:var(--ink-2)}
+  .sheet textarea{width:100%;min-height:7.5rem;resize:vertical;font:inherit;
+    padding:.7rem .8rem;border-radius:12px;border:1px solid var(--line);
+    background:var(--paper);color:var(--ink)}
+  .sheet .row{display:flex;gap:.5rem;margin:.8rem 0 0}
+  .sheet .row button{flex:1 1 auto;min-width:0}
+  .sheet .said{margin:.6rem 0 0;font-size:.85rem;color:var(--muted)}
+  .sheet .said.bad{color:#B4232A}
+  /* A line saying where a thread has got to, where the button used to be. */
+  .stateline{margin:0;padding:.75rem .9rem;border-radius:12px;font-size:.88rem;
+    background:var(--accent-soft);color:var(--ink-2)}
   .none b{display:block;font-family:var(--serif);font-weight:400;font-size:1.35rem;
     color:var(--ink);margin:0 0 .4rem}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -165,13 +186,14 @@ const initial = (name) => (String(name || "?").trim()[0] || "?").toLowerCase();
 let device = "";
 try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
 
-let PERSON = null, POSTS = [];
+let PERSON = null, POSTS = [], THREAD = { can: false, why: "" };
 
 async function load() {
   try {
     const d = await fetch("/api/person?handle=" + encodeURIComponent(HANDLE),
       { headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
     PERSON = d.person; POSTS = d.posts || [];
+    THREAD = (d.person && d.person.thread) || { can: false, why: "" };
   } catch { PERSON = null; }
   paint();
 }
@@ -273,6 +295,16 @@ function paint() {
       fol.textContent = T("act.again");
     });
     acts.append(fol);
+
+    // Saying hello. Only offered where it can actually be done: the rule about
+    // who may write and when lives on the server, and the page asks rather
+    // than working it out again and disagreeing.
+    if (THREAD.can) {
+      const hi = el("button", "primary", T(THREAD.answering ? "note.answerIt" : "note.say"));
+      hi.type = "button";
+      hi.addEventListener("click", () => sheet(q));
+      acts.append(hi);
+    }
   }
   const feed = el("a", null, T("bud.back"));
   feed.href = "/feed";
@@ -294,7 +326,82 @@ function paint() {
     acts.append(rep);
   }
   box.append(acts);
+
+  // Where this got to, when there is nothing left to press. "You have written,
+  // it is theirs to answer" is a better answer than a button that fails.
+  if (!q.mine && !THREAD.can && THREAD.why) {
+    box.append(el("p", "stateline",
+      T(THREAD.why === "closed" ? "note.closed" : "note.waiting", { who: q.handle })));
+  }
   box.append(el("p", "safety", T("bud.safety")));
+}
+
+/* The sheet. Two lines and a send, and an honest sentence about what happens
+ * to them. */
+function sheet(q) {
+  const wrap = el("div", "sheet");
+  const card = el("div", "card");
+  const answering = Boolean(THREAD.answering);
+
+  card.append(el("h2", null, T("note.title", { who: q.handle })));
+  card.append(el("p", "how", answering ? T("note.answerHow") : T("note.how", { who: q.handle })));
+
+  const box = document.createElement("textarea");
+  box.maxLength = 600;
+  box.placeholder = T("note.placeholder");
+  card.append(box);
+
+  const said = el("p", "said");
+  const row = el("div", "row");
+  const shut = el("button", null, T("bud.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => wrap.remove());
+  const go = el("button", "primary", T("note.send"));
+  go.type = "button";
+
+  go.addEventListener("click", async () => {
+    const text = box.value.trim();
+    if (!text) { box.focus(); return; }
+    go.disabled = true; shut.disabled = true;
+    said.classList.remove("bad");
+    said.textContent = T("note.sending");
+    try {
+      const r = await fetch("/api/note", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, who: q.id, text }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        // The server's word for what stopped it, said in the reader's own
+        // language rather than passed through as a code.
+        const known = { profile: "note.needProfile", enough: "note.enough",
+                        gone: "note.gone", closed: "note.closed", waiting: "note.waiting" };
+        said.classList.add("bad");
+        said.textContent = T(known[d.error] || "note.failed", { who: q.handle });
+        go.disabled = false; shut.disabled = false;
+        return;
+      }
+      said.textContent = T("note.sent");
+      go.remove();
+      shut.disabled = false;
+      shut.textContent = T("bud.close");
+      // The profile behind the sheet is now wrong about what can be pressed.
+      await load();
+    } catch {
+      said.classList.add("bad");
+      said.textContent = T("note.failed");
+      go.disabled = false; shut.disabled = false;
+    }
+  });
+
+  row.append(shut, go);
+  card.append(row, said);
+  wrap.append(card);
+  // Pressing the dimmed area behind it closes; pressing the card does not.
+  wrap.addEventListener("click", (e) => { if (e.target === wrap) wrap.remove(); });
+  document.body.append(wrap);
+  box.focus();
 }
 
 setLang(pickLang());

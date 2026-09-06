@@ -605,6 +605,53 @@ export const STRINGS = {
   "bud.blocked":       ["Hidden on this phone", "已在这台手机上隐藏"],
   "bud.reportThem":    ["Report this profile", "举报这份资料"],
 
+  // ---- notes: one message, answered once -----------------------------------
+  "note.say":          ["Say hello", "打个招呼"],
+  "note.title":        ["Write to {who}", "写给 {who}"],
+  "note.how": [
+    "Only {who} sees this. Put your WeChat in it if you want them to reach you — that is what it is for. You get one message; they can answer once. After that you carry on wherever you swapped.",
+    "只有 {who} 能看到。想让对方联系你，就把微信号写进去——这条消息就是干这个用的。你只能发一条，对方可以回一条。之后就到你们交换的地方去聊。",
+  ],
+  "note.placeholder":  ["Hi — I am also at Tsinghua on Tuesdays. WeChat: …",
+                        "你好——我周二也在清华。微信：…"],
+  "note.send":         ["Send it", "发送"],
+  "note.sending":      ["Sending…", "发送中…"],
+  "note.answerIt":     ["Answer", "回复"],
+  "note.answerHow": [
+    "One answer, and then this is finished. If you want to carry on, put something in it they can reach you on.",
+    "只能回一条，回完就结束了。想继续聊的话，把联系方式写进去。",
+  ],
+  "note.sent":         ["Sent. It is theirs to answer now.", "已发送。等对方回复。"],
+  "note.waiting":      ["You have written to {who}. It is theirs to answer.",
+                        "你已经写给 {who} 了。等对方回复。"],
+  "note.closed":       ["You have both written. Carry on where you swapped.",
+                        "你们都写过了。到交换的地方继续聊吧。"],
+  "note.needProfile":  ["Fill in your own profile first — an introduction from nobody is not one.",
+                        "先填好自己的资料——没有名字的自我介绍不算自我介绍。"],
+  "note.enough":       ["That is enough messages for one day.", "今天发得够多了。"],
+  "note.gone":         ["That person is not on the list any more.", "这个人已经不在名单上了。"],
+  "note.failed":       ["It did not send. Try again.", "没有发出去，再试一次。"],
+
+  "note.inbox":        ["Messages", "私信"],
+  "note.inboxSub":     ["Introductions to you, and the ones you sent.", "别人写给你的，和你写出去的。"],
+  "note.none":         ["Nothing yet", "还没有消息"],
+  "note.noneBody": [
+    "When somebody writes to you about studying together, it lands here. Nobody can write to you twice, and nobody can see this but you.",
+    "有人想约你一起学习时，消息会到这里。没有人能给你连发两条，也没有人能看到这里。",
+  ],
+  "note.fromThem":     ["{who} wrote to you", "{who} 写给你"],
+  "note.toThem":       ["You wrote to {who}", "你写给 {who}"],
+  "note.newOnes":      ["{n} new", "{n} 条新消息"],
+  "note.report":       ["Report this message", "举报这条消息"],
+  "note.reportWhy":    ["What is wrong with it? Somebody will read it.",
+                        "哪里有问题？会有人看的。"],
+  "note.reported":     ["Reported. Somebody will read it.", "已举报，会有人看的。"],
+  "note.openProfile":  ["Open their profile", "查看对方资料"],
+  "note.safety": [
+    "Nobody here should ask you for money, a deposit, or photographs of your documents. Report anybody who does.",
+    "这里不该有人向你要钱、要押金，或者要你证件的照片。遇到了就举报。",
+  ],
+
   // ---- translate -----------------------------------------------------------
   "tr.open":           ["Translate", "翻译"],
   "tr.title":          ["Translate anything", "翻译"],
