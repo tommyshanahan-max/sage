@@ -319,15 +319,24 @@ function paint() {
     });
     meet.append(fol);
 
-    // Saying hello. Only offered where it can actually be done: the rule about
-    // who may write and when lives on the server, and the page asks rather
-    // than working it out again and disagreeing.
-    if (THREAD.can) {
-      const hi = el("button", "primary", T(THREAD.answering ? "note.answerIt" : "note.say"));
-      hi.type = "button";
-      hi.addEventListener("click", () => sheet(q));
-      meet.append(hi);
-    }
+    /* Saying hello is held back for V1, with Messages.
+     *
+     * Not because it does not work — it does, and the rule about who may write
+     * and when is still enforced on the server. It is that the inbox it lands
+     * in has no tab on it, so a hello sent today arrives somewhere its
+     * recipient cannot open. A button that quietly fails is worse than one
+     * that is not there.
+     *
+     * Everything below stays wired: put the Messages tab back and this is one
+     * `if` away from working again.
+     *
+     * if (THREAD.can) {
+     *   const hi = el("button", "primary", T(THREAD.answering ? "note.answerIt" : "note.say"));
+     *   hi.type = "button";
+     *   hi.addEventListener("click", () => sheet(q));
+     *   meet.append(hi);
+     * }
+     */
   }
   // Your own profile has neither of them, and an empty row is a gap nobody
   // can explain.
@@ -353,12 +362,16 @@ function paint() {
   }
   box.append(acts);
 
-  // Where this got to, when there is nothing left to press. "You have written,
-  // it is theirs to answer" is a better answer than a button that fails.
-  if (!q.mine && !THREAD.can && THREAD.why) {
-    box.append(el("p", "stateline",
-      T(THREAD.why === "closed" ? "note.closed" : "note.waiting", { who: q.handle })));
-  }
+  /* Where a note got to. Held back with the button that starts one: with no
+   * way to write, "you have written, it is theirs to answer" explains a state
+   * nobody on this page can be in or get out of. It comes back when Say hello
+   * does.
+   *
+   * if (!q.mine && !THREAD.can && THREAD.why) {
+   *   box.append(el("p", "stateline",
+   *     T(THREAD.why === "closed" ? "note.closed" : "note.waiting", { who: q.handle })));
+   * }
+   */
   box.append(el("p", "safety", T("bud.safety")));
 }
 
