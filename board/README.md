@@ -128,3 +128,37 @@ server because the crawler runs no JavaScript.
 
 Each is a deliberate absence rather than an oversight, and each is the next
 thing worth doing.
+
+## The door
+
+Invite-only, by one setting: `BOARD_INVITE`.
+
+| value    | what it does                                                          |
+|----------|-----------------------------------------------------------------------|
+| unset    | off. Anybody reads, anybody posts. What the board did before this.     |
+| `post`   | anybody reads; a code is needed to post or make a page.               |
+| `read`   | a code is needed to see anything. Every page is the door until then.  |
+
+Set it in `.env` and `make deploy`. Nothing else changes.
+
+    make invite WHO="Mei"        one code, labelled so you know who has it
+    make invite WHO="Mei" N=3    three
+    make invites                 what is out there, and what became of it
+    make invite-off CODE=K7M2QP  take one back
+
+Codes are six characters with no O, no zero, no I and no one in them, good
+once, and rate limited to five wrong answers an hour per browser.
+
+**Members hand them out too.** Every admitted person carries one live code in
+their header; it comes back the same until somebody spends it, and then they
+get another. `make invites` shows whose was whose.
+
+**Admission is a fact about a browser** — the same salted hash everything else
+here keys on, held in a signed cookie so the server knows before any script
+runs. Which means the recovery key carries admission with it: paste your key on
+a second browser and that browser is already in. It is also why the door tells
+people to get out of WeChat's browser *before* they spend the code.
+
+It is not encryption. Nothing on the board is encrypted at rest; the pages and
+the data behind them are refused to anybody without the cookie, over HTTPS.
+That is a lock on the door, not a safe.

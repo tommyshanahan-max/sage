@@ -27,7 +27,7 @@
 
 import express from "express";
 import { mkdir, readFile, writeFile, rename, stat } from "node:fs/promises";
-import { timingSafeEqual, randomUUID } from "node:crypto";
+import { timingSafeEqual, randomUUID, createHmac } from "node:crypto";
 import path from "node:path";
 import * as store from "./lib/store.js";
 import { translate, configured as translateReady } from "./lib/translate.js";
@@ -213,6 +213,37 @@ async function page(file, req, res, next) {
  * feed is the better front door.
  */
 const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
+/* THE DOOR, IN FRONT OF EVERYTHING. Only in "read" mode.
+ *
+ * A page request gets the door itself rather than a redirect, so the address
+ * somebody was sent survives being turned away: they type the code and the
+ * link they followed is still in the bar. An API request gets 403 and a word,
+ * because nothing behind here is for a stranger to read.
+ *
+ * What stays open: the door, spending a code, asking whether you are in, and
+ * the files the door itself is made of. Everything in /public is code — no
+ * post, no profile and no photograph is served from there.
+ */
+const OPEN_PATHS = /^\/(enter|i\/|api\/enter|api\/admitted|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+
+app.use(async (req, res, next) => {
+  if (INVITE !== "read") return next();
+  // The operator's own routes carry the admin secret and are checked by their
+  // own middleware. Without this, the door shut on the hand that opens it:
+  // minting an invite was refused before the admin check ever ran.
+  if (KEY && safeEqual(String(req.get("x-admin-secret") || req.query.secret || ""), KEY)) return next();
+  if (OPEN_PATHS.test(req.path)) return next();
+  // Anything with a dot in the last segment is a file: the stylesheet and the
+  // modules the door is built from have to load for the door to work at all.
+  if (/\.[a-z0-9]{2,5}$/i.test(req.path)) return next();
+  if (await admittedReq(req)) return next();
+  if (req.path.startsWith("/api/")) {
+    return res.status(403).json({ error: "invite", where: "/enter" });
+  }
+  res.status(200);
+  return page("enter.html", req, res, next);
+});
+
 app.get("/", (req, res, next) => page(ROOT_IS_BOARD ? "index.html" : "landing.html", req, res, next));
 app.get(["/feed", "/feed/", "/index.html"], (req, res, next) => page("index.html", req, res, next));
 /* /board was the address before this was called the Feed. Kept as a permanent
@@ -263,12 +294,268 @@ app.get(["/buddies", "/buddies/"], (req, res, next) =>
  * by hand, gets the same answer as the tab that is no longer in the bar.
  *
  * Set this true and the whole thing is back: nothing else was removed. */
+/* ---------------------------------------------------------------------------
+ * INVITE ONLY
+ *
+ * Three settings, and the default is the one that changes nothing:
+ *
+ *   ""      off. Anybody can read and anybody can post. What it does today.
+ *   "post"  anybody can read; a code is needed to post or make a page.
+ *   "read"  a code is needed to see anything but the landing page.
+ *
+ * "post" is the one to want. A board nobody can read cannot be recommended by
+ * the people already in it — every shared test result, every profile link sent
+ * into a group chat, is a stranger arriving at a door. Letting them read and
+ * asking for a code before they write keeps the invitation meaningful and
+ * keeps the front door open.
+ *
+ * "read" is there because it is the thing people mean by invite-only, and
+ * because it is one word to change if the board ever needs to be private.
+ *
+ * ADMISSION IS A FACT ABOUT A BROWSER, like everything else here. It is the
+ * same salted hash the rest of the app keys on — which means the recovery key
+ * carries admission with it for free: paste the key on a second browser and
+ * that browser hashes to the same person, and is already in. Nothing extra
+ * had to be built for that, and it is the reason the door tells people to get
+ * out of WeChat before they spend the code rather than afterwards.
+ * ------------------------------------------------------------------------- */
+const INVITE = ["post", "read"].includes(process.env.BOARD_INVITE || "")
+  ? process.env.BOARD_INVITE : "";
+
+/** Has this browser spent a code? */
+async function admitted(device) {
+  const me = store.hashDevice(String(device || ""), SALT);
+  if (!me) return false;
+  const board = await store.load(FILE);
+  return board.invites.some((v) => v.usedBy === me && !v.off);
+}
+
+/* The gate on writing. Reading is never gated by this — see the note above on
+ * why "post" is the setting to want. */
+const gate = async (req, res, next) => {
+  if (INVITE !== "post" && INVITE !== "read") return next();
+  const device = req.body?.device || req.get("x-board-device");
+  if (await admitted(device)) return next();
+  // 403 and a word the page can act on, rather than a sentence to display: the
+  // board sends people to the door rather than printing an error at them.
+  res.status(403).json({ error: "invite", where: "/enter" });
+};
+
 const NOTES_ON = false;
 const notesOff = (req, res, next) =>
   (NOTES_ON ? next() : res.status(404).json({ error: "not in this version" }));
 
 app.get(["/notes", "/notes/"], notesOff,
   (req, res, next) => page("notes.html", req, res, next));
+
+/* ADMISSION THE SERVER CAN SEE BEFORE ANY SCRIPT RUNS.
+ *
+ * The rest of this app identifies a browser from localStorage, which only
+ * exists once the page is running. That is fine for gating what somebody
+ * writes and useless for gating what they are served: an HTML request carries
+ * no localStorage, so "read" mode needs one thing the browser sends on its
+ * own. A cookie is that thing.
+ *
+ * It holds the same salted hash as everything else, signed with the same salt
+ * so it cannot be written by hand — a hash in a cookie with no signature would
+ * be a door anybody could open by pasting somebody else's hash into it. The
+ * hash is not a secret, the signature is.
+ *
+ * httpOnly so no script can read it, Lax so a link from WeChat still carries
+ * it, and a year long because being invited does not expire.
+ */
+const sign = (v) => createHmac("sha256", SALT || "unsalted").update(v).digest("hex").slice(0, 32);
+const inCookie = (req) => {
+  const raw = String(req.headers.cookie || "");
+  const m = /(?:^|;\s*)board_in=([a-f0-9]{32})\.([a-f0-9]{32})/.exec(raw);
+  return m && sign(m[1]) === m[2] ? m[1] : "";
+};
+const setCookie = (res, hash) => {
+  res.append("Set-Cookie", "board_in=" + hash + "." + sign(hash)
+    + "; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax; Secure");
+};
+
+/** Is this request from a browser that has spent a code? Cookie or header. */
+async function admittedReq(req) {
+  const fromCookie = inCookie(req);
+  const fromHeader = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!fromCookie && !fromHeader) return false;
+  const board = await store.load(FILE);
+  return board.invites.some((v) => !v.off && v.usedBy
+    && (v.usedBy === fromCookie || v.usedBy === fromHeader));
+}
+
+/* ---------------------------------------------------------------------------
+ * The door
+ * ------------------------------------------------------------------------- */
+
+/* /i/K7M2QP is the shape that goes in a message: the code is in the address,
+ * so tapping the link is the whole of it. The page reads the code out of the
+ * path, which is why this serves the same file as /enter. */
+app.get(["/enter", "/enter/", "/i/:code"], (req, res, next) =>
+  page("enter.html", req, res, next));
+
+/* SPENDING A CODE.
+ *
+ * Rate limited hard, by browser: five wrong answers an hour. Thirty
+ * characters to the power of six is about seven hundred million, and five
+ * tries an hour makes walking that hopeless — which is the whole security
+ * model, and enough for a board whose contents are public to read anyway.
+ */
+const tries = new Map();
+setInterval(() => {
+  const hour = Date.now() - 3600_000;
+  for (const [k, v] of tries) if (v.at < hour) tries.delete(k);
+}, 600_000).unref?.();
+
+app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no device" });
+
+  // Already in — including somebody who pasted their key on a second browser,
+  // which is the commonest reason to arrive here a second time.
+  if (await admitted(req.body?.device)) {
+    // Already in, but possibly on a browser that has never had the cookie —
+    // somebody who pasted their key. Give it to them now, or "read" mode
+    // would keep turning away a person it has already let in.
+    setCookie(res, me);
+    return res.json({ ok: true, already: true });
+  }
+
+  const now = Date.now();
+  const t = tries.get(me) || { n: 0, at: now };
+  if (t.at < now - 3600_000) { t.n = 0; t.at = now; }
+  if (t.n >= 5) return res.status(429).json({ error: "slow-down", left: 0 });
+
+  const code = store.cleanCode(req.body?.code);
+  if (!code) {
+    t.n += 1; t.at = now; tries.set(me, t);
+    return res.status(400).json({ error: "bad", left: Math.max(0, 5 - t.n) });
+  }
+
+  let outcome = "";
+  const got = await change((board) => {
+    const v = board.invites.find((x) => x.code === code);
+    if (!v || v.off) { outcome = "bad"; return null; }
+    if (v.usedBy) { outcome = v.usedBy === me ? "mine" : "used"; return null; }
+    v.usedBy = me;
+    v.usedAt = new Date().toISOString();
+    outcome = "in";
+    return v;
+  });
+
+  if (outcome === "in" || outcome === "mine") {
+    tries.delete(me);
+    setCookie(res, me);
+    // The label is for whoever handed the code out, not for the person
+    // spending it — what crosses the door is that somebody vouched.
+    return res.json({ ok: true, by: got ? got.who : "" });
+  }
+  t.n += 1; t.at = now; tries.set(me, t);
+  const left = Math.max(0, 5 - t.n);
+  if (outcome === "used") return res.status(409).json({ error: "used", left });
+  return res.status(404).json({ error: "bad", left });
+});
+
+/** Whether this browser is in, and whether being in is required at all. */
+app.get("/api/admitted", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const yes = INVITE ? await admittedReq(req) : true;
+  // Pasting a key on a second browser admits it, and that browser needs the
+  // cookie too or "read" mode will turn it away on the next page load.
+  if (yes && me && INVITE) setCookie(res, me);
+  res.json({ mode: INVITE, in: yes });
+});
+
+/* THE CODE IN SOMEBODY'S OWN HEADER.
+ *
+ * Every member carries one live invite. Asking for it mints it if they have
+ * none, and returns the same one until it is spent — one live code each is
+ * what makes "one code, one person" true from the member's side as well as
+ * the operator's, and it is what keeps the record of who brought whom.
+ *
+ * Labelled with their own name, so the invite list reads as a family tree
+ * rather than a pile of six-character strings.
+ */
+app.get("/api/my-invite", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no device" });
+  if (INVITE && !(await admittedReq(req))) {
+    return res.status(403).json({ error: "invite", where: "/enter" });
+  }
+
+  const board = await store.load(FILE);
+  const mine = board.people.find((q) => q.by === me);
+  const who = (mine && mine.handle) || "";
+
+  const spare = board.invites.find((v) => v.by === me && !v.usedBy && !v.off);
+  if (spare) return res.json({ code: spare.code });
+
+  const made = await change((b) => {
+    // Checked again inside the queue: two taps on a slow connection would
+    // otherwise mint two codes and give away one of them for nothing.
+    const already = b.invites.find((v) => v.by === me && !v.usedBy && !v.off);
+    if (already) return already;
+    const have = new Set(b.invites.map((v) => v.code));
+    let code = store.newCode();
+    while (have.has(code)) code = store.newCode();
+    const v = store.cleanInvite({ code, who, at: new Date().toISOString(), by: me });
+    b.invites.push(v);
+    return v;
+  });
+  res.json({ code: made.code });
+});
+
+/* Minting, from the box. The label is a note to self — how you know who did
+ * not turn up, and how one code is taken back without touching the others. */
+app.post("/api/invite", admin, express.json({ limit: "8kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").slice(0, 40);
+  const n = Math.max(1, Math.min(50, Number(req.body?.n) || 1));
+  const made = [];
+  await change((board) => {
+    const have = new Set(board.invites.map((v) => v.code));
+    for (let i = 0; i < n; i++) {
+      let code = store.newCode();
+      while (have.has(code)) code = store.newCode();
+      have.add(code);
+      const v = store.cleanInvite({ code, who, at: new Date().toISOString() });
+      board.invites.push(v);
+      made.push(v);
+    }
+    return true;
+  });
+  res.status(201).json({ made });
+});
+
+/** What has been handed out, and what became of it. */
+app.get("/api/invite", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  res.json({
+    invites: board.invites.map((v) => ({
+      code: v.code, who: v.who, at: v.at, off: v.off,
+      // Never the hash: it identifies a browser, and this list is read by a
+      // person deciding who to chase, not by anything that needs an id.
+      used: Boolean(v.usedBy), usedAt: v.usedAt,
+    })),
+  });
+});
+
+/** Taking one back. The row stays, so the record of who had it stays. */
+app.delete("/api/invite", admin, express.json({ limit: "8kb" }), async (req, res) => {
+  const code = store.cleanCode(req.query.code || req.body?.code);
+  if (!code) return res.status(400).json({ error: "no such code" });
+  const got = await change((board) => {
+    const v = board.invites.find((x) => x.code === code);
+    if (!v) return null;
+    v.off = true;
+    return v;
+  });
+  if (!got) return res.status(404).json({ error: "no such code" });
+  res.json({ ok: true, code });
+});
 
 // The type sort. Twenty forced choices and where they put you, ported from
 // Fern — the scoring and the items are in /type-items.js, which the page and
@@ -732,7 +1019,7 @@ app.post("/api/note/report", notesOff, express.json({ limit: "16kb" }), async (r
  * many people want it, and one enthusiast pressing four times answers a
  * different question badly.
  */
-app.post("/api/want", express.json({ limit: "4kb" }), async (req, res) => {
+app.post("/api/want", express.json({ limit: "4kb" }), gate, async (req, res) => {
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
   const want = String(req.body?.want || "");
   if (!me) return res.status(400).json({ error: "no" });
@@ -812,7 +1099,7 @@ app.get("/api/followers", async (req, res) => {
 });
 
 /* Follow, and unfollow, which is the same button. */
-app.post("/api/follow", express.json({ limit: "8kb" }), async (req, res) => {
+app.post("/api/follow", express.json({ limit: "8kb" }), gate, async (req, res) => {
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
   const who = String(req.body?.who || "");
   if (!me || !/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "no" });
@@ -879,7 +1166,7 @@ app.get("/api/me", async (req, res) => {
   });
 });
 
-app.put("/api/me", express.json({ limit: "36mb" }), async (req, res) => {
+app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
 
@@ -1039,7 +1326,7 @@ app.post("/api/report", express.json({ limit: "64kb" }), async (req, res) => {
   res.json({ ok: true, hidden: out.hidden });
 });
 
-app.post("/api/post", express.json({ limit: "36mb" }), async (req, res) => {
+app.post("/api/post", express.json({ limit: "36mb" }), gate, async (req, res) => {
   const note = String(req.body?.note || "").trim().slice(0, 2000);
   const handle = String(req.body?.handle || "").trim().replace(/^@+/, "").slice(0, 40);
   const topic = String(req.body?.topic || "").trim().slice(0, 40);

@@ -14,7 +14,7 @@
 // ---------------------------------------------------------------------------
 
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
-import { randomUUID, createHash } from "node:crypto";
+import { randomUUID, createHash, randomBytes } from "node:crypto";
 import path from "node:path";
 
 /** Where a post can be. Four, and each is a different fact:
@@ -190,6 +190,61 @@ function igHandle(v) {
      nothing — somebody would have a profile pointing at a stranger. */
   t = link ? link[1] : t.replace(/^@+/, "");
   return /^[A-Za-z0-9._]{1,30}$/.test(t) ? t : "";
+}
+
+/* ---------------------------------------------------------------------------
+ * Invites
+ *
+ * A code is six characters somebody types on a phone, in a hurry, from a
+ * WeChat message. So the alphabet has no O, no zero, no I and no one in it:
+ * those are the four that get read back wrong, and a code that cannot be
+ * mistyped is worth more than a code with two extra bits of entropy.
+ *
+ * 30^6 is about 730 million, and five tries an hour per browser makes walking
+ * it hopeless. That is the whole security model, and it is enough for a board
+ * whose contents are already public to read.
+ *
+ * One use. The row keeps the hash of the browser that spent it, so "already
+ * used" can tell somebody whether it was them.
+ * ------------------------------------------------------------------------- */
+export const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+/** Six characters from that alphabet, uppercased, or "" if it is not one. */
+export const cleanCode = (v) => {
+  const t = String(v ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (t.length !== 6) return "";
+  for (const ch of t) if (!CODE_ALPHABET.includes(ch)) return "";
+  return t;
+};
+
+export function newCode() {
+  const bytes = randomBytes(6);
+  let out = "";
+  for (const b of bytes) out += CODE_ALPHABET[b % CODE_ALPHABET.length];
+  return out;
+}
+
+export function cleanInvite(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const code = cleanCode(raw.code);
+  if (!code) return null;
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").slice(0, n);
+  return {
+    code,
+    // Who it was given to, for the person handing them out. Never shown to the
+    // person redeeming it — it is a note to self, not a name badge.
+    who: s(raw.who, 40),
+    at: s(raw.at, 40) || new Date().toISOString(),
+    // Who it came from, when a member made it out of their own header rather
+    // than the operator making it from the box. It is what lets the list read
+    // as who brought whom.
+    by: /^[a-f0-9]{32}$/.test(String(raw.by || "")) ? String(raw.by) : "",
+    // The browser that spent it, and when. Empty until somebody does.
+    usedBy: /^[a-f0-9]{32}$/.test(String(raw.usedBy || "")) ? String(raw.usedBy) : "",
+    usedAt: s(raw.usedAt, 40),
+    // Taken back without deleting the row, so the record of who had it stays.
+    off: Boolean(raw.off),
+  };
 }
 
 /** The levels offered. A closed list because it is what matching sorts on, and
@@ -444,7 +499,18 @@ export function cleanBoard(raw) {
     wants.push(w);
   }
 
-  return { posts, people, follows, notes, wants };
+  /* The invites, one row per code. Deduplicated on the code itself: two rows
+     for one code is a code that could be spent twice. */
+  const invites = [];
+  const codes = new Set();
+  for (const r of (Array.isArray(raw?.invites) ? raw.invites : [])) {
+    const v = cleanInvite(r);
+    if (!v || codes.has(v.code)) continue;
+    codes.add(v.code);
+    invites.push(v);
+  }
+
+  return { posts, people, follows, notes, wants, invites };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an

@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="留学生">
+<title>You have been invited</title>
+<meta name="description" content="A board for exchange students in China. Invite only, for now.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="留学生 · Liuxuesheng">
+<meta property="og:description" content="For exchange students in China. Invite only.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="{{ORIGIN}}/enter">
+<meta name="robots" content="noindex">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t3:#D99038; --t6:#2F8C9E;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --shadow:0 2px 6px rgba(21,27,40,.07),0 10px 28px rgba(21,27,40,.09);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t3:#E4A65A; --t6:#4FA9BC;
+      --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --t3:#E4A65A; --t6:#4FA9BC;
+    --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+  }
+  :root[data-lang="zh"]{
+    --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif;
+  }
+  :root[data-lang="zh"] body{line-height:1.75}
+  :root[data-lang="zh"] .eyebrow,
+  :root[data-lang="zh"] .pole{text-transform:none;letter-spacing:.02em}
+  [hidden]{display:none!important}
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  main{max-width:34rem;margin:0 auto;padding:0 1.15rem 4rem}
+  button{font:inherit;cursor:pointer}
+  a{color:inherit}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* The strip that says this is not open yet. Quiet, full width, above
+     everything — it is a status, not an announcement, and it is the first
+     thing somebody arriving from a friend's link should read. */
+  .invite{margin:0 -1.15rem .9rem;padding:.5rem 1.15rem;background:var(--accent-soft);
+    color:var(--accent);font-size:.78rem;letter-spacing:.02em;text-align:center}
+  .bar{display:flex;align-items:center;gap:.7rem;padding:.9rem 0 1.2rem}
+  .bar a.back{color:var(--ink);text-decoration:none;display:grid;place-items:center;
+    margin-left:-.3rem}
+  .bar svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round}
+  .bar .lang{margin-left:auto;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1}
+
+  .eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{margin:.5rem 0 0;font-family:var(--serif);font-weight:400;font-size:2rem;
+    line-height:1.12}
+  .egs{margin:.55rem 0 0;font-family:var(--serif);font-size:1.25rem;
+    letter-spacing:.06em;color:var(--accent)}
+  .lede{margin:.8rem 0 0;font-size:1.02rem;line-height:1.65;color:var(--ink-2)}
+  /* The reason to take this one and not another. Set apart, because it is the
+     claim the rest of the page has to make good on. */
+  .lede.lean{margin-top:1rem;padding-left:.95rem;border-left:2px solid var(--accent);
+    font-size:.98rem}
+  .go{margin:1.6rem 0 0;border:0;background:var(--accent);color:var(--accent-ink);
+    border-radius:99px;padding:.85rem 1.9rem;font-size:1.05rem}
+  .quiet{margin:.8rem 0 0;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);border-radius:99px;padding:.7rem 1.4rem;font-size:.95rem;
+    text-decoration:none;display:inline-block}
+  /* One loud button on this screen, and it is Share. Two would be a screen
+     that has not decided what it wants. */
+  .quiet.wide{display:block;width:100%;text-align:center;padding:.8rem 1rem;
+    font-size:1rem}
+  .go.wide{display:block;width:100%;margin:1.4rem 0 0;padding:.85rem 1rem;
+    font-size:1.02rem}
+  .note{margin:1.4rem 0 0;font-size:.86rem;line-height:1.6;color:var(--muted)}
+
+  /* ---- the door ----------------------------------------------------------
+   * Three screens in one page, because they are one moment: get out of
+   * WeChat, type six characters, come in. */
+  .mark{width:3.2rem;height:3.2rem;border-radius:50%;background:var(--accent);
+    color:var(--accent-ink);display:grid;place-items:center;font-size:1.6rem;
+    line-height:1;-webkit-font-smoothing:antialiased}
+  .top{display:flex;align-items:center;gap:.8rem;margin:1.4rem 0 0}
+  .top h1{margin:0;font-size:1.5rem}
+  .top p{margin:.15rem 0 0;font-size:.86rem;color:var(--muted)}
+
+  .zh{margin:.5rem 0 0;font-size:.95rem;line-height:1.75;color:var(--muted)}
+
+  /* The six boxes. One input under them, so the phone keyboard behaves and a
+     paste of the whole code lands in one go — the boxes are a drawing of what
+     the field holds, which is the only way this works on both keyboards. */
+  .codewrap{position:relative;margin:1.5rem 0 0}
+  .boxes{display:flex;gap:.45rem}
+  .boxes i{flex:1 1 0;min-width:0;height:3.4rem;border-radius:.7rem;
+    background:var(--raise);border:1px solid var(--line);display:grid;
+    place-items:center;font-style:normal;font-family:var(--sans);
+    font-size:1.5rem;font-weight:600;letter-spacing:.04em;color:var(--ink)}
+  .boxes i.on{border-color:var(--accent)}
+  .boxes i.err{border-color:var(--t3);color:var(--t3)}
+  /* Invisible, on top, and the thing actually being typed into. */
+  #code{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;
+    background:none;font-size:16px;letter-spacing:2em;padding:0;
+    -webkit-text-fill-color:transparent;caret-color:transparent}
+  #code:focus{outline:0}
+  .codewrap:focus-within .boxes i.next{border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft)}
+
+  .said{margin:1rem 0 0;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
+  .said.bad{color:var(--t3)}
+  .said.ok{color:var(--accent)}
+
+  /* The way out of WeChat, drawn as the thing it points at. */
+  .steps{margin:1.2rem 0 0;padding:.9rem 1rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:.9rem}
+  .steps .r{display:flex;align-items:center;gap:.6rem;font-size:.95rem}
+  .steps .r + .r{margin-top:.5rem}
+  .steps .k{flex:0 0 auto;min-width:1.9rem;height:1.9rem;padding:0 .4rem;
+    border-radius:.45rem;background:var(--ink);color:var(--paper);
+    display:grid;place-items:center;font-size:.85rem;letter-spacing:.1em}
+  .copyrow{display:flex;gap:.6rem;margin:1.1rem 0 0;flex-wrap:wrap}
+  .copyrow button{flex:1 1 0;min-width:9rem}
+  .anyway{display:block;width:100%;margin:1rem 0 0;border:0;background:none;
+    color:var(--muted);font-size:.88rem;padding:.4rem 0;text-decoration:underline}
+  .anyway:hover{color:var(--ink)}
+
+  .keybox{margin:1.6rem 0 0;padding:1rem 1.05rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:.9rem}
+  .keybox h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
+  .keybox p{margin:.4rem 0 0;font-size:.88rem;line-height:1.55;color:var(--ink-2)}
+  .keybox textarea{width:100%;margin:.7rem 0 0;border:1px solid var(--line);
+    border-radius:.6rem;background:var(--paper);color:var(--ink);
+    padding:.6rem .7rem;font:inherit;font-size:.9rem;resize:vertical}
+</style>
+</head>
+<body>
+<main>
+  <p class="invite" id="invite"></p>
+
+  <!-- WHERE YOU ARE MATTERS MORE THAN WHAT YOU TYPE.
+       In WeChat's browser this is the whole page: the code would work here and
+       the profile built afterwards would be stranded in a browser the person
+       never opens on purpose. -->
+  <section id="wx" hidden>
+    <div class="top">
+      <span class="mark" aria-hidden="true">留</span>
+      <div>
+        <h1 id="wxtitle"></h1>
+        <p id="wxsub"></p>
+      </div>
+    </div>
+    <p class="lede" id="wxsay"></p>
+    <p class="zh" id="wxzh"></p>
+    <div class="steps">
+      <div class="r"><span class="k">···</span><span id="wxstep1"></span></div>
+      <div class="r"><span class="k">↗</span><span id="wxstep2"></span></div>
+    </div>
+    <div class="copyrow">
+      <button class="go" type="button" id="wxcopy"></button>
+    </div>
+    <p class="note" id="wxnote"></p>
+    <button class="anyway" type="button" id="wxanyway"></button>
+  </section>
+
+  <!-- THE DOOR ITSELF. -->
+  <section id="door" hidden>
+    <div class="top">
+      <span class="mark" aria-hidden="true">留</span>
+      <div>
+        <h1 id="doortitle"></h1>
+        <p id="doorsub"></p>
+      </div>
+    </div>
+    <p class="lede" id="doorsay"></p>
+    <p class="zh" id="doorzh"></p>
+
+    <div class="codewrap">
+      <div class="boxes" id="boxes" aria-hidden="true"></div>
+      <input id="code" inputmode="text" autocomplete="one-time-code"
+             autocapitalize="characters" autocorrect="off" spellcheck="false"
+             maxlength="6" aria-label="Invite code">
+    </div>
+    <button class="go wide" type="button" id="go"></button>
+    <p class="said" id="said" hidden></p>
+    <p class="note" id="doornote"></p>
+
+    <!-- Somebody who has been here before does not need a code at all. -->
+    <div class="keybox">
+      <h2 id="keytitle"></h2>
+      <p id="keysay"></p>
+      <textarea id="key" rows="2" spellcheck="false" autocapitalize="off"></textarea>
+      <button class="quiet wide" type="button" id="keygo"></button>
+      <p class="said" id="keysaid" hidden></p>
+    </div>
+  </section>
+
+  <!-- IN. -->
+  <section id="inside" hidden>
+    <div class="top">
+      <span class="mark" aria-hidden="true">留</span>
+      <div>
+        <h1 id="intitle"></h1>
+        <p id="insub"></p>
+      </div>
+    </div>
+    <p class="lede" id="insay"></p>
+    <p class="zh" id="inzh"></p>
+    <a class="go wide" id="ingo" href="/browse"></a>
+    <p class="note" id="innote"></p>
+  </section>
+</main>
+
+<script type="module">
+import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
+
+const $ = (id) => document.getElementById(id);
+const IN_WECHAT = /micromessenger/i.test(navigator.userAgent);
+
+/* The same browser identity the rest of the app uses. Made here if this is the
+   first page somebody has opened, because admission is recorded against it —
+   and it is what the recovery key carries. */
+function uuid() {
+  try {
+    if (crypto && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  } catch { /* older WeChat kernels have neither */ }
+  const r = () => Math.random().toString(16).slice(2, 10);
+  return r() + "-" + r() + "-" + r() + "-" + r();
+}
+let device = "";
+try {
+  device = localStorage.getItem("board:device") || "";
+  if (!device) { device = uuid(); localStorage.setItem("board:device", device); }
+} catch { device = uuid(); }
+
+/* The code out of the address, so tapping the link is the whole of it.
+   /i/K7M2QP, or ?code= for anybody who typed it by hand. */
+const fromLink = (() => {
+  const m = /\/i\/([A-Za-z0-9]{1,12})/.exec(location.pathname);
+  if (m) return m[1].toUpperCase();
+  try {
+    return (new URLSearchParams(location.search).get("code") || "").toUpperCase();
+  } catch { return ""; }
+})();
+
+let TYPED = fromLink.slice(0, 6);
+let ERR = false;
+
+function drawBoxes() {
+  const box = $("boxes");
+  box.textContent = "";
+  for (let i = 0; i < 6; i++) {
+    const cell = document.createElement("i");
+    cell.textContent = TYPED[i] || "";
+    if (TYPED[i]) cell.className = ERR && i === TYPED.length - 1 ? "err" : "on";
+    else if (i === TYPED.length) cell.className = "next";
+    box.append(cell);
+  }
+  $("go").disabled = TYPED.length !== 6;
+}
+
+$("code").addEventListener("input", (e) => {
+  TYPED = String(e.target.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+  e.target.value = TYPED;
+  ERR = false;
+  $("said").hidden = true;
+  drawBoxes();
+  // Six characters and nothing else to do: send it rather than making somebody
+  // find a button they can already see the answer to.
+  if (TYPED.length === 6) enter();
+});
+$("boxes").addEventListener("click", () => $("code").focus());
+
+async function enter() {
+  const btn = $("go");
+  const said = $("said");
+  btn.disabled = true;
+  btn.textContent = T("door.going");
+  try {
+    const r = await fetch("/api/enter", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: TYPED, device }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) return showIn(d.by || "");
+    ERR = true;
+    drawBoxes();
+    said.hidden = false;
+    said.className = "said bad";
+    /* Each refusal says the thing worth knowing. "Used" is the one that needs
+       a second sentence, because the commonest cause of it is the same person
+       in a different browser — which is a key problem, not an invite one. */
+    said.textContent = d.error === "used" ? T("door.used")
+      : d.error === "slow-down" ? T("door.slow")
+      : T("door.wrong", { n: Number(d.left) || 0 });
+  } catch {
+    said.hidden = false;
+    said.className = "said bad";
+    said.textContent = T("door.offline");
+  }
+  btn.disabled = TYPED.length !== 6;
+  btn.textContent = T("door.go");
+}
+
+/* Been here before: the key is the identity, so pasting it admits the browser
+   without spending anybody's code. */
+async function useKey() {
+  const said = $("keysaid");
+  const val = String($("key").value || "").trim();
+  if (!val) return;
+  try { localStorage.setItem("board:device", val); } catch { /* private window */ }
+  device = val;
+  const r = await fetch("/api/admitted", { headers: { "x-board-device": device } })
+    .then((x) => x.json()).catch(() => ({}));
+  said.hidden = false;
+  if (r && r.in) return showIn("");
+  said.className = "said bad";
+  said.textContent = T("door.keyNo");
+}
+
+function showIn(by) {
+  $("wx").hidden = true;
+  $("door").hidden = true;
+  $("inside").hidden = false;
+  /* Back where they were turned away from, if they were turned away from
+     somewhere. Somebody sent to the door by pressing Post should land on the
+     page they were reading, not at the top of the board. */
+  try {
+    const back = new URLSearchParams(location.search).get("back") || "";
+    if (/^\/[A-Za-z0-9/_-]{0,60}$/.test(back)) $("ingo").href = back;
+  } catch { /* the default is /browse */ }
+  $("insub").textContent = by ? T("door.byWho", { who: by }) : T("door.inSub");
+  window.scrollTo(0, 0);
+}
+
+/* WeChat first, always. The code works in there and the profile built
+   afterwards would be stranded in a browser nobody opens on purpose — the
+   same split the recovery key exists to undo, and cheaper to prevent. */
+function route() {
+  const wx = IN_WECHAT && !sessionStorage.getItem("board:anyway");
+  $("wx").hidden = !wx;
+  $("door").hidden = wx;
+  if (!wx) setTimeout(() => $("code").focus(), 60);
+}
+
+function words() {
+  $("invite").textContent = T("site.invite");
+  $("wxtitle").textContent = T("door.wxTitle");
+  $("wxsub").textContent = T("door.wxSub");
+  $("wxsay").textContent = T("door.wxSay");
+  $("wxzh").textContent = T("door.wxZh");
+  $("wxstep1").textContent = T("door.wxStep1");
+  $("wxstep2").textContent = T("door.wxStep2");
+  $("wxcopy").textContent = T("door.wxCopy");
+  $("wxnote").textContent = T("door.wxNote");
+  $("wxanyway").textContent = T("door.wxAnyway");
+
+  $("doortitle").textContent = T("door.title");
+  $("doorsub").textContent = T("door.sub");
+  $("doorsay").textContent = T("door.say");
+  $("doorzh").textContent = T("door.zh");
+  $("go").textContent = T("door.go");
+  $("doornote").textContent = T("door.note");
+  $("code").setAttribute("aria-label", T("door.title"));
+
+  $("keytitle").textContent = T("door.keyTitle");
+  $("keysay").textContent = T("door.keySay");
+  $("key").placeholder = T("door.keyHint");
+  $("keygo").textContent = T("door.keyGo");
+
+  $("intitle").textContent = T("door.inTitle");
+  $("insub").textContent = T("door.inSub");
+  $("insay").textContent = T("door.inSay");
+  $("inzh").textContent = T("door.inZh");
+  $("ingo").textContent = T("door.inGo");
+  $("innote").textContent = T("door.inNote");
+  drawBoxes();
+}
+
+$("go").addEventListener("click", () => { if (TYPED.length === 6) enter(); });
+$("keygo").addEventListener("click", useKey);
+$("wxcopy").addEventListener("click", () => {
+  const url = location.origin + (fromLink ? "/i/" + fromLink : "/enter");
+  let ok = false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(url); ok = true;
+    } else {
+      const t = document.createElement("textarea");
+      t.value = url; t.style.position = "fixed"; t.style.opacity = "0";
+      document.body.append(t); t.select();
+      ok = document.execCommand("copy");
+      t.remove();
+    }
+  } catch { ok = false; }
+  $("wxcopy").textContent = T(ok ? "door.wxCopied" : "door.wxCopyNo");
+  setTimeout(() => { $("wxcopy").textContent = T("door.wxCopy"); }, 2600);
+});
+$("wxanyway").addEventListener("click", () => {
+  try { sessionStorage.setItem("board:anyway", "1"); } catch { /* fine */ }
+  route();
+});
+
+setLang(pickLang());
+$("invite").after(langButton(() => words()));
+words();
+route();
+
+// Already in — including a browser that has the key. Nobody should be asked
+// for a code they have already spent.
+fetch("/api/admitted", { headers: { "x-board-device": device } })
+  .then((r) => r.json())
+  .then((d) => { if (d && d.in && d.mode) showIn(""); })
+  .catch(() => { /* the door still works */ });
+</script>
+</body>
+</html>

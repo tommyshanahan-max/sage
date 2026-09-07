@@ -175,6 +175,21 @@ post-explainer: ## Put the how-to-be-the-same-person-twice post on the feed
 	  /seed/post-explainer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  $(if $(AS),--as "$(AS)",) $(if $(AGAIN),--again,)
 
+invite: ## Make an invite:  make invite WHO="Mei" [N=3]
+	@# Prints the link and the code as the message to send. One person each.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)" --n "$(or $(N),1)"
+
+invites: ## Every invite, and what became of it
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --list
+
+invite-off: ## Take one back:  make invite-off CODE=K7M2QP
+	@test -n "$(CODE)" || { echo "which one? make invite-off CODE=K7M2QP"; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --off "$(CODE)"
+
 feed-list: ## What is on the feed, with ids
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/feed-remove.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"

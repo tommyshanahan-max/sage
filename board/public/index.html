@@ -262,6 +262,18 @@
   /* ---- the tray -----------------------------------------------------------
    * The bell sits in the header beside the language button, and what it opens
    * drops in under it. Everything addressed to this person is in here. */
+  /* The invite, under the count. Quiet until wanted, and the code is the only
+     loud thing in it — it is what somebody is looking for when they open this. */
+  .myinv{display:block;width:100%;margin:.5rem 0 0;padding:.5rem .7rem;
+    border:1px dashed var(--line);background:none;border-radius:.7rem;text-align:left}
+  .myinv:hover{border-color:var(--accent)}
+  .myinv .lab{display:block;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted)}
+  :root[data-lang="zh"] .myinv .lab{text-transform:none;letter-spacing:.02em}
+  .myinv b{display:block;margin:.1rem 0 0;font-size:1.05rem;font-weight:600;
+    letter-spacing:.16em;color:var(--accent);font-variant-numeric:tabular-nums}
+  .myinv .tap{display:block;margin:.05rem 0 0;font-size:.74rem;color:var(--muted)}
+
   .bell{position:relative;flex:0 0 auto;width:2.4rem;height:2.4rem;padding:0;
     border:1px solid var(--line);background:var(--raise);border-radius:50%;
     display:grid;place-items:center;margin-left:auto}
@@ -904,6 +916,13 @@
     <div class="name">
       <h1 id="boardname">The Board</h1>
       <p id="count">Anyone can read. Anyone can post.</p>
+      <!-- The member's own invite, beside the count, because that is where
+           somebody looks when they are thinking about who else is here. -->
+      <button class="myinv" type="button" id="myinv" hidden>
+        <span class="lab" id="myinvlab"></span>
+        <b id="myinvcode"></b>
+        <span class="tap" id="myinvtap"></span>
+      </button>
     </div>
     <nav class="bar" id="bar">
       <a href="/browse" id="navbrowse">
@@ -1530,8 +1549,12 @@ function draw() {
     : T("board.club");
   $("boardname").textContent = T("board.name");
   $("foottext").textContent = T("board.foot") + " ";
+  drawMyInvite();
+  const shut = MODE === "read";
   $("count").textContent = posts.length
-    ? T("board.count", { n: posts.length }) : T("board.tagline");
+    ? T(shut ? "inv.countShut" : "board.count", { n: posts.length })
+    : T(shut ? "inv.taglineShut" : "board.tagline");
+  $("invite").textContent = T(shut ? "inv.locked" : "site.invite");
 
   const box = $("board"); fill(box);
   const list = posts.filter((p) => (
@@ -1915,6 +1938,20 @@ function card(p) {
  *  or the server never answered. The size goes in the message, because on a
  *  mobile connection that is nearly always the answer — and one retry, because
  *  the other nearly-always answer is a blip on a link to Tokyo. */
+/* TURNED AWAY AT THE WRITE.
+ *
+ * In "post" mode anybody can read and a code is needed to put something up, so
+ * the first a person hears of the door is when they press Post. A refusal that
+ * printed "403" at them would be the app knowing exactly what is wrong and
+ * saying none of it — so the server answers with a word and a place, and this
+ * takes them there.
+ */
+function toDoorIf(d, status) {
+  if (status !== 403 || !d || d.error !== "invite") return false;
+  location.href = (d.where || "/enter") + "?back=" + encodeURIComponent(location.pathname);
+  return true;
+}
+
 async function send(body, btn) {
   const payload = JSON.stringify({ ...body, device });
   const mb = (payload.length / 1024 / 1024).toFixed(2);
@@ -1926,6 +1963,7 @@ async function send(body, btn) {
       body: payload,
     });
     const d = await r.json().catch(() => ({}));
+    if (toDoorIf(d, r.status)) return d;
     if (!r.ok) throw new Error((d.error || "it did not go") + " (" + r.status + ")");
     return d;
   };
@@ -2371,6 +2409,66 @@ async function drawTutor() {
   box.append(el("p", "honest", T("tut.honest")));
   box.hidden = false;
 }
+
+/* THE MEMBER'S OWN INVITE.
+ *
+ * One live code each, minted the first time this is asked for and the same one
+ * until somebody spends it. Fetched once on load rather than on the tap: a
+ * button that says "Invite someone" and then has to go and ask the server what
+ * to say is a button people press twice.
+ *
+ * What gets copied is the whole message, not the code — the failure mode of a
+ * bare six characters is somebody pasting them into a chat with no link and no
+ * explanation, and the person on the other end having nowhere to put them.
+ */
+let MYCODE = "";
+/* "", "post" or "read" — what the door is doing, so the board can stop saying
+   "anyone can read" on a day when that is not true. */
+let MODE = "";
+
+async function loadMyInvite() {
+  if (!device) return;
+  try {
+    const [mine, who] = await Promise.all([
+      fetch("/api/my-invite", { cache: "no-store",
+        headers: { "x-board-device": device } }).then((r) => r.json()),
+      fetch("/api/admitted", { cache: "no-store",
+        headers: { "x-board-device": device } }).then((r) => r.json()),
+    ]);
+    MYCODE = (mine && mine.code) || "";
+    MODE = (who && who.mode) || "";
+  } catch { MYCODE = ""; }
+  drawMyInvite();
+  draw();
+}
+
+function drawMyInvite() {
+  const b = $("myinv");
+  if (!MYCODE) { b.hidden = true; return; }
+  b.hidden = false;
+  $("myinvlab").textContent = T("inv.head");
+  $("myinvcode").textContent = MYCODE;
+  $("myinvtap").textContent = T("inv.tap");
+}
+
+$("myinv").addEventListener("click", () => {
+  if (!MYCODE) return;
+  const url = location.origin + "/i/" + MYCODE;
+  const words = T("inv.shared", { url, code: MYCODE });
+  const say = (w) => {
+    $("myinvtap").textContent = w;
+    setTimeout(drawMyInvite, 3000);
+  };
+  /* Inside WeChat a page may not open a share sheet — the ⋯ menu is the only
+     way — so the clipboard is the honest version there, as it is everywhere
+     else this app shares something. */
+  if (!IN_WECHAT && navigator.share) {
+    navigator.share({ title: T("site.title"), text: words })
+      .catch(() => { if (copyText(words)) say(T("inv.copied")); });
+    return;
+  }
+  say(T(copyText(words) ? "inv.copied" : "inv.copyNo", { code: MYCODE }));
+});
 
 /* THE TRAY, AND THE COUNT ON THE BELL.
  *
@@ -3307,6 +3405,9 @@ async function saveMe(patch) {
   }
   const d = await r.json().catch(() => ({}));
   if (!r.ok) {
+    // A page is a thing somebody puts up, so it is behind the same door a post
+    // is. Taken there rather than told a number.
+    if (toDoorIf(d, r.status)) return {};
     if (d.error === "contact") return { error: T("me.noContact", { what: d.what }) };
     return { error: T(d.error === "tooBig" ? "post.tooBig" : "err.general") };
   }
@@ -3556,6 +3657,8 @@ $("meform").addEventListener("submit", async (e) => {
   said.hidden = false; said.classList.remove("bad"); said.textContent = T("me.saved");
   setTimeout(() => { $("mesheet").hidden = true; }, 900);
 });
+
+loadMyInvite();
 
 fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
   .then((r) => r.json())

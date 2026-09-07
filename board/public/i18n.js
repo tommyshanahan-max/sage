@@ -763,6 +763,81 @@ export const STRINGS = {
      a summary line to find your own level is a report card that buries the
      mark it is named after. */
   "prof.now":          ["Where you are now", "你现在的水平"],
+  /* ---- the door ----------------------------------------------------------
+     Three screens: get out of WeChat, six characters, come in. The middle one
+     is the shortest and the first one is the one that matters. */
+  "door.wxTitle":      ["Open this in your browser", "用浏览器打开"],
+  "door.wxSub":        ["Before you use your code", "先别急着输口令"],
+  "door.wxSay": [
+    "You are in WeChat's browser. It keeps its own storage, so a page opened here and the same page opened in Safari are two different people — and the one you use your code in is the one your profile lives in.",
+    "你现在在微信的浏览器里。它的存储是单独的：在这里打开，和在 Safari 里打开，算两个人——你在哪个浏览器里用口令，主页就长在哪个浏览器里。"],
+  "door.wxZh":         ["", ""],
+  "door.wxStep1":      ["Tap the three dots, top right", "点右上角的三个点"],
+  "door.wxStep2":      ["Open in Browser", "在浏览器打开"],
+  "door.wxCopy":       ["Copy the link instead", "复制链接"],
+  "door.wxCopied":     ["Copied — paste it in Safari", "已复制，去 Safari 粘贴"],
+  "door.wxCopyNo":     ["Hold the address bar to copy it", "长按地址栏复制"],
+  "door.wxNote":       ["Your code still works there. Use it once you have arrived.",
+                        "口令在那边一样能用。到了再输。"],
+  "door.wxAnyway":     ["Use it here anyway", "还是在这里用"],
+
+  "door.title":        ["You have been invited", "有人邀请你"],
+  /* THE MEMBER'S OWN INVITE, in the header where the count is. One live code
+     each: it comes back the same until somebody spends it. */
+  "inv.head":          ["Invite someone", "邀请一个人"],
+  "inv.tap":           ["Tap to copy the link and the password",
+                        "点一下，复制链接和口令"],
+  "inv.copied":        ["Copied. Paste it into a chat.", "复制好了，粘到聊天里就行。"],
+  "inv.copyNo":        ["Hold to copy: {code}", "长按复制：{code}"],
+  "inv.shared": [
+    "This is the students' board I mentioned — 留学生. Nobody can read it without a password, so here is mine to give away. It works once.\n\n{url}\n\nPassword: {code}",
+    "就是我说的那个留学生的板子。没有口令谁也看不到，这个给你，只能用一次。\n\n{url}\n\n口令：{code}"],
+  "inv.locked":        ["Locked — nobody can read this without a password.",
+                        "已上锁——没有口令的人看不到这里。"],
+  /* The two lines the board says about itself change with the door. "Anyone
+     can read" is true with the door open and a plain lie with it shut. */
+  "inv.taglineShut":   ["Invite only. A password gets you in, once.",
+                        "邀请制。有口令就能进，一次就够。"],
+  "inv.countShut":     ["{n} posts up. Invite only.", "已发布 {n} 条。邀请制。"],
+  "inv.one":           ["One person each. You get another once this one is used.",
+                        "一个口令进一个人。用掉了会再给你一个。"],
+  "door.sub":          ["Not open to everybody yet", "还没有对所有人开放"],
+  "door.say":          ["Type the code your friend sent. It works once, on this browser.",
+                        "输入朋友发给你的口令。只能用一次，只在这个浏览器上。"],
+  "door.zh":           ["", ""],
+  "door.go":           ["Go in", "进去"],
+  "door.going":        ["Opening\u2026", "正在开门\u2026"],
+  "door.note":         ["No account, no password, no phone number. The code is the whole of it.",
+                        "没有账号，没有密码，也不用手机号。就这一串口令。"],
+  /* Each refusal says the thing worth knowing. "Used" needs two sentences,
+     because the commonest cause of it is the same person in another browser. */
+  "door.wrong": [
+    "That code did not match. Check the last character \u2014 codes have no O, no zero, no I and no one in them. {n} tries left this hour.",
+    "口令不对。看看最后一位——口令里没有 O、0、I、1 这几个字符。这一小时还能试 {n} 次。"],
+  "door.used": [
+    "This one has been used already. Each code lets one person in and then stops working. If that was you on another browser, you do not need a new code \u2014 paste your key below instead.",
+    "这个口令已经用过了。每个口令只能进一个人。如果那是你自己在别的浏览器上用的，你不需要新口令——把钥匙贴在下面就行。"],
+  "door.slow":         ["Too many tries. Wait an hour, or ask for a fresh code.",
+                        "试得太多了。等一个小时，或者再要一个新口令。"],
+  "door.offline":      ["That did not go through. Try again.", "没发出去，再试一次。"],
+
+  "door.keyTitle":     ["Been here before?", "以前来过？"],
+  "door.keySay":       ["Paste the key from your other browser and you are in \u2014 no code needed.",
+                        "把你在另一个浏览器里的钥匙贴进来就行，不用口令。"],
+  "door.keyHint":      ["Your key", "你的钥匙"],
+  "door.keyGo":        ["Use my key", "用我的钥匙"],
+  "door.keyNo":        ["That key has not been let in yet. Use a code first.",
+                        "这把钥匙还没进过门。先用一次口令。"],
+
+  "door.inTitle":      ["You are in", "进来了"],
+  "door.inSub":        ["Welcome", "欢迎"],
+  "door.byWho":        ["{who} let you in", "{who} 带你进来的"],
+  "door.inSay":        ["A photo, a name, and a line about you. Two minutes, and the others can find you.",
+                        "一张照片、一个名字、一句话。两分钟，别人就能找到你了。"],
+  "door.inZh":         ["", ""],
+  "door.inGo":         ["Have a look around", "进去看看"],
+  "door.inNote":       ["Keep your key before you close this: Profile \u2192 Show my key. It is how you are the same person in another browser.",
+                        "关掉之前先把钥匙存好：「我的」→「显示我的钥匙」。换个浏览器还是同一个人，靠的就是它。"],
   /* THE TRAY. Everything addressed to this person, in one place — follows and
      the card of the day. The report card below it is what they are; this is
      what has arrived. */
