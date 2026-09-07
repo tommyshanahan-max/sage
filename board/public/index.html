@@ -544,6 +544,10 @@
    * vertical gesture to the page, which is the whole idea. */
   .deck{position:relative;width:100%;height:min(62vh,34rem);
     margin:0 0 .9rem;touch-action:pan-y;overflow:hidden;border-radius:1.3rem}
+  /* The ask above it is only there while there is no face on this phone, and
+     it has to be paid for out of the deck: a card that keeps its full height
+     pushes Say hello / Next down behind the nav bar. */
+  #mine:not([hidden]) + .deck{height:min(52vh,30rem)}
   .pc{position:absolute;inset:0;border-radius:1.3rem;overflow:hidden;
     background:var(--raise);box-shadow:var(--shadow);
     display:flex;flex-direction:column;justify-content:flex-end;
@@ -579,6 +583,25 @@
   .pacts .primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   .pcount{margin:.7rem 0 0;text-align:center;font-size:.82rem;color:var(--muted);
     font-variant-numeric:tabular-nums}
+  /* Your own missing face, under everybody else's. The circle IS the control:
+     one tap opens the picker, which is the shortest route there is. */
+  .mine{display:flex;align-items:center;gap:.75rem;width:100%;margin:0 0 .8rem;
+    padding:.7rem .85rem;border:1px solid var(--line);background:var(--raise);
+    border-radius:.9rem;text-align:left;color:inherit}
+  .mine .ring{position:relative;flex:0 0 auto;width:2.6rem;height:2.6rem;
+    border-radius:50%;background:var(--paper);color:var(--accent);
+    display:grid;place-items:center;font-family:var(--serif);font-size:1.15rem;
+    line-height:1;box-shadow:0 0 0 2px var(--line)}
+  .mine .ring i{position:absolute;right:-2px;bottom:-2px;width:1.15rem;height:1.15rem;
+    border-radius:50%;background:var(--accent);color:var(--accent-ink);
+    display:grid;place-items:center;font-style:normal;font-size:.8rem;
+    font-family:var(--sans);box-shadow:0 0 0 2px var(--raise)}
+  .mine b{display:block;font-weight:400;font-size:.98rem;color:var(--ink)}
+  .mine span{display:block;margin:.1rem 0 0;font-size:.82rem;color:var(--muted)}
+  /* The last card in the deck, when there is no face on this phone. Same shape
+     as a person, because it is asking you to become one. */
+  .pc.turn .noshot{background:linear-gradient(160deg,var(--accent),var(--t6));
+    font-size:6rem}
   .psafety{margin:.5rem 0 1.9rem;text-align:center;font-size:.78rem;line-height:1.5;
     color:var(--muted)}
   .bnone{margin:0 0 1.9rem;padding:1.6rem 1.1rem;text-align:center;color:var(--muted);
@@ -636,6 +659,10 @@
        ends of one page, because the deck runs out after a handful of people
        and the thing to do when it does is read what everybody said. -->
   <div class="rule"><span id="brwlabel">Browse students</span><i></i></div>
+  <!-- The affordance the profile block used to carry: a missing face with a +
+       on it. One row rather than the four hundred pixels it cost before, and
+       it is gone the moment there is a photo. -->
+  <button class="mine" type="button" id="mine" hidden></button>
   <div class="deck" id="deck"></div>
   <div class="pacts" id="pacts" hidden></div>
   <p class="pcount" id="pcount"></p>
@@ -1758,11 +1785,51 @@ async function loadPeople() {
   drawDeck();
 }
 
+/* Whether this phone still owes the board a face.
+ *
+ * Everything below that asks for one is gated on it, so a settled reader is
+ * never asked again — an ask that stays up after it has been answered is how a
+ * prompt turns into furniture. */
+const needsFace = () => !(ME && ME.photo);
+
+/* How many cards there are: everybody, plus you at the end if you are not on
+ * here yet. Never you on your own — "that is everyone" is a strange thing to
+ * say about nobody, and an empty list already has its own block that says so
+ * and offers the right thing to do about it. */
+const deckLen = () => PEOPLE.length + (needsFace() && PEOPLE.length ? 1 : 0);
+
 function nextPerson() {
-  if (!PEOPLE.length) return;
-  AT = (AT + 1) % PEOPLE.length;
+  const n = deckLen();
+  if (!n) return;
+  AT = (AT + 1) % n;
   drawDeck();
 }
+
+/* The last card. You have just looked at everybody's face, which is the one
+ * moment putting your own up needs no explaining. */
+function turnCard() {
+  const box = el("div", "pc turn");
+  box.append(el("div", "noshot", "+"));
+  const scrim = el("div", "scrim");
+  scrim.append(el("h2", null, T("brw.yourTurn")), el("p", "goal", T("brw.yourTurnWhat")));
+  box.append(scrim);
+  return box;
+}
+
+/* The row under the deck. Drawn from ME, which arrives after the first paint,
+ * so it is redrawn when that lands and again whenever the profile is saved. */
+function drawMine() {
+  const box = $("mine");
+  box.hidden = !needsFace();
+  if (box.hidden) return;
+  fill(box);
+  const ring = el("span", "ring", initial(ME && ME.handle));
+  ring.append(el("i", null, "+"));
+  const words = el("span");
+  words.append(el("b", null, T("brw.mine")), el("span", null, T("brw.mineWhy")));
+  box.append(ring, words);
+}
+$("mine").addEventListener("click", () => $("mephoto").click());
 
 function personCard(q) {
   const box = el("div", "pc");
@@ -1794,17 +1861,24 @@ function personCard(q) {
 function drawDeck() {
   $("brwlabel").textContent = T("brw.title");
 
+  drawMine();
+
   const deck = $("deck");
   fill(deck);
-  const n = PEOPLE.length;
+  const people = PEOPLE.length;
+  const n = deckLen();
+  if (AT >= n) AT = 0;           // a photo arriving takes the last card away
+  const mine = needsFace() && people > 0 && AT === people;
   // Nobody on the list is not an empty screen here — the feed is still under
   // it — so the whole block collapses to one small card that says so.
   deck.hidden = !n;
   $("pacts").hidden = !n;
   $("psafety").hidden = !n;
   $("psafety").textContent = T("bud.safety");
-  $("pcount").textContent = n ? T("brw.of", { n: AT + 1, total: n }) : "";
-  $("bnone").hidden = Boolean(n);
+  // Counted in people, not in cards: yours is the ask at the end, not the
+  // fourth of four students.
+  $("pcount").textContent = people && !mine ? T("brw.of", { n: AT + 1, total: people }) : "";
+  $("bnone").hidden = Boolean(people);
 
   if (!n) {
     const go = el("a", null, T("bud.open"));
@@ -1813,18 +1887,28 @@ function drawDeck() {
     return;
   }
 
-  // The one behind, so moving on reveals a person rather than a hole.
+  const at = (i) => (needsFace() && i === people ? turnCard() : personCard(PEOPLE[i]));
+
+  // The one behind, so moving on reveals a card rather than a hole.
   if (n > 1) {
-    const behind = personCard(PEOPLE[(AT + 1) % n]);
+    const behind = at((AT + 1) % n);
     behind.style.transform = "scale(.96) translateY(10px)";
     deck.append(behind);
   }
-  const top = personCard(PEOPLE[AT]);
+  const top = at(AT);
   deck.append(top);
   dragCard(top);
 
   const acts = $("pacts");
   fill(acts);
+  if (mine) {
+    // One button, and it is the picker. Nothing to say hello to on this card.
+    const add = el("button", "primary", T("brw.mine"));
+    add.type = "button";
+    add.addEventListener("click", () => $("mephoto").click());
+    acts.append(add);
+    return;
+  }
   const q = PEOPLE[AT];
   const hi = el("a", "primary", T("brw.hello"));
   hi.href = "/p/" + encodeURIComponent((q.handle || "").toLowerCase());
@@ -2127,6 +2211,9 @@ async function saveMe(patch) {
   }
   ME = d.person;
   paintNav();
+  // A face arriving takes the ask away — the row under the deck and the card
+  // at the end of it both go.
+  drawDeck();
   // "Set up your page" is only offered while there is no page. Without this it
   // stays on screen telling somebody to do the thing they have just done.
   drawTutor();
@@ -2278,7 +2365,7 @@ $("meform").addEventListener("submit", async (e) => {
 
 fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
   .then((r) => r.json())
-  .then((d) => { ME = d.person; paintNav(); drawTutor(); })
+  .then((d) => { ME = d.person; paintNav(); drawTutor(); drawDeck(); })
   .catch(paintNav);
 
 load();

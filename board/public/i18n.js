@@ -615,6 +615,15 @@ export const STRINGS = {
   "brw.sub":           ["{n} on the list", "名单上有 {n} 个人"],
   "brw.of":            ["{n} of {total}", "第 {n} 个，共 {total} 个"],
   "brw.hello":         ["Say hello", "打个招呼"],
+  // The row under the deck, and the card at the end of it. Both only exist
+  // while there is no face on this phone, and both go the moment there is.
+  "brw.mine":          ["Add your photo", "加上你的照片"],
+  "brw.mineWhy":       ["Nobody here can see who you are yet.", "这里还没人知道你是谁。"],
+  "brw.yourTurn":      ["Your turn", "该你了"],
+  "brw.yourTurnWhat": [
+    "That is everyone. Put your own face up and you are on the list too.",
+    "人就这些了。把你自己的照片放上来，你也就在名单上了。",
+  ],
   "brw.next":          ["Next", "下一个"],
   "brw.none":          ["Nobody on the list yet", "名单上还没有人"],
   "brw.noneBody": [
@@ -638,7 +647,8 @@ export const STRINGS = {
   // where half the buttons lead nowhere teaches people not to press any of them.
   "tut.now":           ["You can do these now", "现在就能做"],
   "tut.setup":         ["Set up your page", "填好你的资料"],
-  "tut.setupWhat":     ["A name and a line about you. Two minutes.", "一个名字，一句关于你的话。两分钟。"],
+  "tut.setupWhat":     ["A photo, a name, and a line about you. Two minutes.",
+                        "一张照片、一个名字，一句关于你的话。两分钟。"],
   "tut.buddy":         ["Find a study buddy", "找学习搭子"],
   "tut.buddyWhat":     ["Who is looking, which campus, which days they are free.",
                         "谁在找、在哪个学校、哪几天有空。"],
