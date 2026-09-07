@@ -130,54 +130,9 @@
     letter-spacing:-.01em;line-height:1.1}
   .top p{margin:.2rem 0 0;color:var(--muted);font-size:.86rem}
 
-  /* ---- your own profile, above the feed -----------------------------------
-     The shape every social profile has, and it is conventional on purpose:
-     somebody who has used a phone knows what a cover with a circle overlapping
-     its bottom edge is, and spends no attention learning it.
-     One departure: there is no Follow. Nobody follows anybody here — the
-     figures are what you have put IN, which is the only number that means
-     anything on a board. */
-  .me{margin:0 -1.15rem 1.5rem;background:var(--raise);
-    border-bottom:1px solid var(--hair)}
-  .cover{position:relative;height:8.5rem;background:var(--accent);overflow:hidden}
-  .cover img{width:100%;height:100%;object-fit:cover;display:block}
-  /* Without a cover photo: a quiet wash rather than a grey hole, so an empty
-     profile reads as new and not as broken. */
-  .cover.bare{background:linear-gradient(160deg,var(--accent),var(--t6))}
-  .cover button{position:absolute;right:.7rem;top:.7rem;border:0;
-    background:rgba(0,0,0,.34);color:#fff;border-radius:99px;
-    padding:.4rem .85rem;font-size:.8rem;backdrop-filter:blur(4px)}
-  .meface{display:flex;flex-direction:column;align-items:center;
-    padding:0 1.15rem 1.1rem;margin-top:-2.9rem}
-  /* The clip lives on the inner circle, not the button. With overflow:hidden
-     on the button itself the + badge — which sits deliberately outside the
-     circle's edge — was sliced in half. */
-  .meface .shot{position:relative;width:5.8rem;height:5.8rem;border-radius:50%;
-    background:var(--paper);color:var(--accent);display:grid;place-items:center;
-    font-family:var(--serif);font-size:2.2rem;line-height:1;
-    box-shadow:0 0 0 4px var(--raise);border:0;padding:0}
-  .meface .shot .in{position:absolute;inset:0;border-radius:50%;overflow:hidden;
-    display:grid;place-items:center}
-  .meface .shot img{width:100%;height:100%;object-fit:cover;display:block}
-  .meface .shot .plus{position:absolute;right:-1px;bottom:-1px;width:1.75rem;
-    height:1.75rem;border-radius:50%;background:var(--accent);color:var(--accent-ink);
-    display:grid;place-items:center;font-size:1.1rem;font-family:var(--sans);
-    box-shadow:0 0 0 3px var(--raise)}
-  .meface h2{margin:.7rem 0 0;font-family:var(--serif);font-weight:400;font-size:1.4rem;
-    line-height:1.15;text-align:center}
-  .meface .facts{margin:.25rem 0 0;font-size:.85rem;color:var(--muted);
-    text-align:center;display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
-  .meface .facts b{font-weight:400;color:var(--ink-2);font-variant-numeric:tabular-nums}
-  .meface .bio{margin:.7rem 0 0;font-family:var(--serif);font-size:1.02rem;
-    line-height:1.55;color:var(--ink-2);text-align:center;max-width:26rem}
-  .meface .pending{margin:.6rem 0 0;font-size:.8rem;color:var(--t3);text-align:center}
-  .meface .go{margin:.9rem 0 0;border:1px solid var(--line);background:var(--paper);
-    color:var(--ink);border-radius:99px;padding:.5rem 1.4rem;font-size:.9rem}
-  .meface .go.primary{background:var(--accent);border-color:var(--accent);
-    color:var(--accent-ink)}
-  .meface .gorow{display:flex;gap:.5rem;margin:.9rem 0 0;flex-wrap:wrap;
-    justify-content:center}
-  .meface .gorow .go{margin:0;text-decoration:none;display:inline-block}
+  /* The cover picker, in the editor. */
+  .coverrow{display:flex;justify-content:center;margin:.55rem 0 0}
+
   .menote{margin:.5rem 0 0;font-size:.82rem;color:var(--muted);text-align:center;
     max-width:24rem;line-height:1.5}
 
@@ -689,12 +644,10 @@
 
   <div class="tutor" id="tutor" hidden></div>
 
-  <!-- Your own block, under the Tutor rather than over him. He is the one who
-       asks you to set your page up, so the thing he is asking about should come
-       after the asking — and on a fresh phone it used to be a large empty
-       prompt standing between the deck and everything else. -->
-  <div class="me" id="me" hidden></div>
-
+  <!-- Your own profile used to be drawn here, above the posts. It is gone.
+       Profile is a tab in the bar, the Tutor's first offer is to set the page
+       up, and the editor holds everything the block held — three ways of saying
+       one thing, standing between the deck and the feed. -->
   <div class="topics" id="topics"></div>
 
   <div class="rule" id="posts"><span id="rulelabel">Everyone · Newest first</span><i></i></div>
@@ -716,6 +669,10 @@
       <span class="in" id="mepicin"></span><span class="plus">+</span>
     </button>
     <p class="menote" id="mepicsay"></p>
+    <!-- The cover lived on the block that is no longer on the page. It is a
+         picture of your own page, so it belongs with the rest of the editing
+         rather than nowhere at all. -->
+    <div class="coverrow"><button class="ghost" type="button" id="mecovergo"></button></div>
     <div class="field"><input id="mename" maxlength="40"></div>
     <div class="field"><input id="mecampus" maxlength="60"></div>
     <div class="field"><input id="mehere" maxlength="40"></div>
@@ -964,7 +921,7 @@ let posts = [], topic = "", FOLLOWING = [];
 // With the rest of the state rather than beside the code that draws it: `let`
 // does not hoist a value, so the nav — which paints before the profile block
 // is reached — hit a temporal dead zone rather than a null.
-let ME = null, MEPOSTS = 0, MEREPLIES = 0;
+let ME = null;
 // Declared here with the rest of the state rather than beside the code that
 // draws it: `let` does not hoist a value, so anything running earlier — the
 // nav, on first paint — hit a temporal dead zone instead of a null.
@@ -1660,21 +1617,17 @@ function paintNav() {
   $("navnoteslabel").textContent = T("note.inbox");
   $("navnewlabel").textContent = T("nav.new");
   $("navmelabel").textContent = T("nav.profile");
-  // Profile goes to your own page once you have one. Before that it opens the
-  // editor: the block it used to scroll to is already at the top of the feed,
-  // so on a fresh phone the button scrolled from the top to the top and looked
-  // broken. A tab in the bar has to arrive somewhere.
+  // Profile goes to your own page once you have one, and before that it opens
+  // the editor. There is nothing on this page to scroll to any more: this tab
+  // and the Tutor's first offer are now the only two ways in, which is the
+  // point of taking the block off the page.
   const me = $("navme");
   if (ME && ME.handle) {
     me.href = "/p/" + encodeURIComponent(ME.handle.toLowerCase());
     me.onclick = null;
   } else {
-    me.href = "#me";
-    me.onclick = (e) => {
-      e.preventDefault();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      openMe();
-    };
+    me.href = "#";
+    me.onclick = (e) => { e.preventDefault(); openMe(); };
   }
 }
 
@@ -1740,10 +1693,7 @@ async function drawTutor() {
   // Only offered while there is nothing there. Telling somebody with a filled
   // profile to fill their profile is the fastest way to stop being read.
   if (!(ME && ME.handle)) {
-    box.append(doable("tut.setup", "tut.setupWhat", () => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      openMe();
-    }));
+    box.append(doable("tut.setup", "tut.setupWhat", () => openMe()));
   }
   box.append(doable("tut.buddy", "tut.buddyWhat", () => { location.href = "/buddies"; }));
   // Browsing is the top of this page now, so this scrolls rather than
@@ -1974,7 +1924,6 @@ markNav();
 
 function repaint() {
   const y = window.scrollY;
-  drawMe();
   paintNav();
   // The tutor's whole card is built in JavaScript, so a language change has to
   // rebuild it like everything else. Left out, he answered in English on a page
@@ -2177,94 +2126,12 @@ async function saveMe(patch) {
     return { error: T(d.error === "tooBig" ? "post.tooBig" : "err.general") };
   }
   ME = d.person;
-  drawMe();
   paintNav();
   // "Set up your page" is only offered while there is no page. Without this it
   // stays on screen telling somebody to do the thing they have just done.
   drawTutor();
   if (!$("mesheet").hidden) drawMePic();
   return d;
-}
-
-function drawMe() {
-  const box = $("me");
-  fill(box);
-  box.hidden = false;
-
-  const cover = el("div", "cover" + (ME && ME.cover ? "" : " bare"));
-  if (ME && ME.cover) {
-    const img = Object.assign(document.createElement("img"),
-      { src: "/api/public-media?id=" + encodeURIComponent(ME.cover), alt: "" });
-    img.addEventListener("error", () => { img.remove(); cover.classList.add("bare"); });
-    cover.append(img);
-  }
-  const cb = el("button", null, T(ME && ME.cover ? "me.edit" : "me.addCover"));
-  cb.type = "button";
-  cb.addEventListener("click", () => $("mecover").click());
-  cover.append(cb);
-  box.append(cover);
-
-  const face = el("div", "meface");
-
-  // The photo control IS the avatar. Adding a face should be one tap on the
-  // thing that is missing one, not a trip through a settings screen.
-  const shot = el("button", "shot");
-  shot.type = "button";
-  shot.setAttribute("aria-label", T("me.addPhoto"));
-  const inner = el("span", "in");
-  if (ME && ME.photo) {
-    const img = Object.assign(document.createElement("img"),
-      { src: "/api/public-media?id=" + encodeURIComponent(ME.photo), alt: "" });
-    img.addEventListener("error", () => { img.remove(); inner.textContent = initial(ME && ME.handle); });
-    inner.append(img);
-  } else {
-    inner.textContent = initial(ME && ME.handle);
-  }
-  shot.append(inner, el("span", "plus", "+"));
-  shot.addEventListener("click", () => $("mephoto").click());
-  face.append(shot);
-
-  face.append(el("h2", null, (ME && ME.handle) || T("me.newHere")));
-
-  if (ME && (MEPOSTS || MEREPLIES || ME.campus || ME.here)) {
-    const facts = el("div", "facts");
-    if (ME.campus) facts.append(el("span", null, ME.campus));
-    if (ME.here) facts.append(el("span", null, ME.here));
-    if (MEPOSTS) { const x = el("span"); x.append(el("b", null, String(MEPOSTS)), document.createTextNode(" " + T("me.posts"))); facts.append(x); }
-    if (MEREPLIES) { const x = el("span"); x.append(el("b", null, String(MEREPLIES)), document.createTextNode(" " + T("me.replies"))); facts.append(x); }
-    face.append(facts);
-  }
-
-  if (ME && ME.goal) face.append(el("p", "bio", ME.goal));
-  if (ME && ME.photoPending) face.append(el("p", "pending", T("me.photoHeld")));
-
-  if (!ME || !ME.handle) {
-    face.append(el("p", "menote", T("me.setUp")));
-    const row = el("div", "gorow");
-    /* One real action. "Add your photo" sat directly under an avatar with a +
-     * on it that does the same thing, and it is the wrong ask anyway: the
-     * thing worth doing here is going on the list, which is what somebody
-     * arriving is actually for. The photo is asked for inside. */
-    const go = el("button", "go primary", T("bud.join"));
-    go.type = "button";
-    go.addEventListener("click", () => openMe(true));
-    const buds = el("a", "go", T("bud.seeWho"));
-    buds.href = "/buddies";
-    row.append(go, buds);
-    face.append(row);
-  } else {
-    const row = el("div", "gorow");
-    const go = el("button", "go", T("me.edit"));
-    go.type = "button";
-    go.addEventListener("click", openMe);
-    const buds = el("a", "go primary", T("bud.open"));
-    buds.href = "/buddies";
-    const mine = el("a", "go", T("me.myPage"));
-    mine.href = "/p/" + encodeURIComponent((ME.handle || "").toLowerCase());
-    row.append(go, mine, buds);
-    face.append(row);
-  }
-  box.append(face);
 }
 
 for (const [input, key] of [["mephoto", "photo"], ["mecover", "cover"]]) {
@@ -2278,17 +2145,17 @@ for (const [input, key] of [["mephoto", "photo"], ["mecover", "cover"]]) {
     // Say something before the wait, not after. Re-encoding a large photo
     // takes a moment on a phone, and a control that does nothing visible is a
     // control somebody presses again.
-    const label = key === "cover" ? $("me").querySelector(".cover button") : null;
+    const label = key === "cover" ? $("mecovergo") : null;
     if (label) label.textContent = T("me.working");
     let shot;
     try {
       shot = await shrink(f, key === "cover" ? 1600 : 1000);
     } catch (err) {
       alert(T("post.badPhoto") + " (" + (err && err.message || "?") + ")");
-      drawMe();
+      drawMePic();
       return;
     }
-    if (shot.error) { alert(shot.error); drawMe(); return; }
+    if (shot.error) { alert(shot.error); drawMePic(); return; }
     const out = await saveMe({
       [key]: shot.data, [key + "Type"]: shot.type,
       ...(ME && ME.handle ? {} : { handle: who }),
@@ -2313,9 +2180,14 @@ function drawMePic() {
     box.textContent = initial(ME && ME.handle);
   }
   $("mepicgo").setAttribute("aria-label", T("me.addPhoto"));
-  $("mepicsay").textContent = ME && ME.photo ? "" : T("me.needPhoto");
+  /* Three states, not two. A photo that is waiting to be read has to say so
+     somewhere, and the block that used to say it is off the page. */
+  $("mepicsay").textContent = !(ME && ME.photo) ? T("me.needPhoto")
+    : ME.photoPending ? T("me.photoHeld") : "";
+  $("mecovergo").textContent = T(ME && ME.cover ? "me.changeCover" : "me.addCover");
 }
 $("mepicgo").addEventListener("click", () => $("mephoto").click());
+$("mecovergo").addEventListener("click", () => $("mecover").click());
 
 /* The days somebody is free, 0–6. Drawn rather than a row of checkboxes: seven
  * of those is a wall of text, and a week reads as a shape. */
@@ -2406,8 +2278,8 @@ $("meform").addEventListener("submit", async (e) => {
 
 fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
   .then((r) => r.json())
-  .then((d) => { ME = d.person; MEPOSTS = d.posts || 0; MEREPLIES = d.replies || 0; drawMe(); paintNav(); })
-  .catch(() => { drawMe(); paintNav(); });
+  .then((d) => { ME = d.person; paintNav(); drawTutor(); })
+  .catch(paintNav);
 
 load();
 loadPeople();

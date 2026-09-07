@@ -462,6 +462,7 @@ export const STRINGS = {
   // ---- your own profile ----------------------------------------------------
   "me.addPhoto":       ["Add your photo", "加上你的照片"],
   "me.addCover":       ["Add a cover", "加个封面"],
+  "me.changeCover":    ["Change the cover", "换个封面"],
   "me.newHere":        ["Looking for someone to study with?", "在找一起学习的人吗？"],
   // Says what the list IS, before a button offers to put you on it. "Put me on
   // the list" means nothing if nobody has said what the list is for.
