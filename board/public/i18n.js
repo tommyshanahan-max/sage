@@ -57,6 +57,8 @@ export const STRINGS = {
   "act.like":          ["Like", "赞"],
   "act.remove":        ["Remove", "删除"],
   "act.share":         ["Share", "分享"],
+  "act.more":          ["Show more", "展开"],
+  "act.less":          ["Show less", "收起"],
   "act.report":        ["Report", "举报"],
   "act.reported":      ["Reported", "已举报"],
   "act.copied":        ["Link copied", "链接已复制"],

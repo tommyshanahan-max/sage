@@ -340,6 +340,9 @@
     line-height:1.55;overflow-wrap:anywhere}
   .zh{margin:.3rem 0 0;font-family:var(--serif);font-size:1.05rem;color:var(--ink-2)}
   .py{margin:.15rem 0 0;font-size:.88rem;color:var(--muted)}
+  .more{margin:.5rem 0 0;border:0;background:none;padding:.2rem 0;
+    color:var(--accent);font-size:.9rem}
+  .rest .words,.rest .zh{margin-top:.6rem}
   .pic{display:block;width:100%;border-radius:.7rem;margin:.65rem 0 0;
     background:var(--raise)}
 
@@ -1287,11 +1290,46 @@ function card(p) {
     body.append(j);
   }
 
-  if (p.note) body.append(el("p", "words", p.note));
-  // The same thing in Chinese where somebody supplied it: the point of a board
-  // for people who cannot read the signs is that the answer can be held up to
-  // the person behind the counter.
-  if (p.zh) body.append(el("p", "zh", p.zh));
+  /* A LONG POST OPENS AS ITS FIRST LINE.
+   *
+   * Anything written as more than one paragraph shows the first and folds the
+   * rest — so a notice with a heading on it reads as a heading, and a wall of
+   * text does not stand between somebody and the next post.
+   *
+   * Both languages fold together and both first lines stay up. Folding the
+   * Chinese away with the body would leave a Chinese reader looking at an
+   * English line and a Show more, which is the one arrangement worse than the
+   * wall. The point of a board for people who cannot read the signs is that
+   * the answer can be held up to the person behind the counter.
+   */
+  // Tolerant of CRLF as well as LF: text stored before the server started
+     // normalising it still has the old kind in it.
+  const split = (t) => {
+    const m = /\r?\n\r?\n/.exec(String(t || ""));
+    return m ? [t.slice(0, m.index), t.slice(m.index + m[0].length)]
+             : [String(t || ""), ""];
+  };
+  const [head, tail] = split(p.note);
+  const [zhHead, zhTail] = split(p.zh);
+
+  if (head) body.append(el("p", "words", head));
+  if (zhHead) body.append(el("p", "zh", zhHead));
+
+  if (tail || zhTail) {
+    const rest = el("div", "rest");
+    rest.hidden = true;
+    if (tail) rest.append(el("p", "words", tail));
+    if (zhTail) rest.append(el("p", "zh", zhTail));
+    const more = el("button", "more", T("act.more"));
+    more.type = "button";
+    more.setAttribute("aria-expanded", "false");
+    more.addEventListener("click", () => {
+      rest.hidden = !rest.hidden;
+      more.textContent = T(rest.hidden ? "act.more" : "act.less");
+      more.setAttribute("aria-expanded", String(!rest.hidden));
+    });
+    body.append(more, rest);
+  }
   if (p.py) body.append(el("p", "py", p.py));
 
   // ---- the actions --------------------------------------------------------
@@ -1445,9 +1483,23 @@ function card(p) {
     rgo.disabled = false; rgo.textContent = T("act.send");
     if (!d) { rgo.textContent = T("act.again"); return; }
     rin.value = "";
-    // Said on the spot. A reply that is held and does not say so reads as a
-    // reply that failed, and gets typed again.
-    const said = el("p", "py", T(d.state === "published" ? "act.replyUp" : "act.replyHeld"));
+
+    /* A reply that went up goes up HERE, not just on the server.
+     *
+     * The board is drawn from a fetch, and nothing re-fetched it after a
+     * reply — so somebody wrote one, was told "Up.", and watched the thread
+     * not contain it. Which reads as a reply that failed, and gets typed
+     * again. The scroll position is put back because redrawing the feed
+     * otherwise throws somebody to the top of it mid-conversation. */
+    if (d.state === "published") {
+      const y = window.scrollY;
+      await load();
+      window.scrollTo(0, y);
+      return;
+    }
+    // Held, and saying so. A reply that waits and does not say it is waiting
+    // reads the same way.
+    const said = el("p", "py", T("act.replyHeld"));
     rbox.after(said);
     setTimeout(() => said.remove(), 6000);
   });

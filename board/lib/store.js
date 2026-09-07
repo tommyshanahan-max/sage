@@ -38,7 +38,12 @@ export function cleanPost(raw) {
   if (!raw || typeof raw !== "object") return null;
   const id = String(raw.id || "");
   if (!/^[a-f0-9]{20}$/.test(id)) return null;
-  const s = (v, n) => String(v ?? "").slice(0, n);
+  /* Line endings normalised on the way in. A post made through the operator's
+     multipart route arrives with CRLF — that is what multipart does to a
+     textarea — and everything downstream that looks for a blank line by
+     matching "\n\n" quietly finds nothing. Stored text has one kind of
+     newline in it. */
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").slice(0, n);
   return {
     id,
     at: s(raw.at, 40) || new Date().toISOString(),
@@ -163,7 +168,12 @@ export function cleanPerson(raw) {
   if (!raw || typeof raw !== "object") return null;
   const id = String(raw.id || "");
   if (!/^[a-f0-9]{20}$/.test(id)) return null;
-  const s = (v, n) => String(v ?? "").slice(0, n);
+  /* Line endings normalised on the way in. A post made through the operator's
+     multipart route arrives with CRLF — that is what multipart does to a
+     textarea — and everything downstream that looks for a blank line by
+     matching "\n\n" quietly finds nothing. Stored text has one kind of
+     newline in it. */
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").slice(0, n);
   const days = Array.isArray(raw.free)
     ? [...new Set(raw.free.map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort()
     : [];
@@ -296,7 +306,12 @@ export function cleanNote(raw) {
   if (!raw || typeof raw !== "object") return null;
   const id = String(raw.id || "");
   if (!/^[a-f0-9]{20}$/.test(id)) return null;
-  const s = (v, n) => String(v ?? "").slice(0, n);
+  /* Line endings normalised on the way in. A post made through the operator's
+     multipart route arrives with CRLF — that is what multipart does to a
+     textarea — and everything downstream that looks for a blank line by
+     matching "\n\n" quietly finds nothing. Stored text has one kind of
+     newline in it. */
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").slice(0, n);
   const by = s(raw.by, 64), to = s(raw.to, 64);
   // A note with nobody at one end of it is not a note.
   if (!by || !to || by === to) return null;

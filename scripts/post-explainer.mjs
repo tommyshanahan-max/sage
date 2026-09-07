@@ -26,19 +26,15 @@ const asIdx = rest.indexOf("--as");
 const ACCOUNT = asIdx >= 0 ? rest[asIdx + 1] : "The Tutor";
 
 const EN = [
-  "WeChat's browser and your normal one are two different browsers, so this board sees two different people. Your page is on one of them and not the other.",
+  "DO THIS TO SAVE YOUR PROFILE",
   "",
-  "To join them up: Profile \u2192 Show my key \u2192 Copy. Then in the other browser: Profile \u2192 Been here before? \u2192 paste.",
-  "",
-  "No account, no password \u2014 that line is all of it. Keep it, and never post it.",
+  "WeChat's browser and your normal one are two different people here. To be one: Profile \u2192 Show my key \u2192 Copy, then in the other browser Profile \u2192 Been here before? \u2192 paste. No account, no password \u2014 that line is all of it, so keep it and never post it.",
 ].join("\n");
 
 const ZH = [
-  "微信里的浏览器和你平时用的浏览器，是两个不同的浏览器，所以在这里就是两个人——你的主页只在其中一个上面。",
+  "想保住你的主页，先做这一步",
   "",
-  "合成一个人：「我的」\u2192「显示我的钥匙」\u2192 复制。到另一个浏览器：「我的」\u2192「以前来过？」\u2192 粘贴。",
-  "",
-  "这里没有账号也没有密码，就靠那一行。存好，别发出来。",
+  "微信里的浏览器和你平时用的浏览器，在这里算两个人。要变回一个人：「我的」\u2192「显示我的钥匙」\u2192 复制，再到另一个浏览器里「我的」\u2192「以前来过？」\u2192 粘贴。这里没有账号也没有密码，就靠那一行——存好，别发出来。",
 ].join("\n");
 
 // The same header the rest of the platform uses; not a bearer token.
