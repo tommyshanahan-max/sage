@@ -485,43 +485,57 @@ function pill(x, left, top, w, h, r) {
   x.closePath();
 }
 
-/** The result card: the code, its name, and the four pills under it. */
+/* THE CARD THE FOUR LETTERS ARE SHARED AS.
+ *
+ * The same family as the level card — identity, then where you sit, then what
+ * that means in words — so somebody who sees both in a chat sees one product.
+ *
+ * The words under each pill are the change worth having. The letters alone say
+ * nothing to anybody who has not taken it: EFSP is four consonants until
+ * something tells you that E is Extraverted and that this one is clear rather
+ * than a coin flip. That is exactly what the screen shows and the card did not.
+ */
 function typePicture(r, titleWords) {
   return resultPicture(({ x, S, paper, ink, muted, accent, line, serif, sans }) => {
     x.textAlign = "center";
+
     x.fillStyle = accent;
-    x.font = "200px " + serif;
-    x.fillText(r.code, S / 2, 300);
+    x.font = "170px " + serif;
+    x.fillText(r.code, S / 2, 250);
 
     if (titleWords) {
       x.fillStyle = ink;
-      x.font = "58px " + serif;
-      x.fillText(titleWords, S / 2, 380);
+      x.font = "60px " + serif;
+      x.fillText(titleWords, S / 2, 336);
     }
 
-    const w = 380, h = 130, gap = 34;
+    /* The whole card is a fixed height, so these four numbers are a budget:
+       two rows of pill plus two lines of label under each has to land above the
+       invitation at the bottom. It did not, the first time — the second row's
+       strength line was printed through "Tap to take it". */
+    const w = 380, h = 124, gap = 34, rowGap = 116;
     const left = (S - (w * 2 + gap)) / 2;
-    const top = 470;
+    const top = 396;
     r.axes.forEach((a, i) => {
       const cx = left + (i % 2) * (w + gap);
-      const cy = top + Math.floor(i / 2) * (h + gap);
+      const cy = top + Math.floor(i / 2) * (h + rowGap);
       pill(x, cx, cy, w, h, h / 2);
       x.strokeStyle = accent;
       x.lineWidth = 4;
       x.stroke();
 
-      x.font = "62px " + serif;
+      x.font = "58px " + serif;
       x.textAlign = "center";
       const mid = cx + w / 2;
       const letter = (ch, at, on) => {
         if (on) {
           x.beginPath();
-          x.arc(at, cy + h / 2, 46, 0, Math.PI * 2);
+          x.arc(at, cy + h / 2, 44, 0, Math.PI * 2);
           x.fillStyle = accent;
           x.fill();
         }
         x.fillStyle = on ? paper : muted;
-        x.fillText(ch, at, cy + h / 2 + 22);
+        x.fillText(ch, at, cy + h / 2 + 20);
       };
       letter(a.axis[0], mid - 62, a.letter === a.axis[0]);
       letter(a.axis[1], mid + 62, a.letter === a.axis[1]);
@@ -529,19 +543,27 @@ function typePicture(r, titleWords) {
       x.strokeStyle = line;
       x.lineWidth = 2;
       x.beginPath();
-      x.moveTo(mid, cy + 34);
-      x.lineTo(mid, cy + h - 34);
+      x.moveTo(mid, cy + 32);
+      x.lineTo(mid, cy + h - 32);
       x.stroke();
+
+      /* What that letter is called, and how firmly it landed. On two lines,
+         not one: "Extraverted · Close to the middle" is wider than the pill it
+         belongs to, and on one line the left column ran into the right. */
+      x.fillStyle = ink;
+      x.font = "32px " + sans;
+      x.fillText(P(AXES[a.axis][a.letter === a.axis[0] ? "first" : "second"]),
+        mid, cy + h + 46);
+      x.fillStyle = muted;
+      x.font = "27px " + sans;
+      x.fillText(P(STRENGTH[a.strength]), mid, cy + h + 86);
     });
 
-    x.fillStyle = muted;
-    x.font = "32px " + sans;
-    x.textAlign = "center";
     // The invitation, on the picture itself — a card in a chat is seen by
     // people who never opened the app, and the post makes it tappable.
     x.fillStyle = accent;
     x.font = "36px " + sans;
-    x.fillText(T("share.cardTap"), S / 2, 880);
+    x.fillText(T("share.cardTap"), S / 2, 900);
   });
 }
 
