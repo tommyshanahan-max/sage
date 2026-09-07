@@ -677,6 +677,12 @@
   .profdots i{width:.35rem;height:.35rem;border-radius:50%;background:var(--line)}
   .profdots i.on{background:var(--accent)}
 
+  /* The header's letter: the same weight as the mark it sits beside, because
+     it is the other half of what this row is for. */
+  .profgrade{font-family:var(--serif);font-weight:400;font-size:1.55rem;line-height:1;
+    color:var(--accent);flex:0 0 auto;align-self:center;letter-spacing:-.02em;
+    min-width:2.2rem;text-align:center}
+
   /* ---- the grade ----------------------------------------------------------- */
   .grade{padding:.1rem 0 .9rem;border-bottom:1px solid var(--hair);margin-bottom:.2rem}
   .gtop{display:flex;align-items:flex-start;gap:.9rem}
@@ -1275,6 +1281,10 @@
         <em id="profsub"></em>
         <span id="profsum"></span>
       </span>
+      <!-- Today's letter, level with the mark at the other end of the row, so
+           the one thing worth knowing is readable without opening anything.
+           The mark says whose card this is; this says how it is going. -->
+      <b class="profgrade" id="profgrade" hidden></b>
       <i class="chev" aria-hidden="true"></i>
     </button>
     <div id="profbody">
@@ -3182,8 +3192,11 @@ function gradeWeek() {
 
 let GRADEOPEN = false;
 
+let GRADE = null;
+
 function drawGrade(box) {
   const g = gradeToday();
+  GRADE = g;
   saveGrade(g);
   const all = readLocal(GRADEKEY) || {};
   const y = new Date();
@@ -3486,9 +3499,16 @@ function drawProf() {
      down to one line — two headlines in one fold is no headline — and when
      there is not, the level takes its old place, which is what somebody in
      their first week sees. */
+  GRADE = null;
   const hasNews = drawNews();
   // An empty card holds a slot in the strip and swipes to nothing.
   $("profnews").hidden = !hasNews;
+  /* The letter in the header, from the same object the card drew — see GRADE.
+     Absent rather than "—" when there is no grade: a dash beside the mark reads
+     as something broken, and the card inside says what is missing and why. */
+  const gh = $("profgrade");
+  gh.textContent = (GRADE && GRADE.letter) || "";
+  gh.hidden = !(GRADE && GRADE.letter);
 
   /* WHERE YOU ARE NOW, large, as the first thing inside the fold.
    *
