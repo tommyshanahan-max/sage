@@ -64,6 +64,46 @@ const HOOK_SECRET = (process.env.BOARD_HOOK_SECRET || "").trim();
 // first thing somebody tests it with.
 const AUTO = process.env.BOARD_AUTO_PUBLISH === "1";
 
+/* TEST MODE, AND IT ENDS BY ITSELF.
+ *
+ * While there are fewer than this many people on the board, a new photograph
+ * and a new post go straight up rather than into the queue.
+ *
+ * The reason is not that review stopped mattering. It is that a board with
+ * four people on it is being tested, not read, and every one of those four is
+ * somebody who was asked to come and try it — a tester who uploads a face,
+ * sends the link to a friend and gets back a page with a letter on it
+ * concludes the app is broken, which is the wrong thing to learn from a test.
+ *
+ * It expires on its own, which is the point: nobody has to remember to turn
+ * moderation back on. Once this many people have a name up, everything waits
+ * for a person again — new photographs, new posts, all of it. Reporting works
+ * throughout, and anything already up can still be taken down.
+ */
+const OPEN_UNTIL = Number(process.env.BOARD_OPEN_UNTIL || 10);
+const openStill = (board) =>
+  board.people.filter((q) => q.handle && q.state === "published").length < OPEN_UNTIL;
+
+/* PHOTOGRAPHS DO NOT WAIT AT ALL, and that is a separate decision from the one
+ * above rather than a special case of it.
+ *
+ * A held photograph is invisible to everybody but its owner, so the person who
+ * uploaded it sees their own face and everybody else sees a letter — including
+ * whoever they just sent their link to. There is no way to tell that apart
+ * from a failed upload, and the conclusion somebody draws is that the app is
+ * broken. That cost lands on every single person who joins, immediately, and
+ * it does not get smaller as the board grows.
+ *
+ * What the queue was protecting against is still handled: a photograph can be
+ * reported by anybody who sees it, the panel lists every face and can take one
+ * down, and the profile it belongs to can be removed with it. The difference
+ * is that a face is now presumed fine until somebody says otherwise, which is
+ * what the words on this board have always been for a reader — the queue only
+ * ever stood in front of the picture.
+ *
+ * Set BOARD_REVIEW_PHOTOS=1 to put it back. */
+const REVIEW_PHOTOS = process.env.BOARD_REVIEW_PHOTOS === "1";
+
 /* How many separate people have to report a post before it comes down on its
  * own, pending somebody reading it.
  *
@@ -717,6 +757,56 @@ app.get("/api/want", async (req, res) => {
   });
 });
 
+/* WHO FOLLOWS YOU, so you can follow them back.
+ *
+ * This is the one place the follow graph is handed to anybody, and it is
+ * handed only to the person it is about: your followers, to you. Nobody can
+ * ask who follows somebody else, and a count is still all a profile shows.
+ *
+ * That is a narrower rule than it sounds. Following somebody here is not a
+ * private act — it is a thing you do TO them, and a person is entitled to know
+ * who has done it. What stays closed is the other direction: nobody learns who
+ * you follow, and nobody learns anything about a stranger's list at all.
+ *
+ * Seen-ness lives in the browser, not here. The board would have to keep a
+ * per-person "last looked" to do it on this side, which is a timestamp about a
+ * reader that nothing else needs — and the count that matters is "new since I
+ * last looked", which is a fact about the phone.
+ */
+app.get("/api/followers", async (req, res) => {
+  const board = await store.load(FILE);
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  res.set("Cache-Control", "no-store");
+  if (!me) return res.json({ followers: [] });
+
+  const mine = board.people.find((q) => q.by === me);
+  if (!mine) return res.json({ followers: [] });
+
+  const iFollow = new Set(board.follows.filter((f) => f.by === me).map((f) => f.who));
+  const followers = board.follows
+    .filter((f) => f.who === mine.id)
+    .sort((a, b) => (b.at || "").localeCompare(a.at || ""))
+    .map((f) => {
+      // The follower's own row, by their device hash. Somebody who followed and
+      // then took their profile down is a follow with nobody behind it.
+      const who = board.people.find((q) => q.by === f.by && q.state === "published" && q.handle);
+      if (!who) return null;
+      return {
+        id: who.id,
+        handle: who.handle,
+        campus: who.campus || "",
+        photo: who.photoState === "published" ? who.photo : "",
+        type: who.type || "",
+        at: f.at,
+        // So the button can say which of the two things it does.
+        following: iFollow.has(who.id),
+      };
+    })
+    .filter(Boolean);
+
+  res.json({ followers });
+});
+
 /* Follow, and unfollow, which is the same button. */
 app.post("/api/follow", express.json({ limit: "8kb" }), async (req, res) => {
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
@@ -826,8 +916,10 @@ app.put("/api/me", express.json({ limit: "36mb" }), async (req, res) => {
     // A new picture goes back into the queue. Changing your face is the same
     // act as adding one, and a profile that could be edited past review would
     // make the review pointless.
-    if (face?.id) { q.photo = face.id; q.photoState = "held"; }
-    if (back?.id) { q.cover = back.id; q.photoState = "held"; }
+    // Straight up. See REVIEW_PHOTOS above for why this one does not wait.
+    const asRead = REVIEW_PHOTOS && !openStill(board) ? "held" : "published";
+    if (face?.id) { q.photo = face.id; q.photoState = asRead; }
+    if (back?.id) { q.cover = back.id; q.photoState = asRead; }
 
     /* THE WORDS GO UP; THE PICTURE WAITS.
      *
@@ -863,7 +955,7 @@ app.put("/api/me", express.json({ limit: "36mb" }), async (req, res) => {
       board.posts.push(store.cleanPost({
         id: store.newId(),
         at: new Date().toISOString(),
-        state: "held",
+        state: openStill(board) ? "published" : "held",
         by: me,
         handle: q.handle,
         note: q.goal || "",
@@ -876,7 +968,13 @@ app.put("/api/me", express.json({ limit: "36mb" }), async (req, res) => {
     return q;
   });
 
-  if (face?.id || back?.id) tell("held", { ...out, note: "New profile photo" });
+  // Told either way, and told which: a photograph that went straight up is
+  // still worth knowing about, and calling it held when it is not would put a
+  // job on the panel that nobody can do.
+  if (face?.id || back?.id) {
+    tell(out.photoState === "published" ? "published" : "held",
+      { ...out, note: "New profile photo" });
+  }
   res.json({ person: shownPerson(out, true) });
 });
 
@@ -963,13 +1061,22 @@ app.post("/api/post", express.json({ limit: "36mb" }), async (req, res) => {
     at: new Date().toISOString(),
     // A like is never held: it is a tally, not a statement, and holding one
     // would put a queue in front of the cheapest thing anybody does here.
-    state: like ? "published" : (AUTO ? "published" : "held"),
+    // Filled in below, once the board has been read: whether this waits for a
+    // person depends on how many people are on it.
+    state: "held",
     handle, note, topic, photo, re, like,
-    why: like || AUTO ? "" : "Waiting for somebody to read it.",
+    why: "Waiting for somebody to read it.",
     by: store.hashDevice(req.body?.device, SALT),
   });
 
-  await change((board) => { board.posts.unshift(post); });
+  await change((board) => {
+    // A like is never held: it is a tally, not a statement, and holding one
+    // would put a queue in front of the cheapest thing anybody does here.
+    const up = like || AUTO || openStill(board);
+    post.state = up ? "published" : "held";
+    post.why = up ? "" : "Waiting for somebody to read it.";
+    board.posts.unshift(post);
+  });
   tell(post.state === "published" ? "published" : "held", post);
   res.status(201).json({ id: post.id, state: post.state });
 });

@@ -258,6 +258,30 @@
     color:var(--accent)}
   .tutor .honest{margin:.85rem 0 0;font-size:.8rem;line-height:1.5;color:var(--muted)}
 
+  /* ---- who followed you ---------------------------------------------------
+   * A row each, with the one control that matters on it. Not a card: these are
+   * people you have not decided about yet, and giving each one a card the size
+   * of a card in the deck would make the decision look bigger than it is. */
+  .fols{display:flex;flex-direction:column;gap:.1rem;margin:0 0 1.5rem}
+  .folrow{display:flex;align-items:center;gap:.75rem;padding:.7rem 0;
+    border-bottom:1px solid var(--hair)}
+  .folrow:last-child{border-bottom:0}
+  .folrow .av{width:2.9rem;height:2.9rem;font-size:1.1rem}
+  .folrow .who{flex:1 1 auto;min-width:0}
+  .folrow .who{color:var(--ink);text-decoration:none}
+  .folrow .who b{display:block;font-family:var(--serif);font-weight:400;font-size:1.05rem;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .folrow .who span{display:block;font-size:.82rem;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .folrow .dot{flex:0 0 auto;width:.45rem;height:.45rem;border-radius:50%;
+    background:var(--accent)}
+  .folrow button{flex:0 0 auto;border:1px solid var(--accent);background:var(--accent);
+    color:var(--accent-ink);border-radius:99px;padding:.5rem 1rem;font-size:.88rem}
+  .folrow button.on{background:var(--raise);border-color:var(--line);color:var(--ink-2)}
+  .rule .new{flex:0 0 auto;font-weight:400;font-size:.7rem;letter-spacing:.06em;
+    background:var(--accent);color:var(--accent-ink);border-radius:99px;
+    padding:.15rem .5rem}
+
   .topics{display:flex;gap:.55rem;overflow-x:auto;padding:0 0 .35rem;
     margin:0 -1.15rem 1.5rem;padding-left:1.15rem;padding-right:1.15rem;
     scrollbar-width:none}
@@ -704,6 +728,7 @@
       <a href="#" id="navme">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
         <span id="navmelabel">Profile</span>
+        <i class="badge" id="navmen" hidden></i>
       </a>
     </nav>
     <span id="langslot"></span>
@@ -723,6 +748,14 @@
   <p class="pcount" id="pcount"></p>
   <p class="psafety" id="psafety"></p>
   <div class="bnone" id="bnone" hidden></div>
+
+  <!-- Who started following you. Under the deck because that is where you
+       already are, and because the answer to "somebody followed me" is usually
+       to look at them and decide whether to follow back. -->
+  <div class="rule" id="folrule" hidden><span id="follabel"></span><i></i>
+    <b class="new" id="folnew" hidden></b>
+  </div>
+  <div class="fols" id="fols" hidden></div>
 
   <div class="tutor" id="tutor" hidden></div>
 
@@ -1015,7 +1048,11 @@ function topicColour(name) {
 let device = "";
 try {
   device = localStorage.getItem("board:device") || "";
-  if (!device) { device = crypto.randomUUID(); localStorage.setItem("board:device", device); }
+  // uuid(), not crypto.randomUUID directly. randomUUID is Chrome 92 and only
+  // exists in a secure context — the exact reason the helper twenty lines up
+  // was written — and calling the raw one here threw on an older WeChat
+  // kernel before a single line of the board had been drawn.
+  if (!device) { device = uuid(); localStorage.setItem("board:device", device); }
 } catch { /* private window: it still works, it just forgets */ }
 
 let posts = [], topic = "", FOLLOWING = [];
@@ -1884,6 +1921,117 @@ function turnCard() {
   return box;
 }
 
+/* ---- who started following you -------------------------------------------
+ *
+ * The notification and the answer to it, in one place. Somebody follows you;
+ * you find out; you look at them and decide whether to follow back. Three
+ * screens for that would be two too many.
+ *
+ * NEW IS A FACT ABOUT THIS PHONE, not about the board. What counts as new is
+ * "since you last had this drawn in front of you", so the newest follower's
+ * timestamp is written to local storage as soon as the row is on the screen:
+ * the dots show on the load they arrived and are gone on the next one, which
+ * is how a since-you-last-looked mark is supposed to behave. The board is not
+ * asked to keep a note of when somebody last opened it.
+ */
+let FOLLOWERS = [], FRESH = new Set();
+
+async function loadFollowers() {
+  if (!device) return;
+  try {
+    const d = await fetch("/api/followers", { cache: "no-store",
+      headers: { "x-board-device": device } }).then((r) => r.json());
+    FOLLOWERS = (d && d.followers) || [];
+  } catch { FOLLOWERS = []; }
+
+  /* Which of them are new is worked out ONCE, here, and not in the draw.
+   * This page redraws whenever the language changes or a late fetch lands, and
+   * a draw that both read the mark and moved it made the second redraw erase
+   * the dots the first one had just put up. */
+  let seen = "";
+  try { seen = localStorage.getItem("board:sawfollowers") || ""; } catch { /* fine */ }
+  FRESH = new Set(FOLLOWERS.filter((f) => (f.at || "") > seen).map((f) => f.id));
+  if (FOLLOWERS.length) {
+    const newest = FOLLOWERS.map((f) => f.at || "").sort().pop();
+    try { localStorage.setItem("board:sawfollowers", newest); } catch { /* fine */ }
+  }
+  drawFollowers();
+}
+
+function drawFollowers() {
+  const box = $("fols");
+  const rule = $("folrule");
+  fill(box);
+  if (!FOLLOWERS.length) {
+    box.hidden = true; rule.hidden = true; badgeFollowers(0);
+    return;
+  }
+  box.hidden = false; rule.hidden = false;
+  $("follabel").textContent = T("fol.head");
+
+  const fresh = FOLLOWERS.filter((f) => FRESH.has(f.id));
+
+  const tag = $("folnew");
+  tag.hidden = !fresh.length;
+  tag.textContent = fresh.length ? T("fol.new", { n: fresh.length }) : "";
+  badgeFollowers(fresh.length);
+
+  for (const f of FOLLOWERS) {
+    const row = el("div", "folrow");
+    const av = el("a", "av");
+    av.href = "/p/" + encodeURIComponent((f.handle || "").toLowerCase());
+    if (f.photo) {
+      const img = Object.assign(document.createElement("img"),
+        { src: "/api/public-media?id=" + encodeURIComponent(f.photo), alt: "", loading: "lazy" });
+      img.addEventListener("error", () => { img.remove(); av.textContent = initial(f.handle); });
+      av.append(img);
+    } else {
+      av.textContent = initial(f.handle);
+    }
+
+    const who = el("a", "who");
+    who.href = av.href;
+    who.style.textDecoration = "none";
+    who.append(el("b", null, f.handle || T("board.someone")),
+      el("span", null, [f.campus, f.type].filter(Boolean).join(" · ")));
+
+    row.append(av, who);
+    if (FRESH.has(f.id)) row.append(el("i", "dot"));
+
+    const b = el("button", f.following ? "on" : "", T(f.following ? "bud.following" : "fol.back"));
+    b.type = "button";
+    b.addEventListener("click", async () => {
+      const want = !f.following;
+      f.following = want;
+      b.textContent = T(want ? "bud.following" : "fol.back");
+      b.classList.toggle("on", want);
+      try {
+        const r = await fetch("/api/follow", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device, who: f.id, on: want }),
+        });
+        if (!r.ok) throw new Error("no");
+        const d = await r.json();
+        f.following = Boolean(d.following);
+      } catch { f.following = !want; }
+      b.textContent = T(f.following ? "bud.following" : "fol.back");
+      b.classList.toggle("on", Boolean(f.following));
+    });
+    row.append(b);
+    box.append(row);
+  }
+
+}
+
+/** The count, on the tab that leads to your own page — the one place somebody
+ *  looks when they wonder whether anything has happened to them. */
+function badgeFollowers(n) {
+  const b = $("navmen");
+  if (!b) return;
+  b.textContent = n > 9 ? "9+" : String(n);
+  b.hidden = !n;
+}
+
 /* THE ROW ABOVE THE DECK: your own card, in whichever of three states it is.
  *
  * It began as one thing — an ask for a photograph — and had to become three,
@@ -2193,6 +2341,7 @@ function repaint() {
   // that had switched to Chinese.
   drawTutor();
   drawDeck();
+  drawFollowers();
   draw();
   window.scrollTo(0, y);
 }
@@ -2573,6 +2722,7 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
 load();
 loadPeople();
 loadWanted();
+loadFollowers();
 </script>
 
 <script>

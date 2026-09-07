@@ -532,6 +532,10 @@ export const STRINGS = {
   "bud.type":          ["Type sort", "性格测试"],
   "bud.follow":        ["Follow", "关注"],
   "bud.following":     ["Following", "已关注"],
+  // Who followed you, and the button that answers it.
+  "fol.head":          ["Following you", "关注了你"],
+  "fol.new":           ["{n} new", "{n} 个新的"],
+  "fol.back":          ["Follow back", "回关"],
   "bud.followers":     ["{n} following them", "{n} 人关注"],
   "bud.followers1":    ["1 person follows them", "1 人关注"],
   "feed.onlyFollowing":["People I follow", "我关注的"],
