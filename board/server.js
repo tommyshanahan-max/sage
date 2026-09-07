@@ -1069,6 +1069,7 @@ app.post("/api/post", express.json({ limit: "36mb" }), async (req, res) => {
     // person depends on how many people are on it.
     state: "held",
     handle, note, topic, photo, re, like,
+    go: String(req.body?.go || ""),
     why: "Waiting for somebody to read it.",
     by: store.hashDevice(req.body?.device, SALT),
   });

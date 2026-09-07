@@ -59,6 +59,14 @@ export function cleanPost(raw) {
     photo: /^[a-f0-9]{20}$/.test(String(raw.photo || "")) ? String(raw.photo) : "",
     clip: /^[a-f0-9]{20}$/.test(String(raw.clip || "")) ? String(raw.clip) : "",
     topic: s(raw.topic, 40),
+    /* Where a post invites the reader to go, from a list of two.
+     *
+     * A result posted to the feed is worth nothing to anybody reading it
+     * unless they can do the thing it is a result of, and a URL typed into
+     * words is a URL nobody taps. An allowlist rather than a path: this field
+     * is written from a page, and a field written from a page that becomes a
+     * link is how somebody sends the whole board somewhere else. */
+    go: ["/type", "/level"].includes(String(raw.go || "")) ? String(raw.go) : "",
     // Where it was taken. Rounded to four decimals — about eleven metres —
     // before it is stored, which is enough to say "this restaurant" and not
     // enough to say "this table".

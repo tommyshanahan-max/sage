@@ -378,6 +378,14 @@
   .more{margin:.5rem 0 0;border:0;background:none;padding:.2rem 0;
     color:var(--accent);font-size:.9rem}
   .rest .words,.rest .zh{margin-top:.6rem}
+  .picgo{display:block}
+  /* A result card is drawn on the same paper as the feed, so without an edge
+     it reads as loose type in the post rather than as a picture. */
+  .picgo .pic{margin-top:.65rem;border:1px solid var(--line)}
+  .takeit{display:inline-block;margin:.7rem 0 0;border:1px solid var(--accent);
+    background:var(--accent);color:var(--accent-ink);border-radius:99px;
+    padding:.55rem 1.2rem;font-size:.95rem;text-decoration:none}
+  .takeit:hover{opacity:.92}
   .pic{display:block;width:100%;border-radius:.7rem;margin:.65rem 0 0;
     background:var(--raise)}
 
@@ -1366,7 +1374,19 @@ function card(p) {
       { className: "pic", src: "/api/public-media?id=" + encodeURIComponent(p.photo),
         alt: "", loading: "lazy" });
     img.addEventListener("error", () => img.remove());
-    body.append(img);
+    /* A result card is a picture of a thing you can do, so the picture opens
+       the thing. Wrapped rather than made a link itself, because an <img>
+       inside an <a> is the only shape that keeps the rounded corner and the
+       tap target the same size as the picture. */
+    if (p.go) {
+      const to = document.createElement("a");
+      to.href = p.go;
+      to.className = "picgo";
+      to.append(img);
+      body.append(to);
+    } else {
+      body.append(img);
+    }
   }
   /* Somebody joining the study-buddy list.
    *
@@ -1427,6 +1447,17 @@ function card(p) {
     body.append(more, rest);
   }
   if (p.py) body.append(el("p", "py", p.py));
+
+  /* And the same invitation in words, under the words — for a post whose
+     picture did not load or was never made, and because a button placed above
+     the sentence that explains it asks before it has said why. */
+  if (p.go) {
+    const go = document.createElement("a");
+    go.className = "takeit";
+    go.href = p.go;
+    go.textContent = T("share.takeIt");
+    body.append(go);
+  }
 
   // ---- the actions --------------------------------------------------------
   const acts = el("div", "acts");

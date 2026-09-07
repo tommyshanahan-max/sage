@@ -741,6 +741,8 @@ export const STRINGS = {
   // Written as somebody would write it about themselves, because that is who
   // is posting. Not "user completed the type sort".
   "share.feed":        ["Put this on the feed", "发到动态里"],
+  "share.takeIt":      ["Take it yourself", "你也来测测"],
+  "share.cardTap":     ["Tap to take it \u2192", "点一下，你也测测 \u2192"],
   // Sending the test itself. Written as an invitation rather than as a link:
   // this is the one that brings somebody who has never been here.
   "share.invite":      ["Send this to a friend", "发给朋友"],
