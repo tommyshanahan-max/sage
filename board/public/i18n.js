@@ -715,6 +715,30 @@ export const STRINGS = {
      The rows are sentences, not labels: "2 people followed you" rather than
      "Followers 2". A label with a number beside it is a dashboard, and a
      dashboard about a board with eleven people on it is mostly zeros. */
+  /* ---- the grade ---------------------------------------------------------
+     Every row is a real event with a real number, because one tap shows all of
+     them and a grade nobody can take apart is a grade nobody believes. */
+  "grade.of":          ["{n} points today", "今天 {n} 分"],
+  "grade.yesterday":   ["Yesterday you had {g}", "昨天是 {g}"],
+  "grade.none":        ["No grade yet today", "今天还没有成绩"],
+  "grade.noneWhy": [
+    "Answer today's card or put something up, and the day gets a letter. A day you were not here is not a failing day.",
+    "答一下今天的卡片，或者发点什么，这一天就有成绩了。没来的那天不算不及格。",
+  ],
+  "grade.why":         ["Where it came from", "分数是怎么来的"],
+  "grade.target":      ["Full marks today", "今天的满分"],
+  "grade.card":        ["Answered today's card", "答了今天的卡片"],
+  "grade.knew":        ["Knew it", "答对了"],
+  "grade.streak":      ["{n} days in a row", "连续 {n} 天"],
+  "grade.levelUp":     ["The cards moved up a level", "卡片升了一级"],
+  "grade.posted":      ["Put something up", "发了内容"],
+  "grade.replied":     ["Answered somebody", "回复了别人"],
+  "grade.followed":    ["Followed somebody new", "关注了新的人"],
+  "grade.opened":      ["{n} people opened your page", "{n} 个人打开了你的主页"],
+  "grade.gotFollowed": ["{n} followed you", "{n} 个人关注了你"],
+  "grade.gotReply":    ["{n} replied to you", "{n} 个人回复了你"],
+  "grade.match":       ["{n} new match", "{n} 个新匹配"],
+
   "prof.sinceToday":   ["Since earlier today", "今天早些时候以来"],
   "prof.sinceYesterday": ["Since yesterday", "从昨天起"],
   "prof.since":        ["Since {day}", "从{day}起"],

@@ -684,7 +684,20 @@ function paint() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ who: q.id, on: want, device }),
         }).then((r) => r.json());
-        if (d && d.ok) { q.following = d.following; q.followers = d.count; paint(); return; }
+        if (d && d.ok) {
+          q.following = d.following; q.followers = d.count;
+          // See the note beside the same line on the feed: the grade needs the
+          // day, and the day stays on this phone.
+          if (d.following) {
+            try {
+              const t = new Date();
+              localStorage.setItem("board:didfollow", t.getFullYear() + "-"
+                + String(t.getMonth() + 1).padStart(2, "0") + "-"
+                + String(t.getDate()).padStart(2, "0"));
+            } catch { /* private window */ }
+          }
+          paint(); return;
+        }
       } catch { /* fall through */ }
       fol.disabled = false;
       fol.textContent = T("act.again");
