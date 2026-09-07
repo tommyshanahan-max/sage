@@ -788,10 +788,20 @@ export const STRINGS = {
   "door.title":        ["You have been invited", "有人邀请你"],
   /* THE MEMBER'S OWN INVITE, in the header where the count is. One live code
      each: it comes back the same until somebody spends it. */
-  "inv.head":          ["Invite someone", "邀请一个人"],
+  /* A headline, not a label. An uppercase micro-label set large only gets
+     shouty; a sentence in the serif everything else here is set in reads as
+     the offer it is. */
+  "inv.head":          ["Bring someone in", "带一个人进来"],
   "inv.tap":           ["Today’s password. One person, then it changes.",
                         "今天的口令。进一个人，然后就换。"],
   "inv.send":          ["Send the invite", "把邀请发出去"],
+  /* AND ONTO THE FEED, on its own. Everybody who can read the feed is already
+     in, so this is not how strangers arrive — it is how somebody who has spent
+     their own code today finds a spare to pass on. */
+  "inv.toFeed":        ["Put it on the feed", "发到动态里"],
+  "inv.feedWords":     ["A spare invite, if anybody needs one. It works once.\n\n{url}\n\nPassword: {code}",
+                        "多的一个口令，谁要谁拿，只能用一次。\n\n{url}\n\n口令：{code}"],
+  "inv.onFeed":        ["It is on the feed.", "已经发到动态里了。"],
   "inv.codeTap":       ["Copy the code", "复制口令"],
   "inv.codeDone":      ["Copied", "已复制"],
   "inv.copied":        ["Copied. Paste it into a chat.", "复制好了，粘到聊天里就行。"],

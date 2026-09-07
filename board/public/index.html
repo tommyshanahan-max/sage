@@ -264,29 +264,35 @@
    * drops in under it. Everything addressed to this person is in here. */
   /* The invite, under the count. Quiet until wanted, and the code is the only
      loud thing in it — it is what somebody is looking for when they open this. */
-  /* In the tray, under the card of the day: it is a thing for this person that
-     changes daily, which is what the tray is for — and the header goes back to
-     being the mark and the name. */
-  .myinv{width:100%;margin:1rem 0 0;padding:.85rem .95rem .9rem;
-    border:1px dashed var(--line);border-radius:.9rem;text-align:left}
-  #notifday + .myinv{border-top:1px solid var(--hair);border-radius:0 0 .9rem .9rem;
-    padding-top:1rem;margin-top:1.1rem}
-  .myinv .lab{display:block;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
-    color:var(--muted)}
+  /* AT THE TOP OF THE TRAY AND LOUD, because it is the thing somebody opens
+     the bell to get. A dashed outline under the card of the day was the shape
+     of a footnote — this is the offer. */
+  .myinv{width:100%;margin:0 0 1.1rem;padding:1rem 1.05rem 1.1rem;
+    background:var(--accent-soft);border-radius:1rem;text-align:left}
+  .myinv + #notifday{padding-top:.2rem}
+  .myinv .lab{display:block;font-family:var(--serif);font-weight:400;
+    font-size:1.35rem;line-height:1.15;color:var(--ink)}
   :root[data-lang="zh"] .myinv .lab{text-transform:none;letter-spacing:.02em}
   /* The code is a button, because six characters somebody wants on their own
      is the second thing anybody does with this. */
-  .codebtn{display:block;margin:.1rem 0 0;padding:0;border:0;background:none;
-    font-family:inherit;font-size:1.05rem;font-weight:600;letter-spacing:.16em;
-    color:var(--accent);font-variant-numeric:tabular-nums;text-align:left}
+  /* The code is the biggest thing in the tray. It is six characters somebody
+     is about to read out or paste, and every size below this one made them
+     lean in. */
+  .codebtn{display:block;margin:.55rem 0 0;padding:0;border:0;background:none;
+    font-family:var(--sans);font-size:2rem;font-weight:600;letter-spacing:.2em;
+    line-height:1.05;color:var(--accent);font-variant-numeric:tabular-nums;
+    text-align:left}
   .codebtn:hover{text-decoration:underline;text-underline-offset:3px}
-  .sendbtn{display:block;width:100%;margin:.5rem 0 0;padding:.45rem .8rem;
-    border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);
-    border-radius:99px;font-size:.86rem}
+  .sendbtn{display:block;width:100%;margin:.85rem 0 0;padding:.7rem 1rem;
+    border:0;background:var(--accent);color:var(--accent-ink);
+    border-radius:99px;font-size:1rem;font-weight:500}
   .sendbtn:hover{opacity:.92}
-  .myinv .url{display:block;margin:.05rem 0 0;font-size:.78rem;color:var(--ink-2);
+  .feedbtn{display:block;width:100%;margin:.5rem 0 0;padding:.5rem 1rem;border:0;
+    background:none;color:var(--accent);font-size:.88rem}
+  .feedbtn:hover{text-decoration:underline;text-underline-offset:3px}
+  .myinv .url{display:block;margin:.3rem 0 0;font-size:.82rem;color:var(--ink-2);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .myinv .tap{display:block;margin:.05rem 0 0;font-size:.74rem;color:var(--muted)}
+  .myinv .tap{display:block;margin:.35rem 0 0;font-size:.8rem;color:var(--ink-2)}
 
   .bell{position:relative;flex:0 0 auto;width:2.4rem;height:2.4rem;padding:0;
     border:1px solid var(--line);background:var(--raise);border-radius:50%;
@@ -974,7 +980,6 @@
   <!-- Follows and the card of the day, in the one tray. Anything that is FOR
        you goes here; the report card below is what you ARE. -->
   <section class="notif" id="notif" hidden>
-    <div id="notifday"></div>
     <!-- TWO THINGS TO DO WITH ONE INVITE, so two controls rather than one
          tap target with two meanings: send the whole letter, or take the six
          characters on their own for somebody who already has the link. -->
@@ -986,7 +991,9 @@
       <span class="url" id="myinvurl"></span>
       <span class="tap" id="myinvtap"></span>
       <button class="sendbtn" type="button" id="myinvsend"></button>
+      <button class="feedbtn" type="button" id="myinvfeed"></button>
     </div>
+    <div id="notifday"></div>
     <div id="notiffol">
       <div class="rule" id="folrule" hidden><span id="follabel"></span><i></i>
         <b class="new" id="folnew" hidden></b>
@@ -2477,6 +2484,7 @@ function drawMyInvite() {
   $("myinvurl").textContent = location.host + "/i/" + MYCODE;
   $("myinvtap").textContent = T("inv.tap");
   $("myinvsend").textContent = T("inv.send");
+  $("myinvfeed").textContent = T("inv.toFeed");
 }
 
 /* Just the six characters, for somebody who already has the link — or who is
@@ -2510,6 +2518,46 @@ $("myinvsend").addEventListener("click", () => {
     return;
   }
   say(T(copyText(words) ? "inv.copied" : "inv.copyNo", { code: MYCODE }));
+});
+
+/* THE SAME INVITE, ON THE FEED, ON ITS OWN.
+ *
+ * Everybody who can read the feed is already through the door, so this is not
+ * how a stranger arrives. It is how somebody who has spent their own code
+ * today finds a spare — and how a member with nobody to invite gives theirs
+ * to whoever does.
+ */
+$("myinvfeed").addEventListener("click", async () => {
+  if (!MYCODE) return;
+  const b = $("myinvfeed");
+  let who = "";
+  try { who = localStorage.getItem("board:who") || ""; } catch { /* private window */ }
+  if (!who) who = (prompt(T("act.answerAs")) || "").trim();
+  if (!who) return;
+  try { localStorage.setItem("board:who", who); } catch { /* fine */ }
+
+  b.disabled = true;
+  b.textContent = T("act.sending");
+  try {
+    const r = await fetch("/api/post", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        note: T("inv.feedWords", { url: location.origin + "/i/" + MYCODE, code: MYCODE }),
+        handle: who, topic: "Getting in", device,
+      }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (toDoorIf(d, r.status)) return;
+    if (!r.ok) throw new Error("no");
+    // The feed is on this page, so it should show what just landed on it —
+    // and the confirmation goes on AFTER that, because the redraw rewrites
+    // every label in the tray including this one.
+    await load();
+    b.textContent = T("inv.onFeed");
+  } catch {
+    b.disabled = false;
+    b.textContent = T("act.again");
+  }
 });
 
 /* THE TRAY, AND THE COUNT ON THE BELL.
