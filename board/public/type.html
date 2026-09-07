@@ -83,7 +83,13 @@
   .eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
   h1{margin:.5rem 0 0;font-family:var(--serif);font-weight:400;font-size:2rem;
     line-height:1.12}
+  .egs{margin:.55rem 0 0;font-family:var(--serif);font-size:1.25rem;
+    letter-spacing:.06em;color:var(--accent)}
   .lede{margin:.8rem 0 0;font-size:1.02rem;line-height:1.65;color:var(--ink-2)}
+  /* The reason to take this one and not another. Set apart, because it is the
+     claim the rest of the page has to make good on. */
+  .lede.lean{margin-top:1rem;padding-left:.95rem;border-left:2px solid var(--accent);
+    font-size:.98rem}
   .go{margin:1.6rem 0 0;border:0;background:var(--accent);color:var(--accent-ink);
     border-radius:99px;padding:.85rem 1.9rem;font-size:1.05rem}
   .quiet{margin:.8rem 0 0;border:1px solid var(--line);background:var(--raise);
@@ -218,7 +224,11 @@ function answer(item, pole) {
 function drawIntro(box) {
   box.append(el("p", "eyebrow", T("type.eyebrow")));
   box.append(el("h1", null, T("type.title")));
+  // Four of the sixteen, set in the accent. It says which test this is faster
+  // than a sentence naming the instrument could.
+  box.append(el("p", "egs", T("type.egs")));
   box.append(el("p", "lede", T("type.lede")));
+  box.append(el("p", "lede lean", T("type.lean")));
   const go = el("button", "go", T("type.start"));
   go.type = "button";
   go.addEventListener("click", start);

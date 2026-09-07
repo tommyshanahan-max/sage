@@ -306,15 +306,7 @@ function row(q) {
   if (where) m.append(el("p", "where", where));
   if (q.goal) m.append(el("p", "goal", q.goal));
 
-  // When they are free, as a week. A grid of seven says it faster than a
-  // sentence, and it is the thing that decides whether it is worth asking.
-  if (q.free && q.free.length) {
-    const days = el("div", "days");
-    T("bud.days").split(",").forEach((d, i) => {
-      days.append(el("b", q.free.indexOf(i) >= 0 ? "on" : "", d));
-    });
-    m.append(days);
-  }
+  // The free-days week is out for V1.
   a.append(m);
   return a;
 }

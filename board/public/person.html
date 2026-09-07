@@ -107,8 +107,12 @@
 
   .head{display:flex;flex-direction:column;align-items:center;text-align:center;
     padding:0 1.15rem 1.2rem}
+  .shot .nameline{display:flex;align-items:baseline;gap:.65rem;flex-wrap:wrap}
   .shot h1{margin:0;font-family:var(--serif);font-weight:400;font-size:2rem;
     line-height:1.1;color:#fff}
+  .shot .type{flex:0 0 auto;font-weight:500;font-size:.82rem;letter-spacing:.1em;
+    background:rgba(255,255,255,.2);color:#fff;border-radius:99px;
+    padding:.28rem .6rem .28rem .7rem}
   .shot .where{margin:.35rem 0 0;font-size:.95rem;color:rgba(255,255,255,.82)}
   /* How many follow them, on the paper under the card rather than on the
      photograph — it is a fact about them, not part of their picture. */
@@ -140,8 +144,12 @@
   .acts{display:flex;gap:.5rem;margin:1.6rem 0 0;padding:0 1.15rem;flex-wrap:wrap}
   /* Directly under the photograph, so Follow is the first thing under the face
      rather than the last thing after the reading. */
+  /* Side by side, directly under the photograph. Follow is the decision;
+     Back to browsing is what you do either way. Flex hands a child its longest
+     word before it takes space from a sibling, so both need telling they may
+     be narrower than their content. */
   .acts.meet{margin:0 0 .4rem}
-  .acts.meet button{padding:.8rem 1rem;font-size:1rem}
+  .acts.meet>*{flex:1 1 0;min-width:0;padding:.8rem .8rem;font-size:1rem}
   .acts button,.acts a{flex:1;min-width:9rem;text-align:center;text-decoration:none;
     border:1px solid var(--line);background:var(--raise);color:var(--ink);
     border-radius:99px;padding:.7rem 1rem;font-size:.93rem}
@@ -240,7 +248,12 @@ function paint() {
     shot.append(el("div", "noshot", initial(q.handle)));
   }
   const scrim = el("div", "scrim");
-  scrim.append(el("h1", null, q.handle));
+  // The name, and the four letters beside it. It was a row in the fact list,
+  // which is where you put a thing somebody has to go looking for.
+  const line = el("div", "nameline");
+  line.append(el("h1", null, q.handle));
+  if (q.type) line.append(el("b", "type", q.type));
+  scrim.append(line);
   const where = [q.campus, q.here].filter(Boolean).join(" · ");
   if (where) scrim.append(el("p", "where", where));
   shot.append(scrim);
@@ -265,17 +278,12 @@ function paint() {
     if (typeof value === "string") dd.textContent = value; else dd.append(value);
     d.append(dd); facts.append(d);
   };
-  if (q.type) fact(T("bud.type"), q.type);
   if (q.level) fact(T("bud.level"), q.level);
   if (q.trade) fact(T("bud.trades"), q.trade);
   if (q.speaks && q.speaks.length) fact(T("bud.speaks"), q.speaks.join(" · "));
-  if (q.free && q.free.length) {
-    const days = el("div", "days");
-    T("bud.days").split(",").forEach((d, i) => {
-      days.append(el("b", q.free.indexOf(i) >= 0 ? "on" : "", d));
-    });
-    fact(T("bud.free"), days);
-  }
+  // The free-days week is out for V1 everywhere it appeared. Two people who
+  // want to study together arrange it between themselves, and a timetable
+  // nobody goes back to edit is worse than no timetable.
   if (facts.children.length) head.append(facts);
   box.append(head);
 
@@ -338,12 +346,13 @@ function paint() {
      * }
      */
   }
-  // Your own profile has neither of them, and an empty row is a gap nobody
-  // can explain.
-  meet.hidden = !meet.children.length;
+
+  // Directly under Follow, because somebody who opened a shared link has two
+  // things they might do and this is the second one: look at the rest. It was
+  // at the bottom of the page, past everything they would have to read first.
   const feed = el("a", null, T("bud.back"));
   feed.href = "/browse";
-  acts.append(feed);
+  meet.append(feed);
   if (!q.mine) {
     const rep = el("button", "warn", T("bud.reportThem"));
     rep.type = "button";

@@ -635,10 +635,19 @@ export const STRINGS = {
   // Ported from Fern. The words that carry the point are the caveat ones: this
   // is the only type product that names the letter least worth trusting.
   "type.eyebrow":      ["Twenty choices · two minutes", "二十道选择 · 两分钟"],
-  "type.title":        ["Which of these is more you?", "哪个更像你？"],
+  // Say which test this is in the first line. "A personality test" could be
+  // anything; the four letters are the thing people already recognise, and
+  // showing four of the sixteen says it faster than naming the instrument.
+  "type.title":        ["The four letters", "那四个字母"],
+  "type.egs":          ["INFJ · ESTP · ENFP · ISTJ", "INFJ · ESTP · ENFP · ISTJ"],
   "type.lede": [
-    "Twenty pairs, no middle option, no right answers. At the end you get four letters — and, more usefully, how far from the middle each one actually sat.",
-    "二十组二选一，没有中间选项，也没有标准答案。做完给你四个字母——更有用的是，每个字母离中间有多远。",
+    "The type test most people mean — the sixteen four-letter codes. Twenty pairs, no middle option, no right answers.",
+    "就是大家常说的那个性格测试——十六种四字母类型。二十组二选一，没有中间选项，也没有标准答案。",
+  ],
+  // The reason to take this one rather than any of the others.
+  "type.lean": [
+    "The difference here: it shows which way you LEAN on each of the four, and how far. A letter decided 3-2 and a letter decided 5-0 look identical everywhere else. Here they do not.",
+    "这个测试不一样的地方：它会告诉你在这四条上各自偏向哪边、偏多少。别处 3 比 2 定下的字母和 5 比 0 定下的字母看起来一模一样，这里不会。",
   ],
   "type.start":        ["Start", "开始"],
   "type.count":        ["{n} of {total}", "第 {n} 题，共 {total} 题"],
@@ -663,7 +672,10 @@ export const STRINGS = {
     "Nobody sees this unless you put it on your page. The questions are a first draft and the result is a description, not a diagnosis.",
     "除非你自己放到主页上，否则没人看得到。题目还是初稿，结果是一种描述，不是诊断。",
   ],
-  "tut.typeGo":        ["Twenty quick choices, two minutes.", "二十道快速选择，两分钟。"],
+  "tut.typeGo": [
+    "INFJ, ESTP and the other fourteen. Twenty quick choices — and it tells you which way you lean, not just the letters.",
+    "INFJ、ESTP，还有另外十四种。二十道快速选择——它还会告诉你每条偏向哪边，不只给你四个字母。",
+  ],
   // The row under the deck, and the card at the end of it. Both only exist
   // while there is no face on this phone, and both go the moment there is.
   "brw.mine":          ["Add your photo", "加上你的照片"],
@@ -680,9 +692,10 @@ export const STRINGS = {
     "还没有人加入学习搭子名单。你可以第一个加入，这样别人第一个看到的就是你。",
   ],
   "brw.open":          ["Browse students", "看看有谁"],
+  // "the study-buddy list" named a page that is not in V1.
   "brw.openWhat": [
-    "The people on the study-buddy list, one at a time, with their photo.",
-    "名单上的人，一个一个看，带照片。",
+    "Everybody who asked to be findable, one at a time, with their photo.",
+    "所有愿意被找到的人，一个一个看，带照片。",
   ],
 
   // ---- the tutor ------------------------------------------------------------
@@ -704,8 +717,9 @@ export const STRINGS = {
   "tut.go":            ["Open", "打开"],
 
   // The three that do not.
-  "tut.next":          ["Which should I make next?", "接下来做哪个？"],
-  "tut.type":          ["A personality test", "性格测试"],
+  // One thing left in this group, so it is no longer a question about which.
+  "tut.next":          ["Not built yet", "还没做的"],
+  "tut.type":          ["The four-letter type test", "四个字母的性格测试"],
   "tut.typeWhat": [
     "Twenty quick choices, two minutes. It names the one answer least settled in you.",
     "二十道快速选择，两分钟。它会告诉你哪一项最不稳定。",
@@ -723,8 +737,8 @@ export const STRINGS = {
   "tut.pick":          ["I would use this", "我会用这个"],
   "tut.onList":        ["Noted", "记下了"],
   "tut.honest": [
-    "These three do not exist yet — pressing only tells me which to make first.",
-    "这三个还没有——按一下只是告诉我先做哪个。",
+    "This one does not exist yet — pressing only tells me somebody wants it.",
+    "这个还没做——按一下只是告诉我有人想要。",
   ],
 
   // ---- notes: one message, answered once -----------------------------------

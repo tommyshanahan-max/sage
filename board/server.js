@@ -198,11 +198,37 @@ app.get(["/abroad", "/abroad/"], (req, res, next) => page("abroad.html", req, re
  * this is read from — and worth having on its own terms, since the honest
  * answer here is unusually short. */
 app.get(["/privacy", "/privacy/"], (req, res, next) => page("privacy.html", req, res, next));
-app.get(["/buddies", "/buddies/"], (req, res, next) => page("buddies.html", req, res, next));
+/* THE STUDY-BUDDY LIST IS OFF FOR V1, for the same reason as the inbox and by
+ * the same mechanism: not broken, just not this version. Browse is the same
+ * people with their faces on, and two ways into one list is a choice between a
+ * thing and itself.
+ *
+ * /api/people stays on — it is what the deck reads. */
+const BUDDIES_ON = false;
+app.get(["/buddies", "/buddies/"], (req, res, next) =>
+  (BUDDIES_ON ? page("buddies.html", req, res, next)
+              : res.status(404).send("Not found")));
 // Your own messages. noindex in the page, and it holds nothing without the
 // device id the browser sends — but a private page should not be in a sitemap
 // either way.
-app.get(["/notes", "/notes/"], (req, res, next) => page("notes.html", req, res, next));
+/* PRIVATE MESSAGES ARE OFF FOR V1.
+ *
+ * One flag rather than five commented-out routes, because the feature is
+ * finished and the reason it is off is not a code problem: a private inbox is
+ * worth having when there are enough people for somebody to write to, and
+ * until then it is a tab that opens an empty room.
+ *
+ * Off means off at the door as well as in the app — the page and every route
+ * behind it answer 404, so a link somebody kept, or a request somebody writes
+ * by hand, gets the same answer as the tab that is no longer in the bar.
+ *
+ * Set this true and the whole thing is back: nothing else was removed. */
+const NOTES_ON = false;
+const notesOff = (req, res, next) =>
+  (NOTES_ON ? next() : res.status(404).json({ error: "not in this version" }));
+
+app.get(["/notes", "/notes/"], notesOff,
+  (req, res, next) => page("notes.html", req, res, next));
 
 // The type sort. Twenty forced choices and where they put you, ported from
 // Fern — the scoring and the items are in /type-items.js, which the page and
@@ -525,7 +551,7 @@ function threadState(notes, me, them) {
 }
 
 /* Writing to somebody. */
-app.post("/api/note", express.json({ limit: "16kb" }), async (req, res) => {
+app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
   const who = String(req.body?.who || "");
   const text = String(req.body?.text || "").trim().slice(0, 600);
@@ -575,7 +601,7 @@ app.post("/api/note", express.json({ limit: "16kb" }), async (req, res) => {
  *
  * The device id travels in a header rather than the query, because a query
  * string is the part of a request that ends up in logs and referrers. */
-app.get("/api/notes", async (req, res) => {
+app.get("/api/notes", notesOff, async (req, res) => {
   const board = await store.load(FILE);
   const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
@@ -609,7 +635,7 @@ app.get("/api/notes", async (req, res) => {
 });
 
 /* Read. Set by the person who received it and by nobody else. */
-app.post("/api/note/seen", express.json({ limit: "8kb" }), async (req, res) => {
+app.post("/api/note/seen", notesOff, express.json({ limit: "8kb" }), async (req, res) => {
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   await change((board) => {
@@ -622,7 +648,7 @@ app.post("/api/note/seen", express.json({ limit: "8kb" }), async (req, res) => {
  *
  * This is the only route that puts a private message in front of the panel,
  * and only the person who received it can press it. */
-app.post("/api/note/report", express.json({ limit: "16kb" }), async (req, res) => {
+app.post("/api/note/report", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
   const id = String(req.body?.id || "");
   const why = String(req.body?.why || "").trim().slice(0, 400);

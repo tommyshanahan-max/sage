@@ -35,13 +35,13 @@
  * the feed document now, and a browser holding the old standalone page would
  * serve it offline for as long as that cache lived. Activating deletes every
  * cache that is not this one. */
-const CACHE = "board-v2";
+const CACHE = "board-v3";
 
 // The shell: enough to open and be recognisable with no network. Deliberately
 // not the API — a cached /api/board is a cached set of somebody's posts, and
 // those go stale in minutes and may have been taken down since.
 const SHELL = [
-  "/feed", "/buddies", "/notes", "/browse", "/site.css", "/i18n.js", "/live.js",
+  "/feed", "/buddies", "/browse", "/type", "/site.css", "/i18n.js", "/live.js",
   "/favicon.png", "/icon-512.png",
 ];
 

@@ -586,8 +586,14 @@
      legible right up until somebody uploads a bright one. */
   .pc .scrim{position:relative;padding:5rem 1.2rem 1.2rem;
     background:linear-gradient(to top,rgba(10,14,22,.86),rgba(10,14,22,.52) 42%,rgba(10,14,22,0))}
+  .pc .nameline{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap}
   .pc h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.8rem;
     line-height:1.1;color:#fff}
+  /* The four letters, as a badge. Monospaced-feeling by letter-spacing rather
+     than by a mono stack, which would not match anything else here. */
+  .pc .type{flex:0 0 auto;font-weight:500;font-size:.78rem;letter-spacing:.1em;
+    background:rgba(255,255,255,.2);color:#fff;border-radius:99px;
+    padding:.25rem .55rem .25rem .65rem}
   .pc .where{margin:.3rem 0 0;font-size:.92rem;color:rgba(255,255,255,.82)}
   .pc .goal{margin:.6rem 0 0;font-family:var(--serif);font-size:1.02rem;line-height:1.5;
     color:rgba(255,255,255,.92);display:-webkit-box;-webkit-line-clamp:3;
@@ -761,15 +767,15 @@
       </div>
       <div class="field"><input id="mehere" maxlength="40"></div>
       <textarea id="megoal" rows="3"></textarea>
+      <!-- A week grid of free days used to open under this. It was the most
+           work the form asked for and the least anybody read: two people who
+           want to study together arrange it between themselves, and a
+           timetable that goes stale in a fortnight is worse than none. -->
       <div class="looking">
         <label>
           <input type="checkbox" id="melooking">
           <span><b id="melookinglabel"></b><span class="why" id="melookingwhy"></span></span>
         </label>
-        <div class="freewrap" id="mefreewrap" hidden>
-          <span class="lab" id="mefreelab"></span>
-          <div class="days" id="medays"></div>
-        </div>
       </div>
       <p class="menote" id="mewhy"></p>
     </div>
@@ -858,10 +864,9 @@
          keeps a board alive and must not cost an extra tap, but "I am looking
          for someone to study with" is a create action too, and this is the
          moment it is on somebody's mind. -->
-    <p class="orbuddy">
-      <span id="orbuddytext"></span>
-      <a href="/buddies" id="orbuddygo"></a>
-    </p>
+    <!-- "Or put yourself on the study-buddy list" pointed at a page that is
+         not in V1. The same offer is the Tutor's first card and the row above
+         the deck, both of which somebody has already walked past to get here. -->
 
     <textarea id="note" rows="3"
       placeholder="Where to get a SIM without a Chinese bank card, which gate at Renmin, what the label says, a good meal…"></textarea>
@@ -1194,19 +1199,8 @@ function card(p) {
       document.createTextNode(" " + T("bud.joined")));
     j.append(say);
     if (p.campus) j.append(el("div", "where", p.campus));
-    if (Array.isArray(p.free) && p.free.length) {
-      const wk = el("div", "wk");
-      const labels = T("bud.days").split(",");
-      for (let i = 0; i < 7; i++) {
-        const d = el("i", p.free.includes(i) ? "on" : "", (labels[i] || "").trim());
-        wk.append(d);
-      }
-      j.append(el("div", "where", T("bud.joinedFree")), wk);
-    }
-    const go = document.createElement("a");
-    go.href = "/buddies";
-    go.textContent = T("bud.joinedGo");
-    j.append(go);
+    // The link into the study-buddy list came out with the list itself: this
+    // person is on the deck at the top of this same page.
     body.append(j);
   }
 
@@ -1530,8 +1524,6 @@ function openSheet(open) {
   $("pickpic").textContent = T("post.photo");
   $("shut").textContent = T("post.cancel");
   $("send").textContent = T("post.go");
-  $("orbuddytext").textContent = T("post.orBuddy");
-  $("orbuddygo").textContent = T("bud.open");
   $("sheet").hidden = !open;
   if (open) {
     try { $("who").value = localStorage.getItem("board:who") || ""; } catch { /* fine */ }
@@ -1796,7 +1788,6 @@ async function drawTutor() {
 
   box.append(el("div", "grp", T("tut.next")));
   box.append(vote("tut.compare", "tut.compareWhat", "compare"));
-  box.append(vote("tut.language", "tut.languageWhat", "language"));
   box.append(el("p", "honest", T("tut.honest")));
   box.hidden = false;
 }
@@ -1912,17 +1903,16 @@ function personCard(q, live) {
   }
 
   const scrim = el("div", "scrim");
-  scrim.append(el("h2", null, q.handle || T("board.someone")));
+  /* The name, and the four letters beside it if they put them up. On the same
+     line because that is what they are — a thing about this person, the size
+     of a badge, not a section of their profile. */
+  const line = el("div", "nameline");
+  line.append(el("h2", null, q.handle || T("board.someone")));
+  if (q.type) line.append(el("b", "type", q.type));
+  scrim.append(line);
   const where = [q.campus, q.here].filter(Boolean).join(" · ");
   if (where) scrim.append(el("p", "where", where));
   if (q.goal) scrim.append(el("p", "goal", q.goal));
-  if (q.free && q.free.length) {
-    const days = el("div", "pdays");
-    T("bud.days").split(",").forEach((d, i) => {
-      days.append(el("b", q.free.indexOf(i) >= 0 ? "on" : "", d));
-    });
-    scrim.append(days);
-  }
   box.append(scrim);
 
   /* On the card, not in the section header above it: this shares one person,
@@ -2418,28 +2408,6 @@ $("mepicgo").addEventListener("click", () => $("mephoto").click());
 
 /* The days somebody is free, 0–6. Drawn rather than a row of checkboxes: seven
  * of those is a wall of text, and a week reads as a shape. */
-let FREE = [];
-function drawDays() {
-  const box = $("medays");
-  fill(box);
-  const labels = T("bud.days").split(",");
-  for (let i = 0; i < 7; i++) {
-    const b = el("button", null, (labels[i] || "").trim());
-    b.type = "button";
-    b.setAttribute("aria-pressed", String(FREE.includes(i)));
-    b.addEventListener("click", () => {
-      FREE = FREE.includes(i) ? FREE.filter((d) => d !== i) : [...FREE, i].sort();
-      drawDays();
-    });
-    box.append(b);
-  }
-}
-function drawLooking() {
-  const on = $("melooking").checked;
-  $("mefreewrap").hidden = !on;
-  if (on) drawDays();
-}
-$("melooking").addEventListener("change", drawLooking);
 
 function openMe(joining) {
   const made = Boolean(ME && ME.handle);
@@ -2470,13 +2438,10 @@ function openMe(joining) {
       (ME.speaks && ME.speaks.length))));
   $("melookinglabel").textContent = T("bud.lookingLabel");
   $("melookingwhy").textContent = T("bud.lookingWhy");
-  $("mefreelab").textContent = T("bud.free");
   // Pressed "join the list", so it starts ticked — the button said what it was
   // going to do and a form that then makes you do it again is a form arguing
   // with its own button.
   $("melooking").checked = joining === true || Boolean(ME && ME.looking);
-  FREE = (ME && Array.isArray(ME.free)) ? [...ME.free] : [];
-  drawLooking();
   $("mesaid").hidden = true;
   drawMePic();
   $("mesheet").hidden = false;
@@ -2518,7 +2483,7 @@ $("meform").addEventListener("submit", async (e) => {
     // is how somebody answers this, and splitting it here means the profile can
     // show them as separate things later without asking again.
     speaks: $("melangs").value.split(/[,，、]/).map((x) => x.trim()).filter(Boolean).slice(0, 6),
-    looking: $("melooking").checked, free: FREE,
+    looking: $("melooking").checked,
     here: $("mehere").value.trim(), goal: $("megoal").value.trim(),
   });
   if (out.error) { said.hidden = false; said.classList.add("bad"); said.textContent = out.error; return; }
