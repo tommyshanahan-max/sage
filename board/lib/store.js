@@ -409,6 +409,20 @@ export function cleanPerson(raw) {
      */
     views: dayCounts(raw.views, 30),
     regs: dayCounts(raw.regs, 8),
+    /* EVERY LEVEL THEY HAVE HELD, AND WHEN. Eight of them, which is more weeks
+     * than anybody will move in.
+     *
+     * It is here so that one thing can be said out loud each week — that
+     * somebody's Chinese went from three to five — without the board keeping a
+     * score of anybody. It is only ever written when they press "put this on my
+     * page", so it describes a number they chose to make public, and it says
+     * nothing about how often they open the app or what they answered. */
+    bands: Array.isArray(raw.bands)
+      ? raw.bands
+        .filter((b) => b && /^(ZH|EN) ([1-9]|10)$/.test(String(b.band || "").toUpperCase()))
+        .slice(-8)
+        .map((b) => ({ band: String(b.band).toUpperCase(), at: String(b.at || "").slice(0, 40) }))
+      : [],
     // Whether they want to be found. Off unless asked for: posting on the
     // board must not put somebody in a directory of students, and one tap
     // takes them back out. This is the difference between a board that has

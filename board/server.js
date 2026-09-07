@@ -1525,6 +1525,10 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
     // Validated in cleanPerson, not here: an unknown room key is dropped
     // rather than refused, so an old page saving against a new server loses
     // the box it did not know about instead of losing the save.
+    /* A LEVEL THAT MOVED, WRITTEN DOWN ONCE. Read before the loop below sets
+       it: afterwards there is no way to tell a new number from the same one
+       saved again, and a log with a row per save is not a log of anything. */
+    const wasBand = q.levelBand;
     if (Array.isArray(req.body.rooms)) q.rooms = req.body.rooms;
     if (req.body.where !== undefined) q.where = String(req.body.where);
     if (req.body.wants !== undefined) q.wants = String(req.body.wants);
@@ -1548,6 +1552,9 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
      * have already been through the one check that matters — no phone, no
      * WeChat, no email — and a profile nobody can see is not a profile. */
     q.state = "published";
+    if (q.levelBand && q.levelBand !== wasBand) {
+      q.bands = [...(q.bands || []), { band: q.levelBand, at: new Date().toISOString() }];
+    }
     const clean = store.cleanPerson(q);
     Object.assign(q, clean);
 
@@ -1823,6 +1830,8 @@ app.get("/api/public", admin, async (req, res) => {
       handle: q.handle, at: q.at, state: q.state,
       looking: q.looking, photoState: q.photoState,
       hasPhoto: Boolean(q.photo), rooms: q.rooms,
+      // The level they chose to make public, and when it moved. See `bands`.
+      levelBand: q.levelBand, bands: q.bands,
     })),
   });
 });

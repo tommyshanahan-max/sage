@@ -156,17 +156,23 @@ export const STRINGS = {
 
   // ---- the landing page ----------------------------------------------------
   "site.title":        ["Liuxuesheng", "留学生"],
-  "site.kicker":       ["For exchange students in China", "写给在中国的留学生"],
+  /* WHO IT IS FOR, WIDENED ON PURPOSE. It began as a board for exchange
+     students and the rooms outgrew that: somebody raising money, somebody
+     sourcing from a factory and somebody looking for a language exchange are
+     all on the same board and all doing the same thing — finding the person on
+     the other side. The name stays; what it says it is for does not. */
+  "site.kicker":       ["For people connecting in China — and with China",
+                        "在中国的人，和想认识中国的人"],
   "site.h1a":          ["Somebody here worked it out ", "这里总有人 "],
   "site.h1b":          ["last month", "上个月刚搞明白"],
   "site.h1c":          [".", "。"],
   "site.lede": [
-    "A place for exchange students to ask the question you are embarrassed to ask, compare notes on courses and on how to actually get by, and find someone to study with. Nothing to install. No account. No VPN.",
-    "留学生问问题的地方：那些不好意思问的问题、哪门课怎么样、在这里生活的门道，也可以找个一起学习的人。不用下载，不用注册。",
+    "A place to ask the question you are embarrassed to ask, and to find the person on the other side of it — a language exchange, somebody to study with, somebody who knows the city, somebody to build something with. Nothing to install. No account. No VPN.",
+    "一个可以问出你不好意思问的问题的地方，也可以在这里找到问题另一头的那个人——语伴、一起学习的人、熟悉这座城市的人、一起做点东西的人。不用下载，不用注册。",
   ],
   "site.hanzi": [
-    "留学生 · liúxuéshēng — a student studying abroad. It is who this is for, so it is what it is called.",
-    "留学生 —— 这是给谁做的，就叫什么。",
+    "留学生 · liúxuéshēng — someone who went abroad to study. That is where this started, and the name stayed even as the rooms outgrew it.",
+    "留学生 —— 这个地方是从这里开始的，后来装下的东西比这个词多了，名字留了下来。",
   ],
   "site.open":         ["See who is on it", "看看有谁在"],
   "site.how":          ["How it is run", "怎么管理"],
@@ -338,8 +344,8 @@ export const STRINGS = {
 
   "pv.h7":             ["Children", "未成年人"],
   "pv.p7": [
-    "This is for university students. It is not intended for anyone under sixteen, and we do not knowingly keep anything from them.",
-    "本站面向大学生，不面向十六岁以下的人，我们也不会有意保留他们的任何信息。",
+    "This is for adults. It is not intended for anyone under sixteen, and we do not knowingly keep anything from them.",
+    "本站面向成年人，不面向十六岁以下的人，我们也不会有意保留他们的任何信息。",
   ],
 
   "pv.h8":             ["If something here is wrong", "如果这里有问题"],
@@ -457,7 +463,7 @@ export const STRINGS = {
   "shot.feedP":        ["Ask, or answer somebody who asked.", "提问，或者回答别人的问题。"],
   "shot.me":           ["Your page", "你的主页"],
   "shot.meP":          ["A face and a name. Nothing else is asked.", "一张照片，一个名字。别的都不问。"],
-  "shot.browse":       ["Browse students", "看看有谁"],
+  "shot.browse":       ["Browse people", "看看有谁"],
   "shot.browseP":      ["Who is here, what they study, and what they can help with.",
                         "这里都有谁、他们学什么、能帮上什么。"],
 
@@ -480,8 +486,8 @@ export const STRINGS = {
   "site.footWrongP":   ["Report any post from the feed itself — a person reads every one.",
                         "在动态里直接举报任何一条内容——每条都由人来看。"],
   "site.footAbout": [
-    "A meeting place for exchange students in China. Read by a person before anything appears. No accounts, no tracking, nothing loaded from outside.",
-    "在中国的留学生聚集地。所有内容发布前都由人过目。不用账号，不做追踪，不加载任何外部资源。",
+    "A private meeting place for people in China and the people who want to reach them. Every report read by a person. No accounts, no tracking, nothing loaded from outside.",
+    "在中国的人、和想认识中国的人的一个私密聚集地。每一条举报都由人来看。不用账号，不做追踪，不加载任何外部资源。",
   ],
   "site.langName":     ["中文", "English"],
 
@@ -657,8 +663,8 @@ export const STRINGS = {
     "请去掉 {what} —— 这里的资料只放 Instagram，填在它自己的框里。其他的等你们都决定了，再私下交换。",
   ],
   "me.whyNoContact": [
-    "No phone, no WeChat, no email. Instagram only, and only in its own box — a public list of students with everybody's contact details is the one thing this must never be.",
-    "不填手机、微信、邮箱。只有 Instagram，而且只能填在它自己的框里——一份人人联系方式俱全的公开学生名单，是这里绝对不能变成的东西。",
+    "No phone, no WeChat, no email. Instagram only, and only in its own box — a public list of people with everybody's contact details is the one thing this must never be.",
+    "不填手机、微信、邮箱。只有 Instagram，而且只能填在它自己的框里——一份人人联系方式俱全的公开名单，是这里绝对不能变成的东西。",
   ],
 
   // ---- finding a study buddy -----------------------------------------------
@@ -695,8 +701,8 @@ export const STRINGS = {
   // appears, and it is the one thing this switch decides.
   "bud.lookingLabel":  ["Show me in Browse", "在「看看有谁」里显示我"],
   "bud.lookingWhy": [
-    "Your page appears in the list of students. Turn it off and you are still here — you just are not in it. Posting never puts you in on its own.",
-    "你的主页会出现在学生名单里。关掉也不会影响你用这个应用，只是不出现在那里。单纯发内容不会把你加进去。",
+    "Your page appears in the list of people. Turn it off and you are still here — you just are not in it. Posting never puts you in on its own.",
+    "你的主页会出现在名单里。关掉也不会影响你用这个应用，只是不出现在那里。单纯发内容不会把你加进去。",
   ],
   /* ---- what you are looking for, and the card two people may swap ---------
    *
@@ -1330,7 +1336,7 @@ export const STRINGS = {
   // switch is off. Every page made before that switch was on the form is here.
   "brw.mineOff":       ["You are not in Browse", "你还没出现在名单里"],
   "brw.mineOffWhy": [
-    "Your page is made, but it is not in the list of students. Tap to turn Show me in Browse on.",
+    "Your page is made, but it is not in the list of people. Tap to turn Show me in Browse on.",
     "你的主页已经做好了，但还没出现在学生名单里。点一下打开「在名单里显示我」。",
   ],
   "brw.mineUp":        ["You are in Browse", "你已经在名单里了"],

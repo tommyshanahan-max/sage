@@ -3086,34 +3086,41 @@ const dayOf = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2
 
 function gradeToday() {
   const today = dayOf(new Date());
+  /* EVERY ROW KNOWS WHOSE IT IS. Not for the arithmetic — a point is a point —
+     but for the ORDER they are read in, which is the whole difference between
+     a card that says you are wanted and a card that says you are trying hard.
+     "4 people opened your page" first; "answered your card, followed somebody"
+     second. Same points, same letter, and only one of those two readings makes
+     somebody close the app. */
   const rows = [];
-  const add = (key, n, arg) => { if (n > 0) rows.push({ key, n, arg }); };
+  const add = (key, n, arg, mine) => { if (n > 0) rows.push({ key, n, arg, mine: Boolean(mine) }); };
 
   /* ---- what you practised. Entirely yours, and it is most of the grade. */
   const deck = readLocal("board:daily") || {};
   const answered = deck.done === today;
   if (answered) {
-    add("grade.card", 3);
+    add("grade.card", 3, null, true);
     // "Knew it" without asking to be shown: the deck only moves up on a run of
     // them, so this is the one it is worth paying for.
-    if ((deck.run || 0) > 0) add("grade.knew", 2);
-    add("grade.streak", Math.min(3, deck.run || 0), { n: deck.run || 0 });
-    if (deck.moved === "up") add("grade.levelUp", 4);
+    if ((deck.run || 0) > 0) add("grade.knew", 2, null, true);
+    add("grade.streak", Math.min(3, deck.run || 0), { n: deck.run || 0 }, true);
+    if (deck.moved === "up") add("grade.levelUp", 4, null, true);
   }
 
   /* ---- what you did here. Also yours. */
   const mine = ME && ME.handle ? ME.handle.toLowerCase() : "";
   const todayPost = (p) => String(p.at || "").slice(0, 10) === today;
   const myPosts = posts.filter((p) => (p.handle || "").toLowerCase() === mine && mine);
-  add("grade.posted", 3 * myPosts.filter((p) => store_isOwn(p) && todayPost(p)).length);
-  add("grade.replied", 2 * myPosts.filter((p) => p.re && todayPost(p)).length);
+  add("grade.posted", 3 * myPosts.filter((p) => store_isOwn(p) && todayPost(p)).length, null, true);
+  add("grade.replied", 2 * myPosts.filter((p) => p.re && todayPost(p)).length, null, true);
   let followedToday = "";
   try { followedToday = localStorage.getItem("board:didfollow") || ""; } catch { /* fine */ }
-  if (followedToday === today) add("grade.followed", 1);
+  if (followedToday === today) add("grade.followed", 1, null, true);
 
-  /* The half of the grade you control. Nothing here and there is no grade,
-     whatever the other half says — see the note above. */
-  const own = rows.reduce((a, r) => a + r.n, 0);
+  /* The half of the grade you control. Read off the flags rather than off the
+     position in the list, so the rows can be re-ordered for reading without
+     quietly changing what counts as showing up. */
+  const own = rows.filter((r) => r.mine).reduce((a, r) => a + r.n, 0);
 
   /* ---- what came back. Capped, so a busy day for your page cannot become the
      whole grade, and never negative on a day nobody looked. */
@@ -3233,7 +3240,8 @@ function drawGrade(box) {
   if (g.letter && GRADEOPEN) {
     const why = el("div", "gwhy");
     why.append(el("p", "gwhyhead", T("grade.why")));
-    for (const r of g.rows) {
+    // What came back first, what you did second. See the note in gradeToday.
+    for (const r of [...g.rows.filter((r) => !r.mine), ...g.rows.filter((r) => r.mine)]) {
       const line = el("div", "growrow");
       line.append(el("span", null, T(r.key, r.arg || {})));
       line.append(el("b", null, "+" + r.n));

@@ -1,7 +1,7 @@
 {
   "name": "Liuxuesheng 留学生",
   "short_name": "留学生",
-  "description": "A meeting place for exchange students in China. Nothing to install. No account. No VPN.",
+  "description": "A private meeting place for people in China, and the people who want to reach them. Nothing to install. No account. No VPN.",
   "start_url": "/browse",
   "scope": "/",
   "display": "standalone",
