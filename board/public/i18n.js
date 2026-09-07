@@ -608,8 +608,8 @@ export const STRINGS = {
   // ---- the tutor, and the two things she offers -----------------------------
   "tut.name":          ["The Tutor", "导师"],
   "tut.hi": [
-    "Two things I could add. Neither is built yet — tell me which one you would actually use and I will make that one first.",
-    "有两个东西可以加。都还没做——你会用哪个，就先做哪个。",
+    "I am working out what to make next. Which of these would you use?",
+    "我在想接下来做什么。这两个，你会用哪个？",
   ],
   "tut.type":          ["The type sort", "性格分类"],
   "tut.typeWhat": [
@@ -625,8 +625,8 @@ export const STRINGS = {
   "tut.onList":        ["Noted. I will tell you when it is ready.", "记下了。做好会告诉你。"],
   "tut.both":          ["Both noted. I will tell you when they are ready.", "两个都记下了。做好会告诉你。"],
   "tut.honest": [
-    "Nothing happens when you press this except that I count it. There is nothing to take yet.",
-    "按了不会发生别的，只是记一下。现在还没有东西可以做。",
+    "Neither exists yet — pressing only tells me which to make first.",
+    "两个都还没有——按一下只是告诉我先做哪个。",
   ],
 
   // ---- notes: one message, answered once -----------------------------------
