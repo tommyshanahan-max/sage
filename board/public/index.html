@@ -165,7 +165,13 @@
      week of days says when somebody is free faster than a sentence does. */
   /* On a joining the picture is an introduction, not the point — at full
      height it pushed the thing the post is actually saying below the fold. */
-  .post.isjoin .pic{max-height:10rem;object-fit:cover}
+  /* NO CROP ON THESE EITHER.
+   *
+   * A post announcing somebody put a page up was capped at ten rem and covered
+   * — which centres the crop, so a portrait selfie lost its forehead and its
+   * chin. The face is the whole content of that post: it is the first time
+   * anybody on the board sees the person. It shows at its own shape now, like
+   * every other photograph in the feed. */
   .joined{margin:.55rem 0 0;padding:.75rem .85rem;border-radius:.7rem;
     background:var(--accent-soft);border:1px solid var(--line)}
   .joined .say{font-size:.92rem;line-height:1.5;color:var(--ink)}
@@ -218,7 +224,7 @@
     font-family:var(--serif);font-size:1.8rem;line-height:1;border:0;padding:0}
   .mepic .in{position:absolute;inset:0;border-radius:50%;overflow:hidden;
     display:grid;place-items:center}
-  .mepic img{width:100%;height:100%;object-fit:cover;display:block}
+  .mepic img{width:100%;height:100%;object-fit:cover;object-position:50% 28%;display:block}
   .mepic .plus{position:absolute;right:-1px;bottom:-1px;width:1.5rem;height:1.5rem;
     border-radius:50%;background:var(--accent);color:var(--accent-ink);
     display:grid;place-items:center;font-size:1rem;font-family:var(--sans);
@@ -465,7 +471,14 @@
   /* A photograph fills the circle rather than sitting in it. Without the crop
      a portrait arrives as a tall image squeezed into a round box, which is the
      one way a real face can look worse than a letter. */
-  .av img{width:100%;height:100%;object-fit:cover;display:block}
+  /* CROPPED FROM THE TOP THIRD, NOT THE MIDDLE.
+   *
+   * A round avatar has to crop; where it crops from decides whether it is a
+   * face or a chest. Centred cover takes the middle of the frame, and the
+   * middle of a portrait selfie is a shoulder — which is why these were
+   * showing as anonymous blobs beside people's names. Faces sit in the upper
+   * third, so that is where the crop looks. */
+  .av img{width:100%;height:100%;object-fit:cover;object-position:50% 28%;display:block}
   /* The house mark. Serif rather than the avatar's usual letter, and no
      letter-spacing: it is one character and it is a logo, not an initial. */
   .av.house{background:var(--accent);color:var(--accent-ink);overflow:hidden;
@@ -823,7 +836,8 @@
     display:flex;flex-direction:column;justify-content:flex-end;
     will-change:transform;transition:transform .28s ease,opacity .28s ease}
   .pc.gone{opacity:0}
-  .pc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .pc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    object-position:50% 32%;display:block}
   /* No photograph is not a hole: the initial, big, on the accent. */
   .pc .noshot{position:absolute;inset:0;display:grid;place-items:center;
     background:var(--accent);color:var(--accent-ink);
