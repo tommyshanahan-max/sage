@@ -301,17 +301,18 @@ try {
   if (!device) { device = uuid(); localStorage.setItem("board:device", device); }
 } catch { device = uuid(); }
 
-/* The code out of the address, so tapping the link is the whole of it.
-   /i/K7M2QP, or ?code= for anybody who typed it by hand. */
-const fromLink = (() => {
-  const m = /\/i\/([A-Za-z0-9]{1,12})/.exec(location.pathname);
-  if (m) return m[1].toUpperCase();
-  try {
-    return (new URLSearchParams(location.search).get("code") || "").toUpperCase();
-  } catch { return ""; }
-})();
-
-let TYPED = fromLink.slice(0, 6);
+/* NOTHING IS TAKEN OUT OF THE ADDRESS.
+ *
+ * Links of the shape /i/CODE were handed out for a few hours and still open
+ * this page, but the code in them is ignored — reading it would put us back
+ * where we started, where opening a link IS accepting the invitation. Forward
+ * one of those to somebody by mistake, or tap it on a friend's phone to show
+ * them what you were sent, and their phone became the member.
+ *
+ * The link is an address. The six characters are the password, they arrive
+ * separately, and somebody types them on purpose.
+ */
+let TYPED = "";
 let ERR = false;
 
 function drawBoxes() {
@@ -459,7 +460,7 @@ $("keyopen").addEventListener("click", () => {
   if (!box.hidden) $("key").focus();
 });
 $("wxcopy").addEventListener("click", () => {
-  const url = location.origin + (fromLink ? "/i/" + fromLink : "/enter");
+  const url = location.origin + "/enter";
   let ok = false;
   try {
     if (navigator.clipboard && window.isSecureContext) {
@@ -485,13 +486,6 @@ $("invite").after(langButton(() => words()));
 words();
 route();
 
-/* AN OLD LINK STILL OPENS. Links of the shape /i/CODE were handed out before
-   the code came out of the address, so one arriving with a code in it fills
-   the boxes and goes in — but nothing this app sends any more looks like that,
-   and the code is typed. */
-if (fromLink.length === 6 && $("door") && !$("door").hidden) {
-  setTimeout(() => { if (!$("inside").hidden) return; enter(); }, 450);
-}
 
 /* ALREADY IN, AND SHOULD NOT HAVE SEEN THIS AT ALL.
  *
