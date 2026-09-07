@@ -265,6 +265,7 @@ function paint() {
     if (typeof value === "string") dd.textContent = value; else dd.append(value);
     d.append(dd); facts.append(d);
   };
+  if (q.type) fact(T("bud.type"), q.type);
   if (q.level) fact(T("bud.level"), q.level);
   if (q.trade) fact(T("bud.trades"), q.trade);
   if (q.speaks && q.speaks.length) fact(T("bud.speaks"), q.speaks.join(" · "));

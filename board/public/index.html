@@ -1790,8 +1790,11 @@ async function drawTutor() {
   box.append(doable("brw.open", "brw.openWhat",
     () => window.scrollTo({ top: 0, behavior: "smooth" })));
 
+  // Built, so it is offered rather than voted on. The votes that asked for it
+  // stay in the file — they are what said to build this one first.
+  box.append(doable("tut.type", "tut.typeGo", () => { location.href = "/type"; }));
+
   box.append(el("div", "grp", T("tut.next")));
-  box.append(vote("tut.type", "tut.typeWhat", "type"));
   box.append(vote("tut.compare", "tut.compareWhat", "compare"));
   box.append(vote("tut.language", "tut.languageWhat", "language"));
   box.append(el("p", "honest", T("tut.honest")));

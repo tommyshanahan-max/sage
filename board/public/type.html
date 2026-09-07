@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="留学生">
+<title>The type sort</title>
+<meta name="description" content="Twenty quick choices, about two minutes, and where you actually sit on four axes.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="The type sort">
+<meta property="og:description" content="Twenty choices, two minutes. It shows where you sit, not just four letters.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="{{ORIGIN}}/type">
+<meta name="robots" content="noindex">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t3:#D99038; --t6:#2F8C9E;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --shadow:0 2px 6px rgba(21,27,40,.07),0 10px 28px rgba(21,27,40,.09);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t3:#E4A65A; --t6:#4FA9BC;
+      --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --t3:#E4A65A; --t6:#4FA9BC;
+    --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+  }
+  :root[data-lang="zh"]{
+    --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif;
+  }
+  :root[data-lang="zh"] body{line-height:1.75}
+  :root[data-lang="zh"] .eyebrow,
+  :root[data-lang="zh"] .pole{text-transform:none;letter-spacing:.02em}
+  [hidden]{display:none!important}
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  main{max-width:34rem;margin:0 auto;padding:0 1.15rem 4rem}
+  button{font:inherit;cursor:pointer}
+  a{color:inherit}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  .bar{display:flex;align-items:center;gap:.7rem;padding:.9rem 0 1.2rem}
+  .bar a.back{color:var(--ink);text-decoration:none;display:grid;place-items:center;
+    margin-left:-.3rem}
+  .bar svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round}
+  .bar .lang{margin-left:auto;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1}
+
+  .eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{margin:.5rem 0 0;font-family:var(--serif);font-weight:400;font-size:2rem;
+    line-height:1.12}
+  .lede{margin:.8rem 0 0;font-size:1.02rem;line-height:1.65;color:var(--ink-2)}
+  .go{margin:1.6rem 0 0;border:0;background:var(--accent);color:var(--accent-ink);
+    border-radius:99px;padding:.85rem 1.9rem;font-size:1.05rem}
+  .quiet{margin:.8rem 0 0;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);border-radius:99px;padding:.7rem 1.4rem;font-size:.95rem;
+    text-decoration:none;display:inline-block}
+  .note{margin:1.4rem 0 0;font-size:.86rem;line-height:1.6;color:var(--muted)}
+
+  /* ---- one question at a time --------------------------------------------
+   * A forced choice is the whole instrument, so the two options are the whole
+   * screen: same size, same weight, nothing between them that could read as a
+   * middle. */
+  .count{font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+  .track{height:3px;background:var(--line);border-radius:99px;margin:.5rem 0 1.8rem;
+    overflow:hidden}
+  .track i{display:block;height:100%;background:var(--accent);border-radius:99px;
+    transition:width .22s ease}
+  .ask{margin:0;font-family:var(--serif);font-weight:400;font-size:1.5rem;
+    line-height:1.25;text-wrap:balance}
+  .picks{display:grid;gap:.75rem;margin:1.7rem 0 0}
+  .pick{border:1px solid var(--line);background:var(--raise);color:var(--ink);
+    border-radius:1rem;padding:1.15rem 1.2rem;font-size:1.06rem;line-height:1.5;
+    text-align:left;box-shadow:var(--shadow)}
+  .pick:hover{border-color:var(--accent);color:var(--accent)}
+  .undo{margin:1.4rem 0 0;border:0;background:none;color:var(--muted);
+    font-size:.88rem;padding:.3rem 0}
+  .undo:hover{color:var(--ink)}
+
+  /* ---- the result --------------------------------------------------------
+   * The four letters are what gets screenshotted, so they are set big — and
+   * the caveat sits directly under them at a size nobody can skip. A giant
+   * serif code with the qualification below the fold would be a better-looking
+   * screen and a worse product. */
+  .code{margin:.6rem 0 0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(3.4rem,17vw,5rem);line-height:1;letter-spacing:.06em;
+    color:var(--accent)}
+  .title{margin:.4rem 0 0;font-family:var(--serif);font-size:1.5rem;line-height:1.2}
+  .caveat{margin:.9rem 0 0;padding:.85rem 1rem;background:var(--raise);
+    border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
+    font-size:.9rem;line-height:1.6;color:var(--ink-2)}
+
+  .axis{margin:1.6rem 0 0;padding-top:1.1rem;border-top:1px solid var(--hair)}
+  .poles{display:flex;align-items:baseline;gap:1rem}
+  .pole{font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+  .pole.on{color:var(--ink)}
+  .poles .sp{flex:1}
+  /* The position, drawn. The dot is where five forced choices put them; the
+     line is the axis. Never a percentage — five items cannot carry one. */
+  .line{position:relative;height:2px;background:var(--line);margin:.85rem 0 0;
+    border-radius:99px}
+  .line .mid{position:absolute;left:50%;top:-3px;width:1px;height:8px;
+    background:var(--muted);opacity:.5}
+  .line .dot{position:absolute;top:-5px;width:12px;height:12px;margin-left:-6px;
+    border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--paper)}
+  .said{margin:.7rem 0 0;font-size:.9rem;color:var(--ink-2)}
+  .said b{font-weight:400;color:var(--ink)}
+
+  .row{display:flex;gap:.6rem;margin:1.8rem 0 0;flex-wrap:wrap}
+  .row>*{flex:1 1 0;min-width:9rem;margin:0;text-align:center}
+  .said.ok{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <div class="bar">
+    <a class="back" href="/browse" id="back" aria-label="Back">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
+    </a>
+    <span id="langslot" style="margin-left:auto;display:flex"></span>
+  </div>
+  <div id="body"></div>
+</main>
+
+<script type="module">
+import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
+import { ITEMS, AXES, TITLES, STRENGTH, score } from "/type-items.js";
+
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
+  if (x !== undefined) n.textContent = x; return n; };
+const fill = (n, ...kids) => { while (n.firstChild) n.removeChild(n.firstChild);
+  for (const k of kids) if (k) n.appendChild(k); };
+/** Both halves of a pair live in one file; this picks the one being read. */
+const P = (pair) => (Array.isArray(pair) ? pair[lang() === "zh" ? 1 : 0] : pair);
+
+let device = "";
+try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
+
+const KEY = "board:type";
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); }
+                     catch { return null; } };
+const save = (r) => { try { localStorage.setItem(KEY, JSON.stringify(r)); }
+                      catch { /* private window: the result is still on screen */ } };
+
+let RESULT = load();
+let ORDER = [];        // the items, shuffled
+let AT = 0;
+let CHOICES = {};
+
+/* Shuffled every time, because the axes are grouped in the file and five EI
+ * questions in a row teaches somebody what is being measured — after which
+ * they answer the measurement rather than the question. */
+function shuffle(xs) {
+  const out = xs.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+function start() {
+  ORDER = shuffle(ITEMS);
+  AT = 0;
+  CHOICES = {};
+  try { if (window.lx) window.lx("type-start"); } catch { /* not fatal */ }
+  paint();
+}
+
+function answer(item, pole) {
+  CHOICES[item.id] = pole;
+  AT += 1;
+  if (AT >= ORDER.length) {
+    RESULT = score(CHOICES);
+    if (RESULT) {
+      save(RESULT);
+      try { if (window.lx) window.lx("type-done"); } catch { /* not fatal */ }
+    }
+  }
+  paint();
+}
+
+function drawIntro(box) {
+  box.append(el("p", "eyebrow", T("type.eyebrow")));
+  box.append(el("h1", null, T("type.title")));
+  box.append(el("p", "lede", T("type.lede")));
+  const go = el("button", "go", T("type.start"));
+  go.type = "button";
+  go.addEventListener("click", start);
+  box.append(go);
+  box.append(el("p", "note", T("type.honest")));
+}
+
+function drawAsk(box) {
+  const item = ORDER[AT];
+  box.append(el("p", "count", T("type.count", { n: AT + 1, total: ORDER.length })));
+  const track = el("div", "track");
+  const bar = el("i");
+  bar.style.width = Math.round((AT / ORDER.length) * 100) + "%";
+  track.append(bar);
+  box.append(track);
+
+  box.append(el("p", "ask", P(item.prompt)));
+  const picks = el("div", "picks");
+  for (const side of ["a", "b"]) {
+    const b = el("button", "pick", P(item[side]));
+    b.type = "button";
+    b.addEventListener("click", () => answer(item, item[side + "Pole"]));
+    picks.append(b);
+  }
+  box.append(picks);
+
+  // One step back, because a mis-tap on question fourteen should not mean
+  // starting again — and because there is no other way to change an answer.
+  if (AT > 0) {
+    const undo = el("button", "undo", T("type.back"));
+    undo.type = "button";
+    undo.addEventListener("click", () => {
+      AT -= 1;
+      delete CHOICES[ORDER[AT].id];
+      paint();
+    });
+    box.append(undo);
+  }
+}
+
+function drawResult(box) {
+  const r = RESULT;
+  box.append(el("p", "eyebrow", T("type.yours")));
+  box.append(el("p", "code", r.code));
+
+  const title = TITLES[r.code];
+  if (title) box.append(el("p", "title", P(title)));
+
+  /* The caveat, directly under the letters and never below the fold.
+   *
+   * An axis answered 3-2 produces a letter as confidently as one answered 5-0,
+   * and nothing downstream can tell them apart. Saying which letter that is,
+   * in the same breath as the code, is the one thing this does that no other
+   * type product will. */
+  const weak = AXES[r.weakest];
+  box.append(el("p", "caveat", T(r.unstable ? "type.softTitle" : "type.soft", {
+    a: P(weak.first), b: P(weak.second),
+  })));
+
+  for (const a of r.axes) {
+    const wrap = el("div", "axis");
+    const poles = el("div", "poles");
+    const first = el("span", "pole" + (a.letter === a.axis[0] ? " on" : ""), P(AXES[a.axis].first));
+    const second = el("span", "pole" + (a.letter === a.axis[1] ? " on" : ""), P(AXES[a.axis].second));
+    poles.append(first, el("span", "sp"), second);
+    wrap.append(poles);
+
+    const line = el("div", "line");
+    line.append(el("i", "mid"));
+    const dot = el("i", "dot");
+    dot.style.left = (a.position * 100) + "%";
+    line.append(dot);
+    wrap.append(line);
+
+    const said = el("p", "said");
+    said.append(el("b", null, P(STRENGTH[a.strength])),
+      document.createTextNode(" · " + T("type.outOf", { n: a.n, total: a.of })));
+    wrap.append(said);
+    box.append(wrap);
+  }
+
+  const row = el("div", "row");
+  const again = el("button", "quiet", T("type.again"));
+  again.type = "button";
+  again.addEventListener("click", start);
+  const done = el("a", "quiet", T("type.done"));
+  done.href = "/browse";
+  row.append(again, done);
+  box.append(row);
+
+  /* Putting it on your profile is a separate act from taking the test. The
+   * result is yours on this phone whether or not anybody else ever sees it,
+   * and a test that publishes its answer by default is a different product. */
+  const mine = el("div");
+  const put = el("button", "go", T("type.put"));
+  put.type = "button";
+  const say = el("p", "said");
+  put.addEventListener("click", async () => {
+    put.disabled = true;
+    put.textContent = T("me.working");
+    try {
+      const out = await fetch("/api/me", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, type: r.code }),
+      }).then((x) => x.json());
+      if (out && out.person) {
+        say.className = "said ok";
+        say.textContent = T("type.puton");
+        put.hidden = true;
+        return;
+      }
+    } catch { /* fall through to the retry */ }
+    put.disabled = false;
+    put.textContent = T("act.again");
+  });
+  mine.append(put, say);
+  box.append(mine);
+  box.append(el("p", "note", T("type.honest")));
+}
+
+function paint() {
+  const box = $("body");
+  fill(box);
+  if (RESULT && !ORDER.length) drawResult(box);
+  else if (!ORDER.length) drawIntro(box);
+  else if (AT < ORDER.length) drawAsk(box);
+  else drawResult(box);
+  window.scrollTo(0, 0);
+}
+
+setLang(pickLang());
+$("langslot").append(langButton(paint));
+$("back").setAttribute("aria-label", T("nav.back"));
+paint();
+</script>
+
+<script>
+if (!/[?&]nocount\b/.test(location.search)) {
+  const c = document.createElement("script");
+  c.src = "/a/lx.js"; c.defer = true;
+  document.head.append(c);
+}
+</script>
+</body>
+</html>

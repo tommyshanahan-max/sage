@@ -529,6 +529,7 @@ export const STRINGS = {
   "nav.profile":       ["Profile", "我的"],
   "nav.new":           ["Post", "发布"],
   "bud.speaks":        ["Languages", "会说的语言"],
+  "bud.type":          ["Type sort", "性格测试"],
   "bud.follow":        ["Follow", "关注"],
   "bud.following":     ["Following", "已关注"],
   "bud.followers":     ["{n} following them", "{n} 人关注"],
@@ -629,6 +630,40 @@ export const STRINGS = {
   "brw.sub":           ["{n} on the list", "名单上有 {n} 个人"],
   "brw.of":            ["{n} of {total}", "第 {n} 个，共 {total} 个"],
   "brw.hello":         ["Say hello", "打个招呼"],
+
+  // ---- the type sort -------------------------------------------------------
+  // Ported from Fern. The words that carry the point are the caveat ones: this
+  // is the only type product that names the letter least worth trusting.
+  "type.eyebrow":      ["Twenty choices · two minutes", "二十道选择 · 两分钟"],
+  "type.title":        ["Which of these is more you?", "哪个更像你？"],
+  "type.lede": [
+    "Twenty pairs, no middle option, no right answers. At the end you get four letters — and, more usefully, how far from the middle each one actually sat.",
+    "二十组二选一，没有中间选项，也没有标准答案。做完给你四个字母——更有用的是，每个字母离中间有多远。",
+  ],
+  "type.start":        ["Start", "开始"],
+  "type.count":        ["{n} of {total}", "第 {n} 题，共 {total} 题"],
+  "type.back":         ["← back one", "← 退回上一题"],
+  "type.yours":        ["Where you sat", "你的结果"],
+  "type.again":        ["Take it again", "再做一次"],
+  "type.done":         ["Back to browsing", "继续看看"],
+  "type.put":          ["Put this on my page", "放到我的主页上"],
+  "type.puton":        ["On your page.", "已经放上去了。"],
+  "type.outOf":        ["{n} of {total} answers", "{total} 题里有 {n} 题"],
+  // Said in the same breath as the code, never below the fold: an axis
+  // answered 3-2 produces a letter as confidently as one answered 5-0.
+  "type.soft": [
+    "Your {a} / {b} letter is the closest to the middle — that is the one most likely to come out differently another day.",
+    "你的「{a} / {b}」这条最接近中间——换一天再做，最可能变的就是这个字母。",
+  ],
+  "type.softTitle": [
+    "One axis sits close enough to the middle that the name above would change on a different day. The letters hold up better than the title does.",
+    "有一条几乎在正中间，所以上面那个名字换一天就可能不一样。字母比名字靠得住。",
+  ],
+  "type.honest": [
+    "Nobody sees this unless you put it on your page. The questions are a first draft and the result is a description, not a diagnosis.",
+    "除非你自己放到主页上，否则没人看得到。题目还是初稿，结果是一种描述，不是诊断。",
+  ],
+  "tut.typeGo":        ["Twenty quick choices, two minutes.", "二十道快速选择，两分钟。"],
   // The row under the deck, and the card at the end of it. Both only exist
   // while there is no face on this phone, and both go the moment there is.
   "brw.mine":          ["Add your photo", "加上你的照片"],

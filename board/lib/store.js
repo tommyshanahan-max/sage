@@ -184,6 +184,12 @@ export function cleanPerson(raw) {
     // Optional, and never asked for on the first screen. Digits only, and two
     // of them: a field that will take a sentence becomes one.
     age: String(raw.age ?? "").replace(/\D/g, "").slice(0, 2),
+    // The type sort's four letters, if they chose to put them up. Checked
+    // against the sixteen rather than stored as text: this field is written
+    // from a page, and a field written from a page will one day be written
+    // from something else.
+    type: /^[EI][SN][TF][JP]$/.test(String(raw.type || "").toUpperCase())
+      ? String(raw.type).toUpperCase() : "",
     speaks: Array.isArray(raw.speaks)
       ? raw.speaks.slice(0, 6).map((x) => s(x, 40)).filter(Boolean) : [],
     free: days,
