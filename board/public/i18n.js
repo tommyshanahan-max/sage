@@ -571,6 +571,12 @@ export const STRINGS = {
     "That did not go up — the connection dropped partway ({mb} MB). Try once more.",
     "没能传上去——中途断了（{mb} MB）。再试一次。",
   ],
+  // On your own page, where it decides whether sharing the link is worth doing
+  // yet. Everywhere else it is a status; here it is a warning.
+  "me.photoHeldShare": [
+    "Your photograph is still waiting for a person to look at it. You can see it here; anybody you send this to sees a letter until it is through.",
+    "你的照片还在等人过目。你自己看得到，但你把链接发给别人，他们看到的会是一个字母，直到审核通过。",
+  ],
   "me.photoHeld": [
     "Your photo is up for you, and waiting for a person before anybody else sees it.",
     "你的照片你自己能看到，其他人要等有人过目之后才能看到。",

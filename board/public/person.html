@@ -183,6 +183,9 @@
   .sheet .said{margin:.6rem 0 0;font-size:.85rem;color:var(--muted)}
   .sheet .said.bad{color:#B4232A}
   /* A line saying where a thread has got to, where the button used to be. */
+  .held{margin:0 1.15rem .7rem;padding:.75rem .9rem;background:var(--raise);
+    border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
+    font-size:.88rem;line-height:1.55;color:var(--ink-2)}
   .stateline{margin:0;padding:.75rem .9rem;border-radius:12px;font-size:.88rem;
     background:var(--accent-soft);color:var(--ink-2)}
   .none b{display:block;font-family:var(--serif);font-weight:400;font-size:1.35rem;
@@ -287,6 +290,17 @@ function paint() {
   if (where) scrim.append(el("p", "where", where));
   shot.append(scrim);
   box.append(shot);
+
+  /* Your own page, while your photograph is still in the queue.
+   *
+   * You can see your face here; nobody else can, and there is nothing on the
+   * page that says so — which turns a shared link into a mystery. Somebody
+   * sends their page to a friend, the friend opens it and sees a letter, and
+   * the obvious conclusion is that the upload failed. It did not; it is
+   * waiting for a person, and this is the line that says which. */
+  if (q.mine && q.photoPending) {
+    box.append(el("p", "held", T("me.photoHeldShare")));
+  }
 
   /* The two things somebody who just opened a WeChat link is here to do, and
      they go above everything they would have to read first. The row is built
