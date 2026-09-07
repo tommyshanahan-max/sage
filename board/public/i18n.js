@@ -608,8 +608,8 @@ export const STRINGS = {
   // ---- the tutor, and the two things she offers -----------------------------
   "tut.name":          ["The Tutor", "导师"],
   "tut.hi": [
-    "I am working out what to make next. Which of these would you use?",
-    "我在想接下来做什么。这两个，你会用哪个？",
+    "I am the Tutor. I help you work out what to do here.",
+    "我是导师。帮你想清楚在这里能做什么。",
   ],
   "tut.type":          ["The type sort", "性格分类"],
   "tut.typeWhat": [
