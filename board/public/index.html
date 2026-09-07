@@ -312,6 +312,10 @@
      a portrait arrives as a tall image squeezed into a round box, which is the
      one way a real face can look worse than a letter. */
   .av img{width:100%;height:100%;object-fit:cover;display:block}
+  /* The house mark. Serif rather than the avatar's usual letter, and no
+     letter-spacing: it is one character and it is a logo, not an initial. */
+  .av.house{background:var(--accent);color:var(--accent-ink);overflow:hidden;
+    font-family:var(--sans);font-size:1.5rem;-webkit-font-smoothing:antialiased}
   a.av{color:var(--accent-ink);text-decoration:none}
   .body{flex:1;min-width:0}
 
@@ -943,7 +947,7 @@
 </div>
 
 <script type="module">
-import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
+import { T, when, lang, setLang, pickLang, langButton, STRINGS } from "/i18n.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -1183,7 +1187,27 @@ function draw() {
  * letter is drawn first and the picture replaces it, rather than an empty
  * circle waiting on a request that may fail — and if the picture does fail,
  * the letter is already there and nothing flickers. */
+/* The board's own voice, in either language.
+ *
+ * A post from the house is not from a person, so it has no photograph and no
+ * page to open, and a letter in a circle makes it look like one more student.
+ * Matched on the name in both halves of the pair rather than on one string,
+ * because the same account posts as The Tutor and as 导师 depending on who is
+ * reading. */
+const HOUSE = new Set((STRINGS["board.name"] || []).map((x) => String(x).toLowerCase()));
+const isHouse = (handle) => HOUSE.has(String(handle || "").toLowerCase());
+
 function face(p) {
+  /* The mark, for the board's own posts. The same image the masthead uses,
+     with the same character behind it when it will not load. */
+  if (isHouse(p.handle)) {
+    const av = el("div", "av house");
+    const img = Object.assign(document.createElement("img"),
+      { src: "/favicon.png", alt: "", width: 192, height: 192 });
+    img.addEventListener("error", () => { img.remove(); av.textContent = "\u7559"; });
+    av.append(img);
+    return av;
+  }
   // A link where there is somebody to open, a plain circle where there is not.
   // The name beside it has always been a link and this was not, which is the
   // wrong way round: the face is the bigger target and the one people press.
@@ -1217,9 +1241,12 @@ function card(p) {
   }
 
   const line = el("div", "line");
-  // The name is a link to the person. It was plain text, which meant a feed
-  // full of people you could not open.
-  if (p.handle) {
+  /* The house posts under its own name, in the language being read, and it is
+     not a link: there is no page behind it and a link to a 404 is worse than
+     plain text. Everybody else's name links to them. */
+  if (isHouse(p.handle)) {
+    line.append(el("b", null, T("board.name")));
+  } else if (p.handle) {
     const a = document.createElement("a");
     a.href = "/p/" + encodeURIComponent(p.handle.toLowerCase());
     a.textContent = p.handle;
