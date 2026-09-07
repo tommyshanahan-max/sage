@@ -287,8 +287,12 @@ whats-new: ## Tell the agent what changed, without a restart
 	@# the file is re-read on its next turn, so nothing needs restarting.
 	sh scripts/whats-new.sh
 
-check: ## Verify every Caddy site resolves to a usable, unique address
+check: ## Verify the sites resolve and the numbers page finishes drawing
 	python3 scripts/check-sites.py
+	@# A render that throws halfway leaves the page looking like one whose data
+	@# never arrived, which sends the hunt to the server and the network before
+	@# anybody suspects the page. This asks the page directly.
+	node scripts/check-dashboard.mjs
 
 doctor: ## Check the path between you and the VPS
 	bash scripts/doctor.sh

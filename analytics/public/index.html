@@ -957,7 +957,7 @@ async function load() {
   if (res.status === 401) { location.href = "/login"; return; }
   const data = await res.json();
 
-  drawApp(data.app, data.appSeries || []);
+  drawApp(data.app, data.appSeries || [], data.tz);
   // Open, and reachable without signing in anywhere. Behind a seat's proxy the
   // second half is false, so the warning would be too.
   document.getElementById("open-note").hidden = !data.open || data.proxied;
@@ -1434,7 +1434,7 @@ function drawArrivals(arrivals) {
       : "");
 }
 
-function drawApp(app, series) {
+function drawApp(app, series, tz) {
   const note = document.getElementById("app-note");
   drawAppCharts(series);
   // Worked out once and handed to all four, so one silence gets one account of
@@ -1450,7 +1450,7 @@ function drawApp(app, series) {
 
   drawUses(app && app.uses, app && app.usesByDay,
     app && app.devices, app && app.deviceDays, app && app.unit);
-  drawToday(app && app.usesByDay, data.tz);
+  drawToday(app && app.usesByDay, tz);
   drawScreens(app && app.screens);
   drawStayed(app && app.people, Boolean(absence));
   drawArrivals(app && app.arrivals);
