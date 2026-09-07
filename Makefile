@@ -173,7 +173,7 @@ post-explainer: ## Put the how-to-be-the-same-person-twice post on the feed
 	  -v "$(CURDIR)/scripts:/seed:ro" \
 	  --entrypoint node board \
 	  /seed/post-explainer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  $(if $(AS),--as "$(AS)",)
+	  $(if $(AS),--as "$(AS)",) $(if $(AGAIN),--again,)
 
 board-reset: ## Empty the board — every person, post and photograph
 	@# For handing a clean app to people who have not seen it. Runs in the
