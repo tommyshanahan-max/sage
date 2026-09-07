@@ -247,20 +247,32 @@
   .tutor .who b{font-family:var(--serif);font-weight:400;font-size:1.05rem}
   .tutor .hi{margin:0;font-family:var(--serif);font-size:1.05rem;line-height:1.55;
     color:var(--ink-2)}
-  .tutor .opt{margin:.85rem 0 0;padding:.8rem .9rem;border:1px solid var(--line);
-    border-radius:.75rem;background:var(--paper)}
-  .tutor .opt h4{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
-  .tutor .opt p{margin:.3rem 0 0;font-size:.88rem;line-height:1.55;color:var(--ink-2)}
-  .tutor .opt button{margin:.7rem 0 0;border:1px solid var(--accent);
+  /* THE THING ON OFFER IS THE HEADLINE, not a label above some explaining.
+     These were set at 1.05rem in a serif — the same size as the body text
+     under them — so the two functions this app has read as fine print in a
+     card of prose. They are the offer. They get headline size, the sentence
+     under them gets out of the way, and the control that opens one is a filled
+     button rather than an outline. */
+  .tutor .opt{margin:.9rem 0 0;padding:1.05rem 1.05rem 1.1rem;
+    border:1px solid var(--line);border-radius:.9rem;background:var(--paper)}
+  .tutor .opt h4{margin:0;font-family:var(--serif);font-weight:400;
+    font-size:1.55rem;line-height:1.15;letter-spacing:-.01em;text-wrap:balance}
+  .tutor .opt p{margin:.45rem 0 0;font-size:.92rem;line-height:1.5;color:var(--ink-2)}
+  .tutor .opt button{margin:.9rem 0 0;border:1px solid var(--accent);
     background:var(--accent);color:var(--accent-ink);border-radius:99px;
-    padding:.45rem 1.1rem;font-size:.88rem}
+    padding:.68rem 1.5rem;font-size:1rem}
   .tutor .opt button[disabled]{background:var(--raise);border-color:var(--line);
     color:var(--muted)}
-  .tutor .grp{margin:1.1rem 0 0;font-size:.7rem;letter-spacing:.14em;
+  .tutor .grp{margin:1.4rem 0 .2rem;font-size:.7rem;letter-spacing:.14em;
     text-transform:uppercase;color:var(--muted);font-weight:600}
   :root[data-lang="zh"] .tutor .grp{text-transform:none;letter-spacing:.06em}
-  .tutor .opt button.go{background:var(--paper);border-color:var(--accent);
-    color:var(--accent)}
+  /* A thing that WORKS is the loud one. This was the outline and the vote for
+     an unbuilt thing was the filled button, which had the board shouting about
+     what it has not made and murmuring about what it has. */
+  .tutor .opt.built{background:var(--accent-soft);border-color:var(--accent)}
+  .tutor .opt.built h4{color:var(--ink)}
+  .tutor .opt button.want{background:var(--paper);border-color:var(--line);
+    color:var(--ink-2);padding:.55rem 1.2rem;font-size:.92rem}
   .tutor .honest{margin:.85rem 0 0;font-size:.8rem;line-height:1.5;color:var(--muted)}
 
   /* ---- who followed you ---------------------------------------------------
@@ -1941,9 +1953,9 @@ async function drawTutor() {
 
   /* A thing that works, with a control that goes there. */
   const doable = (key, what, act) => {
-    const wrap = el("div", "opt");
+    const wrap = el("div", "opt built");
     wrap.append(el("h4", null, T(key)), el("p", null, T(what)));
-    const b = el("button", "go", T("tut.go"));
+    const b = el("button", null, T("tut.go"));
     b.type = "button";
     b.addEventListener("click", act);
     wrap.append(b);
@@ -1956,7 +1968,7 @@ async function drawTutor() {
   const vote = (key, what, name) => {
     const wrap = el("div", "opt");
     wrap.append(el("h4", null, T(key)), el("p", null, T(what)));
-    const b = el("button", null, WANTED.includes(name) ? T("tut.onList") : T("tut.pick"));
+    const b = el("button", "want", WANTED.includes(name) ? T("tut.onList") : T("tut.pick"));
     b.type = "button";
     if (WANTED.includes(name)) b.disabled = true;
     else b.addEventListener("click", async () => {
