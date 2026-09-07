@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<!-- iOS reads these rather than the manifest for a home-screen install:
+     no browser chrome, and a name short enough not to be truncated under
+     the icon. -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="留学生">
+<title>Browse students</title>
+<meta name="description" content="The people on the study-buddy list, one at a time.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Browse students">
+<meta property="og:description" content="Say your level, what you are working towards and when you are free.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="{{ORIGIN}}/browse">
+<meta name="robots" content="noindex">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t1:#3F68D8; --t2:#2A9D63; --t3:#D99038; --t4:#7268C4; --t5:#D4485C; --t6:#2F8C9E;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --shadow:0 2px 6px rgba(21,27,40,.07),0 10px 28px rgba(21,27,40,.09);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
+      --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
+    --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+  }
+  :root[data-lang="zh"]{
+    --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif;
+  }
+  :root[data-lang="zh"] body{line-height:1.75}
+  :root[data-lang="zh"] .rule span,
+  :root[data-lang="zh"] .fact dt{text-transform:none;letter-spacing:.02em}
+  [hidden]{display:none!important}
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  main{max-width:34rem;margin:0 auto;padding:1.4rem 1.15rem 5rem}
+  button{font:inherit;cursor:pointer}
+  a{color:inherit}
+  img{max-width:100%}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  .top{display:flex;align-items:center;gap:.8rem;margin:0 0 1.3rem}
+  .top h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.75rem;line-height:1.1}
+  .top p{margin:.15rem 0 0;font-size:.85rem;color:var(--muted)}
+  .back{border:0;background:none;color:var(--ink);padding:.2rem;margin-left:-.3rem;
+    display:grid;place-items:center;flex:0 0 auto}
+  .back svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round}
+  .lang{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1}
+
+  .none{padding:3rem .5rem;text-align:center;color:var(--muted)}
+  .none b{display:block;font-family:var(--serif);font-weight:400;font-size:1.3rem;
+    color:var(--ink);margin:0 0 .4rem}
+  .none p{margin:0 auto 1.3rem;max-width:26rem;font-size:.95rem;line-height:1.6}
+  .none button{border:0;background:var(--accent);color:var(--accent-ink);border-radius:99px;
+    padding:.75rem 1.6rem;font-size:1rem}
+
+  /* A profile opens over the list rather than as its own page: you are
+     comparing people, and losing your place in the list to read one of them
+     is how somebody gives up halfway down. */
+  .sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;
+    background:rgba(21,27,40,.42)}
+  .sheet .card{width:100%;max-width:34rem;margin:0 auto;background:var(--paper);
+    border-radius:1.1rem 1.1rem 0 0;padding:1.4rem 1.15rem calc(1.4rem + env(safe-area-inset-bottom));
+    box-shadow:var(--shadow);max-height:88vh;overflow-y:auto}
+  .pf{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .pf .av{width:5.4rem;height:5.4rem;font-size:2.1rem;margin:0 0 .8rem}
+  .pf h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.6rem;line-height:1.15}
+  .pf .where{margin:.3rem 0 0;font-size:.9rem}
+  .pf .goal{margin:1rem 0 0;text-align:left;width:100%;font-size:1.06rem}
+  .fact{display:flex;gap:1rem;padding:.7rem 0;border-top:1px solid var(--hair);
+    align-items:baseline;width:100%;text-align:left}
+  .fact dt{flex:0 0 6.4rem;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);margin:0}
+  .fact dd{margin:0;flex:1;font-size:.95rem}
+  .facts{margin:1.1rem 0 0;width:100%}
+  .theirs{margin:1.2rem 0 0;width:100%;text-align:left}
+  .theirs h3{margin:0 0 .5rem;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);font-weight:600}
+  :root[data-lang="zh"] .theirs h3{text-transform:none;letter-spacing:.02em}
+  .theirs p{margin:0;padding:.6rem 0;border-top:1px solid var(--hair);
+    font-family:var(--serif);font-size:1rem;line-height:1.5;color:var(--ink-2)}
+  .theirs .no{color:var(--muted);font-family:var(--sans);font-size:.9rem}
+  .pfacts{display:flex;gap:.5rem;margin:1.3rem 0 0;flex-wrap:wrap;width:100%}
+  .pfacts button{flex:1;min-width:8rem;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);border-radius:99px;padding:.65rem 1rem;font-size:.9rem}
+  .pfacts button.warn{color:var(--t5);border-color:var(--line)}
+
+  .safety{margin:2rem 0 0;padding:.95rem 1.05rem;background:var(--raise);
+    border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
+    font-size:.86rem;line-height:1.6;color:var(--ink-2)}
+
+  /* One person, filling the screen.
+     A photograph is the reason this page exists, so it gets the whole card and
+     the words sit on top of it — but on a scrim, because white text straight
+     onto a photograph is legible until somebody uploads a bright one. */
+  .deck{position:relative;width:100%;max-width:100%;height:min(70vh,38rem);
+    margin:0 0 1.1rem;touch-action:pan-y;overflow:hidden;border-radius:1.3rem}
+  .card{position:absolute;inset:0;border-radius:1.3rem;overflow:hidden;
+    background:var(--raise);box-shadow:var(--shadow);
+    display:flex;flex-direction:column;justify-content:flex-end;
+    will-change:transform;transition:transform .28s ease,opacity .28s ease}
+  .card.gone{opacity:0}
+  .card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  /* No photograph is not a hole: the initial, big, on the accent. */
+  .card .noshot{position:absolute;inset:0;display:grid;place-items:center;
+    background:var(--accent);color:var(--accent-ink);
+    font-family:var(--serif);font-size:9rem;line-height:1}
+  .card .scrim{position:relative;padding:5.5rem 1.2rem 1.2rem;
+    background:linear-gradient(to top,rgba(10,14,22,.86),rgba(10,14,22,.52) 42%,rgba(10,14,22,0))}
+  .card h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.85rem;
+    line-height:1.1;color:#fff}
+  .card .where{margin:.3rem 0 0;font-size:.92rem;color:rgba(255,255,255,.82)}
+  .card .goal{margin:.6rem 0 0;font-family:var(--serif);font-size:1.02rem;line-height:1.5;
+    color:rgba(255,255,255,.92);display:-webkit-box;-webkit-line-clamp:3;
+    -webkit-box-orient:vertical;overflow:hidden}
+  .card .days{display:flex;gap:.25rem;margin:.7rem 0 0;flex-wrap:wrap}
+  .card .days b{width:1.7rem;height:1.7rem;display:grid;place-items:center;border-radius:.4rem;
+    font-size:.7rem;font-weight:500;background:rgba(255,255,255,.16);color:rgba(255,255,255,.6)}
+  .card .days b.on{background:#fff;color:#14203a}
+
+  .acts{display:flex;gap:.6rem;width:100%}
+  /* Flex hands a child its longest word before it takes space from a sibling,
+     so both need telling they may be narrower than their content. */
+  .acts>*{flex:1 1 0;min-width:0}
+  .acts button,.acts a{flex:1;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);border-radius:99px;padding:.85rem 1rem;font-size:1rem;
+    text-align:center;text-decoration:none}
+  .acts .primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .counter{margin:.9rem 0 0;text-align:center;font-size:.82rem;color:var(--muted);
+    font-variant-numeric:tabular-nums}
+</style>
+
+</head>
+<body>
+<main>
+  <div class="top">
+    <button class="back" id="back" aria-label="Back">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <div>
+      <h1 id="title"></h1>
+      <p id="sub"></p>
+    </div>
+    <span id="langslot"></span>
+  </div>
+
+  <div class="deck" id="deck"></div>
+  <div class="acts" id="acts" hidden></div>
+  <p class="counter" id="counter"></p>
+  <div class="none" id="none" hidden></div>
+  <p class="safety" id="safety"></p>
+</main>
+
+<script type="module">
+import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
+
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
+  if (x !== undefined) n.textContent = x; return n; };
+const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
+const initial = (name) => (String(name || "?").trim()[0] || "?").toLowerCase();
+
+let device = "";
+try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
+
+let PEOPLE = [], at = 0;
+
+async function load() {
+  try {
+    const d = await fetch("/api/people", { cache: "no-store",
+      headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
+    // Yourself excluded. Browsing your own photograph is not a feature.
+    PEOPLE = ((d && d.people) || []).filter((q) => !q.mine);
+  } catch { PEOPLE = []; }
+  paint();
+}
+
+/* Move on. Only ever forward and only ever one direction of meaning: there is
+ * no yes and no no here. A flick is how you turn the page, not a verdict on
+ * somebody's face — which is the whole difference between this and the app it
+ * borrows its shape from. */
+function next() {
+  if (!PEOPLE.length) return;
+  at = (at + 1) % PEOPLE.length;
+  paint();
+}
+
+function card(q, ghost) {
+  const box = el("div", "card" + (ghost ? " ghost" : ""));
+  if (q.photo) {
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/public-media?id=" + encodeURIComponent(q.photo), alt: "", loading: "eager" });
+    img.addEventListener("error", () => { img.remove(); box.prepend(el("div", "noshot", initial(q.handle))); });
+    box.append(img);
+  } else {
+    box.append(el("div", "noshot", initial(q.handle)));
+  }
+
+  const scrim = el("div", "scrim");
+  scrim.append(el("h2", null, q.handle || T("board.someone")));
+  const where = [q.campus, q.here].filter(Boolean).join(" \u00b7 ");
+  if (where) scrim.append(el("p", "where", where));
+  if (q.goal) scrim.append(el("p", "goal", q.goal));
+  if (q.free && q.free.length) {
+    const days = el("div", "days");
+    T("bud.days").split(",").forEach((d, i) => {
+      days.append(el("b", q.free.indexOf(i) >= 0 ? "on" : "", d));
+    });
+    scrim.append(days);
+  }
+  box.append(scrim);
+  return box;
+}
+
+function paint() {
+  $("title").textContent = T("brw.title");
+  $("safety").textContent = T("bud.safety");
+  $("back").setAttribute("aria-label", T("bud.back"));
+
+  const deck = $("deck");
+  fill(deck);
+  const n = PEOPLE.length;
+  $("none").hidden = n > 0;
+  $("acts").hidden = !n;
+  $("counter").textContent = n ? T("brw.of", { n: at + 1, total: n }) : "";
+  $("sub").textContent = n ? T("brw.sub", { n }) : "";
+
+  if (!n) {
+    fill($("none"));
+    $("none").append(el("b", null, T("brw.none")), el("p", null, T("brw.noneBody")));
+    const go = el("a", null, T("bud.open"));
+    go.href = "/buddies";
+    $("none").append(go);
+    return;
+  }
+
+  // The one behind, so moving on reveals a person rather than a hole.
+  if (n > 1) {
+    const behind = card(PEOPLE[(at + 1) % n]);
+    behind.style.transform = "scale(.96) translateY(10px)";
+    deck.append(behind);
+  }
+  const top = card(PEOPLE[at]);
+  deck.append(top);
+  drag(top);
+
+  const acts = $("acts");
+  fill(acts);
+  const q = PEOPLE[at];
+  const hi = el("a", "primary", T("brw.hello"));
+  hi.href = "/p/" + encodeURIComponent((q.handle || "").toLowerCase());
+  const on = el("button", null, T("brw.next"));
+  on.type = "button";
+  on.addEventListener("click", next);
+  acts.append(hi, on);
+}
+
+/* Flick to move on. Pointer events rather than touch events, so a mouse on a
+ * laptop behaves the same as a thumb — and the card follows the finger, because
+ * a gesture that only acts at the end of itself feels broken on the way. */
+function drag(box) {
+  let x0 = null, dx = 0;
+  const go = (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    x0 = e.clientX; dx = 0;
+    box.style.transition = "none";
+    box.setPointerCapture?.(e.pointerId);
+  };
+  const move = (e) => {
+    if (x0 === null) return;
+    dx = e.clientX - x0;
+    box.style.transform = `translateX(${dx}px) rotate(${dx / 34}deg)`;
+  };
+  const end = () => {
+    if (x0 === null) return;
+    const far = Math.abs(dx) > 90;
+    box.style.transition = "";
+    if (far) {
+      box.style.transform = `translateX(${dx > 0 ? 700 : -700}px) rotate(${dx / 12}deg)`;
+      box.classList.add("gone");
+      setTimeout(next, 190);
+    } else {
+      box.style.transform = "";
+    }
+    x0 = null;
+  };
+  box.addEventListener("pointerdown", go);
+  box.addEventListener("pointermove", move);
+  box.addEventListener("pointerup", end);
+  box.addEventListener("pointercancel", end);
+}
+
+$("back").addEventListener("click", () => {
+  if (history.length > 1) history.back(); else location.href = "/feed";
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight" || e.key === "ArrowLeft") next();
+});
+
+setLang(pickLang());
+$("langslot").append(langButton(paint));
+load();
+</script>
+</body>
+</html>

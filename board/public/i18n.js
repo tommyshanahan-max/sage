@@ -608,7 +608,24 @@ export const STRINGS = {
   "bud.blocked":       ["Hidden on this phone", "已在这台手机上隐藏"],
   "bud.reportThem":    ["Report this profile", "举报这份资料"],
 
-  // ---- the tutor, and the two things she offers -----------------------------
+  // ---- browsing people, one at a time ---------------------------------------
+  "brw.title":         ["Browse students", "看看有谁"],
+  "brw.sub":           ["{n} on the list", "名单上有 {n} 个人"],
+  "brw.of":            ["{n} of {total}", "第 {n} 个，共 {total} 个"],
+  "brw.hello":         ["Say hello", "打个招呼"],
+  "brw.next":          ["Next", "下一个"],
+  "brw.none":          ["Nobody on the list yet", "名单上还没有人"],
+  "brw.noneBody": [
+    "Nobody has put themselves on the study-buddy list. Put yourself on it and you are the first person anybody sees.",
+    "还没有人加入学习搭子名单。你可以第一个加入，这样别人第一个看到的就是你。",
+  ],
+  "brw.open":          ["Browse students", "看看有谁"],
+  "brw.openWhat": [
+    "The people on the study-buddy list, one at a time, with their photo.",
+    "名单上的人，一个一个看，带照片。",
+  ],
+
+  // ---- the tutor ------------------------------------------------------------
   "tut.name":          ["The Tutor", "导师"],
   "tut.hi": [
     "I am the Tutor. I help you work out what to do here.",

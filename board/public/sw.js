@@ -37,7 +37,7 @@ const CACHE = "board-v1";
 // not the API — a cached /api/board is a cached set of somebody's posts, and
 // those go stale in minutes and may have been taken down since.
 const SHELL = [
-  "/feed", "/buddies", "/notes", "/site.css", "/i18n.js", "/live.js",
+  "/feed", "/buddies", "/notes", "/browse", "/site.css", "/i18n.js", "/live.js",
   "/favicon.png", "/icon-512.png",
 ];
 

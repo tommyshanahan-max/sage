@@ -204,6 +204,11 @@ app.get(["/buddies", "/buddies/"], (req, res, next) => page("buddies.html", req,
 // either way.
 app.get(["/notes", "/notes/"], (req, res, next) => page("notes.html", req, res, next));
 
+// Everyone on the study-buddy list, one at a time, photograph first. Only
+// people who put themselves on that list are in it — the same opt-in the list
+// itself uses, so nobody is browsable who did not choose to be findable.
+app.get(["/browse", "/browse/"], (req, res, next) => page("browse.html", req, res, next));
+
 /* One person, at an address that can be sent to somebody.
  *
  * /p/<name>. A profile you cannot share is not a profile, and until this

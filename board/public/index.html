@@ -1665,6 +1665,7 @@ async function drawTutor() {
     }));
   }
   box.append(doable("tut.buddy", "tut.buddyWhat", () => { location.href = "/buddies"; }));
+  box.append(doable("brw.open", "brw.openWhat", () => { location.href = "/browse"; }));
 
   box.append(el("div", "grp", T("tut.next")));
   box.append(vote("tut.type", "tut.typeWhat", "type"));
