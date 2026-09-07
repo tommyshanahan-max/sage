@@ -1369,11 +1369,17 @@
       <div id="meroomsA"></div>
       <p class="roomgroup" id="megroup2"></p>
       <div id="meroomsB"></div>
-      <button class="morego" type="button" id="meroomsmorego"
-              aria-expanded="false" aria-controls="meroomsmore">
-        <span id="meroomsmorelabel"></span><i aria-hidden="true">+</i>
-      </button>
-      <div id="meroomsmore" hidden><div id="meroomsC"></div></div>
+      <!-- WORK, MONEY AND TRADE, NO LONGER BEHIND A FOLD.
+           They were hidden behind a second + so the form opened on four boxes
+           rather than eleven, and so most people never met the word investor.
+           That was right for a board for exchange students. It is wrong for a
+           place whose whole proposition is finding the person on the other
+           side of a business, and it failed the first test: somebody opened
+           the form, saw a study partner and a language exchange, and reported
+           that the options were not enough. A checklist that hides the half
+           somebody came for is a shorter form and a worse one. -->
+      <p class="roomgroup" id="megroup3"></p>
+      <div id="meroomsC"></div>
       <p class="said roomfull" id="meroomfull" hidden></p>
 
       <p class="roomhead" id="mewherehead"></p>
@@ -2761,8 +2767,11 @@ async function drawTutor() {
     return svg;
   };
 
-  const doable = (key, what, act, icon) => {
+  /* 1 for something not done yet, 4 for a thing already behind them. See
+     orderStrip: the unfinished cards come before the finished ones. */
+  const doable = (key, what, act, icon, done) => {
     const wrap = el("div", "opt built tcard");
+    wrap.dataset.rank = done ? "4" : "1";
     const head = el("div", "opthead");
     // Node.append returns undefined, so this cannot be written as one chained
     // line — doing that threw before the card was built and took the whole
@@ -2845,12 +2854,44 @@ async function drawTutor() {
    * produces them is the one to offer first. A page that leads with a number
    * and then offers a different test underneath is asking somebody to hunt for
    * the thing it just showed them. */
-  strip.append(doable("tut.level", "tut.levelGo", () => { location.href = "/level"; }, "level"));
-  strip.append(doable("tut.type", "tut.typeGo", () => { location.href = "/type"; }, "type"));
+  const tookLevel = Boolean(readLocal("board:level"));
+  const tookType = Boolean(readLocal("board:type"));
+  strip.append(doable("tut.level", "tut.levelGo",
+    () => { location.href = "/level"; }, "level", tookLevel));
+  strip.append(doable("tut.type", "tut.typeGo",
+    () => { location.href = "/type"; }, "type", tookType));
 
   const v = vote("tut.compare", "tut.compareWhat", "compare");
   v.append(el("p", "honest", T("tut.honest")));
+  v.dataset.rank = "5";
   strip.append(v);
+  orderStrip();
+}
+
+/* ---- what comes first in the strip ------------------------------------------
+ *
+ * A strip hides everything to the right of the first card, so the order is the
+ * feature. Left to the order things were built in, the four-letter test ended
+ * up fifth — behind the news, your level, and a test you had already taken —
+ * which is the same as not being there. It was reported as missing.
+ *
+ * So: the news, then anything you have NOT done, then the things you have.
+ * A test you have taken is a result you can look up; a test you have not taken
+ * is the only one of the two with anything to offer. Once it is done it moves
+ * back and lets the next unfinished thing forward.
+ */
+function orderStrip() {
+  const strip = $("profbody");
+  const rank = (n) => {
+    if (n.id === "profnews") return 0;
+    if (n.classList.contains("tcard")) return Number(n.dataset.rank || 3);
+    if (n.id === "profnow") return 2;      // your level, once you have one
+    if (n.id === "daily") return 2.5;      // today's card
+    return 3;
+  };
+  const kids = [...strip.children];
+  kids.sort((a, b) => rank(a) - rank(b));
+  for (const k of kids) strip.append(k);
 }
 
 /* THE MEMBER'S OWN INVITE.
@@ -4827,25 +4868,16 @@ function showRooms() {
   $("meroomwhy").textContent = T("room.why");
   $("megroup1").textContent = T("room.groupStudy");
   $("megroup2").textContent = T("room.groupSettle");
-  $("meroomsmorelabel").textContent = T("room.more");
+  $("megroup3").textContent = T("room.more");
   $("mewherehead").textContent = T("room.whereHead");
   $("mewherelab1").textContent = T("room.whereMe");
   $("mewherelab2").textContent = T("room.whereThem");
   $("mewherewhy").textContent = T("room.whereWhy");
   drawRooms();
   drawWhere();
-  // Open the money fold for somebody who already has one of those ticked —
-  // otherwise their own answer is hidden behind a + they have to find.
-  const deep = PICKED.some((k) => ROOMS_C.includes(k));
-  $("meroomsmore").hidden = !deep;
-  $("meroomsmorego").setAttribute("aria-expanded", String(deep));
 }
 $("melooking").addEventListener("change", showRooms);
-$("meroomsmorego").addEventListener("click", () => {
-  const on = $("meroomsmore").hidden;
-  $("meroomsmore").hidden = !on;
-  $("meroomsmorego").setAttribute("aria-expanded", String(on));
-});
+
 
 $("meshut").addEventListener("click", () => { $("mesheet").hidden = true; });
 $("mesheet").addEventListener("click", (e) => {
