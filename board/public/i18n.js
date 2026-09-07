@@ -783,6 +783,15 @@ export const STRINGS = {
   "room.cofound":      ["Co-founder — building something", "找合伙人——一起做点东西"],
   "room.raise":        ["Raising money", "在融资"],
   "room.invest":       ["Investing, or backing people", "投资，或者支持别人做事"],
+  /* THE ONE PAIR THAT IS NOT ABOUT MONEY OR STUDY. A lot of the foreigners
+     who end up in China are here on the strength of a face or a portfolio, and
+     the people looking for them are a real trade with a real season. Both
+     sides in their own words, so nobody has to describe themselves as
+     "talent". */
+  "room.talent":       ["A model or creative looking for an agent",
+                        "模特或创作者，在找经纪"],
+  "room.agent":        ["An agent or manager looking for people",
+                        "经纪或经纪公司，在找人"],
   "room.buy":          ["Buying or sourcing from China", "从中国采购"],
   "room.sell":         ["Selling or supplying from China", "从中国供货"],
 
@@ -799,6 +808,8 @@ export const STRINGS = {
   "room.cofound.s":    ["a co-founder", "合伙人"],
   "room.raise.s":      ["to raise money", "融资"],
   "room.invest.s":     ["to invest", "投资"],
+  "room.talent.s":     ["an agent", "经纪"],
+  "room.agent.s":      ["people to represent", "可以代理的人"],
   "room.buy.s":        ["to buy from China", "从中国采购"],
   "room.sell.s":       ["to sell from China", "从中国供货"],
 

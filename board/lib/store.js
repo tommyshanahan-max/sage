@@ -273,12 +273,13 @@ export const LEVELS = ["Just starting", "HSK 1-2", "HSK 3", "HSK 4", "HSK 5", "H
  */
 export const ROOMS = [
   "lang", "study", "new", "host", "job", "hire", "cofound", "raise", "invest",
-  "buy", "sell",
+  "buy", "sell", "talent", "agent",
 ];
 
 /** Which box answers which. A room missing from here answers itself. */
 const ANSWERS = { new: "host", host: "new", job: "hire", hire: "job",
-                  raise: "invest", invest: "raise", buy: "sell", sell: "buy" };
+                  raise: "invest", invest: "raise", buy: "sell", sell: "buy",
+                  talent: "agent", agent: "talent" };
 
 /** The room key somebody has to have ticked for this one to pair with it. */
 export const answerTo = (room) => ANSWERS[room] || room;

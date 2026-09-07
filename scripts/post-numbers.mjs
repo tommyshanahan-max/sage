@@ -49,6 +49,8 @@ const ROOMS = {
   invest: ["to invest", "投资"],
   buy: ["to buy from China", "从中国采购"],
   sell: ["to sell from China", "从中国供货"],
+  talent: ["an agent", "经纪"],
+  agent: ["people to represent", "可以代理的人"],
 };
 
 /** The totals as they stood at a moment. Passing no cutoff gives today's. */

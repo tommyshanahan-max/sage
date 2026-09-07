@@ -1735,11 +1735,12 @@ async function load() {
  * working.
  */
 const ROOMKEYS = ["lang", "study", "new", "host", "job", "hire", "cofound",
-                  "raise", "invest", "buy", "sell", "ask"];
+                  "raise", "invest", "buy", "sell", "talent", "agent", "ask"];
 const ROOMGROUPS = [
   { grp: "room.groupStudy",  keys: ["lang", "study"] },
   { grp: "room.groupSettle", keys: ["new", "host"] },
-  { grp: "room.more",        keys: ["job", "hire", "cofound", "raise", "invest", "buy", "sell"] },
+  { grp: "room.more",        keys: ["job", "hire", "cofound", "raise", "invest",
+                                    "buy", "sell", "talent", "agent"] },
   { grp: "room.groupElse",   keys: ["ask"] },
 ];
 
@@ -4805,7 +4806,8 @@ $("memorego").addEventListener("click", () => showMore($("memore").hidden));
  */
 const ROOMS_A = ["lang", "study"];
 const ROOMS_B = ["new", "host"];
-const ROOMS_C = ["job", "hire", "cofound", "raise", "invest", "buy", "sell"];
+const ROOMS_C = ["job", "hire", "cofound", "raise", "invest", "buy", "sell",
+                 "talent", "agent"];
 let PICKED = [];
 
 function drawRooms() {
