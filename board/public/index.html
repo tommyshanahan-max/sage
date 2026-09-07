@@ -39,7 +39,12 @@
      page that waits on it is a page that does not load. Everything here is a
      face the device already has, Chinese ones named first for Chinese text. */
   :root{
-    --paper:#EEF0F4; --raise:#F7F8FB; --ink:#151B28; --ink-2:#4E5968;
+    /* --card is the paper a thing sits ON TOP of --raise: a menu over the
+       feed, a tick box inside a sheet. It is in site.css but was never in this
+       page's own block, so every var(--card) here computed to nothing and the
+       element came out transparent — which is a menu you can read the feed
+       through. */
+    --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD; --ink:#151B28; --ink-2:#4E5968;
     --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
     --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
     --t1:#3F68D8; --t2:#2A9D63; --t3:#D99038; --t4:#7268C4; --t5:#D4485C; --t6:#2F8C9E;
@@ -50,7 +55,7 @@
   }
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
-      --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
       --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
       --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
       --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
@@ -58,7 +63,7 @@
     }
   }
   :root[data-theme="dark"]{
-    --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
     --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
     --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
     --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
@@ -473,10 +478,42 @@
     background:var(--accent);color:var(--accent-ink);border-radius:99px;
     padding:.15rem .5rem}
 
-  .topics{display:flex;gap:.55rem;overflow-x:auto;padding:0 0 .35rem;
-    margin:0 -1.15rem 1.5rem;padding-left:1.15rem;padding-right:1.15rem;
-    scrollbar-width:none}
-  .topics::-webkit-scrollbar{display:none}
+  /* One line, whatever the vocabulary grows to. It was a sideways scroll of
+     chips: three lines' worth of words in a strip most people never pushed. */
+  .topics{position:relative;display:flex;gap:.5rem;align-items:center;margin:0 0 1.5rem}
+  .filt{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--accent);
+    background:var(--accent);color:var(--accent-ink);border-radius:99px;
+    padding:.6rem 1.1rem;font-size:.98rem;line-height:1}
+  .filt .cv{font-style:normal;font-size:.72rem;opacity:.8}
+  .filt.quiet{background:var(--raise);border-color:var(--line);color:var(--ink)}
+  .filt.quiet.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+  /* Under the button, over the feed: a menu, not a page. */
+  .roomsheet{position:absolute;top:calc(100% + .5rem);left:0;right:0;z-index:20;
+    background:var(--card);border:1px solid var(--line);border-radius:1rem;
+    box-shadow:var(--shadow);overflow:hidden;max-height:70vh;overflow-y:auto}
+  .roomsheet h4{margin:0;padding:.9rem 1rem .55rem;font-family:var(--serif);
+    font-weight:400;font-size:1.1rem}
+  .roomsheet .sh{display:flex;align-items:center;gap:.7rem;width:100%;
+    padding:.7rem 1rem;border:0;border-top:1px solid var(--hair);background:none;
+    color:var(--ink);font-size:.95rem;text-align:left}
+  .roomsheet .sh .tick{width:1.1rem;flex:0 0 auto;color:var(--accent);font-style:normal}
+  .roomsheet .sh .n{margin-left:auto;font-size:.85rem;color:var(--muted);
+    font-variant-numeric:tabular-nums}
+  /* A room nobody has posted in yet is named and not offered — see drawTopics. */
+  .roomsheet .sh.off{color:var(--muted)}
+  .roomsheet .sh.off .n{color:var(--line)}
+  .roomsheet .sh.on{color:var(--accent)}
+  .roomsheet .shgrp{padding:.7rem 1rem .2rem;font-size:.66rem;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--muted);font-weight:700;
+    border-top:1px solid var(--hair);background:var(--raise)}
+
+  /* The composer's picker: the whole list, wrapped, because picking one is the
+     only job on that screen. */
+  .pickcap{margin:0 0 .5rem;font-size:.82rem;color:var(--muted)}
+  .pickwrap{display:flex;flex-wrap:wrap;gap:.4rem}
+  .chip.small{padding:.42rem .8rem;font-size:.86rem}
+  .chip.small.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   .chip{display:inline-flex;align-items:center;gap:.45rem;flex:0 0 auto;
     border:1px solid var(--line);background:var(--raise);color:var(--ink);
     border-radius:99px;padding:.6rem 1.15rem;font-size:.98rem;line-height:1;
@@ -1432,10 +1469,11 @@
     <div class="field">
       <input id="who" maxlength="40" placeholder="Post as — a name people will see">
     </div>
-    <div class="field">
-      <input id="topic" maxlength="40" list="topiclist" placeholder="Topic — optional">
-      <datalist id="topiclist"></datalist>
-    </div>
+    <!-- A room, not a word somebody types. Twelve of them, wrapped: this is
+         the one place the whole list is worth showing at once, because picking
+         is the job and there is nothing else on the screen competing for the
+         space. -->
+    <div class="field pickroom" id="pickroom"></div>
     <div class="row">
       <button class="ghost" type="button" id="pickpic">Photo</button>
       <input type="file" id="pic" hidden accept="image/*">
@@ -1626,79 +1664,170 @@ async function load() {
  * reader and a Chinese one filing the same thing would make two topics that
  * never meet. The key travels; the label is chosen when it is drawn.
  */
-const STARTERS = [
-  { key: "Courses",      label: ["Courses", "选课"] },
-  { key: "New here",     label: ["New here", "刚来"] },
-  { key: "Near Renmin",  label: ["Near Renmin", "人大附近"] },
-  { key: "Chinese food", label: ["Chinese food", "中国菜"] },
-  { key: "Language",     label: ["Language", "语言"] },
-  { key: "Getting by",   label: ["Getting by", "生活门道"] },
-  { key: "Applying",     label: ["Applying abroad", "申请出国"] },
-  // Where results land when somebody puts one on the feed.
-  { key: "Tests",        label: ["Tests", "测测"] },
+/* ---- ONE VOCABULARY, AND IT IS THE ROOMS ------------------------------------
+ *
+ * The topics are gone. There were two lists of words in this product — topics
+ * on posts (Courses, Near Renmin, Chinese food) and rooms on people (language
+ * exchange, study partner, raising money) — and on a board of eleven people two
+ * taxonomies is worse than either alone: everything is spread thinly across
+ * both and neither ever fills up.
+ *
+ * So a post is filed under the same words a person is. What somebody is looking
+ * for and what a post is about become the same question, which is the question
+ * this board exists to answer.
+ *
+ * "ask" IS THE CATCH-ALL, and it is not a room anybody ticks on their profile.
+ * "Where do I get a SIM without a bank card" is nobody's intent — it is a
+ * question — and a vocabulary of intentions with nowhere to put a question is a
+ * vocabulary people work around.
+ *
+ * OLD POSTS KEEP THEIR WORDS. Anything filed under a topic that no longer
+ * exists still shows that word on the post and is counted under "ask", so
+ * nothing that was posted before tonight becomes unreachable. The Professor's
+ * notices are filed under "Getting in" and the scripts that match on it keep
+ * working.
+ */
+const ROOMKEYS = ["lang", "study", "new", "host", "job", "hire", "cofound",
+                  "raise", "invest", "buy", "sell", "ask"];
+const ROOMGROUPS = [
+  { grp: "room.groupStudy",  keys: ["lang", "study"] },
+  { grp: "room.groupSettle", keys: ["new", "host"] },
+  { grp: "room.more",        keys: ["job", "hire", "cofound", "raise", "invest", "buy", "sell"] },
+  { grp: "room.groupElse",   keys: ["ask"] },
 ];
-const starterLabel = (key) => {
-  const s = STARTERS.find((x) => x.key === key);
-  return s ? s.label[lang() === "zh" ? 1 : 0] : key;
-};
+
+/** Which room a post belongs to. Anything unrecognised — an old topic, or
+ *  nothing at all — is a question, which is what "ask" is for. */
+const roomOf = (p) => (ROOMKEYS.includes(p.topic) ? p.topic : "ask");
+
+/** What to print on a post. A room by its name in this language; an old topic
+ *  by the word it was actually filed under. */
+const roomLabel = (key) => (ROOMKEYS.includes(key) ? T("room." + key) : key);
+
+/** The head of a room's name, for the one line that lists four of them at
+ *  once. "Co-founder — building something" is a tick box's worth of words and
+ *  four of those on one grey line is a paragraph. Cut at the dash or the comma,
+ *  which is where both languages put the qualifier. */
+const shortRoom = (key) => roomLabel(key).split(/\s*[—,，、]|——/)[0].trim();
+
+/* The composer's room picker. One choice, and none is allowed: a post with no
+ * room lands in "Just asking", which is where a question belongs anyway. */
+let POSTROOM = "";
+function drawPickRoom() {
+  const box = $("pickroom");
+  if (!box) return;
+  fill(box);
+  box.append(el("p", "pickcap", T("post.room")));
+  const wrap = el("div", "pickwrap");
+  for (const k of ROOMKEYS) {
+    const b = el("button", "chip small" + (POSTROOM === k ? " on" : ""));
+    b.type = "button";
+    b.setAttribute("aria-pressed", String(POSTROOM === k));
+    b.textContent = T("room." + k);
+    b.addEventListener("click", () => { POSTROOM = POSTROOM === k ? "" : k; drawPickRoom(); });
+    wrap.append(b);
+  }
+  box.append(wrap);
+}
+
+/* ---- one button, one sheet --------------------------------------------------
+ *
+ * WHY NOT A ROW OF CHIPS. Twelve rooms wrap to three lines, which is most of
+ * what somebody sees above the first post, and four of those lines are rooms
+ * nobody has posted in yet. This is one line, always, however many rooms there
+ * are.
+ *
+ * EVERY ROW CARRIES ITS COUNT, and that is the part that matters at this size.
+ * A filter that leads to an empty screen teaches people not to press filters.
+ * You can see a room is empty before you spend a tap on it, and the empty ones
+ * in a group fold into a single grey line rather than taking a row each.
+ */
+let SHEETOPEN = false;
+
+function roomCounts() {
+  const counts = new Map();
+  for (const p of posts) {
+    if (!store_isOwn(p)) continue;
+    const k = roomOf(p);
+    counts.set(k, (counts.get(k) || 0) + 1);
+  }
+  return counts;
+}
 
 function drawTopics() {
   const box = $("topics"); fill(box);
-  const counts = new Map();
-  for (const p of posts) if (p.topic) counts.set(p.topic, (counts.get(p.topic) || 0) + 1);
-
-  // The datalist in the compose sheet, so posting under an existing topic is
-  // picking one rather than spelling it the same way by luck. Starters are in
-  // it whether or not anybody has used them yet.
-  const all = [...new Set([...STARTERS.map((x) => x.key), ...counts.keys()])];
-  fill($("topiclist"),
-    ...all.map((t) => Object.assign(document.createElement("option"), { value: t })));
-
-  // Never hidden now: the starters are always something to choose between.
   box.hidden = false;
+  const counts = roomCounts();
+  const total = [...counts.values()].reduce((a, b) => a + b, 0);
 
-  const chip = (label, value, n, colour) => {
-    const b = el("button", "chip");
-    b.type = "button";
-    b.setAttribute("aria-pressed", String(topic === value));
-    if (colour) { const i = el("i", "dot"); i.style.background = colour; b.append(i); }
-    b.append(el("span", null, label));
-    if (n !== undefined) b.append(el("span", "n", String(n)));
-    b.addEventListener("click", () => { topic = topic === value ? "" : value; draw(); });
-    return b;
+  const now = topic === "\u0000following" ? T("feed.onlyFollowing")
+    : topic ? roomLabel(topic) : T("board.everyone");
+
+  const btn = el("button", "filt");
+  btn.type = "button";
+  btn.setAttribute("aria-expanded", String(SHEETOPEN));
+  btn.append(el("span", null, now));
+  btn.append(el("i", "cv", "\u25be"));
+  btn.addEventListener("click", () => { SHEETOPEN = !SHEETOPEN; drawTopics(); });
+  box.append(btn);
+
+  /* Following stays outside the sheet. It is not a room — it is the other
+     question somebody asks of a feed — and it is one tap either way. */
+  if (FOLLOWING.length) {
+    const f = el("button", "filt quiet" + (topic === "\u0000following" ? " on" : ""));
+    f.type = "button";
+    f.textContent = T("feed.onlyFollowing");
+    f.addEventListener("click", () => {
+      topic = topic === "\u0000following" ? "" : "\u0000following";
+      SHEETOPEN = false;
+      draw();
+    });
+    box.append(f);
+  }
+
+  if (!SHEETOPEN) return;
+
+  const sheet = el("div", "roomsheet");
+  sheet.append(el("h4", null, T("room.showMe")));
+
+  const line = (label, key, n, off) => {
+    // `on` is passed rather than worked out from the key: the folded lines of
+    // empty rooms carry no key, and comparing "" to "" ticked every one of
+    // them the moment the feed was unfiltered.
+    const on = !off && topic === key;
+    const r = el("button", "sh" + (off ? " off" : "") + (on ? " on" : ""));
+    r.type = "button";
+    r.disabled = Boolean(off);
+    r.append(el("i", "tick", on ? "\u2713" : ""));
+    r.append(el("span", null, label));
+    r.append(el("span", "n", String(n)));
+    if (!off) r.addEventListener("click", () => { topic = key; SHEETOPEN = false; draw(); });
+    sheet.append(r);
   };
-  box.append(chip(T("board.everyone"), ""));
-  // Only offered once it would do something. A filter that always shows an
-  // empty list is a filter that teaches people not to press it.
-  if (FOLLOWING.length) box.append(chip(T("feed.onlyFollowing"), "\u0000following"));
 
-  // Starters first and in their own order — they are the shape of the board,
-  // not a leaderboard — then whatever else people have filed under, busiest
-  // first.
-  for (const st of STARTERS) {
-    const n = counts.get(st.key);
-    box.append(chip(starterLabel(st.key), st.key, n, topicColour(st.key)));
+  line(T("board.everyone"), "", total, false);
+  for (const g of ROOMGROUPS) {
+    const live = g.keys.filter((k) => counts.get(k));
+    const dead = g.keys.filter((k) => !counts.get(k));
+    if (!live.length && !dead.length) continue;
+    sheet.append(el("div", "shgrp", T(g.grp)));
+    for (const k of live) line(roomLabel(k), k, counts.get(k), false);
+    /* THE EMPTY ONES, FOLDED. Seven rooms nobody has posted in is seven rows
+       of nothing; one grey line says the same and says it faster. They are
+       still named, because a room somebody cannot see is a room nobody will
+       ever be the first to post in. */
+    /* Seven names on one grey line is a paragraph again. Two, then a count —
+       enough that somebody can see what kind of thing is missing without the
+       line becoming the longest one in the sheet. */
+    if (dead.length) {
+      const say = dead.length > 3
+        ? dead.slice(0, 2).map(shortRoom).join(" \u00b7 ")
+          + " " + T("room.andMore", { n: dead.length - 2 })
+        : dead.map(shortRoom).join(" \u00b7 ");
+      line(say, "", 0, true);
+    }
   }
-  const rest = [...counts].filter(([t]) => !STARTERS.some((x) => x.key === t));
-  for (const [t, n] of rest.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) {
-    box.append(chip(t, t, n, topicColour(t)));
-  }
-
-  /* A topic is made by writing the first thing in it. There is nowhere to
-   * store an empty one and nothing for a reader to do with it — so this opens
-   * the composer with the name already filled in, which is the same act said
-   * honestly. */
-  const add = el("button", "chip new");
-  add.type = "button";
-  add.append(el("span", null, T("topic.new")));
-  add.addEventListener("click", () => {
-    const name = (prompt(T("topic.ask")) || "").trim().slice(0, 40);
-    if (!name) return;
-    openSheet(true);
-    $("topic").value = name;
-    $("note").focus();
-  });
-  box.append(add);
+  box.append(sheet);
 }
 
 /* WHERE THE CARD OF THE DAY GOES.
@@ -1797,7 +1926,9 @@ function draw() {
   const list = posts.filter((p) => (
       topic === "\u0000following"
         ? FOLLOWING.indexOf((p.handle || "").toLowerCase()) >= 0
-        : (!topic || p.topic === topic))
+        // roomOf, not p.topic: an old topic counts under "Just asking" in the
+      // sheet, so it has to filter there too or the count lies.
+      : (!topic || roomOf(p) === topic))
     && !blocked.has((p.handle || "").toLowerCase())
     // Somebody who has said they should not be looking at this should stop
     // looking at it now, not once a person gets round to the queue.
@@ -1869,11 +2000,14 @@ function card(p) {
 
   const body = el("div", "body");
 
+  /* The room, in the language being read. An old topic prints the word it was
+     actually filed under — see roomLabel — so nothing posted before the rooms
+     existed suddenly claims to be something it is not. */
   if (p.topic) {
     const eb = el("div", "eyebrow");
     const dot = el("i");
     dot.style.background = topicColour(p.topic);
-    eb.append(dot, el("span", null, p.topic));
+    eb.append(dot, el("span", null, roomLabel(p.topic)));
     body.append(eb);
   }
 
@@ -2331,14 +2465,15 @@ function openSheet(open) {
   $("posttitle").textContent = T("post.title");
   $("note").placeholder = T("post.placeholder");
   $("who").placeholder = T("post.as");
-  $("topic").placeholder = T("post.topic");
+  drawPickRoom();
   $("pickpic").textContent = T("post.photo");
   $("shut").textContent = T("post.cancel");
   $("send").textContent = T("post.go");
   $("sheet").hidden = !open;
   if (open) {
     try { $("who").value = localStorage.getItem("board:who") || ""; } catch { /* fine */ }
-    if (topic) $("topic").value = topic;
+    // Opened from a filtered feed: post into the room you were reading.
+    if (topic && ROOMKEYS.includes(topic)) POSTROOM = topic;
     $("note").focus();
   }
 }
@@ -2403,13 +2538,13 @@ $("ask").addEventListener("submit", async (e) => {
 
   $("send").disabled = true;
   const d = await send({
-    note, handle: who, topic: $("topic").value.trim(),
+    note, handle: who, topic: POSTROOM,
     photo: photo ? photo.data : "", photoType: photo ? photo.type : "",
   }, $("send"));
   $("send").disabled = false;
   if (!d) return;
 
-  $("note").value = ""; $("topic").value = "";
+  $("note").value = ""; POSTROOM = "";
   photo = null; $("shot").hidden = true; $("pic").value = "";
   await load();
   if (d.state === "published") { openSheet(false); return; }

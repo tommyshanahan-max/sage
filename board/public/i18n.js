@@ -116,6 +116,7 @@ export const STRINGS = {
   "post.cancel":       ["Cancel", "取消"],
   "post.go":           ["Put it up", "发布"],
   "post.needWords":    ["Say something, or add a photo.", "写点什么，或者加张照片。"],
+  "post.room":         ["What is this about?", "这条是关于什么的？"],
   "post.needName":     ["Pick a name to post under.", "选一个发布用的名字。"],
   "post.tooBig":       ["That photo is too large.", "这张照片太大了。"],
   "post.badPhoto":     ["That photo could not be read. Try another, or a screenshot of it.",
@@ -764,6 +765,15 @@ export const STRINGS = {
   "room.invest.s":     ["to invest", "投资"],
   "room.buy.s":        ["to buy from China", "从中国采购"],
   "room.sell.s":       ["to sell from China", "从中国供货"],
+
+  /* "ask" is not a room anybody ticks on a profile — it is where a question
+     goes, and a vocabulary of intentions with nowhere to put a question is one
+     people work around. */
+  "room.ask":          ["Just asking", "就是问问"],
+  "room.ask.s":        ["an answer", "一个答案"],
+  "room.showMe":       ["Show me", "看什么"],
+  "room.andMore":      ["and {n} more", "等 {n} 个"],
+  "room.groupElse":    ["Everything else", "其他"],
 
   "room.head":         ["What are you looking for?", "你在找什么？"],
   "room.why": [
