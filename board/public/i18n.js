@@ -849,9 +849,17 @@ export const STRINGS = {
                         "试得太多了。等一个小时，或者再要一个新口令。"],
   "door.offline":      ["That did not go through. Try again.", "没发出去，再试一次。"],
 
+  /* FOLDED AWAY, because almost nobody reading this screen has ever had a key
+     and the word means nothing to them. One quiet line they can ignore, and
+     explained from nothing the moment somebody opens it — which only happens
+     when they already need it, and a person who needs it will read. */
+  "door.keyOpen":      ["I have used this board before", "我以前用过这个板子"],
   "door.keyTitle":     ["Been here before?", "以前来过？"],
-  "door.keySay":       ["Paste the key from your other browser and you are in \u2014 no code needed.",
-                        "把你在另一个浏览器里的钥匙贴进来就行，不用口令。"],
+  "door.keySay": [
+    "When you joined, this board gave you a key — one long line of letters and numbers. It is how you stay the same person on a second phone or browser, since there is no account to sign back into. Paste it here and you are in, without spending anybody's password.",
+    "你当初进来的时候，这里给过你一把「钥匙」——很长的一串字母和数字。这里没有账号可以登录，换手机、换浏览器还想是同一个人，靠的就是它。贴在这儿就能进，不用花别人的口令。"],
+  "door.keyWhere":     ["On your other browser it is under Profile → Show my key.",
+                        "在你原来那个浏览器里：「我的」→「显示我的钥匙」。"],
   "door.keyHint":      ["Your key", "你的钥匙"],
   "door.keyGo":        ["Use my key", "用我的钥匙"],
   "door.keyNo":        ["That key has not been let in yet. Use a code first.",
@@ -864,8 +872,9 @@ export const STRINGS = {
                         "一张照片、一个名字、一句话。两分钟，别人就能找到你了。"],
   "door.inZh":         ["", ""],
   "door.inGo":         ["Have a look around", "进去看看"],
-  "door.inNote":       ["Keep your key before you close this: Profile \u2192 Show my key. It is how you are the same person in another browser.",
-                        "关掉之前先把钥匙存好：「我的」→「显示我的钥匙」。换个浏览器还是同一个人，靠的就是它。"],
+  /* Where somebody learns what a key is: the one moment they have one. */
+  "door.inNote":       ["Before you close this, save your key \u2014 Profile \u2192 Show my key. There are no accounts here, so that line is the only way to be you again on another phone.",
+                        "关掉之前把钥匙存好——「我的」→「显示我的钥匙」。这里没有账号，换个手机想还是你自己，只能靠那一行。"],
   /* THE TRAY. Everything addressed to this person, in one place — follows and
      the card of the day. The report card below it is what they are; this is
      what has arrived. */

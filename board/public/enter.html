@@ -171,7 +171,12 @@
     color:var(--muted);font-size:.88rem;padding:.4rem 0;text-decoration:underline}
   .anyway:hover{color:var(--ink)}
 
-  .keybox{margin:1.6rem 0 0;padding:1rem 1.05rem;background:var(--raise);
+  .keyopen{display:block;width:100%;margin:1.6rem 0 0;border:0;background:none;
+    color:var(--muted);font-size:.9rem;padding:.5rem 0;text-decoration:underline;
+    text-underline-offset:3px}
+  .keyopen:hover{color:var(--ink)}
+  .keybox .where{margin:.5rem 0 0;font-size:.85rem;line-height:1.55;color:var(--muted)}
+  .keybox{margin:.7rem 0 0;padding:1rem 1.05rem;background:var(--raise);
     border:1px solid var(--line);border-radius:.9rem}
   .keybox h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
   .keybox p{margin:.4rem 0 0;font-size:.88rem;line-height:1.55;color:var(--ink-2)}
@@ -243,10 +248,15 @@
     <p class="said" id="said" hidden></p>
     <p class="note" id="doornote"></p>
 
-    <!-- Somebody who has been here before does not need a code at all. -->
-    <div class="keybox">
+    <!-- SOMEBODY WHO HAS BEEN HERE BEFORE does not need a code at all — but
+         almost nobody reading this screen is that person, and "paste your key"
+         is a word they have never met. One quiet line until it is asked for. -->
+    <button class="keyopen" type="button" id="keyopen"
+            aria-expanded="false" aria-controls="keybox"></button>
+    <div class="keybox" id="keybox" hidden>
       <h2 id="keytitle"></h2>
       <p id="keysay"></p>
+      <p class="where" id="keywhere"></p>
       <textarea id="key" rows="2" spellcheck="false" autocapitalize="off"></textarea>
       <button class="quiet wide" type="button" id="keygo"></button>
       <p class="said" id="keysaid" hidden></p>
@@ -424,6 +434,8 @@ function words() {
   $("doornote").textContent = T("door.note");
   $("code").setAttribute("aria-label", T("door.title"));
 
+  $("keyopen").textContent = T("door.keyOpen");
+  $("keywhere").textContent = T("door.keyWhere");
   $("keytitle").textContent = T("door.keyTitle");
   $("keysay").textContent = T("door.keySay");
   $("key").placeholder = T("door.keyHint");
@@ -440,6 +452,12 @@ function words() {
 
 $("go").addEventListener("click", () => { if (TYPED.length === 6) enter(); });
 $("keygo").addEventListener("click", useKey);
+$("keyopen").addEventListener("click", () => {
+  const box = $("keybox");
+  box.hidden = !box.hidden;
+  $("keyopen").setAttribute("aria-expanded", String(!box.hidden));
+  if (!box.hidden) $("key").focus();
+});
 $("wxcopy").addEventListener("click", () => {
   const url = location.origin + (fromLink ? "/i/" + fromLink : "/enter");
   let ok = false;
