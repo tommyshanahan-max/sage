@@ -18,6 +18,11 @@ const BASE = (process.env.STATS_BASE || "http://analytics:3000").replace(/\/+$/,
 const TOKEN = process.env.ANALYTICS_INTERNAL_TOKEN || "";
 const DAYS = Math.min(Math.max(Number(process.argv[2]) || 14, 1), 90);
 
+/* `| head` closes the pipe partway through and every write after that throws.
+ * Nothing is wrong when that happens — the reader got what it asked for — so it
+ * should not come back as a failed make target. */
+process.stdout.on("error", (e) => { if (e.code === "EPIPE") process.exit(0); });
+
 const pad = (s, n) => String(s ?? "").padEnd(n);
 const num = (s, n) => String(s ?? "").padStart(n);
 

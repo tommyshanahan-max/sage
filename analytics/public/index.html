@@ -360,6 +360,22 @@
     border-radius:99px;border:1px solid var(--rule);background:var(--card);
     color:var(--ink);cursor:pointer}
   .builder button:disabled{opacity:.45;cursor:default}
+
+  /* Today, beside yesterday. Not a rolling 24 hours — nothing here records
+     an hour, so a rolling window would have to be invented. A day boundary is
+     the finest cut the stored data actually supports. */
+  h3.sub{margin:0 0 .5rem;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);font-weight:600}
+  h3.sub span{text-transform:none;letter-spacing:0;font-weight:400}
+  .nowrow{display:flex;flex-wrap:wrap;gap:.5rem;margin:0 0 .7rem}
+  .nowcell{flex:1 1 7rem;min-width:0;border:1px solid var(--rule);border-radius:10px;
+    padding:.55rem .7rem;background:var(--card)}
+  .nowcell .name{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nowcell .now{font-size:1.35rem;font-weight:700;line-height:1.15;
+    font-variant-numeric:tabular-nums}
+  .nowcell .was{font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums}
+  .nowcell.quiet .now{color:var(--muted);font-weight:600}
 </style>
 </head>
 <body>
@@ -403,6 +419,13 @@
 
     <section>
       <h2>What people used <span id="uses-span" style="text-transform:none;letter-spacing:0"></span></h2>
+
+      <div id="today-wrap" hidden>
+        <h3 class="sub">Today so far <span id="today-when"></span></h3>
+        <div class="nowrow" id="today-row"></div>
+        <p class="thin" id="today-note"></p>
+      </div>
+
       <div class="bars" id="app-uses"></div>
       <p class="bars-empty" id="app-uses-note"></p>
       <p class="thin" id="app-uses-unit"></p>
@@ -1221,6 +1244,68 @@ function drawScreens(screens) {
     (items) => "· " + fmt(items.reduce((n, i) => n + i.count, 0)) + " views");
 }
 
+/** What has been used today, beside what had been used by the end of
+ *  yesterday.
+ *
+ *  Not "the last 24 hours", though that is the question people mean. Nothing
+ *  here records an hour — the store keeps day totals and no timestamps, on
+ *  purpose — so a rolling window would have to be invented rather than
+ *  measured. A day boundary is the finest honest cut, and the heading says
+ *  which day boundary, because it is midnight where the users are and not
+ *  where the reader is.
+ *
+ *  Yesterday sits beside it rather than as a percentage. Early on these are
+ *  single digits, and "up 300%" on a move from one to four is a sentence that
+ *  sounds like a finding and is not one.
+ */
+function drawToday(byDay, tz) {
+  const wrap = document.getElementById("today-wrap");
+  const days = Array.isArray(byDay) ? byDay : [];
+  if (days.length < 1) { wrap.hidden = true; return; }
+
+  const today = days[days.length - 1];
+  // The day before, only when it really is the day before. A gap in the
+  // record must not be presented as yesterday.
+  const prev = days.length > 1 ? days[days.length - 2] : null;
+  const dayBefore = (a, b) => {
+    const t = Date.parse(a + "T00:00:00Z"), y = Date.parse(b + "T00:00:00Z");
+    return Number.isFinite(t) && Number.isFinite(y) && t - y === 86400000;
+  };
+  const yesterday = prev && dayBefore(today.day, prev.day) ? prev : null;
+
+  const now = Object.fromEntries((today.uses || []).map((u) => [u.name, u.count]));
+  const was = Object.fromEntries(((yesterday && yesterday.uses) || []).map((u) => [u.name, u.count]));
+  // Every feature either side, so one that ran yesterday and has not run today
+  // is visible as a nought rather than by its absence.
+  const names = [...new Set([...Object.keys(now), ...Object.keys(was)])]
+    .sort((a, b) => (now[b] || 0) - (now[a] || 0) || a.localeCompare(b));
+  if (!names.length) { wrap.hidden = true; return; }
+
+  document.getElementById("today-when").textContent =
+    "· " + today.day + (tz ? " · midnight " + tz : "");
+
+  const row = document.getElementById("today-row");
+  row.replaceChildren();
+  for (const name of names) {
+    const n = now[name] || 0;
+    const cell = el("div", "nowcell" + (n ? "" : " quiet"));
+    cell.append(el("div", "name", name));
+    cell.append(el("div", "now", fmt(n)));
+    cell.append(el("div", "was",
+      yesterday ? `${fmt(was[name] || 0)} yesterday` : "no day before to compare"));
+    row.append(cell);
+  }
+
+  const total = names.reduce((a, k) => a + (now[k] || 0), 0);
+  const before = names.reduce((a, k) => a + (was[k] || 0), 0);
+  document.getElementById("today-note").textContent =
+    `${fmt(total)} calls today` + (yesterday ? `, against ${fmt(before)} yesterday` : "")
+    + ". Counted in calls rather than people, and only from inside the app — "
+    + "opening a page cannot produce one, which is why this is the figure to "
+    + "read when you have been opening pages yourself.";
+  wrap.hidden = false;
+}
+
 /** Whole days between an ISO day and today, or null if there is no start. */
 function daysSince(day) {
   if (!day) return null;
@@ -1365,6 +1450,7 @@ function drawApp(app, series) {
 
   drawUses(app && app.uses, app && app.usesByDay,
     app && app.devices, app && app.deviceDays, app && app.unit);
+  drawToday(app && app.usesByDay, data.tz);
   drawScreens(app && app.screens);
   drawStayed(app && app.people, Boolean(absence));
   drawArrivals(app && app.arrivals);
