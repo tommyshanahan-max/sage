@@ -638,44 +638,31 @@
   .dband{display:flex;align-items:center;gap:.5rem;margin:.9rem 0 0;padding:.6rem .8rem;
     background:var(--accent-soft);border-radius:.8rem;color:var(--accent);font-size:.9rem}
 
-  /* ---- the report card as a strip you push sideways -------------------------
+  /* ---- the report, inside the tray ------------------------------------------
    *
-   * It was a fold with four unrelated things stacked inside it. The news, the
-   * level, the card of the day and the Professor's two tests have nothing to
-   * say to each other, and stacked they made a column somebody had to scroll
-   * past to reach the feed — which is why it was collapsed by default, which
-   * is why most people never saw what was inside it.
+   * It was a strip you pushed sideways at the top of the feed, and before that
+   * a fold. Both were the same mistake: the news, the card of the day, the
+   * matches and who followed you were ALREADY in the tray under their own
+   * headings, so the report was a second copy of the tray sitting on top of
+   * the feed — two places to keep in step, and a dashboard where a board
+   * should be.
    *
-   * Side by side, each one is a card at its own size and the first one is
-   * always the news. Snap points, so it comes to rest on a card and never
-   * between two.
-   *
-   * WHAT THIS COSTS, and it is not nothing: a card to the right of the first
-   * one is seen by fewer people than a thing below a heading. The dots under
-   * the strip are there to say the others exist — without them a horizontal
-   * list looks like one card that happens to be cut off. */
-  /* The strip is only ever as tall as the card in front of you. Left to
-     stretch, four cards of different lengths all become as tall as the longest
-     one, and the short ones — which are the ones worth reading — arrive with
-     half a screen of nothing under them. The height is set in fitStrip and
-     eased, so moving between cards is a change of shape rather than a jump. */
-  #profbody{display:flex;gap:.7rem;overflow-x:auto;scroll-snap-type:x mandatory;
-    align-items:flex-start;-webkit-overflow-scrolling:touch;scrollbar-width:none;
-    padding:.2rem .1rem .3rem;margin:0 -.1rem;
-    transition:height .18s ease}
-  @media (prefers-reduced-motion:reduce){ #profbody{transition:none} }
-  #profbody::-webkit-scrollbar{display:none}
-  #profbody > div{flex:0 0 84%;scroll-snap-align:center;min-width:0;
-    background:var(--card);border:1px solid var(--line);border-radius:1rem;
-    padding:.95rem 1rem}
-  /* The last card gets the same air on its right as the first has on its left,
-     so the strip does not look like it ran out of room. */
-  #profbody > div:last-child{margin-right:.1rem}
-  .optlab{font-size:.66rem;letter-spacing:.11em;text-transform:uppercase;
-    color:var(--muted);font-weight:700;margin:0 0 .5rem}
-  .profdots{display:flex;gap:.35rem;justify-content:center;margin:.5rem 0 0}
-  .profdots i{width:.35rem;height:.35rem;border-radius:50%;background:var(--line)}
-  .profdots i.on{background:var(--accent)}
+   * So the report lives here, in the one place whose job is what happened
+   * since you were last here, and the feed above it is just the feed. What
+   * stays outside is a single letter — see .daymark.
+   */
+  #profbody > div{margin:0 0 .9rem}
+  #profbody > div:last-child{margin-bottom:0}
+
+  /* THE MARK, AND ONLY THE MARK. The one thing worth seeing without opening
+     anything, at the size of a thing you glance at rather than read. */
+  .daymark{display:inline-flex;align-items:center;gap:.6rem;margin:0 0 1.1rem;
+    padding:.45rem .95rem .45rem .7rem;border-radius:99px;
+    border:1px solid var(--line);background:var(--raise);color:var(--ink-2)}
+  .daymark b{font-family:var(--serif);font-weight:400;font-size:1.5rem;line-height:1;
+    color:var(--accent);letter-spacing:-.02em}
+  .daymark span{font-size:.85rem}
+  .daymark:hover{border-color:var(--accent)}
 
   /* The header's letter: the same weight as the mark it sits beside, because
      it is the other half of what this row is for. */
@@ -1232,6 +1219,37 @@
       <div class="rule" id="matchrule" hidden><span id="matchlabel"></span><i></i></div>
       <div class="fols" id="matches" hidden></div>
     </div>
+  <section class="prof" id="prof" hidden>
+    <button class="profhead" type="button" id="profhead" aria-controls="profbody">
+      <i class="profmark" aria-hidden="true">留</i>
+      <span class="proftext">
+        <b id="proftitle"></b>
+        <em id="profsub"></em>
+        <span id="profsum"></span>
+      </span>
+      <!-- Today's letter, level with the mark at the other end of the row, so
+           the one thing worth knowing is readable without opening anything.
+           The mark says whose card this is; this says how it is going. -->
+      <b class="profgrade" id="profgrade" hidden></b>
+      <i class="chev" aria-hidden="true"></i>
+    </button>
+    <div id="profbody">
+      <!-- WHAT HAS HAPPENED SINCE THEY WERE LAST HERE, first. The level used
+           to be here and is still drawn below it — but a number that is the
+           same every day cannot be the reason somebody opens this. -->
+      <div id="profnews"></div>
+      <!-- Your level, large. Shown at full size only when there is no news to
+           put above it, which is mostly somebody's first week. -->
+      <div id="profnow"></div>
+      <!-- One card a day, at the reader's own level, drawn here rather than
+           posted: a shared board with fifty people on it would carry fifty
+           cards a morning and the thing worth reading would be underneath
+           them. See daily.js. -->
+      <div id="daily"></div>
+      <!-- The Professor's offers are appended here, one block per thing you
+           can do — see drawTutor. -->
+    </div>
+  </section>
     <div id="notifday"></div>
     <div id="notiffol">
       <div class="rule" id="folrule" hidden><span id="follabel"></span><i></i>
@@ -1273,41 +1291,14 @@
        the deck and the feed, and on a phone that is the whole screen twice
        over. One heading, one summary line, one chevron — and what is inside is
        still the same three things. -->
-  <section class="prof" id="prof" hidden>
-    <button class="profhead" type="button" id="profhead" aria-controls="profbody">
-      <i class="profmark" aria-hidden="true">留</i>
-      <span class="proftext">
-        <b id="proftitle"></b>
-        <em id="profsub"></em>
-        <span id="profsum"></span>
-      </span>
-      <!-- Today's letter, level with the mark at the other end of the row, so
-           the one thing worth knowing is readable without opening anything.
-           The mark says whose card this is; this says how it is going. -->
-      <b class="profgrade" id="profgrade" hidden></b>
-      <i class="chev" aria-hidden="true"></i>
-    </button>
-    <div id="profbody">
-      <!-- WHAT HAS HAPPENED SINCE THEY WERE LAST HERE, first. The level used
-           to be here and is still drawn below it — but a number that is the
-           same every day cannot be the reason somebody opens this. -->
-      <div id="profnews"></div>
-      <!-- Your level, large. Shown at full size only when there is no news to
-           put above it, which is mostly somebody's first week. -->
-      <div id="profnow"></div>
-      <!-- One card a day, at the reader's own level, drawn here rather than
-           posted: a shared board with fifty people on it would carry fifty
-           cards a morning and the thing worth reading would be underneath
-           them. See daily.js. -->
-      <div id="daily"></div>
-      <!-- The Professor's offers are appended here as cards of their own, one
-           per thing you can do — see drawTutor. They were one tall block, which
-           in a strip is one card you have to scroll inside. -->
-    </div>
-    <!-- Says the other cards exist. A horizontal list with no marker under it
-         reads as one card that has been cut off. -->
-    <div class="profdots" id="profdots" hidden></div>
-  </section>
+  <!-- The daily mark, and only the mark. The report itself is in the tray:
+       everything in it — the card of the day, your matches, who followed you —
+       was already in the tray under another heading, and the same news in two
+       places is two things to keep in step. One letter above the feed is the
+       glance; the bell is the rest. -->
+  <button class="daymark" id="daymark" type="button" hidden>
+    <b id="daymarkletter"></b><span id="daymarkword"></span>
+  </button>
 
   <div class="topics" id="topics"></div>
 
@@ -1898,7 +1889,6 @@ const setDailyWhere = (v) => {
   /* Moving it to the feed opens the fold it lands in. Otherwise pressing "yes,
      in my feed" makes the card disappear from the tray and reappear inside a
      collapsed section — which reads as having thrown it away. */
-  if (v === "feed") PROFOPEN = true;
   draw();
 };
 
@@ -3057,6 +3047,14 @@ function drawTray() {
 
 let TRAYSEEN = false;
 
+$("daymark").addEventListener("click", () => {
+  const box = $("notif");
+  if (box.hidden) { box.hidden = false; $("bell").setAttribute("aria-expanded", "true"); }
+  TRAYSEEN = true;
+  drawTray();
+  $("prof").scrollIntoView({ behavior: "smooth", block: "center" });
+});
+
 $("bell").addEventListener("click", () => {
   const box = $("notif");
   box.hidden = !box.hidden;
@@ -3090,7 +3088,6 @@ const dayStamp = () => {
 const readLocal = (k) => {
   try { return JSON.parse(localStorage.getItem(k) || "null"); } catch { return null; }
 };
-let PROFOPEN = null;   // null until decided once, then whatever it is
 
 /* ---- the grade ---------------------------------------------------------------
  *
@@ -3274,7 +3271,7 @@ function drawGrade(box) {
     ask.type = "button";
     ask.setAttribute("aria-expanded", String(GRADEOPEN));
     ask.setAttribute("aria-label", T("grade.why"));
-    ask.addEventListener("click", () => { GRADEOPEN = !GRADEOPEN; drawNews(); fitStrip(); });
+    ask.addEventListener("click", () => { GRADEOPEN = !GRADEOPEN; drawNews(); });
     top.append(ask);
   }
   wrap.append(top);
@@ -3560,6 +3557,13 @@ function drawProf() {
   gh.textContent = (GRADE && GRADE.letter) || "";
   gh.hidden = !(GRADE && GRADE.letter);
 
+  /* The same letter, above the feed, and nothing else with it. Whoever never
+     opens the bell has still seen today's mark; whoever wants to know where it
+     came from presses it, and the tray opens on the report. */
+  $("daymarkletter").textContent = (GRADE && GRADE.letter) || "";
+  $("daymarkword").textContent = T("grade.mark");
+  $("daymark").hidden = !(GRADE && GRADE.letter);
+
   /* WHERE YOU ARE NOW, large, as the first thing inside the fold.
    *
    * A report card that makes somebody read a summary line to find their own
@@ -3620,80 +3624,13 @@ function drawProf() {
   $("profsum").textContent = bits.length ? bits.join(" \u00b7 ") : T("prof.nothing");
   head.classList.toggle("todo", hasCard && !done);
 
-  if (PROFOPEN === null) {
-    let shut = "";
-    try { shut = localStorage.getItem(PROFSHUT) || ""; } catch { /* fine */ }
-    PROFOPEN = shut === dayStamp() ? false
-      : (!lvl && !typ) || (hasCard && !done);
-  }
-  body.hidden = !PROFOPEN;
-  head.setAttribute("aria-expanded", String(PROFOPEN));
+  /* NO FOLD. This is inside the tray now, and a fold inside a thing somebody
+     has just opened is a door behind a door. The header stays as the heading
+     it always was — the mark, whose card it is, and today's letter. */
+  body.hidden = false;
+  head.setAttribute("aria-expanded", "true");
   $("daily").hidden = !hasCard;
-  $("profdots").hidden = !PROFOPEN;
-  drawDots();
-  watchStrip();
-  fitStrip();
 }
-
-/* ---- the strip's marker -----------------------------------------------------
- *
- * An empty card is hidden rather than left blank: an empty slot in a strip is
- * a swipe that lands on nothing, which reads as the app having lost something.
- */
-function stripCards() {
-  return [...$("profbody").children].filter((n) => !n.hidden && n.firstChild);
-}
-
-/** The strip's height, matched to whichever card is in front of the reader. */
-function fitStrip() {
-  const strip = $("profbody");
-  const cards = stripCards();
-  if (!cards.length || strip.hidden) { strip.style.height = ""; return; }
-  const mid = strip.scrollLeft + strip.clientWidth / 2;
-  let best = cards[0];
-  for (const c of cards) {
-    const centre = c.offsetLeft + c.offsetWidth / 2 - strip.offsetLeft;
-    if (Math.abs(centre - mid) < Math.abs(best.offsetLeft + best.offsetWidth / 2 - strip.offsetLeft - mid)) best = c;
-  }
-  // The padding the strip itself carries, so a card is not clipped by a pixel.
-  strip.style.height = (best.offsetHeight + 6) + "px";
-}
-
-function drawDots() {
-  const dots = $("profdots");
-  fill(dots);
-  const cards = stripCards();
-  if (cards.length < 2) { dots.hidden = true; return; }
-  const strip = $("profbody");
-  const at = Math.round(strip.scrollLeft / (strip.scrollWidth / cards.length));
-  for (let i = 0; i < cards.length; i++) dots.append(el("i", i === at ? "on" : ""));
-}
-$("profbody").addEventListener("scroll", () => {
-  // Cheap enough to run on every scroll event: it writes four empty <i>s.
-  if (!$("profdots").hidden) drawDots();
-  fitStrip();
-}, { passive: true });
-/* A card that grows — answering the day's card opens the answer underneath —
- * has to take the strip with it. The CARDS are observed and not the strip:
- * fitStrip sets the strip's own height, so watching the strip is a loop that
- * feeds itself. */
-const STRIPFIT = typeof ResizeObserver === "function"
-  ? new ResizeObserver(() => fitStrip()) : null;
-function watchStrip() {
-  if (!STRIPFIT) return;
-  STRIPFIT.disconnect();
-  for (const c of $("profbody").children) STRIPFIT.observe(c);
-}
-
-$("profhead").addEventListener("click", () => {
-  PROFOPEN = !PROFOPEN;
-  $("profbody").hidden = !PROFOPEN;
-  $("profhead").setAttribute("aria-expanded", String(PROFOPEN));
-  try {
-    if (PROFOPEN) localStorage.removeItem(PROFSHUT);
-    else localStorage.setItem(PROFSHUT, dayStamp());
-  } catch { /* private window */ }
-});
 
 /* What this browser has already said. Read once, so the card can say "noted"
  * rather than asking a question somebody has already answered. */

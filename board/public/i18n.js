@@ -35,7 +35,7 @@ export const STRINGS = {
   "board.newest":      ["{topic} · Newest first", "{topic} · 最新在前"],
   // Where the posts start. Named rather than described, because "Everyone ·
   // Newest first" tells a reader how the list is sorted and not what it is.
-  "board.club":        ["Posts from the Uni Club", "大学社团的帖子"],
+  "board.club":        ["Posts from everyone here", "这里大家发的内容"],
   "board.empty.head":  ["Nothing here yet.", "这里还什么都没有。"],
   "board.empty.body":  ["The first thing anybody puts up appears here. Anybody can report it, and a person reads every report.",
                         "第一条内容会出现在这里。任何人都可以举报，每一条举报都由人来看。"],
@@ -724,6 +724,7 @@ export const STRINGS = {
   /* ---- the grade ---------------------------------------------------------
      Every row is a real event with a real number, because one tap shows all of
      them and a grade nobody can take apart is a grade nobody believes. */
+  "grade.mark":        ["today's mark", "今天的成绩"],
   "grade.of":          ["{n} points today", "今天 {n} 分"],
   "grade.yesterday":   ["Yesterday you had {g}", "昨天是 {g}"],
   "grade.none":        ["No grade yet today", "今天还没有成绩"],
@@ -955,7 +956,7 @@ export const STRINGS = {
   "bud.reportThem":    ["Report this profile", "举报这份资料"],
 
   // ---- browsing people, one at a time ---------------------------------------
-  "brw.title":         ["Browse students", "看看有谁"],
+  "brw.title":         ["Browse people", "看看有谁"],
   "brw.sub":           ["{n} on the list", "名单上有 {n} 个人"],
   "brw.of":            ["{n} of {total}", "第 {n} 个，共 {total} 个"],
   "brw.hello":         ["Say hello", "打个招呼"],
