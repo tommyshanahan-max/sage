@@ -300,6 +300,10 @@
   .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   .chip[aria-pressed="true"] .dot{background:var(--accent-ink);opacity:.6}
   .chip[aria-pressed="true"] .n{color:var(--accent-ink);opacity:.75}
+  /* Making one, at the end of the row. Dashed, because it is not a filter —
+     nothing is behind it until somebody writes the first thing in it. */
+  .chip.new{border-style:dashed;color:var(--ink-2)}
+  .chip.new:hover{border-color:var(--accent);color:var(--accent)}
 
   /* ---- the rule that names what you are looking at ----------------------- */
   .rule{display:flex;align-items:center;gap:.9rem;margin:0 0 .4rem}
@@ -1127,19 +1131,44 @@ async function load() {
   draw();
 }
 
+/* THE TOPICS THIS BOARD STARTS WITH.
+ *
+ * A row of filters that only shows what has already been posted is a row that
+ * is empty on the day it matters most: nobody has posted, so there is nothing
+ * to file a post under, so nobody posts. These sit there from the start and
+ * say what this place is for — which is most of what a new reader learns from
+ * the top of a feed.
+ *
+ * THE KEY IS ENGLISH AND THE LABEL IS NOT. A topic is stored on a post as a
+ * plain string, so if the chip's own words went onto the post then an English
+ * reader and a Chinese one filing the same thing would make two topics that
+ * never meet. The key travels; the label is chosen when it is drawn.
+ */
+const STARTERS = [
+  { key: "Courses",      label: ["Courses", "选课"] },
+  { key: "New here",     label: ["New here", "刚来"] },
+  { key: "Language",     label: ["Language", "语言"] },
+  { key: "Getting by",   label: ["Getting by", "生活门道"] },
+  { key: "Applying",     label: ["Applying abroad", "申请出国"] },
+];
+const starterLabel = (key) => {
+  const s = STARTERS.find((x) => x.key === key);
+  return s ? s.label[lang() === "zh" ? 1 : 0] : key;
+};
+
 function drawTopics() {
   const box = $("topics"); fill(box);
   const counts = new Map();
   for (const p of posts) if (p.topic) counts.set(p.topic, (counts.get(p.topic) || 0) + 1);
 
   // The datalist in the compose sheet, so posting under an existing topic is
-  // picking one rather than spelling it the same way by luck.
+  // picking one rather than spelling it the same way by luck. Starters are in
+  // it whether or not anybody has used them yet.
+  const all = [...new Set([...STARTERS.map((x) => x.key), ...counts.keys()])];
   fill($("topiclist"),
-    ...[...counts.keys()].map((t) => Object.assign(document.createElement("option"), { value: t })));
+    ...all.map((t) => Object.assign(document.createElement("option"), { value: t })));
 
-  // Hidden only when there is genuinely nothing to choose between. Everyone on
-  // its own is not a choice; Everyone plus the people you follow is.
-  if (!counts.size && !FOLLOWING.length) { box.hidden = true; return; }
+  // Never hidden now: the starters are always something to choose between.
   box.hidden = false;
 
   const chip = (label, value, n, colour) => {
@@ -1156,9 +1185,34 @@ function drawTopics() {
   // Only offered once it would do something. A filter that always shows an
   // empty list is a filter that teaches people not to press it.
   if (FOLLOWING.length) box.append(chip(T("feed.onlyFollowing"), "\u0000following"));
-  for (const [t, n] of [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) {
+
+  // Starters first and in their own order — they are the shape of the board,
+  // not a leaderboard — then whatever else people have filed under, busiest
+  // first.
+  for (const st of STARTERS) {
+    const n = counts.get(st.key);
+    box.append(chip(starterLabel(st.key), st.key, n, topicColour(st.key)));
+  }
+  const rest = [...counts].filter(([t]) => !STARTERS.some((x) => x.key === t));
+  for (const [t, n] of rest.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) {
     box.append(chip(t, t, n, topicColour(t)));
   }
+
+  /* A topic is made by writing the first thing in it. There is nowhere to
+   * store an empty one and nothing for a reader to do with it — so this opens
+   * the composer with the name already filled in, which is the same act said
+   * honestly. */
+  const add = el("button", "chip new");
+  add.type = "button";
+  add.append(el("span", null, T("topic.new")));
+  add.addEventListener("click", () => {
+    const name = (prompt(T("topic.ask")) || "").trim().slice(0, 40);
+    if (!name) return;
+    openSheet(true);
+    $("topic").value = name;
+    $("note").focus();
+  });
+  box.append(add);
 }
 
 function draw() {

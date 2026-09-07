@@ -101,6 +101,10 @@ export const STRINGS = {
   ],
   "post.as":           ["Post as — a name people will see", "用什么名字发——别人会看到"],
   "post.topic":        ["Topic — optional", "分类——可不填"],
+  // Making a topic is writing the first thing in it: there is nowhere to keep
+  // an empty one and nothing for a reader to do with it.
+  "topic.new":         ["+ New topic", "+ 新话题"],
+  "topic.ask":         ["What is the topic called?", "这个话题叫什么？"],
   "post.photo":        ["Photo", "照片"],
   "post.cancel":       ["Cancel", "取消"],
   "post.go":           ["Put it up", "发布"],
