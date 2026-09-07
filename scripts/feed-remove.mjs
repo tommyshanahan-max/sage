@@ -37,7 +37,16 @@ const one = (p) => {
 };
 
 async function main() {
-  const board = await fetch(base + "/api/board").then((r) => r.json());
+  /* READ THROUGH THE OPERATOR'S OWN ROUTE, not the public one.
+   *
+   * /api/board is what a reader's browser fetches, and with BOARD_INVITE=read it
+   * is behind the door like everything else — it answers 403 to anything without
+   * an admitted cookie. A script that read it there got an object with no posts
+   * in it, decided nothing was up, and posted a second copy. /api/public is the
+   * admin route, carries the same secret this script already holds, and is
+   * exempt from the door for exactly this reason.
+   */
+  const board = await fetch(base + "/api/public", { headers: head }).then((r) => r.json());
   const posts = board.posts || [];
 
   if (!ID) {

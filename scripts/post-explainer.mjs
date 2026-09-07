@@ -31,8 +31,12 @@ const TOPIC = "Getting in";
 // posted under it as admin, in whichever language it is being read.
 const ACCOUNT = asIdx >= 0 ? rest[asIdx + 1] : "The Professor";
 
+/* The first line, and the marker. One constant for both, so the thing it looks
+   for cannot drift from the thing it posts. */
+const TITLE = "DO THIS TO SAVE YOUR PROFILE";
+
 const EN = [
-  "DO THIS TO SAVE YOUR PROFILE",
+  TITLE,
   "",
   "WeChat's browser and your normal one are two different people here. To be one: Profile \u2192 Show my key \u2192 Copy, then in the other browser Profile \u2192 Been here before? \u2192 paste. No account, no password \u2014 that line is all of it, so keep it and never post it.",
 ].join("\n");
@@ -62,13 +66,30 @@ async function main() {
    * readers stop seeing it.
    */
   const HOUSE = ["the professor", "the tutor", "教授", "导师"];
+  /* ITS OWN, AND ONLY ITS OWN.
+   *
+   * Account and topic alone was too wide: the Professor has more than one
+   * notice filed under this topic now, and this script took down another
+   * script's post the first time both ran. The title narrows it to this
+   * notice, and because TITLE is the same constant that gets posted, the two
+   * cannot drift apart — which was the failure that put the notice up twice
+   * back when the matcher was a phrase copied out of the body. */
   const isMine = (p) =>
     p.topic === TOPIC
     && HOUSE.includes(String(p.handle || "").toLowerCase())
+    && String(p.note || "").trim().startsWith(TITLE)
     && p.state !== "removed";
 
-  // Public, and the only list with every post on it.
-  const board = await fetch(base + "/api/board").then((r) => r.json());
+  /* READ THROUGH THE OPERATOR'S OWN ROUTE, not the public one.
+   *
+   * /api/board is what a reader's browser fetches, and with BOARD_INVITE=read it
+   * is behind the door like everything else — it answers 403 to anything without
+   * an admitted cookie. A script that read it there got an object with no posts
+   * in it, decided nothing was up, and posted a second copy. /api/public is the
+   * admin route, carries the same secret this script already holds, and is
+   * exempt from the door for exactly this reason.
+   */
+  const board = await fetch(base + "/api/public", { headers: head }).then((r) => r.json());
   const mine = (board.posts || []).filter(isMine);
 
   if (!rest.includes("--again") && mine.some((p) => String(p.note || "").trim() === EN.trim())) {

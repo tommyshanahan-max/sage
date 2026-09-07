@@ -175,6 +175,10 @@ post-explainer: ## Put the how-to-be-the-same-person-twice post on the feed
 	  /seed/post-explainer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  $(if $(AS),--as "$(AS)",) $(if $(AGAIN),--again,)
 
+post-door: ## Tell the feed the board is private now, as The Professor
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/post-door.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" $(if $(AGAIN),--again,)
+
 invite: ## Make an invite:  make invite WHO="Mei" [N=3]
 	@# Prints the link and the code as the message to send. One person each.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
