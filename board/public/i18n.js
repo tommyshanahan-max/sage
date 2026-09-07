@@ -635,7 +635,11 @@ export const STRINGS = {
   "bud.putMeIn":       ["Put me in the list", "把我加进列表"],
   // The sentence for a joining, written on the page rather than on the server,
   // so it is in the language it is being read in.
-  "bud.joined":        ["is looking for someone to study with", "在找一起学习的人"],
+  /* WHAT THE PERSON ACTUALLY DID. This fires when somebody ticks "Show me in
+     Browse", and it used to say they were looking for a study buddy — which
+     was the wording of a feature that came out for V1, describing something
+     they had not done. */
+  "bud.joined":        ["put a page up", "把自己的主页放上来了"],
   "bud.joinedFree":    ["Free", "有空"],
   "bud.joinedGo":      ["See the list", "看名单"],
   "bud.join":          ["Put me on the list", "把我加到名单上"],

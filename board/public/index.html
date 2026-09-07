@@ -1702,12 +1702,16 @@ function card(p) {
       body.append(img);
     }
   }
-  /* Somebody joining the study-buddy list.
+  /* Somebody putting a page up.
    *
    * The sentence is written here rather than stored, so it is in whichever
    * language this is being read in — the post carries the facts and nothing
    * else. Their own words, where they wrote any, stay their own and appear
-   * below in the ordinary way. */
+   * below in the ordinary way.
+   *
+   * `looking` is the field's old name, from when this announced somebody
+   * joining the study-buddy list. That list came out for V1; the flag now
+   * means "show me in Browse", and the sentence says that instead. */
   if (p.looking) {
     const j = el("div", "joined");
     const say = el("div", "say");
