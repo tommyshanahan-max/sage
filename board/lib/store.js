@@ -272,7 +272,7 @@ export function cleanWant(raw) {
   const want = String(raw.want ?? "").slice(0, 24);
   // A short allow-list rather than any string: this is written from a public
   // route, and an open field would make the counter a place to store text.
-  if (!by || !["type", "card"].includes(want)) return null;
+  if (!by || !["type", "card", "compare", "language"].includes(want)) return null;
   return { by, want, at: String(raw.at ?? "").slice(0, 40) || new Date().toISOString() };
 }
 

@@ -611,22 +611,39 @@ export const STRINGS = {
     "I am the Tutor. I help you work out what to do here.",
     "我是导师。帮你想清楚在这里能做什么。",
   ],
-  "tut.type":          ["The type sort", "性格分类"],
+
+  // The two that exist. Kept apart from the three that do not, because a list
+  // where half the buttons lead nowhere teaches people not to press any of them.
+  "tut.now":           ["You can do these now", "现在就能做"],
+  "tut.setup":         ["Set up your page", "填好你的资料"],
+  "tut.setupWhat":     ["A name and a line about you. Two minutes.", "一个名字，一句关于你的话。两分钟。"],
+  "tut.buddy":         ["Find a study buddy", "找学习搭子"],
+  "tut.buddyWhat":     ["Who is looking, which campus, which days they are free.",
+                        "谁在找、在哪个学校、哪几天有空。"],
+  "tut.go":            ["Open", "打开"],
+
+  // The three that do not.
+  "tut.next":          ["Which should I make next?", "接下来做哪个？"],
+  "tut.type":          ["A personality test", "性格测试"],
   "tut.typeWhat": [
-    "Twenty quick choices, about two minutes. It tells you where you sit on four axes — and which one is least settled, so you know which letter would come out differently on another day.",
-    "二十道快速选择，大约两分钟。会告诉你在四个维度上的位置——还有哪一个最不稳定，也就是换一天来做最可能不一样的那个。",
+    "Twenty quick choices, two minutes. It names the one answer least settled in you.",
+    "二十道快速选择，两分钟。它会告诉你哪一项最不稳定。",
   ],
-  "tut.card":          ["Your card", "你的卡片"],
-  "tut.cardWhat": [
-    "Your result as one image you can send into a group chat, with a code on it that brings people back here.",
-    "把结果做成一张图，可以发到群里，上面有二维码，别人扫了就能找到这里。",
+  "tut.compare":       ["Compare yourself with a friend", "和朋友比一比"],
+  "tut.compareWhat": [
+    "How far apart the two of you sit, and where the difference actually shows.",
+    "你们俩差多远，差别具体在哪里。",
+  ],
+  "tut.language":      ["A language test", "语言水平测试"],
+  "tut.languageWhat": [
+    "Where your Chinese actually is, rather than which class you were put in.",
+    "你的中文到底在什么水平，而不是你被分到哪个班。",
   ],
   "tut.pick":          ["I would use this", "我会用这个"],
-  "tut.onList":        ["Noted. I will tell you when it is ready.", "记下了。做好会告诉你。"],
-  "tut.both":          ["Both noted. I will tell you when they are ready.", "两个都记下了。做好会告诉你。"],
+  "tut.onList":        ["Noted", "记下了"],
   "tut.honest": [
-    "Neither exists yet — pressing only tells me which to make first.",
-    "两个都还没有——按一下只是告诉我先做哪个。",
+    "These three do not exist yet — pressing only tells me which to make first.",
+    "这三个还没有——按一下只是告诉我先做哪个。",
   ],
 
   // ---- notes: one message, answered once -----------------------------------

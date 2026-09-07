@@ -284,6 +284,11 @@
     padding:.45rem 1.1rem;font-size:.88rem}
   .tutor .opt button[disabled]{background:var(--raise);border-color:var(--line);
     color:var(--muted)}
+  .tutor .grp{margin:1.1rem 0 0;font-size:.7rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);font-weight:600}
+  :root[data-lang="zh"] .tutor .grp{text-transform:none;letter-spacing:.06em}
+  .tutor .opt button.go{background:var(--paper);border-color:var(--accent);
+    color:var(--accent)}
   .tutor .honest{margin:.85rem 0 0;font-size:.8rem;line-height:1.5;color:var(--muted)}
 
   .topics{display:flex;gap:.55rem;overflow-x:auto;padding:0 0 .35rem;
@@ -1608,36 +1613,57 @@ async function drawTutor() {
   who.append(el("i", null, "\u7559"), el("b", null, T("tut.name")));
   box.append(who, el("p", "hi", T("tut.hi")));
 
-  const offer = (key, what, label) => {
+  /* A thing that works, with a control that goes there. */
+  const doable = (key, what, act) => {
     const wrap = el("div", "opt");
     wrap.append(el("h4", null, T(key)), el("p", null, T(what)));
-    const b = el("button", null, T("tut.pick"));
+    const b = el("button", "go", T("tut.go"));
     b.type = "button";
-    if (WANTED.includes(label)) {
-      b.disabled = true;
-      b.textContent = T("tut.onList");
-    } else {
-      b.addEventListener("click", async () => {
-        b.disabled = true;
-        b.textContent = T("tut.onList");
-        WANTED.push(label);
-        // Counted twice on purpose: once where it can be read back per person,
-        // once where every other feature is already counted per day.
-        try { if (window.lx) window.lx("want-" + label); } catch { /* not fatal */ }
-        try {
-          await fetch("/api/want", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ device, want: label }),
-          });
-        } catch { /* the press still showed; the count is the only loss */ }
-      });
-    }
+    b.addEventListener("click", act);
     wrap.append(b);
     return wrap;
   };
 
-  box.append(offer("tut.type", "tut.typeWhat", "type"));
-  box.append(offer("tut.card", "tut.cardWhat", "card"));
+  /* A thing that does not exist, with a control that only counts the answer.
+   * Visibly a different kind of row from the ones above it — same card, two
+   * headings, so nobody has to work out which buttons lead somewhere. */
+  const vote = (key, what, name) => {
+    const wrap = el("div", "opt");
+    wrap.append(el("h4", null, T(key)), el("p", null, T(what)));
+    const b = el("button", null, WANTED.includes(name) ? T("tut.onList") : T("tut.pick"));
+    b.type = "button";
+    if (WANTED.includes(name)) b.disabled = true;
+    else b.addEventListener("click", async () => {
+      b.disabled = true;
+      b.textContent = T("tut.onList");
+      WANTED.push(name);
+      try { if (window.lx) window.lx("want-" + name); } catch { /* not fatal */ }
+      try {
+        await fetch("/api/want", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device, want: name }),
+        });
+      } catch { /* the press still showed; the count is the only loss */ }
+    });
+    wrap.append(b);
+    return wrap;
+  };
+
+  box.append(el("div", "grp", T("tut.now")));
+  // Only offered while there is nothing there. Telling somebody with a filled
+  // profile to fill their profile is the fastest way to stop being read.
+  if (!(ME && ME.handle)) {
+    box.append(doable("tut.setup", "tut.setupWhat", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      openMe();
+    }));
+  }
+  box.append(doable("tut.buddy", "tut.buddyWhat", () => { location.href = "/buddies"; }));
+
+  box.append(el("div", "grp", T("tut.next")));
+  box.append(vote("tut.type", "tut.typeWhat", "type"));
+  box.append(vote("tut.compare", "tut.compareWhat", "compare"));
+  box.append(vote("tut.language", "tut.languageWhat", "language"));
   box.append(el("p", "honest", T("tut.honest")));
   box.hidden = false;
 }
@@ -1673,6 +1699,10 @@ function repaint() {
   const y = window.scrollY;
   drawMe();
   paintNav();
+  // The tutor's whole card is built in JavaScript, so a language change has to
+  // rebuild it like everything else. Left out, he answered in English on a page
+  // that had switched to Chinese.
+  drawTutor();
   draw();
   window.scrollTo(0, y);
 }
@@ -1871,6 +1901,9 @@ async function saveMe(patch) {
   ME = d.person;
   drawMe();
   paintNav();
+  // "Set up your page" is only offered while there is no page. Without this it
+  // stays on screen telling somebody to do the thing they have just done.
+  drawTutor();
   if (!$("mesheet").hidden) drawMePic();
   return d;
 }
