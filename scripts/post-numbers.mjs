@@ -104,9 +104,15 @@ async function main() {
      preview is a headline and a Show more — twice over, because a house post
      carries both languages. Whoever never taps should still have read the
      news. */
+  /* One is one. "1 have tested their Chinese or English" is the sentence a
+     template writes and a person never would, and this one is signed by The
+     Professor in front of everybody. */
+  const plural = (n, one, many) => n + " " + (n === 1 ? one : many);
   const en = [
-    TITLE + " — " + now.people + " people, " + now.posts + " things posted, "
-      + now.tested + " have tested their Chinese or English.",
+    TITLE + " — " + plural(now.people, "person", "people") + ", "
+      + plural(now.posts, "thing posted", "things posted") + ", "
+      + now.tested + (now.tested === 1 ? " has" : " have")
+      + " tested their Chinese or English.",
   ];
   const zh = [
     "这里到哪一步了——" + now.people + " 个人，" + now.posts + " 条内容，"
@@ -114,6 +120,7 @@ async function main() {
   ];
   if (top) {
     en.push("", top[1] + " of them are looking for " + ROOMS[top[0]][0] + ".");
+    // (three or more by definition — see FLOOR — so "are" is always right here)
     zh.push("", "其中 " + top[1] + " 个人在找" + ROOMS[top[0]][1] + "。");
   }
   en.push("", "Invite somebody you would actually want to sit next to. Your password is behind the bell.");
