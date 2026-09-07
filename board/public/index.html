@@ -610,10 +610,19 @@
   .pacts .primary.on{background:var(--raise);border-color:var(--line);color:var(--ink-2)}
   .pcount{margin:.7rem 0 0;text-align:center;font-size:.82rem;color:var(--muted);
     font-variant-numeric:tabular-nums}
-  .shareme{flex:0 0 auto;border:1px solid var(--line);background:var(--raise);
-    color:var(--ink-2);border-radius:99px;padding:.28rem .8rem;font-size:.76rem;
-    letter-spacing:.02em}
-  .shareme:hover{color:var(--accent);border-color:var(--accent)}
+  /* Share, on the face it shares. A pill rather than a bare icon: this is the
+     control that puts somebody into a WeChat group, so it is worth a word. It
+     sits on its own scrim because it has to stay readable on a photograph
+     whatever is behind it. */
+  .pc .share{position:absolute;top:.8rem;right:.8rem;z-index:2;
+    display:inline-flex;align-items:center;gap:.4rem;border:0;
+    background:rgba(10,14,22,.52);color:#fff;border-radius:99px;
+    padding:.5rem .9rem .5rem .8rem;font-size:.88rem;line-height:1;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+    box-shadow:0 1px 3px rgba(0,0,0,.35)}
+  .pc .share:hover{background:rgba(10,14,22,.72)}
+  .pc .share svg{width:1.05rem;height:1.05rem;stroke:currentColor;fill:none;
+    stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
   /* Your own missing face, under everybody else's. The circle IS the control:
      one tap opens the picker, which is the shortest route there is. */
   .mine{display:flex;align-items:center;gap:.75rem;width:100%;margin:0 0 .8rem;
@@ -693,12 +702,7 @@
        This used to be its own page at /browse. Two tabs now point at the two
        ends of one page, because the deck runs out after a handful of people
        and the thing to do when it does is read what everybody said. -->
-  <div class="rule"><span id="brwlabel">Browse students</span><i></i>
-    <!-- Shares the person on the card, not this page. Their own page has their
-         name and face in its link card, which is what WeChat shows, and a
-         Follow button for whoever opens it. -->
-    <button class="shareme" type="button" id="brwshare" hidden></button>
-  </div>
+  <div class="rule"><span id="brwlabel">Browse students</span><i></i></div>
   <!-- The affordance the profile block used to carry: a missing face with a +
        on it. One row rather than the four hundred pixels it cost before, and
        it is gone the moment there is a photo. -->
@@ -1893,7 +1897,7 @@ function drawMine() {
 }
 $("mine").addEventListener("click", () => $("mephoto").click());
 
-function personCard(q) {
+function personCard(q, live) {
   const box = el("div", "pc");
   if (q.photo) {
     const img = Object.assign(document.createElement("img"),
@@ -1917,6 +1921,22 @@ function personCard(q) {
     scrim.append(days);
   }
   box.append(scrim);
+
+  /* On the card, not in the section header above it: this shares one person,
+   * so it belongs on the one person.
+   *
+   * pointerdown is stopped here because the card is a drag surface — without
+   * it, pressing share starts a flick, and the tap that follows lands on
+   * whoever comes next. */
+  if (live) {
+    const sh = el("button", "share");
+    sh.type = "button";
+    const words = el("span", null, T("act.share"));
+    sh.append(icon("share"), words);
+    sh.addEventListener("pointerdown", (ev) => ev.stopPropagation());
+    sh.addEventListener("click", (ev) => { ev.stopPropagation(); shareCard(q, words); });
+    box.append(sh);
+  }
   return box;
 }
 
@@ -1926,12 +1946,11 @@ function personCard(q) {
  * its link card, which is the thing WeChat renders in a chat, and it opens with
  * a Follow button for whoever taps it. Sharing this address instead would send
  * somebody a deck that starts at whoever happens to be first. */
-function shareCard(q) {
+function shareCard(q, label) {
   const url = location.origin + "/p/" + encodeURIComponent((q.handle || "").toLowerCase());
-  const b = $("brwshare");
   const say = (words, hold) => {
-    b.textContent = words;
-    setTimeout(() => { b.textContent = T("act.share"); }, hold || 2200);
+    label.textContent = words;
+    setTimeout(() => { label.textContent = T("act.share"); }, hold || 2200);
   };
   // Inside WeChat a page may not open a share sheet — the ⋯ menu is the only
   // way — so the honest version is to put the link on the clipboard and say
@@ -1957,8 +1976,6 @@ function drawDeck() {
   const n = deckLen();
   if (AT >= n) AT = 0;           // a photo arriving takes the last card away
   const mine = needsFace() && people > 0 && AT === people;
-  // Nothing to share on your own card, or on an empty list.
-  $("brwshare").hidden = !people || mine;
   // Nobody on the list is not an empty screen here — the feed is still under
   // it — so the whole block collapses to one small card that says so.
   deck.hidden = !n;
@@ -1981,15 +1998,16 @@ function drawDeck() {
     return;
   }
 
-  const at = (i) => (needsFace() && i === people ? turnCard() : personCard(PEOPLE[i]));
+  const at = (i, live) =>
+    (needsFace() && i === people ? turnCard() : personCard(PEOPLE[i], live));
 
   // The one behind, so moving on reveals a card rather than a hole.
   if (n > 1) {
-    const behind = at((AT + 1) % n);
+    const behind = at((AT + 1) % n, false);
     behind.style.transform = "scale(.96) translateY(10px)";
     deck.append(behind);
   }
-  const top = at(AT);
+  const top = at(AT, true);
   deck.append(top);
   dragCard(top);
 
@@ -2004,10 +2022,6 @@ function drawDeck() {
     return;
   }
   const q = PEOPLE[AT];
-  const sh = $("brwshare");
-  sh.hidden = false;
-  sh.textContent = T("act.share");
-  sh.onclick = () => shareCard(q);
   /* Follow, not "say hello".
    *
    * Saying hello is a thing you do to a person and it wants a reply; following
