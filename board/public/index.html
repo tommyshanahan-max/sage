@@ -654,15 +654,18 @@
   #profbody > div{margin:0 0 .9rem}
   #profbody > div:last-child{margin-bottom:0}
 
-  /* THE MARK, AND ONLY THE MARK. The one thing worth seeing without opening
-     anything, at the size of a thing you glance at rather than read. */
-  .daymark{display:inline-flex;align-items:center;gap:.6rem;margin:0 0 1.1rem;
-    padding:.45rem .95rem .45rem .7rem;border-radius:99px;
-    border:1px solid var(--line);background:var(--raise);color:var(--ink-2)}
-  .daymark b{font-family:var(--serif);font-weight:400;font-size:1.5rem;line-height:1;
-    color:var(--accent);letter-spacing:-.02em}
-  .daymark span{font-size:.85rem}
-  .daymark:hover{border-color:var(--accent)}
+  /* ---- one slot, rotating -------------------------------------------------- */
+  .rotbar{position:relative;margin:0 0 1.3rem}
+  .rotbar .opt{margin:0}
+  .rotnav{display:flex;align-items:center;gap:.5rem;justify-content:flex-end;
+    margin:.5rem 0 0}
+  .rotdots{display:flex;gap:.3rem}
+  .rotdots i{width:.35rem;height:.35rem;border-radius:50%;background:var(--line)}
+  .rotdots i.on{background:var(--accent)}
+  .rotnext{width:1.7rem;height:1.7rem;border-radius:50%;border:1px solid var(--line);
+    background:var(--raise);color:var(--ink-2);font-size:1rem;line-height:1;
+    display:grid;place-items:center}
+  .rotnext:hover{border-color:var(--accent);color:var(--accent)}
 
   /* The header's letter: the same weight as the mark it sits beside, because
      it is the other half of what this row is for. */
@@ -1219,37 +1222,6 @@
       <div class="rule" id="matchrule" hidden><span id="matchlabel"></span><i></i></div>
       <div class="fols" id="matches" hidden></div>
     </div>
-  <section class="prof" id="prof" hidden>
-    <button class="profhead" type="button" id="profhead" aria-controls="profbody">
-      <i class="profmark" aria-hidden="true">留</i>
-      <span class="proftext">
-        <b id="proftitle"></b>
-        <em id="profsub"></em>
-        <span id="profsum"></span>
-      </span>
-      <!-- Today's letter, level with the mark at the other end of the row, so
-           the one thing worth knowing is readable without opening anything.
-           The mark says whose card this is; this says how it is going. -->
-      <b class="profgrade" id="profgrade" hidden></b>
-      <i class="chev" aria-hidden="true"></i>
-    </button>
-    <div id="profbody">
-      <!-- WHAT HAS HAPPENED SINCE THEY WERE LAST HERE, first. The level used
-           to be here and is still drawn below it — but a number that is the
-           same every day cannot be the reason somebody opens this. -->
-      <div id="profnews"></div>
-      <!-- Your level, large. Shown at full size only when there is no news to
-           put above it, which is mostly somebody's first week. -->
-      <div id="profnow"></div>
-      <!-- One card a day, at the reader's own level, drawn here rather than
-           posted: a shared board with fifty people on it would carry fifty
-           cards a morning and the thing worth reading would be underneath
-           them. See daily.js. -->
-      <div id="daily"></div>
-      <!-- The Professor's offers are appended here, one block per thing you
-           can do — see drawTutor. -->
-    </div>
-  </section>
     <div id="notifday"></div>
     <div id="notiffol">
       <div class="rule" id="folrule" hidden><span id="follabel"></span><i></i>
@@ -1296,9 +1268,43 @@
        was already in the tray under another heading, and the same news in two
        places is two things to keep in step. One letter above the feed is the
        glance; the bell is the rest. -->
-  <button class="daymark" id="daymark" type="button" hidden>
-    <b id="daymarkletter"></b><span id="daymarkword"></span>
-  </button>
+  <section class="prof" id="prof" hidden>
+    <button class="profhead" type="button" id="profhead" aria-controls="profbody">
+      <i class="profmark" aria-hidden="true">留</i>
+      <span class="proftext">
+        <b id="proftitle"></b>
+        <em id="profsub"></em>
+        <span id="profsum"></span>
+      </span>
+      <!-- Today's letter, level with the mark at the other end of the row, so
+           the one thing worth knowing is readable without opening anything.
+           The mark says whose card this is; this says how it is going. -->
+      <b class="profgrade" id="profgrade" hidden></b>
+      <i class="chev" aria-hidden="true"></i>
+    </button>
+    <div id="profbody">
+      <!-- WHAT HAS HAPPENED SINCE THEY WERE LAST HERE, first. The level used
+           to be here and is still drawn below it — but a number that is the
+           same every day cannot be the reason somebody opens this. -->
+      <div id="profnews"></div>
+      <!-- Your level, large. Shown at full size only when there is no news to
+           put above it, which is mostly somebody's first week. -->
+      <div id="profnow"></div>
+      <!-- One card a day, at the reader's own level, drawn here rather than
+           posted: a shared board with fifty people on it would carry fifty
+           cards a morning and the thing worth reading would be underneath
+           them. See daily.js. -->
+      <div id="daily"></div>
+      <!-- The Professor's offers are appended here, one block per thing you
+           can do — see drawTutor. -->
+    </div>
+  </section>
+
+  <!-- ONE SLOT, ROTATING. The Professor's offers were a list inside the tile,
+       then cards you had to swipe sideways to find. Both hid whichever one was
+       not first. This is one row that shows one of them: whatever is
+       unfinished, and when everything is done, a different one each day. -->
+  <div class="rotbar" id="rotbar" hidden></div>
 
   <div class="topics" id="topics"></div>
 
@@ -2719,10 +2725,8 @@ let WANTED = [];
  * own face instead.
  */
 async function drawTutor() {
-  const strip = $("profbody");
-  // Every draw replaces its own cards and nothing else's.
-  for (const n of [...strip.querySelectorAll(".tcard")]) n.remove();
-  if (!device) return;
+  OFFERS = [];
+  if (!device) { drawRot(); return; }
   /* The "留 The Tutor" row and the "I am the Tutor" greeting that used to head
      this block are both gone. It now sits inside a section whose own heading
      says From the Professor, and a block that introduces itself twice under a
@@ -2759,7 +2763,7 @@ async function drawTutor() {
   };
 
   /* 1 for something not done yet, 4 for a thing already behind them. See
-     orderStrip: the unfinished cards come before the finished ones. */
+     drawRot: an unfinished one is what the bar opens on. */
   const doable = (key, what, act, icon, done) => {
     const wrap = el("div", "opt built tcard");
     wrap.dataset.rank = done ? "4" : "1";
@@ -2810,7 +2814,7 @@ async function drawTutor() {
   // Only offered while there is nothing there. Telling somebody with a filled
   // profile to fill their profile is the fastest way to stop being read.
   if (!(ME && ME.handle)) {
-    strip.append(doable("tut.setup", "tut.setupWhat", () => openMe()));
+    OFFERS.push(doable("tut.setup", "tut.setupWhat", () => openMe()));
   }
 
   /* NOT IN BROWSE, AND NOBODY HAD TOLD HER.
@@ -2825,8 +2829,9 @@ async function drawTutor() {
    * saying so. First card in the strip while it is true, because it is the one
    * thing on this screen with a consequence she cannot see. */
   if (ME && ME.handle && !ME.looking) {
-    const card = doable("tut.hidden", "tut.hiddenWhat", () => openMe());
-    strip.prepend(card);
+    // Straight to the front: it is the one thing here with a consequence she
+    // cannot see.
+    OFFERS.unshift(doable("tut.hidden", "tut.hiddenWhat", () => openMe()));
   }
   // Find a study buddy is held back for V1: the deck at the top of this page is
   // the same people, and offering both is offering a choice between a thing and
@@ -2847,43 +2852,70 @@ async function drawTutor() {
    * the thing it just showed them. */
   const tookLevel = Boolean(readLocal("board:level"));
   const tookType = Boolean(readLocal("board:type"));
-  strip.append(doable("tut.level", "tut.levelGo",
+  OFFERS.push(doable("tut.level", "tut.levelGo",
     () => { location.href = "/level"; }, "level", tookLevel));
-  strip.append(doable("tut.type", "tut.typeGo",
+  OFFERS.push(doable("tut.type", "tut.typeGo",
     () => { location.href = "/type"; }, "type", tookType));
 
   const v = vote("tut.compare", "tut.compareWhat", "compare");
   v.append(el("p", "honest", T("tut.honest")));
   v.dataset.rank = "5";
-  strip.append(v);
-  orderStrip();
+  OFFERS.push(v);
+  drawRot();
 }
 
-/* ---- what comes first in the strip ------------------------------------------
+/* ---- one slot, rotating -----------------------------------------------------
  *
- * A strip hides everything to the right of the first card, so the order is the
- * feature. Left to the order things were built in, the four-letter test ended
- * up fifth — behind the news, your level, and a test you had already taken —
- * which is the same as not being there. It was reported as missing.
+ * WHAT WAS WRONG WITH EVERY OTHER SHAPE. A list inside the tile made the tile
+ * long enough that people scrolled past it. A sideways strip put the
+ * four-letter test off the edge of the screen, where it was reported missing.
+ * Both were trying to show three things at once in a place with room for one.
  *
- * So: the news, then anything you have NOT done, then the things you have.
- * A test you have taken is a result you can look up; a test you have not taken
- * is the only one of the two with anything to offer. Once it is done it moves
- * back and lets the next unfinished thing forward.
+ * So: room for one, and it takes turns. Anything unfinished comes first —
+ * a test somebody has not taken is the only one of these with something to
+ * offer — and once everything is done it shows a different one each day,
+ * seeded off the date so it is steady all day and different tomorrow.
+ *
+ * The arrow is there because a rotation nobody can hurry is a rotation that
+ * looks broken to whoever wanted the other one.
  */
-function orderStrip() {
-  const strip = $("profbody");
-  const rank = (n) => {
-    if (n.id === "profnews") return 0;
-    if (n.classList.contains("tcard")) return Number(n.dataset.rank || 3);
-    if (n.id === "profnow") return 2;      // your level, once you have one
-    if (n.id === "daily") return 2.5;      // today's card
-    return 3;
-  };
-  const kids = [...strip.children];
-  kids.sort((a, b) => rank(a) - rank(b));
-  for (const k of kids) strip.append(k);
+let OFFERS = [];
+let ROTAT = -1;
+
+function drawRot() {
+  const bar = $("rotbar");
+  fill(bar);
+  const live = OFFERS.filter(Boolean);
+  if (!live.length) { bar.hidden = true; return; }
+  bar.hidden = false;
+
+  if (ROTAT < 0) {
+    const undone = live.findIndex((n) => n.dataset.rank === "1");
+    if (undone >= 0) ROTAT = undone;
+    else {
+      // Steady all day, different tomorrow. A bar that changes while somebody
+      // is looking at it is a bar nobody trusts.
+      const d = new Date();
+      const seed = d.getFullYear() * 372 + d.getMonth() * 31 + d.getDate();
+      ROTAT = seed % live.length;
+    }
+  }
+  const at = ((ROTAT % live.length) + live.length) % live.length;
+  bar.append(live[at]);
+
+  if (live.length > 1) {
+    const nav = el("div", "rotnav");
+    const dots = el("div", "rotdots");
+    for (let i = 0; i < live.length; i++) dots.append(el("i", i === at ? "on" : ""));
+    const next = el("button", "rotnext", "›");
+    next.type = "button";
+    next.setAttribute("aria-label", T("tut.next"));
+    next.addEventListener("click", () => { ROTAT = at + 1; drawRot(); });
+    nav.append(dots, next);
+    bar.append(nav);
+  }
 }
+
 
 /* THE MEMBER'S OWN INVITE.
  *
@@ -3047,12 +3079,14 @@ function drawTray() {
 
 let TRAYSEEN = false;
 
-$("daymark").addEventListener("click", () => {
-  const box = $("notif");
-  if (box.hidden) { box.hidden = false; $("bell").setAttribute("aria-expanded", "true"); }
-  TRAYSEEN = true;
-  drawTray();
-  $("prof").scrollIntoView({ behavior: "smooth", block: "center" });
+$("profhead").addEventListener("click", () => {
+  PROFOPEN = !PROFOPEN;
+  $("profbody").hidden = !PROFOPEN;
+  $("profhead").setAttribute("aria-expanded", String(PROFOPEN));
+  try {
+    if (PROFOPEN) localStorage.removeItem(PROFSHUT);
+    else localStorage.setItem(PROFSHUT, dayStamp());
+  } catch { /* private window */ }
 });
 
 $("bell").addEventListener("click", () => {
@@ -3080,6 +3114,7 @@ $("bell").addEventListener("click", () => {
  * shut.
  */
 const PROFSHUT = "board:profshut";
+let PROFOPEN = null;   // null until decided once, then whatever it is
 const dayStamp = () => {
   const d = new Date();
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0")
@@ -3531,11 +3566,11 @@ function drawProf() {
   const box = $("prof");
   const body = $("profbody");
   const head = $("profhead");
-  // Nothing to fold if the Tutor has nothing to say and there is no card.
+  /* WHAT MAKES THE TILE WORTH DRAWING. It used to be "the Tutor has something
+     to say, or there is a card" — and the Tutor's offers have moved out to the
+     rotating bar, so that test went false and took the whole tile with it,
+     news and level and all. It is the tile's OWN contents that decide now. */
   const hasCard = Boolean($("daily").firstChild);
-  const hasTutor = Boolean($("profbody").querySelector(".tcard"));
-  if (!hasCard && !hasTutor) { box.hidden = true; return; }
-  box.hidden = false;
 
   const lvl = readLocal("board:level");
   const typ = readLocal("board:type");
@@ -3548,6 +3583,11 @@ function drawProf() {
      their first week sees. */
   GRADE = null;
   const hasNews = drawNews();
+  if (!hasNews && !hasCard && !readLocal("board:level") && !readLocal("board:type")) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
   // An empty card holds a slot in the strip and swipes to nothing.
   $("profnews").hidden = !hasNews;
   /* The letter in the header, from the same object the card drew — see GRADE.
@@ -3557,12 +3597,6 @@ function drawProf() {
   gh.textContent = (GRADE && GRADE.letter) || "";
   gh.hidden = !(GRADE && GRADE.letter);
 
-  /* The same letter, above the feed, and nothing else with it. Whoever never
-     opens the bell has still seen today's mark; whoever wants to know where it
-     came from presses it, and the tray opens on the report. */
-  $("daymarkletter").textContent = (GRADE && GRADE.letter) || "";
-  $("daymarkword").textContent = T("grade.mark");
-  $("daymark").hidden = !(GRADE && GRADE.letter);
 
   /* WHERE YOU ARE NOW, large, as the first thing inside the fold.
    *
@@ -3624,11 +3658,21 @@ function drawProf() {
   $("profsum").textContent = bits.length ? bits.join(" \u00b7 ") : T("prof.nothing");
   head.classList.toggle("todo", hasCard && !done);
 
-  /* NO FOLD. This is inside the tray now, and a fold inside a thing somebody
-     has just opened is a door behind a door. The header stays as the heading
-     it always was — the mark, whose card it is, and today's letter. */
-  body.hidden = false;
-  head.setAttribute("aria-expanded", "true");
+  /* ONE TILE, WHICH IS WHAT IT LOOKED LIKE BEST AS. Between Browse and the
+     feed, shut, it is a single row: the mark, what it is, the summary line and
+     today's letter. Open, everything is under it in a list.
+     It starts open while there is something to do — nothing tested yet, or
+     today's card unanswered — and shut once both are behind them. Shutting it
+     by hand sticks for the day, because the point of a fold nobody can keep
+     shut is lost on the person who wanted it shut. */
+  if (PROFOPEN === null) {
+    let shut = "";
+    try { shut = localStorage.getItem(PROFSHUT) || ""; } catch { /* fine */ }
+    PROFOPEN = shut === dayStamp() ? false
+      : (!lvl && !typ) || (hasCard && !done);
+  }
+  body.hidden = !PROFOPEN;
+  head.setAttribute("aria-expanded", String(PROFOPEN));
   $("daily").hidden = !hasCard;
 }
 
