@@ -763,6 +763,21 @@ export const STRINGS = {
      a summary line to find your own level is a report card that buries the
      mark it is named after. */
   "prof.now":          ["Where you are now", "你现在的水平"],
+  /* THE TRAY. Everything addressed to this person, in one place — follows and
+     the card of the day. The report card below it is what they are; this is
+     what has arrived. */
+  "notif.title":       ["For you", "给你的"],
+  "notif.none":        ["Nothing new. Follows and your card of the day arrive here.",
+                        "暂时没有新的。有人关注你，还有每天那张卡，都会到这儿来。"],
+  /* Asked once, then it is a line they can change their mind on. */
+  "notif.askFeed":     ["Would you rather see the card of the day in your feed?",
+                        "每天那张卡，你更想在动态里看到吗？"],
+  "notif.yesFeed":     ["Yes, in my feed", "好，放动态里"],
+  "notif.noFeed":      ["No, keep it here", "不用，就放这儿"],
+  "notif.inFeed":      ["The card of the day is in your feed. Move it back here",
+                        "每天那张卡在动态里。搬回这儿"],
+  "notif.inTray":      ["The card of the day is here. Move it to my feed",
+                        "每天那张卡在这儿。搬到动态里"],
   "prof.nolevelBig":   ["No level yet", "还没有等级"],
   "prof.nolevelWhy":   ["Four questions and you have one.", "四道题，你就有了。"],
   /* WHAT THIS CARD IS, for somebody who has just found it at the top of their

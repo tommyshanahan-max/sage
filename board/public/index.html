@@ -259,6 +259,37 @@
     background:var(--accent);color:var(--accent-ink);border-radius:99px;
     padding:.6rem 1.2rem;font-size:.95rem;text-decoration:none}
 
+  /* ---- the tray -----------------------------------------------------------
+   * The bell sits in the header beside the language button, and what it opens
+   * drops in under it. Everything addressed to this person is in here. */
+  .bell{position:relative;flex:0 0 auto;width:2.4rem;height:2.4rem;padding:0;
+    border:1px solid var(--line);background:var(--raise);border-radius:50%;
+    display:grid;place-items:center;margin-left:auto}
+  .bell + #langslot{margin-left:.5rem}
+  .bell svg{width:1.25rem;height:1.25rem;stroke:var(--ink-2);fill:none;stroke-width:1.7;
+    stroke-linecap:round;stroke-linejoin:round}
+  .bell.lit{border-color:var(--accent)}
+  .bell.lit svg{stroke:var(--accent)}
+  .bell .badge{position:absolute;top:-.25rem;right:-.25rem;min-width:1.05rem;height:1.05rem;
+    padding:0 .2rem;border-radius:99px;background:var(--accent);color:var(--accent-ink);
+    font-size:.68rem;font-style:normal;line-height:1.05rem;text-align:center;
+    box-shadow:0 0 0 2px var(--paper)}
+  .notif{margin:.2rem 0 1.2rem;padding:1rem 1.05rem 1.1rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:1.1rem;box-shadow:var(--shadow)}
+  .notif .daily{margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:none}
+  .notif .rule{margin-top:.9rem}
+  .notifnone{margin:0;font-size:.9rem;line-height:1.55;color:var(--muted)}
+  /* The question, once, under the card it is about. */
+  .askfeed{margin:1rem 0 0;padding:.85rem 1rem;background:var(--paper);
+    border:1px solid var(--line);border-radius:.9rem}
+  .askfeed p{margin:0 0 .7rem;font-size:.88rem;line-height:1.5;color:var(--ink-2)}
+  .askrow{display:flex;gap:.6rem;flex-wrap:wrap}
+  .askrow button{flex:1 1 0;min-width:7rem;border-radius:99px;padding:.6rem 1rem;
+    font-size:.9rem}
+  .swap{display:block;width:100%;margin:.9rem 0 0;border:0;background:none;
+    color:var(--muted);font-size:.82rem;text-align:left;padding:.2rem 0}
+  .swap:hover{color:var(--accent)}
+
   /* ---- the report card ----------------------------------------------------
    * One fold over the card of the day and the two tests. Its head is the whole
    * thing when shut, so it carries the summary and a dot when there is
@@ -902,8 +933,28 @@
         <span id="navmelabel">Profile</span>
       </a>
     </nav>
+    <!-- ONE PLACE FOR WHAT IS ADDRESSED TO YOU. A bell rather than a fifth tab:
+         the bar has four and a button in it already, and this has to be
+         reachable from the top of the page where people look. -->
+    <button class="bell" type="button" id="bell" aria-controls="notif" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a5 5 0 0 1 5 5v3.5l1.6 2.6H5.4L7 12.5V9a5 5 0 0 1 5-5Z M10 18.4a2 2 0 0 0 4 0"/></svg>
+      <i class="badge" id="belln" hidden></i>
+    </button>
     <span id="langslot"></span>
   </div>
+
+  <!-- Follows and the card of the day, in the one tray. Anything that is FOR
+       you goes here; the report card below is what you ARE. -->
+  <section class="notif" id="notif" hidden>
+    <div id="notifday"></div>
+    <div id="notiffol">
+      <div class="rule" id="folrule" hidden><span id="follabel"></span><i></i>
+        <b class="new" id="folnew" hidden></b>
+      </div>
+      <div class="fols" id="fols" hidden></div>
+    </div>
+    <p class="notifnone" id="notifnone" hidden></p>
+  </section>
 
   <!-- Browse first, the feed underneath.
        This used to be its own page at /browse. Two tabs now point at the two
@@ -920,13 +971,10 @@
   <p class="psafety" id="psafety"></p>
   <div class="bnone" id="bnone" hidden></div>
 
-  <!-- Who started following you. Under the deck because that is where you
-       already are, and because the answer to "somebody followed me" is usually
-       to look at them and decide whether to follow back. -->
-  <div class="rule" id="folrule" hidden><span id="follabel"></span><i></i>
-    <b class="new" id="folnew" hidden></b>
-  </div>
-  <div class="fols" id="fols" hidden></div>
+  <!-- Who started following you used to sit here, under the deck. It is in the
+       notifications tray at the top of the page now, with the card of the day,
+       because both are things addressed to this person and two trays for that
+       is one too many. -->
 
 
 
@@ -1397,15 +1445,77 @@ function drawTopics() {
   box.append(add);
 }
 
+/* WHERE THE CARD OF THE DAY GOES.
+ *
+ * The tray by default, the feed if they say so. One card in one place rather
+ * than the same card in two, which would be two states of the same thing
+ * disagreeing the moment somebody answered one of them.
+ *
+ * Asked once, in the tray, next to the card it is about — a preference nobody
+ * was offered is a preference nobody has. "" means unasked, which is why the
+ * question can be shown exactly once and then become a line they can change
+ * their mind on.
+ */
+const WHEREKEY = "board:dailywhere";
+const dailyWhere = () => {
+  try { return localStorage.getItem(WHEREKEY) || ""; } catch { return ""; }
+};
+const setDailyWhere = (v) => {
+  try { localStorage.setItem(WHEREKEY, v); } catch { /* private window */ }
+  /* Moving it to the feed opens the fold it lands in. Otherwise pressing "yes,
+     in my feed" makes the card disappear from the tray and reappear inside a
+     collapsed section — which reads as having thrown it away. */
+  if (v === "feed") PROFOPEN = true;
+  draw();
+};
+
 function draw() {
-  /* The Professor's card for today, above everything else in the feed. Drawn
-     on every pass because the whole page redraws on a language change, and it
-     costs one localStorage read to be right in both languages. */
+  /* The Professor's card for today, in whichever of the two places this
+     person asked for. Drawn on every pass because the whole page redraws on a
+     language change, and it costs one localStorage read to be right in both
+     languages. */
+  const inFeed = dailyWhere() === "feed";
   const dbox = $("daily");
+  const nbox = $("notifday");
   fill(dbox);
-  // Bare, because the section around it already carries the mark and the name.
+  fill(nbox);
+  // Bare, because whichever section holds it already carries the mark and name.
   const one = dailyCard(true);
-  if (one) dbox.append(one);
+  if (one) (inFeed ? dbox : nbox).append(one);
+
+  /* The question, once, under the card it is about. After that it is a line
+     rather than a choice, because somebody who has answered should be able to
+     change their mind without being asked again every day. */
+  if (one && !inFeed) {
+    const where = dailyWhere();
+    if (!where) {
+      const ask = el("div", "askfeed");
+      ask.append(el("p", null, T("notif.askFeed")));
+      const row = el("div", "askrow");
+      const yes = el("button", "dgo", T("notif.yesFeed"));
+      yes.type = "button";
+      yes.addEventListener("click", () => setDailyWhere("feed"));
+      const no = el("button", "dquiet", T("notif.noFeed"));
+      no.type = "button";
+      no.addEventListener("click", () => setDailyWhere("tray"));
+      row.append(yes, no);
+      ask.append(row);
+      nbox.append(ask);
+    } else {
+      const sw = el("button", "swap", T("notif.inTray"));
+      sw.type = "button";
+      sw.addEventListener("click", () => setDailyWhere("feed"));
+      nbox.append(sw);
+    }
+  }
+  if (one && inFeed) {
+    const sw = el("button", "swap", T("notif.inFeed"));
+    sw.type = "button";
+    sw.addEventListener("click", () => setDailyWhere("tray"));
+    dbox.append(sw);
+  }
+
+  drawTray();
   drawProf();
 
   drawTopics();
@@ -2261,6 +2371,52 @@ async function drawTutor() {
   box.append(el("p", "honest", T("tut.honest")));
   box.hidden = false;
 }
+
+/* THE TRAY, AND THE COUNT ON THE BELL.
+ *
+ * Two things arrive here: people who followed you, and the card of the day
+ * when it is living here rather than in the feed. The count is how many of
+ * those are unattended — an unanswered card is one, each new follower is one —
+ * because a bell with a number on it that does not go down is a bell people
+ * stop looking at.
+ */
+function drawTray() {
+  const box = $("notif");
+  const none = $("notifnone");
+  const hasDay = Boolean($("notifday").firstChild);
+  const hasFol = !$("folrule").hidden;
+  none.hidden = hasDay || hasFol;
+  none.textContent = T("notif.none");
+
+  /* WHAT THE NUMBER MEANS: things still waiting, not things unread.
+   *
+   * A follower stops counting once the tray has been opened — that is reading
+   * it. The card of the day keeps counting until it is answered, because it is
+   * not a message, it is a thing to do, and a bell that went quiet while the
+   * card sat there unanswered would be lying about the one item it is best
+   * placed to remind somebody about. */
+  const fresh = TRAYSEEN ? 0 : FOLLOWERS.filter((f) => FRESH.has(f.id)).length;
+  const waiting = (hasDay && !dailyDone() ? 1 : 0) + fresh;
+  const b = $("belln");
+  b.textContent = waiting > 9 ? "9+" : String(waiting);
+  b.setAttribute("aria-label", String(waiting));
+  b.hidden = !waiting;
+  $("bell").classList.toggle("lit", Boolean(waiting));
+  // The tray stays where the reader left it; the bell only says what is in it.
+  if (!box.hidden) $("bell").setAttribute("aria-expanded", "true");
+}
+
+let TRAYSEEN = false;
+
+$("bell").addEventListener("click", () => {
+  const box = $("notif");
+  box.hidden = !box.hidden;
+  $("bell").setAttribute("aria-expanded", String(!box.hidden));
+  /* Opening it is reading it — but only for the count. The dots stay on the
+     rows so somebody can still see which of them are the new ones while they
+     are looking at the list. */
+  if (!box.hidden) { TRAYSEEN = true; drawTray(); }
+});
 
 /* THE REPORT CARD: one fold over the card of the day and the two tests.
  *
