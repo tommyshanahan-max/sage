@@ -647,7 +647,13 @@ async function appCount(force = false) {
     // Written down, because this answer has no past in it and the sequence of
     // them is the only place a growth curve can come from.
     appHistory.record(appCache.value);
-  } catch {
+  } catch (err) {
+    // Said out loud. This is the failure that empties every app figure on the
+    // page at once, and it was the one failure that wrote nothing anywhere —
+    // so the only symptom was a dashboard full of dashes and no way to tell
+    // whether the app was down, the address was wrong, or nothing had been
+    // configured at all.
+    console.error("app count:", String(err?.message || err).slice(0, 200));
     // Keep the last good figure for one cache window rather than blinking the
     // section out of existence over a single bad request.
     if (Date.now() - appCache.at > APP_CACHE_MS * 5) appCache = { at: Date.now(), value: null };

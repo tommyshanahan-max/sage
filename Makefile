@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days
+.PHONY: help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -183,6 +183,15 @@ feed-people: ## Put the demo people on The Feed (roster in scripts/people.json)
 	  --entrypoint node board \
 	  /seed/seed-people.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --people /seed/people.json $(if $(PHOTOS),--photos $(PHOTOS),)
+
+app-check: ## Can this box reach Study Pal's counter? Ask it directly
+	@# The app figures come from another machine. When that fetch fails they
+	@# all empty at once and the page cannot say why, so this asks from
+	@# inside the container that makes the call, with the same address and
+	@# the same key it uses.
+	$(COMPOSE) run --rm --no-deps -T \
+	  -v "$(CURDIR)/scripts:/seed:ro" \
+	  --entrypoint node analytics /seed/app-check.mjs
 
 numbers-days: ## What happened on which day, printed rather than drawn
 	@# Runs in a container built from the analytics image, so the token comes
