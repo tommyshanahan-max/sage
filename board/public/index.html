@@ -328,6 +328,10 @@
   .line time{margin-left:auto;color:var(--muted);font-size:.92rem;
     font-variant-numeric:tabular-nums;flex:0 0 auto}
 
+  /* Line breaks somebody typed are line breaks. They were being collapsed,
+     which turns anything written as more than one paragraph into a wall —
+     including the board's own explanation of itself. */
+  .words,.zh{white-space:pre-line}
   .words{margin:.45rem 0 0;font-family:var(--serif);font-size:1.12rem;
     line-height:1.55;overflow-wrap:anywhere}
   .zh{margin:.3rem 0 0;font-family:var(--serif);font-size:1.05rem;color:var(--ink-2)}

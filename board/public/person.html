@@ -159,6 +159,20 @@
   .acts .primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   .acts .warn{color:var(--t5)}
 
+  .keybox{margin:1.6rem 1.15rem 0;padding-top:1.1rem;border-top:1px solid var(--hair)}
+  .keybox h3{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
+  .keybox p{margin:.4rem 0 0;font-size:.85rem;line-height:1.55;color:var(--ink-2)}
+  .keybox .warn{color:var(--accent)}
+  .keyval{display:flex;margin:.7rem 0 0}
+  .keyval code{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;
+    background:var(--raise);border:1px solid var(--line);border-radius:.5rem;
+    padding:.6rem .7rem}
+  .keyrow{display:flex;gap:.5rem;margin:.7rem 0 0;flex-wrap:wrap}
+  .keyrow button{border:1px solid var(--line);background:var(--raise);color:var(--ink);
+    border-radius:99px;padding:.5rem 1.1rem;font-size:.9rem}
+  .keyrow button.go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
   .safety{margin:1.6rem 1.15rem 0;padding:.95rem 1.05rem;background:var(--raise);
     border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
     font-size:.86rem;line-height:1.6;color:var(--ink-2)}
@@ -451,6 +465,42 @@ function paint() {
    *     T(THREAD.why === "closed" ? "note.closed" : "note.waiting", { who: q.handle })));
    * }
    */
+  /* YOUR KEY, on your own page.
+   *
+   * The line that makes a second browser you. It lives here because this is
+   * the page the Profile tab opens once you have one — telling somebody to
+   * find it in the editor means telling them a different route depending on
+   * whether they have a page yet, and an instruction with an "if" in it is one
+   * people get wrong. */
+  if (q.mine) {
+    const kb = el("div", "keybox");
+    kb.append(el("h3", null, T("key.title")), el("p", null, T("key.body")));
+    const open = el("div");
+    open.hidden = true;
+    const val = el("code", null, device || "\u2014");
+    const row = el("div", "keyrow");
+    const show = el("button", null, T("key.show"));
+    show.type = "button";
+    show.addEventListener("click", () => {
+      open.hidden = !open.hidden;
+      show.textContent = open.hidden ? T("key.show") : T("key.hide");
+    });
+    const copy = el("button", "go", T("key.copy"));
+    copy.type = "button";
+    copy.addEventListener("click", () => {
+      copy.textContent = T(copyText(device) ? "key.copied" : "act.copyFail");
+      setTimeout(() => { copy.textContent = T("key.copy"); }, 2000);
+    });
+    open.append(el("div", "keyval", null), el("p", "warn", T("key.warn")));
+    open.firstChild.append(val);
+    const crow = el("div", "keyrow");
+    crow.append(copy);
+    open.append(crow);
+    row.append(show);
+    kb.append(row, open);
+    if (device) box.append(kb);
+  }
+
   box.append(el("p", "safety", T("bud.safety")));
 }
 

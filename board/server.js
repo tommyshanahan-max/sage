@@ -1237,9 +1237,17 @@ app.post("/api/feed", admin, express.raw({ type: "multipart/form-data", limit: "
 
     // Made by the operator rather than by a reader, so it goes straight up.
     // The admin is the review.
+    /* The same post in the other language, when the operator has written it.
+     *
+     * A reader's post carries one language because that is what they typed;
+     * something written BY this board for everybody on it has to carry both,
+     * or half the people it is for cannot read it. The card already knows how
+     * to show a `zh` under a `note` — it was built for translations — and this
+     * is the route that was missing the field. */
     const post = store.cleanPost({
       id: store.newId(), at, state: "published",
       handle: account, note, photo, by,
+      zh: String(parsed.fields.zh || "").slice(0, 2000),
       re: String(parsed.fields.re || ""),
       topic: String(parsed.fields.topic || "").slice(0, 40),
     });

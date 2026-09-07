@@ -160,6 +160,21 @@ partner-sync-2: ## Same, for the second partner seat
 feed-sync: ## Replace the snapshot The Feed's seat can see
 	bash scripts/partner-sync.sh feed
 
+post-explainer: ## Put the how-to-be-the-same-person-twice post on the feed
+	@# In both languages, because a board that explains itself in one of them
+	@# has explained itself to half the people it is for. Idempotent: it looks
+	@# for its own first line and does nothing if it is already up.
+	@#
+	@# Posts as The Tutor by default;  make post-explainer AS="留学生"  for
+	@# another name.
+	@grep -qE '^TOMSCODING_BOARD_KEY=.+' .env \
+	  || { echo "TOMSCODING_BOARD_KEY is not set in .env — the board would refuse this."; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T \
+	  -v "$(CURDIR)/scripts:/seed:ro" \
+	  --entrypoint node board \
+	  /seed/post-explainer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  $(if $(AS),--as "$(AS)",)
+
 board-reset: ## Empty the board — every person, post and photograph
 	@# For handing a clean app to people who have not seen it. Runs in the
 	@# board's own container, which is where the volume is mounted; this box
