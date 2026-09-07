@@ -706,6 +706,30 @@ export const STRINGS = {
   ],
   "lvl.again":         ["Try again", "再测一次"],
   "lvl.put":           ["Put this on my page", "放到我的主页上"],
+  /* THE RESULT, READ TOP TO BOTTOM. What you are, what that means you can do,
+     three facts about the run, and the one thing to do next. */
+  "lvl.headline":      ["{band} \u2014 Level {n} of 10", "{band} \u2014 第 {n} 级，共 10 级"],
+  "lvl.canNow":        ["What you can do now", "你现在能做到的"],
+  "lvl.stTime":        ["Time", "用时"],
+  "lvl.stRough":       ["Roughly", "大约"],
+  "lvl.stWas":         ["Last time", "上次"],
+  "lvl.stWasN":        ["Level {n}", "第 {n} 级"],
+  /* The two scales a student is actually asked about, and the only two this
+     has any business naming. "Roughly" is doing real work in that label: four
+     questions do not place anybody on HSK or CEFR, they point at a band. */
+  "lvl.hsk1":          ["HSK 1", "HSK 1"],
+  "lvl.hsk23":         ["HSK 2\u20133", "HSK 2\u20133"],
+  "lvl.hsk4":          ["HSK 4", "HSK 4"],
+  /* WHAT WAS ABOVE YOU, not "your mistakes". In a search that halves the range
+     each time, the ones you got wrong are the ones above your level — that is
+     the mechanism working, not you failing, and calling them mistakes would
+     teach somebody the opposite of what the screen is for. */
+  "lvl.above":         ["What was just above you", "刚好比你高一点的"],
+  "lvl.nextUp":        ["Next up", "接下来"],
+  "lvl.aboveWhy":      ["You missed these, which is how the four questions found your level.",
+                        "这几题你没答对——四道题就是这样找到你的水平的。"],
+  "crown.newMark":     ["New mark: {name}", "新称号：{name}"],
+  "crown.newMarkWhy":  ["Your level moved you up a mark.", "你的等级把称号往上推了一格。"],
   /* SOMEWHERE TO BE FOUND THAT IS NOT THIS BOARD. Optional, in the fold with
      the other optional things, and said plainly: a handle on a page is a
      handle anybody who opens the page can read. */

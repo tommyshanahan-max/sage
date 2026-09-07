@@ -108,19 +108,83 @@
     font-size:1.02rem}
   .note{margin:1.4rem 0 0;font-size:.86rem;line-height:1.6;color:var(--muted)}
 
-  /* WHAT THE LEVEL IS WORN AS. The mark large enough to be looked at, the name
-     beside it, and what it takes to change it — a status somebody cannot see
-     the next step of is a status they stop climbing. */
-  .worn{display:flex;align-items:center;gap:1rem;margin:1.5rem 0 0;
-    padding:1rem 1.15rem;background:var(--accent-soft);border-radius:1.1rem}
-  .worn .face{color:var(--accent);flex:0 0 auto;display:grid;place-items:center}
-  .worn .cap{margin:0;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  /* ---- the result, as a card ---------------------------------------------
+   * Raised off the paper and centred, because this is the screen that gets
+   * screenshotted and sent to somebody. Everything on it is one object: a
+   * medallion, what it is called, what it lets you do, and how the run went.
+   */
+  .rcard{margin:1.2rem 0 0;padding:1.6rem 1.15rem 1.3rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:1.4rem;box-shadow:var(--shadow);
+    text-align:center}
+  .medal{width:5rem;height:5rem;margin:0 auto;border-radius:50%;display:grid;
+    place-items:center;background:var(--accent-soft);color:var(--accent);
+    box-shadow:inset 0 0 0 2px var(--accent)}
+  .head1{margin:1rem 0 0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.7rem,7.6vw,2.2rem);line-height:1.15;text-wrap:balance}
+  /* Ten stops as dots rather than bars: a row of dots reads as a scale
+     somebody is standing on, a row of bars reads as a meter filling up, and
+     this is a place on a range and not a percentage of anything. */
+  .dots{display:flex;justify-content:center;gap:.5rem;margin:1rem 0 0}
+  .dots i{width:.68rem;height:.68rem;border-radius:50%;background:var(--line)}
+  .dots i.on{background:var(--accent)}
+  .dots i.here{box-shadow:0 0 0 3px var(--accent-soft)}
+  .markname{margin:1rem 0 0;font-size:1.05rem;font-weight:500}
+  .marknext{margin:.25rem 0 0;font-size:.85rem;color:var(--muted)}
+
+  .did{display:flex;gap:.8rem;text-align:left;margin:1.3rem 0 0;padding:1rem 1.05rem;
+    background:var(--accent-soft);border-top:2px solid var(--accent);
+    border-radius:.4rem .4rem 1rem 1rem}
+  .did .tick{flex:0 0 auto;width:1.9rem;height:1.9rem;border-radius:50%;
+    background:var(--accent);display:grid;place-items:center}
+  .did .tick svg{width:1.1rem;height:1.1rem;fill:none;stroke:var(--accent-ink);
+    stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .did .cap{margin:0;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
     color:var(--accent)}
-  :root[data-lang="zh"] .worn .cap{text-transform:none;letter-spacing:.02em}
-  .worn h2{margin:.2rem 0 0;font-family:var(--serif);font-weight:400;font-size:1.35rem;
-    line-height:1.2}
-  .worn .next{margin:.3rem 0 0;font-size:.86rem;line-height:1.5;color:var(--ink-2)}
-  .wornnote{margin:.6rem 0 0;font-size:.82rem;line-height:1.5;color:var(--muted)}
+  :root[data-lang="zh"] .did .cap{text-transform:none;letter-spacing:.02em}
+  .did h2{margin:.2rem 0 0;font-family:var(--serif);font-weight:400;font-size:1.2rem;
+    line-height:1.25}
+  .did p:not(.cap){margin:.35rem 0 0;font-size:.9rem;line-height:1.5;color:var(--ink-2)}
+
+  .stats{display:flex;margin:1.4rem 0 0}
+  .stats div{flex:1 1 0;min-width:0}
+  .stats b{display:block;font-family:var(--serif);font-weight:400;font-size:1.5rem;
+    line-height:1.1;font-variant-numeric:tabular-nums}
+  .stats span{display:block;margin:.3rem 0 0;font-size:.68rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+  :root[data-lang="zh"] .stats span{text-transform:none;letter-spacing:.02em}
+
+  .unlock{display:flex;align-items:center;gap:.7rem;text-align:left;margin:1.3rem 0 0;
+    padding:.8rem 1rem;background:var(--accent-soft);border-radius:.9rem;
+    color:var(--accent)}
+  .unlock b{display:block;font-weight:500;font-size:.95rem}
+  .unlock span{display:block;margin:.1rem 0 0;font-size:.82rem;color:var(--ink-2)}
+
+  /* ---- the rung above -----------------------------------------------------
+   * Not "your mistakes": these are the cards from the levels the search ruled
+   * out, and getting them wrong is how it found the answer. */
+  .above{margin:1.4rem 0 0;padding:1rem 1.15rem 1.1rem;border:1px solid var(--line);
+    border-radius:1.1rem}
+  .above .cap{margin:0 0 .5rem;font-size:.7rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  :root[data-lang="zh"] .above .cap{text-transform:none;letter-spacing:.02em}
+  .arow{display:flex;align-items:center;gap:.8rem;padding:.55rem 0;
+    border-top:1px solid var(--hair)}
+  .arow .aw{flex:1 1 auto;min-width:0}
+  .arow b{display:block;font-family:var(--serif);font-weight:400;font-size:1.15rem}
+  .arow span{display:block;font-size:.88rem;color:var(--ink-2)}
+  .ahear{flex:0 0 auto;width:2.1rem;height:2.1rem;border-radius:50%;
+    border:1px solid var(--line);background:var(--raise);color:var(--accent);
+    font-size:.7rem;line-height:1}
+  .awhy{margin:.7rem 0 0;font-size:.8rem;line-height:1.5;color:var(--muted)}
+
+  .nextup{margin:0 0 .3rem;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted)}
+  :root[data-lang="zh"] .nextup{text-transform:none;letter-spacing:.02em}
+
+  /* The one line left from that block: whether the mark is already beside
+     their name, or one button away. */
+  .wornnote{margin:.7rem 0 0;font-size:.82rem;line-height:1.5;color:var(--muted);
+    text-align:center}
 
   /* THE CLASS. A card rather than another button, because it is not one more
      thing to do with the result — it is the thing the result was for, and it
@@ -209,18 +273,6 @@
   /* ---- the result --------------------------------------------------------
    * The number is not the answer; what somebody can do is. So the band and the
    * sentence are set together and the digit is the small part. */
-  .band{margin:.5rem 0 0;font-family:var(--serif);font-weight:400;
-    font-size:clamp(2.2rem,10vw,3rem);line-height:1.1;color:var(--accent)}
-  .lvl{display:block;margin:.3rem 0 0;font-family:var(--sans);font-size:.78rem;
-    letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-  :root[data-lang="zh"] .lvl{text-transform:none;letter-spacing:.02em}
-  .can{margin:.9rem 0 0;font-family:var(--serif);font-size:1.2rem;line-height:1.5}
-  /* Ten stops, and where you landed. A picture of a range says "roughly" in a
-     way a digit cannot. */
-  .scale{display:flex;gap:.28rem;margin:1.3rem 0 0}
-  .scale i{flex:1;height:.5rem;border-radius:99px;background:var(--line)}
-  .scale i.on{background:var(--accent)}
-  .scale i.here{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
   .which{display:flex;gap:.6rem;margin:1.6rem 0 0}
   .which button{flex:1 1 0;min-width:0;border:1px solid var(--line);
     background:var(--raise);color:var(--ink);border-radius:1rem;
@@ -301,6 +353,18 @@ let RESULT = load();
 let WHICH = "";          // "zh" or "en" — the language being ranked
 let STATE = null;        // the search
 let CARD = null;
+/* What they came out at before this run, kept apart from RESULT because
+   "Try again" clears RESULT to get back to the start — and clearing the thing
+   that remembers last time is how "last time" quietly became blank on every
+   retake, which is the one moment somebody most wants to see it. */
+let LAST = RESULT ? { which: RESULT.which, level: Number(RESULT.level) || 0 } : null;
+let BEGAN = 0;           // when they started, for the one honest number on the result
+let MISSED = [];         // the cards that were above them
+/* Whether the result on screen was arrived at just now, rather than read back
+   from the last visit. Only a run that happened decides whether a mark is new:
+   a page reopened a week later showing "new mark" would be a lie the second
+   time it was read. */
+let JUST = false;
 
 const shuffle = (xs) => {
   const out = xs.slice();
@@ -322,15 +386,30 @@ function drawCard() {
 function start(which) {
   WHICH = which;
   STATE = firstStep();
+  BEGAN = Date.now();
+  MISSED = [];
   drawCard();
   try { if (window.lx) window.lx("level-start"); } catch { /* not fatal */ }
   paint();
 }
 
 function answer(pick) {
-  const next = nextStep(STATE, pick === CARD.a);
+  const right = pick === CARD.a;
+  // Kept for the end of the run: these are the cards from the levels the
+  // search ruled out above them, which is the useful half of a wrong answer.
+  if (!right) MISSED.push({ q: CARD.q, a: CARD.a });
+  const next = nextStep(STATE, right);
   if (next.done) {
-    RESULT = { at: new Date().toISOString(), which: WHICH, level: next.level };
+    RESULT = {
+      at: new Date().toISOString(), which: WHICH, level: next.level,
+      secs: Math.max(1, Math.round((Date.now() - BEGAN) / 1000)),
+      missed: MISSED.slice(0, 4),
+      // What they came out at before today, so the result can say whether
+      // anything moved. Zero the first time, which is not a number to show.
+      was: LAST && LAST.which === WHICH ? LAST.level : 0,
+    };
+    JUST = true;
+    LAST = { which: WHICH, level: RESULT.level };
     save(RESULT);
     try { if (window.lx) window.lx("level-done"); } catch { /* not fatal */ }
     STATE = null;
@@ -638,45 +717,103 @@ function levelPicture(w, n, band, can) {
 function drawResult(box) {
   const n = RESULT.level;
   const w = RESULT.which;
-  box.append(el("p", "eyebrow", T("lvl.yours")));
-  box.append(el("p", "band", P(BANDS[w][n - 1])));
-  box.append(el("span", "lvl", T("lvl.n", { n })));
-  box.append(el("p", "can", P(CAN[w][n - 1])));
-
-  const scale = el("div", "scale");
-  for (let i = 1; i <= 10; i++) {
-    scale.append(el("i", i === n ? "here" : (i < n ? "on" : "")));
-  }
-  box.append(scale);
-
-  /* Four answers cannot be more certain than four answers. Saying so beside
-     the number is the same discipline as the type sort naming its softest
-     letter — a rank printed bare invites somebody to defend it. */
-  box.append(el("p", "caveat", T("lvl.rough")));
-
-  /* THE MARK.
+  /* THE RESULT, AS ONE CARD.
    *
-   * The number is a measurement and this is what somebody wears because of it,
-   * which is the half people come back for. It is the same five bands as the
-   * result above — see crown.js — so it cannot disagree with the line it sits
-   * under.
-   *
-   * The line underneath is the point of showing it here: either it is already
-   * beside their name, or it is one button away, and that button is directly
-   * below. Nobody hunts for a reward they have not been told they have.
+   * Read top to bottom it answers four questions in the order somebody asks
+   * them: what am I, what does that let me do, how did the run go, and what
+   * changed. Everything on it is measured or stored — there is no score here
+   * and there is not going to be one, for the reason under the stats.
    */
   const stage = Math.ceil(n / 2);
-  const worn = el("div", "worn");
-  const face = el("div", "face");
-  face.append(crownMark(stage, "3.4rem"));
-  worn.append(face);
-  const said = el("div", "said2");
-  said.append(el("p", "cap", T("crown.what")));
-  said.append(el("h2", null, stageName(stage)
+  const card = el("div", "rcard");
+
+  const medal = el("div", "medal");
+  medal.append(crownMark(stage, "2.9rem"));
+  card.append(medal);
+
+  card.append(el("h1", "head1", T("lvl.headline", { band: P(BANDS[w][n - 1]), n })));
+
+  const dots = el("div", "dots");
+  for (let i2 = 1; i2 <= 10; i2++) {
+    dots.append(el("i", i2 === n ? "on here" : (i2 < n ? "on" : "")));
+  }
+  card.append(dots);
+
+  card.append(el("p", "markname", stageName(stage)
     + " \u00b7 " + T(w === "zh" ? "crown.zh" : "crown.en")));
-  said.append(el("p", "next", T(stage >= 5 ? "crown.top" : "crown.next")));
-  worn.append(said);
-  box.append(worn);
+  card.append(el("p", "marknext", T(stage >= 5 ? "crown.top" : "crown.next")));
+
+  /* WHAT THEY CAN DO, which is the half of a result anybody actually wanted.
+     The sentence is already written per level; its first clause is the heading
+     and whatever follows is the description, so one string serves both without
+     a second one to keep in step. */
+  const can = P(CAN[w][n - 1]);
+  const cut = can.indexOf(". ");
+  const did = el("div", "did");
+  const tick = el("div", "tick");
+  const tsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  tsvg.setAttribute("viewBox", "0 0 24 24");
+  tsvg.setAttribute("aria-hidden", "true");
+  const tp = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  tp.setAttribute("d", "M5 12.6 10 17.4 19.4 7.4");
+  tsvg.append(tp);
+  tick.append(tsvg);
+  const didsay = el("div", "didsay");
+  didsay.append(el("p", "cap", T("lvl.canNow")));
+  didsay.append(el("h2", null, cut < 0 ? can : can.slice(0, cut + 1)));
+  if (cut >= 0) didsay.append(el("p", null, can.slice(cut + 2)));
+  did.append(tick, didsay);
+  card.append(did);
+
+  /* THREE FACTS, AND NOT A SCORE.
+   *
+   * The obvious thing to put here is accuracy, and it would be the worst
+   * number on the page. This is a binary search: somebody placed correctly
+   * gets about half of them wrong BY DESIGN, because a wrong answer is how the
+   * range halves. "2 of 4" printed under the word Score reads as fifty per
+   * cent to every person alive, and would make a correct result look like a
+   * failed one.
+   *
+   * So: how long it took, which is measured; the band on the scale they are
+   * actually asked about, hedged with the word Roughly because four questions
+   * point at a band rather than place anybody on one; and what they came out
+   * at last time, which is the only real progress this app can show.
+   */
+  const rough = w === "zh"
+    ? T(n <= 3 ? "lvl.hsk1" : n <= 7 ? "lvl.hsk23" : "lvl.hsk4")
+    : ["A1", "A1", "A2", "A2", "B1", "B1", "B2", "B2", "C1", "C1"][n - 1];
+  const secs = Number(RESULT.secs) || 0;
+  const stats = el("div", "stats");
+  const stat = (value, label) => {
+    const d = el("div");
+    d.append(el("b", null, value));
+    d.append(el("span", null, label));
+    stats.append(d);
+  };
+  if (secs) {
+    stat(Math.floor(secs / 60) + ":" + String(secs % 60).padStart(2, "0"), T("lvl.stTime"));
+  }
+  stat(rough, T("lvl.stRough"));
+  if (RESULT.was) stat(T("lvl.stWasN", { n: RESULT.was }), T("lvl.stWas"));
+  card.append(stats);
+
+  /* Only when a run just happened AND it moved them into a different mark.
+     A ribbon that fires on every result is a ribbon nobody reads twice. */
+  if (JUST && RESULT.was && Math.ceil(RESULT.was / 2) !== stage) {
+    const un = el("div", "unlock");
+    un.append(crownMark(stage, "1.6rem"));
+    const uns = el("div");
+    uns.append(el("b", null, T("crown.newMark", { name: stageName(stage) })));
+    uns.append(el("span", null, T("crown.newMarkWhy")));
+    un.append(uns);
+    card.append(un);
+  }
+
+  /* Four answers cannot be more certain than four answers. Inside the card and
+     directly under the number, because a rank printed bare invites somebody to
+     defend it — and a qualification below the fold is one nobody reads. */
+  card.append(el("p", "caveat", T("lvl.rough")));
+  box.append(card);
   box.append(el("p", "wornnote", T(putUp() ? "crown.is" : "crown.shown")));
 
   /* WHAT THE NUMBER IS FOR.
@@ -701,6 +838,7 @@ function drawResult(box) {
                 : band === "getting_by" ? "lvl.spGetting" : "lvl.spComfortable";
 
     const k = el("div", "klass");
+    k.append(el("p", "nextup", T("lvl.nextUp")));
     k.append(el("h2", null, T("lvl.classTitle")));
     k.append(el("p", "at", T(named)));
     k.append(el("p", null, T("lvl.classSay")));
@@ -714,6 +852,41 @@ function drawResult(box) {
     k.append(go);
     k.append(el("p", "away", T("lvl.classAway")));
     box.append(k);
+  }
+
+  /* THE CARDS THAT WERE ABOVE THEM.
+   *
+   * The reference screen this follows calls the same section "review your
+   * mistakes", and that framing would be wrong here: in a search that halves
+   * the range on every answer, the ones somebody got wrong are the ones from
+   * the levels above the one they landed on. Getting them wrong is the
+   * instrument working. Shown as what they are — the next rung — with the
+   * answer, and the same voice button the questions had, because a word you
+   * nearly knew is the one worth hearing said properly.
+   */
+  const missed = Array.isArray(RESULT.missed) ? RESULT.missed : [];
+  if (missed.length) {
+    const tag = w === "zh" ? "zh-CN" : "en-US";
+    const ab = el("div", "above");
+    ab.append(el("p", "cap", T("lvl.above")));
+    for (const m of missed) {
+      const row = el("div", "arow");
+      const words = el("div", "aw");
+      words.append(el("b", null, m.q));
+      words.append(el("span", null, m.a));
+      row.append(words);
+      if (voiceFor(tag)) {
+        const h = el("button", "ahear");
+        h.type = "button";
+        h.setAttribute("aria-label", T("lvl.hear"));
+        h.textContent = "\u25b6";
+        h.addEventListener("click", () => say(m.q, tag));
+        row.append(h);
+      }
+      ab.append(row);
+    }
+    ab.append(el("p", "awhy", T("lvl.aboveWhy")));
+    box.append(ab);
   }
 
   const feedRow = el("div", "row");
