@@ -755,6 +755,20 @@
          made yet. -->
     <div class="field"><input id="mename" maxlength="40"></div>
 
+    <!-- THE SWITCH THAT DECIDES WHETHER ANY OF THIS DOES ANYTHING.
+         It was inside the fold, with the optional details. That made the short
+         path — photo, name, Post — produce a profile nobody could browse to,
+         which is the one outcome the short path must not have. It is on the
+         form now, and on by default for a new one: on a home screen that is a
+         deck of people, being in the deck is what making a page means. Off is
+         one tap and takes effect at once. -->
+    <div class="looking">
+      <label>
+        <input type="checkbox" id="melooking">
+        <span><b id="melookinglabel"></b><span class="why" id="melookingwhy"></span></span>
+      </label>
+    </div>
+
     <button class="morego" type="button" id="memorego"
             aria-expanded="false" aria-controls="memore">
       <span id="memorelabel"></span><i aria-hidden="true">+</i>
@@ -767,16 +781,6 @@
       </div>
       <div class="field"><input id="mehere" maxlength="40"></div>
       <textarea id="megoal" rows="3"></textarea>
-      <!-- A week grid of free days used to open under this. It was the most
-           work the form asked for and the least anybody read: two people who
-           want to study together arrange it between themselves, and a
-           timetable that goes stale in a fortnight is worse than none. -->
-      <div class="looking">
-        <label>
-          <input type="checkbox" id="melooking">
-          <span><b id="melookinglabel"></b><span class="why" id="melookingwhy"></span></span>
-        </label>
-      </div>
       <p class="menote" id="mewhy"></p>
     </div>
 
@@ -2441,7 +2445,11 @@ function openMe(joining) {
   // Pressed "join the list", so it starts ticked — the button said what it was
   // going to do and a form that then makes you do it again is a form arguing
   // with its own button.
-  $("melooking").checked = joining === true || Boolean(ME && ME.looking);
+  /* On by default for a new page, and whatever they last chose for one that
+   * exists. Defaulting a returning person back to on would be overruling them
+   * every time they opened the form. */
+  $("melooking").checked = joining === true ||
+    (ME && ME.handle ? Boolean(ME.looking) : true);
   $("mesaid").hidden = true;
   drawMePic();
   $("mesheet").hidden = false;

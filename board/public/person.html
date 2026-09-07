@@ -150,6 +150,9 @@
      be narrower than their content. */
   .acts.meet{margin:0 0 .4rem}
   .acts.meet>*{flex:1 1 0;min-width:0;padding:.8rem .8rem;font-size:1rem}
+  /* Share sits with them but does not compete: Follow is the decision on
+     somebody else's page, and on your own there is no decision to make. */
+  .acts .share{color:var(--ink-2)}
   .acts button,.acts a{flex:1;min-width:9rem;text-align:center;text-decoration:none;
     border:1px solid var(--line);background:var(--raise);color:var(--ink);
     border-radius:99px;padding:.7rem 1rem;font-size:.93rem}
@@ -202,6 +205,32 @@
 import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
 
 const HANDLE = "{{HANDLE}}";
+const IN_WECHAT = /micromessenger/i.test(navigator.userAgent);
+
+/* The clipboard API where there is one and a secure context, an off-screen
+ * textarea where there is not — which is most of the browsers this has to work
+ * in. Same two routes as the feed. */
+function copyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) { /* fall through */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:absolute;left:-9999px;top:0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);   // iOS ignores select() alone
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
+
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
   if (x !== undefined) n.textContent = x; return n; };
@@ -346,6 +375,33 @@ function paint() {
      * }
      */
   }
+
+  /* Share, on every profile — including your own, which is the whole point:
+   * this is the page you send a friend so they can find you. It is the address
+   * WeChat renders with a face and a name on it.
+   *
+   * The deck has one of these per card; this is the same thing at the place
+   * somebody arrives when they follow one. */
+  const sh = el("button", "share", T("act.share"));
+  sh.type = "button";
+  sh.addEventListener("click", () => {
+    const url = location.origin + "/p/" + encodeURIComponent((q.handle || "").toLowerCase());
+    const say = (w, hold) => {
+      sh.textContent = w;
+      setTimeout(() => { sh.textContent = T("act.share"); }, hold || 2200);
+    };
+    // Inside WeChat a page may not open a share sheet: the ⋯ menu is the only
+    // way, so the honest version is the clipboard and where the real control is.
+    if (IN_WECHAT) { say(T(copyText(url) ? "act.wxCopied" : "act.wxUseMenu"), 3600); return; }
+    if (navigator.share) {
+      navigator.share({ title: q.handle || T("board.someone"),
+                        text: (q.goal || "").slice(0, 120), url })
+        .catch(() => { /* dismissed is not a failure */ });
+      return;
+    }
+    say(T(copyText(url) ? "act.copied" : "act.copyFail"));
+  });
+  meet.append(sh);
 
   // Directly under Follow, because somebody who opened a shared link has two
   // things they might do and this is the second one: look at the rest. It was

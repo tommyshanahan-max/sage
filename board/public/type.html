@@ -95,6 +95,10 @@
   .quiet{margin:.8rem 0 0;border:1px solid var(--line);background:var(--raise);
     color:var(--ink);border-radius:99px;padding:.7rem 1.4rem;font-size:.95rem;
     text-decoration:none;display:inline-block}
+  /* One loud button on this screen, and it is Share. Two would be a screen
+     that has not decided what it wants. */
+  .quiet.wide{display:block;width:100%;text-align:center;padding:.8rem 1rem;
+    font-size:1rem}
   .note{margin:1.4rem 0 0;font-size:.86rem;line-height:1.6;color:var(--muted)}
 
   /* ---- one question at a time --------------------------------------------
@@ -174,6 +178,32 @@ const fill = (n, ...kids) => { while (n.firstChild) n.removeChild(n.firstChild);
 /** Both halves of a pair live in one file; this picks the one being read. */
 const P = (pair) => (Array.isArray(pair) ? pair[lang() === "zh" ? 1 : 0] : pair);
 
+const IN_WECHAT = /micromessenger/i.test(navigator.userAgent);
+
+/* Same two routes as everywhere else on this board: the clipboard API where
+ * there is one and a secure context, and an off-screen textarea where there is
+ * not — which is most of the browsers this has to work in. */
+function copyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) { /* fall through */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:absolute;left:-9999px;top:0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);   // iOS ignores select() alone
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
+
 let device = "";
 try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
 
@@ -182,6 +212,19 @@ const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"
                      catch { return null; } };
 const save = (r) => { try { localStorage.setItem(KEY, JSON.stringify(r)); }
                       catch { /* private window: the result is still on screen */ } };
+
+/* Their own name, once the letters are on their page — which decides whether
+ * Share sends their profile or sends the test. Read once, and re-read after
+ * they press to put it up. */
+let MINE = "";
+async function whoAmI() {
+  if (!device) return;
+  try {
+    const d = await fetch("/api/me", { cache: "no-store",
+      headers: { "x-board-device": device } }).then((r) => r.json());
+    MINE = (d && d.person && d.person.type && d.person.handle) ? d.person.handle : "";
+  } catch { MINE = ""; }
+}
 
 let RESULT = load();
 let ORDER = [];        // the items, shuffled
@@ -310,6 +353,42 @@ function drawResult(box) {
     box.append(wrap);
   }
 
+  /* SHARING THE RESULT.
+   *
+   * The link is the test, not a page about this answer — there is no page about
+   * this answer, and inventing one that says INFJ to whoever opens it would be
+   * a claim about somebody made by a URL. The four letters travel in the words
+   * instead, where they belong to the person sending them, and whoever receives
+   * it lands on the twenty questions.
+   *
+   * If they have put the letters on their page, that page is the better thing
+   * to send, and the button says so — it carries their face and their name into
+   * the chat, which a link to a questionnaire does not. */
+  const shareRow = el("div", "row");
+  const sh = el("button", "go", T("act.share"));
+  sh.type = "button";
+  const words = title ? T("type.shareTitled", { code: r.code, title: P(title) })
+                      : T("type.share", { code: r.code });
+  sh.addEventListener("click", () => {
+    const url = location.origin + (MINE ? "/p/" + encodeURIComponent(MINE) : "/type");
+    const say = (w, hold) => {
+      sh.textContent = w;
+      setTimeout(() => { sh.textContent = T("act.share"); }, hold || 2200);
+    };
+    if (IN_WECHAT) {
+      say(T(copyText(words + " " + url) ? "act.wxCopied" : "act.wxUseMenu"), 3600);
+      return;
+    }
+    if (navigator.share) {
+      navigator.share({ title: r.code, text: words, url })
+        .catch(() => { /* dismissed is not a failure */ });
+      return;
+    }
+    say(T(copyText(words + " " + url) ? "act.copied" : "act.copyFail"));
+  });
+  shareRow.append(sh);
+  box.append(shareRow);
+
   const row = el("div", "row");
   const again = el("button", "quiet", T("type.again"));
   again.type = "button";
@@ -323,7 +402,7 @@ function drawResult(box) {
    * result is yours on this phone whether or not anybody else ever sees it,
    * and a test that publishes its answer by default is a different product. */
   const mine = el("div");
-  const put = el("button", "go", T("type.put"));
+  const put = el("button", "quiet wide", T("type.put"));
   put.type = "button";
   const say = el("p", "said");
   put.addEventListener("click", async () => {
@@ -338,6 +417,9 @@ function drawResult(box) {
         say.className = "said ok";
         say.textContent = T("type.puton");
         put.hidden = true;
+        // Share now has a better thing to send: their page, with their face
+        // and the letters on it, rather than the questionnaire.
+        MINE = out.person.handle || "";
         return;
       }
     } catch { /* fall through to the retry */ }
@@ -363,6 +445,9 @@ setLang(pickLang());
 $("langslot").append(langButton(paint));
 $("back").setAttribute("aria-label", T("nav.back"));
 paint();
+// After the first paint: it only changes what Share sends, and waiting for it
+// would hold a page that is otherwise ready.
+whoAmI().then(() => { if (RESULT && !ORDER.length) paint(); });
 </script>
 
 <script>

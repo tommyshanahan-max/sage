@@ -601,10 +601,13 @@ export const STRINGS = {
   "bud.joinedGo":      ["See the list", "看名单"],
   "bud.join":          ["Put me on the list", "把我加到名单上"],
   "bud.seeWho":        ["See who is looking", "看看谁在找"],
-  "bud.lookingLabel":  ["I am looking for a study buddy", "我在找学习搭子"],
+  // Names what the switch DOES, not how somebody feels. "I am looking for a
+  // study buddy" is a mood; being in Browse is a fact about where your page
+  // appears, and it is the one thing this switch decides.
+  "bud.lookingLabel":  ["Show me in Browse", "在「看看有谁」里显示我"],
   "bud.lookingWhy": [
-    "Only people who ask to be listed appear here. Posting does not put you in it, and one tap takes you back out.",
-    "只有主动要求的人才会出现在这里。发内容不会把你加进来，点一下就能退出。",
+    "Your page appears in the deck people flick through. Turn it off and you are still here — you just are not in it. Posting never puts you in on its own.",
+    "你的主页会出现在大家翻看的名单里。关掉也不会影响你用这个应用，只是不出现在那里。单纯发内容不会把你加进去。",
   ],
   "bud.free":          ["Free", "有空"],
   "bud.trades":        ["Trades", "可以交换"],
@@ -657,6 +660,12 @@ export const STRINGS = {
   "type.done":         ["Back to browsing", "继续看看"],
   "type.put":          ["Put this on my page", "放到我的主页上"],
   "type.puton":        ["On your page.", "已经放上去了。"],
+  // The letters travel in the words, not in the link. There is no page that
+  // says INFJ about somebody who has not chosen to say it themselves.
+  "type.share":        ["I came out {code}. Twenty choices, two minutes:",
+                        "我做出来是 {code}。二十道选择，两分钟："],
+  "type.shareTitled":  ["I came out {code} — {title}. Twenty choices, two minutes:",
+                        "我做出来是 {code} —— {title}。二十道选择，两分钟："],
   "type.outOf":        ["{n} of {total} answers", "{total} 题里有 {n} 题"],
   // Said in the same breath as the code, never below the fold: an axis
   // answered 3-2 produces a letter as confidently as one answered 5-0.

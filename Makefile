@@ -160,6 +160,23 @@ partner-sync-2: ## Same, for the second partner seat
 feed-sync: ## Replace the snapshot The Feed's seat can see
 	bash scripts/partner-sync.sh feed
 
+board-reset: ## Empty the board — every person, post and photograph
+	@# For handing a clean app to people who have not seen it. Runs in the
+	@# board's own container, which is where the volume is mounted; this box
+	@# has Docker and no node.
+	@#
+	@# Prints what is there and changes nothing unless you add YES=1. It keeps
+	@# a stamped copy beside the original — "start again" is a thing people ask
+	@# for twice, once meaning it — and tells you the command that removes the
+	@# copy when you are sure. NOBACKUP=1 skips the copy.
+	@#
+	@# The counter is a different service with a different volume and is not
+	@# touched: visits, daily figures and the feature votes all survive this.
+	$(COMPOSE) run --rm --no-deps -T \
+	  -v "$(CURDIR)/scripts:/seed:ro" \
+	  --entrypoint node board \
+	  /seed/board-reset.mjs $(if $(YES),--yes,) $(if $(NOBACKUP),--no-backup,)
+
 feed-people: ## Put the demo people on The Feed (roster in scripts/people.json)
 	@# Run inside the board's own container, not on the host. This box has
 	@# Docker and no node — everything here runs in an image — so a script
