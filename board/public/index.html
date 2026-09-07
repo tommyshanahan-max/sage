@@ -2079,24 +2079,36 @@ function drawMine() {
     ring.append(el("i", null, "+"));
   }
 
+  /* FOUR STATES, and the fourth is the one that was lying.
+   *
+   * "You are in Browse" was said to anybody with a photograph, whether or not
+   * they were actually in Browse — and being in it is a switch, off by default
+   * on every page made before that switch was put on the form. So somebody
+   * with a face, a name and looking:false read a row telling them they were in
+   * the deck while the deck showed nobody. */
+  const listed = Boolean(ME && ME.looking);
   const words = el("span");
   if (!face) {
     words.append(el("b", null, T("brw.mine")), el("span", null, T("brw.mineWhy")));
   } else if (ME.photoPending) {
     words.append(el("b", null, T("brw.mineHeld")), el("span", null, T("brw.mineHeldWhy")));
+  } else if (!listed) {
+    words.append(el("b", null, T("brw.mineOff")), el("span", null, T("brw.mineOffWhy")));
   } else {
     words.append(el("b", null, T("brw.mineUp", { name: ME.handle || "" })),
                  el("span", null, T("brw.mineUpWhy")));
   }
   box.append(ring, words);
-  if (face) box.append(el("span", "chev", "\u203a"));
+  if (face) box.append(el("span", "chev", listed ? "\u203a" : "\u2192"));
 }
 /* One control, two destinations: the picker while there is nothing to look at,
  * their own page once there is. */
 $("mine").addEventListener("click", () => {
   if (!(ME && ME.photo)) { $("mephoto").click(); return; }
-  if (ME.handle) location.href = "/p/" + encodeURIComponent(ME.handle.toLowerCase());
-  else openMe();
+  // Not in the deck: the useful thing is the switch that puts you in it, not
+  // a look at the page nobody can reach.
+  if (!ME.looking || !ME.handle) { openMe(); return; }
+  location.href = "/p/" + encodeURIComponent(ME.handle.toLowerCase());
 });
 
 function personCard(q, live) {

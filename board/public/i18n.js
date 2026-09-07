@@ -721,6 +721,14 @@ export const STRINGS = {
     "You can see it. A person looks at every photograph before anybody else does.",
     "你自己看得到。每张照片都要先由人过目，之后别人才看得到。",
   ],
+  // The one that says you are NOT in it, which is a thing a page can be: your
+  // own page exists, has a face on it, and is not in the deck because the
+  // switch is off. Every page made before that switch was on the form is here.
+  "brw.mineOff":       ["You are not in Browse", "你还没出现在名单里"],
+  "brw.mineOffWhy": [
+    "Your page is made, but it is not in the deck people flick through. Tap to turn Show me in Browse on.",
+    "你的主页已经做好了，但还没出现在大家翻看的名单里。点一下打开「在名单里显示我」。",
+  ],
   "brw.mineUp":        ["You are in Browse", "你已经在名单里了"],
   "brw.mineUpWhy": [
     "This is how you look to everybody else. Your own card is never in your own deck.",
@@ -733,9 +741,12 @@ export const STRINGS = {
   ],
   "brw.next":          ["Next", "下一个"],
   "brw.none":          ["Nobody on the list yet", "名单上还没有人"],
+  // Named the study-buddy list, which is not in V1 — and said "nobody", which
+  // is wrong for the commonest case: somebody whose own page exists and is
+  // switched off is reading this about themselves.
   "brw.noneBody": [
-    "Nobody has put themselves on the study-buddy list. Put yourself on it and you are the first person anybody sees.",
-    "还没有人加入学习搭子名单。你可以第一个加入，这样别人第一个看到的就是你。",
+    "Nobody is showing in Browse yet. Put your photo up and you are the first person anybody sees.",
+    "还没有人在这里显示。把你的照片放上来，你就是别人第一个看到的人。",
   ],
   "brw.open":          ["Browse students", "看看有谁"],
   // "the study-buddy list" named a page that is not in V1.
