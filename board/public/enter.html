@@ -438,11 +438,33 @@ $("invite").after(langButton(() => words()));
 words();
 route();
 
-// Already in — including a browser that has the key. Nobody should be asked
-// for a code they have already spent.
+/* ALREADY IN, AND SHOULD NOT HAVE SEEN THIS AT ALL.
+ *
+ * Two people land here who are already admitted: somebody who pasted their
+ * recovery key, and — the case that matters tonight — everybody who was using
+ * the board before there was a door. They were let through in the file, but a
+ * page request carries no localStorage, so the server had nothing to recognise
+ * them by and served them the door.
+ *
+ * The check below is what recognises them: it sends the browser's own id, and
+ * the server hands back a cookie. So the fix is to reload rather than to say
+ * "you are in" — with the cookie set, the address they actually asked for is
+ * served, and the door was a flicker instead of a wall.
+ *
+ * Once, guarded by a flag: if the cookie cannot be stored, a reload that lands
+ * back here would otherwise loop for ever, and a door is a better failure than
+ * a spinning page.
+ */
 fetch("/api/admitted", { headers: { "x-board-device": device } })
   .then((r) => r.json())
-  .then((d) => { if (d && d.in && d.mode) showIn(""); })
+  .then((d) => {
+    if (!d || !d.in || !d.mode) return;
+    let tried = "";
+    try { tried = sessionStorage.getItem("board:doorloop") || ""; } catch { /* fine */ }
+    if (tried) return showIn("");
+    try { sessionStorage.setItem("board:doorloop", "1"); } catch { /* fine */ }
+    location.reload();
+  })
   .catch(() => { /* the door still works */ });
 </script>
 </body>
