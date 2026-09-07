@@ -234,6 +234,31 @@
     text-align:center;box-shadow:0 0 0 2px var(--paper)}
   .bar a{position:relative}
 
+  /* Where you are now, at the top of the opened fold. Centred and set large:
+     it is the payoff for opening, and the summary row above it is the version
+     for when the fold is shut. */
+  #profnow{text-align:center;padding:.4rem 0 1.1rem;border-bottom:1px solid var(--hair);
+    margin:0 0 1.1rem}
+  .nowmedal{width:4.2rem;height:4.2rem;margin:0 auto;border-radius:50%;display:grid;
+    place-items:center;background:var(--accent-soft);color:var(--accent);
+    box-shadow:inset 0 0 0 2px var(--accent)}
+  .nowmedal.empty{background:none;color:var(--line);box-shadow:inset 0 0 0 2px var(--line)}
+  .nowcap{margin:.7rem 0 0;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted)}
+  :root[data-lang="zh"] .nowcap{text-transform:none;letter-spacing:.02em}
+  .nowbig{margin:.25rem 0 0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.9rem,9vw,2.5rem);line-height:1.1;color:var(--accent)}
+  .nowbig.none{color:var(--muted)}
+  .nowlvl{margin:.3rem 0 0;font-size:.92rem;color:var(--ink-2)}
+  .nowdots{display:flex;justify-content:center;gap:.4rem;margin:.8rem 0 0}
+  .nowdots i{width:.55rem;height:.55rem;border-radius:50%;background:var(--line)}
+  .nowdots i.on{background:var(--accent)}
+  .nowtype{display:inline-block;margin:.85rem 0 0;padding:.2rem .6rem;border-radius:99px;
+    background:var(--accent-soft);color:var(--accent);font-size:.8rem;letter-spacing:.1em}
+  .nowgo{display:inline-block;margin:.9rem 0 0;border:1px solid var(--accent);
+    background:var(--accent);color:var(--accent-ink);border-radius:99px;
+    padding:.6rem 1.2rem;font-size:.95rem;text-decoration:none}
+
   /* ---- the report card ----------------------------------------------------
    * One fold over the card of the day and the two tests. Its head is the whole
    * thing when shut, so it carries the summary and a dot when there is
@@ -925,6 +950,8 @@
       <i class="chev" aria-hidden="true"></i>
     </button>
     <div id="profbody">
+      <!-- Your level, large, before anything else in the fold. -->
+      <div id="profnow"></div>
       <!-- One card a day, at the reader's own level, drawn here rather than
            posted: a shared board with fifty people on it would carry fifty
            cards a morning and the thing worth reading would be underneath
@@ -1119,6 +1146,7 @@
 import { T, when, lang, setLang, pickLang, langButton, STRINGS } from "/i18n.js";
 import { stageFor, stageName, crownMark } from "/crown.js";
 import { dailyCard, dailyDone } from "/daily.js";
+import { BANDS } from "/level-cards.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -2265,6 +2293,46 @@ function drawProf() {
   const lvl = readLocal("board:level");
   const typ = readLocal("board:type");
   const done = dailyDone();
+
+  /* WHERE YOU ARE NOW, large, as the first thing inside the fold.
+   *
+   * A report card that makes somebody read a summary line to find their own
+   * level is burying the one number it is named after. Same shape as the
+   * result screen it came from — mark, band, level, ten stops — so opening
+   * this and finishing the test show the same object twice.
+   */
+  const now = $("profnow");
+  fill(now);
+  const P = (pair) => (Array.isArray(pair) ? pair[lang() === "zh" ? 1 : 0] : pair);
+  if (lvl && lvl.level) {
+    const n = Math.max(1, Math.min(10, Number(lvl.level) || 1));
+    const w = lvl.which === "en" ? "en" : "zh";
+    const medal = el("div", "nowmedal");
+    medal.append(crownMark(stageFor((w === "zh" ? "ZH " : "EN ") + n), "2.4rem"));
+    now.append(medal);
+    now.append(el("p", "nowcap", T("prof.now")));
+    now.append(el("p", "nowbig", P(BANDS[w][n - 1])));
+    now.append(el("p", "nowlvl", T("lvl.n", { n })
+      + " \u00b7 " + T(w === "zh" ? "crown.zh" : "crown.en")));
+    const dots = el("div", "nowdots");
+    for (let i = 1; i <= 10; i++) dots.append(el("i", i <= n ? "on" : ""));
+    now.append(dots);
+    if (typ && typ.code) now.append(el("p", "nowtype", typ.code));
+  } else {
+    /* Nothing to show is still worth a line: the invitation goes where the
+       number would have been, rather than being hunted for further down. The
+       first mark is drawn faint above it — what is on offer, shown rather than
+       described, and it fills the hole the medallion would have left. */
+    const medal = el("div", "nowmedal empty");
+    medal.append(crownMark(1, "2.4rem"));
+    now.append(medal);
+    now.append(el("p", "nowcap", T("prof.now")));
+    now.append(el("p", "nowbig none", T("prof.nolevelBig")));
+    now.append(el("p", "nowlvl", T("prof.nolevelWhy")));
+    const go = el("a", "nowgo", T("day.takeTest"));
+    go.href = "/level";
+    now.append(go);
+  }
 
   /* Two lines, not one: "From the Professor · Your report card" wrapped on a
      phone and read as one long sentence. Whose it is, then what it is. */

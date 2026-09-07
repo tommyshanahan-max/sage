@@ -759,6 +759,12 @@ export const STRINGS = {
   "prof.cardDone":     ["Today's card done", "今天的卡做完了"],
   "prof.noLevel":      ["No level yet", "还没测等级"],
   "prof.noType":       ["No letters yet", "还没测字母"],
+  /* THE FIRST THING INSIDE THE FOLD. Opening a report card and having to read
+     a summary line to find your own level is a report card that buries the
+     mark it is named after. */
+  "prof.now":          ["Where you are now", "你现在的水平"],
+  "prof.nolevelBig":   ["No level yet", "还没有等级"],
+  "prof.nolevelWhy":   ["Four questions and you have one.", "四道题，你就有了。"],
   /* WHAT THIS CARD IS, for somebody who has just found it at the top of their
      feed and has no idea why a word is being shown to them. Folded away,
      because it is read once and then never again. */
