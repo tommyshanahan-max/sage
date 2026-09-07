@@ -1780,11 +1780,10 @@ async function drawTutor() {
   // Find a study buddy is held back for V1: the deck at the top of this page is
   // the same people, and offering both is offering a choice between a thing and
   // itself. The route still works for anybody with the address.
-  // Browsing is the top of this page now, so this scrolls rather than
-  // navigates — sending somebody to the page they are already on reloads it
-  // and loses the deck's place.
-  box.append(doable("brw.open", "brw.openWhat",
-    () => window.scrollTo({ top: 0, behavior: "smooth" })));
+  // Browse students is not one of the Tutor's offers. The deck is at the top
+  // of this same page and there is a tab for it in the bar; a third way in,
+  // whose button scrolls you up one screen, is the Tutor offering to take
+  // somebody where they already are.
 
   // Built, so it is offered rather than voted on. The votes that asked for it
   // stay in the file — they are what said to build this one first.
