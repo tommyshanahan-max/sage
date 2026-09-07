@@ -706,6 +706,20 @@ export const STRINGS = {
   ],
   "lvl.again":         ["Try again", "再测一次"],
   "lvl.put":           ["Put this on my page", "放到我的主页上"],
+  /* WHAT TO DO ABOUT THE NUMBER. A rank on its own is a verdict; the useful
+     half is the next hour, and Study Pal already writes that hour. */
+  "lvl.classTitle":    ["A class at this level", "来一节这个水平的课"],
+  "lvl.classSay": [
+    "Study Pal writes you one for a place you will actually stand in: a short conversation at your level, the words inside it, then two more ways to use them.",
+    "Study Pal 按你的水平写一节课，场景是你真会遇到的：一段短对话，把里面的词挑出来，再给两个用法。"],
+  "lvl.classGo":       ["Take a class \u2192", "去上这一节 \u2192"],
+  "lvl.classAway":     ["Opens Study Pal \u00b7 liuxuesheng.help",
+                        "会打开 Study Pal \u00b7 liuxuesheng.help"],
+  /* Study Pal's own three bands, in its own words, because the link hands it
+     one of these and the person should see the same name at both ends. */
+  "lvl.spNew":         ["New here \u00b7 HSK 1", "刚来 \u00b7 HSK 1"],
+  "lvl.spGetting":     ["Getting by \u00b7 HSK 2\u20133", "能应付 \u00b7 HSK 2\u20133"],
+  "lvl.spComfortable": ["Comfortable \u00b7 HSK 4", "比较自如 \u00b7 HSK 4"],
   "lvl.had":           ["You came out at level {n} last time.", "你上次是第 {n} 级。"],
   "lvl.honest": [
     "Nobody sees this unless you put it on your page. The questions are a first draft.",

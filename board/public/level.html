@@ -108,6 +108,21 @@
     font-size:1.02rem}
   .note{margin:1.4rem 0 0;font-size:.86rem;line-height:1.6;color:var(--muted)}
 
+  /* THE CLASS. A card rather than another button, because it is not one more
+     thing to do with the result — it is the thing the result was for, and it
+     leaves this site for the one next door. */
+  .klass{margin:1.5rem 0 0;padding:1.1rem 1.15rem 1.2rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:1.1rem;box-shadow:var(--shadow)}
+  .klass h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.35rem;
+    line-height:1.2}
+  .klass .at{margin:.45rem 0 0;font-size:.78rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--accent)}
+  :root[data-lang="zh"] .klass .at{text-transform:none;letter-spacing:.02em}
+  .klass p{margin:.7rem 0 0;font-size:.95rem;line-height:1.6;color:var(--ink-2)}
+  .klass .go{margin-top:1.1rem;display:block;width:100%;text-align:center;
+    padding:.8rem 1rem;font-size:1rem;text-decoration:none}
+  .klass .away{margin:.7rem 0 0;font-size:.78rem;color:var(--muted);text-align:center}
+
   /* ---- one question at a time --------------------------------------------
    * A forced choice is the whole instrument, so the two options are the whole
    * screen: same size, same weight, nothing between them that could read as a
@@ -608,10 +623,49 @@ function drawResult(box) {
      letter — a rank printed bare invites somebody to defend it. */
   box.append(el("p", "caveat", T("lvl.rough")));
 
+  /* WHAT THE NUMBER IS FOR.
+   *
+   * Somebody who has just been told they are a four wants the next hour, not
+   * the number. Study Pal writes that hour already — a short conversation in a
+   * situation they will stand in, the words lifted out of it, then two more
+   * ways to use them — and it takes the level as a parameter, so the link can
+   * carry this result straight into it.
+   *
+   * Only for Chinese. Study Pal teaches Chinese to foreigners and has nothing
+   * to offer somebody who just ranked their English; sending them anyway would
+   * be the app talking about itself rather than about them.
+   *
+   * Ten levels into its three, and the band is named here in the same words it
+   * uses at the other end — a link that lands on "Getting by" after promising
+   * something else reads as the wrong link.
+   */
+  if (w === "zh") {
+    const band = n <= 3 ? "new" : n <= 7 ? "getting_by" : "comfortable";
+    const named = band === "new" ? "lvl.spNew"
+                : band === "getting_by" ? "lvl.spGetting" : "lvl.spComfortable";
+
+    const k = el("div", "klass");
+    k.append(el("h2", null, T("lvl.classTitle")));
+    k.append(el("p", "at", T(named)));
+    k.append(el("p", null, T("lvl.classSay")));
+
+    const go = el("a", "go", T("lvl.classGo"));
+    go.href = "https://liuxuesheng.help/study?lesson=1&level=" + band;
+    // Another site, so another tab: somebody who came here from a friend's
+    // message should still have this page when they come back.
+    go.target = "_blank";
+    go.rel = "noopener";
+    k.append(go);
+    k.append(el("p", "away", T("lvl.classAway")));
+    box.append(k);
+  }
+
   const feedRow = el("div", "row");
-  // The loud one on this screen: there is no Share here, and putting a result
-  // where other people can see it is the thing worth encouraging.
-  const toBoard = el("button", "go wide", T("share.feed"));
+  /* Quiet, now that the class above it is the loud one. Two full-width accent
+     buttons in a column is a screen that has not decided what it wants, and
+     between "learn something" and "tell everybody" the first is what somebody
+     who just found out their level came for. */
+  const toBoard = el("button", "quiet wide", T("share.feed"));
   toBoard.type = "button";
   const fsaid = el("p", "said");
   toBoard.addEventListener("click", () => toFeed(
