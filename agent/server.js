@@ -1822,10 +1822,18 @@ app.get("/api/numbers", async (_req, res) => {
         count: d.count, fresh: d.fresh, active: d.active, back: d.back,
         sampled: Boolean(d.sampled),
       })),
-      // Its own hostname if one is configured, otherwise the proxy above —
-      // which is always there when the counter is, so the readout is never a
-      // link to nowhere.
-      link: NUMBERS_LINK || "/numbers/",
+      // WHAT THE FRAME LOADS: always the proxy above, never the counter's own
+      // hostname. That hostname needs a DNS record and a certificate before it
+      // answers at all, and pointing the frame at it meant the panel opened as
+      // a tall white rectangle on a box where the record had not been made
+      // yet — with nothing on screen to say why. The proxy is on this origin
+      // and exists whenever the counter does, so the frame always loads
+      // something, and a bad minute at the counter shows as its own words
+      // rather than as nothing.
+      link: "/numbers/",
+      // Where "open in a tab" goes: its own hostname when it has one, so the
+      // dashboard can be a window of its own rather than a panel.
+      openLink: NUMBERS_LINK || "/numbers/",
     });
   } catch (err) {
     res.status(502).json({ error: err.message || "could not reach the counter" });

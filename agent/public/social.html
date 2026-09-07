@@ -394,9 +394,16 @@
   .counts .more:hover{border-color:var(--blue)}
   .numbersview{margin:-.6rem 0 0;border-radius:14px;overflow:hidden;
     background:var(--card);border:1px solid var(--rule);box-shadow:var(--shadow);
-    height:min(70vh,44rem)}
+    height:min(70vh,44rem);display:flex;flex-direction:column}
   .numbersview[hidden]{display:none}
-  .numbersview iframe{width:100%;height:100%;border:0;display:block;background:var(--sunk)}
+  .numbershead{flex:0 0 auto;display:flex;justify-content:flex-end;
+    padding:.4rem .6rem;border-bottom:1px solid var(--rule)}
+  .numbershead a{font-size:.78rem;color:var(--muted);text-decoration:none}
+  .numbershead a:hover{color:var(--ink)}
+  /* flex:1 with min-height:0, not height:100% — a flex child sized to its
+     content will not shrink below it, and the frame would push the bar out. */
+  .numbersview iframe{width:100%;flex:1 1 auto;min-height:0;border:0;
+    display:block;background:var(--sunk)}
   @media (max-width:44rem){
     .counts{gap:1.1rem;padding:.8rem .9rem}
     .counts .n b{font-size:1.2rem}
@@ -511,6 +518,12 @@
 
   <!-- The counter's own dashboard, underneath the figures it summarises. -->
   <div class="numbersview" id="numbersview" hidden>
+    <!-- A panel is a good place to read the figures and a bad place to work in
+         them. This is the way out, and it is also the way to see the dashboard
+         at all if the frame ever comes up empty. -->
+    <div class="numbershead">
+      <a id="numbersopen" target="_blank" rel="noopener">Open in a tab ↗</a>
+    </div>
     <iframe id="numbersframe" title="Numbers"></iframe>
   </div>
 
@@ -2267,6 +2280,7 @@ async function loadCounts() {
   // again.
   if (d.link) {
     numbersLink = d.link;
+    $("numbersopen").href = d.openLink || d.link;
     const b = el("button", "more", "Numbers");
     b.type = "button";
     b.setAttribute("aria-expanded", "false");
