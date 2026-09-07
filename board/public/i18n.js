@@ -705,7 +705,7 @@ export const STRINGS = {
     "四道题就是四道题，不可能更准。把它当成一个范围，不是一个分数——手滑一次就差一级。",
   ],
   "lvl.again":         ["Try again", "再测一次"],
-  "lvl.put":           ["Put this on my page", "放到我的主页上"],
+  "lvl.put":           ["Add my level to my profile", "把等级加到我的主页"],
   /* THE RESULT, READ TOP TO BOTTOM. What you are, what that means you can do,
      three facts about the run, and the one thing to do next. */
   "lvl.headline":      ["{band} \u2014 Level {n} of 10", "{band} \u2014 第 {n} 级，共 10 级"],
@@ -836,14 +836,21 @@ export const STRINGS = {
   "type.yours":        ["Where you sat", "你的结果"],
   "type.again":        ["Take it again", "再做一次"],
   "type.done":         ["Back to browsing", "继续看看"],
-  "type.put":          ["Put this on my page", "放到我的主页上"],
-  "type.puton":        ["On your page.", "已经放上去了。"],
+  "type.put":          ["Add my four letters to my profile", "把四个字母加到我的主页"],
+  "type.puton":        ["It is on your profile.", "已经加到你的主页了。"],
   // The letters travel in the words, not in the link. There is no page that
   // says INFJ about somebody who has not chosen to say it themselves.
   // ---- a result, put on the feed -------------------------------------------
   // Written as somebody would write it about themselves, because that is who
   // is posting. Not "user completed the type sort".
-  "share.feed":        ["Put this on the feed", "发到动态里"],
+  /* NAME WHAT GETS POSTED. "Put this on the feed" was read as sending the
+     page itself rather than the result on it — the word "this" has a whole
+     screen to point at, and it picked the wrong half. */
+  "share.feed":        ["Post my result", "把成绩发到动态"],
+  "share.feedLvl":     ["A card with your level on it, under your name.",
+                        "会以你的名义发一张卡片，上面是你的等级。"],
+  "share.feedType":    ["A card with your four letters on it, under your name.",
+                        "会以你的名义发一张卡片，上面是你的四个字母。"],
   "share.takeIt":      ["Take it yourself", "你也来测测"],
   "share.cardTap":     ["Tap to take it \u2192", "点一下，你也测测 \u2192"],
   // Sending the test itself. Written as an invitation rather than as a link:
@@ -853,7 +860,7 @@ export const STRINGS = {
                         "你是十六种里的哪一种？二十道选择，两分钟："],
   "share.inviteLevel": ["How good is your Chinese, really? Four questions:",
                         "你的中文到底什么水平？四道题就知道："],
-  "share.up":          ["It is on the feed.", "已经发到动态里了。"],
+  "share.up":          ["Posted. It is on the feed.", "发好了，已经在动态里。"],
   "share.type":        ["I came out {code}.", "我做出来是 {code}。"],
   "share.typeTitled":  ["I came out {code} — {title}.", "我做出来是 {code}——{title}"],
   "share.levelZh": [

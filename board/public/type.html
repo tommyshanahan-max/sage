@@ -105,6 +105,8 @@
   .quiet.wide{display:block;width:100%;text-align:center;padding:.8rem 1rem;
     font-size:1rem}
   .note{margin:1.4rem 0 0;font-size:.86rem;line-height:1.6;color:var(--muted)}
+  .feedwhat{margin:.5rem 0 0;font-size:.82rem;line-height:1.5;color:var(--muted);
+    text-align:center}
 
   /* ---- one question at a time --------------------------------------------
    * A forced choice is the whole instrument, so the two options are the whole
@@ -632,7 +634,9 @@ function drawResult(box) {
           : T("share.type", { code: r.code }),
     "Tests", toBoard, fsaid, "/type", typePicture(r, title ? P(title) : "")));
   feedRow.append(toBoard);
-  box.append(feedRow, fsaid);
+  box.append(feedRow);
+  box.append(el("p", "feedwhat", T("share.feedType")));
+  box.append(fsaid);
 
   const row = el("div", "row");
   const again = el("button", "quiet", T("type.again"));

@@ -185,6 +185,8 @@
      their name, or one button away. */
   .wornnote{margin:.7rem 0 0;font-size:.82rem;line-height:1.5;color:var(--muted);
     text-align:center}
+  .feedwhat{margin:.5rem 0 0;font-size:.82rem;line-height:1.5;color:var(--muted);
+    text-align:center}
 
   /* THE CLASS. A card rather than another button, because it is not one more
      thing to do with the result — it is the thing the result was for, and it
@@ -697,50 +699,94 @@ function pill(x, left, top, w, h, r) {
   x.closePath();
 }
 
-/** The result card: the band, the level, and where it sits in ten. */
+/* THE CARD THE RESULT IS SHARED AS.
+ *
+ * The same object as the screen it came from: medallion, headline, ten stops,
+ * and the sentence about what you can do — in that order, because somebody who
+ * has seen one and then the other should not have to work out that they are
+ * the same result. When the screen changed and this did not, the feed carried
+ * a card nobody recognised from the page that made it.
+ */
 function levelPicture(w, n, band, can) {
-  return resultPicture(({ x, S, ink, muted, accent, line, serif, sans }) => {
+  return resultPicture(({ x, S, paper, ink, muted, accent, line, serif, sans }) => {
     x.textAlign = "center";
 
-    // The mark, above everything, because on a card in a chat it is the thing
-    // somebody recognises before they read a word of it.
-    crownOnCanvas(x, Math.ceil(n / 2), S / 2 - 66, 74, 132, accent);
+    /* Hand-wrapped, since canvas has no line breaking. Returns where it got
+       to, so the block underneath starts below the text rather than on top of
+       a second line that was not there yesterday. */
+    const wrap = (text, y, font, colour, width, step) => {
+      x.font = font;
+      x.fillStyle = colour;
+      const words = String(text || "").split(" ");
+      let row = "", at = y;
+      for (const word of words) {
+        const test = row ? row + " " + word : word;
+        if (x.measureText(test).width > width && row) {
+          x.fillText(row, S / 2, at);
+          at += step; row = word;
+        } else { row = test; }
+      }
+      if (row) { x.fillText(row, S / 2, at); at += step; }
+      return at;
+    };
 
-    x.fillStyle = muted;
-    x.font = "34px " + sans;
-    x.fillText(w === "zh" ? "中文" : "English", S / 2, 250);
+    // The medallion, drawn as it is on the screen: the mark in a soft disc
+    // with a ring round it.
+    const cy = 200, r = 82;
+    x.beginPath();
+    x.arc(S / 2, cy, r, 0, Math.PI * 2);
+    x.fillStyle = line;
+    x.fill();
+    x.lineWidth = 5;
+    x.strokeStyle = accent;
+    x.stroke();
+    crownOnCanvas(x, Math.ceil(n / 2), S / 2 - 47, cy - 44, 94, accent);
 
-    x.fillStyle = accent;
-    x.font = "130px " + serif;
-    x.fillText(band, S / 2, 370);
+    // "Upper intermediate — Level 8 of 10", which is the whole answer.
+    const after = wrap(T("lvl.headline", { band, n }), 372, "62px " + serif, ink, S - 150, 76);
 
-    x.fillStyle = ink;
-    x.font = "46px " + sans;
-    x.fillText(T("lvl.n", { n }), S / 2, 452);
-
-    const w10 = 76, gap = 14;
-    const left = (S - (w10 * 10 + gap * 9)) / 2;
-    for (let i = 1; i <= 10; i++) {
-      const cx = left + (i - 1) * (w10 + gap);
-      pill(x, cx, 546, w10, 26, 13);
+    const dots = 10, dr = 11, gap = 40;
+    const left = S / 2 - ((dots - 1) * gap) / 2;
+    for (let i = 1; i <= dots; i++) {
+      x.beginPath();
+      x.arc(left + (i - 1) * gap, after + 26, dr, 0, Math.PI * 2);
       x.fillStyle = i <= n ? accent : line;
       x.fill();
     }
 
-    // Wrapped by hand: canvas has no line breaking, and a sentence that runs
-    // off the edge is the one thing a picture cannot recover from.
-    x.fillStyle = ink;
+    /* What they can do, in the tinted block it sits in on the screen. Measured
+       first so the block is the height of its own text: a fixed box either
+       clips the long sentences or leaves a hole under the short ones. */
+    const top = after + 76;
     x.font = "44px " + serif;
     const words = String(can || "").split(" ");
-    let row = "", y = 690;
+    let row = "", lines = 1;
     for (const word of words) {
       const test = row ? row + " " + word : word;
-      if (x.measureText(test).width > S - 160 && row) {
-        x.fillText(row, S / 2, y);
-        y += 62; row = word;
-      } else { row = test; }
+      if (x.measureText(test).width > S - 300 && row) { lines++; row = word; } else { row = test; }
     }
-    if (row) x.fillText(row, S / 2, y);
+    const step = 62;
+    const boxH = 62 + lines * step;
+    const mid = top + boxH / 2;
+    pill(x, 80, top, S - 160, boxH, 30);
+    x.fillStyle = line;
+    x.fill();
+    // The tick and the sentence both centred on the block rather than hung
+    // from its top: one line was sitting high with a hole underneath it.
+    x.beginPath();
+    x.arc(146, mid, 30, 0, Math.PI * 2);
+    x.fillStyle = accent;
+    x.fill();
+    x.strokeStyle = paper;
+    x.lineWidth = 6;
+    x.lineCap = "round";
+    x.lineJoin = "round";
+    x.beginPath();
+    x.moveTo(132, mid);
+    x.lineTo(143, mid + 11);
+    x.lineTo(161, mid - 12);
+    x.stroke();
+    wrap(can, mid - ((lines - 1) * step) / 2 + 16, "44px " + serif, ink, S - 300, step);
 
     // The invitation, on the picture itself — a card in a chat is seen by
     // people who never opened the app, and the post makes it tappable.
@@ -939,7 +985,11 @@ function drawResult(box) {
     "Tests", toBoard, fsaid, "/level",
     levelPicture(w, n, P(BANDS[w][n - 1]), P(CAN[w][n - 1]))));
   feedRow.append(toBoard);
-  box.append(feedRow, fsaid);
+  box.append(feedRow);
+  /* What the post will look like, in one line, before they press it. The
+     button names the thing; this says what lands. */
+  box.append(el("p", "feedwhat", T("share.feedLvl")));
+  box.append(fsaid);
 
   const row = el("div", "row");
   const again = el("button", "quiet", T("lvl.again"));
