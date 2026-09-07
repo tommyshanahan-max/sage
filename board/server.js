@@ -1811,6 +1811,19 @@ app.get("/api/public", admin, async (req, res) => {
     // mixed in with the posts: releasing a face is a different decision from
     // releasing a sentence, and the panel should not have to tell them apart.
     faces: board.people.filter((q) => q.photoState !== "published" && (q.photo || q.cover)),
+    /* EVERYBODY, not only the ones with something waiting.
+     *
+     * There was no route that could answer "why can I not see her in Browse".
+     * The public list only holds people who are IN Browse, which is the one
+     * group the question is never about — so the answer had to be guessed from
+     * the outside, and the guesses were wrong twice before this existed.
+     * Stripped to what the question needs and nothing that reads as a
+     * directory: no goal, no campus, no photograph. */
+    people: board.people.map((q) => ({
+      handle: q.handle, at: q.at, state: q.state,
+      looking: q.looking, photoState: q.photoState,
+      hasPhoto: Boolean(q.photo), rooms: q.rooms,
+    })),
   });
 });
 

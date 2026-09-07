@@ -208,6 +208,9 @@
   /* Share sits with them but does not compete: Follow is the decision on
      somebody else's page, and on your own there is no decision to make. */
   .acts .share{color:var(--ink-2)}
+  /* Your own page's one control. Filled, because on your own profile it is the
+     thing you came for. */
+  .acts .edit{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   .acts button,.acts a{flex:1;min-width:9rem;text-align:center;text-decoration:none;
     border:1px solid var(--line);background:var(--raise);color:var(--ink);
     border-radius:99px;padding:.7rem 1rem;font-size:.93rem}
@@ -734,6 +737,24 @@ function paint() {
     say(T(copyText(url) ? "act.copied" : "act.copyFail"));
   });
   meet.append(sh);
+
+  /* EDIT, ON YOUR OWN PAGE, AND IT WAS NOT ANYWHERE.
+   *
+   * The form that makes a page was reachable from exactly two places: the
+   * Professor's "set up your page" card, which stops being offered the moment
+   * you have one, and your own card at the far end of the Browse deck. So
+   * after somebody finished setting up there was no way back in: no changing
+   * the photograph, no adding a line about themselves, no turning Browse on.
+   * Reported from the outside as "there is no way to edit", which is exactly
+   * what it was.
+   *
+   * It lives on the feed, where the sheet is — so this is a link that says
+   * open it, and the feed opens it on arrival. */
+  if (q.mine) {
+    const ed = el("a", "edit", T("me.edit"));
+    ed.href = "/feed?edit=1";
+    meet.append(ed);
+  }
 
   // Directly under Follow, because somebody who opened a shared link has two
   // things they might do and this is the second one: look at the rest. It was

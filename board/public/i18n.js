@@ -116,6 +116,12 @@ export const STRINGS = {
   "post.cancel":       ["Cancel", "取消"],
   "post.go":           ["Put it up", "发布"],
   "post.needWords":    ["Say something, or add a photo.", "写点什么，或者加张照片。"],
+  "tut.hidden":        ["You are not in Browse", "你没有出现在「看看有谁」里"],
+  "tut.hiddenWhat": [
+    "Your posts are on the feed and anybody can read them — but you are not in the list of people, so nobody can find you there or follow you from it. One tap turns it on, and one turns it back off.",
+    "你发的内容在动态里，谁都看得到——但你不在学生名单里，所以没人能在那儿找到你、也没法从那儿关注你。点一下就能打开，再点一下就关掉。",
+  ],
+
   "post.room":         ["What is this about?", "这条是关于什么的？"],
   "post.needName":     ["Pick a name to post under.", "选一个发布用的名字。"],
   "post.tooBig":       ["That photo is too large.", "这张照片太大了。"],

@@ -2771,6 +2771,22 @@ async function drawTutor() {
   if (!(ME && ME.handle)) {
     strip.append(doable("tut.setup", "tut.setupWhat", () => openMe()));
   }
+
+  /* NOT IN BROWSE, AND NOBODY HAD TOLD HER.
+   *
+   * Somebody can make a page, put a photograph on a post, be read by everybody
+   * on the feed — and not be in Browse at all, because "Show me in Browse" is
+   * off. From the inside that is indistinguishable from the app losing her:
+   * her face is on the board, and she is not in the list of people. The first
+   * time it happened it was reported as a bug.
+   *
+   * It is not a bug, it is her switch, and the only thing missing was anybody
+   * saying so. First card in the strip while it is true, because it is the one
+   * thing on this screen with a consequence she cannot see. */
+  if (ME && ME.handle && !ME.looking) {
+    const card = doable("tut.hidden", "tut.hiddenWhat", () => openMe());
+    strip.prepend(card);
+  }
   // Find a study buddy is held back for V1: the deck at the top of this page is
   // the same people, and offering both is offering a choice between a thing and
   // itself. The route still works for anybody with the address.
@@ -4591,7 +4607,17 @@ loadMyInvite();
 
 fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
   .then((r) => r.json())
-  .then((d) => { ME = d.person; paintNav(); drawTutor(); drawDeck(); })
+  .then((d) => {
+    ME = d.person; paintNav(); drawTutor(); drawDeck();
+    /* Arrived from "edit" on their own profile. The form lives on this page,
+       so the other page sends people here rather than growing a second copy of
+       it — and the address is cleaned up afterwards so a reload does not open
+       the sheet again over whatever they came back to read. */
+    if (new URLSearchParams(location.search).get("edit") === "1") {
+      openMe();
+      try { history.replaceState(null, "", location.pathname); } catch { /* fine */ }
+    }
+  })
   .catch(paintNav);
 
 load();
