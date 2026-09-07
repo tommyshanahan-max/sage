@@ -255,8 +255,16 @@
      button rather than an outline. */
   .tutor .opt{margin:.9rem 0 0;padding:1.05rem 1.05rem 1.1rem;
     border:1px solid var(--line);border-radius:.9rem;background:var(--paper)}
-  .tutor .opt h4{margin:0;font-family:var(--serif);font-weight:400;
-    font-size:1.55rem;line-height:1.15;letter-spacing:-.01em;text-wrap:balance}
+  .tutor .opthead{display:flex;align-items:center;gap:.7rem}
+  .tutor .mark{flex:0 0 auto;width:2.75rem;height:2.75rem;display:grid;
+    place-items:center;border-radius:.7rem;background:var(--paper);
+    box-shadow:0 0 0 1px var(--line)}
+  .tutor .opt.built .mark{background:var(--raise)}
+  .tutor .mark svg{width:1.7rem;height:1.7rem;stroke:var(--accent);fill:none;
+    stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .tutor .opt h4{margin:0;flex:1 1 auto;min-width:0;
+    font-family:var(--serif);font-weight:400;
+    font-size:1.5rem;line-height:1.15;letter-spacing:-.01em;text-wrap:balance}
   .tutor .opt p{margin:.45rem 0 0;font-size:.92rem;line-height:1.5;color:var(--ink-2)}
   .tutor .opt button{margin:.9rem 0 0;border:1px solid var(--accent);
     background:var(--accent);color:var(--accent-ink);border-radius:99px;
@@ -1159,6 +1167,8 @@ async function load() {
 const STARTERS = [
   { key: "Courses",      label: ["Courses", "选课"] },
   { key: "New here",     label: ["New here", "刚来"] },
+  { key: "Near Renmin",  label: ["Near Renmin", "人大附近"] },
+  { key: "Chinese food", label: ["Chinese food", "中国菜"] },
   { key: "Language",     label: ["Language", "语言"] },
   { key: "Getting by",   label: ["Getting by", "生活门道"] },
   { key: "Applying",     label: ["Applying abroad", "申请出国"] },
@@ -1952,9 +1962,48 @@ async function drawTutor() {
   box.append(who, el("p", "hi", T("tut.hi")));
 
   /* A thing that works, with a control that goes there. */
-  const doable = (key, what, act) => {
+  /* The mark for a function, drawn rather than fetched.
+   *
+   * Two glyphs at 44px: the level test is 中 and A, which is the whole offer
+   * said without words — test the one or the other. The type sort is four
+   * pills with a divider in each, which is four axes each with two sides, and
+   * is what the four letters ARE.
+   *
+   * Strokes in currentColor, so they take the accent and hold up on the dark
+   * ground. An image would need a request, a second file and a @2x, and would
+   * still be the wrong colour in one of the two themes. */
+  const MARKS = {
+    level: "M3 7.6h7.4v6.2H3z|M6.7 4.4v13|M14.4 17.4 18.4 6.2l4 11.2|M15.8 13.9h5.2",
+    type: "M1.6 4.2h9.4v6.4H1.6z|M13 4.2h9.4v6.4H13z|M1.6 13.4h9.4v6.4H1.6z"
+        + "|M13 13.4h9.4v6.4H13z|M6.3 5.8v3.2|M17.7 5.8v3.2|M6.3 15v3.2|M17.7 15v3.2",
+  };
+  const mark = (name) => {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    for (const d of MARKS[name].split("|")) {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d);
+      // The two rounded shapes are rectangles drawn as paths, so one attribute
+      // rounds every corner in the icon rather than each rect carrying its own.
+      svg.append(path);
+    }
+    return svg;
+  };
+
+  const doable = (key, what, act, icon) => {
     const wrap = el("div", "opt built");
-    wrap.append(el("h4", null, T(key)), el("p", null, T(what)));
+    const head = el("div", "opthead");
+    // Node.append returns undefined, so this cannot be written as one chained
+    // line — doing that threw before the card was built and took the whole
+    // Tutor off the page.
+    if (icon) {
+      const box = el("span", "mark");
+      box.append(mark(icon));
+      head.append(box);
+    }
+    head.append(el("h4", null, T(key)));
+    wrap.append(head, el("p", null, T(what)));
     const b = el("button", null, T("tut.go"));
     b.type = "button";
     b.addEventListener("click", act);
@@ -2003,8 +2052,8 @@ async function drawTutor() {
 
   // Built, so it is offered rather than voted on. The votes that asked for it
   // stay in the file — they are what said to build this one first.
-  box.append(doable("tut.type", "tut.typeGo", () => { location.href = "/type"; }));
-  box.append(doable("tut.level", "tut.levelGo", () => { location.href = "/level"; }));
+  box.append(doable("tut.type", "tut.typeGo", () => { location.href = "/type"; }, "type"));
+  box.append(doable("tut.level", "tut.levelGo", () => { location.href = "/level"; }, "level"));
 
   box.append(el("div", "grp", T("tut.next")));
   box.append(vote("tut.compare", "tut.compareWhat", "compare"));
