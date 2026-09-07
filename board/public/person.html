@@ -138,6 +138,10 @@
   .theirs .no{font-family:var(--sans);font-size:.92rem;color:var(--muted)}
 
   .acts{display:flex;gap:.5rem;margin:1.6rem 0 0;padding:0 1.15rem;flex-wrap:wrap}
+  /* Directly under the photograph, so Follow is the first thing under the face
+     rather than the last thing after the reading. */
+  .acts.meet{margin:0 0 .4rem}
+  .acts.meet button{padding:.8rem 1rem;font-size:1rem}
   .acts button,.acts a{flex:1;min-width:9rem;text-align:center;text-decoration:none;
     border:1px solid var(--line);background:var(--raise);color:var(--ink);
     border-radius:99px;padding:.7rem 1rem;font-size:.93rem}
@@ -242,6 +246,14 @@ function paint() {
   shot.append(scrim);
   box.append(shot);
 
+  /* The two things somebody who just opened a WeChat link is here to do, and
+     they go above everything they would have to read first. The row is built
+     empty and filled further down, where the follow state and the note rules
+     are already worked out — putting it in the page here is what fixes the
+     order, not moving the logic. */
+  const meet = el("div", "acts meet");
+  box.append(meet);
+
   const head = el("div", "head");
   if (q.goal) head.append(el("p", "goal", q.goal));
 
@@ -304,7 +316,7 @@ function paint() {
       fol.disabled = false;
       fol.textContent = T("act.again");
     });
-    acts.append(fol);
+    meet.append(fol);
 
     // Saying hello. Only offered where it can actually be done: the rule about
     // who may write and when lives on the server, and the page asks rather
@@ -313,9 +325,12 @@ function paint() {
       const hi = el("button", "primary", T(THREAD.answering ? "note.answerIt" : "note.say"));
       hi.type = "button";
       hi.addEventListener("click", () => sheet(q));
-      acts.append(hi);
+      meet.append(hi);
     }
   }
+  // Your own profile has neither of them, and an empty row is a gap nobody
+  // can explain.
+  meet.hidden = !meet.children.length;
   const feed = el("a", null, T("bud.back"));
   feed.href = "/browse";
   acts.append(feed);
