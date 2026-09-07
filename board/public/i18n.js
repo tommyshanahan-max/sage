@@ -681,6 +681,36 @@ export const STRINGS = {
   // ---- the type sort -------------------------------------------------------
   // Ported from Fern. The words that carry the point are the caveat ones: this
   // is the only type product that names the letter least worth trusting.
+  // ---- the level test ------------------------------------------------------
+  "lvl.eyebrow":       ["Four questions · one minute", "四道题 · 一分钟"],
+  "lvl.title":         ["How good is it, really?", "到底什么水平？"],
+  "lvl.lede": [
+    "Ten levels, from your first week to reading a contract. Four questions is enough to find yours.",
+    "十个等级，从刚来的第一周到看得懂合同。四道题就能找到你在哪一级。",
+  ],
+  "lvl.how": [
+    "It starts in the middle and halves what is left each time — right and it goes up, wrong and it comes down. Working up from level one would mean twenty-six questions you were always going to get right.",
+    "从中间开始，每答一题就把范围砍一半——答对往上，答错往下。要是从第一级一路往上考，前面二十六题你本来就都会。",
+  ],
+  "lvl.myChinese":     ["My Chinese", "我的中文"],
+  "lvl.myEnglish":     ["My English", "我的英文"],
+  "lvl.count":         ["{n} of {total}", "第 {n} 题，共 {total} 题"],
+  "lvl.guess":         ["No idea is an answer. Pick one and it will come down a level.",
+                        "不会就猜——猜错了它会往下调一级。"],
+  "lvl.yours":         ["Around here", "大概在这一级"],
+  "lvl.n":             ["Level {n} of 10", "第 {n} 级，共 10 级"],
+  "lvl.rough": [
+    "Four answers cannot be more certain than four answers. Treat this as a band, not a mark — one careless tap moves it a level.",
+    "四道题就是四道题，不可能更准。把它当成一个范围，不是一个分数——手滑一次就差一级。",
+  ],
+  "lvl.again":         ["Try again", "再测一次"],
+  "lvl.put":           ["Put this on my page", "放到我的主页上"],
+  "lvl.had":           ["You came out at level {n} last time.", "你上次是第 {n} 级。"],
+  "lvl.honest": [
+    "Nobody sees this unless you put it on your page. The questions are a first draft.",
+    "除非你自己放到主页上，否则没人看得到。题目还是初稿。",
+  ],
+
   "type.eyebrow":      ["Twenty choices · two minutes", "二十道选择 · 两分钟"],
   // Say which test this is in the first line. "A personality test" could be
   // anything; the four letters are the thing people already recognise, and
@@ -798,6 +828,11 @@ export const STRINGS = {
   // One thing left in this group, so it is no longer a question about which.
   "tut.next":          ["Not built yet", "还没做的"],
   "tut.type":          ["The four-letter type test", "四个字母的性格测试"],
+  "tut.level":         ["Test your Chinese or English", "测测你的中文或英文"],
+  "tut.levelGo": [
+    "Four questions, one minute. Ten levels, and it finds yours by halving the range each time.",
+    "四道题，一分钟。十个等级，每答一题范围减半，很快就能定位。",
+  ],
   "tut.typeWhat": [
     "Twenty quick choices, two minutes. It names the one answer least settled in you.",
     "二十道快速选择，两分钟。它会告诉你哪一项最不稳定。",

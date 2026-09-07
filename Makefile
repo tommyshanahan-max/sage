@@ -175,6 +175,18 @@ post-explainer: ## Put the how-to-be-the-same-person-twice post on the feed
 	  /seed/post-explainer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  $(if $(AS),--as "$(AS)",) $(if $(AGAIN),--again,)
 
+feed-list: ## What is on the feed, with ids
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/feed-remove.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+
+feed-remove: ## Take one post off the feed:  make feed-remove ID=<id>
+	@# Marks it removed, the same as the panel's button. The row stays in the
+	@# file with a reason on it; readers stop seeing it. Nothing deletes.
+	@test -n "$(ID)" || { echo "ID= is required. Run  make feed-list  first."; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/feed-remove.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --id "$(ID)" $(if $(WHY),--why "$(WHY)",)
+
 board-reset: ## Empty the board — every person, post and photograph
 	@# For handing a clean app to people who have not seen it. Runs in the
 	@# board's own container, which is where the volume is mounted; this box

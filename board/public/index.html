@@ -1992,6 +1992,7 @@ async function drawTutor() {
   // Built, so it is offered rather than voted on. The votes that asked for it
   // stay in the file — they are what said to build this one first.
   box.append(doable("tut.type", "tut.typeGo", () => { location.href = "/type"; }));
+  box.append(doable("tut.level", "tut.levelGo", () => { location.href = "/level"; }));
 
   box.append(el("div", "grp", T("tut.next")));
   box.append(vote("tut.compare", "tut.compareWhat", "compare"));

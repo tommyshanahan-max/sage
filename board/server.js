@@ -275,6 +275,10 @@ app.get(["/notes", "/notes/"], notesOff,
 // nothing else reads.
 app.get(["/type", "/type/"], (req, res, next) => page("type.html", req, res, next));
 
+// Ten levels, found in four questions. The cards and the search are in
+// /level-cards.js, which the page and nothing else reads.
+app.get(["/level", "/level/"], (req, res, next) => page("level.html", req, res, next));
+
 // Everyone on the study-buddy list, one at a time, photograph first. Only
 // people who put themselves on that list are in it — the same opt-in the list
 // itself uses, so nobody is browsable who did not choose to be findable.
@@ -908,7 +912,7 @@ app.put("/api/me", express.json({ limit: "36mb" }), async (req, res) => {
     // after it there is no way to tell the two apart.
     const joining = typeof req.body.looking === "boolean" && req.body.looking && !q.looking;
     if (typeof req.body.looking === "boolean") q.looking = req.body.looking;
-    for (const k of ["handle", "level", "campus", "goal", "trade", "here", "age", "type"]) {
+    for (const k of ["handle", "level", "campus", "goal", "trade", "here", "age", "type", "levelBand"]) {
       if (req.body[k] !== undefined) q[k] = String(req.body[k]).slice(0, k === "goal" ? 600 : 120);
     }
     if (Array.isArray(req.body.free)) q.free = req.body.free;

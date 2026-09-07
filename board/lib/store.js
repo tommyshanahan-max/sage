@@ -200,6 +200,11 @@ export function cleanPerson(raw) {
     // from something else.
     type: /^[EI][SN][TF][JP]$/.test(String(raw.type || "").toUpperCase())
       ? String(raw.type).toUpperCase() : "",
+    // Where four questions put them. "ZH 6" or "EN 3", and nothing else —
+    // written from a page, and a field written from a page will one day be
+    // written from something else.
+    levelBand: /^(ZH|EN) ([1-9]|10)$/.test(String(raw.levelBand || "").toUpperCase())
+      ? String(raw.levelBand).toUpperCase() : "",
     speaks: Array.isArray(raw.speaks)
       ? raw.speaks.slice(0, 6).map((x) => s(x, 40)).filter(Boolean) : [],
     free: days,
