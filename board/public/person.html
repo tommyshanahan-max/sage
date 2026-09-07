@@ -101,10 +101,7 @@
     height:max(15rem, min(66vh, 36rem));
     background:var(--raise);box-shadow:var(--shadow);
     display:flex;flex-direction:column;justify-content:flex-end}
-  /* The same face-biased crop as the deck card: a landscape photograph in a
-     tall frame loses its top, and the top is where the person is. */
-  .shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-    object-position:50% 32%;display:block}
+  .shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
   .shot .noshot{position:absolute;inset:0;display:grid;place-items:center;
     background:linear-gradient(160deg,var(--accent),var(--t6));color:var(--accent-ink);
     font-family:var(--serif);font-size:8rem;line-height:1}
