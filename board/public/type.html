@@ -331,28 +331,6 @@ function drawResult(box) {
     a: P(weak.first), b: P(weak.second),
   })));
 
-  for (const a of r.axes) {
-    const wrap = el("div", "axis");
-    const poles = el("div", "poles");
-    const first = el("span", "pole" + (a.letter === a.axis[0] ? " on" : ""), P(AXES[a.axis].first));
-    const second = el("span", "pole" + (a.letter === a.axis[1] ? " on" : ""), P(AXES[a.axis].second));
-    poles.append(first, el("span", "sp"), second);
-    wrap.append(poles);
-
-    const line = el("div", "line");
-    line.append(el("i", "mid"));
-    const dot = el("i", "dot");
-    dot.style.left = (a.position * 100) + "%";
-    line.append(dot);
-    wrap.append(line);
-
-    const said = el("p", "said");
-    said.append(el("b", null, P(STRENGTH[a.strength])),
-      document.createTextNode(" · " + T("type.outOf", { n: a.n, total: a.of })));
-    wrap.append(said);
-    box.append(wrap);
-  }
-
   /* SHARING THE RESULT.
    *
    * The link is the test, not a page about this answer — there is no page about
@@ -388,6 +366,29 @@ function drawResult(box) {
   });
   shareRow.append(sh);
   box.append(shareRow);
+
+  for (const a of r.axes) {
+    const wrap = el("div", "axis");
+    const poles = el("div", "poles");
+    const first = el("span", "pole" + (a.letter === a.axis[0] ? " on" : ""), P(AXES[a.axis].first));
+    const second = el("span", "pole" + (a.letter === a.axis[1] ? " on" : ""), P(AXES[a.axis].second));
+    poles.append(first, el("span", "sp"), second);
+    wrap.append(poles);
+
+    const line = el("div", "line");
+    line.append(el("i", "mid"));
+    const dot = el("i", "dot");
+    dot.style.left = (a.position * 100) + "%";
+    line.append(dot);
+    wrap.append(line);
+
+    const said = el("p", "said");
+    said.append(el("b", null, P(STRENGTH[a.strength])),
+      document.createTextNode(" · " + T("type.outOf", { n: a.n, total: a.of })));
+    wrap.append(said);
+    box.append(wrap);
+  }
+
 
   const row = el("div", "row");
   const again = el("button", "quiet", T("type.again"));
