@@ -756,6 +756,12 @@ export const STRINGS = {
     "Study Pal writes you one for a place you will actually stand in: a short conversation at your level, the words inside it, then two more ways to use them.",
     "Study Pal 按你的水平写一节课，场景是你真会遇到的：一段短对话，把里面的词挑出来，再给两个用法。"],
   "lvl.classGo":       ["Take a class \u2192", "去上这一节 \u2192"],
+  /* While the lesson route is not yet deployed on Study Pal's machine — see
+     STUDYPAL in level.html. Says the extra tap out loud rather than promising
+     a class at your level and landing somewhere else. */
+  "lvl.classSayDoor": [
+    "Study Pal writes one for a place you will actually stand in: a short conversation, the words inside it, then two more ways to use them. Open it and press Take a lesson, then pick {band}.",
+    "Study Pal 会写一节真实场景的课：一段短对话，把里面的词挑出来，再给两个用法。打开之后点「Take a lesson」，再选「{band}」。"],
   "lvl.classAway":     ["Opens Study Pal \u00b7 liuxuesheng.help",
                         "会打开 Study Pal \u00b7 liuxuesheng.help"],
   /* Study Pal's own three bands, in its own words, because the link hands it

@@ -346,6 +346,27 @@ const save = (r) => { try { localStorage.setItem(KEY, JSON.stringify(r)); } catc
  * somebody clears their browser, and the cost of that is one sentence offering
  * them something they already have.
  */
+/* WHERE THE CLASS IS.
+ *
+ * Study Pal is not on this box. liuxuesheng.help resolves to an older machine
+ * where it shares a container with Fern behind one Caddy, so a path that is
+ * not deployed there does not 404 in Study Pal's voice — it 404s in Fern's,
+ * with Fern's own navigation at the bottom of it. That is exactly what
+ * happened when this pointed straight at /study: the route exists in Study
+ * Pal's source and not yet in what is running.
+ *
+ * So the link goes to the front door, which is deployed, and DEEP stays false
+ * until the lesson route is live on that machine. Flipping it is one word here
+ * and nothing else — and until it is flipped the copy under the button says
+ * what actually happens, because a card that promises a class at your level
+ * and lands somewhere else is worse than one that says "open it and press
+ * Take a lesson".
+ */
+const STUDYPAL = "https://liuxuesheng.help/";
+const DEEP = false;
+const classLink = (band) =>
+  DEEP ? STUDYPAL + "study?lesson=1&level=" + encodeURIComponent(band) : STUDYPAL;
+
 const PUTKEY = "board:levelput";
 const putUp = () => { try { return localStorage.getItem(PUTKEY) === "1"; } catch { return false; } };
 
@@ -841,10 +862,10 @@ function drawResult(box) {
     k.append(el("p", "nextup", T("lvl.nextUp")));
     k.append(el("h2", null, T("lvl.classTitle")));
     k.append(el("p", "at", T(named)));
-    k.append(el("p", null, T("lvl.classSay")));
+    k.append(el("p", null, T(DEEP ? "lvl.classSay" : "lvl.classSayDoor", { band: T(named) })));
 
     const go = el("a", "go", T("lvl.classGo"));
-    go.href = "https://liuxuesheng.help/study?lesson=1&level=" + band;
+    go.href = classLink(band);
     // Another site, so another tab: somebody who came here from a friend's
     // message should still have this page when they come back.
     go.target = "_blank";
