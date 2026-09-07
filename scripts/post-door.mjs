@@ -26,27 +26,23 @@ const TOPIC = "Getting in";
    see the note above on why it is one constant and not two. */
 const TITLE = "THIS PLACE IS PRIVATE NOW";
 
+/* SHORT, because the feed shows the first paragraph and folds the rest. One
+   line people read standing up, and the detail for whoever taps. */
 const EN = [
   TITLE,
   "",
-  "Nobody can open it without a password — not a stranger with the link, not a "
-  + "search engine, nobody.",
+  "Your password is behind the bell. It changes daily and lets one person in.",
   "",
-  "Yours is behind the bell at the top of this page. It changes every day and it "
-  + "lets one person in. Send it to somebody worth having here.",
-  "",
-  "Tell them to open the link in Safari rather than inside WeChat. WeChat's browser "
-  + "forgets who they are, and they would have to start again.",
+  "Send it to somebody worth having here — and tell them to open the link in "
+  + "Safari, not inside WeChat. WeChat's browser forgets them.",
 ].join("\n");
 
 const ZH = [
   "这里从今天起是私密的",
   "",
-  "没有口令谁也打不开——拿到链接的陌生人不行，搜索引擎也不行。",
+  "你的口令在铃铛里，每天换一次，一个口令进一个人。",
   "",
-  "你的口令在页面上面那个铃铛里，每天都换，一个口令进一个人。想让谁来，就发给谁。",
-  "",
-  "记得告诉他别在微信里打开，用 Safari。微信的浏览器记不住他是谁，到时候还得从头再来。",
+  "想让谁来就发给谁——记得让他用 Safari 打开，别在微信里点。微信的浏览器记不住人。",
 ].join("\n");
 
 const head = { "x-admin-secret": key };

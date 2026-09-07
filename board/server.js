@@ -547,6 +547,52 @@ app.post("/api/invite", admin, express.json({ limit: "8kb" }), async (req, res) 
   res.status(201).json({ made });
 });
 
+/* LETTING IN THE PEOPLE WHO ARE ALREADY HERE.
+ *
+ * The door admits a browser that has spent a code. Everybody who joined before
+ * there was a door has spent nothing — so switching to "read" would shut out
+ * every person already using the board, and they would not come back to find
+ * out why.
+ *
+ * This mints one invite per existing person and marks it spent by them. They
+ * are admitted with a row saying how, which is the same record everybody else
+ * has, so one of them can be taken back like any other. Run it before turning
+ * the door on, or immediately after.
+ *
+ * WHO COUNTS AS ALREADY HERE: anybody with a profile or a post on the board.
+ * Not a reader — this app has no way to know about those, and would not want
+ * one.
+ */
+app.post("/api/admit-existing", admin, async (_req, res) => {
+  const now = new Date().toISOString();
+  let added = 0, already = 0;
+  const board = await store.load(FILE);
+
+  const here = new Set();
+  for (const q of board.people) if (q.by) here.add(q.by);
+  for (const p of board.posts) if (p.by && store.isOwnPost(p)) here.add(p.by);
+
+  await change((b) => {
+    const admittedAlready = new Set(b.invites.filter((v) => v.usedBy && !v.off)
+      .map((v) => v.usedBy));
+    const have = new Set(b.invites.map((v) => v.code));
+    for (const by of here) {
+      if (admittedAlready.has(by)) { already++; continue; }
+      let code = store.newCode();
+      while (have.has(code)) code = store.newCode();
+      have.add(code);
+      const q = b.people.find((x) => x.by === by);
+      b.invites.push(store.cleanInvite({
+        code, at: now, usedBy: by, usedAt: now,
+        who: (q && q.handle) || "here before the door",
+      }));
+      added++;
+    }
+    return true;
+  });
+  res.json({ added, already, people: here.size });
+});
+
 /** What has been handed out, and what became of it. */
 app.get("/api/invite", admin, async (_req, res) => {
   const board = await store.load(FILE);

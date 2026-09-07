@@ -2869,11 +2869,15 @@ function drawFollowers() {
  *  whether anything has happened to them — and which opens their own page,
  *  where there is no list of followers. A number that leads somewhere the
  *  thing it counts is not is worse than no number. */
-function badgeFollowers(n) {
+/* THE COUNT LIVES ON THE BELL NOW, and only there.
+ *
+ * It used to sit on the Browse tab, because the followers list sat under the
+ * deck. The list moved into the tray and this did not — leaving a badge on a
+ * tab that no longer holds the thing it was counting, and two notification
+ * dots on one screen for one event. */
+function badgeFollowers() {
   const b = $("navbrowsen");
-  if (!b) return;
-  b.textContent = n > 9 ? "9+" : String(n);
-  b.hidden = !n;
+  if (b) b.hidden = true;
 }
 
 /* THE ROW ABOVE THE DECK: your own card, in whichever of three states it is.
@@ -3200,11 +3204,10 @@ function showTranslate(onFeed) {
 $("navbrowse").addEventListener("click", (e) => {
   if (e.metaKey || e.ctrlKey || e.shiftKey) return;
   e.preventDefault();
-  // Carrying a count means it goes to what the count is about; otherwise the
-  // top, which is what the tab has always done.
-  const go = !$("navbrowsen").hidden && !$("folrule").hidden ? $("folrule") : null;
-  if (go) go.scrollIntoView({ behavior: "smooth", block: "start" });
-  else window.scrollTo({ top: 0, behavior: "smooth" });
+  // The top, which is what this tab has always done. It used to jump to the
+  // followers list when it was carrying a count; that list is behind the bell
+  // now, and the bell is at the top anyway.
+  window.scrollTo({ top: 0, behavior: "smooth" });
 });
 $("navfeed").addEventListener("click", (e) => {
   if (e.metaKey || e.ctrlKey || e.shiftKey) return;

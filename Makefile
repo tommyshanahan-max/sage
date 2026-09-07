@@ -175,6 +175,15 @@ post-explainer: ## Put the how-to-be-the-same-person-twice post on the feed
 	  /seed/post-explainer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  $(if $(AS),--as "$(AS)",) $(if $(AGAIN),--again,)
 
+admit-existing: ## Let everybody already on the board through the door, once
+	@# Run this BEFORE setting BOARD_INVITE=read, or the people already
+	@# using it are shut out on the next deploy.
+	$(COMPOSE) exec -T board sh -c 'wget -qO- --header="x-admin-secret=$$BOARD_ADMIN_KEY" \
+	  --post-data="" http://127.0.0.1:8080/api/admit-existing' || \
+	$(COMPOSE) exec -T board node -e "fetch('http://127.0.0.1:8080/api/admit-existing',\
+	  {method:'POST',headers:{'x-admin-secret':process.env.BOARD_ADMIN_KEY}})\
+	  .then(r=>r.json()).then(d=>console.log(JSON.stringify(d)))"
+
 post-door: ## Tell the feed the board is private now, as The Professor
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/post-door.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" $(if $(AGAIN),--again,)
