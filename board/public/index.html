@@ -568,8 +568,7 @@
   .deck{position:relative;width:100%;
     height:max(13rem, min(62vh, 34rem, calc(var(--vh, 1vh) * 100 - 21rem - env(safe-area-inset-bottom))));
     margin:0 0 .9rem;touch-action:pan-y;overflow:hidden;border-radius:1.3rem}
-  /* The ask above it is only there while there is no face on this phone, and it
-     is paid for out of the deck. */
+  /* The row above it is always there now, so the deck always pays for it. */
   #mine:not([hidden]) + .deck{
     height:max(11rem, min(52vh, 30rem, calc(var(--vh, 1vh) * 100 - 26rem - env(safe-area-inset-bottom))))}
   .pc{position:absolute;inset:0;border-radius:1.3rem;overflow:hidden;
@@ -638,6 +637,12 @@
     border-radius:50%;background:var(--paper);color:var(--accent);
     display:grid;place-items:center;font-family:var(--serif);font-size:1.15rem;
     line-height:1;box-shadow:0 0 0 2px var(--line)}
+  .mine .ring{overflow:visible}
+  .mine .ring img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;
+    object-fit:cover;display:block}
+  /* Not .go — that is the sheet's primary button, and this is a chevron. */
+  .mine .chev{margin-left:auto;flex:0 0 auto;color:var(--muted);font-size:1.4rem;
+    line-height:1;padding-left:.4rem}
   .mine .ring i{position:absolute;right:-2px;bottom:-2px;width:1.15rem;height:1.15rem;
     border-radius:50%;background:var(--accent);color:var(--accent-ink);
     display:grid;place-items:center;font-style:normal;font-size:.8rem;
@@ -1879,20 +1884,57 @@ function turnCard() {
   return box;
 }
 
-/* The row under the deck. Drawn from ME, which arrives after the first paint,
- * so it is redrawn when that lands and again whenever the profile is saved. */
+/* THE ROW ABOVE THE DECK: your own card, in whichever of three states it is.
+ *
+ * It began as one thing — an ask for a photograph — and had to become three,
+ * because the question it answers changes the moment you upload one. Your own
+ * card is deliberately NOT in the deck (browsing your own photograph is not a
+ * feature), so without this row there is nowhere in the app to see that your
+ * face went up, and the only way to find out is to ask somebody else to look.
+ *
+ * No photograph        → add one, and the row is the control.
+ * One, waiting on us    → say so. Held is not broken, and the difference
+ *                         matters more to the person waiting than to anyone.
+ * One, up               → their own face, and the way to their own page.
+ *
+ * Drawn from ME, which arrives after the first paint, so it is redrawn when
+ * that lands and again whenever the profile is saved. */
 function drawMine() {
   const box = $("mine");
-  box.hidden = !needsFace();
-  if (box.hidden) return;
+  box.hidden = false;
   fill(box);
-  const ring = el("span", "ring", initial(ME && ME.handle));
-  ring.append(el("i", null, "+"));
+
+  const ring = el("span", "ring");
+  const face = ME && ME.photo;
+  if (face) {
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/public-media?id=" + encodeURIComponent(ME.photo), alt: "" });
+    img.addEventListener("error", () => { img.remove(); ring.textContent = initial(ME && ME.handle); });
+    ring.append(img);
+  } else {
+    ring.textContent = initial(ME && ME.handle);
+    ring.append(el("i", null, "+"));
+  }
+
   const words = el("span");
-  words.append(el("b", null, T("brw.mine")), el("span", null, T("brw.mineWhy")));
+  if (!face) {
+    words.append(el("b", null, T("brw.mine")), el("span", null, T("brw.mineWhy")));
+  } else if (ME.photoPending) {
+    words.append(el("b", null, T("brw.mineHeld")), el("span", null, T("brw.mineHeldWhy")));
+  } else {
+    words.append(el("b", null, T("brw.mineUp", { name: ME.handle || "" })),
+                 el("span", null, T("brw.mineUpWhy")));
+  }
   box.append(ring, words);
+  if (face) box.append(el("span", "chev", "\u203a"));
 }
-$("mine").addEventListener("click", () => $("mephoto").click());
+/* One control, two destinations: the picker while there is nothing to look at,
+ * their own page once there is. */
+$("mine").addEventListener("click", () => {
+  if (!(ME && ME.photo)) { $("mephoto").click(); return; }
+  if (ME.handle) location.href = "/p/" + encodeURIComponent(ME.handle.toLowerCase());
+  else openMe();
+});
 
 function personCard(q, live) {
   const box = el("div", "pc");
@@ -2331,15 +2373,38 @@ function asBase64(file) {
 async function saveMe(patch) {
   const payload = JSON.stringify({ ...patch, device });
   const mb = (payload.length / 1024 / 1024).toFixed(2);
-  let r;
-  try {
-    r = await fetch("/api/me", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: payload,
-    });
-  } catch (e) {
-    return { error: (e && e.message || "?") + " · " + mb + " MB" };
+
+  /* TWICE, THEN GIVE UP.
+   *
+   * A photograph going from a phone here to a box in Tokyo over mobile data
+   * does not always arrive. The server's log for it is "request aborted" —
+   * the body stopped coming — and what the browser tells the page is "Load
+   * failed", which is not a sentence anybody can act on.
+   *
+   * One retry turns most of those into an upload that worked. The cost is a
+   * photograph that arrived on the first attempt after all: its file stays on
+   * disk unreferenced while the second one becomes the profile picture. A few
+   * stray kilobytes is the right price for not telling somebody their face
+   * would not upload when a second attempt would have carried it.
+   *
+   * Only the throw is retried — a connection that failed. A 4xx or 5xx is an
+   * answer, and asking the same question again gets the same answer. */
+  let r, err;
+  for (let go = 0; go < 2; go++) {
+    if (go) await new Promise((ok) => setTimeout(ok, 900));
+    try {
+      r = await fetch("/api/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      });
+      err = null;
+      break;
+    } catch (e) { err = e; }
+  }
+  if (err) {
+    console.error("profile save:", err);
+    return { error: T("me.didNotGo", { mb }) };
   }
   const d = await r.json().catch(() => ({}));
   if (!r.ok) {

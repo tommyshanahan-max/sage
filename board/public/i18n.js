@@ -563,6 +563,14 @@ export const STRINGS = {
   "me.replies":        ["replies", "条回复"],
   "me.save":           ["Save", "保存"],
   "me.saved":          ["Saved.", "已保存。"],
+  // What a dropped upload says. Not the browser's own words — "Load failed"
+  // is true and useless. This one says what happened and what to do, and
+  // carries the size, because a photo that is too big for a bad connection is
+  // the one case where knowing the number helps.
+  "me.didNotGo": [
+    "That did not go up — the connection dropped partway ({mb} MB). Try once more.",
+    "没能传上去——中途断了（{mb} MB）。再试一次。",
+  ],
   "me.photoHeld": [
     "Your photo is up for you, and waiting for a person before anybody else sees it.",
     "你的照片你自己能看到，其他人要等有人过目之后才能看到。",
@@ -615,9 +623,14 @@ export const STRINGS = {
   "bud.here":          ["Here", "来了"],
   "bud.theirPosts":    ["On the feed", "发过的内容"],
   "bud.nothingYet":    ["Nothing on the feed yet.", "还没有发过内容。"],
+  /* It used to give advice about meeting somebody — where to go the first
+   * time, who to tell. That is a sentence about a thing this app does not ask
+   * anybody to do, printed under a photograph, which is a strange place to
+   * plant the idea. What is worth saying is the opposite: none of this needs
+   * you to give anything away, or to meet anyone at all. */
   "bud.safety": [
-    "Meet on campus or somewhere public the first time, and tell somebody where you are going. Nobody here should be asking you for money, a deposit, or your documents.",
-    "第一次见面选在学校或者公共场所，并且告诉别人你去哪儿。这里不该有人向你要钱、要押金或者要证件。",
+    "Nothing here needs your phone number, your WeChat or your documents, and nobody should be asking you for them. You never have to meet anyone to use this.",
+    "这里不需要你的电话、微信或者证件，也不该有人向你要。你完全不用见面就能用这个应用。",
   ],
   "bud.days":          ["M,T,W,T,F,S,S", "一,二,三,四,五,六,日"],
   "bud.close":         ["Close", "关闭"],
@@ -689,6 +702,19 @@ export const STRINGS = {
   // while there is no face on this phone, and both go the moment there is.
   "brw.mine":          ["Add your photo", "加上你的照片"],
   "brw.mineWhy":       ["Nobody here can see who you are yet.", "这里还没人知道你是谁。"],
+  // Your own card is not in the deck — browsing your own photograph is not a
+  // feature — so this row is the only place in the app that answers "did my
+  // face go up?". It has to answer it in both of the states that follow.
+  "brw.mineHeld":      ["Your photo is in", "照片已经收到"],
+  "brw.mineHeldWhy": [
+    "You can see it. A person looks at every photograph before anybody else does.",
+    "你自己看得到。每张照片都要先由人过目，之后别人才看得到。",
+  ],
+  "brw.mineUp":        ["You are in Browse", "你已经在名单里了"],
+  "brw.mineUpWhy": [
+    "This is how you look to everybody else. Your own card is never in your own deck.",
+    "别人看到的就是这样。你自己的卡片不会出现在你自己的名单里。",
+  ],
   "brw.yourTurn":      ["Your turn", "该你了"],
   "brw.yourTurnWhat": [
     "That is everyone. Put your own face up and you are on the list too.",
