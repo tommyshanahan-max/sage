@@ -109,8 +109,17 @@ const el = (tag, cls, text) => {
   return n;
 };
 
-/** The card, or null when there is nothing to draw at this level. */
-export function dailyCard() {
+/** Whether today's card has been answered, for the summary line above it. */
+export function dailyDone() {
+  const d = deck();
+  return d.done === today();
+}
+
+/** The card, or null when there is nothing to draw at this level.
+ *  `bare` drops the mark and the name, for when it is drawn inside a section
+ *  that already carries both — one voice introducing itself twice reads as
+ *  two. */
+export function dailyCard(bare) {
   let d = deck();
   if (!CARDS[d.which] || !CARDS[d.which][clamp(d.level) - 1]) return null;
 
@@ -129,14 +138,18 @@ export function dailyCard() {
     const card = answered && d.card ? d.card : pick(d);
 
     const head = el("div", "dhead");
-    const disc = el("i", "dmark", "留");
-    disc.setAttribute("aria-hidden", "true");
-    head.append(disc);
+    if (!bare) {
+      const disc = el("i", "dmark", "留");
+      disc.setAttribute("aria-hidden", "true");
+      head.append(disc);
+    }
     const who = el("div", "dwho");
     /* The name comes from house.name, the same string the feed marks a house
        post with — so this card is The Professor everywhere the rest of the app
-       is, and a rename happens in one place rather than two. */
-    who.append(el("b", null, T("house.name") + " \u00b7 " + T("day.today")));
+       is, and a rename happens in one place rather than two. Dropped entirely
+       when the section around it has already said it. */
+    who.append(el("b", null, bare ? T("day.today")
+      : T("house.name") + " \u00b7 " + T("day.today")));
     who.append(el("span", null, T("day.atLevel", { n: clamp(d.level) })));
     head.append(who);
 

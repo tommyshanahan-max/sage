@@ -749,6 +749,16 @@ export const STRINGS = {
      post: see daily.js for why fifty people would otherwise mean fifty cards a
      morning on a board everybody shares. */
   "day.today":         ["today", "今天"],
+  /* ONE FOLD FOR ALL OF IT. The heading of the section that holds the card of
+     the day and the two tests, and the line under it that says what is inside
+     without opening it. */
+  "prof.title":        ["From the Professor", "教授给你的"],
+  "prof.sub":          ["Your report card", "你的成绩单"],
+  "prof.nothing":      ["Two short tests, and a card a day", "两个小测试，每天一张卡"],
+  "prof.waiting":      ["Today's card is waiting", "今天的卡还没做"],
+  "prof.cardDone":     ["Today's card done", "今天的卡做完了"],
+  "prof.noLevel":      ["No level yet", "还没测等级"],
+  "prof.noType":       ["No letters yet", "还没测字母"],
   /* WHAT THIS CARD IS, for somebody who has just found it at the top of their
      feed and has no idea why a word is being shown to them. Folded away,
      because it is read once and then never again. */
