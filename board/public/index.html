@@ -193,6 +193,35 @@
   .looking b{display:block;font-weight:400;font-size:.95rem;color:var(--ink)}
   .looking .why{display:block;margin:.2rem 0 0;font-size:.8rem;line-height:1.5;
     color:var(--muted)}
+  /* ---- what you are looking for ------------------------------------------
+     A tick box is the fastest input there is — four of them is about four
+     seconds, against twenty for a photograph and longer for the box that asks
+     somebody to describe themselves. What costs is the LENGTH of the form, not
+     the typing, which is why these are folded twice: once behind the switch,
+     once behind the second +. */
+  .roomhead{margin:1.4rem 0 .1rem;font-family:var(--serif);font-size:1.15rem;
+    font-weight:400;color:var(--ink)}
+  .roomgroup{margin:1.1rem 0 .5rem;font-size:.7rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);font-weight:600}
+  .room{display:flex;align-items:flex-start;gap:.65rem;padding:.65rem .75rem;
+    background:var(--card);border:1px solid var(--line);border-radius:.75rem;
+    margin:0 0 .45rem;cursor:pointer;width:100%;text-align:left}
+  .room input{margin:.15rem 0 0;flex:0 0 auto;width:1.05rem;height:1.05rem;
+    accent-color:var(--accent)}
+  .room span{font-size:.9rem;line-height:1.35;color:var(--ink)}
+  .room span small{display:block;color:var(--muted);font-size:.78rem;margin-top:.1rem}
+  .room.on{border-color:var(--accent);background:var(--accent-soft)}
+  /* A box somebody cannot tick because they already have three. Dimmed rather
+     than disabled: a disabled box does not explain itself, and the line
+     underneath does. */
+  .room.full{opacity:.5}
+  .roomfull{color:var(--accent)}
+  .seg{display:flex;gap:.4rem;margin:.5rem 0 0}
+  .seg button{flex:1;padding:.5rem .3rem;font-size:.82rem;border-radius:.6rem;
+    border:1px solid var(--line);background:var(--card);color:var(--ink-2)}
+  .seg button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .seglabel{margin:.9rem 0 0;font-size:.8rem;color:var(--ink-2)}
+
   .freewrap{margin:.85rem 0 0}
   .freewrap .lab{font-size:.78rem;color:var(--muted)}
   .days{display:flex;gap:.35rem;margin:.4rem 0 0}
@@ -429,6 +458,12 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .folrow .who span{display:block;font-size:.82rem;color:var(--muted);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* A follower row is a name, which fits. A match row is a SENTENCE — the room
+     is the whole information in it — so an ellipsis there truncates the only
+     part worth reading. It wraps instead. */
+  #matches .who b{white-space:normal;overflow:visible;font-size:.98rem;line-height:1.35}
+  #matches .who span{white-space:normal;overflow:visible;margin-top:.15rem}
+  #matches .folrow{align-items:flex-start}
   .folrow .dot{flex:0 0 auto;width:.45rem;height:.45rem;border-radius:50%;
     background:var(--accent)}
   .folrow button{flex:0 0 auto;border:1px solid var(--accent);background:var(--accent);
@@ -919,6 +954,14 @@
      control that puts somebody into a WeChat group, so it is worth a word. It
      sits on its own scrim because it has to stay readable on a photograph
      whatever is behind it. */
+  /* On the photograph, so they sit over the scrim rather than under the fold.
+     The shared one is filled; the others are outlines — one glance says what
+     you have in common without a second line of text saying it. */
+  .pchips{display:flex;flex-wrap:wrap;gap:.3rem;margin:.6rem 0 0}
+  .pchip{font-size:.72rem;padding:.22rem .55rem;border-radius:99px;
+    border:1px solid rgba(255,255,255,.45);color:#fff;background:rgba(0,0,0,.22)}
+  .pchip.on{background:#fff;color:#151B28;border-color:#fff}
+
   .pc .share{position:absolute;top:.8rem;right:.8rem;z-index:2;
     display:inline-flex;align-items:center;gap:.4rem;border:0;
     background:rgba(10,14,22,.52);color:#fff;border-radius:99px;
@@ -1038,6 +1081,13 @@
       <button class="sendbtn" type="button" id="myinvsend"></button>
       <button class="feedbtn" type="button" id="myinvfeed"></button>
     </div>
+    <!-- MATCHES FIRST. A match is the only thing in this tray that is about
+         another person having chosen you back, and it is the only one with
+         something to do at the other end of it. -->
+    <div id="notifmatch">
+      <div class="rule" id="matchrule" hidden><span id="matchlabel"></span><i></i></div>
+      <div class="fols" id="matches" hidden></div>
+    </div>
     <div id="notifday"></div>
     <div id="notiffol">
       <div class="rule" id="folrule" hidden><span id="follabel"></span><i></i>
@@ -1143,6 +1193,40 @@
         <input type="checkbox" id="melooking">
         <span><b id="melookinglabel"></b><span class="why" id="melookingwhy"></span></span>
       </label>
+    </div>
+
+    <!-- WHAT YOU ARE LOOKING FOR, UNDER THE SWITCH THAT ALREADY MEANS IT.
+         "Show me in Browse" is the tick that says you want to be found, so
+         these appear when it is on and are not on the form at all when it is
+         off. Somebody who never ticks it sees a form exactly as long as it
+         was. Somebody who does is, by their own account, the person these
+         boxes are for.
+         The money and trade rooms are behind their own fold: four boxes on
+         first sight rather than eleven, and most people never see the word
+         investor — which is where it does the least harm. -->
+    <div id="merooms" hidden>
+      <p class="roomhead" id="meroomhead"></p>
+      <p class="menote" id="meroomwhy"></p>
+      <p class="roomgroup" id="megroup1"></p>
+      <div id="meroomsA"></div>
+      <p class="roomgroup" id="megroup2"></p>
+      <div id="meroomsB"></div>
+      <button class="morego" type="button" id="meroomsmorego"
+              aria-expanded="false" aria-controls="meroomsmore">
+        <span id="meroomsmorelabel"></span><i aria-hidden="true">+</i>
+      </button>
+      <div id="meroomsmore" hidden><div id="meroomsC"></div></div>
+      <p class="said roomfull" id="meroomfull" hidden></p>
+
+      <p class="roomhead" id="mewherehead"></p>
+      <!-- Two rows, each labelled. Unlabelled they are two identical-looking
+           strips of the same three words, and which one is about you is a
+           guess somebody makes wrong. -->
+      <p class="seglabel" id="mewherelab1"></p>
+      <div class="seg" id="mewhere"></div>
+      <p class="seglabel" id="mewherelab2"></p>
+      <div class="seg" id="mewants"></div>
+      <p class="menote" id="mewherewhy"></p>
     </div>
 
     <button class="morego" type="button" id="memorego"
@@ -2625,7 +2709,8 @@ function drawTray() {
   const none = $("notifnone");
   const hasDay = Boolean($("notifday").firstChild);
   const hasFol = !$("folrule").hidden;
-  none.hidden = hasDay || hasFol;
+  const hasMatch = !$("matchrule").hidden;
+  none.hidden = hasDay || hasFol || hasMatch;
   none.textContent = T("notif.none");
 
   /* WHAT THE NUMBER MEANS: things still waiting, not things unread.
@@ -2902,6 +2987,71 @@ async function loadFollowers() {
   drawFollowers();
 }
 
+/* ---- matches, in the tray --------------------------------------------------
+ *
+ * THE ROOM IS THE INFORMATION, NOT THE WORD "MATCH". With three picks each out
+ * of seven pairings, two people overlap somewhere about nine times in ten — so
+ * a line that said MATCH and nothing else would fire constantly and be learned
+ * as noise inside a week. "You and Ana both want a language exchange" is
+ * pleasant; "you are raising, they are investing" is worth stopping for; and
+ * the reader can tell which is which without being told.
+ */
+let MATCHES = [];
+
+async function loadMatches() {
+  if (!device) return;
+  try {
+    const d = await fetch("/api/matches", { cache: "no-store",
+      headers: { "x-board-device": device } }).then((r) => r.json());
+    MATCHES = (d && d.matches) || [];
+  } catch { MATCHES = []; }
+  drawMatches();
+  drawTray();
+}
+
+function matchLine(m) {
+  const first = m.shared[0];
+  if (!first) return "";
+  return first.mine === first.theirs
+    ? T("match.one", { who: m.handle, what: T("room." + first.mine + ".s") })
+    : T("match.pair", { who: m.handle, mine: T("room." + first.mine + ".s"),
+                        theirs: T("room." + first.theirs + ".s") });
+}
+
+function drawMatches() {
+  const box = $("matches");
+  const rule = $("matchrule");
+  fill(box);
+  if (!MATCHES.length) { box.hidden = true; rule.hidden = true; return; }
+  box.hidden = false; rule.hidden = false;
+  $("matchlabel").textContent = T("match.head0");
+
+  for (const m of MATCHES) {
+    const row = el("a", "folrow");
+    row.href = "/p/" + encodeURIComponent((m.handle || "").toLowerCase());
+    row.style.textDecoration = "none";
+    const av = el("span", "av");
+    if (m.photo) {
+      const img = Object.assign(document.createElement("img"),
+        { src: "/api/public-media?id=" + encodeURIComponent(m.photo), alt: "", loading: "lazy" });
+      img.addEventListener("error", () => { img.remove(); av.textContent = initial(m.handle); });
+      av.append(img);
+    } else {
+      av.textContent = initial(m.handle);
+    }
+    const who = el("span", "who");
+    who.append(el("b", null, matchLine(m)));
+    // What is outstanding, in the row, so nobody has to open a page to find
+    // out whether the ball is with them.
+    const state = m.card ? T("card.theirs", { who: m.handle })
+      : m.gave ? T("card.waiting", { who: m.handle })
+      : "";
+    if (state) who.append(el("span", null, state));
+    row.append(av, who);
+    box.append(row);
+  }
+}
+
 function drawFollowers() {
   const box = $("fols");
   const rule = $("folrule");
@@ -3080,6 +3230,17 @@ function personCard(q, live) {
   const where = [q.campus, q.here].filter(Boolean).join(" · ");
   if (where) scrim.append(el("p", "where", where));
   if (q.goal) scrim.append(el("p", "goal", q.goal));
+  /* WHAT THEY ARE LOOKING FOR, ON THE CARD ITSELF. This is the half of the
+     feature that works at eight people: a match needs two people to have
+     followed each other, which is rare on a small board, but a label saying
+     what somebody wants is useful the moment they tick it. What the two of
+     you have in common is marked, and the rest is there to read. */
+  if (Array.isArray(q.rooms) && q.rooms.length && !q.mine) {
+    const chips = el("div", "pchips");
+    const shared = new Set((q.shared || []).map((x) => x.theirs));
+    for (const r of q.rooms) chips.append(el("span", "pchip" + (shared.has(r) ? " on" : ""), T("room." + r)));
+    scrim.append(chips);
+  }
   box.append(scrim);
 
   /* On the card, not in the section header above it: this shares one person,
@@ -3335,6 +3496,7 @@ function repaint() {
   drawTutor();
   drawDeck();
   drawFollowers();
+  drawMatches();
   draw();
   window.scrollTo(0, y);
 }
@@ -3665,6 +3827,10 @@ function openMe(joining) {
    * every time they opened the form. */
   $("melooking").checked = joining === true ||
     (ME && ME.handle ? Boolean(ME.looking) : true);
+  PICKED = (ME && Array.isArray(ME.rooms) ? ME.rooms : []).slice(0, 3);
+  WHERE = (ME && ME.where) || "cn";
+  WANTS = (ME && ME.wants) || "any";
+  showRooms();
   $("mesaid").hidden = true;
   drawMePic();
   $("mesheet").hidden = false;
@@ -3764,6 +3930,107 @@ function showMore(on) {
 }
 $("memorego").addEventListener("click", () => showMore($("memore").hidden));
 
+/* ---- what you are looking for ----------------------------------------------
+ *
+ * THREE GROUPS AND A FOLD. The first four boxes are what almost everybody on
+ * this board wants — a language exchange, somebody to study with, somebody who
+ * knows the city, or to be that person for somebody else. The other seven are
+ * work, money and trade, and they sit behind their own + because a form that
+ * opens on the word "investor" is a different form.
+ *
+ * MAX THREE, AND THE FORM SAYS SO RATHER THAN SILENTLY REFUSING. A fourth box
+ * greys out and one line explains why. Disabling them with no explanation is
+ * how a form gets described as broken.
+ *
+ * The keys here are the server's keys. The pairing lives in store.js and is
+ * never shown: you tick "raising money" and come up for somebody who ticked
+ * "investing", and nobody needs to be told that is what happened.
+ */
+const ROOMS_A = ["lang", "study"];
+const ROOMS_B = ["new", "host"];
+const ROOMS_C = ["job", "hire", "cofound", "raise", "invest", "buy", "sell"];
+let PICKED = [];
+
+function drawRooms() {
+  const full = PICKED.length >= 3;
+  const box = (key) => {
+    const lab = el("label", "room" + (PICKED.includes(key) ? " on" : "")
+      + (full && !PICKED.includes(key) ? " full" : ""));
+    const inp = el("input");
+    inp.type = "checkbox";
+    inp.checked = PICKED.includes(key);
+    inp.addEventListener("change", () => {
+      if (inp.checked && PICKED.length >= 3) { inp.checked = false; drawRooms(); return; }
+      PICKED = inp.checked ? [...PICKED, key] : PICKED.filter((k) => k !== key);
+      drawRooms();
+    });
+    const txt = el("span", null, T("room." + key));
+    const sub = T("room." + key + ".sub");
+    // Only two of them carry a second line. T returns the key back when there
+    // is no string, which would print "room.job.sub" under a box.
+    if (sub && sub !== "room." + key + ".sub") txt.append(el("small", null, sub));
+    lab.append(inp, txt);
+    return lab;
+  };
+  for (const [id, keys] of [["meroomsA", ROOMS_A], ["meroomsB", ROOMS_B], ["meroomsC", ROOMS_C]]) {
+    const wrap = $(id);
+    wrap.textContent = "";
+    for (const k of keys) wrap.append(box(k));
+  }
+  $("meroomfull").hidden = !full;
+  $("meroomfull").textContent = T("room.full");
+}
+
+/** One row of choices, of which exactly one is on. */
+function drawSeg(id, keys, now, pick) {
+  const wrap = $(id);
+  wrap.textContent = "";
+  for (const k of keys) {
+    const b = el("button", now === k ? "on" : "", T(wrap.dataset.prefix + "." + k));
+    b.type = "button";
+    b.addEventListener("click", () => { pick(k); });
+    wrap.append(b);
+  }
+}
+
+let WHERE = "cn", WANTS = "any";
+function drawWhere() {
+  $("mewhere").dataset.prefix = "room.where";
+  $("mewants").dataset.prefix = "room.wants";
+  drawSeg("mewhere", ["cn", "out"], WHERE, (k) => { WHERE = k; drawWhere(); });
+  drawSeg("mewants", ["cn", "out", "any"], WANTS, (k) => { WANTS = k; drawWhere(); });
+}
+
+/* Shown only when they have said they want to be found. Off, the form is
+   exactly as long as it was before any of this existed. */
+function showRooms() {
+  const on = $("melooking").checked;
+  $("merooms").hidden = !on;
+  if (!on) return;
+  $("meroomhead").textContent = T("room.head");
+  $("meroomwhy").textContent = T("room.why");
+  $("megroup1").textContent = T("room.groupStudy");
+  $("megroup2").textContent = T("room.groupSettle");
+  $("meroomsmorelabel").textContent = T("room.more");
+  $("mewherehead").textContent = T("room.whereHead");
+  $("mewherelab1").textContent = T("room.whereMe");
+  $("mewherelab2").textContent = T("room.whereThem");
+  $("mewherewhy").textContent = T("room.whereWhy");
+  drawRooms();
+  drawWhere();
+  // Open the money fold for somebody who already has one of those ticked —
+  // otherwise their own answer is hidden behind a + they have to find.
+  const deep = PICKED.some((k) => ROOMS_C.includes(k));
+  $("meroomsmore").hidden = !deep;
+  $("meroomsmorego").setAttribute("aria-expanded", String(deep));
+}
+$("melooking").addEventListener("change", showRooms);
+$("meroomsmorego").addEventListener("click", () => {
+  const on = $("meroomsmore").hidden;
+  $("meroomsmore").hidden = !on;
+  $("meroomsmorego").setAttribute("aria-expanded", String(on));
+});
+
 $("meshut").addEventListener("click", () => { $("mesheet").hidden = true; });
 $("mesheet").addEventListener("click", (e) => {
   if (e.target === $("mesheet")) $("mesheet").hidden = true;
@@ -3793,6 +4060,10 @@ $("meform").addEventListener("submit", async (e) => {
     // show them as separate things later without asking again.
     speaks: $("melangs").value.split(/[,，、]/).map((x) => x.trim()).filter(Boolean).slice(0, 6),
     looking: $("melooking").checked,
+    // Sent whether or not the section was open: somebody who unticks "show me
+    // in Browse" keeps what they picked, so ticking it again brings their
+    // answers back rather than an empty form.
+    rooms: PICKED, where: WHERE, wants: WANTS,
     here: $("mehere").value.trim(), goal: $("megoal").value.trim(),
     ig: $("meig").value.trim(),
   });
@@ -3814,6 +4085,7 @@ load();
 loadPeople();
 loadWanted();
 loadFollowers();
+loadMatches();
 </script>
 
 <script>

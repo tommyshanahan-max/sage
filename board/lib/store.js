@@ -251,6 +251,67 @@ export function cleanInvite(raw) {
  *  free text turns "HSK 4" into four spellings that never meet. */
 export const LEVELS = ["Just starting", "HSK 1-2", "HSK 3", "HSK 4", "HSK 5", "HSK 6", "Beyond HSK"];
 
+/* ---------------------------------------------------------------------------
+ * What somebody is looking for, and who it pairs with
+ *
+ * ELEVEN BOXES, SEVEN PAIRINGS. A tick box on its own cannot decide a match,
+ * because half of these do not pair with themselves: two investors are not a
+ * match, an investor and somebody raising money are. So the table below is the
+ * unit, not the box — and it is here, in one place, rather than being implied
+ * by a name in a template somewhere.
+ *
+ * THEY ARE NOT KINDS OF PEOPLE. A first-year language student can be raising
+ * money for something; somebody hiring can also want a study partner. That is
+ * why a person may hold three of them and why the list is written as things
+ * somebody wants this term rather than as categories somebody belongs to.
+ *
+ * WHY THREE AND NOT MORE. Not modesty about the form — arithmetic. Three picks
+ * out of seven pairings means two people overlap somewhere about nine times in
+ * ten, which is what makes the wall below cheap. Let somebody tick everything
+ * and the overlap is certain, the wall stops meaning anything, and so does the
+ * notification.
+ */
+export const ROOMS = [
+  "lang", "study", "new", "host", "job", "hire", "cofound", "raise", "invest",
+  "buy", "sell",
+];
+
+/** Which box answers which. A room missing from here answers itself. */
+const ANSWERS = { new: "host", host: "new", job: "hire", hire: "job",
+                  raise: "invest", invest: "raise", buy: "sell", sell: "buy" };
+
+/** The room key somebody has to have ticked for this one to pair with it. */
+export const answerTo = (room) => ANSWERS[room] || room;
+
+/* WHERE, AND WHO THEY WANT. The board is one side of an exchange and the other
+ * side is everywhere else, so this is two questions and not one: where you are
+ * settles what you are to somebody else, and who you want settles what they
+ * are to you. Both default to the answer that matches everybody, so a person
+ * who never touches either is never excluded by them. */
+export const WHERES = ["cn", "out"];
+export const WANTS = ["cn", "out", "any"];
+
+/** Whether each side is in the half of the world the other asked for. */
+export const scopeFits = (a, b) =>
+  (a.wants === "any" || a.wants === (b.where || "cn"))
+  && (b.wants === "any" || b.wants === (a.where || "cn"));
+
+/** Every room two people share, as pairs of what each of them ticked. */
+export function sharedRooms(a, b) {
+  const mine = new Set(Array.isArray(a?.rooms) ? a.rooms : []);
+  const theirs = new Set(Array.isArray(b?.rooms) ? b.rooms : []);
+  const out = [];
+  for (const room of mine) {
+    if (theirs.has(answerTo(room))) out.push({ mine: room, theirs: answerTo(room) });
+  }
+  return out;
+}
+
+/** Whether these two are a match at all: something shared, and both in the
+ *  half of the world the other asked for. Following is not checked here — that
+ *  is the caller's half, and it is the half that means consent. */
+export const roomsMatch = (a, b) => sharedRooms(a, b).length > 0 && scopeFits(a, b);
+
 export function cleanPerson(raw) {
   if (!raw || typeof raw !== "object") return null;
   const id = String(raw.id || "");
@@ -316,6 +377,17 @@ export function cleanPerson(raw) {
     // takes them back out. This is the difference between a board that has
     // profiles and a board that is a list of people.
     looking: raw.looking === true,
+    /* What they are looking for. Three at most — see ROOMS above for why that
+       number and not a bigger one. Unknown keys are dropped rather than
+       refused: this field is written from a page, and a page written today is
+       read by a copy of itself from six months ago. */
+    rooms: Array.isArray(raw.rooms)
+      ? [...new Set(raw.rooms.map((r) => String(r)).filter((r) => ROOMS.includes(r)))].slice(0, 3)
+      : [],
+    // Which side of the exchange they are standing on, and which side they
+    // want. Both fall back to the answer that excludes nobody.
+    where: WHERES.includes(raw.where) ? raw.where : "cn",
+    wants: WANTS.includes(raw.wants) ? raw.wants : "any",
     why: (raw.state === "published") ? "" : s(raw.why, 400),
     by: s(raw.by, 64),
   };
@@ -342,6 +414,69 @@ export function cleanFollow(raw) {
 /** How many people follow this person. A count, never the set — who follows
  *  whom among foreign students is a social graph, and publishing one is a
  *  different product from the one this is. */
+/* ---------------------------------------------------------------------------
+ * Cards
+ *
+ * THIS IS THE ONE PLACE THE PROFILE RULE IS BROKEN, AND IT IS BROKEN ON
+ * PURPOSE. Read the note above cleanPerson first: a profile carries what
+ * matches somebody and nothing that finds them, because a directory of foreign
+ * students with contact details on it is a targeting list. That rule stands.
+ *
+ * A card is the exception, and these are the walls around it:
+ *
+ *   - It is a list of its own, keyed by device hash. It is never part of a
+ *     person, so no route that returns people can return it by accident.
+ *   - It reaches one other person only when FOUR things are true: they follow
+ *     each other, they share a room, the owner pressed give, and the reader is
+ *     the person it was given to.
+ *   - Giving can be taken back, which stops the next read. It cannot stop the
+ *     last one. The screen says so before the button, not after.
+ *
+ * WHAT IT STILL COSTS, said plainly because the privacy page has to say it
+ * too: the server now holds a WeChat id for everybody who fills one in, and
+ * whoever runs the box can read the file. That was not true of this board
+ * yesterday. It is the price of the feature and not a detail of it.
+ * ------------------------------------------------------------------------- */
+
+/** Somebody's own card. `by` is their device hash — the card belongs to a
+ *  device, like a post does, because that is the only identity here. */
+export function cleanCard(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const by = String(raw.by || "").slice(0, 64);
+  if (!by) return null;
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").slice(0, n);
+  return {
+    by,
+    // A WeChat id is what people in China actually swap. Kept as typed, minus
+    // the decoration a phone adds: people paste "微信：mei_2024" and mean the
+    // second half of it.
+    wechat: s(raw.wechat, 60).replace(/^\s*(?:wechat|weixin|vx|wx|微信号?|威信)\s*[:：]?\s*/i, "").trim(),
+    // One line they write themselves. An email, a company, a website, when to
+    // message them. Free text on purpose: a phone-number field on a board of
+    // exchange students is a field worth not having.
+    line: s(raw.line, 200),
+    at: s(raw.at, 40) || new Date().toISOString(),
+  };
+}
+
+/** One person handing their card to one other. `by` is the giver's device
+ *  hash, `who` is the receiving person's id — the same shape as a follow, for
+ *  the same reason: a row is cheap to add, cheap to revoke, and never a list
+ *  hanging off either end of it. */
+export function cleanGrant(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const by = String(raw.by || "").slice(0, 64);
+  const who = String(raw.who || "");
+  if (!by || !/^[a-f0-9]{20}$/.test(who)) return null;
+  return {
+    by, who,
+    at: String(raw.at || "").slice(0, 40) || new Date().toISOString(),
+    // Taken back rather than deleted, so "they had it and stopped" and "they
+    // never had it" stay different things — the first one matters to a report.
+    off: raw.off === true,
+  };
+}
+
 export const followersOf = (follows, id) =>
   follows.reduce((n, f) => n + (f.who === id ? 1 : 0), 0);
 
@@ -510,7 +645,32 @@ export function cleanBoard(raw) {
     invites.push(v);
   }
 
-  return { posts, people, follows, notes, wants, invites };
+  /* Cards, one per device. Deduplicated on the owner rather than appended to:
+     a second row for the same person is an older card that could still be
+     handed out. */
+  const cards = [];
+  const owners = new Set();
+  for (const r of (Array.isArray(raw?.cards) ? raw.cards : [])) {
+    const c = cleanCard(r);
+    if (!c || owners.has(c.by)) continue;
+    owners.add(c.by);
+    cards.push(c);
+  }
+
+  /* Who gave theirs to whom. Deduplicated on the pair, latest row winning, so
+     give → take back → give again is one row saying what is true now. */
+  const grants = [];
+  const pairs = new Map();
+  for (const r of (Array.isArray(raw?.grants) ? raw.grants : [])) {
+    const g = cleanGrant(r);
+    if (!g) continue;
+    const key = g.by + ":" + g.who;
+    if (pairs.has(key)) { grants[pairs.get(key)] = g; continue; }
+    pairs.set(key, grants.length);
+    grants.push(g);
+  }
+
+  return { posts, people, follows, notes, wants, invites, cards, grants };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an

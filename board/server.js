@@ -902,8 +902,165 @@ app.get("/api/people", async (req, res) => {
       ...shownPerson(q, q.by === me),
       mine: q.by === me,
       following: Boolean(me) && board.follows.some((f) => f.by === me && f.who === q.id),
+      // What the two of you have in common, so the deck can say it before
+      // anybody presses anything. Both sides of this are already on both
+      // pages: it tells the reader nothing they could not work out.
+      shared: pairState(board, me, q).shared,
     })),
   });
+});
+
+/* ---------------------------------------------------------------------------
+ * Matches, and the cards two people may hand each other
+ *
+ * WHAT A MATCH IS: two people who follow each other AND who ticked boxes that
+ * answer one another. Following is the consent half and it is the half that
+ * cannot be faked by a form — you had to go and press it on their page, and it
+ * shows there. The rooms are the discovery half: they decide whether the board
+ * says anything about it, and what it says.
+ *
+ * THE WALL. No shared room, no card. It costs almost nothing — with three
+ * picks out of seven pairings two people overlap about nine times in ten — and
+ * it buys one real thing: somebody who never ticked a money box cannot be
+ * handed an investor's card, whoever follows whom.
+ *
+ * FOUR DECISIONS BEFORE A WECHAT ID MOVES: I follow you, you follow me, I
+ * press give, you press give. Neither of us sees anything from one press. A
+ * match is not an introduction and it is not a message.
+ *
+ * YOU NEED A PAGE. All of this hangs off a person row, so somebody who never
+ * made one cannot be followed, cannot match and cannot hold a card. That is
+ * the same rule the rest of the board runs on rather than a new one.
+ * ------------------------------------------------------------------------- */
+
+const myRow = (board, me) => (me ? board.people.find((x) => x.by === me) : null) || null;
+
+/** Everything true about me and one other person, in one object, computed in
+ *  one place — so a button and the route behind it can never disagree about
+ *  whether two people may swap anything. */
+function pairState(board, me, q) {
+  const out = { mutual: false, shared: [], can: false, gave: false, given: false, card: null };
+  const mine = myRow(board, me);
+  if (!mine || !q || !q.id || q.by === me) return out;
+
+  out.mutual = board.follows.some((f) => f.by === me && f.who === q.id)
+    && board.follows.some((f) => f.by === q.by && f.who === mine.id);
+  // Public either way: both people's rooms are on both people's pages, so
+  // saying what two of them have in common tells nobody anything new. It is
+  // what lets a page say "you both want a language exchange" before anybody
+  // has followed anybody.
+  out.shared = store.scopeFits(mine, q) ? store.sharedRooms(mine, q) : [];
+  out.can = out.mutual && out.shared.length > 0;
+
+  const live = (by, who) => board.grants.some((g) => g.by === by && g.who === who && !g.off);
+  out.gave = live(me, q.id);
+  out.given = live(q.by, mine.id);
+  // The card itself only ever comes out here, and only on the last line of the
+  // check. A card is read when they gave it, they may still give it, and I am
+  // the person they gave it to.
+  if (out.can && out.given) {
+    /* NARROWED HERE, NOT AT THE ROUTE. The stored row carries the owner's
+       device hash, which is the nearest thing this board has to an identity
+       and is stripped from everything else that goes out (see shownPerson).
+       Copying the two fields rather than the row means a route added later
+       cannot leak it by forgetting to. */
+    const row = board.cards.find((c) => c.by === q.by);
+    if (row) out.card = { wechat: row.wechat, line: row.line };
+  }
+  return out;
+}
+
+/** My own card, which is mine to read whether or not anybody else may. */
+app.get("/api/card", async (req, res) => {
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  if (!me) return res.json({ card: null });
+  const card = board.cards.find((c) => c.by === me) || null;
+  // Who is holding it, as a count and never as a list — the same rule the
+  // follower count runs on. A person is owed the number; nobody is owed the
+  // names of everybody who has their WeChat id, least of all as an API.
+  const out = board.grants.filter((g) => g.by === me && !g.off).length;
+  res.json({ card, out });
+});
+
+/** Write it, or clear it. Never validated into a shape: a WeChat id is
+ *  whatever WeChat let somebody call themselves. */
+app.put("/api/card", express.json({ limit: "8kb" }), gate, async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const out = await change((board) => {
+    const row = store.cleanCard({ by: me, wechat: req.body?.wechat, line: req.body?.line });
+    const i = board.cards.findIndex((c) => c.by === me);
+    // An empty card is a deleted card. Anybody it was given to stops being
+    // able to read anything, which is the same as taking it back from all of
+    // them at once and is the only bulk revoke there is.
+    if (!row.wechat && !row.line) {
+      if (i >= 0) board.cards.splice(i, 1);
+      return null;
+    }
+    if (i >= 0) board.cards[i] = row; else board.cards.push(row);
+    return row;
+  });
+  res.json({ card: out });
+});
+
+/** Hand it to one person, or take it back from them. */
+app.post("/api/card/give", express.json({ limit: "4kb" }), gate, async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const who = String(req.body?.who || "");
+  const on = req.body?.on !== false;
+  if (!me || !/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "no" });
+
+  const out = await change((board) => {
+    const q = board.people.find((x) => x.id === who && x.state === "published");
+    if (!q) return { error: "gone" };
+    const st = pairState(board, me, q);
+    // Checked on the way in as well as on the way out. The screen will not
+    // offer this button without a match, but a screen is not a check.
+    if (!st.can) return { error: "nomatch" };
+    if (on && !board.cards.some((c) => c.by === me)) return { error: "nocard" };
+
+    const i = board.grants.findIndex((g) => g.by === me && g.who === who);
+    if (i >= 0) board.grants[i] = store.cleanGrant({ ...board.grants[i], off: !on });
+    else if (on) board.grants.push(store.cleanGrant({ by: me, who }));
+    return { ok: true, gave: on };
+  });
+  if (out?.error) {
+    return res.status(out.error === "gone" ? 404 : 403).json({ error: out.error });
+  }
+  res.json(out);
+});
+
+/** Everybody I match with, and their card where they have given me one. One
+ *  request for the whole screen, because the alternative is a page that asks
+ *  for a card per person and an access log that reads as a list of who holds
+ *  whose. */
+app.get("/api/matches", async (req, res) => {
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const mine = myRow(board, me);
+  if (!mine) return res.json({ matches: [], card: null });
+
+  const rows = [];
+  for (const q of board.people) {
+    if (q.state !== "published" || !q.handle || q.by === me) continue;
+    const st = pairState(board, me, q);
+    if (!st.can) continue;
+    rows.push({
+      id: q.id,
+      handle: q.handle,
+      photo: q.photoState === "published" ? q.photo : "",
+      campus: q.campus,
+      here: q.here,
+      shared: st.shared,
+      gave: st.gave,
+      given: st.given,
+      card: st.card,
+    });
+  }
+  res.json({ matches: rows, card: board.cards.some((c) => c.by === me) });
 });
 
 /* ---------------------------------------------------------------------------
@@ -1214,6 +1371,8 @@ app.get("/api/person", async (req, res) => {
       // Decided here rather than on the page, so the button and the route
       // cannot come to different conclusions about the same two people.
       thread: (me && q.by !== me) ? threadState(board.notes, me, q.by) : { can: false, why: "" },
+      // Everything about the two of you, from one place. See pairState.
+      pair: pairState(board, me, q),
     },
     // What they have actually put on the board, which is the only evidence a
     // stranger has that a profile is a person.
@@ -1277,6 +1436,13 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
     }
     if (Array.isArray(req.body.free)) q.free = req.body.free;
     if (Array.isArray(req.body.speaks)) q.speaks = req.body.speaks;
+    // What they are looking for, and which half of the world they want it in.
+    // Validated in cleanPerson, not here: an unknown room key is dropped
+    // rather than refused, so an old page saving against a new server loses
+    // the box it did not know about instead of losing the save.
+    if (Array.isArray(req.body.rooms)) q.rooms = req.body.rooms;
+    if (req.body.where !== undefined) q.where = String(req.body.where);
+    if (req.body.wants !== undefined) q.wants = String(req.body.wants);
     // A new picture goes back into the queue. Changing your face is the same
     // act as adding one, and a profile that could be edited past review would
     // make the review pointless.

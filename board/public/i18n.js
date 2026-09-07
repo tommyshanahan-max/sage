@@ -269,6 +269,25 @@ export const STRINGS = {
     "手机号、微信号、邮箱和住址会在发布前被过滤掉。这是为了保护你，不是保护我们；而且它只是一道过滤，不是一堵墙——不要指望它替你拦下本来就不该输入的东西。",
   ],
 
+  /* CARDS ARE THE EXCEPTION TO THE SECTION ABOVE, so they are documented
+     immediately after it rather than in a paragraph somebody has to go and
+     find. The third paragraph is the cost, and it is not softened: the server
+     holds a WeChat id for anybody who fills one in, which was not true of this
+     board before the feature existed. */
+  "pv.hcard":          ["Cards", "名片"],
+  "pv.pcard1": [
+    "A card is a WeChat id and one line you write yourself. It is the one place on this board that holds a way of reaching you off it — everything public is filtered for phone numbers, emails and WeChat ids, and a card is the deliberate exception to that. You only have one if you made one.",
+    "名片就是一个微信号，加一句你自己写的话。这是整个板上唯一保存「怎么在站外找到你」的地方——所有公开内容里的手机号、邮箱和微信号都会被过滤掉，名片是我们有意留的例外。你不填就没有。",
+  ],
+  "pv.pcard2": [
+    "It is never shown because somebody follows you, and never because you matched. It reaches one person when four things are true: you follow each other, you are each looking for something the other answers, you pressed give, and they are the person you gave it to. Taking it back stops them opening it again — it cannot unsend what they have already read. Clearing the card takes it back from everybody at once.",
+    "别人关注你，看不到；匹配上了，也看不到。它只有在四件事同时成立时才会到一个人手里：你们互相关注、你们想找的东西对得上、你按了发送、而且他就是你发给的那个人。收回只是让他以后打不开——已经看过的收不回来。把名片清空，等于同时从所有人那里收回。",
+  ],
+  "pv.pcard3": [
+    "The honest cost: a card is stored on the same server as everything else, and whoever runs this board can read the file. That was not true of anything here before cards existed. If that is not a trade you want to make, do not fill one in — nothing else on this board asks you for a way of being reached.",
+    "老实说代价在哪：名片和其他内容存在同一台服务器上，运行这个板的人是能看到那个文件的。在名片这个功能出现之前，这里没有任何东西是这样的。如果你不愿意做这个交换，就别填——这个板上没有别的地方会向你要联系方式。",
+  ],
+
   "pv.h3":             ["What we do not do", "我们不做的事"],
   "pv.p3": [
     "There are no third-party scripts on this site: no advertising network, no social widgets, no analytics from anybody else. Nothing here is sold, shared or handed to a partner. There is no advertising, so there is nothing to profile you for.",
@@ -659,6 +678,153 @@ export const STRINGS = {
     "Your page appears in the list of students. Turn it off and you are still here — you just are not in it. Posting never puts you in on its own.",
     "你的主页会出现在学生名单里。关掉也不会影响你用这个应用，只是不出现在那里。单纯发内容不会把你加进去。",
   ],
+  /* ---- what you are looking for, and the card two people may swap ---------
+   *
+   * THE ROOM NAMES ARE THE WHOLE INTERFACE. There are eleven of them and a
+   * person picks three, so each one has to be understood at a glance, in a
+   * second language, on a phone. Written as things somebody wants this term —
+   * "raising money", not "founder" — because they are not kinds of people:
+   * one person is a first-year language student AND raising money for
+   * something, and the boxes have to let them be both.
+   *
+   * The pairing is never named on screen. You tick "raising money" and you
+   * come up for somebody who ticked "investing"; nobody has to be told that is
+   * how it works, and being told would only make the form look like a machine.
+   */
+  "room.lang":         ["Language exchange", "语言交换"],
+  "room.lang.sub":     ["My Chinese for your English", "我的中文换你的英文"],
+  "room.study":        ["Study partner", "一起学习的伙伴"],
+  "room.study.sub":    ["Same course, HSK, IELTS", "同一门课、HSK、雅思"],
+  "room.new":          ["New here — want someone who knows the city",
+                        "刚来——想认识熟悉这座城市的人"],
+  "room.host":         ["Been here a while — happy to show people around",
+                        "来了有一阵了——愿意带人转转"],
+  "room.job":          ["Looking for work or an internship", "找工作或实习"],
+  "room.hire":         ["Hiring, or offering one", "在招人，或者能给实习机会"],
+  "room.cofound":      ["Co-founder — building something", "找合伙人——一起做点东西"],
+  "room.raise":        ["Raising money", "在融资"],
+  "room.invest":       ["Investing, or backing people", "投资，或者支持别人做事"],
+  "room.buy":          ["Buying or sourcing from China", "从中国采购"],
+  "room.sell":         ["Selling or supplying from China", "从中国供货"],
+
+  /* THE SHORT FORM, for the middle of a sentence. "You both want Language
+     exchange" reads like a form talking; "you both want a language exchange"
+     reads like a person. The box keeps the long label — on a tick box the
+     grammar of a sentence is noise. */
+  "room.lang.s":       ["a language exchange", "语伴"],
+  "room.study.s":      ["a study partner", "学习搭子"],
+  "room.new.s":        ["someone who knows the city", "熟悉这座城市的人"],
+  "room.host.s":       ["to show people around", "带人转转"],
+  "room.job.s":        ["work or an internship", "工作或实习"],
+  "room.hire.s":       ["to hire somebody", "招人"],
+  "room.cofound.s":    ["a co-founder", "合伙人"],
+  "room.raise.s":      ["to raise money", "融资"],
+  "room.invest.s":     ["to invest", "投资"],
+  "room.buy.s":        ["to buy from China", "从中国采购"],
+  "room.sell.s":       ["to sell from China", "从中国供货"],
+
+  "room.head":         ["What are you looking for?", "你在找什么？"],
+  "room.why": [
+    "Pick up to three. Other people see these on your page — it is how anybody knows what to ask you about.",
+    "最多选三个。别人会在你的主页上看到——他们才知道可以跟你聊什么。",
+  ],
+  "room.groupStudy":   ["Study & language", "学习与语言"],
+  "room.groupSettle":  ["Settling in", "落脚"],
+  "room.groupWork":    ["Work & building", "工作与创业"],
+  "room.more":         ["Work, money and trade", "工作、融资与贸易"],
+  "room.full":         ["Three is the most. Untick one to add another.",
+                        "最多三个。想加新的，先取消一个。"],
+  "room.none":         ["Nothing picked yet.", "还没有选。"],
+
+  "room.whereHead":    ["Where should they be?", "你想认识哪边的人？"],
+  "room.whereMe":      ["You are", "你在"],
+  "room.whereThem":    ["You want people", "你想认识的人在"],
+  "room.where.cn":     ["In China", "在中国"],
+  "room.where.out":    ["Somewhere else", "在其他地方"],
+  "room.wants.cn":     ["In China", "在中国"],
+  "room.wants.out":    ["Outside China", "在中国以外"],
+  "room.wants.any":    ["Either", "都可以"],
+  "room.whereWhy": [
+    "This board is one side of an exchange and the other side is everywhere else. Answer both and you stop coming up for people on the wrong side of it.",
+    "这个板是交换的一边，另一边是世界其他地方。两个都选好，你就不会出现在不相干的人面前了。",
+  ],
+
+  /* On somebody else's page. Said before anybody presses anything, because
+     both halves of it are already public and telling people the rule up front
+     is cheaper than letting them guess at it afterwards. */
+  "room.both":         ["You both want {what}", "你们都想找{what}"],
+  "room.bothPair":     ["You want {mine} · they want {theirs}", "你想{mine}，他们想{theirs}"],
+  "room.nothing":      ["Nothing in common — you can still follow.",
+                        "没有共同点——还是可以关注。"],
+
+  /* The match. The word does the least work here: on a board where most people
+     tick a couple of the same boxes, "match" fires constantly and the reader
+     learns to skip it. The ROOM is the information, so the room is what the
+     line says. */
+  "match.one":         ["You and {who} both want {what}.", "你和{who}都想找{what}。"],
+  "match.pair":        ["You and {who}: you want {mine}, they want {theirs}.",
+                        "你和{who}：你想{mine}，他们想{theirs}。"],
+  "match.head0":       ["Matches", "匹配"],
+  "match.head":        ["You and {who} are after the same thing",
+                        "你和{who}想要的是同一件事"],
+  "match.why":         ["Why this is a match", "为什么算匹配"],
+  "match.becauseOne": [
+    "You both want {what}, and you followed each other.",
+    "你们都想找{what}，而且互相关注了。",
+  ],
+  "match.becausePair": [
+    "You want {mine}, they want {theirs}, and you followed each other.",
+    "你想{mine}，他们想{theirs}，而且你们互相关注了。",
+  ],
+  "match.none":        ["No matches yet.", "还没有匹配。"],
+  "match.noneWhy": [
+    "A match is two people who follow each other and are after the same thing. Follow the people you want to read — this happens on its own or it does not happen.",
+    "匹配是指互相关注、而且想找的东西对得上的两个人。去关注你想读的人就好——这件事要么自己发生，要么就不发生。",
+  ],
+
+  /* The card. The warning is the important string on this screen and it is
+     written the way somebody would say it out loud, not the way a policy
+     would: what happens, to whom, and what cannot be undone. */
+  "card.title":        ["Your card", "你的名片"],
+  "card.what": [
+    "A WeChat id and one line, kept back until you hand it to somebody. Nobody sees this because they follow you, and nobody sees it because you matched.",
+    "一个微信号和一句话，不给出去就没人看得到。别人关注你看不到，匹配了也看不到。",
+  ],
+  "card.wechat":       ["Your WeChat id", "你的微信号"],
+  "card.line":         ["One line — email, company, when to message you…",
+                        "一句话——邮箱、公司、什么时候方便联系…"],
+  "card.save":         ["Save my card", "保存名片"],
+  "card.saved":        ["Saved.", "已保存。"],
+  "card.cleared":      ["Cleared. Nobody can open it now.", "已清空。现在谁也打不开了。"],
+  "card.none":         ["You have not made one yet.", "你还没有填。"],
+  "card.make":         ["Make your card", "填一张名片"],
+  "card.out":          ["{n} people are holding it.", "有 {n} 个人拿着。"],
+  "card.outNone":      ["Nobody is holding it.", "还没有人拿着。"],
+  "card.give":         ["Send {who} my card", "把名片发给{who}"],
+  "card.keep":         ["Just keep following", "先只是关注"],
+  "card.warn": [
+    "If you send your card, {who} sees your WeChat id. You can stop them opening it again, but you cannot take back what they have already read. Send it to people you would give it to in person.",
+    "发出去之后，{who}就能看到你的微信号。你可以让他们以后打不开，但已经看过的收不回来。只发给你当面也愿意给的人。",
+  ],
+  "card.waiting": [
+    "Sent. {who} has not sent theirs yet — you will see it here if they do.",
+    "已发送。{who}还没有发他们的——如果发了，会出现在这里。",
+  ],
+  "card.theirs":       ["{who} gave you their card", "{who}把名片给了你"],
+  "card.theyAdded":    ["They added", "他们还写了"],
+  "card.takeBack":     ["Take my card back", "收回我的名片"],
+  "card.takeBackWhy": [
+    "Stops {who} opening it again. It does not unsend it.",
+    "让{who}以后打不开。已经发出去的收不回来。",
+  ],
+  "card.gaveBack":     ["Taken back.", "已收回。"],
+  "card.offPlatform": [
+    "Everything from here happens off this app, which is the point — this board's job was to get the two of you into the same sentence, not to be where you talk.",
+    "接下来的事都在这个应用之外发生，这本来就是重点——这个板的任务是让你们两个碰上，不是当你们聊天的地方。",
+  ],
+  "card.report":       ["Report", "举报"],
+  "card.block":        ["Block", "屏蔽"],
+
   "bud.free":          ["Free", "有空"],
   "bud.trades":        ["Trades", "可以交换"],
   "bud.level":         ["Level", "水平"],
@@ -669,10 +835,16 @@ export const STRINGS = {
    * time, who to tell. That is a sentence about a thing this app does not ask
    * anybody to do, printed under a photograph, which is a strange place to
    * plant the idea. What is worth saying is the opposite: none of this needs
-   * you to give anything away, or to meet anyone at all. */
+   * you to give anything away, or to meet anyone at all.
+   *
+   * IT NO LONGER SAYS "OR YOUR WECHAT". It was printed at the foot of the same
+   * page that now shows a card with a WeChat id on it — a promise the screen
+   * above it was already breaking. The true version is narrower and still
+   * worth saying: nothing is ever asked of you, and the one thing that can be
+   * swapped is swapped by two people who each pressed a button for it. */
   "bud.safety": [
-    "Nothing here needs your phone number, your WeChat or your documents, and nobody should be asking you for them. You never have to meet anyone to use this.",
-    "这里不需要你的电话、微信或者证件，也不该有人向你要。你完全不用见面就能用这个应用。",
+    "Nothing here needs your phone number or your documents, and nobody should be asking you for them. A WeChat id is only ever swapped by two people who each chose to. You never have to meet anyone to use this.",
+    "这里不需要你的电话或者证件，也不该有人向你要。微信号只在两个人都主动选择的情况下才会交换。你完全不用见面就能用这个应用。",
   ],
   "bud.days":          ["M,T,W,T,F,S,S", "一,二,三,四,五,六,日"],
   "bud.close":         ["Close", "关闭"],
