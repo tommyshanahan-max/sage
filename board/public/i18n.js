@@ -27,12 +27,15 @@
 
 export const STRINGS = {
   // ---- the feed ------------------------------------------------------------
-  "board.name":        ["The Feed", "动态"],
+  "board.name":        ["The Tutor", "导师"],
   "board.tagline":     ["Anyone can read. Anyone can post.", "谁都能看，谁都能发。"],
   "board.count":       ["{n} posts up. Anyone can read. Anyone can post.",
                         "已发布 {n} 条。谁都能看，谁都能发。"],
   "board.everyone":    ["Everyone", "全部"],
   "board.newest":      ["{topic} · Newest first", "{topic} · 最新在前"],
+  // Where the posts start. Named rather than described, because "Everyone ·
+  // Newest first" tells a reader how the list is sorted and not what it is.
+  "board.club":        ["Posts from the Uni Club", "大学社团的帖子"],
   "board.empty.head":  ["Nothing here yet.", "这里还什么都没有。"],
   "board.empty.body":  ["The first thing anybody puts up appears here. Somebody reads everything before it does.",
                         "第一条内容会出现在这里。所有内容都会先由人过目。"],

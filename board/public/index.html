@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="留学生">
-<title>The Feed</title>
+<title>The Tutor</title>
 <!-- What WeChat puts on the card when somebody forwards this into a chat or
      onto Moments. WeChat's crawler reads the title, this description, and the
      first large image in the page — it does not run scripts, so all three have
@@ -24,7 +24,7 @@
      other platform reads. -->
 <meta name="description" content="A noticeboard for people living in and visiting China. Anyone can read, anyone can post. No account, no app to install.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="The Feed">
+<meta property="og:title" content="The Tutor">
 <meta property="og:description" content="A noticeboard for people living in and visiting China. Anyone can read, anyone can post.">
 <meta property="og:image" content="{{ORIGIN}}/share.png">
 <meta property="og:image:width" content="1200">
@@ -498,7 +498,7 @@
     .bar .new span{margin:0}
     /* The masthead was a two-item row and is a three-item row now. Without a
        basis the title had none: flex shrinks a child to its longest word
-       before it takes space from a sibling, so "The Feed" broke over two lines
+       before it takes space from a sibling, so the masthead broke over two lines
        and the tagline came down in a five-line ribbon beside it. */
     .top .name{flex:1 1 auto;min-width:0}
     .top p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -957,9 +957,15 @@ function drawTopics() {
 
 function draw() {
   drawTopics();
-  $("rulelabel").textContent = T("board.newest", {
-    topic: topic === "\u0000following" ? T("feed.onlyFollowing") : (topic || T("board.everyone")),
-  });
+  /* Where the posts begin. Unfiltered, it is named rather than described —
+   * "Everyone · Newest first" told a reader how the list was sorted, which is
+   * not a thing anybody wanted to know. Filtered, the sort matters again,
+   * because then the question is what has been left out. */
+  $("rulelabel").textContent = topic
+    ? T("board.newest", {
+        topic: topic === "\u0000following" ? T("feed.onlyFollowing") : topic,
+      })
+    : T("board.club");
   $("boardname").textContent = T("board.name");
   $("foottext").textContent = T("board.foot") + " ";
   $("count").textContent = posts.length
