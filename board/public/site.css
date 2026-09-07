@@ -264,6 +264,26 @@
   .ph-bio{margin:.4rem .55rem 0;text-align:center;font-size:.55rem;line-height:1.5;
     color:var(--ink-2)}
   /* The directory: a row per person, with the days they are free. */
+  /* The deck, drawn small. One card filling the phone, the words on a scrim
+     over it, and the two ways on underneath — which is the whole screen. */
+  .ph-deck{flex:1;min-height:0;padding:.5rem .55rem;display:flex}
+  .ph-pc{flex:1;position:relative;border-radius:.55rem;overflow:hidden;
+    background:linear-gradient(160deg,var(--accent),var(--t6));
+    display:flex;align-items:flex-end}
+  .ph-init{position:absolute;inset:0;display:grid;place-items:center;line-height:1;
+    font-family:var(--serif);font-size:2.8rem;color:rgba(255,255,255,.45)}
+  /* The column is centred for its caption; a person's own words are not. */
+  .ph-scrim{position:relative;width:100%;text-align:left;padding:1.1rem .5rem .45rem;
+    background:linear-gradient(to top,rgba(10,14,22,.86),rgba(10,14,22,0))}
+  .ph-pn{margin:0;font-family:var(--serif);font-size:.72rem;color:#fff}
+  .ph-pw{margin:.08rem 0 0;font-size:.46rem;color:rgba(255,255,255,.8)}
+  .ph-pg{margin:.2rem 0 0;font-size:.5rem;line-height:1.4;color:rgba(255,255,255,.9)}
+  .ph-acts{display:flex;gap:.3rem;padding:0 .55rem .5rem}
+  .ph-acts b,.ph-acts u{flex:1;text-align:center;font-weight:400;text-decoration:none;
+    font-size:.5rem;padding:.32rem 0;border-radius:99px}
+  .ph-acts b{background:var(--accent);color:var(--accent-ink)}
+  .ph-acts u{background:var(--raise);border:1px solid var(--hair);color:var(--ink-2)}
+
   .ph-row{display:flex;align-items:center;gap:.4rem}
   .ph-row b{width:1.15rem;height:1.15rem;border-radius:50%;background:var(--accent-soft);
     color:var(--accent);display:grid;place-items:center;font-family:var(--serif);

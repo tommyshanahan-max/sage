@@ -43,7 +43,7 @@
       <span><b id="brandname">Liuxuesheng</b><small>留学生</small></span>
     </a>
     <span id="langslot" style="margin-left:auto;display:flex;gap:.6rem;align-items:center"></span>
-    <a class="go" id="navopen" href="/feed">Open the feed</a>
+    <a class="go" id="navopen" href="/browse">See who is on it</a>
   </div>
 </div>
 
@@ -60,7 +60,7 @@
     <p class="hanzi" id="hanzi"></p>
 
     <div class="cta">
-      <a class="btn" id="ctaopen" href="/feed"></a>
+      <a class="btn" id="ctaopen" href="/browse"></a>
       <a class="btn ghost" id="ctahow" href="#how"></a>
     </div>
     <p class="under" id="under"></p>
@@ -74,6 +74,30 @@
     <p class="sub" id="shotSub"></p>
 
     <div class="shots">
+      <!-- Where the app opens: one person, filling the screen, and two ways
+           on. This replaced the directory rather than joining it — the list
+           and the deck are the same people, and a landing page that shows a
+           thing twice is telling you it has run out of things. -->
+      <div class="shot">
+        <div class="phone">
+          <div class="ph-top"><b id="phBrwTitle"></b><i></i></div>
+          <div class="ph-deck">
+            <div class="ph-pc">
+              <span class="ph-init" aria-hidden="true">y</span>
+              <div class="ph-scrim">
+                <p class="ph-pn" id="phBrwName"></p>
+                <p class="ph-pw" id="phBrwWhere"></p>
+                <p class="ph-pg" id="phBrwGoal"></p>
+              </div>
+            </div>
+          </div>
+          <div class="ph-acts"><b id="phBrwHi"></b><u id="phBrwNext"></u></div>
+          <div class="ph-bar"><u></u><em>+</em><u></u></div>
+        </div>
+        <b class="cap" id="shotBrowse"></b>
+        <p class="cap" id="shotBrowseP"></p>
+      </div>
+
       <!-- The feed. Three cards and the bar underneath, which is the whole
            screen: read, and press + to add to it. -->
       <div class="shot">
@@ -108,21 +132,6 @@
         <p class="cap" id="shotMeP"></p>
       </div>
 
-      <!-- The directory. A row per person and the days they are free, which
-           is the only thing anybody needs to know to ask. -->
-      <div class="shot">
-        <div class="phone">
-          <div class="ph-top"><b id="phBudsTitle"></b><i></i></div>
-          <div class="ph-body">
-            <div class="ph-row"><b>m</b><div><p id="phB1"></p><span id="phB1d"></span></div></div>
-            <div class="ph-row"><b>y</b><div><p id="phB2"></p><span id="phB2d"></span></div></div>
-            <div class="ph-row"><b>s</b><div><p id="phB3"></p><span id="phB3d"></span></div></div>
-          </div>
-          <div class="ph-bar"><u></u><em>+</em><u></u></div>
-        </div>
-        <b class="cap" id="shotBuds"></b>
-        <p class="cap" id="shotBudsP"></p>
-      </div>
     </div>
   </div>
 </section>
@@ -231,16 +240,15 @@ const SHOTS = {
   shotEyebrow: "shot.eyebrow", shotH2: "shot.h2", shotSub: "shot.sub",
   shotFeed: "shot.feed", shotFeedP: "shot.feedP",
   shotMe: "shot.me", shotMeP: "shot.meP",
-  shotBuds: "shot.buds", shotBudsP: "shot.budsP",
-  phFeedTitle: "shot.feed", phBudsTitle: "shot.buds",
+  shotBrowse: "shot.browse", shotBrowseP: "shot.browseP",
+  phFeedTitle: "shot.feed", phBrwTitle: "shot.browse",
+  phBrwName: "shot.brwName", phBrwWhere: "shot.brwWhere", phBrwGoal: "shot.brwGoal",
+  phBrwHi: "brw.hello", phBrwNext: "brw.next",
   phQ1: "shot.q1", phQ1who: "shot.q1who",
   phQ2: "shot.q2", phQ2who: "shot.q2who",
   phQ3: "shot.q3", phQ3who: "shot.q3who",
   phMeName: "shot.meName", phMeFacts: "shot.meFacts", phMeBio: "shot.meBio",
   phMeQ: "shot.q1", phMeQwho: "shot.meReplies",
-  phB1: "shot.bud1", phB1d: "shot.bud1d",
-  phB2: "shot.bud2", phB2d: "shot.bud2d",
-  phB3: "shot.bud3", phB3d: "shot.bud3d",
 };
 
 function paint() {

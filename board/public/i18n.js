@@ -133,7 +133,7 @@ export const STRINGS = {
     "留学生 · liúxuéshēng — a student studying abroad. It is who this is for, so it is what it is called.",
     "留学生 —— 这是给谁做的，就叫什么。",
   ],
-  "site.open":         ["Open the feed", "打开动态"],
+  "site.open":         ["See who is on it", "看看有谁在"],
   "site.how":          ["How it is run", "怎么管理"],
   "site.under":        ["Every post is read by a person before it goes up.",
                         "每条内容发布前都由人过目。"],
@@ -390,8 +390,9 @@ export const STRINGS = {
   "shot.feedP":        ["Ask, or answer somebody who asked.", "提问，或者回答别人的问题。"],
   "shot.me":           ["Your page", "你的主页"],
   "shot.meP":          ["A face and a name. Nothing else is asked.", "一张照片，一个名字。别的都不问。"],
-  "shot.buds":         ["Study buddies", "学习搭子"],
-  "shot.budsP":        ["Say you are looking, and see who else is.", "说一声你在找，看看谁也在找。"],
+  "shot.browse":       ["Browse students", "看看有谁"],
+  "shot.browseP":      ["Who is looking, one face at a time. Say hello if it fits.",
+                        "谁在找搭子，一次看一个。合适就打个招呼。"],
 
   // The words inside the drawn phones. Short on purpose — they are read at
   // about eight pixels and the point is the shape, not the sentence.
@@ -406,12 +407,9 @@ export const STRINGS = {
   "shot.meFacts":      ["Renmin · 4 months here", "人大 · 来了四个月"],
   "shot.meBio":        ["HSK 4 in March. Happy to read essays.", "三月考 HSK4。可以帮忙看作文。"],
   "shot.meReplies":    ["3 replies", "3 条回复"],
-  "shot.bud1":         ["Marc · Tsinghua", "Marc · 清华"],
-  "shot.bud1d":        ["Tue · Thu", "周二 · 周四"],
-  "shot.bud2":         ["Yuki · Haidian", "Yuki · 海淀"],
-  "shot.bud2d":        ["Weekends", "周末"],
-  "shot.bud3":         ["Sofia · Beiwai", "Sofia · 北外"],
-  "shot.bud3d":        ["Mon · Wed · Fri", "周一 · 周三 · 周五"],
+  "shot.brwName":      ["Yuki", "Yuki"],
+  "shot.brwWhere":     ["Tsinghua · 8 months here", "清华 · 来了八个月"],
+  "shot.brwGoal":      ["Wants an hour a week, out loud.", "想每周说一小时中文。"],
   "site.footWrongP":   ["Report any post from the feed itself — a person reads every one.",
                         "在动态里直接举报任何一条内容——每条都由人来看。"],
   "site.footAbout": [
