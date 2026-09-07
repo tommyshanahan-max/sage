@@ -43,6 +43,13 @@ export const STRINGS = {
   "board.none.body":   ["Try Everyone, or put the first one up yourself.",
                         "看看全部，或者你来发第一条。"],
   "board.someone":     ["someone", "某人"],
+  /* The board's own voice on the feed. Not "The Tutor" — he is the card at the
+     top of the app that helps somebody work out what to do, and a notice from
+     whoever runs the place is a different thing said by a different person.
+     Marked as admin wherever it appears, because a post from the house
+     carrying no mark is a post pretending to be a student. */
+  "house.name":        ["The Professor", "教授"],
+  "house.tag":         ["admin", "管理员"],
   "board.foot": [
     "Everything is read by a person before it goes up, and a person reads every report. Nothing is kept about you but a random number your browser made up, hashed before it is written down — enough to take your own post back, and nothing else. Anyone you hide is hidden on this phone only, and forgotten if you clear your browsing data.",
     "所有内容都会先由人过目后才会发布，每一条举报也都由人来看。我们不保存关于你的任何信息，只有你的浏览器随机生成的一串数字，写入前还会先做哈希处理——刚好够你撤回自己发的内容，仅此而已。你屏蔽的人只在这台手机上被隐藏，清除浏览数据后就会忘记。",

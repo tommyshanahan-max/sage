@@ -23,7 +23,9 @@ if (!base || !key) {
   process.exit(2);
 }
 const asIdx = rest.indexOf("--as");
-const ACCOUNT = asIdx >= 0 ? rest[asIdx + 1] : "The Tutor";
+// The house voice on the feed. The app knows this name and marks anything
+// posted under it as admin, in whichever language it is being read.
+const ACCOUNT = asIdx >= 0 ? rest[asIdx + 1] : "The Professor";
 
 const EN = [
   "DO THIS TO SAVE YOUR PROFILE",

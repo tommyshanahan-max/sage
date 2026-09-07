@@ -329,6 +329,12 @@
     text-decoration:underline;text-decoration-color:var(--line);
     text-underline-offset:.28em;text-decoration-thickness:1px;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* Says who is talking, and that they run the place. Quiet: it is a fact
+     about the account, not a claim on the reader's attention. */
+  .line .tag{flex:0 0 auto;font-style:normal;font-size:.66rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);border:1px solid var(--line);
+    border-radius:99px;padding:.1rem .4rem}
+  :root[data-lang="zh"] .line .tag{text-transform:none;letter-spacing:.02em}
   .line time{margin-left:auto;color:var(--muted);font-size:.92rem;
     font-variant-numeric:tabular-nums;flex:0 0 auto}
 
@@ -1197,7 +1203,11 @@ function draw() {
  * Matched on the name in both halves of the pair rather than on one string,
  * because the same account posts as The Tutor and as 导师 depending on who is
  * reading. */
-const HOUSE = new Set((STRINGS["board.name"] || []).map((x) => String(x).toLowerCase()));
+const HOUSE = new Set(
+  // board.name as well, so notices posted under the app's own name before
+  // there was a Professor keep their mark.
+  [...(STRINGS["house.name"] || []), ...(STRINGS["board.name"] || [])]
+    .map((x) => String(x).toLowerCase()));
 const isHouse = (handle) => HOUSE.has(String(handle || "").toLowerCase());
 
 function face(p) {
@@ -1248,7 +1258,7 @@ function card(p) {
      not a link: there is no page behind it and a link to a 404 is worse than
      plain text. Everybody else's name links to them. */
   if (isHouse(p.handle)) {
-    line.append(el("b", null, T("board.name")));
+    line.append(el("b", null, T("house.name")), el("i", "tag", T("house.tag")));
   } else if (p.handle) {
     const a = document.createElement("a");
     a.href = "/p/" + encodeURIComponent(p.handle.toLowerCase());
