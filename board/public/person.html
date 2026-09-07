@@ -124,6 +124,9 @@
     font-weight:500;font-size:.82rem;background:rgba(255,255,255,.2);color:#fff;
     border-radius:99px;padding:.28rem .65rem}
   .shot .where{margin:.35rem 0 0;font-size:.95rem;color:rgba(255,255,255,.82)}
+  /* A link off this board. Underlined rather than merely coloured: it leaves,
+     and somebody should be able to tell that before they press it. */
+  .facts .out{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
   /* How many follow them, on the paper under the card rather than on the
      photograph — it is a fact about them, not part of their picture. */
   .count{margin:.9rem 0 0;font-size:.9rem;color:var(--muted);
@@ -360,6 +363,21 @@ function paint() {
   if (q.level) fact(T("bud.level"), q.level);
   if (q.trade) fact(T("bud.trades"), q.trade);
   if (q.speaks && q.speaks.length) fact(T("bud.speaks"), q.speaks.join(" · "));
+  /* Somewhere to be found that is not this board.
+   *
+   * A link and not just text, but the handle is the visible part on purpose:
+   * instagram.com does not open in the mainland without a VPN, and this app's
+   * whole pitch is that it needs neither. So the useful thing here is a name
+   * that can be read, held up, or long-pressed and copied into the app where
+   * it does work — the link is a convenience for everybody else. */
+  if (q.ig) {
+    const a = el("a", "out");
+    a.href = "https://instagram.com/" + encodeURIComponent(q.ig);
+    a.target = "_blank";
+    a.rel = "noopener nofollow";
+    a.textContent = "@" + q.ig;
+    fact(T("me.igName"), a);
+  }
   // The free-days week is out for V1 everywhere it appeared. Two people who
   // want to study together arrange it between themselves, and a timetable
   // nobody goes back to edit is worse than no timetable.

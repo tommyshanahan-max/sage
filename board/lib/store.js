@@ -168,6 +168,30 @@ export function contactShaped(text) {
   return "";
 }
 
+/* An Instagram handle, out of whatever somebody pasted.
+ *
+ * instagram.com/them, @them, them, or the whole share URL with a query string
+ * on the end — because what people actually put in a box like this is the link
+ * their phone gave them when they pressed share. One field, four shapes, one
+ * thing stored.
+ *
+ * Their own rules for a handle are letters, digits, full stops and
+ * underscores, up to thirty. Anything else becomes nothing rather than an
+ * error: this is an optional line on a profile, and a save that failed because
+ * of it would cost somebody their name and their photograph as well.
+ */
+function igHandle(v) {
+  let t = String(v ?? "").trim();
+  if (!t) return "";
+  const link = /(?:instagram\.com|instagr\.am)\/+([^/?#\s]+)/i.exec(t);
+  /* A link carries a path and a query and the handle is one segment of it; a
+     typed handle carries neither. Splitting both on whitespace would take the
+     first word of "not a handle" and keep it, which is worse than keeping
+     nothing — somebody would have a profile pointing at a stranger. */
+  t = link ? link[1] : t.replace(/^@+/, "");
+  return /^[A-Za-z0-9._]{1,30}$/.test(t) ? t : "";
+}
+
 /** The levels offered. A closed list because it is what matching sorts on, and
  *  free text turns "HSK 4" into four spellings that never meet. */
 export const LEVELS = ["Just starting", "HSK 1-2", "HSK 3", "HSK 4", "HSK 5", "HSK 6", "Beyond HSK"];
@@ -199,6 +223,9 @@ export function cleanPerson(raw) {
     // reads to decide whether to ask.
     goal: s(raw.goal, 600),
     trade: s(raw.trade, 120),
+    // Somewhere to be found that is not this board. See igHandle above for
+    // what arrives in this box and what is kept out of it.
+    ig: igHandle(raw.ig),
     // Optional, and never asked for on the first screen. Digits only, and two
     // of them: a field that will take a sentence becomes one.
     age: String(raw.age ?? "").replace(/\D/g, "").slice(0, 2),

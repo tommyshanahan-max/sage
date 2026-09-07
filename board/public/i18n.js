@@ -607,12 +607,12 @@ export const STRINGS = {
     "你的照片你自己能看到，其他人要等有人过目之后才能看到。",
   ],
   "me.noContact": [
-    "Take out {what} — a profile here carries no way to contact you. Swap those privately once you have both decided.",
-    "请去掉 {what} —— 这里的资料不放联系方式。等你们都决定了，再私下交换。",
+    "Take out {what} — the only way to be reached a page here carries is Instagram, in its own box. Swap anything else privately, once you have both decided.",
+    "请去掉 {what} —— 这里的资料只放 Instagram，填在它自己的框里。其他的等你们都决定了，再私下交换。",
   ],
   "me.whyNoContact": [
-    "No phone, no WeChat, no email — a public list of students with contact details is the one thing this must never be.",
-    "不填手机、微信、邮箱——一份带联系方式的公开学生名单，是这里绝对不能变成的东西。",
+    "No phone, no WeChat, no email. Instagram only, and only in its own box — a public list of students with everybody's contact details is the one thing this must never be.",
+    "不填手机、微信、邮箱。只有 Instagram，而且只能填在它自己的框里——一份人人联系方式俱全的公开学生名单，是这里绝对不能变成的东西。",
   ],
 
   // ---- finding a study buddy -----------------------------------------------
@@ -706,6 +706,13 @@ export const STRINGS = {
   ],
   "lvl.again":         ["Try again", "再测一次"],
   "lvl.put":           ["Put this on my page", "放到我的主页上"],
+  /* SOMEWHERE TO BE FOUND THAT IS NOT THIS BOARD. Optional, in the fold with
+     the other optional things, and said plainly: a handle on a page is a
+     handle anybody who opens the page can read. */
+  "me.ig":             ["Instagram (optional)", "Instagram（选填）"],
+  "me.igWhy":          ["Anybody who opens your page can see it.",
+                        "打开你主页的人都能看到。"],
+  "me.igName":         ["Instagram", "Instagram"],
   /* THE MARK. Named where the strings live rather than beside the drawing,
      because these are read by people and the drawing is not. */
   "crown.what":        ["What you are wearing now", "你现在戴的"],
