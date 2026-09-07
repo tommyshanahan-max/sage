@@ -2244,10 +2244,17 @@ async function drawTutor() {
   // whose button scrolls you up one screen, is the Tutor offering to take
   // somebody where they already are.
 
-  // Built, so it is offered rather than voted on. The votes that asked for it
-  // stay in the file — they are what said to build this one first.
-  box.append(doable("tut.type", "tut.typeGo", () => { location.href = "/type"; }, "type"));
+  /* The level test first, the four letters under it.
+   *
+   * Both are built and offered rather than voted on — the votes that asked for
+   * the four letters stay in the file, and they are what said to build that one
+   * first. The order here is not about which came first though: the block above
+   * these opens with a level and the mark that comes from it, so the test that
+   * produces them is the one to offer first. A page that leads with a number
+   * and then offers a different test underneath is asking somebody to hunt for
+   * the thing it just showed them. */
   box.append(doable("tut.level", "tut.levelGo", () => { location.href = "/level"; }, "level"));
+  box.append(doable("tut.type", "tut.typeGo", () => { location.href = "/type"; }, "type"));
 
   box.append(el("div", "grp", T("tut.next")));
   box.append(vote("tut.compare", "tut.compareWhat", "compare"));
