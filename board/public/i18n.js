@@ -37,8 +37,8 @@ export const STRINGS = {
   // Newest first" tells a reader how the list is sorted and not what it is.
   "board.club":        ["Posts from the Uni Club", "大学社团的帖子"],
   "board.empty.head":  ["Nothing here yet.", "这里还什么都没有。"],
-  "board.empty.body":  ["The first thing anybody puts up appears here. Somebody reads everything before it does.",
-                        "第一条内容会出现在这里。所有内容都会先由人过目。"],
+  "board.empty.body":  ["The first thing anybody puts up appears here. Anybody can report it, and a person reads every report.",
+                        "第一条内容会出现在这里。任何人都可以举报，每一条举报都由人来看。"],
   "board.none.head":   ["Nothing under that yet.", "这个分类下还没有内容。"],
   "board.none.body":   ["Try Everyone, or put the first one up yourself.",
                         "看看全部，或者你来发第一条。"],
@@ -58,9 +58,16 @@ export const STRINGS = {
      carrying no mark is a post pretending to be a student. */
   "house.name":        ["The Professor", "教授"],
   "house.tag":         ["admin", "管理员"],
+  /* WHAT THIS PROMISES IS WHAT THE CODE DOES, IN BOTH MODES.
+     It used to say everything was read before it went up. That is true once
+     the board passes BOARD_OPEN_UNTIL and false before it — and photographs do
+     not wait at any size. A promise that holds only in the mode we are not in
+     yet is one people find out about the hard way, so this says the part that
+     is true at eight people and at eighty: reports are read, two hide a post,
+     anything can come down. See TEST MODE in server.js. */
   "board.foot": [
-    "Everything is read by a person before it goes up, and a person reads every report. Nothing is kept about you but a random number your browser made up, hashed before it is written down — enough to take your own post back, and nothing else. Anyone you hide is hidden on this phone only, and forgotten if you clear your browsing data.",
-    "所有内容都会先由人过目后才会发布，每一条举报也都由人来看。我们不保存关于你的任何信息，只有你的浏览器随机生成的一串数字，写入前还会先做哈希处理——刚好够你撤回自己发的内容，仅此而已。你屏蔽的人只在这台手机上被隐藏，清除浏览数据后就会忘记。",
+    "A person reads every report, two of them hide a post until somebody has, and anything here can be taken down. Nothing is kept about you but a random number your browser made up, hashed before it is written down — enough to take your own post back, and nothing else. Anyone you hide is hidden on this phone only, and forgotten if you clear your browsing data.",
+    "每一条举报都由人来看，两条举报就会先把内容隐藏起来等人处理，这里的任何内容都可以撤下。我们不保存关于你的任何信息，只有你的浏览器随机生成的一串数字，写入前还会先做哈希处理——刚好够你撤回自己发的内容，仅此而已。你屏蔽的人只在这台手机上被隐藏，清除浏览数据后就会忘记。",
   ],
   "board.contact":     ["Something wrong that a report cannot cover? ",
                         "有举报解决不了的问题？"],
@@ -156,16 +163,16 @@ export const STRINGS = {
   ],
   "site.open":         ["See who is on it", "看看有谁在"],
   "site.how":          ["How it is run", "怎么管理"],
-  "site.under":        ["Every post is read by a person before it goes up.",
-                        "每条内容发布前都由人过目。"],
+  "site.under":        ["Invite only. A person reads every report, and anything can be taken down.",
+                        "邀请制。每一条举报都由人来看，任何内容都可以撤下。"],
   "site.liveEyebrow":  ["On the feed right now", "动态里的最新内容"],
   "site.liveH2":       ["The last few days", "最近几天"],
   "site.liveSub":      ["Live from the feed itself, not a mock-up of one. Tap any of them to read the rest.",
                         "直接来自动态，不是示意图。点任意一条看全部。"],
   "site.liveEmptyH":   ["Nothing on the feed yet.", "动态里还没有内容。"],
   "site.liveEmptyP": [
-    "It opened this week. The first thing anybody puts up appears here — and somebody reads everything before it does.",
-    "这周刚开。第一条内容会出现在这里——所有内容都会先由人过目。",
+    "It opened this week. The first thing anybody puts up appears here — and anybody who reads it can report it.",
+    "这周刚开。第一条内容会出现在这里——看到的人都可以举报。",
   ],
   "site.seeAll":       ["See the whole feed", "查看全部动态"],
   "site.threeEyebrow": ["Three things, one place", "三件事，一个地方"],
@@ -274,8 +281,8 @@ export const STRINGS = {
 
   "pv.h4":             ["Photographs", "照片"],
   "pv.p4": [
-    "A photograph is read by a person before it appears, because a picture is the one thing that cannot be taken back once somebody has saved it. Photographs are stored on the same server as everything else and are reachable by a link nobody can guess.",
-    "照片在出现之前会由人过目，因为照片是唯一一样别人一旦保存就收不回来的东西。照片和其他内容存在同一台服务器上，通过一个别人猜不到的链接访问。",
+    "A photograph goes up the moment you add it. A face held in a queue looks to everybody else exactly like a failed upload, and that is a bad first thing to learn about a place. Anybody who sees a photograph can report it, two reports hide it until a person has looked, and it can be taken down along with the profile it belongs to. Photographs are stored on the same server as everything else and are reachable by a link nobody can guess.",
+    "照片一加上就会出现。一张排队等审核的照片，在别人看来跟上传失败没有区别——这是一个人对这个地方最不该留下的第一印象。任何看到照片的人都可以举报，两条举报就会先把它隐藏起来等人处理，也可以连同它所属的资料一起撤下。照片和其他内容存在同一台服务器上，通过一个别人猜不到的链接访问。",
   ],
 
   "pv.h5":             ["Taking something back", "撤回内容"],

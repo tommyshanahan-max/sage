@@ -66,8 +66,9 @@ const AUTO = process.env.BOARD_AUTO_PUBLISH === "1";
 
 /* TEST MODE, AND IT ENDS BY ITSELF.
  *
- * While there are fewer than this many people on the board, a new photograph
- * and a new post go straight up rather than into the queue.
+ * While there are fewer than this many people on the board, a new post goes
+ * straight up rather than into the queue. (Photographs are a separate decision
+ * — see below — and do not wait at any size.)
  *
  * The reason is not that review stopped mattering. It is that a board with
  * four people on it is being tested, not read, and every one of those four is
@@ -75,12 +76,20 @@ const AUTO = process.env.BOARD_AUTO_PUBLISH === "1";
  * sends the link to a friend and gets back a page with a letter on it
  * concludes the app is broken, which is the wrong thing to learn from a test.
  *
+ * TWENTY-FIVE, RAISED FROM TEN, because the door changed underneath this
+ * number. Ten was the right figure when anybody with the address could walk
+ * in: the test had to end before the first stranger arrived. Nobody arrives
+ * without a code now, and every code was handed over by somebody already here,
+ * so the population at twenty is the same kind of population as at eight —
+ * people who were asked. What the door does not do is make them all careful,
+ * so this still expires, and twenty-five is where it stops being a test.
+ *
  * It expires on its own, which is the point: nobody has to remember to turn
- * moderation back on. Once this many people have a name up, everything waits
- * for a person again — new photographs, new posts, all of it. Reporting works
- * throughout, and anything already up can still be taken down.
+ * moderation back on. Once this many people have a name up, every new post
+ * waits for a person again. Reporting works throughout, two reports hide a
+ * post on their own, and anything already up can still be taken down.
  */
-const OPEN_UNTIL = Number(process.env.BOARD_OPEN_UNTIL || 10);
+const OPEN_UNTIL = Number(process.env.BOARD_OPEN_UNTIL || 25);
 const openStill = (board) =>
   board.people.filter((q) => q.handle && q.state === "published").length < OPEN_UNTIL;
 
