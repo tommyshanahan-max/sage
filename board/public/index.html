@@ -829,11 +829,15 @@
     </div>
     <p class="said" id="mesaid" hidden></p>
 
-    <!-- The way back, on the screen somebody is already on when they are
-         setting themselves up. Hidden: nothing is wired to these controls yet,
-         and on a form this short an empty bordered box under the buttons reads
-         as a broken screen rather than as a thing not built. -->
-    <div class="keybox" hidden>
+    <!-- THE WAY BACK, on the screen somebody is already on when they are
+         setting themselves up.
+         There are no accounts here, so being the same person on a second
+         browser cannot mean signing in. It means carrying the one random
+         number this phone made up. That number IS the identity — everything
+         on the server is keyed to a salted hash of it — so showing it here and
+         pasting it there is the whole mechanism, with no email, no password
+         and nothing new held about anybody. -->
+    <div class="keybox">
       <h3 id="keytitle"></h3>
       <p id="keybody"></p>
       <div class="keyrow">
@@ -844,6 +848,7 @@
         <p class="warn" id="keywarn"></p>
         <div class="keyrow"><button type="button" class="go" id="keycopy"></button></div>
       </div>
+      <div class="keyrow"><button type="button" id="keyhave"></button></div>
     </div>
   </form>
 </div>
@@ -2690,6 +2695,7 @@ function openMe(joining) {
   // one they are doing.
   $("mesave").textContent = T(made ? "me.save" : "me.post");
   $("memorelabel").textContent = T("me.more");
+  drawKey();
   $("mename").value = (ME && ME.handle) || "";
   $("mecampus").value = (ME && ME.campus) || "";
   $("meage").value = (ME && ME.age) || "";
@@ -2718,6 +2724,92 @@ function openMe(joining) {
   // covers the photo control the form is about to insist on.
   if (ME && ME.photo) $("mename").focus();
 }
+/* ---- the key: being the same person on a second browser --------------------
+ *
+ * WeChat's webview and Safari do not share storage, so the same person opening
+ * the same link in each is two people to this board — which is the problem an
+ * email login would be bought to solve. It does not need one. The identity
+ * here is a random number this browser made up; everything on the server hangs
+ * off a salted hash of it. Carrying the number to the other browser carries
+ * the person, with no email address, no password, and nothing new written down
+ * about anybody.
+ *
+ * The cost is stated where it is shown: whoever has the line IS you, and there
+ * is nobody to appeal to if it is lost. That is the price of holding nothing.
+ */
+function drawKey() {
+  $("keytitle").textContent = T("key.title");
+  $("keybody").textContent = T("key.body");
+  $("keywarn").textContent = T("key.warn");
+  $("keyshow").textContent = $("keyopen").hidden ? T("key.show") : T("key.hide");
+  $("keycopy").textContent = T("key.copy");
+  $("keyhave").textContent = T("key.have");
+  $("keyval").textContent = device || "—";
+  // Nothing to show on a browser that cannot keep one.
+  $("keyshow").hidden = !device;
+}
+$("keyshow").addEventListener("click", () => {
+  $("keyopen").hidden = !$("keyopen").hidden;
+  $("keyshow").textContent = $("keyopen").hidden ? T("key.show") : T("key.hide");
+});
+$("keycopy").addEventListener("click", () => {
+  $("keycopy").textContent = T(copyText(device) ? "key.copied" : "act.copyFail");
+  setTimeout(() => { $("keycopy").textContent = T("key.copy"); }, 2000);
+});
+
+$("keyhave").addEventListener("click", () => {
+  $("keyEnterTitle").textContent = T("key.enterTitle");
+  $("keyEnterBody").textContent = T("key.enterBody");
+  $("keyin").placeholder = T("key.enterPlaceholder");
+  $("keyshut").textContent = T("key.cancel");
+  $("keygo").textContent = T("key.go");
+  $("keyin").value = "";
+  $("keysaid").hidden = true;
+  // Only warned about when there is something to leave behind.
+  const has = Boolean(ME && (ME.handle || ME.photo));
+  $("keyReplace").hidden = !has;
+  $("keyReplace").textContent = has ? T("key.replaceWarn") : "";
+  $("keysheet").hidden = false;
+  $("keyin").focus();
+});
+$("keyshut").addEventListener("click", () => { $("keysheet").hidden = true; });
+$("keysheet").addEventListener("click", (e) => {
+  if (e.target === $("keysheet")) $("keysheet").hidden = true;
+});
+
+/** A key from here is a uuid, or the fallback a browser with no crypto gets. */
+const looksLikeKey = (k) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(k) ||
+  /^x[a-z0-9]{8,}$/i.test(k);
+
+$("keyform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const said = $("keysaid");
+  const key = $("keyin").value.trim();
+  const bad = (msg) => { said.hidden = false; said.classList.add("bad"); said.textContent = msg; };
+  if (!looksLikeKey(key)) return bad(T("key.bad"));
+  if (key === device) { said.hidden = false; said.classList.remove("bad");
+    said.textContent = T("key.done"); return; }
+
+  /* Asked before it is kept. A key with no page behind it is almost always a
+   * key copied short, and swallowing that would leave somebody as a stranger
+   * on their own board with no way to tell why. */
+  let person = null;
+  try {
+    const d = await fetch("/api/me", { cache: "no-store", headers: { "x-board-device": key } })
+      .then((r) => r.json());
+    person = d && d.person;
+  } catch { return bad(T("err.general")); }
+  if (!person) return bad(T("key.bad"));
+
+  try { localStorage.setItem("board:device", key); } catch { /* private window */ }
+  try { if (person.handle) localStorage.setItem("board:who", person.handle); } catch { /* fine */ }
+  said.hidden = false; said.classList.remove("bad"); said.textContent = T("key.done");
+  // Everything on this page was drawn for the other person. Start again as
+  // this one rather than repainting eleven things in the right order.
+  setTimeout(() => location.reload(), 700);
+});
+
 function showMore(on) {
   $("memore").hidden = !on;
   $("memorego").setAttribute("aria-expanded", String(Boolean(on)));
