@@ -402,7 +402,10 @@ function route() {
 }
 
 function words() {
-  $("invite").textContent = T("site.invite");
+  /* Not "not public yet" — somebody looking at this screen is looking at the
+     lock itself, and the strip above it should say the same thing the lock
+     does. */
+  $("invite").textContent = T("inv.locked");
   $("wxtitle").textContent = T("door.wxTitle");
   $("wxsub").textContent = T("door.wxSub");
   $("wxsay").textContent = T("door.wxSay");
