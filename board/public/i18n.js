@@ -459,8 +459,6 @@ export const STRINGS = {
 
   // ---- your own profile ----------------------------------------------------
   "me.addPhoto":       ["Add your photo", "加上你的照片"],
-  "me.addCover":       ["Add a cover", "加个封面"],
-  "me.changeCover":    ["Change the cover", "换个封面"],
   "me.newHere":        ["Looking for someone to study with?", "在找一起学习的人吗？"],
   // Says what the list IS, before a button offers to put you on it. "Put me on
   // the list" means nothing if nobody has said what the list is for.
@@ -539,6 +537,18 @@ export const STRINGS = {
   ],
   "post.orBuddyGo":    ["Say so here instead", "到这里说一声"],
   "me.editTitle":      ["Your profile", "你的资料"],
+  // Two words for two different acts. Putting yourself up is not the same as
+  // changing a detail a week later, and one word for both is why nobody is
+  // sure which one they are doing.
+  "me.newTitle":       ["A photo and a name", "一张照片，一个名字"],
+  "me.post":           ["Post it", "发布"],
+  "me.more": [
+    "Add more — university, age, languages",
+    "再多写点——学校、年龄、会说的语言",
+  ],
+  "me.age":            ["Age", "年龄"],
+  "me.langs":          ["Languages you speak — English, a bit of Chinese",
+                        "你会说的语言——英语，一点中文"],
   "me.name":           ["Your name — what people see on your posts",
                         "你的名字——别人在你的内容上看到的"],
   "me.campus":         ["Campus or city — Renmin · Haidian", "学校或城市——人大 · 海淀"],

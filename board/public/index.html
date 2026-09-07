@@ -130,8 +130,20 @@
     letter-spacing:-.01em;line-height:1.1}
   .top p{margin:.2rem 0 0;color:var(--muted);font-size:.86rem}
 
-  /* The cover picker, in the editor. */
-  .coverrow{display:flex;justify-content:center;margin:.55rem 0 0}
+  /* The fold. A control that looks like a control rather than a link, because
+     what is behind it is a form and not an explanation. */
+  .morego{display:flex;align-items:center;justify-content:space-between;width:100%;
+    margin:.7rem 0 0;padding:.7rem .95rem;border:1px dashed var(--line);
+    background:none;color:var(--ink-2);border-radius:.7rem;font-size:.9rem;
+    text-align:left}
+  .morego:hover{border-color:var(--muted);color:var(--ink)}
+  .morego i{flex:0 0 auto;font-style:normal;font-size:1.05rem;color:var(--accent)}
+  .morego[aria-expanded="true"]{border-style:solid;color:var(--ink)}
+  .morego[aria-expanded="true"] i{transform:rotate(45deg)}
+  #memore .field:first-child{margin-top:.8rem}
+  /* Age is two characters wide and asking for a third of the row for it makes
+     the row look broken. */
+  #meage{flex:0 0 4.6rem}
 
   .menote{margin:.5rem 0 0;font-size:.82rem;color:var(--muted);text-align:center;
     max-width:24rem;line-height:1.5}
@@ -542,12 +554,24 @@
    *
    * The card catches sideways drags only — `touch-action:pan-y` leaves the
    * vertical gesture to the page, which is the whole idea. */
-  .deck{position:relative;width:100%;height:min(62vh,34rem);
+  /* HEIGHT IS A BUDGET, NOT A PROPORTION.
+   *
+   * A share of the viewport is the wrong rule here: the card has a masthead, a
+   * section rule, the Follow row and the nav bar to fit around, and those are
+   * fixed pixels. At 62vh the buttons sat behind the bar on every phone shorter
+   * than about 815px of viewport, which is most of them.
+   *
+   * So: take what is left after everything else, cap it so it does not become a
+   * poster on a desktop, and floor it so a short screen still shows a face.
+   * --vh is set from innerHeight because 100vh on a phone is the height the page
+   * would have if the browser's own chrome were not there. */
+  .deck{position:relative;width:100%;
+    height:max(13rem, min(62vh, 34rem, calc(var(--vh, 1vh) * 100 - 21rem - env(safe-area-inset-bottom))));
     margin:0 0 .9rem;touch-action:pan-y;overflow:hidden;border-radius:1.3rem}
-  /* The ask above it is only there while there is no face on this phone, and
-     it has to be paid for out of the deck: a card that keeps its full height
-     pushes Say hello / Next down behind the nav bar. */
-  #mine:not([hidden]) + .deck{height:min(52vh,30rem)}
+  /* The ask above it is only there while there is no face on this phone, and it
+     is paid for out of the deck. */
+  #mine:not([hidden]) + .deck{
+    height:max(11rem, min(52vh, 30rem, calc(var(--vh, 1vh) * 100 - 26rem - env(safe-area-inset-bottom))))}
   .pc{position:absolute;inset:0;border-radius:1.3rem;overflow:hidden;
     background:var(--raise);box-shadow:var(--shadow);
     display:flex;flex-direction:column;justify-content:flex-end;
@@ -581,8 +605,15 @@
     color:var(--ink);border-radius:99px;padding:.8rem 1rem;font-size:1rem;
     text-align:center;text-decoration:none}
   .pacts .primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  /* Already following: the button is still there to undo it, and stops
+     shouting to be pressed. */
+  .pacts .primary.on{background:var(--raise);border-color:var(--line);color:var(--ink-2)}
   .pcount{margin:.7rem 0 0;text-align:center;font-size:.82rem;color:var(--muted);
     font-variant-numeric:tabular-nums}
+  .shareme{flex:0 0 auto;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink-2);border-radius:99px;padding:.28rem .8rem;font-size:.76rem;
+    letter-spacing:.02em}
+  .shareme:hover{color:var(--accent);border-color:var(--accent)}
   /* Your own missing face, under everybody else's. The circle IS the control:
      one tap opens the picker, which is the shortest route there is. */
   .mine{display:flex;align-items:center;gap:.75rem;width:100%;margin:0 0 .8rem;
@@ -641,7 +672,11 @@
         <i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></i>
         <span id="navnewlabel">Put something up</span>
       </button>
-      <a href="/notes" id="navnotes">
+      <!-- Messages is held back for V1. A private inbox is worth having when
+           there are enough people for somebody to write to; until then it is a
+           tab that opens an empty room. The routes and the page still work for
+           anybody with the address. -->
+      <a href="/notes" id="navnotes" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
         <span id="navnoteslabel">Messages</span>
         <i class="badge" id="navnotesn" hidden></i>
@@ -658,7 +693,12 @@
        This used to be its own page at /browse. Two tabs now point at the two
        ends of one page, because the deck runs out after a handful of people
        and the thing to do when it does is read what everybody said. -->
-  <div class="rule"><span id="brwlabel">Browse students</span><i></i></div>
+  <div class="rule"><span id="brwlabel">Browse students</span><i></i>
+    <!-- Shares the person on the card, not this page. Their own page has their
+         name and face in its link card, which is what WeChat shows, and a
+         Follow button for whoever opens it. -->
+    <button class="shareme" type="button" id="brwshare" hidden></button>
+  </div>
   <!-- The affordance the profile block used to carry: a missing face with a +
        on it. One row rather than the four hundred pixels it cost before, and
        it is gone the moment there is a photo. -->
@@ -696,25 +736,40 @@
       <span class="in" id="mepicin"></span><span class="plus">+</span>
     </button>
     <p class="menote" id="mepicsay"></p>
-    <!-- The cover lived on the block that is no longer on the page. It is a
-         picture of your own page, so it belongs with the rest of the editing
-         rather than nowhere at all. -->
-    <div class="coverrow"><button class="ghost" type="button" id="mecovergo"></button></div>
+
+    <!-- A photograph and a name. That is the whole form.
+         Everything else was asked for at the same moment and none of it was
+         needed to be somebody here — a first screen with six fields on it is
+         how a person decides to do this later. The rest is a fold, shut, and
+         the cover is gone entirely: it was decoration on a page nobody had
+         made yet. -->
     <div class="field"><input id="mename" maxlength="40"></div>
-    <div class="field"><input id="mecampus" maxlength="60"></div>
-    <div class="field"><input id="mehere" maxlength="40"></div>
-    <textarea id="megoal" rows="3"></textarea>
-    <div class="looking">
-      <label>
-        <input type="checkbox" id="melooking">
-        <span><b id="melookinglabel"></b><span class="why" id="melookingwhy"></span></span>
-      </label>
-      <div class="freewrap" id="mefreewrap" hidden>
-        <span class="lab" id="mefreelab"></span>
-        <div class="days" id="medays"></div>
+
+    <button class="morego" type="button" id="memorego"
+            aria-expanded="false" aria-controls="memore">
+      <span id="memorelabel"></span><i aria-hidden="true">+</i>
+    </button>
+    <div id="memore" hidden>
+      <div class="field"><input id="mecampus" maxlength="60"></div>
+      <div class="field">
+        <input id="meage" maxlength="2" inputmode="numeric" autocomplete="off">
+        <input id="melangs" maxlength="60">
       </div>
+      <div class="field"><input id="mehere" maxlength="40"></div>
+      <textarea id="megoal" rows="3"></textarea>
+      <div class="looking">
+        <label>
+          <input type="checkbox" id="melooking">
+          <span><b id="melookinglabel"></b><span class="why" id="melookingwhy"></span></span>
+        </label>
+        <div class="freewrap" id="mefreewrap" hidden>
+          <span class="lab" id="mefreelab"></span>
+          <div class="days" id="medays"></div>
+        </div>
+      </div>
+      <p class="menote" id="mewhy"></p>
     </div>
-    <p class="menote" id="mewhy"></p>
+
     <div class="row">
       <button class="ghost" type="button" id="meshut"></button>
       <button class="go" type="submit" id="mesave"></button>
@@ -722,8 +777,10 @@
     <p class="said" id="mesaid" hidden></p>
 
     <!-- The way back, on the screen somebody is already on when they are
-         setting themselves up. Shut until asked for. -->
-    <div class="keybox">
+         setting themselves up. Hidden: nothing is wired to these controls yet,
+         and on a form this short an empty bordered box under the buttons reads
+         as a broken screen rather than as a thing not built. -->
+    <div class="keybox" hidden>
       <h3 id="keytitle"></h3>
       <p id="keybody"></p>
       <div class="keyrow">
@@ -754,7 +811,6 @@
 </div>
 
 <input type="file" id="mephoto" hidden accept="image/*">
-<input type="file" id="mecover" hidden accept="image/*">
 
 <div class="sheet" id="tsheet" hidden>
   <form class="card" id="tform">
@@ -1641,7 +1697,6 @@ $("tform").addEventListener("submit", async (e) => {
 function paintNav() {
   $("navbrowselabel").textContent = T("nav.browse");
   $("navfeedlabel").textContent = T("nav.feed");
-  $("navnoteslabel").textContent = T("note.inbox");
   $("navnewlabel").textContent = T("nav.new");
   $("navmelabel").textContent = T("nav.profile");
   // Profile goes to your own page once you have one, and before that it opens
@@ -1722,7 +1777,9 @@ async function drawTutor() {
   if (!(ME && ME.handle)) {
     box.append(doable("tut.setup", "tut.setupWhat", () => openMe()));
   }
-  box.append(doable("tut.buddy", "tut.buddyWhat", () => { location.href = "/buddies"; }));
+  // Find a study buddy is held back for V1: the deck at the top of this page is
+  // the same people, and offering both is offering a choice between a thing and
+  // itself. The route still works for anybody with the address.
   // Browsing is the top of this page now, so this scrolls rather than
   // navigates — sending somebody to the page they are already on reloads it
   // and loses the deck's place.
@@ -1752,6 +1809,11 @@ async function loadWanted() {
 /* How many introductions are waiting. Its own request rather than a field on
  * the board: the board is public and cached at every layer, and a number that
  * belongs to one browser has no business travelling with it. */
+/* The unread count on the Messages tab. Not called while that tab is hidden
+ * for V1 — kept whole, because what it is waiting for is the tab coming back
+ * and not a rewrite.
+ *
+ */
 async function countNotes() {
   if (!device) return;
   try {
@@ -1858,6 +1920,32 @@ function personCard(q) {
   return box;
 }
 
+/* Share the person on the card.
+ *
+ * Their own page, not this one: /p/<name> carries their face and their line in
+ * its link card, which is the thing WeChat renders in a chat, and it opens with
+ * a Follow button for whoever taps it. Sharing this address instead would send
+ * somebody a deck that starts at whoever happens to be first. */
+function shareCard(q) {
+  const url = location.origin + "/p/" + encodeURIComponent((q.handle || "").toLowerCase());
+  const b = $("brwshare");
+  const say = (words, hold) => {
+    b.textContent = words;
+    setTimeout(() => { b.textContent = T("act.share"); }, hold || 2200);
+  };
+  // Inside WeChat a page may not open a share sheet — the ⋯ menu is the only
+  // way — so the honest version is to put the link on the clipboard and say
+  // where the real control is.
+  if (IN_WECHAT) { say(T(copyText(url) ? "act.wxCopied" : "act.wxUseMenu"), 3600); return; }
+  if (navigator.share) {
+    navigator.share({ title: q.handle || T("board.someone"),
+                      text: (q.goal || "").slice(0, 120), url })
+      .catch(() => { /* dismissed is not a failure */ });
+    return;
+  }
+  say(T(copyText(url) ? "act.copied" : "act.copyFail"));
+}
+
 function drawDeck() {
   $("brwlabel").textContent = T("brw.title");
 
@@ -1869,6 +1957,8 @@ function drawDeck() {
   const n = deckLen();
   if (AT >= n) AT = 0;           // a photo arriving takes the last card away
   const mine = needsFace() && people > 0 && AT === people;
+  // Nothing to share on your own card, or on an empty list.
+  $("brwshare").hidden = !people || mine;
   // Nobody on the list is not an empty screen here — the feed is still under
   // it — so the whole block collapses to one small card that says so.
   deck.hidden = !n;
@@ -1881,8 +1971,12 @@ function drawDeck() {
   $("bnone").hidden = Boolean(people);
 
   if (!n) {
-    const go = el("a", null, T("bud.open"));
-    go.href = "/buddies";
+    // Nobody to look at yet, so the only useful thing to offer is being the
+    // first one. It used to point at the study-buddy list, which is this same
+    // empty list with a different layout.
+    const go = el("button", null, T("brw.mine"));
+    go.type = "button";
+    go.addEventListener("click", () => $("mephoto").click());
     fill($("bnone"), el("b", null, T("brw.none")), el("p", null, T("brw.noneBody")), go);
     return;
   }
@@ -1902,7 +1996,7 @@ function drawDeck() {
   const acts = $("pacts");
   fill(acts);
   if (mine) {
-    // One button, and it is the picker. Nothing to say hello to on this card.
+    // One button, and it is the picker. Nobody to follow on this card.
     const add = el("button", "primary", T("brw.mine"));
     add.type = "button";
     add.addEventListener("click", () => $("mephoto").click());
@@ -1910,12 +2004,45 @@ function drawDeck() {
     return;
   }
   const q = PEOPLE[AT];
-  const hi = el("a", "primary", T("brw.hello"));
-  hi.href = "/p/" + encodeURIComponent((q.handle || "").toLowerCase());
+  const sh = $("brwshare");
+  sh.hidden = false;
+  sh.textContent = T("act.share");
+  sh.onclick = () => shareCard(q);
+  /* Follow, not "say hello".
+   *
+   * Saying hello is a thing you do to a person and it wants a reply; following
+   * is a thing you do to a feed and it does not. The second is what somebody
+   * looking at a stranger's face is actually ready for, and it is the one that
+   * cannot go wrong in a room full of people who have never met. */
+  const fol = el("button", "primary", "");
+  fol.type = "button";
+  const paintFollow = () => {
+    fol.textContent = T(q.following ? "bud.following" : "bud.follow");
+    fol.classList.toggle("on", Boolean(q.following));
+    fol.setAttribute("aria-pressed", String(Boolean(q.following)));
+  };
+  paintFollow();
+  fol.addEventListener("click", async () => {
+    const want = !q.following;
+    // Shown at once, corrected if the box disagrees. A button that waits for a
+    // round trip before it changes is a button somebody presses twice.
+    q.following = want;
+    paintFollow();
+    try {
+      const r = await fetch("/api/follow", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, who: q.id, on: want }),
+      });
+      if (!r.ok) throw new Error("no");
+      const d = await r.json();
+      q.following = Boolean(d.following);
+    } catch { q.following = !want; }
+    paintFollow();
+  });
   const on = el("button", null, T("brw.next"));
   on.type = "button";
   on.addEventListener("click", nextPerson);
-  acts.append(hi, on);
+  acts.append(fol, on);
 }
 
 /* Flick to move on. Pointer events rather than touch events, so a mouse on a
@@ -2221,7 +2348,7 @@ async function saveMe(patch) {
   return d;
 }
 
-for (const [input, key] of [["mephoto", "photo"], ["mecover", "cover"]]) {
+for (const [input, key] of [["mephoto", "photo"]]) {
   $(input).addEventListener("change", async (e) => {
     const f = e.target.files && e.target.files[0];
     e.target.value = "";
@@ -2232,11 +2359,9 @@ for (const [input, key] of [["mephoto", "photo"], ["mecover", "cover"]]) {
     // Say something before the wait, not after. Re-encoding a large photo
     // takes a moment on a phone, and a control that does nothing visible is a
     // control somebody presses again.
-    const label = key === "cover" ? $("mecovergo") : null;
-    if (label) label.textContent = T("me.working");
     let shot;
     try {
-      shot = await shrink(f, key === "cover" ? 1600 : 1000);
+      shot = await shrink(f, 1000);
     } catch (err) {
       alert(T("post.badPhoto") + " (" + (err && err.message || "?") + ")");
       drawMePic();
@@ -2271,10 +2396,8 @@ function drawMePic() {
      somewhere, and the block that used to say it is off the page. */
   $("mepicsay").textContent = !(ME && ME.photo) ? T("me.needPhoto")
     : ME.photoPending ? T("me.photoHeld") : "";
-  $("mecovergo").textContent = T(ME && ME.cover ? "me.changeCover" : "me.addCover");
 }
 $("mepicgo").addEventListener("click", () => $("mephoto").click());
-$("mecovergo").addEventListener("click", () => $("mecover").click());
 
 /* The days somebody is free, 0–6. Drawn rather than a row of checkboxes: seven
  * of those is a wall of text, and a week reads as a shape. */
@@ -2302,18 +2425,32 @@ function drawLooking() {
 $("melooking").addEventListener("change", drawLooking);
 
 function openMe(joining) {
-  $("metitle").textContent = T("me.editTitle");
+  const made = Boolean(ME && ME.handle);
+  $("metitle").textContent = T(made ? "me.editTitle" : "me.newTitle");
   $("mename").placeholder = T("me.name");
   $("mecampus").placeholder = T("me.campus");
+  $("meage").placeholder = T("me.age");
+  $("melangs").placeholder = T("me.langs");
   $("mehere").placeholder = T("me.here");
   $("megoal").placeholder = T("me.goal");
   $("mewhy").textContent = T("me.whyNoContact");
   $("meshut").textContent = T("post.cancel");
-  $("mesave").textContent = T("me.save");
+  // Putting yourself up is not the same act as changing a detail later, and a
+  // button that says the same word for both is the reason nobody is sure which
+  // one they are doing.
+  $("mesave").textContent = T(made ? "me.save" : "me.post");
+  $("memorelabel").textContent = T("me.more");
   $("mename").value = (ME && ME.handle) || "";
   $("mecampus").value = (ME && ME.campus) || "";
+  $("meage").value = (ME && ME.age) || "";
+  $("melangs").value = (ME && Array.isArray(ME.speaks) ? ME.speaks.join(", ") : "");
   $("mehere").value = (ME && ME.here) || "";
   $("megoal").value = (ME && ME.goal) || "";
+  /* Open if there is already something in it, shut otherwise. Somebody who
+   * filled these in once should not have to find them again to change one. */
+  showMore(Boolean(joining) ||
+    Boolean(ME && (ME.campus || ME.age || ME.here || ME.goal ||
+      (ME.speaks && ME.speaks.length))));
   $("melookinglabel").textContent = T("bud.lookingLabel");
   $("melookingwhy").textContent = T("bud.lookingWhy");
   $("mefreelab").textContent = T("bud.free");
@@ -2330,6 +2467,12 @@ function openMe(joining) {
   // covers the photo control the form is about to insist on.
   if (ME && ME.photo) $("mename").focus();
 }
+function showMore(on) {
+  $("memore").hidden = !on;
+  $("memorego").setAttribute("aria-expanded", String(Boolean(on)));
+}
+$("memorego").addEventListener("click", () => showMore($("memore").hidden));
+
 $("meshut").addEventListener("click", () => { $("mesheet").hidden = true; });
 $("mesheet").addEventListener("click", (e) => {
   if (e.target === $("mesheet")) $("mesheet").hidden = true;
@@ -2353,6 +2496,11 @@ $("meform").addEventListener("submit", async (e) => {
   }
   const out = await saveMe({
     handle, campus: $("mecampus").value.trim(),
+    age: $("meage").value.replace(/\D/g, ""),
+    // Typed as a sentence, kept as a list: "English, Spanish, a bit of Chinese"
+    // is how somebody answers this, and splitting it here means the profile can
+    // show them as separate things later without asking again.
+    speaks: $("melangs").value.split(/[,，、]/).map((x) => x.trim()).filter(Boolean).slice(0, 6),
     looking: $("melooking").checked, free: FREE,
     here: $("mehere").value.trim(), goal: $("megoal").value.trim(),
   });
@@ -2370,7 +2518,6 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
 
 load();
 loadPeople();
-countNotes();
 loadWanted();
 </script>
 

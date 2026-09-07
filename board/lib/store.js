@@ -181,6 +181,9 @@ export function cleanPerson(raw) {
     // reads to decide whether to ask.
     goal: s(raw.goal, 600),
     trade: s(raw.trade, 120),
+    // Optional, and never asked for on the first screen. Digits only, and two
+    // of them: a field that will take a sentence becomes one.
+    age: String(raw.age ?? "").replace(/\D/g, "").slice(0, 2),
     speaks: Array.isArray(raw.speaks)
       ? raw.speaks.slice(0, 6).map((x) => s(x, 40)).filter(Boolean) : [],
     free: days,

@@ -460,7 +460,14 @@ app.get("/api/people", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const live = board.people.filter((q) => q.state === "published" && q.looking && q.handle);
   res.json({
-    people: live.map((q) => ({ ...shownPerson(q, q.by === me), mine: q.by === me })),
+    // Whether this reader already follows them, so the deck's one button can
+    // say which of the two things it is about to do. A fact about the reader,
+    // which is why this response is never cached.
+    people: live.map((q) => ({
+      ...shownPerson(q, q.by === me),
+      mine: q.by === me,
+      following: Boolean(me) && board.follows.some((f) => f.by === me && f.who === q.id),
+    })),
   });
 });
 
@@ -780,7 +787,7 @@ app.put("/api/me", express.json({ limit: "36mb" }), async (req, res) => {
     // after it there is no way to tell the two apart.
     const joining = typeof req.body.looking === "boolean" && req.body.looking && !q.looking;
     if (typeof req.body.looking === "boolean") q.looking = req.body.looking;
-    for (const k of ["handle", "level", "campus", "goal", "trade", "here"]) {
+    for (const k of ["handle", "level", "campus", "goal", "trade", "here", "age"]) {
       if (req.body[k] !== undefined) q[k] = String(req.body[k]).slice(0, k === "goal" ? 600 : 120);
     }
     if (Array.isArray(req.body.free)) q.free = req.body.free;
