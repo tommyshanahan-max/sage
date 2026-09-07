@@ -108,6 +108,38 @@
     font-size:1.02rem}
   .note{margin:1.4rem 0 0;font-size:.86rem;line-height:1.6;color:var(--muted)}
 
+  /* ---- PK ------------------------------------------------------------------
+   * The challenge on arrival, and the comparison on the way out. Accent
+   * ground on both, so the thing that brought somebody here is the thing they
+   * see first on each screen. */
+  .pkcard{margin:1.6rem 0 0;padding:1.3rem 1.2rem 1.4rem;background:var(--accent-soft);
+    border-radius:1.3rem;text-align:center}
+  .pkcap{margin:0;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--accent);font-weight:500}
+  :root[data-lang="zh"] .pkcap{letter-spacing:.06em}
+  .pkfrom{margin:.7rem 0 0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.4rem,6.4vw,1.8rem);line-height:1.25;text-wrap:balance}
+  .pkbeat{margin:.5rem 0 0;font-size:.95rem;color:var(--ink-2)}
+  .pkcard .go{margin-top:1.2rem}
+  .pkalt{display:block;width:100%;margin:.7rem 0 0;border:0;background:none;
+    color:var(--accent);font-size:.9rem;padding:.4rem 0}
+
+  .pkres{margin:1.2rem 0 0;padding:1.2rem 1.15rem 1.3rem;background:var(--accent-soft);
+    border-radius:1.3rem;text-align:center}
+  /* Two numbers, side by side, and nothing between them but a dash. A bar
+     chart of two four-question placements would be a graph of a rumour. */
+  .pkpair{display:flex;align-items:center;justify-content:center;gap:1.1rem;
+    margin:.9rem 0 0}
+  .pkside{flex:0 1 8rem;min-width:0}
+  .pkside b{display:block;font-family:var(--serif);font-weight:400;font-size:2.6rem;
+    line-height:1;color:var(--muted)}
+  .pkside.me b{color:var(--accent)}
+  .pkside span{display:block;margin:.3rem 0 0;font-size:.85rem;color:var(--ink-2);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pkv{font-style:normal;color:var(--muted);font-size:1.2rem}
+  .pkverdict{margin:1rem 0 0;font-family:var(--serif);font-size:1.2rem}
+  .pkres .go{margin-top:1.1rem}
+
   /* ---- the result, as a card ---------------------------------------------
    * Raised off the paper and centred, because this is the screen that gets
    * screenshotted and sent to somebody. Everything on it is one object: a
@@ -384,6 +416,44 @@ const CLASS_ON = false;
 const classLink = (band) =>
   DEEP ? STUDYPAL + "study?lesson=1&level=" + encodeURIComponent(band) : STUDYPAL;
 
+/* PK: A CHALLENGE THAT TRAVELS AS A LINK.
+ *
+ * No inbox, and nothing stored on the server. The challenge IS the address —
+ * "?pk=zh8~Mei" is somebody's name and where they landed — so it goes wherever
+ * a link goes: into a WeChat group, to a friend who has never opened this, to
+ * three people at once. An inbox would only reach people already inside, which
+ * is the half of the audience that does not need reaching.
+ *
+ * It is not evidence and does not pretend to be. Anybody can type a ten into
+ * their own URL, and if two friends want to lie to each other about their
+ * Chinese, this is not the thing standing in the way. What it has to do is
+ * carry a name and a number into the four questions, and it does.
+ */
+function readPk() {
+  try {
+    const raw = new URLSearchParams(location.search).get("pk") || "";
+    const m = /^(zh|en)(10|[1-9])~(.{1,24})$/.exec(raw.trim());
+    return m ? { which: m[1], level: Number(m[2]), who: m[3] } : null;
+  } catch { return null; }
+}
+const PK = readPk();
+
+/** The link that carries this result to somebody else. */
+const pkLink = (which, n, who) =>
+  "/level?pk=" + which + n + "~" + encodeURIComponent(who);
+
+/* The name to send it under. The one this browser already posts with, asked
+   for once if there is not one yet — the same way a reply asks. */
+function pkName() {
+  let who = "";
+  try { who = localStorage.getItem("board:who") || ""; } catch { /* private window */ }
+  if (!who) who = (prompt(T("act.answerAs")) || "").trim();
+  if (!who) return "";
+  try { localStorage.setItem("board:who", who); } catch { /* fine */ }
+  // The separator is the one character the link cannot carry in a name.
+  return who.replace(/~/g, " ").slice(0, 24);
+}
+
 const PUTKEY = "board:levelput";
 const putUp = () => { try { return localStorage.getItem(PUTKEY) === "1"; } catch { return false; } };
 
@@ -470,11 +540,13 @@ function answer(pick) {
  * So it is on the first screen, where somebody who has not started yet can
  * send it to the friend they were going to compare with anyway.
  */
-function inviteTo(path, words, btn) {
+function inviteTo(path, words, btn, labelKey) {
   const url = location.origin + path;
+  // Whatever this button says, it says again afterwards. It was hardcoded to
+  // "Send this to a friend", which is wrong on every other button that shares.
   const back = (w, hold) => {
     btn.textContent = w;
-    setTimeout(() => { btn.textContent = T("share.invite"); }, hold || 2200);
+    setTimeout(() => { btn.textContent = T(labelKey || "share.invite"); }, hold || 2200);
   };
   // Inside WeChat a page may not open a share sheet — the ⋯ menu is the only
   // way — so the honest version is the clipboard and where the real control is.
@@ -491,6 +563,37 @@ function inviteTo(path, words, btn) {
 }
 
 function drawIntro(box) {
+  /* ARRIVING ON A CHALLENGE.
+   *
+   * Somebody who opened this from a friend's message is not choosing between
+   * two tests — they are answering one. So the two language buttons collapse
+   * into the one that matches the challenge, and the other stays reachable
+   * underneath for anybody who followed the link and wants their own thing.
+   */
+  if (PK) {
+    const c = el("div", "pkcard");
+    c.append(el("p", "pkcap", T("pk.title")));
+    c.append(el("p", "pkfrom", T("pk.from", {
+      who: PK.who, n: PK.level,
+      lang: T(PK.which === "zh" ? "crown.zh" : "crown.en"),
+    })));
+    c.append(el("p", "pkbeat", T("pk.beat")));
+    const go = el("button", "go wide", T("pk.take"));
+    go.type = "button";
+    go.addEventListener("click", () => start(PK.which));
+    c.append(go);
+    const other = PK.which === "zh" ? "en" : "zh";
+    const alt = el("button", "pkalt", T("pk.other", {
+      lang: T(other === "zh" ? "crown.zh" : "crown.en"),
+    }));
+    alt.type = "button";
+    alt.addEventListener("click", () => start(other));
+    c.append(alt);
+    box.append(c);
+    box.append(el("p", "note", T("lvl.honest")));
+    return;
+  }
+
   box.append(el("p", "eyebrow", T("lvl.eyebrow")));
   box.append(el("h1", null, T("lvl.title")));
   box.append(el("p", "lede", T("lvl.lede")));
@@ -806,6 +909,48 @@ function drawResult(box) {
    * changed. Everything on it is measured or stored — there is no score here
    * and there is not going to be one, for the reason under the stats.
    */
+  /* THE PK, ABOVE THE RESULT.
+   *
+   * They came here because somebody said a number at them, so the answer to
+   * that goes first and their own result underneath it. Both levels, side by
+   * side, and one line saying which way it went — no percentages, because two
+   * four-question placements are not a scoreline.
+   *
+   * Only when the languages match. Somebody who took the challenge in English
+   * against a Chinese level has two facts, not a comparison, and saying who
+   * won would be inventing a result out of two different tests.
+   */
+  if (PK && PK.which === w) {
+    const pk = el("div", "pkres");
+    pk.append(el("p", "pkcap", T("pk.title")));
+    const pair = el("div", "pkpair");
+    const side = (name, num, mine) => {
+      const d = el("div", mine ? "pkside me" : "pkside");
+      d.append(el("b", null, String(num)));
+      d.append(el("span", null, name));
+      return d;
+    };
+    pair.append(side(PK.who, PK.level, false));
+    pair.append(el("i", "pkv", "\u2013"));
+    pair.append(side(T("pk.you"), n, true));
+    pk.append(pair);
+    pk.append(el("p", "pkverdict", n > PK.level ? T("pk.won")
+      : n < PK.level ? T("pk.lost", { who: PK.who }) : T("pk.tie")));
+
+    // Straight back into the same chat, with their own number on it.
+    const back = el("button", "go wide", T("pk.back"));
+    back.type = "button";
+    back.addEventListener("click", () => {
+      const who = pkName();
+      if (!who) return;
+      inviteTo(pkLink(w, n, who),
+        T("pk.words", { n, lang: T(w === "zh" ? "crown.zh" : "crown.en") }),
+        back, "pk.back");
+    });
+    pk.append(back);
+    box.append(pk);
+  }
+
   const stage = Math.ceil(n / 2);
   const card = el("div", "rcard");
 
@@ -990,6 +1135,22 @@ function drawResult(box) {
      button names the thing; this says what lands. */
   box.append(el("p", "feedwhat", T("share.feedLvl")));
   box.append(fsaid);
+
+  /* AND THE WAY THIS TRAVELS. A result is worth sending because of what it
+     says about the sender — so the challenge sits beside the feed post rather
+     than under it, and it reaches the group chat the feed cannot. */
+  if (!(PK && PK.which === w)) {
+    const pkgo = el("button", "quiet wide", T("pk.challenge"));
+    pkgo.type = "button";
+    pkgo.addEventListener("click", () => {
+      const who = pkName();
+      if (!who) return;
+      inviteTo(pkLink(w, n, who),
+        T("pk.words", { n, lang: T(w === "zh" ? "crown.zh" : "crown.en") }),
+        pkgo, "pk.challenge");
+    });
+    box.append(pkgo);
+  }
 
   const row = el("div", "row");
   const again = el("button", "quiet", T("lvl.again"));
