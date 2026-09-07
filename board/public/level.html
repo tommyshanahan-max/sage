@@ -108,6 +108,20 @@
     font-size:1.02rem}
   .note{margin:1.4rem 0 0;font-size:.86rem;line-height:1.6;color:var(--muted)}
 
+  /* WHAT THE LEVEL IS WORN AS. The mark large enough to be looked at, the name
+     beside it, and what it takes to change it — a status somebody cannot see
+     the next step of is a status they stop climbing. */
+  .worn{display:flex;align-items:center;gap:1rem;margin:1.5rem 0 0;
+    padding:1rem 1.15rem;background:var(--accent-soft);border-radius:1.1rem}
+  .worn .face{color:var(--accent);flex:0 0 auto;display:grid;place-items:center}
+  .worn .cap{margin:0;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent)}
+  :root[data-lang="zh"] .worn .cap{text-transform:none;letter-spacing:.02em}
+  .worn h2{margin:.2rem 0 0;font-family:var(--serif);font-weight:400;font-size:1.35rem;
+    line-height:1.2}
+  .worn .next{margin:.3rem 0 0;font-size:.86rem;line-height:1.5;color:var(--ink-2)}
+  .wornnote{margin:.6rem 0 0;font-size:.82rem;line-height:1.5;color:var(--muted)}
+
   /* THE CLASS. A card rather than another button, because it is not one more
      thing to do with the result — it is the thing the result was for, and it
      leaves this site for the one next door. */
@@ -229,6 +243,7 @@
 <script type="module">
 import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
 import { CARDS, BANDS, CAN, STEPS, firstStep, nextStep } from "/level-cards.js";
+import { stageFor, stageName, crownMark, crownOnCanvas } from "/crown.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -270,6 +285,17 @@ const KEY = "board:level";
 const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); }
                      catch { return null; } };
 const save = (r) => { try { localStorage.setItem(KEY, JSON.stringify(r)); } catch { /* fine */ } };
+
+/* Whether the mark is already beside their name.
+ *
+ * Kept here rather than asked of the server: there are no accounts, the answer
+ * is only used to choose between two sentences, and a page that has to wait on
+ * a fetch to draw a caption is a page that draws late. It can be wrong after
+ * somebody clears their browser, and the cost of that is one sentence offering
+ * them something they already have.
+ */
+const PUTKEY = "board:levelput";
+const putUp = () => { try { return localStorage.getItem(PUTKEY) === "1"; } catch { return false; } };
 
 let RESULT = load();
 let WHICH = "";          // "zh" or "en" — the language being ranked
@@ -560,9 +586,14 @@ function pill(x, left, top, w, h, r) {
 function levelPicture(w, n, band, can) {
   return resultPicture(({ x, S, ink, muted, accent, line, serif, sans }) => {
     x.textAlign = "center";
+
+    // The mark, above everything, because on a card in a chat it is the thing
+    // somebody recognises before they read a word of it.
+    crownOnCanvas(x, Math.ceil(n / 2), S / 2 - 66, 74, 132, accent);
+
     x.fillStyle = muted;
     x.font = "34px " + sans;
-    x.fillText(w === "zh" ? "中文" : "English", S / 2, 210);
+    x.fillText(w === "zh" ? "中文" : "English", S / 2, 250);
 
     x.fillStyle = accent;
     x.font = "130px " + serif;
@@ -622,6 +653,31 @@ function drawResult(box) {
      the number is the same discipline as the type sort naming its softest
      letter — a rank printed bare invites somebody to defend it. */
   box.append(el("p", "caveat", T("lvl.rough")));
+
+  /* THE MARK.
+   *
+   * The number is a measurement and this is what somebody wears because of it,
+   * which is the half people come back for. It is the same five bands as the
+   * result above — see crown.js — so it cannot disagree with the line it sits
+   * under.
+   *
+   * The line underneath is the point of showing it here: either it is already
+   * beside their name, or it is one button away, and that button is directly
+   * below. Nobody hunts for a reward they have not been told they have.
+   */
+  const stage = Math.ceil(n / 2);
+  const worn = el("div", "worn");
+  const face = el("div", "face");
+  face.append(crownMark(stage, "3.4rem"));
+  worn.append(face);
+  const said = el("div", "said2");
+  said.append(el("p", "cap", T("crown.what")));
+  said.append(el("h2", null, stageName(stage)
+    + " \u00b7 " + T(w === "zh" ? "crown.zh" : "crown.en")));
+  said.append(el("p", "next", T(stage >= 5 ? "crown.top" : "crown.next")));
+  worn.append(said);
+  box.append(worn);
+  box.append(el("p", "wornnote", T(putUp() ? "crown.is" : "crown.shown")));
 
   /* WHAT THE NUMBER IS FOR.
    *
@@ -697,6 +753,7 @@ function drawResult(box) {
         body: JSON.stringify({ device, levelBand: (w === "zh" ? "ZH" : "EN") + " " + n }),
       }).then((x) => x.json());
       if (out && out.person) {
+        try { localStorage.setItem(PUTKEY, "1"); } catch { /* fine */ }
         say.className = "said ok";
         say.textContent = T("type.puton");
         put.hidden = true;

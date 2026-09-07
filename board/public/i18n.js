@@ -706,6 +706,18 @@ export const STRINGS = {
   ],
   "lvl.again":         ["Try again", "再测一次"],
   "lvl.put":           ["Put this on my page", "放到我的主页上"],
+  /* THE MARK. Named where the strings live rather than beside the drawing,
+     because these are read by people and the drawing is not. */
+  "crown.what":        ["What you are wearing now", "你现在戴的"],
+  "crown.zh":          ["Chinese", "中文"],
+  "crown.en":          ["English", "英文"],
+  "crown.next":        ["Two more levels and it changes shape again.",
+                        "再上两级，它还会变个样子。"],
+  "crown.top":         ["The last one. There is nothing above it.",
+                        "最后一个了，上面没有了。"],
+  "crown.shown":       ["It appears beside your name once your level is on your page.",
+                        "把等级放到主页上，它就会出现在你名字旁边。"],
+  "crown.is":          ["It is beside your name in Browse.", "它已经在「看看谁在」里你的名字旁边了。"],
   /* WHAT TO DO ABOUT THE NUMBER. A rank on its own is a verdict; the useful
      half is the next hour, and Study Pal already writes that hour. */
   "lvl.classTitle":    ["A class at this level", "来一节这个水平的课"],

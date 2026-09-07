@@ -672,6 +672,13 @@
     background:rgba(255,255,255,.2);color:#fff;border-radius:99px;
     padding:.25rem .55rem .25rem .65rem}
   .pc .type.you{background:var(--accent);letter-spacing:.06em}
+  /* THE MARK, on the photograph beside the name. Same badge family as the four
+     letters — it is one more thing about this person, not a decoration on
+     them — but it carries its own name in words, because a shape nobody can
+     read is a shape that gets asked about once and ignored after. */
+  .pc .rank{display:inline-flex;align-items:center;gap:.35rem;flex:0 0 auto;
+    font-weight:500;font-size:.78rem;background:rgba(255,255,255,.2);color:#fff;
+    border-radius:99px;padding:.25rem .6rem}
   .pc .where{margin:.3rem 0 0;font-size:.92rem;color:rgba(255,255,255,.82)}
   .pc .goal{margin:.6rem 0 0;font-family:var(--serif);font-size:1.02rem;line-height:1.5;
     color:rgba(255,255,255,.92);display:-webkit-box;-webkit-line-clamp:3;
@@ -997,6 +1004,7 @@
 
 <script type="module">
 import { T, when, lang, setLang, pickLang, langButton, STRINGS } from "/i18n.js";
+import { stageFor, stageName, crownMark } from "/crown.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -2386,6 +2394,15 @@ function personCard(q, live) {
   line.append(el("h2", null, q.handle || T("board.someone")));
   if (q.mine) line.append(el("b", "type you", T("brw.you")));
   if (q.type) line.append(el("b", "type", q.type));
+  /* Only if they put their level on their page. The mark is the level worn,
+     so somebody who kept the number keeps the number. */
+  const rank = stageFor(q.levelBand);
+  if (rank) {
+    const worn = el("b", "rank");
+    worn.append(crownMark(rank, "1rem"));
+    worn.append(el("span", null, stageName(rank)));
+    line.append(worn);
+  }
   scrim.append(line);
   const where = [q.campus, q.here].filter(Boolean).join(" · ");
   if (where) scrim.append(el("p", "where", where));
