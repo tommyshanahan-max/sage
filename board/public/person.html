@@ -80,6 +80,11 @@
   img{max-width:100%}
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 
+  /* The strip that says this is not open yet. Quiet, full width, above
+     everything — it is a status, not an announcement, and it is the first
+     thing somebody arriving from a friend's link should read. */
+  .invite{margin:0 0 .9rem;padding:.5rem 1.15rem;background:var(--accent-soft);
+    color:var(--accent);font-size:.78rem;letter-spacing:.02em;text-align:center}
   .bar{display:flex;align-items:center;gap:.7rem;padding:.9rem 1.15rem}
   .bar a.back{color:var(--ink);text-decoration:none;display:grid;place-items:center;
     margin-left:-.3rem}
@@ -209,6 +214,9 @@
 </head>
 <body>
 <main>
+  <!-- While it is true. An empty room reads as a dead product unless it says
+       it is not open yet. -->
+  <p class="invite" id="invite"></p>
   <div class="bar">
     <a class="back" href="/browse" id="back" aria-label="Back">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
@@ -270,6 +278,7 @@ async function load() {
 }
 
 function paint() {
+  $("invite").textContent = T("site.invite");
   const box = $("body");
   fill(box);
   if (!PERSON) {

@@ -42,6 +42,14 @@ export const STRINGS = {
   "board.none.head":   ["Nothing under that yet.", "这个分类下还没有内容。"],
   "board.none.body":   ["Try Everyone, or put the first one up yourself.",
                         "看看全部，或者你来发第一条。"],
+  /* Said at the top of every page while it is true. Somebody arriving from a
+     link a friend sent should know what they have walked into before they
+     judge how quiet it is — an empty room reads as a dead product unless it
+     says it is not open yet. Remove the strip when it stops being true. */
+  "site.invite": [
+    "Not public yet \u2014 invite only.",
+    "尚未公开，目前只能通过邀请进入。",
+  ],
   "board.someone":     ["someone", "某人"],
   /* The board's own voice on the feed. Not "The Tutor" — he is the card at the
      top of the app that helps somebody work out what to do, and a notice from

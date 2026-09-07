@@ -47,6 +47,10 @@
   </div>
 </div>
 
+<!-- While it is true. Somebody who follows a link here should know what
+     they are looking at before they judge how quiet it is. -->
+<p class="invite" id="invite"></p>
+
 <div class="hero">
   <div class="wrap">
     <p class="kicker"><i></i><span id="kicker"></span></p>
@@ -226,7 +230,7 @@ function fill(node) { while (node.firstChild) node.removeChild(node.firstChild);
  * once, painted from the dictionary, and repainted on a language change. There
  * is no second code path to go stale, which is the failure a bolted-on
  * translation always eventually has. */
-const TEXT = ["kicker","lede","hanzi","askUnder","under",
+const TEXT = ["invite","kicker","lede","hanzi","askUnder","under",
   "liveEyebrow","liveH2","liveSub","threeEyebrow","threeH2","threeSub",
   "t1h","t1p","t1s","t2h","t2p","t2s","t3h","t3p","t3s",
   "howEyebrow","howH2","howSub","r1h","r1p","r2h","r2p","r3h","r3p","r4h","r4p",

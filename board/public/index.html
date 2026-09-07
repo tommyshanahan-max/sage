@@ -111,6 +111,11 @@
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 
   /* ---- masthead ---------------------------------------------------------- */
+  /* The strip that says this is not open yet. Quiet, full width, above
+     everything — it is a status, not an announcement, and it is the first
+     thing somebody arriving from a friend's link should read. */
+  .invite{margin:0 -1.15rem .9rem;padding:.5rem 1.15rem;background:var(--accent-soft);
+    color:var(--accent);font-size:.78rem;letter-spacing:.02em;text-align:center}
   .top{display:flex;align-items:center;gap:.9rem;margin:.5rem 0 1.6rem}
   #langslot{margin-left:auto;flex:0 0 auto;display:flex}
   /* The mark: a disc with 留 in it, at the same proportions everywhere it is
@@ -710,6 +715,9 @@
 </head>
 <body>
 <main>
+  <!-- While it is true. An empty room reads as a dead product unless it says
+       it is not open yet. -->
+  <p class="invite" id="invite"></p>
   <div class="top">
     <!-- The mark itself, square. This used to point at /share.png, which was a
          400px square and is now a 1200x630 link card — a wide image in a round
@@ -1836,6 +1844,7 @@ $("tform").addEventListener("submit", async (e) => {
  * the only version that cannot go stale. The scroll position is kept, because
  * losing your place in a feed is what makes people not press it twice. */
 function paintNav() {
+  $("invite").textContent = T("site.invite");
   $("navbrowselabel").textContent = T("nav.browse");
   $("navfeedlabel").textContent = T("nav.feed");
   $("navnewlabel").textContent = T("nav.new");
