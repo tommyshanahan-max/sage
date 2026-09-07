@@ -710,6 +710,7 @@ export const STRINGS = {
   ],
   // The row under the deck, and the card at the end of it. Both only exist
   // while there is no face on this phone, and both go the moment there is.
+  "brw.you":           ["You", "你"],
   "brw.mine":          ["Add your photo", "加上你的照片"],
   "brw.mineWhy":       ["Nobody here can see who you are yet.", "这里还没人知道你是谁。"],
   // Your own card is not in the deck — browsing your own photograph is not a

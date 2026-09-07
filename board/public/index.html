@@ -617,6 +617,7 @@
   .pc .type{flex:0 0 auto;font-weight:500;font-size:.78rem;letter-spacing:.1em;
     background:rgba(255,255,255,.2);color:#fff;border-radius:99px;
     padding:.25rem .55rem .25rem .65rem}
+  .pc .type.you{background:var(--accent);letter-spacing:.06em}
   .pc .where{margin:.3rem 0 0;font-size:.92rem;color:rgba(255,255,255,.82)}
   .pc .goal{margin:.6rem 0 0;font-family:var(--serif);font-size:1.02rem;line-height:1.5;
     color:rgba(255,255,255,.92);display:-webkit-box;-webkit-line-clamp:3;
@@ -1884,8 +1885,18 @@ async function loadPeople() {
   try {
     const d = await fetch("/api/people", { cache: "no-store",
       headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
-    // Yourself excluded. Browsing your own photograph is not a feature.
-    PEOPLE = ((d && d.people) || []).filter((q) => !q.mine);
+    /* Yourself included, for now.
+     *
+     * The argument for leaving yourself out is that browsing your own
+     * photograph is not a feature. The argument against it, which won, is that
+     * somebody who has just uploaded a face and cannot find it in the one
+     * place the app shows faces concludes the upload failed — and being told
+     * "your card is deliberately not in your own deck" answers the question
+     * without ever making the screen make sense.
+     *
+     * Your own card says it is yours and offers the edit rather than a follow
+     * button that would refuse itself. */
+    PEOPLE = (d && d.people) || [];
   } catch { PEOPLE = []; }
   drawDeck();
 }
@@ -2096,11 +2107,12 @@ function personCard(q, live) {
   }
 
   const scrim = el("div", "scrim");
-  /* The name, and the four letters beside it if they put them up. On the same
-     line because that is what they are — a thing about this person, the size
-     of a badge, not a section of their profile. */
+  /* The name, the four letters beside it if they put them up, and — on your
+     own card — that it is yours. On the same line because they are all things
+     about this person, the size of a badge, not sections of their profile. */
   const line = el("div", "nameline");
   line.append(el("h2", null, q.handle || T("board.someone")));
+  if (q.mine) line.append(el("b", "type you", T("brw.you")));
   if (q.type) line.append(el("b", "type", q.type));
   scrim.append(line);
   const where = [q.campus, q.here].filter(Boolean).join(" · ");
@@ -2208,6 +2220,22 @@ function drawDeck() {
     return;
   }
   const q = PEOPLE[AT];
+
+  /* Your own card, which is in the deck now. A follow button on it would be a
+   * button the server refuses — following yourself is not a thing anybody
+   * means to do — so it offers the thing you would actually want from your own
+   * card instead. */
+  if (q.mine) {
+    const ed = el("button", "primary", T("me.edit"));
+    ed.type = "button";
+    ed.addEventListener("click", () => openMe());
+    const on2 = el("button", null, T("brw.next"));
+    on2.type = "button";
+    on2.addEventListener("click", nextPerson);
+    acts.append(ed, on2);
+    return;
+  }
+
   /* Follow, not "say hello".
    *
    * Saying hello is a thing you do to a person and it wants a reply; following
