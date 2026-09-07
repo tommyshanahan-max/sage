@@ -69,7 +69,7 @@
   html{-webkit-text-size-adjust:100%}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
     font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
-  main{max-width:34rem;margin:0 auto;padding:1.4rem 1.15rem 5rem}
+  main{max-width:34rem;margin:0 auto;padding:1.4rem 1.15rem 7rem}
   button{font:inherit;cursor:pointer}
   a{color:inherit}
   img{max-width:100%}
@@ -79,10 +79,9 @@
   .top{display:flex;align-items:center;gap:.8rem;margin:0 0 1.3rem}
   .top h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.75rem;line-height:1.1}
   .top p{margin:.15rem 0 0;font-size:.85rem;color:var(--muted)}
-  .back{border:0;background:none;color:var(--ink);padding:.2rem;margin-left:-.3rem;
-    display:grid;place-items:center;flex:0 0 auto}
-  .back svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.8;
-    stroke-linecap:round;stroke-linejoin:round}
+  .mark{width:2.7rem;height:2.7rem;border-radius:50%;flex:0 0 auto;background:var(--accent);
+    color:var(--accent-ink);display:grid;place-items:center;font-family:var(--sans);
+    font-weight:500;font-size:1.4rem;line-height:1;-webkit-font-smoothing:antialiased}
   .lang{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);background:var(--raise);
     color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1}
 
@@ -167,15 +166,83 @@
   .acts .primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   .counter{margin:.9rem 0 0;text-align:center;font-size:.82rem;color:var(--muted);
     font-variant-numeric:tabular-nums}
+
+  /* The same bar the feed carries, because this is now where the app opens
+     and a home screen with no way off it is a trap. */
+  .bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:35;
+    width:100%;max-width:34rem;display:flex;
+    align-items:center;justify-content:space-around;
+    padding:.35rem .5rem calc(.35rem + env(safe-area-inset-bottom));
+    background:var(--paper);border-top:1px solid var(--line)}
+  @media (min-width:36rem) and (max-width:57.99rem){
+    .bar{border-left:1px solid var(--line);border-right:1px solid var(--line);
+      border-radius:1rem 1rem 0 0}
+  }
+
+  .bar a,.bar button{flex:1;min-width:0;border:0;background:none;color:var(--muted);
+    display:flex;flex-direction:column;align-items:center;gap:.15rem;
+    padding:.45rem .2rem;font-size:.64rem;text-decoration:none;letter-spacing:.02em}
+  /* Five destinations now, so a label that will not fit is truncated rather
+     than allowed to widen its tab and squeeze the others. */
+  .bar a span,.bar button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .bar a[aria-current="page"]{color:var(--accent)}
+  .bar svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.7;
+    stroke-linecap:round;stroke-linejoin:round}
+  .bar .new{flex:0 0 auto}
+  .bar .new i{width:3.4rem;height:3.4rem;border-radius:50%;background:var(--accent);
+    color:var(--accent-ink);display:grid;place-items:center;font-style:normal;
+    box-shadow:var(--shadow);margin-top:-1.1rem}
+  .bar .new i svg{width:1.6rem;height:1.6rem;stroke-width:2.2}
+  .bar .new span{margin-top:.1rem}
+
+  /* ---- the same nav, at the top, on a desktop -----------------------------
+   *
+   * One element, not two. A second copy in the markup would mean two sets of
+   * handlers and two things to keep in step, and the first symptom of that is
+   * a button that works on one size and not the other.
+   *
+   * A bar pinned to the bottom of a large screen is a phone idiom: it puts the
+   * navigation as far from the pointer as the window allows, and it is where
+   * nobody on a desktop looks for it. Above 58rem it becomes a row in the
+   * masthead instead — same buttons, same order, same code. */
+  @media (min-width:58rem){
+    /* Its own row, under the masthead.
+       Not beside the title: this column is 34rem wide, so a header holding the
+       mark, the name, three nav items and the language button has about eighty
+       pixels for the name — the title and the nav simply landed on top of each
+       other. A row of its own has room, and a nav under a masthead is what a
+       web app looks like anyway. */
+    .top{flex-wrap:wrap;margin-bottom:1.2rem}
+    .bar{position:static;transform:none;width:auto;max-width:none;
+      flex:0 0 100%;order:2;
+      margin:.15rem 0 0;padding:.5rem 0 0;background:none;border:0;
+      border-top:1px solid var(--hair);border-radius:0;
+      gap:.25rem;justify-content:flex-start}
+    /* Icon beside the label rather than above it: a row of tall stacks in a
+       header makes the header tall. */
+    .bar a,.bar button{flex:0 0 auto;flex-direction:row;gap:.4rem;
+      padding:.45rem .85rem;border-radius:99px;font-size:.88rem;
+      letter-spacing:0;color:var(--ink-2)}
+    .bar a:hover,.bar button:hover{background:var(--raise);color:var(--ink)}
+    .bar a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+    .bar svg{width:1.15rem;height:1.15rem}
+    /* The + stops being the big round thing lifted out of the bar and becomes
+       an ordinary primary button, because on a desktop it is not competing
+       with a thumb. */
+    .bar .new i{width:auto;height:auto;border-radius:0;background:none;
+      color:inherit;box-shadow:none;margin:0;display:inline-grid}
+    .bar .new i svg{width:1.15rem;height:1.15rem;stroke-width:2}
+    .bar .new{background:var(--accent);color:var(--accent-ink);
+      border-radius:99px;padding:.45rem 1rem}
+  }
 </style>
 
 </head>
 <body>
 <main>
   <div class="top">
-    <button class="back" id="back" aria-label="Back">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
-    </button>
+    <div class="mark" aria-hidden="true">留</div>
     <div>
       <h1 id="title"></h1>
       <p id="sub"></p>
@@ -189,6 +256,31 @@
   <div class="none" id="none" hidden></div>
   <p class="safety" id="safety"></p>
 </main>
+
+    <nav class="bar" id="bar">
+      <a href="/browse" id="navbrowse" aria-current="page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z M9 15c1.5-2 4.5-2 6 0"/><circle cx="12" cy="10" r="2.2"/></svg>
+        <span id="navbrowselabel">Browse</span>
+      </a>
+      <a href="/feed" id="navfeed">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        <span id="navfeedlabel">Feed</span>
+      </a>
+      <a class="new" id="fab" href="/feed">
+        <i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></i>
+        <span id="navnewlabel">Put something up</span>
+      </a>
+      <a href="/notes" id="navnotes">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
+        <span id="navnoteslabel">Messages</span>
+        <i class="badge" id="navnotesn" hidden></i>
+      </a>
+      <a href="#" id="navme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
+        <span id="navmelabel">Profile</span>
+      </a>
+    </nav>
+
 
 <script type="module">
 import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
@@ -254,7 +346,11 @@ function card(q, ghost) {
 function paint() {
   $("title").textContent = T("brw.title");
   $("safety").textContent = T("bud.safety");
-  $("back").setAttribute("aria-label", T("bud.back"));
+  $("navbrowselabel").textContent = T("nav.browse");
+  $("navfeedlabel").textContent = T("nav.feed");
+  $("navnoteslabel").textContent = T("note.inbox");
+  $("navmelabel").textContent = T("nav.profile");
+  $("navnewlabel").textContent = T("nav.new");
 
   const deck = $("deck");
   fill(deck);
@@ -329,9 +425,6 @@ function drag(box) {
   box.addEventListener("pointercancel", end);
 }
 
-$("back").addEventListener("click", () => {
-  if (history.length > 1) history.back(); else location.href = "/feed";
-});
 document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight" || e.key === "ArrowLeft") next();
 });

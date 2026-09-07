@@ -2,7 +2,7 @@
   "name": "Liuxuesheng 留学生",
   "short_name": "留学生",
   "description": "A meeting place for exchange students in China. Nothing to install. No account. No VPN.",
-  "start_url": "/feed",
+  "start_url": "/browse",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -16,6 +16,7 @@
     { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
+    { "name": "Browse students", "url": "/browse" },
     { "name": "The Tutor", "url": "/feed" },
     { "name": "Study buddies", "url": "/buddies" }
   ]
