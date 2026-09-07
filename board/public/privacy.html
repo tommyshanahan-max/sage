@@ -54,6 +54,9 @@
   <!-- Cards get their own section, next to what a profile may carry, because
        they are the exception to it. -->
   <h2 id="hcard"></h2><p id="pcard1"></p><p id="pcard2"></p><p id="pcard3"></p>
+  <!-- Counting readers is a change to what this server holds, so it is
+       documented rather than mentioned. -->
+  <h2 id="hcount"></h2><p id="pcount1"></p><p id="pcount2"></p>
   <h2 id="h3"></h2><p id="p3"></p><p id="p3b"></p>
   <h2 id="h4"></h2><p id="p4"></p>
   <h2 id="h5"></h2><p id="p5"></p>
@@ -77,7 +80,7 @@ const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
 const UPDATED = "2026-09-07";
 
 const KEYS = ["title","lede","h1","p1","p1b","h2","p2","p2b",
-  "hcard","pcard1","pcard2","pcard3",
+  "hcard","pcard1","pcard2","pcard3","hcount","pcount1","pcount2",
   "h3","p3","p3b","h4","p4","h5","p5","h6","p6","h7","p7","h8","p8","back"];
 
 let CONTACT = "";

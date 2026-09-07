@@ -413,35 +413,35 @@
      card of prose. They are the offer. They get headline size, the sentence
      under them gets out of the way, and the control that opens one is a filled
      button rather than an outline. */
-  .tutor .opt{margin:.9rem 0 0;padding:1.05rem 1.05rem 1.1rem;
+  .opt{margin:0;padding:1.05rem 1.05rem 1.1rem;
     border:1px solid var(--line);border-radius:.9rem;background:var(--paper)}
-  .tutor .opthead{display:flex;align-items:center;gap:.7rem}
-  .tutor .mark{flex:0 0 auto;width:2.75rem;height:2.75rem;display:grid;
+  .opthead{display:flex;align-items:center;gap:.7rem}
+  .mark{flex:0 0 auto;width:2.75rem;height:2.75rem;display:grid;
     place-items:center;border-radius:.7rem;background:var(--paper);
     box-shadow:0 0 0 1px var(--line)}
-  .tutor .opt.built .mark{background:var(--raise)}
-  .tutor .mark svg{width:1.7rem;height:1.7rem;stroke:var(--accent);fill:none;
+  .opt.built .mark{background:var(--raise)}
+  .mark svg{width:1.7rem;height:1.7rem;stroke:var(--accent);fill:none;
     stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-  .tutor .opt h4{margin:0;flex:1 1 auto;min-width:0;
+  .opt h4{margin:0;flex:1 1 auto;min-width:0;
     font-family:var(--serif);font-weight:400;
     font-size:1.5rem;line-height:1.15;letter-spacing:-.01em;text-wrap:balance}
-  .tutor .opt p{margin:.45rem 0 0;font-size:.92rem;line-height:1.5;color:var(--ink-2)}
-  .tutor .opt button{margin:.9rem 0 0;border:1px solid var(--accent);
+  .opt p{margin:.45rem 0 0;font-size:.92rem;line-height:1.5;color:var(--ink-2)}
+  .opt button{margin:.9rem 0 0;border:1px solid var(--accent);
     background:var(--accent);color:var(--accent-ink);border-radius:99px;
     padding:.68rem 1.5rem;font-size:1rem}
-  .tutor .opt button[disabled]{background:var(--raise);border-color:var(--line);
+  .opt button[disabled]{background:var(--raise);border-color:var(--line);
     color:var(--muted)}
-  .tutor .grp{margin:1.4rem 0 .2rem;font-size:.7rem;letter-spacing:.14em;
+  .grp{margin:1.4rem 0 .2rem;font-size:.7rem;letter-spacing:.14em;
     text-transform:uppercase;color:var(--muted);font-weight:600}
   :root[data-lang="zh"] .tutor .grp{text-transform:none;letter-spacing:.06em}
   /* A thing that WORKS is the loud one. This was the outline and the vote for
      an unbuilt thing was the filled button, which had the board shouting about
      what it has not made and murmuring about what it has. */
-  .tutor .opt.built{background:var(--accent-soft);border-color:var(--accent)}
-  .tutor .opt.built h4{color:var(--ink)}
-  .tutor .opt button.want{background:var(--paper);border-color:var(--line);
+  .opt.built{background:var(--accent-soft);border-color:var(--accent)}
+  .opt.built h4{color:var(--ink)}
+  .opt button.want{background:var(--paper);border-color:var(--line);
     color:var(--ink-2);padding:.55rem 1.2rem;font-size:.92rem}
-  .tutor .honest{margin:.85rem 0 0;font-size:.8rem;line-height:1.5;color:var(--muted)}
+  .honest{margin:.85rem 0 0;font-size:.8rem;line-height:1.5;color:var(--muted)}
 
   /* ---- who followed you ---------------------------------------------------
    * A row each, with the one control that matters on it. Not a card: these are
@@ -600,6 +600,76 @@
   .donly{margin:.9rem 0 0;font-size:.76rem;color:var(--muted)}
   .dband{display:flex;align-items:center;gap:.5rem;margin:.9rem 0 0;padding:.6rem .8rem;
     background:var(--accent-soft);border-radius:.8rem;color:var(--accent);font-size:.9rem}
+
+  /* ---- the report card as a strip you push sideways -------------------------
+   *
+   * It was a fold with four unrelated things stacked inside it. The news, the
+   * level, the card of the day and the Professor's two tests have nothing to
+   * say to each other, and stacked they made a column somebody had to scroll
+   * past to reach the feed — which is why it was collapsed by default, which
+   * is why most people never saw what was inside it.
+   *
+   * Side by side, each one is a card at its own size and the first one is
+   * always the news. Snap points, so it comes to rest on a card and never
+   * between two.
+   *
+   * WHAT THIS COSTS, and it is not nothing: a card to the right of the first
+   * one is seen by fewer people than a thing below a heading. The dots under
+   * the strip are there to say the others exist — without them a horizontal
+   * list looks like one card that happens to be cut off. */
+  /* The strip is only ever as tall as the card in front of you. Left to
+     stretch, four cards of different lengths all become as tall as the longest
+     one, and the short ones — which are the ones worth reading — arrive with
+     half a screen of nothing under them. The height is set in fitStrip and
+     eased, so moving between cards is a change of shape rather than a jump. */
+  #profbody{display:flex;gap:.7rem;overflow-x:auto;scroll-snap-type:x mandatory;
+    align-items:flex-start;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    padding:.2rem .1rem .3rem;margin:0 -.1rem;
+    transition:height .18s ease}
+  @media (prefers-reduced-motion:reduce){ #profbody{transition:none} }
+  #profbody::-webkit-scrollbar{display:none}
+  #profbody > div{flex:0 0 84%;scroll-snap-align:center;min-width:0;
+    background:var(--card);border:1px solid var(--line);border-radius:1rem;
+    padding:.95rem 1rem}
+  /* The last card gets the same air on its right as the first has on its left,
+     so the strip does not look like it ran out of room. */
+  #profbody > div:last-child{margin-right:.1rem}
+  .optlab{font-size:.66rem;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--muted);font-weight:700;margin:0 0 .5rem}
+  .profdots{display:flex;gap:.35rem;justify-content:center;margin:.5rem 0 0}
+  .profdots i{width:.35rem;height:.35rem;border-radius:50%;background:var(--line)}
+  .profdots i.on{background:var(--accent)}
+
+  /* ---- the report card, as a panel about what happened --------------------- */
+  .wonder{padding:.2rem 0 .9rem;border-bottom:1px solid var(--hair);margin-bottom:.2rem}
+  .wbig{margin:0;font-family:var(--serif);font-size:1.4rem;line-height:1.3;color:var(--ink)}
+  .wfaces{display:flex;align-items:center;margin:.7rem 0 0}
+  .wfaces i{width:1.9rem;height:1.9rem;border-radius:50%;background:var(--raise);
+    border:2px solid var(--paper);margin-right:-.5rem;display:grid;place-items:center;
+    color:var(--muted);font-style:normal;font-size:.9rem}
+  .wfaces span{margin-left:1rem;font-size:.78rem;color:var(--muted)}
+
+  .big{display:flex;align-items:flex-end;gap:.8rem;padding:.85rem 0 .3rem}
+  .bignum{font-family:var(--serif);font-size:2.2rem;line-height:.95}
+  .biglab{flex:1;font-size:.85rem;color:var(--ink-2);line-height:1.35;padding-bottom:.15rem}
+  .biglab small{display:block;color:var(--muted);font-size:.75rem;margin-top:.1rem}
+  svg.spark{display:block;width:72px;height:25px;overflow:visible;flex:0 0 auto;
+    margin-bottom:.25rem}
+  svg.spark .ar{fill:var(--accent-soft)}
+  svg.spark .ln{fill:none;stroke:var(--accent);stroke-width:1.6;
+    stroke-linejoin:round;stroke-linecap:round}
+  svg.spark .dot{fill:var(--accent)}
+
+  .newsrows{margin:.4rem 0 0;border-top:1px solid var(--hair)}
+  .newsrow{display:flex;gap:.6rem;align-items:flex-start;padding:.62rem 0;
+    border-bottom:1px solid var(--hair);font-size:.9rem;line-height:1.45}
+  .newsrow:last-child{border-bottom:0}
+  .newsrow .nd{width:.42rem;height:.42rem;border-radius:50%;background:var(--accent);
+    margin-top:.45rem;flex:0 0 auto}
+  .newsrow .nd.q{background:var(--muted)}
+  .newsquiet{margin:.6rem 0 0;padding:.85rem .9rem;background:var(--card);
+    border:1px dashed var(--line);border-radius:.8rem;font-size:.88rem;
+    color:var(--ink-2);line-height:1.55}
 
   .picgo{display:block}
   /* A result card is drawn on the same paper as the feed, so without an edge
@@ -1140,15 +1210,25 @@
       <i class="chev" aria-hidden="true"></i>
     </button>
     <div id="profbody">
-      <!-- Your level, large, before anything else in the fold. -->
+      <!-- WHAT HAS HAPPENED SINCE THEY WERE LAST HERE, first. The level used
+           to be here and is still drawn below it — but a number that is the
+           same every day cannot be the reason somebody opens this. -->
+      <div id="profnews"></div>
+      <!-- Your level, large. Shown at full size only when there is no news to
+           put above it, which is mostly somebody's first week. -->
       <div id="profnow"></div>
       <!-- One card a day, at the reader's own level, drawn here rather than
            posted: a shared board with fifty people on it would carry fifty
            cards a morning and the thing worth reading would be underneath
            them. See daily.js. -->
       <div id="daily"></div>
-      <div class="tutor" id="tutor" hidden></div>
+      <!-- The Professor's offers are appended here as cards of their own, one
+           per thing you can do — see drawTutor. They were one tall block, which
+           in a strip is one card you have to scroll inside. -->
     </div>
+    <!-- Says the other cards exist. A horizontal list with no marker under it
+         reads as one card that has been cut off. -->
+    <div class="profdots" id="profdots" hidden></div>
   </section>
 
   <div class="topics" id="topics"></div>
@@ -2454,11 +2534,22 @@ function paintNav() {
  */
 let WANTED = [];
 
+/* ---- the Professor's offers, one card each ----------------------------------
+ *
+ * These used to be a single tall block: a heading, three things you can do, and
+ * a vote on a fourth. Stacked in a fold that was already long, the last of them
+ * was eight hundred pixels below the top of the section.
+ *
+ * In the strip each one is its own card, which is what somebody pushing
+ * sideways is looking for. The group headings are gone with the column they
+ * belonged to — a card that says NOT BUILT YET above itself carries that on its
+ * own face instead.
+ */
 async function drawTutor() {
-  const box = $("tutor");
-  if (!device) { box.hidden = true; return; }
-
-  fill(box);
+  const strip = $("profbody");
+  // Every draw replaces its own cards and nothing else's.
+  for (const n of [...strip.querySelectorAll(".tcard")]) n.remove();
+  if (!device) return;
   /* The "留 The Tutor" row and the "I am the Tutor" greeting that used to head
      this block are both gone. It now sits inside a section whose own heading
      says From the Professor, and a block that introduces itself twice under a
@@ -2495,7 +2586,7 @@ async function drawTutor() {
   };
 
   const doable = (key, what, act, icon) => {
-    const wrap = el("div", "opt built");
+    const wrap = el("div", "opt built tcard");
     const head = el("div", "opthead");
     // Node.append returns undefined, so this cannot be written as one chained
     // line — doing that threw before the card was built and took the whole
@@ -2518,7 +2609,8 @@ async function drawTutor() {
    * Visibly a different kind of row from the ones above it — same card, two
    * headings, so nobody has to work out which buttons lead somewhere. */
   const vote = (key, what, name) => {
-    const wrap = el("div", "opt");
+    const wrap = el("div", "opt tcard");
+    wrap.append(el("div", "optlab", T("tut.next")));
     wrap.append(el("h4", null, T(key)), el("p", null, T(what)));
     const b = el("button", "want", WANTED.includes(name) ? T("tut.onList") : T("tut.pick"));
     b.type = "button";
@@ -2539,11 +2631,10 @@ async function drawTutor() {
     return wrap;
   };
 
-  box.append(el("div", "grp", T("tut.now")));
   // Only offered while there is nothing there. Telling somebody with a filled
   // profile to fill their profile is the fastest way to stop being read.
   if (!(ME && ME.handle)) {
-    box.append(doable("tut.setup", "tut.setupWhat", () => openMe()));
+    strip.append(doable("tut.setup", "tut.setupWhat", () => openMe()));
   }
   // Find a study buddy is held back for V1: the deck at the top of this page is
   // the same people, and offering both is offering a choice between a thing and
@@ -2562,13 +2653,12 @@ async function drawTutor() {
    * produces them is the one to offer first. A page that leads with a number
    * and then offers a different test underneath is asking somebody to hunt for
    * the thing it just showed them. */
-  box.append(doable("tut.level", "tut.levelGo", () => { location.href = "/level"; }, "level"));
-  box.append(doable("tut.type", "tut.typeGo", () => { location.href = "/type"; }, "type"));
+  strip.append(doable("tut.level", "tut.levelGo", () => { location.href = "/level"; }, "level"));
+  strip.append(doable("tut.type", "tut.typeGo", () => { location.href = "/type"; }, "type"));
 
-  box.append(el("div", "grp", T("tut.next")));
-  box.append(vote("tut.compare", "tut.compareWhat", "compare"));
-  box.append(el("p", "honest", T("tut.honest")));
-  box.hidden = false;
+  const v = vote("tut.compare", "tut.compareWhat", "compare");
+  v.append(el("p", "honest", T("tut.honest")));
+  strip.append(v);
 }
 
 /* THE MEMBER'S OWN INVITE.
@@ -2768,19 +2858,240 @@ const readLocal = (k) => {
 };
 let PROFOPEN = null;   // null until decided once, then whatever it is
 
+/* ---- the report card as a panel about what happened -------------------------
+ *
+ * WHY IT CHANGED. A card that said "you are level 4" said the same thing every
+ * day, and a thing that says the same thing every day is a thing nobody opens
+ * twice. This says what has happened since somebody was last here, which is
+ * the only kind of line that is worth coming back for.
+ *
+ * TWO RULES, AND THEY MATTER MORE THAN THE LAYOUT:
+ *
+ *  1. A ROW THAT WOULD READ ZERO IS NOT DRAWN. On a board this size most of
+ *     them are zero most days, and a panel listing "0 followers, 0 replies,
+ *     0 likes" is a panel telling somebody in numbers that nothing is
+ *     happening here. It gets SHORTER on a quiet day, and the space says
+ *     something useful instead.
+ *
+ *  2. NO LINE IS EVER MORE SPECIFIC THAN THE CROWD IT HIDES IN. "Somebody
+ *     keeps coming back to your page" with two regulars on a board of eleven
+ *     is a name with a thin coat of paint — the reader can open Browse and
+ *     work it out. Under REGULARS_FLOOR the line is not drawn at all and the
+ *     plain count stands in, which describes nobody.
+ *
+ * The level and the card of the day are still here. They are one line at the
+ * bottom instead of the headline, which is their right size.
+ */
+const LASTOPEN = "board:lastopen";
+const REGULARS_FLOOR = 3;
+
+/* Six hours. Advancing the mark on every load would empty the panel on a
+ * refresh thirty seconds later, which reads as a bug; advancing it never would
+ * make "since" meaningless by Thursday. Six hours keeps one day's news in
+ * place for the day and turns it over by morning. */
+const HOLD_HOURS = 6;
+
+let SINCE = "";       // the mark this draw is reporting against
+function sinceMark() {
+  if (SINCE) return SINCE;
+  let was = "";
+  try { was = localStorage.getItem(LASTOPEN) || ""; } catch { /* fine */ }
+  const now = new Date();
+  const old = was && (now - new Date(was)) > HOLD_HOURS * 3600 * 1000;
+  if (!was || old) {
+    try { localStorage.setItem(LASTOPEN, now.toISOString()); } catch { /* fine */ }
+  }
+  SINCE = was;
+  return SINCE;
+}
+
+/** "Since Tuesday" while that still means something, then a date. */
+function sinceWords(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  const days = Math.floor((Date.now() - d) / 86400000);
+  if (days <= 0) return T("prof.sinceToday");
+  if (days === 1) return T("prof.sinceYesterday");
+  if (days < 7) {
+    return T("prof.since", {
+      day: new Intl.DateTimeFormat(lang() === "zh" ? "zh-CN" : "en-GB",
+        { weekday: "long" }).format(d),
+    });
+  }
+  return T("prof.sinceLong");
+}
+
+/* The admin panel's sparkline, unchanged in shape and in what it refuses to
+ * draw: nothing under three days, and nothing on an all-zero series. A flat
+ * line along the floor is indistinguishable from a rendering fault. */
+function sparkline(series) {
+  if (!series || series.length < 3) return null;
+  const hi = Math.max(...series);
+  if (!hi) return null;
+  const NS = "http://www.w3.org/2000/svg";
+  const w = 62, h = 22, pad = 2, n = series.length;
+  const x = (i) => pad + (i / (n - 1)) * (w - pad * 2);
+  const y = (v) => h - pad - (v / hi) * (h - pad * 2);
+  const pts = series.map((v, i) => x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" L");
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("class", "spark");
+  svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+  svg.setAttribute("preserveAspectRatio", "none");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", T("prof.sparkAlt", { n, a: series[0], b: series[n - 1] }));
+  const mk = (t, a) => { const e = document.createElementNS(NS, t);
+    for (const k in a) e.setAttribute(k, a[k]); return e; };
+  svg.append(mk("path", { class: "ar", d: "M" + pad + "," + (h - pad) + " L" + pts + " L" + (w - pad) + "," + (h - pad) + " Z" }));
+  svg.append(mk("path", { class: "ln", d: "M" + pts }));
+  svg.append(mk("circle", { class: "dot", cx: x(n - 1), cy: y(series[n - 1]), r: 1.9 }));
+  return svg;
+}
+
+/** The last `n` days of a date-keyed count, zeros included. */
+function lastDays(views, n) {
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const k = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0")
+      + "-" + String(d.getDate()).padStart(2, "0");
+    out.push(Number((views || {})[k] || 0));
+  }
+  return out;
+}
+
+/** Monday-based week key, matching the server's bucket. */
+function weekNow(back) {
+  const d = new Date();
+  if (back) d.setDate(d.getDate() - back * 7);
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const jan1 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const n = Math.ceil(((t - jan1) / 86400000 + 1) / 7);
+  return t.getUTCFullYear() + "-W" + String(n).padStart(2, "0");
+}
+
+/** Everything the panel could say, worked out once. Nothing here is a string —
+ *  the drawing decides what is worth saying and in which language. */
+function newsSince() {
+  const mark = sinceMark();
+  const mine = ME && ME.handle ? ME.handle.toLowerCase() : "";
+  const after = (p) => mark && (p.at || "") > mark;
+  const live = posts.filter((p) => p.state !== "removed");
+
+  const myIds = new Set(live.filter((p) => (p.handle || "").toLowerCase() === mine
+    && mine && store_isOwn(p)).map((p) => p.id));
+  const replies = live.filter((p) => p.re && myIds.has(p.re) && after(p)
+    && (p.handle || "").toLowerCase() !== mine);
+
+  const views = lastDays(ME && ME.views, 7);
+  const seen = views.reduce((a, b) => a + b, 0);
+  const before = lastDays(ME && ME.views, 14).slice(0, 7).reduce((a, b) => a + b, 0);
+
+  return {
+    mark,
+    posts: live.filter((p) => store_isOwn(p) && after(p)
+      && (p.handle || "").toLowerCase() !== mine).length,
+    joined: PEOPLE.filter((q) => !q.mine && after(q)).map((q) => q.handle).filter(Boolean),
+    followers: FOLLOWERS.filter((f) => after(f)).length,
+    replies,
+    matches: MATCHES,
+    views, seen, before,
+    regulars: Number(((ME && ME.regs) || {})[weekNow(0)] || 0),
+    people: PEOPLE.length,
+  };
+}
+
+/** A post somebody made, rather than a reply, a like or a report. */
+const store_isOwn = (p) => !p.re && !p.like && !p.report;
+
+function drawNews() {
+  const box = $("profnews");
+  fill(box);
+  if (!ME || !ME.handle) return false;
+  const n = newsSince();
+
+  /* THE WONDERING, and the floor under it. Drawn only when there are enough
+     regulars for the sentence to describe a crowd rather than a person. */
+  if (n.regulars >= REGULARS_FLOOR) {
+    const w = el("div", "wonder");
+    w.append(el("p", "wbig", T("prof.regulars", { n: n.regulars })));
+    const faces = el("div", "wfaces");
+    for (let i = 0; i < Math.min(4, n.regulars); i++) faces.append(el("i", null, "?"));
+    faces.append(el("span", null, T("prof.noName")));
+    w.append(faces);
+    box.append(w);
+  }
+
+  // The headline number, with the squiggle. Only once there is a week of it:
+  // "1 person opened your page" as a headline is not a headline.
+  if (n.seen >= 3) {
+    const big = el("div", "big");
+    big.append(el("span", "bignum", String(n.seen)));
+    const sp = sparkline(n.views);
+    if (sp) big.append(sp);
+    const lab = el("span", "biglab", T("prof.opened"));
+    lab.append(el("small", null, n.before
+      ? T("prof.vsLast", { n: n.before }) : T("prof.sevenDays")));
+    big.append(lab);
+    box.append(big);
+  }
+
+  /* The rows, most personal first. Anything that would read zero is simply
+     absent — see the note at the top of this block. */
+  const rows = el("div", "newsrows");
+  const row = (text, quiet) => {
+    const r = el("div", "newsrow");
+    r.append(el("i", "nd" + (quiet ? " q" : "")));
+    r.append(el("span", null, text));
+    rows.append(r);
+  };
+  for (const p of n.replies.slice(0, 3)) {
+    row(T("prof.replied", { who: p.handle || T("board.someone") }));
+  }
+  for (const m of n.matches.slice(0, 2)) row(matchLine(m));
+  if (n.followers) row(T("prof.followed", { n: n.followers }));
+  if (n.joined.length) {
+    row(n.joined.length === 1 ? T("prof.joined1", { who: n.joined[0] })
+      : T("prof.joined", { n: n.joined.length }), true);
+  }
+  if (n.posts) row(T("prof.posts", { n: n.posts }), true);
+  if (rows.firstChild) box.append(rows);
+
+  /* A QUIET DAY IS NOT AN EMPTY PANEL. Nothing to report is a true thing worth
+     saying, and it is the one moment where asking somebody to post is fair —
+     they can see for themselves that nobody else has. */
+  if (!rows.firstChild && n.mark) {
+    box.append(el("p", "newsquiet", n.people > 1
+      ? T("prof.quiet", { n: n.people }) : T("prof.quietAlone")));
+  }
+  return Boolean(box.firstChild);
+}
+
 function drawProf() {
   const box = $("prof");
   const body = $("profbody");
   const head = $("profhead");
   // Nothing to fold if the Tutor has nothing to say and there is no card.
   const hasCard = Boolean($("daily").firstChild);
-  const hasTutor = !$("tutor").hidden;
+  const hasTutor = Boolean($("profbody").querySelector(".tcard"));
   if (!hasCard && !hasTutor) { box.hidden = true; return; }
   box.hidden = false;
 
   const lvl = readLocal("board:level");
   const typ = readLocal("board:type");
   const done = dailyDone();
+
+  /* THE NEWS, AND WHAT IT DEMOTES. Drawn first because it is the reason to
+     open this at all. When there is something in it the big medallion stands
+     down to one line — two headlines in one fold is no headline — and when
+     there is not, the level takes its old place, which is what somebody in
+     their first week sees. */
+  const hasNews = drawNews();
+  // An empty card holds a slot in the strip and swipes to nothing.
+  $("profnews").hidden = !hasNews;
 
   /* WHERE YOU ARE NOW, large, as the first thing inside the fold.
    *
@@ -2791,7 +3102,13 @@ function drawProf() {
    */
   const now = $("profnow");
   fill(now);
+  now.hidden = false;
   const P = (pair) => (Array.isArray(pair) ? pair[lang() === "zh" ? 1 : 0] : pair);
+  /* THE LEVEL KEEPS ITS FULL SIZE. It was squashed to one line when there was
+     news above it, which made sense while this was a column and the news was
+     the headline. In a strip it is nobody's subtitle — it is its own card with
+     a card's worth of room, and a medallion the size of a line of text is a
+     runt in a box of its own. */
   if (lvl && lvl.level) {
     const n = Math.max(1, Math.min(10, Number(lvl.level) || 1));
     const w = lvl.which === "en" ? "en" : "zh";
@@ -2844,6 +3161,61 @@ function drawProf() {
   }
   body.hidden = !PROFOPEN;
   head.setAttribute("aria-expanded", String(PROFOPEN));
+  $("daily").hidden = !hasCard;
+  $("profdots").hidden = !PROFOPEN;
+  drawDots();
+  watchStrip();
+  fitStrip();
+}
+
+/* ---- the strip's marker -----------------------------------------------------
+ *
+ * An empty card is hidden rather than left blank: an empty slot in a strip is
+ * a swipe that lands on nothing, which reads as the app having lost something.
+ */
+function stripCards() {
+  return [...$("profbody").children].filter((n) => !n.hidden && n.firstChild);
+}
+
+/** The strip's height, matched to whichever card is in front of the reader. */
+function fitStrip() {
+  const strip = $("profbody");
+  const cards = stripCards();
+  if (!cards.length || strip.hidden) { strip.style.height = ""; return; }
+  const mid = strip.scrollLeft + strip.clientWidth / 2;
+  let best = cards[0];
+  for (const c of cards) {
+    const centre = c.offsetLeft + c.offsetWidth / 2 - strip.offsetLeft;
+    if (Math.abs(centre - mid) < Math.abs(best.offsetLeft + best.offsetWidth / 2 - strip.offsetLeft - mid)) best = c;
+  }
+  // The padding the strip itself carries, so a card is not clipped by a pixel.
+  strip.style.height = (best.offsetHeight + 6) + "px";
+}
+
+function drawDots() {
+  const dots = $("profdots");
+  fill(dots);
+  const cards = stripCards();
+  if (cards.length < 2) { dots.hidden = true; return; }
+  const strip = $("profbody");
+  const at = Math.round(strip.scrollLeft / (strip.scrollWidth / cards.length));
+  for (let i = 0; i < cards.length; i++) dots.append(el("i", i === at ? "on" : ""));
+}
+$("profbody").addEventListener("scroll", () => {
+  // Cheap enough to run on every scroll event: it writes four empty <i>s.
+  if (!$("profdots").hidden) drawDots();
+  fitStrip();
+}, { passive: true });
+/* A card that grows — answering the day's card opens the answer underneath —
+ * has to take the strip with it. The CARDS are observed and not the strip:
+ * fitStrip sets the strip's own height, so watching the strip is a loop that
+ * feeds itself. */
+const STRIPFIT = typeof ResizeObserver === "function"
+  ? new ResizeObserver(() => fitStrip()) : null;
+function watchStrip() {
+  if (!STRIPFIT) return;
+  STRIPFIT.disconnect();
+  for (const c of $("profbody").children) STRIPFIT.observe(c);
 }
 
 $("profhead").addEventListener("click", () => {
@@ -2917,6 +3289,10 @@ async function loadPeople() {
     PEOPLE = (d && d.people) || [];
   } catch { PEOPLE = []; }
   drawDeck();
+  /* THE PANEL IS BUILT FROM FOUR FETCHES THAT LAND WHEN THEY LAND. Drawn once
+     at startup it reported whichever of them had arrived — the row about who
+     joined came and went depending on the network. Every loader redraws it. */
+  drawProf();
 }
 
 /* Whether this phone still owes the board a face.
@@ -2985,6 +3361,7 @@ async function loadFollowers() {
     try { localStorage.setItem("board:sawfollowers", newest); } catch { /* fine */ }
   }
   drawFollowers();
+  drawProf();
 }
 
 /* ---- matches, in the tray --------------------------------------------------
@@ -3007,6 +3384,7 @@ async function loadMatches() {
   } catch { MATCHES = []; }
   drawMatches();
   drawTray();
+  drawProf();
 }
 
 function matchLine(m) {

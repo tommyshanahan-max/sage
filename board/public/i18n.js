@@ -288,6 +288,19 @@ export const STRINGS = {
     "老实说代价在哪：名片和其他内容存在同一台服务器上，运行这个板的人是能看到那个文件的。在名片这个功能出现之前，这里没有任何东西是这样的。如果你不愿意做这个交换，就别填——这个板上没有别的地方会向你要联系方式。",
   ],
 
+  /* COUNTING READERS IS NEW, so it is a section and not a clause. The point
+     worth making is the shape of it: a number went up, and the thing that
+     could have been written down — who read what — was not. */
+  "pv.hcount":         ["Counting readers", "阅读数是怎么来的"],
+  "pv.pcount1": [
+    "Your page counts how many people opened it, and how many of those keep coming back. Both are numbers on your own page and nobody else can see them. What is not kept is who: there is no record anywhere on this server of which person read which page, and nothing here could answer that question if it were asked.",
+    "你的主页会统计有多少人打开过，以及其中有多少人反复回来。这两个数字只有你自己看得到。没有保存的是「谁」：这台服务器上没有任何地方记录了谁看了谁的主页，就算有人来问，这里也答不出来。",
+  ],
+  "pv.pcount2": [
+    "It works that way because the counting happens on the reader's own phone. Their browser knows which pages it has opened and on which days — the way it already knows who they have blocked — and it tells us one thing: whether this visit is their first today, and whether they have now been here three separate days. A number goes up. Nothing else is written down.",
+    "之所以能这样，是因为计数发生在读者自己的手机上。他的浏览器知道自己打开过哪些页面、哪几天打开的——就像它已经知道他屏蔽了谁一样——然后只告诉我们一件事：这次是不是他今天第一次打开，以及他是不是已经来过三天。于是一个数字加一。别的什么都没写下来。",
+  ],
+
   "pv.h3":             ["What we do not do", "我们不做的事"],
   "pv.p3": [
     "There are no third-party scripts on this site: no advertising network, no social widgets, no analytics from anybody else. Nothing here is sold, shared or handed to a partner. There is no advertising, so there is nothing to profile you for.",
@@ -691,6 +704,35 @@ export const STRINGS = {
    * come up for somebody who ticked "investing"; nobody has to be told that is
    * how it works, and being told would only make the form look like a machine.
    */
+  /* ---- the report card, as a panel about what happened --------------------
+     The rows are sentences, not labels: "2 people followed you" rather than
+     "Followers 2". A label with a number beside it is a dashboard, and a
+     dashboard about a board with eleven people on it is mostly zeros. */
+  "prof.sinceToday":   ["Since earlier today", "今天早些时候以来"],
+  "prof.sinceYesterday": ["Since yesterday", "从昨天起"],
+  "prof.since":        ["Since {day}", "从{day}起"],
+  "prof.sinceLong":    ["Since you were last here", "自你上次来之后"],
+  "prof.opened":       ["people opened your page", "个人打开了你的主页"],
+  "prof.sevenDays":    ["7 days", "最近 7 天"],
+  "prof.vsLast":       ["7 days · {n} the week before", "最近 7 天 · 上一周 {n} 个"],
+  "prof.sparkAlt":     ["Over {n} days: {a} to {b}", "{n} 天里：从 {a} 到 {b}"],
+  "prof.regulars":     ["{n} people keep coming back to your page.",
+                        "有 {n} 个人反复回到你的主页。"],
+  "prof.noName":       ["nobody is named", "不会告诉你是谁"],
+  "prof.replied":      ["{who} replied to your post", "{who}回复了你的内容"],
+  "prof.followed":     ["{n} people followed you", "{n} 个人关注了你"],
+  "prof.joined1":      ["{who} joined", "{who}来了"],
+  "prof.joined":       ["{n} people joined", "来了 {n} 个人"],
+  "prof.posts":        ["{n} new posts on the board", "板上有 {n} 条新内容"],
+  "prof.quiet": [
+    "Nobody has posted since you were last here. That is {n} people all waiting for somebody else to go first — you could be the one.",
+    "你上次来之后还没有人发东西。也就是说 {n} 个人都在等别人先开口——你可以当那个人。",
+  ],
+  "prof.quietAlone": [
+    "Nothing new yet. You are early here, which is the good problem — put something up and it is the first thing anybody sees.",
+    "还没有新东西。你来得早，这是好事——你现在发点什么，就是别人看到的第一条。",
+  ],
+
   "room.lang":         ["Language exchange", "语言交换"],
   "room.lang.sub":     ["My Chinese for your English", "我的中文换你的英文"],
   "room.study":        ["Study partner", "一起学习的伙伴"],

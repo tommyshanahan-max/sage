@@ -331,6 +331,7 @@ async function load() {
     PERSON = d.person; POSTS = d.posts || [];
     THREAD = (d.person && d.person.thread) || { can: false, why: "" };
     await loadCard();
+    if (d.person) tellSeen(d.person.id, d.person.mine);
     PAIR = (d.person && d.person.pair)
       || { mutual: false, shared: [], can: false, gave: false, given: false, card: null };
   } catch { PERSON = null; }
@@ -448,6 +449,73 @@ function drawCardForm(wrap, say, q) {
   });
   wrap.append(save);
   wrap.append(el("p", "tiny", T("card.warn", { who: q.handle })));
+}
+
+/* ---- the one bit this browser volunteers -------------------------------------
+ *
+ * The reader's own device is the only place that knows which pages it has
+ * opened and when. It keeps that list here, on the phone, exactly the way the
+ * block list is kept — and reports two things to the server, both of them a
+ * single bit with no identity attached:
+ *
+ *   first    — the first time this device has opened this page TODAY
+ *   regular  — this device has now opened this page on three separate days,
+ *              said at most once a week
+ *
+ * That is what lets the owner's page count PEOPLE rather than page loads
+ * without a reading history existing anywhere on the server. The list below
+ * never leaves this phone, is capped, and goes when browsing data is cleared.
+ *
+ * Three days is what makes somebody a regular. Two is a coincidence — a person
+ * who opened a page twice in one week is somebody who lost the tab.
+ */
+const SEENKEY = "board:seen";
+const REGKEY = "board:seenreg";
+const REGULAR_AT = 3;
+
+function tellSeen(id, mine) {
+  if (!id || mine || !device) return;
+  const today = new Date();
+  const day = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0")
+    + "-" + String(today.getDate()).padStart(2, "0");
+  let all = {};
+  try { all = JSON.parse(localStorage.getItem(SEENKEY) || "{}") || {}; } catch { all = {}; }
+  const days = Array.isArray(all[id]) ? all[id] : [];
+  const first = !days.includes(day);
+  // Their last few visits and no more. This is a diary of somebody's reading
+  // and it is kept only as long as it has to be to answer "is this a regular".
+  const next = first ? [...days, day].slice(-8) : days;
+
+  /* Once a week, and only after three separate days. Reported at most once per
+     week per page so the server's weekly bucket counts one person once — that
+     is the whole reason it can say "3 people" rather than "31 page loads". */
+  const week = weekOf(today);
+  let regs = {};
+  try { regs = JSON.parse(localStorage.getItem(REGKEY) || "{}") || {}; } catch { regs = {}; }
+  const regular = next.length >= REGULAR_AT && regs[id] !== week;
+
+  if (!first && !regular) return;
+  try {
+    all[id] = next;
+    localStorage.setItem(SEENKEY, JSON.stringify(all));
+    if (regular) { regs[id] = week; localStorage.setItem(REGKEY, JSON.stringify(regs)); }
+  } catch { /* a private window counts every visit as a first one, which is fine */ }
+
+  fetch("/api/seen", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    keepalive: true,
+    body: JSON.stringify({ device, who: id, first, regular }),
+  }).catch(() => { /* a counter is never worth a message on somebody's screen */ });
+}
+
+/** Monday-based week, matching the server's bucket. */
+function weekOf(d) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const jan1 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const n = Math.ceil(((t - jan1) / 86400000 + 1) / 7);
+  return t.getUTCFullYear() + "-W" + String(n).padStart(2, "0");
 }
 
 async function loadCard() {

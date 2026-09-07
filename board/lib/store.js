@@ -312,6 +312,21 @@ export function sharedRooms(a, b) {
  *  is the caller's half, and it is the half that means consent. */
 export const roomsMatch = (a, b) => sharedRooms(a, b).length > 0 && scopeFits(a, b);
 
+/** A date-or-week keyed count, kept to the newest `keep` keys. Anything that
+ *  is not a plain positive number under a plausible key is dropped: this
+ *  object is written from a page. */
+function dayCounts(raw, keep) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const rows = Object.entries(raw)
+    .filter(([k, v]) => /^\d{4}-(?:\d{2}-\d{2}|W\d{2})$/.test(k)
+      && Number.isFinite(Number(v)) && Number(v) > 0)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-keep);
+  const out = {};
+  for (const [k, v] of rows) out[k] = Math.min(1e6, Math.round(Number(v)));
+  return out;
+}
+
 export function cleanPerson(raw) {
   if (!raw || typeof raw !== "object") return null;
   const id = String(raw.id || "");
@@ -372,6 +387,28 @@ export function cleanPerson(raw) {
     // because the words are useful long before the picture is: a profile can be
     // live and readable while its photograph is still waiting.
     photoState: STATES.includes(raw.photoState) ? raw.photoState : "held",
+    /* HOW MANY PEOPLE OPENED THIS PAGE, AND HOW MANY CAME BACK.
+     *
+     * Two counters and NO READING HISTORY. `views` is a date to a number,
+     * `regs` an ISO week to a number, and neither of them holds an identity —
+     * so nothing here can answer "who looked at whose page", which is the
+     * question this board has spent its whole life unable to answer and the
+     * one worth far more to somebody else than it is to its owner.
+     *
+     * WHAT MAKES A DISTINCT COUNT POSSIBLE WITHOUT ONE. The reader's own
+     * browser knows which pages it has opened and when — it already keeps
+     * blocking that way. It reports at most one visit per page per day and at
+     * most one "I have become a regular here" per page per week, so a bucket
+     * counts PEOPLE rather than page loads without anybody's identity being
+     * written down. The weekly reset is what keeps the regulars figure from
+     * drifting upward for ever: somebody who stops coming back falls out of it
+     * on their own.
+     *
+     * Thirty days and eight weeks. Enough for a sparkline and a comparison
+     * with last week, and not a year of somebody's traffic sitting in a file.
+     */
+    views: dayCounts(raw.views, 30),
+    regs: dayCounts(raw.regs, 8),
     // Whether they want to be found. Off unless asked for: posting on the
     // board must not put somebody in a directory of students, and one tap
     // takes them back out. This is the difference between a board that has

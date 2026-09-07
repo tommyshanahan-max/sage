@@ -871,6 +871,13 @@ app.post("/api/translate", express.json({ limit: "16kb" }), async (req, res) => 
 
 const shownPerson = (q, mine) => ({
   ...q,
+  /* NOBODY ELSE'S BUSINESS. How many people opened somebody's page is a fact
+     about them and their readers, and a directory that published it would let
+     anybody rank the students on it. Kept for the owner, dropped for everyone
+     else, and dropped HERE so that a route added later cannot publish it by
+     forgetting to. */
+  views: mine ? q.views : undefined,
+  regs: mine ? q.regs : undefined,
   // A photograph nobody has looked at yet is shown to its owner and to no one
   // else. Words can be taken back; a face somebody has already saved cannot.
   photo: (q.photoState === "published" || mine) ? q.photo : "",
@@ -908,6 +915,84 @@ app.get("/api/people", async (req, res) => {
       shared: pairState(board, me, q).shared,
     })),
   });
+});
+
+/* ---------------------------------------------------------------------------
+ * Counting readers without recording them
+ *
+ * THE WHOLE DESIGN IN ONE SENTENCE: the reader's browser decides whether this
+ * visit is worth counting, and the server only ever adds one to a number.
+ *
+ * The browser knows which pages it has opened and on which days — it already
+ * keeps a block list the same way, on the phone and nowhere else. So it sends
+ * at most one visit per page per day, and at most one "I have become a regular
+ * here" per page per week. A bucket therefore counts PEOPLE, not page loads,
+ * and no identity was written down to get there.
+ *
+ * WHAT THIS BUYS, said plainly: nothing on this server can answer "who looked
+ * at whose page". That question is worth far more to somebody else than the
+ * answer is to the person whose page it was.
+ *
+ * WHAT IT COSTS: the bit is self-reported, so a determined person can inflate
+ * their own numbers. They can also refresh a page a hundred times, which is
+ * true of every counter ever built. The rate limit below is memory only — a
+ * Map that dies with the process and is never written to disk — so a restart
+ * forgets it, which is the right trade for something that must not become a
+ * log by accident.
+ */
+
+/** device+page+day, in memory only, so a loop cannot run the number up while
+ *  the process is alive. Never persisted: this Map IS the reading history the
+ *  file must not contain, which is why it only exists in RAM and dies there. */
+const SEEN_ONCE = new Map();
+const seenGate = (key) => {
+  if (SEEN_ONCE.has(key)) return false;
+  // Bounded, so a busy week cannot grow this without limit. Oldest out first.
+  if (SEEN_ONCE.size > 20000) {
+    for (const k of SEEN_ONCE.keys()) { SEEN_ONCE.delete(k); if (SEEN_ONCE.size < 15000) break; }
+  }
+  SEEN_ONCE.set(key, 1);
+  return true;
+};
+
+/** ISO-ish week key. Monday-based, which is what a week is here. */
+function weekKey(d = new Date()) {
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const jan1 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const n = Math.ceil(((t - jan1) / 86400000 + 1) / 7);
+  return t.getUTCFullYear() + "-W" + String(n).padStart(2, "0");
+}
+
+app.post("/api/seen", express.json({ limit: "2kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const who = String(req.body?.who || "");
+  if (!/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "no" });
+  const first = req.body?.first === true;
+  const regular = req.body?.regular === true;
+  if (!first && !regular) return res.json({ ok: true });
+
+  // dayKey wants a timestamp — called bare it formats an Invalid Date and throws.
+  const day = dayKey(Date.now());
+  const week = weekKey();
+  // Answered before the write either way: a reader is never told whether their
+  // visit counted, because that is a question only somebody probing would ask.
+  res.json({ ok: true });
+
+  await change((board) => {
+    const q = board.people.find((x) => x.id === who && x.state === "published");
+    // Your own page is not a reader. Without this the number is mostly you.
+    if (!q || (me && q.by === me)) return null;
+    if (first && seenGate(me + ":" + who + ":" + day)) {
+      q.views = { ...(q.views || {}), [day]: (q.views?.[day] || 0) + 1 };
+    }
+    if (regular && seenGate(me + ":" + who + ":r:" + week)) {
+      q.regs = { ...(q.regs || {}), [week]: (q.regs?.[week] || 0) + 1 };
+    }
+    Object.assign(q, store.cleanPerson(q));
+    return null;
+  }).catch(() => { /* a counter is never worth failing a page load over */ });
 });
 
 /* ---------------------------------------------------------------------------
