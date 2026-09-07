@@ -726,6 +726,46 @@ export const STRINGS = {
      teach somebody the opposite of what the screen is for. */
   "lvl.above":         ["What was just above you", "刚好比你高一点的"],
   "lvl.nextUp":        ["Next up", "接下来"],
+  /* PK \u2014 a challenge that travels as a link.
+     The word is PK in both languages because that is what it is called in
+     Chinese, and an English translation of it would be the longer word. */
+  "pk.title":          ["PK", "PK"],
+  "pk.from":           ["{who} came out level {n} of 10 in {lang}.",
+                        "{who} 的{lang}测出来是第 {n} 级，满分 10 级。"],
+  "pk.beat":           ["Four questions. See where you land.", "四道题，看看你在哪一级。"],
+  "pk.take":           ["Take the same test \u2192", "来做同一套题 \u2192"],
+  "pk.other":          ["Or rank my {lang} instead", "或者改成测我的{lang}"],
+  "pk.you":            ["You", "你"],
+  "pk.won":            ["You are ahead.", "你领先。"],
+  "pk.lost":           ["{who} is ahead \u2014 for now.", "{who} 领先——暂时的。"],
+  "pk.tie":            ["Level pegging.", "打平。"],
+  "pk.back":           ["Send it back \u2192", "回敬一局 \u2192"],
+  "pk.challenge":      ["PK a friend \u2192", "叫朋友来 PK \u2192"],
+  "pk.words":          ["I came out level {n} of 10 in {lang}. Beat that:",
+                        "我的{lang}测出来是第 {n} 级，满分 10 级。你来超过我："],
+  "pk.sent":           ["Sent. They get the same four questions.",
+                        "发出去了，他们做的是同一套题。"],
+  /* ONE CARD A DAY, drawn for the reader at the top of their own feed. Not a
+     post: see daily.js for why fifty people would otherwise mean fifty cards a
+     morning on a board everybody shares. */
+  "day.today":         ["today", "今天"],
+  "day.atLevel":       ["Level {n}", "第 {n} 级"],
+  "day.show":          ["Show me", "看答案"],
+  "day.knew":          ["I knew it", "我认识"],
+  "day.didnt":         ["I didn't", "不认识"],
+  "day.done":          ["That is today's. Another one tomorrow.",
+                        "今天这张就到这儿，明天还有一张。"],
+  "day.streak":        ["{n} known in a row.", "连着 {n} 张都认识。"],
+  "day.up":            ["Your cards move up a level.", "你的卡片升一级。"],
+  "day.down":          ["Your cards drop back a level.", "你的卡片降回一级。"],
+  "day.band":          ["Your cards are in {name} now.", "你的卡片进入「{name}」了。"],
+  "day.only":          ["Only you see this card.", "这张卡只有你看得到。"],
+  "day.noTest":        ["These are at level {n} until you take the test.",
+                        "在你做那四道题之前，这些都按第 {n} 级来。"],
+  "day.retest": [
+    "Your cards are running above what you tested at. Take it again and the mark beside your name can move too.",
+    "你的卡片已经高过你测出来的水平了。再测一次，名字旁边的称号才会跟着动。"],
+  "day.takeTest":      ["Take the four questions", "去做那四道题"],
   "lvl.aboveWhy":      ["You missed these, which is how the four questions found your level.",
                         "这几题你没答对——四道题就是这样找到你的水平的。"],
   "crown.newMark":     ["New mark: {name}", "新称号：{name}"],

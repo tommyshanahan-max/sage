@@ -378,6 +378,41 @@
   .more{margin:.5rem 0 0;border:0;background:none;padding:.2rem 0;
     color:var(--accent);font-size:.9rem}
   .rest .words,.rest .zh{margin-top:.6rem}
+  /* ---- the card of the day -----------------------------------------------
+   * The Professor, at the top of the reader's own feed. Framed like a post so
+   * it reads as one, and set apart by the accent edge so nobody mistakes it
+   * for something everybody else can see and reply to. */
+  .daily{margin:.4rem 0 1.2rem;padding:1.1rem 1.15rem 1.2rem;background:var(--raise);
+    border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:1.1rem;box-shadow:var(--shadow)}
+  .dhead{display:flex;align-items:center;gap:.65rem}
+  .dmark{width:2rem;height:2rem;border-radius:50%;flex:0 0 auto;font-style:normal;
+    background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;
+    font-size:1.02rem;line-height:1;-webkit-font-smoothing:antialiased}
+  .dwho b{display:block;font-weight:500;font-size:.82rem;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--accent)}
+  :root[data-lang="zh"] .dwho b{text-transform:none;letter-spacing:.02em}
+  .dwho span{display:block;font-size:.78rem;color:var(--muted)}
+  /* The word itself is the point of the card, so it is the size of a headline
+     and nothing sits beside it. */
+  .dword{margin:.9rem 0 0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(2rem,9vw,2.6rem);line-height:1.15}
+  .dacts{display:flex;gap:.6rem;margin:1rem 0 0;flex-wrap:wrap}
+  .dacts button{flex:1 1 0;min-width:7rem;border-radius:99px;padding:.7rem 1rem;
+    font-size:.95rem}
+  .dgo{border:0;background:var(--accent);color:var(--accent-ink)}
+  .dquiet{border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+  .dmean{margin:.7rem 0 0;font-size:1.15rem;line-height:1.45;color:var(--ink-2)}
+  .dmoved{margin:.8rem 0 0;font-size:.92rem;color:var(--accent)}
+  .dmoved.down{color:var(--muted)}
+  .dstreak{margin:.3rem 0 0;font-size:.92rem;color:var(--ink-2)}
+  .ddone{margin:.6rem 0 0;font-size:.92rem;color:var(--ink-2)}
+  .dnote{margin:.9rem 0 0;font-size:.86rem;line-height:1.5;color:var(--muted)}
+  .dlink{display:inline-block;margin:.35rem 0 0;color:var(--accent);font-size:.9rem}
+  .donly{margin:.9rem 0 0;font-size:.76rem;color:var(--muted)}
+  .dband{display:flex;align-items:center;gap:.5rem;margin:.9rem 0 0;padding:.6rem .8rem;
+    background:var(--accent-soft);border-radius:.8rem;color:var(--accent);font-size:.9rem}
+
   .picgo{display:block}
   /* A result card is drawn on the same paper as the feed, so without an edge
      it reads as loose type in the post rather than as a picture. */
@@ -828,6 +863,11 @@
        Profile is a tab in the bar, the Tutor's first offer is to set the page
        up, and the editor holds everything the block held — three ways of saying
        one thing, standing between the deck and the feed. -->
+  <!-- One card a day, at the reader's own level, drawn here rather than posted:
+       a shared board with fifty people on it would carry fifty cards a morning
+       and the thing worth reading would be underneath them. See daily.js. -->
+  <div id="daily"></div>
+
   <div class="topics" id="topics"></div>
 
   <div class="rule" id="posts"><span id="rulelabel">Everyone · Newest first</span><i></i></div>
@@ -1012,6 +1052,7 @@
 <script type="module">
 import { T, when, lang, setLang, pickLang, langButton, STRINGS } from "/i18n.js";
 import { stageFor, stageName, crownMark } from "/crown.js";
+import { dailyCard } from "/daily.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -1263,6 +1304,14 @@ function drawTopics() {
 }
 
 function draw() {
+  /* The Professor's card for today, above everything else in the feed. Drawn
+     on every pass because the whole page redraws on a language change, and it
+     costs one localStorage read to be right in both languages. */
+  const dbox = $("daily");
+  fill(dbox);
+  const one = dailyCard();
+  if (one) dbox.append(one);
+
   drawTopics();
   /* Where the posts begin. Unfiltered, it is named rather than described —
    * "Everyone · Newest first" told a reader how the list was sorted, which is
