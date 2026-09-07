@@ -264,8 +264,13 @@
    * drops in under it. Everything addressed to this person is in here. */
   /* The invite, under the count. Quiet until wanted, and the code is the only
      loud thing in it — it is what somebody is looking for when they open this. */
-  .myinv{width:100%;margin:.5rem 0 0;padding:.55rem .7rem .6rem;
-    border:1px dashed var(--line);border-radius:.7rem;text-align:left}
+  /* In the tray, under the card of the day: it is a thing for this person that
+     changes daily, which is what the tray is for — and the header goes back to
+     being the mark and the name. */
+  .myinv{width:100%;margin:1rem 0 0;padding:.85rem .95rem .9rem;
+    border:1px dashed var(--line);border-radius:.9rem;text-align:left}
+  #notifday + .myinv{border-top:1px solid var(--hair);border-radius:0 0 .9rem .9rem;
+    padding-top:1rem;margin-top:1.1rem}
   .myinv .lab{display:block;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
     color:var(--muted)}
   :root[data-lang="zh"] .myinv .lab{text-transform:none;letter-spacing:.02em}
@@ -927,18 +932,6 @@
       <p id="count">Anyone can read. Anyone can post.</p>
       <!-- The member's own invite, beside the count, because that is where
            somebody looks when they are thinking about who else is here. -->
-      <!-- TWO THINGS TO DO WITH ONE INVITE, so two controls rather than one
-           tap target with two meanings: send the whole letter, or take the six
-           characters on their own for somebody who already has the link. -->
-      <div class="myinv" id="myinv" hidden>
-        <span class="lab" id="myinvlab"></span>
-        <button class="codebtn" type="button" id="myinvcode"></button>
-        <!-- The link beside the code, because the two only work together and
-             somebody reading their own header should see both. -->
-        <span class="url" id="myinvurl"></span>
-        <span class="tap" id="myinvtap"></span>
-        <button class="sendbtn" type="button" id="myinvsend"></button>
-      </div>
     </div>
     <nav class="bar" id="bar">
       <a href="/browse" id="navbrowse">
@@ -982,6 +975,18 @@
        you goes here; the report card below is what you ARE. -->
   <section class="notif" id="notif" hidden>
     <div id="notifday"></div>
+    <!-- TWO THINGS TO DO WITH ONE INVITE, so two controls rather than one
+         tap target with two meanings: send the whole letter, or take the six
+         characters on their own for somebody who already has the link. -->
+    <div class="myinv" id="myinv" hidden>
+      <span class="lab" id="myinvlab"></span>
+      <button class="codebtn" type="button" id="myinvcode"></button>
+      <!-- The link beside the code, because the two only work together and
+           somebody reading their own header should see both. -->
+      <span class="url" id="myinvurl"></span>
+      <span class="tap" id="myinvtap"></span>
+      <button class="sendbtn" type="button" id="myinvsend"></button>
+    </div>
     <div id="notiffol">
       <div class="rule" id="folrule" hidden><span id="follabel"></span><i></i>
         <b class="new" id="folnew" hidden></b>
