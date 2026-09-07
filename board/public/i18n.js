@@ -79,8 +79,8 @@ export const STRINGS = {
   // ---- putting something up ------------------------------------------------
   "post.title":        ["Put something up", "发点什么"],
   "post.placeholder": [
-    "Where to get a SIM without a Chinese bank card, which gate at Renmin, what the label says, a good meal…",
-    "哪里能办没有国内银行卡的电话卡、人大走哪个门、这个标签写的什么、哪家饭好吃…",
+    "Whether that course is worth taking, where to get a SIM without a Chinese bank card, which gate at Renmin is open, what the label says…",
+    "那门课值不值得选、哪里能办没有国内银行卡的电话卡、人大哪个门开着、这个标签写的什么…",
   ],
   "post.as":           ["Post as — a name people will see", "用什么名字发——别人会看到"],
   "post.topic":        ["Topic — optional", "分类——可不填"],
@@ -126,8 +126,8 @@ export const STRINGS = {
   "site.h1b":          ["last month", "上个月刚搞明白"],
   "site.h1c":          [".", "。"],
   "site.lede": [
-    "A meeting place for exchange students: find a study buddy, ask the question you are embarrassed to ask, and compare notes on how to actually get by. Nothing to install. No account. No VPN.",
-    "留学生的聚集地：找个学习搭子，问那些不好意思问的问题，交换在这里生活的门道。不用下载，不用注册。",
+    "A place for exchange students to ask the question you are embarrassed to ask, compare notes on courses and on how to actually get by, and find someone to study with. Nothing to install. No account. No VPN.",
+    "留学生问问题的地方：那些不好意思问的问题、哪门课怎么样、在这里生活的门道，也可以找个一起学习的人。不用下载，不用注册。",
   ],
   "site.hanzi": [
     "留学生 · liúxuéshēng — a student studying abroad. It is who this is for, so it is what it is called.",
@@ -154,20 +154,20 @@ export const STRINGS = {
     "Your university gives you a timetable and a dorm key. Everything after that is worked out by asking somebody who arrived a term earlier.",
     "学校给你课表和宿舍钥匙，剩下的都靠问早来一学期的人。",
   ],
-  "site.t1h":          ["Meet the people already here", "认识已经在这儿的人"],
+  "site.t1h":          ["Ask the people already here", "问问已经在这儿的人"],
   "site.t1p": [
-    "A feed by campus and city. Who is around, what is on this week, who is going. Arriving alone is the whole problem and it is the easiest one to fix.",
-    "按学校和城市分的动态。谁在附近、这周有什么活动、谁去。一个人来是最大的问题，也是最好解决的一个。",
+    "A feed by campus and city. Which course is worth taking, what is on this week, what nobody tells you. Working it out alone is the whole problem and it is the easiest one to fix.",
+    "按学校和城市分的动态。哪门课值得选、这周有什么、没人会告诉你的那些事。一个人瞎摸索是最大的问题，也是最好解决的一个。",
   ],
-  "site.t1s":          ["“Anyone at Renmin going to the Gulou thing Thursday?”",
-                        "「人大有人周四去鼓楼吗？」"],
+  "site.t1s":          ["“Has anyone at Renmin taken the 8am listening class?”",
+                        "「人大有人上过早八的听力课吗？」"],
   "site.t2h":          ["Find a study buddy", "找个学习搭子"],
   "site.t2p": [
-    "Say your level, what you are working towards and when you are free. Most people want the same trade — their Chinese for your English — and no app is needed to make that work, only a way to find each other.",
-    "写下你的水平、想考什么、什么时候有空。大多数人想要的是同一种交换——他们的中文换你的英文——这件事不需要什么应用，只需要一个能找到彼此的地方。",
+    "Say your level and what you are working towards. Most people want the same trade — their Chinese for your English — and no app is needed to make that work, only a page each.",
+    "写下你的水平、想考什么。大多数人想要的是同一种交换——他们的中文换你的英文——这件事不需要什么应用，各自有个主页就够了。",
   ],
-  "site.t2s":          ["“HSK4 in March, Tuesdays, will trade for English.”",
-                        "「三月考 HSK4，每周二，可以用英文换。」"],
+  "site.t2s":          ["“HSK4 in March, will trade for English.”",
+                        "「三月考 HSK4，可以用英文换。」"],
   "site.t3h":          ["Compare notes on getting by", "交换生活门道"],
   "site.t3p": [
     "The SIM without a bank card. Which gate is shut. What the label says. What 微辣 really means. Small things that cost a week each to learn alone and a minute to be told.",
@@ -391,8 +391,8 @@ export const STRINGS = {
   "shot.me":           ["Your page", "你的主页"],
   "shot.meP":          ["A face and a name. Nothing else is asked.", "一张照片，一个名字。别的都不问。"],
   "shot.browse":       ["Browse students", "看看有谁"],
-  "shot.browseP":      ["Who is looking, one face at a time. Say hello if it fits.",
-                        "谁在找搭子，一次看一个。合适就打个招呼。"],
+  "shot.browseP":      ["Who is here, what they study, and what they can help with.",
+                        "这里都有谁、他们学什么、能帮上什么。"],
 
   // The words inside the drawn phones. Short on purpose — they are read at
   // about eight pixels and the point is the shape, not the sentence.
@@ -624,8 +624,8 @@ export const STRINGS = {
   // appears, and it is the one thing this switch decides.
   "bud.lookingLabel":  ["Show me in Browse", "在「看看有谁」里显示我"],
   "bud.lookingWhy": [
-    "Your page appears in the deck people flick through. Turn it off and you are still here — you just are not in it. Posting never puts you in on its own.",
-    "你的主页会出现在大家翻看的名单里。关掉也不会影响你用这个应用，只是不出现在那里。单纯发内容不会把你加进去。",
+    "Your page appears in the list of students. Turn it off and you are still here — you just are not in it. Posting never puts you in on its own.",
+    "你的主页会出现在学生名单里。关掉也不会影响你用这个应用，只是不出现在那里。单纯发内容不会把你加进去。",
   ],
   "bud.free":          ["Free", "有空"],
   "bud.trades":        ["Trades", "可以交换"],
@@ -726,13 +726,13 @@ export const STRINGS = {
   // switch is off. Every page made before that switch was on the form is here.
   "brw.mineOff":       ["You are not in Browse", "你还没出现在名单里"],
   "brw.mineOffWhy": [
-    "Your page is made, but it is not in the deck people flick through. Tap to turn Show me in Browse on.",
-    "你的主页已经做好了，但还没出现在大家翻看的名单里。点一下打开「在名单里显示我」。",
+    "Your page is made, but it is not in the list of students. Tap to turn Show me in Browse on.",
+    "你的主页已经做好了，但还没出现在学生名单里。点一下打开「在名单里显示我」。",
   ],
   "brw.mineUp":        ["You are in Browse", "你已经在名单里了"],
   "brw.mineUpWhy": [
-    "This is how you look to everybody else. Your own card is never in your own deck.",
-    "别人看到的就是这样。你自己的卡片不会出现在你自己的名单里。",
+    "This is what everybody else sees when they find you.",
+    "别人找到你的时候，看到的就是这些。",
   ],
   "brw.yourTurn":      ["Your turn", "该你了"],
   "brw.yourTurnWhat": [
@@ -751,8 +751,8 @@ export const STRINGS = {
   "brw.open":          ["Browse students", "看看有谁"],
   // "the study-buddy list" named a page that is not in V1.
   "brw.openWhat": [
-    "Everybody who asked to be findable, one at a time, with their photo.",
-    "所有愿意被找到的人，一个一个看，带照片。",
+    "Everybody who asked to be findable, with what they are studying.",
+    "所有愿意被找到的人，还有他们在学什么。",
   ],
 
   // ---- the tutor ------------------------------------------------------------
