@@ -171,7 +171,13 @@ board-reset: ## Empty the board — every person, post and photograph
 	@# copy when you are sure. NOBACKUP=1 skips the copy.
 	@#
 	@# The counter is a different service with a different volume and is not
-	@# touched: visits, daily figures and the feature votes all survive this.
+	@# touched: visits and the daily figures survive this.
+	@#
+	@# The feature votes do NOT. They are rows in the board's own file and go
+	@# with everything else — what survives is the counter's record that a
+	@# button was pressed on a given day, which is a count and not a list. If
+	@# the standing totals matter, read them from /api/count before you run
+	@# this; there is nowhere to get them back from afterwards.
 	$(COMPOSE) run --rm --no-deps -T \
 	  -v "$(CURDIR)/scripts:/seed:ro" \
 	  --entrypoint node board \
