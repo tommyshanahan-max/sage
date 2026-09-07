@@ -82,11 +82,11 @@ async function main() {
   for (const v of d.made) {
     console.log("");
     console.log(v.who ? "For " + v.who + ":" : "Invite:");
-    console.log("  " + PUBLIC + "/i/" + v.code);
+    console.log("  " + PUBLIC + "/enter");
     console.log("  " + v.code);
   }
   console.log("");
-  console.log("One person each. Send the link and the code — either one opens the door.");
+  console.log("One person each. Send them both — the link is worth nothing without the code.");
 }
 
 main().catch((e) => {

@@ -2481,7 +2481,7 @@ function drawMyInvite() {
   $("myinvlab").textContent = T("inv.head");
   $("myinvcode").textContent = MYCODE;
   $("myinvcode").title = T("inv.codeTap");
-  $("myinvurl").textContent = location.host + "/i/" + MYCODE;
+  $("myinvurl").textContent = location.host + "/enter";
   $("myinvtap").textContent = T("inv.tap");
   $("myinvsend").textContent = T("inv.send");
   $("myinvfeed").textContent = T("inv.toFeed");
@@ -2500,7 +2500,14 @@ $("myinvcode").addEventListener("click", () => {
 
 $("myinvsend").addEventListener("click", () => {
   if (!MYCODE) return;
-  const url = location.origin + "/i/" + MYCODE;
+  /* THE LINK DOES NOT CARRY THE CODE.
+   *
+   * It used to be /i/CODE, and that made the link the password: forward it,
+   * screenshot the address bar, leave it in somebody's history, and the code
+   * went with it. Sent apart, the link is worth nothing on its own and the six
+   * characters are a real second thing. /i/CODE still opens for anybody
+   * holding an older link. */
+  const url = location.origin + "/enter";
   /* The letter changes with where it is going. Inside WeChat this is being
      pasted into WeChat, and whoever taps it lands in the browser that forgets
      them — so that version carries the way out. */
@@ -2542,7 +2549,7 @@ $("myinvfeed").addEventListener("click", async () => {
     const r = await fetch("/api/post", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        note: T("inv.feedWords", { url: location.origin + "/i/" + MYCODE, code: MYCODE }),
+        note: T("inv.feedWords", { url: location.origin + "/enter", code: MYCODE }),
         handle: who, topic: "Getting in", device,
       }),
     });
