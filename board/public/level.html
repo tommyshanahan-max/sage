@@ -364,6 +364,21 @@ const save = (r) => { try { localStorage.setItem(KEY, JSON.stringify(r)); } catc
  */
 const STUDYPAL = "https://liuxuesheng.help/";
 const DEEP = false;
+/* AND THE DOOR ITSELF IS SHUT. Pointing at the front page instead of /study
+ * did not help: that host answers with a 404 carrying Fern's own navigation at
+ * the bottom of it, which means the whole hostname is being served by Fern on
+ * that shared box rather than by Study Pal. It is not a wrong path, it is a
+ * wrong site — nothing in this repository can fix it, because the routing is
+ * on the other machine.
+ *
+ * So the card is off. An offer whose button lands on somebody else's 404 costs
+ * more than not making the offer: it is the first thing a new person presses
+ * on the screen where they were just told something good about themselves.
+ *
+ * ON is the one word to flip back once liuxuesheng.help serves Study Pal
+ * again, and DEEP is the second, once /study is deployed there.
+ */
+const CLASS_ON = false;
 const classLink = (band) =>
   DEEP ? STUDYPAL + "study?lesson=1&level=" + encodeURIComponent(band) : STUDYPAL;
 
@@ -853,7 +868,7 @@ function drawResult(box) {
    * uses at the other end — a link that lands on "Getting by" after promising
    * something else reads as the wrong link.
    */
-  if (w === "zh") {
+  if (CLASS_ON && w === "zh") {
     const band = n <= 3 ? "new" : n <= 7 ? "getting_by" : "comfortable";
     const named = band === "new" ? "lvl.spNew"
                 : band === "getting_by" ? "lvl.spGetting" : "lvl.spComfortable";
