@@ -116,6 +116,9 @@ export function dailyCard() {
 
   const box = el("section", "daily");
   const tag = d.which === "zh" ? "zh-CN" : "en-US";
+  /* Kept out here rather than in draw(), so opening the explanation and then
+     answering the card does not fold it shut again underneath somebody. */
+  let aboutOpen = false;
 
   const draw = () => {
     box.textContent = "";
@@ -136,7 +139,31 @@ export function dailyCard() {
     who.append(el("b", null, T("house.name") + " \u00b7 " + T("day.today")));
     who.append(el("span", null, T("day.atLevel", { n: clamp(d.level) })));
     head.append(who);
+
+    /* WHAT IS THIS. A card that appears at the top of somebody's feed showing
+       them a word, with no explanation, is a card they scroll past. The answer
+       is three sentences and it is read once, so it folds away — and the
+       question mark is a real button rather than an icon, because at this size
+       an icon is a smudge somebody has to guess at. */
+    const ask = el("button", "dask", "?");
+    ask.type = "button";
+    ask.setAttribute("aria-label", T("day.what"));
+    ask.title = T("day.what");
+    ask.setAttribute("aria-expanded", String(aboutOpen));
+    head.append(ask);
     box.append(head);
+
+    const about = el("div", "dabout");
+    about.hidden = !aboutOpen;
+    about.append(el("p", null, T("day.about1")));
+    about.append(el("p", null, T("day.about2")));
+    about.append(el("p", null, T("day.about3")));
+    ask.addEventListener("click", () => {
+      aboutOpen = !aboutOpen;
+      about.hidden = !aboutOpen;
+      ask.setAttribute("aria-expanded", String(aboutOpen));
+    });
+    box.append(about);
 
     box.append(el("p", "dword", card.q));
 

@@ -749,6 +749,19 @@ export const STRINGS = {
      post: see daily.js for why fifty people would otherwise mean fifty cards a
      morning on a board everybody shares. */
   "day.today":         ["today", "今天"],
+  /* WHAT THIS CARD IS, for somebody who has just found it at the top of their
+     feed and has no idea why a word is being shown to them. Folded away,
+     because it is read once and then never again. */
+  "day.what":          ["What is this?", "这是什么？"],
+  "day.about1": [
+    "One card a day, picked for the level you tested at. Only you see it \u2014 it is drawn for you here, not posted to the board.",
+    "每天一张，按你测出来的水平挑。只有你能看到——它是在这儿给你一个人画出来的，不是发到板上的。"],
+  "day.about2": [
+    "Say you knew it and the cards move up. Miss one and they drop back a level. Three known in a row moves you up.",
+    "说「我认识」，卡片就往上走；错一张，就退回一级。连着三张认识，升一级。"],
+  "day.about3": [
+    "The mark beside your name still comes from the four questions. Pressing \u201cI knew it\u201d is a claim; the test is the proof.",
+    "名字旁边的称号还是看那四道题。点「我认识」只是你自己说的，测试才算数。"],
   "day.atLevel":       ["Level {n}", "第 {n} 级"],
   "day.show":          ["Show me", "看答案"],
   "day.knew":          ["I knew it", "我认识"],
