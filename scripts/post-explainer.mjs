@@ -23,6 +23,10 @@ if (!base || !key) {
   process.exit(2);
 }
 const asIdx = rest.indexOf("--as");
+// What this notice is filed under, and how the script finds an older one of
+// itself. Structural, so it survives the copy being rewritten.
+const TOPIC = "Getting in";
+
 // The house voice on the feed. The app knows this name and marks anything
 // posted under it as admin, in whichever language it is being read.
 const ACCOUNT = asIdx >= 0 ? rest[asIdx + 1] : "The Professor";
@@ -43,27 +47,52 @@ const ZH = [
 const head = { "x-admin-secret": key };
 
 async function main() {
-  /* Already up? Matched on the phrase every version of this post has had,
-   * rather than on its first sentence — the wording has been shortened once
-   * and a marker that moves with the copy is a marker that stops working the
-   * first time somebody edits it. --again posts anyway, which is how a
-   * reworded one replaces an older one on a board that already has it. */
-  const mark = "two different browsers";
-  // Public, and the only list that has every post on it.
+  /* WHAT IS ALREADY THERE, and what to do about it.
+   *
+   * FOUND BY WHO POSTED IT AND UNDER WHAT, not by a phrase in it. Two earlier
+   * versions of this script matched on words in the copy, and both stopped
+   * working the moment the copy was shortened — the second time producing two
+   * copies of the notice on the feed, which is the thing the check exists to
+   * prevent. The account and the topic do not move when somebody edits a
+   * sentence.
+   *
+   * Same text already up: nothing to do. Different text: the old ones come
+   * down and the new one goes up. Taking down is the admin's own route, which
+   * marks a post removed rather than deleting it — the record stays, the
+   * readers stop seeing it.
+   */
+  const HOUSE = ["the professor", "the tutor", "教授", "导师"];
+  const isMine = (p) =>
+    p.topic === TOPIC
+    && HOUSE.includes(String(p.handle || "").toLowerCase())
+    && p.state !== "removed";
+
+  // Public, and the only list with every post on it.
   const board = await fetch(base + "/api/board").then((r) => r.json());
-  const already = !rest.includes("--again")
-    && (board.posts || []).some((p) => String(p.note || "").includes(mark));
-  if (already) {
-    console.log("The explanation is already on the feed. Nothing to do.");
-    console.log("To put a reworded one up beside it:  make post-explainer AGAIN=1");
+  const mine = (board.posts || []).filter(isMine);
+
+  if (!rest.includes("--again") && mine.some((p) => String(p.note || "").trim() === EN.trim())) {
+    console.log("The current notice is already on the feed. Nothing to do.");
     return;
+  }
+
+  for (const old of mine) {
+    const r = await fetch(
+      base + "/api/feed?id=" + encodeURIComponent(old.id)
+        + "&why=" + encodeURIComponent("Replaced by a newer notice."),
+      { method: "DELETE", headers: head });
+    if (!r.ok) {
+      console.error("Could not take down the older notice:", r.status);
+      process.exit(1);
+    }
+    console.log("Took down an older version (" + old.id + ").");
   }
 
   const form = new FormData();
   form.set("account", ACCOUNT);
   form.set("body", EN);
   form.set("zh", ZH);
-  form.set("topic", "Getting in");
+  form.set("topic", TOPIC);
 
   const r = await fetch(base + "/api/feed", { method: "POST", headers: head, body: form });
   const d = await r.json().catch(() => ({}));
