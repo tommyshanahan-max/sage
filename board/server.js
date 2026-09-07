@@ -1464,8 +1464,24 @@ function multipart(req) {
   return out;
 }
 
+/* THE SCRIPTS REVALIDATE TOO, NOT JUST THE PAGES.
+ *
+ * The pages were already no-cache because WeChat on iOS caches hard against
+ * the URL. The modules beside them were not — and half this app is in them:
+ * the strings, the cards, the mark, the card of the day. So a phone could hold
+ * a week-old i18n.js against a page that had just been redeployed, and show
+ * old wording on new markup. That is exactly what it looks like when a deploy
+ * "did not work", and it costs an evening to tell apart from one that did not.
+ *
+ * They are a few kilobytes each and no-cache still revalidates rather than
+ * refetching, so the cost is one conditional request per file per load.
+ * Photographs are not served from here — they go through their own route,
+ * addressed by a hash of their content, and are safe to keep for ever.
+ */
 app.use(express.static("public", {
-  setHeaders: (res, f) => { if (f.endsWith(".html")) res.set("Cache-Control", "no-cache"); },
+  setHeaders: (res, f) => {
+    if (f.endsWith(".html") || f.endsWith(".js")) res.set("Cache-Control", "no-cache");
+  },
 }));
 
 await mkdir(DIR, { recursive: true });
