@@ -490,14 +490,32 @@ app.get("/api/my-invite", async (req, res) => {
   const mine = board.people.find((q) => q.by === me);
   const who = (mine && mine.handle) || "";
 
-  const spare = board.invites.find((v) => v.by === me && !v.usedBy && !v.off);
-  if (spare) return res.json({ code: spare.code });
+  /* TODAY'S, NOT A STANDING ONE.
+   *
+   * The code in somebody's header changes every day: yesterday's, if nobody
+   * spent it, stops working when the new one is minted. That is what makes the
+   * line "it changes every day" true rather than decorative — and it means a
+   * code that leaks out of a group chat is worth something for one day.
+   *
+   * The owner's day, not UTC, for the same reason the counter uses it: a UTC
+   * boundary in Asia cuts the evening in half.
+   */
+  const today = dayKey(Date.now());
+  const spare = board.invites.find((v) =>
+    v.by === me && !v.usedBy && !v.off && dayKey(v.at) === today);
+  if (spare) return res.json({ code: spare.code, day: today });
 
   const made = await change((b) => {
     // Checked again inside the queue: two taps on a slow connection would
     // otherwise mint two codes and give away one of them for nothing.
-    const already = b.invites.find((v) => v.by === me && !v.usedBy && !v.off);
+    const already = b.invites.find((v) =>
+      v.by === me && !v.usedBy && !v.off && dayKey(v.at) === today);
     if (already) return already;
+    // Yesterday's, unspent, stops working now. Spent ones are untouched —
+    // being let in does not expire, only the invitation does.
+    for (const v of b.invites) {
+      if (v.by === me && !v.usedBy && !v.off) v.off = true;
+    }
     const have = new Set(b.invites.map((v) => v.code));
     let code = store.newCode();
     while (have.has(code)) code = store.newCode();
@@ -505,7 +523,7 @@ app.get("/api/my-invite", async (req, res) => {
     b.invites.push(v);
     return v;
   });
-  res.json({ code: made.code });
+  res.json({ code: made.code, day: today });
 });
 
 /* Minting, from the box. The label is a note to self — how you know who did

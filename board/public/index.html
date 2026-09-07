@@ -264,14 +264,23 @@
    * drops in under it. Everything addressed to this person is in here. */
   /* The invite, under the count. Quiet until wanted, and the code is the only
      loud thing in it — it is what somebody is looking for when they open this. */
-  .myinv{display:block;width:100%;margin:.5rem 0 0;padding:.5rem .7rem;
-    border:1px dashed var(--line);background:none;border-radius:.7rem;text-align:left}
-  .myinv:hover{border-color:var(--accent)}
+  .myinv{width:100%;margin:.5rem 0 0;padding:.55rem .7rem .6rem;
+    border:1px dashed var(--line);border-radius:.7rem;text-align:left}
   .myinv .lab{display:block;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
     color:var(--muted)}
   :root[data-lang="zh"] .myinv .lab{text-transform:none;letter-spacing:.02em}
-  .myinv b{display:block;margin:.1rem 0 0;font-size:1.05rem;font-weight:600;
-    letter-spacing:.16em;color:var(--accent);font-variant-numeric:tabular-nums}
+  /* The code is a button, because six characters somebody wants on their own
+     is the second thing anybody does with this. */
+  .codebtn{display:block;margin:.1rem 0 0;padding:0;border:0;background:none;
+    font-family:inherit;font-size:1.05rem;font-weight:600;letter-spacing:.16em;
+    color:var(--accent);font-variant-numeric:tabular-nums;text-align:left}
+  .codebtn:hover{text-decoration:underline;text-underline-offset:3px}
+  .sendbtn{display:block;width:100%;margin:.5rem 0 0;padding:.45rem .8rem;
+    border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);
+    border-radius:99px;font-size:.86rem}
+  .sendbtn:hover{opacity:.92}
+  .myinv .url{display:block;margin:.05rem 0 0;font-size:.78rem;color:var(--ink-2);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .myinv .tap{display:block;margin:.05rem 0 0;font-size:.74rem;color:var(--muted)}
 
   .bell{position:relative;flex:0 0 auto;width:2.4rem;height:2.4rem;padding:0;
@@ -918,11 +927,18 @@
       <p id="count">Anyone can read. Anyone can post.</p>
       <!-- The member's own invite, beside the count, because that is where
            somebody looks when they are thinking about who else is here. -->
-      <button class="myinv" type="button" id="myinv" hidden>
+      <!-- TWO THINGS TO DO WITH ONE INVITE, so two controls rather than one
+           tap target with two meanings: send the whole letter, or take the six
+           characters on their own for somebody who already has the link. -->
+      <div class="myinv" id="myinv" hidden>
         <span class="lab" id="myinvlab"></span>
-        <b id="myinvcode"></b>
+        <button class="codebtn" type="button" id="myinvcode"></button>
+        <!-- The link beside the code, because the two only work together and
+             somebody reading their own header should see both. -->
+        <span class="url" id="myinvurl"></span>
         <span class="tap" id="myinvtap"></span>
-      </button>
+        <button class="sendbtn" type="button" id="myinvsend"></button>
+      </div>
     </div>
     <nav class="bar" id="bar">
       <a href="/browse" id="navbrowse">
@@ -2448,15 +2464,32 @@ function drawMyInvite() {
   b.hidden = false;
   $("myinvlab").textContent = T("inv.head");
   $("myinvcode").textContent = MYCODE;
+  $("myinvcode").title = T("inv.codeTap");
+  $("myinvurl").textContent = location.host + "/i/" + MYCODE;
   $("myinvtap").textContent = T("inv.tap");
+  $("myinvsend").textContent = T("inv.send");
 }
 
-$("myinv").addEventListener("click", () => {
+/* Just the six characters, for somebody who already has the link — or who is
+   reading them out loud. */
+$("myinvcode").addEventListener("click", () => {
+  if (!MYCODE) return;
+  const b = $("myinvcode");
+  if (copyText(MYCODE)) {
+    b.textContent = T("inv.codeDone");
+    setTimeout(drawMyInvite, 1800);
+  }
+});
+
+$("myinvsend").addEventListener("click", () => {
   if (!MYCODE) return;
   const url = location.origin + "/i/" + MYCODE;
-  const words = T("inv.shared", { url, code: MYCODE });
+  /* The letter changes with where it is going. Inside WeChat this is being
+     pasted into WeChat, and whoever taps it lands in the browser that forgets
+     them — so that version carries the way out. */
+  const words = T(IN_WECHAT ? "inv.sharedWx" : "inv.shared", { url, code: MYCODE });
   const say = (w) => {
-    $("myinvtap").textContent = w;
+    $("myinvsend").textContent = w;
     setTimeout(drawMyInvite, 3000);
   };
   /* Inside WeChat a page may not open a share sheet — the ⋯ menu is the only

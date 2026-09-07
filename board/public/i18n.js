@@ -785,25 +785,39 @@ export const STRINGS = {
   /* THE MEMBER'S OWN INVITE, in the header where the count is. One live code
      each: it comes back the same until somebody spends it. */
   "inv.head":          ["Invite someone", "邀请一个人"],
-  "inv.tap":           ["Tap to copy the link and the password",
-                        "点一下，复制链接和口令"],
+  "inv.tap":           ["Today’s password. One person, then it changes.",
+                        "今天的口令。进一个人，然后就换。"],
+  "inv.send":          ["Send the invite", "把邀请发出去"],
+  "inv.codeTap":       ["Copy the code", "复制口令"],
+  "inv.codeDone":      ["Copied", "已复制"],
   "inv.copied":        ["Copied. Paste it into a chat.", "复制好了，粘到聊天里就行。"],
   "inv.copyNo":        ["Hold to copy: {code}", "长按复制：{code}"],
+  /* TWO LETTERS, BECAUSE THEY ARE READ IN DIFFERENT PLACES.
+   *
+   * Pasted into WeChat, the link will be tapped inside WeChat's browser, and
+   * whoever taps it meets a screen telling them to get out of it. Saying so in
+   * the message beats making somebody read an instruction after they have
+   * already tapped — so the WeChat letter carries the step and the other one
+   * does not need to.
+   */
+  "inv.sharedWx": [
+    "This is the students' board I mentioned — 留学生. It is private: nobody can open it without a password, and mine changes every day. Here is today's, good for one person.\n\n{url}\n\nPassword: {code}\n\nOpen it in Safari, not in here — tap ··· at the top right, then Open in Browser. WeChat's browser forgets you.",
+    "就是我说的那个留学生的板子。那里是私密的，没有口令谁也打不开，我的口令每天还会换。这是今天的，只能进一个人。\n\n{url}\n\n口令：{code}\n\n别在微信里打开——点右上角的 ···，选「在浏览器打开」。微信的浏览器记不住你。"],
   "inv.shared": [
-    "This is the students' board I mentioned — 留学生. Nobody can read it without a password, so here is mine to give away. It works once.\n\n{url}\n\nPassword: {code}",
-    "就是我说的那个留学生的板子。没有口令谁也看不到，这个给你，只能用一次。\n\n{url}\n\n口令：{code}"],
-  "inv.locked":        ["Locked — nobody can read this without a password.",
-                        "已上锁——没有口令的人看不到这里。"],
+    "This is the students' board I mentioned — 留学生. It is private: nobody can open it without a password, and mine changes every day. Here is today's, good for one person.\n\n{url}\n\nPassword: {code}",
+    "就是我说的那个留学生的板子。那里是私密的，没有口令谁也打不开，我的口令每天还会换。这是今天的，只能进一个人。\n\n{url}\n\n口令：{code}"],
+  "inv.locked":        ["Private — nothing here opens without today’s password.",
+                        "私密——没有今天的口令，这里什么都打不开。"],
   /* The two lines the board says about itself change with the door. "Anyone
      can read" is true with the door open and a plain lie with it shut. */
-  "inv.taglineShut":   ["Invite only. A password gets you in, once.",
-                        "邀请制。有口令就能进，一次就够。"],
+  "inv.taglineShut":   ["Invite only. One password each, and it changes every day.",
+                        "邀请制。一人一个口令，每天都换。"],
   "inv.countShut":     ["{n} posts up. Invite only.", "已发布 {n} 条。邀请制。"],
-  "inv.one":           ["One person each. You get another once this one is used.",
-                        "一个口令进一个人。用掉了会再给你一个。"],
+  "inv.one":           ["One person each, and a new one tomorrow.",
+                        "一个口令进一个人，明天再给你一个新的。"],
   "door.sub":          ["Not open to everybody yet", "还没有对所有人开放"],
-  "door.say":          ["Type the code your friend sent. It works once, on this browser.",
-                        "输入朋友发给你的口令。只能用一次，只在这个浏览器上。"],
+  "door.say":          ["This board is private \u2014 nothing on it can be read without a password. Type the one your friend sent. It works once, on this browser, and their password changes tomorrow.",
+                        "这个板子是私密的——没有口令，里面什么都看不到。输入朋友发给你的那串。只能用一次，只在这个浏览器上；他的口令明天就换了。"],
   "door.zh":           ["", ""],
   "door.go":           ["Go in", "进去"],
   "door.going":        ["Opening\u2026", "正在开门\u2026"],
