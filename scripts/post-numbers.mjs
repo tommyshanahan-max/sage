@@ -27,7 +27,10 @@ if (!base || !key) {
 }
 const asIdx = rest.indexOf("--as");
 const ACCOUNT = asIdx >= 0 ? rest[asIdx + 1] : "The Professor";
-const TOPIC = "ask";
+/* NO ROOM. The rooms are what somebody is looking for, and a notice from the
+   house is not looking for anything — filed under one it borrows a colour and
+   a word that belong to the people using it. Empty means no eyebrow. */
+const TOPIC = "";
 const TITLE = "Where this has got to";
 const FLOOR = 3;               // below this, a room count names a person
 
@@ -94,14 +97,18 @@ async function main() {
   const top = Object.entries(now.rooms).filter(([, n]) => n >= FLOOR)
     .sort((a, b) => b[1] - a[1])[0];
 
+  /* THE NUMBERS GO IN THE FIRST PARAGRAPH, WITH THE TITLE. The feed folds a
+     post after its first paragraph, so a title on a line of its own means the
+     preview is a headline and a Show more — twice over, because a house post
+     carries both languages. Whoever never taps should still have read the
+     news. */
   const en = [
-    TITLE, "",
-    now.people + " people. " + now.posts + " things posted. "
+    TITLE + " — " + now.people + " people, " + now.posts + " things posted, "
       + now.tested + " have tested their Chinese or English.",
   ];
   const zh = [
-    "这里到哪一步了", "",
-    now.people + " 个人，" + now.posts + " 条内容，" + now.tested + " 个人测过自己的中文或英文。",
+    "这里到哪一步了——" + now.people + " 个人，" + now.posts + " 条内容，"
+      + now.tested + " 个人测过自己的中文或英文。",
   ];
   if (top) {
     en.push("", top[1] + " of them are looking for " + ROOMS[top[0]][0] + ".");

@@ -35,7 +35,10 @@ if (!base || !key) {
 }
 const asIdx = rest.indexOf("--as");
 const ACCOUNT = asIdx >= 0 ? rest[asIdx + 1] : "The Professor";
-const TOPIC = "study";
+/* NO ROOM. The rooms are what somebody is looking for, and a notice from the
+   house is not looking for anything — filed under one it borrows a colour and
+   a word that belong to the people using it. Empty means no eyebrow. */
+const TOPIC = "";
 
 /* The marker, and the thing it posts, in one constant — the same rule the
    other Professor scripts learned the hard way. */
@@ -84,18 +87,17 @@ async function main() {
   }
 
   const lang = which(best.band) === "zh" ? "Chinese" : "English";
+  /* The news in the first paragraph, with the title. The feed folds after it,
+     and a preview that is only a headline is a post nobody reads. */
   const EN = [
-    TITLE,
-    "",
-    best.who + "'s " + lang + " went from level " + best.was + " to level " + best.now + " this week.",
+    TITLE + " — " + best.who + "'s " + lang + " went from level "
+      + best.was + " to level " + best.now + ".",
     "",
     "Four questions, one minute, if you want to see where yours is: /level",
   ].join("\n");
   const ZH = [
-    "这周有人的水平变了",
-    "",
-    best.who + "的" + (which(best.band) === "zh" ? "中文" : "英文")
-      + "这周从第 " + best.was + " 级到了第 " + best.now + " 级。",
+    "这周有人的水平变了——" + best.who + "的" + (which(best.band) === "zh" ? "中文" : "英文")
+      + "从第 " + best.was + " 级到了第 " + best.now + " 级。",
     "",
     "四道题，一分钟，想知道自己在哪一级就去：/level",
   ].join("\n");
