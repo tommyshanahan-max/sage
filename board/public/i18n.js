@@ -526,6 +526,7 @@ export const STRINGS = {
   "nav.feed":          ["Feed", "动态"],
   "nav.profile":       ["Profile", "我的"],
   "nav.new":           ["Post", "发布"],
+  "bud.speaks":        ["Languages", "会说的语言"],
   "bud.follow":        ["Follow", "关注"],
   "bud.following":     ["Following", "已关注"],
   "bud.followers":     ["{n} following them", "{n} 人关注"],

@@ -88,19 +88,32 @@
   .lang{margin-left:auto;border:1px solid var(--line);background:var(--raise);
     color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1}
 
-  .cover{position:relative;height:9rem;overflow:hidden;
-    background:linear-gradient(160deg,var(--accent),var(--t6))}
-  .cover img{width:100%;height:100%;object-fit:cover;display:block}
+  /* The same card as the top of the app, at the same size.
+     A profile reached from the deck used to shrink the face to a six-rem
+     circle over a decorative band — the photograph is the thing somebody
+     followed the link for, so it keeps the size it had. */
+  .shot{position:relative;margin:0 1.15rem 1rem;border-radius:1.3rem;overflow:hidden;
+    height:max(15rem, min(66vh, 36rem));
+    background:var(--raise);box-shadow:var(--shadow);
+    display:flex;flex-direction:column;justify-content:flex-end}
+  .shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .shot .noshot{position:absolute;inset:0;display:grid;place-items:center;
+    background:linear-gradient(160deg,var(--accent),var(--t6));color:var(--accent-ink);
+    font-family:var(--serif);font-size:8rem;line-height:1}
+  /* Words on a scrim, because white on a photograph is legible right up until
+     somebody uploads a bright one. */
+  .shot .scrim{position:relative;padding:5rem 1.2rem 1.2rem;
+    background:linear-gradient(to top,rgba(10,14,22,.86),rgba(10,14,22,.5) 44%,rgba(10,14,22,0))}
 
   .head{display:flex;flex-direction:column;align-items:center;text-align:center;
-    padding:0 1.15rem 1.2rem;margin-top:-3rem}
-  .av{width:6rem;height:6rem;border-radius:50%;background:var(--paper);
-    color:var(--accent);display:grid;place-items:center;font-family:var(--serif);
-    font-size:2.3rem;line-height:1;overflow:hidden;box-shadow:0 0 0 4px var(--paper)}
-  .av img{width:100%;height:100%;object-fit:cover;display:block}
-  h1{margin:.8rem 0 0;font-family:var(--serif);font-weight:400;font-size:1.75rem;
-    line-height:1.15}
-  .where{margin:.3rem 0 0;font-size:.9rem;color:var(--muted)}
+    padding:0 1.15rem 1.2rem}
+  .shot h1{margin:0;font-family:var(--serif);font-weight:400;font-size:2rem;
+    line-height:1.1;color:#fff}
+  .shot .where{margin:.35rem 0 0;font-size:.95rem;color:rgba(255,255,255,.82)}
+  /* How many follow them, on the paper under the card rather than on the
+     photograph — it is a fact about them, not part of their picture. */
+  .count{margin:.9rem 0 0;font-size:.9rem;color:var(--muted);
+    font-variant-numeric:tabular-nums}
   .goal{margin:1rem 0 0;font-family:var(--serif);font-size:1.1rem;line-height:1.6;
     color:var(--ink-2);text-align:left;width:100%;max-width:28rem}
 
@@ -114,7 +127,7 @@
   .days b{width:1.8rem;height:1.8rem;display:grid;place-items:center;border-radius:.4rem;
     font-size:.73rem;font-weight:500;background:var(--raise);border:1px solid var(--line);
     color:var(--muted)}
-  .days b.on{background:var(--t2);border-color:var(--t2);color:#fff}
+  .days b.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 
   .theirs{margin:1.6rem 0 0;padding:0 1.15rem;width:100%}
   .theirs h3{margin:0 0 .3rem;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
@@ -210,29 +223,26 @@ function paint() {
   }
   const q = PERSON;
 
-  const cover = el("div", "cover");
-  if (q.cover) {
-    const img = Object.assign(document.createElement("img"),
-      { src: "/api/public-media?id=" + encodeURIComponent(q.cover), alt: "" });
-    img.addEventListener("error", () => img.remove());
-    cover.append(img);
-  }
-  box.append(cover);
-
-  const head = el("div", "head");
-  const av = el("div", "av");
+  /* One card, the size it is on the home screen. The cover is gone with it:
+     it was a decorative band above a small circle, and both existed to make
+     room for each other. */
+  const shot = el("div", "shot");
   if (q.photo) {
     const img = Object.assign(document.createElement("img"),
-      { src: "/api/public-media?id=" + encodeURIComponent(q.photo), alt: "" });
-    img.addEventListener("error", () => { img.remove(); av.textContent = initial(q.handle); });
-    av.append(img);
+      { src: "/api/public-media?id=" + encodeURIComponent(q.photo), alt: "", loading: "eager" });
+    img.addEventListener("error", () => { img.remove(); shot.prepend(el("div", "noshot", initial(q.handle))); });
+    shot.append(img);
   } else {
-    av.textContent = initial(q.handle);
+    shot.append(el("div", "noshot", initial(q.handle)));
   }
-  head.append(av, el("h1", null, q.handle));
-
+  const scrim = el("div", "scrim");
+  scrim.append(el("h1", null, q.handle));
   const where = [q.campus, q.here].filter(Boolean).join(" · ");
-  if (where) head.append(el("p", "where", where));
+  if (where) scrim.append(el("p", "where", where));
+  shot.append(scrim);
+  box.append(shot);
+
+  const head = el("div", "head");
   if (q.goal) head.append(el("p", "goal", q.goal));
 
   const facts = el("dl", "facts");
@@ -245,7 +255,7 @@ function paint() {
   };
   if (q.level) fact(T("bud.level"), q.level);
   if (q.trade) fact(T("bud.trades"), q.trade);
-  if (q.speaks && q.speaks.length) fact(T("bud.trades"), q.speaks.join(" · "));
+  if (q.speaks && q.speaks.length) fact(T("bud.speaks"), q.speaks.join(" · "));
   if (q.free && q.free.length) {
     const days = el("div", "days");
     T("bud.days").split(",").forEach((d, i) => {
@@ -271,7 +281,7 @@ function paint() {
   // who follows whom among foreign students is a social graph, and this is
   // not the product that publishes one.
   if (q.followers) {
-    head.append(el("p", "where",
+    head.append(el("p", "count",
       q.followers === 1 ? T("bud.followers1") : T("bud.followers", { n: q.followers })));
   }
 
