@@ -178,7 +178,7 @@
 <body>
 <main>
   <div class="bar">
-    <a class="back" href="/feed" id="back" aria-label="Back">
+    <a class="back" href="/browse" id="back" aria-label="Back">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
     </a>
     <span id="langslot" style="margin-left:auto;display:flex"></span>
@@ -317,7 +317,7 @@ function paint() {
     }
   }
   const feed = el("a", null, T("bud.back"));
-  feed.href = "/feed";
+  feed.href = "/browse";
   acts.append(feed);
   if (!q.mine) {
     const rep = el("button", "warn", T("bud.reportThem"));

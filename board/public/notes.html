@@ -225,7 +225,7 @@ function paint() {
   $("title").textContent = T("note.inbox");
   $("rulelabel").textContent = T("note.inbox");
   $("safety").textContent = T("note.safety");
-  $("back").setAttribute("aria-label", T("bud.back"));
+  $("back").setAttribute("aria-label", T("nav.back"));
   $("sub").textContent = UNREAD ? T("note.newOnes", { n: UNREAD }) : T("note.inboxSub");
 
   const box = $("list");
@@ -357,7 +357,7 @@ function row(n) {
 }
 
 $("back").addEventListener("click", () => {
-  if (history.length > 1) history.back(); else location.href = "/feed";
+  if (history.length > 1) history.back(); else location.href = "/browse";
 });
 
 setLang(pickLang());

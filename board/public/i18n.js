@@ -523,6 +523,8 @@ export const STRINGS = {
   ],
   "key.done":          ["Welcome back.", "欢迎回来。"],
   "nav.browse":        ["Browse", "看看"],
+  // The arrow that just goes back, wherever back was.
+  "nav.back":          ["Back", "返回"],
   "nav.feed":          ["Feed", "动态"],
   "nav.profile":       ["Profile", "我的"],
   "nav.new":           ["Post", "发布"],
@@ -578,7 +580,10 @@ export const STRINGS = {
   "bud.sub":           ["{n} people near you, looking", "附近有 {n} 个人在找"],
   "bud.subOne":        ["1 person near you, looking", "附近有 1 个人在找"],
   "bud.open":          ["Find a study buddy", "找个学习搭子"],
-  "bud.back":          ["Back to the feed", "回到动态"],
+  // Where somebody came from is the deck, not the posts: a profile is reached
+  // by browsing or by a link somebody sent, and neither of those started on the
+  // feed.
+  "bud.back":          ["Back to browsing", "继续看看"],
   "bud.empty.head":    ["Nobody is looking yet.", "还没有人在找。"],
   "bud.empty.body": [
     "Say you are looking and you will be the first. Most people want the same trade — their Chinese for your English.",
