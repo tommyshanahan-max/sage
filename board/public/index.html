@@ -577,6 +577,63 @@
   .foot{margin:2.5rem 0 0;padding-top:1.3rem;border-top:1px solid var(--line);
     color:var(--muted);font-size:.82rem;line-height:1.65}
 
+
+  /* ---- the deck, at the top of the feed ---------------------------------
+   *
+   * Browse used to be its own page. It is now the first thing on this one,
+   * because a stack of three cards is exhausted in ten seconds and a page that
+   * ends there ends the visit with it. Underneath the last card is the feed,
+   * so running out of people starts the next thing rather than finishing.
+   *
+   * The card catches sideways drags only — `touch-action:pan-y` leaves the
+   * vertical gesture to the page, which is the whole idea. */
+  .deck{position:relative;width:100%;height:min(62vh,34rem);
+    margin:0 0 .9rem;touch-action:pan-y;overflow:hidden;border-radius:1.3rem}
+  .pc{position:absolute;inset:0;border-radius:1.3rem;overflow:hidden;
+    background:var(--raise);box-shadow:var(--shadow);
+    display:flex;flex-direction:column;justify-content:flex-end;
+    will-change:transform;transition:transform .28s ease,opacity .28s ease}
+  .pc.gone{opacity:0}
+  .pc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  /* No photograph is not a hole: the initial, big, on the accent. */
+  .pc .noshot{position:absolute;inset:0;display:grid;place-items:center;
+    background:var(--accent);color:var(--accent-ink);
+    font-family:var(--serif);font-size:8rem;line-height:1}
+  /* Words on a scrim, not straight onto the photograph: white on a picture is
+     legible right up until somebody uploads a bright one. */
+  .pc .scrim{position:relative;padding:5rem 1.2rem 1.2rem;
+    background:linear-gradient(to top,rgba(10,14,22,.86),rgba(10,14,22,.52) 42%,rgba(10,14,22,0))}
+  .pc h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.8rem;
+    line-height:1.1;color:#fff}
+  .pc .where{margin:.3rem 0 0;font-size:.92rem;color:rgba(255,255,255,.82)}
+  .pc .goal{margin:.6rem 0 0;font-family:var(--serif);font-size:1.02rem;line-height:1.5;
+    color:rgba(255,255,255,.92);display:-webkit-box;-webkit-line-clamp:3;
+    -webkit-box-orient:vertical;overflow:hidden}
+  .pc .pdays{display:flex;gap:.25rem;margin:.7rem 0 0;flex-wrap:wrap}
+  .pc .pdays b{width:1.7rem;height:1.7rem;display:grid;place-items:center;border-radius:.4rem;
+    font-size:.7rem;font-weight:500;background:rgba(255,255,255,.16);color:rgba(255,255,255,.6)}
+  .pc .pdays b.on{background:#fff;color:#14203a}
+
+  .pacts{display:flex;gap:.6rem;width:100%}
+  /* Flex hands a child its longest word before it takes space from a sibling,
+     so both need telling they may be narrower than their content. */
+  .pacts>*{flex:1 1 0;min-width:0}
+  .pacts button,.pacts a{border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);border-radius:99px;padding:.8rem 1rem;font-size:1rem;
+    text-align:center;text-decoration:none}
+  .pacts .primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .pcount{margin:.7rem 0 0;text-align:center;font-size:.82rem;color:var(--muted);
+    font-variant-numeric:tabular-nums}
+  .psafety{margin:.5rem 0 1.9rem;text-align:center;font-size:.78rem;line-height:1.5;
+    color:var(--muted)}
+  .bnone{margin:0 0 1.9rem;padding:1.6rem 1.1rem;text-align:center;color:var(--muted);
+    background:var(--raise);border:1px solid var(--line);border-radius:1rem}
+  .bnone b{display:block;font-family:var(--serif);font-weight:400;font-size:1.15rem;
+    color:var(--ink);margin:0 0 .35rem}
+  .bnone p{margin:0 auto 1rem;max-width:24rem;font-size:.9rem;line-height:1.55}
+  .bnone a{display:inline-block;border:0;background:var(--accent);color:var(--accent-ink);
+    border-radius:99px;padding:.65rem 1.4rem;font-size:.95rem;text-decoration:none}
+
   @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -619,13 +676,24 @@
     <span id="langslot"></span>
   </div>
 
+  <!-- Browse first, the feed underneath.
+       This used to be its own page at /browse. Two tabs now point at the two
+       ends of one page, because the deck runs out after a handful of people
+       and the thing to do when it does is read what everybody said. -->
+  <div class="rule"><span id="brwlabel">Browse students</span><i></i></div>
+  <div class="deck" id="deck"></div>
+  <div class="pacts" id="pacts" hidden></div>
+  <p class="pcount" id="pcount"></p>
+  <p class="psafety" id="psafety"></p>
+  <div class="bnone" id="bnone" hidden></div>
+
   <div class="me" id="me" hidden></div>
 
   <div class="tutor" id="tutor" hidden></div>
 
   <div class="topics" id="topics"></div>
 
-  <div class="rule"><span id="rulelabel">Everyone · Newest first</span><i></i></div>
+  <div class="rule" id="posts"><span id="rulelabel">Everyone · Newest first</span><i></i></div>
 
   <div id="board"></div>
   <div class="none" id="none" hidden></div>
@@ -1674,7 +1742,11 @@ async function drawTutor() {
     }));
   }
   box.append(doable("tut.buddy", "tut.buddyWhat", () => { location.href = "/buddies"; }));
-  box.append(doable("brw.open", "brw.openWhat", () => { location.href = "/browse"; }));
+  // Browsing is the top of this page now, so this scrolls rather than
+  // navigates — sending somebody to the page they are already on reloads it
+  // and loses the deck's place.
+  box.append(doable("brw.open", "brw.openWhat",
+    () => window.scrollTo({ top: 0, behavior: "smooth" })));
 
   box.append(el("div", "grp", T("tut.next")));
   box.append(vote("tut.type", "tut.typeWhat", "type"));
@@ -1711,6 +1783,191 @@ async function countNotes() {
   } catch { /* the tab is still a tab without a number on it */ }
 }
 
+/* ---- browse, at the top of this page ---------------------------------------
+ *
+ * One person, filling the card. A photograph is the reason this exists, so it
+ * gets the whole thing and the words sit on top of it.
+ *
+ * There is no yes and no no here. A flick moves on; it is how you turn the
+ * page, not a verdict on somebody's face — which is the whole difference
+ * between this and the app it borrows its shape from.
+ */
+let PEOPLE = [], AT = 0;
+
+async function loadPeople() {
+  try {
+    const d = await fetch("/api/people", { cache: "no-store",
+      headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
+    // Yourself excluded. Browsing your own photograph is not a feature.
+    PEOPLE = ((d && d.people) || []).filter((q) => !q.mine);
+  } catch { PEOPLE = []; }
+  drawDeck();
+}
+
+function nextPerson() {
+  if (!PEOPLE.length) return;
+  AT = (AT + 1) % PEOPLE.length;
+  drawDeck();
+}
+
+function personCard(q) {
+  const box = el("div", "pc");
+  if (q.photo) {
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/public-media?id=" + encodeURIComponent(q.photo), alt: "", loading: "eager" });
+    img.addEventListener("error", () => { img.remove(); box.prepend(el("div", "noshot", initial(q.handle))); });
+    box.append(img);
+  } else {
+    box.append(el("div", "noshot", initial(q.handle)));
+  }
+
+  const scrim = el("div", "scrim");
+  scrim.append(el("h2", null, q.handle || T("board.someone")));
+  const where = [q.campus, q.here].filter(Boolean).join(" · ");
+  if (where) scrim.append(el("p", "where", where));
+  if (q.goal) scrim.append(el("p", "goal", q.goal));
+  if (q.free && q.free.length) {
+    const days = el("div", "pdays");
+    T("bud.days").split(",").forEach((d, i) => {
+      days.append(el("b", q.free.indexOf(i) >= 0 ? "on" : "", d));
+    });
+    scrim.append(days);
+  }
+  box.append(scrim);
+  return box;
+}
+
+function drawDeck() {
+  $("brwlabel").textContent = T("brw.title");
+
+  const deck = $("deck");
+  fill(deck);
+  const n = PEOPLE.length;
+  // Nobody on the list is not an empty screen here — the feed is still under
+  // it — so the whole block collapses to one small card that says so.
+  deck.hidden = !n;
+  $("pacts").hidden = !n;
+  $("psafety").hidden = !n;
+  $("psafety").textContent = T("bud.safety");
+  $("pcount").textContent = n ? T("brw.of", { n: AT + 1, total: n }) : "";
+  $("bnone").hidden = Boolean(n);
+
+  if (!n) {
+    const go = el("a", null, T("bud.open"));
+    go.href = "/buddies";
+    fill($("bnone"), el("b", null, T("brw.none")), el("p", null, T("brw.noneBody")), go);
+    return;
+  }
+
+  // The one behind, so moving on reveals a person rather than a hole.
+  if (n > 1) {
+    const behind = personCard(PEOPLE[(AT + 1) % n]);
+    behind.style.transform = "scale(.96) translateY(10px)";
+    deck.append(behind);
+  }
+  const top = personCard(PEOPLE[AT]);
+  deck.append(top);
+  dragCard(top);
+
+  const acts = $("pacts");
+  fill(acts);
+  const q = PEOPLE[AT];
+  const hi = el("a", "primary", T("brw.hello"));
+  hi.href = "/p/" + encodeURIComponent((q.handle || "").toLowerCase());
+  const on = el("button", null, T("brw.next"));
+  on.type = "button";
+  on.addEventListener("click", nextPerson);
+  acts.append(hi, on);
+}
+
+/* Flick to move on. Pointer events rather than touch events, so a mouse on a
+ * laptop behaves the same as a thumb — and the card follows the finger, because
+ * a gesture that only acts at the end of itself feels broken on the way. */
+function dragCard(box) {
+  let x0 = null, dx = 0;
+  const go = (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    x0 = e.clientX; dx = 0;
+    box.style.transition = "none";
+    box.setPointerCapture?.(e.pointerId);
+  };
+  const move = (e) => {
+    if (x0 === null) return;
+    dx = e.clientX - x0;
+    box.style.transform = `translateX(${dx}px) rotate(${dx / 34}deg)`;
+  };
+  const end = () => {
+    if (x0 === null) return;
+    const far = Math.abs(dx) > 90;
+    box.style.transition = "";
+    if (far) {
+      box.style.transform = `translateX(${dx > 0 ? 700 : -700}px) rotate(${dx / 12}deg)`;
+      box.classList.add("gone");
+      setTimeout(nextPerson, 190);
+    } else {
+      box.style.transform = "";
+    }
+    x0 = null;
+  };
+  box.addEventListener("pointerdown", go);
+  box.addEventListener("pointermove", move);
+  box.addEventListener("pointerup", end);
+  box.addEventListener("pointercancel", end);
+}
+
+/* Arrow keys, but only while the deck is the thing on screen and nothing is
+ * being typed into. A page-wide arrow handler on a page that is mostly a feed
+ * would fight the scroll. */
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  const a = document.activeElement;
+  if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+  const r = $("deck").getBoundingClientRect();
+  if (r.bottom < 80 || r.top > window.innerHeight - 80) return;
+  nextPerson();
+});
+
+/* Two tabs, one page.
+ *
+ * Browse and Feed are now the top and the middle of the same document, so the
+ * buttons scroll rather than navigate — and which one is lit follows where you
+ * actually are, because a bar that says Browse while you are reading posts is
+ * worse than no bar. The hrefs stay real: without JavaScript, or on a middle
+ * click, they still go somewhere. */
+function markNav() {
+  const onFeed = $("posts").getBoundingClientRect().top < window.innerHeight * 0.45;
+  $("navbrowse").setAttribute("aria-current", onFeed ? "false" : "page");
+  $("navfeed").setAttribute("aria-current", onFeed ? "page" : "false");
+  showTranslate(onFeed);
+}
+
+/* The translate button belongs to the words, not to the faces.
+ *
+ * It is fixed to the bottom right, which is exactly where the deck's Say
+ * hello / Next row lands — a floating button sitting on top of a button is a
+ * tap that does the wrong thing. So it appears when the posts do. */
+function showTranslate(onFeed) {
+  if (onFeed === undefined) onFeed = $("navfeed").getAttribute("aria-current") === "page";
+  $("tfab").hidden = !translateOn || !onFeed;
+}
+$("navbrowse").addEventListener("click", (e) => {
+  if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+  e.preventDefault();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+$("navfeed").addEventListener("click", (e) => {
+  if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+  e.preventDefault();
+  $("posts").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+let navTick = false;
+window.addEventListener("scroll", () => {
+  if (navTick) return;
+  navTick = true;
+  requestAnimationFrame(() => { navTick = false; markNav(); });
+}, { passive: true });
+markNav();
+
 function repaint() {
   const y = window.scrollY;
   drawMe();
@@ -1719,6 +1976,7 @@ function repaint() {
   // rebuild it like everything else. Left out, he answered in English on a page
   // that had switched to Chinese.
   drawTutor();
+  drawDeck();
   draw();
   window.scrollTo(0, y);
 }
@@ -1728,7 +1986,7 @@ paintNav();
 
 fetch("/api/contact").then((r) => r.json()).then((d) => {
   translateOn = Boolean(d && d.translate);
-  $("tfab").hidden = !translateOn;
+  showTranslate();
   // The board is already drawn by the time this answers, and whether each post
   // gets a translate button depends on it. Without this the button appears or
   // not depending on which of two fetches won, which is how one language ended
@@ -2148,6 +2406,7 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
   .catch(() => { drawMe(); paintNav(); });
 
 load();
+loadPeople();
 countNotes();
 loadWanted();
 </script>

@@ -207,7 +207,11 @@ app.get(["/notes", "/notes/"], (req, res, next) => page("notes.html", req, res, 
 // Everyone on the study-buddy list, one at a time, photograph first. Only
 // people who put themselves on that list are in it — the same opt-in the list
 // itself uses, so nobody is browsable who did not choose to be findable.
-app.get(["/browse", "/browse/"], (req, res, next) => page("browse.html", req, res, next));
+//
+// The same document as the feed. Browsing is now the top of that page and the
+// posts are underneath it, so this address is a scroll position rather than a
+// page — and one copy of the feed rather than two.
+app.get(["/browse", "/browse/"], (req, res, next) => page("index.html", req, res, next));
 
 /* One person, at an address that can be sent to somebody.
  *

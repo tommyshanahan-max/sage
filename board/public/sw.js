@@ -31,7 +31,11 @@
  * beats no answer.
  */
 
-const CACHE = "board-v1";
+/* Bumped when a shell file changes shape rather than content. v2: /browse is
+ * the feed document now, and a browser holding the old standalone page would
+ * serve it offline for as long as that cache lived. Activating deletes every
+ * cache that is not this one. */
+const CACHE = "board-v2";
 
 // The shell: enough to open and be recognisable with no network. Deliberately
 // not the API — a cached /api/board is a cached set of somebody's posts, and
