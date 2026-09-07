@@ -488,7 +488,9 @@
   .av.house{background:var(--accent);color:var(--accent-ink);overflow:hidden;
     font-family:var(--sans);font-size:1.5rem;-webkit-font-smoothing:antialiased}
   a.av{color:var(--accent-ink);text-decoration:none}
-  .body{flex:1;min-width:0}
+  /* A SIZE CONTAINER, so a photograph can be measured against the column it
+     is in rather than against the phone. See .pic below. */
+  .body{flex:1;min-width:0;container-type:inline-size}
 
   .eyebrow{display:flex;align-items:center;gap:.45rem;margin:0 0 .3rem}
   .eyebrow i{width:.45rem;height:.45rem;border-radius:50%;flex:0 0 auto}
@@ -572,8 +574,34 @@
     background:var(--accent);color:var(--accent-ink);border-radius:99px;
     padding:.55rem 1.2rem;font-size:.95rem;text-decoration:none}
   .takeit:hover{opacity:.92}
+  /* A CEILING ON HEIGHT, NOT A FIXED SHAPE.
+   *
+   * A phone selfie is often 9:16, and most of the top of one is whatever was
+   * above the person — a car roof, a sky, a wall. At full height it costs the
+   * whole screen to show a face in the lower third.
+   *
+   * So: nothing taller than five-to-four, cropped from the middle. That is the
+   * shape a feed has settled on everywhere, and it is a real cut, not a token
+   * one: a 9:16 selfie loses thirty per cent of its height, the 2:3 a camera
+   * makes loses seventeen. Landscape and square photographs are under the
+   * ceiling already and are shown whole.
+   *
+   * MEASURED IN cqw, AGAINST THE COLUMN, NOT THE PHONE. A ceiling in vw was
+   * tried first and it is not one rule but a different rule per screen: the
+   * photograph sits in a column narrower than the window by an avatar and two
+   * paddings, and that gap is a bigger share of a small phone than of a wide
+   * one. The same 94vw that trimmed a 9:16 selfie sensibly on a 390px phone
+   * was also cutting fourteen per cent off an ordinary 2:3 portrait, and on a
+   * desktop it clamped everything to something squarer still. 125cqw is one
+   * twenty-five per cent of the photograph's own width, which is five-to-four
+   * and nothing else, anywhere. A browser too old for container queries drops
+   * the line and shows the photograph whole, which is where we were.
+   *
+   * The trim comes off the top and the bottom equally — deliberately, because
+   * the last time I decided which end held the person, a real photograph
+   * proved me wrong. */
   .pic{display:block;width:100%;border-radius:.7rem;margin:.65rem 0 0;
-    background:var(--raise)}
+    max-height:125cqw;object-fit:cover;background:var(--raise)}
 
   /* ---- what you can do to it --------------------------------------------- */
   .acts{display:flex;align-items:center;gap:1.15rem;margin:.85rem 0 0;flex-wrap:wrap}
