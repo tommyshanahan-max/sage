@@ -43,6 +43,20 @@
 	# The app answers "/" itself rather than serving a static file, because the
 	# share card needs its own absolute address written into it and the server
 	# only learns that from the request.
+	# The counter's two public paths, and only those two — same arrangement the
+	# brand page uses, and for the same reason: same origin as the page, so
+	# reporting a visit needs no CORS preflight and no third-party request, on
+	# a connection where every extra round trip is one that can fail.
+	#
+	# This board was not counted at all until now. The snippet lived only on
+	# the brand page, so every figure anybody read about "the site" was the
+	# marketing page and none of it was the app.
+	@count path /a/e /a/lx.js
+	handle @count {
+		uri strip_prefix /a
+		reverse_proxy analytics:3000
+	}
+
 	handle {
 		reverse_proxy board:8080
 	}

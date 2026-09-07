@@ -261,6 +261,28 @@ export const followersOf = (follows, id) =>
  * it. Reporting hands the text to the queue — and that is the only way a note
  * is ever read by anybody but the two people concerned.
  * ------------------------------------------------------------------------- */
+/* Somebody asking for a thing that is not built.
+ *
+ * The whole record is a device hash, a name for the thing, and when — no text,
+ * because there is nothing here to say and a free-text field on a button is an
+ * invitation to put something in it that then has to be moderated. */
+export function cleanWant(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const by = String(raw.by ?? "").slice(0, 64);
+  const want = String(raw.want ?? "").slice(0, 24);
+  // A short allow-list rather than any string: this is written from a public
+  // route, and an open field would make the counter a place to store text.
+  if (!by || !["type", "card"].includes(want)) return null;
+  return { by, want, at: String(raw.at ?? "").slice(0, 40) || new Date().toISOString() };
+}
+
+/** How many separate people asked for each thing. */
+export function wantCounts(wants) {
+  const out = {};
+  for (const w of wants || []) out[w.want] = (out[w.want] || 0) + 1;
+  return out;
+}
+
 export function cleanNote(raw) {
   if (!raw || typeof raw !== "object") return null;
   const id = String(raw.id || "");
@@ -342,7 +364,23 @@ export function cleanBoard(raw) {
   }
   notes.sort((a, b) => (b.at || "").localeCompare(a.at || ""));
 
-  return { posts, people, follows, notes };
+  /* What somebody said they wanted, when it did not exist yet.
+   *
+   * One row per person per thing, not per press — the question is how many
+   * people want it, and letting one enthusiast press four times answers a
+   * different question badly. */
+  const wants = [];
+  const asked = new Set();
+  for (const r of (Array.isArray(raw?.wants) ? raw.wants : [])) {
+    const w = cleanWant(r);
+    if (!w) continue;
+    const key = w.by + ":" + w.want;
+    if (asked.has(key)) continue;
+    asked.add(key);
+    wants.push(w);
+  }
+
+  return { posts, people, follows, notes, wants };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an

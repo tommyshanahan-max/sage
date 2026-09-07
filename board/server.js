@@ -626,6 +626,50 @@ app.post("/api/note/report", express.json({ limit: "16kb" }), async (req, res) =
   res.json({ ok: true });
 });
 
+/* Saying you want a thing that does not exist yet.
+ *
+ * The two Sage offers — the type sort and the card — are not built. Rather
+ * than build both and find out afterwards which one anybody wanted, the offer
+ * ships first and this counts the answer.
+ *
+ * Deliberately not a fake door: the page says plainly that it is not built and
+ * that pressing puts you on the list to be told. A tap that pretends to lead
+ * somewhere and does not is a thing you can only do to a person once, and this
+ * board has about forty people who have ever done anything on it.
+ *
+ * One row per person per thing, enforced in the store — the question is how
+ * many people want it, and one enthusiast pressing four times answers a
+ * different question badly.
+ */
+app.post("/api/want", express.json({ limit: "4kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const want = String(req.body?.want || "");
+  if (!me) return res.status(400).json({ error: "no" });
+
+  const row = store.cleanWant({ by: me, want, at: new Date().toISOString() });
+  if (!row) return res.status(400).json({ error: "no such thing" });
+
+  const counts = await change((board) => {
+    board.wants.push(row);
+    // Re-cleaned so the dedup rule lives in one place rather than here as well.
+    board.wants = store.cleanBoard({ wants: board.wants }).wants;
+    return store.wantCounts(board.wants);
+  });
+  res.json({ ok: true, want: row.want, counts });
+});
+
+/** What this browser has already asked for, so the page does not offer a thing
+ *  twice and can say "you are on the list" instead. */
+app.get("/api/want", async (req, res) => {
+  const board = await store.load(FILE);
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  res.set("Cache-Control", "no-store");
+  res.json({
+    mine: me ? board.wants.filter((w) => w.by === me).map((w) => w.want) : [],
+    counts: store.wantCounts(board.wants),
+  });
+});
+
 /* Follow, and unfollow, which is the same button. */
 app.post("/api/follow", express.json({ limit: "8kb" }), async (req, res) => {
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
@@ -961,6 +1005,10 @@ app.get("/api/count", async (_req, res) => {
     // number on this page that is a task rather than a result.
     held: board.posts.filter((p) => p.state === "held" && store.isOwnPost(p)).length,
     facesHeld: board.people.filter((q) => q.photoState !== "published" && (q.photo || q.cover)).length,
+    // How many separate people have asked for each unbuilt thing. On the
+    // public counter because it is a fact about the board, and because the
+    // panel reads this endpoint already.
+    wants: store.wantCounts(board.wants),
   });
 });
 

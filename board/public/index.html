@@ -262,6 +262,30 @@
     text-align:center;box-shadow:0 0 0 2px var(--paper)}
   .bar a{position:relative}
 
+  /* The tutor, asking which of two unbuilt things is worth building.
+     Above the topics because it is a question, and a question under the feed
+     is a question nobody answers. It removes itself once answered — a board
+     that keeps asking after you have replied is not listening. */
+  .tutor{background:var(--raise);border:1px solid var(--line);border-radius:1rem;
+    padding:1.05rem 1.1rem;margin:0 0 1.4rem}
+  .tutor .who{display:flex;align-items:center;gap:.6rem;margin:0 0 .5rem}
+  .tutor .who i{width:1.9rem;height:1.9rem;border-radius:50%;flex:0 0 auto;
+    background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;
+    font-style:normal;font-size:.95rem;font-family:var(--sans)}
+  .tutor .who b{font-family:var(--serif);font-weight:400;font-size:1.05rem}
+  .tutor .hi{margin:0;font-family:var(--serif);font-size:1.05rem;line-height:1.55;
+    color:var(--ink-2)}
+  .tutor .opt{margin:.85rem 0 0;padding:.8rem .9rem;border:1px solid var(--line);
+    border-radius:.75rem;background:var(--paper)}
+  .tutor .opt h4{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
+  .tutor .opt p{margin:.3rem 0 0;font-size:.88rem;line-height:1.55;color:var(--ink-2)}
+  .tutor .opt button{margin:.7rem 0 0;border:1px solid var(--accent);
+    background:var(--accent);color:var(--accent-ink);border-radius:99px;
+    padding:.45rem 1.1rem;font-size:.88rem}
+  .tutor .opt button[disabled]{background:var(--raise);border-color:var(--line);
+    color:var(--muted)}
+  .tutor .honest{margin:.85rem 0 0;font-size:.8rem;line-height:1.5;color:var(--muted)}
+
   .topics{display:flex;gap:.55rem;overflow-x:auto;padding:0 0 .35rem;
     margin:0 -1.15rem 1.5rem;padding-left:1.15rem;padding-right:1.15rem;
     scrollbar-width:none}
@@ -583,6 +607,8 @@
   </div>
 
   <div class="me" id="me" hidden></div>
+
+  <div class="tutor" id="tutor" hidden></div>
 
   <div class="topics" id="topics"></div>
 
@@ -1560,6 +1586,74 @@ function paintNav() {
   }
 }
 
+/* The tutor's one question: which of two unbuilt things would you use?
+ *
+ * Not a fake door. The card says plainly that neither exists and that pressing
+ * only counts the answer — because a tap that pretends to lead somewhere and
+ * does not is a thing you can do to a person once, and this board has about
+ * forty people who have ever done anything on it.
+ *
+ * It also fires the analytics `use` event, so the answer lands in the same
+ * day-by-day table every other feature is counted in rather than in a place
+ * only this feature knows about.
+ */
+let WANTED = [];
+
+async function drawTutor() {
+  const box = $("tutor");
+  if (!device) { box.hidden = true; return; }
+
+  fill(box);
+  const who = el("div", "who");
+  who.append(el("i", null, "\u7559"), el("b", null, T("tut.name")));
+  box.append(who, el("p", "hi", T("tut.hi")));
+
+  const offer = (key, what, label) => {
+    const wrap = el("div", "opt");
+    wrap.append(el("h4", null, T(key)), el("p", null, T(what)));
+    const b = el("button", null, T("tut.pick"));
+    b.type = "button";
+    if (WANTED.includes(label)) {
+      b.disabled = true;
+      b.textContent = T("tut.onList");
+    } else {
+      b.addEventListener("click", async () => {
+        b.disabled = true;
+        b.textContent = T("tut.onList");
+        WANTED.push(label);
+        // Counted twice on purpose: once where it can be read back per person,
+        // once where every other feature is already counted per day.
+        try { if (window.lx) window.lx("want-" + label); } catch { /* not fatal */ }
+        try {
+          await fetch("/api/want", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device, want: label }),
+          });
+        } catch { /* the press still showed; the count is the only loss */ }
+      });
+    }
+    wrap.append(b);
+    return wrap;
+  };
+
+  box.append(offer("tut.type", "tut.typeWhat", "type"));
+  box.append(offer("tut.card", "tut.cardWhat", "card"));
+  box.append(el("p", "honest", T("tut.honest")));
+  box.hidden = false;
+}
+
+/* What this browser has already said. Read once, so the card can say "noted"
+ * rather than asking a question somebody has already answered. */
+async function loadWanted() {
+  if (!device) return;
+  try {
+    const d = await fetch("/api/want", { cache: "no-store",
+      headers: { "x-board-device": device } }).then((r) => r.json());
+    WANTED = (d && d.mine) || [];
+  } catch { WANTED = []; }
+  drawTutor();
+}
+
 /* How many introductions are waiting. Its own request rather than a field on
  * the board: the board is public and cached at every layer, and a number that
  * belongs to one browser has no business travelling with it. */
@@ -2006,6 +2100,7 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
 
 load();
 countNotes();
+loadWanted();
 </script>
 
 <script>
@@ -2019,6 +2114,15 @@ countNotes();
  * Deferred to load: registration competes with the page's own requests, and
  * the first paint matters more than the second visit.
  */
+/* The counter. First-party, from this board's own hostname — the same file the
+ * brand page loads, proxied by Caddy so nothing here is a third-party request.
+ * Deferred: it must never compete with the board's own first paint. */
+if (!/[?&]nocount\b/.test(location.search)) {
+  const c = document.createElement("script");
+  c.src = "/a/lx.js"; c.defer = true;
+  document.head.append(c);
+}
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch(() => { /* not fatal */ });
