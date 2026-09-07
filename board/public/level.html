@@ -167,7 +167,14 @@
   .word{margin:1.6rem 0 0;font-family:var(--serif);font-weight:400;
     font-size:clamp(2.6rem,13vw,3.6rem);line-height:1.1;text-align:center;
     word-break:break-word}
-  .picks{margin:1.9rem 0 0}
+  /* Under the word, centred, quiet. It is an offer, not the question. */
+  .hear{display:flex;align-items:center;gap:.45rem;margin:.9rem auto 0;
+    border:1px solid var(--line);background:var(--raise);color:var(--ink-2);
+    border-radius:99px;padding:.45rem 1.05rem;font-size:.9rem}
+  .hear:hover{border-color:var(--accent);color:var(--accent)}
+  .hear svg{width:1.05rem;height:1.05rem;stroke:currentColor;fill:none;
+    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .picks{margin:1.5rem 0 0}
   .pick{text-align:center}
 
   /* ---- the result --------------------------------------------------------
@@ -214,6 +221,32 @@ const el = (t, c, x) => { const n = document.createElement(t); if (c) n.classNam
 const fill = (n, ...kids) => { while (n.firstChild) n.removeChild(n.firstChild);
   for (const k of kids) if (k) n.appendChild(k); };
 const P = (pair) => (Array.isArray(pair) ? pair[lang() === "zh" ? 1 : 0] : pair);
+
+const IN_WECHAT = /micromessenger/i.test(navigator.userAgent);
+
+/* The clipboard API where there is one and a secure context, an off-screen
+ * textarea where there is not — which is most of the browsers this has to work
+ * in. Same two routes as everywhere else on this board. */
+function copyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) { /* fall through */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:absolute;left:-9999px;top:0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);   // iOS ignores select() alone
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
 
 let device = "";
 try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
@@ -267,6 +300,38 @@ function answer(pick) {
   paint();
 }
 
+
+/* SHARING THE TEST ITSELF, before anybody has taken it.
+ *
+ * A result is worth sending because of what it says about the sender; the test
+ * is worth sending because of what it asks of the person who gets it. They are
+ * different shares and the second one is the one that brings somebody new —
+ * which is the whole of how this board grows, since there is no feed to be
+ * recommended by and no app store to be found in.
+ *
+ * So it is on the first screen, where somebody who has not started yet can
+ * send it to the friend they were going to compare with anyway.
+ */
+function inviteTo(path, words, btn) {
+  const url = location.origin + path;
+  const back = (w, hold) => {
+    btn.textContent = w;
+    setTimeout(() => { btn.textContent = T("share.invite"); }, hold || 2200);
+  };
+  // Inside WeChat a page may not open a share sheet — the ⋯ menu is the only
+  // way — so the honest version is the clipboard and where the real control is.
+  if (IN_WECHAT) {
+    back(T(copyText(words + " " + url) ? "act.wxCopied" : "act.wxUseMenu"), 3600);
+    return;
+  }
+  if (navigator.share) {
+    navigator.share({ title: T("site.title"), text: words, url })
+      .catch(() => { /* dismissed is not a failure */ });
+    return;
+  }
+  back(T(copyText(words + " " + url) ? "act.copied" : "act.copyFail"));
+}
+
 function drawIntro(box) {
   box.append(el("p", "eyebrow", T("lvl.eyebrow")));
   box.append(el("h1", null, T("lvl.title")));
@@ -280,11 +345,55 @@ function drawIntro(box) {
     row.append(b);
   }
   box.append(row);
+  const inv = el("button", "quiet wide", T("share.invite"));
+  inv.type = "button";
+  inv.addEventListener("click", () => inviteTo("/level", T("share.inviteLevel"), inv));
+  box.append(inv);
   box.append(el("p", "note", T("lvl.honest")));
   if (RESULT) {
     const again = el("p", "note", T("lvl.had", { n: RESULT.level }));
     box.append(again);
   }
+}
+
+/* HEARING THE CARD.
+ *
+ * The browser's own voice, not a request. speechSynthesis is on every phone
+ * this has to work on, costs nothing, needs no key on a public page and works
+ * with the network having a bad minute — which is the whole argument, because
+ * the alternative is an audio file per card fetched from a box in Tokyo.
+ *
+ * Never on its own. Audio that starts without being asked for is the reason
+ * people mute a page, and iOS will not allow it without a tap anyway.
+ *
+ * The button is only offered where there is a voice for the language: hiding
+ * it is better than a control that does nothing, and a phone with no Chinese
+ * voice installed is a real phone somebody is holding.
+ */
+const canSpeak = () => typeof window !== "undefined" && "speechSynthesis" in window;
+
+function voiceFor(tag) {
+  if (!canSpeak()) return null;
+  const want = tag.slice(0, 2).toLowerCase();
+  // Loaded asynchronously in most browsers, so this is asked each time rather
+  // than once at startup — the first call often returns an empty list.
+  const all = window.speechSynthesis.getVoices() || [];
+  return all.find((v) => String(v.lang || "").toLowerCase().startsWith(want)) || null;
+}
+
+function say(text, tag) {
+  if (!canSpeak()) return;
+  try {
+    window.speechSynthesis.cancel();      // a second tap restarts rather than queues
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = tag;
+    const v = voiceFor(tag);
+    if (v) u.voice = v;
+    // Slower than speech, because this is a word being learned rather than a
+    // sentence being read.
+    u.rate = 0.85;
+    window.speechSynthesis.speak(u);
+  } catch { /* a browser that has the object but not the voice */ }
 }
 
 function drawAsk(box) {
@@ -295,7 +404,26 @@ function drawAsk(box) {
   track.append(bar);
   box.append(track);
 
-  box.append(el("p", "word", CARD.q));
+  const tag = WHICH === "zh" ? "zh-CN" : "en-US";
+  const word = el("p", "word", CARD.q);
+  box.append(word);
+  if (voiceFor(tag)) {
+    const hear = el("button", "hear");
+    hear.type = "button";
+    hear.setAttribute("aria-label", T("lvl.hear"));
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    for (const d of ["M4 9.5h3.5L12 5.5v13L7.5 14.5H4z", "M16 9.2a4 4 0 0 1 0 5.6",
+                     "M18.8 6.4a8 8 0 0 1 0 11.2"]) {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d);
+      svg.append(path);
+    }
+    hear.append(svg, el("span", null, T("lvl.hear")));
+    hear.addEventListener("click", () => say(CARD.q, tag));
+    box.append(hear);
+  }
   const picks = el("div", "picks");
   for (const opt of CARD.options) {
     const b = el("button", "pick", opt);
@@ -420,6 +548,14 @@ function paint() {
   else if (RESULT) drawResult(box);
   else drawIntro(box);
   window.scrollTo(0, 0);
+}
+
+/* The voice list is empty on the first call in most browsers and arrives a
+ * moment later, so the card is drawn again when it does — otherwise the button
+ * is missing on the one card somebody sees first and present on every card
+ * after it. */
+if (canSpeak()) {
+  window.speechSynthesis.addEventListener?.("voiceschanged", () => { if (STATE) paint(); });
 }
 
 setLang(pickLang());

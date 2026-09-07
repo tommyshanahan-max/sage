@@ -695,6 +695,7 @@ export const STRINGS = {
   "lvl.myChinese":     ["My Chinese", "我的中文"],
   "lvl.myEnglish":     ["My English", "我的英文"],
   "lvl.count":         ["{n} of {total}", "第 {n} 题，共 {total} 题"],
+  "lvl.hear":          ["Hear it", "听一下"],
   "lvl.guess":         ["No idea is an answer. Pick one and it will come down a level.",
                         "不会就猜——猜错了它会往下调一级。"],
   "lvl.yours":         ["Around here", "大概在这一级"],
@@ -740,6 +741,13 @@ export const STRINGS = {
   // Written as somebody would write it about themselves, because that is who
   // is posting. Not "user completed the type sort".
   "share.feed":        ["Put this on the feed", "发到动态里"],
+  // Sending the test itself. Written as an invitation rather than as a link:
+  // this is the one that brings somebody who has never been here.
+  "share.invite":      ["Send this to a friend", "发给朋友"],
+  "share.inviteType":  ["Which of the sixteen are you? Twenty choices, two minutes:",
+                        "你是十六种里的哪一种？二十道选择，两分钟："],
+  "share.inviteLevel": ["How good is your Chinese, really? Four questions:",
+                        "你的中文到底什么水平？四道题就知道："],
   "share.up":          ["It is on the feed.", "已经发到动态里了。"],
   "share.type":        ["I came out {code}.", "我做出来是 {code}。"],
   "share.typeTitled":  ["I came out {code} — {title}.", "我做出来是 {code}——{title}"],

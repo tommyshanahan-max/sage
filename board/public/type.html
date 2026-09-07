@@ -272,6 +272,38 @@ function answer(item, pole) {
   paint();
 }
 
+
+/* SHARING THE TEST ITSELF, before anybody has taken it.
+ *
+ * A result is worth sending because of what it says about the sender; the test
+ * is worth sending because of what it asks of the person who gets it. They are
+ * different shares and the second one is the one that brings somebody new —
+ * which is the whole of how this board grows, since there is no feed to be
+ * recommended by and no app store to be found in.
+ *
+ * So it is on the first screen, where somebody who has not started yet can
+ * send it to the friend they were going to compare with anyway.
+ */
+function inviteTo(path, words, btn) {
+  const url = location.origin + path;
+  const back = (w, hold) => {
+    btn.textContent = w;
+    setTimeout(() => { btn.textContent = T("share.invite"); }, hold || 2200);
+  };
+  // Inside WeChat a page may not open a share sheet — the ⋯ menu is the only
+  // way — so the honest version is the clipboard and where the real control is.
+  if (IN_WECHAT) {
+    back(T(copyText(words + " " + url) ? "act.wxCopied" : "act.wxUseMenu"), 3600);
+    return;
+  }
+  if (navigator.share) {
+    navigator.share({ title: T("site.title"), text: words, url })
+      .catch(() => { /* dismissed is not a failure */ });
+    return;
+  }
+  back(T(copyText(words + " " + url) ? "act.copied" : "act.copyFail"));
+}
+
 function drawIntro(box) {
   box.append(el("p", "eyebrow", T("type.eyebrow")));
   box.append(el("h1", null, T("type.title")));
@@ -284,6 +316,12 @@ function drawIntro(box) {
   go.type = "button";
   go.addEventListener("click", start);
   box.append(go);
+  /* Send the test, not a result. Under the Start button, quiet: somebody who
+     came here to take it should not have to step over an invitation first. */
+  const inv = el("button", "quiet wide", T("share.invite"));
+  inv.type = "button";
+  inv.addEventListener("click", () => inviteTo("/type", T("share.inviteType"), inv));
+  box.append(inv);
   box.append(el("p", "note", T("type.honest")));
 }
 
