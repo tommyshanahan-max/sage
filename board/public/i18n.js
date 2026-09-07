@@ -736,6 +736,22 @@ export const STRINGS = {
   "type.puton":        ["On your page.", "已经放上去了。"],
   // The letters travel in the words, not in the link. There is no page that
   // says INFJ about somebody who has not chosen to say it themselves.
+  // ---- a result, put on the feed -------------------------------------------
+  // Written as somebody would write it about themselves, because that is who
+  // is posting. Not "user completed the type sort".
+  "share.feed":        ["Put this on the feed", "发到动态里"],
+  "share.up":          ["It is on the feed.", "已经发到动态里了。"],
+  "share.type":        ["I came out {code}.", "我做出来是 {code}。"],
+  "share.typeTitled":  ["I came out {code} — {title}.", "我做出来是 {code}——{title}"],
+  "share.levelZh": [
+    "My Chinese came out at level {n} of 10 — {band}. {can}",
+    "我的中文测出来是第 {n} 级（共 10 级）——{band}。{can}",
+  ],
+  "share.levelEn": [
+    "My English came out at level {n} of 10 — {band}. {can}",
+    "我的英文测出来是第 {n} 级（共 10 级）——{band}。{can}",
+  ],
+
   "type.share":        ["I came out {code}. Twenty choices, two minutes:",
                         "我做出来是 {code}。二十道选择，两分钟："],
   "type.shareTitled":  ["I came out {code} — {title}. Twenty choices, two minutes:",

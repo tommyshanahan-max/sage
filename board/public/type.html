@@ -320,6 +320,45 @@ function drawAsk(box) {
   }
 }
 
+
+/* PUTTING A RESULT ON THE FEED.
+ *
+ * A result somebody is pleased with is the one thing they will happily write a
+ * post about, and a board with four people on it needs posts more than it
+ * needs anything else. So the button is here, on the screen where they have
+ * just been told something about themselves.
+ *
+ * It posts as them, under their own name — not as the house and not
+ * anonymously. Their name is the one this browser already posts under; if
+ * there is not one yet it is asked for once, the same way a reply asks.
+ */
+async function toFeed(words, topic, btn, say) {
+  let who = "";
+  try { who = localStorage.getItem("board:who") || ""; } catch { /* private window */ }
+  if (!who) who = (prompt(T("act.answerAs")) || "").trim();
+  if (!who) return;
+  try { localStorage.setItem("board:who", who); } catch { /* fine */ }
+
+  btn.disabled = true;
+  btn.textContent = T("act.sending");
+  try {
+    const r = await fetch("/api/post", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note: words, handle: who, topic, device }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "no");
+    // Held and published are different outcomes and the words say which. A
+    // post that is waiting and does not say so reads as one that failed.
+    say.className = "said ok";
+    say.textContent = T(d.state === "published" ? "share.up" : "act.replyHeld");
+    btn.hidden = true;
+  } catch {
+    btn.disabled = false;
+    btn.textContent = T("act.again");
+  }
+}
+
 function drawResult(box) {
   const r = RESULT;
   box.append(el("p", "eyebrow", T("type.yours")));
@@ -397,6 +436,19 @@ function drawResult(box) {
     box.append(wrap);
   }
 
+
+  /* On the feed, as them. The four letters plus what they are called is the
+     whole post — the axes underneath are for the person who took it. */
+  const feedRow = el("div", "row");
+  const toBoard = el("button", "quiet wide", T("share.feed"));
+  toBoard.type = "button";
+  const fsaid = el("p", "said");
+  toBoard.addEventListener("click", () => toFeed(
+    title ? T("share.typeTitled", { code: r.code, title: P(title) })
+          : T("share.type", { code: r.code }),
+    "Tests", toBoard, fsaid));
+  feedRow.append(toBoard);
+  box.append(feedRow, fsaid);
 
   const row = el("div", "row");
   const again = el("button", "quiet", T("type.again"));
