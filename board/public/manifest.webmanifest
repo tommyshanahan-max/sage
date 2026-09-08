@@ -1,7 +1,7 @@
 {
-  "name": "Liuxuesheng 留学生",
-  "short_name": "留学生",
-  "description": "A private meeting place for people in China, and the people who want to reach them. Nothing to install. No account. No VPN.",
+  "name": "The Exchange 交换",
+  "short_name": "交换",
+  "description": "Find the other half of what you are doing in China. One side asks, the other answers. Nothing to install. No account. No VPN.",
   "start_url": "/browse",
   "scope": "/",
   "display": "standalone",
@@ -16,8 +16,8 @@
     { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Browse students", "url": "/browse" },
+    { "name": "Browse people", "url": "/browse" },
     { "name": "The Tutor", "url": "/feed" },
-    { "name": "Study buddies", "url": "/buddies" }
+    { "name": "Messages", "url": "/notes" }
   ]
 }

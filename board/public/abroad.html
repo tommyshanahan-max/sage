@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="留学生">
+<meta name="apple-mobile-web-app-title" content="交换">
 <title>在考虑出国 — 问问正在经历的人</title>
 <meta name="description" content="能问的人几乎都是靠说“值得”赚钱的。这里可以问真正去过的人，还有为了读书搬到中国来的外国学生。">
 
@@ -56,8 +56,8 @@
 <div class="top">
   <div class="wrap">
     <a class="brand" href="/abroad">
-      <i>留</i>
-      <span><b id="brandname">Liuxuesheng</b><small>留学生</small></span>
+      <i>换</i>
+      <span><b id="brandname">The Exchange</b><small>交换</small></span>
     </a>
     <span id="langslot" style="margin-left:auto;display:flex;gap:.6rem;align-items:center"></span>
     <a class="go" id="navopen" href="/feed"></a>
@@ -127,7 +127,7 @@
 
 <footer>
   <div class="wrap">
-    <div class="col"><b>Liuxuesheng · 留学生</b><span id="footAbout"></span></div>
+    <div class="col"><b>The Exchange · 交换</b><span id="footAbout"></span></div>
     <div class="col">
       <b id="footBack"></b>
       <a class="adminlink" href="/" id="footBackGo"></a>
@@ -162,7 +162,7 @@ const FROM = ["DE","KR","FR","BR","IT","RU","TH","PL"];
 function paint() {
   document.title = T("ab.title") + " — " + T("ab.askUnder");
   // Not painted from the dictionary: a name is not translated, and
-  // site.title is "留学生" in Chinese — the same word the <small>
+  // site.title is "交换" in Chinese — the same word the <small>
   // beneath it already carries, printed twice.
   for (const id of TEXT) $(id).textContent = T("ab." + id);
   $("navopen").textContent = T("ab.ctaOpen");

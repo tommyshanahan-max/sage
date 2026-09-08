@@ -155,7 +155,18 @@ export const STRINGS = {
   "rep.sent":          ["Sent. A person reads every one of these.", "已提交。每一条都由人来看。"],
 
   // ---- the landing page ----------------------------------------------------
-  "site.title":        ["Liuxuesheng", "留学生"],
+  /* THE NAME.
+     "Liuxuesheng" was true when this was a board for people who had gone
+     abroad to study, and it stopped being true when the rooms outgrew it — a
+     director looking for an agent does not open something called the students
+     board. The Exchange is what the place actually does: two sides, and one
+     trades with the other. It keeps the language-exchange meaning it started
+     with, so nothing already said to anybody becomes untrue.
+
+     The address is still liuxuesheng.io. A link already forwarded in a WeChat
+     thread has to keep working, and a domain is a separate decision from a
+     name. */
+  "site.title":        ["The Exchange", "交换"],
   /* WHO IT IS FOR, WIDENED ON PURPOSE. It began as a board for exchange
      students and the rooms outgrew that: somebody raising money, somebody
      sourcing from a factory and somebody looking for a language exchange are
@@ -171,8 +182,8 @@ export const STRINGS = {
     "一个可以问出你不好意思问的问题的地方，也可以在这里找到问题另一头的那个人——语伴、一起学习的人、熟悉这座城市的人、一起做点东西的人。不用下载，不用注册。",
   ],
   "site.hanzi": [
-    "留学生 · liúxuéshēng — someone who went abroad to study. That is where this started, and the name stayed even as the rooms outgrew it.",
-    "留学生 —— 这个地方是从这里开始的，后来装下的东西比这个词多了，名字留了下来。",
+    "交换 · jiāohuàn — a swap. One person has what the other is short of, and the whole board is built on finding that pair. It began as a place for people who had gone abroad to study; the rooms outgrew that, and the name caught up.",
+    "交换 · jiāohuàn —— 一方有的，正是另一方缺的；这个板子做的全部事情，就是把这两个人凑到一起。它一开始是给留学生做的，后来装下的东西多了，名字也就跟上了。",
   ],
   "site.open":         ["See who is on it", "看看有谁在"],
   "site.how":          ["How it is run", "怎么管理"],
@@ -1391,11 +1402,11 @@ export const STRINGS = {
    * does not need to.
    */
   "inv.sharedWx": [
-    "This is the students' board I mentioned — 留学生. It is private: nobody can open it without a password, and mine changes every day. Here is today's, good for one person.\n\n{url}\n\nPassword: {code}\n\nOpen it in Safari, not in here — tap ··· at the top right, then Open in Browser. WeChat's browser forgets you.",
-    "就是我说的那个留学生的板子。那里是私密的，没有口令谁也打不开，我的口令每天还会换。这是今天的，只能进一个人。\n\n{url}\n\n口令：{code}\n\n别在微信里打开——点右上角的 ···，选「在浏览器打开」。微信的浏览器记不住你。"],
+    "This is the board I mentioned — The Exchange. It is private: nobody can open it without a password, and mine changes every day. Here is today's, good for one person.\n\n{url}\n\nPassword: {code}\n\nOpen it in Safari, not in here — tap ··· at the top right, then Open in Browser. WeChat's browser forgets you.",
+    "就是我说的那个板子，交换。那里是私密的，没有口令谁也打不开，我的口令每天还会换。这是今天的，只能进一个人。\n\n{url}\n\n口令：{code}\n\n别在微信里打开——点右上角的 ···，选「在浏览器打开」。微信的浏览器记不住你。"],
   "inv.shared": [
-    "This is the students' board I mentioned — 留学生. It is private: nobody can open it without a password, and mine changes every day. Here is today's, good for one person.\n\n{url}\n\nPassword: {code}",
-    "就是我说的那个留学生的板子。那里是私密的，没有口令谁也打不开，我的口令每天还会换。这是今天的，只能进一个人。\n\n{url}\n\n口令：{code}"],
+    "This is the board I mentioned — The Exchange. It is private: nobody can open it without a password, and mine changes every day. Here is today's, good for one person.\n\n{url}\n\nPassword: {code}",
+    "就是我说的那个板子，交换。那里是私密的，没有口令谁也打不开，我的口令每天还会换。这是今天的，只能进一个人。\n\n{url}\n\n口令：{code}"],
   "inv.locked":        ["Private — nothing here opens without today’s password.",
                         "私密——没有今天的口令，这里什么都打不开。"],
   /* The two lines the board says about itself change with the door. "Anyone
