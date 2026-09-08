@@ -49,7 +49,7 @@ let can = 0;
 for (const r of rows.sort((a, b) => (a.at || "").localeCompare(b.at || ""))) {
   if (r.can) can++;
   console.log(pad(r.handle, 16) + pad(when(r.at), 12) + pad(r.said, 7)
-    + pad(r.guests, 8) + (r.can ? "yes" : "no"));
+    + pad(r.guests, 8) + (r.can ? (r.staff ? "yes (staff)" : "yes") : "no"));
   // Every unmet test, not the first — the same as the screen. A member fixing
   // one of four and finding themselves still refused is how a rule stops being
   // read as a rule.

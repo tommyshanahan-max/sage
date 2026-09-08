@@ -4976,6 +4976,8 @@ $("mepicgo").addEventListener("click", () => $("mephoto").click());
 
 function openMe(joining) {
   const made = Boolean(ME && ME.handle);
+  // Asked once per opening of the sheet, not once ever.
+  ASKEDPIC = false;
   $("metitle").textContent = T(made ? "me.editTitle" : "me.newTitle");
   $("mename").placeholder = T("me.name");
   $("mecampus").placeholder = T("me.campus");
@@ -5146,6 +5148,9 @@ const ROOMS_B = ["new", "host"];
 const ROOMS_C = ["job", "hire", "cofound", "raise", "invest", "buy", "sell",
                  "talent", "agent"];
 let PICKED = [];
+/* Whether the photo has been asked for once already this time the sheet was
+   open. Once, then it stops standing in the way — see the note in saving. */
+let ASKEDPIC = false;
 
 function drawRooms() {
   const full = PICKED.length >= 3;
@@ -5200,6 +5205,9 @@ let SAY = [];
 /** One dropdown, grouped into the two halves so twelve names can be read. */
 function rolePick(now, onPick, wanting) {
   const sel = document.createElement("select");
+  /* A PROMPT, NOT AN ELLIPSIS. "…" is honest and says nothing; a pill that
+     says what goes in it is the difference between a control somebody
+     understands and one they tap to find out. */
   const blank = el("option", null, T(wanting ? "say.pickWant" : "say.pickMe"));
   blank.value = "";
   sel.append(blank);
@@ -5387,17 +5395,26 @@ $("meform").addEventListener("submit", async (e) => {
   const said = $("mesaid");
   const handle = $("mename").value.trim();
   if (!handle) { said.hidden = false; said.classList.add("bad"); said.textContent = T("post.needName"); return; }
-  /* A profile here has a face on it.
+  /* A PHOTO IS ASKED FOR AND NO LONGER DEMANDED.
    *
-   * Checked against the picture the person has, not the one the public can see:
-   * a photo waiting for review is still a photo they added, and refusing to
-   * save their name until somebody has looked at it would be a strange way to
-   * treat them. */
+   * A profile here has a face on it, and it should — but this refused to
+   * finish without one, which put a camera roll between somebody and being in,
+   * on a phone, in WeChat's browser, thirty seconds after they were handed a
+   * password. Somebody who cannot find a photo they like at that moment does
+   * not go and find one; they close it.
+   *
+   * They are asked once, here, and the picker opens for them. If they save
+   * anyway they are in, and "Add your photo" is the first line of Things to do
+   * on the other side — which is the right place for it, because by then they
+   * have a reason to want to be seen. */
   if (!ME || !ME.photo) {
-    said.hidden = false; said.classList.add("bad");
-    said.textContent = T("me.needPhoto");
-    $("mephoto").click();
-    return;
+    if (!ASKEDPIC) {
+      ASKEDPIC = true;
+      said.hidden = false; said.classList.add("bad");
+      said.textContent = T("me.needPhoto");
+      $("mephoto").click();
+      return;
+    }
   }
   const out = await saveMe({
     handle, campus: $("mecampus").value.trim(),

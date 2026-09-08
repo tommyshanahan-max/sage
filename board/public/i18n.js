@@ -388,8 +388,8 @@ export const STRINGS = {
   "say.wants.cn":      ["China", "中国"],
   "say.wants.out":     ["outside China", "中国以外"],
   "say.wants.any":     ["anywhere", "哪里都行"],
-  "say.pickMe":        ["…", "…"],
-  "say.pickWant":      ["…", "…"],
+  "say.pickMe":        ["what I am", "我是做什么的"],
+  "say.pickWant":      ["what I need", "我需要什么"],
   "say.make":          ["Making the work", "做事的人"],
   "say.back":          ["Backing it", "支持的人"],
   "say.more":          ["＋ and something else", "＋ 还想找别的"],
@@ -838,9 +838,13 @@ export const STRINGS = {
   "me.edit":           ["Edit", "编辑"],
   "me.working":        ["One moment…", "稍等…"],
   "me.myPage":         ["My page", "我的主页"],
+  /* Asked once, then it stops standing in the way. So it is an invitation
+     rather than a refusal: "add one first" is a door being held shut, and
+     what is true is that a page with a face on it is read and one without is
+     scrolled past. */
   "me.needPhoto": [
-    "Add a photo first — a profile here has a face on it.",
-    "先加一张照片——这里的资料都有照片。",
+    "Add a photo — a page with a face on it gets read. You can do it after.",
+    "加一张照片吧——有照片的主页才有人看。也可以之后再加。",
   ],
   "me.photoFirst":     ["Add your photo", "先加照片"],
 
@@ -918,7 +922,10 @@ export const STRINGS = {
   // changing a detail a week later, and one word for both is why nobody is
   // sure which one they are doing.
   "me.newTitle":       ["A photo and a name", "一张照片，一个名字"],
-  "me.post":           ["Post it", "发布"],
+  /* WHAT THE BUTTON DOES, ON A SCREEN HEADED "A photo and a name".
+     "Post it" read as posting a message. Joining does put you on the board —
+     that is the point of the button — so it says so. */
+  "me.post":           ["Put me on the board", "把我放到板上"],
   "me.more": [
     "Add more — university, age, languages",
     "再多写点——学校、年龄、会说的语言",

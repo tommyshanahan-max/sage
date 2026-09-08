@@ -832,6 +832,11 @@ services:
       BOARD_BRING_SAID: ${TOMSCODING_BOARD_BRING_SAID:-2}
       BOARD_BRING_WEEK: ${TOMSCODING_BOARD_BRING_WEEK:-7}
       BOARD_GUEST_ROOM: ${TOMSCODING_BOARD_GUEST_ROOM:-3}
+      # Handles that skip the standing rule entirely. Whoever runs the board is
+      # not a member in the sense that rule means — they are the person handing
+      # out a code when somebody asks in a WeChat thread, and a morning when
+      # they cannot is a morning the board stops growing.
+      BOARD_STAFF: ${TOMSCODING_BOARD_STAFF:-}
     volumes:
       - board_data:/data
     expose:

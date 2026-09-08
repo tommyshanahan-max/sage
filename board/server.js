@@ -1118,8 +1118,27 @@ const GUEST_ROOM = num("BOARD_GUEST_ROOM", 3);
  *  Returns { can, need } where `need` is every unmet test, in reading order —
  *  all of them, not the first: a door that tells you one thing at a time is a
  *  door you knock on four times. */
+/* WHOEVER RUNS THE BOARD IS NOT SUBJECT TO THE DOOR THEY BUILT.
+ *
+ * Standing is a rule for members, and the operator is not one in the sense
+ * the rule means: they are the person handing out codes when somebody asks in
+ * a WeChat thread, and a morning when they cannot is a morning the board
+ * stops growing for a reason nobody outside can see. It caught them on the
+ * first day it shipped.
+ *
+ * Named handles rather than a device hash, because the operator changes phones
+ * and a hash in a config file is a thing nobody can read. Matched without case,
+ * since it is typed by hand into .env.
+ */
+const STAFF = new Set(String(process.env.BOARD_STAFF || "")
+  .split(",").map((x) => x.trim().toLowerCase()).filter(Boolean));
+
 function standing(board, me) {
   const need = [];
+  const who = me && board.people.find((x) => x.by === me);
+  if (who && who.handle && STAFF.has(who.handle.toLowerCase())) {
+    return { can: true, need: [], guests: 0, staff: true };
+  }
   /* NO PROFILE AT ALL is not a special case. Somebody who came through the
      door and has not made a page yet fails the same three tests everybody
      else fails on their first day, and reading all three is how they find out
@@ -1332,6 +1351,7 @@ app.get("/api/standing", admin, async (_req, res) => {
       return {
         handle: q.handle, at: q.at, state: q.state,
         can: rank.can, need: rank.need, guests: rank.guests, said,
+        staff: Boolean(rank.staff),
       };
     });
   res.json({ rows });
