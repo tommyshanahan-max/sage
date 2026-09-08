@@ -4041,6 +4041,35 @@ async function countNotes() {
  */
 let PEOPLE = [], AT = 0;
 
+/* A FRESH CUT OF THE DECK EVERY TIME IT IS OPENED.
+ *
+ * The server sends people in the order they joined, and a deck in join order
+ * is the same face every single time — which makes a board of a dozen people
+ * feel like a board of one, and quietly settles who gets looked at. Whoever
+ * arrived last week is the person nobody ever reaches, because reaching them
+ * costs eleven flicks and the first three are always the same.
+ *
+ * Fisher-Yates, on the client, on load. Nothing is carried between opens:
+ * no seed, no stored position, so it is a shuffle rather than a rotation
+ * somebody could learn. Order is not a signal on this board and it should not
+ * accidentally become one.
+ */
+function shuffled(rows) {
+  const out = rows.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  /* Not your own face first. You are in the deck on purpose — see below — but
+     opening the app and being shown yourself reads as the app being broken,
+     and it costs one swap to avoid. */
+  if (out.length > 1 && out[0].mine) {
+    const j = 1 + Math.floor(Math.random() * (out.length - 1));
+    [out[0], out[j]] = [out[j], out[0]];
+  }
+  return out;
+}
+
 async function loadPeople() {
   try {
     const d = await fetch("/api/people", { cache: "no-store",
@@ -4056,7 +4085,7 @@ async function loadPeople() {
      *
      * Your own card says it is yours and offers the edit rather than a follow
      * button that would refuse itself. */
-    PEOPLE = (d && d.people) || [];
+    PEOPLE = shuffled((d && d.people) || []);
   } catch { PEOPLE = []; }
   drawDeck();
   /* THE PANEL IS BUILT FROM FOUR FETCHES THAT LAND WHEN THEY LAND. Drawn once
