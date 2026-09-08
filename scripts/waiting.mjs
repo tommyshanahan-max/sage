@@ -109,9 +109,9 @@ async function main() {
      Read one name at a time you let people in one at a time, and each of them
      arrives to an empty feed. Read a room at a time you can let a room in
      together, and it is warm on the morning they get there. */
-  const LABEL = { film: "FILM & TV", invest: "INVESTING",
-                  raise: "RAISING", other: "SOMETHING ELSE" };
-  const ORDER = ["film", "invest", "raise", "other"];
+  const LABEL = { film: "FILM & TV", invest: "INVESTING", raise: "RAISING",
+                  trade: "FACTORIES & BUYERS", other: "SOMETHING ELSE" };
+  const ORDER = ["film", "invest", "raise", "trade", "other"];
   const byRoom = new Map(ORDER.map((k) => [k, []]));
   for (const w of rows) (byRoom.get(w.room) || byRoom.get("other")).push(w);
 

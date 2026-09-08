@@ -327,7 +327,7 @@ export const STRINGS = {
   "rank.toPrincipal":  ["three who stayed, and five people who answered you", "三个人留下来，五个人回过你"],
   "rank.top":          ["Nothing above this one.", "这已经是最上面一级了。"],
 
-  /* THE FOUR DOORS. Same board behind every one of them — only the sign
+  /* THE DOORS. Same board behind every one of them — only the sign
      changes, and the sign is written in the words of the person who followed
      that link. The "under" line is the same promise on all four: this is one
      room in one building, and the rest of the building is the point. */
@@ -357,6 +357,15 @@ export const STRINGS = {
   "door.raise.say": [
     "People raising in China and the people who back them, in one place. Along with the operators, the lawyers and the crews you will need after the money — which is the point of it being one board.",
     "在中国融资的人，和给他们钱的人，在同一个地方。还有拿到钱之后你会需要的操盘手、律师和团队——这正是它只做一个板子的意义。",
+  ],
+  "door.trade.head": [
+    "Who has actually been to the factory?",
+    "谁真去过那家工厂？",
+  ],
+  "door.trade.under":  ["Not the one with the best website.", "不是网站做得最好看的那家。"],
+  "door.trade.say": [
+    "People sourcing from China, and the factories and trading companies supplying them — with the agents, the distributors and the lawyers who sit in between. All on the same board, which is the point of it.",
+    "从中国采购的人，和给他们供货的工厂与外贸公司——还有夹在中间的代理、经销商和律师。都在同一个板子上，这正是它的意义所在。",
   ],
   "door.other.head": [
     "Who would you ring, if you knew them yet?",
@@ -401,12 +410,15 @@ export const STRINGS = {
   "role.crew":         ["Crew", "剧组"],
   "role.founder":      ["Founder", "创始人"],
   "role.student":      ["Student", "学生"],
+  "role.maker":        ["Manufacturer", "工厂"],
   "role.agent":        ["Agent", "经纪人"],
   "role.producer":     ["Producer", "制片人"],
   "role.brand":        ["Brand", "品牌方"],
   "role.investor":     ["Investor", "投资人"],
   "role.lawyer":       ["Lawyer", "律师"],
   "role.recruiter":    ["Recruiter", "招聘方"],
+  "role.buyer":        ["Buyer", "采购方"],
+  "role.distributor":  ["Distributor", "经销商"],
 
   /* And in the plural, for "you would come up for agents". English needs three
      forms of the same word in one sentence and Chinese needs one; writing them
@@ -417,12 +429,15 @@ export const STRINGS = {
   "role.p.crew":       ["crew", "剧组的人"],
   "role.p.founder":    ["founders", "创始人"],
   "role.p.student":    ["students", "学生"],
+  "role.p.maker":      ["manufacturers", "工厂"],
   "role.p.agent":      ["agents", "经纪人"],
   "role.p.producer":   ["producers", "制片人"],
   "role.p.brand":      ["brands", "品牌方"],
   "role.p.investor":   ["investors", "投资人"],
   "role.p.lawyer":     ["lawyers", "律师"],
   "role.p.recruiter":  ["recruiters", "招聘方"],
+  "role.p.buyer":      ["buyers", "采购方"],
+  "role.p.distributor": ["distributors", "经销商"],
 
   "role.a.director":   ["a Director", "导演"],
   "role.a.writer":     ["a Writer", "编剧"],
@@ -430,12 +445,15 @@ export const STRINGS = {
   "role.a.crew":       ["Crew", "剧组"],
   "role.a.founder":    ["a Founder", "创始人"],
   "role.a.student":    ["a Student", "学生"],
+  "role.a.maker":      ["a Manufacturer", "工厂"],
   "role.a.agent":      ["an Agent", "经纪人"],
   "role.a.producer":   ["a Producer", "制片人"],
   "role.a.brand":      ["a Brand", "品牌方"],
   "role.a.investor":   ["an Investor", "投资人"],
   "role.a.lawyer":     ["a Lawyer", "律师"],
   "role.a.recruiter":  ["a Recruiter", "招聘方"],
+  "role.a.buyer":      ["a Buyer", "采购方"],
+  "role.a.distributor": ["a Distributor", "经销商"],
 
   /* THE FRONT PAGE.
      "Airbnb meets Tinder" is a good line to say to somebody across a table
@@ -481,6 +499,7 @@ export const STRINGS = {
   "waitroom.film":     ["Film & TV", "影视"],
   "waitroom.invest":   ["Investing", "投资"],
   "waitroom.raise":    ["Raising", "融资"],
+  "waitroom.trade":    ["Factories & buyers", "工厂与买家"],
   "waitroom.other":    ["Something else", "别的"],
   "wait.name":         ["Your name", "你的名字"],
   /* Short enough not to be cut off in the box it sits in. It was three

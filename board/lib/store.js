@@ -63,7 +63,7 @@ export const newId = () => randomUUID().replace(/-/g, "").slice(0, 20);
  * a room admitted together is a room that is warm on the morning they arrive,
  * instead of six people each landing in an empty feed one at a time.
  */
-export const WAITROOMS = ["film", "invest", "raise", "other"];
+export const WAITROOMS = ["film", "invest", "raise", "trade", "other"];
 
 export function cleanWait(raw) {
   if (!raw || typeof raw !== "object") return null;
@@ -401,6 +401,13 @@ export const ROLES = {
   performer: { side: "make", rooms: ["talent"] },
   crew:      { side: "make", rooms: ["talent", "job"] },
   founder:   { side: "make", rooms: ["raise", "cofound", "hire"] },
+  /* THE FACTORY IS ON THE MAKING SIDE, and it is the half of this board
+     with the most people behind it: somebody arrives in China looking for a
+     manufacturer, and the manufacturer is looking for an agent or a
+     distributor. That is the same shape as a director looking for an agent,
+     so it is the same sentence and not a second product. It lands in the
+     buy/sell rooms, which already existed. */
+  maker:     { side: "make", rooms: ["sell", "buy"] },
   student:   { side: "make", rooms: ["job", "study", "lang"] },
   // The people who back it, or take people on.
   agent:     { side: "back", rooms: ["agent"] },
@@ -409,6 +416,9 @@ export const ROLES = {
   investor:  { side: "back", rooms: ["invest"] },
   lawyer:    { side: "back", rooms: ["agent", "invest", "hire"] },
   recruiter: { side: "back", rooms: ["hire"] },
+  // The other end of a factory: somebody buying, and somebody who moves it.
+  buyer:       { side: "back", rooms: ["buy", "sell"] },
+  distributor: { side: "back", rooms: ["buy", "sell"] },
 };
 
 export const ROLEKEYS = Object.keys(ROLES);

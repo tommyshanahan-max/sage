@@ -173,8 +173,9 @@ const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
  * line underneath says what that pair would get them — which is the whole
  * product explained by doing it once.
  */
-const MAKE = ["director", "writer", "performer", "crew", "founder", "student"];
-const BACK = ["agent", "producer", "brand", "investor", "lawyer", "recruiter"];
+const MAKE = ["director", "writer", "performer", "crew", "founder", "maker", "student"];
+const BACK = ["agent", "producer", "brand", "buyer", "distributor",
+              "investor", "lawyer", "recruiter"];
 let ME = "director", WANT = "agent";
 
 function rolePick(now, onPick, wanting) {
@@ -211,7 +212,7 @@ function drawSay() {
 }
 
 /* ---- the doors ---------------------------------------------------------- */
-const DOORS = ["film", "invest", "raise", "other"];
+const DOORS = ["film", "invest", "raise", "trade", "other"];
 function drawDoors() {
   const box = $("doors");
   fill(box);

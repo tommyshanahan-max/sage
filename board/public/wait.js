@@ -25,7 +25,7 @@ import { T } from "/i18n.js";
 export function roomFromPath() {
   const m = /^\/r\/([a-z]+)/.exec(location.pathname || "");
   const key = m ? m[1] : "";
-  return ["film", "invest", "raise", "other"].includes(key) ? key : "";
+  return ["film", "invest", "raise", "trade", "other"].includes(key) ? key : "";
 }
 
 const el = (tag, cls, text) => {
@@ -118,7 +118,7 @@ export function waitBox() {
   let room = roomFromPath();
   const rooms = el("div", "waitrooms");
   const chips = [];
-  for (const key of ["film", "invest", "raise", "other"]) {
+  for (const key of ["film", "invest", "raise", "trade", "other"]) {
     const c = el("button", "waitrm", T("waitroom." + key));
     c.type = "button";
     c.addEventListener("click", () => {
