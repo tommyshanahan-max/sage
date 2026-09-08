@@ -208,13 +208,22 @@
      reads rather than a form they fill — the two words they choose are the
      only ones that move, and everything around them is there to make those
      two make sense. */
-  .says{margin:.2rem 0 0}
+  /* THE CARD. White, generous, and the sentence is the only thing on it —
+     the shape Meta used, which is right: it lifts the one question that
+     matters off a form that has eight other fields on it. The icon is theirs
+     too, and it earns its place by saying "this is the control" before the
+     words do. */
+  .says{margin:.2rem 0 0;padding:1.15rem 1.1rem 1rem;background:var(--card);
+    border:1px solid var(--line);border-radius:1.1rem;box-shadow:var(--shadow)}
+  .sayicon{display:block;width:1.5rem;height:1.5rem;margin:0 0 .55rem;
+    stroke:var(--accent);fill:none;stroke-width:1.9;stroke-linecap:round}
   /* SIZED TO WRAP TWICE, NOT FOUR TIMES. The pattern is a desktop one and at
      desktop sizes it is one line; on a phone four pills at that size become
      four lines, which is a list again. Small enough that the sentence breaks
      once and still reads as a sentence. */
-  .sayrow{margin:0 0 .9rem;font-family:var(--serif);font-size:1.06rem;
-    line-height:2.15;color:var(--ink)}
+  .sayrow{margin:0 0 .55rem;font-family:var(--serif);font-size:1.12rem;
+    line-height:2.25;color:var(--ink)}
+  .sayrow:last-of-type{margin-bottom:0}
   /* SOLID PILLS. Tinted, they read as fields in a form; filled, they read as
      the words somebody chose in a sentence — which is what they are, and the
      only part of the line that moves. */
@@ -228,8 +237,8 @@
   .sayrow .drop{border:0;background:none;color:var(--muted);font-size:1rem;
     padding:0 .3rem;font-family:var(--sans)}
   .sayrow .drop:hover{color:var(--t5)}
-  .saymore{border:0;background:none;color:var(--accent);font-size:.95rem;
-    padding:.2rem 0;margin:0 0 .4rem}
+  .saymore{border:0;background:none;color:var(--accent);font-size:.92rem;
+    padding:.6rem 0 .2rem;margin:0 0 .4rem}
 
   .roomhead{margin:1.4rem 0 .1rem;font-family:var(--serif);font-size:1.15rem;
     font-weight:400;color:var(--ink)}
@@ -5224,9 +5233,30 @@ function scopePick(prefix, keys, now, onPick) {
   return sel;
 }
 
+/** Their sliders mark. Drawn rather than an emoji so it takes the accent and
+ *  sits on the baseline of a serif line without wobbling. */
+function sayIcon() {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("class", "sayicon");
+  for (const d2 of ["M3 7h13M20 7h1", "M3 12h4M11 12h10", "M3 17h9M16 17h5"]) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", d2);
+    svg.append(path);
+  }
+  for (const [cx, cy] of [[18, 7], [9, 12], [14, 17]]) {
+    const c2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c2.setAttribute("cx", cx); c2.setAttribute("cy", cy); c2.setAttribute("r", "2");
+    svg.append(c2);
+  }
+  return svg;
+}
+
 function drawSays() {
   const box = $("mesays");
   fill(box);
+  box.append(sayIcon());
   if (!SAY.length) SAY = [{ me: "", want: "" }];
   SAY.forEach((row, i) => {
     const line = el("div", "sayrow");
@@ -5240,18 +5270,19 @@ function drawSays() {
      * eventually set to two different things. */
     line.append(document.createTextNode((i ? T("say.and") : T("say.iam")) + " "));
     line.append(rolePick(row.me, (v) => { row.me = v; drawSays(); }, false));
-    if (!i) {
-      line.append(document.createTextNode(" " + T("say.in") + " "));
-      line.append(scopePick("say.where", ["cn", "out"], WHERE,
-        (v) => { WHERE = v; drawSays(); }));
-    }
     line.append(document.createTextNode(" " + T("say.lookingFor") + " "));
     line.append(rolePick(row.want, (v) => { row.want = v; drawSays(); }, true));
-    if (!i) {
-      line.append(document.createTextNode(" " + T("say.in") + " "));
-      line.append(scopePick("say.wants", ["cn", "out", "any"], WANTS,
-        (v) => { WANTS = v; drawSays(); }));
-    }
+    /* TWO PILLS. THAT IS THE WHOLE QUESTION.
+     *
+     * It was four — what you are, where you are, what you want, where they
+     * should be — then three. Both locations are gone from the sentence, and
+     * neither is lost: they are filters inside the app, where somebody who
+     * has decided to be here can narrow what they are looking at.
+     *
+     * The difference between the two places is the difference between a
+     * question and a control. On the way in, every extra pill is a chance to
+     * decide this is not worth the afternoon. Once you are in, a filter is
+     * something you reach for because you want it. */
     /* The way out of a line somebody added by mistake. Never on the first —
      * a form whose only field can be deleted is a form that can be empty. */
     if (i > 0) {
@@ -5267,7 +5298,10 @@ function drawSays() {
   const last = SAY[SAY.length - 1];
   const more = $("mesaymore");
   more.textContent = T("say.more");
-  more.hidden = SAY.length >= 3 || !(last && last.me && last.want);
+  /* Not on the way in. A second sentence is a good thing to have and a bad
+     thing to be offered before you have finished the first one ever. */
+  more.hidden = !(ME && ME.handle) || SAY.length >= 3
+    || !(last && last.me && last.want);
 }
 $("mesaymore").addEventListener("click", () => {
   SAY = [...SAY, { me: "", want: "" }];
@@ -5306,6 +5340,7 @@ function showRooms() {
    * their rooms are read from them until they answer the sentence — see
    * roomsFor in store.js. Nobody is shown both questions: two ways to say the
    * same thing on one form is how a profile ends up disagreeing with itself. */
+  // Somebody who ticked boxes before the sentence existed. Never a new person.
   const old = !SAY.some((r) => r.me && r.want) && PICKED.length > 0;
   for (const id of ["meroomhead", "meroomwhy", "megroup1", "meroomsA", "megroup2",
     "meroomsB", "megroup3", "meroomsC"]) $(id).hidden = !old;
@@ -5314,8 +5349,20 @@ function showRooms() {
      twice on one form is how the two answers come to disagree. The block
      stays for the people still on the tick boxes, who have no sentence to
      carry it. */
+  /* ONBOARDING IS ONE SENTENCE AND NOTHING ELSE.
+   *
+   * Somebody setting up a page for the first time is deciding whether this
+   * place is worth their afternoon, and every extra question is a chance to
+   * decide it is not. So the first time they see the sentence and that is all
+   * — where they should be is a pill in it, and where YOU are defaults to
+   * China, which is the premise of the whole board rather than a question.
+   *
+   * It all comes back the moment they have a page. Editing is a different act
+   * from joining: somebody who is already in and has opened their own profile
+   * has asked for the controls. */
+  const first = !(ME && ME.handle);
   for (const id of ["mewherehead", "mewherelab1", "mewhere", "mewherelab2",
-    "mewants", "mewherewhy"]) { const n = $(id); if (n) n.hidden = !old; }
+    "mewants", "mewherewhy"]) { const n = $(id); if (n) n.hidden = first; }
   $("meroomhead").textContent = T("room.head");
   $("meroomwhy").textContent = T("room.why");
   $("megroup1").textContent = T("room.groupStudy");
