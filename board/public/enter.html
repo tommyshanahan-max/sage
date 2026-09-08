@@ -473,6 +473,12 @@ async function useKey() {
 function showIn(by) {
   $("wx").hidden = true;
   $("door").hidden = true;
+  /* AND THE GREETING, which is for somebody arriving. A member who taps a
+     greet link — a forwarded one, or their own, to see what it looks like —
+     is not arriving, and being welcomed in by name as though they were is
+     worse than not being greeted at all. */
+  $("hello").hidden = true;
+  try { window.speechSynthesis.cancel(); } catch { /* nothing to stop */ }
   $("inside").hidden = false;
   /* Back where they were turned away from, if they were turned away from
      somewhere. Somebody sent to the door by pressing Post should land on the
