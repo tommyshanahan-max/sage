@@ -1201,7 +1201,10 @@ export const STRINGS = {
      they have been refused. Each line below is one of the four tests in
      standing() on the server, written as the thing you do rather than the
      thing you failed. */
-  "inv.needHead":      ["How to get an invite", "怎么才能拿到邀请码"],
+  /* MAKE, not get. "Get an invite" is what somebody outside the door does —
+     the person reading this is already in, and what they are short of is the
+     standing to hand one out. Same in Chinese: 发出, not 拿到. */
+  "inv.needHead":      ["How to make an invite", "怎么才能发出邀请码"],
   "inv.needWhy": [
     "Whoever you bring in has your name on them. So first:",
     "你带进来的人，是挂着你的名字进来的。所以先做到：",
