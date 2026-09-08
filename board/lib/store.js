@@ -236,6 +236,36 @@ function igHandle(v) {
   return /^[A-Za-z0-9._]{1,30}$/.test(t) ? t : "";
 }
 
+/* A LinkedIn profile, out of whatever somebody pasted.
+ *
+ * WHY THIS FIELD AND NOT A GENERAL "WEBSITE". This board stopped being the
+ * students board and became a place for people connecting in China, and the
+ * thing a business contact wants to look up before answering is not an
+ * Instagram grid. LinkedIn is the one identity people already publish on
+ * purpose — real name, employer, history, findable by design — so putting it
+ * here is somebody doing the thing LinkedIn is for, not leaking something.
+ *
+ * IT IS STILL A REAL DISCLOSURE and it is optional for that reason. A profile
+ * here carries what matches somebody and nothing that finds them; a LinkedIn
+ * is a find-me link, and the form says so before the box rather than after.
+ *
+ * linkedin.com/in/them, /in/them/, the whole share URL with a query on the
+ * end, or just the slug. Their own rules for a vanity name are letters,
+ * digits and hyphens, 3 to 100. Anything else becomes nothing rather than an
+ * error, the same as igHandle: this is an optional line, and a save that
+ * failed because of it would cost somebody their name and their photograph
+ * as well.
+ *
+ * Company and school pages are not people, so only /in/ is taken.
+ */
+function inHandle(v) {
+  let t = String(v ?? "").trim();
+  if (!t) return "";
+  const link = /(?:linkedin\.com|linkedin\.cn)\/+in\/+([^/?#\s]+)/i.exec(t);
+  t = link ? link[1] : t.replace(/^@+/, "").replace(/\/+$/, "");
+  return /^[A-Za-z0-9-]{3,100}$/.test(t) ? t : "";
+}
+
 /* ---------------------------------------------------------------------------
  * Invites
  *
@@ -402,6 +432,9 @@ export function cleanPerson(raw) {
     // Somewhere to be found that is not this board. See igHandle above for
     // what arrives in this box and what is kept out of it.
     ig: igHandle(raw.ig),
+    // The other one people already publish on purpose. See inHandle above for
+    // what arrives in this box and what is kept out of it.
+    li: inHandle(raw.li),
     // Optional, and never asked for on the first screen. Digits only, and two
     // of them: a field that will take a sentence becomes one.
     age: String(raw.age ?? "").replace(/\D/g, "").slice(0, 2),

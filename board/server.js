@@ -2116,8 +2116,13 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
     // after it there is no way to tell the two apart.
     const joining = typeof req.body.looking === "boolean" && req.body.looking && !q.looking;
     if (typeof req.body.looking === "boolean") q.looking = req.body.looking;
-    for (const k of ["handle", "level", "campus", "goal", "trade", "here", "age", "type", "levelBand", "ig"]) {
-      if (req.body[k] !== undefined) q[k] = String(req.body[k]).slice(0, k === "goal" ? 600 : 120);
+    /* "li" takes 200 rather than 120: a LinkedIn share URL is long, and a save
+       that truncated the link before cleanPerson could read the slug out of it
+       would silently drop the field. */
+    for (const k of ["handle", "level", "campus", "goal", "trade", "here", "age", "type", "levelBand", "ig", "li"]) {
+      if (req.body[k] !== undefined) {
+        q[k] = String(req.body[k]).slice(0, k === "goal" ? 600 : k === "li" ? 200 : 120);
+      }
     }
     if (Array.isArray(req.body.free)) q.free = req.body.free;
     if (Array.isArray(req.body.speaks)) q.speaks = req.body.speaks;

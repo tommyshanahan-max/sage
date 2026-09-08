@@ -1486,6 +1486,14 @@
                autocapitalize="off" spellcheck="false">
       </div>
       <p class="menote" id="meigwhy"></p>
+      <!-- The same box for the other identity people already publish on
+           purpose. Paste-friendly the same way: the server takes the whole
+           linkedin.com/in/ link, or just the slug. -->
+      <div class="field">
+        <input id="meli" maxlength="140" autocomplete="off"
+               autocapitalize="off" spellcheck="false">
+      </div>
+      <p class="menote" id="meliwhy"></p>
       <textarea id="megoal" rows="3"></textarea>
       <p class="menote" id="mewhy"></p>
     </div>
@@ -4882,6 +4890,8 @@ function openMe(joining) {
   $("melangs").placeholder = T("me.langs");
   $("mehere").placeholder = T("me.here");
   $("meig").placeholder = T("me.ig");
+  $("meli").placeholder = T("me.li");
+  $("meliwhy").textContent = T("me.liWhy");
   $("meigwhy").textContent = T("me.igWhy");
   $("megoal").placeholder = T("me.goal");
   $("mewhy").textContent = T("me.whyNoContact");
@@ -4900,6 +4910,7 @@ function openMe(joining) {
   // Shown back with the @ on it, because that is how somebody reads their own
   // handle; it is stored without one.
   $("meig").value = ME && ME.ig ? "@" + ME.ig : "";
+  $("meli").value = (ME && ME.li) || "";
   $("megoal").value = (ME && ME.goal) || "";
   /* Open if there is already something in it, shut otherwise. Somebody who
    * filled these in once should not have to find them again to change one. */
@@ -5147,6 +5158,7 @@ $("meform").addEventListener("submit", async (e) => {
     rooms: PICKED, where: WHERE, wants: WANTS,
     here: $("mehere").value.trim(), goal: $("megoal").value.trim(),
     ig: $("meig").value.trim(),
+    li: $("meli").value.trim(),
   });
   if (out.error) { said.hidden = false; said.classList.add("bad"); said.textContent = out.error; return; }
   // The name here is the name posts go out under, so the two stay in step.

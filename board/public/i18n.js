@@ -434,6 +434,15 @@ export const STRINGS = {
     "这份名单只有运行这个板的人会读。你被放进来之后它会被删掉，没被放进来也会被删掉——无论哪种情况，它都不会变成一份「谁曾经想进来」的记录。等候的人数会显示在公开页面和板内，但只是一个数字，而且要等到人数多到这个数字指不到任何具体的人时才会出现。",
   ],
 
+  /* THE TWO FIELDS THAT ARE THE EXCEPTION TO THE FILTER, said next to it
+     rather than left for somebody to notice. A filter that removes contact
+     details from every box except two, without saying which two, teaches the
+     wrong lesson about how careful to be. */
+  "pv.p2c": [
+    "Two boxes are the exception, because you are meant to be found through them: Instagram and LinkedIn. Both are optional, both are blank until you fill them, and anybody who opens your page can see them. A LinkedIn is the bigger step of the two — it usually carries your real name and where you work — so it is worth deciding about rather than filling in because the box is there.",
+    "有两个框是例外，因为它们本来就是让别人找到你的：Instagram 和领英。两个都是选填，不填就是空的，而任何打开你主页的人都能看到。领英这一步更大——上面通常有你的真名和工作单位——所以值得想一想再填，而不是因为有这个框就填。",
+  ],
+
   "pv.h3":             ["What we do not do", "我们不做的事"],
   "pv.p3": [
     "There are no third-party scripts on this site: no advertising network, no social widgets, no analytics from anybody else. Nothing here is sold, shared or handed to a partner. There is no advertising, so there is nothing to profile you for.",
@@ -779,12 +788,12 @@ export const STRINGS = {
     "你的照片你自己能看到，其他人要等有人过目之后才能看到。",
   ],
   "me.noContact": [
-    "Take out {what} — the only way to be reached a page here carries is Instagram, in its own box. Swap anything else privately, once you have both decided.",
-    "请去掉 {what} —— 这里的资料只放 Instagram，填在它自己的框里。其他的等你们都决定了，再私下交换。",
+    "Take out {what} — the only ways to be reached a page here carries are Instagram and LinkedIn, each in its own box. Swap anything else privately, once you have both decided.",
+    "请去掉 {what} —— 这里的资料只放 Instagram 和领英，各填在自己的框里。其他的等你们都决定了，再私下交换。",
   ],
   "me.whyNoContact": [
-    "No phone, no WeChat, no email. Instagram only, and only in its own box — a public list of people with everybody's contact details is the one thing this must never be.",
-    "不填手机、微信、邮箱。只有 Instagram，而且只能填在它自己的框里——一份人人联系方式俱全的公开名单，是这里绝对不能变成的东西。",
+    "No phone, no WeChat, no email. Instagram and LinkedIn only, each in its own box — a public list of people with everybody's contact details is the one thing this must never be.",
+    "不填手机、微信、邮箱。只有 Instagram 和领英，各填在自己的框里——一份人人联系方式俱全的公开名单，是这里绝对不能变成的东西。",
   ],
 
   // ---- finding a study buddy -----------------------------------------------
@@ -1397,6 +1406,16 @@ export const STRINGS = {
   "me.igWhy":          ["Anybody who opens your page can see it.",
                         "打开你主页的人都能看到。"],
   "me.igName":         ["Instagram", "Instagram"],
+  /* LINKEDIN. The reason to have it is the reason this board stopped calling
+     itself the students board: the thing a business contact looks up before
+     answering is not a grid of photographs. The warning is stronger than
+     Instagram's because a LinkedIn is a real name and an employer. */
+  "me.li":             ["LinkedIn (optional)", "领英（选填）"],
+  "me.liWhy": [
+    "Anybody who opens your page can see it — and a LinkedIn usually carries your real name and where you work.",
+    "任何打开你主页的人都能看到——而领英上通常有你的真名和工作单位。",
+  ],
+  "me.liName":         ["LinkedIn", "领英"],
   /* THE MARK. Named where the strings live rather than beside the drawing,
      because these are read by people and the drawing is not. */
   "crown.what":        ["What you are wearing now", "你现在戴的"],

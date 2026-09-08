@@ -678,6 +678,21 @@ function paint() {
     a.textContent = "@" + q.ig;
     fact(T("me.igName"), a);
   }
+
+  /* LINKEDIN, and the reverse of the Instagram note above. That one shows the
+   * handle because instagram.com does not open in the mainland; this one shows
+   * the person's own vanity slug for a different reason — it is usually their
+   * name, and a row that reads "tom-shanahan" tells you who you are about to
+   * open before you open it. LinkedIn is also unreachable from the mainland
+   * without a VPN, so the readable half matters here too. */
+  if (q.li) {
+    const a = el("a", "out");
+    a.href = "https://www.linkedin.com/in/" + encodeURIComponent(q.li);
+    a.target = "_blank";
+    a.rel = "noopener nofollow";
+    a.textContent = q.li;
+    fact(T("me.liName"), a);
+  }
   // The free-days week is out for V1 everywhere it appeared. Two people who
   // want to study together arrange it between themselves, and a timetable
   // nobody goes back to edit is worse than no timetable.
