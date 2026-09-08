@@ -2583,6 +2583,19 @@ app.get("/api/feed/people", feedDoor, async (_req, res) => {
   res.status(r.status).json(r.body);
 });
 
+/** Who is at the door: the waiting list, straight through from the board.
+ *
+ *  It carries how to reach somebody, which is the point of it and also the
+ *  reason it is here rather than anywhere else — this seat is already the one
+ *  place holding the board's admin key, and the form told these people that
+ *  one person would read what they wrote. Adding a second door to it would
+ *  make that sentence less true by exactly one door. */
+app.get("/api/feed/waiting", feedDoor, async (_req, res) => {
+  const r = await feed.call("/api/waiting");
+  res.set("Cache-Control", "no-store");
+  res.status(r.status).json(r.body);
+});
+
 /** A picture chosen here, for somebody named here.
  *
  *  The form is passed through rather than parsed: this seat has no business
