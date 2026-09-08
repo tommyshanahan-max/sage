@@ -508,6 +508,29 @@ export const STRINGS = {
   /* WHICH ROOM, in four words a stranger can read. Not the board's thirteen —
      those are the vocabulary of somebody already inside. See WAITROOMS. */
   /* The one line worth adding back to a box everything else came off. */
+  /* ---- THE PERSON ON THE DOOR --------------------------------------------
+     Outside only. A member has Ask the Professor inside, which is ten written
+     answers and costs nothing; this is for the stranger deciding whether to
+     trust a friend's link, where a page cannot anticipate the question. */
+  "host.head":         ["Not sure what this is? Ask.", "不太清楚这是什么？问一下。"],
+  "host.ask":          ["Type your question", "打字问吧"],
+  "host.go":           ["Ask", "问"],
+  "host.q.what":       ["What is this?", "这是个什么？"],
+  "host.q.safe":       ["Who can see my details?", "谁能看到我的信息？"],
+  "host.q.cost":       ["Does it cost anything?", "要钱吗？"],
+  "host.thinking":     ["\u2026", "\u2026"],
+  "host.slow":         ["One at a time. Try again in a minute.",
+                        "一次一个问题，过一分钟再来。"],
+  "host.busy":         ["Too many questions today. Ask whoever sent you the link.",
+                        "今天问得太多了，去问发你链接的那个人吧。"],
+  "host.no":           ["That did not go through. Try again.", "没发出去，再试一次。"],
+  /* Said on the box, not buried in a policy. Somebody typing a question into
+     a stranger's website is owed the two facts that matter about it. */
+  "host.note": [
+    "Answered by a machine, from a written brief about this board. Your question is not stored and nobody here reads it. Do not type anything private.",
+    "这是机器按一份写好的说明回答的。你的问题不会被保存，这边也没人看。别在这儿写私密的东西。",
+  ],
+
   "wait.sentBy":       ["{who} thought you should be on this.", "{who} 觉得你该在这上面。"],
   "wait.which":        ["What are you here for?", "你是为了什么来的？"],
   "waitroom.film":     ["Film & TV", "影视"],

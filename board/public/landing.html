@@ -84,6 +84,29 @@
   .saylands{margin:.85rem 0 0;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
   .saylands b{font-weight:500;color:var(--ink)}
 
+  /* THE PERSON ON THE DOOR. Deliberately quieter than the form above it:
+     the form is the thing to do, this is the thing to do first if you are
+     not sure. No avatar, no bubbles, no typing dots — it answers once and
+     the answer sits there like a note. */
+  .hostess{margin:1.6rem 0 0;padding:1.1rem 1.1rem .9rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:1rem;max-width:34rem}
+  .hlab{margin:0 0 .7rem;font-size:.95rem;color:var(--ink-2)}
+  .hasks{display:flex;flex-wrap:wrap;gap:.4rem;margin:0 0 .7rem}
+  .hasks button{border:1px solid var(--line);background:var(--paper);color:var(--ink-2);
+    border-radius:99px;padding:.4rem .75rem;font:inherit;font-size:.85rem}
+  .hasks button:hover{border-color:var(--accent);color:var(--accent)}
+  #hostessform{display:flex;gap:.5rem}
+  #hostessq{flex:1;min-width:0;padding:.6rem .9rem;font:inherit;font-size:.95rem;
+    border:1px solid var(--line);border-radius:99px;background:var(--paper);
+    color:var(--ink)}
+  #hostessq:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .hgo{border:0;border-radius:99px;background:var(--accent);color:var(--accent-ink);
+    padding:.6rem 1.1rem;font:inherit;font-size:.95rem}
+  .hgo[disabled]{opacity:.55}
+  .hsaid{margin:.85rem 0 0;font-size:.95rem;line-height:1.6;color:var(--ink);
+    white-space:pre-wrap}
+  .hnote{margin:.7rem 0 0;font-size:.78rem;line-height:1.5;color:var(--muted)}
+
   /* The four doors, as doors. Rows rather than chips: each one is a place to
      go, and a row is a thing you tap where a chip is a thing you pick. */
   .doors{display:flex;flex-direction:column;margin:.4rem 0 0}
@@ -170,6 +193,25 @@
 <section id="waitsection">
   <div class="wrap">
     <div id="waitslot"></div>
+
+    <!-- THE PERSON ON THE DOOR.
+         A stranger deciding whether to trust a friend's link has questions
+         this page did not anticipate, and at eleven at night there is nobody
+         to ask. Under the form rather than above it: somebody who already
+         knows they want in should not have to walk past a chat box to say so.
+         Drawn only when the server says there is anybody there — see hostess
+         in /api/hello — and it lives inside the section a member never sees,
+         so it costs nothing to somebody already through the door. -->
+    <div class="hostess" id="hostess" hidden>
+      <p class="hlab" id="hostesslab"></p>
+      <div class="hasks" id="hostessasks"></div>
+      <form id="hostessform">
+        <input id="hostessq" maxlength="300" autocomplete="off">
+        <button class="hgo" type="submit" id="hostessgo"></button>
+      </form>
+      <p class="hsaid" id="hostesssaid" hidden></p>
+      <p class="hnote" id="hostessnote"></p>
+    </div>
   </div>
 </section>
 
@@ -308,10 +350,85 @@ function paintRoom() {
 }
 
 setLang(pickLang());
-$("langslot").append(langButton(() => { paint(); paintRoom(); }));
+/* The door box is built in JavaScript like the rest of this page, so a
+   language change has to rebuild it too — left out, the hostess went on
+   offering her questions in English on a page that had switched to Chinese.
+   Only when she is there: drawing her would un-hide nothing, but it would
+   fill a box the server said not to show. */
+$("langslot").append(langButton(() => {
+  paint();
+  paintRoom();
+  if (!$("hostess").hidden) drawHostess();
+}));
 paint();
 paintRoom();
 $("waitslot").append(waitBox());
+
+/* THE PERSON ON THE DOOR, WIRED.
+ *
+ * One question, one answer, no history — see lib/hostess.js for why the
+ * server keeps none. So this keeps none either: the last answer is replaced
+ * by the next, which is also the honest shape for a doorway. Asking again is
+ * asking again, not continuing a conversation.
+ */
+function drawHostess() {
+  $("hostesslab").textContent = T("host.head");
+  $("hostessq").placeholder = T("host.ask");
+  $("hostessgo").textContent = T("host.go");
+  $("hostessnote").textContent = T("host.note");
+  const box = $("hostessasks");
+  fill(box);
+  /* Three questions people actually arrive with, so nobody has to compose one
+     to find out whether it is worth composing one. */
+  for (const k of ["what", "safe", "cost"]) {
+    const b = el("button", null, T("host.q." + k));
+    b.type = "button";
+    b.addEventListener("click", () => { $("hostessq").value = T("host.q." + k); askNow(); });
+    box.append(b);
+  }
+}
+
+let ASKING = false;
+async function askNow() {
+  const q = $("hostessq").value.trim();
+  if (!q || ASKING) return;
+  ASKING = true;
+  const go = $("hostessgo");
+  go.disabled = true;
+  const said = $("hostesssaid");
+  said.hidden = false;
+  said.textContent = T("host.thinking");
+  try {
+    const r = await fetch("/api/ask", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q, device: askDevice() }),
+    });
+    const d = await r.json().catch(() => ({}));
+    /* Their words, not the provider's. Busy, over its allowance, and broken
+       are three different sentences to a reader and one shrug in a log. */
+    said.textContent = d && d.text ? d.text
+      : T(d && d.error === "slow-down" ? "host.slow"
+        : d && d.error === "busy" ? "host.busy" : "host.no");
+  } catch { said.textContent = T("host.no"); }
+  go.disabled = false;
+  ASKING = false;
+}
+
+/** The same random number the waiting form uses, so one visitor is one
+ *  visitor to the rate limit rather than one per box on the page. */
+function askDevice() {
+  try {
+    let d = localStorage.getItem("board:device") || "";
+    if (!d) {
+      d = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2))
+        .replace(/-/g, "");
+      localStorage.setItem("board:device", d);
+    }
+    return d;
+  } catch { return ""; }
+}
+
+$("hostessform").addEventListener("submit", (e) => { e.preventDefault(); askNow(); });
 
 /* Whether this browser is already through the door. Two things on this page
    depend on it and they arrive over the network in either order, so the answer
@@ -325,6 +442,10 @@ const asked = roomFromPath();
 fetch("/api/hello" + (asked ? "?room=" + encodeURIComponent(asked) : ""))
   .then((r) => r.json())
   .then((d) => {
+    /* Only if there is anybody on the door. A box that answers every
+       question with an error is worse than no box, and the server is the one
+       that knows whether the key is configured — see hostess in /api/hello. */
+    if (d && d.hostess && !INSIDE) { $("hostess").hidden = false; drawHostess(); }
     if (!d || !Array.isArray(d.peek) || !d.peek.length) return;
     // A member does not need the feed out of focus. Checked here as well as
     // in the handler below because these two land in whichever order the
@@ -359,6 +480,9 @@ fetch("/api/hello" + (asked ? "?room=" + encodeURIComponent(asked) : ""))
 admitted().then((inAlready) => {
   INSIDE = inAlready;
   if (!inAlready) return;
+  // The door box goes with the queue: a member has the Ask the Professor
+  // panel inside, which is written answers and costs nothing.
+  $("hostess").hidden = true;
   $("waitsection").hidden = true;
   $("peeksection").hidden = true;
   const go = $("navopen");

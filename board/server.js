@@ -31,6 +31,7 @@ import { timingSafeEqual, randomUUID, createHmac } from "node:crypto";
 import path from "node:path";
 import * as store from "./lib/store.js";
 import { translate, configured as translateReady } from "./lib/translate.js";
+import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -264,7 +265,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * the person, that is a decision to make on purpose here, not a side effect
  * of a route somebody opened to fix an image.
  */
-const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|api\/ask|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -1455,6 +1456,10 @@ app.get("/api/hello", async (req, res) => {
     featured,
     peek,
     via: from ? from.handle : "",
+    // Whether there is anybody on the door. The page draws nothing at all
+    // when there is not, rather than a box that answers every question with
+    // an error — see lib/hostess.js, which is off unless switched on.
+    hostess: hostessReady(),
     // The room this number is about, or "" when it is about the whole board.
     // Echoed so the page never holds its own copy of the four names.
     room: enough ? only : "",
@@ -1463,6 +1468,32 @@ app.get("/api/hello", async (req, res) => {
     // all instead of saying something small.
     waiting: waiting >= WAITING_FLOOR ? waiting : null,
   });
+});
+
+/* A QUESTION FROM SOMEBODY OUTSIDE THE DOOR.
+ *
+ * Public, and it has to be: the reader has no code, that is the whole reason
+ * they are asking. See lib/hostess.js for what it may say and the three
+ * limits on what it may cost.
+ *
+ * Nothing is written down. The question is not logged, the answer is not
+ * stored beyond an in-memory cache of identical questions, and the only thing
+ * about the asker that reaches this route is the device number their own
+ * browser made up — used to rate-limit them and for nothing else.
+ */
+app.post("/api/ask", express.json({ limit: "2kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  if (!hostessReady()) return res.status(404).json({ error: "off" });
+  /* Not the salted hash. This never touches the board file and never meets a
+     member, so the plain browser number is enough to tell two visitors apart,
+     and hashing it here would only make the counter harder to reason about. */
+  const by = String(req.body?.device || "").slice(0, 64) || String(req.ip || "anon");
+  const out = await askHostess(req.body?.q, { by });
+  if (out.error) {
+    const code = out.error === "slow-down" || out.error === "busy" ? 429 : 400;
+    return res.status(code).json({ error: out.error });
+  }
+  res.json({ text: out.text });
 });
 
 /** Ask to be let in. Public, obviously — it is the only thing here that is. */

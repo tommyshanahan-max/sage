@@ -845,6 +845,12 @@ services:
       # Members who may bring in more than one person a day, as
       # "handle:number" — see the note above CODES in server.js.
       BOARD_CODES: ${TOMSCODING_BOARD_CODES:-}
+      # The person on the door. Off unless this is exactly "on" — a model
+      # on a public page is a bill and an outward-facing voice, and neither
+      # should arrive because a container was rebuilt. See lib/hostess.js.
+      BOARD_HOSTESS: ${TOMSCODING_BOARD_HOSTESS:-}
+      BOARD_HOSTESS_BURST: ${TOMSCODING_BOARD_HOSTESS_BURST:-8}
+      BOARD_HOSTESS_DAY: ${TOMSCODING_BOARD_HOSTESS_DAY:-400}
     volumes:
       - board_data:/data
     expose:
