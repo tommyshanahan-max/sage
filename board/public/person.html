@@ -131,6 +131,8 @@
      photograph — it is a fact about them, not part of their picture. */
   .count{margin:.9rem 0 0;font-size:.9rem;color:var(--muted);
     font-variant-numeric:tabular-nums}
+  .brought{margin:.7rem 0 0;font-size:.88rem;color:var(--ink-2)}
+  .brought b{font-weight:500;color:var(--ink)}
   .goal{margin:1rem 0 0;font-family:var(--serif);font-size:1.1rem;line-height:1.6;
     color:var(--ink-2);text-align:left;width:100%;max-width:28rem}
 
@@ -647,6 +649,14 @@ function paint() {
   // How many people follow them, under the name. A count and never a list:
   // who follows whom among foreign students is a social graph, and this is
   // not the product that publishes one.
+  /* WHO BROUGHT THEM, under the name.
+   *
+   * The one line on this page that is about somebody else, and it is here on
+   * purpose: it is what makes an invitation a vouch rather than a password.
+   * Absent for anybody who arrived before the door existed, or on a code the
+   * board itself made — see broughtBy on the server. */
+  if (q.brought) head.append(el("p", "brought", T("inv.brought", { who: q.brought })));
+
   if (q.followers) {
     head.append(el("p", "count",
       q.followers === 1 ? T("bud.followers1") : T("bud.followers", { n: q.followers })));

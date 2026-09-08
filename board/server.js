@@ -278,6 +278,9 @@ app.get(["/abroad", "/abroad/"], (req, res, next) => page("abroad.html", req, re
  * this is read from — and worth having on its own terms, since the honest
  * answer here is unusually short. */
 app.get(["/privacy", "/privacy/"], (req, res, next) => page("privacy.html", req, res, next));
+/* The house rules. Behind the door like everything else — they describe how
+   people behave in here, and out there they would be a leaflet. */
+app.get(["/rules", "/rules/"], (req, res, next) => page("rules.html", req, res, next));
 /* THE STUDY-BUDDY LIST IS OFF FOR V1, for the same reason as the inbox and by
  * the same mechanism: not broken, just not this version. Browse is the same
  * people with their faces on, and two ways into one list is a choice between a
@@ -886,6 +889,30 @@ const shownPerson = (q, mine) => ({
   by: undefined,
 });
 
+/* WHO BROUGHT THEM.
+ *
+ * The invite row already holds both ends of this — `by` is the member who made
+ * the code, `usedBy` is the browser that spent it — so nothing new is stored to
+ * answer it. What is new is showing it.
+ *
+ * WHY IT IS WORTH SHOWING. A password on its own is a lock. A password with a
+ * name attached is a vouch: people are careful about who they bring when their
+ * own judgement stays on the record, which is most of what makes a members'
+ * club work and none of what makes it feel like one.
+ *
+ * Only when a MEMBER made the code. Codes minted from the box have no `by`, so
+ * the seven people who were here before the door existed show nothing rather
+ * than being credited to nobody.
+ */
+function broughtBy(board, q) {
+  if (!q || !q.by) return "";
+  const invite = board.invites.find((v) => v.usedBy === q.by && v.by);
+  if (!invite) return "";
+  const host = board.people.find((x) => x.by === invite.by
+    && x.state === "published" && x.handle);
+  return host ? host.handle : "";
+}
+
 /* Everybody looking for a study buddy.
  *
  * Public, and only what has been through a person: a directory of foreign
@@ -1458,6 +1485,8 @@ app.get("/api/person", async (req, res) => {
       thread: (me && q.by !== me) ? threadState(board.notes, me, q.by) : { can: false, why: "" },
       // Everything about the two of you, from one place. See pairState.
       pair: pairState(board, me, q),
+      // The member who vouched for them. See broughtBy.
+      brought: broughtBy(board, q),
     },
     // What they have actually put on the board, which is the only evidence a
     // stranger has that a profile is a person.

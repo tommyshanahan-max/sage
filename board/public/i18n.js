@@ -255,6 +255,69 @@ export const STRINGS = {
   // is nineteen and reading on a phone in their second language, and a policy
   // nobody can read is a policy nobody agreed to.
   // ---------------------------------------------------------------------
+  /* ---- the house rules ----------------------------------------------------
+   * Nine lines about how people behave, not about what the software permits.
+   * What the software stops is in the software; this is the part it cannot,
+   * and it is the part that decides what this place is like to be in.
+   * Written to be read once and remembered — which is why there are nine and
+   * not thirty. */
+  "rules.title":       ["House rules", "这里的规矩"],
+  "rules.lede": [
+    "Nine lines. None of them are enforced by the software, which is the point — this is the part of a place that only the people in it can keep.",
+    "九条。没有一条是靠程序管住的，这正是重点——一个地方的这一部分，只有待在里面的人才守得住。",
+  ],
+  "rules.bring":       ["Bring people you would vouch for.", "带你愿意为他担保的人来。"],
+  "rules.bring.why": [
+    "Your name stays on their page. That is the whole system: there is no committee, only whether you were careful.",
+    "你的名字会留在他的主页上。整套机制就是这样：没有委员会，只有你有没有慎重。",
+  ],
+  "rules.reply":       ["If you swap cards, reply.", "换了名片，就回一句。"],
+  "rules.reply.why": [
+    "Somebody gave you a way to reach them because you asked for it. Silence after that is the one thing that makes people stop giving.",
+    "别人把联系方式给你，是因为你要了。之后不回，正是让大家不再愿意给的原因。",
+  ],
+  "rules.pitch":       ["Do not pitch in the wrong room.", "别在不相干的地方推销。"],
+  "rules.pitch.why": [
+    "Somebody looking for a language exchange did not ask about your company. Tick the box for what you want and the people who want it will find you.",
+    "找语伴的人没问你的公司。想找什么就勾什么，想要的人自然会找到你。",
+  ],
+  "rules.screenshot":  ["Do not screenshot somebody into a group chat.",
+                        "别把别人截图发到群里。"],
+  "rules.screenshot.why": [
+    "Everything here was written for the people in here. A screenshot moves it somewhere its author never agreed to be.",
+    "这里写的每一句都是给这里的人看的。一张截图会把它挪到作者从没同意过的地方。",
+  ],
+  "rules.owe":         ["Nobody here owes you a reply.", "这里没有人欠你一个回复。"],
+  "rules.owe.why": [
+    "Not a follow back, not a card, not a match. Asking twice is fine. Asking a third time is not.",
+    "不欠你关注，不欠你名片，也不欠你匹配。问两次可以，第三次就不行了。",
+  ],
+  "rules.guess":       ["Do not guess who looked at your page.", "别去猜谁看了你的主页。"],
+  "rules.guess.why": [
+    "The number is deliberately anonymous. On a board this small a guess is usually wrong and always awkward for the person you guessed.",
+    "那个数字是故意匿名的。人这么少，猜多半是错的，而且对被你猜到的人总是很尴尬。",
+  ],
+  "rules.photo":       ["Post your own face, not somebody else's.",
+                        "放你自己的脸，不要放别人的。"],
+  "rules.photo.why": [
+    "A photograph is the one thing that cannot be taken back once somebody has saved it.",
+    "照片是唯一一样别人存下来就收不回的东西。",
+  ],
+  "rules.report":      ["Report it rather than arguing with it.", "举报，而不是吵起来。"],
+  "rules.report.why": [
+    "A person reads every report, and two of them hide a post until somebody has. A thread of people arguing helps nobody who comes after.",
+    "每一条举报都由人来看，两条就会先把内容隐藏起来等人处理。一串吵架的回复，对后来的人没有任何好处。",
+  ],
+  "rules.leave":       ["Leave it better than a group chat.", "让它比一个群聊更值得待。"],
+  "rules.leave.why": [
+    "That is the only bar. Everything above is a way of saying it more precisely.",
+    "标准只有这一条。上面所有的话，都只是把它说得更具体一点。",
+  ],
+  "rules.end": [
+    "Nothing here is a threat. Somebody who ignores all nine will be removed by a person, and the person who brought them will be told — which is also the only enforcement there is.",
+    "上面没有一句是威胁。九条全不当回事的人，会由人把他请出去，并且会告诉带他进来的那个人——这也是全部的「执法」了。",
+  ],
+
   "pv.title":          ["What is kept", "我们保留什么"],
   "pv.updated":        ["Last changed {d}", "最后修改于 {d}"],
   "pv.lede": [
@@ -1073,6 +1136,8 @@ export const STRINGS = {
   "inv.head":          ["Bring someone in", "带一个人进来"],
   "inv.tap":           ["Today’s password. One person, then it changes.",
                         "今天的口令。进一个人，然后就换。"],
+  /* One line on a profile, and the whole of the vouch. */
+  "inv.brought":       ["Brought in by {who}", "{who}带进来的"],
   "inv.send":          ["Send the invite", "把邀请发出去"],
   /* AND ONTO THE FEED, on its own. Everybody who can read the feed is already
      in, so this is not how strangers arrive — it is how somebody who has spent

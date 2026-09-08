@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>House rules — Liuxuesheng</title>
+<meta name="description" content="Nine lines about how people behave here. Not terms of service.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="/site.css">
+<style>
+  /* A short document meant to be read once and remembered, so: one column,
+     numbered, and nothing on the page competing with the rules themselves. */
+  .doc{max-width:34rem;margin:0 auto;padding:2.6rem 1.25rem 5rem}
+  .doc h1{margin:0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.9rem,4.5vw,2.6rem);line-height:1.12;letter-spacing:-.015em}
+  .doc .lede{margin:1.3rem 0 0;font-size:1.05rem;line-height:1.7;color:var(--ink-2)}
+  ol{margin:2.4rem 0 0;padding:0;list-style:none;counter-reset:r}
+  li{counter-increment:r;padding:1.15rem 0 1.15rem 3rem;position:relative;
+    border-top:1px solid var(--hair)}
+  li:last-child{border-bottom:1px solid var(--hair)}
+  li::before{content:counter(r);position:absolute;left:0;top:1.15rem;
+    font-family:var(--serif);font-size:1.35rem;color:var(--accent);line-height:1}
+  li b{display:block;font-weight:500;font-size:1.02rem;line-height:1.4}
+  li span{display:block;margin:.3rem 0 0;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
+  .doc .end{margin:2.4rem 0 0;font-size:.92rem;line-height:1.7;color:var(--muted)}
+  .doc .back{display:inline-block;margin:2.4rem 0 0;font-size:.9rem;color:var(--muted);
+    text-decoration:none;border-bottom:1px solid var(--hair)}
+  .doc .back:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="wrap">
+    <a class="brand" href="/feed">
+      <i>留</i>
+      <span><b>Liuxuesheng</b><small>留学生</small></span>
+    </a>
+    <span id="langslot" style="margin-left:auto;display:flex;gap:.6rem;align-items:center"></span>
+  </div>
+</div>
+<div class="doc">
+  <h1 id="title"></h1>
+  <p class="lede" id="lede"></p>
+  <ol id="list"></ol>
+  <p class="end" id="end"></p>
+  <a class="back" href="/feed" id="back"></a>
+</div>
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+const $ = (id) => document.getElementById(id);
+
+/* NINE, AND NOT ONE MORE. A list somebody reads to the end is a list they can
+ * remember, and a rule nobody remembers is decoration. Every one of these is
+ * about behaviour rather than permission: what the software stops is in the
+ * software, and this is the part it cannot. */
+const RULES = ["bring", "reply", "pitch", "screenshot", "owe", "guess",
+               "photo", "report", "leave"];
+
+function paint() {
+  $("title").textContent = T("rules.title");
+  $("lede").textContent = T("rules.lede");
+  $("end").textContent = T("rules.end");
+  $("back").textContent = T("pv.back");
+  document.title = T("rules.title") + " — " + T("site.title");
+  const list = $("list");
+  while (list.firstChild) list.removeChild(list.firstChild);
+  for (const key of RULES) {
+    const li = document.createElement("li");
+    const b = document.createElement("b");
+    b.textContent = T("rules." + key);
+    const s = document.createElement("span");
+    s.textContent = T("rules." + key + ".why");
+    li.append(b, s);
+    list.append(li);
+  }
+}
+setLang(pickLang());
+$("langslot").append(langButton(paint));
+paint();
+</script>
+</body>
+</html>
