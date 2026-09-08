@@ -63,8 +63,14 @@ if (!GO) {
 
 let done = 0;
 for (const p of mine) {
+  /* The reason goes in the file and stays there. The house has one — its
+     answers live in Ask the Professor — and a member's post does not: saying
+     so on somebody's row would be a false record of why it came down. */
+  const why = WHO
+    ? "Taken off the feed by the board."
+    : "Answered in Ask the Professor instead.";
   const r = await fetch(base + "/api/feed?id=" + encodeURIComponent(p.id)
-    + "&why=" + encodeURIComponent("Answered in Ask the Professor instead."),
+    + "&why=" + encodeURIComponent(why),
     { method: "DELETE", headers: head });
   if (!r.ok) { console.error("Could not take down " + p.id + ": " + r.status); continue; }
   done += 1;
