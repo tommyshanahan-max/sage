@@ -31,7 +31,7 @@ if (!rows.length) {
 /* The same words the member reads, so the table and their screen cannot come
    to different conclusions about the same person. */
 const WHY = {
-  face: "not in Browse — no name, no face through the queue, or the switch is off",
+  face: "not in Browse — no name, no photo, or the switch is off",
   days: "here less than three days",
   said: "fewer than two posts this week",
   guests: "somebody they brought has gone, or their guests never said anything",
@@ -61,6 +61,6 @@ console.log(can + " of " + rows.length + " can bring somebody in today.");
 if (can < rows.length) {
   console.log("");
   console.log("Nobody's standing is fixable from here — it is four things they do,");
-  console.log("and each one is shown to them under \"An invitation is a vouch\".");
+  console.log("and each one is shown to them under \"How to invite someone\".");
   console.log("A code can still be handed out directly:  make invite WHO=\"their name\"");
 }

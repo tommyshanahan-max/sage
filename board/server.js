@@ -954,10 +954,12 @@ function broughtBy(board, q) {
  *
  * THE FOUR TESTS, in the order they are read to somebody who fails them:
  *
- *   face    You are in Browse: published, named, with a face that has been
- *           looked at, and the switch on. You cannot vouch from behind a
- *           curtain — the person you bring can be asked who brought them, and
- *           the answer has to be somebody the room can see.
+ *   face    You are in Browse: published, named, with a face on the page and
+ *           the switch on. You cannot vouch from behind a curtain — the person
+ *           you bring can be asked who brought them, and the answer has to be
+ *           somebody the room can see. Whether the photograph has cleared the
+ *           queue is not part of it: that is the operator's backlog, not the
+ *           member's conduct.
  *   days    You have been here three days. Long enough to have read the place
  *           you are recommending.
  *   said    You have put two things on the board this week. Not a volume test:
@@ -996,8 +998,14 @@ function standing(board, me) {
      other two until they had done it. */
   const q = (me && board.people.find((x) => x.by === me)) || {};
 
-  const listed = q.state === "published" && q.handle
-    && q.photo && q.photoState === "published" && q.looking;
+  /* A PHOTO STILL IN THE QUEUE DOES NOT COUNT AGAINST THEM. They uploaded it;
+     whether it has been looked at yet is this operator's backlog, and standing
+     is a description of what a member does, never of how quickly somebody else
+     got round to them. They are in Browse either way — as a letter with their
+     name on it until the picture clears — and that is what the test means by
+     being visible. `photo` is still required: a page with no face at all is
+     not somebody the room can see. */
+  const listed = q.state === "published" && q.handle && q.photo && q.looking;
   if (!listed) need.push("face");
 
   const age = Date.now() - Date.parse(q.at || "");
