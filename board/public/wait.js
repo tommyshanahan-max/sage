@@ -47,10 +47,26 @@ function device() {
 export function waitBox(opts) {
   const o = opts || {};
   const box = el("div", "waitbox");
+  /* SAID BEFORE ANYTHING ELSE. Two words, and they are the whole proposition:
+     this is not a site you sign up to. Everything under them is a consequence
+     of that sentence rather than an apology for it. */
+  box.append(el("span", "waiteyebrow", T("wait.only")));
   box.append(el("h3", null, o.head || T("wait.head")));
   box.append(el("p", "sub", o.say || T("wait.say")));
 
-  const count = el("p", "waitn");
+  /* THE NUMBER, AT THE SIZE OF THE THING IT IS SAYING.
+   *
+   * It was a line of small blue text under a paragraph, which is where a
+   * footnote goes. It is not a footnote — it is the only evidence on this page
+   * that anybody else wants in, and a queue you cannot see is not a queue. So
+   * it is set as a figure with its label under it, the same way the report
+   * card sets a number worth looking at.
+   *
+   * Still absent rather than zero below the floor: see WAITING_FLOOR. */
+  const count = el("div", "waitcount");
+  const big = el("b");
+  const lab = el("span");
+  count.append(big, lab);
   count.hidden = true;
   box.append(count);
 
@@ -136,7 +152,8 @@ export function waitBox(opts) {
     .then((d) => {
       if (!d || !d.waiting) return;
       count.hidden = false;
-      count.textContent = T("wait.n", { n: d.waiting });
+      big.textContent = String(d.waiting);
+      lab.textContent = T("wait.waiting");
     })
     .catch(() => { /* no number, same box */ });
 

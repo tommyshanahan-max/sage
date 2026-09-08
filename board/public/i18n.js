@@ -276,7 +276,13 @@ export const STRINGS = {
     "Everything else here is behind a password from somebody already in. If you do not know anybody yet, leave your name and one way to reach you — a member may.",
     "这里其余的东西，都要用已经在里面的人给的口令才打得开。如果你还不认识谁，就留个名字和一个联系方式——也许会有人来找你。",
   ],
+  /* Kept: still used where a sentence is wanted rather than a figure. */
   "wait.n":            ["{n} people are waiting.", "有 {n} 个人在等。"],
+  /* The two words at the top of the box, and the label under the figure.
+     "Invite only" rather than "private" or "members only": it names the one
+     mechanism — somebody already in has to hand you the password. */
+  "wait.only":         ["Invite only", "仅限邀请"],
+  "wait.waiting":      ["waiting to get in", "个人在等着进来"],
   "wait.name":         ["Your name", "你的名字"],
   "wait.reach":        ["WeChat, Instagram, email — one is enough",
                         "微信、Instagram、邮箱——一个就够"],
