@@ -573,6 +573,33 @@ export function cleanGrant(raw) {
   };
 }
 
+/* ---------------------------------------------------------------------------
+ * Leaving a conversation
+ *
+ * A private room is only safe if getting out of it is one press and needs no
+ * explanation. This is that press: one row, written by the person leaving,
+ * naming the person they are leaving. Either side may write one and it shuts
+ * the thread for BOTH — a room one person cannot leave is not a room they
+ * chose to be in.
+ *
+ * WHY IT IS A ROW AND NOT A DELETION. What was already said stays said; both
+ * people keep what they have read, and a report about it still works. Leaving
+ * ends the conversation, it does not erase the evidence of it, which is the
+ * difference between leaving and covering something up.
+ *
+ * The person left is never told who pressed it. They see a closed thread,
+ * which is the same thing they would see if the other person simply stopped —
+ * and "she blocked you" is a sentence that starts arguments and protects
+ * nobody. Same reason blocking is never sent to us at all.
+ */
+export function cleanShut(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const by = String(raw.by || "").slice(0, 64);
+  const who = String(raw.who || "").slice(0, 64);
+  if (!by || !who || by === who) return null;
+  return { by, who, at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
+}
+
 export const followersOf = (follows, id) =>
   follows.reduce((n, f) => n + (f.who === id ? 1 : 0), 0);
 
@@ -665,9 +692,15 @@ export const notesFor = (notes, me) =>
 
 /** How many they have sent today, for the cap. Counted rather than stored, so
  *  there is no second number to keep in step. */
-export function sentToday(notes, me, now = new Date()) {
+export function sentToday(notes, me, now = new Date(), skip = null) {
   const day = now.toISOString().slice(0, 10);
-  return notes.filter((n) => n.by === me && String(n.at).slice(0, 10) === day).length;
+  /* `skip` leaves out the people this is not counting — the ones already in an
+     open conversation with. The cap is on INTRODUCTIONS: a busy afternoon with
+     somebody who matched with you must not be what stops you introducing
+     yourself to somebody new, and a hundred messages into one open thread must
+     not read as a hundred approaches. */
+  return notes.filter((n) => n.by === me && String(n.at).slice(0, 10) === day
+    && !(skip && skip(n.to))).length;
 }
 
 export function cleanBoard(raw) {
@@ -780,7 +813,21 @@ export function cleanBoard(raw) {
     waits.push(w);
   }
 
-  return { posts, people, follows, notes, wants, invites, cards, grants, waits };
+  /* Who walked out of which conversation. One row per direction, first
+     writing wins — leaving twice is leaving once, and the time on it is when
+     they first went. */
+  const shuts = [];
+  const gone = new Set();
+  for (const r of (Array.isArray(raw?.shuts) ? raw.shuts : [])) {
+    const x = cleanShut(r);
+    if (!x) continue;
+    const key = x.by + ":" + x.who;
+    if (gone.has(key)) continue;
+    gone.add(key);
+    shuts.push(x);
+  }
+
+  return { posts, people, follows, notes, wants, invites, cards, grants, waits, shuts };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an

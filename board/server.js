@@ -366,7 +366,19 @@ const gate = async (req, res, next) => {
   res.status(403).json({ error: "invite", where: "/enter" });
 };
 
-const NOTES_ON = false;
+/* PRIVATE MESSAGES, AND THE SWITCH THAT KILLS THEM.
+ *
+ * This was a hard `false` while there was nowhere for a message to lead: two
+ * strangers, two messages, and then a dead end. It is on now because a match
+ * has somewhere to lead — a room only the two of them can see, which is the
+ * safer thing to offer a matched pair than "hand over your WeChat id".
+ *
+ * It stays an environment switch rather than becoming plain code, and the
+ * default is on. BOARD_NOTES=off in .env turns every message route in this
+ * file into a 404 without a deploy, which is the thing you want within reach
+ * on the one surface here that two people can use to reach each other.
+ */
+const NOTES_ON = String(process.env.BOARD_NOTES || "on").toLowerCase() !== "off";
 const notesOff = (req, res, next) =>
   (NOTES_ON ? next() : res.status(404).json({ error: "not in this version" }));
 
@@ -1454,14 +1466,37 @@ app.get("/api/matches", async (req, res) => {
  * usually — is how you carry on somewhere else. Then this thread is closed and
  * neither of you can write again.
  *
- * Why closed rather than open:
+ * Why closed rather than open, FOR TWO PEOPLE WHO HAVE NOT MATCHED:
  *   - Two messages is exactly enough to trade contact details, which is the
- *     whole job. A third is a conversation, and a conversation here would need
- *     blocking, muting, deletion and everything else that follows.
+ *     whole job. A third is a conversation with somebody who has not agreed to
+ *     have one.
  *   - Nobody can be worn down. The person who did not answer is not written to
  *     again, and "no answer" needs no button and costs nothing to say.
  *   - There is no inbox to fill. The worst case for a person on the list is a
  *     handful of unanswered introductions, not a stream.
+ *
+ * AND WHY IT OPENS ONCE THEY MATCH.
+ *
+ * A match is not a like. It is four separate decisions: she followed him, he
+ * followed her, and their rooms line up in both directions. Two people who
+ * have each done that have asked for a conversation, and the two-message cap
+ * then stops being a protection and becomes an obstacle — it pushes them onto
+ * WeChat before either of them has decided the other is worth a WeChat id.
+ *
+ * So a matched pair gets an open thread. Everything that makes it safe is a
+ * consequence of how it was opened rather than a lock added afterwards:
+ *
+ *   - It cannot be started by one person. No amount of writing gets a stranger
+ *     into somebody's thread; only that person following back does.
+ *   - Either side leaves with one press, permanently, for both, and is never
+ *     asked why. The person left sees a closed thread and is not told who
+ *     closed it — see cleanShut.
+ *   - Every message is still reportable, and a report is still the only way
+ *     anybody else ever reads one. That is the whole reason these are held on
+ *     a server that can read them: a room nobody can read is a room nobody can
+ *     be removed from.
+ *   - Nothing is broadcast. No typing, no online, no read receipt to the
+ *     sender. Being in here does not tell anybody you are here.
  *
  * What is not here, deliberately: nothing is held for review, because a
  * private message read by a moderator before delivery is not private; and
@@ -1475,18 +1510,54 @@ app.get("/api/matches", async (req, res) => {
  * evening, and nobody with an honest reason to write needs more. */
 const NOTES_A_DAY = Math.max(1, Number(process.env.BOARD_NOTES_A_DAY || 5));
 
+/** Whether two people have matched: each follows the other, and their rooms
+ *  line up. The same four decisions pairState reports to a profile — read from
+ *  the board rather than passed in, so nothing can claim a match by asserting
+ *  one. */
+function matched(board, me, them) {
+  const mine = board.people.find((q) => q.by === me);
+  const theirs = board.people.find((q) => q.by === them);
+  if (!mine || !theirs) return false;
+  return board.follows.some((f) => f.by === me && f.who === theirs.id)
+    && board.follows.some((f) => f.by === them && f.who === mine.id)
+    && store.scopeFits(mine, theirs)
+    && store.sharedRooms(mine, theirs).length > 0;
+}
+
 /** Where a thread between two people has got to. The whole rule, in one place,
- *  so the route and the page cannot disagree about it. */
-function threadState(notes, me, them) {
+ *  so the route and the page cannot disagree about it.
+ *
+ *  Order matters: leaving beats everything, including a match. Somebody who
+ *  walked out does not get walked back in by a follow. */
+function threadState(board, me, them) {
+  if (board.shuts.some((x) => (x.by === me && x.who === them)
+    || (x.by === them && x.who === me))) {
+    return { can: false, why: "shut", open: false };
+  }
+  const notes = board.notes;
   const between = notes.filter(
     (n) => (n.by === me && n.to === them) || (n.by === them && n.to === me));
-  if (!between.length) return { can: true, why: "" };
-  if (between.length >= 2) return { can: false, why: "closed" };
+
+  /* MATCHED: an open thread. Still not a free channel — the same daily count
+     applies, so a matched pair is a conversation and not a firehose, and the
+     other person can leave at any point in it. */
+  if (matched(board, me, them)) {
+    const last = between[between.length - 1];
+    return {
+      can: true, open: true, why: "open",
+      // An answer rather than a new introduction when they spoke last: it is
+      // what keeps the daily count off a running conversation.
+      answering: last && last.to === me ? last.id : "",
+    };
+  }
+
+  if (!between.length) return { can: true, why: "", open: false };
+  if (between.length >= 2) return { can: false, why: "closed", open: false };
   // Exactly one. Only the person who received it may answer, and only now.
   const one = between[0];
   return one.to === me
-    ? { can: true, why: "answering", answering: one.id }
-    : { can: false, why: "waiting" };
+    ? { can: true, why: "answering", answering: one.id, open: false }
+    : { can: false, why: "waiting", open: false };
 }
 
 /* Writing to somebody. */
@@ -1512,9 +1583,17 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
     const mine = board.people.find((q) => q.by === me);
     if (!mine || !mine.handle) return { error: "profile" };
 
-    const state = threadState(board.notes, me, target.by);
+    const state = threadState(board, me, target.by);
     if (!state.can) return { error: state.why };
-    if (!state.answering && store.sentToday(board.notes, me) >= NOTES_A_DAY) {
+    /* THE DAILY COUNT IS ABOUT INTRODUCTIONS, NOT CONVERSATIONS.
+       It exists to stop somebody writing to every woman on the list in one
+       evening. Neither half of that applies inside an open thread: the other
+       person chose to be in it and can leave with one press, and counting a
+       conversation against it would mean the fifth message of the day to
+       somebody you matched with is refused. */
+    if (!state.answering && !state.open
+      && store.sentToday(board.notes, me, new Date(),
+        (to) => threadState(board, me, to).open) >= NOTES_A_DAY) {
       return { error: "enough" };
     }
 
@@ -1554,9 +1633,29 @@ app.get("/api/notes", notesOff, async (req, res) => {
              : { who: "", handle: "", photo: "" };
   };
 
-  const notes = store.notesFor(board.notes, me).map((n) => {
+  /* THE STATE OF EACH THREAD, WORKED OUT ONCE PER PERSON rather than once per
+     message: it is a fact about the two of you, and asking it again for every
+     line of a conversation is both wasteful and a way for two lines of the
+     same thread to disagree. */
+  const rows = store.notesFor(board.notes, me);
+  const other = (n) => (n.by === me ? n.to : n.by);
+  const state = new Map();
+  for (const n of rows) {
+    if (!state.has(other(n))) state.set(other(n), threadState(board, me, other(n)));
+  }
+  /* WHICH MESSAGE IS THE LATEST IN ITS THREAD. Only that one carries the box
+     to write in — a reply box under every line of a conversation is five boxes
+     that all do the same thing. */
+  const newest = new Map();
+  for (const n of rows) {
+    const k = other(n);
+    if (!newest.has(k) || String(n.at) > String(newest.get(k))) newest.set(k, String(n.at));
+  }
+
+  const notes = rows.map((n) => {
     const mine = n.by === me;
     const them = name(mine ? n.to : n.by);
+    const st = state.get(other(n)) || { can: false, open: false };
     return {
       id: n.id, at: n.at, text: n.text, re: n.re, mine,
       ...them,
@@ -1565,12 +1664,47 @@ app.get("/api/notes", notesOff, async (req, res) => {
       seen: mine ? undefined : n.seen,
       reported: Boolean(n.report),
       // Whether this can still be answered, so the page does not offer a box
-      // that the server will refuse.
-      canAnswer: !mine && threadState(board.notes, me, n.by).can,
+      // that the server will refuse. In an open thread either side may write
+      // next, so it no longer depends on whose message this is.
+      canAnswer: st.open ? true : (!mine && st.can),
+      // An open thread is a conversation rather than an introduction, and the
+      // page says so and offers the way out of it.
+      open: Boolean(st.open),
+      last: String(n.at) === newest.get(other(n)),
     };
   });
 
   res.json({ notes, unread: notes.filter((n) => !n.mine && !n.seen).length });
+});
+
+/* LEAVING A CONVERSATION.
+ *
+ * One press, permanent, both sides, no reason asked and none recorded. The
+ * other person is never told who did it — they see a thread that has closed,
+ * which is exactly what they would see if you had simply stopped answering.
+ * "She left this chat" is a sentence that starts arguments and protects
+ * nobody; the same reason blocking is never sent to this server at all.
+ *
+ * What was already said stays said. Leaving ends a conversation, it does not
+ * erase it — both people keep what they have read, and a report about any of
+ * it still works afterwards.
+ */
+app.post("/api/note/shut", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const who = String(req.body?.who || "");
+  if (!me) return res.status(400).json({ error: "no" });
+  if (!/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "gone" });
+  const out = await change((board) => {
+    const target = board.people.find((x) => x.id === who);
+    // The same answer for somebody who never existed and somebody who has
+    // taken themselves down: this must not become a way to ask which is which.
+    if (!target || target.by === me) return { error: "gone" };
+    if (board.shuts.some((x) => x.by === me && x.who === target.by)) return { ok: true };
+    board.shuts.push(store.cleanShut({ by: me, who: target.by }));
+    return { ok: true };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
 });
 
 /* Read. Set by the person who received it and by nobody else. */
@@ -1748,7 +1882,7 @@ app.get("/api/person", async (req, res) => {
       // Whether you may write to them, and whether this would be an answer.
       // Decided here rather than on the page, so the button and the route
       // cannot come to different conclusions about the same two people.
-      thread: (me && q.by !== me) ? threadState(board.notes, me, q.by) : { can: false, why: "" },
+      thread: (me && q.by !== me) ? threadState(board, me, q.by) : { can: false, why: "" },
       // Everything about the two of you, from one place. See pairState.
       pair: pairState(board, me, q),
       // The member who vouched for them. See broughtBy.

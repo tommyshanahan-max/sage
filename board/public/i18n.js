@@ -392,6 +392,20 @@ export const STRINGS = {
     "老实说代价在哪：名片和其他内容存在同一台服务器上，运行这个板的人是能看到那个文件的。在名片这个功能出现之前，这里没有任何东西是这样的。如果你不愿意做这个交换，就别填——这个板上没有别的地方会向你要联系方式。",
   ],
 
+  /* PRIVATE MESSAGES ARE THE ONE PLACE ON THIS BOARD WHERE TWO PEOPLE WRITE
+     TO EACH OTHER AND NOBODY ELSE, so what that does and does not mean is
+     spelled out rather than implied — including the part people assume and we
+     will not claim. */
+  "pv.hchat":          ["Messages", "私信"],
+  "pv.pchat1": [
+    "A message holds what you wrote, who it was to, and when. It is kept on the same server as everything else. Nobody but the two of you reads it — not other members, not us — with one exception, and the exception is the point: if the person who received a message reports it, that is when somebody reads it. That is the whole reason these are not built so that we cannot read them. A room nobody can read is a room nobody can be removed from.",
+    "一条私信保存的是：你写的内容、写给谁、什么时候写的，和其他内容存在同一台服务器上。除了你们两个人，没有别人会读——其他成员不会，我们也不会——只有一个例外，而这个例外正是关键：如果收信的人举报了这条消息，那时才会有人来读。这也正是我们没有把私信做成「连我们自己都读不了」的原因——一个没有人能读的房间，也就没有人能被请出去。",
+  ],
+  "pv.pchat2": [
+    "It is not end-to-end encrypted and this page will not tell you it is. It travels over HTTPS and it sits on a server we run. Either of you can leave a conversation with one press: after that neither of you can write again, the other person is not told who left, and what was already said stays where it is — leaving ends a conversation, it does not erase it, which is what keeps a report about it possible afterwards.",
+    "它不是端到端加密的，本页也不会告诉你它是。传输走 HTTPS，存放在我们自己运行的服务器上。你们任何一方都可以一键退出对话：退出后双方都不能再写，对方也不会被告知是谁退出的，而已经说过的话会留在原处——退出是结束对话，不是抹掉对话，这样事后举报才仍然成立。",
+  ],
+
   /* COUNTING READERS IS NEW, so it is a section and not a clause. The point
      worth making is the shape of it: a number went up, and the thing that
      could have been written down — who read what — was not. */
@@ -973,6 +987,16 @@ export const STRINGS = {
   "match.head0":       ["Matches", "匹配"],
   "match.head":        ["You and {who} are after the same thing",
                         "你和{who}想要的是同一件事"],
+  /* THE CHAT A MATCH OPENS, offered before the card. See the note in
+     matchBox: the first thing a match should buy is somewhere private to
+     talk, not somebody's WeChat id. */
+  "match.chatWhy": [
+    "You can talk to {who} here first — a room only the two of you can see. Either of you can leave it at any time, and neither is told when the other does.",
+    "你可以先在这里跟{who}聊——一个只有你们两个人看得见的房间。任何一方随时都可以退出，退出时也不会通知对方。",
+  ],
+  "match.chatGo":      ["Message {who}", "给{who}发消息"],
+  "match.chatSent":    ["Sent. It is in Messages.", "已发送，可以在私信里看到。"],
+
   "match.why":         ["Why this is a match", "为什么算匹配"],
   "match.becauseOne": [
     "You both want {what}, and you followed each other.",
@@ -1607,6 +1631,20 @@ export const STRINGS = {
                         "你已经写给 {who} 了。等对方回复。"],
   "note.closed":       ["You have both written. Carry on where you swapped.",
                         "你们都写过了。到交换的地方继续聊吧。"],
+  /* AN OPEN THREAD, which only two people who matched ever have. The words
+     are deliberately plainer than the introduction's: an introduction is a
+     thing you compose, a conversation is a thing you are in. */
+  "note.write":        ["Write", "写点什么"],
+  "note.openHow": [
+    "You matched, so this one stays open. Either of you can leave it at any time, and neither of you is told when the other does.",
+    "你们匹配上了，所以这个对话会一直开着。任何一方随时都可以退出，退出时也不会通知对方。",
+  ],
+  "note.leave":        ["Leave this chat", "退出这个对话"],
+  "note.leaveSure": [
+    "Leave the chat with {who}? Neither of you can write again. {who} is not told.",
+    "退出和 {who} 的对话？之后你们都不能再写了。{who} 不会收到通知。",
+  ],
+  "note.shut":         ["This conversation is closed.", "这个对话已经结束了。"],
   "note.needProfile":  ["Fill in your own profile first — an introduction from nobody is not one.",
                         "先填好自己的资料——没有名字的自我介绍不算自我介绍。"],
   "note.enough":       ["That is enough messages for one day.", "今天发得够多了。"],

@@ -161,6 +161,12 @@
     border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);
     font-size:.94rem}
   .match button.q{background:transparent;color:var(--ink-2);border-color:var(--line)}
+  /* THE CHAT, above the card and set off from it by a rule: they are two
+     separate decisions and the screen should not read as one long form. */
+  .match .chat{margin:.9rem 0 0;padding:0 0 1rem;border-bottom:1px solid var(--line)}
+  .match .chat textarea{width:100%;margin:.7rem 0 0;padding:.7rem .8rem;font:inherit;
+    font-size:.95rem;line-height:1.5;border:1px solid var(--line);
+    border-radius:.7rem;background:var(--paper);color:var(--ink);resize:vertical}
   .match .k{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
     color:var(--muted);font-weight:600;display:block;margin:.9rem 0 0}
   .match .v{margin:.15rem 0 0;font-size:1.05rem;word-break:break-all}
@@ -371,6 +377,55 @@ function matchBox(q) {
     ? T("match.becauseOne", { what: T("room." + first.mine + ".s") })
     : T("match.becausePair", { mine: T("room." + first.mine + ".s"),
                                theirs: T("room." + first.theirs + ".s") })));
+
+  /* THE CHAT, BEFORE THE CARD.
+   *
+   * This is the order that makes the whole match safe. A match used to lead
+   * straight to "give them your WeChat id", which asks somebody to hand over
+   * the way they are reached before they have exchanged a sentence with the
+   * person. Now the first thing a match opens is a room that only the two of
+   * them can see, on this board, where every message is reportable and either
+   * of them can walk out with one press.
+   *
+   * The card is still there, underneath, for the pair who decide they want to
+   * carry on somewhere else. It is a second decision now instead of the only
+   * one.
+   */
+  if (THREAD.open) {
+    const chat = el("div", "chat");
+    chat.append(el("p", "why", T("match.chatWhy", { who: q.handle })));
+    const go = el("button", null, T("match.chatGo", { who: q.handle }));
+    go.type = "button";
+    go.addEventListener("click", () => {
+      go.remove();
+      const ta = document.createElement("textarea");
+      ta.maxLength = 600;
+      ta.rows = 3;
+      ta.placeholder = T("note.placeholder");
+      const send = el("button", null, T("note.send"));
+      send.type = "button";
+      const out = el("p", "said");
+      send.addEventListener("click", async () => {
+        const text = ta.value.trim();
+        if (!text) { ta.focus(); return; }
+        send.disabled = true;
+        out.textContent = T("note.sending");
+        try {
+          const r = await fetch("/api/note", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device, who: q.id, text }),
+          });
+          if (!r.ok) throw new Error("no");
+          ta.remove(); send.remove();
+          out.textContent = T("match.chatSent");
+        } catch { out.textContent = T("act.again"); send.disabled = false; }
+      });
+      chat.append(ta, send, out);
+      ta.focus();
+    });
+    chat.append(go);
+    wrap.append(chat);
+  }
 
   /* THEIR CARD, when they have handed it over. Above your own decision on
      purpose: somebody who has already been given something should see it
