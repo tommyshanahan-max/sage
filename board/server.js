@@ -3419,6 +3419,38 @@ app.delete("/api/face", admin, async (req, res) => {
   res.json({ ok: true, id });
 });
 
+/* TAKING SOMEBODY OUT OF THE ROOM, AND PUTTING THEM BACK.
+ *
+ * Being IN Browse is the member's own switch and stays that way — nobody can
+ * put somebody in front of the room on their behalf. Taking somebody out is
+ * the other direction and belongs to whoever runs the board: a room where the
+ * only person who can remove you is you is not a room anybody is keeping.
+ *
+ * NOTHING IS DELETED. The state goes back to held, which is the same state
+ * every profile starts in: they vanish from Browse and from their public page,
+ * their posts stay where they are, and they still see their own profile
+ * exactly as before. They are not told, because there is nothing here that
+ * tells anybody anything — and because "you have been hidden" is a
+ * conversation to have in a chat, in your own words, or not at all.
+ *
+ * It reverses with the same call. That matters more than it sounds: a control
+ * that only goes one way gets used as a last resort, and the point of this one
+ * is to be usable on a hunch.
+ */
+app.post("/api/person/out", admin, express.json({ limit: "1kb" }), async (req, res) => {
+  const want = String(req.body?.handle || "").trim().toLowerCase();
+  if (!want) return res.status(400).json({ error: "which handle" });
+  const back = req.body?.back === true;
+  const out = await change((board) => {
+    const q = board.people.find((x) => String(x.handle || "").toLowerCase() === want);
+    if (!q) return null;
+    q.state = back ? "published" : "held";
+    return { handle: q.handle, state: q.state };
+  });
+  if (!out) return res.status(404).json({ error: "no such person" });
+  res.json({ ok: true, ...out });
+});
+
 // Everybody with a name, so the panel can show a person and the picture they
 // have. Held profiles included: somebody whose words are still in the queue is
 // exactly who an operator might be about to put a face to.
