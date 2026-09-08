@@ -261,6 +261,37 @@ export const STRINGS = {
    * and it is the part that decides what this place is like to be in.
    * Written to be read once and remembered — which is why there are nine and
    * not thirty. */
+  /* ---- the waiting list, on the public page -------------------------------
+     The only place this board asks anything of somebody who is not in it, so
+     it asks for as little as it can and says what happens to it. */
+  "wait.head":         ["No password yet?", "还没有口令？"],
+  "wait.say": [
+    "The only way in is a password from somebody already here. If you do not know anybody yet, leave your name and one way to reach you, and a member may.",
+    "进来的唯一办法，是从已经在里面的人那儿拿到一个口令。如果你还不认识谁，就留个名字和一个联系方式，也许会有人来找你。",
+  ],
+  /* Under a result, where the screen has already earned the right to ask. The
+     general version explains what the place is; this one does not have to. */
+  "wait.headTest":     ["This board is invite only", "这个板是邀请制的"],
+  "wait.sayTest": [
+    "Everything else here is behind a password from somebody already in. If you do not know anybody yet, leave your name and one way to reach you — a member may.",
+    "这里其余的东西，都要用已经在里面的人给的口令才打得开。如果你还不认识谁，就留个名字和一个联系方式——也许会有人来找你。",
+  ],
+  "wait.n":            ["{n} people are waiting.", "有 {n} 个人在等。"],
+  "wait.name":         ["Your name", "你的名字"],
+  "wait.reach":        ["WeChat, Instagram, email — one is enough",
+                        "微信、Instagram、邮箱——一个就够"],
+  "wait.why":          ["One line about you. Optional.", "一句话介绍自己。可以不写。"],
+  "wait.go":           ["Put me on the list", "把我加进名单"],
+  "wait.both":         ["A name and one way to reach you.", "名字和一个联系方式。"],
+  "wait.done":         ["You are on the list.", "已经加进名单了。"],
+  "wait.again":        ["Changed — the old answer is replaced.", "改好了，旧的那条已经被替换。"],
+  "wait.already":      ["You are already a member. Open the board.",
+                        "你已经是这里的人了，直接打开就行。"],
+  "wait.note": [
+    "Only whoever runs this board can read the list — no member sees it, and nothing you write here appears anywhere on the board. It is deleted once you are let in, or if you are not.",
+    "只有管这个板的人能看到这份名单——成员看不到，你在这里写的任何东西都不会出现在板上。等你被放进来，或者确定不放，这条就删掉。",
+  ],
+
   "rules.title":       ["House rules", "这里的规矩"],
   "rules.lede": [
     "Nine lines. None of them are enforced by the software, which is the point — this is the part of a place that only the people in it can keep.",
@@ -375,6 +406,21 @@ export const STRINGS = {
   "pv.pcount2": [
     "It works that way because the counting happens on the reader's own phone. Their browser knows which pages it has opened and on which days — the way it already knows who they have blocked — and it tells us one thing: whether this visit is their first today, and whether they have now been here three separate days. A number goes up. Nothing else is written down.",
     "之所以能这样，是因为计数发生在读者自己的手机上。他的浏览器知道自己打开过哪些页面、哪几天打开的——就像它已经知道他屏蔽了谁一样——然后只告诉我们一件事：这次是不是他今天第一次打开，以及他是不是已经来过三天。于是一个数字加一。别的什么都没写下来。",
+  ],
+
+  /* THE WAITING LIST IS THE FIRST THING WE HOLD ABOUT SOMEBODY WHO IS NOT A
+     MEMBER, so it gets its own section rather than a clause. The waitlist form
+     promises three things — nobody but the operator reads it, none of it
+     appears on the board, and it is deleted either way — and a promise made in
+     a form has to be findable here too, or it is only marketing. */
+  "pv.hwait":          ["The waiting list", "等候名单"],
+  "pv.pwait1": [
+    "If you asked to join and are waiting, what we hold is what you typed into that one form: a name to call you, a way to reach you, and whatever you wrote about yourself. Nothing else. There is no account behind it, and asking to join does not put anything on the board — no member sees your name, and nothing you wrote appears anywhere a member can read.",
+    "如果你申请加入、正在等候，我们保留的就是你在那个表单里填的东西：一个称呼、一个联系方式，以及你写的那段自我介绍，仅此而已。它背后没有账号，申请本身也不会在板上留下任何痕迹——没有成员看得到你的名字，你写的内容也不会出现在任何成员能读到的地方。",
+  ],
+  "pv.pwait2": [
+    "Only whoever runs this board reads that list. It is deleted once you are let in, and deleted if you are not — either way it does not become a record of people who once wanted in. The number of people waiting is shown on the public page and inside the board, but only as a number, and only once enough people are waiting that the number cannot point at anybody.",
+    "这份名单只有运行这个板的人会读。你被放进来之后它会被删掉，没被放进来也会被删掉——无论哪种情况，它都不会变成一份「谁曾经想进来」的记录。等候的人数会显示在公开页面和板内，但只是一个数字，而且要等到人数多到这个数字指不到任何具体的人时才会出现。",
   ],
 
   "pv.h3":             ["What we do not do", "我们不做的事"],
@@ -1022,6 +1068,12 @@ export const STRINGS = {
   "brw.title":         ["Browse people", "看看有谁"],
   "brw.sub":           ["{n} on the list", "名单上有 {n} 个人"],
   "brw.of":            ["{n} of {total}", "第 {n} 个，共 {total} 个"],
+  /* THE DOOR, READ FROM THE INSIDE. Two halves of one line: how many are in,
+     then how many are outside. The waiting half only ever renders above the
+     floor, so it is safe to write in the plural — nobody will see "5 people
+     are waiting" turn into "1 person is". */
+  "brw.inside":        ["{n} people are in.", "里面有 {n} 个人。"],
+  "brw.atdoor":        ["{n} are waiting to get in.", "另有 {n} 个人在等着进来。"],
   "brw.hello":         ["Say hello", "打个招呼"],
 
   // ---- the type sort -------------------------------------------------------
@@ -1143,6 +1195,37 @@ export const STRINGS = {
      in, so this is not how strangers arrive — it is how somebody who has spent
      their own code today finds a spare to pass on. */
   "inv.toFeed":        ["Put it on the feed", "发到动态里"],
+
+  /* NO CODE, AND WHY. The head is deliberately not "you cannot invite anyone":
+     the sentence a member should leave with is what an invitation is, not what
+     they have been refused. Each line below is one of the four tests in
+     standing() on the server, written as the thing you do rather than the
+     thing you failed. */
+  "inv.needHead":      ["An invitation is a vouch", "邀请是一次担保"],
+  "inv.needWhy": [
+    "You do not have one today. Whoever you bring in is introduced with your name on it, so bringing somebody is something you get to do rather than something you get:",
+    "你今天没有邀请码。你带进来的人，是挂着你的名字被介绍进来的——所以带人进来是一件要先站得住的事，而不是注册就送的东西：",
+  ],
+  "inv.needFace": [
+    "Be in Browse: a name, a face that has been looked at, and the switch on.",
+    "先出现在名单里：有名字，有一张审核过的照片，并且把开关打开。",
+  ],
+  "inv.needDays": [
+    "Be here three days. Long enough to have read the place you are recommending.",
+    "在这里待满三天——足够你读懂你正在推荐的这个地方。",
+  ],
+  "inv.needSaid": [
+    "Put two things on the board, one of them this fortnight.",
+    "在板上发过两条内容，其中至少一条是最近两周发的。",
+  ],
+  "inv.needGuests": [
+    "The people you already brought are still here, and said something.",
+    "你之前带进来的人还在，并且开过口。",
+  ],
+  "inv.needRoom": [
+    "You have {n} guests in already. Room for more once they settle.",
+    "你已经带进来 {n} 个人了。等他们安顿下来，再带下一个。",
+  ],
   "inv.feedWords":     ["A spare invite, if anybody needs one. It works once.\n\n{url}\n\nPassword: {code}",
                         "多的一个口令，谁要谁拿，只能用一次。\n\n{url}\n\n口令：{code}"],
   "inv.onFeed":        ["It is on the feed.", "已经发到动态里了。"],

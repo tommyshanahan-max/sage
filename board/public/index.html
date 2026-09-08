@@ -333,6 +333,17 @@
   .myinv .url{display:block;margin:.3rem 0 0;font-size:.82rem;color:var(--ink-2);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .myinv .tap{display:block;margin:.35rem 0 0;font-size:.8rem;color:var(--ink-2)}
+  /* WHAT IS MISSING, when nothing is being offered. Deliberately not styled as
+     a warning: this is a list of ordinary things an ordinary member does, and
+     a red box would make being three days old look like a violation. */
+  .myinv .need{margin:.55rem 0 0}
+  .myinv .need p{margin:0 0 .6rem;font-size:.9rem;line-height:1.5;color:var(--ink-2)}
+  .myinv .need ul{margin:0;padding:0;list-style:none;display:flex;
+    flex-direction:column;gap:.45rem}
+  .myinv .need li{display:flex;gap:.55rem;align-items:baseline;
+    font-size:.92rem;line-height:1.4;color:var(--ink)}
+  .myinv .need li i{flex:0 0 auto;width:.42rem;height:.42rem;margin-top:.42rem;
+    border-radius:50%;background:var(--accent);opacity:.55}
 
   .bell{position:relative;flex:0 0 auto;width:2.4rem;height:2.4rem;padding:0;
     border:1px solid var(--line);background:var(--raise);border-radius:50%;
@@ -1084,6 +1095,12 @@
   .pacts .primary.on{background:var(--raise);border-color:var(--line);color:var(--ink-2)}
   .pcount{margin:.7rem 0 0;text-align:center;font-size:.82rem;color:var(--muted);
     font-variant-numeric:tabular-nums}
+  /* THE DOOR, FROM THE INSIDE. One line, quieter than the count above it,
+     with the waiting number carried at full strength — that is the half of
+     the sentence worth reading, and the reason the line exists at all. */
+  .atdoor{margin:.35rem 0 0;text-align:center;font-size:.82rem;color:var(--muted);
+    font-variant-numeric:tabular-nums}
+  .atdoor b{color:var(--ink);font-weight:600}
   /* Share, on the face it shares. A pill rather than a bare icon: this is the
      control that puts somebody into a WeChat group, so it is worth a word. It
      sits on its own scrim because it has to stay readable on a photograph
@@ -1214,6 +1231,10 @@
       <span class="tap" id="myinvtap"></span>
       <button class="sendbtn" type="button" id="myinvsend"></button>
       <button class="feedbtn" type="button" id="myinvfeed"></button>
+      <!-- What is standing between them and a code. Inside the same box, in
+           the same place the code would have been: the offer and the reason it
+           is not being made are one thing, not two. -->
+      <div class="need" id="myinvneed" hidden></div>
     </div>
     <!-- MATCHES FIRST. A match is the only thing in this tray that is about
          another person having chosen you back, and it is the only one with
@@ -1244,6 +1265,9 @@
   <div class="deck" id="deck"></div>
   <div class="pacts" id="pacts" hidden></div>
   <p class="pcount" id="pcount"></p>
+  <!-- Who is in, and who is outside wanting in. The second half only appears
+       once enough people are waiting that the number describes a queue. -->
+  <p class="atdoor" id="atdoor"></p>
   <p class="psafety" id="psafety"></p>
   <div class="bnone" id="bnone" hidden></div>
 
@@ -1659,6 +1683,10 @@ let posts = [], topic = "", FOLLOWING = [];
 // does not hoist a value, so the nav — which paints before the profile block
 // is reached — hit a temporal dead zone rather than a null.
 let ME = null;
+/* How many people are at the door, or null while there are too few for the
+   number to be a queue rather than a handful of names. From /api/me, kept
+   apart from ME because it is a fact about the board and not about you. */
+let WAITING = null, MEMBERS = 0;
 // Declared here with the rest of the state rather than beside the code that
 // draws it: `let` does not hoist a value, so anything running earlier — the
 // nav, on first paint — hit a temporal dead zone instead of a null.
@@ -2929,6 +2957,9 @@ function drawRot() {
  * explanation, and the person on the other end having nowhere to put them.
  */
 let MYCODE = "";
+// Why there is no code today, and how many guests are already in. Both from
+// /api/my-invite — see standing() on the server.
+let MYNEED = [], MYGUESTS = 0;
 /* "", "post" or "read" — what the door is doing, so the board can stop saying
    "anyone can read" on a day when that is not true. */
 let MODE = "";
@@ -2943,16 +2974,28 @@ async function loadMyInvite() {
         headers: { "x-board-device": device } }).then((r) => r.json()),
     ]);
     MYCODE = (mine && mine.code) || "";
+    // Why there is no code, when there is none. Every unmet test, not the
+    // first — see standing() on the server.
+    MYNEED = (mine && Array.isArray(mine.need)) ? mine.need : [];
+    MYGUESTS = Number((mine && mine.guests) || 0);
     MODE = (who && who.mode) || "";
-  } catch { MYCODE = ""; }
+  } catch { MYCODE = ""; MYNEED = []; }
   drawMyInvite();
   draw();
 }
 
 function drawMyInvite() {
   const b = $("myinv");
+  /* THREE STATES, not two. A code; no code and a reason; nothing at all.
+     The third is somebody who is not a member — there is nothing to say to
+     them here and the box stays away. */
+  if (!MYCODE && MYNEED.length) { drawNeed(b); return; }
   if (!MYCODE) { b.hidden = true; return; }
   b.hidden = false;
+  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvfeed"]) {
+    $(id).hidden = false;
+  }
+  $("myinvneed").hidden = true;
   $("myinvlab").textContent = T("inv.head");
   $("myinvcode").textContent = MYCODE;
   $("myinvcode").title = T("inv.codeTap");
@@ -2960,6 +3003,33 @@ function drawMyInvite() {
   $("myinvtap").textContent = T("inv.tap");
   $("myinvsend").textContent = T("inv.send");
   $("myinvfeed").textContent = T("inv.toFeed");
+}
+
+/** No code, and why. Same box, same place — see the note in the markup.
+ *
+ *  WHY IT SAYS ALL OF IT. Standing is four small ordinary things, and a member
+ *  who is told one of them at a time comes back four times to be turned away
+ *  four times. Told all of them at once it reads as what it is: a short list of
+ *  what a member does here, which is also the answer to what this place is. */
+function drawNeed(b) {
+  b.hidden = false;
+  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvfeed"]) {
+    $(id).hidden = true;
+  }
+  $("myinvlab").textContent = T("inv.needHead");
+  const box = $("myinvneed");
+  box.hidden = false;
+  fill(box);
+  box.append(el("p", null, T("inv.needWhy")));
+  const ul = el("ul");
+  for (const k of MYNEED) {
+    const li = el("li");
+    li.append(el("i"));
+    li.append(el("span", null, k === "room"
+      ? T("inv.needRoom", { n: MYGUESTS }) : T("inv.need" + k[0].toUpperCase() + k.slice(1))));
+    ul.append(li);
+  }
+  box.append(ul);
 }
 
 /* Just the six characters, for somebody who already has the link — or who is
@@ -4112,6 +4182,27 @@ function shareCard(q, label) {
   say(T(copyText(url) ? "act.copied" : "act.copyFail"));
 }
 
+/** Who is in, and how many are outside. Two facts in one line.
+ *
+ *  THE POINT OF SHOWING A MEMBER THE QUEUE. Being inside something has no
+ *  weight unless you can see the edge of it, and a member who can see the
+ *  queue is the member who spends an invitation. It is a number and never a
+ *  list: no name, no photograph, nothing that could tell anybody in here who
+ *  is waiting — and below the floor the server sends null, so the line simply
+ *  says how many people are in and stops. */
+function drawDoor(people) {
+  const box = $("atdoor");
+  fill(box);
+  box.hidden = !people;
+  if (!people) return;
+  box.append(document.createTextNode(T("brw.inside", { n: MEMBERS || people })));
+  if (WAITING) {
+    box.append(document.createTextNode(" "));
+    const b = el("b", null, T("brw.atdoor", { n: WAITING }));
+    box.append(b);
+  }
+}
+
 function drawDeck() {
   $("brwlabel").textContent = T("brw.title");
 
@@ -4132,6 +4223,7 @@ function drawDeck() {
   // Counted in people, not in cards: yours is the ask at the end, not the
   // fourth of four students.
   $("pcount").textContent = people && !mine ? T("brw.of", { n: AT + 1, total: people }) : "";
+  drawDoor(people);
   $("bnone").hidden = Boolean(people);
 
   if (!n) {
@@ -4558,6 +4650,8 @@ async function saveMe(patch) {
     return { error: T(d.error === "tooBig" ? "post.tooBig" : "err.general") };
   }
   ME = d.person;
+  if (typeof d.waiting === "number") WAITING = d.waiting;
+  if (typeof d.people === "number") MEMBERS = d.people;
   paintNav();
   // A face arriving takes the ask away — the row under the deck and the card
   // at the end of it both go.
@@ -4910,7 +5004,10 @@ loadMyInvite();
 fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
   .then((r) => r.json())
   .then((d) => {
-    ME = d.person; paintNav(); drawTutor(); drawDeck();
+    ME = d.person;
+    WAITING = typeof d.waiting === "number" ? d.waiting : null;
+    MEMBERS = Number(d.people || 0);
+    paintNav(); drawTutor(); drawDeck();
     /* Arrived from "edit" on their own profile. The form lives on this page,
        so the other page sends people here rather than growing a second copy of
        it — and the address is cleaned up afterwards so a reload does not open

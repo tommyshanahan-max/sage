@@ -317,3 +317,24 @@
     font-size:.82rem;color:var(--muted);text-decoration:none;
     border-bottom:1px solid var(--hair);padding-bottom:.15rem}
   footer .adminlink:hover{color:var(--ink)}
+
+  /* ---- the waiting list, on the public page ---------------------------------
+   * The one thing a stranger can DO on this site; everything above it is
+   * reading. Boxed and centred so it reads as the end of the argument. */
+  .waitbox{max-width:34rem;margin:2.4rem auto 0;padding:1.4rem 1.3rem 1.5rem;
+    background:var(--card);border:1px solid var(--line);border-radius:1.2rem;
+    text-align:left;box-shadow:var(--shadow)}
+  .waitbox h3{margin:0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.3rem,4.4vw,1.6rem);line-height:1.2}
+  .waitbox .sub{margin:.6rem 0 0;font-size:.95rem;line-height:1.6;color:var(--ink-2)}
+  .waitn{margin:.9rem 0 0;font-size:.9rem;color:var(--accent);font-weight:500}
+  .waitbox form{display:flex;flex-direction:column;gap:.6rem;margin:1.1rem 0 0}
+  .waitbox input,.waitbox textarea{width:100%;padding:.75rem .9rem;font:inherit;
+    font-size:1rem;border:1px solid var(--line);border-radius:.7rem;
+    background:var(--paper);color:var(--ink);resize:vertical}
+  .waitbox input:focus,.waitbox textarea:focus{outline:2px solid var(--accent);
+    outline-offset:1px;border-color:var(--accent)}
+  .waitbox .btn{margin:.2rem 0 0}
+  .waitbox .said{margin:.8rem 0 0;font-size:.92rem;color:var(--accent)}
+  .waitbox .said.bad{color:var(--t5)}
+  .waitnote{margin:1rem 0 0;font-size:.8rem;line-height:1.55;color:var(--muted)}

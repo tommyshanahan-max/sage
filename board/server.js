@@ -233,7 +233,20 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * the files the door itself is made of. Everything in /public is code — no
  * post, no profile and no photograph is served from there.
  */
-const OPEN_PATHS = /^\/(enter|i\/|api\/enter|api\/admitted|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+/* WHAT IS OUTSIDE THE DOOR, and it is a short list on purpose.
+ *
+ *   /about  what this is, one featured post, and the waiting list
+ *   /rules  how people behave in here, which names no member
+ *   /level  THE FOUR QUESTIONS, and this one is the whole growth mechanic:
+ *           a member shares their result into a group chat, somebody who is
+ *           not a member taps it, takes the test themselves, and lands on the
+ *           waiting list under their own number. A teaser that asks nothing
+ *           and gives something is worth more than a page describing a board.
+ *
+ * The test needs no route of its own — it is four questions and a canvas — so
+ * nothing but the page is opened, and a stranger who finishes it is offered
+ * the list instead of the buttons that post to a feed they cannot read. */
+const OPEN_PATHS = /^\/(enter|i\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -501,6 +514,13 @@ app.get("/api/my-invite", async (req, res) => {
   const board = await store.load(FILE);
   const mine = board.people.find((q) => q.by === me);
   const who = (mine && mine.handle) || "";
+
+  /* STANDING, BEFORE A CODE EXISTS. Not a 403: being unable to bring somebody
+     in today is an ordinary state of an ordinary member, not an error, and the
+     header has something to say about it. The reasons go back with it so the
+     screen can say all of them at once — see standing(). */
+  const rank = standing(board, me);
+  if (!rank.can) return res.json({ code: "", need: rank.need, guests: rank.guests });
 
   /* TODAY'S, NOT A STANDING ONE.
    *
@@ -913,6 +933,97 @@ function broughtBy(board, q) {
   return host ? host.handle : "";
 }
 
+/* ---------------------------------------------------------------------------
+ * WHO MAY BRING SOMEBODY IN
+ *
+ * Every member used to carry a code. That made an invitation a property of
+ * having an account, which is another way of saying it was worth nothing —
+ * and it put the whole quality of the room in the hands of whoever joined
+ * most recently and understood it least.
+ *
+ * An invitation is a vouch. It is the one thing a member does that changes
+ * the room for everybody else, so it is the one thing here you have to be
+ * standing to do.
+ *
+ * WHAT THIS IS NOT. It is not the daily grade. The grade is worked out on the
+ * member's own phone from things only that phone knows — a card answered, a
+ * streak, which matches are new — and a number a client computes is a number
+ * a client can claim. Nothing that decides who gets through the door may rest
+ * on a claim. Every test below is a fact this server already holds and did
+ * not have to be told.
+ *
+ * THE FOUR TESTS, in the order they are read to somebody who fails them:
+ *
+ *   face    You are in Browse: published, named, with a face that has been
+ *           looked at, and the switch on. You cannot vouch from behind a
+ *           curtain — the person you bring can be asked who brought them, and
+ *           the answer has to be somebody the room can see.
+ *   days    You have been here three days. Long enough to have read the place
+ *           you are recommending.
+ *   said    You have put two things on the board, one of them this fortnight.
+ *           Not a volume test: two is the difference between a member and a
+ *           registration.
+ *   guests  The people you already brought are still here, and if you have
+ *           brought two or more, at least half of them said something. This is
+ *           the only test that is about somebody else, and it is the one that
+ *           does the real work: it costs you nothing to invite a stranger
+ *           until the stranger's silence is on your record.
+ *
+ * And a ceiling: GUEST_ROOM live guests at a time. A room this size cannot
+ * absorb one person's address book, however good their standing.
+ */
+const BRING_DAYS = 3;
+const BRING_SAID = 2;
+const BRING_FRESH_DAYS = 14;
+const GUEST_ROOM = 3;
+
+/** Everything about whether one member may mint a code, worked out in one
+ *  place so the route that refuses and the screen that explains cannot come to
+ *  different conclusions about the same person.
+ *
+ *  Returns { can, need } where `need` is every unmet test, in reading order —
+ *  all of them, not the first: a door that tells you one thing at a time is a
+ *  door you knock on four times. */
+function standing(board, me) {
+  const need = [];
+  /* NO PROFILE AT ALL is not a special case. Somebody who came through the
+     door and has not made a page yet fails the same three tests everybody
+     else fails on their first day, and reading all three is how they find out
+     what this place expects — telling them only "be in Browse" would hide the
+     other two until they had done it. */
+  const q = (me && board.people.find((x) => x.by === me)) || {};
+
+  const listed = q.state === "published" && q.handle
+    && q.photo && q.photoState === "published" && q.looking;
+  if (!listed) need.push("face");
+
+  const age = Date.now() - Date.parse(q.at || "");
+  if (!(age >= BRING_DAYS * 86400000)) need.push("days");
+
+  const mine = board.posts.filter((p) => p.by === me && p.state === "published"
+    && !p.like && !p.report);
+  const fresh = mine.some((p) =>
+    Date.now() - Date.parse(p.at || "") < BRING_FRESH_DAYS * 86400000);
+  if (mine.length < BRING_SAID || !fresh) need.push("said");
+
+  /* THE GUESTS. Found the same way the "brought in by" line on a profile is
+     found — through the invite rows — so there is no second record of who
+     brought whom to fall out of step with the first. */
+  const codes = board.invites.filter((v) => v.by === me && v.usedBy);
+  const guests = codes
+    .map((v) => board.people.find((x) => x.by === v.usedBy))
+    .filter(Boolean);
+  const live = guests.filter((g) => g.state === "published");
+  const gone = guests.some((g) => g.state === "removed");
+  const spoke = live.filter((g) =>
+    board.posts.some((p) => p.by === g.by && p.state === "published"
+      && !p.like && !p.report)).length;
+  if (gone || (live.length >= 2 && spoke * 2 < live.length)) need.push("guests");
+  if (live.length >= GUEST_ROOM) need.push("room");
+
+  return { can: need.length === 0, need, guests: live.length };
+}
+
 /* Everybody looking for a study buddy.
  *
  * Public, and only what has been through a person: a directory of foreign
@@ -942,6 +1053,119 @@ app.get("/api/people", async (req, res) => {
       shared: pairState(board, me, q).shared,
     })),
   });
+});
+
+/* ---------------------------------------------------------------------------
+ * The public side of the door
+ *
+ * A door with nothing outside it is a door nobody knocks on. Everything else
+ * on this board is behind the password; these three things are not, and each
+ * one is a deliberate hole rather than a page that happened to be reachable:
+ *
+ *   /about   what this is, one featured post, and the waiting list
+ *   /rules   how people behave in here, which says nothing about any member
+ *   /api/hello, /api/wait  what those two pages need
+ *
+ * WHAT LEAKS, EXACTLY. One post, chosen from the box, and two numbers. No
+ * names of members, no profiles, no photographs of anybody, no feed. A
+ * featured post carries the words and the account it went out under and
+ * nothing else — see the note in post-feature.mjs about which posts may be
+ * chosen and which have to be asked about first.
+ */
+
+/** The number of people waiting, but only once it is a crowd.
+ *
+ *  Below this it is not a queue, it is a list of individuals — and "1 person
+ *  is waiting" on a page that anybody can read is a worse advertisement than
+ *  no number at all, as well as being nearly a name. */
+const WAITING_FLOOR = 5;
+
+app.get("/api/hello", async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const featured = board.posts.filter((p) => p.featured && p.state === "published")
+    .slice(0, 1)
+    .map((p) => ({
+      // The words and who said them. Nothing else — no id, no photograph, no
+      // way back to a profile.
+      note: p.note, zh: p.zh, handle: p.handle, at: p.at,
+    }));
+  const waiting = board.waits.filter((w) => !w.done).length;
+  res.json({
+    featured,
+    people: board.people.filter((q) => q.state === "published" && q.handle).length,
+    // Absent rather than zero below the floor: a page can then say nothing at
+    // all instead of saying something small.
+    waiting: waiting >= WAITING_FLOOR ? waiting : null,
+  });
+});
+
+/** Ask to be let in. Public, obviously — it is the only thing here that is. */
+app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const name = String(req.body?.name || "").trim();
+  const reach = String(req.body?.reach || "").trim();
+  if (!name || !reach) return res.status(400).json({ error: "both" });
+
+  const out = await change((board) => {
+    /* Already in, and asking anyway. Somebody who cleared their browser can
+       land on the public page while still being a member in the file; telling
+       them to wait for something they already have would be absurd. */
+    if (me && board.people.some((q) => q.by === me)) return { already: true };
+    const row = store.cleanWait({ name, reach, why: req.body?.why, by: me });
+    if (!row) return { error: "both" };
+    const at = me ? board.waits.findIndex((w) => w.by === me) : -1;
+    if (at >= 0) board.waits[at] = { ...row, id: board.waits[at].id, at: board.waits[at].at };
+    else board.waits.push(row);
+    return { ok: true, again: at >= 0 };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** The list itself, for whoever runs the box. Never for a member. */
+app.get("/api/waiting", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  res.json({ waits: board.waits });
+});
+
+/** Cross somebody off, once they are in or once they are not. */
+app.post("/api/waiting", express.json({ limit: "2kb" }), admin, async (req, res) => {
+  const id = String(req.body?.id || "");
+  const done = ["", "in", "no"].includes(req.body?.done) ? req.body.done : "";
+  const out = await change((board) => {
+    const w = board.waits.find((x) => x.id === id);
+    if (!w) return { error: "gone" };
+    // Deleted outright when asked: a way of reaching a stranger is not
+    // something to keep for the record.
+    if (req.body?.remove === true) {
+      board.waits = board.waits.filter((x) => x.id !== id);
+      return { ok: true, removed: true };
+    }
+    w.done = done;
+    return { ok: true, done };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.json(out);
+});
+
+/** Choose the one post that shows outside. Admin only, and one at a time. */
+app.post("/api/feature", express.json({ limit: "2kb" }), admin, async (req, res) => {
+  const id = String(req.body?.id || "");
+  const on = req.body?.on !== false;
+  const out = await change((board) => {
+    // Only ever one. Two featured posts is a feed, and a feed outside the door
+    // is the thing this whole design is avoiding.
+    for (const p of board.posts) p.featured = false;
+    if (!on) return { ok: true, featured: "" };
+    const p = board.posts.find((x) => x.id === id && x.state === "published");
+    if (!p) return { error: "gone" };
+    p.featured = true;
+    return { ok: true, featured: p.id };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.json(out);
 });
 
 /* ---------------------------------------------------------------------------
@@ -1505,10 +1729,23 @@ app.get("/api/me", async (req, res) => {
   // Not followers: there is nothing to follow, and a count of nothing is worse
   // than no count.
   const posts = board.posts.filter((p) => p.by === me && p.state === "published");
+  /* HOW MANY ARE AT THE DOOR. The same number the public page shows, under
+     the same floor, and for the same reason it is a number and not a list:
+     below WAITING_FLOOR it stops describing a queue and starts describing
+     individuals. A member sees it because being inside something people are
+     waiting to get into is most of what being inside it is worth — and
+     because a member who can see the queue growing is a member who invites. */
+  const waiting = board.waits.filter((w) => !w.done).length;
   res.json({
     person: shownPerson(mine, true),
     posts: posts.filter(store.isOwnPost).length,
     replies: posts.filter((p) => p.re).length,
+    /* HOW MANY ARE IN, counted the same way the public page counts them —
+       everybody with a page, not everybody in the deck. The line that carries
+       it sits under Browse, and Browse is missing anybody who switched
+       themselves out of it; a number that says "in" has to mean in. */
+    people: board.people.filter((q) => q.state === "published" && q.handle).length,
+    waiting: waiting >= WAITING_FLOOR ? waiting : null,
   });
 });
 

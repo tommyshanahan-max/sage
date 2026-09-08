@@ -148,6 +148,12 @@
       <p class="sub" id="liveSub"></p>
       <div class="live" id="live"></div>
       <div class="more"><a class="btn ghost" id="seeall" href="/feed"></a></div>
+
+      <!-- THE WAY IN, FOR SOMEBODY WHO DOES NOT KNOW ANYBODY. The door needs
+           a password from a member and that is not changing; this is how a
+           stranger becomes somebody a member can decide about. Drawn by
+           wait.js, which the test result page uses too. -->
+      <div id="waitslot"></div>
     </div>
   </section>
 </div>
@@ -214,6 +220,7 @@
 <script type="module">
 import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
 import { drawLive, topicColour } from "/live.js";
+import { waitBox } from "/wait.js";
 
 const $ = (id) => document.getElementById(id);
 function el(t, c, x) {
@@ -281,6 +288,7 @@ function paint() {
   drawLive($("live"), POSTS);
 }
 
+
 /* ---- the one moving thing on the page --------------------------------------
  *
  * Real questions, cycling. The fastest way to say what a board is for is to
@@ -318,13 +326,29 @@ let POSTS = [];
 
 // ---- go ---------------------------------------------------------------------
 setLang(pickLang());
+$("waitslot").append(waitBox());
 $("langslot").append(langButton(paint));
 paint();
 askRun(true);
 
-fetch("/api/board")
+/* WHAT THIS PAGE MAY SHOW, NOW THAT ANYBODY CAN READ IT.
+ *
+ * It used to draw the last few posts off /api/board. That is behind the door,
+ * so from outside it now answers 403 and the section quietly stayed empty —
+ * no leak, but no page either. And if the door were ever opened, the same code
+ * would put the whole feed on a public URL.
+ *
+ * So it reads /api/hello instead, which hands out exactly one post: the one
+ * chosen from the box, with the words and the account it went out under and
+ * nothing else. One post is also the better advertisement — a feed says "here
+ * is a lot of content", one question says "somebody here is a person".
+ */
+fetch("/api/hello")
   .then((r) => r.json())
-  .then((d) => { POSTS = (d && d.posts) || []; drawLive($("live"), POSTS); })
+  .then((d) => {
+    POSTS = (d && d.featured) || [];
+    drawLive($("live"), POSTS);
+  })
   .catch(() => drawLive($("live"), []));
 
 fetch("/api/contact")

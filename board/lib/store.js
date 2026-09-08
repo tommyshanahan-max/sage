@@ -34,6 +34,45 @@ export const newId = () => randomUUID().replace(/-/g, "").slice(0, 20);
 
 /** The shape stored, from whatever arrives. Anything malformed costs its own
  *  row rather than the file. */
+/* ---------------------------------------------------------------------------
+ * The waiting list
+ *
+ * The one place this board hears from somebody who is not in it. It exists
+ * because a door with nothing outside it is a door nobody knocks on: the
+ * public page shows one post and a number, and this is where the number comes
+ * from.
+ *
+ * WHAT IT HOLDS, AND WHY THAT IS A DECISION AND NOT A FORM. A way to reach
+ * somebody who is not a member is exactly the kind of data this board has
+ * spent its life not holding — so it is one field, it is visible to nobody but
+ * whoever runs the box, and the honest thing to do with a row is act on it and
+ * delete it. Nothing here is ever shown on the board, and no member can read
+ * the list.
+ * ------------------------------------------------------------------------- */
+export function cleanWait(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").trim().slice(0, n);
+  const name = s(raw.name, 40);
+  const reach = s(raw.reach, 80);
+  if (!name || !reach) return null;
+  return {
+    id: /^[a-f0-9]{20}$/.test(String(raw.id || "")) ? String(raw.id) : newId(),
+    name,
+    // One way to be reached, in whatever shape they typed it. Not validated
+    // into an email: half of the people this is for do not use one.
+    reach,
+    // Why they want in, in their own words. The only thing a member vouching
+    // for a stranger has to go on.
+    why: s(raw.why, 300),
+    at: s(raw.at, 40) || new Date().toISOString(),
+    // The browser that asked, so one person cannot fill the list on their own.
+    by: s(raw.by, 64),
+    // Let in, or turned down. The row stays until somebody deletes it, so the
+    // same person is not asked twice.
+    done: ["", "in", "no"].includes(raw.done) ? raw.done : "",
+  };
+}
+
 export function cleanPost(raw) {
   if (!raw || typeof raw !== "object") return null;
   const id = String(raw.id || "");
@@ -59,6 +98,11 @@ export function cleanPost(raw) {
     photo: /^[a-f0-9]{20}$/.test(String(raw.photo || "")) ? String(raw.photo) : "",
     clip: /^[a-f0-9]{20}$/.test(String(raw.clip || "")) ? String(raw.clip) : "",
     topic: s(raw.topic, 40),
+    /* SHOWN OUTSIDE THE DOOR. One post at a time, set from the box and never
+       from a page, because it moves something written for the people in here
+       to a page anybody can read. See the note on featuring in post-feature.mjs
+       for what may be featured and what needs asking first. */
+    featured: raw.featured === true,
     /* Where a post invites the reader to go, from a list of two.
      *
      * A result posted to the feed is worth nothing to anybody reading it
@@ -722,7 +766,21 @@ export function cleanBoard(raw) {
     grants.push(g);
   }
 
-  return { posts, people, follows, notes, wants, invites, cards, grants };
+  /* Who is waiting outside. One row per person; the newest wins if somebody
+     asks twice, so a second answer corrects the first rather than queueing
+     behind it. */
+  const waits = [];
+  const asked2 = new Map();
+  for (const r of (Array.isArray(raw?.waits) ? raw.waits : [])) {
+    const w = cleanWait(r);
+    if (!w) continue;
+    const key = w.by || w.id;
+    if (asked2.has(key)) { waits[asked2.get(key)] = w; continue; }
+    asked2.set(key, waits.length);
+    waits.push(w);
+  }
+
+  return { posts, people, follows, notes, wants, invites, cards, grants, waits };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an
