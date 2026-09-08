@@ -5,6 +5,7 @@
  * record worth keeping, and the page they typed it into says so.
  *
  *   make waiting                 who is waiting, oldest first
+ *   make wait-add NAME=.. REACH=..   write down an ask that arrived elsewhere
  *   make waiting-in ID=abc123    let in — hand them a code with `make invite`
  *   make waiting-no ID=abc123    not now
  *   make waiting-rm ID=abc123    delete the row outright
@@ -17,6 +18,28 @@ if (!base || !key) {
 }
 const head = { "x-admin-secret": key, "Content-Type": "application/json" };
 const arg = (n) => { const i = rest.indexOf("--" + n); return i >= 0 ? rest[i + 1] : ""; };
+
+/* ADDING SOMEBODY. The list could only be joined through the public form,
+   which meant the people most likely to be waiting — the ones who asked in a
+   WeChat thread or in person — were the ones who could not be on it.
+
+   Every row is still somebody who actually asked. The public page says "N
+   people are waiting" and that number has to be true; this writes down an ask
+   that arrived somewhere else, it does not invent a queue. */
+async function add(name, reach, why) {
+  const r = await fetch(base + "/api/waiting/add", {
+    method: "POST", headers: head, body: JSON.stringify({ name, reach, why }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    console.error(d.error === "both" ? "A name and a way to reach them, both." : "It did not save.");
+    process.exit(1);
+  }
+  console.log(d.again ? "Already on the list — that row is updated." : "On the list.");
+  console.log("");
+  console.log("The count on the public page appears at five. Below that it is");
+  console.log("nearly a name, so it says nothing at all.");
+}
 const when = (iso) => String(iso || "").slice(0, 10);
 const pad = (s, n) => String(s).padEnd(n).slice(0, n);
 
@@ -29,6 +52,7 @@ async function mark(id, body) {
 }
 
 async function main() {
+  if (arg("name")) return add(arg("name"), arg("reach"), arg("why"));
   if (arg("in")) return mark(arg("in"), { done: "in" });
   if (arg("no")) return mark(arg("no"), { done: "no" });
   if (arg("rm")) return mark(arg("rm"), { remove: true });

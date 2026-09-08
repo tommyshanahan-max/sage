@@ -1188,6 +1188,37 @@ app.get("/api/waiting", admin, async (_req, res) => {
 });
 
 /** Cross somebody off, once they are in or once they are not. */
+/* PUTTING SOMEBODY ON THE LIST FROM THE BOX.
+ *
+ * The list could only be joined through the public form, which meant the
+ * people most likely to be waiting — the ones who asked in a WeChat thread,
+ * or in person — were the ones who could not be on it. Every row here is
+ * still somebody who actually asked; this is a way of writing down an ask
+ * that arrived somewhere else, not a way of inventing a queue. The number on
+ * the public page says "N people are waiting" and it has to be true.
+ */
+app.post("/api/waiting/add", express.json({ limit: "4kb" }), admin, async (req, res) => {
+  const name = String(req.body?.name || "").trim();
+  const reach = String(req.body?.reach || "").trim();
+  if (!name || !reach) return res.status(400).json({ error: "both" });
+  const out = await change((board) => {
+    const row = store.cleanWait({ name, reach, why: req.body?.why });
+    if (!row) return { error: "both" };
+    /* Deduplicated on the way somebody is reached, newest winning. Adding the
+       same WeChat id twice is one person asking twice, not two people. */
+    const at = board.waits.findIndex((w) =>
+      w.reach.toLowerCase() === row.reach.toLowerCase());
+    if (at >= 0) {
+      board.waits[at] = { ...row, id: board.waits[at].id, at: board.waits[at].at };
+      return { ok: true, again: true, id: board.waits[at].id };
+    }
+    board.waits.push(row);
+    return { ok: true, id: row.id };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
 app.post("/api/waiting", express.json({ limit: "2kb" }), admin, async (req, res) => {
   const id = String(req.body?.id || "");
   const done = ["", "in", "no"].includes(req.body?.done) ? req.body.done : "";

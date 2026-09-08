@@ -213,6 +213,19 @@ waiting: ## Who is waiting outside, and let them in or not
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
 
+pitch: ## What to paste into WeChat to get people onto the waiting list
+	@# The link that works is not the obvious one — see the note in pitch.mjs.
+	@node scripts/pitch.mjs "https://liuxuesheng.io"
+
+wait-add: ## Write down an ask that came in elsewhere:  make wait-add NAME="Wei" REACH="wechat weilin88"
+	@# For somebody who asked in a WeChat thread or in person. Every row is
+	@# still a real ask — the public page says how many are waiting and that
+	@# number has to be true.
+	@test -n "$(NAME)" -a -n "$(REACH)" || { echo 'both: make wait-add NAME="Wei" REACH="wechat weilin88" [WHY="..."]'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --name "$(NAME)" --reach "$(REACH)" --why "$(WHY)"
+
 waiting-in: ## Mark one as let in: make waiting-in ID=...
 	@test -n "$(ID)" || { echo "which one? make waiting-in ID=..."; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
