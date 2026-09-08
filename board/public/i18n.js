@@ -507,6 +507,7 @@ export const STRINGS = {
      the room rather than for the rank: Doors is who arrived, Panel is what
      they said, and both together are what "admin" would have meant. */
   "land.panel":        ["Panel", "后台"],
+  "land.queue":        ["Waiting", "门外"],
 
   "peek.head":         ["Inside, right now", "里面此刻的样子"],
   "wait.only":         ["Invite only", "仅限邀请"],

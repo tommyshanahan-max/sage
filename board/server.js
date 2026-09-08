@@ -265,7 +265,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * the person, that is a decision to make on purpose here, not a side effect
  * of a route somebody opened to fix an image.
  */
-const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|api\/ask|api\/tally|api\/counts|doors|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -360,6 +360,10 @@ app.get("/", (req, res, next) => page(ROOT_IS_BOARD ? "index.html" : "landing.ht
  * A stranger who finds this address learns that it exists and no more.
  */
 app.get(["/doors", "/doors/"], (req, res, next) => page("doors.html", req, res, next));
+/* The queue, on a phone, for the one person the form says reads it. In front
+   of the invitation door for the same reason /doors is: the key is the
+   credential, and whoever runs this opens it on whatever is in their hand. */
+app.get(["/waiting", "/waiting/"], (req, res, next) => page("waiting.html", req, res, next));
 app.get(["/feed", "/feed/", "/index.html"], (req, res, next) => page("index.html", req, res, next));
 /* /board was the address before this was called the Feed. Kept as a permanent
  * redirect rather than deleted: links already sent into a WeChat chat cannot be

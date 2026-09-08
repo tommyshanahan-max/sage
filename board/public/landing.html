@@ -249,6 +249,8 @@
            hostname behind its own login, which is why this is a link out and
            not a page here. -->
       <a href="/admin" id="footPanel"></a>
+      <!-- Who is at the door, for the one person the form says reads it. -->
+      <a href="/waiting" id="footWaiting"></a>
     </div>
   </div>
 </div>
@@ -353,6 +355,7 @@ function paint() {
   $("footPrivacy").textContent = T("land.privacy");
   $("footDoors").textContent = T("land.counted");
   $("footPanel").textContent = T("land.panel");
+  $("footWaiting").textContent = T("land.queue");
   drawSay();
   drawDoors();
 }
