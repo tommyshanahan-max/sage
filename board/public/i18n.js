@@ -1201,10 +1201,14 @@ export const STRINGS = {
      they have been refused. Each line below is one of the four tests in
      standing() on the server, written as the thing you do rather than the
      thing you failed. */
-  /* MAKE, not get. "Get an invite" is what somebody outside the door does —
-     the person reading this is already in, and what they are short of is the
-     standing to hand one out. Same in Chinese: 发出, not 拿到. */
-  "inv.needHead":      ["How to make an invite", "怎么才能发出邀请码"],
+  /* INVITE SOMEONE, not make an invite and not get one.
+     "Get an invite" is what somebody outside the door does — the person
+     reading this is already in. "Make an invite" is the machinery: nobody
+     wants a code, they want the person. And "a friend" narrows it on a board
+     that is for networking as much as for friends — the man bringing a
+     supplier he trusts is not bringing a friend. "Someone" covers both, and
+     it is the word the box already uses one state along: Bring someone in. */
+  "inv.needHead":      ["How to invite someone", "怎么邀请别人进来"],
   "inv.needWhy": [
     "Whoever you bring in has your name on them. So first:",
     "你带进来的人，是挂着你的名字进来的。所以先做到：",
