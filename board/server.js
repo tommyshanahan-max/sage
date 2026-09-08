@@ -2521,9 +2521,40 @@ app.get("/api/person", async (req, res) => {
 
 app.get("/api/me", async (req, res) => {
   const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
-  const board = await store.load(FILE);
+  let board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
-  const mine = me && board.people.find((q) => q.by === me);
+  let mine = me && board.people.find((q) => q.by === me);
+
+  /* A BROWSER THAT FORGOT WHO IT WAS.
+   *
+   * Safari deletes a site's stored data after seven days without a visit. The
+   * random number this browser identifies itself by lives there, so somebody
+   * who made a page and did not come back for a week arrives with a brand new
+   * id and no profile — while their profile, posts and matches sit on the
+   * server under a hash nobody can produce any more. There is no password to
+   * fall back on: that is the whole design.
+   *
+   * The admission cookie is the exception. The server set it, it is HttpOnly
+   * and signed, it lasts a year, and Safari does not clear it the way it
+   * clears the rest. It holds the same hash. So a browser presenting a valid
+   * cookie for somebody who exists, together with a device id for somebody who
+   * does not, is that person on a browser that forgot — and their rows move
+   * onto the id they have now.
+   *
+   * Only in that direction, and only into an empty seat. A device that already
+   * has a profile is that profile, cookie or no cookie; that check is what
+   * stops a shared phone from swallowing somebody else's page. */
+  if (!mine && me) {
+    const was = inCookie(req);
+    const there = was && was !== me && board.people.some((q) => q.by === was);
+    if (there) {
+      await change((b) => { store.rebind(b, was, me); return { ok: true }; });
+      board = await store.load(FILE);
+      mine = board.people.find((q) => q.by === me);
+      // The cookie names the old hash and would rebind them again tomorrow.
+      if (mine) setCookie(res, me);
+    }
+  }
   if (!mine) return res.json({ person: null });
   // How much they have put in, which is the only figure here worth showing.
   // Not followers: there is nothing to follow, and a count of nothing is worse

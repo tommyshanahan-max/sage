@@ -1141,3 +1141,57 @@ export function reportsFor(posts, id) {
   }
   return { count: who.size, why };
 }
+
+/** Move everything belonging to one browser onto another one.
+ *
+ * WHY THIS EXISTS. There are no accounts here: a person IS a browser, kept as
+ * a salted hash of a random number that browser made up and stored. Safari
+ * deletes that number for any site not visited in seven days. So somebody who
+ * made a page, then did not open it for a week, comes back to a board that has
+ * never heard of them — with their profile, their posts and their matches all
+ * still on the server under a hash nobody can produce any more.
+ *
+ * The one thing that survives is the admission cookie: the server set it,
+ * it is HttpOnly, it is signed, it lasts a year, and it holds that same hash.
+ * A browser presenting a cookie for somebody who exists, alongside a device id
+ * for somebody who does not, is that person on a browser that forgot. This
+ * moves them onto the id it has now.
+ *
+ * IT IS A MOVE, NOT A COPY. Two rows keyed on the same person would be worse
+ * than the problem: two profiles in Browse, a match that only answers on one
+ * of them, a code counted twice. Every table that keys on a device hash is
+ * listed here by name — if a new one is added and not added here, somebody's
+ * rebind loses that part of them silently, which is the failure to watch for.
+ *
+ * Nothing is deleted and nothing changes hands: `to` must not already be
+ * somebody, and the caller checks that `from` is.
+ */
+export function rebind(board, from, to) {
+  if (!from || !to || from === to) return 0;
+  let moved = 0;
+  const swap = (row, key) => {
+    if (row[key] === from) { row[key] = to; moved++; }
+  };
+  for (const q of board.people) swap(q, "by");
+  for (const p of board.posts) swap(p, "by");
+  for (const f of board.follows) swap(f, "by");
+  for (const g of board.grants) swap(g, "by");
+  for (const s of board.shuts) swap(s, "by");
+  for (const w of board.wants) swap(w, "by");
+  for (const c of board.cards) swap(c, "by");
+  for (const n of board.notes) { swap(n, "by"); swap(n, "to"); }
+  for (const g of board.groups) {
+    swap(g, "by");
+    if (Array.isArray(g.members) && g.members.includes(from)) {
+      g.members = [...new Set(g.members.map((m) => (m === from ? to : m)))];
+      moved++;
+    }
+  }
+  for (const s of board.says) swap(s, "by");
+  /* The invite rows last, and both fields. `usedBy` is what admission is read
+     from — miss it and somebody is restored to their profile and then shut out
+     at the door. `by` is who they brought in, which is the credit on their
+     page. */
+  for (const v of board.invites) { swap(v, "by"); swap(v, "usedBy"); }
+  return moved;
+}
