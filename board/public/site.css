@@ -127,13 +127,17 @@
      in a bordered box under the headline, which is where you put a thing you
      are not sure about. */
   .asking{margin:0 0 1.4rem}
+  /* NO RESERVED HEIGHT. This held 2.4 lines so that a rotating question could
+     change length without the page below it jumping. The question does not
+     rotate any more — it is one line about one room — so the reservation is
+     just a hole under the headline, and it was the first thing anybody saw. */
   .asking q{display:block;font-family:var(--serif);quotes:none;
     font-size:clamp(2rem,5.2vw,3.4rem);line-height:1.14;letter-spacing:-.02em;
-    max-width:19ch;min-height:2.4em;transition:opacity .4s ease}
+    max-width:19ch;transition:opacity .4s ease}
   :root[data-lang="zh"] .asking q{line-height:1.35;letter-spacing:0;max-width:15ch;
     font-size:clamp(1.75rem,4.6vw,2.9rem)}
   .asking q.fade{opacity:0}
-  .asking .under{margin:.2rem 0 0;font-size:1.02rem;color:var(--ink-2)}
+  .asking .under{margin:.7rem 0 0;font-size:1.02rem;color:var(--ink-2)}
   @media (prefers-reduced-motion:reduce){ .asking q{transition:none} }
 
   /* ---- what is actually on it, live -------------------------------------- */
