@@ -309,6 +309,17 @@
      of a footnote — this is the offer. */
   .myinv{width:100%;margin:0 0 1.1rem;padding:1rem 1.05rem 1.1rem;
     background:var(--accent-soft);border-radius:1rem;text-align:left}
+  /* MESSAGES AND GROUPS. Two plain rows rather than two more cards: they are
+     doors to other screens, not things with news on them, and a tray of five
+     boxes is a tray nobody reads to the bottom of. */
+  .talkrow{display:flex;gap:.6rem;margin:0 0 1.2rem}
+  .talkrow a{flex:1;display:flex;gap:.5rem;align-items:center;justify-content:center;
+    padding:.7rem .6rem;border:1px solid var(--line);border-radius:.9rem;
+    background:var(--raise);color:var(--ink);text-decoration:none;font-size:.95rem}
+  .talkrow a:hover{border-color:var(--accent);color:var(--accent)}
+  .talkrow .badge{position:static;min-width:1.15rem;height:1.15rem;padding:0 .3rem;
+    border-radius:99px;background:var(--accent);color:var(--accent-ink);
+    font-size:.72rem;font-style:normal;display:grid;place-items:center}
   /* THINGS TO DO. On the raised surface rather than the accent one: the
      invite is the offer and keeps the colour, this is the work. Rows are
      buttons the whole width of the card — every line here goes somewhere, and
@@ -1269,6 +1280,15 @@
            the same place the code would have been: the offer and the reason it
            is not being made are one thing, not two. -->
       <div class="need" id="myinvneed" hidden></div>
+    </div>
+    <!-- THE TWO PLACES PEOPLE TALK. They live here rather than in the bar,
+         which already has four tabs and a button in it — and this tray is
+         where everything addressed to you already is. Hidden until there is a
+         profile: a private inbox is not the first thing to show somebody who
+         has not put a name up yet. -->
+    <div class="talkrow" id="talkrow" hidden>
+      <a href="/notes" id="gonotes"><span></span><i class="badge" id="gonotesn" hidden></i></a>
+      <a href="/groups" id="gogroups"><span></span></a>
     </div>
     <!-- MATCHES FIRST. A match is the only thing in this tray that is about
          another person having chosen you back, and it is the only one with
@@ -3015,6 +3035,9 @@ async function loadMyInvite() {
     MODE = (who && who.mode) || "";
   } catch { MYCODE = ""; MYNEED = []; }
   drawMyInvite();
+  drawTodo();
+  drawTalk();
+  countNotes();
   draw();
 }
 
@@ -3877,21 +3900,34 @@ async function loadWanted() {
 /* How many introductions are waiting. Its own request rather than a field on
  * the board: the board is public and cached at every layer, and a number that
  * belongs to one browser has no business travelling with it. */
-/* The unread count on the Messages tab. Not called while that tab is hidden
- * for V1 — kept whole, because what it is waiting for is the tab coming back
- * and not a rewrite.
+/* THE TWO DOORS, AND THE NUMBER ON ONE OF THEM.
  *
- */
+ * This was the count on a Messages tab that was hidden for V1. The tab is
+ * still not in the bar — four and a button is enough down there — but messages
+ * are real now, so the doors live in the tray with everything else addressed
+ * to you, and this puts the unread count on one of them. */
+function drawTalk() {
+  const row = $("talkrow");
+  // Nothing to offer somebody who has not put a name up yet. A private inbox
+  // is not the first thing to show on an empty profile.
+  row.hidden = !(ME && ME.handle);
+  $("gonotes").firstChild.textContent = T("note.inbox");
+  $("gogroups").firstChild.textContent = T("grp.title");
+}
+
 async function countNotes() {
   if (!device) return;
   try {
     const d = await fetch("/api/notes", { cache: "no-store",
       headers: { "x-board-device": device } }).then((r) => r.json());
     const n = (d && d.unread) || 0;
-    const badge = $("navnotesn");
-    badge.textContent = n > 9 ? "9+" : String(n);
-    badge.hidden = !n;
-  } catch { /* the tab is still a tab without a number on it */ }
+    for (const id of ["navnotesn", "gonotesn"]) {
+      const badge = $(id);
+      if (!badge) continue;
+      badge.textContent = n > 9 ? "9+" : String(n);
+      badge.hidden = !n;
+    }
+  } catch { /* the door is still a door without a number on it */ }
 }
 
 /* ---- browse, at the top of this page ---------------------------------------
@@ -4772,6 +4808,7 @@ async function saveMe(patch) {
   // The list is made of what is on their page, so it is redrawn the moment
   // the page changes.
   drawTodo();
+  drawTalk();
   // A face arriving takes the ask away — the row under the deck and the card
   // at the end of it both go.
   drawDeck();
@@ -5126,7 +5163,7 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
     ME = d.person;
     WAITING = typeof d.waiting === "number" ? d.waiting : null;
     MEMBERS = Number(d.people || 0);
-    paintNav(); drawTutor(); drawDeck();
+    paintNav(); drawTutor(); drawDeck(); drawTalk(); countNotes();
     /* Arrived from "edit" on their own profile. The form lives on this page,
        so the other page sends people here rather than growing a second copy of
        it — and the address is cleaned up afterwards so a reload does not open
