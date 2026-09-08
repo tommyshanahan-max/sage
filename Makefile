@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: post-profile pair who admit waiting waiting-in waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: feed-quiet post-profile pair who admit waiting waiting-in waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -331,6 +331,15 @@ invite-off: ## Take one back:  make invite-off CODE=K7M2QP
 feed-list: ## What is on the feed, with ids
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/feed-remove.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+
+feed-quiet: ## Take every house notice off the feed:  make feed-quiet GO=1
+	@# Four Professor posts on a board of fifteen makes the house the loudest
+	@# member. Everything they said is answered permanently in Ask the
+	@# Professor, which does not take a slot. Prints what it would do; GO=1
+	@# does it. Nothing is deleted — rows stay with a reason on them.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/feed-quiet.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  $(if $(GO),--go,)
 
 feed-remove: ## Take one post off the feed:  make feed-remove ID=<id>
 	@# Marks it removed, the same as the panel's button. The row stays in the
