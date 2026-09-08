@@ -272,21 +272,25 @@ export const STRINGS = {
   "wait.only":         ["Invite only", "仅限邀请"],
   "wait.waiting":      ["waiting to get in", "个人在等着进来"],
   "wait.name":         ["Your name", "你的名字"],
-  "wait.reach":        ["WeChat, Instagram, email — one is enough",
-                        "微信、Instagram、邮箱——一个就够"],
-  "wait.why":          ["One line about you. Optional.", "一句话介绍自己。可以不写。"],
-  /* THE FIRST BUTTON, which asks for nothing. It is a different sentence from
-     the one on the form: this one is the decision, that one is the send. */
-  "wait.join":         ["Join the list", "加入名单"],
-  "wait.go":           ["Put me on the list", "把我加进名单"],
+  /* Short enough not to be cut off in the box it sits in. It was three
+     examples and a clause, and the clause was the half that got truncated. */
+  "wait.reach":        ["WeChat or email", "微信或邮箱"],
+  "wait.why":          ["One line about you (optional)", "一句话介绍自己（选填）"],
+  "wait.go":           ["Join the list", "加入名单"],
   "wait.both":         ["A name and one way to reach you.", "名字和一个联系方式。"],
   "wait.done":         ["You are on the list.", "已经加进名单了。"],
   "wait.again":        ["Changed — the old answer is replaced.", "改好了，旧的那条已经被替换。"],
   "wait.already":      ["You are already a member. Open the board.",
                         "你已经是这里的人了，直接打开就行。"],
+  /* THE WHOLE PROMISE IN ONE LINE.
+     It was four: only the operator reads it, no member sees it, nothing
+     appears on the board, deleted either way. Three of those are the same
+     fact said three ways — if one person reads it, no member sees it and
+     nothing reaches the board. Kept: who reads it, and that it goes. The long
+     version is on the privacy page, where somebody who wants it will look. */
   "wait.note": [
-    "Only whoever runs this board can read the list — no member sees it, and nothing you write here appears anywhere on the board. It is deleted once you are let in, or if you are not.",
-    "只有管这个板的人能看到这份名单——成员看不到，你在这里写的任何东西都不会出现在板上。等你被放进来，或者确定不放，这条就删掉。",
+    "One person reads this. Deleted either way.",
+    "只有一个人会看。无论结果如何都会删掉。",
   ],
 
   "rules.title":       ["House rules", "这里的规矩"],

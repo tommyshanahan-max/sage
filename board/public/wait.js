@@ -73,23 +73,22 @@ export function waitBox() {
   count.hidden = true;
   box.append(count);
 
-  /* TWO STEPS, AND THE FIRST ONE ASKS FOR NOTHING.
+  /* ONE STEP, NOT TWO.
    *
-   * Three empty boxes are a form, and a form is a decision about whether to
-   * fill it in — made before the person has decided the smaller thing, which
-   * is whether they want in at all. So the box opens as a sentence, the number
-   * of people already waiting, and one button. Nothing to type until they have
-   * said yes.
+   * This opened as a sentence, a number and a button, with the form behind a
+   * tap — on the argument that three empty boxes are a decision about whether
+   * to fill them in, asked before somebody has decided the smaller thing.
    *
-   * It also keeps the box short, which is the other half of it: collapsed it
-   * fits on the screen under whatever brought them here, so the number and the
-   * button are read rather than scrolled to. */
-  const open = el("button", "btn", T("wait.join"));
-  open.type = "button";
-  box.append(open);
-
+   * The argument stopped holding once the promise about who reads the list
+   * moved down onto the form. What was left on the first step was the number
+   * and a button, and the second step said the same thing plus the boxes. A
+   * step that asks nothing and adds nothing is a tap, and a tap between
+   * somebody wanting in and being able to say so is the one thing on this
+   * page worth nothing at all.
+   *
+   * Three fields, two of them required, and the third optional and marked so.
+   * That is short enough to be the first thing seen. */
   const form = el("form");
-  form.hidden = true;
   const name = el("input");
   name.maxLength = 40;
   name.autocomplete = "name";
@@ -99,8 +98,10 @@ export function waitBox() {
   reach.autocapitalize = "off";
   reach.spellcheck = false;
   reach.placeholder = T("wait.reach");
-  const why = el("textarea");
-  why.rows = 2;
+  /* One line, in a box the size of one line. It was a two-row textarea, which
+     is the tallest thing on the screen asking for the least important thing
+     on it — and a box that size asks for a paragraph. */
+  const why = el("input");
   why.maxLength = 300;
   why.placeholder = T("wait.why");
   const go = el("button", "btn", T("wait.go"));
@@ -108,17 +109,19 @@ export function waitBox() {
   form.append(name, reach, why, go);
   box.append(form);
 
-  open.addEventListener("click", () => {
-    open.hidden = true;
-    form.hidden = false;
-    // Straight into the first box: they have already pressed the button, and
-    // asking them to press again to start typing is one press too many.
-    try { name.focus({ preventScroll: true }); } catch { name.focus(); }
-  });
-
   const said = el("p", "said");
   said.hidden = true;
   box.append(said);
+
+  /* THE PROMISE MOVES TO WHERE IT IS OWED.
+   *
+   * It used to sit under the button, on a screen asking for nothing — four
+   * lines of policy answering a question nobody had been given a reason to
+   * ask yet, and it was most of the words on the first thing a stranger sees.
+   *
+   * It belongs on the step where they are actually typing a way to reach
+   * them. That is the moment the promise is being made, and it is read there
+   * because it is about the box under the cursor. */
   box.append(el("p", "waitnote", T("wait.note")));
 
   const tell = (words, bad) => {
@@ -144,6 +147,7 @@ export function waitBox() {
       // Somebody who is already a member and has landed here anyway.
       tell(d.already ? T("wait.already") : d.again ? T("wait.again") : T("wait.done"));
       if (!d.already) { form.hidden = true; count.hidden = true; }
+      // The promise stays after sending: it is about what was just handed over.
     } catch { tell(T("act.again"), true); }
     go.disabled = false;
   });
