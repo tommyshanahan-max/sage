@@ -365,6 +365,81 @@ export const LEVELS = ["Just starting", "HSK 1-2", "HSK 3", "HSK 4", "HSK 5", "H
  * and the overlap is certain, the wall stops meaning anything, and so does the
  * notification.
  */
+/* ---------------------------------------------------------------------------
+ * THE SENTENCE
+ *
+ * "I am a Director looking for an Agent."
+ *
+ * The rooms below came first and they encode two things at once: a topic and a
+ * side. `talent` means "a model or creative looking for an agent" and `agent`
+ * means "an agent or manager looking for people" — which is why their labels
+ * are sentences rather than words, why there are thirteen of them when there
+ * are really six topics, and why somebody joining has to read two long
+ * descriptions of the same room and pick the one that is about them.
+ *
+ * Two dropdowns say the same thing and need no explaining, because the
+ * sentence IS the rule: you come up for people who are what you are looking
+ * for, and who are looking for what you are. Nobody has to learn what a room
+ * is.
+ *
+ * SIDES ARE FOR READING, NOT FOR MATCHING. They group the list so it is
+ * scannable — the people who make the work, then the people who back it or
+ * take people on — and they decide nothing. A director looking for a writer is
+ * two people on the same side and a perfectly good pair; a rule that forbade
+ * it would be the model getting in the way of the truth.
+ *
+ * THE ROOM IS DERIVED, NEVER ASKED. A pair lands in the first room both halves
+ * belong to, and everything downstream — the feed filter, the /r/ doors, the
+ * matching table above — goes on working on rooms without knowing any of this
+ * happened. That is the whole reason it is built this way round: the sentence
+ * is a better question, not a different product.
+ */
+export const ROLES = {
+  // The people who make the work.
+  director:  { side: "make", rooms: ["talent"] },
+  writer:    { side: "make", rooms: ["talent"] },
+  performer: { side: "make", rooms: ["talent"] },
+  crew:      { side: "make", rooms: ["talent", "job"] },
+  founder:   { side: "make", rooms: ["raise", "cofound", "hire"] },
+  student:   { side: "make", rooms: ["job", "study", "lang"] },
+  // The people who back it, or take people on.
+  agent:     { side: "back", rooms: ["agent"] },
+  producer:  { side: "back", rooms: ["agent", "talent"] },
+  brand:     { side: "back", rooms: ["agent", "buy"] },
+  investor:  { side: "back", rooms: ["invest"] },
+  lawyer:    { side: "back", rooms: ["agent", "invest", "hire"] },
+  recruiter: { side: "back", rooms: ["hire"] },
+};
+
+export const ROLEKEYS = Object.keys(ROLES);
+
+/** The room a sentence lands in: the first one both halves belong to, and
+ *  "new" — the room for somebody who has just turned up — when they share
+ *  none. Never asked for, never stored twice; see the note above. */
+/** What a person's rooms are: derived from their sentences when they have
+ *  any, and otherwise whatever they ticked before the sentence existed. One
+ *  place, so a profile cannot end up with a sentence saying one thing and a
+ *  room saying another. */
+function roomsFor(raw) {
+  const said = (Array.isArray(raw?.say) ? raw.say : [])
+    .map((x) => roomOfPair(String(x?.me || ""), String(x?.want || "")))
+    .filter(Boolean);
+  if (said.length) return [...new Set(said)].slice(0, 3);
+  return Array.isArray(raw?.rooms)
+    ? [...new Set(raw.rooms.map((r) => String(r)).filter((r) => ROOMS.includes(r)))].slice(0, 3)
+    : [];
+}
+
+export function roomOfPair(me, want) {
+  const a = ROLES[me], b = ROLES[want];
+  if (!a || !b) return "";
+  for (const r of a.rooms) if (b.rooms.includes(r)) return r;
+  // No overlap is not an error. "A student looking for an investor" is a real
+  // sentence and the honest place to put it is the room for people who have
+  // just arrived and do not fit anywhere yet.
+  return a.rooms[0] || "new";
+}
+
 export const ROOMS = [
   "lang", "study", "new", "host", "job", "hire", "cofound", "raise", "invest",
   "buy", "sell", "talent", "agent",
@@ -530,9 +605,25 @@ export function cleanPerson(raw) {
        number and not a bigger one. Unknown keys are dropped rather than
        refused: this field is written from a page, and a page written today is
        read by a copy of itself from six months ago. */
-    rooms: Array.isArray(raw.rooms)
-      ? [...new Set(raw.rooms.map((r) => String(r)).filter((r) => ROOMS.includes(r)))].slice(0, 3)
-      : [],
+    /* THE SENTENCE, AND THE ROOMS IT LANDS IN.
+     *
+     * `say` is up to three "I am a X looking for a Y" pairs — the only thing
+     * anybody is asked, and the first thing they are asked. `rooms` is derived
+     * from them and kept in the record so that every part of this board that
+     * already works on rooms — the feed filter, the /r/ doors, sharedRooms and
+     * the matching table above — goes on working without knowing the question
+     * changed.
+     *
+     * Somebody who joined before the sentence existed keeps the rooms they
+     * ticked: `say` is empty for them, and the derivation leaves those rooms
+     * alone rather than emptying a profile to prove a point. */
+    say: (Array.isArray(raw.say) ? raw.say : [])
+      .map((x) => ({ me: String(x?.me || ""), want: String(x?.want || "") }))
+      .filter((x) => ROLES[x.me] && ROLES[x.want])
+      .filter((x, i, all) =>
+        all.findIndex((y) => y.me === x.me && y.want === x.want) === i)
+      .slice(0, 3),
+    rooms: roomsFor(raw),
     // Which side of the exchange they are standing on, and which side they
     // want. Both fall back to the answer that excludes nobody.
     where: WHERES.includes(raw.where) ? raw.where : "cn",

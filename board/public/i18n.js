@@ -368,6 +368,46 @@ export const STRINGS = {
     "在中国、以及跟中国打交道的人。影视、资金、招人、语言——不同的房间，同一栋楼；而真正值钱的引荐，往往是跨房间的那些。",
   ],
 
+  /* THE SENTENCE. "I am a Director looking for an Agent." The English needs
+     the article on the second half only — "I am a Director" then "looking for
+     an Agent" — so the roles are written twice: bare, and with the article
+     that goes in front of them. Chinese needs neither, and both lists are the
+     same words there. */
+  "say.iam":           ["I am a", "我是"],
+  "say.lookingFor":    ["looking for", "我在找"],
+  "say.pickMe":        ["…", "…"],
+  "say.pickWant":      ["…", "…"],
+  "say.make":          ["Making the work", "做事的人"],
+  "say.back":          ["Backing it", "支持的人"],
+  "say.more":          ["＋ and something else", "＋ 还想找别的"],
+  "say.drop":          ["remove", "删掉"],
+
+  "role.director":     ["Director", "导演"],
+  "role.writer":       ["Writer", "编剧"],
+  "role.performer":    ["Performer", "演员"],
+  "role.crew":         ["Crew", "剧组"],
+  "role.founder":      ["Founder", "创始人"],
+  "role.student":      ["Student", "学生"],
+  "role.agent":        ["Agent", "经纪人"],
+  "role.producer":     ["Producer", "制片人"],
+  "role.brand":        ["Brand", "品牌方"],
+  "role.investor":     ["Investor", "投资人"],
+  "role.lawyer":       ["Lawyer", "律师"],
+  "role.recruiter":    ["Recruiter", "招聘方"],
+
+  "role.a.director":   ["a Director", "导演"],
+  "role.a.writer":     ["a Writer", "编剧"],
+  "role.a.performer":  ["a Performer", "演员"],
+  "role.a.crew":       ["Crew", "剧组"],
+  "role.a.founder":    ["a Founder", "创始人"],
+  "role.a.student":    ["a Student", "学生"],
+  "role.a.agent":      ["an Agent", "经纪人"],
+  "role.a.producer":   ["a Producer", "制片人"],
+  "role.a.brand":      ["a Brand", "品牌方"],
+  "role.a.investor":   ["an Investor", "投资人"],
+  "role.a.lawyer":     ["a Lawyer", "律师"],
+  "role.a.recruiter":  ["a Recruiter", "招聘方"],
+
   "peek.head":         ["Inside, right now", "里面此刻的样子"],
   "wait.only":         ["Invite only", "仅限邀请"],
   "wait.waiting":      ["waiting to get in", "个人在等着进来"],

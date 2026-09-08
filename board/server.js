@@ -2372,6 +2372,11 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
        it: afterwards there is no way to tell a new number from the same one
        saved again, and a log with a row per save is not a log of anything. */
     const wasBand = q.levelBand;
+    /* The sentence. Validated in cleanPerson like everything else — an
+       unknown role is dropped rather than refused, so an old page saving
+       against a new server loses the line it did not understand instead of
+       losing the save. The rooms are derived from it there too. */
+    if (Array.isArray(req.body.say)) q.say = req.body.say;
     if (Array.isArray(req.body.rooms)) q.rooms = req.body.rooms;
     if (req.body.where !== undefined) q.where = String(req.body.where);
     if (req.body.wants !== undefined) q.wants = String(req.body.wants);

@@ -204,6 +204,25 @@
      somebody to describe themselves. What costs is the LENGTH of the form, not
      the typing, which is why these are folded twice: once behind the switch,
      once behind the second +. */
+  /* THE SENTENCE. Set in the serif at reading size so it is a line somebody
+     reads rather than a form they fill — the two words they choose are the
+     only ones that move, and everything around them is there to make those
+     two make sense. */
+  .says{margin:.2rem 0 0}
+  .sayrow{margin:0 0 1.1rem;font-family:var(--serif);font-size:1.32rem;
+    line-height:2;color:var(--ink-2)}
+  .sayrow select{font:inherit;font-family:var(--serif);font-size:1.32rem;
+    color:var(--accent);background:var(--card);border:1px solid var(--line);
+    border-radius:.7rem;padding:.1rem 2rem .1rem .65rem;margin:0 .15rem;
+    -webkit-appearance:none;appearance:none;max-width:100%;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233F68D8' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right .55rem center;background-size:1rem}
+  .sayrow .drop{border:0;background:none;color:var(--muted);font-size:1rem;
+    padding:0 .3rem;font-family:var(--sans)}
+  .sayrow .drop:hover{color:var(--t5)}
+  .saymore{border:0;background:none;color:var(--accent);font-size:.95rem;
+    padding:.2rem 0;margin:0 0 .4rem}
+
   .roomhead{margin:1.4rem 0 .1rem;font-family:var(--serif);font-size:1.15rem;
     font-weight:400;color:var(--ink)}
   .roomgroup{margin:1.1rem 0 .5rem;font-size:.7rem;letter-spacing:.1em;
@@ -1450,8 +1469,17 @@
          first sight rather than eleven, and most people never see the word
          investor — which is where it does the least harm. -->
     <div id="merooms" hidden>
-      <p class="roomhead" id="meroomhead"></p>
-      <p class="menote" id="meroomwhy"></p>
+      <!-- THE SENTENCE, AND IT IS THE WHOLE QUESTION.
+           Two dropdowns say what eleven tick boxes said, and the sentence IS
+           the rule: you come up for people who are what you are looking for
+           and are looking for what you are. Nothing explains it because
+           nothing needs to. Up to three, and the second and third arrive only
+           when somebody asks for them. -->
+      <div class="says" id="mesays"></div>
+      <button class="saymore" type="button" id="mesaymore"></button>
+
+      <p class="roomhead" id="meroomhead" hidden></p>
+      <p class="menote" id="meroomwhy" hidden></p>
       <p class="roomgroup" id="megroup1"></p>
       <div id="meroomsA"></div>
       <p class="roomgroup" id="megroup2"></p>
@@ -4976,6 +5004,8 @@ function openMe(joining) {
   $("melooking").checked = joining === true ||
     (ME && ME.handle ? Boolean(ME.looking) : true);
   PICKED = (ME && Array.isArray(ME.rooms) ? ME.rooms : []).slice(0, 3);
+  SAY = (ME && Array.isArray(ME.say) && ME.say.length)
+    ? ME.say.map((r) => ({ me: r.me, want: r.want })) : [{ me: "", want: "" }];
   WHERE = (ME && ME.where) || "cn";
   WANTS = (ME && ME.wants) || "any";
   showRooms();
@@ -5130,6 +5160,80 @@ function drawRooms() {
   $("meroomfull").textContent = T("room.full");
 }
 
+/* ---------------------------------------------------------------------------
+ * THE SENTENCE
+ *
+ * "I am a Director looking for an Agent." Two dropdowns, and the sentence is
+ * the rule: you come up for people who are what you are looking for and are
+ * looking for what you are. Nothing on the screen explains it, because
+ * nothing needs to.
+ *
+ * The room it lands in is worked out on the server from the pair — see
+ * roomOfPair in store.js — so the feed filter, the /r/ doors and the matching
+ * table go on working on rooms and never learn that the question changed.
+ *
+ * Sides are for reading. They group the list so it can be scanned, and they
+ * decide nothing: a director looking for a writer is two people on the same
+ * side and a perfectly good pair.
+ */
+const MAKE = ["director", "writer", "performer", "crew", "founder", "student"];
+const BACK = ["agent", "producer", "brand", "investor", "lawyer", "recruiter"];
+let SAY = [];
+
+/** One dropdown, grouped into the two halves so twelve names can be read. */
+function rolePick(now, onPick, wanting) {
+  const sel = document.createElement("select");
+  const blank = el("option", null, T(wanting ? "say.pickWant" : "say.pickMe"));
+  blank.value = "";
+  sel.append(blank);
+  for (const [half, keys] of [["say.make", MAKE], ["say.back", BACK]]) {
+    const g = document.createElement("optgroup");
+    g.label = T(half);
+    for (const k of keys) {
+      const o = el("option", null, T((wanting ? "role.a." : "role.") + k));
+      o.value = k;
+      if (k === now) o.selected = true;
+      g.append(o);
+    }
+    sel.append(g);
+  }
+  sel.addEventListener("change", () => onPick(sel.value));
+  return sel;
+}
+
+function drawSays() {
+  const box = $("mesays");
+  fill(box);
+  if (!SAY.length) SAY = [{ me: "", want: "" }];
+  SAY.forEach((row, i) => {
+    const line = el("div", "sayrow");
+    line.append(document.createTextNode(T("say.iam") + " "));
+    line.append(rolePick(row.me, (v) => { row.me = v; drawSays(); }, false));
+    line.append(document.createElement("br"));
+    line.append(document.createTextNode(T("say.lookingFor") + " "));
+    line.append(rolePick(row.want, (v) => { row.want = v; drawSays(); }, true));
+    /* The way out of a line somebody added by mistake. Never on the first —
+     * a form whose only field can be deleted is a form that can be empty. */
+    if (i > 0) {
+      const x = el("button", "drop", T("say.drop"));
+      x.type = "button";
+      x.addEventListener("click", () => { SAY.splice(i, 1); drawSays(); });
+      line.append(x);
+    }
+    box.append(line);
+  });
+  /* Offered only once the line above it is finished. "Add another" under a
+   * half-filled sentence is an invitation to leave two of them half-filled. */
+  const last = SAY[SAY.length - 1];
+  const more = $("mesaymore");
+  more.textContent = T("say.more");
+  more.hidden = SAY.length >= 3 || !(last && last.me && last.want);
+}
+$("mesaymore").addEventListener("click", () => {
+  SAY = [...SAY, { me: "", want: "" }];
+  drawSays();
+});
+
 /** One row of choices, of which exactly one is on. */
 function drawSeg(id, keys, now, pick) {
   const wrap = $(id);
@@ -5156,6 +5260,15 @@ function showRooms() {
   const on = $("melooking").checked;
   $("merooms").hidden = !on;
   if (!on) return;
+  drawSays();
+  /* THE ELEVEN BOXES ARE STILL HERE, AND STILL OFF.
+   * They are what somebody who joined before the sentence existed picked, and
+   * their rooms are read from them until they answer the sentence — see
+   * roomsFor in store.js. Nobody is shown both questions: two ways to say the
+   * same thing on one form is how a profile ends up disagreeing with itself. */
+  const old = !SAY.some((r) => r.me && r.want) && PICKED.length > 0;
+  for (const id of ["meroomhead", "meroomwhy", "megroup1", "meroomsA", "megroup2",
+    "meroomsB", "megroup3", "meroomsC"]) $(id).hidden = !old;
   $("meroomhead").textContent = T("room.head");
   $("meroomwhy").textContent = T("room.why");
   $("megroup1").textContent = T("room.groupStudy");
@@ -5203,6 +5316,9 @@ $("meform").addEventListener("submit", async (e) => {
     // Sent whether or not the section was open: somebody who unticks "show me
     // in Browse" keeps what they picked, so ticking it again brings their
     // answers back rather than an empty form.
+    // Only finished sentences go up. A half-answered line is somebody who
+    // opened a dropdown and changed their mind, not a thing they said.
+    say: SAY.filter((r) => r.me && r.want),
     rooms: PICKED, where: WHERE, wants: WANTS,
     here: $("mehere").value.trim(), goal: $("megoal").value.trim(),
     ig: $("meig").value.trim(),
