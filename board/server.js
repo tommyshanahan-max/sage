@@ -1133,9 +1133,31 @@ app.get("/api/hello", async (_req, res) => {
       // way back to a profile.
       note: p.note, zh: p.zh, handle: p.handle, at: p.at,
     }));
+  /* A LOOK AT THE FEED WITH NO WORDS IN IT.
+   *
+   * Blur is not privacy. A page that ships the real text and blurs it in CSS
+   * has published the feed to anybody who opens the developer tools, and the
+   * whole point of the door is that the feed is behind it.
+   *
+   * So this sends the SHAPE and not the words: how many posts, how long each
+   * one is, and how long each word in it is. The page draws grey blocks at
+   * those widths and blurs them, which looks like exactly what it is — a real
+   * board with real posts on it — while the sentences never leave this
+   * server. Nothing here can be un-blurred, because there is nothing under it.
+   *
+   * Word lengths and nothing else: no handles, no dates, no ids. A first
+   * letter or a timestamp would be the beginning of a way to work out who.
+   */
+  const peek = board.posts
+    .filter((p) => p.state === "published" && !p.re && !p.like && !p.report && p.note)
+    .slice(0, 6)
+    .map((p) => String(p.note).trim().split(/\s+/).slice(0, 34)
+      .map((w) => Math.min(14, [...w].length)));
+
   const waiting = board.waits.filter((w) => !w.done).length;
   res.json({
     featured,
+    peek,
     people: board.people.filter((q) => q.state === "published" && q.handle).length,
     // Absent rather than zero below the floor: a page can then say nothing at
     // all instead of saying something small.

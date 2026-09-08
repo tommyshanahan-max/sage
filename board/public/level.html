@@ -318,6 +318,23 @@
      site.css and this one has never loaded anything but its own block, so the
      box is dressed here too. Same shape, so the two screens do not disagree
      about what it looks like. */
+  /* THE FEED, OUT OF FOCUS. Grey blocks where the words are — see feedPeek in
+     wait.js for why the words are not here at all. Fades out at the bottom so
+     it reads as something continuing rather than a list that stopped. */
+  .peek{margin:1.6rem 0 0}
+  .peekhead{display:block;margin:0 0 .7rem;font-size:.72rem;font-weight:600;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .peekstack{position:relative;filter:blur(3.5px);opacity:.75;
+    -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 52%,transparent 100%);
+    mask-image:linear-gradient(180deg,#000 0%,#000 52%,transparent 100%);
+    pointer-events:none;user-select:none}
+  .peekpost{display:flex;gap:.7rem;padding:.75rem 0;align-items:flex-start}
+  .peekav{flex:0 0 auto;width:2.1rem;height:2.1rem;border-radius:50%;
+    background:var(--accent);opacity:.55}
+  .peekwords{display:flex;flex-wrap:wrap;gap:.34rem .3rem;padding-top:.35rem}
+  .peekwords b{display:block;height:.62rem;border-radius:.31rem;background:var(--ink);
+    opacity:.16}
+  @media (prefers-reduced-motion:reduce){.peekstack{filter:blur(3.5px)}}
   .waitbox{max-width:28rem;margin:2rem auto 0;padding:1.3rem 1.2rem 1.4rem;
     background:var(--card);border:1px solid var(--line);border-radius:1.2rem;
     text-align:left;box-shadow:var(--shadow)}
@@ -360,7 +377,7 @@
 
 <script type="module">
 import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
-import { waitBox, admitted } from "/wait.js";
+import { waitBox, admitted, feedPeek } from "/wait.js";
 import { CARDS, BANDS, CAN, STEPS, firstStep, nextStep } from "/level-cards.js";
 import { stageFor, stageName, crownMark, crownOnCanvas } from "/crown.js";
 
@@ -1072,7 +1089,10 @@ function drawResult(box) {
   /* Four answers cannot be more certain than four answers. Inside the card and
      directly under the number, because a rank printed bare invites somebody to
      defend it — and a qualification below the fold is one nobody reads. */
-  card.append(el("p", "caveat", T("lvl.rough")));
+  /* The caveat is honesty about a number a MEMBER is going to carry around.
+     For somebody who has not come in yet it is the fourth block of small type
+     on a screen asking them to make one decision. */
+  if (ADMITTED) card.append(el("p", "caveat", T("lvl.rough")));
   box.append(card);
   /* "It appears beside your name once your level is on your page" is a
      sentence about a page a stranger does not have. Members only. */
@@ -1177,6 +1197,11 @@ function drawResult(box) {
    * a feed they cannot read, so for them it is replaced by the one thing that
    * is any use: their result, and a way onto the list under it. */
   if (!ADMITTED) {
+    /* WHAT IS BEHIND THE DOOR, SHOWN RATHER THAN DESCRIBED. A paragraph
+       saying "there is a board in here with people on it" is a claim; five
+       posts out of focus is the thing itself, and it is read in a glance
+       instead of a sentence. No words in it — see feedPeek. */
+    if (PEEK.length) box.append(feedPeek(PEEK, T("peek.head")));
     box.append(waitBox());
     return;
   }
@@ -1261,12 +1286,17 @@ if (canSpeak()) {
    the same either way until the result, where the difference is the whole
    point — see the note beside waitBox below. */
 let ADMITTED = true;
+// The shape of the newest posts, for the out-of-focus stack a stranger sees.
+let PEEK = [];
 /* Resolved on load, and the result is four questions away — so the answer is
    always in before anything depends on it. Defaulting to "in" rather than
    "out" is the safe way round: the worst case is a member seeing their own
    buttons a moment late, where the other way round would offer somebody the
    waiting list they are already on. */
 admitted().then((yes) => { ADMITTED = yes; });
+fetch("/api/hello").then((r) => r.json())
+  .then((d) => { PEEK = Array.isArray(d && d.peek) ? d.peek : []; })
+  .catch(() => { /* the box below still works without it */ });
 
 setLang(pickLang());
 $("langslot").append(langButton(paint));

@@ -321,6 +321,23 @@
   /* ---- the waiting list, on the public page ---------------------------------
    * The one thing a stranger can DO on this site; everything above it is
    * reading. Boxed and centred so it reads as the end of the argument. */
+  /* THE FEED, OUT OF FOCUS. Grey blocks where the words are — see feedPeek in
+     wait.js for why the words are not here at all. Fades out at the bottom so
+     it reads as something continuing rather than a list that stopped. */
+  .peek{margin:1.6rem 0 0}
+  .peekhead{display:block;margin:0 0 .7rem;font-size:.72rem;font-weight:600;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .peekstack{position:relative;filter:blur(3.5px);opacity:.75;
+    -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 52%,transparent 100%);
+    mask-image:linear-gradient(180deg,#000 0%,#000 52%,transparent 100%);
+    pointer-events:none;user-select:none}
+  .peekpost{display:flex;gap:.7rem;padding:.75rem 0;align-items:flex-start}
+  .peekav{flex:0 0 auto;width:2.1rem;height:2.1rem;border-radius:50%;
+    background:var(--accent);opacity:.55}
+  .peekwords{display:flex;flex-wrap:wrap;gap:.34rem .3rem;padding-top:.35rem}
+  .peekwords b{display:block;height:.62rem;border-radius:.31rem;background:var(--ink);
+    opacity:.16}
+  @media (prefers-reduced-motion:reduce){.peekstack{filter:blur(3.5px)}}
   .waitbox{max-width:34rem;margin:2.4rem auto 0;padding:1.4rem 1.3rem 1.5rem;
     background:var(--card);border:1px solid var(--line);border-radius:1.2rem;
     text-align:left;box-shadow:var(--shadow)}

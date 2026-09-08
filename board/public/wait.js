@@ -167,6 +167,40 @@ export function waitBox() {
   return box;
 }
 
+/* A LOOK AT THE FEED WITH NO WORDS IN IT.
+ *
+ * The server sends the shape of the newest posts and never the text — see the
+ * note above `peek` in server.js. Each row is a list of word lengths, and this
+ * draws a grey block per word at that width. Blurred on top, so it reads as a
+ * board somebody is holding just out of focus.
+ *
+ * The blur is the look, not the protection. The protection is that there is
+ * nothing underneath it: no sentence reaches this page, so no developer tools
+ * can reveal one. That is the difference between a teaser and a leak, and it
+ * is why this could not be done by blurring the real feed.
+ */
+export function feedPeek(rows, head) {
+  const box = el("div", "peek");
+  if (head) box.append(el("span", "peekhead", head));
+  const stack = el("div", "peekstack");
+  for (const words of (rows || []).slice(0, 5)) {
+    const post = el("div", "peekpost");
+    const av = el("i", "peekav");
+    const lines = el("div", "peekwords");
+    for (const n of words) {
+      const w = el("b");
+      // 0.42rem a character, which lands close enough to real text that the
+      // ragged right edge of a paragraph comes out looking like one.
+      w.style.width = (Math.max(1, Number(n) || 1) * 0.42).toFixed(2) + "rem";
+      lines.append(w);
+    }
+    post.append(av, lines);
+    stack.append(post);
+  }
+  box.append(stack);
+  return box;
+}
+
 /** Whether this browser is already through the door. Public route, so it
  *  works on a page a stranger is reading. */
 export async function admitted() {
