@@ -41,6 +41,10 @@
      together out of two halves, and a stranger can do that here, before being
      let in — a better argument than any paragraph, and the same control they
      meet inside. */
+  /* The paragraph that used to sit under this card was also the thing holding
+     the hero open. With it gone the padding was a hole, so the hero closes up
+     behind the card instead. */
+  .hero{padding-bottom:1.4rem}
   .tryit{margin:1.6rem 0 0;padding:1.25rem 1.2rem 1.1rem;background:var(--card);
     border:1px solid var(--line);border-radius:1.2rem;box-shadow:var(--shadow);
     max-width:34rem}
@@ -125,8 +129,6 @@
   </div>
 </div>
 
-<p class="invite" id="invite"></p>
-
 <!-- THE HERO IS THE PRODUCT, WORKING.
      Every other version of this page described the board and then showed
      three drawings of it. The one thing this place does is put a sentence
@@ -134,13 +136,16 @@
      public page, before they have been let in — which is a better argument
      for it than any paragraph, and it is the same control they will meet
      inside. -->
+<!-- WHAT IS LEFT AFTER THE WORDS CAME OFF.
+     A question, and the thing itself. There was a banner, an eyebrow, a line
+     under the question and a four-line paragraph naming everybody who is
+     inside — and every one of them was answering a question the reader had
+     not asked yet. The sentence answers it by being moved once, which no
+     paragraph next to it was ever going to beat. -->
 <div class="hero">
   <div class="wrap">
-    <p class="kicker"><i></i><span id="kicker"></span></p>
-
     <div class="asking">
       <q id="asking"></q>
-      <p class="under" id="askUnder"></p>
     </div>
 
     <div class="tryit" id="tryit">
@@ -151,8 +156,6 @@
       <div class="sayline" id="sayline"></div>
       <p class="saylands" id="saylands"></p>
     </div>
-
-    <p class="lede" id="lede"></p>
   </div>
 </div>
 
@@ -280,11 +283,7 @@ function paint() {
   document.title = T("site.title") + " — " + T("land.title");
   $("brandname").textContent = T("site.title");
   $("navopen").textContent = T("land.enter");
-  $("invite").textContent = T("land.invite");
-  $("kicker").textContent = T("land.kicker");
   $("asking").textContent = T("land.head");
-  $("askUnder").textContent = T("land.under");
-  $("lede").textContent = T("land.lede");
   $("doorsEyebrow").textContent = T("land.doors");
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");
@@ -293,17 +292,19 @@ function paint() {
   drawDoors();
 }
 
-/* A room door writes over the three lines it has better words for. After
-   paint, never instead of it — see the note in the server for /r/:room. */
+/* A room door writes over the one line it has better words for. After paint,
+   never instead of it — see the note in the server for /r/:room.
+   It used to write three: the eyebrow, the question and the paragraph. Two of
+   those are gone from the page, so door.<room>.say and land.under/land.lede
+   are unused now. Left in the strings rather than deleted — they are written
+   and translated, and the day a room wants a line back it should not have to
+   be written twice. */
 function paintRoom() {
   const key = roomFromPath();
   if (!key) return;
   const name = T("waitroom." + key);
   document.title = name + " · " + T("site.title");
-  $("kicker").textContent = name + " · " + T("wait.only");
   $("asking").textContent = T("door." + key + ".head");
-  $("askUnder").textContent = T("door." + key + ".under");
-  $("lede").textContent = T("door." + key + ".say");
 }
 
 setLang(pickLang());
