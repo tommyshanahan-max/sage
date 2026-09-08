@@ -1123,6 +1123,35 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
   res.json(out);
 });
 
+/* WHO CAN BRING SOMEBODY IN, for whoever runs the box.
+ *
+ * The companion to /api/public?queue=1 and for the same reason: a rule nobody
+ * can see the effect of is a rule that gets argued about instead of read. This
+ * runs standing() over everybody and says, per member, whether they have a
+ * code today and which of the four tests they are failing — so the answer to
+ * "who did this just take invitations away from" is a table rather than a
+ * guess.
+ *
+ * Nothing here reaches a member. Standing is between one person and the door,
+ * not a ranking to be published on a board where everybody knows each other.
+ */
+app.get("/api/standing", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const rows = board.people
+    .filter((q) => q.handle)
+    .map((q) => {
+      const rank = standing(board, q.by);
+      const said = board.posts.filter((p) => p.by === q.by && p.state === "published"
+        && !p.like && !p.report).length;
+      return {
+        handle: q.handle, at: q.at, state: q.state,
+        can: rank.can, need: rank.need, guests: rank.guests, said,
+      };
+    });
+  res.json({ rows });
+});
+
 /** The list itself, for whoever runs the box. Never for a member. */
 app.get("/api/waiting", admin, async (_req, res) => {
   const board = await store.load(FILE);
