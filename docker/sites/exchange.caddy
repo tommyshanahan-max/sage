@@ -29,6 +29,17 @@
 		-Server
 	}
 
+	# THE WAY IN FOR WHOEVER RUNS IT. Same trick the brand page uses: the HTML
+	# holds a short path and the real hostname is filled in from the
+	# environment here, so moving the seat is a .env change and never an edit
+	# to a page. Nothing is authenticated on the way through — the seat asks
+	# for its own username and password on its own address, which is the only
+	# place one is ever typed. Unconfigured, it lands on that seat's internal
+	# .localhost fallback, which is the honest outcome for a door this
+	# deployment does not have.
+	@admin path /admin /admin/
+	redir @admin https://{$TOMSCODING_PARTNER_DOMAIN}/
+
 	root * /srv/site
 	file_server
 }
