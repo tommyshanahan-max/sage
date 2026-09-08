@@ -269,33 +269,40 @@ export const STRINGS = {
   /* The two words at the top of the box, and the label under the figure.
      "Invite only" rather than "private" or "members only": it names the one
      mechanism — somebody already in has to hand you the password. */
-  /* COLLABORATION RANK. Five titles and one line each. Every one describes a
-     thing that happened rather than a quantity, because a board this size
-     where everybody knows each other cannot carry a ranking of its members
-     without becoming a worse place. See rankOf in server.js. */
+  /* COLLABORATION RANK, IN CREDITS.
+     Five titles and one line each. Every one describes a thing that happened
+     rather than a quantity, because a board this size where everybody knows
+     each other cannot carry a ranking of its members without becoming a worse
+     place. See rankOf in server.js for what earns each one.
+
+     The credits are not a metaphor stretched over the rungs — they are the
+     industry's own words for these exact things. A series regular IS the
+     person who keeps turning up. A producer IS the credit for assembling
+     other people. And "speaking part" is the plainest way anybody has ever
+     said that somebody answered you: you got a line. */
   "rank.head":         ["Where you stand", "你现在的位置"],
   "rank.headThem":     ["Where {who} stands", "{who} 现在的位置"],
-  "rank.guest":        ["Guest", "客人"],
+  "rank.guest":        ["Extra", "群演"],
   "rank.guestWhy": [
     "Nobody has answered you yet. Put something up that somebody can answer.",
     "还没有人回过你。发点别人能接话的东西。",
   ],
-  "rank.contact":      ["Contact", "熟人"],
+  "rank.contact":      ["Speaking part", "有台词"],
   "rank.contactWhy": [
     "Somebody answered you. That is the whole difference between having joined and having arrived.",
     "有人回过你了。这就是「注册了」和「真的到了」之间的全部区别。",
   ],
-  "rank.regular":      ["Regular", "常客"],
+  "rank.regular":      ["Series regular", "常驻"],
   "rank.regularWhy": [
     "You have put something up in three separate weeks. The one thing a board cannot fake is somebody who keeps coming back.",
     "你在三个不同的周里都发过东西。一个板子唯一装不出来的，就是有人一直回来。",
   ],
-  "rank.connector":    ["Connector", "引荐人"],
+  "rank.connector":    ["Producer", "制片人"],
   "rank.connectorWhy": [
     "Two people you brought are still here, and have spoken. This is the one that is about somebody else being here rather than you.",
     "你带进来的两个人还在，而且开过口。这一级说的是别人在不在，而不是你在不在。",
   ],
-  "rank.principal":    ["Principal", "掌事"],
+  "rank.principal":    ["Showrunner", "主创"],
   "rank.principalWhy": [
     "Three who stayed and spoke, and five different people have answered you. This board is different for you being on it.",
     "三个人留下来并且开了口，还有五个不同的人回过你。因为有你，这个板子才是现在这个样子。",
