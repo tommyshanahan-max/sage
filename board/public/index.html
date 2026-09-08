@@ -107,9 +107,15 @@
   [hidden]{display:none!important}
 
   *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
+  /* THE WHOLE APP, ONE SIZE UP.
+     Everything here is set in rem, so the root is the one dial: 17px instead
+     of the browser's 16 puts about six per cent on every size, every gap and
+     every tap target at once, which is what "it is all a bit small" actually
+     asks for. Not a per-element pass — that is how a page ends up with three
+     sizes of the same thing. */
+  html{font-size:17px;-webkit-text-size-adjust:100%}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
-    font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
   main{max-width:34rem;margin:0 auto;padding:1.5rem 1.15rem 8rem}
   img{max-width:100%}
   button{font:inherit;cursor:pointer}

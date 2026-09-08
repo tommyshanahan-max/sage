@@ -1714,6 +1714,13 @@ export const STRINGS = {
      is a label that disappears the moment somebody starts typing, which is
      when they are most likely to want to check what the box was for. */
   "me.linksHead":      ["Where else you are", "你还在哪儿"],
+  /* THE HOLES IN YOUR OWN PAGE, named as the thing that fills them. "Edit" is
+     what a developer calls the button; two of the first three members read it
+     and still asked where their LinkedIn went. */
+  "me.editWhat":       ["Edit your page", "编辑主页"],
+  "me.addBio":         ["Add a short bio →", "写一段简短介绍 →"],
+  "me.addLi":          ["Add your LinkedIn →", "填上你的领英 →"],
+  "me.gapPhoto":       ["Add a photo →", "加一张照片 →"],
   "me.liLab":          ["LinkedIn — optional", "领英——选填"],
   "me.igLab":          ["Instagram — optional", "Instagram——选填"],
   "me.goalLab":        ["A short bio", "简短介绍"],

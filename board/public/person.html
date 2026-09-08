@@ -71,9 +71,20 @@
   [hidden]{display:none!important}
 
   *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
+  /* THE WHOLE APP, ONE SIZE UP.
+     Everything here is set in rem, so the root is the one dial: 17px instead
+     of the browser's 16 puts about six per cent on every size, every gap and
+     every tap target at once, which is what "it is all a bit small" actually
+     asks for. Not a per-element pass — that is how a page ends up with three
+     sizes of the same thing. */
+  html{font-size:17px;-webkit-text-size-adjust:100%}
+  /* A hole in your own page, as a row that fills it. Dashed, so it reads as
+     something not yet there rather than as a fact about you. */
+  .gap{display:block;margin:.5rem 0 0;padding:.6rem .85rem;border:1px dashed var(--line);
+    border-radius:.7rem;color:var(--accent);text-decoration:none;font-size:.95rem}
+  .gap:hover{border-color:var(--accent);background:var(--accent-soft)}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
-    font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
   main{max-width:34rem;margin:0 auto;padding:0 0 4rem}
   button{font:inherit;cursor:pointer}
   a{color:inherit}
@@ -652,6 +663,30 @@ function paint() {
   const head = el("div", "head");
   if (q.goal) head.append(el("p", "goal", q.goal));
 
+  /* WHAT IS MISSING, ON YOUR OWN PAGE, AS THE THING THAT FIXES IT.
+   *
+   * There has always been an Edit button up there and it was still reported as
+   * "I cannot see where any of this goes" — twice, by two of the first three
+   * members. A button named after the verb tells nobody what is behind it, and
+   * a page with a bio-shaped hole in it does not look like a page with a
+   * missing bio. It looks finished.
+   *
+   * So the holes say what they are and open the form. Only your own page, only
+   * the ones actually empty, and gone the moment they are filled — a prompt
+   * that stays after it has been answered is furniture. */
+  if (q.mine) {
+    const gaps = [
+      [!q.goal, "me.addBio"],
+      [!q.li, "me.addLi"],
+      [!q.photo && !q.photoPending, "me.gapPhoto"],
+    ].filter((g) => g[0]);
+    for (const [, key] of gaps) {
+      const a2 = el("a", "gap", T(key));
+      a2.href = "/feed?edit=1";
+      head.append(a2);
+    }
+  }
+
   const facts = el("dl", "facts");
   const fact = (label, value) => {
     const d = el("div", "fact");
@@ -850,7 +885,10 @@ function paint() {
    * It lives on the feed, where the sheet is — so this is a link that says
    * open it, and the feed opens it on arrival. */
   if (q.mine) {
-    const ed = el("a", "edit", T("me.edit"));
+    /* Named for what it opens, not for the verb. "Edit" is what a developer
+       calls it; the person reading it wants to know whether their LinkedIn
+       goes in there. */
+    const ed = el("a", "edit", T("me.editWhat"));
     ed.href = "/feed?edit=1";
     meet.append(ed);
   }

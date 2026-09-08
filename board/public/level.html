@@ -63,9 +63,10 @@
   [hidden]{display:none!important}
 
   *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
+  /* One size up, the same as everywhere else — see the note in index.html. */
+  html{font-size:17px;-webkit-text-size-adjust:100%}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
-    font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
   main{max-width:34rem;margin:0 auto;padding:0 1.15rem 4rem}
   button{font:inherit;cursor:pointer}
   a{color:inherit}
