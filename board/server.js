@@ -265,7 +265,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * the person, that is a decision to make on purpose here, not a side effect
  * of a route somebody opened to fix an image.
  */
-const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|api\/ask|api\/tally|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|api\/ask|api\/tally|api\/counts|doors|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -347,11 +347,17 @@ app.get("/", (req, res, next) => page(ROOT_IS_BOARD ? "index.html" : "landing.ht
  * ("did that post work") is asked ten minutes after posting, from a phone, in
  * a taxi.
  *
- * Behind the door like everything else, so a stranger cannot reach the page at
- * all; and the figures behind the admin key on top of that, because being a
- * member is not the same as running the place. The key is typed once and kept
- * in that browser — the same key already typed into a terminal, on the same
- * person's device, and it never leaves either.
+ * IN FRONT OF THE DOOR, not behind it, and the key alone is what opens it.
+ * This sat behind the invitation first, on the reasoning that two locks beat
+ * one. They do not: a member without the key sees nothing anyway, so the
+ * invitation added no protection at all — while locking the one person who
+ * needs this out of every browser they had not spent a code in. Whoever runs
+ * the board opens it on a laptop, on a second phone, in somebody else's
+ * Chrome, and the answer cannot be "spend an invitation on yourself first".
+ *
+ * So: the page is a key box and nothing else until a key is typed, and every
+ * figure on it comes from /api/counts, which checks the key on every request.
+ * A stranger who finds this address learns that it exists and no more.
  */
 app.get(["/doors", "/doors/"], (req, res, next) => page("doors.html", req, res, next));
 app.get(["/feed", "/feed/", "/index.html"], (req, res, next) => page("index.html", req, res, next));
