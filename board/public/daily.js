@@ -139,7 +139,7 @@ export function dailyCard(bare) {
 
     const head = el("div", "dhead");
     if (!bare) {
-      const disc = el("i", "dmark", "留");
+      const disc = el("i", "dmark", "换");
       disc.setAttribute("aria-hidden", "true");
       head.append(disc);
     }
