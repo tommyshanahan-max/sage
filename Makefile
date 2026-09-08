@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: pair who admit waiting waiting-in waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: post-profile pair who admit waiting waiting-in waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -172,6 +172,14 @@ partner-sync-2: ## Same, for the second partner seat
 
 feed-sync: ## Replace the snapshot The Feed's seat can see
 	bash scripts/partner-sync.sh feed
+
+post-profile: ## Tell everybody how to finish their page, LinkedIn included
+	@# Written after the first member made a page, went looking for LinkedIn,
+	@# and could not find the box. The box moved; this reaches the people who
+	@# already gave up looking. Idempotent — says nothing twice.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/post-profile.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  $(if $(AS),--as "$(AS)",) $(if $(AGAIN),--again,)
 
 post-explainer: ## Put the how-to-be-the-same-person-twice post on the feed
 	@# In both languages, because a board that explains itself in one of them

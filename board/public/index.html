@@ -1559,34 +1559,53 @@
       <p class="menote" id="mewherewhy"></p>
     </div>
 
+    <!-- OUT OF THE DRAWER, AND LABELLED.
+         These three were behind the "add more" button with university, age and
+         languages, and every one of them is a thing somebody comes to this
+         form to do. The first member through the door made a page, went
+         looking for LinkedIn, read a button offering university and age, and
+         asked where LinkedIn was — correctly, because nothing said it was in
+         there.
+         Labels above the boxes rather than placeholders inside them: a
+         placeholder is a label that disappears the moment somebody starts
+         typing, which is exactly when they are most likely to want to check
+         what the box was for. -->
+    <p class="roomhead" id="melinkshead"></p>
+    <p class="seglabel" id="melilab"></p>
+    <!-- Paste-friendly on purpose: the server takes the whole
+         linkedin.com/in/ link, or just the slug. -->
+    <div class="field">
+      <input id="meli" maxlength="140" autocomplete="off"
+             autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="menote" id="meliwhy"></p>
+    <p class="seglabel" id="meiglab"></p>
+    <!-- Same: @them, them, or the whole instagram.com link a phone gives you
+         when you press share. -->
+    <div class="field">
+      <input id="meig" maxlength="120" autocomplete="off"
+             autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="menote" id="meigwhy"></p>
+    <p class="seglabel" id="megoallab"></p>
+    <!-- Five rows, not three. The field holds six hundred characters and
+         people arrive with a paragraph already written; a box the height of a
+         one-liner tells them to write one. -->
+    <textarea id="megoal" rows="5"></textarea>
+    <p class="menote" id="mewhy"></p>
+
     <button class="morego" type="button" id="memorego"
             aria-expanded="false" aria-controls="memore">
       <span id="memorelabel"></span><i aria-hidden="true">+</i>
     </button>
     <div id="memore" hidden>
+      <p class="seglabel" id="mecampuslab"></p>
       <div class="field"><input id="mecampus" maxlength="60"></div>
       <div class="field">
         <input id="meage" maxlength="2" inputmode="numeric" autocomplete="off">
         <input id="melangs" maxlength="60">
       </div>
       <div class="field"><input id="mehere" maxlength="40"></div>
-      <!-- Paste-friendly on purpose: the server takes @them, them, or the
-           whole instagram.com link a phone gives you when you press share. -->
-      <div class="field">
-        <input id="meig" maxlength="120" autocomplete="off"
-               autocapitalize="off" spellcheck="false">
-      </div>
-      <p class="menote" id="meigwhy"></p>
-      <!-- The same box for the other identity people already publish on
-           purpose. Paste-friendly the same way: the server takes the whole
-           linkedin.com/in/ link, or just the slug. -->
-      <div class="field">
-        <input id="meli" maxlength="140" autocomplete="off"
-               autocapitalize="off" spellcheck="false">
-      </div>
-      <p class="menote" id="meliwhy"></p>
-      <textarea id="megoal" rows="3"></textarea>
-      <p class="menote" id="mewhy"></p>
     </div>
 
     <div class="row">
@@ -5139,8 +5158,13 @@ function openMe(joining) {
   $("melangs").placeholder = T("me.langs");
   $("mehere").placeholder = T("me.here");
   $("meig").placeholder = T("me.ig");
+  $("melinkshead").textContent = T("me.linksHead");
+  $("melilab").textContent = T("me.liLab");
   $("meli").placeholder = T("me.li");
   $("meliwhy").textContent = T("me.liWhy");
+  $("meiglab").textContent = T("me.igLab");
+  $("megoallab").textContent = T("me.goalLab");
+  $("mecampuslab").textContent = T("me.campusLab");
   $("meigwhy").textContent = T("me.igWhy");
   $("megoal").placeholder = T("me.goal");
   $("mewhy").textContent = T("me.whyNoContact");

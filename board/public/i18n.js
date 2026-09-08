@@ -1007,6 +1007,12 @@ export const STRINGS = {
      "Post it" read as posting a message. Joining does put you on the board —
      that is the point of the button — so it says so. */
   "me.post":           ["Put me on the board", "把我放到板上"],
+  /* WHAT IS ACTUALLY LEFT BEHIND IT.
+     LinkedIn, Instagram and the line about what somebody is working on used to
+     be in here too, and the first member to look for LinkedIn read a button
+     offering university and age and correctly concluded it was not in there.
+     Those three are on the form now; a disclosure should hold the things
+     nobody is hunting for, and only those. */
   "me.more": [
     "Add more — university, age, languages",
     "再多写点——学校、年龄、会说的语言",
@@ -1017,8 +1023,15 @@ export const STRINGS = {
   "me.name":           ["Your name — what people see on your posts",
                         "你的名字——别人在你的内容上看到的"],
   "me.campus":         ["Campus or city — Renmin · Haidian", "学校或城市——人大 · 海淀"],
-  "me.goal":           ["What you are working on, in your own words…",
-                        "你在忙什么，用你自己的话说…"],
+  /* THE BIO. Six hundred characters, which is a real paragraph, and it shows
+     on the profile under the name — but it was called "what you are working
+     on" and sized like a one-liner, so members with a bio already written
+     could not see where to put it. Same field, same store; it is named for
+     what people arrive wanting to write. */
+  "me.goal": [
+    "A few lines about you — what you do, and what you are here for.",
+    "写几句你自己——你做什么，来这儿想干什么。",
+  ],
   "me.here":           ["How long you have been here", "你来多久了"],
   "me.posts":          ["posts", "条内容"],
   "me.replies":        ["replies", "条回复"],
@@ -1534,7 +1547,7 @@ export const STRINGS = {
   "todo.photo":        ["Add your photo.", "加一张你的照片。"],
   "todo.browse":       ["Turn on “Show me in Browse”.", "把「在名单里显示我」打开。"],
   "todo.rooms":        ["Pick your rooms.", "选你的房间。"],
-  "todo.goal":         ["Say what you are looking for.", "写一句你在找什么。"],
+  "todo.goal":         ["Write a short bio.", "写一段简短介绍。"],
   "todo.level":        ["Take the level test.", "做一下水平测试。"],
   "todo.card":         ["Answer today’s card.", "答一下今天的卡片。"],
   "todo.post":         ["Post something.", "发一条内容。"],
@@ -1689,7 +1702,7 @@ export const STRINGS = {
   /* SOMEWHERE TO BE FOUND THAT IS NOT THIS BOARD. Optional, in the fold with
      the other optional things, and said plainly: a handle on a page is a
      handle anybody who opens the page can read. */
-  "me.ig":             ["Instagram (optional)", "Instagram（选填）"],
+  "me.ig":             ["@yourname", "@你的名字"],
   "me.igWhy":          ["Anybody who opens your page can see it.",
                         "打开你主页的人都能看到。"],
   "me.igName":         ["Instagram", "Instagram"],
@@ -1697,7 +1710,15 @@ export const STRINGS = {
      itself the students board: the thing a business contact looks up before
      answering is not a grid of photographs. The warning is stronger than
      Instagram's because a LinkedIn is a real name and an employer. */
-  "me.li":             ["LinkedIn (optional)", "领英（选填）"],
+  /* THE LABEL SAYS WHAT IT IS; the box shows what goes in it. A placeholder
+     is a label that disappears the moment somebody starts typing, which is
+     when they are most likely to want to check what the box was for. */
+  "me.linksHead":      ["Where else you are", "你还在哪儿"],
+  "me.liLab":          ["LinkedIn — optional", "领英——选填"],
+  "me.igLab":          ["Instagram — optional", "Instagram——选填"],
+  "me.goalLab":        ["A short bio", "简短介绍"],
+  "me.campusLab":      ["University", "学校"],
+  "me.li":             ["linkedin.com/in/your-name", "linkedin.com/in/你的名字"],
   "me.liWhy": [
     "Anybody who opens your page can see it — and a LinkedIn usually carries your real name and where you work.",
     "任何打开你主页的人都能看到——而领英上通常有你的真名和工作单位。",
