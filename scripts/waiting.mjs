@@ -84,11 +84,82 @@ async function admit(room, max) {
   console.log(pad("name", 16) + pad("reach", 26) + "code");
   console.log("-".repeat(52));
   for (const w of rows) console.log(pad(w.name, 16) + pad(w.reach, 26) + w.code);
+
+  /* AND THE MESSAGE ITSELF, one per person, ready to copy.
+   *
+   * The table above is the record. This is the work: twenty people admitted
+   * is twenty WeChat messages typed by hand, and typing the same four lines
+   * twenty times is how a code ends up sent to the wrong person, or sent
+   * without its link, or not sent at all because it was late.
+   *
+   * Each one is addressed, carries the greet link with their name in it, and
+   * carries their code underneath. Nothing sends: a code handed over by the
+   * person who runs the board is the last human moment before somebody is in,
+   * and it should stay one. */
+  console.log("");
+  console.log("=".repeat(64));
+  console.log("ONE MESSAGE EACH — copy from below the line to the next one.");
+  console.log("=".repeat(64));
+  for (const w of rows) console.log(draft(w));
+
   console.log("");
   console.log("A code is one use and it does not expire. Their rows are still");
   console.log("on the list until you delete them:  make waiting-rm ID=...");
-  console.log("");
-  console.log("Say it in their language if you know it:  make pitch");
+}
+
+/* THE ADDRESS PEOPLE TYPE, which is not the one this script talks to: the
+   board answers on its own hostname over the compose network. --public first
+   so the Makefile can read it off .env, then the environment, then the name
+   it has had all along. */
+const PUBLIC = (arg("public") || process.env.BOARD_PUBLIC_URL || "https://liuxuesheng.io")
+  .replace(/\/+$/, "");
+
+/* WHICH LANGUAGE TO WRITE IT IN.
+ *
+ * Nobody asked them, and asking on the join form would be a fifth field on a
+ * form whose whole virtue is that it has three. So: a name written in Chinese
+ * characters gets the Chinese message. It is right nearly every time and the
+ * failure is mild — somebody bilingual reads a language they also read.
+ *
+ * Everyone else gets both, English first, because a wrong guess about a
+ * stranger is worse than four extra lines. */
+const isZh = (s) => /[\u4e00-\u9fff]/.test(String(s || ""));
+
+function draft(w) {
+  const link = PUBLIC + "/enter?for=" + encodeURIComponent(w.name)
+    + (w.via ? "&from=" + encodeURIComponent(w.via) : "");
+
+  /* Written as two messages, not one translated. "你在名单上了" is what a
+     person says; "you are on the list" run through a dictionary is not. */
+  const en = [
+    w.via ? `${w.name} — you joined the list off ${w.via}. You are in.`
+          : `${w.name} — you are in.`,
+    "",
+    link,
+    w.code,
+    "",
+    "Tap the link and it will say hello. The code goes in on the same screen.",
+    "One use, and it does not expire. Open it in Safari or Chrome rather than",
+    "inside WeChat — WeChat keeps its own storage and you would end up with",
+    "two of you.",
+  ].join("\n");
+
+  const zh = [
+    w.via ? `${w.name}，你是从 ${w.via} 那儿排上队的。可以进来了。`
+          : `${w.name}，可以进来了。`,
+    "",
+    link,
+    w.code,
+    "",
+    "点开链接会先跟你打个招呼，口令就在同一个页面上输。",
+    "只能用一次，不过不会过期。请用 Safari 或 Chrome 打开，别在微信里打开——",
+    "微信的浏览器自己存一份，会变成两个你。",
+  ].join("\n");
+
+  const body = isZh(w.name) ? zh : en + "\n\n" + "-".repeat(30) + "\n\n" + zh;
+  return "\n" + "-".repeat(64) + "\n"
+    + "TO: " + w.name + "   (" + (w.reach || "no way to reach them") + ")\n\n"
+    + body + "\n";
 }
 
 async function main() {

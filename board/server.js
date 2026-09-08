@@ -1584,6 +1584,12 @@ app.post("/api/waiting/admit", express.json({ limit: "2kb" }), admin, async (req
     if (!some.length) return { ok: true, admitted: [] };
 
     const have = new Set(board.invites.map((v) => v.code));
+    /* WHO SENT THEM, by name. The row stores an id because a member who
+       changes what they are called should not leave a trail of rows crediting
+       who they used to be — so it is resolved here, at the moment the message
+       is written, and never written down. It goes in the link: somebody who
+       joined the list off Peter's post is let in by Peter, not by nobody. */
+    const who = new Map(board.people.map((q) => [q.id, q.handle]));
     const admitted = [];
     for (const w of some) {
       let code = store.newCode();
@@ -1593,7 +1599,7 @@ app.post("/api/waiting/admit", express.json({ limit: "2kb" }), admin, async (req
         code, who: w.name, at: new Date().toISOString(),
       }));
       w.done = "in";
-      admitted.push({ name: w.name, reach: w.reach, code });
+      admitted.push({ name: w.name, reach: w.reach, code, via: who.get(w.via) || "" });
     }
     return { ok: true, admitted };
   });

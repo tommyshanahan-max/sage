@@ -252,7 +252,17 @@ waiting: ## Who is waiting outside, and let them in or not
 
 pitch: ## WeChat copy for each door:  make pitch  |  make pitch ROOM=film
 	@# The link that works is not the obvious one — see the note in pitch.mjs.
-	@node scripts/pitch.mjs "https://liuxuesheng.io" "$(ROOM)"
+	@#
+	@# Through the board container like every other target here. This one used
+	@# to run node on the host, on the grounds that it talks to nothing and
+	@# only prints — and the box has no node on it, so it printed
+	@# "node: command not found" instead. Nothing needs installing on a server
+	@# whose whole job is to run containers.
+	@# The address people actually type, read off .env rather than written in
+	@# here — the domain has moved once already and a link in a pitch that goes
+	@# to the old one is worse than no pitch.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/pitch.mjs "https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" "$(ROOM)"
 
 admit: ## Let a whole room in at once:  make admit ROOM=film
 	@# Cold start is the only real risk in a room-based board. One name at a
@@ -261,7 +271,8 @@ admit: ## Let a whole room in at once:  make admit ROOM=film
 	@test -n "$(ROOM)" || { echo 'which room? make admit ROOM=film|invest|raise|other'; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  --admit "$(ROOM)" --max "$(MAX)"
+	  --admit "$(ROOM)" --max "$(MAX)" \
+	  --public "https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')"
 
 wait-add: ## Write it down:  make wait-add NAME="Wei" REACH="wechat weilin88" ROOM=film
 	@# For somebody who asked in a WeChat thread or in person. Every row is
