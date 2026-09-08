@@ -75,6 +75,53 @@
      asks for. Not a per-element pass — that is how a page ends up with three
      sizes of the same thing. */
   html{font-size:17px;-webkit-text-size-adjust:100%}
+
+  /* ---- WHO LEFT THIS FOR YOU -------------------------------------------
+     One page, two things: a face to tap and the way in. The face is the mark
+     from the share card, so somebody who has seen the link preview has
+     already met it. */
+  #hello{text-align:center;padding:1.4rem 0 0}
+  #hello .tag{margin:0 0 1.5rem;font-size:.7rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--muted)}
+  #hello .tag b{color:var(--ink-2);font-weight:500}
+  .orb{position:relative;width:8.5rem;height:8.5rem;margin:0 auto 1.2rem;
+    display:grid;place-items:center;border:0;background:none;padding:0}
+  .orb u{position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(circle at 50% 45%,var(--accent-soft),transparent 68%)}
+  .orb s{position:absolute;inset:1.1rem;border-radius:50%;
+    border:1px solid var(--accent);opacity:.32}
+  .orb i{position:relative;width:5rem;height:5rem;border-radius:50%;
+    background:#121110;color:#faf4ea;display:grid;place-items:center;
+    font-family:var(--serif);font-size:2rem;font-style:normal;
+    box-shadow:0 14px 34px -14px rgba(18,17,16,.8)}
+  .orb .badge{position:absolute;right:1.5rem;bottom:1.5rem;width:1.3rem;
+    height:1.3rem;border-radius:50%;background:var(--accent);
+    border:2.5px solid var(--paper);background-repeat:no-repeat;
+    background-position:57% 50%;background-size:.6rem;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'><path d='M9 5.5v13l10-6.5z'/></svg>")}
+  /* Reading it aloud: the mark holds still and the ring breathes, which reads
+     as speaking without anything jumping about on a small screen. */
+  .orb.on s{animation:breathe 1.9s ease-in-out infinite}
+  .orb.on .badge{background-size:.55rem;background-position:50% 50%;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'><path d='M9 6v12M15 6v12'/></svg>")}
+  @keyframes breathe{0%,100%{transform:scale(1);opacity:.32}
+                     50%{transform:scale(1.09);opacity:.6}}
+  @media (prefers-reduced-motion:reduce){.orb.on s{animation:none;opacity:.6}}
+
+  #hello .lead{margin:0 0 .35rem;font-family:var(--serif);font-weight:400;
+    font-size:1.42rem;line-height:1.28;letter-spacing:-.01em}
+  #hello .under{margin:0 0 1.6rem;font-size:.9rem;color:var(--muted)}
+  /* What was just said, written down. */
+  .spoke{margin:0 0 1.5rem;padding:.9rem 1rem;background:var(--accent-soft);
+    border-radius:.9rem;font-size:.98rem;line-height:1.6;color:var(--ink);
+    text-align:left}
+  .orline{display:flex;align-items:center;gap:.7rem;margin:0 0 1rem;
+    color:var(--muted);font-size:.72rem;letter-spacing:.12em;
+    text-transform:uppercase}
+  .orline::before,.orline::after{content:"";flex:1;height:1px;background:var(--hair)}
+  #hello .go small{display:block;font-weight:400;font-size:.76rem;opacity:.85;
+    margin-top:.12rem}
+  #hello .note{margin:1rem 0 0}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
     font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
   main{max-width:34rem;margin:0 auto;padding:0 1.15rem 4rem}
@@ -235,6 +282,31 @@
     </div>
     <p class="note" id="wxnote"></p>
     <button class="anyway" type="button" id="wxanyway"></button>
+  </section>
+
+  <!-- WHO LEFT THIS FOR YOU.
+       Shown only when the link carries a name — see `for` and `from` in the
+       script. Two things on it and nothing else: a face to tap, and the way
+       in. Everything the earlier version of this screen said in four
+       paragraphs is behind the tap, and most people will never need it.
+       The names are decoration on a greeting, not a claim about anybody: they
+       are typed by whoever made the link, and they are escaped on the way in.
+       The code is still the only thing that opens anything. -->
+  <section id="hello" hidden>
+    <p class="tag" id="hellotag"></p>
+    <button class="orb" type="button" id="orb">
+      <u aria-hidden="true"></u><s aria-hidden="true"></s>
+      <i aria-hidden="true">换</i>
+      <b class="badge" aria-hidden="true"></b>
+    </button>
+    <h1 class="lead" id="hellolead"></h1>
+    <p class="under" id="hellounder"></p>
+    <!-- Said out loud AND written down. A voice is no use on a phone that is
+         on silent, on a train, or to somebody who did not expect sound. -->
+    <p class="spoke" id="hellospoke" hidden></p>
+    <div class="orline" id="helloor"><span></span></div>
+    <button class="go wide" type="button" id="helloaccept"></button>
+    <p class="note" id="hellonote"></p>
   </section>
 
   <!-- THE DOOR ITSELF. -->
@@ -413,15 +485,97 @@ function showIn(by) {
   window.scrollTo(0, 0);
 }
 
+/* WHO LEFT THIS, AND FOR WHOM.
+ *
+ * Both are plain text in the address, typed by whoever made the link. They
+ * are a greeting and nothing more: no name in a URL is a claim about anybody,
+ * and the six characters remain the only thing that opens anything. Trimmed
+ * hard and set as text rather than markup, because a name in an address is
+ * written by a stranger.
+ */
+function nameFrom(key) {
+  try {
+    const v = new URLSearchParams(location.search).get(key) || "";
+    return v.replace(/[<>&"'\\]/g, "").trim().slice(0, 24);
+  } catch { return ""; }
+}
+const FOR = nameFrom("for");
+const FROM = nameFrom("from");
+
+/* WHAT THE VOICE SAYS. Built here rather than fetched: it is four facts and a
+   name, it must work with no network left, and a message about a private
+   board should not need a request to a server to be read out. */
+function message() {
+  return [
+    FOR ? T("hi.spokeName", { who: FOR }) : T("hi.spoke"),
+    FROM ? T("hi.spokeFrom", { who: FROM }) : "",
+    T("hi.spokeWhat"),
+    T("hi.spokeHow"),
+  /* Chinese sentences carry their own full stop and take no space after it;
+     English needs one. Joining with the wrong one is the sort of thing that
+     makes a welcome look machine-made. */
+  ].filter(Boolean).join(lang() === "zh" ? "" : " ");
+}
+
+/* READ ALOUD BY THE BROWSER'S OWN VOICE.
+ *
+ * No vendor, no key, no audio leaving the phone, and it speaks Chinese. It
+ * sounds like a phone rather than like a person, which is the honest register
+ * for a machine reading a message anyway.
+ *
+ * The words go on screen at the same moment, every time. A voice is no use on
+ * a phone that is on silent, on a train, or to somebody who did not expect
+ * sound — and on the browsers where speech is missing altogether, reading it
+ * is the whole feature rather than a fallback. */
+let SPEAKING = false;
+function hearIt() {
+  const orb = $("orb");
+  const said = $("hellospoke");
+  said.hidden = false;
+  said.textContent = message();
+
+  let synth = null;
+  try { synth = window.speechSynthesis; } catch { synth = null; }
+  if (!synth) return;
+  if (SPEAKING) { synth.cancel(); SPEAKING = false; orb.className = "orb"; return; }
+
+  try {
+    const u = new SpeechSynthesisUtterance(message());
+    u.lang = lang() === "zh" ? "zh-CN" : "en-GB";
+    u.rate = 0.98;
+    u.onend = () => { SPEAKING = false; orb.className = "orb"; };
+    u.onerror = () => { SPEAKING = false; orb.className = "orb"; };
+    synth.cancel();
+    synth.speak(u);
+    SPEAKING = true;
+    orb.className = "orb on";
+  } catch { /* the words are on screen either way */ }
+}
+
 /* WeChat first, always. The code works in there and the profile built
    afterwards would be stranded in a browser nobody opens on purpose — the
-   same split the recovery key exists to undo, and cheaper to prevent. */
+   same split the recovery key exists to undo, and cheaper to prevent.
+ *
+ * And the greeting before the door, when the link carried a name. It is not a
+ * second page: accepting swaps it for the six boxes on the same screen, so
+ * there is no navigation to lose somebody in. Nobody without a name in their
+ * link sees it at all — a "Welcome." to somebody nobody greeted is worse than
+ * arriving at the lock. */
 function route() {
   const wx = IN_WECHAT && !sessionStorage.getItem("board:anyway");
+  const greet = !wx && (FOR || FROM) && !sessionStorage.getItem("board:greeted");
   $("wx").hidden = !wx;
-  $("door").hidden = wx;
-  if (!wx) setTimeout(() => $("code").focus(), 60);
+  $("hello").hidden = !greet;
+  $("door").hidden = wx || greet;
+  if (!wx && !greet) setTimeout(() => $("code").focus(), 60);
 }
+
+$("orb").addEventListener("click", hearIt);
+$("helloaccept").addEventListener("click", () => {
+  try { window.speechSynthesis.cancel(); } catch { /* nothing to stop */ }
+  sessionStorage.setItem("board:greeted", "1");
+  route();
+});
 
 function words() {
   /* Not "not public yet" — somebody looking at this screen is looking at the
@@ -437,6 +591,16 @@ function words() {
   $("wxcopy").textContent = T("door.wxCopy");
   $("wxnote").textContent = T("door.wxNote");
   $("wxanyway").textContent = T("door.wxAnyway");
+
+  $("hellotag").textContent = FROM ? T("hi.tagFrom", { who: FROM }) : T("hi.tag");
+  $("hellolead").textContent = FOR ? T("hi.leadName", { who: FOR }) : T("hi.lead");
+  $("hellounder").textContent = T("hi.under");
+  $("helloor").firstElementChild.textContent = T("hi.or");
+  $("helloaccept").textContent = T("hi.accept");
+  $("hellonote").textContent = T("hi.note");
+  /* The spoken words follow the language too — somebody who switches after
+     hearing it in English should not be reading English underneath. */
+  if (!$("hellospoke").hidden) $("hellospoke").textContent = message();
 
   $("doortitle").textContent = T("door.title");
   $("doorsub").textContent = T("door.sub");

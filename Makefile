@@ -219,11 +219,17 @@ post-door: ## Tell the feed the board is private now, as The Professor
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/post-door.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" $(if $(AGAIN),--again,)
 
-invite: ## Make an invite:  make invite WHO="Mei" [N=3]
+invite: ## Make an invite:  make invite WHO="you" FOR="them" [N=3]
 	@# Prints the link and the code as the message to send. One person each.
+	@#
+	@# WHO is whoever is vouching — it is the label on the row and the name the
+	@# door says on the way in ("Tom let you in"), so it is usually you.
+	@# FOR is the person receiving it. It goes in the link and nowhere else:
+	@# the door opens with their name on it and nothing is stored about them.
+	@# Neither name opens anything. The six characters still do that.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  --who "$(WHO)" --n "$(or $(N),1)"
+	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --n "$(or $(N),1)"
 
 post-numbers: ## Say where the whole board has got to, as The Professor
 	@# Safe every morning: it works out what the totals were when it last spoke

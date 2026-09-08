@@ -67,6 +67,12 @@ async function main() {
 
   const who = arg("who");
   const n = Number(arg("n")) || 1;
+  /* WHO IT IS FOR, which is not the same as WHO. `who` is the label on the
+     invite row — whoever vouched — and it is what the door says on the way
+     in. This is the name of the person receiving it, and it goes in the link
+     rather than in the board: it greets them and nothing else, so it is never
+     stored, never checked, and opens nothing. */
+  const forWhom = arg("for");
   const r = await fetch(base + "/api/invite", {
     method: "POST", headers: head, body: JSON.stringify({ who, n }),
   });
@@ -79,14 +85,28 @@ async function main() {
   /* Printed as the message you actually send, because the failure mode of a
      bare code is somebody pasting it with no link and the person on the other
      end having nowhere to type it. */
+  /* The link carries the two names when there are two names. A door that
+     opens with "Welcome, Christopher — Keith asked me to let you in" is a
+     different arrival from a password box, and it costs nothing but a query
+     string. Neither name is a credential; the code still is. */
+  const q = [
+    forWhom ? "for=" + encodeURIComponent(forWhom) : "",
+    who ? "from=" + encodeURIComponent(who) : "",
+  ].filter(Boolean).join("&");
+  const link = PUBLIC + "/enter" + (q ? "?" + q : "");
+
   for (const v of d.made) {
     console.log("");
-    console.log(v.who ? "For " + v.who + ":" : "Invite:");
-    console.log("  " + PUBLIC + "/enter");
+    console.log(forWhom ? "For " + forWhom + ":" : v.who ? "From " + v.who + ":" : "Invite:");
+    console.log("  " + link);
     console.log("  " + v.code);
   }
   console.log("");
   console.log("One person each. Send them both — the link is worth nothing without the code.");
+  if (!forWhom) {
+    console.log("");
+    console.log('Name them and the door greets them by it:  make invite WHO="you" FOR="their name"');
+  }
 }
 
 main().catch((e) => {

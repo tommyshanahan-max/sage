@@ -1509,6 +1509,43 @@ export const STRINGS = {
   /* ---- the door ----------------------------------------------------------
      Three screens: get out of WeChat, six characters, come in. The middle one
      is the shortest and the first one is the one that matters. */
+  /* ---- WHO LEFT THIS FOR YOU ---------------------------------------------
+     The greeting in front of the door, when the link carried a name. Both
+     names are typed by whoever made the link and neither opens anything —
+     the six characters still do that. Everything here is said out loud by
+     the browser's own voice as well as written down; keep it speakable, which
+     mostly means short sentences and no punctuation a voice cannot hear. */
+  "hi.tag":            ["Somebody left you a message", "有人给你留了句话"],
+  "hi.tagFrom":        ["{who} left you a message", "{who} 给你留了句话"],
+  "hi.lead":           ["Welcome", "欢迎你"],
+  "hi.leadName":       ["Welcome, {who}", "欢迎你，{who}"],
+  /* THE INSTRUCTION LIVES HERE, not in the heading, because the heading is
+     taken by the name whenever there is one — and the tap is the whole point
+     of the screen. Half a minute, and which languages, on the same line. */
+  "hi.under": [
+    "Tap the circle to hear your message, and ask me anything · English or 中文",
+    "点一下那个圈，听听留给你的话，有问题也可以问我 · 中英文都行",
+  ],
+  "hi.or":             ["or", "或者"],
+  "hi.accept":         ["Accept the invitation", "接受邀请"],
+  "hi.note": [
+    "Invite only. No account, no password, no phone number — the code is the whole of it.",
+    "邀请制。没有账号，没有密码，也不要手机号——只有那串口令。",
+  ],
+  /* THE MESSAGE ITSELF, in four pieces so a missing name drops its own
+     sentence rather than leaving a hole in the middle of a spoken line. */
+  "hi.spoke":          ["Welcome.", "欢迎。"],
+  "hi.spokeName":      ["Welcome, {who}.", "欢迎你，{who}。"],
+  "hi.spokeFrom":      ["{who} asked me to let you in.", "{who} 让我把你放进来。"],
+  "hi.spokeWhat": [
+    "This is a private board for people doing business in China. Film, money, factories.",
+    "这是一个给在中国做事的人用的私密板子。影视、资金、工厂。",
+  ],
+  "hi.spokeHow": [
+    "Nothing on it is public, and nobody sees you until you have both chosen each other. Your code is the six characters they sent.",
+    "上面的东西都不公开，而且要你们互相都选了对方，别人才看得到你。你的口令就是他发给你的那六位。",
+  ],
+
   "door.wxTitle":      ["Open this in your browser", "用浏览器打开"],
   "door.wxSub":        ["Before you use your code", "先别急着输口令"],
   "door.wxSay": [
