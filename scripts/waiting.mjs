@@ -8,6 +8,7 @@
  *   make wait-add NAME=.. REACH=.. [ROOM=film|invest|raise|other]
  *   make admit ROOM=film         let that whole room in, one code each
  *   make waiting-in ID=abc123    let in — hand them a code with `make invite`
+ *   make waiting-back ID=abc123  put one back on the list, undoing an admit
  *   make waiting-no ID=abc123    not now
  *   make waiting-rm ID=abc123    delete the row outright
  */
@@ -165,6 +166,11 @@ function draft(w) {
 async function main() {
   if (arg("admit")) return admit(arg("admit"), arg("max"));
   if (arg("name")) return add(arg("name"), arg("reach"), arg("why"), arg("room"));
+  /* BACK ON THE LIST. The one way out of "let in" that is not a deletion —
+     for an admit that went out to a room wider than intended, or a person
+     admitted before somebody had decided. Their code is a separate thing and
+     stays live until it is taken back: make invite-off CODE=... */
+  if (arg("back")) return mark(arg("back"), { done: "" });
   if (arg("in")) return mark(arg("in"), { done: "in" });
   if (arg("no")) return mark(arg("no"), { done: "no" });
   if (arg("rm")) return mark(arg("rm"), { remove: true });

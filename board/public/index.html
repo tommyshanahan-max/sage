@@ -1527,6 +1527,14 @@
 
   <div class="topics" id="topics"></div>
 
+  <!-- HOW MANY ARE OUTSIDE, on the page everybody opens first.
+       It was on Browse only, which is the tab a member visits when they are
+       already thinking about people. The queue is worth more here: it is the
+       one number that says this place is worth being in, and a member who can
+       see it growing is the member who spends an invitation. A number and
+       never a list — no name, no photograph, nothing that says who. -->
+  <p class="atdoor" id="feeddoor" hidden></p>
+
   <div class="rule" id="posts"><span id="rulelabel">Everyone · Newest first</span><i></i></div>
 
   <div id="board"></div>
@@ -4807,16 +4815,39 @@ function shareCard(q, label) {
  *  list: no name, no photograph, nothing that could tell anybody in here who
  *  is waiting — and below the floor the server sends null, so the line simply
  *  says how many people are in and stops. */
+/* One person is not "1 people". English needs the second sentence and Chinese
+   does not, so the choice is made here and both languages read right. */
+const inside = (n) => T(n === 1 ? "brw.inside1" : "brw.inside", { n });
+const atdoor = (n) => T(n === 1 ? "brw.atdoor1" : "brw.atdoor", { n });
+
 function drawDoor(people) {
   const box = $("atdoor");
   fill(box);
   box.hidden = !people;
   if (!people) return;
-  box.append(document.createTextNode(T("brw.inside", { n: MEMBERS || people })));
+  box.append(document.createTextNode(inside(MEMBERS || people)));
   if (WAITING) {
     box.append(document.createTextNode(" "));
-    const b = el("b", null, T("brw.atdoor", { n: WAITING }));
-    box.append(b);
+    box.append(el("b", null, atdoor(WAITING)));
+  }
+}
+
+/* THE SAME TWO NUMBERS ON THE FEED.
+ *
+ * Its own function rather than a second call to drawDoor, because the one
+ * above hangs off the deck: no faces drawn, no line. The feed has no deck to
+ * wait for, and MEMBERS arrives with /api/me — so this draws as soon as the
+ * numbers do, and says nothing until they have. */
+function drawFeedDoor() {
+  const box = $("feeddoor");
+  if (!box) return;
+  fill(box);
+  if (!MEMBERS && !WAITING) { box.hidden = true; return; }
+  box.hidden = false;
+  if (MEMBERS) box.append(document.createTextNode(inside(MEMBERS)));
+  if (WAITING) {
+    if (MEMBERS) box.append(document.createTextNode(" "));
+    box.append(el("b", null, atdoor(WAITING)));
   }
 }
 
@@ -5052,6 +5083,7 @@ function repaint() {
   drawTalk();
   drawAsk();
   drawMyInvite();
+  drawFeedDoor();
   draw();
   window.scrollTo(0, y);
 }
@@ -5832,6 +5864,7 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
     ME = d.person;
     WAITING = typeof d.waiting === "number" ? d.waiting : null;
     MEMBERS = Number(d.people || 0);
+    drawFeedDoor();
     RANK = d.rank || "";
     /* drawTodo BELONGS HERE and was missing. The list is made out of ME, and
        the only other place it is drawn is loadMyInvite, which runs before

@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: feed-quiet post-profile pair who admit waiting waiting-in waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -287,6 +287,13 @@ waiting-in: ## Mark one as let in: make waiting-in ID=...
 	@test -n "$(ID)" || { echo "which one? make waiting-in ID=..."; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --in "$(ID)"
+
+waiting-back: ## Put one back on the list: make waiting-back ID=...
+	@# Undoes an admit. The code minted for them is a separate thing and keeps
+	@# working until it is taken back:  make invite-off CODE=...
+	@test -n "$(ID)" || { echo "which one? make waiting-back ID=..."; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --back "$(ID)"
 
 waiting-no: ## Turn one down: make waiting-no ID=...
 	@test -n "$(ID)" || { echo "which one? make waiting-no ID=..."; exit 1; }

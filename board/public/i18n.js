@@ -1418,7 +1418,12 @@ export const STRINGS = {
      floor, so it is safe to write in the plural — nobody will see "5 people
      are waiting" turn into "1 person is". */
   "brw.inside":        ["{n} people are in.", "里面有 {n} 个人。"],
+  /* Its own string rather than a plural rule. There is one number this ever
+     applies to and English is the only side that cares — Chinese counts the
+     same either way, which is why the pair below is not two sentences. */
+  "brw.inside1":       ["1 person is in.", "里面有 1 个人。"],
   "brw.atdoor":        ["{n} are waiting to get in.", "另有 {n} 个人在等着进来。"],
+  "brw.atdoor1":       ["1 is waiting to get in.", "另有 1 个人在等着进来。"],
   "brw.hello":         ["Say hello", "打个招呼"],
 
   // ---- the type sort -------------------------------------------------------

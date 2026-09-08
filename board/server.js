@@ -2576,7 +2576,14 @@ app.get("/api/me", async (req, res) => {
        it sits under Browse, and Browse is missing anybody who switched
        themselves out of it; a number that says "in" has to mean in. */
     people: board.people.filter((q) => q.state === "published" && q.handle).length,
-    waiting: waiting >= WAITING_FLOOR ? waiting : null,
+    /* NO FLOOR IN HERE. The floor exists because "1 person is waiting" on a
+       page anybody can read is nearly a name — a stranger reading it can
+       match it against whoever just posted the link. Nobody inside is a
+       stranger: they are already through the door, they cannot see the list,
+       and the one inference available to them is about a person they invited
+       themselves. What the floor costs in here is the whole point of the
+       number — a queue of three that reads as no queue at all. */
+    waiting,
     rank: rankOf(board, me),
   });
 });
