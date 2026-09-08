@@ -362,6 +362,9 @@ app.get(["/buddies", "/buddies/"], (req, res, next) =>
  * had to be built for that, and it is the reason the door tells people to get
  * out of WeChat before they spend the code rather than afterwards.
  * ------------------------------------------------------------------------- */
+/* "open" is spelled out so that meaning to have no door and forgetting to
+   configure one are different strings. `make check` refuses a deploy where
+   this is empty; it accepts "open", which is somebody saying so. */
 const INVITE = ["post", "read"].includes(process.env.BOARD_INVITE || "")
   ? process.env.BOARD_INVITE : "";
 

@@ -68,6 +68,19 @@ up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	  && { echo "partner2 is enabled but it has no snapshot yet."; \
 	       echo "Run 'make partner-sync-2' first — it decides which repos and versions they see."; \
 	       exit 1; } || true
+	@# THE DOOR, CHECKED BEFORE EVERY DEPLOY.
+	@# The board's "invite only" banner is a string in the page. The gate is
+	@# this variable, and empty means there is no gate — the feed, the
+	@# directory and every API are open to anybody with the address, while the
+	@# page goes on saying otherwise. That is the one failure here nobody
+	@# would see by looking at the site, so it is refused rather than warned
+	@# about. Set it to "read" or, deliberately, to "open".
+	@grep -q '^COMPOSE_PROFILES=.*board' .env && ! grep -qE '^TOMSCODING_BOARD_INVITE=(read|post|open)$$' .env \
+	  && { echo "the board is enabled but TOMSCODING_BOARD_INVITE is not set."; \
+	       echo "Empty means there is no door: everything is readable by anybody"; \
+	       echo "with the address, while the page still says invite only."; \
+	       echo "Set TOMSCODING_BOARD_INVITE=read in .env, or =open to mean it."; \
+	       exit 1; } || true
 	@grep -q '^COMPOSE_PROFILES=.*thefeed' .env && ! grep -qE '^TOMSCODING_FEED_PASSWORD=.+' .env \
 	  && { echo "thefeed is enabled but TOMSCODING_FEED_PASSWORD is empty."; \
 	       echo "That seat moderates a live board — it needs its own password."; \
@@ -213,9 +226,9 @@ waiting: ## Who is waiting outside, and let them in or not
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
 
-pitch: ## What to paste into WeChat to get people onto the waiting list
+pitch: ## WeChat copy for each door:  make pitch  |  make pitch ROOM=film
 	@# The link that works is not the obvious one — see the note in pitch.mjs.
-	@node scripts/pitch.mjs "https://liuxuesheng.io"
+	@node scripts/pitch.mjs "https://liuxuesheng.io" "$(ROOM)"
 
 admit: ## Let a whole room in at once:  make admit ROOM=film
 	@# Cold start is the only real risk in a room-based board. One name at a

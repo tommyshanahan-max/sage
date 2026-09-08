@@ -808,6 +808,30 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       BOARD_TRANSLATE_BURST: ${TOMSCODING_BOARD_TRANSLATE_BURST:-30}
       BOARD_TRANSLATE_DAY: ${TOMSCODING_BOARD_TRANSLATE_DAY:-2000}
+      # THE DOOR. Unset means there is no door: the code in server.js reads
+      # this and, with nothing in it, serves the feed, the directory and every
+      # API to anybody with the address. The banner at the top of the page
+      # saying "invite only" is a STRING, not the gate — a board can say it and
+      # not mean it, and that is exactly what happened here until this line
+      # existed. "read" is what people mean by invite only; "post" lets anybody
+      # read and only members write.
+      BOARD_INVITE: ${TOMSCODING_BOARD_INVITE:-}
+      # Private messages and groups, and the switch that kills them. Default on
+      # — "off" turns every message and group route in the app into a 404
+      # without a deploy, which is the thing you want within reach on the one
+      # surface two people use to reach each other.
+      BOARD_NOTES: ${TOMSCODING_BOARD_NOTES:-on}
+      # How many introductions one browser may send in a day. Messages inside
+      # an open thread do not count against it.
+      BOARD_NOTES_A_DAY: ${TOMSCODING_BOARD_NOTES_A_DAY:-5}
+      # WHAT IT TAKES TO BRING SOMEBODY IN. Here rather than in the code so
+      # that "this is too tight" is a line in .env and a restart, which is the
+      # difference between tuning a rule during a test week and shipping to
+      # change a number. See standing() in board/server.js.
+      BOARD_BRING_DAYS: ${TOMSCODING_BOARD_BRING_DAYS:-1}
+      BOARD_BRING_SAID: ${TOMSCODING_BOARD_BRING_SAID:-2}
+      BOARD_BRING_WEEK: ${TOMSCODING_BOARD_BRING_WEEK:-7}
+      BOARD_GUEST_ROOM: ${TOMSCODING_BOARD_GUEST_ROOM:-3}
     volumes:
       - board_data:/data
     expose:
