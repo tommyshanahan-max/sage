@@ -294,6 +294,47 @@ app.use(async (req, res, next) => {
   if (req.path.startsWith("/api/")) {
     return res.status(403).json({ error: "invite", where: "/enter" });
   }
+
+  /* A MEMBER'S PAGE, SHARED WITH SOMEBODY WHO IS NOT IN.
+   *
+   * Sharing your own profile is what a person actually does — it is the link
+   * they have, it has their name on it, and every other product on earth has
+   * trained them that it works. Here it landed a stranger on a password box
+   * asking for a code they were never given, which is a dead end for every
+   * one of them and for the member who sent it.
+   *
+   * So it becomes the thing they meant to send: the door for that member's
+   * room, carrying their id, which is the same link the Share button makes.
+   * The page then greets the visitor with the member's name on it and offers
+   * the waiting list. Nobody gets in — a queue is not admission — and the
+   * member gets the credit for whoever joins.
+   *
+   * The profile itself stays behind the door. This looks up who they were
+   * sharing and sends the visitor onwards; it never renders a page.
+   */
+  const shared = /^\/p\/([A-Za-z0-9_-]{1,40})\/?$/.exec(req.path);
+  if (shared) {
+    const board = await store.load(FILE);
+    const want = shared[1].toLowerCase();
+    const q = board.people.find((x) =>
+      x.state === "published" && String(x.handle || "").toLowerCase() === want);
+    if (q && q.id) {
+      /* Their own room, chosen the way the Share button chooses it, so a
+         visitor lands among the people the member is actually among. */
+      const rooms = Array.isArray(q.rooms) ? q.rooms : [];
+      const door = rooms.includes("talent") || rooms.includes("agent") ? "/r/film"
+        : rooms.includes("invest") ? "/r/invest"
+        : rooms.includes("raise") ? "/r/raise"
+        : rooms.includes("buy") || rooms.includes("sell") ? "/r/trade"
+        : "/about";
+      return res.redirect(302, door + "?via=" + encodeURIComponent(q.id));
+    }
+    /* No such member. The waiting list rather than the door: somebody who
+       followed a link to a person who is not here still came from somewhere,
+       and the queue is the only thing there is to offer them. */
+    return res.redirect(302, "/about");
+  }
+
   res.status(200);
   return page("enter.html", req, res, next);
 });
