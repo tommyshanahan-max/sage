@@ -870,6 +870,69 @@ function pill(x, left, top, w, h, r) {
  * the same result. When the screen changed and this did not, the feed carried
  * a card nobody recognised from the page that made it.
  */
+/* BREAKING A LINE THAT HAS NO SPACES IN IT.
+ *
+ * Canvas does no line breaking, so the card wraps its own text — and it did it
+ * by splitting on spaces. Chinese has none. Every Chinese sentence on a result
+ * card was therefore one enormous word that could never be broken, and ran off
+ * both edges of the picture people were posting to the feed and sending into
+ * group chats.
+ *
+ * Latin words stay whole. Every CJK character is its own break point, which is
+ * how Chinese is actually set. Two punctuation rules on top, because a line
+ * that opens with a full stop or closes with an opening bracket is the tell
+ * that a machine did the typesetting.
+ */
+const CJK = /[\u3000-\u303F\u3400-\u4DBF\u4E00-\u9FFF\uFF00-\uFFEF]/;
+const NO_START = "。，、；：？！）」』】》〉·…";
+const NO_END = "（「『【《〈";
+
+function pieces(text) {
+  /* Spread rather than indexed, so a character outside the basic plane is one
+     piece and not two halves of a broken pair. */
+  const ch = [...String(text || "")];
+  const out = [];
+  let i = 0, pre = false;
+  while (i < ch.length) {
+    if (ch[i] === " ") { pre = true; i++; continue; }
+    if (CJK.test(ch[i])) { out.push({ t: ch[i], pre }); pre = false; i++; continue; }
+    /* A run of Latin is one piece: English breaks between words, not inside
+       them, and "level" split across two lines is worse than a short line. */
+    let j = i;
+    while (j < ch.length && ch[j] !== " " && !CJK.test(ch[j])) j++;
+    out.push({ t: ch.slice(i, j).join(""), pre });
+    pre = false;
+    i = j;
+  }
+  return out;
+}
+
+/** The lines `text` breaks into at `width`, using ctx's current font. */
+function lay(x, text, width) {
+  const rows = [];
+  let row = "";
+  for (const p of pieces(text)) {
+    /* THE SPACES THAT WERE THERE, AND NO OTHERS. Chinese sets a thin space
+       around Latin — 第 8 级 — and the first version of this rebuilt the line
+       from words and lost every one of them, which is its own kind of wrong
+       typesetting. `pre` remembers what the string actually had. */
+    const gap = row && p.pre ? " " : "";
+    const test = row + gap + p.t;
+    if (row && x.measureText(test).width > width && !NO_START.includes(p.t)) {
+      /* An opening bracket goes down with the thing it opens. */
+      if (NO_END.includes(row.slice(-1))) {
+        rows.push(row.slice(0, -1));
+        row = row.slice(-1) + p.t;
+      } else {
+        rows.push(row);
+        row = p.t;
+      }
+    } else { row = test; }
+  }
+  if (row) rows.push(row);
+  return rows;
+}
+
 function levelPicture(w, n, band, can) {
   return resultPicture(({ x, S, paper, ink, muted, accent, line, serif, sans }) => {
     x.textAlign = "center";
@@ -880,16 +943,11 @@ function levelPicture(w, n, band, can) {
     const wrap = (text, y, font, colour, width, step) => {
       x.font = font;
       x.fillStyle = colour;
-      const words = String(text || "").split(" ");
-      let row = "", at = y;
-      for (const word of words) {
-        const test = row ? row + " " + word : word;
-        if (x.measureText(test).width > width && row) {
-          x.fillText(row, S / 2, at);
-          at += step; row = word;
-        } else { row = test; }
+      let at = y;
+      for (const row of lay(x, text, width)) {
+        x.fillText(row, S / 2, at);
+        at += step;
       }
-      if (row) { x.fillText(row, S / 2, at); at += step; }
       return at;
     };
 
@@ -922,12 +980,9 @@ function levelPicture(w, n, band, can) {
        clips the long sentences or leaves a hole under the short ones. */
     const top = after + 76;
     x.font = "44px " + serif;
-    const words = String(can || "").split(" ");
-    let row = "", lines = 1;
-    for (const word of words) {
-      const test = row ? row + " " + word : word;
-      if (x.measureText(test).width > S - 300 && row) { lines++; row = word; } else { row = test; }
-    }
+    /* Measured with the same breaker that draws it, or the block is the height
+       of a different sentence than the one inside it. */
+    const lines = Math.max(1, lay(x, can, S - 300).length);
     const step = 62;
     const boxH = 62 + lines * step;
     const mid = top + boxH / 2;
