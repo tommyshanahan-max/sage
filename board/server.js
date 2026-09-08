@@ -1147,6 +1147,150 @@ function rankOf(board, who) {
 }
 
 /* ---------------------------------------------------------------------------
+ * THE LEDGER
+ *
+ * WHAT THIS IS, AND WHAT IT IS NOT. A count of what somebody put into this
+ * board, kept per member, and a share of the board expressed as a percentage
+ * of everybody's counts added together. It is NOT tradeable, it cannot be sent
+ * to anybody, and it is not money. The moment a thing like this can be passed
+ * from one person to another it is a security, which is a different product
+ * with lawyers in it — and, for the half of this board sitting in China, an
+ * illegal one. So it moves in one direction only: it is earned and it is held.
+ *
+ * WHETHER IT EVER CONVERTS TO ANYTHING is a promise made on paper by whoever
+ * runs the board, not a property of this file. Nothing here should be written
+ * as though a payout exists — see the strings, which say points and share and
+ * never money — until there is a signed document saying what a point is worth.
+ *
+ * WHY IT MOVES ON ITS OWN. A share is a slice of a total that grows every time
+ * anybody does anything, so sitting still costs you: the number falls as other
+ * people work and rises when you do. That is the whole mechanic, and it is the
+ * honest version of "early members have a stake" — early counts for a lot, and
+ * it stops counting for everything.
+ *
+ * EVERY WEIGHT BELOW IS SOMETHING THE BOARD ALREADY KNOWS. Nothing here asks
+ * a member to do anything they were not already being asked to do, and nothing
+ * counts an act nobody else benefited from: a post nobody answered is worth
+ * nothing here, and so is a guest who never spoke.
+ * ------------------------------------------------------------------------- */
+
+/* HOW MANY SEATS THERE ARE, AND HOW LONG THEY MOVE FOR.
+ *
+ * A hundred, and a date. Both are the point: a share of a thing that anybody
+ * can still join is not a share of anything, and a number that keeps moving
+ * for ever is never allocated. Seats fill in the order people arrived; the
+ * hundred-and-first member is a member like any other and is not in the
+ * ledger, and the app says so rather than showing them a nought.
+ *
+ * The date is when the counting stops and the split is whatever it is on that
+ * morning. Until then every point anybody earns moves everybody else's share,
+ * which is what makes it worth watching — and what makes sitting on an early
+ * seat worth less than working from a late one.
+ *
+ * Both are read from the environment because both are promises, and a promise
+ * that lives in a source file gets changed by whoever is editing that file.
+ * Unset, the ledger is off entirely: no seats, no share, nothing shown. */
+const SEATS = Math.max(0, Number(process.env.BOARD_STAKE_SEATS || 0));
+const UNTIL = /^\d{4}-\d{2}-\d{2}$/.test(process.env.BOARD_STAKE_UNTIL || "")
+  ? process.env.BOARD_STAKE_UNTIL : "";
+const ledgerOn = () => SEATS > 0 && Boolean(UNTIL);
+
+/* Counting stops on the date. After it the numbers are what they were, which
+   is the difference between an allocation and a leaderboard. */
+const ledgerShut = () => Boolean(UNTIL) && new Date().toISOString().slice(0, 10) > UNTIL;
+
+/* Being early is worth a lot and then less, on a curve rather than a cliff.
+   Seat 1 is worth ten of seat 100 and seat 100 is not worth nothing — a
+   cohort where the hundredth person can never catch the fifth is a cohort the
+   hundredth person does not bother working for. */
+const FOUND = (n) => Math.round(200 / Math.sqrt(Math.max(1, n)));
+
+/** What one member has put in, and what each part of it came from. */
+function stakeOf(board, who) {
+  const zero = { points: 0, parts: [], seat: 0 };
+  if (!who || !ledgerOn()) return zero;
+  const mine = board.people.find((q) => q.by === who);
+  if (!mine) return zero;
+
+  const live = (p) => p.state === "published" && !p.like && !p.report;
+
+  /* Seat, oldest first. Read off the roll rather than stored, so a page taken
+     down and put back does not mint a founder — and so the seats stay in the
+     order people actually arrived however the file is edited. */
+  const order = board.people
+    .filter((q) => q.state === "published" && q.handle)
+    .sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  const seat = order.findIndex((q) => q.by === who) + 1;
+  /* Past the hundredth, nothing. Not a small number — nothing, and the screen
+     says the seats are gone rather than showing somebody a nought and letting
+     them work out why it never moves. */
+  if (!seat || seat > SEATS) return { ...zero, seat };
+
+  const myPosts = board.posts.filter((p) => p.by === who && live(p) && !p.re);
+  const myIds = new Set(myPosts.map((p) => p.id));
+
+  /* DISTINCT PEOPLE WHO ANSWERED, not answers. One enthusiastic friend
+     replying nine times is one person finding you worth answering. */
+  const answerers = new Set();
+  for (const p of board.posts) {
+    if (p.re && myIds.has(p.re) && live(p) && p.by && p.by !== who) answerers.add(p.by);
+  }
+  for (const n of board.notes) {
+    if (n.to === who && n.by && n.by !== who) answerers.add(n.by);
+  }
+
+  /* GUESTS WHO STAYED AND SPOKE. The strongest thing anybody does here: it is
+     the entire growth of the board, and it is the one act whose value lands in
+     somebody else's column rather than your own. Weighted accordingly. */
+  const guests = board.invites
+    .filter((v) => v.by === who && v.usedBy)
+    .map((v) => board.people.find((x) => x.by === v.usedBy))
+    .filter((g) => g && g.state === "published"
+      && board.posts.some((p) => p.by === g.by && live(p)));
+
+  /* AN INTRODUCTION THAT LANDED. A card is handed over only when two people
+     have chosen each other and one of them acted on it — the nearest thing
+     this board has to a transaction, and the thing it exists to produce. */
+  const cards = board.cards.filter((c) => c.by === who).length;
+
+  /* WEEKS, not days. A board is a habit and a habit shows up across weeks. */
+  const weeks = new Set(board.posts
+    .filter((p) => p.by === who && live(p))
+    .map((p) => weekKey(new Date(Date.parse(p.at || "") || Date.now())))).size;
+
+  const parts = [
+    { key: "found",  n: seat,           points: FOUND(seat) },
+    { key: "guests", n: guests.length,  points: guests.length * 100 },
+    { key: "heard",  n: answerers.size, points: answerers.size * 20 },
+    { key: "cards",  n: cards,          points: cards * 40 },
+    { key: "weeks",  n: weeks,          points: weeks * 10 },
+  ].filter((r) => r.points > 0);
+
+  return { points: parts.reduce((a, r) => a + r.points, 0), parts, seat };
+}
+
+/** One member's share of the cohort, as a percentage of everybody's points. */
+function shareOf(board, who) {
+  if (!ledgerOn()) return null;
+  const mine = stakeOf(board, who);
+  /* HOW MANY SEATS ARE LEFT, which is the number that makes anybody move.
+     Counted off the roll, so it falls the moment somebody publishes a page. */
+  const taken = board.people.filter((q) => q.state === "published" && q.handle).length;
+  const head = { seats: SEATS, left: Math.max(0, SEATS - taken), until: UNTIL, shut: ledgerShut() };
+  if (!mine.points) return { ...head, ...mine, share: 0 };
+  let total = 0;
+  for (const q of board.people) {
+    if (q.state === "published" && q.handle) total += stakeOf(board, q.by).points;
+  }
+  return {
+    ...head, ...mine,
+    /* One decimal. Two is a precision this does not have, and a whole number
+       makes everybody under one percent read as nothing. */
+    share: total ? Math.round((mine.points / total) * 1000) / 10 : 0,
+  };
+}
+
+/* ---------------------------------------------------------------------------
  * WHO MAY BRING SOMEBODY IN
  *
  * Every member used to carry a code. That made an invitation a property of
