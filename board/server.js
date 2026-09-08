@@ -975,8 +975,9 @@ function broughtBy(board, q) {
  *           somebody the room can see. Whether the photograph has cleared the
  *           queue is not part of it: that is the operator's backlog, not the
  *           member's conduct.
- *   days    You have been here three days. Long enough to have read the place
- *           you are recommending.
+ *   days    You have been here a day. Long enough to have read the place you
+ *           are recommending, and short enough that it does not refuse a
+ *           board where every profile was made yesterday.
  *   said    You have put two things on the board this week. Not a volume test:
  *           two is the difference between a member and a registration — and
  *           it is a week rather than "two, ever, plus one recently" because
@@ -992,10 +993,24 @@ function broughtBy(board, q) {
  * And a ceiling: GUEST_ROOM live guests at a time. A room this size cannot
  * absorb one person's address book, however good their standing.
  */
-const BRING_DAYS = 3;
-const BRING_SAID = 2;
-const BRING_WEEK = 7;
-const GUEST_ROOM = 3;
+/* THE FOUR NUMBERS, OVERRIDABLE FROM .env.
+ *
+ * BRING_DAYS is one and not three. Three was chosen for a board with history
+ * in it; the live one has none — every profile on it was made yesterday, so a
+ * three-day rule locked out every member at once, including the people who
+ * had already brought somebody in. A rule that refuses everybody is not
+ * strict, it is broken.
+ *
+ * They are read from the environment so the answer to "this is too tight" is
+ * a line in .env and a restart, not a commit. */
+const num = (name, fallback) => {
+  const v = Number(process.env[name]);
+  return Number.isFinite(v) && v >= 0 ? v : fallback;
+};
+const BRING_DAYS = num("BOARD_BRING_DAYS", 1);
+const BRING_SAID = num("BOARD_BRING_SAID", 2);
+const BRING_WEEK = num("BOARD_BRING_WEEK", 7);
+const GUEST_ROOM = num("BOARD_GUEST_ROOM", 3);
 
 /** Everything about whether one member may mint a code, worked out in one
  *  place so the route that refuses and the screen that explains cannot come to

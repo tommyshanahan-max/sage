@@ -1262,7 +1262,7 @@ export const STRINGS = {
     "Be in Browse — add a photo, turn the switch on.",
     "出现在名单里——加一张照片，把开关打开。",
   ],
-  "inv.needDays":      ["Be here 3 days.", "在这里待满 3 天。"],
+  "inv.needDays":      ["Be here a day.", "在这里待满一天。"],
   "inv.needSaid":      ["Post 2 things this week.", "这周发 2 条内容。"],
   "inv.needGuests": [
     "The people you brought are still here, and posting.",

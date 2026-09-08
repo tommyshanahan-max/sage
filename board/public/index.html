@@ -5175,7 +5175,12 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
     ME = d.person;
     WAITING = typeof d.waiting === "number" ? d.waiting : null;
     MEMBERS = Number(d.people || 0);
-    paintNav(); drawTutor(); drawDeck(); drawTalk(); countNotes();
+    /* drawTodo BELONGS HERE and was missing. The list is made out of ME, and
+       the only other place it is drawn is loadMyInvite, which runs before
+       /api/me has landed — so somebody with a page, a photo and rooms was
+       being told to make a page, add a photo and pick rooms, on a screen that
+       simultaneously showed the Messages door only a named member gets. */
+    paintNav(); drawTutor(); drawDeck(); drawTodo(); drawTalk(); countNotes();
     /* Arrived from "edit" on their own profile. The form lives on this page,
        so the other page sends people here rather than growing a second copy of
        it — and the address is cleaned up afterwards so a reload does not open

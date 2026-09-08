@@ -32,7 +32,7 @@ if (!rows.length) {
    to different conclusions about the same person. */
 const WHY = {
   face: "not in Browse — no name, no photo, or the switch is off",
-  days: "here less than three days",
+  days: "here less than a day",
   said: "fewer than two posts this week",
   guests: "somebody they brought has gone, or their guests never said anything",
   room: "already has three guests in",
