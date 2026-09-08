@@ -509,15 +509,23 @@
   @media (prefers-reduced-motion:reduce){
     .stake .ring .fill{transition:none}
   }
+  /* The mark. Quiet, round, and the same size as the text beside it — it is
+     a way to ask a question, not a control anybody has to notice. */
+  .stake .info{width:1.15rem;height:1.15rem;padding:0;border-radius:50%;
+    border:1px solid var(--line);background:none;color:var(--muted);
+    font-family:var(--serif);font-size:.78rem;line-height:1;cursor:pointer}
+  .stake .info:hover,.stake .info[aria-expanded="true"]{
+    border-color:var(--accent);color:var(--accent)}
+  .stake .about{margin:.7rem 0 0;padding:.8rem .9rem;border-radius:.6rem;
+    background:var(--raise)}
+  .stake .about p{margin:0}
+  .stake .about p + p{margin-top:.5rem}
   .stake .total{display:flex;margin:.6rem 0 0;padding-top:.6rem;
     border-top:1px solid var(--hair);font-size:.86rem;color:var(--muted)}
   .stake .total b{margin-left:auto;color:var(--ink);font-weight:600;
     font-variant-numeric:tabular-nums}
-  .stake .pct{display:block;margin:.25rem 0 0;font-family:var(--serif);
-    font-weight:400;font-size:1.9rem;line-height:1.1;color:var(--ink);
-    font-variant-numeric:tabular-nums}
-  .stake .seat{display:block;margin:.15rem 0 0;font-size:.84rem;color:var(--muted);
-    font-variant-numeric:tabular-nums}
+  .stake .seat{display:block;margin:.3rem 0 0;font-family:var(--serif);
+    font-size:1.15rem;color:var(--ink);font-variant-numeric:tabular-nums}
   .stake .parts{list-style:none;margin:.7rem 0 0;padding:0}
   .stake .parts li{display:flex;gap:.6rem;align-items:baseline;
     padding:.3rem 0;font-size:.86rem;color:var(--ink-2);
@@ -1470,12 +1478,27 @@
     <div class="stake" id="stake" hidden>
       <div class="stakehead">
         <span class="lab" id="stakelab"></span>
+        <!-- WHAT IT IS, FOLDED. The two lines under this panel — when the
+             counting stops, and that a point is not money — have to be here
+             and are read once. Left open they are two paragraphs standing
+             between somebody and the thing they came to look at, every time.
+             Behind a mark they are one tap away for the one reading that
+             wants them. -->
+        <button class="info" type="button" id="stakeinfo"
+                aria-controls="stakeabout" aria-expanded="false">i</button>
         <!-- How many are left, at the top where it is read first. It is the
              number that makes anybody act, and it was buried at the end of a
              paragraph nobody reaches. -->
         <b class="left" id="stakeleft" hidden></b>
       </div>
-      <b class="pct" id="stakepct"></b>
+      <div class="about" id="stakeabout" hidden>
+        <p class="when" id="stakewhen"></p>
+        <p class="note" id="stakenote"></p>
+      </div>
+      <!-- The seat, and then the ring. The big percentage that used to stand
+           here said exactly what the ring says four lines below it, which is
+           the sort of duplication that makes a panel feel long without
+           telling anybody anything twice as well. -->
       <span class="seat" id="stakeseat"></span>
       <!-- The share as a ring. A percentage is a fact and a ring is a
            quantity: it says at a glance whether this is most of the board or
@@ -1491,8 +1514,6 @@
       </div>
       <ul class="parts" id="stakeparts"></ul>
       <p class="total" id="staketotal" hidden></p>
-      <p class="when" id="stakewhen"></p>
-      <p class="note" id="stakenote"></p>
     </div>
 
     <!-- THE TWO PLACES PEOPLE TALK. They live here rather than in the bar,
@@ -3540,11 +3561,11 @@ function drawStake() {
      the same for them, and the line says so rather than leaving them to
      wonder what they missed. */
   const inCohort = STAKE.seat > 0 && STAKE.seat <= STAKE.seats;
-  $("stakepct").textContent = inCohort ? T("stake.share", { n: STAKE.share })
-    : T("stake.full");
+  /* Outside the hundred there is no ring to draw, so the line under the
+     heading carries the whole answer instead. */
   $("stakeseat").textContent = inCohort
     ? T("stake.seat", { n: STAKE.seat, seats: STAKE.seats })
-    : "";
+    : T("stake.full");
 
   /* THE COUNTDOWN, at the top. Shown to somebody outside the hundred too:
      they can still tell whoever they were about to invite to hurry. */
@@ -3603,7 +3624,20 @@ function drawStake() {
      at the top now: the number that makes anybody act does not belong at the
      end of the sentence they stopped reading. */
   $("stakenote").textContent = inCohort ? T("stake.note") : "";
+  /* The mark goes when there is nothing behind it: somebody outside the
+     hundred has the whole answer on the face of the panel already. */
+  $("stakeinfo").hidden = !inCohort;
 }
+
+/* One tap, and it stays open until it is tapped again — somebody who opened
+   this wanted to read it, and closing it under them on a redraw is not a
+   thing they asked for. Bound once, outside the drawing. */
+$("stakeinfo").addEventListener("click", () => {
+  const box = $("stakeabout");
+  const open = !box.hidden;
+  box.hidden = open;
+  $("stakeinfo").setAttribute("aria-expanded", String(!open));
+});
 
 /* ---------------------------------------------------------------------------
  * THINGS TO DO
