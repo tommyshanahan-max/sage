@@ -220,7 +220,7 @@
 <script type="module">
 import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
 import { drawLive, topicColour } from "/live.js";
-import { waitBox } from "/wait.js";
+import { waitBox, roomFromPath } from "/wait.js";
 
 const $ = (id) => document.getElementById(id);
 function el(t, c, x) {
@@ -327,9 +327,48 @@ let POSTS = [];
 // ---- go ---------------------------------------------------------------------
 setLang(pickLang());
 $("waitslot").append(waitBox());
-$("langslot").append(langButton(paint));
+
+/* ONE DOOR, DIFFERENT SIGNS.
+ *
+ * /r/film is this page with the room written into it. Only the eyebrow, the
+ * headline and the line under it change — everything below is the same board,
+ * because it IS the same board. A filmmaker who joins here is introduced to
+ * the lawyer, the fixer and the person with a factory, which is exactly what a
+ * separate film platform would have walled off.
+ *
+ * Done after the first paint rather than instead of it: the ordinary front
+ * door is the default, and a room only overwrites the three lines it has
+ * better words for. */
+function paintRoom() {
+  const key = roomFromPath();
+  if (!key) return;
+  const name = T("waitroom." + key);
+  document.title = name + " \u00b7 " + T("site.title");
+  const k = $("kicker");
+  if (k) k.textContent = name + " \u00b7 " + T("wait.only");
+  const q = $("asking");
+  if (q) q.textContent = T("door." + key + ".head");
+  const u = $("askUnder");
+  if (u) u.textContent = T("door." + key + ".under");
+  const l = $("lede");
+  if (l) l.textContent = T("door." + key + ".say");
+}
+
+/* AFTER the general paint and after every language change, never instead of
+   either. paint() writes the ordinary front door into those three elements;
+   this is the room writing over the three it has better words for, and doing
+   it first meant paint() promptly undid it. */
+$("langslot").append(langButton(() => { paint(); paintRoom(); }));
 paint();
-askRun(true);
+paintRoom();
+/* THE QUESTION STOPS ROTATING ON A ROOM DOOR.
+ *
+ * The front door cycles six questions because it is asking "what is this
+ * place" and six answers say it better than one. A room door has already been
+ * answered — the person followed a film link — so it asks the one question
+ * that room is for, and a carousel would wipe it four seconds later, which is
+ * exactly what it did the first time this ran. */
+askRun(!roomFromPath());
 
 /* WHAT THIS PAGE MAY SHOW, NOW THAT ANYBODY CAN READ IT.
  *

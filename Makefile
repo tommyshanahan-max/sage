@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: who waiting waiting-in waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: who admit waiting waiting-in waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -216,6 +216,15 @@ waiting: ## Who is waiting outside, and let them in or not
 pitch: ## What to paste into WeChat to get people onto the waiting list
 	@# The link that works is not the obvious one — see the note in pitch.mjs.
 	@node scripts/pitch.mjs "https://liuxuesheng.io"
+
+admit: ## Let a whole room in at once:  make admit ROOM=film
+	@# Cold start is the only real risk in a room-based board. One name at a
+	@# time and each person arrives to an empty feed; a room together and it
+	@# is warm the morning they get there. Prints a code per person to send.
+	@test -n "$(ROOM)" || { echo 'which room? make admit ROOM=film|invest|raise|other'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --admit "$(ROOM)" --max "$(MAX)"
 
 wait-add: ## Write it down:  make wait-add NAME="Wei" REACH="wechat weilin88" ROOM=film
 	@# For somebody who asked in a WeChat thread or in person. Every row is

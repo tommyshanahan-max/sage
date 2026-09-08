@@ -6,6 +6,7 @@
  *
  *   make waiting                 who is waiting, oldest first
  *   make wait-add NAME=.. REACH=.. [ROOM=film|invest|raise|other]
+ *   make admit ROOM=film         let that whole room in, one code each
  *   make waiting-in ID=abc123    let in — hand them a code with `make invite`
  *   make waiting-no ID=abc123    not now
  *   make waiting-rm ID=abc123    delete the row outright
@@ -51,7 +52,47 @@ async function mark(id, body) {
   console.log("Done.");
 }
 
+/* LETTING A ROOM IN.
+ *
+ * The whole reason the join form asks which room. Admitting one name at a time
+ * means each person arrives to a feed with nothing in it for them, decides the
+ * place is empty, and does not come back — and each of those is somebody you
+ * had already persuaded. A room let in together is warm on the morning they
+ * get there.
+ *
+ * What this prints is the work: one line per person, a way to reach them and
+ * the code to send. Nothing is delivered for you — a code handed over by the
+ * person who runs the board is the last human moment before somebody is in,
+ * and it should stay one. */
+async function admit(room, max) {
+  const r = await fetch(base + "/api/waiting/admit", {
+    method: "POST", headers: head, body: JSON.stringify({ room, max: Number(max) || undefined }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    console.error(d.error === "room"
+      ? "Which room? film, invest, raise or other." : "It did not go through.");
+    process.exit(1);
+  }
+  const rows = d.admitted || [];
+  if (!rows.length) {
+    console.log("Nobody is waiting in that room.");
+    return;
+  }
+  console.log(rows.length + " let in. Send each of them their code:");
+  console.log("");
+  console.log(pad("name", 16) + pad("reach", 26) + "code");
+  console.log("-".repeat(52));
+  for (const w of rows) console.log(pad(w.name, 16) + pad(w.reach, 26) + w.code);
+  console.log("");
+  console.log("A code is one use and it does not expire. Their rows are still");
+  console.log("on the list until you delete them:  make waiting-rm ID=...");
+  console.log("");
+  console.log("Say it in their language if you know it:  make pitch");
+}
+
 async function main() {
+  if (arg("admit")) return admit(arg("admit"), arg("max"));
   if (arg("name")) return add(arg("name"), arg("reach"), arg("why"), arg("room"));
   if (arg("in")) return mark(arg("in"), { done: "in" });
   if (arg("no")) return mark(arg("no"), { done: "no" });

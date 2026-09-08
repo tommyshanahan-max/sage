@@ -19,6 +19,15 @@
 
 import { T } from "/i18n.js";
 
+/** The room a /r/... address names, or "" anywhere else. One place, so the
+ *  page, the count and the form cannot come to different conclusions about
+ *  which door somebody walked through. */
+export function roomFromPath() {
+  const m = /^\/r\/([a-z]+)/.exec(location.pathname || "");
+  const key = m ? m[1] : "";
+  return ["film", "invest", "raise", "other"].includes(key) ? key : "";
+}
+
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -103,7 +112,10 @@ export function waitBox() {
    * end — the list can be read a room at a time, and a room can be let in
    * together, which is the difference between arriving somewhere and arriving
    * in an empty feed. */
-  let room = "";
+  /* THE ROOM THE DOOR WAS OPENED WITH. /r/film arrives with Film & TV already
+     picked — somebody who followed a film link has answered this question by
+     following it, and asking again is asking them to agree with themselves. */
+  let room = roomFromPath();
   const rooms = el("div", "waitrooms");
   const chips = [];
   for (const key of ["film", "invest", "raise", "other"]) {
@@ -113,6 +125,7 @@ export function waitBox() {
       room = room === key ? "" : key;
       for (const [k, b] of chips) b.className = "waitrm" + (k === room ? " on" : "");
     });
+    if (key === room) c.className = "waitrm on";
     chips.push([key, c]);
     rooms.append(c);
   }
@@ -183,13 +196,20 @@ export function waitBox() {
 
   // The count, if the server is willing to say. Drawn late rather than holding
   // the box back: the form is the point and it works without a number.
-  fetch("/api/hello")
+  const askedFor = roomFromPath();
+  fetch("/api/hello" + (askedFor ? "?room=" + encodeURIComponent(askedFor) : ""))
     .then((r) => r.json())
     .then((d) => {
       if (!d || !d.waiting) return;
       count.hidden = false;
       big.textContent = String(d.waiting);
-      lab.textContent = T("wait.waiting");
+      /* The label follows the number the SERVER decided to send. A room below
+         the floor comes back as the whole board's figure with no room on it —
+         see /api/hello — and this then says "waiting to get in" rather than
+         naming a room the number is not about. */
+      lab.textContent = d.room
+        ? T("wait.waitingIn", { room: T("waitroom." + d.room) })
+        : T("wait.waiting");
     })
     .catch(() => { /* no number, same box */ });
 

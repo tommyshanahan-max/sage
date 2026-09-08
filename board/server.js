@@ -246,7 +246,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * The test needs no route of its own — it is four questions and a canvas — so
  * nothing but the page is opened, and a stranger who finishes it is offered
  * the list instead of the buttons that post to a feed they cannot read. */
-const OPEN_PATHS = /^\/(enter|i\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -274,6 +274,24 @@ app.get(["/feed", "/feed/", "/index.html"], (req, res, next) => page("index.html
  * from. It costs one line and never needs revisiting. */
 app.get(["/board", "/board/"], (req, res) => res.redirect(301, "/feed" + (req.url.split("?")[1] ? "?" + req.url.split("?")[1] : "")));
 app.get(["/about", "/landing.html"], (req, res, next) => page("landing.html", req, res, next));
+
+/* ONE DOOR, DIFFERENT SIGNS.
+ *
+ * /r/film is the same page as /about with the room written into it: the same
+ * board, the same members, the same graph behind it — and a heading somebody
+ * in that world recognises as being for them.
+ *
+ * This is the whole of "separate it upstream" and the reason not to build two
+ * products. A filmmaker who opens /about sees a board that could be for
+ * anybody; one who opens /r/film sees a film board, joins it, and is then
+ * introduced to the lawyer, the fixer and the person with a factory — which
+ * is exactly what a second platform would have walled off.
+ *
+ * The room is read from the path by the page, so nothing here needs to know
+ * the four names. An unknown one falls through to the ordinary front door
+ * rather than a 404: a link somebody typed wrong should still open the board.
+ */
+app.get("/r/:room", (req, res, next) => page("landing.html", req, res, next));
 
 /* The second front door.
  *
@@ -1201,9 +1219,13 @@ app.get("/api/people", async (req, res) => {
  *  no number at all, as well as being nearly a name. */
 const WAITING_FLOOR = 5;
 
-app.get("/api/hello", async (_req, res) => {
+app.get("/api/hello", async (req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
+  /* A ROOM-FLAVOURED DOOR ASKS FOR A ROOM-FLAVOURED NUMBER. /r/film wants how
+     many film people are waiting, not how many people. Unknown or absent means
+     the whole board, which is what /about asks for. */
+  const only = store.WAITROOMS.includes(String(req.query.room || "")) ? String(req.query.room) : "";
   const featured = board.posts.filter((p) => p.featured && p.state === "published")
     .slice(0, 1)
     .map((p) => ({
@@ -1232,10 +1254,26 @@ app.get("/api/hello", async (_req, res) => {
     .map((p) => String(p.note).trim().split(/\s+/).slice(0, 34)
       .map((w) => Math.min(14, [...w].length)));
 
-  const waiting = board.waits.filter((w) => !w.done).length;
+  /* THE NUMBER FALLS BACK TO THE WHOLE BOARD RATHER THAN TO NOTHING.
+   *
+   * The floor is there because a small number of people is nearly a list of
+   * names, and that is MORE true of a room than of the board. But a
+   * room-flavoured door with no queue on it is a door with nothing behind it,
+   * which is the one thing this page exists to disprove.
+   *
+   * So a room below the floor reports the whole board figure and drops the
+   * room from the answer. The page then says "6 waiting to get in" instead of
+   * "3 in Film & TV" — true, not a name, and still a queue. */
+  const all = board.waits.filter((w) => !w.done).length;
+  const mine = only ? board.waits.filter((w) => !w.done && w.room === only).length : 0;
+  const enough = Boolean(only) && mine >= WAITING_FLOOR;
+  const waiting = enough ? mine : all;
   res.json({
     featured,
     peek,
+    // The room this number is about, or "" when it is about the whole board.
+    // Echoed so the page never holds its own copy of the four names.
+    room: enough ? only : "",
     people: board.people.filter((q) => q.state === "published" && q.handle).length,
     // Absent rather than zero below the floor: a page can then say nothing at
     // all instead of saying something small.
@@ -1294,6 +1332,51 @@ app.get("/api/standing", admin, async (_req, res) => {
       };
     });
   res.json({ rows });
+});
+
+/* LET A WHOLE ROOM IN AT ONCE.
+ *
+ * Cold start is the only real risk in a room-based board. Admitting one name
+ * at a time means each of them arrives to a feed with nothing in it for them,
+ * decides the place is empty, and does not come back — and each one of those
+ * is a person you had already persuaded.
+ *
+ * This marks every waiting row in one room as let in and mints a code for
+ * each, labelled with their name so the invite list still reads as who
+ * brought whom. What comes back is a list of "message this person, this
+ * code", which is the actual work.
+ *
+ * The rows are NOT deleted. A code has to be handed over before it is worth
+ * anything, and deleting the way of reaching somebody at the moment you need
+ * to reach them is the wrong order. `make waiting-rm` is still how a row goes.
+ */
+app.post("/api/waiting/admit", express.json({ limit: "2kb" }), admin, async (req, res) => {
+  const room = String(req.body?.room || "");
+  if (!store.WAITROOMS.includes(room)) return res.status(400).json({ error: "room" });
+  const cap = Math.max(1, Math.min(25, Number(req.body?.max) || 25));
+
+  const out = await change((board) => {
+    const some = board.waits
+      .filter((w) => !w.done && w.room === room)
+      .sort((a, b) => String(a.at).localeCompare(String(b.at)))
+      .slice(0, cap);
+    if (!some.length) return { ok: true, admitted: [] };
+
+    const have = new Set(board.invites.map((v) => v.code));
+    const admitted = [];
+    for (const w of some) {
+      let code = store.newCode();
+      while (have.has(code)) code = store.newCode();
+      have.add(code);
+      board.invites.push(store.cleanInvite({
+        code, who: w.name, at: new Date().toISOString(),
+      }));
+      w.done = "in";
+      admitted.push({ name: w.name, reach: w.reach, code });
+    }
+    return { ok: true, admitted };
+  });
+  res.json(out);
 });
 
 /** The list itself, for whoever runs the box. Never for a member. */

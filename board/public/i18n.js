@@ -316,9 +316,53 @@ export const STRINGS = {
   "rank.toPrincipal":  ["three who stayed, and five people who answered you", "三个人留下来，五个人回过你"],
   "rank.top":          ["Nothing above this one.", "这已经是最上面一级了。"],
 
+  /* THE FOUR DOORS. Same board behind every one of them — only the sign
+     changes, and the sign is written in the words of the person who followed
+     that link. The "under" line is the same promise on all four: this is one
+     room in one building, and the rest of the building is the point. */
+  "door.film.head": [
+    "Who do I get to shoot in Beijing in November?",
+    "十一月要在北京拍，找谁？",
+  ],
+  "door.film.under":   ["Somebody two floors up has already done it.", "楼上那位早就干过这事。"],
+  "door.film.say": [
+    "Directors, casting, producers and crew who are in China — and the fixers, the lawyers and the money who make a shoot happen. They are all on the same board, which is the point of it.",
+    "在中国的导演、选角、制片和剧组——以及让一部片子真正拍成的中间人、律师和出钱的人。他们都在同一个板子上，这正是它的意义所在。",
+  ],
+  "door.invest.head": [
+    "Who is actually building something here?",
+    "这里到底有谁在做事？",
+  ],
+  "door.invest.under": ["Not the ones who post about it.", "不是那些天天发帖说的人。"],
+  "door.invest.say": [
+    "Founders in China, and the people already backing them. Plus the operators, the lawyers and the film crews they end up needing — all on the same board, which is the point of it.",
+    "在中国做事的创始人，以及已经在支持他们的人。还有他们迟早会需要的操盘手、律师和拍摄团队——都在同一个板子上，这正是它的意义所在。",
+  ],
+  "door.raise.head": [
+    "Who writes the first cheque here?",
+    "在这里，第一张支票是谁开的？",
+  ],
+  "door.raise.under": ["Somebody in this room already knows.", "这屋里有人已经知道答案。"],
+  "door.raise.say": [
+    "People raising in China and the people who back them, in one place. Along with the operators, the lawyers and the crews you will need after the money — which is the point of it being one board.",
+    "在中国融资的人，和给他们钱的人，在同一个地方。还有拿到钱之后你会需要的操盘手、律师和团队——这正是它只做一个板子的意义。",
+  ],
+  "door.other.head": [
+    "Who would you ring, if you knew them yet?",
+    "如果你认识那个人，你会给谁打电话？",
+  ],
+  "door.other.under": ["That is the whole of it.", "就这么一件事。"],
+  "door.other.say": [
+    "People connecting in China, and with China. Film, money, hiring, language — different rooms, one building, and the introductions worth having are the ones that cross between them.",
+    "在中国、以及跟中国打交道的人。影视、资金、招人、语言——不同的房间，同一栋楼；而真正值钱的引荐，往往是跨房间的那些。",
+  ],
+
   "peek.head":         ["Inside, right now", "里面此刻的样子"],
   "wait.only":         ["Invite only", "仅限邀请"],
   "wait.waiting":      ["waiting to get in", "个人在等着进来"],
+  /* Said only when the server sent a number that really is about that room —
+     below the floor it sends the whole board's figure instead. */
+  "wait.waitingIn":    ["in {room}\nare waiting", "个 {room} 的人在等"],
   /* WHICH ROOM, in four words a stranger can read. Not the board's thirteen —
      those are the vocabulary of somebody already inside. See WAITROOMS. */
   "wait.which":        ["What are you here for?", "你是为了什么来的？"],
