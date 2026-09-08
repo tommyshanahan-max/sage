@@ -487,6 +487,9 @@ export const STRINGS = {
     "你会出现在正在找{me}的{want}面前。",
   ],
   "land.enter":        ["I have a password", "我有口令"],
+  /* What that same button says to somebody who is already through the door.
+     The public page has two readers and only one of them is outside. */
+  "land.inside":       ["Go to the board", "回到板子"],
   "land.invite":       ["Invite only — a member has to bring you.", "邀请制——得有成员带你进来。"],
   "land.doors":        ["Which one are you here for", "你是为哪一件来的"],
   "land.foot": [

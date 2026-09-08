@@ -167,7 +167,7 @@
   </div>
 </section>
 
-<section>
+<section id="waitsection">
   <div class="wrap">
     <div id="waitslot"></div>
   </div>
@@ -197,7 +197,7 @@
 
 <script type="module">
 import { T, setLang, pickLang, langButton } from "/i18n.js";
-import { waitBox, feedPeek, roomFromPath } from "/wait.js";
+import { waitBox, feedPeek, roomFromPath, admitted } from "/wait.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -313,6 +313,12 @@ paint();
 paintRoom();
 $("waitslot").append(waitBox());
 
+/* Whether this browser is already through the door. Two things on this page
+   depend on it and they arrive over the network in either order, so the answer
+   is held here rather than each of them asking separately — see the note at
+   the foot of this file. */
+let INSIDE = false;
+
 /* The board out of focus. Words never leave the server — the shape of the
    newest posts and nothing else. */
 const asked = roomFromPath();
@@ -320,6 +326,10 @@ fetch("/api/hello" + (asked ? "?room=" + encodeURIComponent(asked) : ""))
   .then((r) => r.json())
   .then((d) => {
     if (!d || !Array.isArray(d.peek) || !d.peek.length) return;
+    // A member does not need the feed out of focus. Checked here as well as
+    // in the handler below because these two land in whichever order the
+    // network gives them, and whichever is second has to be the one that wins.
+    if (INSIDE) return;
     // Shown only when there is something to show. An empty band of raised
     // grey is a section that failed to load, which is the wrong thing to put
     // between the pitch and the door.
@@ -327,6 +337,34 @@ fetch("/api/hello" + (asked ? "?room=" + encodeURIComponent(asked) : ""))
     $("peekslot").append(feedPeek(d.peek, T("peek.head")));
   })
   .catch(() => { /* the page is the same page without it */ });
+
+/* THIS PAGE HAS TWO READERS AND ONLY ONE OF THEM IS OUTSIDE.
+ *
+ * A member who taps their own link, or comes back to /about from a group
+ * chat, was being shown a form asking to be put on the waiting list for the
+ * board they are already on — and a blurred version of the feed they can read
+ * in full one tap away. Both read as the app having forgotten them.
+ *
+ * So it asks. One public route, no names, no cookie beyond the one they
+ * already have: is this browser through the door. If it is, the queue and the
+ * blur come off and the button in the corner stops offering to take a
+ * password it does not need.
+ *
+ * Drawn after, never instead: the answer arrives over the network and the
+ * page has to be right before it does. Somebody outside sees the page they
+ * should see with no wait, and a member sees a form for a moment. That is the
+ * right way round — the stranger is the reader this page is for, and the
+ * member has somewhere better to be anyway.
+ */
+admitted().then((inAlready) => {
+  INSIDE = inAlready;
+  if (!inAlready) return;
+  $("waitsection").hidden = true;
+  $("peeksection").hidden = true;
+  const go = $("navopen");
+  go.textContent = T("land.inside");
+  go.href = "/";
+}).catch(() => { /* not sure means outside, which is the safe half */ });
 </script>
 </body>
 </html>
