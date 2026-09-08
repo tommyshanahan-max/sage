@@ -10,8 +10,14 @@
  * Nothing is deleted. Each row stays in the file with a reason on it and
  * readers stop seeing it, which is the same thing the panel's own button does.
  *
- *   make feed-quiet          say what it would take down
- *   make feed-quiet GO=1     take it down
+ *   make feed-quiet             say what it would take down
+ *   make feed-quiet GO=1        take it down
+ *   make feed-quiet WHO=as      one named author instead of the house
+ *
+ * WHO exists because of a real accident: a make variable clash posted three
+ * notices under the name "as" (AS is make's own name for the assembler), and
+ * "as" is not a house name — correctly, since somebody could one day be
+ * called that. Rather than teach the house list a typo, this takes a name.
  */
 
 const [, , base, key, ...rest] = process.argv;
@@ -21,6 +27,8 @@ if (!base || !key) {
 }
 const head = { "x-admin-secret": key };
 const GO = rest.includes("--go");
+const whoIdx = rest.indexOf("--who");
+const WHO = whoIdx >= 0 ? String(rest[whoIdx + 1] || "").trim().toLowerCase() : "";
 
 /* Both halves of every name the house has ever posted under. Matched on the
    handle rather than on a flag, because that is what the board itself matches
@@ -28,12 +36,15 @@ const GO = rest.includes("--go");
 const HOUSE = ["the professor", "the tutor", "教授", "导师"];
 
 const board = await fetch(base + "/api/public", { headers: head }).then((r) => r.json());
+const want = WHO ? [WHO] : HOUSE;
 const mine = (board.posts || []).filter((p) =>
   p.state === "published"
-  && HOUSE.includes(String(p.handle || "").toLowerCase()));
+  && want.includes(String(p.handle || "").toLowerCase()));
 
 if (!mine.length) {
-  console.log("The house has nothing up. Nothing to do.");
+  console.log(WHO
+    ? "Nothing up under \"" + WHO + "\". Nothing to do."
+    : "The house has nothing up. Nothing to do.");
   process.exit(0);
 }
 
@@ -43,7 +54,7 @@ console.log("");
 
 if (!GO) {
   console.log(mine.length + " would come down. Nothing has changed.");
-  console.log("Do it with:  make feed-quiet GO=1");
+  console.log("Do it with:  make feed-quiet " + (WHO ? 'WHO="' + WHO + '" ' : "") + "GO=1");
   console.log("");
   console.log("Nothing is deleted either way — a row stays in the file with a");
   console.log("reason on it and readers stop seeing it.");
@@ -59,6 +70,8 @@ for (const p of mine) {
   done += 1;
 }
 console.log(done + " down. The feed is members again.");
-console.log("");
-console.log("What they said is in the bell, under Ask the Professor — ten");
-console.log("questions, both languages, and it does not take a slot.");
+if (!WHO) {
+  console.log("");
+  console.log("What they said is in the bell, under Ask the Professor — ten");
+  console.log("questions, both languages, and it does not take a slot.");
+}

@@ -332,14 +332,14 @@ feed-list: ## What is on the feed, with ids
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/feed-remove.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
 
-feed-quiet: ## Take every house notice off the feed:  make feed-quiet GO=1
+feed-quiet: ## Clear the house off the feed:  make feed-quiet [WHO=name] GO=1
 	@# Four Professor posts on a board of fifteen makes the house the loudest
 	@# member. Everything they said is answered permanently in Ask the
 	@# Professor, which does not take a slot. Prints what it would do; GO=1
 	@# does it. Nothing is deleted — rows stay with a reason on them.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/feed-quiet.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  $(if $(GO),--go,)
+	  $(if $(WHO),--who "$(WHO)",) $(if $(GO),--go,)
 
 feed-remove: ## Take one post off the feed:  make feed-remove ID=<id>
 	@# Marks it removed, the same as the panel's button. The row stays in the
