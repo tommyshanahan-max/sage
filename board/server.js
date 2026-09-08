@@ -960,9 +960,12 @@ function broughtBy(board, q) {
  *           the answer has to be somebody the room can see.
  *   days    You have been here three days. Long enough to have read the place
  *           you are recommending.
- *   said    You have put two things on the board, one of them this fortnight.
- *           Not a volume test: two is the difference between a member and a
- *           registration.
+ *   said    You have put two things on the board this week. Not a volume test:
+ *           two is the difference between a member and a registration — and
+ *           it is a week rather than "two, ever, plus one recently" because
+ *           the screen has to be able to say the rule in one short sentence
+ *           somebody reads once. A rule that needs a paragraph is a rule
+ *           people work around instead of following.
  *   guests  The people you already brought are still here, and if you have
  *           brought two or more, at least half of them said something. This is
  *           the only test that is about somebody else, and it is the one that
@@ -974,7 +977,7 @@ function broughtBy(board, q) {
  */
 const BRING_DAYS = 3;
 const BRING_SAID = 2;
-const BRING_FRESH_DAYS = 14;
+const BRING_WEEK = 7;
 const GUEST_ROOM = 3;
 
 /** Everything about whether one member may mint a code, worked out in one
@@ -1000,11 +1003,13 @@ function standing(board, me) {
   const age = Date.now() - Date.parse(q.at || "");
   if (!(age >= BRING_DAYS * 86400000)) need.push("days");
 
-  const mine = board.posts.filter((p) => p.by === me && p.state === "published"
-    && !p.like && !p.report);
-  const fresh = mine.some((p) =>
-    Date.now() - Date.parse(p.at || "") < BRING_FRESH_DAYS * 86400000);
-  if (mine.length < BRING_SAID || !fresh) need.push("said");
+  /* THIS WEEK, not ever. An invitation earned once and held for good is a
+     property of having joined early; earned this week it is a description of
+     somebody who is actually here. */
+  const said = board.posts.filter((p) => p.by === me && p.state === "published"
+    && !p.like && !p.report
+    && Date.now() - Date.parse(p.at || "") < BRING_WEEK * 86400000).length;
+  if (said < BRING_SAID) need.push("said");
 
   /* THE GUESTS. Found the same way the "brought in by" line on a profile is
      found — through the invite rows — so there is no second record of who

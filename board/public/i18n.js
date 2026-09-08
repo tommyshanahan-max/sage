@@ -1201,30 +1201,24 @@ export const STRINGS = {
      they have been refused. Each line below is one of the four tests in
      standing() on the server, written as the thing you do rather than the
      thing you failed. */
-  "inv.needHead":      ["An invitation is a vouch", "邀请是一次担保"],
+  "inv.needHead":      ["How to get an invite", "怎么才能拿到邀请码"],
   "inv.needWhy": [
-    "You do not have one today. Whoever you bring in is introduced with your name on it, so bringing somebody is something you get to do rather than something you get:",
-    "你今天没有邀请码。你带进来的人，是挂着你的名字被介绍进来的——所以带人进来是一件要先站得住的事，而不是注册就送的东西：",
+    "Whoever you bring in has your name on them. So first:",
+    "你带进来的人，是挂着你的名字进来的。所以先做到：",
   ],
   "inv.needFace": [
-    "Be in Browse: a name, a face that has been looked at, and the switch on.",
-    "先出现在名单里：有名字，有一张审核过的照片，并且把开关打开。",
+    "Be in Browse — add a photo, turn the switch on.",
+    "出现在名单里——加一张照片，把开关打开。",
   ],
-  "inv.needDays": [
-    "Be here three days. Long enough to have read the place you are recommending.",
-    "在这里待满三天——足够你读懂你正在推荐的这个地方。",
-  ],
-  "inv.needSaid": [
-    "Put two things on the board, one of them this fortnight.",
-    "在板上发过两条内容，其中至少一条是最近两周发的。",
-  ],
+  "inv.needDays":      ["Be here 3 days.", "在这里待满 3 天。"],
+  "inv.needSaid":      ["Post 2 things this week.", "这周发 2 条内容。"],
   "inv.needGuests": [
-    "The people you already brought are still here, and said something.",
-    "你之前带进来的人还在，并且开过口。",
+    "The people you brought are still here, and posting.",
+    "你带进来的人还在，并且在发内容。",
   ],
   "inv.needRoom": [
-    "You have {n} guests in already. Room for more once they settle.",
-    "你已经带进来 {n} 个人了。等他们安顿下来，再带下一个。",
+    "Wait — you have {n} guests in already.",
+    "等一下——你已经带了 {n} 个人进来。",
   ],
   "inv.feedWords":     ["A spare invite, if anybody needs one. It works once.\n\n{url}\n\nPassword: {code}",
                         "多的一个口令，谁要谁拿，只能用一次。\n\n{url}\n\n口令：{code}"],

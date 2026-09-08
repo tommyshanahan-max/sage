@@ -33,7 +33,7 @@ if (!rows.length) {
 const WHY = {
   face: "not in Browse — no name, no face through the queue, or the switch is off",
   days: "here less than three days",
-  said: "fewer than two posts, or nothing in the last fortnight",
+  said: "fewer than two posts this week",
   guests: "somebody they brought has gone, or their guests never said anything",
   room: "already has three guests in",
 };
