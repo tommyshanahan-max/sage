@@ -246,6 +246,24 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * The test needs no route of its own — it is four questions and a canvas — so
  * nothing but the page is opened, and a stranger who finishes it is offered
  * the list instead of the buttons that post to a feed they cannot read. */
+/* WHAT IS OUTSIDE THE DOOR.
+ *
+ * NOT api/public-media, and it was nearly added here — a member forwarded
+ * their own profile into a chat and the card came back a grey box, which
+ * looked like the face failing to load. It is not. /p/:handle is behind the
+ * door too, so a crawler with no cookie never reaches the person page at all;
+ * it gets the door, and the card it builds is the door's own — share.png and
+ * "Invite only". Opening the media route would not have changed that picture
+ * by a pixel, and would have made every published photograph fetchable by
+ * anybody holding its id.
+ *
+ * Which leaves the og:profile tags in person.html unread by any crawler, and
+ * that is the right way round: a page carrying a member's name, face and bio
+ * should not be legible to a link-preview robot on a board whose whole claim
+ * is that it is not a directory. If a shared profile ever should look like
+ * the person, that is a decision to make on purpose here, not a side effect
+ * of a route somebody opened to fix an image.
+ */
 const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
@@ -582,9 +600,23 @@ app.get("/api/my-invite", async (req, res) => {
    * boundary in Asia cuts the evening in half.
    */
   const today = dayKey(Date.now());
-  const spare = board.invites.find((v) =>
-    v.by === me && !v.usedBy && !v.off && dayKey(v.at) === today);
-  if (spare) return res.json({ code: spare.code, day: today });
+  /* HOW MANY ARE LIVE, not just whether one is.
+   *
+   * An ordinary member holds one at a time and gets another the moment it is
+   * spent. Somebody on an allowance (see BOARD_CODES) can hold several, and
+   * needs to: three codes handed out one at a time is three codes only if the
+   * first person joins promptly, and the whole point of an allowance is
+   * somebody messaging three people in one sitting.
+   *
+   * They are asked for one at a time all the same — see the POST below. A
+   * member who needs one gets one; nobody is handed their whole day's worth
+   * on the off chance. */
+  const mine2 = (b) => b.invites.filter((v) => v.by === me && dayKey(v.at) === today);
+  const liveCodes = mine2(board).filter((v) => !v.usedBy && !v.off).map((v) => v.code);
+  const left = rank.perDay ? Math.max(0, rank.perDay - mine2(board).length) : 0;
+  if (liveCodes.length) {
+    return res.json({ code: liveCodes[0], codes: liveCodes, left, day: today });
+  }
 
   const made = await change((b) => {
     // Checked again inside the queue: two taps on a slow connection would
@@ -604,7 +636,60 @@ app.get("/api/my-invite", async (req, res) => {
     b.invites.push(v);
     return v;
   });
-  res.json({ code: made.code, day: today });
+  res.json({ code: made.code, codes: [made.code],
+             left: rank.perDay ? Math.max(0, rank.perDay - 1) : 0, day: today });
+});
+
+/* ONE MORE, FOR SOMEBODY WITH AN ALLOWANCE.
+ *
+ * Ordinary members have nothing to ask for: their one code is replaced the
+ * moment it is spent, and a second live code would be a second person let in
+ * on the same day, which is the thing the ceiling is. Everybody named in
+ * BOARD_CODES may hold more, up to their number, and asks for each one — so
+ * the day's allowance is spent on people they actually have in mind rather
+ * than issued in a batch to be forwarded around.
+ *
+ * standing() is the authority, as everywhere else: it already refuses once
+ * today's codes reach the allowance, and refuses for every other reason too.
+ * This route adds no rule of its own. */
+app.post("/api/my-invite", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no device" });
+  if (INVITE && !(await admittedReq(req))) {
+    return res.status(403).json({ error: "invite", where: "/enter" });
+  }
+  const board = await store.load(FILE);
+  const rank = standing(board, me);
+  if (!rank.can || !rank.perDay) {
+    return res.status(409).json({ error: "no", need: rank.need, guests: rank.guests });
+  }
+  const mine = board.people.find((q) => q.by === me);
+  const who = (mine && mine.handle) || "";
+  const today = dayKey(Date.now());
+
+  const made = await change((b) => {
+    const todays = b.invites.filter((v) => v.by === me && dayKey(v.at) === today);
+    // Checked inside the queue, the same way the daily code is: two taps on a
+    // slow connection would otherwise spend two of the allowance for one ask.
+    if (todays.length >= rank.perDay) return null;
+    const have = new Set(b.invites.map((v) => v.code));
+    let code = store.newCode();
+    while (have.has(code)) code = store.newCode();
+    const v = store.cleanInvite({ code, who, at: new Date().toISOString(), by: me });
+    b.invites.push(v);
+    return v;
+  });
+  if (!made) return res.status(409).json({ error: "spent" });
+
+  const after = await store.load(FILE);
+  const todays = after.invites.filter((v) => v.by === me && dayKey(v.at) === today);
+  res.json({
+    code: made.code,
+    codes: todays.filter((v) => !v.usedBy && !v.off).map((v) => v.code),
+    left: Math.max(0, rank.perDay - todays.length),
+    day: today,
+  });
 });
 
 /* Minting, from the box. The label is a note to self — how you know who did
@@ -1146,6 +1231,38 @@ const GUEST_ROOM = num("BOARD_GUEST_ROOM", 3);
 const STAFF = new Set(String(process.env.BOARD_STAFF || "")
   .split(",").map((x) => x.trim().toLowerCase()).filter(Boolean));
 
+/* MEMBERS WHO MAY BRING MORE THAN ONE PERSON A DAY.
+ *
+ * BOARD_CODES="keith:3,peter:5" — a handle and how many people they may bring
+ * in on any one day. Everybody else has the ordinary ceiling, which is a
+ * LIFETIME one: three guests on the board and no more codes, ever. That is
+ * right for an ordinary member and wrong for the two or three people who are
+ * how a board this size actually fills, and turning the ceiling off for them
+ * (which is what putting them in BOARD_STAFF would do) is not the answer
+ * either — "as many as you like" is how a private room stops being one.
+ *
+ * So: the same ceiling, counted per day and reset by the calendar. Every other
+ * test still applies to them, including the one that says the people you
+ * already brought have to have turned up and said something. An allowance is
+ * not an exemption from bringing people who stay.
+ *
+ * Named handles rather than device hashes, for the same reason STAFF is:
+ * somebody has to be able to read this file and know who is on it.
+ */
+const CODES = new Map(String(process.env.BOARD_CODES || "")
+  .split(",").map((x) => x.trim()).filter(Boolean)
+  .map((row) => {
+    const at = row.lastIndexOf(":");
+    const name = (at > 0 ? row.slice(0, at) : row).trim().toLowerCase();
+    const n = at > 0 ? Number(row.slice(at + 1)) : 0;
+    return [name, Math.max(1, Math.min(20, Number.isFinite(n) ? n : 1))];
+  })
+  .filter(([name]) => name));
+
+/** How many people this member may bring in on one day, and whether their
+ *  ceiling is counted per day at all. 0 means the ordinary lifetime one. */
+const allowance = (handle) => CODES.get(String(handle || "").toLowerCase()) || 0;
+
 function standing(board, me) {
   const need = [];
   const who = me && board.people.find((x) => x.by === me);
@@ -1193,9 +1310,26 @@ function standing(board, me) {
     board.posts.some((p) => p.by === g.by && p.state === "published"
       && !p.like && !p.report)).length;
   if (gone || (live.length >= 2 && spoke * 2 < live.length)) need.push("guests");
-  if (live.length >= GUEST_ROOM) need.push("room");
 
-  return { can: need.length === 0, need, guests: live.length };
+  /* THE CEILING, LIFETIME OR DAILY.
+   *
+   * Ordinarily it is lifetime: three guests on the board and that is the end
+   * of it. For the handful named in BOARD_CODES it is the same number counted
+   * against today only — so they can keep bringing people, at a rate, rather
+   * than emptying their allowance in one afternoon and never having another.
+   * Counted on the codes rather than on the people, because a code carries the
+   * day it was made and a person carries the day they joined, and the thing
+   * being rationed is the invitation. */
+  const perDay = allowance(q.handle);
+  if (perDay) {
+    const today = dayKey(Date.now());
+    const brought = codes.filter((v) => dayKey(v.at) === today).length;
+    if (brought >= perDay) need.push("room");
+  } else if (live.length >= GUEST_ROOM) {
+    need.push("room");
+  }
+
+  return { can: need.length === 0, need, guests: live.length, perDay };
 }
 
 /* Everybody looking for a study buddy.

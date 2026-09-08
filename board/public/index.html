@@ -411,6 +411,13 @@
   /* The share link. Bordered rather than bare, because it is a different
      offer from the two above it — those spend the one code, this one costs
      nothing and can be sent to twenty people. */
+  /* The codes still in hand, under the one being sent. Mono and spaced, so
+     six characters read as six characters. */
+  .alsocodes{display:block;margin:.35rem 0 0;font-family:ui-monospace,SFMono-Regular,
+    Menlo,Consolas,monospace;font-size:.85rem;letter-spacing:.08em;color:var(--ink-2)}
+  .morecode{display:block;width:100%;margin:.5rem 0 0;padding:.45rem 1rem;border:0;
+    background:none;color:var(--accent);font:inherit;font-size:.86rem}
+  .morecode:hover{text-decoration:underline;text-underline-offset:3px}
   .sharebtn{display:block;width:100%;margin:.6rem 0 0;padding:.6rem 1rem;
     border:1px solid var(--line);border-radius:99px;background:var(--raise);
     color:var(--ink);font:inherit;font-size:.9rem}
@@ -1369,6 +1376,7 @@
     <div class="myinv" id="myinv" hidden>
       <span class="lab" id="myinvlab"></span>
       <button class="codebtn" type="button" id="myinvcode"></button>
+      <span class="alsocodes" id="myinvextra" hidden></span>
       <!-- The link beside the code, because the two only work together and
            somebody reading their own header should see both. -->
       <span class="url" id="myinvurl"></span>
@@ -1381,6 +1389,10 @@
            link that can go anywhere: whoever follows it joins the queue, and
            the row says who sent them. Nobody gets in without somebody
            deciding, so it can be posted where a code never could. -->
+      <!-- ONE MORE, for a member on an allowance. Hidden for everybody else,
+           who have nothing to ask for: their single code is replaced the
+           moment it is spent. -->
+      <button class="morecode" type="button" id="myinvmore" hidden></button>
       <button class="sharebtn" type="button" id="myinvshare"></button>
       <!-- What is standing between them and a code. Inside the same box, in
            the same place the code would have been: the offer and the reason it
@@ -3224,6 +3236,8 @@ let MYNEED = [], MYGUESTS = 0;
 /* "", "post" or "read" — what the door is doing, so the board can stop saying
    "anyone can read" on a day when that is not true. */
 let MODE = "";
+let MYCODES = [];
+let MYLEFT = 0;
 
 async function loadMyInvite() {
   if (!device) return;
@@ -3235,12 +3249,18 @@ async function loadMyInvite() {
         headers: { "x-board-device": device } }).then((r) => r.json()),
     ]);
     MYCODE = (mine && mine.code) || "";
+    /* EVERY LIVE CODE, not just the first. Most members have one; somebody on
+       an allowance holds up to their number, and all of them have to be on
+       screen or the second one is a code nobody can spend. */
+    MYCODES = (mine && Array.isArray(mine.codes) && mine.codes.length)
+      ? mine.codes : (MYCODE ? [MYCODE] : []);
+    MYLEFT = Number((mine && mine.left) || 0);
     // Why there is no code, when there is none. Every unmet test, not the
     // first — see standing() on the server.
     MYNEED = (mine && Array.isArray(mine.need)) ? mine.need : [];
     MYGUESTS = Number((mine && mine.guests) || 0);
     MODE = (who && who.mode) || "";
-  } catch { MYCODE = ""; MYNEED = []; }
+  } catch { MYCODE = ""; MYCODES = []; MYLEFT = 0; MYNEED = []; }
   drawMyInvite();
   drawTodo();
   drawTalk();
@@ -3323,10 +3343,22 @@ function drawMyInvite() {
                     "myinvshare"]) {
     $(id).hidden = false;
   }
+  // myinvmore and myinvextra decide for themselves below: both are about an
+  // allowance most members do not have.
   $("myinvneed").hidden = true;
   $("myinvlab").textContent = T("inv.head");
   $("myinvcode").textContent = MYCODE;
   $("myinvcode").title = T("inv.codeTap");
+  /* THE REST OF THEM, under the first. Drawn into the label slot rather than
+     as more buttons: one code is the thing to send and the others are the
+     ones still in hand, which is a different sentence. */
+  const extra = MYCODES.slice(1);
+  $("myinvextra").hidden = !extra.length;
+  $("myinvextra").textContent = extra.length ? T("inv.also", { codes: extra.join("  ") }) : "";
+  /* One more, for a member with an allowance left. Everybody else has nothing
+     to ask for and does not see it. */
+  $("myinvmore").hidden = MYLEFT < 1;
+  $("myinvmore").textContent = T("inv.more", { n: MYLEFT });
   $("myinvurl").textContent = location.host + "/enter";
   $("myinvtap").textContent = T("inv.tap");
   $("myinvsend").textContent = T("inv.send");
@@ -3421,7 +3453,7 @@ function drawTodo() {
 function drawNeed(b) {
   b.hidden = false;
   for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvfeed",
-                    "myinvshare"]) {
+                    "myinvshare", "myinvmore", "myinvextra"]) {
     $(id).hidden = true;
   }
   $("myinvlab").textContent = T("inv.needHead");
@@ -3505,6 +3537,28 @@ $("myinvsend").addEventListener("click", () => {
  * /r/film and their friends arrive in the film queue without being asked a
  * question they have already answered by being their friend.
  */
+/* ANOTHER CODE, asked for one at a time. The server is the authority on
+   whether there is one to give — see the POST in server.js — so this asks and
+   reports, and never decides. */
+$("myinvmore").addEventListener("click", async () => {
+  const b = $("myinvmore");
+  b.disabled = true;
+  try {
+    const d = await fetch("/api/my-invite", { method: "POST",
+      headers: { "x-board-device": device } }).then((r) => r.json());
+    if (d && d.code) {
+      MYCODE = MYCODES.length ? MYCODE : d.code;
+      MYCODES = Array.isArray(d.codes) && d.codes.length ? d.codes : [d.code];
+      MYLEFT = Number(d.left || 0);
+      drawMyInvite();
+    } else {
+      b.textContent = T("inv.moreNo");
+      setTimeout(drawMyInvite, 3000);
+    }
+  } catch { b.textContent = T("act.again"); setTimeout(drawMyInvite, 3000); }
+  b.disabled = false;
+});
+
 $("myinvshare").addEventListener("click", () => {
   if (!(ME && ME.id)) return;
   const rooms = Array.isArray(ME.rooms) ? ME.rooms : [];

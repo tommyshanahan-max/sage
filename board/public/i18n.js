@@ -1517,6 +1517,12 @@ export const STRINGS = {
      in, so this is not how strangers arrive — it is how somebody who has spent
      their own code today finds a spare to pass on. */
   "inv.toFeed":        ["Put it on the feed", "发到动态里"],
+  /* AN ALLOWANCE, which most members do not have — see BOARD_CODES in the
+     server. Said as codes in hand rather than as a rank: nobody needs to know
+     who is on the list, least of all the people who are not. */
+  "inv.also":          ["Also yours today: {codes}", "今天你手上还有：{codes}"],
+  "inv.more":          ["Get another code ({n} left today)", "再要一个口令（今天还剩 {n} 个）"],
+  "inv.moreNo":        ["That is all for today.", "今天就到这儿了。"],
   /* The share link, which is not the code. Said as the thing it does — it
      puts people in the queue — because a member who thinks this lets somebody
      straight in will send it to the wrong person. */

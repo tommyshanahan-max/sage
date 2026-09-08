@@ -842,6 +842,9 @@ services:
       # out a code when somebody asks in a WeChat thread, and a morning when
       # they cannot is a morning the board stops growing.
       BOARD_STAFF: ${TOMSCODING_BOARD_STAFF:-}
+      # Members who may bring in more than one person a day, as
+      # "handle:number" — see the note above CODES in server.js.
+      BOARD_CODES: ${TOMSCODING_BOARD_CODES:-}
     volumes:
       - board_data:/data
     expose:
