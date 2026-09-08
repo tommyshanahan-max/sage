@@ -507,6 +507,8 @@ export const STRINGS = {
   "wait.waitingIn":    ["in {room}\nare waiting", "个 {room} 的人在等"],
   /* WHICH ROOM, in four words a stranger can read. Not the board's thirteen —
      those are the vocabulary of somebody already inside. See WAITROOMS. */
+  /* The one line worth adding back to a box everything else came off. */
+  "wait.sentBy":       ["{who} thought you should be on this.", "{who} 觉得你该在这上面。"],
   "wait.which":        ["What are you here for?", "你是为了什么来的？"],
   "waitroom.film":     ["Film & TV", "影视"],
   "waitroom.invest":   ["Investing", "投资"],
@@ -1502,6 +1504,14 @@ export const STRINGS = {
      in, so this is not how strangers arrive — it is how somebody who has spent
      their own code today finds a spare to pass on. */
   "inv.toFeed":        ["Put it on the feed", "发到动态里"],
+  /* The share link, which is not the code. Said as the thing it does — it
+     puts people in the queue — because a member who thinks this lets somebody
+     straight in will send it to the wrong person. */
+  "inv.share":         ["Share a link with friends", "把链接分享给朋友"],
+  "inv.shareSay": [
+    "I am on The Exchange — a private board for people doing business in China. It is invite only, but you can put your name down here and I will vouch for you: {url}",
+    "我在 The Exchange——一个给在中国做事的人用的私密板子。目前是邀请制，你可以先在这里留个名，我来给你说话：{url}",
+  ],
 
   /* NO CODE, AND WHY. The head is deliberately not "you cannot invite anyone":
      the sentence a member should leave with is what an invitation is, not what

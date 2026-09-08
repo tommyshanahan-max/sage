@@ -90,6 +90,19 @@ export function cleanWait(raw) {
     // a stranger who skipped the question is not a stranger to leave off the
     // list.
     room: WAITROOMS.includes(raw.room) ? raw.room : "other",
+    /* WHO SENT THEM. The id of the member whose link they followed, or "".
+     *
+     * A member has one invite code and it lets one person in, which is right
+     * for the person they would vouch for by name and useless for the twenty
+     * they would happily tell. This is the other half: a link they can post
+     * anywhere, which puts whoever follows it in the queue rather than
+     * through the door. Nobody gets in without somebody deciding.
+     *
+     * An id and not a name, because a name in an address is a name anybody
+     * can type. It is checked against the roll before it is written — see
+     * /api/wait — so a row either names a real member or names nobody.
+     */
+    via: /^[a-f0-9]{20}$/.test(String(raw.via || "")) ? String(raw.via) : "",
   };
 }
 

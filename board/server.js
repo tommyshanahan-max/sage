@@ -1303,9 +1303,24 @@ app.get("/api/hello", async (req, res) => {
   const mine = only ? board.waits.filter((w) => !w.done && w.room === only).length : 0;
   const enough = Boolean(only) && mine >= WAITING_FLOOR;
   const waiting = enough ? mine : all;
+  /* THE NAME ON THE LINK THEY FOLLOWED, if it names anybody.
+   *
+   * A stranger who followed a member's share link should be told whose it
+   * was: "somebody sent me this" is a different proposition from a page that
+   * arrived out of nowhere, and it is the only thing about it that is worth
+   * a line. A handle and nothing else — no id back, no photograph, nothing
+   * that says anything about that member beyond the name they already show
+   * on every post they have ever made. An id that names nobody returns "",
+   * so a made-up address simply loses its line. */
+  const sent = String(req.query.via || "");
+  const from = /^[a-f0-9]{20}$/.test(sent)
+    ? board.people.find((q) => q.id === sent && q.state === "published" && q.handle)
+    : null;
+
   res.json({
     featured,
     peek,
+    via: from ? from.handle : "",
     // The room this number is about, or "" when it is about the whole board.
     // Echoed so the page never holds its own copy of the four names.
     room: enough ? only : "",
@@ -1328,8 +1343,13 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
        land on the public page while still being a member in the file; telling
        them to wait for something they already have would be absurd. */
     if (me && board.people.some((q) => q.by === me)) return { already: true };
+    /* THE LINK THEY CAME IN ON, checked rather than believed. An address is
+       typed by anybody, so a `via` that does not name a published member is
+       dropped and the row simply has nobody behind it. */
+    const sent = String(req.body?.via || "");
+    const from = board.people.find((q) => q.id === sent && q.state === "published" && q.handle);
     const row = store.cleanWait({ name, reach, why: req.body?.why,
-      room: req.body?.room, by: me });
+      room: req.body?.room, by: me, via: from ? from.id : "" });
     if (!row) return { error: "both" };
     const at = me ? board.waits.findIndex((w) => w.by === me) : -1;
     if (at >= 0) board.waits[at] = { ...row, id: board.waits[at].id, at: board.waits[at].at };
@@ -1419,7 +1439,12 @@ app.post("/api/waiting/admit", express.json({ limit: "2kb" }), admin, async (req
 app.get("/api/waiting", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
-  res.json({ waits: board.waits });
+  /* The sender resolved to a name, because an id is not something anybody can
+     read. Resolved here rather than stored as a name: a member who changes
+     what they are called should not leave a trail of rows crediting who they
+     used to be. */
+  const who = new Map(board.people.map((q) => [q.id, q.handle]));
+  res.json({ waits: board.waits.map((w) => ({ ...w, viaName: who.get(w.via) || "" })) });
 });
 
 /** Cross somebody off, once they are in or once they are not. */

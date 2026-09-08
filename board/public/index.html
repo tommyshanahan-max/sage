@@ -402,6 +402,13 @@
   .feedbtn{display:block;width:100%;margin:.5rem 0 0;padding:.5rem 1rem;border:0;
     background:none;color:var(--accent);font-size:.88rem}
   .feedbtn:hover{text-decoration:underline;text-underline-offset:3px}
+  /* The share link. Bordered rather than bare, because it is a different
+     offer from the two above it — those spend the one code, this one costs
+     nothing and can be sent to twenty people. */
+  .sharebtn{display:block;width:100%;margin:.6rem 0 0;padding:.6rem 1rem;
+    border:1px solid var(--line);border-radius:99px;background:var(--raise);
+    color:var(--ink);font:inherit;font-size:.9rem}
+  .sharebtn:hover{border-color:var(--accent);color:var(--accent)}
   .myinv .url{display:block;margin:.3rem 0 0;font-size:.82rem;color:var(--ink-2);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .myinv .tap{display:block;margin:.35rem 0 0;font-size:.8rem;color:var(--ink-2)}
@@ -1344,6 +1351,13 @@
       <span class="tap" id="myinvtap"></span>
       <button class="sendbtn" type="button" id="myinvsend"></button>
       <button class="feedbtn" type="button" id="myinvfeed"></button>
+      <!-- THE OTHER HALF OF INVITING SOMEBODY. The code above lets one person
+           through the door, which is right for the one you would vouch for by
+           name and useless for the twenty you would happily tell. This is a
+           link that can go anywhere: whoever follows it joins the queue, and
+           the row says who sent them. Nobody gets in without somebody
+           deciding, so it can be posted where a code never could. -->
+      <button class="sharebtn" type="button" id="myinvshare"></button>
       <!-- What is standing between them and a code. Inside the same box, in
            the same place the code would have been: the offer and the reason it
            is not being made are one thing, not two. -->
@@ -3181,7 +3195,8 @@ function drawMyInvite() {
   if (!MYCODE && MYNEED.length) { drawNeed(b); return; }
   if (!MYCODE) { b.hidden = true; return; }
   b.hidden = false;
-  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvfeed"]) {
+  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvfeed",
+                    "myinvshare"]) {
     $(id).hidden = false;
   }
   $("myinvneed").hidden = true;
@@ -3192,6 +3207,12 @@ function drawMyInvite() {
   $("myinvtap").textContent = T("inv.tap");
   $("myinvsend").textContent = T("inv.send");
   $("myinvfeed").textContent = T("inv.toFeed");
+  /* Only once there is a page to credit. The link carries an id and the server
+     checks it against the roll, so one sent before the profile exists would
+     quietly credit nobody — better no button than a button doing half of what
+     it says. */
+  $("myinvshare").hidden = !(ME && ME.id && ME.handle);
+  $("myinvshare").textContent = T("inv.share");
 }
 
 /* ---------------------------------------------------------------------------
@@ -3275,7 +3296,8 @@ function drawTodo() {
  *  what a member does here, which is also the answer to what this place is. */
 function drawNeed(b) {
   b.hidden = false;
-  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvfeed"]) {
+  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvfeed",
+                    "myinvshare"]) {
     $(id).hidden = true;
   }
   $("myinvlab").textContent = T("inv.needHead");
@@ -3341,6 +3363,44 @@ $("myinvsend").addEventListener("click", () => {
     return;
   }
   say(T(copyText(words) ? "inv.copied" : "inv.copyNo", { code: MYCODE }));
+});
+
+/* A LINK FOR THE PEOPLE YOU WOULD TELL, NOT THE ONE YOU WOULD VOUCH FOR.
+ *
+ * A code is one use and it goes straight through the door, so it can only ever
+ * be sent to somebody already decided about. Plenty of members know twenty
+ * people worth having and none of them well enough for that.
+ *
+ * This is the other end: one link, posted anywhere, and whoever follows it
+ * lands on the public page and joins the waiting list. The id in it is checked
+ * against the roll on the way in, so the queue can be read by room AND by who
+ * sent them — and nobody is admitted without a person deciding, which is what
+ * makes this safe to put somewhere a code never could go.
+ *
+ * The room comes from the address, so somebody in the talent rooms sends
+ * /r/film and their friends arrive in the film queue without being asked a
+ * question they have already answered by being their friend.
+ */
+$("myinvshare").addEventListener("click", () => {
+  if (!(ME && ME.id)) return;
+  const rooms = Array.isArray(ME.rooms) ? ME.rooms : [];
+  const door = rooms.includes("talent") || rooms.includes("agent") ? "/r/film"
+    : rooms.includes("invest") ? "/r/invest"
+    : rooms.includes("raise") ? "/r/raise"
+    : rooms.includes("buy") || rooms.includes("sell") ? "/r/trade"
+    : "/about";
+  const url = location.origin + door + "?via=" + ME.id;
+  const words = T("inv.shareSay", { url });
+  const say = (w) => {
+    $("myinvshare").textContent = w;
+    setTimeout(drawMyInvite, 3000);
+  };
+  if (!IN_WECHAT && navigator.share) {
+    navigator.share({ title: T("site.title"), text: words })
+      .catch(() => { if (copyText(words)) say(T("inv.copied")); });
+    return;
+  }
+  say(T(copyText(words) ? "inv.copied" : "inv.copyNo", { code: url }));
 });
 
 /* THE SAME INVITE, ON THE FEED, ON ITS OWN.

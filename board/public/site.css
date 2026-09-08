@@ -348,6 +348,10 @@
   /* WHICH ROOM. Four chips in a row that wraps to two — small enough that the
      question does not become the form. */
   .waitbox .waitask{margin:0 0 .55rem;font-size:.9rem;color:var(--ink-2)}
+  /* Who sent them. Set above the form, in the accent, because it is the
+     reason they are looking at this box at all. */
+  .waitbox .waitfrom{margin:.9rem 0 0;font-size:.95rem;color:var(--accent);
+    font-weight:500}
   .waitbox .waitrooms{display:flex;flex-wrap:wrap;gap:.45rem;margin:0 0 .3rem}
   .waitbox .waitrm{padding:.5rem .85rem;border:1px solid var(--line);border-radius:99px;
     background:var(--raise);color:var(--ink-2);font-size:.92rem}

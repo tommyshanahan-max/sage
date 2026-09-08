@@ -28,6 +28,16 @@ export function roomFromPath() {
   return ["film", "invest", "raise", "trade", "other"].includes(key) ? key : "";
 }
 
+/** The member whose link this is, or "" when nobody sent them. An id in the
+ *  address rather than a name: a name in a URL is a name anybody can type, and
+ *  the server checks this one against the roll before it writes it down. */
+export function viaFromUrl() {
+  try {
+    const v = new URLSearchParams(location.search).get("via") || "";
+    return /^[a-f0-9]{20}$/.test(v) ? v : "";
+  } catch { return ""; }
+}
+
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -155,6 +165,17 @@ export function waitBox() {
   said.hidden = true;
   box.append(said);
 
+  /* WHO SENT THEM, WHEN SOMEBODY DID.
+   *
+   * "Somebody sent me this" is a different proposition from a page that
+   * arrived out of nowhere, and it is the one line on this box worth adding
+   * back after everything else came off. Filled in only if the server
+   * recognises the id — see /api/hello — so an address somebody made up
+   * quietly says nothing rather than crediting a person who does not exist. */
+  const from = el("p", "waitfrom");
+  from.hidden = true;
+  box.insertBefore(from, form);
+
   /* THE PROMISE MOVES TO WHERE IT IS OWED.
    *
    * It used to sit under the button, on a screen asking for nothing — four
@@ -181,7 +202,7 @@ export function waitBox() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.value.trim(), reach: reach.value.trim(),
-          why: why.value.trim(), room, device: device(),
+          why: why.value.trim(), room, device: device(), via: viaFromUrl(),
         }),
       });
       const d = await r.json().catch(() => ({}));
@@ -197,9 +218,16 @@ export function waitBox() {
   // The count, if the server is willing to say. Drawn late rather than holding
   // the box back: the form is the point and it works without a number.
   const askedFor = roomFromPath();
-  fetch("/api/hello" + (askedFor ? "?room=" + encodeURIComponent(askedFor) : ""))
+  const sentBy = viaFromUrl();
+  const q = [askedFor ? "room=" + encodeURIComponent(askedFor) : "",
+             sentBy ? "via=" + encodeURIComponent(sentBy) : ""].filter(Boolean).join("&");
+  fetch("/api/hello" + (q ? "?" + q : ""))
     .then((r) => r.json())
     .then((d) => {
+      if (d && d.via) {
+        from.hidden = false;
+        from.textContent = T("wait.sentBy", { who: d.via });
+      }
       if (!d || !d.waiting) return;
       count.hidden = false;
       big.textContent = String(d.waiting);

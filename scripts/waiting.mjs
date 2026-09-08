@@ -127,6 +127,10 @@ async function main() {
       console.log(pad(w.id, 22) + pad(when(w.at), 12) + pad(w.name, 16)
         + pad(w.reach, 24)
         + (w.done === "in" ? "let in" : w.done === "no" ? "turned down" : "waiting"));
+      /* WHO SENT THEM, when a member's share link did. It is the difference
+         between a stranger and somebody a member will vouch for, and it is
+         the only thing on this list that tells them apart. */
+      if (w.viaName) console.log(pad("", 22) + "  sent by " + w.viaName);
       if (w.why) console.log(pad("", 22) + "  " + w.why.replace(/\n/g, " ").slice(0, 60));
     }
   }
