@@ -1,0 +1,42 @@
+# THE EXCHANGE — the page for somebody who has never heard of this.
+#
+# Not the app's front door. liuxuesheng.io is where a person with a link lands
+# and where the waiting list lives; this is the page an investor, a journalist
+# or a stranger finds on the web, and it says what the thing is rather than
+# asking anybody to join it. Two audiences, two pages, one product — mixing
+# them makes a page that does neither job.
+#
+# Caddy alone serves it. There is no container behind it and nothing to add to
+# COMPOSE_PROFILES: the page is one file on disk, read-only.
+#
+# Inert until TOMSCODING_SITE_DOMAIN is set. Unset it binds an internal
+# .localhost name and requests no certificate — and that fallback has to stay
+# distinct from every other one here, because two site blocks sharing an
+# address is a startup failure that takes down every other site with it.
+#
+# The name is a .app, which is on the HSTS preload list: browsers refuse plain
+# HTTP to it before a request is ever made. Nothing to configure for that — it
+# is a property of the suffix — but it does mean a misconfigured certificate
+# shows as a hard failure with no way to click through, so the fallback above
+# matters more here than anywhere else on this box.
+{$TOMSCODING_SITE_DOMAIN:exchange.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+
+	root * /srv/site
+	file_server
+}
+
+# www redirects to the apex. Somebody will type it, and a certificate error on
+# a page you handed to an investor reads as the company being broken. Its own
+# block because Caddy substitutes one variable per address; unset, it binds a
+# distinct .localhost and does nothing.
+{$TOMSCODING_SITE_WWW:www.exchange.localhost} {
+	redir https://{$TOMSCODING_SITE_DOMAIN}{uri} permanent
+}

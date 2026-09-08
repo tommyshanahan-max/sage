@@ -26,40 +26,42 @@
    * page would look accidental in the only country it is about. So the
    * personality is carried by size, spacing, case and colour, all of which
    * arrive with the HTML.
-   *
-   * THE PALETTE IS LACQUER AND CELADON ON BONE. Not red-and-gold: those are
-   * the two colours of a restaurant menu. Lacquer is the deep oxblood of a
-   * sealed box and celadon is the green of the glaze — the actual material
-   * palette, and two accents rather than one, because this page is about a
-   * thing with two sides.
    */
   :root{
-    --paper:#FBF9F6;      /* bone, warm but not cream */
-    --raise:#F3EFE9;
-    --line:#E3DBD0;
-    --line-2:#CFC3B4;
-    --ink:#17120E;        /* near-black with a brown bias, so it sits on bone */
-    --ink-2:#57504A;
-    --muted:#8B8076;
-    --lacquer:#9E2B22;    /* the sealed-box red */
-    --lacquer-2:#7C1F19;
-    --celadon:#2E5B4F;    /* the glaze */
-    --celadon-2:#E4EDE8;
-    --on-lacquer:#FBF3EC;
-    --on-lacquer-2:#E9C6BE;
-    --serif:Georgia,"Songti SC","Noto Serif CJK SC","Times New Roman",serif;
-    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
-      "Hiragino Sans GB","Noto Sans SC",sans-serif;
-    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,
-      "Liberation Mono",monospace;
+    /* THE HOUSE PALETTE, TAKEN FROM laonei.co AND NOT RE-INVENTED.
+       Same names, same values, same font stacks as brand/index.html. Two
+       pages from one shop that disagree about which red they use are two
+       pages from two shops, and the red is the part anybody remembers. If
+       those tokens change, change these with them. */
+    --red:#c22b21;
+    --red-deep:#a3211a;
+    --ink-on-red:#fbf6ee;
+    --on-red-2:rgba(251,246,238,.86);
+    --cream:#faf4ea;
+    --cream-2:#f0e6d8;
+    --paper:#f5f1e8;
+    --card:#fdfbf6;
+    --ink:#1a1613;
+    --ink-2:#544c45;
+    --muted:#8a8078;
+    --rule:#e2dacd;
+    --rule-2:#cfc2ae;
+    --disc:#121110;
+    --live:#1f6b52;
+    --live-soft:#e4efea;
+    --serif:ui-serif,"New York",Georgia,"Songti SC","Noto Serif SC","Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
+           "Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB",
+           "Microsoft YaHei",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
     font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
   .wrap{max-width:48rem;margin:0 auto;padding:0 1.4rem}
-  a{color:var(--lacquer)}
-  :focus-visible{outline:2px solid var(--lacquer);outline-offset:3px}
+  a{color:var(--red)}
+  :focus-visible{outline:2px solid var(--red);outline-offset:3px}
   img{max-width:100%}
 
   /* THE LABEL VOICE. Mono, small, wide, upper — the type of a ticker board and
@@ -71,26 +73,27 @@
   /* ---- the red block ---------------------------------------------------
      The whole top of the page is one filled colour, not a white page with a
      coloured button on it. A reader decides what this is in about a second and
-     a field of lacquer decides it faster than any sentence can. */
-  .block{background:var(--lacquer);color:var(--on-lacquer);
-    background-image:radial-gradient(120% 90% at 82% 0%,#B4342A 0%,#9E2B22 45%,#87211A 100%)}
-  .block a{color:var(--on-lacquer)}
-  .block :focus-visible{outline-color:var(--on-lacquer)}
+     a field of red decides it faster than any sentence can. Flat, the way it
+     is on laonei.co: a gradient laid over a brand colour is a second brand
+     colour nobody chose. */
+  .block{background:var(--red);color:var(--ink-on-red)}
+  .block a{color:var(--ink-on-red)}
+  .block :focus-visible{outline-color:var(--ink-on-red)}
 
   .top{display:flex;align-items:center;justify-content:space-between;gap:1rem;
     padding:1.5rem 0}
   .brand{display:inline-flex;align-items:center;gap:.75rem;text-decoration:none;
     color:inherit}
-  .brand i{width:2.4rem;height:2.4rem;border-radius:.55rem;background:var(--on-lacquer);
-    color:var(--lacquer);display:grid;place-items:center;font-size:1.4rem;
+  .brand i{width:2.4rem;height:2.4rem;border-radius:.55rem;background:var(--ink-on-red);
+    color:var(--red);display:grid;place-items:center;font-size:1.4rem;
     font-style:normal;line-height:1}
   .brand b{font-family:var(--serif);font-weight:400;font-size:1.22rem;
     letter-spacing:-.01em}
-  .brand small{display:block;color:var(--on-lacquer-2);font-size:.78rem;
+  .brand small{display:block;color:var(--on-red-2);font-size:.78rem;
     font-family:var(--mono);letter-spacing:.06em}
   .top .go{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;
     text-transform:uppercase;text-decoration:none;padding:.6rem .95rem;
-    border:1px solid rgba(251,243,236,.34);border-radius:99px;white-space:nowrap}
+    border:1px solid rgba(251,246,238,.45);border-radius:99px;white-space:nowrap}
   /* On a phone the wordmark and the pill were touching. The pill gives up its
      tracking before the name gives up any of itself. */
   @media(max-width:26rem){
@@ -103,21 +106,21 @@
     font-size:clamp(2.15rem,7.4vw,3.7rem);line-height:1.04;letter-spacing:-.02em;
     text-wrap:balance;max-width:16ch}
   .sub{margin:1.35rem 0 0;font-size:clamp(1.02rem,3.2vw,1.2rem);line-height:1.62;
-    color:var(--on-lacquer-2);max-width:34rem}
+    color:var(--on-red-2);max-width:34rem}
 
   /* THE SENTENCE, AND WHY ITS TWO HALVES ARE TWO COLOURS.
      They are not decorated differently for the look of it. One is the side
      that makes the thing and one is the side that backs it, and that is the
      only distinction this whole product draws. The colour is the argument. */
-  .say{margin:2.4rem 0 0;padding:1.5rem 1.5rem 1.35rem;background:var(--paper);
+  .say{margin:2.4rem 0 0;padding:1.5rem 1.5rem 1.35rem;background:var(--card);
     color:var(--ink);border-radius:.9rem;max-width:35rem;
-    box-shadow:0 18px 40px -24px rgba(23,18,14,.55)}
+    box-shadow:0 18px 40px -24px rgba(18,17,16,.5)}
   .say p{margin:0;font-family:var(--serif);font-size:clamp(1.18rem,4.2vw,1.55rem);
     line-height:1.65}
   .say em{font-style:normal;border-radius:99px;padding:.12rem .7rem;
     white-space:nowrap;font-size:.94em}
-  .say .a{background:var(--lacquer);color:var(--on-lacquer)}
-  .say .b{background:var(--celadon);color:#EFF5F2}
+  .say .a{background:var(--red);color:var(--ink-on-red)}
+  .say .b{background:var(--live);color:var(--live-soft)}
   .say span{display:block;margin:1rem 0 0;font-family:var(--sans);font-size:.94rem;
     color:var(--ink-2);line-height:1.6}
 
@@ -125,13 +128,12 @@
      Real pairs, in the product's own grammar, running along the seam between
      the red block and the page. It is the closest this page comes to a
      screenshot, and it is truer than one: the sentences ARE the product. */
-  .tick{background:var(--ink);color:var(--paper);overflow:hidden;
-    border-bottom:1px solid var(--ink)}
+  .tick{background:var(--disc);color:var(--cream);overflow:hidden}
   .tickrow{display:flex;gap:2.6rem;padding:.85rem 0;width:max-content;
     animation:slide 46s linear infinite}
   .tick span{font-family:var(--mono);font-size:.76rem;letter-spacing:.06em;
-    white-space:nowrap;color:#CFC6BC}
-  .tick span b{color:var(--paper);font-weight:500}
+    white-space:nowrap;color:rgba(250,244,234,.62)}
+  .tick span b{color:var(--cream);font-weight:500}
   .tick span i{color:var(--muted);font-style:normal;padding:0 .5rem}
   @keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
   @media(prefers-reduced-motion:reduce){
@@ -140,7 +142,7 @@
 
   /* ---- the page ---------------------------------------------------------- */
   section{padding:3.4rem 0}
-  section + section{border-top:1px solid var(--line)}
+  section + section{border-top:1px solid var(--rule)}
   h2{margin:0 0 1.1rem;font-family:var(--serif);font-weight:400;
     font-size:clamp(1.5rem,4.8vw,2.1rem);line-height:1.16;letter-spacing:-.015em;
     text-wrap:balance;max-width:22ch}
@@ -157,8 +159,8 @@
   .steps li{counter-increment:s;padding:0 0 0 0}
   .steps li::before{content:counter(s,decimal-leading-zero);display:block;
     font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;
-    color:var(--lacquer);margin:0 0 .6rem;
-    border-top:2px solid var(--lacquer);padding-top:.6rem;width:2.6rem}
+    color:var(--red);margin:0 0 .6rem;
+    border-top:2px solid var(--red);padding-top:.6rem;width:2.6rem}
   .steps b{display:block;font-family:var(--serif);font-weight:400;font-size:1.22rem;
     line-height:1.3;margin:0 0 .45rem}
   .steps p{margin:0;font-size:.95rem;color:var(--ink-2);line-height:1.6}
@@ -166,30 +168,30 @@
   /* The four load-bearing facts. A hairline down the left rather than four
      boxes: they are one argument in four parts, not four objects. */
   .why{display:grid;gap:1.3rem;margin:1.8rem 0 0;padding:0 0 0 1.35rem;
-    list-style:none;border-left:2px solid var(--celadon-2);max-width:38rem}
+    list-style:none;border-left:2px solid var(--live-soft);max-width:38rem}
   .why li{color:var(--ink-2);position:relative}
   .why li::before{content:"";position:absolute;left:-1.75rem;top:.62rem;
-    width:.5rem;height:.5rem;border-radius:50%;background:var(--celadon)}
+    width:.5rem;height:.5rem;border-radius:50%;background:var(--live)}
   .why b{color:var(--ink);font-weight:600}
 
-  /* The quiet section: what is kept. On the celadon so it reads as the
+  /* The quiet section: what is kept. On the pale green so it reads as the
      considered part of the page rather than more of the pitch. */
-  .keep{background:var(--celadon-2);border-top:1px solid var(--line)}
-  .keep .eyebrow{color:var(--celadon)}
-  .keep a{color:var(--celadon)}
+  .keep{background:var(--live-soft);border-top:1px solid var(--rule)}
+  .keep .eyebrow{color:var(--live)}
+  .keep a{color:var(--live)}
 
-  .end{background:var(--raise);border-top:1px solid var(--line);
+  .end{background:var(--cream-2);border-top:1px solid var(--rule);
     padding:3.6rem 0 4rem}
   .btns{display:flex;flex-wrap:wrap;gap:.7rem;margin:1.6rem 0 0}
   .btns a{display:inline-block;padding:.85rem 1.6rem;border-radius:99px;
     text-decoration:none;font-size:1rem}
-  .btns .p{background:var(--lacquer);color:var(--on-lacquer);font-weight:500}
-  .btns .p:hover{background:var(--lacquer-2)}
-  .btns .q{border:1px solid var(--line-2);color:var(--ink)}
-  .foot{background:var(--ink);color:#A79D93;padding:2.2rem 0 2.6rem;
+  .btns .p{background:var(--red);color:var(--ink-on-red);font-weight:500}
+  .btns .p:hover{background:var(--red-deep)}
+  .btns .q{border:1px solid var(--rule-2);color:var(--ink)}
+  .foot{background:var(--disc);color:rgba(250,244,234,.62);padding:2.2rem 0 2.6rem;
     font-size:.85rem}
-  .foot a{color:#CFC6BC}
-  .foot .mark{font-family:var(--serif);color:var(--paper);font-size:1rem}
+  .foot a{color:rgba(250,244,234,.88)}
+  .foot .mark{font-family:var(--serif);color:var(--cream);font-size:1rem}
 </style>
 </head>
 <body>
