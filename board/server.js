@@ -340,6 +340,20 @@ app.use(async (req, res, next) => {
 });
 
 app.get("/", (req, res, next) => page(ROOT_IS_BOARD ? "index.html" : "landing.html", req, res, next));
+/* THE NUMBERS, ON A PHONE.
+ *
+ * make doors is the same figures and needs a terminal, which means they get
+ * looked at on the days somebody is at a desk — and the question they answer
+ * ("did that post work") is asked ten minutes after posting, from a phone, in
+ * a taxi.
+ *
+ * Behind the door like everything else, so a stranger cannot reach the page at
+ * all; and the figures behind the admin key on top of that, because being a
+ * member is not the same as running the place. The key is typed once and kept
+ * in that browser — the same key already typed into a terminal, on the same
+ * person's device, and it never leaves either.
+ */
+app.get(["/doors", "/doors/"], (req, res, next) => page("doors.html", req, res, next));
 app.get(["/feed", "/feed/", "/index.html"], (req, res, next) => page("index.html", req, res, next));
 /* /board was the address before this was called the Feed. Kept as a permanent
  * redirect rather than deleted: links already sent into a WeChat chat cannot be

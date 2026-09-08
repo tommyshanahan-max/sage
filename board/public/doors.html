@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Doors · The Exchange</title>
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/site.css">
+<style>
+  /* THE SAME THREE NUMBERS make doors prints, on a phone.
+     Deliberately plain: this is a thing looked at for ten seconds, ten minutes
+     after posting a link, to answer one question. */
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans)}
+  main{max-width:34rem;margin:0 auto;padding:1.4rem 1.2rem 4rem}
+  h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.5rem;
+     letter-spacing:-.01em}
+  .sub{margin:.2rem 0 0;font-size:.85rem;color:var(--muted)}
+
+  .askkey{margin:1.6rem 0 0;padding:1.1rem 1.2rem;background:var(--card);
+    border:1px solid var(--hair);border-radius:.8rem}
+  .askkey p{margin:0 0 .7rem;font-size:.9rem;color:var(--ink-2)}
+  .askkey input{width:100%;padding:.7rem .9rem;border:1px solid var(--hair);
+    border-radius:.6rem;background:var(--raise);color:var(--ink);
+    font:inherit;font-size:1rem}
+  .askkey button{margin:.7rem 0 0;width:100%;padding:.7rem 1rem;border:0;
+    border-radius:99px;background:var(--accent);color:var(--accent-ink);font:inherit;
+    font-weight:600;font-size:.95rem;cursor:pointer}
+  .askkey .no{margin:.6rem 0 0;font-size:.84rem;color:#b3261e}
+
+  .verdict{margin:1.5rem 0 0;padding:1.1rem 1.2rem;border-radius:.8rem;
+    background:var(--card);border:1px solid var(--hair)}
+  .verdict b{display:block;font-family:var(--serif);font-size:1.15rem;
+    font-weight:400;line-height:1.4}
+  .verdict span{display:block;margin:.5rem 0 0;font-size:.88rem;color:var(--ink-2)}
+
+  .dhead{display:flex;align-items:center;gap:.8rem;margin:2rem 0 .4rem;
+    font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted)}
+  .dhead i{flex:1;height:1px;background:var(--hair)}
+
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  th,td{padding:.55rem .4rem;text-align:right;
+        font-variant-numeric:tabular-nums}
+  th:first-child,td:first-child{text-align:left;padding-left:0}
+  th{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+     color:var(--muted);font-weight:500;border-bottom:1px solid var(--hair)}
+  td{border-bottom:1px solid var(--hair)}
+  tr:last-child td{border-bottom:0}
+  td.z{color:var(--muted)}
+  tfoot td{border-top:2px solid var(--ink);border-bottom:0;font-weight:600}
+
+  .note{margin:2rem 0 0;font-size:.8rem;color:var(--muted);line-height:1.55}
+  .again{margin:1.2rem 0 0;width:100%;padding:.6rem 1rem;border:1px solid var(--hair);
+    border-radius:99px;background:var(--card);color:var(--ink-2);font:inherit;
+    font-size:.86rem;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+  <h1>Doors</h1>
+  <p class="sub" id="sub">Who came, and where they stopped.</p>
+
+  <!-- The key, once. Kept in this browser and nowhere else. -->
+  <div class="askkey" id="ask" hidden>
+    <p id="askp">The admin key — the same one in your .env.</p>
+    <input id="key" type="password" autocomplete="off" autocapitalize="off"
+           spellcheck="false" placeholder="admin key">
+    <button type="button" id="go">Show me</button>
+    <p class="no" id="no" hidden></p>
+  </div>
+
+  <div id="out" hidden>
+    <div class="verdict"><b id="verdict"></b><span id="verdictwhy"></span></div>
+
+    <div class="dhead"><span>By day</span><i></i></div>
+    <table>
+      <thead><tr><th>Day</th><th>Opened</th><th>Began</th><th>Joined</th></tr></thead>
+      <tbody id="days"></tbody>
+    </table>
+
+    <div class="dhead"><span>By room</span><i></i></div>
+    <table>
+      <thead><tr><th>Room</th><th>Opened</th><th>Began</th><th>Joined</th></tr></thead>
+      <tbody id="rooms"></tbody>
+    </table>
+
+    <p class="note">
+      Counted as numbers only — no addresses, no devices, nothing that could say
+      who came. A member opening a door is not counted: they are not arriving.
+    </p>
+    <button class="again" type="button" id="forget">Forget the key on this phone</button>
+  </div>
+</main>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+const ROOMS = ["film", "invest", "raise", "trade", "other"];
+const LABEL = { film: "Film & TV", invest: "Investing", raise: "Raising",
+                trade: "Factories", other: "Something else" };
+const DAYS = 14;
+
+/* The key lives in this browser and is sent as a header, never in the address:
+   a key in a URL is a key in a server log, a chat history and a screenshot. */
+const keep = {
+  get() { try { return localStorage.getItem("board:adminkey") || ""; } catch { return ""; } },
+  set(v) { try { localStorage.setItem("board:adminkey", v); } catch { /* fine */ } },
+  drop() { try { localStorage.removeItem("board:adminkey"); } catch { /* fine */ } },
+};
+
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+};
+const cell = (n) => {
+  const td = el("td", n ? "" : "z", n ? String(n) : "·");
+  return td;
+};
+
+async function load(key) {
+  const r = await fetch("/api/counts", { headers: { "x-admin-secret": key } });
+  if (!r.ok) return null;
+  return (await r.json()).counts || {};
+}
+
+function draw(counts) {
+  const at = (d, room, what) => counts[d + "|" + room + "|" + what] || 0;
+  const sum = (d, what) => ROOMS.reduce((a, r) => a + at(d, r, what), 0);
+
+  /* Every day in the window, empty ones included: a table with the quiet days
+     left out reads as a busier board than it is. */
+  const days = [];
+  for (let i = 0; i < DAYS; i++) {
+    days.push(new Date(Date.now() - i * 86400000).toISOString().slice(0, 10));
+  }
+
+  const tb = $("days");
+  tb.replaceChildren();
+  let O = 0, F = 0, J = 0;
+  for (const d of days) {
+    const o = sum(d, "door"), f = sum(d, "form"), j = sum(d, "joined");
+    O += o; F += f; J += j;
+    const tr = el("tr");
+    tr.append(el("td", "", d.slice(5)), cell(o), cell(f), cell(j));
+    tb.append(tr);
+  }
+
+  const rb = $("rooms");
+  rb.replaceChildren();
+  for (const r of ROOMS) {
+    let o = 0, f = 0, j = 0;
+    for (const d of days) { o += at(d, r, "door"); f += at(d, r, "form"); j += at(d, r, "joined"); }
+    if (!o && !f && !j) continue;
+    const tr = el("tr");
+    tr.append(el("td", "", LABEL[r]), cell(o), cell(f), cell(j));
+    rb.append(tr);
+  }
+
+  /* THE ONE LINE THAT SAYS WHAT TO DO. Three numbers are a fact; which of the
+     three stages lost people is the decision. */
+  const pc = (a, b) => (b ? Math.round((a / b) * 100) + "%" : "—");
+  $("verdict").textContent = O
+    ? O + " opened a door · " + F + " began (" + pc(F, O) + ") · " + J + " joined (" + pc(J, F) + ")"
+    : "Nobody has opened a door.";
+  $("verdictwhy").textContent = !O
+    ? "The link did not travel. Post it somewhere else, or post it again."
+    : F / O < 0.15
+      ? "They came and the page did not convince them. The words on that door are what to change, not the form."
+      : F && J / F < 0.5
+        ? "They started and did not finish. Three boxes losing half the people who begin them is worth an evening."
+        : "The door is working. More people through it is a distribution problem now, not a page problem.";
+
+  $("sub").textContent = "Last " + DAYS + " days.";
+  $("ask").hidden = true;
+  $("out").hidden = false;
+}
+
+async function tryKey(key, fromBox) {
+  const counts = await load(key);
+  if (!counts) {
+    keep.drop();
+    $("ask").hidden = false;
+    $("out").hidden = true;
+    if (fromBox) { $("no").hidden = false; $("no").textContent = "That key was not accepted."; }
+    return;
+  }
+  keep.set(key);
+  draw(counts);
+}
+
+$("go").addEventListener("click", () => {
+  const v = $("key").value.trim();
+  $("no").hidden = true;
+  if (v) tryKey(v, true);
+});
+$("key").addEventListener("keydown", (e) => { if (e.key === "Enter") $("go").click(); });
+$("forget").addEventListener("click", () => {
+  keep.drop();
+  $("key").value = "";
+  $("out").hidden = true;
+  $("ask").hidden = false;
+});
+
+const had = keep.get();
+if (had) tryKey(had, false);
+else $("ask").hidden = false;
+</script>
+</body>
+</html>

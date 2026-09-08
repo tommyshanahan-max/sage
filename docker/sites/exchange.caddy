@@ -40,6 +40,13 @@
 	@admin path /admin /admin/
 	redir @admin https://{$TOMSCODING_PARTNER_DOMAIN}/
 
+	# The board's own three numbers — opened a door, began the form, joined —
+	# which are about The Exchange rather than about the counter next door.
+	# On the board's hostname because that is where the figures are; it asks
+	# for the admin key on arrival and holds it in that browser.
+	@doors path /admin/doors /admin/doors/
+	redir @doors https://{$TOMSCODING_BOARD_DOMAIN}/doors
+
 	root * /srv/site
 	file_server
 }

@@ -32,6 +32,13 @@
 	@numbers path /admin/numbers /admin/numbers/
 	redir @numbers https://{$TOMSCODING_STATS_DOMAIN}/
 
+	# The board's own three numbers — opened a door, began the form, joined —
+	# which are about The Exchange rather than about the counter next door.
+	# On the board's hostname because that is where the figures are; it asks
+	# for the admin key on arrival and holds it in that browser.
+	@doors path /admin/doors /admin/doors/
+	redir @doors https://{$TOMSCODING_BOARD_DOMAIN}/doors
+
 	# The counter's two public paths, and only those two. The dashboard is not
 	# reachable from this hostname at all — it lives on the stats hostname
 	# behind a password, and there is nothing to be gained by having a second
