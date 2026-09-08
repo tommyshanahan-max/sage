@@ -498,6 +498,11 @@ export const STRINGS = {
   ],
   "land.rules":        ["House rules", "这里的规矩"],
   "land.privacy":      ["What is kept", "我们保留什么"],
+  /* For whoever runs the board, in the footer where the other two are. Named
+     for what it shows rather than "Admin": a stranger reading the footer of a
+     private board should not be told there is a control room behind it.
+     land.doors was already the eyebrow above the four rooms. */
+  "land.counted":      ["Doors", "门口"],
 
   "peek.head":         ["Inside, right now", "里面此刻的样子"],
   "wait.only":         ["Invite only", "仅限邀请"],

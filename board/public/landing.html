@@ -239,6 +239,12 @@
     <div class="col links">
       <a href="/rules" id="footRules"></a>
       <a href="/privacy" id="footPrivacy"></a>
+      <!-- The way in for whoever runs it. Visible to everybody, which costs
+           nothing: the page behind it is behind the invitation door, and the
+           figures on it need the admin key after that. A hidden address is
+           not a lock, and a link the person who needs it cannot find is not
+           a feature. -->
+      <a href="/doors" id="footDoors"></a>
     </div>
   </div>
 </div>
@@ -341,6 +347,7 @@ function paint() {
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");
   $("footPrivacy").textContent = T("land.privacy");
+  $("footDoors").textContent = T("land.counted");
   drawSay();
   drawDoors();
 }
