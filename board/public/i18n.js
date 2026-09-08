@@ -374,7 +374,20 @@ export const STRINGS = {
      that goes in front of them. Chinese needs neither, and both lists are the
      same words there. */
   "say.iam":           ["I am a", "我是"],
+  "say.in":            ["in", "在"],
   "say.lookingFor":    ["looking for", "我在找"],
+  /* The second and third lines. "And a Founder looking for an Investor" —
+     where they are does not change between one sentence and the next, so it
+     is asked once, on the first line, and not repeated. */
+  "say.and":           ["and a", "还是"],
+  /* Short enough to sit in a pill inside a sentence. The segmented rows these
+     replace could afford "Somewhere else"; a word in the middle of a line
+     cannot. */
+  "say.where.cn":      ["China", "中国"],
+  "say.where.out":     ["elsewhere", "其他地方"],
+  "say.wants.cn":      ["China", "中国"],
+  "say.wants.out":     ["outside China", "中国以外"],
+  "say.wants.any":     ["anywhere", "哪里都行"],
   "say.pickMe":        ["…", "…"],
   "say.pickWant":      ["…", "…"],
   "say.make":          ["Making the work", "做事的人"],

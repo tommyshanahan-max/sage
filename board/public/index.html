@@ -209,14 +209,22 @@
      only ones that move, and everything around them is there to make those
      two make sense. */
   .says{margin:.2rem 0 0}
-  .sayrow{margin:0 0 1.1rem;font-family:var(--serif);font-size:1.32rem;
-    line-height:2;color:var(--ink-2)}
-  .sayrow select{font:inherit;font-family:var(--serif);font-size:1.32rem;
-    color:var(--accent);background:var(--card);border:1px solid var(--line);
-    border-radius:.7rem;padding:.1rem 2rem .1rem .65rem;margin:0 .15rem;
+  /* SIZED TO WRAP TWICE, NOT FOUR TIMES. The pattern is a desktop one and at
+     desktop sizes it is one line; on a phone four pills at that size become
+     four lines, which is a list again. Small enough that the sentence breaks
+     once and still reads as a sentence. */
+  .sayrow{margin:0 0 .9rem;font-family:var(--serif);font-size:1.06rem;
+    line-height:2.15;color:var(--ink)}
+  /* SOLID PILLS. Tinted, they read as fields in a form; filled, they read as
+     the words somebody chose in a sentence — which is what they are, and the
+     only part of the line that moves. */
+  .sayrow select{font:inherit;font-family:var(--sans);font-size:.98rem;font-weight:500;
+    color:var(--accent-ink);background-color:var(--accent);border:0;
+    border-radius:99px;padding:.3rem 1.6rem .3rem .78rem;margin:.1rem .06rem;
     -webkit-appearance:none;appearance:none;max-width:100%;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233F68D8' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
-    background-repeat:no-repeat;background-position:right .55rem center;background-size:1rem}
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right .55rem center;background-size:.9rem}
+  .sayrow select:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
   .sayrow .drop{border:0;background:none;color:var(--muted);font-size:1rem;
     padding:0 .3rem;font-family:var(--sans)}
   .sayrow .drop:hover{color:var(--t5)}
@@ -5201,17 +5209,49 @@ function rolePick(now, onPick, wanting) {
   return sel;
 }
 
+/** A pill that is one of a short closed list — where you are, where they
+ *  should be. Same shape as the role pills so the line reads as one sentence
+ *  rather than as a sentence with a form in it. */
+function scopePick(prefix, keys, now, onPick) {
+  const sel = document.createElement("select");
+  for (const k of keys) {
+    const o = el("option", null, T(prefix + "." + k));
+    o.value = k;
+    if (k === now) o.selected = true;
+    sel.append(o);
+  }
+  sel.addEventListener("change", () => onPick(sel.value));
+  return sel;
+}
+
 function drawSays() {
   const box = $("mesays");
   fill(box);
   if (!SAY.length) SAY = [{ me: "", want: "" }];
   SAY.forEach((row, i) => {
     const line = el("div", "sayrow");
-    line.append(document.createTextNode(T("say.iam") + " "));
+    /* ONE SENTENCE, FOUR PILLS — and the last two are the question that used
+     * to be its own block with two labelled rows of buttons under a heading.
+     * Where somebody is and where they want people is the same sentence as
+     * what they are and what they want; asking it separately was asking twice.
+     *
+     * Only on the first line. Where you are does not change between one
+     * sentence and the next, and a pill that repeats is a pill somebody will
+     * eventually set to two different things. */
+    line.append(document.createTextNode((i ? T("say.and") : T("say.iam")) + " "));
     line.append(rolePick(row.me, (v) => { row.me = v; drawSays(); }, false));
-    line.append(document.createElement("br"));
-    line.append(document.createTextNode(T("say.lookingFor") + " "));
+    if (!i) {
+      line.append(document.createTextNode(" " + T("say.in") + " "));
+      line.append(scopePick("say.where", ["cn", "out"], WHERE,
+        (v) => { WHERE = v; drawSays(); }));
+    }
+    line.append(document.createTextNode(" " + T("say.lookingFor") + " "));
     line.append(rolePick(row.want, (v) => { row.want = v; drawSays(); }, true));
+    if (!i) {
+      line.append(document.createTextNode(" " + T("say.in") + " "));
+      line.append(scopePick("say.wants", ["cn", "out", "any"], WANTS,
+        (v) => { WANTS = v; drawSays(); }));
+    }
     /* The way out of a line somebody added by mistake. Never on the first —
      * a form whose only field can be deleted is a form that can be empty. */
     if (i > 0) {
@@ -5269,6 +5309,13 @@ function showRooms() {
   const old = !SAY.some((r) => r.me && r.want) && PICKED.length > 0;
   for (const id of ["meroomhead", "meroomwhy", "megroup1", "meroomsA", "megroup2",
     "meroomsB", "megroup3", "meroomsC"]) $(id).hidden = !old;
+  /* WHERE IS IN THE SENTENCE NOW. It was a heading and two labelled rows of
+     buttons under the rooms; four pills in one line say it, and asking it
+     twice on one form is how the two answers come to disagree. The block
+     stays for the people still on the tick boxes, who have no sentence to
+     carry it. */
+  for (const id of ["mewherehead", "mewherelab1", "mewhere", "mewherelab2",
+    "mewants", "mewherewhy"]) { const n = $(id); if (n) n.hidden = !old; }
   $("meroomhead").textContent = T("room.head");
   $("meroomwhy").textContent = T("room.why");
   $("megroup1").textContent = T("room.groupStudy");
