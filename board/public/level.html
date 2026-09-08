@@ -940,12 +940,15 @@ function levelPicture(w, n, band, can) {
     /* Hand-wrapped, since canvas has no line breaking. Returns where it got
        to, so the block underneath starts below the text rather than on top of
        a second line that was not there yesterday. */
-    const wrap = (text, y, font, colour, width, step) => {
+    /* cx, because not everything on this card is centred on the card. The
+       block below has a tick sitting in its left end, and text centred on the
+       whole width runs underneath it. */
+    const wrap = (text, y, font, colour, width, step, cx = S / 2) => {
       x.font = font;
       x.fillStyle = colour;
       let at = y;
       for (const row of lay(x, text, width)) {
-        x.fillText(row, S / 2, at);
+        x.fillText(row, cx, at);
         at += step;
       }
       return at;
@@ -982,7 +985,13 @@ function levelPicture(w, n, band, can) {
     x.font = "44px " + serif;
     /* Measured with the same breaker that draws it, or the block is the height
        of a different sentence than the one inside it. */
-    const lines = Math.max(1, lay(x, can, S - 300).length);
+    /* THE SPACE THE SENTENCE ACTUALLY HAS. The tick is a disc of radius 30 at
+       x=146, so it owns everything up to 176; text centred on the card began
+       at 150 and ran under it. This is the room to the right of it, and the
+       measure and the drawing below both use it — they have to agree or the
+       block is the height of a different sentence. */
+    const CAN_CX = 600, CAN_W = 760;
+    const lines = Math.max(1, lay(x, can, CAN_W).length);
     const step = 62;
     const boxH = 62 + lines * step;
     const mid = top + boxH / 2;
@@ -1004,7 +1013,7 @@ function levelPicture(w, n, band, can) {
     x.lineTo(143, mid + 11);
     x.lineTo(161, mid - 12);
     x.stroke();
-    wrap(can, mid - ((lines - 1) * step) / 2 + 16, "44px " + serif, ink, S - 300, step);
+    wrap(can, mid - ((lines - 1) * step) / 2 + 16, "44px " + serif, ink, CAN_W, step, CAN_CX);
 
     // The invitation, on the picture itself — a card in a chat is seen by
     // people who never opened the app, and the post makes it tappable.
