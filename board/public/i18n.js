@@ -1793,6 +1793,10 @@ export const STRINGS = {
    */
   "ask.head":          ["Ask the Professor", "问问教授"],
 
+  /* The rest of them, folded. The count is in it because "More" alone does
+     not say whether that is two more or twenty, and somebody deciding whether
+     to tap wants to know which. */
+  "ask.more":          ["{n} more questions", "还有 {n} 个问题"],
   "ask.q.linkedin":    ["Where do I put my LinkedIn?", "我的领英填在哪儿？"],
   "ask.a.linkedin": [
     "On your page, under Where else you are. Paste the whole linkedin.com/in/ link or just the last part of it — either works. It shows on your page as a link anybody who opens the page can tap, so put it there only if you are happy for it to be seen.",

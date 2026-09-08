@@ -438,6 +438,11 @@
   .ask li.on .q b{transform:rotate(45deg)}
   .ask .a{margin:0 0 .8rem;padding:0 .2rem;color:var(--ink-2);font-size:.92rem;
     line-height:1.6}
+  /* The fold. Quieter than a question — it is a way to see more of them, not
+     one of them — and it carries no + because nothing opens under it. */
+  .ask .askmore{border-bottom:0}
+  .ask .askmore .q{justify-content:center;color:var(--accent);font-size:.88rem;
+    padding:.7rem .2rem}
   .ask .a a{display:inline-block;margin:.5rem 0 0;color:var(--accent);
     text-decoration:none;border-bottom:1px solid currentColor}
   .myinv .url{display:block;margin:.3rem 0 0;font-size:.82rem;color:var(--ink-2);
@@ -3306,7 +3311,18 @@ function drawAsk() {
   $("asklabel").textContent = T("ask.head");
   const ul = $("asklist");
   fill(ul);
-  for (const [key, go] of ASKS) {
+  /* THREE, AND THE REST BEHIND ONE TAP.
+   *
+   * Ten questions in a tray is not a help panel, it is a wall of text — and a
+   * wall of text is read as a chore and closed, which costs the answers to the
+   * three questions people actually arrive with. The other seven have not gone
+   * anywhere; they are one tap down, for somebody looking for something
+   * specific rather than somebody being shown everything at once.
+   *
+   * The first three are the ones asked out loud: where the LinkedIn goes, how
+   * to change the page, and who can see it. */
+  const SHOWN = 3;
+  const row = ([key, go]) => {
     const li = el("li");
     const q = el("button", "q");
     q.type = "button";
@@ -3327,8 +3343,25 @@ function drawAsk() {
       q.setAttribute("aria-expanded", String(!open));
     });
     li.append(q, a);
-    ul.append(li);
-  }
+    return li;
+  };
+
+  for (const ask of ASKS.slice(0, SHOWN)) ul.append(row(ask));
+
+  const rest = ASKS.slice(SHOWN);
+  if (!rest.length) return;
+  /* One way, no way back. Somebody who opened the rest was looking for
+     something; closing it again under them is not a thing they asked for. */
+  const more = el("li", "askmore");
+  const b = el("button", "q");
+  b.type = "button";
+  b.append(el("span", null, T("ask.more", { n: rest.length })));
+  b.addEventListener("click", () => {
+    for (const ask of rest) ul.insertBefore(row(ask), more);
+    more.remove();
+  });
+  more.append(b);
+  ul.append(more);
 }
 
 function drawMyInvite() {
