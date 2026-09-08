@@ -770,12 +770,20 @@ function drawAsk(box) {
  */
 /* `go` is where the picture takes a reader who taps it, and `pic` is the card
  * drawn above. Both are optional: a post with neither is still a post. */
-async function toFeed(words, topic, btn, say, go, pic) {
+/* `makePic` is a function, not a picture.
+ *
+ * The card carries the name of whoever is posting, and the name is not known
+ * until the two lines below have run — it is in this browser or it is typed
+ * into a prompt. Drawing the picture at the call site meant drawing it before
+ * anybody had said who they were, which is exactly the gap the old card had.
+ * A function closes it: it is called once there is a name to put on it. */
+async function toFeed(words, topic, btn, say, go, makePic) {
   let who = "";
   try { who = localStorage.getItem("board:who") || ""; } catch { /* private window */ }
   if (!who) who = (prompt(T("act.answerAs")) || "").trim();
   if (!who) return;
   try { localStorage.setItem("board:who", who); } catch { /* fine */ }
+  const pic = typeof makePic === "function" ? makePic(who) : makePic;
 
   btn.disabled = true;
   btn.textContent = T("act.sending");
@@ -933,95 +941,112 @@ function lay(x, text, width) {
   return rows;
 }
 
-function levelPicture(w, n, band, can) {
+function levelPicture(w, n, band, can, who) {
   return resultPicture(({ x, S, paper, ink, muted, accent, line, serif, sans }) => {
-    x.textAlign = "center";
+    const ink2 = "#4E5968";
+    const sunk = paper;                     // the card sits on white, panels on paper
+    x.fillStyle = "#FFFFFF";
+    x.fillRect(0, 0, S, S);
 
-    /* Hand-wrapped, since canvas has no line breaking. Returns where it got
-       to, so the block underneath starts below the text rather than on top of
-       a second line that was not there yesterday. */
-    /* cx, because not everything on this card is centred on the card. The
-       block below has a tick sitting in its left end, and text centred on the
-       whole width runs underneath it. */
-    const wrap = (text, y, font, colour, width, step, cx = S / 2) => {
-      x.font = font;
-      x.fillStyle = colour;
-      let at = y;
-      for (const row of lay(x, text, width)) {
-        x.fillText(row, cx, at);
-        at += step;
-      }
-      return at;
-    };
+    /* WHOSE RESULT THIS IS, at the top.
+     *
+     * The card used to be a medallion and a sentence and nothing that said
+     * who. In the feed that is fine — the row above it carries the face and
+     * the name. In a WeChat group the card arrives on its own, and a result
+     * with nobody attached to it is a poster for a quiz rather than a thing
+     * somebody you know just did. */
+    x.textAlign = "left";
+    x.font = "27px " + sans;
+    x.fillStyle = muted;
+    x.fillText("The Exchange · 交换", 96, 122);
 
-    // The medallion, drawn as it is on the screen: the mark in a soft disc
-    // with a ring round it.
-    const cy = 200, r = 82;
+    const name = String(who || "").trim();
+    const ax = 172, ay = 244, ar = 66;
+    /* A letter in a disc rather than their photograph: the page is reachable
+       without being a member, the photo would be a second request that can
+       fail, and a card that sometimes has a face and sometimes a hole is
+       worse than one that never has one. */
+    x.save();
     x.beginPath();
-    x.arc(S / 2, cy, r, 0, Math.PI * 2);
+    x.arc(ax, ay, ar, 0, Math.PI * 2);
+    x.clip();
     x.fillStyle = line;
-    x.fill();
-    x.lineWidth = 5;
-    x.strokeStyle = accent;
+    x.fillRect(ax - ar, ay - ar, ar * 2, ar * 2);
+    x.textAlign = "center";
+    x.font = "68px " + serif;
+    x.fillStyle = muted;
+    x.fillText((name || "·").slice(0, 1).toUpperCase(), ax, ay + 24);
+    x.restore();
+    x.beginPath();
+    x.arc(ax, ay, ar, 0, Math.PI * 2);
+    x.strokeStyle = line;
+    x.lineWidth = 4;
     x.stroke();
-    crownOnCanvas(x, Math.ceil(n / 2), S / 2 - 47, cy - 44, 94, accent);
+    // The app's own crown, at the tier the level earns.
+    crownOnCanvas(x, Math.ceil(n / 2), ax - 34, ay - ar - 56, 68, accent);
 
-    // "Upper intermediate — Level 8 of 10", which is the whole answer.
-    const after = wrap(T("lvl.headline", { band, n }), 372, "62px " + serif, ink, S - 150, 76);
+    x.textAlign = "left";
+    if (name) {
+      x.font = "62px " + serif;
+      x.fillStyle = ink;
+      x.fillText(name, 268, ay - 4);
+    }
+    x.font = "31px " + sans;
+    x.fillStyle = ink2;
+    x.fillText(T("lvl.headline", { band, n }), 268, name ? ay + 46 : ay + 12);
 
-    const dots = 10, dr = 11, gap = 40;
-    const left = S / 2 - ((dots - 1) * gap) / 2;
+    /* THE PANEL. A heading on the block rather than a sentence floating in
+       it: somebody scrolling a chat should know what they are looking at
+       before they read a word of it. */
+    const pT = 370, pH = 430;
+    pill(x, 96, pT, S - 192, pH, 38);
+    x.fillStyle = sunk;
+    x.fill();
+
+    x.font = "42px " + serif;
+    x.fillStyle = ink;
+    x.fillText(T("lvl.cardHead"), 148, pT + 82);
+    x.font = "27px " + sans;
+    x.fillStyle = muted;
+    x.fillText(T(w === "zh" ? "lvl.cardSubZh" : "lvl.cardSubEn"), 148, pT + 128);
+
+    // The level, as a word on the left and the count on the right.
+    x.font = "31px " + sans;
+    x.fillStyle = ink2;
+    x.fillText(T("lvl.cardLevel"), 148, pT + 212);
+    x.textAlign = "right";
+    x.font = "42px " + serif;
+    x.fillStyle = ink;
+    x.fillText(n + " / 10", S - 148, pT + 214);
+
+    const dots = 10, dr = 12, gap = 76;
     for (let i = 1; i <= dots; i++) {
       x.beginPath();
-      x.arc(left + (i - 1) * gap, after + 26, dr, 0, Math.PI * 2);
+      x.arc(148 + dr + (i - 1) * gap, pT + 274, dr, 0, Math.PI * 2);
       x.fillStyle = i <= n ? accent : line;
       x.fill();
     }
 
-    /* What they can do, in the tinted block it sits in on the screen. Measured
-       first so the block is the height of its own text: a fixed box either
-       clips the long sentences or leaves a hole under the short ones. */
-    const top = after + 76;
-    x.font = "44px " + serif;
-    /* Measured with the same breaker that draws it, or the block is the height
-       of a different sentence than the one inside it. */
-    /* THE SPACE THE SENTENCE ACTUALLY HAS. The tick is a disc of radius 30 at
-       x=146, so it owns everything up to 176; text centred on the card began
-       at 150 and ran under it. This is the room to the right of it, and the
-       measure and the drawing below both use it — they have to agree or the
-       block is the height of a different sentence. */
-    const CAN_CX = 600, CAN_W = 760;
-    const lines = Math.max(1, lay(x, can, CAN_W).length);
-    const step = 62;
-    const boxH = 62 + lines * step;
-    const mid = top + boxH / 2;
-    pill(x, 80, top, S - 160, boxH, 30);
-    x.fillStyle = line;
-    x.fill();
-    // The tick and the sentence both centred on the block rather than hung
-    // from its top: one line was sitting high with a hole underneath it.
-    x.beginPath();
-    x.arc(146, mid, 30, 0, Math.PI * 2);
-    x.fillStyle = accent;
-    x.fill();
-    x.strokeStyle = paper;
-    x.lineWidth = 6;
-    x.lineCap = "round";
-    x.lineJoin = "round";
-    x.beginPath();
-    x.moveTo(132, mid);
-    x.lineTo(143, mid + 11);
-    x.lineTo(161, mid - 12);
-    x.stroke();
-    wrap(can, mid - ((lines - 1) * step) / 2 + 16, "44px " + serif, ink, CAN_W, step, CAN_CX);
+    /* What they can actually do — the only line on here anybody reads twice.
+       Left-aligned inside the panel: a centred paragraph under a left-aligned
+       heading is two grids in one box. */
+    x.textAlign = "left";
+    x.font = "31px " + serif;
+    x.fillStyle = ink2;
+    let at = pT + 348;
+    for (const row of lay(x, can, S - 296)) {
+      x.fillText(row, 148, at);
+      at += 42;
+    }
 
-    // The invitation, on the picture itself — a card in a chat is seen by
-    // people who never opened the app, and the post makes it tappable.
+    // The way in, on the picture, because the picture is what travels.
+    x.textAlign = "center";
+    x.font = "31px " + sans;
     x.fillStyle = accent;
-    x.font = "36px " + sans;
-    x.fillText(T("share.cardTap"), S / 2, 880);
+    x.fillText(T("share.cardTap"), S / 2, S - 128);
   });
 }
+
 
 function drawResult(box) {
   const n = RESULT.level;
@@ -1281,7 +1306,7 @@ function drawResult(box) {
     T(w === "zh" ? "share.levelZh" : "share.levelEn",
       { n, band: P(BANDS[w][n - 1]), can: P(CAN[w][n - 1]) }),
     "Tests", toBoard, fsaid, "/level",
-    levelPicture(w, n, P(BANDS[w][n - 1]), P(CAN[w][n - 1]))));
+    (who) => levelPicture(w, n, P(BANDS[w][n - 1]), P(CAN[w][n - 1]), who)));
   /* A STRANGER GETS THE LIST INSTEAD OF THE BUTTONS.
    *
    * This page is outside the door — it is what a shared result links to, and

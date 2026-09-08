@@ -2012,6 +2012,14 @@ export const STRINGS = {
                         "会以你的名义发一张卡片，上面是你的四个字母。"],
   "share.takeIt":      ["Take it yourself", "你也来测测"],
   "share.cardTap":     ["Tap to take it \u2192", "点一下，你也测测 \u2192"],
+  /* On the shared card, which is read by people who have never opened the
+     app. A heading so they know what they are looking at before they read a
+     word of it, and the number of questions because four is the honest claim
+     and any card implying more is lying about its own precision. */
+  "lvl.cardHead":      ["Test result", "测试结果"],
+  "lvl.cardSubZh":     ["Chinese · four questions", "中文 · 四道题"],
+  "lvl.cardSubEn":     ["English · four questions", "英文 · 四道题"],
+  "lvl.cardLevel":     ["Level", "等级"],
   // Sending the test itself. Written as an invitation rather than as a link:
   // this is the one that brings somebody who has never been here.
   "share.invite":      ["Send this to a friend", "发给朋友"],
