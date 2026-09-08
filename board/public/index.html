@@ -595,6 +595,20 @@
      only job on that screen. */
   .pickcap{margin:0 0 .5rem;font-size:.82rem;color:var(--muted)}
   .pickwrap{display:flex;flex-wrap:wrap;gap:.4rem}
+  /* The composer's one dropdown. Shaped like the sentence pills so the sheet
+     has one kind of control in it, not two. */
+  /* .field select sets `background` as a shorthand, which wipes any
+     background-image an equally specific rule adds — hence the extra class
+     here rather than a bare .roomsel, which lost the chevron silently. */
+  .field .roomsel{font:inherit;font-family:var(--sans);font-size:.95rem;
+    color:var(--ink);background-color:var(--raise);
+    border:1px solid var(--line);border-radius:99px;
+    padding:.5rem 2rem .5rem .95rem;max-width:100%;
+    -webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right .7rem center;
+    background-size:.95rem}
+  .field .roomsel:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .chip.small{padding:.42rem .8rem;font-size:.86rem}
   .chip.small.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   .chip{display:inline-flex;align-items:center;gap:.45rem;flex:0 0 auto;
@@ -1896,9 +1910,16 @@ const ROOMGROUPS = [
   { grp: "room.groupElse",   keys: ["ask"] },
 ];
 
-/** Which room a post belongs to. Anything unrecognised — an old topic, or
- *  nothing at all — is a question, which is what "ask" is for. */
-const roomOf = (p) => (ROOMKEYS.includes(p.topic) ? p.topic : "ask");
+/** Which room a post belongs to, or "" for one that was never filed.
+ *
+ *  Nothing at all is now a real answer: a post made without touching the
+ *  dropdown goes to the main feed and belongs to no room, so it shows no room
+ *  on the card and appears in the sheet only inside the Everyone total.
+ *
+ *  An unrecognised topic is different — that is an old post filed under a
+ *  word that no longer exists, and it still counts as a question, which is
+ *  what "ask" is for. */
+const roomOf = (p) => (p.topic ? (ROOMKEYS.includes(p.topic) ? p.topic : "ask") : "");
 
 /** What to print on a post. A room by its name in this language; an old topic
  *  by the word it was actually filed under. */
@@ -1910,73 +1931,52 @@ const roomLabel = (key) => (ROOMKEYS.includes(key) ? T("room." + key) : key);
  *  which is where both languages put the qualifier. */
 const shortRoom = (key) => roomLabel(key).split(/\s*[—,，、]|——/)[0].trim();
 
-/* THE COMPOSER'S ROOM PICKER — YOUR OWN ROOMS FIRST.
+/* WHERE A POST GOES: THE MAIN FEED, UNLESS SOMEBODY SAYS OTHERWISE.
  *
- * One choice, and none is allowed: a post with no room lands in "Just asking",
- * which is where a question belongs anyway.
+ * This was fourteen chips, then two chips and a link, and both were the same
+ * mistake in different sizes: a question asked of everybody, in front of the
+ * box they opened the sheet to type in, when the honest answer almost every
+ * time is "everyone".
  *
- * It used to offer all fourteen at once, as chips, which wraps to three lines
- * directly above the box somebody opened this to type in. Fourteen options is
- * not a choice, it is a form — and thirteen of them are wrong for any given
- * person. Somebody who has written "I am a Manufacturer looking for a
- * Distributor" is going to post about buying and selling; they are not going
- * to file it under study partner, and they should not have to read the words
- * to rule them out.
+ * So it is one dropdown, closed, reading Everyone. A post with nothing picked
+ * goes to the main feed and carries no room at all — no eyebrow on the card,
+ * counted only under Everyone in the filter sheet. Filing is a thing somebody
+ * does on purpose, not a form they have to clear on the way past.
  *
- * So the sentence they already wrote picks the shortlist: their own rooms,
- * plus Just asking. Two or three chips, on one line, and the common case
- * needs no reading at all.
- *
- * THE REST STAY REACHABLE, behind one word. A room nobody can get to from the
- * composer is a room nobody is ever first to post in, and this board is small
- * enough that the empty rooms are the ones that matter most.
+ * A NATIVE SELECT RATHER THAN CHIPS, because the phone draws it. Fourteen
+ * options cost one line here however long the list gets, they are grouped the
+ * same way the filter sheet groups them, and the picker is the one the reader
+ * already knows how to use.
  */
 let POSTROOM = "";
-let POSTMORE = false;
-
-/** The short list, or null when there is no sentence to derive one from — a
- *  person who has not said what they are gets the full set, because one chip
- *  reading "Just asking" is not a choice either. */
-function myPostRooms() {
-  const mine = (ME && Array.isArray(ME.rooms) ? ME.rooms : [])
-    .filter((k) => ROOMKEYS.includes(k));
-  const out = [...new Set([...mine, "ask"])];
-  return out.length > 1 ? out : null;
-}
-
 function drawPickRoom() {
   const box = $("pickroom");
   if (!box) return;
   fill(box);
   box.append(el("p", "pickcap", T("post.room")));
 
-  let keys = POSTMORE ? null : myPostRooms();
-  /* Opened from a filtered feed, into a room that is not one of yours — see
-     openSheet. The chip that is already ticked has to be on screen, or the
-     picker shows nothing selected while the post is filed somewhere. */
-  if (keys && POSTROOM && !keys.includes(POSTROOM)) keys = null;
-  const short = Boolean(keys);
-  if (!keys) keys = ROOMKEYS;
-
-  const wrap = el("div", "pickwrap");
-  for (const k of keys) {
-    const b = el("button", "chip small" + (POSTROOM === k ? " on" : ""));
-    b.type = "button";
-    b.setAttribute("aria-pressed", String(POSTROOM === k));
-    /* The short name, not the profile form's sentence. A chip is a tag; the
-       sentence belongs where somebody is deciding, not where they are
-       filing. See room.t.* in the strings. */
-    b.textContent = T("room.t." + k);
-    b.addEventListener("click", () => { POSTROOM = POSTROOM === k ? "" : k; drawPickRoom(); });
-    wrap.append(b);
+  const sel = document.createElement("select");
+  sel.className = "roomsel";
+  const all = el("option", null, T("board.everyone"));
+  all.value = "";
+  all.selected = !POSTROOM;
+  sel.append(all);
+  for (const g of ROOMGROUPS) {
+    const grp = document.createElement("optgroup");
+    grp.label = T(g.grp);
+    for (const k of g.keys) {
+      // The short name. A dropdown row is a tag, the same as a chip was.
+      const o = el("option", null, T("room.t." + k));
+      o.value = k;
+      if (k === POSTROOM) o.selected = true;
+      grp.append(o);
+    }
+    sel.append(grp);
   }
-  if (short) {
-    const more = el("button", "chip small quiet", T("room.another"));
-    more.type = "button";
-    more.addEventListener("click", () => { POSTMORE = true; drawPickRoom(); });
-    wrap.append(more);
-  }
-  box.append(wrap);
+  // No redraw: the select holds its own state, and redrawing it mid-choice
+  // takes the focus off the control somebody is using.
+  sel.addEventListener("change", () => { POSTROOM = sel.value; });
+  box.append(sel);
 }
 
 /* ---- one button, one sheet --------------------------------------------------
@@ -1998,6 +1998,9 @@ function roomCounts() {
   for (const p of posts) {
     if (!store_isOwn(p)) continue;
     const k = roomOf(p);
+    // "" is a real bucket now — a post on the main feed and in no room. It is
+    // counted so the Everyone total stays true, and it has no row of its own
+    // because it is not a room somebody can go to.
     counts.set(k, (counts.get(k) || 0) + 1);
   }
   return counts;
@@ -2728,9 +2731,6 @@ function openSheet(open) {
     try { $("who").value = localStorage.getItem("board:who") || ""; } catch { /* fine */ }
     // Opened from a filtered feed: post into the room you were reading.
     if (topic && ROOMKEYS.includes(topic)) POSTROOM = topic;
-    // Folded back up each time. Somebody who went looking for a room last
-    // week should not be handed all fourteen for the rest of the year.
-    POSTMORE = false;
     drawPickRoom();
     $("note").focus();
   }
@@ -2802,7 +2802,7 @@ $("ask").addEventListener("submit", async (e) => {
   $("send").disabled = false;
   if (!d) return;
 
-  $("note").value = ""; POSTROOM = ""; POSTMORE = false;
+  $("note").value = ""; POSTROOM = "";
   photo = null; $("shot").hidden = true; $("pic").value = "";
   await load();
   if (d.state === "published") { openSheet(false); return; }

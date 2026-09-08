@@ -128,7 +128,10 @@ export const STRINGS = {
     "你发的内容在动态里，谁都看得到——但你不在学生名单里，所以没人能在那儿找到你、也没法从那儿关注你。点一下就能打开，再点一下就关掉。",
   ],
 
-  "post.room":         ["What is this about?", "这条是关于什么的？"],
+  /* The composer asks WHERE, not WHAT. It answers with a dropdown whose
+     default is Everyone, and "What is this about? Everyone" is not a
+     sentence. A post goes to the main feed unless somebody picks a room. */
+  "post.room":         ["Where does this go?", "发到哪里？"],
   "post.needName":     ["Pick a name to post under.", "选一个发布用的名字。"],
   "post.tooBig":       ["That photo is too large.", "这张照片太大了。"],
   "post.badPhoto":     ["That photo could not be read. Try another, or a screenshot of it.",
@@ -1221,7 +1224,6 @@ export const STRINGS = {
 
   "room.showMe":       ["Show me", "看什么"],
   "room.andMore":      ["and {n} more", "等 {n} 个"],
-  "room.another":      ["Another room", "其他房间"],
   "room.groupElse":    ["Everything else", "其他"],
 
   "room.head":         ["What are you looking for?", "你在找什么？"],
