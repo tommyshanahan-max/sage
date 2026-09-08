@@ -264,20 +264,8 @@ export const STRINGS = {
   /* ---- the waiting list, on the public page -------------------------------
      The only place this board asks anything of somebody who is not in it, so
      it asks for as little as it can and says what happens to it. */
-  "wait.head":         ["No password yet?", "还没有口令？"],
-  "wait.say": [
-    "The only way in is a password from somebody already here. If you do not know anybody yet, leave your name and one way to reach you, and a member may.",
-    "进来的唯一办法，是从已经在里面的人那儿拿到一个口令。如果你还不认识谁，就留个名字和一个联系方式，也许会有人来找你。",
-  ],
   /* Under a result, where the screen has already earned the right to ask. The
      general version explains what the place is; this one does not have to. */
-  "wait.headTest":     ["This board is invite only", "这个板是邀请制的"],
-  "wait.sayTest": [
-    "Everything else here is behind a password from somebody already in. If you do not know anybody yet, leave your name and one way to reach you — a member may.",
-    "这里其余的东西，都要用已经在里面的人给的口令才打得开。如果你还不认识谁，就留个名字和一个联系方式——也许会有人来找你。",
-  ],
-  /* Kept: still used where a sentence is wanted rather than a figure. */
-  "wait.n":            ["{n} people are waiting.", "有 {n} 个人在等。"],
   /* The two words at the top of the box, and the label under the figure.
      "Invite only" rather than "private" or "members only": it names the one
      mechanism — somebody already in has to hand you the password. */

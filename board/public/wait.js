@@ -41,18 +41,21 @@ function device() {
   } catch { return ""; }
 }
 
-/** The box, wired. `head` and `say` may be overridden where the screen around
- *  it has already said what this place is — under a test result, the sentence
- *  about passwords has already been read. */
-export function waitBox(opts) {
-  const o = opts || {};
+/** The box, wired.
+ *
+ *  THREE THINGS AND NOTHING ELSE: invite only, how many are waiting, and the
+ *  button. It used to carry a heading and a paragraph explaining that the way
+ *  in is a password from a member — which is what "invite only" already says,
+ *  in two words, at the top. A box that says the same thing twice reads as a
+ *  box arguing with itself, and the second saying of it was where the number
+ *  got pushed down out of sight.
+ *
+ *  It took a head and a say for the test page, which needed different words
+ *  for the same idea. It does not need them any more: the two words are right
+ *  on both screens. */
+export function waitBox() {
   const box = el("div", "waitbox");
-  /* SAID BEFORE ANYTHING ELSE. Two words, and they are the whole proposition:
-     this is not a site you sign up to. Everything under them is a consequence
-     of that sentence rather than an apology for it. */
   box.append(el("span", "waiteyebrow", T("wait.only")));
-  box.append(el("h3", null, o.head || T("wait.head")));
-  box.append(el("p", "sub", o.say || T("wait.say")));
 
   /* THE NUMBER, AT THE SIZE OF THE THING IT IS SAYING.
    *
