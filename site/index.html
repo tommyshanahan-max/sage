@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The Exchange — the other half of doing business in China</title>
+<meta name="description" content="An invite-only board where people doing business in China find the other half of what they are doing. No app, no account, no VPN.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="The Exchange">
+<meta property="og:description" content="The other half of doing business in China.">
+<meta property="og:image" content="https://liuxuesheng.io/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<link rel="icon" href="https://liuxuesheng.io/favicon.ico" sizes="any">
+<meta name="color-scheme" content="dark">
+<style>
+  /* A PAGE THAT COMMITS TO ONE LOOK.
+     The app answers the reader's theme because it is a tool somebody uses at
+     night. This is not that: it is read once, by somebody who has never heard
+     of this, and it should look like one thing rather than two. The ground is
+     the share card's, which is the mark people will have seen first. */
+  :root{
+    --ink:#151B28; --paper:#0E1420; --raise:#141B2B; --line:#1F2839;
+    --text:#E9EDF5; --text-2:#A3B0C4; --muted:#6F7D92;
+    --accent:#5C8DFF; --accent-soft:#18233D;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC","Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--text);font-family:var(--sans);
+    font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:52rem;margin:0 auto;padding:0 1.3rem}
+  a{color:var(--accent)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+  .top{padding:1.6rem 0}
+  .brand{display:inline-flex;align-items:center;gap:.7rem;text-decoration:none;color:inherit}
+  .brand i{width:2.3rem;height:2.3rem;border-radius:.6rem;background:var(--ink);
+    color:var(--accent);display:grid;place-items:center;font-size:1.35rem;font-style:normal}
+  .brand b{font-family:var(--serif);font-weight:400;font-size:1.2rem}
+  .brand small{display:block;color:var(--muted);font-size:.8rem}
+
+  .hero{padding:3.4rem 0 3rem}
+  h1{margin:0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(2.1rem,7vw,3.4rem);line-height:1.08;text-wrap:balance}
+  .sub{margin:1.2rem 0 0;font-size:clamp(1.05rem,3.4vw,1.25rem);line-height:1.6;
+    color:var(--text-2);max-width:36rem}
+
+  /* THE SENTENCE, AS THE ARGUMENT. Not a screenshot of the product — the
+     product's one idea, set as type, which is the only part of it a reader
+     needs to understand before deciding whether the rest is interesting. */
+  .say{margin:2.6rem 0 0;padding:1.6rem 1.5rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:1.1rem;max-width:36rem}
+  .say p{margin:0;font-family:var(--serif);font-size:clamp(1.2rem,4.4vw,1.6rem);
+    line-height:1.7}
+  .say em{font-style:normal;background:var(--accent);color:var(--ink);
+    border-radius:99px;padding:.1rem .7rem;white-space:nowrap}
+  .say span{display:block;margin:1rem 0 0;font-family:var(--sans);font-size:.95rem;
+    color:var(--text-2);line-height:1.6}
+
+  section{padding:3rem 0;border-top:1px solid var(--line)}
+  .eyebrow{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 1rem}
+  h2{margin:0 0 1rem;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.5rem,5vw,2rem);line-height:1.2;text-wrap:balance}
+  p.body{margin:0 0 1rem;color:var(--text-2);max-width:38rem}
+  p.body strong{color:var(--text);font-weight:500}
+
+  .three{display:grid;gap:1.4rem;margin:1.8rem 0 0}
+  @media(min-width:44rem){.three{grid-template-columns:repeat(3,1fr);gap:1.8rem}}
+  .three div b{display:block;font-family:var(--serif);font-weight:400;font-size:1.2rem;
+    margin:0 0 .4rem}
+  .three div p{margin:0;font-size:.96rem;color:var(--text-2);line-height:1.6}
+
+  .why{display:grid;gap:1.1rem;margin:1.6rem 0 0;padding:0;list-style:none}
+  .why li{display:flex;gap:.9rem;align-items:flex-start;color:var(--text-2);
+    max-width:38rem}
+  .why li i{flex:0 0 auto;width:.5rem;height:.5rem;border-radius:50%;
+    background:var(--accent);margin-top:.62rem}
+  .why li b{color:var(--text);font-weight:500}
+
+  .end{padding:3.4rem 0 4rem;border-top:1px solid var(--line)}
+  .btns{display:flex;flex-wrap:wrap;gap:.7rem;margin:1.5rem 0 0}
+  .btns a{display:inline-block;padding:.85rem 1.5rem;border-radius:99px;
+    text-decoration:none;font-size:1rem}
+  .btns .p{background:var(--accent);color:var(--ink);font-weight:500}
+  .btns .q{border:1px solid var(--line);color:var(--text)}
+  .foot{padding:2rem 0 3rem;color:var(--muted);font-size:.86rem;
+    border-top:1px solid var(--line)}
+  .foot a{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="wrap">
+  <a class="brand" href="/">
+    <i>换</i>
+    <span><b>The Exchange</b><small>交换 · jiāohuàn</small></span>
+  </a>
+</div></div>
+
+<div class="hero"><div class="wrap">
+  <h1>The other half of doing business in China.</h1>
+  <p class="sub">An invite-only board where the person you are missing is already
+    a member — and where nothing happens between two people until each of them
+    is what the other is looking for.</p>
+
+  <div class="say">
+    <p>I am a <em>Director</em> looking for <em>an Agent</em></p>
+    <span>That is the whole of it. Two halves of one sentence, and the board
+      introduces the people whose halves fit together.</span>
+  </div>
+</div></div>
+
+<section><div class="wrap">
+  <p class="eyebrow">The problem</p>
+  <h2>In China, the useful introduction never comes from a search box.</h2>
+  <p class="body">It comes from somebody who already knows both of you. That is
+    true everywhere and it is <strong>load-bearing</strong> here: LinkedIn does
+    not work in the mainland, WeChat has no discovery, and a foreign company
+    arriving without a network spends its first year buying the wrong
+    introductions from people who charge for them.</p>
+  <p class="body">Meanwhile the person on the other side of that trade — the
+    fixer, the line producer, the lawyer, the founder — has the same problem in
+    reverse and no way to be found.</p>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">How it works</p>
+  <h2>One sentence in, two decisions out.</h2>
+  <div class="three">
+    <div><b>You say what you are.</b>
+      <p>Two words: what you are, and what you are missing. That is the entire
+        sign-up. No form, no CV, no profile to maintain.</p></div>
+    <div><b>The board finds the fit.</b>
+      <p>You come up for people who are what you are looking for and are looking
+        for what you are. Anything else is not shown to either of you.</p></div>
+    <div><b>You both say yes, or nothing.</b>
+      <p>A match takes two decisions. Only then does a private room open, and
+        only then can contact details move.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">Why it holds</p>
+  <h2>Members bring members, and their name stays on it.</h2>
+  <ul class="why">
+    <li><i></i><span><b>Every member was brought by another member</b>, whose name
+      stays visible on the profile of whoever they brought. Nobody is here by
+      accident, and vouching costs something.</span></li>
+    <li><i></i><span><b>An invitation is earned, not issued.</b> A member can only
+      bring somebody in while the people they already brought are still here and
+      taking part.</span></li>
+    <li><i></i><span><b>It opens in WeChat.</b> No app to install, no account, no
+      VPN. A link forwarded into a group chat opens where it lands, on the phone
+      it lands on.</span></li>
+    <li><i></i><span><b>It is two languages, not one translated.</b> Every word on
+      it was written twice, by somebody who meant it in both.</span></li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">What it holds</p>
+  <h2>Almost nothing, on purpose.</h2>
+  <p class="body">There are no accounts. A member is a random number their own
+    browser made up, hashed before it is written down. No phone number, no
+    email, no location, and no record anywhere of who read whose page.</p>
+  <p class="body">Contact details are filtered out of every public field and move
+    only between two people who have each chosen to hand them over — which can
+    be taken back. A directory of foreigners in China with everybody's contact
+    details on it is the one thing this must never become, and the design is
+    arranged around not being able to.</p>
+  <p class="body"><a href="https://liuxuesheng.io/privacy">The whole of what is
+    kept</a>, in plain words.</p>
+</div></section>
+
+<div class="end"><div class="wrap">
+  <h2>It is invite only.</h2>
+  <p class="body">If you know a member, ask them. If you do not, the level test
+    is open to anybody and there is a waiting list under the result.</p>
+  <div class="btns">
+    <a class="p" href="https://liuxuesheng.io/level">Take the test</a>
+    <a class="q" href="https://liuxuesheng.io/about">See the board</a>
+  </div>
+</div></div>
+
+<div class="foot"><div class="wrap">
+  The Exchange · 交换 &nbsp;·&nbsp;
+  <a href="https://liuxuesheng.io/rules">House rules</a> &nbsp;·&nbsp;
+  <a href="https://liuxuesheng.io/privacy">What is kept</a>
+</div></div>
+
+</body>
+</html>
