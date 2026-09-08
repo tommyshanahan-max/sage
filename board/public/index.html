@@ -478,6 +478,27 @@
   .notif .rule{margin-top:.9rem}
   .notifnone{margin:0;font-size:.9rem;line-height:1.55;color:var(--muted)}
   /* The question, once, under the card it is about. */
+  /* THE LEDGER. The percentage is the whole block — everything under it is
+     the working. Quiet on purpose: it is a standing, and a screen that shouts
+     a number people cannot spend reads as a promise nobody made. */
+  .stake{margin:1rem 0 0;padding:.9rem 1rem;border:1px solid var(--hair);
+    border-radius:.8rem;background:var(--paper)}
+  .stake .lab{display:block;font-size:.7rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .stake .pct{display:block;margin:.25rem 0 0;font-family:var(--serif);
+    font-weight:400;font-size:1.9rem;line-height:1.1;color:var(--ink);
+    font-variant-numeric:tabular-nums}
+  .stake .seat{display:block;margin:.15rem 0 0;font-size:.84rem;color:var(--muted);
+    font-variant-numeric:tabular-nums}
+  .stake .parts{list-style:none;margin:.7rem 0 0;padding:0}
+  .stake .parts li{display:flex;gap:.6rem;align-items:baseline;
+    padding:.3rem 0;font-size:.86rem;color:var(--ink-2);
+    border-bottom:1px solid var(--hair)}
+  .stake .parts li:last-child{border-bottom:0}
+  .stake .parts b{margin-left:auto;color:var(--ink);font-weight:600;
+    font-variant-numeric:tabular-nums}
+  .stake .when{margin:.7rem 0 0;font-size:.84rem;color:var(--ink-2)}
+  .stake .note{margin:.4rem 0 0;font-size:.78rem;color:var(--muted)}
   .askfeed{margin:1rem 0 0;padding:.85rem 1rem;background:var(--paper);
     border:1px solid var(--line);border-radius:.9rem}
   .askfeed p{margin:0 0 .7rem;font-size:.88rem;line-height:1.5;color:var(--ink-2)}
@@ -1412,6 +1433,21 @@
            is not being made are one thing, not two. -->
       <div class="need" id="myinvneed" hidden></div>
     </div>
+    <!-- THE SEAT AND THE SHARE.
+         Beside the invite box on purpose: bringing somebody in is far and away
+         the biggest thing that moves this number, and a member reading what
+         their seat is worth should be one thumb away from the thing that grows
+         it. Its own request, and the whole block stays away when the board has
+         no promise attached to it. -->
+    <div class="stake" id="stake" hidden>
+      <span class="lab" id="stakelab"></span>
+      <b class="pct" id="stakepct"></b>
+      <span class="seat" id="stakeseat"></span>
+      <ul class="parts" id="stakeparts"></ul>
+      <p class="when" id="stakewhen"></p>
+      <p class="note" id="stakenote"></p>
+    </div>
+
     <!-- THE TWO PLACES PEOPLE TALK. They live here rather than in the bar,
          which already has four tabs and a button in it — and this tray is
          where everything addressed to you already is. Hidden until there is a
@@ -3424,6 +3460,79 @@ function drawMyInvite() {
   $("myinvshare").textContent = T("inv.share");
 }
 
+/* THE SEAT AND THE SHARE.
+ *
+ * Its own request rather than a field on /api/me, because the whole feature is
+ * optional: a board with no promise attached answers 404 and this block never
+ * appears. Fetched once and held, so a language change redraws from what is
+ * already here instead of asking again.
+ *
+ * The percentage is the headline and everything under it is the working —
+ * somebody who wants to know why theirs is small can read the rows and see
+ * exactly which line they have not done. */
+let STAKE = null;
+
+function loadStake() {
+  fetch("/api/stake", { headers: device ? { "x-board-device": device } : {} })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => { STAKE = d; drawStake(); })
+    .catch(() => { /* the tray works without it */ });
+}
+
+function drawStake() {
+  const box = $("stake");
+  if (!box) return;
+  /* Members only, and only where there is a ledger. Somebody with no page has
+     one thing to do and Things to do is already telling them what it is. */
+  if (!STAKE || !(ME && ME.handle)) { box.hidden = true; return; }
+  box.hidden = false;
+  $("stakelab").textContent = T("stake.head");
+
+  /* PAST THE LAST SEAT. Nothing, said plainly — not a nought, which reads as a
+     number that might move and never does. Everything else about the board is
+     the same for them, and the line says so rather than leaving them to
+     wonder what they missed. */
+  const inCohort = STAKE.seat > 0 && STAKE.seat <= STAKE.seats;
+  $("stakepct").textContent = inCohort ? T("stake.share", { n: STAKE.share })
+    : T("stake.full");
+  $("stakeseat").textContent = inCohort
+    ? T("stake.seat", { n: STAKE.seat, seats: STAKE.seats })
+    : "";
+
+  const ul = $("stakeparts");
+  fill(ul);
+  if (inCohort) {
+    /* Biggest first: the rows are an argument for what to do next, and the
+       one worth most should be the one read first. */
+    for (const r of [...(STAKE.parts || [])].sort((a, b) => b.points - a.points)) {
+      const li = el("li");
+      /* One of a thing is not "1 weeks". The seat row has no count in it and
+         so has no singular to pick. */
+      const one = r.n === 1 && r.key !== "found";
+      li.append(el("span", null, T("stake.p." + r.key + (one ? "1" : ""), { n: r.n })));
+      li.append(el("b", null, "+" + r.points));
+      ul.append(li);
+    }
+  }
+
+  $("stakewhen").textContent = STAKE.shut
+    ? T("stake.frozen", { date: STAKE.until })
+    : inCohort ? T("stake.moves", { date: STAKE.until }) : T("stake.none");
+  /* HOW MANY ARE LEFT, under the working, because it is the reason to move —
+     and it is true for somebody outside the cohort too, who can still tell
+     the person they were about to invite to hurry. */
+  if (!STAKE.shut && STAKE.left > 0) {
+    /* A Chinese sentence ends in 。and takes no space before it; an English
+       one takes a space and a full stop. Appending the English shape to both
+       is the sort of seam that makes a page look translated. */
+    const zh = lang() === "zh";
+    $("stakewhen").textContent += (zh ? "" : " ")
+      + T(STAKE.left === 1 ? "stake.last" : "stake.left", { n: STAKE.left })
+      + (zh ? "。" : ".");
+  }
+  $("stakenote").textContent = inCohort ? T("stake.note") : "";
+}
+
 /* ---------------------------------------------------------------------------
  * THINGS TO DO
  *
@@ -5095,6 +5204,7 @@ function repaint() {
   drawTalk();
   drawAsk();
   drawMyInvite();
+  drawStake();
   drawFeedDoor();
   draw();
   window.scrollTo(0, y);
@@ -5869,6 +5979,7 @@ $("meform").addEventListener("submit", async (e) => {
 });
 
 loadMyInvite();
+loadStake();
 
 fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
   .then((r) => r.json())
@@ -5877,6 +5988,7 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
     WAITING = typeof d.waiting === "number" ? d.waiting : null;
     MEMBERS = Number(d.people || 0);
     drawFeedDoor();
+    drawStake();
     RANK = d.rank || "";
     /* drawTodo BELONGS HERE and was missing. The list is made out of ME, and
        the only other place it is drawn is loadMyInvite, which runs before

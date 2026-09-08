@@ -2663,6 +2663,26 @@ app.get("/api/person", async (req, res) => {
   });
 });
 
+/** A member's seat and share. Theirs only — never anybody else's.
+ *
+ *  NO LEADERBOARD, and that is a decision rather than an omission. A ranked
+ *  list of who owns most of a private board turns every post into a play for
+ *  position and every introduction into a trade — which is the behaviour this
+ *  whole product exists to avoid. You see your own number and how many seats
+ *  are left, which is everything you need to decide whether to work.
+ *
+ *  404 when the ledger is off, so a board with no promise attached has no
+ *  screen for one either. */
+app.get("/api/stake", async (req, res) => {
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT)
+    || inCookie(req);
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const mine = shareOf(board, me);
+  if (!mine) return res.status(404).json({ error: "off" });
+  res.json(mine);
+});
+
 app.get("/api/me", async (req, res) => {
   const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
   let board = await store.load(FILE);

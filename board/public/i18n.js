@@ -1417,6 +1417,41 @@ export const STRINGS = {
      then how many are outside. The waiting half only ever renders above the
      floor, so it is safe to write in the plural — nobody will see "5 people
      are waiting" turn into "1 person is". */
+  /* THE LEDGER, in a member's own words.
+     Points and a share, never an amount and never the word ownership — what a
+     point turns into is a promise on paper somewhere else, and a screen that
+     hints at money before that paper exists is a screen that lies. */
+  "stake.head":        ["Your seat", "你的位置"],
+  "stake.share":       ["{n}% of the board", "占整个板子的 {n}%"],
+  "stake.seat":        ["Seat {n} of {seats}", "第 {n} 号，共 {seats} 个"],
+  "stake.left":        ["{n} seats left", "还剩 {n} 个位置"],
+  "stake.last":        ["1 seat left", "只剩 1 个位置了"],
+  "stake.full":        ["The seats are taken", "位置已经满了"],
+  "stake.none": [
+    "The hundred seats were taken before you arrived. Everything else on this board works the same for you.",
+    "那一百个位置在你来之前就满了。这个板子上其他所有东西，对你都是一样的。",
+  ],
+  "stake.moves": [
+    "This moves every time anybody does anything, until {date}. Whatever it says that morning is what it stays.",
+    "只要还有人在这儿做事，这个数就一直在动，直到 {date}。那天早上是多少，就定在多少。",
+  ],
+  "stake.frozen":      ["Fixed on {date}.", "已于 {date} 定下。"],
+  /* What earned it, in the order it is worth reading: the big one first. */
+  "stake.p.guests":    ["{n} you brought in, who stayed", "{n} 个你带进来、并且留下的人"],
+  "stake.p.heard":     ["{n} people answered you", "{n} 个人回过你"],
+  "stake.p.cards":     ["{n} introductions that landed", "{n} 次真的接上头的引荐"],
+  "stake.p.weeks":     ["{n} weeks you turned up", "{n} 周你都在"],
+  /* One of each. English needs the singular and Chinese does not, which is
+     why every Chinese half below is the same sentence as the plural above. */
+  "stake.p.guests1":   ["1 you brought in, who stayed", "1 个你带进来、并且留下的人"],
+  "stake.p.heard1":    ["1 person answered you", "1 个人回过你"],
+  "stake.p.cards1":    ["1 introduction that landed", "1 次真的接上头的引荐"],
+  "stake.p.weeks1":    ["1 week you turned up", "1 周你都在"],
+  "stake.p.found":     ["Being here early", "来得早"],
+  "stake.note": [
+    "Points, not money. What they are worth is a separate promise, in writing. They cannot be sent to anybody.",
+    "这是积分，不是钱。它值多少，是另外一份白纸黑字的承诺。积分不能转给别人。",
+  ],
   "brw.inside":        ["{n} people are in.", "里面有 {n} 个人。"],
   /* Its own string rather than a plural rule. There is one number this ever
      applies to and English is the only side that cares — Chinese counts the
