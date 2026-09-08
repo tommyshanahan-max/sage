@@ -254,6 +254,19 @@ app.use(async (req, res, next) => {
   // own middleware. Without this, the door shut on the hand that opens it:
   // minting an invite was refused before the admin check ever ran.
   if (KEY && safeEqual(String(req.get("x-admin-secret") || req.query.secret || ""), KEY)) return next();
+  /* THE FRONT PAGE IS OUTSIDE THE DOOR, and leaving it off this list was the
+     one mistake that undid the rest of it. "/" serves the same page as
+     /about — the thing that exists to persuade somebody who has never heard
+     of this — and the moment the door went on, the only address anybody
+     actually types stopped showing it and showed a password box instead. A
+     stranger arriving at liuxuesheng.io met a lock and nothing to read.
+
+     Exactly "/", not a prefix: OPEN_PATHS is a prefix match and /^\// would
+     open the entire board.
+
+     Unless the feed has been moved to the root, in which case "/" is the board
+     itself and belongs behind the door like the rest of it. */
+  if (req.path === "/" && !ROOT_IS_BOARD) return next();
   if (OPEN_PATHS.test(req.path)) return next();
   // Anything with a dot in the last segment is a file: the stylesheet and the
   // modules the door is built from have to load for the door to work at all.
