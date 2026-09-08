@@ -49,6 +49,22 @@ export const newId = () => randomUUID().replace(/-/g, "").slice(0, 20);
  * delete it. Nothing here is ever shown on the board, and no member can read
  * the list.
  * ------------------------------------------------------------------------- */
+/* WHAT SOMEBODY OUTSIDE SAYS THEY ARE COMING FOR.
+ *
+ * Four, not thirteen. The board's own rooms are the vocabulary of somebody who
+ * is already in it — a stranger who has never seen the place cannot be asked
+ * to choose between "a model or creative looking for an agent" and "an agent
+ * or manager looking for people". Film & TV holds both sides of that, and both
+ * sides of it will pick it.
+ *
+ * It is a bucket for whoever reads the list, not a field on a profile. Once
+ * somebody is in they pick their real rooms themselves; this only decides
+ * which pile they are in while they wait, and that is the whole point of it —
+ * a room admitted together is a room that is warm on the morning they arrive,
+ * instead of six people each landing in an empty feed one at a time.
+ */
+export const WAITROOMS = ["film", "invest", "raise", "other"];
+
 export function cleanWait(raw) {
   if (!raw || typeof raw !== "object") return null;
   const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").trim().slice(0, n);
@@ -70,6 +86,10 @@ export function cleanWait(raw) {
     // Let in, or turned down. The row stays until somebody deletes it, so the
     // same person is not asked twice.
     done: ["", "in", "no"].includes(raw.done) ? raw.done : "",
+    // Which pile they are in while they wait. "other" when they did not say —
+    // a stranger who skipped the question is not a stranger to leave off the
+    // list.
+    room: WAITROOMS.includes(raw.room) ? raw.room : "other",
   };
 }
 

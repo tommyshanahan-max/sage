@@ -319,6 +319,13 @@ export const STRINGS = {
   "peek.head":         ["Inside, right now", "里面此刻的样子"],
   "wait.only":         ["Invite only", "仅限邀请"],
   "wait.waiting":      ["waiting to get in", "个人在等着进来"],
+  /* WHICH ROOM, in four words a stranger can read. Not the board's thirteen —
+     those are the vocabulary of somebody already inside. See WAITROOMS. */
+  "wait.which":        ["What are you here for?", "你是为了什么来的？"],
+  "waitroom.film":     ["Film & TV", "影视"],
+  "waitroom.invest":   ["Investing", "投资"],
+  "waitroom.raise":    ["Raising", "融资"],
+  "waitroom.other":    ["Something else", "别的"],
   "wait.name":         ["Your name", "你的名字"],
   /* Short enough not to be cut off in the box it sits in. It was three
      examples and a clause, and the clause was the half that got truncated. */

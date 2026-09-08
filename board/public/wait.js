@@ -89,6 +89,35 @@ export function waitBox() {
    * Three fields, two of them required, and the third optional and marked so.
    * That is short enough to be the first thing seen. */
   const form = el("form");
+
+  /* WHICH ROOM, ASKED FIRST AND IN FOUR WORDS.
+   *
+   * Four buckets and not the board's thirteen rooms: those are the vocabulary
+   * of somebody already inside. A stranger cannot be asked to choose between
+   * "a model or creative looking for an agent" and "an agent or manager
+   * looking for people" — Film & TV holds both, and both sides of it will pick
+   * it.
+   *
+   * It is one tap and nothing is required: whoever skips it lands in Other,
+   * which is a real pile and not a punishment. What it buys is on the other
+   * end — the list can be read a room at a time, and a room can be let in
+   * together, which is the difference between arriving somewhere and arriving
+   * in an empty feed. */
+  let room = "";
+  const rooms = el("div", "waitrooms");
+  const chips = [];
+  for (const key of ["film", "invest", "raise", "other"]) {
+    const c = el("button", "waitrm", T("waitroom." + key));
+    c.type = "button";
+    c.addEventListener("click", () => {
+      room = room === key ? "" : key;
+      for (const [k, b] of chips) b.className = "waitrm" + (k === room ? " on" : "");
+    });
+    chips.push([key, c]);
+    rooms.append(c);
+  }
+  form.append(el("p", "waitask", T("wait.which")), rooms);
+
   const name = el("input");
   name.maxLength = 40;
   name.autocomplete = "name";
@@ -139,7 +168,7 @@ export function waitBox() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.value.trim(), reach: reach.value.trim(),
-          why: why.value.trim(), device: device(),
+          why: why.value.trim(), room, device: device(),
         }),
       });
       const d = await r.json().catch(() => ({}));

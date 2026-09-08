@@ -338,6 +338,14 @@
   .waitbox{max-width:28rem;margin:2rem auto 0;padding:1.3rem 1.2rem 1.4rem;
     background:var(--card);border:1px solid var(--line);border-radius:1.2rem;
     text-align:left;box-shadow:var(--shadow)}
+  /* WHICH ROOM. Four chips in a row that wraps to two — small enough that the
+     question does not become the form. */
+  .waitbox .waitask{margin:0 0 .55rem;font-size:.9rem;color:var(--ink-2)}
+  .waitbox .waitrooms{display:flex;flex-wrap:wrap;gap:.45rem;margin:0 0 .3rem}
+  .waitbox .waitrm{padding:.5rem .85rem;border:1px solid var(--line);border-radius:99px;
+    background:var(--raise);color:var(--ink-2);font-size:.92rem}
+  .waitbox .waitrm.on{background:var(--accent);border-color:var(--accent);
+    color:var(--accent-ink)}
   .waitbox form{display:flex;flex-direction:column;gap:.6rem;margin:1.1rem 0 0}
   .waitbox input,.waitbox textarea{width:100%;padding:.75rem .9rem;font:inherit;
     font-size:1rem;border:1px solid var(--line);border-radius:.7rem;

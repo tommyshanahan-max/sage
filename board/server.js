@@ -1255,7 +1255,8 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
        land on the public page while still being a member in the file; telling
        them to wait for something they already have would be absurd. */
     if (me && board.people.some((q) => q.by === me)) return { already: true };
-    const row = store.cleanWait({ name, reach, why: req.body?.why, by: me });
+    const row = store.cleanWait({ name, reach, why: req.body?.why,
+      room: req.body?.room, by: me });
     if (!row) return { error: "both" };
     const at = me ? board.waits.findIndex((w) => w.by === me) : -1;
     if (at >= 0) board.waits[at] = { ...row, id: board.waits[at].id, at: board.waits[at].at };
@@ -1317,7 +1318,8 @@ app.post("/api/waiting/add", express.json({ limit: "4kb" }), admin, async (req, 
   const reach = String(req.body?.reach || "").trim();
   if (!name || !reach) return res.status(400).json({ error: "both" });
   const out = await change((board) => {
-    const row = store.cleanWait({ name, reach, why: req.body?.why });
+    const row = store.cleanWait({ name, reach, why: req.body?.why,
+      room: req.body?.room });
     if (!row) return { error: "both" };
     /* Deduplicated on the way somebody is reached, newest winning. Adding the
        same WeChat id twice is one person asking twice, not two people. */
