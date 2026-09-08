@@ -1713,6 +1713,82 @@ export const STRINGS = {
   /* THE LABEL SAYS WHAT IT IS; the box shows what goes in it. A placeholder
      is a label that disappears the moment somebody starts typing, which is
      when they are most likely to want to check what the box was for. */
+  /* ---- ASK THE PROFESSOR --------------------------------------------------
+   *
+   * Written once, by a person, in both languages — see the note above the
+   * panel in index.html for why these are not generated.
+   *
+   * EVERY ANSWER HERE IS A CLAIM ABOUT WHAT THE CODE DOES, and half of them
+   * are claims about who can see what. If one of them stops being true the
+   * answer is wrong in the most damaging way this app can be wrong, so each
+   * one names the thing it depends on: matching is roomsMatch + follows both
+   * ways, contact is grants, hiding is local, the key is the device line.
+   * Change any of those and change these with them.
+   */
+  "ask.head":          ["Ask the Professor", "问问教授"],
+
+  "ask.q.linkedin":    ["Where do I put my LinkedIn?", "我的领英填在哪儿？"],
+  "ask.a.linkedin": [
+    "On your page, under Where else you are. Paste the whole linkedin.com/in/ link or just the last part of it — either works. It shows on your page as a link anybody who opens the page can tap, so put it there only if you are happy for it to be seen.",
+    "在你的主页里，「你还在哪儿」那一栏。整条 linkedin.com/in/ 链接粘进去，或者只填最后那一段，都行。它会以链接的形式出现在你的主页上，任何打开你主页的人都能点——所以你得愿意让人看到才填。",
+  ],
+  "ask.go.linkedin":   ["Open my page", "打开我的主页"],
+
+  "ask.q.edit":        ["How do I change my page?", "怎么改我的主页？"],
+  "ask.a.edit": [
+    "Profile, then Edit your page. Anything still missing shows on your own page as a row you can tap — a bio, a photo, your LinkedIn — and those rows disappear once you fill them. Nobody else sees them.",
+    "点 Profile，再点「编辑主页」。还没填的东西会在你自己的主页上列出来，点一下就能去填——介绍、照片、领英；填完就不见了。别人看不到这几行。",
+  ],
+  "ask.go.edit":       ["Open my page", "打开我的主页"],
+
+  "ask.q.seen":        ["Who can see my page?", "谁能看到我的主页？"],
+  "ask.a.seen": [
+    "Anybody who is through the door. That is what the board is — a small room where everybody was brought in by somebody. What they see is exactly what you typed: your name, your photo, your bio, your rooms, and the links you added. There is no phone number, no email and no WeChat on it, ever. Nobody can see who has looked at your page, and that includes you.",
+    "所有进了门的人。这个板子就是这么回事——一个小房间，每个人都是别人带进来的。他们看到的就是你填的那些：名字、照片、介绍、房间，还有你自己加的链接。上面永远不会有手机号、邮箱或微信。谁看过你的主页，没人查得到——包括你自己。",
+  ],
+
+  "ask.q.match":       ["What is a match?", "什么算配上了？"],
+  "ask.a.match": [
+    "Three things at once. You each followed the other; you are each in the half of the world the other asked for; and your rooms answer each other — buying answers selling, raising answers investing, looking for work answers hiring. Two people both selling are not a pair. Following somebody on its own does nothing until they follow you back.",
+    "三件事同时成立。你们互相都关注了对方；各自都在对方要找的那一半世界里；而且你们的房间是互相对上的——采购对供货，融资对投资，找工作对招人。两个都在供货的人不算一对。你单方面关注没有用，得等对方也关注你。",
+  ],
+
+  "ask.q.talk":        ["Why can I not message somebody?", "为什么我没法给人发消息？"],
+  "ask.a.talk": [
+    "A private thread opens when you match, and not before. Until then you can send one introduction a day, to anybody — that is the limit, and it is the reason nobody here gets a hundred messages in a week. If somebody leaves a thread it stays closed, and following them again does not reopen it.",
+    "配上之后才会开一条私聊，在那之前不会。在那之前你每天可以给任何人发一条自我介绍——就这个上限，也正是这里没人一周收到一百条消息的原因。如果对方退出了某条私聊，它就一直关着，你再关注一次也不会重开。",
+  ],
+
+  "ask.q.invite":      ["How do I invite somebody?", "我怎么邀请别人？"],
+  "ask.a.invite": [
+    "Two ways, and they are different. Your code lets one person straight in, so send it to somebody you would vouch for by name. The link under it can go anywhere — whoever follows it joins the waiting list instead, and whoever runs the board decides. Post the link; hand over the code.",
+    "两种方式，性质不一样。你的口令直接放一个人进来，所以只发给你愿意点名担保的人。下面那条链接可以随便发——点进来的人是进候补名单，由管板子的人来决定。链接可以公开发；口令要亲手给。",
+  ],
+
+  "ask.q.wait":        ["I have no code. Why?", "我没有口令，为什么？"],
+  "ask.a.wait": [
+    "A code is earned rather than issued, and the box in this tray says which of the tests you have not passed yet. Roughly: finish your page, put something up, and let the people you already brought in settle. It is not a punishment — it is the only thing keeping this room worth being in.",
+    "口令是挣来的，不是发的；这个抽屉里的那个框会告诉你还差哪一条。大致上是：把主页填完，发点东西，再让你已经带进来的人先待住。这不是惩罚——正是它让这个房间值得待。",
+  ],
+
+  "ask.q.wechat":      ["How do I give somebody my WeChat?", "我怎么把微信给别人？"],
+  "ask.a.wechat": [
+    "You hand it over, to one person, after you have matched — and you can take it back, at which point they cannot see it again. It is never on your page and it is filtered out of anything you type in public. A list of everybody here with their contact details on it is the one thing this must never become.",
+    "配上之后，你把它单独交给某一个人——而且可以收回，收回之后对方就再也看不到了。它永远不会出现在你的主页上，你在公开地方打的字里也会被过滤掉。一份写着所有人联系方式的名单，是这个东西绝对不能变成的样子。",
+  ],
+
+  "ask.q.key":         ["How do I get back in on a new phone?", "换手机了怎么回来？"],
+  "ask.a.key": [
+    "With your key. There are no accounts here — no password, no phone number — so that one line is the whole of you. Profile, then Show my key, and save it somewhere now rather than on the day you need it. Without it a new phone is a new person.",
+    "用你的钥匙。这里没有账号——没有密码，也没有手机号——所以那一行就是你本人。点 Profile，再点「显示我的钥匙」，现在就存起来，别等到要用的那天。没有它，换了手机你就是另一个人了。",
+  ],
+
+  "ask.q.hide":        ["How do I stop seeing somebody?", "怎么不再看到某个人？"],
+  "ask.a.hide": [
+    "Hide them, and they are gone from your feed on this phone. It is on your phone only — they are not told, nothing happens to them, and clearing your browsing data forgets it. If somebody should not be here at all, report them instead: a person reads every report.",
+    "把他隐藏掉，他就从你这台手机上的动态里消失了。这只在你这台手机上生效——不会通知对方，对方那边什么也不会发生，清了浏览数据就忘了。如果你觉得某个人根本不该在这儿，那就举报：每一条举报都有人看。",
+  ],
+
   "me.linksHead":      ["Where else you are", "你还在哪儿"],
   /* THE HOLES IN YOUR OWN PAGE, named as the thing that fills them. "Edit" is
      what a developer calls the button; two of the first three members read it
