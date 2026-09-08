@@ -1016,9 +1016,23 @@ function drawResult(box) {
   }
   card.append(dots);
 
-  card.append(el("p", "markname", stageName(stage)
-    + " \u00b7 " + T(w === "zh" ? "crown.zh" : "crown.en")));
-  card.append(el("p", "marknext", T(stage >= 5 ? "crown.top" : "crown.next")));
+  /* NOTHING ABOUT LEARNING CHINESE NEXT TO THE INVITE.
+   *
+   * This board is a place for people connecting in China, not a language app,
+   * and the test is the way in rather than the thing being sold. Everything on
+   * a stranger's result that frames it as a language product — the mark's
+   * name and its language, what two more levels unlocks, what they can order
+   * in a shop, the HSK band — is a pitch for a different product, made at the
+   * exact moment they are deciding about this one.
+   *
+   * What is left is their number and the dots. That is their result, which is
+   * what they came for and what they will screenshot; underneath it is the
+   * board out of focus and the way in. Members keep all of it. */
+  if (ADMITTED) {
+    card.append(el("p", "markname", stageName(stage)
+      + " \u00b7 " + T(w === "zh" ? "crown.zh" : "crown.en")));
+    card.append(el("p", "marknext", T(stage >= 5 ? "crown.top" : "crown.next")));
+  }
 
   /* WHAT THEY CAN DO, which is the half of a result anybody actually wanted.
      The sentence is already written per level; its first clause is the heading
@@ -1040,7 +1054,9 @@ function drawResult(box) {
   didsay.append(el("h2", null, cut < 0 ? can : can.slice(0, cut + 1)));
   if (cut >= 0) didsay.append(el("p", null, can.slice(cut + 2)));
   did.append(tick, didsay);
-  card.append(did);
+  // "What you can do now" is what you can do in a SHOP. Members only — see
+  // the note above the mark name.
+  if (ADMITTED) card.append(did);
 
   /* THREE FACTS, AND NOT A SCORE.
    *
@@ -1072,7 +1088,9 @@ function drawResult(box) {
   }
   stat(rough, T("lvl.stRough"));
   if (RESULT.was) stat(T("lvl.stWasN", { n: RESULT.was }), T("lvl.stWas"));
-  card.append(stats);
+  // The HSK band is the plainest statement on the page that this is a
+  // language product. Members only.
+  if (ADMITTED) card.append(stats);
 
   /* Only when a run just happened AND it moved them into a different mark.
      A ribbon that fires on every result is a ribbon nobody reads twice. */

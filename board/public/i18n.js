@@ -269,6 +269,46 @@ export const STRINGS = {
   /* The two words at the top of the box, and the label under the figure.
      "Invite only" rather than "private" or "members only": it names the one
      mechanism — somebody already in has to hand you the password. */
+  /* COLLABORATION RANK. Five titles and one line each. Every one describes a
+     thing that happened rather than a quantity, because a board this size
+     where everybody knows each other cannot carry a ranking of its members
+     without becoming a worse place. See rankOf in server.js. */
+  "rank.head":         ["Where you stand", "你现在的位置"],
+  "rank.headThem":     ["Where {who} stands", "{who} 现在的位置"],
+  "rank.guest":        ["Guest", "客人"],
+  "rank.guestWhy": [
+    "Nobody has answered you yet. Put something up that somebody can answer.",
+    "还没有人回过你。发点别人能接话的东西。",
+  ],
+  "rank.contact":      ["Contact", "熟人"],
+  "rank.contactWhy": [
+    "Somebody answered you. That is the whole difference between having joined and having arrived.",
+    "有人回过你了。这就是「注册了」和「真的到了」之间的全部区别。",
+  ],
+  "rank.regular":      ["Regular", "常客"],
+  "rank.regularWhy": [
+    "You have put something up in three separate weeks. The one thing a board cannot fake is somebody who keeps coming back.",
+    "你在三个不同的周里都发过东西。一个板子唯一装不出来的，就是有人一直回来。",
+  ],
+  "rank.connector":    ["Connector", "引荐人"],
+  "rank.connectorWhy": [
+    "Two people you brought are still here, and have spoken. This is the one that is about somebody else being here rather than you.",
+    "你带进来的两个人还在，而且开过口。这一级说的是别人在不在，而不是你在不在。",
+  ],
+  "rank.principal":    ["Principal", "掌事"],
+  "rank.principalWhy": [
+    "Three who stayed and spoke, and five different people have answered you. This board is different for you being on it.",
+    "三个人留下来并且开了口，还有五个不同的人回过你。因为有你，这个板子才是现在这个样子。",
+  ],
+  /* What the next rung needs, said as the thing to do rather than the score
+     to reach. Only ever shown to the person themselves. */
+  "rank.next":         ["Next: {what}", "下一步：{what}"],
+  "rank.toContact":    ["somebody answering you", "有人回你一句"],
+  "rank.toRegular":    ["something up in three separate weeks", "在三个不同的周里各发点东西"],
+  "rank.toConnector":  ["two people you brought staying and speaking", "你带进来的两个人留下来并开口"],
+  "rank.toPrincipal":  ["three who stayed, and five people who answered you", "三个人留下来，五个人回过你"],
+  "rank.top":          ["Nothing above this one.", "这已经是最上面一级了。"],
+
   "peek.head":         ["Inside, right now", "里面此刻的样子"],
   "wait.only":         ["Invite only", "仅限邀请"],
   "wait.waiting":      ["waiting to get in", "个人在等着进来"],

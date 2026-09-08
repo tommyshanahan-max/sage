@@ -752,6 +752,18 @@
   .gweek i.now{background:var(--accent);color:var(--accent-ink)}
 
   /* ---- the report card, as a panel about what happened --------------------- */
+  /* THE TITLE. Set as a title and not as a statistic: serif, no number
+     anywhere near it, and the sentence under it says what happened rather
+     than what it is worth. */
+  .rank{padding:.1rem 0 .95rem;border-bottom:1px solid var(--hair);margin-bottom:.85rem}
+  .rankcap{display:block;font-size:.68rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--muted)}
+  :root[data-lang="zh"] .rankcap{letter-spacing:.06em;font-size:.74rem}
+  .rank b{display:block;margin:.3rem 0 0;font-family:var(--serif);font-weight:400;
+    font-size:1.65rem;line-height:1.1;color:var(--accent)}
+  .rank p{margin:.4rem 0 0;font-size:.9rem;line-height:1.55;color:var(--ink-2)}
+  .rank .ranknext{margin:.5rem 0 0;font-size:.82rem;color:var(--muted)}
+
   .wonder{padding:.2rem 0 .9rem;border-bottom:1px solid var(--hair);margin-bottom:.2rem}
   .wbig{margin:0;font-family:var(--serif);font-size:1.4rem;line-height:1.3;color:var(--ink)}
   .wfaces{display:flex;align-items:center;margin:.7rem 0 0}
@@ -1749,6 +1761,8 @@ let ME = null;
    number to be a queue rather than a handful of names. From /api/me, kept
    apart from ME because it is a fact about the board and not about you. */
 let WAITING = null, MEMBERS = 0;
+// What they have done with people here. One of five words — see rankOf.
+let RANK = "";
 // Declared here with the rest of the state rather than beside the code that
 // draws it: `let` does not hoist a value, so anything running earlier — the
 // nav, on first paint — hit a temporal dead zone instead of a null.
@@ -3709,6 +3723,31 @@ function newsSince() {
   };
 }
 
+/** THE TITLE, AND THE ONE THING THAT WOULD MOVE IT.
+ *
+ *  Not a number and not a position: five words, each describing something
+ *  that happened. See rankOf in server.js for what earns each one.
+ *
+ *  The next rung is written as the thing to do rather than the score to hit —
+ *  "somebody answering you" is an instruction, "1 more reply" is a target, and
+ *  a target on a board this small is a thing people play at instead of use. */
+const RANKORDER = ["guest", "contact", "regular", "connector", "principal"];
+const RANKNEXT = { guest: "toContact", contact: "toRegular",
+  regular: "toConnector", connector: "toPrincipal" };
+
+function drawRank(box) {
+  const key = RANK && RANKORDER.includes(RANK) ? RANK : "";
+  if (!key) return;
+  const wrap = el("div", "rank");
+  wrap.append(el("span", "rankcap", T("rank.head")));
+  wrap.append(el("b", null, T("rank." + key)));
+  wrap.append(el("p", null, T("rank." + key + "Why")));
+  const next = RANKNEXT[key];
+  wrap.append(el("p", "ranknext", next
+    ? T("rank.next", { what: T("rank." + next) }) : T("rank.top")));
+  box.append(wrap);
+}
+
 /** A post somebody made, rather than a reply, a like or a report. */
 const store_isOwn = (p) => !p.re && !p.like && !p.report;
 
@@ -3718,7 +3757,15 @@ function drawNews() {
   if (!ME || !ME.handle) return false;
   const n = newsSince();
 
-  // The letter first. It is the one line somebody can compare with yesterday
+  /* WHERE THEY STAND, above the letter.
+   *
+   * The grade is today; the rank is what they have built. One is a mark that
+   * moves every morning and the other is a title that took weeks — so the
+   * title goes first, and the mark under it reads as the day rather than as a
+   * verdict on the person. */
+  drawRank(box);
+
+  // The letter. It is the one line somebody can compare with yesterday
   // without reading anything else on the card.
   drawGrade(box);
 
@@ -4812,6 +4859,7 @@ async function saveMe(patch) {
   ME = d.person;
   if (typeof d.waiting === "number") WAITING = d.waiting;
   if (typeof d.people === "number") MEMBERS = d.people;
+  if (d.rank) RANK = d.rank;
   paintNav();
   // The list is made of what is on their page, so it is redrawn the moment
   // the page changes.
@@ -5175,6 +5223,7 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
     ME = d.person;
     WAITING = typeof d.waiting === "number" ? d.waiting : null;
     MEMBERS = Number(d.people || 0);
+    RANK = d.rank || "";
     /* drawTodo BELONGS HERE and was missing. The list is made out of ME, and
        the only other place it is drawn is loadMyInvite, which runs before
        /api/me has landed — so somebody with a page, a photo and rooms was

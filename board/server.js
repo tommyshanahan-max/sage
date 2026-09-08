@@ -949,6 +949,84 @@ function broughtBy(board, q) {
 }
 
 /* ---------------------------------------------------------------------------
+ * COLLABORATION RANK
+ *
+ * The figure on a profile used to be a Chinese level, which made this look
+ * like a language app on a board that is not one. This is what replaces it:
+ * not what somebody knows, but what they have actually done WITH other people
+ * here.
+ *
+ * WHY THESE FIVE AND IN THIS ORDER. Each rung is a thing that cannot happen
+ * on your own — every one of them needs somebody else to have acted. That is
+ * the whole point: effort alone does not move you, and neither does
+ * popularity. Being answered is the first rung because being answered once is
+ * the difference between having joined and having arrived.
+ *
+ *   guest      Nobody has answered you yet. Where everybody starts.
+ *   contact    Somebody answered you — a reply on the board, or a note.
+ *   regular    You have put something up in three separate weeks. Not volume:
+ *              the one thing a board cannot fake is somebody who keeps
+ *              coming back.
+ *   connector  Two people you brought are still here and have spoken. The
+ *              rung that is about other people's presence rather than yours,
+ *              and the one worth having.
+ *   principal  Three who stayed and spoke, and five different people have
+ *              answered you. The board is different for them being on it.
+ *
+ * IT IS A TITLE, NOT A SCORE. No number, no position in a list, nothing to
+ * be bottom of — a board this size where everybody knows each other cannot
+ * carry a ranking of its members without becoming a worse place. Five words,
+ * each of which describes a thing that happened.
+ *
+ * Worked out here from what the server already holds, and never from anything
+ * a page sends.
+ */
+const RANKS = ["guest", "contact", "regular", "connector", "principal"];
+
+function rankOf(board, who) {
+  if (!who) return "guest";
+  const mine = board.people.find((q) => q.by === who);
+  if (!mine) return "guest";
+
+  const live = (p) => p.state === "published" && !p.like && !p.report;
+  const myPosts = board.posts.filter((p) => p.by === who && live(p) && !p.re);
+  const myIds = new Set(myPosts.map((p) => p.id));
+
+  /* WHO HAS ANSWERED THEM. Distinct people, so one enthusiastic friend is one
+     answer however many times they write. Replies on the board and answers to
+     a note both count — they are the same act on two surfaces. */
+  const answerers = new Set();
+  for (const p of board.posts) {
+    if (p.re && myIds.has(p.re) && live(p) && p.by && p.by !== who) answerers.add(p.by);
+  }
+  for (const n of board.notes) {
+    if (n.to === who && n.by && n.by !== who) answerers.add(n.by);
+  }
+
+  // Three separate weeks with something in them. Weeks and not days: a board
+  // is a habit, and a habit shows up across weeks.
+  const weeks = new Set(board.posts
+    .filter((p) => p.by === who && live(p))
+    // weekKey takes a Date, not a number of milliseconds.
+    .map((p) => weekKey(new Date(Date.parse(p.at || "") || Date.now()))));
+
+  /* Guests who stayed AND spoke. Both, because somebody brought in who never
+     said anything is a name on a list — and it is the same test standing()
+     uses to decide whether they may bring anybody else. */
+  const guests = board.invites
+    .filter((v) => v.by === who && v.usedBy)
+    .map((v) => board.people.find((x) => x.by === v.usedBy))
+    .filter((g) => g && g.state === "published"
+      && board.posts.some((p) => p.by === g.by && live(p)));
+
+  if (guests.length >= 3 && answerers.size >= 5) return "principal";
+  if (guests.length >= 2) return "connector";
+  if (weeks.size >= 3) return "regular";
+  if (answerers.size >= 1) return "contact";
+  return "guest";
+}
+
+/* ---------------------------------------------------------------------------
  * WHO MAY BRING SOMEBODY IN
  *
  * Every member used to carry a code. That made an invitation a property of
@@ -2113,6 +2191,9 @@ app.get("/api/person", async (req, res) => {
       pair: pairState(board, me, q),
       // The member who vouched for them. See broughtBy.
       brought: broughtBy(board, q),
+      // What they have done with people here. A title, never a number — see
+      // rankOf. Public, because it describes acts rather than popularity.
+      rank: rankOf(board, q.by),
     },
     // What they have actually put on the board, which is the only evidence a
     // stranger has that a profile is a person.
@@ -2148,6 +2229,7 @@ app.get("/api/me", async (req, res) => {
        themselves out of it; a number that says "in" has to mean in. */
     people: board.people.filter((q) => q.state === "published" && q.handle).length,
     waiting: waiting >= WAITING_FLOOR ? waiting : null,
+    rank: rankOf(board, me),
   });
 });
 

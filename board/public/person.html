@@ -685,6 +685,12 @@ function paint() {
    * name, and a row that reads "tom-shanahan" tells you who you are about to
    * open before you open it. LinkedIn is also unreachable from the mainland
    * without a VPN, so the readable half matters here too. */
+  /* WHERE THEY STAND, on somebody else's page. A title rather than a number
+     on purpose — see rankOf in server.js. It is here because it answers the
+     question a profile is actually being read to answer: is this somebody
+     who does things with people, or somebody who signed up. */
+  if (q.rank && q.rank !== "guest") fact(T("rank.headThem", { who: q.handle }), T("rank." + q.rank));
+
   if (q.li) {
     const a = el("a", "out");
     a.href = "https://www.linkedin.com/in/" + encodeURIComponent(q.li);
