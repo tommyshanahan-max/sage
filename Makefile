@@ -177,24 +177,34 @@ post-profile: ## Tell everybody how to finish their page, LinkedIn included
 	@# Written after the first member made a page, went looking for LinkedIn,
 	@# and could not find the box. The box moved; this reaches the people who
 	@# already gave up looking. Idempotent — says nothing twice.
+	@# AUTHOR, not AS. `AS` is one of make's own built-in variables — it names
+	@# the assembler and is always set to "as" — so `$(if $(AS),...)` was
+	@# always true and every one of these posted under the name "as". It went
+	@# out on a live board before anybody noticed, because the failure looks
+	@# exactly like a post from an account nobody recognises.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/post-profile.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  $(if $(AS),--as "$(AS)",) $(if $(AGAIN),--again,)
+	  $(if $(AUTHOR),--as "$(AUTHOR)",) $(if $(AGAIN),--again,)
 
 post-explainer: ## Put the how-to-be-the-same-person-twice post on the feed
 	@# In both languages, because a board that explains itself in one of them
 	@# has explained itself to half the people it is for. Idempotent: it looks
 	@# for its own first line and does nothing if it is already up.
 	@#
-	@# Posts as The Tutor by default;  make post-explainer AS="留学生"  for
-	@# another name.
+	@# Posts as The Professor by default;  make post-explainer AUTHOR="留学生"
+	@# for another name.
+	@# AUTHOR, not AS. `AS` is one of make's own built-in variables — it names
+	@# the assembler and is always set to "as" — so `$(if $(AS),...)` was
+	@# always true and every one of these posted under the name "as". It went
+	@# out on a live board before anybody noticed, because the failure looks
+	@# exactly like a post from an account nobody recognises.
 	@grep -qE '^TOMSCODING_BOARD_KEY=.+' .env \
 	  || { echo "TOMSCODING_BOARD_KEY is not set in .env — the board would refuse this."; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T \
 	  -v "$(CURDIR)/scripts:/seed:ro" \
 	  --entrypoint node board \
 	  /seed/post-explainer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  $(if $(AS),--as "$(AS)",) $(if $(AGAIN),--again,)
+	  $(if $(AUTHOR),--as "$(AUTHOR)",) $(if $(AGAIN),--again,)
 
 admit-existing: ## Let everybody already on the board through the door, once
 	@# Run this BEFORE setting BOARD_INVITE=read, or the people already
