@@ -1195,6 +1195,30 @@ export const STRINGS = {
      people work around. */
   "room.ask":          ["Just asking", "就是问问"],
   "room.ask.s":        ["an answer", "一个答案"],
+  /* THE SAME ROOMS, AS CHIP LABELS.
+     The room names are written for the profile form, where somebody is
+     choosing what they want and a full sentence is the right length — "New
+     here — want someone who knows the city" tells them exactly what they are
+     ticking. As chips in the composer those sentences are one full line each,
+     and fourteen of them is a wall.
+     So a second, shorter pair per room, for anywhere a room is a tag rather
+     than a choice. Two or three words, the same meaning, and never a dash:
+     if the short one needs a qualifier it is not short. */
+  "room.t.lang":       ["Language exchange", "语言交换"],
+  "room.t.study":      ["Study partner", "学习伙伴"],
+  "room.t.new":        ["New here", "刚来"],
+  "room.t.host":       ["Showing people around", "带人转转"],
+  "room.t.job":        ["Looking for work", "找工作"],
+  "room.t.hire":       ["Hiring", "招人"],
+  "room.t.cofound":    ["Co-founder", "找合伙人"],
+  "room.t.raise":      ["Raising money", "融资"],
+  "room.t.invest":     ["Investing", "投资"],
+  "room.t.buy":        ["Buying from China", "从中国采购"],
+  "room.t.sell":       ["Supplying from China", "从中国供货"],
+  "room.t.talent":     ["Looking for an agent", "找经纪人"],
+  "room.t.agent":      ["Agent or manager", "经纪或经理人"],
+  "room.t.ask":        ["Just asking", "就是问问"],
+
   "room.showMe":       ["Show me", "看什么"],
   "room.andMore":      ["and {n} more", "等 {n} 个"],
   "room.another":      ["Another room", "其他房间"],

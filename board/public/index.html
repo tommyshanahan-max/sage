@@ -1963,7 +1963,10 @@ function drawPickRoom() {
     const b = el("button", "chip small" + (POSTROOM === k ? " on" : ""));
     b.type = "button";
     b.setAttribute("aria-pressed", String(POSTROOM === k));
-    b.textContent = T("room." + k);
+    /* The short name, not the profile form's sentence. A chip is a tag; the
+       sentence belongs where somebody is deciding, not where they are
+       filing. See room.t.* in the strings. */
+    b.textContent = T("room.t." + k);
     b.addEventListener("click", () => { POSTROOM = POSTROOM === k ? "" : k; drawPickRoom(); });
     wrap.append(b);
   }
