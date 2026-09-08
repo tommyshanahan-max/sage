@@ -334,6 +334,9 @@
     background:var(--paper);color:var(--ink);resize:vertical}
   .waitbox input:focus,.waitbox textarea:focus{outline:2px solid var(--accent);
     outline-offset:1px;border-color:var(--accent)}
+  /* The button that opens the form. Sits directly under the count with room
+     around it — collapsed, this and the number are the whole box. */
+  .waitbox > .btn{width:100%;margin:1.2rem 0 0}
   .waitbox .btn{margin:.2rem 0 0}
   .waitbox .said{margin:.8rem 0 0;font-size:.92rem;color:var(--accent)}
   .waitbox .said.bad{color:var(--t5)}

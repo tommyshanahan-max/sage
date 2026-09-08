@@ -281,6 +281,9 @@ export const STRINGS = {
   "wait.reach":        ["WeChat, Instagram, email — one is enough",
                         "微信、Instagram、邮箱——一个就够"],
   "wait.why":          ["One line about you. Optional.", "一句话介绍自己。可以不写。"],
+  /* THE FIRST BUTTON, which asks for nothing. It is a different sentence from
+     the one on the form: this one is the decision, that one is the send. */
+  "wait.join":         ["Join the list", "加入名单"],
   "wait.go":           ["Put me on the list", "把我加进名单"],
   "wait.both":         ["A name and one way to reach you.", "名字和一个联系方式。"],
   "wait.done":         ["You are on the list.", "已经加进名单了。"],
@@ -1208,6 +1211,21 @@ export const STRINGS = {
      that is for networking as much as for friends — the man bringing a
      supplier he trusts is not bringing a friend. "Someone" covers both, and
      it is the word the box already uses one state along: Bring someone in. */
+  /* THINGS TO DO. Every one an instruction short enough to read at a glance
+     and specific enough to act on without opening anything to find out what it
+     means. No "complete your profile" — that is a category, not a task. */
+  "todo.head":         ["Things to do", "接下来做这几件事"],
+  "todo.more":         ["{n} more after these.", "后面还有 {n} 件。"],
+  "todo.name":         ["Make your page.", "先把你的主页建起来。"],
+  "todo.photo":        ["Add your photo.", "加一张你的照片。"],
+  "todo.browse":       ["Turn on “Show me in Browse”.", "把「在名单里显示我」打开。"],
+  "todo.rooms":        ["Pick your rooms.", "选你的房间。"],
+  "todo.goal":         ["Say what you are looking for.", "写一句你在找什么。"],
+  "todo.level":        ["Take the level test.", "做一下水平测试。"],
+  "todo.card":         ["Answer today’s card.", "答一下今天的卡片。"],
+  "todo.post":         ["Post something.", "发一条内容。"],
+  "todo.week":         ["Post 2 things this week.", "这周发 2 条内容。"],
+
   "inv.needHead":      ["How to invite someone", "怎么邀请别人进来"],
   "inv.needWhy": [
     "Whoever you bring in has your name on them. So first:",

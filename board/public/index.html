@@ -309,6 +309,31 @@
      of a footnote — this is the offer. */
   .myinv{width:100%;margin:0 0 1.1rem;padding:1rem 1.05rem 1.1rem;
     background:var(--accent-soft);border-radius:1rem;text-align:left}
+  /* THINGS TO DO. On the raised surface rather than the accent one: the
+     invite is the offer and keeps the colour, this is the work. Rows are
+     buttons the whole width of the card — every line here goes somewhere, and
+     a list of instructions you cannot tap is a list you have to remember. */
+  .todo{width:100%;margin:0 0 1.1rem;padding:1rem 1.05rem .9rem;
+    background:var(--raise);border:1px solid var(--line);
+    border-radius:1rem;text-align:left}
+  .todo .lab{display:block;font-family:var(--serif);font-weight:400;
+    font-size:1.35rem;line-height:1.15;color:var(--ink)}
+  :root[data-lang="zh"] .todo .lab{letter-spacing:.02em}
+  .todo ul{margin:.7rem 0 0;padding:0;list-style:none;display:flex;
+    flex-direction:column;gap:.15rem}
+  .todo li{margin:0}
+  .todo li button{display:flex;width:100%;gap:.7rem;align-items:center;
+    padding:.5rem .1rem;border:0;background:none;text-align:left;
+    font-size:1rem;line-height:1.35;color:var(--ink)}
+  .todo li button:hover{color:var(--accent)}
+  /* An empty box rather than a bullet: the shape says it is waiting to be
+     ticked, which a dot does not. */
+  .todo li i{flex:0 0 auto;width:1.15rem;height:1.15rem;border-radius:.35rem;
+    border:1.5px solid var(--line-2, var(--line));background:var(--card)}
+  .todo li button:hover i{border-color:var(--accent)}
+  .todo li span{flex:1 1 auto}
+  .todo li b{flex:0 0 auto;color:var(--ink-2);font-weight:400;font-size:1.1rem}
+  .todo .tap{display:block;margin:.6rem 0 0;font-size:.8rem;color:var(--ink-2)}
   .myinv + #notifday{padding-top:.2rem}
   .myinv .lab{display:block;font-family:var(--serif);font-weight:400;
     font-size:1.35rem;line-height:1.15;color:var(--ink)}
@@ -1222,6 +1247,15 @@
     <!-- TWO THINGS TO DO WITH ONE INVITE, so two controls rather than one
          tap target with two meanings: send the whole letter, or take the six
          characters on their own for somebody who already has the link. -->
+    <!-- THREE THINGS, AND THEY GO AWAY WHEN DONE.
+         The first thing in the tray because it is the only thing here that is
+         asking rather than reporting. Three at a time and never more: a list
+         of nine is a chore, and the four remaining are still there tomorrow. -->
+    <div class="todo" id="todo" hidden>
+      <span class="lab" id="todolab"></span>
+      <ul id="todolist"></ul>
+      <span class="tap" id="todoleft"></span>
+    </div>
     <div class="myinv" id="myinv" hidden>
       <span class="lab" id="myinvlab"></span>
       <button class="codebtn" type="button" id="myinvcode"></button>
@@ -3005,6 +3039,79 @@ function drawMyInvite() {
   $("myinvfeed").textContent = T("inv.toFeed");
 }
 
+/* ---------------------------------------------------------------------------
+ * THINGS TO DO
+ *
+ * One ordered list of everything a member has not done yet, of which THREE are
+ * shown. Three because a list of nine reads as a chore and gets closed; the
+ * other six are still there tomorrow, and arriving one at a time as the ones
+ * above them are ticked is the only version of this anybody finishes.
+ *
+ * ORDER IS THE WHOLE DESIGN. Cheapest first, and within that, the ones with a
+ * consequence they cannot see first of all — being out of Browse is invisible
+ * from the inside, which is how somebody ends up thinking the app lost them.
+ * Nothing here is a nag: every row is a thing that changes what the board can
+ * do for them, and every row goes somewhere when tapped.
+ *
+ * WHAT IS NOT ON IT. Anything that is not theirs to do. "Be here three days"
+ * is not a task, it is a wait; a guest of theirs who never posted is not their
+ * work either. Those stay in the invite box, which is where the reasons a code
+ * is missing belong.
+ */
+function todoList() {
+  const has = (v) => Boolean(v && String(v).trim());
+  const mine = ME && ME.handle ? ME.handle.toLowerCase() : "";
+  const myPosts = posts.filter((p) => (p.handle || "").toLowerCase() === mine
+    && mine && p.state !== "removed");
+  const week = myPosts.filter((p) =>
+    Date.now() - Date.parse(p.at || "") < 7 * 86400000).length;
+
+  const all = [
+    // Their own page, in the order it costs them anything.
+    ["name", !(ME && ME.handle), () => openMe()],
+    ["photo", !(ME && ME.photo), () => $("mephoto").click()],
+    ["browse", Boolean(ME && ME.handle) && !(ME && ME.looking), () => openMe()],
+    ["rooms", !(ME && Array.isArray(ME.rooms) && ME.rooms.length), () => openMe()],
+    ["goal", Boolean(ME && ME.handle) && !has(ME && ME.goal), () => openMe()],
+    // Two minutes, and it is what the mark on the card is made of.
+    ["level", !readLocal("board:level"), () => { location.href = "/level"; }],
+    ["card", !dailyDone(), () => { $("prof").scrollIntoView({ behavior: "smooth" }); }],
+    // The board itself. Last because it is the one that needs the rest.
+    ["post", !myPosts.length, () => $("fab").click()],
+    /* The invitation, said as the thing you do rather than the thing you are
+       refused. Only once the page is made — telling somebody with no photo to
+       post twice is the wrong instruction in the wrong week. */
+    ["week", Boolean(ME && ME.handle && ME.photo) && week < 2, () => $("fab").click()],
+  ];
+  return all.filter((r) => r[1]).map((r) => ({ key: r[0], go: r[2] }));
+}
+
+function drawTodo() {
+  const box = $("todo");
+  const list = todoList();
+  // Nothing left is not an empty card. It is no card.
+  box.hidden = !list.length;
+  if (!list.length) return;
+  $("todolab").textContent = T("todo.head");
+  const ul = $("todolist");
+  fill(ul);
+  for (const t of list.slice(0, 3)) {
+    const li = el("li");
+    const b = el("button");
+    b.type = "button";
+    b.append(el("i"), el("span", null, T("todo." + t.key)), el("b", null, "\u203a"));
+    b.addEventListener("click", t.go);
+    li.append(b);
+    ul.append(li);
+  }
+  /* HOW MANY ARE BEHIND THE THREE. Said only when there are some, and said as
+     a number rather than a list — the point of showing three is that the rest
+     are not on the screen. */
+  const rest = list.length - 3;
+  $("todoleft").textContent = rest > 0 ? T("todo.more", { n: rest }) : "";
+  $("todoleft").hidden = rest <= 0;
+}
+
 /** No code, and why. Same box, same place — see the note in the markup.
  *
  *  WHY IT SAYS ALL OF IT. Standing is four small ordinary things, and a member
@@ -3022,7 +3129,16 @@ function drawNeed(b) {
   fill(box);
   box.append(el("p", null, T("inv.needWhy")));
   const ul = el("ul");
-  for (const k of MYNEED) {
+  /* WHAT THE LIST ABOVE IS ALREADY SAYING. "Be in Browse" and "post 2 things
+     this week" are both rows in Things to do, and a member reading the same
+     instruction twice in one tray stops reading the tray. Only the reasons
+     that are NOT theirs to do are left here — a wait, and a guest of theirs
+     who never posted. */
+  const said = new Set(todoList().map((t) => t.key));
+  const show = MYNEED.filter((k) =>
+    !(k === "face" && (said.has("photo") || said.has("browse") || said.has("name")))
+    && !(k === "said" && said.has("week")));
+  for (const k of show.length ? show : MYNEED) {
     const li = el("li");
     li.append(el("i"));
     li.append(el("span", null, k === "room"
@@ -4653,6 +4769,9 @@ async function saveMe(patch) {
   if (typeof d.waiting === "number") WAITING = d.waiting;
   if (typeof d.people === "number") MEMBERS = d.people;
   paintNav();
+  // The list is made of what is on their page, so it is redrawn the moment
+  // the page changes.
+  drawTodo();
   // A face arriving takes the ask away — the row under the deck and the card
   // at the end of it both go.
   drawDeck();

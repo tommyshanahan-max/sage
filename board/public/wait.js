@@ -54,7 +54,23 @@ export function waitBox(opts) {
   count.hidden = true;
   box.append(count);
 
+  /* TWO STEPS, AND THE FIRST ONE ASKS FOR NOTHING.
+   *
+   * Three empty boxes are a form, and a form is a decision about whether to
+   * fill it in — made before the person has decided the smaller thing, which
+   * is whether they want in at all. So the box opens as a sentence, the number
+   * of people already waiting, and one button. Nothing to type until they have
+   * said yes.
+   *
+   * It also keeps the box short, which is the other half of it: collapsed it
+   * fits on the screen under whatever brought them here, so the number and the
+   * button are read rather than scrolled to. */
+  const open = el("button", "btn", T("wait.join"));
+  open.type = "button";
+  box.append(open);
+
   const form = el("form");
+  form.hidden = true;
   const name = el("input");
   name.maxLength = 40;
   name.autocomplete = "name";
@@ -72,6 +88,14 @@ export function waitBox(opts) {
   go.type = "submit";
   form.append(name, reach, why, go);
   box.append(form);
+
+  open.addEventListener("click", () => {
+    open.hidden = true;
+    form.hidden = false;
+    // Straight into the first box: they have already pressed the button, and
+    // asking them to press again to start typing is one press too many.
+    try { name.focus({ preventScroll: true }); } catch { name.focus(); }
+  });
 
   const said = el("p", "said");
   said.hidden = true;
@@ -100,7 +124,7 @@ export function waitBox(opts) {
       if (!r.ok) throw new Error("no");
       // Somebody who is already a member and has landed here anyway.
       tell(d.already ? T("wait.already") : d.again ? T("wait.again") : T("wait.done"));
-      if (!d.already) form.hidden = true;
+      if (!d.already) { form.hidden = true; count.hidden = true; }
     } catch { tell(T("act.again"), true); }
     go.disabled = false;
   });
