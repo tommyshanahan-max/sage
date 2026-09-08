@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<!-- iOS reads these rather than the manifest for a home-screen install:
+     no browser chrome, and a name short enough not to be truncated under
+     the icon. -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="留学生">
+<title>Groups</title>
+<meta name="description" content="Rooms with more than two people in them.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Groups">
+<meta property="og:description" content="A room only the people in it can see.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="{{ORIGIN}}/groups">
+<meta name="robots" content="noindex">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t1:#3F68D8; --t2:#2A9D63; --t3:#D99038; --t4:#7268C4; --t5:#D4485C; --t6:#2F8C9E;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --shadow:0 2px 6px rgba(21,27,40,.07),0 10px 28px rgba(21,27,40,.09);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
+      --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
+    --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+  }
+  :root[data-lang="zh"]{
+    --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif;
+  }
+  :root[data-lang="zh"] body{line-height:1.75}
+  :root[data-lang="zh"] .rule span,
+  :root[data-lang="zh"] .fact dt{text-transform:none;letter-spacing:.02em}
+  [hidden]{display:none!important}
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  main{max-width:34rem;margin:0 auto;padding:1.4rem 1.15rem 5rem}
+  button{font:inherit;cursor:pointer}
+  a{color:inherit}
+  img{max-width:100%}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  .top{display:flex;align-items:center;gap:.8rem;margin:0 0 1.3rem}
+  .top h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.75rem;line-height:1.1}
+  .top p{margin:.15rem 0 0;font-size:.85rem;color:var(--muted)}
+  .back{border:0;background:none;color:var(--ink);padding:.2rem;margin-left:-.3rem;
+    display:grid;place-items:center;flex:0 0 auto}
+  .back svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round}
+  .lang{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1}
+
+  .rule{display:flex;align-items:center;gap:.9rem;margin:0 0 .3rem}
+  .rule span{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);white-space:nowrap}
+  .rule i{flex:1;height:1px;background:var(--line)}
+
+  /* A person in the list. The same row the feed uses, so the two read as one
+     product rather than two screens that happen to share a palette. */
+  .who{display:flex;gap:.9rem;padding:1.2rem 0;border-bottom:1px solid var(--hair);
+    width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;
+    align-items:flex-start}
+  .av{width:3.4rem;height:3.4rem;border-radius:50%;flex:0 0 auto;background:var(--accent);
+    color:var(--accent-ink);display:grid;place-items:center;font-family:var(--serif);
+    font-size:1.35rem;line-height:1;overflow:hidden;
+    box-shadow:0 0 0 3px var(--paper),0 0 0 4px var(--accent-soft)}
+  .av img{width:100%;height:100%;object-fit:cover;display:block}
+  .m{flex:1;min-width:0}
+  .nameline{display:flex;align-items:baseline;gap:.5rem}
+  .nameline b{font-family:var(--serif);font-weight:400;font-size:1.15rem;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nameline .lv{margin-left:auto;flex:0 0 auto;font-size:.72rem;letter-spacing:.05em;
+    border:1px solid var(--line);border-radius:99px;padding:.16rem .55rem;color:var(--muted)}
+  .where{margin:.15rem 0 0;font-size:.83rem;color:var(--muted)}
+  .goal{margin:.45rem 0 0;font-family:var(--serif);font-size:1rem;line-height:1.5;
+    color:var(--ink-2);overflow-wrap:anywhere}
+  .days{display:flex;gap:.25rem;margin:.55rem 0 0;flex-wrap:wrap}
+  .days b{width:1.75rem;height:1.75rem;display:grid;place-items:center;border-radius:.4rem;
+    font-size:.72rem;font-weight:500;background:var(--paper);border:1px solid var(--line);
+    color:var(--muted)}
+  .days b.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+  .none{padding:3rem .5rem;text-align:center;color:var(--muted)}
+  .none b{display:block;font-family:var(--serif);font-weight:400;font-size:1.3rem;
+    color:var(--ink);margin:0 0 .4rem}
+  .none p{margin:0 auto 1.3rem;max-width:26rem;font-size:.95rem;line-height:1.6}
+  .none button{border:0;background:var(--accent);color:var(--accent-ink);border-radius:99px;
+    padding:.75rem 1.6rem;font-size:1rem}
+
+  .safety{margin:2rem 0 0;padding:.95rem 1.05rem;background:var(--raise);
+    border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
+    font-size:.86rem;line-height:1.6;color:var(--ink-2)}
+
+  /* A note. Two shapes, not one with a modifier: what somebody sent you is a
+     thing to decide about, what you sent is a receipt. Making them look the
+     same made a page where you could not tell at a glance which was which. */
+  .note{padding:1.15rem 0;border-bottom:1px solid var(--hair);display:flex;gap:.9rem;
+    align-items:flex-start}
+  .note .m{flex:1 1 auto;min-width:0}
+  .note .line{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+  .note .line b{font-family:var(--serif);font-weight:400;font-size:1.08rem}
+  .note .line time{margin-left:auto;font-size:.78rem;color:var(--muted);flex:0 0 auto}
+  .note .text{margin:.45rem 0 0;font-family:var(--serif);font-size:1.02rem;line-height:1.55;
+    overflow-wrap:anywhere;white-space:pre-wrap}
+  .note.mine .text{color:var(--ink-2)}
+  .note .acts{display:flex;gap:.5rem;margin:.75rem 0 0;flex-wrap:wrap}
+  .note .acts button,.note .acts a{border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);border-radius:99px;padding:.5rem 1.05rem;font-size:.87rem;
+    text-decoration:none;display:inline-block}
+  .note .acts button.primary{background:var(--accent);border-color:var(--accent);
+    color:var(--accent-ink)}
+  .note .acts button.warn{color:var(--t5)}
+  .note .said{margin:.55rem 0 0;font-size:.83rem;color:var(--muted)}
+  .note .said.bad{color:var(--t5)}
+  /* Unread. A dot rather than a colour wash: the message is what should be
+     read, not the fact that it is new. */
+  .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--accent);
+    flex:0 0 auto;margin-top:.5rem}
+  .dot.spent{background:transparent}
+  a.av{color:var(--accent-ink);text-decoration:none}
+  .av.small{width:2.8rem;height:2.8rem;font-size:1.1rem;box-shadow:none}
+
+  /* Answering, in place. There is only ever one answer, so a sheet with its
+     own screen would be more ceremony than the thing deserves. */
+  .reply{margin:.75rem 0 0}
+  .reply textarea{width:100%;min-height:5.5rem;resize:vertical;font:inherit;
+    padding:.65rem .75rem;border-radius:.7rem;border:1px solid var(--line);
+    background:var(--raise);color:var(--ink)}
+  .reply .how{margin:.5rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
+</style>
+<style>
+  /* GROUPS. Two screens in one page: the list of rooms you are in, and one
+     room open. A room is not worth its own route while there are three of
+     them, and a page that changes what it shows without changing address is
+     one back button rather than two. */
+
+  /* THE PICKER, lifted in shape from Fern's Start a group: a collapsed button,
+     then one row per person with a face, a name, and a word that changes when
+     they are in. What is different here is who is in the list — only people
+     who followed you back and share a room with you — and that difference is
+     the whole safety story, so the note under the button says it. */
+  .start{width:100%;margin:0 0 1.4rem;padding:.95rem 1rem;border:1px solid var(--accent);
+    background:none;color:var(--accent);border-radius:99px;font-size:1rem}
+  .picker{margin:0 0 1.6rem}
+  .picker .lede{margin:.8rem 0 0;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
+  .pick{display:flex;width:100%;gap:.9rem;align-items:center;padding:.85rem 0;
+    border:0;border-top:1px solid var(--hair);background:none;text-align:left}
+  .pick:disabled{opacity:.4}
+  .pick b{flex:1;min-width:0;font-family:var(--serif);font-weight:400;font-size:1.15rem;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pick span{flex:0 0 auto;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted)}
+  .pick.on span{color:var(--accent)}
+  /* A ring rather than a filled disc: picked should not erase the face it is
+     drawn over. Fern learned that one the hard way and wrote it down. */
+  .pick.on .av{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--accent)}
+  .picker input{width:100%;margin:1.1rem 0 0;padding:.75rem .9rem;font:inherit;font-size:1rem;
+    border:1px solid var(--line);border-radius:.7rem;background:var(--raise);color:var(--ink)}
+  .picker .make{width:100%;margin:.7rem 0 0;padding:.8rem 1rem;border:0;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);font-size:1rem}
+  .picker .make:disabled{opacity:.45}
+  .picker .limit{margin:.8rem 0 0;font-size:.82rem;line-height:1.6;color:var(--muted)}
+
+  /* A room in the list. Faces stacked, because who is in it is the thing you
+     recognise a room by long before its name. */
+  .room{display:flex;width:100%;gap:.9rem;align-items:center;padding:1.1rem 0;
+    border:0;border-bottom:1px solid var(--hair);background:none;text-align:left}
+  .faces{display:flex;flex:0 0 auto}
+  .faces .av{width:2.4rem;height:2.4rem;font-size:.95rem;margin-left:-.7rem;
+    box-shadow:0 0 0 2px var(--paper)}
+  .faces .av:first-child{margin-left:0}
+  .room .m b{display:block;font-family:var(--serif);font-weight:400;font-size:1.15rem}
+  .room .m p{margin:.15rem 0 0;font-size:.85rem;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .room .chev{margin-left:auto;color:var(--muted);font-size:1.3rem;flex:0 0 auto}
+
+  /* THE ROOM ITSELF. Bubbles, oldest at the top, because that is what a
+     conversation is and the inbox shape this page started from read as a pile
+     of separate letters. */
+  .said{display:flex;gap:.6rem;margin:0 0 .9rem;align-items:flex-start}
+  .said.mine{flex-direction:row-reverse}
+  .said .av{width:2rem;height:2rem;font-size:.85rem;box-shadow:none}
+  .bub{max-width:78%;padding:.6rem .85rem;border-radius:1.1rem;background:var(--raise);
+    border:1px solid var(--line);font-size:1rem;line-height:1.5;overflow-wrap:anywhere;
+    white-space:pre-wrap}
+  .said.mine .bub{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  /* One line under the bubble carrying everything small: who, when, and the
+     way to report it. Reporting used to be its own line under every incoming
+     message, which put a red-ish call to action beside every sentence anybody
+     said — a room where every message is asking you whether to report it is
+     not a room people relax in. */
+  .said .meta{display:flex;gap:.45rem;align-items:baseline;margin:.3rem 0 0;
+    font-size:.72rem;color:var(--muted)}
+  .said.mine .meta{justify-content:flex-end}
+  .said .rep{border:0;background:none;color:var(--muted);font-size:.72rem;padding:0;
+    text-decoration:underline;text-underline-offset:2px;opacity:.75}
+  .said .rep:hover{color:var(--t5);opacity:1}
+
+  .compose{display:flex;gap:.6rem;align-items:flex-end;margin:1.4rem 0 0}
+  .compose textarea{flex:1;min-height:2.9rem;max-height:9rem;resize:vertical;font:inherit;
+    padding:.65rem .8rem;border-radius:1rem;border:1px solid var(--line);
+    background:var(--raise);color:var(--ink)}
+  .compose button{flex:0 0 auto;border:0;border-radius:99px;background:var(--accent);
+    color:var(--accent-ink);padding:.7rem 1.15rem;font-size:.95rem}
+
+  .inroom{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 1.2rem}
+  .inroom span{font-size:.8rem;color:var(--muted);border:1px solid var(--line);
+    border-radius:99px;padding:.28rem .7rem}
+  .leave{margin:2rem 0 0;width:100%;padding:.7rem;border:1px solid var(--line);
+    background:none;color:var(--t5);border-radius:99px;font-size:.9rem}
+</style>
+
+</head>
+<body>
+<main>
+  <div class="top">
+    <button class="back" id="back" aria-label="Back">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <div>
+      <h1 id="title"></h1>
+      <p id="sub"></p>
+    </div>
+    <span id="langslot"></span>
+  </div>
+
+  <div id="screen"></div>
+  <p class="safety" id="safety"></p>
+</main>
+
+<script type="module">
+import { T, when, setLang, pickLang, langButton } from "/i18n.js";
+
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
+  if (x !== undefined) n.textContent = x; return n; };
+const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
+const initial = (name) => (String(name || "?").trim()[0] || "?").toLowerCase();
+
+let device = "";
+try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
+
+let GROUPS = [], CANADD = [], MAX = 10;
+/* Which room is open, or "" for the list. Kept in the address so the back
+   button leaves a room rather than the page. */
+let OPEN = new URLSearchParams(location.search).get("g") || "";
+let PICKED = [], PICKING = false;
+
+/** A face, or a letter where there is none. */
+function face(p, cls) {
+  const a = el("span", "av" + (cls ? " " + cls : ""), initial(p.handle));
+  if (p.photo) {
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/public-media?id=" + encodeURIComponent(p.photo), alt: "", loading: "lazy" });
+    img.addEventListener("load", () => { a.textContent = ""; a.append(img); });
+  }
+  return a;
+}
+
+async function load() {
+  try {
+    const d = await fetch("/api/groups", { cache: "no-store",
+      headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
+    GROUPS = d.groups || [];
+    CANADD = d.canAdd || [];
+    MAX = Number(d.max) || 10;
+  } catch { GROUPS = []; CANADD = []; }
+  paint();
+}
+
+function go(id) {
+  OPEN = id;
+  const u = new URL(location.href);
+  if (id) u.searchParams.set("g", id); else u.searchParams.delete("g");
+  try { history.replaceState(null, "", u); } catch { /* fine */ }
+  paint();
+}
+
+function paint() {
+  $("safety").textContent = T("note.safety");
+  $("back").setAttribute("aria-label", T("nav.back"));
+  const room = GROUPS.find((g) => g.id === OPEN);
+  if (room) return paintRoom(room);
+  paintList();
+}
+
+/* --------------------------------------------------------------- the list */
+
+function paintList() {
+  $("title").textContent = T("grp.title");
+  $("sub").textContent = GROUPS.length
+    ? T("grp.count", { n: GROUPS.length }) : T("grp.sub");
+  const box = $("screen");
+  fill(box);
+
+  if (PICKING) { box.append(picker()); return; }
+
+  /* The button first. Making one is the thing somebody opens this page to do
+     while there are none, and it stays at the top afterwards because a list of
+     three rooms is not long enough to bury it under. */
+  const start = el("button", "start", T("grp.start"));
+  start.type = "button";
+  start.addEventListener("click", () => { PICKING = true; PICKED = []; paint(); });
+  box.append(start);
+
+  if (!GROUPS.length) {
+    const none = el("div", "none");
+    none.append(el("b", null, T("grp.none")), el("p", null, T("grp.noneBody")));
+    box.append(none);
+    return;
+  }
+
+  box.append(Object.assign(el("div", "rule"), {}));
+  const r = el("div", "rule");
+  r.append(el("span", null, T("grp.yours")), el("i"));
+  box.append(r);
+
+  for (const g of GROUPS) {
+    const b = el("button", "room");
+    b.type = "button";
+    const faces = el("div", "faces");
+    for (const p of g.who.slice(0, 4)) faces.append(face(p));
+    const m = el("div", "m");
+    m.append(el("b", null, g.name || nameOf(g)));
+    const last = g.says[g.says.length - 1];
+    m.append(el("p", null, last ? last.text : T("grp.quiet")));
+    b.append(faces, m, el("span", "chev", "›"));
+    b.addEventListener("click", () => go(g.id));
+    box.append(b);
+  }
+}
+
+/** What to call a room nobody named: the people in it. */
+const nameOf = (g) => g.who.map((p) => p.handle).filter(Boolean).slice(0, 3).join(", ");
+
+/* ------------------------------------------------------------- the picker */
+
+function picker() {
+  const box = el("div", "picker");
+  const r = el("div", "rule");
+  r.append(el("span", null, T("grp.start")), el("i"));
+  box.append(r);
+
+  if (!CANADD.length) {
+    box.append(el("p", "lede", T("grp.nobody")));
+    const back = el("button", "start", T("nav.back"));
+    back.type = "button";
+    back.addEventListener("click", () => { PICKING = false; paint(); });
+    box.append(back);
+    return box;
+  }
+
+  // You are always in it, so there is room for one fewer than the cap.
+  const room = MAX - 1;
+  box.append(el("p", "lede", T("grp.who", { n: room })));
+
+  const full = PICKED.length >= room;
+  for (const c of CANADD) {
+    const on = PICKED.includes(c.who);
+    const b = el("button", "pick" + (on ? " on" : ""));
+    b.type = "button";
+    b.disabled = !on && full;
+    b.append(face(c), el("b", null, c.handle),
+      el("span", null, T(on ? "grp.added" : "grp.add")));
+    b.addEventListener("click", () => {
+      PICKED = on ? PICKED.filter((x) => x !== c.who) : [...PICKED, c.who];
+      paint();
+    });
+    box.append(b);
+  }
+
+  const name = document.createElement("input");
+  name.maxLength = 60;
+  name.placeholder = T("grp.namePlaceholder");
+  box.append(name);
+
+  const make = el("button", "make", T("grp.make", { n: PICKED.length + 1 }));
+  make.type = "button";
+  // Three, because two people already have a thread and a group of two would
+  // be a second, worse version of it.
+  make.disabled = PICKED.length < 2;
+  const said = el("p", "limit");
+  make.addEventListener("click", async () => {
+    make.disabled = true;
+    try {
+      const r2 = await fetch("/api/group", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, who: PICKED, name: name.value.trim() }),
+      });
+      const d = await r2.json().catch(() => ({}));
+      if (!r2.ok) throw new Error(d.error || "no");
+      PICKING = false;
+      await load();
+      go(d.id);
+    } catch {
+      said.textContent = T("act.again");
+      make.disabled = false;
+    }
+  });
+  box.append(make, said);
+  box.append(el("p", "limit", T("grp.limit")));
+
+  const back = el("button", "start", T("nav.back"));
+  back.type = "button";
+  back.addEventListener("click", () => { PICKING = false; paint(); });
+  box.append(back);
+  return box;
+}
+
+/* --------------------------------------------------------------- one room */
+
+function paintRoom(g) {
+  $("title").textContent = g.name || nameOf(g);
+  $("sub").textContent = T("grp.inIt", { n: g.who.length });
+  const box = $("screen");
+  fill(box);
+
+  // Who is in it, said out loud. In a room of six, knowing who is reading is
+  // the difference between a conversation and a broadcast.
+  const who = el("div", "inroom");
+  for (const p of g.who) who.append(el("span", null, p.handle));
+  box.append(who);
+
+  for (const m of g.says) {
+    const row = el("div", "said" + (m.mine ? " mine" : ""));
+    if (!m.mine) row.append(face(m, "small"));
+    const wrap = el("div");
+    wrap.append(el("div", "bub", m.text));
+    const meta = el("div", "meta");
+    meta.append(el("span", null, (m.mine ? "" : (m.handle || "") + " · ") + when(m.at)));
+    if (!m.mine) {
+      if (m.reported) {
+        meta.append(el("span", null, T("note.reported")));
+      } else {
+        const rep = el("button", "rep", T("grp.flag"));
+        rep.type = "button";
+        rep.addEventListener("click", async () => {
+          const why = window.prompt(T("note.reportWhy"), "");
+          if (why === null) return;
+          rep.disabled = true;
+          await fetch("/api/group/report", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device, id: m.id, why }),
+          }).catch(() => {});
+          await load();
+        });
+        meta.append(rep);
+      }
+    }
+    wrap.append(meta);
+    row.append(wrap);
+    box.append(row);
+  }
+
+  const c = el("div", "compose");
+  const ta = document.createElement("textarea");
+  ta.rows = 1;
+  ta.maxLength = 600;
+  ta.placeholder = T("grp.placeholder");
+  const send = el("button", null, T("note.send"));
+  send.type = "button";
+  send.addEventListener("click", async () => {
+    const text = ta.value.trim();
+    if (!text) { ta.focus(); return; }
+    send.disabled = true;
+    try {
+      const r = await fetch("/api/group/say", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, group: g.id, text }),
+      });
+      if (!r.ok) throw new Error("no");
+      ta.value = "";
+      await load();
+    } catch { /* the text is still in the box */ }
+    send.disabled = false;
+  });
+  c.append(ta, send);
+  box.append(c);
+
+  const out = el("button", "leave", T("grp.leave"));
+  out.type = "button";
+  out.addEventListener("click", async () => {
+    if (!window.confirm(T("grp.leaveSure"))) return;
+    out.disabled = true;
+    await fetch("/api/group/leave", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, group: g.id }),
+    }).catch(() => {});
+    go("");
+    await load();
+  });
+  box.append(out);
+}
+
+$("back").addEventListener("click", () => {
+  // Out of a room to the list, out of the list to the board. One button, and
+  // it always goes back one step rather than off the page.
+  if (PICKING) { PICKING = false; paint(); return; }
+  if (OPEN) { go(""); return; }
+  if (history.length > 1) history.back(); else location.href = "/feed";
+});
+
+setLang(pickLang());
+$("langslot").append(langButton(paint));
+load();
+</script>
+</body>
+</html>

@@ -1651,6 +1651,47 @@ export const STRINGS = {
   "note.gone":         ["That person is not on the list any more.", "这个人已经不在名单上了。"],
   "note.failed":       ["It did not send. Try again.", "没有发出去，再试一次。"],
 
+  /* GROUPS. The words are plain on purpose: a group is an ordinary thing and
+     the only sentence here doing real work is the one about who can be in it. */
+  "grp.title":         ["Groups", "群组"],
+  "grp.sub":           ["Rooms with more than two people in them.", "两个人以上的房间。"],
+  "grp.count":         ["{n} of them", "共 {n} 个"],
+  "grp.start":         ["Start a group", "建一个群"],
+  "grp.yours":         ["Your groups", "你的群"],
+  "grp.none":          ["No groups yet", "还没有群"],
+  "grp.noneBody": [
+    "A group is a room only the people in it can see. You can start one with anybody you have matched with.",
+    "群是一个只有群里的人才看得见的房间。你可以和任何一个跟你匹配上的人建一个。",
+  ],
+  "grp.nobody": [
+    "Nobody to add yet. You can put people in a group once you have matched with them — you follow each other and you are after the same thing.",
+    "还没有人可以加。要先跟对方匹配上，才能把他拉进群——也就是互相关注，而且想找的是同一件事。",
+  ],
+  "grp.who": [
+    "Anybody you have matched with. You are always in it, so there is room for {n} more.",
+    "任何跟你匹配上的人都可以加。你自己一定在里面，所以还能再加 {n} 个。",
+  ],
+  "grp.add":           ["Add", "加入"],
+  "grp.added":         ["Added", "已加"],
+  "grp.namePlaceholder": ["Call it something. Optional.", "起个名字。可以不写。"],
+  "grp.make":          ["Create group ({n})", "建群（{n} 人）"],
+  "grp.limit": [
+    "Everybody in a group can see every message in it and everybody who is in it. Anybody can leave, and nobody can be thrown out.",
+    "群里的每个人都能看到群里的所有消息，也能看到都有谁在群里。任何人都可以退群，但没有人能把别人踢出去。",
+  ],
+  "grp.inIt":          ["{n} people in it", "群里有 {n} 个人"],
+  "grp.quiet":         ["Nothing said yet.", "还没有人说话。"],
+  /* One word on the small line under a message, not a call to action beside
+     every sentence: a room that asks you about every message is not a room
+     anybody relaxes in. */
+  "grp.flag":          ["Report", "举报"],
+  "grp.placeholder":   ["Say something to the group.", "跟群里说点什么。"],
+  "grp.leave":         ["Leave this group", "退出这个群"],
+  "grp.leaveSure": [
+    "Leave this group? You will not see it again, and what you said stays where it is.",
+    "确定退群？之后你就看不到它了，你说过的话会留在原处。",
+  ],
+
   "note.inbox":        ["Messages", "私信"],
   "note.inboxSub":     ["Introductions to you, and the ones you sent.", "别人写给你的，和你写出去的。"],
   "note.none":         ["Nothing yet", "还没有消息"],

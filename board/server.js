@@ -385,6 +385,9 @@ const notesOff = (req, res, next) =>
 app.get(["/notes", "/notes/"], notesOff,
   (req, res, next) => page("notes.html", req, res, next));
 
+app.get(["/groups", "/groups/"], notesOff,
+  (req, res, next) => page("groups.html", req, res, next));
+
 /* ADMISSION THE SERVER CAN SEE BEFORE ANY SCRIPT RUNS.
  *
  * The rest of this app identifies a browser from localStorage, which only
@@ -1701,6 +1704,161 @@ app.post("/api/note/shut", notesOff, express.json({ limit: "2kb" }), async (req,
     if (!target || target.by === me) return { error: "gone" };
     if (board.shuts.some((x) => x.by === me && x.who === target.by)) return { ok: true };
     board.shuts.push(store.cleanShut({ by: me, who: target.by }));
+    return { ok: true };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/* ---------------------------------------------------------------------------
+ * GROUPS
+ *
+ * A one-to-one thread opens when two people match. A group is that widened,
+ * and the widening is the whole risk in it: a message reaching one person who
+ * chose you is an introduction; the same message reaching nine who did not is
+ * a broadcast into somebody's phone.
+ *
+ * SO THE ONLY PEOPLE YOU MAY PUT IN A GROUP ARE PEOPLE YOU HAVE MATCHED WITH.
+ * Each of them followed you back and shares a room with you. Nobody is added
+ * by a stranger, nobody by a friend of a friend, and there is no way to end up
+ * in a group with somebody you never agreed to hear from. Checked here from
+ * follows and rooms rather than from the list the page sends — a page can send
+ * anything.
+ *
+ * Everybody in a group sees every message in it and everybody who is in it.
+ * Nobody can be removed by anybody else. The only exit is your own, and taking
+ * it takes you off the list rather than deleting what you said — the same rule
+ * as leaving a thread, and for the same reason: a report about it has to keep
+ * working afterwards.
+ */
+
+/** Everyone this person may put in a group: the matched, and nobody else. */
+function groupable(board, me) {
+  const mine = board.people.find((q) => q.by === me);
+  if (!mine) return [];
+  return board.people
+    .filter((q) => q.state === "published" && q.handle && q.by !== me
+      && matched(board, me, q.by))
+    .map((q) => ({ who: q.id, handle: q.handle,
+      photo: q.photoState === "published" ? q.photo : "" }));
+}
+
+/** The groups this person is in, with who is in them and what was said. */
+app.get("/api/groups", notesOff, async (req, res) => {
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  res.set("Cache-Control", "no-store");
+  if (!me) return res.json({ groups: [], canAdd: [] });
+  const board = await store.load(FILE);
+  const name = (hash) => {
+    const q = board.people.find((x) => x.by === hash);
+    return q ? { who: q.id, handle: q.handle,
+      photo: q.photoState === "published" ? q.photo : "" } : null;
+  };
+  const groups = board.groups
+    .filter((g) => g.members.includes(me))
+    .map((g) => ({
+      id: g.id, name: g.name, at: g.at, mine: g.by === me,
+      // Names and faces, never the device hashes the group is stored under.
+      who: g.members.map(name).filter(Boolean),
+      says: board.says.filter((m) => m.group === g.id)
+        .sort((a, b) => String(a.at).localeCompare(String(b.at)))
+        .map((m) => ({ id: m.id, at: m.at, text: m.text,
+          mine: m.by === me, reported: Boolean(m.report),
+          ...(name(m.by) || { who: "", handle: "", photo: "" }) })),
+    }));
+  res.json({ groups, canAdd: groupable(board, me), max: store.GROUP_MAX });
+});
+
+/** Making one. */
+app.post("/api/group", notesOff, express.json({ limit: "8kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const want = (Array.isArray(req.body?.who) ? req.body.who : [])
+    .map((x) => String(x || "")).filter((x) => /^[a-f0-9]{20}$/.test(x));
+  const label = String(req.body?.name || "").slice(0, 60);
+
+  const out = await change((board) => {
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine || !mine.handle) return { error: "profile" };
+    /* THE GATE, APPLIED HERE AND NOT ON THE PAGE. Every id the page sent is
+       checked back against the matches — an unmatched id is dropped rather
+       than refused, so a stale page cannot fail the whole group over somebody
+       who unfollowed while it was open. */
+    const allowed = new Set(groupable(board, me).map((c) => c.who));
+    const members = [me];
+    for (const id of want) {
+      if (!allowed.has(id)) continue;
+      const q = board.people.find((x) => x.id === id);
+      if (q && !members.includes(q.by)) members.push(q.by);
+    }
+    if (members.length < 3) return { error: "few" };
+    if (members.length > store.GROUP_MAX) return { error: "many" };
+    const g = store.cleanGroup({ id: store.newId(), by: me, members, name: label });
+    if (!g) return { error: "no" };
+    board.groups.push(g);
+    return { ok: true, id: g.id };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** Saying something in one. */
+app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.group || "");
+  const text = String(req.body?.text || "").trim().slice(0, 600);
+  if (!me) return res.status(400).json({ error: "no" });
+  if (!text) return res.status(400).json({ error: "empty" });
+
+  const out = await change((board) => {
+    const g = board.groups.find((x) => x.id === id);
+    // The same answer for a group that never existed and one you are not in:
+    // this must not become a way to ask which groups are real.
+    if (!g || !g.members.includes(me)) return { error: "gone" };
+    board.says.push(store.cleanSay({ id: store.newId(), group: id, by: me, text }));
+    return { ok: true };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** Leaving one. Yours to take and nobody else's to take for you. */
+app.post("/api/group/leave", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.group || "");
+  if (!me) return res.status(400).json({ error: "no" });
+  const out = await change((board) => {
+    const g = board.groups.find((x) => x.id === id);
+    if (!g || !g.members.includes(me)) return { error: "gone" };
+    g.members = g.members.filter((m) => m !== me);
+    /* NOBODY LEFT IS NOT AN EMPTY ROOM, it is no room. The messages go with it
+       — there is nobody who could read or report them, and a file full of
+       conversations nobody is in is a file of other people's words kept for
+       no reason. */
+    if (g.members.length < 2) {
+      board.groups = board.groups.filter((x) => x.id !== id);
+      board.says = board.says.filter((m) => m.group !== id);
+    }
+    return { ok: true };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** Reporting something said in one. The only way anybody outside it reads a
+ *  message, which is the same rule as everywhere else here. */
+app.post("/api/group/report", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.id || "");
+  const why = String(req.body?.why || "").slice(0, 400);
+  if (!me) return res.status(400).json({ error: "no" });
+  const out = await change((board) => {
+    const m = board.says.find((x) => x.id === id);
+    if (!m) return { error: "gone" };
+    const g = board.groups.find((x) => x.id === m.group);
+    // Only somebody in the room, and never your own words.
+    if (!g || !g.members.includes(me) || m.by === me) return { error: "gone" };
+    m.report = why || "Reported";
     return { ok: true };
   });
   if (out?.error) return res.status(400).json(out);

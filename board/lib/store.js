@@ -685,6 +685,75 @@ export function cleanNote(raw) {
   };
 }
 
+/* ---------------------------------------------------------------------------
+ * A group: three or more people who can all see each other's messages
+ *
+ * The one-to-one thread opens when two people match. A group is the same
+ * mechanism widened, and the widening is the whole risk in it: a message that
+ * reaches one person who chose you is an introduction, and the same message
+ * reaching nine people who did not is a broadcast into somebody's phone.
+ *
+ * SO WHO CAN BE PUT IN ONE. Only people you have matched with — each of whom
+ * followed you back and shares a room with you. Nobody can be added by a
+ * stranger, nobody can be added by a friend of a friend, and there is no way
+ * to be put in a group by somebody you have never agreed to hear from. That
+ * one rule is what makes the rest of this safe, and it is why membership is
+ * decided here from follows and rooms rather than from a list somebody sends.
+ *
+ * TEN, because past that it is a broadcast channel with a different set of
+ * problems. Fern settled on the same number for the same reason.
+ *
+ * Everybody in a group can see every message in it and everybody who is in
+ * it. Nobody can be removed by anybody else — the only exit is your own, and
+ * taking it removes you from the list rather than deleting what you said, for
+ * the same reason leaving a thread does not erase it.
+ */
+export const GROUP_MAX = 10;
+
+export function cleanGroup(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = String(raw.id || "");
+  if (!/^[a-f0-9]{20}$/.test(id)) return null;
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").slice(0, n);
+  const by = s(raw.by, 64);
+  if (!by) return null;
+  /* Deduplicated and capped here rather than at the route, so a file edited by
+     hand cannot produce a group of forty. The maker is always in it: a group
+     you made and are not in is not a thing anybody means to make. */
+  const members = [...new Set([by, ...(Array.isArray(raw.members) ? raw.members : [])
+    .map((m) => String(m || "").slice(0, 64)).filter(Boolean)])].slice(0, GROUP_MAX);
+  if (members.length < 2) return null;
+  return {
+    id,
+    at: s(raw.at, 40) || new Date().toISOString(),
+    by, members,
+    // What it is called. Optional: a group of four people who matched on the
+    // same room does not need naming to be useful, and an empty name draws
+    // itself from who is in it.
+    name: s(raw.name, 60),
+  };
+}
+
+/** One message in a group. Kept apart from notes because the two have
+ *  different shapes at the receiving end — a note has one reader and a group
+ *  message has all of them — and because a bug that confused them would send a
+ *  private message to nine people. */
+export function cleanSay(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = String(raw.id || "");
+  const group = String(raw.group || "");
+  if (!/^[a-f0-9]{20}$/.test(id) || !/^[a-f0-9]{20}$/.test(group)) return null;
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").slice(0, n);
+  const by = s(raw.by, 64);
+  if (!by) return null;
+  return {
+    id, group, by,
+    at: s(raw.at, 40) || new Date().toISOString(),
+    text: s(raw.text, 600),
+    report: s(raw.report, 400),
+  };
+}
+
 /** Notes for one person, both directions, newest first. */
 export const notesFor = (notes, me) =>
   !me ? [] : notes.filter((n) => n.by === me || n.to === me)
@@ -827,7 +896,28 @@ export function cleanBoard(raw) {
     shuts.push(x);
   }
 
-  return { posts, people, follows, notes, wants, invites, cards, grants, waits, shuts };
+  /* Groups, and what was said in them. Deduplicated on id like everything
+     else; a message whose group is gone is dropped rather than kept as an
+     orphan nobody can read or report. */
+  const groups = [];
+  const gids = new Set();
+  for (const r of (Array.isArray(raw?.groups) ? raw.groups : [])) {
+    const g = cleanGroup(r);
+    if (!g || gids.has(g.id)) continue;
+    gids.add(g.id);
+    groups.push(g);
+  }
+  const says = [];
+  const sids = new Set();
+  for (const r of (Array.isArray(raw?.says) ? raw.says : [])) {
+    const m = cleanSay(r);
+    if (!m || sids.has(m.id) || !gids.has(m.group)) continue;
+    sids.add(m.id);
+    says.push(m);
+  }
+
+  return { posts, people, follows, notes, wants, invites, cards, grants, waits,
+    shuts, groups, says };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an
