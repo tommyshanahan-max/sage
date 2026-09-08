@@ -245,6 +245,10 @@
            not a lock, and a link the person who needs it cannot find is not
            a feature. -->
       <a href="/doors" id="footDoors"></a>
+      <!-- The panel: the queue, who is in, what has been posted. On its own
+           hostname behind its own login, which is why this is a link out and
+           not a page here. -->
+      <a href="/admin" id="footPanel"></a>
     </div>
   </div>
 </div>
@@ -348,6 +352,7 @@ function paint() {
   $("footRules").textContent = T("land.rules");
   $("footPrivacy").textContent = T("land.privacy");
   $("footDoors").textContent = T("land.counted");
+  $("footPanel").textContent = T("land.panel");
   drawSay();
   drawDoors();
 }

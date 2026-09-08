@@ -37,8 +37,17 @@
 	# place one is ever typed. Unconfigured, it lands on that seat's internal
 	# .localhost fallback, which is the honest outcome for a door this
 	# deployment does not have.
+	# The panel — the queue, who is in, and what has been posted. The same
+	# place liuxuesheng.io/admin goes, because there is one board and it should
+	# have one control room however you arrived at it. This used to land on the
+	# partner seat, which is a code editor and not what anybody clicking Admin
+	# on a product page is looking for.
 	@admin path /admin /admin/
-	redir @admin https://{$TOMSCODING_PARTNER_DOMAIN}/
+	redir @admin https://{$TOMSCODING_FEED_DOMAIN}/
+
+	# The partner's own seat, still reachable and no longer on the word Admin.
+	@seat path /admin/seat /admin/seat/
+	redir @seat https://{$TOMSCODING_PARTNER_DOMAIN}/
 
 	# The board's own three numbers — opened a door, began the form, joined —
 	# which are about The Exchange rather than about the counter next door.

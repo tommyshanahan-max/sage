@@ -503,6 +503,10 @@ export const STRINGS = {
      private board should not be told there is a control room behind it.
      land.doors was already the eyebrow above the four rooms. */
   "land.counted":      ["Doors", "门口"],
+  /* The moderation panel, on its own hostname behind its own login. Named for
+     the room rather than for the rank: Doors is who arrived, Panel is what
+     they said, and both together are what "admin" would have meant. */
+  "land.panel":        ["Panel", "后台"],
 
   "peek.head":         ["Inside, right now", "里面此刻的样子"],
   "wait.only":         ["Invite only", "仅限邀请"],
