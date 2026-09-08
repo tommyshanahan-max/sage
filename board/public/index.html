@@ -608,6 +608,12 @@
   .chip[aria-pressed="true"] .n{color:var(--accent-ink);opacity:.75}
   /* Making one, at the end of the row. Dashed, because it is not a filter —
      nothing is behind it until somebody writes the first thing in it. */
+  /* The composer's way to the rooms that are not yours. Reads as a way out of
+     the row rather than as one more room in it — no border, so it cannot be
+     mistaken for a chip that could be ticked. */
+  .chip.quiet{background:none;border-color:transparent;color:var(--ink-2);
+    text-decoration:underline;text-underline-offset:3px}
+  .chip.quiet:hover{color:var(--accent)}
   .chip.new{border-style:dashed;color:var(--ink-2)}
   .chip.new:hover{border-color:var(--accent);color:var(--accent)}
 
@@ -1904,22 +1910,68 @@ const roomLabel = (key) => (ROOMKEYS.includes(key) ? T("room." + key) : key);
  *  which is where both languages put the qualifier. */
 const shortRoom = (key) => roomLabel(key).split(/\s*[—,，、]|——/)[0].trim();
 
-/* The composer's room picker. One choice, and none is allowed: a post with no
- * room lands in "Just asking", which is where a question belongs anyway. */
+/* THE COMPOSER'S ROOM PICKER — YOUR OWN ROOMS FIRST.
+ *
+ * One choice, and none is allowed: a post with no room lands in "Just asking",
+ * which is where a question belongs anyway.
+ *
+ * It used to offer all fourteen at once, as chips, which wraps to three lines
+ * directly above the box somebody opened this to type in. Fourteen options is
+ * not a choice, it is a form — and thirteen of them are wrong for any given
+ * person. Somebody who has written "I am a Manufacturer looking for a
+ * Distributor" is going to post about buying and selling; they are not going
+ * to file it under study partner, and they should not have to read the words
+ * to rule them out.
+ *
+ * So the sentence they already wrote picks the shortlist: their own rooms,
+ * plus Just asking. Two or three chips, on one line, and the common case
+ * needs no reading at all.
+ *
+ * THE REST STAY REACHABLE, behind one word. A room nobody can get to from the
+ * composer is a room nobody is ever first to post in, and this board is small
+ * enough that the empty rooms are the ones that matter most.
+ */
 let POSTROOM = "";
+let POSTMORE = false;
+
+/** The short list, or null when there is no sentence to derive one from — a
+ *  person who has not said what they are gets the full set, because one chip
+ *  reading "Just asking" is not a choice either. */
+function myPostRooms() {
+  const mine = (ME && Array.isArray(ME.rooms) ? ME.rooms : [])
+    .filter((k) => ROOMKEYS.includes(k));
+  const out = [...new Set([...mine, "ask"])];
+  return out.length > 1 ? out : null;
+}
+
 function drawPickRoom() {
   const box = $("pickroom");
   if (!box) return;
   fill(box);
   box.append(el("p", "pickcap", T("post.room")));
+
+  let keys = POSTMORE ? null : myPostRooms();
+  /* Opened from a filtered feed, into a room that is not one of yours — see
+     openSheet. The chip that is already ticked has to be on screen, or the
+     picker shows nothing selected while the post is filed somewhere. */
+  if (keys && POSTROOM && !keys.includes(POSTROOM)) keys = null;
+  const short = Boolean(keys);
+  if (!keys) keys = ROOMKEYS;
+
   const wrap = el("div", "pickwrap");
-  for (const k of ROOMKEYS) {
+  for (const k of keys) {
     const b = el("button", "chip small" + (POSTROOM === k ? " on" : ""));
     b.type = "button";
     b.setAttribute("aria-pressed", String(POSTROOM === k));
     b.textContent = T("room." + k);
     b.addEventListener("click", () => { POSTROOM = POSTROOM === k ? "" : k; drawPickRoom(); });
     wrap.append(b);
+  }
+  if (short) {
+    const more = el("button", "chip small quiet", T("room.another"));
+    more.type = "button";
+    more.addEventListener("click", () => { POSTMORE = true; drawPickRoom(); });
+    wrap.append(more);
   }
   box.append(wrap);
 }
@@ -2106,7 +2158,13 @@ function draw() {
         topic: topic === "\u0000following" ? T("feed.onlyFollowing") : topic,
       })
     : T("board.club");
-  $("boardname").textContent = T("board.name");
+  /* THE MASTHEAD IS THE PRODUCT'S NAME, which is site.title. It read
+     board.name — "The Tutor" — for as long as that was the name, and it kept
+     reading it after the rename, so the front of the app disagreed with the
+     front door, the share card and the icon. board.name stays in the strings
+     because HOUSE still matches on it: posts the house made under the old
+     name keep their mark. See the note above HOUSE. */
+  $("boardname").textContent = T("site.title");
   $("foottext").textContent = T("board.foot") + " ";
   drawMyInvite();
   const shut = MODE === "read";
@@ -2431,7 +2489,7 @@ function card(p) {
     }
     try {
       if (navigator.share) {
-        await navigator.share({ title: T("board.name"), text: (p.note || "").slice(0, 120), url });
+        await navigator.share({ title: T("site.title"), text: (p.note || "").slice(0, 120), url });
         return;
       }
     } catch (e) { /* dismissed: not a failure, say nothing */ return; }
@@ -2667,6 +2725,10 @@ function openSheet(open) {
     try { $("who").value = localStorage.getItem("board:who") || ""; } catch { /* fine */ }
     // Opened from a filtered feed: post into the room you were reading.
     if (topic && ROOMKEYS.includes(topic)) POSTROOM = topic;
+    // Folded back up each time. Somebody who went looking for a room last
+    // week should not be handed all fourteen for the rest of the year.
+    POSTMORE = false;
+    drawPickRoom();
     $("note").focus();
   }
 }
@@ -2737,7 +2799,7 @@ $("ask").addEventListener("submit", async (e) => {
   $("send").disabled = false;
   if (!d) return;
 
-  $("note").value = ""; POSTROOM = "";
+  $("note").value = ""; POSTROOM = ""; POSTMORE = false;
   photo = null; $("shot").hidden = true; $("pic").value = "";
   await load();
   if (d.state === "published") { openSheet(false); return; }

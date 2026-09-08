@@ -27,6 +27,12 @@
 
 export const STRINGS = {
   // ---- the feed ------------------------------------------------------------
+  /* THE OLD NAME, KEPT ON PURPOSE. The masthead reads site.title now — see
+     the note where it is set. This pair is left because HOUSE matches on it,
+     so notices the board posted under its own name before the rename still
+     carry the house mark instead of showing up as a member nobody knows.
+     Do not translate it afresh; it has to stay the string those posts were
+     actually filed under. */
   "board.name":        ["The Tutor", "导师"],
   "board.tagline":     ["Anyone can read. Anyone can post.", "谁都能看，谁都能发。"],
   "board.count":       ["{n} posts up. Anyone can read. Anyone can post.",
@@ -1191,6 +1197,7 @@ export const STRINGS = {
   "room.ask.s":        ["an answer", "一个答案"],
   "room.showMe":       ["Show me", "看什么"],
   "room.andMore":      ["and {n} more", "等 {n} 个"],
+  "room.another":      ["Another room", "其他房间"],
   "room.groupElse":    ["Everything else", "其他"],
 
   "room.head":         ["What are you looking for?", "你在找什么？"],
