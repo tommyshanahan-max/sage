@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="交换">
-<title>The Exchange — find the other half of what you are doing in China</title>
+<title>The Exchange — the other half of doing business in China</title>
 <meta name="description" content="Find the person on the other side — a language exchange, somebody to study with, somebody to build something with. Ask the question you are embarrassed to ask. Nothing to install. No VPN.">
 
 <!-- The card WeChat, and everything else, builds when this link is forwarded.
@@ -33,6 +33,50 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="color-scheme" content="light dark">
 <link rel="stylesheet" href="/site.css">
+
+<style>
+  /* THE HERO IS THE PRODUCT, WORKING.
+     Every earlier version of this page described the board and then showed
+     three drawings of it. The one thing this place does is put a sentence
+     together out of two halves, and a stranger can do that here, before being
+     let in — a better argument than any paragraph, and the same control they
+     meet inside. */
+  .tryit{margin:1.6rem 0 0;padding:1.25rem 1.2rem 1.1rem;background:var(--card);
+    border:1px solid var(--line);border-radius:1.2rem;box-shadow:var(--shadow);
+    max-width:34rem}
+  .sayicon{display:block;width:1.5rem;height:1.5rem;margin:0 0 .6rem;
+    stroke:var(--accent);fill:none;stroke-width:1.9;stroke-linecap:round}
+  .sayline{font-family:var(--serif);font-size:1.14rem;line-height:2.2;color:var(--ink)}
+  .sayline select{font:inherit;font-family:var(--sans);font-size:1rem;font-weight:500;
+    color:var(--accent-ink);background-color:var(--accent);border:0;border-radius:99px;
+    padding:.32rem 1.65rem .32rem .8rem;margin:.1rem .06rem;max-width:100%;
+    -webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right .58rem center;background-size:.92rem}
+  .saylands{margin:.85rem 0 0;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
+  .saylands b{font-weight:500;color:var(--ink)}
+
+  /* The four doors, as doors. Rows rather than chips: each one is a place to
+     go, and a row is a thing you tap where a chip is a thing you pick. */
+  .doors{display:flex;flex-direction:column;margin:.4rem 0 0}
+  .doors a{display:flex;align-items:center;gap:.9rem;padding:1.05rem .1rem;
+    border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+  .doors b{flex:1;font-family:var(--serif);font-weight:400;font-size:1.25rem}
+  .doors small{display:block;font-family:var(--sans);font-size:.85rem;color:var(--muted);
+    margin-top:.1rem}
+  .doors i{font-style:normal;color:var(--muted);font-size:1.2rem}
+  .quiet{background:var(--raise)}
+  /* The footer columns stack, and their contents are lines rather than a
+     paragraph run together. */
+  .foot .col{display:flex;flex-direction:column;gap:.35rem}
+  .foot .col b{font-weight:500}
+  .foot .links{gap:.5rem;margin-top:1rem}
+  .foot .links a{color:var(--accent);text-decoration:none}
+  .foot .links a:hover{text-decoration:underline;text-underline-offset:3px}
+  /* The wordmark is two words and was breaking between them in a narrow
+     header. It is a name; it goes on one line. */
+  .brand span b{white-space:nowrap}
+</style>
 </head>
 <body>
 
@@ -43,14 +87,19 @@
       <span><b id="brandname">The Exchange</b><small>交换</small></span>
     </a>
     <span id="langslot" style="margin-left:auto;display:flex;gap:.6rem;align-items:center"></span>
-    <a class="go" id="navopen" href="/browse">See who is on it</a>
+    <a class="go" id="navopen" href="/enter"></a>
   </div>
 </div>
 
-<!-- While it is true. Somebody who follows a link here should know what
-     they are looking at before they judge how quiet it is. -->
 <p class="invite" id="invite"></p>
 
+<!-- THE HERO IS THE PRODUCT, WORKING.
+     Every other version of this page described the board and then showed
+     three drawings of it. The one thing this place does is put a sentence
+     together out of two halves, and a stranger can do that here, on the
+     public page, before they have been let in — which is a better argument
+     for it than any paragraph, and it is the same control they will meet
+     inside. -->
 <div class="hero">
   <div class="wrap">
     <p class="kicker"><i></i><span id="kicker"></span></p>
@@ -60,368 +109,173 @@
       <p class="under" id="askUnder"></p>
     </div>
 
+    <div class="tryit" id="tryit">
+      <svg class="sayicon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 7h13M20 7h1"/><path d="M3 12h4M11 12h10"/><path d="M3 17h9M16 17h5"/>
+        <circle cx="18" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="14" cy="17" r="2"/>
+      </svg>
+      <div class="sayline" id="sayline"></div>
+      <p class="saylands" id="saylands"></p>
+    </div>
+
     <p class="lede" id="lede"></p>
-    <p class="hanzi" id="hanzi"></p>
-
-    <div class="cta">
-      <a class="btn" id="ctaopen" href="/browse"></a>
-      <a class="btn ghost" id="ctahow" href="#how"></a>
-    </div>
-    <p class="under" id="under"></p>
   </div>
 </div>
 
-<section>
+<!-- WHAT IS BEHIND THE DOOR, SHOWN RATHER THAN DESCRIBED. The shape of the
+     newest posts and none of their words — see feedPeek in wait.js. -->
+<section class="quiet" id="peeksection" hidden>
   <div class="wrap">
-    <div class="eyebrow"><span id="shotEyebrow"></span><i></i></div>
-    <h2 id="shotH2"></h2>
-    <p class="sub" id="shotSub"></p>
-
-    <div class="shots">
-      <!-- Where the app opens: one person, filling the screen, and two ways
-           on. This replaced the directory rather than joining it — the list
-           and the deck are the same people, and a landing page that shows a
-           thing twice is telling you it has run out of things. -->
-      <div class="shot">
-        <div class="phone">
-          <div class="ph-top"><b id="phBrwTitle"></b><i></i></div>
-          <div class="ph-deck">
-            <div class="ph-pc">
-              <span class="ph-init" aria-hidden="true">y</span>
-              <div class="ph-scrim">
-                <p class="ph-pn" id="phBrwName"></p>
-                <p class="ph-pw" id="phBrwWhere"></p>
-                <p class="ph-pg" id="phBrwGoal"></p>
-              </div>
-            </div>
-          </div>
-          <div class="ph-acts"><b id="phBrwHi"></b><u id="phBrwNext"></u></div>
-          <div class="ph-bar"><u></u><em>+</em><u></u></div>
-        </div>
-        <b class="cap" id="shotBrowse"></b>
-        <p class="cap" id="shotBrowseP"></p>
-      </div>
-
-      <!-- The feed. Three cards and the bar underneath, which is the whole
-           screen: read, and press + to add to it. -->
-      <div class="shot">
-        <div class="phone">
-          <div class="ph-top"><b id="phFeedTitle"></b><i></i></div>
-          <div class="ph-body">
-            <div class="ph-card"><p id="phQ1"></p><span id="phQ1who"></span></div>
-            <div class="ph-card"><p id="phQ2"></p><span id="phQ2who"></span></div>
-            <div class="ph-card"><p id="phQ3"></p><span id="phQ3who"></span></div>
-          </div>
-          <div class="ph-bar"><u></u><em>+</em><u></u></div>
-        </div>
-        <b class="cap" id="shotFeed"></b>
-        <p class="cap" id="shotFeedP"></p>
-      </div>
-
-      <!-- Your own page: a cover, a face, a name, and one line about what you
-           are working on. Nothing is asked for beyond that. -->
-      <div class="shot">
-        <div class="phone">
-          <div class="ph-cover"></div>
-          <div class="ph-face">a</div>
-          <p class="ph-name" id="phMeName"></p>
-          <p class="ph-facts" id="phMeFacts"></p>
-          <p class="ph-bio" id="phMeBio"></p>
-          <div class="ph-body">
-            <div class="ph-card"><p id="phMeQ"></p><span id="phMeQwho"></span></div>
-          </div>
-          <div class="ph-bar"><u></u><em>+</em><u></u></div>
-        </div>
-        <b class="cap" id="shotMe"></b>
-        <p class="cap" id="shotMeP"></p>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<div class="band">
-  <section>
-    <div class="wrap">
-      <div class="eyebrow"><span id="liveEyebrow"></span><i></i></div>
-      <h2 id="liveH2"></h2>
-      <p class="sub" id="liveSub"></p>
-      <div class="live" id="live"></div>
-      <div class="more"><a class="btn ghost" id="seeall" href="/feed"></a></div>
-
-      <!-- THE WAY IN, FOR SOMEBODY WHO DOES NOT KNOW ANYBODY. The door needs
-           a password from a member and that is not changing; this is how a
-           stranger becomes somebody a member can decide about. Drawn by
-           wait.js, which the test result page uses too. -->
-      <div id="waitslot"></div>
-    </div>
-  </section>
-</div>
-
-<section>
-  <div class="wrap">
-    <div class="eyebrow"><span id="ddEyebrow"></span><i></i></div>
-    <h2 id="ddH2"></h2>
-    <div class="dd">
-      <div class="ddhead"><span id="ddDo"></span><span id="ddDont"></span></div>
-      <div class="ddrow"><p id="dd1a"></p><p id="dd1b"></p></div>
-      <div class="ddrow"><p id="dd2a"></p><p id="dd2b"></p></div>
-      <div class="ddrow"><p id="dd3a"></p><p id="dd3b"></p></div>
-      <div class="ddrow"><p id="dd4a"></p><p id="dd4b"></p></div>
-      <div class="ddrow"><p id="dd5a"></p><p id="dd5b"></p></div>
-    </div>
+    <div id="peekslot"></div>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <div class="eyebrow"><span id="threeEyebrow"></span><i></i></div>
-    <h2 id="threeH2"></h2>
-    <p class="sub" id="threeSub"></p>
-    <div class="three">
-      <div class="thing"><span class="n">01</span><h3 id="t1h"></h3><p id="t1p"></p><p class="say" id="t1s"></p></div>
-      <div class="thing"><span class="n">02</span><h3 id="t2h"></h3><p id="t2p"></p><p class="say" id="t2s"></p></div>
-      <div class="thing"><span class="n">03</span><h3 id="t3h"></h3><p id="t3p"></p><p class="say" id="t3s"></p></div>
-    </div>
+    <div id="waitslot"></div>
   </div>
 </section>
 
-<div class="band">
-  <section id="how">
-    <div class="wrap">
-      <div class="eyebrow"><span id="howEyebrow"></span><i></i></div>
-      <h2 id="howH2"></h2>
-      <p class="sub" id="howSub"></p>
-      <div class="rules">
-        <div class="rule"><h4 id="r1h"></h4><p id="r1p"></p></div>
-        <div class="rule"><h4 id="r2h"></h4><p id="r2p"></p></div>
-        <div class="rule"><h4 id="r3h"></h4><p id="r3p"></p></div>
-        <div class="rule warn"><h4 id="r4h"></h4><p id="r4p"></p></div>
-      </div>
-    </div>
-  </section>
-</div>
-
-<footer>
+<!-- THE FOUR DOORS. Somebody who came in on the general page and knows what
+     they do can go and stand in the right queue. -->
+<section class="quiet">
   <div class="wrap">
-    <div class="col"><b>The Exchange · 交换</b><span id="footAbout"></span></div>
+    <div class="eyebrow"><span id="doorsEyebrow"></span><i></i></div>
+    <div class="doors" id="doors"></div>
+  </div>
+</section>
+
+<div class="foot">
+  <div class="wrap">
     <div class="col">
-      <b id="footWrong"></b><span id="footWrongP"></span>
-      <span id="contact" hidden></span>
-      <!-- Quiet, and on the product's own domain, so the people who run this
-           have one address to be sent rather than two. It is a redirect to a
-           seat with its own login; nothing here is reachable without it. -->
-      <a class="adminlink" href="/admin" id="adminLink"></a>
-      <a class="adminlink" href="/privacy" id="privacyLink"></a>
+      <b>The Exchange · 交换</b>
+      <span id="footAbout"></span>
+    </div>
+    <div class="col links">
+      <a href="/rules" id="footRules"></a>
+      <a href="/privacy" id="footPrivacy"></a>
     </div>
   </div>
-</footer>
+</div>
 
 <script type="module">
-import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
-import { drawLive, topicColour } from "/live.js";
-import { waitBox, roomFromPath } from "/wait.js";
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+import { waitBox, feedPeek, roomFromPath } from "/wait.js";
 
 const $ = (id) => document.getElementById(id);
-function el(t, c, x) {
-  const n = document.createElement(t);
-  if (c) n.className = c;
-  if (x !== undefined) n.textContent = x;
-  return n;
-}
-function fill(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
+  if (x !== undefined) n.textContent = x; return n; };
+const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
 
-/* Every string on the page, in one function.
+/* ---- the sentence, live on a public page ---------------------------------
  *
- * A repaint rather than a DOM walk swapping text nodes: the page is written
- * once, painted from the dictionary, and repainted on a language change. There
- * is no second code path to go stale, which is the failure a bolted-on
- * translation always eventually has. */
-const TEXT = ["invite","kicker","lede","hanzi","askUnder","under",
-  "liveEyebrow","liveH2","liveSub","threeEyebrow","threeH2","threeSub",
-  "t1h","t1p","t1s","t2h","t2p","t2s","t3h","t3p","t3s",
-  "howEyebrow","howH2","howSub","r1h","r1p","r2h","r2p","r3h","r3p","r4h","r4p",
-  "footAbout","footWrong","footWrongP","adminLink"];
+ * The same two lists the profile form uses. A stranger can move them, and the
+ * line underneath says what that pair would get them — which is the whole
+ * product explained by doing it once.
+ */
+const MAKE = ["director", "writer", "performer", "crew", "founder", "student"];
+const BACK = ["agent", "producer", "brand", "investor", "lawyer", "recruiter"];
+let ME = "director", WANT = "agent";
 
-/* The drawn phones. Their own list because the ids do not match the keys
- * one-for-one: the markup names an element for where it sits, the dictionary
- * names a string for what it says, and forcing those to be the same word makes
- * one of them wrong. */
-const SHOTS = {
-  shotEyebrow: "shot.eyebrow", shotH2: "shot.h2", shotSub: "shot.sub",
-  shotFeed: "shot.feed", shotFeedP: "shot.feedP",
-  shotMe: "shot.me", shotMeP: "shot.meP",
-  shotBrowse: "shot.browse", shotBrowseP: "shot.browseP",
-  phFeedTitle: "shot.feed", phBrwTitle: "shot.browse",
-  phBrwName: "shot.brwName", phBrwWhere: "shot.brwWhere", phBrwGoal: "shot.brwGoal",
-  phBrwHi: "brw.hello", phBrwNext: "brw.next",
-  phQ1: "shot.q1", phQ1who: "shot.q1who",
-  phQ2: "shot.q2", phQ2who: "shot.q2who",
-  phQ3: "shot.q3", phQ3who: "shot.q3who",
-  phMeName: "shot.meName", phMeFacts: "shot.meFacts", phMeBio: "shot.meBio",
-  phMeQ: "shot.q1", phMeQwho: "shot.meReplies",
-};
-
-function paint() {
-  document.title = T("site.title") + " — " + T("site.kicker");
-  // Not painted from the dictionary: a name is not translated, and
-  // site.title is "交换" in Chinese — the same word the <small>
-  // beneath it already carries, printed twice.
-  for (const id of TEXT) $(id).textContent = T("site." + id);
-  $("privacyLink").textContent = T("pv.title");
-  for (const [id, key] of Object.entries(SHOTS)) $(id).textContent = T(key);
-  // The two-column list: its keys live under dd.* rather than site.*, since it
-  // is content rather than chrome and reads as a block.
-  $("ddEyebrow").textContent = T("dd.eyebrow");
-  $("ddH2").textContent = T("dd.h2");
-  $("ddDo").textContent = T("dd.do");
-  $("ddDont").textContent = T("dd.dont");
-  for (let i = 1; i <= 5; i++) {
-    $("dd" + i + "a").textContent = T("dd." + i + "a");
-    $("dd" + i + "b").textContent = T("dd." + i + "b");
+function rolePick(now, onPick, wanting) {
+  const sel = document.createElement("select");
+  for (const [half, keys] of [["say.make", MAKE], ["say.back", BACK]]) {
+    const g = document.createElement("optgroup");
+    g.label = T(half);
+    for (const k of keys) {
+      const o = el("option", null, T((wanting ? "role.a." : "role.") + k));
+      o.value = k;
+      if (k === now) o.selected = true;
+      g.append(o);
+    }
+    sel.append(g);
   }
-  $("navopen").textContent = T("site.open");
-  $("ctaopen").textContent = T("site.open");
-  $("ctahow").textContent = T("site.how");
-  $("seeall").textContent = T("site.seeAll");
-  askNow(true);
-  drawLive($("live"), POSTS);
+  sel.addEventListener("change", () => onPick(sel.value));
+  return sel;
 }
 
-
-/* ---- the one moving thing on the page --------------------------------------
- *
- * Real questions, cycling. The fastest way to say what a board is for is to
- * show somebody asking — a feature list says "you can ask questions", this
- * says what the questions are.
- *
- * It stops for anyone who asked their system for less motion, and it stops
- * when the tab is not being looked at, because a timer running in a background
- * tab on a phone is somebody's battery. */
-const ASKS = ["site.ask1","site.ask2","site.ask3","site.ask4","site.ask5","site.ask6"];
-let askAt = 0, askTimer = null;
-const stillMotion = window.matchMedia
-  && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-function askNow(immediate) {
-  const q = $("asking");
-  if (immediate) { q.textContent = T(ASKS[askAt]); return; }
-  q.classList.add("fade");
-  setTimeout(() => {
-    askAt = (askAt + 1) % ASKS.length;
-    q.textContent = T(ASKS[askAt]);
-    q.classList.remove("fade");
-  }, stillMotion ? 0 : 350);
+function drawSay() {
+  const line = $("sayline");
+  fill(line);
+  line.append(document.createTextNode(T("say.iam") + " "));
+  line.append(rolePick(ME, (v) => { ME = v; drawSay(); }, false));
+  line.append(document.createTextNode(" " + T("say.lookingFor") + " "));
+  line.append(rolePick(WANT, (v) => { WANT = v; drawSay(); }, true));
+  /* One string with both halves in it rather than three glued together: an
+     English plural is an "s" on the end and a Chinese one is nothing at all,
+     and a sentence assembled from fragments is a sentence that reads wrong in
+     one of the two languages. */
+  $("saylands").textContent = T("land.lands", {
+    want: T("role.p." + WANT), me: T("role.a." + ME),
+  });
 }
-function askRun(on) {
-  clearInterval(askTimer);
-  askTimer = null;
-  if (on && !stillMotion) askTimer = setInterval(() => askNow(false), 4200);
+
+/* ---- the doors ---------------------------------------------------------- */
+const DOORS = ["film", "invest", "raise", "other"];
+function drawDoors() {
+  const box = $("doors");
+  fill(box);
+  for (const k of DOORS) {
+    const a = el("a");
+    a.href = "/r/" + k;
+    const b = el("b", null, T("waitroom." + k));
+    b.append(el("small", null, T("door." + k + ".under")));
+    a.append(b, el("i", null, "›"));
+    box.append(a);
+  }
 }
-document.addEventListener("visibilitychange", () => askRun(!document.hidden));
 
-// ---- the newest few, live from the board ------------------------------------
-let POSTS = [];
+/* ---- the words ---------------------------------------------------------- */
+function paint() {
+  document.title = T("site.title") + " — " + T("land.title");
+  $("brandname").textContent = T("site.title");
+  $("navopen").textContent = T("land.enter");
+  $("invite").textContent = T("land.invite");
+  $("kicker").textContent = T("land.kicker");
+  $("asking").textContent = T("land.head");
+  $("askUnder").textContent = T("land.under");
+  $("lede").textContent = T("land.lede");
+  $("doorsEyebrow").textContent = T("land.doors");
+  $("footAbout").textContent = T("land.foot");
+  $("footRules").textContent = T("land.rules");
+  $("footPrivacy").textContent = T("land.privacy");
+  drawSay();
+  drawDoors();
+}
 
-
-// ---- go ---------------------------------------------------------------------
-setLang(pickLang());
-$("waitslot").append(waitBox());
-
-/* ONE DOOR, DIFFERENT SIGNS.
- *
- * /r/film is this page with the room written into it. Only the eyebrow, the
- * headline and the line under it change — everything below is the same board,
- * because it IS the same board. A filmmaker who joins here is introduced to
- * the lawyer, the fixer and the person with a factory, which is exactly what a
- * separate film platform would have walled off.
- *
- * Done after the first paint rather than instead of it: the ordinary front
- * door is the default, and a room only overwrites the three lines it has
- * better words for. */
+/* A room door writes over the three lines it has better words for. After
+   paint, never instead of it — see the note in the server for /r/:room. */
 function paintRoom() {
   const key = roomFromPath();
   if (!key) return;
   const name = T("waitroom." + key);
-  document.title = name + " \u00b7 " + T("site.title");
-  const k = $("kicker");
-  if (k) k.textContent = name + " \u00b7 " + T("wait.only");
-  const q = $("asking");
-  if (q) q.textContent = T("door." + key + ".head");
-  const u = $("askUnder");
-  if (u) u.textContent = T("door." + key + ".under");
-  const l = $("lede");
-  if (l) l.textContent = T("door." + key + ".say");
+  document.title = name + " · " + T("site.title");
+  $("kicker").textContent = name + " · " + T("wait.only");
+  $("asking").textContent = T("door." + key + ".head");
+  $("askUnder").textContent = T("door." + key + ".under");
+  $("lede").textContent = T("door." + key + ".say");
 }
 
-/* AFTER the general paint and after every language change, never instead of
-   either. paint() writes the ordinary front door into those three elements;
-   this is the room writing over the three it has better words for, and doing
-   it first meant paint() promptly undid it. */
+setLang(pickLang());
 $("langslot").append(langButton(() => { paint(); paintRoom(); }));
 paint();
 paintRoom();
-/* THE QUESTION STOPS ROTATING ON A ROOM DOOR.
- *
- * The front door cycles six questions because it is asking "what is this
- * place" and six answers say it better than one. A room door has already been
- * answered — the person followed a film link — so it asks the one question
- * that room is for, and a carousel would wipe it four seconds later, which is
- * exactly what it did the first time this ran. */
-askRun(!roomFromPath());
+$("waitslot").append(waitBox());
 
-/* WHAT THIS PAGE MAY SHOW, NOW THAT ANYBODY CAN READ IT.
- *
- * It used to draw the last few posts off /api/board. That is behind the door,
- * so from outside it now answers 403 and the section quietly stayed empty —
- * no leak, but no page either. And if the door were ever opened, the same code
- * would put the whole feed on a public URL.
- *
- * So it reads /api/hello instead, which hands out exactly one post: the one
- * chosen from the box, with the words and the account it went out under and
- * nothing else. One post is also the better advertisement — a feed says "here
- * is a lot of content", one question says "somebody here is a person".
- */
-fetch("/api/hello")
+/* The board out of focus. Words never leave the server — the shape of the
+   newest posts and nothing else. */
+const asked = roomFromPath();
+fetch("/api/hello" + (asked ? "?room=" + encodeURIComponent(asked) : ""))
   .then((r) => r.json())
   .then((d) => {
-    POSTS = (d && d.featured) || [];
-    drawLive($("live"), POSTS);
+    if (!d || !Array.isArray(d.peek) || !d.peek.length) return;
+    // Shown only when there is something to show. An empty band of raised
+    // grey is a section that failed to load, which is the wrong thing to put
+    // between the pitch and the door.
+    $("peeksection").hidden = false;
+    $("peekslot").append(feedPeek(d.peek, T("peek.head")));
   })
-  .catch(() => drawLive($("live"), []));
-
-fetch("/api/contact")
-  .then((r) => r.json())
-  .then((d) => {
-    if (!d || !d.contact) return;
-    const box = $("contact");
-    box.hidden = false;
-    box.append(document.createTextNode(" " + T("board.contact") + " "));
-    const a = document.createElement("a");
-    a.href = /@/.test(d.contact) ? "mailto:" + d.contact : d.contact;
-    a.textContent = d.contact;
-    box.append(a, document.createTextNode("."));
-  })
-  .catch(() => { /* no contact set: say nothing */ });
-</script>
-
-
-<script>
-/* Registering the worker.
- *
- * Classic script rather than a module so this runs before anything else and
- * on browsers that do not do modules — the worker is what makes the board
- * survive a bad connection, which is exactly the browser least likely to be
- * new.
- *
- * Deferred to load: registration competes with the page's own requests, and
- * the first paint matters more than the second visit.
- */
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => { /* not fatal */ });
-  });
-}
+  .catch(() => { /* the page is the same page without it */ });
 </script>
 </body>
 </html>

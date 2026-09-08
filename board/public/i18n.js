@@ -408,6 +408,22 @@ export const STRINGS = {
   "role.lawyer":       ["Lawyer", "律师"],
   "role.recruiter":    ["Recruiter", "招聘方"],
 
+  /* And in the plural, for "you would come up for agents". English needs three
+     forms of the same word in one sentence and Chinese needs one; writing them
+     out is shorter than the code that would guess. */
+  "role.p.director":   ["directors", "导演"],
+  "role.p.writer":     ["writers", "编剧"],
+  "role.p.performer":  ["performers", "演员"],
+  "role.p.crew":       ["crew", "剧组的人"],
+  "role.p.founder":    ["founders", "创始人"],
+  "role.p.student":    ["students", "学生"],
+  "role.p.agent":      ["agents", "经纪人"],
+  "role.p.producer":   ["producers", "制片人"],
+  "role.p.brand":      ["brands", "品牌方"],
+  "role.p.investor":   ["investors", "投资人"],
+  "role.p.lawyer":     ["lawyers", "律师"],
+  "role.p.recruiter":  ["recruiters", "招聘方"],
+
   "role.a.director":   ["a Director", "导演"],
   "role.a.writer":     ["a Writer", "编剧"],
   "role.a.performer":  ["a Performer", "演员"],
@@ -420,6 +436,38 @@ export const STRINGS = {
   "role.a.investor":   ["an Investor", "投资人"],
   "role.a.lawyer":     ["a Lawyer", "律师"],
   "role.a.recruiter":  ["a Recruiter", "招聘方"],
+
+  /* THE FRONT PAGE.
+     "Airbnb meets Tinder" is a good line to say to somebody across a table
+     and a bad one to print: the first association is hotels and the second is
+     one-night stands, and neither is what a person doing business in China
+     wants to be told this is. The mechanism said plainly is the same claim
+     and carries none of that — you are vouched for by a member, and nothing
+     happens between two people until each is what the other is looking for. */
+  "land.title":        ["the other half of doing business in China",
+                        "在中国做事，你缺的那一半"],
+  "land.kicker":       ["Invite only · doing business in China", "邀请制 · 在中国做事"],
+  "land.head":         ["Who are you missing?", "你缺的是谁？"],
+  "land.under":        ["Say it in one line.", "一句话说清楚。"],
+  "land.lede": [
+    "Members bring members, and their name stays on whoever they brought. Nothing happens between two people until each of them is what the other is looking for.",
+    "成员带成员，带进来的人身上一直挂着带他进来那个人的名字。而两个人之间不会发生任何事，除非彼此正好是对方要找的人。",
+  ],
+  /* Under the two pills, in the reader's own terms — the product explained by
+     doing it once rather than described. */
+  "land.lands": [
+    "You would come up for {want} who are looking for {me}.",
+    "你会出现在正在找{me}的{want}面前。",
+  ],
+  "land.enter":        ["I have a password", "我有口令"],
+  "land.invite":       ["Invite only — a member has to bring you.", "邀请制——得有成员带你进来。"],
+  "land.doors":        ["Which one are you here for", "你是为哪一件来的"],
+  "land.foot": [
+    "A private board for people connecting in China, and with China.",
+    "一个私密板子，给在中国、以及跟中国打交道的人。",
+  ],
+  "land.rules":        ["House rules", "这里的规矩"],
+  "land.privacy":      ["What is kept", "我们保留什么"],
 
   "peek.head":         ["Inside, right now", "里面此刻的样子"],
   "wait.only":         ["Invite only", "仅限邀请"],
