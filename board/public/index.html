@@ -483,8 +483,36 @@
      a number people cannot spend reads as a promise nobody made. */
   .stake{margin:1rem 0 0;padding:.9rem 1rem;border:1px solid var(--hair);
     border-radius:.8rem;background:var(--paper)}
+  .stakehead{display:flex;align-items:center;gap:.7rem}
   .stake .lab{display:block;font-size:.7rem;letter-spacing:.14em;
     text-transform:uppercase;color:var(--muted)}
+  /* A pill, because it is a countdown and not a label. */
+  .stake .left{margin-left:auto;padding:.2rem .6rem;border-radius:99px;
+    background:var(--accent-soft);color:var(--accent);font-size:.72rem;
+    font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+  /* THE RING. Drawn with a dash on a circle rather than an arc path: one
+     number sets it, it animates for free, and there is no arithmetic to get
+     wrong at 0% or 100%. Rotated so it starts at the top. */
+  .stake .ring{position:relative;width:9.5rem;height:9.5rem;margin:1rem auto .2rem}
+  .stake .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .stake .ring circle{fill:none;stroke-width:9;stroke-linecap:round;
+    r:52px;cx:60px;cy:60px}
+  .stake .ring .track{stroke:var(--hair)}
+  .stake .ring .fill{stroke:var(--accent);
+    stroke-dasharray:327; stroke-dashoffset:327;
+    transition:stroke-dashoffset .6s ease}
+  .stake .ring .mid{position:absolute;inset:0;display:flex;
+    flex-direction:column;align-items:center;justify-content:center;gap:.1rem}
+  .stake .ring .mid b{font-family:var(--serif);font-weight:400;font-size:1.6rem;
+    color:var(--ink);font-variant-numeric:tabular-nums;line-height:1}
+  .stake .ring .mid i{font-style:normal;font-size:.72rem;color:var(--muted)}
+  @media (prefers-reduced-motion:reduce){
+    .stake .ring .fill{transition:none}
+  }
+  .stake .total{display:flex;margin:.6rem 0 0;padding-top:.6rem;
+    border-top:1px solid var(--hair);font-size:.86rem;color:var(--muted)}
+  .stake .total b{margin-left:auto;color:var(--ink);font-weight:600;
+    font-variant-numeric:tabular-nums}
   .stake .pct{display:block;margin:.25rem 0 0;font-family:var(--serif);
     font-weight:400;font-size:1.9rem;line-height:1.1;color:var(--ink);
     font-variant-numeric:tabular-nums}
@@ -1440,10 +1468,29 @@
          it. Its own request, and the whole block stays away when the board has
          no promise attached to it. -->
     <div class="stake" id="stake" hidden>
-      <span class="lab" id="stakelab"></span>
+      <div class="stakehead">
+        <span class="lab" id="stakelab"></span>
+        <!-- How many are left, at the top where it is read first. It is the
+             number that makes anybody act, and it was buried at the end of a
+             paragraph nobody reaches. -->
+        <b class="left" id="stakeleft" hidden></b>
+      </div>
       <b class="pct" id="stakepct"></b>
       <span class="seat" id="stakeseat"></span>
+      <!-- The share as a ring. A percentage is a fact and a ring is a
+           quantity: it says at a glance whether this is most of the board or
+           a sliver of it, which is the thing somebody actually wants to know
+           and cannot get from four characters. aria-hidden because the same
+           number is already read out above it. -->
+      <div class="ring" id="stakering" hidden aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <circle class="track" cx="60" cy="60" r="52"></circle>
+          <circle class="fill" id="stakearc" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <span class="mid"><b id="stakeringpct"></b><i id="stakeringlab"></i></span>
+      </div>
       <ul class="parts" id="stakeparts"></ul>
+      <p class="total" id="staketotal" hidden></p>
       <p class="when" id="stakewhen"></p>
       <p class="note" id="stakenote"></p>
     </div>
@@ -3499,6 +3546,27 @@ function drawStake() {
     ? T("stake.seat", { n: STAKE.seat, seats: STAKE.seats })
     : "";
 
+  /* THE COUNTDOWN, at the top. Shown to somebody outside the hundred too:
+     they can still tell whoever they were about to invite to hurry. */
+  const left = $("stakeleft");
+  left.hidden = Boolean(STAKE.shut) || !(STAKE.left > 0);
+  left.textContent = STAKE.left === 1
+    ? T("stake.last") : T("stake.left", { n: STAKE.left });
+
+  /* THE RING. A percentage is a fact; a ring is a quantity, and the quantity
+     is what somebody is actually asking — whether this is most of the board
+     or a sliver of it. Drawn as a dash on a circle so one number sets it and
+     there is no arithmetic to get wrong at either end. */
+  const ring = $("stakering");
+  ring.hidden = !inCohort;
+  if (inCohort) {
+    const round = 2 * Math.PI * 52;
+    const share = Math.max(0, Math.min(100, Number(STAKE.share) || 0));
+    $("stakearc").style.strokeDashoffset = String(round - (share / 100) * round);
+    $("stakeringpct").textContent = share + "%";
+    $("stakeringlab").textContent = T("stake.ring");
+  }
+
   const ul = $("stakeparts");
   fill(ul);
   if (inCohort) {
@@ -3515,21 +3583,25 @@ function drawStake() {
     }
   }
 
+  /* The points themselves, under the rows they add up to. A share is a
+     comparison and a total is a thing you did; both are worth showing. */
+  const total = $("staketotal");
+  total.hidden = !inCohort;
+  if (inCohort) {
+    fill(total);
+    total.append(document.createTextNode(T("stake.total")));
+    total.append(el("b", null, String(STAKE.points)));
+  }
+
   $("stakewhen").textContent = STAKE.shut
     ? T("stake.frozen", { date: STAKE.until })
     : inCohort ? T("stake.moves", { date: STAKE.until }) : T("stake.none");
   /* HOW MANY ARE LEFT, under the working, because it is the reason to move —
      and it is true for somebody outside the cohort too, who can still tell
      the person they were about to invite to hurry. */
-  if (!STAKE.shut && STAKE.left > 0) {
-    /* A Chinese sentence ends in 。and takes no space before it; an English
-       one takes a space and a full stop. Appending the English shape to both
-       is the sort of seam that makes a page look translated. */
-    const zh = lang() === "zh";
-    $("stakewhen").textContent += (zh ? "" : " ")
-      + T(STAKE.left === 1 ? "stake.last" : "stake.left", { n: STAKE.left })
-      + (zh ? "。" : ".");
-  }
+  /* The seats left used to be appended to the paragraph above. It is the pill
+     at the top now: the number that makes anybody act does not belong at the
+     end of the sentence they stopped reading. */
   $("stakenote").textContent = inCohort ? T("stake.note") : "";
 }
 

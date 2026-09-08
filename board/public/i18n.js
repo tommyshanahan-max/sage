@@ -1431,6 +1431,11 @@ export const STRINGS = {
      point turns into is a promise on paper somewhere else, and a screen that
      hints at money before that paper exists is a screen that lies. */
   "stake.head":        ["Your seat", "你的位置"],
+  /* Under the number in the ring. Share, never ownership: what a point turns
+     into is a promise on paper somewhere else, and a word that says otherwise
+     on the screen is the one thing the note underneath then has to walk back. */
+  "stake.ring":        ["share", "占比"],
+  "stake.total":       ["Total points", "总积分"],
   "stake.share":       ["{n}% of the board", "占整个板子的 {n}%"],
   "stake.seat":        ["Seat {n} of {seats}", "第 {n} 号，共 {seats} 个"],
   "stake.left":        ["{n} seats left", "还剩 {n} 个位置"],
