@@ -265,7 +265,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * the person, that is a decision to make on purpose here, not a side effect
  * of a route somebody opened to fix an image.
  */
-const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|api\/ask|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|api\/ask|api\/tally|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -1573,6 +1573,63 @@ app.get("/api/people", async (req, res) => {
  *  is waiting" on a page that anybody can read is a worse advertisement than
  *  no number at all, as well as being nearly a name. */
 const WAITING_FLOOR = 5;
+
+/* COUNTING WHO CAME WITHOUT WRITING DOWN WHO CAME.
+ *
+ * The board could not answer the only question worth asking after somebody
+ * posts a link: did anybody come, and did they stop at the form. There was no
+ * counter of any kind, and the numbers page next door belongs to a different
+ * product entirely.
+ *
+ * Three integers a day per room — opened the door, began typing, joined the
+ * list — and nothing else. No address, no device id, no user agent, no row per
+ * visit. There is deliberately nothing here capable of holding a person, which
+ * is why it needs no consent banner and no retention policy: the record cannot
+ * identify anybody because the record is a number.
+ *
+ * WHY THE PAGE REPORTS ITSELF rather than the server counting requests. The
+ * server sees every crawler, every preview fetch by WeChat, every uptime
+ * check; counting those makes a number that goes up when nobody came. This
+ * fires from a browser that ran the page's script, which is the nearest thing
+ * to a person that can be measured without measuring people.
+ *
+ * IT CAN BE INFLATED, by anybody who wants to sit and press. That is accepted:
+ * the alternative is a fingerprint, and a number this is used to decide
+ * whether to post again does not need to survive an adversary. The rate cap
+ * below is against an accident — a page in a reload loop — not an attacker.
+ */
+const TALLY = new Map();
+const TALLY_BURST = 240;
+setInterval(() => TALLY.clear(), 60_000).unref?.();
+
+app.post("/api/tally", express.json({ limit: "1kb" }), async (req, res) => {
+  const what = String(req.body?.what || "");
+  if (!["door", "form", "joined"].includes(what)) return res.json({ ok: true });
+  const room = store.WAITROOMS.includes(String(req.body?.room || ""))
+    ? String(req.body.room) : "other";
+
+  /* One bucket for everybody, not one per address: keeping a count per IP
+     would mean keeping the addresses, which is the thing this route exists to
+     avoid. A shared cap is cruder and holds nothing. */
+  const n = (TALLY.get("all") || 0) + 1;
+  TALLY.set("all", n);
+  if (n > TALLY_BURST) return res.json({ ok: true });
+
+  const day = new Date().toISOString().slice(0, 10);
+  await change((board) => {
+    const key = day + "|" + room + "|" + what;
+    board.counts[key] = (board.counts[key] || 0) + 1;
+    return { ok: true };
+  });
+  res.json({ ok: true });
+});
+
+/** The tally, for whoever runs the board. Never for a member. */
+app.get("/api/counts", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  res.json({ counts: board.counts || {} });
+});
 
 app.get("/api/hello", async (req, res) => {
   const board = await store.load(FILE);

@@ -939,6 +939,31 @@ export function sentToday(notes, me, now = new Date(), skip = null) {
     && !(skip && skip(n.to))).length;
 }
 
+/* THE DOOR TALLY.
+ *
+ * How many people opened a room door, how many began the form, how many
+ * finished it — by day and by room, as three integers. That is the whole
+ * record: no address, no device, no browser, no row per visit. It cannot
+ * answer "who came" because nothing here is capable of storing a who, which
+ * is the same rule the rest of this file follows and the reason the number
+ * can be looked at without anybody's permission.
+ *
+ * Keyed "YYYY-MM-DD|room|what" so a day rolls off by deleting a prefix, and
+ * so two servers writing the same key add rather than collide.
+ */
+const TALLY_WHAT = ["door", "form", "joined"];
+export function cleanCounts(raw) {
+  const out = {};
+  if (!raw || typeof raw !== "object") return out;
+  for (const [k, v] of Object.entries(raw)) {
+    const m = /^(\d{4}-\d{2}-\d{2})\|([a-z]{1,10})\|([a-z]{1,10})$/.exec(String(k));
+    if (!m || !TALLY_WHAT.includes(m[3])) continue;
+    const n = Math.max(0, Math.min(10_000_000, Math.floor(Number(v) || 0)));
+    if (n > 0) out[k] = n;
+  }
+  return out;
+}
+
 export function cleanBoard(raw) {
   const rows = Array.isArray(raw) ? raw : Array.isArray(raw?.posts) ? raw.posts : [];
   const seen = new Set();
@@ -1084,7 +1109,7 @@ export function cleanBoard(raw) {
   }
 
   return { posts, people, follows, notes, wants, invites, cards, grants, waits,
-    shuts, groups, says };
+    shuts, groups, says, counts: cleanCounts(raw?.counts) };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an

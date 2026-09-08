@@ -19,6 +19,34 @@
 
 import { T } from "/i18n.js";
 
+/* THREE NUMBERS, SO A POSTED LINK CAN BE ANSWERED FOR.
+ *
+ * Somebody posts a room door into a group and there is no way to know whether
+ * anybody came, or whether they came and the form lost them. This says so: the
+ * door was opened, the form was begun, the list was joined — as a count by day
+ * and by room and nothing else. No address, no device, no browser. The server
+ * keeps three integers; there is nothing in the record capable of naming a
+ * person, which is why it needs no banner and no permission.
+ *
+ * Sent from the page rather than counted at the server on purpose: the server
+ * sees every crawler, every WeChat preview fetch, every uptime probe, and a
+ * number that rises when nobody came is worse than no number. Fire and forget
+ * — nothing waits on it and a failure is silent, because a counter that can
+ * hold up a form is a counter that costs more than it is worth.
+ */
+const told = new Set();
+export function tally(what, room) {
+  if (told.has(what)) return;             // a reload loop is one visit, not fifty
+  told.add(what);
+  try {
+    fetch("/api/tally", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ what, room: room || roomFromPath() || "other" }),
+      keepalive: true,
+    }).catch(() => { /* it is a count, not the product */ });
+  } catch { /* older browsers: the page still works */ }
+}
+
 /** The room a /r/... address names, or "" anywhere else. One place, so the
  *  page, the count and the form cannot come to different conclusions about
  *  which door somebody walked through. */
@@ -159,6 +187,12 @@ export function waitBox() {
   const go = el("button", "btn", T("wait.go"));
   go.type = "submit";
   form.append(name, reach, why, go);
+  /* BEGUN, not focused. A tap that lands in a box and goes nowhere is not
+     somebody trying; a typed character is. Once per page — the counter that
+     matters is how many people started, not how many keys they pressed. */
+  for (const f of [name, reach, why]) {
+    f.addEventListener("input", () => tally("form", room), { once: true });
+  }
   box.append(form);
 
   const said = el("p", "said");
@@ -209,6 +243,11 @@ export function waitBox() {
       if (!r.ok) throw new Error("no");
       // Somebody who is already a member and has landed here anyway.
       tell(d.already ? T("wait.already") : d.again ? T("wait.again") : T("wait.done"));
+      /* Counted only when a row was actually made. A member who wandered in
+         here, and somebody correcting an answer they already gave, are both
+         real events and neither is a person joining the queue — counting them
+         would make the number the one thing it must not be, which is flattering. */
+      if (!d.already && !d.again) tally("joined", room);
       if (!d.already) { form.hidden = true; count.hidden = true; }
       // The promise stays after sending: it is about what was just handed over.
     } catch { tell(T("act.again"), true); }

@@ -245,7 +245,12 @@
 
 <script type="module">
 import { T, setLang, pickLang, langButton } from "/i18n.js";
-import { waitBox, feedPeek, roomFromPath, admitted } from "/wait.js";
+import { waitBox, feedPeek, roomFromPath, admitted, tally } from "/wait.js";
+
+/* SOMEBODY OPENED THIS DOOR. Reported after the page is up rather than at the
+   top of the script, so a browser that fell over on the way never counts as a
+   visit — and not at all for a member, who is not somebody arriving. */
+admitted().then((yes) => { if (!yes) tally("door"); }).catch(() => tally("door"));
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
