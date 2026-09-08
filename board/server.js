@@ -2670,6 +2670,49 @@ app.get("/api/count", async (_req, res) => {
   });
 });
 
+/* WHY THESE TWO CANNOT TALK.
+ *
+ * "I am following Hugo, why can we not connect?" is the most reasonable
+ * question anybody asks about this board, and until now the only way to answer
+ * it was to guess. A match is three separate tests and a person can pass two
+ * of them and see nothing, with no screen anywhere saying which one they
+ * failed — because the honest screen for it would be a screen about somebody
+ * else's settings.
+ *
+ * So the answer lives here, where the operator can ask for it, and it calls
+ * the very same matched()/scopeFits()/sharedRooms() the product calls. A
+ * diagnostic that reimplements the rule is a diagnostic that will one day be
+ * confidently wrong.
+ *
+ *   make pair A="Tom" B="Hugo"
+ *
+ * Names, not device hashes: the operator has names. Nothing about either
+ * person's device leaves this route.
+ */
+app.get("/api/pair", admin, async (req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const find = (name) => board.people.find(
+    (q) => (q.handle || "").toLowerCase() === String(name || "").trim().toLowerCase());
+  const a = find(req.query.a), b = find(req.query.b);
+  if (!a || !b) {
+    return res.status(404).json({ error: "who", missing: [!a && req.query.a, !b && req.query.b].filter(Boolean) });
+  }
+  const follows = (x, y) => board.follows.some((f) => f.by === x.by && f.who === y.id);
+  const shared = store.sharedRooms(a, b);
+  res.json({
+    a: { name: a.handle, rooms: a.rooms || [], where: a.where || "cn", wants: a.wants || "any",
+         looking: Boolean(a.looking), state: a.state },
+    b: { name: b.handle, rooms: b.rooms || [], where: b.where || "cn", wants: b.wants || "any",
+         looking: Boolean(b.looking), state: b.state },
+    aFollowsB: follows(a, b),
+    bFollowsA: follows(b, a),
+    scopeFits: store.scopeFits(a, b),
+    shared: shared.map((x) => x.mine + " \u2194 " + x.theirs),
+    matched: matched(board, a.by, b.by),
+  });
+});
+
 app.get("/api/public", admin, async (req, res) => {
   const board = await store.load(FILE);
   if (req.query.queue !== "1") {

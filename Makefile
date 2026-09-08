@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: who admit waiting waiting-in waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: pair who admit waiting waiting-in waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -290,6 +290,16 @@ standing: ## Who can bring somebody in, and who cannot yet
 	@# they have a code today and every test they are failing.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/standing.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+
+pair: ## Why two people cannot talk yet — make pair A="Tom" B="Hugo"
+	@# A match is three tests and somebody can pass two of them and see
+	@# nothing. There is no screen that says which one failed, and there
+	@# should not be — it would be a screen about somebody else's settings.
+	@# This says which, and whose it is to fix.
+	@test -n "$(A)" && test -n "$(B)" || { echo 'Two names:  make pair A="Tom" B="Hugo"'; exit 2; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/pair.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --a "$(A)" --b "$(B)"
 
 invites: ## Every invite, and what became of it
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
