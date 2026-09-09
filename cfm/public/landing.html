@@ -9,171 +9,231 @@
   :root{
     --ground:#F3F5F2; --card:#FFFFFF; --ink:#0F1512; --ink2:#46524B;
     --mut:#8A958E; --line:#DDE2DD; --go:#1E7A59; --soft:#E3EFE9;
+    --deep:#0B120E; --deepink:#EAF1EC; --deepdim:#93A69B; --deepline:#1E2A23;
+    --glow:#4FBB8E;
   }
   :root:not([data-theme="light"]){ @media (prefers-color-scheme: dark){
     --ground:#0C110E; --card:#141A16; --ink:#E9EFEA; --ink2:#A6B2AA;
     --mut:#6E7B74; --line:#232C27; --go:#4FBB8E; --soft:#152922;
+    --deep:#060A08; --deepline:#1A241E;
   }}
   :root[data-theme="dark"]{
     --ground:#0C110E; --card:#141A16; --ink:#E9EFEA; --ink2:#A6B2AA;
     --mut:#6E7B74; --line:#232C27; --go:#4FBB8E; --soft:#152922;
+    --deep:#060A08; --deepline:#1A241E;
   }
-  *{box-sizing:border-box}
-  body{background:var(--ground);color:var(--ink);
-    font:17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    -webkit-font-smoothing:antialiased}
-  .wrap{max-width:640px;margin:0 auto;padding:clamp(2.5rem,7vw,5.5rem) 1.5rem 4rem}
-  .mark{display:flex;align-items:center;gap:.6rem;margin-bottom:clamp(2.5rem,7vw,4.5rem)}
-  .mark i{width:34px;height:34px;border-radius:9px;background:var(--go);
-    display:grid;place-items:center;font-style:normal;color:#fff;
-    font:400 19px/1 "Instrument Serif",Georgia,serif}
-  .mark b{font:400 21px/1 "Instrument Serif",Georgia,serif;letter-spacing:.01em}
-  h1{font:400 clamp(2.4rem,7.5vw,3.6rem)/1.08 "Instrument Serif",Georgia,serif;
-    margin:0 0 1.1rem;letter-spacing:-.015em;text-wrap:balance}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--ground);color:var(--ink)}
+  body{font:17px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,
+    Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:640px;margin:0 auto;padding:0 1.5rem}
+  .serif{font-family:"Instrument Serif",Georgia,"Times New Roman",serif;font-weight:400}
+
+  /* ---- mark + hero ---- */
+  header{padding:clamp(2.2rem,7vw,4rem) 0 0}
+  .mark{display:flex;align-items:center;gap:.6rem;margin-bottom:clamp(3rem,10vw,5rem)}
+  .mark i{width:34px;height:34px;border-radius:9px;background:var(--go);display:grid;
+    place-items:center;font-style:normal;color:#fff;font-size:19px}
+  .mark b{font-size:21px;letter-spacing:.01em;font-weight:400}
+  h1{font-size:clamp(2.5rem,9vw,3.9rem);line-height:1.04;letter-spacing:-.02em;
+    text-wrap:balance;margin-bottom:1.1rem}
   h1 em{font-style:italic;color:var(--go)}
-  .lede{margin:0;color:var(--ink2);font-size:clamp(1.05rem,2.6vw,1.25rem);max-width:34ch}
-  .rule{height:1px;background:var(--line);margin:clamp(2.2rem,6vw,3.2rem) 0}
-  .three{display:grid;gap:1.6rem}
-  .one{display:grid;grid-template-columns:auto 1fr;gap:1rem;align-items:start}
-  .one .k{width:30px;height:30px;border-radius:50%;background:var(--soft);color:var(--go);
-    display:grid;place-items:center;font-size:.85rem;font-weight:700}
-  .one h2{margin:.15rem 0 .3rem;font-size:1.08rem;font-weight:650;letter-spacing:-.005em}
-  .one p{margin:0;color:var(--ink2);font-size:1rem}
-  .note{margin-top:clamp(2.2rem,6vw,3.2rem);padding:1.1rem 1.2rem;background:var(--card);
-    border:1px solid var(--line);border-radius:12px;color:var(--ink2);font-size:.97rem}
-  .note b{color:var(--ink);font-weight:650}
-  footer{margin-top:2.4rem;color:var(--mut);font-size:.9rem}
-  /* WHAT IT IS FOR, and honestly which parts of that exist.
-     Two of the three are not built. Saying so on the page costs nothing and
-     buys the only thing this product sells — that when it says something is
-     the case, it is. A "soon" the reader can see is worth more than three
-     lanes implied to be open. */
-  .lanes{margin-top:clamp(2.2rem,6vw,3rem);padding-top:clamp(1.8rem,5vw,2.4rem);
-    border-top:1px solid var(--line);display:grid;gap:.9rem}
+  .lede{color:var(--ink2);font-size:clamp(1.1rem,3.4vw,1.32rem);max-width:26ch;
+    line-height:1.45}
+
+  /* ---- the three ---- */
+  .steps{margin-top:clamp(3.5rem,11vw,6rem)}
+  .step{padding:clamp(2rem,6vw,2.8rem) 0;border-top:1px solid var(--line)}
+  .kicker{display:flex;align-items:baseline;gap:.85rem;margin-bottom:.9rem}
+  .kicker .n{font-family:"Instrument Serif",Georgia,serif;font-size:2.6rem;line-height:.8;
+    color:var(--go);letter-spacing:-.02em}
+  .kicker h2{font-size:clamp(1.4rem,4.6vw,1.8rem);line-height:1.12;letter-spacing:-.01em;
+    font-weight:400;font-family:"Instrument Serif",Georgia,serif}
+  .step p{color:var(--ink2);margin-bottom:.75rem;max-width:44ch}
+  .step p:last-child{margin-bottom:0}
+  .step b{color:var(--ink);font-weight:600}
+  .aside{margin-top:1.1rem;font-size:.94rem;color:var(--mut);border-left:2px solid var(--line);
+    padding-left:.9rem}
+
+  /* ---- the dark band: what happens to a month ---- */
+  .band{background:var(--deep);color:var(--deepink);margin-top:clamp(2rem,6vw,2.8rem);
+    border-radius:18px;padding:clamp(1.6rem,5vw,2.2rem) clamp(1.3rem,4vw,1.8rem)}
+  .band h3{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--glow);font-weight:700;margin-bottom:1.4rem}
+  .flow{display:grid;gap:.9rem}
+  .fl{display:grid;grid-template-columns:auto 1fr;gap:.9rem;align-items:start}
+  .fl .ic{width:34px;height:34px;border-radius:9px;background:#132019;flex:0 0 auto;
+    display:grid;place-items:center;color:var(--glow);font-size:.95rem}
+  /* The colour is stated, not inherited. `.step b` sets near-black for the body
+     copy and matches `.fl b` on specificity, so without this the three labels
+     inside the band were black on black — present, selectable, invisible. */
+  .band b,.fl b{display:block;font-size:1rem;font-weight:600;margin-bottom:.15rem;
+    color:var(--deepink)}
+  .fl span{color:var(--deepdim);font-size:.93rem;line-height:1.5}
+  .fl code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;
+    color:var(--glow);word-break:break-all}
+  .down{height:14px;border-left:1px solid var(--deepline);margin-left:17px}
+
+  /* ---- the promise ---- */
+  .quote{margin-top:clamp(3.5rem,11vw,6rem);padding:clamp(1.8rem,6vw,2.6rem) 0;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .quote p{font-family:"Instrument Serif",Georgia,serif;
+    font-size:clamp(1.35rem,4.6vw,1.75rem);line-height:1.24;letter-spacing:-.01em;
+    margin-bottom:1rem;text-wrap:balance}
+  .quote p:last-child{margin-bottom:0;color:var(--ink2)}
+  .quote em{font-style:italic;color:var(--go)}
+
+  /* ---- record ---- */
+  .rec{margin-top:clamp(3rem,9vw,4.5rem)}
+  .eyebrow{font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:var(--mut);
+    font-weight:700;margin-bottom:1.1rem}
+  .rec ol{list-style:none}
+  .seal,.rec li{display:flex;flex-wrap:wrap;align-items:baseline;gap:.5rem .9rem;
+    padding-bottom:.7rem;border-bottom:1px solid var(--line);margin-bottom:.7rem}
+  .rec li{padding-bottom:.7rem;border-bottom:1px solid var(--line);margin-bottom:.7rem}
+  .rec li:last-of-type{border-bottom:0}
+  .seal b,.rec li b{font-weight:650;min-width:5em}
+  .seal .n,.rec li .n{color:var(--ink2);min-width:6em}
+  .seal code,.rec li code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.83rem;
+    color:var(--go);word-break:break-all;flex:1 1 14em}
+  .seal a,.rec li a{color:var(--go);font-size:.85rem;white-space:nowrap}
+  .rec li .un{color:var(--mut);font-size:.85rem;white-space:nowrap}
+  .rec > p{color:var(--mut);font-size:.93rem;max-width:46ch}
+  .rec > p b{color:var(--ink)}
+
+  /* ---- lanes ---- */
+  .lanes{margin-top:clamp(3rem,9vw,4.5rem);display:grid;gap:.9rem}
   .lane{padding-bottom:.9rem;border-bottom:1px solid var(--line)}
   .lane:last-child{border-bottom:0;padding-bottom:0}
-  /* Name and state on one line, what it means underneath. Trying to fit all
-     three across put the pill in a flex row with a growing sibling, where the
-     more specific `.lane span` beat `.pill` and stretched it into a bar. */
   .lane .top{display:flex;align-items:center;gap:.65rem;margin-bottom:.25rem}
   .lane b{font-weight:650;font-size:1.05rem}
-  .lane .pill{flex:0 0 auto;font-size:.68rem;letter-spacing:.09em;
-    text-transform:uppercase;font-weight:700;border-radius:99px;padding:.24rem .6rem}
+  .lane .pill{font-size:.67rem;letter-spacing:.09em;text-transform:uppercase;
+    font-weight:700;border-radius:99px;padding:.24rem .6rem}
   .lane .pill.on{background:var(--soft);color:var(--go)}
-  .lane .pill.off{background:transparent;color:var(--mut);border:1px solid var(--line)}
-  .lane p{margin:0;color:var(--ink2);font-size:.95rem}
-  /* The open lane goes somewhere. It read as a link before it was one — the
-     pill says Open and the eye finishes the sentence — and a row that looks
-     clickable and is not is worse than a plain list. The two that are not
-     open stay plainly not open. */
+  .lane .pill.off{color:var(--mut);border:1px solid var(--line)}
+  .lane p{color:var(--ink2);font-size:.95rem}
   a.lane{display:block;text-decoration:none;color:inherit}
-  a.lane .top b{text-decoration:underline;text-underline-offset:3px;
+  a.lane b{text-decoration:underline;text-underline-offset:3px;
     text-decoration-color:var(--line)}
-  a.lane:hover .top b{text-decoration-color:var(--go)}
   a.lane .go{color:var(--go);font-weight:600}
 
-  /* THE PROOF, and it draws itself only when there is some.
-     The page claims nobody rewrites the record. This is where a reader checks
-     rather than takes it — and with no months sealed there is nothing to
-     check, so the whole block stays off the page instead of standing there
-     empty saying trust me. */
-  .seals{margin-top:clamp(2.2rem,6vw,3rem);padding-top:clamp(1.8rem,5vw,2.4rem);
-    border-top:1px solid var(--line)}
-  .seals h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;
-    color:var(--mut);font-weight:600;margin:0 0 1rem}
-  .seals ol{list-style:none;margin:0 0 1rem;padding:0;display:grid;gap:.55rem}
-  .seals li{display:flex;flex-wrap:wrap;align-items:baseline;gap:.5rem .9rem;
-    font-size:.95rem;padding-bottom:.55rem;border-bottom:1px solid var(--line)}
-  .seals li:last-child{border-bottom:0;padding-bottom:0}
-  .seals b{font-weight:650;min-width:5.5em}
-  .seals .n{color:var(--ink2);min-width:6em}
-  .seals code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-    font-size:.85rem;color:var(--go);word-break:break-all}
-  .seals a{color:var(--go);font-size:.85rem;white-space:nowrap}
-  .seals .un{color:var(--mut);font-size:.85rem;white-space:nowrap}
-  .seals p{margin:0;color:var(--mut);font-size:.9rem;max-width:44ch}
-  /* The way through. The page is the offer; this is the door. */
-  .go{margin-top:clamp(2.2rem,6vw,3rem);padding-top:clamp(1.8rem,5vw,2.4rem);
-    border-top:1px solid var(--line)}
-  .go .who{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;
-    color:var(--mut);font-weight:600;margin:0 0 .5rem}
-  .go h2{margin:0 0 .35rem;font:400 clamp(1.5rem,4.5vw,1.9rem)/1.15 "Instrument Serif",Georgia,serif}
-  .go p{margin:0 0 1.3rem;color:var(--ink2);max-width:32ch}
-  .go a{display:inline-block;background:var(--go);color:#fff;text-decoration:none;
-    border-radius:99px;padding:.85rem 1.7rem;font-weight:650;font-size:1.02rem}
-  .go small{display:block;margin-top:.85rem;color:var(--mut);font-size:.86rem}
+  /* ---- doors ---- */
+  .doors{margin-top:clamp(3rem,9vw,4.5rem);display:grid;gap:1.6rem}
+  .door{padding-top:clamp(1.6rem,5vw,2.2rem);border-top:1px solid var(--line)}
+  .door h2{font-family:"Instrument Serif",Georgia,serif;font-weight:400;
+    font-size:clamp(1.5rem,4.6vw,1.9rem);margin:.3rem 0 .9rem}
+  .btn{display:inline-block;border-radius:99px;padding:.85rem 1.7rem;font-weight:650;
+    text-decoration:none;font-size:1.02rem}
+  .btn.solid{background:var(--go);color:#fff}
+  .btn.dark{background:var(--ink);color:var(--ground)}
+  .door small{display:block;margin-top:.85rem;color:var(--mut);font-size:.87rem}
+  footer{margin-top:clamp(3rem,9vw,4rem);padding:1.6rem 0 3.5rem;
+    border-top:1px solid var(--line);color:var(--mut);font-size:.9rem}
 </style>
 </head>
 <body>
-
 <div class="wrap">
-  <div class="mark"><i>◷</i><b>crowdfundme</b></div>
 
-  <h1>Early deals get done <em>on a napkin</em>.</h1>
-  <p class="lede">We keep the record instead.</p>
+  <header>
+    <div class="mark"><i class="serif">◷</i><b class="serif">crowdfundme</b></div>
+    <h1 class="serif">Early deals get done <em>on a napkin</em>.</h1>
+    <p class="lede">We keep the record instead. Then we put it where neither of us can change it.</p>
+  </header>
 
-  <div class="rule"></div>
+  <div class="steps">
 
-  <div class="three">
-    <div class="one"><span class="k">1</span><div>
-      <h2>It gets written down</h2>
-      <p>Who was early, what they were told, and the day it was said.</p>
-    </div></div>
+    <section class="step">
+      <div class="kicker"><span class="n">1</span><h2>We get you started</h2></div>
+      <p>Write the deal down. Send them a code. They read their own terms and
+        <b>type their name to accept</b>.</p>
+      <p>A minute. No account, nothing to pay.</p>
+    </section>
 
-    <div class="one"><span class="k">2</span><div>
-      <h2>Nobody rewrites it</h2>
-      <p>Not the founder, and not later, when it has become expensive.</p>
-    </div></div>
+    <section class="step">
+      <div class="kicker"><span class="n">2</span><h2>Come back next month</h2></div>
+      <p>Tell us what changed. We lock the month and
+        <b>write it to the blockchain for you</b>.</p>
+      <p>Nothing technical to do. That part is our job.</p>
 
-    <div class="one"><span class="k">3</span><div>
-      <h2>When there is a company</h2>
-      <p>This is what the share register gets drawn from.</p>
-    </div></div>
+      <div class="band">
+        <h3>What happens to a month</h3>
+        <div class="flow">
+          <div class="fl"><span class="ic">✍</span><div>
+            <b>Everything written that month</b>
+            <span>Who was asked, what they got, the name they signed.</span>
+          </div></div>
+          <div class="down"></div>
+          <div class="fl"><span class="ic">⁂</span><div>
+            <b>Becomes one fingerprint</b>
+            <span>Change one letter of the record and this changes completely.</span>
+            <code>d0a276688feab501e94137ae4770298cba6d417…</code>
+          </div></div>
+          <div class="down"></div>
+          <div class="fl"><span class="ic">◆</span><div>
+            <b>Goes onto the blockchain</b>
+            <span>A dated transaction on Stellar. We can't edit it, delete it or
+              backdate it. Nor can anyone else.</span>
+          </div></div>
+        </div>
+      </div>
+
+      <p class="aside">A year from now, anyone can check the record against the chain
+        themselves. They never have to ask you.</p>
+    </section>
+
+    <section class="step">
+      <div class="kicker"><span class="n">3</span><h2>When you're ready, hand it over</h2></div>
+      <p>Incorporating? Raising? Selling? Take the record to your lawyers.
+        It's what they work the paperwork out from — <b>whatever they advise</b>.</p>
+      <p>A signed, dated history instead of a year of chat logs.</p>
+      <p class="aside">We don't decide what it becomes. We make sure the part
+        before it holds up.</p>
+    </section>
+
   </div>
 
-  <p class="note"><b>We do not do the legal work.</b> When a deal becomes real the record
-    goes to the people who do — counsel, a company registry, a tokenisation platform.
-    This is what they start from, not a substitute for them.</p>
+  <div class="quote">
+    <p class="serif">It doesn't mean the record <em>can't be changed</em>.<br>
+      It means it can't be changed <em>without it showing</em>.</p>
+  </div>
 
-  <p class="note"><b>Nothing is promised.</b> Nothing is for sale.
-    It is a record, kept properly, in case it matters later.</p>
-
-  <section class="lanes">
-    <a class="lane" href="/f">
-      <div class="top"><b>Early founder deals</b><span class="pill on">Open</span></div>
-      <p>The handshake before there is a company. <span class="go">Write yours down →</span></p>
-    </a>
-    <div class="lane">
-      <div class="top"><b>Investor rounds</b><span class="pill off">Soon</span></div>
-      <p>Who came in, at what, and when — one record everybody reads.</p>
-    </div>
-    <div class="lane">
-      <div class="top"><b>Crowdfunding</b><span class="pill off">Soon</span></div>
-      <p>Many small backers, the same record, kept the same way.</p>
-    </div>
-  </section>
-
-  <section class="seals" id="seals" hidden>
-    <h2>The record so far</h2>
+  <section class="rec" id="seals" hidden>
+    <p class="eyebrow">The record so far</p>
     <ol id="seallist"></ol>
     <p id="sealwhy"></p>
   </section>
 
-  <!-- The only way through, and deliberately the only one.
-       A project used to be advertised here — the first one, when it was the
-       only one. That made the platform's front page one project's poster, and
-       sent everybody else's reader past somebody else's pitch on the way to
-       their own offer. The code decides where somebody goes; this page does
-       not need to know where that is, which is the same boundary lib/store.js
-       draws and the reason a second project cost two API calls. -->
-  <div class="go">
-    <p class="who">Sent a code?</p>
-    <h2 style="margin-bottom:.9rem">Open your offer</h2>
-    <a href="/o" style="background:var(--ink);color:var(--ground)">I have a code</a>
-    <small>It opens yours and nobody else's.</small>
+  <section class="lanes">
+    <a class="lane" href="/f">
+      <div class="top"><b>Early founder deals</b><span class="pill on">Open</span></div>
+      <p>Before there is a company. <span class="go">Write yours down →</span></p>
+    </a>
+    <div class="lane">
+      <div class="top"><b>Investor rounds</b><span class="pill off">Soon</span></div>
+      <p>Who came in, at what, and when.</p>
+    </div>
+    <div class="lane">
+      <div class="top"><b>Crowdfunding</b><span class="pill off">Soon</span></div>
+      <p>Many small backers, the same record.</p>
+    </div>
+  </section>
+
+  <div class="doors">
+    <div class="door">
+      <p class="eyebrow">Start one</p>
+      <h2>Write the deal down</h2>
+      <a class="btn solid" href="/f">Start the record</a>
+      <small>A minute. Nothing to pay.</small>
+    </div>
+    <div class="door">
+      <p class="eyebrow">Sent a code?</p>
+      <h2>Open your offer</h2>
+      <a class="btn dark" href="/o">I have a code</a>
+      <small>It opens yours and nobody else's.</small>
+    </div>
   </div>
 
-  <footer>crowdfundme is being built.</footer>
+  <footer>crowdfundme is being built. Nothing here is legal or financial advice.</footer>
 </div>
 
 <script>
@@ -220,20 +280,19 @@ fetch("/api/seals").then((r) => r.json()).then((d) => {
   const why = document.getElementById("sealwhy");
   const strong = document.createElement("b");
   if (anchored === rows.length) {
+    /* The pull-quote above already says what anchoring does and does not mean.
+       Saying it twice on one page reads as protesting. */
     strong.textContent = "Sealed monthly and written to Stellar.";
-    why.append(strong, " Each month is hashed, chained to the one before it, and " +
-      "the hash is put on a public chain. Anybody can check a month here against " +
-      "the transaction — nobody has to take our word for it. It does not mean the " +
-      "record cannot be changed; it means it cannot be changed without this showing.");
+    why.append(strong, " Check any month against its transaction. Nobody has to " +
+      "take our word for it.");
   } else if (anchored) {
     strong.textContent = "Sealed monthly, some months written to Stellar.";
-    why.append(strong, " The months with a transaction can be checked by anybody. " +
-      "The rest show only that the record has not changed since — you would be " +
-      "taking our word for that.");
+    why.append(strong, " The months with a transaction anybody can check. For the " +
+      "rest you would be taking our word for it.");
   } else {
     strong.textContent = "Sealed and hashed, each month chained to the one before it.";
-    why.append(strong, " Nothing has been published outside this server yet, so " +
-      "these show the record has not changed — not that it could not.");
+    why.append(strong, " Nothing is on a chain yet, so for now you would be taking " +
+      "our word for it.");
   }
   document.getElementById("seals").hidden = false;
 }).catch(() => {});
