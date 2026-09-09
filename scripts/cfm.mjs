@@ -72,7 +72,7 @@ if (cmd === "setup") {
     goTo: "", seats: 0,
     claim: "Early founder deals get done on a napkin.",
     sub: "Then somebody has to remember what it said, years later, when it has become expensive to remember it wrong. We keep the record instead.",
-    goal: "250 projects keeping their record here inside three years. The business is the ledger, not any one thing on it — and the first thing on it is already running.",
+    goal: "250 projects keeping their record here inside three years. The business is the ledger — what counsel and the tokenisation platforms get handed when a deal turns real — not any one thing on it.",
     marks: [
       { val: "1", when: "on it today" },
       { val: "25", when: "year one" },
@@ -91,7 +91,7 @@ if (cmd === "setup") {
     pct: Number(arg("pct", "10")), years: Number(arg("years", "4")),
     cliff: Number(arg("cliff", "12")),
     ask: "Make this stand up in law.|That is the whole ask.",
-    why: "You already know what a record has to look like before anybody will act on it. Build that here, and the share is in the ledger itself — every project that ever runs on it, not one of them.",
+    why: "This never does the legal work — when a deal becomes real the record is handed to the people who do. Your firm is where it gets handed to. Build the thing that feeds you, and the share is in the ledger itself: every project that ever runs on it, not one of them.",
   });
   console.log("\n  crowdfundme · counsel · " + arg("pct", "10") + "% over " +
     arg("years", "4") + "y, " + arg("cliff", "12") + "m cliff");
