@@ -27,6 +27,18 @@ import {
   Keypair, TransactionBuilder, Networks, Operation, BASE_FEE, Horizon,
 } from "@stellar/stellar-sdk";
 
+/* "This account does not exist" reaches us as a 404 from Horizon, and the SDK
+   wraps it in a NotFoundError. Matched three ways rather than one: this
+   environment cannot reach Stellar to confirm which shape arrives, and being
+   wrong here turns the most likely first-run problem back into the unhelpful
+   message this exists to replace. Over-matching costs nothing — a real
+   failure that says "not found" is the same advice either way. */
+const missing = (e) => Boolean(e) && (
+  (e.response && e.response.status === 404) ||
+  e.name === "NotFoundError" ||
+  /not\s*found/i.test(String(e.message || ""))
+);
+
 /* Testnet by default, and deliberately. Anchoring to the public network costs
    real lumens and cannot be undone; a box that quietly did that because a
    variable was missing would be the wrong kind of surprise. Say "public" and
@@ -104,7 +116,24 @@ export async function put(month, hash) {
   const server = new Horizon.Server(NET.horizon);
   /* Loaded rather than cached: the sequence number moves every time this
      account is used, and a stale one is a transaction the network rejects. */
-  const account = await server.loadAccount(kp.publicKey());
+  let account;
+  try {
+    account = await server.loadAccount(kp.publicKey());
+  } catch (e) {
+    /* Horizon answers 404 for an account that has never been funded, and the
+       SDK passes that up as "Not Found" — true, unhelpful, and the single
+       most likely thing to go wrong the first time anybody turns this on. An
+       account on Stellar does not exist until something pays its reserve. */
+    if (missing(e)) {
+      throw new Error(
+        "the account " + kp.publicKey() + " does not exist on the " + NET.name +
+        " network yet — nothing has funded it." +
+        (NET.name === "test"
+          ? " Free: https://friendbot.stellar.org/?addr=" + kp.publicKey()
+          : " Send it a couple of lumens and try again."));
+    }
+    throw e;
+  }
 
   const tx = new TransactionBuilder(account, {
     fee: BASE_FEE,
@@ -126,7 +155,15 @@ export async function get(month) {
   const key = who();
   if (!key) return "";
   const server = new Horizon.Server(NET.horizon);
-  const account = await server.loadAccount(key);
+  let account;
+  try {
+    account = await server.loadAccount(key);
+  } catch (e) {
+    /* Same 404, and here it means the same thing: nothing was ever written,
+       so there is nothing on the chain to agree or disagree with. */
+    if (missing(e)) return "";
+    throw e;
+  }
   const raw = account.data_attr["seal-" + month];
   return raw ? Buffer.from(raw, "base64").toString("utf8") : "";
 }
