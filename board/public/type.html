@@ -199,6 +199,7 @@
 <script type="module">
 import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
 import { ITEMS, AXES, TITLES, STRENGTH, score } from "/type-items.js";
+import { putResult, admitted } from "/wait.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -242,6 +243,29 @@ const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"
                      catch { return null; } };
 const save = (r) => { try { localStorage.setItem(KEY, JSON.stringify(r)); }
                       catch { /* private window: the result is still on screen */ } };
+
+/* WHETHER THIS BROWSER IS THROUGH THE DOOR. It decides one word on one
+ * button: a member is offered their profile, somebody on the waiting list is
+ * offered their card, and being wrong about it means offering a profile to
+ * somebody who has not got one. Defaulted to "in" and corrected on load —
+ * the result is twenty questions away, so the answer is always back long
+ * before anything reads it, and the safe half of a wrong guess is a member
+ * seeing the right button a moment late. */
+let ADMITTED = true;
+/* And whether they are on the waiting list, which is the other place four
+   letters can go. Neither means there is nowhere to put them, and the button
+   is not drawn at all — offering somebody a place to keep something and then
+   failing is worse than not offering. */
+let ONLIST = false;
+const redraw = () => { if (RESULT && !ORDER.length) paint(); };
+/* Drawn again when the answers arrive: somebody opening this page with a
+   result already saved is shown it immediately, before either fetch is back,
+   and the button on that screen is what they decide. */
+admitted().then((yes) => { if (yes !== ADMITTED) { ADMITTED = yes; redraw(); } });
+fetch("/api/hello", { headers: { "x-board-device": device } })
+  .then((r) => r.json())
+  .then((d) => { if (d && d.already) { ONLIST = true; redraw(); } })
+  .catch(() => { /* the page is the same without it */ });
 
 /* Their own name, once the letters are on their page — which decides whether
  * Share sends their profile or sends the test. Read once, and re-read after
@@ -647,26 +671,35 @@ function drawResult(box) {
   box.append(grid);
 
   /* On the feed, as them. The four letters and what they are called is the
-     whole post — the pills above are for the person who took it. */
-  const feedRow = el("div", "row");
-  const toBoard = el("button", "quiet wide", T("share.feed"));
-  toBoard.type = "button";
-  const fsaid = el("p", "said");
-  toBoard.addEventListener("click", () => toFeed(
-    title ? T("share.typeTitled", { code: r.code, title: P(title) })
-          : T("share.type", { code: r.code }),
-    "Tests", toBoard, fsaid, "/type", typePicture(r, title ? P(title) : "")));
-  feedRow.append(toBoard);
-  box.append(feedRow);
-  box.append(el("p", "feedwhat", T("share.feedType")));
-  box.append(fsaid);
+     whole post — the pills above are for the person who took it.
+     MEMBERS ONLY, and it has to be: this page is outside the door now, so
+     that this test can be one of the things somebody does while waiting —
+     and the feed is not. Offering a stranger a button that posts to a board
+     they cannot read is offering them a 403. */
+  if (ADMITTED) {
+    const feedRow = el("div", "row");
+    const toBoard = el("button", "quiet wide", T("share.feed"));
+    toBoard.type = "button";
+    const fsaid = el("p", "said");
+    toBoard.addEventListener("click", () => toFeed(
+      title ? T("share.typeTitled", { code: r.code, title: P(title) })
+            : T("share.type", { code: r.code }),
+      "Tests", toBoard, fsaid, "/type", typePicture(r, title ? P(title) : "")));
+    feedRow.append(toBoard);
+    box.append(feedRow);
+    box.append(el("p", "feedwhat", T("share.feedType")));
+    box.append(fsaid);
+  }
 
   const row = el("div", "row");
   const again = el("button", "quiet", T("type.again"));
   again.type = "button";
   again.addEventListener("click", start);
-  const done = el("a", "quiet", T("type.done"));
-  done.href = "/browse";
+  /* Where "done" goes depends on where they can get to. /browse is behind the
+     door; the room is the equivalent for somebody on the list, and somebody
+     on neither is offered the way onto it. */
+  const done = el("a", "quiet", T(ADMITTED ? "type.done" : ONLIST ? "wr.open" : "wr.goneGo"));
+  done.href = ADMITTED ? "/browse" : ONLIST ? "/room" : "/about";
   row.append(again, done);
   box.append(row);
 
@@ -674,27 +707,37 @@ function drawResult(box) {
    * result is yours on this phone whether or not anybody else ever sees it,
    * and a test that publishes its answer by default is a different product. */
   const mine = el("div");
-  const put = el("button", "quiet wide", T("type.put"));
+  /* THE SAME BUTTON, TWO PLACES FOR THE ANSWER TO GO. A member's four letters
+     belong on their profile; somebody on the waiting list has no profile and
+     theirs belong on their card, where they are one of the three things a
+     member has to go on. putResult picks — see wait.js. The label follows,
+     because "add it to my profile" is a lie to somebody who has not got one. */
+  const put = el("button", "quiet wide", T(ADMITTED ? "type.put" : "wr.putcard"));
   put.type = "button";
+  /* Nowhere to put it: not a member, not on the list. The result is still
+     theirs on this phone — see the note above — and there is simply nothing
+     to add it to. */
+  put.hidden = !ADMITTED && !ONLIST;
   const say = el("p", "said");
   put.addEventListener("click", async () => {
     put.disabled = true;
     put.textContent = T("me.working");
-    try {
-      const out = await fetch("/api/me", {
-        method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ device, type: r.code }),
-      }).then((x) => x.json());
-      if (out && out.person) {
-        say.className = "said ok";
-        say.textContent = T("type.puton");
-        put.hidden = true;
+    const got = await putResult({ type: r.code });
+    if (got.where) {
+      say.className = "said ok";
+      say.textContent = T(got.where === "room" ? "wr.putdone" : "type.puton");
+      put.hidden = true;
+      if (got.where === "room") {
+        const on = el("a", "btn goroom", T("wr.open"));
+        on.href = "/room";
+        box.append(on);
+      } else {
         // Share now has a better thing to send: their page, with their face
         // and the letters on it, rather than the questionnaire.
-        MINE = out.person.handle || "";
-        return;
+        MINE = (got.person && got.person.handle) || "";
       }
-    } catch { /* fall through to the retry */ }
+      return;
+    }
     put.disabled = false;
     put.textContent = T("act.again");
   });

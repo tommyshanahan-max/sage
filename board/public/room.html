@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>While you wait · The Exchange</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/site.css">
+<style>
+  /* THE ROOM FOR SOMEBODY ON THE LIST.
+   *
+   * The queue used to end at one sentence — "You are on the list." — and that
+   * sentence was the whole of the product for everybody who had not been
+   * brought in yet, which on most days is most of the people who have ever
+   * heard of this board. This is what that sentence opens onto.
+   *
+   * THE RULE THAT GOVERNS EVERY LINE OF IT: this is how members find you,
+   * never this is how you qualify. Nothing here admits anybody, nothing is
+   * scored against a pass mark, and the moment it reads as an exam the busy
+   * people stop bothering — and the busy people are who the board is for.
+   */
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+       /* The tab bar is fixed to the bottom, so the last card needs room to
+          finish above it rather than under it. */
+       padding-bottom:4.6rem}
+  main{max-width:30rem;margin:0 auto;padding:0 1rem 1.6rem}
+
+  /* .top and .wrap are site.css's header and are reused deliberately — it is
+     the same bar this board draws on every page. Only what differs is set
+     here: it sticks, and it is as narrow as the column under it. */
+  .top{position:sticky;top:0;z-index:5;background:var(--card);
+       border-bottom:1px solid var(--hair)}
+  .top .wrap{max-width:30rem;margin:0 auto;padding:.7rem 1rem;
+             display:flex;align-items:center;gap:.6rem}
+  .top .mark{width:1.75rem;height:1.75rem;border-radius:.45rem;
+    background:var(--accent);color:var(--accent-ink);display:flex;
+    align-items:center;justify-content:center;font-family:var(--serif);
+    font-size:.95rem}
+  .top b{font-size:.95rem;font-weight:500}
+  .top .pill{margin-left:auto;padding:.15rem .6rem;border-radius:99px;
+    background:var(--accent-soft);color:var(--accent);font-size:.72rem;
+    font-weight:600}
+
+  .wrband{margin:1rem 0 0;padding:.85rem .95rem;border-radius:.75rem;
+    background:var(--accent-soft);font-size:.86rem;color:var(--ink-2);
+    line-height:1.5}
+  .wrband b{display:block;color:var(--ink);font-size:.98rem;font-weight:500}
+  .wrband .q{display:block;margin:.35rem 0 0;font-size:.8rem;color:var(--accent);
+    font-weight:600}
+
+  /* THEIR CARD, DRAWN AS A MEMBER WILL SEE IT and not as a form they filled
+     in. The whole argument of this screen is that the card is the thing, so
+     it is shown as the thing. */
+  .pc{position:relative;margin:1rem 0 0;aspect-ratio:4/3;border-radius:1rem;
+      overflow:hidden;background:linear-gradient(150deg,#C9D3E6,#93A5C4)}
+  /* NO PHOTOGRAPH IS NOT A HOLE. A wash and an initial — the same object the
+     result card draws — so a card without a face is still a card, and the
+     photograph becomes one more slot that fills rather than the thing
+     standing between somebody and being seen at all. */
+  .pc .ini{position:absolute;inset:0;display:flex;align-items:center;
+    justify-content:center;font-family:var(--serif);font-size:5rem;
+    color:rgba(255,255,255,.34);line-height:1;padding-bottom:2.6rem}
+  .pc .scrim{position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(10,14,22,0) 34%,rgba(10,14,22,.84) 100%)}
+  .pc .flag{position:absolute;top:.7rem;left:.7rem;padding:.18rem .6rem;
+    border-radius:99px;background:rgba(10,14,22,.5);color:#fff;font-size:.68rem;
+    font-weight:600;backdrop-filter:blur(6px)}
+  .pc .said{position:absolute;left:.9rem;right:.9rem;bottom:.85rem;color:#fff}
+  .pc .nm{font-family:var(--serif);font-size:1.35rem;line-height:1.15}
+  .pc .ln{margin:.25rem 0 0;font-size:.82rem;line-height:1.45;opacity:.94}
+  .pc .chips{margin:.45rem 0 0;display:flex;gap:.3rem;flex-wrap:wrap}
+  .pc .chips span{padding:.14rem .52rem;border-radius:99px;font-size:.7rem;
+    background:rgba(255,255,255,.22)}
+  /* An empty slot is drawn rather than left out, so three blanks read as
+     three things to do and not as a card that failed to load. */
+  .pc .chips span.ghost{background:none;border:1px dashed rgba(255,255,255,.45);
+    color:rgba(255,255,255,.66)}
+  .under{margin:.5rem 0 0;font-size:.79rem;color:var(--muted);text-align:center}
+
+  /* NOT .rule — site.css already owns that, and it is the bordered card the
+     house-rules page is made of. Checked against the stylesheet before this
+     was written rather than after, which is the lesson from doors.html. */
+  .wrhead{display:flex;align-items:center;gap:.7rem;margin:1.5rem 0 .1rem;
+    font-size:.64rem;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--muted)}
+  .wrhead i{flex:1;height:1px;background:var(--hair)}
+
+  .row{display:flex;align-items:center;gap:.8rem;margin:.6rem 0 0;
+    padding:.85rem .95rem;background:var(--card);border:1px solid var(--hair);
+    border-radius:.75rem}
+  .row .n{flex:none;width:1.6rem;height:1.6rem;border-radius:99px;
+    border:1px solid var(--hair);display:flex;align-items:center;
+    justify-content:center;font-size:.78rem;color:var(--muted)}
+  .row.ok .n{border-color:transparent;background:var(--good, #2E7D5B);color:#fff}
+  .row .mid{flex:1;min-width:0}
+  .row .mid b{display:block;font-size:.94rem;font-weight:500}
+  .row .mid small{display:block;margin:.1rem 0 0;font-size:.8rem;
+    color:var(--muted);line-height:1.4}
+  .row .go{flex:none;padding:.4rem .85rem;border:1px solid var(--accent);
+    border-radius:99px;background:none;color:var(--accent);font:inherit;
+    font-size:.82rem;font-weight:600;cursor:pointer;text-decoration:none}
+  .row.ok .go{border-color:var(--hair);color:var(--muted)}
+  .row .got{flex:none;font-size:.85rem;font-weight:600;
+    color:var(--good, #2E7D5B)}
+
+  /* The third one answers here rather than on a page of its own: it is two
+     choices, and sending somebody to another screen and back for two choices
+     is most of the reason people abandon a form. */
+  .pick{margin:.6rem 0 0;padding:.95rem;background:var(--card);
+    border:1px solid var(--hair);border-radius:.75rem}
+  .pick .row.bare{margin:0 0 .85rem;padding:0;background:none;border:0}
+  .pick .two{display:grid;grid-template-columns:auto minmax(0,1fr);
+    gap:.6rem;align-items:center}
+  .pick .w{font-size:.9rem;color:var(--ink-2)}
+  .pick select{font:inherit;font-size:.95rem;font-weight:500;width:100%;
+    color:var(--accent-ink);background-color:var(--accent);border:0;
+    border-radius:99px;padding:.5rem 1.8rem .5rem 1rem;
+    -webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right .6rem center;
+    background-size:.9rem}
+  .pick .save{margin:.75rem 0 0;width:100%;padding:.6rem;border:0;
+    border-radius:99px;background:var(--accent);color:var(--accent-ink);
+    font:inherit;font-weight:600;font-size:.9rem;cursor:pointer}
+  .pick .said{margin:.5rem 0 0;font-size:.83rem;color:var(--good, #2E7D5B)}
+
+  /* The others, as a list and not a deck. Somebody waiting is not choosing
+     anybody — the choosing is the members' half — so these are people to
+     recognise, at the size a name and a line need and no larger. */
+  .who{display:flex;align-items:center;gap:.75rem;margin:.6rem 0 0;
+    padding:.8rem .95rem;background:var(--card);border:1px solid var(--hair);
+    border-radius:.75rem}
+  .who .av{flex:none;width:2.2rem;height:2.2rem;border-radius:99px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-size:.95rem;color:#fff}
+  .who .mid{flex:1;min-width:0}
+  .who .mid b{font-size:.94rem;font-weight:500}
+  .who .mid em{font-style:normal;color:var(--accent);font-size:.86rem}
+  .who .mid small{display:block;margin:.1rem 0 0;font-size:.82rem;
+    color:var(--ink-2);line-height:1.4;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .who .tags{margin:.25rem 0 0;display:flex;gap:.3rem;flex-wrap:wrap}
+  .who .tags span{padding:.1rem .45rem;border-radius:99px;background:var(--raise);
+    color:var(--muted);font-size:.7rem}
+
+  /* NOT .post, NOT .band. site.css owns both: .post is the feed's own card,
+     laid out as a flex row with an avatar column — which squeezed this card's
+     byline into a stripe down its right-hand side — and .band is the tinted
+     full-width strip the marketing page is built from. Both were caught by
+     comparing every class in this file against the stylesheet, which is the
+     check that should have run before the file was written. */
+  .wrpost{margin:.6rem 0 0;padding:.95rem 1.05rem;background:var(--card);
+    border:1px solid var(--hair);border-radius:.75rem}
+  .wrpost p{margin:0;font-size:.93rem;line-height:1.55}
+  .wrpost .by{margin:.5rem 0 0;font-size:.8rem;color:var(--muted)}
+
+  .locked{display:flex;align-items:center;gap:.5rem;margin:1.5rem 0 0;
+    padding:.85rem .95rem;border:1px dashed var(--hair);border-radius:.75rem;
+    font-size:.85rem;color:var(--muted)}
+  .locked svg{flex:none;width:.95rem;height:.95rem;stroke:currentColor;
+    fill:none;stroke-width:2}
+
+  .none{margin:.6rem 0 0;padding:.95rem 1.05rem;background:var(--card);
+    border:1px solid var(--hair);border-radius:.75rem;font-size:.88rem;
+    color:var(--ink-2);line-height:1.5}
+
+  /* ---- the You tab ---- */
+  .form{margin:1rem 0 0;padding:1rem;background:var(--card);
+    border:1px solid var(--hair);border-radius:.8rem}
+  .form label{display:block;margin:.75rem 0 .25rem;font-size:.82rem;
+    color:var(--ink-2)}
+  .form label:first-of-type{margin-top:0}
+  .form input,.form textarea{width:100%;padding:.7rem .85rem;font:inherit;
+    font-size:1rem;border:1px solid var(--hair);border-radius:.6rem;
+    background:var(--raise);color:var(--ink);resize:vertical}
+  .form .rooms{display:flex;flex-wrap:wrap;gap:.4rem}
+  .form .rm{padding:.45rem .8rem;border:1px solid var(--line);border-radius:99px;
+    background:none;color:var(--ink-2);font:inherit;font-size:.86rem;
+    cursor:pointer}
+  .form .rm.on{background:var(--accent);border-color:var(--accent);
+    color:var(--accent-ink)}
+  .form .save{margin:.9rem 0 0;width:100%;padding:.7rem;border:0;
+    border-radius:99px;background:var(--accent);color:var(--accent-ink);
+    font:inherit;font-weight:600;font-size:.95rem;cursor:pointer}
+  .form .said{margin:.55rem 0 0;font-size:.85rem;color:var(--good, #2E7D5B)}
+  .form .no{margin:.55rem 0 0;font-size:.85rem;color:#b3261e}
+
+  /* ---- the two tabs ----
+     There were three. The third was a feed, and the feed is behind the door:
+     the tab would have been either a locked screen or the blurred shape they
+     already scrolled past on the way in, on their first evening. It arrives
+     the day somebody brings them in, and its arriving is part of what that
+     feels like. */
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;
+    background:var(--card);border-top:1px solid var(--hair);
+    padding-bottom:env(safe-area-inset-bottom)}
+  .tabs button{flex:1;padding:.9rem 0;border:0;background:none;font:inherit;
+    font-size:.9rem;font-weight:600;color:var(--muted);cursor:pointer}
+  .tabs button.on{color:var(--accent)}
+
+  .quietlink{display:inline-block;margin:1rem 0 0;color:var(--accent);
+    font-size:.9rem}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap">
+    <span class="mark">换</span>
+    <b id="brandname">The Exchange</b>
+    <span id="langslot" style="margin-left:auto"></span>
+    <span class="pill" id="statepill" hidden></span>
+  </div>
+</div>
+
+<main>
+  <div id="body"></div>
+</main>
+
+<nav class="tabs" id="tabs" hidden>
+  <button type="button" id="tabWait"></button>
+  <button type="button" id="tabYou"></button>
+</nav>
+
+<script type="module">
+import { T, setLang, pickLang, langButton, when } from "/i18n.js";
+import { device } from "/wait.js";
+
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
+  if (x !== undefined) n.textContent = x; return n; };
+const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
+
+/* The two halves of the sentence. The same lists the profile form inside
+   offers — kept here rather than imported because the only shared module on
+   this side of the door is wait.js, which is about the list and not about
+   roles, and a third copy of two arrays is cheaper than a module that exists
+   to hold two arrays. */
+const MAKE = ["director", "writer", "performer", "crew", "founder", "maker", "student"];
+const BACK = ["agent", "producer", "brand", "buyer", "distributor",
+              "investor", "lawyer", "recruiter"];
+const ROOMS = ["film", "invest", "raise", "trade", "other"];
+
+/* A colour per person, from their own name. Not random: the card has to look
+   the same tomorrow, and the same to them as it does to a member. */
+function wash(name) {
+  let h = 0;
+  for (const ch of String(name || "?")) h = (h * 31 + ch.codePointAt(0)) % 360;
+  return "linear-gradient(150deg,hsl(" + h + " 26% 74%),hsl(" + ((h + 24) % 360) + " 24% 52%))";
+}
+const initial = (name) => [...String(name || "?").trim()][0] || "?";
+
+let DATA = null;
+let PANE = "wait";
+
+/* ---- their card ---------------------------------------------------------- */
+
+/** The three chips, in the order they fill. A slot with nothing in it is a
+ *  dashed outline naming what is missing rather than an absence. */
+function chips(w, ghosts) {
+  const box = el("div", "chips");
+  const add = (text, got) => {
+    const c = el("span", got ? null : "ghost", text);
+    box.append(c);
+  };
+  if (w.levelBand) add(bandWords(w.levelBand), true);
+  else if (ghosts) add(T("wr.c1"), false);
+  if (w.type) add(w.type, true);
+  else if (ghosts) add(T("wr.c2"), false);
+  if (w.want) add(T("wr.wants", { who: T("role.p." + w.want) }), true);
+  else if (ghosts) add(T("wr.c3"), false);
+  return box;
+}
+
+/* "ZH 7" is what the file holds and not what anybody says. */
+function bandWords(band) {
+  const [w, n] = String(band).split(" ");
+  return T(w === "ZH" ? "wr.zh" : "wr.en", { n });
+}
+
+function cardOf(w, ghosts) {
+  const pc = el("div", "pc");
+  pc.style.background = wash(w.name);
+  pc.append(el("span", "ini", initial(w.name)));
+  pc.append(el("span", "scrim"));
+  pc.append(el("span", "flag", T("waitroom." + (w.room || "other")) + " · " + T("wr.flag")));
+  const said = el("div", "said");
+  said.append(el("div", "nm", w.name));
+  if (w.why) said.append(el("p", "ln", w.why));
+  said.append(chips(w, ghosts));
+  pc.append(said);
+  return pc;
+}
+
+/* ---- the three things to fill in ----------------------------------------- */
+
+function testRow(n, key, sub, done, href) {
+  const row = el("div", done ? "row ok" : "row");
+  row.append(el("span", "n", done ? "✓" : String(n)));
+  const mid = el("div", "mid");
+  mid.append(el("b", null, T(key)));
+  /* The subtitle stays what the test is, not what it said — the result is
+     already the green mark two inches to the right, and printing it twice
+     made the row read as a mistake. */
+  mid.append(el("small", null, T(sub)));
+  row.append(mid);
+  if (done) row.append(el("span", "got", done));
+  const go = el("a", "go", T(done ? "wr.again" : "wr.take"));
+  go.href = href;
+  row.append(go);
+  return row;
+}
+
+/** The third one, answered in place. */
+function pickRow(w) {
+  const box = el("div", w.want ? "pick ok" : "pick");
+  /* It carries its own numbered header rather than sitting under a row that
+     says the same thing: two cards for one question read as two questions,
+     one of which does nothing. */
+  const head = el("div", "row bare");
+  head.append(el("span", "n", w.want ? "✓" : "3"));
+  const mid = el("div", "mid");
+  mid.append(el("b", null, T("wr.t3")));
+  mid.append(el("small", null, T("wr.t3sub")));
+  head.append(mid);
+  if (w.want) head.append(el("span", "got", T("wr.wants", { who: T("role.p." + w.want) })));
+  box.append(head);
+
+  const two = el("div", "two");
+  const sel = (now, wanting) => {
+    const s = document.createElement("select");
+    for (const [head, keys] of [["say.make", MAKE], ["say.back", BACK]]) {
+      const g = document.createElement("optgroup");
+      g.label = T(head);
+      for (const k of keys) {
+        const o = el("option", null, T((wanting ? "role.a." : "role.") + k));
+        o.value = k;
+        if (k === now) o.selected = true;
+        g.append(o);
+      }
+      s.append(g);
+    }
+    return s;
+  };
+  const me = sel(w.me || "director", false);
+  const want = sel(w.want || "agent", true);
+  two.append(el("span", "w", T("say.iam")), me);
+  two.append(el("span", "w", T("say.lookingFor")), want);
+  box.append(two);
+
+  const save = el("button", "save", T("wr.t3save"));
+  save.type = "button";
+  const said = el("p", "said");
+  save.addEventListener("click", async () => {
+    save.disabled = true;
+    const ok = await putCard({ me: me.value, want: want.value });
+    save.disabled = false;
+    if (!ok) { save.textContent = T("act.again"); return; }
+    said.textContent = T("wr.saved");
+    draw();
+  });
+  box.append(save, said);
+  return box;
+}
+
+/** One field or several, onto their own row. Returns whether it landed. */
+async function putCard(body) {
+  try {
+    const out = await fetch("/api/wait/card", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-board-device": device() },
+      body: JSON.stringify(body),
+    }).then((r) => r.json());
+    if (out && out.on && DATA && DATA.you) Object.assign(DATA.you, out.you);
+    return Boolean(out && out.on);
+  } catch { return false; }
+}
+
+/* ---- the panes ----------------------------------------------------------- */
+
+function drawWait(box) {
+  const you = DATA.you;
+
+  const band = el("div", "wrband");
+  band.append(el("b", null, T("wr.on")));
+  band.append(document.createTextNode(T("wr.onWhy")));
+  band.append(el("span", "q", DATA.ahead
+    ? T("wr.ahead", { n: DATA.ahead }) : T("wr.aheadNone")));
+  box.append(band);
+
+  const full = Boolean(you.levelBand && you.type && you.want);
+  box.append(cardOf(you, true));
+  box.append(el("p", "under", T(full ? "wr.full" : "wr.thin")));
+
+  const head = el("div", "wrhead");
+  head.append(el("span", null, T(full ? "wr.done" : "wr.fill")), el("i"));
+  box.append(head);
+
+  box.append(testRow(1, "wr.t1", "wr.t1sub",
+    you.levelBand ? bandWords(you.levelBand) : "", "/level"));
+  box.append(testRow(2, "wr.t2", "wr.t2sub", you.type || "", "/type"));
+
+  box.append(pickRow(you));
+
+  /* The others. Nobody who answered the older form is in here — see `shown`
+     in store.js — so on the first day this list is empty and says so. */
+  const oh = el("div", "wrhead");
+  oh.append(el("span", null, T("wr.others")), el("i"));
+  box.append(oh);
+  if (!DATA.others.length) box.append(el("div", "none", T("wr.othersNone")));
+  for (const w of DATA.others) box.append(whoRow(w));
+
+  if (DATA.featured.length) {
+    const ih = el("div", "wrhead");
+    ih.append(el("span", null, T("wr.inside")), el("i"));
+    box.append(ih);
+    const p = DATA.featured[0];
+    const card = el("div", "wrpost");
+    card.append(el("p", null, p.note));
+    card.append(el("p", "by", p.handle + " · " + when(p.at)));
+    box.append(card);
+  }
+
+  const lock = el("div", "locked");
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M6 11V8a6 6 0 0112 0v3M5 11h14v9H5z");
+  svg.append(path);
+  lock.append(svg, el("span", null, T("wr.locked")));
+  box.append(lock);
+}
+
+function whoRow(w) {
+  const row = el("div", "who");
+  const av = el("span", "av", initial(w.name));
+  av.style.background = wash(w.name);
+  row.append(av);
+  const mid = el("div", "mid");
+  const line = el("div");
+  line.append(el("b", null, w.name), document.createTextNode(" · "),
+    el("em", null, T("waitroom." + (w.room || "other"))));
+  mid.append(line);
+  if (w.why) mid.append(el("small", null, w.why));
+  const tags = el("div", "tags");
+  if (w.levelBand) tags.append(el("span", null, bandWords(w.levelBand)));
+  if (w.type) tags.append(el("span", null, w.type));
+  if (w.want) tags.append(el("span", null, T("wr.wants", { who: T("role.p." + w.want) })));
+  if (tags.childNodes.length) mid.append(tags);
+  row.append(mid);
+  return row;
+}
+
+/** What members see, and the only screen that can change it. */
+function drawYou(box) {
+  const you = DATA.you;
+  const head = el("div", "wrhead");
+  head.append(el("span", null, T("wr.edit")), el("i"));
+  box.append(head);
+
+  box.append(cardOf(you, false));
+
+  const form = el("div", "form");
+  const name = el("input");
+  name.value = you.name; name.maxLength = 40;
+  const why = el("textarea");
+  why.value = you.why || ""; why.maxLength = 300; why.rows = 3;
+
+  form.append(el("label", null, T("wait.name")), name);
+  form.append(el("label", null, T("wait.why")), why);
+
+  form.append(el("label", null, T("wait.which")));
+  const rooms = el("div", "rooms");
+  let room = you.room || "other";
+  const btns = [];
+  for (const k of ROOMS) {
+    const b = el("button", k === room ? "rm on" : "rm", T("waitroom." + k));
+    b.type = "button";
+    b.addEventListener("click", () => {
+      room = k;
+      for (const o of btns) o.className = o === b ? "rm on" : "rm";
+    });
+    btns.push(b);
+    rooms.append(b);
+  }
+  form.append(rooms);
+
+  const save = el("button", "save", T("wr.editSave"));
+  save.type = "button";
+  const said = el("p", "said");
+  const no = el("p", "no");
+  save.addEventListener("click", async () => {
+    if (!name.value.trim()) { no.textContent = T("wait.both"); return; }
+    no.textContent = "";
+    save.disabled = true;
+    save.textContent = T("me.working");
+    /* NOT the join form's route, which replaces the whole row and would
+       therefore need their contact sent back with it — so the contact would
+       have to be handed to this page first. It is the one thing on the row
+       shown to nobody, and a page that holds it is a page one bug away from
+       showing it. This route edits the fields it is given and never sees it. */
+    const ok = await putCard({ name: name.value, why: why.value, room });
+    save.disabled = false;
+    save.textContent = T("wr.editSave");
+    if (!ok) { no.textContent = T("act.again"); return; }
+    said.textContent = T("wr.saved");
+    await load();
+    draw();
+  });
+  form.append(save, said, no);
+  box.append(form);
+}
+
+/* ---- the three answers this page can get --------------------------------- */
+
+function draw() {
+  const box = $("body");
+  fill(box);
+  document.title = T("wr.title") + " · " + T("site.title");
+  $("brandname").textContent = T("site.title");
+  $("tabWait").textContent = T("wr.tabWait");
+  $("tabYou").textContent = T("wr.tabYou");
+  $("tabWait").className = PANE === "wait" ? "on" : "";
+  $("tabYou").className = PANE === "you" ? "on" : "";
+
+  if (!DATA) { box.append(el("p", "under", "…")); return; }
+
+  /* Already through the door. Somebody who was let in and opened the address
+     they used to use, which is the one thing this page must not answer with
+     an empty room. */
+  if (DATA.inside) {
+    $("tabs").hidden = true;
+    box.append(el("div", "none", T("wr.inAlready")));
+    const a = el("a", "quietlink", T("land.inside"));
+    a.href = "/";
+    box.append(a);
+    return;
+  }
+  /* Not on the list on this browser — a cleared Safari, a second phone, or
+     somebody who simply found the address. The way in rather than an error. */
+  if (!DATA.on) {
+    $("tabs").hidden = true;
+    box.append(el("div", "none", T("wr.gone")));
+    const a = el("a", "quietlink", T("wr.goneGo"));
+    a.href = "/about";
+    box.append(a);
+    return;
+  }
+
+  $("tabs").hidden = false;
+  $("statepill").hidden = false;
+  $("statepill").textContent = T("wr.pill");
+  if (PANE === "wait") drawWait(box);
+  else drawYou(box);
+  window.scrollTo(0, 0);
+}
+
+async function load() {
+  try {
+    DATA = await fetch("/api/wait/me", { cache: "no-store",
+      headers: { "x-board-device": device() } }).then((r) => r.json());
+  } catch { DATA = { on: false }; }
+}
+
+for (const [id, pane] of [["tabWait", "wait"], ["tabYou", "you"]]) {
+  $(id).addEventListener("click", () => { PANE = pane; draw(); });
+}
+
+setLang(pickLang());
+$("langslot").append(langButton(draw));
+draw();
+load().then(draw);
+</script>
+</body>
+</html>

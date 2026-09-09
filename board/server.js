@@ -265,7 +265,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * the person, that is a decision to make on purpose here, not a side effect
  * of a route somebody opened to fix an image.
  */
-const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|api\/enter|api\/admitted|api\/hello|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|type|room|api\/enter|api\/admitted|api\/hello|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -364,6 +364,18 @@ app.get(["/doors", "/doors/"], (req, res, next) => page("doors.html", req, res, 
    of the invitation door for the same reason /doors is: the key is the
    credential, and whoever runs this opens it on whatever is in their hand. */
 app.get(["/waiting", "/waiting/"], (req, res, next) => page("waiting.html", req, res, next));
+/* THE ROOM FOR SOMEBODY ON THE LIST.
+ *
+ * In front of the door, because everybody it is for is outside it. The page
+ * itself knows nothing: it asks /api/wait/me, which answers about the device
+ * asking and nobody else, and draws whichever of the three answers comes back
+ * — a member (go inside), somebody on the list (their room), or a browser
+ * that is neither (the way to join).
+ *
+ * /waiting next door is the admin queue and is a different thing entirely.
+ * The names are close enough to be worth saying so here.
+ */
+app.get(["/room", "/room/"], (req, res, next) => page("room.html", req, res, next));
 app.get(["/feed", "/feed/", "/index.html"], (req, res, next) => page("index.html", req, res, next));
 /* /board was the address before this was called the Feed. Kept as a permanent
  * redirect rather than deleted: links already sent into a WeChat chat cannot be
@@ -1718,9 +1730,25 @@ app.get("/api/hello", async (req, res) => {
     ? board.people.find((q) => q.id === sent && q.state === "published" && q.handle)
     : null;
 
+  /* WHETHER THE BROWSER ASKING IS ALREADY ON THE LIST.
+   *
+   * Somebody who joined last week and opens the same link again was being
+   * shown the form a second time, which is how you get two rows for one
+   * person and a stranger who thinks nothing happened the first time. One
+   * boolean, about the device asking and nobody else, so the box can offer
+   * the room instead of the form. It says nothing about who they are — the
+   * page already knows that, because it is them.
+   *
+   * Sent to the browser that already sends this header everywhere else; a
+   * request without it simply gets false, which is the form, which is right.
+   */
+  const asking = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const already = Boolean(asking && board.waits.some((w) => w.by === asking && !w.done));
+
   res.json({
     featured,
     peek,
+    already,
     via: from ? from.handle : "",
     // Whether there is anybody on the door. The page draws nothing at all
     // when there is not, rather than a box that answers every question with
@@ -1779,13 +1807,171 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
        dropped and the row simply has nobody behind it. */
     const sent = String(req.body?.via || "");
     const from = board.people.find((q) => q.id === sent && q.state === "published" && q.handle);
+    /* shown: true, ALWAYS, and never taken from the request.
+       The form that posts here is the one that says so — see wait.note — so
+       agreeing to it and sending it are the same act, and a browser cannot
+       opt out of a promise the page already made on its behalf by leaving a
+       field off. Rows written before that wording changed have no flag and
+       stay invisible; see the note on `shown` in cleanWait. */
     const row = store.cleanWait({ name, reach, why: req.body?.why,
-      room: req.body?.room, by: me, via: from ? from.id : "" });
+      room: req.body?.room, by: me, via: from ? from.id : "", shown: true });
     if (!row) return { error: "both" };
+    /* CHANGING THE ANSWER MUST NOT EMPTY THE CARD. This replaces the row
+       rather than merging into it, which is right for the three things the
+       form owns and wrong for everything they filled in afterwards — a
+       correction to a typo in a name would otherwise silently throw away a
+       level, a type and a sentence. Carried over by name, so a field added
+       here later has to be thought about rather than lost quietly. */
     const at = me ? board.waits.findIndex((w) => w.by === me) : -1;
-    if (at >= 0) board.waits[at] = { ...row, id: board.waits[at].id, at: board.waits[at].at };
-    else board.waits.push(row);
+    if (at >= 0) {
+      const was = board.waits[at];
+      board.waits[at] = { ...row, id: was.id, at: was.at,
+        levelBand: was.levelBand, type: was.type, me: was.me, want: was.want };
+    } else board.waits.push(row);
     return { ok: true, again: at >= 0 };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/* ---------------------------------------------------------------------------
+ * The waiting room
+ *
+ * Everything below here is for somebody who is on the list and not through
+ * the door. It is public in the sense that the door does not guard it, and
+ * private in the only sense that matters here: every route works out who is
+ * asking from their own device number, and answers about that person alone.
+ *
+ * WHY THE QUEUE STOPPED BEING ONLY A QUEUE. A member deciding whether to
+ * vouch for a stranger had a name and one line to go on, which is not enough
+ * to decide anything — so in practice nobody was ever brought in without a
+ * private message from somebody who already knew them, and the list simply
+ * grew. The room is the other half: somebody waiting can fill in a card, and
+ * a card is a basis for a decision.
+ *
+ * NOTHING IN HERE ADMITS ANYBODY. There is no score, no pass mark, and no
+ * amount of filling in that opens the door — a member still decides, in the
+ * same way, for the same reasons. What changes is that they have something to
+ * decide with, and that the waiting stopped being dead time.
+ * ------------------------------------------------------------------------- */
+
+/** Their own row, the queue around it, and the others waiting.
+ *
+ *  Public, and identified the way everything else outside the door is: by the
+ *  hash of the number their browser made up. Nobody can ask this about
+ *  anybody else, because the only thing it will answer about is the asker.
+ */
+app.get("/api/wait/me", async (req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+
+  /* Already a member, asking anyway — a browser that was let in and then
+     opened the address it used to use. Said plainly rather than as an empty
+     room, so the page can send them somewhere better. */
+  if (me && board.people.some((q) => q.by === me)) return res.json({ inside: true });
+
+  const mine = me ? board.waits.find((w) => w.by === me && !w.done) : null;
+  if (!mine) return res.json({ on: false });
+
+  /* HOW MANY ARE AHEAD, and it is a queue position rather than a ranking.
+     Everybody still waiting who asked before they did — the one number that
+     is true, means what it looks like, and does not need anybody's name. */
+  const open = board.waits.filter((w) => !w.done);
+  const ahead = open.filter((w) => (w.at || "") < (mine.at || "")).length;
+
+  /* THE OTHERS, AND ONLY THE ONES WHO SAID SO.
+   *
+   * `shown` and nothing else decides this. Everybody who answered the older
+   * form — which promised them that no member would ever see their name — is
+   * absent from this list for ever, and absent from it here as well as from
+   * the members' side, because "the others waiting" are not members either
+   * and were never covered by anything they agreed to.
+   *
+   * What travels is what the card shows: a name, their room, the line they
+   * wrote, and the three things they filled in. NOT the contact, which is
+   * the one promise the new wording still makes in full, and not the id or
+   * the device.
+   */
+  const others = open
+    .filter((w) => w.shown && w.by !== me)
+    .slice(0, 60)
+    .map((w) => ({ name: w.name, room: w.room, why: w.why,
+      levelBand: w.levelBand, type: w.type, me: w.me, want: w.want }));
+
+  /* ONE POST, NOT A FEED. The feed is behind the door and stays there. This
+     is the same single post the public page carries, for the same reason:
+     it says the place is real without pretending the door is open. */
+  const featured = board.posts.filter((p) => p.featured && p.state === "published")
+    .slice(0, 1)
+    .map((p) => ({ note: p.note, zh: p.zh, handle: p.handle, at: p.at }));
+
+  res.json({
+    on: true,
+    you: { name: mine.name, room: mine.room, why: mine.why, at: mine.at,
+      levelBand: mine.levelBand, type: mine.type, me: mine.me, want: mine.want },
+    ahead, waiting: open.length, others, featured,
+  });
+});
+
+/** What they filled in, onto their own row and nobody else's.
+ *
+ *  One field at a time or all of them; anything absent is left alone, so the
+ *  level test can write a band without knowing whether a type is there yet.
+ *  Every value goes through cleanWait, which is where the checking lives.
+ *
+ *  IT TAKES THE THREE FORM FIELDS TOO, and this is the reason it exists
+ *  rather than the room simply posting the join form again. /api/wait
+ *  replaces the row, so a screen that lets somebody fix a typo in their name
+ *  would have to send their contact back with it — which means the server
+ *  would have to hand the contact to the browser first. The one promise the
+ *  new wording still makes in full is that the contact is shown to nobody, and
+ *  a page that holds it in a variable is a page one bug away from breaking
+ *  that. So it never leaves this process: `reach` is not readable here, not
+ *  writable here, and not in anything /api/wait/me returns.
+ */
+app.post("/api/wait/card", express.json({ limit: "2kb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || req.get("x-board-device") || ""), SALT);
+  if (!me) return res.status(400).json({ error: "who" });
+  const out = await change((board) => {
+    const at = board.waits.findIndex((w) => w.by === me && !w.done);
+    /* No row is not an error worth a red screen: a member takes the same
+       tests from inside and their results belong on their profile, which is
+       a different route. The page asks this one only when it is in the
+       waiting room, so this is the "you were let in while the tab was open"
+       case. */
+    if (at < 0) return { on: false };
+    const was = board.waits[at];
+
+    /* A VALUE THAT DOES NOT SURVIVE CHECKING LEAVES THE OLD ONE ALONE.
+     *
+     * cleanWait blanks a field it does not recognise, which is right when a
+     * whole row arrives and wrong here: posting a level of "ZH 99" would then
+     * quietly delete a good level, and a page that sends one bad field would
+     * take the rest of the card down with it. Nothing on this screen is ever
+     * un-taken, so an unreadable value means keep what is there — a write is
+     * only allowed to replace a field with another real value.
+     *
+     * Cleaned one field at a time, against a row that is otherwise theirs, so
+     * every rule stays in cleanWait rather than being restated here.
+     */
+    const put = { ...was };
+    for (const k of ["levelBand", "type", "me", "want", "name", "room", "why"]) {
+      if (req.body?.[k] === undefined) continue;
+      const tried = store.cleanWait({ ...was, [k]: req.body[k] });
+      /* `why` is the one field that is allowed to become nothing: it is
+         optional on the form that made the row, so somebody who wants their
+         line gone has to be able to delete it. Everything else keeps its old
+         value when the new one does not survive checking. */
+      if (!tried) continue;
+      if (tried[k] || k === "why") put[k] = tried[k];
+    }
+    const row = store.cleanWait(put);
+    if (!row) return { error: "row" };
+    board.waits[at] = row;
+    return { on: true, you: { levelBand: row.levelBand, type: row.type,
+      me: row.me, want: row.want, name: row.name, room: row.room,
+      why: row.why } };
   });
   if (out?.error) return res.status(400).json(out);
   res.json(out);

@@ -384,6 +384,11 @@
   .waitcount span{font-size:.95rem;line-height:1.35;color:var(--ink-2);
     white-space:pre-line}
   .waitbox .btn{margin:.2rem 0 0}
+  /* THE WAY INTO THE ROOM, after joining or on coming back. Full width and
+     centred: by the time it is drawn the form is gone and this is the only
+     thing left in the box, and a pill floating on the left of an otherwise
+     empty card reads as something left behind. */
+  .waitbox .goroom{display:block;margin:1rem 0 0;text-align:center}
   .waitbox .said{margin:.8rem 0 0;font-size:.92rem;color:var(--accent)}
   .waitbox .said.bad{color:var(--t5)}
   .waitnote{margin:1rem 0 0;font-size:.8rem;line-height:1.55;color:var(--muted)}

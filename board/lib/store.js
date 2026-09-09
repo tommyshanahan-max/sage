@@ -103,6 +103,47 @@ export function cleanWait(raw) {
      * /api/wait — so a row either names a real member or names nobody.
      */
     via: /^[a-f0-9]{20}$/.test(String(raw.via || "")) ? String(raw.via) : "",
+
+    /* WHETHER THEY AGREED TO BE SEEN, and nothing about them is shown to
+     * anybody until they did.
+     *
+     * The form used to promise that one person read the list and no member
+     * ever saw it. That promise was kept, and it is the reason the queue
+     * could only ever be a queue: a member deciding whether to vouch for a
+     * stranger had nothing to decide with, so nobody was ever brought in
+     * without a private message from somebody who already knew them.
+     *
+     * The new form says the opposite in as many words — see wait.note. This
+     * flag is what makes changing it honest. Only a row written after the
+     * wording changed carries it, so everybody who answered the old question
+     * stays exactly as invisible as they were promised, for ever, without
+     * anybody having to remember which week they signed up in.
+     *
+     * NOT a default. An absent or untrue value is false, so a row that
+     * arrives from anywhere but the current form is invisible — which is the
+     * safe way for this particular field to fail.
+     */
+    shown: raw.shown === true,
+
+    /* WHAT THEY FILLED IN WHILE THEY WAITED.
+     *
+     * The same three shapes a member's profile carries, checked the same way
+     * and for the same reason — these are written from a page, and a field
+     * written from a page will one day be written from something else. A
+     * waiting row has no person behind it, so they live here rather than on
+     * board.people, and they go when the row goes.
+     */
+    levelBand: /^(ZH|EN) ([1-9]|10)$/.test(String(raw.levelBand || "").toUpperCase())
+      ? String(raw.levelBand).toUpperCase() : "",
+    type: /^[EI][SN][TF][JP]$/.test(String(raw.type || "").toUpperCase())
+      ? String(raw.type).toUpperCase() : "",
+    /* What they are and what they are after: the two halves of the sentence
+       this board is built on. Checked against the same ROLES table the
+       profile form and the matching use, further down this file — so a
+       waiting row can only ever hold a role that means something, and the
+       words for it stay in i18n.js where the rest of the words are. */
+    me: Object.hasOwn(ROLES, String(raw.me || "")) ? String(raw.me) : "",
+    want: Object.hasOwn(ROLES, String(raw.want || "")) ? String(raw.want) : "",
   };
 }
 

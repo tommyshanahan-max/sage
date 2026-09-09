@@ -555,16 +555,117 @@ export const STRINGS = {
   "wait.again":        ["Changed — the old answer is replaced.", "改好了，旧的那条已经被替换。"],
   "wait.already":      ["You are already a member. Open the board.",
                         "你已经是这里的人了，直接打开就行。"],
-  /* THE WHOLE PROMISE IN ONE LINE.
-     It was four: only the operator reads it, no member sees it, nothing
-     appears on the board, deleted either way. Three of those are the same
-     fact said three ways — if one person reads it, no member sees it and
-     nothing reaches the board. Kept: who reads it, and that it goes. The long
-     version is on the privacy page, where somebody who wants it will look. */
+  /* THE WHOLE PROMISE, AND IT CHANGED THE DAY THE ROOM SHIPPED.
+   *
+   * It used to say one person reads this, which was true and was the reason
+   * the queue could only ever be a queue: a member deciding about a stranger
+   * had nothing to decide with. There is a room behind this form now, and
+   * everybody in it can see everybody else — so the line says that, in the
+   * order it matters. What is shown, why it is shown, what is never shown,
+   * and that it goes either way.
+   *
+   * IT ONLY BINDS PEOPLE WHO READ IT. Every row written before this wording
+   * changed is invisible for ever — see `shown` in store.js — because they
+   * agreed to the older sentence and nothing about a product changing is
+   * their problem.
+   *
+   * The contact is the half that did not move, and saying so plainly is what
+   * keeps the rest of it a promise rather than a category. */
   "wait.note": [
-    "One person reads this. Deleted either way.",
-    "只有一个人会看。无论结果如何都会删掉。",
+    "Members and the others waiting see your name and your line — that is how somebody brings you in. Your WeChat or email is shown to nobody. Deleted either way.",
+    "成员和其他在等的人能看到你的名字和这句话——你就是这样被带进来的。微信或邮箱不给任何人看。无论结果如何都会删掉。",
   ],
+
+  /* ---- the waiting room ---------------------------------------------------
+     wr.* and not room.*, which is already the eleven rooms of the board and
+     would put "You are on the list" in a run of Language exchange / Job /
+     Raising. Everything somebody on the list sees. The rule that governs every line of
+     it: this is how members find you, never this is how you qualify. Nothing
+     here admits anybody, nothing is scored against a pass mark, and the
+     moment it reads as an exam the people worth having stop bothering. */
+  "wr.title":        ["While you wait", "等着的时候"],
+  "wr.on":           ["You are on the list.", "你已经在名单上了。"],
+  "wr.onWhy": [
+    "Members are looking through the people at the door. This is what they see of you.",
+    "里面的人在翻门口这些人的卡片。他们看到的你，就是这一张。",
+  ],
+  "wr.ahead":        ["{n} asked before you", "有 {n} 个人比你先问"],
+  "wr.aheadNone":    ["You are first in the queue", "你排在最前面"],
+  "wr.yourcard":     ["Your card", "你的卡片"],
+  /* The empty card, said out loud. A screen that draws three blanks and says
+     nothing about them reads as a page that failed to load. */
+  "wr.thin":         ["Three empty spaces. Nothing to go on but a sentence.",
+                        "三个空格。除了一句话，没别的可看。"],
+  "wr.full":         ["Three things a member can judge without meeting you.",
+                        "三件事，不用见面就能判断。"],
+  "wr.fill":         ["Fill them in · 2 minutes each", "填一下 · 每个两分钟"],
+  "wr.done":         ["Done", "已经填了"],
+  "wr.take":         ["Take it", "去做"],
+  "wr.again":        ["Again", "重做"],
+
+  "wr.t1":           ["How good is your Chinese?", "你中文什么水平？"],
+  "wr.t1sub":        ["Four questions", "四道题"],
+  "wr.t2":           ["Which of the sixteen are you?", "十六种里你是哪种？"],
+  "wr.t2sub":        ["Twenty choices", "二十道选择"],
+  "wr.t3":           ["What are you looking for?", "你在找什么？"],
+  "wr.t3sub":        ["Two answers", "两个选择"],
+  "wr.t3save":       ["Put it on the card", "放到卡片上"],
+
+  /* The three chips, and the dashed outline each one leaves while it is
+     empty. Named for what is missing rather than left blank: three blanks
+     read as a card that failed to load, three labels read as three things
+     to do. */
+  "wr.c1":           ["Chinese —", "中文 —"],
+  "wr.c2":           ["Type —", "类型 —"],
+  "wr.c3":           ["Looking for —", "在找 —"],
+  "wr.zh":           ["中文 {n} / 10", "中文 {n} / 10"],
+  "wr.en":           ["English {n} / 10", "英文 {n} / 10"],
+  "wr.wants":        ["Wants: {who}", "在找：{who}"],
+  /* On the card itself, after the room: "Film & TV · waiting". It says the
+     same thing on their own copy as on the members' side, because a card
+     that reads differently to the person it is about is one they cannot
+     trust. */
+  "wr.flag":         ["waiting", "等候中"],
+  "wr.pill":         ["On the list", "在名单上"],
+
+  /* The one line that connects the form to everything behind it. Said as an
+     invitation to look rather than an instruction, because nothing in the
+     room is required and the first words about it should not sound like it. */
+  /* On the two tests, for somebody who has no profile to add anything to.
+     The member's version of this button says profile; saying that to
+     somebody on the waiting list is offering them something they have not
+     got. */
+  "wr.putcard":      ["Put it on my card", "放到我的卡片上"],
+  "wr.putdone":      ["It is on your card.", "已经在你的卡片上了。"],
+  "wr.open":         ["See your card", "看看你的卡片"],
+  "wr.back":         ["You are already on the list. See your card.",
+                      "你已经在名单上了。看看你的卡片。"],
+
+  "wr.others":       ["Waiting with you", "和你一起等的人"],
+  "wr.othersNone": [
+    "Nobody else has joined since the list started keeping cards.",
+    "从名单开始保留卡片以来，还没有别人加进来。",
+  ],
+  "wr.inside":       ["Inside, this week", "里面，这周"],
+  "wr.locked": [
+    "Messages open when somebody brings you in.",
+    "有人把你带进来之后，就能发消息了。",
+  ],
+  /* The two tabs. There were three: the third was a feed nobody outside the
+     door can be shown, which would have been either a locked screen or the
+     blurred shape they already scrolled past to get here. It arrives the day
+     they are let in, and its arriving is part of what that feels like. */
+  "wr.tabWait":      ["Waiting", "等候"],
+  "wr.tabYou":       ["You", "你"],
+  "wr.edit":         ["What members see", "成员看到的"],
+  "wr.editSave":     ["Save", "保存"],
+  "wr.saved":        ["Saved.", "已保存。"],
+  "wr.gone": [
+    "You are not on the list on this browser.",
+    "这个浏览器不在名单上。",
+  ],
+  "wr.goneGo":       ["Ask to join", "申请加入"],
+  "wr.inAlready":    ["You are a member. Open the board.", "你已经是这里的人了，直接打开。"],
 
   "rules.title":       ["House rules", "这里的规矩"],
   "rules.lede": [
@@ -703,12 +804,18 @@ export const STRINGS = {
      a form has to be findable here too, or it is only marketing. */
   "pv.hwait":          ["The waiting list", "等候名单"],
   "pv.pwait1": [
-    "If you asked to join and are waiting, what we hold is what you typed into that one form: a name to call you, a way to reach you, and whatever you wrote about yourself. Nothing else. There is no account behind it, and asking to join does not put anything on the board — no member sees your name, and nothing you wrote appears anywhere a member can read.",
-    "如果你申请加入、正在等候，我们保留的就是你在那个表单里填的东西：一个称呼、一个联系方式，以及你写的那段自我介绍，仅此而已。它背后没有账号，申请本身也不会在板上留下任何痕迹——没有成员看得到你的名字，你写的内容也不会出现在任何成员能读到的地方。",
+    "If you asked to join and are waiting, what we hold is what you typed into that one form — a name to call you, a way to reach you, and whatever you wrote about yourself — plus anything you added afterwards in the waiting room: a language level, a type, what you are looking for. There is no account behind any of it.",
+    "如果你申请加入、正在等候，我们保留的就是你在那个表单里填的东西——一个称呼、一个联系方式，以及你写的那段自我介绍——再加上你之后在等候室里补的：语言水平、类型、你在找什么。这些背后都没有账号。",
   ],
   "pv.pwait2": [
-    "Only whoever runs this board reads that list. It is deleted once you are let in, and deleted if you are not — either way it does not become a record of people who once wanted in. The number of people waiting is shown on the public page and inside the board, but only as a number, and only once enough people are waiting that the number cannot point at anybody.",
-    "这份名单只有运行这个板的人会读。你被放进来之后它会被删掉，没被放进来也会被删掉——无论哪种情况，它都不会变成一份「谁曾经想进来」的记录。等候的人数会显示在公开页面和板内，但只是一个数字，而且要等到人数多到这个数字指不到任何具体的人时才会出现。",
+    "Your name, your line and what you added are shown to members and to the other people waiting. That is the point of them: it is how somebody decides to bring you in, and there is no other way in. The way to reach you is shown to nobody at all — not to a member, not to the room, only to whoever runs this board. The list is deleted once you are let in, and deleted if you are not.",
+    "你的名字、那句话，以及你补上的东西，会给成员和其他在等的人看。这正是它们存在的意义：有人就是这样决定把你带进来的，除此之外没有别的路。联系方式则不给任何人看——成员看不到，等候室里的人也看不到，只有运行这个板的人能看到。你被放进来之后名单会被删掉，没被放进来也会被删掉。",
+  ],
+  /* WHO THIS DOES NOT APPLY TO, said here because it is the whole reason the
+     paragraph above can be honest. */
+  "pv.pwait3": [
+    "Everybody who asked to join before this changed answered a different question — one that promised no member would ever see their name. Nothing about them is shown to anybody, and that does not expire. The number of people waiting is still only ever a number, and only once enough people are waiting that it cannot point at anybody.",
+    "在这条改动之前申请的人，当时回答的是另一个问题——那个版本承诺过任何成员都不会看到他们的名字。关于他们的任何东西都不会给任何人看，而且这一点不会过期。等候人数依然只是一个数字，而且要等到人数多到这个数字指不到任何具体的人时才会出现。",
   ],
 
   /* THE TWO FIELDS THAT ARE THE EXCEPTION TO THE FILTER, said next to it

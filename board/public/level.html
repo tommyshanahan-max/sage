@@ -387,7 +387,7 @@
 
 <script type="module">
 import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
-import { waitBox, admitted, feedPeek } from "/wait.js";
+import { waitBox, admitted, feedPeek, putResult } from "/wait.js";
 import { CARDS, BANDS, CAN, STEPS, firstStep, nextStep } from "/level-cards.js";
 import { stageFor, stageName, crownMark, crownOnCanvas } from "/crown.js";
 
@@ -1314,6 +1314,40 @@ function drawResult(box) {
    * a feed they cannot read, so for them it is replaced by the one thing that
    * is any use: their result, and a way onto the list under it. */
   if (!ADMITTED) {
+    /* SOMEBODY ALREADY ON THE LIST HAS SOMEWHERE TO PUT THIS.
+     *
+     * They have no profile, so every button below is useless to them — but
+     * they do have a card, and a level is one of the three things a member
+     * looking at that card has to go on. Without this the test was a dead end
+     * for exactly the people it works hardest on: they could take it, read
+     * the result, and had no way to keep it.
+     *
+     * Only when the server says this browser is on the list. Somebody who is
+     * not gets the queue, which is the same thing one step earlier. */
+    if (ONLIST) {
+      const keep = el("button", "quiet wide", T("wr.putcard"));
+      keep.type = "button";
+      const kept = el("p", "said");
+      keep.addEventListener("click", async () => {
+        keep.disabled = true;
+        keep.textContent = T("me.working");
+        const got = await putResult({ levelBand: (w === "zh" ? "ZH" : "EN") + " " + n });
+        if (got.where) {
+          try { localStorage.setItem(PUTKEY, "1"); } catch { /* fine */ }
+          kept.className = "said ok";
+          kept.textContent = T("wr.putdone");
+          keep.hidden = true;
+          return;
+        }
+        keep.disabled = false;
+        keep.textContent = T("act.again");
+      });
+      box.append(keep, kept);
+      const on = el("a", "btn goroom", T("wr.open"));
+      on.href = "/room";
+      box.append(on);
+      return;
+    }
     /* WHAT IS BEHIND THE DOOR, SHOWN RATHER THAN DESCRIBED. A paragraph
        saying "there is a board in here with people on it" is a claim; five
        posts out of focus is the thing itself, and it is read in a glance
@@ -1355,25 +1389,22 @@ function drawResult(box) {
   row.append(again, done);
   box.append(row);
 
+  /* Only members reach this — see the early return above, which hands
+     somebody on the waiting list their own version of it. */
   const put = el("button", "quiet wide", T("lvl.put"));
   put.type = "button";
   const say = el("p", "said");
   put.addEventListener("click", async () => {
     put.disabled = true;
     put.textContent = T("me.working");
-    try {
-      const out = await fetch("/api/me", {
-        method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ device, levelBand: (w === "zh" ? "ZH" : "EN") + " " + n }),
-      }).then((x) => x.json());
-      if (out && out.person) {
-        try { localStorage.setItem(PUTKEY, "1"); } catch { /* fine */ }
-        say.className = "said ok";
-        say.textContent = T("type.puton");
-        put.hidden = true;
-        return;
-      }
-    } catch { /* fall through */ }
+    const got = await putResult({ levelBand: (w === "zh" ? "ZH" : "EN") + " " + n });
+    if (got.where) {
+      try { localStorage.setItem(PUTKEY, "1"); } catch { /* fine */ }
+      say.className = "said ok";
+      say.textContent = T("type.puton");
+      put.hidden = true;
+      return;
+    }
     put.disabled = false;
     put.textContent = T("act.again");
   });
@@ -1410,9 +1441,29 @@ let PEEK = [];
    "out" is the safe way round: the worst case is a member seeing their own
    buttons a moment late, where the other way round would offer somebody the
    waiting list they are already on. */
-admitted().then((yes) => { ADMITTED = yes; });
-fetch("/api/hello").then((r) => r.json())
-  .then((d) => { PEEK = Array.isArray(d && d.peek) ? d.peek : []; })
+/* AND DRAWN AGAIN WHEN THE ANSWER COMES BACK.
+ *
+ * It used to be set and left, on the reasoning that the result is four
+ * questions away so the answer is always in first. That is true of somebody
+ * taking the test and false of somebody opening the page with a result
+ * already saved on it, who is shown the result screen immediately — and that
+ * screen now has a button whose label depends on this. Left alone it offered
+ * a waiting person their profile, which they have not got. */
+admitted().then((yes) => {
+  if (yes === ADMITTED) return;
+  ADMITTED = yes;
+  if (RESULT && !STATE) paint();
+});
+/* Whether this browser is on the waiting list, from the same call that
+   already fetches the peek. It decides whether somebody outside the door is
+   offered their card or offered the queue, and it arrives after the first
+   draw — so the page is drawn again when it does, the same way ADMITTED is. */
+let ONLIST = false;
+fetch("/api/hello", { headers: { "x-board-device": device } }).then((r) => r.json())
+  .then((d) => {
+    PEEK = Array.isArray(d && d.peek) ? d.peek : [];
+    if (d && d.already) { ONLIST = true; if (RESULT && !STATE) paint(); }
+  })
   .catch(() => { /* the box below still works without it */ });
 
 setLang(pickLang());

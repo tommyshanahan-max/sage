@@ -76,7 +76,13 @@ const el = (tag, cls, text) => {
 /** The same random number the app uses, so asking twice from one browser
  *  corrects the first answer instead of queueing behind it. Made here when
  *  this is the first page of ours somebody has opened. */
-function device() {
+/* THE BROWSER'S OWN NUMBER, made up once and kept.
+ *
+ * Exported because the waiting room needs the same one: a room that asked
+ * with a different id would look at somebody's own list row and see a
+ * stranger's, or more likely nobody's. There is one identity outside the
+ * door and this is it. */
+export function device() {
   try {
     let d = localStorage.getItem("board:device") || "";
     if (!d) {
@@ -249,6 +255,20 @@ export function waitBox() {
          would make the number the one thing it must not be, which is flattering. */
       if (!d.already && !d.again) tally("joined", room);
       if (!d.already) { form.hidden = true; count.hidden = true; }
+      /* AND THE WAY INTO THE ROOM.
+       *
+       * "You are on the list" was the end of it, for everybody who has not
+       * been brought in yet — which on most days is nearly everybody who has
+       * heard of this place. There is a room behind that sentence now and
+       * nothing else on this page can lead to it, so the sentence leads to
+       * it. Drawn only when there is a row to open: somebody who is already a
+       * member gets sent to the board itself, and their button is the one in
+       * the corner. */
+      if (!d.already) {
+        const on = el("a", "btn goroom", T("wr.open"));
+        on.href = "/room";
+        box.append(on);
+      }
       // The promise stays after sending: it is about what was just handed over.
     } catch { tell(T("act.again"), true); }
     go.disabled = false;
@@ -260,9 +280,20 @@ export function waitBox() {
   const sentBy = viaFromUrl();
   const q = [askedFor ? "room=" + encodeURIComponent(askedFor) : "",
              sentBy ? "via=" + encodeURIComponent(sentBy) : ""].filter(Boolean).join("&");
-  fetch("/api/hello" + (q ? "?" + q : ""))
+  fetch("/api/hello" + (q ? "?" + q : ""), { headers: { "x-board-device": device() } })
     .then((r) => r.json())
     .then((d) => {
+      /* ALREADY ON IT, AND HERE AGAIN. A link forwarded twice, a bookmark, a
+         second look a week later. Showing the form again is how one person
+         becomes two rows and how somebody decides nothing happened the first
+         time — so the form goes and the room is offered instead. */
+      if (d && d.already) {
+        form.hidden = true;
+        tell(T("wr.back"));
+        const on = el("a", "btn goroom", T("wr.open"));
+        on.href = "/room";
+        box.append(on);
+      }
       if (d && d.via) {
         from.hidden = false;
         from.textContent = T("wait.sentBy", { who: d.via });
@@ -315,6 +346,39 @@ export function feedPeek(rows, head) {
   }
   box.append(stack);
   return box;
+}
+
+/* WHERE A TEST RESULT GOES WHEN THERE IS NO PROFILE TO PUT IT ON.
+ *
+ * The level test and the sixteen types both ended at one button — put this on
+ * my profile — and that button did nothing for anybody outside the door,
+ * which is everybody the tests are best at persuading. They could take the
+ * test, read the result, and had no way to keep it.
+ *
+ * A member's result belongs on their profile and a waiting person's on their
+ * waiting row, and the field names are the same on both. So: try the profile,
+ * and when there is no profile — which outside the door is a 403 from the
+ * gate rather than an error worth showing anybody — write it to the row
+ * instead. Returns which of the two happened, so the page can say the right
+ * sentence, or "" when neither worked.
+ */
+export async function putResult(fields) {
+  try {
+    const out = await fetch("/api/me", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device: device(), ...fields }),
+    }).then((r) => (r.ok ? r.json() : null));
+    if (out && out.person) return { where: "profile", person: out.person };
+  } catch { /* the row is the other half of this, not a failure yet */ }
+  try {
+    const out = await fetch("/api/wait/card", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-board-device": device() },
+      body: JSON.stringify(fields),
+    }).then((r) => (r.ok ? r.json() : null));
+    if (out && out.on) return { where: "room" };
+  } catch { /* fall through */ }
+  return { where: "" };
 }
 
 /** Whether this browser is already through the door. Public route, so it
