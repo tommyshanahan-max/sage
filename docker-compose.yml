@@ -665,6 +665,15 @@ services:
       # Distinct .localhost fallbacks, same reason as every other pair here.
       TOMSCODING_SITE_DOMAIN: ${TOMSCODING_SITE_DOMAIN:-exchange.localhost}
       TOMSCODING_SITE_WWW: ${TOMSCODING_SITE_WWW:-www.exchange.localhost}
+      # The ledger. Its site block reads these from Caddy's own environment —
+      # putting the hostname in .env and the file in docker/sites is not
+      # enough, and the failure is quiet: Caddy comes up managing the
+      # .localhost fallback instead, so the real domain answers with a
+      # certificate for a name nobody asked for. On a .app, which browsers
+      # refuse over plain HTTP, that reads as ERR_SSL_PROTOCOL_ERROR and looks
+      # like a broken box rather than a missing line.
+      TOMSCODING_CFM_DOMAIN: ${TOMSCODING_CFM_DOMAIN:-cfm.localhost}
+      TOMSCODING_CFM_WWW: ${TOMSCODING_CFM_WWW:-www.cfm.localhost}
       # Not an address — the brand page's template reads it to decide whether
       # to include the counting snippet at all. Empty means nothing is counted,
       # which is exactly when the snippet should not be on the page.
