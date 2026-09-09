@@ -81,6 +81,21 @@
   .pc .chips span.ghost{background:none;border:1px dashed rgba(255,255,255,.45);
     color:rgba(255,255,255,.66)}
   .under{margin:.5rem 0 0;font-size:.79rem;color:var(--muted);text-align:center}
+  .under.bad{color:#b3261e}
+  .under.wait{color:var(--accent)}
+  /* The card is a button ONLY where it is the photograph control — the
+     Waiting tab. The same card is drawn on the You tab above a form that has
+     its own button, and a pointer cursor on something that does nothing is a
+     promise the page does not keep. The chip is the only thing that says the
+     card is tappable, so it sits on the corner a thumb reaches and never
+     covers the name or the line. */
+  .pc.tap{cursor:pointer}
+  .pc.tap.busy{opacity:.65;pointer-events:none}
+  .shotchip{position:absolute;top:.7rem;right:.7rem;padding:.22rem .65rem;
+    border-radius:99px;background:rgba(255,255,255,.92);color:#151B28;
+    font-size:.7rem;font-weight:600}
+  .shotchip.wait{background:rgba(255,255,255,.72)}
+  .shotchip.bad{background:#b3261e;color:#fff}
 
   /* NOT .rule — site.css already owns that, and it is the bordered card the
      house-rules page is made of. Checked against the stylesheet before this
@@ -407,6 +422,98 @@ async function putCard(body) {
   } catch { return false; }
 }
 
+/* ---- the photograph ------------------------------------------------------
+ *
+ * One control, offered in two places. It began on the You tab alone, which
+ * meant the one slot worth the most was two taps and a tab away from the
+ * screen everybody actually looks at — so the card carries it too. Both call
+ * this; neither owns it, and there is one upload path to get wrong.
+ */
+
+/** What to say about the photograph they have, or have not got. */
+function photoWord(you) {
+  if (you.photo) {
+    return you.photoState === "published"
+      ? { words: T("wr.photoLive"), how: "" }
+      /* A picture that is up but not yet released looks identical to one that
+         failed to send, and only one of those is worth worrying about. */
+      : { words: T("wr.photoHeld"), how: "wait" };
+  }
+  /* Told, rather than quietly returned to the offer. A picture that vanishes
+     with no explanation reads as a bug in the app, and the person tries the
+     same photograph again. */
+  if (you.photoState === "refused") return { words: T("wr.photoNo"), how: "bad" };
+  return { words: T("wr.photoWhy"), how: "" };
+}
+
+/** The hidden input and the way to open it.
+ *
+ *  `ui.busy(on)` and `ui.say(words, how)` are however the caller wants to
+ *  show those two things — a button that dims and a line under it on the You
+ *  tab, a chip on the card in the Waiting tab. Everything between the tap and
+ *  the row being written lives here.
+ *
+ *  A DETACHED INPUT, TRIGGERED WITH .click(). Not a <label> wrapping one:
+ *  WeChat's webview — where most of the people this is for will open it —
+ *  does not reliably pass a tap on a label through to the input inside, so
+ *  the picker never opens and nothing at all happens, which reads as a photo
+ *  that would not save.
+ */
+function photoPicker(you, ui) {
+  const file = document.createElement("input");
+  file.type = "file";
+  file.accept = "image/*";
+  file.hidden = true;
+
+  file.addEventListener("change", async () => {
+    const f = file.files && file.files[0];
+    /* Cancelled. Not an error and not a state to leave the button in. */
+    if (!f) return;
+    ui.busy(true);
+    ui.say(T("me.working"), "");
+    const small = await shrink(f, 1200);
+    if (small.error) {
+      ui.busy(false);
+      file.value = "";
+      ui.say(small.error, "bad");
+      return;
+    }
+    /* WHAT WENT WRONG, RATHER THAN "TRY AGAIN".
+     *
+     * Four things can stop this and they need four different actions from the
+     * person holding the phone: the picture is too big, the file is not one
+     * the server takes, this browser is not on the list any more, or the
+     * network dropped. One message for all four is a message that helps with
+     * none of them, and it is what somebody quotes back when they say it does
+     * not work. */
+    let ok = false, why = "act.again";
+    try {
+      const r = await fetch("/api/wait/photo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-board-device": device() },
+        body: JSON.stringify({ photo: small.data, photoType: small.type || "image/jpeg" }),
+      });
+      const out = await r.json().catch(() => null);
+      ok = Boolean(r.ok && out && out.on);
+      if (!ok) {
+        if (r.status === 413) why = "wr.photoBig";
+        else if (r.status === 415) why = "post.badPhoto";
+        else if (out && out.on === false) why = "wr.gone";
+      }
+    } catch { /* the network. act.again is right for that one. */ }
+    ui.busy(false);
+    /* Cleared whatever happened: without this, picking the same photograph a
+       second time fires no change event at all, so a failed upload could not
+       be retried with the one file somebody actually wants to send. */
+    file.value = "";
+    if (!ok) { ui.say(T(why), "bad"); return; }
+    await load();
+    draw();
+  });
+
+  return { input: file, open: () => file.click() };
+}
+
 /* ---- the panes ----------------------------------------------------------- */
 
 function drawWait(box) {
@@ -420,8 +527,47 @@ function drawWait(box) {
   box.append(band);
 
   const full = Boolean(you.levelBand && you.type && you.want);
-  box.append(cardOf(you, true));
-  box.append(el("p", "under", T(full ? "wr.full" : "wr.thin")));
+
+  /* THE CARD TAKES THE PHOTOGRAPH ITSELF.
+   *
+   * It was on the You tab only, which put the slot worth the most two taps
+   * and a tab away from the screen everybody actually looks at — and the
+   * thing a person taps when they want to change their picture is the
+   * picture. So the card is the control: tapping it opens the same picker,
+   * and a chip on it says so, because a tap target nobody can see is a tap
+   * target nobody uses. The You tab keeps its button; this is the short way,
+   * not the only way. */
+  const card = cardOf(you, true);
+  card.className = "pc tap";
+  const under = el("p", "under", T(full ? "wr.full" : "wr.thin"));
+  const chip = el("span", "shotchip");
+  const setChip = () => {
+    const w = photoWord(you);
+    chip.className = "shotchip" + (w.how ? " " + w.how : "");
+    chip.textContent = T(you.photo ? "wr.photoAgain" : "wr.photoAdd");
+  };
+  setChip();
+  const picker = photoPicker(you, {
+    busy: (on) => { card.className = on ? "pc tap busy" : "pc tap"; },
+    /* On the card there is no room for a sentence, so the chip carries the
+       short version and the line under the card carries the rest — which is
+       where the reader is already looking after tapping it. */
+    say: (words, how) => { under.className = "under" + (how ? " " + how : "");
+      under.textContent = words; },
+  });
+  card.append(chip);
+  card.addEventListener("click", picker.open);
+  box.append(card, picker.input);
+  box.append(under);
+  /* AND WHERE THE PHOTOGRAPH HAS GOT TO, on the screen they took it from.
+   *
+   * A picture uploaded from the card appeared on the card and said nothing
+   * else, so the honest answer to "has this saved?" was only on the other
+   * tab. It is up, it is theirs, and nobody else can see it yet — three
+   * facts, and the middle one is the reason the third is not alarming. */
+  if (you.photo && you.photoState !== "published") {
+    box.append(el("p", "under wait", T("wr.photoHeld")));
+  }
 
   const head = el("div", "wrhead");
   head.append(el("span", null, T(full ? "wr.done" : "wr.fill")), el("i"));
@@ -509,86 +655,18 @@ function drawYou(box) {
    * looks identical to one that failed to send, and only one of those is
    * worth worrying about. */
   const shot = el("div", "shot");
-  /* A BUTTON THAT PRESSES A HIDDEN INPUT, and not a label wrapping one.
-   *
-   * The label is the tidier markup and it is the one that fails: WeChat's
-   * webview — where most of the people this is for will open it — does not
-   * reliably pass a tap on a label through to a file input inside it, so the
-   * picker never opens and nothing at all happens, which reads as a photo
-   * that would not save. Every other file input on this board is already a
-   * button and a detached input; this one is now the same. */
   const pick = el("button", "shotgo", T(you.photo ? "wr.photoAgain" : "wr.photoAdd"));
   pick.type = "button";
-  const file = document.createElement("input");
-  file.type = "file";
-  file.accept = "image/*";
-  file.hidden = true;
-  pick.addEventListener("click", () => file.click());
   const shotsaid = el("p", "shotsaid");
-  if (you.photo) {
-    shotsaid.textContent = T(you.photoState === "published" ? "wr.photoLive" : "wr.photoHeld");
-    if (you.photoState !== "published") shotsaid.className = "shotsaid wait";
-  } else if (you.photoState === "refused") {
-    /* Told, rather than quietly returned to the offer. A picture that
-       vanishes with no explanation reads as a bug in the app, and the person
-       tries the same photograph again. */
-    shotsaid.className = "shotsaid bad";
-    shotsaid.textContent = T("wr.photoNo");
-  } else {
-    shotsaid.textContent = T("wr.photoWhy");
-  }
-  file.addEventListener("change", async () => {
-    const f = file.files && file.files[0];
-    /* Cancelled. Not an error and not a state to leave the button in. */
-    if (!f) return;
-    pick.className = "shotgo busy";
-    shotsaid.className = "shotsaid";
-    shotsaid.textContent = T("me.working");
-    const small = await shrink(f, 1200);
-    if (small.error) {
-      pick.className = "shotgo";
-      file.value = "";
-      shotsaid.className = "shotsaid bad";
-      shotsaid.textContent = small.error;
-      return;
-    }
-    /* WHAT WENT WRONG, RATHER THAN "TRY AGAIN".
-     *
-     * Four things can stop this and they need four different actions from the
-     * person holding the phone: the picture is too big, the file is not one
-     * the server takes, this browser is not on the list any more, or the
-     * network dropped. One message for all four is a message that helps with
-     * none of them, and it is what somebody quotes back when they say it does
-     * not work. */
-    let ok = false, why = "act.again";
-    try {
-      const r = await fetch("/api/wait/photo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-board-device": device() },
-        body: JSON.stringify({ photo: small.data, photoType: small.type || "image/jpeg" }),
-      });
-      const out = await r.json().catch(() => null);
-      ok = Boolean(r.ok && out && out.on);
-      if (!ok) {
-        if (r.status === 413) why = "wr.photoBig";
-        else if (r.status === 415) why = "post.badPhoto";
-        else if (out && out.on === false) why = "wr.gone";
-      }
-    } catch { /* the network. act.again is right for that one. */ }
-    pick.className = "shotgo";
-    /* Cleared whatever happened: without this, picking the same photograph a
-       second time fires no change event at all, so a failed upload could not
-       be retried with the one file somebody actually wants to send. */
-    file.value = "";
-    if (!ok) {
-      shotsaid.className = "shotsaid bad";
-      shotsaid.textContent = T(why);
-      return;
-    }
-    await load();
-    draw();
+  shotsaid.className = "shotsaid " + photoWord(you).how;
+  shotsaid.textContent = photoWord(you).words;
+  const picker = photoPicker(you, {
+    busy: (on) => { pick.className = on ? "shotgo busy" : "shotgo"; },
+    say: (words, how) => { shotsaid.className = "shotsaid " + (how || "");
+      shotsaid.textContent = words; },
   });
-  shot.append(pick, file, shotsaid);
+  pick.addEventListener("click", picker.open);
+  shot.append(pick, picker.input, shotsaid);
   box.append(shot);
 
   const form = el("div", "form");
