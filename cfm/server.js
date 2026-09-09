@@ -578,7 +578,7 @@ app.post("/api/seal", express.json({ limit: "1kb" }), admin, async (req, res) =>
      down, and a month that refused to close because Horizon was busy would
      be the tail wagging the dog. An un-anchored seal is a true statement
      about a record; a month that was never sealed is a hole in one. */
-  let put = null, why = "";
+  let put = null, why = anchor.bad() ? anchor.why() : "";
   if (anchor.on()) {
     try { put = await anchor.put(out.month, out.hash); }
     catch (e) { why = String((e && e.message) || e).slice(0, 200); }
@@ -599,6 +599,7 @@ app.post("/api/seal", express.json({ limit: "1kb" }), admin, async (req, res) =>
  *  For the first anchor after turning it on, and for the one that failed
  *  because the network was busy. */
 app.post("/api/anchor", express.json({ limit: "1kb" }), admin, async (req, res) => {
+  if (anchor.bad()) return res.status(503).json({ error: "key", why: anchor.why() });
   if (!anchor.on()) return res.status(503).json({ error: "off" });
   const month = String(req.body?.month || "");
   const data = await store.load(FILE);
@@ -642,7 +643,12 @@ app.get("/api/verify", async (req, res) => {
  *  anchor nobody can find the account for is not evidence of anything. */
 app.get("/api/anchoring", (_req, res) => {
   res.set("Cache-Control", "no-store");
-  res.json({ on: anchor.on(), net: anchor.on() ? anchor.net() : "", by: anchor.who() });
+  res.json({
+    on: anchor.on(), net: anchor.on() ? anchor.net() : "", by: anchor.who(),
+    /* Set-but-wrong is its own state. Reported as such, because "off" would
+       send somebody to add a key they have already added. */
+    bad: anchor.bad(), why: anchor.bad() ? anchor.why() : "",
+  });
 });
 
 /** Undo the newest seal, and only the newest.

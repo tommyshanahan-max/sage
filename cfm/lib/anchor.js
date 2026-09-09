@@ -43,7 +43,35 @@ const NET = (process.env.CFM_STELLAR_NET || "test").toLowerCase() === "public"
       horizon: "https://horizon-testnet.stellar.org",
     };
 
-const SECRET = (process.env.CFM_STELLAR_SECRET || "").trim();
+/* Trimmed, and then checked for shape rather than trusted.
+ *
+ * A Stellar secret is base32: 56 characters, S, and nothing outside A-Z and
+ * 2-7. Pasting one into a `read -s` prompt is where this goes wrong — many
+ * terminals wrap a paste in bracketed-paste escape sequences, and read
+ * captures them, so the variable holds the key with invisible characters
+ * around it. Everything downstream then fails at submit time with the SDK
+ * saying "invalid encoded string", which tells nobody anything.
+ *
+ * So the shape is checked here, once, where the message can name the actual
+ * problem instead of passing a library's wording through to somebody who has
+ * no way to act on it. */
+const RAW = (process.env.CFM_STELLAR_SECRET || "").trim();
+const SECRET = /^S[A-Z2-7]{55}$/.test(RAW) ? RAW : "";
+
+/** Set but wrong — worth telling apart from not set at all, because the two
+ *  need opposite things done about them. */
+export const bad = () => Boolean(RAW) && !SECRET;
+export const why = () => {
+  if (!RAW) return "";
+  const clean = RAW.replace(/[^A-Z2-7]/g, "");
+  return "CFM_STELLAR_SECRET is " + RAW.length + " characters and a Stellar " +
+    "secret is 56 starting with S. " +
+    (clean.length === 56 && clean.startsWith("S")
+      ? "There is a valid-looking key inside it with " + (RAW.length - 56) +
+        " extra character(s) around it — a pasted key usually picks those up " +
+        "from the terminal."
+      : "Check it was pasted whole.");
+};
 
 export const on = () => Boolean(SECRET);
 export const net = () => NET.name;

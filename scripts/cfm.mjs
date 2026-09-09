@@ -180,6 +180,10 @@ if (cmd === "setup") {
     method: "POST", headers: head, body: JSON.stringify({ month }),
   });
   const d = await r.json().catch(() => ({}));
+  if (d.error === "key") {
+    console.error("\n  The value in .env is not a Stellar secret.\n  " + d.why + "\n");
+    process.exit(1);
+  }
   if (d.error === "off") {
     console.error("\n  Anchoring is off. Set CFM_STELLAR_SECRET in .env to turn it on.\n");
     process.exit(1);
@@ -222,7 +226,14 @@ if (cmd === "setup") {
 } else if (cmd === "anchoring") {
   const r = await fetch(base + "/api/anchoring");
   const d = await r.json().catch(() => ({}));
-  if (!d.on) {
+  if (d.bad) {
+    console.log("\n  The value in .env is not a Stellar secret.");
+    console.log("  " + d.why);
+    console.log("\n  Delete the line and write it again:");
+    console.log("    sed -i '/^TOMSCODING_CFM_STELLAR_SECRET=/d' .env");
+    console.log("    printf 'TOMSCODING_CFM_STELLAR_SECRET=%s\\n' YOUR_KEY >> .env");
+    console.log("\n  Then: make up, then this again.\n");
+  } else if (!d.on) {
     console.log("\n  Anchoring is off. Seals stay on this server only.");
     console.log("  Set CFM_STELLAR_SECRET (and CFM_STELLAR_NET=test) in .env.\n");
   } else {
