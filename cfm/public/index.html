@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>crowdfundme</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  /* THE LEDGER'S OWN LOOK, and it is deliberately not the board's.
+     Green here, blue there. When somebody accepts, the colour changes under
+     them — which is the whole point: the ledger made the offer and handed
+     over, and a reader can see that it did. */
+  :root{
+    --ink:#0B0F0D; --raise:#121815; --line:#1E2622; --hair:#171E1A;
+    --text:#F2F5F3; --dim:#9EACA5; --mut:#66746D;
+    --go:#3FBF8F; --gold:#C9A44C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--ink);color:var(--text);min-height:100%}
+  body{font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+    "PingFang SC","Hiragino Sans GB",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:26rem;margin:0 auto;padding:2.2rem 1.3rem 3rem;
+    min-height:100dvh;display:flex;flex-direction:column}
+  .mk{width:46px;height:46px;border-radius:13px;background:#1F7A5A;display:grid;
+    place-items:center;font:400 23px/1 "Instrument Serif",Georgia,serif;margin:0 auto 1.3rem}
+  .tag{font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--go);
+    font-weight:700;margin-bottom:.6rem}
+  .tag b{color:var(--text)}
+  h1{font:400 1.65rem/1.15 "Instrument Serif",Georgia,serif;text-align:center}
+  .sub{color:var(--mut);font-size:.85rem;text-align:center;margin-top:.2rem}
+  /* the door */
+  form{margin-top:1.5rem}
+  .boxes{display:flex;gap:.4rem;justify-content:center;margin-bottom:1.2rem}
+  .boxes input{width:2.7rem;height:3.4rem;border:1.5px solid var(--line);border-radius:.7rem;
+    background:#0F1512;color:var(--text);font:700 1.5rem/1 inherit;text-align:center;
+    text-transform:uppercase;outline:none;-webkit-appearance:none}
+  .boxes input:focus{border-color:var(--go);box-shadow:0 0 0 3px rgba(63,191,143,.14)}
+  .boxes input.on{border-color:var(--go)}
+  button{width:100%;border:0;border-radius:99px;padding:.95rem;font:700 1rem/1 inherit;
+    background:#1B221E;color:#5C6A64;cursor:not-allowed;font-family:inherit}
+  button.ready{background:var(--go);color:#08120E;cursor:pointer}
+  button.pale{background:#F2F5F3;color:#0B0F0D;cursor:pointer}
+  .said{margin-top:.9rem;font-size:.85rem;color:#E08A6B;text-align:center;min-height:1.2em}
+  .foot{margin-top:auto;padding-top:2rem;color:var(--mut);font-size:.78rem;text-align:center}
+  /* the offer */
+  .nm{font:400 2.1rem/1.02 "Instrument Serif",Georgia,serif;margin-bottom:.35rem}
+  .one{color:var(--dim);font-size:.95rem;margin-bottom:1.5rem}
+  .seat{text-align:center;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:1.25rem 0;margin-bottom:1.2rem}
+  .seat b{font:400 3.4rem/1 "Instrument Serif",Georgia,serif;color:var(--gold)}
+  .seat b i{font-style:normal;font-size:1.2rem;color:var(--mut)}
+  .seat span{display:block;font-size:.78rem;color:var(--mut);margin-top:.4rem}
+  .chip{display:inline-block;margin-top:.7rem;font-size:.64rem;letter-spacing:.12em;
+    text-transform:uppercase;font-weight:700;color:var(--gold);border:1px solid #4A3E22;
+    background:#191509;border-radius:99px;padding:.3rem .7rem}
+  .ask{font:400 1.35rem/1.25 "Instrument Serif",Georgia,serif;margin-bottom:.7rem}
+  .ask em{font-style:italic;color:var(--go)}
+  .why{color:var(--dim);font-size:.88rem;margin-bottom:1.3rem}
+  .from{display:flex;gap:.7rem;align-items:flex-start;padding:.85rem .9rem;background:var(--raise);
+    border-radius:.7rem;font-size:.86rem;color:#B9C6BF;margin-bottom:1.3rem}
+  .from i{width:2rem;height:2rem;border-radius:50%;background:#1E2A24;color:#8FA69B;flex:0 0 auto;
+    display:grid;place-items:center;font-size:.7rem;font-weight:700;font-style:normal}
+  .from b{color:var(--text)}
+  .lk{display:block;text-align:center;margin-top:.85rem;font-size:.85rem;color:var(--gold);
+    text-decoration:underline;text-underline-offset:3px;background:none;border:0;width:100%;
+    cursor:pointer;font-family:inherit}
+  .fine{margin-top:1.1rem;font-size:.72rem;line-height:1.55;color:#5C6A64}
+  /* where this goes */
+  .claim{font:400 1.25rem/1.28 "Instrument Serif",Georgia,serif;margin-bottom:.35rem}
+  .claim em{font-style:italic;color:var(--go)}
+  .claimsub{color:var(--dim);font-size:.85rem;margin-bottom:1rem}
+  .gl{color:var(--dim);font-size:.84rem;margin:.6rem 0 1.3rem}
+  .gl b{color:var(--text);font-weight:700}
+  .sec{border-top:1px solid var(--line);padding-top:1.1rem;margin-bottom:1.2rem}
+  .sech{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+    font-weight:700;margin-bottom:.85rem}
+  .stp{display:flex;gap:.75rem;margin-bottom:.9rem}
+  .stp i{flex:0 0 auto;width:1.4rem;height:1.4rem;border-radius:50%;background:#152019;
+    color:var(--go);font-style:normal;display:grid;place-items:center;font-size:.68rem;font-weight:700}
+  .stp div{font-size:.85rem;color:#B9C6BF}
+  .stp div b{color:var(--text);display:block;font-size:.9rem}
+  .not{background:#16110A;border:1px solid #38301B;border-radius:.7rem;padding:.9rem;
+    margin-bottom:1.2rem}
+  .not b{display:block;color:var(--gold);font-size:.85rem;margin-bottom:.35rem}
+  .not span{color:#A8A08C;font-size:.82rem;line-height:1.55}
+  .d{display:flex;justify-content:space-between;padding:.6rem 0;font-size:.87rem;
+    border-bottom:1px solid var(--hair);color:var(--dim)}
+  .d:last-of-type{border-bottom:0}
+  .d b{color:var(--text)}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 1 · the door -->
+  <section id="door">
+    <div class="mk">◷</div>
+    <h1>You have a code.</h1>
+    <p class="sub">Type it in.</p>
+    <form id="f" autocomplete="off">
+      <div class="boxes" id="bx"></div>
+      <button id="go" type="submit" disabled>Open</button>
+    </form>
+    <p class="said" id="said"></p>
+    <p class="foot">No account. Nothing to remember.</p>
+  </section>
+
+  <!-- 2 · the offer -->
+  <section id="offer" hidden>
+    <p class="tag">◷ crowdfundme</p>
+    <p class="tag" style="color:var(--gold)">An offer on <b id="pname"></b></p>
+    <p class="nm" id="who"></p>
+    <p class="one" id="pline"></p>
+    <div class="seat">
+      <b id="seat"></b>
+      <span id="seatof"></span>
+      <i class="chip" id="tier" hidden></i>
+    </div>
+    <p class="ask">Bring one person worth having.<br><em>That is the whole ask.</em></p>
+    <p class="why">Fixed the day you accept. It never moves again, and everything you and
+      your people do from here is on the record under your name.</p>
+    <div class="from" id="frombox" hidden><i id="fromini"></i><div id="fromsay"></div></div>
+    <button class="pale" id="take">Accept</button>
+    <button class="lk" id="openwhere">Where this goes →</button>
+    <p class="fine" id="fine"></p>
+  </section>
+
+  <!-- 3 · where this goes -->
+  <section id="where" hidden>
+    <p class="tag">◷ crowdfundme · <b id="pname2"></b></p>
+    <h1 style="text-align:left;margin-bottom:1rem">Where this goes</h1>
+
+    <p class="claim">The people you need in China <em>already know each other</em>.</p>
+    <p class="claimsub">Getting into that circle takes years. Usually it takes a person.</p>
+
+    <svg viewBox="0 0 300 118" width="100%" aria-hidden="true">
+      <line x1="6" y1="98" x2="288" y2="98" stroke="#2F3B36" stroke-width="1.2"/>
+      <polygon points="288,98 280,94 280,102" fill="#2F3B36"/>
+      <circle cx="22" cy="96" r="2.4" fill="#3FBF8F"/>
+      <circle cx="80" cy="84" r="14" fill="#3FBF8F"/>
+      <circle cx="198" cy="55" r="43" fill="#3FBF8F" fill-opacity=".14"
+        stroke="#3FBF8F" stroke-opacity=".5"/>
+      <text x="22" y="85" font-size="9.5" fill="#A9B7B0" text-anchor="middle">$2k</text>
+      <text x="80" y="62" font-size="10" fill="#E4EFEA" text-anchor="middle" font-weight="600">$50k</text>
+      <text x="198" y="59" font-size="17" fill="#3FBF8F" text-anchor="middle"
+        font-family="Instrument Serif,Georgia,serif">$500k</text>
+      <text x="22" y="113" font-size="9" fill="#66746D" text-anchor="middle">today</text>
+      <text x="80" y="113" font-size="9" fill="#66746D" text-anchor="middle">year one</text>
+      <text x="198" y="113" font-size="9" fill="#66746D" text-anchor="middle">10,000 people</text>
+    </svg>
+    <p class="gl"><b>$500,000 in 18 months.</b> Then a company in Singapore. All three figures
+      at $50 a person — what rooms like this have sold for. An example, not a forecast.</p>
+
+    <div class="sec">
+      <p class="sech">What the record is</p>
+      <div class="stp"><i>1</i><div><b>It counts</b>Being early, and every person you bring
+        who stays. Nothing you have to manage.</div></div>
+      <div class="stp"><i>2</i><div><b>It is sealed every month</b>Written once, hashed,
+        never recalculated. A number from October is still that number in a year.</div></div>
+      <div class="stp"><i>3</i><div><b>If there is ever a company</b>The record is what any
+        allocation would be worked out from — one snapshot becomes the cap table, the rest
+        are the evidence of how it was arrived at.</div></div>
+    </div>
+
+    <div class="not"><b>What this is not</b><span>Not shares. Not a token. Nothing has been
+      issued, nothing is for sale, and nobody is promising you a number. If tokens ever exist
+      they would come from a company that does not exist yet — and the record is what would
+      decide them, not a substitute for them.</span></div>
+
+    <div class="d"><span>Accepting</span><b id="w1"></b></div>
+    <div class="d"><span>Costs</span><b>Nothing</b></div>
+    <div class="d"><span>Issued today</span><b>Nothing</b></div>
+    <div class="d"><span>Asked for</span><b>One introduction</b></div>
+    <button class="lk" id="back">← Back to your offer</button>
+  </section>
+
+</div>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+const N = 6;
+
+/* The browser's own name for itself, so an accepted offer is attached to
+   something. A random number kept on the device — the same shape the board
+   uses, and the same reason: enough to know it was taken, not enough to say
+   by whom. */
+function device() {
+  try {
+    let d = localStorage.getItem("cfm:device") || "";
+    if (!/^[a-z0-9-]{8,64}$/.test(d)) {
+      d = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+      localStorage.setItem("cfm:device", d);
+    }
+    return d;
+  } catch { return "no-store-" + Math.random().toString(36).slice(2); }
+}
+
+/* Six boxes rather than one field: it tells somebody how long the code is
+   before they start, and it is the only feedback that the code is complete —
+   the button wakes up. */
+const boxes = [];
+for (let i = 0; i < N; i++) {
+  const el = document.createElement("input");
+  el.maxLength = 1; el.inputMode = "text"; el.autocapitalize = "characters";
+  el.setAttribute("aria-label", "Character " + (i + 1) + " of " + N);
+  $("bx").append(el); boxes.push(el);
+}
+const typed = () => boxes.map((b) => b.value.toUpperCase()).join("");
+function look() {
+  const on = typed().length === N;
+  boxes.forEach((b) => b.classList.toggle("on", Boolean(b.value)));
+  $("go").disabled = !on;
+  $("go").className = on ? "ready" : "";
+}
+boxes.forEach((b, i) => {
+  b.addEventListener("input", () => {
+    b.value = b.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+    if (b.value && boxes[i + 1]) boxes[i + 1].focus();
+    look();
+  });
+  b.addEventListener("keydown", (e) => {
+    if (e.key === "Backspace" && !b.value && boxes[i - 1]) boxes[i - 1].focus();
+  });
+  /* Pasting the whole code is what somebody who was sent it in a chat will
+     actually do, and one character per box would throw the rest away. */
+  b.addEventListener("paste", (e) => {
+    const t = (e.clipboardData || window.clipboardData).getData("text") || "";
+    const c = t.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, N);
+    if (!c) return;
+    e.preventDefault();
+    boxes.forEach((x, j) => { x.value = c[j] || ""; });
+    look(); (boxes[Math.min(c.length, N - 1)] || b).focus();
+  });
+});
+
+const show = (id) => {
+  for (const s of ["door", "offer", "where"]) $(s).hidden = s !== id;
+  window.scrollTo(0, 0);
+};
+
+let OFFER = null;
+function draw(o) {
+  OFFER = o;
+  const p = o.project || {};
+  $("pname").textContent = p.name || "";
+  $("pname2").textContent = p.name || "";
+  $("who").textContent = o.who;
+  $("pline").textContent = p.line || "";
+  $("seat").innerHTML = String(o.seat) + "<i> / " + (p.seats || 100) + "</i>";
+  $("seatof").textContent = "Your place in the founding " + (p.seats === 100 ? "hundred" : String(p.seats || 100));
+  /* The tier, and only when it is true. "One of the first ten" on seat 40 is
+     the kind of thing that gets discovered and costs you the person. */
+  if (o.seat && o.seat <= 10) { $("tier").textContent = "One of the first ten"; $("tier").hidden = false; }
+  if (o.note) {
+    $("frombox").hidden = false;
+    $("fromini").textContent = "TS";
+    $("fromsay").innerHTML = "<b>Tom</b> asked you himself.<br>“" +
+      o.note.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])) + "”";
+  }
+  $("w1").textContent = "Seat " + o.seat + " of " + (p.seats || 100);
+  $("fine").textContent = "Nothing is issued and nothing is sold." +
+    (o.until ? " Reserved until " + o.until + "." : "");
+  if (o.taken) { $("take").textContent = "Go in"; }
+  show("offer");
+}
+
+$("f").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("said").textContent = "";
+  $("go").textContent = "Opening…";
+  try {
+    const r = await fetch("/api/open", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: typed() }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "no");
+    draw(d.offer);
+  } catch {
+    /* One message, and it says the useful half: the code is wrong, not the
+       person. No count of tries — this is not a lock, it is a name. */
+    $("said").textContent = "That code did not match. Check the last character.";
+  }
+  $("go").textContent = "Open";
+});
+
+$("openwhere").addEventListener("click", () => show("where"));
+$("back").addEventListener("click", () => show("offer"));
+
+$("take").addEventListener("click", async () => {
+  $("take").textContent = "…";
+  try {
+    const r = await fetch("/api/accept", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device: device() }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.goTo) { location.assign(d.goTo); return; }
+    $("take").textContent = "Accept";
+  } catch { $("take").textContent = "Accept"; }
+});
+
+/* Already holding one — a reload, or coming back to think about it. */
+fetch("/api/mine").then((r) => r.json()).then((d) => {
+  if (d && d.on) draw(d.offer);
+}).catch(() => {});
+</script>
+</body>
+</html>

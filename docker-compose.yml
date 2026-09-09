@@ -585,6 +585,42 @@ services:
           memory: ${TOMSCODING_FEED_MEMORY:-768m}
     cpu_shares: ${TOMSCODING_FEED_CPU_SHARES:-256}
 
+  # crowdfundme — the ledger, and the offer.
+  #
+  # Off unless asked for, like every other optional service here: add `cfm` to
+  # COMPOSE_PROFILES in .env. Its own data volume and its own network — it
+  # holds who was offered what, which is the one table on this box that would
+  # matter in an argument, and it has no reason to reach the board or the
+  # workspace to do its job.
+  cfm:
+    build:
+      context: ./cfm
+    image: tomscoding-cfm:latest
+    container_name: tomscoding-cfm
+    restart: unless-stopped
+    profiles: ["cfm"]
+    user: "1000:1000"
+    environment:
+      CFM_DIR: /data
+      # Without this the admin routes refuse everything, which is the safe
+      # failure: a ledger nobody can add to beats one anybody can.
+      CFM_ADMIN_KEY: ${TOMSCODING_CFM_KEY:-}
+      # Signs the cookie that carries an opened offer across a reload. Without
+      # it somebody has to retype the code every time they look again.
+      CFM_SALT: ${TOMSCODING_CFM_SALT:-}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - cfm_data:/data
+    expose:
+      - "3000"
+    networks:
+      - cfm_net
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_CFM_MEMORY:-256m}
+    cpu_shares: ${TOMSCODING_CFM_CPU_SHARES:-128}
+
   caddy:
     image: caddy:2-alpine
     container_name: tomscoding-caddy
@@ -664,6 +700,8 @@ services:
       # And The Feed's seat, or its hostname proxies to a name that does not
       # resolve — which Caddy reports as a 502 on a site that looks configured.
       - feed_net
+      # And the ledger, for the same reason.
+      - cfm_net
 
   # The counter.
   #
@@ -902,8 +940,17 @@ networks:
   # on it but the two things it is meant to talk to.
   feed_net:
     driver: bridge
+  # The ledger and Caddy, and nothing else. It records who was offered what;
+  # it has no reason to reach the board, the workspace or a partner seat, and
+  # a table that would matter in an argument is the last one to leave open.
+  cfm_net:
+    driver: bridge
 
 volumes:
+  # Projects, packages and offers — who was told they were third, and when.
+  # Its own volume for the same reason the board has one: the day this becomes
+  # its own product on its own box, it should be one `docker volume` to carry.
+  cfm_data:
   # The Board's own posts and photographs. Its own volume, not shared with
   # anything: this is a separate product and the day it moves to its own box is
   # a day it should be one `docker volume` to carry.

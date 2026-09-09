@@ -1,0 +1,25 @@
+# crowdfundme — the ledger, on its own hostname.
+#
+# Its own domain and not a path on the board, because the separation is the
+# product: the ledger makes the offer, which is why it can say "nothing is
+# issued". A page on the board promising you a stake in the board is a pitch.
+#
+# Inert until TOMSCODING_CFM_DOMAIN is set: unset, it binds an internal
+# .localhost name and requests no certificate. That fallback must stay distinct
+# from every other one here — two site blocks sharing an address is a startup
+# failure, not a warning, and it takes every other site on this box down with
+# it.
+{$TOMSCODING_CFM_DOMAIN:cfm.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		# Not same-origin. This link is forwarded into chat apps, and a
+		# referrer policy that breaks that breaks the only way anybody arrives.
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy cfm:3000
+}
