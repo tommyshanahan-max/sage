@@ -474,7 +474,18 @@ export const STRINGS = {
   "land.title":        ["the other half of doing business in China",
                         "在中国做事，你缺的那一半"],
   "land.kicker":       ["Invite only · doing business in China", "邀请制 · 在中国做事"],
-  "land.head":         ["Who are you missing?", "你缺的是谁？"],
+  /* THE HEADLINE ON /about, and it stopped working the day the matcher came
+     off the page. "Who are you missing?" was a question with the answer
+     directly underneath it — two dropdowns you could move — so the question
+     was an invitation to try the thing. Above a join form and nothing else it
+     is a question the page never answers.
+     A statement instead. It says what the place is for in five words, which
+     is what a headline over a form has to do.
+     The Chinese is not the sentence translated. "你在中国的生意伙伴" assumes
+     the reader is outside China looking in, and half the people this is for
+     are inside it looking out. So it names the person rather than the side:
+     in China, the one you are short of. */
+  "land.head":         ["Your business partner in China", "在中国，你缺的那个人"],
   "land.under":        ["Say it in one line.", "一句话说清楚。"],
   "land.lede": [
     "Members bring members, and their name stays on whoever they brought. Nothing happens between two people until each of them is what the other is looking for.",
