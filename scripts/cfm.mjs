@@ -7,7 +7,7 @@
 
 const [, , base, key, cmd, ...rest] = process.argv;
 if (!base || !key || !cmd) {
-  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|offer|offers|seal|seals|unseal|reopen|void [--who NAME ...]");
+  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|owner|owners|offer|offers|seal|seals|unseal|reopen|void [--who NAME ...]");
   process.exit(2);
 }
 const arg = (n, d = "") => {
@@ -121,6 +121,29 @@ if (cmd === "setup") {
     console.log("\n  Gone: " + d.who + " · " + code.toUpperCase());
     console.log("  That code opens nothing now.\n");
   }
+} else if (cmd === "owner") {
+  /* A founder who is not you. The key prints once — it is stored to be
+     matched and no route reads it back, so losing it means a new one. */
+  const name = arg("name");
+  if (!name) { console.error('who? make cfm-owner NAME="their name"'); process.exit(2); }
+  const d = await post("/api/owner", { name, projects: Number(arg("projects", "1")) || 1 });
+  const o = d.owner;
+  console.log("\n  " + o.name + " · " + o.projects +
+    (o.projects === 1 ? " project" : " projects"));
+  console.log("\n      " + o.key + "\n");
+  console.log("  Send them crowdfundme.app/f and that key. It is shown once —");
+  console.log("  nothing here can read it back.\n");
+} else if (cmd === "owners") {
+  const r = await fetch(base + "/api/owners", { headers: head });
+  const d = await r.json().catch(() => ({}));
+  const rows = d.owners || [];
+  if (!rows.length) { console.log("\n  Nobody yet.\n"); process.exit(0); }
+  console.log("");
+  for (const o of rows) {
+    console.log("  " + String(o.name).padEnd(20).slice(0, 20) +
+      (o.has + " of " + o.projects).padEnd(12) + "projects");
+  }
+  console.log("");
 } else if (cmd === "seal") {
   /* Chained to the last one, so an old month cannot be quietly re-sealed. */
   const r = await fetch(base + "/api/seal", {
@@ -168,6 +191,6 @@ if (cmd === "setup") {
   }
   console.log("\n  " + rows.length + " in all.\n");
 } else {
-  console.error("setup, setup-cfm, offer, offers, seal, seals, unseal, reopen or void.");
+  console.error("setup, setup-cfm, owner, owners, offer, offers, seal, seals, unseal, reopen or void.");
   process.exit(2);
 }

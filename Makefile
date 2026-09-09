@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: cfm-setup cfm-self cfm-offer cfm-seal cfm-seals cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: cfm-setup cfm-self cfm-owner cfm-owners cfm-offer cfm-seal cfm-seals cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -323,6 +323,20 @@ cfm-self: ## Put crowdfundme itself on the ledger: make cfm-self [PCT=10 YEARS=4
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  setup-cfm --pct "$(or $(PCT),10)" --years "$(or $(YEARS),4)" --cliff "$(or $(CLIFF),12)" \
 	  --from "$(or $(FROM),Tom Shanahan)" --holds "$(HOLDS)"
+
+cfm-owner: ## Let somebody else keep their own record: make cfm-owner NAME="Ana" [PROJECTS=1]
+	@# Their own key, scoped to their own rows — not the master key, which
+	@# opens every project and every offer on this box. The key prints once and
+	@# no route reads it back; losing it means a new one, which is the right
+	@# amount of ceremony for a key that opens somebody else's record.
+	@test -n "$(NAME)" || { echo 'who? make cfm-owner NAME="their name"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  owner --name "$(NAME)" --projects "$(or $(PROJECTS),1)"
+
+cfm-owners: ## Who keeps a record here, and how many projects each has
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" owners
 
 cfm-offer: ## One offer to one person: make cfm-offer WHO="Keith" [PROJECT=the-exchange PACK=founding SEAT=3 NOTE="..." UNTIL=2026-09-16]
 	@# The seat is written when the offer is made, not when it is opened. Two

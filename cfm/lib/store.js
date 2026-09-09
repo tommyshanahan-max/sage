@@ -38,6 +38,33 @@ export const cleanCode = (v) => {
 
 const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").trim().slice(0, n);
 
+/** WHOSE PROJECT IT IS.
+ *
+ * A person who keeps a record here. Not an account: a name and a key they
+ * were handed, which is the same idiom as everything else on this site — no
+ * password to forget, nothing to reset, and nothing stored that could be
+ * stolen and reused elsewhere.
+ *
+ * It exists because the alternative was handing a second founder the master
+ * key, which opens every project and every offer on the box. One key per
+ * person, scoped to their own rows, is the difference between a platform and
+ * a shared login.
+ */
+export function cleanOwner(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const name = s(raw.name, 60);
+  const key = cleanCode(raw.key);
+  if (!name || key.length < 10) return null;
+  return {
+    id: /^[a-f0-9]{20}$/.test(String(raw.id || "")) ? String(raw.id) : newId(),
+    name, key,
+    at: s(raw.at, 40) || new Date().toISOString(),
+    /* How many projects they may keep. Nought is not "unlimited" — it is the
+       honest default for somebody who has been made and not yet let in. */
+    projects: Math.max(0, Math.min(50, Number(raw.projects) || 0)),
+  };
+}
+
 /** A thing people are early to. Not a product — a name and where to send them. */
 export function cleanProject(raw) {
   if (!raw || typeof raw !== "object") return null;
@@ -46,6 +73,10 @@ export function cleanProject(raw) {
   if (!id || !name) return null;
   return {
     id, name,
+    /* The owner id, and it is never read from a request body — the server
+       takes it from whoever is signed in. A project that could name its own
+       owner is a project anybody could reassign to themselves. */
+    owner: /^[a-f0-9]{20}$/.test(String(raw.owner || "")) ? String(raw.owner) : "",
     zh: s(raw.zh, 60),
     line: s(raw.line, 200),
     /* Where somebody goes the moment they accept. The ledger hands over and
@@ -216,12 +247,13 @@ export function cleanSeal(raw) {
 export const hashDevice = (id, salt) =>
   id ? createHash("sha256").update(salt + ":" + id).digest("hex").slice(0, 32) : "";
 
-const EMPTY = { projects: [], packages: [], offers: [], seals: [] };
+const EMPTY = { owners: [], projects: [], packages: [], offers: [], seals: [] };
 
 export async function load(file) {
   try {
     const raw = JSON.parse(await readFile(file, "utf8"));
     return {
+      owners: (raw.owners || []).map(cleanOwner).filter(Boolean),
       projects: (raw.projects || []).map(cleanProject).filter(Boolean),
       packages: (raw.packages || []).map(cleanPackage).filter(Boolean),
       offers: (raw.offers || []).map(cleanOffer).filter(Boolean),

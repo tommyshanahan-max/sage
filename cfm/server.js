@@ -72,12 +72,57 @@ function held(req) {
   return id && mac && sign(id) === mac ? id : "";
 }
 
+/* WHOSE CONSOLE THIS IS.
+ *
+ * The same signed-cookie shape as a held offer, carrying an owner id. The key
+ * is spent once at the door; after that the cookie is what identifies them,
+ * so the key never sits in a page, a URL or a history entry.
+ *
+ * Everything below reads the owner from here and never from a request body.
+ * That is the whole of the isolation: a founder can name anything about their
+ * project except who owns it. */
+function setMe(res, id) {
+  res.append("Set-Cookie",
+    "cfm_me=" + id + "." + sign(id) +
+    "; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax; Secure");
+}
+function meId(req) {
+  const raw = /(?:^|;\s*)cfm_me=([^;]+)/.exec(req.get("cookie") || "");
+  if (!raw) return "";
+  const [id, mac] = decodeURIComponent(raw[1]).split(".");
+  return id && mac && sign(id) === mac ? id : "";
+}
+
+/** Routes that need a founder. Loads the row so nothing downstream trusts an
+ *  id that no longer exists — a revoked owner is a cookie pointing at nobody. */
+function owner(req, res, next) {
+  const id = meId(req);
+  if (!id) return res.status(401).json({ error: "who" });
+  store.load(FILE).then((data) => {
+    const me = data.owners.find((o) => o.id === id);
+    if (!me) return res.status(401).json({ error: "who" });
+    req.me = me;
+    next();
+  }).catch(next);
+}
+
+/** Everything of theirs, and nothing of anybody else's. */
+function mine(data, me) {
+  const projects = data.projects.filter((p) => p.owner === me.id);
+  const ids = new Set(projects.map((p) => p.id));
+  return {
+    projects,
+    packages: data.packages.filter((k) => ids.has(k.project)),
+    offers: data.offers.filter((o) => ids.has(o.project)),
+  };
+}
+
 /* What a reader is allowed to see of their own offer. Never the whole row:
    `by` is a device hash and nobody else's business, and the code has been
    spent by the time this is drawn. */
 function view(data, o) {
   const p = data.projects.find((x) => x.id === o.project) || null;
-  const k = data.packages.find((x) => x.id === o.package) || null;
+  const k = data.packages.find((x) => x.id === o.package && x.project === o.project) || null;
   return {
     who: o.who, seat: o.seat, note: o.note, until: o.until,
     taken: Boolean(o.tookAt), signed: o.signed,
@@ -154,7 +199,7 @@ app.post("/api/accept", express.json({ limit: "2kb" }), async (req, res) => {
     if (!o) return null;
     /* A stake is not taken by tapping. Checked on this side and not only in
        the page: the page is the convenience, the rule is here. */
-    const k = data.packages.find((x) => x.id === o.package);
+    const k = data.packages.find((x) => x.id === o.package && x.project === o.project);
     if (k && k.face === "stake" && !o.tookAt && sign.length < 3) return "unsigned";
     /* Accepting twice is a reload, not a second person. The first time is the
        one on the record. */
@@ -174,7 +219,162 @@ app.get("/api/seals", async (_req, res) => {
   res.json({ seals: data.seals });
 });
 
+/* ---- the founder's own side, scoped to the founder ---------------------- */
+
+app.get("/f", (req, res, next) => page("founder.html", req, res, next));
+
+/** Spend an owner key. One person, once — after that the cookie carries them. */
+app.post("/api/me/in", express.json({ limit: "1kb" }), async (req, res) => {
+  const key = store.cleanCode(req.body?.key);
+  if (key.length < 10) return res.status(400).json({ error: "bad" });
+  const data = await store.load(FILE);
+  const me = data.owners.find((o) => o.key === key);
+  if (!me) return res.status(404).json({ error: "no" });
+  setMe(res, me.id);
+  res.json({ ok: true, name: me.name });
+});
+
+app.post("/api/me/out", (_req, res) => {
+  res.append("Set-Cookie", "cfm_me=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax; Secure");
+  res.json({ ok: true });
+});
+
+/** The console's whole state in one call. */
+app.get("/api/me", owner, async (req, res) => {
+  const data = await store.load(FILE);
+  const own = mine(data, req.me);
+  res.json({
+    ok: true,
+    me: { name: req.me.name, projects: req.me.projects },
+    projects: own.projects,
+    packages: own.packages,
+    /* Codes included: this is the founder's own list and the code is what
+       they copy to send. Nobody else's offers are ever in here. */
+    offers: own.offers.map((o) => ({
+      who: o.who, code: o.code, seat: o.seat, project: o.project,
+      package: o.package, at: o.at, openedAt: o.openedAt, tookAt: o.tookAt,
+      signed: o.signed,
+    })),
+  });
+});
+
+app.post("/api/me/project", express.json({ limit: "4kb" }), owner, async (req, res) => {
+  const out = await change((data) => {
+    const own = mine(data, req.me);
+    const id = String(req.body?.id || "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const at = data.projects.findIndex((x) => x.id === id);
+    /* Editing somebody else's project by guessing its id is the one thing
+       that must not work here, so an existing id that is not theirs is
+       refused rather than merged into. */
+    if (at >= 0 && data.projects[at].owner !== req.me.id) return "taken";
+    if (at < 0 && own.projects.length >= req.me.projects) return "full";
+    /* Owner from the session, never from the body. */
+    const p = store.cleanProject({ ...req.body, owner: req.me.id });
+    if (!p) return null;
+    if (at >= 0) data.projects[at] = { ...data.projects[at], ...p };
+    else data.projects.push(p);
+    return p;
+  });
+  if (out === "taken") return res.status(409).json({ error: "taken" });
+  if (out === "full") return res.status(403).json({ error: "full" });
+  if (!out) return res.status(400).json({ error: "bad" });
+  res.json({ ok: true, project: out });
+});
+
+app.post("/api/me/package", express.json({ limit: "4kb" }), owner, async (req, res) => {
+  const out = await change((data) => {
+    const own = mine(data, req.me);
+    if (!own.projects.some((p) => p.id === String(req.body?.project || ""))) return null;
+    const k = store.cleanPackage(req.body);
+    if (!k) return null;
+    /* Within the project, not across the box — see the note in view(). The
+       project is already theirs, checked above, so there is nobody else's row
+       this can reach. */
+    const at = data.packages.findIndex((x) => x.id === k.id && x.project === k.project);
+    if (at >= 0) data.packages[at] = { ...data.packages[at], ...k };
+    else data.packages.push(k);
+    return k;
+  });
+  if (out === "taken") return res.status(409).json({ error: "taken" });
+  if (!out) return res.status(400).json({ error: "bad" });
+  res.json({ ok: true, package: out });
+});
+
+app.post("/api/me/offer", express.json({ limit: "4kb" }), owner, async (req, res) => {
+  const out = await change((data) => {
+    const own = mine(data, req.me);
+    const p = own.projects.find((x) => x.id === String(req.body?.project || ""));
+    if (!p) return null;
+    if (!own.packages.some((k) => k.id === String(req.body?.package || "") &&
+      k.project === p.id)) return null;
+    const taken = new Set(data.offers.map((x) => x.code));
+    let code = store.newCode();
+    while (taken.has(code)) code = store.newCode();
+    /* A share is not a place in a queue. The project can have both kinds of
+       offer on it, so the package decides, not the project. */
+    const k = own.packages.find((x) => x.id === String(req.body?.package || "") &&
+      x.project === p.id);
+    let seat = Number(req.body?.seat) || 0;
+    if (!seat && p.seats > 0 && k.face !== "stake") {
+      const used = new Set(own.offers.filter((x) => x.project === p.id)
+        .map((x) => x.seat).filter(Boolean));
+      seat = 1; while (used.has(seat)) seat += 1;
+    }
+    const o = store.cleanOffer({ ...req.body, code, seat });
+    if (!o) return null;
+    data.offers.push(o);
+    return o;
+  });
+  if (!out) return res.status(400).json({ error: "bad" });
+  res.json({ ok: true, offer: out });
+});
+
+/** Reopen or void, on their own offers only. */
+app.post("/api/me/undo", express.json({ limit: "1kb" }), owner, async (req, res) => {
+  const code = store.cleanCode(req.body?.code);
+  const how = req.body?.how === "void" ? "void" : "reopen";
+  if (!code) return res.status(400).json({ error: "bad" });
+  const out = await change((data) => {
+    const own = mine(data, req.me);
+    if (!own.offers.some((x) => x.code === code)) return null;
+    const at = data.offers.findIndex((x) => x.code === code);
+    const o = data.offers[at];
+    if (how === "void") { data.offers.splice(at, 1); return { how, who: o.who }; }
+    o.tookAt = ""; o.by = ""; o.openedAt = ""; o.signed = "";
+    return { how, who: o.who };
+  });
+  if (!out) return res.status(404).json({ error: "no" });
+  res.json({ ok: true, ...out });
+});
+
 /* ---- the side only the person running it sees ------------------------- */
+
+/** Make a founder. The key is returned once and never again — it is stored to
+ *  be matched, and there is no route that reads it back. Losing it means a new
+ *  one, which is the correct amount of ceremony for a key that opens somebody
+ *  else's record. */
+app.post("/api/owner", express.json({ limit: "2kb" }), admin, async (req, res) => {
+  const out = await change((data) => {
+    const taken = new Set(data.owners.map((o) => o.key));
+    let key = store.newCode(12);
+    while (taken.has(key)) key = store.newCode(12);
+    const o = store.cleanOwner({ ...req.body, key });
+    if (!o) return null;
+    data.owners.push(o);
+    return o;
+  });
+  if (!out) return res.status(400).json({ error: "bad" });
+  res.json({ ok: true, owner: out });
+});
+
+app.get("/api/owners", admin, async (_req, res) => {
+  const data = await store.load(FILE);
+  /* No keys. There is no reason to list them and every reason not to. */
+  res.json({ owners: data.owners.map((o) => ({
+    name: o.name, at: o.at, projects: o.projects,
+    has: data.projects.filter((p) => p.owner === o.id).length,
+  })) });
+});
 
 app.post("/api/project", express.json({ limit: "4kb" }), admin, async (req, res) => {
   const out = await change((data) => {
@@ -193,7 +393,7 @@ app.post("/api/package", express.json({ limit: "4kb" }), admin, async (req, res)
   const out = await change((data) => {
     const k = store.cleanPackage(req.body);
     if (!k) return null;
-    const at = data.packages.findIndex((x) => x.id === k.id);
+    const at = data.packages.findIndex((x) => x.id === k.id && x.project === k.project);
     if (at >= 0) data.packages[at] = { ...data.packages[at], ...k };
     else data.packages.push(k);
     return k;
@@ -217,8 +417,10 @@ app.post("/api/offer", express.json({ limit: "4kb" }), admin, async (req, res) =
        of something else are not the same seat — and skipped entirely for a
        project that has no queue, where a seat number would be a number the
        reader is invited to misunderstand. */
+    const k = data.packages.find((x) => x.id === String(req.body?.package || "") &&
+      x.project === project);
     let seat = Number(req.body?.seat) || 0;
-    if (!seat && p.seats > 0) {
+    if (!seat && p.seats > 0 && (!k || k.face !== "stake")) {
       const used = new Set(data.offers.filter((x) => x.project === project)
         .map((x) => x.seat).filter(Boolean));
       seat = 1; while (used.has(seat)) seat += 1;

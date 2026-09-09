@@ -43,6 +43,26 @@
     border:1px solid var(--line);border-radius:12px;color:var(--ink2);font-size:.97rem}
   .note b{color:var(--ink);font-weight:650}
   footer{margin-top:2.4rem;color:var(--mut);font-size:.9rem}
+  /* WHAT IT IS FOR, and honestly which parts of that exist.
+     Two of the three are not built. Saying so on the page costs nothing and
+     buys the only thing this product sells — that when it says something is
+     the case, it is. A "soon" the reader can see is worth more than three
+     lanes implied to be open. */
+  .lanes{margin-top:clamp(2.2rem,6vw,3rem);padding-top:clamp(1.8rem,5vw,2.4rem);
+    border-top:1px solid var(--line);display:grid;gap:.9rem}
+  .lane{padding-bottom:.9rem;border-bottom:1px solid var(--line)}
+  .lane:last-child{border-bottom:0;padding-bottom:0}
+  /* Name and state on one line, what it means underneath. Trying to fit all
+     three across put the pill in a flex row with a growing sibling, where the
+     more specific `.lane span` beat `.pill` and stretched it into a bar. */
+  .lane .top{display:flex;align-items:center;gap:.65rem;margin-bottom:.25rem}
+  .lane b{font-weight:650;font-size:1.05rem}
+  .lane .pill{flex:0 0 auto;font-size:.68rem;letter-spacing:.09em;
+    text-transform:uppercase;font-weight:700;border-radius:99px;padding:.24rem .6rem}
+  .lane .pill.on{background:var(--soft);color:var(--go)}
+  .lane .pill.off{background:transparent;color:var(--mut);border:1px solid var(--line)}
+  .lane p{margin:0;color:var(--ink2);font-size:.95rem}
+
   /* THE PROOF, and it draws itself only when there is some.
      The page claims nobody rewrites the record. This is where a reader checks
      rather than takes it — and with no months sealed there is nothing to
@@ -106,6 +126,21 @@
 
   <p class="note"><b>Nothing is promised.</b> Nothing is for sale.
     It is a record, kept properly, in case it matters later.</p>
+
+  <section class="lanes">
+    <div class="lane">
+      <div class="top"><b>Early founder deals</b><span class="pill on">Open</span></div>
+      <p>The handshake before there is a company. By invitation.</p>
+    </div>
+    <div class="lane">
+      <div class="top"><b>Investor rounds</b><span class="pill off">Soon</span></div>
+      <p>Who came in, at what, and when — one record everybody reads.</p>
+    </div>
+    <div class="lane">
+      <div class="top"><b>Crowdfunding</b><span class="pill off">Soon</span></div>
+      <p>Many small backers, the same record, kept the same way.</p>
+    </div>
+  </section>
 
   <section class="seals" id="seals" hidden>
     <h2>The record so far</h2>
