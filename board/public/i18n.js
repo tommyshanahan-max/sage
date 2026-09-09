@@ -482,10 +482,6 @@ export const STRINGS = {
   ],
   /* Under the two pills, in the reader's own terms — the product explained by
      doing it once rather than described. */
-  "land.lands": [
-    "You would come up for {want} who are looking for {me}.",
-    "你会出现在正在找{me}的{want}面前。",
-  ],
   "land.enter":        ["I have a password", "我有口令"],
   /* What that same button says to somebody who is already through the door.
      The public page has two readers and only one of them is outside. */

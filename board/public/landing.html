@@ -35,54 +35,22 @@
 <link rel="stylesheet" href="/site.css">
 
 <style>
-  /* THE HERO IS THE PRODUCT, WORKING.
-     Every earlier version of this page described the board and then showed
-     three drawings of it. The one thing this place does is put a sentence
-     together out of two halves, and a stranger can do that here, before being
-     let in — a better argument than any paragraph, and the same control they
-     meet inside. */
-  /* The paragraph that used to sit under this card was also the thing holding
-     the hero open. With it gone the padding was a hole, so the hero closes up
-     behind the card instead. */
+  /* THE HERO IS A QUESTION AND NOTHING ELSE.
+     It used to hold a working copy of the matcher. That belongs inside — see
+     the note above the hero markup. Nothing between the question and the form
+     but air. */
   .hero{padding-bottom:1.4rem}
-  .tryit{margin:1.6rem 0 0;padding:1.25rem 1.2rem 1.1rem;background:var(--card);
-    border:1px solid var(--line);border-radius:1.2rem;box-shadow:var(--shadow);
-    max-width:34rem}
-  .sayicon{display:block;width:1.5rem;height:1.5rem;margin:0 0 .6rem;
-    stroke:var(--accent);fill:none;stroke-width:1.9;stroke-linecap:round}
-  .sayline{font-family:var(--serif);font-size:1.14rem;line-height:2.2;color:var(--ink)}
-  /* WIDE SCREENS MUST RENDER EXACTLY AS BEFORE. This was four things appended
-     in a row — two text nodes and two pills — separated by ordinary spaces.
-     The halves exist only so the phone grid below has something to hang on,
-     so here they are transparent: nowrap, and a gap the width of the space
-     they replaced (about .25em of this face at this size). */
-  .sayp{white-space:nowrap}
-  .sayp .w{margin-right:.28rem}
-  .sayp + .sayp{margin-left:.28rem}
-  .sayline select{font:inherit;font-family:var(--sans);font-size:1rem;font-weight:500;
-    color:var(--accent-ink);background-color:var(--accent);border:0;border-radius:99px;
-    padding:.32rem 1.65rem .32rem .8rem;margin:.1rem .06rem;max-width:100%;
-    -webkit-appearance:none;appearance:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4'><path d='M6 9l6 6 6-6'/></svg>");
-    background-repeat:no-repeat;background-position:right .58rem center;background-size:.92rem}
-
-  /* ON A PHONE IT IS TWO ROWS, word then pill, and the pills fill the row so
-     they are the same width as each other. A sentence that has to wrap is
-     better broken where somebody chose than where the box ran out. */
-  @media (max-width:34rem){
-    .tryit{padding:1.1rem 1rem}
-    /* A two-column grid rather than two flex rows, so "I am a" and "looking
-       for" share a column and the two pills start at the same edge and come
-       out the same width. Two pills of different widths, each beginning
-       somewhere else, is what made this look like a form that had wrapped. */
-    .sayline{display:grid;grid-template-columns:auto minmax(0,1fr);
-      gap:.6rem .6rem;align-items:center;line-height:1.3;font-size:1.08rem}
-    .sayp{display:contents}
-    .sayp .w,.sayp + .sayp{margin:0}
-    .sayline select{margin:0;padding:.55rem 1.9rem .55rem 1rem;width:100%}
-  }
-  .saylands{margin:.85rem 0 0;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
-  .saylands b{font-weight:500;color:var(--ink)}
+  /* AND NOT MUCH OF IT. The section brings 3rem of padding and the card
+     another 2.4rem of margin, both measured against a matcher card that used
+     to sit between them. With it gone that is 86px of empty grey under a
+     two-line question — on the one page whose whole job is the form. Only
+     here: /level ships its own .waitbox and site.css still serves it. */
+  #waitsection{padding-top:1.2rem}
+  /* And it starts where the question starts. The card centres itself, which
+     read as one object among several while the matcher sat above it; now
+     that it leads the page, a left-aligned headline over a centred card is
+     just two things that do not line up. */
+  #waitsection .waitbox{margin-top:0;margin-left:0}
 
   /* THE PERSON ON THE DOOR. Deliberately quieter than the form above it:
      the form is the thing to do, this is the thing to do first if you are
@@ -152,32 +120,19 @@
   </div>
 </div>
 
-<!-- THE HERO IS THE PRODUCT, WORKING.
-     Every other version of this page described the board and then showed
-     three drawings of it. The one thing this place does is put a sentence
-     together out of two halves, and a stranger can do that here, on the
-     public page, before they have been let in — which is a better argument
-     for it than any paragraph, and it is the same control they will meet
-     inside. -->
-<!-- WHAT IS LEFT AFTER THE WORDS CAME OFF.
-     A question, and the thing itself. There was a banner, an eyebrow, a line
-     under the question and a four-line paragraph naming everybody who is
-     inside — and every one of them was answering a question the reader had
-     not asked yet. The sentence answers it by being moved once, which no
-     paragraph next to it was ever going to beat. -->
+<!-- A QUESTION, AND THEN THE FORM.
+     The hero used to carry a working copy of the matcher — two dropdowns a
+     stranger could move to see what the board does. It argued well and it sat
+     in the wrong place: measured on a 390px phone it pushed the form to 471px,
+     so the one thing a shared link is for was the third thing on the page and
+     below the fold. Somebody arriving on a name they trust has already been
+     persuaded; making them scroll past a demonstration is asking them to be
+     persuaded twice. The matcher is the first thing they meet inside, which is
+     where a control you can actually use belongs. -->
 <div class="hero">
   <div class="wrap">
     <div class="asking">
       <q id="asking"></q>
-    </div>
-
-    <div class="tryit" id="tryit">
-      <svg class="sayicon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M3 7h13M20 7h1"/><path d="M3 12h4M11 12h10"/><path d="M3 17h9M16 17h5"/>
-        <circle cx="18" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="14" cy="17" r="2"/>
-      </svg>
-      <div class="sayline" id="sayline"></div>
-      <p class="saylands" id="saylands"></p>
     </div>
   </div>
 </div>
@@ -269,65 +224,6 @@ const el = (t, c, x) => { const n = document.createElement(t); if (c) n.classNam
   if (x !== undefined) n.textContent = x; return n; };
 const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
 
-/* ---- the sentence, live on a public page ---------------------------------
- *
- * The same two lists the profile form uses. A stranger can move them, and the
- * line underneath says what that pair would get them — which is the whole
- * product explained by doing it once.
- */
-const MAKE = ["director", "writer", "performer", "crew", "founder", "maker", "student"];
-const BACK = ["agent", "producer", "brand", "buyer", "distributor",
-              "investor", "lawyer", "recruiter"];
-let ME = "director", WANT = "agent";
-
-function rolePick(now, onPick, wanting) {
-  const sel = document.createElement("select");
-  for (const [half, keys] of [["say.make", MAKE], ["say.back", BACK]]) {
-    const g = document.createElement("optgroup");
-    g.label = T(half);
-    for (const k of keys) {
-      const o = el("option", null, T((wanting ? "role.a." : "role.") + k));
-      o.value = k;
-      if (k === now) o.selected = true;
-      g.append(o);
-    }
-    sel.append(g);
-  }
-  sel.addEventListener("change", () => onPick(sel.value));
-  return sel;
-}
-
-/* HALVES, NOT A RUN OF TEXT NODES.
- *
- * It was four things appended in a row and left to the line-breaking rules,
- * which on a phone put "I am a [Director] looking for" on one line and
- * dropped "[an Agent]" onto the next — a sentence broken between its verb and
- * its object, with two differently-sized pills and a hole beside each.
- *
- * Wrapped in halves, CSS can lay it out on purpose: one sentence on a wide
- * screen, two rows of word-then-pill on a narrow one, where both pills are
- * the same width because both fill the row. */
-function half(word, node) {
-  const w = document.createElement("span");
-  w.className = "sayp";
-  w.append(el("span", "w", word), node);
-  return w;
-}
-
-function drawSay() {
-  const line = $("sayline");
-  fill(line);
-  line.append(half(T("say.iam"), rolePick(ME, (v) => { ME = v; drawSay(); }, false)));
-  line.append(half(T("say.lookingFor"), rolePick(WANT, (v) => { WANT = v; drawSay(); }, true)));
-  /* One string with both halves in it rather than three glued together: an
-     English plural is an "s" on the end and a Chinese one is nothing at all,
-     and a sentence assembled from fragments is a sentence that reads wrong in
-     one of the two languages. */
-  $("saylands").textContent = T("land.lands", {
-    want: T("role.p." + WANT), me: T("role.a." + ME),
-  });
-}
-
 /* ---- the doors ---------------------------------------------------------- */
 const DOORS = ["film", "invest", "raise", "trade", "other"];
 function drawDoors() {
@@ -356,7 +252,6 @@ function paint() {
   $("footDoors").textContent = T("land.counted");
   $("footPanel").textContent = T("land.panel");
   $("footWaiting").textContent = T("land.queue");
-  drawSay();
   drawDoors();
 }
 
