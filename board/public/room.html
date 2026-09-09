@@ -792,7 +792,8 @@ function shareBox(link, ahead) {
   wrap.append(el("p", "sharewhy", T("wr.shareWhy")));
   /* And where that leaves them today, so the promise has a number attached
      rather than being a sentence about the future. */
-  wrap.append(el("p", "hold", T("wr.sharePlace", { n: (ahead || 0) + 1 })));
+  wrap.append(el("p", "hold", T("wr.sharePlace",
+    { n: (ahead || 0) + 1, t: (DATA && DATA.waiting) || 1 })));
 
   const go = el("button", "sharego");
   go.type = "button";
@@ -846,8 +847,11 @@ function drawWait(box) {
   const band = el("div", "wrband");
   band.append(el("b", null, T("wr.on")));
   band.append(document.createTextNode(T("wr.onWhy")));
-  band.append(el("span", "q", DATA.ahead
-    ? T("wr.ahead", { n: DATA.ahead }) : T("wr.aheadNone")));
+  /* Their number and how many are in the queue with them. The gap on its own
+     said nothing about the scale — fifth of six and fifth of ninety read the
+     same, and only one of them is worth working at. */
+  band.append(el("span", "q", T("wr.ahead",
+    { n: (DATA.ahead || 0) + 1, t: DATA.waiting || 1 })));
   box.append(band);
 
   const full = Boolean(you.levelBand && you.type && you.want);
@@ -897,20 +901,20 @@ function drawWait(box) {
     box.append(el("p", "under wait", T("wr.photoHeld")));
   }
 
-  /* SHARING, DIRECTLY UNDER THE CARD. It is the one act this room asks for
-     and it pays the thing somebody waiting wants, so it goes above the
-     optional tests rather than below them — and above the seat block, which
-     may not be on at all. */
-  if (DATA.link) box.append(shareBox(DATA.link, DATA.ahead));
-
-  const head = el("div", "wrhead");
-  head.append(el("span", null, T(full ? "wr.done" : "wr.fill")), el("i"));
-  box.append(head);
+  /* The heading and its line only when there is a section to head. With the
+     two tests off it labelled a single row of dropdowns, which is a heading
+     for nothing — and it stood between the profile and the thing somebody
+     fills in. */
+  if (DATA.tests) {
+    const head = el("div", "wrhead");
+    head.append(el("span", null, T(full ? "wr.done" : "wr.fill")), el("i"));
+    box.append(head);
+  }
   /* Said once, under the heading, and not repeated on each row: the rule is
      that this is optional, and a rule restated three times starts to sound
      like somebody protesting. Gone once all three are filled in — by then it
      is answering a question nobody still has. */
-  if (!full) box.append(el("p", "wrwhy", T("wr.fillWhy")));
+  if (DATA.tests && !full) box.append(el("p", "wrwhy", T("wr.fillWhy")));
 
   /* The two tests only where somebody has turned them on. See TESTS_ON. The
      picker is not one of them and is always here. */
@@ -921,6 +925,15 @@ function drawWait(box) {
   }
 
   box.append(pickRow(you, DATA.tests ? 3 : 1));
+
+  /* SHARING, AFTER THE CARD IS FINISHED.
+   *
+   * It sat directly under the picture, which put the ask before the card was
+   * worth sending — somebody who had not chosen what they are looking for
+   * was being handed a link to a half-filled page. Below the dropdowns it
+   * comes after the last thing they fill in, and before the people waiting
+   * with them, so the proof sits next to the ask. */
+  if (DATA.link) box.append(shareBox(DATA.link, DATA.ahead));
 
   /* THE SEAT, when the switch is on. See SEAT_OUTSIDE in server.js — the
      server sends nothing at all when it is off, so this whole block simply

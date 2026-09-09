@@ -600,7 +600,12 @@ export const STRINGS = {
     "Members are looking through the people at the door. This is what they see of you.",
     "里面的人在翻门口这些人的卡片。他们看到的你，就是这一张。",
   ],
-  "wr.ahead":        ["{n} asked before you", "有 {n} 个人比你先问"],
+  /* THEIR NUMBER AND THE SIZE OF THE QUEUE, in one line. "5 asked before
+     you" gave the gap without the scale — being fifth of six and fifth of
+     ninety are different situations and the page was telling them the same
+     thing. */
+  "wr.ahead":        ["You are number {n} of {t} waiting",
+                      "你排在第 {n} 位，共 {t} 人在等"],
   "wr.aheadNone":    ["You are first in the queue", "你排在最前面"],
   "wr.yourcard":     ["Your card", "你的卡片"],
   /* The empty card, said out loud. A screen that draws three blanks and says
@@ -793,15 +798,15 @@ export const STRINGS = {
     "Every person who joins through your link moves you one place up the list.",
     "每有一个人通过你的链接加入，你就在名单上往前一位。",
   ],
-  "wr.sharePlace":   ["You are number {n} in the queue right now.", "你现在排在第 {n} 位。"],
+  "wr.sharePlace":   ["Number {n} of {t} right now.", "现在第 {n} 位，共 {t} 人。"],
   /* WHAT A WEB PAGE CAN ACTUALLY DO. "Share to WeChat" promised something no
      page can do from inside WeChat — it blocks the share API on purpose and
      there is no way to hand it a link. Copying is the thing that works, so
      the button says that, and the sentence under it points at WeChat's own
      menu, which is the real way. A button that does nothing when tapped is
      worse than no button. */
-  "wr.shareGo":      ["Copy the link", "复制链接"],
-  "wr.shareSheet":   ["Share", "分享"],
+  "wr.shareGo":      ["Share Invite", "分享邀请"],
+  "wr.shareSheet":   ["Share Invite", "分享邀请"],
   /* Only shown inside WeChat, where it is the answer. Everywhere else the
      share sheet already has WeChat in it and this is noise. */
   "wr.shareWeChat": [
