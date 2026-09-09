@@ -74,6 +74,7 @@
     color:var(--glow);word-break:break-all}
   .down{height:14px;border-left:1px solid var(--deepline);margin-left:17px}
 
+  .how{margin-top:clamp(3rem,9vw,4.5rem)}
   /* ---- the promise ---- */
   .quote{margin-top:clamp(3.5rem,11vw,6rem);padding:clamp(1.8rem,6vw,2.6rem) 0;
     border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
@@ -154,29 +155,6 @@
       <p>We lock it and <b>write it to the blockchain</b>. Not the founder, not us,
         not later when it has become expensive.</p>
 
-      <div class="band">
-        <h3>What happens to it</h3>
-        <div class="flow">
-          <div class="fl"><span class="ic">✍</span><div>
-            <b>What you wrote down</b>
-            <span>Who was asked, what they got, the name they signed.</span>
-          </div></div>
-          <div class="down"></div>
-          <div class="fl"><span class="ic">⁂</span><div>
-            <b>Becomes one fingerprint</b>
-            <span>Change one letter of the record and this changes completely.</span>
-            <code>d0a276688feab501e94137ae4770298cba6d417…</code>
-          </div></div>
-          <div class="down"></div>
-          <div class="fl"><span class="ic">◆</span><div>
-            <b>Goes onto the blockchain</b>
-            <span>A dated transaction on Stellar. Nobody can edit it. Not even us.</span>
-          </div></div>
-        </div>
-      </div>
-
-      <p class="aside">Anyone can check it against the chain themselves. They never
-        have to ask you.</p>
     </section>
 
     <section class="step">
@@ -189,10 +167,44 @@
 
   </div>
 
+  <div class="doors">
+    <div class="door">
+      <p class="eyebrow">Start one</p>
+      <h2>Write the deal down</h2>
+      <a class="btn solid" href="/f">Start the record</a>
+      <small>A minute. Nothing to pay.</small>
+    </div>
+  </div>
+
   <div class="quote">
     <p class="serif">It doesn't mean the record <em>can't be changed</em>.<br>
       It means it can't be changed <em>without it showing</em>.</p>
   </div>
+
+  <section class="how">
+    <p class="eyebrow">More information</p>
+    <div class="band">
+      <h3>What happens to what you write</h3>
+      <div class="flow">
+        <div class="fl"><span class="ic">✍</span><div>
+        <b>What you wrote down</b>
+        <span>Who was asked, what they got, the name they signed.</span>
+        </div></div>
+        <div class="down"></div>
+        <div class="fl"><span class="ic">⁂</span><div>
+        <b>Becomes one fingerprint</b>
+        <span>Change one letter of the record and this changes completely.</span>
+        <code>d0a276688feab501e94137ae4770298cba6d417…</code>
+        </div></div>
+        <div class="down"></div>
+        <div class="fl"><span class="ic">◆</span><div>
+        <b>Goes onto the blockchain</b>
+        <span>A dated transaction on Stellar. Nobody can edit it. Not even us.</span>
+        </div></div>
+      </div>
+    </div>
+
+  </section>
 
   <section class="rec" id="seals" hidden>
     <p class="eyebrow">The record so far</p>
@@ -216,12 +228,6 @@
   </section>
 
   <div class="doors">
-    <div class="door">
-      <p class="eyebrow">Start one</p>
-      <h2>Write the deal down</h2>
-      <a class="btn solid" href="/f">Start the record</a>
-      <small>A minute. Nothing to pay.</small>
-    </div>
     <div class="door">
       <p class="eyebrow">Sent a code?</p>
       <h2>Open your offer</h2>
