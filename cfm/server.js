@@ -280,9 +280,20 @@ app.get("/api/offers", admin, async (_req, res) => {
  * was actually published, and every page reads it before saying a word about
  * it. An empty ref is the honest state and looks like one. */
 app.post("/api/seal", express.json({ limit: "1kb" }), admin, async (req, res) => {
+  const d = new Date();
+  d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - 1);
   const month = /^\d{4}-\d{2}$/.test(String(req.body?.month || ""))
     ? String(req.body.month)
-    : new Date().toISOString().slice(0, 7);
+    : d.toISOString().slice(0, 7);
+  /* A MONTH IS SEALED WHEN IT IS OVER, and not before.
+     Sealing the current one looks harmless and is not: every entry made for
+     the rest of the month falls outside a seal that claims to be the month,
+     and the first ordinary admin afterwards — reopening an offer somebody
+     took by accident, voiding one that was never sent — changes a row the
+     seal covers. The hash then stops matching and the record reads as
+     tampered with, by the person running it, doing their job. */
+  if (month >= new Date().toISOString().slice(0, 7)) return res.status(400)
+    .json({ error: "early", month });
   const out = await change((data) => {
     /* Re-sealing a month would break the chain after it and hide whatever
        changed. If a month needs a new seal, that is a decision with
@@ -294,6 +305,21 @@ app.post("/api/seal", express.json({ limit: "1kb" }), admin, async (req, res) =>
     return seal;
   });
   if (out === "already") return res.status(409).json({ error: "sealed" });
+  res.json({ ok: true, seal: out });
+});
+
+/** Undo the newest seal, and only the newest.
+ *
+ * Anything earlier is load-bearing: every seal after it hashes its hash, so
+ * removing one from the middle silently invalidates the rest. The last one
+ * has nothing depending on it yet, which makes it the only one that can go
+ * without leaving a lie behind. */
+app.post("/api/unseal", express.json({ limit: "1kb" }), admin, async (_req, res) => {
+  const out = await change((data) => {
+    if (!data.seals.length) return null;
+    return data.seals.pop();
+  });
+  if (!out) return res.status(404).json({ error: "none" });
   res.json({ ok: true, seal: out });
 });
 

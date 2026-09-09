@@ -7,7 +7,7 @@
 
 const [, , base, key, cmd, ...rest] = process.argv;
 if (!base || !key || !cmd) {
-  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|offer|offers|seal|seals|reopen|void [--who NAME ...]");
+  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|offer|offers|seal|seals|unseal|reopen|void [--who NAME ...]");
   process.exit(2);
 }
 const arg = (n, d = "") => {
@@ -123,13 +123,25 @@ if (cmd === "setup") {
   }
 } else if (cmd === "seal") {
   /* Chained to the last one, so an old month cannot be quietly re-sealed. */
-  const d = await post("/api/seal", { month: arg("month") });
+  const r = await fetch(base + "/api/seal", {
+    method: "POST", headers: head, body: JSON.stringify({ month: arg("month") }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (d.error === "early") {
+    console.error("\n  " + d.month + " is not over. A month is sealed once it is,");
+    console.error("  or every entry after today falls outside its own seal.\n");
+    process.exit(1);
+  }
+  if (!r.ok) { console.error("The ledger refused that:", d.error || r.status); process.exit(1); }
   const x = d.seal;
   console.log("\n  " + x.month + " sealed · " + x.count +
     (x.count === 1 ? " entry" : " entries"));
   console.log("\n  " + x.hash + "\n");
   console.log("  Nothing has been published anywhere. Until it is, this proves the");
   console.log("  record has not changed since — not that it could not.\n");
+} else if (cmd === "unseal") {
+  const d = await post("/api/unseal", {});
+  console.log("\n  " + d.seal.month + " is open again. The seal is gone.\n");
 } else if (cmd === "seals") {
   const r = await fetch(base + "/api/seals");
   const d = await r.json().catch(() => ({}));
@@ -156,6 +168,6 @@ if (cmd === "setup") {
   }
   console.log("\n  " + rows.length + " in all.\n");
 } else {
-  console.error("setup, setup-cfm, offer, offers, seal, seals, reopen or void.");
+  console.error("setup, setup-cfm, offer, offers, seal, seals, unseal, reopen or void.");
   process.exit(2);
 }
