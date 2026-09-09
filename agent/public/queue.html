@@ -610,7 +610,6 @@ function drawWaiting(w) {
   if (w.type) tags.append(el("span", "tag", w.type));
   if (w.want) tags.append(el("span", "tag", "wants " + w.want));
   if (w.done) tags.append(el("span", "tag off", w.done === "in" ? "let in" : "turned down"));
-  if (tags.childNodes.length) box.append(tags);
 
   /* THEIR PHOTOGRAPH, AND THE ONE DECISION IT NEEDS.
    *
@@ -639,6 +638,15 @@ function drawWaiting(w) {
     }
     box.append(el("div", "said"));
   }
+
+  /* THE PILLS, UNDER THE FACE RATHER THAN ABOVE IT.
+   *
+   * They sat between the contact line and the photograph, which put five
+   * grey chips in the gap where the person's face was about to be — so the
+   * eye reached the picture last, after reading the labels. A face is the
+   * fastest thing on this row to read and the chips qualify it, so they go
+   * under it. Same chips, same order, further down. */
+  if (tags.childNodes.length) box.append(tags);
   return box;
 }
 
