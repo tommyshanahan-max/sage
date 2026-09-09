@@ -1423,6 +1423,18 @@ const ledgerShut = () => Boolean(UNTIL) && new Date().toISOString().slice(0, 10)
    hundredth person does not bother working for. */
 const FOUND = (n) => Math.round(200 / Math.sqrt(Math.max(1, n)));
 
+/* WHAT EACH ACT IS WORTH, in one place because two places is how a screen ends
+   up promising a number the ledger does not pay. The waiting room reads these
+   to show somebody what an act is worth before they are inside to do it; the
+   ledger below spends them. Nobody retypes a weight.
+
+   The ordering is the argument. Bringing somebody in who stays is worth more
+   than any seat in the hundred — seat 1 is 200 and seat 24 is 41 — because the
+   board is the people in it and being early is only a claim on having been
+   early. A screen that leads with the seat number leads with the smallest
+   number on it. */
+const WORTH = { guest: 100, card: 40, heard: 20, week: 10 };
+
 /** What one member has put in, and what each part of it came from. */
 function stakeOf(board, who) {
   const zero = { points: 0, parts: [], seat: 0 };
@@ -1478,10 +1490,10 @@ function stakeOf(board, who) {
 
   const parts = [
     { key: "found",  n: seat,           points: FOUND(seat) },
-    { key: "guests", n: guests.length,  points: guests.length * 100 },
-    { key: "heard",  n: answerers.size, points: answerers.size * 20 },
-    { key: "cards",  n: cards,          points: cards * 40 },
-    { key: "weeks",  n: weeks,          points: weeks * 10 },
+    { key: "guests", n: guests.length,  points: guests.length * WORTH.guest },
+    { key: "heard",  n: answerers.size, points: answerers.size * WORTH.heard },
+    { key: "cards",  n: cards,          points: cards * WORTH.card },
+    { key: "weeks",  n: weeks,          points: weeks * WORTH.week },
   ].filter((r) => r.points > 0);
 
   return { points: parts.reduce((a, r) => a + r.points, 0), parts, seat };
