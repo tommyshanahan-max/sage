@@ -71,8 +71,18 @@
      stylesheet starts fighting itself. */
   .who .when{margin-left:auto;font-variant-numeric:tabular-nums}
   .why{margin:.45rem 0 0;line-height:1.55;word-break:break-word}
-  .reach{display:inline-block;margin:.5rem 0 0;color:var(--blue);
+  .reachlab{margin:.6rem 0 0;font-size:.66rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+  .reach{display:inline-block;margin:.15rem 0 0;color:var(--blue);
     font-size:.86rem;word-break:break-all}
+  /* A button rather than a span, and it has to lose every button default or
+     it stops looking like the address it is. What it keeps is the cursor and
+     a dotted underline — the two things that say "this does something", which
+     the blue on its own was only pretending to say. */
+  .reach.copy{border:0;background:none;padding:0;font:inherit;font-size:.86rem;
+    text-align:left;cursor:pointer;text-decoration:underline dotted;
+    text-underline-offset:3px}
+  .reach.copy.done{color:var(--green);text-decoration:none}
   .tags{margin:.5rem 0 0;display:flex;gap:.4rem;flex-wrap:wrap}
   .tag{padding:.1rem .5rem;border-radius:99px;background:var(--rule);
     color:var(--ink-2);font-size:.72rem;font-weight:600}
@@ -276,6 +286,30 @@ for (const k of PANES) $("tab-" + k).addEventListener("click", () => show(k));
    which is what every caller wanted until the waiting list grew buttons of
    its own — redrawing the queue after releasing a waiting person's photograph
    would leave the row that was just acted on exactly as it was. */
+/* The clipboard, in whichever way this browser has one. The same routine the
+   board's own pages carry: the API where there is one and a secure context,
+   an off-screen textarea where there is not. */
+function copyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch { /* fall through */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:absolute;left:-9999px;top:0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch { return false; }
+}
+
 async function act(btn, url, opts, confirmText, after) {
   if (confirmText && !window.confirm(confirmText)) return;
   const row = btn.closest(".post");
@@ -520,14 +554,42 @@ function drawWaiting(w) {
   head.append(el("span", "when", ago(w.at)));
   box.append(head);
   if (w.why) box.append(el("p", "why", w.why));
+  /* THE WAY TO REACH THEM, AND SOMETHING TO DO WITH IT.
+   *
+   * An email gets a mailto link and always did. Everything else — which on
+   * this board is nearly always a WeChat id — was a blue span: it looked
+   * exactly like the link beside it and did nothing at all when pressed.
+   * There is nowhere for a WeChat id to link TO, so the useful action is the
+   * one you were about to do by hand: copy it, and go and paste it into
+   * WeChat. */
   const reach = String(w.reach || "").trim();
   if (reach) {
+    /* SAYING WHAT THE BLUE LINE IS.
+     *
+     * It is one field — the "WeChat or email" box — and people type whatever
+     * they like into it: "wechat weilin88", "que_la_famille", an address, a
+     * phone number. Two rows next to each other therefore look like two
+     * different kinds of thing and are not, and nothing on the row said which
+     * was which or even what either was for. The label says it once. It does
+     * not claim to know WHICH service a handle belongs to, because it cannot
+     * and neither can anybody else. */
+    box.append(el("p", "reachlab", "How to reach them"));
     if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reach)) {
       const a = el("a", "reach", reach);
       a.href = "mailto:" + reach;
       box.append(a);
     } else {
-      box.append(el("span", "reach", reach));
+      const c = el("button", "reach copy", reach);
+      c.type = "button";
+      c.title = "Copy";
+      c.addEventListener("click", () => {
+        const ok = copyText(reach);
+        c.textContent = ok ? "Copied — " + reach : reach;
+        c.className = ok ? "reach copy done" : "reach copy";
+        // Back to itself, so the row does not stay in a state it is not in.
+        setTimeout(() => { c.textContent = reach; c.className = "reach copy"; }, 1600);
+      });
+      box.append(c);
     }
   }
   const tags = el("div", "tags");
