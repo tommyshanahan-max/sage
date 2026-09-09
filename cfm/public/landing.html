@@ -43,6 +43,24 @@
     border:1px solid var(--line);border-radius:12px;color:var(--ink2);font-size:.97rem}
   .note b{color:var(--ink);font-weight:650}
   footer{margin-top:2.4rem;color:var(--mut);font-size:.9rem}
+  /* THE PROOF, and it draws itself only when there is some.
+     The page claims nobody rewrites the record. This is where a reader checks
+     rather than takes it — and with no months sealed there is nothing to
+     check, so the whole block stays off the page instead of standing there
+     empty saying trust me. */
+  .seals{margin-top:clamp(2.2rem,6vw,3rem);padding-top:clamp(1.8rem,5vw,2.4rem);
+    border-top:1px solid var(--line)}
+  .seals h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--mut);font-weight:600;margin:0 0 1rem}
+  .seals ol{list-style:none;margin:0 0 1rem;padding:0;display:grid;gap:.55rem}
+  .seals li{display:flex;flex-wrap:wrap;align-items:baseline;gap:.5rem .9rem;
+    font-size:.95rem;padding-bottom:.55rem;border-bottom:1px solid var(--line)}
+  .seals li:last-child{border-bottom:0;padding-bottom:0}
+  .seals b{font-weight:650;min-width:5.5em}
+  .seals .n{color:var(--ink2);min-width:6em}
+  .seals code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:.85rem;color:var(--go);word-break:break-all}
+  .seals p{margin:0;color:var(--mut);font-size:.9rem;max-width:44ch}
   /* The way through. The page is the offer; this is the door. */
   .go{margin-top:clamp(2.2rem,6vw,3rem);padding-top:clamp(1.8rem,5vw,2.4rem);
     border-top:1px solid var(--line)}
@@ -89,6 +107,14 @@
   <p class="note"><b>Nothing is promised.</b> Nothing is for sale.
     It is a record, kept properly, in case it matters later.</p>
 
+  <section class="seals" id="seals" hidden>
+    <h2>The record so far</h2>
+    <ol id="seallist"></ol>
+    <p><b>Sealed and hashed, each month chained to the one before it.</b>
+      Nothing has been published outside this server yet — so these show the record
+      has not changed, not that it could not. That is the next piece.</p>
+  </section>
+
   <div class="go">
     <p class="who">Sent a code?</p>
     <h2 style="margin-bottom:.9rem">Open your offer</h2>
@@ -104,9 +130,31 @@
     <small>Takes a minute. Someone reads it and decides.</small>
   </div>
 
-  <footer>crowdfundme is being built — entries are dated and kept; monthly sealing
-    is the next piece. The Exchange is the first list on it.</footer>
+  <footer>crowdfundme is being built. The Exchange is the first list on it.</footer>
 </div>
+
+<script>
+/* Nothing here is decided in the page: no seals, no block. A record that
+   advertises proof it does not have is worse than one that says nothing. */
+fetch("/api/seals").then((r) => r.json()).then((d) => {
+  const rows = (d && d.seals) || [];
+  if (!rows.length) return;
+  const list = document.getElementById("seallist");
+  for (const x of rows) {
+    const li = document.createElement("li");
+    const b = document.createElement("b");
+    b.textContent = x.month;
+    const n = document.createElement("span");
+    n.className = "n";
+    n.textContent = x.count + (x.count === 1 ? " entry" : " entries");
+    const c = document.createElement("code");
+    c.textContent = x.hash;
+    li.append(b, n, c);
+    list.append(li);
+  }
+  document.getElementById("seals").hidden = false;
+}).catch(() => {});
+</script>
 
 </body>
 </html>
