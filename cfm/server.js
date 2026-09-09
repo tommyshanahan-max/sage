@@ -180,6 +180,7 @@ app.post("/api/open", express.json({ limit: "2kb" }), async (req, res) => {
 
 /** Whatever this browser is already holding. */
 app.get("/api/mine", async (req, res) => {
+  res.set("Cache-Control", "no-store");
   const id = held(req);
   if (!id) return res.json({ on: false });
   const data = await store.load(FILE);
@@ -216,6 +217,12 @@ app.post("/api/accept", express.json({ limit: "2kb" }), async (req, res) => {
  *  a claim, and the whole point of sealing is that it stops being one. */
 app.get("/api/seals", async (_req, res) => {
   const data = await store.load(FILE);
+  /* Never cached. Express sends this with no freshness information, so a
+     browser is free to keep it — and it did: a seal that had been removed went
+     on being shown on the page for as long as the tab lived. On the one block
+     whose whole job is saying what the record is right now, a stale copy is
+     not a slow page, it is a false statement. */
+  res.set("Cache-Control", "no-store");
   res.json({ seals: data.seals });
 });
 
@@ -241,6 +248,7 @@ app.post("/api/me/out", (_req, res) => {
 
 /** The console's whole state in one call. */
 app.get("/api/me", owner, async (req, res) => {
+  res.set("Cache-Control", "no-store");
   const data = await store.load(FILE);
   const own = mine(data, req.me);
   res.json({
