@@ -204,7 +204,19 @@ async function page(file, req, res, next) {
     // A board is the one thing that must never be a day old, and WeChat on iOS
     // caches hard against the URL.
     res.set("Cache-Control", "no-cache");
-    res.send(PAGES.get(file).split("{{ORIGIN}}").join(origin));
+    /* {{HERE}} is this exact URL, path and query kept.
+     *
+     * og:url on the landing page was {{ORIGIN}}/ — the bare homepage — on a
+     * page that is also served at /r/:room?w=<id>, where the query string is
+     * the entire referral. A chat client that canonicalises a shared card to
+     * og:url therefore forwarded the homepage, and whoever sent it got no
+     * credit for anybody who joined through it. The preview has to name the
+     * link it is previewing. */
+    const here = origin + String(req.originalUrl || req.url || "/")
+      .replace(/[^A-Za-z0-9/?=&._~:@+-]/g, "").slice(0, 512);
+    res.send(PAGES.get(file)
+      .split("{{HERE}}").join(here)
+      .split("{{ORIGIN}}").join(origin));
   } catch (e) { next(e); }
 }
 
