@@ -209,6 +209,24 @@ async function main() {
          the only thing on this list that tells them apart. */
       if (w.viaName) console.log(pad("", 22) + "  sent by " + w.viaName);
       if (w.why) console.log(pad("", 22) + "  " + w.why.replace(/\n/g, " ").slice(0, 60));
+      /* WHAT THEY FILLED IN WHILE THEY WAITED, and whether a photograph is
+         sitting in the queue.
+         This list is the answer to "did that save" from a terminal, and it
+         could not answer it: somebody uploads a picture, the panel is a
+         browser away, and the only other way to look was to read the board
+         file by hand. A held photograph is the one row here that needs
+         somebody to do something, so it says so in those words. */
+      const card = [
+        w.levelBand ? w.levelBand.replace("ZH", "Chinese").replace("EN", "English") : "",
+        w.type || "",
+        w.want ? "wants " + w.want : "",
+      ].filter(Boolean).join(" · ");
+      if (card) console.log(pad("", 22) + "  " + card);
+      if (w.photo) {
+        console.log(pad("", 22) + "  photo " + (w.photoState === "published"
+          ? "shown"
+          : w.photoState === "refused" ? "refused" : "WAITING FOR YOU TO LOOK"));
+      }
     }
   }
 
@@ -217,6 +235,12 @@ async function main() {
   console.log("");
   console.log(open + " waiting across " + rooms + " room" + (rooms === 1 ? "" : "s")
     + ", " + rows.length + " rows in all.");
+  const held = rows.filter((w) => w.photo && w.photoState !== "published"
+    && w.photoState !== "refused").length;
+  if (held) {
+    console.log(held + " photograph" + (held === 1 ? " is" : "s are") + " waiting to be"
+      + " looked at. Let them through in the panel, Waiting tab.");
+  }
   console.log("Let somebody in with:  make waiting-in ID=... && make invite WHO=\"their name\"");
   console.log("A row is worth deleting once it is answered:  make waiting-rm ID=...");
 }
