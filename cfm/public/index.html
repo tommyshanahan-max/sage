@@ -57,6 +57,19 @@
     text-transform:uppercase;font-weight:700;color:var(--gold);border:1px solid #4A3E22;
     background:#191509;border-radius:99px;padding:.3rem .7rem}
   #terms{margin-bottom:1.4rem}
+  /* The signature. Deliberately looks like something you write on, not like
+     another field in a form — it is the only place on this page where what
+     the reader does is more than a tap. */
+  #signbox{border:1px solid var(--line);border-radius:.8rem;padding:1rem 1.05rem;
+    background:#0F1512;margin-bottom:1rem}
+  #signbox label{display:block;font-size:.72rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:.6rem}
+  #signbox input{width:100%;border:0;border-bottom:1px solid var(--line);background:none;
+    color:var(--text);font:400 1.35rem/1.6 "Instrument Serif",Georgia,serif;
+    padding:.1rem 0 .45rem;outline:none}
+  #signbox input:focus{border-bottom-color:var(--go)}
+  #signbox small{display:block;margin-top:.6rem;font-size:.8rem;color:var(--faint);
+    line-height:1.55}
   .ask{font:400 1.35rem/1.25 "Instrument Serif",Georgia,serif;margin-bottom:.7rem}
   .ask em{font-style:italic;color:var(--go)}
   .why{color:var(--dim);font-size:.94rem;margin-bottom:1.3rem}
@@ -135,6 +148,14 @@
     <p class="ask" id="ask"></p>
     <p class="why" id="why"></p>
     <div class="from" id="frombox" hidden><i id="fromini"></i><div id="fromsay"></div></div>
+    <div id="signbox" hidden>
+      <label for="sign">Sign it</label>
+      <input id="sign" type="text" autocomplete="name" spellcheck="false"
+        placeholder="Your full name" aria-describedby="signwhy">
+      <small id="signwhy">Typed by you, with today's date, and kept on the record
+        beside the terms above. It is not a share certificate and does not pretend
+        to be one — it is what you agreed to, in your own name.</small>
+    </div>
     <button class="pale" id="take">Accept</button>
     <!-- Not every project has somewhere to send you. A share in the thing that
          keeps the record has no room to walk into, so accepting has to end in
@@ -299,6 +320,16 @@ function draw(o) {
     $("tvest").textContent = k.years
       ? "Monthly over " + k.years + (k.years === 1 ? " year" : " years")
       : "In full on incorporation";
+    if (!o.taken) {
+      $("signbox").hidden = false;
+      $("take").disabled = true;
+      $("take").className = "";
+      $("sign").addEventListener("input", () => {
+        const on = $("sign").value.trim().length >= 3;
+        $("take").disabled = !on;
+        $("take").className = on ? "pale" : "";
+      });
+    }
     if (p.from) { $("tfrom").textContent = p.from; $("tfromrow").hidden = false; }
     if (p.holds) { $("holds").textContent = p.holds; $("holds").hidden = false; }
     $("tcliff").textContent = k.cliff
@@ -383,7 +414,7 @@ function draw(o) {
   $("w4").textContent = stake ? "The structure, done properly" : "One introduction";
   $("fine").textContent = "Nothing is issued and nothing is sold." +
     (o.until ? " Reserved until " + o.until + "." : "");
-  if (o.taken) settled(p);
+  if (o.taken) { $("signbox").hidden = true; settled(p, o.signed); }
   show("offer");
 }
 
@@ -411,15 +442,16 @@ $("openwhere").addEventListener("click", () => show("where"));
 $("back").addEventListener("click", () => show("offer"));
 
 /* What an accepted offer looks like on the way back to it. */
-function settled(p) {
+function settled(p, signed) {
   const goTo = p && p.goTo;
   $("take").textContent = goTo ? "Go in" : "Accepted";
   if (!goTo) {
     $("take").className = "";
     $("take").disabled = true;
     $("took").hidden = false;
-    $("took").textContent = "On the record. Nothing else to do — I will come to you " +
-      "with the paperwork when there is paperwork.";
+    $("took").textContent = (signed ? "Signed " + signed + ". " : "") +
+      "On the record. Nothing else to do — I will come to you with the paperwork " +
+      "when there is paperwork.";
   }
 }
 
@@ -428,11 +460,11 @@ $("take").addEventListener("click", async () => {
   try {
     const r = await fetch("/api/accept", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ device: device() }),
+      body: JSON.stringify({ device: device(), sign: $("sign").value.trim() }),
     });
     const d = await r.json().catch(() => ({}));
     if (r.ok && d.goTo) { location.assign(d.goTo); return; }
-    if (r.ok) { settled(null); return; }
+    if (r.ok) { $("signbox").hidden = true; settled(null, $("sign").value.trim()); return; }
     $("take").textContent = "Accept";
   } catch { $("take").textContent = "Accept"; }
 });

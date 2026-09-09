@@ -138,16 +138,85 @@ export function cleanOffer(raw) {
     /* Opened, then accepted. Both are worth knowing before you follow up. */
     openedAt: s(raw.openedAt, 40),
     tookAt: s(raw.tookAt, 40),
+    /* WHAT THEY TYPED, and why a button was not enough.
+       A tap records that a device pressed Accept. A name typed by the person
+       whose offer it is records that a person did — it is the difference
+       between an event log and something anybody would act on later. Asked
+       for on a stake and nowhere else: a founding seat that demands a legal
+       name at the door is a founding seat nobody takes. */
+    signed: s(raw.signed, 60),
     /* The browser that accepted, hashed. Enough to know it was taken and to
        hand the same person back their own offer; not enough to say who. */
     by: s(raw.by, 64),
   };
 }
 
+/* SEALING A MONTH.
+ *
+ * The claim the whole product rests on is that a number written in October is
+ * still that number in a year. Nothing enforced that: the file is JSON on a
+ * disk, and an edit leaves no trace. A seal is the trace — the month's rows,
+ * serialised the same way every time, hashed, and chained to the seal before
+ * it so that changing anything old invalidates every seal since.
+ *
+ * Chained rather than a list of independent hashes: independent hashes let
+ * somebody re-seal one month quietly. A chain means the only way to hide an
+ * edit is to redo every seal after it, which is exactly the work anchoring a
+ * seal publicly is meant to make impossible.
+ *
+ * No chain is involved here and none is needed for this part. Publishing a
+ * seal somewhere it cannot be rewritten is a separate, optional step on top —
+ * see the anchor notes in server.js. Until that is configured, this is a
+ * tamper-EVIDENT record, not a tamper-PROOF one, and nothing says otherwise.
+ */
+const canon = (v) => {
+  if (Array.isArray(v)) return "[" + v.map(canon).join(",") + "]";
+  if (v && typeof v === "object") {
+    return "{" + Object.keys(v).sort()
+      .map((k) => JSON.stringify(k) + ":" + canon(v[k])).join(",") + "}";
+  }
+  return JSON.stringify(v ?? null);
+};
+
+/** One month of the record, exactly as it stood. */
+export function sealOf(data, month, prev) {
+  /* Everything dated inside the month, whatever it is about — an offer made,
+     opened or accepted in September belongs to September's seal. */
+  const rows = data.offers
+    .filter((o) => String(o.at).slice(0, 7) === month)
+    .sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+  const body = canon({ month, prev: prev || "", rows });
+  return {
+    month,
+    /* The chain link. An empty prev means this is the first seal. */
+    prev: prev || "",
+    hash: createHash("sha256").update(body).digest("hex"),
+    count: rows.length,
+    at: new Date().toISOString(),
+    /* Where it was published, if it ever was. Empty is the honest default and
+       the page reads it: no reference, no claim. */
+    ref: "",
+  };
+}
+
+export function cleanSeal(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const month = /^\d{4}-\d{2}$/.test(String(raw.month || "")) ? String(raw.month) : "";
+  const hash = /^[a-f0-9]{64}$/.test(String(raw.hash || "")) ? String(raw.hash) : "";
+  if (!month || !hash) return null;
+  return {
+    month, hash,
+    prev: /^[a-f0-9]{64}$/.test(String(raw.prev || "")) ? String(raw.prev) : "",
+    count: Math.max(0, Number(raw.count) || 0),
+    at: s(raw.at, 40) || new Date().toISOString(),
+    ref: s(raw.ref, 200),
+  };
+}
+
 export const hashDevice = (id, salt) =>
   id ? createHash("sha256").update(salt + ":" + id).digest("hex").slice(0, 32) : "";
 
-const EMPTY = { projects: [], packages: [], offers: [] };
+const EMPTY = { projects: [], packages: [], offers: [], seals: [] };
 
 export async function load(file) {
   try {
@@ -156,6 +225,7 @@ export async function load(file) {
       projects: (raw.projects || []).map(cleanProject).filter(Boolean),
       packages: (raw.packages || []).map(cleanPackage).filter(Boolean),
       offers: (raw.offers || []).map(cleanOffer).filter(Boolean),
+      seals: (raw.seals || []).map(cleanSeal).filter(Boolean),
     };
   } catch { return { ...EMPTY }; }
 }

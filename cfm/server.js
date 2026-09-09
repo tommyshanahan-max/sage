@@ -80,7 +80,7 @@ function view(data, o) {
   const k = data.packages.find((x) => x.id === o.package) || null;
   return {
     who: o.who, seat: o.seat, note: o.note, until: o.until,
-    taken: Boolean(o.tookAt),
+    taken: Boolean(o.tookAt), signed: o.signed,
     /* goTo is here so the page can tell, before the button is pressed, whether
        accepting ends in a room or in a sentence. Not a secret — it is where
        the button was always going to send them. */
@@ -148,17 +148,30 @@ app.post("/api/accept", express.json({ limit: "2kb" }), async (req, res) => {
   const id = held(req);
   if (!id) return res.status(400).json({ error: "who" });
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const sign = String(req.body?.sign || "").trim().slice(0, 60);
   const out = await change((data) => {
     const o = data.offers.find((x) => x.id === id);
     if (!o) return null;
+    /* A stake is not taken by tapping. Checked on this side and not only in
+       the page: the page is the convenience, the rule is here. */
+    const k = data.packages.find((x) => x.id === o.package);
+    if (k && k.face === "stake" && !o.tookAt && sign.length < 3) return "unsigned";
     /* Accepting twice is a reload, not a second person. The first time is the
        one on the record. */
-    if (!o.tookAt) { o.tookAt = new Date().toISOString(); o.by = me; }
+    if (!o.tookAt) { o.tookAt = new Date().toISOString(); o.by = me; o.signed = sign; }
     const p = data.projects.find((x) => x.id === o.project);
     return { goTo: (p && p.goTo) || "", seat: o.seat };
   });
+  if (out === "unsigned") return res.status(400).json({ error: "sign" });
   if (!out) return res.status(404).json({ error: "no" });
   res.json({ ok: true, ...out });
+});
+
+/** The seals, for anybody. Published on purpose: a record nobody can check is
+ *  a claim, and the whole point of sealing is that it stops being one. */
+app.get("/api/seals", async (_req, res) => {
+  const data = await store.load(FILE);
+  res.json({ seals: data.seals });
 });
 
 /* ---- the side only the person running it sees ------------------------- */
@@ -252,6 +265,36 @@ app.get("/api/offers", admin, async (_req, res) => {
     who: o.who, code: o.code, seat: o.seat, project: o.project, package: o.package,
     at: o.at, openedAt: o.openedAt, tookAt: o.tookAt,
   })) });
+});
+
+/** Seal a month. Chained to the last seal, so re-sealing an old month cannot
+ *  be done quietly — every seal after it stops matching.
+ *
+ * ANCHORING, when there is a reason to.
+ * A seal proves nothing on its own: the file holding the seals is the same
+ * file holding the rows, and whoever can edit one can redo the other. What
+ * makes it evidence is publishing the top hash somewhere the publisher cannot
+ * rewrite — a Stellar `manage_data` entry costs a fraction of a cent and takes
+ * 64 bytes, which is twice what a sha256 needs. That is an option a project
+ * turns on, not a thing this claims by default: `ref` is empty until something
+ * was actually published, and every page reads it before saying a word about
+ * it. An empty ref is the honest state and looks like one. */
+app.post("/api/seal", express.json({ limit: "1kb" }), admin, async (req, res) => {
+  const month = /^\d{4}-\d{2}$/.test(String(req.body?.month || ""))
+    ? String(req.body.month)
+    : new Date().toISOString().slice(0, 7);
+  const out = await change((data) => {
+    /* Re-sealing a month would break the chain after it and hide whatever
+       changed. If a month needs a new seal, that is a decision with
+       consequences and not a repeated command. */
+    if (data.seals.some((x) => x.month === month)) return "already";
+    const last = data.seals[data.seals.length - 1];
+    const seal = store.sealOf(data, month, last ? last.hash : "");
+    data.seals.push(seal);
+    return seal;
+  });
+  if (out === "already") return res.status(409).json({ error: "sealed" });
+  res.json({ ok: true, seal: out });
 });
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));

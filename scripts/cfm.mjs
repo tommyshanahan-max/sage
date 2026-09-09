@@ -7,7 +7,7 @@
 
 const [, , base, key, cmd, ...rest] = process.argv;
 if (!base || !key || !cmd) {
-  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|offer|offers|reopen|void [--who NAME ...]");
+  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|offer|offers|seal|seals|reopen|void [--who NAME ...]");
   process.exit(2);
 }
 const arg = (n, d = "") => {
@@ -121,6 +121,26 @@ if (cmd === "setup") {
     console.log("\n  Gone: " + d.who + " · " + code.toUpperCase());
     console.log("  That code opens nothing now.\n");
   }
+} else if (cmd === "seal") {
+  /* Chained to the last one, so an old month cannot be quietly re-sealed. */
+  const d = await post("/api/seal", { month: arg("month") });
+  const x = d.seal;
+  console.log("\n  " + x.month + " sealed · " + x.count +
+    (x.count === 1 ? " entry" : " entries"));
+  console.log("\n  " + x.hash + "\n");
+  console.log("  Nothing has been published anywhere. Until it is, this proves the");
+  console.log("  record has not changed since — not that it could not.\n");
+} else if (cmd === "seals") {
+  const r = await fetch(base + "/api/seals");
+  const d = await r.json().catch(() => ({}));
+  const rows = d.seals || [];
+  if (!rows.length) { console.log("\n  No months sealed yet.\n"); process.exit(0); }
+  console.log("");
+  for (const x of rows) {
+    console.log("  " + x.month + "  " + String(x.count).padStart(4) + "  " +
+      x.hash.slice(0, 16) + "…  " + (x.ref || "not published"));
+  }
+  console.log("");
 } else if (cmd === "offers") {
   const r = await fetch(base + "/api/offers", { headers: head });
   const d = await r.json().catch(() => ({}));
@@ -136,6 +156,6 @@ if (cmd === "setup") {
   }
   console.log("\n  " + rows.length + " in all.\n");
 } else {
-  console.error("setup, setup-cfm, offer, offers, reopen or void.");
+  console.error("setup, setup-cfm, offer, offers, seal, seals, reopen or void.");
   process.exit(2);
 }

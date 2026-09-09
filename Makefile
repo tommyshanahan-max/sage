@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: cfm-setup cfm-self cfm-offer cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: cfm-setup cfm-self cfm-offer cfm-seal cfm-seals cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -334,6 +334,19 @@ cfm-offer: ## One offer to one person: make cfm-offer WHO="Keith" [PROJECT=the-e
 	  offer --who "$(WHO)" --project "$(or $(PROJECT),the-exchange)" \
 	  --pack "$(or $(PACK),founding)" --seat "$(or $(SEAT),0)" \
 	  --note "$(NOTE)" --until "$(UNTIL)"
+
+cfm-seal: ## Close a month and hash it: make cfm-seal [MONTH=2026-09]
+	@# Chained to the seal before it, so re-sealing an old month breaks every
+	@# seal since rather than passing quietly. Run it once a month. Nothing is
+	@# published anywhere: this makes the record tamper-EVIDENT, and it says so
+	@# — anchoring a hash publicly is a separate thing a project turns on.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  seal --month "$(MONTH)"
+
+cfm-seals: ## Every month sealed so far, and whether it was published
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" seals
 
 cfm-reopen: ## Undo an acceptance, same code stays live: make cfm-reopen CODE=ABC123
 	@# For the offer you accepted yourself while checking it — which is the
