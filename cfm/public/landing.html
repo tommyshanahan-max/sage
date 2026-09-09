@@ -62,6 +62,15 @@
   .lane .pill.on{background:var(--soft);color:var(--go)}
   .lane .pill.off{background:transparent;color:var(--mut);border:1px solid var(--line)}
   .lane p{margin:0;color:var(--ink2);font-size:.95rem}
+  /* The open lane goes somewhere. It read as a link before it was one — the
+     pill says Open and the eye finishes the sentence — and a row that looks
+     clickable and is not is worse than a plain list. The two that are not
+     open stay plainly not open. */
+  a.lane{display:block;text-decoration:none;color:inherit}
+  a.lane .top b{text-decoration:underline;text-underline-offset:3px;
+    text-decoration-color:var(--line)}
+  a.lane:hover .top b{text-decoration-color:var(--go)}
+  a.lane .go{color:var(--go);font-weight:600}
 
   /* THE PROOF, and it draws itself only when there is some.
      The page claims nobody rewrites the record. This is where a reader checks
@@ -128,10 +137,10 @@
     It is a record, kept properly, in case it matters later.</p>
 
   <section class="lanes">
-    <div class="lane">
+    <a class="lane" href="/f">
       <div class="top"><b>Early founder deals</b><span class="pill on">Open</span></div>
-      <p>The handshake before there is a company. By invitation.</p>
-    </div>
+      <p>The handshake before there is a company. <span class="go">Keep your own record →</span></p>
+    </a>
     <div class="lane">
       <div class="top"><b>Investor rounds</b><span class="pill off">Soon</span></div>
       <p>Who came in, at what, and when — one record everybody reads.</p>
