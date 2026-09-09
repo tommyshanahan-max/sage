@@ -308,41 +308,26 @@ waiting-in: ## Mark one as let in: make waiting-in ID=...
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --in "$(ID)"
 
-# The ledger runs inside the estate; reached by service name, so the admin key
-# never leaves this box to make an offer.
-define cfm
-$(COMPOSE) run --rm --no-deps -T -e K="$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
-  --entrypoint node cfm -e '(async () => { \
-  const [, , url, method, body] = process.argv; \
-  const r = await fetch("http://cfm:3000" + url, { method, \
-    headers: { "content-type": "application/json", "x-admin-secret": process.env.K }, \
-    body: body || undefined }); \
-  process.stdout.write(await r.text()); \
-  if (!r.ok) process.exit(1); })()' $(2) $(1) $(3)
-endef
-
-cfm-setup: ## Create the project and the two packages: make cfm-setup
+cfm-setup: ## Create the project and its packages: make cfm-setup
 	@# Once, on a new box. The ledger knows nothing about The Exchange until it
-	@# is told — a name, a line and where to send somebody who accepts. See
-	@# cfm/lib/store.js for why that is the whole of it.
-	@$(call cfm,POST,/api/project,'{"id":"the-exchange","name":"The Exchange","zh":"交换","line":"The people you need in China already know each other. This is the room.","goTo":"https://liuxuesheng.io/enter","seats":100}')
-	@$(call cfm,POST,/api/package,'{"id":"founding","name":"Founding","project":"the-exchange","face":"plain","points":500,"perDay":3}')
-	@$(call cfm,POST,/api/package,'{"id":"connector","name":"Connector","project":"the-exchange","face":"reach","points":200,"perDay":10}')
-	@echo "the-exchange · founding · connector"
+	@# is told — a name, a line, and where to send somebody who accepts. See
+	@# cfm/lib/store.js for why that is the whole of what it holds.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" setup
 
-cfm-offer: ## One offer to one person: make cfm-offer WHO="Keith" [PACK=founding SEAT=3 NOTE="..."]
-	@# The seat is decided here, not when it is opened. Two people quietly told
-	@# they are third is the one mistake here that cannot be walked back.
+cfm-offer: ## One offer to one person: make cfm-offer WHO="Keith" [PACK=founding SEAT=3 NOTE="..." UNTIL=2026-09-16]
+	@# The seat is written when the offer is made, not when it is opened. Two
+	@# people quietly told they are third is the one mistake here that cannot
+	@# be walked back.
 	@test -n "$(WHO)" || { echo 'which one? make cfm-offer WHO="their name"'; exit 1; }
-	@$(call cfm,POST,/api/offer,'{"who":"$(WHO)","project":"the-exchange","package":"$(or $(PACK),founding)","seat":$(or $(SEAT),0),"note":"$(NOTE)","until":"$(UNTIL)"}') \
-	  | python3 -c 'import json,sys; o=json.load(sys.stdin)["offer"]; print("\n  " + o["who"] + " · seat " + str(o["seat"]) + "\n\n      " + o["code"] + "\n")'
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  offer --who "$(WHO)" --pack "$(or $(PACK),founding)" --seat "$(or $(SEAT),0)" \
+	  --note "$(NOTE)" --until "$(UNTIL)"
 
-cfm-offers: ## Who has been offered what, and who opened it
-	@$(call cfm,GET,/api/offers,) | python3 -c 'import json,sys;\
-	  rows=json.load(sys.stdin)["offers"];\
-	  print();\
-	  [print("  %-14s %-8s seat %-4s %-10s %s" % (r["who"], r["code"], r["seat"], r["package"], "accepted" if r["tookAt"] else ("opened" if r["openedAt"] else "not opened"))) for r in rows];\
-	  print()'
+cfm-offers: ## Who has been offered what, and who has opened it
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" offers
 
 waiting-key: ## A code that gives one person their place back: make waiting-key ID=...
 	@# For somebody whose browser forgot them — a cleared cache, a new phone, a
