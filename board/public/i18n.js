@@ -798,7 +798,11 @@ export const STRINGS = {
     "Every person who joins through your link moves you one place up the list.",
     "每有一个人通过你的链接加入，你就在名单上往前一位。",
   ],
-  "wr.sharePlace":   ["Number {n} of {t} right now.", "现在第 {n} 位，共 {t} 人。"],
+  /* THE NUMBER, BIG, ABOVE THE BUTTON. It was a grey line under the sentence
+     — the fact somebody is actually here for, set smaller than the
+     explanation of it. It is the headline of this panel now. */
+  "wr.sharePlace":   ["You are", "你现在排"],
+  "wr.shareOf":      ["of {t} waiting", "共 {t} 人在等"],
   /* WHAT A WEB PAGE CAN ACTUALLY DO. "Share to WeChat" promised something no
      page can do from inside WeChat — it blocks the share API on purpose and
      there is no way to hand it a link. Copying is the thing that works, so

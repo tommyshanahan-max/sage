@@ -225,6 +225,12 @@
   /* Sharing, as its own panel rather than a line inside something else. */
   .wrshare{margin:1.4rem 0 0;background:var(--card);border:1px solid var(--line);
     border-radius:14px;padding:1.1rem}
+  .wrshare .sharenow{display:flex;align-items:baseline;gap:.45rem;margin:0 0 .5rem;
+    flex-wrap:wrap}
+  .wrshare .sharenow .lab{font-size:.9rem;color:var(--ink-2)}
+  .wrshare .sharenow b{font-size:2.2rem;line-height:1;letter-spacing:-.02em;
+    font-weight:650;color:var(--accent)}
+  .wrshare .sharenow .of{font-size:.9rem;color:var(--ink-2)}
   .wrshare .sharewhy{margin:0 0 .85rem;font-size:.88rem;color:var(--ink-2)}
   .wrshare .sharego{width:100%;border:0;border-radius:99px;background:var(--accent);
     color:var(--accent-ink);padding:.85rem;font-size:1rem;font-weight:600;
@@ -789,11 +795,15 @@ function shareBox(link, ahead) {
   const head = el("div", "wrhead");
   head.append(el("span", null, T("wr.shareHead")), el("i"));
 
+  /* THEIR PLACE, AS THE HEADLINE. It was a grey line under the sentence
+     explaining it — the fact set smaller than the explanation. Big number
+     first, then what moves it, then the button that moves it. */
+  const now = el("div", "sharenow");
+  now.append(el("span", "lab", T("wr.sharePlace")));
+  now.append(el("b", null, "#" + ((ahead || 0) + 1)));
+  now.append(el("span", "of", T("wr.shareOf", { t: (DATA && DATA.waiting) || 1 })));
+  wrap.append(now);
   wrap.append(el("p", "sharewhy", T("wr.shareWhy")));
-  /* And where that leaves them today, so the promise has a number attached
-     rather than being a sentence about the future. */
-  wrap.append(el("p", "hold", T("wr.sharePlace",
-    { n: (ahead || 0) + 1, t: (DATA && DATA.waiting) || 1 })));
 
   const go = el("button", "sharego");
   go.type = "button";
