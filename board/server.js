@@ -1425,6 +1425,18 @@ const ledgerOn = () => SEATS > 0 && Boolean(UNTIL);
  */
 const SEAT_OUTSIDE = process.env.BOARD_SEAT_OUTSIDE === "1";
 
+/* THE TWO TESTS, WHICH NOBODY WAS TAKING.
+ *
+ * Twenty-two people on the list and not one had a level or a type, so two
+ * thirds of "something to do while you wait" was a section asking for work
+ * nobody wanted to do, above the one thing this room actually asks for. Off
+ * unless BOARD_TESTS=1.
+ *
+ * NOT THE PICKER. "I am a / looking for" sits in the same section and is not
+ * a test — it is two dropdowns answered in place, it fills the chip a member
+ * reads when deciding, and people do use it. It stays whatever this says. */
+const TESTS_ON = process.env.BOARD_TESTS === "1";
+
 /* Counting stops on the date. After it the numbers are what they were, which
    is the difference between an allocation and a leaderboard. */
 const ledgerShut = () => Boolean(UNTIL) && new Date().toISOString().slice(0, 10) > UNTIL;
@@ -2243,6 +2255,7 @@ app.get("/api/wait/me", async (req, res) => {
      * percentage, no money, and nothing to click. One switch does both: the
      * block is on, or the sentence is. */
     soon: !SEAT_OUTSIDE,
+    tests: TESTS_ON,
     /* THEIR LINK, ALWAYS — not only when the seat block is on.
      *
      * It used to live inside seat.link, so turning the block off took the

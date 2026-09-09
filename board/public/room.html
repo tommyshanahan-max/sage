@@ -73,13 +73,17 @@
   .pc .said{position:absolute;left:.9rem;right:.9rem;bottom:.85rem;color:#fff}
   .pc .nm{font-family:var(--serif);font-size:1.35rem;line-height:1.15}
   .pc .ln{margin:.25rem 0 0;font-size:.82rem;line-height:1.45;opacity:.94}
-  .pc .chips{margin:.45rem 0 0;display:flex;gap:.3rem;flex-wrap:wrap}
-  .pc .chips span{padding:.14rem .52rem;border-radius:99px;font-size:.7rem;
-    background:rgba(255,255,255,.22)}
-  /* An empty slot is drawn rather than left out, so three blanks read as
-     three things to do and not as a card that failed to load. */
-  .pc .chips span.ghost{background:none;border:1px dashed rgba(255,255,255,.45);
-    color:rgba(255,255,255,.66)}
+  /* The pills, under the picture rather than laid over the bottom of it.
+     On the photograph they were white-on-whatever — dashed outlines over a
+     face, unreadable on a bright patch — and a thing somebody is meant to
+     act on should not read as a caption. */
+  .pcwrap{margin:1rem 0 0}
+  .pcwrap .pc{margin:0}
+  .pcwrap .chips{margin:.55rem 0 0;display:flex;gap:.35rem;flex-wrap:wrap}
+  .pcwrap .chips span{padding:.2rem .62rem;border-radius:99px;font-size:.75rem;
+    background:var(--accent-soft);color:var(--accent);border:1px solid transparent}
+  .pcwrap .chips span.ghost{background:none;color:var(--muted);
+    border:1px dashed var(--line)}
   .under{margin:.5rem 0 0;font-size:.79rem;color:var(--muted);text-align:center}
   .under.bad{color:#b3261e}
   .under.wait{color:var(--accent)}
@@ -440,9 +444,20 @@ function cardOf(w, ghosts) {
   const said = el("div", "said");
   said.append(el("div", "nm", w.name));
   if (w.why) said.append(el("p", "ln", w.why));
-  said.append(chips(w, ghosts));
   pc.append(said);
-  return pc;
+  /* THE PILLS COME OFF THE PICTURE.
+   *
+   * They were the third line of the overlay, laid over whatever the bottom
+   * of the photograph happened to be — dashed outlines on a face, or on a
+   * bright patch where they could not be read at all. They are also the part
+   * somebody is meant to act on, and a control sitting on top of a picture
+   * reads as a caption.
+   *
+   * So the card is returned with them directly underneath it rather than
+   * inside it, and the caller gets both as one block. */
+  const wrap = el("div", "pcwrap");
+  wrap.append(pc, chips(w, ghosts));
+  return wrap;
 }
 
 /* ---- the three things to fill in ----------------------------------------- */
@@ -465,13 +480,16 @@ function testRow(n, key, sub, done, href) {
 }
 
 /** The third one, answered in place. */
-function pickRow(w) {
+function pickRow(w, n) {
   const box = el("div", w.want ? "pick ok" : "pick");
   /* It carries its own numbered header rather than sitting under a row that
      says the same thing: two cards for one question read as two questions,
      one of which does nothing. */
   const head = el("div", "row bare");
-  head.append(el("span", "n", w.want ? "✓" : "3"));
+  /* Numbered by what is actually on the screen. With the two tests off it is
+     the first thing here, and calling it 3 asks the reader to look for two
+     rows that are not there. */
+  head.append(el("span", "n", w.want ? "✓" : String(n || 3)));
   const mid = el("div", "mid");
   mid.append(el("b", null, T("wr.t3")));
   mid.append(el("small", null, T("wr.t3sub")));
@@ -843,7 +861,11 @@ function drawWait(box) {
    * and a chip on it says so, because a tap target nobody can see is a tap
    * target nobody uses. The You tab keeps its button; this is the short way,
    * not the only way. */
-  const card = cardOf(you, true);
+  /* cardOf returns the picture with the pills underneath it, as one block.
+     The tapping, the busy state and the chip all belong to the picture, so
+     that is what is held here; the block is what goes on the page. */
+  const cardWrap = cardOf(you, true);
+  const card = cardWrap.querySelector(".pc");
   card.className = "pc tap";
   const under = el("p", "under", T(full ? "wr.full" : "wr.thin"));
   const chip = el("span", "shotchip");
@@ -863,7 +885,7 @@ function drawWait(box) {
   });
   card.append(chip);
   card.addEventListener("click", picker.open);
-  box.append(card, picker.input);
+  box.append(cardWrap, picker.input);
   box.append(under);
   /* AND WHERE THE PHOTOGRAPH HAS GOT TO, on the screen they took it from.
    *
@@ -890,11 +912,15 @@ function drawWait(box) {
      is answering a question nobody still has. */
   if (!full) box.append(el("p", "wrwhy", T("wr.fillWhy")));
 
-  box.append(testRow(1, "wr.t1", "wr.t1sub",
-    you.levelBand ? bandWords(you.levelBand) : "", "/level"));
-  box.append(testRow(2, "wr.t2", "wr.t2sub", you.type || "", "/type"));
+  /* The two tests only where somebody has turned them on. See TESTS_ON. The
+     picker is not one of them and is always here. */
+  if (DATA.tests) {
+    box.append(testRow(1, "wr.t1", "wr.t1sub",
+      you.levelBand ? bandWords(you.levelBand) : "", "/level"));
+    box.append(testRow(2, "wr.t2", "wr.t2sub", you.type || "", "/type"));
+  }
 
-  box.append(pickRow(you));
+  box.append(pickRow(you, DATA.tests ? 3 : 1));
 
   /* THE SEAT, when the switch is on. See SEAT_OUTSIDE in server.js — the
      server sends nothing at all when it is off, so this whole block simply
