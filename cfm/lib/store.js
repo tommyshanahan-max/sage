@@ -66,6 +66,15 @@ export function cleanProject(raw) {
     marks: (Array.isArray(raw.marks) ? raw.marks : []).slice(0, 3).map((m) => ({
       val: s(m && m.val, 16), when: s(m && m.when, 24),
     })).filter((m) => m.val),
+    /* WHO IS ON THE OTHER SIDE OF THIS.
+       The name used to be written into the offer page, which meant every
+       project on this ledger, forever, said Tom asked you himself. It is the
+       project's now — and on a stake offer it is not decoration: a share in a
+       company that does not exist yet, from a page that does not name the
+       person granting it, is the first thing a careful reader stops on.
+       `holds` is the sentence that answers "out of what". */
+    from: s(raw.from, 60),
+    holds: s(raw.holds, 160),
     at: s(raw.at, 40) || new Date().toISOString(),
   };
 }

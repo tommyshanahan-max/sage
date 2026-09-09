@@ -41,6 +41,7 @@ if (cmd === "setup") {
       { val: "$50k", when: "year one" },
       { val: "$500k", when: "10,000 people" },
     ],
+    from: arg("from", "Tom"),
   });
   await post("/api/package", {
     id: "founding", name: "Founding", project: "the-exchange",
@@ -77,6 +78,12 @@ if (cmd === "setup") {
       { val: "25", when: "year one" },
       { val: "250", when: "projects" },
     ],
+    /* The full name here, not the first one. This project's offers are stakes,
+       and a stake with no named grantor is a screenshot rather than a record —
+       check the spelling before anybody opens it. */
+    from: arg("from", "Tom Shanahan"),
+    holds: arg("holds",
+      "Sole owner today. This comes out of that holding, not out of a pool set aside for it."),
   });
   await post("/api/package", {
     id: "counsel", name: "Counsel", project: "crowdfundme",
@@ -87,7 +94,9 @@ if (cmd === "setup") {
     why: "You already know what a record has to look like before anybody will act on it. Build that here, and the share is in the ledger itself — every project that ever runs on it, not one of them.",
   });
   console.log("\n  crowdfundme · counsel · " + arg("pct", "10") + "% over " +
-    arg("years", "4") + "y, " + arg("cliff", "12") + "m cliff\n");
+    arg("years", "4") + "y, " + arg("cliff", "12") + "m cliff");
+  console.log("  granted by " + arg("from", "Tom Shanahan") +
+    " — check that spelling, it is on his offer\n");
 } else if (cmd === "offer") {
   const who = arg("who");
   if (!who) { console.error('which one? make cfm-offer WHO="their name"'); process.exit(2); }

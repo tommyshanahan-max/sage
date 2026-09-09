@@ -126,7 +126,9 @@
       <div class="d"><span>Vesting</span><b id="tvest"></b></div>
       <div class="d"><span>Nothing until</span><b id="tcliff"></b></div>
       <div class="d"><span>Issued today</span><b>Nothing</b></div>
+      <div class="d" id="tfromrow" hidden><span>Granted by</span><b id="tfrom"></b></div>
     </div>
+    <p class="fine" id="holds" hidden style="margin:-.9rem 0 1.4rem"></p>
     <p class="ask" id="ask"></p>
     <p class="why" id="why"></p>
     <div class="from" id="frombox" hidden><i id="fromini"></i><div id="fromsay"></div></div>
@@ -294,6 +296,8 @@ function draw(o) {
     $("tvest").textContent = k.years
       ? "Monthly over " + k.years + (k.years === 1 ? " year" : " years")
       : "In full on incorporation";
+    if (p.from) { $("tfrom").textContent = p.from; $("tfromrow").hidden = false; }
+    if (p.holds) { $("holds").textContent = p.holds; $("holds").hidden = false; }
     $("tcliff").textContent = k.cliff
       ? k.cliff + (k.cliff === 1 ? " month in" : " months in")
       : "No cliff";
@@ -356,9 +360,19 @@ function draw(o) {
   });
   if (o.note) {
     $("frombox").hidden = false;
-    $("fromini").textContent = "TS";
-    $("fromsay").innerHTML = "<b>Tom</b> asked you himself.<br>“" +
-      o.note.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])) + "”";
+    /* Initials from the name on the project. Two letters at most — this is an
+       avatar, and three is a monogram nobody reads. */
+    const words = (p.from || "").split(/\s+/).filter(Boolean);
+    $("fromini").textContent = words.slice(0, 2).map((w) => w[0].toUpperCase()).join("") || "·";
+    /* Built as nodes, never as a string of markup: everything below came out
+       of the ledger, and the ledger is edited from a terminal at midnight. */
+    $("fromsay").textContent = "";
+    if (p.from) {
+      const b = document.createElement("b");
+      b.textContent = p.from.split(/\s+/)[0];
+      $("fromsay").append(b, " asked you himself.", document.createElement("br"));
+    }
+    $("fromsay").append("\u201C" + o.note + "\u201D");
   }
   $("w1").textContent = stake
     ? k.pct + "% of " + (p.name || "it")

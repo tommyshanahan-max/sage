@@ -85,7 +85,8 @@ function view(data, o) {
        accepting ends in a room or in a sentence. Not a secret — it is where
        the button was always going to send them. */
     project: p && { id: p.id, name: p.name, zh: p.zh, line: p.line, seats: p.seats, goTo: p.goTo,
-      claim: p.claim, sub: p.sub, goal: p.goal, marks: p.marks },
+      claim: p.claim, sub: p.sub, goal: p.goal, marks: p.marks,
+      from: p.from, holds: p.holds },
     pack: k && { name: k.name, face: k.face, points: k.points, perDay: k.perDay,
       pct: k.pct, years: k.years, cliff: k.cliff, ask: k.ask, why: k.why },
   };

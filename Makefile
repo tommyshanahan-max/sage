@@ -315,13 +315,14 @@ cfm-setup: ## Create the project and its packages: make cfm-setup
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" setup
 
-cfm-self: ## Put crowdfundme itself on the ledger: make cfm-self [PCT=10 YEARS=4 CLIFF=12]
+cfm-self: ## Put crowdfundme itself on the ledger: make cfm-self [PCT=10 YEARS=4 CLIFF=12 FROM="Tom Shanahan"]
 	@# The second project, and the proof the boundary in cfm/lib/store.js held:
 	@# a row and two calls, not a rewrite. Its package is a stake — a share of
 	@# the ledger itself, for the people who build it rather than join it.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  setup-cfm --pct "$(or $(PCT),10)" --years "$(or $(YEARS),4)" --cliff "$(or $(CLIFF),12)"
+	  setup-cfm --pct "$(or $(PCT),10)" --years "$(or $(YEARS),4)" --cliff "$(or $(CLIFF),12)" \
+	  --from "$(or $(FROM),Tom Shanahan)" --holds "$(HOLDS)"
 
 cfm-offer: ## One offer to one person: make cfm-offer WHO="Keith" [PROJECT=the-exchange PACK=founding SEAT=3 NOTE="..." UNTIL=2026-09-16]
 	@# The seat is written when the offer is made, not when it is opened. Two
