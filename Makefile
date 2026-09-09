@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: cfm-setup cfm-self cfm-owner cfm-owners cfm-offer cfm-seal cfm-seals cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: cfm-setup cfm-self cfm-owner cfm-owners cfm-offer cfm-seal cfm-seals cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -357,6 +357,30 @@ cfm-seal: ## Close a month and hash it: make cfm-seal [MONTH=2026-09]
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  seal --month "$(MONTH)"
+
+cfm-anchoring: ## Is anchoring on, which chain, and which account
+	@# Off unless CFM_STELLAR_SECRET is set. Off is a real state and the pages
+	@# say so — an un-anchored seal claims only that the record has not
+	@# changed, which is a thing you are asking people to take on trust.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" anchoring
+
+cfm-anchor: ## Put an already-sealed month on the chain: make cfm-anchor MONTH=2026-08
+	@# For the first anchor after turning it on, and for one that failed
+	@# because Horizon was busy. Sealing already does this by itself.
+	@test -n "$(MONTH)" || { echo "which month? make cfm-anchor MONTH=2026-08"; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  anchor --month "$(MONTH)"
+
+cfm-verify: ## Check a month against the chain: make cfm-verify MONTH=2026-08
+	@# Re-hashes the rows as they stand and reads the value back off Stellar
+	@# rather than out of the file. A check that trusts the thing it is
+	@# checking is not a check.
+	@test -n "$(MONTH)" || { echo "which month? make cfm-verify MONTH=2026-08"; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  verify --month "$(MONTH)"
 
 cfm-unseal: ## Remove the newest seal (only the newest): make cfm-unseal
 	@# Anything earlier is load-bearing — every seal after one hashes its hash,

@@ -89,6 +89,8 @@
   .seals .n{color:var(--ink2);min-width:6em}
   .seals code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
     font-size:.85rem;color:var(--go);word-break:break-all}
+  .seals a{color:var(--go);font-size:.85rem;white-space:nowrap}
+  .seals .un{color:var(--mut);font-size:.85rem;white-space:nowrap}
   .seals p{margin:0;color:var(--mut);font-size:.9rem;max-width:44ch}
   /* The way through. The page is the offer; this is the door. */
   .go{margin-top:clamp(2.2rem,6vw,3rem);padding-top:clamp(1.8rem,5vw,2.4rem);
@@ -154,9 +156,7 @@
   <section class="seals" id="seals" hidden>
     <h2>The record so far</h2>
     <ol id="seallist"></ol>
-    <p><b>Sealed and hashed, each month chained to the one before it.</b>
-      Nothing has been published outside this server yet — so these show the record
-      has not changed, not that it could not. That is the next piece.</p>
+    <p id="sealwhy"></p>
   </section>
 
   <!-- The only way through, and deliberately the only one.
@@ -183,6 +183,7 @@ fetch("/api/seals").then((r) => r.json()).then((d) => {
   const rows = (d && d.seals) || [];
   if (!rows.length) return;
   const list = document.getElementById("seallist");
+  let anchored = 0;
   for (const x of rows) {
     const li = document.createElement("li");
     const b = document.createElement("b");
@@ -193,7 +194,46 @@ fetch("/api/seals").then((r) => r.json()).then((d) => {
     const c = document.createElement("code");
     c.textContent = x.hash;
     li.append(b, n, c);
+    /* A month either points at a transaction anybody can open, or says
+       plainly that it does not. There is no third state and no wording that
+       covers both. */
+    if (x.ref && x.net) {
+      anchored++;
+      const a = document.createElement("a");
+      a.href = (x.net === "public"
+        ? "https://stellar.expert/explorer/public/tx/"
+        : "https://stellar.expert/explorer/testnet/tx/") + x.ref;
+      a.target = "_blank"; a.rel = "noopener noreferrer";
+      a.textContent = x.net === "public" ? "on Stellar ↗" : "on Stellar testnet ↗";
+      li.append(a);
+    } else {
+      const u = document.createElement("span");
+      u.className = "un";
+      u.textContent = "not published";
+      li.append(u);
+    }
     list.append(li);
+  }
+
+  /* The sentence underneath is written from what is actually true of these
+     rows, because the difference between the two is the whole claim. */
+  const why = document.getElementById("sealwhy");
+  const strong = document.createElement("b");
+  if (anchored === rows.length) {
+    strong.textContent = "Sealed monthly and written to Stellar.";
+    why.append(strong, " Each month is hashed, chained to the one before it, and " +
+      "the hash is put on a public chain. Anybody can check a month here against " +
+      "the transaction — nobody has to take our word for it. It does not mean the " +
+      "record cannot be changed; it means it cannot be changed without this showing.");
+  } else if (anchored) {
+    strong.textContent = "Sealed monthly, some months written to Stellar.";
+    why.append(strong, " The months with a transaction can be checked by anybody. " +
+      "The rest show only that the record has not changed since — you would be " +
+      "taking our word for that.");
+  } else {
+    strong.textContent = "Sealed and hashed, each month chained to the one before it.";
+    why.append(strong, " Nothing has been published outside this server yet, so " +
+      "these show the record has not changed — not that it could not.");
   }
   document.getElementById("seals").hidden = false;
 }).catch(() => {});

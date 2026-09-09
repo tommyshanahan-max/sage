@@ -608,6 +608,26 @@ services:
       # Signs the cookie that carries an opened offer across a reload. Without
       # it somebody has to retype the code every time they look again.
       CFM_SALT: ${TOMSCODING_CFM_SALT:-}
+      # ANCHORING, and it is off unless this is set.
+      #
+      # The secret key of a Stellar account that writes one small transaction
+      # per sealed month. Unset, months still seal and still hash and still
+      # chain — they just stay on this box, and every page says exactly that
+      # rather than implying otherwise. Set it and the same pages start
+      # pointing at transactions anybody can open.
+      #
+      # It is a spending key. Keep it to a throwaway account holding the few
+      # lumens the fees need, never one that holds anything.
+      CFM_STELLAR_SECRET: ${TOMSCODING_CFM_STELLAR_SECRET:-}
+      # "test" or "public". Defaults to test on purpose: anchoring to the
+      # public network costs real lumens and cannot be taken back, and a box
+      # that did that because a variable was missing would be the wrong kind
+      # of surprise.
+      CFM_STELLAR_NET: ${TOMSCODING_CFM_STELLAR_NET:-test}
+      # How many strangers may start a record in an hour. Anybody can start
+      # one, which is the point — but the whole ledger is one JSON file and a
+      # script fills it faster than a person reads it.
+      CFM_NEW_PER_HOUR: ${TOMSCODING_CFM_NEW_PER_HOUR:-20}
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - cfm_data:/data

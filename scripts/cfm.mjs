@@ -7,7 +7,7 @@
 
 const [, , base, key, cmd, ...rest] = process.argv;
 if (!base || !key || !cmd) {
-  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|owner|owners|offer|offers|seal|seals|unseal|reopen|void [--who NAME ...]");
+  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|owner|owners|offer|offers|seal|seals|anchor|verify|anchoring|unseal|reopen|void [--who NAME ...]");
   process.exit(2);
 }
 const arg = (n, d = "") => {
@@ -160,8 +160,79 @@ if (cmd === "setup") {
   console.log("\n  " + x.month + " sealed · " + x.count +
     (x.count === 1 ? " entry" : " entries"));
   console.log("\n  " + x.hash + "\n");
-  console.log("  Nothing has been published anywhere. Until it is, this proves the");
-  console.log("  record has not changed since — not that it could not.\n");
+  if (d.anchored) {
+    console.log("  On Stellar " + x.net + ":");
+    console.log("  https://stellar.expert/explorer/" +
+      (x.net === "public" ? "public" : "testnet") + "/tx/" + x.ref);
+    console.log("\n  Anybody can check that month against it without asking you.\n");
+  } else if (d.why) {
+    console.log("  Sealed, but the chain did not take it:");
+    console.log("  " + d.why);
+    console.log("\n  The seal stands. Try again with: make cfm-anchor MONTH=" + x.month + "\n");
+  } else {
+    console.log("  Nothing has been published anywhere. Until it is, this proves the");
+    console.log("  record has not changed since — not that it could not.\n");
+  }
+} else if (cmd === "anchor") {
+  const month = arg("month");
+  if (!month) { console.error("which month? MONTH=2026-08"); process.exit(2); }
+  const r = await fetch(base + "/api/anchor", {
+    method: "POST", headers: head, body: JSON.stringify({ month }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (d.error === "off") {
+    console.error("\n  Anchoring is off. Set CFM_STELLAR_SECRET in .env to turn it on.\n");
+    process.exit(1);
+  }
+  if (d.error === "unsealed") {
+    console.error("\n  " + month + " is not sealed yet. Seal it first.\n");
+    process.exit(1);
+  }
+  if (!r.ok) { console.error("\n  The chain refused that:\n  " + (d.why || d.error) + "\n"); process.exit(1); }
+  console.log("\n  " + d.month + " is on Stellar " + d.net);
+  console.log("\n      " + d.ref + "\n");
+  console.log("  https://stellar.expert/explorer/" +
+    (d.net === "public" ? "public" : "testnet") + "/tx/" + d.ref + "\n");
+} else if (cmd === "verify") {
+  /* Reads the chain, not the file — a check that trusts what it is checking
+     is not a check. */
+  const month = arg("month");
+  if (!month) { console.error("which month? MONTH=2026-08"); process.exit(2); }
+  const r = await fetch(base + "/api/verify?month=" + encodeURIComponent(month));
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { console.error("\n  " + (d.error === "unsealed" ? month + " is not sealed." : "no") + "\n"); process.exit(1); }
+  console.log("\n  " + d.month);
+  console.log("  sealed as    " + d.stored);
+  console.log("  rows hash to " + d.now);
+  console.log("  " + (d.matches
+    ? "→ the record has not changed since it was sealed."
+    : "→ THE RECORD HAS CHANGED SINCE IT WAS SEALED."));
+  if (!d.anchored) {
+    console.log("\n  Not on any chain, so that check is ours to make and yours to trust.\n");
+  } else if (d.why) {
+    console.log("\n  Could not reach the chain: " + d.why + "\n");
+  } else {
+    console.log("\n  chain says   " + (d.chain || "(nothing at that month)"));
+    console.log("  " + (d.agrees
+      ? "→ and the chain agrees. Anybody can check this without us."
+      : "→ THE CHAIN DISAGREES WITH THESE ROWS."));
+    console.log("\n  https://stellar.expert/explorer/" +
+      (d.net === "public" ? "public" : "testnet") + "/tx/" + d.ref + "\n");
+  }
+} else if (cmd === "anchoring") {
+  const r = await fetch(base + "/api/anchoring");
+  const d = await r.json().catch(() => ({}));
+  if (!d.on) {
+    console.log("\n  Anchoring is off. Seals stay on this server only.");
+    console.log("  Set CFM_STELLAR_SECRET (and CFM_STELLAR_NET=test) in .env.\n");
+  } else {
+    console.log("\n  Anchoring to Stellar " + d.net);
+    console.log("  from account " + d.by);
+    if (d.net === "test") {
+      console.log("\n  Fund it once, free:");
+      console.log("  https://friendbot.stellar.org/?addr=" + d.by + "\n");
+    } else { console.log(""); }
+  }
 } else if (cmd === "unseal") {
   const d = await post("/api/unseal", {});
   console.log("\n  " + d.seal.month + " is open again. The seal is gone.\n");
@@ -191,6 +262,6 @@ if (cmd === "setup") {
   }
   console.log("\n  " + rows.length + " in all.\n");
 } else {
-  console.error("setup, setup-cfm, owner, owners, offer, offers, seal, seals, unseal, reopen or void.");
+  console.error("setup, setup-cfm, owner, owners, offer, offers, seal, seals, anchor, verify, anchoring, unseal, reopen or void.");
   process.exit(2);
 }

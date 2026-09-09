@@ -18,6 +18,7 @@ import { createHmac } from "node:crypto";
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 import * as store from "./lib/store.js";
+import * as anchor from "./lib/anchor.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -571,7 +572,77 @@ app.post("/api/seal", express.json({ limit: "1kb" }), admin, async (req, res) =>
     return seal;
   });
   if (out === "already") return res.status(409).json({ error: "sealed" });
-  res.json({ ok: true, seal: out });
+
+  /* Sealed first, anchored second, and the seal survives a failed anchor.
+     The chain is somebody else's machine: it is slow, it is occasionally
+     down, and a month that refused to close because Horizon was busy would
+     be the tail wagging the dog. An un-anchored seal is a true statement
+     about a record; a month that was never sealed is a hole in one. */
+  let put = null, why = "";
+  if (anchor.on()) {
+    try { put = await anchor.put(out.month, out.hash); }
+    catch (e) { why = String((e && e.message) || e).slice(0, 200); }
+    if (put) {
+      await change((data) => {
+        const x = data.seals.find((z) => z.month === out.month);
+        if (!x) return null;
+        x.ref = put.ref; x.net = put.net;
+        return x;
+      });
+      out.ref = put.ref; out.net = put.net;
+    }
+  }
+  res.json({ ok: true, seal: out, anchored: Boolean(put), why });
+});
+
+/** Anchor a month that is already sealed — the seal it was, not a new one.
+ *  For the first anchor after turning it on, and for the one that failed
+ *  because the network was busy. */
+app.post("/api/anchor", express.json({ limit: "1kb" }), admin, async (req, res) => {
+  if (!anchor.on()) return res.status(503).json({ error: "off" });
+  const month = String(req.body?.month || "");
+  const data = await store.load(FILE);
+  const seal = data.seals.find((x) => x.month === month);
+  if (!seal) return res.status(404).json({ error: "unsealed" });
+  let put;
+  try { put = await anchor.put(seal.month, seal.hash); }
+  catch (e) { return res.status(502).json({ error: "chain", why: String((e && e.message) || e).slice(0, 300) }); }
+  await change((d) => {
+    const x = d.seals.find((z) => z.month === month);
+    if (!x) return null;
+    x.ref = put.ref; x.net = put.net;
+    return x;
+  });
+  res.json({ ok: true, month, ...put });
+});
+
+/** Check a month against the chain, reading the chain rather than the file.
+ *  A verification that trusts the thing it is verifying is not one. */
+app.get("/api/verify", async (req, res) => {
+  const month = String(req.query.month || "");
+  const data = await store.load(FILE);
+  const seal = data.seals.find((x) => x.month === month);
+  if (!seal) return res.status(404).json({ error: "unsealed" });
+  /* Recomputed from the rows as they stand now, not read from the seal. */
+  const prev = data.seals[data.seals.indexOf(seal) - 1];
+  const now = store.sealOf(data, month, prev ? prev.hash : "").hash;
+  const out = { month, stored: seal.hash, now, matches: now === seal.hash };
+  if (!anchor.on() || !seal.ref) return res.json({ ...out, anchored: false });
+  try {
+    const chain = await anchor.get(month);
+    res.json({ ...out, anchored: true, net: seal.net, ref: seal.ref,
+      chain, agrees: chain === now });
+  } catch (e) {
+    res.json({ ...out, anchored: true, net: seal.net, ref: seal.ref,
+      why: String((e && e.message) || e).slice(0, 200) });
+  }
+});
+
+/** Whether anchoring is on at all, and which account is doing it. Public: an
+ *  anchor nobody can find the account for is not evidence of anything. */
+app.get("/api/anchoring", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ on: anchor.on(), net: anchor.on() ? anchor.net() : "", by: anchor.who() });
 });
 
 /** Undo the newest seal, and only the newest.

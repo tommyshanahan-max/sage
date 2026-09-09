@@ -226,7 +226,7 @@ export function sealOf(data, month, prev) {
     at: new Date().toISOString(),
     /* Where it was published, if it ever was. Empty is the honest default and
        the page reads it: no reference, no claim. */
-    ref: "",
+    ref: "", net: "",
   };
 }
 
@@ -241,6 +241,10 @@ export function cleanSeal(raw) {
     count: Math.max(0, Number(raw.count) || 0),
     at: s(raw.at, 40) || new Date().toISOString(),
     ref: s(raw.ref, 200),
+    /* Which network the ref is on. Without it a page cannot build a link that
+       goes anywhere, and a testnet anchor read as a public one is a claim
+       nobody can check — worse than no claim. */
+    net: ["test", "public"].includes(raw.net) ? raw.net : "",
   };
 }
 
