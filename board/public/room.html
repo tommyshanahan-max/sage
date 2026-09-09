@@ -104,6 +104,7 @@
     font-size:.64rem;letter-spacing:.15em;text-transform:uppercase;
     color:var(--muted)}
   .wrhead i{flex:1;height:1px;background:var(--hair)}
+  .wrwhy{margin:.45rem 0 0;font-size:.82rem;color:var(--ink-2);line-height:1.5}
 
   .row{display:flex;align-items:center;gap:.8rem;margin:.6rem 0 0;
     padding:.85rem .95rem;background:var(--card);border:1px solid var(--hair);
@@ -572,6 +573,11 @@ function drawWait(box) {
   const head = el("div", "wrhead");
   head.append(el("span", null, T(full ? "wr.done" : "wr.fill")), el("i"));
   box.append(head);
+  /* Said once, under the heading, and not repeated on each row: the rule is
+     that this is optional, and a rule restated three times starts to sound
+     like somebody protesting. Gone once all three are filled in — by then it
+     is answering a question nobody still has. */
+  if (!full) box.append(el("p", "wrwhy", T("wr.fillWhy")));
 
   box.append(testRow(1, "wr.t1", "wr.t1sub",
     you.levelBand ? bandWords(you.levelBand) : "", "/level"));

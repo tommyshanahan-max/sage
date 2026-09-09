@@ -609,7 +609,16 @@ export const STRINGS = {
                         "三个空格。除了一句话，没别的可看。"],
   "wr.full":         ["Three things a member can judge without meeting you.",
                         "三件事，不用见面就能判断。"],
-  "wr.fill":         ["Fill them in · 2 minutes each", "填一下 · 每个两分钟"],
+  /* NOT "Fill them in". That is a to-do list, and a to-do list handed to
+     somebody at a door is an entrance exam however gently it is worded — at
+     which point the busy people leave, and the busy people are who this is
+     for. It is something to do while waiting, it is optional, and both of
+     those are said rather than implied. */
+  "wr.fill":         ["Something to do while you wait", "等着的时候，随便玩玩"],
+  "wr.fillWhy": [
+    "None of it is required. It just gives a member more to go on than one line.",
+    "都不是必须的。只是让成员多一点可以看的东西，而不只是一句话。",
+  ],
   "wr.done":         ["Done", "已经填了"],
   "wr.take":         ["Take it", "去做"],
   "wr.again":        ["Again", "重做"],
