@@ -219,6 +219,33 @@ app.post("/api/offer", express.json({ limit: "4kb" }), admin, async (req, res) =
   res.json({ ok: true, offer: out });
 });
 
+/** Undo, and the two kinds of it.
+ *
+ * `reopen` clears the acceptance and leaves the code alive — for the offer
+ * opened by the wrong person, which on a page you test yourself before
+ * sending is the mistake you make first. The alternative is a fresh code and
+ * a row on the record saying somebody accepted who never did, which is
+ * exactly the thing this is supposed to be better than.
+ *
+ * `void` removes it. Only honest for an offer that was never sent — a
+ * mis-typed name, a placeholder note. An offer somebody has actually read is
+ * part of what happened and gets reopened or left alone, not deleted. */
+app.post("/api/undo", express.json({ limit: "1kb" }), admin, async (req, res) => {
+  const code = store.cleanCode(req.body?.code);
+  const how = req.body?.how === "void" ? "void" : "reopen";
+  if (!code) return res.status(400).json({ error: "bad" });
+  const out = await change((data) => {
+    const at = data.offers.findIndex((x) => x.code === code);
+    if (at < 0) return null;
+    const o = data.offers[at];
+    if (how === "void") { data.offers.splice(at, 1); return { how, who: o.who }; }
+    o.tookAt = ""; o.by = ""; o.openedAt = "";
+    return { how, who: o.who };
+  });
+  if (!out) return res.status(404).json({ error: "no" });
+  res.json({ ok: true, ...out });
+});
+
 app.get("/api/offers", admin, async (_req, res) => {
   const data = await store.load(FILE);
   res.json({ offers: data.offers.map((o) => ({

@@ -7,7 +7,7 @@
 
 const [, , base, key, cmd, ...rest] = process.argv;
 if (!base || !key || !cmd) {
-  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|offer|offers [--who NAME ...]");
+  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|offer|offers|reopen|void [--who NAME ...]");
   process.exit(2);
 }
 const arg = (n, d = "") => {
@@ -110,6 +110,17 @@ if (cmd === "setup") {
   console.log("\n      " + o.code + "\n");
   console.log("  Send them crowdfundme.app and that code. It opens their offer");
   console.log("  and nobody else's.\n");
+} else if (cmd === "reopen" || cmd === "void") {
+  const code = arg("code");
+  if (!code) { console.error("which one? CODE=ABC123"); process.exit(2); }
+  const d = await post("/api/undo", { code, how: cmd });
+  if (cmd === "reopen") {
+    console.log("\n  " + d.who + "'s offer is open again. Same code: " + code.toUpperCase());
+    console.log("  Nothing on the record says it was accepted.\n");
+  } else {
+    console.log("\n  Gone: " + d.who + " · " + code.toUpperCase());
+    console.log("  That code opens nothing now.\n");
+  }
 } else if (cmd === "offers") {
   const r = await fetch(base + "/api/offers", { headers: head });
   const d = await r.json().catch(() => ({}));
@@ -125,6 +136,6 @@ if (cmd === "setup") {
   }
   console.log("\n  " + rows.length + " in all.\n");
 } else {
-  console.error("setup, setup-cfm, offer or offers.");
+  console.error("setup, setup-cfm, offer, offers, reopen or void.");
   process.exit(2);
 }

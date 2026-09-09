@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: cfm-setup cfm-self cfm-offer cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: cfm-setup cfm-self cfm-offer cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -334,6 +334,25 @@ cfm-offer: ## One offer to one person: make cfm-offer WHO="Keith" [PROJECT=the-e
 	  offer --who "$(WHO)" --project "$(or $(PROJECT),the-exchange)" \
 	  --pack "$(or $(PACK),founding)" --seat "$(or $(SEAT),0)" \
 	  --note "$(NOTE)" --until "$(UNTIL)"
+
+cfm-reopen: ## Undo an acceptance, same code stays live: make cfm-reopen CODE=ABC123
+	@# For the offer you accepted yourself while checking it — which is the
+	@# first mistake anybody makes here. Minting a fresh code instead would
+	@# leave a row saying somebody accepted who never did, on a record whose
+	@# whole claim is that it does not say things like that.
+	@test -n "$(CODE)" || { echo "which one? make cfm-reopen CODE=ABC123"; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  reopen --code "$(CODE)"
+
+cfm-void: ## Delete an offer that was never sent: make cfm-void CODE=ABC123
+	@# Only for one nobody has read — a mis-typed name, a placeholder note.
+	@# An offer somebody opened is part of what happened; reopen it or leave
+	@# it, but do not make the record forget it.
+	@test -n "$(CODE)" || { echo "which one? make cfm-void CODE=ABC123"; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  void --code "$(CODE)"
 
 cfm-offers: ## Who has been offered what, and who has opened it
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \

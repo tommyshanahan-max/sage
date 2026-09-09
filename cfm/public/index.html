@@ -13,8 +13,10 @@
      over, and a reader can see that it did. */
   :root{
     --ink:#0B0F0D; --raise:#121815; --line:#1E2622; --hair:#171E1A;
-    --text:#F2F5F3; --dim:#9EACA5; --mut:#66746D;
+    --text:#F2F5F3; --dim:#9EACA5;
     --go:#3FBF8F; --gold:#C9A44C;
+    /* 7.26:1 and 6.41:1 on --ink. Was 3.94 and 3.40. */
+    --mut:#94A29B; --faint:#8A9891;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--ink);color:var(--text);min-height:100%}
@@ -24,11 +26,11 @@
     min-height:100dvh;display:flex;flex-direction:column}
   .mk{width:46px;height:46px;border-radius:13px;background:#1F7A5A;display:grid;
     place-items:center;font:400 23px/1 "Instrument Serif",Georgia,serif;margin:0 auto 1.3rem}
-  .tag{font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--go);
+  .tag{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--go);
     font-weight:700;margin-bottom:.6rem}
   .tag b{color:var(--text)}
   h1{font:400 1.65rem/1.15 "Instrument Serif",Georgia,serif;text-align:center}
-  .sub{color:var(--mut);font-size:.85rem;text-align:center;margin-top:.2rem}
+  .sub{color:var(--mut);font-size:.9rem;text-align:center;margin-top:.2rem}
   /* the door */
   form{margin-top:1.5rem}
   .boxes{display:flex;gap:.4rem;justify-content:center;margin-bottom:1.2rem}
@@ -41,8 +43,8 @@
     background:#1B221E;color:#5C6A64;cursor:not-allowed;font-family:inherit}
   button.ready{background:var(--go);color:#08120E;cursor:pointer}
   button.pale{background:#F2F5F3;color:#0B0F0D;cursor:pointer}
-  .said{margin-top:.9rem;font-size:.85rem;color:#E08A6B;text-align:center;min-height:1.2em}
-  .foot{margin-top:auto;padding-top:2rem;color:var(--mut);font-size:.78rem;text-align:center}
+  .said{margin-top:.9rem;font-size:.9rem;color:#E08A6B;text-align:center;min-height:1.2em}
+  .foot{margin-top:auto;padding-top:2rem;color:var(--mut);font-size:.84rem;text-align:center}
   /* the offer */
   .nm{font:400 2.1rem/1.02 "Instrument Serif",Georgia,serif;margin-bottom:.35rem}
   .one{color:var(--dim);font-size:.95rem;margin-bottom:1.5rem}
@@ -50,42 +52,42 @@
     padding:1.25rem 0;margin-bottom:1.2rem}
   .seat b{font:400 3.4rem/1 "Instrument Serif",Georgia,serif;color:var(--gold)}
   .seat b i{font-style:normal;font-size:1.2rem;color:var(--mut)}
-  .seat span{display:block;font-size:.78rem;color:var(--mut);margin-top:.4rem}
-  .chip{display:inline-block;margin-top:.7rem;font-size:.64rem;letter-spacing:.12em;
+  .seat span{display:block;font-size:.85rem;color:var(--mut);margin-top:.4rem}
+  .chip{display:inline-block;margin-top:.7rem;font-size:.68rem;letter-spacing:.12em;
     text-transform:uppercase;font-weight:700;color:var(--gold);border:1px solid #4A3E22;
     background:#191509;border-radius:99px;padding:.3rem .7rem}
   #terms{margin-bottom:1.4rem}
   .ask{font:400 1.35rem/1.25 "Instrument Serif",Georgia,serif;margin-bottom:.7rem}
   .ask em{font-style:italic;color:var(--go)}
-  .why{color:var(--dim);font-size:.88rem;margin-bottom:1.3rem}
+  .why{color:var(--dim);font-size:.94rem;margin-bottom:1.3rem}
   .from{display:flex;gap:.7rem;align-items:flex-start;padding:.85rem .9rem;background:var(--raise);
-    border-radius:.7rem;font-size:.86rem;color:#B9C6BF;margin-bottom:1.3rem}
+    border-radius:.7rem;font-size:.93rem;color:#C4D0CA;margin-bottom:1.3rem}
   .from i{width:2rem;height:2rem;border-radius:50%;background:#1E2A24;color:#8FA69B;flex:0 0 auto;
     display:grid;place-items:center;font-size:.7rem;font-weight:700;font-style:normal}
   .from b{color:var(--text)}
-  .lk{display:block;text-align:center;margin-top:.85rem;font-size:.85rem;color:var(--gold);
+  .lk{display:block;text-align:center;margin-top:.85rem;font-size:.92rem;color:var(--gold);
     text-decoration:underline;text-underline-offset:3px;background:none;border:0;width:100%;
     cursor:pointer;font-family:inherit}
-  .fine{margin-top:1.1rem;font-size:.72rem;line-height:1.55;color:#5C6A64}
+  .fine{margin-top:1.1rem;font-size:.8rem;line-height:1.6;color:var(--faint)}
   /* where this goes */
   .claim{font:400 1.25rem/1.28 "Instrument Serif",Georgia,serif;margin-bottom:.35rem}
   .claim em{font-style:italic;color:var(--go)}
-  .claimsub{color:var(--dim);font-size:.85rem;margin-bottom:1rem}
-  .gl{color:var(--dim);font-size:.84rem;margin:.6rem 0 1.3rem}
+  .claimsub{color:var(--dim);font-size:.92rem;margin-bottom:1rem}
+  .gl{color:var(--dim);font-size:.91rem;margin:.6rem 0 1.3rem}
   .gl b{color:var(--text);font-weight:700}
   .sec{border-top:1px solid var(--line);padding-top:1.1rem;margin-bottom:1.2rem}
-  .sech{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+  .sech{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
     font-weight:700;margin-bottom:.85rem}
   .stp{display:flex;gap:.75rem;margin-bottom:.9rem}
   .stp i{flex:0 0 auto;width:1.4rem;height:1.4rem;border-radius:50%;background:#152019;
     color:var(--go);font-style:normal;display:grid;place-items:center;font-size:.68rem;font-weight:700}
-  .stp div{font-size:.85rem;color:#B9C6BF}
-  .stp div b{color:var(--text);display:block;font-size:.9rem}
+  .stp div{font-size:.92rem;color:#C4D0CA}
+  .stp div b{color:var(--text);display:block;font-size:.97rem}
   .not{background:#16110A;border:1px solid #38301B;border-radius:.7rem;padding:.9rem;
     margin-bottom:1.2rem}
-  .not b{display:block;color:var(--gold);font-size:.85rem;margin-bottom:.35rem}
-  .not span{color:#A8A08C;font-size:.82rem;line-height:1.55}
-  .d{display:flex;justify-content:space-between;padding:.6rem 0;font-size:.87rem;
+  .not b{display:block;color:var(--gold);font-size:.92rem;margin-bottom:.35rem}
+  .not span{color:#B5AD97;font-size:.89rem;line-height:1.6}
+  .d{display:flex;justify-content:space-between;padding:.7rem 0;font-size:.93rem;
     border-bottom:1px solid var(--hair);color:var(--dim)}
   .d:last-of-type{border-bottom:0}
   .d b{color:var(--text)}
@@ -128,7 +130,8 @@
       <div class="d"><span>Issued today</span><b>Nothing</b></div>
       <div class="d" id="tfromrow" hidden><span>Granted by</span><b id="tfrom"></b></div>
     </div>
-    <p class="fine" id="holds" hidden style="margin:-.9rem 0 1.4rem"></p>
+    <p id="holds" hidden style="margin:-.7rem 0 1.5rem;font-size:.86rem;
+      line-height:1.6;color:var(--dim)"></p>
     <p class="ask" id="ask"></p>
     <p class="why" id="why"></p>
     <div class="from" id="frombox" hidden><i id="fromini"></i><div id="fromsay"></div></div>
@@ -157,13 +160,13 @@
       <circle cx="80" cy="84" r="14" fill="#3FBF8F"/>
       <circle cx="198" cy="55" r="43" fill="#3FBF8F" fill-opacity=".14"
         stroke="#3FBF8F" stroke-opacity=".5"/>
-      <text id="m1v" x="22" y="85" font-size="9.5" fill="#A9B7B0" text-anchor="middle"></text>
-      <text id="m2v" x="80" y="62" font-size="10" fill="#E4EFEA" text-anchor="middle" font-weight="600"></text>
+      <text id="m1v" x="22" y="85" font-size="11" fill="#BCC8C2" text-anchor="middle"></text>
+      <text id="m2v" x="80" y="62" font-size="11.5" fill="#E4EFEA" text-anchor="middle" font-weight="600"></text>
       <text id="m3v" x="198" y="59" font-size="17" fill="#3FBF8F" text-anchor="middle"
         font-family="Instrument Serif,Georgia,serif"></text>
-      <text id="m1w" x="22" y="113" font-size="9" fill="#66746D" text-anchor="middle"></text>
-      <text id="m2w" x="80" y="113" font-size="9" fill="#66746D" text-anchor="middle"></text>
-      <text id="m3w" x="198" y="113" font-size="9" fill="#66746D" text-anchor="middle"></text>
+      <text id="m1w" x="22" y="113" font-size="10.5" fill="#94A29B" text-anchor="middle"></text>
+      <text id="m2w" x="80" y="113" font-size="10.5" fill="#94A29B" text-anchor="middle"></text>
+      <text id="m3w" x="198" y="113" font-size="10.5" fill="#94A29B" text-anchor="middle"></text>
     </svg>
     <p class="gl" id="goal"></p>
 
