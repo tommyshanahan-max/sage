@@ -701,6 +701,29 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
     return res.status(400).json({ error: "bad", left: Math.max(0, 5 - t.n) });
   }
 
+  /* A WAITING PERSON'S WAY BACK, checked before the invites.
+   *
+   * The same box, because asking somebody who has lost their place to find a
+   * different page is asking them to give up. The two kinds of code cannot
+   * collide — one is on a wait row, the other on an invite — and this one
+   * never opens the door: it rebinds their row to the browser in front of it,
+   * gives them the waiting cookie, and the page sends them to their card.
+   *
+   * SPENT ON USE. It names one person's own row and nothing else, but a code
+   * that keeps working is a code that ends up in a group chat. */
+  const backTo = await change((board) => {
+    const row = board.waits.find((w) => w.back && w.back === code && !w.done);
+    if (!row) return null;
+    row.by = me;
+    row.back = "";
+    return { id: row.id, room: row.room };
+  });
+  if (backTo) {
+    setWaitCookie(res, me);
+    tries.delete(me);
+    return res.json({ ok: true, waiting: true, room: backTo.room });
+  }
+
   let outcome = "";
   const got = await change((board) => {
     const v = board.invites.find((x) => x.code === code);
@@ -2486,6 +2509,39 @@ app.get("/api/waiting", admin, async (_req, res) => {
  * rule as a member's. Deleting the row would throw away somebody who asked to
  * join because of a picture they chose badly.
  */
+/** A WAY BACK FOR SOMEBODY WHOSE BROWSER FORGOT THEM.
+ *
+ *  Rows are found by device hash and nothing else, so a cleared browser, a new
+ *  phone or a private window left a person permanently separated from their
+ *  own card — and filling the form again wrote a second row rather than
+ *  finding the first. There was no way to reunite them, by hand or otherwise.
+ *
+ *  So: one code against one row, minted here, read down a phone or sent in a
+ *  message, and spent at the same box a member uses. Same alphabet as an
+ *  invite code — no O, no zero, no I, no one — because it is going to be typed
+ *  by somebody who is already annoyed.
+ *
+ *  IT DOES NOT LET ANYBODY IN. It hands back a place on the list and the card
+ *  they filled in. A code that could be either would be one typo away from
+ *  admitting a stranger.
+ */
+app.post("/api/waiting/key", express.json({ limit: "1kb" }), admin, async (req, res) => {
+  const id = String(req.query.id || req.body?.id || "");
+  const out = await change((board) => {
+    const row = board.waits.find((w) => w.id === id);
+    if (!row) return null;
+    /* Fresh every time it is asked for. An old code stops working the moment a
+       new one is made, so "send her another" cannot leave two in the wild. */
+    const taken = new Set(board.waits.map((w) => w.back).filter(Boolean));
+    let code = store.newCode();
+    while (taken.has(code)) code = store.newCode();
+    row.back = code;
+    return { code, name: row.name, room: row.room };
+  });
+  if (!out) return res.status(404).json({ error: "no" });
+  res.json({ ok: true, ...out });
+});
+
 app.post("/api/waiting/face", express.json({ limit: "1kb" }), admin, async (req, res) => {
   const id = String(req.query.id || req.body?.id || "");
   const yes = req.query.ok === "1" || req.body?.ok === true;

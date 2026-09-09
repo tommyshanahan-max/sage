@@ -179,6 +179,14 @@ export function cleanWait(raw) {
      * is written — see /api/wait — so it either names a real row or nobody.
      */
     fromWait: /^[a-f0-9]{20}$/.test(String(raw.fromWait || "")) ? String(raw.fromWait) : "",
+    /* A CODE THAT NAMES THIS ROW, for somebody whose browser has forgotten
+       them. Rows are found by device hash and nothing else, so a cleared
+       browser could not be reunited with its own card — filling the form
+       again made a second row instead. This is the way back: minted by hand,
+       spent once, and it carries them to their card rather than through the
+       door. Same alphabet as an invite code, so it can be read down a phone
+       and typed without ambiguity. */
+    back: cleanCode(raw.back) || "",
   };
 }
 

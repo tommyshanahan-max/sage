@@ -15,7 +15,7 @@
 
 const [, , base, key, ...rest] = process.argv;
 if (!base || !key) {
-  console.error("usage: waiting.mjs <board url> <admin key> [--in ID|--no ID|--rm ID]");
+  console.error("usage: waiting.mjs <board url> <admin key> [--in ID|--no ID|--rm ID|--key ID]");
   process.exit(2);
 }
 const head = { "x-admin-secret": key, "Content-Type": "application/json" };
@@ -44,6 +44,23 @@ async function add(name, reach, why, room) {
 }
 const when = (iso) => String(iso || "").slice(0, 10);
 const pad = (s, n) => String(s).padEnd(n).slice(0, n);
+
+async function backKey(id) {
+  const r = await fetch(base + "/api/waiting/key?id=" + encodeURIComponent(id), {
+    method: "POST", headers: head,
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { console.error("No row with that id."); process.exit(1); }
+  console.log("");
+  console.log("  " + d.name + " types this at the door:");
+  console.log("");
+  console.log("      " + d.code);
+  console.log("");
+  console.log("  It gives back their place on the list and the card they filled");
+  console.log("  in. It does not let anybody in. It works once, and asking for");
+  console.log("  another stops this one working.");
+  console.log("");
+}
 
 async function mark(id, body) {
   const r = await fetch(base + "/api/waiting", {
@@ -170,6 +187,12 @@ async function main() {
      for an admit that went out to a room wider than intended, or a person
      admitted before somebody had decided. Their code is a separate thing and
      stays live until it is taken back: make invite-off CODE=... */
+  /* A WAY BACK FOR SOMEBODY WHOSE BROWSER FORGOT THEM. Rows are found by
+     device hash and nothing else, so a cleared cache or a new phone left a
+     person permanently separated from their own card. This mints one code
+     against one row; they type it at the same box a member uses, and it hands
+     back their place and their card rather than opening the door. */
+  if (arg("key")) return backKey(arg("key"));
   if (arg("back")) return mark(arg("back"), { done: "" });
   if (arg("in")) return mark(arg("in"), { done: "in" });
   if (arg("no")) return mark(arg("no"), { done: "no" });

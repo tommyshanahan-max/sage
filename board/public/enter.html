@@ -434,6 +434,12 @@ async function enter() {
       body: JSON.stringify({ code: TYPED, device }),
     });
     const d = await r.json().catch(() => ({}));
+    /* A WAITING PERSON'S WAY BACK, not a way in. The server has already put
+       their row on this browser and given it the cookie; the room is where
+       their card is, so that is where they go. No "you are in" screen — they
+       are not in, and telling them so for a second before the page changes
+       would be the wrong thing to have said. */
+    if (r.ok && d.waiting) { location.assign("/room"); return; }
     if (r.ok) return showIn(d.by || "");
     ERR = true;
     drawBoxes();

@@ -308,6 +308,18 @@ waiting-in: ## Mark one as let in: make waiting-in ID=...
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --in "$(ID)"
 
+waiting-key: ## A code that gives one person their place back: make waiting-key ID=...
+	@# For somebody whose browser forgot them — a cleared cache, a new phone, a
+	@# private window. Rows are found by device hash and nothing else, so
+	@# without this they cannot be reunited with their own card, and filling the
+	@# form again writes a second row instead of finding the first. They type it
+	@# at the same box a member uses. It does not let anybody in: it hands back
+	@# a place on the list and the card they filled in. Asking again mints a
+	@# fresh one and the old one stops working.
+	@test -n "$(ID)" || { echo "which one? make waiting-key ID=..."; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --key "$(ID)"
+
 waiting-back: ## Put one back on the list: make waiting-back ID=...
 	@# Undoes an admit. The code minted for them is a separate thing and keeps
 	@# working until it is taken back:  make invite-off CODE=...
