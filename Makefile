@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: cfm-setup cfm-offer cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: cfm-setup cfm-self cfm-offer cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -315,14 +315,23 @@ cfm-setup: ## Create the project and its packages: make cfm-setup
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" setup
 
-cfm-offer: ## One offer to one person: make cfm-offer WHO="Keith" [PACK=founding SEAT=3 NOTE="..." UNTIL=2026-09-16]
+cfm-self: ## Put crowdfundme itself on the ledger: make cfm-self [PCT=10 YEARS=4 CLIFF=12]
+	@# The second project, and the proof the boundary in cfm/lib/store.js held:
+	@# a row and two calls, not a rewrite. Its package is a stake — a share of
+	@# the ledger itself, for the people who build it rather than join it.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  setup-cfm --pct "$(or $(PCT),10)" --years "$(or $(YEARS),4)" --cliff "$(or $(CLIFF),12)"
+
+cfm-offer: ## One offer to one person: make cfm-offer WHO="Keith" [PROJECT=the-exchange PACK=founding SEAT=3 NOTE="..." UNTIL=2026-09-16]
 	@# The seat is written when the offer is made, not when it is opened. Two
 	@# people quietly told they are third is the one mistake here that cannot
 	@# be walked back.
 	@test -n "$(WHO)" || { echo 'which one? make cfm-offer WHO="their name"'; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  offer --who "$(WHO)" --pack "$(or $(PACK),founding)" --seat "$(or $(SEAT),0)" \
+	  offer --who "$(WHO)" --project "$(or $(PROJECT),the-exchange)" \
+	  --pack "$(or $(PACK),founding)" --seat "$(or $(SEAT),0)" \
 	  --note "$(NOTE)" --until "$(UNTIL)"
 
 cfm-offers: ## Who has been offered what, and who has opened it

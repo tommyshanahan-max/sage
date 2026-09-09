@@ -52,6 +52,20 @@ export function cleanProject(raw) {
        stops; what happens on the other side is not its business. */
     goTo: /^https?:\/\/[^\s]{1,200}$/.test(String(raw.goTo || "")) ? String(raw.goTo) : "",
     seats: Math.max(0, Math.min(100000, Number(raw.seats) || 0)),
+    /* WHERE THIS GOES, in the project's own words.
+       This used to be written into the offer page, which meant the page was
+       The Exchange's page wearing the ledger's name. A second project would
+       have arrived reading somebody else's pitch. The claim, the one-line
+       goal and the three milestones are the project's, and the page just
+       draws whatever it is handed. */
+    claim: s(raw.claim, 160),
+    sub: s(raw.sub, 200),
+    goal: s(raw.goal, 240),
+    /* Up to three: today, the middle, and the one worth doing this for. The
+       page sizes them in that order, so the order is the meaning. */
+    marks: (Array.isArray(raw.marks) ? raw.marks : []).slice(0, 3).map((m) => ({
+      val: s(m && m.val, 16), when: s(m && m.when, 24),
+    })).filter((m) => m.val),
     at: s(raw.at, 40) || new Date().toISOString(),
   };
 }
@@ -68,10 +82,26 @@ export function cleanPackage(raw) {
     project: s(raw.project, 40),
     /* Which screen this person gets. `plain` is the founding offer — one
        number, one ask, no arithmetic. `reach` is the connector's, with the
-       per-head rates and the tree. Two audiences, never the same page. */
-    face: ["plain", "reach"].includes(raw.face) ? raw.face : "plain",
+       per-head rates and the tree. `stake` is a share of the thing itself,
+       for the handful of people who build it rather than join it. Three
+       audiences, never the same page. */
+    face: ["plain", "reach", "stake"].includes(raw.face) ? raw.face : "plain",
     points: Math.max(0, Math.min(100000, Number(raw.points) || 0)),
     perDay: Math.max(0, Math.min(1000, Number(raw.perDay) || 0)),
+    /* THE STAKE, and it is deliberately three numbers and not a paragraph.
+       A percentage with no vesting attached is the thing people later
+       disagree about, so the schedule is stored beside it and printed on the
+       same screen: what share, over how long, and how long before any of it
+       is theirs. Tenths, because 12.5% is a real answer and 12.53% is not. */
+    pct: Math.max(0, Math.min(100, Math.round((Number(raw.pct) || 0) * 10) / 10)),
+    years: Math.max(0, Math.min(10, Number(raw.years) || 0)),
+    cliff: Math.max(0, Math.min(48, Number(raw.cliff) || 0)),
+    /* The ask, in the words that fit this offer. "Bring one person worth
+       having" is right for a founding seat and wrong for everything else,
+       and a wrong ask is worse than none — it tells the reader the page was
+       not written for them. */
+    ask: s(raw.ask, 160),
+    why: s(raw.why, 300),
     at: s(raw.at, 40) || new Date().toISOString(),
   };
 }

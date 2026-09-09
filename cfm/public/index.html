@@ -54,6 +54,7 @@
   .chip{display:inline-block;margin-top:.7rem;font-size:.64rem;letter-spacing:.12em;
     text-transform:uppercase;font-weight:700;color:var(--gold);border:1px solid #4A3E22;
     background:#191509;border-radius:99px;padding:.3rem .7rem}
+  #terms{margin-bottom:1.4rem}
   .ask{font:400 1.35rem/1.25 "Instrument Serif",Georgia,serif;margin-bottom:.7rem}
   .ask em{font-style:italic;color:var(--go)}
   .why{color:var(--dim);font-size:.88rem;margin-bottom:1.3rem}
@@ -110,7 +111,7 @@
   <!-- 2 · the offer -->
   <section id="offer" hidden>
     <p class="tag">◷ crowdfundme</p>
-    <p class="tag" style="color:var(--gold)">An offer on <b id="pname"></b></p>
+    <p class="tag" id="ptag" style="color:var(--gold)">An offer on <b id="pname"></b></p>
     <p class="nm" id="who"></p>
     <p class="one" id="pline"></p>
     <div class="seat">
@@ -118,42 +119,70 @@
       <span id="seatof"></span>
       <i class="chip" id="tier" hidden></i>
     </div>
-    <p class="ask">Bring one person worth having.<br><em>That is the whole ask.</em></p>
-    <p class="why">Fixed the day you accept. It never moves again, and everything you and
-      your people do from here is on the record under your name.</p>
+    <!-- Only a stake offer has a schedule. A percentage printed on its own is
+         the thing people disagree about a year later, so it never appears
+         here without the two numbers that qualify it. -->
+    <div id="terms" hidden>
+      <div class="d"><span>Vesting</span><b id="tvest"></b></div>
+      <div class="d"><span>Nothing until</span><b id="tcliff"></b></div>
+      <div class="d"><span>Issued today</span><b>Nothing</b></div>
+    </div>
+    <p class="ask" id="ask"></p>
+    <p class="why" id="why"></p>
     <div class="from" id="frombox" hidden><i id="fromini"></i><div id="fromsay"></div></div>
     <button class="pale" id="take">Accept</button>
+    <!-- Not every project has somewhere to send you. A share in the thing that
+         keeps the record has no room to walk into, so accepting has to end in
+         a sentence rather than a redirect — otherwise the button appears to do
+         nothing, which is the worst thing a button can do here. -->
+    <p class="fine" id="took" hidden style="color:var(--go);text-align:center"></p>
     <button class="lk" id="openwhere">Where this goes →</button>
     <p class="fine" id="fine"></p>
   </section>
 
   <!-- 3 · where this goes -->
   <section id="where" hidden>
-    <p class="tag">◷ crowdfundme · <b id="pname2"></b></p>
+    <p class="tag" id="ptag2">◷ crowdfundme · <b id="pname2"></b></p>
     <h1 style="text-align:left;margin-bottom:1rem">Where this goes</h1>
 
-    <p class="claim">The people you need in China <em>already know each other</em>.</p>
-    <p class="claimsub">Getting into that circle takes years. Usually it takes a person.</p>
+    <p class="claim" id="claim"></p>
+    <p class="claimsub" id="claimsub"></p>
 
-    <svg viewBox="0 0 300 118" width="100%" aria-hidden="true">
+    <svg id="growth" viewBox="0 0 300 118" width="100%" aria-hidden="true">
       <line x1="6" y1="98" x2="288" y2="98" stroke="#2F3B36" stroke-width="1.2"/>
       <polygon points="288,98 280,94 280,102" fill="#2F3B36"/>
       <circle cx="22" cy="96" r="2.4" fill="#3FBF8F"/>
       <circle cx="80" cy="84" r="14" fill="#3FBF8F"/>
       <circle cx="198" cy="55" r="43" fill="#3FBF8F" fill-opacity=".14"
         stroke="#3FBF8F" stroke-opacity=".5"/>
-      <text x="22" y="85" font-size="9.5" fill="#A9B7B0" text-anchor="middle">$2k</text>
-      <text x="80" y="62" font-size="10" fill="#E4EFEA" text-anchor="middle" font-weight="600">$50k</text>
-      <text x="198" y="59" font-size="17" fill="#3FBF8F" text-anchor="middle"
-        font-family="Instrument Serif,Georgia,serif">$500k</text>
-      <text x="22" y="113" font-size="9" fill="#66746D" text-anchor="middle">today</text>
-      <text x="80" y="113" font-size="9" fill="#66746D" text-anchor="middle">year one</text>
-      <text x="198" y="113" font-size="9" fill="#66746D" text-anchor="middle">10,000 people</text>
+      <text id="m1v" x="22" y="85" font-size="9.5" fill="#A9B7B0" text-anchor="middle"></text>
+      <text id="m2v" x="80" y="62" font-size="10" fill="#E4EFEA" text-anchor="middle" font-weight="600"></text>
+      <text id="m3v" x="198" y="59" font-size="17" fill="#3FBF8F" text-anchor="middle"
+        font-family="Instrument Serif,Georgia,serif"></text>
+      <text id="m1w" x="22" y="113" font-size="9" fill="#66746D" text-anchor="middle"></text>
+      <text id="m2w" x="80" y="113" font-size="9" fill="#66746D" text-anchor="middle"></text>
+      <text id="m3w" x="198" y="113" font-size="9" fill="#66746D" text-anchor="middle"></text>
     </svg>
-    <p class="gl"><b>$500,000 in 18 months.</b> Then a company in Singapore. All three figures
-      at $50 a person — what rooms like this have sold for. An example, not a forecast.</p>
+    <p class="gl" id="goal"></p>
 
-    <div class="sec">
+    <!-- A stake is not a place in a queue, so it does not get the queue's
+         explanation. Same ledger, same three beats — what is counted, when it
+         is fixed, and what it turns into — written for somebody whose share is
+         in the thing itself. -->
+    <div class="sec" id="secstake" hidden>
+      <p class="sech">How the share works</p>
+      <div class="stp"><i>1</i><div><b>It is written down now</b>The share, the schedule and
+        the date are on the record from the day you accept. Not a conversation either of us
+        has to remember.</div></div>
+      <div class="stp"><i>2</i><div><b>It becomes real on incorporation</b>The day the company
+        exists, this is the instruction its first share register is drawn from — the same
+        record, handed to whoever does the paperwork.</div></div>
+      <div class="stp"><i>3</i><div><b>Until then it is an intention, and says so</b>No company,
+        no shares, no instrument. What you have is a dated, signed-off position — which is
+        worth exactly as much as the thing it is a share of, and no more.</div></div>
+    </div>
+
+    <div class="sec" id="secrecord">
       <p class="sech">What the record is</p>
       <div class="stp"><i>1</i><div><b>It counts</b>Being early, and every person you bring
         who stays. Nothing you have to manage.</div></div>
@@ -164,15 +193,12 @@
         are the evidence of how it was arrived at.</div></div>
     </div>
 
-    <div class="not"><b>What this is not</b><span>Not shares. Not a token. Nothing has been
-      issued, nothing is for sale, and nobody is promising you a number. If tokens ever exist
-      they would come from a company that does not exist yet — and the record is what would
-      decide them, not a substitute for them.</span></div>
+    <div class="not"><b>What this is not</b><span id="notsay"></span></div>
 
     <div class="d"><span>Accepting</span><b id="w1"></b></div>
     <div class="d"><span>Costs</span><b>Nothing</b></div>
     <div class="d"><span>Issued today</span><b>Nothing</b></div>
-    <div class="d"><span>Asked for</span><b>One introduction</b></div>
+    <div class="d"><span>Asked for</span><b id="w4"></b></div>
     <button class="lk" id="back">← Back to your offer</button>
   </section>
 
@@ -246,23 +272,101 @@ function draw(o) {
   const p = o.project || {};
   $("pname").textContent = p.name || "";
   $("pname2").textContent = p.name || "";
+  /* "crowdfundme · An offer on crowdfundme" is what the ledger's own project
+     produces, and it reads like a bug. Not a special case for one id — the
+     second name is only ever worth printing when it differs from the first. */
+  if ((p.name || "").toLowerCase() === "crowdfundme") {
+    $("ptag").textContent = "An offer";
+    $("ptag2").textContent = "◷ crowdfundme";
+  }
   $("who").textContent = o.who;
   $("pline").textContent = p.line || "";
-  $("seat").innerHTML = String(o.seat) + "<i> / " + (p.seats || 100) + "</i>";
-  $("seatof").textContent = "Your place in the founding " + (p.seats === 100 ? "hundred" : String(p.seats || 100));
-  /* The tier, and only when it is true. "One of the first ten" on seat 40 is
-     the kind of thing that gets discovered and costs you the person. */
-  if (o.seat && o.seat <= 10) { $("tier").textContent = "One of the first ten"; $("tier").hidden = false; }
+  const k = o.pack || {};
+  const stake = k.face === "stake";
+
+  if (stake) {
+    /* The figure is the share, and the two numbers that qualify it sit
+       directly under it. A percentage on its own is the half of a deal people
+       remember, and the half they argue about. */
+    $("seat").innerHTML = String(k.pct) + "<i>%</i>";
+    $("seatof").textContent = "of the company, on the day there is one";
+    $("terms").hidden = false;
+    $("tvest").textContent = k.years
+      ? "Monthly over " + k.years + (k.years === 1 ? " year" : " years")
+      : "In full on incorporation";
+    $("tcliff").textContent = k.cliff
+      ? k.cliff + (k.cliff === 1 ? " month in" : " months in")
+      : "No cliff";
+  } else {
+    $("seat").innerHTML = String(o.seat) + "<i> / " + (p.seats || 100) + "</i>";
+    $("seatof").textContent = "Your place in the founding " + (p.seats === 100 ? "hundred" : String(p.seats || 100));
+    /* The tier, and only when it is true. "One of the first ten" on seat 40 is
+       the kind of thing that gets discovered and costs you the person. */
+    if (o.seat && o.seat <= 10) { $("tier").textContent = "One of the first ten"; $("tier").hidden = false; }
+  }
+
+  /* The ask is the package's, because it is the one line that tells a reader
+     whether this page was written for them. Stored as plain text, never
+     markup: a "|" is the line break, and what follows it is the half in the
+     accent colour. Nothing from the ledger is ever set as HTML. */
+  const ask = (k.ask || "Bring one person worth having.|That is the whole ask.").split("|");
+  $("ask").textContent = ask[0].trim();
+  if (ask[1]) {
+    $("ask").append(document.createElement("br"));
+    const em = document.createElement("em");
+    em.textContent = ask[1].trim();
+    $("ask").append(em);
+  }
+  $("why").textContent = k.why ||
+    "Fixed the day you accept. It never moves again, and everything you and " +
+    "your people do from here is on the record under your name.";
+
+  /* Two audiences, two explanations of the same ledger. */
+  $("secstake").hidden = !stake;
+  $("secrecord").hidden = stake;
+  $("notsay").textContent = stake
+    ? "Not shares, not yet. No company has been incorporated, nothing has been issued, " +
+      "and this is not a subscription agreement. It is a recorded intention with a date " +
+      "on it — the instruction the share register would be drawn from, not the register."
+    : "Not shares. Not a token. Nothing has been issued, nothing is for sale, and nobody " +
+      "is promising you a number. If tokens ever exist they would come from a company that " +
+      "does not exist yet — and the record is what would decide them, not a substitute for them.";
+
+  /* Where this goes, in the project's own words. Nothing here is written into
+     the page: a project with no story of its own simply has no growth block,
+     which is better than showing it somebody else's. */
+  $("claim").textContent = p.claim || "";
+  $("claimsub").textContent = p.sub || "";
+  /* The goal, with its first sentence carrying the weight — the number is the
+     thing somebody skimming stops on. Split, not markup, for the same reason
+     as the ask. */
+  $("goal").textContent = "";
+  const goal = String(p.goal || "");
+  const cut = goal.indexOf(". ");
+  if (cut > 0) {
+    const b = document.createElement("b");
+    b.textContent = goal.slice(0, cut + 1);
+    $("goal").append(b, " " + goal.slice(cut + 2));
+  } else $("goal").textContent = goal;
+  const marks = p.marks || [];
+  $("growth").hidden = marks.length < 3;
+  marks.slice(0, 3).forEach((m, i) => {
+    $("m" + (i + 1) + "v").textContent = m.val || "";
+    $("m" + (i + 1) + "w").textContent = m.when || "";
+  });
   if (o.note) {
     $("frombox").hidden = false;
     $("fromini").textContent = "TS";
     $("fromsay").innerHTML = "<b>Tom</b> asked you himself.<br>“" +
       o.note.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])) + "”";
   }
-  $("w1").textContent = "Seat " + o.seat + " of " + (p.seats || 100);
+  $("w1").textContent = stake
+    ? k.pct + "% of " + (p.name || "it")
+    : "Seat " + o.seat + " of " + (p.seats || 100);
+  $("w4").textContent = stake ? "The structure, done properly" : "One introduction";
   $("fine").textContent = "Nothing is issued and nothing is sold." +
     (o.until ? " Reserved until " + o.until + "." : "");
-  if (o.taken) { $("take").textContent = "Go in"; }
+  if (o.taken) settled(p);
   show("offer");
 }
 
@@ -289,6 +393,19 @@ $("f").addEventListener("submit", async (e) => {
 $("openwhere").addEventListener("click", () => show("where"));
 $("back").addEventListener("click", () => show("offer"));
 
+/* What an accepted offer looks like on the way back to it. */
+function settled(p) {
+  const goTo = p && p.goTo;
+  $("take").textContent = goTo ? "Go in" : "Accepted";
+  if (!goTo) {
+    $("take").className = "";
+    $("take").disabled = true;
+    $("took").hidden = false;
+    $("took").textContent = "On the record. Nothing else to do — I will come to you " +
+      "with the paperwork when there is paperwork.";
+  }
+}
+
 $("take").addEventListener("click", async () => {
   $("take").textContent = "…";
   try {
@@ -298,6 +415,7 @@ $("take").addEventListener("click", async () => {
     });
     const d = await r.json().catch(() => ({}));
     if (r.ok && d.goTo) { location.assign(d.goTo); return; }
+    if (r.ok) { settled(null); return; }
     $("take").textContent = "Accept";
   } catch { $("take").textContent = "Accept"; }
 });

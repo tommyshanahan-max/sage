@@ -28,6 +28,7 @@ partner/source.*/
 agent/package-lock.json
 analytics/package-lock.json
 board/package-lock.json
+cfm/package-lock.json
 
 # A copy of the server with "; Secure" stripped from the cookies, made while
 # testing: local Chromium will not send a Secure cookie over plain http, so the

@@ -81,8 +81,13 @@ function view(data, o) {
   return {
     who: o.who, seat: o.seat, note: o.note, until: o.until,
     taken: Boolean(o.tookAt),
-    project: p && { id: p.id, name: p.name, zh: p.zh, line: p.line, seats: p.seats },
-    pack: k && { name: k.name, face: k.face, points: k.points, perDay: k.perDay },
+    /* goTo is here so the page can tell, before the button is pressed, whether
+       accepting ends in a room or in a sentence. Not a secret — it is where
+       the button was always going to send them. */
+    project: p && { id: p.id, name: p.name, zh: p.zh, line: p.line, seats: p.seats, goTo: p.goTo,
+      claim: p.claim, sub: p.sub, goal: p.goal, marks: p.marks },
+    pack: k && { name: k.name, face: k.face, points: k.points, perDay: k.perDay,
+      pct: k.pct, years: k.years, cliff: k.cliff, ask: k.ask, why: k.why },
   };
 }
 
@@ -189,14 +194,23 @@ app.post("/api/offer", express.json({ limit: "4kb" }), admin, async (req, res) =
     const taken = new Set(data.offers.map((x) => x.code));
     let code = store.newCode();
     while (taken.has(code)) code = store.newCode();
+    const project = String(req.body?.project || "");
+    const p = data.projects.find((x) => x.id === project);
+    if (!p) return null;
     /* The seat is decided now, not when it is opened. Two people quietly told
-       they are third is the one mistake here that cannot be walked back. */
-    const used = new Set(data.offers.map((x) => x.seat).filter(Boolean));
+       they are third is the one mistake here that cannot be walked back.
+       Counted within the project, because seat 3 of The Exchange and seat 3
+       of something else are not the same seat — and skipped entirely for a
+       project that has no queue, where a seat number would be a number the
+       reader is invited to misunderstand. */
     let seat = Number(req.body?.seat) || 0;
-    if (!seat) { seat = 1; while (used.has(seat)) seat += 1; }
+    if (!seat && p.seats > 0) {
+      const used = new Set(data.offers.filter((x) => x.project === project)
+        .map((x) => x.seat).filter(Boolean));
+      seat = 1; while (used.has(seat)) seat += 1;
+    }
     const o = store.cleanOffer({ ...req.body, code, seat });
     if (!o) return null;
-    if (!data.projects.some((p) => p.id === o.project)) return null;
     data.offers.push(o);
     return o;
   });
