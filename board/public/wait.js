@@ -281,6 +281,21 @@ export function waitBox() {
         const on = el("a", "btn goroom", T("wr.open"));
         on.href = "/room";
         box.append(on);
+        /* AND THEN IT TAKES THEM THERE.
+         *
+         * The button was the whole way in, and a button somebody has to
+         * notice after their form disappears is a button most people do not
+         * press — they read "you are on the list", close the tab, and never
+         * see the room at all. So the page goes, after a beat long enough to
+         * read the line that was just written.
+         *
+         * The band at the top of the room opens with the same sentence, so
+         * nothing is lost by arriving there instead of being told and left.
+         * The button stays: it is what a browser that refuses the redirect
+         * still has, and what somebody who taps first gets. */
+        setTimeout(() => {
+          if (location.pathname !== "/room") location.assign("/room");
+        }, 1200);
       }
       // The promise stays after sending: it is about what was just handed over.
     } catch { tell(T("act.again"), true); }
