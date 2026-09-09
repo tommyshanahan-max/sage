@@ -78,6 +78,9 @@
     color:var(--ink-2);font-size:.72rem;font-weight:600}
   .tag.off{background:none;border:1px solid var(--rule);color:var(--muted);
     font-weight:400}
+  /* The one tag that is a reason rather than a label: it says why this row is
+     above the row it used to be below. */
+  .tag.on{background:var(--accent-soft, #E8ECF7);color:var(--accent, #3F68D8)}
   .rule{margin:1.1rem 0 .3rem;font-size:.7rem;letter-spacing:.12em;
     text-transform:uppercase;color:var(--muted)}
   .rule:first-child{margin-top:.2rem}
@@ -529,6 +532,13 @@ function drawWaiting(w) {
   }
   const tags = el("div", "tags");
   if (w.viaName) tags.append(el("span", "tag", "sent by " + w.viaName));
+  /* Whoever's link they came in on, when it was somebody also waiting. It is
+     the fact behind the queue moving, so it is on the row that moved. */
+  if (w.fromWaitName) tags.append(el("span", "tag", "sent by " + w.fromWaitName + ", waiting"));
+  if (w.brought) {
+    tags.append(el("span", "tag on", "brought in " + w.brought
+      + " · up " + w.brought + " place" + (w.brought === 1 ? "" : "s")));
+  }
   /* WHAT THEY FILLED IN WHILE THEY WAITED. The three things a member gets to
      decide on, on the row where the deciding happens. */
   if (w.levelBand) {
@@ -587,19 +597,21 @@ async function loadWaiting() {
     for (const [key, label] of WAITROOMS) {
       const some = rows.filter((w) => (w.room || "other") === key);
       if (!some.length) continue;
-      /* A FULLER CARD COMES FIRST, and the longest wait wins between equals.
+      /* THE QUEUE ORDER THE BOARD DECIDED, not one worked out again here.
        *
-       * Somebody who added a photograph and took the tests is genuinely
-       * easier to decide about than a name and a line, so the order says so
-       * — which is the incentive to fill the card in, stated by the software
-       * rather than by a rule. Answered rows sink to the bottom whatever they
-       * carry, and within one score it is still first come first served, so
-       * nobody who waited is buried by somebody who arrived this morning and
-       * filled in three boxes. */
-      const worth = (w) => (w.photo && w.photoState === "published" ? 2 : 0)
-        + (w.levelBand ? 1 : 0) + (w.type ? 1 : 0) + (w.want ? 1 : 0);
+       * First come, first served, and one place up for each person somebody
+       * brought in — see queueOrder in server.js, which is where that rule
+       * lives and the only place it is written. `place` arrives on the row.
+       *
+       * It replaces a sort by how full a card was. That was a second order
+       * competing with this one, it read as a ranking of people rather than a
+       * queue, and it was true on this screen and nowhere else. How full a
+       * card is now decides nothing but is still visible on the row, which is
+       * the right way round: it helps you choose, it does not choose for you.
+       *
+       * Answered rows sink to the bottom whatever they carry. */
       some.sort((a, b) => (Number(Boolean(a.done)) - Number(Boolean(b.done)))
-        || (worth(b) - worth(a))
+        || ((a.place ?? 1e9) - (b.place ?? 1e9))
         || String(a.at).localeCompare(String(b.at)));
       const n = some.filter((w) => !w.done).length;
       box.append(el("div", "rule", label + (n ? "  ·  " + n + " waiting" : "")));

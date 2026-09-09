@@ -2020,6 +2020,46 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
  * decide with, and that the waiting stopped being dead time.
  * ------------------------------------------------------------------------- */
 
+/* THE QUEUE, IN THE ORDER IT IS ACTUALLY READ.
+ *
+ * First come, first served, and then one thing moves it: every person you
+ * brought in who was not turned down moves you up one place.
+ *
+ * WHY THAT AND NOT POINTS. The seat block asks somebody to send their link,
+ * and until now the whole of what it paid them was a counter going up. A
+ * reward that is only a number is the kind of thing people notice, and
+ * noticing it costs more trust than the extra sign-ups are worth. This is a
+ * benefit that can be delivered today, is true the moment it ships, and is
+ * not a promise about money.
+ *
+ * It is also the right incentive rather than a bribe: somebody who brings
+ * good people in is a better bet for this board than somebody who filled in a
+ * personality test, and the order should say so.
+ *
+ * ONE PLACE PER PERSON, not a multiplier and not a jump to the front. The
+ * oldest rows can still be overtaken, but only by somebody who did the one
+ * thing this place runs on, and only one step at a time.
+ *
+ * The same order everywhere: the number somebody is shown, the list of
+ * others in their room, and the queue in the panel — because an order that
+ * is only true on one screen is not an order, it is a decoration.
+ */
+function queueOrder(board) {
+  const brought = (id) => board.waits.filter((x) => x.fromWait === id && x.done !== "no").length;
+  return board.waits
+    .filter((w) => !w.done)
+    .sort((a, b) => String(a.at || "").localeCompare(String(b.at || "")))
+    /* The shift is measured against where they stood by date, so bringing
+       somebody in cannot move you past somebody who brought in more. */
+    .map((w, i) => ({ w, i, pos: Math.max(0, i - brought(w.id)), n: brought(w.id) }))
+    /* THE TIE GOES TO WHOEVER BROUGHT SOMEBODY IN, and without that line the
+       promise is off by one: moving up one place from behind somebody only
+       draws level with them, and drawing level then loses to the older row.
+       Somebody who brought one person in would have to bring in two before
+       anything visibly moved, which is not what the screen says. */
+    .sort((a, b) => (a.pos - b.pos) || (b.n - a.n) || (a.i - b.i));
+}
+
 /** Their own row, the queue around it, and the others waiting.
  *
  *  Public, and identified the way everything else outside the door is: by the
@@ -2041,10 +2081,12 @@ app.get("/api/wait/me", async (req, res) => {
   if (!mine) return res.json({ on: false });
 
   /* HOW MANY ARE AHEAD, and it is a queue position rather than a ranking.
-     Everybody still waiting who asked before they did — the one number that
-     is true, means what it looks like, and does not need anybody's name. */
-  const open = board.waits.filter((w) => !w.done);
-  const ahead = open.filter((w) => (w.at || "") < (mine.at || "")).length;
+     Everybody still waiting who is in front of them — by when they asked,
+     less one place for each person they brought in. See queueOrder. */
+  const order = queueOrder(board);
+  const open = order.map((x) => x.w);
+  const ahead = Math.max(0, order.findIndex((x) => x.w.id === mine.id));
+  const broughtIn = (order.find((x) => x.w.id === mine.id) || {}).n || 0;
 
   /* THE OTHERS, AND ONLY THE ONES WHO SAID SO.
    *
@@ -2059,15 +2101,12 @@ app.get("/api/wait/me", async (req, res) => {
    * the one promise the new wording still makes in full, and not the id or
    * the device.
    */
-  /* THE SAME ORDER THE QUEUE IN THE PANEL USES. A fuller card first, longest
-     wait between equals — see the note beside `worth` in queue.html. It is
-     the one place somebody waiting can see the rule working, which is most of
-     what makes it an incentive rather than a claim. */
-  const worth = (w) => (w.photo && w.photoState === "published" ? 2 : 0)
-    + (w.levelBand ? 1 : 0) + (w.type ? 1 : 0) + (w.want ? 1 : 0);
+  /* IN QUEUE ORDER, which `open` already is. It was sorted by how full a card
+     was, which read as a ranking of people and was a second order competing
+     with the one that decides anything. There is one order now and this is
+     the one place somebody waiting can watch it work. */
   const others = open
     .filter((w) => w.shown && w.by !== me)
-    .sort((a, b) => (worth(b) - worth(a)) || String(a.at).localeCompare(String(b.at)))
     .slice(0, 60)
     .map((w) => ({ name: w.name, room: w.room, why: w.why,
       levelBand: w.levelBand, type: w.type, me: w.me, want: w.want,
@@ -2095,7 +2134,7 @@ app.get("/api/wait/me", async (req, res) => {
   let seat = null;
   if (SEAT_OUTSIDE && ledgerOn()) {
     const inAlready = board.people.filter((q) => q.state === "published" && q.handle).length;
-    const brought = board.waits.filter((w) => w.fromWait === mine.id && w.done !== "no").length;
+    const brought = broughtIn;
     const began = Date.parse(mine.at || "") || Date.now();
     seat = {
       n: Math.min(SEATS, inAlready + ahead + 1),
@@ -2316,7 +2355,24 @@ app.get("/api/waiting", admin, async (_req, res) => {
      what they are called should not leave a trail of rows crediting who they
      used to be. */
   const who = new Map(board.people.map((q) => [q.id, q.handle]));
-  res.json({ waits: board.waits.map((w) => ({ ...w, viaName: who.get(w.via) || "" })) });
+  /* AND WHERE EACH OPEN ROW STANDS IN THE QUEUE, worked out here rather than
+     in the panel. The order is a rule about this board — first come, one
+     place up per person brought in — and a rule reimplemented in a browser is
+     a rule that will one day disagree with itself. See queueOrder.
+     `brought` travels too, so the panel can show why somebody moved. */
+  const place = new Map();
+  const bring = new Map();
+  queueOrder(board).forEach((x, i) => { place.set(x.w.id, i); bring.set(x.w.id, x.n); });
+  /* Also the name of whoever's link they came in on, when it was somebody
+     waiting rather than a member — the same courtesy `viaName` does. */
+  const byWait = new Map(board.waits.map((w) => [w.id, w.name]));
+  res.json({ waits: board.waits.map((w) => ({
+    ...w,
+    viaName: who.get(w.via) || "",
+    fromWaitName: byWait.get(w.fromWait) || "",
+    place: place.has(w.id) ? place.get(w.id) : null,
+    brought: bring.get(w.id) || 0,
+  })) });
 });
 
 /* LETTING A WAITING PERSON'S PHOTOGRAPH THROUGH, OR NOT.

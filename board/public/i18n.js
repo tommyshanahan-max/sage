@@ -699,7 +699,12 @@ export const STRINGS = {
   "wr.seatLeft":     ["{left} seats left · {n} people in so far",
                       "还剩 {left} 个位子 · 目前进来了 {n} 个人"],
   "wr.way1":         ["Bring somebody in who stays", "带一个留下来的人进来"],
-  "wr.way1sub":      ["The biggest one, by a long way", "这个影响最大，差得很远"],
+  /* WHAT IT ACTUALLY DOES FOR THEM, and it has to be something. Until this
+     line was true, the whole of what Send your link paid somebody was a
+     counter going up — and a reward that is only a number is the kind of
+     thing people notice. One place per person is small, it is delivered the
+     moment it ships, and it is not a promise about money. */
+  "wr.way1sub":      ["Each one moves you up a place", "每带进来一个，你就往前一位"],
   "wr.wayNone":      ["none yet", "还没有"],
   "wr.wayN":         ["{n} so far", "已经 {n} 个"],
   "wr.way2":         ["Being early", "来得早"],
