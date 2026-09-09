@@ -1396,6 +1396,23 @@ const UNTIL = /^\d{4}-\d{2}-\d{2}$/.test(process.env.BOARD_STAKE_UNTIL || "")
   ? process.env.BOARD_STAKE_UNTIL : "";
 const ledgerOn = () => SEATS > 0 && Boolean(UNTIL);
 
+/* WHETHER ANY OF THAT IS SHOWN OUTSIDE THE DOOR.
+ *
+ * Off unless BOARD_SEAT_OUTSIDE=1, and off is the default on purpose. What a
+ * waiting person would be shown carries no figure in money and no percentage
+ * — a seat number out of the hundred, and the three things that move a seat —
+ * but it still changes what the front of this product is about. Today
+ * somebody joins to find a producer. With this on, some of them join because
+ * a seat is running out, and those are different people arriving at a board
+ * whose only asset is that members vouch for each other.
+ *
+ * So it is a switch rather than a decision written into the code: turn it on,
+ * watch who joins for a week, turn it off if they are the wrong people. The
+ * environment is also where the two promises live (see SEATS and UNTIL), and
+ * this belongs with them.
+ */
+const SEAT_OUTSIDE = process.env.BOARD_SEAT_OUTSIDE === "1";
+
 /* Counting stops on the date. After it the numbers are what they were, which
    is the difference between an allocation and a leaderboard. */
 const ledgerShut = () => Boolean(UNTIL) && new Date().toISOString().slice(0, 10) > UNTIL;
@@ -1938,6 +1955,13 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
        dropped and the row simply has nobody behind it. */
     const sent = String(req.body?.via || "");
     const from = board.people.find((q) => q.id === sent && q.state === "published" && q.handle);
+    /* THE OTHER KIND OF LINK: one sent by somebody who is also waiting. Checked
+       the same way and against the other table — a `w` that does not name a
+       live row is dropped, so a made-up address credits nobody rather than
+       inventing a person. And never themselves: a link followed back to your
+       own row is a reload, not somebody brought in. */
+    const wsent = String(req.body?.w || "");
+    const wfrom = board.waits.find((w) => w.id === wsent && !w.done && w.by !== me);
     /* shown: true, ALWAYS, and never taken from the request.
        The form that posts here is the one that says so — see wait.note — so
        agreeing to it and sending it are the same act, and a browser cannot
@@ -1945,7 +1969,8 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
        field off. Rows written before that wording changed have no flag and
        stay invisible; see the note on `shown` in cleanWait. */
     const row = store.cleanWait({ name, reach, why: req.body?.why,
-      room: req.body?.room, by: me, via: from ? from.id : "", shown: true });
+      room: req.body?.room, by: me, via: from ? from.id : "",
+      fromWait: wfrom ? wfrom.id : "", shown: true });
     if (!row) return { error: "both" };
     /* CHANGING THE ANSWER MUST NOT EMPTY THE CARD. This replaces the row
        rather than merging into it, which is right for the three things the
@@ -1957,7 +1982,11 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
     if (at >= 0) {
       const was = board.waits[at];
       board.waits[at] = { ...row, id: was.id, at: was.at,
-        levelBand: was.levelBand, type: was.type, me: was.me, want: was.want };
+        levelBand: was.levelBand, type: was.type, me: was.me, want: was.want,
+        photo: was.photo, photoState: was.photoState,
+        // Who brought them is a fact about how they arrived, not something a
+        // second visit to the form should be able to rewrite.
+        via: was.via || row.via, fromWait: was.fromWait || row.fromWait };
     } else board.waits.push(row);
     return { ok: true, again: at >= 0 };
   });
@@ -2046,6 +2075,40 @@ app.get("/api/wait/me", async (req, res) => {
       // that has not been looked at.
       photo: w.photoState === "published" ? w.photo : "" }));
 
+  /* THEIR SEAT, IF THE SWITCH IS ON. See SEAT_OUTSIDE.
+   *
+   * WHAT THE NUMBER MEANS, because it is the one thing on this block that
+   * could be read as a promise. It is the seat they would take if everybody
+   * ahead of them in the queue went in first: the members already in, plus
+   * the people who asked before they did, plus one. It moves — down when
+   * somebody ahead is turned down, up when somebody is let in before them —
+   * and the page says so. It is not a seat they hold.
+   *
+   * `brought` is rows that named their row as the one they followed, still
+   * waiting or already let in. Turned-down rows do not count: the line says
+   * "who stays", and this is the honest reading of it.
+   *
+   * NO FIGURE IN MONEY AND NO PERCENTAGE. Those are on the seat page behind
+   * the door, where the reader is a member and the arithmetic is theirs to
+   * see. Out here it is a count and three rows.
+   */
+  let seat = null;
+  if (SEAT_OUTSIDE && ledgerOn()) {
+    const inAlready = board.people.filter((q) => q.state === "published" && q.handle).length;
+    const brought = board.waits.filter((w) => w.fromWait === mine.id && w.done !== "no").length;
+    const began = Date.parse(mine.at || "") || Date.now();
+    seat = {
+      n: Math.min(SEATS, inAlready + ahead + 1),
+      seats: SEATS,
+      taken: inAlready,
+      brought,
+      weeks: Math.max(1, Math.ceil((Date.now() - began) / (7 * 86400000))),
+      // The link they send. Their row's id, not their device — an id that
+      // survives them clearing the browser, which the device hash does not.
+      link: "/r/" + (mine.room === "other" ? "other" : mine.room) + "?w=" + mine.id,
+    };
+  }
+
   /* ONE POST, NOT A FEED. The feed is behind the door and stays there. This
      is the same single post the public page carries, for the same reason:
      it says the place is real without pretending the door is open. */
@@ -2062,7 +2125,7 @@ app.get("/api/wait/me", async (req, res) => {
     you: { name: mine.name, room: mine.room, why: mine.why, at: mine.at,
       levelBand: mine.levelBand, type: mine.type, me: mine.me, want: mine.want,
       photo: mine.photo, photoState: mine.photoState },
-    ahead, waiting: open.length, others, featured,
+    ahead, waiting: open.length, others, featured, seat,
   });
 });
 

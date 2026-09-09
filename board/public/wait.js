@@ -66,6 +66,18 @@ export function viaFromUrl() {
   } catch { return ""; }
 }
 
+/** The same, for a link sent by somebody who is also waiting.
+ *
+ *  Its own parameter rather than a second meaning for `via`: the two name
+ *  different tables — a member and a waiting row — and the server checks each
+ *  against its own before writing either. Neither is believed here. */
+export function wFromUrl() {
+  try {
+    const v = new URLSearchParams(location.search).get("w") || "";
+    return /^[a-f0-9]{20}$/.test(v) ? v : "";
+  } catch { return ""; }
+}
+
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -242,7 +254,8 @@ export function waitBox() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.value.trim(), reach: reach.value.trim(),
-          why: why.value.trim(), room, device: device(), via: viaFromUrl(),
+          why: why.value.trim(), room, device: device(),
+          via: viaFromUrl(), w: wFromUrl(),
         }),
       });
       const d = await r.json().catch(() => ({}));

@@ -858,6 +858,10 @@ services:
       # default that arrives with a rebuild. See stakeOf in server.js.
       BOARD_STAKE_SEATS: ${TOMSCODING_BOARD_STAKE_SEATS:-}
       BOARD_STAKE_UNTIL: ${TOMSCODING_BOARD_STAKE_UNTIL:-}
+      # Whether a seat number is shown to people on the waiting list. Off
+      # unless this is 1 — see SEAT_OUTSIDE in server.js for why it is a
+      # switch and not a decision written into the code.
+      BOARD_SEAT_OUTSIDE: ${TOMSCODING_BOARD_SEAT_OUTSIDE:-}
     volumes:
       - board_data:/data
     expose:

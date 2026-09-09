@@ -689,6 +689,34 @@ export const STRINGS = {
   "wr.back":         ["You are already on the list. See your card.",
                       "你已经在名单上了。看看你的卡片。"],
 
+  /* ---- the seat, outside the door -------------------------------------
+     NOT A FIGURE ANYWHERE. No money, no percentage, no chart — those are on
+     the seat page behind the door, where the reader is a member. Out here it
+     is a count out of a hundred, three rows and a link, and one line saying
+     in as many words that none of it is a promise of money. */
+  "wr.seat":         ["Your seat", "你的位子"],
+  "wr.seatOf":       ["of the founding hundred", "创始一百人之一"],
+  "wr.seatLeft":     ["{left} seats left · {n} people in so far",
+                      "还剩 {left} 个位子 · 目前进来了 {n} 个人"],
+  "wr.way1":         ["Bring somebody in who stays", "带一个留下来的人进来"],
+  "wr.way1sub":      ["The biggest one, by a long way", "这个影响最大，差得很远"],
+  "wr.wayNone":      ["none yet", "还没有"],
+  "wr.wayN":         ["{n} so far", "已经 {n} 个"],
+  "wr.way2":         ["Being early", "来得早"],
+  "wr.way2sub":      ["Counts more the lower your number", "号码越靠前，算得越多"],
+  "wr.waySeat":      ["seat {n}", "第 {n} 号"],
+  "wr.way3":         ["Turning up", "常来"],
+  "wr.way3sub":      ["Each week you are here", "在这里的每一周"],
+  "wr.wayWeek":      ["week {n}", "第 {n} 周"],
+  "wr.seatSend":     ["Send your link", "把你的链接发出去"],
+  /* The whole of what is claimed, and it claims nothing. The number moves,
+     the hundred is fixed, the arithmetic is inside, and none of this is money
+     — said plainly rather than left for somebody to assume otherwise. */
+  "wr.seatFine": [
+    "Your number moves as people are let in or turned down. What a seat comes to is written down for members inside. Nothing here is a promise of money.",
+    "随着有人被放进来或被回绝，你的号码会变动。一个位子最后代表什么，写在里面给成员看。这里没有任何关于钱的承诺。",
+  ],
+
   "wr.others":       ["Waiting with you", "和你一起等的人"],
   "wr.othersNone": [
     "Nobody else has joined since the list started keeping cards.",

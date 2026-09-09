@@ -165,6 +165,37 @@
   .who .tags span{padding:.1rem .45rem;border-radius:99px;background:var(--raise);
     color:var(--muted);font-size:.7rem}
 
+  /* ---- the seat ---- */
+  .seat{margin:.6rem 0 0;padding:1rem;background:var(--card);
+    border:1px solid var(--hair);border-radius:.85rem}
+  .seatn{display:flex;align-items:baseline;gap:.5rem}
+  .seatn b{font-family:var(--serif);font-weight:400;font-size:2.4rem;line-height:1;
+    color:var(--accent);font-variant-numeric:tabular-nums}
+  .seatn span{font-size:.9rem;color:var(--ink-2)}
+  .seatleft{margin:.5rem 0 0;font-size:.82rem;color:var(--muted)}
+  /* The hundred as a hundred dots: filled, yours, and the ones still open. A
+     number out of a hundred is a claim; this is the same fact as a picture,
+     and it needs no translating. */
+  .dots{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;margin:.75rem 0 0}
+  .dots i{aspect-ratio:1;border-radius:50%;background:var(--line)}
+  .dots i.on{background:var(--accent);opacity:.5}
+  .dots i.you{background:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .ways{margin:.85rem 0 0;border-top:1px solid var(--hair)}
+  .way{display:flex;align-items:baseline;gap:.7rem;padding:.55rem 0;
+    border-bottom:1px solid var(--hair);font-size:.88rem}
+  .way:last-child{border-bottom:0}
+  .way .t{flex:1}
+  .way .t small{display:block;margin:.1rem 0 0;font-size:.76rem;color:var(--muted);
+    line-height:1.4}
+  .way .v{flex:none;font-size:.8rem;font-weight:600;color:var(--accent)}
+  .way .v.grey{color:var(--muted);font-weight:500}
+  .seatgo{display:block;width:100%;margin:.85rem 0 0;padding:.65rem;border:0;
+    border-radius:99px;background:var(--accent);color:var(--accent-ink);
+    font:inherit;font-weight:600;font-size:.9rem;cursor:pointer}
+  .seatsaid{margin:.5rem 0 0;font-size:.83rem;color:var(--muted);text-align:center}
+  .seatsaid.on{color:var(--good, #2E7D5B)}
+  .seatfine{margin:.7rem 0 0;font-size:.75rem;color:var(--muted);line-height:1.5}
+
   /* NOT .post, NOT .band. site.css owns both: .post is the feed's own card,
      laid out as a flex row with an avatar column — which squeezed this card's
      byline into a stripe down its right-hand side — and .band is the tinted
@@ -187,7 +218,11 @@
     color:var(--ink-2);line-height:1.5}
 
   /* ---- the You tab ---- */
-  .shot{margin:1rem 0 0;padding:1rem;background:var(--card);
+  /* NOT .shot — site.css owns that too, as a centred flex column for the
+     phone mock-ups on the marketing page. It was quietly making this box
+     centre its contents, which is why the photo button rendered as a narrow
+     pill instead of the full-width button it is written as. */
+  .wrshot{margin:1rem 0 0;padding:1rem;background:var(--card);
     border:1px solid var(--hair);border-radius:.8rem}
   /* A label wrapping a hidden file input: the styled control every browser
      agrees on, and it opens the camera on a phone. */
@@ -286,6 +321,31 @@ function wash(name) {
   return "linear-gradient(150deg,hsl(" + h + " 26% 74%),hsl(" + ((h + 24) % 360) + " 24% 52%))";
 }
 const initial = (name) => [...String(name || "?").trim()][0] || "?";
+
+/* The clipboard, in whichever way this browser has one. The same routine four
+   other pages on this board carry: the API where there is one and a secure
+   context, an off-screen textarea where there is not — which is WeChat's
+   webview, where most of these links get pasted. */
+function copyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch { /* fall through */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:absolute;left:-9999px;top:0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);   // iOS ignores select() alone
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch { return false; }
+}
 
 let DATA = null;
 let PANE = "wait";
@@ -517,6 +577,85 @@ function photoPicker(you, ui) {
 
 /* ---- the panes ----------------------------------------------------------- */
 
+/** The hundred, drawn.
+ *
+ *  A number out of a hundred is a claim; a hundred dots with sixteen filled
+ *  is the same fact as a picture, and a picture cannot be argued with. Theirs
+ *  is the one that is solid.
+ */
+function hundred(seat) {
+  const box = el("div", "dots");
+  for (let n = 1; n <= seat.seats; n++) {
+    const dot = el("i");
+    if (n === seat.n) dot.className = "you";
+    else if (n <= seat.taken) dot.className = "on";
+    box.append(dot);
+  }
+  return box;
+}
+
+/** One of the three things that move a seat. */
+function way(key, sub, value, dim) {
+  const row = el("div", "way");
+  const t = el("span", "t", T(key));
+  t.append(el("small", null, T(sub)));
+  row.append(t, el("span", dim ? "v grey" : "v", value));
+  return row;
+}
+
+/** WHAT A SEAT IS, OUTSIDE THE DOOR.
+ *
+ *  NO FIGURE IN MONEY AND NO PERCENTAGE anywhere on it. Those live on the
+ *  seat page behind the door, where the reader is a member and the arithmetic
+ *  is theirs. Out here it is a count, three rows and a link — because a
+ *  projected payout shown to strangers to get them to sign up is a different
+ *  kind of sentence entirely, and it is not needed for any of what this
+ *  screen is for.
+ *
+ *  WHAT IT IS FOR: the link. Eighteen people were waiting and not one of them
+ *  had a reason to tell anybody. This gives them one, in the place they are
+ *  already sitting, and the reason is true — a seat is a share of something,
+ *  and more people is what makes the something worth having.
+ */
+function seatBox(seat) {
+  const wrap = document.createElement("div");
+  const head = el("div", "wrhead");
+  head.append(el("span", null, T("wr.seat")), el("i"));
+  wrap.append(head);
+
+  const card = el("div", "seat");
+  const n = el("div", "seatn");
+  n.append(el("b", null, String(seat.n)), el("span", null, T("wr.seatOf")));
+  card.append(n);
+  card.append(el("p", "seatleft", T("wr.seatLeft",
+    { left: Math.max(0, seat.seats - seat.taken), n: seat.taken })));
+  card.append(hundred(seat));
+
+  const ways = el("div", "ways");
+  ways.append(way("wr.way1", "wr.way1sub",
+    seat.brought ? T("wr.wayN", { n: seat.brought }) : T("wr.wayNone"), !seat.brought));
+  ways.append(way("wr.way2", "wr.way2sub", T("wr.waySeat", { n: seat.n })));
+  ways.append(way("wr.way3", "wr.way3sub", T("wr.wayWeek", { n: seat.weeks })));
+  card.append(ways);
+
+  /* The link, copied rather than opened. A share sheet is a different button
+     on every phone and missing in WeChat's browser; the clipboard is the one
+     that works everywhere, and pasting into a chat is what they were going to
+     do with it anyway. */
+  const go = el("button", "seatgo", T("wr.seatSend"));
+  go.type = "button";
+  const said = el("p", "seatsaid");
+  go.addEventListener("click", () => {
+    const link = location.origin + seat.link;
+    said.textContent = T(copyText(link) ? "act.copied" : "act.copyFail");
+    said.className = "seatsaid on";
+  });
+  card.append(go, said);
+  card.append(el("p", "seatfine", T("wr.seatFine")));
+  wrap.append(card);
+  return wrap;
+}
+
 function drawWait(box) {
   const you = DATA.you;
 
@@ -584,6 +723,18 @@ function drawWait(box) {
   box.append(testRow(2, "wr.t2", "wr.t2sub", you.type || "", "/type"));
 
   box.append(pickRow(you));
+
+  /* THE SEAT, when the switch is on. See SEAT_OUTSIDE in server.js — the
+     server sends nothing at all when it is off, so this whole block simply
+     does not exist rather than being hidden.
+
+     FOURTH, and the position is the argument. Above it the screen is about
+     being findable, which is what they came for and what the busy people
+     stay for. Directly below it are the other people waiting — so the moment
+     after somebody taps Send your link, the next thing on the screen is four
+     people who are here because somebody did. The proof sits next to the
+     ask. */
+  if (DATA.seat) box.append(seatBox(DATA.seat));
 
   /* The others. Nobody who answered the older form is in here — see `shown`
      in store.js — so on the first day this list is empty and says so. */
@@ -660,7 +811,7 @@ function drawYou(box) {
    * exactly where it has got to — a picture that is up but not yet released
    * looks identical to one that failed to send, and only one of those is
    * worth worrying about. */
-  const shot = el("div", "shot");
+  const shot = el("div", "wrshot");
   const pick = el("button", "shotgo", T(you.photo ? "wr.photoAgain" : "wr.photoAdd"));
   pick.type = "button";
   const shotsaid = el("p", "shotsaid");

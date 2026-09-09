@@ -164,6 +164,21 @@ export function cleanWait(raw) {
     photo: /^[a-f0-9]{20}$/.test(String(raw.photo || "")) ? String(raw.photo) : "",
     photoState: ["held", "published", "refused"].includes(raw.photoState)
       ? raw.photoState : "held",
+
+    /* WHOSE LINK THEY FOLLOWED, when it was somebody who is also waiting.
+     *
+     * `via` above holds a member's id and is the older half of this: a member
+     * posts their link, whoever follows it lands in the queue with the member
+     * named. This is the same idea one door further out — somebody on the
+     * list sends the link too, and their row is what gets the credit.
+     *
+     * A SEPARATE FIELD RATHER THAN A SECOND MEANING FOR `via`. The two point
+     * at different tables, a member's id and a wait row's id, and one field
+     * that sometimes meant one and sometimes the other is a field every
+     * reader has to guess about. It is checked against board.waits before it
+     * is written — see /api/wait — so it either names a real row or nobody.
+     */
+    fromWait: /^[a-f0-9]{20}$/.test(String(raw.fromWait || "")) ? String(raw.fromWait) : "",
   };
 }
 
