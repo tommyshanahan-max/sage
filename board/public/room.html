@@ -175,11 +175,10 @@
     border:1px solid var(--hair);border-radius:.8rem}
   /* A label wrapping a hidden file input: the styled control every browser
      agrees on, and it opens the camera on a phone. */
-  .shotgo{display:block;padding:.7rem;border:1px solid var(--accent);
-    border-radius:99px;background:none;color:var(--accent);font-weight:600;
-    font-size:.92rem;text-align:center;cursor:pointer}
+  .shotgo{display:block;width:100%;padding:.7rem;border:1px solid var(--accent);
+    border-radius:99px;background:none;color:var(--accent);font:inherit;
+    font-weight:600;font-size:.92rem;text-align:center;cursor:pointer}
   .shotgo.busy{opacity:.6;pointer-events:none}
-  .shotgo input{display:none}
   .shotsaid{margin:.6rem 0 0;font-size:.83rem;color:var(--muted);line-height:1.5;
     text-align:center}
   .shotsaid.wait{color:var(--accent)}
@@ -510,12 +509,21 @@ function drawYou(box) {
    * looks identical to one that failed to send, and only one of those is
    * worth worrying about. */
   const shot = el("div", "shot");
-  const pick = el("label", "shotgo");
-  pick.append(document.createTextNode(T(you.photo ? "wr.photoAgain" : "wr.photoAdd")));
+  /* A BUTTON THAT PRESSES A HIDDEN INPUT, and not a label wrapping one.
+   *
+   * The label is the tidier markup and it is the one that fails: WeChat's
+   * webview — where most of the people this is for will open it — does not
+   * reliably pass a tap on a label through to a file input inside it, so the
+   * picker never opens and nothing at all happens, which reads as a photo
+   * that would not save. Every other file input on this board is already a
+   * button and a detached input; this one is now the same. */
+  const pick = el("button", "shotgo", T(you.photo ? "wr.photoAgain" : "wr.photoAdd"));
+  pick.type = "button";
   const file = document.createElement("input");
   file.type = "file";
   file.accept = "image/*";
-  pick.append(file);
+  file.hidden = true;
+  pick.addEventListener("click", () => file.click());
   const shotsaid = el("p", "shotsaid");
   if (you.photo) {
     shotsaid.textContent = T(you.photoState === "published" ? "wr.photoLive" : "wr.photoHeld");
@@ -531,6 +539,7 @@ function drawYou(box) {
   }
   file.addEventListener("change", async () => {
     const f = file.files && file.files[0];
+    /* Cancelled. Not an error and not a state to leave the button in. */
     if (!f) return;
     pick.className = "shotgo busy";
     shotsaid.className = "shotsaid";
@@ -538,29 +547,48 @@ function drawYou(box) {
     const small = await shrink(f, 1200);
     if (small.error) {
       pick.className = "shotgo";
+      file.value = "";
       shotsaid.className = "shotsaid bad";
       shotsaid.textContent = small.error;
       return;
     }
-    let ok = false;
+    /* WHAT WENT WRONG, RATHER THAN "TRY AGAIN".
+     *
+     * Four things can stop this and they need four different actions from the
+     * person holding the phone: the picture is too big, the file is not one
+     * the server takes, this browser is not on the list any more, or the
+     * network dropped. One message for all four is a message that helps with
+     * none of them, and it is what somebody quotes back when they say it does
+     * not work. */
+    let ok = false, why = "act.again";
     try {
-      const out = await fetch("/api/wait/photo", {
+      const r = await fetch("/api/wait/photo", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-board-device": device() },
         body: JSON.stringify({ photo: small.data, photoType: small.type || "image/jpeg" }),
-      }).then((r) => (r.ok ? r.json() : null));
-      ok = Boolean(out && out.on);
-    } catch { /* fall through */ }
+      });
+      const out = await r.json().catch(() => null);
+      ok = Boolean(r.ok && out && out.on);
+      if (!ok) {
+        if (r.status === 413) why = "wr.photoBig";
+        else if (r.status === 415) why = "post.badPhoto";
+        else if (out && out.on === false) why = "wr.gone";
+      }
+    } catch { /* the network. act.again is right for that one. */ }
     pick.className = "shotgo";
+    /* Cleared whatever happened: without this, picking the same photograph a
+       second time fires no change event at all, so a failed upload could not
+       be retried with the one file somebody actually wants to send. */
+    file.value = "";
     if (!ok) {
       shotsaid.className = "shotsaid bad";
-      shotsaid.textContent = T("act.again");
+      shotsaid.textContent = T(why);
       return;
     }
     await load();
     draw();
   });
-  shot.append(pick, shotsaid);
+  shot.append(pick, file, shotsaid);
   box.append(shot);
 
   const form = el("div", "form");

@@ -652,6 +652,8 @@ export const STRINGS = {
      what it does for them rather than what it is for. "You will get picked
      faster" is true — a member choosing between a face and a letter chooses
      the face — so it is said out loud rather than left as a nudge. */
+  "wr.photoBig":     ["That photo is too large to send. Try another.",
+                      "这张照片太大了，传不上去。换一张试试。"],
   "wr.photoAdd":     ["Add a photo", "加一张照片"],
   "wr.photoAgain":   ["Change the photo", "换一张照片"],
   "wr.photoNo":      ["That photo was not put up. You can add a different one.",
