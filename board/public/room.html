@@ -216,6 +216,8 @@
   .seatrest .h{margin:0 0 .5rem;font-size:.76rem;text-transform:uppercase;
     letter-spacing:.08em;color:var(--muted)}
   .seatex{margin:.8rem 0 0;font-size:.75rem;line-height:1.55;color:var(--muted)}
+  .soonnote{margin:1.4rem 0 0;padding:.9rem 1rem;border-left:2px solid var(--accent);
+    background:var(--raise);border-radius:0 8px 8px 0;font-size:.88rem;color:var(--ink-2)}
   .seatgo{display:block;width:100%;margin:.85rem 0 0;padding:.65rem;border:0;
     border-radius:99px;background:var(--accent);color:var(--accent-ink);
     font:inherit;font-weight:600;font-size:.9rem;cursor:pointer}
@@ -812,6 +814,8 @@ function drawWait(box) {
      people who are here because somebody did. The proof sits next to the
      ask. */
   if (DATA.seat) box.append(seatBox(DATA.seat));
+  /* Or, with the block off, the sentence. See `soon` in server.js. */
+  else if (DATA.soon) box.append(el("p", "soonnote", T("wr.soon")));
 
   /* The others. Nobody who answered the older form is in here — see `shown`
      in store.js — so on the first day this list is empty and says so. */

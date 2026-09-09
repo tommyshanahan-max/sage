@@ -2234,6 +2234,15 @@ app.get("/api/wait/me", async (req, res) => {
       levelBand: mine.levelBand, type: mine.type, me: mine.me, want: mine.want,
       photo: mine.photo, photoState: mine.photoState },
     ahead, waiting: open.length, others, featured, seat,
+    /* THE ONE LINE, WHEN THE BLOCK ITSELF IS OFF.
+     *
+     * Turning the seat block off took the whole idea off the screen with it,
+     * and the idea is worth saying even while the arithmetic is not being
+     * shown: somebody deciding whether to bother should know there is
+     * something here. It is a sentence, not a block — no seat, no points, no
+     * percentage, no money, and nothing to click. One switch does both: the
+     * block is on, or the sentence is. */
+    soon: !SEAT_OUTSIDE,
   });
 });
 

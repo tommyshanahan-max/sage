@@ -767,6 +767,16 @@ export const STRINGS = {
     "随着有人被放进来或被回绝，你的号码会变动。一个位置最后值什么，由运营这个板子的人决定，可能会变，而且只有在这个板子真的被卖掉时才有意义。这里没有任何关于钱的承诺。",
   ],
 
+  /* SAID WHILE THE ARITHMETIC IS HIDDEN. An intention, in as many words —
+     "will be offered", not "you have", and a plain admission that how it
+     works does not exist yet. Nothing here is a number and nothing is a
+     promise; the moment either becomes one it belongs in the block, behind
+     the switch, with its inputs on the screen beside it. */
+  "wr.soon": [
+    "The first hundred people in will be offered a share of this board. How that works is still being written, and none of it is settled.",
+    "最早进来的一百个人，将会获得这个板子的一部分。具体怎么算还在拟定中，都还没有定下来。",
+  ],
+
   "wr.others":       ["Waiting with you", "和你一起等的人"],
   "wr.othersNone": [
     "Nobody else has joined since the list started keeping cards.",
