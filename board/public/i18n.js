@@ -665,13 +665,26 @@ export const STRINGS = {
                       "这张照片太大了，传不上去。换一张试试。"],
   "wr.photoAdd":     ["Add a photo", "加一张照片"],
   "wr.photoAgain":   ["Change the photo", "换一张照片"],
-  "wr.photoNo":      ["That photo was not put up. You can add a different one.",
-                      "那张照片没有放上去。可以换一张。"],
+  /* The third state, in the same words as the other two. "Was not put up"
+     described the mechanism; "did not pass" describes the check the other
+     two lines just promised, which is what somebody reading this was told to
+     expect. No reason is given because none is known here — and the useful
+     half is the second sentence. */
+  "wr.photoNo":      ["That photo did not pass. You can add a different one.",
+                      "那张照片没通过。可以换一张。"],
   "wr.photoWhy":     ["Optional. Cards with a face get picked first.",
                       "可以不加。有照片的卡片会先被看到。"],
-  "wr.photoHeld":    ["Up. Nobody else sees it until it has been looked at.",
-                      "上传好了。等有人看过之后，别人才看得到。"],
-  "wr.photoLive":    ["Up, and everybody can see it.", "上传好了，大家都看得到。"],
+  /* "Nobody else sees it until it has been looked at" was accurate and it
+     read as suspicion — somebody is examining you. This says the same two
+     facts in the order that matters: it arrived, and it goes public after a
+     check.
+     It still leads with Saved rather than "will be uploaded", because it HAS
+     been uploaded; what is pending is other people seeing it. A line that
+     said otherwise would be a lie on the one screen where somebody is
+     wondering whether the thing worked. */
+  "wr.photoHeld":    ["Saved. It goes live once it has been checked.",
+                      "已保存。通过检查后就会公开。"],
+  "wr.photoLive":    ["Live. Everybody can see it.", "已通过，大家都看得到了。"],
   "wr.open":         ["See your card", "看看你的卡片"],
   "wr.back":         ["You are already on the list. See your card.",
                       "你已经在名单上了。看看你的卡片。"],
