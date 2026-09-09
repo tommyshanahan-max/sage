@@ -788,6 +788,17 @@ export const STRINGS = {
     "Clear your browser data, change phone or use a private window and that number is gone. You become a new person here, and your old posts and profile are no longer yours to delete. That is the cost of not asking who you are, and it is a deliberate trade.",
     "清除浏览器数据、换手机、用无痕窗口，这个数字就没了。你在这里就成了一个新的人，之前发的内容和资料也不再由你控制。这是不问你是谁的代价，是我们有意做的取舍。",
   ],
+  /* THE COOKIE, said here because the paragraph above stopped being the whole
+     truth the day it was added. It holds the same hash and a signature, no
+     name and nothing readable, and it exists because Safari deletes the
+     number above after seven days without a visit — which was quietly losing
+     people their profile, and then their waiting card. Saying "you become a
+     new person" while a cookie was putting them back would be the page
+     describing a product that no longer exists. */
+  "pv.p1c": [
+    "There is also a small cookie holding that same hash and a signature of it — no name, nothing readable, and no third party can see it. It is there because some browsers delete the number above after a week of not visiting, which was quietly costing people the profile or the waiting card they had built. Clear your cookies as well, or open it on a different phone, and you are a new person again.",
+    "还有一个很小的 cookie，里面装的是同一个哈希值和它的签名——没有名字，读不出任何东西，任何第三方也看不到。它存在的原因是：有些浏览器超过一周没访问就会把上面那个数字删掉，而这会让人悄无声息地丢掉自己的资料或等候卡片。如果你把 cookie 也一起清掉，或者换一台手机打开，那你依然会变成一个新的人。",
+  ],
 
   "pv.h2":             ["What you give us", "你给我们的"],
   "pv.p2": [

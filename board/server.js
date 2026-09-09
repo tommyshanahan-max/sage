@@ -238,6 +238,14 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  *
  *   /about  what this is, one featured post, and the waiting list
  *   /rules  how people behave in here, which names no member
+ *   /privacy WHAT IS KEPT, and it has to be out here.
+ *           The join form asks a stranger for a name and a way to reach them,
+ *           makes four promises about what happens to both, and the footer
+ *           link to the page those promises are written out on landed them on
+ *           this door. A promise whose small print is behind a password is
+ *           not a promise; it is a claim. The page names no member, holds no
+ *           figures and describes only what this server does with what it is
+ *           given, so there was never anything on it to protect.
  *   /level  THE FOUR QUESTIONS, and this one is the whole growth mechanic:
  *           a member shares their result into a group chat, somebody who is
  *           not a member taps it, takes the test themselves, and lands on the
@@ -265,7 +273,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * the person, that is a decision to make on purpose here, not a side effect
  * of a route somebody opened to fix an image.
  */
-const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|level|type|room|api\/enter|api\/admitted|api\/hello|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|privacy|level|type|room|api\/enter|api\/admitted|api\/hello|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -544,6 +552,84 @@ const setCookie = (res, hash) => {
   res.append("Set-Cookie", "board_in=" + hash + "." + sign(hash)
     + "; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax; Secure");
 };
+
+/* THE SAME THING FOR SOMEBODY WHO IS ONLY ON THE LIST.
+ *
+ * A waiting person's whole identity was a random id in localStorage. Same
+ * browser, same phone, and /room finds their card; clear the browser, open
+ * the link in Safari having joined in WeChat, or pick up a different phone,
+ * and they are a stranger — and joining again makes a SECOND row with an
+ * empty card, which is worse than nothing for them and worse than nothing
+ * for whoever reads the queue.
+ *
+ * Safari deletes localStorage after seven days without a visit. So the list
+ * as it stands loses most of its cards next week, quietly, and the first
+ * anybody would know is a queue full of duplicate names.
+ *
+ * Members were given a signed cookie for exactly this and it is how a profile
+ * survives that purge. This is the same cookie under a different name, doing
+ * the same job one door further out. Nothing in it is a secret — it holds the
+ * salted hash, which is not one — and the signature is what stops somebody
+ * pasting another person's hash in and being handed their card.
+ *
+ * A DIFFERENT NAME, so the two cannot be confused: a browser holding
+ * board_wait has not been admitted to anything, and no route that guards the
+ * door reads it.
+ */
+const waitCookie = (req) => {
+  const raw = String(req.headers.cookie || "");
+  const m = /(?:^|;\s*)board_wait=([a-f0-9]{32})\.([a-f0-9]{32})/.exec(raw);
+  return m && sign(m[1]) === m[2] ? m[1] : "";
+};
+const setWaitCookie = (res, hash) => {
+  res.append("Set-Cookie", "board_wait=" + hash + "." + sign(hash)
+    + "; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax; Secure");
+};
+
+/** Which waiting row belongs to the browser asking, by either key.
+ *
+ *  THE BROWSER'S NEW ID WINS AND THE ROW MOVES TO IT. A cleared browser makes
+ *  a fresh localStorage id and still sends the old cookie, so the row is
+ *  found by the cookie and then rebound to the new id — after which both keys
+ *  agree again and nothing has to be worked out twice. That is the same move
+ *  /api/me makes for a member who forgot themselves, and it is what keeps one
+ *  person to one row.
+ *
+ *  Rebinding is a write and this is called from reads. That is deliberate:
+ *  the alternative is a row that is found through the cookie for ever while
+ *  every write keyed on the browser's id silently misses it.
+ *
+ *  Pass `res` to have the cookie set or refreshed; omit it for a route that
+ *  only wants to know.
+ */
+async function waitingRow(req, res) {
+  const said = String(req.get("x-board-device") || req.body?.device || "");
+  const me = store.hashDevice(said, SALT);
+  const was = waitCookie(req);
+  let board = await store.load(FILE);
+  const live = (by) => (by ? board.waits.find((w) => w.by === by && !w.done) : null);
+
+  let row = live(me);
+  if (!row && was && was !== me) {
+    const old = live(was);
+    if (old && me) {
+      await change((b) => {
+        const r = b.waits.find((w) => w.by === was && !w.done);
+        if (r) r.by = me;
+        return { ok: true };
+      });
+      board = await store.load(FILE);
+      row = live(me);
+    } else if (old) {
+      /* No localStorage at all — a private window. The cookie is the only key
+         they have and it still names their row, so it is used as it is and
+         nothing is rebound to an id that does not exist. */
+      row = old;
+    }
+  }
+  if (res && row) setWaitCookie(res, row.by);
+  return { board, row, who: row ? row.by : me };
+}
 
 /** Is this request from a browser that has spent a code? Cookie or header. */
 async function admittedReq(req) {
@@ -1781,7 +1867,14 @@ app.get("/api/hello", async (req, res) => {
    * request without it simply gets false, which is the form, which is right.
    */
   const asking = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
-  const already = Boolean(asking && board.waits.some((w) => w.by === asking && !w.done));
+  /* The cookie counts here too. A browser that has forgotten itself sends a
+     new id and the old cookie, and showing it the form again is how one
+     person becomes two rows — the whole thing the cookie exists to stop.
+     Read only: the rebinding belongs on a route about one person, not on the
+     one every visitor to the front page hits. */
+  const kept = waitCookie(req);
+  const already = board.waits.some((w) => !w.done
+    && ((asking && w.by === asking) || (kept && w.by === kept)));
 
   res.json({
     featured,
@@ -1869,6 +1962,11 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
     return { ok: true, again: at >= 0 };
   });
   if (out?.error) return res.status(400).json(out);
+  /* THE COOKIE IS SET HERE, on the way out of joining, and not on the first
+     edit afterwards — most people fill in the form and close the tab, and
+     those are exactly the ones who would otherwise lose the row when their
+     browser forgets itself. See waitingRow. */
+  if (me && (out?.ok || out?.again)) setWaitCookie(res, me);
   res.json(out);
 });
 
@@ -1900,16 +1998,17 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
  *  anybody else, because the only thing it will answer about is the asker.
  */
 app.get("/api/wait/me", async (req, res) => {
-  const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  /* Either key — the browser's own id, or the cookie it was given when it
+     joined. See waitingRow: a browser that has forgotten itself is found by
+     the cookie and the row moves to its new id. */
+  const { board, row: mine, who: me } = await waitingRow(req, res);
 
   /* Already a member, asking anyway — a browser that was let in and then
      opened the address it used to use. Said plainly rather than as an empty
      room, so the page can send them somewhere better. */
   if (me && board.people.some((q) => q.by === me)) return res.json({ inside: true });
 
-  const mine = me ? board.waits.find((w) => w.by === me && !w.done) : null;
   if (!mine) return res.json({ on: false });
 
   /* HOW MANY ARE AHEAD, and it is a queue position rather than a ranking.
@@ -1984,8 +2083,8 @@ app.get("/api/wait/me", async (req, res) => {
  *  writable here, and not in anything /api/wait/me returns.
  */
 app.post("/api/wait/card", express.json({ limit: "2kb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || req.get("x-board-device") || ""), SALT);
-  if (!me) return res.status(400).json({ error: "who" });
+  const { row, who: me } = await waitingRow(req, res);
+  if (!me && !row) return res.status(400).json({ error: "who" });
   const out = await change((board) => {
     const at = board.waits.findIndex((w) => w.by === me && !w.done);
     /* No row is not an error worth a red screen: a member takes the same
@@ -2046,8 +2145,8 @@ app.post("/api/wait/card", express.json({ limit: "2kb" }), async (req, res) => {
  *  after release would make releasing it mean nothing.
  */
 app.post("/api/wait/photo", express.json({ limit: "36mb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || req.get("x-board-device") || ""), SALT);
-  if (!me) return res.status(400).json({ error: "who" });
+  const { row, who: me } = await waitingRow(req, res);
+  if (!me && !row) return res.status(400).json({ error: "who" });
   const data = String(req.body?.photo || "");
   if (!data) return res.status(400).json({ error: "none" });
   const buf = Buffer.from(data, "base64");
