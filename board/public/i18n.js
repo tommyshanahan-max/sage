@@ -802,9 +802,11 @@ export const STRINGS = {
      worse than no button. */
   "wr.shareGo":      ["Copy the link", "复制链接"],
   "wr.shareSheet":   ["Share", "分享"],
+  /* Only shown inside WeChat, where it is the answer. Everywhere else the
+     share sheet already has WeChat in it and this is noise. */
   "wr.shareWeChat": [
-    "In WeChat: tap ••• at the top right, then Send to Friend.",
-    "在微信里：点右上角的 •••，然后选「发送给朋友」。",
+    "To put it in a chat: tap ••• at the top right, then Send to Friend — or Open in Safari and use Share.",
+    "要发到聊天里：点右上角的 •••，选「发送给朋友」——或者「在 Safari 中打开」再用分享。",
   ],
   "wr.shareHold":    ["Or press and hold to copy it:", "或者长按复制："],
 

@@ -808,8 +808,12 @@ function shareBox(link, ahead) {
   wrap.append(go, said);
   /* WeChat's own menu is the only way to put this in a chat from inside
      WeChat, so the page says where that menu is rather than pretending it
-     can do it. */
-  wrap.append(el("p", "hold", T("wr.shareWeChat")));
+     can do it — and says it only in there. In Safari the share sheet
+     already offers WeChat, and an instruction about a menu that is not on
+     the screen is a sentence somebody has to work out is not for them. */
+  if (/MicroMessenger/i.test(navigator.userAgent)) {
+    wrap.append(el("p", "hold", T("wr.shareWeChat")));
+  }
   wrap.append(el("p", "hold", T("wr.shareHold")));
   wrap.append(el("p", "shareurl", url));
 
