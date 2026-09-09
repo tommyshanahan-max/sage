@@ -70,8 +70,8 @@ if (cmd === "setup") {
     /* Nowhere to send anybody. Accepting here ends in a sentence, which the
        offer page handles — see the `took` line in public/index.html. */
     goTo: "", seats: 0,
-    claim: "Every early raise keeps its record somewhere that cannot defend itself.",
-    sub: "Screenshots, a spreadsheet, and what somebody remembers being promised. Then counsel is asked to turn that into a cap table.",
+    claim: "Early founder deals get done on a napkin.",
+    sub: "Then somebody has to remember what it said, years later, when it has become expensive to remember it wrong. We keep the record instead.",
     goal: "250 projects keeping their record here inside three years. The business is the ledger, not any one thing on it — and the first thing on it is already running.",
     marks: [
       { val: "1", when: "on it today" },
