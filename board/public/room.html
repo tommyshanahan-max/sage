@@ -783,18 +783,22 @@ function shareBox(link, ahead) {
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("d", "M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7M12 15V3m0 0L8 7m4-4l4 4");
   svg.append(path);
-  go.append(svg, document.createTextNode(T("wr.shareGo")));
+  /* The label is what the tap will actually do. Inside WeChat there is no
+     share sheet — it blocks the API deliberately — so a button saying "Share
+     to WeChat" did nothing when tapped, which is worse than no button. It
+     copies; where a real sheet exists it offers that instead. */
+  const sheet = Boolean(navigator.share);
+  go.append(svg, document.createTextNode(T(sheet ? "wr.shareSheet" : "wr.shareGo")));
 
   const said = el("p", "said");
   go.addEventListener("click", async () => {
-    /* The real sheet if the browser has one. A cancelled share throws, and a
-       cancellation is not a failure — it is somebody changing their mind, so
-       it says nothing rather than an error. */
-    if (navigator.share) {
+    if (sheet) {
       try {
         await navigator.share({ title: document.title, url });
         return;
       } catch (e) {
+        /* Cancelling is somebody changing their mind, not a failure — say
+           nothing. Anything else, fall through and copy instead. */
         if (e && e.name === "AbortError") return;
       }
     }
@@ -802,6 +806,10 @@ function shareBox(link, ahead) {
   });
 
   wrap.append(go, said);
+  /* WeChat's own menu is the only way to put this in a chat from inside
+     WeChat, so the page says where that menu is rather than pretending it
+     can do it. */
+  wrap.append(el("p", "hold", T("wr.shareWeChat")));
   wrap.append(el("p", "hold", T("wr.shareHold")));
   wrap.append(el("p", "shareurl", url));
 

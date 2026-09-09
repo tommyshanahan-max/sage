@@ -794,8 +794,18 @@ export const STRINGS = {
     "每有一个人通过你的链接加入，你就在名单上往前一位。",
   ],
   "wr.sharePlace":   ["You are number {n} in the queue right now.", "你现在排在第 {n} 位。"],
-  "wr.shareGo":      ["Share to WeChat", "分享到微信"],
-  "wr.shareCopy":    ["Copy the link", "复制链接"],
+  /* WHAT A WEB PAGE CAN ACTUALLY DO. "Share to WeChat" promised something no
+     page can do from inside WeChat — it blocks the share API on purpose and
+     there is no way to hand it a link. Copying is the thing that works, so
+     the button says that, and the sentence under it points at WeChat's own
+     menu, which is the real way. A button that does nothing when tapped is
+     worse than no button. */
+  "wr.shareGo":      ["Copy the link", "复制链接"],
+  "wr.shareSheet":   ["Share", "分享"],
+  "wr.shareWeChat": [
+    "In WeChat: tap ••• at the top right, then Send to Friend.",
+    "在微信里：点右上角的 •••，然后选「发送给朋友」。",
+  ],
   "wr.shareHold":    ["Or press and hold to copy it:", "或者长按复制："],
 
   "wr.others":       ["Waiting with you", "和你一起等的人"],
