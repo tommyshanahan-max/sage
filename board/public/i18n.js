@@ -777,6 +777,27 @@ export const STRINGS = {
     "最早进来的一百个人，将会获得这个板子的一部分。具体怎么算还在拟定中，都还没有定下来。",
   ],
 
+  /* SHARING, SAID AS A THING TO DO RATHER THAN A BUTTON TO FIND. It was one
+     line inside the seat block, so turning that block off removed the only
+     way to do the one thing this room asks for. Out here it is its own
+     panel, above the fold, with the address visible — WeChat's browser has
+     no share sheet and often no clipboard either, and a link somebody can
+     read and long-press is the one that works when both are missing. */
+  "wr.shareHead":    ["Your link", "你的链接"],
+  /* WHAT IT PAYS, FIRST AND IN THE SAME BREATH AS THE BUTTON. "Counted as
+     brought in by you" is bookkeeping; moving up the list is the thing
+     somebody waiting actually wants, it happens the moment the row is
+     created, and it is true — see queueOrder in server.js, where a place is
+     the arrival order minus the people brought in. */
+  "wr.shareWhy": [
+    "Every person who joins through your link moves you one place up the list.",
+    "每有一个人通过你的链接加入，你就在名单上往前一位。",
+  ],
+  "wr.sharePlace":   ["You are number {n} in the queue right now.", "你现在排在第 {n} 位。"],
+  "wr.shareGo":      ["Share to WeChat", "分享到微信"],
+  "wr.shareCopy":    ["Copy the link", "复制链接"],
+  "wr.shareHold":    ["Or press and hold to copy it:", "或者长按复制："],
+
   "wr.others":       ["Waiting with you", "和你一起等的人"],
   "wr.othersNone": [
     "Nobody else has joined since the list started keeping cards.",

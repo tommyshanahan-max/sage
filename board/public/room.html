@@ -218,6 +218,23 @@
   .seatex{margin:.8rem 0 0;font-size:.75rem;line-height:1.55;color:var(--muted)}
   .soonnote{margin:1.4rem 0 0;padding:.9rem 1rem;border-left:2px solid var(--accent);
     background:var(--raise);border-radius:0 8px 8px 0;font-size:.88rem;color:var(--ink-2)}
+  /* Sharing, as its own panel rather than a line inside something else. */
+  .wrshare{margin:1.4rem 0 0;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:1.1rem}
+  .wrshare .sharewhy{margin:0 0 .85rem;font-size:.88rem;color:var(--ink-2)}
+  .wrshare .sharego{width:100%;border:0;border-radius:99px;background:var(--accent);
+    color:var(--accent-ink);padding:.85rem;font-size:1rem;font-weight:600;
+    font-family:inherit;cursor:pointer;display:flex;align-items:center;
+    justify-content:center;gap:.5rem}
+  .wrshare .sharego svg{width:1.1rem;height:1.1rem;fill:none;stroke:currentColor;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .wrshare .hold{margin:.9rem 0 .35rem;font-size:.78rem;color:var(--muted)}
+  /* The address itself, readable and selectable. WeChat's browser often has
+     neither a share sheet nor a clipboard, and then this is the whole way. */
+  .wrshare .shareurl{margin:0;padding:.6rem .7rem;background:var(--raise);
+    border:1px solid var(--hair);border-radius:8px;font-size:.8rem;
+    color:var(--ink-2);word-break:break-all;user-select:all;-webkit-user-select:all}
+  .wrshare .said{margin:.6rem 0 0;font-size:.82rem;color:var(--accent);min-height:1.1em}
   .seatgo{display:block;width:100%;margin:.85rem 0 0;padding:.65rem;border:0;
     border-radius:99px;background:var(--accent);color:var(--accent-ink);
     font:inherit;font-weight:600;font-size:.9rem;cursor:pointer}
@@ -735,6 +752,64 @@ function seatBox(seat) {
   return wrap;
 }
 
+/** THEIR LINK, AS THE ONE THING THIS ROOM ASKS ANYBODY TO DO.
+ *
+ *  It was a line inside the seat block, so turning that block off removed
+ *  sharing from the room entirely. It is its own panel now, drawn whether the
+ *  block is on or off, and high enough that nobody has to go looking.
+ *
+ *  THREE WAYS, because on the phones this runs on any one of them can be
+ *  missing. navigator.share opens the real sheet — WeChat included — and is
+ *  the one people expect; it exists on iOS Safari and not in much else. The
+ *  clipboard is the fallback, and WeChat's webview sometimes refuses that
+ *  too. So the address is printed underneath, selectable, for the case where
+ *  both fail and somebody has to press and hold it like any other text.
+ */
+function shareBox(link, ahead) {
+  const url = location.origin + link;
+  const wrap = el("div", "wrshare");
+  const head = el("div", "wrhead");
+  head.append(el("span", null, T("wr.shareHead")), el("i"));
+
+  wrap.append(el("p", "sharewhy", T("wr.shareWhy")));
+  /* And where that leaves them today, so the promise has a number attached
+     rather than being a sentence about the future. */
+  wrap.append(el("p", "hold", T("wr.sharePlace", { n: (ahead || 0) + 1 })));
+
+  const go = el("button", "sharego");
+  go.type = "button";
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7M12 15V3m0 0L8 7m4-4l4 4");
+  svg.append(path);
+  go.append(svg, document.createTextNode(T("wr.shareGo")));
+
+  const said = el("p", "said");
+  go.addEventListener("click", async () => {
+    /* The real sheet if the browser has one. A cancelled share throws, and a
+       cancellation is not a failure — it is somebody changing their mind, so
+       it says nothing rather than an error. */
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: document.title, url });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return;
+      }
+    }
+    said.textContent = T(copyText(url) ? "act.copied" : "act.copyFail");
+  });
+
+  wrap.append(go, said);
+  wrap.append(el("p", "hold", T("wr.shareHold")));
+  wrap.append(el("p", "shareurl", url));
+
+  const out = document.createElement("div");
+  out.append(head, wrap);
+  return out;
+}
+
 function drawWait(box) {
   const you = DATA.you;
 
@@ -787,6 +862,12 @@ function drawWait(box) {
   if (you.photo && you.photoState !== "published") {
     box.append(el("p", "under wait", T("wr.photoHeld")));
   }
+
+  /* SHARING, DIRECTLY UNDER THE CARD. It is the one act this room asks for
+     and it pays the thing somebody waiting wants, so it goes above the
+     optional tests rather than below them — and above the seat block, which
+     may not be on at all. */
+  if (DATA.link) box.append(shareBox(DATA.link, DATA.ahead));
 
   const head = el("div", "wrhead");
   head.append(el("span", null, T(full ? "wr.done" : "wr.fill")), el("i"));

@@ -2243,6 +2243,13 @@ app.get("/api/wait/me", async (req, res) => {
      * percentage, no money, and nothing to click. One switch does both: the
      * block is on, or the sentence is. */
     soon: !SEAT_OUTSIDE,
+    /* THEIR LINK, ALWAYS — not only when the seat block is on.
+     *
+     * It used to live inside seat.link, so turning the block off took the
+     * only way to share with it, and sharing is the one thing this room asks
+     * anybody to do. It is their row's id, not their device: an id that
+     * survives them clearing the browser, which the device hash does not. */
+    link: "/r/" + (mine.room === "other" ? "other" : mine.room) + "?w=" + mine.id,
   });
 });
 
