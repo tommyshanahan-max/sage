@@ -694,32 +694,77 @@ export const STRINGS = {
      the seat page behind the door, where the reader is a member. Out here it
      is a count out of a hundred, three rows and a link, and one line saying
      in as many words that none of it is a promise of money. */
-  "wr.seat":         ["Your seat", "你的位子"],
-  "wr.seatOf":       ["of the founding hundred", "创始一百人之一"],
-  "wr.seatLeft":     ["{left} seats left · {n} people in so far",
-                      "还剩 {left} 个位子 · 目前进来了 {n} 个人"],
-  "wr.way1":         ["Bring somebody in who stays", "带一个留下来的人进来"],
-  /* WHAT IT ACTUALLY DOES FOR THEM, and it has to be something. Until this
-     line was true, the whole of what Send your link paid somebody was a
-     counter going up — and a reward that is only a number is the kind of
-     thing people notice. One place per person is small, it is delivered the
-     moment it ships, and it is not a promise about money. */
-  "wr.way1sub":      ["Each one moves you up a place", "每带进来一个，你就往前一位"],
-  "wr.wayNone":      ["none yet", "还没有"],
-  "wr.wayN":         ["{n} so far", "已经 {n} 个"],
-  "wr.way2":         ["Being early", "来得早"],
-  "wr.way2sub":      ["Counts more the lower your number", "号码越靠前，算得越多"],
-  "wr.waySeat":      ["seat {n}", "第 {n} 号"],
-  "wr.way3":         ["Turning up", "常来"],
-  "wr.way3sub":      ["Each week you are here", "在这里的每一周"],
-  "wr.wayWeek":      ["week {n}", "第 {n} 周"],
+  "wr.seat":         ["Founding early adopters", "创始早期成员"],
+  /* PLACES LEFT, NOT SEATS TAKEN. "20 of 100 are in" told somebody deciding
+     whether to bother that nobody was here yet. Same subtraction, and the
+     other side of it is the one that is also useful. */
+  "wr.seatLeft":     ["{n} places left", "还剩 {n} 个名额"],
+  "wr.seatShut":     ["When the hundred is full, the founding group closes.",
+                      "一百人满了，创始这一批就关闭了。"],
+
+  /* WHAT THE WORDS MEAN, because a name nobody can define is a name nobody
+     trusts. Said as what it is and what it is not — no job, nothing bought,
+     no certificate — so the reader can decide rather than guess. */
+  "wr.seatWhat":     ["What is a founding early adopter?", "什么叫创始早期成员？"],
+  "wr.seatWhatP": [
+    "One of the first hundred people whose page goes up here. Your number is set the day you are let in and never moves again, and the lower it is, the more it counts. It is not a job, it is not bought, and it is not a share certificate. It is a place in the group that showed up first.",
+    "在这里最早发布个人页的一百个人之一。你的号码在被放进来那天定下，之后不再变动；号码越靠前，算得越多。这不是一份工作，不用花钱买，也不是股权证书。它是最早来的那一批人里的一个位置。",
+  ],
+
+  "wr.seatNow":      ["Your share today", "你今天的份额"],
+  "wr.seatPts":      ["{p} points · {pc}% of what the hundred hold",
+                      "{p} 分 · 占一百人总数的 {pc}%"],
+  "wr.seatNoMoney":  ["{p} points of what the hundred hold",
+                      "在一百人总数里的 {p} 分"],
+
+  /* THE ONE ACT WORTH THE MOST, at the top, with the figure it moves. The
+     block used to lead with the seat number, which is worth 41 points at seat
+     24 — the smallest number on the screen in the largest type. One person
+     who gets in and stays is 100. That ordering is the whole block. */
+  "wr.seatLift":     ["Bring one person in who stays", "带一个留下来的人进来"],
+  "wr.seatLiftP": [
+    "One person who is let in and posts is worth {n} points, every time.",
+    "一个被放进来并且发帖的人，每次值 {n} 分。",
+  ],
+  /* THE GATE, SAID OUT LOUD. Anybody can send a link; only the ones let in
+     count, and letting in is not theirs to do. Said here rather than
+     discovered later by somebody who sent forty. */
+  "wr.seatGate": [
+    "Sending a link pays nothing on its own. It counts when that person is let in and posts — and who gets let in is not up to you.",
+    "光把链接发出去本身不算数。要等那个人被放进来并且发帖才算——而放谁进来不由你决定。",
+  ],
+  "wr.seatSent":     ["{n} sent so far", "已经发出 {n} 个"],
+  "wr.seatSentNone": ["none sent yet", "还没发过"],
+
+  "wr.seatRest":     ["The rest, once you are in", "进来之后的其他部分"],
+  "wr.rowCard":      ["An introduction that lands", "一次促成的引荐"],
+  "wr.rowHeard":     ["Someone answers your post", "有人回你的帖子"],
+  "wr.rowWeek":      ["A week you show up", "你出现的每一周"],
+  "wr.rowSeat":      ["Being seat {n} — counted once", "第 {n} 号——只算一次"],
+  "wr.rowPts":       ["{n} pts", "{n} 分"],
+  "wr.rowEach":      ["{n} pts each", "每次 {n} 分"],
+
   "wr.seatSend":     ["Send your link", "把你的链接发出去"],
-  /* The whole of what is claimed, and it claims nothing. The number moves,
-     the hundred is fixed, the arithmetic is inside, and none of this is money
-     — said plainly rather than left for somebody to assume otherwise. */
+
+  /* WHERE THE MONEY COMES FROM, on the screen with the figure rather than a
+     page away from it. A number whose inputs are visible is an illustration;
+     the same number on its own is a forecast, and a forecast is the thing
+     nobody should be reading here. */
+  "wr.seatEx": [
+    "Worked at a sale of {sale} with members holding {cut}%. Both are examples for showing the arithmetic — not offers, not forecasts, and not a valuation of anything.",
+    "按售价 {sale}、成员共持有 {cut}% 算出来的。这两个数字只是用来演示算法的例子——不是报价，不是预测，也不是对任何东西的估值。",
+  ],
+  /* THE DILUTION, said before somebody works it out and concludes they were
+     had. The figure is what one person holds if they do this and others do
+     not; everybody doing it grows the denominator. */
+  "wr.seatDilute": [
+    "This is what you would hold if you did it and others did not. The more people everybody brings, the more ways the same pool divides.",
+    "这是在别人没这么做、而你做了的情况下你会持有的份额。大家带进来的人越多，同一份池子分的份数就越多。",
+  ],
+
   "wr.seatFine": [
-    "Your number moves as people are let in or turned down. What a seat comes to is up to whoever runs this board, could change, and only means anything if it is ever sold. Nothing here is a promise of money.",
-    "随着有人被放进来或被回绝，你的号码会变动。一个位子最后值什么，由运营这个板子的人决定，可能会变，而且只有在这个板子真的被卖掉时才有意义。这里没有任何关于钱的承诺。",
+    "Your number moves as people are let in or turned down. What a place comes to is up to whoever runs this board, could change, and only means anything if it is ever sold. Nothing here is a promise of money.",
+    "随着有人被放进来或被回绝，你的号码会变动。一个位置最后值什么，由运营这个板子的人决定，可能会变，而且只有在这个板子真的被卖掉时才有意义。这里没有任何关于钱的承诺。",
   ],
 
   "wr.others":       ["Waiting with you", "和你一起等的人"],

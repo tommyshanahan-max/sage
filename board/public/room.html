@@ -189,6 +189,33 @@
     line-height:1.4}
   .way .v{flex:none;font-size:.8rem;font-weight:600;color:var(--accent)}
   .way .v.grey{color:var(--muted);font-weight:500}
+  /* The share, and the one act that moves it. The block used to lead with the
+     seat number — 41 points at seat 24, the smallest number on the screen in
+     the largest type. It leads with what somebody actually gets now. */
+  .seatnow{margin:0;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--muted)}
+  .seatbig{margin:.15rem 0 0;font-size:2.4rem;line-height:1.05;letter-spacing:-.025em;
+    font-weight:650}
+  .seatpts{margin:.3rem 0 0;font-size:.86rem;color:var(--ink-2)}
+  .seatwhat{margin:.9rem 0 0;border-top:1px solid var(--hair);padding-top:.85rem}
+  .seatwhat summary{cursor:pointer;color:var(--accent);font-size:.88rem;list-style:none}
+  .seatwhat summary::-webkit-details-marker{display:none}
+  .seatwhat summary::before{content:"›";display:inline-block;margin-right:.4rem}
+  .seatwhat[open] summary::before{transform:rotate(90deg)}
+  .seatwhat p{margin:.6rem 0 0;font-size:.86rem;color:var(--ink-2)}
+  .seatlift{margin:1rem 0 0;background:var(--accent-soft);border:1px solid var(--line);
+    border-radius:12px;padding:.95rem}
+  .seatlift .lab{margin:0 0 .4rem;font-size:.78rem;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--accent)}
+  .seatlad{display:flex;align-items:baseline;gap:.5rem;margin:0;flex-wrap:wrap}
+  .seatlad .from{font-size:1rem;color:var(--muted);text-decoration:line-through}
+  .seatlad .to{font-size:1.7rem;font-weight:650;letter-spacing:-.02em}
+  .seatlift .x{margin:.45rem 0 0;font-size:.84rem;color:var(--ink-2)}
+  .seatgate{margin:.55rem 0 0;font-size:.79rem;line-height:1.5;color:var(--muted)}
+  .seatrest{margin:1.05rem 0 0;padding-top:.85rem;border-top:1px solid var(--hair)}
+  .seatrest .h{margin:0 0 .5rem;font-size:.76rem;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--muted)}
+  .seatex{margin:.8rem 0 0;font-size:.75rem;line-height:1.55;color:var(--muted)}
   .seatgo{display:block;width:100%;margin:.85rem 0 0;padding:.65rem;border:0;
     border-radius:99px;background:var(--accent);color:var(--accent-ink);
     font:inherit;font-weight:600;font-size:.9rem;cursor:pointer}
@@ -594,49 +621,74 @@ function hundred(seat) {
   return box;
 }
 
-/** One of the three things that move a seat. */
-function way(key, sub, value, dim) {
-  const row = el("div", "way");
-  const t = el("span", "t", T(key));
-  t.append(el("small", null, T(sub)));
-  row.append(t, el("span", dim ? "v grey" : "v", value));
-  return row;
-}
-
-/** WHAT A SEAT IS, OUTSIDE THE DOOR.
+/** WHAT A PLACE IS, OUTSIDE THE DOOR.
  *
- *  NO FIGURE IN MONEY AND NO PERCENTAGE anywhere on it. Those live on the
- *  seat page behind the door, where the reader is a member and the arithmetic
- *  is theirs. Out here it is a count, three rows and a link — because a
- *  projected payout shown to strangers to get them to sign up is a different
- *  kind of sentence entirely, and it is not needed for any of what this
- *  screen is for.
+ *  TURNED THE RIGHT WAY UP. The block led with the seat number in the largest
+ *  type on the screen, and a seat is worth FOUND(n) points — 41 at seat 24,
+ *  20 at seat 100. One person who is let in and stays is worth 100. So the
+ *  biggest type held the smallest number, the row that pays most was a grey
+ *  line at the bottom, and nobody reading it could tell what they were being
+ *  asked to do or why. Every row now ends in a number and the largest number
+ *  is at the top.
  *
- *  WHAT IT IS FOR: the link. Eighteen people were waiting and not one of them
- *  had a reason to tell anybody. This gives them one, in the place they are
- *  already sitting, and the reason is true — a seat is a share of something,
- *  and more people is what makes the something worth having.
+ *  MONEY ONLY IF SOMEBODY SET THE TWO NUMBERS. seat.money is null unless a
+ *  sale figure and a members' share are both configured, and then the screen
+ *  falls back to points and a percentage. Nothing invented reaches a reader.
+ *
+ *  THE GATE IS SAID OUT LOUD. Anybody may send their link; only a person who
+ *  is let in and posts pays anything, and letting in is not theirs to do. A
+ *  reward that looked like it paid per link sent is a reward that gets forty
+ *  links sent to strangers.
  */
 function seatBox(seat) {
   const wrap = document.createElement("div");
   const head = el("div", "wrhead");
-  head.append(el("span", null, T("wr.seat")), el("i"));
+  head.append(el("span", null, T("wr.seat") + " · " + T("wr.seatLeft", { n: seat.left })),
+    el("i"));
   wrap.append(head);
 
   const card = el("div", "seat");
-  const n = el("div", "seatn");
-  n.append(el("b", null, String(seat.n)), el("span", null, T("wr.seatOf")));
-  card.append(n);
-  card.append(el("p", "seatleft", T("wr.seatLeft",
-    { left: Math.max(0, seat.seats - seat.taken), n: seat.taken })));
-  card.append(hundred(seat));
+  const money = seat.money;
+  /* Their share of the hundred, to two places — small numbers that climb
+     rather than a big one that falls. See POOL in server.js. */
+  const pc = (seat.pts * 100 / seat.pool).toFixed(2);
+  const cash = (n) => "$" + Number(n).toLocaleString();
 
-  const ways = el("div", "ways");
-  ways.append(way("wr.way1", "wr.way1sub",
-    seat.brought ? T("wr.wayN", { n: seat.brought }) : T("wr.wayNone"), !seat.brought));
-  ways.append(way("wr.way2", "wr.way2sub", T("wr.waySeat", { n: seat.n })));
-  ways.append(way("wr.way3", "wr.way3sub", T("wr.wayWeek", { n: seat.weeks })));
-  card.append(ways);
+  card.append(el("p", "seatnow", T("wr.seatNow")));
+  /* The figure on its own line and the arithmetic under it. Side by side, the
+     points wrapped into a second line beside a 2.4rem number and the block
+     opened on a ragged shape. */
+  /* With no sale figure the headline is the share itself. It used to be the
+     points, which the line underneath then repeated word for word. */
+  card.append(el("p", "seatbig", money ? cash(money.at[0].money) : pc + "%"));
+  /* No sale figure set: points and a percentage are true without one and
+     carry the same ordering, so the block still works. */
+  card.append(el("p", "seatpts",
+    T(money ? "wr.seatPts" : "wr.seatNoMoney", { p: seat.pts, pc })));
+  card.append(el("p", "seatleft", T("wr.seatShut")));
+
+  const what = document.createElement("details");
+  what.className = "seatwhat";
+  const sum = document.createElement("summary");
+  sum.textContent = T("wr.seatWhat");
+  what.append(sum, el("p", null, T("wr.seatWhatP")));
+  card.append(what);
+
+  /* THE ONE ACT WORTH THE MOST, with the figure it moves. */
+  const lift = el("div", "seatlift");
+  lift.append(el("p", "lab", T("wr.seatLift")));
+  const lad = el("p", "seatlad");
+  if (money) {
+    lad.append(el("span", "from", cash(money.at[0].money)));
+    lad.append(el("span", "to", cash(money.at[1].money)));
+  } else {
+    lad.append(el("span", "from", String(seat.pts)));
+    lad.append(el("span", "to", String(seat.pts + seat.worth.guest)));
+  }
+  lift.append(lad);
+  lift.append(el("p", "x", T("wr.seatLiftP", { n: seat.worth.guest })));
+  lift.append(el("p", "seatgate", T("wr.seatGate")));
+  card.append(lift);
 
   /* The link, copied rather than opened. A share sheet is a different button
      on every phone and missing in WeChat's browser; the clipboard is the one
@@ -651,6 +703,31 @@ function seatBox(seat) {
     said.className = "seatsaid on";
   });
   card.append(go, said);
+
+  /* EVERYTHING ELSE, each row ending in a number, with their own seat among
+     them rather than above them — because that is its size. */
+  const rest = el("div", "seatrest");
+  rest.append(el("p", "h", T("wr.seatRest")));
+  const rows = el("div", "ways");
+  const row = (label, value, dim) => {
+    const r = el("div", "way");
+    r.append(el("span", "t", label), el("span", dim ? "v grey" : "v", value));
+    rows.append(r);
+  };
+  row(T("wr.rowCard"), T("wr.rowEach", { n: seat.worth.card }));
+  row(T("wr.rowHeard"), T("wr.rowEach", { n: seat.worth.heard }));
+  row(T("wr.rowWeek"), T("wr.rowEach", { n: seat.worth.week }));
+  row(T("wr.rowSeat", { n: seat.n }), T("wr.rowPts", { n: seat.pts }), true);
+  rest.append(rows);
+  card.append(rest);
+
+  card.append(hundred(seat));
+
+  if (money) {
+    card.append(el("p", "seatex",
+      T("wr.seatEx", { sale: cash(money.sale), cut: money.cut })));
+    card.append(el("p", "seatex", T("wr.seatDilute")));
+  }
   card.append(el("p", "seatfine", T("wr.seatFine")));
   wrap.append(card);
   return wrap;

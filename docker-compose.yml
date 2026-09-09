@@ -862,6 +862,8 @@ services:
       # unless this is 1 — see SEAT_OUTSIDE in server.js for why it is a
       # switch and not a decision written into the code.
       BOARD_SEAT_OUTSIDE: ${TOMSCODING_BOARD_SEAT_OUTSIDE:-}
+      BOARD_STAKE_SALE: ${TOMSCODING_BOARD_STAKE_SALE:-}
+      BOARD_STAKE_CUT: ${TOMSCODING_BOARD_STAKE_CUT:-}
     volumes:
       - board_data:/data
     expose:

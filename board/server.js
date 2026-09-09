@@ -1435,6 +1435,29 @@ const FOUND = (n) => Math.round(200 / Math.sqrt(Math.max(1, n)));
    number on it. */
 const WORTH = { guest: 100, card: 40, heard: 20, week: 10 };
 
+/* THE WHOLE HUNDRED'S FOUNDING POINTS, which is what a share is divided by.
+   Against today's members instead, an early seat reads as some enormous
+   fraction and then falls fivefold as the hundred fill — a number that only
+   ever goes down is a grievance waiting to happen. Against the full hundred
+   it starts small and climbs as they earn, which is both truer to what they
+   end up holding and the only version nobody feels robbed by. */
+const POOL = (() => { let t = 0; for (let n = 1; n <= SEATS; n++) t += FOUND(n); return t; })();
+
+/* MONEY, AND ONLY IF SOMEBODY DECIDED THE TWO NUMBERS.
+ *
+ * A sale figure and what share of it members hold. Neither has a default and
+ * neither is guessed: unset, the block shows points and a percentage and no
+ * money appears anywhere on it. An invented figure on this screen is the one
+ * thing here that could fairly be called a promise, so it takes a deliberate
+ * act to put one there.
+ *
+ * SALE is an illustration, not a valuation, and the screen says so. */
+const SALE = Math.max(0, Number(process.env.BOARD_STAKE_SALE || 0));
+const CUT = Math.min(100, Math.max(0, Number(process.env.BOARD_STAKE_CUT || 0)));
+const moneyOn = () => SALE > 0 && CUT > 0;
+/** What n points come to, at the two configured numbers. Null if they are not set. */
+const inMoney = (pts) => moneyOn() ? Math.round((SALE * (CUT / 100)) * pts / POOL) : null;
+
 /** What one member has put in, and what each part of it came from. */
 function stakeOf(board, who) {
   const zero = { points: 0, parts: [], seat: 0 };
@@ -2154,6 +2177,28 @@ app.get("/api/wait/me", async (req, res) => {
       taken: inAlready,
       brought,
       weeks: Math.max(1, Math.ceil((Date.now() - began) / (7 * 86400000))),
+      /* PLACES LEFT, not seats taken. The same subtraction either way, but
+         "20 of 100 are in" reads as an empty room to somebody deciding
+         whether this is worth their time, and "80 places left" reads as a
+         thing running out. Both are true; one of them is also useful. */
+      left: Math.max(0, SEATS - inAlready),
+      /* WHAT EACH THING IS WORTH, so the screen can end every row in a
+         number instead of asking somebody to hold a four-step chain in their
+         head. Being early is worth 200/sqrt(seat) — 41 at seat 24 — and one
+         person who gets in and stays is worth 100. That ordering is the whole
+         argument for the block, and it only lands if both numbers are on it. */
+      pts: FOUND(Math.min(SEATS, inAlready + ahead + 1)),
+      worth: WORTH,
+      pool: POOL,
+      /* Money only if somebody set the two numbers. See moneyOn(). */
+      money: moneyOn() ? {
+        sale: SALE, cut: CUT,
+        /* The ladder, at guests who got in AND posted — the only ones that
+           pay. Sent links are not on it, because sent links pay nothing. */
+        at: [0, 1, 3, 10].map((g) => ({
+          g, money: inMoney(FOUND(Math.min(SEATS, inAlready + ahead + 1)) + g * WORTH.guest),
+        })),
+      } : null,
       // The link they send. Their row's id, not their device — an id that
       // survives them clearing the browser, which the device hash does not.
       link: "/r/" + (mine.room === "other" ? "other" : mine.room) + "?w=" + mine.id,
