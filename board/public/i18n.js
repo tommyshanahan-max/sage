@@ -718,8 +718,8 @@ export const STRINGS = {
      the hundred is fixed, the arithmetic is inside, and none of this is money
      — said plainly rather than left for somebody to assume otherwise. */
   "wr.seatFine": [
-    "Your number moves as people are let in or turned down. What a seat comes to is written down for members inside. Nothing here is a promise of money.",
-    "随着有人被放进来或被回绝，你的号码会变动。一个位子最后代表什么，写在里面给成员看。这里没有任何关于钱的承诺。",
+    "Your number moves as people are let in or turned down. What a seat comes to is up to whoever runs this board, could change, and only means anything if it is ever sold. Nothing here is a promise of money.",
+    "随着有人被放进来或被回绝，你的号码会变动。一个位子最后值什么，由运营这个板子的人决定，可能会变，而且只有在这个板子真的被卖掉时才有意义。这里没有任何关于钱的承诺。",
   ],
 
   "wr.others":       ["Waiting with you", "和你一起等的人"],
@@ -1627,12 +1627,16 @@ export const STRINGS = {
      point turns into is a promise on paper somewhere else, and a screen that
      hints at money before that paper exists is a screen that lies. */
   "stake.head":        ["Your seat", "你的位置"],
-  /* Under the number in the ring. Share, never ownership: what a point turns
-     into is a promise on paper somewhere else, and a word that says otherwise
-     on the screen is the one thing the note underneath then has to walk back. */
-  "stake.ring":        ["share", "占比"],
+  /* Under the number in the ring. Share, never ownership — and not "equity",
+     which is the word that describes a security and would put a page anybody
+     can open into a category it does not belong in. What a point comes to is
+     the operator's intention, said in stake.note below. */
+  "stake.ring":        ["of the points", "占积分"],
   "stake.total":       ["Total points", "总积分"],
-  "stake.share":       ["{n}% of the board", "占整个板子的 {n}%"],
+  /* NOT "{n}% of the board", which is the sentence a shareholder says. It is
+     a share of the points counted so far and nothing else — the same number,
+     naming the thing it is actually a proportion of. */
+  "stake.share":       ["{n}% of the points so far", "占目前全部积分的 {n}%"],
   "stake.seat":        ["Seat {n} of {seats}", "第 {n} 号，共 {seats} 个"],
   "stake.left":        ["{n} seats left", "还剩 {n} 个位置"],
   "stake.last":        ["1 seat left", "只剩 1 个位置了"],
@@ -1644,11 +1648,14 @@ export const STRINGS = {
   /* One line, not three. The panel is read in ten seconds by somebody who
      already knows what it is; the long version of this was the paragraph
      everybody scrolled past to reach the button underneath. */
+  /* WHAT STOPS ON THE DATE IS THE COUNTING. "Fixed" was about the points and
+     could be read as an entitlement becoming fixed, which is a commitment
+     nobody has made. The sentence says which of the two it is. */
   "stake.moves": [
-    "Moves until {date}, then it is fixed.",
-    "到 {date} 为止一直在动，之后就定下了。",
+    "Counting goes on until {date}.",
+    "积分会一直算到 {date}。",
   ],
-  "stake.frozen":      ["Fixed on {date}.", "已于 {date} 定下。"],
+  "stake.frozen":      ["Counting stopped on {date}.", "积分已于 {date} 停止计算。"],
   /* What earned it, in the order it is worth reading: the big one first. */
   "stake.p.guests":    ["{n} you brought in, who stayed", "{n} 个你带进来、并且留下的人"],
   "stake.p.heard":     ["{n} people answered you", "{n} 个人回过你"],
@@ -1663,9 +1670,16 @@ export const STRINGS = {
   "stake.p.found":     ["Being here early", "来得早"],
   /* Shorter, and still says the three things it has to: not money, not
      transferable, and the paper elsewhere is what counts. */
+  /* WHAT THIS LINE MAY NOT DO IS CLAIM A DOCUMENT.
+     It said "a separate promise in writing", and there is no such document —
+     which makes the most careful sentence on the screen the only untrue one,
+     and makes every figure above it rest on a piece of paper nobody can be
+     shown. What it says instead is exactly where things stand: an intention,
+     the operator's, changeable, and worth nothing unless the board is ever
+     sold. When the terms are written down this becomes a link. */
   "stake.note": [
-    "Points, not money, and not transferable. What they are worth is a separate promise in writing.",
-    "是积分，不是钱，也不能转给别人。值多少，另有一份白纸黑字的承诺。",
+    "Points, not money, and not transferable. What they come to is up to whoever runs this board, could change, and only means anything if it is ever sold.",
+    "是积分，不是钱，也不能转给别人。最后值什么，由运营这个板子的人决定，可能会变，而且只有在这个板子真的被卖掉时才有意义。",
   ],
   "brw.inside":        ["{n} people are in.", "里面有 {n} 个人。"],
   /* Its own string rather than a plural rule. There is one number this ever
