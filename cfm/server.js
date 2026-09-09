@@ -230,6 +230,57 @@ app.get("/api/seals", async (_req, res) => {
 
 app.get("/f", (req, res, next) => page("founder.html", req, res, next));
 
+/* HOW MANY STRANGERS AT ONCE.
+ *
+ * Anyone can start a record, which is the point — but the whole ledger is one
+ * JSON file, and a script can fill it faster than anybody can read it. A cap
+ * on new records per hour is the cheapest thing that keeps the door open to a
+ * person and shut to a loop. It is not security; it is a rate. */
+const RECENT = () => Date.now() - 60 * 60 * 1000;
+const NEW_PER_HOUR = Math.max(1, Number(process.env.CFM_NEW_PER_HOUR || 20));
+
+/** START ONE. No key, no code, no invitation — this is somebody who has just
+ *  landed and has a deal to write down.
+ *
+ *  They get a key on the way out rather than being asked for one on the way
+ *  in. It is the same key `make cfm-owner` issues; the difference is only who
+ *  decided they should have it, and for a record of your own agreement that
+ *  should not have been me. */
+app.post("/api/me/new", express.json({ limit: "4kb" }), async (req, res) => {
+  const out = await change((data) => {
+    const since = new Date(RECENT()).toISOString();
+    if (data.owners.filter((o) => o.at > since).length >= NEW_PER_HOUR) return "slow";
+    const taken = new Set(data.owners.map((o) => o.key));
+    let key = store.newCode(12);
+    while (taken.has(key)) key = store.newCode(12);
+    const me = store.cleanOwner({ name: req.body?.name, key, projects: 3 });
+    if (!me) return null;
+    /* The project too, in the same breath. Landing on an empty desk and being
+       asked to "create a project" is a second decision for somebody who came
+       here with one thing to write down. */
+    const want = String(req.body?.project || "").trim();
+    if (!want) return null;
+    let id = want.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 34);
+    if (!id) id = "record";
+    /* Their chosen id may be somebody else's already. Theirs is the name; the
+       id is plumbing, so it is quietly made unique rather than refused. */
+    let uid = id, n = 2;
+    while (data.projects.some((x) => x.id === uid)) uid = id + "-" + n++;
+    const p = store.cleanProject({
+      id: uid, name: want, line: String(req.body?.line || ""),
+      owner: me.id, seats: 0,
+    });
+    if (!p) return null;
+    data.owners.push(me);
+    data.projects.push(p);
+    return { me, p };
+  });
+  if (out === "slow") return res.status(429).json({ error: "slow" });
+  if (!out) return res.status(400).json({ error: "bad" });
+  setMe(res, out.me.id);
+  res.json({ ok: true, name: out.me.name, key: out.me.key, project: out.p.id });
+});
+
 /** Spend an owner key. One person, once — after that the cookie carries them. */
 app.post("/api/me/in", express.json({ limit: "1kb" }), async (req, res) => {
   const key = store.cleanCode(req.body?.key);
@@ -253,7 +304,12 @@ app.get("/api/me", owner, async (req, res) => {
   const own = mine(data, req.me);
   res.json({
     ok: true,
-    me: { name: req.me.name, projects: req.me.projects },
+    /* Their own key, back to them. Issued keys were write-only on purpose —
+       I handed those out and losing one meant asking me. A key somebody was
+       given by the site itself has no such person to ask, so a lost key would
+       mean a lost record the moment the cookie expires. Reading it needs that
+       cookie, which already grants everything the key does. */
+    me: { name: req.me.name, projects: req.me.projects, key: req.me.key },
     projects: own.projects,
     packages: own.packages,
     /* Codes included: this is the founder's own list and the code is what

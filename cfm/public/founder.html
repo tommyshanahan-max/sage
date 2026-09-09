@@ -84,6 +84,9 @@
   .warn{background:var(--warnbg);border:1px solid var(--line);border-radius:.7rem;
     padding:.85rem 1rem;color:var(--ink2);font-size:.9rem;margin-bottom:1.1rem}
   .warn b{color:var(--warn)}
+  .warn code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.15rem;
+    letter-spacing:.06em;background:var(--card);border:1px solid var(--line);
+    border-radius:.45rem;padding:.35rem .6rem;color:var(--ink)}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -93,28 +96,50 @@
   <div class="mark"><i>◷</i><b>crowdfundme</b>
     <button id="out" hidden>Sign out</button></div>
 
-  <!-- 1 · the door -->
+  <!-- 1 · the way in, and it is a start rather than a gate.
+       Somebody clicking through from the landing page has no key and no code:
+       they have a deal and nowhere to write it down. Asking them for a key
+       first turned the front door into a members' entrance for a product
+       whose whole pitch is that the napkin is not good enough. The key is
+       what they leave with. -->
   <section id="door">
-    <h1>Your record.</h1>
-    <p class="lede">Paste the key you were given. There is no account and no password.</p>
-    <div class="row">
+    <h1>Write the deal down.</h1>
+    <p class="lede">Takes a minute. No account, no password, nothing to pay.</p>
+    <div class="row two">
       <div>
-        <label for="key">Your key</label>
-        <input id="key" autocomplete="off" autocapitalize="characters" spellcheck="false"
-          placeholder="12 characters">
+        <label for="nname">Your name</label>
+        <input id="nname" autocomplete="name" placeholder="Who is keeping this record">
+      </div>
+      <div>
+        <label for="nproject">What you are recording</label>
+        <input id="nproject" placeholder="The company, the round, the project">
       </div>
     </div>
-    <button class="go" id="in">Open</button>
+    <div class="row">
+      <div>
+        <label for="nline">One line <span class="hint">— what it is, for whoever reads it</span></label>
+        <input id="nline" placeholder="Four of us building it before there is a company.">
+      </div>
+    </div>
+    <button class="go" id="start">Start the record</button>
     <p class="said" id="doorsaid"></p>
-    <!-- Somebody arrives here from the landing page with no key at all, which
-         is the common case and was a dead end: a box, a button, and no way to
-         work out what to type. It says what a key is and what to do instead. -->
     <p class="lede" style="margin:1.6rem 0 0;padding-top:1.4rem;
       border-top:1px solid var(--line);font-size:.94rem">
-      <b style="color:var(--ink)">No key?</b> They are given out one at a time,
-      to people keeping a record of a real deal. Ask for one and say what you
-      are recording. If you were sent a code for somebody else's offer rather
-      than a key, that goes <a href="/o" style="color:var(--go)">here</a>.</p>
+      <b style="color:var(--ink)">Been here before?</b>
+      <button class="quiet" id="showback">Use your key</button> ·
+      If somebody sent you a code for <em>their</em> offer, that goes
+      <a href="/o" style="color:var(--go)">here</a>.</p>
+
+    <div id="back" hidden style="margin-top:1.4rem">
+      <div class="row">
+        <div>
+          <label for="key">Your key</label>
+          <input id="key" autocomplete="off" autocapitalize="characters"
+            spellcheck="false" placeholder="12 characters">
+        </div>
+      </div>
+      <button class="go" id="in">Open my record</button>
+    </div>
   </section>
 
   <!-- 2 · the desk -->
@@ -123,6 +148,16 @@
     <section>
       <h1 id="hello"></h1>
       <p class="lede" id="hellosub"></p>
+      <!-- Shown plainly rather than once-and-gone. Nobody handed them this
+           key, so there is nobody to ask when it is lost — and losing it
+           means losing the record the day the cookie expires. -->
+      <div class="warn" id="keybox">
+        <b>Your key</b> — the way back into this record on any device.
+        <div style="margin-top:.5rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
+          <code id="mykey"></code>
+          <button class="quiet" id="copykey">Copy</button>
+        </div>
+      </div>
     </section>
 
     <section id="newproject">
@@ -270,6 +305,27 @@ $("kface").addEventListener("change", () => {
 });
 
 /* ---- the door ---------------------------------------------------------- */
+$("showback").addEventListener("click", () => {
+  $("back").hidden = false;
+  $("key").focus();
+});
+
+$("start").addEventListener("click", async () => {
+  say("doorsaid", "");
+  if (!$("nname").value.trim() || !$("nproject").value.trim()) {
+    return say("doorsaid", "Your name, and what you are recording.");
+  }
+  const { ok, d } = await api("/api/me/new", {
+    name: $("nname").value, project: $("nproject").value, line: $("nline").value,
+  });
+  if (!ok) {
+    return say("doorsaid", d.error === "slow"
+      ? "A lot of records were started in the last hour. Try again shortly."
+      : "That did not work. A name and something to record are needed.");
+  }
+  load();
+});
+
 $("in").addEventListener("click", async () => {
   say("doorsaid", "");
   const { ok } = await api("/api/me/in", { key: $("key").value });
@@ -304,6 +360,8 @@ function draw(s) {
   $("desk").hidden = false;
   $("out").hidden = false;
   $("hello").textContent = s.me.name + "'s record.";
+  $("mykey").textContent = s.me.key || "";
+  $("keybox").hidden = !s.me.key;
   const n = s.offers.length;
   $("hellosub").textContent = n
     ? n + (n === 1 ? " person asked" : " people asked") + " · " +
@@ -371,6 +429,13 @@ async function load() {
   if (!ok) { $("door").hidden = false; $("desk").hidden = true; $("out").hidden = true; return; }
   draw(d);
 }
+
+$("copykey").addEventListener("click", () => {
+  navigator.clipboard?.writeText($("mykey").textContent).then(() => {
+    $("copykey").textContent = "Copied";
+    setTimeout(() => { $("copykey").textContent = "Copy"; }, 1200);
+  }).catch(() => {});
+});
 
 $("saveproject").addEventListener("click", async () => {
   say("psaid", "");
