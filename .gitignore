@@ -28,3 +28,10 @@ partner/source.*/
 agent/package-lock.json
 analytics/package-lock.json
 board/package-lock.json
+
+# A copy of the server with "; Secure" stripped from the cookies, made while
+# testing: local Chromium will not send a Secure cookie over plain http, so the
+# signed-in and on-the-list paths cannot be walked in a browser without one. It
+# is generated per run and must never ship — a board that sets its cookies
+# without Secure is a board handing them to anybody on the network.
+board/server.nosec.mjs
