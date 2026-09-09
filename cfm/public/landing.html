@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>crowdfundme</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  :root{
+    --ground:#F3F5F2; --card:#FFFFFF; --ink:#0F1512; --ink2:#46524B;
+    --mut:#8A958E; --line:#DDE2DD; --go:#1E7A59; --soft:#E3EFE9;
+  }
+  :root:not([data-theme="light"]){ @media (prefers-color-scheme: dark){
+    --ground:#0C110E; --card:#141A16; --ink:#E9EFEA; --ink2:#A6B2AA;
+    --mut:#6E7B74; --line:#232C27; --go:#4FBB8E; --soft:#152922;
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0C110E; --card:#141A16; --ink:#E9EFEA; --ink2:#A6B2AA;
+    --mut:#6E7B74; --line:#232C27; --go:#4FBB8E; --soft:#152922;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--ink);
+    font:17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:640px;margin:0 auto;padding:clamp(2.5rem,7vw,5.5rem) 1.5rem 4rem}
+  .mark{display:flex;align-items:center;gap:.6rem;margin-bottom:clamp(2.5rem,7vw,4.5rem)}
+  .mark i{width:34px;height:34px;border-radius:9px;background:var(--go);
+    display:grid;place-items:center;font-style:normal;color:#fff;
+    font:400 19px/1 "Instrument Serif",Georgia,serif}
+  .mark b{font:400 21px/1 "Instrument Serif",Georgia,serif;letter-spacing:.01em}
+  h1{font:400 clamp(2.4rem,7.5vw,3.6rem)/1.08 "Instrument Serif",Georgia,serif;
+    margin:0 0 1.1rem;letter-spacing:-.015em;text-wrap:balance}
+  h1 em{font-style:italic;color:var(--go)}
+  .lede{margin:0;color:var(--ink2);font-size:clamp(1.05rem,2.6vw,1.25rem);max-width:34ch}
+  .rule{height:1px;background:var(--line);margin:clamp(2.2rem,6vw,3.2rem) 0}
+  .three{display:grid;gap:1.6rem}
+  .one{display:grid;grid-template-columns:auto 1fr;gap:1rem;align-items:start}
+  .one .k{width:30px;height:30px;border-radius:50%;background:var(--soft);color:var(--go);
+    display:grid;place-items:center;font-size:.85rem;font-weight:700}
+  .one h2{margin:.15rem 0 .3rem;font-size:1.08rem;font-weight:650;letter-spacing:-.005em}
+  .one p{margin:0;color:var(--ink2);font-size:1rem}
+  .note{margin-top:clamp(2.2rem,6vw,3.2rem);padding:1.1rem 1.2rem;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;color:var(--ink2);font-size:.97rem}
+  .note b{color:var(--ink);font-weight:650}
+  footer{margin-top:2.4rem;color:var(--mut);font-size:.9rem}
+  /* The way through. The page is the offer; this is the door. */
+  .go{margin-top:clamp(2.2rem,6vw,3rem);padding-top:clamp(1.8rem,5vw,2.4rem);
+    border-top:1px solid var(--line)}
+  .go .who{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--mut);font-weight:600;margin:0 0 .5rem}
+  .go h2{margin:0 0 .35rem;font:400 clamp(1.5rem,4.5vw,1.9rem)/1.15 "Instrument Serif",Georgia,serif}
+  .go p{margin:0 0 1.3rem;color:var(--ink2);max-width:32ch}
+  .go a{display:inline-block;background:var(--go);color:#fff;text-decoration:none;
+    border-radius:99px;padding:.85rem 1.7rem;font-weight:650;font-size:1.02rem}
+  .go small{display:block;margin-top:.85rem;color:var(--mut);font-size:.86rem}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="mark"><i>◷</i><b>crowdfundme</b></div>
+
+  <h1>Being early should <em>count for something</em>.</h1>
+  <p class="lede">We keep the record of who was here first.</p>
+
+  <div class="rule"></div>
+
+  <div class="three">
+    <div class="one"><span class="k">1</span><div>
+      <h2>You get points</h2>
+      <p>For joining early. For bringing a friend who stays.</p>
+    </div></div>
+
+    <div class="one"><span class="k">2</span><div>
+      <h2>Locked every month</h2>
+      <p>Once it is written down, it never changes.</p>
+    </div></div>
+
+    <div class="one"><span class="k">3</span><div>
+      <h2>If it is ever worth money</h2>
+      <p>The record says who was there, and how early.</p>
+    </div></div>
+  </div>
+
+  <p class="note"><b>Nothing is promised.</b> Nothing is for sale.
+    It is a record, kept properly, in case it matters later.</p>
+
+  <div class="go">
+    <p class="who">Sent a code?</p>
+    <h2 style="margin-bottom:.9rem">Open your offer</h2>
+    <a href="/o" style="background:var(--ink);color:var(--ground)">I have a code</a>
+  </div>
+
+  <div class="go">
+    <p class="who">The first list</p>
+    <h2>The Exchange · 交换</h2>
+    <p>A private room for people doing business between China and everywhere else.
+      Invite only. It is open now.</p>
+    <a href="https://liuxuesheng.io/r/film">Join the list</a>
+    <small>Takes a minute. Someone reads it and decides.</small>
+  </div>
+
+  <footer>crowdfundme is being built. The Exchange is the first list on it.</footer>
+</div>
+
+</body>
+</html>

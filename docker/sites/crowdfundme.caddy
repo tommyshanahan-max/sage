@@ -23,3 +23,11 @@
 
 	reverse_proxy cfm:3000
 }
+
+# www, redirected rather than served. Every other hostname here does the same:
+# one canonical address, so a link that reaches the box by either name settles
+# on the one the certificates and the cookies are for. Inert with the domain
+# unset, and its fallback is distinct from every other one for the reason above.
+{$TOMSCODING_CFM_WWW:www.cfm.localhost} {
+	redir https://{$TOMSCODING_CFM_DOMAIN:cfm.localhost}{uri} permanent
+}

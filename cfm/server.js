@@ -96,7 +96,17 @@ async function page(file, req, res, next) {
   } catch (e) { next(e); }
 }
 
-app.get(["/", "/o"], (req, res, next) => page("index.html", req, res, next));
+/* TWO FRONT DOORS, and which is which matters.
+ *
+ * "/" is the landing page: what this is, for somebody who arrived without a
+ * code — a forwarded link, somebody Peter told, a person opening it a week
+ * later. It asks for nothing.
+ *
+ * "/o" is the code door. Sending somebody straight to it is the two-minute
+ * path; the landing page carries a way through for everybody else, because a
+ * stranger meeting a six-character box and no explanation just closes it. */
+app.get("/", (req, res, next) => page("landing.html", req, res, next));
+app.get("/o", (req, res, next) => page("index.html", req, res, next));
 app.use(express.static("public", { index: false, maxAge: "1h" }));
 
 /** Spend a code. One person, once — after that the cookie carries them. */
