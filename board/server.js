@@ -977,6 +977,44 @@ app.get("/api/public-media", async (req, res) => {
   res.sendFile(found.file);
 });
 
+/* A WAITING PERSON'S PHOTOGRAPH, AND ONLY THEIRS.
+ *
+ * /api/public-media is behind the door on purpose — see the long note above
+ * OPEN_PATHS — so that a member's face is not fetchable by anybody holding
+ * its id. Everybody this route is for is outside that door, including for
+ * their own picture, so they need a way to see one.
+ *
+ * IT SERVES WAIT ROWS AND NOTHING ELSE. The id is looked up in board.waits
+ * before a byte is read, so a member's photograph cannot be fetched here
+ * whatever id is presented, and the rule this board already made stands
+ * exactly as it was.
+ *
+ * A HELD ONE IS SERVED TOO, and this is the part worth being honest about.
+ * An <img> cannot carry the device header, so there is no way to check that
+ * the browser asking is the one that uploaded it. What protects a held
+ * photograph is that its id is a twenty-character random string which the
+ * server sends to nobody but its owner: /api/wait/me returns other people's
+ * ids only once they are released, and the queue in the panel is behind the
+ * admin key. Somebody who has the id can fetch the picture. Nobody is given
+ * the id.
+ */
+app.get("/api/wait-media", async (req, res) => {
+  const id = String(req.query.id || "");
+  const board = await store.load(FILE);
+  if (!board.waits.some((w) => w.photo && w.photo === id)) {
+    return res.status(404).json({ error: "no such file" });
+  }
+  const found = await findMedia(id);
+  if (!found) return res.status(404).json({ error: "no such file" });
+  res.set("Content-Type", found.type);
+  res.set("X-Content-Type-Options", "nosniff");
+  /* Not immutable, and not for long. A released photograph can be refused an
+     hour later, and a day of caching would leave it on screens after it was
+     taken down. */
+  res.set("Cache-Control", "private, max-age=300");
+  res.sendFile(found.file);
+});
+
 // ---------------------------------------------------------------------------
 // The board, for readers
 // ---------------------------------------------------------------------------
@@ -1893,11 +1931,21 @@ app.get("/api/wait/me", async (req, res) => {
    * the one promise the new wording still makes in full, and not the id or
    * the device.
    */
+  /* THE SAME ORDER THE QUEUE IN THE PANEL USES. A fuller card first, longest
+     wait between equals — see the note beside `worth` in queue.html. It is
+     the one place somebody waiting can see the rule working, which is most of
+     what makes it an incentive rather than a claim. */
+  const worth = (w) => (w.photo && w.photoState === "published" ? 2 : 0)
+    + (w.levelBand ? 1 : 0) + (w.type ? 1 : 0) + (w.want ? 1 : 0);
   const others = open
     .filter((w) => w.shown && w.by !== me)
+    .sort((a, b) => (worth(b) - worth(a)) || String(a.at).localeCompare(String(b.at)))
     .slice(0, 60)
     .map((w) => ({ name: w.name, room: w.room, why: w.why,
-      levelBand: w.levelBand, type: w.type, me: w.me, want: w.want }));
+      levelBand: w.levelBand, type: w.type, me: w.me, want: w.want,
+      // Released only. An id nobody can guess is not a reason to hand out one
+      // that has not been looked at.
+      photo: w.photoState === "published" ? w.photo : "" }));
 
   /* ONE POST, NOT A FEED. The feed is behind the door and stays there. This
      is the same single post the public page carries, for the same reason:
@@ -1908,8 +1956,13 @@ app.get("/api/wait/me", async (req, res) => {
 
   res.json({
     on: true,
+    /* Their own photograph, whatever state it is in — it is theirs, they are
+       looking at their own card, and a card that hid it from them would read
+       as an upload that failed. photoState travels with it so the page can
+       say plainly that nobody else can see it yet. */
     you: { name: mine.name, room: mine.room, why: mine.why, at: mine.at,
-      levelBand: mine.levelBand, type: mine.type, me: mine.me, want: mine.want },
+      levelBand: mine.levelBand, type: mine.type, me: mine.me, want: mine.want,
+      photo: mine.photo, photoState: mine.photoState },
     ahead, waiting: open.length, others, featured,
   });
 });
@@ -1974,6 +2027,40 @@ app.post("/api/wait/card", express.json({ limit: "2kb" }), async (req, res) => {
       why: row.why } };
   });
   if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** A photograph, onto their own row.
+ *
+ *  Its own route rather than a field on /api/wait/card, because it is the one
+ *  thing here that arrives as a megabyte rather than a word — a 2kb body limit
+ *  is right for the card and would silently refuse this.
+ *
+ *  HELD, ALWAYS. See the note on `photo` in cleanWait: a member was vouched
+ *  for and somebody on the list was not, so this one waits for a person to
+ *  look at it. They see it on their own card immediately; what waits is
+ *  everybody else seeing it.
+ *
+ *  A NEW ONE GOES BACK INTO THE QUEUE, the same way a member's does. Changing
+ *  a face is the same act as adding one, and a picture that could be swapped
+ *  after release would make releasing it mean nothing.
+ */
+app.post("/api/wait/photo", express.json({ limit: "36mb" }), async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || req.get("x-board-device") || ""), SALT);
+  if (!me) return res.status(400).json({ error: "who" });
+  const data = String(req.body?.photo || "");
+  if (!data) return res.status(400).json({ error: "none" });
+  const buf = Buffer.from(data, "base64");
+  if (buf.length > MEDIA_MAX) return res.status(413).json({ error: "tooBig" });
+  const id = await putMedia(buf, String(req.body?.photoType || ""));
+  if (!id) return res.status(415).json({ error: "badType" });
+
+  const out = await change((board) => {
+    const at = board.waits.findIndex((w) => w.by === me && !w.done);
+    if (at < 0) return { on: false };
+    board.waits[at] = store.cleanWait({ ...board.waits[at], photo: id, photoState: "held" });
+    return { on: true, photo: id, photoState: "held" };
+  });
   res.json(out);
 });
 
@@ -2068,6 +2155,35 @@ app.get("/api/waiting", admin, async (_req, res) => {
      used to be. */
   const who = new Map(board.people.map((q) => [q.id, q.handle]));
   res.json({ waits: board.waits.map((w) => ({ ...w, viaName: who.get(w.via) || "" })) });
+});
+
+/* LETTING A WAITING PERSON'S PHOTOGRAPH THROUGH, OR NOT.
+ *
+ * The companion to /api/face/release and DELETE /api/face, which do the same
+ * two things for a member. Separate routes rather than a flag on those,
+ * because they address a different row by a different id: a member is found
+ * by their person id, somebody waiting by their wait-row id, and one route
+ * that guessed which would be one route that could act on the wrong person.
+ *
+ * REFUSED CLEARS THE PICTURE AND KEEPS THE ROW. They are still waiting, they
+ * simply have no photograph, and they can put up a different one — the same
+ * rule as a member's. Deleting the row would throw away somebody who asked to
+ * join because of a picture they chose badly.
+ */
+app.post("/api/waiting/face", express.json({ limit: "1kb" }), admin, async (req, res) => {
+  const id = String(req.query.id || req.body?.id || "");
+  const yes = req.query.ok === "1" || req.body?.ok === true;
+  const out = await change((board) => {
+    const at = board.waits.findIndex((w) => w.id === id);
+    if (at < 0) return null;
+    const w = board.waits[at];
+    board.waits[at] = store.cleanWait(yes
+      ? { ...w, photoState: "published" }
+      : { ...w, photo: "", photoState: "refused" });
+    return { name: w.name, photoState: board.waits[at].photoState };
+  });
+  if (!out) return res.status(404).json({ error: "no such row" });
+  res.json({ ok: true, ...out });
 });
 
 /** Cross somebody off, once they are in or once they are not. */

@@ -144,6 +144,26 @@ export function cleanWait(raw) {
        words for it stay in i18n.js where the rest of the words are. */
     me: Object.hasOwn(ROLES, String(raw.me || "")) ? String(raw.me) : "",
     want: Object.hasOwn(ROLES, String(raw.want || "")) ? String(raw.want) : "",
+
+    /* A FACE, AND IT WAITS.
+     *
+     * A member's photograph goes straight up — see REVIEW_PHOTOS in
+     * server.js, and the reasoning there: a member was vouched for by name by
+     * somebody whose own name stays on their page, so a face is presumed fine
+     * until somebody says otherwise.
+     *
+     * NONE OF THAT IS TRUE OF SOMEBODY ON THE LIST. They arrived off a link,
+     * nobody has vouched for them, and what they upload would go in front of
+     * every member and everybody else waiting. So this one is held whatever
+     * REVIEW_PHOTOS says, and released by hand from the queue in the panel,
+     * where whoever runs the board is already looking at these people.
+     *
+     * They see their own photograph on their own card the whole time. What
+     * waits is other people seeing it.
+     */
+    photo: /^[a-f0-9]{20}$/.test(String(raw.photo || "")) ? String(raw.photo) : "",
+    photoState: ["held", "published", "refused"].includes(raw.photoState)
+      ? raw.photoState : "held",
   };
 }
 

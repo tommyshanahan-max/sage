@@ -63,6 +63,8 @@
   .pc .ini{position:absolute;inset:0;display:flex;align-items:center;
     justify-content:center;font-family:var(--serif);font-size:5rem;
     color:rgba(255,255,255,.34);line-height:1;padding-bottom:2.6rem}
+  .pc .face{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    display:block}
   .pc .scrim{position:absolute;inset:0;
     background:linear-gradient(180deg,rgba(10,14,22,0) 34%,rgba(10,14,22,.84) 100%)}
   .pc .flag{position:absolute;top:.7rem;left:.7rem;padding:.18rem .6rem;
@@ -134,8 +136,9 @@
     padding:.8rem .95rem;background:var(--card);border:1px solid var(--hair);
     border-radius:.75rem}
   .who .av{flex:none;width:2.2rem;height:2.2rem;border-radius:99px;
-    display:flex;align-items:center;justify-content:center;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
     font-family:var(--serif);font-size:.95rem;color:#fff}
+  .who .av img{width:100%;height:100%;object-fit:cover;display:block}
   .who .mid{flex:1;min-width:0}
   .who .mid b{font-size:.94rem;font-weight:500}
   .who .mid em{font-style:normal;color:var(--accent);font-size:.86rem}
@@ -168,6 +171,19 @@
     color:var(--ink-2);line-height:1.5}
 
   /* ---- the You tab ---- */
+  .shot{margin:1rem 0 0;padding:1rem;background:var(--card);
+    border:1px solid var(--hair);border-radius:.8rem}
+  /* A label wrapping a hidden file input: the styled control every browser
+     agrees on, and it opens the camera on a phone. */
+  .shotgo{display:block;padding:.7rem;border:1px solid var(--accent);
+    border-radius:99px;background:none;color:var(--accent);font-weight:600;
+    font-size:.92rem;text-align:center;cursor:pointer}
+  .shotgo.busy{opacity:.6;pointer-events:none}
+  .shotgo input{display:none}
+  .shotsaid{margin:.6rem 0 0;font-size:.83rem;color:var(--muted);line-height:1.5;
+    text-align:center}
+  .shotsaid.wait{color:var(--accent)}
+  .shotsaid.bad{color:#b3261e}
   .form{margin:1rem 0 0;padding:1rem;background:var(--card);
     border:1px solid var(--hair);border-radius:.8rem}
   .form label{display:block;margin:.75rem 0 .25rem;font-size:.82rem;
@@ -228,6 +244,9 @@
 <script type="module">
 import { T, setLang, pickLang, langButton, when } from "/i18n.js";
 import { device } from "/wait.js";
+/* The same pipeline the board behind the door uses — HEIC in, JPEG out,
+   the right way up, small enough to arrive over Chinese mobile data. */
+import { shrink } from "/photo.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -284,7 +303,17 @@ function bandWords(band) {
 function cardOf(w, ghosts) {
   const pc = el("div", "pc");
   pc.style.background = wash(w.name);
+  /* The wash and the initial are the ground, and a photograph covers them.
+     Kept underneath rather than swapped out: a picture that fails to load
+     then leaves a card rather than a hole. */
   pc.append(el("span", "ini", initial(w.name)));
+  if (w.photo) {
+    const img = document.createElement("img");
+    img.className = "face";
+    img.src = "/api/wait-media?id=" + encodeURIComponent(w.photo);
+    img.alt = "";
+    pc.append(img);
+  }
   pc.append(el("span", "scrim"));
   pc.append(el("span", "flag", T("waitroom." + (w.room || "other")) + " · " + T("wr.flag")));
   const said = el("div", "said");
@@ -436,8 +465,18 @@ function drawWait(box) {
 
 function whoRow(w) {
   const row = el("div", "who");
-  const av = el("span", "av", initial(w.name));
+  const av = el("span", "av", w.photo ? "" : initial(w.name));
   av.style.background = wash(w.name);
+  /* The face where there is one. Only released photographs reach this list at
+     all — the server drops the id otherwise — so nothing here has to decide
+     whether it is allowed to be shown. */
+  if (w.photo) {
+    const img = document.createElement("img");
+    img.src = "/api/wait-media?id=" + encodeURIComponent(w.photo);
+    img.alt = "";
+    img.loading = "lazy";
+    av.append(img);
+  }
   row.append(av);
   const mid = el("div", "mid");
   const line = el("div");
@@ -462,6 +501,67 @@ function drawYou(box) {
   box.append(head);
 
   box.append(cardOf(you, false));
+
+  /* THE PHOTOGRAPH, ABOVE THE WORDS.
+   *
+   * It is the slot worth the most and the one nobody is required to fill, so
+   * it is offered first and never asked for twice. The line under it says
+   * exactly where it has got to — a picture that is up but not yet released
+   * looks identical to one that failed to send, and only one of those is
+   * worth worrying about. */
+  const shot = el("div", "shot");
+  const pick = el("label", "shotgo");
+  pick.append(document.createTextNode(T(you.photo ? "wr.photoAgain" : "wr.photoAdd")));
+  const file = document.createElement("input");
+  file.type = "file";
+  file.accept = "image/*";
+  pick.append(file);
+  const shotsaid = el("p", "shotsaid");
+  if (you.photo) {
+    shotsaid.textContent = T(you.photoState === "published" ? "wr.photoLive" : "wr.photoHeld");
+    if (you.photoState !== "published") shotsaid.className = "shotsaid wait";
+  } else if (you.photoState === "refused") {
+    /* Told, rather than quietly returned to the offer. A picture that
+       vanishes with no explanation reads as a bug in the app, and the person
+       tries the same photograph again. */
+    shotsaid.className = "shotsaid bad";
+    shotsaid.textContent = T("wr.photoNo");
+  } else {
+    shotsaid.textContent = T("wr.photoWhy");
+  }
+  file.addEventListener("change", async () => {
+    const f = file.files && file.files[0];
+    if (!f) return;
+    pick.className = "shotgo busy";
+    shotsaid.className = "shotsaid";
+    shotsaid.textContent = T("me.working");
+    const small = await shrink(f, 1200);
+    if (small.error) {
+      pick.className = "shotgo";
+      shotsaid.className = "shotsaid bad";
+      shotsaid.textContent = small.error;
+      return;
+    }
+    let ok = false;
+    try {
+      const out = await fetch("/api/wait/photo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-board-device": device() },
+        body: JSON.stringify({ photo: small.data, photoType: small.type || "image/jpeg" }),
+      }).then((r) => (r.ok ? r.json() : null));
+      ok = Boolean(out && out.on);
+    } catch { /* fall through */ }
+    pick.className = "shotgo";
+    if (!ok) {
+      shotsaid.className = "shotsaid bad";
+      shotsaid.textContent = T("act.again");
+      return;
+    }
+    await load();
+    draw();
+  });
+  shot.append(pick, shotsaid);
+  box.append(shot);
 
   const form = el("div", "form");
   const name = el("input");

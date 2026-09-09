@@ -269,7 +269,11 @@ for (const k of PANES) $("tab-" + k).addEventListener("click", () => show(k));
 /* Every action asks first. Releasing puts something in front of readers and
  * taking it down takes it away from them; neither is a press worth making by
  * accident, and there is no undo on the first. */
-async function act(btn, url, opts, confirmText) {
+/* `after` is which list to redraw when it worked. It defaults to the queue,
+   which is what every caller wanted until the waiting list grew buttons of
+   its own — redrawing the queue after releasing a waiting person's photograph
+   would leave the row that was just acted on exactly as it was. */
+async function act(btn, url, opts, confirmText, after) {
   if (confirmText && !window.confirm(confirmText)) return;
   const row = btn.closest(".post");
   const said = row.querySelector(".said");
@@ -280,7 +284,7 @@ async function act(btn, url, opts, confirmText) {
     const r = await fetch(url, opts);
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || ("the server said " + r.status));
-    await load();
+    await (after || load)();
   } catch (err) {
     said.classList.add("bad");
     said.textContent = String(err.message || err);
@@ -293,12 +297,17 @@ async function act(btn, url, opts, confirmText) {
  * The first version removed a broken image and left an empty card, which is
  * the worst of both: nothing to look at and no sign that anything is missing.
  * Deciding whether to publish a picture you cannot see is not a decision. */
-function picture(box, id) {
+/* `where` is which of the board's two media routes to read from. A member's
+   photograph lives behind the door on /api/public-media and is fetched by a
+   browser that has been through it; a waiting person's is on /api/wait-media,
+   which is open and serves wait rows only. Defaulted, so every existing
+   caller is untouched. */
+function picture(box, id, where) {
   const img = document.createElement("img");
   img.className = "shot";
   img.loading = "lazy";
   img.alt = "";
-  img.src = ORIGIN + "/api/public-media?id=" + encodeURIComponent(id);
+  img.src = ORIGIN + (where || "/api/public-media") + "?id=" + encodeURIComponent(id);
   img.addEventListener("error", () => {
     const note = el("div", "missing",
       "There is a photograph on this and it would not load from " + (ORIGIN || "the app")
@@ -520,8 +529,44 @@ function drawWaiting(w) {
   }
   const tags = el("div", "tags");
   if (w.viaName) tags.append(el("span", "tag", "sent by " + w.viaName));
+  /* WHAT THEY FILLED IN WHILE THEY WAITED. The three things a member gets to
+     decide on, on the row where the deciding happens. */
+  if (w.levelBand) {
+    const [which, n] = String(w.levelBand).split(" ");
+    tags.append(el("span", "tag", (which === "ZH" ? "Chinese " : "English ") + n + "/10"));
+  }
+  if (w.type) tags.append(el("span", "tag", w.type));
+  if (w.want) tags.append(el("span", "tag", "wants " + w.want));
   if (w.done) tags.append(el("span", "tag off", w.done === "in" ? "let in" : "turned down"));
   if (tags.childNodes.length) box.append(tags);
+
+  /* THEIR PHOTOGRAPH, AND THE ONE DECISION IT NEEDS.
+   *
+   * A waiting person's picture is held whatever the board's setting says —
+   * see the note on `photo` in store.js — so it needs a person to look at it,
+   * and this is where that person already is. Released ones are shown too,
+   * without buttons: seeing who has a face on their card is half of knowing
+   * whether the queue is worth going through. */
+  if (w.photo) {
+    picture(box, w.photo, "/api/wait-media");
+    if (w.photoState !== "published") {
+      const acts = el("div", "acts");
+      const ok = el("button", "go", "Let it through");
+      ok.addEventListener("click", () => act(ok,
+        "/api/feed/waiting/face?id=" + encodeURIComponent(w.id) + "&ok=1", { method: "POST" },
+        "Show this photograph to members and to the others waiting?", loadWaiting));
+      const no = el("button", "bad", "Refuse it");
+      no.addEventListener("click", () => act(no,
+        "/api/feed/waiting/face?id=" + encodeURIComponent(w.id), { method: "POST" },
+        "Clear this photograph? They stay on the list and can put up another.",
+        loadWaiting));
+      acts.append(ok, no);
+      box.append(acts);
+    } else {
+      box.append(el("span", "tag", "photo shown"));
+    }
+    box.append(el("div", "said"));
+  }
   return box;
 }
 
@@ -542,7 +587,19 @@ async function loadWaiting() {
     for (const [key, label] of WAITROOMS) {
       const some = rows.filter((w) => (w.room || "other") === key);
       if (!some.length) continue;
+      /* A FULLER CARD COMES FIRST, and the longest wait wins between equals.
+       *
+       * Somebody who added a photograph and took the tests is genuinely
+       * easier to decide about than a name and a line, so the order says so
+       * — which is the incentive to fill the card in, stated by the software
+       * rather than by a rule. Answered rows sink to the bottom whatever they
+       * carry, and within one score it is still first come first served, so
+       * nobody who waited is buried by somebody who arrived this morning and
+       * filled in three boxes. */
+      const worth = (w) => (w.photo && w.photoState === "published" ? 2 : 0)
+        + (w.levelBand ? 1 : 0) + (w.type ? 1 : 0) + (w.want ? 1 : 0);
       some.sort((a, b) => (Number(Boolean(a.done)) - Number(Boolean(b.done)))
+        || (worth(b) - worth(a))
         || String(a.at).localeCompare(String(b.at)));
       const n = some.filter((w) => !w.done).length;
       box.append(el("div", "rule", label + (n ? "  ·  " + n + " waiting" : "")));

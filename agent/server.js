@@ -2575,6 +2575,22 @@ app.delete("/api/feed/face", feedDoor, async (req, res) => {
   res.status(r.status).json(r.body);
 });
 
+/** A waiting person's photograph, let through or refused.
+ *
+ *  The companion to /api/feed/face and separate from it for the same reason
+ *  the board's routes are: a member is addressed by their person id and
+ *  somebody waiting by their wait-row id, and one route that guessed between
+ *  them is one route that can act on the wrong person.
+ */
+app.post("/api/feed/waiting/face", feedDoor, async (req, res) => {
+  const id = String(req.query.id || "");
+  if (!feedId(id)) return res.status(400).json({ error: "bad row id" });
+  const ok = req.query.ok === "1";
+  const r = await feed.call("/api/waiting/face?id=" + encodeURIComponent(id)
+    + (ok ? "&ok=1" : ""), { method: "POST", body: {} });
+  res.status(r.status).json(r.body);
+});
+
 /** Everybody on the board with a name, and the picture each of them has.
  *  What the panel needs to offer a person to put a face to. */
 app.get("/api/feed/people", feedDoor, async (_req, res) => {

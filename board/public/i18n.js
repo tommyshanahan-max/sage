@@ -637,6 +637,19 @@ export const STRINGS = {
      got. */
   "wr.putcard":      ["Put it on my card", "放到我的卡片上"],
   "wr.putdone":      ["It is on your card.", "已经在你的卡片上了。"],
+  /* THE PHOTOGRAPH. Offered, never required, and every line about it says
+     what it does for them rather than what it is for. "You will get picked
+     faster" is true — a member choosing between a face and a letter chooses
+     the face — so it is said out loud rather than left as a nudge. */
+  "wr.photoAdd":     ["Add a photo", "加一张照片"],
+  "wr.photoAgain":   ["Change the photo", "换一张照片"],
+  "wr.photoNo":      ["That photo was not put up. You can add a different one.",
+                      "那张照片没有放上去。可以换一张。"],
+  "wr.photoWhy":     ["Optional. Cards with a face get picked first.",
+                      "可以不加。有照片的卡片会先被看到。"],
+  "wr.photoHeld":    ["Up. Nobody else sees it until it has been looked at.",
+                      "上传好了。等有人看过之后，别人才看得到。"],
+  "wr.photoLive":    ["Up, and everybody can see it.", "上传好了，大家都看得到。"],
   "wr.open":         ["See your card", "看看你的卡片"],
   "wr.back":         ["You are already on the list. See your card.",
                       "你已经在名单上了。看看你的卡片。"],
