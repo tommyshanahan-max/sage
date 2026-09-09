@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: cfm-setup cfm-self cfm-owner cfm-owners cfm-offer cfm-seal cfm-seals cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: cfm-setup cfm-self cfm-owner cfm-owners cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -357,6 +357,14 @@ cfm-seal: ## Close a month and hash it: make cfm-seal [MONTH=2026-09]
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  seal --month "$(MONTH)"
+
+cfm-keypair: ## Make a throwaway Stellar account for anchoring: make cfm-keypair
+	@# Generated inside the container that already has the SDK — nothing to
+	@# install, nothing to quote. It is printed once and stored nowhere: the
+	@# only copy that should exist afterwards is the one you put in .env.
+	@#
+	@# It is a spending key. Use it for fees and nothing else.
+	$(COMPOSE) run --rm --no-deps -T --entrypoint node cfm keypair.mjs
 
 cfm-anchoring: ## Is anchoring on, which chain, and which account
 	@# Off unless CFM_STELLAR_SECRET is set. Off is a real state and the pages
