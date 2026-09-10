@@ -1551,6 +1551,12 @@
   .pchip{font-size:.72rem;padding:.22rem .55rem;border-radius:99px;
     border:1px solid rgba(255,255,255,.45);color:#fff;background:rgba(0,0,0,.22)}
   .pchip.on{background:#fff;color:#151B28;border-color:#fff}
+  /* THE SENTENCE, ON THE FACE. Set as a line of text with the two roles as
+     pills inside it rather than as a row of chips: it is something a person
+     wrote, and it should read as words with two of them emphasised. */
+  .psay{margin:.6rem 0 0;font-size:.9rem;line-height:1.9;
+    color:rgba(255,255,255,.82)}
+  .psay .pchip{display:inline-block;vertical-align:.05em}
 
   .pc .share{position:absolute;top:.8rem;right:.8rem;z-index:2;
     display:inline-flex;align-items:center;gap:.4rem;border:0;
@@ -5693,7 +5699,12 @@ function personCard(q, live) {
     line.append(worn);
   }
   scrim.append(line);
-  const where = [q.campus, q.here].filter(Boolean).join(" · ");
+  /* "BEIJING · BEIJING" WAS ON EVERY OTHER CARD. campus and here are two
+     different questions — which campus, and how long they have been in the
+     country — and plenty of people answer both with the name of a city. Two
+     identical words with a dot between them read as a bug on the one screen
+     that is supposed to make a stranger look like a person. */
+  const where = [...new Set([q.campus, q.here].filter(Boolean))].join(" · ");
   if (where) scrim.append(el("p", "where", where));
   if (q.goal) scrim.append(el("p", "goal", q.goal));
   /* WHAT THEY ARE LOOKING FOR, ON THE CARD ITSELF. This is the half of the
@@ -5701,11 +5712,45 @@ function personCard(q, live) {
      followed each other, which is rare on a small board, but a label saying
      what somebody wants is useful the moment they tick it. What the two of
      you have in common is marked, and the rest is there to read. */
-  if (Array.isArray(q.rooms) && q.rooms.length && !q.mine) {
-    const chips = el("div", "pchips");
+  /* THEIR SENTENCE, NOT THE ROOM'S LABEL.
+   *
+   * This card carried the rooms a person lands in — "Talent", "Hiring" — which
+   * are the board's own words for a filing cabinet, and the same four labels
+   * appeared under every face. What somebody actually wrote is "I am an Agent
+   * looking for a Performer", and that is both more specific and the only
+   * thing on the card a reader can act on.
+   *
+   * THE HALF THAT ANSWERS YOU IS MARKED. `shared` already says which rooms the
+   * two of you have in common; the pill that put you there is the one worth
+   * lighting up, because it is the reason this person is on your screen.
+   *
+   * The rooms stay as the fallback. Somebody who joined before the sentence
+   * existed has no `say`, and an empty space under their name would be a
+   * regression for the people who have been here longest. */
+  if (!q.mine) {
     const shared = new Set((q.shared || []).map((x) => x.theirs));
-    for (const r of q.rooms) chips.append(el("span", "pchip" + (shared.has(r) ? " on" : ""), T("room." + r)));
-    scrim.append(chips);
+    const says = Array.isArray(q.say) ? q.say.slice(0, 2) : [];
+    if (says.length) {
+      const line2 = el("p", "psay");
+      says.forEach((r, i) => {
+        if (i) line2.append(document.createTextNode(" · "));
+        /* "I am a Agent" — say.iam carries the article because the form after
+           it is a dropdown, where the pill is a control rather than a word.
+           Here it is prose, so the article travels with the role: role.a.*
+           has both halves right for every one of them. */
+        line2.append(document.createTextNode(T("brw.iam") + " "));
+        line2.append(el("b", "pchip on", T("role.a." + r.me)));
+        line2.append(document.createTextNode(" " + T("say.lookingFor") + " "));
+        // Lit when it is what you are: that is why they came up for you.
+        const mine2 = shared.size > 0;
+        line2.append(el("b", "pchip" + (mine2 ? " on" : ""), T("role.a." + r.want)));
+      });
+      scrim.append(line2);
+    } else if (Array.isArray(q.rooms) && q.rooms.length) {
+      const chips = el("div", "pchips");
+      for (const r of q.rooms) chips.append(el("span", "pchip" + (shared.has(r) ? " on" : ""), T("room." + r)));
+      scrim.append(chips);
+    }
   }
   box.append(scrim);
 
@@ -6056,16 +6101,21 @@ function drawDeck() {
     return;
   }
 
-  /* Follow, not "say hello".
+  /* CONNECT, NOT FOLLOW.
    *
-   * Saying hello is a thing you do to a person and it wants a reply; following
-   * is a thing you do to a feed and it does not. The second is what somebody
-   * looking at a stranger's face is actually ready for, and it is the one that
-   * cannot go wrong in a room full of people who have never met. */
+   * The row it writes is the same one, and the word is not. "Follow" is what
+   * you do to a feed — it says this person is worth reading, which is not what
+   * anybody means here and puts whoever presses it one step below the person
+   * they pressed it on. "Connect" is two people agreeing to be introduced,
+   * which is what the row actually leads to: they are told, and if they do the
+   * same the cards open.
+   *
+   * The buddies page keeps "Follow". It is a list of people you are reading,
+   * and there the word is true. */
   const fol = el("button", "primary", "");
   fol.type = "button";
   const paintFollow = () => {
-    fol.textContent = T(q.following ? "bud.following" : "bud.follow");
+    fol.textContent = T(q.following ? "brw.connected" : "brw.connect");
     fol.classList.toggle("on", Boolean(q.following));
     fol.setAttribute("aria-pressed", String(Boolean(q.following)));
   };

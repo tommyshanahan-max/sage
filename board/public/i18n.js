@@ -2291,6 +2291,16 @@ export const STRINGS = {
     "一个私密板子，给在中国、和跟中国打交道的人。留个名字，由已经在里面的人来定。你的微信或邮箱谁都看不到。"],
   "join.has":          ["Already have a password?", "已经有口令了？"],
   "join.hasGo":        ["Use it", "去输入"],
+  /* THE DECK'S OWN WORD FOR IT. The buddies list keeps "Follow", where it is
+     true: that is a list of people you are reading. On a stranger's face the
+     same row means something else — two people agreeing to be introduced — and
+     "follow" puts whoever presses it one step below the person they pressed
+     it on. */
+  /* On the card the sentence is prose, so the article goes with the role —
+     see the note where this is used. say.iam keeps its "a" for the form. */
+  "brw.iam":           ["I am", "我是"],
+  "brw.connect":       ["Connect", "建立联系"],
+  "brw.connected":     ["Connected", "已联系"],
   "door.noCode":       ["I do not have one — put me on the list",
                         "我没有口令——把我加到名单里"],
   "door.note":         ["No account, no password, no phone number. The code is the whole of it.",
