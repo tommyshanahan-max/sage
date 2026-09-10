@@ -1,0 +1,202 @@
+<title>The Exchange · for Curt</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  :root{
+    --ground:#080C0A;
+    --raise:#0E1512;
+    --ink:#ECEAE4;
+    --dim:#939C96;
+    --hair:#1E2A25;
+    --jade:#3FBF8F;
+    --gold:#D9A94A;
+    --serif:"Instrument Serif",Georgia,"Songti SC",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);color:var(--ink);
+    font:16px/1.6 var(--sans);
+    -webkit-font-smoothing:antialiased;
+    scroll-snap-type:y proximity;
+  }
+  .deck{max-width:30rem;margin:0 auto;padding:0 1.4rem}
+  section{
+    scroll-snap-align:start;
+    min-height:86svh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:3rem 0;
+    border-bottom:1px solid var(--hair);
+  }
+  section:last-of-type{border-bottom:0}
+  .eyebrow{
+    font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--jade);margin:0 0 1.1rem;
+  }
+  .eyebrow.gold{color:var(--gold)}
+  h1{font:400 clamp(2.9rem,12vw,4rem)/1.01 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  h2{font:400 clamp(2.4rem,9.6vw,3.2rem)/1.08 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  p{margin:0 0 1rem;color:var(--dim);font-size:1.02rem}
+  p.lead{color:var(--ink);font-size:1.08rem}
+  p:last-child{margin-bottom:0}
+  em{font-style:italic;font-family:var(--serif);font-size:1.15em;color:var(--jade)}
+  b{color:var(--ink);font-weight:650}
+
+  .big{font:400 clamp(4rem,22vw,6.5rem)/.9 var(--serif);color:var(--gold);letter-spacing:-.02em}
+  .big.range{font-size:clamp(2.9rem,15vw,4.4rem);line-height:1}
+  .big.range span{font-size:.42em;color:var(--dim);margin:0 .28em;
+    font-family:var(--sans);font-style:italic}
+  .under{color:var(--dim);font-size:.95rem;margin:.7rem 0 0}
+  .growth{display:block;margin:2rem 0 0;overflow:visible;max-width:100%}
+
+  .pair{display:flex;gap:2.4rem;flex-wrap:wrap;margin:0 0 1.6rem}
+  .pair .n{font:400 clamp(3rem,15vw,4.2rem)/.9 var(--serif);color:var(--gold)}
+  .pair .n.quiet{color:var(--ink)}
+  .pair .l{color:var(--dim);font-size:.86rem;margin-top:.5rem;max-width:8rem}
+
+  /* WHAT IS BEING ASKED OF HIM. Two lines, in the margin-numbered shape the
+     advisor deck uses — a partner reading a share offer wants to know the
+     price in his own time before he reads the number. */
+  ol.how{list-style:none;margin:0 0 1.5rem;padding:0;counter-reset:how}
+  ol.how li{position:relative;padding:0 0 1.1rem 2.5rem;counter-increment:how}
+  ol.how li:last-child{padding-bottom:.4rem}
+  ol.how li::before{content:counter(how);position:absolute;left:0;top:-.1rem;
+    font:400 1.5rem/1 var(--serif);color:var(--gold)}
+  ol.how b{display:block;color:var(--ink);font-weight:650;font-size:1.02rem;margin-bottom:.15rem}
+  ol.how span{display:block;color:var(--dim);font-size:.95rem;line-height:1.5}
+
+  .terms{margin:1.4rem 0 0}
+  .terms div{display:flex;justify-content:space-between;gap:1rem;
+    padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
+  .terms div:last-child{border-bottom:0}
+  .terms .w{color:var(--dim)}
+  .terms .v{color:var(--ink);font-weight:650;text-align:right}
+
+  .go{display:block;margin:1.6rem 0 0;padding:1.05rem 1.2rem;
+    background:var(--jade);color:#04120C;border-radius:99px;text-align:center;
+    text-decoration:none;font-weight:700;font-size:1.02rem}
+  .fine{color:var(--dim);font-size:.85rem;margin-top:1rem;text-align:center}
+  .on{display:block;margin:1.1rem 0 0;color:var(--dim);font-size:.9rem;
+    line-height:1.5;text-align:center;text-decoration:none}
+  .on:hover{color:var(--ink)}
+  #what{scroll-margin-top:1rem}
+
+  .mark{display:flex;align-items:center;gap:.7rem;margin:0 0 2rem}
+  .mark i{width:2.6rem;height:2.6rem;border-radius:.7rem;background:var(--raise);
+    border:1px solid var(--hair);display:grid;place-items:center;font-style:normal;
+    font:400 1.3rem/1 var(--serif);color:var(--jade)}
+  .mark span{font:400 1.25rem/1 var(--serif);color:var(--ink)}
+
+  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="deck">
+
+  <!-- FOUR SCREENS, FOR A FRIEND WHO IS ALSO AN INVESTOR.
+       Aiden's deck argues, because he is being recruited. The advisor's deck
+       explains, because the job is unfamiliar. Curt needs neither: he already
+       knows Tom and he reads offers for a living. So this one states — what
+       it is, how big it could be, what the share is, and where to sign.
+
+       IT ASKS FOR SOMETHING, on the first screen, in Tom's words. A share
+       handed to a friend with no ask attached is the thing that gets awkward
+       in a year, and the awkwardness always lands on the friendship rather
+       than on the cap table.
+
+       NO BLOCKCHAIN LINE. The advisor deck says the record is stamped onto a
+       public chain once a month. That is where this is going and it is not
+       where it is: the ledger is on a test network and the sealing is done by
+       hand. What is true is that the offer is signed, dated and held on a
+       record neither side can quietly edit, so that is what this says. A
+       claim an investor could check and find false costs more than it buys.
+
+       THE PERCENTAGE, AND THE MONEY IT COMES TO. Two and a half per cent on
+       its own is the smallest-sounding way to say it, and a reader does the
+       division whether or not the page does it for him — so the figure it is
+       worth against the two-year number above is printed underneath rather
+       than left for him to work out and be disappointed by. Same lesson the
+       advisor deck learned the hard way. -->
+
+  <section>
+    <div class="mark"><i>换</i><span>The Exchange</span></div>
+    <p class="eyebrow gold">One minute</p>
+    <h1>Curt — I want you in on this properly.</h1>
+    <p class="lead">There is a real share in it, on the last screen. Two things
+      I actually want from you:</p>
+    <ol class="how">
+      <li><b>The founders you already know who are raising.</b>
+        <span>One name a month is more than the board can do for itself.</span></li>
+      <li><b>Telling me when the model is wrong.</b>
+        <span>You read these for a living. I would rather hear it early.</span></li>
+    </ol>
+    <a class="on" href="#what">thirty seconds on what it is ↓</a>
+  </section>
+
+  <section id="what">
+    <p class="eyebrow">What it is</p>
+    <h2>The people you need in China already know each other.</h2>
+    <p class="lead">Getting into that circle takes years. Usually it takes a
+      person. <em>This is the room.</em></p>
+    <p style="margin-top:1.4rem">Everyone says one line — <b>I am a ___ looking
+      for a ___</b> — and the board matches the two halves. Founders raising,
+      investors, agents, factories, film people.</p>
+
+    <div class="pair" style="margin-top:1.8rem">
+      <div><div class="n">21</div><div class="l">inside</div></div>
+      <div><div class="n quiet">1</div><div class="l">code each, per day</div></div>
+    </div>
+    <p>Nobody walks in. A member vouches for you and their name stays on you.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">What it could be worth</p>
+
+    <!-- The same drawing Aiden and the advisors see. Two people holding
+         shares in one company should be looking at one picture of it. -->
+    <svg class="growth" viewBox="0 0 300 128" width="100%" role="img"
+      aria-label="Nothing today, a hundred and fifty thousand at year one, one and a half million inside two years.">
+      <line x1="6" y1="104" x2="288" y2="104" stroke="#2F3B36" stroke-width="1.2"/>
+      <polygon points="288,104 280,100 280,108" fill="#2F3B36"/>
+      <circle cx="22" cy="102" r="2.6" fill="#3FBF8F"/>
+      <circle cx="82" cy="89" r="15" fill="#3FBF8F"/>
+      <circle cx="200" cy="58" r="45" fill="#3FBF8F" fill-opacity=".14"
+        stroke="#3FBF8F" stroke-opacity=".5"/>
+      <text x="22" y="90" font-size="11.5" fill="#BCC8C2" text-anchor="middle">nil</text>
+      <text x="82" y="65" font-size="13" fill="#E4EFEA" text-anchor="middle"
+        font-weight="600">$150k</text>
+      <text x="200" y="64" font-size="20" fill="#3FBF8F" text-anchor="middle"
+        font-family="Instrument Serif,Georgia,serif">$1.5m</text>
+      <text x="22" y="121" font-size="10.5" fill="#94A29B" text-anchor="middle">today</text>
+      <text x="82" y="121" font-size="10.5" fill="#94A29B" text-anchor="middle">year one</text>
+      <text x="200" y="121" font-size="10.5" fill="#94A29B" text-anchor="middle">two years</text>
+    </svg>
+
+    <p style="margin-top:1.4rem">Ten thousand people at <b>$50 a year</b> — one
+      suggested model, not a decided one — is $500,000 a year. Businesses like
+      that have sold for <b>three to five times</b> what they take in.</p>
+    <p>So the circles are the company, not the takings. You will have your own
+      view on both, which is half of why I am asking you.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">Your offer</p>
+    <h2>Signed, dated, and not quietly editable afterwards.</h2>
+
+    <div class="big" style="margin:1.3rem 0 0">2.5%</div>
+    <p class="under">of The Exchange — <b>$37,500</b> against the two-year
+      figure above</p>
+
+    <div class="terms">
+      <div><span class="w">Vesting</span><span class="v">monthly from the day you sign</span></div>
+      <div><span class="w">Cliff</span><span class="v">none</span></div>
+      <div><span class="w">Signed as</span><span class="v">your own name</span></div>
+    </div>
+
+    <p style="margin-top:1.5rem">The share, the schedule and the date go down
+      the moment you accept — held on a record neither of us can change after
+      the fact, which is the thing this company is being built to sell.</p>
+    <a class="go" href="https://crowdfundme.app/o">Open your offer →</a>
+    <p class="fine">Type the six-character code I sent you. The way into the
+      board comes straight after.</p>
+  </section>
+
+</div>
