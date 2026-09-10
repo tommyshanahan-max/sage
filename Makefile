@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: cfm-project can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: demo demo-cards demo-rm cfm-project can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -402,6 +402,33 @@ cfm-grantor: ## Who grants a share and out of what: make cfm-grantor ID=the-exch
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  grantor --id "$(or $(ID),the-exchange)" --from "$(FROM)" --holds "$(HOLDS)" \
 	  --sig "$(SIG)"
+
+demo: ## Two people who are not real, so you can see a full room: make demo WHO="Tom" [N=2]
+	@# For "show me what it looks like when I have connections". They are named,
+	@# their sentences answer yours, and they are gone again in one command.
+	@#
+	@# WHAT IT WILL NOT DO is act as somebody who exists. A row saying Hugo
+	@# connected with you, when Hugo did not, is the one thing that makes the
+	@# Cards tab worth nothing — including to whoever asked for it, who then
+	@# cannot trust their own screen.
+	@#
+	@# Three steps, and the middle one is yours: they connect to you, you press
+	@# Connect on each of them in Browse, then make demo-cards.
+	@test -n "$(WHO)" || { echo 'whose room? make demo WHO="Tom"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/demo.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  add --for "$(WHO)" --n "$(or $(N),2)"
+
+demo-cards: ## They hand you their cards, once you have connected back: make demo-cards WHO="Tom"
+	@test -n "$(WHO)" || { echo 'whose room? make demo-cards WHO="Tom"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/demo.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  cards --for "$(WHO)"
+
+demo-rm: ## Take the demo people back out again
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/demo.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  rm
 
 cfm-project: ## A new project on the ledger: make cfm-project ID=laonei NAME="Laonei" [LINE="..." CLAIM="..." SUB="..." GOAL="..." MARKS="nil|today;$600k|two years" SEATS=0 GOTO=https://...]
 	@# The ledger knows nothing about a project until it is told, and an offer
