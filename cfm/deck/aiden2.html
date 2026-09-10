@@ -1,0 +1,251 @@
+<title>The Exchange · for Aiden</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  :root{
+    --ground:#080C0A;
+    --raise:#0E1512;
+    --ink:#ECEAE4;
+    --dim:#939C96;
+    --hair:#1E2A25;
+    --jade:#3FBF8F;
+    --gold:#D9A94A;
+    --serif:"Instrument Serif",Georgia,"Songti SC",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);color:var(--ink);
+    font:16px/1.6 var(--sans);
+    -webkit-font-smoothing:antialiased;
+    scroll-snap-type:y proximity;
+  }
+  .deck{max-width:30rem;margin:0 auto;padding:0 1.4rem}
+  section{
+    scroll-snap-align:start;
+    min-height:86svh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:3rem 0;
+    border-bottom:1px solid var(--hair);
+  }
+  section:last-of-type{border-bottom:0}
+  .eyebrow{
+    font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--jade);margin:0 0 1.1rem;
+  }
+  .eyebrow.gold{color:var(--gold)}
+  h1{font:400 clamp(2.9rem,12vw,4rem)/1.01 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  h2{font:400 clamp(2.4rem,9.6vw,3.2rem)/1.08 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  p{margin:0 0 1rem;color:var(--dim);font-size:1.02rem}
+  p.lead{color:var(--ink);font-size:1.08rem}
+  p:last-child{margin-bottom:0}
+  em{font-style:italic;font-family:var(--serif);font-size:1.15em;color:var(--jade)}
+  b{color:var(--ink);font-weight:650}
+
+  .big{font:400 clamp(4rem,22vw,6.5rem)/.9 var(--serif);color:var(--gold);letter-spacing:-.02em}
+  .big.range{font-size:clamp(2.9rem,15vw,4.4rem);line-height:1}
+  .big.range span{font-size:.42em;color:var(--dim);margin:0 .28em;
+    font-family:var(--sans);font-style:italic}
+  .under{color:var(--dim);font-size:.95rem;margin:.7rem 0 0}
+  .growth{display:block;margin:2rem 0 0;overflow:visible;max-width:100%}
+
+  .pair{display:flex;gap:2.4rem;flex-wrap:wrap;margin:0 0 1.6rem}
+  .pair .n{font:400 clamp(3rem,15vw,4.2rem)/.9 var(--serif);color:var(--gold)}
+  .pair .n.quiet{color:var(--ink)}
+  .pair .l{color:var(--dim);font-size:.86rem;margin-top:.5rem;max-width:8rem}
+
+  /* WHAT IS BEING ASKED OF HIM. Two lines, in the margin-numbered shape the
+     advisor deck uses — a partner reading a share offer wants to know the
+     price in his own time before he reads the number. */
+  ol.how{list-style:none;margin:0 0 1.5rem;padding:0;counter-reset:how}
+  ol.how li{position:relative;padding:0 0 1.1rem 2.5rem;counter-increment:how}
+  ol.how li:last-child{padding-bottom:.4rem}
+  ol.how li::before{content:counter(how);position:absolute;left:0;top:-.1rem;
+    font:400 1.5rem/1 var(--serif);color:var(--gold)}
+  ol.how b{display:block;color:var(--ink);font-weight:650;font-size:1.02rem;margin-bottom:.15rem}
+  ol.how span{display:block;color:var(--dim);font-size:.95rem;line-height:1.5}
+
+  /* THE LADDER. Rows rather than circles past two years: a fourth circle
+     drawn to scale against $20m is four times the width of a phone, and one
+     drawn smaller than scale is a lie told in a picture. The other decks keep
+     the three circles unchanged — they stop at two years and the drawing is
+     honest there. */
+  .steps{margin:1.2rem 0 0}
+  .steps div{display:flex;justify-content:space-between;align-items:baseline;
+    gap:1rem;padding:.9rem 0;border-bottom:1px solid var(--hair)}
+  .steps div:last-child{border-bottom:0}
+  .steps .w{color:var(--dim);font-size:.95rem}
+  .steps .v{font:400 1.75rem/1 var(--serif);color:var(--gold);white-space:nowrap}
+  .steps .v.quiet{color:var(--dim);font-size:1.3rem}
+  .steps .v.on{color:var(--jade)}
+
+  /* SCENES FROM THE APP, drawn here rather than screenshotted.
+     A screenshot of a light-mode app dropped into a dark deck reads as a
+     picture of something else; these are the same screens in the deck's own
+     colours, so they belong to the page they are on. Small on purpose — they
+     are there to make one sentence concrete, not to be inspected. */
+  .screens{display:flex;gap:.8rem;margin:1.5rem 0 0}
+  .sc{flex:1;min-width:0;background:var(--raise);border:1px solid var(--hair);
+    border-radius:.9rem;padding:.6rem;display:flex;flex-direction:column;gap:.45rem}
+  .sc .face{aspect-ratio:1/.82;border-radius:.5rem;position:relative;overflow:hidden;
+    background:linear-gradient(158deg,#3B4A55,#141C21)}
+  .sc .face b{position:absolute;left:.4rem;bottom:.75rem;color:#fff;
+    font:400 .82rem/1 var(--serif)}
+  .sc .face i{position:absolute;left:.42rem;bottom:.3rem;font-style:normal;
+    font-size:.5rem;color:#9FB0BA}
+  .sc .said{font-size:.58rem;line-height:1.7;color:var(--ink);font-family:var(--serif)}
+  .sc .said em{font-style:normal;font-family:var(--sans);font-size:.85em;
+    font-weight:700;color:#04120C;background:var(--jade);
+    border-radius:99px;padding:.05rem .32rem}
+  .sc .btn{border-radius:99px;text-align:center;font-size:.55rem;font-weight:700;
+    padding:.34rem;background:var(--jade);color:#04120C}
+  .sc .btn.q{background:transparent;border:1px solid var(--hair);color:var(--dim)}
+  .sc .tag{font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;
+    font-weight:700;color:var(--gold)}
+  .sc .id{font:.52rem/1.4 ui-monospace,Menlo,monospace;color:var(--ink);
+    background:#0A100D;border:1px solid var(--hair);border-radius:.35rem;
+    padding:.24rem .3rem}
+  .caption{font-size:.82rem;color:var(--dim);margin:.8rem 0 0;text-align:center}
+
+  /* HIS SHARE, AND WHAT WOULD MOVE IT. Dashed, because the two steps have not
+     happened — the same distinction the offer page itself makes. */
+  .earn{border:1px dashed var(--hair);border-radius:.9rem;padding:1rem 1.1rem;margin:1.3rem 0 0}
+  .earn > p{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;
+    font-weight:700;color:var(--gold);margin:0 0 .7rem}
+  .earn div{display:flex;gap:.9rem;align-items:baseline;padding:.5rem 0}
+  .earn b{color:var(--gold);font-size:1rem;font-weight:700;min-width:2.8rem;
+    flex:0 0 auto;font-variant-numeric:tabular-nums}
+  .earn span{color:var(--ink);font-size:.92rem;line-height:1.45}
+
+  .terms{margin:1.4rem 0 0}
+  .terms div{display:flex;justify-content:space-between;gap:1rem;
+    padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
+  .terms div:last-child{border-bottom:0}
+  .terms .w{color:var(--dim)}
+  .terms .v{color:var(--ink);font-weight:650;text-align:right}
+
+  .go{display:block;margin:1.6rem 0 0;padding:1.05rem 1.2rem;
+    background:var(--jade);color:#04120C;border-radius:99px;text-align:center;
+    text-decoration:none;font-weight:700;font-size:1.02rem}
+  .fine{color:var(--dim);font-size:.85rem;margin-top:1rem;text-align:center}
+  .on{display:block;margin:1.1rem 0 0;color:var(--dim);font-size:.9rem;
+    line-height:1.5;text-align:center;text-decoration:none}
+  .on:hover{color:var(--ink)}
+  #what{scroll-margin-top:1rem}
+
+  .mark{display:flex;align-items:center;gap:.7rem;margin:0 0 2rem}
+  .mark i{width:2.6rem;height:2.6rem;border-radius:.7rem;background:var(--raise);
+    border:1px solid var(--hair);display:grid;place-items:center;font-style:normal;
+    font:400 1.3rem/1 var(--serif);color:var(--jade)}
+  .mark span{font:400 1.25rem/1 var(--serif);color:var(--ink)}
+
+  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="deck">
+
+  <!-- SIX SLIDES, ONE IDEA EACH, READ IN FLICKS.
+       Written for somebody who already knows Tom: no persuading, just the four
+       things a person decides on — what is offered, what the thing is, what it
+       could be worth, and what is asked back.
+
+       NO BLOCKCHAIN LINE. The record is going onto a public chain and is not
+       there yet: testnet, sealed by hand. What is true is that the offer is
+       signed, dated and not quietly editable, so that is what these say. -->
+
+  <section>
+    <div class="mark"><i>换</i><span>The Exchange</span></div>
+    <p class="eyebrow gold">Aiden</p>
+    <h1>Tom is offering you 5% of The Exchange.</h1>
+    <a class="on" href="#what">what it is ↓</a>
+  </section>
+
+  <section id="what">
+    <p class="eyebrow">The project</p>
+    <h2>LinkedIn × Tinder.</h2>
+    <p class="lead">You say one line — <b>I am a ___ looking for a ___</b> —
+      and it finds the people who said the other half.</p>
+
+    <div class="screens">
+      <div class="sc">
+        <div class="face"><b>Mia</b><i>Agent · Shanghai</i></div>
+        <div class="said">I am an <em>Agent</em> looking for <em>a Performer</em></div>
+        <div class="btn">Make her an offer</div>
+      </div>
+      <div class="sc">
+        <span class="tag">✓ Offer accepted</span>
+        <div class="said" style="font-family:var(--sans);font-size:.55rem;color:var(--dim)">
+          One day, Shanghai — <b style="color:var(--ink)">¥6,400</b></div>
+        <div class="id">mia_chen_sh</div>
+        <div class="btn q">Open WeChat</div>
+      </div>
+    </div>
+
+    <p class="caption">Nobody's contact opens until both sides agree.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Eighteen months</p>
+    <h2>Then it stops being a China product.</h2>
+    <p class="lead">China is the hard version of the same problem: an outsider
+      who needs the one person nobody introduces them to.</p>
+    <p>Jakarta, Lagos, São Paulo, Dubai. Same room, same sentence, nothing
+      changes.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">Four years</p>
+    <h2>100,000 people at $50 a year.</h2>
+
+    <div class="steps">
+      <div><span class="w">today</span><span class="v quiet">nil</span></div>
+      <div><span class="w">year one · China</span><span class="v">$150k</span></div>
+      <div><span class="w">two years</span><span class="v">$1.5m</span></div>
+      <div><span class="w">four years · global</span><span class="v on">$15m – $25m</span></div>
+    </div>
+
+    <p style="margin-top:1.3rem">$5m a year in subscriptions, at the <b>three to
+      five times revenue</b> businesses like this have sold for.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">Your share</p>
+    <div class="big range">5%<span>rising to</span>10%</div>
+    <p class="under"><b>$750k to $2.5m</b> against the four-year figure</p>
+
+    <div class="earn">
+      <p>What moves it</p>
+      <div><b>+2%</b><span>Incorporated in Singapore — three months away — and
+        you are still building it</span></div>
+      <div><b>+3%</b><span>10,000 people in the room</span></div>
+    </div>
+
+    <p style="margin-top:1.4rem">Vesting monthly from the day you sign, no
+      cliff. Against two years the 5% is $75k.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">If you want it</p>
+    <h2>Accept, then two things.</h2>
+    <ol class="how">
+      <li><b>Bring people in.</b>
+        <span>You know rooms Tom does not. Everyone you bring keeps your name
+          on them.</span></li>
+      <li><b>Promote it.</b>
+        <span>To the people who listen to you. That is the half Tom cannot
+          do.</span></li>
+    </ol>
+
+    <div class="screens" style="max-width:11rem">
+      <div class="sc">
+        <span class="tag" style="color:var(--jade)">Your line</span>
+        <div class="said">I am a <em>Producer</em> looking for <em>a Writer</em></div>
+        <div class="btn">Put it up</div>
+      </div>
+    </div>
+
+    <a class="go" href="https://crowdfundme.app/o">Open your offer →</a>
+    <p class="fine">Six-character code from Tom. Your way in comes straight
+      after.</p>
+  </section>
+
+</div>
