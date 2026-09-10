@@ -4913,17 +4913,21 @@ function drawNews() {
   if (!ME || !ME.handle) return false;
   const n = newsSince();
 
-  /* WHERE THEY STAND, above the letter.
+  /* THE RANK AND THE LETTER, BEHIND THE SAME SWITCH AS THE REST OF IT.
    *
-   * The grade is today; the rank is what they have built. One is a mark that
-   * moves every morning and the other is a title that took weeks — so the
-   * title goes first, and the mark under it reads as the day rather than as a
-   * verdict on the person. */
-  drawRank(box);
-
-  // The letter. It is the one line somebody can compare with yesterday
-  // without reading anything else on the card.
-  drawGrade(box);
+   * "Where you stand · Extra · Nobody has answered you yet" and "A+ · 11
+   * points today" were the first two things in the one place a member goes to
+   * find out what happened — a title, a mark out of the day, and a row of
+   * letters, on a board of agents and producers. It is the study app's
+   * scoring, and it came in on the back of real news: somebody gets a match
+   * and is handed a report card with it.
+   *
+   * They are good things and they are for a different product. One flag, so
+   * the day this board wants a grade again it comes back whole. */
+  if (LEARNING) {
+    drawRank(box);
+    drawGrade(box);
+  }
 
   /* THE WONDERING, and the floor under it. Drawn only when there are enough
      regulars for the sentence to describe a crowd rather than a person. */
@@ -4964,7 +4968,13 @@ function drawNews() {
     row(T("prof.replied", { who: p.handle || T("board.someone") }));
   }
   for (const m of n.matches.slice(0, 2)) row(matchLine(m));
-  if (n.followers) row(T("prof.followed", { n: n.followers }));
+  /* "1 people followed you" — one string doing two numbers, in the one place
+     a member goes to find out what happened. And the word: the deck says
+     Connect now, so this says connected. */
+  if (n.followers) {
+    row(T(n.followers === 1 ? "prof.connected1" : "prof.connected",
+      { n: n.followers }));
+  }
   if (n.joined.length) {
     row(n.joined.length === 1 ? T("prof.joined1", { who: n.joined[0] })
       : T("prof.joined", { n: n.joined.length }), true);
@@ -5008,6 +5018,30 @@ function drawProf() {
     return;
   }
   box.hidden = false;
+
+  /* WITH THE LEARNING HALF OFF, THIS FOLD IS ONLY THE NEWS.
+   *
+   * Everything else in it is the study app's scoring — a letter grade, points
+   * today, a ladder of ranks, and a language test somebody is invited to take.
+   * On a board of agents, producers and investors that is somebody else's
+   * homework stapled to the one place a member looks to find out what
+   * happened, and it arrives BECAUSE there is news: a match brings the whole
+   * report card in with it.
+   *
+   * The news is the half worth having and it stays. The rest goes behind the
+   * same switch as the language half — one flag, so the day this board wants
+   * a level again, it comes back whole rather than in pieces. */
+  if (!LEARNING) {
+    if (head) head.hidden = true;
+    for (const id of ["profnow", "daily", "proftests", "profgrade"]) {
+      if ($(id)) { fill($(id)); $(id).hidden = true; }
+    }
+    const b = $("profbody");
+    if (b) b.hidden = false;
+    $("profnews").hidden = !hasNews;
+    box.hidden = !hasNews;
+    return;
+  }
   // An empty card holds a slot in the strip and swipes to nothing.
   $("profnews").hidden = !hasNews;
   /* The letter in the header, from the same object the card drew — see GRADE.

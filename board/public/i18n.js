@@ -1521,7 +1521,10 @@ export const STRINGS = {
                         "有 {n} 个人反复回到你的主页。"],
   "prof.noName":       ["nobody is named", "不会告诉你是谁"],
   "prof.replied":      ["{who} replied to your post", "{who}回复了你的内容"],
-  "prof.followed":     ["{n} people followed you", "{n} 个人关注了你"],
+  /* Two strings, because "1 people followed you" is the product misspelling
+     its own good news. And the word follows the deck's button. */
+  "prof.connected1":   ["Somebody connected with you", "有人跟你建立了联系"],
+  "prof.connected":    ["{n} people connected with you", "{n} 个人跟你建立了联系"],
   "prof.joined1":      ["{who} joined", "{who}来了"],
   "prof.joined":       ["{n} people joined", "来了 {n} 个人"],
   "prof.posts":        ["{n} new posts on the board", "板上有 {n} 条新内容"],
@@ -2435,7 +2438,12 @@ export const STRINGS = {
    * ways, contact is grants, hiding is local, the key is the device line.
    * Change any of those and change these with them.
    */
-  "ask.head":          ["Ask the Professor", "问问教授"],
+  /* IT IS A HELP LIST, AND IT SAYS SO. "Ask the Professor" is the study half's
+     character, and the questions under it are "How do I change my page?" —
+     a member of a board of agents and producers reading that heading has to
+     work out who the Professor is before they can ask him where their
+     LinkedIn goes. */
+  "ask.head":          ["Questions", "常见问题"],
 
   /* The rest of them, folded. The count is in it because "More" alone does
      not say whether that is two more or twenty, and somebody deciding whether
