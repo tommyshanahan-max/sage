@@ -3190,20 +3190,43 @@ app.get("/api/offer", async (req, res) => {
   res.json({ offer: shownOffer(o, board) });
 });
 
-/** Take it. Records the name they typed, and lets them in. */
+/** Take it. Records the deal, and puts them on the list — not through the
+ *  door.
+ *
+ *  IT USED TO LET THEM STRAIGHT IN, and that was wrong twice over.
+ *
+ *  A link is a bearer token. This one is built to be pasted into a chat, which
+ *  is exactly where things get forwarded — so an offer addressed to one person
+ *  admitted whoever opened it first. The invite code has the same shape and
+ *  gets away with it because nobody designed it to travel.
+ *
+ *  And the claims are not the same size. A member making an offer is saying "I
+ *  want this done"; a member vouching is saying "I know this person". An agent
+ *  offering work to a performer she found on Instagram has said the first and
+ *  nothing like the second, and this room is worth being in precisely because
+ *  nobody walks in.
+ *
+ *  So accepting does the thing that has to be immediate — the deal is on the
+ *  record, with their name and the date — and puts them in the queue with the
+ *  offer attached and the sender named. That is the strongest position anybody
+ *  can be in on that list, and letting them through stays one deliberate press
+ *  by a member, which is the whole design. */
 app.post("/api/offer/take", express.json({ limit: "4kb" }), async (req, res) => {
   const code = store.cleanCode(req.body?.code);
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
   const name = String(req.body?.name || "").trim().slice(0, 60);
-  if (!code || !me || !name) return res.status(400).json({ error: "no" });
+  /* A WAY TO REACH THEM, and it is not an extra hurdle bolted on. They are
+     going onto a list rather than into the room, so the person who offered
+     them work needs to be able to answer them — and somebody who has just
+     accepted a job is the one person who will hand over a WeChat id without
+     being persuaded. */
+  const reach = String(req.body?.reach || "").trim().slice(0, 80);
+  if (!code || !me || !name || !reach) return res.status(400).json({ error: "no" });
 
   const out = await change((board) => {
     const o = board.offers.find((x) => x.code === code);
     if (!o) return { error: "gone" };
     if (o.off) return { error: "off" };
-    // Taken already, by somebody else. Told apart from "taken by you", because
-    // one of those is a dead end and the other is the page they are looking
-    // for on a second phone.
     if (o.tookAt) return o.tookBy === me ? { ok: true, mine: true } : { error: "taken" };
     if (o.by === me) return { error: "yours" };
 
@@ -3211,25 +3234,38 @@ app.post("/api/offer/take", express.json({ limit: "4kb" }), async (req, res) => 
     o.tookAt = new Date().toISOString();
     o.name = name;
 
-    /* THE INVITE, WRITTEN HERE. Marked used by them in the same breath, so
-       there is never a moment where a row exists that somebody else could
-       spend. `by` is the sender, which is what makes the invites list read as
-       who brought whom. */
-    if (!board.invites.some((v) => v.usedBy === me && !v.off)) {
-      board.invites.push(store.cleanInvite({
-        code: store.newCode(), who: name, by: o.by,
-        usedBy: me, usedAt: o.tookAt,
-      }));
+    // Already a member: nothing to queue for. The deal is recorded and that is
+    // the whole of it.
+    if (board.people.some((q) => q.by === me && q.state === "published")) {
+      return { ok: true, member: true };
     }
-    return { ok: true };
+
+    const from = board.people.find((q) => q.by === o.by);
+    const at = board.waits.findIndex((w) => w.by === me && !w.done);
+    const row = store.cleanWait({
+      name, reach, by: me,
+      /* THE REASON WRITES ITSELF, and it is a better one than anybody types
+         into that box. "Accepted an offer from Mia" is a fact a member can
+         check against their own sent offers. */
+      why: (from ? from.handle + " offered: " : "Offered: ") + o.give,
+      via: from ? from.id : "",
+      // They came through a named member's offer and are waiting to be let in
+      // by one. Being invisible would leave nobody able to decide.
+      shown: true,
+      at: o.tookAt,
+    });
+    if (!row) return { error: "no" };
+    if (at >= 0) board.waits[at] = { ...board.waits[at], ...row, id: board.waits[at].id };
+    else board.waits.push(row);
+    return { ok: true, waiting: true };
   });
 
   if (out?.error) {
     return res.status(out.error === "gone" ? 404 : 409).json(out);
   }
-  // Admitted from this moment, on this browser — the same cookie the door
-  // sets, so nothing downstream has to know an offer was involved.
-  setCookie(res, me);
+  // The waiting cookie, not the admission one — so a browser that forgets
+  // itself can still find its own row. Being on the list is not being in.
+  if (out?.waiting) setWaitCookie(res, me);
   res.json(out);
 });
 

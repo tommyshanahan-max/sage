@@ -1755,18 +1755,29 @@ export const STRINGS = {
   "off.money":         ["What it pays", "报酬"],
   "off.want":          ["What they would expect", "对方希望的"],
   "off.signsay": [
-    "Your name here is your signature. It goes on the record with today's date, and it is what lets you into the room.",
-    "在这里写下名字就是签名。会连同今天的日期一起记录下来，也是你进入这个圈子的方式。"],
+    "Your name here is your signature. It goes on the record with today's date.",
+    "在这里写下名字就是签名，会连同今天的日期一起记录下来。"],
   "off.yourname":      ["Your name", "你的名字"],
+  "off.yourreach":     ["Your WeChat, so they can answer you", "你的微信，方便对方回复你"],
   "off.take":          ["Accept", "接受"],
   "off.fine": [
     "No account, no password, no phone number.",
     "不需要注册、不需要密码、不需要手机号。"],
   "off.donehead":      ["Accepted.", "已接受。"],
+  /* WHAT ACCEPTING ACTUALLY DID. It records the deal and puts them in the
+     queue — it does not open the door, and this used to say it did. Nobody
+     walks into this room, including somebody holding a link that was meant
+     for them. */
   "off.donesay": [
-    "It is on the record, and you are in. Put a photograph and one line up, and people can find you.",
-    "已经记录下来了，你也进来了。放一张照片、写一句话，别人就能找到你。"],
-  "off.donego":        ["Go in", "进去看看"],
+    "It is on the record. You are on the list with this offer against your name — {who} still has to let you in, and that is usually quick. Put a photograph and a line up while you wait.",
+    "已经记录下来了。你已经在名单上，名字后面附着这个邀约——还需要{who}放你进来，通常很快。等的时候可以先放一张照片、写一句话。"],
+  "off.donego":        ["See where you are", "看看你的位置"],
+  /* A member who accepts is already inside and must not be told to wait. */
+  "off.doneIn": [
+    "It is on the record. Nothing else to do — you are already in.",
+    "已经记录下来了。你本来就在里面，不用再做什么。"],
+  "off.doneGoIn":      ["Go in", "进去看看"],
+  "off.someone":       ["whoever sent it", "发给你的人"],
   "off.already": [
     "Somebody has already taken this one.",
     "这个邀约已经被别人接了。"],

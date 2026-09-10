@@ -119,6 +119,11 @@
     <div class="signbox" id="signbox">
       <p id="signsay"></p>
       <input id="name" autocomplete="name" spellcheck="false">
+      <!-- A WAY TO ANSWER THEM. They are joining a list rather than walking
+           into the room, so the person who offered them work has to be able to
+           reach them — and somebody who has just accepted a job is the one
+           person who hands this over without being talked into it. -->
+      <input id="reach" autocomplete="off" spellcheck="false" style="margin-top:.6rem">
       <button class="go" id="take" type="button"></button>
       <p class="fine" id="fine"></p>
     </div>
@@ -127,7 +132,10 @@
       <div class="tick">✓</div>
       <h2 id="donehead"></h2>
       <p id="donesay"></p>
-      <a class="go" id="donego" href="/browse"></a>
+      <!-- The waiting room, not Browse. Accepting records the deal; it does
+           not open the door, and a button that went to the members' area would
+           be promising something the server will refuse. -->
+      <a class="go" id="donego" href="/room"></a>
     </div>
   </div>
 
@@ -155,6 +163,10 @@ try {
 } catch { /* a private window can still read the offer, just not take it */ }
 
 let OFFER = null;
+/* "" until they press it, then "waiting" or "member" — a member who accepts an
+ * offer is already in and must not be told to wait for a door they are stood
+ * behind. */
+let DONE = "";
 
 function paint() {
   if (!OFFER) return;
@@ -168,9 +180,14 @@ function paint() {
   $("take").textContent = T("off.take");
   $("fine").textContent = T("off.fine");
   $("name").placeholder = T("off.yourname");
+  $("reach").placeholder = T("off.yourreach");
   $("donehead").textContent = T("off.donehead");
-  $("donesay").textContent = T("off.donesay");
-  $("donego").textContent = T("off.donego");
+  $("donesay").textContent = DONE === "member" ? T("off.doneIn")
+    // Named, because "somebody has to let you in" is a queue and
+    // "Mia still has to let you in" is a person who owes you a press.
+    : T("off.donesay", { who: (OFFER && OFFER.from && OFFER.from.handle) || T("off.someone") });
+  $("donego").textContent = T(DONE === "member" ? "off.doneGoIn" : "off.donego");
+  $("donego").href = DONE === "member" ? "/browse" : "/room";
   if (OFFER.from) $("fromsay").textContent = OFFER.from.campus || "";
 }
 
@@ -213,12 +230,14 @@ async function load() {
 $("take").addEventListener("click", async () => {
   const name = $("name").value.trim();
   if (!name) { $("name").focus(); return; }
+  const reach = $("reach").value.trim();
+  if (!reach) { $("reach").focus(); return; }
   const b = $("take");
   b.disabled = true;
   try {
     const r = await fetch("/api/offer/take", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ code: CODE, device, name }),
+      body: JSON.stringify({ code: CODE, device, name, reach }),
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) {
@@ -227,8 +246,10 @@ $("take").addEventListener("click", async () => {
         : d.error === "yours" ? "off.yours" : "off.failed");
       return;
     }
+    DONE = d.member ? "member" : "waiting";
     $("signbox").hidden = true;
     $("done").hidden = false;
+    paint();
   } catch {
     b.disabled = false;
     $("fine").textContent = T("off.failed");
