@@ -398,9 +398,21 @@ fetch("/api/hello" + (asked ? "?room=" + encodeURIComponent(asked) : ""))
  * right way round — the stranger is the reader this page is for, and the
  * member has somewhere better to be anyway.
  */
+/* ?new=1 SHOWS A MEMBER WHAT A STRANGER SEES.
+ *
+ * This page hides the queue and the form from anybody already in, which is
+ * right — and it means whoever runs the board cannot check their own share
+ * links. They open one, see a page with no way to join on it, and conclude the
+ * link is broken; it is working perfectly and showing them the member's half.
+ * The same switch the door has, for the same reason.
+ *
+ * Display only. Nothing about being admitted is touched: drop the parameter
+ * and the member's page is back. */
+const PREVIEW = new URLSearchParams(location.search).get("new") === "1";
+
 admitted().then((inAlready) => {
   INSIDE = inAlready;
-  if (!inAlready) return;
+  if (!inAlready || PREVIEW) return;
   // The door box goes with the queue: a member has the Ask the Professor
   // panel inside, which is written answers and costs nothing.
   $("hostess").hidden = true;
