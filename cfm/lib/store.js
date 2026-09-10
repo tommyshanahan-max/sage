@@ -105,6 +105,23 @@ export function cleanProject(raw) {
        person granting it, is the first thing a careful reader stops on.
        `holds` is the sentence that answers "out of what". */
     from: s(raw.from, 60),
+    /* THEIR ACTUAL SIGNATURE, if they have put one there.
+     *
+     * A file in public/, named here rather than embedded: an image on a page
+     * is a few kilobytes and a data URI in the record is a few kilobytes in
+     * every backup, every seal and every diff of a file that is meant to be
+     * readable by a person.
+     *
+     * A FILENAME AND NOTHING ELSE. No slashes, no dots beyond the extension,
+     * nothing that can climb out of the directory — this value is written by
+     * whoever runs the box and read straight into an img src, and the day it
+     * is settable from anywhere else is the day it would matter.
+     *
+     * Optional, and the page is correct without it: a typed name and a date
+     * is a signature. This is the same thing with a pen behind it.
+     */
+    sig: /^[a-z0-9][a-z0-9._-]{0,48}\.(png|jpg|jpeg|svg|webp)$/i.test(String(raw.sig || ""))
+      ? String(raw.sig) : "",
     holds: s(raw.holds, 160),
     at: s(raw.at, 40) || new Date().toISOString(),
   };

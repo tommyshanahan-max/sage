@@ -140,7 +140,7 @@ function view(data, o) {
        the button was always going to send them. */
     project: p && { id: p.id, name: p.name, zh: p.zh, line: p.line, seats: p.seats, goTo: p.goTo,
       claim: p.claim, sub: p.sub, goal: p.goal, marks: p.marks,
-      from: p.from, holds: p.holds },
+      from: p.from, holds: p.holds, sig: p.sig },
     pack: k && { name: k.name, face: k.face, points: k.points, perDay: k.perDay,
       pct: k.pct, years: k.years, cliff: k.cliff, ask: k.ask, why: k.why,
       // The earn-out, and it goes out with the terms it qualifies. A page that
@@ -508,7 +508,12 @@ app.post("/api/project/from", express.json({ limit: "2kb" }), admin, async (req,
     if (!p) return null;
     if (req.body.from !== undefined) p.from = String(req.body.from).slice(0, 60);
     if (req.body.holds !== undefined) p.holds = String(req.body.holds).slice(0, 160);
-    return { id: p.id, name: p.name, from: p.from, holds: p.holds };
+    /* Through cleanProject rather than assigned, so the filename rule lives in
+       one place and a bad one is dropped rather than written. */
+    if (req.body.sig !== undefined) {
+      p.sig = store.cleanProject({ ...p, sig: req.body.sig }).sig;
+    }
+    return { id: p.id, name: p.name, from: p.from, holds: p.holds, sig: p.sig };
   });
   if (!out) return res.status(404).json({ error: "no such project" });
   res.json({ ok: true, project: out });

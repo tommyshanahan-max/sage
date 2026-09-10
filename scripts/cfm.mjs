@@ -115,10 +115,11 @@ if (cmd === "setup") {
      is how the other eight get blanked. */
   const id = arg("id", "the-exchange");
   const d = await post("/api/project/from", {
-    id, from: arg("from"), holds: arg("holds"),
+    id, from: arg("from"), holds: arg("holds"), sig: arg("sig"),
   });
   console.log("\n  " + d.project.name + " — granted by " + (d.project.from || "(nobody named)"));
   if (d.project.holds) console.log("      " + d.project.holds);
+  if (d.project.sig) console.log("      signature: /" + d.project.sig);
   console.log("");
   if (!d.project.from) {
     console.log("  A stake offer with no named grantor is a screenshot, not a record.");

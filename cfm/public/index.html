@@ -88,6 +88,11 @@
      because it is done — the eye belongs on the line that is not. */
   .sigrow{padding-bottom:1rem;margin-bottom:1rem;border-bottom:1px solid var(--line)}
   .sigrow.theirs{padding-bottom:0;margin-bottom:0;border-bottom:0}
+  /* THE INK. Sized in rem so it sits at the scale of the writing around it
+     rather than the resolution of whatever it was photographed at, and capped
+     so a wide signature cannot push the card sideways on a phone. */
+  #sigfromink{display:block;height:3.2rem;width:auto;max-width:100%;
+    margin:0 0 .5rem;opacity:.92}
   .sigwho{display:block;font:400 1.35rem/1.4 "Instrument Serif",Georgia,serif;
     color:var(--dim)}
   /* Their own name once it is down. Full ink, not dim: it is the newest thing
@@ -216,6 +221,11 @@
          name rather than a request. -->
     <div id="signbox" hidden>
       <div class="sigrow" id="sigfrom">
+        <!-- THE PEN, THEN THE NAME, THEN THE DATE — the order a signed page
+             has had for four hundred years. The image is optional and the row
+             is correct without it: a typed name and a date IS a signature,
+             and this is the same thing with a hand behind it. -->
+        <img id="sigfromink" alt="" hidden>
         <span class="sigwho" id="sigfromwho"></span>
         <span class="sigwhen" id="sigfromwhen"></span>
       </div>
@@ -475,6 +485,15 @@ function draw(o) {
       if (p.from) {
         $("sigfromwho").textContent = p.from;
         $("sigfromwhen").textContent = "Signed " + onDay(o.at);
+        /* Only when the project names one. A missing file would draw a broken
+           image on the one page that cannot afford to look unfinished, so the
+           element stays hidden until the load succeeds. */
+        if (p.sig) {
+          const ink = $("sigfromink");
+          ink.alt = p.from + "'s signature";
+          ink.addEventListener("load", () => { ink.hidden = false; });
+          ink.src = "/" + p.sig;
+        }
       } else {
         $("sigfrom").hidden = true;
       }

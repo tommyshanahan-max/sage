@@ -349,7 +349,7 @@ cfm-owners: ## Who keeps a record here, and how many projects each has
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" owners
 
-cfm-grantor: ## Who grants a share and out of what: make cfm-grantor ID=the-exchange FROM="Tom Shanahan" HOLDS="..."
+cfm-grantor: ## Who grants a share and out of what: make cfm-grantor ID=the-exchange FROM="Tom Shanahan" HOLDS="..." [SIG=sig-tom.png]
 	@# The two fields a project needs the day it makes its first stake offer,
 	@# and never before it. A share in a company, on a page that does not name
 	@# who is granting it or what holding it comes out of, is a screenshot
@@ -361,7 +361,8 @@ cfm-grantor: ## Who grants a share and out of what: make cfm-grantor ID=the-exch
 	@test -n "$(FROM)" || { echo 'make cfm-grantor ID=the-exchange FROM="Tom Shanahan" HOLDS="Sole owner today..."'; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  grantor --id "$(or $(ID),the-exchange)" --from "$(FROM)" --holds "$(HOLDS)"
+	  grantor --id "$(or $(ID),the-exchange)" --from "$(FROM)" --holds "$(HOLDS)" \
+	  --sig "$(SIG)"
 
 cfm-stake: ## A share with an earn-out: make cfm-stake ID=aiden NAME="Founding engineer" PCT=5 STEPS="3|ships v1;2|25 projects on it"
 	@# The half of a founder deal nobody writes down: five per cent now, more
