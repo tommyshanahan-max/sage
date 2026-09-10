@@ -35,9 +35,16 @@
  * get a new row written, with the way to reach them taken from the contact
  * card they filled in — the only contact this board holds.
  *
- * Anybody with no card either is held and named, because inventing a way to
- * reach somebody is worse than admitting there isn't one. `make wait-add` puts
- * them on by hand once you know how to reach them.
+ * This board holds no contact cards at all — members were never asked for one,
+ * because a member is reached through the board itself. So the row says that,
+ * in the field where a WeChat id would go:
+ *
+ *     Nata — was in the room, no contact on file
+ *
+ * True, unique per person so the list does not fold sixteen of them into one
+ * row, and obviously not a way of reaching anybody. Better than inventing a
+ * contact, and better than leaving somebody in neither place. Replace it with
+ * `make wait-add` once you have their real one.
  */
 
 const [, , base, key, ...rest] = process.argv;
@@ -115,10 +122,12 @@ const onList = (p) => {
 };
 /* Their own row, turned back on. */
 const toList = rest2.filter((p) => rowFor(p) && rowFor(p).done === "in");
-/* No row, but a way to reach them — a new row. */
-const toAdd = rest2.filter((p) => !rowFor(p) && p.reach);
-/* No row and no card. Named, and left alone. */
-const noRow = rest2.filter((p) => !rowFor(p) && !p.reach);
+/* No row of their own — so one gets written. The contact is theirs when the
+   board has one and a plain statement that it does not when it has none; the
+   list requires the field and refuses a row without it. */
+const reachFor = (p) => p.reach || (p.handle + " — was in the room, no contact on file");
+const toAdd = rest2.filter((p) => !rowFor(p));
+const noRow = [];
 
 console.log("");
 console.log("  STAYING IN BROWSE");
@@ -157,15 +166,9 @@ if (toAdd.length) {
   console.log("  ADDED TO THE LIST \u2014 " + toAdd.length +
     "   (they came in on a member's invite, not off the list)");
   for (const p of toAdd) {
-    console.log("    " + pad(p.handle, 24) + p.reach +
-      (p.state === "published" ? "" : "   (already out of Browse)"));
+    console.log("    " + pad(p.handle, 22) + pad(reachFor(p), 46) +
+      (p.state === "published" ? "" : "(already out of Browse)"));
   }
-}
-
-if (noRow.length) {
-  console.log("");
-  console.log("  OUT, BUT NOT ON THE LIST \u2014 " + noRow.length);
-  for (const p of noRow) console.log("    " + p.handle + "   \u2190 no way to reach them on file");
 }
 
 if (!toHold.length && !toList.length && !toAdd.length) {
@@ -208,7 +211,7 @@ for (const p of toAdd) {
      reaching somebody, so running this twice does not write them twice. */
   const w = await fetch(base + "/api/waiting/add", {
     method: "POST", headers: head,
-    body: JSON.stringify({ name: p.handle, reach: p.reach,
+    body: JSON.stringify({ name: p.handle, reach: reachFor(p),
       why: "was in the room, moved back to the list" }),
   });
   if (w.ok) { back++; console.log("  added to the list: " + p.handle); }
