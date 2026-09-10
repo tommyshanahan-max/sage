@@ -154,6 +154,15 @@
     font-weight:700;font-size:1.02rem;
   }
   .fine{color:var(--dim);font-size:.85rem;margin-top:1rem;text-align:center}
+  /* THE WAY PAST THE BUTTON. Deliberately quieter than it and directly under
+     it: the point of putting a button here is that reading on is optional,
+     and an equally loud second option turns one decision into two. */
+  .cta .on{display:block;margin:1.1rem 0 0;color:var(--dim);font-size:.9rem;
+    line-height:1.5;text-align:center;text-decoration:none}
+  .cta .on:hover{color:var(--ink)}
+  /* The section it jumps to should not land under the tab bar of whatever
+     browser he is in. */
+  #more{scroll-margin-top:1rem}
 
   .mark{display:flex;align-items:center;gap:.7rem;margin:0 0 2rem}
   .mark i{
@@ -194,7 +203,44 @@
       to join it.</p>
   </section>
 
+  <!-- HOW IT ACTUALLY WORKS. He knew what he would own and not what the thing
+       does — and a person cannot judge a share in something they cannot
+       picture. Numbered because it genuinely is a sequence: you get in, you
+       say one thing, the room answers. Three steps, because that is all there
+       is; a fourth would be invented. -->
   <section>
+    <p class="eyebrow">How it works</p>
+    <h2>One sentence, and the room does the rest.</h2>
+    <ol class="how">
+      <li><b>Somebody vouches for you.</b><span>Nobody walks in. You join the
+        queue, and a member brings you through — their name stays on you.</span></li>
+      <li><b>You say what you are and what you need.</b><span>"I am a producer
+        looking for an investor." That is the whole form.</span></li>
+      <li><b>The room answers.</b><span>You come up for the people who are
+        what you are looking for, and are looking for what you are.</span></li>
+    </ol>
+    <p>No feed to keep up with, nothing to post, nobody to impress. Say the
+      sentence and wait to be useful to somebody.</p>
+  </section>
+
+  <!-- THE FIRST ACCEPT, AND THE POINT OF THE WHOLE SHAPE.
+       Three screens in he knows what he is being offered, what the thing is
+       and how it works — which is enough to say yes. Everything after this is
+       for somebody who wants it, not somebody who has to be walked through it
+       before he is allowed to decide. A deck that only offers its button at
+       the end is a deck that assumes nobody was convinced early. -->
+  <section class="cta">
+    <p class="eyebrow gold">That is the offer</p>
+    <h2>Five per cent, rising to ten.</h2>
+    <p class="lead">Vesting monthly over two years, with the first of it yours
+      in three months when the company exists. Written down and signed the day
+      you accept.</p>
+    <a class="go" href="https://crowdfundme.app/o">Accept the offer →</a>
+    <a class="on" href="#more">or read on — what it could be worth, the full
+      terms, and what happens to the record ↓</a>
+  </section>
+
+  <section id="more">
     <p class="eyebrow">It is already running</p>
     <div class="pair">
       <div>
@@ -217,26 +263,6 @@
       <li><b>Factories &amp; buyers</b><span>the ones who make it, the ones who move it</span></li>
     </ul>
     <p>Every one of them is looking for somebody the others already know.</p>
-  </section>
-
-  <!-- HOW IT ACTUALLY WORKS. He knew what he would own and not what the thing
-       does — and a person cannot judge a share in something they cannot
-       picture. Numbered because it genuinely is a sequence: you get in, you
-       say one thing, the room answers. Three steps, because that is all there
-       is; a fourth would be invented. -->
-  <section>
-    <p class="eyebrow">How it works</p>
-    <h2>One sentence, and the room does the rest.</h2>
-    <ol class="how">
-      <li><b>Somebody vouches for you.</b><span>Nobody walks in. You join the
-        queue, and a member brings you through — their name stays on you.</span></li>
-      <li><b>You say what you are and what you need.</b><span>"I am a producer
-        looking for an investor." That is the whole form.</span></li>
-      <li><b>The room answers.</b><span>You come up for the people who are
-        what you are looking for, and are looking for what you are.</span></li>
-    </ol>
-    <p>No feed to keep up with, nothing to post, nobody to impress. Say the
-      sentence and wait to be useful to somebody.</p>
   </section>
 
   <section>
