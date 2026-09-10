@@ -1304,6 +1304,57 @@ function broughtBy(board, q) {
   return host ? host.handle : "";
 }
 
+/* WHAT THEY SAID THEY WERE, ON THE WAY IN.
+ *
+ * Somebody filling in a card while they wait already answers the first half
+ * of the sentence this board is built on — "I am a producer". Asking it again
+ * the moment they get through the door is asking the same question twice, and
+ * worse: the answer a member gives themselves inside can quietly stop
+ * matching the answer somebody vouched for.
+ *
+ * So it carries over, and it is FIXED. What they are looking for stays theirs
+ * to change — that is the half that moves from week to week — but what they
+ * are is the thing the room already agreed to let in.
+ *
+ * Two ways to find the row, in order. The device number is the same hash on
+ * both tables, so a person who joined the list and redeemed their code on the
+ * same browser matches directly. Somebody who cleared their browser in
+ * between is found through the invitation: the operator writes the waiting
+ * person's name onto the code when they admit them, so the code names the
+ * row. Nothing here leaves the box — the caller gets a role key, never a row.
+ *
+ * "" when they never said, which is most of the seven who were here before
+ * the list existed. Then the pill is theirs to pick, once.
+ */
+function roleFromWait(board, q) {
+  if (!q || !q.by) return "";
+  const own = board.waits.find((w) => w.me && w.by && w.by === q.by);
+  if (own) return own.me;
+  const invite = board.invites.find((v) => v.usedBy === q.by && v.who);
+  if (!invite) return "";
+  /* ONLY WHEN THE NAME NAMES ONE PERSON. Two people called Wei on the list
+     and this would hand one of them the other's answer, which is worse than
+     handing them a dropdown. An ambiguous name carries nothing. */
+  const rows = board.waits.filter((w) => w.me && w.done === "in" && w.name === invite.who);
+  return rows.length === 1 ? rows[0].me : "";
+}
+
+/* The sentence on the way in, with the fixed half put back.
+ *
+ * The browser is not trusted with it. A page that has been open since before
+ * somebody was admitted still has a dropdown in it, and an old page saving
+ * against a new server must not be able to rewrite what the room agreed to.
+ * So the carried role is stamped onto every line here, and what the request
+ * asked for is only read for the half that is theirs.
+ *
+ * When nothing carried over, it is theirs to pick and this does nothing.
+ */
+function fixSay(board, q, rows) {
+  const fixed = roleFromWait(board, q);
+  if (!fixed) return rows;
+  return rows.map((r) => ({ ...r, me: fixed }));
+}
+
 /* ---------------------------------------------------------------------------
  * COLLABORATION RANK
  *
@@ -3628,6 +3679,10 @@ app.get("/api/me", async (req, res) => {
        number — a queue of three that reads as no queue at all. */
     waiting,
     rank: rankOf(board, me),
+    /* The half of the sentence they do not get to pick. Sent whether or not
+       they have one: the page needs to know the difference between "fixed to
+       producer" and "nobody ever asked", and an absent field says neither. */
+    sayMe: roleFromWait(board, mine),
   });
 });
 
@@ -3686,7 +3741,7 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
        unknown role is dropped rather than refused, so an old page saving
        against a new server loses the line it did not understand instead of
        losing the save. The rooms are derived from it there too. */
-    if (Array.isArray(req.body.say)) q.say = req.body.say;
+    if (Array.isArray(req.body.say)) q.say = fixSay(board, q, req.body.say);
     if (Array.isArray(req.body.rooms)) q.rooms = req.body.rooms;
     if (req.body.where !== undefined) q.where = String(req.body.where);
     if (req.body.wants !== undefined) q.wants = String(req.body.wants);
@@ -3756,6 +3811,40 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
       { ...out, note: "New profile photo" });
   }
   res.json({ person: shownPerson(out, true) });
+});
+
+/* THE SENTENCE ON ITS OWN, saved where it is read.
+ *
+ * The two pills used to live inside the profile sheet, which meant changing
+ * what you are looking for cost a trip through a form with a photograph in
+ * it. They sit on Browse now, at the top of the deck they decide — and a
+ * control that is edited in one tap has to save in one tap, or the next
+ * person to close the page loses what they picked without being told.
+ *
+ * So: this route, and nothing else on it. It takes the sentence and touches
+ * no other field, which is the whole reason it exists rather than the page
+ * posting a whole profile back with two pills changed and everything else
+ * copied out of what it happened to be holding.
+ *
+ * The fixed half is stamped on here as it is everywhere else — see fixSay —
+ * so what the browser sends for it is read and thrown away.
+ */
+app.put("/api/me/say", express.json({ limit: "4kb" }), gate, async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  if (!Array.isArray(req.body?.say)) return res.status(400).json({ error: "say" });
+  const out = await change((board) => {
+    const q = board.people.find((x) => x.by === me);
+    // No profile yet: the pills are part of making one, and making one is the
+    // other route's job. Nothing is written for somebody who is not here.
+    if (!q) return { error: "who" };
+    q.say = fixSay(board, q, req.body.say);
+    // The rooms are derived from the sentence, so they are re-derived with it.
+    Object.assign(q, store.cleanPerson(q));
+    return { ok: true, say: q.say };
+  });
+  if (out?.error === "who") return res.status(404).json(out);
+  res.json(out);
 });
 
 // ---------------------------------------------------------------------------

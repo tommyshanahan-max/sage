@@ -243,8 +243,22 @@
   .sayrow .drop{border:0;background:none;color:var(--muted);font-size:1rem;
     padding:0 .3rem;font-family:var(--sans)}
   .sayrow .drop:hover{color:var(--t5)}
+  /* THE HALF THEY DO NOT PICK. Same pill, no chevron, no hand cursor — it has
+     to look like the answer it is rather than like a dropdown that has
+     stopped working. Quieter than the one beside it on purpose: the eye
+     belongs on the pill that moves. */
+  .sayrow .fixed{font-family:var(--sans);font-size:.98rem;font-weight:600;
+    color:var(--ink);background:var(--raise);border:1px solid var(--line);
+    border-radius:99px;padding:.3rem .78rem;margin:.1rem .06rem;
+    display:inline-block;max-width:100%}
   .saymore{border:0;background:none;color:var(--accent);font-size:.92rem;
     padding:.6rem 0 .2rem;margin:0 0 .4rem}
+  /* THE SENTENCE ON BROWSE. The card the pills sit in is the same one; what
+     changes is that it is now above a deck rather than inside a form, so it
+     needs air under it and a line to say the picking landed. */
+  .saysay{margin:0 0 1.2rem}
+  .saysaid{margin:.4rem 0 0;font-size:.82rem;color:var(--muted)}
+  .saysaid.bad{color:var(--t5)}
 
   .roomhead{margin:1.4rem 0 .1rem;font-family:var(--serif);font-size:1.15rem;
     font-weight:400;color:var(--ink)}
@@ -484,9 +498,9 @@
   .settrow > div{flex:1;min-width:0}
   .settrow b{display:block;font-weight:600;font-size:.95rem}
   .settrow small{display:block;color:var(--muted);font-size:.85rem;margin-top:.1rem}
-  .settrow .soon{flex:0 0 auto;font-size:.68rem;letter-spacing:.09em;
-    text-transform:uppercase;font-weight:700;color:var(--muted);
-    border:1px solid var(--line);border-radius:99px;padding:.2rem .6rem}
+  .settrow .settgo{flex:0 0 auto;font-size:.8rem;font-weight:600;
+    color:var(--accent);background:var(--accent-soft);border:0;
+    border-radius:99px;padding:.35rem .8rem;white-space:nowrap}
   /* The question, once, under the card it is about. */
   /* THE LEDGER. The percentage is the whole block — everything under it is
      the working. Quiet on purpose: it is a standing, and a screen that shouts
@@ -1330,7 +1344,12 @@
     border:0;padding:.15rem 0 .8rem;font:inherit;font-size:.72rem;
     letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
     font-weight:700;cursor:pointer;text-align:left}
-  .qtoggle .qn2{margin-left:auto;letter-spacing:0;font-variant-numeric:tabular-nums}
+  .qtoggle .qn2{margin-left:auto;letter-spacing:0;font-variant-numeric:tabular-nums;
+    text-transform:none;font-weight:400}
+  /* The fact, at the size of a fact. The words around it stay the small grey
+     caption they were. */
+  .qtoggle .qbig{font-size:1.15rem;line-height:1;color:var(--ink);font-weight:700;
+    letter-spacing:0;font-variant-numeric:tabular-nums;margin:0 .1rem 0 0}
   .qtoggle .qcar{transition:transform .15s ease;font-size:.9rem;line-height:1}
   .qtoggle[aria-expanded="true"] .qcar{transform:rotate(90deg)}
   .qrow{display:flex;gap:.7rem;align-items:flex-start;padding:.6rem 0;
@@ -1529,10 +1548,11 @@
     </div>
     </section>
 
-    <!-- SETTINGS, SUCH AS THERE ARE. One row, and it does nothing yet — see
-         set.soon. It is here rather than absent because somebody wondering
-         whether they can take themselves out of Browse should find the answer
-         where they would look for it, and "not yet" is an answer. -->
+    <!-- SETTINGS, SUCH AS THERE ARE. One row: whether this person is in
+         Browse. It said "coming soon" for a day, next to a tick box in the
+         profile form that has done exactly this since the form existed —
+         which is worse than saying nothing. It reports the real state and
+         opens the real control. See drawSetts. -->
     <div class="setts" id="setts">
       <span class="lab" id="settslab"></span>
       <div class="settrow">
@@ -1540,7 +1560,7 @@
           <b id="incoglab"></b>
           <small id="incogwhy"></small>
         </div>
-        <span class="soon" id="incogsoon"></span>
+        <button class="settgo" type="button" id="incoggo"></button>
       </div>
     </div>
 
@@ -1677,6 +1697,26 @@
        so it goes where the eye lands. The queue leads and the membership
        follows: how many want in is the half worth reading. -->
   <p class="atdoor" id="atdoor"></p>
+  <!-- THE SENTENCE, AND IT IS THE WHOLE QUESTION.
+       Two pills say what eleven tick boxes said, and the sentence IS the rule:
+       you come up for people who are what you are looking for and are looking
+       for what you are.
+
+       IT SITS HERE BECAUSE THIS IS WHAT IT DOES. It was inside the profile
+       sheet, three folds down, which put the control that decides the deck
+       out of sight of the deck — so the faces below looked like the whole
+       room rather than an answer to a question this person asked. Above them,
+       it reads as the reason they are the ones showing.
+
+       The first half is fixed and the second is not: what you are is what the
+       room let in, what you want changes. Saved on the spot, one pill at a
+       time — see saveSay. Up to three, and the second and third arrive only
+       when somebody asks for them. -->
+  <section class="saysay" id="saysay" hidden>
+    <div class="says" id="mesays"></div>
+    <button class="saymore" type="button" id="mesaymore"></button>
+    <p class="saysaid" id="saysaid" hidden></p>
+  </section>
   <div class="deck" id="deck"></div>
   <div class="pacts" id="pacts" hidden></div>
   <p class="pcount" id="pcount"></p>
@@ -1784,14 +1824,10 @@
          first sight rather than eleven, and most people never see the word
          investor — which is where it does the least harm. -->
     <div id="merooms" hidden>
-      <!-- THE SENTENCE, AND IT IS THE WHOLE QUESTION.
-           Two dropdowns say what eleven tick boxes said, and the sentence IS
-           the rule: you come up for people who are what you are looking for
-           and are looking for what you are. Nothing explains it because
-           nothing needs to. Up to three, and the second and third arrive only
-           when somebody asks for them. -->
-      <div class="says" id="mesays"></div>
-      <button class="saymore" type="button" id="mesaymore"></button>
+      <!-- The sentence used to be here, at the top of the rooms fold. It is
+           on Browse now, above the deck it decides — see #saysay. Editing what
+           you are looking for should not mean opening the form with the
+           photograph in it. -->
 
       <p class="roomhead" id="meroomhead" hidden></p>
       <p class="menote" id="meroomwhy" hidden></p>
@@ -5156,11 +5192,21 @@ async function drawQueue() {
   if (!d || !Array.isArray(d.rows)) return;
   /* Rebuilt each time rather than toggled in place: the order changes when
      somebody vouches, so a list left as it was would show the old one. */
+  /* THE NUMBER LEADS. It was a heading with a count tucked away on the right,
+     which is the wrong way round: how many people are outside is the fact,
+     and "waiting to get in" is the caption on it. Bold and in ink so it reads
+     at a glance from the number alone.
+     What it counts is what is behind the button — the people who agreed to be
+     listed — and when the queue is longer than that it says so rather than
+     letting the two numbers on this screen quietly disagree. */
   fill($("queueh"));
   $("queueh").append(
     el("span", "qcar", "\u203A"),
-    document.createTextNode(T("brw.qh")),
-    el("span", "qn2", String(d.rows.length)));
+    el("b", "qbig", String(d.rows.length)),
+    document.createTextNode(" " + T("brw.qh")));
+  if (Number(d.waiting) > d.rows.length) {
+    $("queueh").append(el("span", "qn2", T("brw.qof").replace("{n}", d.waiting)));
+  }
   fill(list);
   if (!d.rows.length) {
     list.append(el("p", "qnone", T("brw.qnone")));
@@ -5249,9 +5295,32 @@ function qRow(w) {
 function drawSetts() {
   if (!$("setts")) return;
   $("settslab").textContent = T("set.head");
-  $("incoglab").textContent = T("set.incog");
-  $("incogwhy").textContent = T("set.incogWhy");
-  $("incogsoon").textContent = T("set.soon");
+  /* IT SAID "COMING SOON" NEXT TO A CONTROL THAT ALREADY WORKS.
+     "Show me in Browse" has been a real tick box in the profile form the
+     whole time, so a row in the tray promising the same thing later was the
+     tray telling somebody a lie about their own settings. It now says which
+     way round they are and opens the box that changes it. */
+  /* THE ROW SAYS WHICH WAY ROUND THEY ARE, not what the button does — a
+     heading of "Hide me from Browse" above a button reading "Hide me" is the
+     same words twice and never tells anybody their current state. This is
+     where "You are in Browse" went when it came off the deck. */
+  const out = Boolean(ME && ME.handle && !ME.looking);
+  $("incoglab").textContent = T(out ? "set.incogOut" : "set.incogIn");
+  $("incogwhy").textContent = T(out ? "set.incogOutWhy" : "set.incogInWhy");
+  $("incoggo").textContent = T(out ? "set.incogBack" : "set.incogGo");
+  /* Wired once. drawSetts runs on every paint and a listener added each time
+     would fire the form open as many times as the tray has been drawn. */
+  if (!$("incoggo").dataset.on) {
+    $("incoggo").dataset.on = "1";
+    $("incoggo").addEventListener("click", () => {
+      /* THE SWITCH ITSELF IS NOT COPIED HERE. One control, in the form, next
+         to the rooms it decides — two tick boxes for the same fact is how a
+         profile ends up disagreeing with itself. This opens that one. */
+      const tray = $("notif");
+      if (tray) tray.hidden = true;
+      openMe();
+    });
+  }
 }
 
 function drawDoor(people) {
@@ -5729,8 +5798,7 @@ function openMe(joining) {
   $("melooking").checked = joining === true ||
     (ME && ME.handle ? Boolean(ME.looking) : true);
   PICKED = (ME && Array.isArray(ME.rooms) ? ME.rooms : []).slice(0, 3);
-  SAY = (ME && Array.isArray(ME.say) && ME.say.length)
-    ? ME.say.map((r) => ({ me: r.me, want: r.want })) : [{ me: "", want: "" }];
+  seedSay();
   WHERE = (ME && ME.where) || "cn";
   WANTS = (ME && ME.wants) || "any";
   showRooms();
@@ -5908,6 +5976,22 @@ const MAKE = ["director", "writer", "performer", "crew", "founder", "maker", "st
 const BACK = ["agent", "producer", "brand", "buyer", "distributor",
               "investor", "lawyer", "recruiter"];
 let SAY = [];
+/* WHAT THEY SAID THEY WERE ON THE WAY IN, and it does not change here.
+ * "" when nobody ever asked — the seven who were here before the list, and
+ * anybody admitted without filling in a card — and then the first pill is a
+ * dropdown like it always was. Set from /api/me; never from this page.
+ * The server stamps it on every save regardless, so this only decides whether
+ * to draw a control for something that would be ignored. */
+let SAYME = "";
+/* The sentence as it stands on the server, copied so the pills can be moved
+ * about without touching the profile until a save lands. Called twice: once
+ * when /api/me arrives, because the pills are on Browse and draw before
+ * anybody opens a form, and again when the form opens, because by then a save
+ * may have moved it. */
+function seedSay() {
+  SAY = (ME && Array.isArray(ME.say) && ME.say.length)
+    ? ME.say.map((r) => ({ me: r.me, want: r.want })) : [{ me: "", want: "" }];
+}
 
 /** One dropdown, grouped into the two halves so twelve names can be read. */
 function rolePick(now, onPick, wanting) {
@@ -5983,10 +6067,29 @@ function drawSays() {
      * Only on the first line. Where you are does not change between one
      * sentence and the next, and a pill that repeats is a pill somebody will
      * eventually set to two different things. */
-    line.append(document.createTextNode((i ? T("say.and") : T("say.iam")) + " "));
-    line.append(rolePick(row.me, (v) => { row.me = v; drawSays(); }, false));
-    line.append(document.createTextNode(" " + T("say.lookingFor") + " "));
-    line.append(rolePick(row.want, (v) => { row.want = v; drawSays(); }, true));
+    /* FIXED, WHEN THEY ALREADY ANSWERED IT ON THE WAY IN. Somebody vouched
+       for a producer; the producer does not get to become an investor on the
+       way through the door. A word, not a control — see .fixed.
+
+       And said ONCE. The second and third lines drop the identity and read
+       "and looking for —": repeating "I am a producer" three times down a
+       card is a form talking to itself, and the only thing changing between
+       the lines is the half after it. */
+    if (SAYME) {
+      row.me = SAYME;
+      if (i) {
+        line.append(document.createTextNode(T("say.andWant") + " "));
+      } else {
+        line.append(document.createTextNode(T("say.iamFixed") + " "));
+        line.append(el("span", "fixed", T("role.a." + SAYME)));
+        line.append(document.createTextNode(" " + T("say.lookingFor") + " "));
+      }
+    } else {
+      line.append(document.createTextNode((i ? T("say.and") : T("say.iam")) + " "));
+      line.append(rolePick(row.me, (v) => { row.me = v; drawSays(); saveSay(); }, false));
+      line.append(document.createTextNode(" " + T("say.lookingFor") + " "));
+    }
+    line.append(rolePick(row.want, (v) => { row.want = v; drawSays(); saveSay(); }, true));
     /* TWO PILLS. THAT IS THE WHOLE QUESTION.
      *
      * It was four — what you are, where you are, what you want, where they
@@ -6003,7 +6106,7 @@ function drawSays() {
     if (i > 0) {
       const x = el("button", "drop", T("say.drop"));
       x.type = "button";
-      x.addEventListener("click", () => { SAY.splice(i, 1); drawSays(); });
+      x.addEventListener("click", () => { SAY.splice(i, 1); drawSays(); saveSay(); });
       line.append(x);
     }
     box.append(line);
@@ -6017,7 +6120,52 @@ function drawSays() {
      thing to be offered before you have finished the first one ever. */
   more.hidden = !(ME && ME.handle) || SAY.length >= 3
     || !(last && last.me && last.want);
+  /* THE WHOLE BLOCK IS FOR MEMBERS. A stranger reading Browse over somebody's
+     shoulder has no sentence to write and nothing to save it to. */
+  const sec = $("saysay");
+  if (sec) sec.hidden = !(ME && ME.handle);
 }
+/* THE SENTENCE SAVES ITSELF.
+ *
+ * It sits on Browse now rather than in the profile sheet, and the sheet was
+ * the only thing that ever wrote it — a pill changed here with no save button
+ * under it would be a pill that quietly forgets. So every change goes up on
+ * its own, to a route that takes the sentence and nothing else.
+ *
+ * HALF-FINISHED LINES DO NOT GO. Somebody who opens the second dropdown and
+ * changes their mind has not said anything; the filter is the same one the
+ * profile form used.
+ *
+ * LAST ONE WINS. Two dropdowns changed quickly are two saves in flight, and
+ * the order they land in is not the order they were sent in. The counter
+ * makes a late answer to an old question do nothing.
+ */
+let sayN = 0;
+async function saveSay() {
+  const said = $("saysaid");
+  const mine = ++sayN;
+  const rows = SAY.filter((r) => r.me && r.want);
+  if (said) { said.hidden = false; said.classList.remove("bad"); said.textContent = T("say.saving"); }
+  let ok = false;
+  try {
+    const r = await fetch("/api/me/say", {
+      method: "PUT", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ device, say: rows }),
+    });
+    ok = r.ok;
+  } catch { ok = false; }
+  if (mine !== sayN) return;
+  if (!said) return;
+  /* The profile in hand is now out of date, and opening the form re-seeds the
+     pills from it — so it is brought level here rather than re-fetched. */
+  if (ok && ME) ME.say = rows.map((r) => ({ me: r.me, want: r.want }));
+  said.classList.toggle("bad", !ok);
+  said.textContent = T(ok ? "say.saved" : "say.saveno");
+  /* The confirmation goes; the failure stays. One is a receipt nobody needs
+     to keep reading, the other is a thing they have to do something about. */
+  if (ok) setTimeout(() => { if (mine === sayN) said.hidden = true; }, 1600);
+}
+
 $("mesaymore").addEventListener("click", () => {
   SAY = [...SAY, { me: "", want: "" }];
   drawSays();
@@ -6156,6 +6304,9 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
   .then((r) => r.json())
   .then((d) => {
     ME = d.person;
+    /* THE FIXED HALF, and it arrives before anything draws the sentence. A
+       string when they answered it on the way in, "" when nobody asked. */
+    SAYME = typeof d.sayMe === "string" ? d.sayMe : "";
     WAITING = typeof d.waiting === "number" ? d.waiting : null;
     MEMBERS = Number(d.people || 0);
     drawFeedDoor();
@@ -6166,6 +6317,7 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
        /api/me has landed — so somebody with a page, a photo and rooms was
        being told to make a page, add a photo and pick rooms, on a screen that
        simultaneously showed the Messages door only a named member gets. */
+    seedSay(); drawSays();
     paintNav(); drawTutor(); drawDeck(); drawTodo(); drawTalk(); drawAsk(); countNotes();
     /* Arrived from "edit" on their own profile. The form lives on this page,
        so the other page sends people here rather than growing a second copy of

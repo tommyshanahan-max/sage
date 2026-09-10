@@ -398,6 +398,10 @@ export const STRINGS = {
      where they are does not change between one sentence and the next, so it
      is asked once, on the first line, and not repeated. */
   "say.and":           ["and a", "还是"],
+  // The same line when what they are is fixed: said once at the top, and the
+  // lines under it carry only the half that changes.
+  "say.iamFixed":      ["I am", "我是"],
+  "say.andWant":       ["and looking for", "还想找"],
   /* Short enough to sit in a pill inside a sentence. The segmented rows these
      replace could afford "Somewhere else"; a word in the middle of a line
      cannot. */
@@ -412,6 +416,11 @@ export const STRINGS = {
   "say.back":          ["Backing it", "支持的人"],
   "say.more":          ["＋ and something else", "＋ 还想找别的"],
   "say.drop":          ["remove", "删掉"],
+  // The sentence saves itself now that it lives on Browse. Three short states
+  // and no button: the pill IS the button.
+  "say.saving":        ["saving…", "保存中…"],
+  "say.saved":         ["saved", "已保存"],
+  "say.saveno":        ["That did not save. Try again.", "没保存上，再试一次。"],
 
   "role.director":     ["Director", "导演"],
   "role.writer":       ["Writer", "编剧"],
@@ -1781,7 +1790,10 @@ export const STRINGS = {
   "brw.inside":        ["{n} people are in.", "里面有 {n} 个人。"],
   /* The queue, as a list rather than a number — see /api/queue. Only somebody
      already in ever sees these, and never how to reach anybody. */
-  "brw.qh":            ["People waiting to get in", "正在等待进入的人"],
+  // Reads after the number now — "12 waiting to get in" — so it is a caption
+  // and not a heading.
+  "brw.qh":            ["waiting to get in", "人在等着进来"],
+  "brw.qof":           ["of {n} on the list", "名单上共 {n} 人"],
   "brw.qnone":         ["Nobody is waiting.", "目前没有人在等。"],
   "brw.qbrought":      ["brought {n} in", "带进来 {n} 人"],
   /* Vouching. A member saying somebody is worth letting in moves them one
@@ -1789,14 +1801,23 @@ export const STRINGS = {
   "brw.vouch":         ["Vouch", "推荐"],
   "brw.vouched":       ["Vouched", "已推荐"],
   "brw.qvouches":      ["{n} vouched", "{n} 人推荐"],
-  /* The switch that is not a switch yet. Shown so that somebody wondering
-     whether they can disappear knows the answer is coming, and disabled so
-     that nobody believes they already have. */
+  /* THE ONE SETTING, AND IT READS AS A STATE. It said "coming soon" for a
+     day, next to a tick box in the profile form that had done exactly this
+     since the form existed — so the tray was telling people a lie about
+     their own settings. The row now names which way round they are, the line
+     under it says what that costs, and the button does the other one.
+
+     "You are in Browse" is the line that used to sit on the deck itself.
+     This is where it went. */
   "set.head":          ["Your settings", "你的设置"],
-  "set.incog":         ["Hide me from Browse", "在浏览中隐藏我"],
-  "set.incogWhy":      ["Nobody would see your card. You would still see theirs.",
+  "set.incogIn":       ["You are in Browse", "你在浏览中"],
+  "set.incogOut":      ["You are hidden", "你已隐藏"],
+  "set.incogInWhy":    ["Everybody in here can see your card.",
+                        "这里的每个人都能看到你的名片。"],
+  "set.incogOutWhy":   ["Nobody sees your card. You still see theirs.",
                         "别人看不到你的名片，你仍然能看到他们的。"],
-  "set.soon":          ["Coming soon", "即将推出"],
+  "set.incogGo":       ["Hide me", "隐藏我"],
+  "set.incogBack":     ["Show me", "显示我"],
   /* Its own string rather than a plural rule. There is one number this ever
      applies to and English is the only side that cares — Chinese counts the
      same either way, which is why the pair below is not two sentences. */
