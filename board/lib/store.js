@@ -489,6 +489,18 @@ export function cleanOffer(raw) {
   if (!give) return null;
   return {
     code, by,
+    /* WHAT KIND OF THING THIS IS, and it is only two.
+     *
+     * A job is a date and a number: two days in Shanghai, ¥6,400. A project is
+     * a conversation that has to happen before either of those exists — a film
+     * next spring, a band, a company. Both travel the same way and both are
+     * accepted the same way; what differs is that a project may carry no money
+     * yet, and that accepting one opens a few lines to settle it in.
+     *
+     * Two and not five. The moment this field has a taxonomy in it, somebody
+     * has to keep the taxonomy, and the only thing the room does differently
+     * is whether the money line is expected to be filled in. */
+    kind: raw.kind === "project" ? "project" : "job",
     /* A note to self, so a list of sent offers reads as names rather than as
        codes. Never shown to the person opening it — they know who they are. */
     who: s(raw.who, 40),
@@ -914,6 +926,20 @@ export function cleanCard(raw) {
     // the decoration a phone adds: people paste "微信：mei_2024" and mean the
     // second half of it.
     wechat: s(raw.wechat, 60).replace(/^\s*(?:wechat|weixin|vx|wx|微信号?|威信)\s*[:：]?\s*/i, "").trim(),
+    /* THEIR WECHAT CODE, AS A PICTURE, and it is the half that actually works.
+     *
+     * An id has to be typed into WeChat's search, and plenty of accounts are
+     * not findable that way at all. A code is: save it to the photo roll, then
+     * Scan · from album, which is how people in China add each other and the
+     * only one of the two that works from inside WeChat's own browser, where
+     * "open WeChat" has nothing to open.
+     *
+     * It is a media id, uploaded by its owner and never generated here — this
+     * server has no way to make somebody's code and must not pretend to. It is
+     * served from /api/public-media like a face, which means anybody holding
+     * the id can fetch it; the id is only ever sent to somebody the owner gave
+     * their card to, which is the same protection a photograph gets. */
+    qr: /^[a-f0-9]{20}$/.test(String(raw.qr || "")) ? String(raw.qr) : "",
     // One line they write themselves. An email, a company, a website, when to
     // message them. Free text on purpose: a phone-number field on a board of
     // exchange students is a field worth not having.

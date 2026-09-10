@@ -52,13 +52,22 @@
   .terms{border:1px solid var(--accent);border-radius:.9rem;overflow:hidden;
     background:var(--card)}
   .terms .head{background:var(--accent-soft);color:var(--accent);padding:.5rem .9rem;
-    font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;font-weight:700}
+    font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;font-weight:700;
+    display:flex;gap:.5rem}
+  /* Which of the two this is, said where the terms start rather than in the
+     headline: it changes how the money line reads, and nothing else. */
+  .terms .head .kind{margin-left:auto;letter-spacing:0;text-transform:none;
+    font-weight:400;font-style:italic}
   .terms .f{padding:.8rem .9rem;border-top:1px solid var(--hair)}
   .terms .f:first-of-type{border-top:0}
   .terms .k{display:block;font-size:.62rem;letter-spacing:.12em;
     text-transform:uppercase;font-weight:700;color:var(--muted);margin:0 0 .3rem}
   .terms .v{font-size:1rem;line-height:1.6;color:var(--ink)}
   .terms .v.money{font-weight:700;font-size:1.15rem}
+  /* A project may have no number yet, and that is a term rather than a gap.
+     Said in the money row, in the muted voice, so nobody accepts one thinking
+     a figure was left out by accident. */
+  .terms .v.open{font-weight:400;font-size:1rem;color:var(--ink-2);font-style:italic}
 
   /* THE NAME IS THE SIGNATURE. Not a form field with a label: the sentence
      round it is what says that typing here is the act. */
@@ -107,7 +116,7 @@
     </div>
 
     <div class="terms">
-      <div class="head" id="thead"></div>
+      <div class="head" id="thead"><span id="theadt"></span><span class="kind" id="kind"></span></div>
       <div class="f"><span class="k" id="kgive"></span>
         <span class="v" id="vgive"></span></div>
       <div class="f" id="fmoney" hidden><span class="k" id="kmoney"></span>
@@ -172,7 +181,8 @@ function paint() {
   if (!OFFER) return;
   $("title").textContent = T("off.title");
   $("lede").textContent = T("off.lede");
-  $("thead").textContent = T("off.head");
+  $("theadt").textContent = T("off.head");
+  $("kind").textContent = T(OFFER.kind === "project" ? "off.kProject" : "off.kJob");
   $("kgive").textContent = T("off.give");
   $("kmoney").textContent = T("off.money");
   $("kwant").textContent = T("off.want");
@@ -195,8 +205,15 @@ function draw(o) {
   OFFER = o;
   $("wrap").hidden = false;
   $("vgive").textContent = o.give;
-  $("fmoney").hidden = !o.money;
-  $("vmoney").textContent = o.money || "";
+  /* A JOB WITH NO MONEY LINE HIDES IT; A PROJECT SAYS SO OUT LOUD. The second
+     is the whole difference between the two kinds — somebody is being asked to
+     agree to a thing whose number does not exist yet, and they should be able
+     to see that before they put their name to it. */
+  const openMoney = !o.money && o.kind === "project";
+  $("fmoney").hidden = !o.money && !openMoney;
+  $("vmoney").textContent = o.money || (openMoney ? T("off.moneyOpen") : "");
+  $("vmoney").classList.toggle("open", openMoney);
+  $("vmoney").classList.toggle("money", !openMoney);
   $("fwant").hidden = !o.want;
   $("vwant").textContent = o.want || "";
   if (o.from && o.from.handle) {

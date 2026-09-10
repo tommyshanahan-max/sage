@@ -11,7 +11,7 @@
  *   node offer.mjs <base> <key> can-offer  --who Mia [--off]
  *   node offer.mjs <base> <key> send       --from Tom --who "Yana"
  *                                          --give "..." [--pays "..."] [--want "..."]
- *                                          [--public https://liuxuesheng.io]
+ *                                          [--project] [--public https://liuxuesheng.io]
  *   node offer.mjs <base> <key> list
  */
 const [, , BASE, KEY, CMD, ...rest] = process.argv;
@@ -79,12 +79,17 @@ if (CMD === "can-offer") {
     method: "POST",
     body: JSON.stringify({
       from: arg("from"), who: arg("who"), give,
+      /* A job unless told otherwise. --project is the one that may go out with
+         no --pays on it, and the one whose acceptance opens a few lines to
+         settle the money in. */
+      kind: has("project") ? "project" : "job",
       money: arg("pays"), want: arg("want"),
     }),
   });
   const host = arg("public", "https://liuxuesheng.io").replace(/\/+$/, "");
   console.log("");
-  console.log("  From " + d.from + ". Send this, and nothing else:");
+  console.log("  From " + d.from + ", as " + (has("project") ? "a project" : "a job")
+    + ". Send this, and nothing else:");
   console.log("  " + host + "/o/" + d.code);
   console.log("");
 } else if (CMD === "list") {
@@ -93,7 +98,8 @@ if (CMD === "can-offer") {
   for (const o of d.offers) {
     const state = o.takenAt ? "taken by " + o.takenBy + " on " + o.takenAt.slice(0, 10)
       : o.off ? "withdrawn" : "waiting";
-    console.log("  " + o.code + "  " + String(o.who || "—").padEnd(14)
+    console.log("  " + o.code + "  " + (o.kind === "project" ? "proj " : "job  ")
+      + String(o.who || "—").padEnd(14)
       + state.padEnd(34) + (o.money || ""));
   }
 } else {

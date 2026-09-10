@@ -244,7 +244,7 @@ can-offer: ## Who may make offers, or let one:  make can-offer [WHO=Mia] [ID=...
 	  /seed/offer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  can-offer --who "$(WHO)" $(if $(ID),--id "$(ID)",) $(if $(OFF),--off,)
 
-offer: ## Send somebody real work:  make offer FROM=Tom WHO="Yana" GIVE="..." [PAYS="¥8,000" WANT="..."]
+offer: ## Send somebody real work:  make offer FROM=Tom WHO="Yana" GIVE="..." [PAYS="¥8,000" WANT="..." PROJECT=1]
 	@# Prints the one link to paste into WeChat. It opens for anybody — no code,
 	@# no account, not a member — and accepting it is what lets them in.
 	@#
@@ -252,12 +252,16 @@ offer: ## Send somebody real work:  make offer FROM=Tom WHO="Yana" GIVE="..." [P
 	@# page: an offer from nobody is not a thing anybody should be able to make.
 	@# WHO is a note to yourself so `make offers` reads as names; the person
 	@# opening it never sees it.
+	@#
+	@# PROJECT=1 sends it as a project rather than a job: PAYS may be left out,
+	@# the page says the money is not settled instead of hiding the line, and
+	@# accepting it opens a few lines to settle it in.
 	@test -n "$(FROM)" -a -n "$(GIVE)" || { \
 	  echo 'make offer FROM=Tom WHO="Yana" GIVE="what they would do" PAYS="¥8,000" WANT="what you expect"'; exit 1; }
 	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/offer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  send --from "$(FROM)" --who "$(WHO)" --give "$(GIVE)" \
-	  --pays "$(PAYS)" --want "$(WANT)" \
+	  $(if $(PROJECT),--project,) --pays "$(PAYS)" --want "$(WANT)" \
 	  --public "https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '"')"
 
 offers: ## Every offer, and who took it

@@ -2943,7 +2943,7 @@ function pairState(board, me, q) {
        Copying the two fields rather than the row means a route added later
        cannot leak it by forgetting to. */
     const row = board.cards.find((c) => c.by === q.by);
-    if (row) out.card = { wechat: row.wechat, line: row.line };
+    if (row) out.card = { wechat: row.wechat, line: row.line, qr: row.qr };
   }
   return out;
 }
@@ -2968,12 +2968,18 @@ app.put("/api/card", express.json({ limit: "8kb" }), gate, async (req, res) => {
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   const out = await change((board) => {
-    const row = store.cleanCard({ by: me, wechat: req.body?.wechat, line: req.body?.line });
+    const was = board.cards.find((c) => c.by === me);
+    /* THE CODE IS CARRIED, NOT RESENT. It is uploaded by its own route and is
+       not in this form, so building the row from the request alone would have
+       every save of the two text fields quietly delete the picture. */
+    const row = store.cleanCard({
+      by: me, wechat: req.body?.wechat, line: req.body?.line, qr: was?.qr,
+    });
     const i = board.cards.findIndex((c) => c.by === me);
     // An empty card is a deleted card. Anybody it was given to stops being
     // able to read anything, which is the same as taking it back from all of
     // them at once and is the only bulk revoke there is.
-    if (!row.wechat && !row.line) {
+    if (!row.wechat && !row.line && !row.qr) {
       if (i >= 0) board.cards.splice(i, 1);
       return null;
     }
@@ -2981,6 +2987,49 @@ app.put("/api/card", express.json({ limit: "8kb" }), gate, async (req, res) => {
     return row;
   });
   res.json({ card: out });
+});
+
+/* THE CODE ITSELF, uploaded by its owner.
+ *
+ * Its own route rather than a field on the card, because it arrives as a
+ * picture and pictures do not travel in the same request as a WeChat id
+ * without the id form growing a 36MB body limit.
+ *
+ * NOT HELD FOR REVIEW, unlike a face. A face is held because it goes on a
+ * public browser and cannot be taken back once somebody has saved it; a code
+ * is shown to nobody except the person its owner handed a card to, and holding
+ * it would mean a deal is agreed and the way to carry it on is in a queue. */
+app.post("/api/card/qr", express.json({ limit: "36mb" }), gate, async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const data = String(req.body?.qr || "");
+
+  // An empty body clears it, which is how somebody takes their code back
+  // without deleting the whole card.
+  if (!data) {
+    const out = await change((board) => {
+      const i = board.cards.findIndex((c) => c.by === me);
+      if (i < 0) return { qr: "" };
+      board.cards[i] = store.cleanCard({ ...board.cards[i], qr: "" });
+      return { qr: "" };
+    });
+    return res.json(out);
+  }
+
+  const buf = Buffer.from(data, "base64");
+  if (buf.length > MEDIA_MAX) return res.status(413).json({ error: "tooBig" });
+  const id = await putMedia(buf, String(req.body?.qrType || ""));
+  if (!id) return res.status(415).json({ error: "badType" });
+
+  const out = await change((board) => {
+    const i = board.cards.findIndex((c) => c.by === me);
+    if (i >= 0) board.cards[i] = store.cleanCard({ ...board.cards[i], qr: id });
+    // A code with nothing else on the card is still a card — it is the one
+    // half of a handover that works on its own.
+    else board.cards.push(store.cleanCard({ by: me, qr: id }));
+    return { qr: id };
+  });
+  res.json(out);
 });
 
 /** Hand it to one person, or take it back from them. */
@@ -3063,7 +3112,8 @@ app.get("/api/matches", async (req, res) => {
 const shownOffer = (o, board) => {
   const from = board.people.find((q) => q.by === o.by && q.state === "published");
   return {
-    code: o.code, give: o.give, money: o.money, want: o.want, at: o.at,
+    code: o.code, kind: o.kind || "job",
+    give: o.give, money: o.money, want: o.want, at: o.at,
     // Who is offering, as a person rather than as a hash — a name and their
     // sentence, so somebody deciding has the same context a member would.
     from: from ? { handle: from.handle, say: from.say || [], campus: from.campus || "" } : null,
@@ -3173,7 +3223,8 @@ app.get("/api/admin/offer", admin, async (_req, res) => {
   const name = (by) => (board.people.find((q) => q.by === by) || {}).handle || "";
   res.json({
     offers: board.offers.map((o) => ({
-      code: o.code, who: o.who, from: name(o.by), give: o.give, money: o.money,
+      code: o.code, kind: o.kind || "job", who: o.who, from: name(o.by),
+      give: o.give, money: o.money,
       at: o.at, takenBy: o.name, takenAt: o.tookAt, off: o.off,
     })),
   });
@@ -3326,6 +3377,25 @@ app.post("/api/offer/take", express.json({ limit: "4kb" }), async (req, res) => 
  * evening, and nobody with an honest reason to write needs more. */
 const NOTES_A_DAY = Math.max(1, Number(process.env.BOARD_NOTES_A_DAY || 5));
 
+/* HOW MANY LINES AN ACCEPTED OFFER IS WORTH, per side.
+ *
+ * Not every offer is a day's work. A job is a date and a number and needs no
+ * conversation at all; a project — a film next spring, a band, a company — is
+ * a conversation before either of those exists, and two messages is not enough
+ * to have it in.
+ *
+ * Six, because six is enough to settle dates, money and language and is not
+ * enough to live in. The number is the whole design: an uncapped thread makes
+ * this a messaging service, which in this country is a different kind of
+ * business with a different set of duties, and a two-line one pushes people
+ * onto WeChat before they have decided the other is worth a WeChat id.
+ *
+ * WHAT HAPPENS WHEN THEY RUN OUT IS NOT A WALL. The card is already open —
+ * accepting is what opened it — so the end of the lines is the moment the
+ * handover stops being a button somebody has to think about and becomes the
+ * obvious next thing. */
+const OFFER_LINES = Math.max(1, Number(process.env.BOARD_OFFER_LINES || 6));
+
 /** Whether two people have matched: each follows the other, and their rooms
  *  line up. The same four decisions pairState reports to a profile — read from
  *  the board rather than passed in, so nothing can claim a match by asserting
@@ -3354,9 +3424,29 @@ function threadState(board, me, them) {
   const between = notes.filter(
     (n) => (n.by === me && n.to === them) || (n.by === them && n.to === me));
 
+  /* AN ACCEPTED OFFER, IF THERE IS ONE. Found before either branch below,
+     because what it supplies to each of them is different: to a matched pair
+     it supplies the terms to pin over the conversation, and to two people who
+     have not matched it supplies the conversation itself.
+
+     Read from board.offers rather than passed in, for the same reason
+     matched() is: nothing can claim a deal by asserting one. Either direction
+     counts — whoever sent it and whoever took it are in the same conversation
+     — and a withdrawn offer is not one, though an accepted offer can no longer
+     be withdrawn. */
+  const deal = board.offers.find((o) => o.tookAt && !o.off
+    && ((o.by === me && o.tookBy === them) || (o.by === them && o.tookBy === me)));
+
   /* MATCHED: an open thread. Still not a free channel — the same daily count
      applies, so a matched pair is a conversation and not a firehose, and the
-     other person can leave at any point in it. */
+     other person can leave at any point in it.
+
+     NO COUNT ON IT, even where there is a deal. The cap below exists to keep a
+     thread between two people who have agreed to nothing from becoming an
+     inbox; a match is the thing that says they have agreed to talk, and taking
+     lines off them for having also agreed to a piece of work would be exactly
+     backwards. The terms still come with it — those are worth having over any
+     conversation about the work they describe. */
   if (matched(board, me, them)) {
     const last = between[between.length - 1];
     return {
@@ -3364,6 +3454,28 @@ function threadState(board, me, them) {
       // An answer rather than a new introduction when they spoke last: it is
       // what keeps the daily count off a running conversation.
       answering: last && last.to === me ? last.id : "",
+      deal: deal ? deal.code : "",
+    };
+  }
+
+  /* AN ACCEPTED OFFER OPENS A COUNTED THREAD.
+   *
+   * Above the two-message rule, because two messages is the cap for people who
+   * have agreed to nothing, and these two have agreed to a piece of work with
+   * a name and a date on it. Not every offer is a day's work: a project is a
+   * conversation before the money exists, and this is where it happens.
+   *
+   * Six lines each and then it stops — see OFFER_LINES. Running out is not a
+   * wall: accepting is what opened the card, so the end of the lines is where
+   * the handover stops being a button somebody has to think about. */
+  if (deal) {
+    // Counted per side, so one person cannot spend the other's lines.
+    const sent = between.filter((n) => n.by === me).length;
+    const left = Math.max(0, OFFER_LINES - sent);
+    return {
+      can: left > 0, open: true, why: left > 0 ? "deal" : "spent",
+      left, cap: OFFER_LINES, deal: deal.code,
+      answering: "",
     };
   }
 
@@ -3453,6 +3565,13 @@ app.get("/api/notes", notesOff, async (req, res) => {
      message: it is a fact about the two of you, and asking it again for every
      line of a conversation is both wasteful and a way for two lines of the
      same thread to disagree. */
+  /* The offer a thread hangs on, in the words both of them already read on the
+     page where it was accepted. Never the codes or hashes around it. */
+  const terms = (code) => {
+    const o = board.offers.find((x) => x.code === code);
+    return o ? { kind: o.kind || "job", give: o.give, money: o.money, at: o.tookAt } : undefined;
+  };
+
   const rows = store.notesFor(board.notes, me);
   const other = (n) => (n.by === me ? n.to : n.by);
   const state = new Map();
@@ -3486,6 +3605,15 @@ app.get("/api/notes", notesOff, async (req, res) => {
       // An open thread is a conversation rather than an introduction, and the
       // page says so and offers the way out of it.
       open: Boolean(st.open),
+      /* HOW MANY LINES ARE LEFT, on a thread an offer opened. Shown rather
+         than discovered: a box that refuses the seventh message without ever
+         having said there were six is a bug the person blames on themselves. */
+      left: st.cap ? st.left : undefined,
+      cap: st.cap || undefined,
+      /* WHAT WAS AGREED, ABOVE THE TALK. The reason to type in here at all
+         rather than in WeChat — the terms sit over the conversation and cannot
+         scroll away from either of them. */
+      deal: st.deal ? terms(st.deal) : undefined,
       last: String(n.at) === newest.get(other(n)),
     };
   });

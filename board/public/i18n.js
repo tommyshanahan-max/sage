@@ -1731,6 +1731,13 @@ export const STRINGS = {
   "mko.moneyHint":     ["¥6,400 for the day", "一天 6,400 元"],
   "mko.want":          ["What you would expect", "你希望对方做到的"],
   "mko.wantHint":      ["A fitting on the Thursday before.", "拍摄前的周四试装。"],
+  "mko.kind":          ["What it is", "是什么"],
+  "mko.kindJob":       ["A job", "一份工作"],
+  "mko.kindProject":   ["A project", "一个项目"],
+  "mko.moneyOpenHint": ["Leave it blank if it is not settled", "还没定就先空着"],
+  "mko.giveProjectHint": [
+    "A short film, shooting in Chengdu next spring. Looking for a lead.",
+    "一部短片，明年春天在成都拍，找一位主演。"],
   "mko.go":            ["Make the link", "生成链接"],
   "mko.made":          ["Tap it to send.", "点一下发出去。"],
   "mko.madeWx":        ["Tap it to copy, then paste it into the chat.",
@@ -1750,6 +1757,11 @@ export const STRINGS = {
   "off.lede": [
     "Read it, and put your name to it if you want it. Nothing happens until you do, and nobody is told if you do not.",
     "看一下，愿意的话签个名。在那之前什么都不会发生；不愿意也没人会知道。"],
+  "off.kJob":          ["a job", "一份工作"],
+  "off.kProject":      ["a project", "一个项目"],
+  "off.moneyOpen": [
+    "Not settled yet — that is what you would talk about.",
+    "还没谈定——这正是要聊的事。"],
   "off.head":          ["The offer", "邀约内容"],
   "off.give":          ["What you would be doing", "你要做的"],
   "off.money":         ["What it pays", "报酬"],
@@ -1803,6 +1815,19 @@ export const STRINGS = {
   "cards.blankGo":     ["Open their page", "打开他们的主页"],
   "cards.copy":        ["Copy", "复制"],
   "cards.copied":      ["Copied", "已复制"],
+  /* THE HANDOVER, in the order the two halves actually work in.
+     "Open WeChat" alone was a dead button — WeChat has no link that opens a
+     chat with a stranger — so the code comes first and the id sits under it. */
+  "cards.qrHow": [
+    "Press and hold to save it, then in WeChat: Scan · from album.",
+    "长按保存，然后在微信里：扫一扫 · 从相册选取。"],
+  "cards.qrHowWx": [
+    "Press and hold the code to save it, then Scan · from album.",
+    "长按二维码保存，再用扫一扫 · 从相册选取。"],
+  "cards.openWx":      ["Open WeChat", "打开微信"],
+  "cards.idHow": [
+    "In WeChat: search, paste the id, Add.",
+    "在微信里搜索，粘贴微信号，添加。"],
   "cards.mineNone":    ["You have no card yet, so nobody can be given one.",
                         "你还没有名片，所以也没法发给别人。"],
   "cards.mineGo":      ["Make yours", "去填一张"],
@@ -1813,6 +1838,17 @@ export const STRINGS = {
     "让{who}以后打不开。已经发出去的收不回来。",
   ],
   "card.gaveBack":     ["Taken back.", "已收回。"],
+  "card.qrLab":        ["Your WeChat code", "你的微信二维码"],
+  "card.qrWhy": [
+    "A picture of your own code. Plenty of accounts cannot be found by searching an id, and this one can always be scanned from the photo roll. Only the people you hand your card to ever see it.",
+    "上传你自己的二维码截图。很多号搜微信号是搜不到的，而二维码从相册里总能扫出来。只有你把名片给到的人才看得到。"],
+  "card.qrHow": [
+    "Press and hold to save it, then in WeChat: Scan · from album.",
+    "长按保存，然后在微信里：扫一扫 · 从相册选取。"],
+  "card.qrSending":    ["Sending…", "正在上传…"],
+  "card.qrSaved":      ["Saved.", "已保存。"],
+  "card.qrBig":        ["That picture is too big.", "图片太大了。"],
+  "card.qrFailed":     ["That did not go through. Try again.", "没有成功，再试一次。"],
   "card.offPlatform": [
     "Everything from here happens off this app, which is the point — this board's job was to get the two of you into the same sentence, not to be where you talk.",
     "接下来的事都在这个应用之外发生，这本来就是重点——这个板的任务是让你们两个碰上，不是当你们聊天的地方。",
@@ -2696,6 +2732,14 @@ export const STRINGS = {
   "note.shut":         ["This conversation is closed.", "这个对话已经结束了。"],
   "note.needProfile":  ["Fill in your own profile first — an introduction from nobody is not one.",
                         "先填好自己的资料——没有名字的自我介绍不算自我介绍。"],
+  /* An accepted offer opens a counted thread — see OFFER_LINES in server.js.
+     The terms sit above the talk, and the count is said before it is spent. */
+  "note.dealJob":      ["The job, agreed", "已确认的工作"],
+  "note.dealProject":  ["The project, agreed", "已确认的项目"],
+  "note.linesLeft":    ["{n} lines left here.", "这里还剩 {n} 条。"],
+  "note.linesSpent": [
+    "You have said everything this thread is for. Carry on with them directly — their card is open.",
+    "这里能聊的已经聊完了。直接联系对方吧——名片已经给你了。"],
   "note.enough":       ["That is enough messages for one day.", "今天发得够多了。"],
   "note.gone":         ["That person is not on the list any more.", "这个人已经不在名单上了。"],
   "note.failed":       ["It did not send. Try again.", "没有发出去，再试一次。"],

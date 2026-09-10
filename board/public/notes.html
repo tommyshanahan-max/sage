@@ -148,6 +148,18 @@
     color:var(--accent-ink)}
   .note .acts button.warn{color:var(--t5)}
   .note .said{margin:.55rem 0 0;font-size:.83rem;color:var(--muted)}
+
+  /* The terms an accepted offer put over the thread. Bordered in the accent
+     rather than tucked into the muted voice: it is the thing on this screen
+     that both people are working from. */
+  .note .pin{margin:.6rem 0 0;border:1px solid var(--accent);border-radius:.55rem;
+    padding:.45rem .55rem;background:var(--paper)}
+  .note .pin .k{display:block;font-size:.6rem;letter-spacing:.12em;
+    text-transform:uppercase;font-weight:700;color:var(--accent);margin:0 0 .25rem}
+  .note .pin p{margin:0;font-size:.86rem;line-height:1.5;color:var(--ink)}
+  .note .pin p.money{margin-top:.2rem;font-weight:700}
+  .note .left{margin:.5rem 0 0;font-size:.76rem;color:var(--muted)}
+  .note .left.spent{color:var(--ink-2)}
   .note .said.bad{color:var(--t5)}
   /* Unread. A dot rather than a colour wash: the message is what should be
      read, not the fact that it is new. */
@@ -270,6 +282,24 @@ function row(n) {
   line.append(t);
   m.append(line, el("div", "text", n.text));
 
+  /* WHAT WAS AGREED, ABOVE THE TALK.
+   *
+   * On the newest line of the thread only — the terms are a fact about the two
+   * of you, not about each message, and repeating them under every line turns
+   * the one thing worth reading into wallpaper.
+   *
+   * This is the only reason to type in here rather than in WeChat: the offer
+   * somebody accepted sits over the conversation and cannot scroll away from
+   * either of them. */
+  if (n.deal && n.last !== false) {
+    const pin = el("div", "pin");
+    pin.append(el("span", "k",
+      T(n.deal.kind === "project" ? "note.dealProject" : "note.dealJob")));
+    pin.append(el("p", null, n.deal.give));
+    if (n.deal.money) pin.append(el("p", "money", n.deal.money));
+    m.append(pin);
+  }
+
   const acts = el("div", "acts");
   if (n.handle) {
     const go = el("a", null, T("note.openProfile"));
@@ -282,6 +312,15 @@ function row(n) {
   /* THE BOX TO WRITE IN, on the newest message of the thread and nowhere else.
      A reply box under every line of a conversation is five boxes that all do
      the same thing, and in an open thread there are lines. */
+  /* HOW MANY LINES ARE LEFT, said before they are spent rather than after.
+     A box that refuses the seventh message without ever having mentioned six
+     is a bug the person blames on themselves. */
+  if (typeof n.left === "number" && n.last !== false) {
+    const cap = el("p", "left" + (n.left ? "" : " spent"),
+      T(n.left ? "note.linesLeft" : "note.linesSpent", { n: n.left }));
+    m.append(cap);
+  }
+
   if (n.canAnswer && n.last !== false) {
     const ans = el("button", "primary", T(n.open ? "note.write" : "note.answerIt"));
     ans.type = "button";
@@ -311,7 +350,8 @@ function row(n) {
         } catch (err) {
           said.classList.add("bad");
           const known = { profile: "note.needProfile", enough: "note.enough",
-                          gone: "note.gone", closed: "note.closed" };
+                          gone: "note.gone", closed: "note.closed",
+                          spent: "note.linesSpent" };
           said.textContent = T(known[String(err.message)] || "note.failed", { who: n.handle });
           send.disabled = false;
         }

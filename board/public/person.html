@@ -184,6 +184,14 @@
   .match .line{margin:.5rem 0 0;font-size:.88rem;color:var(--ink-2);line-height:1.55}
   .match .said{margin:.7rem 0 0;font-size:.85rem;color:var(--ink-2)}
   .match .tiny{margin:.6rem 0 0;font-size:.76rem;color:var(--muted);line-height:1.5}
+  /* A WeChat code, theirs or your own. White behind it whatever the theme: a
+     code inverted by a dark page is a code a scanner will not read. */
+  .match .qr{display:block;width:100%;max-width:11rem;aspect-ratio:1;
+    object-fit:contain;background:#fff;border-radius:.55rem;padding:.4rem;
+    margin:.6rem 0 0}
+  .match .qrrow{margin:.5rem 0 0}
+  .match .qrpick{display:block;margin:.5rem 0 0;font-size:.8rem;color:var(--ink-2);
+    max-width:100%}
   .match input{width:100%;margin:.45rem 0 0;padding:.65rem .8rem;font:inherit;
     font-size:.95rem;border:1px solid var(--line);border-radius:.7rem;
     background:var(--paper);color:var(--ink)}
@@ -443,7 +451,18 @@ function matchBox(q) {
      before being asked for anything. */
   if (PAIR.card) {
     wrap.append(el("span", "k", T("card.theirs", { who: q.handle })));
-    wrap.append(el("p", "v", PAIR.card.wechat));
+    /* THE CODE FIRST, WHERE THERE IS ONE. An id has to be typed into WeChat's
+       search and plenty of accounts cannot be found that way at all; a code is
+       saved to the photo roll and read back through Scan · from album, which
+       is how people here add each other. */
+    if (PAIR.card.qr) {
+      const img = Object.assign(document.createElement("img"),
+        { className: "qr", src: "/api/public-media?id=" + encodeURIComponent(PAIR.card.qr),
+          alt: "", loading: "lazy" });
+      wrap.append(img);
+      wrap.append(el("p", "tiny", T("card.qrHow")));
+    }
+    if (PAIR.card.wechat) wrap.append(el("p", "v", PAIR.card.wechat));
     if (PAIR.card.line) {
       wrap.append(el("span", "k", T("card.theyAdded")));
       wrap.append(el("p", "line", PAIR.card.line));
@@ -504,10 +523,56 @@ function drawCardForm(wrap, say, q) {
   ln.maxLength = 200;
   if (MYCARD) { wx.value = MYCARD.wechat || ""; ln.value = MYCARD.line || ""; }
   wrap.append(wx, ln);
+
+  /* THEIR OWN CODE, UPLOADED BY THEM. This server has no way to make somebody's
+     WeChat code and must never appear to: what is stored is the picture they
+     took of their own, and it goes out only to the people they hand a card to.
+     Not held for review, unlike a face — a face goes on a public browser and
+     cannot be taken back, and a code is shown to nobody but somebody they have
+     already decided to give their WeChat id to. */
+  const qrRow = el("div", "qrrow");
+  const pick = el("input");
+  pick.type = "file";
+  pick.accept = "image/*";
+  pick.className = "qrpick";
+  const qrSaid = el("p", "tiny", "");
+  const shot = Object.assign(document.createElement("img"), { className: "qr", alt: "" });
+  shot.hidden = true;
+  if (MYCARD && MYCARD.qr) {
+    shot.src = "/api/public-media?id=" + encodeURIComponent(MYCARD.qr);
+    shot.hidden = false;
+  }
+  pick.addEventListener("change", async () => {
+    const f = pick.files && pick.files[0];
+    if (!f) return;
+    qrSaid.textContent = T("card.qrSending");
+    try {
+      const buf = await f.arrayBuffer();
+      let bin = "";
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      const r = await fetch("/api/card/qr", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, qr: btoa(bin), qrType: f.type }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.qr) throw new Error(d.error || "no");
+      shot.src = "/api/public-media?id=" + encodeURIComponent(d.qr);
+      shot.hidden = false;
+      qrSaid.textContent = T("card.qrSaved");
+      await loadCard();
+    } catch (err) {
+      qrSaid.textContent = T(String(err.message) === "tooBig" ? "card.qrBig" : "card.qrFailed");
+    }
+  });
+  wrap.append(el("span", "k", T("card.qrLab")));
+  wrap.append(el("p", "why", T("card.qrWhy")));
+  qrRow.append(shot, pick, qrSaid);
+  wrap.append(qrRow);
   const save = el("button", null, T("card.save"));
   save.type = "button";
   save.addEventListener("click", async () => {
-    if (!wx.value.trim() && !ln.value.trim()) return;
+    if (!wx.value.trim() && !ln.value.trim() && !(MYCARD && MYCARD.qr)) return;
     save.disabled = true;
     await fetch("/api/card", {
       method: "PUT", headers: { "Content-Type": "application/json" },

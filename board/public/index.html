@@ -383,6 +383,13 @@
 
   /* GIVEN. The id, at a size somebody can read off a screen, next to the one
      button they actually want. */
+  .bcard .qr{margin:0 0 .7rem;text-align:center}
+  .bcard .qr img{width:100%;max-width:11rem;aspect-ratio:1;object-fit:contain;
+    background:#fff;border-radius:.5rem;padding:.35rem}
+  .bcard .how{margin:.4rem 0 0;font-size:.76rem;line-height:1.45;color:var(--muted)}
+  .bcard .wxgo{display:block;margin:.5rem 0 0;padding:.5rem;border-radius:99px;
+    background:var(--accent);color:#fff;text-align:center;text-decoration:none;
+    font-size:.86rem;font-weight:700}
   .bcard .got{display:flex;gap:.6rem;align-items:center}
   .bcard .got code{flex:1;min-width:0;font-family:ui-monospace,Menlo,monospace;
     font-size:.95rem;color:var(--ink);overflow-wrap:anywhere}
@@ -501,6 +508,11 @@
   .mkoffer input, .mkoffer textarea{width:100%;padding:.55rem .65rem;
     border:1px solid var(--line);border-radius:.55rem;background:var(--paper);
     color:var(--ink);font:inherit;font-size:.95rem;resize:vertical}
+  .mkoffer .kinds{display:flex;gap:.4rem}
+  .mkoffer .kbtn{flex:1;padding:.5rem;border:1px solid var(--line);border-radius:99px;
+    background:var(--paper);color:var(--ink-2);font:inherit;font-size:.85rem;
+    font-weight:600;cursor:pointer}
+  .mkoffer .kbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .mkoffer .sendbtn{width:100%;margin:.2rem 0 0}
   /* The link it produces. Monospaced and full width because it is meant to be
      read back off a screen and pressed, not admired. */
@@ -1742,6 +1754,16 @@
     <div class="mkoffer" id="mkoffer" hidden>
       <span class="lab" id="mkofferlab"></span>
       <p class="why" id="mkofferwhy"></p>
+      <!-- WHICH OF THE TWO. A job is a date and a number; a project is the
+           conversation that has to happen before either exists. The switch is
+           here rather than inferred from whether the money box is empty,
+           because an empty money box on a job is a mistake and on a project is
+           a term. -->
+      <div class="f"><span id="mkofferkindk"></span>
+        <div class="kinds" role="group">
+          <button type="button" class="kbtn on" id="mkkjob" data-kind="job"></button>
+          <button type="button" class="kbtn" id="mkkproject" data-kind="project"></button>
+        </div></div>
       <label class="f"><span id="mkofferwhok"></span>
         <input id="mkofferwho" autocomplete="off" spellcheck="false"></label>
       <label class="f"><span id="mkoffergivek"></span>
@@ -5372,6 +5394,35 @@ function drawCards() {
     card.append(who);
 
     const foot = el("div", "foot");
+
+    /* THE HANDOVER.
+     *
+     * "Open WeChat" on its own was a dead button: WeChat has no link that
+     * opens a chat with somebody you have never spoken to, so launching the
+     * app just abandons the person on whatever screen it was left on. The two
+     * things that do work are here instead, in the order they work in —
+     *
+     *   the code, saved to the photo roll and read back through Scan · from
+     *   album, which is how people here actually add each other and the only
+     *   half that works from inside WeChat's own browser;
+     *
+     *   the id underneath it, always, because plenty of people have not put a
+     *   code up and a searchable id is better than nothing.
+     */
+    if (m.card && m.card.qr) {
+      const q = el("div", "qr");
+      const img = Object.assign(document.createElement("img"), {
+        src: "/api/public-media?id=" + encodeURIComponent(m.card.qr),
+        alt: "", loading: "lazy",
+      });
+      q.append(img);
+      // No button. Saving a picture is a press-and-hold that no script may
+      // perform, and a button that cannot do what it says is the thing this
+      // whole block exists to replace.
+      q.append(el("p", "how", T(IN_WECHAT ? "cards.qrHowWx" : "cards.qrHow")));
+      foot.append(q);
+    }
+
     if (m.card && m.card.wechat) {
       const got = el("div", "got");
       got.append(el("code", null, m.card.wechat));
@@ -5390,6 +5441,17 @@ function drawCards() {
       });
       got.append(copy);
       foot.append(got);
+      /* Launching WeChat is only worth offering to somebody who is not already
+         inside it, and only next to an id they can paste — on its own it is
+         the dead button again. */
+      if (!IN_WECHAT) {
+        const open = el("a", "wxgo", T("cards.openWx"));
+        open.href = "weixin://";
+        foot.append(open);
+      }
+      foot.append(el("p", "how", T("cards.idHow")));
+      if (m.card.line) foot.append(el("p", "line", m.card.line));
+    } else if (m.card && m.card.qr) {
       if (m.card.line) foot.append(el("p", "line", m.card.line));
     } else {
       const slot = el("div", "slot");
@@ -6659,6 +6721,25 @@ function drawMkOffer() {
   $("mkoffergive").placeholder = T("mko.giveHint");
   $("mkoffermoney").placeholder = T("mko.moneyHint");
   $("mkofferwant").placeholder = T("mko.wantHint");
+  $("mkofferkindk").textContent = T("mko.kind");
+  $("mkkjob").textContent = T("mko.kindJob");
+  $("mkkproject").textContent = T("mko.kindProject");
+  drawKind();
+}
+
+/* Which kind is chosen, and the one thing it changes on this form: what the
+ * money box says when it is empty. A project's money line is allowed to be
+ * "not settled yet" — that is what the thread it opens is for. */
+let OKIND = "job";
+function drawKind() {
+  $("mkkjob").classList.toggle("on", OKIND === "job");
+  $("mkkproject").classList.toggle("on", OKIND === "project");
+  $("mkoffermoney").placeholder = T(OKIND === "project" ? "mko.moneyOpenHint" : "mko.moneyHint");
+  $("mkoffergive").placeholder = T(OKIND === "project" ? "mko.giveProjectHint" : "mko.giveHint");
+}
+for (const id of ["mkkjob", "mkkproject"]) {
+  const el = $(id);
+  if (el) el.addEventListener("click", () => { OKIND = el.dataset.kind; drawKind(); });
 }
 
 async function makeOffer() {
@@ -6671,7 +6752,7 @@ async function makeOffer() {
     const r = await fetch("/api/offer", {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        device, who: $("mkofferwho").value.trim(), give,
+        device, kind: OKIND, who: $("mkofferwho").value.trim(), give,
         money: $("mkoffermoney").value.trim(), want: $("mkofferwant").value.trim(),
       }),
     });
