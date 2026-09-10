@@ -2329,6 +2329,17 @@ function drawSoon() {
   if (!box) return;
   const quiet = FROMMEMBERS < 1;
   box.hidden = !quiet;
+  /* NOBODY LANDS ON A TAB THAT SAYS IT IS SHUT.
+   *
+   * A home-screen icon added months ago still opens at whatever address it
+   * was installed with, and for most of this board's life that was /feed. The
+   * manifest says /browse now and the old installs do not care — so rather
+   * than ask everybody to delete and re-add an icon, an arrival on an empty
+   * feed is corrected here, address and all.
+   *
+   * Only an arrival. Tapping the tab is a choice and is honoured: somebody
+   * who asks for the feed should be told why it is quiet, not bounced. */
+  if (quiet && !VIEWCHOSE && !$("vfeed").hidden) { showView("browse", true); return; }
   /* The posts and everything that files them. Left alone when it is not
      quiet, because each of these has its own reason to be hidden and this
      one must not overrule them. */
@@ -5776,6 +5787,11 @@ document.addEventListener("keydown", (e) => {
  * A HASH ALWAYS WINS. Shared posts are /feed#<id>, and somebody following one
  * has to land on the posts whatever tab they last had open.
  */
+/* Whether this reader asked for the tab they are on, or simply arrived on it.
+   The difference decides whether a feed with nothing in it is allowed to be
+   the first thing they see. */
+let VIEWCHOSE = false;
+
 function viewNow() {
   if (location.hash && location.hash.length > 1) return "feed";
   return location.pathname.startsWith("/feed") ? "feed" : "browse";
@@ -5813,11 +5829,16 @@ function showTranslate(onFeed) {
 $("navbrowse").addEventListener("click", (e) => {
   if (e.metaKey || e.ctrlKey || e.shiftKey) return;
   e.preventDefault();
+  VIEWCHOSE = true;
   showView("browse", true);
 });
 $("navfeed").addEventListener("click", (e) => {
   if (e.metaKey || e.ctrlKey || e.shiftKey) return;
   e.preventDefault();
+  /* Tapping the tab is a choice, and a choice is honoured even when the feed
+     has nothing in it — somebody who taps Feed should see why it is quiet,
+     not be bounced back to where they came from. */
+  VIEWCHOSE = true;
   showView("feed", true);
 });
 // Back and forward mean the other tab now, which is what they look like they

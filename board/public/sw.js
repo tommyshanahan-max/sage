@@ -35,13 +35,16 @@
  * the feed document now, and a browser holding the old standalone page would
  * serve it offline for as long as that cache lived. Activating deletes every
  * cache that is not this one. */
-const CACHE = "board-v3";
+/* v4: the front of this place is /browse. A worker installed under v3 holds a
+   shell whose first entry was /feed, and a home-screen icon added then still
+   opens there. Bumping the name drops every older cache on activate. */
+const CACHE = "board-v4";
 
 // The shell: enough to open and be recognisable with no network. Deliberately
 // not the API — a cached /api/board is a cached set of somebody's posts, and
 // those go stale in minutes and may have been taken down since.
 const SHELL = [
-  "/feed", "/buddies", "/browse", "/type", "/site.css", "/i18n.js", "/live.js",
+  "/browse", "/feed", "/buddies", "/type", "/site.css", "/i18n.js", "/live.js",
   "/favicon.png", "/icon-512.png",
 ];
 
@@ -94,7 +97,9 @@ self.addEventListener("fetch", (event) => {
       // A navigation with nothing cached for it still deserves the app rather
       // than the browser's offline page, if the shell is there.
       if (req.mode === "navigate") {
-        const shell = await caches.match("/feed");
+        // Browse, not the feed. Offline and with nothing cached for this
+        // address, the app should open on the people.
+        const shell = await caches.match("/browse");
         if (shell) return shell;
       }
       throw new Error("offline and nothing cached");
