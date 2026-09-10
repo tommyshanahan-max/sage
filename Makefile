@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -141,6 +141,17 @@ up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	@# loud when it fails. The first version of this swallowed its own error and
 	@# wrote nothing on the box for a whole deploy without anyone noticing.
 	@sh scripts/whats-new.sh 	  || echo "note: could not stamp the commit list; Sage will not know what changed"
+	@# A COPY BEFORE EVERY DEPLOY, and this is the whole reason `save` exists.
+	@# The one thing on this box that has actually gone wrong is code that runs
+	@# at boot and rewrites rows — a migration republished every held profile
+	@# on every restart and undid the same afternoon's work three times before
+	@# anybody could see what was doing it. The deploy is the moment that risk
+	@# arrives, so the copy is taken here, first.
+	@#
+	@# Never fatal. A box with no backups directory, or a volume that is not
+	@# there yet on a fresh install, must not stop a deploy — it says so and
+	@# carries on.
+	@$(MAKE) save || echo "note: could not copy the data first — deploying anyway"
 	$(COMPOSE) up -d --build
 	@# Caddy's site files are bind-mounted, so editing one changes nothing that
 	@# compose can see: the service definition is identical, the container is
@@ -337,6 +348,28 @@ cfm-owner: ## Let somebody else keep their own record: make cfm-owner NAME="Ana"
 cfm-owners: ## Who keeps a record here, and how many projects each has
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" owners
+
+cfm-stake: ## A share with an earn-out: make cfm-stake ID=aiden NAME="Founding engineer" PCT=5 STEPS="3|ships v1;2|25 projects on it"
+	@# The half of a founder deal nobody writes down: five per cent now, more
+	@# if something happens. It goes on the record here, in the words the two
+	@# of you used, on a page that says when it was written.
+	@#
+	@# STEPS is one or more "percentage|what has to happen", separated by
+	@# semicolons. The semicolon is the separator because the conditions are
+	@# sentences and sentences have commas in them.
+	@#
+	@# The ledger holds these and judges none of them: there is no date to
+	@# pass, nothing that ticks itself, and nothing here issues anything.
+	@test -n "$(ID)" -a -n "$(NAME)" || { echo 'both: make cfm-stake ID=aiden NAME="Founding engineer" PCT=5'; exit 1; }
+	@# STEPS goes through as ONE argument and cfm.mjs splits it. Splitting it
+	@# here would mean a condition with a space in it arrives as three
+	@# arguments, and a condition without spaces is not a sentence anybody
+	@# wrote. One thing does the parsing.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  stake --id "$(ID)" --name "$(NAME)" --project "$(or $(PROJECT),crowdfundme)" \
+	  --pct "$(or $(PCT),5)" --years "$(or $(YEARS),4)" --cliff "$(or $(CLIFF),12)" \
+	  --ask "$(ASK)" --why "$(WHY)" --steps "$(STEPS)"
 
 cfm-offer: ## One offer to one person: make cfm-offer WHO="Keith" [PROJECT=the-exchange PACK=founding SEAT=3 NOTE="..." UNTIL=2026-09-16]
 	@# The seat is written when the offer is made, not when it is opened. Two
@@ -678,6 +711,63 @@ claude: ## Run the Claude Code CLI in the workspace
 
 password: ## Generate a strong password for TOMSCODING_PASSWORD
 	openssl rand -base64 24
+
+save: ## Copy the board and the ledger out to ./backups — the two that cannot be rebuilt
+	@# WHAT IS ACTUALLY IRREPLACEABLE ON THIS BOX. Everything else here is in
+	@# git or can be rebuilt from it. These two are not: board.json holds the
+	@# waiting list — names and the one way each of those people gave to reach
+	@# them, typed once and stored nowhere else — and cfm.json is the record of
+	@# who was offered what and who accepted.
+	@#
+	@# `make backup` tars the workspace homes, which is a different job: those
+	@# are working directories. This is the data, it is small, and it is quick
+	@# enough to run before every deploy.
+	@#
+	@# Read straight off the volumes with a throwaway container, so it works
+	@# whether or not the services are up — including the case you want it for
+	@# most, which is a box that will not start.
+	@#
+	@# The volume names come from `name: tomscoding` at the top of the compose
+	@# file, not from the directory this is checked out into, so they are the
+	@# same whether the clone is called tc or sage.
+	mkdir -p backups
+	@stamp=$$(date +%Y%m%d-%H%M%S); \
+	  docker run --rm -v tomscoding_board_data:/board:ro -v tomscoding_cfm_data:/cfm:ro \
+	    -v "$$PWD/backups:/out" alpine:3 \
+	    sh -c 'tar czf /out/data-'"$$stamp"'.tar.gz -C / board cfm' \
+	  && echo "wrote backups/data-$$stamp.tar.gz"
+	@# And what went into it. Counted off the live volume, which is what was
+	@# just copied — see data-count.mjs for why this is printed at all.
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" \
+	  --entrypoint node board /seed/data-count.mjs || true
+	@ls -lh backups | tail -n 4
+
+restore: ## Put a saved copy back: make restore FILE=backups/data-....tar.gz YES=1
+	@# DELIBERATELY AWKWARD. This overwrites the live board and the live
+	@# ledger, and what it is most likely to be used for is undoing a mistake
+	@# made in a hurry — which is the worst frame of mind to be in while
+	@# running something that cannot be undone. So it names the file, says what
+	@# is inside it, and refuses without YES=1.
+	@test -n "$(FILE)" || { echo 'which one? make restore FILE=backups/data-....tar.gz YES=1'; echo; ls -1t backups/data-*.tar.gz 2>/dev/null | head -5; exit 1; }
+	@test -f "$(FILE)" || { echo "no such file: $(FILE)"; exit 1; }
+	@rm -rf backups/.peek && mkdir -p backups/.peek
+	@docker run --rm -v "$(CURDIR)/$(FILE):/in.tar.gz:ro" \
+	  -v "$(CURDIR)/backups/.peek:/out" alpine:3 sh -c 'tar xzf /in.tar.gz -C /out'
+	@echo "About to replace the live board and ledger with $(FILE), which holds:"
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/backups/.peek:/peek:ro" \
+	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/data-count.mjs /peek/board/board.json
+	@test -n "$(YES)" || { echo; echo "Nothing done. Add YES=1 once you have read the line above."; exit 1; }
+	@# The live copy first, always. Restoring the wrong file is a mistake
+	@# somebody makes once, and it should not be the last thing that happens.
+	$(MAKE) save
+	$(COMPOSE) stop board cfm
+	docker run --rm -v tomscoding_board_data:/board -v tomscoding_cfm_data:/cfm \
+	  -v "$(CURDIR)/$(FILE):/in.tar.gz:ro" alpine:3 \
+	  sh -c 'rm -rf /board/* /cfm/* && tar xzf /in.tar.gz -C /'
+	$(COMPOSE) start board cfm
+	@rm -rf backups/.peek
+	@echo "Back. Look at the queue on the site before you do anything else."
 
 backup: ## Snapshot every workspace home volume to ./backups
 	mkdir -p backups

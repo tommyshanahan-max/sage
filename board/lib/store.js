@@ -13,7 +13,7 @@
 // shape below is deliberately the shape a row would take.
 // ---------------------------------------------------------------------------
 
-import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rename, readdir, unlink, access } from "node:fs/promises";
 import { randomUUID, createHash, randomBytes } from "node:crypto";
 import path from "node:path";
 
@@ -1281,7 +1281,69 @@ export async function save(file, board) {
   await mkdir(path.dirname(file), { recursive: true });
   const tmp = file + ".tmp";
   await writeFile(tmp, JSON.stringify(cleanBoard(board), null, 2) + "\n", "utf8");
+  /* READ BEFORE THE RENAME, on the first write of a day only. What is on disk
+     at this moment is the last state of yesterday, and the rename below is
+     about to make it stop existing. */
+  const keep = (await needsDay(file)) ? await readFile(file, "utf8").catch(() => "") : "";
   await rename(tmp, file);
+  /* NEVER LET THE COPY BREAK THE SAVE. A full disk or a permission that
+     changed must lose the snapshot, not the write everybody is waiting on. */
+  if (keep) keepADay(file, keep).catch(() => {});
+}
+
+/* ---------------------------------------------------------------------------
+ * ONE COPY A DAY, KEPT BESIDE THE FILE
+ *
+ * WHAT THIS IS FOR, and it is not disk failure. The volume is the box's
+ * problem and a host-side tar is the answer to it — see `make save`. This is
+ * for the other thing, which has already happened here once: code that runs
+ * at boot and quietly rewrites rows. A migration republished every held
+ * profile on every restart, three times, and undid the same piece of work
+ * three times before anybody could tell what was doing it. There was nothing
+ * to compare against, because the only copy of the file was the one being
+ * rewritten.
+ *
+ * So: the first write of each day sets aside what was there before it. That
+ * is the state at the end of the previous day, untouched by anything today's
+ * boot has done to it — which is exactly the file you want when a change you
+ * did not make appears overnight.
+ *
+ * THIRTY OF THEM. A month is long enough to notice something wrong, small
+ * enough that a board.json of a few hundred kilobytes stays a few megabytes
+ * of history. The oldest go first.
+ *
+ * The names are dates on purpose: `ls` in that directory is the answer to
+ * "what did it look like on the 8th", with no tool to run and nothing to
+ * unpack.
+ */
+const KEEP_DAYS = 30;
+const dayOf = (d = new Date()) => d.toISOString().slice(0, 10);
+const daysDir = (file) => path.join(path.dirname(file), "days");
+const dayFile = (file, day) =>
+  path.join(daysDir(file), path.basename(file, ".json") + "-" + day + ".json");
+
+/** Whether today's copy is still to be made. Cheap enough to ask on every
+ *  save: one stat, and it says no all day after the first write. */
+async function needsDay(file) {
+  try { await access(dayFile(file, dayOf())); return false; } catch { return true; }
+}
+
+async function keepADay(file, text) {
+  const dir = daysDir(file);
+  await mkdir(dir, { recursive: true });
+  const at = dayFile(file, dayOf());
+  const tmp = at + ".tmp";
+  await writeFile(tmp, text, "utf8");
+  await rename(tmp, at);
+  /* Sorted by name, which for ISO dates is sorted by date. Failing to delete
+     an old one is not worth failing the save that triggered this. */
+  const base = path.basename(file, ".json") + "-";
+  const all = (await readdir(dir))
+    .filter((n) => n.startsWith(base) && n.endsWith(".json"))
+    .sort();
+  for (const n of all.slice(0, Math.max(0, all.length - KEEP_DAYS))) {
+    await unlink(path.join(dir, n)).catch(() => {});
+  }
 }
 
 /** What a post is, for a reader. A reply and a like are rows in the same list

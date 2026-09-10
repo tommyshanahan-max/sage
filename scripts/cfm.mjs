@@ -7,12 +7,22 @@
 
 const [, , base, key, cmd, ...rest] = process.argv;
 if (!base || !key || !cmd) {
-  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|owner|owners|offer|offers|seal|seals|anchor|verify|anchoring|unseal|reopen|void [--who NAME ...]");
+  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|owner|owners|stake|offer|offers|seal|seals|anchor|verify|anchoring|unseal|reopen|void [--who NAME ...]");
   process.exit(2);
 }
 const arg = (n, d = "") => {
   const i = rest.indexOf("--" + n);
   return i >= 0 && rest[i + 1] ? rest[i + 1] : d;
+};
+/* The same flag more than once. Only --step needs it, and it needs it because
+   a deal with three milestones has three of them and a comma-separated list
+   in one string is a parser waiting to meet somebody's sentence. */
+const args = (n) => {
+  const out = [];
+  for (let i = 0; i < rest.length; i++) {
+    if (rest[i] === "--" + n && rest[i + 1]) out.push(rest[i + 1]);
+  }
+  return out;
 };
 const head = { "content-type": "application/json", "x-admin-secret": key };
 
@@ -97,6 +107,59 @@ if (cmd === "setup") {
     arg("years", "4") + "y, " + arg("cliff", "12") + "m cliff");
   console.log("  granted by " + arg("from", "Tom Shanahan") +
     " — check that spelling, it is on his offer\n");
+} else if (cmd === "stake") {
+  /* A SHARE IN SOMETHING, WITH AN EARN-OUT.
+   *
+   * The `setup-cfm` command above writes one of these by hand for counsel.
+   * This is the general one, because "five per cent now and more if something
+   * happens" is how these deals are actually made and there was nowhere to
+   * put the second half — it ended up as prose in a note, which is the napkin
+   * with a nicer font.
+   *
+   *   --step "3|ships v1 and it is in front of users"
+   *
+   * A percentage, a pipe, and the thing that has to happen in the words the
+   * two of you used. Repeat it for each one, up to four. Both halves matter:
+   * the ledger holds them, judges neither, and issues nothing.
+   */
+  const id = arg("id");
+  const name = arg("name");
+  if (!id || !name) {
+    console.error('needs both: --id aiden --name "Founding engineer"');
+    process.exit(2);
+  }
+  /* TWO WAYS IN, AND THE SECOND ONE IS WHY. --step repeated is the readable
+     form for anybody driving this directly. --steps is one string with
+     semicolons in it, and it exists because the Makefile has to hand these
+     through make, then sh, then docker: splitting them in the shell means a
+     condition with a space in it arrives as three arguments, and a condition
+     without spaces in it is not a sentence anybody wrote. Split here, where
+     there is exactly one thing doing the parsing. */
+  const raw = [...args("step"),
+    ...arg("steps").split(";").map((t) => t.trim()).filter(Boolean)];
+  const steps = raw.map((t) => {
+    const at = t.indexOf("|");
+    if (at < 0) {
+      console.error('a step is a percentage, a pipe, then the condition: --step "3|ships v1"');
+      process.exit(2);
+    }
+    return { pct: Number(t.slice(0, at).replace(/[^0-9.]/g, "")), on: t.slice(at + 1).trim() };
+  });
+  const pct = Number(arg("pct", "5"));
+  await post("/api/package", {
+    id, name, project: arg("project", "crowdfundme"), face: "stake",
+    pct, years: Number(arg("years", "4")), cliff: Number(arg("cliff", "12")),
+    steps,
+    ask: arg("ask"), why: arg("why"),
+  });
+  const all = steps.reduce((n, m) => n + m.pct, pct);
+  console.log("\n  " + arg("project", "crowdfundme") + " · " + id + " · " + pct + "% over "
+    + arg("years", "4") + "y, " + arg("cliff", "12") + "m cliff");
+  for (const m of steps) console.log("      +" + m.pct + "%  " + m.on);
+  if (steps.length) console.log("      = up to " + Math.round(all * 10) / 10 + "% in all");
+  console.log("\n  Now make the offer:");
+  console.log('      make cfm-offer WHO="their name" PROJECT=' + arg("project", "crowdfundme")
+    + " PACK=" + id + '\n');
 } else if (cmd === "offer") {
   const who = arg("who");
   if (!who) { console.error('which one? make cfm-offer WHO="their name"'); process.exit(2); }

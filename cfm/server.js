@@ -134,7 +134,11 @@ function view(data, o) {
       claim: p.claim, sub: p.sub, goal: p.goal, marks: p.marks,
       from: p.from, holds: p.holds },
     pack: k && { name: k.name, face: k.face, points: k.points, perDay: k.perDay,
-      pct: k.pct, years: k.years, cliff: k.cliff, ask: k.ask, why: k.why },
+      pct: k.pct, years: k.years, cliff: k.cliff, ask: k.ask, why: k.why,
+      // The earn-out, and it goes out with the terms it qualifies. A page that
+      // showed 5% while the record said 5% plus three more on conditions would
+      // be the wrong half of the deal, told to the person it matters to.
+      steps: k.steps },
   };
 }
 

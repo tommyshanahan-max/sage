@@ -57,6 +57,25 @@
     text-transform:uppercase;font-weight:700;color:var(--gold);border:1px solid #4A3E22;
     background:#191509;border-radius:99px;padding:.3rem .7rem}
   #terms{margin-bottom:1.4rem}
+  /* WHAT WOULD MAKE IT MORE. Set apart from the terms above deliberately: a
+     dashed edge rather than a solid one, because these are the conditions
+     that have not happened yet and a block that looks identical to the
+     settled rows reads as a promise the ledger is not making. */
+  #steps{border:1px dashed var(--hair);border-radius:.8rem;padding:.9rem 1.05rem .3rem;
+    margin-bottom:1.4rem}
+  .steph{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--gold);font-weight:700;margin-bottom:.5rem}
+  .stepwho{font-size:.82rem;line-height:1.6;color:var(--mut);margin:.5rem 0 .9rem}
+  /* The extra share, then what has to happen for it. The percentage leads
+     because it is what the eye is looking for, and the plus sign is doing
+     real work — it is the difference between five becoming eight and five
+     becoming three. */
+  .step{display:flex;gap:.8rem;align-items:baseline;padding:.6rem 0;
+    border-bottom:1px solid var(--hair)}
+  .step:last-of-type{border-bottom:0}
+  .step b{flex:0 0 auto;color:var(--gold);font-size:1rem;font-weight:700;
+    font-variant-numeric:tabular-nums;min-width:3.4rem}
+  .step span{color:var(--text);font-size:.92rem;line-height:1.5}
   /* The signature. Deliberately looks like something you write on, not like
      another field in a form — it is the only place on this page where what
      the reader does is more than a tap. */
@@ -142,6 +161,16 @@
       <div class="d"><span>Nothing until</span><b id="tcliff"></b></div>
       <div class="d"><span>Issued today</span><b>Nothing</b></div>
       <div class="d" id="tfromrow" hidden><span>Granted by</span><b id="tfrom"></b></div>
+    </div>
+    <!-- WHAT WOULD MAKE IT MORE. Its own block under the terms rather than a
+         row inside them: the rows above are settled and these are not, and a
+         thing that might happen printed in the same list as a thing that has
+         reads as a promise. The heading says "on top of" because that is the
+         one line here somebody could read the wrong way round. -->
+    <div id="steps" hidden>
+      <p class="steph" id="stephead"></p>
+      <div id="steplist"></div>
+      <p class="stepwho" id="stepwho"></p>
     </div>
     <p id="holds" hidden style="margin:-.7rem 0 1.5rem;font-size:.86rem;
       line-height:1.6;color:var(--dim)"></p>
@@ -293,6 +322,50 @@ const show = (id) => {
 };
 
 let OFFER = null;
+/* WHAT WOULD MAKE IT MORE.
+ *
+ * The half of a founder deal that normally never gets written down: five per
+ * cent now, more if something happens. It is on the record here in the same
+ * place as the base, in the words the two of them used, on a page that says
+ * when it was written — which is the entire point of this ledger.
+ *
+ * ON TOP OF, NOT INSTEAD OF, and the heading says so rather than leaving it to
+ * a plus sign. It is the one thing on this page a reader could take the wrong
+ * way round, and reading it the wrong way round turns a good offer into an
+ * insulting one.
+ *
+ * AND THE LEDGER DOES NOT DECIDE WHETHER ANY OF IT HAPPENED. There is no date
+ * to pass, no box that ticks itself and nothing here that pays out — the last
+ * line says so plainly, because a page that lists milestones and stays silent
+ * about who judges them is implying it does.
+ */
+function drawSteps(k) {
+  const rows = Array.isArray(k.steps) ? k.steps : [];
+  const box = document.getElementById("steps");
+  if (!rows.length) { box.hidden = true; return; }
+  box.hidden = false;
+  const total = rows.reduce((n, m) => n + m.pct, Number(k.pct) || 0);
+  document.getElementById("stephead").textContent =
+    "On top of the " + k.pct + "%, up to " + Math.round(total * 10) / 10 + "% in all";
+  const list = document.getElementById("steplist");
+  list.textContent = "";
+  for (const m of rows) {
+    const row = document.createElement("div");
+    row.className = "step";
+    const b = document.createElement("b");
+    b.textContent = "+" + m.pct + "%";
+    const sp = document.createElement("span");
+    sp.textContent = m.on;
+    row.append(b, sp);
+    list.append(row);
+  }
+  document.getElementById("stepwho").textContent =
+    "Written down, not worked out. Nothing here decides whether one of these "
+    + "has happened, and nothing here issues anything — that is between the "
+    + "two of you and whoever advises you. What this page is for is that you "
+    + "both agreed to these words, on this date.";
+}
+
 function draw(o) {
   OFFER = o;
   const p = o.project || {};
@@ -335,6 +408,7 @@ function draw(o) {
     $("tcliff").textContent = k.cliff
       ? k.cliff + (k.cliff === 1 ? " month in" : " months in")
       : "No cliff";
+    drawSteps(k);
   } else {
     $("seat").innerHTML = String(o.seat) + "<i> / " + (p.seats || 100) + "</i>";
     $("seatof").textContent = "Your place in the founding " + (p.seats === 100 ? "hundred" : String(p.seats || 100));

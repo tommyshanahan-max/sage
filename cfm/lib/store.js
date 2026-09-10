@@ -14,7 +14,7 @@
 // rewrite. Every temptation to break it will look small at the time.
 // ---------------------------------------------------------------------------
 
-import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rename, readdir, unlink, access } from "node:fs/promises";
 import { randomUUID, createHash } from "node:crypto";
 import path from "node:path";
 
@@ -136,6 +136,37 @@ export function cleanPackage(raw) {
     pct: Math.max(0, Math.min(100, Math.round((Number(raw.pct) || 0) * 10) / 10)),
     years: Math.max(0, Math.min(10, Number(raw.years) || 0)),
     cliff: Math.max(0, Math.min(48, Number(raw.cliff) || 0)),
+    /* MORE, IF SOMETHING HAPPENS — and this is the field the whole ledger is
+     * for.
+     *
+     * "Five percent now, more depending on milestones" is how these deals are
+     * actually made, and it is exactly the half nobody writes down. The
+     * percentage gets recorded because it is a number; the earn-out stays in
+     * a conversation, and two years later the two people remember two
+     * different sentences. That is the napkin this product exists to replace,
+     * and until now the only place to put it here was a free-text note — which
+     * is the napkin with a nicer font.
+     *
+     * So: up to four steps, each an extra share and the thing that has to
+     * happen for it. Both halves required — a percentage with no condition is
+     * not a milestone, and a condition with no percentage is a hope.
+     *
+     * THE CONDITION IS THEIR WORDS AND THE LEDGER DOES NOT JUDGE IT. It has
+     * no idea whether "ships v1" has happened and never will: no dates to
+     * compare, no box to tick, nothing here that pays out. What it does is
+     * hold what was agreed, in the words both of them used, on a record that
+     * says when it was written and cannot be quietly changed afterwards. Who
+     * decides it happened is a conversation between two people and their
+     * lawyers, which is where it belongs.
+     *
+     * `pct` is on top of the base, not instead of it. The page says so in as
+     * many words, because it is the one thing here somebody could read the
+     * wrong way round and it is expensive to read wrong.
+     */
+    steps: (Array.isArray(raw.steps) ? raw.steps : []).slice(0, 4).map((m) => ({
+      pct: Math.max(0, Math.min(100, Math.round((Number(m && m.pct) || 0) * 10) / 10)),
+      on: s(m && m.on, 120),
+    })).filter((m) => m.pct > 0 && m.on),
     /* The ask, in the words that fit this offer. "Bring one person worth
        having" is right for a founding seat and wrong for everything else,
        and a wrong ask is worse than none — it tells the reader the page was
@@ -272,5 +303,49 @@ export async function save(file, data) {
   await mkdir(path.dirname(file), { recursive: true });
   const tmp = file + ".tmp";
   await writeFile(tmp, JSON.stringify(data, null, 2), "utf8");
+  const keep = (await needsDay(file)) ? await readFile(file, "utf8").catch(() => "") : "";
   await rename(tmp, file);
+  if (keep) keepADay(file, keep).catch(() => {});
+}
+
+/* ---------------------------------------------------------------------------
+ * ONE COPY A DAY, KEPT BESIDE THE FILE
+ *
+ * The same thirty-day history the board keeps, and here it matters more. This
+ * file is the record: who was offered what, who accepted, and the seals that
+ * say the months before this one have not moved. A row lost from a board is a
+ * post; a row lost from here is somebody's share in something.
+ *
+ * The first write of each day sets aside what was on disk before it — the
+ * state at the end of the previous day, untouched by anything today has done.
+ * Names are dates, so `ls` answers "what did the ledger say on the 8th".
+ *
+ * This is not what makes the record trustworthy. The seals and the chain are
+ * — see anchor.js. This is what means a mistake is recoverable rather than
+ * only detectable.
+ */
+const KEEP_DAYS = 30;
+const dayOf = (d = new Date()) => d.toISOString().slice(0, 10);
+const daysDir = (file) => path.join(path.dirname(file), "days");
+const dayFile = (file, day) =>
+  path.join(daysDir(file), path.basename(file, ".json") + "-" + day + ".json");
+
+async function needsDay(file) {
+  try { await access(dayFile(file, dayOf())); return false; } catch { return true; }
+}
+
+async function keepADay(file, text) {
+  const dir = daysDir(file);
+  await mkdir(dir, { recursive: true });
+  const at = dayFile(file, dayOf());
+  const tmp = at + ".tmp";
+  await writeFile(tmp, text, "utf8");
+  await rename(tmp, at);
+  const base = path.basename(file, ".json") + "-";
+  const all = (await readdir(dir))
+    .filter((n) => n.startsWith(base) && n.endsWith(".json"))
+    .sort();
+  for (const n of all.slice(0, Math.max(0, all.length - KEEP_DAYS))) {
+    await unlink(path.join(dir, n)).catch(() => {});
+  }
 }

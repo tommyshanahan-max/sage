@@ -2044,6 +2044,14 @@ export const STRINGS = {
     "Whoever you bring in has your name on them. So first:",
     "你带进来的人，是挂着你的名字进来的。所以先做到：",
   ],
+  /* The same block, for a member who has a page and therefore already has the
+     link above it. The link and the code are not the same favour: the link
+     puts somebody in the queue, the code walks them through the door. This
+     line says which of the two is still to be earned. */
+  "inv.needWhyLink": [
+    "The link above puts people in the queue — send it to anybody. A code lets one person straight in on your word, and that one you earn:",
+    "上面这个链接是把人放进排队名单，谁都可以发。而邀请码是凭你一句话直接让人进来，这个要先做到：",
+  ],
   "inv.needFace": [
     "Be in Browse — add a photo, turn the switch on.",
     "出现在名单里——加一张照片，把开关打开。",

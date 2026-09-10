@@ -3905,14 +3905,32 @@ function drawTodo() {
 function drawNeed(b) {
   b.hidden = false;
   for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvfeed",
-                    "myinvshare", "myinvmore", "myinvextra"]) {
+                    "myinvmore", "myinvextra"]) {
     $(id).hidden = true;
   }
+  /* THE LINK IS NOT THE CODE, AND ONLY ONE OF THEM NEEDS STANDING.
+   *
+   * They were gated together, so a new member had nothing at all to send
+   * anybody until they had been here a day and posted twice. That is right
+   * for the code and wrong for the link, and the difference is what each one
+   * does: a code walks one person THROUGH THE DOOR on this member's word. A
+   * link puts whoever follows it in the QUEUE, where somebody still has to
+   * decide. Nobody gets in off a link.
+   *
+   * So the link is every member's from the first day — it is how a member who
+   * knows fifty useful people is any use to this board at all — and the code
+   * stays behind standing, which is the thing worth earning.
+   *
+   * Still only once there is a page to credit: the link carries an id the
+   * server checks against the roll, and one sent before the profile exists
+   * would quietly credit nobody. */
+  $("myinvshare").hidden = !(ME && ME.id && ME.handle);
+  $("myinvshare").textContent = T("inv.share");
   $("myinvlab").textContent = T("inv.needHead");
   const box = $("myinvneed");
   box.hidden = false;
   fill(box);
-  box.append(el("p", null, T("inv.needWhy")));
+  box.append(el("p", null, T(ME && ME.id && ME.handle ? "inv.needWhyLink" : "inv.needWhy")));
   const ul = el("ul");
   /* WHAT THE LIST ABOVE IS ALREADY SAYING. "Be in Browse" and "post 2 things
      this week" are both rows in Things to do, and a member reading the same
@@ -6457,6 +6475,11 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
        simultaneously showed the Messages door only a named member gets. */
     seedSay(); drawSays();
     paintNav(); drawTutor(); drawDeck(); drawTodo(); drawTalk(); drawAsk(); countNotes();
+    /* AND THE INVITE BLOCK, which was drawn once by loadMyInvite before this
+       landed. The share link needs a page to credit — an id and a name — so
+       drawn against a null ME it hid the one thing every member is supposed
+       to have. Redrawn here, when there is somebody to draw it for. */
+    drawMyInvite();
     /* AFTER drawDeck, ALWAYS. It reads whether Browse is already showing the
        same two numbers, and before the deck is drawn the answer is always no
        — which is how the line ended up on the screen twice. */
