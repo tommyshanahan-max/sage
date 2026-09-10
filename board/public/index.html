@@ -349,6 +349,8 @@
   .cardshead h2{margin:0;font-family:var(--serif);font-weight:400;
     font-size:1.5rem;line-height:1.2}
   .cardshead p{margin:.25rem 0 0;font-size:.9rem;color:var(--muted)}
+  .cardshead .cardswhat{margin:.55rem 0 0;font-size:.86rem;line-height:1.55;
+    color:var(--ink-2);max-width:32rem}
 
   /* A CARD IS A CARD, NOT A LIST ROW. It is the thing somebody is imagining
      putting in their pocket, and the reason to draw the empty one at all is
@@ -2077,6 +2079,10 @@
     <div class="cardshead">
       <h2 id="cardshead"></h2>
       <p id="cardsn"></p>
+      <!-- What this shelf is, in one line. Somebody arriving here has matched
+           with people and been offered a button called Connect, and has no
+           way of knowing from the rows alone that nothing has left yet. -->
+      <p id="cardswhat" class="cardswhat" hidden></p>
     </div>
     <div id="cardslist"></div>
     <div id="cardsnone" class="cardsnone" hidden>
@@ -5497,6 +5503,10 @@ function drawCards() {
   $("cardshead").textContent = T("cards.head");
   $("cardsn").textContent = MATCHES.length
     ? T(MATCHES.length === 1 ? "cards.n1" : "cards.n", { n: MATCHES.length }) : "";
+
+  const what = $("cardswhat");
+  what.hidden = !MATCHES.length;
+  if (!what.hidden) what.textContent = T("cards.what");
 
   const none = $("cardsnone");
   none.hidden = MATCHES.length > 0;

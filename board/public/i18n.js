@@ -1818,6 +1818,13 @@ export const STRINGS = {
   "cards.n1":          ["One person you have matched with", "你匹配到了一个人"],
   "cards.n":           ["{n} people you have matched with",
                         "你匹配到的 {n} 个人"],
+  /* THE SHELF, IN ONE LINE. Shown over the rows rather than only over the
+     empty state, because the person who needs it most is the one looking at
+     three faces and a button called Connect, wondering what has already gone
+     out. Nothing has. That is the whole sentence. */
+  "cards.what": [
+    "Everyone here matched with you — your sentence and theirs answer each other. No contact details have gone anywhere. They move when one of you presses Connect.",
+    "这里的人都和你匹配上了——你写的那句话和他们写的正好对上。目前还没有任何联系方式发出去。要等你们其中一方点了「建立联系」才会。"],
   "cards.none":        ["No cards yet.", "还没有名片。"],
   "cards.noneWhy": [
     "A card lands here when you and somebody else follow each other and want the same kind of thing. Nothing arrives on its own — go and look at who is here.",
