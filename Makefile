@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -348,6 +348,20 @@ cfm-owner: ## Let somebody else keep their own record: make cfm-owner NAME="Ana"
 cfm-owners: ## Who keeps a record here, and how many projects each has
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" owners
+
+cfm-grantor: ## Who grants a share and out of what: make cfm-grantor ID=the-exchange FROM="Tom Shanahan" HOLDS="..."
+	@# The two fields a project needs the day it makes its first stake offer,
+	@# and never before it. A share in a company, on a page that does not name
+	@# who is granting it or what holding it comes out of, is a screenshot
+	@# rather than a record — and the person reading it is being asked to take
+	@# a share instead of a salary.
+	@#
+	@# The full name, not the first one. It is on the record beside their
+	@# signature.
+	@test -n "$(FROM)" || { echo 'make cfm-grantor ID=the-exchange FROM="Tom Shanahan" HOLDS="Sole owner today..."'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  grantor --id "$(or $(ID),the-exchange)" --from "$(FROM)" --holds "$(HOLDS)"
 
 cfm-stake: ## A share with an earn-out: make cfm-stake ID=aiden NAME="Founding engineer" PCT=5 STEPS="3|ships v1;2|25 projects on it"
 	@# The half of a founder deal nobody writes down: five per cent now, more

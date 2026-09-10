@@ -458,6 +458,34 @@ app.post("/api/project", express.json({ limit: "4kb" }), admin, async (req, res)
   res.json({ ok: true, project: out });
 });
 
+/* WHO IS GRANTING IT, AND OUT OF WHAT — on its own route.
+ *
+ * /api/project above merges what it is sent, but cleanProject fills every
+ * field it did not receive, so posting two of them blanks the other eight. A
+ * project set up months ago would lose its claim, its goal and its milestones
+ * to a call meant to add a name — which is the kind of thing you find out
+ * afterwards.
+ *
+ * These two get their own route because they are the two a project needs the
+ * day it makes its first STAKE offer and never needs before it. A share in a
+ * company, on a page that does not name the person granting it or say what
+ * holding it comes out of, is a screenshot rather than a record — it is the
+ * first thing a careful reader stops on, and the reader here is somebody
+ * being asked to take a share instead of a salary.
+ */
+app.post("/api/project/from", express.json({ limit: "2kb" }), admin, async (req, res) => {
+  const id = String(req.body?.id || "");
+  const out = await change((data) => {
+    const p = data.projects.find((x) => x.id === id);
+    if (!p) return null;
+    if (req.body.from !== undefined) p.from = String(req.body.from).slice(0, 60);
+    if (req.body.holds !== undefined) p.holds = String(req.body.holds).slice(0, 160);
+    return { id: p.id, name: p.name, from: p.from, holds: p.holds };
+  });
+  if (!out) return res.status(404).json({ error: "no such project" });
+  res.json({ ok: true, project: out });
+});
+
 app.post("/api/package", express.json({ limit: "4kb" }), admin, async (req, res) => {
   const out = await change((data) => {
     const k = store.cleanPackage(req.body);

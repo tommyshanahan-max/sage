@@ -7,7 +7,7 @@
 
 const [, , base, key, cmd, ...rest] = process.argv;
 if (!base || !key || !cmd) {
-  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|owner|owners|stake|offer|offers|seal|seals|anchor|verify|anchoring|unseal|reopen|void [--who NAME ...]");
+  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|owner|owners|grantor|stake|offer|offers|seal|seals|anchor|verify|anchoring|unseal|reopen|void [--who NAME ...]");
   process.exit(2);
 }
 const arg = (n, d = "") => {
@@ -107,6 +107,23 @@ if (cmd === "setup") {
     arg("years", "4") + "y, " + arg("cliff", "12") + "m cliff");
   console.log("  granted by " + arg("from", "Tom Shanahan") +
     " — check that spelling, it is on his offer\n");
+} else if (cmd === "grantor") {
+  /* The two things a project needs the day it makes its first stake offer:
+     who is granting the share, in full, and what holding it comes out of.
+     Its own command because it is the one edit you make to a project that is
+     already set up, and posting the whole project again to change two fields
+     is how the other eight get blanked. */
+  const id = arg("id", "the-exchange");
+  const d = await post("/api/project/from", {
+    id, from: arg("from"), holds: arg("holds"),
+  });
+  console.log("\n  " + d.project.name + " — granted by " + (d.project.from || "(nobody named)"));
+  if (d.project.holds) console.log("      " + d.project.holds);
+  console.log("");
+  if (!d.project.from) {
+    console.log("  A stake offer with no named grantor is a screenshot, not a record.");
+    console.log('  make cfm-grantor ID=' + id + ' FROM="Your Full Name" HOLDS="..."\n');
+  }
 } else if (cmd === "stake") {
   /* A SHARE IN SOMETHING, WITH AN EARN-OUT.
    *
