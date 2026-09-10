@@ -90,14 +90,20 @@ for (const hits of matched.values()) for (const p of hits) keepIds.add(p.handle)
 const wd = await fetch(base + "/api/waiting", { headers: head })
   .then((r) => r.json()).catch(() => ({}));
 const waits = wd.waits || [];
-const rowFor = (handle) => waits.find((w) => w.done === "in" && flat(w.name) === flat(handle))
-  || waits.find((w) => w.done === "in" && flat(w.name).startsWith(flat(handle)))
-  || waits.find((w) => w.done === "in" && flat(handle).startsWith(flat(w.name)));
+const byId = new Map(waits.map((w) => [w.id, w]));
+/* The board resolves this: person → the invite their device spent → the row it
+   was minted for. Exact, and it survives somebody renaming themselves, which
+   matching on the handle does not — a person called "j j j" in Browse joined
+   the list under something else entirely. Name matching stays as a fallback
+   for anybody admitted before that link existed. */
+const rowFor = (p) => byId.get(p.fromWait)
+  || waits.find((w) => flat(w.name) === flat(p.handle))
+  || waits.find((w) => flat(w.name).startsWith(flat(p.handle)) && flat(p.handle).length > 2);
 
 const rest2 = people.filter((p) => !keepIds.has(p.handle));
 const toHold = rest2.filter((p) => p.state === "published");
-const toList = rest2.filter((p) => rowFor(p.handle));
-const noRow = rest2.filter((p) => !rowFor(p.handle) && p.state !== "published");
+const toList = rest2.filter((p) => rowFor(p) && rowFor(p).done !== "");
+const noRow = rest2.filter((p) => !rowFor(p));
 
 console.log("");
 console.log("  STAYING IN BROWSE");
@@ -122,7 +128,11 @@ if (toList.length) {
   console.log("");
   console.log("  BACK ON THE WAITING LIST \u2014 " + toList.length);
   for (const p of toList) {
+    const w = rowFor(p);
+    /* The name on the row printed beside the handle when they differ, so a
+       wrong match is visible before it is made rather than after. */
     console.log("    " + p.handle +
+      (flat(w.name) === flat(p.handle) ? "" : "  \u2192 " + w.name) +
       (p.state === "published" ? "" : "   (already out of Browse)"));
   }
 }
@@ -159,7 +169,7 @@ for (const p of toHold) {
   else console.log("  FAILED to hold " + p.handle + " (" + r.status + ")");
 }
 for (const p of toList) {
-  const row = rowFor(p.handle);
+  const row = rowFor(p);
   const w = await fetch(base + "/api/waiting", {
     method: "POST", headers: head,
     body: JSON.stringify({ id: row.id, done: "" }),

@@ -3917,6 +3917,17 @@ app.get("/api/public", admin, async (req, res) => {
   // Reports are rows pointing at posts, so they are filtered out of every list
   // here — a queue full of one-line pointers is a queue nobody reads — and
   // folded back on as counts and reasons against the post they concern.
+  /* person → the invite their device spent → the wait row it was minted for.
+     Built once; `who` on an invite is the wait row's name as it stood the
+     moment it was handed over. */
+  const spent = new Map(board.invites.filter((v) => v.usedBy).map((v) => [v.usedBy, v]));
+  const byName = new Map(board.waits.map((w) => [String(w.name).toLowerCase(), w]));
+  const waitOf = (q) => {
+    if (!q.by) return null;
+    const v = spent.get(q.by);
+    return v && v.who ? (byName.get(String(v.who).toLowerCase()) || null) : null;
+  };
+
   const real = board.posts.filter(store.isOwnPost);
   const withReports = (p) => {
     const { count, why } = store.reportsFor(board.posts, p.id);
@@ -3950,6 +3961,16 @@ app.get("/api/public", admin, async (req, res) => {
       hasPhoto: Boolean(q.photo), rooms: q.rooms,
       // The level they chose to make public, and when it moved. See `bands`.
       levelBand: q.levelBand, bands: q.bands,
+      /* WHICH ROW THEY CAME IN ON, resolved here rather than guessed outside.
+         A person's handle is what they chose to be called and has nothing to
+         do with the name they typed on the join form, so matching the two by
+         name finds almost nobody — "j j j" was never going to match a row.
+         The chain is exact: the person's device spent an invite, and that
+         invite was minted carrying the wait row's own name. Resolved on this
+         side because the middle of that chain is a device hash, which has no
+         business leaving the box. */
+      fromWait: waitOf(q) ? waitOf(q).id : "",
+      fromWaitName: waitOf(q) ? waitOf(q).name : "",
     })),
   });
 });
