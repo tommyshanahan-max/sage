@@ -1822,8 +1822,8 @@ export const STRINGS = {
      matching works and not how a person thinks about it. What they want to
      know is who these people are and whether anything has already gone out. */
   "cards.what": [
-    "This is where the fun starts. These people are interested in networking with you. Nobody has your WeChat yet. Press Connect to send it.",
-    "好戏从这里开始。这些人有兴趣认识你。现在还没人拿到你的微信。点「建立联系」就发过去。"],
+    "This is where the fun starts. Everyone here is looking for what you\u2019ve got. Nobody has your WeChat yet. Press Connect to send it.",
+    "好戏从这里开始。这里的每个人，找的正是你有的。现在还没人拿到你的微信。点「建立联系」就发过去。"],
   "cards.none":        ["No cards yet.", "还没有名片。"],
   "cards.noneWhy": [
     "A card lands here when you and somebody else follow each other and want the same kind of thing. Nothing arrives on its own — go and look at who is here.",
