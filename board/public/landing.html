@@ -408,7 +408,12 @@ admitted().then((inAlready) => {
   $("peeksection").hidden = true;
   const go = $("navopen");
   go.textContent = T("land.inside");
-  go.href = "/";
+  /* BROWSE, NOT "/". This said "/" — which is THIS PAGE unless BOARD_AT_ROOT
+     is set, so the one button a member had on the public page put them back
+     on the public page. Tapped from WeChat, where a member's link often lands
+     here rather than on the board, that reads as the link being broken.
+     The board's front door is /browse, whatever the root is pointed at. */
+  go.href = "/browse";
 }).catch(() => { /* not sure means outside, which is the safe half */ });
 </script>
 </body>

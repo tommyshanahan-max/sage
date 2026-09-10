@@ -1121,7 +1121,10 @@ function draw() {
     $("tabs").hidden = true;
     box.append(el("div", "none", T("wr.inAlready")));
     const a = el("a", "quietlink", T("land.inside"));
-    a.href = "/";
+    // Browse, not "/" — see the note on the same link in landing.html. The
+    // root is the page explaining what a board is, which is not what somebody
+    // pressing "Go to the board" is asking for.
+    a.href = "/browse";
     box.append(a);
     return;
   }
