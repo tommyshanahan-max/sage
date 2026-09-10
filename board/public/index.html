@@ -1404,6 +1404,11 @@
   /* The row above it is always there now, so the deck always pays for it. */
   #mine:not([hidden]) + .deck{
     height:max(11rem, min(52vh, 30rem, calc(var(--vh, 1vh) * 100 - 26rem - env(safe-area-inset-bottom))))}
+  /* No photograph: shorter, so the sentence is on the screen — see the note
+     where this class is set. Both selectors, because the row above changes
+     the height and this has to beat it. */
+  .deck.short, #mine:not([hidden]) + .deck.short{
+    height:max(9rem, min(34vh, 19rem, calc(var(--vh, 1vh) * 100 - 30rem - env(safe-area-inset-bottom))))}
   .pc{position:absolute;inset:0;border-radius:1.3rem;overflow:hidden;
     background:var(--raise);box-shadow:var(--shadow);
     display:flex;flex-direction:column;justify-content:flex-end;
@@ -1411,9 +1416,14 @@
   .pc.gone{opacity:0}
   .pc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
   /* No photograph is not a hole: the initial, big, on the accent. */
+  /* THE LETTER, AT THE SIZE OF A MISSING PICTURE. It was 8rem — a screen with
+     one character on it, which is what the card became for anybody who had not
+     uploaded a face. It sits behind the words now rather than instead of
+     them. */
   .pc .noshot{position:absolute;inset:0;display:grid;place-items:center;
     background:var(--accent);color:var(--accent-ink);
-    font-family:var(--serif);font-size:8rem;line-height:1}
+    font-family:var(--serif);font-size:4.5rem;line-height:1;opacity:.55;
+    align-content:start;padding-top:1.1rem}
   /* Words on a scrim, not straight onto the photograph: white on a picture is
      legible right up until somebody uploads a bright one. */
   .pc .scrim{position:relative;padding:5rem 1.2rem 1.2rem;
@@ -6184,6 +6194,20 @@ function drawDeck() {
 
   const at = (i, live) =>
     (needsFace() && i === people ? turnCard() : personCard(PEOPLE[i], live));
+
+  /* A CARD WITH NO PHOTOGRAPH IS SHORTER.
+   *
+   * Every card is the same height, which is right when there is a face in it
+   * and wrong when there is not: what fills it instead is one letter the size
+   * of a hand, and the sentence — the only thing on the card anybody can act
+   * on — is pushed under the fold. On a room this new most cards have no photo
+   * yet, so that was the ordinary case rather than the exception.
+   *
+   * The words are the same words. They just have the room they need, and the
+   * letter goes back to being the mark of a missing picture instead of the
+   * card's whole content. */
+  const shot = Boolean(PEOPLE[AT] && PEOPLE[AT].photo) || (needsFace() && AT === people);
+  deck.classList.toggle("short", !shot);
 
   // The one behind, so moving on reveals a card rather than a hole.
   if (n > 1) {
