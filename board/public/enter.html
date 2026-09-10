@@ -729,9 +729,22 @@ route();
  * back here would otherwise loop for ever, and a door is a better failure than
  * a spinning page.
  */
+/* ?new=1 HOLDS THE DOOR SHUT, for whoever runs this.
+ *
+ * The reload above is right and it makes the door impossible for a member to
+ * look at: open the link on your own phone and you are through it before you
+ * see it, so "is the way onto the list actually there" has no answer except
+ * borrowing somebody else's phone. This is that answer.
+ *
+ * It shows the door and nothing else. Admission is a row in the file and a
+ * signed cookie; neither is touched here, so this is a preview and never a way
+ * out — reload without it and you are through as before. */
+const PREVIEW = new URLSearchParams(location.search).get("new") === "1";
+
 fetch("/api/admitted", { headers: { "x-board-device": device } })
   .then((r) => r.json())
   .then((d) => {
+    if (PREVIEW) return;
     if (!d || !d.in || !d.mode) return;
     let tried = "";
     try { tried = sessionStorage.getItem("board:doorloop") || ""; } catch { /* fine */ }
