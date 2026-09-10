@@ -1313,8 +1313,16 @@
      to recognise, not people to choose between, and the deck above is already
      doing the choosing. */
   .queue{margin:1.6rem 0 0;padding-top:1.1rem;border-top:1px solid var(--line)}
-  .queue h2{margin:0 0 .8rem;font-size:.72rem;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--muted);font-weight:700}
+  /* A BUTTON, NOT A HEADING. Thirty-five rows under the deck is most of a
+     screen for something a member looks at now and then, so it is shut until
+     asked for and says how many are behind it. */
+  .qtoggle{display:flex;width:100%;align-items:center;gap:.5rem;background:none;
+    border:0;padding:.15rem 0 .8rem;font:inherit;font-size:.72rem;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+    font-weight:700;cursor:pointer;text-align:left}
+  .qtoggle .qn2{margin-left:auto;letter-spacing:0;font-variant-numeric:tabular-nums}
+  .qtoggle .qcar{transition:transform .15s ease;font-size:.9rem;line-height:1}
+  .qtoggle[aria-expanded="true"] .qcar{transform:rotate(90deg)}
   .qrow{display:flex;gap:.7rem;align-items:flex-start;padding:.6rem 0;
     border-bottom:1px solid var(--hair,var(--line))}
   .qrow:last-child{border-bottom:0}
@@ -1613,8 +1621,9 @@
        can recognise a name and vouch for them. Never how to reach anybody —
        that is on the row for us, not for the room. -->
   <section class="queue" id="queue" hidden>
-    <h2 id="queueh"></h2>
-    <div id="queuelist"></div>
+    <button class="qtoggle" type="button" id="queueh" aria-expanded="false"
+      aria-controls="queuelist"></button>
+    <div id="queuelist" hidden></div>
   </section>
   <div class="pacts" id="pacts" hidden></div>
   <p class="pcount" id="pcount"></p>
@@ -5095,9 +5104,16 @@ const atdoor = (n) => T(n === 1 ? "brw.atdoor1" : "brw.atdoor", { n });
  * place that wants it, it is members-only on the server, and a 401 or 403 is
  * the ordinary answer for anybody who is not one — so a failure here leaves
  * the section hidden and says nothing. */
+let queueWired = false;
 async function drawQueue() {
   const box = $("queue"), list = $("queuelist");
   if (!box) return;
+  if (!queueWired) {
+    queueWired = true;
+    $("queueh").addEventListener("click", () => {
+      setQueueOpen($("queuelist").hidden);
+    });
+  }
   let d = null;
   try {
     const r = await fetch("/api/queue");
@@ -5105,7 +5121,13 @@ async function drawQueue() {
     d = await r.json();
   } catch { return; }
   if (!d || !Array.isArray(d.rows)) return;
-  $("queueh").textContent = T("brw.qh");
+  /* Rebuilt each time rather than toggled in place: the order changes when
+     somebody vouches, so a list left as it was would show the old one. */
+  fill($("queueh"));
+  $("queueh").append(
+    el("span", "qcar", "\u203A"),
+    document.createTextNode(T("brw.qh")),
+    el("span", "qn2", String(d.rows.length)));
   fill(list);
   if (!d.rows.length) {
     list.append(el("p", "qnone", T("brw.qnone")));
@@ -5113,6 +5135,17 @@ async function drawQueue() {
     for (const w of d.rows) list.append(qRow(w));
   }
   box.hidden = false;
+  /* Shut by default, and it stays however this reader last left it — somebody
+     who opens it every day should not have to open it every day. */
+  let open = false;
+  try { open = localStorage.getItem("board:queue") === "1"; } catch {}
+  setQueueOpen(open);
+}
+
+function setQueueOpen(open) {
+  $("queuelist").hidden = !open;
+  $("queueh").setAttribute("aria-expanded", open ? "true" : "false");
+  try { localStorage.setItem("board:queue", open ? "1" : "0"); } catch {}
 }
 
 function qRow(w) {
