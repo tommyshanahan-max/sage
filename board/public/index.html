@@ -2419,6 +2419,29 @@ let FROMMEMBERS = 0;
 // With the rest of the state rather than beside the code that draws it: `let`
 // does not hoist a value, so the nav — which paints before the profile block
 // is reached — hit a temporal dead zone rather than a null.
+/* THE LANGUAGE HALF OF THIS BOARD IS OFF.
+ *
+ * The phrase of the day, the ten-level test and the four-letter test are
+ * heritage: this began as a board for people arriving in China and studying,
+ * and those were the right things then. The Exchange is a room where people
+ * find each other and make each other offers, and a Chinese flashcard sitting
+ * above the waiting list is asking a member to do homework on their way to
+ * work.
+ *
+ * Switched off rather than deleted, because none of it is wrong — it is in
+ * the wrong product. The routes, the pages, the levels and everything anybody
+ * has already earned are untouched and come back by turning this to true.
+ */
+const LEARNING = false;
+
+/* Every read of a level or a four-letter code goes through here, so switching
+ * LEARNING off is one decision rather than a hunt for the places that show
+ * them. Gating the drawing instead missed the collapsed summary row on the
+ * report card, which is the one place a level appears without a heading over
+ * it saying so — visible only when somebody opened the fold, which no test
+ * that reads the page as text will notice. What is stored stays stored. */
+const learned = (key) => (LEARNING ? readLocal(key) : null);
+
 let ME = null;
 /* How many people are at the door, or null while there are too few for the
    number to be a queue rather than a handful of names. From /api/me, kept
@@ -2752,7 +2775,7 @@ function draw() {
   fill(dbox);
   fill(nbox);
   // Bare, because whichever section holds it already carries the mark and name.
-  const one = dailyCard(true);
+  const one = LEARNING ? dailyCard(true) : null;
   if (one) (inFeed ? dbox : nbox).append(one);
 
   /* The question, once, under the card it is about. After that it is a line
@@ -3712,8 +3735,8 @@ async function drawTutor() {
    * produces them is the one to offer first. A page that leads with a number
    * and then offers a different test underneath is asking somebody to hunt for
    * the thing it just showed them. */
-  const tookLevel = Boolean(readLocal("board:level"));
-  const tookType = Boolean(readLocal("board:type"));
+  const tookLevel = Boolean(learned("board:level"));
+  const tookType = Boolean(learned("board:type"));
   /* MARKED AS TESTS, and that keeps them off the homepage. drawRot skips
      anything carrying this and drawTests draws it in the tray instead —
      under the report card, which is the thing both of them produce. */
@@ -3723,7 +3746,9 @@ async function drawTutor() {
     () => { location.href = "/type"; }, "type", tookType);
   lvl.dataset.test = "1";
   typ.dataset.test = "1";
-  OFFERS.push(lvl, typ);
+  // See LEARNING at the top. Built either way, offered only when it is on —
+  // drawTests reads OFFERS, so an empty push is the whole switch.
+  if (LEARNING) OFFERS.push(lvl, typ);
 
   /* "Compare yourself with a friend" was here — an unbuilt thing with a
      button that only counted the press. It was honest about that, and it was
@@ -4130,7 +4155,7 @@ function todoList() {
     ["rooms", !(ME && Array.isArray(ME.rooms) && ME.rooms.length), () => openMe()],
     ["goal", Boolean(ME && ME.handle) && !has(ME && ME.goal), () => openMe()],
     // Two minutes, and it is what the mark on the card is made of.
-    ["level", !readLocal("board:level"), () => { location.href = "/level"; }],
+    ["level", !learned("board:level"), () => { location.href = "/level"; }],
     ["card", !dailyDone(), () => { $("prof").scrollIntoView({ behavior: "smooth" }); }],
     // The board itself. Last because it is the one that needs the rest.
     ["post", !myPosts.length, () => $("fab").click()],
@@ -4926,8 +4951,8 @@ function drawProf() {
      news and level and all. It is the tile's OWN contents that decide now. */
   const hasCard = Boolean($("daily").firstChild);
 
-  const lvl = readLocal("board:level");
-  const typ = readLocal("board:type");
+  const lvl = learned("board:level");
+  const typ = learned("board:type");
   const done = dailyDone();
 
   /* THE NEWS, AND WHAT IT DEMOTES. Drawn first because it is the reason to
@@ -4937,7 +4962,7 @@ function drawProf() {
      their first week sees. */
   GRADE = null;
   const hasNews = drawNews();
-  if (!hasNews && !hasCard && !readLocal("board:level") && !readLocal("board:type")) {
+  if (!hasNews && !hasCard && !learned("board:level") && !learned("board:type")) {
     box.hidden = true;
     return;
   }
