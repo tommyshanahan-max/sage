@@ -2462,6 +2462,24 @@ let FROMMEMBERS = 0;
  */
 const LEARNING = false;
 
+/* THE OFFER COMPOSER, OFF FOR NOW.
+ *
+ * Not because it is wrong — it works, and offers are the point of this place.
+ * It is that nobody in the room has done the first three steps yet: a form
+ * for writing somebody a paid job, sitting in the tray of members who have
+ * not yet put a sentence up, teaches the wrong thing about what this is for.
+ * Offers go out from the box in the meantime — `make offer` — which is one
+ * person deciding rather than a button anybody with the flag can find.
+ *
+ * The whole system stays: the routes, the /o/ pages, the codes already sent,
+ * and the flag itself. This hides one form, and one line brings it back.
+ *
+ * MAKE_OFFERS rather than OFFERS: there is already an OFFERS on this page —
+ * the rotating bar's list of things the Tutor is offering to do — and two
+ * constants with one name is the kind of collision that only shows up as a
+ * blank screen. */
+const MAKE_OFFERS = false;
+
 /* Every read of a level or a four-letter code goes through here, so switching
  * LEARNING off is one decision rather than a hunt for the places that show
  * them. Gating the drawing instead missed the collapsed summary row on the
@@ -6826,8 +6844,11 @@ let CANOFFER = false;
 function drawMkOffer() {
   const box = $("mkoffer");
   if (!box) return;
-  box.hidden = !CANOFFER;
-  if (!CANOFFER) return;
+  // See MAKE_OFFERS above. The flag still decides who could; this decides
+  // whether anybody can find the form at all.
+  const on = CANOFFER && MAKE_OFFERS;
+  box.hidden = !on;
+  if (!on) return;
   $("mkofferlab").textContent = T("mko.lab");
   $("mkofferwhy").textContent = T("mko.why");
   $("mkofferwhok").textContent = T("mko.who");
