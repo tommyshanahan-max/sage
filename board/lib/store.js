@@ -415,6 +415,21 @@ export function newCode() {
   return out;
 }
 
+/** One member vouching for one person waiting.
+ *
+ *  `by` is the member's device hash — the same thing every other row here is
+ *  keyed on — and `wait` is the row they are vouching for. Two of the same
+ *  pair is one member changing their mind twice, not two vouches, so the
+ *  loader keeps the first and drops the rest.
+ */
+export function cleanVouch(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const by = /^[a-f0-9]{32}$/.test(String(raw.by || "")) ? String(raw.by) : "";
+  const wait = /^[a-f0-9]{20}$/.test(String(raw.wait || "")) ? String(raw.wait) : "";
+  if (!by || !wait) return null;
+  return { by, wait, at: String(raw.at ?? "").slice(0, 40) || new Date().toISOString() };
+}
+
 export function cleanInvite(raw) {
   if (!raw || typeof raw !== "object") return null;
   const code = cleanCode(raw.code);
@@ -1192,7 +1207,20 @@ export function cleanBoard(raw) {
     says.push(m);
   }
 
-  return { posts, people, follows, notes, wants, invites, cards, grants, waits,
+  /* A MEMBER SAYING THIS ONE IS WORTH LETTING IN.
+     A row, not a field: one member, one waiting row, once. Cheap to add,
+     cheap to take back, and it never leaves a list hanging off either end. */
+  const vouches = [];
+  const seenV = new Set();
+  for (const r of (Array.isArray(raw?.vouches) ? raw.vouches : [])) {
+    const v = cleanVouch(r);
+    if (!v) continue;
+    const k = v.by + ":" + v.wait;
+    if (seenV.has(k)) continue;
+    seenV.add(k);
+    vouches.push(v);
+  }
+  return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches,
     shuts, groups, says, counts: cleanCounts(raw?.counts) };
 }
 

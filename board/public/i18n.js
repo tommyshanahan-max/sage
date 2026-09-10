@@ -1784,6 +1784,11 @@ export const STRINGS = {
   "brw.qh":            ["People waiting to get in", "正在等待进入的人"],
   "brw.qnone":         ["Nobody is waiting.", "目前没有人在等。"],
   "brw.qbrought":      ["brought {n} in", "带进来 {n} 人"],
+  /* Vouching. A member saying somebody is worth letting in moves them one
+     place, the same as bringing somebody in does. */
+  "brw.vouch":         ["Vouch", "推荐"],
+  "brw.vouched":       ["Vouched", "已推荐"],
+  "brw.qvouches":      ["{n} vouched", "{n} 人推荐"],
   /* Its own string rather than a plural rule. There is one number this ever
      applies to and English is the only side that cares — Chinese counts the
      same either way, which is why the pair below is not two sentences. */

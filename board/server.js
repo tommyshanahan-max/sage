@@ -2128,18 +2128,30 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
  */
 function queueOrder(board) {
   const brought = (id) => board.waits.filter((x) => x.fromWait === id && x.done !== "no").length;
+  /* AND A VOUCH MOVES THEM THE SAME ONE PLACE.
+     A member saying somebody is worth letting in is worth exactly what
+     bringing somebody in is worth: one step, not a jump to the front. Two
+     members vouching is two steps. The rule stays "one place per thing you
+     did", so the order is still readable by anybody standing in it. */
+  const vouched = (id) => (board.vouches || []).filter((v) => v.wait === id).length;
+  const up = (id) => brought(id) + vouched(id);
   return board.waits
     .filter((w) => !w.done)
     .sort((a, b) => String(a.at || "").localeCompare(String(b.at || "")))
     /* The shift is measured against where they stood by date, so bringing
        somebody in cannot move you past somebody who brought in more. */
-    .map((w, i) => ({ w, i, pos: Math.max(0, i - brought(w.id)), n: brought(w.id) }))
-    /* THE TIE GOES TO WHOEVER BROUGHT SOMEBODY IN, and without that line the
-       promise is off by one: moving up one place from behind somebody only
-       draws level with them, and drawing level then loses to the older row.
-       Somebody who brought one person in would have to bring in two before
-       anything visibly moved, which is not what the screen says. */
-    .sort((a, b) => (a.pos - b.pos) || (b.n - a.n) || (a.i - b.i));
+    .map((w, i) => ({ w, i, pos: Math.max(0, i - up(w.id)), n: brought(w.id),
+      v: vouched(w.id), u: up(w.id) }))
+    /* THE TIE GOES TO WHOEVER DID SOMETHING, and without that line the promise
+       is off by one: moving up one place from behind somebody only draws level
+       with them, and drawing level then loses to the older row. Somebody who
+       was vouched for once would have to be vouched for twice before anything
+       visibly moved, which is not what the screen says.
+       Measured on everything that moves a row — people brought in and vouches
+       both — because it used to count only the first, and a vouch that showed
+       on the row while changing nothing about the order is worse than no
+       vouch at all. */
+    .sort((a, b) => (a.pos - b.pos) || (b.u - a.u) || (a.i - b.i));
 }
 
 /** Their own row, the queue around it, and the others waiting.
@@ -2187,11 +2199,17 @@ app.get("/api/wait/me", async (req, res) => {
      was, which read as a ranking of people and was a second order competing
      with the one that decides anything. There is one order now and this is
      the one place somebody waiting can watch it work. */
+  /* NAMES, NOT REASONS.
+     This used to carry `why` — the line somebody writes about themselves — to
+     everybody else in the queue. It is the most personal thing on the row and
+     it was written to persuade whoever decides, not to be read by the other
+     thirty-four people standing outside. A name and which room is enough to
+     feel that the queue is real; the rest goes to the members, who are the
+     ones it was written for. */
   const others = open
     .filter((w) => w.shown && w.by !== me)
     .slice(0, 60)
-    .map((w) => ({ name: w.name, room: w.room, why: w.why,
-      levelBand: w.levelBand, type: w.type, me: w.me, want: w.want,
+    .map((w) => ({ name: w.name, room: w.room,
       // Released only. An id nobody can guess is not a reason to hand out one
       // that has not been looked at.
       photo: w.photoState === "published" ? w.photo : "" }));
@@ -2495,12 +2513,42 @@ app.get("/api/queue", async (req, res) => {
   res.json({
     waiting: order.length,
     rows: order.filter((x) => x.w.shown).slice(0, 120).map((x, i) => ({
-      place: i + 1, name: x.w.name, room: x.w.room, why: x.w.why,
+      place: i + 1, id: x.w.id,
+      name: x.w.name, room: x.w.room, why: x.w.why,
       levelBand: x.w.levelBand, type: x.w.type, want: x.w.want,
-      brought: x.n || 0,
+      brought: x.n || 0, vouches: x.v || 0,
+      /* Whether this reader has already vouched, so the button can say so
+         rather than offering a thing that would do nothing. */
+      mine: (board.vouches || []).some((v) => v.wait === x.w.id && v.by === me),
       photo: x.w.photoState === "published" ? x.w.photo : "",
     })),
   });
+});
+
+/** Vouch for somebody waiting, or take it back. Members only, one per person.
+ *
+ *  It moves them one place, the same as bringing somebody in does — see
+ *  queueOrder. Not a jump to the front, because an order that can be skipped
+ *  is not an order, and the people standing in it can read this one.
+ */
+app.post("/api/vouch", express.json({ limit: "1kb" }), async (req, res) => {
+  const me = inCookie(req);
+  if (!me) return res.status(401).json({ error: "who" });
+  const wait = String(req.body?.wait || "");
+  const on = req.body?.on !== false;
+  const out = await change((board) => {
+    if (!board.people.some((q) => q.by === me)) return { error: "no" };
+    const row = board.waits.find((w) => w.id === wait && !w.done);
+    if (!row) return { error: "gone" };
+    board.vouches = board.vouches || [];
+    const at = board.vouches.findIndex((v) => v.wait === wait && v.by === me);
+    if (on && at < 0) board.vouches.push(store.cleanVouch({ by: me, wait }));
+    if (!on && at >= 0) board.vouches.splice(at, 1);
+    return { ok: true, on, n: board.vouches.filter((v) => v.wait === wait).length };
+  });
+  if (out?.error === "no") return res.status(403).json(out);
+  if (out?.error) return res.status(404).json(out);
+  res.json(out);
 });
 
 app.get("/api/waiting", admin, async (_req, res) => {

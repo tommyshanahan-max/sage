@@ -1332,6 +1332,13 @@
     padding:.1rem .45rem;color:var(--muted)}
   .qpl{flex:0 0 auto;color:var(--muted);font-size:.8rem;
     font-variant-numeric:tabular-nums}
+  /* The one thing a member can do about somebody waiting. Outlined until it
+     is pressed and filled after, so the row says what you already did. */
+  .qv{flex:0 0 auto;align-self:center;border:1px solid var(--accent);
+    background:none;color:var(--accent);border-radius:99px;padding:.2rem .7rem;
+    font:inherit;font-size:.75rem;font-weight:650;cursor:pointer;white-space:nowrap}
+  .qv[aria-pressed="true"]{background:var(--accent);color:#fff}
+  .qv:disabled{opacity:.55;cursor:default}
   .qnone{color:var(--muted);font-size:.88rem}
   /* On the feed it is a line under the topics, not a band: the feed already
      opens with a row of controls and a second filled block above the first
@@ -5134,8 +5141,40 @@ function qRow(w) {
   if (w.type) tags.append(el("span", null, w.type));
   if (w.want) tags.append(el("span", null, T("role.p." + w.want)));
   if (w.brought) tags.append(el("span", null, T("brw.qbrought", { n: w.brought })));
+  if (w.vouches) tags.append(el("span", null, T("brw.qvouches", { n: w.vouches })));
   if (tags.childNodes.length) mid.append(tags);
-  row.append(av, mid, el("span", "qpl", String(w.place)));
+
+  /* THE VOUCH, and it moves them one place — see queueOrder on the server.
+     Optimistic, because the answer is a row in a file and the interesting
+     case is the button feeling dead while a phone thinks about it; if the
+     server disagrees the button goes back to where it was. */
+  const v = el("button", "qv", T(w.mine ? "brw.vouched" : "brw.vouch"));
+  v.type = "button";
+  v.setAttribute("aria-pressed", w.mine ? "true" : "false");
+  v.addEventListener("click", async () => {
+    const was = v.getAttribute("aria-pressed") === "true";
+    const now = !was;
+    v.setAttribute("aria-pressed", now ? "true" : "false");
+    v.textContent = T(now ? "brw.vouched" : "brw.vouch");
+    v.disabled = true;
+    try {
+      const r = await fetch("/api/vouch", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wait: w.id, on: now }),
+      });
+      if (!r.ok) throw new Error("no");
+      /* Redrawn rather than nudged: vouching changes the order, and a list
+         that says somebody moved up while leaving them where they were is
+         worse than one that takes a moment. */
+      drawQueue();
+    } catch {
+      v.setAttribute("aria-pressed", was ? "true" : "false");
+      v.textContent = T(was ? "brw.vouched" : "brw.vouch");
+      v.disabled = false;
+    }
+  });
+
+  row.append(av, mid, el("span", "qpl", String(w.place)), v);
   return row;
 }
 
