@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>交换 · The Exchange — ask to join</title>
+<meta name="description" content="Put your name down. Somebody already inside decides.">
+
+<!-- WeChat's crawler fetches this once and runs no JavaScript, so the card is
+     built from these. It says what the page does rather than what the board
+     is: this link is pasted into groups, and the question a person in a group
+     is answering is whether to bother tapping. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="交换 · The Exchange">
+<meta property="og:description" content="A private board for people connecting in China. Put your name down — somebody already inside decides.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="{{HERE}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="/site.css">
+
+<style>
+  /* ONE SCREEN, ONE THING ON IT.
+   *
+   * Every other way in has something in front of the form. The public page
+   * opens with what the board is, because it is written for somebody who has
+   * never heard of it; the door asks for a code, because it is written for
+   * somebody holding one; and inside WeChat the door puts a wall about
+   * browsers ahead of both. All three are right for the person they were
+   * written for, and all three are wrong for the one case this page is: a link
+   * pasted into a group of forty strangers, where the only question is whether
+   * to put your name down and nobody is going to scroll to find out.
+   *
+   * So: the mark, a sentence, the form. Nothing above it, nothing beside it,
+   * and no other button on the page.
+   */
+  .jwrap{max-width:26rem;margin:0 auto;padding:2.2rem 1.15rem 3rem}
+  .jbrand{display:flex;align-items:center;gap:.6rem;margin:0 0 1.6rem}
+  .jbrand i{width:2.1rem;height:2.1rem;border-radius:.55rem;background:var(--ink);
+    color:var(--paper);display:grid;place-items:center;font-style:normal;
+    font:400 1rem/1 var(--serif)}
+  .jbrand b{font:400 1.05rem/1.15 var(--serif);color:var(--ink)}
+  .jbrand small{display:block;font-size:.7rem;color:var(--muted)}
+  .jbrand .l{margin-left:auto}
+  .jlede{font:400 clamp(1.35rem,5.4vw,1.7rem)/1.25 var(--serif);color:var(--ink);
+    margin:0 0 .5rem}
+  .jsub{font-size:.95rem;line-height:1.6;color:var(--ink-2);margin:0 0 1.5rem}
+  /* The one link off this page, and it is small on purpose: somebody who has a
+     code is not the reader here, and a second button beside a form is a
+     decision that costs the form. */
+  .jhas{display:block;margin:1.6rem 0 0;text-align:center;font-size:.82rem;
+    color:var(--muted);text-decoration:none}
+  .jhas b{color:var(--accent);font-weight:650}
+</style>
+</head>
+<body>
+
+<div class="jwrap">
+  <div class="jbrand">
+    <i>换</i>
+    <span><b>The Exchange</b><small>交换</small></span>
+    <span class="l" id="langslot"></span>
+  </div>
+
+  <h1 class="jlede" id="lede"></h1>
+  <p class="jsub" id="sub"></p>
+
+  <div id="waitslot"></div>
+
+  <a class="jhas" id="has" href="/enter"></a>
+</div>
+
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+import { waitBox, tally } from "/wait.js";
+
+const $ = (id) => document.getElementById(id);
+
+function paint() {
+  document.title = T("join.tab");
+  document.documentElement.lang = /* the page is the language it is read in */
+    document.documentElement.lang;
+  $("lede").textContent = T("join.lede");
+  $("sub").textContent = T("join.sub");
+  $("has").innerHTML = "";
+  $("has").append(document.createTextNode(T("join.has") + " "));
+  const b = document.createElement("b");
+  b.textContent = T("join.hasGo");
+  $("has").append(b);
+}
+
+setLang(pickLang());
+paint();
+$("langslot").append(langButton(() => {
+  paint();
+  /* The form is built from strings, so it is rebuilt rather than translated in
+     place — half of it in one language is worse than either. */
+  $("waitslot").textContent = "";
+  $("waitslot").append(waitBox());
+}));
+
+$("waitslot").append(waitBox());
+
+/* Counted the same way every other door is: opened, begun, joined — three
+   integers by day and room, and nothing in the record can name anybody. */
+tally("door");
+</script>
+</body>
+</html>

@@ -2281,6 +2281,16 @@ export const STRINGS = {
   /* The way out of the door for somebody who has no code. Phrased as the thing
      they would say, not as a feature: nobody arrives thinking "I would like to
      join a waiting list". */
+  /* /join — the link for a group. One screen, one thing on it. */
+  "join.tab":          ["交换 · The Exchange — ask to join", "交换 · 申请加入"],
+  "join.lede": [
+    "Ask to join The Exchange.",
+    "申请加入交换。"],
+  "join.sub": [
+    "A private board for people connecting in China, and with China. Put your name down and somebody already inside decides. Your WeChat or email is shown to nobody.",
+    "一个私密板子，给在中国、和跟中国打交道的人。留个名字，由已经在里面的人来定。你的微信或邮箱谁都看不到。"],
+  "join.has":          ["Already have a password?", "已经有口令了？"],
+  "join.hasGo":        ["Use it", "去输入"],
   "door.noCode":       ["I do not have one — put me on the list",
                         "我没有口令——把我加到名单里"],
   "door.note":         ["No account, no password, no phone number. The code is the whole of it.",

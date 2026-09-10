@@ -299,7 +299,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|r\/|o(?:\/|$)|about|rules|privacy|level|type|room|api\/enter|api\/admitted|api\/hello|api\/offer|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|r\/|o(?:\/|$)|join|about|rules|privacy|level|type|room|api\/enter|api\/admitted|api\/hello|api\/offer|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -698,6 +698,19 @@ const codesTaken = (board) => new Set([
 /* The offer page. /o/CODE is what gets pasted into WeChat; /o?c=CODE is what
  * comes back when a client mangles it. Both land here, and the page reads
  * the code out of whichever one it got. */
+/* THE LINK FOR A GROUP.
+ *
+ * Every other way in has something ahead of the form — the public page opens
+ * with what the board is, the door asks for a code, and inside WeChat the door
+ * puts a wall about browsers in front of both. Each is right for the reader it
+ * was written for. None of them is right for a link pasted into a group of
+ * forty strangers, which is how people actually spread this, and where the
+ * only question is whether to put your name down.
+ *
+ * /join is that link and does nothing else. ?w=<id> still travels, so whoever
+ * shared it keeps the credit for anybody who joins on it. */
+app.get(["/join", "/join/"], (req, res, next) => page("join.html", req, res, next));
+
 app.get(["/o", "/o/", "/o/:code"], (req, res, next) => page("offer.html", req, res, next));
 app.get(["/enter", "/enter/", "/i/:code"], (req, res, next) =>
   page("enter.html", req, res, next));
