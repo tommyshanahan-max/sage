@@ -157,9 +157,19 @@
          the thing people disagree about a year later, so it never appears
          here without the two numbers that qualify it. -->
     <div id="terms" hidden>
-      <div class="d"><span>Vesting</span><b id="tvest"></b></div>
-      <div class="d"><span>Nothing until</span><b id="tcliff"></b></div>
-      <div class="d"><span>Issued today</span><b>Nothing</b></div>
+      <!-- EVERY ROW SAYS WHAT IS TRUE, NOT WHAT IS ABSENT.
+           These read "Vesting / Nothing until / Issued today: Nothing" — the
+           word Nothing twice in three lines, on the screen where somebody
+           decides whether they are being offered anything at all. The facts
+           have not changed: no shares exist yet, and none of it is theirs on
+           day one. What changed is that each line now states the thing that
+           IS the case. The one flat statement that nothing has been issued
+           belongs in the fine print at the bottom, where it does its job
+           without being the headline. -->
+      <div class="d"><span>The share</span><b id="tshare"></b></div>
+      <div class="d"><span>Vests</span><b id="tvest"></b></div>
+      <div class="d"><span>First vests</span><b id="tcliff"></b></div>
+      <div class="d"><span>On the record</span><b>From the day you sign</b></div>
       <div class="d" id="tfromrow" hidden><span>Granted by</span><b id="tfrom"></b></div>
     </div>
     <!-- WHAT WOULD MAKE IT MORE. Its own block under the terms rather than a
@@ -251,8 +261,8 @@
     <div class="not"><b>What this is not</b><span id="notsay"></span></div>
 
     <div class="d"><span>Accepting</span><b id="w1"></b></div>
-    <div class="d"><span>Costs</span><b>Nothing</b></div>
-    <div class="d"><span>Issued today</span><b>Nothing</b></div>
+    <div class="d"><span>Costs you</span><b>Nothing</b></div>
+    <div class="d"><span>On the record</span><b>From the day you sign</b></div>
     <div class="d"><span>Asked for</span><b id="w4"></b></div>
     <button class="lk" id="back">← Back to your offer</button>
   </section>
@@ -390,6 +400,10 @@ function draw(o) {
     $("seat").innerHTML = String(k.pct) + "<i>%</i>";
     $("seatof").textContent = "of the company, on the day there is one";
     $("terms").hidden = false;
+    /* The share, stated as a thing they have rather than left to be inferred
+       from the big number above it. The row above used to be the first thing
+       under the percentage and it said "Nothing". */
+    $("tshare").textContent = k.pct + "% of " + (p.name || "the company");
     $("tvest").textContent = k.years
       ? "Monthly over " + k.years + (k.years === 1 ? " year" : " years")
       : "In full on incorporation";
@@ -405,9 +419,14 @@ function draw(o) {
     }
     if (p.from) { $("tfrom").textContent = p.from; $("tfromrow").hidden = false; }
     if (p.holds) { $("holds").textContent = p.holds; $("holds").hidden = false; }
+    /* WHEN THE FIRST OF IT IS THEIRS, which is the same fact as the cliff and
+       the opposite sentence. "Nothing until 12 months in" and "First vests at
+       month 12" describe one schedule; only one of them reads like an offer.
+       No cliff at all is the best version of this row, not the absence of
+       one, so it says so. */
     $("tcliff").textContent = k.cliff
-      ? k.cliff + (k.cliff === 1 ? " month in" : " months in")
-      : "No cliff";
+      ? "Month " + k.cliff
+      : "Straight away";
     drawSteps(k);
   } else {
     $("seat").innerHTML = String(o.seat) + "<i> / " + (p.seats || 100) + "</i>";
