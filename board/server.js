@@ -2468,6 +2468,41 @@ app.post("/api/waiting/admit", express.json({ limit: "2kb" }), admin, async (req
 });
 
 /** The list itself, for whoever runs the box. Never for a member. */
+/** THE QUEUE, TO SOMEBODY ALREADY IN.
+ *
+ * The rule here was that the queue is a number and never a list, so nothing
+ * inside could say who was outside. That is relaxed on purpose: the people in
+ * the room are the ones who would vouch for somebody waiting, and nobody
+ * vouches for a number.
+ *
+ * What it shows is exactly what a waiting person already shows every other
+ * waiting person — name, which room, why, and a released photograph. What it
+ * never shows is `reach`. That is the one field somebody typed so that we
+ * could contact them, not so a roomful of people could.
+ *
+ * Members only, checked the way the door checks everything: the browser has to
+ * belong to somebody with a profile here.
+ */
+app.get("/api/queue", async (req, res) => {
+  const me = inCookie(req);
+  if (!me) return res.status(401).json({ error: "who" });
+  const board = await store.load(FILE);
+  if (!board.people.some((q) => q.by === me)) return res.status(403).json({ error: "no" });
+  res.set("Cache-Control", "no-store");
+  /* The same order the waiting room shows and the same order admission uses —
+     first come, one place up per person brought in. One rule, one place. */
+  const order = queueOrder(board);
+  res.json({
+    waiting: order.length,
+    rows: order.filter((x) => x.w.shown).slice(0, 120).map((x, i) => ({
+      place: i + 1, name: x.w.name, room: x.w.room, why: x.w.why,
+      levelBand: x.w.levelBand, type: x.w.type, want: x.w.want,
+      brought: x.n || 0,
+      photo: x.w.photoState === "published" ? x.w.photo : "",
+    })),
+  });
+});
+
 app.get("/api/waiting", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");

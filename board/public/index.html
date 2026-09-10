@@ -1309,6 +1309,30 @@
     font-variant-numeric:tabular-nums}
   .atdoor b{display:block;margin:0 0 .1rem;color:var(--ink);font-weight:600;
     font-size:1.05rem}
+  /* THE QUEUE AS A LIST, under the deck. Rows and not cards: these are people
+     to recognise, not people to choose between, and the deck above is already
+     doing the choosing. */
+  .queue{margin:1.6rem 0 0;padding-top:1.1rem;border-top:1px solid var(--line)}
+  .queue h2{margin:0 0 .8rem;font-size:.72rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);font-weight:700}
+  .qrow{display:flex;gap:.7rem;align-items:flex-start;padding:.6rem 0;
+    border-bottom:1px solid var(--hair,var(--line))}
+  .qrow:last-child{border-bottom:0}
+  .qav{width:2.2rem;height:2.2rem;border-radius:50%;flex:0 0 auto;overflow:hidden;
+    display:grid;place-items:center;background:var(--raise);color:var(--muted);
+    font-weight:700;text-transform:uppercase;font-size:.85rem}
+  .qav img{width:100%;height:100%;object-fit:cover}
+  .qmid{min-width:0;flex:1}
+  .qmid .qn{font-weight:650}
+  .qmid em{font-style:normal;color:var(--muted)}
+  .qmid small{display:block;color:var(--muted);font-size:.84rem;margin-top:.1rem;
+    overflow-wrap:anywhere}
+  .qtags{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.3rem}
+  .qtags span{font-size:.7rem;border:1px solid var(--line);border-radius:99px;
+    padding:.1rem .45rem;color:var(--muted)}
+  .qpl{flex:0 0 auto;color:var(--muted);font-size:.8rem;
+    font-variant-numeric:tabular-nums}
+  .qnone{color:var(--muted);font-size:.88rem}
   /* On the feed it is a line under the topics, not a band: the feed already
      opens with a row of controls and a second filled block above the first
      post reads as a second bar. */
@@ -1577,6 +1601,14 @@
        follows: how many want in is the half worth reading. -->
   <p class="atdoor" id="atdoor"></p>
   <div class="deck" id="deck"></div>
+  <!-- AND THE QUEUE ITSELF, under the people who are already in.
+       The number above says how many; this says who, so that somebody in here
+       can recognise a name and vouch for them. Never how to reach anybody —
+       that is on the row for us, not for the room. -->
+  <section class="queue" id="queue" hidden>
+    <h2 id="queueh"></h2>
+    <div id="queuelist"></div>
+  </section>
   <div class="pacts" id="pacts" hidden></div>
   <p class="pcount" id="pcount"></p>
   <p class="psafety" id="psafety"></p>
@@ -5050,6 +5082,63 @@ function shareCard(q, label) {
 const inside = (n) => T(n === 1 ? "brw.inside1" : "brw.inside", { n });
 const atdoor = (n) => T(n === 1 ? "brw.atdoor1" : "brw.atdoor", { n });
 
+/* THE QUEUE, DRAWN ONCE THE DECK IS THERE.
+ *
+ * Its own fetch rather than something bolted onto /api/me: this is the only
+ * place that wants it, it is members-only on the server, and a 401 or 403 is
+ * the ordinary answer for anybody who is not one — so a failure here leaves
+ * the section hidden and says nothing. */
+async function drawQueue() {
+  const box = $("queue"), list = $("queuelist");
+  if (!box) return;
+  let d = null;
+  try {
+    const r = await fetch("/api/queue");
+    if (!r.ok) return;
+    d = await r.json();
+  } catch { return; }
+  if (!d || !Array.isArray(d.rows)) return;
+  $("queueh").textContent = T("brw.qh");
+  fill(list);
+  if (!d.rows.length) {
+    list.append(el("p", "qnone", T("brw.qnone")));
+  } else {
+    for (const w of d.rows) list.append(qRow(w));
+  }
+  box.hidden = false;
+}
+
+function qRow(w) {
+  const row = el("div", "qrow");
+  const av = el("span", "qav", w.photo ? "" : initial(w.name));
+  /* Only released photographs reach this list — the server drops the id
+     otherwise — so nothing here decides whether it may be shown. */
+  if (w.photo) {
+    const img = document.createElement("img");
+    img.src = "/api/wait-media?id=" + encodeURIComponent(w.photo);
+    img.alt = "";
+    img.loading = "lazy";
+    img.addEventListener("error", () => { img.remove(); av.textContent = initial(w.name); });
+    av.append(img);
+  }
+  const mid = el("div", "qmid");
+  const line = el("div", "qn");
+  line.append(document.createTextNode(w.name));
+  if (w.room) {
+    line.append(document.createTextNode(" · "),
+      el("em", null, T("waitroom." + w.room)));
+  }
+  mid.append(line);
+  if (w.why) mid.append(el("small", null, w.why));
+  const tags = el("div", "qtags");
+  if (w.type) tags.append(el("span", null, w.type));
+  if (w.want) tags.append(el("span", null, T("role.p." + w.want)));
+  if (w.brought) tags.append(el("span", null, T("brw.qbrought", { n: w.brought })));
+  if (tags.childNodes.length) mid.append(tags);
+  row.append(av, mid, el("span", "qpl", String(w.place)));
+  return row;
+}
+
 function drawDoor(people) {
   const box = $("atdoor");
   fill(box);
@@ -5102,6 +5191,7 @@ function drawDeck() {
   // fourth of four students.
   $("pcount").textContent = people && !mine ? T("brw.of", { n: AT + 1, total: people }) : "";
   drawDoor(people);
+  drawQueue();
   $("bnone").hidden = Boolean(people);
 
   if (!n) {

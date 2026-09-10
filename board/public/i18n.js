@@ -1779,6 +1779,11 @@ export const STRINGS = {
     "是积分，不是钱，也不能转给别人。最后值什么，由运营这个板子的人决定，可能会变，而且只有在这个板子真的被卖掉时才有意义。",
   ],
   "brw.inside":        ["{n} people are in.", "里面有 {n} 个人。"],
+  /* The queue, as a list rather than a number — see /api/queue. Only somebody
+     already in ever sees these, and never how to reach anybody. */
+  "brw.qh":            ["People waiting to get in", "正在等待进入的人"],
+  "brw.qnone":         ["Nobody is waiting.", "目前没有人在等。"],
+  "brw.qbrought":      ["brought {n} in", "带进来 {n} 人"],
   /* Its own string rather than a plural rule. There is one number this ever
      applies to and English is the only side that cares — Chinese counts the
      same either way, which is why the pair below is not two sentences. */
