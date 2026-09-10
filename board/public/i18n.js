@@ -2278,6 +2278,11 @@ export const STRINGS = {
   "door.zh":           ["", ""],
   "door.go":           ["Go in", "进去"],
   "door.going":        ["Opening\u2026", "正在开门\u2026"],
+  /* The way out of the door for somebody who has no code. Phrased as the thing
+     they would say, not as a feature: nobody arrives thinking "I would like to
+     join a waiting list". */
+  "door.noCode":       ["I do not have one — put me on the list",
+                        "我没有口令——把我加到名单里"],
   "door.note":         ["No account, no password, no phone number. The code is the whole of it.",
                         "没有账号，没有密码，也不用手机号。就这一串口令。"],
   /* Each refusal says the thing worth knowing. "Used" needs two sentences,

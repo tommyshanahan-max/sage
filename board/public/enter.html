@@ -331,6 +331,20 @@
     <p class="said" id="said" hidden></p>
     <p class="note" id="doornote"></p>
 
+    <!-- SOMEBODY WITH NO CODE AT ALL, which is most of the people who arrive
+         here. The link and the six characters are sent apart on purpose, so
+         anybody who was forwarded the link, or whose code has already been
+         spent, or who simply found the address, lands on a screen that asks
+         for a thing they do not have and offers nothing else. That is not a
+         door, it is a wall — and it was turning away exactly the people the
+         board wants, at the only moment they were interested.
+
+         The same box the public page uses, so there is one waiting list and
+         one set of words about who reads it. -->
+    <button class="keyopen" type="button" id="listopen"
+            aria-expanded="false" aria-controls="listbox"></button>
+    <div class="keybox" id="listbox" hidden><div id="waitslot"></div></div>
+
     <!-- SOMEBODY WHO HAS BEEN HERE BEFORE does not need a code at all — but
          almost nobody reading this screen is that person, and "paste your key"
          is a word they have never met. One quiet line until it is asked for. -->
@@ -364,6 +378,7 @@
 
 <script type="module">
 import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
+import { waitBox } from "/wait.js";
 
 const $ = (id) => document.getElementById(id);
 const IN_WECHAT = /micromessenger/i.test(navigator.userAgent);
@@ -634,6 +649,7 @@ function words() {
   $("code").setAttribute("aria-label", T("door.title"));
 
   $("keyopen").textContent = T("door.keyOpen");
+  $("listopen").textContent = T("door.noCode");
   $("keywhere").textContent = T("door.keyWhere");
   $("keytitle").textContent = T("door.keyTitle");
   $("keysay").textContent = T("door.keySay");
@@ -651,6 +667,17 @@ function words() {
 
 $("go").addEventListener("click", () => { if (TYPED.length === 6) enter(); });
 $("keygo").addEventListener("click", useKey);
+/* Built on the first press rather than on load: it asks the server for the
+   number waiting, and a door nobody has knocked on should not be making
+   requests on behalf of a person who has a code in their hand. */
+$("listopen").addEventListener("click", () => {
+  const box = $("listbox");
+  box.hidden = !box.hidden;
+  $("listopen").setAttribute("aria-expanded", String(!box.hidden));
+  if (box.hidden || $("waitslot").firstChild) return;
+  $("waitslot").append(waitBox());
+});
+
 $("keyopen").addEventListener("click", () => {
   const box = $("keybox");
   box.hidden = !box.hidden;
