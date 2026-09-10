@@ -27,10 +27,6 @@
   body{font:17px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,
     Arial,sans-serif;-webkit-font-smoothing:antialiased}
   .wrap{max-width:640px;margin:0 auto;padding:0 1.5rem}
-  /* The steps are the only part that wants to be wider than the reading
-     measure. Everything else stays at 640 so the prose keeps its line length. */
-  .wrap.wide{max-width:640px}
-  @media (min-width:46rem){ .wrap.wide{max-width:940px} }
   .serif{font-family:"Instrument Serif",Georgia,"Times New Roman",serif;font-weight:400}
 
   /* ---- mark + hero ---- */
@@ -38,7 +34,18 @@
   .mark{display:flex;align-items:center;gap:.6rem;margin-bottom:clamp(3rem,10vw,5rem)}
   .mark i{width:34px;height:34px;border-radius:9px;background:var(--go);display:grid;
     place-items:center;font-style:normal;color:#fff;font-size:19px}
-  .mark b{font-size:21px;letter-spacing:.01em;font-weight:400}
+  .mark b{font-size:21px;letter-spacing:.01em;font-weight:400;flex:1}
+  .mark button{background:none;border:1px solid var(--line);border-radius:99px;
+    padding:.3rem .8rem;font:inherit;font-size:.84rem;color:var(--ink2);
+    cursor:pointer;white-space:nowrap}
+  .mark button:hover{border-color:var(--go);color:var(--go)}
+  /* Chinese sets tighter than the serif display face and has no italic, so the
+     display sizes come down a notch and the hero stops leaning. */
+  html[lang="zh"] h1{font-size:clamp(2.1rem,7.5vw,3.2rem);letter-spacing:0;line-height:1.18}
+  html[lang="zh"] h1 em,html[lang="zh"] .quote em{font-style:normal}
+  html[lang="zh"] .quote p{font-size:clamp(1.2rem,4.2vw,1.5rem);line-height:1.5}
+  html[lang="zh"] .kicker h2{line-height:1.3}
+  html[lang="zh"] .door h2{line-height:1.35}
   h1{font-size:clamp(2.5rem,9vw,3.9rem);line-height:1.04;letter-spacing:-.02em;
     text-wrap:balance;margin-bottom:1.1rem}
   h1 em{font-style:italic;color:var(--go)}
@@ -46,30 +53,14 @@
     line-height:1.45}
 
   /* ---- the three ---- */
-  /* THREE ACROSS once there is room for three.
-     Stacked, each step is a scroll of its own and the reader meets them one at
-     a time — which reads as three separate things rather than one shape. Side
-     by side they are taken in at a glance, which is what a pitch wants. Below
-     46rem there is no room for three columns of prose, so they stack: three
-     140px columns is not horizontal, it is unreadable. */
-  .steps{margin-top:clamp(3.5rem,11vw,6rem);display:grid;gap:0;
-    border-top:1px solid var(--line)}
-  .step{padding:clamp(1.8rem,5vw,2.2rem) 0}
-  .step + .step{border-top:1px solid var(--line)}
-  @media (min-width:46rem){
-    .steps{grid-template-columns:repeat(3,1fr);gap:2.2rem;
-      padding-top:clamp(1.8rem,5vw,2.4rem)}
-    .step{padding:0}
-    .step + .step{border-top:0;border-left:1px solid var(--line);padding-left:2.2rem}
-    .steps{gap:0}
-    .step{padding-right:2.2rem}
-    .step:last-child{padding-right:0}
-  }
+  /* One column, on purpose. Three across was tried and read worse: the copy is
+     short enough that side by side turned each step into a narrow strip with
+     the headings wrapping, and a reader skimming down one column meets them in
+     the order they happen. The two doors below are still a row — that is a
+     choice between two things, which is what side by side is good at. */
+  .steps{margin-top:clamp(3.5rem,11vw,6rem)}
+  .step{padding:clamp(2rem,6vw,2.8rem) 0;border-top:1px solid var(--line)}
   .kicker{display:flex;align-items:baseline;gap:.85rem;margin-bottom:.9rem}
-  @media (min-width:46rem){
-    .kicker{display:block}
-    .kicker .n{display:block;margin-bottom:.5rem}
-  }
   .kicker .n{font-family:"Instrument Serif",Georgia,serif;font-size:2.6rem;line-height:.8;
     color:var(--go);letter-spacing:-.02em}
   .kicker h2{font-size:clamp(1.4rem,4.6vw,1.8rem);line-height:1.12;letter-spacing:-.01em;
@@ -162,85 +153,85 @@
 <div class="wrap">
 
   <header>
-    <div class="mark"><i class="serif">◷</i><b class="serif">crowdfundme</b></div>
-    <h1 class="serif">Early deals get done <em>on a napkin</em>.</h1>
-    <p class="lede">We keep the record instead.</p>
+    <div class="mark"><i class="serif">◷</i><b class="serif">crowdfundme</b>
+      <!-- Half the people this is for read Chinese first. The switch sits in
+           the mark row rather than a footer: a reader who needs it should not
+           have to read the English page to find out the Chinese one exists. -->
+      <button id="lang" type="button" aria-label="切换语言 / switch language">中文</button>
+    </div>
+    <h1 class="serif" data-t="h1">Early deals get done <em>on a napkin</em>.</h1>
+    <p class="lede" data-t="lede">We keep the record instead.</p>
   </header>
 
-</div>
-
-<div class="wrap wide">
   <div class="steps">
 
     <section class="step">
-      <div class="kicker"><span class="n">1</span><h2>It gets written down</h2></div>
-      <p>Who was asked, what they were offered, and the day it was said. They read
+      <div class="kicker"><span class="n">1</span><h2 data-t="s1h">It gets written down</h2></div>
+      <p data-t="s1a">Who was asked, what they were offered, and the day it was said. They read
         their own terms and <b>type their name to accept</b>.</p>
-      <p>A minute. No account, nothing to pay.</p>
+      <p data-t="s1b">A minute. No account, nothing to pay.</p>
     </section>
 
     <section class="step">
-      <div class="kicker"><span class="n">2</span><h2>Nobody can rewrite it</h2></div>
-      <p>We lock it and <b>write it to the blockchain</b>. Not the founder, not us,
+      <div class="kicker"><span class="n">2</span><h2 data-t="s2h">Nobody can rewrite it</h2></div>
+      <p data-t="s2a">We lock it and <b>write it to the blockchain</b>. Not the founder, not us,
         not later when it has become expensive.</p>
 
     </section>
 
     <section class="step">
-      <div class="kicker"><span class="n">3</span><h2>Your lawyers take it from there</h2></div>
-      <p>When you incorporate, raise or sell, the record is what they work the
+      <div class="kicker"><span class="n">3</span><h2 data-t="s3h">Your lawyers take it from there</h2></div>
+      <p data-t="s3a">When you incorporate, raise or sell, the record is what they work the
         paperwork out from — <b>whatever they advise</b>.</p>
-      <p class="aside">We don't decide what it becomes. We make sure the part
+      <p class="aside" data-t="s3b">We don't decide what it becomes. We make sure the part
         before it holds up.</p>
     </section>
 
   </div>
-</div>
 
-<div class="wrap">
   <!-- BOTH DOORS TOGETHER. They were at opposite ends of the page, which made
        a reader who had been sent a code scroll past the whole pitch to find the
        one line addressed to them. Two ways in, side by side, and whichever one
        you are it is on screen at the same moment. -->
   <div class="doors">
     <div class="door">
-      <p class="eyebrow">Start one</p>
-      <h2>Write the deal down</h2>
-      <a class="btn solid" href="/f">Start the record</a>
-      <small>A minute. Nothing to pay.</small>
+      <p class="eyebrow" data-t="d1k">Start one</p>
+      <h2 data-t="d1h">Write the deal down</h2>
+      <a class="btn solid" href="/f" data-t="d1b">Start the record</a>
+      <small data-t="d1s">A minute. Nothing to pay.</small>
     </div>
     <div class="door">
-      <p class="eyebrow">Sent a code?</p>
-      <h2>Open your offer</h2>
-      <a class="btn dark" href="/o">I have a code</a>
-      <small>It opens yours and nobody else's.</small>
+      <p class="eyebrow" data-t="d2k">Sent a code?</p>
+      <h2 data-t="d2h">Open your offer</h2>
+      <a class="btn dark" href="/o" data-t="d2b">I have a code</a>
+      <small data-t="d2s">It opens yours and nobody else's.</small>
     </div>
   </div>
 
   <div class="quote">
-    <p class="serif">It doesn't mean the record <em>can't be changed</em>.<br>
+    <p class="serif" data-t="quote">It doesn't mean the record <em>can't be changed</em>.<br>
       It means it can't be changed <em>without it showing</em>.</p>
   </div>
 
   <section class="how">
-    <p class="eyebrow">More information</p>
+    <p class="eyebrow" data-t="mork">More information</p>
     <div class="band">
-      <h3>What happens to what you write</h3>
+      <h3 data-t="bandh">What happens to what you write</h3>
       <div class="flow">
         <div class="fl"><span class="ic">✍</span><div>
-        <b>What you wrote down</b>
-        <span>Who was asked, what they got, the name they signed.</span>
+        <b data-t="b1h">What you wrote down</b>
+        <span data-t="b1p">Who was asked, what they got, the name they signed.</span>
         </div></div>
         <div class="down"></div>
         <div class="fl"><span class="ic">⁂</span><div>
-        <b>Becomes one fingerprint</b>
-        <span>Change one letter of the record and this changes completely.</span>
+        <b data-t="b2h">Becomes one fingerprint</b>
+        <span data-t="b2p">Change one letter of the record and this changes completely.</span>
         <code>d0a276688feab501e94137ae4770298cba6d417…</code>
         </div></div>
         <div class="down"></div>
         <div class="fl"><span class="ic">◆</span><div>
-        <b>Goes onto the blockchain</b>
-        <span>A dated transaction on Stellar. Nobody can edit it. Not even us.</span>
+        <b data-t="b3h">Goes onto the blockchain</b>
+        <span data-t="b3p">A dated transaction on Stellar. Nobody can edit it. Not even us.</span>
         </div></div>
       </div>
     </div>
@@ -248,36 +239,42 @@
   </section>
 
   <section class="rec" id="seals" hidden>
-    <p class="eyebrow">The record so far</p>
+    <p class="eyebrow" data-t="reck">The record so far</p>
     <ol id="seallist"></ol>
     <p id="sealwhy"></p>
   </section>
 
   <section class="lanes">
     <a class="lane" href="/f">
-      <div class="top"><b>Early founder deals</b><span class="pill on">Open</span></div>
-      <p>Before there is a company. <span class="go">Write yours down →</span></p>
+      <div class="top"><b data-t="l1">Early founder deals</b><span class="pill on" data-t="pon">Open</span></div>
+      <p data-t="l1p">Before there is a company. <span class="go">Write yours down →</span></p>
     </a>
     <div class="lane">
-      <div class="top"><b>Investor rounds</b><span class="pill off">Soon</span></div>
-      <p>Who came in, at what, and when.</p>
+      <div class="top"><b data-t="l2">Investor rounds</b><span class="pill off" data-t="poff1">Soon</span></div>
+      <p data-t="l2p">Who came in, at what, and when.</p>
     </div>
     <div class="lane">
-      <div class="top"><b>Crowdfunding</b><span class="pill off">Soon</span></div>
-      <p>Many small backers, the same record.</p>
+      <div class="top"><b data-t="l3">Crowdfunding</b><span class="pill off" data-t="poff2">Soon</span></div>
+      <p data-t="l3p">Many small backers, the same record.</p>
     </div>
   </section>
 
-  <footer>crowdfundme is being built. Nothing here is legal or financial advice.</footer>
+  <footer data-t="foot">crowdfundme is being built. Nothing here is legal or financial advice.</footer>
 </div>
 
 <script>
 /* Nothing here is decided in the page: no seals, no block. A record that
    advertises proof it does not have is worse than one that says nothing. */
-fetch("/api/seals").then((r) => r.json()).then((d) => {
-  const rows = (d && d.seals) || [];
-  if (!rows.length) return;
+let SEALS = null;
+window.drawSeals = function () {
+  const rows = SEALS;
+  if (!rows || !rows.length) return;
+  /* Written in whichever language the page is in. The dictionary lives in the
+     other script; if this runs first it simply uses the English it has. */
+  const zh = document.documentElement.lang === "zh";
+  const D = window.CFM_ZH || {};
   const list = document.getElementById("seallist");
+  list.textContent = "";
   let anchored = 0;
   for (const x of rows) {
     const li = document.createElement("li");
@@ -285,7 +282,10 @@ fetch("/api/seals").then((r) => r.json()).then((d) => {
     b.textContent = x.month;
     const n = document.createElement("span");
     n.className = "n";
-    n.textContent = x.count + (x.count === 1 ? " entry" : " entries");
+    /* Chinese has no plural here, which is why it is a branch and not a
+       suffix stuck on the end of a number. */
+    n.textContent = zh ? x.count + " 条记录"
+      : x.count + (x.count === 1 ? " entry" : " entries");
     const c = document.createElement("code");
     c.textContent = x.hash;
     li.append(b, n, c);
@@ -299,12 +299,14 @@ fetch("/api/seals").then((r) => r.json()).then((d) => {
         ? "https://stellar.expert/explorer/public/tx/"
         : "https://stellar.expert/explorer/testnet/tx/") + x.ref;
       a.target = "_blank"; a.rel = "noopener noreferrer";
-      a.textContent = x.net === "public" ? "on Stellar ↗" : "on Stellar testnet ↗";
+      a.textContent = zh
+        ? (x.net === "public" ? "在 Stellar 上 ↗" : "在 Stellar 测试网 ↗")
+        : (x.net === "public" ? "on Stellar ↗" : "on Stellar testnet ↗");
       li.append(a);
     } else {
       const u = document.createElement("span");
       u.className = "un";
-      u.textContent = "not published";
+      u.textContent = zh ? "尚未上链" : "not published";
       li.append(u);
     }
     list.append(li);
@@ -313,6 +315,13 @@ fetch("/api/seals").then((r) => r.json()).then((d) => {
   /* The sentence underneath is written from what is actually true of these
      rows, because the difference between the two is the whole claim. */
   const why = document.getElementById("sealwhy");
+  why.textContent = "";
+  if (zh) {
+    why.innerHTML = anchored === rows.length ? D.recA
+      : anchored ? D.recB : D.recC;
+    document.getElementById("seals").hidden = false;
+    return;
+  }
   const strong = document.createElement("b");
   if (anchored === rows.length) {
     /* The pull-quote above already says what anchoring does and does not mean.
@@ -330,7 +339,90 @@ fetch("/api/seals").then((r) => r.json()).then((d) => {
       "our word for it.");
   }
   document.getElementById("seals").hidden = false;
+};
+
+fetch("/api/seals").then((r) => r.json()).then((d) => {
+  SEALS = (d && d.seals) || [];
+  window.drawSeals();
 }).catch(() => {});
+</script>
+
+
+<script>
+/* BOTH LANGUAGES, in one object, marked in the markup by data-t.
+ *
+ * Not a framework and not a second file: the page is small enough that a
+ * dictionary beside it stays in step with the words it translates, and a
+ * missing key falls through to the English already in the tag rather than
+ * leaving a gap. The board does the same thing at a hundred times the size.
+ *
+ * The Chinese is written, not transliterated. "写在餐巾纸上" is the same
+ * picture a Chinese reader has of a deal done over dinner, which is the whole
+ * point of the line; a literal rendering of "napkin" would land as nothing. */
+const ZH = window.CFM_ZH = {
+  h1: '早期的约定，往往就写在<em>餐巾纸上</em>。',
+  lede: '我们替你把它记下来。',
+  s1h: '白纸黑字',
+  s1a: '谁被邀请、给了什么条件、哪一天说的。对方读完自己的条款，<b>亲手签下名字</b>。',
+  s1b: '一分钟。不用注册，不用付钱。',
+  s2h: '谁也改不了',
+  s2a: '我们把它封存，<b>写进区块链</b>。创始人改不了，我们改不了，日后它值钱了也改不了。',
+  s3h: '之后交给律师',
+  s3a: '等到注册公司、融资或出售，律师就是照着这份记录去做正式文件——<b>怎么做由他们决定</b>。',
+  s3b: '我们不决定它最后变成什么。我们只保证在那之前的部分站得住。',
+  d1k: '开始记录', d1h: '把约定写下来', d1b: '开始记录', d1s: '一分钟。不用付钱。',
+  d2k: '收到邀请码？', d2h: '打开你的邀请', d2b: '我有邀请码',
+  d2s: '只会打开你的，别人的打不开。',
+  mork: '了解更多',
+  bandh: '你写下的内容会怎么样',
+  b1h: '你写下的内容', b2h: '生成一个指纹', b3h: '写进区块链',
+  reck: '已封存的记录',
+  l1: '早期创始人约定', l2: '投资轮次', l3: '众筹',
+  pon: '已开放', poff1: '即将推出', poff2: '即将推出',
+  quote: '这不代表记录<em>不能被改</em>。<br>而是一旦被改，<em>一定看得出来</em>。',
+  b1p: '谁被邀请、拿到什么、签的什么名字。',
+  b2p: '记录里改一个字，这串指纹就完全不同。',
+  b3p: '一笔带日期的 Stellar 交易。谁都改不了，我们也不行。',
+  l1p: '在公司成立之前。<span class="go">把你的写下来 →</span>',
+  l2p: '谁在什么时候、以什么条件进来。',
+  l3p: '很多小额支持者，同一份记录。',
+  foot: 'crowdfundme 还在建设中。本页内容不构成法律或财务建议。',
+  /* The record block is drawn by the other script from what is actually
+     sealed, so its sentence lives here rather than in the markup. */
+  recA: '<b>每月封存，并写入 Stellar。</b>任何一个月都能对着它的交易核对，不用信我们的话。',
+  recB: '<b>每月封存，部分月份已写入 Stellar。</b>有交易的月份谁都能核对，其余的你只能先信我们。',
+  recC: '<b>每月封存，并与上一个月环环相扣。</b>目前还没有写上链，所以你只能先信我们。',
+};
+
+const EN = {};
+for (const el of document.querySelectorAll("[data-t]")) EN[el.dataset.t] = el.innerHTML;
+
+/* The band's descriptions and the quote are the two places where the English
+   is inside a tag that also holds other things, so they are swapped whole. */
+function paint(lang) {
+  const on = lang === "zh";
+  document.documentElement.lang = on ? "zh" : "en";
+  for (const el of document.querySelectorAll("[data-t]")) {
+    const k = el.dataset.t;
+    el.innerHTML = on ? (ZH[k] ?? EN[k]) : EN[k];
+  }
+  document.getElementById("lang").textContent = on ? "EN" : "中文";
+  /* The seals block is drawn by the other script, which may run before or
+     after this one. Asking it to redraw keeps the two in step either way. */
+  if (window.drawSeals) window.drawSeals();
+  try { localStorage.setItem("cfm:lang", lang); } catch {}
+}
+
+document.getElementById("lang").addEventListener("click", () => {
+  paint(document.documentElement.lang === "zh" ? "en" : "zh");
+});
+
+/* Chosen last time, or what the browser asks for. Nothing is guessed from an
+   IP address — a Chinese speaker in London is still a Chinese speaker. */
+let want = "en";
+try { want = localStorage.getItem("cfm:lang") || ""; } catch {}
+if (!want) want = /^zh/i.test(navigator.language || "") ? "zh" : "en";
+if (want === "zh") paint("zh");
 </script>
 
 </body>
