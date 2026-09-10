@@ -1877,9 +1877,6 @@ export const STRINGS = {
   "cards.idHow": [
     "In WeChat: search, paste the id, Add.",
     "在微信里搜索，粘贴微信号，添加。"],
-  "cards.mineNone":    ["You have no card yet, so nobody can be given one.",
-                        "你还没有名片，所以也没法发给别人。"],
-  "cards.mineGo":      ["Make yours", "去填一张"],
   "card.theyAdded":    ["They added", "他们还写了"],
   "card.takeBack":     ["Take my card back", "收回我的名片"],
   "card.takeBackWhy": [

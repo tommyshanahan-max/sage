@@ -350,13 +350,6 @@
     font-size:1.5rem;line-height:1.2}
   .cardshead p{margin:.25rem 0 0;font-size:.9rem;color:var(--muted)}
 
-  .cardsmine{margin:.9rem 0 0;padding:.75rem .85rem;background:var(--raise);
-    border:1px solid var(--hair);border-radius:.75rem;font-size:.9rem;
-    color:var(--ink-2);display:flex;gap:.6rem;align-items:baseline;
-    flex-wrap:wrap}
-  .cardsmine a{color:var(--accent);font-weight:650;text-decoration:none;
-    white-space:nowrap}
-
   /* A CARD IS A CARD, NOT A LIST ROW. It is the thing somebody is imagining
      putting in their pocket, and the reason to draw the empty one at all is
      that the object has to feel real before the blank line means anything. */
@@ -2084,10 +2077,6 @@
     <div class="cardshead">
       <h2 id="cardshead"></h2>
       <p id="cardsn"></p>
-    </div>
-    <div id="cardsmine" class="cardsmine" hidden>
-      <span id="cardsminetxt"></span>
-      <a href="#" id="cardsminego"></a>
     </div>
     <div id="cardslist"></div>
     <div id="cardsnone" class="cardsnone" hidden>
@@ -5517,19 +5506,16 @@ function drawCards() {
     $("cardsnonego").textContent = T("cards.noneGo");
   }
 
-  /* Told once, at the top, rather than on every card: without a card of your
-     own you cannot give one to anybody, and repeating that under six faces
-     would read as six problems instead of one. */
-  const mine = $("cardsmine");
-  mine.hidden = !MATCHES.length || HAVECARD;
-  if (!mine.hidden) {
-    $("cardsminetxt").textContent = T("cards.mineNone");
-    const go = $("cardsminego");
-    go.textContent = T("cards.mineGo");
-    if (typeof ME === "object" && ME && ME.handle) {
-      go.href = "/p/" + encodeURIComponent(ME.handle.toLowerCase());
-    }
-  }
+  /* THE "YOU HAVE NO CARD YET" BANNER IS GONE.
+   *
+   * It sat over a shelf of matches saying you had nothing to give and sent
+   * whoever read it to Profile to fill in a form — which read as though a
+   * card were a thing you needed in order to match, and it never was. A match
+   * is two sentences that answer each other and two people who both followed.
+   * A card is your contact details, and it is asked for at the only moment it
+   * is needed: inside the Connect sheet, one field, without leaving the row.
+   *
+   * HAVECARD is still loaded — the sheet prefills from it. */
 
   for (const m of MATCHES) {
     const card = el("div", "bcard");
