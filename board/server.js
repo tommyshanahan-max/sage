@@ -2976,7 +2976,8 @@ const myRow = (board, me) => (me ? board.people.find((x) => x.by === me) : null)
  *  one place — so a button and the route behind it can never disagree about
  *  whether two people may swap anything. */
 function pairState(board, me, q) {
-  const out = { mutual: false, shared: [], can: false, gave: false, given: false, card: null };
+  const out = { mutual: false, shared: [], can: false, gave: false, given: false,
+                card: null, note: "" };
   const mine = myRow(board, me);
   if (!mine || !q || !q.id || q.by === me) return out;
 
@@ -3003,6 +3004,10 @@ function pairState(board, me, q) {
        cannot leak it by forgetting to. */
     const row = board.cards.find((c) => c.by === q.by);
     if (row) out.card = { wechat: row.wechat, line: row.line, qr: row.qr };
+    // What they wrote when they handed it over, read by the one person it was
+    // written for and by nobody else — same gate as the card, one line later.
+    const g = board.grants.find((x) => x.by === q.by && x.who === mine.id && !x.off);
+    out.note = (g && g.note) || "";
   }
   return out;
 }
@@ -3096,6 +3101,7 @@ app.post("/api/card/give", express.json({ limit: "4kb" }), gate, async (req, res
   const me = store.hashDevice(String(req.body?.device || ""), SALT);
   const who = String(req.body?.who || "");
   const on = req.body?.on !== false;
+  const note = String(req.body?.note || "").slice(0, 200);
   if (!me || !/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "no" });
 
   const out = await change((board) => {
@@ -3108,8 +3114,15 @@ app.post("/api/card/give", express.json({ limit: "4kb" }), gate, async (req, res
     if (on && !board.cards.some((c) => c.by === me)) return { error: "nocard" };
 
     const i = board.grants.findIndex((g) => g.by === me && g.who === who);
-    if (i >= 0) board.grants[i] = store.cleanGrant({ ...board.grants[i], off: !on });
-    else if (on) board.grants.push(store.cleanGrant({ by: me, who }));
+    /* A line given back with the card, and never quietly dropped. Giving again
+       after taking it back may carry a new one; giving again with the box left
+       empty keeps whatever was said the first time, because the alternative is
+       a press that silently erases something the other side has already read. */
+    if (i >= 0) {
+      board.grants[i] = store.cleanGrant({
+        ...board.grants[i], off: !on, note: note || board.grants[i].note,
+      });
+    } else if (on) board.grants.push(store.cleanGrant({ by: me, who, note }));
     return { ok: true, gave: on };
   });
   if (out?.error) {
@@ -3144,9 +3157,19 @@ app.get("/api/matches", async (req, res) => {
       gave: st.gave,
       given: st.given,
       card: st.card,
+      note: st.note,
     });
   }
-  res.json({ matches: rows, card: board.cards.some((c) => c.by === me) });
+  /* MY OWN CARD, not just whether I have one. The screen that offers to hand
+     it over has to be able to show what it is about to send: a button that
+     sends your contact details without naming them is a button people press
+     once and then go looking for a way to undo. */
+  const own = board.cards.find((c) => c.by === me) || null;
+  res.json({
+    matches: rows,
+    card: Boolean(own),
+    mine: own ? { wechat: own.wechat, line: own.line, qr: own.qr } : null,
+  });
 });
 
 /* ---------------------------------------------------------------------------

@@ -416,6 +416,41 @@
   .bcard .slot .st a{font-size:.82rem;color:var(--accent);font-weight:650;
     text-decoration:none}
 
+  /* MATCHED, NOTHING HANDED OVER YET.
+   *
+   * Not the dashed empty slot: an empty box is a drawing of an absence, and
+   * this is the one row on the shelf where something is available to do. It
+   * reads as the match it is, and carries the one press that moves it on. */
+  .bcard .meet{border:1px solid var(--hair);border-radius:.7rem;
+    padding:.75rem .8rem;background:var(--raise)}
+  .bcard .meet b{display:block;font-size:.86rem;font-weight:650;color:var(--ink)}
+  .bcard .meet .how{margin:.3rem 0 0}
+  .bcard .meet .give{display:block;width:100%;margin:.7rem 0 0;border:0;
+    border-radius:99px;padding:.7rem;background:var(--accent);
+    color:var(--accent-ink);font:inherit;font-size:.95rem;font-weight:650}
+  .bcard .meet .back{margin:.55rem 0 0;border:0;background:none;padding:0;
+    font:inherit;font-size:.8rem;color:var(--muted);text-decoration:underline}
+  .bcard .meet .sent{color:var(--good, var(--accent))}
+
+  /* THE LINE THEY WROTE, above their id rather than under it. It is the only
+     thing on a received card that is addressed to the reader, and a card that
+     opens with a contact string and buries the sentence is read as spam. */
+  .bcard .said{margin:0 0 .7rem;padding:.6rem .7rem;border-radius:.6rem;
+    background:var(--raise);border:1px solid var(--hair);
+    font-family:var(--serif);font-size:1rem;line-height:1.5;color:var(--ink)}
+
+  .givemine{margin:.9rem 0 0;padding:.7rem .8rem;border:1px solid var(--line);
+    border-radius:.7rem;background:var(--raise)}
+  .givemine .lbl{display:block;margin:0 0 .35rem;font-size:.68rem;
+    letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
+    font-weight:700}
+  .givemine input{width:100%;border:1px solid var(--line);background:var(--paper);
+    border-radius:99px;padding:.55rem .9rem;font:inherit;font-size:.95rem;
+    color:var(--ink);outline:none}
+  .givemine input:focus{border-color:var(--accent)}
+  .givemine .how{margin:.45rem 0 0;font-size:.76rem;line-height:1.45;
+    color:var(--muted)}
+
   .cardsnone{margin:1.4rem 0 0;padding:1.2rem 1.1rem;background:var(--raise);
     border:1px solid var(--hair);border-radius:.9rem;text-align:center}
   .cardsnone p{margin:0 0 .5rem;color:var(--ink-2);font-size:.92rem;
@@ -2293,6 +2328,29 @@
       <button class="go" type="submit" id="reportgo"></button>
     </div>
     <p class="said" id="reportsaid" hidden></p>
+  </form>
+</div>
+
+<!-- HANDING YOUR CARD OVER, with a line about yourself attached.
+     Two fields and no thread: whoever moves first says who they are and what
+     they want, and the other side gets it once, with the contact details. -->
+<div class="sheet" id="givesheet" hidden>
+  <form class="card" id="giveform">
+    <h2 id="givetitle"></h2>
+    <p class="hint" id="givehint"></p>
+    <textarea id="givenote" rows="3" maxlength="200"></textarea>
+    <p class="hint" id="givecount"></p>
+    <div class="givemine">
+      <span class="lbl" id="givemlbl"></span>
+      <input id="givewx" type="text" autocomplete="off" autocapitalize="none"
+        spellcheck="false" maxlength="60">
+      <p class="how" id="givemhow"></p>
+    </div>
+    <div class="row">
+      <button class="ghost" type="button" id="giveshut"></button>
+      <button class="go" type="submit" id="givego"></button>
+    </div>
+    <p class="said" id="givesaid" hidden></p>
   </form>
 </div>
 
@@ -5356,6 +5414,10 @@ let MATCHES = [];
    the same request, so the shelf never has to ask a second time to find out
    it cannot do anything. */
 let HAVECARD = false;
+/* My own card, so the sheet that offers to send it can show what it is about
+   to send — and let somebody who has not made one yet type the id right there
+   rather than being sent to Profile and losing the match they were looking at. */
+let MYCARD = null;
 /* Cards I have already looked at, so the tab's number counts what is new
    rather than what exists. Its own key: board:sawmatches belongs to the daily
    summary and counts a different thing. */
@@ -5370,7 +5432,8 @@ async function loadMatches() {
       headers: { "x-board-device": device } }).then((r) => r.json());
     MATCHES = (d && d.matches) || [];
     HAVECARD = Boolean(d && d.card);
-  } catch { MATCHES = []; HAVECARD = false; }
+    MYCARD = (d && d.mine) || null;
+  } catch { MATCHES = []; HAVECARD = false; MYCARD = null; }
   drawMatches();
   drawCards();
   /* markCardsSeen, not just badgeCards. showView marks them when a tab is
@@ -5496,6 +5559,9 @@ function drawCards() {
      *   the id underneath it, always, because plenty of people have not put a
      *   code up and a searchable id is better than nothing.
      */
+    // What they wrote when they handed it over, first — see .said in the CSS.
+    if (m.card && m.note) foot.append(el("p", "said", m.note));
+
     if (m.card && m.card.qr) {
       const q = el("div", "qr");
       const img = Object.assign(document.createElement("img"), {
@@ -5541,27 +5607,143 @@ function drawCards() {
     } else if (m.card && m.card.qr) {
       if (m.card.line) foot.append(el("p", "line", m.card.line));
     } else {
-      const slot = el("div", "slot");
-      /* No glyph. U+2337 was here as a "space for a card" mark and drew a
-         tofu box on the CJK fallback stack this app runs on, which is the
-         one place it must not: a missing-character box in the empty slot
-         reads as the page being broken rather than the card being blank.
-         An empty dashed square says the same thing and cannot fail. */
-      slot.append(el("i"));
-      const st = el("span", "st");
-      st.append(el("b", null, m.gave
-        ? T("card.waiting", { who: m.handle })
-        : T("cards.blank", { who: m.handle })));
-      const go = el("a", null, T("cards.blankGo"));
-      go.href = "/p/" + encodeURIComponent((m.handle || "").toLowerCase());
-      st.append(go);
-      slot.append(st);
-      foot.append(slot);
+      /* MATCHED, AND NOBODY HAS MOVED YET.
+       *
+       * This was a dashed empty square saying their card was blank, which
+       * described the wrong half of the situation: the match is the thing
+       * that happened, and the reader is the one who can act on it. So it
+       * says what the match is and offers the press that ends it — your
+       * details and one line about yourself, sent to them.
+       *
+       * Not a message. It goes one way, it is read once, and there is
+       * nothing to reply to; what comes back, if anything, is their card. */
+      const meet = el("div", "meet");
+      if (m.gave) {
+        meet.append(el("b", "sent", T("cards.sentHead", { who: m.handle })));
+        meet.append(el("p", "how", T("cards.sentWhy", { who: m.handle })));
+        const back = el("button", "back", T("cards.takeBack"));
+        back.type = "button";
+        back.addEventListener("click", async () => {
+          back.disabled = true;
+          await giveCard(m, false, "");
+        });
+        meet.append(back);
+      } else {
+        meet.append(el("b", null, T("cards.matchHead")));
+        meet.append(el("p", "how", T("cards.matchWhy", { who: m.handle })));
+        const go = el("button", "give", T("cards.give", { who: m.handle }));
+        go.type = "button";
+        go.addEventListener("click", () => openGive(m));
+        meet.append(go);
+        meet.append(el("p", "how", T("cards.giveHow", { who: m.handle })));
+      }
+      foot.append(meet);
     }
     card.append(foot);
     list.append(card);
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Handing your card over, with a line attached
+ *
+ * WHY A LINE AT ALL. A card arriving on its own is a name and a WeChat id,
+ * and the person receiving it has no idea which of their matches it is or
+ * what the sender wants. The sender is the one with a reason to move, so the
+ * sender is the one who writes it: one line about themselves, sent once,
+ * together with the details.
+ *
+ * WHY IT IS NOT A MESSAGE. There is no reply to it and no second line. The
+ * answer to a card is a card, and everything after that happens in WeChat,
+ * where these people already are. A board that grows an inbox grows
+ * moderation, read receipts and unanswered messages, none of which are the
+ * thing this is for.
+ *
+ * WHY THE ID IS IN THIS SHEET. Somebody with no card of their own used to be
+ * told to go to Profile, which meant leaving the match they were looking at
+ * to fill in a form and find their way back. The one field it needs is here.
+ * ------------------------------------------------------------------------- */
+
+let GIVING = null;
+
+function openGive(m) {
+  GIVING = m;
+  $("givetitle").textContent = T("give.head", { who: m.handle });
+  $("givehint").textContent = matchLine(m) || T("give.hint", { who: m.handle });
+  const note = $("givenote");
+  note.placeholder = T("give.ph");
+  note.value = "";
+  $("givecount").textContent = T("give.count", { n: 200 });
+  $("givemlbl").textContent = T("give.mine");
+  const wx = $("givewx");
+  wx.placeholder = T("give.wxPh");
+  wx.value = (MYCARD && MYCARD.wechat) || "";
+  $("givemhow").textContent = MYCARD && MYCARD.qr
+    ? T("give.wxHowQr") : T("give.wxHow");
+  $("giveshut").textContent = T("give.no");
+  $("givego").textContent = T("give.go");
+  $("givego").disabled = false;
+  $("givesaid").hidden = true;
+  $("givesheet").hidden = false;
+  note.focus();
+}
+
+$("givenote").addEventListener("input", () => {
+  $("givecount").textContent = T("give.count",
+    { n: 200 - $("givenote").value.length });
+});
+$("giveshut").addEventListener("click", () => { $("givesheet").hidden = true; });
+$("givesheet").addEventListener("click", (e) => {
+  if (e.target === $("givesheet")) $("givesheet").hidden = true;
+});
+
+/** Give it, or take it back. One place, so both directions reload the shelf. */
+async function giveCard(m, on, note) {
+  try {
+    const d = await fetch("/api/card/give", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ device, who: m.id, on, note }),
+    }).then((r) => r.json());
+    if (d && d.error) return d.error;
+  } catch { return "net"; }
+  await loadMatches();
+  return "";
+}
+
+$("giveform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!GIVING) return;
+  const go = $("givego");
+  const said = $("givesaid");
+  go.disabled = true;
+
+  /* THE CARD IS SAVED FIRST, and the grant only if that worked. The other
+     order hands somebody a permission to read a card that does not exist. */
+  const wx = $("givewx").value.trim();
+  if (wx && wx !== ((MYCARD && MYCARD.wechat) || "")) {
+    try {
+      await fetch("/api/card", {
+        method: "PUT", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ device, wechat: wx, line: (MYCARD && MYCARD.line) || "" }),
+      });
+    } catch { /* reported by the give below, which will fail with nocard */ }
+  } else if (!wx && !(MYCARD && MYCARD.qr)) {
+    said.hidden = false;
+    said.textContent = T("give.needWx");
+    go.disabled = false;
+    return;
+  }
+
+  const bad = await giveCard(GIVING, true, $("givenote").value.trim());
+  if (bad) {
+    said.hidden = false;
+    said.textContent = T(bad === "nocard" ? "give.needWx" : "give.failed");
+    go.disabled = false;
+    return;
+  }
+  $("givesheet").hidden = true;
+  GIVING = null;
+});
 
 /* The number on the tab: cards handed to you that you have not opened yet.
  * With no push in the mainland this is the entire notification system, so it

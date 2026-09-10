@@ -960,6 +960,16 @@ export function cleanGrant(raw) {
   return {
     by, who,
     at: String(raw.at || "").slice(0, 40) || new Date().toISOString(),
+    /* ONE LINE, WRITTEN BY WHOEVER MOVED FIRST.
+     *
+     * A card arriving on its own says a name and an id and nothing about why.
+     * The person handing it over is the one with a reason, and this is where
+     * they say it — what they do, what they want, why this match. It travels
+     * with the card and is read by exactly one person, so it is not a message
+     * and it is not a thread: no reply, no second line, nothing to answer.
+     *
+     * It is a line about yourself, not to them. Kept short on purpose. */
+    note: String(raw.note ?? "").replace(/\r\n?/g, "\n").slice(0, 200),
     // Taken back rather than deleted, so "they had it and stopped" and "they
     // never had it" stay different things — the first one matters to a report.
     off: raw.off === true,

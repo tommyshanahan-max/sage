@@ -1823,12 +1823,45 @@ export const STRINGS = {
     "A card lands here when you and somebody else follow each other and want the same kind of thing. Nothing arrives on its own — go and look at who is here.",
     "当你和某个人互相关注、而且想找的东西对得上时，这里就会多一张名片。名片不会自己出现，先去看看这里都有谁。"],
   "cards.noneGo":      ["Look at who is here", "看看这里有谁"],
-  /* THE BLANK LINE. It names Mei rather than the app, because the app is not      withholding anything — she simply has not given it to anybody yet, and
-     "we are hiding this from you" is both untrue and the grammar of a
-     paywall. */
-  "cards.blank":       ["{who} has not given you their card yet",
-                        "{who}还没有把名片给你"],
-  "cards.blankGo":     ["Open their page", "打开他们的主页"],
+  /* MATCHED, NOTHING SENT YET. This was "{who} has not given you their card
+     yet", which described the wrong half: the reader is the one who can move,
+     and the row now says so. Nothing here is being withheld by the app — see
+     the note on .meet in index.html. */
+  "cards.matchHead":   ["You matched", "你们匹配上了"],
+  "cards.matchWhy": [
+    "Neither of you has sent contact details yet. Whoever goes first says one line about themselves.",
+    "你们都还没发联系方式。先开口的人，顺便写一句自己是谁。"],
+  "cards.give":        ["Send {who} your details", "把你的联系方式发给{who}"],
+  "cards.giveHow": [
+    "{who} gets your WeChat and your line. You get theirs if they send it back.",
+    "{who}会收到你的微信号和你写的那句话。他们回发，你才拿到他们的。"],
+  "cards.sentHead":    ["Sent to {who}", "已发给{who}"],
+  "cards.sentWhy": [
+    "{who} has your details. Theirs appear here if they send them back.",
+    "{who}已经有你的联系方式了。等他们回发，这里就会出现他们的。"],
+  "cards.takeBack":    ["Take it back", "收回"],
+
+  /* THE SHEET. One line and one field: who you are, and what to reach you on.
+     Not a message box — see the block comment above openGive in index.html. */
+  "give.head":         ["Send {who} your details", "把联系方式发给{who}"],
+  "give.hint":         ["You and {who} matched.", "你和{who}匹配上了。"],
+  "give.ph": [
+    "One line: who you are and what you are after.",
+    "写一句：你是谁，你在找什么。"],
+  "give.count":        ["{n} left", "还剩 {n} 字"],
+  "give.mine":         ["Sent with it", "一起发过去的"],
+  "give.wxPh":         ["Your WeChat id", "你的微信号"],
+  "give.wxHow": [
+    "Only they can read it, and you can take it back.",
+    "只有对方看得到，你随时可以收回。"],
+  "give.wxHowQr": [
+    "Your code goes with it. Only they can read either, and you can take it back.",
+    "你的二维码也会一起发过去。只有对方看得到，你随时可以收回。"],
+  "give.needWx":       ["Put a WeChat id in first — there is nothing to send yet.",
+                        "先填一个微信号，不然没东西可发。"],
+  "give.failed":       ["That did not send. Try again.", "没发出去，再试一次。"],
+  "give.no":           ["Not now", "先不发"],
+  "give.go":           ["Send", "发送"],
   "cards.copy":        ["Copy", "复制"],
   "cards.copied":      ["Copied", "已复制"],
   /* THE HANDOVER, in the order the two halves actually work in.
