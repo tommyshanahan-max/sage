@@ -5061,8 +5061,9 @@ function drawNews() {
   }
   for (const m of n.matches.slice(0, 2)) row(matchLine(m));
   /* "1 people followed you" — one string doing two numbers, in the one place
-     a member goes to find out what happened. And the word: the deck says
-     Connect now, so this says connected. */
+     a member goes to find out what happened. And the word is followed, not
+     connected: Connect is now the press on the Cards shelf that hands over
+     contact details, and this counts the smaller thing. */
   if (n.followers) {
     row(T(n.followers === 1 ? "prof.connected1" : "prof.connected",
       { n: n.followers }));
@@ -6424,15 +6425,16 @@ function drawDeck() {
 
   /* CONNECT, NOT FOLLOW.
    *
-   * The row it writes is the same one, and the word is not. "Follow" is what
-   * you do to a feed — it says this person is worth reading, which is not what
-   * anybody means here and puts whoever presses it one step below the person
-   * they pressed it on. "Connect" is two people agreeing to be introduced,
-   * which is what the row actually leads to: they are told, and if they do the
-   * same the cards open.
+   * THE WORD IS FOLLOW, and it went back and forth before it settled there.
+   * It was Follow, then Connect — because "follow" is what you do to a feed
+   * and puts whoever presses it a step below the person they pressed it on —
+   * and then Connect was needed somewhere else and could not be in two places.
    *
-   * The buddies page keeps "Follow". It is a list of people you are reading,
-   * and there the word is true. */
+   * This press is one-sided and costs nothing: it says you are interested and
+   * waits to see whether they say it back. The press that actually introduces
+   * two people is on the Cards shelf, where a card and a line about yourself
+   * change hands, and that one is Connect. Two acts, two words, and the
+   * bigger word on the bigger act. */
   const fol = el("button", "primary", "");
   fol.type = "button";
   const paintFollow = () => {

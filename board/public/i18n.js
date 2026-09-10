@@ -1527,8 +1527,8 @@ export const STRINGS = {
   "prof.replied":      ["{who} replied to your post", "{who}回复了你的内容"],
   /* Two strings, because "1 people followed you" is the product misspelling
      its own good news. And the word follows the deck's button. */
-  "prof.connected1":   ["Somebody connected with you", "有人跟你建立了联系"],
-  "prof.connected":    ["{n} people connected with you", "{n} 个人跟你建立了联系"],
+  "prof.connected1":   ["Somebody followed you", "有人关注了你"],
+  "prof.connected":    ["{n} people followed you", "{n} 个人关注了你"],
   "prof.joined1":      ["{who} joined", "{who}来了"],
   "prof.joined":       ["{n} people joined", "来了 {n} 个人"],
   "prof.posts":        ["{n} new posts on the board", "板上有 {n} 条新内容"],
@@ -1831,7 +1831,7 @@ export const STRINGS = {
   "cards.matchWhy": [
     "Neither of you has sent contact details yet. Whoever goes first says one line about themselves.",
     "你们都还没发联系方式。先开口的人，顺便写一句自己是谁。"],
-  "cards.give":        ["Send {who} your details", "把你的联系方式发给{who}"],
+  "cards.give":        ["Connect with {who}", "和{who}建立联系"],
   "cards.giveHow": [
     "{who} gets your WeChat and your line. You get theirs if they send it back.",
     "{who}会收到你的微信号和你写的那句话。他们回发，你才拿到他们的。"],
@@ -1843,7 +1843,7 @@ export const STRINGS = {
 
   /* THE SHEET. One line and one field: who you are, and what to reach you on.
      Not a message box — see the block comment above openGive in index.html. */
-  "give.head":         ["Send {who} your details", "把联系方式发给{who}"],
+  "give.head":         ["Connect with {who}", "和{who}建立联系"],
   "give.hint":         ["You and {who} matched.", "你和{who}匹配上了。"],
   "give.ph": [
     "One line: who you are and what you are after.",
@@ -1861,7 +1861,7 @@ export const STRINGS = {
                         "先填一个微信号，不然没东西可发。"],
   "give.failed":       ["That did not send. Try again.", "没发出去，再试一次。"],
   "give.no":           ["Not now", "先不发"],
-  "give.go":           ["Send", "发送"],
+  "give.go":           ["Connect", "建立联系"],
   "cards.copy":        ["Copy", "复制"],
   "cards.copied":      ["Copied", "已复制"],
   /* THE HANDOVER, in the order the two halves actually work in.
@@ -2363,8 +2363,13 @@ export const STRINGS = {
   /* The sentences that did not fit. A count, not more pills — see the note
      where the card draws it. */
   "brw.sayMore":       ["+{n} more", "还有 {n} 条"],
-  "brw.connect":       ["Connect", "建立联系"],
-  "brw.connected":     ["Connected", "已联系"],
+  /* FOLLOW, NOT CONNECT. This button is one-sided and costs nothing — it says
+     you are interested and waits to see whether they say it back. Connect is
+     the other press, on the Cards shelf, where contact details actually
+     change hands. Two acts cannot share one word, and this is the smaller
+     one, so it takes the smaller word. */
+  "brw.connect":       ["Follow", "关注"],
+  "brw.connected":     ["Following", "已关注"],
   "door.noCode":       ["I do not have one — put me on the list",
                         "我没有口令——把我加到名单里"],
   "door.note":         ["No account, no password, no phone number. The code is the whole of it.",
