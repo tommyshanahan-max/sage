@@ -22,6 +22,24 @@
  * can a card be handed over — which is the rule this board runs on and not a
  * rule this script gets to skip.
  */
+/* THE REAL TABLES, NOT A COPY OF THEM.
+ *
+ * This runs inside the board's own container, where lib/store.js is the file
+ * the server is using — so the roles, the rooms and which room answers which
+ * are read from it rather than restated here. A second copy of the matching
+ * rules in a demo script is a second copy that drifts, and the first thing it
+ * does when it drifts is make demo people who cannot match anybody, which is
+ * the one job this has. */
+let ROLES = null, answerTo = (r) => r;
+for (const where of ["/app/lib/store.js",
+                     new URL("../board/lib/store.js", import.meta.url).href]) {
+  try {
+    const store = await import(where);
+    ROLES = store.ROLES; answerTo = store.answerTo;
+    break;
+  } catch { /* the other path, or neither — see the fallback below */ }
+}
+
 const [, , BASE, KEY, CMD, ...rest] = process.argv;
 if (!BASE || !KEY || !CMD) {
   console.error("demo.mjs <base> <key> add|cards|rm [--for NAME] [--n 2]");
@@ -53,28 +71,68 @@ const call = async (path, opts = {}) => {
   return { ok: r.ok, code: r.status, d };
 };
 
-/** Their sentence has to answer yours or nothing matches, so it is read off
- *  your row rather than guessed. */
-async function sayOf(handle) {
+/** Your row, whole — the sentence and the rooms it put you in. */
+async function rowOf(handle) {
   const r = await call("/api/people");
-  const rows = (r.d.people || []).filter(
-    (q) => String(q.handle || "").toLowerCase() === handle.toLowerCase());
-  if (!rows.length) return null;
-  const say = (rows[0].say || []).filter((s) => s.me && s.want);
-  return say.length ? say[0] : null;
+  return (r.d.people || []).find(
+    (q) => String(q.handle || "").toLowerCase() === handle.toLowerCase()) || null;
+}
+
+/* WHAT THEY HAVE TO SAY TO ANSWER YOU.
+ *
+ * The obvious version — your sentence backwards — is right until somebody is
+ * looking for ANYONE, which is most people who have not thought about it. That
+ * is not a role: "anyone" on the left of a sentence is dropped by the server,
+ * so the demo person lands in no room, matches nobody, and the whole exercise
+ * quietly produces two strangers who cannot see each other.
+ *
+ * So the rooms decide it. Whatever rooms you are in, they need a role standing
+ * in the room that answers one of them — which is the same test the board runs
+ * to decide who comes up on your screen. */
+function answering(you) {
+  const say = (you.say || []).filter((s) => s.me && s.want);
+  const plain = say.find((s) => s.want && s.want !== "anyone");
+
+  /* THE ROOMS FIRST, AND YOUR SENTENCE ONLY AS A FALLBACK.
+   *
+   * Reversing the sentence looks obviously right and is wrong whenever the two
+   * halves of it do not share a room. "I am an Agent looking for an Investor"
+   * is a real thing to want and puts you in the agent room; an investor
+   * looking for an agent lands in invest. Neither answers the other, so the
+   * demo produced two people who could not see each other and no explanation
+   * on any screen.
+   *
+   * What decides who comes up is the room, so that is what this reads. */
+  const rooms = Array.isArray(you.rooms) ? you.rooms : [];
+  if (ROLES) {
+    for (const room of rooms) {
+      const need = answerTo(room);
+      for (const [role, def] of Object.entries(ROLES)) {
+        if (!def.rooms.includes(need)) continue;
+        // Their half is the role you said you are, when you said one.
+        const back = (say[0] && ROLES[say[0].me]) ? say[0].me : "anyone";
+        return { me: role, want: back };
+      }
+    }
+  }
+  return plain ? { me: plain.want, want: plain.me } : null;
 }
 
 async function add() {
   const forWho = arg("for");
   if (!forWho) { console.error('  --for your handle, so their sentence answers yours'); process.exit(1); }
-  const mine = await sayOf(forWho);
+  const you = await rowOf(forWho);
+  if (!you) { console.error("  no page called " + forWho); process.exit(1); }
+  const mine = answering(you);
   if (!mine) {
     console.error("  " + forWho + " has no sentence yet — nothing for them to answer.");
     console.error("  Put one up first: Profile, under your name.");
     process.exit(1);
   }
-  const n = Math.max(1, Math.min(DEMOS.length, Number(arg("n", "2")) || 2));
   console.log("");
+  console.log("  " + forWho + " is in " + ((you.rooms || []).join(", ") || "no room")
+    + "; they will say " + mine.me + " looking for " + mine.want + ".");
+  const n = Math.max(1, Math.min(DEMOS.length, Number(arg("n", "2")) || 2));
   for (const one of DEMOS.slice(0, n)) {
     const inv = await call("/api/invite", { method: "POST", body: JSON.stringify({ n: 1, who: "demo" }) });
     const code = inv.d.made[0].code;
@@ -84,7 +142,7 @@ async function add() {
       campus: one.campus, here: one.here, looking: true,
       // Yours, in reverse. They are what you are looking for, and they are
       // looking for what you are — which is the whole of the match rule.
-      say: [{ me: mine.want, want: mine.me }],
+      say: [{ me: mine.me, want: mine.want }],
     }) });
     // Find you, and connect.
     const ppl = await call("/api/people");
