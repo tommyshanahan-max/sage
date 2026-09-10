@@ -1757,6 +1757,12 @@ export const STRINGS = {
   "off.lede": [
     "Read it, and put your name to it if you want it. Nothing happens until you do, and nobody is told if you do not.",
     "看一下，愿意的话签个名。在那之前什么都不会发生；不愿意也没人会知道。"],
+  /* The one refusal at the door that is not a refusal: /i/CODE and /o/CODE are
+     one letter apart, and somebody sent the second who lands on the first has
+     the right code and the wrong screen. */
+  "door.isOffer": [
+    "That is an offer, not an invitation — opening it.",
+    "这是一个邀约，不是入场码——正在打开。"],
   "off.kJob":          ["a job", "一份工作"],
   "off.kProject":      ["a project", "一个项目"],
   "off.moneyOpen": [

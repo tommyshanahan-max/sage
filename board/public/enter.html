@@ -441,6 +441,17 @@ async function enter() {
        would be the wrong thing to have said. */
     if (r.ok && d.waiting) { location.assign("/room"); return; }
     if (r.ok) return showIn(d.by || "");
+    /* THE RIGHT CODE AT THE WRONG DOOR. Somebody who was sent a piece of work
+       and landed here types the only code they have. Take them to it rather
+       than telling them it is wrong — there is nothing for them to do on this
+       screen, and the offer's own page is where accepting happens. */
+    if (d.error === "offer" && d.code) {
+      said.hidden = false;
+      said.className = "said";
+      said.textContent = T("door.isOffer");
+      location.assign("/o/" + encodeURIComponent(d.code));
+      return;
+    }
     ERR = true;
     drawBoxes();
     said.hidden = false;

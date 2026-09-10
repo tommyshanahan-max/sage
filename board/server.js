@@ -670,6 +670,24 @@ async function admittedReq(req) {
     && (v.usedBy === fromCookie || v.usedBy === fromHeader));
 }
 
+/* EVERY SIX-CHARACTER CODE ALREADY IN USE, whatever it opens.
+ *
+ * There are three kinds and they share one alphabet: an invite, an offer, and
+ * the code that takes somebody back to their own place in the queue. They were
+ * minted against three separate lists, so a new invite could be handed out
+ * with the same six characters as a live offer — and then /i/K7M2QP and
+ * /o/K7M2QP are two different things one letter apart, one code spends the
+ * other's meaning, and whichever of the two the person was sent is the one
+ * that appears to be broken.
+ *
+ * One set, checked by all of them. Cheap: this runs inside a change() that is
+ * already holding the whole board in memory. */
+const codesTaken = (board) => new Set([
+  ...board.invites.map((v) => v.code),
+  ...board.offers.map((o) => o.code),
+  ...board.waits.map((w) => w.back),
+].filter(Boolean));
+
 /* ---------------------------------------------------------------------------
  * The door
  * ------------------------------------------------------------------------- */
@@ -725,10 +743,11 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
   /* A WAITING PERSON'S WAY BACK, checked before the invites.
    *
    * The same box, because asking somebody who has lost their place to find a
-   * different page is asking them to give up. The two kinds of code cannot
-   * collide — one is on a wait row, the other on an invite — and this one
-   * never opens the door: it rebinds their row to the browser in front of it,
-   * gives them the waiting cookie, and the page sends them to their card.
+   * different page is asking them to give up. The three kinds of code cannot
+   * collide — every one of them is minted against codesTaken, which holds all
+   * three — and this one never opens the door: it rebinds their row to the
+   * browser in front of it, gives them the waiting cookie, and the page sends
+   * them to their card.
    *
    * SPENT ON USE. It names one person's own row and nothing else, but a code
    * that keeps working is a code that ends up in a group chat. */
@@ -743,6 +762,23 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
     setWaitCookie(res, me);
     tries.delete(me);
     return res.json({ ok: true, waiting: true, room: backTo.room });
+  }
+
+  /* AN OFFER'S CODE, TYPED AT THE DOOR.
+   *
+   * Two links go out from here and they are one letter apart — /i/K7M2QP is a
+   * way in, /o/K7M2QP is a piece of work — so somebody who was sent the second
+   * and lands on the first types the only code they have. That is not a wrong
+   * answer: it is the right code at the wrong door, and counting it against
+   * five-an-hour would eventually lock out a person who has done nothing but
+   * follow the link they were sent.
+   *
+   * Read-only, before the tries are spent. The offer itself is not opened
+   * here — the page is sent to it, and accepting is still its own deliberate
+   * press on its own screen. */
+  const board = await store.load(FILE);
+  if (board.offers.some((o) => o.code === code && !o.off && !o.tookAt)) {
+    return res.status(409).json({ error: "offer", code });
   }
 
   let outcome = "";
@@ -849,7 +885,7 @@ app.get("/api/my-invite", async (req, res) => {
     for (const v of b.invites) {
       if (v.by === me && !v.usedBy && !v.off) v.off = true;
     }
-    const have = new Set(b.invites.map((v) => v.code));
+    const have = codesTaken(b);
     let code = store.newCode();
     while (have.has(code)) code = store.newCode();
     const v = store.cleanInvite({ code, who, at: new Date().toISOString(), by: me });
@@ -893,7 +929,7 @@ app.post("/api/my-invite", async (req, res) => {
     // Checked inside the queue, the same way the daily code is: two taps on a
     // slow connection would otherwise spend two of the allowance for one ask.
     if (todays.length >= rank.perDay) return null;
-    const have = new Set(b.invites.map((v) => v.code));
+    const have = codesTaken(b);
     let code = store.newCode();
     while (have.has(code)) code = store.newCode();
     const v = store.cleanInvite({ code, who, at: new Date().toISOString(), by: me });
@@ -919,7 +955,7 @@ app.post("/api/invite", admin, express.json({ limit: "8kb" }), async (req, res) 
   const n = Math.max(1, Math.min(50, Number(req.body?.n) || 1));
   const made = [];
   await change((board) => {
-    const have = new Set(board.invites.map((v) => v.code));
+    const have = codesTaken(board);
     for (let i = 0; i < n; i++) {
       let code = store.newCode();
       while (have.has(code)) code = store.newCode();
@@ -961,7 +997,7 @@ app.post("/api/admit-existing", admin, async (_req, res) => {
   await change((b) => {
     const admittedAlready = new Set(b.invites.filter((v) => v.usedBy && !v.off)
       .map((v) => v.usedBy));
-    const have = new Set(b.invites.map((v) => v.code));
+    const have = codesTaken(b);
     for (const by of here) {
       if (admittedAlready.has(by)) { already++; continue; }
       let code = store.newCode();
@@ -2561,7 +2597,7 @@ app.post("/api/waiting/admit", express.json({ limit: "2kb" }), admin, async (req
       .slice(0, cap);
     if (!some.length) return { ok: true, admitted: [] };
 
-    const have = new Set(board.invites.map((v) => v.code));
+    const have = codesTaken(board);
     /* WHO SENT THEM, by name. The row stores an id because a member who
        changes what they are called should not leave a trail of rows crediting
        who they used to be — so it is resolved here, at the moment the message
@@ -2714,7 +2750,7 @@ app.post("/api/waiting/key", express.json({ limit: "1kb" }), admin, async (req, 
     if (!row) return null;
     /* Fresh every time it is asked for. An old code stops working the moment a
        new one is made, so "send her another" cannot leave two in the wild. */
-    const taken = new Set(board.waits.map((w) => w.back).filter(Boolean));
+    const taken = codesTaken(board);
     let code = store.newCode();
     while (taken.has(code)) code = store.newCode();
     row.back = code;
@@ -3133,9 +3169,9 @@ app.post("/api/offer", express.json({ limit: "8kb" }), gate, async (req, res) =>
       // person row, so somebody with no page cannot offer anybody anything.
       return { error: "nopage" };
     }
-    let code;
-    do { code = store.newCode(); }
-    while (board.offers.some((o) => o.code === code) || board.invites.some((v) => v.code === code));
+    const have = codesTaken(board);
+    let code = store.newCode();
+    while (have.has(code)) code = store.newCode();
     const row = store.cleanOffer({ ...req.body, code, by: me, at: new Date().toISOString() });
     if (!row) return { error: "empty" };
     board.offers.push(row);
@@ -3162,9 +3198,9 @@ app.post("/api/admin/offer", admin, express.json({ limit: "8kb" }), async (req, 
     const q = board.people.find((x) => x.state === "published"
       && String(x.handle || "").toLowerCase() === from);
     if (!q) return { error: "nobody" };
-    let code;
-    do { code = store.newCode(); }
-    while (board.offers.some((o) => o.code === code) || board.invites.some((v) => v.code === code));
+    const have = codesTaken(board);
+    let code = store.newCode();
+    while (have.has(code)) code = store.newCode();
     const row = store.cleanOffer({ ...req.body, code, by: q.by, at: new Date().toISOString() });
     if (!row) return { error: "empty" };
     board.offers.push(row);
