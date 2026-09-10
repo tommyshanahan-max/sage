@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -436,6 +436,14 @@ waiting-key: ## A code that gives one person their place back: make waiting-key 
 	@test -n "$(ID)" || { echo "which one? make waiting-key ID=..."; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --key "$(ID)"
+
+why-no-row: ## Why somebody in the room has no waiting row: make why-no-row
+	@# Reads the data file rather than the API, because the question is about
+	@# the device hash in the middle of the chain — which the API deliberately
+	@# does not hand out. Answers where it breaks: never redeemed an invite, an
+	@# invite nothing records spending, or a name the list no longer holds.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/why-no-row.mjs /data/board.json
 
 room-keep: ## Keep only these in Browse: make room-keep KEEP="Keith,Axel,Hugo" [GO=1]
 	@# The only command here that acts on everybody at once, with the names
