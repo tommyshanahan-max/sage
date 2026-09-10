@@ -3131,14 +3131,40 @@ app.post("/api/admin/can-offer", admin, express.json({ limit: "2kb" }), async (r
   const on = req.body?.on !== false;
   if (!who) return res.status(400).json({ error: "who" });
   const out = await change((board) => {
-    const q = board.people.find((x) => String(x.handle || "").toLowerCase() === who);
+    /* A HANDLE IS NOT UNIQUE ON THIS BOARD, and this refuses rather than
+       guesses. The first version matched the first row with the name, set the
+       flag on one nobody was using, and reported success — the member then
+       looked for a button that was never going to be drawn, and the only
+       thing wrong was invisible from both ends.
+       Preferring the published row was not enough either: two published rows
+       can share a name, and then a preference is still a guess. So an
+       ambiguous name is an error that names the candidates, and --id settles
+       it. Nothing here is urgent enough to be worth being wrong quietly. */
+    const all = board.people.filter((x) => String(x.handle || "").toLowerCase() === who);
+    const id = String(req.body?.id || "");
+    const q = id ? all.find((x) => x.id === id)
+      : all.length === 1 ? all[0] : null;
+    if (!q && all.length > 1) {
+      return { error: "which", rows: all.map((x) => ({ id: x.id, state: x.state, canOffer: Boolean(x.canOffer) })) };
+    }
     if (!q) return { error: "nobody" };
     q.canOffer = on;
     Object.assign(q, store.cleanPerson(q));
-    return { handle: q.handle, canOffer: q.canOffer };
+    return { handle: q.handle, canOffer: q.canOffer, state: q.state, rows: all.length };
   });
-  if (out?.error) return res.status(404).json(out);
+  if (out?.error) return res.status(out.error === "which" ? 409 : 404).json(out);
   res.json(out);
+});
+
+/** Who currently may make one. So "it is not showing" has an answer that is
+ *  not a guess about caches. */
+app.get("/api/admin/can-offer", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  res.json({
+    people: board.people
+      .filter((q) => q.handle)
+      .map((q) => ({ handle: q.handle, state: q.state, canOffer: Boolean(q.canOffer) })),
+  });
 });
 
 /** Every offer and what became of it. For the person who sent them. */

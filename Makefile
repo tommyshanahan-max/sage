@@ -235,15 +235,14 @@ post-door: ## Tell the feed the board is private now, as The Professor
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/post-door.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" $(if $(AGAIN),--again,)
 
-can-offer: ## Let one member make offers:  make can-offer WHO=Mia [OFF=1]
+can-offer: ## Who may make offers, or let one:  make can-offer [WHO=Mia] [ID=... OFF=1]
 	@# Deliberately one person at a time and never derived from somebody's role.
 	@# Reaching a stranger with money attached is a different power from being
 	@# in the room, and an agent nobody has vouched for should not get it by
 	@# ticking a box on the way in. It becomes part of a matched card later.
-	@test -n "$(WHO)" || { echo 'make can-offer WHO=Mia   (OFF=1 to take it back)'; exit 1; }
 	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/offer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  can-offer --who "$(WHO)" $(if $(OFF),--off,)
+	  can-offer --who "$(WHO)" $(if $(ID),--id "$(ID)",) $(if $(OFF),--off,)
 
 offer: ## Send somebody real work:  make offer FROM=Tom WHO="Yana" GIVE="..." [PAYS="¥8,000" WANT="..."]
 	@# Prints the one link to paste into WeChat. It opens for anybody — no code,

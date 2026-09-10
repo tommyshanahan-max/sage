@@ -1732,7 +1732,15 @@ export const STRINGS = {
   "mko.want":          ["What you would expect", "你希望对方做到的"],
   "mko.wantHint":      ["A fitting on the Thursday before.", "拍摄前的周四试装。"],
   "mko.go":            ["Make the link", "生成链接"],
-  "mko.made":          ["Tap it to copy, then send it.", "点一下复制，然后发出去。"],
+  "mko.made":          ["Tap it to send.", "点一下发出去。"],
+  "mko.madeWx":        ["Tap it to copy, then paste it into the chat.",
+                        "点一下复制，然后粘贴到聊天里。"],
+  /* WHAT LANDS IN THE CHAT. It says what the link is before somebody taps a
+     strange address, and never what the offer says — that card can sit in a
+     conversation other people are reading. */
+  "mko.share": [
+    "I have made you an offer. Open it here — nothing happens until you accept.\n{url}",
+    "我给你发了一个邀约，点这里看：接受之前什么都不会发生。\n{url}"],
   "mko.copied":        ["Copied. Paste it into WeChat.", "已复制，粘贴到微信发出去。"],
   "mko.copyfail":      ["Copy it by hand — press and hold.", "长按手动复制。"],
   "mko.nopage":        ["Put your own page up first.", "先把你自己的主页建好。"],

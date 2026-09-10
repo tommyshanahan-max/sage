@@ -32,7 +32,17 @@ const call = async (path, opts = {}) => {
   });
   const body = await r.json().catch(() => ({}));
   if (!r.ok) {
-    console.error("  no: " + (body.error || r.status));
+    if (body.error === "which") {
+      // Say which rows, and how to pick one. An error that leaves somebody
+      // with no next move is barely better than the wrong answer.
+      console.error("  more than one page has that name. Add --id:");
+      for (const row of body.rows) {
+        console.error("    --id " + row.id + "   (" + row.state
+          + (row.canOffer ? ", can already" : "") + ")");
+      }
+    } else {
+      console.error("  no: " + (body.error || r.status));
+    }
     process.exit(1);
   }
   return body;
@@ -40,11 +50,25 @@ const call = async (path, opts = {}) => {
 
 if (CMD === "can-offer") {
   const who = arg("who");
-  if (!who) { console.error("  --who is which member"); process.exit(1); }
+  // No --who is a question rather than a mistake: who can do this today.
+  if (!who) {
+    const d = await call("/api/admin/can-offer");
+    const yes = d.people.filter((p) => p.canOffer);
+    if (!yes.length) console.log("  nobody can make offers yet.");
+    for (const p of yes) console.log("  " + p.handle + "  (" + p.state + ")");
+    const dupes = {};
+    for (const p of d.people) (dupes[p.handle.toLowerCase()] ||= []).push(p.state);
+    for (const [h, states] of Object.entries(dupes)) {
+      if (states.length > 1) console.log("  note: " + states.length + " rows named " + h + " — " + states.join(", "));
+    }
+    process.exit(0);
+  }
   const d = await call("/api/admin/can-offer", {
-    method: "POST", body: JSON.stringify({ who, on: !has("off") }),
+    method: "POST", body: JSON.stringify({ who, id: arg("id"), on: !has("off") }),
   });
-  console.log("  " + d.handle + (d.canOffer ? " can make offers." : " no longer can."));
+  console.log("  " + d.handle + " (" + d.state + ")"
+    + (d.canOffer ? " can make offers." : " no longer can.")
+    + (d.rows > 1 ? "  [" + d.rows + " rows share that handle]" : ""));
 } else if (CMD === "send") {
   const give = arg("give");
   if (!arg("from") || !give) {

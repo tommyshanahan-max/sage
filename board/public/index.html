@@ -6678,16 +6678,27 @@ async function makeOffer() {
 }
 
 $("mkoffergo").addEventListener("click", makeOffer);
-$("mkofferout").addEventListener("click", async () => {
-  const out = $("mkofferout");
-  try {
-    await navigator.clipboard.writeText(out.textContent);
-    $("mkoffernote").textContent = T("mko.copied");
-  } catch {
-    /* No clipboard on an insecure origin or an older WebView. The address is
-       on the screen and selectable, which is the fallback. */
-    $("mkoffernote").textContent = T("mko.copyfail");
+/* SENDING IT, the same way the invite beside it is sent.
+ *
+ * Outside WeChat the share sheet is the whole point — one tap and WeChat is in
+ * the list with everything else. Inside WeChat a page may not open one at all;
+ * the ⋯ menu is the only way there, so the clipboard is the honest version,
+ * which is what every other share in this app already does.
+ *
+ * The words carry the link rather than the link travelling bare, because what
+ * lands in the chat should say what it is before somebody taps a strange
+ * address. */
+$("mkofferout").addEventListener("click", () => {
+  const url = $("mkofferout").textContent.trim();
+  if (!url) return;
+  const words = T("mko.share", { url });
+  const note = (w) => { $("mkoffernote").textContent = w; };
+  if (!IN_WECHAT && navigator.share) {
+    navigator.share({ title: T("site.title"), text: words })
+      .catch(() => note(copyText(words) ? T("mko.copied") : T("mko.copyfail")));
+    return;
   }
+  note(copyText(words) ? T("mko.copied") : T("mko.copyfail"));
 });
 
 /* The sentence as it stands on the server, copied so the pills can be moved
