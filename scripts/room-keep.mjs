@@ -19,10 +19,20 @@
  * and they are not told. It is undone one at a time with `make show WHO=...`,
  * or by running this again with a longer KEEP.
  *
- * It does not touch the waiting list. A held profile and a waiting-list row
- * are different things: the row is somebody asking to come in, and rewriting
- * history so that a member who was already let in looks like they never were
- * is not something this should do behind a name-matching heuristic.
+ * AND THE WAITING LIST, which is the point of the exercise.
+ *
+ * Holding a profile takes somebody out of Browse and leaves them nowhere —
+ * not in the room and not in the queue, so the number on the door does not
+ * move and they have no way back short of being admitted again by hand.
+ *
+ * Everybody who was let in still has the waiting-list row they were let in
+ * from, marked done. Their row is turned back on rather than a new one being
+ * written: the original name, the original way of reaching them, the original
+ * date they asked. A second row would be the same person asking twice.
+ *
+ * Anybody with no row — added straight to the room, or from before the list
+ * existed — is held and said so, because inventing a way to reach somebody is
+ * worse than admitting there isn't one.
  */
 
 const [, , base, key, ...rest] = process.argv;
@@ -71,29 +81,61 @@ for (const w of want) {
 
 const keepIds = new Set();
 for (const hits of matched.values()) for (const p of hits) keepIds.add(p.handle);
-const going = people.filter((p) => !keepIds.has(p.handle) && p.state === "published");
+
+/* The rows people were let in from, so the queue step can find them. Read
+   before anything is decided, because who needs putting back on the list is
+   not the same set as who needs holding — somebody held on an earlier run is
+   already out of Browse and still missing from the queue, which is exactly
+   the state this had left them in. */
+const wd = await fetch(base + "/api/waiting", { headers: head })
+  .then((r) => r.json()).catch(() => ({}));
+const waits = wd.waits || [];
+const rowFor = (handle) => waits.find((w) => w.done === "in" && flat(w.name) === flat(handle))
+  || waits.find((w) => w.done === "in" && flat(w.name).startsWith(flat(handle)))
+  || waits.find((w) => w.done === "in" && flat(handle).startsWith(flat(w.name)));
+
+const rest2 = people.filter((p) => !keepIds.has(p.handle));
+const toHold = rest2.filter((p) => p.state === "published");
+const toList = rest2.filter((p) => rowFor(p.handle));
+const noRow = rest2.filter((p) => !rowFor(p.handle) && p.state !== "published");
 
 console.log("");
 console.log("  STAYING IN BROWSE");
 for (const [w, hits] of matched) {
   for (const p of hits) {
-    console.log("    " + p.handle + (flat(p.handle) === flat(w) ? "" : "   ← matched \"" + w + "\""));
+    console.log("    " + p.handle + (flat(p.handle) === flat(w) ? "" : "   \u2190 matched \"" + w + "\""));
   }
 }
 if (unmatched.length) {
   console.log("");
   console.log("  NOBODY HERE IS CALLED");
-  for (const w of unmatched) console.log("    " + w + "   ← check the spelling, this person is NOT protected");
+  for (const w of unmatched) console.log("    " + w + "   \u2190 check the spelling, this person is NOT protected");
 }
 
-console.log("");
-console.log("  COMING OUT OF BROWSE — " + going.length);
-for (const p of going) console.log("    " + p.handle);
-
-const already = people.filter((p) => !keepIds.has(p.handle) && p.state !== "published");
-if (already.length) {
+if (toHold.length) {
   console.log("");
-  console.log("  already out, left alone — " + already.length);
+  console.log("  COMING OUT OF BROWSE \u2014 " + toHold.length);
+  for (const p of toHold) console.log("    " + p.handle);
+}
+
+if (toList.length) {
+  console.log("");
+  console.log("  BACK ON THE WAITING LIST \u2014 " + toList.length);
+  for (const p of toList) {
+    console.log("    " + p.handle +
+      (p.state === "published" ? "" : "   (already out of Browse)"));
+  }
+}
+
+if (noRow.length) {
+  console.log("");
+  console.log("  OUT, BUT NOT ON THE LIST \u2014 " + noRow.length);
+  for (const p of noRow) console.log("    " + p.handle + "   \u2190 no waiting row to turn back on");
+}
+
+if (!toHold.length && !toList.length) {
+  console.log("");
+  console.log("  Nothing to do.");
 }
 
 if (!go) {
@@ -107,17 +149,28 @@ if (!go) {
 }
 
 console.log("");
-let done = 0;
-for (const p of going) {
+let done = 0, back = 0;
+for (const p of toHold) {
   const r = await fetch(base + "/api/person/out", {
     method: "POST", headers: head,
     body: JSON.stringify({ handle: p.handle, back: false }),
   });
-  if (r.ok) { done++; console.log("  out: " + p.handle); }
-  else console.log("  FAILED: " + p.handle + " (" + r.status + ")");
+  if (r.ok) { done++; console.log("  out of Browse: " + p.handle); }
+  else console.log("  FAILED to hold " + p.handle + " (" + r.status + ")");
+}
+for (const p of toList) {
+  const row = rowFor(p.handle);
+  const w = await fetch(base + "/api/waiting", {
+    method: "POST", headers: head,
+    body: JSON.stringify({ id: row.id, done: "" }),
+  });
+  if (w.ok) { back++; console.log("  back on the list: " + p.handle); }
+  else console.log("  FAILED to list " + p.handle + " (" + w.status + ")");
 }
 console.log("");
-console.log("  " + done + " out of Browse. " + keepIds.size + " still in.");
-console.log("  Nobody was told and nothing was deleted.");
-console.log('  Put one back with:  make show WHO="their name"');
+console.log("  " + done + " taken out of Browse, " + back + " back on the list. " +
+  keepIds.size + " still in.");
+console.log("  Nobody was told and nothing was deleted \u2014 the queue is longer by " +
+  back + ", so the number on the door moves.");
+console.log('  Put one back in with:  make show WHO="their name"');
 console.log("");
