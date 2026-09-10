@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: cfm-project can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -402,6 +402,25 @@ cfm-grantor: ## Who grants a share and out of what: make cfm-grantor ID=the-exch
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  grantor --id "$(or $(ID),the-exchange)" --from "$(FROM)" --holds "$(HOLDS)" \
 	  --sig "$(SIG)"
+
+cfm-project: ## A new project on the ledger: make cfm-project ID=laonei NAME="Laonei" [LINE="..." CLAIM="..." SUB="..." GOAL="..." MARKS="nil|today;$600k|two years" SEATS=0 GOTO=https://...]
+	@# The ledger knows nothing about a project until it is told, and an offer
+	@# for a project it has never heard of comes back as "The ledger refused
+	@# that: bad" — which is the truth and is no help at all.
+	@#
+	@# GOTO is where somebody lands the moment they accept. Leave it out for a
+	@# project whose offers are stakes: a stake opens nothing, and a link to a
+	@# door they have no key to reads as a membership being sold.
+	@#
+	@# MARKS is up to three "value|when" pairs separated by semicolons. They
+	@# are the project's own figures — the offer page draws what it is handed,
+	@# so a project that sets none arrives wearing another one's numbers.
+	@test -n "$(ID)" -a -n "$(NAME)" || { echo 'make cfm-project ID=laonei NAME="Laonei"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  project --id "$(ID)" --name "$(NAME)" --zh "$(ZH)" --line "$(LINE)" \
+	  --goto "$(GOTO)" --seats "$(or $(SEATS),0)" \
+	  --claim "$(CLAIM)" --sub "$(SUB)" --goal "$(GOAL)" --marks "$(MARKS)" --from "$(or $(FROM),Tom)"
 
 cfm-stake: ## A share with an earn-out: make cfm-stake ID=aiden NAME="Founding engineer" PCT=5 STEPS="3|ships v1;2|25 projects on it"
 	@# The half of a founder deal nobody writes down: five per cent now, more

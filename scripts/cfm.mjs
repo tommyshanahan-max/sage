@@ -74,6 +74,46 @@ if (cmd === "setup") {
     why: "Every person who comes through you, and every person who comes through them, counts under your name. You are not asked to manage any of it.",
   });
   console.log("\n  the-exchange · founding · connector\n");
+} else if (cmd === "project") {
+  /* ANY OTHER PROJECT, WITHOUT EDITING THIS FILE.
+   *
+   * `setup` and `setup-cfm` each write one hardcoded project, which was right
+   * while there were two. The third was Laonei, and the ledger refused its
+   * offer with "bad" — the offer route checks that the project exists and
+   * nothing here could make one. An hour of a good evening went on reading
+   * that word.
+   *
+   * The claim, the sub and the goal are the project's own: the offer page
+   * draws whatever it is handed, so a project that does not set them arrives
+   * reading somebody else's pitch. */
+  const id = arg("id");
+  const name = arg("name");
+  if (!id || !name) {
+    console.error('  --id and --name, both. Everything else is optional.');
+    process.exit(1);
+  }
+  /* Three marks at most, as "value|when" pairs — today, the middle, and the
+     one worth doing it for. Semicolons between them, because a "when" is a
+     phrase and phrases have commas in them. */
+  const marks = arg("marks").split(";").map((x) => x.trim()).filter(Boolean)
+    .slice(0, 3).map((x) => {
+      const [val, when] = x.split("|").map((y) => (y || "").trim());
+      return { val, when };
+    }).filter((m) => m.val);
+  await post("/api/project", {
+    id, name, zh: arg("zh"), line: arg("line"),
+    // Empty on purpose for a project whose offers are stakes: a stake opens
+    // nothing, and a link to a door somebody has no key to reads as a
+    // membership being sold.
+    goTo: arg("goto"),
+    seats: Number(arg("seats", "0")) || 0,
+    claim: arg("claim"), sub: arg("sub"), goal: arg("goal"),
+    marks, from: arg("from", "Tom"),
+  });
+  console.log("\n  " + id + " · " + name + (marks.length ? " · " + marks.length + " marks" : ""));
+  console.log("\n  Now a package and an offer:");
+  console.log('      make cfm-stake ID=<pack> NAME="Founder" PROJECT=' + id + " PCT=10");
+  console.log('      make cfm-offer WHO="their name" PROJECT=' + id + " PACK=<pack>\n");
 } else if (cmd === "setup-cfm") {
   /* THE LEDGER, ON ITS OWN LEDGER.
      A share in crowdfundme is not a seat in a hundred and does not pretend to
