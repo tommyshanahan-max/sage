@@ -4405,15 +4405,30 @@ await mkdir(DIR, { recursive: true });
  * nothing, so it costs one read of a file already being read.
  * ------------------------------------------------------------------------- */
 {
+  /* ONCE MEANS ONCE, AND IT DID NOT.
+   *
+   * This says above that it runs once because after the first pass every row
+   * is published and the loop finds nothing. That was true only while nothing
+   * else ever held a profile. `make hide` and `room-keep` both do — and every
+   * restart after one of them found those rows "stuck" and put them straight
+   * back, silently, so a deliberate hold survived exactly until the next
+   * deploy. Eleven people were held and republished three times over before
+   * anybody worked out why the number would not move.
+   *
+   * So the fact that it ran is written down, and it never runs again on a
+   * board that has already had it. A hold means what it says now. */
+  const RAN = "split-publish";
   const board = await store.load(FILE);
-  const stuck = board.people.filter((q) => q.state !== "published" && q.handle);
-  if (stuck.length) {
-    const ids = new Set(stuck.map((q) => q.id));
+  if (!board.ran.includes(RAN)) {
+    const stuck = board.people.filter((q) => q.state !== "published" && q.handle);
     await change((b) => {
-      for (const q of b.people) if (ids.has(q.id)) q.state = "published";
+      for (const q of b.people) if (q.state !== "published" && q.handle) q.state = "published";
+      b.ran = [...(b.ran || []), RAN];
       return true;
     });
-    console.log(`published ${stuck.length} profile(s) held only because they predate the split`);
+    if (stuck.length) {
+      console.log(`published ${stuck.length} profile(s) held only because they predate the split`);
+    }
   }
 }
 

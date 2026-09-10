@@ -1220,7 +1220,14 @@ export function cleanBoard(raw) {
     seenV.add(k);
     vouches.push(v);
   }
-  return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches,
+  /* WHICH ONE-TIME PASSES HAVE ALREADY RUN.
+     A migration that says "runs once" and has no way of knowing whether it
+     did runs on every boot, and one of them was quietly republishing every
+     profile somebody had deliberately held. Writing the name down is what
+     makes "once" true. */
+  const ran = (Array.isArray(raw?.ran) ? raw.ran : [])
+    .filter((x) => typeof x === "string" && x.length < 60).slice(0, 50);
+  return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
     shuts, groups, says, counts: cleanCounts(raw?.counts) };
 }
 
