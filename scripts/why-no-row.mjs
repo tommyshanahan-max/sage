@@ -32,11 +32,21 @@ const byName = new Map(waits.map((w) => [flat(w.name), w]));
 const pad = (s, n) => String(s ?? "").padEnd(n).slice(0, n);
 
 console.log("");
-console.log(pad("who", 26) + pad("device?", 9) + pad("invite?", 9) +
-  pad("minted for", 22) + "row?");
-console.log("-".repeat(78));
+/* And whether there is any way to reach them, which is what writing a new row
+   needs. A card is keyed by the device that wrote it — the same hash the
+   person carries. No card, no contact, no row can be written. */
+const cards = new Map((board.cards || []).map((c) => [c.by, c]));
+const reachOf = (q) => {
+  const c = q.by ? cards.get(q.by) : null;
+  if (!c) return "";
+  return c.wechat ? "wechat " + c.wechat : String(c.line || "").trim();
+};
 
-const tally = { fine: 0, noDevice: 0, noInvite: 0, noRow: 0 };
+console.log(pad("who", 22) + pad("device?", 9) + pad("invite?", 9) +
+  pad("minted for", 18) + pad("reach", 26) + "row?");
+console.log("-".repeat(96));
+
+const tally = { fine: 0, noDevice: 0, noInvite: 0, noRow: 0, noCard: 0 };
 for (const q of people) {
   const dev = Boolean(q.by);
   const v = dev ? spent.get(q.by) : null;
@@ -47,8 +57,11 @@ for (const q of people) {
   else if (!v) { verdict = "— no invite carries this device"; tally.noInvite++; }
   else if (!row) { verdict = "— nothing on the list by that name"; tally.noRow++; }
   else { verdict = row.done === "in" ? "yes (marked in)" : "yes (" + (row.done || "waiting") + ")"; tally.fine++; }
-  console.log(pad(q.handle || "—", 26) + pad(dev ? "yes" : "no", 9) +
-    pad(v ? "yes" : "no", 9) + pad(who || "—", 22) + verdict);
+  const reach = reachOf(q);
+  if (!reach) tally.noCard++;
+  console.log(pad(q.handle || "—", 22) + pad(dev ? "yes" : "no", 9) +
+    pad(v ? "yes" : "no", 9) + pad(who || "—", 18) +
+    pad(reach || "— none", 26) + verdict);
 }
 
 console.log("");
@@ -56,6 +69,10 @@ console.log("  " + people.length + " people · " + tally.fine + " trace back to 
 if (tally.noDevice) console.log("  " + tally.noDevice + " never redeemed an invite — they were let in some other way");
 if (tally.noInvite) console.log("  " + tally.noInvite + " have a device no invite records spending");
 if (tally.noRow) console.log("  " + tally.noRow + " came in on an invite minted for a name the list no longer holds");
+console.log("");
+console.log("  " + (people.length - tally.noCard) + " have a way to be reached on file · " +
+  tally.noCard + " have none");
+console.log("  " + (board.cards || []).length + " contact cards stored in all");
 console.log("");
 console.log("  " + waits.length + " rows on the list · " +
   waits.filter((w) => !w.done).length + " waiting · " +
