@@ -65,12 +65,21 @@
   }
   .eyebrow.gold{color:var(--gold)}
 
+  /* TWO SIZES THAT WERE FURTHER APART THAN THEY MEANT TO BE. Some screens
+     opened at 43px and some at 30px, and which was which came down to
+     whichever tag got typed — so half the deck landed softer for no reason a
+     reader could see. Both up, and the gap between them closed to something
+     deliberate: this is read in flicks, and a headline that has to be leaned
+     into is a headline that gets scrolled past.
+     The floors matter more than the caps here. 12vw is what a phone actually
+     gets; the rem cap only bites on a desktop, where the column is narrow and
+     the type should stop growing. */
   h1{
-    font:400 clamp(2.6rem,11vw,3.6rem)/1.02 var(--serif);
+    font:400 clamp(2.9rem,12vw,4rem)/1.01 var(--serif);
     margin:0 0 1rem;text-wrap:balance;
   }
   h2{
-    font:400 clamp(1.9rem,7.4vw,2.5rem)/1.14 var(--serif);
+    font:400 clamp(2.4rem,9.6vw,3.2rem)/1.08 var(--serif);
     margin:0 0 1rem;text-wrap:balance;
   }
   p{margin:0 0 1rem;color:var(--dim);font-size:1.02rem}
@@ -229,27 +238,6 @@
       already know.</p>
   </section>
 
-  <!-- ONE SCREEN, NOT TWO. This was a screen saying the model is undecided,
-       then a screen showing a model — which reads as a disclaimer followed by
-       the thing it disclaims, and makes a reader wonder which one to believe.
-       The caveat belongs on the same screen as the numbers, above them, where
-       it frames them instead of arguing with them. -->
-  <section>
-    <p class="eyebrow gold">One suggested option</p>
-    <h2>If it were $50 a head.</h2>
-    <p class="lead">How it makes revenue is not worked out yet — that is one
-      of the things you would be deciding. This is a suggestion, so the
-      numbers are not abstract.</p>
-    <div class="steps" style="margin-top:1.4rem">
-      <div><span class="w">Today</span><span class="v on">$2k</span></div>
-      <div><span class="w">1,000 people</span><span class="v">$50k</span></div>
-      <div><span class="w">10,000 people</span><span class="v">$500k</span></div>
-    </div>
-    <p style="margin-top:1.2rem">A year, every year, and the room costs almost
-      nothing to run. Pick a different model and these change — <b>the
-      milestones underneath them do not</b>.</p>
-  </section>
-
   <section>
     <p class="eyebrow gold">Three months</p>
     <h2>A company in Singapore, inside ninety days.</h2>
@@ -259,7 +247,7 @@
   </section>
 
   <section>
-    <p class="eyebrow gold">What that makes it worth</p>
+    <p class="eyebrow gold">What it could be worth</p>
 
     <!-- THE CIRCLES SHOW THE COMPANY, NOT THE TAKINGS. They were sized by
          revenue, which is the business model — and the business model is not
@@ -284,10 +272,16 @@
       <text x="200" y="121" font-size="10.5" fill="#94A29B" text-anchor="middle">two years</text>
     </svg>
 
-    <p style="margin-top:1.4rem">Subscription businesses this size have sold
-      for <b>three to five times what they take in a year</b>. On the version
-      above, that is a company worth <b>$1.5m to $2.5m</b> — which is what the
-      circles are, not the takings.</p>
+    <!-- THE ASSUMPTION LIVES HERE NOW. It had a screen of its own — a
+         revenue model, spelled out, before the valuation that rested on it.
+         Two screens for one argument, and the first was the weaker half. So
+         the model is one clause inside the sentence it supports, marked as a
+         suggestion, and the screen goes straight to the number he came for. -->
+    <p style="margin-top:1.4rem">At ten thousand people paying <b>$50 a
+      year</b> — one suggested model, not a decided one — that is $500,000 a
+      year. Businesses like that have sold for <b>three to five times what
+      they take in</b>.</p>
+    <p>So the circles are the company, not the takings.</p>
   </section>
 
   <section>
