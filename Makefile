@@ -240,15 +240,10 @@ can-offer: ## Let one member make offers:  make can-offer WHO=Mia [OFF=1]
 	@# Reaching a stranger with money attached is a different power from being
 	@# in the room, and an agent nobody has vouched for should not get it by
 	@# ticking a box on the way in. It becomes part of a matched card later.
-	@test -n "$(WHO)" || { echo 'make can-offer WHO=Mia   (make can-offer WHO=Mia OFF=1 to take it back)'; exit 1; }
-	@printf '%s' '{"who":"$(WHO)","on":$(if $(OFF),false,true)}' \
-	  | $(COMPOSE) exec -T board node -e '\
-	    let b=""; process.stdin.on("data",d=>b+=d).on("end",async()=>{ \
-	      const r=await fetch("http://127.0.0.1:8080/api/admin/can-offer",{method:"POST", \
-	        headers:{"content-type":"application/json","x-admin-secret":process.env.BOARD_ADMIN_KEY||""}, \
-	        body:b}); const j=await r.json(); \
-	      if(!r.ok){ console.error("no:",JSON.stringify(j)); process.exit(1); } \
-	      console.log("  " + j.handle + (j.canOffer ? " can make offers." : " no longer can.")); });'
+	@test -n "$(WHO)" || { echo 'make can-offer WHO=Mia   (OFF=1 to take it back)'; exit 1; }
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/offer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  can-offer --who "$(WHO)" $(if $(OFF),--off,)
 
 offer: ## Send somebody real work:  make offer FROM=Tom WHO="Yana" GIVE="..." [PAYS="¥8,000" WANT="..."]
 	@# Prints the one link to paste into WeChat. It opens for anybody — no code,
@@ -258,27 +253,18 @@ offer: ## Send somebody real work:  make offer FROM=Tom WHO="Yana" GIVE="..." [P
 	@# page: an offer from nobody is not a thing anybody should be able to make.
 	@# WHO is a note to yourself so `make offers` reads as names; the person
 	@# opening it never sees it.
-	@test -n "$(FROM)" -a -n "$(WHO)" -a -n "$(GIVE)" || { \
+	@test -n "$(FROM)" -a -n "$(GIVE)" || { \
 	  echo 'make offer FROM=Tom WHO="Yana" GIVE="what they would do" PAYS="¥8,000" WANT="what you expect"'; exit 1; }
-	@printf '%s' '{"from":"$(FROM)","who":"$(WHO)","give":"$(GIVE)","money":"$(PAYS)","want":"$(WANT)"}' \
-	  | $(COMPOSE) exec -T board node -e '\
-	    let b=""; process.stdin.on("data",d=>b+=d).on("end",async()=>{ \
-	      const r=await fetch("http://127.0.0.1:8080/api/admin/offer",{method:"POST", \
-	        headers:{"content-type":"application/json","x-admin-secret":process.env.BOARD_ADMIN_KEY||""}, \
-	        body:b}); const j=await r.json(); \
-	      if(!r.ok){ console.error("no:",JSON.stringify(j)); process.exit(1); } \
-	      console.log(""); console.log("  Send this, and nothing else:"); \
-	      console.log("  https://" + (process.env.BOARD_HOST||"liuxuesheng.io") + "/o/" + j.code); \
-	      console.log(""); });'
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/offer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  send --from "$(FROM)" --who "$(WHO)" --give "$(GIVE)" \
+	  --pays "$(PAYS)" --want "$(WANT)" \
+	  --public "https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '"')"
 
 offers: ## Every offer, and who took it
-	@$(COMPOSE) exec -T board node -e '\
-	  fetch("http://127.0.0.1:8080/api/admin/offer",{headers:{"x-admin-secret":process.env.BOARD_ADMIN_KEY||""}}) \
-	    .then(r=>r.json()).then(d=>{ \
-	      if(!d.offers||!d.offers.length) return console.log("  none sent yet."); \
-	      for(const o of d.offers) console.log("  " + o.code + "  " + (o.who||"—").padEnd(14) \
-	        + (o.takenAt ? "taken by " + o.takenBy + " on " + o.takenAt.slice(0,10) \
-	           : o.off ? "withdrawn" : "waiting") + "   " + (o.money||"")); });'
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/offer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  list
 
 invite: ## Make an invite:  make invite WHO="you" FOR="them" [N=3]
 	@# Prints the link and the code as the message to send. One person each.
