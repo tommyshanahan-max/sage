@@ -1,0 +1,232 @@
+<title>Advising The Exchange</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  :root{
+    --ground:#080C0A;
+    --raise:#0E1512;
+    --ink:#ECEAE4;
+    --dim:#939C96;
+    --hair:#1E2A25;
+    --jade:#3FBF8F;
+    --gold:#D9A94A;
+    --serif:"Instrument Serif",Georgia,"Songti SC",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);color:var(--ink);
+    font:16px/1.6 var(--sans);
+    -webkit-font-smoothing:antialiased;
+    scroll-snap-type:y proximity;
+  }
+  .deck{max-width:30rem;margin:0 auto;padding:0 1.4rem}
+
+  /* ONE IDEA PER FLICK. Snap, because he is on a phone with a minute — but
+     sized by content with a floor, not pinned to the viewport, so nothing is
+     ever cut off on a small screen. */
+  section{
+    scroll-snap-align:start;
+    min-height:86svh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:3rem 0;
+    border-bottom:1px solid var(--hair);
+  }
+  section:last-of-type{border-bottom:0}
+
+  .eyebrow{
+    font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--jade);margin:0 0 1.1rem;
+  }
+  .eyebrow.gold{color:var(--gold)}
+
+  /* TWO SIZES THAT WERE FURTHER APART THAN THEY MEANT TO BE. Some screens
+     opened at 43px and some at 30px, and which was which came down to
+     whichever tag got typed — so half the deck landed softer for no reason a
+     reader could see. Both up, and the gap between them closed to something
+     deliberate: this is read in flicks, and a headline that has to be leaned
+     into is a headline that gets scrolled past.
+     The floors matter more than the caps here. 12vw is what a phone actually
+     gets; the rem cap only bites on a desktop, where the column is narrow and
+     the type should stop growing. */
+  h1{
+    font:400 clamp(2.9rem,12vw,4rem)/1.01 var(--serif);
+    margin:0 0 1rem;text-wrap:balance;
+  }
+  h2{
+    font:400 clamp(2.4rem,9.6vw,3.2rem)/1.08 var(--serif);
+    margin:0 0 1rem;text-wrap:balance;
+  }
+  p{margin:0 0 1rem;color:var(--dim);font-size:1.02rem}
+  p.lead{color:var(--ink);font-size:1.08rem}
+  p:last-child{margin-bottom:0}
+  em{font-style:italic;font-family:var(--serif);font-size:1.15em;color:var(--jade)}
+  b{color:var(--ink);font-weight:650}
+
+  /* THE FIGURES. Serif, gold, and big enough to be the whole message —
+     these are what he will actually take away from a thirty-second look. */
+  .big{
+    font:400 clamp(4rem,22vw,6.5rem)/.9 var(--serif);
+    color:var(--gold);letter-spacing:-.02em;
+  }
+  /* THE PRICE, INSIDE THE SENTENCE THAT SAYS WHAT IT IS. It was the giant gold
+     figure on this screen and read as the size of the business rather than the
+     size of a subscription — fifty dollars, once, in total. A price only means
+     anything with "a year" and "everyone" around it, so it stays in the line
+     and is coloured rather than enlarged. */
+  .price{color:var(--gold);white-space:nowrap}
+  /* The chart from the offer page, so the second sighting is a recognition
+     rather than a new claim. */
+  .growth{display:block;margin:2rem 0 0;overflow:visible;max-width:100%}
+  .big i{font-style:normal;font-size:.32em;color:var(--dim);margin-left:.15em}
+  /* A RANGE IS ONE ANSWER, NOT AN ANSWER AND A FOOTNOTE. Both ends the same
+     size and the same gold — dimming the second one would quietly say the
+     first is the real number, and it is the conservative end. */
+  .big.range{font-size:clamp(2.9rem,15vw,4.4rem);line-height:1}
+  .big.range span{font-size:.42em;color:var(--dim);margin:0 .28em;
+    font-family:var(--sans);font-style:italic}
+  .under{color:var(--dim);font-size:.95rem;margin:.7rem 0 0}
+
+  .pair{display:flex;gap:2.4rem;flex-wrap:wrap;margin:0 0 1.6rem}
+  .pair .n{font:400 clamp(3rem,15vw,4.2rem)/.9 var(--serif);color:var(--gold)}
+  .pair .n.quiet{color:var(--ink)}
+  .pair .l{color:var(--dim);font-size:.86rem;margin-top:.5rem;max-width:8rem}
+
+  /* THE THREE STEPS. Numbered in the margin rather than by the list's own
+     markers, so the number is the size of a number and the step is the size
+     of a sentence — a browser's default puts them the same weight and the
+     sequence stops reading as one. */
+  ol.how{list-style:none;margin:0 0 1.5rem;padding:0;counter-reset:how}
+  ol.how li{position:relative;padding:0 0 1.1rem 2.5rem;counter-increment:how}
+  ol.how li:last-child{padding-bottom:.4rem}
+  ol.how li::before{content:counter(how);position:absolute;left:0;top:-.1rem;
+    font:400 1.5rem/1 var(--serif);color:var(--gold)}
+  ol.how b{display:block;color:var(--ink);font-weight:650;font-size:1.02rem;
+    margin-bottom:.15rem}
+  ol.how span{display:block;color:var(--dim);font-size:.95rem;line-height:1.5}
+
+  /* The rooms. Not cards — a list of who is already standing in there. */
+  ul.rooms{list-style:none;margin:0 0 1.5rem;padding:0}
+  ul.rooms li{
+    display:flex;gap:.9rem;align-items:baseline;
+    padding:.85rem 0;border-bottom:1px solid var(--hair);
+  }
+  ul.rooms li:last-child{border-bottom:0}
+  ul.rooms b{font:400 1.35rem/1 var(--serif);color:var(--ink);flex:0 0 auto}
+  ul.rooms span{color:var(--dim);font-size:.92rem}
+
+  /* The ladder of money. Rows, because the point is the direction. */
+  .steps{margin:0 0 1.5rem}
+  .steps div{
+    display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+    padding:.95rem 0;border-bottom:1px solid var(--hair);
+  }
+  .steps div:last-child{border-bottom:0}
+  .steps .w{color:var(--dim);font-size:.95rem}
+  .steps .v{font:400 1.9rem/1 var(--serif);color:var(--gold);white-space:nowrap}
+  .steps .v.on{color:var(--jade)}
+
+  /* His share, and what would move it. Dashed, because the two steps have not
+     happened — the same distinction the offer page itself makes. */
+  .earn{
+    border:1px dashed var(--hair);border-radius:.9rem;
+    padding:1.1rem 1.2rem;margin:1.4rem 0 0;
+  }
+  .earn > p{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    font-weight:700;color:var(--gold);margin:0 0 .8rem}
+  .earn div{display:flex;gap:1rem;align-items:baseline;padding:.55rem 0}
+  .earn b{color:var(--gold);font-size:1.05rem;font-weight:700;
+    min-width:3.2rem;flex:0 0 auto;font-variant-numeric:tabular-nums}
+  .earn span{color:var(--ink);font-size:.95rem;line-height:1.45}
+
+  .terms{margin:1.4rem 0 0}
+  .terms div{
+    display:flex;justify-content:space-between;gap:1rem;
+    padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.95rem;
+  }
+  .terms div:last-child{border-bottom:0}
+  .terms .w{color:var(--dim)}
+  .terms .v{color:var(--ink);font-weight:650;text-align:right}
+
+  .go{
+    display:block;margin:1.6rem 0 0;padding:1.05rem 1.2rem;
+    background:var(--jade);color:#04120C;
+    border-radius:99px;text-align:center;text-decoration:none;
+    font-weight:700;font-size:1.02rem;
+  }
+  .fine{color:var(--dim);font-size:.85rem;margin-top:1rem;text-align:center}
+  /* THE WAY PAST THE BUTTON. Deliberately quieter than it and directly under
+     it: the point of putting a button here is that reading on is optional,
+     and an equally loud second option turns one decision into two. */
+  .on{display:block;margin:1.1rem 0 0;color:var(--dim);font-size:.9rem;
+    line-height:1.5;text-align:center;text-decoration:none}
+  .on:hover{color:var(--ink)}
+  /* The section it jumps to should not land under the tab bar of whatever
+     browser he is in. */
+  #more{scroll-margin-top:1rem}
+
+  .mark{display:flex;align-items:center;gap:.7rem;margin:0 0 2rem}
+  .mark i{
+    width:2.6rem;height:2.6rem;border-radius:.7rem;background:var(--raise);
+    border:1px solid var(--hair);
+    display:grid;place-items:center;font-style:normal;
+    font:400 1.3rem/1 var(--serif);color:var(--jade);
+  }
+  .mark span{font:400 1.25rem/1 var(--serif);color:var(--ink)}
+
+  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="deck">
+
+  <!-- THREE SCREENS, FOR SOMEBODY WITH NOT MUCH TIME.
+       Aiden's deck is eleven, and it should be: he is being asked for two
+       years. An advisor is being asked for the odd phone call, and a deck
+       that takes longer to read than the thing it asks for is a deck that
+       gets closed. The ask, the proof, the button.
+
+       NO PERCENTAGE ANYWHERE. One link serves every advisor, and what each of
+       them was offered belongs on their own page behind their own code. -->
+
+  <section>
+    <div class="mark"><i>换</i><span>The Exchange</span></div>
+    <p class="eyebrow gold">One minute</p>
+    <h1>Tom wants you advising The Exchange.</h1>
+    <p class="lead">Take the calls. Tell him when he is about to do something
+      stupid. That is the whole ask — no meetings, nothing to run.</p>
+    <p style="margin-top:1.4rem">There is a share in it. A real one: it vests
+      monthly from the day you sign, with no cliff, and your terms are on your
+      own offer page.</p>
+    <a class="go" href="https://crowdfundme.app/o">Open your offer →</a>
+    <a class="on" href="#what">or thirty seconds on what it is ↓</a>
+  </section>
+
+  <section id="what">
+    <p class="eyebrow">What it is</p>
+    <h2>The people you need in China already know each other.</h2>
+    <p class="lead">Getting into that circle takes years. Usually it takes a
+      person. <em>This is the room.</em></p>
+
+    <div class="pair" style="margin-top:1.6rem">
+      <div><div class="n">35</div><div class="l">waiting to get in</div></div>
+      <div><div class="n quiet">5</div><div class="l">inside</div></div>
+    </div>
+    <p>A queue of thirty-five before a pound of advertising. Nobody walks in —
+      a member vouches for you and their name stays on you. Film &amp; TV,
+      investing, raising, factories and buyers.</p>
+    <p class="lead" style="margin-top:1.2rem"><b>A company in Singapore inside
+      ninety days.</b> That is the next thing on the list, and the day a share
+      in this stops being a sentence.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">Your offer</p>
+    <h2>On a record neither of us can quietly change.</h2>
+    <p class="lead">The share, the schedule and the date go down the moment you
+      accept — signed in your own name, and stamped onto a public blockchain
+      once a month. Nothing is issued today and nothing is sold.</p>
+    <a class="go" href="https://crowdfundme.app/o">Open your offer →</a>
+    <p class="fine">Type the six-character code Tom sent you.<br>
+      It opens your offer and nobody else's.</p>
+  </section>
+
+</div>

@@ -21,7 +21,7 @@
  *   The name is kept between builds, so editing the deck does not break the
  *   link somebody was already sent.
  */
-import { readFile, writeFile, readdir } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import path from "node:path";
 
@@ -42,10 +42,28 @@ const CARD = {
 const src = await readFile(SRC, "utf8");
 const font = await readFile(path.join("cfm", "deck", "instrument.woff2"));
 
-// Keep the name a deck already has. A new one every build would break the link
-// in somebody's chat window every time a word changed.
-const had = (await readdir(OUT)).find((f) => f.startsWith("d-") && f.endsWith(".html"));
-const file = had || "d-" + randomBytes(8).toString("hex").slice(0, 12) + ".html";
+/* THE NAME A DECK ALREADY HAS, AND ONLY ITS OWN.
+ *
+ * A new name every build would break the link in somebody's chat window every
+ * time a word changed, so the name is kept. The first version of this kept
+ * "the existing d- file" — any of them — which was fine while there was one
+ * deck and silently overwrote Aiden's page the moment there were two.
+ *
+ * So the mapping is written down, in the repo, beside the decks: which deck
+ * owns which address. It is not a cache and it is not derivable — lose it and
+ * every link already sent points at a page that no longer gets rebuilt. */
+const MAP = path.join("cfm", "deck", "urls.json");
+let urls = {};
+try { urls = JSON.parse(await readFile(MAP, "utf8")); } catch { /* first run */ }
+if (!urls[name]) {
+  const taken = new Set(Object.values(urls));
+  let pick;
+  do { pick = "d-" + randomBytes(8).toString("hex").slice(0, 12) + ".html"; }
+  while (taken.has(pick));
+  urls[name] = pick;
+  await writeFile(MAP, JSON.stringify(urls, null, 2) + "\n", "utf8");
+}
+const file = urls[name];
 
 const title = (src.match(/<title>[\s\S]*?<\/title>/) || ["<title>Untitled</title>"])[0];
 const body = src.replace(/<link rel="stylesheet" href="https:\/\/fonts\.googleapis[^>]*>/g, "")
