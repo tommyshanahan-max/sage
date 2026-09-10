@@ -104,6 +104,34 @@
   .steps .v.quiet{color:var(--dim);font-size:1.3rem}
   .steps .v.on{color:var(--jade)}
 
+  /* SCENES FROM THE APP, drawn here rather than screenshotted.
+     A screenshot of a light-mode app dropped into a dark deck reads as a
+     picture of something else; these are the same screens in the deck's own
+     colours, so they belong to the page they are on. Small on purpose — they
+     are there to make one sentence concrete, not to be inspected. */
+  .screens{display:flex;gap:.8rem;margin:1.5rem 0 0}
+  .sc{flex:1;min-width:0;background:var(--raise);border:1px solid var(--hair);
+    border-radius:.9rem;padding:.6rem;display:flex;flex-direction:column;gap:.45rem}
+  .sc .face{aspect-ratio:1/.82;border-radius:.5rem;position:relative;overflow:hidden;
+    background:linear-gradient(158deg,#3B4A55,#141C21)}
+  .sc .face b{position:absolute;left:.4rem;bottom:.75rem;color:#fff;
+    font:400 .82rem/1 var(--serif)}
+  .sc .face i{position:absolute;left:.42rem;bottom:.3rem;font-style:normal;
+    font-size:.5rem;color:#9FB0BA}
+  .sc .said{font-size:.58rem;line-height:1.7;color:var(--ink);font-family:var(--serif)}
+  .sc .said em{font-style:normal;font-family:var(--sans);font-size:.85em;
+    font-weight:700;color:#04120C;background:var(--jade);
+    border-radius:99px;padding:.05rem .32rem}
+  .sc .btn{border-radius:99px;text-align:center;font-size:.55rem;font-weight:700;
+    padding:.34rem;background:var(--jade);color:#04120C}
+  .sc .btn.q{background:transparent;border:1px solid var(--hair);color:var(--dim)}
+  .sc .tag{font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;
+    font-weight:700;color:var(--gold)}
+  .sc .id{font:.52rem/1.4 ui-monospace,Menlo,monospace;color:var(--ink);
+    background:#0A100D;border:1px solid var(--hair);border-radius:.35rem;
+    padding:.24rem .3rem}
+  .caption{font-size:.82rem;color:var(--dim);margin:.8rem 0 0;text-align:center}
+
   .terms{margin:1.4rem 0 0}
   .terms div{display:flex;justify-content:space-between;gap:1rem;
     padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
@@ -161,9 +189,24 @@
          already knows what both halves mean. -->
     <h2>LinkedIn × Tinder.</h2>
     <p class="lead">You say one line — <b>I am a ___ looking for a ___</b> —
-      and the board matches the two halves.</p>
-    <p>Both sides have to want it before any contact is exchanged. Private,
-      invite only, a member vouches for you. 21 inside.</p>
+      and it finds the people who said the other half.</p>
+
+    <div class="screens">
+      <div class="sc">
+        <div class="face"><b>Mia</b><i>Agent · Shanghai</i></div>
+        <div class="said">I am an <em>Agent</em> looking for <em>a Performer</em></div>
+        <div class="btn">Make her an offer</div>
+      </div>
+      <div class="sc">
+        <span class="tag">✓ Offer accepted</span>
+        <div class="said" style="font-family:var(--sans);font-size:.55rem;color:var(--dim)">
+          One day, Shanghai — <b style="color:var(--ink)">¥6,400</b></div>
+        <div class="id">mia_chen_sh</div>
+        <div class="btn q">Open WeChat</div>
+      </div>
+    </div>
+
+    <p class="caption">Nobody's contact opens until both sides agree.</p>
   </section>
 
   <section>
@@ -208,15 +251,26 @@
   <section>
     <p class="eyebrow gold">If you want it</p>
     <!-- NOT "come in as an investor", which read as being asked to put money
-         into the project. The ask is to use the thing: a profile on the board
-         whose role is Investor, so the people raising come to him. -->
+         into the project. The ask is to use the thing: a profile whose role is
+         Investor, so the people raising come to him. And "the board" is gone
+         from every screen he reads — it is the word we use for it, not a word
+         he has ever met. -->
     <h2>Accept, then set up a profile.</h2>
-    <p class="lead">One line on the board — <b>I am an Investor looking for a
-      Founder</b> — and the people raising come to you.</p>
-    <p>That is the whole ask: be one of the first people using it.</p>
+
+    <div class="screens" style="max-width:11rem">
+      <div class="sc">
+        <span class="tag" style="color:var(--jade)">Your line</span>
+        <div class="said">I am an <em>Investor</em> looking for <em>a Founder</em></div>
+        <div class="btn">Put it up</div>
+      </div>
+    </div>
+
+    <p class="lead" style="margin-top:1.3rem">That is all it takes, and then the
+      people raising come to you.</p>
+    <p>The whole ask: be one of the first people using it.</p>
     <a class="go" href="https://crowdfundme.app/o">Open your offer →</a>
-    <p class="fine">Six-character code from Tom. The way into the board comes
-      straight after.</p>
+    <p class="fine">Six-character code from Tom. Your way in comes straight
+      after.</p>
   </section>
 
 </div>
