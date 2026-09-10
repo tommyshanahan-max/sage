@@ -344,6 +344,78 @@
     text-align:center;box-shadow:0 0 0 2px var(--paper)}
   .bar a{position:relative}
 
+  /* ---- the card shelf ---------------------------------------------------- */
+  .cardshead{padding:1.1rem 0 .2rem}
+  .cardshead h2{margin:0;font-family:var(--serif);font-weight:400;
+    font-size:1.5rem;line-height:1.2}
+  .cardshead p{margin:.25rem 0 0;font-size:.9rem;color:var(--muted)}
+
+  .cardsmine{margin:.9rem 0 0;padding:.75rem .85rem;background:var(--raise);
+    border:1px solid var(--hair);border-radius:.75rem;font-size:.9rem;
+    color:var(--ink-2);display:flex;gap:.6rem;align-items:baseline;
+    flex-wrap:wrap}
+  .cardsmine a{color:var(--accent);font-weight:650;text-decoration:none;
+    white-space:nowrap}
+
+  /* A CARD IS A CARD, NOT A LIST ROW. It is the thing somebody is imagining
+     putting in their pocket, and the reason to draw the empty one at all is
+     that the object has to feel real before the blank line means anything. */
+  .bcard{margin:.9rem 0 0;border:1px solid var(--line);border-radius:.9rem;
+    background:var(--card);box-shadow:var(--shadow);overflow:hidden}
+  .bcard .who{display:flex;gap:.75rem;align-items:center;padding:.85rem .9rem;
+    text-decoration:none;color:inherit}
+  .bcard .av{width:2.8rem;height:2.8rem;border-radius:50%;flex:0 0 auto;
+    background:var(--raise);color:var(--accent);font-family:var(--serif);
+    font-size:1.15rem;display:grid;place-items:center;overflow:hidden}
+  .bcard .av img{width:100%;height:100%;object-fit:cover;display:block}
+  .bcard .t{min-width:0}
+  .bcard .t b{display:block;font-family:var(--serif);font-weight:400;
+    font-size:1.15rem;line-height:1.2}
+  .bcard .t span{display:block;font-size:.85rem;color:var(--ink-2);
+    line-height:1.4;margin-top:.15rem}
+
+  /* margin:0 because something upstream puts 42px on a bare div in here, which
+     opened a band of empty white between the name and the contact line and
+     made every card look like it had lost something. Measured rather than
+     guessed at: .who ended at 534.6 and .foot began at 577.1. */
+  .bcard .who, .bcard .foot{margin:0}
+  .bcard .foot{padding:.75rem .9rem .85rem;border-top:1px solid var(--hair)}
+
+  /* GIVEN. The id, at a size somebody can read off a screen, next to the one
+     button they actually want. */
+  .bcard .got{display:flex;gap:.6rem;align-items:center}
+  .bcard .got code{flex:1;min-width:0;font-family:ui-monospace,Menlo,monospace;
+    font-size:.95rem;color:var(--ink);overflow-wrap:anywhere}
+  .bcard .got button{flex:0 0 auto;border:1px solid var(--accent);
+    background:none;color:var(--accent);border-radius:99px;
+    padding:.3rem .75rem;font-size:.8rem;font-weight:650}
+  .bcard .line{margin:.5rem 0 0;font-size:.88rem;color:var(--ink-2);
+    line-height:1.5}
+
+  /* NOT GIVEN. Dashed and empty rather than blurred: a blur is the grammar of
+     a paywall — it says the app is holding something back from you — and the
+     truth is simply that they have not handed it to anybody. The server never
+     sends it either, so this is an honest drawing of a field that is not
+     there rather than a field covered over. */
+  .bcard .slot{display:flex;gap:.7rem;align-items:center;
+    border:1px dashed var(--line);border-radius:.6rem;padding:.6rem .7rem;
+    background:var(--raise)}
+  .bcard .slot i{flex:0 0 auto;width:2.2rem;height:2.2rem;border-radius:.4rem;
+    border:1px dashed var(--line);display:grid;place-items:center;
+    color:var(--muted);font-style:normal;font-size:1rem}
+  .bcard .slot .st{min-width:0}
+  .bcard .slot .st b{display:block;font-size:.86rem;color:var(--ink);
+    font-weight:650;line-height:1.4}
+  .bcard .slot .st a{font-size:.82rem;color:var(--accent);font-weight:650;
+    text-decoration:none}
+
+  .cardsnone{margin:1.4rem 0 0;padding:1.2rem 1.1rem;background:var(--raise);
+    border:1px solid var(--hair);border-radius:.9rem;text-align:center}
+  .cardsnone p{margin:0 0 .5rem;color:var(--ink-2);font-size:.92rem;
+    line-height:1.6}
+  .cardsnone p:first-child{color:var(--ink);font-family:var(--serif);
+    font-size:1.15rem}
+
   /* Where you are now, at the top of the opened fold. Centred and set large:
      it is the payoff for opening, and the summary row above it is the version
      for when the fold is shut. */
@@ -1519,9 +1591,22 @@
         <span id="navbrowselabel">Browse</span>
         <i class="badge" id="navbrowsen" hidden></i>
       </a>
-      <a href="/feed" id="navfeed" aria-current="page">
+      <!-- CARDS TOOK THE FEED'S SLOT. The feed opens on "not yet" until members
+           are posting, and a bar with a tab that opens on an apology in it is
+           a bar with a wasted slot. Cards has the opposite property: the
+           moment anybody matches with you there is something on the shelf, and
+           a card with its contact line still blank is worth looking at.
+           The feed's tab is hidden rather than deleted — /feed#id is what a
+           shared post looks like, showView still names it, and showTranslate
+           still reads its aria-current. Same treatment as Messages below. -->
+      <a href="/feed" id="navfeed" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
         <span id="navfeedlabel">Feed</span>
+      </a>
+      <a href="/cards" id="navcards">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M3 10h18"/></svg>
+        <span id="navcardslabel">Cards</span>
+        <i class="badge" id="navcardsn" hidden></i>
       </a>
       <button class="new" id="fab" type="button">
         <i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></i>
@@ -1879,6 +1964,28 @@
   <div id="board"></div>
   <div class="none" id="none" hidden></div>
   </div><!-- /vfeed -->
+
+  <!-- THE SHELF. Everybody you have matched with, as a card each, with the
+       contact line either filled in or left empty. It was already computed and
+       already served by /api/matches; all that was missing was a screen to put
+       it on, because it lived in the notification tray showing two rows inside
+       a summary somebody had to open first. -->
+  <div id="vcards" hidden>
+    <div class="cardshead">
+      <h2 id="cardshead"></h2>
+      <p id="cardsn"></p>
+    </div>
+    <div id="cardsmine" class="cardsmine" hidden>
+      <span id="cardsminetxt"></span>
+      <a href="#" id="cardsminego"></a>
+    </div>
+    <div id="cardslist"></div>
+    <div id="cardsnone" class="cardsnone" hidden>
+      <p id="cardsnonehead"></p>
+      <p id="cardsnonewhy"></p>
+      <button class="feedbtn" type="button" id="cardsnonego"></button>
+    </div>
+  </div><!-- /vcards -->
 
   <p class="foot">
 <span id="foottext"></span><span id="contact" hidden></span>
@@ -3390,6 +3497,7 @@ function paintNav() {
   $("invite").textContent = T("site.invite");
   $("navbrowselabel").textContent = T("nav.browse");
   $("navfeedlabel").textContent = T("nav.feed");
+  $("navcardslabel").textContent = T("nav.cards");
   $("navnewlabel").textContent = T("nav.new");
   $("navmelabel").textContent = T("nav.profile");
   // Profile goes to your own page once you have one, and before that it opens
@@ -5062,6 +5170,16 @@ async function loadFollowers() {
  * the reader can tell which is which without being told.
  */
 let MATCHES = [];
+/* Whether I have a card of my own to hand anybody. /api/matches answers it in
+   the same request, so the shelf never has to ask a second time to find out
+   it cannot do anything. */
+let HAVECARD = false;
+/* Cards I have already looked at, so the tab's number counts what is new
+   rather than what exists. Its own key: board:sawmatches belongs to the daily
+   summary and counts a different thing. */
+let SAWCARDS = [];
+try { SAWCARDS = JSON.parse(localStorage.getItem("board:sawcards") || "[]"); }
+catch { /* a badge is never worth failing a page load over */ }
 
 async function loadMatches() {
   if (!device) return;
@@ -5069,8 +5187,18 @@ async function loadMatches() {
     const d = await fetch("/api/matches", { cache: "no-store",
       headers: { "x-board-device": device } }).then((r) => r.json());
     MATCHES = (d && d.matches) || [];
-  } catch { MATCHES = []; }
+    HAVECARD = Boolean(d && d.card);
+  } catch { MATCHES = []; HAVECARD = false; }
   drawMatches();
+  drawCards();
+  /* markCardsSeen, not just badgeCards. showView marks them when a tab is
+     tapped, but somebody who arrives straight at /cards — a reload, a
+     bookmark — runs showView before this request has answered, so there was
+     nothing to mark yet and the number sat there while they read the very
+     cards it was counting. markCardsSeen checks the view is on screen itself,
+     so calling it here is right in both cases and wrong in neither. */
+  markCardsSeen();
+  badgeCards();
   drawTray();
   drawProf();
 }
@@ -5084,38 +5212,166 @@ function matchLine(m) {
                         theirs: T("room." + first.theirs + ".s") });
 }
 
+/* THE TRAY'S COPY OF THIS LIST IS OFF, and the function is kept as the thing
+ * that keeps it off — the same treatment badgeFollowers got when the followers
+ * list moved. Matches now have a tab, and two lists of the same rows on two
+ * screens is how a reader learns to trust neither of them.
+ *
+ * loadMatches still runs and MATCHES is still filled: the daily summary reads
+ * it for its two-line digest, which is a different surface answering a
+ * different question ("what happened today") and is left alone. */
 function drawMatches() {
   const box = $("matches");
   const rule = $("matchrule");
-  fill(box);
-  if (!MATCHES.length) { box.hidden = true; rule.hidden = true; return; }
-  box.hidden = false; rule.hidden = false;
-  $("matchlabel").textContent = T("match.head0");
+  if (box) { fill(box); box.hidden = true; }
+  if (rule) rule.hidden = true;
+}
+
+/* One face, for a card or a row. Falls back to the initial when the photo is
+ * missing or fails, which is the same rule the deck and the followers list
+ * already follow. */
+function faceInto(av, handle, photo) {
+  if (photo) {
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/public-media?id=" + encodeURIComponent(photo), alt: "", loading: "lazy" });
+    img.addEventListener("error", () => { img.remove(); av.textContent = initial(handle); });
+    av.append(img);
+  } else {
+    av.textContent = initial(handle);
+  }
+  return av;
+}
+
+/* ---- the shelf -------------------------------------------------------------
+ *
+ * THE CARD IS DRAWN WHETHER OR NOT IT HAS ANYTHING ON IT. An empty shelf slot
+ * is the whole point: you can see there is a real person there, what is
+ * missing, and what would fill it — which is what makes somebody go and ask.
+ *
+ * The blank line names them, not us. "Mei has not given you her card yet" is
+ * true; "unlock this" would not be, because nothing is being withheld from you
+ * by the board — she simply has not handed it to anybody. The server agrees:
+ * pairState only ever attaches a card on the last line of its check, so an
+ * ungiven id is not in the page at all and cannot be read out of it.
+ */
+function drawCards() {
+  const list = $("cardslist");
+  if (!list) return;
+  fill(list);
+
+  $("cardshead").textContent = T("cards.head");
+  $("cardsn").textContent = MATCHES.length
+    ? T("cards.n", { n: MATCHES.length }) : "";
+
+  const none = $("cardsnone");
+  none.hidden = MATCHES.length > 0;
+  if (!MATCHES.length) {
+    $("cardsnonehead").textContent = T("cards.none");
+    $("cardsnonewhy").textContent = T("cards.noneWhy");
+    $("cardsnonego").textContent = T("cards.noneGo");
+  }
+
+  /* Told once, at the top, rather than on every card: without a card of your
+     own you cannot give one to anybody, and repeating that under six faces
+     would read as six problems instead of one. */
+  const mine = $("cardsmine");
+  mine.hidden = !MATCHES.length || HAVECARD;
+  if (!mine.hidden) {
+    $("cardsminetxt").textContent = T("cards.mineNone");
+    const go = $("cardsminego");
+    go.textContent = T("cards.mineGo");
+    if (typeof ME === "object" && ME && ME.handle) {
+      go.href = "/p/" + encodeURIComponent(ME.handle.toLowerCase());
+    }
+  }
 
   for (const m of MATCHES) {
-    const row = el("a", "folrow");
-    row.href = "/p/" + encodeURIComponent((m.handle || "").toLowerCase());
-    row.style.textDecoration = "none";
-    const av = el("span", "av");
-    if (m.photo) {
-      const img = Object.assign(document.createElement("img"),
-        { src: "/api/public-media?id=" + encodeURIComponent(m.photo), alt: "", loading: "lazy" });
-      img.addEventListener("error", () => { img.remove(); av.textContent = initial(m.handle); });
-      av.append(img);
+    const card = el("div", "bcard");
+
+    const who = el("a", "who");
+    who.href = "/p/" + encodeURIComponent((m.handle || "").toLowerCase());
+    who.append(faceInto(el("span", "av"), m.handle, m.photo));
+    const t = el("span", "t");
+    t.append(el("b", null, m.handle));
+    const why = matchLine(m);
+    if (why) t.append(el("span", null, why));
+    who.append(t);
+    card.append(who);
+
+    const foot = el("div", "foot");
+    if (m.card && m.card.wechat) {
+      const got = el("div", "got");
+      got.append(el("code", null, m.card.wechat));
+      const copy = el("button", null, T("cards.copy"));
+      copy.type = "button";
+      copy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(m.card.wechat);
+          copy.textContent = T("cards.copied");
+        } catch {
+          /* No clipboard permission, an insecure origin, or an older
+             WebView — the id is on the screen either way, and a button that
+             quietly did nothing would be worse than one that says so. */
+          copy.textContent = m.card.wechat;
+        }
+      });
+      got.append(copy);
+      foot.append(got);
+      if (m.card.line) foot.append(el("p", "line", m.card.line));
     } else {
-      av.textContent = initial(m.handle);
+      const slot = el("div", "slot");
+      /* No glyph. U+2337 was here as a "space for a card" mark and drew a
+         tofu box on the CJK fallback stack this app runs on, which is the
+         one place it must not: a missing-character box in the empty slot
+         reads as the page being broken rather than the card being blank.
+         An empty dashed square says the same thing and cannot fail. */
+      slot.append(el("i"));
+      const st = el("span", "st");
+      st.append(el("b", null, m.gave
+        ? T("card.waiting", { who: m.handle })
+        : T("cards.blank", { who: m.handle })));
+      const go = el("a", null, T("cards.blankGo"));
+      go.href = "/p/" + encodeURIComponent((m.handle || "").toLowerCase());
+      st.append(go);
+      slot.append(st);
+      foot.append(slot);
     }
-    const who = el("span", "who");
-    who.append(el("b", null, matchLine(m)));
-    // What is outstanding, in the row, so nobody has to open a page to find
-    // out whether the ball is with them.
-    const state = m.card ? T("card.theirs", { who: m.handle })
-      : m.gave ? T("card.waiting", { who: m.handle })
-      : "";
-    if (state) who.append(el("span", null, state));
-    row.append(av, who);
-    box.append(row);
+    card.append(foot);
+    list.append(card);
   }
+}
+
+/* The number on the tab: cards handed to you that you have not opened yet.
+ * With no push in the mainland this is the entire notification system, so it
+ * counts something that is genuinely new rather than the size of the shelf. */
+function badgeCards() {
+  const b = $("navcardsn");
+  if (!b) return;
+  const n = MATCHES.filter((m) => m.card && !SAWCARDS.includes(m.id)).length;
+  b.hidden = n < 1;
+  b.textContent = n ? String(n) : "";
+}
+
+/* SEEN MEANS LOOKED AT, NOT DRAWN.
+ *
+ * This lived inside drawCards, which runs on every load to fill a view that is
+ * usually hidden — so a card was marked as read while its owner was on Browse
+ * and the badge could never once appear. Found by opening the screen rather
+ * than by reading it: everything rendered correctly and the number simply was
+ * not there.
+ *
+ * So it is its own step, and showView is the only caller: the shelf has to be
+ * the thing on screen before anything on it counts as seen. */
+function markCardsSeen() {
+  if ($("vcards") && $("vcards").hidden) return;
+  let add = false;
+  for (const m of MATCHES) {
+    if (m.card && !SAWCARDS.includes(m.id)) { SAWCARDS.push(m.id); add = true; }
+  }
+  if (!add) return;
+  SAWCARDS = SAWCARDS.slice(-200);
+  try { localStorage.setItem("board:sawcards", JSON.stringify(SAWCARDS)); }
+  catch { /* a badge is never worth failing on */ }
 }
 
 function drawFollowers() {
@@ -5800,18 +6056,37 @@ function viewNow() {
    * THE HASH IS THE EXCEPTION, and it is the one that matters: a shared post
    * is /feed#id, which is an arrival WITH a destination. Tapping the tab is
    * not an arrival at all — that goes through showView and is honoured. */
+  /* /cards is honoured on arrival where /feed is not, and the difference is
+     the reason /feed is not: no home-screen icon in the world was installed
+     pointing at /cards, so an address bar reading /cards is somebody who
+     asked for it just now — a reload, a bookmark, a link — rather than a
+     four-year-old shortcut opening where the app used to live. */
+  if (location.pathname === "/cards" || location.pathname === "/cards/") return "cards";
   if (location.hash && location.hash.length > 1) return "feed";
   return "browse";
 }
 
+/* The three views and the address each one lives at. It was a boolean —
+   feed or not-feed — which had exactly the right shape for two views and none
+   at all for three: every line of showView had to name both halves, so adding
+   a third meant editing all of them and hoping none was missed. A map is
+   edited in one place. */
+const VIEWS = { browse: "/browse", feed: "/feed", cards: "/cards" };
+
 function showView(v, push) {
-  const feed = v === "feed";
-  $("vbrowse").hidden = feed;
-  $("vfeed").hidden = !feed;
-  $("navbrowse").setAttribute("aria-current", feed ? "false" : "page");
-  $("navfeed").setAttribute("aria-current", feed ? "page" : "false");
-  showTranslate(feed);
-  const want = feed ? "/feed" : "/browse";
+  if (!VIEWS[v]) v = "browse";
+  for (const k of Object.keys(VIEWS)) {
+    const box = $("v" + k);
+    if (box) box.hidden = k !== v;
+    const nav = $("nav" + k);
+    if (nav) nav.setAttribute("aria-current", k === v ? "page" : "false");
+  }
+  showTranslate(v === "feed");
+  /* Drawn on the way in rather than only when the data lands, so a tab tapped
+     before /api/matches has answered shows the shelf it already has instead of
+     an empty screen that fills in a second later. */
+  if (v === "cards") { drawCards(); markCardsSeen(); badgeCards(); }
+  const want = VIEWS[v];
   if (location.pathname !== want) {
     /* A TAP IS A NEW PLACE; AN ARRIVAL IS THE SAME PLACE, NAMED PROPERLY.
        Somebody whose icon opens /feed and lands on Browse should end up with
@@ -5845,6 +6120,16 @@ $("navbrowse").addEventListener("click", (e) => {
   e.preventDefault();
   VIEWCHOSE = true;
   showView("browse", true);
+});
+$("cardsnonego").addEventListener("click", () => {
+  VIEWCHOSE = true;
+  showView("browse", true);
+});
+$("navcards").addEventListener("click", (e) => {
+  if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+  e.preventDefault();
+  VIEWCHOSE = true;
+  showView("cards", true);
 });
 $("navfeed").addEventListener("click", (e) => {
   if (e.metaKey || e.ctrlKey || e.shiftKey) return;

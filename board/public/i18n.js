@@ -1345,6 +1345,7 @@ export const STRINGS = {
   // The arrow that just goes back, wherever back was.
   "nav.back":          ["Back", "返回"],
   "nav.feed":          ["Feed", "动态"],
+  "nav.cards":         ["Cards", "名片"],
   "nav.profile":       ["Profile", "我的"],
   "nav.new":           ["Post", "发布"],
   "bud.speaks":        ["Languages", "会说的语言"],
@@ -1707,6 +1708,30 @@ export const STRINGS = {
     "已发送。{who}还没有发他们的——如果发了，会出现在这里。",
   ],
   "card.theirs":       ["{who} gave you their card", "{who}把名片给了你"],
+
+  /* THE SHELF. The matches list came out of the notification tray, where it
+     showed two rows inside a summary somebody had to open, and became a tab
+     of its own. These are the strings that only exist because it is a screen
+     now rather than a line in a digest. */
+  "cards.head":        ["Your cards", "你的名片夹"],
+  "cards.n":           ["{n} people you have matched with",
+                        "你匹配到的 {n} 个人"],
+  "cards.none":        ["No cards yet.", "还没有名片。"],
+  "cards.noneWhy": [
+    "A card lands here when you and somebody else follow each other and want the same kind of thing. Nothing arrives on its own — go and look at who is here.",
+    "当你和某个人互相关注、而且想找的东西对得上时，这里就会多一张名片。名片不会自己出现，先去看看这里都有谁。"],
+  "cards.noneGo":      ["Look at who is here", "看看这里有谁"],
+  /* THE BLANK LINE. It names Mei rather than the app, because the app is not      withholding anything — she simply has not given it to anybody yet, and
+     "we are hiding this from you" is both untrue and the grammar of a
+     paywall. */
+  "cards.blank":       ["{who} has not given you their card yet",
+                        "{who}还没有把名片给你"],
+  "cards.blankGo":     ["Open their page", "打开他们的主页"],
+  "cards.copy":        ["Copy", "复制"],
+  "cards.copied":      ["Copied", "已复制"],
+  "cards.mineNone":    ["You have no card yet, so nobody can be given one.",
+                        "你还没有名片，所以也没法发给别人。"],
+  "cards.mineGo":      ["Make yours", "去填一张"],
   "card.theyAdded":    ["They added", "他们还写了"],
   "card.takeBack":     ["Take my card back", "收回我的名片"],
   "card.takeBackWhy": [

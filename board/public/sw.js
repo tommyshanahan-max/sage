@@ -38,13 +38,13 @@
 /* v4: the front of this place is /browse. A worker installed under v3 holds a
    shell whose first entry was /feed, and a home-screen icon added then still
    opens there. Bumping the name drops every older cache on activate. */
-const CACHE = "board-v4";
+const CACHE = "board-v5";
 
 // The shell: enough to open and be recognisable with no network. Deliberately
 // not the API — a cached /api/board is a cached set of somebody's posts, and
 // those go stale in minutes and may have been taken down since.
 const SHELL = [
-  "/browse", "/feed", "/buddies", "/type", "/site.css", "/i18n.js", "/live.js",
+  "/browse", "/feed", "/cards", "/buddies", "/type", "/site.css", "/i18n.js", "/live.js",
   "/favicon.png", "/icon-512.png",
 ];
 

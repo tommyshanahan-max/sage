@@ -1006,6 +1006,10 @@ app.get(["/level", "/level/"], (req, res, next) => page("level.html", req, res, 
 // posts are underneath it, so this address is a scroll position rather than a
 // page — and one copy of the feed rather than two.
 app.get(["/browse", "/browse/"], (req, res, next) => page("index.html", req, res, next));
+/* The card shelf. Same page as everything else — the view is chosen in the
+ * browser — but a real address, so it can be reloaded, bookmarked and put in
+ * the service worker's shell like the other two. */
+app.get(["/cards", "/cards/"], (req, res, next) => page("index.html", req, res, next));
 
 /* One person, at an address that can be sent to somebody.
  *
