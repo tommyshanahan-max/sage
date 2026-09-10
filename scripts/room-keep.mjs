@@ -30,9 +30,14 @@
  * written: the original name, the original way of reaching them, the original
  * date they asked. A second row would be the same person asking twice.
  *
- * Anybody with no row — added straight to the room, or from before the list
- * existed — is held and said so, because inventing a way to reach somebody is
- * worse than admitting there isn't one.
+ * Most people here never came through the list at all: they were invited
+ * directly by a member, so there is no row of theirs to turn back on. Those
+ * get a new row written, with the way to reach them taken from the contact
+ * card they filled in — the only contact this board holds.
+ *
+ * Anybody with no card either is held and named, because inventing a way to
+ * reach somebody is worse than admitting there isn't one. `make wait-add` puts
+ * them on by hand once you know how to reach them.
  */
 
 const [, , base, key, ...rest] = process.argv;
@@ -51,6 +56,7 @@ const head = { "x-admin-secret": key, "Content-Type": "application/json" };
    typed from memory into a terminal and "O'Brien" is not going to survive that
    twice the same way. */
 const flat = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+const pad = (v, n) => String(v ?? "").padEnd(n).slice(0, n);
 
 const want = arg("keep").split(",").map((s) => s.trim()).filter(Boolean);
 if (!want.length) {
@@ -102,8 +108,17 @@ const rowFor = (p) => byId.get(p.fromWait)
 
 const rest2 = people.filter((p) => !keepIds.has(p.handle));
 const toHold = rest2.filter((p) => p.state === "published");
-const toList = rest2.filter((p) => rowFor(p) && rowFor(p).done !== "");
-const noRow = rest2.filter((p) => !rowFor(p));
+/* Already on the list and open — nothing to do for them. */
+const onList = (p) => {
+  const w = rowFor(p);
+  return w && !w.done;
+};
+/* Their own row, turned back on. */
+const toList = rest2.filter((p) => rowFor(p) && rowFor(p).done === "in");
+/* No row, but a way to reach them — a new row. */
+const toAdd = rest2.filter((p) => !rowFor(p) && p.reach);
+/* No row and no card. Named, and left alone. */
+const noRow = rest2.filter((p) => !rowFor(p) && !p.reach);
 
 console.log("");
 console.log("  STAYING IN BROWSE");
@@ -137,13 +152,23 @@ if (toList.length) {
   }
 }
 
+if (toAdd.length) {
+  console.log("");
+  console.log("  ADDED TO THE LIST \u2014 " + toAdd.length +
+    "   (they came in on a member's invite, not off the list)");
+  for (const p of toAdd) {
+    console.log("    " + pad(p.handle, 24) + p.reach +
+      (p.state === "published" ? "" : "   (already out of Browse)"));
+  }
+}
+
 if (noRow.length) {
   console.log("");
   console.log("  OUT, BUT NOT ON THE LIST \u2014 " + noRow.length);
-  for (const p of noRow) console.log("    " + p.handle + "   \u2190 no waiting row to turn back on");
+  for (const p of noRow) console.log("    " + p.handle + "   \u2190 no way to reach them on file");
 }
 
-if (!toHold.length && !toList.length) {
+if (!toHold.length && !toList.length && !toAdd.length) {
   console.log("");
   console.log("  Nothing to do.");
 }
@@ -176,6 +201,18 @@ for (const p of toList) {
   });
   if (w.ok) { back++; console.log("  back on the list: " + p.handle); }
   else console.log("  FAILED to list " + p.handle + " (" + w.status + ")");
+}
+for (const p of toAdd) {
+  /* Their handle as the name, because it is what this board knows them as and
+     what you will recognise in the queue. The list deduplicates on the way of
+     reaching somebody, so running this twice does not write them twice. */
+  const w = await fetch(base + "/api/waiting/add", {
+    method: "POST", headers: head,
+    body: JSON.stringify({ name: p.handle, reach: p.reach,
+      why: "was in the room, moved back to the list" }),
+  });
+  if (w.ok) { back++; console.log("  added to the list: " + p.handle); }
+  else console.log("  FAILED to add " + p.handle + " (" + w.status + ")");
 }
 console.log("");
 console.log("  " + done + " taken out of Browse, " + back + " back on the list. " +

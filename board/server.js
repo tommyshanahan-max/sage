@@ -3921,6 +3921,18 @@ app.get("/api/public", admin, async (req, res) => {
      Built once; `who` on an invite is the wait row's name as it stood the
      moment it was handed over. */
   const spent = new Map(board.invites.filter((v) => v.usedBy).map((v) => [v.usedBy, v]));
+  /* HOW TO REACH THEM, resolved the same way and for the same reason.
+     A card is keyed by the device that wrote it, which is the same hash the
+     person carries — so a person who filled one in has a WeChat id or a line
+     of their own here. It is the only contact this board holds, and a waiting
+     row cannot be written without one. Admin-only route, same as the waiting
+     list it feeds. */
+  const cards = new Map((board.cards || []).map((c) => [c.by, c]));
+  const reachOf = (q) => {
+    const c = q.by ? cards.get(q.by) : null;
+    if (!c) return "";
+    return c.wechat ? "wechat " + c.wechat : String(c.line || "").trim();
+  };
   const byName = new Map(board.waits.map((w) => [String(w.name).toLowerCase(), w]));
   const waitOf = (q) => {
     if (!q.by) return null;
@@ -3971,6 +3983,7 @@ app.get("/api/public", admin, async (req, res) => {
          business leaving the box. */
       fromWait: waitOf(q) ? waitOf(q).id : "",
       fromWaitName: waitOf(q) ? waitOf(q).name : "",
+      reach: reachOf(q),
     })),
   });
 });
