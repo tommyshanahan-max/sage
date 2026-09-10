@@ -1796,15 +1796,13 @@ export const STRINGS = {
   "brw.inside":        ["{n} people are in.", "里面有 {n} 个人。"],
   /* The queue, as a list rather than a number — see /api/queue. Only somebody
      already in ever sees these, and never how to reach anybody. */
-  /* THE CARD ABOVE THE LIST. Shut, this is all there is of it, so it reads
-     as: a number in the mark, brw.qh as the eyebrow, the first few names, and
-     a line saying either that the queue is longer than the list or what a
-     member can do about it. Names are the reason anybody opens this. */
-  "brw.qh":            ["Waiting to get in", "在等着进来"],
-  // The comma between names. English uses its own; Chinese uses the one for
-  // lists of nouns, which is not the same character as the one in a sentence.
-  "brw.qjoin":         [", ", "、"],
-  "brw.qplus":         [" and {n} more", " 等 {n} 人"],
+  /* THE HEAD OF THE LIST, and the list is under it either way now. It led
+     with the first three names while it was a shut button that had to be
+     worth opening. Open by default, the rows do that job themselves, so the
+     head says the thing nobody should have to work out: these people are
+     OUTSIDE, and there is something a member can do about it. */
+  "brw.qlab":          ["The waiting list", "等候名单"],
+  "brw.qh":            ["{n} people want in", "{n} 个人想进来"],
   "brw.qwhy":          ["Vouch for somebody and they move up.",
                         "帮谁说句话，他就往前挪一位。"],
   "brw.qof":           ["{n} on the list. These are the ones who agreed to be shown.",

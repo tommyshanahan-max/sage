@@ -1358,9 +1358,8 @@
   .queue{margin:1.6rem 0 1.2rem;background:var(--raise);
     border:1px solid var(--line);border-radius:1.1rem;box-shadow:var(--shadow);
     overflow:hidden}
-  .qtoggle{display:flex;width:100%;align-items:center;gap:.75rem;background:none;
-    border:0;padding:.95rem 1.05rem;font:inherit;color:var(--ink);
-    cursor:pointer;text-align:left}
+  .qtoggle{display:flex;width:100%;align-items:center;gap:.75rem;
+    padding:.95rem 1.05rem .8rem;color:var(--ink);text-align:left}
   /* The number, in the accent circle, at the size of a fact. */
   .qmark{width:2rem;height:2rem;border-radius:50%;flex:0 0 auto;font-style:normal;
     background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;
@@ -1376,10 +1375,7 @@
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .qtext span{display:block;font-size:.86rem;color:var(--muted);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .qtoggle .qcar2{flex:0 0 auto;width:.55rem;height:.55rem;
-    border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);
-    transform:rotate(45deg);margin:-.2rem .2rem 0 0;transition:transform .18s ease}
-  .qtoggle[aria-expanded="true"] .qcar2{transform:rotate(-135deg);margin-top:.2rem}
+  /* The chevron went with the button. Nothing here opens any more. */
   #queuelist{padding:0 1.05rem .5rem}
   /* The initial rings sat on --raise, and so does the card now — so they
      disappeared into it. On the card they take the paper behind it. */
@@ -1719,10 +1715,16 @@
     </div>
   </section>
 
-  <!-- Browse first, the feed underneath.
-       This used to be its own page at /browse. Two tabs now point at the two
-       ends of one page, because the deck runs out after a handful of people
-       and the thing to do when it does is read what everybody said. -->
+  <!-- TWO TABS, TWO VIEWS — and for a while they were two ends of one long
+       page instead, which is how Browse ended up being: a deck, then the
+       waiting list, then an unbuilt thing asking for a vote, then everybody's
+       posts. A tab bar whose buttons scroll is a tab bar that never lets you
+       finish anything: there is no bottom of Browse, so nothing on it ever
+       reads as the end of a task.
+       They are separate now. Browse is people; the Feed is words; the bar
+       switches between them and the addresses stay real, so /browse and
+       /feed are still two places you can send somebody. See showView. -->
+  <div id="vbrowse">
   <div class="rule"><span id="brwlabel">Browse students</span><i></i></div>
   <!-- The affordance the profile block used to carry: a missing face with a +
        on it. One row rather than the four hundred pixels it cost before, and
@@ -1769,12 +1771,19 @@
        can recognise a name and vouch for them. Never how to reach anybody —
        that is on the row for us, not for the room. -->
   <section class="queue" id="queue" hidden>
-    <button class="qtoggle" type="button" id="queueh" aria-expanded="false"
-      aria-controls="queuelist"></button>
-    <div id="queuelist" hidden></div>
+    <!-- NOT A BUTTON ANY MORE. It was shut by default and said how many were
+         behind it, on the reasoning that thirty-five rows is most of a screen.
+         That reasoning was about a page which also carried the whole feed
+         underneath; Browse ends here now, so there is nothing for the list to
+         be in the way of — and a list nobody opens is a list nobody reads. -->
+    <div class="qtoggle" id="queueh"></div>
+    <div id="queuelist"></div>
   </section>
 
 
+  </div><!-- /vbrowse -->
+
+  <div id="vfeed" hidden>
   <!-- Who started following you used to sit here, under the deck. It is in the
        notifications tray at the top of the page now, with the card of the day,
        because both are things addressed to this person and two trays for that
@@ -1817,6 +1826,7 @@
 
   <div id="board"></div>
   <div class="none" id="none" hidden></div>
+  </div><!-- /vfeed -->
 
   <p class="foot">
 <span id="foottext"></span><span id="contact" hidden></span>
@@ -3454,10 +3464,11 @@ async function drawTutor() {
   typ.dataset.test = "1";
   OFFERS.push(lvl, typ);
 
-  const v = vote("tut.compare", "tut.compareWhat", "compare");
-  v.append(el("p", "honest", T("tut.honest")));
-  v.dataset.rank = "5";
-  OFFERS.push(v);
+  /* "Compare yourself with a friend" was here — an unbuilt thing with a
+     button that only counted the press. It was honest about that, and it was
+     still the largest block on the page, sitting between the waiting list and
+     the posts, asking a member to vote on something instead of doing
+     something. The votes it collected are in the file; the card is gone. */
   drawRot();
   drawTests();
 }
@@ -5264,16 +5275,9 @@ const atdoor = (n) => T(n === 1 ? "brw.atdoor1" : "brw.atdoor", { n });
  * place that wants it, it is members-only on the server, and a 401 or 403 is
  * the ordinary answer for anybody who is not one — so a failure here leaves
  * the section hidden and says nothing. */
-let queueWired = false;
 async function drawQueue() {
   const box = $("queue"), list = $("queuelist");
   if (!box) return;
-  if (!queueWired) {
-    queueWired = true;
-    $("queueh").addEventListener("click", () => {
-      setQueueOpen($("queuelist").hidden);
-    });
-  }
   let d = null;
   try {
     const r = await fetch("/api/queue");
@@ -5293,22 +5297,24 @@ async function drawQueue() {
      The count is what is BEHIND the button — the people who agreed to be
      listed — and when the queue is longer it says so, rather than letting the
      two numbers on this screen quietly disagree. */
+  /* THE HEAD SAYS WHAT THE LIST IS, because the list is under it either way.
+     It used to lead with names, which was the right thing when it was a shut
+     button somebody had to be persuaded to open — a member scrolling past
+     "3 waiting" opens nothing and a member who reads three names opens it.
+     Open by default, that job is done by the rows themselves, and the head
+     goes back to the one thing nobody should have to work out: these people
+     are OUTSIDE, and this is what a member can do about it. */
   const n = d.rows.length;
   fill($("queueh"));
   const mark = el("i", "qmark", String(n));
   if (n > 99) mark.classList.add("wide");
   const text = el("span", "qtext");
-  text.append(el("b", null, T("brw.qh")));
-  /* The names, in queue order, as many as fit on one line. Never the reason
-     they gave — that is on the row inside, for somebody who opened it. */
-  const some = d.rows.slice(0, 3).map((w) => w.name).filter(Boolean);
-  text.append(el("em", null, n
-    ? (some.join(T("brw.qjoin")) + (n > some.length ? T("brw.qplus", { n: n - some.length }) : ""))
-    : T("brw.qnone")));
+  text.append(el("b", null, T("brw.qlab")));
+  text.append(el("em", null, n ? T("brw.qh", { n }) : T("brw.qnone")));
   text.append(el("span", null, Number(d.waiting) > n
     ? T("brw.qof", { n: d.waiting })
     : T("brw.qwhy")));
-  $("queueh").append(mark, text, el("i", "qcar2"));
+  $("queueh").append(mark, text);
   fill(list);
   if (!d.rows.length) {
     list.append(el("p", "qnone", T("brw.qnone")));
@@ -5316,17 +5322,6 @@ async function drawQueue() {
     for (const w of d.rows) list.append(qRow(w));
   }
   box.hidden = false;
-  /* Shut by default, and it stays however this reader last left it — somebody
-     who opens it every day should not have to open it every day. */
-  let open = false;
-  try { open = localStorage.getItem("board:queue") === "1"; } catch {}
-  setQueueOpen(open);
-}
-
-function setQueueOpen(open) {
-  $("queuelist").hidden = !open;
-  $("queueh").setAttribute("aria-expanded", open ? "true" : "false");
-  try { localStorage.setItem("board:queue", open ? "1" : "0"); } catch {}
 }
 
 function qRow(w) {
@@ -5457,8 +5452,9 @@ function doorGo(words) {
   b.append(el("span", "doorcar", "\u203A"));
   b.addEventListener("click", () => {
     const box = $("queue");
+    // Nothing to open any more — the list is always open — so this just
+    // takes them down to it.
     if (!box || box.hidden) return;
-    setQueueOpen(true);
     box.scrollIntoView({ behavior: "smooth", block: "start" });
   });
   return b;
@@ -5661,19 +5657,46 @@ document.addEventListener("keydown", (e) => {
   nextPerson();
 });
 
-/* Two tabs, one page.
+/* TWO TABS, TWO VIEWS.
  *
- * Browse and Feed are now the top and the middle of the same document, so the
- * buttons scroll rather than navigate — and which one is lit follows where you
- * actually are, because a bar that says Browse while you are reading posts is
- * worse than no bar. The hrefs stay real: without JavaScript, or on a middle
- * click, they still go somewhere. */
-function markNav() {
-  const onFeed = $("posts").getBoundingClientRect().top < window.innerHeight * 0.45;
-  $("navbrowse").setAttribute("aria-current", onFeed ? "false" : "page");
-  $("navfeed").setAttribute("aria-current", onFeed ? "page" : "false");
-  showTranslate(onFeed);
+ * They were the two ends of one long document and the buttons scrolled
+ * between them. That made Browse endless: a deck, the waiting list, then
+ * everybody's posts running on underneath, with no point at which a member
+ * had finished looking at people. A tab bar whose buttons scroll is not a tab
+ * bar, it is a table of contents.
+ *
+ * One of the two is shown at a time now. The addresses stay real — /browse
+ * and /feed are separate routes on the server and both serve this file — so a
+ * link to either still lands in the right place, and history.pushState keeps
+ * the back button meaning what it looks like it means.
+ *
+ * A HASH ALWAYS WINS. Shared posts are /feed#<id>, and somebody following one
+ * has to land on the posts whatever tab they last had open.
+ */
+function viewNow() {
+  if (location.hash && location.hash.length > 1) return "feed";
+  return location.pathname.startsWith("/feed") ? "feed" : "browse";
 }
+
+function showView(v, push) {
+  const feed = v === "feed";
+  $("vbrowse").hidden = feed;
+  $("vfeed").hidden = !feed;
+  $("navbrowse").setAttribute("aria-current", feed ? "false" : "page");
+  $("navfeed").setAttribute("aria-current", feed ? "page" : "false");
+  showTranslate(feed);
+  if (push && location.pathname !== (feed ? "/feed" : "/browse")) {
+    try { history.pushState({ v }, "", feed ? "/feed" : "/browse"); } catch { /* fine */ }
+  }
+  /* Switching a tab is arriving somewhere, and arriving somewhere means the
+     top of it. Without this, a reader deep in the posts taps Browse and finds
+     the deck already scrolled halfway down. */
+  if (push) window.scrollTo(0, 0);
+}
+
+/* markNav was here. It watched the scroll position to decide which tab was
+   lit, because the two views were one page and the answer changed as you
+   moved. Now the view decides, and showView says so directly. */
 
 /* The translate button belongs to the words, not to the faces.
  *
@@ -5687,23 +5710,17 @@ function showTranslate(onFeed) {
 $("navbrowse").addEventListener("click", (e) => {
   if (e.metaKey || e.ctrlKey || e.shiftKey) return;
   e.preventDefault();
-  // The top, which is what this tab has always done. It used to jump to the
-  // followers list when it was carrying a count; that list is behind the bell
-  // now, and the bell is at the top anyway.
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  showView("browse", true);
 });
 $("navfeed").addEventListener("click", (e) => {
   if (e.metaKey || e.ctrlKey || e.shiftKey) return;
   e.preventDefault();
-  $("posts").scrollIntoView({ behavior: "smooth", block: "start" });
+  showView("feed", true);
 });
-let navTick = false;
-window.addEventListener("scroll", () => {
-  if (navTick) return;
-  navTick = true;
-  requestAnimationFrame(() => { navTick = false; markNav(); });
-}, { passive: true });
-markNav();
+// Back and forward mean the other tab now, which is what they look like they
+// mean once the two are separate places.
+window.addEventListener("popstate", () => showView(viewNow(), false));
+showView(viewNow(), false);
 
 function repaint() {
   const y = window.scrollY;
