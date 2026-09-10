@@ -3095,6 +3095,47 @@ app.post("/api/offer", express.json({ limit: "8kb" }), gate, async (req, res) =>
   res.json(out);
 });
 
+/* THE SAME THING FROM THE BOX.
+ *
+ * The route above needs the sender's device hash, which lives in one browser's
+ * localStorage and which the person running this server has no way to type. So
+ * the operator's version takes a handle instead and looks the member up — the
+ * offer is still from a named person with a page, because an offer from nobody
+ * is not something anybody should be able to make.
+ *
+ * `admin` rather than `gate`: this is the key the box already holds, and it is
+ * how every other operator route on this server is authenticated. */
+app.post("/api/admin/offer", admin, express.json({ limit: "8kb" }), async (req, res) => {
+  const from = String(req.body?.from || "").trim().toLowerCase();
+  if (!from) return res.status(400).json({ error: "from" });
+  const out = await change((board) => {
+    const q = board.people.find((x) => x.state === "published"
+      && String(x.handle || "").toLowerCase() === from);
+    if (!q) return { error: "nobody" };
+    let code;
+    do { code = store.newCode(); }
+    while (board.offers.some((o) => o.code === code) || board.invites.some((v) => v.code === code));
+    const row = store.cleanOffer({ ...req.body, code, by: q.by, at: new Date().toISOString() });
+    if (!row) return { error: "empty" };
+    board.offers.push(row);
+    return { code: row.code, from: q.handle };
+  });
+  if (out?.error) return res.status(out.error === "nobody" ? 404 : 400).json(out);
+  res.status(201).json(out);
+});
+
+/** Every offer and what became of it. For the person who sent them. */
+app.get("/api/admin/offer", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  const name = (by) => (board.people.find((q) => q.by === by) || {}).handle || "";
+  res.json({
+    offers: board.offers.map((o) => ({
+      code: o.code, who: o.who, from: name(o.by), give: o.give, money: o.money,
+      at: o.at, takenBy: o.name, takenAt: o.tookAt, off: o.off,
+    })),
+  });
+});
+
 /** Read one. No gate, on purpose — this is the whole point of the thing. */
 app.get("/api/offer", async (req, res) => {
   const code = store.cleanCode(req.query?.code);
