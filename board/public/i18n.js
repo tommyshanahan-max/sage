@@ -71,9 +71,15 @@ export const STRINGS = {
      yet is one people find out about the hard way, so this says the part that
      is true at eight people and at eighty: reports are read, two hide a post,
      anything can come down. See TEST MODE in server.js. */
+  /* THE FOOTER WAS THE FINE PRINT, ALL OF IT — three sentences about reports,
+     the device number and hiding people, set in grey at the bottom of every
+     screen. Every word true and none of it read, because a paragraph nobody
+     opened is not a disclosure, it is a paragraph. It is on /privacy now,
+     which is a page somebody goes to on purpose, and this is one line and a
+     way there. */
   "board.foot": [
-    "A person reads every report, two of them hide a post until somebody has, and anything here can be taken down. Nothing is kept about you but a random number your browser made up, hashed before it is written down — enough to take your own post back, and nothing else. Anyone you hide is hidden on this phone only, and forgotten if you clear your browsing data.",
-    "每一条举报都由人来看，两条举报就会先把内容隐藏起来等人处理，这里的任何内容都可以撤下。我们不保存关于你的任何信息，只有你的浏览器随机生成的一串数字，写入前还会先做哈希处理——刚好够你撤回自己发的内容，仅此而已。你屏蔽的人只在这台手机上被隐藏，清除浏览数据后就会忘记。",
+    "A person reads every report, and anything here can be taken down.",
+    "每一条举报都由人来看，这里的任何内容都可以撤下。",
   ],
   "board.contact":     ["Something wrong that a report cannot cover? ",
                         "有举报解决不了的问题？"],
@@ -261,6 +267,9 @@ export const STRINGS = {
     "No web fonts, no CDN, no third-party script or pixel. Everything is served from one machine, because a page that waits on something unreachable from the mainland is a page that does not load.",
     "没有网络字体，没有 CDN，没有第三方脚本或统计代码。全部由一台机器提供，因为一个要等国内访问不到的东西的页面，就是一个打不开的页面。",
   ],
+  // The way to the fine print, now that it is not standing in the middle of
+  // Browse. See the note where .psafety used to be.
+  "site.privacy":      ["What is kept about you", "关于你的信息我们留了什么"],
   "site.footWrong":    ["Something wrong?", "发现问题？"],
   // The way in for the people who run this. Public on purpose: the password is
   // the gate, and a link nobody can find is a link its own team has to be told
@@ -1020,6 +1029,22 @@ export const STRINGS = {
   "pv.pwait3": [
     "Everybody who asked to join before this changed answered a different question — one that promised no member would ever see their name. Nothing about them is shown to anybody, and that does not expire. The number of people waiting is still only ever a number, and only once enough people are waiting that it cannot point at anybody.",
     "在这条改动之前申请的人，当时回答的是另一个问题——那个版本承诺过任何成员都不会看到他们的名字。关于他们的任何东西都不会给任何人看，而且这一点不会过期。等候人数依然只是一个数字，而且要等到人数多到这个数字指不到任何具体的人时才会出现。",
+  ],
+  /* WHAT NOBODY HERE WILL ASK YOU FOR. This lived under the deck on Browse
+     as four lines of fine print, between the faces and the waiting list. True
+     and worth saying once — and standing in the middle of the screen people
+     came to look at people, which is the wrong place to make a promise about
+     safety. It belongs here, where somebody who wants to know what is kept
+     about them comes to look. */
+  "pv.hsafe":          ["What nobody here will ask you for",
+                        "这里没有人会向你要的东西"],
+  "pv.psafe1": [
+    "Nothing here needs your phone number or your documents, and nobody should be asking you for them. A WeChat id is only ever swapped by two people who each chose to. You never have to meet anyone to use this.",
+    "这里不需要你的电话或者证件，也不该有人向你要。微信号只在两个人都主动选择的情况下才会交换。你完全不用见面就能用这个应用。",
+  ],
+  "pv.psafe2": [
+    "If somebody does ask, that is worth reporting — a person reads every report, and anything here can be taken down.",
+    "如果真有人问你要，那值得举报——每一条举报都有人看，这里的任何内容都可以撤下。",
   ],
 
   /* THE TWO FIELDS THAT ARE THE EXCEPTION TO THE FILTER, said next to it
@@ -1801,6 +1826,18 @@ export const STRINGS = {
      worth opening. Open by default, the rows do that job themselves, so the
      head says the thing nobody should have to work out: these people are
      OUTSIDE, and there is something a member can do about it. */
+  /* THE FEED, BEFORE THERE IS ONE. Not an empty state — the feed is full of
+     rows nobody in the room wrote, and showing those is worse than showing
+     nothing. See drawSoon. */
+  "soon.lab":          ["The feed", "动态"],
+  "soon.head":         ["Not open yet.", "还没开放。"],
+  "soon.say": [
+    "This is where members talk to each other. It opens the day somebody here posts — until then there is nothing worth reading, and a busy-looking page would only be the board talking to itself.",
+    "这里是会员之间说话的地方。等有人发第一条，它就开了——在那之前没什么好看的，硬撑出来的热闹只是自说自话。",
+  ],
+  // The comma between two roles on the shut row. English uses its own;
+  // Chinese uses the one for lists of nouns.
+  "brw.qjoin":         [", ", "、"],
   "brw.qlab":          ["The waiting list", "等候名单"],
   "brw.qh":            ["{n} people want in", "{n} 个人想进来"],
   "brw.qwhy":          ["Vouch for somebody and they move up.",

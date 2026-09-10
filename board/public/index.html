@@ -29,7 +29,7 @@
 <meta property="og:image" content="{{ORIGIN}}/share.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:url" content="{{ORIGIN}}/feed">
+<meta property="og:url" content="{{ORIGIN}}/browse">
 <!-- WeChat on iOS caches aggressively against the URL, and a board is the one
      thing that must never be a day old. -->
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -253,6 +253,24 @@
      than inside a form, so it needs air on both sides and a line to say the
      picking landed. */
   .saysay{margin:1.4rem 0 0}
+  /* THE SHUT ROW. Deliberately not a card: a second bordered box between the
+     deck and the waiting list is a third thing to read on a screen that has
+     two. Just the icon, the sentence in the reader's own words, and a caret. */
+  .sayhead{display:flex;width:100%;align-items:center;gap:.7rem;
+    background:none;border:0;padding:.55rem 0;font:inherit;color:var(--ink);
+    text-align:left;cursor:pointer}
+  .sayhead .sayicon{flex:0 0 auto;margin:0}
+  .sayhead .saynow{flex:1 1 auto;min-width:0;font-size:.95rem;color:var(--ink-2);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sayhead .saynow b{color:var(--ink);font-weight:650}
+  .sayhead .saycar{flex:0 0 auto;width:.5rem;height:.5rem;
+    border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);
+    transform:rotate(45deg);margin:-.18rem .2rem 0 0;transition:transform .18s ease}
+  .sayhead[aria-expanded="true"] .saycar{transform:rotate(-135deg);margin-top:.18rem}
+  /* Open, the card loses its own icon — the row above it is already wearing
+     one, and two of the same mark on one control is a control explaining
+     itself twice. */
+  #saybody .says .sayicon{display:none}
   .saysaid{margin:.4rem 0 0;font-size:.82rem;color:var(--muted)}
   .saysaid.bad{color:var(--t5)}
 
@@ -878,6 +896,15 @@
   #profbody > div:last-child{margin-bottom:0}
 
   /* ---- one slot, rotating -------------------------------------------------- */
+  /* Not an error and not an empty state — a note about what is not open yet.
+     Roomy, because it is the whole tab. */
+  .soon{margin:2rem 0 0;padding:2.2rem 1.2rem 2.4rem;text-align:center}
+  .soon .eyebrow{display:block;font-size:.7rem;letter-spacing:.16em;
+    text-transform:uppercase;font-weight:700;color:var(--accent);margin:0 0 .8rem}
+  .soon h2{margin:0 0 .8rem;font-family:var(--serif);font-weight:400;
+    font-size:1.5rem;line-height:1.2;color:var(--ink)}
+  .soon p{margin:0;color:var(--muted);font-size:.95rem;line-height:1.6;
+    max-width:22rem;margin-inline:auto}
   .rotbar{position:relative;margin:0 0 1.3rem}
   .rotbar .opt{margin:0}
   /* THE TWO TESTS, IN THE TRAY. Stacked rather than rotated: there are two of
@@ -1455,8 +1482,8 @@
      as a person, because it is asking you to become one. */
   .pc.turn .noshot{background:linear-gradient(160deg,var(--accent),var(--t6));
     font-size:6rem}
-  .psafety{margin:.5rem 0 1.9rem;text-align:center;font-size:.78rem;line-height:1.5;
-    color:var(--muted)}
+  /* .psafety is gone — the safety note lives on /privacy now. */
+  .footpriv{color:var(--muted);text-decoration:underline;text-underline-offset:.2em}
   .bnone{margin:0 0 1.9rem;padding:1.6rem 1.1rem;text-align:center;color:var(--muted);
     background:var(--raise);border:1px solid var(--line);border-radius:1rem}
   .bnone b{display:block;font-family:var(--serif);font-weight:400;font-size:1.15rem;
@@ -1740,7 +1767,11 @@
   <div class="deck" id="deck"></div>
   <div class="pacts" id="pacts" hidden></div>
   <p class="pcount" id="pcount"></p>
-  <p class="psafety" id="psafety"></p>
+  <!-- The safety paragraph was here, under the deck: four lines of fine print
+       between the faces and the waiting list, on the screen people came to
+       look at people. It is true and it is worth saying once — so it is on
+       /privacy, where somebody who wants it can find it, and linked from the
+       footer of every page rather than standing in the middle of one. -->
   <div class="bnone" id="bnone" hidden></div>
 
   <!-- THE SENTENCE, AND IT IS THE WHOLE QUESTION.
@@ -1761,9 +1792,18 @@
        time — see saveSay. Up to three, and the second and third arrive only
        when somebody asks for them. -->
   <section class="saysay" id="saysay" hidden>
-    <div class="says" id="mesays"></div>
-    <button class="saymore" type="button" id="mesaymore"></button>
-    <p class="saysaid" id="saysaid" hidden></p>
+    <!-- SHUT, IT IS THE ICON AND THE SENTENCE. The card was a permanent form
+         sitting between the people who are in and the people waiting — two
+         dropdowns and a save line, open all the time, for a thing somebody
+         changes about twice a year. Closed it is one row: the sliders, what
+         they currently say, and a caret. Tapping it opens the card. -->
+    <button class="sayhead" type="button" id="sayhead" aria-expanded="false"
+      aria-controls="saybody"></button>
+    <div id="saybody" hidden>
+      <div class="says" id="mesays"></div>
+      <button class="saymore" type="button" id="mesaymore"></button>
+      <p class="saysaid" id="saysaid" hidden></p>
+    </div>
   </section>
 
   <!-- AND THE QUEUE ITSELF, under the people who are already in.
@@ -1784,6 +1824,18 @@
   </div><!-- /vbrowse -->
 
   <div id="vfeed" hidden>
+  <!-- THE FEED, BEFORE THERE IS ONE.
+       It is not empty — there are seeded posts, the board announcing that
+       somebody joined, cards put up from the box. All real rows, none of them
+       a member with something to say, and a feed that looks busy while the
+       room is silent is the one thing a member reads as "nobody is here".
+       So it says so, until somebody with a page posts something. See
+       drawSoon. -->
+  <section class="soon" id="soon" hidden>
+    <p class="eyebrow" id="soonlab"></p>
+    <h2 id="soonhead"></h2>
+    <p id="soonsay"></p>
+  </section>
   <!-- Who started following you used to sit here, under the deck. It is in the
        notifications tray at the top of the page now, with the card of the day,
        because both are things addressed to this person and two trays for that
@@ -2205,6 +2257,10 @@ try {
 } catch { /* private window: it still works, it just forgets */ }
 
 let posts = [], topic = "", FOLLOWING = [];
+/* How many of those posts a member actually wrote — see /api/board. The rest
+   is the board talking to itself, and it should not be mistaken for a room
+   with people in it. */
+let FROMMEMBERS = 0;
 // With the rest of the state rather than beside the code that draws it: `let`
 // does not hoist a value, so the nav — which paints before the profile block
 // is reached — hit a temporal dead zone rather than a null.
@@ -2247,8 +2303,44 @@ async function load() {
     const d = await r.json();
     posts = Array.isArray(d.posts) ? d.posts : [];
     FOLLOWING = Array.isArray(d.following) ? d.following : [];
+    FROMMEMBERS = Number(d.fromMembers || 0);
   } catch { posts = []; }
   draw();
+  /* AFTER draw(), NOT BEFORE IT. draw() fills the board and unhides the rows
+     that go with it, so a quiet feed drawn first was immediately undrawn. */
+  drawSoon();
+}
+
+/* THE FEED SAYS SO WHEN NOBODY HAS SAID ANYTHING.
+ *
+ * It was never empty and that was the problem. Seeded posts, the board
+ * announcing that somebody joined, a card put up from the box — all real
+ * rows, none of them a member with something to say. A feed that looks busy
+ * while the room is silent is the one thing a member reads as "nobody is
+ * here", and it is worse than a blank page because it looks like the answer.
+ *
+ * So until somebody with a page posts something, the tab says what is true:
+ * this half is not open yet. The moment one member posts, the count is no
+ * longer nought and the feed appears with their post at the top of it — no
+ * switch to remember, nothing to turn off.
+ */
+function drawSoon() {
+  const box = $("soon");
+  if (!box) return;
+  const quiet = FROMMEMBERS < 1;
+  box.hidden = !quiet;
+  /* The posts and everything that files them. Left alone when it is not
+     quiet, because each of these has its own reason to be hidden and this
+     one must not overrule them. */
+  for (const id of ["topics", "posts", "board"]) {
+    const e = $(id);
+    if (e && quiet) e.hidden = true;
+    else if (e && id !== "board") e.hidden = false;
+  }
+  if (quiet) { const n = $("none"); if (n) n.hidden = true; }
+  $("soonlab").textContent = T("soon.lab");
+  $("soonhead").textContent = T("soon.head");
+  $("soonsay").textContent = T("soon.say");
 }
 
 /* THE TOPICS THIS BOARD STARTS WITH.
@@ -2559,6 +2651,17 @@ function draw() {
      name keep their mark. See the note above HOUSE. */
   $("boardname").textContent = T("site.title");
   $("foottext").textContent = T("board.foot") + " ";
+  /* AND THE WAY TO THE FINE PRINT. It used to be a paragraph under the deck;
+     moving it off that screen only helps if there is still a way to reach it,
+     and the footer is where somebody looks for one. Wired once. */
+  if (!$("footpriv")) {
+    const a = document.createElement("a");
+    a.id = "footpriv";
+    a.href = "/privacy";
+    a.className = "footpriv";
+    $("foottext").after(a);
+  }
+  $("footpriv").textContent = T("site.privacy");
   drawMyInvite();
   const shut = MODE === "read";
   $("count").textContent = posts.length
@@ -5499,8 +5602,8 @@ function drawDeck() {
   // it — so the whole block collapses to one small card that says so.
   deck.hidden = !n;
   $("pacts").hidden = !n;
-  $("psafety").hidden = !n;
-  $("psafety").textContent = T("bud.safety");
+  /* psafety is gone from this page — see the note where it used to be, and
+     /privacy, which now carries it. */
   // Counted in people, not in cards: yours is the ask at the end, not the
   // fourth of four students.
   $("pcount").textContent = people && !mine ? T("brw.of", { n: AT + 1, total: people }) : "";
@@ -6298,7 +6401,49 @@ function drawSays() {
      shoulder has no sentence to write and nothing to save it to. */
   const sec = $("saysay");
   if (sec) sec.hidden = !(ME && ME.handle);
+  drawSayHead();
 }
+/* THE ROW WHEN IT IS SHUT: the icon, what they currently say, and a caret.
+ *
+ * The sentence in their own words rather than a label, because that is the
+ * only thing worth a row here — "Looking for a Founder" tells them whether to
+ * open it; "Your sentence" does not. Whoever has not answered it yet gets the
+ * ask instead, which is the one case where this should be inviting.
+ */
+function drawSayHead() {
+  const head = $("sayhead");
+  if (!head) return;
+  fill(head);
+  const done = SAY.filter((r) => r.want);
+  const words = done.length
+    ? done.map((r) => T("role.a." + r.want)).join(T("brw.qjoin") || ", ")
+    : "";
+  const now = el("span", "saynow");
+  if (words) {
+    now.append(document.createTextNode(T("say.want1") + " "));
+    now.append(el("b", null, words));
+  } else {
+    now.append(document.createTextNode(T("say.pickWant")));
+  }
+  head.append(sayIcon(), now, el("i", "saycar"));
+  if (head.dataset.on) return;
+  head.dataset.on = "1";
+  head.addEventListener("click", () => {
+    const body = $("saybody");
+    const open = body.hidden;
+    body.hidden = !open;
+    head.setAttribute("aria-expanded", open ? "true" : "false");
+    /* However they last left it. Somebody who opens this every week should
+       not have to open it every week, and somebody who never touches it
+       should not be looking at a form. */
+    try { localStorage.setItem("board:say", open ? "1" : "0"); } catch { /* fine */ }
+  });
+  let open = false;
+  try { open = localStorage.getItem("board:say") === "1"; } catch { /* fine */ }
+  $("saybody").hidden = !open;
+  head.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
 /* THE SENTENCE SAVES ITSELF.
  *
  * It sits on Browse now rather than in the profile sheet, and the sheet was

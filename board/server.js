@@ -401,7 +401,10 @@ app.get(["/feed", "/feed/", "/index.html"], (req, res, next) => page("index.html
  * redirect rather than deleted: links already sent into a WeChat chat cannot be
  * edited, and a dead link is the one failure a shared board cannot recover
  * from. It costs one line and never needs revisiting. */
-app.get(["/board", "/board/"], (req, res) => res.redirect(301, "/feed" + (req.url.split("?")[1] ? "?" + req.url.split("?")[1] : "")));
+/* THE FRONT OF THIS PLACE IS THE PEOPLE, NOT THE POSTS. /board is an old
+   address somebody may still have; it used to land on the feed, which is the
+   quiet half. */
+app.get(["/board", "/board/"], (req, res) => res.redirect(301, "/browse" + (req.url.split("?")[1] ? "?" + req.url.split("?")[1] : "")));
 app.get(["/about", "/landing.html"], (req, res, next) => page("landing.html", req, res, next));
 
 /* ONE DOOR, DIFFERENT SIGNS.
@@ -1181,8 +1184,31 @@ app.get("/api/board", async (req, res) => {
   const faceFor = (p) =>
     (p.by && byHash.get(p.by)) || byName.get(String(p.handle || "").toLowerCase()) || "";
 
+  /* HOW MANY OF THESE A MEMBER ACTUALLY WROTE.
+   *
+   * The feed is full and none of it is the room talking: seeded posts, the
+   * board announcing that somebody joined, the operator putting a card up.
+   * All real rows, none of them a member with something to say — and a feed
+   * that looks busy while the room is silent is the one thing a member reads
+   * as "nobody is here".
+   *
+   * A post counts when its author is somebody with a live page. Counted here
+   * rather than in the browser because it needs the roll, and the browser has
+   * no business holding a table of device hashes.
+   */
+  const roll = new Set(board.people.filter((q) => q.state === "published" && q.handle)
+    .map((q) => q.by).filter(Boolean));
+  const fromMembers = live.filter((p) => store.isOwnPost(p) && p.by && roll.has(p.by)
+    /* AND NOT THE BOARD ANNOUNCING THEM. "X put a page up" is posted with the
+       member's own device hash, because it is about them — so by every other
+       measure it is their post. It is not: nobody wrote it, nobody chose to
+       say it, and a feed of nothing but join notices is exactly the busy
+       silence this count exists to detect. `looking` is what marks one. */
+    && !p.looking).length;
+
   res.json({
     following: [...mineFollows],
+    fromMembers,
     posts: live.filter(store.isOwnPost).map((p) => ({
       ...p,
       ...store.threadFor(live, p.id),
