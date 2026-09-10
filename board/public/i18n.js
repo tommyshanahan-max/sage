@@ -1292,6 +1292,8 @@ export const STRINGS = {
     "Add a photo — a page with a face on it gets read. You can do it after.",
     "加一张照片吧——有照片的主页才有人看。也可以之后再加。",
   ],
+  /* The same button, once it has asked for a photo and been pressed anyway. */
+  "me.postAnyway":     ["Put me in without one", "没有照片也先进去"],
   "me.photoFirst":     ["Add your photo", "先加照片"],
 
   // ---------------------------------------------------------------------
@@ -1372,7 +1374,9 @@ export const STRINGS = {
   /* WHAT THE BUTTON DOES, ON A SCREEN HEADED "A photo and a name".
      "Post it" read as posting a message. Joining does put you on the board —
      that is the point of the button — so it says so. */
-  "me.post":           ["Put me on the board", "把我放到板上"],
+  /* "The board" is the house word for this, not a word a new member has met.
+     What the button does is make them findable by the people in the room. */
+  "me.post":           ["Put me in the room", "把我放进房间"],
   /* WHAT IS ACTUALLY LEFT BEHIND IT.
      LinkedIn, Instagram and the line about what somebody is working on used to
      be in here too, and the first member to look for LinkedIn read a button
@@ -2288,8 +2292,14 @@ export const STRINGS = {
   "inv.one":           ["One person each, and a new one tomorrow.",
                         "一个口令进一个人，明天再给你一个新的。"],
   "door.sub":          ["Not open to everybody yet", "还没有对所有人开放"],
-  "door.say":          ["This board is private \u2014 nothing on it can be read without a password. Type the one your friend sent. It works once, on this browser, and their password changes tomorrow. The link on its own opens nothing.",
-                        "这个板子是私密的——没有口令，里面什么都看不到。输入朋友发给你的那串。只能用一次，只在这个浏览器上；他的口令明天就换了。光有链接是打不开的。"],
+  /* THE DOOR, IN THE WORDS OF WHAT IT ACTUALLY DOES. It said "their password
+     changes tomorrow", which describes a shared password on a rota. What is
+     true: the code is one person's, it is spent the moment it is used, and
+     the member who gave it away gets another one to give tomorrow. The third
+     sentence is the one that matters — a link on its own opens nothing — so
+     it stays. */
+  "door.say":          ["This board is private \u2014 nothing on it can be read without a code. Type the one your friend sent: it lets one person in, once, on this browser. The link on its own opens nothing.",
+                        "这个板子是私密的——没有口令，里面什么都看不到。输入朋友发给你的那串：只能进一个人，只能用一次，只在这个浏览器上。光有链接是打不开的。"],
   "door.zh":           ["", ""],
   "door.go":           ["Go in", "进去"],
   "door.going":        ["Opening\u2026", "正在开门\u2026"],
