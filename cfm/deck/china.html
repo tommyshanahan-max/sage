@@ -1,0 +1,233 @@
+<title>The Next Twelve Months</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  :root{
+    --ground:#080C0A;
+    --raise:#0E1512;
+    --ink:#ECEAE4;
+    --dim:#939C96;
+    --hair:#1E2A25;
+    --jade:#3FBF8F;
+    --gold:#D9A94A;
+    --red:#D2695C;
+    --serif:"Instrument Serif",Georgia,"Songti SC",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);color:var(--ink);
+    font:16px/1.6 var(--sans);
+    -webkit-font-smoothing:antialiased;
+    scroll-snap-type:y proximity;
+  }
+  .deck{max-width:30rem;margin:0 auto;padding:0 1.4rem}
+  section{
+    scroll-snap-align:start;
+    min-height:86svh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:3rem 0;
+    border-bottom:1px solid var(--hair);
+  }
+  section:last-of-type{border-bottom:0}
+  .eyebrow{
+    font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--jade);margin:0 0 1.1rem;
+  }
+  .eyebrow.gold{color:var(--gold)}
+  .eyebrow.red{color:var(--red)}
+  h1{font:400 clamp(2.9rem,12vw,4rem)/1.01 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  h2{font:400 clamp(2.2rem,9vw,3rem)/1.08 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  p{margin:0 0 1rem;color:var(--dim);font-size:1.02rem}
+  p.lead{color:var(--ink);font-size:1.08rem}
+  p:last-child{margin-bottom:0}
+  em{font-style:italic;font-family:var(--serif);font-size:1.15em;color:var(--jade)}
+  b{color:var(--ink);font-weight:650}
+
+  .mark{display:flex;align-items:center;gap:.7rem;margin:0 0 2rem}
+  .mark i{width:2.6rem;height:2.6rem;border-radius:.7rem;background:var(--raise);
+    border:1px solid var(--hair);display:grid;place-items:center;font-style:normal;
+    font:400 1.3rem/1 var(--serif);color:var(--jade)}
+  .mark span{font:400 1.25rem/1 var(--serif);color:var(--ink)}
+  .on{display:block;margin:1.1rem 0 0;color:var(--dim);font-size:.9rem;
+    text-align:center;text-decoration:none}
+  #how{scroll-margin-top:1rem}
+
+  /* THE STRUCTURE, AS THREE BOXES AND WHAT PASSES BETWEEN THEM.
+     Drawn rather than described: the whole argument of this deck is that the
+     money and the data sit in two different countries from the people, and
+     three stacked panels say that in one look. */
+  .stack{margin:1.4rem 0 0}
+  .lvl{background:var(--raise);border:1px solid var(--hair);border-radius:.9rem;
+    padding:.9rem 1rem;display:flex;gap:.9rem;align-items:flex-start}
+  .lvl i{flex:0 0 auto;width:2.3rem;height:2.3rem;border-radius:.6rem;
+    background:var(--ground);border:1px solid var(--hair);display:grid;
+    place-items:center;font-style:normal;font-size:1.05rem}
+  .lvl b{display:block;font-size:.97rem;color:var(--ink);font-weight:650;
+    line-height:1.35}
+  .lvl span{display:block;font-size:.85rem;color:var(--dim);line-height:1.5;
+    margin-top:.15rem}
+  .lvl.gold{border-color:rgba(217,169,74,.4)}
+  .lvl.jade{border-color:rgba(63,191,143,.4)}
+  .tie{display:flex;align-items:center;gap:.6rem;padding:.5rem 0 .5rem 1.15rem;
+    color:var(--dim);font-size:.8rem}
+  .tie::before{content:"";width:1px;height:1.5rem;background:var(--hair);
+    margin-left:.02rem}
+  .tie em{font-style:normal;font-family:var(--sans);font-size:.8rem;
+    color:var(--jade)}
+
+  /* THE THREE NUMBERS. Rows, not circles: these are thresholds on one axis and
+     a reader needs to see which one comes first. */
+  .steps{margin:1.2rem 0 0}
+  .steps div{display:flex;justify-content:space-between;align-items:baseline;
+    gap:1rem;padding:.9rem 0;border-bottom:1px solid var(--hair)}
+  .steps div:last-child{border-bottom:0}
+  .steps .w{color:var(--dim);font-size:.95rem}
+  .steps .v{font:400 1.55rem/1 var(--serif);color:var(--gold);white-space:nowrap}
+  .steps .v.on{color:var(--jade)}
+  .steps .v.off{color:var(--red)}
+
+  .big{font:400 clamp(3.4rem,17vw,5rem)/.92 var(--serif);color:var(--gold);
+    letter-spacing:-.02em}
+  .under{color:var(--dim);font-size:.95rem;margin:.7rem 0 0}
+
+  /* WHAT WE DO AND DO NOT DO. Two columns would halve the type on a phone,
+     so it is one list with the mark carrying the sense. */
+  ul.flags{list-style:none;margin:1.2rem 0 0;padding:0}
+  ul.flags li{position:relative;padding:0 0 .9rem 1.9rem;color:var(--dim);
+    font-size:.97rem;line-height:1.55}
+  ul.flags li:last-child{padding-bottom:0}
+  ul.flags li::before{position:absolute;left:0;top:0;font-size:1rem;font-weight:700}
+  ul.flags li.y::before{content:"✓";color:var(--jade)}
+  ul.flags li.n::before{content:"✕";color:var(--red)}
+  ul.flags b{color:var(--ink)}
+
+  ol.how{list-style:none;margin:1rem 0 0;padding:0;counter-reset:how}
+  ol.how li{position:relative;padding:0 0 1.1rem 2.5rem;counter-increment:how}
+  ol.how li:last-child{padding-bottom:0}
+  ol.how li::before{content:counter(how);position:absolute;left:0;top:-.1rem;
+    font:400 1.5rem/1 var(--serif);color:var(--gold)}
+  ol.how b{display:block;color:var(--ink);font-weight:650;font-size:1.02rem;
+    margin-bottom:.15rem}
+  ol.how span{display:block;color:var(--dim);font-size:.95rem;line-height:1.5}
+
+  .fine{color:var(--dim);font-size:.82rem;line-height:1.55;margin-top:1.4rem;
+    padding-top:1rem;border-top:1px solid var(--hair)}
+
+  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="deck">
+
+  <!-- SIX SLIDES ON ONE QUESTION: what can this thing legally be, without a
+       Chinese company, for the next year.
+
+       Written as a plan rather than as law. Every number in here is a real
+       threshold in PRC rules as they stand, but the deck's job is to say
+       which side of each one we are on and what would move us across. -->
+
+  <section>
+    <div class="mark"><i>换</i><span>The Exchange</span></div>
+    <p class="eyebrow gold">Before the China pivot</p>
+    <h1>The next twelve months.</h1>
+    <p class="lead">What we can build, who we can charge, and the three numbers
+      that decide when any of it has to change.</p>
+    <a class="on" href="#how">how it works ↓</a>
+  </section>
+
+  <section id="how">
+    <p class="eyebrow">How it is put together</p>
+    <h2>Three countries, on purpose.</h2>
+
+    <div class="stack">
+      <div class="lvl gold">
+        <i>🇸🇬</i>
+        <div><b>Singapore company</b>
+          <span>Owns everything. Takes every payment through Stripe, in dollars.</span></div>
+      </div>
+      <div class="tie"><em>runs</em> the servers, <em>takes</em> the money</div>
+      <div class="lvl jade">
+        <i>🇯🇵</i>
+        <div><b>Server in Tokyo</b>
+          <span>Where the board lives and where the data sits. Outside China.</span></div>
+      </div>
+      <div class="tie"><em>serves</em> the app</div>
+      <div class="lvl">
+        <i>🇨🇳</i>
+        <div><b>People in China</b>
+          <span>Mostly foreigners. They open a link, they use the room.</span></div>
+      </div>
+    </div>
+
+    <p style="margin-top:1.4rem">Nothing Chinese owns anything and nothing
+      Chinese is owed anything. That is the whole trick.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">The one rule</p>
+    <h2>The money never lands in China.</h2>
+    <p class="lead">A licence is needed to run a <b>paid</b> internet service
+      inside China. Charge in dollars to a Singapore account and we are a
+      foreign company somebody chose to buy from.</p>
+    <p>Chinese users can still pay with Alipay or WeChat Pay — Stripe takes it
+      in RMB and settles to Singapore in dollars. Same as Steam, same as
+      Airbnb.</p>
+    <p style="margin-top:1.3rem"><b>What we never do:</b> take RMB into a
+      Chinese bank account. That is the line, and it is one line.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">Three numbers</p>
+    <h2>Nothing changes until one of these.</h2>
+
+    <div class="steps">
+      <div><span class="w">today</span><span class="v on">23 people</span></div>
+      <div><span class="w">no paperwork of any kind</span><span class="v on">100,000</span></div>
+      <div><span class="w">one filing, and carry on</span><span class="v">1,000,000</span></div>
+      <div><span class="w">servers must move to China</span><span class="v off">1m +</span></div>
+    </div>
+
+    <p style="margin-top:1.4rem">Under a hundred thousand people there is
+      nothing to file, nothing to register and nobody to tell. We are two
+      orders of magnitude away from the first one.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">For the next year</p>
+    <h2>What we do, and what we leave alone.</h2>
+    <ul class="flags">
+      <li class="y"><b>Charge in dollars</b> to the Singapore company, by card
+        or by Alipay through Stripe.</li>
+      <li class="y"><b>Ship to the App Store</b> — every storefront except
+        mainland China. Most foreigners here have a foreign Apple ID anyway.</li>
+      <li class="y"><b>Keep the servers in Tokyo.</b> Fast enough, and it keeps
+        the whole question theoretical.</li>
+      <li class="n"><b>No Chinese company</b>, no ICP licence, no Chinese bank
+        account.</li>
+      <li class="n"><b>No mainland App Store.</b> It needs a Chinese entity and
+        a filing, and it is the one thing that puts us on a list.</li>
+      <li class="n"><b>No shares for numbers.</b> Equity is a fixed grant for a
+        named role. Never more shares for bringing more people.</li>
+    </ul>
+  </section>
+
+  <section>
+    <p class="eyebrow red">When we pivot</p>
+    <h2>Only when the money is Chinese.</h2>
+    <ol class="how">
+      <li><b>The trigger</b>
+        <span>Chinese nationals paying in RMB become most of the revenue. Not
+          user numbers — revenue.</span></li>
+      <li><b>What it costs</b>
+        <span>A Chinese company, an ICP licence, real-name sign-up, and a
+          compliance job that has to be somebody's. Months, not weeks.</span></li>
+      <li><b>What we do first</b>
+        <span>A thousand foreigners in China using it every week. That number
+          answers the question on its own.</span></li>
+    </ol>
+
+    <p class="fine">Written as a plan, not as advice. Every threshold here is
+      real, but a China lawyer signs it off before the first real revenue —
+      an hour of their time, not a project.</p>
+  </section>
+
+</div>
