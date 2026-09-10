@@ -253,10 +253,11 @@
     display:inline-block;max-width:100%}
   .saymore{border:0;background:none;color:var(--accent);font-size:.92rem;
     padding:.6rem 0 .2rem;margin:0 0 .4rem}
-  /* THE SENTENCE ON BROWSE. The card the pills sit in is the same one; what
-     changes is that it is now above a deck rather than inside a form, so it
-     needs air under it and a line to say the picking landed. */
-  .saysay{margin:0 0 1.2rem}
+  /* THE SENTENCE ON BROWSE, between the deck and the queue. The card the
+     pills sit in is the same one; what changes is that it is on a page rather
+     than inside a form, so it needs air on both sides and a line to say the
+     picking landed. */
+  .saysay{margin:1.4rem 0 0}
   .saysaid{margin:.4rem 0 0;font-size:.82rem;color:var(--muted)}
   .saysaid.bad{color:var(--t5)}
 
@@ -884,6 +885,12 @@
   /* ---- one slot, rotating -------------------------------------------------- */
   .rotbar{position:relative;margin:0 0 1.3rem}
   .rotbar .opt{margin:0}
+  /* THE TWO TESTS, IN THE TRAY. Stacked rather than rotated: there are two of
+     them, somebody who opened this fold is already looking for something to
+     do, and a slot that hides one of two is a slot hiding half of what is
+     here. Spaced, because the bar's rule flattens their margin to nothing. */
+  #proftests{display:flex;flex-direction:column;gap:.7rem;margin:.9rem 0 0}
+  #proftests .opt{margin:0}
   .rotnav{display:flex;align-items:center;gap:.5rem;justify-content:flex-end;
     margin:.5rem 0 0}
   .rotdots{display:flex;gap:.3rem}
@@ -1336,22 +1343,42 @@
   /* THE QUEUE AS A LIST, under the deck. Rows and not cards: these are people
      to recognise, not people to choose between, and the deck above is already
      doing the choosing. */
-  .queue{margin:1.6rem 0 0;padding-top:1.1rem;border-top:1px solid var(--line)}
-  /* A BUTTON, NOT A HEADING. Thirty-five rows under the deck is most of a
-     screen for something a member looks at now and then, so it is shut until
-     asked for and says how many are behind it. */
-  .qtoggle{display:flex;width:100%;align-items:center;gap:.5rem;background:none;
-    border:0;padding:.15rem 0 .8rem;font:inherit;font-size:.72rem;
-    letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
-    font-weight:700;cursor:pointer;text-align:left}
-  .qtoggle .qn2{margin-left:auto;letter-spacing:0;font-variant-numeric:tabular-nums;
-    text-transform:none;font-weight:400}
-  /* The fact, at the size of a fact. The words around it stay the small grey
-     caption they were. */
-  .qtoggle .qbig{font-size:1.15rem;line-height:1;color:var(--ink);font-weight:700;
-    letter-spacing:0;font-variant-numeric:tabular-nums;margin:0 .1rem 0 0}
-  .qtoggle .qcar{transition:transform .15s ease;font-size:.9rem;line-height:1}
-  .qtoggle[aria-expanded="true"] .qcar{transform:rotate(90deg)}
+  /* A CARD, THE SHAPE OF THE REPORT CARD. It was a small grey uppercase line
+     under the deck, which on a phone is several screens down — findable only
+     by somebody who already knew it was there, and reported as exactly that.
+     The report card is the one thing on this app people do find, so the queue
+     borrows its shape: a raised card, a mark carrying the number, an eyebrow,
+     a line of names, and a chevron. Shut until asked for, because thirty-five
+     rows is most of a screen. */
+  .queue{margin:1.6rem 0 1.2rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:1.1rem;box-shadow:var(--shadow);
+    overflow:hidden}
+  .qtoggle{display:flex;width:100%;align-items:center;gap:.75rem;background:none;
+    border:0;padding:.95rem 1.05rem;font:inherit;color:var(--ink);
+    cursor:pointer;text-align:left}
+  /* The number, in the accent circle, at the size of a fact. */
+  .qmark{width:2rem;height:2rem;border-radius:50%;flex:0 0 auto;font-style:normal;
+    background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;
+    font-size:.92rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;
+    -webkit-font-smoothing:antialiased}
+  .qmark.wide{font-size:.76rem}
+  .qtext{flex:1 1 auto;min-width:0}
+  .qtext b{display:block;font-weight:500;font-size:.74rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--accent)}
+  :root[data-lang="zh"] .qtext b{text-transform:none;letter-spacing:.02em}
+  .qtext em{display:block;margin:.1rem 0 .05rem;font-family:var(--serif);
+    font-style:normal;font-size:1.08rem;line-height:1.2;color:var(--ink);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qtext span{display:block;font-size:.86rem;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qtoggle .qcar2{flex:0 0 auto;width:.55rem;height:.55rem;
+    border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);
+    transform:rotate(45deg);margin:-.2rem .2rem 0 0;transition:transform .18s ease}
+  .qtoggle[aria-expanded="true"] .qcar2{transform:rotate(-135deg);margin-top:.2rem}
+  #queuelist{padding:0 1.05rem .5rem}
+  /* The initial rings sat on --raise, and so does the card now — so they
+     disappeared into it. On the card they take the paper behind it. */
+  .queue .qav{background:var(--paper)}
   .qrow{display:flex;gap:.7rem;align-items:flex-start;padding:.6rem 0;
     border-bottom:1px solid var(--hair,var(--line))}
   .qrow:last-child{border-bottom:0}
@@ -1543,8 +1570,14 @@
     cards a morning and the thing worth reading would be underneath
     them. See daily.js. -->
     <div id="daily"></div>
-    <!-- The Professor's offers are appended here, one block per thing you
-    can do — see drawTutor. -->
+    <!-- THE TWO TESTS, AND ONLY HERE.
+         They were in the rotating bar on the homepage, which meant the first
+         thing on the board most days was the board asking somebody to sit a
+         Chinese test. A test is a thing you go and take when you want to know
+         your level; it is not news, and it does not belong on the page people
+         open to read what everybody said. Everything else the Professor
+         offers still rotates up there — see drawRot. -->
+    <div id="proftests"></div>
     </div>
     </section>
 
@@ -1697,16 +1730,24 @@
        so it goes where the eye lands. The queue leads and the membership
        follows: how many want in is the half worth reading. -->
   <p class="atdoor" id="atdoor"></p>
+  <div class="deck" id="deck"></div>
+  <div class="pacts" id="pacts" hidden></div>
+  <p class="pcount" id="pcount"></p>
+  <p class="psafety" id="psafety"></p>
+  <div class="bnone" id="bnone" hidden></div>
+
   <!-- THE SENTENCE, AND IT IS THE WHOLE QUESTION.
        Two pills say what eleven tick boxes said, and the sentence IS the rule:
        you come up for people who are what you are looking for and are looking
        for what you are.
 
-       IT SITS HERE BECAUSE THIS IS WHAT IT DOES. It was inside the profile
-       sheet, three folds down, which put the control that decides the deck
-       out of sight of the deck — so the faces below looked like the whole
-       room rather than an answer to a question this person asked. Above them,
-       it reads as the reason they are the ones showing.
+       IT SITS BETWEEN THE TWO ROOMS. It was inside the profile sheet, three
+       folds down, which put the control that decides the deck out of sight of
+       the deck. It went above the faces first and that was too loud — the
+       first thing on Browse should be people, not a form. Here it closes the
+       people who are in and opens the people who are waiting, which is the
+       one place on this page where somebody has just finished looking and is
+       ready to change what they are looking for.
 
        The first half is fixed and the second is not: what you are is what the
        room let in, what you want changes. Saved on the spot, one pill at a
@@ -1717,11 +1758,6 @@
     <button class="saymore" type="button" id="mesaymore"></button>
     <p class="saysaid" id="saysaid" hidden></p>
   </section>
-  <div class="deck" id="deck"></div>
-  <div class="pacts" id="pacts" hidden></div>
-  <p class="pcount" id="pcount"></p>
-  <p class="psafety" id="psafety"></p>
-  <div class="bnone" id="bnone" hidden></div>
 
   <!-- AND THE QUEUE ITSELF, under the people who are already in.
        The number above says how many; this says who, so that somebody in here
@@ -3402,16 +3438,37 @@ async function drawTutor() {
    * the thing it just showed them. */
   const tookLevel = Boolean(readLocal("board:level"));
   const tookType = Boolean(readLocal("board:type"));
-  OFFERS.push(doable("tut.level", "tut.levelGo",
-    () => { location.href = "/level"; }, "level", tookLevel));
-  OFFERS.push(doable("tut.type", "tut.typeGo",
-    () => { location.href = "/type"; }, "type", tookType));
+  /* MARKED AS TESTS, and that keeps them off the homepage. drawRot skips
+     anything carrying this and drawTests draws it in the tray instead —
+     under the report card, which is the thing both of them produce. */
+  const lvl = doable("tut.level", "tut.levelGo",
+    () => { location.href = "/level"; }, "level", tookLevel);
+  const typ = doable("tut.type", "tut.typeGo",
+    () => { location.href = "/type"; }, "type", tookType);
+  lvl.dataset.test = "1";
+  typ.dataset.test = "1";
+  OFFERS.push(lvl, typ);
 
   const v = vote("tut.compare", "tut.compareWhat", "compare");
   v.append(el("p", "honest", T("tut.honest")));
   v.dataset.rank = "5";
   OFFERS.push(v);
   drawRot();
+  drawTests();
+}
+
+/* The two tests, in the tray, under the thing they produce.
+ *
+ * They are the same blocks the rotating bar draws — built once in drawTutor
+ * and moved, not copied, so there is one description of each test and one
+ * place that decides whether it has been taken. */
+function drawTests() {
+  const box = $("proftests");
+  if (!box) return;
+  fill(box);
+  const mine = OFFERS.filter((n) => n && n.dataset && n.dataset.test === "1");
+  box.hidden = !mine.length;
+  for (const n of mine) box.append(n);
 }
 
 /* ---- one slot, rotating -----------------------------------------------------
@@ -3435,7 +3492,9 @@ let ROTAT = -1;
 function drawRot() {
   const bar = $("rotbar");
   fill(bar);
-  const live = OFFERS.filter(Boolean);
+  /* The tests are not news. They live in the tray — see drawTests — and the
+     bar carries what is left. */
+  const live = OFFERS.filter((n) => n && !(n.dataset && n.dataset.test === "1"));
   if (!live.length) { bar.hidden = true; return; }
   bar.hidden = false;
 
@@ -5034,13 +5093,22 @@ function drawMine() {
     ring.append(el("i", null, "+"));
   }
 
-  /* FOUR STATES, and the fourth is the one that was lying.
+  /* THREE STATES, AND IT WAS FOUR.
    *
-   * "You are in Browse" was said to anybody with a photograph, whether or not
-   * they were actually in Browse — and being in it is a switch, off by default
-   * on every page made before that switch was put on the form. So somebody
-   * with a face, a name and looking:false read a row telling them they were in
-   * the deck while the deck showed nobody. */
+   * The fourth said "You are in Browse — this is what everybody else sees",
+   * to somebody whose face was up and whose switch was on. That is the state
+   * where there is nothing to do, and a row at the top of the deck saying so
+   * every single visit is the app talking about itself in the place people
+   * came to look at other people. Where the fact belongs is the settings row
+   * in the tray, which now carries it — and the way to your own page is the
+   * Profile tab, which has been there the whole time.
+   *
+   * The three that survive all ASK FOR SOMETHING: a photograph, patience, or
+   * the switch. None of them is a status.
+   *
+   * The switch state is not a nicety. Being in Browse is off by default on
+   * every page made before it was on the form, so somebody with a face and a
+   * name can be absent from a deck they think they are in. */
   const listed = Boolean(ME && ME.looking);
   const words = el("span");
   if (!face) {
@@ -5050,20 +5118,20 @@ function drawMine() {
   } else if (!listed) {
     words.append(el("b", null, T("brw.mineOff")), el("span", null, T("brw.mineOffWhy")));
   } else {
-    words.append(el("b", null, T("brw.mineUp", { name: ME.handle || "" })),
-                 el("span", null, T("brw.mineUpWhy")));
+    box.hidden = true;
+    return;
   }
   box.append(ring, words);
-  if (face) box.append(el("span", "chev", listed ? "\u203a" : "\u2192"));
+  if (face) box.append(el("span", "chev", "\u2192"));
 }
 /* One control, two destinations: the picker while there is nothing to look at,
  * their own page once there is. */
 $("mine").addEventListener("click", () => {
+  /* The row is only drawn when there is something to do, so every branch here
+     goes to the thing that does it. Somebody already in Browse never sees it
+     — their own page is the Profile tab. */
   if (!(ME && ME.photo)) { $("mephoto").click(); return; }
-  // Not in the deck: the useful thing is the switch that puts you in it, not
-  // a look at the page nobody can reach.
-  if (!ME.looking || !ME.handle) { openMe(); return; }
-  location.href = "/p/" + encodeURIComponent(ME.handle.toLowerCase());
+  openMe();
 });
 
 function personCard(q, live) {
@@ -5192,21 +5260,32 @@ async function drawQueue() {
   if (!d || !Array.isArray(d.rows)) return;
   /* Rebuilt each time rather than toggled in place: the order changes when
      somebody vouches, so a list left as it was would show the old one. */
-  /* THE NUMBER LEADS. It was a heading with a count tucked away on the right,
-     which is the wrong way round: how many people are outside is the fact,
-     and "waiting to get in" is the caption on it. Bold and in ink so it reads
-     at a glance from the number alone.
-     What it counts is what is behind the button — the people who agreed to be
-     listed — and when the queue is longer than that it says so rather than
-     letting the two numbers on this screen quietly disagree. */
+  /* THE HEAD IS THE WHOLE THING WHEN SHUT, so it has to earn the tap: the
+     number in the mark, what they are waiting for as the eyebrow, and the
+     first few names as the line under it. Names are the reason to open this —
+     a member scrolling past "3 waiting" opens nothing, and a member who reads
+     "Nadia, Liza, Chen" opens it because one of them might be somebody they
+     know. That is the whole point of the list.
+
+     The count is what is BEHIND the button — the people who agreed to be
+     listed — and when the queue is longer it says so, rather than letting the
+     two numbers on this screen quietly disagree. */
+  const n = d.rows.length;
   fill($("queueh"));
-  $("queueh").append(
-    el("span", "qcar", "\u203A"),
-    el("b", "qbig", String(d.rows.length)),
-    document.createTextNode(" " + T("brw.qh")));
-  if (Number(d.waiting) > d.rows.length) {
-    $("queueh").append(el("span", "qn2", T("brw.qof").replace("{n}", d.waiting)));
-  }
+  const mark = el("i", "qmark", String(n));
+  if (n > 99) mark.classList.add("wide");
+  const text = el("span", "qtext");
+  text.append(el("b", null, T("brw.qh")));
+  /* The names, in queue order, as many as fit on one line. Never the reason
+     they gave — that is on the row inside, for somebody who opened it. */
+  const some = d.rows.slice(0, 3).map((w) => w.name).filter(Boolean);
+  text.append(el("em", null, n
+    ? (some.join(T("brw.qjoin")) + (n > some.length ? T("brw.qplus", { n: n - some.length }) : ""))
+    : T("brw.qnone")));
+  text.append(el("span", null, Number(d.waiting) > n
+    ? T("brw.qof", { n: d.waiting })
+    : T("brw.qwhy")));
+  $("queueh").append(mark, text, el("i", "qcar2"));
   fill(list);
   if (!d.rows.length) {
     list.append(el("p", "qnone", T("brw.qnone")));
@@ -5333,9 +5412,33 @@ function drawDoor(people) {
   box.hidden = !(some || WAITING);
   if (box.hidden) return;
   /* The queue first and in the loud voice. How many are already in is the
-     reassuring half; how many want in is the interesting one. */
-  if (WAITING) box.append(el("b", null, atdoor(WAITING)));
+     reassuring half; how many want in is the interesting one.
+
+     AND THE NUMBER IS THE WAY TO THE LIST. The list is under the deck, which
+     on a phone is several screens down, behind a small grey button — findable
+     if you know it is there and not otherwise. This line is at the top, it
+     already says the number, and a member reading "35 are waiting to get in"
+     is a member who wants to know who. Same words, now the door. */
+  if (WAITING) box.append(doorGo(atdoor(WAITING)));
   if (some) box.append(document.createTextNode(inside(some)));
+}
+
+/* The waiting number, as a way in when there is a list behind it.
+ *
+ * Plain text for anybody who is not a member: the queue is theirs to be in,
+ * not theirs to read, and a control that goes nowhere is worse than a fact. */
+function doorGo(words) {
+  if (!(ME && ME.handle)) return el("b", null, words);
+  const b = el("button", "doorgo", words);
+  b.type = "button";
+  b.append(el("span", "doorcar", "\u203A"));
+  b.addEventListener("click", () => {
+    const box = $("queue");
+    if (!box || box.hidden) return;
+    setQueueOpen(true);
+    box.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  return b;
 }
 
 /* THE SAME TWO NUMBERS ON THE FEED.

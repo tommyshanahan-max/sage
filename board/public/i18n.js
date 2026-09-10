@@ -1790,10 +1790,19 @@ export const STRINGS = {
   "brw.inside":        ["{n} people are in.", "里面有 {n} 个人。"],
   /* The queue, as a list rather than a number — see /api/queue. Only somebody
      already in ever sees these, and never how to reach anybody. */
-  // Reads after the number now — "12 waiting to get in" — so it is a caption
-  // and not a heading.
-  "brw.qh":            ["waiting to get in", "人在等着进来"],
-  "brw.qof":           ["of {n} on the list", "名单上共 {n} 人"],
+  /* THE CARD ABOVE THE LIST. Shut, this is all there is of it, so it reads
+     as: a number in the mark, brw.qh as the eyebrow, the first few names, and
+     a line saying either that the queue is longer than the list or what a
+     member can do about it. Names are the reason anybody opens this. */
+  "brw.qh":            ["Waiting to get in", "在等着进来"],
+  // The comma between names. English uses its own; Chinese uses the one for
+  // lists of nouns, which is not the same character as the one in a sentence.
+  "brw.qjoin":         [", ", "、"],
+  "brw.qplus":         [" and {n} more", " 等 {n} 人"],
+  "brw.qwhy":          ["Vouch for somebody and they move up.",
+                        "帮谁说句话，他就往前挪一位。"],
+  "brw.qof":           ["{n} on the list. These are the ones who agreed to be shown.",
+                        "名单上共 {n} 人，这些是同意公开的。"],
   "brw.qnone":         ["Nobody is waiting.", "目前没有人在等。"],
   "brw.qbrought":      ["brought {n} in", "带进来 {n} 人"],
   /* Vouching. A member saying somebody is worth letting in moves them one
@@ -2429,11 +2438,10 @@ export const STRINGS = {
     "Your page is made, but it is not in the list of people. Tap to turn Show me in Browse on.",
     "你的主页已经做好了，但还没出现在学生名单里。点一下打开「在名单里显示我」。",
   ],
-  "brw.mineUp":        ["You are in Browse", "你已经在名单里了"],
-  "brw.mineUpWhy": [
-    "This is what everybody else sees when they find you.",
-    "别人找到你的时候，看到的就是这些。",
-  ],
+  /* "You are in Browse" was here, on the row above the deck, and is gone: a
+     person whose face is up and whose switch is on has nothing to do, and a
+     row saying so on every visit is the app talking about itself. The fact is
+     in the settings row now — see set.incogIn. */
   "brw.yourTurn":      ["Your turn", "该你了"],
   "brw.yourTurnWhat": [
     "That is everyone. Put your own face up and you are on the list too.",
