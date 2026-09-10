@@ -90,6 +90,20 @@
   ol.how b{display:block;color:var(--ink);font-weight:650;font-size:1.02rem;margin-bottom:.15rem}
   ol.how span{display:block;color:var(--dim);font-size:.95rem;line-height:1.5}
 
+  /* THE LADDER. Rows rather than circles past two years: a fourth circle
+     drawn to scale against $20m is four times the width of a phone, and one
+     drawn smaller than scale is a lie told in a picture. The other decks keep
+     the three circles unchanged — they stop at two years and the drawing is
+     honest there. */
+  .steps{margin:1.2rem 0 0}
+  .steps div{display:flex;justify-content:space-between;align-items:baseline;
+    gap:1rem;padding:.9rem 0;border-bottom:1px solid var(--hair)}
+  .steps div:last-child{border-bottom:0}
+  .steps .w{color:var(--dim);font-size:.95rem}
+  .steps .v{font:400 1.75rem/1 var(--serif);color:var(--gold);white-space:nowrap}
+  .steps .v.quiet{color:var(--dim);font-size:1.3rem}
+  .steps .v.on{color:var(--jade)}
+
   .terms{margin:1.4rem 0 0}
   .terms div{display:flex;justify-content:space-between;gap:1rem;
     padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
@@ -147,30 +161,42 @@
   </section>
 
   <section>
-    <p class="eyebrow gold">What it could be worth</p>
+    <p class="eyebrow">Eighteen months</p>
+    <!-- THE PIVOT, ON ITS OWN SLIDE. China is the hard version of a problem
+         that is not only China's — an outsider needing the person nobody
+         introduces them to. Whatever works in Shanghai works in Jakarta,
+         Lagos, São Paulo, and the product does not change to do it. -->
+    <h2>Then it stops being a China product.</h2>
+    <p class="lead">China is the hard version of the same problem: an outsider
+      who needs the one person nobody introduces them to.</p>
+    <p>Jakarta, Lagos, São Paulo, Dubai. Same room, same sentence, nothing in
+      the product changes.</p>
+  </section>
 
-    <svg class="growth" viewBox="0 0 300 128" width="100%" role="img"
-      aria-label="Nothing today, a hundred and fifty thousand at year one, one and a half million inside two years.">
-      <line x1="6" y1="104" x2="288" y2="104" stroke="#2F3B36" stroke-width="1.2"/>
-      <polygon points="288,104 280,100 280,108" fill="#2F3B36"/>
-      <circle cx="22" cy="102" r="2.6" fill="#3FBF8F"/>
-      <circle cx="82" cy="89" r="15" fill="#3FBF8F"/>
-      <circle cx="200" cy="58" r="45" fill="#3FBF8F" fill-opacity=".14"
-        stroke="#3FBF8F" stroke-opacity=".5"/>
-      <text x="22" y="90" font-size="11.5" fill="#BCC8C2" text-anchor="middle">nil</text>
-      <text x="82" y="65" font-size="13" fill="#E4EFEA" text-anchor="middle"
-        font-weight="600">$150k</text>
-      <text x="200" y="64" font-size="20" fill="#3FBF8F" text-anchor="middle"
-        font-family="Instrument Serif,Georgia,serif">$1.5m</text>
-      <text x="22" y="121" font-size="10.5" fill="#94A29B" text-anchor="middle">today</text>
-      <text x="82" y="121" font-size="10.5" fill="#94A29B" text-anchor="middle">year one</text>
-      <text x="200" y="121" font-size="10.5" fill="#94A29B" text-anchor="middle">two years</text>
-    </svg>
+  <section>
+    <p class="eyebrow gold">Four years</p>
+    <h2>100,000 people at $50 a year.</h2>
 
-    <div class="big" style="margin:2.2rem 0 0">2.5%</div>
-    <p class="under">yours — <b>$37,500</b> against the two-year figure</p>
+    <div class="steps">
+      <div><span class="w">today</span><span class="v quiet">nil</span></div>
+      <div><span class="w">year one · China</span><span class="v">$150k</span></div>
+      <div><span class="w">two years</span><span class="v">$1.5m</span></div>
+      <div><span class="w">four years · global</span><span class="v on">$15m – $25m</span></div>
+    </div>
+
+    <p style="margin-top:1.3rem">$5m a year in subscriptions, at the <b>three to
+      five times revenue</b> businesses like this have sold for.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">Your share</p>
+    <div class="big range">$375k<span>to</span>$625k</div>
+    <p class="under"><b>2.5%</b> of The Exchange at the four-year figure</p>
     <p class="under" style="margin-top:.35rem">vesting monthly from the day you
       sign, no cliff</p>
+    <p style="margin-top:1.6rem">Against two years it is $37,500. The gap
+      between those two numbers is the whole bet, and you are better placed to
+      price it than I am.</p>
   </section>
 
   <section>
