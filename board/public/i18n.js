@@ -398,10 +398,12 @@ export const STRINGS = {
      where they are does not change between one sentence and the next, so it
      is asked once, on the first line, and not repeated. */
   "say.and":           ["and a", "还是"],
-  // The same line when what they are is fixed: said once at the top, and the
-  // lines under it carry only the half that changes.
-  "say.iamFixed":      ["I am", "我是"],
-  "say.andWant":       ["and looking for", "还想找"],
+  /* THE LINE WHEN WHAT THEY ARE IS ALREADY KNOWN. It read "I am an Investor
+     looking for —", with the first half a word nobody could change. A control
+     that does not respond, in the middle of the one thing on the screen that
+     does, so it went: the card carries only the half that moves. */
+  "say.want1":         ["Looking for", "我在找"],
+  "say.andOnly":       ["and", "还有"],
   /* Short enough to sit in a pill inside a sentence. The segmented rows these
      replace could afford "Somewhere else"; a word in the middle of a line
      cannot. */
@@ -468,6 +470,10 @@ export const STRINGS = {
   "role.a.producer":   ["a Producer", "制片人"],
   "role.a.brand":      ["a Brand", "品牌方"],
   "role.a.investor":   ["an Investor", "投资人"],
+  /* The open answer, and only ever on the "looking for" side — see ANYONE in
+     store.js. Not "everyone": that reads as a broadcast. "Anyone" reads as
+     being open, which is what it means. */
+  "role.a.anyone":     ["anyone", "谁都行"],
   "role.a.lawyer":     ["a Lawyer", "律师"],
   "role.a.recruiter":  ["a Recruiter", "招聘方"],
   "role.a.buyer":      ["a Buyer", "采购方"],

@@ -143,7 +143,8 @@ export function cleanWait(raw) {
        waiting row can only ever hold a role that means something, and the
        words for it stay in i18n.js where the rest of the words are. */
     me: Object.hasOwn(ROLES, String(raw.me || "")) ? String(raw.me) : "",
-    want: Object.hasOwn(ROLES, String(raw.want || "")) ? String(raw.want) : "",
+    want: (Object.hasOwn(ROLES, String(raw.want || "")) || String(raw.want) === ANYONE)
+      ? String(raw.want) : "",
 
     /* A FACE, AND IT WAITS.
      *
@@ -544,7 +545,16 @@ export const ROLEKEYS = Object.keys(ROLES);
  *  room saying another. */
 function roomsFor(raw) {
   const said = (Array.isArray(raw?.say) ? raw.say : [])
-    .map((x) => roomOfPair(String(x?.me || ""), String(x?.want || "")))
+    /* ANYONE IS NOT ONE ROOM, IT IS ALL OF THEIRS. Every other sentence lands
+       in the one room both halves belong to. "A producer looking for anyone"
+       has no other half to meet, so the honest reading is every room a
+       producer stands in — which is what somebody open to anyone is asking
+       for. flatMap rather than map for exactly this one case. */
+    .flatMap((x) => {
+      const me = String(x?.me || ""), want = String(x?.want || "");
+      if (want === ANYONE) return ROLES[me] ? ROLES[me].rooms : [];
+      return [roomOfPair(me, want)];
+    })
     .filter(Boolean);
   if (said.length) return [...new Set(said)].slice(0, 3);
   return Array.isArray(raw?.rooms)
@@ -552,7 +562,25 @@ function roomsFor(raw) {
     : [];
 }
 
+/* THE OPEN ANSWER, and it is deliberately not in ROLES.
+ *
+ * "Anyone" is a thing you can be looking FOR and never a thing you can BE, so
+ * it has no room list of its own and cannot appear on the left of a sentence.
+ * Keeping it out of the table is what enforces that: every check that reads a
+ * role from ROLES rejects it, and the three places that mean to allow it say
+ * so by name.
+ *
+ * WHY IT EXISTS. The sentence made somebody name one role before they could
+ * be matched at all, and plenty of people arrive without one — they want to
+ * see who is here. Making them pick "an Investor" to get past the question is
+ * how a form collects an answer nobody meant.
+ */
+export const ANYONE = "anyone";
+
 export function roomOfPair(me, want) {
+  // See roomsFor: this one is handled there, where all of their rooms are
+  // available rather than one.
+  if (want === ANYONE) return ROLES[me] ? (ROLES[me].rooms[0] || "new") : "";
   const a = ROLES[me], b = ROLES[want];
   if (!a || !b) return "";
   for (const r of a.rooms) if (b.rooms.includes(r)) return r;
@@ -741,7 +769,8 @@ export function cleanPerson(raw) {
      * alone rather than emptying a profile to prove a point. */
     say: (Array.isArray(raw.say) ? raw.say : [])
       .map((x) => ({ me: String(x?.me || ""), want: String(x?.want || "") }))
-      .filter((x) => ROLES[x.me] && ROLES[x.want])
+      // "anyone" is allowed on the right and never on the left — see ANYONE.
+      .filter((x) => ROLES[x.me] && (ROLES[x.want] || x.want === ANYONE))
       .filter((x, i, all) =>
         all.findIndex((y) => y.me === x.me && y.want === x.want) === i)
       .slice(0, 3),

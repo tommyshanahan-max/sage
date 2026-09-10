@@ -243,14 +243,9 @@
   .sayrow .drop{border:0;background:none;color:var(--muted);font-size:1rem;
     padding:0 .3rem;font-family:var(--sans)}
   .sayrow .drop:hover{color:var(--t5)}
-  /* THE HALF THEY DO NOT PICK. Same pill, no chevron, no hand cursor — it has
-     to look like the answer it is rather than like a dropdown that has
-     stopped working. Quieter than the one beside it on purpose: the eye
-     belongs on the pill that moves. */
-  .sayrow .fixed{font-family:var(--sans);font-size:.98rem;font-weight:600;
-    color:var(--ink);background:var(--raise);border:1px solid var(--line);
-    border-radius:99px;padding:.3rem .78rem;margin:.1rem .06rem;
-    display:inline-block;max-width:100%}
+  /* There was a .fixed pill here for the half somebody cannot change. It is
+     gone with the half itself — see drawSays. A pill that does not respond
+     next to one that does is a card teaching people not to touch it. */
   .saymore{border:0;background:none;color:var(--accent);font-size:.92rem;
     padding:.6rem 0 .2rem;margin:0 0 .4rem}
   /* THE SENTENCE ON BROWSE, between the deck and the queue. The card the
@@ -1340,6 +1335,16 @@
     font-variant-numeric:tabular-nums}
   .atdoor b{display:block;margin:0 0 .1rem;color:var(--ink);font-weight:600;
     font-size:1.05rem}
+  /* THE NUMBER IS THE WAY TO THE LIST, for a member. Same line, same weight —
+     it is still a fact first — with a chevron in the accent to say it goes
+     somewhere. A button rather than a link because it opens something further
+     down this page rather than another page. */
+  .atdoor .doorgo{display:block;width:100%;margin:0 0 .1rem;padding:0;border:0;
+    background:none;font:inherit;font-weight:600;font-size:1.05rem;
+    color:var(--ink);text-align:center;cursor:pointer}
+  .atdoor .doorcar{display:inline-block;margin-left:.35rem;color:var(--accent);
+    font-weight:700;line-height:1}
+  .atdoor .doorgo:active .doorcar{transform:translateX(.12rem)}
   /* THE QUEUE AS A LIST, under the deck. Rows and not cards: these are people
      to recognise, not people to choose between, and the deck above is already
      doing the choosing. */
@@ -5452,6 +5457,14 @@ function drawFeedDoor() {
   if (!box) return;
   fill(box);
   if (!MEMBERS && !WAITING) { box.hidden = true; return; }
+  /* NOT TWICE ON ONE SCROLL. These two were written as if Browse and the feed
+     were separate pages. They are one document — the deck at the top, the
+     posts under it — so a member scrolling down read "35 are waiting to get
+     in" once above the faces and again above the posts, which makes the
+     number look like a banner rather than a fact. Browse owns it when Browse
+     is showing it; this is for the reader who has no deck above them. */
+  const up = $("atdoor");
+  if (up && !up.hidden && up.textContent.trim()) { box.hidden = true; return; }
   box.hidden = false;
   if (WAITING) box.append(el("b", null, atdoor(WAITING)));
   if (MEMBERS) box.append(document.createTextNode(inside(MEMBERS)));
@@ -5692,8 +5705,10 @@ function repaint() {
   drawAsk();
   drawMyInvite();
   drawStake();
-  drawFeedDoor();
   draw();
+  // Same reason as above: it has to know what Browse is showing, and draw()
+  // is what redraws the deck.
+  drawFeedDoor();
   window.scrollTo(0, y);
 }
 setLang(pickLang());
@@ -6105,6 +6120,22 @@ function rolePick(now, onPick, wanting) {
   const blank = el("option", null, T(wanting ? "say.pickWant" : "say.pickMe"));
   blank.value = "";
   sel.append(blank);
+  /* THE OPEN ANSWER, FIRST AND OUTSIDE THE TWO HALVES.
+   *
+   * The sentence made somebody name one role before it counted as answered,
+   * and plenty of people here do not have one in mind — they want to see who
+   * is in the room. Forcing a choice to get past the question is how a form
+   * collects an answer nobody meant, so "anyone" is a real answer: it puts
+   * them in every room they stand in rather than one. See ANYONE in store.js.
+   *
+   * Only on this side. It is a thing to be looking FOR and never a thing to
+   * be, and the server enforces that whatever this page sends. */
+  if (wanting) {
+    const any = el("option", null, T("role.a.anyone"));
+    any.value = "anyone";
+    if (now === "anyone") any.selected = true;
+    sel.append(any);
+  }
   for (const [half, keys] of [["say.make", MAKE], ["say.back", BACK]]) {
     const g = document.createElement("optgroup");
     g.label = T(half);
@@ -6170,23 +6201,28 @@ function drawSays() {
      * Only on the first line. Where you are does not change between one
      * sentence and the next, and a pill that repeats is a pill somebody will
      * eventually set to two different things. */
-    /* FIXED, WHEN THEY ALREADY ANSWERED IT ON THE WAY IN. Somebody vouched
-       for a producer; the producer does not get to become an investor on the
-       way through the door. A word, not a control — see .fixed.
-
-       And said ONCE. The second and third lines drop the identity and read
-       "and looking for —": repeating "I am a producer" three times down a
-       card is a form talking to itself, and the only thing changing between
-       the lines is the half after it. */
+    /* WHEN THEY ALREADY ANSWERED IT, IT IS NOT ON THIS CARD AT ALL.
+     *
+     * It was a fixed pill saying "I am an Investor" — true, unchangeable, and
+     * therefore not a control. A word somebody cannot edit, sitting in the
+     * middle of the one thing on this screen they CAN edit, teaches them the
+     * card does not respond. They said what they are in the waiting room and
+     * it is on their own page; saying it back to them above the deck, every
+     * visit, is the app reciting their own form to them.
+     *
+     * So the card carries only the half that moves. row.me is still set here
+     * — the sentence is a pair and the matching needs both — it is just not
+     * drawn.
+     *
+     * THE ONE CASE WHERE IT STAYS. Somebody who never answered it: the
+     * handful who were here before the waiting list, whose sentence has no
+     * first half and who would otherwise come up for nobody, for ever, with
+     * nothing on this screen to say why. They get the full sentence and both
+     * dropdowns, and it is theirs to set once. */
     if (SAYME) {
       row.me = SAYME;
-      if (i) {
-        line.append(document.createTextNode(T("say.andWant") + " "));
-      } else {
-        line.append(document.createTextNode(T("say.iamFixed") + " "));
-        line.append(el("span", "fixed", T("role.a." + SAYME)));
-        line.append(document.createTextNode(" " + T("say.lookingFor") + " "));
-      }
+      line.append(document.createTextNode(
+        (i ? T("say.andOnly") : T("say.want1")) + " "));
     } else {
       line.append(document.createTextNode((i ? T("say.and") : T("say.iam")) + " "));
       line.append(rolePick(row.me, (v) => { row.me = v; drawSays(); saveSay(); }, false));
@@ -6412,7 +6448,6 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
     SAYME = typeof d.sayMe === "string" ? d.sayMe : "";
     WAITING = typeof d.waiting === "number" ? d.waiting : null;
     MEMBERS = Number(d.people || 0);
-    drawFeedDoor();
     drawStake();
     RANK = d.rank || "";
     /* drawTodo BELONGS HERE and was missing. The list is made out of ME, and
@@ -6422,6 +6457,10 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
        simultaneously showed the Messages door only a named member gets. */
     seedSay(); drawSays();
     paintNav(); drawTutor(); drawDeck(); drawTodo(); drawTalk(); drawAsk(); countNotes();
+    /* AFTER drawDeck, ALWAYS. It reads whether Browse is already showing the
+       same two numbers, and before the deck is drawn the answer is always no
+       — which is how the line ended up on the screen twice. */
+    drawFeedDoor();
     /* Arrived from "edit" on their own profile. The form lives on this page,
        so the other page sends people here rather than growing a second copy of
        it — and the address is cleaned up afterwards so a reload does not open
