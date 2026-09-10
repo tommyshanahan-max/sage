@@ -454,6 +454,64 @@ export function cleanInvite(raw) {
   };
 }
 
+/* ---------------------------------------------------------------------------
+ * An offer, and why it is a link rather than a screen
+ *
+ * Everything else on this board is for people who are already inside. An offer
+ * is the one thing that has to work on somebody who is not — because the way
+ * to fill a room like this is not to ask people to join it, it is to hand them
+ * real work and let joining be what accepting costs.
+ *
+ * So an offer carries its own code and lives at its own address. It is sent
+ * the way everything is sent here — pasted into WeChat — and it opens for
+ * whoever taps it, member or stranger. There is no push in the mainland and
+ * there is not going to be; a link into the app people already have open is
+ * the delivery mechanism, not a workaround for the absence of one.
+ *
+ * ACCEPTING IT LETS YOU IN. That is the whole point and it is deliberate: the
+ * offer is an invite with a reason attached. Somebody who accepts has both a
+ * page and a first piece of work, which is a better start than an empty
+ * profile in a room of strangers.
+ *
+ * WHAT IT IS NOT. Not a contract, not escrow, not a payment. Three lines in
+ * the parties' own words and a date — what is offered, what it pays, what is
+ * expected back. The board holds the record and judges none of it. Money moves
+ * wherever these two would have moved it anyway.
+ * ------------------------------------------------------------------------- */
+
+export function cleanOffer(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const code = cleanCode(raw.code);
+  const by = /^[a-f0-9]{32}$/.test(String(raw.by || "")) ? String(raw.by) : "";
+  if (!code || !by) return null;
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").trim().slice(0, n);
+  const give = s(raw.give, 300);
+  if (!give) return null;
+  return {
+    code, by,
+    /* A note to self, so a list of sent offers reads as names rather than as
+       codes. Never shown to the person opening it — they know who they are. */
+    who: s(raw.who, 40),
+    give,
+    /* THE MONEY, AS TEXT AND NOT AS A NUMBER. "¥6,400 for the day", "¥700 an
+       hour plus travel", "2% of the round" — the shapes people actually agree
+       in. A number field would force every one of those into the one shape it
+       understood, and the ledger would be tidier and wrong. */
+    money: s(raw.money, 80),
+    want: s(raw.want, 300),
+    at: s(raw.at, 40) || new Date().toISOString(),
+    /* Who took it, and when. The name is typed by them at the moment they
+       accept — it is the signature, and it is why the record is worth more
+       than the conversation that led to it. */
+    tookBy: /^[a-f0-9]{32}$/.test(String(raw.tookBy || "")) ? String(raw.tookBy) : "",
+    tookAt: s(raw.tookAt, 40),
+    name: s(raw.name, 60),
+    /* Withdrawn without deleting the row, so an offer that was sent and then
+       pulled leaves a trace. An accepted one can never be withdrawn. */
+    off: Boolean(raw.off),
+  };
+}
+
 /** The levels offered. A closed list because it is what matching sorts on, and
  *  free text turns "HSK 4" into four spellings that never meet. */
 export const LEVELS = ["Just starting", "HSK 1-2", "HSK 3", "HSK 4", "HSK 5", "HSK 6", "Beyond HSK"];
@@ -1256,8 +1314,18 @@ export function cleanBoard(raw) {
      makes "once" true. */
   const ran = (Array.isArray(raw?.ran) ? raw.ran : [])
     .filter((x) => typeof x === "string" && x.length < 60).slice(0, 50);
+  const offers = [];
+  const seenOffer = new Set();
+  for (const r of (Array.isArray(raw?.offers) ? raw.offers : [])) {
+    const o = cleanOffer(r);
+    // One row per code. A duplicate is a bad write, and the first one is the
+    // one whose address has already been sent to somebody.
+    if (!o || seenOffer.has(o.code)) continue;
+    seenOffer.add(o.code);
+    offers.push(o);
+  }
   return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
-    shuts, groups, says, counts: cleanCounts(raw?.counts) };
+    offers, shuts, groups, says, counts: cleanCounts(raw?.counts) };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an

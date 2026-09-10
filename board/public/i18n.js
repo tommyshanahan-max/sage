@@ -1713,6 +1713,39 @@ export const STRINGS = {
      showed two rows inside a summary somebody had to open, and became a tab
      of its own. These are the strings that only exist because it is a screen
      now rather than a line in a digest. */
+  /* THE OFFER PAGE. Read by somebody who may never have heard of this board —
+     so nothing here assumes they know what The Exchange is, and none of it
+     asks them to learn before they can answer. */
+  "off.title":         ["You have been made an offer.", "有人给你发了一个邀约。"],
+  "off.lede": [
+    "Read it, and put your name to it if you want it. Nothing happens until you do, and nobody is told if you do not.",
+    "看一下，愿意的话签个名。在那之前什么都不会发生；不愿意也没人会知道。"],
+  "off.head":          ["The offer", "邀约内容"],
+  "off.give":          ["What you would be doing", "你要做的"],
+  "off.money":         ["What it pays", "报酬"],
+  "off.want":          ["What they would expect", "对方希望的"],
+  "off.signsay": [
+    "Your name here is your signature. It goes on the record with today's date, and it is what lets you into the room.",
+    "在这里写下名字就是签名。会连同今天的日期一起记录下来，也是你进入这个圈子的方式。"],
+  "off.yourname":      ["Your name", "你的名字"],
+  "off.take":          ["Accept", "接受"],
+  "off.fine": [
+    "No account, no password, no phone number.",
+    "不需要注册、不需要密码、不需要手机号。"],
+  "off.donehead":      ["Accepted.", "已接受。"],
+  "off.donesay": [
+    "It is on the record, and you are in. Put a photograph and one line up, and people can find you.",
+    "已经记录下来了，你也进来了。放一张照片、写一句话，别人就能找到你。"],
+  "off.donego":        ["Go in", "进去看看"],
+  "off.already": [
+    "Somebody has already taken this one.",
+    "这个邀约已经被别人接了。"],
+  "off.yours":         ["This is your own offer.", "这是你自己发出的邀约。"],
+  "off.failed":        ["That did not go through. Try again.", "没有成功，再试一次。"],
+  "off.withdrawn":     ["This offer has been withdrawn.", "这个邀约已经被收回了。"],
+  "off.gone":          ["There is no offer at this address.", "这个地址上没有邀约。"],
+  "off.nocode":        ["That link is missing its code.", "这个链接少了邀约码。"],
+
   "cards.head":        ["Your cards", "你的名片夹"],
   "cards.n":           ["{n} people you have matched with",
                         "你匹配到的 {n} 个人"],

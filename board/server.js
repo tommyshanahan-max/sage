@@ -285,7 +285,21 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * the person, that is a decision to make on purpose here, not a side effect
  * of a route somebody opened to fix an image.
  */
-const OPEN_PATHS = /^\/(enter|i\/|r\/|about|rules|privacy|level|type|room|api\/enter|api\/admitted|api\/hello|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+/* AN OFFER IS OUTSIDE THE DOOR, and it has to be.
+ *
+ * `o` and `api/offer` are here for the same reason "/" is: the whole purpose
+ * of an offer is that it opens for somebody who has never heard of this place.
+ * Requiring a code to read one would mean asking a person to join a room
+ * before they may see the work being offered to them, which is the wrong way
+ * round and is the thing this was built to fix.
+ *
+ * It opens the door to reading and taking, and to nothing else. Writing one is
+ * still members-only — POST /api/offer carries `gate`, which runs after this
+ * and is unaffected by it. And `o(?:\/|$)` rather than a bare `o`, because
+ * OPEN_PATHS is a prefix match and one loose letter would open every path on
+ * this board beginning with it.
+ */
+const OPEN_PATHS = /^\/(enter|i\/|r\/|o(?:\/|$)|about|rules|privacy|level|type|room|api\/enter|api\/admitted|api\/hello|api\/offer|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -663,6 +677,10 @@ async function admittedReq(req) {
 /* /i/K7M2QP is the shape that goes in a message: the code is in the address,
  * so tapping the link is the whole of it. The page reads the code out of the
  * path, which is why this serves the same file as /enter. */
+/* The offer page. /o/CODE is what gets pasted into WeChat; /o?c=CODE is what
+ * comes back when a client mangles it. Both land here, and the page reads
+ * the code out of whichever one it got. */
+app.get(["/o", "/o/", "/o/:code"], (req, res, next) => page("offer.html", req, res, next));
 app.get(["/enter", "/enter/", "/i/:code"], (req, res, next) =>
   page("enter.html", req, res, next));
 
@@ -3021,6 +3039,114 @@ app.get("/api/matches", async (req, res) => {
     });
   }
   res.json({ matches: rows, card: board.cards.some((c) => c.by === me) });
+});
+
+/* ---------------------------------------------------------------------------
+ * Offers: the one thing here that works on somebody who is not a member
+ *
+ * See cleanOffer in store.js for what an offer is and is not. This is how it
+ * travels: a member writes one, gets an address back, and pastes that address
+ * into WeChat. Whoever taps it can read it without a code, because requiring
+ * a code to read an offer would mean requiring somebody to join a room before
+ * they can see the work you are offering them, which is the wrong way round.
+ *
+ * ACCEPTING WRITES AN INVITE. Not a second way in — the same one. admitted()
+ * reads board.invites and knows nothing about offers, and it stays that way:
+ * an accepted offer mints a row there marked used by the person who took it,
+ * carrying the name of whoever sent it. So `make invites` reads as who brought
+ * whom whether they came in on a bare code or on a piece of work, and there is
+ * exactly one place in this server that decides whether somebody is inside.
+ * ------------------------------------------------------------------------- */
+
+/** What an offer looks like to whoever opens the link. Never the device hash
+ *  of either party, and never the note-to-self name the sender typed. */
+const shownOffer = (o, board) => {
+  const from = board.people.find((q) => q.by === o.by && q.state === "published");
+  return {
+    code: o.code, give: o.give, money: o.money, want: o.want, at: o.at,
+    // Who is offering, as a person rather than as a hash — a name and their
+    // sentence, so somebody deciding has the same context a member would.
+    from: from ? { handle: from.handle, say: from.say || [], campus: from.campus || "" } : null,
+    taken: Boolean(o.tookAt), takenAt: o.tookAt, takenName: o.name,
+    off: Boolean(o.off),
+  };
+};
+
+/** Write one. Members only — an offer is somebody in the room reaching out of
+ *  it, and both halves of that matter. */
+app.post("/api/offer", express.json({ limit: "8kb" }), gate, async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const out = await change((board) => {
+    if (!board.people.some((q) => q.by === me && q.state === "published")) {
+      // The same rule the rest of the board runs on: everything hangs off a
+      // person row, so somebody with no page cannot offer anybody anything.
+      return { error: "nopage" };
+    }
+    let code;
+    do { code = store.newCode(); }
+    while (board.offers.some((o) => o.code === code) || board.invites.some((v) => v.code === code));
+    const row = store.cleanOffer({ ...req.body, code, by: me, at: new Date().toISOString() });
+    if (!row) return { error: "empty" };
+    board.offers.push(row);
+    return { code: row.code };
+  });
+  if (out?.error) return res.status(out.error === "nopage" ? 403 : 400).json(out);
+  res.json(out);
+});
+
+/** Read one. No gate, on purpose — this is the whole point of the thing. */
+app.get("/api/offer", async (req, res) => {
+  const code = store.cleanCode(req.query?.code);
+  res.set("Cache-Control", "no-store");
+  if (!code) return res.status(400).json({ error: "no" });
+  const board = await store.load(FILE);
+  const o = board.offers.find((x) => x.code === code);
+  if (!o) return res.status(404).json({ error: "gone" });
+  res.json({ offer: shownOffer(o, board) });
+});
+
+/** Take it. Records the name they typed, and lets them in. */
+app.post("/api/offer/take", express.json({ limit: "4kb" }), async (req, res) => {
+  const code = store.cleanCode(req.body?.code);
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const name = String(req.body?.name || "").trim().slice(0, 60);
+  if (!code || !me || !name) return res.status(400).json({ error: "no" });
+
+  const out = await change((board) => {
+    const o = board.offers.find((x) => x.code === code);
+    if (!o) return { error: "gone" };
+    if (o.off) return { error: "off" };
+    // Taken already, by somebody else. Told apart from "taken by you", because
+    // one of those is a dead end and the other is the page they are looking
+    // for on a second phone.
+    if (o.tookAt) return o.tookBy === me ? { ok: true, mine: true } : { error: "taken" };
+    if (o.by === me) return { error: "yours" };
+
+    o.tookBy = me;
+    o.tookAt = new Date().toISOString();
+    o.name = name;
+
+    /* THE INVITE, WRITTEN HERE. Marked used by them in the same breath, so
+       there is never a moment where a row exists that somebody else could
+       spend. `by` is the sender, which is what makes the invites list read as
+       who brought whom. */
+    if (!board.invites.some((v) => v.usedBy === me && !v.off)) {
+      board.invites.push(store.cleanInvite({
+        code: store.newCode(), who: name, by: o.by,
+        usedBy: me, usedAt: o.tookAt,
+      }));
+    }
+    return { ok: true };
+  });
+
+  if (out?.error) {
+    return res.status(out.error === "gone" ? 404 : 409).json(out);
+  }
+  // Admitted from this moment, on this browser — the same cookie the door
+  // sets, so nothing downstream has to know an offer was involved.
+  setCookie(res, me);
+  res.json(out);
 });
 
 /* ---------------------------------------------------------------------------

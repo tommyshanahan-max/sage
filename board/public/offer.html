@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>An offer — The Exchange</title>
+<!-- WHAT WECHAT DRAWS IN THE CHAT. Deliberately says an offer is waiting and
+     never what it is: the card sits in a conversation somebody else can be
+     looking over the shoulder of, and the money is nobody's business until the
+     page is open. -->
+<meta name="description" content="Somebody has made you an offer.">
+<meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Exchange">
+<meta property="og:title" content="You have been made an offer">
+<meta property="og:description" content="Open it to see what it is. Nothing happens until you accept.">
+<meta property="og:url" content="{{HERE}}">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="/site.css">
+<style>
+  .sheet{max-width:30rem;margin:0 auto;padding:1.6rem 1.25rem 4rem}
+  .brandrow{display:flex;align-items:center;gap:.6rem;margin:0 0 1.8rem}
+  .brandrow i{width:2.2rem;height:2.2rem;border-radius:.6rem;background:var(--ink);
+    display:grid;place-items:center;font-style:normal;font-family:var(--serif);
+    font-size:1.1rem;color:var(--paper)}
+  .brandrow b{font-family:var(--serif);font-weight:400;font-size:1.1rem}
+  .brandrow span{margin-left:auto;font-size:.72rem;color:var(--muted)}
+
+  h1{margin:0 0 .5rem;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.9rem,6vw,2.5rem);line-height:1.12}
+  .lede{margin:0 0 1.6rem;color:var(--ink-2);line-height:1.65}
+
+  /* WHO IS ASKING, BEFORE WHAT THEY ARE ASKING. An offer from a stranger with
+     no face is a scam; the same offer under a name, a sentence and the mark of
+     the room it came from is a job. */
+  .whofrom{display:flex;gap:.7rem;align-items:center;padding:.85rem .9rem;
+    background:var(--raise);border:1px solid var(--hair);border-radius:.8rem;
+    margin:0 0 1rem}
+  .whofrom .av{width:2.6rem;height:2.6rem;border-radius:50%;flex:0 0 auto;
+    background:var(--accent-soft);color:var(--accent);display:grid;
+    place-items:center;font-family:var(--serif);font-size:1.1rem}
+  .whofrom .t b{display:block;font-family:var(--serif);font-weight:400;font-size:1.1rem}
+  .whofrom .t span{display:block;font-size:.82rem;color:var(--ink-2);margin-top:.1rem}
+
+  .terms{border:1px solid var(--accent);border-radius:.9rem;overflow:hidden;
+    background:var(--card)}
+  .terms .head{background:var(--accent-soft);color:var(--accent);padding:.5rem .9rem;
+    font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;font-weight:700}
+  .terms .f{padding:.8rem .9rem;border-top:1px solid var(--hair)}
+  .terms .f:first-of-type{border-top:0}
+  .terms .k{display:block;font-size:.62rem;letter-spacing:.12em;
+    text-transform:uppercase;font-weight:700;color:var(--muted);margin:0 0 .3rem}
+  .terms .v{font-size:1rem;line-height:1.6;color:var(--ink)}
+  .terms .v.money{font-weight:700;font-size:1.15rem}
+
+  /* THE NAME IS THE SIGNATURE. Not a form field with a label: the sentence
+     round it is what says that typing here is the act. */
+  .signbox{margin:1.4rem 0 0;padding:1.1rem 1.05rem;background:var(--raise);
+    border:1px solid var(--hair);border-radius:.9rem}
+  .signbox p{margin:0 0 .7rem;font-size:.92rem;color:var(--ink-2);line-height:1.6}
+  .signbox input{width:100%;padding:.7rem .8rem;border:1px solid var(--line);
+    border-radius:.6rem;background:var(--paper);color:var(--ink);font:inherit;
+    font-family:var(--serif);font-size:1.15rem}
+  .go{display:block;width:100%;margin:.9rem 0 0;padding:.95rem;border:0;
+    border-radius:99px;background:var(--accent);color:var(--accent-ink);
+    font-weight:700;font-size:1rem}
+  .go[disabled]{opacity:.5}
+  .fine{margin:.8rem 0 0;font-size:.82rem;color:var(--muted);line-height:1.55;
+    text-align:center}
+
+  .done{margin:1.4rem 0 0;padding:1.3rem 1.1rem;background:var(--raise);
+    border:1px solid var(--t2);border-radius:.9rem;text-align:center}
+  .done .tick{width:2.8rem;height:2.8rem;border-radius:50%;background:var(--t2);
+    color:#fff;display:grid;place-items:center;font-size:1.3rem;font-weight:700;
+    margin:0 auto .7rem}
+  .done h2{margin:0 0 .3rem;font-family:var(--serif);font-weight:400;font-size:1.35rem}
+  .done p{margin:0;color:var(--ink-2);font-size:.92rem;line-height:1.6}
+  .done .go{margin-top:1rem}
+
+  .bad{margin:1.4rem 0 0;padding:1.1rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:.9rem;color:var(--ink-2);
+    line-height:1.6;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="sheet">
+  <div class="brandrow">
+    <i>换</i><b>The Exchange</b>
+    <span id="langslot"></span>
+  </div>
+
+  <div id="wrap" hidden>
+    <h1 id="title"></h1>
+    <p class="lede" id="lede"></p>
+
+    <div class="whofrom" id="whofrom" hidden>
+      <span class="av" id="fromav"></span>
+      <span class="t"><b id="fromname"></b><span id="fromsay"></span></span>
+    </div>
+
+    <div class="terms">
+      <div class="head" id="thead"></div>
+      <div class="f"><span class="k" id="kgive"></span>
+        <span class="v" id="vgive"></span></div>
+      <div class="f" id="fmoney" hidden><span class="k" id="kmoney"></span>
+        <span class="v money" id="vmoney"></span></div>
+      <div class="f" id="fwant" hidden><span class="k" id="kwant"></span>
+        <span class="v" id="vwant"></span></div>
+    </div>
+
+    <div class="signbox" id="signbox">
+      <p id="signsay"></p>
+      <input id="name" autocomplete="name" spellcheck="false">
+      <button class="go" id="take" type="button"></button>
+      <p class="fine" id="fine"></p>
+    </div>
+
+    <div class="done" id="done" hidden>
+      <div class="tick">✓</div>
+      <h2 id="donehead"></h2>
+      <p id="donesay"></p>
+      <a class="go" id="donego" href="/browse"></a>
+    </div>
+  </div>
+
+  <div class="bad" id="bad" hidden></div>
+</div>
+
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+
+const $ = (id) => document.getElementById(id);
+const qs = new URLSearchParams(location.search);
+/* The code comes from the path (/o/K4M2QP) or the query (?c=K4M2QP). Both,
+ * because a link pasted into WeChat comes back in whichever shape the client
+ * felt like, and a person retyping it will not know there was a difference. */
+const CODE = (location.pathname.split("/").pop() || qs.get("c") || "")
+  .toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+
+let device = "";
+try {
+  device = localStorage.getItem("board:device") || "";
+  if (!device) {
+    device = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random())).replace(/-/g, "");
+    localStorage.setItem("board:device", device);
+  }
+} catch { /* a private window can still read the offer, just not take it */ }
+
+let OFFER = null;
+
+function paint() {
+  if (!OFFER) return;
+  $("title").textContent = T("off.title");
+  $("lede").textContent = T("off.lede");
+  $("thead").textContent = T("off.head");
+  $("kgive").textContent = T("off.give");
+  $("kmoney").textContent = T("off.money");
+  $("kwant").textContent = T("off.want");
+  $("signsay").textContent = T("off.signsay");
+  $("take").textContent = T("off.take");
+  $("fine").textContent = T("off.fine");
+  $("name").placeholder = T("off.yourname");
+  $("donehead").textContent = T("off.donehead");
+  $("donesay").textContent = T("off.donesay");
+  $("donego").textContent = T("off.donego");
+  if (OFFER.from) $("fromsay").textContent = OFFER.from.campus || "";
+}
+
+function draw(o) {
+  OFFER = o;
+  $("wrap").hidden = false;
+  $("vgive").textContent = o.give;
+  $("fmoney").hidden = !o.money;
+  $("vmoney").textContent = o.money || "";
+  $("fwant").hidden = !o.want;
+  $("vwant").textContent = o.want || "";
+  if (o.from && o.from.handle) {
+    $("whofrom").hidden = false;
+    $("fromname").textContent = o.from.handle;
+    $("fromav").textContent = (o.from.handle[0] || "?").toUpperCase();
+  }
+  const shut = o.taken || o.off;
+  $("signbox").hidden = shut;
+  $("done").hidden = !o.taken;
+  paint();
+  if (o.off && !o.taken) {
+    $("bad").hidden = false;
+    $("bad").textContent = T("off.withdrawn");
+  }
+}
+
+async function load() {
+  if (!CODE) { $("bad").hidden = false; $("bad").textContent = T("off.nocode"); return; }
+  try {
+    const r = await fetch("/api/offer?code=" + encodeURIComponent(CODE), { cache: "no-store" });
+    if (!r.ok) throw new Error(String(r.status));
+    const d = await r.json();
+    draw(d.offer);
+  } catch {
+    $("bad").hidden = false;
+    $("bad").textContent = T("off.gone");
+  }
+}
+
+$("take").addEventListener("click", async () => {
+  const name = $("name").value.trim();
+  if (!name) { $("name").focus(); return; }
+  const b = $("take");
+  b.disabled = true;
+  try {
+    const r = await fetch("/api/offer/take", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: CODE, device, name }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      b.disabled = false;
+      $("fine").textContent = T(d.error === "taken" ? "off.already"
+        : d.error === "yours" ? "off.yours" : "off.failed");
+      return;
+    }
+    $("signbox").hidden = true;
+    $("done").hidden = false;
+  } catch {
+    b.disabled = false;
+    $("fine").textContent = T("off.failed");
+  }
+});
+
+setLang(pickLang());
+$("langslot").append(langButton(paint));
+load();
+</script>
+</body>
+</html>
