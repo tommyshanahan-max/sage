@@ -1716,6 +1716,28 @@ export const STRINGS = {
   /* THE OFFER PAGE. Read by somebody who may never have heard of this board —
      so nothing here assumes they know what The Exchange is, and none of it
      asks them to learn before they can answer. */
+  /* THE COMPOSER, in the tray. Written for somebody who is about to reach a
+     person who may not be a member — so it says what the link does before it
+     asks for anything. */
+  "mko.lab":           ["Make an offer", "发一个邀约"],
+  "mko.why": [
+    "You get one link. It opens for anybody — no code, no account — and whoever accepts it is in the room from that moment.",
+    "你会拿到一个链接。任何人都能打开，不需要邀约码、不需要注册；谁接受了，谁就从那一刻起进来了。"],
+  "mko.who":           ["Who it is for", "发给谁"],
+  "mko.whoHint":       ["A note to yourself", "只有你自己看得到"],
+  "mko.give":          ["What they would be doing", "他们要做的"],
+  "mko.giveHint":      ["Two days on a beauty campaign, Shanghai.", "上海，美妆拍摄，两天。"],
+  "mko.money":         ["What it pays", "报酬"],
+  "mko.moneyHint":     ["¥6,400 for the day", "一天 6,400 元"],
+  "mko.want":          ["What you would expect", "你希望对方做到的"],
+  "mko.wantHint":      ["A fitting on the Thursday before.", "拍摄前的周四试装。"],
+  "mko.go":            ["Make the link", "生成链接"],
+  "mko.made":          ["Tap it to copy, then send it.", "点一下复制，然后发出去。"],
+  "mko.copied":        ["Copied. Paste it into WeChat.", "已复制，粘贴到微信发出去。"],
+  "mko.copyfail":      ["Copy it by hand — press and hold.", "长按手动复制。"],
+  "mko.nopage":        ["Put your own page up first.", "先把你自己的主页建好。"],
+  "mko.failed":        ["That did not go through. Try again.", "没有成功，再试一次。"],
+
   "off.title":         ["You have been made an offer.", "有人给你发了一个邀约。"],
   "off.lede": [
     "Read it, and put your name to it if you want it. Nothing happens until you do, and nobody is told if you do not.",

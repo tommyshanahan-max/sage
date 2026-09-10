@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -234,6 +234,21 @@ admit-existing: ## Let everybody already on the board through the door, once
 post-door: ## Tell the feed the board is private now, as The Professor
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/post-door.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" $(if $(AGAIN),--again,)
+
+can-offer: ## Let one member make offers:  make can-offer WHO=Mia [OFF=1]
+	@# Deliberately one person at a time and never derived from somebody's role.
+	@# Reaching a stranger with money attached is a different power from being
+	@# in the room, and an agent nobody has vouched for should not get it by
+	@# ticking a box on the way in. It becomes part of a matched card later.
+	@test -n "$(WHO)" || { echo 'make can-offer WHO=Mia   (make can-offer WHO=Mia OFF=1 to take it back)'; exit 1; }
+	@printf '%s' '{"who":"$(WHO)","on":$(if $(OFF),false,true)}' \
+	  | $(COMPOSE) exec -T board node -e '\
+	    let b=""; process.stdin.on("data",d=>b+=d).on("end",async()=>{ \
+	      const r=await fetch("http://127.0.0.1:8080/api/admin/can-offer",{method:"POST", \
+	        headers:{"content-type":"application/json","x-admin-secret":process.env.BOARD_ADMIN_KEY||""}, \
+	        body:b}); const j=await r.json(); \
+	      if(!r.ok){ console.error("no:",JSON.stringify(j)); process.exit(1); } \
+	      console.log("  " + j.handle + (j.canOffer ? " can make offers." : " no longer can.")); });'
 
 offer: ## Send somebody real work:  make offer FROM=Tom WHO="Yana" GIVE="..." [PAYS="¥8,000" WANT="..."]
 	@# Prints the one link to paste into WeChat. It opens for anybody — no code,

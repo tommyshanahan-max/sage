@@ -488,6 +488,26 @@
   .todo li b{flex:0 0 auto;color:var(--ink-2);font-weight:400;font-size:1.1rem}
   .todo .tap{display:block;margin:.6rem 0 0;font-size:.8rem;color:var(--ink-2)}
   .myinv + #notifday{padding-top:.2rem}
+
+  /* ---- make an offer, in the tray ---------------------------------------- */
+  .mkoffer{margin:.2rem 0 1rem;padding:.9rem .95rem 1rem;background:var(--card);
+    border:1px solid var(--accent);border-radius:.9rem}
+  .mkoffer .lab{display:block;font-size:.68rem;letter-spacing:.13em;
+    text-transform:uppercase;font-weight:700;color:var(--accent);margin:0 0 .3rem}
+  .mkoffer .why{margin:0 0 .8rem;font-size:.85rem;line-height:1.55;color:var(--ink-2)}
+  .mkoffer .f{display:block;margin:0 0 .6rem}
+  .mkoffer .f span{display:block;font-size:.66rem;letter-spacing:.1em;
+    text-transform:uppercase;font-weight:700;color:var(--muted);margin:0 0 .25rem}
+  .mkoffer input, .mkoffer textarea{width:100%;padding:.55rem .65rem;
+    border:1px solid var(--line);border-radius:.55rem;background:var(--paper);
+    color:var(--ink);font:inherit;font-size:.95rem;resize:vertical}
+  .mkoffer .sendbtn{width:100%;margin:.2rem 0 0}
+  /* The link it produces. Monospaced and full width because it is meant to be
+     read back off a screen and pressed, not admired. */
+  .mkoffer .made{width:100%;margin:.7rem 0 0;padding:.6rem .5rem;border:0;
+    border-radius:.55rem;background:var(--accent-soft);color:var(--accent);
+    font-family:ui-monospace,Menlo,monospace;font-size:.9rem;
+    overflow-wrap:anywhere;text-align:center}
   .myinv .lab{display:block;font-family:var(--serif);font-weight:400;
     font-size:1.35rem;line-height:1.15;color:var(--ink)}
   :root[data-lang="zh"] .myinv .lab{text-transform:none;letter-spacing:.02em}
@@ -1708,6 +1728,34 @@
         </div>
         <button class="settgo" type="button" id="incoggo"></button>
       </div>
+    </div>
+
+    <!-- MAKE AN OFFER. Above the invite because it is the stronger version of
+         the same act: an invite asks somebody to come and look at a room, an
+         offer hands them work and lets accepting be how they get in.
+
+         Hidden for almost everybody, and that is deliberate rather than
+         temporary caution — reaching a stranger with money attached is a
+         different power from being in the room. It belongs on a matched card
+         once anybody can send one; until then it is a short list of people and
+         one block in the tray. -->
+    <div class="mkoffer" id="mkoffer" hidden>
+      <span class="lab" id="mkofferlab"></span>
+      <p class="why" id="mkofferwhy"></p>
+      <label class="f"><span id="mkofferwhok"></span>
+        <input id="mkofferwho" autocomplete="off" spellcheck="false"></label>
+      <label class="f"><span id="mkoffergivek"></span>
+        <textarea id="mkoffergive" rows="2"></textarea></label>
+      <label class="f"><span id="mkoffermoneyk"></span>
+        <input id="mkoffermoney" autocomplete="off"></label>
+      <label class="f"><span id="mkofferwantk"></span>
+        <textarea id="mkofferwant" rows="2"></textarea></label>
+      <button class="sendbtn" type="button" id="mkoffergo"></button>
+      <!-- WHAT COMES BACK IS ONE LINE, and it is the whole product of this
+           form: an address to paste into WeChat. Tapping it copies it, which
+           is the only thing anybody wants to do with it. -->
+      <button class="made" type="button" id="mkofferout" hidden></button>
+      <p class="why" id="mkoffernote" hidden></p>
     </div>
 
     <div class="myinv" id="myinv" hidden>
@@ -6559,6 +6607,89 @@ let SAY = [];
  * The server stamps it on every save regardless, so this only decides whether
  * to draw a control for something that would be ignored. */
 let SAYME = "";
+/* Whether this person may make an offer. Told by /api/me, and it decides one
+ * thing only: whether the block is drawn. The refusal that matters is on the
+ * server, which checks the stored row rather than anything the page says. */
+let CANOFFER = false;
+
+/* ---- make an offer, in the tray --------------------------------------------
+ *
+ * Four fields and one line back. There is no list of sent offers here on
+ * purpose: the operator has `make offers` for that, and a member with the flag
+ * needs the thing in front of them to be the form, not a history.
+ */
+function drawMkOffer() {
+  const box = $("mkoffer");
+  if (!box) return;
+  box.hidden = !CANOFFER;
+  if (!CANOFFER) return;
+  $("mkofferlab").textContent = T("mko.lab");
+  $("mkofferwhy").textContent = T("mko.why");
+  $("mkofferwhok").textContent = T("mko.who");
+  $("mkoffergivek").textContent = T("mko.give");
+  $("mkoffermoneyk").textContent = T("mko.money");
+  $("mkofferwantk").textContent = T("mko.want");
+  $("mkoffergo").textContent = T("mko.go");
+  $("mkofferwho").placeholder = T("mko.whoHint");
+  $("mkoffergive").placeholder = T("mko.giveHint");
+  $("mkoffermoney").placeholder = T("mko.moneyHint");
+  $("mkofferwant").placeholder = T("mko.wantHint");
+}
+
+async function makeOffer() {
+  const give = $("mkoffergive").value.trim();
+  if (!give) { $("mkoffergive").focus(); return; }
+  const b = $("mkoffergo");
+  b.disabled = true;
+  const note = $("mkoffernote");
+  try {
+    const r = await fetch("/api/offer", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        device, who: $("mkofferwho").value.trim(), give,
+        money: $("mkoffermoney").value.trim(), want: $("mkofferwant").value.trim(),
+      }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.code) {
+      note.hidden = false;
+      note.textContent = T(d.error === "nopage" ? "mko.nopage" : "mko.failed");
+      b.disabled = false;
+      return;
+    }
+    const url = location.origin + "/o/" + d.code;
+    const out = $("mkofferout");
+    out.hidden = false;
+    out.textContent = url;
+    note.hidden = false;
+    note.textContent = T("mko.made");
+    /* The form empties, because the next thing somebody does here is write a
+       different offer to a different person — leaving the last one in the
+       boxes is how two people get sent the same words by accident. */
+    for (const id of ["mkofferwho", "mkoffergive", "mkoffermoney", "mkofferwant"]) {
+      $(id).value = "";
+    }
+    b.disabled = false;
+  } catch {
+    note.hidden = false;
+    note.textContent = T("mko.failed");
+    b.disabled = false;
+  }
+}
+
+$("mkoffergo").addEventListener("click", makeOffer);
+$("mkofferout").addEventListener("click", async () => {
+  const out = $("mkofferout");
+  try {
+    await navigator.clipboard.writeText(out.textContent);
+    $("mkoffernote").textContent = T("mko.copied");
+  } catch {
+    /* No clipboard on an insecure origin or an older WebView. The address is
+       on the screen and selectable, which is the fallback. */
+    $("mkoffernote").textContent = T("mko.copyfail");
+  }
+});
+
 /* The sentence as it stands on the server, copied so the pills can be moved
  * about without touching the profile until a save lands. Called twice: once
  * when /api/me arrives, because the pills are on Browse and draw before
@@ -6946,6 +7077,8 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
     /* THE FIXED HALF, and it arrives before anything draws the sentence. A
        string when they answered it on the way in, "" when nobody asked. */
     SAYME = typeof d.sayMe === "string" ? d.sayMe : "";
+    CANOFFER = Boolean(d.canOffer);
+    drawMkOffer();
     WAITING = typeof d.waiting === "number" ? d.waiting : null;
     MEMBERS = Number(d.people || 0);
     drawStake();

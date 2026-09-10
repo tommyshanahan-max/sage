@@ -809,6 +809,20 @@ export function cleanPerson(raw) {
     // takes them back out. This is the difference between a board that has
     // profiles and a board that is a list of people.
     looking: raw.looking === true,
+    /* MAY THIS PERSON MAKE AN OFFER.
+     *
+     * Set by whoever runs the board and by nothing else. It is read straight
+     * off the stored row, and every save on this server runs the existing row
+     * back through here — no route copies request fields onto a person
+     * wholesale — so a member cannot grant it to themselves by posting it.
+     *
+     * It exists because reaching somebody with money attached is a different
+     * power from being in the room, and the day it is automatic is the day an
+     * agent nobody has vouched for can do it to forty performers. It becomes
+     * an ordinary part of a matched card later; until then it is a short list
+     * of people, decided one at a time.
+     */
+    canOffer: raw.canOffer === true,
     /* What they are looking for. Three at most — see ROOMS above for why that
        number and not a bigger one. Unknown keys are dropped rather than
        refused: this field is written from a page, and a page written today is

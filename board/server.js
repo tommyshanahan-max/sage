@@ -3124,6 +3124,23 @@ app.post("/api/admin/offer", admin, express.json({ limit: "8kb" }), async (req, 
   res.status(201).json(out);
 });
 
+/** Who may make one. Operator only, one person at a time, on purpose — see
+ *  canOffer in store.js for why this is not derived from somebody's role. */
+app.post("/api/admin/can-offer", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").trim().toLowerCase();
+  const on = req.body?.on !== false;
+  if (!who) return res.status(400).json({ error: "who" });
+  const out = await change((board) => {
+    const q = board.people.find((x) => String(x.handle || "").toLowerCase() === who);
+    if (!q) return { error: "nobody" };
+    q.canOffer = on;
+    Object.assign(q, store.cleanPerson(q));
+    return { handle: q.handle, canOffer: q.canOffer };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.json(out);
+});
+
 /** Every offer and what became of it. For the person who sent them. */
 app.get("/api/admin/offer", admin, async (_req, res) => {
   const board = await store.load(FILE);
@@ -3880,6 +3897,9 @@ app.get("/api/me", async (req, res) => {
        they have one: the page needs to know the difference between "fixed to
        producer" and "nobody ever asked", and an absent field says neither. */
     sayMe: roleFromWait(board, mine),
+    // Whether the panel shows the offer block. The check that matters is
+    // on POST /api/offer; this only decides whether a button is drawn.
+    canOffer: Boolean(mine && mine.canOffer),
   });
 });
 
