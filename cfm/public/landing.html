@@ -27,6 +27,10 @@
   body{font:17px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,
     Arial,sans-serif;-webkit-font-smoothing:antialiased}
   .wrap{max-width:640px;margin:0 auto;padding:0 1.5rem}
+  /* The steps are the only part that wants to be wider than the reading
+     measure. Everything else stays at 640 so the prose keeps its line length. */
+  .wrap.wide{max-width:640px}
+  @media (min-width:46rem){ .wrap.wide{max-width:940px} }
   .serif{font-family:"Instrument Serif",Georgia,"Times New Roman",serif;font-weight:400}
 
   /* ---- mark + hero ---- */
@@ -42,9 +46,30 @@
     line-height:1.45}
 
   /* ---- the three ---- */
-  .steps{margin-top:clamp(3.5rem,11vw,6rem)}
-  .step{padding:clamp(2rem,6vw,2.8rem) 0;border-top:1px solid var(--line)}
+  /* THREE ACROSS once there is room for three.
+     Stacked, each step is a scroll of its own and the reader meets them one at
+     a time — which reads as three separate things rather than one shape. Side
+     by side they are taken in at a glance, which is what a pitch wants. Below
+     46rem there is no room for three columns of prose, so they stack: three
+     140px columns is not horizontal, it is unreadable. */
+  .steps{margin-top:clamp(3.5rem,11vw,6rem);display:grid;gap:0;
+    border-top:1px solid var(--line)}
+  .step{padding:clamp(1.8rem,5vw,2.2rem) 0}
+  .step + .step{border-top:1px solid var(--line)}
+  @media (min-width:46rem){
+    .steps{grid-template-columns:repeat(3,1fr);gap:2.2rem;
+      padding-top:clamp(1.8rem,5vw,2.4rem)}
+    .step{padding:0}
+    .step + .step{border-top:0;border-left:1px solid var(--line);padding-left:2.2rem}
+    .steps{gap:0}
+    .step{padding-right:2.2rem}
+    .step:last-child{padding-right:0}
+  }
   .kicker{display:flex;align-items:baseline;gap:.85rem;margin-bottom:.9rem}
+  @media (min-width:46rem){
+    .kicker{display:block}
+    .kicker .n{display:block;margin-bottom:.5rem}
+  }
   .kicker .n{font-family:"Instrument Serif",Georgia,serif;font-size:2.6rem;line-height:.8;
     color:var(--go);letter-spacing:-.02em}
   .kicker h2{font-size:clamp(1.4rem,4.6vw,1.8rem);line-height:1.12;letter-spacing:-.01em;
@@ -120,6 +145,7 @@
 
   /* ---- doors ---- */
   .doors{margin-top:clamp(3rem,9vw,4.5rem);display:grid;gap:1.6rem}
+  @media (min-width:34rem){ .doors{grid-template-columns:1fr 1fr;gap:2.2rem} }
   .door{padding-top:clamp(1.6rem,5vw,2.2rem);border-top:1px solid var(--line)}
   .door h2{font-family:"Instrument Serif",Georgia,serif;font-weight:400;
     font-size:clamp(1.5rem,4.6vw,1.9rem);margin:.3rem 0 .9rem}
@@ -141,6 +167,9 @@
     <p class="lede">We keep the record instead.</p>
   </header>
 
+</div>
+
+<div class="wrap wide">
   <div class="steps">
 
     <section class="step">
@@ -166,13 +195,25 @@
     </section>
 
   </div>
+</div>
 
+<div class="wrap">
+  <!-- BOTH DOORS TOGETHER. They were at opposite ends of the page, which made
+       a reader who had been sent a code scroll past the whole pitch to find the
+       one line addressed to them. Two ways in, side by side, and whichever one
+       you are it is on screen at the same moment. -->
   <div class="doors">
     <div class="door">
       <p class="eyebrow">Start one</p>
       <h2>Write the deal down</h2>
       <a class="btn solid" href="/f">Start the record</a>
       <small>A minute. Nothing to pay.</small>
+    </div>
+    <div class="door">
+      <p class="eyebrow">Sent a code?</p>
+      <h2>Open your offer</h2>
+      <a class="btn dark" href="/o">I have a code</a>
+      <small>It opens yours and nobody else's.</small>
     </div>
   </div>
 
@@ -226,15 +267,6 @@
       <p>Many small backers, the same record.</p>
     </div>
   </section>
-
-  <div class="doors">
-    <div class="door">
-      <p class="eyebrow">Sent a code?</p>
-      <h2>Open your offer</h2>
-      <a class="btn dark" href="/o">I have a code</a>
-      <small>It opens yours and nobody else's.</small>
-    </div>
-  </div>
 
   <footer>crowdfundme is being built. Nothing here is legal or financial advice.</footer>
 </div>
