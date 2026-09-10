@@ -83,6 +83,18 @@
     background:#0F1512;margin-bottom:1rem}
   #signbox label{display:block;font-size:.72rem;letter-spacing:.12em;
     text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:.6rem}
+  /* THE SIGNED HALF. Set in the same serif the empty line is typed in, so the
+     two read as the same document rather than a caption above a field. Dim,
+     because it is done — the eye belongs on the line that is not. */
+  .sigrow{padding-bottom:1rem;margin-bottom:1rem;border-bottom:1px solid var(--line)}
+  .sigrow.theirs{padding-bottom:0;margin-bottom:0;border-bottom:0}
+  .sigwho{display:block;font:400 1.35rem/1.4 "Instrument Serif",Georgia,serif;
+    color:var(--dim)}
+  /* Their own name once it is down. Full ink, not dim: it is the newest thing
+     on the page and the reason they came back to look. */
+  .sigwho.done{color:var(--text)}
+  .sigwhen{display:block;font-size:.76rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--mut);margin-top:.25rem}
   #signbox input{width:100%;border:0;border-bottom:1px solid var(--line);background:none;
     color:var(--text);font:400 1.35rem/1.6 "Instrument Serif",Georgia,serif;
     padding:.1rem 0 .45rem;outline:none}
@@ -101,6 +113,14 @@
     text-decoration:underline;text-underline-offset:3px;background:none;border:0;width:100%;
     cursor:pointer;font-family:inherit}
   .fine{margin-top:1.1rem;font-size:.8rem;line-height:1.6;color:var(--faint)}
+  /* The receipt, after the fact. Bordered rather than plain text: it is the
+     one block on this page that describes the future, and it should not be
+     mistaken for another term. */
+  #chain{margin:1.2rem 0 0;padding:.95rem 1.05rem;border:1px solid var(--line);
+    border-radius:.8rem;background:#0F1512}
+  #chain b{display:block;font-size:.72rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--go);font-weight:700;margin-bottom:.45rem}
+  #chain span{display:block;color:var(--dim);font-size:.88rem;line-height:1.6}
   /* where this goes */
   .claim{font:400 1.25rem/1.28 "Instrument Serif",Georgia,serif;margin-bottom:.35rem}
   .claim em{font-style:italic;color:var(--go)}
@@ -187,10 +207,29 @@
     <p class="ask" id="ask"></p>
     <p class="why" id="why"></p>
     <div class="from" id="frombox" hidden><i id="fromini"></i><div id="fromsay"></div></div>
+    <!-- TWO SIGNATURES, AND ONE OF THEM IS ALREADY THERE.
+         The page asked one person to sign and showed nothing from the other,
+         which makes it a form. The grantor signed when the offer was made —
+         that is an authenticated act by the owner of the record, and it is
+         stamped with the date — so it belongs on the page, above the empty
+         line, where it says what this is: a document waiting on one more
+         name rather than a request. -->
     <div id="signbox" hidden>
-      <label for="sign">Sign it</label>
-      <input id="sign" type="text" autocomplete="name" spellcheck="false"
-        placeholder="Your full name" aria-describedby="signwhy">
+      <div class="sigrow" id="sigfrom">
+        <span class="sigwho" id="sigfromwho"></span>
+        <span class="sigwhen" id="sigfromwhen"></span>
+      </div>
+      <div class="sigrow theirs" id="sigmine">
+        <label for="sign" id="siglabel">Sign it</label>
+        <input id="sign" type="text" autocomplete="name" spellcheck="false"
+          placeholder="Your full name" aria-describedby="signwhy">
+        <!-- Once it is signed the line is not a field any more. Coming back to
+             a document you signed and finding an empty box where your name
+             should be is the one thing that would make somebody doubt it was
+             recorded at all. -->
+        <span class="sigwho done" id="siginkwho" hidden></span>
+        <span class="sigwhen" id="siginkwhen" hidden></span>
+      </div>
       <small id="signwhy">Typed by you, with today's date, and kept on the record
         beside the terms above. It is not a share certificate and does not pretend
         to be one — it is what you agreed to, in your own name.</small>
@@ -201,6 +240,16 @@
          a sentence rather than a redirect — otherwise the button appears to do
          nothing, which is the worst thing a button can do here. -->
     <p class="fine" id="took" hidden style="color:var(--go);text-align:center"></p>
+    <!-- WHAT HAPPENS TO IT NEXT, said at the one moment somebody cares.
+         Accepting is the point at which this stops being a page and starts
+         being a record, and what makes the record worth having is that it
+         gets sealed and put somewhere neither side controls. Saying so
+         afterwards rather than in the pitch is the difference between a claim
+         and a receipt. -->
+    <div id="chain" hidden>
+      <b id="chainhead"></b>
+      <span id="chainsay"></span>
+    </div>
     <button class="lk" id="openwhere">Where this goes →</button>
     <p class="fine" id="fine"></p>
   </section>
@@ -349,6 +398,16 @@ let OFFER = null;
  * line says so plainly, because a page that lists milestones and stays silent
  * about who judges them is implying it does.
  */
+/* A date on a document, written the way a person writes one. The record
+   stores ISO strings because they sort; nobody signs "2026-09-10". */
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July",
+  "August", "September", "October", "November", "December"];
+function onDay(iso) {
+  const d = new Date(String(iso || ""));
+  if (Number.isNaN(d.getTime())) return "";
+  return d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
+}
+
 function drawSteps(k) {
   const rows = Array.isArray(k.steps) ? k.steps : [];
   const box = document.getElementById("steps");
@@ -409,6 +468,16 @@ function draw(o) {
       : "In full on incorporation";
     if (!o.taken) {
       $("signbox").hidden = false;
+      /* THE OTHER NAME, ALREADY ON IT. Making the offer is the grantor's half
+         and it is stamped with the day it happened, so both halves are drawn
+         from what the record already holds — nothing here is decorative and
+         nothing is asserted that did not occur. */
+      if (p.from) {
+        $("sigfromwho").textContent = p.from;
+        $("sigfromwhen").textContent = "Signed " + onDay(o.at);
+      } else {
+        $("sigfrom").hidden = true;
+      }
       $("take").disabled = true;
       $("take").className = "";
       $("sign").addEventListener("input", () => {
@@ -507,7 +576,7 @@ function draw(o) {
   $("w4").textContent = stake ? "The structure, done properly" : "One introduction";
   $("fine").textContent = "Nothing is issued and nothing is sold." +
     (o.until ? " Reserved until " + o.until + "." : "");
-  if (o.taken) { $("signbox").hidden = true; settled(p, o.signed); }
+  if (o.taken) { settled(p, o.signed, stake, o.tookAt); }
   show("offer");
 }
 
@@ -535,8 +604,14 @@ $("openwhere").addEventListener("click", () => show("where"));
 $("back").addEventListener("click", () => show("offer"));
 
 /* What an accepted offer looks like on the way back to it. */
-function settled(p, signed) {
-  const goTo = p && p.goTo;
+function settled(p, signed, stake, when) {
+  /* A STAKE NEVER HAS SOMEWHERE TO GO, including on the way back. The server
+     stopped sending a redirect for one — see /api/accept — but this runs
+     again every time they reopen a signed offer, and it was reading the
+     project's door rather than the kind of offer. So a signer returning to
+     look at their own record was shown a "Go in" button to a board they have
+     no code for. */
+  const goTo = !stake && p && p.goTo;
   $("take").textContent = goTo ? "Go in" : "Accepted";
   if (!goTo) {
     $("take").className = "";
@@ -545,7 +620,53 @@ function settled(p, signed) {
     $("took").textContent = (signed ? "Signed " + signed + ". " : "") +
       "On the record. Nothing else to do — I will come to you with the paperwork " +
       "when there is paperwork.";
+    /* Their signature, in place of the empty line. */
+    if (signed) {
+      $("signbox").hidden = false;
+      $("siglabel").hidden = true;
+      $("sign").hidden = true;
+      $("siginkwho").textContent = signed;
+      $("siginkwho").hidden = false;
+      $("siginkwhen").textContent = "Signed " + (onDay(when) || onDay(new Date().toISOString()));
+      $("siginkwhen").hidden = false;
+      $("signwhy").hidden = true;
+    }
+    drawChain();
   }
+}
+
+/* WHERE IT GOES AFTER THIS, and only after this.
+ *
+ * The pitch does not need to explain the chain; the person who has just put
+ * their name on something does. It is the difference between a claim made
+ * while somebody is deciding and a receipt handed over once they have.
+ *
+ * SAID AS IT ACTUALLY WORKS, which means saying "at the end of the month".
+ * Nothing is written to a chain the instant a button is pressed — the month's
+ * rows are canonicalised, hashed, chained to the previous month's hash, and
+ * that one hash goes on. Implying it happens now would be the first thing a
+ * careful reader checks and the first thing they would catch.
+ *
+ * And nothing is claimed when nothing is switched on. /api/anchoring answers
+ * whether there is a chain behind this at all; with no key set, the block says
+ * the sealing part, which is true regardless, and stops.
+ */
+async function drawChain() {
+  const box = $("chain");
+  if (!box) return;
+  let a = null;
+  try { a = await fetch("/api/anchoring").then((r) => (r.ok ? r.json() : null)); } catch { /* fine */ }
+  $("chainhead").textContent = "What happens to this now";
+  const sealed = "At the end of this month, everything written here — the terms, "
+    + "your name and the date — is hashed into one line that stands for the "
+    + "whole month, and that line is chained to last month's. Change any of it "
+    + "afterwards and the hash stops matching.";
+  const onChain = " That hash is then written to the "
+    + (a && a.net === "public" ? "Stellar" : "Stellar test")
+    + " blockchain, where neither of us can reach it. Anybody can check the "
+    + "record against it.";
+  $("chainsay").textContent = sealed + (a && a.on ? onChain : "");
+  box.hidden = false;
 }
 
 $("take").addEventListener("click", async () => {
@@ -557,7 +678,7 @@ $("take").addEventListener("click", async () => {
     });
     const d = await r.json().catch(() => ({}));
     if (r.ok && d.goTo) { location.assign(d.goTo); return; }
-    if (r.ok) { $("signbox").hidden = true; settled(null, $("sign").value.trim()); return; }
+    if (r.ok) { settled(null, $("sign").value.trim(), true, new Date().toISOString()); return; }
     $("take").textContent = "Accept";
   } catch { $("take").textContent = "Accept"; }
 });

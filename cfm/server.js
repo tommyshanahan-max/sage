@@ -127,6 +127,14 @@ function view(data, o) {
   return {
     who: o.who, seat: o.seat, note: o.note, until: o.until,
     taken: Boolean(o.tookAt), signed: o.signed,
+    /* BOTH SIDES OF THE DATE, so the page can show a document with two
+       signatures on it rather than a form with one.
+       `at` is when the offer was made, which is when the grantor did their
+       half: making it is an authenticated act by the owner of the record and
+       it is stamped. `tookAt` is when the other person did theirs. Nothing
+       new is stored to say this — it is the two timestamps the row already
+       had, sent out so the page can stop implying only one person signed. */
+    at: o.at, tookAt: o.tookAt,
     /* goTo is here so the page can tell, before the button is pressed, whether
        accepting ends in a room or in a sentence. Not a secret — it is where
        the button was always going to send them. */
