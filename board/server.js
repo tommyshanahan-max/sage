@@ -26,7 +26,7 @@
 // ---------------------------------------------------------------------------
 
 import express from "express";
-import { mkdir, readFile, writeFile, rename, stat } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rename, stat, rm } from "node:fs/promises";
 import { timingSafeEqual, randomUUID, createHmac } from "node:crypto";
 import path from "node:path";
 import * as store from "./lib/store.js";
@@ -3011,6 +3011,48 @@ function pairState(board, me, q) {
   }
   return out;
 }
+
+/* ---------------------------------------------------------------------------
+ * Leaving for good
+ *
+ * The counterpart of the door. Everything else here is written so that a
+ * person can decide what other people see; this is the one that lets them
+ * decide the board sees nothing, and it is not a settings toggle — it is a
+ * separate press behind its own screen that names, in advance, exactly what
+ * goes. See forget() in store.js for the list and for the two rows that are
+ * unlinked rather than removed.
+ *
+ * ONE CONFIRMATION AND NO PASSWORD, because there is no password: a person IS
+ * a browser here, so the device id in the body is the whole of the proof, and
+ * it is the same proof every other write on this board runs on. Asking for a
+ * second secret would mean inventing one for this route alone.
+ *
+ * THE COOKIE GOES TOO. It is what admission is read from and it outlives
+ * localStorage by design — leaving it behind would mean somebody who deleted
+ * everything still walks through the door as a member who no longer exists.
+ * ------------------------------------------------------------------------- */
+app.post("/api/me/forget", express.json({ limit: "1kb" }), gate, async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  // A word the page has to send, so a stray POST cannot do this and neither
+  // can a link somebody is sent. Not a secret — a second act.
+  if (req.body?.sure !== "forget") return res.status(400).json({ error: "sure" });
+
+  const out = await change((board) => store.forget(board, me));
+
+  /* The files last, and failures are swallowed on purpose: the rows are the
+     record, and a photograph whose row is gone is unreachable by every route
+     on this server — findMedia is only ever called with an id read out of the
+     board. A file left on disk is a cleanup job, not a leak of a profile. */
+  for (const id of out.media) {
+    const found = await findMedia(id);
+    if (found) await rm(found.file).catch(() => {});
+  }
+
+  res.append("Set-Cookie",
+    "board_in=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax; Secure");
+  res.json({ ok: true, rows: out.rows, files: out.media.length });
+});
 
 /** My own card, which is mine to read whether or not anybody else may. */
 app.get("/api/card", async (req, res) => {

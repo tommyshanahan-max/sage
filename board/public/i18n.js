@@ -1326,6 +1326,37 @@ export const STRINGS = {
   "key.hide":          ["Hide it", "藏起来"],
 
   "key.have":          ["Been here before?", "以前来过？"],
+
+  /* LEAVING FOR GOOD. It lists what goes before it goes, because a plain
+     "are you sure?" makes somebody guess, and the guess is always smaller
+     than the truth — most people think this hides a profile. */
+  "gone.go":           ["Delete everything and leave", "删除全部内容并离开"],
+  "gone.head":         ["Delete everything?", "确定要删除全部内容吗？"],
+  "gone.body": [
+    "This cannot be undone, and there is no way to get any of it back. Your number stops working the moment you press it.",
+    "这个操作没法撤销，删掉的东西也拿不回来。你的那串数字，一按下去就失效了。"],
+  "gone.l1":           ["Your profile and your photo", "你的资料和照片"],
+  "gone.l2":           ["Everything you have posted", "你发过的所有内容"],
+  "gone.l3": [
+    "Every message, including the ones written to you",
+    "所有私信，包括别人写给你的"],
+  "gone.l4": [
+    "Your card, and it stops working for everyone you gave it to",
+    "你的名片，收到过的人也都看不到了"],
+  "gone.l5":           ["Everyone you follow, and everyone following you",
+                        "你关注的人，和关注你的人"],
+  "gone.keeps": [
+    "Two things stay, with your name taken off them: the record that your invite code was used, and any offer somebody has already accepted. Neither can be traced back to you.",
+    "有两样会留下，但会把你的名字去掉：你的邀请码被用过的记录，还有已经被人接受的邀约。这两样都追溯不到你。"],
+  "gone.no":           ["Keep my account", "先不删"],
+  "gone.yes":          ["Delete everything", "全部删除"],
+  "gone.going":        ["Deleting…", "正在删除……"],
+  "gone.failed":       ["That did not work. Nothing has been deleted.",
+                        "没成功。什么都还没删掉。"],
+  "gone.done": [
+    "Everything is deleted. Nothing of yours is left here.",
+    "已经全部删除，这里不再有你的任何内容。"],
+
   "key.enterTitle":    ["Paste your key", "粘贴你的钥匙"],
   "key.enterBody": [
     "From the phone you used before. You will become that person again — their posts, their profile, the people they follow.",

@@ -1479,6 +1479,120 @@ export function threadFor(posts, id) {
   };
 }
 
+/* ---------------------------------------------------------------------------
+ * Deleting yourself
+ *
+ * WHY IT HAS TO EXIST. Apple has required it of anything with an account since
+ * 2022, and it is the right of it anyway: a board that lets somebody in and
+ * then cannot let them out is holding them. There are no accounts here — a
+ * person IS a browser — but the rows on the server are just as real, and
+ * clearing the browser leaves every one of them behind under a hash nobody can
+ * produce any more, which is the worst of both.
+ *
+ * WHAT GOES. Everything keyed to them, in both directions: their profile and
+ * face, their posts and replies and likes and reports, what they follow and
+ * who follows them, cards, grants either way, every private message they wrote
+ * AND every one written to them, the rooms they asked for, their sentence,
+ * their group memberships.
+ *
+ * A message has two people in it and both copies go. That is deliberate:
+ * asking to be deleted and being told half of what you wrote stays readable
+ * by somebody else is not deletion. The person on the other side keeps
+ * whatever they have already read, which is true of any message ever sent.
+ *
+ * WHAT STAYS, AND WHY. Two things, and neither is a profile:
+ *
+ *   The invite row. It is the record of the door — which code was spent and
+ *   whether it can be spent again. Deleting it would hand back a used code and
+ *   would let somebody who brought in a person who then hurt people erase that
+ *   they brought them. The person is unlinked from it instead: the hash is
+ *   replaced with a tombstone, so the row says a code was used and by nobody
+ *   this board can name.
+ *
+ *   An accepted offer. Two people agreed terms, one of them is leaving, and
+ *   the agreement was not only theirs. Same treatment — unlinked, not removed.
+ *   An offer nobody took is not an agreement and goes.
+ *
+ * Media is NOT deleted here. This function takes a board and returns the ids
+ * of the files that are now orphaned; deleting them is the caller's, because
+ * this module does not touch the disk.
+ */
+export function forget(board, me) {
+  if (!me) return { media: [], rows: 0 };
+  const media = [];
+  let rows = 0;
+
+  const mine = board.people.filter((q) => q.by === me);
+  const ids = new Set(mine.map((q) => q.id));
+  for (const q of mine) {
+    if (q.photo) media.push(q.photo);
+    if (q.cover) media.push(q.cover);
+  }
+  for (const c of board.cards) if (c.by === me && c.qr) media.push(c.qr);
+  for (const p of board.posts) {
+    if (p.by !== me) continue;
+    if (p.photo) media.push(p.photo);
+    if (p.clip) media.push(p.clip);
+  }
+  for (const w of board.waits) if (w.by === me && w.photo) media.push(w.photo);
+
+  /* Rows are replaced rather than spliced, because half of them are
+     deduplicated on load and a splice inside a loop over the same array is how
+     one of them gets skipped. */
+  const drop = (key, keep) => {
+    const was = board[key].length;
+    board[key] = board[key].filter(keep);
+    rows += was - board[key].length;
+  };
+
+  drop("people", (q) => q.by !== me);
+  drop("posts", (p) => p.by !== me);
+  // Both directions: what they follow, and everybody following the person they
+  // were. An id in follows that names nobody is a follower count that lies.
+  drop("follows", (f) => f.by !== me && !ids.has(f.who));
+  drop("grants", (g) => g.by !== me && !ids.has(g.who));
+  drop("shuts", (x) => x.by !== me && !ids.has(x.who));
+  drop("cards", (c) => c.by !== me);
+  drop("wants", (w) => w.by !== me);
+  drop("says", (x) => x.by !== me);
+  drop("notes", (n) => n.by !== me && n.to !== me);
+  drop("waits", (w) => w.by !== me);
+  drop("vouches", (v) => v.by !== me);
+
+  /* Only the groups this person was actually in. Filtering every group by its
+     size would take out any group that was already below three for some other
+     reason — somebody else's room, deleted by somebody else leaving. */
+  const thin = new Set();
+  for (const g of board.groups) {
+    if (!Array.isArray(g.members) || !g.members.includes(me)) continue;
+    g.members = g.members.filter((x) => x !== me);
+    rows++;
+    // A group needs three people to be a group. Two left holding it is a
+    // private message with extra steps, and nobody chose to be in that.
+    if (g.members.length < 3) thin.add(g.id);
+  }
+  drop("groups", (g) => !thin.has(g.id));
+
+  // An offer nobody took is not an agreement.
+  drop("offers", (o) => !(o.by === me && !o.tookAt));
+
+  /* THE TWO THAT ARE UNLINKED RATHER THAN REMOVED. A tombstone that is the
+     right shape for the field and can never be a real device hash, so nothing
+     matches it and nothing crashes on it. */
+  const GONE32 = "0".repeat(32);
+  const GONE64 = "gone";
+  for (const o of board.offers) {
+    if (o.by === me) { o.by = GONE64; o.name = ""; rows++; }
+    if (o.tookBy === me) { o.tookBy = GONE32; o.name = ""; rows++; }
+  }
+  for (const v of board.invites) {
+    if (v.by === me) { v.by = GONE64; rows++; }
+    if (v.usedBy === me) { v.usedBy = GONE64; rows++; }
+  }
+
+  return { media: [...new Set(media)].filter(Boolean), rows };
+}
+
 /** Who has reported a post, counted by device rather than by row.
  *
  *  By device because the number is used to decide whether to take something
@@ -1541,6 +1655,11 @@ export function rebind(board, from, to) {
     }
   }
   for (const s of board.says) swap(s, "by");
+  /* Offers, both fields, for the reason the comment above this function gives:
+     they were added to the board after rebind was written and were not added
+     here, so somebody who came back on a second phone quietly lost every offer
+     they had sent and every one they had accepted. */
+  for (const o of board.offers) { swap(o, "by"); swap(o, "tookBy"); }
   /* The invite rows last, and both fields. `usedBy` is what admission is read
      from — miss it and somebody is restored to their profile and then shut out
      at the door. `by` is who they brought in, which is the credit on their

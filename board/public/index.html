@@ -1361,6 +1361,18 @@
        innerHeight, which is the number that is actually true. */
     max-height:calc(var(--vh, 1vh) * 92)}
   .sheet h2{margin:0 0 1rem;font-family:var(--serif);font-weight:400;font-size:1.35rem}
+
+  /* The way out. Not styled as a danger button until the sheet it opens —
+     a red control on a form somebody is filling in reads as a warning about
+     the form. */
+  .gonebox{margin:1.4rem 0 0;padding:.9rem 0 0;border-top:1px solid var(--hair);
+    text-align:center}
+  .gonebox button{border:0;background:none;padding:.3rem;font:inherit;
+    font-size:.84rem;color:var(--muted);text-decoration:underline}
+  .gonelist{margin:.9rem 0 0;padding:0 0 0 1.1rem;color:var(--ink-2);
+    font-size:.92rem;line-height:1.65}
+  .gonelist li{margin:.15rem 0}
+  .go.warn{background:var(--bad,#B3261E);color:#fff}
   .sheet textarea{width:100%;border:1px solid var(--line);background:var(--raise);
     border-radius:.7rem;padding:.85rem;font:inherit;font-family:var(--serif);
     font-size:1.08rem;line-height:1.55;color:var(--ink);resize:vertical;outline:none}
@@ -2273,6 +2285,31 @@
       </div>
       <div class="keyrow"><button type="button" id="keyhave"></button></div>
     </div>
+
+    <!-- THE WAY OUT, under the way back, which is the right order: the number
+         above is how you keep everything, and this is how you keep none of it.
+         Small and last on purpose — it is not a setting, and nobody arrives at
+         this form looking for it — but it is here rather than nowhere, and it
+         says what it does before it is pressed rather than after. -->
+    <div class="gonebox">
+      <button type="button" id="gonego"></button>
+    </div>
+  </form>
+</div>
+
+<!-- Deleting everything. Its own screen, because a list of what is about to
+     go is the only thing that makes the press an informed one. -->
+<div class="sheet" id="gonesheet" hidden>
+  <form class="card" id="goneform">
+    <h2 id="gonetitle"></h2>
+    <p class="hint" id="gonebody"></p>
+    <ul class="gonelist" id="gonelist"></ul>
+    <p class="menote" id="gonekeeps"></p>
+    <div class="row">
+      <button class="ghost" type="button" id="goneshut"></button>
+      <button class="go warn" type="submit" id="gonedo"></button>
+    </div>
+    <p class="said" id="gonesaid" hidden></p>
   </form>
 </div>
 
@@ -6912,7 +6949,71 @@ function drawKey() {
   $("keyval").textContent = device || "—";
   // Nothing to show on a browser that cannot keep one.
   $("keyshow").hidden = !device;
+  // And nothing to delete on one either.
+  $("gonego").hidden = !device;
+  $("gonego").textContent = T("gone.go");
 }
+
+/* ---------------------------------------------------------------------------
+ * Deleting everything
+ *
+ * IT LISTS WHAT GOES BEFORE IT GOES. A confirmation that only asks "are you
+ * sure?" makes somebody guess at what they are agreeing to, and the guess is
+ * usually smaller than the truth — most people think this hides a profile.
+ * It does not: it takes out the messages, both sides of them, and every card
+ * anybody was given.
+ *
+ * And it says what stays, in the same breath, because the two rows that stay
+ * would otherwise be a surprise found later. See forget() in store.js.
+ * ------------------------------------------------------------------------- */
+function drawGone() {
+  $("gonetitle").textContent = T("gone.head");
+  $("gonebody").textContent = T("gone.body");
+  const list = $("gonelist");
+  fill(list);
+  for (const k of ["gone.l1", "gone.l2", "gone.l3", "gone.l4", "gone.l5"]) {
+    list.append(el("li", null, T(k)));
+  }
+  $("gonekeeps").textContent = T("gone.keeps");
+  $("goneshut").textContent = T("gone.no");
+  $("gonedo").textContent = T("gone.yes");
+  $("gonedo").disabled = false;
+  $("gonesaid").hidden = true;
+}
+$("gonego").addEventListener("click", () => {
+  drawGone();
+  $("gonesheet").hidden = false;
+});
+$("goneshut").addEventListener("click", () => { $("gonesheet").hidden = true; });
+$("gonesheet").addEventListener("click", (e) => {
+  if (e.target === $("gonesheet")) $("gonesheet").hidden = true;
+});
+$("goneform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const go = $("gonedo");
+  const said = $("gonesaid");
+  go.disabled = true;
+  said.hidden = false;
+  said.textContent = T("gone.going");
+  try {
+    const r = await fetch("/api/me/forget", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ device, sure: "forget" }),
+    });
+    if (!r.ok) throw new Error("no");
+  } catch {
+    said.textContent = T("gone.failed");
+    go.disabled = false;
+    return;
+  }
+  /* THE BROWSER IS CLEARED TOO, and this is the half people forget. The server
+     has nothing left, but the device id in localStorage is the identity — left
+     behind, the next visit is a browser claiming to be somebody who no longer
+     exists, and every screen would be half-empty rather than new. */
+  try { localStorage.clear(); } catch { /* nothing to do about it */ }
+  try { sessionStorage.clear(); } catch { /* same */ }
+  location.replace("/?gone=1");
+});
 $("keyshow").addEventListener("click", () => {
   $("keyopen").hidden = !$("keyopen").hidden;
   $("keyshow").textContent = $("keyopen").hidden ? T("key.show") : T("key.hide");

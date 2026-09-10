@@ -105,9 +105,17 @@
     .brand span small{font-size:.72rem}
     .top .go{padding:.5rem .85rem;font-size:.84rem}
   }
+  .gonesaid{margin:0;padding:.9rem 1.1rem;background:var(--raise,#0E1512);
+    border-bottom:1px solid var(--hair,#1E2A25);text-align:center;
+    font-size:.92rem;line-height:1.55}
 </style>
 </head>
 <body>
+
+<!-- WHERE SOMEBODY LANDS AFTER DELETING THEMSELVES. The press worked, their
+     browser has been cleared, and without this they arrive at a page selling
+     them the thing they just left with no word that it happened. -->
+<p id="gonesaid" class="gonesaid" hidden></p>
 
 <div class="top">
   <div class="wrap">
@@ -213,6 +221,15 @@
 <script type="module">
 import { T, setLang, pickLang, langButton } from "/i18n.js";
 import { waitBox, feedPeek, roomFromPath, admitted, tally } from "/wait.js";
+
+/* One line for somebody who has just deleted themselves. It is drawn before
+   anything else on the page so the word arrives with the page rather than
+   after it. */
+if (new URLSearchParams(location.search).get("gone") === "1") {
+  const said = document.getElementById("gonesaid");
+  said.hidden = false;
+  said.textContent = T("gone.done");
+}
 
 /* SOMEBODY OPENED THIS DOOR. Reported after the page is up rather than at the
    top of the script, so a browser that fell over on the way never counts as a
