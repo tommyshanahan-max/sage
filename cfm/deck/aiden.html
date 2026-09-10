@@ -91,6 +91,19 @@
   .pair .n.quiet{color:var(--ink)}
   .pair .l{color:var(--dim);font-size:.86rem;margin-top:.5rem;max-width:8rem}
 
+  /* THE THREE STEPS. Numbered in the margin rather than by the list's own
+     markers, so the number is the size of a number and the step is the size
+     of a sentence — a browser's default puts them the same weight and the
+     sequence stops reading as one. */
+  ol.how{list-style:none;margin:0 0 1.5rem;padding:0;counter-reset:how}
+  ol.how li{position:relative;padding:0 0 1.1rem 2.5rem;counter-increment:how}
+  ol.how li:last-child{padding-bottom:.4rem}
+  ol.how li::before{content:counter(how);position:absolute;left:0;top:-.1rem;
+    font:400 1.5rem/1 var(--serif);color:var(--gold)}
+  ol.how b{display:block;color:var(--ink);font-weight:650;font-size:1.02rem;
+    margin-bottom:.15rem}
+  ol.how span{display:block;color:var(--dim);font-size:.95rem;line-height:1.5}
+
   /* The rooms. Not cards — a list of who is already standing in there. */
   ul.rooms{list-style:none;margin:0 0 1.5rem;padding:0}
   ul.rooms li{
@@ -168,19 +181,17 @@
       you press it.</p>
   </section>
 
+  <!-- TWO SCREENS MAKING ONE POINT. "The room decides it" and "nobody got the
+       gig from an advert" are the same sentence twice, and the second was the
+       proof of the first — so it is the line under it now, where proof goes. -->
   <section>
     <h1>The people you need in China already know each other.</h1>
-    <p class="lead">Getting into that circle takes years. Usually it takes a person.</p>
-    <p><em>This is the room.</em></p>
-    <p style="margin-top:2rem">Tom is asking you to build it with him — not to join it.</p>
-  </section>
-
-  <section>
-    <p class="eyebrow">You already know how this works</p>
-    <h2>Nobody good ever got the gig from an advert.</h2>
-    <p>They got it because someone in the room said their name.</p>
-    <p class="lead">That is the whole thing. Everybody knows the room decides
-      it, and almost nobody has tried to build the room on purpose.</p>
+    <p class="lead">Nobody good ever got the gig from an advert. They got it
+      because someone in the room said their name.</p>
+    <p style="margin-top:1.4rem">Getting into that circle takes years. Usually
+      it takes a person. <em>This is the room.</em></p>
+    <p style="margin-top:1.4rem">Tom is asking you to build it with him — not
+      to join it.</p>
   </section>
 
   <section>
@@ -195,21 +206,37 @@
         <div class="l">inside</div>
       </div>
     </div>
-    <p class="lead">A queue of thirty-five before a single pound of advertising.
-      Nobody gets in unless a member vouches for them.</p>
-    <p>The queue is not a metric. It <b>is</b> the product.</p>
-  </section>
-
-  <section>
-    <p class="eyebrow">Who is in there</p>
-    <ul class="rooms">
-      <li><b>Film &amp; TV</b><span>producers, casting, crew who work in Beijing now</span></li>
+    <p class="lead">A queue of thirty-five before a single pound of
+      advertising. Nobody gets in unless a member vouches for them.</p>
+    <!-- The rooms had a screen of their own. They are the detail under the
+         number, not a point beside it: what the queue is made of. -->
+    <ul class="rooms" style="margin-top:1.4rem">
+      <li><b>Film &amp; TV</b><span>producers, casting, crew working in Beijing now</span></li>
       <li><b>Investing</b><span>small funds looking for founders who ship</span></li>
       <li><b>Raising</b><span>founders who need the first cheque</span></li>
-      <li><b>Factories &amp; buyers</b><span>the ones who make it and the ones who move it</span></li>
+      <li><b>Factories &amp; buyers</b><span>the ones who make it, the ones who move it</span></li>
     </ul>
-    <p class="lead">Every one of them is looking for somebody the others
-      already know.</p>
+    <p>Every one of them is looking for somebody the others already know.</p>
+  </section>
+
+  <!-- HOW IT ACTUALLY WORKS. He knew what he would own and not what the thing
+       does — and a person cannot judge a share in something they cannot
+       picture. Numbered because it genuinely is a sequence: you get in, you
+       say one thing, the room answers. Three steps, because that is all there
+       is; a fourth would be invented. -->
+  <section>
+    <p class="eyebrow">How it works</p>
+    <h2>One sentence, and the room does the rest.</h2>
+    <ol class="how">
+      <li><b>Somebody vouches for you.</b><span>Nobody walks in. You join the
+        queue, and a member brings you through — their name stays on you.</span></li>
+      <li><b>You say what you are and what you need.</b><span>"I am a producer
+        looking for an investor." That is the whole form.</span></li>
+      <li><b>The room answers.</b><span>You come up for the people who are
+        what you are looking for, and are looking for what you are.</span></li>
+    </ol>
+    <p>No feed to keep up with, nothing to post, nobody to impress. Say the
+      sentence and wait to be useful to somebody.</p>
   </section>
 
   <section>
