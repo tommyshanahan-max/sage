@@ -2314,6 +2314,9 @@ export const STRINGS = {
   /* On the card the sentence is prose, so the article goes with the role —
      see the note where this is used. say.iam keeps its "a" for the form. */
   "brw.iam":           ["I am", "我是"],
+  /* The sentences that did not fit. A count, not more pills — see the note
+     where the card draws it. */
+  "brw.sayMore":       ["+{n} more", "还有 {n} 条"],
   "brw.connect":       ["Connect", "建立联系"],
   "brw.connected":     ["Connected", "已联系"],
   "door.noCode":       ["I do not have one — put me on the list",

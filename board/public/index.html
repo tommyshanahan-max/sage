@@ -1557,6 +1557,9 @@
   .psay{margin:.6rem 0 0;font-size:.9rem;line-height:1.9;
     color:rgba(255,255,255,.82)}
   .psay .pchip{display:inline-block;vertical-align:.05em}
+  /* The other sentences, as a count rather than as more pills. Quiet enough
+     that it reads as a footnote on the one above it. */
+  .psay .psaymore{margin-left:.45rem;font-size:.78rem;color:rgba(255,255,255,.6)}
 
   .pc .share{position:absolute;top:.8rem;right:.8rem;z-index:2;
     display:inline-flex;align-items:center;gap:.4rem;border:0;
@@ -5794,22 +5797,36 @@ function personCard(q, live) {
    * regression for the people who have been here longest. */
   if (!q.mine) {
     const shared = new Set((q.shared || []).map((x) => x.theirs));
-    const says = Array.isArray(q.say) ? q.say.slice(0, 2) : [];
+    const says = Array.isArray(q.say) ? q.say : [];
     if (says.length) {
+      /* ONE SENTENCE ON THE CARD, AND IT IS THE ONE THAT CONCERNS YOU.
+       *
+       * Somebody with two of them printed both, and over a photograph that is
+       * four lines of pills wrapping into each other — "I am a Producer
+       * looking for an Investor · I am a Performer looking for an Agent" —
+       * which is not a sentence anybody reads, it is a shape.
+       *
+       * The card is answering one question: why is this person on my screen.
+       * That has one answer, so the row shown is the one whose second half is
+       * something I am, and the rest is a count. Nothing is hidden — their
+       * page has all of it — and the count says there is more to see. */
+      const mineRoles = new Set((ME && Array.isArray(ME.say) ? ME.say : [])
+        .map((r) => r && r.me).filter(Boolean));
+      const pick = says.find((r) => mineRoles.has(r.want)) || says[0];
       const line2 = el("p", "psay");
-      says.forEach((r, i) => {
-        if (i) line2.append(document.createTextNode(" · "));
-        /* "I am a Agent" — say.iam carries the article because the form after
-           it is a dropdown, where the pill is a control rather than a word.
-           Here it is prose, so the article travels with the role: role.a.*
-           has both halves right for every one of them. */
-        line2.append(document.createTextNode(T("brw.iam") + " "));
-        line2.append(el("b", "pchip on", T("role.a." + r.me)));
-        line2.append(document.createTextNode(" " + T("say.lookingFor") + " "));
-        // Lit when it is what you are: that is why they came up for you.
-        const mine2 = shared.size > 0;
-        line2.append(el("b", "pchip" + (mine2 ? " on" : ""), T("role.a." + r.want)));
-      });
+      /* "I am a Agent" — say.iam carries the article because the form after
+         it is a dropdown, where the pill is a control rather than a word.
+         Here it is prose, so the article travels with the role: role.a.*
+         has both halves right for every one of them. */
+      line2.append(document.createTextNode(T("brw.iam") + " "));
+      line2.append(el("b", "pchip on", T("role.a." + pick.me)));
+      line2.append(document.createTextNode(" " + T("say.lookingFor") + " "));
+      // Lit when it is what you are: that is why they came up for you.
+      line2.append(el("b", "pchip" + (mineRoles.has(pick.want) ? " on" : ""),
+        T("role.a." + pick.want)));
+      if (says.length > 1) {
+        line2.append(el("span", "psaymore", T("brw.sayMore", { n: says.length - 1 })));
+      }
       scrim.append(line2);
     } else if (Array.isArray(q.rooms) && q.rooms.length) {
       const chips = el("div", "pchips");
