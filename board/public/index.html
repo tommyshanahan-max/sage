@@ -2329,17 +2329,8 @@ function drawSoon() {
   if (!box) return;
   const quiet = FROMMEMBERS < 1;
   box.hidden = !quiet;
-  /* NOBODY LANDS ON A TAB THAT SAYS IT IS SHUT.
-   *
-   * A home-screen icon added months ago still opens at whatever address it
-   * was installed with, and for most of this board's life that was /feed. The
-   * manifest says /browse now and the old installs do not care — so rather
-   * than ask everybody to delete and re-add an icon, an arrival on an empty
-   * feed is corrected here, address and all.
-   *
-   * Only an arrival. Tapping the tab is a choice and is honoured: somebody
-   * who asks for the feed should be told why it is quiet, not bounced. */
-  if (quiet && !VIEWCHOSE && !$("vfeed").hidden) { showView("browse", true); return; }
+  /* The bounce that used to be here is gone: viewNow settles this before the
+     first paint now, for every arrival rather than only a quiet one. */
   /* The posts and everything that files them. Left alone when it is not
      quiet, because each of these has its own reason to be hidden and this
      one must not overrule them. */
@@ -5793,8 +5784,24 @@ document.addEventListener("keydown", (e) => {
 let VIEWCHOSE = false;
 
 function viewNow() {
+  /* AN ARRIVAL ALWAYS OPENS ON THE PEOPLE.
+   *
+   * /feed was the front of this board for most of its life, so every
+   * home-screen icon added before today still opens there — and an icon opens
+   * at the address it was installed with whatever the manifest says now.
+   * Changing the manifest fixed nothing, and asking people to delete and
+   * re-add an icon is a request rather than a fix.
+   *
+   * This was tried once as "correct it only when the feed is empty", which
+   * was the wrong condition: it made a fix for cold arrivals depend on
+   * whether anybody had posted. A cold arrival opens on Browse whether the
+   * feed is busy or not.
+   *
+   * THE HASH IS THE EXCEPTION, and it is the one that matters: a shared post
+   * is /feed#id, which is an arrival WITH a destination. Tapping the tab is
+   * not an arrival at all — that goes through showView and is honoured. */
   if (location.hash && location.hash.length > 1) return "feed";
-  return location.pathname.startsWith("/feed") ? "feed" : "browse";
+  return "browse";
 }
 
 function showView(v, push) {
@@ -5804,8 +5811,15 @@ function showView(v, push) {
   $("navbrowse").setAttribute("aria-current", feed ? "false" : "page");
   $("navfeed").setAttribute("aria-current", feed ? "page" : "false");
   showTranslate(feed);
-  if (push && location.pathname !== (feed ? "/feed" : "/browse")) {
-    try { history.pushState({ v }, "", feed ? "/feed" : "/browse"); } catch { /* fine */ }
+  const want = feed ? "/feed" : "/browse";
+  if (location.pathname !== want) {
+    /* A TAP IS A NEW PLACE; AN ARRIVAL IS THE SAME PLACE, NAMED PROPERLY.
+       Somebody whose icon opens /feed and lands on Browse should end up with
+       /browse in the address bar — otherwise every reload, and every bookmark
+       they take from here, keeps the old address alive. replaceState rather
+       than push, so the back button does not gain a step nobody took. */
+    try { history[push ? "pushState" : "replaceState"]({ v }, "", want); }
+    catch { /* fine */ }
   }
   /* Switching a tab is arriving somewhere, and arriving somewhere means the
      top of it. Without this, a reader deep in the posts taps Browse and finds
