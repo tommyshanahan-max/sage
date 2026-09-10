@@ -3560,19 +3560,13 @@ $("ask").addEventListener("submit", async (e) => {
   say(T("post.held"));
 });
 
-/* A person a reader can reach who is not this software. Printed only when the
-   server was given one — an address that bounces is worse than none. */
-fetch("/api/contact").then((r) => r.json()).then((d) => {
-  if (!d || !d.contact) return;
-  const box = $("contact");
-  box.hidden = false;
-  box.append(document.createTextNode(" Something wrong that a report cannot cover? "));
-  const a = document.createElement("a");
-  a.href = /@/.test(d.contact) ? "mailto:" + d.contact : d.contact;
-  a.textContent = d.contact;
-  a.style.color = "inherit";
-  box.append(a, document.createTextNode("."));
-}).catch(() => { /* no contact set: say nothing */ });
+/* THE CONTACT LINE IS BUILT ONCE, further down, by the fetch that also settles
+ * whether translation is on. There were two of them — this one and that one,
+ * each appending to the same span — so the footer read "Something wrong that a
+ * report cannot cover? tom@… Something wrong that a report cannot cover?
+ * tom@…". Once is a footnote; twice reads as the page having lost track of
+ * itself. This one is gone; the other says the same thing and its answer also
+ * decides the translate button, so it cannot be the one to drop. */
 
 /* ---- translate -------------------------------------------------------------
  *
@@ -5449,7 +5443,7 @@ function drawCards() {
 
   $("cardshead").textContent = T("cards.head");
   $("cardsn").textContent = MATCHES.length
-    ? T("cards.n", { n: MATCHES.length }) : "";
+    ? T(MATCHES.length === 1 ? "cards.n1" : "cards.n", { n: MATCHES.length }) : "";
 
   const none = $("cardsnone");
   none.hidden = MATCHES.length > 0;

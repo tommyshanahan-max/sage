@@ -1813,6 +1813,9 @@ export const STRINGS = {
   "off.nocode":        ["That link is missing its code.", "这个链接少了邀约码。"],
 
   "cards.head":        ["Your cards", "你的名片夹"],
+  /* Two strings, because "1 people you have matched with" is the product
+     miscounting the one thing on the screen. */
+  "cards.n1":          ["One person you have matched with", "你匹配到了一个人"],
   "cards.n":           ["{n} people you have matched with",
                         "你匹配到的 {n} 个人"],
   "cards.none":        ["No cards yet.", "还没有名片。"],
