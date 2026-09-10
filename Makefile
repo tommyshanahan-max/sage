@@ -167,6 +167,11 @@ up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	@$(COMPOSE) exec -T caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null \
 	  && echo "caddy reloaded" \
 	  || echo "note: caddy not reloaded (not running yet?) — run 'make reload' if a site is missing"
+	@# AND WHETHER THE LEDGER OWES A SEAL. Every offer page tells the person
+	@# signing it that their record is hashed and anchored. That is only true
+	@# if somebody runs the seal once a month has ended, and nothing else on
+	@# this box would ever mention it. Quiet when nothing is owed, never fatal.
+	@grep -q "^COMPOSE_PROFILES=.*cfm" .env 2>/dev/null && $(MAKE) --no-print-directory cfm-due || true
 	echo "up. https://$$(grep -E '^TOMSCODING_DOMAIN=' .env | cut -d= -f2-)"
 
 down: ## Stop everything (volumes are kept)
@@ -445,6 +450,12 @@ cfm-unseal: ## Remove the newest seal (only the newest): make cfm-unseal
 	@# can go without leaving a lie behind.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" unseal
+
+cfm-due: ## Is a finished month still unsealed? Asked on every deploy
+	@# The one promise here that does not keep itself. See the `due` command.
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \
+	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  due 2>/dev/null || true
 
 cfm-seals: ## Every month sealed so far, and whether it was published
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node cfm \

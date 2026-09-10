@@ -171,7 +171,26 @@ async function page(file, req, res, next) {
  * stranger meeting a six-character box and no explanation just closes it. */
 app.get("/", (req, res, next) => page("landing.html", req, res, next));
 app.get("/o", (req, res, next) => page("index.html", req, res, next));
-app.use(express.static("public", { index: false, maxAge: "1h" }));
+/* AN HOUR IS RIGHT FOR AN IMAGE AND WRONG FOR A PAGE.
+ *
+ * The fonts, the mark, the signature — those are named files whose contents
+ * never change, and an hour off the network is a gift on a phone in China.
+ * A deck is the opposite: it is one file that keeps being rewritten at the
+ * same address, on purpose, because the address is already in somebody's
+ * chat window and must not change.
+ *
+ * Cached for an hour, an edit landed on the box and the person it was written
+ * for kept reading the version before it — with nothing to tell either of
+ * them why. So HTML revalidates every time: still cheap, because a 304 sends
+ * no body, and never stale.
+ */
+app.use(express.static("public", {
+  index: false,
+  maxAge: "1h",
+  setHeaders(res, file) {
+    if (file.endsWith(".html")) res.setHeader("Cache-Control", "no-cache");
+  },
+}));
 
 /** Spend a code. One person, once — after that the cookie carries them. */
 app.post("/api/open", express.json({ limit: "2kb" }), async (req, res) => {

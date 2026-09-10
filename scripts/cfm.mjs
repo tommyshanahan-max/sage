@@ -7,7 +7,7 @@
 
 const [, , base, key, cmd, ...rest] = process.argv;
 if (!base || !key || !cmd) {
-  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|owner|owners|grantor|stake|offer|offers|seal|seals|anchor|verify|anchoring|unseal|reopen|void [--who NAME ...]");
+  console.error("usage: cfm.mjs <url> <key> setup|setup-cfm|owner|owners|grantor|stake|offer|offers|due|seal|seals|anchor|verify|anchoring|unseal|reopen|void [--who NAME ...]");
   process.exit(2);
 }
 const arg = (n, d = "") => {
@@ -25,6 +25,12 @@ const args = (n) => {
   return out;
 };
 const head = { "content-type": "application/json", "x-admin-secret": key };
+
+async function get(path) {
+  const r = await fetch(base + path, { headers: head });
+  if (!r.ok) { console.error("The ledger refused that:", r.status); process.exit(1); }
+  return r.json().catch(() => ({}));
+}
 
 async function post(path, body) {
   const r = await fetch(base + path, { method: "POST", headers: head, body: JSON.stringify(body) });
@@ -107,6 +113,44 @@ if (cmd === "setup") {
     arg("years", "4") + "y, " + arg("cliff", "12") + "m cliff");
   console.log("  granted by " + arg("from", "Tom Shanahan") +
     " — check that spelling, it is on his offer\n");
+} else if (cmd === "due") {
+  /* IS THERE A MONTH SITTING UNSEALED?
+   *
+   * Sealing is the one thing here that does not happen by itself, and the
+   * only thing holding the promise up. The offer page tells the person
+   * signing that their record gets hashed and put somewhere neither side
+   * controls; if nobody runs `make cfm-seal` in the first week of the month,
+   * that is simply not true, and nothing anywhere says so. A promise that
+   * depends on somebody remembering is not a promise.
+   *
+   * So this is asked on every deploy — see `make up`. Quiet when there is
+   * nothing to do, loud when there is, and never fatal: a box that will not
+   * deploy because of a bookkeeping reminder is a worse box.
+   */
+  const d = await get("/api/seals");
+  const seals = (d && d.seals) || [];
+  const done = new Set(seals.map((x) => x.month));
+  const now = new Date();
+  const out = [];
+  // Back a year, and only months that have actually ended.
+  for (let i = 1; i <= 12; i++) {
+    const t = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+    out.push(t.toISOString().slice(0, 7));
+  }
+  const missing = out.filter((m) => !done.has(m)).sort();
+  // Only from the first sealed month onwards: months before this ledger
+  // existed were never going to be sealed and are not a debt.
+  const first = seals.length ? seals.map((x) => x.month).sort()[0] : "";
+  const owed = first ? missing.filter((m) => m > first) : missing.slice(-1);
+  if (!owed.length) {
+    console.log("  Every finished month is sealed.");
+  } else {
+    console.log("\n  NOT SEALED YET: " + owed.join(", "));
+    console.log("  The offer pages say these records are hashed and anchored.");
+    console.log("  Until this runs, they are not:");
+    for (const m of owed) console.log("      make cfm-seal MONTH=" + m);
+    console.log("");
+  }
 } else if (cmd === "grantor") {
   /* The two things a project needs the day it makes its first stake offer:
      who is granting the share, in full, and what holding it comes out of.
