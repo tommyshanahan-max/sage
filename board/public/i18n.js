@@ -2208,7 +2208,9 @@ export const STRINGS = {
   "todo.name":         ["Make your page.", "先把你的主页建起来。"],
   "todo.photo":        ["Add your photo.", "加一张你的照片。"],
   "todo.browse":       ["Turn on “Show me in Browse”.", "把「在名单里显示我」打开。"],
-  "todo.rooms":        ["Pick your rooms.", "选你的房间。"],
+  /* The sentence, which is what the matching reads. It replaced "pick your
+     rooms" — rooms are derived from what somebody says now. */
+  "todo.say":          ["Say what you are looking for.", "写清楚你在找什么。"],
   "todo.goal":         ["Write a short bio.", "写一段简短介绍。"],
   "todo.level":        ["Take the level test.", "做一下水平测试。"],
   "todo.card":         ["Answer today’s card.", "答一下今天的卡片。"],
@@ -2263,13 +2265,23 @@ export const STRINGS = {
   "inv.shared": [
     "This is the board I mentioned — The Exchange. It is private: nobody can open it without a password, and mine changes every day. Here is today's, good for one person.\n\n{url}\n\nPassword: {code}",
     "就是我说的那个板子，交换。那里是私密的，没有口令谁也打不开，我的口令每天还会换。这是今天的，只能进一个人。\n\n{url}\n\n口令：{code}"],
-  "inv.locked":        ["Private — nothing here opens without today’s password.",
-                        "私密——没有今天的口令，这里什么都打不开。"],
+  /* THE STRIP ACROSS THE TOP, and it had the same daily-password fiction in
+     it as the tagline. A code is one person's, once. */
+  "inv.locked":        ["Private — nothing here opens without an invitation.",
+                        "私密——没有邀请，这里什么都打不开。"],
   /* The two lines the board says about itself change with the door. "Anyone
      can read" is true with the door open and a plain lie with it shut. */
-  "inv.taglineShut":   ["Invite only. One password each, and it changes every day.",
-                        "邀请制。一人一个口令，每天都换。"],
+  /* WHAT THE DOOR ACTUALLY DOES NOW. It said one password each, changing
+     every day — which described a shared password on a rota. A code lets one
+     person in once and is spent; a member gets a fresh one to give away each
+     day. Two different facts, and the old line ran them together. */
+  "inv.taglineShut":   ["Invite only. A member has to bring you.",
+                        "邀请制。得有成员带你进来。"],
   "inv.countShut":     ["{n} posts up. Invite only.", "已发布 {n} 条。邀请制。"],
+  /* The line under the name, for somebody already inside. It counted posts —
+     see the note where it is set. */
+  "board.inRoom":      ["{n} people in the room. Invite only.",
+                        "房间里有 {n} 个人。邀请制。"],
   "inv.one":           ["One person each, and a new one tomorrow.",
                         "一个口令进一个人，明天再给你一个新的。"],
   "door.sub":          ["Not open to everybody yet", "还没有对所有人开放"],
@@ -2347,8 +2359,11 @@ export const STRINGS = {
      the card of the day. The report card below it is what they are; this is
      what has arrived. */
   "notif.title":       ["For you", "给你的"],
-  "notif.none":        ["Nothing new. Follows and your card of the day arrive here.",
-                        "暂时没有新的。有人关注你，还有每天那张卡，都会到这儿来。"],
+  /* WHAT ACTUALLY ARRIVES HERE. It promised follows and "your card of the
+     day" — the second belongs to the half of this app that is switched off,
+     and the first is called something else now. */
+  "notif.none":        ["Nothing new. Connections and offers arrive here.",
+                        "暂时没有新的。有人跟你建立联系、给你发邀约，都会到这儿来。"],
   /* Asked once, then it is a line they can change their mind on. */
   "notif.askFeed":     ["Would you rather see the card of the day in your feed?",
                         "每天那张卡，你更想在动态里看到吗？"],

@@ -1798,7 +1798,17 @@ const num = (name, fallback) => {
   return Number.isFinite(v) && v >= 0 ? v : fallback;
 };
 const BRING_DAYS = num("BOARD_BRING_DAYS", 1);
-const BRING_SAID = num("BOARD_BRING_SAID", 2);
+/* POSTING TWICE A WEEK WAS THE PRICE OF AN INVITE, and it stopped being the
+ * right one. It was written when the board was a feed and what a member did
+ * here was write on it; what a member does here now is say what they are
+ * looking for and answer the people it matches them with. "Post 2 things this
+ * week" sat in the invite panel telling somebody to feed a feed in order to
+ * bring in the person they actually came here to bring in.
+ *
+ * Zero by default, and still a number: BOARD_BRING_SAID in .env puts it back
+ * the moment the feed is worth feeding again. BRING_DAYS does the work that
+ * matters — a browser that arrived an hour ago cannot hand out codes. */
+const BRING_SAID = num("BOARD_BRING_SAID", 0);
 const BRING_WEEK = num("BOARD_BRING_WEEK", 7);
 const GUEST_ROOM = num("BOARD_GUEST_ROOM", 3);
 

@@ -2872,8 +2872,19 @@ function draw() {
   $("footpriv").textContent = T("site.privacy");
   drawMyInvite();
   const shut = MODE === "read";
-  $("count").textContent = posts.length
-    ? T(shut ? "inv.countShut" : "board.count", { n: posts.length })
+  /* THE LINE UNDER THE NAME COUNTED POSTS, and posts are not what this is.
+   *
+   * "3 posts up. Invite only." was the first sentence a new member read, on a
+   * board whose whole argument is the people in it — and three is a number
+   * that makes a room sound empty whichever way you say it. The count that
+   * belongs here is the one the room is: how many are in.
+   *
+   * Posts still exist and the feed still works. It is the masthead that has
+   * to say what the place is for, and it now says the same thing the door
+   * said on the way in. */
+  const inRoom = MEMBERS || (Array.isArray(PEOPLE) ? PEOPLE.length : 0);
+  $("count").textContent = inRoom
+    ? T("board.inRoom", { n: inRoom })
     : T(shut ? "inv.taglineShut" : "board.tagline");
   $("invite").textContent = T(shut ? "inv.locked" : "site.invite");
 
@@ -4169,28 +4180,30 @@ $("stakeinfo").addEventListener("click", () => {
  */
 function todoList() {
   const has = (v) => Boolean(v && String(v).trim());
-  const mine = ME && ME.handle ? ME.handle.toLowerCase() : "";
-  const myPosts = posts.filter((p) => (p.handle || "").toLowerCase() === mine
-    && mine && p.state !== "removed");
-  const week = myPosts.filter((p) =>
-    Date.now() - Date.parse(p.at || "") < 7 * 86400000).length;
 
+  /* FIVE THINGS, AND EVERY ONE OF THEM MAKES YOU FINDABLE.
+   *
+   * It was nine, and four of those had stopped meaning anything. "Take the
+   * level test" and "read today's card" belong to the half of this app that is
+   * switched off — and with it off they could never be finished, so they sat
+   * at the top of a new member's list for ever. "Pick your rooms" is the
+   * question the sentence replaced: rooms are derived from what somebody says
+   * now, and nobody has picked one in months. "Post two things this week" is
+   * the old board asking to be fed; what this place does is match people, and
+   * a member who has written their sentence and put a face to it has done the
+   * thing that makes that possible.
+   *
+   * What is left is the shortest path to being matched, in the order it costs
+   * anything. Somebody who finishes it is in Browse, says what they want, and
+   * can be recognised — and the list then disappears, which is the point. */
   const all = [
-    // Their own page, in the order it costs them anything.
     ["name", !(ME && ME.handle), () => openMe()],
     ["photo", !(ME && ME.photo), () => $("mephoto").click()],
-    ["browse", Boolean(ME && ME.handle) && !(ME && ME.looking), () => openMe()],
-    ["rooms", !(ME && Array.isArray(ME.rooms) && ME.rooms.length), () => openMe()],
+    // The sentence. The one thing the matching actually reads.
+    ["say", Boolean(ME && ME.handle) && !(ME && Array.isArray(ME.say) && ME.say.length),
+      () => { showView("browse"); $("saysay").scrollIntoView({ behavior: "smooth" }); }],
     ["goal", Boolean(ME && ME.handle) && !has(ME && ME.goal), () => openMe()],
-    // Two minutes, and it is what the mark on the card is made of.
-    ["level", !learned("board:level"), () => { location.href = "/level"; }],
-    ["card", !dailyDone(), () => { $("prof").scrollIntoView({ behavior: "smooth" }); }],
-    // The board itself. Last because it is the one that needs the rest.
-    ["post", !myPosts.length, () => $("fab").click()],
-    /* The invitation, said as the thing you do rather than the thing you are
-       refused. Only once the page is made — telling somebody with no photo to
-       post twice is the wrong instruction in the wrong week. */
-    ["week", Boolean(ME && ME.handle && ME.photo) && week < 2, () => $("fab").click()],
+    ["browse", Boolean(ME && ME.handle) && !(ME && ME.looking), () => openMe()],
   ];
   return all.filter((r) => r[1]).map((r) => ({ key: r[0], go: r[2] }));
 }
@@ -5932,6 +5945,21 @@ function qRow(w) {
    reads in whichever language the rest of the page is in. */
 function drawSetts() {
   if (!$("setts")) return;
+  /* ONLY WHEN IT IS NEWS.
+   *
+   * This row said "You are in Browse · Everybody in here can see your card ·
+   * Hide me" to every member on every visit, in a tray whose whole job is
+   * telling somebody what has happened. Being in Browse is the ordinary state
+   * and the state they chose; saying it every time is a settings page that
+   * followed them around, and it was one of four blocks standing between a
+   * new member and the one thing the bell is for.
+   *
+   * Being HIDDEN is worth saying, every time, because it is the state where
+   * nothing works and nobody can see why — so the row stays for exactly that
+   * case. Turning it back on is in the profile form either way. */
+  const hidden = Boolean(ME && ME.handle && !ME.looking);
+  $("setts").hidden = !hidden;
+  if (!hidden) return;
   $("settslab").textContent = T("set.head");
   /* IT SAID "COMING SOON" NEXT TO A CONTROL THAT ALREADY WORKS.
      "Show me in Browse" has been a real tick box in the profile form the
@@ -5980,6 +6008,12 @@ function drawDoor(people) {
      is a member who wants to know who. Same words, now the door. */
   if (WAITING) box.append(doorGo(atdoor(WAITING)));
   if (some) box.append(document.createTextNode(inside(some)));
+
+  /* AND THE MASTHEAD, HERE, because this is where the number arrives.
+     The line under the name is drawn with the feed, which paints before
+     anybody has been counted — so it fell back to the tagline and stayed
+     there. Corrected the moment the count is known, which is now. */
+  if (some && $("count")) $("count").textContent = T("board.inRoom", { n: some });
 }
 
 /* The waiting number, as a way in when there is a list behind it.
