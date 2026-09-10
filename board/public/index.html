@@ -477,6 +477,16 @@
   .notif .daily{margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:none}
   .notif .rule{margin-top:.9rem}
   .notifnone{margin:0;font-size:.9rem;line-height:1.55;color:var(--muted)}
+  /* Settings in the tray. Deliberately quiet — one row that is not yet a
+     control, so it should not look like one waiting to be pressed. */
+  .setts{margin:0 0 1.1rem}
+  .settrow{display:flex;gap:.8rem;align-items:center;padding:.7rem 0 0}
+  .settrow > div{flex:1;min-width:0}
+  .settrow b{display:block;font-weight:600;font-size:.95rem}
+  .settrow small{display:block;color:var(--muted);font-size:.85rem;margin-top:.1rem}
+  .settrow .soon{flex:0 0 auto;font-size:.68rem;letter-spacing:.09em;
+    text-transform:uppercase;font-weight:700;color:var(--muted);
+    border:1px solid var(--line);border-radius:99px;padding:.2rem .6rem}
   /* The question, once, under the card it is about. */
   /* THE LEDGER. The percentage is the whole block — everything under it is
      the working. Quiet on purpose: it is a standing, and a screen that shouts
@@ -1482,6 +1492,58 @@
       <ul id="todolist"></ul>
       <span class="tap" id="todoleft"></span>
     </div>
+    <!-- THE PROFESSOR'S FOLD, MOVED IN HERE.
+         It used to stand between the deck and the feed, which on a phone is
+         the whole screen twice over before you reach a single post. The room
+         is for the room; anything that is a setting, a test or a report is
+         behind the bell. -->
+    <section class="prof" id="prof" hidden>
+    <button class="profhead" type="button" id="profhead" aria-controls="profbody">
+    <i class="profmark" aria-hidden="true">换</i>
+    <span class="proftext">
+    <b id="proftitle"></b>
+    <em id="profsub"></em>
+    <span id="profsum"></span>
+    </span>
+    <!-- Today's letter, level with the mark at the other end of the row, so
+    the one thing worth knowing is readable without opening anything.
+    The mark says whose card this is; this says how it is going. -->
+    <b class="profgrade" id="profgrade" hidden></b>
+    <i class="chev" aria-hidden="true"></i>
+    </button>
+    <div id="profbody">
+    <!-- WHAT HAS HAPPENED SINCE THEY WERE LAST HERE, first. The level used
+    to be here and is still drawn below it — but a number that is the
+    same every day cannot be the reason somebody opens this. -->
+    <div id="profnews"></div>
+    <!-- Your level, large. Shown at full size only when there is no news to
+    put above it, which is mostly somebody's first week. -->
+    <div id="profnow"></div>
+    <!-- One card a day, at the reader's own level, drawn here rather than
+    posted: a shared board with fifty people on it would carry fifty
+    cards a morning and the thing worth reading would be underneath
+    them. See daily.js. -->
+    <div id="daily"></div>
+    <!-- The Professor's offers are appended here, one block per thing you
+    can do — see drawTutor. -->
+    </div>
+    </section>
+
+    <!-- SETTINGS, SUCH AS THERE ARE. One row, and it does nothing yet — see
+         set.soon. It is here rather than absent because somebody wondering
+         whether they can take themselves out of Browse should find the answer
+         where they would look for it, and "not yet" is an answer. -->
+    <div class="setts" id="setts">
+      <span class="lab" id="settslab"></span>
+      <div class="settrow">
+        <div>
+          <b id="incoglab"></b>
+          <small id="incogwhy"></small>
+        </div>
+        <span class="soon" id="incogsoon"></span>
+      </div>
+    </div>
+
     <div class="myinv" id="myinv" hidden>
       <span class="lab" id="myinvlab"></span>
       <button class="codebtn" type="button" id="myinvcode"></button>
@@ -1651,37 +1713,6 @@
        was already in the tray under another heading, and the same news in two
        places is two things to keep in step. One letter above the feed is the
        glance; the bell is the rest. -->
-  <section class="prof" id="prof" hidden>
-    <button class="profhead" type="button" id="profhead" aria-controls="profbody">
-      <i class="profmark" aria-hidden="true">换</i>
-      <span class="proftext">
-        <b id="proftitle"></b>
-        <em id="profsub"></em>
-        <span id="profsum"></span>
-      </span>
-      <!-- Today's letter, level with the mark at the other end of the row, so
-           the one thing worth knowing is readable without opening anything.
-           The mark says whose card this is; this says how it is going. -->
-      <b class="profgrade" id="profgrade" hidden></b>
-      <i class="chev" aria-hidden="true"></i>
-    </button>
-    <div id="profbody">
-      <!-- WHAT HAS HAPPENED SINCE THEY WERE LAST HERE, first. The level used
-           to be here and is still drawn below it — but a number that is the
-           same every day cannot be the reason somebody opens this. -->
-      <div id="profnews"></div>
-      <!-- Your level, large. Shown at full size only when there is no news to
-           put above it, which is mostly somebody's first week. -->
-      <div id="profnow"></div>
-      <!-- One card a day, at the reader's own level, drawn here rather than
-           posted: a shared board with fifty people on it would carry fifty
-           cards a morning and the thing worth reading would be underneath
-           them. See daily.js. -->
-      <div id="daily"></div>
-      <!-- The Professor's offers are appended here, one block per thing you
-           can do — see drawTutor. -->
-    </div>
-  </section>
 
   <!-- ONE SLOT, ROTATING. The Professor's offers were a list inside the tile,
        then cards you had to swipe sideways to find. Both hid whichever one was
@@ -5211,6 +5242,16 @@ function qRow(w) {
   return row;
 }
 
+/* The settings row's words. Static, but they still go through T so the tray
+   reads in whichever language the rest of the page is in. */
+function drawSetts() {
+  if (!$("setts")) return;
+  $("settslab").textContent = T("set.head");
+  $("incoglab").textContent = T("set.incog");
+  $("incogwhy").textContent = T("set.incogWhy");
+  $("incogsoon").textContent = T("set.soon");
+}
+
 function drawDoor(people) {
   const box = $("atdoor");
   fill(box);
@@ -5264,6 +5305,7 @@ function drawDeck() {
   $("pcount").textContent = people && !mine ? T("brw.of", { n: AT + 1, total: people }) : "";
   drawDoor(people);
   drawQueue();
+  drawSetts();
   $("bnone").hidden = Boolean(people);
 
   if (!n) {

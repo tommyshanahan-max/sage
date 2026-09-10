@@ -1789,6 +1789,14 @@ export const STRINGS = {
   "brw.vouch":         ["Vouch", "推荐"],
   "brw.vouched":       ["Vouched", "已推荐"],
   "brw.qvouches":      ["{n} vouched", "{n} 人推荐"],
+  /* The switch that is not a switch yet. Shown so that somebody wondering
+     whether they can disappear knows the answer is coming, and disabled so
+     that nobody believes they already have. */
+  "set.head":          ["Your settings", "你的设置"],
+  "set.incog":         ["Hide me from Browse", "在浏览中隐藏我"],
+  "set.incogWhy":      ["Nobody would see your card. You would still see theirs.",
+                        "别人看不到你的名片，你仍然能看到他们的。"],
+  "set.soon":          ["Coming soon", "即将推出"],
   /* Its own string rather than a plural rule. There is one number this ever
      applies to and English is the only side that cares — Chinese counts the
      same either way, which is why the pair below is not two sentences. */
