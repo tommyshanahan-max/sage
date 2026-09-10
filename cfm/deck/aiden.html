@@ -104,6 +104,31 @@
     margin-bottom:.15rem}
   ol.how span{display:block;color:var(--dim);font-size:.95rem;line-height:1.5}
 
+  /* HIS SIDE OF IT. Deliberately not numbered: these two run in parallel and
+     neither comes first. ol.how above earns its numerals because getting in,
+     saying the sentence and being answered genuinely happen in that order —
+     numbering a pair of standing jobs would claim a sequence that is not
+     there, and a reader feels that even when they cannot name it. */
+  ul.job{list-style:none;margin:0;padding:0}
+  ul.job li{padding:.95rem 0;border-bottom:1px solid var(--hair)}
+  ul.job li:last-child{border-bottom:0}
+  ul.job b{display:block;color:var(--ink);font-weight:650;font-size:1.06rem;
+    margin-bottom:.2rem}
+  ul.job span{display:block;color:var(--dim);font-size:.95rem;line-height:1.55}
+
+  /* WHAT HAS NOT BEEN DECIDED, DRAWN AS UNDECIDED. The same dashed edge the
+     earn-out block wears, because this deck already uses a dashed border to
+     mean "this has not happened yet" and a reader should not have to learn a
+     second vocabulary for the same idea. Saying plainly that the rest is
+     unagreed is stronger than filling it with duties nobody has discussed —
+     an invented list of obligations is the thing that makes somebody stop
+     reading and start asking what else was decided without them. */
+  .open{border:1px dashed var(--hair);border-radius:.9rem;
+    padding:1.1rem 1.2rem;margin:1.6rem 0 0}
+  .open p{color:var(--dim);font-size:.95rem;margin:0}
+  .open > p:first-child{font-size:.72rem;letter-spacing:.14em;
+    text-transform:uppercase;font-weight:700;color:var(--gold);margin:0 0 .6rem}
+
   /* The rooms. Not cards — a list of who is already standing in there. */
   ul.rooms{list-style:none;margin:0 0 1.5rem;padding:0}
   ul.rooms li{
@@ -221,6 +246,39 @@
     </ol>
     <p>No feed to keep up with, nothing to post, nobody to impress. Say the
       sentence and wait to be useful to somebody.</p>
+  </section>
+
+  <!-- WHAT IS BEING ASKED OF HIM, BEFORE HE IS ASKED TO ACCEPT. It came right
+       after the screen that explains the room, and before the first Accept
+       button, because those are the two constraints: "bring people in" means
+       nothing until you know what they are being brought into, and nobody can
+       say yes to a tenth of something without knowing what it costs their
+       week. Every screen after this is detail; this one is the deal.
+
+       The third item is that nothing has been decided past the first two, and
+       it is on the page as itself. Aiden is being asked for two years — the
+       fastest way to lose him is a list of duties he never agreed to, quietly
+       appearing under a heading that looks settled. -->
+  <section>
+    <p class="eyebrow gold">Your side of the work</p>
+    <h2>Two things, and the rest is a conversation.</h2>
+
+    <ul class="job">
+      <li><b>Bring people in.</b><span>You know rooms Tom does not. Everyone
+        you vouch for is somebody this room could not have reached on its own,
+        and your name stays on them — which is exactly why it is worth
+        something.</span></li>
+      <li><b>Say it is yours.</b><span>To the people who listen to you. A
+        private room grows on who is seen to be standing in it, and that is
+        the one thing a founder cannot do for himself.</span></li>
+    </ul>
+
+    <div class="open">
+      <p>Still to agree</p>
+      <p>Anything past those two is a conversation between you and Tom, not a
+        clause in this offer. Nothing is expected of you that the pair of you
+        have not sat down and agreed on.</p>
+    </div>
   </section>
 
   <!-- THE FIRST ACCEPT, AND THE POINT OF THE WHOLE SHAPE.
