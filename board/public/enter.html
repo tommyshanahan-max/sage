@@ -229,6 +229,8 @@
     color:var(--muted);font-size:.88rem;padding:.4rem 0;text-decoration:underline}
   .anyway:hover{color:var(--ink)}
 
+  /* Its own section now, so it needs the width the door used to give it. */
+  #listwrap{width:100%;max-width:22rem;margin:0 auto}
   .keyopen{display:block;width:100%;margin:1.6rem 0 0;border:0;background:none;
     color:var(--muted);font-size:.9rem;padding:.5rem 0;text-decoration:underline;
     text-underline-offset:3px}
@@ -341,10 +343,6 @@
 
          The same box the public page uses, so there is one waiting list and
          one set of words about who reads it. -->
-    <button class="keyopen" type="button" id="listopen"
-            aria-expanded="false" aria-controls="listbox"></button>
-    <div class="keybox" id="listbox" hidden><div id="waitslot"></div></div>
-
     <!-- SOMEBODY WHO HAS BEEN HERE BEFORE does not need a code at all — but
          almost nobody reading this screen is that person, and "paste your key"
          is a word they have never met. One quiet line until it is asked for. -->
@@ -361,6 +359,19 @@
   </section>
 
   <!-- IN. -->
+  <!-- THE WAY ONTO THE LIST, UNDER BOTH SCREENS.
+       It started inside the door, which meant the one set of people most
+       likely to need it never saw it: inside WeChat the wall comes first, and
+       the wall is where most of these links are opened. Joining the list has
+       nothing to do with what that wall is warning about — nobody is spending
+       a code, and a row is keyed to a name and a way to be reached rather than
+       to the browser it was typed in — so it works there exactly as well. -->
+  <section id="listwrap" hidden>
+    <button class="keyopen" type="button" id="listopen"
+            aria-expanded="false" aria-controls="listbox"></button>
+    <div class="keybox" id="listbox" hidden><div id="waitslot"></div></div>
+  </section>
+
   <section id="inside" hidden>
     <div class="top">
       <span class="mark" aria-hidden="true">换</span>
@@ -382,6 +393,24 @@ import { waitBox } from "/wait.js";
 
 const $ = (id) => document.getElementById(id);
 const IN_WECHAT = /micromessenger/i.test(navigator.userAgent);
+
+/* ?new=1 HOLDS THE DOOR SHUT, for whoever runs this.
+ *
+ * A browser that has spent a code is recognised here and reloaded straight
+ * through, which is right and makes the door impossible for a member to look
+ * at: open the link on your own phone and you are inside before you see it,
+ * so "is the way onto the list actually there" had no answer except borrowing
+ * somebody else's phone.
+ *
+ * It skips the WeChat wall too. That wall is advice for somebody about to
+ * spend a code in a browser that will forget them; whoever is previewing the
+ * door is spending nothing, and stopping them at it would hide the one screen
+ * they came to see.
+ *
+ * Nothing but display. Admission is a row in the file and a signed cookie and
+ * neither is touched, so this is a preview and never a way out — reload
+ * without it and you are through as before. */
+const PREVIEW = new URLSearchParams(location.search).get("new") === "1";
 
 /* The same browser identity the rest of the app uses. Made here if this is the
    first page somebody has opened, because admission is recorded against it —
@@ -505,6 +534,7 @@ async function useKey() {
 function showIn(by) {
   $("wx").hidden = true;
   $("door").hidden = true;
+  $("listwrap").hidden = true;
   /* AND THE GREETING, which is for somebody arriving. A member who taps a
      greet link — a forwarded one, or their own, to see what it looks like —
      is not arriving, and being welcomed in by name as though they were is
@@ -600,11 +630,14 @@ function hearIt() {
  * link sees it at all — a "Welcome." to somebody nobody greeted is worse than
  * arriving at the lock. */
 function route() {
-  const wx = IN_WECHAT && !sessionStorage.getItem("board:anyway");
-  const greet = !wx && (FOR || FROM) && !sessionStorage.getItem("board:greeted");
+  const wx = IN_WECHAT && !sessionStorage.getItem("board:anyway") && !PREVIEW;
+  const greet = !wx && !PREVIEW && (FOR || FROM) && !sessionStorage.getItem("board:greeted");
   $("wx").hidden = !wx;
   $("hello").hidden = !greet;
   $("door").hidden = wx || greet;
+  // With the wall and with the door. Not under the greeting, which is a
+  // welcome to somebody who was named in a link and already has a code.
+  $("listwrap").hidden = greet;
   if (!wx && !greet) setTimeout(() => $("code").focus(), 60);
 }
 
@@ -729,18 +762,6 @@ route();
  * back here would otherwise loop for ever, and a door is a better failure than
  * a spinning page.
  */
-/* ?new=1 HOLDS THE DOOR SHUT, for whoever runs this.
- *
- * The reload above is right and it makes the door impossible for a member to
- * look at: open the link on your own phone and you are through it before you
- * see it, so "is the way onto the list actually there" has no answer except
- * borrowing somebody else's phone. This is that answer.
- *
- * It shows the door and nothing else. Admission is a row in the file and a
- * signed cookie; neither is touched here, so this is a preview and never a way
- * out — reload without it and you are through as before. */
-const PREVIEW = new URLSearchParams(location.search).get("new") === "1";
-
 fetch("/api/admitted", { headers: { "x-board-device": device } })
   .then((r) => r.json())
   .then((d) => {
