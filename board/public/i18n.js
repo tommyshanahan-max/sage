@@ -1815,16 +1815,15 @@ export const STRINGS = {
   "cards.head":        ["Your cards", "你的名片夹"],
   /* Two strings, because "1 people you have matched with" is the product
      miscounting the one thing on the screen. */
-  "cards.n1":          ["One person you have matched with", "你匹配到了一个人"],
-  "cards.n":           ["{n} people you have matched with",
-                        "你匹配到的 {n} 个人"],
-  /* THE SHELF, IN ONE LINE. Shown over the rows rather than only over the
-     empty state, because the person who needs it most is the one looking at
-     three faces and a button called Connect, wondering what has already gone
-     out. Nothing has. That is the whole sentence. */
+  "cards.n1":          ["1 match", "1 个匹配"],
+  "cards.n":           ["{n} matches", "{n} 个匹配"],
+  /* THE SHELF, IN ONE LINE, and in the words somebody would actually use.
+     It said "your sentence and theirs answer each other", which is how the
+     matching works and not how a person thinks about it. What they want to
+     know is who these people are and whether anything has already gone out. */
   "cards.what": [
-    "Everyone here matched with you — your sentence and theirs answer each other. No contact details have gone anywhere. They move when one of you presses Connect.",
-    "这里的人都和你匹配上了——你写的那句话和他们写的正好对上。目前还没有任何联系方式发出去。要等你们其中一方点了「建立联系」才会。"],
+    "These people want what you have, and you want what they have. Nobody has your WeChat yet. Press Connect to send it.",
+    "这些人在找你有的，你也在找他们有的。现在还没人拿到你的微信。点「建立联系」就发过去。"],
   "cards.none":        ["No cards yet.", "还没有名片。"],
   "cards.noneWhy": [
     "A card lands here when you and somebody else follow each other and want the same kind of thing. Nothing arrives on its own — go and look at who is here.",
@@ -1836,16 +1835,16 @@ export const STRINGS = {
      the note on .meet in index.html. */
   "cards.matchHead":   ["You matched", "你们匹配上了"],
   "cards.matchWhy": [
-    "Neither of you has sent contact details yet. Whoever goes first says one line about themselves.",
-    "你们都还没发联系方式。先开口的人，顺便写一句自己是谁。"],
+    "Neither of you has sent anything yet.",
+    "你们都还没发出任何东西。"],
   "cards.give":        ["Connect with {who}", "和{who}建立联系"],
   "cards.giveHow": [
-    "{who} gets your WeChat and your line. You get theirs if they send it back.",
-    "{who}会收到你的微信号和你写的那句话。他们回发，你才拿到他们的。"],
+    "{who} gets your WeChat and a line from you. You get theirs if they send it back.",
+    "{who}会收到你的微信号和你写的一句话。对方回发，你才拿到他们的。"],
   "cards.sentHead":    ["Sent to {who}", "已发给{who}"],
   "cards.sentWhy": [
-    "{who} has your details. Theirs appear here if they send them back.",
-    "{who}已经有你的联系方式了。等他们回发，这里就会出现他们的。"],
+    "{who} has your WeChat now. Theirs shows up here if they send it back.",
+    "{who}已经有你的微信了。对方回发，这里就会出现他们的。"],
   "cards.takeBack":    ["Take it back", "收回"],
 
   /* THE SHEET. One line and one field: who you are, and what to reach you on.
@@ -1853,10 +1852,10 @@ export const STRINGS = {
   "give.head":         ["Connect with {who}", "和{who}建立联系"],
   "give.hint":         ["You and {who} matched.", "你和{who}匹配上了。"],
   "give.ph": [
-    "One line: who you are and what you are after.",
-    "写一句：你是谁，你在找什么。"],
+    "Say who you are and what you're after.",
+    "说说你是谁，你在找什么。"],
   "give.count":        ["{n} left", "还剩 {n} 字"],
-  "give.mine":         ["Sent with it", "一起发过去的"],
+  "give.mine":         ["Goes with it", "一起发过去"],
   "give.wxPh":         ["Your WeChat id", "你的微信号"],
   "give.wxHow": [
     "Only they can read it, and you can take it back.",
