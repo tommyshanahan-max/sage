@@ -210,8 +210,28 @@ app.post("/api/accept", express.json({ limit: "2kb" }), async (req, res) => {
     /* Accepting twice is a reload, not a second person. The first time is the
        one on the record. */
     if (!o.tookAt) { o.tookAt = new Date().toISOString(); o.by = me; o.signed = sign; }
+    /* WHERE A STAKE ENDS: HERE, AND NOWHERE ELSE.
+     *
+     * `goTo` is where somebody goes the moment they accept, and for a seat
+     * that is exactly right — a founding offer means come in, so it hands
+     * them to the door. A stake means the opposite. Nothing opens, nothing is
+     * issued, and there is nowhere to be let into: what happened is that a
+     * record was made.
+     *
+     * Sending a signer to the project's door was a real thing that happened
+     * on this page. Somebody signed for ten per cent of a company and was
+     * dropped on a password screen for a board they had never been given a
+     * code to — which reads, at exactly the wrong moment, as though the offer
+     * were a way of selling them a membership.
+     *
+     * So the redirect belongs to the seat and not to the project. The page
+     * already knows how to end well when there is nowhere to go: it says
+     * signed, on the record, and that somebody will come to you with the
+     * paperwork when there is paperwork.
+     */
     const p = data.projects.find((x) => x.id === o.project);
-    return { goTo: (p && p.goTo) || "", seat: o.seat };
+    const stake = Boolean(k && k.face === "stake");
+    return { goTo: (!stake && p && p.goTo) || "", seat: o.seat };
   });
   if (out === "unsigned") return res.status(400).json({ error: "sign" });
   if (!out) return res.status(404).json({ error: "no" });
