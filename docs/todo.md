@@ -211,6 +211,55 @@ something.
 and how many became a card. It is in the data already. Charge for a step people
 take, not the one we wish they took.
 
+**The four gates considered, and what survives.** Worked through at two in the
+morning, kept because the reasoning is the part that gets lost.
+
+- **Charge to hand over a contact.** No. It taxes the promise the product is
+  built on, it leaks the moment messaging is free, and policing the leak means
+  reading messages. See above.
+- **Cap browsing.** No, and this is the worst of the four. Never gate discovery
+  in a cold marketplace: somebody sees three cards, decides there is nobody
+  here, and leaves — and the cap also limits how many people see *them*, so one
+  lever damages both sides at once. Browsing is how the value becomes visible.
+- **Cap new introductions, sell unlimited.** Half right. One intro per match is
+  a quality feature, not a limit to sell relief from: it forces a real opening
+  line, and unlimited would make whoever pays the most the spammiest. What is
+  worth selling is the thread staying **open** — the conversation not ending —
+  which the code already models (`threadState` has `open`, used today when an
+  offer opens a thread). One rule needed: if **either** side is a member the
+  thread is open, or the wall lands on the person who did not buy anything and
+  the payer's money does not buy them a working conversation.
+- **Cap follows.** Yes — the best of the four. A Follow is the bet somebody is
+  placing, so capping it caps how many bets, which is how the dating apps sell.
+  It does not touch the contact promise, and the wall lands only on the person
+  who chose not to pay, never on whoever they were writing to. It also improves
+  the free tier rather than crippling it: fewer follows are more considered
+  ones.
+
+**So the shape, when the time comes.** Free: browse everyone, a handful of
+follows a week. Member: follows uncapped, and the thread stays open.
+
+**And the order, which matters more than the shape.**
+
+1. **Nothing.** Get to thirty or forty and watch what they do. With seven in the
+   deck a cap of five follows a week is invisible; these levers only bite at a
+   few hundred members.
+2. **Dues at the door.** Annual, founding price that never goes up, everything
+   free inside. One decision, one payment, no mechanic to build, and it is what
+   the page already promises — you are selling being in the room.
+3. **The caps above**, once there are conversations to point at and say: this is
+   what stops when you leave.
+
+Charging before the room is warm is the one mistake that is hard to undo. You
+can always start charging; you cannot un-charge without telling everybody the
+thing was not worth it.
+
+**One practical blocker for anything recurring.** Taking a subscription from a
+mainland member needs a Chinese entity, a business licence and a merchant
+account — the same chain as WeChat login. Stripe covers Hong Kong and overseas
+and does not cover a Shenzhen founder's WeChat Pay. At this size a manual
+transfer against a name on a list is faster than building for it.
+
 **Finished looks like.** A decision written down here with the number that
 justified it — not a price on a feature nobody has been observed using.
 
