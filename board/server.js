@@ -3747,6 +3747,48 @@ app.post("/api/offer", express.json({ limit: "8kb" }), gate, async (req, res) =>
   res.json(out);
 });
 
+/* AN ADDRESS PUT ON A MEMBER'S ROW FROM THE BOX.
+ *
+ * Signing in by email matches an address on a person's row, and the only way
+ * to get one there was to be signed in already — which is fine for everybody
+ * except the person who is locked out, who is the only person who needs it.
+ * The way back code solves that in one direction and leaves a second errand
+ * behind it: get in, find the settings, type the address, and only then is
+ * next time easy.
+ *
+ * This removes the errand. The operator writes the address, the person opens
+ * the door and asks for six digits, and no key is ever handed round. It is the
+ * same authority as minting a way back — somebody who can see the board saying
+ * this row is that person — and it is less power than that one, because an
+ * address on a row opens nothing on its own.
+ *
+ * An empty ADDR clears it, which is how somebody asks to be forgotten by mail
+ * without deleting themselves.
+ */
+app.post("/api/admin/mail", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").trim().toLowerCase();
+  const mail = String(req.body?.mail || "").trim().toLowerCase();
+  if (!who) return res.status(400).json({ error: "who" });
+  if (mail && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(mail)) {
+    return res.status(400).json({ error: "bad" });
+  }
+  const out = await change((board) => {
+    const q = board.people.find((x) => String(x.handle || "").toLowerCase() === who);
+    if (!q) return { error: "nobody" };
+    /* ONE ADDRESS, ONE PERSON. Two rows carrying the same address would make
+       the sign-in ambiguous, and it resolves ambiguity by picking one — which
+       is the wrong thing to do with somebody's way back in. */
+    if (mail && board.people.some((x) => x !== q && x.mail === mail)) {
+      return { error: "taken" };
+    }
+    q.mail = mail;
+    return { handle: q.handle || "", mail };
+  });
+  if (out?.error === "nobody") return res.status(404).json(out);
+  if (out?.error) return res.status(409).json(out);
+  res.json(out);
+});
+
 /* A MEMBER'S WAY BACK IN, MINTED FROM THE BOX.
  *
  * `admin`, because it is the operator's job: the person who needs it cannot

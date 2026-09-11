@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: back waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: back mail waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -297,6 +297,25 @@ invite: ## Make an invite:  make invite WHO="you" FOR="them" [HOURS=24] [N=3]
 	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --hours "$(if $(HOURS),$(HOURS),24)" --n "$(or $(N),1)"
+
+mail: ## Put an email on somebody's row so they can sign in:  make mail WHO="Tom" ADDR="tom@x.com"
+	@# The address is what a sign-in code gets sent to. It has to be ON their
+	@# row, and the only way to put it there was to be signed in already —
+	@# which is fine for everybody except the person locked out, who is the
+	@# one who needs it. This writes it from here, so nobody has to find a
+	@# key, save a key, or type a key.
+	@#
+	@# It is not a way in. An address opens nothing on its own: the six digits
+	@# still have to be typed on the browser that wants to be them.
+	@#
+	@# ADDR="" takes it off again.
+	@#
+	@# Needs mail switched on: TOMSCODING_BOARD_MAIL_KEY and _MAIL_FROM in
+	@# .env, or the door says so rather than sending nothing.
+	@test -n "$(WHO)" || { echo 'make mail WHO="their name" ADDR="them@example.com"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/mail.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)" --mail "$(ADDR)"
 
 back: ## Somebody locked out of their own page:  make back WHO="Tom"
 	@# For a member who has lost their key and cannot be reached by email —
