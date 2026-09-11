@@ -169,6 +169,78 @@ aspect ratio nobody here knows.
 **Done looks like.** The deployed code pushed to `main`, and the workspace clone
 pulled.
 
+## Soon — one member, several cards
+
+### Agents put their talent in Browse; the agent is the member
+
+**The problem it solves.** Andy is an agent in Australia with a list of
+exclusive actors. Chinese producers want them. He will not bring them onto a
+board where they can be approached directly, because that is his leverage and
+his network given away in one move. Every agent on the film side has this
+shape, and most of the talent will never sign up for themselves — for film,
+that is not a stage, it is how the business works.
+
+**The shape.** A member may put up more than one card. Andy logs in once; under
+his row sit the people he represents, and each appears in Browse as a card.
+Follow, match and Connect work exactly as they do today, and every one of them
+hands over the contact on Andy's row, because it is his row underneath.
+
+**Why this rather than the other three we worked through.**
+
+- *Not accounts for the talent.* Anyone can claim to represent anyone; a board
+  whose value is that people are real does not survive a hundred dormant
+  profiles nobody agreed to. It would also inflate the count, which is one of
+  the two numbers on the front page.
+- *Not routing.* "The message gets redirected to Andy" was the first idea and
+  it is the wrong frame: **Andy is the party, the actor is the subject.** He
+  matched. Nothing is forwarded, so there is nothing to forward wrongly.
+- *Not briefs instead of cards.* Letting the producer post what they need and
+  having agents answer is cheaper, exposes nothing of Andy's list, and puts the
+  advertising on the scarce side. It was the better idea for about ten minutes,
+  and it loses the product: Browse is cards of actual people, and "Andy, agent,
+  Sydney" is a card nobody stops on. **Mia, 24, Mandarin, Sydney** is.
+
+**What forces a feature rather than a convention.** Andy could just make ten
+profiles today — except one browser is one key is one row, so ten actors means
+ten keys and ten browsers, and he will not do it past the second. One login,
+several cards, is the whole of what is new.
+
+**Said out loud, in two places.** On the card — *Represented by Andy — he takes
+the conversation* — so a producer knows before pressing Follow. And again when
+the contact crosses: *Mia's agent · andy_syd*. Otherwise somebody saves that as
+Mia, opens WeChat and finds a stranger, which is the same trick as the first
+one and feels worse.
+
+**The thread is Andy's and is named Andy.** "Andy — about Mia", every line from
+him. The version to refuse is a thread that looks like it is from Mia with
+Andy typing in it.
+
+**Same messaging rules as everybody.** One line each, then it rests. A special
+case for agents is a thing we would be explaining forever; the natural first
+question is "is she free in March?" and one line each answers it before anybody
+commits to a WeChat add.
+
+**What a represented card cannot do.** No key — nobody signs into it, it is not
+an account. Not in the member count. No posting to the feed. And no card of its
+own: the only contact it can ever hand over is the one on the member's row, so
+a wrong number is not reachable.
+
+**If the talent turns up themselves, that is welcome.** They make their own
+account and run it. Their own row is then the truth and the agent's card points
+at it; routing, if it ever exists, is a setting they own. The software must
+never be the thing holding somebody's conversations hostage — an agent who
+could do that is how this board gets a bad name in Sydney in a week.
+
+**Consent is about the photograph, not the name.** A line and a first name is a
+claim Andy is making with his own name attached. A face is a different thing,
+and before photographs go up there should be a confirmation link he sends her.
+
+**The open decision: a cap.** Ten agents with ten cards each is a hundred cards
+and ten people, and Browse stops being a room and becomes a catalogue with one
+agent's stock in it. Three to five cards a member keeps it a room and makes an
+agent put up their best rather than their whole list — which serves the
+producer too. Pick a number before the first agent asks for the eleventh.
+
 ## Soon — money
 
 ### Charging for The Exchange, and why not per contact
