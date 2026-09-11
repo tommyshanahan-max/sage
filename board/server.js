@@ -28,6 +28,7 @@
 import express from "express";
 import { mkdir, readFile, writeFile, rename, stat, rm } from "node:fs/promises";
 import { timingSafeEqual, randomUUID, createHmac } from "node:crypto";
+import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
 import * as store from "./lib/store.js";
 import { translate, configured as translateReady } from "./lib/translate.js";
@@ -301,6 +302,71 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * this board beginning with it.
  */
 const OPEN_PATHS = /^\/(enter|i\/|r\/|o(?:\/|$)|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+
+/* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
+ *
+ * THE PROBLEM. An agent runs nine performers. Every one of them needs a real
+ * row — a page, a sentence, matches, a conversation — and there is one browser
+ * between the lot of them. This server was written on the flat assumption that
+ * one browser is one person: `q.by === me` appears in it seventy-six times.
+ * Rewriting all seventy-six is a night's work and a month of finding the two
+ * that were missed, on the board people are actually using.
+ *
+ * WHAT IS DONE INSTEAD. Nothing downstream changes at all. A represented
+ * person keeps an ordinary identity of their own, and the agent's browser is
+ * allowed to BE that identity for the length of one request: the page sends
+ * `x-board-as: <person id>` beside its usual device header, this middleware
+ * checks that the row really is one the agent runs, and from then on every
+ * `hashDevice(...)` in the file answers with the represented person's hash.
+ * Posting, following, matching, messages, photographs — all of it is already
+ * written, and it is already right.
+ *
+ * WHY A HEADER AND NOT A COOKIE. A cookie is a mode you are in until something
+ * takes you out of it, which is the exact shape of the accident this feature
+ * risks — writing as the wrong person. A header is sent per request by a page
+ * that is currently showing an orange bar with a name in it. Close the tab and
+ * you are yourself again.
+ *
+ * WHAT IT CANNOT DO. It resolves from `x-board-device` only, never from a body
+ * field, because this runs before any body parser; a page that wants to act
+ * has to send the header, which is one line in the fetch helper. It refuses
+ * chains — a row that is run may not run anybody — and it refuses silently,
+ * by leaving you as yourself, because the alternative is a 403 on every route
+ * the moment a stale id is left in localStorage.
+ *
+ * ADMISSION IS NOT AFFECTED, deliberately. `admitted`, `admittedReq` and the
+ * door go on asking about the real browser: the agent was let in, the people
+ * they speak for were not, and an unpublished row must not be a way through a
+ * door. Those two call sites still say `store.hashDevice`, and that is the
+ * whole reason they do.
+ */
+const acting = new AsyncLocalStorage();
+
+/** The device hash this request should be treated as — theirs, or somebody's
+ *  they are allowed to speak for. Every route in this file uses this; only the
+ *  door uses store.hashDevice directly. */
+function hashDevice(said, salt) {
+  const real = store.hashDevice(String(said ?? ""), salt);
+  const act = acting.getStore();
+  return (act && real && act.real === real && act.by) ? act.by : real;
+}
+
+app.use(async (req, res, next) => {
+  const as = String(req.get("x-board-as") || "");
+  if (!/^[a-f0-9]{20}$/.test(as)) return next();
+  const real = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!real) return next();
+  let by = "";
+  try {
+    const board = await store.load(FILE);
+    const q = board.people.find((x) => x.id === as);
+    // Their own row is not "acting", and a row somebody else runs is not
+    // theirs to be. Both fall through as themselves rather than erroring.
+    if (q && q.by && q.by !== real && q.runBy === real) by = q.by;
+  } catch { /* unreadable board is the next handler's problem, not this one's */ }
+  if (!by) return next();
+  acting.run({ real, by, as }, next);
+});
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -764,7 +830,7 @@ setInterval(() => {
 }, 600_000).unref?.();
 
 app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no device" });
 
   // Already in — including somebody who pasted their key on a second browser,
@@ -895,7 +961,7 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
 /** Whether this browser is in, and whether being in is required at all. */
 app.get("/api/admitted", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   const yes = INVITE ? await admittedReq(req) : true;
   // Pasting a key on a second browser admits it, and that browser needs the
   // cookie too or "read" mode will turn it away on the next page load.
@@ -915,7 +981,7 @@ app.get("/api/admitted", async (req, res) => {
  */
 app.get("/api/my-invite", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   if (!me) return res.status(400).json({ error: "no device" });
   if (INVITE && !(await admittedReq(req))) {
     return res.status(403).json({ error: "invite", where: "/enter" });
@@ -997,7 +1063,7 @@ app.get("/api/my-invite", async (req, res) => {
  * This route adds no rule of its own. */
 app.post("/api/my-invite", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   if (!me) return res.status(400).json({ error: "no device" });
   if (INVITE && !(await admittedReq(req))) {
     return res.status(403).json({ error: "invite", where: "/enter" });
@@ -1325,7 +1391,7 @@ app.get("/api/board", async (req, res) => {
   // Which of these are the reader's own, so the page can offer to take one
   // down. Sent as a header rather than a query string: it is the same secret
   // either way, and a query string is the half that ends up in an access log.
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
 
   /* The handles of everybody this reader follows, so the page can offer a feed
@@ -1408,7 +1474,7 @@ app.get("/api/board", async (req, res) => {
 // written by other people.
 app.delete("/api/post", express.json(), async (req, res) => {
   const id = String(req.query.id || req.body?.id || "");
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   const post = await change((board) => {
     const p = board.posts.find((x) => x.id === id);
@@ -1443,7 +1509,7 @@ app.post("/api/translate", express.json({ limit: "16kb" }), async (req, res) => 
   if (!translateReady()) return res.status(503).json({ error: "unconfigured" });
   const out = await translate(String(req.body?.text || ""), {
     lang: req.body?.lang === "zh" ? "zh" : "en",
-    by: store.hashDevice(String(req.body?.device || ""), SALT) || req.ip || "anon",
+    by: hashDevice(String(req.body?.device || ""), SALT) || req.ip || "anon",
   });
   // A refusal is not a server fault: the caller is told which kind so the page
   // can say "wait a moment" rather than "something went wrong".
@@ -1465,6 +1531,33 @@ app.post("/api/translate", express.json({ limit: "16kb" }), async (req, res) => 
 // There is no sign-in, so "yours" means posted from this browser — the same
 // salted hash that lets you take your own post back. One profile per browser.
 // ---------------------------------------------------------------------------
+
+/* WHO SPEAKS FOR THEM, SAID OUT LOUD.
+ *
+ * On the card and on the page, before anybody presses Follow — not a thing
+ * discovered after a match, when somebody has already decided they are talking
+ * to a performer and finds they are talking to an agency. The arrangement is
+ * fine; being surprised by it is not.
+ *
+ * A name rather than the id, because the id is a fact about the database and
+ * the name is the fact the reader needs. */
+const speaksFor = (board, q) => {
+  if (!q.agent) return "";
+  const a = board.people.find((x) => x.id === q.agent && x.state === "published");
+  return a ? a.handle : "";
+};
+
+/* And the other direction: everybody one agent speaks for, for their own page.
+ * Browse shows a few of them (see RUN_SHOW); this shows all of them, because
+ * somebody who has got as far as opening an agent's page has chosen to look.
+ * One match with the agent is how a producer meets the whole roster, which is
+ * also the best reason an agent has to want a good page. */
+const rosterOf = (board, q) => board.people
+  .filter((x) => x.agent === q.id && x.state === "published" && x.handle)
+  .map((x) => ({
+    id: x.id, handle: x.handle, campus: x.campus,
+    photo: x.photoState === "published" ? x.photo : "",
+  }));
 
 const shownPerson = (q, mine) => ({
   ...q,
@@ -2076,7 +2169,7 @@ function standing(board, me) {
  */
 app.get("/api/people", async (req, res) => {
   const board = await store.load(FILE);
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
   const live = board.people.filter((q) => q.state === "published" && q.looking && q.handle);
   res.json({
@@ -2086,6 +2179,7 @@ app.get("/api/people", async (req, res) => {
     people: live.map((q) => ({
       ...shownPerson(q, q.by === me),
       mine: q.by === me,
+      speaksFor: speaksFor(board, q),
       following: Boolean(me) && board.follows.some((f) => f.by === me && f.who === q.id),
       // What the two of you have in common, so the deck can say it before
       // anybody presses anything. Both sides of this are already on both
@@ -2252,7 +2346,7 @@ app.get("/api/hello", async (req, res) => {
    * Sent to the browser that already sends this header everywhere else; a
    * request without it simply gets false, which is the form, which is right.
    */
-  const asking = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const asking = hashDevice(String(req.get("x-board-device") || ""), SALT);
   /* The cookie counts here too. A browser that has forgotten itself sends a
      new id and the old cookie, and showing it the form again is how one
      person becomes two rows — the whole thing the cookie exists to stop.
@@ -2309,7 +2403,7 @@ app.post("/api/ask", express.json({ limit: "2kb" }), async (req, res) => {
 
 /** Ask to be let in. Public, obviously — it is the only thing here that is. */
 app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   const name = String(req.body?.name || "").trim();
   const reach = String(req.body?.reach || "").trim();
   if (!name || !reach) return res.status(400).json({ error: "both" });
@@ -3183,7 +3277,7 @@ function weekKey(d = new Date()) {
 }
 
 app.post("/api/seen", express.json({ limit: "2kb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   const who = String(req.body?.who || "");
   if (!/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "no" });
   const first = req.body?.first === true;
@@ -3297,7 +3391,7 @@ function pairState(board, me, q) {
  * everything still walks through the door as a member who no longer exists.
  * ------------------------------------------------------------------------- */
 app.post("/api/me/forget", express.json({ limit: "1kb" }), gate, async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   // A word the page has to send, so a stray POST cannot do this and neither
   // can a link somebody is sent. Not a secret — a second act.
@@ -3462,7 +3556,7 @@ app.post("/api/signin/code", express.json({ limit: "1kb" }), async (req, res) =>
      which person it is about to strand. `over` is the second act, the same
      shape as `sure` on forget: a word the page sends once somebody has read
      the warning. */
-  const here = store.hashDevice(String(req.body?.device || ""), SALT);
+  const here = hashDevice(String(req.body?.device || ""), SALT);
   const now = await store.load(FILE);
   if (here && now.people.some((q) => q.by === here) && req.body?.over !== "yes") {
     return res.status(409).json({ error: "here" });
@@ -3534,7 +3628,7 @@ app.post("/api/signin/code", express.json({ limit: "1kb" }), async (req, res) =>
 
 /** My own card, which is mine to read whether or not anybody else may. */
 app.get("/api/card", async (req, res) => {
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
   if (!me) return res.json({ card: null });
@@ -3549,7 +3643,7 @@ app.get("/api/card", async (req, res) => {
 /** Write it, or clear it. Never validated into a shape: a WeChat id is
  *  whatever WeChat let somebody call themselves. */
 app.put("/api/card", express.json({ limit: "8kb" }), gate, async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   const out = await change((board) => {
     const was = board.cards.find((c) => c.by === me);
@@ -3584,7 +3678,7 @@ app.put("/api/card", express.json({ limit: "8kb" }), gate, async (req, res) => {
  * is shown to nobody except the person its owner handed a card to, and holding
  * it would mean a deal is agreed and the way to carry it on is in a queue. */
 app.post("/api/card/qr", express.json({ limit: "36mb" }), gate, async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   const data = String(req.body?.qr || "");
 
@@ -3618,7 +3712,7 @@ app.post("/api/card/qr", express.json({ limit: "36mb" }), gate, async (req, res)
 
 /** Hand it to one person, or take it back from them. */
 app.post("/api/card/give", express.json({ limit: "4kb" }), gate, async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   const who = String(req.body?.who || "");
   const on = req.body?.on !== false;
   const note = String(req.body?.note || "").slice(0, 200);
@@ -3656,7 +3750,7 @@ app.post("/api/card/give", express.json({ limit: "4kb" }), gate, async (req, res
  *  for a card per person and an access log that reads as a list of who holds
  *  whose. */
 app.get("/api/matches", async (req, res) => {
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
   const mine = myRow(board, me);
@@ -3727,7 +3821,7 @@ const shownOffer = (o, board) => {
 /** Write one. Members only — an offer is somebody in the room reaching out of
  *  it, and both halves of that matter. */
 app.post("/api/offer", express.json({ limit: "8kb" }), gate, async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   const out = await change((board) => {
     if (!board.people.some((q) => q.by === me && q.state === "published")) {
@@ -3940,7 +4034,7 @@ app.get("/api/offer", async (req, res) => {
  *  by a member, which is the whole design. */
 app.post("/api/offer/take", express.json({ limit: "4kb" }), async (req, res) => {
   const code = store.cleanCode(req.body?.code);
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   const name = String(req.body?.name || "").trim().slice(0, 60);
   /* A WAY TO REACH THEM, and it is not an extra hurdle bolted on. They are
      going onto a list rather than into the room, so the person who offered
@@ -4166,7 +4260,7 @@ function threadState(board, me, them) {
 
 /* Writing to somebody. */
 app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   const who = String(req.body?.who || "");
   const text = String(req.body?.text || "").trim().slice(0, 600);
   const re = String(req.body?.re || "");
@@ -4225,7 +4319,7 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
  * string is the part of a request that ends up in logs and referrers. */
 app.get("/api/notes", notesOff, async (req, res) => {
   const board = await store.load(FILE);
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
   if (!me) return res.json({ notes: [], unread: 0 });
 
@@ -4322,7 +4416,7 @@ app.get("/api/notes", notesOff, async (req, res) => {
  * it still works afterwards.
  */
 app.post("/api/note/shut", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   const who = String(req.body?.who || "");
   if (!me) return res.status(400).json({ error: "no" });
   if (!/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "gone" });
@@ -4374,7 +4468,7 @@ function groupable(board, me) {
 
 /** The groups this person is in, with who is in them and what was said. */
 app.get("/api/groups", notesOff, async (req, res) => {
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
   if (!me) return res.json({ groups: [], canAdd: [] });
   const board = await store.load(FILE);
@@ -4400,7 +4494,7 @@ app.get("/api/groups", notesOff, async (req, res) => {
 
 /** Making one. */
 app.post("/api/group", notesOff, express.json({ limit: "8kb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   const want = (Array.isArray(req.body?.who) ? req.body.who : [])
     .map((x) => String(x || "")).filter((x) => /^[a-f0-9]{20}$/.test(x));
@@ -4433,7 +4527,7 @@ app.post("/api/group", notesOff, express.json({ limit: "8kb" }), async (req, res
 
 /** Saying something in one. */
 app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   const id = String(req.body?.group || "");
   const text = String(req.body?.text || "").trim().slice(0, 600);
   if (!me) return res.status(400).json({ error: "no" });
@@ -4453,7 +4547,7 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
 
 /** Leaving one. Yours to take and nobody else's to take for you. */
 app.post("/api/group/leave", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   const id = String(req.body?.group || "");
   if (!me) return res.status(400).json({ error: "no" });
   const out = await change((board) => {
@@ -4477,7 +4571,7 @@ app.post("/api/group/leave", notesOff, express.json({ limit: "2kb" }), async (re
 /** Reporting something said in one. The only way anybody outside it reads a
  *  message, which is the same rule as everywhere else here. */
 app.post("/api/group/report", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   const id = String(req.body?.id || "");
   const why = String(req.body?.why || "").slice(0, 400);
   if (!me) return res.status(400).json({ error: "no" });
@@ -4496,7 +4590,7 @@ app.post("/api/group/report", notesOff, express.json({ limit: "16kb" }), async (
 
 /* Read. Set by the person who received it and by nobody else. */
 app.post("/api/note/seen", notesOff, express.json({ limit: "8kb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   await change((board) => {
     for (const n of board.notes) if (n.to === me) n.seen = true;
@@ -4509,7 +4603,7 @@ app.post("/api/note/seen", notesOff, express.json({ limit: "8kb" }), async (req,
  * This is the only route that puts a private message in front of the panel,
  * and only the person who received it can press it. */
 app.post("/api/note/report", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   const id = String(req.body?.id || "");
   const why = String(req.body?.why || "").trim().slice(0, 400);
   if (!me || !/^[a-f0-9]{20}$/.test(id)) return res.status(400).json({ error: "no" });
@@ -4549,7 +4643,7 @@ app.post("/api/note/report", notesOff, express.json({ limit: "16kb" }), async (r
  * different question badly.
  */
 app.post("/api/want", express.json({ limit: "4kb" }), gate, async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   const want = String(req.body?.want || "");
   if (!me) return res.status(400).json({ error: "no" });
 
@@ -4569,7 +4663,7 @@ app.post("/api/want", express.json({ limit: "4kb" }), gate, async (req, res) => 
  *  twice and can say "you are on the list" instead. */
 app.get("/api/want", async (req, res) => {
   const board = await store.load(FILE);
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
   res.json({
     mine: me ? board.wants.filter((w) => w.by === me).map((w) => w.want) : [],
@@ -4595,7 +4689,7 @@ app.get("/api/want", async (req, res) => {
  */
 app.get("/api/followers", async (req, res) => {
   const board = await store.load(FILE);
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
   if (!me) return res.json({ followers: [] });
 
@@ -4629,7 +4723,7 @@ app.get("/api/followers", async (req, res) => {
 
 /* Follow, and unfollow, which is the same button. */
 app.post("/api/follow", express.json({ limit: "8kb" }), gate, async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   const who = String(req.body?.who || "");
   if (!me || !/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "no" });
   const on = req.body?.on !== false;
@@ -4652,7 +4746,7 @@ app.get("/api/person", async (req, res) => {
   const want = String(req.query.handle || "").toLowerCase();
   if (!want) return res.status(400).json({ error: "no" });
   const board = await store.load(FILE);
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   const q = board.people.find((x) =>
     x.state === "published" && x.handle.toLowerCase() === want);
   if (!q) return res.json({ person: null });
@@ -4662,6 +4756,8 @@ app.get("/api/person", async (req, res) => {
     person: {
       ...shownPerson(q, q.by === me),
       mine: q.by === me,
+      speaksFor: speaksFor(board, q),
+      roster: rosterOf(board, q),
       followers: store.followersOf(board.follows, q.id),
       // Whether YOU follow them. Never who else does — a count is a fact about
       // a person, a list is a social graph.
@@ -4696,7 +4792,7 @@ app.get("/api/person", async (req, res) => {
  *  404 when the ledger is off, so a board with no promise attached has no
  *  screen for one either. */
 app.get("/api/stake", async (req, res) => {
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT)
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT)
     || inCookie(req);
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
@@ -4706,7 +4802,7 @@ app.get("/api/stake", async (req, res) => {
 });
 
 app.get("/api/me", async (req, res) => {
-  const me = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   let board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
   let mine = me && board.people.find((q) => q.by === me);
@@ -4782,7 +4878,7 @@ app.get("/api/me", async (req, res) => {
 });
 
 app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
 
   const words = [req.body?.goal, req.body?.trade, req.body?.campus, req.body?.handle]
@@ -4814,6 +4910,11 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
     // after it there is no way to tell the two apart.
     const joining = typeof req.body.looking === "boolean" && req.body.looking && !q.looking;
     if (typeof req.body.looking === "boolean") q.looking = req.body.looking;
+    /* THE CAP ON THE ROOM, and it is checked here because this is the one line
+       on the whole server that puts somebody into Browse. /api/run/show is the
+       button; this is the door it opens, and a cap enforced only at the button
+       is a cap you get round by editing the profile instead. */
+    if (q.looking && q.runBy && overShow(board, q.runBy, q.id)) q.looking = false;
     /* "li" takes 200 rather than 120: a LinkedIn share URL is long, and a save
        that truncated the link before cleanPerson could read the slug out of it
        would silently drop the field. */
@@ -4933,6 +5034,201 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
   res.json({ person: shownPerson(out, true) });
 });
 
+/* ---- THE PEOPLE ONE LOGIN SPEAKS FOR -------------------------------------
+ *
+ * Everything here is asked as the REAL browser — `store.hashDevice`, never the
+ * local one — because these are the routes that manage the roster rather than
+ * act through it. Being Mia must not let you add somebody to Mia's roster.
+ * That is the whole reason the two functions have different names.
+ */
+
+/** Would showing this one put the agent over the room's share of Browse? */
+const overShow = (board, runBy, exceptId) =>
+  board.people.filter((q) => q.runBy === runBy && q.looking && q.id !== exceptId)
+    .length >= store.RUN_SHOW;
+
+/** The roster, and who this browser is being on this request. */
+app.get("/api/run", gate, async (req, res) => {
+  const real = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!real) return res.status(400).json({ error: "no" });
+  const board = await store.load(FILE);
+  const me = board.people.find((q) => q.by === real);
+  const run = board.people.filter((q) => q.runBy === real && q.by !== real);
+  const unread = new Map();
+  for (const n of board.notes) {
+    // What is waiting, per person, so one list can carry the whole roster —
+    // see the merged Cards screen in docs/mockups/agent.html.
+    const q = run.find((x) => x.by === n.to);
+    if (q && !n.seen) unread.set(q.id, (unread.get(q.id) || 0) + 1);
+  }
+  res.json({
+    max: store.RUN_MAX,
+    show: store.RUN_SHOW,
+    showing: run.filter((q) => q.looking).length,
+    // Empty when they are themselves. The page draws the orange bar off this
+    // and nothing else, so a stale id in localStorage shows no bar rather than
+    // a bar naming somebody they are not actually being.
+    as: acting.getStore()?.as || "",
+    me: me ? { id: me.id, handle: me.handle, photo: me.photoState === "published" ? me.photo : "" } : null,
+    run: run.map((q) => ({
+      id: q.id, handle: q.handle, state: q.state, looking: q.looking,
+      photo: q.photoState === "published" ? q.photo : "",
+      campus: q.campus, say: q.say, waiting: unread.get(q.id) || 0,
+    })),
+  });
+});
+
+/* ONE FIELD, BECAUSE THIS HAPPENS IN A TAXI.
+ *
+ * A name a line. Everything else is inherited from the agent's own row — the
+ * sentence, the rooms, which half of the world, the trade — because an agent
+ * for Sydney performers is adding Sydney performers, and a form that asked
+ * nine questions about each of nine people is a form nobody finishes. All of
+ * it is editable afterwards by being them.
+ *
+ * Published on arrival, like any other profile made of words: the words have
+ * been through the one check this board has, and a profile nobody can see is
+ * not a profile. Faces are a separate queue, as they are for everybody.
+ *
+ * Showing is capped, so the first few land in Browse and the rest wait. That
+ * is not a punishment, it is the only reason Browse is worth opening.
+ */
+app.post("/api/run/add", express.json({ limit: "8kb" }), gate, async (req, res) => {
+  const real = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!real) return res.status(400).json({ error: "no" });
+
+  const names = String(req.body?.names || "").split(/[\n\r]+/)
+    .map((x) => x.trim()).filter(Boolean).slice(0, store.RUN_MAX);
+  if (!names.length) return res.status(400).json({ error: "names" });
+
+  /* WHAT THEY ARE — the one thing the server cannot guess and will not invent.
+   *
+   * Everything else on these rows is inherited from the agent's, and that is
+   * right: an agent for Sydney performers is adding Sydney performers. The
+   * sentence is the exception. Andy's own reads "I am an Agent looking for a
+   * Producer"; copying it wholesale puts nine agents on the board who are not
+   * agents, in the wrong rooms, matched to the wrong people. His performers
+   * are PERFORMERS looking for producers — the left half is theirs and the
+   * right half is his.
+   *
+   * Making side only. An agent adding producers is not representing anybody,
+   * it is filling Browse with the other half of their own market, and the
+   * first person to try it will not be doing it by accident. */
+  const role = String(req.body?.role || "");
+  if (!store.ROLES[role] || store.ROLES[role].side !== "make") {
+    return res.status(400).json({ error: "role" });
+  }
+  // The profile rule applies to a name typed by an agent exactly as it applies
+  // to a name typed by its owner.
+  const shaped = store.contactShaped(names.join(" "));
+  if (shaped) return res.status(400).json({ error: "contact", what: shaped });
+
+  let why = "";
+  const out = await change((board) => {
+    const mine = board.people.find((q) => q.by === real);
+    if (!mine) { why = "nopage"; return null; }
+    // NO CHAINS. Somebody an agent speaks for may not speak for anybody: two
+    // links and there is no answering who a conversation is actually with.
+    if (mine.runBy) { why = "run"; return null; }
+    const had = board.people.filter((q) => q.runBy === real && q.by !== real).length;
+    if (had + names.length > store.RUN_MAX) { why = "full"; return null; }
+
+    const made = [];
+    for (const handle of names) {
+      /* AN IDENTITY FOR A BROWSER THAT DOES NOT EXIST. The same salted hash
+         every other row has, over a random number nothing keeps — so the row
+         is indistinguishable from a member's downstream, and there is no seed
+         stored anywhere that would let this file impersonate them later. The
+         agent reaches it through `runBy` and by no other path. */
+      const q = store.cleanPerson({
+        id: store.newId(),
+        at: new Date().toISOString(),
+        state: "published",
+        by: store.hashDevice(randomUUID(), SALT),
+        runBy: real,
+        agent: mine.id,
+        handle: handle.slice(0, 40),
+        // Everything below is the agent's own row, which is the whole point of
+        // the one field. Wrong for somebody is one edit away; asked for nine
+        // people up front, it is nine forms nobody fills in.
+        /* His sentences with the left half replaced by theirs, deduplicated by
+           cleanPerson, and capped at three there too. Somebody who says
+           nothing on the right — an agent looking for anyone — passes that
+           through, which is the correct reading: so is the performer. */
+        say: (mine.say.length ? mine.say : [{ me: "", want: store.ANYONE }])
+          .map((x) => ({ me: role, want: x.want })),
+        where: mine.where, wants: mine.wants,
+        trade: mine.trade, campus: mine.campus,
+        looking: !overShow(board, real, ""),
+      });
+      board.people.push(q);
+      made.push({ id: q.id, handle: q.handle, looking: q.looking });
+    }
+    return made;
+  });
+
+  if (why === "nopage") return res.status(409).json({ error: "nopage" });
+  if (why === "run") return res.status(409).json({ error: "run" });
+  if (why === "full") return res.status(409).json({ error: "full", max: store.RUN_MAX });
+  res.status(201).json({ ok: true, added: out || [] });
+});
+
+/** In Browse, or not. The cap is the room's, not the agent's — see RUN_SHOW. */
+app.post("/api/run/show", express.json({ limit: "2kb" }), gate, async (req, res) => {
+  const real = store.hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.id || "");
+  const on = req.body?.show === true;
+  if (!real || !/^[a-f0-9]{20}$/.test(id)) return res.status(400).json({ error: "no" });
+  let why = "";
+  const out = await change((board) => {
+    const q = board.people.find((x) => x.id === id && x.runBy === real);
+    if (!q) { why = "nope"; return null; }
+    if (on && overShow(board, real, id)) { why = "full"; return null; }
+    q.looking = on;
+    return { id: q.id, looking: q.looking };
+  });
+  if (why === "full") return res.status(409).json({ error: "full", show: store.RUN_SHOW });
+  if (why) return res.status(404).json({ error: "nope" });
+  res.json({ ok: true, ...out });
+});
+
+/* HANDING SOMEBODY THEIR OWN ROW.
+ *
+ * The day a performer wants their own account, they get THIS one — the page,
+ * the history, the matches, the conversations — and not a copy of it with the
+ * good part missing. An arrangement you cannot leave is not an arrangement,
+ * and an agent who can say "it is yours whenever you want it" is telling the
+ * truth rather than making a promise the software would have to be rewritten
+ * to keep.
+ *
+ * It is the way-back code the board already has (see `back` on a person), so
+ * there is nothing new to explain to anybody: they type six characters and the
+ * row moves onto their browser. Minted here and shown once; the agent loses
+ * their hold on it the moment it is spent.
+ */
+app.post("/api/run/hand", express.json({ limit: "2kb" }), gate, async (req, res) => {
+  const real = store.hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.id || "");
+  if (!real || !/^[a-f0-9]{20}$/.test(id)) return res.status(400).json({ error: "no" });
+  const out = await change((board) => {
+    const q = board.people.find((x) => x.id === id && x.runBy === real);
+    if (!q) return null;
+    const taken = codesTaken(board);
+    let code = store.newCode();
+    for (let i = 0; i < 50 && taken.has(code); i++) code = store.newCode();
+    if (taken.has(code)) return null;
+    q.back = code;
+    /* Cleared BEFORE they spend it, not after. The other order looks tidier
+       and means an agent who changes their mind can take it back, which is
+       exactly the thing this route exists to make impossible. */
+    q.runBy = "";
+    q.agent = "";
+    return { code, handle: q.handle };
+  });
+  if (!out) return res.status(404).json({ error: "nope" });
+  res.json({ ok: true, ...out });
+});
+
 /* THE SENTENCE ON ITS OWN, saved where it is read.
  *
  * The two pills used to live inside the profile sheet, which meant changing
@@ -4950,7 +5246,7 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
  * so what the browser sends for it is read and thrown away.
  */
 app.put("/api/me/say", express.json({ limit: "4kb" }), gate, async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   if (!Array.isArray(req.body?.say)) return res.status(400).json({ error: "say" });
   const out = await change((board) => {
@@ -4985,7 +5281,7 @@ app.put("/api/me/say", express.json({ limit: "4kb" }), gate, async (req, res) =>
 app.post("/api/report", express.json({ limit: "64kb" }), async (req, res) => {
   const id = String(req.body?.id || "");
   const why = String(req.body?.why || "").trim().slice(0, 400);
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!/^[a-f0-9]{20}$/.test(id)) return res.status(400).json({ error: "no such post" });
   if (!me) return res.status(400).json({ error: "no" });
 
@@ -5056,7 +5352,7 @@ app.post("/api/post", express.json({ limit: "36mb" }), gate, async (req, res) =>
     handle, note, topic, photo, re, like,
     go: String(req.body?.go || ""),
     why: "Waiting for somebody to read it.",
-    by: store.hashDevice(req.body?.device, SALT),
+    by: hashDevice(req.body?.device, SALT),
   });
 
   await change((board) => {
@@ -5315,7 +5611,7 @@ app.post("/api/feed", admin, express.raw({ type: "multipart/form-data", limit: "
     // never supplies one, so a post made this way counts toward the same
     // person and nothing else can be claimed by asserting a `by`.
     const by = parsed.fields.device
-      ? store.hashDevice(String(parsed.fields.device), SALT) : "";
+      ? hashDevice(String(parsed.fields.device), SALT) : "";
 
     // Made by the operator rather than by a reader, so it goes straight up.
     // The admin is the review.

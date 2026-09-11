@@ -981,6 +981,31 @@ export function cleanPerson(raw) {
     wants: WANTS.includes(raw.wants) ? raw.wants : "any",
     why: (raw.state === "published") ? "" : s(raw.why, 400),
     by: s(raw.by, 64),
+    /* WHO SPEAKS FOR THIS PERSON, IF IT IS NOT THEM.
+     *
+     * `runBy` is the device hash of the agent who runs the row, and it is what
+     * the server checks. `agent` is that agent's person id, and it is only for
+     * saying so out loud — "Represented by Andy", on the card, before anybody
+     * presses Follow. Two fields because one of them is a credential and the
+     * other is a sentence, and the day they are the same field is the day
+     * changing a display name changes who can log in as somebody.
+     *
+     * THE ROW STILL HAS ITS OWN `by`. That is the whole trick, and it is why
+     * this is a small change to a server with `by === me` written through it
+     * seventy-six times: a represented person is an ordinary person with an
+     * ordinary identity, and the agent's browser is allowed to BE that
+     * identity for the length of one request. Nothing downstream knows.
+     *
+     * WHICH MEANS THE DAY THEY WANT IT, IT IS ALREADY THEIRS. Clearing these
+     * two fields and minting them a way back (see `back`) hands over the row,
+     * the history, the matches and the conversations — the same account, not a
+     * copy of it. An arrangement you cannot leave is not an arrangement.
+     *
+     * No chains: a row that is run cannot itself run anybody. Enforced where
+     * rows are made rather than here, because this function cannot see the
+     * board it is part of. */
+    runBy: s(raw.runBy, 64),
+    agent: /^[a-f0-9]{20}$/.test(String(raw.agent || "")) ? String(raw.agent) : "",
   };
 }
 
@@ -1227,6 +1252,31 @@ export function cleanNote(raw) {
  * taking it removes you from the list rather than deleting what you said, for
  * the same reason leaving a thread does not erase it.
  */
+/* HOW MANY PEOPLE ONE LOGIN MAY SPEAK FOR, AND HOW MANY OF THEM THE ROOM SEES.
+ *
+ * An agent with exclusive talent will not put that talent somewhere a producer
+ * can reach them directly — that is the leverage given away in one move — and
+ * most of the talent will never sign up for themselves. So they get ordinary
+ * rows and one person runs them. Nothing is forwarded and nothing is
+ * redirected: the agent IS the party in every conversation and the performer
+ * is the subject of it, which is what already happens when a producer wants
+ * one of somebody's people.
+ *
+ * TWO DIFFERENT NUMBERS, because they protect two different things.
+ *
+ * RUN_MAX is a limit on the agent, and it is generous: somebody with forty
+ * performers is exactly who this is for, and forty rows nobody browses cost
+ * this box nothing.
+ *
+ * RUN_SHOW is a limit on the ROOM, and it is small. Browse is shared and
+ * finite. One agent's roster could otherwise be most of what anybody sees,
+ * which turns a board into a catalogue — and the people who would notice first
+ * are the ones who joined because it was not one. Their own page shows all of
+ * them: somebody who has found the agent has chosen to look.
+ */
+export const RUN_MAX = 40;
+export const RUN_SHOW = 5;
+
 export const GROUP_MAX = 10;
 
 export function cleanGroup(raw) {
@@ -1649,6 +1699,19 @@ export function forget(board, me) {
   const media = [];
   let rows = 0;
 
+  /* ANYBODY THIS PERSON SPEAKS FOR GOES FIRST, and it has to be first: their
+     rows carry their own `by`, so the pass below — which is entirely "is this
+     row mine" — would walk straight past them and leave nine profiles, their
+     photographs and their conversations sitting on the board under an identity
+     no browser can produce. Forgetting that quietly keeps everything is worse
+     than not offering it.
+     Recursion is safe because a run row may not itself run anybody. */
+  for (const by of [...new Set(board.people.filter((q) => q.runBy === me && q.by && q.by !== me).map((q) => q.by))]) {
+    const out = forget(board, by);
+    media.push(...out.media);
+    rows += out.rows;
+  }
+
   const mine = board.people.filter((q) => q.by === me);
   const ids = new Set(mine.map((q) => q.id));
   for (const q of mine) {
@@ -1773,6 +1836,12 @@ export function rebind(board, from, to) {
     if (row[key] === from) { row[key] = to; moved++; }
   };
   for (const q of board.people) swap(q, "by");
+  /* AND THE ROSTER FOLLOWS THE AGENT. An agent who comes back on a new phone
+     keeps their own row through the line above; without this one they keep it
+     and lose the nine people they speak for, who are then rows no browser on
+     earth can reach. Found once by `make back` on a row that ran nobody, which
+     is to say not found at all — written from the shape rather than the bug. */
+  for (const q of board.people) swap(q, "runBy");
   for (const p of board.posts) swap(p, "by");
   for (const f of board.follows) swap(f, "by");
   for (const g of board.grants) swap(g, "by");
