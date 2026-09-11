@@ -510,6 +510,34 @@ export const STRINGS = {
      are inside it looking out. So it names the person rather than the side:
      in China, the one you are short of. */
   "land.head":         ["Your business partner in China", "在中国，你缺的那个人"],
+  /* WHAT IT DOES, ON THE FRONT PAGE, SHOWN RATHER THAN DESCRIBED.
+     The headline names who you get and nothing said how, so a stranger off a
+     forwarded link had to guess — and the guesses are directory, agency, or
+     scam. These four fragments are the sentence the whole product runs on,
+     filled in with one real pair. Four keys rather than one string with
+     placeholders because the two halves are pills and the two joins are not,
+     and Chinese puts them in a different order — see .doesline. */
+  "land.does1":        ["I am", "我是"],
+  "land.does2":        ["an Agent", "经纪人"],
+  "land.does3":        ["looking for", "在找"],
+  "land.does4":        ["a Performer", "演员"],
+  "land.doesWhy": [
+    "Say that once. It finds the people who said the other half, and tells neither of you until you both do.",
+    "这句话说一次就行。它会找出说了另一半的人——在你们双方都说出来之前，谁也不会被告知。"],
+
+  /* EACH DOOR FILLS THE SAME SENTENCE WITH ITS OWN PAIR. A link into a film
+     group should not open on an investor's example. Only the two pills change;
+     the joins and the line under them are the same words every time. Rooms
+     without a pair here keep the general one. */
+  "door.film.does2":   ["a Producer", "制片人"],
+  "door.film.does4":   ["a Performer", "演员"],
+  "door.invest.does2": ["an Investor", "投资人"],
+  "door.invest.does4": ["a Founder", "创始人"],
+  "door.raise.does2":  ["a Founder", "创始人"],
+  "door.raise.does4":  ["an Investor", "投资人"],
+  "door.trade.does2":  ["a Buyer", "采购方"],
+  "door.trade.does4":  ["a Manufacturer", "工厂"],
+
   "land.under":        ["Say it in one line.", "一句话说清楚。"],
   "land.lede": [
     "Members bring members, and their name stays on whoever they brought. Nothing happens between two people until each of them is what the other is looking for.",

@@ -46,6 +46,31 @@
      two-line question — on the one page whose whole job is the form. Only
      here: /level ships its own .waitbox and site.css still serves it. */
   #waitsection{padding-top:1.2rem}
+
+  /* WHAT IT DOES, IN ONE LINE, SHOWN RATHER THAN SAID.
+   *
+   * The headline names who you get. Nothing on this page said how, so a
+   * stranger off a forwarded link read "Your business partner in China" over
+   * a form asking for their name and had to guess — and the guesses are
+   * directory, or agency, or scam.
+   *
+   * This is the sentence the whole product runs on, filled in with one real
+   * pair, in the pills it wears inside. It is not the working matcher that
+   * used to be here: no controls, nothing to operate, two lines tall. The
+   * form stays above the fold, which is the thing that rule was protecting. */
+  .does{margin:.9rem 0 0;max-width:32rem}
+  .doesline{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem;
+    font-size:1.02rem;line-height:1.9;color:var(--ink)}
+  .doesline b{font-weight:400;color:var(--dim, var(--muted))}
+  .doesline i{font-style:normal;font-weight:650;font-size:.95rem;
+    padding:.18rem .7rem;border-radius:99px;background:var(--accent-soft);
+    color:var(--accent);white-space:nowrap}
+  .doeswhy{margin:.55rem 0 0;font-size:.92rem;line-height:1.6;
+    color:var(--muted)}
+  @media (max-width:380px){
+    .doesline{font-size:.95rem;gap:.3rem}
+    .doesline i{font-size:.88rem;padding:.15rem .58rem}
+  }
   /* And it starts where the question starts. The card centres itself, which
      read as one object among several while the matcher sat above it; now
      that it leads the page, a left-aligned headline over a centred card is
@@ -141,6 +166,12 @@
   <div class="wrap">
     <div class="asking">
       <q id="asking"></q>
+    </div>
+    <div class="does">
+      <p class="doesline">
+        <b id="does1"></b><i id="does2"></i><b id="does3"></b><i id="does4"></i>
+      </p>
+      <p class="doeswhy" id="doeswhy"></p>
     </div>
   </div>
 </div>
@@ -262,6 +293,11 @@ function paint() {
   $("brandname").textContent = T("site.title");
   $("navopen").textContent = T("land.enter");
   $("asking").textContent = T("land.head");
+  $("does1").textContent = T("land.does1");
+  $("does2").textContent = T("land.does2");
+  $("does3").textContent = T("land.does3");
+  $("does4").textContent = T("land.does4");
+  $("doeswhy").textContent = T("land.doesWhy");
   $("doorsEyebrow").textContent = T("land.doors");
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");
@@ -285,6 +321,14 @@ function paintRoom() {
   const name = T("waitroom." + key);
   document.title = name + " · " + T("site.title");
   $("asking").textContent = T("door." + key + ".head");
+  /* The same sentence, this room's pair. T returns the key itself when there
+     is none, which is the test: a room without a pair keeps the general one
+     rather than printing "door.other.does2" at a stranger. */
+  for (const n of ["does2", "does4"]) {
+    const k = "door." + key + "." + n;
+    const said = T(k);
+    if (said !== k) $(n).textContent = said;
+  }
 }
 
 setLang(pickLang());
