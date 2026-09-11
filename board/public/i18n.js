@@ -760,6 +760,14 @@ export const STRINGS = {
      needed a caption it could not carry — so it gets a label instead.
      "Connect" and not "Message": the app's word for the press is Connect, and
      a landing page that teaches a different word teaches the wrong one. */
+  /* ONE LINE UNDER ONE SCREEN. The three steps that used to be here explained
+     a picture that was sitting directly underneath them, and people still said
+     they did not get it — because nobody studies a page a friend forwarded
+     them. This says the only thing the picture does not: that it goes both
+     ways, and that nothing happens until it does.
+     中文写的不是翻的：「对上眼」就是这个意思，比「匹配」这种词实在。 */
+  "land.one":          ["You say your line. You are shown whoever said the other half of it — and neither of you is told until you both say yes.",
+                        "你说你那一句，就能看到说了另一半的人。两边都点了头，才互相知道。"],
   "land.step1":        ["Step 1 · Say it once", "第一步 · 说一句话"],
   "land.step2":        ["Step 2 · You match", "第二步 · 匹配上"],
   "land.step3":        ["Step 3 · Connect and do business", "第三步 · 联系上，开始谈"],

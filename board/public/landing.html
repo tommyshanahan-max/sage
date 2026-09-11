@@ -80,6 +80,28 @@
     letter-spacing:-.01em;padding:.3rem .9rem;border-radius:99px;
     background:var(--accent);color:var(--accent-ink);white-space:nowrap;
     box-shadow:0 4px 14px rgba(43,85,222,.28)}
+  /* THE SENTENCE, THEN THE SCREEN IT PRODUCES. One column, centred, nothing
+     between them: the pills are the question and the card is the answer, and
+     anything sitting in the gap turns two things into three. */
+  /* The section already pads; this used to add its own on top of an eyebrow
+     that is no longer there, which left a hand's width of empty dark above the
+     pills — the first thing on the band being nothing. */
+  .one{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+    padding:.4rem 0 .6rem}
+  .one .does{display:flex;justify-content:center;margin:0;padding:0}
+  /* Centred, because the phone under it is. The pills wrap to two lines on a
+     narrow screen and were left-aligned against a centred screenshot, which
+     reads as two things that were laid out by different people. */
+  .one .doesline{text-align:center}
+  .one .shot.card{width:min(78vw,300px);height:auto;border-radius:1.4rem;
+    box-shadow:0 18px 44px rgba(8,12,20,.28)}
+  .onewhy{margin:0;max-width:26rem;text-align:center;font-size:1.05rem;
+    line-height:1.6;color:var(--ink-2)}
+  @media (min-width:740px){
+    .one{gap:1.9rem;padding:.8rem 0 1rem}
+    .one .shot.card{width:330px}
+    .onewhy{font-size:1.1rem}
+  }
   .doeswhy{margin:.7rem 0 0;font-size:1.02rem;line-height:1.55;
     color:var(--ink-2)}
   @media (max-width:380px){
@@ -359,58 +381,32 @@
   </div>
 </div>
 
-<!-- WHAT IT LOOKS LIKE, BEFORE ANYBODY IS ASKED TO JOIN IT.
-     Three frames out of the running app — not drawings of it, and not slides
-     from a deck: the decks are written to one named person and carry that
-     person's offer, which is not a thing to put on the open web.
-     Above the waiting list on purpose. A stranger off a forwarded link is
-     deciding whether this is real before they decide whether to leave a name,
-     and a screen answers that faster than a paragraph. -->
+<!-- ONE SENTENCE AND ONE SCREEN.
+     This was three numbered steps with arrows between them — the sentence, a
+     match, a conversation — and people still said they did not get it. Three
+     steps is a thing to be studied, and nobody studies a page a friend
+     forwarded them; they look at it for four seconds and decide.
+
+     So: the sentence, and the screen it produces. That is the whole product —
+     you say one line, and you are shown the person who said the other half of
+     it. Everything the three steps were explaining is visible in the one
+     screen: her face, her line, and the two buttons. The steps were describing
+     a picture that was sitting right underneath them.
+
+     Not a drawing of the app and not a slide from a deck. The decks are
+     written to one named person and carry that person's offer, which is not a
+     thing to put on the open web. -->
 <section class="frames">
   <div class="wrap">
-    <div class="eyebrow"><span id="framesEyebrow"></span><i></i></div>
-    <div class="story">
-      <!-- STEP ONE IS THE SENTENCE, and it used to sit in the hero above this
-           section with no number on it — a widget a stranger could play with
-           and no sign that it was the first move of anything. Down here it is
-           the first of three, and the hero ends on the button instead of on a
-           demonstration, which is the right thing for the hero to end on. -->
-      <figure class="sayfig">
-        <span class="step" id="step1"></span>
-        <div class="does">
-          <p class="doesline">
-            <b id="does1"></b><i id="does2"></i><b id="does3"></b><i id="does4"></i>
-          </p>
-        </div>
-        <figcaption id="doeswhy"></figcaption>
-      </figure>
-      <div class="arrow" aria-hidden="true">&rarr;</div>
-      <figure>
-        <span class="step" id="step2"></span>
-        <div class="lean">
-          <img class="shot" src="/frame-1.png" alt="" width="585" height="1170" loading="lazy">
-          <img class="shot" src="/frame-2.png" alt="" width="585" height="1170" loading="lazy">
-          <!-- The mark itself is two circles overlapping, which is what a match
-               is. Using the logo here rather than a heart or a tick means the
-               symbol on the door and the symbol for the thing it does are the
-               same drawing. -->
-          <span class="matchdot" aria-hidden="true">
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg>
-          </span>
-        </div>
-        <figcaption id="frame1"></figcaption>
-      </figure>
-      <div class="arrow" aria-hidden="true">&rarr;</div>
-      <figure class="payoff">
-        <span class="step" id="step3"></span>
-        <!-- CROPPED TO THE CONVERSATION. The whole phone was the payoff frame
-             for a night and it was the weakest of the three: a screen of
-             explanatory paragraph, a nav bar, and the two lines that matter
-             about a fifth of the height. What somebody wants to know is
-             whether anything is said to anybody, so the frame is the saying. -->
-        <img class="shot chat" src="/frame-3.png" alt="" width="1122" height="903" loading="lazy">
-        <figcaption id="frame2"></figcaption>
-      </figure>
+    <div class="one">
+      <div class="does">
+        <p class="doesline">
+          <b id="does1"></b><i id="does2"></i><b id="does3"></b><i id="does4"></i>
+        </p>
+      </div>
+      <img class="shot card" src="/frame-2.png" alt=""
+        width="585" height="1170" loading="lazy">
+      <p class="onewhy" id="onewhy"></p>
     </div>
   </div>
 </section>
@@ -561,13 +557,7 @@ function paint() {
   $("does2").textContent = T("land.does2");
   $("does3").textContent = T("land.does3");
   $("does4").textContent = T("land.does4");
-  $("doeswhy").textContent = T("land.doesWhy");
-  $("framesEyebrow").textContent = T("land.frames");
-  $("frame1").textContent = T("land.frame1");
-  $("frame2").textContent = T("land.frame2");
-  $("step1").textContent = T("land.step1");
-  $("step2").textContent = T("land.step2");
-  $("step3").textContent = T("land.step3");
+  $("onewhy").textContent = T("land.one");
   $("doorsEyebrow").textContent = T("land.doors");
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");
