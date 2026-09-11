@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Exchange — an agent and the people they represent</title>
+
+<!-- WHAT THIS ARGUES.
+     An agent with exclusive talent will not put that talent on a board where a
+     producer can reach them directly — that is the leverage and the network
+     given away in one move. And most of the talent will never sign up for
+     themselves; on the film side that is not a stage, it is the business.
+
+     So: the people they represent get ordinary accounts, and the agent runs
+     them from one login. Nothing is redirected — the agent IS the party and
+     the actor is the subject — so there is nothing to forward wrongly.
+     See docs/todo.md for the three shapes this beat and why.
+
+     Five screens, in the order Andy meets them:
+       1  add        one field, because he is doing this in a taxi
+       2  roster     on his own profile: a rail of faces to switch, a list to manage
+       3  being      the coloured bar that stops him posting as the wrong person
+       4  public     what a producer sees on his page — his whole shop window
+       5  cards      every match across everybody he runs, in one list
+
+     Self-contained, no build, no external request. Fake people. -->
+
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD;
+    --ink:#151B28; --ink-2:#4E5968; --muted:#7A8699;
+    --line:#DFE4EC; --hair:#E7EBF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    /* The "you are somebody else" colour. Deliberately not the accent: it has
+       to read as a state, not as a button. */
+    --alarm:#B4531F; --alarm-soft:#FBEEE4;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+           "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#0B0E15; --raise:#141924; --card:#1B212D;
+      --ink:#E9EDF5; --ink-2:#A3B0C4; --muted:#7D8AA0;
+      --line:#232B3A; --hair:#1C2330;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --alarm:#E8905A; --alarm-soft:#2A1A10;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#5A6070;font-family:var(--sans);color:var(--ink);
+    -webkit-font-smoothing:antialiased;padding:2rem 1rem;
+    display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .phone{width:390px;height:820px;background:var(--paper);border-radius:2.2rem;
+    overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 24px 60px rgba(0,0,0,.35)}
+  .label{color:#EEF0F4;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
+    margin:0 0 .6rem;font-weight:600}
+  figure{margin:0}
+  figcaption{color:#C8CEDA;font-size:.82rem;line-height:1.5;max-width:390px;margin:.7rem 0 0}
+
+  .bar{flex:0 0 auto;display:flex;align-items:center;gap:.6rem;padding:.85rem .9rem;
+    background:var(--card);border-bottom:1px solid var(--hair)}
+  .bar b{font-family:var(--serif);font-weight:400;font-size:1.05rem;flex:1}
+  .bar .x{border:0;background:none;color:var(--ink-2);font-size:1.4rem;line-height:1}
+  .body{flex:1;overflow-y:auto;padding:1.1rem .95rem 1.4rem}
+  h2{margin:0 0 .3rem;font-family:var(--serif);font-weight:400;font-size:1.3rem}
+  .sub{margin:0 0 1rem;font-size:.9rem;line-height:1.55;color:var(--ink-2)}
+  .eyebrow{margin:1.4rem 0 .6rem;font-size:.7rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);font-weight:600}
+
+  textarea,input{width:100%;padding:.75rem .9rem;font:inherit;font-size:1rem;
+    border:1px solid var(--line);border-radius:.8rem;background:var(--raise);
+    color:var(--ink);resize:none}
+  .go{width:100%;margin:.9rem 0 0;border:0;border-radius:99px;background:var(--accent);
+    color:var(--accent-ink);padding:.85rem;font-size:1rem;font-weight:600}
+  .note{margin:.8rem 0 0;font-size:.8rem;line-height:1.55;color:var(--muted)}
+  .note b{color:var(--ink-2);font-weight:600}
+
+  /* ---- the roster, on his own profile ----------------------------------- */
+  .row{display:flex;align-items:center;gap:.7rem;padding:.65rem .2rem;
+    border-bottom:1px solid var(--hair)}
+  .row:last-of-type{border-bottom:0}
+  .face{width:2.6rem;height:2.6rem;border-radius:50%;flex:0 0 auto;display:grid;
+    place-items:center;color:#fff;font-family:var(--serif);font-size:1.1rem}
+  .m{flex:1;min-width:0}
+  .m b{display:block;font-weight:500;font-size:.98rem}
+  .m small{display:block;font-size:.78rem;color:var(--muted)}
+  .tag{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;
+    padding:.2rem .5rem;border-radius:99px;font-weight:600;white-space:nowrap}
+  .tag.up{background:var(--accent-soft);color:var(--accent)}
+  .tag.off{background:var(--raise);color:var(--muted);border:1px solid var(--hair)}
+  .add{display:block;width:100%;margin:.9rem 0 0;border:1px dashed var(--line);
+    background:none;color:var(--accent);border-radius:.8rem;padding:.75rem;
+    font-size:.95rem;font-weight:600}
+  .count{margin:.7rem 0 0;font-size:.8rem;color:var(--muted)}
+
+  /* ---- the switcher, along the top of his own page -----------------------
+     A rail of faces, not a menu. He will do this twenty times a day, and the
+     thing he most needs — who am I right now — should be answerable by
+     glancing rather than by opening something. The ring is the answer, and it
+     is orange when the answer is not him (see .being). */
+  .rail{flex:0 0 auto;display:flex;gap:.7rem;overflow-x:auto;
+    padding:.85rem .95rem .7rem;background:var(--card);
+    border-bottom:1px solid var(--hair);scrollbar-width:none}
+  .rail::-webkit-scrollbar{display:none}
+  .pick{flex:0 0 auto;width:3.4rem;padding:0;border:0;background:none;text-align:center}
+  .pick .face{width:2.8rem;height:2.8rem;margin:0 auto;font-size:1.1rem}
+  .pick small{display:block;margin-top:.4rem;font-size:.66rem;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* The ring sits outside the circle with a gap the colour of the bar, so it
+     reads as a ring and not as a thicker avatar. */
+  .pick.on .face{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--accent)}
+  .pick.on small{color:var(--accent);font-weight:600}
+  .pick.as .face{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--alarm)}
+  .pick.as small{color:var(--alarm);font-weight:600}
+  .pick.more .face{background:var(--raise);border:1px dashed var(--line);
+    color:var(--muted);font-family:var(--sans);font-size:1.3rem}
+
+  /* ---- being somebody else ---------------------------------------------- */
+  /* NOT A DROPDOWN. The risk this whole feature carries is posting as the
+     wrong person, so it is a state you can see from across the room and have
+     to leave on purpose, not a setting that sits quietly in a corner. */
+  .being{flex:0 0 auto;display:flex;align-items:center;gap:.6rem;
+    padding:.6rem .9rem;background:var(--alarm);color:#fff}
+  .being span{flex:1;font-size:.86rem;line-height:1.3}
+  .being span i{font-style:normal;font-weight:700}
+  .being button{border:0;border-radius:99px;background:rgba(255,255,255,.22);
+    color:#fff;padding:.35rem .8rem;font-size:.8rem;font-weight:600;white-space:nowrap}
+
+  /* ---- the public page --------------------------------------------------- */
+  .say{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;margin:.7rem 0 0;
+    font-size:.95rem;color:var(--ink-2)}
+  .say i{font-style:normal;font-weight:650;font-size:.9rem;padding:.16rem .6rem;
+    border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin:.2rem 0 0}
+  .who{background:var(--card);border:1px solid var(--hair);border-radius:.9rem;
+    padding:.7rem .5rem;text-align:center}
+  .who .face{margin:0 auto .45rem;width:3rem;height:3rem;font-size:1.2rem}
+  .who b{display:block;font-size:.86rem;font-weight:500}
+  .who small{display:block;font-size:.72rem;color:var(--muted);margin-top:.1rem}
+  .repd{margin:.9rem 0 0;padding:.6rem .75rem;background:var(--accent-soft);
+    border-radius:.7rem;font-size:.82rem;line-height:1.45;color:var(--ink-2)}
+  .repd b{color:var(--ink)}
+
+  /* ---- cards, merged ----------------------------------------------------- */
+  .mrow{display:flex;align-items:center;gap:.7rem;padding:.75rem .8rem;
+    background:var(--card);border:1px solid var(--hair);border-radius:.9rem;
+    margin:0 0 .55rem}
+  .mrow .m b{font-size:.95rem}
+  .dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--accent);flex:0 0 auto}
+
+  .nav{flex:0 0 auto;display:flex;background:var(--card);
+    border-top:1px solid var(--hair);padding:.5rem .3rem .7rem}
+  .nav div{flex:1;text-align:center;font-size:.66rem;color:var(--muted)}
+  .nav div.on{color:var(--accent);font-weight:600}
+  .nav i{display:block;font-style:normal;font-size:1.05rem;margin:0 0 .1rem}
+
+  .f-mia{background:linear-gradient(150deg,hsl(320 26% 74%),hsl(344 24% 52%))}
+  .f-jen{background:linear-gradient(150deg,hsl(196 26% 74%),hsl(210 24% 52%))}
+  .f-tom{background:linear-gradient(150deg,hsl(96 26% 74%),hsl(120 24% 52%))}
+  .f-sar{background:linear-gradient(150deg,hsl(36 30% 74%),hsl(28 26% 52%))}
+  .f-wei{background:linear-gradient(150deg,hsl(266 22% 74%),hsl(276 22% 52%))}
+  .f-and{background:linear-gradient(150deg,hsl(12 26% 74%),hsl(4 24% 52%))}
+</style>
+</head>
+<body>
+
+<!-- ====================================================================== 1 -->
+<figure>
+  <p class="label">1 · Adding them</p>
+  <div class="phone">
+    <div class="bar"><button class="x">‹</button><b>Who you represent</b></div>
+    <div class="body">
+      <h2>Who do you represent?</h2>
+      <p class="sub">One name a line. Everything else you can add later, or
+        never — a name, a face and the sentence is all it takes to be found.</p>
+      <textarea rows="5">Mia Chen
+Jen Alvarez
+Tom Hale</textarea>
+      <button class="go">Add these three</button>
+      <p class="note">They each get their own page and you run it. Everything
+        starts from yours — <b>Performer looking for a Producer</b>, Film &amp; TV,
+        Sydney — and you change whatever is different.<br><br>
+        Matches come to you. Your WeChat is the one that crosses, never theirs.
+        The day one of them wants their own account, they can have it.</p>
+    </div>
+  </div>
+  <figcaption>One field, because this happens on a phone in a taxi or it does
+  not happen. Everything inherits from the agent's own row and is editable
+  after.</figcaption>
+</figure>
+
+<!-- ====================================================================== 2 -->
+<figure>
+  <p class="label">2 · His profile</p>
+  <div class="phone">
+    <div class="bar"><b>Andy</b><button class="x">✎</button></div>
+    <div class="rail">
+      <button class="pick on"><span class="face f-and">a</span><small>You</small></button>
+      <button class="pick"><span class="face f-mia">m</span><small>Mia</small></button>
+      <button class="pick"><span class="face f-jen">j</span><small>Jen</small></button>
+      <button class="pick"><span class="face f-tom">t</span><small>Tom H</small></button>
+      <button class="pick"><span class="face f-sar">s</span><small>Sara</small></button>
+      <button class="pick"><span class="face f-wei">w</span><small>Wei L</small></button>
+      <button class="pick more"><span class="face">+</span><small>Add</small></button>
+    </div>
+    <div class="body">
+      <div class="say"><span>I am</span><i>an Agent</i><span>looking for</span><i>a Producer</i></div>
+      <p class="eyebrow">The people you represent</p>
+
+      <div class="row">
+        <span class="face f-mia">m</span>
+        <span class="m"><b>Mia Chen</b><small>Performer · Sydney</small></span>
+        <span class="tag up">Showing</span>
+      </div>
+      <div class="row">
+        <span class="face f-jen">j</span>
+        <span class="m"><b>Jen Alvarez</b><small>Performer · Melbourne</small></span>
+        <span class="tag up">Showing</span>
+      </div>
+      <div class="row">
+        <span class="face f-tom">t</span>
+        <span class="m"><b>Tom Hale</b><small>Performer · Sydney</small></span>
+        <span class="tag up">Showing</span>
+      </div>
+      <div class="row">
+        <span class="face f-sar">s</span>
+        <span class="m"><b>Sara Okafor</b><small>Performer · Sydney</small></span>
+        <span class="tag up">Showing</span>
+      </div>
+      <div class="row">
+        <span class="face f-wei">w</span>
+        <span class="m"><b>Wei Lin</b><small>Performer · Sydney</small></span>
+        <span class="tag up">Showing</span>
+      </div>
+      <div class="row">
+        <span class="face f-and" style="opacity:.45">k</span>
+        <span class="m" style="opacity:.55"><b>Kit Moran</b><small>Performer · Perth</small></span>
+        <span class="tag off">Not showing</span>
+      </div>
+
+      <p class="count">Five showing of nine. The faces along the top are how you
+        become one of them; this list is where you edit them and choose which
+        five the room sees.</p>
+      <button class="add">+ Add someone</button>
+    </div>
+    <div class="nav">
+      <div><i>◫</i>Browse</div><div><i>▤</i>Cards</div>
+      <div><i>＋</i>Post</div><div class="on"><i>◍</i>Profile</div>
+    </div>
+  </div>
+  <figcaption>Managed where his own page is, because "you" and "the people you
+  speak for" are the same thing from his side. The rail along the top is the
+  switch — one tap, always visible, ringed on whoever he is. Five showing in
+  Browse; the other four exist and are his to rotate in.</figcaption>
+</figure>
+
+<!-- ====================================================================== 3 -->
+<figure>
+  <p class="label">3 · Being one of them</p>
+  <div class="phone">
+    <div class="being">
+      <span>You are <i>Mia Chen</i>. Everything you write is hers.</span>
+      <button>Back to Andy</button>
+    </div>
+    <div class="bar"><b>Mia Chen</b><button class="x">✎</button></div>
+    <div class="rail">
+      <button class="pick"><span class="face f-and">a</span><small>You</small></button>
+      <button class="pick as"><span class="face f-mia">m</span><small>Mia</small></button>
+      <button class="pick"><span class="face f-jen">j</span><small>Jen</small></button>
+      <button class="pick"><span class="face f-tom">t</span><small>Tom H</small></button>
+      <button class="pick"><span class="face f-sar">s</span><small>Sara</small></button>
+      <button class="pick"><span class="face f-wei">w</span><small>Wei L</small></button>
+      <button class="pick more"><span class="face">+</span><small>Add</small></button>
+    </div>
+    <div class="body">
+      <div class="say"><span>I am</span><i>a Performer</i><span>looking for</span><i>a Producer</i></div>
+      <p class="sub" style="margin-top:.9rem">Sydney. Mandarin and English.
+        Two features and a Stan series. Free from March.</p>
+      <div class="repd"><b>Represented by Andy.</b> Producers who follow her
+        talk to him, and it is his WeChat that crosses — said on her card too,
+        before anybody presses Follow.</div>
+      <p class="eyebrow">Her page</p>
+      <div class="row">
+        <span class="face f-mia">m</span>
+        <span class="m"><b>Photo</b><small>Add a headshot</small></span>
+        <span class="tag off">Empty</span>
+      </div>
+      <div class="row">
+        <span class="m"><b>What she is looking for</b><small>Film &amp; TV · Producers</small></span>
+      </div>
+      <div class="row">
+        <span class="m"><b>Showing in Browse</b><small>Yes — one of your five</small></span>
+      </div>
+    </div>
+    <div class="nav">
+      <div><i>◫</i>Browse</div><div><i>▤</i>Cards</div>
+      <div><i>＋</i>Post</div><div class="on"><i>◍</i>Profile</div>
+    </div>
+  </div>
+  <figcaption>No separate editing screen — he becomes her and edits her page
+  the way he edits his own. The rail is the same rail; only the ring has moved,
+  and it has gone orange. That plus the bar is the whole safety story: a state
+  you can see across a room and have to leave on purpose, never a dropdown you
+  forget you are in.</figcaption>
+</figure>
+
+<!-- ====================================================================== 4 -->
+<figure>
+  <p class="label">4 · What a producer sees</p>
+  <div class="phone">
+    <div class="bar"><button class="x">‹</button><b>Andy</b></div>
+    <div class="body">
+      <div class="say"><span>I am</span><i>an Agent</i><span>looking for</span><i>a Producer</i></div>
+      <p class="sub" style="margin-top:.9rem">Sydney. Twenty-two years, mostly
+        drama. I do not send people who are not right for it.</p>
+
+      <p class="eyebrow">Who he represents</p>
+      <div class="grid">
+        <div class="who"><span class="face f-mia">m</span><b>Mia</b><small>Sydney</small></div>
+        <div class="who"><span class="face f-jen">j</span><b>Jen</b><small>Melbourne</small></div>
+        <div class="who"><span class="face f-tom">t</span><b>Tom H</b><small>Sydney</small></div>
+        <div class="who"><span class="face f-sar">s</span><b>Sara</b><small>Sydney</small></div>
+        <div class="who"><span class="face f-wei">w</span><b>Wei L</b><small>Sydney</small></div>
+        <div class="who"><span class="face f-and">k</span><b>Kit</b><small>Perth</small></div>
+      </div>
+      <p class="note">Nine people. Tap one for their page.<br><br>
+        <b>Browse shows five.</b> This page shows all of them — somebody who has
+        found Andy has chosen to look.</p>
+    </div>
+    <div class="nav">
+      <div class="on"><i>◫</i>Browse</div><div><i>▤</i>Cards</div>
+      <div><i>＋</i>Post</div><div><i>◍</i>Profile</div>
+    </div>
+  </div>
+  <figcaption>One match with Andy turns into his whole roster, which is the
+  best reason for him to want a good page. The cap protects the shared room,
+  not his own.</figcaption>
+</figure>
+
+<!-- ====================================================================== 5 -->
+<figure>
+  <p class="label">5 · Everything, in one list</p>
+  <div class="phone">
+    <div class="bar"><b>Your cards</b><button class="x">⌄</button></div>
+    <div class="body">
+      <p class="sub">Every match, across everybody you run. You are the person
+        in all of them.</p>
+
+      <div class="mrow">
+        <span class="dot"></span>
+        <span class="face f-mia">m</span>
+        <span class="m"><b>Mia</b><small>A producer in Beijing · 2h ago</small></span>
+      </div>
+      <div class="mrow">
+        <span class="dot"></span>
+        <span class="face f-and">a</span>
+        <span class="m"><b>You</b><small>A casting director in Shanghai · yesterday</small></span>
+      </div>
+      <div class="mrow" style="opacity:.6">
+        <span class="face f-tom">t</span>
+        <span class="m"><b>Tom H</b><small>Nobody yet</small></span>
+      </div>
+      <div class="mrow" style="opacity:.6">
+        <span class="face f-jen">j</span>
+        <span class="m"><b>Jen</b><small>Nobody yet</small></span>
+      </div>
+
+      <p class="note">Tapping one opens the conversation with you already
+        switched to the right person — so a reply is never sent as the wrong
+        one.</p>
+    </div>
+    <div class="nav">
+      <div><i>◫</i>Browse</div><div class="on"><i>▤</i>Cards</div>
+      <div><i>＋</i>Post</div><div><i>◍</i>Profile</div>
+    </div>
+  </div>
+  <figcaption>The one place the accounts merge, and it is right rather than
+  convenient: he is the party in every one of these. Nine inboxes would be
+  pretending they belong to nine people.</figcaption>
+</figure>
+
+</body>
+</html>

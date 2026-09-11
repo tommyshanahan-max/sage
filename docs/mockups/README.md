@@ -127,3 +127,57 @@ Two decisions worth keeping whatever gets built:
 - **The board speaks in its own voice** — centred, small, no bubble — and only
   for the two facts a person cannot work out from the messages themselves: that
   they matched, and that nobody has anybody's contact yet.
+
+## agent.html
+
+An agent, and the people they represent, on one login.
+
+The problem it answers is Andy's: an agent with exclusive talent will not put
+that talent on a board where a producer can reach them directly. That is the
+leverage and the network given away in one move. And most of the talent will
+never sign up for themselves — on the film side that is not a stage, it is the
+business.
+
+So the people he represents get **ordinary accounts, and he runs them**.
+Nothing is forwarded and nothing is redirected: he is the party in every
+conversation and the actor is the subject of it, which is what actually happens
+when a producer wants one of his people. If a performer later wants their own
+account, they can have it, and it is the same account.
+
+Five phones, in the order he meets them:
+
+1. **Adding them** — one textarea, one name a line. He is doing this in a taxi
+   or he is not doing it. Everything inherits from his own row (Performer
+   looking for a Producer, Film & TV, Sydney) and is editable after.
+2. **His profile** — a rail of faces along the top to switch who he is, and
+   under it the list, where he edits them and chooses which five the room sees.
+3. **Being one of them** — the same rail with the ring moved, plus an orange
+   bar across the top: *You are Mia Chen. Everything you write is hers.*
+4. **What a producer sees** — his public page, with his whole roster on it.
+5. **Cards** — every match across everybody he runs, in one list.
+
+What it asserts, so it can be argued with:
+
+- **Switching is a rail of faces, not a menu.** He will do it twenty times a
+  day, and the question he most needs answered — *who am I right now* — should
+  be answerable by glancing. The ring is the answer. It goes orange when the
+  answer is not him.
+- **The orange bar is the whole safety story.** The one risk this feature
+  carries is writing as the wrong person. So it is a state you can see across a
+  room and have to leave on purpose, never a dropdown you forget you are in.
+- **A cap, and it is on the room, not on him.** Five of his nine show in
+  Browse; his own page shows all nine. An agent with forty people could
+  otherwise be most of what anybody sees, and Browse is shared. Somebody who
+  has found Andy has chosen to look.
+- **One inbox, not nine.** Cards merge across everybody he runs, because he is
+  the party in every one of them. Tapping one opens the conversation already
+  switched to the right person, so a reply is never sent as the wrong one.
+- **"Represented by Andy" is on the performer's card**, before anybody presses
+  Follow — not a surprise discovered after a match. His WeChat is the one that
+  crosses; that is the arrangement, said out loud.
+
+What it needs that does not exist: everything. `board/server.js` assumes one
+browser is one person — `.by === me` appears seventy-six times — so running
+several rows from one login is the first real change to that assumption since
+the board was written. The shapes considered and why this one won are in
+`docs/todo.md`.
