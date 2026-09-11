@@ -526,17 +526,26 @@ export const STRINGS = {
      let in by somebody already in, and the line above it was measuring this
      place against the two largest open sign-up products on earth. A club does
      not compare itself to LinkedIn.
-     So: the club first, the mechanic second, and neither borrowed. "That
-     matches" keeps the whole of what Tinder was doing there — two people, one
-     line each, and nothing said to either until both of them press — without
-     handing a reader an app to picture instead of this one.
+     So: the mechanic, and neither name borrowed. "Matched" keeps the whole of
+     what Tinder was doing there — two people, one line each, and nothing said
+     to either until both of them press — without handing a reader an app to
+     picture instead of this one. "Not listed" is what is left of LinkedIn: a
+     directory is a page of people who are all findable by anybody, and this is
+     the opposite arrangement.
+     It said "A private club that matches" for ten minutes, which was a third
+     go at being exclusive on a line that did not need to be. The two lines
+     under it already say invite only and then print how few are in — the
+     exclusivity is stated twice and counted once before a reader reaches the
+     button. A third claim reads as a velvet rope, and a velvet rope directly
+     above "Get on the waiting list" is telling somebody they cannot come in
+     and asking them to queue in the same breath. The eyebrow says what
+     happens to you; the page says who gets in.
      互相看对眼才算 is how it would be said out loud rather than a rendering of
      "matches": it only counts if you both like what you see. 配对 would have
-     been the dictionary word and reads like software.
-     The Chinese is not that translated: neither name means anything in a
-     mainland ear. 找人、找钱、找项目 — find the person, find the money, find
-     the project — is the same promise in the words that are used. */
-  "land.eyebrow":      ["A private club that matches", "私人圈子 · 互相看对眼才算"],
+     been the dictionary word and reads like software. 不是名录 — not a
+     directory — is the same half of the line as "not listed", and 名录 is the
+     word for exactly the kind of book this is not. */
+  "land.eyebrow":      ["Matched, not listed", "不是名录 · 互相看对眼才算"],
   /* THE HEADLINE IS THE BLANK, and the blank is the product.
      It was a line out of a deck ("the room you keep asking people for"), which
      needed the slide before it to make sense, and then a plain description,
