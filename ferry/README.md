@@ -34,11 +34,37 @@ people have. What it protects against: whoever runs this box, a stolen disk, a
 subpoena served on the server, and every messenger that reads what passes
 through it. What it does not: somebody holding the link, or an unlocked phone.
 
+## The invite: a link and a code
+
+The key used to be in the link, which made the link the room — forward it by
+accident and you have given everything away. The board's invites do not work
+that way and this one does not either.
+
+The key is derived from **both halves**: a 256-bit secret that rides in the
+fragment, and six characters that do not ride anywhere. Neither opens a room
+alone. PBKDF2 at 250,000 rounds ties them together, which costs a phone a
+moment once per device and makes guessing the code against a stolen link
+expensive rather than instant. The alphabet has no O, no zero, no I and no one
+in it — the four that get read back wrong out of a chat window; the same
+alphabet the board's invites use, for the same reason.
+
+Pressing **Link** prints the message ready to paste, in the shape the board's
+invites go out in: a block between two rules, the link and the code on their
+own lines, both languages, and the sentence about WeChat's browser that stops
+somebody becoming two people. There is a **Just the code** button for sending
+the halves by two different routes, which is the point of having two.
+
+Whoever opens the link is asked for the code. A wrong one is told apart from a
+broken link by trying it against a line the room already holds: if nothing
+opens, the code is wrong, and saying so is the difference between somebody
+re-reading a chat message and somebody giving up.
+
 ## Losing the link
 
-The link is needed once per device. After a room is opened, the key is kept in
-that browser and Ferry lists the room by name — day to day nobody goes hunting
-for a link. The link stays the backup, and the other person has a copy of it.
+The link and the code are each needed **once per device**. After a room is
+opened the derived key is kept in that browser and Ferry lists the room by
+name — day to day nobody goes hunting for either. The message stays the backup,
+and the other person has a copy of it.
 
 Still to build: **email me this room**, so a third copy lives in an inbox. The
 board's mailer is `board/lib/mail.js` and is the obvious thing to point at.

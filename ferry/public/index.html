@@ -146,8 +146,19 @@
   .link code{flex:1;min-width:0;font-family:ui-monospace,Menlo,monospace;font-size:.8rem;
     background:var(--raise);border:1px solid var(--hair);border-radius:.6rem;
     padding:.6rem .7rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .link button{border:1px solid var(--line);background:var(--raise);color:var(--accent);
-    border-radius:99px;padding:.55rem .9rem;font-size:.85rem;font-weight:600}
+  .link button{flex:1;border:1px solid var(--line);background:var(--raise);
+    color:var(--accent);border-radius:99px;padding:.55rem .9rem;font-size:.85rem;
+    font-weight:600}
+  /* The message as it will be pasted, in the shape it will be read in. A
+     preview rather than a summary: what somebody sends at one in the morning
+     is whatever is in front of them. */
+  .invite{margin:0 0 .9rem;padding:.8rem .9rem;background:var(--raise);
+    border:1px solid var(--hair);border-radius:.8rem;font-family:inherit;
+    font-size:.86rem;line-height:1.55;color:var(--ink-2);white-space:pre-wrap;
+    max-height:13rem;overflow-y:auto}
+  #code{text-transform:uppercase;letter-spacing:.2em;font-size:1.3rem;
+    text-align:center;font-family:ui-monospace,Menlo,monospace}
+  .no{margin:-.3rem 0 .8rem;font-size:.85rem;color:#C4553F}
 </style>
 </head>
 <body>
@@ -221,16 +232,30 @@
   <button class="go" id="enter">Go in</button>
 </div></div>
 
-<!-- THE LINK, which is also the key. -->
+<!-- THE INVITE. A link and a code, the way the board's invites go out: the
+     link on its own opens nothing, so one forwarded by accident is not a way
+     into somebody's conversation. -->
 <div class="sheet" id="linksheet" hidden><div>
-  <h2>The link is the room</h2>
-  <p>Send this to one person. It carries the key, so anybody who has it can
-    read everything — and without it, nobody can, including this server.</p>
+  <h2>Send them both lines</h2>
+  <p>The link opens nothing on its own. The code is the other half of the key
+    and never travels with it — send them together and they are in; send only
+    the link and nobody is, including this server.</p>
+  <pre class="invite" id="invitetext"></pre>
   <div class="link">
-    <code id="linktext"></code>
-    <button id="copy">Copy</button>
+    <button id="copy">Copy the message</button>
+    <button id="copycode">Just the code</button>
   </div>
   <button class="go" id="linkshut">Done</button>
+</div></div>
+
+<!-- THE CODE, asked of whoever opens the link. -->
+<div class="sheet" id="codesheet" hidden><div>
+  <h2>What is the code?</h2>
+  <p id="codewho">Six characters, sent to you beside this link.</p>
+  <input id="code" maxlength="7" autocapitalize="characters" autocomplete="off"
+         spellcheck="false" placeholder="ABC234">
+  <p class="no" id="codesaid" hidden></p>
+  <button class="go" id="codego">Open the room</button>
 </div></div>
 
 <script type="module">
@@ -250,15 +275,57 @@ const b64 = {
   from: (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0)),
 };
 
-async function newKey() {
-  const k = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 },
-    true, ["encrypt", "decrypt"]);
-  const raw = await crypto.subtle.exportKey("raw", k);
-  return { key: k, text: b64.to(raw).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") };
+/* TWO HALVES, AND THEY TRAVEL SEPARATELY.
+ *
+ * The key was in the link, which meant the link was the room: forward it by
+ * accident, or let somebody glance at your phone while it is open in a chat,
+ * and they have everything. The board's invites do not work that way and Tom
+ * did not want this one to either — there, a link opens nothing and six
+ * characters sent beside it are what let you in.
+ *
+ * So the key is derived from both: a long random secret that rides in the
+ * fragment, and a short code that does not ride anywhere. Neither half opens
+ * a room. The code is short enough to read out on the phone and is not
+ * carrying the security on its own — the secret is 256 bits and the code's job
+ * is only to be a thing that travelled by a different route.
+ *
+ * PBKDF2 rather than a plain hash, at 250k rounds: it costs a phone a moment
+ * once per device, and it is what makes guessing the code against a stolen
+ * link expensive rather than instant.
+ *
+ * The alphabet has no O, no zero, no I and no one in it — the four that get
+ * read back wrong when somebody is typing from a chat window. Same alphabet
+ * as the board's invites, for the same reason.
+ */
+const CODE_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const newCode = () => [...crypto.getRandomValues(new Uint8Array(6))]
+  .map((b) => CODE_LETTERS[b % CODE_LETTERS.length]).join("");
+
+const b64url = (buf) => b64.to(buf).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+function newSecret() {
+  return b64url(crypto.getRandomValues(new Uint8Array(32)));
 }
-async function keyFrom(text) {
-  const s = text.replace(/-/g, "+").replace(/_/g, "/");
-  return crypto.subtle.importKey("raw", b64.from(s), { name: "AES-GCM" },
+
+/** The room key, from the half in the link and the half that was typed. */
+async function keyFrom(secret, code) {
+  const salt = new TextEncoder().encode(secret.replace(/-/g, "+").replace(/_/g, "/"));
+  const base = await crypto.subtle.importKey("raw",
+    new TextEncoder().encode(String(code || "").trim().toUpperCase()),
+    "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt, iterations: 250000, hash: "SHA-256" },
+    base, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+}
+
+/** Kept per device once it is derived, so the link and the code are each
+ *  needed exactly once and never again on this phone. */
+async function keyText(key) {
+  return b64url(await crypto.subtle.exportKey("raw", key));
+}
+async function keyFromText(text) {
+  const t = text.replace(/-/g, "+").replace(/_/g, "/");
+  return crypto.subtle.importKey("raw", b64.from(t), { name: "AES-GCM" },
     false, ["encrypt", "decrypt"]);
 }
 async function seal(key, obj) {
@@ -295,7 +362,9 @@ const ROOM = (location.pathname.match(/^\/r\/([a-z0-9]{10})$/) || [])[1] || "";
    message from three weeks ago. The link stays the backup, and the other
    person has a copy of it. */
 const saved = mem.get("rooms", {});
-const KEYTEXT = location.hash.slice(1) || (saved[ROOM] && saved[ROOM].key) || "";
+/* The half that rides in the link. The other half is typed once, and after
+   that this device keeps the derived key and needs neither again. */
+const SECRET = location.hash.slice(1);
 
 let KEY = null, ME = null, LANG = "en", SIDE = "a", LAST = "", CAN_TRANSLATE = false;
 const seen = new Set();
@@ -321,10 +390,54 @@ $("make").addEventListener("click", async () => {
   $("make").disabled = true;
   try {
     const r = await fetch("/api/room", { method: "POST" }).then((x) => x.json());
-    const k = await newKey();
-    location.href = "/r/" + r.room + "#" + k.text;
+    const secret = newSecret();
+    const code = newCode();
+    /* Derived here and kept, so the person who made the room never types their
+       own code — they are already in. It is for the other chair. */
+    const key = await keyFrom(secret, code);
+    const rooms = mem.get("rooms", {});
+    rooms[r.room] = { key: await keyText(key), name: "", lang: "en", side: "a",
+                      at: new Date().toISOString(), secret, code };
+    mem.set("rooms", rooms);
+    location.href = "/r/" + r.room + "#" + secret;
   } catch { $("make").disabled = false; }
 });
+
+/* THE MESSAGE, IN THE SHAPE THE BOARD'S INVITES GO OUT IN — because that is
+ * the one Tom sends and the one people here have already been taught to read:
+ * a block between two rules, the link and the code on their own lines, and the
+ * sentence about WeChat's browser that saves somebody from becoming two
+ * people. Both languages, and neither is the other translated. */
+function inviteText() {
+  const r = (mem.get("rooms", {}) || {})[ROOM] || {};
+  const link = location.origin + "/r/" + ROOM + "#" + (r.secret || "");
+  const line = "─".repeat(40);
+  return [
+    line,
+    "This is a private room for the two of us. It is encrypted,",
+    "and the code below is half the key — the link alone opens",
+    "nothing.",
+    "",
+    link,
+    r.code || "",
+    "",
+    "Open it in Safari or Chrome rather than inside WeChat —",
+    "WeChat keeps its own storage and you would end up with",
+    "two of you.",
+    "",
+    "-".repeat(30),
+    "",
+    "这是我们两个人的私密房间，内容是加密的，",
+    "下面这个口令是钥匙的一半——光有链接打不开。",
+    "",
+    link,
+    r.code || "",
+    "",
+    "请用 Safari 或 Chrome 打开，别在微信里打开——微信的",
+    "浏览器自己存一份，会变成两个你。",
+    line,
+  ].join("\n");
+}
 
 /* ---- going in ------------------------------------------------------------ */
 for (const b of $("pick").querySelectorAll("button")) {
@@ -343,7 +456,7 @@ $("enter").addEventListener("click", () => {
      been decrypted, which is why it is a letter and not a name — it is the one
      thing about a person this server holds. */
   const side = (saved[ROOM] && saved[ROOM].side) || SIDE;
-  saved[ROOM] = { key: KEYTEXT, name, lang, side, at: new Date().toISOString() };
+  saved[ROOM] = { ...(saved[ROOM] || {}), name, lang, side, at: new Date().toISOString() };
   mem.set("rooms", saved);
   ME = name; LANG = lang; SIDE = side;
   $("join").hidden = true;
@@ -569,22 +682,29 @@ $("buzzyes").addEventListener("click", async () => {
 
 /* ---- the link ------------------------------------------------------------ */
 $("linkbtn").addEventListener("click", () => {
-  $("linktext").textContent = location.origin + "/r/" + ROOM + "#" + KEYTEXT;
+  $("invitetext").textContent = inviteText();
   $("linksheet").hidden = false;
 });
 $("linkshut").addEventListener("click", () => { $("linksheet").hidden = true; });
+$("copycode").addEventListener("click", async () => {
+  const r = (mem.get("rooms", {}) || {})[ROOM] || {};
+  try { await navigator.clipboard.writeText(r.code || ""); $("copycode").textContent = "Copied"; }
+  catch { $("copycode").textContent = r.code || ""; }
+  setTimeout(() => { $("copycode").textContent = "Just the code"; }, 2400);
+});
+
 $("copy").addEventListener("click", async () => {
-  const t = $("linktext").textContent;
+  const t = $("invitetext").textContent;
   try { await navigator.clipboard.writeText(t); $("copy").textContent = "Copied"; }
   catch {
     /* WeChat's browser and old Safari have no clipboard API. Selecting it is
        not as good and it is not nothing. */
     const r = document.createRange();
-    r.selectNodeContents($("linktext"));
+    r.selectNodeContents($("invitetext"));
     getSelection().removeAllRanges(); getSelection().addRange(r);
-    $("copy").textContent = "Copy it";
+    $("copy").textContent = "Select and copy";
   }
-  setTimeout(() => { $("copy").textContent = "Copy"; }, 1600);
+  setTimeout(() => { $("copy").textContent = "Copy the message"; }, 2000);
 });
 
 $("langbtn").addEventListener("click", () => {
@@ -620,28 +740,64 @@ async function begin() {
   }
 }
 
-if (!ROOM || !KEYTEXT) {
+/* THE CODE, ASKED ONCE. A wrong one is told apart from a broken link by trying
+ * it against a line the room already has: if nothing opens, the code is wrong,
+ * and saying "that code does not open this room" is the difference between
+ * somebody re-reading a chat message and somebody giving up. An empty room has
+ * nothing to test against, so the first person in is taken at their word — and
+ * finds out soon enough, because the other side's lines will not open. */
+async function askCode() {
+  $("codesheet").hidden = false;
+  $("code").focus();
+}
+$("code").addEventListener("keydown", (e) => { if (e.key === "Enter") $("codego").click(); });
+$("codego").addEventListener("click", async () => {
+  const typed = $("code").value.trim().toUpperCase();
+  if (typed.length < 4) return $("code").focus();
+  $("codego").disabled = true;
+  $("codesaid").hidden = true;
+  try {
+    const key = await keyFrom(SECRET, typed);
+    let ok = true;
+    try {
+      const d = await fetch("/api/since?room=" + ROOM, { cache: "no-store" }).then((r) => r.json());
+      const first = d && d.lines && d.lines[0];
+      if (first) ok = Boolean(await open(key, first.box));
+      SIDE = first ? (first.side === "a" ? "b" : "a") : "a";
+    } catch { /* offline: take the code and let the lines decide */ }
+    if (!ok) {
+      $("codesaid").textContent = "That code does not open this room. Check the message it came in.";
+      $("codesaid").hidden = false;
+      $("codego").disabled = false;
+      return;
+    }
+    KEY = key;
+    saved[ROOM] = { ...(saved[ROOM] || {}), key: await keyText(key), secret: SECRET,
+                    side: SIDE, at: new Date().toISOString() };
+    mem.set("rooms", saved);
+    $("codesheet").hidden = true;
+    // Straight on to who they are, which is the question they expected first.
+    $("join").hidden = false;
+    $("name").focus();
+  } finally { $("codego").disabled = false; }
+});
+
+const mine = saved[ROOM];
+if (!ROOM || (!SECRET && !(mine && mine.key))) {
   drawStart();
-} else {
-  KEY = await keyFrom(KEYTEXT);
-  const mine = saved[ROOM];
-  if (mine && mine.name) {
+} else if (mine && mine.key) {
+  KEY = await keyFromText(mine.key);
+  if (mine.name) {
     ME = mine.name; LANG = mine.lang || "en"; SIDE = mine.side || "a";
     begin();
   } else {
-    /* Asked before the sheet opens, so the chair is already decided when they
-       press Go in. A room that cannot be reached is treated as empty: the
-       worst case is two people on the same side, which looks wrong and loses
-       nothing. */
-    try {
-      const d = await fetch("/api/since?room=" + ROOM, { cache: "no-store" })
-        .then((r) => r.json());
-      const first = d && d.lines && d.lines[0];
-      SIDE = first ? (first.side === "a" ? "b" : "a") : "a";
-    } catch { SIDE = "a"; }
+    SIDE = (saved[ROOM] && saved[ROOM].side) || "a";
     $("join").hidden = false;
     $("name").focus();
   }
+} else {
+  // A link, and no key on this device yet. The code is the missing half.
+  askCode();
 }
 </script>
 </body>
