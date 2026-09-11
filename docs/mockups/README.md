@@ -47,3 +47,34 @@ What it needs that does not exist:
   beside `series.json`, in the project that owns the relationship.
 - The Sharing / Slowing / Stalled states are a guess. Real thresholds need real
   reshare data, which is the same blocker as above.
+
+## chat.html
+
+The conversation, as a conversation.
+
+Messages today is a list of rows: every line of a thread is its own card with
+its own buttons, newest first, so a thread reads backwards and a reply sits
+above the thing it answers. That was the right shape while a message was an
+introduction — one thing said, once. It is the wrong shape the moment two
+people can keep talking, which is what the pricing note in `docs/todo.md`
+proposes selling.
+
+Three phones, side by side, because the argument is about what happens between
+the states rather than about any one of them:
+
+- **Open** — they matched, both can talk. One thread, oldest at the top, the
+  name once in the bar and never again. Under it, in one line, why these two
+  came up for each other.
+- **Free** — one thing each, then the thread rests. The wall is a sentence
+  rather than a locked door, and it says what happened, what is still possible,
+  and what the other thing costs, in that order.
+- **After Connect** — the WeChat id has been sent, by a person, on purpose.
+
+Two decisions worth keeping whatever gets built:
+
+- **Connect is never in the composer.** Sending somebody your WeChat is a
+  different kind of act from sending them a sentence, and a button beside the
+  send key gets pressed by accident once and cannot be unpressed.
+- **The board speaks in its own voice** — centred, small, no bubble — and only
+  for the two facts a person cannot work out from the messages themselves: that
+  they matched, and that nobody has anybody's contact yet.

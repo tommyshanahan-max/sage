@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Exchange — the conversation, mocked up</title>
+
+<!-- WHAT THIS ARGUES.
+     Messages today is a list of rows: every line of a thread is its own card
+     with its own buttons, newest first, so a conversation reads backwards and
+     a reply sits above the thing it replies to. That shape was right when a
+     message was an introduction — one thing said, once — and it is wrong the
+     moment two people can keep talking.
+
+     This is the shape it should take instead: one thread, one screen, oldest
+     at the top, the person you are talking to named once at the top and never
+     again. Everybody has used this screen before, which is the whole point —
+     nothing here needs to be learnt.
+
+     Three states, because the argument is about what happens between them:
+       #open     they matched, one has written, both can still speak
+       #intro    the free tier — one thing each, then the thread rests
+       #card     the WeChat id has been sent, on purpose, by a person
+
+     Self-contained, no build, no external request. Fake people. -->
+
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD;
+    --ink:#151B28; --ink-2:#4E5968; --muted:#7A8699;
+    --line:#DFE4EC; --hair:#E7EBF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --mine:#3F68D8; --mineink:#FFFFFF;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+           "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#0B0E15; --raise:#141924; --card:#1B212D;
+      --ink:#E9EDF5; --ink-2:#A3B0C4; --muted:#7D8AA0;
+      --line:#232B3A; --hair:#1C2330;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --mine:#5C8DFF; --mineink:#0B0E15;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#5A6070;font-family:var(--sans);color:var(--ink);
+    -webkit-font-smoothing:antialiased;padding:2rem 1rem;
+    display:flex;gap:2rem;flex-wrap:wrap;justify-content:center}
+
+  /* A phone, so the thing is judged at the size it will be used. */
+  .phone{width:390px;height:800px;background:var(--paper);border-radius:2.2rem;
+    overflow:hidden;display:flex;flex-direction:column;position:relative;
+    box-shadow:0 24px 60px rgba(0,0,0,.35)}
+  .label{color:#EEF0F4;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
+    margin:0 0 .6rem;font-weight:600}
+  figure{margin:0}
+  figcaption{color:#C8CEDA;font-size:.82rem;line-height:1.5;max-width:390px;
+    margin:.7rem 0 0}
+
+  /* ---- the top of the thread -------------------------------------------
+     THE PERSON, ONCE. The list said "Wei wrote to you" on every single row,
+     which is a label a screen needs when rows from four people are stacked
+     together and noise the moment the screen holds one conversation. Here the
+     name is at the top with the thing they are looking for beside it — which
+     is the only fact that matters while you decide what to type. */
+  .bar{flex:0 0 auto;display:flex;align-items:center;gap:.7rem;
+    padding:.85rem .9rem;background:var(--card);border-bottom:1px solid var(--hair)}
+  .back{border:0;background:none;color:var(--ink-2);font-size:1.5rem;line-height:1;
+    padding:0 .2rem;cursor:pointer}
+  .who{min-width:0;flex:1}
+  .who b{display:block;font-family:var(--serif);font-weight:400;font-size:1.06rem;
+    line-height:1.2}
+  .who small{display:block;font-size:.76rem;color:var(--muted);margin-top:.1rem;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .face{width:2.3rem;height:2.3rem;border-radius:50%;flex:0 0 auto;display:grid;
+    place-items:center;color:#fff;font-family:var(--serif);font-size:1.05rem}
+  /* The colour comes from the name, the same way it does in Messages today. */
+  .face.wei{background:linear-gradient(150deg,hsl(96 26% 74%),hsl(120 24% 52%))}
+  .face.ele{background:linear-gradient(150deg,hsl(320 26% 74%),hsl(344 24% 52%))}
+
+  /* WHY THEY CAME UP FOR EACH OTHER, said once, under the name. The board's
+     whole mechanic is two halves of a sentence, and this is the only screen
+     where both halves are true at the same time — so it says so, quietly,
+     rather than leaving somebody to remember. */
+  .pair{flex:0 0 auto;display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;
+    padding:.6rem .95rem;background:var(--accent-soft);font-size:.82rem;
+    color:var(--ink-2);border-bottom:1px solid var(--hair)}
+  .pair i{font-style:normal;font-weight:650;color:var(--accent)}
+
+  /* ---- the conversation ------------------------------------------------- */
+  .talk{flex:1;overflow-y:auto;padding:1rem .9rem 1.2rem;
+    display:flex;flex-direction:column;gap:.55rem}
+  .day{align-self:center;font-size:.72rem;color:var(--muted);margin:.2rem 0 .4rem;
+    letter-spacing:.06em}
+  .msg{max-width:78%;padding:.62rem .85rem;border-radius:1.1rem;font-size:.95rem;
+    line-height:1.5;white-space:pre-wrap}
+  .msg.them{align-self:flex-start;background:var(--card);color:var(--ink);
+    border:1px solid var(--hair);border-bottom-left-radius:.35rem}
+  .msg.me{align-self:flex-end;background:var(--mine);color:var(--mineink);
+    border-bottom-right-radius:.35rem}
+  .when{font-size:.68rem;color:var(--muted);margin:-.3rem .3rem .3rem}
+  .when.me{align-self:flex-end}
+  .when.them{align-self:flex-start}
+
+  /* THE BOARD SPEAKING, and it looks like neither of them. Centred, small, no
+     bubble — a line of stage direction. It is used for the two facts a person
+     cannot work out from the messages themselves: that they matched, and that
+     nobody has anybody's contact yet. */
+  .said{align-self:center;text-align:center;max-width:88%;font-size:.8rem;
+    line-height:1.55;color:var(--muted);margin:.5rem 0}
+  .said b{color:var(--ink-2);font-weight:600}
+
+  /* ---- the card, when it is sent ---------------------------------------- */
+  .cardsent{align-self:stretch;margin:.5rem 0;padding:.85rem .9rem;
+    background:var(--card);border:1px solid var(--line);border-radius:1rem}
+  .cardsent p{margin:0 0 .55rem;font-size:.82rem;color:var(--muted)}
+  .id{display:flex;align-items:center;gap:.5rem}
+  .id code{flex:1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:1rem;background:var(--raise);border:1px solid var(--hair);
+    border-radius:.6rem;padding:.5rem .7rem}
+  .id button{border:1px solid var(--line);background:var(--raise);color:var(--accent);
+    border-radius:99px;padding:.5rem .9rem;font:inherit;font-size:.85rem;cursor:pointer}
+
+  /* ---- the bottom ------------------------------------------------------- */
+  .foot{flex:0 0 auto;padding:.65rem .9rem .9rem;background:var(--card);
+    border-top:1px solid var(--hair)}
+  .write{display:flex;gap:.5rem;align-items:flex-end}
+  .write textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:.95rem;
+    padding:.6rem .85rem;border:1px solid var(--line);border-radius:1.1rem;
+    background:var(--raise);color:var(--ink);height:2.6rem;line-height:1.4}
+  .send{border:0;border-radius:50%;width:2.6rem;height:2.6rem;flex:0 0 auto;
+    background:var(--accent);color:var(--accent-ink);font-size:1.1rem;cursor:pointer}
+  .send[disabled]{opacity:.4}
+
+  /* CONNECT IS NOT IN THE COMPOSER. Sending somebody your WeChat is a
+     different kind of act from sending them a sentence, and a button beside
+     the send key is a button somebody presses by accident once and cannot
+     unpress. It sits above the composer, in its own strip, with what it does
+     written next to it. */
+  .connect{display:flex;align-items:center;gap:.6rem;margin:0 0 .6rem;
+    padding:.55rem .7rem;background:var(--accent-soft);border-radius:.9rem}
+  .connect span{flex:1;font-size:.78rem;line-height:1.4;color:var(--ink-2)}
+  .connect button{border:0;border-radius:99px;background:var(--accent);
+    color:var(--accent-ink);padding:.5rem 1rem;font:inherit;font-size:.88rem;
+    font-weight:600;cursor:pointer;white-space:nowrap}
+
+  /* THE FREE TIER'S WALL, and it is a sentence rather than a locked door.
+     It says what happened, what is still possible, and what the other thing
+     costs — in that order, because a person who has just been stopped wants
+     to know whether they have lost anything first. */
+  .rest{padding:.7rem .8rem;background:var(--raise);border:1px solid var(--hair);
+    border-radius:.9rem;font-size:.82rem;line-height:1.55;color:var(--ink-2)}
+  .rest b{color:var(--ink)}
+  .rest a{color:var(--accent);text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- ====================================================================== -->
+<figure>
+  <p class="label">Open — both can talk</p>
+  <div class="phone">
+    <div class="bar">
+      <button class="back" aria-label="Back">‹</button>
+      <span class="face wei">w</span>
+      <span class="who">
+        <b>Wei</b>
+        <small>Founder · Shenzhen · raising a seed</small>
+      </span>
+    </div>
+    <div class="pair">
+      You want <i>a Founder</i> · they want <i>an Investor</i>
+    </div>
+
+    <div class="talk">
+      <p class="said">You and Wei both pressed Follow.<br>This is where it starts.</p>
+      <p class="day">Thursday</p>
+
+      <div class="msg me">Your line is the other half of mine. What are the eleven factories paying you?</div>
+      <p class="when me">09:12</p>
+
+      <div class="msg them">Eleven factories paying, no salespeople. Raising a seed — worth twenty minutes on Thursday?</div>
+      <p class="when them">09:41</p>
+
+      <div class="msg me">Send me the last three months of revenue and I will take the call.</div>
+      <p class="when me">09:44</p>
+
+      <div class="msg them">On its way. Morning or afternoon for you?</div>
+      <p class="when them">09:51</p>
+    </div>
+
+    <div class="foot">
+      <div class="connect">
+        <span>Wei does not have your WeChat. Nobody here does.</span>
+        <button>Connect</button>
+      </div>
+      <div class="write">
+        <textarea placeholder="Write to Wei"></textarea>
+        <button class="send" aria-label="Send">↑</button>
+      </div>
+    </div>
+  </div>
+  <figcaption>One thread, oldest first, the name once at the top. The line
+  under it is why these two came up for each other — the only fact that
+  matters while you decide what to type.</figcaption>
+</figure>
+
+<!-- ====================================================================== -->
+<figure>
+  <p class="label">Free — one each, then it rests</p>
+  <div class="phone">
+    <div class="bar">
+      <button class="back" aria-label="Back">‹</button>
+      <span class="face ele">e</span>
+      <span class="who">
+        <b>Elena</b>
+        <small>Investor · Shanghai · writes first cheques</small>
+      </span>
+    </div>
+    <div class="pair">
+      You want <i>an Investor</i> · they want <i>a Founder</i>
+    </div>
+
+    <div class="talk">
+      <p class="said">You and Elena both pressed Follow.<br>This is where it starts.</p>
+      <p class="day">Yesterday</p>
+
+      <div class="msg me">Second company. Hardware for small factories — eleven paying, growing without ads. Raising a seed.</div>
+      <p class="when me">21:04</p>
+
+      <div class="msg them">Interesting. Send me the numbers and I will look properly this week.</div>
+      <p class="when them">22:18</p>
+
+      <p class="said">You have each said one thing. That is what an introduction is.</p>
+    </div>
+
+    <div class="foot">
+      <p class="rest">The thread rests here. <b>Nothing is lost</b> — Elena has
+        what you said and can come back to it any time.<br>
+        Members keep talking. <a href="#">What that costs →</a></p>
+    </div>
+  </div>
+  <figcaption>The wall is a sentence, not a locked door: what happened, what is
+  still possible, then what the other thing costs. A person who has just been
+  stopped wants to know whether they lost anything first.</figcaption>
+</figure>
+
+<!-- ====================================================================== -->
+<figure>
+  <p class="label">After Connect</p>
+  <div class="phone">
+    <div class="bar">
+      <button class="back" aria-label="Back">‹</button>
+      <span class="face wei">w</span>
+      <span class="who">
+        <b>Wei</b>
+        <small>Founder · Shenzhen · raising a seed</small>
+      </span>
+    </div>
+    <div class="pair">
+      You want <i>a Founder</i> · they want <i>an Investor</i>
+    </div>
+
+    <div class="talk">
+      <p class="day">Thursday</p>
+
+      <div class="msg them">Eleven factories paying, no salespeople. Raising a seed — worth twenty minutes on Thursday?</div>
+      <p class="when them">09:41</p>
+
+      <div class="msg me">Send me the last three months of revenue and I will take the call.</div>
+      <p class="when me">09:44</p>
+
+      <p class="said"><b>You sent Wei your WeChat.</b><br>You can take it back until they open it.</p>
+
+      <div class="cardsent">
+        <p>Wei sent you theirs</p>
+        <div class="id">
+          <code>wei_sz</code>
+          <button>Copy</button>
+        </div>
+      </div>
+
+      <p class="said">In WeChat: search, paste the id, Add.</p>
+    </div>
+
+    <div class="foot">
+      <div class="write">
+        <textarea placeholder="Write to Wei"></textarea>
+        <button class="send" aria-label="Send">↑</button>
+      </div>
+    </div>
+  </div>
+  <figcaption>Connect is never in the composer. Sending somebody your WeChat is
+  a different kind of act from sending a sentence, and a button beside the send
+  key gets pressed by accident once and cannot be unpressed.</figcaption>
+</figure>
+
+</body>
+</html>
