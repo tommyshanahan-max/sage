@@ -509,7 +509,28 @@ export const STRINGS = {
      the reader is outside China looking in, and half the people this is for
      are inside it looking out. So it names the person rather than the side:
      in China, the one you are short of. */
-  "land.head":         ["Your business partner in China", "在中国，你缺的那个人"],
+  /* THE POSITIONING, IN THE SHAPE PEOPLE ALREADY UNDERSTAND.
+     "Your business partner in China" says who you get and nothing about what
+     the thing is, so a stranger's guesses are directory, agency or scam. Three
+     names they already know does the job in four words — and the head under it
+     stays the human line, because a page that is only a comparison is a page
+     about three other companies.
+     The Chinese is not that translated: Shark Tank is 《鲨鱼坦克》 to almost
+     nobody there. 找人、找钱、找项目 — find the person, find the money, find
+     the project — is the same promise in the words that are used. */
+  "land.eyebrow":      ["Shark Tank × LinkedIn × Tinder", "找人 · 找钱 · 找项目"],
+  "land.head":         ["The room you keep asking people for", "你一直在找的那个圈子"],
+  /* The frames. Said as what the screen IS, not as a caption about it. */
+  "land.frames":       ["What it looks like", "长这个样子"],
+  "land.frameBrowse": [
+    "Everybody says one line. You are shown the people whose line answers yours.",
+    "每个人都写一句话。你看到的，是那句话正好对上你的人。"],
+  "land.frameCards": [
+    "Nobody gets your WeChat because you matched. You send it, to one person, on purpose.",
+    "匹配上了不等于拿到你的微信。得你自己发，发给某一个人，是你决定的。"],
+  "land.frameDoor": [
+    "Invite only. One code, one person, and it stops working on its own.",
+    "只能被邀请进来。一个口令进一个人，到时间它自己就失效。"],
   /* WHAT IT DOES, ON THE FRONT PAGE, SHOWN RATHER THAN DESCRIBED.
      The headline names who you get and nothing said how, so a stranger off a
      forwarded link had to guess — and the guesses are directory, agency, or

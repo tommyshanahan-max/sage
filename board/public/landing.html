@@ -133,6 +133,25 @@
   .gonesaid{margin:0;padding:.9rem 1.1rem;background:var(--raise,#0E1512);
     border-bottom:1px solid var(--hair,#1E2A25);text-align:center;
     font-size:.92rem;line-height:1.55}
+  /* THE FRAMES. A row that scrolls sideways on a phone rather than three
+     pictures stacked into three screens of scrolling: they are one idea seen
+     three ways, and a row says that where a stack says "keep going". */
+  .eyeline{margin:0 0 .55rem;font-size:.76rem;font-weight:600;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--accent)}
+  :root[data-lang="zh"] .eyeline{text-transform:none;letter-spacing:.06em;font-size:.82rem}
+  .frames{padding:2.2rem 0 .6rem}
+  .shots{display:flex;gap:1rem;overflow-x:auto;padding:.2rem .1rem 1rem;
+    scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+  .shots figure{margin:0;flex:0 0 auto;width:min(62vw,230px);scroll-snap-align:center}
+  .shots img{display:block;width:100%;height:auto;border-radius:14px;
+    border:1px solid var(--line);background:var(--paper);
+    box-shadow:0 8px 28px rgba(16,25,43,.10)}
+  .shots figcaption{margin:.6rem .1rem 0;font-size:.8rem;line-height:1.45;
+    color:var(--muted)}
+  @media (min-width:52rem){
+    .shots{overflow:visible;justify-content:center}
+    .shots figure{width:252px}
+  }
 </style>
 </head>
 <body>
@@ -165,6 +184,9 @@
 <div class="hero">
   <div class="wrap">
     <div class="asking">
+      <!-- Three names a stranger already knows, above the human line. The
+           comparison does the explaining; the line under it does the work. -->
+      <p class="eyeline" id="eyeline"></p>
       <q id="asking"></q>
     </div>
     <div class="does">
@@ -175,6 +197,33 @@
     </div>
   </div>
 </div>
+
+<!-- WHAT IT LOOKS LIKE, BEFORE ANYBODY IS ASKED TO JOIN IT.
+     Three frames out of the running app — not drawings of it, and not slides
+     from a deck: the decks are written to one named person and carry that
+     person's offer, which is not a thing to put on the open web.
+     Above the waiting list on purpose. A stranger off a forwarded link is
+     deciding whether this is real before they decide whether to leave a name,
+     and a screen answers that faster than a paragraph. -->
+<section class="frames">
+  <div class="wrap">
+    <div class="eyebrow"><span id="framesEyebrow"></span><i></i></div>
+    <div class="shots">
+      <figure>
+        <img src="/frame-browse.png" alt="" width="585" height="1170" loading="lazy">
+        <figcaption id="frameBrowse"></figcaption>
+      </figure>
+      <figure>
+        <img src="/frame-cards.png" alt="" width="585" height="1170" loading="lazy">
+        <figcaption id="frameCards"></figcaption>
+      </figure>
+      <figure>
+        <img src="/frame-door.png" alt="" width="585" height="1170" loading="lazy">
+        <figcaption id="frameDoor"></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
 
 <section id="waitsection">
   <div class="wrap">
@@ -292,12 +341,17 @@ function paint() {
   document.title = T("site.title") + " — " + T("land.title");
   $("brandname").textContent = T("site.title");
   $("navopen").textContent = T("land.enter");
+  $("eyeline").textContent = T("land.eyebrow");
   $("asking").textContent = T("land.head");
   $("does1").textContent = T("land.does1");
   $("does2").textContent = T("land.does2");
   $("does3").textContent = T("land.does3");
   $("does4").textContent = T("land.does4");
   $("doeswhy").textContent = T("land.doesWhy");
+  $("framesEyebrow").textContent = T("land.frames");
+  $("frameBrowse").textContent = T("land.frameBrowse");
+  $("frameCards").textContent = T("land.frameCards");
+  $("frameDoor").textContent = T("land.frameDoor");
   $("doorsEyebrow").textContent = T("land.doors");
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");
@@ -321,6 +375,9 @@ function paintRoom() {
   const name = T("waitroom." + key);
   document.title = name + " · " + T("site.title");
   $("asking").textContent = T("door." + key + ".head");
+  // A room-flavoured door says its own thing; the general comparison over it
+  // would be a second headline about somebody else's products.
+  $("eyeline").hidden = true;
   /* The same sentence, this room's pair. T returns the key itself when there
      is none, which is the test: a room without a pair keeps the general one
      rather than printing "door.other.does2" at a stranger. */
