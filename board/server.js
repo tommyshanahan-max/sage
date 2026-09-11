@@ -34,6 +34,7 @@ import * as store from "./lib/store.js";
 import { translate, configured as translateReady } from "./lib/translate.js";
 import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js";
 import { send as sendMail, configured as mailReady } from "./lib/mail.js";
+import * as intake from "./lib/intake.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -5173,6 +5174,158 @@ app.post("/api/run/add", express.json({ limit: "8kb" }), gate, async (req, res) 
   res.status(201).json({ ok: true, added: out || [] });
 });
 
+/* A FOLDER, DROPPED.
+ *
+ * The typing is the reason an agent does not do this. They have had a folder
+ * per performer for years — a headshot, a CV, a bio somebody wrote in 2019 —
+ * and retyping nine of them into a form is the competition this feature is
+ * actually against. So they drop the folder and the box does the typing.
+ *
+ * WHAT HAPPENS, IN THIS ORDER, AND THE ORDER IS THE POINT.
+ *
+ *  1  GROUPED HERE, locally, with no model involved: whose file is this. The
+ *     folder each file sits in answers it, because that is how everybody keeps
+ *     these files. A wrong answer at this step puts one performer's credits on
+ *     another performer's page, and nobody would catch that by reading the
+ *     bio — so it is decided by a rule that can be explained, not by a guess.
+ *  2  READ HERE. Text, markdown, .docx and most PDFs. A file that cannot be
+ *     read honestly is reported as unread rather than fed to anything.
+ *  3  SHAPED, and only this step leaves the box: the text of one person's own
+ *     files, for one request, written nowhere. With no key on this box the
+ *     step is skipped and the rows are still made — names and faces, which is
+ *     the boring half of the job and the half nobody does.
+ *  4  HELD. Nothing published, nothing in Browse, nothing anybody else can
+ *     see. The agent reads all of it and presses a button, or does not.
+ *
+ * The whole of step 4 is why the rest is allowed to exist. A machine that
+ * writes a bio is a machine that will occasionally write a confident sentence
+ * about somebody's career that is not true, and the person it happens to is
+ * not in the room.
+ */
+app.post("/api/run/drop", gate,
+  express.raw({ type: "multipart/form-data", limit: "64mb" }), async (req, res) => {
+  const parsed = multipart(req);
+  if (!parsed) return res.status(400).json({ error: "expected multipart/form-data" });
+  const real = store.hashDevice(String(parsed.fields.device || ""), SALT);
+  if (!real) return res.status(400).json({ error: "no" });
+  const role = String(parsed.fields.role || "");
+  if (!store.ROLES[role] || store.ROLES[role].side !== "make") {
+    return res.status(400).json({ error: "role" });
+  }
+  if (!parsed.files.length) return res.status(400).json({ error: "empty" });
+
+  const board0 = await store.load(FILE);
+  const mine = board0.people.find((q) => q.by === real);
+  if (!mine) return res.status(409).json({ error: "nopage" });
+  if (mine.runBy) return res.status(409).json({ error: "run" });
+
+  const { piles, loose } = intake.group(parsed.files);
+  if (!piles.length) return res.status(400).json({ error: "nonames", loose: loose.length });
+  const room = store.RUN_MAX - board0.people.filter((q) => q.runBy === real && q.by !== real).length;
+  if (room <= 0) return res.status(409).json({ error: "full", max: store.RUN_MAX });
+
+  /* ALREADY HERE IS NOT AN ERROR. An agent who drops the same folder again
+     after adding one performer to it should get the one new person, not a
+     refusal and not nine duplicates. Matched on the name, which is the only
+     thing both sides have. */
+  const had = new Set(board0.people
+    .filter((q) => q.runBy === real).map((q) => q.handle.trim().toLowerCase()));
+  const fresh = piles.filter((p) => !had.has(p.name.trim().toLowerCase())).slice(0, room);
+  if (!fresh.length) {
+    return res.status(200).json({ ok: true, added: [], already: piles.length,
+      loose: loose.length, drafting: intake.configured() });
+  }
+
+  const drafts = await intake.draft(fresh);
+
+  // Faces are stored before the board is touched, so a write that fails leaves
+  // no rows pointing at media and no media pointing at nothing.
+  for (const d of drafts) {
+    d.photoId = "";
+    if (!d.face) continue;
+    try {
+      if (d.face.buf.length <= 25 * 1024 * 1024) {
+        d.photoId = (await putMedia(d.face.buf, d.face.type)) || "";
+      }
+    } catch { /* a face that will not store is a face the agent adds later */ }
+  }
+
+  const out = await change((board) => {
+    const made = [];
+    for (const d of drafts) {
+      /* THE ONE RULE A PROFILE HERE HAS, applied to words a model wrote
+         exactly as it is applied to words a person typed. It is told not to
+         put contact details on a page; this is what happens when it does. */
+      if (store.contactShaped([d.goal, d.trade, d.campus, d.handle].filter(Boolean).join(" "))) {
+        d.goal = ""; d.trade = ""; d.stripped = true;
+      }
+      const q = store.cleanPerson({
+        id: store.newId(),
+        at: new Date().toISOString(),
+        // HELD, and this is the whole argument for the rest of the route.
+        state: "held",
+        by: store.hashDevice(randomUUID(), SALT),
+        runBy: real,
+        agent: mine.id,
+        handle: d.handle,
+        goal: d.goal, trade: d.trade, campus: d.campus,
+        speaks: d.speaks, age: d.age,
+        photo: d.photoId,
+        say: (mine.say.length ? mine.say : [{ me: "", want: store.ANYONE }])
+          .map((x) => ({ me: role, want: x.want })),
+        where: mine.where, wants: mine.wants,
+        // Not in Browse and not anywhere until somebody has read it.
+        looking: false,
+      });
+      board.people.push(q);
+      made.push({
+        id: q.id, handle: q.handle, goal: q.goal, trade: q.trade, campus: q.campus,
+        drafted: d.drafted, stripped: Boolean(d.stripped),
+        face: Boolean(q.photo), read: d.read,
+      });
+    }
+    return made;
+  });
+
+  res.status(201).json({
+    ok: true,
+    added: out || [],
+    already: piles.length - fresh.length,
+    // Files that belong to nobody — a bare `cv.pdf` dropped loose. Named back
+    // rather than silently ignored: a file that vanished is the one thing that
+    // would make somebody distrust the whole import.
+    loose: loose.length,
+    drafting: intake.configured(),
+  });
+});
+
+/* READ, AND LET THROUGH. The button at the end of the drop.
+ *
+ * Publishing is a separate request from importing on purpose: the two are
+ * different decisions and one of them is somebody else's reputation. Ids are
+ * named one at a time, so approving is something done to rows that were
+ * actually looked at rather than to whatever happens to be held. */
+app.post("/api/run/approve", express.json({ limit: "8kb" }), gate, async (req, res) => {
+  const real = store.hashDevice(String(req.body?.device || ""), SALT);
+  const ids = (Array.isArray(req.body?.ids) ? req.body.ids : [])
+    .map(String).filter((x) => /^[a-f0-9]{20}$/.test(x)).slice(0, store.RUN_MAX);
+  if (!real || !ids.length) return res.status(400).json({ error: "no" });
+  const out = await change((board) => {
+    const done = [];
+    for (const id of ids) {
+      const q = board.people.find((x) => x.id === id && x.runBy === real && x.state === "held");
+      if (!q || !q.handle) continue;
+      q.state = "published";
+      // Into Browse if there is room, and quietly not if there is not — see
+      // RUN_SHOW. Their page and their matches work either way.
+      if (!overShow(board, real, q.id)) q.looking = true;
+      done.push({ id: q.id, handle: q.handle, looking: q.looking });
+    }
+    return done;
+  });
+  res.json({ ok: true, live: out || [], show: store.RUN_SHOW });
+});
+
 /** In Browse, or not. The cap is the room's, not the agent's — see RUN_SHOW. */
 app.post("/api/run/show", express.json({ limit: "2kb" }), gate, async (req, res) => {
   const real = store.hashDevice(String(req.body?.device || ""), SALT);
@@ -5839,19 +5992,25 @@ app.get("/api/users", admin, async (_req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// A multipart reader, for one file and a few short fields
+// A multipart reader, for a few short fields and the files beside them
 //
 // Written rather than depended on. The parsing libraries are good and none of
-// them is small, and this handles exactly the shape the spec describes: a
-// handful of text fields and at most one file. Anything more elaborate arriving
-// here is not a request this route was built for.
+// them is small, and this handles exactly the shape the routes here describe.
+//
+// It took one file for most of its life, which was every route that existed.
+// The folder drop needs the pile — forty files across nine people — so it now
+// collects `files`, each with the name the browser sent, and `file` stays as
+// the first of them so that nothing already written had to be touched. The
+// name matters for the first time here: `Mia Chen/headshot.jpg` is how the
+// drop knows whose headshot it is, and a reader that threw the path away threw
+// away the only thing grouping the pile.
 // ---------------------------------------------------------------------------
 function multipart(req) {
   const ct = String(req.get("content-type") || "");
   const m = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(ct);
   if (!m || !Buffer.isBuffer(req.body)) return null;
   const boundary = Buffer.from("--" + (m[1] || m[2]).trim());
-  const out = { fields: {}, file: null };
+  const out = { fields: {}, file: null, files: [] };
 
   let i = req.body.indexOf(boundary);
   while (i >= 0) {
@@ -5868,7 +6027,11 @@ function multipart(req) {
       const filename = /filename="([^"]*)"/i.exec(head)?.[1];
       const type = /content-type:\s*([^\r\n;]+)/i.exec(head)?.[1]?.trim();
       if (name && filename !== undefined) {
-        if (!out.file) out.file = { buf: body, type: type || "application/octet-stream" };
+        const f = { buf: body, type: type || "application/octet-stream", name: filename };
+        if (!out.file) out.file = f;
+        // A folder drop of forty files is the size this is for; a browser
+        // posting four hundred is not a request this route was built for.
+        if (out.files.length < 200) out.files.push(f);
       } else if (name) {
         out.fields[name] = body.toString("utf8").slice(0, 4000);
       }
