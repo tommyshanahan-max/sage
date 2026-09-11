@@ -2421,8 +2421,8 @@ export const STRINGS = {
      that room, and a question about it lands where a description does not. */
   "ag.tab":            ["The Exchange — for agents", "交换 · 给经纪人"],
   "ag.head": [
-    "How many jobs got cast this month without you?",
-    "这个月，有多少活儿是没经过你就定了的？"],
+    "Only limited spots available.",
+    "名额有限。"],
   "ag.p1": [
     "You will never know. That is what I built this for.",
     "你永远不会知道。我做这个，就是为了这件事。"],
