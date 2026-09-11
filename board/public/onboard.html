@@ -49,6 +49,14 @@
     font-size:1.6rem;line-height:1.15;margin:0}
   .way p{margin:0;color:var(--ink-2);line-height:1.5;font-size:1.02rem;flex:1}
   .way a{font-size:1rem;font-weight:600;color:var(--accent);margin-top:.3rem}
+  /* Numbered because he asked for one and two, and because the numbers do
+     work here: they say "there are exactly two of these" before either has
+     been read, which is the fact somebody needs first. */
+  .num{display:grid;place-items:center;width:1.9rem;height:1.9rem;border-radius:50%;
+    background:var(--accent);color:#fff;font-weight:700;font-size:1rem;
+    font-variant-numeric:tabular-nums}
+  .skip{margin:-.6rem 0 2rem;font-size:.95rem}
+  .skip a{color:var(--muted)}
   .pic{width:100%;max-width:13rem;height:auto;margin:.2rem 0 .6rem;display:block}
   .pic .ln{fill:none;stroke-width:2.5}
   .pic .ln.hot{stroke:var(--accent)}
@@ -172,6 +180,7 @@
        reader should not be read two drawings of a rectangle. -->
   <div class="twoways">
     <div class="way">
+      <span class="num">1</span>
       <svg class="pic" viewBox="0 0 120 68" aria-hidden="true">
         <rect class="ln hot" x="38" y="6" width="44" height="56" rx="6"/>
         <circle class="fl hot" cx="60" cy="24" r="7"/>
@@ -183,6 +192,7 @@
       <a id="wayonego" href="/browse?edit=1"></a>
     </div>
     <div class="way">
+      <span class="num">2</span>
       <svg class="pic" viewBox="0 0 120 68" aria-hidden="true">
         <!-- One in front and two behind it. They are separate pages standing
              beside yours, not a list living inside it, and that is the whole
@@ -203,6 +213,15 @@
       <a id="waytwogo" href="/run"></a>
     </div>
   </div>
+
+  <!-- THE THIRD OPTION, WHICH IS NEITHER.
+       Somebody who has just come through the door at eleven at night and wants
+       to look round first should be able to, and a screen with two ways
+       forward and none out is a screen people close rather than leave. It is
+       safe to offer now and would not have been an hour ago: the link back to
+       this page sits on their profile, so skipping is putting it off rather
+       than losing it. -->
+  <p class="skip"><a href="/browse" id="skipgo"></a></p>
 
   <!-- ASKED ONCE, AND ONLY OF SOMEBODY WHO HAS NOT SAID IT.
        An agent arriving on an agent invite has a row and no name on it: the
@@ -526,12 +545,15 @@ function paint() {
   document.title = T("ob.title");
   const set = (id, key) => { $(id).textContent = T(key); };
   set("backlink", "run.title");
-  set("head", "ob.title");
+  // The tab and the links elsewhere keep the plain name; the page itself says
+  // hello, because this is the first screen an agent ever sees.
+  set("head", "ob.welcome");
   set("lede", "ob.lede");
   set("rolehead", "ob.rolehead");
   set("fieldhead", "ob.fieldhead");
   set("fieldsub", "ob.fieldsub");
   set("browse", "ob.choose");
+  set("skipgo", "ob.skip");
   set("wayonehead", "ob.wayone.head");
   set("wayone", "ob.wayone.body");
   set("wayonego", "ob.wayone.go");

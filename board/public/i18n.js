@@ -558,7 +558,10 @@ export const STRINGS = {
    * can afford a sentence. What it must not do is imply the sorting is
    * reliable — "check the names" is the instruction, and it is first. */
   "ob.title":       ["Bring your people on", "把你的人一次弄进来"],
-  "ob.lede":        ["Two things you can do here.", "这儿能做两件事。"],
+  "ob.welcome":     ["Welcome", "欢迎"],
+  "ob.skip":        ["Or skip this for now \u2014 it will be on your profile when you want it.",
+                     "也可以先放着——想弄的时候在你主页上找得到。"],
+  "ob.lede":        ["As an agent you have two options.", "作为经纪人，你有两个选择。"],
   "ob.rolehead":    ["They are", "他们是"],
   "ob.fieldhead":   ["Drag it all in here", "全拖到这儿"],
   "ob.fieldsub":    ["A folder, or a pile. Nothing is made until you say so.", "一个文件夹，或者一堆文件。你不点，什么都不建。"],
