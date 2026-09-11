@@ -121,15 +121,16 @@ up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	@# hostname from one product to another and setting the new one before
 	@# clearing the old. Caught here, where the cost is a message, rather than
 	@# on the box, where the cost is everything being down.
-	@b=$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | cut -d= -f2- | tr -d '"' ); \
-	 n=$$(grep -E '^TOMSCODING_BRAND_DOMAIN=' .env | cut -d= -f2- | tr -d '"' ); \
-	 if [ -n "$$b" ] && [ "$$b" = "$$n" ]; then \
-	   echo "TOMSCODING_BOARD_DOMAIN and TOMSCODING_BRAND_DOMAIN are both $$b."; \
-	   echo "Caddy would refuse to start and take every site here down with it."; \
-	   echo "Move the brand to its own hostname first, deploy, and give this one"; \
-	   echo "to the board after that has come up."; \
-	   exit 1; \
-	 fi
+	@#
+	@# THIS .env, NOT A PRESET. It was a hand-written comparison of the board
+	@# against the brand, which is the one collision that had already happened —
+	@# and the next move is the board onto the site's hostname, which it would
+	@# have gone straight past. check-sites.py resolves every site block the way
+	@# Caddy does and knows about empties and variables the caddy service is
+	@# never passed, which no grep here was ever going to. It was only ever run
+	@# against two synthetic presets; the file that can be wrong tonight is this
+	@# one.
+	@python3 scripts/check-sites.py .env
 	@grep -qE '^TOMSCODING_BOARD_DOMAIN=.+' .env && ! grep -q '^COMPOSE_PROFILES=.*board' .env \
 	  && { echo "TOMSCODING_BOARD_DOMAIN is set but 'board' is not in COMPOSE_PROFILES."; \
 	       echo "Caddy would answer that hostname with a 502: a certificate, a public"; \

@@ -679,6 +679,13 @@ services:
       # must not be an address another block already claims — two site blocks
       # sharing one is a startup failure that takes every site here down.
       TOMSCODING_BOARD_DOMAIN: ${TOMSCODING_BOARD_DOMAIN:-board.localhost}
+      # THE NAME THE BOARD USED TO HAVE, redirecting to the one it has now.
+      # oldboard.caddy reads this and it was never passed through here, so the
+      # block could only ever resolve to its own .localhost fallback — the old
+      # address would have answered nothing on the day it was moved, silently,
+      # which is the one thing that file exists to prevent. Found by
+      # check-sites.py the first time it was pointed at a real .env.
+      TOMSCODING_BOARD_OLD_DOMAIN: ${TOMSCODING_BOARD_OLD_DOMAIN:-oldboard.localhost}
       TOMSCODING_BOARD_WWW: ${TOMSCODING_BOARD_WWW:-www.board.localhost}
       TOMSCODING_STATS_DOMAIN: ${TOMSCODING_STATS_DOMAIN:-stats.localhost}
       # The Exchange's page on the open web — see docker/sites/exchange.caddy.

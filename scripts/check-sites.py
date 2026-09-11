@@ -13,6 +13,14 @@ Run with no arguments to check the deployment's own preset both fully
 configured and with nothing optional set:
 
     python3 scripts/check-sites.py
+
+Or hand it one env file to check that one — which is how `make check` uses it,
+against the .env this box is actually running. The two synthetic presets above
+prove the repo is shippable; they say nothing about the file somebody edited at
+midnight, and that is the file where a hostname gets moved from one product to
+another without the old one being cleared first:
+
+    python3 scripts/check-sites.py .env
 """
 
 import json
@@ -85,6 +93,17 @@ def check(label, env_file):
 
 
 def main():
+    # One file named on the command line: check that and nothing else. This is
+    # the deployment's own .env, and it is the only one that can be wrong in a
+    # way that takes the box down tonight.
+    if len(sys.argv) > 1:
+        target = pathlib.Path(sys.argv[1])
+        if not target.exists():
+            print(f"{target}: no such file")
+            return 1
+        print(f"{target}:")
+        return 0 if check(str(target), target) else 1
+
     preset = (REPO / "env.tomscoding").read_text()
     secrets = (
         "TOMSCODING_PASSWORD=x\nTOMSCODING_PASSWORD_2=x\n"
