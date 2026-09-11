@@ -278,16 +278,17 @@ invite: ## Make an invite:  make invite WHO="you" FOR="them" [HOURS=24] [N=3]
 	@# the door opens with their name on it and nothing is stored about them.
 	@# Neither name opens anything. The six characters still do that.
 	@#
-	@# HOURS is how long it lasts and the default is 72 — three days, which is
-	@# long enough to survive a weekend and short enough that a code forwarded
-	@# into a group chat next month opens nothing. HOURS=0 for one that never
-	@# stops, which is right for a code you carry around and hand out in person.
+	@# HOURS is how long it lasts and the default is 24. A day is long enough
+	@# for somebody to see the message, sleep on it and still get in, and short
+	@# enough that a code forwarded into a group chat next week opens nothing.
+	@# HOURS=72 over a weekend; HOURS=0 for one that never stops, which is right
+	@# for a code you carry around and hand out in person.
 	@#
 	@# The deadline travels in the link and the door counts it down on screen.
 	@# The code itself never travels in a link — see enter.html.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --hours "$(if $(HOURS),$(HOURS),72)" --n "$(or $(N),1)"
+	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --hours "$(if $(HOURS),$(HOURS),24)" --n "$(or $(N),1)"
 
 post-numbers: ## Say where the whole board has got to, as The Professor
 	@# Safe every morning: it works out what the totals were when it last spoke
