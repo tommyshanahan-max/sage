@@ -39,7 +39,12 @@
      It used to hold a working copy of the matcher. That belongs inside — see
      the note above the hero markup. Nothing between the question and the form
      but air. */
-  .hero{padding-bottom:1.4rem}
+  .hero{padding-bottom:.6rem}
+  /* The gap under the buttons was measured when the sentence still sat here.
+     With it moved down into the steps, a phone got two hundred pixels of grey
+     between "I have a password" and HOW IT GOES — dead air exactly where
+     somebody decides whether the page has more to say. */
+  .cta{margin-top:1.4rem}
   /* AND NOT MUCH OF IT. The section brings 3rem of padding and the card
      another 2.4rem of margin, both measured against a matcher card that used
      to sit between them. With it gone that is 86px of empty grey under a
@@ -168,17 +173,27 @@
   body.inside #navjoin,body.inside #herocta{display:none}
   body.inside .top #navopen{display:inline-block;background:var(--accent);
     color:var(--accent-ink);border:0;margin-left:auto}
-  .frames{padding:2.2rem 0 .6rem}
+  .frames{padding:1.4rem 0 .6rem}
   /* Stacked on a phone so the arrow turns down and stays under the pair —
      wrapped as a row it landed beside them, pointing at the gutter. */
   .story{display:flex;flex-direction:column;align-items:center;
-    justify-content:center;gap:1.2rem}
-  .story figure{margin:0;display:flex;flex-direction:column;align-items:center}
+    justify-content:center;gap:.5rem}
+  /* LEFT EDGE, LIKE EVERY OTHER LINE ON A PHONE. Centred figures put a column
+     of ragged edges down a screen where everything else starts in the same
+     place; the picture still centres itself inside the column. */
+  .story figure{margin:0;display:flex;flex-direction:column;
+    align-items:flex-start;width:100%}
+  .step{align-self:flex-start}
+  .lean,.payoff .shot.chat{align-self:center}
   .shot{display:block;height:auto;border-radius:14px;border:1px solid var(--line);
     background:var(--paper);box-shadow:0 10px 30px rgba(16,25,43,.13)}
   .lean{position:relative;display:flex;align-items:center;justify-content:center;
-    padding:1.1rem 0 1.4rem}
-  .lean .shot{width:min(36vw,152px)}
+    padding:.6rem 0 1.2rem}
+  /* AS WIDE AS THE PHONE ALLOWS. At 36vw each these were 140px on a 390px
+     screen, and the card inside — the name, the line, the two pills that are
+     the whole argument — was grey texture. A picture of an app that cannot be
+     read is worse than no picture. */
+  .lean .shot{width:min(47vw,210px)}
   /* Tops tip towards each other: the left one clockwise, the right one back.
      They nearly touch at the top and open into a V at the bottom, which is
      where the mark goes. An earlier version overlapped them by 20px, and the
@@ -195,7 +210,7 @@
     box-shadow:0 6px 18px rgba(43,85,222,.35)}
   .matchdot svg{width:1.35rem;height:1.35rem;display:block}
   .arrow{flex:0 0 auto;color:var(--muted);font-size:1.5rem;line-height:1;
-    transform:rotate(90deg);margin:.2rem 0}
+    transform:rotate(90deg);margin:0;align-self:center}
   /* The two steps named out loud. The picture argued it on its own and people
      still asked what they were looking at — two words each is cheaper than
      another sentence of caption. */
@@ -204,14 +219,20 @@
   :root[data-lang="zh"] .step{text-transform:none;letter-spacing:.08em;font-size:.78rem}
   /* The sentence, off the hero's left margin and into a column of its own.
      Centred like the two beside it, and the pills keep their own wrapping. */
-  .sayfig .does{display:flex;justify-content:center}
+  .sayfig .does{display:flex;justify-content:flex-start;margin:0}
   .sayfig .doesline{margin:0}
   .payoff{padding-top:.2rem}
-  .payoff .shot.chat{width:min(84vw,330px)}
-  .story figcaption{margin:.7rem .1rem 0;font-size:.8rem;line-height:1.45;
-    color:var(--muted);max-width:30ch;text-align:center}
+  .payoff .shot.chat{width:min(92vw,360px)}
+  /* Centred again from the width where the three steps sit side by side: there
+     a caption belongs to the thing above it rather than to the page. */
+  .story figcaption{margin:.7rem .1rem 0;font-size:.85rem;line-height:1.5;
+    color:var(--muted);max-width:34ch;text-align:left}
   @media (min-width:52rem){
     .story{flex-direction:row;gap:1.8rem;align-items:flex-start}
+    .story figure{align-items:center;width:auto}
+    .step{align-self:auto}
+    .sayfig .does{justify-content:center}
+    .story figcaption{text-align:center;max-width:30ch;font-size:.8rem}
     .arrow{transform:none;margin-top:7rem}
     .lean .shot{width:142px}
     .payoff .shot.chat{width:288px}

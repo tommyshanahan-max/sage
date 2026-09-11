@@ -148,6 +148,30 @@ async function main() {
    *
    * The lines below the rule are not part of it. Everything between the rules
    * is what goes in the chat. */
+  /* WHAT IT IS, BEFORE WHAT IT DOES. The message opened with the mechanics —
+   * invite only, works for a day, one person — to somebody who had not been
+   * told what they were being let into. A private club for doing business
+   * through who you know, cross-border investment and entertainment: that is
+   * the sentence Tom says out loud when he explains it, so it goes first and
+   * the rules go after it.
+   * 人脉 rather than a translation of "social network": in a mainland ear the
+   * English phrase means Facebook, and 人脉 means exactly the thing this board
+   * is about — the people you can actually call. */
+  /* WRAPPED FOR A CHAT WINDOW, not for a terminal. These lines are pasted into
+   * WeChat and read on a phone, where a sixty-character line breaks once and a
+   * ninety-character one breaks somewhere different on every screen. Done here
+   * rather than by hand so the sentence about hours can be any length. */
+  const wrap = (t, n = 62) => {
+    const out = [];
+    let line = "";
+    for (const w of t.split(" ")) {
+      if (line && (line + " " + w).length > n) { out.push(line); line = w; }
+      else line = line ? line + " " + w : w;
+    }
+    if (line) out.push(line);
+    return out.join("\n");
+  };
+
   const lasts = hours
     ? " It works for " + hours + (hours === 1 ? " hour" : " hours") + " and lets one person in, once."
     : " It lets one person in, once.";
@@ -170,8 +194,11 @@ async function main() {
   const zhName = /[\u4e00-\u9fff]/.test(String(forWhom || ""));
   for (const v of d.made) {
     const en = [
-      forWhom ? forWhom + " — this is the board I mentioned. It is invite only," : "",
-      forWhom ? "so here is your way in. " + lasts.trim() : "",
+      forWhom ? wrap(forWhom + " — this is the board I mentioned. A private club"
+        + " for doing business through who you know: cross-border investment"
+        + " and entertainment, mostly.") : "",
+      forWhom ? "" : "",
+      forWhom ? wrap("Invite only, so here is your way in." + lasts) : "",
       forWhom ? "" : "",
       link,
       v.code,
@@ -181,8 +208,10 @@ async function main() {
     ].filter((x, i, a) => !(x === "" && a[i - 1] === "")).join("\n");
 
     const zh = [
-      forWhom ? forWhom + " —— 就是我跟你说的那个板子，只能被邀请进来，" : "",
-      forWhom ? "这是你的入口。" + lastsZh : "",
+      forWhom ? forWhom + " —— 就是我跟你说的那个板子。一个靠人脉做生意的私人圈子，" : "",
+      forWhom ? "主要是跨境投资和影视娱乐。" : "",
+      forWhom ? "" : "",
+      forWhom ? "只能被邀请进来，这是你的入口。" + lastsZh : "",
       forWhom ? "" : "",
       link,
       v.code,
