@@ -169,77 +169,88 @@ aspect ratio nobody here knows.
 **Done looks like.** The deployed code pushed to `main`, and the workspace clone
 pulled.
 
-## Soon — one member, several cards
+## Soon — an agent runs several accounts
 
-### Agents put their talent in Browse; the agent is the member
+### One key, several rows, and everybody can see whose they are
 
 **The problem it solves.** Andy is an agent in Australia with a list of
 exclusive actors. Chinese producers want them. He will not bring them onto a
 board where they can be approached directly, because that is his leverage and
-his network given away in one move. Every agent on the film side has this
-shape, and most of the talent will never sign up for themselves — for film,
-that is not a stage, it is how the business works.
+his network given away in one move. Every agent and manager on the film side
+has this shape, and most of the talent will never sign up for themselves — for
+film that is not a stage, it is how the business works.
 
-**The shape.** A member may put up more than one card. Andy logs in once; under
-his row sit the people he represents, and each appears in Browse as a card.
-Follow, match and Connect work exactly as they do today, and every one of them
-hands over the contact on Andy's row, because it is his row underneath.
+**The shape.** The people he represents get ordinary accounts, and Andy
+operates them from one login. A switcher says which one he is acting as.
+Profile, sentence, follows, matching, cards and messages are unchanged, because
+they are ordinary accounts.
 
-**Why this rather than the other three we worked through.**
+**Why accounts rather than listings on his own row**, which is where this
+conversation got to first: **the handover already exists.** The day Mia wants
+her own account it is `make back WHO="Mia"` — six characters, the row moves to
+her browser, Andy loses it. Built, tested, and nothing to migrate. With
+listings there would be nothing to hand over: she would start again and his
+card would dangle.
 
-- *Not accounts for the talent.* Anyone can claim to represent anyone; a board
-  whose value is that people are real does not survive a hundred dormant
-  profiles nobody agreed to. It would also inflate the count, which is one of
-  the two numbers on the front page.
-- *Not routing.* "The message gets redirected to Andy" was the first idea and
-  it is the wrong frame: **Andy is the party, the actor is the subject.** He
-  matched. Nothing is forwarded, so there is nothing to forward wrongly.
-- *Not briefs instead of cards.* Letting the producer post what they need and
-  having agents answer is cheaper, exposes nothing of Andy's list, and puts the
-  advertising on the scarce side. It was the better idea for about ten minutes,
+**Three other shapes considered and dropped.**
+
+- *Routing a redirected conversation.* The first idea, and the wrong frame:
+  **the agent is the party and the actor is the subject.** Nothing is
+  forwarded, so nothing can be forwarded wrongly.
+- *Listings on the agent's row.* Cheaper, but no handover, and it invents a
+  second species of thing that has to be taught the whole matching mechanic.
+- *Briefs instead of cards* — the producer posts what they need and agents
+  answer. Cheaper still, exposes nothing of Andy's list, and puts the
+  advertising on the scarce side. It was the better idea for about ten minutes
   and it loses the product: Browse is cards of actual people, and "Andy, agent,
   Sydney" is a card nobody stops on. **Mia, 24, Mandarin, Sydney** is.
 
-**What forces a feature rather than a convention.** Andy could just make ten
-profiles today — except one browser is one key is one row, so ten actors means
-ten keys and ten browsers, and he will not do it past the second. One login,
-several cards, is the whole of what is new.
+**What is actually new is smaller than it sounds:** one key operating several
+rows, a switcher, the label, and the contact rule. Everything else already
+works.
 
-**Said out loud, in two places.** On the card — *Represented by Andy — he takes
-the conversation* — so a producer knows before pressing Follow. And again when
-the contact crosses: *Mia's agent · andy_syd*. Otherwise somebody saves that as
-Mia, opens WeChat and finds a stranger, which is the same trick as the first
-one and feels worse.
+**And the real cost is width, not depth.** *One browser is one person* is baked
+in. `.by === me` appears **76 times** in `board/server.js` — the profile, the
+feed, following, invites, offers, the waiting list, notes, cards. Every one of
+them becomes "the row being operated now". Not deep, but wide, and exactly the
+kind of change where one missed call site means Andy posts as Mia by accident.
 
-**The thread is Andy's and is named Andy.** "Andy — about Mia", every line from
-him. The version to refuse is a thread that looks like it is from Mia with
-Andy typing in it.
+So the order matters: **find all 76 and decide what each one means before
+writing the switcher.** Most are "my current row" and change mechanically. A
+few are not, and those are the whole job:
+
+- *Invites.* Andy's allowance is Andy's, not one per account he runs — or one
+  agent mints ten codes a day and invite-only stops meaning anything.
+- *The waiting list.* A represented person is not somebody waiting to get in.
+- *Deleting.* `forget()` takes everything hanging off a device hash. Run it
+  from a browser holding six rows and it takes six people with it.
+- *The member count.* Ten accounts operated by one agent is ten cards and one
+  person, and the number on the front page has to say the second thing.
+
+**Two labels, and neither is optional.** On the card, before anybody presses
+Follow — *Represented by Andy — he takes the conversation*. And again when the
+contact crosses: *Mia's agent · andy_syd*. Otherwise a producer saves that as
+Mia, opens WeChat and finds a stranger. An account operated by an agent that
+does not say so is worse than a listing that does not, not better.
+
+**The thread is the agent's and is named for him.** "Andy — about Mia", every
+line from him. The version to refuse is a thread that looks like it is from Mia
+with Andy typing in it.
 
 **Same messaging rules as everybody.** One line each, then it rests. A special
-case for agents is a thing we would be explaining forever; the natural first
-question is "is she free in March?" and one line each answers it before anybody
-commits to a WeChat add.
-
-**What a represented card cannot do.** No key — nobody signs into it, it is not
-an account. Not in the member count. No posting to the feed. And no card of its
-own: the only contact it can ever hand over is the one on the member's row, so
-a wrong number is not reachable.
-
-**If the talent turns up themselves, that is welcome.** They make their own
-account and run it. Their own row is then the truth and the agent's card points
-at it; routing, if it ever exists, is a setting they own. The software must
-never be the thing holding somebody's conversations hostage — an agent who
-could do that is how this board gets a bad name in Sydney in a week.
+case for agents is a thing we would be explaining forever, and the natural
+first question — "is she free in March?" — is answered inside the rule that
+already exists.
 
 **Consent is about the photograph, not the name.** A line and a first name is a
-claim Andy is making with his own name attached. A face is a different thing,
+claim Andy makes with his own name attached to it. A face is a different thing,
 and before photographs go up there should be a confirmation link he sends her.
 
-**The open decision: a cap.** Ten agents with ten cards each is a hundred cards
-and ten people, and Browse stops being a room and becomes a catalogue with one
-agent's stock in it. Three to five cards a member keeps it a room and makes an
-agent put up their best rather than their whole list — which serves the
-producer too. Pick a number before the first agent asks for the eleventh.
+**The open decision: a cap.** Ten agents with ten accounts each is a hundred
+cards and ten people, and Browse stops being a room and becomes a catalogue
+with one agency's stock in it. Three to five keeps it a room and makes an agent
+put up their best rather than their whole list, which serves the producer too.
+Pick a number before the first agent asks for the eleventh.
 
 ## Soon — money
 
