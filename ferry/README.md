@@ -127,3 +127,31 @@ subscribed from holds none of it.
 
 **iOS needs the home-screen install first.** Safari will not deliver a push to
 a page in a tab. Android and desktop work either way.
+
+## Next: the link lands on somebody, not on a code box
+
+Today the link opens a box asking for six characters. That is the right second
+screen and the wrong first one — a person who has just been sent an encrypted
+room by WeChat message has questions, and a password prompt answers none of
+them. It is also the moment the whole thing looks most like a scam: an
+unfamiliar address, a code, and a demand.
+
+So the first screen should be the greeting the board's door already does. Named
+("Ray — Tom sent you a room"), saying who it is from and what this is, read
+aloud by the browser's own voice for somebody holding a phone at arm's length,
+and with a box to ask anything — the same one on the board's door, which is
+`board/lib/hostess.js` behind `POST /api/ask`. Then the code, then the chat.
+
+What it needs:
+
+- the greeting screen, taking the sender's name from the link the way the
+  board's door takes `?for=` and `?from=`
+- a brief of its own. The board's answers are about the board; this one is
+  about a private room, and the honest answers to the two questions everybody
+  will ask — *can anybody read this* and *what happens to it* — are already
+  written in this file
+- the code box demoted to the second step, where it belongs
+
+The sender's name goes in the query string and not the fragment: it is not a
+secret and the greeting has to show it before anything is decrypted. Nothing
+else about either person may travel that way.
