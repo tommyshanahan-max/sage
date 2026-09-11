@@ -189,8 +189,29 @@
      started — everything above is what this is, everything in here is how it
      goes. A shade and two hairlines say that without a word, and the band runs
      edge to edge because a phone has no margins to spare. */
-  .frames{padding:2rem 0 2.2rem;background:var(--raise);
-    border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
+  /* DARK, and not a shade darker. A band one step off the page background was
+     the honest minimum and it was not enough to see: on a phone, scrolling
+     past at speed, two greys four percent apart are one grey. This half of
+     the page is a different place — above it is what this is, in here is how
+     it goes — so it gets a different set of colours rather than a different
+     amount of the same one.
+     The tokens are redefined on the section and everything inside reads them,
+     so the eyebrow, the step labels and the three captions come right without
+     a single one of them being restyled. The accent lifts to a blue that can
+     be read on ink; the one at the top of this file is tuned for paper and
+     goes muddy here. The screenshots keep their own light pixels and sit on
+     the dark like product shots, which is the one thing this change also
+     happens to improve. */
+  .frames{
+    --paper:#111722; --raise:#1A2130; --card:#222B3C;
+    --line:#2C3546; --hair:#222A3A;
+    --ink:#F2F5FA; --ink-2:#B6C2D4; --muted:#8A99B0;
+    --accent:#7D9BFF; --accent-soft:#1E2A47; --accent-ink:#0B0E15;
+    padding:2.4rem 0 2.6rem;background:#111722;color:var(--ink);
+    border-top:1px solid #0A0E16;border-bottom:1px solid #0A0E16}
+  /* The shadow under a phone was written for a light page and is invisible on
+     ink; on dark a rim does the lifting a shadow did. */
+  .frames .shot{box-shadow:0 14px 34px rgba(0,0,0,.45);border-color:#2C3546}
   /* Stacked on a phone so the arrow turns down and stays under the pair —
      wrapped as a row it landed beside them, pointing at the gutter. */
   .story{display:flex;flex-direction:column;align-items:center;
