@@ -137,6 +137,14 @@
     box-shadow:0 20px 48px rgba(8,12,20,.4)}
   /* One grey pill. Enough to read as a phone and not an imitation of anybody's
      hardware — the same call site.css made, made again here on purpose. */
+  /* A short settle rather than a slide. The words are changing underneath, and
+     anything that moves the pill itself reads as the layout breaking. */
+  .say.turn i,.say.turn .pick{animation:settle .42s ease-out}
+  .appshot.turn{animation:settle .42s ease-out}
+  @keyframes settle{from{opacity:.25;transform:translateY(.3rem)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    .say.turn i,.say.turn .pick,.appshot.turn{animation:none}
+  }
   .appshot::before{content:"";position:absolute;top:.42rem;left:50%;
     transform:translateX(-50%);width:2.4rem;height:.26rem;border-radius:99px;
     background:rgba(21,27,40,.22);z-index:2}
@@ -543,7 +551,7 @@
            which would make a private board searchable from outside by role.
            That is a directory, and the line at the top of this page promises
            it is not one. -->
-      <div class="appshot" aria-hidden="true">
+      <div class="appshot" id="appshot" aria-hidden="true">
         <p class="as-top" id="phTop"></p>
         <div class="as-head">
           <span class="as-mark"><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg></span>
@@ -834,7 +842,10 @@ function drawSay() {
        sentence — but it does not pretend to open. */
     const dead = side === "want" && list.length < 2;
     if (dead) b.classList.add("dead");
-    b.onclick = () => { if (!dead) { openPill = openPill === side ? "" : side; drawSay(); } };
+    b.onclick = () => {
+      touched = true;
+      if (!dead) { openPill = openPill === side ? "" : side; drawSay(); }
+    };
     wrap.append(b);
 
     if (openPill === side && !dead) {
@@ -846,6 +857,7 @@ function drawSay() {
         o.className = k === now ? "on" : "";
         o.textContent = T("art." + k);
         o.onclick = () => {
+          touched = true;
           if (side === "me") {
             iAm = k;
             // The right-hand half has to stay a real pair — see MATCH.
@@ -884,6 +896,58 @@ function pinSay(me, want) {
     pill(want),
     document.createTextNode(" " + T("land.say3")));
   drawWho();
+}
+
+/* IT MOVES ONCE, AND THEN IT WAITS.
+ *
+ * The pills are controls now, and nothing on the page says so except a caret
+ * three millimetres wide. Plenty of people will read the line as a sentence
+ * and never touch it, which is where it was before — only prettier.
+ *
+ * So the first time the band is actually on screen it changes the pair by
+ * itself, once, and the card follows. That single movement says "this is
+ * touchable" without a caption, an arrow, or a "try it" label, all of which
+ * are a page apologising for a control nobody noticed.
+ *
+ * ONCE, NOT A LOOP. A thing that keeps moving while somebody is trying to
+ * read is not an invitation, it is a distraction — and the constant cycle this
+ * replaces had a worse problem, which was a fixed screenshot it kept
+ * contradicting. That is gone: the card follows whatever the pills say.
+ *
+ * It gives up the moment a person is doing anything themselves, and it does
+ * not run at all for somebody who has asked their system for less movement,
+ * or on a room door, where the pair is the whole point of the link.
+ */
+let touched = false, nudged = false;
+function nudge() {
+  if (nudged || touched) return;
+  nudged = true;
+  // Film, from startups: the two halves of this board are further apart than
+  // any one pair can show, and the jump is the thing worth demonstrating.
+  iAm = "performer"; iWant = "agent";
+  const line = $("landsay"), shot = $("appshot");
+  for (const n of [line, shot]) if (n) n.classList.add("turn");
+  drawSay();
+  setTimeout(() => { for (const n of [line, shot]) if (n) n.classList.remove("turn"); }, 420);
+}
+
+/* Only when it is genuinely on screen. Firing on load means it happens while
+   the reader is still up in the hero and the one movement is spent on nobody. */
+if (window.IntersectionObserver
+    && !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+  const band = document.querySelector(".frames");
+  if (band) {
+    const eye = new IntersectionObserver((rows) => {
+      for (const r of rows) {
+        if (!r.isIntersecting) continue;
+        eye.disconnect();
+        // A beat, so it is read first and then seen to change. Immediately is
+        // a flicker somebody notices only after it has finished.
+        setTimeout(nudge, 900);
+      }
+    }, { threshold: 0.45 });
+    eye.observe(band);
+  }
 }
 
 // Tapping anywhere else closes an open menu, which is what every menu does.
