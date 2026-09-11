@@ -19,3 +19,18 @@
 {$TOMSCODING_BOARD_OLD_DOMAIN:oldboard.localhost} {
 	redir https://{$TOMSCODING_BOARD_DOMAIN}{uri} permanent
 }
+
+# AND ITS www, which had nowhere to go.
+#
+# The board's own www block moves to the new name with the board — that is what
+# it is for — and the old www is then a hostname with a certificate, a DNS
+# record and no site block anywhere on this box. Somebody who typed the name
+# with a www in front of it, or a link written that way in a message two months
+# ago, gets nothing.
+#
+# Same redirect, its own variable, for the same reason the block above has one:
+# one variable per address, and a second block sharing an address is a startup
+# failure that takes the box down.
+{$TOMSCODING_BOARD_OLD_WWW:oldboardwww.localhost} {
+	redir https://{$TOMSCODING_BOARD_DOMAIN}{uri} permanent
+}

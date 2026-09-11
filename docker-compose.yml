@@ -686,6 +686,7 @@ services:
       # which is the one thing that file exists to prevent. Found by
       # check-sites.py the first time it was pointed at a real .env.
       TOMSCODING_BOARD_OLD_DOMAIN: ${TOMSCODING_BOARD_OLD_DOMAIN:-oldboard.localhost}
+      TOMSCODING_BOARD_OLD_WWW: ${TOMSCODING_BOARD_OLD_WWW:-oldboardwww.localhost}
       TOMSCODING_BOARD_WWW: ${TOMSCODING_BOARD_WWW:-www.board.localhost}
       TOMSCODING_STATS_DOMAIN: ${TOMSCODING_STATS_DOMAIN:-stats.localhost}
       # The Exchange's page on the open web — see docker/sites/exchange.caddy.
