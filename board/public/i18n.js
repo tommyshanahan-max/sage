@@ -542,9 +542,15 @@ export const STRINGS = {
   "land.does2":        ["an Agent", "经纪人"],
   "land.does3":        ["looking for", "在找"],
   "land.does4":        ["a Performer", "演员"],
+  /* IT SAID "tells neither of you until you both do" AND THERE WAS NOTHING FOR
+     `do` TO POINT AT. The only verb in the sentence is saying your half, which
+     the reader has already done, so the condition reads as one they have
+     already met. Two mechanisms in one clause: the sentence pairs you, and
+     Follow is what confirms it. This names the button, so the next act is a
+     thing on screen rather than a promise. */
   "land.doesWhy": [
-    "Say that once. It finds the people who said the other half, and tells neither of you until you both do.",
-    "这句话说一次就行。它会找出说了另一半的人——在你们双方都说出来之前，谁也不会被告知。"],
+    "Say it once. You see who said the other half — and nobody is told until you both press Follow.",
+    "说一次就行。谁说了另一半，你就看得到——在你们都点了「关注」之前，谁也不会知道。"],
 
   /* EACH DOOR FILLS THE SAME SENTENCE WITH ITS OWN PAIR. A link into a film
      group should not open on an investor's example. Only the two pills change;
