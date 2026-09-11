@@ -105,18 +105,16 @@
        question is the sell: every agent in that room knows the answer is not
        zero and has no way to find out what it is. Everything under it is
        there to be the answer. -->
-  <h1 class="alede">How many jobs got cast this month without you?</h1>
+  <h1 class="alede" id="aghead"></h1>
 
-  <p class="asub">You will never know. That is what I built this for.</p>
-  <p class="asub">Agents in front of artists and directors — not just China.
-    I have worked with Oscar-winning directors in Hollywood and with top
-    agents around the world.</p>
+  <p class="asub" id="agp1"></p>
+  <p class="asub" id="agp2"></p>
 
   <div class="asay">
-    <b>I am</b> <em>an Agent</em> <b>looking for</b> <em>a Producer</em>
+    <b id="agsay1"></b> <em id="agsay2"></em>
+    <b id="agsay3"></b> <em id="agsay4"></em>
   </div>
-  <p class="asub" style="margin-top:.8rem">Somebody writes the other half.
-    You are put in front of each other.</p>
+  <p class="asub" style="margin-top:.8rem" id="agafter"></p>
 
   <div class="ashots">
     <figure>
@@ -128,12 +126,11 @@
   </div>
 
   <div class="arule">
-    <p><b>Nobody gets your WeChat until you both say yes.</b> Invite only, and
-      every name is read by a person.</p>
+    <p><b id="agruleA"></b> <span id="agruleB"></span></p>
   </div>
 
   <div class="aask">
-    <h2>I am looking for agents to work with.</h2>
+    <h2 id="agask"></h2>
     <div id="waitslot"></div>
   </div>
 
@@ -141,15 +138,24 @@
 </div>
 
 <script type="module">
-import { T, setLang, pickLang, langButton } from "/i18n.js";
+import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
 import { waitBox, tally } from "/wait.js";
 
 const $ = (id) => document.getElementById(id);
 
-/* Only the two pieces that come from the strings — the rest of this page is
-   written once, in one voice, because it is one person talking to one group.
-   The form is bilingual either way, which is the half that matters. */
+/* EVERY WORD ON THIS PAGE COMES FROM THE STRINGS.
+ *
+ * It was written once in English on the reasoning that it is one person
+ * talking to one group. The group is Chinese. So the 中文 button moved the
+ * form and left the page it was on in English, which is worse than either
+ * language on its own — see ag.* in i18n.js. */
 function paint() {
+  document.title = T("ag.tab");
+  document.documentElement.lang = lang();
+  for (const k of ["head", "p1", "p2", "say1", "say2", "say3", "say4",
+                   "after", "ruleA", "ruleB", "ask"]) {
+    $("ag" + k).textContent = T("ag." + k);
+  }
   $("has").textContent = "";
   $("has").append(document.createTextNode(T("join.has") + " "));
   const b = document.createElement("b");

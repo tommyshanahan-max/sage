@@ -2413,6 +2413,35 @@ export const STRINGS = {
     "A private board for people connecting in China, and with China. Put your name down and somebody already inside decides. Your WeChat or email is shown to nobody.",
     "一个私密板子，给在中国、和跟中国打交道的人。留个名字，由已经在里面的人来定。你的微信或邮箱谁都看不到。"],
   "join.has":          ["Already have a password?", "已经有口令了？"],
+
+  /* /agents — one page for one WeChat group of film agents. Its own keys
+     rather than words baked into the page, because the group is Chinese and
+     the 中文 button has to move the whole page, not just the form. The Chinese
+     is written rather than translated: 「活儿」is what the work is called in
+     that room, and a question about it lands where a description does not. */
+  "ag.tab":            ["The Exchange — for agents", "交换 · 给经纪人"],
+  "ag.head": [
+    "How many jobs got cast this month without you?",
+    "这个月，有多少活儿是没经过你就定了的？"],
+  "ag.p1": [
+    "You will never know. That is what I built this for.",
+    "你永远不会知道。我做这个，就是为了这件事。"],
+  "ag.p2": [
+    "Agents in front of artists and directors — not just China. I have worked with Oscar-winning directors in Hollywood and with top agents around the world.",
+    "让经纪人直接对上艺人和导演——不只是国内。我跟好莱坞拿过奥斯卡的导演合作过，也跟国际上顶尖的经纪人打过交道。"],
+  "ag.say1":           ["I am", "我是"],
+  "ag.say2":           ["an Agent", "经纪人"],
+  "ag.say3":           ["looking for", "我在找"],
+  "ag.say4":           ["a Producer", "制片人"],
+  "ag.after": [
+    "Somebody writes the other half. You are put in front of each other.",
+    "有人写了另一半，你们就直接对上了。"],
+  "ag.ruleA":          ["Nobody gets your WeChat until you both say yes.",
+                        "双方都点了头，微信才互相可见。"],
+  "ag.ruleB":          ["Invite only, and every name is read by a person.",
+                        "邀请制，每个名字都有人亲自看。"],
+  "ag.ask":            ["I am looking for agents to work with.",
+                        "我在找可以合作的经纪人。"],
   "join.hasGo":        ["Use it", "去输入"],
   /* THE DECK'S OWN WORD FOR IT. The buddies list keeps "Follow", where it is
      true: that is a list of people you are reading. On a stranger's face the
