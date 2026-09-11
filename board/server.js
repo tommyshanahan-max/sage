@@ -5114,7 +5114,17 @@ app.get("/api/run", gate, async (req, res) => {
     // and nothing else, so a stale id in localStorage shows no bar rather than
     // a bar naming somebody they are not actually being.
     as: acting.getStore()?.as || "",
-    me: me ? { id: me.id, handle: me.handle, photo: me.photoState === "published" ? me.photo : "" } : null,
+    me: me ? {
+      id: me.id, handle: me.handle,
+      photo: me.photoState === "published" ? me.photo : "",
+      /* WHETHER THEY SAY THEY ARE ONE, which is not the same as running
+         somebody yet. The app showed its link to this page only to people who
+         already had a roster, so an agent who came through the door and had
+         not added anybody — which is every agent, for their first ten minutes
+         — had no way back to the console they were invited for. The sentence
+         is the honest test: it is what they told the board they are. */
+      agent: me.say.some((x) => x.me === "agent"),
+    } : null,
     run: run.map((q) => ({
       id: q.id, handle: q.handle, state: q.state, looking: q.looking,
       photo: q.photoState === "published" ? q.photo : "",

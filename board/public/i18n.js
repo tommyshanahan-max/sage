@@ -493,6 +493,8 @@ export const STRINGS = {
      Tapping here means becoming somebody. The label is the cheap half of the
      fix; the tiles being square is the other half. */
   "run.railhead":   ["Posting as", "现在以谁的身份"],
+  "run.desk":       ["On a laptop? Drag the whole folder in instead \u2192",
+                     "用电脑的话，整个文件夹拖进去就行 \u2192"],
 
   /* The door, when the person coming through it represents other people.
      两句话就够：他们进来不是为了逛，是为了把手上的人弄上去。 */
@@ -577,6 +579,19 @@ export const STRINGS = {
   "ob.whois":       ["Nothing in there says who this is. Type a name and it is theirs.",
                      "里面看不出这是谁。打个名字就归他了。"],
   "ob.addwho":      ["+ Another person", "+ 再加一个人"],
+
+  /* The two halves of what an agent is here for. Written as alternatives
+     rather than as steps: plenty of agents will do one and not the other, and
+     numbering them would make the second look like homework.
+     一个人和一群人是两件事，所以并排放，不是第一步第二步。 */
+  "ob.wayone.head": ["A page of your own", "你自己的主页"],
+  "ob.wayone.body": ["You are on the board as an agent, the same as anybody else: one sentence, and producers and brands find you. It is also how they find everybody you represent \u2014 one match with you opens your whole list.",
+                     "你自己也在板上，身份是经纪人，跟别人一样：一句话，制片、品牌方就能找到你。他们也是这样找到你带的人的——跟你对上一个，你手里的名单就都看得到。"],
+  "ob.wayone.go":   ["Finish your page \u2192", "去把主页填好 \u2192"],
+  "ob.waytwo.head": ["Pages for the people you represent", "你带的人的主页"],
+  "ob.waytwo.body": ["Each one gets their own page, their own sentence and their own matches, and you run all of them from this login. When somebody wants one of them, they are talking to you \u2014 it is your WeChat that crosses, never theirs.",
+                     "他们每个人都有自己的主页、自己那句话、自己的匹配，你一个账号全管。谁看上了你的人，联系的是你——过去的是你的微信，不是他们的。"],
+  "ob.waytwo.go":   ["See who you run \u2192", "看看你带了谁 \u2192"],
   "ob.trayhead":    ["Could not tell whose these are \u2014 drag them onto somebody",
                      "这几个不知道是谁的——拖到对应的人身上"],
   "ob.guessed":     ["Worked out", "猜的"],

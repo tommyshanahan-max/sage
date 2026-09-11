@@ -146,6 +146,11 @@
     <input id="files" type="file" multiple webkitdirectory directory hidden>
   </div>
 
+  <!-- THE OTHER WAY ROUND. /onboard links here and this did not link back,
+       so somebody who came in through the console and later opened their
+       roster on a phone had no way to find the wide screen again. One line. -->
+  <p class="count"><a href="/onboard" id="deskgo"></a></p>
+
   <p class="count" id="orhead" style="margin-top:1.4rem"></p>
   <textarea id="names" rows="3"></textarea>
   <p><button class="go" id="add" type="button"><span id="addgo"></span></button></p>
@@ -444,6 +449,7 @@ function paint() {
   set("lede", "run.lede");
   set("barback", "run.beback");
   set("railhead", "run.railhead");
+  set("deskgo", "run.desk");
   set("addhead", "run.addhead");
   set("drophead", "run.drophead");
   set("dropsub", "run.dropsub");

@@ -33,6 +33,15 @@
   h1{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:1.9rem;margin:.6rem 0 .3rem}
   .lede{color:var(--ink-2);margin:0 0 1.6rem;line-height:1.65;max-width:44rem}
 
+  /* The two halves, side by side rather than stacked, because they are
+     alternatives and a list of two would read as a sequence. */
+  .twoways{display:grid;gap:1rem;margin:0 0 1.6rem;
+    grid-template-columns:repeat(auto-fit,minmax(19rem,1fr))}
+  .way{border:1px solid var(--hair);border-radius:.9rem;padding:1rem 1.1rem;background:var(--raise)}
+  .way b{display:block;font-family:var(--serif,Georgia,serif);font-weight:400;
+    font-size:1.15rem;margin:0 0 .35rem}
+  .way p{margin:0 0 .6rem;color:var(--ink-2);line-height:1.6;font-size:.94rem}
+  .way a{font-size:.92rem;font-weight:600;color:var(--accent)}
   .mine{margin:0 0 1.4rem;padding:1rem 1.1rem;border:1px solid var(--accent-soft);
     border-radius:.9rem;background:var(--accent-soft)}
   .mine label{display:block;font-size:.9rem;color:var(--ink-2);margin:0 0 .55rem;line-height:1.55}
@@ -129,6 +138,26 @@
   </div>
   <h1 id="head"></h1>
   <p class="lede" id="lede"></p>
+
+  <!-- TWO THINGS, AND THE PAGE ONLY EVER MENTIONED ONE.
+       An agent arriving here has a row of their own and nine people to put up,
+       and the console talked about nothing but the nine. So somebody could
+       finish the whole import and never learn they were on the board
+       themselves — which is the half that makes the other half worth doing,
+       because a producer meets the roster by meeting the agent. Said plainly,
+       side by side, before anything is asked of them. -->
+  <div class="twoways">
+    <div class="way">
+      <b id="wayonehead"></b>
+      <p id="wayone"></p>
+      <a id="wayonego" href="/browse?edit=1"></a>
+    </div>
+    <div class="way">
+      <b id="waytwohead"></b>
+      <p id="waytwo"></p>
+      <a id="waytwogo" href="/run"></a>
+    </div>
+  </div>
 
   <!-- ASKED ONCE, AND ONLY OF SOMEBODY WHO HAS NOT SAID IT.
        An agent arriving on an agent invite has a row and no name on it: the
@@ -453,6 +482,12 @@ function paint() {
   set("fieldhead", "ob.fieldhead");
   set("fieldsub", "ob.fieldsub");
   set("browse", "ob.choose");
+  set("wayonehead", "ob.wayone.head");
+  set("wayone", "ob.wayone.body");
+  set("wayonego", "ob.wayone.go");
+  set("waytwohead", "ob.waytwo.head");
+  set("waytwo", "ob.waytwo.body");
+  set("waytwogo", "ob.waytwo.go");
   set("mylabel", "ob.mylabel");
   set("mysave", "ob.mysave");
   $("myname").placeholder = T("ob.myph");

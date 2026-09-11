@@ -5488,7 +5488,8 @@ function drawTalk() {
   row.hidden = !(ME && ME.handle);
   $("gonotes").firstChild.textContent = T("note.inbox");
   $("gogroups").firstChild.textContent = T("grp.title");
-  $("gorun").firstChild.textContent = T("run.title");
+  // Left alone when paintRun has already decided which of the two this is.
+  if (!$("gorun").dataset.set) $("gorun").firstChild.textContent = T("run.title");
 }
 
 async function countNotes() {
@@ -8279,7 +8280,25 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
 function paintRun() {
   fetch("/api/run", { headers: { "x-board-device": device } })
     .then((r) => r.json())
-    .then((d) => { if (d && d.run && d.run.length) $("gorun").hidden = false; })
+    .then((d) => {
+      if (!d || !d.me) return;
+      const runs = (d.run || []).length;
+      /* SHOWN TO SOMEBODY WHO SAYS THEY ARE AN AGENT, not only to somebody who
+         already runs people. It was the second test alone, which meant an
+         agent who had just come through the door — nobody added yet, which is
+         every agent for their first ten minutes — had no way back to the
+         console they were invited for. A dead end on the one screen the whole
+         invite was about. */
+      if (!runs && !d.me.agent) return;
+      const go = $("gorun");
+      /* And it points at whichever of the two is useful. With a roster, the
+         roster; with nobody yet, there is nothing to manage and the only thing
+         to do is put somebody up. */
+      go.href = runs ? "/run" : "/onboard";
+      go.firstChild.textContent = T(runs ? "run.title" : "ob.title");
+      go.dataset.set = "1";
+      go.hidden = false;
+    })
     .catch(() => { /* no link rather than a broken one */ });
 }
 
