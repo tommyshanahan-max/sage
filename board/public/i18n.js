@@ -559,13 +559,16 @@ export const STRINGS = {
      the app and not the point. A stranger reading left to right now watches a
      deal start. */
   "land.frames":       ["How it goes", "大概是这样"],
+  /* TWO CAPTIONS, NOT THREE, because the picture is now two phones leaning
+     into each other and one standing on its own. The first names both people
+     and why they come up for each other; the second is the only thing this
+     product actually does.
+     "never because they matched" is load-bearing and stays in both languages:
+     matching does not hand anybody a WeChat id. A person decides to send it. */
   "land.frame1": [
-    "Wei is raising money for his second company. He says so in one line.",
-    "小魏的第二家公司在融资。他就写了这么一句。"],
+    "Wei is raising for his second company. Elena writes first cheques. Each line is the other half of the other's — so they come up for each other.",
+    "小魏的第二家公司在融资，Elena 是投第一笔钱的人。两句话正好是彼此的另一半——于是两个人互相出现在对方眼前。"],
   "land.frame2": [
-    "Elena writes first cheques. Her line is the other half of his — so each of them comes up for the other.",
-    "Elena 是投第一笔钱的人。她那句话，正好是小魏那句的另一半——于是两个人互相出现在对方眼前。"],
-  "land.frame3": [
     "They match. Then one of them sends a WeChat id and a reason — on purpose, and never because they matched.",
     "匹配上了。然后其中一个把微信和一句理由发过去——是他自己决定发的，不是因为匹配就自动给。"],
   /* WHAT IT DOES, ON THE FRONT PAGE, SHOWN RATHER THAN DESCRIBED.

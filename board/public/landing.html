@@ -144,18 +144,53 @@
   .eyeline{margin:0 0 .55rem;font-size:.76rem;font-weight:600;letter-spacing:.13em;
     text-transform:uppercase;color:var(--accent)}
   :root[data-lang="zh"] .eyeline{text-transform:none;letter-spacing:.06em;font-size:.82rem}
+  /* THE TWO HALVES LEAN INTO EACH OTHER, AND THE THIRD STANDS STRAIGHT.
+     Three phones in a row read as a product tour: here is a screen, here is
+     another screen. The thing this board does is not a screen, it is two
+     people finding each other — so the two people tilt towards one another
+     with the mark where they meet, and the one thing that comes of it stands
+     upright on its own, after an arrow. The composition carries the argument
+     before a word of the captions is read.
+     Angles are small (6deg). Anything more reads as a sticker sheet, and the
+     text inside a phone at 10deg is genuinely harder to read. */
   .frames{padding:2.2rem 0 .6rem}
-  .shots{display:flex;gap:1rem;overflow-x:auto;padding:.2rem .1rem 1rem;
-    scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
-  .shots figure{margin:0;flex:0 0 auto;width:min(62vw,230px);scroll-snap-align:center}
-  .shots img{display:block;width:100%;height:auto;border-radius:14px;
-    border:1px solid var(--line);background:var(--paper);
-    box-shadow:0 8px 28px rgba(16,25,43,.10)}
-  .shots figcaption{margin:.6rem .1rem 0;font-size:.8rem;line-height:1.45;
-    color:var(--muted)}
+  /* Stacked on a phone so the arrow turns down and stays under the pair —
+     wrapped as a row it landed beside them, pointing at the gutter. */
+  .story{display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:1.2rem}
+  .story figure{margin:0;display:flex;flex-direction:column;align-items:center}
+  .shot{display:block;height:auto;border-radius:14px;border:1px solid var(--line);
+    background:var(--paper);box-shadow:0 10px 30px rgba(16,25,43,.13)}
+  .lean{position:relative;display:flex;align-items:center;justify-content:center;
+    padding:1.1rem 0 1.4rem}
+  .lean .shot{width:min(36vw,152px)}
+  /* Tops tip towards each other: the left one clockwise, the right one back.
+     They nearly touch at the top and open into a V at the bottom, which is
+     where the mark goes. An earlier version overlapped them by 20px, and the
+     right-hand phone lost its name and its line behind the left one — two
+     people is the whole point of the picture, so they must both be legible. */
+  .lean .shot:first-of-type{transform:rotate(6deg);margin-right:3px}
+  .lean .shot:last-of-type{transform:rotate(-6deg);margin-left:3px}
+  /* In the gap the lean opens up at the bottom. Overlapping the phones rather
+     than floating under them is what makes it read as the two of them meeting
+     and not as a button. */
+  .matchdot{position:absolute;left:50%;bottom:2.1rem;transform:translateX(-50%);
+    z-index:2;display:grid;place-items:center;width:2.5rem;height:2.5rem;
+    border-radius:50%;background:var(--accent);color:#fff;
+    box-shadow:0 6px 18px rgba(43,85,222,.35)}
+  .matchdot svg{width:1.35rem;height:1.35rem;display:block}
+  .arrow{flex:0 0 auto;color:var(--muted);font-size:1.5rem;line-height:1;
+    transform:rotate(90deg);margin:.2rem 0}
+  .payoff{padding-top:.2rem}
+  .payoff .shot{width:min(52vw,196px)}
+  .story figcaption{margin:.7rem .1rem 0;font-size:.8rem;line-height:1.45;
+    color:var(--muted);max-width:30ch;text-align:center}
   @media (min-width:52rem){
-    .shots{overflow:visible;justify-content:center}
-    .shots figure{width:252px}
+    .story{flex-direction:row;gap:1.8rem;align-items:flex-start}
+    .arrow{transform:none;margin-top:6.5rem}
+    .lean .shot{width:172px}
+    .payoff .shot{width:206px}
+    .payoff{padding-top:1.1rem}
   }
 </style>
 </head>
@@ -219,18 +254,25 @@
 <section class="frames">
   <div class="wrap">
     <div class="eyebrow"><span id="framesEyebrow"></span><i></i></div>
-    <div class="shots">
+    <div class="story">
       <figure>
-        <img src="/frame-1.png" alt="" width="585" height="1170" loading="lazy">
+        <div class="lean">
+          <img class="shot" src="/frame-1.png" alt="" width="585" height="1170" loading="lazy">
+          <img class="shot" src="/frame-2.png" alt="" width="585" height="1170" loading="lazy">
+          <!-- The mark itself is two circles overlapping, which is what a match
+               is. Using the logo here rather than a heart or a tick means the
+               symbol on the door and the symbol for the thing it does are the
+               same drawing. -->
+          <span class="matchdot" aria-hidden="true">
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg>
+          </span>
+        </div>
         <figcaption id="frame1"></figcaption>
       </figure>
-      <figure>
-        <img src="/frame-2.png" alt="" width="585" height="1170" loading="lazy">
+      <div class="arrow" aria-hidden="true">&rarr;</div>
+      <figure class="payoff">
+        <img class="shot" src="/frame-3.png" alt="" width="585" height="1170" loading="lazy">
         <figcaption id="frame2"></figcaption>
-      </figure>
-      <figure>
-        <img src="/frame-3.png" alt="" width="585" height="1170" loading="lazy">
-        <figcaption id="frame3"></figcaption>
       </figure>
     </div>
   </div>
@@ -363,7 +405,6 @@ function paint() {
   $("framesEyebrow").textContent = T("land.frames");
   $("frame1").textContent = T("land.frame1");
   $("frame2").textContent = T("land.frame2");
-  $("frame3").textContent = T("land.frame3");
   $("doorsEyebrow").textContent = T("land.doors");
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");
