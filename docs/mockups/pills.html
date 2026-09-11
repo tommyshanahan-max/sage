@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Exchange — what the pills do when you press them</title>
+
+<!-- THE QUESTION THIS ANSWERS.
+     The sentence on the homepage is set in pills. Pills are the shape of a
+     control, and these do nothing — which teaches somebody in two seconds that
+     the page is a picture of a product rather than one.
+
+     Making them pickers is clearly right. What is not obvious is what happens
+     AFTER somebody picks, and the two answers are different products:
+
+       A  the card underneath answers them. Pick a Manufacturer looking for a
+          Buyer and you are shown a buyer. Always coherent, and it is the whole
+          mechanic demonstrated on the homepage — at the cost of the real
+          screenshot, which is the thing that makes the page feel real.
+
+       B  the pick fills in the form. The sentence changes, the button under it
+          becomes "Get on the list as a Manufacturer", and the waiting form
+          opens with that room already chosen. The screenshot stays, as a
+          picture of the app rather than a response to anything.
+
+     Both are drawn here in the board's own dark band, at the width the band is
+     actually read at. Fake people. -->
+
+<style>
+  :root{
+    --paper:#111722; --raise:#1A2130; --card:#222B3C;
+    --line:#2C3546; --hair:#222A3A;
+    --ink:#F2F5FA; --ink-2:#B6C2D4; --muted:#8A99B0;
+    --accent:#7D9BFF; --accent-soft:#1E2A47; --accent-ink:#0B0E15;
+    --serif:Georgia,"Songti SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#5A6070;font-family:var(--sans);color:var(--ink);
+    padding:2rem 1rem;display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;
+    align-items:flex-start;-webkit-font-smoothing:antialiased}
+  figure{margin:0;width:min(560px,100%)}
+  .label{color:#EEF0F4;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
+    margin:0 0 .6rem;font-weight:700}
+  figcaption{color:#C8CEDA;font-size:.85rem;line-height:1.6;margin:.8rem 0 0}
+  figcaption b{color:#fff}
+
+  .band{background:var(--paper);border-radius:1rem;padding:2.2rem 1.6rem 2.4rem;
+    text-align:center;overflow:hidden}
+  .big{font-family:var(--serif);font-weight:400;font-size:2.3rem;margin:0 0 1.1rem;
+    line-height:1.05}
+  .say{margin:0 0 1.4rem;font-size:1.1rem;line-height:2.1;color:var(--ink-2)}
+  /* A PILL THAT IS A CONTROL LOOKS LIKE ONE. The caret is the whole difference
+     between "this is emphasis" and "this opens". */
+  .pill{display:inline-flex;align-items:center;gap:.4rem;font-weight:700;
+    font-size:1rem;padding:.3rem .5rem .3rem .9rem;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);cursor:pointer;
+    border:2px solid var(--accent)}
+  .pill s{text-decoration:none;font-size:.7em;opacity:.75}
+  .pill.open{background:var(--paper);color:var(--accent)}
+
+  .menu{position:relative;display:inline-block;text-align:left;vertical-align:middle}
+  .drop{position:absolute;left:0;top:calc(100% + .4rem);z-index:5;min-width:12rem;
+    background:var(--card);border:1px solid var(--line);border-radius:.8rem;
+    padding:.35rem;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+  .drop b{display:block;padding:.5rem .7rem;border-radius:.55rem;font-weight:400;
+    font-size:.95rem;color:var(--ink-2);white-space:nowrap}
+  .drop b.on{background:var(--accent);color:var(--accent-ink);font-weight:700}
+
+  /* ---- A: a drawn card that answers whatever was picked ------------------ */
+  .answer{margin:12rem auto 0;width:270px;background:var(--card);
+    border:1px solid var(--line);border-radius:1rem;padding:.8rem;text-align:left}
+  .answer .face{height:6.5rem;border-radius:.7rem;display:grid;place-items:center;
+    background:linear-gradient(150deg,hsl(196 26% 62%),hsl(210 24% 40%));
+    font-family:var(--serif);font-size:2.6rem;color:rgba(255,255,255,.85)}
+  .answer .nm{margin:.6rem 0 0;display:flex;align-items:baseline;gap:.45rem}
+  .answer .nm b{font-family:var(--serif);font-weight:400;font-size:1.15rem}
+  .answer .nm small{color:var(--muted);font-size:.78rem}
+  .answer .ln{margin:.45rem 0 0;font-size:.84rem;color:var(--ink-2);
+    display:flex;flex-wrap:wrap;gap:.28rem;align-items:center}
+  .answer .ln i{font-style:normal;font-weight:700;font-size:.78rem;padding:.16rem .5rem;
+    border-radius:99px;background:var(--accent);color:var(--accent-ink)}
+  .answer .go{display:block;margin:.7rem 0 0;text-align:center;padding:.5rem;
+    border-radius:99px;background:var(--accent);color:var(--accent-ink);font-weight:700;
+    font-size:.9rem}
+
+  /* ---- B: the real screenshot, and a button that carries the pick -------- */
+  .shot{display:block;margin:12rem auto 0;width:230px;height:auto;border-radius:1rem;
+    box-shadow:0 16px 40px rgba(0,0,0,.45)}
+  .cta{display:inline-block;margin:1.4rem 0 0;padding:.85rem 1.6rem;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:1.02rem}
+  .under{margin:.7rem 0 0;font-size:.9rem;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- ====================================================================== A -->
+<figure>
+  <p class="label">A · The card answers you</p>
+  <div class="band">
+    <h2 class="big">LinkedIn &times; Tinder.</h2>
+    <p class="say">You say one line &mdash; I am
+      <span class="menu">
+        <span class="pill open">a Manufacturer <s>&#9662;</s></span>
+        <span class="drop">
+          <b>a Founder</b><b>an Agent</b><b class="on">a Manufacturer</b><b>a Writer</b>
+        </span>
+      </span>
+      looking for <span class="pill">a Buyer <s>&#9662;</s></span>
+      &mdash; and it finds the people who said the other half.</p>
+
+    <!-- The card is drawn, so it can be anybody. Pick a manufacturer and a
+         buyer appears; pick a writer and a producer does. -->
+    <div class="answer">
+      <div class="face">h</div>
+      <p class="nm"><b>Hui</b><small>Guangzhou</small></p>
+      <p class="ln"><span>I am</span><i>a Buyer</i><span>looking for</span><i>a Manufacturer</i></p>
+      <span class="go">Follow</span>
+    </div>
+  </div>
+  <figcaption><b>The mechanic, demonstrated.</b> Whatever they pick, somebody
+  who said the other half appears underneath. Always coherent, and the page
+  does the thing instead of describing it. The cost is real: this is a drawing,
+  and a drawing of an app is what every other startup landing page shows. The
+  screenshot is what makes ours look like it exists.</figcaption>
+</figure>
+
+<!-- ====================================================================== B -->
+<figure>
+  <p class="label">B · It fills in the form</p>
+  <div class="band">
+    <h2 class="big">LinkedIn &times; Tinder.</h2>
+    <p class="say">You say one line &mdash; I am
+      <span class="menu">
+        <span class="pill open">a Manufacturer <s>&#9662;</s></span>
+        <span class="drop">
+          <b>a Founder</b><b>an Agent</b><b class="on">a Manufacturer</b><b>a Writer</b>
+        </span>
+      </span>
+      looking for <span class="pill">a Buyer <s>&#9662;</s></span>
+      &mdash; and it finds the people who said the other half.</p>
+
+    <img class="shot" src="../../board/public/frame-2.png" alt="" width="585" height="1170">
+    <p><span class="cta">Get on the list as a Manufacturer</span></p>
+    <p class="under">Takes them to the form with Trade &amp; factories already ticked.</p>
+  </div>
+  <figcaption><b>The pick does something you want.</b> It is the only control
+  on the page and it now leads to the one thing this page exists for. The
+  screenshot stays and stops pretending to be a response &mdash; it is a picture
+  of the app, which is what it always was. Cheaper to build, and it cannot
+  contradict itself.</figcaption>
+</figure>
+
+</body>
+</html>
