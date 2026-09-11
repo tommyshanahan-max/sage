@@ -545,13 +545,14 @@ export const STRINGS = {
      been the dictionary word and reads like software. 不是名录 — not a
      directory — is the same half of the line as "not listed", and 名录 is the
      word for exactly the kind of book this is not.
-     Then Tom asked for "for professionals" in place of "not listed", and it
-     is his line to pick. Noting the trade so nobody re-derives it: "not
-     listed" said a thing a reader can check against the page — there is no
-     directory here and nobody is findable — where "for professionals" is a
-     claim every product aimed at work makes about itself. The half that does
-     the work either way is "Matched". */
-  "land.eyebrow":      ["Matched, for professionals", "专业人士 · 互相看对眼才算"],
+     It read "for professionals" for a few minutes. Both halves of an eyebrow
+     have to earn their place, and that one did not: "not listed" is a thing a
+     reader can check against this page — there is no directory here and
+     nobody is findable in one — where "for professionals" is a claim every
+     product aimed at work makes about itself, and a reader has no way to
+     agree or disagree with it. The half doing the work is "Matched" either
+     way; the second half is the one that has to say something. */
+  "land.eyebrow":      ["Matched, not listed", "不是名录 · 互相看对眼才算"],
   /* THE HEADLINE IS THE BLANK, and the blank is the product.
      It was a line out of a deck ("the room you keep asking people for"), which
      needed the slide before it to make sense, and then a plain description,
