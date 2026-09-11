@@ -2450,6 +2450,10 @@ export const STRINGS = {
                         "邀请制，每个名字都有人亲自看。"],
   "ag.ask":            ["I am looking for agents to work with.",
                         "我在找可以合作的经纪人。"],
+  "ag.shot1":          ["A person on the board, with the line they wrote",
+                        "板子上的一个人，和他写的那句话"],
+  "ag.shot2":          ["The two pills that set your own line",
+                        "设置你自己那句话的两个选项"],
   "join.hasGo":        ["Use it", "去输入"],
   /* THE DECK'S OWN WORD FOR IT. The buddies list keeps "Follow", where it is
      true: that is a list of people you are reading. On a stranger's face the

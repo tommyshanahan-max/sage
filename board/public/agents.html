@@ -122,12 +122,16 @@
   </div>
   <p class="asub" style="margin-top:.8rem" id="agafter"></p>
 
+  <!-- THE PICTURES ARE IN A LANGUAGE TOO, and that was missed: the page moved
+       to Chinese and the two screenshots of the app stayed in English, which
+       is the one place on the page a reader would look to check the app is
+       actually in their language. Swapped with everything else — see paint. -->
   <div class="ashots">
     <figure>
-      <img src="/a-browse.png" alt="A person on the board, with the line they wrote" loading="lazy">
+      <img id="agshot1" src="/a-browse.png" alt="" loading="lazy">
     </figure>
     <figure>
-      <img src="/a-say.png" alt="The two pills that set your own line" loading="lazy">
+      <img id="agshot2" src="/a-say.png" alt="" loading="lazy">
     </figure>
   </div>
 
@@ -162,6 +166,11 @@ function paint() {
                    "after", "ruleA", "ruleB", "ask"]) {
     $("ag" + k).textContent = T("ag." + k);
   }
+  const zh = lang() === "zh";
+  $("agshot1").src = zh ? "/a-browse-zh.png" : "/a-browse.png";
+  $("agshot2").src = zh ? "/a-say-zh.png" : "/a-say.png";
+  $("agshot1").alt = T("ag.shot1");
+  $("agshot2").alt = T("ag.shot2");
   $("has").textContent = "";
   $("has").append(document.createTextNode(T("join.has") + " "));
   const b = document.createElement("b");

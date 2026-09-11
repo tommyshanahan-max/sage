@@ -299,7 +299,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|r\/|o(?:\/|$)|join|agents|a-browse\.png|a-say\.png|about|rules|privacy|level|type|room|api\/enter|api\/admitted|api\/hello|api\/offer|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|r\/|o(?:\/|$)|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|about|rules|privacy|level|type|room|api\/enter|api\/admitted|api\/hello|api\/offer|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
