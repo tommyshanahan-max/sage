@@ -1555,6 +1555,12 @@
   .queue{margin:1.6rem 0 1.2rem;background:var(--raise);
     border:1px solid var(--line);border-radius:1.1rem;box-shadow:var(--shadow);
     overflow:hidden}
+  /* A line, not a card. It sits under the rotation and above the room, quiet
+     until somebody is looking for it. */
+  .backline{display:block;width:100%;margin:.5rem 0 0;padding:.55rem 0;
+    border:0;background:none;color:var(--muted);font:inherit;font-size:.88rem;
+    text-align:center}
+  .backline b{color:var(--accent);font-weight:500;margin-left:.35rem}
   .qtoggle{display:flex;width:100%;align-items:center;gap:.75rem;
     padding:.95rem 1.05rem .8rem;color:var(--ink);text-align:left}
   /* The number, in the accent circle, at the size of a fact. */
@@ -1818,12 +1824,27 @@
          opens the real control. See drawSetts. -->
     <div class="setts" id="setts">
       <span class="lab" id="settslab"></span>
-      <div class="settrow">
+      <div class="settrow" id="incogrow">
         <div>
           <b id="incoglab"></b>
           <small id="incogwhy"></small>
         </div>
         <button class="settgo" type="button" id="incoggo"></button>
+      </div>
+      <!-- THE WAY BACK, REPORTED WHERE SETTINGS ARE LOOKED FOR.
+           The control is one question at the end of the profile form and stays
+           there — two boxes for one address is how a profile ends up
+           disagreeing with itself. This is the row that says which state it is
+           in and opens that one, the same as the row above it does for Browse.
+           It is here because the bell is on every screen and a form is not:
+           somebody wanting to check whether they can get back in should not
+           have to open an editor to find out. -->
+      <div class="settrow">
+        <div>
+          <b id="maillab"></b>
+          <small id="mailwhy"></small>
+        </div>
+        <button class="settgo" type="button" id="mailgo"></button>
       </div>
     </div>
 
@@ -1997,6 +2018,18 @@
        on it. One row rather than the four hundred pixels it cost before, and
        it is gone the moment there is a photo. -->
   <button class="mine" type="button" id="mine" hidden></button>
+  <!-- THE OTHER HALF OF "SET UP YOUR PAGE".
+       A browser with no page is either somebody who has never been here or a
+       member on a phone they have not used before, and from the outside those
+       two are identical. The board only ever spoke to the first of them: the
+       way back was at the bottom of a form you open by pressing "set up your
+       page", which is the wrong sentence for somebody who already has one.
+
+       Not a card in the rotation on the feed — that shows one thing and hides
+       the rest behind an arrow, which is right for things somebody might do
+       and wrong for the only thing that gets a member back. Here, on the
+       screen everybody lands on, for exactly as long as it is true. -->
+  <button class="backline" id="backline" type="button" hidden></button>
   <!-- WHO IS OUTSIDE, ABOVE THE FIRST FACE.
        It used to sit under the deck, which on a phone is three screens down —
        past every card — and a number nobody scrolls to is a number that does
@@ -3925,6 +3958,21 @@ async function drawTutor() {
     wrap.append(b);
     return wrap;
   };
+
+  /* THE WAY BACK, ON THE FIRST SCREEN. Shown on exactly the same condition as
+     "set up your page" below, and beside it rather than inside the rotation —
+     see the note on the element. */
+  const back = $("backline");
+  if (back) {
+    const nobody = !(ME && ME.handle);
+    back.hidden = !nobody;
+    if (nobody) {
+      fill(back);
+      back.append(document.createTextNode(T("tut.back")),
+        el("b", null, T("tut.backGo")));
+      if (!back.dataset.on) { back.dataset.on = "1"; back.addEventListener("click", openIn); }
+    }
+  }
 
   // Only offered while there is nothing there. Telling somebody with a filled
   // profile to fill their profile is the fastest way to stop being read.
@@ -6384,10 +6432,23 @@ function drawSetts() {
    * Being HIDDEN is worth saying, every time, because it is the state where
    * nothing works and nobody can see why — so the row stays for exactly that
    * case. Turning it back on is in the profile form either way. */
+  /* TWO ROWS NOW, AND THEY APPEAR ON DIFFERENT CONDITIONS — so the block is
+     shown when either of them has something to say, and each row decides for
+     itself. It was one row and one condition, and adding the second under it
+     meant the way back in was invisible to everybody who was not also hidden
+     from Browse: which is nearly everybody, and exactly the people asking
+     where it had gone. */
   const hidden = Boolean(ME && ME.handle && !ME.looking);
-  $("setts").hidden = !hidden;
-  if (!hidden) return;
+  const member = Boolean(ME && ME.handle);
+  $("setts").hidden = !member;
+  if (!member) return;
+  $("incogrow").hidden = !hidden;
   $("settslab").textContent = T("set.head");
+  if (hidden) drawIncog();
+  drawMailRow();
+}
+
+function drawIncog() {
   /* IT SAID "COMING SOON" NEXT TO A CONTROL THAT ALREADY WORKS.
      "Show me in Browse" has been a real tick box in the profile form the
      whole time, so a row in the tray promising the same thing later was the
@@ -6412,6 +6473,41 @@ function drawSetts() {
       const tray = $("notif");
       if (tray) tray.hidden = true;
       openMe();
+    });
+  }
+
+}
+
+/* THE WAY BACK, SAID IN THE STATE IT IS IN. Same shape as the row above it:
+ * what is true now, and a button that opens the one control.
+ *
+ * UNLIKE THAT ROW, IT IS HERE EVERY TIME. The rule next door is "only when it
+ * is news", and it is the right rule for a state somebody chose. This is not
+ * a state, it is the answer to "can I get back in if I lose this phone" — and
+ * a row that only appears while the answer is no is a row nobody can find on
+ * the day they want to change the address. The address itself is the label,
+ * because "an address is saved" leaves somebody wondering which of theirs, and
+ * nobody but its owner ever sees this tray. */
+function drawMailRow() {
+  // Not `has` — that is a helper this file already has, and shadowing it
+  // inside a function that may one day call it is a bug waiting to be written.
+  const gotMail = Boolean(ME && ME.mail);
+  $("maillab").textContent = gotMail ? ME.mail : T("set.mailNo");
+  $("mailwhy").textContent = T(gotMail ? "set.mailYesWhy" : "set.mailNoWhy");
+  $("mailgo").textContent = T(gotMail ? "set.mailChange" : "set.mailAdd");
+  if (!$("mailgo").dataset.on) {
+    $("mailgo").dataset.on = "1";
+    $("mailgo").addEventListener("click", () => {
+      const tray = $("notif");
+      if (tray) tray.hidden = true;
+      openMe();
+      /* Straight to the question rather than the top of a long form — it is
+         the last thing on it, and a form that opens above the thing somebody
+         tapped for is a form they have to hunt through twice. */
+      setTimeout(() => {
+        $("mailbox")?.scrollIntoView({ block: "center", behavior: "smooth" });
+        $("mailin")?.focus({ preventScroll: true });
+      }, 120);
     });
   }
 }

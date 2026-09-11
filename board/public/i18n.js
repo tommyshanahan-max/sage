@@ -1394,6 +1394,17 @@ export const STRINGS = {
    * assumed: on a board that asks for no phone number and no documents, a box
    * wanting an email needs to say in the same breath where it goes. */
   "mail.title":        ["The way back in", "换手机之后怎么回来"],
+  /* The tray row. It reports rather than asks — see drawSetts — so the label
+     is the address itself when there is one. */
+  "set.mailNo":        ["No way back in", "还没有回来的路"],
+  "set.mailNoWhy": [
+    "Change phone and you would lose this page. An address fixes that.",
+    "换手机就找不回这个主页了。留个邮箱就不会。",
+  ],
+  "set.mailYesWhy":    ["Six digits here gets you back in on any phone.",
+                        "任何手机上，六位数字就能回来。"],
+  "set.mailAdd":       ["Add", "去留"],
+  "set.mailChange":    ["Change", "改"],
   "mail.body": [
     "Leave an address and you can get back in from any phone: we send six digits, and that is the whole of it. Nobody on the board ever sees it.",
     "留个邮箱。以后换手机，我们发你六位数字，你就能回来。板上没有人看得到这个地址。",
@@ -2972,6 +2983,10 @@ export const STRINGS = {
   // where half the buttons lead nowhere teaches people not to press any of them.
   "tut.now":           ["You can do these now", "现在就能做"],
   "tut.setup":         ["Set up your page", "填好你的资料"],
+  /* Beside it, and worded for somebody who does not know the word "key": the
+     question is whether they have been here, not what they are holding. */
+  "tut.back":          ["Been here before?", "以前来过？"],
+  "tut.backGo":        ["Sign in", "登录"],
   "tut.setupWhat":     ["A photo, a name, and a line about you. Two minutes.",
                         "一张照片、一个名字，一句关于你的话。两分钟。"],
   "tut.buddy":         ["Find a study buddy", "找学习搭子"],
