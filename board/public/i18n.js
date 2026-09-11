@@ -499,6 +499,8 @@ export const STRINGS = {
   "door.agentSub":  ["You are in. Next: the people you represent \u2014 drag their files in and they get pages of their own.",
                      "进来了。下一步是把你带的人弄上去——把他们的资料拖进来，一人一个主页。"],
   "door.agentGo":   ["Bring your people on", "把你的人弄上去"],
+  "door.agentSay":  ["Their files are enough \u2014 drag the folder in and it writes the pages. You check them before anybody else sees them.",
+                     "有他们的资料就够了——文件夹拖进去，主页它来写。别人看到之前你先过一遍。"],
 
   "run.count":      ["{show} of {all} showing in Browse. Your own page shows all of them.",
                      "{all} 个人里有 {show} 个在「逛逛」能刷到。你自己的主页上他们都在。"],

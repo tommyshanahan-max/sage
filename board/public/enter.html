@@ -710,6 +710,16 @@ function showIn(by, agent) {
   if (agent) {
     $("ingo").href = "/onboard";
     $("ingo").textContent = T("door.agentGo");
+    /* AND THE LINE ABOVE THE BUTTON, which is the one that was still wrong
+       after the subtitle and the button were right: "a photo, a name and a
+       line about you — two minutes and the others can find you" is written for
+       somebody joining as themselves. An agent is not two minutes from being
+       findable, they are a folder away from nine people being findable, and
+       telling them to fill in their own profile first is the detour that
+       loses them. The advice about an address stays: it is true of everybody,
+       and an agent with no way back is an agent who loses nine pages. */
+    $("insay").textContent = T("door.agentSay");
+    $("inzh").hidden = true;
   }
   $("insub").textContent = agent ? T("door.agentSub")
     : by ? T("door.byWho", { who: by }) : T("door.inSub");
