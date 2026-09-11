@@ -987,6 +987,20 @@ whats-new: ## Tell the agent what changed, without a restart
 	sh scripts/whats-new.sh
 
 check: ## Verify the sites resolve and the numbers page finishes drawing
+	@# THIS .env FIRST, because it is the file that can be wrong tonight.
+	@#
+	@# This target checked two synthetic presets and not the deployment, which
+	@# made it a trap rather than a check: it is the one somebody runs by name
+	@# before touching a hostname, it printed a screen of green, and every line
+	@# of it was about a .localhost fallback. The real run already happened
+	@# inside `make up`, so nothing was ever deployed past a collision — but
+	@# somebody reading this output would have believed they had checked the
+	@# thing they had not checked, which is worse than no check at all.
+	@#
+	@# Both, in this order. The presets still earn their place: they are the
+	@# only way to catch a collision that appears when an optional site is
+	@# switched on later, on a box where it is off today.
+	@test -f .env && python3 scripts/check-sites.py .env || 	  echo "no .env here — skipping the deployment's own file"
 	python3 scripts/check-sites.py
 	@# A render that throws halfway leaves the page looking like one whose data
 	@# never arrived, which sends the hunt to the server and the network before
