@@ -246,11 +246,27 @@ already exists.
 claim Andy makes with his own name attached to it. A face is a different thing,
 and before photographs go up there should be a confirmation link he sends her.
 
-**The open decision: a cap.** Ten agents with ten accounts each is a hundred
-cards and ten people, and Browse stops being a room and becomes a catalogue
-with one agency's stock in it. Three to five keeps it a room and makes an agent
-put up their best rather than their whole list, which serves the producer too.
-Pick a number before the first agent asks for the eleventh.
+**The cap is on what is SHOWING, not on what he holds.** Decided, and it is the
+better half of the idea. Andy may manage as many accounts as he likes; **five**
+are up in Browse at a time and he rotates them.
+
+A hard limit on the roster would mean an agent with thirty actors cannot use
+the board for his roster and does not bother. Thirty cards from one agency in a
+room of forty people turns Browse into a catalogue. Capping what shows turns
+the constraint into curation instead of a wall: nobody pitches thirty people
+for a role, they pitch the three who fit, so this is what an agent does anyway
+and the producer meets five considered cards rather than a scroll of stock.
+
+Five because a casting shortlist is three to five. Past that a producer sees
+"Represented by Andy" on every card and the room stops feeling like a room.
+
+**A number set per member, not a law in the code.** Default five, raisable.
+Then an agent who is actually working can be given eight without a deploy, and
+somebody whose five never get followed can quietly be dropped to two.
+
+One consequence worth liking: **what an agent chooses to show becomes a
+signal.** Five that are always the right five is worth more to him than thirty
+nobody scrolls past.
 
 ## Soon — money
 
