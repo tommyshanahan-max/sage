@@ -519,12 +519,17 @@ export const STRINGS = {
      nobody there. 找人、找钱、找项目 — find the person, find the money, find
      the project — is the same promise in the words that are used. */
   "land.eyebrow":      ["Shark Tank × LinkedIn × Tinder", "找人 · 找钱 · 找项目"],
-  /* IT WAS "The room you keep asking people for", which is a line out of a
-     deck: the slide before it said "you keep asking people who they know", and
-     without that setup it is a riddle — what room, asking who, for what. A
-     headline over a form has one job, which is to say what the place is. */
-  "land.head":         ["A private room for people doing business in China",
-                        "一个做生意的人的私密圈子，在中国"],
+  /* THE HEADLINE IS THE BLANK, and the blank is the product.
+     It was a line out of a deck ("the room you keep asking people for"), which
+     needed the slide before it to make sense, and then a plain description,
+     which said what the place is and nothing about what you do there. This is
+     the thing itself: the sentence the whole board runs on, with the half that
+     is about you left open — and the demonstration two lines below fills the
+     same blank in, so the headline is a question the page immediately answers.
+     The Chinese keeps the blank in the same place. It reads as an unfinished
+     sentence in both, which is the point. */
+  "land.head":         ["Find your ______ to do business with",
+                        "找到你的 ______，一起做生意"],
   /* WHAT IT COSTS TO BE IN IT, said where somebody decides whether to bother.
      It was on the form further down and in the door's own words, both of which
      come after that decision. A private room is the product; saying so late
@@ -532,9 +537,16 @@ export const STRINGS = {
      "Somebody already inside decides" and not "we decide": the second is a
      company with a policy, the first is a club — and the first is what
      actually happens, because a member vouching is how anybody gets in. */
+  /* WHAT KIND OF PLACE IT IS, in the two facts that make it different from a
+     directory: you say a line rather than upload a CV, and nobody is in here
+     who was not let in by somebody who already is.
+     "let in by somebody already in" rather than "we screen everybody": the
+     second is a company with a policy, the first is a club — and the first is
+     what actually happens. It is also the honest version of "quality people":
+     nobody is vetted, somebody is vouched for, and those are different claims. */
   "land.only": [
-    "Invite only. Somebody already inside decides who comes in.",
-    "只能被邀请进来。放谁进来，由已经在里面的人决定。"],
+    "One line instead of a CV. Invite only — everybody here was let in by somebody already in.",
+    "写一句话就行，不用简历。只能被邀请进来——这里的每个人，都是里面的人放进来的。"],
   /* The frames. Said as what the screen IS, not as a caption about it. */
   "land.frames":       ["What it looks like", "长这个样子"],
   "land.frameBrowse": [
