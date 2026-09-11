@@ -2213,9 +2213,13 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
        opt out of a promise the page already made on its behalf by leaving a
        field off. Rows written before that wording changed have no flag and
        stay invisible; see the note on `shown` in cleanWait. */
+    /* quiet IS taken from the request, and shown is not. See the note on
+       `quiet` in cleanWait: it can only ever hide the sender from other people
+       waiting, so a browser sending it is asking for less and not more. */
     const row = store.cleanWait({ name, reach, why: req.body?.why,
       room: req.body?.room, by: me, via: from ? from.id : "",
-      fromWait: wfrom ? wfrom.id : "", shown: true });
+      fromWait: wfrom ? wfrom.id : "", shown: true,
+      quiet: req.body?.quiet === true });
     if (!row) return { error: "both" };
     /* CHANGING THE ANSWER MUST NOT EMPTY THE CARD. This replaces the row
        rather than merging into it, which is right for the three things the
@@ -2370,7 +2374,10 @@ app.get("/api/wait/me", async (req, res) => {
      feel that the queue is real; the rest goes to the members, who are the
      ones it was written for. */
   const others = open
-    .filter((w) => w.shown && w.by !== me)
+    // `quiet` goes out here and stays in /api/queue — see cleanWait. The
+    // people inside can vouch for a name; the people beside you in the queue
+    // can only read it, and on some doors they are your competition.
+    .filter((w) => w.shown && !w.quiet && w.by !== me)
     .slice(0, 60)
     .map((w) => ({ name: w.name, room: w.room,
       // Released only. An id nobody can guess is not a reason to hand out one

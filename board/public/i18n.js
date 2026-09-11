@@ -638,6 +638,14 @@ export const STRINGS = {
     "Members and the others waiting see your name and your line — that is how somebody brings you in. Your WeChat or email is shown to nobody. Deleted either way.",
     "成员和其他在等的人能看到你的名字和这句话——你就是这样被带进来的。微信或邮箱不给任何人看。无论结果如何都会删掉。",
   ],
+  /* THE SAME PROMISE WITH ONE AUDIENCE TAKEN OUT. On a door sent to people who
+     compete with each other, the other names in the queue are the reason not
+     to answer. Members still see it, because somebody has to be able to vouch.
+     See `quiet` in cleanWait and QUIET_PAGES in wait.js. */
+  "wait.noteQuiet": [
+    "Only members see your name and your line — that is how somebody brings you in. Nobody else waiting sees you, and your WeChat or email is shown to nobody. Deleted either way.",
+    "只有成员能看到你的名字和这句话——你就是这样被带进来的。其他在等的人看不到你，微信或邮箱也不给任何人看。无论结果如何都会删掉。",
+  ],
 
   /* ---- the waiting room ---------------------------------------------------
      wr.* and not room.*, which is already the eleven rooms of the board and

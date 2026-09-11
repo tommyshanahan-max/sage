@@ -50,6 +50,22 @@ export function tally(what, room) {
 /** The room a /r/... address names, or "" anywhere else. One place, so the
  *  page, the count and the form cannot come to different conclusions about
  *  which door somebody walked through. */
+/* WHICH DOORS PUT SOMEBODY IN QUIETLY.
+ *
+ * On most of them the other people waiting are strangers with nothing to do
+ * but read. On /agents they are two hundred people from one WeChat group who
+ * compete with each other for the same work, and a list of who else answered
+ * is the one thing that would stop them answering.
+ *
+ * Listed here beside the room map so the two facts about a campaign page —
+ * which room it opens on, and whether its queue is visible — are read from the
+ * same place. The form's fine print changes with it; see wait.noteQuiet. */
+const QUIET_PAGES = ["/agents"];
+export function quietHere() {
+  const here = (location.pathname || "").replace(/\/+$/, "") || "/";
+  return QUIET_PAGES.includes(here);
+}
+
 export function roomFromPath() {
   /* A CAMPAIGN PAGE CARRIES ITS ROOM IN ITS NAME. /agents is one link sent to
      one group of film agents; making them pick Film & TV out of five options
@@ -245,7 +261,7 @@ export function waitBox() {
    * It belongs on the step where they are actually typing a way to reach
    * them. That is the moment the promise is being made, and it is read there
    * because it is about the box under the cursor. */
-  box.append(el("p", "waitnote", T("wait.note")));
+  box.append(el("p", "waitnote", T(quietHere() ? "wait.noteQuiet" : "wait.note")));
 
   const tell = (words, bad) => {
     said.hidden = false;
@@ -263,7 +279,7 @@ export function waitBox() {
         body: JSON.stringify({
           name: name.value.trim(), reach: reach.value.trim(),
           why: why.value.trim(), room, device: device(),
-          via: viaFromUrl(), w: wFromUrl(),
+          via: viaFromUrl(), w: wFromUrl(), quiet: quietHere(),
         }),
       });
       const d = await r.json().catch(() => ({}));

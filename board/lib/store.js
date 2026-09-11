@@ -124,6 +124,24 @@ export function cleanWait(raw) {
      * safe way for this particular field to fail.
      */
     shown: raw.shown === true,
+    /* QUIET: SEEN BY MEMBERS, NOT BY THE QUEUE.
+     *
+     * `shown` is one switch over two different audiences — the people inside,
+     * who can vouch, and the other people waiting, who cannot do anything
+     * except read. That was fine while every door made the same promise. It
+     * stopped being fine the day a page went out to a WeChat group of two
+     * hundred agents: those are competitors, and a list of who else answered
+     * is the one thing that would stop them answering.
+     *
+     * So this splits the audience rather than the promise. A quiet row is in
+     * the members' queue, where somebody can vouch for it, and out of the list
+     * the other waiting people see. The form that sets it says exactly that —
+     * see wait.noteQuiet.
+     *
+     * TAKEN FROM THE REQUEST, unlike `shown`, and that is safe in the one
+     * direction that matters: the only thing a browser can do by sending it is
+     * make ITSELF less visible. There is nothing here to gain by lying. */
+    quiet: raw.quiet === true,
 
     /* WHAT THEY FILLED IN WHILE THEY WAITED.
      *
