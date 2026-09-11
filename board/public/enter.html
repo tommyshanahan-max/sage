@@ -805,6 +805,9 @@ async function siSpend() {
   try { localStorage.setItem("board:device", d.key); } catch { /* private window */ }
   device = d.key;
   siSaid(T("in.done", { who: d.handle || "" }), false);
+  /* Somebody on the waiting list is not being let in — they are being given
+     their place back. This door has nothing to show them; their card does. */
+  if (d.where) { setTimeout(() => location.replace(d.where), 700); return; }
   showIn("");
 }
 

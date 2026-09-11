@@ -322,14 +322,6 @@
   /* The address and its one button on one line, and the input takes whatever
      is left: an email is long and the box has to show the end of it, which is
      where the typo always is. It wraps rather than shrinking past readable. */
-  /* The last question the form asks, and it reads as a question rather than a
-     setting: a rule above it, the ask, why, then the box. */
-  .mailask{margin:1.2rem 0 .2rem;padding-top:1rem;border-top:1px solid var(--hair)}
-  .mailask h3{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
-  .mailask p{margin:.35rem 0 0;font-size:.85rem;line-height:1.55;color:var(--ink-2)}
-  .mailask input{width:100%;margin:.6rem 0 0;border:1px solid var(--line);
-    border-radius:.5rem;padding:.6rem .7rem;font:inherit;font-size:.95rem;
-    background:var(--paper);color:var(--ink)}
   #incode{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
     letter-spacing:.35em;font-size:1.2rem;text-align:center}
 
@@ -2315,21 +2307,6 @@
       <div class="field"><input id="mehere" maxlength="40"></div>
     </div>
 
-    <!-- THE WAY BACK, INSIDE THE FORM AND ABOVE THE BUTTON.
-         It sat under Save with a second Save of its own, which is two saves on
-         one screen and the easier one to walk past — on the single field whose
-         whole job is to still be there in six months. It is part of setting
-         yourself up, so it is part of the form that sets you up, and the one
-         Save saves it.
-         The key stays below the buttons where it was: that is the mechanism,
-         not the question. -->
-    <div class="mailask" id="mailbox">
-      <h3 id="mailtitle"></h3>
-      <p id="mailbody"></p>
-      <input id="mailin" type="email" inputmode="email" autocomplete="email"
-             spellcheck="false" autocapitalize="off">
-    </div>
-
     <div class="row">
       <button class="ghost" type="button" id="meshut"></button>
       <button class="go" type="submit" id="mesave"></button>
@@ -2397,6 +2374,28 @@
       <button class="go" type="submit" id="keygo"></button>
     </div>
     <p class="said" id="keysaid" hidden></p>
+  </form>
+</div>
+
+<!-- THE WAY BACK, ON ITS OWN.
+     It was the last question of the profile form, which put "add a way back
+     in" and "edit your page" behind one screen — and they are not the same
+     act. Somebody tapping this wants to answer one question, not scroll past
+     their university and their languages to find it. One question, one box,
+     one button. -->
+<div class="sheet" id="backsheet" hidden>
+  <form class="card" id="backform">
+    <h2 id="mailtitle"></h2>
+    <p class="hint" id="mailbody"></p>
+    <div class="field">
+      <input id="mailin" type="email" inputmode="email" autocomplete="email"
+             spellcheck="false" autocapitalize="off">
+    </div>
+    <div class="row">
+      <button class="ghost" type="button" id="backshut"></button>
+      <button class="go" type="submit" id="backgo"></button>
+    </div>
+    <p class="said" id="backsaid" hidden></p>
   </form>
 </div>
 
@@ -4446,7 +4445,7 @@ function todoList() {
        that is not about being found: everything else makes somebody easier to
        match, and this one stops them losing all of it on a new phone. Last,
        because nothing is worth keeping until there is something to keep. */
-    ["mail", Boolean(ME && ME.handle) && !has(ME && ME.mail), () => openMe()],
+    ["mail", Boolean(ME && ME.handle) && !has(ME && ME.mail), () => openBack()],
     ["browse", Boolean(ME && ME.handle) && !(ME && ME.looking), () => openMe()],
   ];
   return all.filter((r) => r[1]).map((r) => ({ key: r[0], go: r[2] }));
@@ -6100,14 +6099,8 @@ $("mine").addEventListener("click", () => {
      Read off the row rather than worked out again: the two would drift, and a
      row that asks for one thing and opens another is worse than no row. */
   if ($("mine").dataset.go === "photo") { $("mephoto").click(); return; }
+  if ($("mine").dataset.go === "mail") { openBack(); return; }
   openMe();
-  if ($("mine").dataset.go === "mail") {
-    // Straight to the question. It is the last thing on a long form.
-    setTimeout(() => {
-      $("mailbox")?.scrollIntoView({ block: "center", behavior: "smooth" });
-      $("mailin")?.focus({ preventScroll: true });
-    }, 120);
-  }
 });
 
 function personCard(q, live) {
@@ -6523,14 +6516,7 @@ function drawMailRow() {
     $("mailgo").addEventListener("click", () => {
       const tray = $("notif");
       if (tray) tray.hidden = true;
-      openMe();
-      /* Straight to the question rather than the top of a long form — it is
-         the last thing on it, and a form that opens above the thing somebody
-         tapped for is a form they have to hunt through twice. */
-      setTimeout(() => {
-        $("mailbox")?.scrollIntoView({ block: "center", behavior: "smooth" });
-        $("mailin")?.focus({ preventScroll: true });
-      }, 120);
+      openBack();
     });
   }
 }
@@ -7209,7 +7195,6 @@ function openMe(joining) {
  * is nobody to appeal to if it is lost. That is the price of holding nothing.
  */
 function drawKey() {
-  drawMail();
   $("keytitle").textContent = T("key.title");
   $("keybody").textContent = T("key.body");
   $("keywarn").textContent = T("key.warn");
@@ -7306,18 +7291,58 @@ $("keycopy").addEventListener("click", () => {
  * to it and do exactly what pasting a key does: the browser is handed a key
  * and stores it. One mechanism, a door people recognise.
  * ------------------------------------------------------------------------- */
-function drawMail() {
+/* ONE QUESTION, ON ITS OWN SCREEN.
+ *
+ * It was the last block of the profile form, which meant "add a way back in"
+ * opened "edit your page" — a long form about a university, languages and a
+ * bio, with the one box being asked about at the bottom of it. Those are not
+ * the same act and it read as the wrong screen, because it was.
+ *
+ * Saved through the same route as the rest of a profile: the address is a
+ * field on the person row like any other, and a route of its own would be a
+ * second way to write the same field. */
+function openBack() {
   $("mailtitle").textContent = T("mail.title");
   $("mailbody").textContent = T("mail.body");
   $("mailin").placeholder = T("mail.ph");
+  $("backshut").textContent = T("key.cancel");
+  $("backgo").textContent = T("mail.keep");
   /* Only what the server sent back, never a value this page remembers: the
      address lives on the row, and a box that keeps showing what somebody typed
      after the save was refused is a box that lies about what is stored. */
   $("mailin").value = (ME && ME.mail) || "";
-  // Shown to everybody the form is open for, somebody joining included — it is
-  // one of the questions, not a setting found later by the people who look.
-  $("mailbox").hidden = false;
+  $("backsaid").hidden = true;
+  $("backsheet").hidden = false;
+  $("mailin").focus();
 }
+
+$("backshut").addEventListener("click", () => { $("backsheet").hidden = true; });
+$("backsheet").addEventListener("click", (e) => {
+  if (e.target === $("backsheet")) $("backsheet").hidden = true;
+});
+
+$("backform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const said = $("backsaid");
+  const mail = $("mailin").value.trim().toLowerCase();
+  if (mail && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(mail)) {
+    said.hidden = false; said.classList.add("bad");
+    said.textContent = T("mail.bad");
+    return;
+  }
+  $("backgo").disabled = true;
+  // Empty clears it, which is the only way to take an address off a row.
+  const out = await saveMe({ mail });
+  $("backgo").disabled = false;
+  if (out.error) {
+    said.hidden = false; said.classList.add("bad");
+    said.textContent = out.error === "mailTaken" ? T("mail.taken") : out.error;
+    return;
+  }
+  said.hidden = false; said.classList.remove("bad");
+  said.textContent = T(mail ? "mail.saved" : "mail.cleared");
+  setTimeout(() => { $("backsheet").hidden = true; }, 900);
+});
 
 /* Which of the two steps the sheet is on, and the address it is working with.
    On the sheet rather than read out of the box each time: the address box is
@@ -7439,8 +7464,14 @@ async function inSpend() {
   try { localStorage.setItem("board:device", d.key); } catch { /* private window */ }
   try { if (d.handle) localStorage.setItem("board:who", d.handle); } catch { /* fine */ }
   inSaid(T("in.done", { who: d.handle || T("board.someone") }), false);
-  // Everything on this page was drawn for whoever was here before.
-  setTimeout(() => location.reload(), 800);
+  /* Everything on this page was drawn for whoever was here before, so it
+     starts again rather than repainting eleven things in the right order.
+     `where` is set when the address belonged to somebody on the waiting list
+     rather than a member: their card is not on this page at all. */
+  setTimeout(() => {
+    if (d.where) location.replace(d.where);
+    else location.reload();
+  }, 800);
 }
 
 function openKeySheet() {
@@ -8098,8 +8129,6 @@ $("meform").addEventListener("submit", async (e) => {
     here: $("mehere").value.trim(), goal: $("megoal").value.trim(),
     ig: $("meig").value.trim(),
     li: $("meli").value.trim(),
-    // Empty clears it, which is the only way to take an address off a row.
-    mail: $("mailin").value.trim().toLowerCase(),
   });
   if (out.error) {
     said.hidden = false; said.classList.add("bad");

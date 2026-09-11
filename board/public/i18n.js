@@ -1017,6 +1017,14 @@ export const STRINGS = {
     "Because most people do not save it, you can leave an email address instead. It is used for one thing: sending you six digits so you can get back in on another phone. It is never shown to another member, never sent anywhere else, and nothing on this board is gated on having one.",
     "因为大多数人不会把钥匙存下来，你也可以留一个邮箱地址。它只有一个用处：给你发六位数字，让你换手机之后还能回来。别的会员看不到它，它也不会被发去任何别的地方，而且这里没有任何功能是非留不可的。",
   ],
+  /* The queue has the same problem and no separate box for it — see the note
+     on /api/signin. Said here because it is the one place a contact somebody
+     gave for one purpose is also used for another, and that is exactly the
+     kind of thing this page exists to say out loud. */
+  "pv.pmail4": [
+    "If you are on the waiting list rather than in, the same six digits go to the way of reaching you that you typed on the form, when what you typed was an email address. It puts you back on your own row instead of making a second one. Nothing else is done with it.",
+    "如果你还在等候名单上，同样的六位数字会发到你在表单里填的那个联系方式——前提是你填的是邮箱。它只是把你放回你自己那一行，而不是多出一行。除此之外不会用它做别的。",
+  ],
   "pv.pmail3": [
     "The honest cost: it is an address, held on the same server as everything else, and whoever runs this board can read the file — the same trade a card asks for. Clear the box and it is gone from the row; delete your account and it goes with everything else. Anyone who can read your inbox can become you, which is true of every service that works this way.",
     "老实说代价在哪：那是一个地址，和别的东西存在同一台服务器上，运行这个板的人能看到那个文件——和名片是同一笔交换。把框清空，它就从那一行里消失；把账号删掉，它跟着一起没。谁能看你的邮箱，谁就能变成你——所有这样做的服务都是这样。",
@@ -1410,6 +1418,9 @@ export const STRINGS = {
     "留个邮箱。以后换手机，我们发你六位数字，你就能回来。板上没有人看得到这个地址。",
   ],
   "mail.ph":           ["your@email", "你的邮箱"],
+  "mail.keep":         ["Save it", "存下来"],
+  "mail.saved":        ["Saved.", "存好了。"],
+  "mail.cleared":      ["Removed.", "已经删掉了。"],
   "mail.bad":          ["That does not look like an address.", "这不太像一个邮箱地址。"],
   "mail.taken":        ["Somebody here already uses that address.",
                         "这个地址板上已经有人在用了。"],

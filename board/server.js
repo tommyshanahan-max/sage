@@ -3267,7 +3267,23 @@ app.post("/api/signin", express.json({ limit: "1kb" }), async (req, res) => {
   if (!mailBudget(mail)) return res.json(same);
 
   const board = await store.load(FILE);
-  const mine = board.people.find((q) => q.mail === mail);
+  /* MEMBERS FIRST, THEN THE QUEUE.
+   *
+   * Somebody waiting loses their place the same way a member loses their
+   * page, and worse: they join again, and the list grows a second row with
+   * the same person on it — which is worth nothing to them and worth less
+   * than nothing to whoever reads the queue.
+   *
+   * NO NEW BOX ON THE FORM. A waiting row already carries `reach`, which is
+   * required and is how they asked to be contacted; when what they typed is
+   * an address, it is the address. Forty-six people have already filled that
+   * form in and asking them for a second contact is churn. Whoever typed a
+   * WeChat id there has no door here and still has the code the panel can
+   * mint — see make waiting-key.
+   *
+   * A member wins a tie. They are in; the row is history. */
+  const mine = board.people.find((q) => q.mail === mail)
+    || board.waits.find((w) => !w.done && String(w.reach || "").trim().toLowerCase() === mail);
   // Nothing here uses that address. Answered like every other case, and the
   // work stops: no row written, no mail sent, nothing to time.
   if (!mine) return res.json(same);
@@ -3350,13 +3366,22 @@ app.post("/api/signin/code", express.json({ limit: "1kb" }), async (req, res) =>
       return { error: "bad", left: CODE_TRIES - row.tries };
     }
     const mine = board.people.find((q) => q.mail === mail);
+    /* THE QUEUE, IF NO MEMBER HAS IT — see the note on /api/signin. Their
+       whole identity is `by` on one row, so putting them back is that one
+       field and the waiting cookie, which the caller sets. */
+    const waiting = mine ? null
+      : board.waits.find((w) => !w.done && String(w.reach || "").trim().toLowerCase() === mail);
     // The address left the row while the code was in the air.
-    if (!mine) {
+    if (!mine && !waiting) {
       board.signins = board.signins.filter((v) => v.mail !== mail);
       return { error: "bad" };
     }
-    store.rebind(board, mine.by, to);
     board.signins = board.signins.filter((v) => v.mail !== mail);
+    if (waiting) {
+      waiting.by = to;
+      return { ok: true, handle: waiting.name || "", waiting: true };
+    }
+    store.rebind(board, mine.by, to);
     return { ok: true, handle: mine.handle || "" };
   });
 
@@ -3364,11 +3389,18 @@ app.post("/api/signin/code", express.json({ limit: "1kb" }), async (req, res) =>
   if (out?.error === "spent") return res.status(429).json(out);
   if (out?.error) return res.status(401).json(out);
 
-  /* The cookie, so the server knows them before a single script has run — the
-     same one the door sets, and the reason a signed-in browser is also an
-     admitted one. See the note above OPEN_PATHS. */
-  setCookie(res, to);
-  res.json({ ok: true, key, handle: out.handle });
+  /* THE COOKIE THAT MATCHES WHAT THEY ARE.
+   *
+   * A member gets board_in — the same one the door sets, and the reason a
+   * signed-in browser is also an admitted one; see the note above OPEN_PATHS.
+   * Somebody waiting gets board_wait, which is admission to nothing and is
+   * only how /room finds their card again. Setting the member's cookie for
+   * somebody on the list would let the queue in through the door. */
+  if (out.waiting) setWaitCookie(res, to);
+  else setCookie(res, to);
+  res.json({ ok: true, key, handle: out.handle,
+    // Where the page should take them: their card, or the board.
+    where: out.waiting ? "/room" : "" });
 });
 
 /** My own card, which is mine to read whether or not anybody else may. */
