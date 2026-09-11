@@ -76,15 +76,15 @@
   .doesline{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem;
     font-size:.92rem;line-height:1.75;color:var(--ink)}
   .doesline b{font-weight:400;font-size:.92rem;color:var(--muted)}
-  .doesline i{font-style:normal;font-weight:650;font-size:1.35rem;
-    letter-spacing:-.01em;padding:.34rem 1rem;border-radius:99px;
+  .doesline i{font-style:normal;font-weight:650;font-size:1.2rem;
+    letter-spacing:-.01em;padding:.3rem .9rem;border-radius:99px;
     background:var(--accent);color:var(--accent-ink);white-space:nowrap;
     box-shadow:0 4px 14px rgba(43,85,222,.28)}
   .doeswhy{margin:.7rem 0 0;font-size:1.02rem;line-height:1.55;
     color:var(--ink-2)}
   @media (max-width:380px){
     .doesline{gap:.35rem}
-    .doesline i{font-size:1.18rem;padding:.3rem .8rem}
+    .doesline i{font-size:1.06rem;padding:.28rem .75rem}
   }
   /* And it starts where the question starts. The card centres itself, which
      read as one object among several while the matcher sat above it; now
@@ -156,6 +156,12 @@
   .only{margin:.8rem 0 0;font-size:.95rem;line-height:1.55;color:var(--ink-2);
     max-width:32ch}
   .only b{color:var(--ink);font-weight:600}
+  /* Set in the serif and spaced like a line in a members' book rather than
+     like a statistic. The numbers are the loud part; the words around them
+     stay out of the way. */
+  .fewline{margin:.9rem 0 0;font-family:var(--serif);font-size:1.02rem;
+    line-height:1.6;color:var(--ink-2)}
+  .fewline b{font-weight:400;color:var(--ink)}
   .eyeline{margin:0 0 .55rem;font-size:.76rem;font-weight:600;letter-spacing:.13em;
     text-transform:uppercase;color:var(--accent)}
   :root[data-lang="zh"] .eyeline{text-transform:none;letter-spacing:.06em;font-size:.82rem}
@@ -335,6 +341,13 @@
            further down and in the door's own words — by which point somebody
            has already decided whether to bother. -->
       <p class="only" id="onlyline"></p>
+      <!-- HOW FEW. The page says "invite only" and that is a policy; this is
+           the fact underneath it, and a fact is what makes a policy believed.
+           Drawn only when the server sends both numbers — it withholds the
+           queue below a floor, because a number that small is nearly a name.
+           Never a target and never rounded up: whatever it says tonight is
+           what is actually in the file. -->
+      <p class="fewline" id="fewline" hidden></p>
       <!-- HIGH, not at the bottom of the page. Somebody who has read "invite
            only" is at the exact moment of wanting in; the form was four
            screens below that, which spends the feeling on scrolling. -->
@@ -513,6 +526,22 @@ function drawDoors() {
   }
 }
 
+/* HOW FEW, held here rather than drawn where it arrives. The numbers come
+ * over the network once; the words are rebuilt every time the language
+ * changes, and the two events have nothing to do with each other. */
+let FEW = null;
+function drawFew() {
+  const line = $("fewline");
+  if (!line || !FEW) return;
+  line.replaceChildren();
+  for (const bit of T("land.few").split(/(\{in\}|\{out\})/)) {
+    if (bit === "{in}") line.append(el("b", null, String(FEW.in)));
+    else if (bit === "{out}") line.append(el("b", null, String(FEW.out)));
+    else if (bit) line.append(document.createTextNode(bit));
+  }
+  line.hidden = false;
+}
+
 /* ---- the words ---------------------------------------------------------- */
 function paint() {
   document.title = T("site.title") + " — " + T("land.title");
@@ -522,6 +551,10 @@ function paint() {
   $("ctajoin").textContent = T("land.join");
   $("ctaenter").textContent = T("land.enter");
   $("eyeline").textContent = T("land.eyebrow");
+  // Rebuilt with the words, not only when the numbers land — the language
+  // button calls this, and a line drawn once stays in the language it was
+  // drawn in. The hostess box learnt the same lesson two hours ago.
+  drawFew();
   $("asking").textContent = T("land.head");
   $("onlyline").textContent = T("land.only");
   $("does1").textContent = T("land.does1");
@@ -680,6 +713,14 @@ fetch("/api/hello" + (asked ? "?room=" + encodeURIComponent(asked) : ""))
        question with an error is worse than no box, and the server is the one
        that knows whether the key is configured — see hostess in /api/hello. */
     if (d && d.hostess && !INSIDE) { $("hostess").hidden = false; drawHostess(); }
+    /* HOW FEW, in the hero. Both numbers or neither: "41 inside" on its own
+       is a small company, and "120 waiting" on its own is a queue for nothing.
+       Together they are the only argument for a door that this page can make
+       out of facts rather than adjectives. */
+    if (d && !INSIDE && d.people && d.waiting) {
+      FEW = { in: d.people, out: d.waiting };
+      drawFew();
+    }
     if (!d || !Array.isArray(d.peek) || !d.peek.length) return;
     // A member does not need the feed out of focus. Checked here as well as
     // in the handler below because these two land in whichever order the

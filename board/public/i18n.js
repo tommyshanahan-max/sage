@@ -550,6 +550,15 @@ export const STRINGS = {
      second is a company with a policy, the first is a club — and the first is
      what actually happens. It is also the honest version of "quality people":
      nobody is vetted, somebody is vouched for, and those are different claims. */
+  /* THE FACT UNDER THE POLICY. "Invite only" is something a page says about
+     itself; two numbers are something a reader can check against what they
+     see. Not a boast and never rounded — whatever is in the file tonight.
+     The Chinese is the way it would be said out loud: inside, and outside
+     the door, which is also what the four rooms are called.
+     Both halves or neither. "41 inside" alone is a small company; "120
+     waiting" alone is a queue for nothing. */
+  "land.few":          ["{in} inside. {out} waiting to be let in.",
+                        "里面 {in} 个人，门外 {out} 个在等。"],
   "land.only": [
     "One line instead of a CV. Invite only — everybody here was let in by somebody already in.",
     "写一句话就行，不用简历。只能被邀请进来——这里的每个人，都是里面的人放进来的。"],
@@ -587,9 +596,15 @@ export const STRINGS = {
      placeholders because the two halves are pills and the two joins are not,
      and Chinese puts them in a different order — see .doesline. */
   "land.does1":        ["I am", "我是"],
-  "land.does2":        ["an Agent", "经纪人"],
+  /* THE SAME PAIR THE OTHER TWO STEPS USE. It was an Agent and a Performer,
+     which is a real pair on this board and the wrong one here: step two shows
+     Wei the founder and Elena the investor, and step three is their
+     conversation. A reader met one pair in step one and a different pair
+     immediately after, and had to work out that the sentence was an example
+     rather than the story. One pair, three steps. */
+  "land.does2":        ["a Founder", "创始人"],
   "land.does3":        ["looking for", "在找"],
-  "land.does4":        ["a Performer", "演员"],
+  "land.does4":        ["an Investor", "投资人"],
   /* IT SAID "tells neither of you until you both do" AND THERE WAS NOTHING FOR
      `do` TO POINT AT. The only verb in the sentence is saying your half, which
      the reader has already done, so the condition reads as one they have
