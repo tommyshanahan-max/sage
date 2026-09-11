@@ -4,8 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tom's Coding</title>
-<meta name="description" content="Personal workspace.">
+<meta name="description" content="Making ideas real. Small products, built where they are used.">
+<meta name="theme-color" content="#0B0D13">
 <!--
+  THE FRONT OF IT, AND WHO IT IS FOR.
+
+  This page was a dashboard: workspaces, a second seat, a browser in Tokyo, an
+  agent, and a round-trip figure at the top. All of that is real and useful and
+  none of it is for a visitor — it is the inside of a machine, on the address a
+  stranger types when somebody mentions what Tom builds.
+
+  So the products are the page and the machine is behind one word at the
+  bottom. Everything that was here is still here; it is one tap away instead of
+  first.
+
+  A NOTE ON WHAT "HIDDEN" MEANS. The admin panel is tidiness, not a lock: the
+  hostnames are in this file and anybody can read them. What protects those
+  services is that every one of them asks for a sign-in. Nothing on this page
+  is or has ever been a credential.
+
   No web fonts, no CDN, no analytics, no external anything. Google Fonts and
   most CDNs are unreachable from mainland China, and one blocked stylesheet
   leaves a visitor on an unstyled page. Every byte here is same-origin.
@@ -14,146 +31,193 @@
   Character without a download.
 -->
 <style>
+  /* DARK FIRST, AND LIGHT IS NOT AN AFTERTHOUGHT. The complete palette is on
+     bare :root so an un-stamped document — which is most of them, since
+     "system" stamps nothing — has every colour it needs. The two blocks under
+     it only redefine tokens. */
   :root{
-    --paper:#eef1f5;
-    --card:#fbfcfd;
-    --card-2:#f4f6f9;
-    --ink:#10192b;
-    --ink-2:#45536b;
-    --muted:#7d8ba0;
-    --rule:#dae0e9;
-    --gold:#a8761f;
-    --gold-soft:#f6efdf;
-    --live:#1f7a55;
-    --live-soft:#e2f1ea;
-    --down:#a8442f;
-    --down-soft:#f8e9e5;
+    --paper:#0B0D13;
+    --paper-2:#11141C;
+    --card:#151925;
+    --edge:#232838;
+    --ink:#F2F4F8;
+    --ink-2:#A8B0C2;
+    --muted:#6F788C;
+    --gold:#D9A94E;
+    --live:#4FC48C;
+    --down:#E08A72;
     --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;
     --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
            "Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB",
            "Microsoft YaHei",sans-serif;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
-  @media (prefers-color-scheme:dark){
-    :root:not([data-theme="light"]){
-      --paper:#0e1219;
-      --card:#161b24;
-      --card-2:#1b2029;
-      --ink:#e8ecf3;
-      --ink-2:#a6b1c2;
-      --muted:#77839a;
-      --rule:#242b36;
-      --gold:#d9a94e;
-      --gold-soft:#2a2213;
-      --live:#4fc48c;
-      --live-soft:#122a20;
-      --down:#e08a72;
-      --down-soft:#2c1a16;
+  @media (prefers-color-scheme:light){
+    :root:not([data-theme="dark"]){
+      --paper:#EFF1F5;
+      --paper-2:#FFFFFF;
+      --card:#FBFCFD;
+      --edge:#DDE2EA;
+      --ink:#0F1520;
+      --ink-2:#45536B;
+      --muted:#7D8BA0;
+      --gold:#9A6A15;
+      --live:#1F7A55;
+      --down:#A8442F;
     }
   }
-  :root[data-theme="dark"]{
-    --paper:#0e1219; --card:#161b24; --card-2:#1b2029; --ink:#e8ecf3;
-    --ink-2:#a6b1c2; --muted:#77839a; --rule:#242b36; --gold:#d9a94e;
-    --gold-soft:#2a2213; --live:#4fc48c; --live-soft:#122a20;
-    --down:#e08a72; --down-soft:#2c1a16;
+  :root[data-theme="light"]{
+    --paper:#EFF1F5; --paper-2:#FFFFFF; --card:#FBFCFD; --edge:#DDE2EA;
+    --ink:#0F1520; --ink-2:#45536B; --muted:#7D8BA0; --gold:#9A6A15;
+    --live:#1F7A55; --down:#A8442F;
   }
 
   *{box-sizing:border-box}
+  /* A display rule beats the hidden attribute's own display:none, and #panel
+     is a flex column — so the panel this page exists to put away was on the
+     screen at every paint. Once, at the top, for everything. */
+  [hidden]{display:none!important}
   html{-webkit-text-size-adjust:100%}
   body{
     margin:0;min-height:100vh;
-    padding:clamp(2.75rem,8vw,6rem) clamp(1.1rem,5vw,2rem) 4rem;
+    /* One gutter, set once, and vertical padding that cannot zero it. */
+    padding-block:clamp(2.5rem,7vw,5rem) 3rem;
+    padding-inline:clamp(1.1rem,5vw,2rem);
     background:var(--paper);color:var(--ink);
     font-family:var(--sans);font-size:16px;line-height:1.6;
     -webkit-font-smoothing:antialiased;
   }
-  main{max-width:41rem;margin:0 auto;display:flex;flex-direction:column;gap:2.5rem}
+  main{max-width:46rem;margin:0 auto;display:flex;flex-direction:column;gap:clamp(2.6rem,7vw,4rem)}
 
-  /* ---------- masthead: the link is the thesis ---------- */
-  .mast{display:flex;flex-direction:column;gap:1.4rem}
-  h1{
+  /* ---------- the name, small ---------- */
+  .mast{display:flex;align-items:baseline;gap:.9rem;flex-wrap:wrap}
+  .mast h1{
     margin:0;font-family:var(--serif);font-weight:400;
-    font-size:clamp(2.4rem,8vw,3.6rem);line-height:1;letter-spacing:-.02em;
+    font-size:1.1rem;letter-spacing:-.01em;
   }
-  h1 em{font-style:italic;color:var(--gold)}
+  .mast h1 em{font-style:italic;color:var(--gold)}
+  .mast p{margin:0;font-size:.85rem;color:var(--muted)}
 
-  .link{
-    display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;
-    padding:.8rem 1rem;border:1px solid var(--rule);border-radius:10px;
-    background:var(--card);
+  /* ---------- the one sentence ---------- */
+  .say{
+    margin:0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(2rem,7.5vw,3.1rem);line-height:1.08;letter-spacing:-.025em;
+    text-wrap:balance;max-width:18ch;
   }
-  .pulse{
-    width:9px;height:9px;border-radius:50%;flex:none;
-    background:var(--muted);box-shadow:0 0 0 0 transparent;
-  }
-  .pulse.live{background:var(--live);animation:beat 2.6s ease-out infinite}
-  .pulse.down{background:var(--down)}
-  @keyframes beat{
-    0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--live) 55%,transparent)}
-    70%,100%{box-shadow:0 0 0 7px transparent}
-  }
-  .link .where{font-size:.9rem;color:var(--ink-2)}
-  .link .rtt{
-    margin-left:auto;font-family:var(--mono);font-variant-numeric:tabular-nums;
-    font-size:1.05rem;color:var(--ink);
-  }
-  .link .rtt small{font-size:.68em;color:var(--muted);margin-left:.15rem}
-  .link button{
-    font:inherit;font-size:.78rem;color:var(--muted);background:none;
-    border:1px solid var(--rule);border-radius:6px;padding:.2rem .55rem;cursor:pointer;
-  }
-  .link button:hover{color:var(--gold);border-color:var(--gold)}
-  .link button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .say em{font-style:italic;color:var(--gold)}
+  .sub{margin:1rem 0 0;font-size:1rem;color:var(--ink-2);max-width:34ch}
 
-  /* ---------- services ---------- */
-  h2{
-    margin:0 0 .85rem;font-family:var(--sans);font-size:.7rem;font-weight:600;
-    letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
+  /* ---------- the products ---------- */
+  .eyebrow{
+    margin:0 0 1rem;font-size:.68rem;font-weight:600;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--muted);
   }
-  .rows{display:flex;flex-direction:column;gap:.6rem}
-  .row{
-    display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;
-    padding:1rem 1.15rem;background:var(--card);
-    border:1px solid var(--rule);border-radius:11px;
-    text-decoration:none;color:inherit;
-    transition:border-color .16s ease,transform .16s ease,background .16s ease;
+  .apps{display:grid;gap:.9rem;grid-template-columns:1fr}
+  @media (min-width:40rem){ .apps{grid-template-columns:1fr 1fr} }
+
+  /* A tile is a link, a mark, a name, a line, and where it lives. The accent
+     is per product and set inline from the list below, so adding one is a row
+     of data rather than a new rule. */
+  .app{
+    position:relative;display:flex;flex-direction:column;gap:.55rem;
+    padding:1.5rem 1.4rem 1.3rem;border-radius:16px;
+    background:var(--card);border:1px solid var(--edge);
+    text-decoration:none;color:inherit;overflow:hidden;
+    transition:border-color .18s ease,transform .18s ease;
   }
-  .row:hover,.row:focus-visible{border-color:var(--gold);transform:translateY(-1px)}
-  .row:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-  .row .name{
-    font-family:var(--serif);font-size:1.22rem;line-height:1.25;letter-spacing:-.01em;
-    display:flex;align-items:baseline;gap:.5rem;
+  /* The wash is the only decoration, and it is the product's own colour. */
+  .app::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 90% at 0% 0%,
+      color-mix(in srgb,var(--tint) 16%,transparent),transparent 62%);
   }
-  .row .name .arrow{font-family:var(--sans);font-size:.8rem;color:var(--muted)}
-  .row:hover .name .arrow{color:var(--gold)}
-  .row .desc{font-size:.85rem;color:var(--muted);margin-top:.15rem;line-height:1.45}
-  .row .host{
-    display:block;font-family:var(--mono);font-size:.74rem;color:var(--ink-2);
-    margin-top:.45rem;
+  .app:hover,.app:focus-visible{border-color:var(--tint);transform:translateY(-2px)}
+  .app:focus-visible{outline:2px solid var(--tint);outline-offset:3px}
+  .app>*{position:relative}
+  .app .mark{
+    width:2.6rem;height:2.6rem;border-radius:12px;flex:none;
+    display:grid;place-items:center;background:var(--tint);color:#0B0D13;
+    font-family:var(--serif);font-size:1.2rem;line-height:1;
   }
-  .state{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;flex:none}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+  .app .mark svg{width:1.3rem;height:1.3rem;display:block}
+  .app h3{
+    margin:.35rem 0 0;font-family:var(--serif);font-weight:400;
+    font-size:1.55rem;line-height:1.15;letter-spacing:-.015em;
+  }
+  .app .line{margin:0;font-size:.92rem;color:var(--ink-2);line-height:1.5}
+  .app .foot{
+    margin-top:auto;padding-top:.9rem;display:flex;align-items:center;gap:.5rem;
+    font-family:var(--mono);font-size:.72rem;color:var(--muted);
+  }
+  .app .foot .arrow{margin-left:auto;font-family:var(--sans);color:var(--tint)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none}
   .dot.live{background:var(--live)}
   .dot.down{background:var(--down)}
-  .tag{
-    font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
-    padding:.15rem .4rem;border-radius:3px;color:var(--muted);
-    background:var(--card-2);border:1px solid var(--rule);white-space:nowrap;
-  }
-  .tag.live{color:var(--live);background:var(--live-soft);border-color:currentColor}
-  .tag.down{color:var(--down);background:var(--down-soft);border-color:currentColor}
 
-  /* ---------- footnote ---------- */
-  .note{
-    border-top:1px solid var(--rule);padding-top:1.35rem;
-    font-size:.83rem;color:var(--muted);line-height:1.6;
+  /* NOT A LINK YET, AND STILL A PRODUCT. It was centred, dashed and markless,
+     which made a real app with a real line under it read as an empty slot.
+     Same tile, same mark, same left edge — the only difference is a word where
+     the address goes and nothing to press. */
+  .app.soon{cursor:default}
+  .app.soon:hover{transform:none;border-color:var(--edge)}
+  .app .tag{
+    font-family:var(--sans);font-size:.62rem;font-weight:600;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--tint);
   }
+
+  /* The last tile is a line across the foot rather than a lonely square in a
+     two-column grid with a hole beside it. */
+  .app.next{
+    grid-column:1/-1;min-height:0;flex-direction:row;align-items:center;gap:.8rem;
+    border-style:dashed;background:none;padding:1.05rem 1.3rem;
+  }
+  .app.next::before{display:none}
+  .app.next h3{margin:0;font-size:1.1rem;color:var(--muted)}
+  .app.next p{margin:0;font-size:.85rem;color:var(--muted)}
+
+  /* ---------- the machine, behind one word ---------- */
+  .corner{
+    margin-top:1rem;border-top:1px solid var(--edge);padding-top:1.1rem;
+    display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+  }
+  .corner button{
+    font:inherit;font-size:.74rem;font-weight:600;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);background:none;
+    border:1px solid var(--edge);border-radius:99px;padding:.4rem .9rem;cursor:pointer;
+    transition:color .16s ease,border-color .16s ease;
+  }
+  .corner button:hover{color:var(--gold);border-color:var(--gold)}
+  .corner button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .corner .rtt{
+    font-family:var(--mono);font-variant-numeric:tabular-nums;
+    font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:.5rem;
+  }
+  .pulse{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+  .pulse.live{background:var(--live)}
+  .pulse.down{background:var(--down)}
+
+  #panel{margin-top:1.6rem;display:flex;flex-direction:column;gap:1.8rem}
+  .rows{display:flex;flex-direction:column;gap:.55rem}
+  .row{
+    display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;
+    padding:.85rem 1.05rem;background:var(--card);
+    border:1px solid var(--edge);border-radius:11px;
+    text-decoration:none;color:inherit;
+    transition:border-color .16s ease;
+  }
+  .row:hover,.row:focus-visible{border-color:var(--gold)}
+  .row:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .row .name{font-size:.98rem}
+  .row .desc{font-size:.8rem;color:var(--muted);margin:.1rem 0 0;line-height:1.45}
+  .row .host{display:block;font-family:var(--mono);font-size:.7rem;color:var(--ink-2);margin-top:.35rem}
+  .state{display:flex;align-items:center;gap:.45rem;flex:none;
+    font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+  .note{font-size:.8rem;color:var(--muted);line-height:1.65}
   .note b{color:var(--ink-2);font-weight:600}
-  .note code{font-family:var(--mono);font-size:.92em;color:var(--gold)}
 
   @media (prefers-reduced-motion:reduce){
-    .pulse.live{animation:none}
-    .row{transition:none}
+    .app,.row{transition:none}
   }
 </style>
 </head>
@@ -162,90 +226,103 @@
 
   <div class="mast">
     <h1>Tom's <em>Coding</em></h1>
+    <p>Beijing</p>
+  </div>
 
-    <div class="link">
-      <span class="pulse" id="pulse" aria-hidden="true"></span>
-      <span class="where" id="where">Measuring the link to Tokyo&hellip;</span>
-      <span class="rtt" id="rtt">&mdash;</span>
-      <button type="button" id="again">Again</button>
-    </div>
+  <div>
+    <h2 class="say">Making ideas <em>real</em>.</h2>
+    <p class="sub">Small products, built where they are used. Everything here
+      runs on one server in Tokyo and is written a screen at a time.</p>
   </div>
 
   <section>
-    <h2>Workspaces</h2>
-    <div class="rows" id="workspaces"></div>
+    <p class="eyebrow">The apps</p>
+    <div class="apps" id="apps"></div>
   </section>
 
-  <section>
-    <h2>Tools</h2>
-    <div class="rows" id="tools"></div>
-  </section>
+  <!-- THE MACHINE. Everything this page used to open with, one word down. -->
+  <div>
+    <div class="corner">
+      <button type="button" id="admin" aria-expanded="false" aria-controls="panel">Admin</button>
+      <span class="rtt" id="rtt" hidden>
+        <span class="pulse" id="pulse" aria-hidden="true"></span>
+        <span id="where">Tokyo</span>
+      </span>
+    </div>
 
-  <!-- Hidden until at least one app is listed, so an empty section never shows. -->
-  <section id="apps-section" hidden>
-    <h2>Your apps</h2>
-    <div class="rows" id="apps"></div>
-  </section>
-
-  <p class="note">
-    <b>Instagram, WhatsApp and the rest live inside the browser</b>, not here. Both refuse
-    to be embedded in another page, and a link from here would load from wherever you are
-    rather than from Tokyo &mdash; which is the whole point. Bookmark them in the browser
-    instead.
-    <br><br>
-    The figure above is a real HTTP round trip to the server, measured from this device,
-    not a ping, and it counts only what runs in Tokyo. Sign-in is required on every
-    service; a green dot means the machine answered, not that you're logged in.
-    <br><br>
-    Tiles under <b>Your apps</b> are hosted elsewhere and open from wherever you are, so
-    their dots answer a different question &mdash; whether this device can reach that app
-    at all. A red one there is worth knowing: it means the app is unreachable on this
-    connection, and the browser in Tokyo is the way round it.
-  </p>
+    <div id="panel" hidden>
+      <section>
+        <p class="eyebrow">Workspaces</p>
+        <div class="rows" id="workspaces"></div>
+      </section>
+      <section>
+        <p class="eyebrow">Tools</p>
+        <div class="rows" id="tools"></div>
+      </section>
+      <p class="note">
+        <b>Instagram, WhatsApp and the rest live inside the browser</b>, not here. Both
+        refuse to be embedded in another page, and a link from here would load from
+        wherever you are rather than from Tokyo — which is the whole point.
+        <br><br>
+        The figure above is a real HTTP round trip measured from this device, not a ping,
+        and it counts only what runs in Tokyo. Sign-in is required on every service; a
+        green dot means the machine answered, not that you are signed in.
+      </p>
+    </div>
+  </div>
 
 </main>
 
 <script>
-// One place to change if the domain ever moves.
+/* ---------------------------------------------------------------------------
+ * WHAT IS ON THE PAGE, AS DATA
+ *
+ * Adding a product is a row here and nothing else. `tint` is the tile's own
+ * colour and the only thing that varies between them; `url` is optional and
+ * only needed when the useful page is not the bare hostname.
+ *
+ * A product with no `host` is the one that is not a link yet — it draws as the
+ * dashed tile and probes nothing.
+ * ------------------------------------------------------------------------- */
+const APPS = [
+  {
+    name: "The Exchange",
+    host: "liuxuesheng.io",
+    line: "A private board for people doing business in China. One sentence — I am a ___ looking for a ___ — decides who you are shown.",
+    tint: "#5C8DFF",
+    /* The lens: two circles, and the only part that matters is where they
+       overlap. Same mark the board itself wears. */
+    mark: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg>',
+  },
+  {
+    /* LAONEI IS A DIFFERENT REPO AND STAYS ONE. This is a name, a line and an
+       address on a page — no code from it is here and none of it is served
+       from this box.
+       ITS ADDRESS GOES IN `host` WHEN THERE IS ONE. Left empty it draws as the
+       tile below: named, described, and not yet a link. That is true today and
+       stops being true with one line. */
+    name: "Laonei",
+    host: "",
+    soon: "In the works",
+    line: "Point it at anything in China and it answers. Built for the people living there rather than visiting.",
+    tint: "#D9A94E",
+    mark: "内",
+  },
+  { next: true, name: "More coming", line: "One at a time, and only what somebody asked for." },
+];
+
 const SERVICES = {
   workspaces: [
-    { name: "Workspace",   host: "code.tomscoding.com",
+    { name: "Workspace", host: "code.tomscoding.com",
       desc: "Editor and terminal, with Claude Code already running." },
     { name: "Second seat", host: "her.tomscoding.com",
       desc: "A separate workspace. Own files, own terminal." },
   ],
   tools: [
-    { name: "Browser",     host: "browser.tomscoding.com",
+    { name: "Browser", host: "browser.tomscoding.com",
       desc: "Firefox running in Tokyo. Pages load from there, not from here." },
-    { name: "Agent",       host: "agent.tomscoding.com",
+    { name: "Agent", host: "agent.tomscoding.com",
       desc: "Chat interface for Claude, with file and command access." },
-  ],
-  // Everything above runs on this server. Everything here does not — these are
-  // your own applications, wherever they happen to be hosted. Marked external
-  // so their reachability never contaminates the reading at the top, which is
-  // specifically about the link to Tokyo. Their dot answers a different
-  // question: can *this device*, right now, reach that app at all.
-  //
-  // Add one per line. `url` is optional and only needed when the link should
-  // go somewhere other than the bare hostname:
-  //
-  //   { name: "Journey", host: "safejourney.ai",
-  //     desc: "What it is, in a line.", external: true },
-  //
-  //   { name: "Sage", host: "sage-aesthetic.vercel.app",
-  //     url: "https://sage-aesthetic.vercel.app/social",
-  //     desc: "…", external: true },
-  //
-  // `desc` is optional and deliberately absent below — better no line than a
-  // guessed one on your own front page. Add one to each when you have the
-  // words for it.
-  apps: [
-    { name: "Fern Social",  host: "fernsocial.io",    external: true },
-    { name: "Sage Journey", host: "sagejourney.io",   external: true },
-    // The brand homepage rather than the app itself: it runs here, and it is
-    // the page with the partner seats behind it. The app is one click on.
-    { name: "Liuxuesheng",  host: "liuxuesheng.io",
-      desc: "The brand, the live app, and the partner seats." },
   ],
 };
 
@@ -255,36 +332,68 @@ const el = (tag, cls, text) => {
   if (text !== undefined) n.textContent = text;
   return n;
 };
+const addressOf = (s) => s.url || "https://" + s.host;
 
-// Where a tile points, and what gets probed. Hostname alone for anything on
-// this server; an app can override it when the useful page is not the root.
-const addressOf = (svc) => svc.url || "https://" + svc.host;
+/* ---- the tiles ---------------------------------------------------------- */
+const appBox = document.getElementById("apps");
+const appRows = [];
+for (const app of APPS) {
+  /* The one that is a row rather than a tile: whatever comes next, said in a
+     line across the foot. */
+  if (app.next) {
+    const t = el("div", "app next");
+    t.style.setProperty("--tint", "var(--muted)");
+    t.append(el("h3", null, app.name), el("p", null, app.line || ""));
+    appBox.append(t);
+    continue;
+  }
 
-function renderRow(svc) {
-  const a = el("a", "row");
-  a.href = addressOf(svc);
-
-  const left = el("div");
-  const name = el("div", "name");
-  name.append(el("span", null, svc.name), el("span", "arrow", "→"));
-  left.append(name);
-  // Optional: a tile with nothing useful to say is better with the line left
-  // out than with an empty one holding the space open.
-  if (svc.desc) left.append(el("p", "desc", svc.desc));
-  left.append(el("code", "host", svc.host));
-
-  const state = el("div", "state");
-  const dot = el("span", "dot");
-  const tag = el("span", "tag", "checking");
-  state.append(dot, tag);
-
-  a.append(left, state);
-  return { a, dot, tag };
+  /* A product with no address yet is the same tile with a word where the
+     address goes. It is a real thing with a real line under it and drawing it
+     as an empty slot said the opposite. */
+  const live = Boolean(app.host);
+  const a = el(live ? "a" : "div", "app" + (live ? "" : " soon"));
+  if (live) a.href = addressOf(app);
+  a.style.setProperty("--tint", app.tint);
+  const mark = el("span", "mark");
+  mark.innerHTML = app.mark || "";
+  a.append(mark, el("h3", null, app.name), el("p", "line", app.line));
+  const foot = el("div", "foot");
+  if (live) {
+    const dot = el("span", "dot");
+    foot.append(dot, el("span", null, app.host), el("span", "arrow", "→"));
+    appRows.push({ dot, address: addressOf(app) });
+  } else {
+    foot.append(el("span", "tag", app.soon || "Coming soon"));
+  }
+  a.append(foot);
+  appBox.append(a);
 }
 
-// A no-cors request tells us the machine answered without letting us read the
-// reply. That is exactly the right amount of information for a status dot: an
-// auth prompt is a successful response, so "live" means reachable, not signed in.
+/* ---- the machine -------------------------------------------------------- */
+const svcRows = [];
+for (const [section, list] of Object.entries(SERVICES)) {
+  const target = document.getElementById(section);
+  for (const svc of list) {
+    const a = el("a", "row");
+    a.href = addressOf(svc);
+    const left = el("div");
+    left.append(el("div", "name", svc.name), el("p", "desc", svc.desc),
+      el("code", "host", svc.host));
+    const state = el("div", "state");
+    const dot = el("span", "dot");
+    const tag = el("span", null, "checking");
+    state.append(dot, tag);
+    a.append(left, state);
+    target.append(a);
+    svcRows.push({ dot, tag, address: addressOf(svc) });
+  }
+}
+
+/* A no-cors request tells us the machine answered without letting us read the
+   reply. That is exactly the right amount of information for a status dot: an
+   auth prompt is a successful response, so "live" means reachable, not signed
+   in. */
 async function probe(address, timeoutMs = 8000) {
   const control = new AbortController();
   const timer = setTimeout(() => control.abort(), timeoutMs);
@@ -292,9 +401,7 @@ async function probe(address, timeoutMs = 8000) {
   try {
     const u = new URL(address);
     u.searchParams.set("_", Date.now());
-    await fetch(u, {
-      mode: "no-cors", cache: "no-store", signal: control.signal,
-    });
+    await fetch(u, { mode: "no-cors", cache: "no-store", signal: control.signal });
     return { ok: true, ms: Math.round(performance.now() - started) };
   } catch {
     return { ok: false, ms: null };
@@ -303,75 +410,53 @@ async function probe(address, timeoutMs = 8000) {
   }
 }
 
-const rows = [];
-for (const [section, list] of Object.entries(SERVICES)) {
-  const target = document.getElementById(section);
-  for (const svc of list) {
-    const r = renderRow(svc);
-    target.append(r.a);
-    rows.push({ ...r, address: addressOf(svc), external: !!svc.external });
-  }
-}
-
-// An empty apps list leaves a bare heading behind, so the section only appears
-// once there is something in it.
-if (SERVICES.apps.length) document.getElementById("apps-section").hidden = false;
-
-// The reading at the top is about the link to Tokyo, so it is computed from
-// this server's own services alone. An app hosted elsewhere being fast says
-// nothing about this route, and an app being down should never read as Tokyo
-// being down.
-const tokyoRows = rows.filter((r) => !r.external);
-
-const pulse = document.getElementById("pulse");
-const where = document.getElementById("where");
-const rtt   = document.getElementById("rtt");
-const again = document.getElementById("again");
-
+/* NOTHING IS PROBED UNTIL SOMEBODY ASKS. This page used to fire six requests
+   at six hostnames the moment it opened, at every visitor — most of whom are
+   here to read two sentences about two apps. The app tiles check themselves
+   because their dot is part of the tile; the machine checks itself when the
+   panel is opened, and only the first time. */
+let measured = false;
 async function measure() {
-  pulse.className = "pulse";
-  where.textContent = "Measuring the link to Tokyo…";
-  rtt.textContent = "—";
-  for (const r of rows) {
-    r.dot.className = "dot";
-    r.tag.className = "tag";
-    r.tag.textContent = "checking";
-  }
-
-  const check = async (r) => {
+  if (measured) return;
+  measured = true;
+  document.getElementById("rtt").hidden = false;
+  const pulse = document.getElementById("pulse");
+  const where = document.getElementById("where");
+  where.textContent = "Measuring…";
+  const times = [];
+  await Promise.all(svcRows.map(async (r) => {
     const res = await probe(r.address);
-    r.ok = res.ok;
-    r.ms = res.ms;
     r.dot.className = "dot " + (res.ok ? "live" : "down");
-    r.tag.className = "tag " + (res.ok ? "live" : "down");
     r.tag.textContent = res.ok ? "live" : "no answer";
-    return res;
-  };
-
-  // Started together, awaited separately. An app hosted elsewhere that never
-  // answers takes the full timeout to fail, and waiting on it would hold the
-  // Tokyo reading hostage for eight seconds over something it does not measure.
-  // The app tiles fill themselves in whenever they get there.
-  const appsSettled = Promise.all(rows.filter((r) => r.external).map(check));
-  await Promise.all(tokyoRows.map(check));
-  appsSettled.catch(() => {});
-
-  // The first request pays for DNS and the TLS handshake, so the fastest of the
-  // set is the closest thing to a true round trip on a warm connection.
-  const times = tokyoRows.filter((r) => r.ok).map((r) => r.ms);
+    if (res.ok) times.push(res.ms);
+  }));
   if (!times.length) {
     pulse.className = "pulse down";
     where.textContent = "No answer from Tokyo";
-    rtt.innerHTML = "&mdash;";
     return;
   }
   pulse.className = "pulse live";
-  where.textContent = "Tokyo · " + times.length + " of " + tokyoRows.length + " answering";
-  rtt.innerHTML = Math.min(...times) + "<small>ms</small>";
+  /* The first request pays for DNS and the TLS handshake, so the fastest of
+     the set is the closest thing to a true round trip on a warm connection. */
+  where.textContent = "Tokyo · " + Math.min(...times) + "ms · "
+    + times.length + " of " + svcRows.length;
 }
 
-again.addEventListener("click", measure);
-measure();
+const panel = document.getElementById("panel");
+const admin = document.getElementById("admin");
+admin.addEventListener("click", () => {
+  const open = panel.hidden;
+  panel.hidden = !open;
+  admin.setAttribute("aria-expanded", String(open));
+  if (open) measure();
+});
+
+// The tiles answer for themselves, quietly, without holding anything up.
+for (const r of appRows) {
+  probe(r.address, 6000).then((res) => {
+    r.dot.className = "dot " + (res.ok ? "live" : "down");
+  });
+}
 </script>
 </body>
 </html>
