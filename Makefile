@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: gram gram-clips gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -414,6 +414,19 @@ gram-clips: ## Make the clips for the stills marked for one: make gram-clips [NA
 	@# so a 404 here is a missing deploy and not a missing key.
 	set -a; . ./.env; set +a; \
 	  node scripts/gram/clip.mjs $(if $(NAME),"$(NAME)",--all) $(if $(DRY),--dry,)
+
+gram-next: ## Post the next one that has not gone out: make gram-next [DRY=1]
+	@# What cron calls. Picks at random from whatever is left, posts it, and
+	@# writes it into scripts/gram/posted.json — that ledger is the only thing
+	@# between a cron entry and the same six posts every other day.
+	set -a; . ./.env; set +a; \
+	  node scripts/gram/next.mjs $(if $(DRY),--dry,)
+
+gram-token: ## Refresh the Instagram token and write it back into .env
+	@# It lasts sixty days and nothing warns you — it works, and then one
+	@# morning posting stops with a message about the session. Monthly is fine.
+	set -a; . ./.env; set +a; \
+	  node scripts/gram/token.mjs --write
 
 gram-list: ## What is made and ready to post
 	node scripts/gram/post.mjs --list
