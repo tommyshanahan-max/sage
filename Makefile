@@ -946,7 +946,22 @@ check: ## Verify the sites resolve and the numbers page finishes drawing
 	@# A render that throws halfway leaves the page looking like one whose data
 	@# never arrived, which sends the hunt to the server and the network before
 	@# anybody suspects the page. This asks the page directly.
-	node scripts/check-dashboard.mjs
+	@#
+	@# THROUGH A CONTAINER WHEN THE HOST HAS NO node, which is the case on the
+	@# box: nothing needs installing on a server whose whole job is to run
+	@# containers. It ran on the host and printed "node: command not found",
+	@# which fails `make check` — and `make deploy` runs `make check` first, so
+	@# one missing runtime on the host blocked every deploy. The same mistake
+	@# `pitch` made once; same fix.
+	@#
+	@# The whole repo read-only rather than scripts alone: this one reads the
+	@# analytics page out of the tree beside it.
+	@if command -v node >/dev/null 2>&1; then \
+	  node scripts/check-dashboard.mjs; \
+	else \
+	  $(COMPOSE) run --rm --no-deps -T -v "$(CURDIR):/repo:ro" --entrypoint node board \
+	    /repo/scripts/check-dashboard.mjs; \
+	fi
 
 doctor: ## Check the path between you and the VPS
 	bash scripts/doctor.sh
