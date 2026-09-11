@@ -86,8 +86,19 @@
   .screens{display:flex;gap:.8rem;margin:1.5rem 0 0}
   .sc{flex:1;min-width:0;background:var(--raise);border:1px solid var(--hair);
     border-radius:.9rem;padding:.6rem;display:flex;flex-direction:column;gap:.45rem}
+  /* A FACE, DRAWN. This was a bare gradient standing in for a photograph,
+     which at phone width read as a dark card and at any wider size read as an
+     image that had failed to load. Nothing is fetched here — see the note in
+     deck-build.mjs about what a page sent into China may load — so the face is
+     a head and a pair of shoulders in CSS, and the scrim keeps the name
+     legible over the top of them. */
   .sc .face{aspect-ratio:1/.82;border-radius:.5rem;position:relative;overflow:hidden;
-    background:linear-gradient(158deg,#3B4A55,#141C21)}
+    background:linear-gradient(158deg,#3B4A55,#141C21);
+    box-shadow:inset 0 -2.4rem 1.6rem -1.1rem rgba(4,8,10,.72)}
+  .sc .face::before,.sc .face::after{content:"";position:absolute;left:50%;
+    transform:translateX(-50%);background:#51626E}
+  .sc .face::before{top:20%;width:24%;aspect-ratio:1;border-radius:50%}
+  .sc .face::after{top:50%;width:50%;height:42%;border-radius:50% 50% 0 0}
   .sc .face b{position:absolute;left:.4rem;bottom:.75rem;color:#fff;
     font:400 .82rem/1 var(--serif)}
   .sc .face i{position:absolute;left:.42rem;bottom:.3rem;font-style:normal;
