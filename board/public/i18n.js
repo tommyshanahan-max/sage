@@ -412,6 +412,11 @@ export const STRINGS = {
      that does not respond, in the middle of the one thing on the screen that
      does, so it went: the card carries only the half that moves. */
   "say.want1":         ["Looking for", "我在找"],
+  /* The sheet when it has been opened for the sentence alone. The heading is
+     the question, because the pills under it are the answer and there is
+     nothing else on the screen. */
+  "say.only":          ["What are you looking for?", "你在找什么？"],
+  "say.done":          ["Done", "好了"],
   /* The way back to the pills from the deck they decide. Says what happens,
      not what the row is: "Your sentence" over a sentence is the same words
      twice. */

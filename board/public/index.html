@@ -1372,6 +1372,16 @@
     max-height:calc(var(--vh, 1vh) * 92)}
   .sheet h2{margin:0 0 1rem;font-family:var(--serif);font-weight:400;font-size:1.35rem}
 
+  /* THE FORM, SHOWING ONLY THE SENTENCE. Opened from Browse, where the ask was
+     four words and not a profile — see openMe. The heading, the pills, and the
+     way out; everything else in the form stands down. */
+  #meform.justsay > *:not(#metitle):not(.saysay):not(.row):not(#mesaid){
+    display:none!important}
+  #meform.justsay .saysay{margin-top:0}
+  #meform.justsay #sayhead{display:none}
+  #meform.justsay #mesave{display:none}
+  #meform.justsay .ghost{margin-left:auto}
+
   /* The way out. Not styled as a danger button until the sheet it opens —
      a red control on a form somebody is filling in reads as a warning about
      the form. */
@@ -6869,11 +6879,25 @@ $("mepicgo").addEventListener("click", () => $("mephoto").click());
 /* The days somebody is free, 0–6. Drawn rather than a row of checkboxes: seven
  * of those is a wall of text, and a week reads as a shape. */
 
-function openMe(joining) {
+/* ONE SENTENCE, OR THE WHOLE FORM.
+ *
+ * Pressing Change on Browse opened the setup form: a photograph, a name, the
+ * rooms, the links, the recovery number and the way out — for a person who had
+ * asked to change four words. The pills are inside this sheet because that is
+ * where somebody is first asked them, and they must stay one control rather
+ * than two; so the sheet learns to show only the part that was asked for.
+ *
+ * A class rather than a dozen hidden flags: every block in here is already
+ * shown or hidden by its own logic, and a second owner of those flags is how
+ * a block comes back on a later draw with nothing to explain why. */
+function openMe(joining, only) {
   const made = Boolean(ME && ME.handle);
+  const say = only === "say";
+  $("meform").classList.toggle("justsay", say);
   // Asked once per opening of the sheet, not once ever.
   ASKEDPIC = false;
-  $("metitle").textContent = T(made ? "me.editTitle" : "me.newTitle");
+  $("metitle").textContent = say ? T("say.only")
+    : T(made ? "me.editTitle" : "me.newTitle");
   $("mename").placeholder = T("me.name");
   $("mecampus").placeholder = T("me.campus");
   $("meage").placeholder = T("me.age");
@@ -6890,7 +6914,10 @@ function openMe(joining) {
   $("meigwhy").textContent = T("me.igWhy");
   $("megoal").placeholder = T("me.goal");
   $("mewhy").textContent = T("me.whyNoContact");
-  $("meshut").textContent = T("post.cancel");
+  /* DONE, NOT CANCEL. The pills save themselves one at a time — see saveSay —
+     so in this mode there is nothing pending to abandon, and Save/Cancel over
+     a control that has already saved is a question with no true answer. */
+  $("meshut").textContent = say ? T("say.done") : T("post.cancel");
   // Putting yourself up is not the same act as changing a detail later, and a
   // button that says the same word for both is the reason nobody is sure which
   // one they are doing.
@@ -7407,12 +7434,11 @@ function drawBrwSay() {
        to change it, and landing on a shut fold is one more press for nothing.
        drawSayHead reads this key when it draws. */
     try { localStorage.setItem("board:say", "1"); } catch { /* fine */ }
-    openMe(false);
+    openMe(false, "say");
     const body = $("saybody");
     if (body) {
       body.hidden = false;
       $("sayhead").setAttribute("aria-expanded", "true");
-      body.scrollIntoView({ block: "center", behavior: "smooth" });
     }
   });
 }
