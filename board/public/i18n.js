@@ -1431,8 +1431,11 @@ export const STRINGS = {
                         "这个地址板上已经有人在用了。"],
 
   "in.title":          ["Sign in", "登录"],
-  "in.body":           ["The address on your profile. We send you six digits.",
-                        "用你资料里留的那个邮箱。我们发你六位数字。"],
+  /* NOT "on your profile". Half the people who reach this are on the waiting
+     list and have no profile — what they have is the address they typed when
+     they asked to join. One sentence that is true of both. */
+  "in.body":           ["The email address you left here. We send you six digits.",
+                        "你在这儿留过的那个邮箱。我们发你六位数字。"],
   "in.send":           ["Send me a code", "给我发验证码"],
   "in.codeTitle":      ["Six digits", "六位数字"],
   "in.codeBody": [

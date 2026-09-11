@@ -263,6 +263,28 @@ export function waitBox() {
    * because it is about the box under the cursor. */
   box.append(el("p", "waitnote", T(quietHere() ? "wait.noteQuiet" : "wait.note")));
 
+  /* THE DOOR FOR SOMEBODY WHO IS ALREADY ON THE LIST.
+   *
+   * A waiting row lives on the browser that made it. Change phone, clear
+   * Safari, open the link in WeChat rather than the browser it was joined in —
+   * and this form is what they meet. Fill it in and the list grows a second
+   * row with the same person on it, which loses them their place and tells
+   * whoever reads the queue that two people are waiting when one is.
+   *
+   * The row already knows how to find them: what they typed as `reach` is
+   * what /api/signin matches, and six digits put them back on it. This is the
+   * one line that says so, in the one place they would be about to make the
+   * mistake. It goes to the door, which leads with signing in.
+   *
+   * ?in=1 so the section is already open when they arrive. A link that lands
+   * somebody on a page and asks them to find the right fold is a link that
+   * has done half its job. */
+  const back = el("a", "waitback");
+  back.href = "/enter?in=1";
+  back.append(document.createTextNode(T("tut.back")),
+    el("b", null, T("tut.backGo")));
+  box.append(back);
+
   const tell = (words, bad) => {
     said.hidden = false;
     said.className = "said" + (bad ? " bad" : "");

@@ -834,6 +834,19 @@ $("listopen").addEventListener("click", () => {
   $("waitslot").append(waitBox());
 });
 
+/* ARRIVED ASKING FOR IT. The join form sends somebody already on the list
+   here with ?in=1 — see waitBox — and a link that lands them on a page and
+   then asks them to find the right fold has done half its job. Read before
+   anything else runs, for the same reason CAME_TO_EDIT is on the board. */
+if (new URLSearchParams(location.search).get("in") === "1") {
+  const box = $("keybox");
+  if (box) {
+    box.hidden = false;
+    $("keyopen").setAttribute("aria-expanded", "true");
+    setTimeout(() => $("simail")?.focus({ preventScroll: true }), 200);
+  }
+}
+
 $("keyopen").addEventListener("click", () => {
   const box = $("keybox");
   box.hidden = !box.hidden;

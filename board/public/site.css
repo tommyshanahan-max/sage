@@ -392,3 +392,9 @@
   .waitbox .said{margin:.8rem 0 0;font-size:.92rem;color:var(--accent)}
   .waitbox .said.bad{color:var(--t5)}
   .waitnote{margin:1rem 0 0;font-size:.8rem;line-height:1.55;color:var(--muted)}
+  /* The way back, under the way in. Quiet: almost nobody reading this form is
+     the person it is for, and the one who is will be looking for it. */
+  .waitback{display:block;margin:.9rem 0 0;padding-top:.9rem;
+    border-top:1px solid var(--hair,var(--line));
+    font-size:.85rem;color:var(--muted);text-decoration:none;text-align:center}
+  .waitback b{color:var(--accent);font-weight:500;margin-left:.35rem}
