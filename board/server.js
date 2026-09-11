@@ -1037,12 +1037,30 @@ app.post("/api/admit-existing", admin, async (_req, res) => {
 app.get("/api/invite", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
+  /* WHO WALKED IN ON IT.
+   *
+   * The row has carried `usedBy` since it was written — the browser that
+   * spent the code, and the same hash a profile is keyed by — so this was
+   * always answerable and was never answered. The list said "used" against
+   * four codes and nothing about which of them was the person being asked
+   * about, and the only way to tell was to line the dates up by hand.
+   *
+   * A HANDLE AND NEVER THE HASH, for the reason that was already here: this
+   * is read by somebody deciding who to chase. Empty when they spent the code
+   * and have not made a profile yet, which is its own answer and a useful one.
+   */
+  const nameOf = (hash) => (hash && board.people.find((q) => q.by === hash) || {}).handle || "";
   res.json({
     invites: board.invites.map((v) => ({
       code: v.code, who: v.who, at: v.at, off: v.off,
       // Never the hash: it identifies a browser, and this list is read by a
       // person deciding who to chase, not by anything that needs an id.
       used: Boolean(v.usedBy), usedAt: v.usedAt,
+      usedName: nameOf(v.usedBy),
+      /* Who made it, when a member made it out of their own header rather
+         than the box making it: `who` is blank on those rows, so the list
+         read as if nobody had given it out. */
+      fromName: nameOf(v.by),
     })),
   });
 });
@@ -2796,12 +2814,32 @@ app.get("/api/waiting", admin, async (_req, res) => {
   /* Also the name of whoever's link they came in on, when it was somebody
      waiting rather than a member — the same courtesy `viaName` does. */
   const byWait = new Map(board.waits.map((w) => [w.id, w.name]));
+  /* WHO VOUCHED FOR THEM, BY NAME.
+   *
+   * The count has been on the members' side of this since vouching existed
+   * and the names were nowhere: a row read "3 vouched" and the one question
+   * worth asking of it — which three — could only be answered by opening the
+   * board file. It is also the question asked about somebody already let in,
+   * long after the row has stopped mattering for anything else.
+   *
+   * Resolved from the profile here and not stored as a name, the same as
+   * `via` above and for the same reason: somebody who changes what they are
+   * called should not leave a trail of rows crediting who they used to be.
+   * Keyed on `by`, the browser hash, which is what a vouch carries. */
+  const byHash = new Map(board.people.map((q) => [q.by, q.handle]));
+  const vouched = new Map();
+  for (const v of board.vouches || []) {
+    if (!vouched.has(v.wait)) vouched.set(v.wait, []);
+    // A vouch from somebody whose profile has since gone still happened.
+    vouched.get(v.wait).push(byHash.get(v.by) || "somebody");
+  }
   res.json({ waits: board.waits.map((w) => ({
     ...w,
     viaName: who.get(w.via) || "",
     fromWaitName: byWait.get(w.fromWait) || "",
     place: place.has(w.id) ? place.get(w.id) : null,
     brought: bring.get(w.id) || 0,
+    vouchedBy: vouched.get(w.id) || [],
   })) });
 });
 

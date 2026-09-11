@@ -40,12 +40,19 @@ async function list() {
     console.log("No invites yet.  make invite WHO=\"their name\"");
     return;
   }
-  console.log("code".padEnd(8) + "  " + "who".padEnd(16) + "  " + "made".padEnd(11) + "  state");
+  console.log("code".padEnd(8) + "  " + "from".padEnd(16) + "  " + "made".padEnd(11) + "  state");
   for (const v of rows) {
+    /* WHO WALKED IN ON IT, and it is the whole point of reading this list.
+       The row has always known — see the note on /api/invite — and the line
+       said "used 2026-09-10" and stopped, which answers a question nobody
+       asks. A code was used; the name is what you wanted. */
     const state = v.off ? "taken back"
-      : v.used ? "used " + when(v.usedAt)
+      : v.used ? "used " + when(v.usedAt) + (v.usedName ? " by " + v.usedName : "")
       : "waiting";
-    console.log(v.code.padEnd(8) + "  " + (v.who || "—").padEnd(16).slice(0, 16)
+    /* `who` is the label typed when it was minted. A member making one out of
+       their own header types nothing, so that column was blank on exactly the
+       rows where somebody inside did the vouching. Their name stands in. */
+    console.log(v.code.padEnd(8) + "  " + (v.who || v.fromName || "—").padEnd(16).slice(0, 16)
       + "  " + when(v.at).padEnd(11) + "  " + state);
   }
   const spare = rows.filter((v) => !v.used && !v.off).length;

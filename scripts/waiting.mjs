@@ -231,6 +231,14 @@ async function main() {
          between a stranger and somebody a member will vouch for, and it is
          the only thing on this list that tells them apart. */
       if (w.viaName) console.log(pad("", 22) + "  sent by " + w.viaName);
+      /* AND WHO INSIDE SPOKE FOR THEM. Named rather than counted — see the
+         note on /api/waiting. It is the difference between a row that moved
+         up on its own and a row a member put their name to, and it is the
+         answer to "who vouched for her", which is asked about people who were
+         let in weeks ago. */
+      if ((w.vouchedBy || []).length) {
+        console.log(pad("", 22) + "  vouched by " + w.vouchedBy.join(", "));
+      }
       if (w.why) console.log(pad("", 22) + "  " + w.why.replace(/\n/g, " ").slice(0, 60));
       /* WHAT THEY FILLED IN WHILE THEY WAITED, and whether a photograph is
          sitting in the queue.
