@@ -275,7 +275,7 @@
       </svg>
     </div>
     <div class="top">
-      <span class="mark" aria-hidden="true">换</span>
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" style="width:1em;height:1em;display:block" aria-hidden="true"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg></span>
       <div>
         <h1 id="wxtitle"></h1>
         <p id="wxsub"></p>
@@ -306,7 +306,7 @@
     <p class="tag" id="hellotag"></p>
     <button class="orb" type="button" id="orb">
       <u aria-hidden="true"></u><s aria-hidden="true"></s>
-      <i aria-hidden="true">换</i>
+      <i aria-hidden="true"><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" style="width:1em;height:1em;display:block" aria-hidden="true"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg></i>
       <b class="badge" aria-hidden="true"></b>
     </button>
     <h1 class="lead" id="hellolead"></h1>
@@ -322,7 +322,7 @@
   <!-- THE DOOR ITSELF. -->
   <section id="door" hidden>
     <div class="top">
-      <span class="mark" aria-hidden="true">换</span>
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" style="width:1em;height:1em;display:block" aria-hidden="true"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg></span>
       <div>
         <h1 id="doortitle"></h1>
         <p id="doorsub"></p>
@@ -396,7 +396,7 @@
 
   <section id="inside" hidden>
     <div class="top">
-      <span class="mark" aria-hidden="true">换</span>
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" style="width:1em;height:1em;display:block" aria-hidden="true"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg></span>
       <div>
         <h1 id="intitle"></h1>
         <p id="insub"></p>
@@ -406,6 +406,8 @@
     <p class="zh" id="inzh"></p>
     <a class="go wide" id="ingo" href="/browse"></a>
     <p class="note" id="innote"></p>
+    <!-- The key, one line under the thing most people will actually do. -->
+    <p class="note" id="inkey"></p>
   </section>
 </main>
 
@@ -722,6 +724,7 @@ function words() {
   $("inzh").textContent = T("door.inZh");
   $("ingo").textContent = T("door.inGo");
   $("innote").textContent = T("door.inNote");
+  $("inkey").textContent = T("door.inKey");
   drawBoxes();
 }
 

@@ -2638,8 +2638,14 @@ export const STRINGS = {
   "door.inZh":         ["", ""],
   "door.inGo":         ["Have a look around", "进去看看"],
   /* Where somebody learns what a key is: the one moment they have one. */
-  "door.inNote":       ["Before you close this, save your key \u2014 Profile \u2192 Show my key. There are no accounts here, so that line is the only way to be you again on another phone.",
-                        "关掉之前把钥匙存好——「我的」→「显示我的钥匙」。这里没有账号，换个手机想还是你自己，只能靠那一行。"],
+  /* IT SAID THE KEY WAS THE ONLY WAY BACK, which was true when it was written
+     and is not now. Somebody reading this is thirty seconds old here, and the
+     first thing this board asks them to do should be the thing most of them
+     will actually do. The key is a line down. */
+  "door.inNote":       ["Before you close this, leave an address \u2014 the first thing on Browse. There are no accounts here, so without one, a new phone loses everything you write.",
+                        "关掉之前先留个邮箱——「看看」里第一条就是。这里没有账号，不留的话，换了手机你写的东西就都没了。"],
+  "door.inKey":        ["Or save your key: Profile \u2192 Show my key.",
+                        "或者把钥匙存下来：「我的」→「显示我的钥匙」。"],
   /* THE TRAY. Everything addressed to this person, in one place — follows and
      the card of the day. The report card below it is what they are; this is
      what has arrived. */

@@ -1,0 +1,20 @@
+<!-- The Exchange.
+
+     Two circles, and the only part that matters is where they overlap: this
+     board shows you the people whose sentence answers yours, and nothing
+     else. The mark is the mechanism.
+
+     It replaced 换 — the right character and the wrong mark. Half the people
+     this is for cannot read it, it renders as a box wherever the font is
+     missing, and a home-screen icon that is a glyph is a glyph, not a thing
+     anybody recognises at 22px.
+
+     currentColor on purpose: inlined in a header it takes the colour of the
+     text around it, and the PNGs are cut from the same file. Stroke only, no
+     fill — it survives being drawn white at 22 pixels, which is where most
+     people will meet it. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none"
+     stroke="currentColor" stroke-width="7" aria-hidden="true">
+  <circle cx="38" cy="50" r="24"/>
+  <circle cx="62" cy="50" r="24"/>
+</svg>
