@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>The people you speak for</title>
+<link rel="stylesheet" href="/site.css">
+
+<!-- WHY THIS IS ITS OWN PAGE AND NOT A PANEL IN THE APP.
+     The switcher is a small tool for a small number of members, and the app's
+     own page is already five thousand lines. What does NOT live here is the
+     part that has to be everywhere: the orange bar saying whose words these
+     are is drawn by index.html on every screen, because the risk this whole
+     feature carries is writing as the wrong person and a warning you have to
+     navigate to is not a warning.
+
+     So: come here to switch, manage, drop a folder and read what came out of
+     it. Leave, and the rest of the board already knows who you are being.
+
+     See docs/mockups/agent.html for the argument each of these screens is
+     making, and docs/todo.md for the shapes that were rejected. -->
+
+<style>
+  .wrap{max-width:44rem;margin:0 auto;padding:0 1rem 4rem}
+  h1{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:1.5rem;margin:1.2rem 0 .2rem}
+  .lede{color:var(--ink-2);margin:0 0 1.4rem;line-height:1.6}
+
+  /* ---- the rail: one tap, and always the answer to "who am I" ------------ */
+  .rail{display:flex;gap:.8rem;overflow-x:auto;padding:.9rem 0 .8rem;
+    border-bottom:1px solid var(--hair);scrollbar-width:none;margin:0 0 1.2rem}
+  .rail::-webkit-scrollbar{display:none}
+  .pick{flex:0 0 auto;width:3.6rem;padding:0;border:0;background:none;
+    text-align:center;cursor:pointer}
+  .pick .face{width:2.9rem;height:2.9rem;border-radius:50%;margin:0 auto;
+    display:grid;place-items:center;color:#fff;font-family:var(--serif,Georgia,serif);
+    font-size:1.1rem;overflow:hidden}
+  .pick .face img{width:100%;height:100%;object-fit:cover}
+  .pick small{display:block;margin-top:.4rem;font-size:.68rem;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* The ring is outside the circle with a gap the colour of the page, so it
+     reads as a ring rather than as a thicker avatar. */
+  .pick.on .face{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--accent)}
+  .pick.on small{color:var(--accent);font-weight:600}
+  .pick.as .face{box-shadow:0 0 0 2px var(--paper),0 0 0 4px #B4531F}
+  .pick.as small{color:#B4531F;font-weight:600}
+  .pick.more .face{background:var(--raise);border:1px dashed var(--line);
+    color:var(--muted);font-family:inherit;font-size:1.3rem}
+
+  /* ---- being somebody else: a state, not a setting ---------------------- */
+  .being{display:flex;align-items:center;gap:.7rem;padding:.65rem .9rem;
+    background:#B4531F;color:#fff;border-radius:.7rem;margin:0 0 1.2rem}
+  .being span{flex:1;font-size:.9rem;line-height:1.35}
+  .being b{font-weight:700}
+  .being button{border:0;border-radius:99px;background:rgba(255,255,255,.24);
+    color:#fff;padding:.4rem .85rem;font-size:.82rem;font-weight:600;cursor:pointer}
+
+  .eyebrow{margin:1.8rem 0 .5rem;font-size:.72rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);font-weight:600}
+  .row{display:flex;align-items:center;gap:.75rem;padding:.7rem .1rem;
+    border-bottom:1px solid var(--hair)}
+  .row .face{width:2.5rem;height:2.5rem;border-radius:50%;flex:0 0 auto;display:grid;
+    place-items:center;color:#fff;font-family:var(--serif,Georgia,serif);overflow:hidden}
+  .row .face img{width:100%;height:100%;object-fit:cover}
+  .m{flex:1;min-width:0}
+  .m b{display:block;font-weight:500}
+  .m small{display:block;font-size:.78rem;color:var(--muted)}
+  .tag{font-size:.66rem;letter-spacing:.07em;text-transform:uppercase;padding:.22rem .55rem;
+    border-radius:99px;font-weight:600;white-space:nowrap;border:1px solid transparent;cursor:pointer}
+  .tag.up{background:var(--accent-soft);color:var(--accent)}
+  .tag.off{background:var(--raise);color:var(--muted);border-color:var(--hair)}
+  .tag.draft{background:#FBEEE4;color:#B4531F}
+  @media (prefers-color-scheme:dark){.tag.draft{background:#2A1A10;color:#E8905A}}
+  .count{margin:.8rem 0 0;font-size:.85rem;color:var(--muted);line-height:1.55}
+
+  /* ---- dropping a folder ------------------------------------------------- */
+  .drop{margin:.6rem 0 0;border:2px dashed var(--line);border-radius:1rem;
+    padding:1.6rem 1rem;text-align:center;color:var(--ink-2);background:var(--raise)}
+  .drop.over{border-color:var(--accent);background:var(--accent-soft)}
+  .drop b{display:block;font-size:1.02rem;color:var(--ink);margin:0 0 .3rem}
+  .drop small{display:block;font-size:.82rem;color:var(--muted);line-height:1.55;
+    max-width:26rem;margin:.5rem auto 0}
+  textarea{width:100%;padding:.75rem .9rem;font:inherit;border:1px solid var(--line);
+    border-radius:.8rem;background:var(--raise);color:var(--ink);resize:vertical}
+  .roles{display:flex;flex-wrap:wrap;gap:.4rem;margin:.7rem 0}
+  .roles button{border:1px solid var(--line);background:var(--raise);color:var(--ink-2);
+    border-radius:99px;padding:.35rem .8rem;font:inherit;font-size:.88rem;cursor:pointer}
+  .roles button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);
+    color:#fff;font-weight:600}
+  .go{border:0;border-radius:99px;background:var(--accent);color:#fff;
+    padding:.75rem 1.4rem;font:inherit;font-size:1rem;font-weight:600;cursor:pointer}
+  .go[disabled]{opacity:.45}
+  .flat{background:none;border:1px solid var(--line);color:var(--ink-2)}
+  .said{margin:.9rem 0 0;padding:.7rem .85rem;border-radius:.7rem;background:var(--accent-soft);
+    color:var(--ink-2);font-size:.88rem;line-height:1.55}
+  .said.bad{background:#FBEEE4;color:#8A3D14}
+  @media (prefers-color-scheme:dark){.said.bad{background:#2A1A10;color:#E8905A}}
+
+  /* ---- what came out of the folder, before anybody else can see it ------- */
+  .card{border:1px solid var(--hair);border-radius:.9rem;padding:.9rem;margin:0 0 .7rem;
+    background:var(--card,var(--raise))}
+  .card h3{margin:0;font-size:1rem;font-weight:600}
+  .card p{margin:.45rem 0 0;font-size:.9rem;line-height:1.6;color:var(--ink-2)}
+  .card .from{margin:.6rem 0 0;font-size:.75rem;color:var(--muted)}
+  .card .from i{font-style:normal}
+  .card .from i.no{text-decoration:line-through}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <p class="rotnav"><a href="/" class="back">&lsaquo; <span id="boardlink"></span></a><span id="lang"></span></p>
+  <h1 id="head"></h1>
+  <p class="lede" id="lede"></p>
+
+  <div id="bar" hidden class="being">
+    <span id="barwho"></span>
+    <button id="barback" type="button"></button>
+  </div>
+
+  <div class="rail" id="rail"></div>
+
+  <div id="roster"></div>
+  <p class="count" id="count"></p>
+
+  <p class="eyebrow" id="addhead"></p>
+  <div class="roles" id="roles"></div>
+
+  <div class="drop" id="drop">
+    <b id="drophead"></b>
+    <span id="dropsub"></span>
+    <p><button class="go flat" id="browse" type="button"></button></p>
+    <small id="dropwhy"></small>
+    <input id="files" type="file" multiple webkitdirectory directory hidden>
+  </div>
+
+  <p class="count" id="orhead" style="margin-top:1.4rem"></p>
+  <textarea id="names" rows="3"></textarea>
+  <p><button class="go" id="add" type="button"><span id="addgo"></span></button></p>
+
+  <div id="said"></div>
+  <div id="review"></div>
+</main>
+
+<script type="module">
+import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
+pickLang();
+
+/* The same random number every other page here uses. Never sent raw to
+   anything but this board, and hashed before it is written down. */
+let device = "";
+try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
+
+/* WHO YOU ARE BEING, and it lives in localStorage rather than in a cookie for
+   the reason the server's middleware gives: a cookie is a mode you are in
+   until something takes you out of it, which is the exact shape of the
+   accident this feature risks. This is read by the fetch below and by
+   index.html, and cleared by one button. */
+const asKey = "board:as";
+const being = () => { try { return localStorage.getItem(asKey) || ""; } catch { return ""; } };
+const be = (id) => { try { id ? localStorage.setItem(asKey, id) : localStorage.removeItem(asKey); } catch { /* private window */ } };
+
+const head = () => {
+  const h = { "x-board-device": device };
+  const as = being();
+  if (as) h["x-board-as"] = as;
+  return h;
+};
+const post = (url, body) => fetch(url, {
+  method: "POST",
+  headers: { ...head(), "Content-Type": "application/json" },
+  body: JSON.stringify({ device, ...body }),
+}).then((r) => r.json().then((j) => ({ ok: r.ok, ...j })));
+
+const el = (tag, props, kids) => {
+  const n = Object.assign(document.createElement(tag), props || {});
+  for (const k of [].concat(kids || [])) if (k) n.append(k);
+  return n;
+};
+
+/* The same colour function the chat and the room use, so one person is the
+   same colour everywhere they appear. A name in, a gradient out; no state. */
+function wash(name) {
+  let h = 0;
+  for (const ch of String(name || "?")) h = (h * 31 + ch.codePointAt(0)) % 360;
+  return "linear-gradient(150deg,hsl(" + h + " 26% 74%),hsl(" + ((h + 24) % 360) + " 24% 52%))";
+}
+function face(p, cls) {
+  const n = el("span", { className: cls || "face" });
+  if (p && p.photo) {
+    n.append(el("img", { src: "/api/public-media?id=" + encodeURIComponent(p.photo), alt: "" }));
+  } else {
+    n.style.background = wash(p && p.handle);
+    n.textContent = String((p && p.handle) || "?").trim().slice(0, 1).toLowerCase();
+  }
+  return n;
+}
+
+/* The making side of the sentence, which is the one thing the server will not
+   guess. Kept short: an agent's people are on one of these four. */
+const ROLES = ["performer", "director", "writer", "crew"];
+let role = "performer";
+let STATE = null;
+
+function drawRoles() {
+  const box = document.getElementById("roles");
+  box.replaceChildren(...ROLES.map((r) => {
+    const b = el("button", { type: "button", textContent: T("role." + r) });
+    b.setAttribute("aria-pressed", String(r === role));
+    b.onclick = () => { role = r; drawRoles(); };
+    return b;
+  }));
+}
+
+function drawRail(d) {
+  const rail = document.getElementById("rail");
+  const as = d.as;
+  const bits = [];
+  const mk = (p, cls, label) => {
+    const b = el("button", { className: "pick " + cls, type: "button" },
+      [face(p), el("small", { textContent: label })]);
+    b.onclick = () => { be(p && p.id === (d.me || {}).id ? "" : p.id); location.reload(); };
+    return b;
+  };
+  if (d.me) bits.push(mk(d.me, as ? "" : "on", T("run.you")));
+  for (const q of d.run) bits.push(mk(q, as === q.id ? "as" : "", q.handle));
+  rail.replaceChildren(...bits);
+
+  const bar = document.getElementById("bar");
+  const who = d.run.find((q) => q.id === as);
+  bar.hidden = !who;
+  if (who) {
+    document.getElementById("barwho").replaceChildren(
+      ...T("run.being").split("{who}").flatMap((s, i) =>
+        i ? [el("b", { textContent: who.handle }), document.createTextNode(s)] : [document.createTextNode(s)]));
+  }
+}
+
+function drawRoster(d) {
+  const box = document.getElementById("roster");
+  const held = d.run.filter((q) => q.state !== "published");
+  const live = d.run.filter((q) => q.state === "published");
+  const rows = [];
+  for (const q of [...live, ...held]) {
+    const draft = q.state !== "published";
+    const tag = el("button", {
+      className: "tag " + (draft ? "draft" : q.looking ? "up" : "off"),
+      type: "button",
+      textContent: draft ? T("run.tagdraft") : q.looking ? T("run.tagshow") : T("run.taghide"),
+    });
+    tag.onclick = async () => {
+      if (draft) { location.hash = "#review"; return; }
+      const r = await post("/api/run/show", { id: q.id, show: !q.looking });
+      if (r.error === "full") return say(T("run.full", { n: d.show }), true);
+      load();
+    };
+    const row = el("div", { className: "row" }, [
+      face(q),
+      el("span", { className: "m" }, [
+        el("b", { textContent: q.handle }),
+        el("small", { textContent: [q.campus, q.waiting ? T("run.waiting", { n: q.waiting }) : ""]
+          .filter(Boolean).join(" · ") }),
+      ]),
+      tag,
+    ]);
+    row.style.cursor = "pointer";
+    row.onclick = (e) => { if (e.target !== tag) { be(q.id); location.reload(); } };
+    rows.push(row);
+  }
+  box.replaceChildren(...rows);
+  document.getElementById("count").textContent = d.run.length
+    ? T("run.count", { show: d.run.filter((q) => q.looking).length,
+                       all: d.run.length, max: d.show })
+    : T("run.none");
+}
+
+const say = (text, bad) => {
+  const box = document.getElementById("said");
+  /* An empty string CLEARS it. It used to draw an empty coloured pill, which
+     is a blue bar with nothing in it sitting under the button somebody just
+     pressed — the screen's way of saying something went wrong when nothing
+     did. Seen in a screenshot, not in the code. */
+  if (!text) return box.replaceChildren();
+  box.replaceChildren(el("p", { className: "said" + (bad ? " bad" : ""), textContent: text }));
+};
+
+/* WHAT CAME OUT OF THE FOLDER, before anybody else can see it.
+ *
+ * Every row is held. The screen says which file each person's words came out
+ * of and which file could not be opened, because "where did this sentence
+ * come from" is the only question worth asking about a bio somebody else's
+ * software wrote, and an agent who cannot answer it will not press the
+ * button — correctly. */
+function drawReview(added, info) {
+  const box = document.getElementById("review");
+  if (!added.length) { box.replaceChildren(); return; }
+  const cards = added.map((p) => el("div", { className: "card" }, [
+    el("h3", { textContent: p.handle }),
+    /* THREE DIFFERENT SILENCES, and the screen said the same thing for all of
+       them. No bio because nothing on this box writes bios is not the same as
+       no bio because the files could not be opened — and telling an agent
+       their files were unreadable when they were read perfectly well is how
+       they stop believing the rest of the panel. So the line appears only when
+       something WAS available to write with and still produced nothing, which
+       is the one case that is actually about their files. */
+    p.goal ? el("p", { textContent: p.goal })
+      : (info.drafting ? el("p", { textContent: T("run.nowords") }) : null),
+    (p.trade || p.campus) ? el("p", { className: "from" }, [
+      document.createTextNode([p.trade, p.campus].filter(Boolean).join(" · ")),
+    ]) : null,
+    el("p", { className: "from" }, p.read.map((f, i) =>
+      el("i", { className: f.got ? "" : "no", textContent: (i ? " · " : "") + f.name }))),
+    p.stripped ? el("p", { className: "from", textContent: T("run.stripped") }) : null,
+  ]));
+  const go = el("button", { className: "go", type: "button", textContent: T("run.approve") });
+  go.onclick = async () => {
+    go.disabled = true;
+    const r = await post("/api/run/approve", { ids: added.map((p) => p.id) });
+    say(T("run.approved", { n: (r.live || []).length }));
+    box.replaceChildren();
+    load();
+  };
+  box.replaceChildren(
+    el("p", { className: "eyebrow", textContent: T("run.reviewhead") }),
+    el("p", { className: "count", textContent:
+      (info.drafting ? T("run.reviewwhy") : T("run.reviewnokey"))
+      + (info.loose ? " " + T("run.loose", { n: info.loose }) : "") }),
+    ...cards, el("p", {}, [go]));
+  box.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function send(files) {
+  if (!files.length) return;
+  const fd = new FormData();
+  fd.append("device", device);
+  fd.append("role", role);
+  let n = 0;
+  for (const f of files) {
+    // The path the browser knows, not just the leaf: the folder a file sits in
+    // is the only thing that says whose file it is.
+    fd.append("f" + n, f, f.webkitRelativePath || f.name);
+    if (++n >= 200) break;
+  }
+  say(T("run.reading", { n }));
+  const r = await fetch("/api/run/drop", { method: "POST", headers: head(), body: fd })
+    .then((x) => x.json()).catch(() => ({ error: "failed" }));
+  if (r.error === "nonames") return say(T("run.nonames"), true);
+  if (r.error === "full") return say(T("run.runfull", { n: r.max }), true);
+  if (r.error) return say(T("run.failed"), true);
+  if (!r.added.length) return say(T("run.allalready", { n: r.already }));
+  say("");
+  drawReview(r.added, r);
+  load();
+}
+
+const drop = document.getElementById("drop");
+const input = document.getElementById("files");
+document.getElementById("browse").onclick = () => input.click();
+input.onchange = () => send([...input.files]);
+for (const e of ["dragenter", "dragover"]) {
+  drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.add("over"); });
+}
+for (const e of ["dragleave", "drop"]) {
+  drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.remove("over"); });
+}
+/* A DROPPED FOLDER IS NOT A LIST OF FILES. The drop event gives entries, and
+   only walking them recursively gets `Mia Chen/cv.pdf` rather than nine files
+   with no folder on them — which is the whole grouping signal thrown away at
+   the last step. The file PICKER hands back webkitRelativePath and needs none
+   of this; the two paths exist because people do both. */
+drop.addEventListener("drop", async (ev) => {
+  const items = [...(ev.dataTransfer?.items || [])];
+  const roots = items.map((i) => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+  if (!roots.length) return send([...(ev.dataTransfer?.files || [])]);
+  const out = [];
+  const walk = (entry, path) => new Promise((done) => {
+    if (entry.isFile) {
+      return entry.file((f) => {
+        // The name carries the path, because FormData sends a name and the
+        // server groups on it.
+        out.push(new File([f], path + entry.name, { type: f.type }));
+        done();
+      }, done);
+    }
+    const rdr = entry.createReader();
+    const chunk = () => rdr.readEntries(async (list) => {
+      if (!list.length) return done();
+      for (const e of list) await walk(e, path + entry.name + "/");
+      chunk();   // readEntries returns at most a hundred at a time
+    }, done);
+    chunk();
+  });
+  for (const r of roots) await walk(r, "");
+  send(out);
+});
+
+document.getElementById("add").onclick = async () => {
+  const names = document.getElementById("names").value;
+  if (!names.trim()) return;
+  const r = await post("/api/run/add", { names, role });
+  if (r.error === "full") return say(T("run.runfull", { n: r.max }), true);
+  if (r.error === "contact") return say(T("run.contact"), true);
+  if (r.error === "nopage") return say(T("run.nopage"), true);
+  if (r.error) return say(T("run.failed"), true);
+  document.getElementById("names").value = "";
+  say(T("run.added", { n: r.added.length }));
+  load();
+};
+
+async function load() {
+  const d = await fetch("/api/run", { headers: head() }).then((r) => r.json()).catch(() => null);
+  if (!d || !d.me) { say(T("run.nopage"), true); return; }
+  STATE = d;
+  /* A STALE ID IS NOT AN ERROR. Somebody handed a row over, or cleared it on
+     another phone; the server answers with an empty `as` and the bar simply
+     does not draw. Cleared here so the next request stops sending it. */
+  if (being() && !d.as) be("");
+  drawRail(d);
+  drawRoster(d);
+}
+
+document.getElementById("barback").onclick = () => { be(""); location.reload(); };
+
+/* Every string on the page, in one function, called again when the language
+   changes. The house pattern — see notes.html — rather than a sweep over
+   data- attributes, so a missing key shows up as a key on the screen. */
+function paint() {
+  const set = (id, key) => { document.getElementById(id).textContent = T(key); };
+  document.title = T("run.title");
+  set("boardlink", "run.board");
+  set("head", "run.title");
+  set("lede", "run.lede");
+  set("barback", "run.beback");
+  set("addhead", "run.addhead");
+  set("drophead", "run.drophead");
+  set("dropsub", "run.dropsub");
+  set("browse", "run.choose");
+  set("dropwhy", "run.dropwhy");
+  set("orhead", "run.orhead");
+  set("addgo", "run.addgo");
+  document.getElementById("names").placeholder = T("run.namesph");
+  drawRoles();
+  if (STATE) { drawRail(STATE); drawRoster(STATE); }
+}
+
+document.getElementById("lang").append(langButton(() => paint()));
+paint();
+load();
+</script>
+</body>
+</html>

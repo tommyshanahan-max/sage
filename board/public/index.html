@@ -1052,6 +1052,19 @@
      here. Spaced, because the bar's rule flattens their margin to nothing. */
   #proftests{display:flex;flex-direction:column;gap:.7rem;margin:.9rem 0 0}
   #proftests .opt{margin:0}
+  /* ---- you are somebody you speak for ------------------------------------
+   * Orange, not the accent: this is a state, not a button, and it has to read
+   * as one from across a room. Sticky rather than fixed so it does not sit on
+   * top of a keyboard, and above everything else on the page, because a
+   * warning something can cover is not a warning. */
+  #beingbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;
+    gap:.7rem;padding:.6rem .9rem;background:#B4531F;color:#fff;
+    font-size:.9rem;line-height:1.35}
+  #beingbar span{flex:1}
+  #beingbar button{border:0;border-radius:99px;background:rgba(255,255,255,.24);
+    color:#fff;padding:.35rem .8rem;font:inherit;font-size:.82rem;font-weight:600;
+    white-space:nowrap;cursor:pointer}
+
   .rotnav{display:flex;align-items:center;gap:.5rem;justify-content:flex-end;
     margin:.5rem 0 0}
   .rotdots{display:flex;gap:.3rem}
@@ -1959,6 +1972,10 @@
     <div class="talkrow" id="talkrow" hidden>
       <a href="/notes" id="gonotes"><span></span><i class="badge" id="gonotesn" hidden></i></a>
       <a href="/groups" id="gogroups"><span></span></a>
+      <!-- Only for somebody who already speaks for somebody. It is the tool
+           for a small number of members and a puzzle for everybody else, so it
+           appears when there is a roster and not before — see paintRun(). -->
+      <a href="/run" id="gorun" hidden><span></span></a>
     </div>
     <!-- MATCHES FIRST. A match is the only thing in this tray that is about
          another person having chosen you back, and it is the only one with
@@ -2649,6 +2666,75 @@ try {
   // kernel before a single line of the board had been drawn.
   if (!device) { device = uuid(); localStorage.setItem("board:device", device); }
 } catch { /* private window: it still works, it just forgets */ }
+
+/* ---- BEING SOMEBODY YOU SPEAK FOR ---------------------------------------
+ *
+ * An agent runs several people (see /run, and docs/mockups/agent.html). While
+ * they are being one of them, every request this page makes has to say so, and
+ * the screen has to say so too.
+ *
+ * ONE SHIM RATHER THAN FORTY EDITS. There are dozens of fetch calls in this
+ * file and each one assembles its own headers; threading an extra header
+ * through all of them is forty chances to miss one, and the one missed is a
+ * post written as the wrong person. So `fetch` is wrapped once, here, and adds
+ * the header to any request that already identifies this browser. A request
+ * that does not send x-board-device is a request that does not care who is
+ * asking, and it is left alone.
+ *
+ * THE BAR IS NOT OPTIONAL AND NOT DISMISSABLE. The whole risk this feature
+ * carries is writing as the wrong person, so the state is orange, across the
+ * top, on every screen, with the name in it and one button out. A dropdown you
+ * can forget you are in is the thing this is designed not to be.
+ */
+const AS_KEY = "board:as";
+const beingAs = () => { try { return localStorage.getItem(AS_KEY) || ""; } catch { return ""; } };
+
+const rawFetch = window.fetch.bind(window);
+window.fetch = (input, init) => {
+  const as = beingAs();
+  if (!as) return rawFetch(input, init);
+  const h = new Headers((init && init.headers) || (input instanceof Request ? input.headers : undefined));
+  // Only where this browser has already said who it is. Anything else is a
+  // page load or a public read, and neither is done as anybody.
+  if (h.get("x-board-device")) h.set("x-board-as", as);
+  return rawFetch(input, { ...(init || {}), headers: h });
+};
+
+/* Drawn before anything else paints, because it is the one thing on the screen
+   that has to be true before somebody starts typing. The name is filled in
+   from /api/run when that answers; until then the bar says it plainly without
+   one rather than waiting and showing nothing. */
+function drawBeing() {
+  const as = beingAs();
+  let bar = document.getElementById("beingbar");
+  if (!as) { if (bar) bar.remove(); return; }
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "beingbar";
+    bar.innerHTML = '<span id="beingwho"></span>'
+      + '<button type="button" id="beingout"></button>';
+    document.body.prepend(bar);
+    document.getElementById("beingout").onclick = () => {
+      try { localStorage.removeItem(AS_KEY); } catch { /* private window */ }
+      location.reload();
+    };
+  }
+  document.getElementById("beingout").textContent = T("run.beback");
+  fetch("/api/run", { headers: { "x-board-device": device } })
+    .then((r) => r.json())
+    .then((d) => {
+      const who = (d.run || []).find((q) => q.id === d.as);
+      // A stale id — the row was handed over, or cleared on another phone —
+      // is not an error. Stop sending it and take the bar down.
+      if (!who) {
+        try { localStorage.removeItem(AS_KEY); } catch { /* private window */ }
+        bar.remove();
+        return;
+      }
+      document.getElementById("beingwho").textContent = T("run.being", { who: who.handle });
+    })
+    .catch(() => { /* offline: the bar stays up, which is the safe direction */ });
+}
 
 let posts = [], topic = "", FOLLOWING = [];
 /* How many of those posts a member actually wrote — see /api/board. The rest
@@ -5402,6 +5488,7 @@ function drawTalk() {
   row.hidden = !(ME && ME.handle);
   $("gonotes").firstChild.textContent = T("note.inbox");
   $("gogroups").firstChild.textContent = T("grp.title");
+  $("gorun").firstChild.textContent = T("run.title");
 }
 
 async function countNotes() {
@@ -8184,6 +8271,20 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
   })
   .catch(paintNav);
 
+/* THE WAY IN, AND ONLY FOR PEOPLE WHO HAVE ONE. An agent who has added
+   somebody gets a link to the switcher beside their inbox; everybody else
+   never learns the page exists, because for them it is a screen that explains
+   a feature they are not using. Asked once, quietly, and a failure leaves the
+   link hidden — which is the right direction. */
+function paintRun() {
+  fetch("/api/run", { headers: { "x-board-device": device } })
+    .then((r) => r.json())
+    .then((d) => { if (d && d.run && d.run.length) $("gorun").hidden = false; })
+    .catch(() => { /* no link rather than a broken one */ });
+}
+
+drawBeing();
+paintRun();
 load();
 loadPeople();
 loadWanted();

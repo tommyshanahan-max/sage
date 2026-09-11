@@ -176,8 +176,21 @@ What it asserts, so it can be argued with:
   Follow — not a surprise discovered after a match. His WeChat is the one that
   crosses; that is the arrangement, said out loud.
 
-What it needs that does not exist: everything. `board/server.js` assumes one
-browser is one person — `.by === me` appears seventy-six times — so running
-several rows from one login is the first real change to that assumption since
-the board was written. The shapes considered and why this one won are in
-`docs/todo.md`.
+**Built.** This one is no longer a mockup of something that does not exist —
+`/run`, `POST /api/run/*` and `board/lib/intake.js`. What changed on the way
+from the picture to the thing:
+
+- **The rail moved to its own page, the bar did not.** Switching is at `/run`;
+  the orange "You are Mia Chen" bar is drawn by `index.html` on every screen,
+  because the risk this feature carries is writing as the wrong person and a
+  warning you have to navigate to is not a warning.
+- **The seventy-six `by === me` comparisons were left alone.** A represented
+  person keeps an ordinary identity and the agent's browser is allowed to BE
+  it for the length of one request. Nothing downstream knows.
+- **The sentence is not inherited whole.** Andy's reads "I am an Agent looking
+  for a Producer"; his performers get the left half replaced by theirs. The
+  mockup had this right and the first implementation did not.
+- **A folder can be dropped**, which the mockup did not imagine: an agent has
+  had a folder per performer for years, and retyping nine of them is the real
+  competition. Grouped locally by folder name, read locally, and only the text
+  of one person's own files goes anywhere. Everything lands held.

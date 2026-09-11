@@ -468,6 +468,75 @@ export const STRINGS = {
   "role.p.buyer":      ["buyers", "采购方"],
   "role.p.distributor": ["distributors", "经销商"],
 
+  /* ---- the people one login speaks for -----------------------------------
+   *
+   * The Chinese here is written rather than translated, and two of them are
+   * deliberately not the obvious word. 代理 is what a Chinese producer calls
+   * this arrangement; "经纪人代管" is the phrase they would use for one login
+   * holding several artists' pages, and it is what goes on the button.
+   *
+   * The orange bar is the one string that matters most. It has to be read in
+   * half a second by somebody about to type, so it is short, it names the
+   * person, and it says whose the words are — not "you are in Mia's account",
+   * which describes a setting, but "everything you write is hers", which
+   * describes a consequence. */
+  "run.title":      ["The people you speak for", "你代管的人"],
+  "run.board":      ["The board", "返回"],
+  "run.lede":       ["Everyone here has their own page and their own matches. You run all of them from this login — and the conversations come to you.",
+                     "他们每个人都有自己的主页、自己的匹配。你用一个账号全部代管，谈事的时候对方找的是你。"],
+  "run.you":        ["You", "你自己"],
+  "run.being":      ["You are {who}. Everything you write is theirs.",
+                     "你现在是 {who}。你写的每一句都算她/他说的。"],
+  "run.beback":     ["Back to me", "变回我自己"],
+
+  "run.count":      ["{show} of {all} showing in Browse. Your own page shows all of them.",
+                     "{all} 个人里有 {show} 个在「逛逛」能刷到。你自己的主页上他们都在。"],
+  "run.none":       ["Nobody yet. Drop a folder, or type a few names.",
+                     "还没有人。把文件夹拖进来，或者直接打几个名字。"],
+  "run.tagshow":    ["Showing", "在逛逛"],
+  "run.taghide":    ["Not showing", "没在逛逛"],
+  "run.tagdraft":   ["Draft", "草稿"],
+  "run.waiting":    ["{n} waiting", "{n} 条没看"],
+  "run.full":       ["Browse shows {n} of yours at a time. Take one out first — your own page still shows everybody.",
+                     "「逛逛」里同时最多放你 {n} 个人。先撤下一个——你自己的主页上谁都不少。"],
+
+  "run.addhead":    ["Add someone", "加人"],
+  "run.drophead":   ["Drop a folder", "把文件夹拖进来"],
+  "run.dropsub":    ["— one folder per person, however you already keep them.",
+                     "——一个人一个文件夹，你原来怎么存的就怎么拖。"],
+  "run.choose":     ["Choose a folder", "选文件夹"],
+  "run.dropwhy":    ["Headshots, CVs, bios. The folder names say who is who; nothing is published until you have read it.",
+                     "定妆照、简历、个人介绍都行。谁是谁看文件夹名字；你没过目之前，谁都看不到。"],
+  "run.orhead":     ["Or just the names, one a line:", "或者直接打名字，一行一个："],
+  "run.namesph":    ["Mia Chen\nJen Alvarez\nTom Hale", "陈弥雅\n李真\n韩沐"],
+  "run.addgo":      ["Add them", "加进来"],
+  "run.added":      ["{n} added. Tap a name to be them and fill in their page.",
+                     "加了 {n} 个。点名字就变成他，去把主页填上。"],
+
+  "run.reading":    ["Reading {n} files\u2026", "正在看这 {n} 个文件……"],
+  "run.nonames":    ["Nothing here says whose files these are. Put each person's files in a folder with their name on it.",
+                     "看不出这些文件是谁的。每个人的东西放进一个以他名字命名的文件夹里。"],
+  "run.runfull":    ["That is {n} people, which is as many as one login holds. Ask and it can be raised.",
+                     "一个账号最多带 {n} 个人，满了。要加跟我们说。"],
+  "run.allalready": ["All {n} are already here. Nothing added.", "这 {n} 个都已经在了，没重复加。"],
+  "run.contact":    ["One of those has a phone number or a WeChat id in it. Profiles here carry neither.",
+                     "里面有手机号或者微信号。这儿的主页不放这些。"],
+  "run.nopage":     ["Finish your own page first — that is where theirs starts from.",
+                     "先把你自己的主页填完，他们的是从你这儿来的。"],
+  "run.failed":     ["That did not go through. Try again.", "没成功，再试一次。"],
+
+  "run.reviewhead": ["Read this before anybody else does", "先过一遍，别人还看不到"],
+  "run.reviewwhy":  ["Written from the files you dropped, and held until you say so. Check it: it can only be as right as the paperwork was.",
+                     "这是照着你拖进来的文件写的，你不点确认谁也看不到。看一眼——文件里怎么写的，它就怎么写。"],
+  "run.reviewnokey":["Names and faces came out of the folders. The words are yours to write — tap a name after this to fill in their page.",
+                     "名字和照片是从文件夹里拿的。介绍得你自己写——确认完点名字就能去填。"],
+  "run.loose":      ["{n} files were not in anybody's folder and were left out.",
+                     "有 {n} 个文件不在任何人的文件夹里，没算进来。"],
+  "run.nowords":    ["Nothing readable in their files.", "他的文件里没读出什么来。"],
+  "run.stripped":   ["Contact details were taken out.", "里面的联系方式去掉了。"],
+  "run.approve":    ["Put them on the board", "放上去"],
+  "run.approved":   ["{n} are on the board.", "{n} 个已经上去了。"],
+
   "role.a.director":   ["a Director", "导演"],
   "role.a.writer":     ["a Writer", "编剧"],
   "role.a.performer":  ["a Performer", "演员"],

@@ -623,6 +623,11 @@ app.get(["/notes", "/notes/"], notesOff,
 app.get(["/groups", "/groups/"], notesOff,
   (req, res, next) => page("groups.html", req, res, next));
 
+/* The switcher, the roster and the folder drop. Behind the door like the rest
+   of the board — it is nothing but somebody's own roster — and not in
+   OPEN_PATHS. */
+app.get(["/run", "/run/"], (req, res, next) => page("run.html", req, res, next));
+
 /* ADMISSION THE SERVER CAN SEE BEFORE ANY SCRIPT RUNS.
  *
  * The rest of this app identifies a browser from localStorage, which only
