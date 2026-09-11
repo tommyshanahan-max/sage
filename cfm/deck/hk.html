@@ -1,0 +1,242 @@
+<title>The Exchange · Hong Kong</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  :root{
+    --ground:#080C0A;
+    --raise:#0E1512;
+    --ink:#ECEAE4;
+    --dim:#939C96;
+    --hair:#1E2A25;
+    --jade:#3FBF8F;
+    --gold:#D9A94A;
+    --serif:"Instrument Serif",Georgia,"Songti SC",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);color:var(--ink);
+    font:16px/1.6 var(--sans);
+    -webkit-font-smoothing:antialiased;
+    scroll-snap-type:y proximity;
+  }
+  .deck{max-width:30rem;margin:0 auto;padding:0 1.4rem}
+  section{
+    scroll-snap-align:start;
+    min-height:86svh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:3rem 0;
+    border-bottom:1px solid var(--hair);
+  }
+  section:last-of-type{border-bottom:0}
+  .eyebrow{
+    font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--jade);margin:0 0 1.1rem;
+  }
+  .eyebrow.gold{color:var(--gold)}
+  h1{font:400 clamp(2.9rem,12vw,4rem)/1.01 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  h2{font:400 clamp(2.4rem,9.6vw,3.2rem)/1.08 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  p{margin:0 0 1rem;color:var(--dim);font-size:1.02rem}
+  p.lead{color:var(--ink);font-size:1.08rem}
+  p:last-child{margin-bottom:0}
+  em{font-style:italic;font-family:var(--serif);font-size:1.15em;color:var(--jade)}
+  b{color:var(--ink);font-weight:650}
+
+  .big{font:400 clamp(4rem,22vw,6.5rem)/.9 var(--serif);color:var(--gold);letter-spacing:-.02em}
+  .big.range{font-size:clamp(2.9rem,15vw,4.4rem);line-height:1}
+  .big.range span{font-size:.42em;color:var(--dim);margin:0 .28em;
+    font-family:var(--sans);font-style:italic}
+  .under{color:var(--dim);font-size:.95rem;margin:.7rem 0 0}
+  .growth{display:block;margin:2rem 0 0;overflow:visible;max-width:100%}
+
+  .pair{display:flex;gap:2.4rem;flex-wrap:wrap;margin:0 0 1.6rem}
+  .pair .n{font:400 clamp(3rem,15vw,4.2rem)/.9 var(--serif);color:var(--gold)}
+  .pair .n.quiet{color:var(--ink)}
+  .pair .l{color:var(--dim);font-size:.86rem;margin-top:.5rem;max-width:8rem}
+
+  /* WHAT IS BEING ASKED OF HIM. Two lines, in the margin-numbered shape the
+     advisor deck uses — a partner reading a share offer wants to know the
+     price in his own time before he reads the number. */
+  ol.how{list-style:none;margin:0 0 1.5rem;padding:0;counter-reset:how}
+  ol.how li{position:relative;padding:0 0 1.1rem 2.5rem;counter-increment:how}
+  ol.how li:last-child{padding-bottom:.4rem}
+  ol.how li::before{content:counter(how);position:absolute;left:0;top:-.1rem;
+    font:400 1.5rem/1 var(--serif);color:var(--gold)}
+  ol.how b{display:block;color:var(--ink);font-weight:650;font-size:1.02rem;margin-bottom:.15rem}
+  ol.how span{display:block;color:var(--dim);font-size:.95rem;line-height:1.5}
+
+  /* THE LADDER. Rows rather than circles past two years: a fourth circle
+     drawn to scale against $20m is four times the width of a phone, and one
+     drawn smaller than scale is a lie told in a picture. The other decks keep
+     the three circles unchanged — they stop at two years and the drawing is
+     honest there. */
+  .steps{margin:1.2rem 0 0}
+  .steps div{display:flex;justify-content:space-between;align-items:baseline;
+    gap:1rem;padding:.9rem 0;border-bottom:1px solid var(--hair)}
+  .steps div:last-child{border-bottom:0}
+  .steps .w{color:var(--dim);font-size:.95rem}
+  .steps .v{font:400 1.75rem/1 var(--serif);color:var(--gold);white-space:nowrap}
+  .steps .v.quiet{color:var(--dim);font-size:1.3rem}
+  .steps .v.on{color:var(--jade)}
+
+  /* SCENES FROM THE APP, drawn here rather than screenshotted.
+     A screenshot of a light-mode app dropped into a dark deck reads as a
+     picture of something else; these are the same screens in the deck's own
+     colours, so they belong to the page they are on. Small on purpose — they
+     are there to make one sentence concrete, not to be inspected. */
+  .screens{display:flex;gap:.8rem;margin:1.5rem 0 0}
+  .sc{flex:1;min-width:0;background:var(--raise);border:1px solid var(--hair);
+    border-radius:.9rem;padding:.6rem;display:flex;flex-direction:column;gap:.45rem}
+  /* A FACE, DRAWN. This was a bare gradient standing in for a photograph,
+     which at phone width read as a dark card and at any wider size read as an
+     image that had failed to load. Nothing is fetched here — see the note in
+     deck-build.mjs about what a page sent into China may load — so the face is
+     a head and a pair of shoulders in CSS, and the scrim keeps the name
+     legible over the top of them. */
+  .sc .face{aspect-ratio:1/.82;border-radius:.5rem;position:relative;overflow:hidden;
+    background:linear-gradient(158deg,#3B4A55,#141C21);
+    box-shadow:inset 0 -2.4rem 1.6rem -1.1rem rgba(4,8,10,.72)}
+  .sc .face::before,.sc .face::after{content:"";position:absolute;left:50%;
+    transform:translateX(-50%);background:#51626E}
+  .sc .face::before{top:20%;width:24%;aspect-ratio:1;border-radius:50%}
+  .sc .face::after{top:50%;width:50%;height:42%;border-radius:50% 50% 0 0}
+  .sc .face b{position:absolute;left:.4rem;bottom:.75rem;color:#fff;
+    font:400 .82rem/1 var(--serif)}
+  .sc .face i{position:absolute;left:.42rem;bottom:.3rem;font-style:normal;
+    font-size:.5rem;color:#9FB0BA}
+  .sc .said{font-size:.58rem;line-height:1.7;color:var(--ink);font-family:var(--serif)}
+  .sc .said em{font-style:normal;font-family:var(--sans);font-size:.85em;
+    font-weight:700;color:#04120C;background:var(--jade);
+    border-radius:99px;padding:.05rem .32rem}
+  .sc .btn{border-radius:99px;text-align:center;font-size:.55rem;font-weight:700;
+    padding:.34rem;background:var(--jade);color:#04120C}
+  .sc .btn.q{background:transparent;border:1px solid var(--hair);color:var(--dim)}
+  .sc .tag{font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;
+    font-weight:700;color:var(--gold)}
+  .sc .id{font:.52rem/1.4 ui-monospace,Menlo,monospace;color:var(--ink);
+    background:#0A100D;border:1px solid var(--hair);border-radius:.35rem;
+    padding:.24rem .3rem}
+  .caption{font-size:.82rem;color:var(--dim);margin:.8rem 0 0;text-align:center}
+
+  .terms{margin:1.4rem 0 0}
+  .terms div{display:flex;justify-content:space-between;gap:1rem;
+    padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
+  .terms div:last-child{border-bottom:0}
+  .terms .w{color:var(--dim)}
+  .terms .v{color:var(--ink);font-weight:650;text-align:right}
+
+  .go{display:block;margin:1.6rem 0 0;padding:1.05rem 1.2rem;
+    background:var(--jade);color:#04120C;border-radius:99px;text-align:center;
+    text-decoration:none;font-weight:700;font-size:1.02rem}
+  .fine{color:var(--dim);font-size:.85rem;margin-top:1rem;text-align:center}
+  .on{display:block;margin:1.1rem 0 0;color:var(--dim);font-size:.9rem;
+    line-height:1.5;text-align:center;text-decoration:none}
+  .on:hover{color:var(--ink)}
+  #what{scroll-margin-top:1rem}
+
+  .mark{display:flex;align-items:center;gap:.7rem;margin:0 0 2rem}
+  .mark i{width:2.6rem;height:2.6rem;border-radius:.7rem;background:var(--raise);
+    border:1px solid var(--hair);display:grid;place-items:center;font-style:normal;
+    font:400 1.3rem/1 var(--serif);color:var(--jade)}
+  .mark span{font:400 1.25rem/1 var(--serif);color:var(--ink)}
+
+  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="deck">
+
+  <!-- FIVE SLIDES, AND NO OFFER ON ANY OF THEM.
+       The other decks in this folder ask somebody to take a share. This one
+       asks somebody to walk through a door, which is a much smaller thing and
+       has to be written as one: no percentages, no four-year figure, nothing
+       to think about overnight. What it is, why it is worth being early to,
+       what it will not do to them, and how to get in.
+
+       WRITTEN FOR HONG KONG. A producer or an agent there already works both
+       sides of the border and already knows the introduction problem — which
+       means the argument is not that the problem exists, it is that somebody
+       has finally built the room. -->
+
+  <section>
+    <div class="mark"><i>换</i><span>The Exchange</span></div>
+    <p class="eyebrow gold">Invitation</p>
+    <h1>The room you keep asking people for.</h1>
+    <p class="lead">A private board where one line decides who you are shown.
+      I would like you in it.</p>
+    <a class="on" href="#what">what it is ↓</a>
+  </section>
+
+  <section id="what">
+    <p class="eyebrow">What it is</p>
+    <h2>LinkedIn × Tinder.</h2>
+    <p class="lead">You say one line — <b>I am a ___ looking for a ___</b> —
+      and it finds the people who said the other half.</p>
+
+    <div class="screens">
+      <div class="sc">
+        <div class="face"><b>Mia</b><i>Agent · Shanghai</i></div>
+        <div class="said">I am an <em>Agent</em> looking for <em>a Producer</em></div>
+        <div class="btn">Follow</div>
+      </div>
+      <div class="sc">
+        <span class="tag">✓ You matched</span>
+        <div class="said" style="font-family:var(--sans);font-size:.55rem;color:var(--dim)">
+          She followed you back, and you<br><b style="color:var(--ink)">sent her your card</b></div>
+        <div class="id">mia_chen_sh</div>
+        <div class="btn q">Open WeChat</div>
+      </div>
+    </div>
+
+    <p class="caption">Nobody's contact opens until both sides agree.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Why Hong Kong</p>
+    <h2>You already work both sides.</h2>
+    <p class="lead">Half the value of somebody in Hong Kong is that they know
+      people on the other side of a border everybody else has to be introduced
+      across.</p>
+    <p>That is the whole product. The board is people in China, and with
+      China — and the ones who can move between the two are worth the most in
+      it and get the most out of it.</p>
+    <p style="margin-top:1.3rem">In eighteen months it stops being a China
+      product at all: Jakarta, Lagos, São Paulo, Dubai. Same room, same
+      sentence.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">What it will not do</p>
+    <h2>Three things it does not have.</h2>
+    <ol class="how">
+      <li><b>No feed.</b>
+        <span>Nothing to scroll and nothing to keep up with. You set your line
+          and you are shown the people who answer it.</span></li>
+      <li><b>No cold messages.</b>
+        <span>Nobody can write to you until you have both said you want the
+          same thing. There is no way to reach the room at once.</span></li>
+      <li><b>Nobody gets your contact by being there.</b>
+        <span>Your WeChat moves when you hand it over, one person at a time,
+          and you can take it back.</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">If you want in</p>
+    <h2>It is invite only, and small.</h2>
+    <p class="lead">Twenty-three people so far, and it stays that shape on
+      purpose — a room where everybody was brought in by somebody is a room
+      where a stranger's name still means something.</p>
+
+    <div class="screens" style="max-width:11rem">
+      <div class="sc">
+        <span class="tag" style="color:var(--jade)">Your line</span>
+        <div class="said">I am a <em>___</em> looking for <em>a ___</em></div>
+        <div class="btn">Put it up</div>
+      </div>
+    </div>
+
+    <a class="go" href="https://liuxuesheng.io/join">Put your name down →</a>
+    <p class="fine">Say yes and I will send you a code, which skips the list
+      entirely.</p>
+  </section>
+
+</div>
