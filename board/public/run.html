@@ -29,13 +29,22 @@
   h1{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:1.5rem;margin:1.2rem 0 .2rem}
   .lede{color:var(--ink-2);margin:0 0 1.4rem;line-height:1.6}
 
-  /* ---- the rail: one tap, and always the answer to "who am I" ------------ */
-  .rail{display:flex;gap:.8rem;overflow-x:auto;padding:.9rem 0 .8rem;
+  /* ---- the rail: one tap, and always the answer to "who am I" ------------
+   *
+   * NOT ROUND, AND LABELLED. It was a row of circles that scrolled sideways
+   * along the top of a page — which is exactly where stories live in every app
+   * these people already use, and round means "tap me to watch something".
+   * Here tapping means you silently become somebody else, which is the one
+   * accident this whole feature exists to prevent. So: rounded squares, a
+   * label over them saying what they do, and nothing that reads as content. */
+  .railhead{margin:1rem 0 .4rem;font-size:.7rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);font-weight:600}
+  .rail{display:flex;gap:.8rem;overflow-x:auto;padding:.1rem 0 .8rem;
     border-bottom:1px solid var(--hair);scrollbar-width:none;margin:0 0 1.2rem}
   .rail::-webkit-scrollbar{display:none}
   .pick{flex:0 0 auto;width:3.6rem;padding:0;border:0;background:none;
     text-align:center;cursor:pointer}
-  .pick .face{width:2.9rem;height:2.9rem;border-radius:50%;margin:0 auto;
+  .pick .face{width:2.9rem;height:2.9rem;border-radius:.7rem;margin:0 auto;
     display:grid;place-items:center;color:#fff;font-family:var(--serif,Georgia,serif);
     font-size:1.1rem;overflow:hidden}
   .pick .face img{width:100%;height:100%;object-fit:cover}
@@ -43,9 +52,9 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* The ring is outside the circle with a gap the colour of the page, so it
      reads as a ring rather than as a thicker avatar. */
-  .pick.on .face{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--accent)}
+  .pick.on .face{box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--accent)}
   .pick.on small{color:var(--accent);font-weight:600}
-  .pick.as .face{box-shadow:0 0 0 2px var(--paper),0 0 0 4px #B4531F}
+  .pick.as .face{box-shadow:0 0 0 2px var(--paper),0 0 0 3px #B4531F}
   .pick.as small{color:#B4531F;font-weight:600}
   .pick.more .face{background:var(--raise);border:1px dashed var(--line);
     color:var(--muted);font-family:inherit;font-size:1.3rem}
@@ -120,6 +129,7 @@
     <button id="barback" type="button"></button>
   </div>
 
+  <p class="railhead" id="railhead"></p>
   <div class="rail" id="rail"></div>
 
   <div id="roster"></div>
@@ -433,6 +443,7 @@ function paint() {
   set("head", "run.title");
   set("lede", "run.lede");
   set("barback", "run.beback");
+  set("railhead", "run.railhead");
   set("addhead", "run.addhead");
   set("drophead", "run.drophead");
   set("dropsub", "run.dropsub");

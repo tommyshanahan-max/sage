@@ -488,6 +488,11 @@ export const STRINGS = {
   "run.being":      ["You are {who}. Everything you write is theirs.",
                      "你现在是 {who}。你写的每一句都算她/他说的。"],
   "run.beback":     ["Back to me", "变回我自己"],
+  /* Over the rail, because a row of faces that scrolls sideways is where every
+     app these people use puts stories, and round faces mean "tap to watch".
+     Tapping here means becoming somebody. The label is the cheap half of the
+     fix; the tiles being square is the other half. */
+  "run.railhead":   ["Posting as", "现在以谁的身份"],
 
   "run.count":      ["{show} of {all} showing in Browse. Your own page shows all of them.",
                      "{all} 个人里有 {show} 个在「逛逛」能刷到。你自己的主页上他们都在。"],
@@ -536,6 +541,43 @@ export const STRINGS = {
   "run.stripped":   ["Contact details were taken out.", "里面的联系方式去掉了。"],
   "run.approve":    ["Put them on the board", "放上去"],
   "run.approved":   ["{n} are on the board.", "{n} 个已经上去了。"],
+
+  /* ---- the laptop console ------------------------------------------------
+   * A different register from /run: this is somebody at a desk with a folder
+   * of files open beside the browser, not somebody on a phone in a taxi. It
+   * can afford a sentence. What it must not do is imply the sorting is
+   * reliable — "check the names" is the instruction, and it is first. */
+  "ob.title":       ["Bring your people on", "把你的人一次弄进来"],
+  "ob.lede":        ["Drag in everything you have — headshots, CVs, bios, all of it in one go. It gets sorted into people, and you check the names before anything is made.",
+                     "手上有什么就拖什么进来——定妆照、简历、个人介绍，一次全丢进来。它会按人分好，你核对一下名字，然后才开始建。"],
+  "ob.rolehead":    ["They are", "他们是"],
+  "ob.fieldhead":   ["Drag it all in here", "全拖到这儿"],
+  "ob.fieldsub":    ["A folder, several folders, or two hundred loose files. Nothing leaves this page until you say so.",
+                     "一个文件夹、好几个文件夹，或者两百个散文件都行。你不点确认，什么都不会建。"],
+  "ob.choose":      ["Choose files", "选文件"],
+  "ob.reading":     ["Reading {n} files and working out who is who\u2026", "正在看这 {n} 个文件，分一下谁是谁……"],
+  "ob.sorted":      ["{n} people. The names and the words came out of the files \u2014 check them, and drag a file onto somebody else if it landed wrong.",
+                     "分出来 {n} 个人。名字和介绍都是从文件里读出来的——核对一下，分错了就把文件拖到别人那儿。"],
+  "ob.sortednokey": ["{n} people, sorted by their file names. The words are yours to write.",
+                     "按文件名分出来 {n} 个人。介绍得你自己写。"],
+  "ob.already":     ["{n} were already on your roster.", "有 {n} 个你已经带了。"],
+  "ob.nonames":     ["Nothing in that pile says whose files these are. Put each person's files in a folder with their name on it, or rename them.",
+                     "这堆文件看不出是谁的。给每个人建个以他名字命名的文件夹，或者把文件名改一下。"],
+  "ob.trayhead":    ["Could not tell whose these are \u2014 drag them onto somebody",
+                     "这几个不知道是谁的——拖到对应的人身上"],
+  "ob.guessed":     ["Worked out", "猜的"],
+  "ob.fromfolder":  ["From your folder", "按你的文件夹分的"],
+  "ob.movetip":     ["Drag onto somebody else", "拖到别人那儿"],
+  "ob.whoph":       ["Their name", "名字"],
+  "ob.goalph":      ["What they do, in their own voice.", "他是干什么的，用他自己的口气写。"],
+  "ob.tradeph":     ["Line of work", "行当"],
+  "ob.cityph":      ["City", "城市"],
+  "ob.drop":        ["Leave out", "不要这个"],
+  "ob.keep":        ["Put back", "还是要"],
+  "ob.make":        ["Make {n} pages", "建 {n} 个主页"],
+  "ob.tally":       ["{files} files \u00b7 {n} people", "{files} 个文件 · {n} 个人"],
+  "ob.made":        ["{n} made, and held. Read them on your roster, then put them on the board.",
+                     "建好了 {n} 个，先存着。去名单里过一遍，再放上板。"],
 
   "role.a.director":   ["a Director", "导演"],
   "role.a.writer":     ["a Writer", "编剧"],

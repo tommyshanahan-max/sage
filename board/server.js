@@ -628,6 +628,10 @@ app.get(["/groups", "/groups/"], notesOff,
    OPEN_PATHS. */
 app.get(["/run", "/run/"], (req, res, next) => page("run.html", req, res, next));
 
+/* The laptop half of the same thing: a heap of files, sorted, shown, and
+   corrected before anything is written. Same door, same roster. */
+app.get(["/onboard", "/onboard/"], (req, res, next) => page("onboard.html", req, res, next));
+
 /* ADMISSION THE SERVER CAN SEE BEFORE ANY SCRIPT RUNS.
  *
  * The rest of this app identifies a browser from localStorage, which only
@@ -5224,8 +5228,19 @@ app.post("/api/run/drop", gate,
   if (!mine) return res.status(409).json({ error: "nopage" });
   if (mine.runBy) return res.status(409).json({ error: "run" });
 
+  /* FOLDERS FIRST, THEN THE HEAP. A tidy drop — one folder per person — never
+     reaches a model at all: a person put those files in those folders and that
+     is better evidence than anything a machine can infer. What is left over is
+     the pile an agent actually drags in off a laptop, and that is proposed
+     rather than decided; see sortLoose. */
+  // Tagged before anything groups them, so a file can be named back to the
+  // browser that sent it however the grouping shuffles it about.
+  parsed.files.forEach((f, i) => { f.i = i; });
   const { piles, loose } = intake.group(parsed.files);
-  if (!piles.length) return res.status(400).json({ error: "nonames", loose: loose.length });
+  const guessed = await intake.sortLoose(loose);
+  const all = [...piles, ...guessed.filter((g) => g.name)];
+  const unplaced = guessed.filter((g) => !g.name).flatMap((g) => g.files);
+  if (!all.length) return res.status(400).json({ error: "nonames", loose: loose.length });
   const room = store.RUN_MAX - board0.people.filter((q) => q.runBy === real && q.by !== real).length;
   if (room <= 0) return res.status(409).json({ error: "full", max: store.RUN_MAX });
 
@@ -5235,13 +5250,47 @@ app.post("/api/run/drop", gate,
      thing both sides have. */
   const had = new Set(board0.people
     .filter((q) => q.runBy === real).map((q) => q.handle.trim().toLowerCase()));
-  const fresh = piles.filter((p) => !had.has(p.name.trim().toLowerCase())).slice(0, room);
+  const fresh = all.filter((p) => !had.has(p.name.trim().toLowerCase())).slice(0, room);
   if (!fresh.length) {
-    return res.status(200).json({ ok: true, added: [], already: piles.length,
-      loose: loose.length, drafting: intake.configured() });
+    return res.status(200).json({ ok: true, added: [], already: all.length,
+      loose: unplaced.length, drafting: intake.configured() });
   }
 
   const drafts = await intake.draft(fresh);
+
+  /* THE CONSOLE'S HALF: propose, and write nothing at all.
+   *
+   * The tidy path creates held rows straight away, which is right when the
+   * agent's folders already say who is who — there is nothing to correct. The
+   * heap is different: the grouping itself is a guess, and a guess is only
+   * safe when the person can see it and move a file. So /onboard asks with
+   * dry=1, shows WHICH FILES went under WHICH NAME, lets it be fixed, and
+   * sends the result back to /api/run/make.
+   *
+   * Nothing is kept between the two requests — no token, no temp directory, no
+   * half-made rows to sweep up if somebody closes the laptop. The browser
+   * still has the files; the second request carries only the faces and the
+   * fields, which is a fraction of the pile. State on a server is a thing to
+   * expire, and this way there is none. */
+  if (String(parsed.fields.dry || "") === "1") {
+    return res.json({
+      ok: true, dry: true, drafting: intake.configured(),
+      already: all.length - fresh.length,
+      unplaced: unplaced.map((f) => ({ i: f.i, name: String(f.name).split("/").pop() })),
+      people: drafts.map((d) => ({
+        handle: d.handle, goal: d.goal, trade: d.trade, campus: d.campus,
+        speaks: d.speaks, age: d.age,
+        // Named so the console can show the grouping, which is the whole
+        // reason this request exists.
+        // `i` travels: the console has to put a chip under a different person
+        // and two people can both have a bio.txt, so the leaf name is not an
+        // identity. Dropping it here was a card with no files drawn on it.
+        files: d.read.map((f) => ({ i: f.i, name: f.name, read: f.got })),
+        guessed: Boolean(fresh.find((p) => p.name === d.handle)?.guessed),
+        drafted: d.drafted,
+      })),
+    });
+  }
 
   // Faces are stored before the board is touched, so a write that fails leaves
   // no rows pointing at media and no media pointing at nothing.
@@ -5295,13 +5344,111 @@ app.post("/api/run/drop", gate,
   res.status(201).json({
     ok: true,
     added: out || [],
-    already: piles.length - fresh.length,
+    already: all.length - fresh.length,
     // Files that belong to nobody — a bare `cv.pdf` dropped loose. Named back
     // rather than silently ignored: a file that vanished is the one thing that
     // would make somebody distrust the whole import.
-    loose: loose.length,
+    loose: unplaced.length,
     drafting: intake.configured(),
   });
+});
+
+/* WHAT THE AGENT CONFIRMED.
+ *
+ * The second half of the console, and the only half that writes anything. It
+ * takes the people as they stand on the screen after the grouping has been
+ * corrected — names fixed, files moved, somebody deleted — plus one face each,
+ * and makes the rows.
+ *
+ * The fields arrive as text rather than being re-derived, which is the point:
+ * they are what the agent read and edited, not what a model said. If they
+ * rewrote a bio in the box, the rewritten one is what lands. Nothing here asks
+ * a model anything.
+ *
+ * Faces come up as files named `face0`, `face1` — matched to the person at
+ * that index. Everything else in the pile is left in the browser and never
+ * uploaded twice: a CV's job was finished the moment its words were read.
+ */
+app.post("/api/run/make", gate,
+  express.raw({ type: "multipart/form-data", limit: "64mb" }), async (req, res) => {
+  const parsed = multipart(req);
+  if (!parsed) return res.status(400).json({ error: "expected multipart/form-data" });
+  const real = store.hashDevice(String(parsed.fields.device || ""), SALT);
+  if (!real) return res.status(400).json({ error: "no" });
+  const role = String(parsed.fields.role || "");
+  if (!store.ROLES[role] || store.ROLES[role].side !== "make") {
+    return res.status(400).json({ error: "role" });
+  }
+
+  let want = [];
+  try { want = JSON.parse(String(parsed.fields.people || "[]")); } catch { /* refused below */ }
+  if (!Array.isArray(want) || !want.length) return res.status(400).json({ error: "people" });
+  want = want.slice(0, store.RUN_MAX);
+
+  const board0 = await store.load(FILE);
+  const mine = board0.people.find((q) => q.by === real);
+  if (!mine) return res.status(409).json({ error: "nopage" });
+  if (mine.runBy) return res.status(409).json({ error: "run" });
+  const room = store.RUN_MAX - board0.people.filter((q) => q.runBy === real && q.by !== real).length;
+  if (room <= 0) return res.status(409).json({ error: "full", max: store.RUN_MAX });
+
+  const had = new Set(board0.people
+    .filter((q) => q.runBy === real).map((q) => q.handle.trim().toLowerCase()));
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").trim().slice(0, n);
+
+  const rows = [];
+  for (let i = 0; i < want.length && rows.length < room; i++) {
+    const p = want[i] || {};
+    const handle = s(p.handle, 40);
+    // A person with no name is a group the agent left unnamed on the screen.
+    // Skipped rather than refused: the other eight should still land.
+    if (!handle || had.has(handle.toLowerCase())) continue;
+    had.add(handle.toLowerCase());
+    const face = parsed.files.find((f) => f.name === "face" + i);
+    let photo = "";
+    if (face && face.buf.length <= 25 * 1024 * 1024) {
+      try { photo = (await putMedia(face.buf, face.type)) || ""; } catch { /* added later */ }
+    }
+    rows.push({
+      handle, photo,
+      goal: s(p.goal, 600), trade: s(p.trade, 120), campus: s(p.campus, 60),
+      age: String(p.age ?? "").replace(/\D/g, "").slice(0, 2),
+      speaks: Array.isArray(p.speaks) ? p.speaks.slice(0, 6).map((x) => s(x, 40)).filter(Boolean) : [],
+    });
+  }
+  if (!rows.length) return res.status(200).json({ ok: true, added: [] });
+
+  const out = await change((board) => {
+    const made = [];
+    for (const r of rows) {
+      // The board's one rule, applied to what the agent confirmed exactly as
+      // it is applied to what a model wrote and to what a member types.
+      let stripped = false;
+      if (store.contactShaped([r.goal, r.trade, r.campus, r.handle].filter(Boolean).join(" "))) {
+        r.goal = ""; r.trade = ""; stripped = true;
+      }
+      const q = store.cleanPerson({
+        id: store.newId(),
+        at: new Date().toISOString(),
+        // Held, like everything else that arrives this way. Approving the
+        // grouping is not the same decision as putting somebody on a board,
+        // and the console asks for both.
+        state: "held",
+        by: store.hashDevice(randomUUID(), SALT),
+        runBy: real, agent: mine.id,
+        handle: r.handle, goal: r.goal, trade: r.trade, campus: r.campus,
+        speaks: r.speaks, age: r.age, photo: r.photo,
+        say: (mine.say.length ? mine.say : [{ me: "", want: store.ANYONE }])
+          .map((x) => ({ me: role, want: x.want })),
+        where: mine.where, wants: mine.wants,
+        looking: false,
+      });
+      board.people.push(q);
+      made.push({ id: q.id, handle: q.handle, goal: q.goal, face: Boolean(q.photo), stripped });
+    }
+    return made;
+  });
+  res.status(201).json({ ok: true, added: out || [] });
 });
 
 /* READ, AND LET THROUGH. The button at the end of the drop.

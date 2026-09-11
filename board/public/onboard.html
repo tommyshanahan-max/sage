@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>Bring your people on</title>
+<link rel="stylesheet" href="/site.css">
+
+<!-- THE LAPTOP SCREEN.
+     What an agent actually does is select everything and drag it in: two
+     hundred files, IMG_4821.jpg and "headshot final FINAL.pdf" among them, in
+     one heap. /run takes a tidy folder-per-person drop on a phone. This takes
+     the heap, on a wide screen, and shows the sorting so it can be corrected.
+
+     THE WHOLE ARGUMENT OF THIS PAGE IS THAT THE GROUPING IS VISIBLE. Working
+     out whose CV a CV is fails silently and in the worst direction — a CV
+     naming a director they worked with, filed under the director — and nobody
+     catches that by reading a bio. It is safe here only because the screen
+     says WHICH FILES went under WHICH NAME, and fixing it is one drag. A guess
+     somebody checks is not the same object as a guess nobody sees.
+
+     Nothing is written until the button at the bottom. The first request
+     proposes and keeps nothing — no token, no temp directory, no half-made
+     rows to sweep up if the laptop closes. The browser still holds the files. -->
+
+<style>
+  body{margin:0}
+  .wrap{max-width:76rem;margin:0 auto;padding:0 1.4rem 6rem}
+  .rotnav{display:flex;align-items:center;gap:.6rem;justify-content:space-between;padding:1rem 0}
+  h1{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:1.9rem;margin:.6rem 0 .3rem}
+  .lede{color:var(--ink-2);margin:0 0 1.6rem;line-height:1.65;max-width:44rem}
+
+  .roles{display:flex;flex-wrap:wrap;gap:.4rem;margin:0 0 1rem;align-items:center}
+  .roles b{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);margin-right:.4rem;font-weight:600}
+  .roles button{border:1px solid var(--line);background:var(--raise);color:var(--ink-2);
+    border-radius:99px;padding:.35rem .85rem;font:inherit;font-size:.9rem;cursor:pointer}
+  .roles button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);
+    color:#fff;font-weight:600}
+
+  /* The drop target is the page, not a box in it: somebody dragging two
+     hundred files is not aiming. */
+  .field{border:2px dashed var(--line);border-radius:1.2rem;padding:3.4rem 1.5rem;
+    text-align:center;background:var(--raise);transition:background .12s,border-color .12s}
+  .field.over{border-color:var(--accent);background:var(--accent-soft)}
+  /* ONCE THE PILE IS IN, THE TARGET GETS OUT OF THE WAY. A half-screen of
+     empty dashed box above the thing somebody is actually reading is the
+     upload form still asking for an upload that has happened. It stays a drop
+     target — dropping a second folder on top is a normal thing to do. */
+  .field.small{padding:.9rem 1.2rem;display:flex;align-items:center;gap:1rem;text-align:left}
+  .field.small b{font-size:1rem;margin:0;flex:1}
+  .field.small p{display:none}
+  .field.small .go{margin:0}
+  .field b{display:block;font-family:var(--serif,Georgia,serif);font-weight:400;
+    font-size:1.5rem;color:var(--ink);margin:0 0 .5rem}
+  .field p{margin:.4rem auto 0;max-width:34rem;color:var(--muted);line-height:1.6}
+  .field .go{margin-top:1.2rem}
+  .go{border:0;border-radius:99px;background:var(--accent);color:#fff;
+    padding:.75rem 1.5rem;font:inherit;font-size:1rem;font-weight:600;cursor:pointer}
+  .go[disabled]{opacity:.45;cursor:default}
+  .flat{background:none;border:1px solid var(--line);color:var(--ink-2)}
+
+  .said{margin:1rem 0 0;padding:.8rem 1rem;border-radius:.7rem;background:var(--accent-soft);
+    color:var(--ink-2);line-height:1.6}
+  .said.bad{background:#FBEEE4;color:#8A3D14}
+  @media (prefers-color-scheme:dark){.said.bad{background:#2A1A10;color:#E8905A}}
+
+  /* ---- one card per person ---------------------------------------------- */
+  .people{display:grid;gap:1rem;margin:1.4rem 0 0;
+    grid-template-columns:repeat(auto-fill,minmax(20rem,1fr))}
+  .who{border:1px solid var(--hair);border-radius:1rem;padding:1rem;background:var(--raise);
+    display:flex;flex-direction:column;gap:.6rem}
+  .who.over{border-color:var(--accent);background:var(--accent-soft)}
+  .who.out{opacity:.4}
+  .whohead{display:flex;align-items:center;gap:.7rem}
+  .face{width:3rem;height:3rem;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+    color:#fff;font-family:var(--serif,Georgia,serif);font-size:1.2rem;overflow:hidden;
+    background:var(--line)}
+  .face img{width:100%;height:100%;object-fit:cover}
+  .who input,.who textarea{width:100%;padding:.5rem .7rem;font:inherit;border:1px solid var(--line);
+    border-radius:.6rem;background:var(--paper);color:var(--ink)}
+  .who input.name{font-size:1.05rem;font-weight:600;border-color:transparent;background:none;padding:.2rem 0}
+  .who input.name:focus{border-color:var(--line);background:var(--paper);padding:.5rem .7rem}
+  .who textarea{resize:vertical;line-height:1.55;font-size:.92rem}
+  .who .two{display:flex;gap:.5rem}
+  .who .two input{font-size:.88rem}
+  .chips{display:flex;flex-wrap:wrap;gap:.35rem}
+  .chip{font-size:.74rem;padding:.22rem .55rem;border-radius:99px;border:1px solid var(--hair);
+    background:var(--paper);color:var(--ink-2);cursor:grab;white-space:nowrap}
+  .chip.no{color:var(--muted);text-decoration:line-through}
+  .chip.pic{border-color:var(--accent);color:var(--accent)}
+  .whyrow{display:flex;align-items:center;justify-content:space-between;gap:.5rem;
+    font-size:.74rem;color:var(--muted)}
+  .whyrow button{border:0;background:none;color:var(--muted);font:inherit;font-size:.74rem;
+    cursor:pointer;text-decoration:underline}
+  .flag{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;
+    padding:.16rem .45rem;border-radius:99px;background:#FBEEE4;color:#B4531F}
+  @media (prefers-color-scheme:dark){.flag{background:#2A1A10;color:#E8905A}}
+
+  .tray{margin:1.4rem 0 0;padding:.9rem 1rem;border:1px dashed var(--line);border-radius:.9rem;
+    background:var(--raise)}
+  .tray.over{border-color:var(--accent);background:var(--accent-soft)}
+  .tray b{display:block;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 .5rem}
+  /* Opaque, and above everything. A translucent action bar drifting over the
+     card somebody is reading is worse than one that takes up a line. */
+  .bottom{position:sticky;bottom:0;z-index:5;margin:1.6rem 0 0;padding:1rem 0 1.2rem;
+    background:var(--paper);border-top:1px solid var(--hair);
+    display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+  .bottom p{margin:0;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="rotnav">
+    <a href="/run" class="back">&lsaquo; <span id="backlink"></span></a><span id="lang"></span>
+  </div>
+  <h1 id="head"></h1>
+  <p class="lede" id="lede"></p>
+
+  <div class="roles"><b id="rolehead"></b><span id="roles"></span></div>
+
+  <div class="field" id="field">
+    <b id="fieldhead"></b>
+    <p id="fieldsub"></p>
+    <button class="go flat" id="browse" type="button"></button>
+    <input id="files" type="file" multiple hidden>
+  </div>
+
+  <div id="said"></div>
+  <div class="people" id="people"></div>
+  <div class="tray" id="tray" hidden><b id="trayhead"></b><div class="chips" id="traychips"></div></div>
+
+  <div class="bottom" id="bottom" hidden>
+    <button class="go" id="make" type="button"></button>
+    <p id="tally"></p>
+  </div>
+</main>
+
+<script type="module">
+import { T, langButton, pickLang } from "/i18n.js";
+pickLang();
+
+let device = "";
+try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
+
+const $ = (id) => document.getElementById(id);
+const el = (tag, props, kids) => {
+  const n = Object.assign(document.createElement(tag), props || {});
+  for (const k of [].concat(kids || [])) if (k || k === 0) n.append(k);
+  return n;
+};
+const say = (text, bad) => {
+  if (!text) return $("said").replaceChildren();
+  $("said").replaceChildren(el("p", { className: "said" + (bad ? " bad" : ""), textContent: text }));
+};
+function wash(name) {
+  let h = 0;
+  for (const ch of String(name || "?")) h = (h * 31 + ch.codePointAt(0)) % 360;
+  return "linear-gradient(150deg,hsl(" + h + " 26% 74%),hsl(" + ((h + 24) % 360) + " 24% 52%))";
+}
+const isPic = (f) => f && /^image\//.test(f.type || "");
+
+const ROLES = ["performer", "director", "writer", "crew"];
+let role = "performer";
+/* The pile, held here and never uploaded twice. The proposal that comes back
+   names files by their position in this array, so moving a chip between people
+   is a number changing hands rather than a re-upload. */
+let PILE = [];
+let GROUPS = [];      // [{ handle, goal, trade, campus, speaks, age, files:[i], out }]
+let UNPLACED = [];    // [i]
+
+function drawRoles() {
+  $("roles").replaceChildren(...ROLES.map((r) => {
+    const b = el("button", { type: "button", textContent: T("role." + r) });
+    b.setAttribute("aria-pressed", String(r === role));
+    b.onclick = () => { role = r; drawRoles(); };
+    return b;
+  }));
+}
+
+/* ---- moving a file from one person to another --------------------------- */
+let dragging = null;
+function chip(i, from) {
+  const f = PILE[i];
+  const c = el("span", {
+    className: "chip" + (isPic(f) ? " pic" : ""),
+    draggable: true,
+    textContent: String(f.webkitRelativePath || f.name).split("/").pop(),
+    title: T("ob.movetip"),
+  });
+  c.ondragstart = () => { dragging = { i, from }; };
+  c.ondragend = () => { dragging = null; };
+  return c;
+}
+function moveTo(to) {
+  if (!dragging) return;
+  const { i, from } = dragging;
+  if (from === to) return;
+  if (from === "loose") UNPLACED = UNPLACED.filter((x) => x !== i);
+  else GROUPS[from].files = GROUPS[from].files.filter((x) => x !== i);
+  if (to === "loose") UNPLACED.push(i);
+  else GROUPS[to].files.push(i);
+  dragging = null;
+  drawPeople();
+}
+
+function drawPeople() {
+  const box = $("people");
+  box.replaceChildren(...GROUPS.map((g, gi) => {
+    const pic = g.files.map((i) => PILE[i]).find(isPic);
+    const faceBox = el("span", { className: "face" });
+    if (pic) faceBox.append(el("img", { src: URL.createObjectURL(pic), alt: "" }));
+    else { faceBox.style.background = wash(g.handle); faceBox.textContent = (g.handle || "?").slice(0, 1).toLowerCase(); }
+
+    const name = el("input", { className: "name", value: g.handle, placeholder: T("ob.whoph") });
+    name.oninput = () => { g.handle = name.value; tally(); };
+
+    const goal = el("textarea", { rows: 4, value: g.goal, placeholder: T("ob.goalph") });
+    goal.oninput = () => { g.goal = goal.value; };
+    const trade = el("input", { value: g.trade, placeholder: T("ob.tradeph") });
+    trade.oninput = () => { g.trade = trade.value; };
+    const campus = el("input", { value: g.campus, placeholder: T("ob.cityph") });
+    campus.oninput = () => { g.campus = campus.value; };
+
+    const out = el("button", { type: "button", textContent: g.out ? T("ob.keep") : T("ob.drop") });
+    out.onclick = () => { g.out = !g.out; drawPeople(); };
+
+    const card = el("div", { className: "who" + (g.out ? " out" : "") }, [
+      el("div", { className: "whohead" }, [faceBox, el("span", { style: "flex:1;min-width:0" }, [name])]),
+      goal,
+      el("div", { className: "two" }, [trade, campus]),
+      el("div", { className: "chips" }, g.files.map((i) => chip(i, gi))),
+      el("div", { className: "whyrow" }, [
+        g.guessed ? el("span", { className: "flag", textContent: T("ob.guessed") })
+          : el("span", { textContent: T("ob.fromfolder") }),
+        out,
+      ]),
+    ]);
+    card.ondragover = (e) => { e.preventDefault(); card.classList.add("over"); };
+    card.ondragleave = () => card.classList.remove("over");
+    card.ondrop = (e) => { e.preventDefault(); card.classList.remove("over"); moveTo(gi); };
+    return card;
+  }));
+
+  const tray = $("tray");
+  tray.hidden = !UNPLACED.length;
+  $("traychips").replaceChildren(...UNPLACED.map((i) => chip(i, "loose")));
+  tray.ondragover = (e) => { e.preventDefault(); tray.classList.add("over"); };
+  tray.ondragleave = () => tray.classList.remove("over");
+  tray.ondrop = (e) => { e.preventDefault(); tray.classList.remove("over"); moveTo("loose"); };
+  // The target shrinks the moment there is something below it to read.
+  $("field").classList.toggle("small", GROUPS.length > 0);
+  tally();
+}
+
+function tally() {
+  const n = GROUPS.filter((g) => !g.out && g.handle.trim()).length;
+  $("bottom").hidden = !GROUPS.length;
+  $("make").textContent = T("ob.make", { n });
+  $("make").disabled = !n;
+  $("tally").textContent = T("ob.tally", { files: PILE.length, n });
+}
+
+/* ---- the pile goes up once, and is proposed back ------------------------ */
+async function sort(list) {
+  PILE = list.slice(0, 200);
+  if (!PILE.length) return;
+  const fd = new FormData();
+  fd.append("device", device);
+  fd.append("role", role);
+  fd.append("dry", "1");
+  PILE.forEach((f, i) => fd.append("f" + i, f, f.webkitRelativePath || f.name));
+  say(T("ob.reading", { n: PILE.length }));
+  const r = await fetch("/api/run/drop", { method: "POST", headers: { "x-board-device": device }, body: fd })
+    .then((x) => x.json()).catch(() => ({ error: "failed" }));
+  if (r.error === "nonames") return say(T("ob.nonames"), true);
+  if (r.error === "nopage") return say(T("run.nopage"), true);
+  if (r.error === "full") return say(T("run.runfull", { n: r.max }), true);
+  if (r.error) return say(T("run.failed"), true);
+  GROUPS = (r.people || []).map((p) => ({
+    handle: p.handle || "", goal: p.goal || "", trade: p.trade || "", campus: p.campus || "",
+    speaks: p.speaks || [], age: p.age || "", guessed: Boolean(p.guessed), out: false,
+    files: (p.files || []).map((f) => f.i).filter((i) => Number.isInteger(i)),
+  }));
+  UNPLACED = (r.unplaced || []).map((f) => f.i).filter((i) => Number.isInteger(i));
+  say(r.drafting
+    ? T("ob.sorted", { n: GROUPS.length })
+    : T("ob.sortednokey", { n: GROUPS.length })
+    + (r.already ? " " + T("ob.already", { n: r.already }) : ""));
+  drawPeople();
+}
+
+$("make").onclick = async () => {
+  const keep = GROUPS.filter((g) => !g.out && g.handle.trim());
+  if (!keep.length) return;
+  $("make").disabled = true;
+  const fd = new FormData();
+  fd.append("device", device);
+  fd.append("role", role);
+  fd.append("people", JSON.stringify(keep.map((g) => ({
+    handle: g.handle, goal: g.goal, trade: g.trade, campus: g.campus,
+    speaks: g.speaks, age: g.age,
+  }))));
+  // One face each, and nothing else goes up a second time: a CV's job was
+  // finished the moment its words were read.
+  keep.forEach((g, i) => {
+    const pic = g.files.map((x) => PILE[x]).find(isPic);
+    if (pic) fd.append("face" + i, pic, "face" + i);
+  });
+  const r = await fetch("/api/run/make", { method: "POST", headers: { "x-board-device": device }, body: fd })
+    .then((x) => x.json()).catch(() => ({ error: "failed" }));
+  if (r.error) { $("make").disabled = false; return say(T("run.failed"), true); }
+  GROUPS = []; UNPLACED = []; PILE = [];
+  drawPeople();
+  $("bottom").hidden = true;
+  say(T("ob.made", { n: (r.added || []).length }));
+};
+
+const field = $("field");
+$("browse").onclick = () => $("files").click();
+$("files").onchange = () => sort([...$("files").files]);
+for (const e of ["dragenter", "dragover"]) {
+  field.addEventListener(e, (ev) => { ev.preventDefault(); field.classList.add("over"); });
+}
+for (const e of ["dragleave", "drop"]) {
+  field.addEventListener(e, (ev) => { ev.preventDefault(); field.classList.remove("over"); });
+}
+/* A DROPPED FOLDER IS NOT A LIST OF FILES. The drop event gives entries, and
+   only walking them recursively keeps `Mia Chen/cv.pdf` — which, where the
+   agent's files ARE tidy, is better evidence than anything a model infers. */
+field.addEventListener("drop", async (ev) => {
+  const roots = [...(ev.dataTransfer?.items || [])]
+    .map((i) => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+  if (!roots.length) return sort([...(ev.dataTransfer?.files || [])]);
+  const out = [];
+  const walk = (entry, path) => new Promise((done) => {
+    if (entry.isFile) {
+      return entry.file((f) => { out.push(new File([f], path + entry.name, { type: f.type })); done(); }, done);
+    }
+    const rdr = entry.createReader();
+    const chunk = () => rdr.readEntries(async (list) => {
+      if (!list.length) return done();
+      for (const e of list) await walk(e, path + entry.name + "/");
+      chunk();   // readEntries returns at most a hundred at a time
+    }, done);
+    chunk();
+  });
+  for (const r of roots) await walk(r, "");
+  sort(out);
+});
+
+function paint() {
+  document.title = T("ob.title");
+  const set = (id, key) => { $(id).textContent = T(key); };
+  set("backlink", "run.title");
+  set("head", "ob.title");
+  set("lede", "ob.lede");
+  set("rolehead", "ob.rolehead");
+  set("fieldhead", "ob.fieldhead");
+  set("fieldsub", "ob.fieldsub");
+  set("browse", "ob.choose");
+  set("trayhead", "ob.trayhead");
+  drawRoles();
+  if (GROUPS.length || PILE.length) drawPeople(); else tally();
+}
+$("lang").append(langButton(() => paint()));
+paint();
+$("bottom").hidden = true;
+</script>
+</body>
+</html>
