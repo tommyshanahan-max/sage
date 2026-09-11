@@ -299,7 +299,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|r\/|o(?:\/|$)|join|about|rules|privacy|level|type|room|api\/enter|api\/admitted|api\/hello|api\/offer|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|r\/|o(?:\/|$)|join|agents|a-browse\.png|a-say\.png|about|rules|privacy|level|type|room|api\/enter|api\/admitted|api\/hello|api\/offer|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -710,6 +710,11 @@ const codesTaken = (board) => new Set([
  * /join is that link and does nothing else. ?w=<id> still travels, so whoever
  * shared it keeps the credit for anybody who joins on it. */
 app.get(["/join", "/join/"], (req, res, next) => page("join.html", req, res, next));
+
+/* ONE PAGE FOR ONE GROUP. See the note at the top of agents.html: a link
+   pasted into a WeChat group of film agents, written for somebody who was in
+   that group for something else. Public, like the other doors. */
+app.get(["/agents", "/agents/"], (req, res, next) => page("agents.html", req, res, next));
 
 app.get(["/o", "/o/", "/o/:code"], (req, res, next) => page("offer.html", req, res, next));
 app.get(["/enter", "/enter/", "/i/:code"], (req, res, next) =>

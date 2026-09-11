@@ -51,6 +51,14 @@ export function tally(what, room) {
  *  page, the count and the form cannot come to different conclusions about
  *  which door somebody walked through. */
 export function roomFromPath() {
+  /* A CAMPAIGN PAGE CARRIES ITS ROOM IN ITS NAME. /agents is one link sent to
+     one group of film agents; making them pick Film & TV out of five options
+     is asking a question whose answer is the reason they were sent the link.
+     Listed here rather than passed in, so every part of wait.js that reads the
+     room — the form, the counter, the door tally — agrees about it. */
+  const PAGES = { "/agents": "film" };
+  const here = (location.pathname || "").replace(/\/+$/, "") || "/";
+  if (PAGES[here]) return PAGES[here];
   const m = /^\/r\/([a-z]+)/.exec(location.pathname || "");
   const key = m ? m[1] : "";
   return ["film", "invest", "raise", "trade", "other"].includes(key) ? key : "";

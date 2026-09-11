@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>The Exchange — for agents</title>
+<meta name="description" content="A platform that puts agents in front of artists and directors. Leave your name.">
+
+<!-- WeChat's crawler fetches this once and runs no JavaScript. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="交换 · The Exchange — for agents">
+<meta property="og:description" content="Agents in front of artists and directors. Not just China. Leave your name.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="{{HERE}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="/site.css">
+
+<style>
+  /* ONE PAGE FOR ONE GROUP.
+   *
+   * Pasted into a WeChat group of two hundred agents, where the reader has
+   * scrolled past forty other messages to get here and will give this about
+   * eight seconds. So: who is talking and why they should be listened to, the
+   * thing itself in one sentence, two pictures of it, and the form.
+   *
+   * NOT THE PUBLIC PAGE. That one is written for somebody who arrived on a
+   * name they trust and already half wants in. This one is written for
+   * somebody who was in a group chat about something else.
+   *
+   * The pictures are MOCK-UPS, drawn with invented people. Two hundred agents
+   * is a public, and the twenty-three people actually on the board did not
+   * agree to have their faces posted into it. Nothing here is a real member.
+   */
+  .aw{max-width:27rem;margin:0 auto;padding:2rem 1.15rem 3rem}
+  .abrand{display:flex;align-items:center;gap:.6rem;margin:0 0 1.8rem}
+  .abrand i{width:2.1rem;height:2.1rem;border-radius:.55rem;background:var(--ink);
+    color:var(--paper);display:grid;place-items:center;font-style:normal;
+    font:400 1rem/1 var(--serif)}
+  .abrand b{font:400 1.05rem/1.15 var(--serif);color:var(--ink)}
+  .abrand small{display:block;font-size:.7rem;color:var(--muted)}
+  .abrand .l{margin-left:auto}
+
+  .alede{font:400 clamp(1.7rem,7vw,2.3rem)/1.18 var(--serif);color:var(--ink);
+    margin:0 0 .8rem;text-wrap:balance}
+  .asub{font-size:1rem;line-height:1.65;color:var(--ink-2);margin:0 0 1rem}
+  .asub b{color:var(--ink);font-weight:650}
+
+  /* THE ONE SENTENCE, SET AS THE SENTENCE. The pills are what the app looks
+     like, so the page says it in the app's own grammar rather than describing
+     a feature. */
+  .asay{margin:1.6rem 0 0;padding:1rem .95rem;background:var(--raise);
+    border:1px solid var(--hair);border-radius:.85rem;
+    display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;
+    font-size:1.05rem;line-height:1.9;color:var(--ink)}
+  .asay em{font-style:normal;font-weight:650;font-size:.98rem;
+    padding:.18rem .72rem;border-radius:99px;background:var(--accent-soft);
+    color:var(--accent)}
+  .asay b{font-weight:400;color:var(--ink-2)}
+
+  /* ONE COLUMN ON A PHONE. Two app screenshots side by side on a 390px screen
+     are 170px wide each, which is a picture of an interface rather than a
+     readable one — and the whole reason they are here is that somebody can
+     see the sentence on the card. */
+  .ashots{display:grid;gap:1.2rem;margin:1.4rem 0 0}
+  @media (min-width:560px){.ashots{grid-template-columns:1fr 1fr}}
+  .ashots figure{min-width:0;margin:0}
+  .ashots img{display:block;width:100%;border-radius:.8rem;
+    border:1px solid var(--line)}
+  .ashots figcaption{margin:.5rem 0 0;font-size:.78rem;line-height:1.5;
+    color:var(--muted)}
+
+  .arule{margin:1.8rem 0 0;padding-top:1.3rem;border-top:1px solid var(--hair)}
+  .arule p{margin:0 0 .6rem;font-size:.95rem;line-height:1.6;color:var(--ink-2)}
+  .arule p:last-child{margin-bottom:0}
+  .arule b{color:var(--ink);font-weight:650}
+
+  .aask{margin:2rem 0 0}
+  .aask h2{margin:0 0 .9rem;font:400 1.35rem/1.2 var(--serif);color:var(--ink)}
+
+  .ahas{display:block;margin:1.6rem 0 0;text-align:center;font-size:.82rem;
+    color:var(--muted);text-decoration:none}
+  .ahas b{color:var(--accent);font-weight:650}
+</style>
+</head>
+<body>
+
+<div class="aw">
+  <div class="abrand">
+    <i>换</i>
+    <span><b>The Exchange</b><small>交换</small></span>
+    <span class="l" id="langslot"></span>
+  </div>
+
+  <h1 class="alede">Agents, in front of the people casting.</h1>
+
+  <p class="asub">I built a platform that puts agents in front of artists and
+    directors. Not just China — internationally.</p>
+  <p class="asub">I have worked with Oscar-winning directors in Hollywood and
+    with top agents around the world. <b>This is the thing I wish had existed
+    the whole time.</b></p>
+
+  <div class="asay">
+    <b>I am</b> <em>an Agent</em> <b>looking for</b> <em>a Producer</em>
+  </div>
+  <p class="asub" style="margin-top:.8rem">You write that one line. Somebody
+    writes the other half. You are put in front of each other — and that is
+    the whole product.</p>
+
+  <div class="ashots">
+    <figure>
+      <img src="/a-browse.png" alt="A person on the board, with the line they wrote" loading="lazy">
+      <figcaption>Everyone carries their line.</figcaption>
+    </figure>
+    <figure>
+      <img src="/a-say.png" alt="The two pills that set your own line" loading="lazy">
+      <figcaption>Two taps sets yours.</figcaption>
+    </figure>
+  </div>
+
+  <div class="arule">
+    <p><b>Nobody gets your WeChat until you both say yes.</b> No feed, no cold
+      messages, nobody browsing you. You can take your details back.</p>
+    <p><b>Invite only, and still small.</b> Every name is read by a person.</p>
+  </div>
+
+  <div class="aask">
+    <h2>I am looking for agents to work with.</h2>
+    <div id="waitslot"></div>
+  </div>
+
+  <a class="ahas" id="has" href="/enter"></a>
+</div>
+
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+import { waitBox, tally } from "/wait.js";
+
+const $ = (id) => document.getElementById(id);
+
+/* Only the two pieces that come from the strings — the rest of this page is
+   written once, in one voice, because it is one person talking to one group.
+   The form is bilingual either way, which is the half that matters. */
+function paint() {
+  $("has").textContent = "";
+  $("has").append(document.createTextNode(T("join.has") + " "));
+  const b = document.createElement("b");
+  b.textContent = T("join.hasGo");
+  $("has").append(b);
+}
+
+setLang(pickLang());
+paint();
+$("langslot").append(langButton(() => {
+  paint();
+  $("waitslot").textContent = "";
+  $("waitslot").append(waitBox());
+}));
+
+$("waitslot").append(waitBox());
+tally("door");
+</script>
+</body>
+</html>
