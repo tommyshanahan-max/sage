@@ -92,6 +92,85 @@
     line-height:1.05;margin:0;letter-spacing:-.01em}
   .say{margin:0;max-width:36rem;font-size:clamp(1.02rem,4.2vw,1.22rem);
     line-height:1.9;color:var(--ink-2)}
+  /* ---- the two pickers ---------------------------------------------------
+     A pill that opens looks like one: the caret is the whole difference
+     between emphasis and a control. The one that cannot open (a role with a
+     single partner) drops the caret rather than lying about itself. */
+  .pickwrap{position:relative;display:inline-block;vertical-align:baseline}
+  .pick{font:inherit;font-weight:700;font-size:.95em;line-height:1;
+    display:inline-flex;align-items:center;gap:.35rem;cursor:pointer;
+    padding:.3rem .55rem .3rem .85rem;border-radius:99px;white-space:nowrap;
+    background:var(--accent);color:var(--accent-ink);border:2px solid var(--accent)}
+  .pick s{text-decoration:none;font-size:.72em;opacity:.75}
+  .pick.dead{cursor:default;padding-right:.85rem}
+  .pick.dead s{display:none}
+  .pick.open{background:transparent;color:var(--accent)}
+  /* TWO COLUMNS, BECAUSE ONE SWALLOWED THE PHONE. Nine roles in a single
+     column is a menu taller than the thing it is meant to be changing — you
+     press a role and cannot see the card answer, which is the entire point of
+     the control. Two columns is five rows and the screen stays visible. */
+  .picklist{position:absolute;left:50%;transform:translateX(-50%);
+    top:calc(100% + .45rem);z-index:20;text-align:left;
+    display:grid;grid-template-columns:1fr 1fr;gap:.15rem;
+    background:var(--card);border:1px solid var(--line);border-radius:.85rem;
+    padding:.35rem;box-shadow:0 20px 44px rgba(0,0,0,.5)}
+  .picklist button{display:block;width:100%;text-align:left;font:inherit;
+    font-size:.92rem;padding:.45rem .65rem;border:0;border-radius:.55rem;
+    background:none;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  /* The right-hand pill never offers more than three, so a second column there
+     would be one item beside a gap. */
+  .pickwrap:last-of-type .picklist{grid-template-columns:1fr}
+  .picklist button.on{background:var(--accent);color:var(--accent-ink);font-weight:700}
+
+  /* ---- the app, drawn, so it can be anybody ------------------------------
+     Close enough to the real screen to read as one — the bar, the eyebrow, the
+     card, the two buttons — and no closer. It is not a replica; it is the one
+     screen this page is about, with whoever the sentence asked for on it. */
+  /* Named `appshot`, not `phone`. site.css already has a whole .phone / .ph-top
+     / .ph-card system from an older landing page, and reusing those names
+     inherited a second border, a second notch and a second card style on top
+     of this one — which is what the black bar over the invite-only line was.
+     A shared stylesheet is a namespace; this page does not get to squat in it. */
+  .appshot{position:relative;width:min(78vw,292px);margin:0 auto;
+    border-radius:1.6rem;overflow:hidden;padding-top:.4rem;
+    background:#EEF0F4;color:#151B28;text-align:left;
+    box-shadow:0 20px 48px rgba(8,12,20,.4)}
+  /* One grey pill. Enough to read as a phone and not an imitation of anybody's
+     hardware — the same call site.css made, made again here on purpose. */
+  .appshot::before{content:"";position:absolute;top:.42rem;left:50%;
+    transform:translateX(-50%);width:2.4rem;height:.26rem;border-radius:99px;
+    background:rgba(21,27,40,.22);z-index:2}
+  .as-top{margin:0;padding:.5rem;text-align:center;font-size:.68rem;
+    background:#E4E9F5;color:#3F68D8}
+  .as-head{display:flex;align-items:center;gap:.55rem;padding:.7rem .8rem .2rem}
+  .as-mark{width:1.9rem;height:1.9rem;border-radius:.55rem;background:#151B28;color:#fff;
+    display:grid;place-items:center;flex:0 0 auto}
+  .as-mark svg{width:1.1rem;height:1.1rem}
+  .as-head b{display:block;font-family:var(--serif);font-weight:400;font-size:1rem}
+  .as-head small{display:block;font-size:.66rem;color:#7A8699}
+  .as-eye{margin:.6rem .8rem .35rem;font-size:.6rem;letter-spacing:.13em;
+    text-transform:uppercase;color:#7A8699;font-weight:600}
+  .as-card{margin:0 .7rem;border-radius:.9rem;padding:.75rem;color:#fff;
+    background:linear-gradient(170deg,#8FA6DE,#1D2536)}
+  /* The letter had no colour of its own, so it was drawn in the card's dark
+     text on a mid-tone circle and simply was not there. */
+  .as-letter{float:right;width:2.3rem;height:2.3rem;border-radius:50%;
+    display:grid;place-items:center;font-family:var(--serif);font-size:1.2rem;
+    margin:0 0 .2rem .4rem;color:rgba(255,255,255,.92)}
+  .as-card b{display:block;font-family:var(--serif);font-weight:400;font-size:1.15rem}
+  .as-card small{display:block;font-size:.72rem;opacity:.8}
+  .as-card p{margin:.45rem 0 0;font-size:.74rem;line-height:1.45;opacity:.92}
+  /* "I am" and "looking for" were inheriting the card's 92% opacity on top of
+     a small size on a gradient, and came out as grey on grey. */
+  .as-say{display:flex;flex-wrap:wrap;align-items:center;gap:.25rem;
+    font-size:.72rem;margin-top:.55rem!important;opacity:1;color:rgba(255,255,255,.8)}
+  .as-say i{font-style:normal;font-weight:700;font-size:.68rem;padding:.16rem .45rem;
+    border-radius:99px;background:rgba(255,255,255,.92);color:#151B28}
+  .as-btns{display:flex;gap:.45rem;margin:.7rem;font-size:.8rem;font-weight:600}
+  .as-go,.as-next{flex:1;text-align:center;padding:.5rem;border-radius:99px}
+  .as-go{background:#3F68D8;color:#fff}
+  .as-next{background:#F7F8FB;color:#151B28;border:1px solid #DFE4EC}
+
   .say i{font-style:normal;font-weight:700;font-size:.95em;
     padding:.22rem .85rem;border-radius:99px;white-space:nowrap;
     background:var(--accent);color:var(--accent-ink);
@@ -450,20 +529,39 @@
            like a control, because it is one. -->
       <p class="say" id="landsay"></p>
 
-      <!-- ONE IMAGE OF THE APP, AND IT IS THE OTHER HALF OF THE SENTENCE.
-           The line above says a Founder looking for an Investor. Elena is an
-           investor looking for a founder. So the picture is not an
-           illustration of the product, it is the answer to the sentence
-           directly above it — which is the only way a screenshot on a landing
-           page ever earns its weight.
+      <!-- THE OTHER HALF, DRAWN, INSIDE THE APP'S OWN FRAME.
+           A screenshot is the thing a stranger believes, and this had one. It
+           could only ever show one pair, so the moment the sentence above it
+           became something you can change, it was a picture contradicting the
+           line over it every time somebody touched the control.
 
-           That pairing is also why the sentence stopped cycling through four
-           pairs: a line reading "a Manufacturer looking for a Buyer" over a
-           photograph of an investor is two things contradicting each other,
-           and the contradiction is invisible to whoever wrote it and obvious
-           to everybody else. -->
-      <img class="shot card" src="/frame-2.png" alt=""
-        width="585" height="1170" loading="lazy">
+           So it is drawn — the top bar, BROWSE PEOPLE, the card, Follow and
+           Next — which keeps it reading as a screen rather than as a diagram,
+           and lets it be anybody. Nine invented people, one per role that can
+           stand on the right of the sentence. They are invented and they have
+           to be: the alternative is putting real members on a public page,
+           which would make a private board searchable from outside by role.
+           That is a directory, and the line at the top of this page promises
+           it is not one. -->
+      <div class="appshot" aria-hidden="true">
+        <p class="as-top" id="phTop"></p>
+        <div class="as-head">
+          <span class="as-mark"><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg></span>
+          <span><b>The Exchange</b><small id="phFew"></small></span>
+        </div>
+        <p class="as-eye" id="phEye"></p>
+        <div class="as-card">
+          <span class="as-letter" id="phLetter"></span>
+          <b id="phName"></b>
+          <small id="phCity"></small>
+          <p id="phLine"></p>
+          <p class="as-say">
+            <span id="phSay1"></span><i id="phSay2"></i>
+            <span id="phSay3"></span><i id="phSay4"></i>
+          </p>
+        </div>
+        <p class="as-btns"><span class="as-go" id="phFollow"></span><span class="as-next" id="phNext"></span></p>
+      </div>
 
       <p class="onewhy" id="onewhy"></p>
     </div>
@@ -614,14 +712,15 @@ function paint() {
   $("onlyline").textContent = T("land.only");
   $("onewhy").textContent = T("land.one");
   $("landbig").textContent = T("land.big");
+  $("phTop").textContent = T("land.phTop");
+  $("phFew").textContent = T("land.phFew");
+  $("phEye").textContent = T("land.phEye");
+  $("phFollow").textContent = T("land.phFollow");
+  $("phNext").textContent = T("land.phNext");
   /* The blank sentence is the bold half and has to stay one unbroken run, so
      it is two nodes rather than a string with markup in it — this page never
      puts translated text through innerHTML. */
-  /* FILLED IN, NOT BLANK, and always the pair the screenshot underneath
-     answers. Blanks were the honest version of a question nobody had asked
-     yet; a written sentence with a real answer below it is the product
-     happening once on the page. */
-  sayLine(T("land.does2"), T("land.does4"));
+  drawSay();
   $("doorsEyebrow").textContent = T("land.doors");
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");
@@ -646,21 +745,151 @@ function paint() {
  * two places is a sentence that will one day disagree with itself. Nothing
  * goes through innerHTML: the words are translated and the pills are elements.
  */
-function sayLine(me, want) {
-  /* Blank is decided by what the CALLER passed, not by what ends up in the
-     element: an empty pill still needs something inside it to have a width,
-     and testing the filled-in text meant every blank came out solid. */
-  const pill = (word) => Object.assign(document.createElement("i"), {
-    textContent: word || "\u2003\u2003",
-    className: word ? "" : "blank",
-  });
-  $("landsay").replaceChildren(
+/* WHICH PAIRS ARE REAL.
+ *
+ * Not every combination is a match — "a Founder looking for a Performer" is
+ * two people who will never come up for each other, and offering it on the
+ * front page would teach the mechanic wrongly in the one place it has to be
+ * taught right. So the right-hand pill only ever offers the roles that
+ * actually pair with whatever is on the left, and changing the left resets it.
+ *
+ * A short list rather than all fifteen roles: these are the rooms with people
+ * in them, and a menu of fifteen is a form. */
+/* Which pair each /r/ door stands for. It was read out of the door's own
+   strings, which meant the sentence had the words and the card underneath had
+   no idea who it was drawing. */
+const ROOMPAIR = {
+  film: ["producer", "performer"],
+  invest: ["investor", "founder"],
+  raise: ["founder", "investor"],
+  trade: ["buyer", "maker"],
+};
+
+const MATCH = {
+  founder: ["investor"],
+  investor: ["founder"],
+  performer: ["agent", "producer"],
+  agent: ["producer", "brand"],
+  producer: ["performer", "writer"],
+  writer: ["producer"],
+  maker: ["buyer", "brand"],
+  buyer: ["maker"],
+  brand: ["maker", "agent"],
+};
+const MEROLES = Object.keys(MATCH);
+let iAm = "founder", iWant = "investor", openPill = "";
+
+/** The person on the other side: whoever the right-hand pill names. */
+function drawWho() {
+  const k = iWant;
+  const set = (id, key) => { $(id).textContent = T(key); };
+  $("phLetter").textContent = T("who." + k + ".name").trim().slice(0, 1);
+  /* The same colour the app gives a name, so a person is the same colour here
+     as they would be on the board. See wash() in index.html. */
+  let h = 0;
+  for (const ch of T("who." + k + ".name")) h = (h * 31 + ch.codePointAt(0)) % 360;
+  $("phLetter").style.background =
+    "linear-gradient(150deg,hsl(" + h + " 30% 62%),hsl(" + ((h + 24) % 360) + " 26% 38%))";
+  set("phName", "who." + k + ".name");
+  set("phCity", "who." + k + ".city");
+  set("phLine", "who." + k + ".line");
+  $("phSay1").textContent = T("land.does1") + " ";
+  $("phSay2").textContent = T("art." + k);
+  $("phSay3").textContent = " " + T("land.does3") + " ";
+  // Their half is the mirror of yours: you said what you are, they are looking
+  // for exactly that.
+  $("phSay4").textContent = T("art." + iAm);
+}
+
+/* THE SENTENCE, AS TWO CONTROLS.
+ *
+ * A pill is the shape of a control and these did nothing, which teaches
+ * somebody in the first two seconds that the page is a picture of a product
+ * rather than one. Now the left one asks what you are and the right one asks
+ * what you want, and the screen underneath answers with somebody who said it.
+ *
+ * Built out of buttons and a list rather than a <select>: a native select on a
+ * phone opens a full-height wheel that covers the very thing it is meant to be
+ * changing, and the whole point here is watching the card change while you
+ * pick. Keyboard and screen readers get real buttons with aria-expanded.
+ */
+function drawSay() {
+  const line = $("landsay");
+  const bit = (t) => document.createTextNode(t);
+
+  const picker = (side) => {
+    const now = side === "me" ? iAm : iWant;
+    const list = side === "me" ? MEROLES : (MATCH[iAm] || []);
+    const wrap = document.createElement("span");
+    wrap.className = "pickwrap";
+
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "pick" + (openPill === side ? " open" : "");
+    b.setAttribute("aria-expanded", String(openPill === side));
+    b.append(bit(T("art." + now)), Object.assign(document.createElement("s"),
+      { textContent: "\u25be", ariaHidden: "true" }));
+    /* One choice is not a choice. When the left-hand role pairs with exactly
+       one other, the right-hand pill still says the word — it is half the
+       sentence — but it does not pretend to open. */
+    const dead = side === "want" && list.length < 2;
+    if (dead) b.classList.add("dead");
+    b.onclick = () => { if (!dead) { openPill = openPill === side ? "" : side; drawSay(); } };
+    wrap.append(b);
+
+    if (openPill === side && !dead) {
+      const menu = document.createElement("span");
+      menu.className = "picklist";
+      for (const k of list) {
+        const o = document.createElement("button");
+        o.type = "button";
+        o.className = k === now ? "on" : "";
+        o.textContent = T("art." + k);
+        o.onclick = () => {
+          if (side === "me") {
+            iAm = k;
+            // The right-hand half has to stay a real pair — see MATCH.
+            if (!(MATCH[iAm] || []).includes(iWant)) iWant = MATCH[iAm][0];
+          } else { iWant = k; }
+          openPill = "";
+          drawSay(); drawWho();
+        };
+        menu.append(o);
+      }
+      wrap.append(menu);
+    }
+    return wrap;
+  };
+
+  line.replaceChildren(
+    bit(T("land.say1") + " " + T("land.does1") + " "),
+    picker("me"),
+    bit(" " + T("land.does3") + " "),
+    picker("want"),
+    bit(" " + T("land.say3")));
+  drawWho();
+}
+
+/* A room door says its own pair and does not offer to change it: /r/film is
+   one link sent to one group, and a picker on it is a question that room has
+   already answered. */
+function pinSay(me, want) {
+  iAm = me; iWant = want; openPill = "";
+  const line = $("landsay");
+  const pill = (k) => Object.assign(document.createElement("i"), { textContent: T("art." + k) });
+  line.replaceChildren(
     document.createTextNode(T("land.say1") + " " + T("land.does1") + " "),
     pill(me),
     document.createTextNode(" " + T("land.does3") + " "),
     pill(want),
     document.createTextNode(" " + T("land.say3")));
+  drawWho();
 }
+
+// Tapping anywhere else closes an open menu, which is what every menu does.
+document.addEventListener("click", (e) => {
+  if (openPill && !e.target.closest(".pickwrap")) { openPill = ""; drawSay(); }
+});
 
 function paintRoom() {
   const key = roomFromPath();
@@ -684,11 +913,11 @@ function paintRoom() {
    * wrote into no longer existed and the whole function threw. T returning the
    * key itself is still the test for a room with no pair of its own.
    */
-  const me = T("door." + key + ".does2");
-  const want = T("door." + key + ".does4");
-  if (me !== "door." + key + ".does2" && want !== "door." + key + ".does4") {
-    sayLine(me, want);
-  }
+  /* The room's own pair, as role keys rather than as words — the sentence and
+     the person underneath both need the key, and looking the words back up
+     from a translated string is how a room door ends up in English. */
+  const pair = ROOMPAIR[key];
+  if (pair) pinSay(pair[0], pair[1]);
 }
 
 setLang(pickLang());

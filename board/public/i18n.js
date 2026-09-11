@@ -786,6 +786,78 @@ export const STRINGS = {
   "land.miniGo":       ["Message", "发消息"],
   "land.miniRole1":    ["an Agent", "经纪人"],
   "land.miniRole2":    ["a Performer", "演员"],
+
+  /* ---- the sentence's two pickers, and the person on the other side -------
+   *
+   * NINE INVENTED PEOPLE, one per role that can stand on the right of the
+   * sentence. They are invented and they have to be: the alternative is
+   * putting real members on a public page, which would make a private board
+   * browsable from outside by role — a directory, which is the one thing
+   * "Matched, not listed" promises it is not, and the thing every member was
+   * told when they joined.
+   *
+   * Written the way a real row reads: a first name, a city, and one line of
+   * what they actually do. No adjectives, no "passionate", no company names.
+   * Half of them are on each side of the border, because that is what this
+   * board is and a homepage full of Shanghai would say something else.
+   *
+   * The articles are their own keys rather than being glued on in code:
+   * a/an is an English problem that does not exist in Chinese, and a template
+   * that concatenates one would be wrong in half the languages here. */
+  "art.founder":       ["a Founder", "创始人"],
+  "art.investor":      ["an Investor", "投资人"],
+  "art.agent":         ["an Agent", "经纪人"],
+  "art.producer":      ["a Producer", "制片人"],
+  "art.performer":     ["a Performer", "演员"],
+  "art.writer":        ["a Writer", "编剧"],
+  "art.maker":         ["a Manufacturer", "工厂"],
+  "art.buyer":         ["a Buyer", "采购方"],
+  "art.brand":         ["a Brand", "品牌方"],
+
+  /* The app's own chrome, drawn round the card. Taken from the real screens so
+     somebody who joins recognises the page they were shown. */
+  "land.phTop":        ["Not public yet \u2014 invite only.", "还没公开 \u2014 只能被邀请。"],
+  "land.phFew":        ["Invite only.", "只能被邀请进来。"],
+  "land.phEye":        ["Browse people", "看看都有谁"],
+  "land.phFollow":     ["Follow", "关注"],
+  "land.phNext":       ["Next", "下一个"],
+
+  "who.investor.name": ["Elena", "Elena"],
+  "who.investor.city": ["Shanghai", "上海"],
+  "who.investor.line": ["I write the first cheque. Consumer and marketplaces, China and Southeast Asia.",
+                        "我投第一笔钱。消费和平台，中国和东南亚。"],
+  "who.founder.name":  ["Wei", "小魏"],
+  "who.founder.city":  ["Shenzhen", "深圳"],
+  "who.founder.line":  ["Second company. Hardware for small factories \u2014 eleven of them paying, no salespeople.",
+                        "第二家公司。做小工厂用的硬件，十一家在付钱，没有销售。"],
+  "who.agent.name":    ["Andy", "Andy"],
+  "who.agent.city":    ["Sydney", "悉尼"],
+  "who.agent.line":    ["Twenty-two years, mostly drama. I do not send people who are not right for it.",
+                        "做了二十二年，主要是正剧。不合适的人我不会推。"],
+  "who.producer.name": ["Lin", "林"],
+  "who.producer.city": ["Beijing", "北京"],
+  "who.producer.line": ["Two features a year, co-productions mostly. Casting from March.",
+                        "一年两部，基本都是合拍。三月开始定角。"],
+  "who.performer.name":["Mia", "Mia"],
+  "who.performer.city":["Shanghai", "上海"],
+  "who.performer.line":["Mandarin and English. Two features and a series. Free from March.",
+                        "中英文都行。两部电影、一部剧。三月之后有档期。"],
+  "who.writer.name":   ["Jun", "俊"],
+  "who.writer.city":   ["Hangzhou", "杭州"],
+  "who.writer.line":   ["Half-hour comedy. One series made, one sitting in a drawer.",
+                        "半小时喜剧。拍过一部，还有一部压在抽屉里。"],
+  "who.maker.name":    ["Fai", "阿辉"],
+  "who.maker.city":    ["Dongguan", "东莞"],
+  "who.maker.line":    ["Small-batch metal, fifty people. I would rather have four buyers than forty.",
+                        "小批量五金，五十个人。宁可四个长期客户，不要四十个。"],
+  "who.buyer.name":    ["Hui", "阿慧"],
+  "who.buyer.city":    ["Guangzhou", "广州"],
+  "who.buyer.line":    ["Homeware for forty stores. I place orders twice a year and I pay on time.",
+                        "四十家店的家居用品。一年下两次单，从不拖款。"],
+  "who.brand.name":    ["Rachel", "Rachel"],
+  "who.brand.city":    ["Melbourne", "墨尔本"],
+  "who.brand.line":    ["Skincare, four years old. Looking for the factory, not the middleman.",
+                        "护肤品，做了四年。想直接找工厂，不要中间商。"],
   /* The other two pairs the sentence cycles through on the front page. Chosen
      one per room that has people in it, so the range is shown rather than
      claimed — a manufacturer who sees only founders and investors decides this
