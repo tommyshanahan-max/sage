@@ -2763,6 +2763,12 @@ export const STRINGS = {
      will actually do. The key is a line down. */
   "door.inNote":       ["Before you close this, leave an address \u2014 the first thing on Browse. There are no accounts here, so without one, a new phone loses everything you write.",
                         "关掉之前先留个邮箱——「看看」里第一条就是。这里没有账号，不留的话，换了手机你写的东西就都没了。"],
+  /* THE ONE REFUSAL A WAY-BACK CODE CAN MEET. It is not a wrong code and
+     saying "wrong code" would send somebody hunting for a better one. The
+     browser already has a person on it — a shared phone, nearly always. */
+  "door.backTaken": [
+    "This browser already has somebody's page on it. Open the link on your own phone, or in a private window.",
+    "这个浏览器上已经有一个人的主页了。请在你自己的手机上打开，或者用无痕窗口。"],
   "door.inKey":        ["Or save your key: Profile \u2192 Show my key.",
                         "或者把钥匙存下来：「我的」→「显示我的钥匙」。"],
   /* THE TRAY. Everything addressed to this person, in one place — follows and

@@ -844,6 +844,22 @@ export function cleanPerson(raw) {
       const m = s(raw.mail, 120).trim().toLowerCase();
       return /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(m) ? m : "";
     })(),
+    /* A MEMBER'S OWN WAY BACK, the same field a waiting row already has.
+     *
+     * Everything a member is hangs off `by`, a hash of a random number in one
+     * browser's storage. Clear that storage, change phone, or — the way this
+     * came up — move the board to a new domain, and the person is a stranger
+     * on their own board with no account to sign back into. The key is the
+     * answer when they have it written down. Email is the answer when the row
+     * carries an address and the box can send. When neither is true there was
+     * nothing at all, and the first person that happened to was the operator.
+     *
+     * So: a six-character code the operator mints against one named row. It
+     * opens nothing new — it moves an existing person onto the browser that
+     * types it, which is the one thing they need and the only thing it can do.
+     * Cleared the moment it is spent, because a code that keeps working is a
+     * code that ends up in a group chat. */
+    back: cleanCode(raw.back) || "",
     // Somewhere to be found that is not this board. See igHandle above for
     // what arrives in this box and what is kept out of it.
     ig: igHandle(raw.ig),

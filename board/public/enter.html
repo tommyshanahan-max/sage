@@ -571,11 +571,26 @@ async function enter() {
        are not in, and telling them so for a second before the page changes
        would be the wrong thing to have said. */
     if (r.ok && d.waiting) { location.assign("/room"); return; }
+    /* A MEMBER'S WAY BACK, and the same reasoning: they are already in, their
+       rows are already on this browser, and the "you are in" screen is written
+       for somebody arriving for the first time. Straight to the board. */
+    if (r.ok && d.back) { location.assign("/browse"); return; }
     if (r.ok) return showIn(d.by || "");
     /* THE RIGHT CODE AT THE WRONG DOOR. Somebody who was sent a piece of work
        and landed here types the only code they have. Take them to it rather
        than telling them it is wrong — there is nothing for them to do on this
        screen, and the offer's own page is where accepting happens. */
+    /* THIS BROWSER IS ALREADY SOMEBODY. A way-back code moves one person onto
+       the browser that types it, and this browser already has a person on it —
+       almost always a shared phone, occasionally somebody who got back in on
+       this device an hour ago and forgot. Said plainly, because "wrong code"
+       would send them looking for a better code that does not exist. */
+    if (d.error === "taken") {
+      said.hidden = false;
+      said.classList.add("bad");
+      said.textContent = T("door.backTaken");
+      return;
+    }
     if (d.error === "offer" && d.code) {
       said.hidden = false;
       said.className = "said";

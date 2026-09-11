@@ -667,8 +667,33 @@ async function admittedReq(req) {
   const fromHeader = store.hashDevice(String(req.get("x-board-device") || ""), SALT);
   if (!fromCookie && !fromHeader) return false;
   const board = await store.load(FILE);
-  return board.invites.some((v) => !v.off && v.usedBy
-    && (v.usedBy === fromCookie || v.usedBy === fromHeader));
+  if (board.invites.some((v) => !v.off && v.usedBy
+    && (v.usedBy === fromCookie || v.usedBy === fromHeader))) return true;
+  /* A PAGE ON THIS BOARD IS ALSO PROOF, and it is the better proof of the two.
+   *
+   * Admission was read off one row: the invite somebody spent. That works for
+   * anybody who came through the door and it is wrong for everybody else, and
+   * "everybody else" turned out to include three real cases —
+   *
+   *   the members who were here before the door was (admit-existing let them
+   *   through without any of them spending a code),
+   *   anybody whose invite was later taken back, which was only ever meant to
+   *   stop the code working and instead silently locked out the person who had
+   *   already used it,
+   *   and a member handed a way back in on a new phone, if their row happened
+   *   to be one of the first two.
+   *
+   * All three end the same way: rebound correctly onto the browser in front of
+   * them, holding a valid signed cookie, and turned away at the door anyway —
+   * with nothing on screen to say why, because as far as this function knew
+   * they had never been let in.
+   *
+   * A published person row cannot be made from outside this gate. Having one
+   * IS being a member; the invite is how most people got one, not what makes
+   * it true. Deleting yourself takes the row with it, so the door shuts on the
+   * same press it always did. */
+  return board.people.some((q) => q.state === "published"
+    && (q.by === fromCookie || q.by === fromHeader));
 }
 
 /* EVERY SIX-CHARACTER CODE ALREADY IN USE, whatever it opens.
@@ -687,6 +712,10 @@ const codesTaken = (board) => new Set([
   ...board.invites.map((v) => v.code),
   ...board.offers.map((o) => o.code),
   ...board.waits.map((w) => w.back),
+  // A member's own way back. In here for the same reason as the other three:
+  // one box at the door reads all of them, so two of them colliding would
+  // send somebody to the wrong place with the right code.
+  ...board.people.map((q) => q.back),
 ].filter(Boolean));
 
 /* ---------------------------------------------------------------------------
@@ -781,6 +810,39 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
     setWaitCookie(res, me);
     tries.delete(me);
     return res.json({ ok: true, waiting: true, room: backTo.room });
+  }
+
+  /* A MEMBER'S WAY BACK, on the same box and for the same reason.
+   *
+   * The block above puts somebody back on the waiting list. This one puts a
+   * member back on their own page — every row they have moves onto the browser
+   * in front of it, which is what rebind is for and what the cookie already
+   * does automatically on a browser that merely forgot. It does not open the
+   * door to anybody new: there is no new person at the end of it, only an
+   * existing one somewhere else.
+   *
+   * REFUSED IF THIS BROWSER IS ALREADY SOMEBODY. Two people's rows on one
+   * device hash is not a state this board has, and the shared-phone case is
+   * exactly how it would happen. The person typing gets told, rather than
+   * quietly swallowing whoever was here first.
+   *
+   * Spent on use, like the waiting one. */
+  let backWhy = "";
+  const backMe = await change((board) => {
+    const q = board.people.find((p) => p.back && p.back === code);
+    if (!q) return null;
+    if (q.by === me) { q.back = ""; return { handle: q.handle || "" }; }
+    if (board.people.some((p) => p.by === me)) { backWhy = "taken"; return null; }
+    const was = q.by;
+    q.back = "";
+    store.rebind(board, was, me);
+    return { handle: q.handle || "" };
+  });
+  if (backWhy === "taken") return res.status(409).json({ error: "taken" });
+  if (backMe) {
+    setCookie(res, me);
+    tries.delete(me);
+    return res.json({ ok: true, back: true, handle: backMe.handle });
   }
 
   /* AN OFFER'S CODE, TYPED AT THE DOOR.
@@ -3683,6 +3745,38 @@ app.post("/api/offer", express.json({ limit: "8kb" }), gate, async (req, res) =>
   });
   if (out?.error) return res.status(out.error === "nopage" ? 403 : 400).json(out);
   res.json(out);
+});
+
+/* A MEMBER'S WAY BACK IN, MINTED FROM THE BOX.
+ *
+ * `admin`, because it is the operator's job: the person who needs it cannot
+ * prove who they are — that is the whole problem — so somebody who can see the
+ * board has to say "this row is yours" out loud. Exactly what a door code is,
+ * pointed at a person who is already inside rather than at an empty seat.
+ *
+ * It takes a handle, like every other operator route here, because a handle is
+ * what the operator can read and type. One live code per row: minting a second
+ * replaces the first, so a code sent last week stops working the moment a new
+ * one is sent, and there is never a drawer of old ones behind a person.
+ *
+ * No expiry field. It is spent on first use and it is sent to one person
+ * directly; a deadline on top would mean the operator explaining to somebody
+ * locked out that the thing that unlocks them has also expired.
+ */
+app.post("/api/admin/back", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").trim().toLowerCase();
+  if (!who) return res.status(400).json({ error: "who" });
+  const out = await change((board) => {
+    const q = board.people.find((x) => String(x.handle || "").toLowerCase() === who);
+    if (!q) return { error: "nobody" };
+    const have = codesTaken(board);
+    let code = store.newCode();
+    while (have.has(code)) code = store.newCode();
+    q.back = code;
+    return { code, handle: q.handle || "" };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.status(201).json(out);
 });
 
 /* THE SAME THING FROM THE BOX.
