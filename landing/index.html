@@ -287,12 +287,34 @@
 const APPS = [
   {
     name: "The Exchange",
-    host: "liuxuesheng.io",
+    /* thexchange.app since the board moved. liuxuesheng.io still answers and
+       still redirects here, so this tile was not broken — it was pointing at
+       the name we had just left, which is the one thing a tile on the front
+       page of a company must not do. */
+    host: "thexchange.app",
     line: "A private board for people doing business in China. One sentence — I am a ___ looking for a ___ — decides who you are shown.",
     tint: "#5C8DFF",
     /* The lens: two circles, and the only part that matters is where they
        overlap. Same mark the board itself wears. */
     mark: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg>',
+  },
+  {
+    /* THE LEDGER, and the only thing here that is not an app somebody opens for
+       fun. It is where a share offer is written down and where the deck that
+       goes with it is served from, which is why it belongs on this page: a
+       person deciding whether to take one is entitled to see that the thing
+       recording it is a product with a name and an address rather than a
+       spreadsheet somebody keeps.
+       WHAT IS ON IT IS ALREADY PUBLIC. crowdfundme.app serves the decks; the
+       offers themselves are behind their own codes and stay there. This tile
+       adds a link to a site that is already open, and nothing else. */
+    name: "crowdfundme",
+    host: "crowdfundme.app",
+    line: "The ledger a small company's share offers are written on, and where the deck that goes with one is served from.",
+    tint: "#D4705E",
+    /* A seal: something stamped once and not edited afterwards, which is the
+       whole claim the ledger makes about itself. */
+    mark: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8"><rect x="22" y="22" width="56" height="56" rx="12"/><path d="M36 50h28" stroke-linecap="round"/></svg>',
   },
   {
     /* LAONEI IS A DIFFERENT REPO AND STAYS ONE. This is a name, a line and an
