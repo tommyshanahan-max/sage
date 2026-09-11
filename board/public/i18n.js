@@ -412,20 +412,6 @@ export const STRINGS = {
      that does not respond, in the middle of the one thing on the screen that
      does, so it went: the card carries only the half that moves. */
   "say.want1":         ["Looking for", "我在找"],
-  /* The sheet when it has been opened for the sentence alone. The heading is
-     the question, because the pills under it are the answer and there is
-     nothing else on the screen. */
-  "say.only":          ["What are you looking for?", "你在找什么？"],
-  "say.done":          ["Done", "好了"],
-  /* The way back to the pills from the deck they decide. Says what happens,
-     not what the row is: "Your sentence" over a sentence is the same words
-     twice. */
-  "brw.sayChange":     ["Change", "改一下"],
-  /* The empty case, and it is an ask rather than a label. say.pickWant reads
-     "what I need", which works as the tail of a sentence inside the form and
-     as nothing at all on its own. */
-  "brw.sayNone":       ["You have not said what you are looking for",
-                        "你还没说你在找什么"],
   "say.andOnly":       ["and", "还有"],
   /* Short enough to sit in a pill inside a sentence. The segmented rows these
      replace could afford "Somewhere else"; a word in the middle of a line

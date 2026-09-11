@@ -416,16 +416,6 @@
    * Not the dashed empty slot: an empty box is a drawing of an absence, and
    * this is the one row on the shelf where something is available to do. It
    * reads as the match it is, and carries the one press that moves it on. */
-  /* The sentence Browse is running on, and the way back to it. Quiet: it is a
-     caption on the deck above it, not a control competing with the faces. */
-  .brwsay{display:flex;width:100%;align-items:baseline;gap:.5rem;
-    margin:1.1rem 0 0;padding:.7rem .85rem;border:1px solid var(--hair);
-    border-radius:.7rem;background:var(--raise);font:inherit;text-align:left;
-    color:var(--ink-2);font-size:.88rem;line-height:1.5;flex-wrap:wrap}
-  .brwsay b{color:var(--ink);font-weight:650}
-  .brwsay .chg{margin-left:auto;color:var(--accent);font-weight:650;
-    white-space:nowrap}
-
   .bcard .meet{border:1px solid var(--hair);border-radius:.7rem;
     padding:.75rem .8rem;background:var(--raise)}
   .bcard .meet b{display:block;font-size:.86rem;font-weight:650;color:var(--ink)}
@@ -1372,15 +1362,6 @@
     max-height:calc(var(--vh, 1vh) * 92)}
   .sheet h2{margin:0 0 1rem;font-family:var(--serif);font-weight:400;font-size:1.35rem}
 
-  /* THE FORM, SHOWING ONLY THE SENTENCE. Opened from Browse, where the ask was
-     four words and not a profile — see openMe. The heading, the pills, and the
-     way out; everything else in the form stands down. */
-  #meform.justsay > *:not(#metitle):not(.saysay):not(.row):not(#mesaid){
-    display:none!important}
-  #meform.justsay .saysay{margin-top:0}
-  #meform.justsay #sayhead{display:none}
-  #meform.justsay #mesave{display:none}
-  #meform.justsay .ghost{margin-left:auto}
 
   /* The way out. Not styled as a danger button until the sheet it opens —
      a red control on a form somebody is filling in reads as a warning about
@@ -2010,20 +1991,41 @@
        footer of every page rather than standing in the middle of one. -->
   <div class="bnone" id="bnone" hidden></div>
 
-  <!-- WHAT THIS DECK IS, SAID ONCE, WHERE IT CAN BE CHANGED.
-       The two pills themselves used to live here. They moved into the profile
-       form, because a person could finish setting themselves up without ever
-       being asked the one question the matching reads, and be shown to nobody.
+  <!-- THE SENTENCE, AND IT IS THE WHOLE QUESTION.
+       Two pills say what eleven tick boxes said, and the sentence IS the rule:
+       you come up for people who are what you are looking for and are looking
+       for what you are.
 
-       This is what Browse keeps: the sentence in their own words and a way
-       back to it. Not a second copy of the control — one editable sentence in
-       two places is two answers waiting to disagree — but a reader who has
-       just been through the faces and wants different ones should not have to
-       go looking for the reason they got these.
+       IT HAS BEEN IN THREE PLACES. Inside the profile sheet, which put the
+       control that decides the deck out of sight of the deck. Then here.
+       Then back in the sheet, because somebody could finish setting themselves
+       up without ever being asked it and be shown to nobody — and then here
+       again, because it is the one control that demonstrates what this app
+       does, and a thing you have to open a form to see is a thing nobody is
+       shown.
 
-       Between the two rooms, which is where the pills sat: it closes the
-       people who are in and opens the people who are waiting. -->
-  <button class="brwsay" type="button" id="brwsay" hidden></button>
+       The first-time hole the sheet was solving is closed a different way:
+       the fold opens itself for anybody who has not answered it, and Browse
+       is where a new member lands. See drawSayHead.
+
+       IT SITS BETWEEN THE TWO ROOMS. It closes the people who are in and
+       opens the people who are waiting, which is the one place on this page
+       where somebody has just finished looking and is ready to change what
+       they are looking for. -->
+  <section class="saysay" id="saysay" hidden>
+    <!-- SHUT, IT IS THE ICON AND THE SENTENCE. Two dropdowns and a save
+         line, open all the time, for a thing somebody changes about twice a
+         year. Closed it is one row: the sliders, what they currently say,
+         and a caret. It opens itself for somebody who has not answered it
+         yet — see drawSays. -->
+    <button class="sayhead" type="button" id="sayhead" aria-expanded="false"
+      aria-controls="saybody"></button>
+    <div id="saybody" hidden>
+      <div class="says" id="mesays"></div>
+      <button class="saymore" type="button" id="mesaymore"></button>
+      <p class="saysaid" id="saysaid" hidden></p>
+    </div>
+  </section>
 
   <!-- AND THE QUEUE ITSELF, under the people who are already in.
        The number above says how many; this says who, so that somebody in here
@@ -2144,28 +2146,6 @@
          made yet. -->
     <div class="field"><input id="mename" maxlength="40"></div>
 
-    <!-- THE SENTENCE, AND IT BELONGS HERE.
-         It lived on Browse, between the people who are in and the people
-         waiting — the one control that decides who a member is shown, three
-         screens away from the form where they set themselves up. So somebody
-         filled this in, pressed the button, and was matched with nobody,
-         having never been asked the only question the matching reads.
-         Under the name because that is the order it is said in: this is who I
-         am, and this is what I am here for. -->
-    <section class="saysay" id="saysay" hidden>
-      <!-- SHUT, IT IS THE ICON AND THE SENTENCE. Two dropdowns and a save
-           line, open all the time, for a thing somebody changes about twice a
-           year. Closed it is one row: the sliders, what they currently say,
-           and a caret. It opens itself for somebody who has not answered it
-           yet — see drawSays. -->
-      <button class="sayhead" type="button" id="sayhead" aria-expanded="false"
-        aria-controls="saybody"></button>
-      <div id="saybody" hidden>
-        <div class="says" id="mesays"></div>
-        <button class="saymore" type="button" id="mesaymore"></button>
-        <p class="saysaid" id="saysaid" hidden></p>
-      </div>
-    </section>
 
     <!-- THE SWITCH THAT DECIDES WHETHER ANY OF THIS DOES ANYTHING.
          It was inside the fold, with the optional details. That made the short
@@ -6387,7 +6367,8 @@ function drawDeck() {
   $("brwlabel").textContent = T("brw.title");
 
   drawMine();
-  drawBrwSay();
+  // The sentence sits under the deck it decides — see the note in the markup.
+  drawSays();
 
   const deck = $("deck");
   fill(deck);
@@ -6879,25 +6860,11 @@ $("mepicgo").addEventListener("click", () => $("mephoto").click());
 /* The days somebody is free, 0–6. Drawn rather than a row of checkboxes: seven
  * of those is a wall of text, and a week reads as a shape. */
 
-/* ONE SENTENCE, OR THE WHOLE FORM.
- *
- * Pressing Change on Browse opened the setup form: a photograph, a name, the
- * rooms, the links, the recovery number and the way out — for a person who had
- * asked to change four words. The pills are inside this sheet because that is
- * where somebody is first asked them, and they must stay one control rather
- * than two; so the sheet learns to show only the part that was asked for.
- *
- * A class rather than a dozen hidden flags: every block in here is already
- * shown or hidden by its own logic, and a second owner of those flags is how
- * a block comes back on a later draw with nothing to explain why. */
-function openMe(joining, only) {
+function openMe(joining) {
   const made = Boolean(ME && ME.handle);
-  const say = only === "say";
-  $("meform").classList.toggle("justsay", say);
   // Asked once per opening of the sheet, not once ever.
   ASKEDPIC = false;
-  $("metitle").textContent = say ? T("say.only")
-    : T(made ? "me.editTitle" : "me.newTitle");
+  $("metitle").textContent = T(made ? "me.editTitle" : "me.newTitle");
   $("mename").placeholder = T("me.name");
   $("mecampus").placeholder = T("me.campus");
   $("meage").placeholder = T("me.age");
@@ -6914,10 +6881,7 @@ function openMe(joining, only) {
   $("meigwhy").textContent = T("me.igWhy");
   $("megoal").placeholder = T("me.goal");
   $("mewhy").textContent = T("me.whyNoContact");
-  /* DONE, NOT CANCEL. The pills save themselves one at a time — see saveSay —
-     so in this mode there is nothing pending to abandon, and Save/Cancel over
-     a control that has already saved is a question with no true answer. */
-  $("meshut").textContent = say ? T("say.done") : T("post.cancel");
+  $("meshut").textContent = T("post.cancel");
   // Putting yourself up is not the same act as changing a detail later, and a
   // button that says the same word for both is the reason nobody is sure which
   // one they are doing.
@@ -7398,49 +7362,6 @@ function sayIcon() {
     svg.append(c2);
   }
   return svg;
-}
-
-/* THE SENTENCE, ON BROWSE, READ-ONLY.
- *
- * The pills live in the profile form now — see the note where they used to
- * be. This is the half Browse needs: what it is currently running on, and one
- * press back to the place it is changed.
- *
- * Not a second control. One editable sentence in two places is two answers
- * waiting to disagree, and the matching reads one of them.
- */
-function drawBrwSay() {
-  const row = $("brwsay");
-  if (!row) return;
-  const done = (Array.isArray(SAY) ? SAY : []).filter((r) => r && r.want);
-  // Nothing to say to somebody with no profile: the card above this one is
-  // already asking them for the whole thing.
-  row.hidden = !(ME && ME.handle);
-  if (row.hidden) return;
-  fill(row);
-  const said = el("span");
-  if (done.length) {
-    said.append(document.createTextNode(T("say.want1") + " "));
-    said.append(el("b", null,
-      done.map((r) => T("role.a." + r.want)).join(T("brw.qjoin") || ", ")));
-  } else {
-    said.append(el("b", null, T("brw.sayNone")));
-  }
-  row.append(said, el("span", "chg", T("brw.sayChange")));
-  if (row.dataset.on) return;
-  row.dataset.on = "1";
-  row.addEventListener("click", () => {
-    /* Opened, not just reachable. Somebody pressing this has already decided
-       to change it, and landing on a shut fold is one more press for nothing.
-       drawSayHead reads this key when it draws. */
-    try { localStorage.setItem("board:say", "1"); } catch { /* fine */ }
-    openMe(false, "say");
-    const body = $("saybody");
-    if (body) {
-      body.hidden = false;
-      $("sayhead").setAttribute("aria-expanded", "true");
-    }
-  });
 }
 
 function drawSays() {
