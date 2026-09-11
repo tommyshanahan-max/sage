@@ -4158,7 +4158,19 @@ app.get("/api/notes", notesOff, async (req, res) => {
     };
   });
 
-  res.json({ notes, unread: notes.filter((n) => !n.mine && !n.seen).length });
+  /* THE READER'S OWN FACE, for the lines the reader wrote.
+     Every row carried the other person's face, including the ones you sent —
+     so a thread read as one person talking to themselves, the same initial
+     twice down the page. The name on the line was right ("You wrote to Wei")
+     and the picture beside it contradicted it, which is the kind of small
+     wrongness that makes a screen feel broken without anybody being able to
+     say why. Sent once rather than per row: it is the same person on every
+     one of them. */
+  res.json({
+    notes,
+    you: name(me),
+    unread: notes.filter((n) => !n.mine && !n.seen).length,
+  });
 });
 
 /* LEAVING A CONVERSATION.

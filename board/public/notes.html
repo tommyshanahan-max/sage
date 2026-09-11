@@ -208,18 +208,31 @@ const el = (t, c, x) => { const n = document.createElement(t); if (c) n.classNam
 const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
 const initial = (name) => (String(name || "?").trim()[0] || "?").toLowerCase();
 
+/* A COLOUR PER PERSON, FROM THEIR OWN NAME — the same routine, and so the
+   same colour, as the card in room.html. Every letter avatar in a thread was
+   the one accent blue, so two people who had not uploaded a photo were two
+   identical blue circles and the only thing telling them apart was a letter.
+   Not random: it has to be the same tomorrow, and the same to them as it is
+   to the person reading. */
+function wash(name) {
+  let h = 0;
+  for (const ch of String(name || "?")) h = (h * 31 + ch.codePointAt(0)) % 360;
+  return "linear-gradient(150deg,hsl(" + h + " 26% 74%),hsl(" + ((h + 24) % 360) + " 24% 52%))";
+}
+
 let device = "";
 try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
 
-let NOTES = [], UNREAD = 0;
+let NOTES = [], UNREAD = 0, YOU = { handle: "", photo: "" };
 
 async function load() {
   try {
     const d = await fetch("/api/notes", { cache: "no-store",
       headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
     NOTES = d.notes || [];
+    YOU = d.you || { handle: "", photo: "" };
     UNREAD = d.unread || 0;
-  } catch { NOTES = []; UNREAD = 0; }
+  } catch { NOTES = []; UNREAD = 0; YOU = { handle: "", photo: "" }; }
   paint();
 
   /* Marked read after they are on the screen, not before. Doing it in the
@@ -256,18 +269,25 @@ function row(n) {
   const box = el("div", "note" + (n.mine ? " mine" : ""));
   box.append(el("div", "dot" + (n.mine || n.seen ? " spent" : "")));
 
-  // Their face, and it opens them. A list of messages from names you cannot
-  // put a face to is the same problem the feed had.
-  if (n.handle) {
+  /* WHOEVER WROTE THE LINE, and it opens them. A list of messages from names
+     you cannot put a face to is the same problem the feed had.
+     On the lines you sent that is YOU. It was the other person on every row,
+     which drew the same initial twice down a thread and read as one person
+     talking to themselves — while the line beside it said "You wrote to Wei".
+     A picture that contradicts the sentence next to it makes a screen feel
+     broken without anybody being able to say why. */
+  const face = n.mine ? YOU : n;
+  if (face.handle) {
     const av = Object.assign(document.createElement("a"), {
       className: "av small",
-      href: "/p/" + encodeURIComponent(n.handle.toLowerCase()),
-      textContent: initial(n.handle),
+      href: "/p/" + encodeURIComponent(face.handle.toLowerCase()),
+      textContent: initial(face.handle),
     });
-    av.setAttribute("aria-label", n.handle);
-    if (n.photo) {
+    av.setAttribute("aria-label", face.handle);
+    av.style.background = wash(face.handle);
+    if (face.photo) {
       const img = Object.assign(document.createElement("img"),
-        { src: "/api/public-media?id=" + encodeURIComponent(n.photo), alt: "", loading: "lazy" });
+        { src: "/api/public-media?id=" + encodeURIComponent(face.photo), alt: "", loading: "lazy" });
       img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
     }
     box.append(av);
