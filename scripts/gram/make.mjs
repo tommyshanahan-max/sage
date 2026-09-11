@@ -104,9 +104,23 @@ for (const one of pairs) {
   const shot = await p.screenshot({ path: path.join(OUT, name + ".png") });
   await writeFile(path.join(WEB, name + ".png"), shot);
 
-  /* The caption, in both languages, in one file. The English is for the
-     international account and the Chinese for whatever goes to 小红书 — which
-     is the one that reaches the mainland, where Instagram does not. */
+  /* THE CAPTION, ONCE PER PLACE IT IS GOING.
+   *
+   * Three blocks, separated by a rule, because the same words do not work in
+   * all three and the differences are not stylistic:
+   *
+   *   Instagram — English, and "link in bio", which is the only way a link
+   *   travels there. post.mjs reads this block and no other.
+   *
+   *   小红书 — Chinese, same shape. The mainland network, which is where
+   *   Instagram does not reach at all.
+   *
+   *   WhatsApp and WeChat — forwarded into a chat by hand, so "link in bio"
+   *   means nothing and the address has to be in the message. Short, because
+   *   a long paste into a group is read as an advertisement and a short one
+   *   is read as a person. Both languages, one after the other, so the same
+   *   block works whichever chat it lands in.
+   */
   const [zme, zwant] = one.zh || ["", ""];
   await writeFile(path.join(OUT, name + ".txt"),
 `I am ${one.me} looking for ${one.want}.
@@ -124,6 +138,20 @@ Invite only. Link in bio.
 双方都点了头，微信才互相可见。
 
 邀请制。主页链接。
+
+—
+
+WhatsApp / WeChat — paste with the picture:
+
+I am ${one.me} looking for ${one.want}.
+Someone writes the other half and you are put in front of each other.
+Invite only, still small.
+thexchange.app
+
+我是${zme}，我在找${zwant}。
+有人写了另一半，你们就直接对上。
+邀请制，人还不多。
+thexchange.app
 `, "utf8");
   if (moving) {
     /* WHAT THE CAMERA DOES, AND NOTHING ELSE. The frame already says the whole
