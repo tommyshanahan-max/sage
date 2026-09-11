@@ -634,17 +634,22 @@ export const STRINGS = {
    *
    * The contact is the half that did not move, and saying so plainly is what
    * keeps the rest of it a promise rather than a category. */
+  /* "SHOWN TO NOBODY" IS STILL TRUE AND IS NO LONGER THE WHOLE OF IT. An
+     address left here is now also how somebody gets their place back on a new
+     phone — see /api/signin. Shown and used are different words, and a form
+     that says the first while quietly doing the second is the kind of thing
+     this board exists not to be. One clause, on the line people read. */
   "wait.note": [
-    "Members and the others waiting see your name and your line — that is how somebody brings you in. Your WeChat or email is shown to nobody. Deleted either way.",
-    "成员和其他在等的人能看到你的名字和这句话——你就是这样被带进来的。微信或邮箱不给任何人看。无论结果如何都会删掉。",
+    "Members and the others waiting see your name and your line — that is how somebody brings you in. Your WeChat or email is shown to nobody; if it is an email, it is also how you get your place back on a new phone. Deleted either way.",
+    "成员和其他在等的人能看到你的名字和这句话——你就是这样被带进来的。微信或邮箱不给任何人看；要是填的是邮箱，换手机的时候也靠它把你的位置找回来。无论结果如何都会删掉。",
   ],
   /* THE SAME PROMISE WITH ONE AUDIENCE TAKEN OUT. On a door sent to people who
      compete with each other, the other names in the queue are the reason not
      to answer. Members still see it, because somebody has to be able to vouch.
      See `quiet` in cleanWait and QUIET_PAGES in wait.js. */
   "wait.noteQuiet": [
-    "Only members see your name and your line — that is how somebody brings you in. Nobody else waiting sees you, and your WeChat or email is shown to nobody. Deleted either way.",
-    "只有成员能看到你的名字和这句话——你就是这样被带进来的。其他在等的人看不到你，微信或邮箱也不给任何人看。无论结果如何都会删掉。",
+    "Only members see your name and your line — that is how somebody brings you in. Nobody else waiting sees you, and your WeChat or email is shown to nobody; if it is an email, it is also how you get your place back on a new phone. Deleted either way.",
+    "只有成员能看到你的名字和这句话——你就是这样被带进来的。其他在等的人看不到你，微信或邮箱也不给任何人看；要是填的是邮箱，换手机的时候也靠它把你的位置找回来。无论结果如何都会删掉。",
   ],
 
   /* ---- the waiting room ---------------------------------------------------
