@@ -154,15 +154,15 @@
      Angles are small (6deg). Anything more reads as a sticker sheet, and the
      text inside a phone at 10deg is genuinely harder to read. */
   .top .wrap{gap:.5rem}
-  /* ONE BUTTON UP HERE, AND IT IS THE LIST.
-     The bar held both doors for a few hours and it was too much: a brand, a
-     language, a quiet button and a loud one, four things to read before the
-     headline. The password is not the common case — most people arriving have
-     never heard of this — and it is still two lines down in the hero, where
-     somebody who has one will look anyway. A member gets their own button back
-     by the rule below. */
-  .top #navopen{display:none}
-  .top .go{margin-left:auto}
+  /* NO BUTTONS UP HERE AT ALL — the brand, the language, and nothing else.
+     The bar held both doors for a few hours and it was too much: four things
+     to read before the headline, two of them asking for a decision from
+     somebody who has not been told yet what the decision is about. Both are in
+     the hero, one screen down, under the sentence that makes anybody want
+     either. A stranger reads before they are asked.
+     A member is the exception and keeps one: "Go to the board" is not a pitch,
+     it is the way home, and they have already made the decision. */
+  .top #navopen,.top #navjoin{display:none}
   /* A member has no list to join and does not need the hero's buttons: their
      one button is "Go to the board", which is #navopen wearing new words. */
   body.inside #navjoin,body.inside #herocta{display:none}

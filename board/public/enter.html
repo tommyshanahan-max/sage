@@ -231,6 +231,29 @@
 
   /* Its own section now, so it needs the width the door used to give it. */
   #listwrap{width:100%;max-width:22rem;margin:0 auto}
+  /* THE SAME BOX AS THE PUBLIC PAGE, deliberately — somebody who read the
+     landing page and then opened their link should meet one thing twice, not
+     two things once. Kept as its own copy rather than shared: these two pages
+     share no stylesheet beyond site.css, and a third file for one card would
+     cost a request on the screen where the wall is slowest. */
+  .hostess{margin:1.8rem 0 0;padding:1.1rem 1.1rem .9rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:1rem}
+  .hlab{margin:0 0 .7rem;font-size:.95rem;color:var(--ink-2)}
+  .hasks{display:flex;flex-wrap:wrap;gap:.4rem;margin:0 0 .7rem}
+  .hasks button{border:1px solid var(--line);background:var(--paper);color:var(--ink-2);
+    border-radius:99px;padding:.4rem .75rem;font:inherit;font-size:.85rem}
+  .hasks button:hover{border-color:var(--accent);color:var(--accent)}
+  #hostessform{display:flex;gap:.5rem}
+  #hostessq{flex:1;min-width:0;padding:.6rem .9rem;font:inherit;font-size:.95rem;
+    border:1px solid var(--line);border-radius:99px;background:var(--paper);
+    color:var(--ink)}
+  #hostessq:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .hgo{border:0;border-radius:99px;background:var(--accent);color:var(--accent-ink);
+    padding:.6rem 1.1rem;font:inherit;font-size:.95rem}
+  .hgo[disabled]{opacity:.55}
+  .hsaid{margin:.85rem 0 0;font-size:.95rem;line-height:1.6;color:var(--ink);
+    white-space:pre-wrap}
+  .hnote{margin:.7rem 0 0;font-size:.8rem;line-height:1.5;color:var(--muted)}
   .keyopen{display:block;width:100%;margin:1.6rem 0 0;border:0;background:none;
     color:var(--muted);font-size:.9rem;padding:.5rem 0;text-decoration:underline;
     text-underline-offset:3px}
@@ -395,6 +418,30 @@
       <button class="quiet wide" type="button" id="keygo"></button>
       <p class="said" id="keysaid" hidden></p>
     </div>
+  </section>
+
+  <!-- SOMEBODY TO ASK, ON THE DOOR ITSELF.
+       The welcome reads four facts out loud and they are the four we guessed
+       at. The questions somebody actually arrives with are the ones a page
+       cannot anticipate — is this a scam, who else is on it, what happens to
+       my WeChat — and until now the only place to ask them was the public
+       page, which is not where an invite link lands. So the same box, on the
+       screen people are actually sent to.
+
+       UNDER THE CODE, never above it. Somebody holding a code came here to
+       type it; walking them past a chat box first would be answering a
+       question they did not ask. Drawn only when the server says there is
+       anybody on the door — see hostess in /api/hello — so it is nothing at
+       all on a board that has not switched it on. -->
+  <section class="hostess" id="hostess" hidden>
+    <p class="hlab" id="hostesslab"></p>
+    <div class="hasks" id="hostessasks"></div>
+    <form id="hostessform">
+      <input id="hostessq" maxlength="300" autocomplete="off">
+      <button class="hgo" type="submit" id="hostessgo"></button>
+    </form>
+    <p class="hsaid" id="hostesssaid" hidden></p>
+    <p class="hnote" id="hostessnote"></p>
   </section>
 
   <!-- IN. -->
@@ -757,6 +804,9 @@ function words() {
      lock itself, and the strip above it should say the same thing the lock
      does. */
   $("invite").textContent = T("inv.locked");
+  // The language button calls this; the box has to be rebuilt with it or it
+  // keeps the words it was drawn in. The landing page learnt that one already.
+  if (!$("hostess").hidden) drawHostess();
   $("wxtitle").textContent = T("door.wxTitle");
   $("wxsub").textContent = T("door.wxSub");
   $("wxsay").textContent = T("door.wxSay");
@@ -997,6 +1047,70 @@ fetch("/api/admitted", { headers: { "x-board-device": device } })
     location.reload();
   })
   .catch(() => { /* the door still works */ });
+
+/* SOMEBODY TO ASK, ON THE DOOR.
+ *
+ * The same box and the same route as the public page — see the note beside
+ * the markup for why it is here, and lib/hostess.js for what it may say and
+ * the three limits on what it may cost.
+ *
+ * One question, one answer, no history. The last answer is replaced by the
+ * next, which is the honest shape for a doorway: asking again is asking
+ * again, not continuing a conversation. Nothing is written down at either
+ * end.
+ */
+function drawHostess() {
+  $("hostesslab").textContent = T("host.head");
+  $("hostessq").placeholder = T("host.ask");
+  $("hostessgo").textContent = T("host.go");
+  $("hostessnote").textContent = T("host.note");
+  const box = $("hostessasks");
+  box.replaceChildren();
+  /* Three questions people actually arrive with, so nobody has to compose one
+     to find out whether it is worth composing one. */
+  for (const k of ["what", "safe", "cost"]) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = T("host.q." + k);
+    b.addEventListener("click", () => { $("hostessq").value = T("host.q." + k); askNow(); });
+    box.append(b);
+  }
+}
+
+let ASKING = false;
+async function askNow() {
+  const q = $("hostessq").value.trim();
+  if (!q || ASKING) return;
+  ASKING = true;
+  const go = $("hostessgo");
+  go.disabled = true;
+  const said = $("hostesssaid");
+  said.hidden = false;
+  said.textContent = T("host.thinking");
+  try {
+    const r = await fetch("/api/ask", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q, device }),
+    });
+    const d = await r.json().catch(() => ({}));
+    /* Their words, not the provider's. Busy, over its allowance, and broken
+       are three different sentences to a reader and one shrug in a log. */
+    said.textContent = d && d.text ? d.text
+      : T(d && d.error === "slow-down" ? "host.slow"
+        : d && d.error === "busy" ? "host.busy" : "host.no");
+  } catch { said.textContent = T("host.no"); }
+  go.disabled = false;
+  ASKING = false;
+}
+$("hostessform").addEventListener("submit", (e) => { e.preventDefault(); askNow(); });
+
+/* Drawn only if there is anybody on the door. The same one field the public
+   page reads, from the same route, so a board with the feature off shows no
+   box rather than a box that answers everything with an error. */
+fetch("/api/hello", { cache: "no-store" })
+  .then((r) => r.json())
+  .then((d) => { if (d && d.hostess) { $("hostess").hidden = false; drawHostess(); } })
+  .catch(() => { /* no box, and the door is unaffected */ });
 </script>
 </body>
 </html>
