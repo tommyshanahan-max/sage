@@ -33,6 +33,12 @@
   h1{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:1.9rem;margin:.6rem 0 .3rem}
   .lede{color:var(--ink-2);margin:0 0 1.6rem;line-height:1.65;max-width:44rem}
 
+  .mine{margin:0 0 1.4rem;padding:1rem 1.1rem;border:1px solid var(--accent-soft);
+    border-radius:.9rem;background:var(--accent-soft)}
+  .mine label{display:block;font-size:.9rem;color:var(--ink-2);margin:0 0 .55rem;line-height:1.55}
+  .mine .two{display:flex;gap:.6rem;flex-wrap:wrap}
+  .mine input{flex:1;min-width:12rem;padding:.65rem .8rem;font:inherit;
+    border:1px solid var(--line);border-radius:.6rem;background:var(--paper);color:var(--ink)}
   .roles{display:flex;flex-wrap:wrap;gap:.4rem;margin:0 0 1rem;align-items:center}
   .roles b{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;
     color:var(--muted);margin-right:.4rem;font-weight:600}
@@ -121,6 +127,21 @@
   <h1 id="head"></h1>
   <p class="lede" id="lede"></p>
 
+  <!-- ASKED ONCE, AND ONLY OF SOMEBODY WHO HAS NOT SAID IT.
+       An agent arriving on an agent invite has a row and no name on it: the
+       door made the row so this page has a roster to hang things off, and put
+       nothing on it that they did not type. Their people's pages are made in
+       their name and their WeChat is the one that crosses, so the board has to
+       know what to call them before any of that means anything. One field, at
+       the top, gone the moment it is answered. -->
+  <div class="mine" id="mine" hidden>
+    <label for="myname" id="mylabel"></label>
+    <div class="two">
+      <input id="myname" autocomplete="name">
+      <button class="go" id="mysave" type="button"></button>
+    </div>
+  </div>
+
   <div class="roles"><b id="rolehead"></b><span id="roles"></span></div>
 
   <div class="field" id="field">
@@ -163,6 +184,33 @@ function wash(name) {
   return "linear-gradient(150deg,hsl(" + h + " 26% 74%),hsl(" + ((h + 24) % 360) + " 24% 52%))";
 }
 const isPic = (f) => f && /^image\//.test(f.type || "");
+
+/* Whether this browser has a page with a name on it. Everything here needs
+   one: a roster hangs off it, and their people's sentences are built from it.
+   Checked once on load and again after they answer. */
+async function askName() {
+  const d = await fetch("/api/me", { headers: { "x-board-device": device } })
+    .then((r) => r.json()).catch(() => null);
+  const has = Boolean(d && d.person && d.person.handle);
+  $("mine").hidden = has;
+  if (!has) $("myname").focus();
+  return has;
+}
+
+$("mysave").onclick = async () => {
+  const handle = $("myname").value.trim();
+  if (!handle) return;
+  $("mysave").disabled = true;
+  const r = await fetch("/api/me", {
+    method: "PUT", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ device, handle }),
+  }).then((x) => x.json()).catch(() => ({ error: "failed" }));
+  $("mysave").disabled = false;
+  if (r.error === "contact") return say(T("run.contact"), true);
+  if (r.error) return say(T("run.failed"), true);
+  $("mine").hidden = true;
+  say("");
+};
 
 const ROLES = ["performer", "director", "writer", "crew"];
 let role = "performer";
@@ -363,6 +411,9 @@ function paint() {
   set("fieldhead", "ob.fieldhead");
   set("fieldsub", "ob.fieldsub");
   set("browse", "ob.choose");
+  set("mylabel", "ob.mylabel");
+  set("mysave", "ob.mysave");
+  $("myname").placeholder = T("ob.myph");
   set("trayhead", "ob.trayhead");
   drawRoles();
   if (GROUPS.length || PILE.length) drawPeople(); else tally();
@@ -370,6 +421,7 @@ function paint() {
 $("lang").append(langButton(() => paint()));
 paint();
 $("bottom").hidden = true;
+askName();
 </script>
 </body>
 </html>

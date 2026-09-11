@@ -622,7 +622,7 @@ async function enter() {
        rows are already on this browser, and the "you are in" screen is written
        for somebody arriving for the first time. Straight to the board. */
     if (r.ok && d.back) { location.assign("/browse"); return; }
-    if (r.ok) return showIn(d.by || "");
+    if (r.ok) return showIn(d.by || "", Boolean(d.agent));
     /* THE RIGHT CODE AT THE WRONG DOOR. Somebody who was sent a piece of work
        and landed here types the only code they have. Take them to it rather
        than telling them it is wrong — there is nothing for them to do on this
@@ -682,7 +682,7 @@ async function useKey() {
   said.textContent = T("door.keyNo");
 }
 
-function showIn(by) {
+function showIn(by, agent) {
   $("wx").hidden = true;
   $("door").hidden = true;
   $("listwrap").hidden = true;
@@ -700,7 +700,19 @@ function showIn(by) {
     const back = new URLSearchParams(location.search).get("back") || "";
     if (/^\/[A-Za-z0-9/_-]{0,60}$/.test(back)) $("ingo").href = back;
   } catch { /* the default is /browse */ }
-  $("insub").textContent = by ? T("door.byWho", { who: by }) : T("door.inSub");
+  /* AN AGENT IS NOT HERE TO BROWSE. They came in holding nine people and a
+     folder for each, and the first screen that is any use to them is the one
+     that takes the folder. Said on this screen rather than left as a surprise:
+     "you are in" followed by a button marked Browse would send somebody who
+     has forty minutes of typing ahead of them to look at a deck of strangers.
+     Overrides `back` on purpose — a back link is where they were turned away
+     from, and nobody is ever turned away from /onboard. */
+  if (agent) {
+    $("ingo").href = "/onboard";
+    $("ingo").textContent = T("door.agentGo");
+  }
+  $("insub").textContent = agent ? T("door.agentSub")
+    : by ? T("door.byWho", { who: by }) : T("door.inSub");
   window.scrollTo(0, 0);
 }
 

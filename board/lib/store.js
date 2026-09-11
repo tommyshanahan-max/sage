@@ -469,6 +469,24 @@ export function cleanInvite(raw) {
     usedAt: s(raw.usedAt, 40),
     // Taken back without deleting the row, so the record of who had it stays.
     off: Boolean(raw.off),
+    /* WHAT KIND OF DOOR THIS IS.
+     *
+     * Empty is the ordinary one and stays the default: somebody joins, writes
+     * their sentence, and is a member.
+     *
+     * "agent" is for somebody who arrives representing other people. Everybody
+     * else on this board turns up as themselves; an agent turns up with nine
+     * performers and a folder for each of them, and the first thing to show
+     * them is not Browse — it is the console that takes the folder. So the
+     * code carries what it is for, the door sets their sentence, and they land
+     * on /onboard.
+     *
+     * It is on the INVITE and not on the person because it describes the
+     * arrival, not the account: nothing here is a permission, and an agent is
+     * an ordinary member whose sentence happens to say Agent. Anybody can
+     * become one later by changing that sentence, and this is only about where
+     * the door puts somebody down. */
+    kind: raw.kind === "agent" ? "agent" : "",
     /* WHEN IT STOPS WORKING, IF IT EVER DOES.
      *
      * Empty is the old behaviour and stays the default: a code works until it

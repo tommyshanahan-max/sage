@@ -99,8 +99,18 @@ async function main() {
      rather than in the board: it greets them and nothing else, so it is never
      stored, never checked, and opens nothing. */
   const forWhom = arg("for");
+  /* AN INVITE FOR SOMEBODY WHO ARRIVES REPRESENTING OTHER PEOPLE.
+   *
+   * THE MECHANICS DO NOT CHANGE, and that is deliberate — the invite is
+   * settled. Same block between two rules, same link and code on separate
+   * lines, same named greeting, same clock, same one person once, same line
+   * about WeChat's browser. What changes is two sentences of what it is for,
+   * and where the door puts them down: an agent lands on the console that
+   * takes their folder rather than on a deck of strangers. */
+  const agent = rest.includes("--agent");
   const r = await fetch(base + "/api/invite", {
-    method: "POST", headers: head, body: JSON.stringify({ who, n, hours }),
+    method: "POST", headers: head,
+    body: JSON.stringify({ who, n, hours, kind: agent ? "agent" : "" }),
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) {
@@ -198,6 +208,18 @@ async function main() {
         + " for doing business through who you know: cross-border investment"
         + " and entertainment, mostly.") : "",
       forWhom ? "" : "",
+      /* THE OBJECTION, ANSWERED IN THE MESSAGE RATHER THAN ON A PAGE.
+         An agent's whole hesitation is "I am not putting my list somewhere a
+         producer can go round me", and they will decide that before they open
+         anything. So the answer goes here, where it is read. */
+      forWhom && agent ? wrap("You would not be handing over your list."
+        + " Everybody you represent gets their own page, you run all of them"
+        + " from one login, and when somebody wants one of them they are"
+        + " talking to you.") : "",
+      forWhom && agent ? "" : "",
+      forWhom && agent ? wrap("Do it on a laptop and you can drag the whole"
+        + " folder in — headshots, CVs, all of it — and it does the typing.") : "",
+      forWhom && agent ? "" : "",
       forWhom ? wrap("Invite only, so here is your way in." + lasts) : "",
       forWhom ? "" : "",
       link,
@@ -211,6 +233,14 @@ async function main() {
       forWhom ? forWhom + " —— 就是我跟你说的那个板子。一个靠人脉做生意的私人圈子，" : "",
       forWhom ? "主要是跨境投资和影视娱乐。" : "",
       forWhom ? "" : "",
+      // 写的，不是翻的。经纪人最先想的是「我的人名单凭什么给你」，
+      // 所以先把这句说清楚，再说怎么进。
+      forWhom && agent ? "不是让你把名单交出去。你带的每个人都有自己的主页，" : "",
+      forWhom && agent ? "你一个账号全管；谁看上了你的人，联系的还是你。" : "",
+      forWhom && agent ? "" : "",
+      forWhom && agent ? "用电脑打开的话，整个文件夹拖进去就行——定妆照、简历，" : "",
+      forWhom && agent ? "都不用你打字。" : "",
+      forWhom && agent ? "" : "",
       forWhom ? "只能被邀请进来，这是你的入口。" + lastsZh : "",
       forWhom ? "" : "",
       link,

@@ -298,6 +298,31 @@ invite: ## Make an invite:  make invite WHO="you" FOR="them" [HOURS=24] [N=3]
 	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --hours "$(if $(HOURS),$(HOURS),24)" --n "$(or $(N),1)"
 
+agent-invite: ## Bring an agent in:  make agent-invite WHO="Tom" FOR="Andy" [HOURS=48]
+	@# The same door as `make invite` and the same message shape — it is settled
+	@# and this does not redesign it. Two things differ.
+	@#
+	@# The message answers the objection an agent has before they open anything:
+	@# they are not handing over their list. Everybody they represent gets their
+	@# own page, they run all of them from one login, and a producer who wants
+	@# one of them is talking to THEM. Said in the message because that is where
+	@# it is read, not on a page they may never reach.
+	@#
+	@# And the door lands them on /onboard instead of Browse. An agent's first
+	@# job is not to look at anybody, it is to get nine people up — forty
+	@# minutes of typing, or one drag of a folder on a laptop. Sending somebody
+	@# with that ahead of them to a deck of strangers is how they never come
+	@# back. The row is made on the way in with the sentence already set; the
+	@# console asks their name and nothing else.
+	@#
+	@# HOURS defaults to 48 rather than 24: this one usually needs a laptop, and
+	@# somebody reading it on a phone on a Friday should still have it on Monday.
+	$(COMPOSE) run --rm --no-deps -T \
+	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '"')" \
+	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --hours "$(if $(HOURS),$(HOURS),48)" --n "$(or $(N),1)" --agent
+
 mail: ## Put an email on somebody's row so they can sign in:  make mail WHO="Tom" ADDR="tom@x.com"
 	@# The address is what a sign-in code gets sent to. It has to be ON their
 	@# row, and the only way to put it there was to be signed in already —

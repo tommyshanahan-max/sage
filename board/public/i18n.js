@@ -494,6 +494,12 @@ export const STRINGS = {
      fix; the tiles being square is the other half. */
   "run.railhead":   ["Posting as", "现在以谁的身份"],
 
+  /* The door, when the person coming through it represents other people.
+     两句话就够：他们进来不是为了逛，是为了把手上的人弄上去。 */
+  "door.agentSub":  ["You are in. Next: the people you represent \u2014 drag their files in and they get pages of their own.",
+                     "进来了。下一步是把你带的人弄上去——把他们的资料拖进来，一人一个主页。"],
+  "door.agentGo":   ["Bring your people on", "把你的人弄上去"],
+
   "run.count":      ["{show} of {all} showing in Browse. Your own page shows all of them.",
                      "{all} 个人里有 {show} 个在「逛逛」能刷到。你自己的主页上他们都在。"],
   "run.none":       ["Nobody yet. Drop a folder, or type a few names.",
@@ -580,6 +586,14 @@ export const STRINGS = {
                      "建好了 {n} 个，先存着。去名单里过一遍，再放上板。"],
 
   "role.a.director":   ["a Director", "导演"],
+  /* Asked of an agent who came in on an agent invite and has a row with
+     nothing on it. Not "create your profile": they are not here to make a
+     profile, they are here to put nine people up, and this is the one fact
+     that has to exist first. */
+  "ob.mylabel":     ["First \u2014 what should the board call you? Their pages say they are represented by you, and it is your WeChat that crosses.",
+                     "先说一下，板上叫你什么？他们的主页上会写「由你代理」，对方最后加的也是你的微信。"],
+  "ob.myph":        ["Your name", "你的名字"],
+  "ob.mysave":      ["That is me", "就叫这个"],
   "role.a.writer":     ["a Writer", "编剧"],
   "role.a.performer":  ["a Performer", "演员"],
   "role.a.crew":       ["Crew", "剧组"],

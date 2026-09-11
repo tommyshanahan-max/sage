@@ -957,6 +957,36 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
   if (outcome === "in" || outcome === "mine") {
     tries.delete(me);
     setCookie(res, me);
+    /* AN AGENT ARRIVES WITH NINE PEOPLE AND A FOLDER FOR EACH.
+     *
+     * Everybody else who comes through this door turns up as themselves, and
+     * Browse is the right first screen. An agent's first job is not to look at
+     * anybody — it is to get the people they represent onto the board, which
+     * is forty minutes of typing or one drag, and the difference between those
+     * two is whether they bother at all.
+     *
+     * So the row is made here rather than on their first save: /onboard needs
+     * a page to hang a roster off, and asking somebody to fill in a profile
+     * before they can use the thing they were invited for is the form that
+     * loses them. It is held and nameless — no handle, so nothing is in Browse
+     * and nothing was put on a page that they did not type.
+     *
+     * The sentence IS written, because it is the one thing the invite already
+     * knows and because their people inherit the right half of it. */
+    if (got && got.kind === "agent") {
+      await change((board) => {
+        if (board.people.some((q) => q.by === me)) return false;
+        board.people.push(store.cleanPerson({
+          id: store.newId(),
+          at: new Date().toISOString(),
+          state: "held",
+          by: me,
+          say: [{ me: "agent", want: "producer" }],
+        }));
+        return true;
+      });
+      return res.json({ ok: true, by: got.who || "", agent: true, where: "/onboard" });
+    }
     // The label is for whoever handed the code out, not for the person
     // spending it — what crosses the door is that somebody vouched.
     return res.json({ ok: true, by: got ? got.who : "" });
@@ -1134,7 +1164,12 @@ app.post("/api/invite", admin, express.json({ limit: "8kb" }), async (req, res) 
       let code = store.newCode();
       while (have.has(code)) code = store.newCode();
       have.add(code);
-      const v = store.cleanInvite({ code, who, until, at: new Date().toISOString() });
+      const v = store.cleanInvite({
+        code, who, until, at: new Date().toISOString(),
+        // See `kind` on cleanInvite: what the door does on the way in, not a
+        // permission of any sort.
+        kind: req.body?.kind === "agent" ? "agent" : "",
+      });
       board.invites.push(v);
       made.push(v);
     }
