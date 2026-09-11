@@ -521,10 +521,22 @@ export const STRINGS = {
      pitching for money — and two of the four doors, Film & TV and Factories &
      buyers, are not about money at all. It also puts the reader in the chair
      being judged, which is the opposite of what happens here.
+     Then "LinkedIn × Tinder" for an hour, and the problem with that one is
+     what it is standing next to. The line under it says everybody here was
+     let in by somebody already in, and the line above it was measuring this
+     place against the two largest open sign-up products on earth. A club does
+     not compare itself to LinkedIn.
+     So: the club first, the mechanic second, and neither borrowed. "That
+     matches" keeps the whole of what Tinder was doing there — two people, one
+     line each, and nothing said to either until both of them press — without
+     handing a reader an app to picture instead of this one.
+     互相看对眼才算 is how it would be said out loud rather than a rendering of
+     "matches": it only counts if you both like what you see. 配对 would have
+     been the dictionary word and reads like software.
      The Chinese is not that translated: neither name means anything in a
      mainland ear. 找人、找钱、找项目 — find the person, find the money, find
      the project — is the same promise in the words that are used. */
-  "land.eyebrow":      ["LinkedIn × Tinder", "找人 · 找钱 · 找项目"],
+  "land.eyebrow":      ["A private club that matches", "私人圈子 · 互相看对眼才算"],
   /* THE HEADLINE IS THE BLANK, and the blank is the product.
      It was a line out of a deck ("the room you keep asking people for"), which
      needed the slide before it to make sense, and then a plain description,
