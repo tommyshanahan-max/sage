@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ferry</title>
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#EEF0F4">
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD;
+    --ink:#151B28; --ink-2:#4E5968; --muted:#7A8699;
+    --line:#DFE4EC; --hair:#E7EBF1;
+    --accent:#2F6F62; --accent-ink:#FFFFFF; --accent-soft:#E2EDEA;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+           "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  }
+  /* A green rather than the board's blue, and not for variety: these are two
+     different products on one box and somebody will have both open. */
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#0B0E15; --raise:#141924; --card:#1B212D;
+      --ink:#E9EDF5; --ink-2:#A3B0C4; --muted:#7D8AA0;
+      --line:#232B3A; --hair:#1C2330;
+      --accent:#5FBFA8; --accent-ink:#0B0E15; --accent-soft:#16261F;
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+    overscroll-behavior-y:none}
+  [hidden]{display:none!important}
+  button{font:inherit;cursor:pointer}
+
+  /* ---- the start screen --------------------------------------------------- */
+  .start{flex:1;display:flex;flex-direction:column;justify-content:center;
+    padding:2rem 1.2rem;max-width:30rem;margin:0 auto;width:100%}
+  .mark{display:flex;align-items:center;gap:.6rem;margin:0 0 1.6rem}
+  .mark i{width:2.2rem;height:2.2rem;border-radius:50%;background:var(--accent);
+    display:grid;place-items:center;color:var(--accent-ink)}
+  .mark i svg{width:1.2rem;height:1.2rem}
+  .mark b{font-family:var(--serif);font-weight:400;font-size:1.3rem}
+  h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.9rem;
+    line-height:1.2;letter-spacing:-.01em}
+  .lede{margin:.9rem 0 0;font-size:1rem;line-height:1.6;color:var(--ink-2)}
+  .go{margin:1.6rem 0 0;border:0;border-radius:99px;background:var(--accent);
+    color:var(--accent-ink);padding:.85rem 1.5rem;font-size:1rem;font-weight:600}
+  .quiet{margin:1.4rem 0 0;font-size:.82rem;line-height:1.6;color:var(--muted)}
+  .quiet b{color:var(--ink-2);font-weight:600}
+  .rooms{margin:1.8rem 0 0;padding:1rem 0 0;border-top:1px solid var(--hair)}
+  .rooms h2{margin:0 0 .6rem;font-size:.72rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);font-weight:600}
+  .rooms a{display:flex;align-items:center;justify-content:space-between;gap:.6rem;
+    padding:.7rem .9rem;margin:0 0 .4rem;background:var(--card);
+    border:1px solid var(--hair);border-radius:.8rem;text-decoration:none;
+    color:var(--ink);font-size:.95rem}
+  .rooms a small{color:var(--muted);font-size:.78rem}
+
+  /* ---- the room ----------------------------------------------------------- */
+  .room{flex:1;display:flex;flex-direction:column;min-height:0}
+  .bar{flex:0 0 auto;display:flex;align-items:center;gap:.7rem;
+    padding:.8rem .9rem;padding-top:max(.8rem,env(safe-area-inset-top));
+    background:var(--card);border-bottom:1px solid var(--hair)}
+  .bar .who{flex:1;min-width:0}
+  .bar .who b{display:block;font-family:var(--serif);font-weight:400;font-size:1.05rem}
+  .bar .who small{display:block;font-size:.75rem;color:var(--muted)}
+  .chip{border:1px solid var(--line);background:var(--raise);color:var(--ink-2);
+    border-radius:99px;padding:.3rem .7rem;font-size:.78rem;font-weight:600}
+  .chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+  .talk{flex:1;overflow-y:auto;padding:1rem .9rem 1.4rem;
+    display:flex;flex-direction:column;gap:.5rem;-webkit-overflow-scrolling:touch}
+  .msg{max-width:80%;padding:.6rem .85rem;border-radius:1.1rem;font-size:.97rem;
+    line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+  .msg.them{align-self:flex-start;background:var(--card);border:1px solid var(--hair);
+    border-bottom-left-radius:.35rem}
+  .msg.me{align-self:flex-end;background:var(--accent);color:var(--accent-ink);
+    border-bottom-right-radius:.35rem}
+  .tools{display:flex;gap:.6rem;align-items:center;margin:-.2rem .3rem .25rem}
+  .tools.me{align-self:flex-end}
+  .tools.them{align-self:flex-start}
+  .tool{border:0;background:none;color:var(--muted);font-size:.72rem;padding:.1rem}
+  .tool:hover{color:var(--accent)}
+  .orig{max-width:80%;margin:-.05rem 0 .3rem;padding:.45rem .8rem;font-size:.88rem;
+    line-height:1.5;color:var(--ink-2);background:var(--accent-soft);
+    border-left:2px solid var(--accent);border-radius:.2rem .9rem .9rem .2rem}
+  .orig.me{align-self:flex-end;border-left:0;border-right:2px solid var(--accent);
+    border-radius:.9rem .2rem .2rem .9rem}
+  .orig small{display:block;font-size:.65rem;letter-spacing:.05em;color:var(--muted);
+    margin:0 0 .15rem}
+  .said{align-self:center;text-align:center;max-width:90%;font-size:.79rem;
+    line-height:1.55;color:var(--muted);margin:.5rem 0}
+  .said b{color:var(--ink-2);font-weight:600}
+  .spoke{font-size:.66rem;letter-spacing:.05em;color:var(--muted)}
+
+  .foot{flex:0 0 auto;padding:.6rem .9rem;
+    padding-bottom:max(.9rem,env(safe-area-inset-bottom));
+    background:var(--card);border-top:1px solid var(--hair)}
+  .write{display:flex;gap:.5rem;align-items:flex-end}
+  .write textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:1rem;
+    padding:.6rem .85rem;border:1px solid var(--line);border-radius:1.1rem;
+    background:var(--raise);color:var(--ink);max-height:7rem;line-height:1.4}
+  .rnd{border:1px solid var(--line);background:var(--raise);color:var(--ink-2);
+    border-radius:50%;width:2.7rem;height:2.7rem;flex:0 0 auto;display:grid;
+    place-items:center}
+  .rnd svg{width:1.15rem;height:1.15rem}
+  .rnd.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .send{border:0;border-radius:50%;width:2.7rem;height:2.7rem;flex:0 0 auto;
+    background:var(--accent);color:var(--accent-ink);font-size:1.1rem}
+  .send[disabled]{opacity:.4}
+
+  /* ---- the sheet, for joining and for the link ---------------------------- */
+  .sheet{position:fixed;inset:0;background:rgba(10,14,22,.55);display:grid;
+    place-items:end center;padding:0;z-index:5}
+  .sheet > div{background:var(--card);width:100%;max-width:30rem;
+    border-radius:1.2rem 1.2rem 0 0;padding:1.3rem 1.1rem;
+    padding-bottom:max(1.3rem,env(safe-area-inset-bottom))}
+  .sheet h2{margin:0 0 .3rem;font-family:var(--serif);font-weight:400;font-size:1.25rem}
+  .sheet p{margin:0 0 .9rem;font-size:.9rem;line-height:1.55;color:var(--ink-2)}
+  .sheet input{width:100%;padding:.7rem .9rem;font:inherit;font-size:1rem;
+    border:1px solid var(--line);border-radius:.8rem;background:var(--raise);
+    color:var(--ink);margin:0 0 .7rem}
+  .pick{display:flex;gap:.5rem;margin:0 0 1rem}
+  .pick button{flex:1;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink-2);border-radius:.8rem;padding:.7rem;font-size:.95rem}
+  .pick button.on{border-color:var(--accent);background:var(--accent-soft);
+    color:var(--accent);font-weight:600}
+  .sheet .go{width:100%;margin:0}
+  .link{display:flex;gap:.5rem;align-items:center;margin:0 0 .9rem}
+  .link code{flex:1;min-width:0;font-family:ui-monospace,Menlo,monospace;font-size:.8rem;
+    background:var(--raise);border:1px solid var(--hair);border-radius:.6rem;
+    padding:.6rem .7rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .link button{border:1px solid var(--line);background:var(--raise);color:var(--accent);
+    border-radius:99px;padding:.55rem .9rem;font-size:.85rem;font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- NO ROOM YET. -->
+<div class="start" id="start" hidden>
+  <p class="mark">
+    <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 4.5 0 3-1 4.5 0"/><path d="M5 14l1.5-6h11L19 14"/><path d="M12 8V4"/></svg></i>
+    <b>Ferry</b>
+  </p>
+  <h1>Two languages, one conversation.</h1>
+  <p class="lede">You type in yours. They read theirs. Neither of you does
+    anything about it.</p>
+  <button class="go" id="make">Start a room</button>
+  <p class="quiet">
+    <b>This server cannot read your messages.</b> The key is in the link, in the
+    part browsers never send. What is stored here is a blob it has no key for.
+    <br><br>
+    Translating a line is the one time text leaves your browser — that line, one
+    request, kept nowhere. It is not end-to-end encrypted and we will not call
+    it that. Anybody holding the link is in the room.
+  </p>
+  <div class="rooms" id="rooms" hidden>
+    <h2>Your rooms</h2>
+    <div id="roomlist"></div>
+  </div>
+</div>
+
+<!-- A ROOM. -->
+<div class="room" id="room" hidden>
+  <div class="bar">
+    <span class="who">
+      <b id="title">Ferry</b>
+      <small id="sub"></small>
+    </span>
+    <button class="chip" id="linkbtn">Link</button>
+    <button class="chip on" id="langbtn">EN</button>
+  </div>
+  <div class="talk" id="talk"></div>
+  <div class="foot">
+    <div class="write">
+      <textarea id="text" rows="1" placeholder="Write"></textarea>
+      <button class="rnd" id="mic" hidden aria-label="Speak instead of typing">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>
+      </button>
+      <button class="send" id="send" aria-label="Send">↑</button>
+    </div>
+  </div>
+</div>
+
+<!-- WHO ARE YOU, asked once per device per room. -->
+<div class="sheet" id="join" hidden><div>
+  <h2>Before you go in</h2>
+  <p>Your name is stored inside the encrypted message, not on the server.</p>
+  <input id="name" maxlength="40" placeholder="Your name" autocomplete="name">
+  <div class="pick" id="pick">
+    <button data-lang="en" class="on">I read English</button>
+    <button data-lang="zh">我看中文</button>
+  </div>
+  <button class="go" id="enter">Go in</button>
+</div></div>
+
+<!-- THE LINK, which is also the key. -->
+<div class="sheet" id="linksheet" hidden><div>
+  <h2>The link is the room</h2>
+  <p>Send this to one person. It carries the key, so anybody who has it can
+    read everything — and without it, nobody can, including this server.</p>
+  <div class="link">
+    <code id="linktext"></code>
+    <button id="copy">Copy</button>
+  </div>
+  <button class="go" id="linkshut">Done</button>
+</div></div>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+
+/* ---- the key, and where it is not ---------------------------------------
+ * In the fragment. Browsers do not send a fragment to a server — that is the
+ * specification, not a courtesy — so the key never arrives here, is never in
+ * an access log, and is not in the referrer of anything somebody taps through
+ * to. The room id is in the path, because the link has to name a room.
+ *
+ * AES-GCM, 256 bits, a fresh 12-byte nonce per line, nonce prepended to the
+ * ciphertext. Nothing home-made: this is WebCrypto doing one standard thing.
+ */
+const b64 = {
+  to: (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))),
+  from: (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0)),
+};
+
+async function newKey() {
+  const k = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 },
+    true, ["encrypt", "decrypt"]);
+  const raw = await crypto.subtle.exportKey("raw", k);
+  return { key: k, text: b64.to(raw).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") };
+}
+async function keyFrom(text) {
+  const s = text.replace(/-/g, "+").replace(/_/g, "/");
+  return crypto.subtle.importKey("raw", b64.from(s), { name: "AES-GCM" },
+    false, ["encrypt", "decrypt"]);
+}
+async function seal(key, obj) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = new TextEncoder().encode(JSON.stringify(obj));
+  const out = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
+  const both = new Uint8Array(iv.length + out.byteLength);
+  both.set(iv); both.set(new Uint8Array(out), iv.length);
+  return b64.to(both);
+}
+async function open(key, box) {
+  try {
+    const raw = b64.from(box);
+    const out = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: raw.slice(0, 12) }, key, raw.slice(12));
+    return JSON.parse(new TextDecoder().decode(out));
+  } catch {
+    /* A line this key cannot open. It is not an error to shout about: a room
+       whose link was regenerated, or a blob from a different room, and the
+       honest thing is to show that something is there and unreadable. */
+    return null;
+  }
+}
+
+/* ---- what this device remembers ----------------------------------------- */
+const mem = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem("ferry:" + k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("ferry:" + k, JSON.stringify(v)); } catch { /* private window */ } },
+};
+
+const ROOM = (location.pathname.match(/^\/r\/([a-z0-9]{10})$/) || [])[1] || "";
+/* THE LINK IS ONLY NEEDED ONCE. After a room is opened on a device, the key is
+   kept here — so the day-to-day is a list of rooms and nobody hunts for a
+   message from three weeks ago. The link stays the backup, and the other
+   person has a copy of it. */
+const saved = mem.get("rooms", {});
+const KEYTEXT = location.hash.slice(1) || (saved[ROOM] && saved[ROOM].key) || "";
+
+let KEY = null, ME = null, LANG = "en", SIDE = "a", LAST = "", CAN_TRANSLATE = false;
+const seen = new Set();
+
+/* ---- the start screen ---------------------------------------------------- */
+function drawStart() {
+  $("start").hidden = false;
+  const list = Object.entries(saved).sort((a, b) => (b[1].at || "").localeCompare(a[1].at || ""));
+  if (!list.length) return;
+  $("rooms").hidden = false;
+  $("roomlist").replaceChildren();
+  for (const [id, r] of list) {
+    const a = document.createElement("a");
+    a.href = "/r/" + id + "#" + r.key;
+    a.append(Object.assign(document.createElement("span"), { textContent: r.name || "Room" }));
+    a.append(Object.assign(document.createElement("small"),
+      { textContent: (r.at || "").slice(0, 10) }));
+    $("roomlist").append(a);
+  }
+}
+
+$("make").addEventListener("click", async () => {
+  $("make").disabled = true;
+  try {
+    const r = await fetch("/api/room", { method: "POST" }).then((x) => x.json());
+    const k = await newKey();
+    location.href = "/r/" + r.room + "#" + k.text;
+  } catch { $("make").disabled = false; }
+});
+
+/* ---- going in ------------------------------------------------------------ */
+for (const b of $("pick").querySelectorAll("button")) {
+  b.addEventListener("click", () => {
+    for (const o of $("pick").querySelectorAll("button")) o.classList.toggle("on", o === b);
+  });
+}
+$("enter").addEventListener("click", () => {
+  const name = $("name").value.trim().slice(0, 40);
+  if (!name) return $("name").focus();
+  const lang = $("pick").querySelector("button.on").dataset.lang;
+  /* WHICH CHAIR, worked out from the room rather than from this device. An
+     empty room means you are the first one in and you take a; a room with
+     anything in it means somebody already has a and you take the other side.
+     It is used only to lay the page out left and right before anything has
+     been decrypted, which is why it is a letter and not a name — it is the one
+     thing about a person this server holds. */
+  const side = (saved[ROOM] && saved[ROOM].side) || SIDE;
+  saved[ROOM] = { key: KEYTEXT, name, lang, side, at: new Date().toISOString() };
+  mem.set("rooms", saved);
+  ME = name; LANG = lang; SIDE = side;
+  $("join").hidden = true;
+  begin();
+});
+
+/* ---- the conversation ---------------------------------------------------- */
+const other = () => (LANG === "en" ? "zh" : "en");
+
+function line(l, said) {
+  const mine = l.side === SIDE;
+  const talk = $("talk");
+  if (!said) {
+    const p = document.createElement("p");
+    p.className = "said";
+    p.textContent = "A line this link cannot open.";
+    talk.append(p);
+    return;
+  }
+  const div = document.createElement("div");
+  div.className = "msg " + (mine ? "me" : "them");
+  /* THE READER'S LANGUAGE, ALWAYS. Each line carries both versions, sealed
+     together, so nothing is fetched or decided at read time — and a line
+     written before translation was switched on still shows what was typed. */
+  const show = said.tr && said.tr[LANG] ? said.tr[LANG] : said.text;
+  div.textContent = show;
+  talk.append(div);
+
+  const tools = document.createElement("div");
+  tools.className = "tools " + (mine ? "me" : "them");
+  if (said.said) {
+    const s = document.createElement("span");
+    s.className = "spoke"; s.textContent = "SPOKEN";
+    tools.append(s);
+  }
+  if (said.text && show !== said.text) {
+    const b = document.createElement("button");
+    b.className = "tool";
+    b.textContent = mine ? "what they read · show" : (said.name || "they") + " wrote · show";
+    b.addEventListener("click", () => {
+      if (b.dataset.on) { b.nextSibling?.remove?.(); }
+      const q = document.createElement("div");
+      q.className = "orig " + (mine ? "me" : "");
+      const cap = document.createElement("small");
+      cap.textContent = mine ? "THEY READ" : "AS WRITTEN";
+      q.append(cap, document.createTextNode(mine ? (said.tr?.[other()] || "") : said.text));
+      tools.after(q);
+      b.textContent = "hide";
+      b.onclick = () => { q.remove(); line.rebuild?.(); b.textContent = "show"; b.onclick = null; };
+    });
+    tools.append(b);
+  }
+  if (window.speechSynthesis) {
+    const v = document.createElement("button");
+    v.className = "tool"; v.textContent = "listen";
+    v.addEventListener("click", () => {
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(show);
+        u.lang = LANG === "zh" ? "zh-CN" : "en-US";
+        speechSynthesis.speak(u);
+      } catch { /* no voice on this browser */ }
+    });
+    tools.append(v);
+  }
+  talk.append(tools);
+}
+
+function draw(lines) {
+  const talk = $("talk");
+  const stick = talk.scrollTop + talk.clientHeight > talk.scrollHeight - 80;
+  for (const l of lines) {
+    if (seen.has(l.id)) continue;
+    seen.add(l.id);
+    open(KEY, l.box).then((said) => {
+      line(l, said);
+      if (stick) talk.scrollTop = talk.scrollHeight;
+    });
+  }
+}
+
+async function poll() {
+  try {
+    const r = await fetch("/api/since?room=" + ROOM + (LAST ? "&after=" + encodeURIComponent(LAST) : ""),
+      { cache: "no-store" });
+    if (r.status === 404) return;
+    const d = await r.json();
+    if (d.lines && d.lines.length) {
+      LAST = d.lines[d.lines.length - 1].at;
+      draw(d.lines);
+    }
+  } catch { /* a tunnel, a lift, a train. The next poll is in two seconds. */ }
+}
+
+async function say(text, spoken) {
+  const body = { name: ME, lang: LANG, text, said: Boolean(spoken), tr: {} };
+  body.tr[LANG] = text;
+  /* TRANSLATED ON THE WAY OUT, not on the way in. The person waiting should
+     not also be waiting for a round trip, and a line sealed with both versions
+     costs the reader nothing and works offline afterwards. If translation is
+     off or refuses, the line still goes — a conversation that stops because a
+     model is busy is worse than one in one language. */
+  if (CAN_TRANSLATE) {
+    try {
+      const r = await fetch("/api/translate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, to: other(), room: ROOM }),
+      });
+      const d = await r.json();
+      if (d && d.text) body.tr[other()] = d.text;
+    } catch { /* send it as written */ }
+  }
+  const box = await seal(KEY, body);
+  const id = [...crypto.getRandomValues(new Uint8Array(6))]
+    .map((b) => b.toString(36).padStart(2, "0")).join("").slice(0, 12);
+  await fetch("/api/say", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ room: ROOM, id, side: SIDE, box, said: Boolean(spoken) }),
+  });
+  poll();
+}
+
+/* Wrapped, not passed. addEventListener hands the click event to its listener
+   as the first argument, so `send` got a PointerEvent where it expects a
+   boolean — and an event is truthy, so every typed line was labelled SPOKEN. */
+$("send").addEventListener("click", () => send(false));
+$("text").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(false); }
+});
+async function send(spoken) {
+  const t = $("text").value.trim();
+  if (!t) return;
+  $("text").value = "";
+  $("send").disabled = true;
+  try { await say(t, spoken); } finally { $("send").disabled = false; }
+}
+
+/* ---- speaking ------------------------------------------------------------ */
+const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (Rec) {
+  $("mic").hidden = false;
+  let rec = null;
+  $("mic").addEventListener("click", () => {
+    if (rec) { rec.stop(); return; }
+    rec = new Rec();
+    rec.lang = LANG === "zh" ? "zh-CN" : "en-US";
+    rec.interimResults = true;
+    $("mic").classList.add("on");
+    let got = "";
+    rec.onresult = (e) => {
+      got = [...e.results].map((r) => r[0].transcript).join("");
+      $("text").value = got;
+    };
+    /* SENT ON STOP, not on a second press of send. Somebody who has just
+       spoken a sentence has finished saying the thing; asking them to then
+       find a button is the step that makes people go back to typing. */
+    rec.onend = () => {
+      rec = null;
+      $("mic").classList.remove("on");
+      if (got.trim()) send(true);
+    };
+    rec.onerror = () => { rec = null; $("mic").classList.remove("on"); };
+    try { rec.start(); } catch { rec = null; $("mic").classList.remove("on"); }
+  });
+}
+
+/* ---- the link ------------------------------------------------------------ */
+$("linkbtn").addEventListener("click", () => {
+  $("linktext").textContent = location.origin + "/r/" + ROOM + "#" + KEYTEXT;
+  $("linksheet").hidden = false;
+});
+$("linkshut").addEventListener("click", () => { $("linksheet").hidden = true; });
+$("copy").addEventListener("click", async () => {
+  const t = $("linktext").textContent;
+  try { await navigator.clipboard.writeText(t); $("copy").textContent = "Copied"; }
+  catch {
+    /* WeChat's browser and old Safari have no clipboard API. Selecting it is
+       not as good and it is not nothing. */
+    const r = document.createRange();
+    r.selectNodeContents($("linktext"));
+    getSelection().removeAllRanges(); getSelection().addRange(r);
+    $("copy").textContent = "Copy it";
+  }
+  setTimeout(() => { $("copy").textContent = "Copy"; }, 1600);
+});
+
+$("langbtn").addEventListener("click", () => {
+  LANG = LANG === "en" ? "zh" : "en";
+  saved[ROOM].lang = LANG; mem.set("rooms", saved);
+  $("langbtn").textContent = LANG === "en" ? "EN" : "中";
+  $("talk").replaceChildren(); seen.clear(); LAST = "";
+  poll();
+});
+
+/* ---- start --------------------------------------------------------------- */
+async function begin() {
+  $("room").hidden = false;
+  $("langbtn").textContent = LANG === "en" ? "EN" : "中";
+  $("title").textContent = "Ferry";
+  const d = await fetch("/api/hello").then((r) => r.json()).catch(() => ({}));
+  CAN_TRANSLATE = Boolean(d && d.translate);
+  $("sub").textContent = CAN_TRANSLATE
+    ? "Encrypted here. Translated as it goes."
+    : "Encrypted here. Translation is off on this box.";
+  /* THE ADDRESS LOSES THE KEY once it is remembered, so a screenshot of a
+     conversation does not hand the room away with it. The link button still
+     has it, because sending the room on purpose is a different act. */
+  if (location.hash) history.replaceState(null, "", "/r/" + ROOM);
+  await poll();
+  setInterval(poll, 2000);
+}
+
+if (!ROOM || !KEYTEXT) {
+  drawStart();
+} else {
+  KEY = await keyFrom(KEYTEXT);
+  const mine = saved[ROOM];
+  if (mine && mine.name) {
+    ME = mine.name; LANG = mine.lang || "en"; SIDE = mine.side || "a";
+    begin();
+  } else {
+    /* Asked before the sheet opens, so the chair is already decided when they
+       press Go in. A room that cannot be reached is treated as empty: the
+       worst case is two people on the same side, which looks wrong and loses
+       nothing. */
+    try {
+      const d = await fetch("/api/since?room=" + ROOM, { cache: "no-store" })
+        .then((r) => r.json());
+      const first = d && d.lines && d.lines[0];
+      SIDE = first ? (first.side === "a" ? "b" : "a") : "a";
+    } catch { SIDE = "a"; }
+    $("join").hidden = false;
+    $("name").focus();
+  }
+}
+</script>
+</body>
+</html>

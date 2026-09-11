@@ -1,0 +1,9 @@
+{
+  "name": "ferry",
+  "private": true,
+  "type": "module",
+  "main": "server.mjs",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.124.0"
+  }
+}
