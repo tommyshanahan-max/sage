@@ -90,9 +90,15 @@
     padding:.4rem 0 .6rem;text-align:center}
   .big{font-family:var(--serif);font-weight:400;font-size:clamp(2.1rem,9vw,3.4rem);
     line-height:1.05;margin:0;letter-spacing:-.01em}
-  .say{margin:0;max-width:34rem;font-size:clamp(1.02rem,4.2vw,1.25rem);
-    line-height:1.5;color:var(--ink-2)}
-  .say b{color:var(--ink);font-weight:650;white-space:nowrap}
+  .say{margin:0;max-width:36rem;font-size:clamp(1.02rem,4.2vw,1.22rem);
+    line-height:1.9;color:var(--ink-2)}
+  .say i{font-style:normal;font-weight:700;font-size:.95em;
+    padding:.22rem .85rem;border-radius:99px;white-space:nowrap;
+    background:var(--accent);color:var(--accent-ink)}
+  /* An empty one on the general page: the same shape with nothing written in
+     it, which is the question the whole board asks. Outlined rather than
+     filled, so a blank does not shout as loudly as an answer. */
+  .say i.blank{background:none;border:2px dashed var(--accent);color:transparent}
 
   /* The two cards, before and after. Stacked on a phone: side by side at that
      width is two things too small to read rather than one comparison. */
@@ -430,6 +436,11 @@
   <div class="wrap">
     <div class="one">
       <h2 class="big" id="landbig"></h2>
+      <!-- THE SENTENCE AS PILLS, not as bold text. Same slot, same words. The
+           pills are the one thing on this page that looks like nothing else on
+           the internet, and "I am a ___ looking for a ___" set in bold grey is
+           a line somebody reads past. This is the mechanic; it should look
+           like a control, because it is one. -->
       <p class="say" id="landsay"></p>
 
       <div class="twocards">
@@ -613,10 +624,7 @@ function paint() {
   /* The blank sentence is the bold half and has to stay one unbroken run, so
      it is two nodes rather than a string with markup in it — this page never
      puts translated text through innerHTML. */
-  $("landsay").replaceChildren(
-    document.createTextNode(T("land.say1") + " "),
-    Object.assign(document.createElement("b"), { textContent: T("land.say2") }),
-    document.createTextNode(" " + T("land.say3")));
+  sayLine("", "");
   $("mininame").textContent = T("land.miniName");
   $("miniwho").textContent = T("land.miniWho");
   $("minisay1").textContent = T("land.does1");
@@ -646,6 +654,29 @@ function paint() {
    are unused now. Left in the strings rather than deleted — they are written
    and translated, and the day a room wants a line back it should not have to
    be written twice. */
+/* THE SENTENCE, WITH OR WITHOUT ITS BLANKS FILLED IN.
+ *
+ * One function because there are two callers — the general page, which leaves
+ * the blanks, and a room door, which knows the pair — and a sentence built in
+ * two places is a sentence that will one day disagree with itself. Nothing
+ * goes through innerHTML: the words are translated and the pills are elements.
+ */
+function sayLine(me, want) {
+  /* Blank is decided by what the CALLER passed, not by what ends up in the
+     element: an empty pill still needs something inside it to have a width,
+     and testing the filled-in text meant every blank came out solid. */
+  const pill = (word) => Object.assign(document.createElement("i"), {
+    textContent: word || "\u2003\u2003",
+    className: word ? "" : "blank",
+  });
+  $("landsay").replaceChildren(
+    document.createTextNode(T("land.say1") + " " + T("land.does1") + " "),
+    pill(me),
+    document.createTextNode(" " + T("land.does3") + " "),
+    pill(want),
+    document.createTextNode(" " + T("land.say3")));
+}
+
 function paintRoom() {
   const key = roomFromPath();
   if (!key) return;
@@ -670,14 +701,7 @@ function paintRoom() {
    */
   const me = T("door." + key + ".does2");
   const want = T("door." + key + ".does4");
-  if (me !== "door." + key + ".does2" && want !== "door." + key + ".does4") {
-    $("landsay").replaceChildren(
-      document.createTextNode(T("land.say1") + " "),
-      Object.assign(document.createElement("b"), {
-        textContent: T("land.does1") + " " + me + " " + T("land.does3") + " " + want,
-      }),
-      document.createTextNode(" " + T("land.say3")));
-  }
+  if (me !== "door." + key + ".does2" && want !== "door." + key + ".does4") sayLine(me, want);
 }
 
 setLang(pickLang());
