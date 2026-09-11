@@ -486,7 +486,14 @@
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="t-share"  aria-selected="true">Share</button>
-      <button class="tab" role="tab" id="t-feed"   aria-selected="false">Feed</button>
+      <!-- Feed retired, 2026-09-09. Tom: there is no social now. The public
+           feed came out of the app itself over the two days before this, so a
+           tab here that lists posts nobody can reach is a window onto a room
+           that has been closed. Hidden rather than torn out, the same as
+           People and Content above — the reader is written and correct, and
+           unhiding it is cheaper than rebuilding it if the feed ever comes
+           back. -->
+      <button class="tab" role="tab" id="t-feed"   aria-selected="false" hidden>Feed</button>
       <!-- People retired: the audience is the app's users, and a list of
            names kept on this box was never one of them. The tab, its view and
            its editor stay in the file rather than being torn out, because the
@@ -516,6 +523,20 @@
        without numbers access — an empty band would be worse than none. -->
   <div class="counts" id="counts" hidden></div>
 
+  <!-- THE WRITTEN-DOWN HALF, in the panel rather than in a folder.
+       Framed from Laonei's own host rather than proxied like the numbers
+       beside it: that proxy points at the analytics container on this box,
+       which knows nothing about these documents, and a second proxy would
+       mean this panel holding another service's admin key. The documents'
+       own host asks for its key once and remembers it, so the secret stays
+       on the side that owns it and nothing here has to keep one. -->
+  <div class="numbersview" id="docsview" hidden>
+    <div class="numbershead">
+      <a href="https://liuxuesheng.help/docs" target="_blank" rel="noopener">Open in a tab ↗</a>
+    </div>
+    <iframe id="docsframe" title="Laonei documents"></iframe>
+  </div>
+
   <!-- The counter's own dashboard, underneath the figures it summarises. -->
   <div class="numbersview" id="numbersview" hidden>
     <!-- A panel is a good place to read the figures and a bad place to work in
@@ -525,6 +546,21 @@
       <a id="numbersopen" target="_blank" rel="noopener">Open in a tab ↗</a>
     </div>
     <iframe id="numbersframe" title="Numbers"></iframe>
+  </div>
+
+  <!-- THE APP'S OWN CHECK-UPS, directly under the counter's figures.
+       Tom asked for the server's check-up reports on the Numbers screen. They
+       live on Laonei's own host at /numbers#health and are framed from there,
+       the same as the documents: that host asks for its key once and remembers
+       it, so the secret stays on the side that owns it and this panel keeps
+       none. A box of its own at full height rather than a second frame inside
+       the counter's, which would have halved both. Opens and closes with the
+       Numbers button. -->
+  <div class="numbersview" id="healthview" hidden style="margin-top:.8rem">
+    <div class="numbershead">
+      <a href="https://liuxuesheng.help/numbers#health" target="_blank" rel="noopener">Check-ups and speed · open in a tab ↗</a>
+    </div>
+    <iframe id="healthframe" title="Laonei check-ups and speed"></iframe>
   </div>
 
   <p class="err" id="err" hidden></p>
@@ -2287,11 +2323,41 @@ async function loadCounts() {
     b.setAttribute("aria-controls", "numbersview");
     b.addEventListener("click", () => showNumbers($("numbersview").hidden));
     box.append(b);
+
+    // The written-down half — the pitch, the figures behind it, the privacy
+    // decisions — which lived in a folder on one laptop. Opens underneath, the
+    // same as the numbers, because Tom asked for them in the panel rather than
+    // in a tab; the header inside it still offers a tab for actual reading.
+    const docs = el("button", "more", "Documents");
+    docs.type = "button";
+    docs.setAttribute("aria-expanded", "false");
+    docs.setAttribute("aria-controls", "docsview");
+    docs.addEventListener("click", () => showDocs($("docsview").hidden));
+    box.append(docs);
   }
   box.hidden = false;
 }
 
-let numbersLink = "", numbersLoaded = false;
+let docsLoaded = false;
+
+function showDocs(on) {
+  const view = $("docsview");
+  view.hidden = !on;
+  const b = [...$("counts").querySelectorAll(".more")].find((x) => /Documents|Hide documents/.test(x.textContent));
+  if (b) {
+    b.setAttribute("aria-expanded", String(Boolean(on)));
+    b.textContent = on ? "Hide documents" : "Documents";
+  }
+  // Loaded on the first open and left alone after, the same reasoning as the
+  // dashboard below: re-pointing it on every collapse would put this page's
+  // fidgeting on somebody else's request log.
+  if (on && !docsLoaded) {
+    $("docsframe").src = "https://liuxuesheng.help/docs";
+    docsLoaded = true;
+  }
+}
+
+let numbersLink = "", numbersLoaded = false, healthLoaded = false;
 
 function showNumbers(on) {
   const view = $("numbersview");
@@ -2307,6 +2373,16 @@ function showNumbers(on) {
   if (on && !numbersLoaded && numbersLink) {
     $("numbersframe").src = numbersLink;
     numbersLoaded = true;
+  }
+  // The app's check-ups open and close with the numbers, loaded on the first
+  // open like everything else here.
+  const health = $("healthview");
+  if (health) {
+    health.hidden = !on;
+    if (on && !healthLoaded) {
+      $("healthframe").src = "https://liuxuesheng.help/numbers#health";
+      healthLoaded = true;
+    }
   }
 }
 
