@@ -63,18 +63,28 @@
    * pair, in the pills it wears inside. It is not the working matcher that
    * used to be here: no controls, nothing to operate, two lines tall. The
    * form stays above the fold, which is the thing that rule was protecting. */
+  /* THE PILLS ARE THE PICTURE. Steps two and three each have a screenshot
+     under the label and step one had a line of text with two tinted words in
+     it — so the first step, which is the one thing a reader has to understand
+     before the other two mean anything, was the quietest thing in the row.
+     It read as a sentence that happened to have some colour in it.
+     So the two blanks are filled in loudly and the words that join them get
+     out of the way: "I am" and "looking for" are small, muted and lowercase
+     furniture, and what a person actually types is a solid accent pill at
+     nearly twice their size. Nobody has to be told which part is the answer. */
   .does{margin:.9rem 0 0;max-width:32rem}
-  .doesline{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem;
-    font-size:1.02rem;line-height:1.9;color:var(--ink)}
-  .doesline b{font-weight:400;color:var(--dim, var(--muted))}
-  .doesline i{font-style:normal;font-weight:650;font-size:.95rem;
-    padding:.18rem .7rem;border-radius:99px;background:var(--accent-soft);
-    color:var(--accent);white-space:nowrap}
-  .doeswhy{margin:.55rem 0 0;font-size:.92rem;line-height:1.6;
-    color:var(--muted)}
+  .doesline{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem;
+    font-size:.92rem;line-height:1.75;color:var(--ink)}
+  .doesline b{font-weight:400;font-size:.92rem;color:var(--muted)}
+  .doesline i{font-style:normal;font-weight:650;font-size:1.35rem;
+    letter-spacing:-.01em;padding:.34rem 1rem;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);white-space:nowrap;
+    box-shadow:0 4px 14px rgba(43,85,222,.28)}
+  .doeswhy{margin:.7rem 0 0;font-size:1.02rem;line-height:1.55;
+    color:var(--ink-2)}
   @media (max-width:380px){
-    .doesline{font-size:.95rem;gap:.3rem}
-    .doesline i{font-size:.88rem;padding:.15rem .58rem}
+    .doesline{gap:.35rem}
+    .doesline i{font-size:1.18rem;padding:.3rem .8rem}
   }
   /* And it starts where the question starts. The card centres itself, which
      read as one object among several while the matcher sat above it; now
@@ -173,7 +183,14 @@
   body.inside #navjoin,body.inside #herocta{display:none}
   body.inside .top #navopen{display:inline-block;background:var(--accent);
     color:var(--accent-ink);border:0;margin-left:auto}
-  .frames{padding:1.4rem 0 .6rem}
+  /* ITS OWN SURFACE, so the page has two parts rather than one long scroll.
+     On a phone the hero, the steps and the form ran together on one flat grey
+     and a reader could not tell where the pitch stopped and the explanation
+     started — everything above is what this is, everything in here is how it
+     goes. A shade and two hairlines say that without a word, and the band runs
+     edge to edge because a phone has no margins to spare. */
+  .frames{padding:2rem 0 2.2rem;background:var(--raise);
+    border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
   /* Stacked on a phone so the arrow turns down and stays under the pair —
      wrapped as a row it landed beside them, pointing at the gutter. */
   .story{display:flex;flex-direction:column;align-items:center;
@@ -214,8 +231,8 @@
   /* The two steps named out loud. The picture argued it on its own and people
      still asked what they were looking at — two words each is cheaper than
      another sentence of caption. */
-  .step{display:block;margin:0 0 .55rem;font-size:.7rem;font-weight:600;
-    letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  .step{display:block;margin:0 0 .7rem;font-size:.8rem;font-weight:700;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
   :root[data-lang="zh"] .step{text-transform:none;letter-spacing:.08em;font-size:.78rem}
   /* The sentence, off the hero's left margin and into a column of its own.
      Centred like the two beside it, and the pills keep their own wrapping. */
@@ -223,16 +240,21 @@
   .sayfig .doesline{margin:0}
   .payoff{padding-top:.2rem}
   .payoff .shot.chat{width:min(92vw,360px)}
-  /* Centred again from the width where the three steps sit side by side: there
-     a caption belongs to the thing above it rather than to the page. */
-  .story figcaption{margin:.7rem .1rem 0;font-size:.85rem;line-height:1.5;
-    color:var(--muted);max-width:34ch;text-align:left}
+  /* READ, NOT SKIMMED PAST. These three lines are the only writing in the
+     section and they were set as captions — small, grey, the size a photo
+     credit gets. Under step one's pills, which are now loud, they vanished
+     altogether. They are the argument, so they are set as sentences: body
+     size, ink rather than grey.
+     Centred again from the width where the three steps sit side by side —
+     there a caption belongs to the thing above it rather than to the page. */
+  .story figcaption{margin:.8rem .1rem 0;font-size:1.02rem;line-height:1.55;
+    color:var(--ink-2);max-width:34ch;text-align:left}
   @media (min-width:52rem){
     .story{flex-direction:row;gap:1.8rem;align-items:flex-start}
     .story figure{align-items:center;width:auto}
     .step{align-self:auto}
     .sayfig .does{justify-content:center}
-    .story figcaption{text-align:center;max-width:30ch;font-size:.8rem}
+    .story figcaption{text-align:center;max-width:30ch;font-size:.92rem}
     .arrow{transform:none;margin-top:7rem}
     .lean .shot{width:142px}
     .payoff .shot.chat{width:288px}
