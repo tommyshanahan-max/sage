@@ -200,6 +200,10 @@
   .step{display:block;margin:0 0 .55rem;font-size:.7rem;font-weight:600;
     letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
   :root[data-lang="zh"] .step{text-transform:none;letter-spacing:.08em;font-size:.78rem}
+  /* The sentence, off the hero's left margin and into a column of its own.
+     Centred like the two beside it, and the pills keep their own wrapping. */
+  .sayfig .does{display:flex;justify-content:center}
+  .sayfig .doesline{margin:0}
   .payoff{padding-top:.2rem}
   .payoff .shot.chat{width:min(84vw,330px)}
   .story figcaption{margin:.7rem .1rem 0;font-size:.8rem;line-height:1.45;
@@ -207,9 +211,13 @@
   @media (min-width:52rem){
     .story{flex-direction:row;gap:1.8rem;align-items:flex-start}
     .arrow{transform:none;margin-top:7rem}
-    .lean .shot{width:172px}
-    .payoff .shot.chat{width:330px}
+    .lean .shot{width:142px}
+    .payoff .shot.chat{width:288px}
     .payoff{padding-top:0}
+    /* All three step labels sit on one line. The sentence has no phone
+       under it, so its column got the breathing room instead. */
+    .sayfig{width:250px}
+    .sayfig .does{padding:2.2rem 0 1.4rem}
   }
 </style>
 </head>
@@ -269,12 +277,6 @@
         <a class="btn ghost" id="ctaenter" href="/enter"></a>
       </p>
     </div>
-    <div class="does">
-      <p class="doesline">
-        <b id="does1"></b><i id="does2"></i><b id="does3"></b><i id="does4"></i>
-      </p>
-      <p class="doeswhy" id="doeswhy"></p>
-    </div>
   </div>
 </div>
 
@@ -289,8 +291,23 @@
   <div class="wrap">
     <div class="eyebrow"><span id="framesEyebrow"></span><i></i></div>
     <div class="story">
-      <figure>
+      <!-- STEP ONE IS THE SENTENCE, and it used to sit in the hero above this
+           section with no number on it — a widget a stranger could play with
+           and no sign that it was the first move of anything. Down here it is
+           the first of three, and the hero ends on the button instead of on a
+           demonstration, which is the right thing for the hero to end on. -->
+      <figure class="sayfig">
         <span class="step" id="step1"></span>
+        <div class="does">
+          <p class="doesline">
+            <b id="does1"></b><i id="does2"></i><b id="does3"></b><i id="does4"></i>
+          </p>
+        </div>
+        <figcaption id="doeswhy"></figcaption>
+      </figure>
+      <div class="arrow" aria-hidden="true">&rarr;</div>
+      <figure>
+        <span class="step" id="step2"></span>
         <div class="lean">
           <img class="shot" src="/frame-1.png" alt="" width="585" height="1170" loading="lazy">
           <img class="shot" src="/frame-2.png" alt="" width="585" height="1170" loading="lazy">
@@ -306,7 +323,7 @@
       </figure>
       <div class="arrow" aria-hidden="true">&rarr;</div>
       <figure class="payoff">
-        <span class="step" id="step2"></span>
+        <span class="step" id="step3"></span>
         <!-- CROPPED TO THE CONVERSATION. The whole phone was the payoff frame
              for a night and it was the weakest of the three: a screen of
              explanatory paragraph, a nav bar, and the two lines that matter
@@ -451,6 +468,7 @@ function paint() {
   $("frame2").textContent = T("land.frame2");
   $("step1").textContent = T("land.step1");
   $("step2").textContent = T("land.step2");
+  $("step3").textContent = T("land.step3");
   $("doorsEyebrow").textContent = T("land.doors");
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");

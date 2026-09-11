@@ -576,8 +576,9 @@ export const STRINGS = {
      needed a caption it could not carry — so it gets a label instead.
      "Connect" and not "Message": the app's word for the press is Connect, and
      a landing page that teaches a different word teaches the wrong one. */
-  "land.step1":        ["First match", "第一次匹配"],
-  "land.step2":        ["Connect", "联系上"],
+  "land.step1":        ["Step 1 · Say it once", "第一步 · 说一句话"],
+  "land.step2":        ["Step 2 · You match", "第二步 · 匹配上"],
+  "land.step3":        ["Step 3 · Connect and do business", "第三步 · 联系上，开始谈"],
   /* WHAT IT DOES, ON THE FRONT PAGE, SHOWN RATHER THAN DESCRIBED.
      The headline names who you get and nothing said how, so a stranger off a
      forwarded link had to guess — and the guesses are directory, agency, or
