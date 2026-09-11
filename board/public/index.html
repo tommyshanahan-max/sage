@@ -6065,11 +6065,25 @@ function drawMine() {
   const listed = Boolean(ME && ME.looking);
   const words = el("span");
   if (!face) {
+    box.dataset.go = "photo";
     words.append(el("b", null, T("brw.mine")), el("span", null, T("brw.mineWhy")));
   } else if (ME.photoPending) {
+    box.dataset.go = "held";
     words.append(el("b", null, T("brw.mineHeld")), el("span", null, T("brw.mineHeldWhy")));
   } else if (!listed) {
+    box.dataset.go = "switch";
     words.append(el("b", null, T("brw.mineOff")), el("span", null, T("brw.mineOffWhy")));
+  } else if (!(ME && ME.mail)) {
+    /* A FOURTH ASK, AND THE LAST ONE OF THEM CHRONOLOGICALLY.
+     *
+     * The three above are about being seen; this one is about not losing the
+     * page once you are. It comes after them on purpose — nothing is worth
+     * keeping until there is something to keep — and it is here rather than
+     * only behind the bell because a row in a tray behind an icon is a row
+     * nobody finds, which is what happened. It goes the moment an address is
+     * saved, like the other three. */
+    box.dataset.go = "mail";
+    words.append(el("b", null, T("brw.mineBack")), el("span", null, T("brw.mineBackWhy")));
   } else {
     box.hidden = true;
     return;
@@ -6082,9 +6096,18 @@ function drawMine() {
 $("mine").addEventListener("click", () => {
   /* The row is only drawn when there is something to do, so every branch here
      goes to the thing that does it. Somebody already in Browse never sees it
-     — their own page is the Profile tab. */
-  if (!(ME && ME.photo)) { $("mephoto").click(); return; }
+     — their own page is the Profile tab.
+     Read off the row rather than worked out again: the two would drift, and a
+     row that asks for one thing and opens another is worse than no row. */
+  if ($("mine").dataset.go === "photo") { $("mephoto").click(); return; }
   openMe();
+  if ($("mine").dataset.go === "mail") {
+    // Straight to the question. It is the last thing on a long form.
+    setTimeout(() => {
+      $("mailbox")?.scrollIntoView({ block: "center", behavior: "smooth" });
+      $("mailin")?.focus({ preventScroll: true });
+    }, 120);
+  }
 });
 
 function personCard(q, live) {

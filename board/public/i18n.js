@@ -2947,6 +2947,14 @@ export const STRINGS = {
     "Your page is made, but it is not in the list of people. Tap to turn Show me in Browse on.",
     "你的主页已经做好了，但还没出现在学生名单里。点一下打开「在名单里显示我」。",
   ],
+  /* The fourth state of that row — see drawMine. Worded as what is lost
+     rather than what is asked for: "add an email address" is a chore, and
+     "this page is gone" is the reason anybody would. */
+  "brw.mineBack":      ["Add a way back in", "留个回来的方式"],
+  "brw.mineBackWhy": [
+    "Change phone and this page is gone. An address brings it back.",
+    "换了手机，这个主页就没了。留个邮箱，随时找得回来。",
+  ],
   /* "You are in Browse" was here, on the row above the deck, and is gone: a
      person whose face is up and whose switch is on has nothing to do, and a
      row saying so on every visit is the app talking about itself. The fact is
