@@ -519,7 +519,22 @@ export const STRINGS = {
      nobody there. 找人、找钱、找项目 — find the person, find the money, find
      the project — is the same promise in the words that are used. */
   "land.eyebrow":      ["Shark Tank × LinkedIn × Tinder", "找人 · 找钱 · 找项目"],
-  "land.head":         ["The room you keep asking people for", "你一直在找的那个圈子"],
+  /* IT WAS "The room you keep asking people for", which is a line out of a
+     deck: the slide before it said "you keep asking people who they know", and
+     without that setup it is a riddle — what room, asking who, for what. A
+     headline over a form has one job, which is to say what the place is. */
+  "land.head":         ["A private room for people doing business in China",
+                        "一个做生意的人的私密圈子，在中国"],
+  /* WHAT IT COSTS TO BE IN IT, said where somebody decides whether to bother.
+     It was on the form further down and in the door's own words, both of which
+     come after that decision. A private room is the product; saying so late
+     makes it read as a hurdle rather than the point.
+     "Somebody already inside decides" and not "we decide": the second is a
+     company with a policy, the first is a club — and the first is what
+     actually happens, because a member vouching is how anybody gets in. */
+  "land.only": [
+    "Invite only. Somebody already inside decides who comes in.",
+    "只能被邀请进来。放谁进来，由已经在里面的人决定。"],
   /* The frames. Said as what the screen IS, not as a caption about it. */
   "land.frames":       ["What it looks like", "长这个样子"],
   "land.frameBrowse": [

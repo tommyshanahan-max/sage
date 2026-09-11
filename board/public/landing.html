@@ -136,6 +136,11 @@
   /* THE FRAMES. A row that scrolls sideways on a phone rather than three
      pictures stacked into three screens of scrolling: they are one idea seen
      three ways, and a row says that where a stack says "keep going". */
+  /* Under the headline and above the demonstration: the price of admission,
+     before anybody is shown what they would be admitted to. */
+  .only{margin:.8rem 0 0;font-size:.95rem;line-height:1.55;color:var(--ink-2);
+    max-width:32ch}
+  .only b{color:var(--ink);font-weight:600}
   .eyeline{margin:0 0 .55rem;font-size:.76rem;font-weight:600;letter-spacing:.13em;
     text-transform:uppercase;color:var(--accent)}
   :root[data-lang="zh"] .eyeline{text-transform:none;letter-spacing:.06em;font-size:.82rem}
@@ -188,6 +193,12 @@
            comparison does the explaining; the line under it does the work. -->
       <p class="eyeline" id="eyeline"></p>
       <q id="asking"></q>
+      <!-- THE OTHER HALF OF WHAT THIS IS. The comparison above says what it
+           does; this says what it costs to be in it, which is the thing that
+           makes the rest worth reading. It was only ever said on the form
+           further down and in the door's own words — by which point somebody
+           has already decided whether to bother. -->
+      <p class="only" id="onlyline"></p>
     </div>
     <div class="does">
       <p class="doesline">
@@ -343,6 +354,7 @@ function paint() {
   $("navopen").textContent = T("land.enter");
   $("eyeline").textContent = T("land.eyebrow");
   $("asking").textContent = T("land.head");
+  $("onlyline").textContent = T("land.only");
   $("does1").textContent = T("land.does1");
   $("does2").textContent = T("land.does2");
   $("does3").textContent = T("land.does3");
