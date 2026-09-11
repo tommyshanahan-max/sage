@@ -86,8 +86,19 @@ const b = await chromium.launch({
 const ctx = await b.newContext({ viewport: { width: 1080, height: 1080 }, deviceScaleFactor: 1 });
 const p = await ctx.newPage();
 
+/* EVERY FIFTH ONE IS A CLIP.
+ *
+ * Not every one: a feed of nothing but video is a feed nobody scrolls, and a
+ * clip costs a minute of somebody else's GPU where a still costs nothing. One
+ * in five is often enough to be a pattern and rare enough to be a change of
+ * pace — and because the clip opens on the still it would have replaced, the
+ * two read as one account rather than two.
+ *
+ * The still is made either way. It is the first frame. */
+let n = 0;
 for (const one of pairs) {
   const name = `${slug(one.me)}-${slug(one.want)}`;
+  const moving = (++n) % 5 === 0;
   await p.setContent(page(one), { waitUntil: "load" });
   await p.evaluate(() => document.fonts.ready);
   const shot = await p.screenshot({ path: path.join(OUT, name + ".png") });
@@ -114,7 +125,19 @@ Invite only. Link in bio.
 
 邀请制。主页链接。
 `, "utf8");
-  console.log("  " + name);
+  if (moving) {
+    /* WHAT THE CAMERA DOES, AND NOTHING ELSE. The frame already says the whole
+       thing; a prompt that describes a scene would replace it with a different
+       picture. So the instruction is a move, not a subject — the card stays
+       the card and the type stays legible, which is the only thing this clip
+       has to do. */
+    await writeFile(path.join(OUT, name + ".clip.json"), JSON.stringify({
+      prompt: "Hold on this exact dark card. A very slow push in, barely moving. "
+        + "The two green pills pulse once, gently, one after the other. "
+        + "Fine grain, no camera shake, no new objects, no text changes.",
+    }, null, 2) + "\n", "utf8");
+  }
+  console.log("  " + name + (moving ? "  · clip" : ""));
 }
 await b.close();
 console.log(`\n${pairs.length} posts in scripts/gram/out`);

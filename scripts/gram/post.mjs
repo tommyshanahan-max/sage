@@ -44,7 +44,14 @@ if (args.includes("--list") || !name) {
   process.exit(0);
 }
 
-const url = `${BASE}/${name}.png`;
+/* A CLIP IF ONE WAS MADE, OTHERWISE THE STILL. Meta wants a different field
+   and a different media_type for each, and posting a Reel as an image fails
+   with a message about the URL rather than about the type — so the choice is
+   made here from what exists on disk, not from a flag somebody has to
+   remember. See clip.mjs for which posts get one. */
+const mp4 = path.join(OUT, name + ".mp4");
+const moving = await readFile(mp4).then(() => true, () => false);
+const url = `${BASE}/${name}.${moving ? "mp4" : "png"}`;
 /* The English half only. The file carries both languages separated by a rule,
    because the Chinese half goes to a different network entirely — see the note
    in make.mjs about where Instagram does not reach. */
@@ -52,7 +59,7 @@ const caption = (await readFile(path.join(OUT, name + ".txt"), "utf8")).split("\
 
 if (dry || !USER || !TOKEN) {
   if (!dry) console.log("GRAM_USER_ID / GRAM_TOKEN are not set — printing instead.\n");
-  console.log("image    " + url);
+  console.log((moving ? "reel     " : "image    ") + url);
   console.log("caption  " + caption.split("\n")[0]);
   console.log("\n1. POST " + API + "/" + (USER || "<user id>") + "/media");
   console.log("2. POST " + API + "/" + (USER || "<user id>") + "/media_publish");
@@ -73,6 +80,22 @@ const call = async (pathname, body) => {
   return d;
 };
 
-const made = await call("media", { image_url: url, caption });
+const made = await call("media", moving
+  ? { media_type: "REELS", video_url: url, caption }
+  : { image_url: url, caption });
+
+/* A REEL IS NOT READY THE MOMENT THE CONTAINER EXISTS. Meta transcodes it,
+   and publishing before that finishes fails with an error about the container
+   rather than about the video. A still needs none of this. */
+if (moving) {
+  for (let i = 0; i < 30; i++) {
+    await new Promise((r) => setTimeout(r, 5000));
+    const r = await fetch(`${API}/${made.id}?fields=status_code&access_token=${TOKEN}`);
+    const d = await r.json().catch(() => ({}));
+    if (d.status_code === "FINISHED") break;
+    if (d.status_code === "ERROR") { console.error("Meta could not process the video"); process.exit(1); }
+    if (i === 29) { console.error("still transcoding after two and a half minutes"); process.exit(1); }
+  }
+}
 const live = await call("media_publish", { creation_id: made.id });
 console.log("posted  " + live.id + "  " + url);
