@@ -107,9 +107,27 @@ async function main() {
      opens with "Welcome, Christopher — Keith asked me to let you in" is a
      different arrival from a password box, and it costs nothing but a query
      string. Neither name is a credential; the code still is. */
+  /* THE DEADLINE TRAVELS IN THE LINK, AND THE CODE NEVER DOES.
+   *
+   * See the note in enter.html: a code in the address is a code that lets
+   * anybody in who was forwarded the link, so the six characters arrive
+   * separately and are typed on purpose. A deadline is the opposite — it opens
+   * nothing, it only draws a clock, and it is the one thing somebody holding
+   * this link actually wants to know without typing anything.
+   *
+   * NOT AUTHORITY. Edit it and you get a wrong clock; the row is what the door
+   * checks and it stops on time either way. The only person who could fool
+   * themselves with it is the person holding it. */
+  /* SECONDS SINCE 1970, NOT AN ISO STRING. This link is pasted into a WeChat
+     message by a person; `until=2026-09-14T16%3A14%3A04.562Z` on the end of it
+     is ten characters of meaning and thirty of noise, and a link that looks
+     like a tracking parameter is a link people hesitate over. `t=1789574044`
+     is the same instant. */
+  const t = hours ? Math.round((Date.now() + hours * 3600e3) / 1000) : 0;
   const q = [
     forWhom ? "for=" + encodeURIComponent(forWhom) : "",
     who ? "from=" + encodeURIComponent(who) : "",
+    t ? "t=" + t : "",
   ].filter(Boolean).join("&");
   const link = PUBLIC + "/enter" + (q ? "?" + q : "");
 

@@ -243,6 +243,15 @@
   .keybox textarea{width:100%;margin:.7rem 0 0;border:1px solid var(--line);
     border-radius:.6rem;background:var(--paper);color:var(--ink);
     padding:.6rem .7rem;font:inherit;font-size:.9rem;resize:vertical}
+  /* The clock. Tabular figures so the seconds do not shove the minutes about
+     once a second, which is the difference between a countdown and a twitch. */
+  .clock{display:flex;align-items:baseline;justify-content:center;gap:.5rem;
+    margin:0 0 .9rem;font-size:.85rem;color:var(--muted)}
+  .clock b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-variant-numeric:tabular-nums;font-size:1.05rem;font-weight:500;
+    color:var(--ink);letter-spacing:.02em}
+  .clock.low b{color:var(--accent)}
+  .clock.gone b{color:var(--bad,#B4232B)}
   .keybox input{width:100%;margin:.7rem 0 0;border:1px solid var(--line);
     border-radius:.6rem;background:var(--paper);color:var(--ink);
     padding:.6rem .7rem;font:inherit;font-size:.95rem}
@@ -330,6 +339,14 @@
     </div>
     <p class="lede" id="doorsay"></p>
     <p class="zh" id="doorzh"></p>
+
+    <!-- HOW LONG IT LASTS, TICKING. Above the boxes because it is the reason
+         to type them now rather than tomorrow. Hidden unless the link carried
+         a deadline — see the note on the clock. -->
+    <p class="clock" id="clock" hidden>
+      <span id="clocklab"></span>
+      <b id="clockleft"></b>
+    </p>
 
     <div class="codewrap">
       <div class="boxes" id="boxes" aria-hidden="true"></div>
@@ -465,6 +482,52 @@ try {
  */
 let TYPED = "";
 let ERR = false;
+
+/* ---------------------------------------------------------------------------
+ * THE CLOCK
+ *
+ * A code sent to one person now stops working on its own — see `until` in
+ * cleanInvite — and the person holding it has no way of knowing that unless
+ * whoever sent it remembered to say so in the message. So the deadline rides
+ * in the link and the door counts it down.
+ *
+ * THE DEADLINE TRAVELS AND THE CODE DOES NOT. That is not an oversight, it is
+ * the rule the note above this one is about: a code in an address is a code
+ * that lets in whoever was forwarded the link. A deadline opens nothing.
+ *
+ * IT IS NOT AUTHORITY EITHER. Edit the query and you get a wrong clock; the
+ * row is what the door checks, and it stops on time whatever this says. The
+ * only person who can fool themselves with it is the person holding it.
+ *
+ * Seconds, because a countdown that moves is a countdown somebody believes,
+ * and one that says "2 days" reads as a rounding of something nobody checked.
+ * ------------------------------------------------------------------------- */
+const UNTIL = (() => {
+  // Seconds since 1970 — see the note in invite.mjs on why not an ISO string.
+  const n = Number(new URLSearchParams(location.search).get("t"));
+  return Number.isFinite(n) && n > 0 ? n * 1000 : 0;
+})();
+
+function tick() {
+  if (!UNTIL) return;
+  const box = $("clock");
+  box.hidden = false;
+  const left = UNTIL - Date.now();
+  if (left <= 0) {
+    box.className = "clock gone";
+    $("clocklab").textContent = "";
+    $("clockleft").textContent = T("door.clockGone");
+    return;
+  }
+  // Days folded into hours on purpose: 71:59:58 is one number going down,
+  // and "2d 23h 59m 58s" is four of them doing it at different speeds.
+  const s = Math.floor(left / 1000);
+  const two = (n) => String(n).padStart(2, "0");
+  box.className = "clock" + (left < 6 * 3600e3 ? " low" : "");
+  $("clocklab").textContent = T("door.clockLab");
+  $("clockleft").textContent =
+    two(Math.floor(s / 3600)) + ":" + two(Math.floor(s / 60) % 60) + ":" + two(s % 60);
+}
 
 function drawBoxes() {
   const box = $("boxes");
@@ -707,6 +770,9 @@ function words() {
   $("doornote").textContent = T("door.note");
   $("code").setAttribute("aria-label", T("door.title"));
 
+  // The clock carries two words of its own and they are in both languages.
+  if (UNTIL) tick();
+
   $("sititle").textContent = T("in.title");
   $("sisay").textContent = T("in.body");
   $("simail").placeholder = T("mail.ph");
@@ -876,6 +942,10 @@ $("wxanyway").addEventListener("click", () => {
   try { sessionStorage.setItem("board:anyway", "1"); } catch { /* fine */ }
   route();
 });
+
+/* Every second, and drawn once before the first one so the line does not
+   arrive a beat after the page. Nothing else on this page is on a timer. */
+if (UNTIL) { tick(); setInterval(tick, 1000); }
 
 setLang(pickLang());
 $("invite").after(langButton(() => words()));

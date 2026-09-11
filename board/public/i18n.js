@@ -2635,6 +2635,10 @@ export const STRINGS = {
   /* RUN OUT IS NOT WRONG. Somebody holding an expired code typed the right
      thing, and telling them it did not match sends them hunting for a typo
      that is not there. What they need is to go back and ask. */
+  /* The ticking clock on the door — see enter.html. Two words and a number,
+     because the number is the whole of it. */
+  "door.clockLab":     ["This code stops working in", "这个口令还有"],
+  "door.clockGone":    ["run out", "已过期"],
   "door.over": [
     "That code has run out. It was set to work for a while and the while is up — ask whoever sent it for a new one, it takes them a second.",
     "这个口令过期了。当初就设了时限，现在到了——找给你口令的人再要一个，他那边一秒钟的事。"],
