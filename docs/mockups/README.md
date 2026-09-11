@@ -112,11 +112,12 @@ run up. Study Pal's translation code stays in Study Pal's repository.
   somebody who reads English, with nothing to tap through. The voice is the way
   in, not the thing that travels, and no audio is stored or sent anywhere.
 
-Speaking is the one feature here that costs real money every time it is used —
-a transcription per press — so it is the honest thing to put behind the
-subscription. See the pricing note in `docs/todo.md`: it charges for something
-that has a bill attached rather than for relief from a limit we invented, and
-it helps the member who needs the most help.
+All three are free, including speaking. It was briefly the candidate for the
+subscription — it is the only thing here with a real bill attached — and that
+did not survive ten minutes of thinking: every phone already dictates for
+nothing, so what is left to sell is dictation *plus* translation in one press,
+and translation is free here for everybody. A saved tap is not a subscription.
+The full argument is in `docs/todo.md`.
 
 Two decisions worth keeping whatever gets built:
 

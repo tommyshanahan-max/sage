@@ -236,18 +236,32 @@ morning, kept because the reasoning is the part that gets lost.
   the free tier rather than crippling it: fewer follows are more considered
   ones.
 
-- **Speaking instead of typing.** Yes, and it is the best of all of them for a
-  reason none of the others have: it costs real money every time it is used, a
-  transcription per press. Everything else on this list charges for relief from
-  a limit we invented; this charges for a bill that exists. It also helps the
-  member who needs the most help — the one composing in their second language
-  on a phone keyboard — and it cannot annoy anybody, because what arrives at
-  the other end is ordinary text in their own language. See
-  `docs/mockups/chat.html`.
+- **Speaking instead of typing.** It was put on this list and taken off again
+  the same night, and the argument is worth keeping because it is the one that
+  sounds best and is wrong.
+  It looked like the honest gate: unlike everything else here it has a real
+  bill attached, a transcription per press, so charging for it is charging for
+  a cost rather than for relief from a limit we invented. Two things kill it.
+  **Every phone already dictates.** iOS and Android both let somebody speak
+  into any text field for nothing, in Chinese, today. What is left to sell is
+  speaking *plus* translation in one press — and translation is free here for
+  everybody, because a board where free members cannot cross the language is
+  not this board. So the paid feature saves one tap, and one tap is not a
+  subscription.
+  **And the bill is rounding error at this size.** Transcription is fractions
+  of a cent a minute. At forty members nobody needs that covered. It is a real
+  cost and a trivial one, which is not the same thing.
+  So: **build it, free.** It makes the board better for exactly the people we
+  are shortest of — the ones composing in their second language on a phone
+  keyboard — and it costs almost nothing. See `docs/mockups/chat.html`.
+
+**What is left is what is actually scarce.** Both survivors are about access to
+people, which is the only thing this board has that nobody else can hand out.
+Convenience is what everybody expects for free; the room is what they pay for.
 
 **So the shape, when the time comes.** Free: browse everyone, a handful of
-follows a week, type your messages. Member: follows uncapped, the thread stays
-open, and you can talk instead of type.
+follows a week, type or talk — the translation and the voice are for everybody.
+Member: follows uncapped, and the thread stays open.
 
 **And the order, which matters more than the shape.**
 
