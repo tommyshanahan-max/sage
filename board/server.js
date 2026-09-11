@@ -2680,8 +2680,64 @@ app.get("/api/queue", async (req, res) => {
   /* The same order the waiting room shows and the same order admission uses —
      first come, one place up per person brought in. One rule, one place. */
   const order = queueOrder(board);
+
+  /* WHO IS WAITING FOR *YOU* — the queue read through the reader's own
+   * sentence rather than through the door the waiting person came in by.
+   *
+   * The list below is in queue order and that order is right: it is the one
+   * admission uses. But a member scrolling thirty names has no way to tell
+   * which of them they would actually match with, and the answer is already
+   * on their own profile — I am a ___ looking for a ___. So each sentence
+   * they have written comes back with three numbers against it.
+   *
+   * COUNTED OVER `shown` ROWS ONLY, which is exactly the rows the list below
+   * carries, so the block and the list can never quietly disagree on screen.
+   * `quiet` stays in: it hides somebody from the other people waiting, never
+   * from the people who could let them in.
+   *
+   * `inside` is other MEMBERS who say they are that thing, and it is here
+   * knowing it will be small. A member who wants an agent and reads that one
+   * agent is in is the member who spends a vouch — the number that makes them
+   * act is the same number that says the room is thin, and there is no honest
+   * way to show the first without the second.
+   *
+   * WHAT THEY ARE COMES FROM `say`, not from `type` (the MBTI four letters,
+   * which shares nothing with roles but a field name) and not from `rooms` (a
+   * member belongs to a matching room, a waiting person to a door — two
+   * namespaces with some of the same words in them). Both wrong readings show
+   * as nobody waiting, every time. Same trap as /api/faces; same note there.
+   */
+  const shown = order.map((x) => x.w).filter((w) => w.shown);
+  const says = [];
+  for (const q of board.people) {
+    if (q.by !== me) continue;
+    for (const r of Array.isArray(q.say) ? q.say : []) {
+      if (r && r.me && r.want && !says.some((y) => y.me === r.me && y.want === r.want)) {
+        says.push({ me: r.me, want: r.want });
+      }
+    }
+  }
+  const saysIt = (q, role, any) => (Array.isArray(q.say) ? q.say : [])
+    .some((r) => r && r.me && (any || r.me === role));
+  const pairs = [];
+  for (const r of says) {
+    const any = r.want === store.ANYONE;
+    const here = shown.filter((w) => w.me && (any || w.me === r.want));
+    // Nothing to say is better said by saying nothing — see the page.
+    if (!here.length) continue;
+    pairs.push({
+      me: r.me, want: r.want,
+      waiting: here.length,
+      /* Both halves of the sentence: these are a match rather than a hope. */
+      mutual: here.filter((w) => w.want === r.me || w.want === store.ANYONE).length,
+      inside: board.people.filter((q) => q.by !== me && q.state === "published"
+        && saysIt(q, r.want, any)).length,
+    });
+  }
+
   res.json({
     waiting: order.length,
+    pairs,
     rows: order.filter((x) => x.w.shown).slice(0, 120).map((x, i) => ({
       place: i + 1, id: x.w.id,
       name: x.w.name, room: x.w.room, why: x.w.why,

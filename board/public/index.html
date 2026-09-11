@@ -1561,6 +1561,16 @@
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* The chevron went with the button. Nothing here opens any more. */
   #queuelist{padding:0 1.05rem .5rem}
+  /* WAITING FOR YOU. Sits between the head and the list because it is the
+     reason to read the list — see drawPairs. Indented to the same gutter as
+     the rows so it reads as part of the same block and not a second card. */
+  .qpairs{padding:.1rem 1.05rem .55rem;margin:0 0 .2rem}
+  .qpairs>b{display:block;font-weight:500;font-size:.74rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 .35rem}
+  :root[data-lang="zh"] .qpairs>b{text-transform:none;letter-spacing:.02em}
+  .qp{margin:.25rem 0;font-size:.92rem;line-height:1.45}
+  .qp b{font-weight:650}
+  .qp span{color:var(--muted)}
   /* The initial rings sat on --raise, and so does the card now — so they
      disappeared into it. On the card they take the paper behind it. */
   .queue .qav{background:var(--paper)}
@@ -2038,6 +2048,10 @@
          underneath; Browse ends here now, so there is nothing for the list to
          be in the way of — and a list nobody opens is a list nobody reads. -->
     <div class="qtoggle" id="queueh"></div>
+    <!-- Who of them is waiting for THIS member, before the list of all of
+         them. Empty and hidden when none of them is anything this member
+         asked for — see drawPairs. -->
+    <div class="qpairs" id="qpairs" hidden></div>
     <div id="queuelist"></div>
   </section>
 
@@ -6164,6 +6178,7 @@ async function drawQueue() {
     ? T("brw.qof", { n: d.waiting })
     : T("brw.qwhy")));
   $("queueh").append(mark, text);
+  drawPairs(d.pairs);
   fill(list);
   if (!d.rows.length) {
     list.append(el("p", "qnone", T("brw.qnone")));
@@ -6171,6 +6186,49 @@ async function drawQueue() {
     for (const w of d.rows) list.append(qRow(w));
   }
   box.hidden = false;
+}
+
+/** WHO OF THEM IS WAITING FOR YOU.
+ *
+ *  The list under this is in queue order, which is the order admission uses
+ *  and the only order there should be. It is also thirty names a member
+ *  cannot read anything into. This block is the same queue counted against
+ *  the one thing that decides everything else here — their own sentence — so
+ *  a member sees "three agents are waiting" instead of "thirty people are".
+ *
+ *  HIDDEN WHEN IT WOULD SAY NOTHING. The server sends a row only where
+ *  somebody waiting is actually what this member asked for; no rows, no
+ *  block. A panel reading zero three times is worse than no panel, and on a
+ *  small board that is the usual case.
+ */
+function drawPairs(pairs) {
+  const box = $("qpairs");
+  if (!box) return;
+  fill(box);
+  const rows = Array.isArray(pairs) ? pairs : [];
+  box.hidden = !rows.length;
+  if (!rows.length) return;
+
+  // "anyone" has no plural of its own — it is already a crowd. See ANYONE.
+  const many = (r) => r === "anyone" ? T("role.a.anyone") : T("role.p." + r);
+
+  box.append(el("b", null, T("brw.qpfor")));
+  for (const p of rows) {
+    const line = el("p", "qp");
+    const n = el("b", null, T("brw.qpn", { n: p.waiting, who: many(p.want) }));
+    line.append(n);
+    /* The second number is the stronger one and needs the difference said:
+       these are the ones whose own sentence points back at this member. */
+    if (p.mutual) {
+      line.append(el("span", null, " · "
+        + T("brw.qpboth", { n: p.mutual, who: T("role.a." + p.me) })));
+    }
+    line.append(el("span", null, " · "
+      + (p.inside ? T("brw.qpin", { n: p.inside }) : T("brw.qpnone"))));
+    box.append(line);
+  }
+  /* NO "vouch and they move up" LINE HERE. The head two lines above this one
+     already says it, and said twice in one card it reads as a nag. */
 }
 
 function qRow(w) {

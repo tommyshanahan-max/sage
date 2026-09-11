@@ -2100,6 +2100,22 @@ export const STRINGS = {
                         "名单上共 {n} 人，这些是同意公开的。"],
   "brw.qnone":         ["Nobody is waiting.", "目前没有人在等。"],
   "brw.qbrought":      ["brought {n} in", "带进来 {n} 人"],
+
+  /* WAITING FOR YOU — the queue counted against the reader's own sentence.
+     See the block above /api/queue's response.
+
+     "{n} agents are waiting" and not "{n} people are waiting": the whole
+     point of this block is that it is not the same number for everybody. The
+     role words are the plurals already used on the rows underneath, so a
+     member reads the same word in both places. */
+  "brw.qpfor":         ["Waiting for you", "在等你"],
+  "brw.qpn":           ["{n} {who} waiting", "{n} 位{who}在等"],
+  /* The stronger half: they are what you are after AND you are what they are
+     after. One line, because two numbers that mean different things need the
+     difference said out loud. */
+  "brw.qpboth":        ["{n} of them are looking for {who}", "其中 {n} 位在找{who}"],
+  "brw.qpin":          ["{n} already in", "室内已有 {n} 位"],
+  "brw.qpnone":        ["none in here yet", "室内还没有"],
   /* Vouching. A member saying somebody is worth letting in moves them one
      place, the same as bringing somebody in does. */
   "brw.vouch":         ["Vouch", "推荐"],
