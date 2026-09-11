@@ -613,6 +613,18 @@ export const STRINGS = {
   /* Under the two pills, in the reader's own terms — the product explained by
      doing it once rather than described. */
   "land.enter":        ["I have a password", "我有口令"],
+  /* THE OTHER DOOR, AND THE ONE MOST PEOPLE NEED. It sat at the bottom of the
+     page with no button anywhere above it, so the only thing a stranger could
+     press said "I have a password" — which most of them do not.
+     "Waiting list" and not "Sign up": the queue is the product's best line
+     about itself. 等候名单 is the phrase used for a restaurant or a school
+     with more people than places, which is exactly the feeling. */
+  "land.join":         ["Get on the waiting list", "加入等候名单"],
+  /* THE SAME DOOR, IN THE WIDTH A PHONE'S TOP BAR ACTUALLY HAS. The full
+     sentence ran off the right edge of a 390px screen — the word "list" was
+     over the fold, which is the one word that says what the button does. The
+     hero button two lines down still says the whole thing. */
+  "land.joinbar":      ["Get on the list", "加入名单"],
   /* What that same button says to somebody who is already through the door.
      The public page has two readers and only one of them is outside. */
   "land.inside":       ["Go to the board", "回到板子"],

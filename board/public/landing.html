@@ -128,7 +128,11 @@
     .brand i{width:1.9rem;height:1.9rem;font-size:1rem}
     .brand span b{font-size:1rem}
     .brand span small{font-size:.72rem}
-    .top .go{padding:.5rem .85rem;font-size:.84rem}
+    .top .go{padding:.5rem .8rem;font-size:.82rem}
+    /* On a phone the top bar holds the brand, the language and one button.
+       The password is the one that goes: it is in the hero two lines down,
+       and a member coming back gets it put back by the rule below. */
+    .top #navopen{display:none}
   }
   .gonesaid{margin:0;padding:.9rem 1.1rem;background:var(--raise,#0E1512);
     border-bottom:1px solid var(--hair,#1E2A25);text-align:center;
@@ -153,6 +157,15 @@
      before a word of the captions is read.
      Angles are small (6deg). Anything more reads as a sticker sheet, and the
      text inside a phone at 10deg is genuinely harder to read. */
+  .top .wrap{gap:.5rem}
+  .top .go.quiet{background:var(--raise);color:var(--ink-2);
+    border:1px solid var(--line);margin-left:auto}
+  .top .go.quiet + .go{margin-left:0}
+  /* A member has no list to join and does not need the hero's buttons: their
+     one button is "Go to the board", which is #navopen wearing new words. */
+  body.inside #navjoin,body.inside #herocta{display:none}
+  body.inside .top #navopen{display:inline-block;background:var(--accent);
+    color:var(--accent-ink);border:0}
   .frames{padding:2.2rem 0 .6rem}
   /* Stacked on a phone so the arrow turns down and stays under the pair —
      wrapped as a row it landed beside them, pointing at the gutter. */
@@ -208,7 +221,15 @@
       <span><b id="brandname">The Exchange</b><small>交换</small></span>
     </a>
     <span id="langslot" style="margin-left:auto;display:flex;gap:.6rem;align-items:center"></span>
-    <a class="go" id="navopen" href="/enter"></a>
+    <!-- TWO DOORS, IN THE ORDER MOST PEOPLE NEED THEM.
+         "I have a password" was the only button up here and it was the blue
+         one, which told a stranger that the way in is a password they do not
+         have — a locked door with no bell. The bell is the list, so the list
+         is the blue one now and the password is the quiet one beside it.
+         Being asked to queue IS the pitch: it says out loud that not everybody
+         gets in, which is the thing we are selling. -->
+    <a class="go quiet" id="navopen" href="/enter"></a>
+    <a class="go" id="navjoin" href="#waitsection"></a>
   </div>
 </div>
 
@@ -234,6 +255,13 @@
            further down and in the door's own words — by which point somebody
            has already decided whether to bother. -->
       <p class="only" id="onlyline"></p>
+      <!-- HIGH, not at the bottom of the page. Somebody who has read "invite
+           only" is at the exact moment of wanting in; the form was four
+           screens below that, which spends the feeling on scrolling. -->
+      <p class="cta" id="herocta">
+        <a class="btn" id="ctajoin" href="#waitsection"></a>
+        <a class="btn ghost" id="ctaenter" href="/enter"></a>
+      </p>
     </div>
     <div class="does">
       <p class="doesline">
@@ -394,6 +422,9 @@ function paint() {
   document.title = T("site.title") + " — " + T("land.title");
   $("brandname").textContent = T("site.title");
   $("navopen").textContent = T("land.enter");
+  $("navjoin").textContent = T("land.joinbar");
+  $("ctajoin").textContent = T("land.join");
+  $("ctaenter").textContent = T("land.enter");
   $("eyeline").textContent = T("land.eyebrow");
   $("asking").textContent = T("land.head");
   $("onlyline").textContent = T("land.only");
@@ -455,6 +486,18 @@ $("langslot").append(langButton(() => {
 paint();
 paintRoom();
 $("waitslot").append(waitBox());
+
+/* THE PRESS PUTS THE CURSOR IN THE BOX. A bare #waitsection jump leaves the
+ * form on screen and the keyboard shut, and on a phone the section heading
+ * alone fills the screen — it reads as nothing having happened. */
+for (const id of ["navjoin", "ctajoin"]) $(id).addEventListener("click", (e) => {
+  const box = $("waitsection");
+  if (!box || box.hidden) return;
+  e.preventDefault();
+  box.scrollIntoView({ behavior: "smooth", block: "start" });
+  const first = box.querySelector("input:not([type=hidden])");
+  if (first) setTimeout(() => first.focus({ preventScroll: true }), 420);
+});
 
 /* THE PERSON ON THE DOOR, WIRED.
  *
@@ -586,6 +629,7 @@ admitted().then((inAlready) => {
   if (!inAlready || PREVIEW) return;
   // The door box goes with the queue: a member has the Ask the Professor
   // panel inside, which is written answers and costs nothing.
+  document.body.classList.add("inside");
   $("hostess").hidden = true;
   $("waitsection").hidden = true;
   $("peeksection").hidden = true;
