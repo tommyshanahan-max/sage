@@ -80,6 +80,27 @@
   .face.wei{background:linear-gradient(150deg,hsl(96 26% 74%),hsl(120 24% 52%))}
   .face.ele{background:linear-gradient(150deg,hsl(320 26% 74%),hsl(344 24% 52%))}
 
+  /* ---- the two languages, picked once ------------------------------------
+     TAPPING TRANSLATE ON EVERY LINE IS A TAX ON THE PERSON WHO CANNOT READ.
+     One of these two people is reading their second language and the other is
+     not, and it is always the same one doing the tapping. So it is a pair set
+     once at the top of the thread — what you read, what they read — and after
+     that every line arrives in both.
+     NOT FLAGS. A flag names a country and a language is not one: English would
+     have to choose between two of them and Chinese has more than one home, and
+     the board has members on both sides of that. EN and 中 claim nothing and
+     are read instantly by everybody here.
+     The arrow points both ways because it is one setting describing two
+     people, not a direction of travel. Tapping it opens the pair; tapping the
+     line under a message turns the whole thing off for this thread. */
+  .langs{flex:0 0 auto;display:flex;align-items:center;gap:.3rem;
+    border:1px solid var(--line);background:var(--raise);border-radius:99px;
+    padding:.28rem .55rem;cursor:pointer}
+  .langs b{font-size:.78rem;font-weight:650;color:var(--ink-2);line-height:1}
+  .langs i{font-style:normal;font-size:.7rem;color:var(--muted);line-height:1}
+  .langs.on{border-color:var(--accent);background:var(--accent-soft)}
+  .langs.on b{color:var(--accent)}
+
   /* WHY THEY CAME UP FOR EACH OTHER, said once, under the name. The board's
      whole mechanic is two halves of a sentence, and this is the only screen
      where both halves are true at the same time — so it says so, quietly,
@@ -103,6 +124,40 @@
   .when{font-size:.68rem;color:var(--muted);margin:-.3rem .3rem .3rem}
   .when.me{align-self:flex-end}
   .when.them{align-self:flex-start}
+
+  /* ---- crossing the language, on every single line -----------------------
+     HALF THE PEOPLE ON THIS BOARD DO NOT SHARE A LANGUAGE WITH THE OTHER
+     HALF. That is not an edge case here, it is the product — cross-border is
+     the word in the invite — so translation cannot be a setting somebody finds
+     in a menu, and it cannot be a button somebody presses on every line — one
+     of these two is reading their second language and the other is not, and it
+     is always the same one doing the pressing.
+     So: every bubble is already in the reader's language. One types English,
+     the other sees Chinese, and neither of them does anything about it. What
+     the other person actually typed sits one tap underneath — never above and
+     never instead. A translated line is a machine's opinion of what somebody
+     said, and when the sentence is about money, the person who can half-read
+     the original is entitled to check it.
+     NOTHING NEW IS NEEDED FOR THIS. The board already has its own translator —
+     board/lib/translate.js behind POST /api/translate, rate-limited per device
+     and per day because a public endpoint that calls a model is a bill anybody
+     can run up. Study Pal's translation code stays in Study Pal's repository;
+     this one is already here. */
+  .tools{display:flex;gap:.5rem;align-items:center;margin:-.25rem .3rem .35rem}
+  .tools.me{align-self:flex-end}
+  .tools.them{align-self:flex-start}
+  .tool{border:0;background:none;color:var(--muted);font:inherit;font-size:.74rem;
+    padding:.1rem .2rem;cursor:pointer;display:flex;align-items:center;gap:.25rem}
+  .tool:hover{color:var(--accent)}
+  .tool svg{width:.9rem;height:.9rem;display:block}
+  .crossed{align-self:flex-start;max-width:78%;margin:-.1rem 0 .35rem;
+    padding:.5rem .85rem;border-left:2px solid var(--accent);
+    background:var(--accent-soft);border-radius:.2rem .9rem .9rem .2rem;
+    font-size:.9rem;line-height:1.5;color:var(--ink-2)}
+  .crossed.me{align-self:flex-end;border-left:0;border-right:2px solid var(--accent);
+    border-radius:.9rem .2rem .2rem .9rem}
+  .crossed small{display:block;font-size:.68rem;color:var(--muted);margin:0 0 .2rem;
+    letter-spacing:.04em}
 
   /* THE BOARD SPEAKING, and it looks like neither of them. Centred, small, no
      bubble — a line of stage direction. It is used for the two facts a person
@@ -130,6 +185,17 @@
   .write textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:.95rem;
     padding:.6rem .85rem;border:1px solid var(--line);border-radius:1.1rem;
     background:var(--raise);color:var(--ink);height:2.6rem;line-height:1.4}
+  /* SPEAK IT INSTEAD OF TYPING IT. Typing a foreign language on a phone
+     keyboard is the slowest thing anybody does on this board, and the people
+     who most need to say something here are the ones typing it in their second
+     language. The browser's own speech recognition, the same way the door uses
+     the browser's own voice to read a welcome: no vendor, no key, and nothing
+     leaves the phone until they press send. Hidden where the browser has none
+     rather than offered and broken. */
+  .mic{border:1px solid var(--line);background:var(--raise);color:var(--ink-2);
+    border-radius:50%;width:2.6rem;height:2.6rem;flex:0 0 auto;cursor:pointer;
+    display:grid;place-items:center}
+  .mic svg{width:1.1rem;height:1.1rem}
   .send{border:0;border-radius:50%;width:2.6rem;height:2.6rem;flex:0 0 auto;
     background:var(--accent);color:var(--accent-ink);font-size:1.1rem;cursor:pointer}
   .send[disabled]{opacity:.4}
@@ -169,6 +235,9 @@
         <b>Wei</b>
         <small>Founder · Shenzhen · raising a seed</small>
       </span>
+      <span class="langs on" role="button" tabindex="0" aria-label="You read English, Wei reads Chinese">
+        <b>EN</b><i>⇄</i><b>中</b>
+      </span>
     </div>
     <div class="pair">
       You want <i>a Founder</i> · they want <i>an Investor</i>
@@ -176,18 +245,33 @@
 
     <div class="talk">
       <p class="said">You and Wei both pressed Follow.<br>This is where it starts.</p>
+      <p class="said">Wei writes in Chinese. You read English.<br>Neither of you has to do anything about it.</p>
       <p class="day">Thursday</p>
 
-      <div class="msg me">Your line is the other half of mine. What are the eleven factories paying you?</div>
-      <p class="when me">09:12</p>
-
+      <!-- EVERY BUBBLE IS IN THE READER'S LANGUAGE. This is Elena's phone and
+           she reads English, so Wei's Chinese arrives in English and there is
+           nothing to press. The original is one tap under it, never above and
+           never instead: a translated line is a machine's opinion of what
+           somebody said, and when the sentence is about money the person who
+           can half-read the original is entitled to check it. -->
       <div class="msg them">Eleven factories paying, no salespeople. Raising a seed — worth twenty minutes on Thursday?</div>
+      <div class="tools them">
+        <button class="tool">Wei wrote in 中文 · show</button>
+      </div>
       <p class="when them">09:41</p>
 
       <div class="msg me">Send me the last three months of revenue and I will take the call.</div>
+      <div class="tools me">
+        <button class="tool">Wei reads this in 中文 · show</button>
+      </div>
       <p class="when me">09:44</p>
 
+      <!-- ONE OF THEM OPENED, so the mockup shows what the tap does. -->
       <div class="msg them">On its way. Morning or afternoon for you?</div>
+      <div class="crossed"><small>WEI WROTE</small>这就发。你那边上午方便还是下午？</div>
+      <div class="tools them">
+        <button class="tool">hide</button>
+      </div>
       <p class="when them">09:51</p>
     </div>
 
@@ -198,6 +282,10 @@
       </div>
       <div class="write">
         <textarea placeholder="Write to Wei"></textarea>
+        <button class="mic" aria-label="Speak instead of typing">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>
+        </button>
         <button class="send" aria-label="Send">↑</button>
       </div>
     </div>

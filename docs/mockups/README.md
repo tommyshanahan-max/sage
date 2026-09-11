@@ -70,6 +70,37 @@ the states rather than about any one of them:
   and what the other thing costs, in that order.
 - **After Connect** — the WeChat id has been sent, by a person, on purpose.
 
+**Crossing the language, which is the whole board.** Half the members do not
+share a language with the other half — cross-border is the word in the invite —
+so translation is not a setting in a menu and not a button pressed on every
+line. It cannot be, because one of the two people is reading their second
+language and the other is not, and it is always the same one doing the
+pressing.
+
+So every bubble is already in the reader's language. One types English, the
+other sees Chinese, and neither does anything about it. What the other person
+actually typed is one tap underneath — never above and never instead: a
+translated line is a machine's opinion of what somebody said, and when the
+sentence is about money the person who can half-read the original is entitled
+to check it.
+
+The pair is set once at the top of the thread and shown as **EN ⇄ 中**. Not
+flags: a flag names a country and a language is not one — English would have to
+choose between two of them and Chinese has more than one home, and this board
+has members on both sides of that.
+
+Nothing new is needed to build it. The board has its own translator already —
+`board/lib/translate.js` behind `POST /api/translate`, rate-limited per device
+and per day because a public endpoint that calls a model is a bill anybody can
+run up. Study Pal's translation code stays in Study Pal's repository.
+
+The mic beside the composer is the browser's own speech recognition, the same
+way the door already uses the browser's own voice to read a welcome aloud: no
+vendor, no key, nothing leaves the phone until send is pressed. Hidden where
+the browser has none rather than offered and broken. Typing a second language
+on a phone keyboard is the slowest thing anybody does here, and the people who
+most need to say something are the ones doing it.
+
 Two decisions worth keeping whatever gets built:
 
 - **Connect is never in the composer.** Sending somebody your WeChat is a
