@@ -129,10 +129,6 @@
     .brand span b{font-size:1rem}
     .brand span small{font-size:.72rem}
     .top .go{padding:.5rem .8rem;font-size:.82rem}
-    /* On a phone the top bar holds the brand, the language and one button.
-       The password is the one that goes: it is in the hero two lines down,
-       and a member coming back gets it put back by the rule below. */
-    .top #navopen{display:none}
   }
   .gonesaid{margin:0;padding:.9rem 1.1rem;background:var(--raise,#0E1512);
     border-bottom:1px solid var(--hair,#1E2A25);text-align:center;
@@ -158,14 +154,20 @@
      Angles are small (6deg). Anything more reads as a sticker sheet, and the
      text inside a phone at 10deg is genuinely harder to read. */
   .top .wrap{gap:.5rem}
-  .top .go.quiet{background:var(--raise);color:var(--ink-2);
-    border:1px solid var(--line);margin-left:auto}
-  .top .go.quiet + .go{margin-left:0}
+  /* ONE BUTTON UP HERE, AND IT IS THE LIST.
+     The bar held both doors for a few hours and it was too much: a brand, a
+     language, a quiet button and a loud one, four things to read before the
+     headline. The password is not the common case — most people arriving have
+     never heard of this — and it is still two lines down in the hero, where
+     somebody who has one will look anyway. A member gets their own button back
+     by the rule below. */
+  .top #navopen{display:none}
+  .top .go{margin-left:auto}
   /* A member has no list to join and does not need the hero's buttons: their
      one button is "Go to the board", which is #navopen wearing new words. */
   body.inside #navjoin,body.inside #herocta{display:none}
   body.inside .top #navopen{display:inline-block;background:var(--accent);
-    color:var(--accent-ink);border:0}
+    color:var(--accent-ink);border:0;margin-left:auto}
   .frames{padding:2.2rem 0 .6rem}
   /* Stacked on a phone so the arrow turns down and stays under the pair —
      wrapped as a row it landed beside them, pointing at the gutter. */
