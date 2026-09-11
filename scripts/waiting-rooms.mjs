@@ -84,7 +84,8 @@ for (const room of ROOMS) {
        sentence, which is the only number that decides whether letting these
        ones in produces a match or a wall. */
     const supply = are.get(role) || 0;
-    const within = people.filter((q) => q.state === "published" && q.type === role).length;
+    const within = people.filter((q) => q.state === "published"
+      && (q.says || []).includes(role)).length;
     const mark = supply + within === 0 ? "   ← nobody" : "";
     console.log("  " + pad(role, 18) + pad(n, 8)
       + pad(supply, 9) + within + mark);

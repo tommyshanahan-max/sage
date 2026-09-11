@@ -4890,6 +4890,15 @@ app.get("/api/faces", admin, async (_req, res) => {
       .map((q) => ({
         id: q.id, handle: q.handle, campus: q.campus || "",
         looking: Boolean(q.looking), state: q.state || "",
+        /* WHAT THEY SAY THEY ARE, which /doors counts against what the queue
+           is asking for — see drawQueue.
+           The left half of their sentence and not `type`: type is the MBTI
+           four-letter code and has nothing to do with roles, so counting the
+           queue against it read as nobody inside, every time. Nothing new
+           leaks — the sentence is on their own page. */
+        says: [...new Set((Array.isArray(q.say) ? q.say : [])
+          .map((r) => r && r.me).filter(Boolean))],
+        type: q.type || "",
         photoState: q.photoState || "", photo: q.photo || "",
       }))
       .sort((a, b) => a.handle.localeCompare(b.handle)),

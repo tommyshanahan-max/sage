@@ -87,6 +87,13 @@
       <tbody id="rooms"></tbody>
     </table>
 
+    <!-- THE QUEUE, BY PAIRS. The tables above say whether the door works.
+         This says who to let through it, which is a different question and the
+         one that is actually asked every day. See the note above drawQueue. -->
+    <div class="dhead"><span>Who is waiting</span><i></i></div>
+    <div class="verdict"><b id="qverdict"></b><span id="qwhy"></span></div>
+    <div id="queue"></div>
+
     <p class="note">
       Counted as numbers only — no addresses, no devices, nothing that could say
       who came. A member opening a door is not counted: they are not arriving.
@@ -94,6 +101,18 @@
     <button class="again" type="button" id="forget">Forget the key on this phone</button>
   </div>
 </main>
+
+<style>
+  /* One block per room, because the decision is made inside a room and never
+     across them — see the note above drawQueue. */
+  .qroom{margin:1.1rem 0 0}
+  .qroom h3{margin:0 0 .2rem;font-size:.95rem;font-weight:650}
+  .qroom h3 span{font-weight:400;opacity:.6;font-size:.85rem;margin-left:.4rem}
+  .qroom table{margin:.45rem 0 0}
+  .qroom td.gap{opacity:.55}
+  .qroom td.ready{font-weight:650}
+  .qnone{opacity:.6;font-size:.9rem;margin:.3rem 0 0}
+</style>
 
 <script type="module">
 const $ = (id) => document.getElementById(id);
@@ -179,6 +198,92 @@ function draw(counts) {
   $("out").hidden = false;
 }
 
+/* ---------------------------------------------------------------------------
+ * The queue, by pairs
+ *
+ * The tables above answer whether the door works. This answers who to let
+ * through it, which is asked every day and is a different question.
+ *
+ * WHY PAIRS AND NOT POSITION. A hundred admitted off the top of the queue is
+ * twenty in each of five rooms, and twenty people who mostly want the same
+ * thing match with nobody — the room is full and the product does not work,
+ * which is the worst of both. So each row is a want, beside the number of
+ * people waiting who ARE that thing, and the number already inside. A want
+ * with nobody on either is a person to leave in the queue for now.
+ *
+ * WHAT A MEMBER *IS* COMES FROM THEIR SENTENCE. Not from `type`, which is the
+ * MBTI four-letter code and shares nothing with roles but a field name, and not
+ * from their room: a member belongs to a matching room (agent, talent) and a
+ * waiting person to a door (film, invest), two namespaces with some of the same
+ * words in them. Both of those wrong readings show as nobody inside, every
+ * time — wrong in the one direction that leaves people queueing for a room
+ * that is already ready for them. See `says` in /api/faces.
+ * ------------------------------------------------------------------------- */
+function drawQueue(waits, people) {
+  const box = $("queue");
+  box.replaceChildren();
+  const open = (waits || []).filter((w) => !w.done);
+  const inside = (role) => (people || [])
+    .filter((q) => q.state === "published" && (q.says || []).includes(role)).length;
+
+  let ready = 0, walls = 0;
+  for (const room of ROOMS) {
+    const here = open.filter((w) => (w.room || "other") === room);
+    if (!here.length) continue;
+
+    const are = new Map(), want = new Map();
+    for (const w of here) {
+      if (w.me) are.set(w.me, (are.get(w.me) || 0) + 1);
+      if (w.want) want.set(w.want, (want.get(w.want) || 0) + 1);
+    }
+    const quiet = here.filter((w) => !w.me && !w.want).length;
+
+    const wrap = el("div", "qroom");
+    const h = el("h3", null, LABEL[room] || room);
+    h.append(el("span", null, here.length + " waiting"
+      + (quiet ? " · " + quiet + " said nothing yet" : "")));
+    wrap.append(h);
+
+    if (!want.size) {
+      wrap.append(el("p", "qnone", "Nobody here has said what they are looking for."));
+      box.append(wrap);
+      continue;
+    }
+
+    const t = el("table");
+    const th = el("thead");
+    const hr = el("tr");
+    for (const c of ["They want", "Asking", "Waiting", "Inside"]) hr.append(el("th", null, c));
+    th.append(hr); t.append(th);
+    const tb = el("tbody");
+    for (const [role, n] of [...want.entries()].sort((a, b) => b[1] - a[1])) {
+      const supply = are.get(role) || 0;
+      const within = inside(role);
+      const has = supply + within;
+      has ? ready++ : walls++;
+      const tr = el("tr");
+      tr.append(el("td", null, role), cell(n), cell(supply), cell(within));
+      tr.lastChild.className = has ? "ready" : "gap";
+      if (!has) tr.lastChild.textContent = "nobody";
+      tb.append(tr);
+    }
+    t.append(tb); wrap.append(t);
+    box.append(wrap);
+  }
+
+  const said = open.filter((w) => w.me || w.want).length;
+  $("qverdict").textContent = open.length
+    ? open.length + " waiting · " + ready + " wants have somebody on the other side"
+    : "Nobody is waiting.";
+  $("qwhy").textContent = !open.length
+    ? "The list is empty. That is a distribution problem, not a door problem."
+    : !said
+      ? "Nobody has said what they are looking for, so there is no way to tell who would match. The form asks — see whether it is being skipped."
+      : walls > ready
+        ? "Most of these want something nobody here is. Let in the pairs and leave the rest queueing — a room of people who cannot match is worse than a shorter list."
+        : "Let both halves of a row in together and they match the day they arrive.";
+}
+
 async function tryKey(key, fromBox) {
   const counts = await load(key);
   if (!counts) {
@@ -190,6 +295,16 @@ async function tryKey(key, fromBox) {
   }
   keep.set(key);
   draw(counts);
+
+  /* After the tables, and never blocking them. These two are a bigger answer
+     from a slower route, and a page that waits for them to show the funnel is
+     a page that looks broken while they load. */
+  const head = { "x-admin-secret": key };
+  const [waits, faces] = await Promise.all([
+    fetch("/api/waiting", { headers: head }).then((r) => r.json()).catch(() => ({})),
+    fetch("/api/faces", { headers: head }).then((r) => r.json()).catch(() => ({})),
+  ]);
+  drawQueue(waits.waits, faces.people);
 }
 
 $("go").addEventListener("click", () => {
