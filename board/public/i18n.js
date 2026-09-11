@@ -558,12 +558,10 @@ export const STRINGS = {
    * can afford a sentence. What it must not do is imply the sorting is
    * reliable — "check the names" is the instruction, and it is first. */
   "ob.title":       ["Bring your people on", "把你的人一次弄进来"],
-  "ob.lede":        ["Drag in everything you have — headshots, CVs, bios, all of it in one go. It gets sorted into people, and you check the names before anything is made.",
-                     "手上有什么就拖什么进来——定妆照、简历、个人介绍，一次全丢进来。它会按人分好，你核对一下名字，然后才开始建。"],
+  "ob.lede":        ["Two things you can do here.", "这儿能做两件事。"],
   "ob.rolehead":    ["They are", "他们是"],
   "ob.fieldhead":   ["Drag it all in here", "全拖到这儿"],
-  "ob.fieldsub":    ["A folder, several folders, or two hundred loose files. Nothing leaves this page until you say so.",
-                     "一个文件夹、好几个文件夹，或者两百个散文件都行。你不点确认，什么都不会建。"],
+  "ob.fieldsub":    ["A folder, or a pile. Nothing is made until you say so.", "一个文件夹，或者一堆文件。你不点，什么都不建。"],
   "ob.choose":      ["Choose files", "选文件"],
   "ob.reading":     ["Reading {n} files and working out who is who\u2026", "正在看这 {n} 个文件，分一下谁是谁……"],
   "ob.sorted":      ["{n} people. The names and the words came out of the files \u2014 check them, and drag a file onto somebody else if it landed wrong.",
@@ -584,14 +582,12 @@ export const STRINGS = {
      rather than as steps: plenty of agents will do one and not the other, and
      numbering them would make the second look like homework.
      一个人和一群人是两件事，所以并排放，不是第一步第二步。 */
-  "ob.wayone.head": ["A page of your own", "你自己的主页"],
-  "ob.wayone.body": ["You are on the board as an agent, the same as anybody else: one sentence, and producers and brands find you. It is also how they find everybody you represent \u2014 one match with you opens your whole list.",
-                     "你自己也在板上，身份是经纪人，跟别人一样：一句话，制片、品牌方就能找到你。他们也是这样找到你带的人的——跟你对上一个，你手里的名单就都看得到。"],
-  "ob.wayone.go":   ["Finish your page \u2192", "去把主页填好 \u2192"],
-  "ob.waytwo.head": ["Pages for the people you represent", "你带的人的主页"],
-  "ob.waytwo.body": ["Each one gets their own page, their own sentence and their own matches, and you run all of them from this login. When somebody wants one of them, they are talking to you \u2014 it is your WeChat that crosses, never theirs.",
-                     "他们每个人都有自己的主页、自己那句话、自己的匹配，你一个账号全管。谁看上了你的人，联系的是你——过去的是你的微信，不是他们的。"],
-  "ob.waytwo.go":   ["See who you run \u2192", "看看你带了谁 \u2192"],
+  "ob.wayone.head": ["Your own page", "你自己的主页"],
+  "ob.wayone.body": ["Producers and brands find you here.", "制片方、品牌方从这儿找到你。"],
+  "ob.wayone.go":   ["Finish it \u2192", "去填好 \u2192"],
+  "ob.waytwo.head": ["The people you represent", "你带的人"],
+  "ob.waytwo.body": ["A page each. You run all of them.", "一人一个主页，全归你管。"],
+  "ob.waytwo.go":   ["See who you run \u2192", "看名单 \u2192"],
   "ob.trayhead":    ["Could not tell whose these are \u2014 drag them onto somebody",
                      "这几个不知道是谁的——拖到对应的人身上"],
   "ob.guessed":     ["Worked out", "猜的"],

@@ -31,17 +31,31 @@
   .wrap{max-width:76rem;margin:0 auto;padding:0 1.4rem 6rem}
   .rotnav{display:flex;align-items:center;gap:.6rem;justify-content:space-between;padding:1rem 0}
   h1{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:1.9rem;margin:.6rem 0 .3rem}
-  .lede{color:var(--ink-2);margin:0 0 1.6rem;line-height:1.65;max-width:44rem}
+  .lede{color:var(--muted);margin:0 0 1.4rem;line-height:1.6;max-width:44rem;
+    font-size:.95rem}
 
-  /* The two halves, side by side rather than stacked, because they are
-     alternatives and a list of two would read as a sequence. */
-  .twoways{display:grid;gap:1rem;margin:0 0 1.6rem;
-    grid-template-columns:repeat(auto-fit,minmax(19rem,1fr))}
-  .way{border:1px solid var(--hair);border-radius:.9rem;padding:1rem 1.1rem;background:var(--raise)}
+  /* TWO CHOICES, NOT TWO PARAGRAPHS.
+     This was a heading and three lines of prose each, which is an essay in
+     front of a person who has not done anything yet — they read none of it and
+     the two options might as well not have been there. A choice has to be
+     readable at a glance from across the desk: the name big, one line under
+     it, and the thing to press. If it needs a second line it is not a choice,
+     it is an explanation, and it belongs somewhere else. */
+  .twoways{display:grid;gap:1.1rem;margin:0 0 2rem;
+    grid-template-columns:repeat(auto-fit,minmax(20rem,1fr))}
+  .way{border:1px solid var(--hair);border-radius:1rem;padding:1.4rem 1.5rem;
+    background:var(--raise);display:flex;flex-direction:column;gap:.5rem}
   .way b{display:block;font-family:var(--serif,Georgia,serif);font-weight:400;
-    font-size:1.15rem;margin:0 0 .35rem}
-  .way p{margin:0 0 .6rem;color:var(--ink-2);line-height:1.6;font-size:.94rem}
-  .way a{font-size:.92rem;font-weight:600;color:var(--accent)}
+    font-size:1.6rem;line-height:1.15;margin:0}
+  .way p{margin:0;color:var(--ink-2);line-height:1.5;font-size:1.02rem;flex:1}
+  .way a{font-size:1rem;font-weight:600;color:var(--accent);margin-top:.3rem}
+  .pic{width:100%;max-width:13rem;height:auto;margin:.2rem 0 .6rem;display:block}
+  .pic .ln{fill:none;stroke-width:2.5}
+  .pic .ln.hot{stroke:var(--accent)}
+  .pic .ln.dim{stroke:var(--line)}
+  .pic .fl.hot{fill:var(--accent)}
+  .pic .fl.soft{fill:var(--accent-soft)}
+  .pic .fl.dim{fill:var(--line)}
   .mine{margin:0 0 1.4rem;padding:1rem 1.1rem;border:1px solid var(--accent-soft);
     border-radius:.9rem;background:var(--accent-soft)}
   .mine label{display:block;font-size:.9rem;color:var(--ink-2);margin:0 0 .55rem;line-height:1.55}
@@ -68,6 +82,9 @@
   .field.small{padding:.9rem 1.2rem;display:flex;align-items:center;gap:1rem;text-align:left}
   .field.small b{font-size:1rem;margin:0;flex:1}
   .field.small p{display:none}
+  .field.small .drop-pic{display:none}
+  .drop-pic{margin:0 auto 1rem;max-width:6.5rem}
+  .drop-pic .ln{stroke-linecap:round;stroke-linejoin:round}
   .field.small .go{margin:0}
   .field b{display:block;font-family:var(--serif,Georgia,serif);font-weight:400;
     font-size:1.5rem;color:var(--ink);margin:0 0 .5rem}
@@ -146,13 +163,41 @@
        themselves — which is the half that makes the other half worth doing,
        because a producer meets the roster by meeting the agent. Said plainly,
        side by side, before anything is asked of them. -->
+  <!-- DRAWN, NOT DESCRIBED.
+       The difference between these two is one page and several pages, which is
+       a picture rather than a sentence — and a sentence is the thing somebody
+       skips. Line art, inline, no request: this is read from mainland China,
+       where an icon font that has to be fetched is an icon that never arrives.
+       aria-hidden because the heading under each already says it; a screen
+       reader should not be read two drawings of a rectangle. -->
   <div class="twoways">
     <div class="way">
+      <svg class="pic" viewBox="0 0 120 68" aria-hidden="true">
+        <rect class="ln hot" x="38" y="6" width="44" height="56" rx="6"/>
+        <circle class="fl hot" cx="60" cy="24" r="7"/>
+        <rect class="fl soft" x="47" y="38" width="26" height="4" rx="2"/>
+        <rect class="fl soft" x="51" y="47" width="18" height="4" rx="2"/>
+      </svg>
       <b id="wayonehead"></b>
       <p id="wayone"></p>
       <a id="wayonego" href="/browse?edit=1"></a>
     </div>
     <div class="way">
+      <svg class="pic" viewBox="0 0 120 68" aria-hidden="true">
+        <!-- One in front and two behind it. They are separate pages standing
+             beside yours, not a list living inside it, and that is the whole
+             thing this drawing has to get across. -->
+        <rect class="ln dim" x="4"  y="12" width="34" height="44" rx="5"/>
+        <circle class="fl dim" cx="21" cy="26" r="5"/>
+        <rect class="fl dim" x="12" y="38" width="18" height="3" rx="1.5"/>
+        <rect class="ln dim" x="82" y="12" width="34" height="44" rx="5"/>
+        <circle class="fl dim" cx="99" cy="26" r="5"/>
+        <rect class="fl dim" x="90" y="38" width="18" height="3" rx="1.5"/>
+        <rect class="ln hot" x="41" y="6" width="38" height="56" rx="6"/>
+        <circle class="fl hot" cx="60" cy="24" r="7"/>
+        <rect class="fl soft" x="48" y="38" width="24" height="4" rx="2"/>
+        <rect class="fl soft" x="52" y="47" width="16" height="4" rx="2"/>
+      </svg>
       <b id="waytwohead"></b>
       <p id="waytwo"></p>
       <a id="waytwogo" href="/run"></a>
@@ -177,6 +222,11 @@
   <div class="roles"><b id="rolehead"></b><span id="roles"></span></div>
 
   <div class="field" id="field">
+    <svg class="pic drop-pic" viewBox="0 0 120 84" aria-hidden="true">
+      <path class="ln dim" d="M10 74V22a5 5 0 0 1 5-5h26l8 9h56a5 5 0 0 1 5 5v43a5 5 0 0 1-5 5H15a5 5 0 0 1-5-5Z"/>
+      <path class="ln hot" d="M60 8v32"/>
+      <path class="ln hot" d="M48 29l12 12 12-12"/>
+    </svg>
     <b id="fieldhead"></b>
     <p id="fieldsub"></p>
     <button class="go flat" id="browse" type="button"></button>
