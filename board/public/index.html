@@ -6732,6 +6732,22 @@ function viewNow() {
   return "browse";
 }
 
+/* WHAT THE ADDRESS ASKED FOR, READ BEFORE ANYTHING REWRITES IT.
+ *
+ * showView runs at the bottom of this script, on load, and an arrival at
+ * /feed is corrected to /browse with a replaceState — which drops the query
+ * string with it. The one thing that arrives with a query is "Edit your page"
+ * on somebody's own profile, which sends them to /feed?edit=1 because the
+ * form lives on this page; by the time /api/me lands and the arrival is
+ * checked, the ?edit=1 has been gone for a second and the sheet never opens.
+ *
+ * So the link has been silently doing nothing since Browse became the front
+ * of this place — it took somebody to Browse and left them there, which is
+ * exactly what it looks like from the outside.
+ *
+ * Read here, once, above every line that rewrites the address. */
+const CAME_TO_EDIT = new URLSearchParams(location.search).get("edit") === "1";
+
 /* The three views and the address each one lives at. It was a boolean —
    feed or not-feed — which had exactly the right shape for two views and none
    at all for three: every line of showView had to name both halves, so adding
@@ -8027,10 +8043,9 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
        so the other page sends people here rather than growing a second copy of
        it — and the address is cleaned up afterwards so a reload does not open
        the sheet again over whatever they came back to read. */
-    if (new URLSearchParams(location.search).get("edit") === "1") {
-      openMe();
-      try { history.replaceState(null, "", location.pathname); } catch { /* fine */ }
-    }
+    // Read at load — see CAME_TO_EDIT. The address has already been tidied by
+    // then, so there is nothing left here to clean up.
+    if (CAME_TO_EDIT) openMe();
   })
   .catch(paintNav);
 
