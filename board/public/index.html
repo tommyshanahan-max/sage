@@ -7428,21 +7428,21 @@ function drawSays() {
     }
     box.append(line);
   });
-  /* Offered only once the line above it is finished. "Add another" under a
-   * half-filled sentence is an invitation to leave two of them half-filled. */
-  const last = SAY[SAY.length - 1];
+  /* "AND SOMETHING ELSE" IS NOT OFFERED ANY MORE.
+   *
+   * A second sentence is a real feature and the invitation to write one is
+   * not. This block sits on the home screen, under the faces, and its whole
+   * job there is to show in one look what the app does: I am this, looking
+   * for that. A second row dropping out underneath the first turns one clear
+   * sentence into a form with an Add button, on the screen that has least
+   * room to spare for either.
+   *
+   * NOTHING IS TAKEN FROM ANYBODY. Rows that exist are still drawn, still
+   * editable and still removable — see the × on each. Only the way to add a
+   * third and a second from here is gone, and it goes back the moment there
+   * is a screen for it that is not this one. */
   const more = $("mesaymore");
-  more.textContent = T("say.more");
-  /* Not on the way in. A second sentence is a good thing to have and a bad
-     thing to be offered before you have finished the first one ever. */
-  more.hidden = !(ME && ME.handle) || SAY.length >= 3
-    || !(last && last.me && last.want);
-  /* IT LIVES IN THE FORM NOW, so the reader is always its owner — the test
-     that hid it from anybody without a page was written when it sat on
-     Browse, in front of strangers. Inside the sheet that test hid it from
-     exactly the person who needs it most: somebody filling this in for the
-     first time, who would otherwise be put in the room having said nothing
-     about what they are looking for. */
+  more.hidden = true;
   const sec = $("saysay");
   if (sec) sec.hidden = false;
   drawSayHead();
