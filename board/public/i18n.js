@@ -1364,9 +1364,12 @@ export const STRINGS = {
   // nothing about anybody.
   // ---------------------------------------------------------------------
   "key.title":         ["Your key", "你的钥匙"],
+  /* It used to say "this one line is how you get back in", which was true
+     until the box above it existed and reads as a contradiction now. The key
+     is still the mechanism; the address is the door most people will use. */
   "key.body": [
-    "This is you. There is no account here and no password — this one line is how you get back in on a new phone. Save it somewhere, now.",
-    "这就是你。这里没有账号，也没有密码——换手机之后，就靠这一行回来。现在就存起来。",
+    "This is you. There is no account here and no password — the address above brings you back, and this line does it without one. Worth keeping somewhere.",
+    "这就是你。这里没有账号，也没有密码——上面那个邮箱能把你带回来，这一行不用邮箱也行。找个地方存一份。",
   ],
   "key.warn": [
     "Anyone who has it is you. Do not put it in a post.",
@@ -1396,16 +1399,9 @@ export const STRINGS = {
     "留个邮箱。以后换手机，我们发你六位数字，你就能回来。板上没有人看得到这个地址。",
   ],
   "mail.ph":           ["your@email", "你的邮箱"],
-  "mail.save":         ["Save", "保存"],
-  "mail.saved":        ["Saved.", "存好了。"],
-  "mail.cleared":      ["Removed.", "已经删掉了。"],
   "mail.bad":          ["That does not look like an address.", "这不太像一个邮箱地址。"],
   "mail.taken":        ["Somebody here already uses that address.",
                         "这个地址板上已经有人在用了。"],
-  "mail.off": [
-    "Sending mail is not set up on this board yet, so an address here would do nothing. Save your key instead.",
-    "这块板还没配好发信，留了地址也没用。先把钥匙存下来吧。",
-  ],
 
   "in.title":          ["Sign in", "登录"],
   "in.body":           ["The address on your profile. We send you six digits.",
@@ -2427,6 +2423,11 @@ export const STRINGS = {
      rooms" — rooms are derived from what somebody says now. */
   "todo.say":          ["Say what you are looking for.", "写清楚你在找什么。"],
   "todo.goal":         ["Write a short bio.", "写一段简短介绍。"],
+  /* The row that stops somebody losing everything they are about to write.
+     Worded as the thing it buys rather than the thing it asks for: "Add an
+     email address" is a chore, "so you can get back in" is a reason. */
+  "todo.mail":         ["Add a way back in, for a new phone.",
+                        "留个回来的方式，换手机能用。"],
   "todo.level":        ["Take the level test.", "做一下水平测试。"],
   "todo.card":         ["Answer today’s card.", "答一下今天的卡片。"],
   "todo.post":         ["Post something.", "发一条内容。"],

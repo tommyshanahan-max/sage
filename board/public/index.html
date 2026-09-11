@@ -322,12 +322,14 @@
   /* The address and its one button on one line, and the input takes whatever
      is left: an email is long and the box has to show the end of it, which is
      where the typo always is. It wraps rather than shrinking past readable. */
-  .mailrow{display:flex;gap:.5rem;margin:.7rem 0 0;flex-wrap:wrap}
-  .mailrow input{flex:1 1 12rem;min-width:0;border:1px solid var(--line);
-    border-radius:.5rem;padding:.55rem .7rem;font-size:.95rem;
+  /* The last question the form asks, and it reads as a question rather than a
+     setting: a rule above it, the ask, why, then the box. */
+  .mailask{margin:1.2rem 0 .2rem;padding-top:1rem;border-top:1px solid var(--hair)}
+  .mailask h3{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
+  .mailask p{margin:.35rem 0 0;font-size:.85rem;line-height:1.55;color:var(--ink-2)}
+  .mailask input{width:100%;margin:.6rem 0 0;border:1px solid var(--line);
+    border-radius:.5rem;padding:.6rem .7rem;font:inherit;font-size:.95rem;
     background:var(--paper);color:var(--ink)}
-  .mailrow button{border:1px solid var(--accent);background:var(--accent);
-    color:var(--accent-ink);border-radius:99px;padding:.45rem 1.1rem;font-size:.88rem}
   #incode{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
     letter-spacing:.35em;font-size:1.2rem;text-align:center}
 
@@ -2280,6 +2282,21 @@
       <div class="field"><input id="mehere" maxlength="40"></div>
     </div>
 
+    <!-- THE WAY BACK, INSIDE THE FORM AND ABOVE THE BUTTON.
+         It sat under Save with a second Save of its own, which is two saves on
+         one screen and the easier one to walk past — on the single field whose
+         whole job is to still be there in six months. It is part of setting
+         yourself up, so it is part of the form that sets you up, and the one
+         Save saves it.
+         The key stays below the buttons where it was: that is the mechanism,
+         not the question. -->
+    <div class="mailask" id="mailbox">
+      <h3 id="mailtitle"></h3>
+      <p id="mailbody"></p>
+      <input id="mailin" type="email" inputmode="email" autocomplete="email"
+             spellcheck="false" autocapitalize="off">
+    </div>
+
     <div class="row">
       <button class="ghost" type="button" id="meshut"></button>
       <button class="go" type="submit" id="mesave"></button>
@@ -2294,22 +2311,6 @@
          on the server is keyed to a salted hash of it — so showing it here and
          pasting it there is the whole mechanism, with no email, no password
          and nothing new held about anybody. -->
-    <!-- THE WAY BACK, IN THE SHAPE PEOPLE KNOW.
-         Above the key and not inside it, because it is the one most members
-         will actually use: a key is a word they have never met, and the way
-         they find out what it was for is by changing phone. The key stays
-         underneath for anybody who wants the real thing. -->
-    <div class="keybox" id="mailbox">
-      <h3 id="mailtitle"></h3>
-      <p id="mailbody"></p>
-      <div class="mailrow">
-        <input id="mailin" type="email" inputmode="email" autocomplete="email"
-               spellcheck="false" autocapitalize="off">
-        <button type="button" class="go" id="mailsave"></button>
-      </div>
-      <p class="said" id="mailsaid" hidden></p>
-    </div>
-
     <div class="keybox">
       <h3 id="keytitle"></h3>
       <p id="keybody"></p>
@@ -4393,6 +4394,11 @@ function todoList() {
     ["say", Boolean(ME && ME.handle) && !(ME && Array.isArray(ME.say) && ME.say.length),
       () => { showView("browse"); $("saysay").scrollIntoView({ behavior: "smooth" }); }],
     ["goal", Boolean(ME && ME.handle) && !has(ME && ME.goal), () => openMe()],
+    /* THE WAY BACK, ASKED ONCE AND THEN NEVER AGAIN. It is the only row here
+       that is not about being found: everything else makes somebody easier to
+       match, and this one stops them losing all of it on a new phone. Last,
+       because nothing is worth keeping until there is something to keep. */
+    ["mail", Boolean(ME && ME.handle) && !has(ME && ME.mail), () => openMe()],
     ["browse", Boolean(ME && ME.handle) && !(ME && ME.looking), () => openMe()],
   ];
   return all.filter((r) => r[1]).map((r) => ({ key: r[0], go: r[2] }));
@@ -6923,6 +6929,9 @@ async function saveMe(patch) {
     // is. Taken there rather than told a number.
     if (toDoorIf(d, r.status)) return {};
     if (d.error === "contact") return { error: T("me.noContact", { what: d.what }) };
+    /* Passed through as the server's word rather than translated here: the
+       form knows which box it belongs under, and this function does not. */
+    if (d.error === "mailTaken") return { error: "mailTaken" };
     return { error: T(d.error === "tooBig" ? "post.tooBig" : "err.general") };
   }
   ME = d.person;
@@ -7182,43 +7191,14 @@ function drawMail() {
   $("mailtitle").textContent = T("mail.title");
   $("mailbody").textContent = T("mail.body");
   $("mailin").placeholder = T("mail.ph");
-  $("mailsave").textContent = T("mail.save");
   /* Only what the server sent back, never a value this page remembers: the
      address lives on the row, and a box that keeps showing what somebody typed
      after the save was refused is a box that lies about what is stored. */
   $("mailin").value = (ME && ME.mail) || "";
-  // Nothing to save against on a browser with no profile yet.
-  $("mailbox").hidden = !(ME && ME.handle);
+  // Shown to everybody the form is open for, somebody joining included — it is
+  // one of the questions, not a setting found later by the people who look.
+  $("mailbox").hidden = false;
 }
-
-function mailSaid(msg, bad) {
-  const said = $("mailsaid");
-  said.hidden = false;
-  said.classList.toggle("bad", Boolean(bad));
-  said.textContent = msg;
-}
-
-$("mailsave").addEventListener("click", async () => {
-  const mail = $("mailin").value.trim().toLowerCase();
-  $("mailsave").disabled = true;
-  try {
-    const r = await fetch("/api/me/mail", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ device, mail }),
-    });
-    const d = await r.json().catch(() => ({}));
-    if (r.ok) {
-      // Kept on ME so the box redraws from what was actually stored.
-      if (ME) ME.mail = d.mail || "";
-      mailSaid(T(d.mail ? "mail.saved" : "mail.cleared"), false);
-    } else if (d.error === "taken") mailSaid(T("mail.taken"), true);
-    else if (d.error === "shape") mailSaid(T("mail.bad"), true);
-    else mailSaid(T("err.general"), true);
-  } catch {
-    mailSaid(T("err.general"), true);
-  }
-  $("mailsave").disabled = false;
-});
 
 /* Which of the two steps the sheet is on, and the address it is working with.
    On the sheet rather than read out of the box each time: the address box is
@@ -7999,8 +7979,15 @@ $("meform").addEventListener("submit", async (e) => {
     here: $("mehere").value.trim(), goal: $("megoal").value.trim(),
     ig: $("meig").value.trim(),
     li: $("meli").value.trim(),
+    // Empty clears it, which is the only way to take an address off a row.
+    mail: $("mailin").value.trim().toLowerCase(),
   });
-  if (out.error) { said.hidden = false; said.classList.add("bad"); said.textContent = out.error; return; }
+  if (out.error) {
+    said.hidden = false; said.classList.add("bad");
+    // The one refusal that is about a particular box rather than the save.
+    said.textContent = out.error === "mailTaken" ? T("mail.taken") : out.error;
+    return;
+  }
   // The name here is the name posts go out under, so the two stay in step.
   try { localStorage.setItem("board:who", handle); } catch { /* fine */ }
   said.hidden = false; said.classList.remove("bad"); said.textContent = T("me.saved");

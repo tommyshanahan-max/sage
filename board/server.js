@@ -3252,38 +3252,6 @@ const sixDigits = () => String(randomUUID().replace(/\D/g, "").slice(0, 6) || "0
  *  else here, so board.json never holds a live one in the clear. */
 const codeHash = (mail, code) => store.hashDevice(mail + ":" + code, SALT);
 
-/** Set the address on my own profile, or clear it.
- *
- *  Member only and this browser only: it is written to the row this browser
- *  already owns, so there is no way to attach an address to somebody else.
- *  One address per person, and an address another member already has is
- *  refused — two rows behind one address is one of them locked out. */
-app.post("/api/me/mail", express.json({ limit: "1kb" }), gate, async (req, res) => {
-  const me = store.hashDevice(String(req.body?.device || ""), SALT);
-  if (!me) return res.status(400).json({ error: "no" });
-  const want = String(req.body?.mail || "").trim().toLowerCase();
-  // Clearing is always allowed and never an error: it is their address.
-  if (want && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(want)) {
-    return res.status(400).json({ error: "shape" });
-  }
-  const out = await change((board) => {
-    const mine = board.people.find((q) => q.by === me);
-    if (!mine) return { error: "who" };
-    if (want && board.people.some((q) => q.by !== me && q.mail === want)) {
-      return { error: "taken" };
-    }
-    mine.mail = want;
-    /* A code out to the old address stops working the moment the address
-       leaves the row — otherwise a mail sent a minute ago still opens a door
-       that is no longer theirs. */
-    board.signins = (board.signins || []).filter((v) => v.mail !== want);
-    return { ok: true, mail: want };
-  });
-  if (out?.error === "who") return res.status(403).json(out);
-  if (out?.error) return res.status(409).json(out);
-  res.json(out);
-});
-
 /** Ask for a code.
  *
  *  ALWAYS THE SAME ANSWER. Known address or not, sent or not sent, the reply
@@ -4607,6 +4575,26 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
         q[k] = String(req.body[k]).slice(0, k === "goal" ? 600 : k === "li" ? 200 : 120);
       }
     }
+    /* THE ADDRESS, SAVED WITH THE FORM AND NOT BESIDE IT.
+     *
+     * It had its own box and its own button under the Save that saves
+     * everything else, which is two saves on one screen and the second one
+     * easy to walk past — on the one field whose whole job is to be there
+     * later. One form, one button.
+     *
+     * The one thing this cannot do quietly is take an address another member
+     * is already using: two rows behind one address is one of them locked
+     * out, so it is refused by name rather than dropped. Everything else about
+     * the shape is cleanPerson's, like every other field here. */
+    if (req.body.mail !== undefined) {
+      const want = String(req.body.mail).trim().toLowerCase().slice(0, 120);
+      if (want && board.people.some((x) => x.by !== me && x.mail === want)) {
+        return { error: "mailTaken" };
+      }
+      q.mail = want;
+      // A code out to an address that has just left a row opens nothing.
+      board.signins = (board.signins || []).filter((v) => v.mail !== want);
+    }
     if (Array.isArray(req.body.free)) q.free = req.body.free;
     if (Array.isArray(req.body.speaks)) q.speaks = req.body.speaks;
     // What they are looking for, and which half of the world they want it in.
@@ -4682,6 +4670,11 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
     }
     return q;
   });
+
+  /* An address another member already has. Refused by name so the form can
+     say which field, rather than a save that quietly did four of five things.
+     Checked here because `change` is where the other rows are visible. */
+  if (out?.error === "mailTaken") return res.status(409).json(out);
 
   // Told either way, and told which: a photograph that went straight up is
   // still worth knowing about, and calling it held when it is not would put a
