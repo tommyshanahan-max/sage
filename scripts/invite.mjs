@@ -151,16 +151,49 @@ async function main() {
   const lasts = hours
     ? " It works for " + hours + (hours === 1 ? " hour" : " hours") + " and lets one person in, once."
     : " It lets one person in, once.";
+  const lastsZh = hours
+    ? "有效期 " + hours + " 小时，只能一个人用一次。"
+    : "只能一个人用一次。";
+
+  /* BOTH LANGUAGES, the way `make admit` has always printed them — and not one
+   * of them translated. Most of the people these go to read Chinese first, and
+   * a name written in characters gets the Chinese half on its own, because
+   * sending somebody an English paragraph they did not need is its own small
+   * insult.
+   *
+   * AND THE LINE ABOUT WECHAT, which the admit drafts carried and this did not.
+   * WeChat's own browser keeps its own storage: a code opened inside the chat
+   * makes a person who exists nowhere else, and then the same human opening the
+   * board properly a day later is a stranger with an empty page and a spent
+   * code. It is the single most expensive mistake somebody can make with one of
+   * these messages, and it costs one sentence to prevent. */
+  const zhName = /[\u4e00-\u9fff]/.test(String(forWhom || ""));
   for (const v of d.made) {
+    const en = [
+      forWhom ? forWhom + " — this is the board I mentioned. It is invite only," : "",
+      forWhom ? "so here is your way in. " + lasts.trim() : "",
+      forWhom ? "" : "",
+      link,
+      v.code,
+      "",
+      "Open it in Safari or Chrome rather than inside WeChat — WeChat keeps its",
+      "own storage and you would end up with two of you.",
+    ].filter((x, i, a) => !(x === "" && a[i - 1] === "")).join("\n");
+
+    const zh = [
+      forWhom ? forWhom + " —— 就是我跟你说的那个板子，只能被邀请进来，" : "",
+      forWhom ? "这是你的入口。" + lastsZh : "",
+      forWhom ? "" : "",
+      link,
+      v.code,
+      "",
+      "请用 Safari 或 Chrome 打开，别在微信里打开——微信的浏览器自己存一份，",
+      "会变成两个你。",
+    ].filter((x, i, a) => !(x === "" && a[i - 1] === "")).join("\n");
+
     console.log("");
     console.log("─".repeat(60));
-    if (forWhom) {
-      console.log(forWhom + " — this is the board I mentioned. It is invite only,");
-      console.log("so here is your way in. " + lasts.trim());
-      console.log("");
-    }
-    console.log(link);
-    console.log(v.code);
+    console.log(zhName ? zh : en + "\n\n" + "-".repeat(30) + "\n\n" + zh);
     console.log("─".repeat(60));
   }
   console.log("");

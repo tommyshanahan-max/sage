@@ -67,12 +67,32 @@ if (!r.ok || !d.code) {
  * reason they do on an invite: the link on its own opens nothing, so a link
  * forwarded by accident is not a way into somebody's account. */
 const line = "─".repeat(60);
+const en = [
+  `${d.handle} — this puts your page back on the phone or browser you are`,
+  `holding. Open the link, type the code.`,
+  "",
+  `${PUBLIC}/enter`,
+  d.code,
+  "",
+  "Open it in Safari or Chrome rather than inside WeChat — WeChat keeps its",
+  "own storage and you would end up with two of you.",
+].join("\n");
+
+const zh = [
+  `${d.handle} —— 这个能把你的主页放回你手上这台手机或浏览器。`,
+  `打开链接，输入口令就行。`,
+  "",
+  `${PUBLIC}/enter`,
+  d.code,
+  "",
+  "请用 Safari 或 Chrome 打开，别在微信里打开——微信的浏览器自己存一份，",
+  "会变成两个你。",
+].join("\n");
+
+// A name written in characters gets the Chinese half on its own.
+const zhName = /[\u4e00-\u9fff]/.test(String(d.handle || ""));
 console.log("\n" + line);
-console.log(`${d.handle} — this puts your page back on the phone or browser`);
-console.log(`you are holding. Open the link, type the code.`);
-console.log("");
-console.log(`${PUBLIC}/enter`);
-console.log(d.code);
+console.log(zhName ? zh : en + "\n\n" + "-".repeat(30) + "\n\n" + zh);
 console.log(line);
 console.log("\nEverything between the rules is the message. It works once and then");
 console.log("stops. Nothing about who they are changes — the same page, the same");
