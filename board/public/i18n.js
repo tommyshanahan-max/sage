@@ -569,8 +569,15 @@ export const STRINGS = {
     "Wei is raising for his second company. Elena writes first cheques. Each line is the other half of the other's — so they come up for each other.",
     "小魏的第二家公司在融资，Elena 是投第一笔钱的人。两句话正好是彼此的另一半——于是两个人互相出现在对方眼前。"],
   "land.frame2": [
-    "They match. Then one of them sends a WeChat id and a reason — on purpose, and never because they matched.",
-    "匹配上了。然后其中一个把微信和一句理由发过去——是他自己决定发的，不是因为匹配就自动给。"],
+    "One of them writes. Nobody's contact is handed over by the board — a person decides to answer.",
+    "然后有人先开口。这里不会替谁把联系方式交出去——回不回，是本人决定的。"],
+  /* TWO WORDS OVER EACH HALF OF THE PICTURE. The composition made the argument
+     and people still asked what they were looking at, which means the picture
+     needed a caption it could not carry — so it gets a label instead.
+     "Connect" and not "Message": the app's word for the press is Connect, and
+     a landing page that teaches a different word teaches the wrong one. */
+  "land.step1":        ["First match", "第一次匹配"],
+  "land.step2":        ["Connect", "联系上"],
   /* WHAT IT DOES, ON THE FRONT PAGE, SHOWN RATHER THAN DESCRIBED.
      The headline names who you get and nothing said how, so a stranger off a
      forwarded link had to guess — and the guesses are directory, agency, or
