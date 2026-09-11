@@ -571,6 +571,12 @@ export const STRINGS = {
   "ob.already":     ["{n} were already on your roster.", "有 {n} 个你已经带了。"],
   "ob.nonames":     ["Nothing in that pile says whose files these are. Put each person's files in a folder with their name on it, or rename them.",
                      "这堆文件看不出是谁的。给每个人建个以他名字命名的文件夹，或者把文件名改一下。"],
+  /* When nothing in the pile carries a name. Not an error and not an
+     instruction to go and rename things — a question, with the box to answer
+     it already open. */
+  "ob.whois":       ["Nothing in there says who this is. Type a name and it is theirs.",
+                     "里面看不出这是谁。打个名字就归他了。"],
+  "ob.addwho":      ["+ Another person", "+ 再加一个人"],
   "ob.trayhead":    ["Could not tell whose these are \u2014 drag them onto somebody",
                      "这几个不知道是谁的——拖到对应的人身上"],
   "ob.guessed":     ["Worked out", "猜的"],

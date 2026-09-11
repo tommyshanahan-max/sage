@@ -81,6 +81,9 @@
     display:flex;flex-direction:column;gap:.6rem}
   .who.over{border-color:var(--accent);background:var(--accent-soft)}
   .who.out{opacity:.4}
+  .addwho{border-style:dashed;background:none;color:var(--accent);font:inherit;
+    font-size:1rem;font-weight:600;cursor:pointer;align-items:center;justify-content:center;
+    min-height:8rem}
   .whohead{display:flex;align-items:center;gap:.7rem}
   .face{width:3rem;height:3rem;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
     color:#fff;font-family:var(--serif,Georgia,serif);font-size:1.2rem;overflow:hidden;
@@ -283,8 +286,9 @@ function drawPeople() {
       el("div", { className: "two" }, [trade, campus]),
       el("div", { className: "chips" }, g.files.map((i) => chip(i, gi))),
       el("div", { className: "whyrow" }, [
-        g.guessed ? el("span", { className: "flag", textContent: T("ob.guessed") })
-          : el("span", { textContent: T("ob.fromfolder") }),
+        g.from === "guess" ? el("span", { className: "flag", textContent: T("ob.guessed") })
+          : g.from === "folder" ? el("span", { textContent: T("ob.fromfolder") })
+          : el("span", { textContent: "" }),
         out,
       ]),
     ]);
@@ -293,6 +297,20 @@ function drawPeople() {
     card.ondrop = (e) => { e.preventDefault(); card.classList.remove("over"); moveTo(gi); };
     return card;
   }));
+
+  /* ONE MORE PERSON, BY HAND. Two people's files in one pile with no names in
+     them arrive as one card; splitting them is a card to drag the second
+     person's files onto, and there was nowhere to put them. */
+  if (GROUPS.length) {
+    const add = el("button", { className: "who addwho", type: "button", textContent: T("ob.addwho") });
+    add.onclick = () => {
+      GROUPS.push({ handle: "", goal: "", trade: "", campus: "", speaks: [],
+                    age: "", guessed: false, from: "", out: false, files: [] });
+      drawPeople();
+      [...document.querySelectorAll(".who input.name")].pop()?.focus();
+    };
+    box.append(add);
+  }
 
   const tray = $("tray");
   tray.hidden = !UNPLACED.length;
@@ -331,15 +349,39 @@ async function sort(list) {
   if (r.error) return say(T("run.failed"), true);
   GROUPS = (r.people || []).map((p) => ({
     handle: p.handle || "", goal: p.goal || "", trade: p.trade || "", campus: p.campus || "",
-    speaks: p.speaks || [], age: p.age || "", guessed: Boolean(p.guessed), out: false,
+    speaks: p.speaks || [], age: p.age || "", guessed: Boolean(p.guessed),
+    // Where the NAME came from, which is the only thing the flag is about.
+    // A card this page invented came from neither, and saying "from your
+    // folder" on one is the screen claiming an authority it does not have.
+    from: p.guessed ? "guess" : "folder", out: false,
     files: (p.files || []).map((f) => f.i).filter((i) => Number.isInteger(i)),
   }));
   UNPLACED = (r.unplaced || []).map((f) => f.i).filter((i) => Number.isInteger(i));
-  say(r.drafting
-    ? T("ob.sorted", { n: GROUPS.length })
-    : T("ob.sortednokey", { n: GROUPS.length })
-    + (r.already ? " " + T("ob.already", { n: r.already }) : ""));
+
+  /* NOTHING NAMED IS NOT NOTHING.
+   *
+   * The first thing anybody does is drag one file in to see what happens, and
+   * a file called `resume.pdf` has no name in it — nor does a designed CV
+   * whose text cannot be read at all. There is then nobody to propose, and
+   * this page used to say so and stop, which is software asking somebody to go
+   * away and rename their files.
+   *
+   * A name is one box and one second. So the files become a card with an empty
+   * name on it and the cursor in it, which turns the dead end into the
+   * question it always was: who is this? */
+  if (!GROUPS.length && UNPLACED.length) {
+    GROUPS = [{ handle: "", goal: "", trade: "", campus: "", speaks: [], age: "",
+                guessed: false, from: "", out: false, files: UNPLACED }];
+    UNPLACED = [];
+    say(T("ob.whois"));
+  } else {
+    say((r.drafting
+      ? T("ob.sorted", { n: GROUPS.length })
+      : T("ob.sortednokey", { n: GROUPS.length }))
+      + (r.already ? " " + T("ob.already", { n: r.already }) : ""));
+  }
   drawPeople();
+  if (!GROUPS[0]?.handle) document.querySelector(".who input.name")?.focus();
 }
 
 $("make").onclick = async () => {

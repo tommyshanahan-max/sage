@@ -5275,7 +5275,26 @@ app.post("/api/run/drop", gate,
   const guessed = await intake.sortLoose(loose);
   const all = [...piles, ...guessed.filter((g) => g.name)];
   const unplaced = guessed.filter((g) => !g.name).flatMap((g) => g.files);
-  if (!all.length) return res.status(400).json({ error: "nonames", loose: loose.length });
+  /* A PILE IT CANNOT NAME IS STILL A PILE, and refusing it was wrong.
+   *
+   * The first thing anybody does with this is drag ONE file in to see what
+   * happens — a PDF called `resume.pdf`, or a designed one-pager whose text
+   * cannot be read at all. There is no name in the filename and none to be
+   * had from the contents, so nothing could be grouped, and the console said
+   * "put each person's files in a folder with their name on it" — which is
+   * software sending somebody away to do filing, to the exact person who was
+   * promised they could pile everything in.
+   *
+   * The console can take it from here: it shows the files and asks for a
+   * name, which is one box and the thing a person can answer instantly. So
+   * the dry path never refuses. The direct path below still does, because it
+   * writes rows immediately and has nobody to ask. */
+  if (!all.length && !unplaced.length) {
+    return res.status(400).json({ error: "nonames", loose: loose.length });
+  }
+  if (!all.length && String(parsed.fields.dry || "") !== "1") {
+    return res.status(400).json({ error: "nonames", loose: loose.length });
+  }
   const room = store.RUN_MAX - board0.people.filter((q) => q.runBy === real && q.by !== real).length;
   if (room <= 0) return res.status(409).json({ error: "full", max: store.RUN_MAX });
 
@@ -5286,7 +5305,7 @@ app.post("/api/run/drop", gate,
   const had = new Set(board0.people
     .filter((q) => q.runBy === real).map((q) => q.handle.trim().toLowerCase()));
   const fresh = all.filter((p) => !had.has(p.name.trim().toLowerCase())).slice(0, room);
-  if (!fresh.length) {
+  if (!fresh.length && !(unplaced.length && String(parsed.fields.dry || "") === "1")) {
     return res.status(200).json({ ok: true, added: [], already: all.length,
       loose: unplaced.length, drafting: intake.configured() });
   }
