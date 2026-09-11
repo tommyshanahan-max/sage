@@ -702,6 +702,10 @@ services:
       # like a broken box rather than a missing line.
       TOMSCODING_CFM_DOMAIN: ${TOMSCODING_CFM_DOMAIN:-cfm.localhost}
       TOMSCODING_CFM_WWW: ${TOMSCODING_CFM_WWW:-www.cfm.localhost}
+      # Ferry's address. Its own fallback, like every other one here: two site
+      # blocks sharing an address is a startup failure that takes the whole box
+      # down, so no two of these may ever default to the same name.
+      TOMSCODING_FERRY_DOMAIN: ${TOMSCODING_FERRY_DOMAIN:-ferry.localhost}
       # Not an address — the brand page's template reads it to decide whether
       # to include the counting snippet at all. Empty means nothing is counted,
       # which is exactly when the snippet should not be on the page.
@@ -739,6 +743,10 @@ services:
       - feed_net
       # And the ledger, for the same reason.
       - cfm_net
+      # And Ferry. Caddy is the only other thing on that network, which is the
+      # whole design: a container holding other people's conversations should
+      # be reachable from the front door and from nothing else.
+      - ferry_net
 
   # The counter.
   #
@@ -971,6 +979,48 @@ services:
           memory: ${TOMSCODING_BOARD_MEMORY:-256m}
     cpu_shares: ${TOMSCODING_BOARD_CPU_SHARES:-128}
 
+  # ---------------------------------------------------------------------------
+  # Ferry: a private room where two people read different languages.
+  #
+  # Off unless asked for, like every optional thing here. Add `ferry` to
+  # COMPOSE_PROFILES in .env to switch it on; without that this is a directory
+  # in the repository and nothing on the box.
+  #
+  # ITS OWN NETWORK, WITH CADDY AND NOTHING ELSE ON IT. Ferry has no reason to
+  # reach the board, the ledger, a seat or the counter, and the argument for
+  # using it at all is that it knows as little as possible — a container that
+  # cannot resolve the rest of the estate is that argument made structural
+  # rather than promised.
+  # ---------------------------------------------------------------------------
+  ferry:
+    profiles: ["ferry"]
+    build:
+      context: ./ferry
+    image: tomscoding-ferry:latest
+    container_name: tomscoding-ferry
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      FERRY_DIR: /data
+      # Translation. Without it the page says translation is off rather than
+      # offering a button that fails — see lib/translate.mjs.
+      FERRY_KEY: ${TOMSCODING_FERRY_KEY:-${ANTHROPIC_API_KEY:-}}
+      # A room nobody has opened in this long deletes itself. The honest
+      # version of "we cannot read it" includes not keeping it.
+      FERRY_KEEP_DAYS: ${TOMSCODING_FERRY_KEEP_DAYS:-90}
+      # What translation may cost, per room and per day. A public endpoint that
+      # calls a model is a bill anybody with a link can run up.
+      FERRY_BURST: ${TOMSCODING_FERRY_BURST:-60}
+      FERRY_REFILL: ${TOMSCODING_FERRY_REFILL:-20}
+      FERRY_DAY: ${TOMSCODING_FERRY_DAY:-4000}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ferry_data:/data
+    expose:
+      - "8080"
+    networks:
+      - ferry_net
+
 networks:
   tomscoding:
     driver: bridge
@@ -990,10 +1040,19 @@ networks:
   # The ledger and Caddy, and nothing else. It records who was offered what;
   # it has no reason to reach the board, the workspace or a partner seat, and
   # a table that would matter in an argument is the last one to leave open.
+  # Ferry and Caddy, and nothing else. The narrowest network on the box, and
+  # deliberately: this one holds other people's conversations, and the shortest
+  # answer to "what else could read them" is that nothing else can reach it.
+  ferry_net:
+    driver: bridge
   cfm_net:
     driver: bridge
 
 volumes:
+  # The rooms, which are blobs this box has no key for. Its own volume for the
+  # same reason the board and the ledger have one: a separate product, and the
+  # day it moves to its own box it should be one `docker volume` to carry.
+  ferry_data:
   # Projects, packages and offers — who was told they were third, and when.
   # Its own volume for the same reason the board has one: the day this becomes
   # its own product on its own box, it should be one `docker volume` to carry.

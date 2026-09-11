@@ -1,0 +1,32 @@
+# Ferry, on its own hostname. Inert until TOMSCODING_FERRY_DOMAIN is set:
+# unset, this binds an internal .localhost name and requests no certificate.
+# Its own fallback, distinct from every other one on this box — two site blocks
+# sharing an address is a startup failure rather than a warning, and it takes
+# every site here down with it. Run scripts/check-sites.py before deploying a
+# change to any of these.
+#
+# Starting the container is separate, via COMPOSE_PROFILES in .env.
+{$TOMSCODING_FERRY_DOMAIN:ferry.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+
+		# NO REFERRER AT ALL, which is stricter than the rest of this box and
+		# deliberate. A room's address is /r/<id>, and the key rides in the
+		# fragment — browsers never send a fragment, but they do send a path.
+		# A room id turning up in somebody else's logs because a person tapped
+		# a link inside a conversation is a thing we can decline for free.
+		Referrer-Policy "no-referrer"
+
+		# The pages carry no third-party anything: no CDN, no font host, no
+		# analytics. Saying so here means a future edit that reaches for one
+		# breaks loudly in a browser rather than quietly shipping a request
+		# that carries a room id off this box.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+		-Server
+	}
+
+	reverse_proxy ferry:8080
+}
