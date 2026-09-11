@@ -94,12 +94,29 @@ Nothing new is needed to build it. The board has its own translator already —
 and per day because a public endpoint that calls a model is a bill anybody can
 run up. Study Pal's translation code stays in Study Pal's repository.
 
-The mic beside the composer is the browser's own speech recognition, the same
-way the door already uses the browser's own voice to read a welcome aloud: no
-vendor, no key, nothing leaves the phone until send is pressed. Hidden where
-the browser has none rather than offered and broken. Typing a second language
-on a phone keyboard is the slowest thing anybody does here, and the people who
-most need to say something are the ones doing it.
+**Voice, which is three different things.**
+
+- **Speak instead of typing.** Hold the mic, talk, and it lands as text on both
+  sides in both languages. Typing a second language on a phone keyboard is the
+  slowest thing anybody does here, and the people who most need to say
+  something are the ones doing it. A line that was spoken says `SPOKEN` under
+  it — not to charge for it twice, but because the register is different:
+  "send me the numbers" typed is an instruction and spoken is a conversation,
+  and somebody reading it in their second language has no other way to tell.
+- **Listen to a line**, in the tools under it. `speechSynthesis` is on every
+  phone here and speaks Chinese; `level.html` has used it for months. It costs
+  nothing and it is the difference between a board somebody uses on a train and
+  one they put off until they are at a desk.
+- **Sending audio: no.** A voice note is the ordinary way to talk in China and
+  it is the wrong thing on this board — a Chinese voice note is a wall to
+  somebody who reads English, with nothing to tap through. The voice is the way
+  in, not the thing that travels, and no audio is stored or sent anywhere.
+
+Speaking is the one feature here that costs real money every time it is used —
+a transcription per press — so it is the honest thing to put behind the
+subscription. See the pricing note in `docs/todo.md`: it charges for something
+that has a bill attached rather than for relief from a limit we invented, and
+it helps the member who needs the most help.
 
 Two decisions worth keeping whatever gets built:
 

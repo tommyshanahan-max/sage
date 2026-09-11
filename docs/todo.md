@@ -236,8 +236,18 @@ morning, kept because the reasoning is the part that gets lost.
   the free tier rather than crippling it: fewer follows are more considered
   ones.
 
+- **Speaking instead of typing.** Yes, and it is the best of all of them for a
+  reason none of the others have: it costs real money every time it is used, a
+  transcription per press. Everything else on this list charges for relief from
+  a limit we invented; this charges for a bill that exists. It also helps the
+  member who needs the most help — the one composing in their second language
+  on a phone keyboard — and it cannot annoy anybody, because what arrives at
+  the other end is ordinary text in their own language. See
+  `docs/mockups/chat.html`.
+
 **So the shape, when the time comes.** Free: browse everyone, a handful of
-follows a week. Member: follows uncapped, and the thread stays open.
+follows a week, type your messages. Member: follows uncapped, the thread stays
+open, and you can talk instead of type.
 
 **And the order, which matters more than the shape.**
 

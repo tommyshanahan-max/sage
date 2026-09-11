@@ -185,13 +185,39 @@
   .write textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:.95rem;
     padding:.6rem .85rem;border:1px solid var(--line);border-radius:1.1rem;
     background:var(--raise);color:var(--ink);height:2.6rem;line-height:1.4}
-  /* SPEAK IT INSTEAD OF TYPING IT. Typing a foreign language on a phone
-     keyboard is the slowest thing anybody does on this board, and the people
-     who most need to say something here are the ones typing it in their second
-     language. The browser's own speech recognition, the same way the door uses
-     the browser's own voice to read a welcome: no vendor, no key, and nothing
-     leaves the phone until they press send. Hidden where the browser has none
-     rather than offered and broken. */
+  /* ---- voice, and the three different things that means ------------------
+     SPEAK IT INSTEAD OF TYPING IT. Typing a second language on a phone keyboard
+     is the slowest thing anybody does on this board, and the people who most
+     need to say something are the ones doing it. The browser's own speech
+     recognition, the same way the door already uses the browser's own voice to
+     read a welcome: no vendor, no key, nothing leaves the phone until send is
+     pressed. Hidden where the browser has none rather than offered and broken.
+
+     LISTEN TO A LINE, in the tools under it. speechSynthesis is on every phone
+     here and speaks Chinese; level.html has used it for months. It costs
+     nothing and it is the difference between a board somebody uses on a train
+     and one they put off until they are at a desk. Plenty of people on both
+     sides of this read their second language slower than they hear it.
+
+     AND THE ONE THAT IS NOT BUILT HERE: sending audio. A voice note is the
+     ordinary way to talk in China and it is the wrong thing on this board,
+     because a Chinese voice note is of no use whatever to somebody who reads
+     English — it arrives as a wall nobody can tap through. What works is the
+     mic above: hold it, speak, and it lands as text on both sides, in both
+     languages, and no audio is stored or sent anywhere. The voice is the way
+     in, not the thing that travels. */
+  /* A LINE THAT WAS SPOKEN SAYS SO. Not to charge for it twice — because the
+     register is different. "Send me the numbers" typed is an instruction and
+     spoken is a conversation, and the person reading it in their second
+     language has no other way to tell. */
+  .spoke{display:inline-flex;align-items:center;gap:.25rem;font-size:.68rem;
+    letter-spacing:.05em;color:var(--muted);margin:-.15rem .3rem .3rem}
+  .spoke.me{align-self:flex-end}
+  .spoke svg{width:.8rem;height:.8rem}
+  .mic.locked{position:relative;color:var(--muted)}
+  .mic.locked::after{content:"";position:absolute;right:-1px;bottom:-1px;
+    width:.85rem;height:.85rem;border-radius:50%;background:var(--accent);
+    border:2px solid var(--card)}
   .mic{border:1px solid var(--line);background:var(--raise);color:var(--ink-2);
     border-radius:50%;width:2.6rem;height:2.6rem;flex:0 0 auto;cursor:pointer;
     display:grid;place-items:center}
@@ -256,11 +282,26 @@
            can half-read the original is entitled to check it. -->
       <div class="msg them">Eleven factories paying, no salespeople. Raising a seed — worth twenty minutes on Thursday?</div>
       <div class="tools them">
+        <button class="tool">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 8.5a5 5 0 0 1 0 7"/></svg>
+          listen
+        </button>
         <button class="tool">Wei wrote in 中文 · show</button>
       </div>
       <p class="when them">09:41</p>
 
+      <!-- SPOKEN, AND IT WENT BOTH WAYS AS TEXT. She held the mic and talked;
+           it arrived as English for her and Chinese for him. No audio is sent
+           or kept — a Chinese voice note is a wall to somebody who reads
+           English, and the voice is the way in rather than the thing that
+           travels. -->
       <div class="msg me">Send me the last three months of revenue and I will take the call.</div>
+      <span class="spoke me">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>
+        SPOKEN
+      </span>
       <div class="tools me">
         <button class="tool">Wei reads this in 中文 · show</button>
       </div>
@@ -270,6 +311,11 @@
       <div class="msg them">On its way. Morning or afternoon for you?</div>
       <div class="crossed"><small>WEI WROTE</small>这就发。你那边上午方便还是下午？</div>
       <div class="tools them">
+        <button class="tool">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 8.5a5 5 0 0 1 0 7"/></svg>
+          listen
+        </button>
         <button class="tool">hide</button>
       </div>
       <p class="when them">09:51</p>
@@ -327,7 +373,8 @@
     <div class="foot">
       <p class="rest">The thread rests here. <b>Nothing is lost</b> — Elena has
         what you said and can come back to it any time.<br>
-        Members keep talking. <a href="#">What that costs →</a></p>
+        Members keep talking, and can <b>talk instead of type</b> — it arrives
+        as text in both languages. <a href="#">What that costs →</a></p>
     </div>
   </div>
   <figcaption>The wall is a sentence, not a locked door: what happened, what is
