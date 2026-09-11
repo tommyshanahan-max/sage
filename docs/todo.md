@@ -169,6 +169,51 @@ aspect ratio nobody here knows.
 **Done looks like.** The deployed code pushed to `main`, and the workspace clone
 pulled.
 
+## Soon — money
+
+### Charging for The Exchange, and why not per contact
+
+**What was proposed.** Loosen messaging so members can write freely, and charge
+at the moment one of them hands over an actual contact.
+
+**Why the instinct is right.** It charges at the point of value. Nobody pays to
+look or to talk; they pay when they want to take it off the board. That is what
+a broker charges for, and it is the moment a member would agree they got
+something.
+
+**Why that particular toll is the wrong one.**
+
+- *It taxes the promise.* The landing page says nobody's contact is handed over
+  by the board — a person decides to answer. Charging to permit that turns a
+  privacy guarantee into a paywall, in the same words, meaning the opposite.
+- *It leaks, and policing the leak costs more than the leak.* The moment
+  messaging is free, somebody types their WeChat id into a message. Catching
+  that means reading messages, which breaks "not stored, nobody reads it" — the
+  claim the whole product rests on. Every network that has tried this collects
+  on a fraction of the connections it enables.
+- *It charges the wrong side.* The one who wants the contact usually has less
+  power: the founder chasing the investor, the performer chasing the agent. At
+  this size that is exactly the side we are short of.
+
+**What to look at instead, in order.**
+
+- **Dues at the door.** A club charges for membership, not per introduction. It
+  fits what this is, taxes nothing anybody does inside, and crowdfundme already
+  collects money.
+- **Charge the side with the cheque.** Investors and buyers pay; founders and
+  talent do not. Standard for deal networks, and it raises quality on the side
+  that decides whether the other side bothers.
+- **Keep one-intro-per-match as a feature, not a limit to sell.** It forces a
+  real opening line. Loosening it may lower quality rather than raise it, and
+  that is worth knowing before anything is charged for.
+
+**The number to get first.** Of the matches so far: how many became a message,
+and how many became a card. It is in the data already. Charge for a step people
+take, not the one we wish they took.
+
+**Finished looks like.** A decision written down here with the number that
+justified it — not a price on a feature nobody has been observed using.
+
 ## When it comes up
 
 - **A preview hostname for dev servers.** Sage can start a project's dev server
