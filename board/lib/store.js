@@ -469,7 +469,30 @@ export function cleanInvite(raw) {
     usedAt: s(raw.usedAt, 40),
     // Taken back without deleting the row, so the record of who had it stays.
     off: Boolean(raw.off),
+    /* WHEN IT STOPS WORKING, IF IT EVER DOES.
+     *
+     * Empty is the old behaviour and stays the default: a code works until it
+     * is spent or taken back. That is right for the one a member carries in
+     * their own header, which they hand out when they happen to meet somebody.
+     *
+     * It is wrong for a code sent to one named person tonight. "This is good
+     * for 24 hours" was being said to people and it was not true of anything —
+     * the row had no way to stop, so the sentence depended on somebody
+     * remembering to run `make invite-off` the next day. A promise that needs
+     * a human alarm clock is a promise that gets broken.
+     *
+     * An ISO timestamp, checked at the door. A code that has run out is told
+     * apart from a wrong one, because they are different things to the person
+     * typing and only one of them is worth asking about. */
+    until: /^\d{4}-\d{2}-\d{2}T/.test(String(raw.until || "")) ? String(raw.until) : "",
   };
+}
+
+/** Whether an invite has run out. Its own function because three places ask —
+ *  the door, the list, and the member's own header — and a rule written three
+ *  times is a rule that will one day disagree with itself. */
+export function inviteOver(v, now = Date.now()) {
+  return Boolean(v && v.until && Date.parse(v.until) <= now);
 }
 
 /* ---------------------------------------------------------------------------

@@ -528,6 +528,8 @@ async function enter() {
        a second sentence, because the commonest cause of it is the same person
        in a different browser — which is a key problem, not an invite one. */
     said.textContent = d.error === "used" ? T("door.used")
+      // Expired is its own answer — see door.over. It is the right code.
+      : d.error === "over" ? T("door.over")
       : d.error === "slow-down" ? T("door.slow")
       : T("door.wrong", { n: Number(d.left) || 0 });
   } catch {

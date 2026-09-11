@@ -804,6 +804,11 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
   const got = await change((board) => {
     const v = board.invites.find((x) => x.code === code);
     if (!v || v.off) { outcome = "bad"; return null; }
+    /* RUN OUT IS NOT WRONG, and the door says which. Somebody holding a code
+       that expired typed the right thing; being told it was wrong sends them
+       looking for a typo that is not there, when what they need is to ask for
+       another one. */
+    if (store.inviteOver(v)) { outcome = "over"; return null; }
     if (v.usedBy) { outcome = v.usedBy === me ? "mine" : "used"; return null; }
     v.usedBy = me;
     v.usedAt = new Date().toISOString();
@@ -821,6 +826,7 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
   t.n += 1; t.at = now; tries.set(me, t);
   const left = Math.max(0, 5 - t.n);
   if (outcome === "used") return res.status(409).json({ error: "used", left });
+  if (outcome === "over") return res.status(410).json({ error: "over", left });
   return res.status(404).json({ error: "bad", left });
 });
 
@@ -972,6 +978,17 @@ app.post("/api/my-invite", async (req, res) => {
 app.post("/api/invite", admin, express.json({ limit: "8kb" }), async (req, res) => {
   const who = String(req.body?.who || "").slice(0, 40);
   const n = Math.max(1, Math.min(50, Number(req.body?.n) || 1));
+  /* HOW LONG IT LASTS, IN HOURS, AND NOTHING IS THE DEFAULT.
+   *
+   * A code with no expiry is the old behaviour and the right one for the code
+   * a member carries around. Hours are for the other case: one code, one named
+   * person, sent tonight — where "this is good for 24 hours" is a thing people
+   * actually say and should therefore be a thing the row actually does.
+   *
+   * Capped at a year. Not a rule about anything, just the difference between a
+   * long-lived code and a typo with four extra zeros on it. */
+  const hours = Math.max(0, Math.min(8760, Number(req.body?.hours) || 0));
+  const until = hours ? new Date(Date.now() + hours * 3600_000).toISOString() : "";
   const made = [];
   await change((board) => {
     const have = codesTaken(board);
@@ -979,7 +996,7 @@ app.post("/api/invite", admin, express.json({ limit: "8kb" }), async (req, res) 
       let code = store.newCode();
       while (have.has(code)) code = store.newCode();
       have.add(code);
-      const v = store.cleanInvite({ code, who, at: new Date().toISOString() });
+      const v = store.cleanInvite({ code, who, until, at: new Date().toISOString() });
       board.invites.push(v);
       made.push(v);
     }
@@ -1058,6 +1075,9 @@ app.get("/api/invite", admin, async (_req, res) => {
       // person deciding who to chase, not by anything that needs an id.
       used: Boolean(v.usedBy), usedAt: v.usedAt,
       usedName: nameOf(v.usedBy),
+      // When it runs out, and whether it already has. Both, because "expired"
+      // and "expires tomorrow" are the two things worth reading off this list.
+      until: v.until, over: store.inviteOver(v),
       /* Who made it, when a member made it out of their own header rather
          than the box making it: `who` is blank on those rows, so the list
          read as if nobody had given it out. */

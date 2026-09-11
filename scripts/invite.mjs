@@ -46,9 +46,17 @@ async function list() {
        The row has always known — see the note on /api/invite — and the line
        said "used 2026-09-10" and stopped, which answers a question nobody
        asks. A code was used; the name is what you wanted. */
+    /* RUN OUT COMES BEFORE WAITING, because a row that says "waiting" about a
+       code nobody can spend is the list lying quietly. A live one says when it
+       stops, in hours while that is the useful unit and in days after. */
+    const left = v.until ? Date.parse(v.until) - Date.now() : 0;
+    const inWords = !v.until ? ""
+      : left <= 0 ? "expired"
+      : left < 36 * 3600e3 ? "expires in " + Math.max(1, Math.round(left / 3600e3)) + "h"
+      : "expires in " + Math.round(left / 86400e3) + "d";
     const state = v.off ? "taken back"
       : v.used ? "used " + when(v.usedAt) + (v.usedName ? " by " + v.usedName : "")
-      : "waiting";
+      : inWords || "waiting";
     /* `who` is the label typed when it was minted. A member making one out of
        their own header types nothing, so that column was blank on exactly the
        rows where somebody inside did the vouching. Their name stands in. */
@@ -74,6 +82,9 @@ async function main() {
 
   const who = arg("who");
   const n = Number(arg("n")) || 1;
+  /* HOW LONG IT LASTS. Nothing by default — see the note on /api/invite — and
+     a number of hours when this code is for one person tonight. */
+  const hours = Number(arg("hours")) || 0;
   /* WHO IT IS FOR, which is not the same as WHO. `who` is the label on the
      invite row — whoever vouched — and it is what the door says on the way
      in. This is the name of the person receiving it, and it goes in the link
@@ -81,7 +92,7 @@ async function main() {
      stored, never checked, and opens nothing. */
   const forWhom = arg("for");
   const r = await fetch(base + "/api/invite", {
-    method: "POST", headers: head, body: JSON.stringify({ who, n }),
+    method: "POST", headers: head, body: JSON.stringify({ who, n, hours }),
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) {
@@ -102,17 +113,44 @@ async function main() {
   ].filter(Boolean).join("&");
   const link = PUBLIC + "/enter" + (q ? "?" + q : "");
 
+  /* ONE BLOCK, WRITTEN THE WAY IT IS ACTUALLY SENT.
+   *
+   * This printed a heading, a link and a code on three lines, and what happens
+   * next is somebody copying them one at a time into WeChat at midnight —
+   * which on a bad night means pasting them into the terminal instead. The
+   * message is the thing being made here, so the tool makes the message.
+   *
+   * The lines below the rule are not part of it. Everything between the rules
+   * is what goes in the chat. */
+  const lasts = hours
+    ? " It works for " + hours + (hours === 1 ? " hour" : " hours") + " and lets one person in, once."
+    : " It lets one person in, once.";
   for (const v of d.made) {
     console.log("");
-    console.log(forWhom ? "For " + forWhom + ":" : v.who ? "From " + v.who + ":" : "Invite:");
-    console.log("  " + link);
-    console.log("  " + v.code);
+    console.log("─".repeat(60));
+    if (forWhom) {
+      console.log(forWhom + " — this is the board I mentioned. It is invite only,");
+      console.log("so here is your way in. " + lasts.trim());
+      console.log("");
+    }
+    console.log(link);
+    console.log(v.code);
+    console.log("─".repeat(60));
   }
   console.log("");
-  console.log("One person each. Send them both — the link is worth nothing without the code.");
+  console.log("Everything between the rules is the message. Send the code with the"
+    + " link — the link on its own opens nothing.");
+  if (hours) {
+    console.log("It stops working on its own at "
+      + new Date(Date.now() + hours * 3600e3).toISOString().slice(0, 16).replace("T", " ")
+      + " UTC. Nothing to remember.");
+  }
   if (!forWhom) {
     console.log("");
     console.log('Name them and the door greets them by it:  make invite WHO="you" FOR="their name"');
+  }
+  if (!hours) {
+    console.log('Give it a life:  make invite WHO="you" FOR="them" HOURS=24');
   }
 }
 

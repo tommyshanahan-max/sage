@@ -269,17 +269,22 @@ offers: ## Every offer, and who took it
 	  /seed/offer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  list
 
-invite: ## Make an invite:  make invite WHO="you" FOR="them" [N=3]
-	@# Prints the link and the code as the message to send. One person each.
+invite: ## Make an invite:  make invite WHO="you" FOR="them" [HOURS=24] [N=3]
+	@# Prints the message to send, between two rules. One person each.
 	@#
 	@# WHO is whoever is vouching — it is the label on the row and the name the
 	@# door says on the way in ("Tom let you in"), so it is usually you.
 	@# FOR is the person receiving it. It goes in the link and nowhere else:
 	@# the door opens with their name on it and nothing is stored about them.
 	@# Neither name opens anything. The six characters still do that.
+	@#
+	@# HOURS makes it stop working on its own. Without it a code lasts until it
+	@# is spent or taken back, which is right for the one you carry around and
+	@# wrong for one sent to a named person tonight — "good for 24 hours" used
+	@# to depend on somebody remembering make invite-off the next day.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --n "$(or $(N),1)"
+	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) $(if $(HOURS),--hours "$(HOURS)",) --n "$(or $(N),1)"
 
 post-numbers: ## Say where the whole board has got to, as The Professor
 	@# Safe every morning: it works out what the totals were when it last spoke

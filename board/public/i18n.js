@@ -2632,6 +2632,12 @@ export const STRINGS = {
   "door.used": [
     "This one has been used already. Each code lets one person in and then stops working. If that was you on another browser, you do not need a new code \u2014 paste your key below instead.",
     "这个口令已经用过了。每个口令只能进一个人。如果那是你自己在别的浏览器上用的，你不需要新口令——把钥匙贴在下面就行。"],
+  /* RUN OUT IS NOT WRONG. Somebody holding an expired code typed the right
+     thing, and telling them it did not match sends them hunting for a typo
+     that is not there. What they need is to go back and ask. */
+  "door.over": [
+    "That code has run out. It was set to work for a while and the while is up — ask whoever sent it for a new one, it takes them a second.",
+    "这个口令过期了。当初就设了时限，现在到了——找给你口令的人再要一个，他那边一秒钟的事。"],
   "door.slow":         ["Too many tries. Wait an hour, or ask for a fresh code.",
                         "试得太多了。等一个小时，或者再要一个新口令。"],
   "door.offline":      ["That did not go through. Try again.", "没发出去，再试一次。"],
