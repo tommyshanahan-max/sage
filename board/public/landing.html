@@ -94,14 +94,21 @@
     line-height:1.9;color:var(--ink-2)}
   .say i{font-style:normal;font-weight:700;font-size:.95em;
     padding:.22rem .85rem;border-radius:99px;white-space:nowrap;
-    background:var(--accent);color:var(--accent-ink)}
-  /* An empty one on the general page: the same shape with nothing written in
-     it, which is the question the whole board asks. Outlined rather than
-     filled, so a blank does not shout as loudly as an answer. */
-  .say i.blank{background:none;border:2px dashed var(--accent);color:transparent}
+    background:var(--accent);color:var(--accent-ink);
+    /* The word changes; the pill should not appear to. A short fade reads as
+       one control being set to a new value, where a hard swap reads as the
+       page redrawing itself. */
+    animation:pillin .32s ease-out}
+  @keyframes pillin{from{opacity:0;transform:translateY(.18em)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.say i{animation:none}}
 
-  /* The two cards, before and after. Stacked on a phone: side by side at that
-     width is two things too small to read rather than one comparison. */
+
+  .one .shot.card{width:min(74vw,290px);height:auto;border-radius:1.3rem;
+    box-shadow:0 18px 44px rgba(8,12,20,.34)}
+  @media (min-width:620px){ .one .shot.card{width:320px} }
+
+  /* Kept for now: the before/after cards are one commit back and this is the
+     third layout tonight. Dead CSS is cheaper than retyping it. */
   .twocards{display:grid;gap:.9rem;width:100%;max-width:38rem;margin:.4rem 0 0;
     grid-template-columns:1fr;text-align:left}
   .minicard{background:var(--card);border:1px solid var(--line);border-radius:1.1rem;
@@ -443,34 +450,20 @@
            like a control, because it is one. -->
       <p class="say" id="landsay"></p>
 
-      <div class="twocards">
-        <!-- BEFORE. A person, their line, and the one button. -->
-        <div class="minicard">
-          <div class="mini-face"><span id="miniletter">m</span></div>
-          <p class="mini-name"><b id="mininame"></b><small id="miniwho"></small></p>
-          <p class="mini-say">
-            <span id="minisay1"></span><i id="minisay2"></i>
-            <span id="minisay3"></span><i id="minisay4"></i>
-          </p>
-          <span class="mini-btn" id="minifollow"></span>
-        </div>
+      <!-- ONE IMAGE OF THE APP, AND IT IS THE OTHER HALF OF THE SENTENCE.
+           The line above says a Founder looking for an Investor. Elena is an
+           investor looking for a founder. So the picture is not an
+           illustration of the product, it is the answer to the sentence
+           directly above it — which is the only way a screenshot on a landing
+           page ever earns its weight.
 
-        <!-- AFTER. Both sides said yes, so a contact crossed. The id is the
-             only thing on this page that looks like a real detail, and it is
-             invented — mia_chen_sh belongs to nobody. -->
-        <div class="minicard matched">
-          <p class="mini-tag"><span aria-hidden="true">✓</span> <span id="minimatched"></span></p>
-          <p class="mini-why" id="miniwhy"></p>
-          <p class="mini-id">mia_chen_sh</p>
-          <!-- MESSAGE, NOT "OPEN WECHAT". The board does not open WeChat and
-               must not draw a button that says it does — and the more
-               important half is that it does not need to: a matched pair have
-               a room here, which is the safer thing to offer two people who
-               have just met than "here is my WeChat, go". The id crossing is
-               what they choose to do next. -->
-          <span class="mini-btn ghost" id="minigo"></span>
-        </div>
-      </div>
+           That pairing is also why the sentence stopped cycling through four
+           pairs: a line reading "a Manufacturer looking for a Buyer" over a
+           photograph of an investor is two things contradicting each other,
+           and the contradiction is invisible to whoever wrote it and obvious
+           to everybody else. -->
+      <img class="shot card" src="/frame-2.png" alt=""
+        width="585" height="1170" loading="lazy">
 
       <p class="onewhy" id="onewhy"></p>
     </div>
@@ -624,19 +617,11 @@ function paint() {
   /* The blank sentence is the bold half and has to stay one unbroken run, so
      it is two nodes rather than a string with markup in it — this page never
      puts translated text through innerHTML. */
-  sayLine("", "");
-  $("mininame").textContent = T("land.miniName");
-  $("miniwho").textContent = T("land.miniWho");
-  $("minisay1").textContent = T("land.does1");
-  /* WITH THE ARTICLE. role.agent is the bare word, used in pickers where it
-     sits under a label; in a sentence it has to read as a sentence. */
-  $("minisay2").textContent = T("land.miniRole1");
-  $("minisay3").textContent = T("land.does3");
-  $("minisay4").textContent = T("land.miniRole2");
-  $("minifollow").textContent = T("land.miniFollow");
-  $("minimatched").textContent = T("land.miniMatched");
-  $("miniwhy").textContent = T("land.miniWhy");
-  $("minigo").textContent = T("land.miniGo");
+  /* FILLED IN, NOT BLANK, and always the pair the screenshot underneath
+     answers. Blanks were the honest version of a question nobody had asked
+     yet; a written sentence with a real answer below it is the product
+     happening once on the page. */
+  sayLine(T("land.does2"), T("land.does4"));
   $("doorsEyebrow").textContent = T("land.doors");
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");
@@ -701,7 +686,9 @@ function paintRoom() {
    */
   const me = T("door." + key + ".does2");
   const want = T("door." + key + ".does4");
-  if (me !== "door." + key + ".does2" && want !== "door." + key + ".does4") sayLine(me, want);
+  if (me !== "door." + key + ".does2" && want !== "door." + key + ".does4") {
+    sayLine(me, want);
+  }
 }
 
 setLang(pickLang());

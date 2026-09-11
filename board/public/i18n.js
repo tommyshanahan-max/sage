@@ -786,6 +786,14 @@ export const STRINGS = {
   "land.miniGo":       ["Message", "发消息"],
   "land.miniRole1":    ["an Agent", "经纪人"],
   "land.miniRole2":    ["a Performer", "演员"],
+  /* The other two pairs the sentence cycles through on the front page. Chosen
+     one per room that has people in it, so the range is shown rather than
+     claimed — a manufacturer who sees only founders and investors decides this
+     is a startup board and leaves. */
+  "land.pairMake":     ["a Manufacturer", "工厂"],
+  "land.pairBuy":      ["a Buyer", "采购方"],
+  "land.pairWrite":    ["a Writer", "编剧"],
+  "land.pairProd":     ["a Producer", "制片人"],
   /* The line under both cards, and the only one that is a promise rather than
      a description. It is why this is not a directory. */
   "land.one":          ["Nobody's contact opens until both sides agree.",
