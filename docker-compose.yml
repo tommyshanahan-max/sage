@@ -1010,6 +1010,14 @@ services:
       FERRY_KEEP_DAYS: ${TOMSCODING_FERRY_KEEP_DAYS:-90}
       # What translation may cost, per room and per day. A public endpoint that
       # calls a model is a bill anybody with a link can run up.
+      # Notifications. Off without a keypair, and the page then never asks
+      # anybody for permission — that prompt can be shown once and a dismissal
+      # is permanent. `make ferry-keys` prints a pair.
+      FERRY_VAPID_PUBLIC: ${TOMSCODING_FERRY_VAPID_PUBLIC:-}
+      FERRY_VAPID_PRIVATE: ${TOMSCODING_FERRY_VAPID_PRIVATE:-}
+      # Who the push services write to about a misbehaving sender. Theirs, not
+      # a user's.
+      FERRY_VAPID_SUBJECT: ${TOMSCODING_FERRY_VAPID_SUBJECT:-mailto:${TOMSCODING_ACME_EMAIL:-hello@example.com}}
       FERRY_BURST: ${TOMSCODING_FERRY_BURST:-60}
       FERRY_REFILL: ${TOMSCODING_FERRY_REFILL:-20}
       FERRY_DAY: ${TOMSCODING_FERRY_DAY:-4000}

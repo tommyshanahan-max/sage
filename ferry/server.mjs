@@ -29,6 +29,7 @@ import { fileURLToPath } from "node:url";
 
 import { ROOM, cleanLine, cleanRoom } from "./lib/crypt.mjs";
 import { translate, configured as translateReady } from "./lib/translate.mjs";
+import { cleanSub, tell, configured as pushReady, publicKey } from "./lib/push.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(HERE, "public");
@@ -55,7 +56,7 @@ const roomPath = (id) => path.join(DIR, id + ".json");
 
 async function load(id) {
   try {
-    return cleanRoom(JSON.parse(await readFile(roomPath(id), "utf8")));
+    return cleanRoom(JSON.parse(await readFile(roomPath(id), "utf8")), cleanSub);
   } catch {
     return null;
   }
@@ -64,7 +65,7 @@ async function load(id) {
 async function change(id, fn) {
   const last = writing.get(id) || Promise.resolve();
   const next = last.then(async () => {
-    const room = (await load(id)) || cleanRoom({});
+    const room = (await load(id)) || cleanRoom({}, cleanSub);
     const out = await fn(room);
     if (out !== false) {
       await mkdir(DIR, { recursive: true });
@@ -195,7 +196,49 @@ const server = createServer(async (req, res) => {
         room.seen = new Date().toISOString();
         return line.at;
       });
+      /* THE OTHER CHAIR'S PHONE, after the line is safely written and outside
+         the write lock — a push service having a slow afternoon must not hold
+         up the person who just pressed send. Nothing is awaited here on the
+         request's behalf. */
+      tell(await load(id), id, line.side).then(async (dead) => {
+        if (dead && dead.length) {
+          await change(id, (room) => {
+            room.subs = room.subs.filter((s) => !dead.includes(s.endpoint));
+          });
+        }
+      }).catch(() => { /* the line is written either way */ });
       return json(res, 201, { at: out });
+    }
+
+    /* A PHONE ASKING TO BE TOLD. One per browser per room; a second from the
+       same endpoint replaces the first rather than stacking, because a browser
+       that re-subscribes has not become two devices. */
+    if (req.method === "POST" && p === "/api/push") {
+      if (!pushReady()) return json(res, 503, { error: "unconfigured" });
+      const b = await body(req, 8_000);
+      const id = String(b.room || "");
+      if (!ROOM.test(id)) return json(res, 400, { error: "room" });
+      const sub = cleanSub(b);
+      if (!sub) return json(res, 400, { error: "shape" });
+      await change(id, (room) => {
+        room.subs = room.subs.filter((s) => s.endpoint !== sub.endpoint);
+        room.subs.push(sub);
+        if (room.subs.length > 8) room.subs = room.subs.slice(-8);
+      });
+      return json(res, 201, { ok: true });
+    }
+
+    /* AND ASKING TO BE LEFT ALONE. Its own route rather than a flag, so
+       turning it off removes the row instead of marking it. */
+    if (req.method === "POST" && p === "/api/push/off") {
+      const b = await body(req, 8_000);
+      const id = String(b.room || "");
+      const url = String(b.endpoint || "");
+      if (!ROOM.test(id) || !url) return json(res, 400, { error: "room" });
+      await change(id, (room) => {
+        room.subs = room.subs.filter((s) => s.endpoint !== url);
+      });
+      return json(res, 200, { ok: true });
     }
 
     /* THE ONE TIME TEXT IS READABLE HERE. Sent by the page on purpose, for one
@@ -216,7 +259,14 @@ const server = createServer(async (req, res) => {
     /* WHAT THIS BOX CAN DO, so the page can say "translation is off" rather
        than offering it and failing. */
     if (req.method === "GET" && p === "/api/hello") {
-      return json(res, 200, { translate: translateReady(), keepDays: KEEP_DAYS });
+      return json(res, 200, {
+        translate: translateReady(),
+        keepDays: KEEP_DAYS,
+        /* The public half of the push keypair. Public by definition — it is
+           what a browser encrypts to — and useless without the private half,
+           which never leaves this process. */
+        push: pushReady() ? publicKey() : "",
+      });
     }
 
     // A room's address. The page is the same for every room; the id is in the
@@ -239,5 +289,6 @@ await mkdir(DIR, { recursive: true });
 sweep();
 setInterval(sweep, 3600_000).unref();
 server.listen(PORT, () => {
-  console.log("ferry on " + PORT + (translateReady() ? "" : " — translation off, no key"));
+  const off = [translateReady() ? "" : "translation", pushReady() ? "" : "push"].filter(Boolean);
+  console.log("ferry on " + PORT + (off.length ? " — " + off.join(" and ") + " off, no key" : ""));
 });

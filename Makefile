@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: back mail waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -316,6 +316,21 @@ mail: ## Put an email on somebody's row so they can sign in:  make mail WHO="Tom
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/mail.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" --mail "$(ADDR)"
+
+ferry-keys: ## Make the keypair Ferry needs to send notifications
+	@# VAPID: the standard that lets a server push to Apple's and Google's
+	@# services without an account with either. Two keys, made once, and the
+	@# private half never leaves .env.
+	@#
+	@# Notifications are off until these are set, and the page does not ask
+	@# anybody for permission on a box that cannot send — a permission prompt
+	@# is a thing you get to show once, and a dismissal is permanent.
+	@#
+	@# Paste the two lines it prints into .env, then `make deploy`.
+	$(COMPOSE) run --rm --no-deps -T --entrypoint node ferry \
+	  -e "const w=require('web-push');const k=w.generateVAPIDKeys();\
+	      console.log('TOMSCODING_FERRY_VAPID_PUBLIC='+k.publicKey);\
+	      console.log('TOMSCODING_FERRY_VAPID_PRIVATE='+k.privateKey);"
 
 back: ## Somebody locked out of their own page:  make back WHO="Tom"
 	@# For a member who has lost their key and cannot be reached by email —

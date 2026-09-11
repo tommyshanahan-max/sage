@@ -71,3 +71,33 @@ button that fails. With one:
 - **No push.** A browser page gets no notifications on iOS; if that turns out
   to matter, the answer is a home-screen app first and a native one only if
   somebody actually asks.
+
+## On a home screen, and telling you a line arrived
+
+**Installable.** A manifest, three icons and a service worker: added to the
+home screen it opens full-screen with its own icon and no address bar, and it
+opens instantly with no signal — the shell is cached and the conversation is
+already decrypted in that browser's own storage. The service worker caches the
+page and the icons and **never** a request to `/api/`: a cache of replies would
+be a copy of the room sitting somewhere the promise says nothing about.
+
+**Notifications carry no words.** This box has no key for the room, so it
+cannot say what arrived — only that something did. Every push says the same
+sentence and opening it brings you to the room. That is a real limitation, you
+cannot triage from a lock screen, and it is the honest shape: a lock screen is
+the least private surface a phone has, and a product that *cannot* leak a
+message there is worth more than one that promises not to.
+
+Off until a keypair is set. `make ferry-keys` prints one; the two lines go in
+`.env`. With them unset the page never asks anybody for permission, which
+matters — a browser lets you ask once, and a dismissal is permanent.
+
+**Asked after the first line is sent**, never on arrival, for the same reason.
+
+What is stored for it: a URL at Apple or Google and two keys belonging to a
+browser, kept beside the room under the chair it belongs to. It says a device
+is in a room. It does not say who, and it cannot read anything. A room nobody
+subscribed from holds none of it.
+
+**iOS needs the home-screen install first.** Safari will not deliver a push to
+a page in a tab. Android and desktop work either way.

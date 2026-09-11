@@ -59,10 +59,20 @@ export function cleanLine(raw) {
 }
 
 /** A room, as stored. No key, no names, no text. */
-export function cleanRoom(raw) {
+export function cleanRoom(raw, cleanSub) {
   const r = raw && typeof raw === "object" ? raw : {};
   const lines = Array.isArray(r.lines) ? r.lines.map(cleanLine).filter(Boolean) : [];
+  /* WHICH PHONES TO BUZZ, and nothing more about them. A push subscription is
+     a URL at Apple or Google and two keys belonging to a browser. It says a
+     device is in this room; it does not say who, and it cannot read a word.
+     That is the one piece of metadata a room holds beyond its timestamps, and
+     it is the price of a phone buzzing — a room nobody subscribed from stores
+     none of it. Cleaned by the push module, passed in so this file keeps
+     knowing nothing about how a notification is sent. */
+  const subs = (Array.isArray(r.subs) && cleanSub)
+    ? r.subs.map(cleanSub).filter(Boolean).slice(0, 8) : [];
   return {
+    subs,
     at: typeof r.at === "string" ? r.at : new Date().toISOString(),
     /* Touched on every read as well as every write, because a room somebody is
        still reading is not idle — see the sweep in server.mjs. */
