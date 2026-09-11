@@ -36,7 +36,7 @@ const SRC = path.join("cfm", "deck", name + ".html");
  *               stranger, who reads "this man wants my money" before reading
  *               a word — see the note on which deck went where.
  *
- *   --board     liuxuesheng.io    the app itself. Where a member lands.
+ *   --board     thexchange.app    the app itself. Where a member lands.
  *
  *   --site      thexchange.app    the product's public face, served by Caddy
  *               off disk with no container and no invitation gate behind it.
@@ -52,7 +52,7 @@ const OUT = ONSITE ? "site"
   : ONBOARD ? path.join("board", "public") : path.join("cfm", "public");
 const BASE = process.env.DECK_BASE
   || (ONSITE ? "https://thexchange.app"
-    : ONBOARD ? "https://liuxuesheng.io" : "https://crowdfundme.app");
+    : ONBOARD ? "https://thexchange.app" : "https://crowdfundme.app");
 
 /* THE CARD SAYS THE COMPANY, NOT THE PERSON. <title> is "The Exchange for
    Aiden", which is right in a browser tab; the card is the half that gets

@@ -27,7 +27,7 @@
  */
 
 const [, , base] = process.argv;
-const HOST = (base || "https://liuxuesheng.io").replace(/\/+$/, "");
+const HOST = (base || "https://thexchange.app").replace(/\/+$/, "");
 
 const rule = (t) => {
   console.log("");

@@ -21,7 +21,7 @@
  * That runs it inside the board's own container, which is the only place on
  * the box with a node to run it: the host has Docker and nothing else. Calling
  * it directly needs a runtime and the key:
- *   node scripts/seed-people.mjs https://liuxuesheng.io "$BOARD_KEY"
+ *   node scripts/seed-people.mjs https://thexchange.app "$BOARD_KEY"
  *
  * With real pictures — a folder of image files named after the people, so
  * wen.jpg goes to Wen:

@@ -129,7 +129,7 @@ async function admit(room, max) {
    board answers on its own hostname over the compose network. --public first
    so the Makefile can read it off .env, then the environment, then the name
    it has had all along. */
-const PUBLIC = (arg("public") || process.env.BOARD_PUBLIC_URL || "https://liuxuesheng.io")
+const PUBLIC = (arg("public") || process.env.BOARD_PUBLIC_URL || "https://thexchange.app")
   .replace(/\/+$/, "");
 
 /* WHICH LANGUAGE TO WRITE IT IN.

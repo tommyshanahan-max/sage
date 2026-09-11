@@ -11,7 +11,7 @@
  *   node offer.mjs <base> <key> can-offer  --who Mia [--off]
  *   node offer.mjs <base> <key> send       --from Tom --who "Yana"
  *                                          --give "..." [--pays "..."] [--want "..."]
- *                                          [--project] [--public https://liuxuesheng.io]
+ *                                          [--project] [--public https://thexchange.app]
  *   node offer.mjs <base> <key> list
  */
 const [, , BASE, KEY, CMD, ...rest] = process.argv;
@@ -86,7 +86,7 @@ if (CMD === "can-offer") {
       money: arg("pays"), want: arg("want"),
     }),
   });
-  const host = arg("public", "https://liuxuesheng.io").replace(/\/+$/, "");
+  const host = arg("public", "https://thexchange.app").replace(/\/+$/, "");
   console.log("");
   console.log("  From " + d.from + ", as " + (has("project") ? "a project" : "a job")
     + ". Send this, and nothing else:");

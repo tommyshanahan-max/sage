@@ -28,8 +28,16 @@ const head = { "x-admin-secret": key, "Content-Type": "application/json" };
 
 /* The public address, for the line you paste into a chat. BOARD_PUBLIC_URL if
  * it is set, because the board answers on its own hostname and is reached over
- * the compose network by another name entirely. */
-const PUBLIC = (process.env.BOARD_PUBLIC_URL || "https://liuxuesheng.io").replace(/\/+$/, "");
+ * the compose network by another name entirely.
+ *
+ * THE FALLBACK IS NOT THE OLD NAME ANY MORE. It was liuxuesheng.io, and
+ * `make invite` did not pass BOARD_PUBLIC_URL, so every code minted after the
+ * move printed a link on a domain that now 301s. It still worked — that is
+ * what the redirect is for — but the first thing a stranger sees of this board
+ * is the address in the message, and sending them the name we just left is a
+ * link that looks forwarded from somebody else. The Makefile passes the real
+ * one off .env now; this is what is left if it ever does not. */
+const PUBLIC = (process.env.BOARD_PUBLIC_URL || "https://thexchange.app").replace(/\/+$/, "");
 
 const when = (iso) => (iso ? String(iso).slice(0, 10) : "");
 

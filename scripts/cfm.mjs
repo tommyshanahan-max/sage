@@ -48,7 +48,7 @@ if (cmd === "setup") {
   await post("/api/project", {
     id: "the-exchange", name: "The Exchange", zh: "交换",
     line: "The people you need in China already know each other. This is the room.",
-    goTo: arg("goto", "https://liuxuesheng.io/enter"), seats: 100,
+    goTo: arg("goto", "https://thexchange.app/enter"), seats: 100,
     claim: "The people you need in China already know each other.",
     sub: "Getting into that circle takes years. Usually it takes a person.",
     goal: "$500,000 in 18 months. Then a company in Singapore. All three figures at $50 a person — what rooms like this have sold for. An example, not a forecast.",

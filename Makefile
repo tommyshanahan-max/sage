@@ -287,7 +287,14 @@ invite: ## Make an invite:  make invite WHO="you" FOR="them" [HOURS=24] [N=3]
 	@#
 	@# The deadline travels in the link and the door counts it down on screen.
 	@# The code itself never travels in a link — see enter.html.
-	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	@# The address in the link, read off .env the way offer and pitch already
+	@# read it. Without this the script fell back to a name written into it,
+	@# which stayed the old one through the move — every code minted printed a
+	@# liuxuesheng.io link. The redirect caught them, but the name in the
+	@# message is the first thing the person you are inviting sees.
+	$(COMPOSE) run --rm --no-deps -T \
+	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
+	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --hours "$(if $(HOURS),$(HOURS),24)" --n "$(or $(N),1)"
 
