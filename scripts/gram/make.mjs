@@ -20,6 +20,11 @@ import { chromium } from "/tmp/claude-0/node_modules/playwright-core/index.mjs";
 
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 const OUT = path.join(HERE, "out");
+/* AND A SECOND COPY WHERE META CAN FETCH IT. The publishing API takes a URL
+   and will not accept an upload, so the picture has to be on the open web
+   before it can be posted. site/ is served by Caddy off disk at
+   thexchange.app with no container and no invitation gate — see post.mjs. */
+const WEB = path.join(HERE, "..", "..", "site", "g");
 
 /* The pairs. Each one is a real sentence somebody could say in the app — the
    roles come from ROLES in board/lib/store.js, so a pair that could never
@@ -75,6 +80,7 @@ const pairs = process.argv[2]
   : BUILTIN;
 
 await mkdir(OUT, { recursive: true });
+await mkdir(WEB, { recursive: true });
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
 const ctx = await b.newContext({ viewport: { width: 1080, height: 1080 }, deviceScaleFactor: 1 });
@@ -84,7 +90,8 @@ for (const one of pairs) {
   const name = `${slug(one.me)}-${slug(one.want)}`;
   await p.setContent(page(one), { waitUntil: "load" });
   await p.evaluate(() => document.fonts.ready);
-  await p.screenshot({ path: path.join(OUT, name + ".png") });
+  const shot = await p.screenshot({ path: path.join(OUT, name + ".png") });
+  await writeFile(path.join(WEB, name + ".png"), shot);
 
   /* The caption, in both languages, in one file. The English is for the
      international account and the Chinese for whatever goes to 小红书 — which

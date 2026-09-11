@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: demo demo-cards demo-rm cfm-project can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: gram gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -402,6 +402,21 @@ cfm-grantor: ## Who grants a share and out of what: make cfm-grantor ID=the-exch
 	  /seed/cfm.mjs http://cfm:3000 "$$(grep -E '^TOMSCODING_CFM_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  grantor --id "$(or $(ID),the-exchange)" --from "$(FROM)" --holds "$(HOLDS)" \
 	  --sig "$(SIG)"
+
+gram: ## Make the square posts: make gram [PAIRS=scripts/gram/pairs.json]
+	@# Writes into scripts/gram/out and a second copy into site/g, which is
+	@# served at thexchange.app with no gate in front of it — Meta fetches the
+	@# picture by URL and will not take an upload. Deploy after running this.
+	node scripts/gram/make.mjs $(PAIRS)
+
+gram-list: ## What is made and ready to post
+	node scripts/gram/post.mjs --list
+
+gram-post: ## Post one: make gram-post NAME=agent-producer [DRY=1]
+	@test -n "$(NAME)" || { echo 'which one? make gram-list'; exit 1; }
+	@# GRAM_USER_ID and GRAM_TOKEN come from .env and never from the repo.
+	set -a; . ./.env; set +a; \
+	  node scripts/gram/post.mjs "$(NAME)" $(if $(DRY),--dry,)
 
 demo: ## Two people who are not real, so you can see a full room: make demo WHO="Tom" [N=2]
 	@# For "show me what it looks like when I have connections". They are named,
