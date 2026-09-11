@@ -108,6 +108,9 @@ server because the crawler runs no JavaScript.
 | `BOARD_DIR` | Where the feed and its media are written. Default `/data` |
 | `BOARD_ADMIN_KEY` | The admin routes refuse everything without it |
 | `BOARD_SALT` | Salts the device hash. Unset means an unsalted hash, which is a rainbow table away from the id it came from |
+| `BOARD_MAIL_URL` | Where a code is POSTed. Default Resend's address; any provider taking `{from,to,subject,text}` works |
+| `BOARD_MAIL_KEY` | The bearer token for it. Unset and signing in by address is off, and says so |
+| `BOARD_MAIL_FROM` | The address it comes from, on a domain that provider has verified |
 | `BOARD_AT_ROOT` | `1` serves the feed at `/` instead of the landing page |
 | `BOARD_CONTACT` | A person a reader can reach who is not this software |
 | `BOARD_REPORTS_TO_HIDE` | How many separate people hide a post. Default 2 |

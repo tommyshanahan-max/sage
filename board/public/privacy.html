@@ -53,6 +53,11 @@
   <h2 id="h2"></h2><p id="p2"></p><p id="p2b"></p><p id="p2c"></p>
   <!-- Cards get their own section, next to what a profile may carry, because
        they are the exception to it. -->
+  <!-- How somebody gets back in, and the second thing here that can reach
+       them off the board. Before cards because it is the one people will meet
+       first: everybody is asked whether to leave an address, and only some
+       people ever make a card. -->
+  <h2 id="hmail"></h2><p id="pmail1"></p><p id="pmail2"></p><p id="pmail3"></p>
   <h2 id="hcard"></h2><p id="pcard1"></p><p id="pcard2"></p><p id="pcard3"></p>
   <!-- Messages, next to cards: the two places where something reaches one
        named person rather than the board. -->
@@ -89,9 +94,10 @@ const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
 /* The date this document last changed, written into the page at build time
  * rather than generated from today — a policy that always says it was updated
  * today is a policy nobody can tell has changed. */
-const UPDATED = "2026-09-08";
+const UPDATED = "2026-09-11";
 
 const KEYS = ["title","lede","h1","p1","p1b","p1c","h2","p2","p2b","p2c",
+  "hmail","pmail1","pmail2","pmail3",
   "hcard","pcard1","pcard2","pcard3","hcount","pcount1","pcount2",
   "hchat","pchat1","pchat2",
   "hwait","pwait1","pwait2","pwait3",

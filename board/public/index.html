@@ -319,6 +319,17 @@
   .keyrow button{border:1px solid var(--line);background:var(--paper);color:var(--ink);
     border-radius:99px;padding:.45rem 1rem;font-size:.88rem}
   .keyrow button.go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  /* The address and its one button on one line, and the input takes whatever
+     is left: an email is long and the box has to show the end of it, which is
+     where the typo always is. It wraps rather than shrinking past readable. */
+  .mailrow{display:flex;gap:.5rem;margin:.7rem 0 0;flex-wrap:wrap}
+  .mailrow input{flex:1 1 12rem;min-width:0;border:1px solid var(--line);
+    border-radius:.5rem;padding:.55rem .7rem;font-size:.95rem;
+    background:var(--paper);color:var(--ink)}
+  .mailrow button{border:1px solid var(--accent);background:var(--accent);
+    color:var(--accent-ink);border-radius:99px;padding:.45rem 1.1rem;font-size:.88rem}
+  #incode{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    letter-spacing:.35em;font-size:1.2rem;text-align:center}
 
   /* The same avatar control, inside the editor sheet. Profile is reachable
      from the bar before a profile exists, so the form it opens has to be able
@@ -2283,6 +2294,22 @@
          on the server is keyed to a salted hash of it — so showing it here and
          pasting it there is the whole mechanism, with no email, no password
          and nothing new held about anybody. -->
+    <!-- THE WAY BACK, IN THE SHAPE PEOPLE KNOW.
+         Above the key and not inside it, because it is the one most members
+         will actually use: a key is a word they have never met, and the way
+         they find out what it was for is by changing phone. The key stays
+         underneath for anybody who wants the real thing. -->
+    <div class="keybox" id="mailbox">
+      <h3 id="mailtitle"></h3>
+      <p id="mailbody"></p>
+      <div class="mailrow">
+        <input id="mailin" type="email" inputmode="email" autocomplete="email"
+               spellcheck="false" autocapitalize="off">
+        <button type="button" class="go" id="mailsave"></button>
+      </div>
+      <p class="said" id="mailsaid" hidden></p>
+    </div>
+
     <div class="keybox">
       <h3 id="keytitle"></h3>
       <p id="keybody"></p>
@@ -2336,6 +2363,34 @@
       <button class="go" type="submit" id="keygo"></button>
     </div>
     <p class="said" id="keysaid" hidden></p>
+  </form>
+</div>
+
+<!-- SIGNING IN. Two steps in one card: the address, then the six digits that
+     come back to it. The key sheet is still there and one line away, because
+     the key is the thing that actually works and this is the door on top
+     of it. -->
+<div class="sheet" id="insheet" hidden>
+  <form class="card" id="inform">
+    <h2 id="inTitle"></h2>
+    <p class="hint" id="inBody"></p>
+    <div class="field" id="inmailwrap">
+      <input id="inmail" type="email" inputmode="email" autocomplete="email"
+             spellcheck="false" autocapitalize="off">
+    </div>
+    <div class="field" id="incodewrap" hidden>
+      <!-- one-time-code so a phone offers the digits out of the mail itself.
+           Numeric and six long: a box that takes a sentence gets one. -->
+      <input id="incode" inputmode="numeric" autocomplete="one-time-code"
+             maxlength="6" spellcheck="false">
+    </div>
+    <p class="menote" id="inHere" hidden></p>
+    <div class="row">
+      <button class="ghost" type="button" id="inshut"></button>
+      <button class="go" type="submit" id="ingo"></button>
+    </div>
+    <p class="said" id="insaid" hidden></p>
+    <button class="saymore" type="button" id="inkey"></button>
   </form>
 </div>
 
@@ -7010,6 +7065,7 @@ function openMe(joining) {
  * is nobody to appeal to if it is lost. That is the price of holding nothing.
  */
 function drawKey() {
+  drawMail();
   $("keytitle").textContent = T("key.title");
   $("keybody").textContent = T("key.body");
   $("keywarn").textContent = T("key.warn");
@@ -7093,7 +7149,186 @@ $("keycopy").addEventListener("click", () => {
   setTimeout(() => { $("keycopy").textContent = T("key.copy"); }, 2000);
 });
 
-$("keyhave").addEventListener("click", () => {
+/* ---------------------------------------------------------------------------
+ * The address, and the door on top of the key
+ *
+ * The key underneath this is the identity and it is not going anywhere. What
+ * it is not is a thing most people have met: they do not save it, and they
+ * find out what it was for on the day they change phone and everything they
+ * wrote is under a hash nobody can produce any more.
+ *
+ * So an address, optional, never shown to anybody — see shownPerson on the
+ * server, which drops it for every reader but its owner. Six digits come back
+ * to it and do exactly what pasting a key does: the browser is handed a key
+ * and stores it. One mechanism, a door people recognise.
+ * ------------------------------------------------------------------------- */
+function drawMail() {
+  $("mailtitle").textContent = T("mail.title");
+  $("mailbody").textContent = T("mail.body");
+  $("mailin").placeholder = T("mail.ph");
+  $("mailsave").textContent = T("mail.save");
+  /* Only what the server sent back, never a value this page remembers: the
+     address lives on the row, and a box that keeps showing what somebody typed
+     after the save was refused is a box that lies about what is stored. */
+  $("mailin").value = (ME && ME.mail) || "";
+  // Nothing to save against on a browser with no profile yet.
+  $("mailbox").hidden = !(ME && ME.handle);
+}
+
+function mailSaid(msg, bad) {
+  const said = $("mailsaid");
+  said.hidden = false;
+  said.classList.toggle("bad", Boolean(bad));
+  said.textContent = msg;
+}
+
+$("mailsave").addEventListener("click", async () => {
+  const mail = $("mailin").value.trim().toLowerCase();
+  $("mailsave").disabled = true;
+  try {
+    const r = await fetch("/api/me/mail", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, mail }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) {
+      // Kept on ME so the box redraws from what was actually stored.
+      if (ME) ME.mail = d.mail || "";
+      mailSaid(T(d.mail ? "mail.saved" : "mail.cleared"), false);
+    } else if (d.error === "taken") mailSaid(T("mail.taken"), true);
+    else if (d.error === "shape") mailSaid(T("mail.bad"), true);
+    else mailSaid(T("err.general"), true);
+  } catch {
+    mailSaid(T("err.general"), true);
+  }
+  $("mailsave").disabled = false;
+});
+
+/* Which of the two steps the sheet is on, and the address it is working with.
+   On the sheet rather than read out of the box each time: the address box is
+   hidden once the digits are asked for, and a hidden box is still editable by
+   anything that can reach the DOM. */
+let INSTEP = "mail", INMAIL = "", INOVER = false;
+
+function openIn() {
+  INSTEP = "mail";
+  INMAIL = "";
+  INOVER = false;
+  $("inTitle").textContent = T("in.title");
+  $("inBody").textContent = T("in.body");
+  $("inmail").placeholder = T("mail.ph");
+  $("inmail").value = (ME && ME.mail) || "";
+  $("inmailwrap").hidden = false;
+  $("incodewrap").hidden = true;
+  $("incode").value = "";
+  $("inshut").textContent = T("in.cancel");
+  $("ingo").textContent = T("in.send");
+  $("inkey").textContent = T("in.haveKey");
+  $("inHere").hidden = true;
+  $("insaid").hidden = true;
+  $("insheet").hidden = false;
+  $("inmail").focus();
+}
+
+function inSaid(msg, bad) {
+  const said = $("insaid");
+  said.hidden = false;
+  said.classList.toggle("bad", Boolean(bad));
+  said.textContent = msg;
+}
+
+$("keyhave").addEventListener("click", openIn);
+$("inshut").addEventListener("click", () => { $("insheet").hidden = true; });
+$("insheet").addEventListener("click", (e) => {
+  if (e.target === $("insheet")) $("insheet").hidden = true;
+});
+// The real mechanism, one line down from the one people recognise.
+$("inkey").addEventListener("click", () => {
+  $("insheet").hidden = true;
+  openKeySheet();
+});
+
+$("inform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("ingo").disabled = true;
+  try {
+    if (INSTEP === "mail") await inAsk();
+    else await inSpend();
+  } finally {
+    $("ingo").disabled = false;
+  }
+});
+
+async function inAsk() {
+  const mail = $("inmail").value.trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(mail)) return inSaid(T("mail.bad"), true);
+  let r;
+  try {
+    r = await fetch("/api/signin", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mail }),
+    });
+  } catch { return inSaid(T("err.general"), true); }
+  // The one answer that is about the board rather than about a person.
+  if (r.status === 503) return inSaid(T("in.off"), true);
+  if (!r.ok) return inSaid(T("err.general"), true);
+
+  /* ON TO THE DIGITS WHETHER OR NOT ANYBODY HERE USES THAT ADDRESS, because
+     the server will not say which — see /api/signin. The line under the box
+     is true of both cases. */
+  INSTEP = "code";
+  INMAIL = mail;
+  $("inTitle").textContent = T("in.codeTitle");
+  $("inBody").textContent = T("in.codeBody", { mail });
+  $("inmailwrap").hidden = true;
+  $("incodewrap").hidden = false;
+  $("ingo").textContent = T("in.go");
+  inSaid(T("in.sent"), false);
+  $("incode").focus();
+}
+
+async function inSpend() {
+  const code = $("incode").value.replace(/\D/g, "").slice(0, 6);
+  if (code.length !== 6) return inSaid(T("in.bad"), true);
+  let r, d;
+  try {
+    r = await fetch("/api/signin/code", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mail: INMAIL, code, device, over: INOVER ? "yes" : "" }),
+    });
+    d = await r.json().catch(() => ({}));
+  } catch { return inSaid(T("err.general"), true); }
+
+  /* ALREADY SOMEBODY ON THIS PHONE. Warned once and then allowed, the same
+     shape as deleting everything: rebinding moves rather than copies, and the
+     person who is here now would be left with no way back. */
+  if (r.status === 409 && d.error === "here") {
+    INOVER = true;
+    $("inHere").hidden = false;
+    $("inHere").textContent = T("in.here");
+    $("ingo").textContent = T("in.anyway");
+    // The warning is the message; a second line under it says nothing.
+    $("insaid").hidden = true;
+    return;
+  }
+  if (!r.ok) {
+    if (d.error === "old") return inSaid(T("in.old"), true);
+    if (d.error === "spent") return inSaid(T("in.spent"), true);
+    return inSaid(Number(d.left) > 0 ? T("in.left", { n: d.left }) : T("in.bad"), true);
+  }
+
+  /* THE KEY, AND THIS IS THE ONLY PLACE IT WILL EVER EXIST. The server holds
+     a salted hash of it and never the line itself, so a browser that drops it
+     here is in exactly the position somebody is in when they lose their key —
+     which is why it is written before anything else is said on screen. */
+  try { localStorage.setItem("board:device", d.key); } catch { /* private window */ }
+  try { if (d.handle) localStorage.setItem("board:who", d.handle); } catch { /* fine */ }
+  inSaid(T("in.done", { who: d.handle || T("board.someone") }), false);
+  // Everything on this page was drawn for whoever was here before.
+  setTimeout(() => location.reload(), 800);
+}
+
+function openKeySheet() {
   $("keyEnterTitle").textContent = T("key.enterTitle");
   $("keyEnterBody").textContent = T("key.enterBody");
   $("keyin").placeholder = T("key.enterPlaceholder");
@@ -7107,7 +7342,7 @@ $("keyhave").addEventListener("click", () => {
   $("keyReplace").textContent = has ? T("key.replaceWarn") : "";
   $("keysheet").hidden = false;
   $("keyin").focus();
-});
+}
 $("keyshut").addEventListener("click", () => { $("keysheet").hidden = true; });
 $("keysheet").addEventListener("click", (e) => {
   if (e.target === $("keysheet")) $("keysheet").hidden = true;

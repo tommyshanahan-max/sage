@@ -32,6 +32,7 @@ import path from "node:path";
 import * as store from "./lib/store.js";
 import { translate, configured as translateReady } from "./lib/translate.js";
 import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js";
+import { send as sendMail, configured as mailReady } from "./lib/mail.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -299,7 +300,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|r\/|o(?:\/|$)|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|api\/enter|api\/admitted|api\/hello|api\/offer|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|r\/|o(?:\/|$)|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -1392,6 +1393,11 @@ const shownPerson = (q, mine) => ({
      forgetting to. */
   views: mine ? q.views : undefined,
   regs: mine ? q.regs : undefined,
+  /* THE ADDRESS, AND IT GOES TO NOBODY. It is on the row so somebody who never
+     saved their key can get back in, and it is on nobody's screen but their
+     own. Dropped here for the reason given above: a route added later must not
+     be able to publish it by forgetting to. */
+  mail: mine ? q.mail : undefined,
   // A photograph nobody has looked at yet is shown to its owner and to no one
   // else. Words can be taken back; a face somebody has already saved cannot.
   photo: (q.photoState === "published" || mine) ? q.photo : "",
@@ -3182,6 +3188,219 @@ app.post("/api/me/forget", express.json({ limit: "1kb" }), gate, async (req, res
   res.append("Set-Cookie",
     "board_in=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax; Secure");
   res.json({ ok: true, rows: out.rows, files: out.media.length });
+});
+
+/* ---------------------------------------------------------------------------
+ * SIGNING IN, ON A BOARD THAT HAS NO ACCOUNTS
+ *
+ * The identity here is a random number the browser made up, and the key is
+ * that number shown. It is the whole design and it works. What it does not do
+ * is survive people: most of them do not know what a key is, do not save it,
+ * and find out what it was for on the day they change phone and everything
+ * they wrote is under a hash nobody can produce any more.
+ *
+ * So: an address, optional, and six digits to it. What the code does is not
+ * "log you in" — there is still no session and nothing to be logged into. It
+ * REBINDS: their rows move onto a fresh key this browser is handed and stores,
+ * which is exactly what the key does when pasted, and exactly what the cookie
+ * already does for a browser that forgot itself. One mechanism, three doors.
+ *
+ * WHAT IS NOT BUILT HERE, on purpose:
+ *
+ *   No password. There is nothing to remember and nothing to reuse from
+ *   somewhere it has already leaked.
+ *
+ *   No session. The code is spent once and the row is deleted; what the
+ *   browser keeps afterwards is the same key it would have kept anyway.
+ *
+ *   No enumeration. /api/signin answers the same whether or not anybody here
+ *   uses that address. An endpoint that says "no such member" is a tool for
+ *   finding out who is a member, and this is a board whose whole value is
+ *   that being in it is not public.
+ * ------------------------------------------------------------------------- */
+
+/* How long a code is worth anything, and how many guesses it survives. Ten
+   minutes is long enough to walk to a laptop and short enough that a code read
+   off an old mail is dead. Five guesses against a million is generous. */
+const CODE_MINUTES = 10;
+const CODE_TRIES = 5;
+
+/* WHAT THIS COSTS AND WHO CAN SPEND IT — the same shape as the translate cap
+   above. Mail is a bill and an address is somebody's inbox, so a public route
+   that sends one on request is both a bill anybody can run up and a way to
+   post six digits at a stranger all afternoon. Two buckets, neither of which
+   holds an address: one per address hashed, one for the whole board. */
+const MAIL_SENT = new Map();
+const MAIL_PER_ADDRESS = 3;
+const MAIL_PER_HOUR = 60;
+setInterval(() => MAIL_SENT.clear(), 3_600_000).unref?.();
+const mailBudget = (mail) => {
+  const key = store.hashDevice(mail, SALT);
+  const all = (MAIL_SENT.get("all") || 0) + 1;
+  const one = (MAIL_SENT.get(key) || 0) + 1;
+  MAIL_SENT.set("all", all);
+  MAIL_SENT.set(key, one);
+  return all <= MAIL_PER_HOUR && one <= MAIL_PER_ADDRESS;
+};
+
+/** Six digits. Leading zeros kept — a code that is sometimes five long is a
+ *  box people mistype. */
+const sixDigits = () => String(randomUUID().replace(/\D/g, "").slice(0, 6) || "0")
+  .padStart(6, "0").slice(0, 6);
+
+/** The stored form of a code. Hashed with the board's salt, like everything
+ *  else here, so board.json never holds a live one in the clear. */
+const codeHash = (mail, code) => store.hashDevice(mail + ":" + code, SALT);
+
+/** Set the address on my own profile, or clear it.
+ *
+ *  Member only and this browser only: it is written to the row this browser
+ *  already owns, so there is no way to attach an address to somebody else.
+ *  One address per person, and an address another member already has is
+ *  refused — two rows behind one address is one of them locked out. */
+app.post("/api/me/mail", express.json({ limit: "1kb" }), gate, async (req, res) => {
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const want = String(req.body?.mail || "").trim().toLowerCase();
+  // Clearing is always allowed and never an error: it is their address.
+  if (want && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(want)) {
+    return res.status(400).json({ error: "shape" });
+  }
+  const out = await change((board) => {
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine) return { error: "who" };
+    if (want && board.people.some((q) => q.by !== me && q.mail === want)) {
+      return { error: "taken" };
+    }
+    mine.mail = want;
+    /* A code out to the old address stops working the moment the address
+       leaves the row — otherwise a mail sent a minute ago still opens a door
+       that is no longer theirs. */
+    board.signins = (board.signins || []).filter((v) => v.mail !== want);
+    return { ok: true, mail: want };
+  });
+  if (out?.error === "who") return res.status(403).json(out);
+  if (out?.error) return res.status(409).json(out);
+  res.json(out);
+});
+
+/** Ask for a code.
+ *
+ *  ALWAYS THE SAME ANSWER. Known address or not, sent or not sent, the reply
+ *  is `{ ok: true }` — see the note above on enumeration. The only thing that
+ *  changes the answer is mail not being configured on this box at all, which
+ *  is a fact about the board and not about any person.
+ */
+app.post("/api/signin", express.json({ limit: "1kb" }), async (req, res) => {
+  if (!mailReady()) return res.status(503).json({ error: "unconfigured" });
+  const mail = String(req.body?.mail || "").trim().toLowerCase().slice(0, 120);
+  const same = { ok: true };
+  if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(mail)) return res.json(same);
+  if (!mailBudget(mail)) return res.json(same);
+
+  const board = await store.load(FILE);
+  const mine = board.people.find((q) => q.mail === mail);
+  // Nothing here uses that address. Answered like every other case, and the
+  // work stops: no row written, no mail sent, nothing to time.
+  if (!mine) return res.json(same);
+
+  const code = sixDigits();
+  await change((b) => {
+    b.signins = (b.signins || []).filter((v) => v.mail !== mail);
+    b.signins.push(store.cleanSignin({ mail, code: codeHash(mail, code) }));
+    return true;
+  });
+
+  /* SENT AFTER THE ROW IS WRITTEN, and a failure to send is not reported. A
+     mail that bounced and a mail that was never asked for have to look the
+     same from outside, or the difference is the enumeration this route was
+     built to refuse. The page says to check the spam folder. */
+  await sendMail({
+    to: mail,
+    subject: code + " — " + (process.env.TOMSCODING_BOARD_DOMAIN || "The Exchange"),
+    text: "Your code is " + code + ".\n\n"
+      + "It works for " + CODE_MINUTES + " minutes, on the phone or computer you "
+      + "asked from.\n\nIf you did not ask for it, somebody typed your address "
+      + "by mistake. Nothing has happened and you can ignore this.\n",
+  });
+  res.json(same);
+});
+
+/** Spend it.
+ *
+ *  On the way through: the row is deleted, a fresh key is minted, their rows
+ *  are rebound onto it, and the cookie is set to match. The key goes back to
+ *  the browser, which stores it exactly as if somebody had pasted one — so a
+ *  member who signs in on a new phone ends up holding a key again, whether or
+ *  not they ever knew they had one.
+ *
+ *  THE OLD PHONE STOPS BEING THEM. Rebinding moves; it does not copy. Said out
+ *  loud on the screen rather than discovered, because the alternative is many
+ *  keys for one person, and every row on this board is keyed by exactly one
+ *  hash. One person, one key, and the last device to sign in holds it.
+ */
+app.post("/api/signin/code", express.json({ limit: "1kb" }), async (req, res) => {
+  const mail = String(req.body?.mail || "").trim().toLowerCase().slice(0, 120);
+  const code = String(req.body?.code || "").replace(/\D/g, "").slice(0, 6);
+  if (!mail || code.length !== 6) return res.status(400).json({ error: "bad" });
+
+  /* A BROWSER THAT IS ALREADY SOMEBODY. Signing in here would leave that
+     person with no key and no way back — so it is refused, and the page says
+     which person it is about to strand. `over` is the second act, the same
+     shape as `sure` on forget: a word the page sends once somebody has read
+     the warning. */
+  const here = store.hashDevice(String(req.body?.device || ""), SALT);
+  const now = await store.load(FILE);
+  if (here && now.people.some((q) => q.by === here) && req.body?.over !== "yes") {
+    return res.status(409).json({ error: "here" });
+  }
+
+  /* THE KEY IS MADE HERE AND THE SERVER NEVER KEEPS IT. What is stored is the
+     salted hash, like every other identity on this board; the line itself
+     exists in this response and in the browser that receives it, and nowhere
+     else. Two UUIDs so it is as long as the ones browsers make for themselves. */
+  const key = randomUUID() + randomUUID().slice(0, 8);
+  const to = store.hashDevice(key, SALT);
+
+  const out = await change((board) => {
+    board.signins = board.signins || [];
+    const row = board.signins.find((v) => v.mail === mail);
+    if (!row) return { error: "bad" };
+    const old = Date.now() - Date.parse(row.at || "") > CODE_MINUTES * 60_000;
+    if (old) {
+      board.signins = board.signins.filter((v) => v.mail !== mail);
+      return { error: "old" };
+    }
+    if (row.code !== codeHash(mail, code)) {
+      row.tries += 1;
+      // Out of guesses: the row goes rather than sitting there being guessed
+      // at. Asking again sends a new code, which is the cheap part.
+      if (row.tries >= CODE_TRIES) {
+        board.signins = board.signins.filter((v) => v.mail !== mail);
+        return { error: "spent" };
+      }
+      return { error: "bad", left: CODE_TRIES - row.tries };
+    }
+    const mine = board.people.find((q) => q.mail === mail);
+    // The address left the row while the code was in the air.
+    if (!mine) {
+      board.signins = board.signins.filter((v) => v.mail !== mail);
+      return { error: "bad" };
+    }
+    store.rebind(board, mine.by, to);
+    board.signins = board.signins.filter((v) => v.mail !== mail);
+    return { ok: true, handle: mine.handle || "" };
+  });
+
+  if (out?.error === "old") return res.status(410).json(out);
+  if (out?.error === "spent") return res.status(429).json(out);
+  if (out?.error) return res.status(401).json(out);
+
+  /* The cookie, so the server knows them before a single script has run — the
+     same one the door sets, and the reason a signed-in browser is also an
+     admitted one. See the note above OPEN_PATHS. */
+  setCookie(res, to);
+  res.json({ ok: true, key, handle: out.handle });
 });
 
 /** My own card, which is mine to read whether or not anybody else may. */

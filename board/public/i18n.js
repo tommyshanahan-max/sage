@@ -1005,6 +1005,22 @@ export const STRINGS = {
      find. The third paragraph is the cost, and it is not softened: the server
      holds a WeChat id for anybody who fills one in, which was not true of this
      board before the feature existed. */
+  /* AN ADDRESS IS THE SECOND THING THIS SERVER HOLDS THAT CAN REACH SOMEBODY
+     OFF THE BOARD, so it is documented the way cards are: its own section,
+     next to the other one, with the cost said plainly rather than implied. */
+  "pv.hmail":          ["Signing in", "登录"],
+  "pv.pmail1": [
+    "There are no accounts here. What identifies you is a random number your browser made up, and everything you write hangs off a hash of it. That number is your key, and it is shown to you on your own profile.",
+    "这里没有账号。认出你的，是你浏览器随手生成的一串数字；你写的所有东西都挂在它的哈希值下面。那串数字就是你的钥匙，在你自己的资料页上能看到。",
+  ],
+  "pv.pmail2": [
+    "Because most people do not save it, you can leave an email address instead. It is used for one thing: sending you six digits so you can get back in on another phone. It is never shown to another member, never sent anywhere else, and nothing on this board is gated on having one.",
+    "因为大多数人不会把钥匙存下来，你也可以留一个邮箱地址。它只有一个用处：给你发六位数字，让你换手机之后还能回来。别的会员看不到它，它也不会被发去任何别的地方，而且这里没有任何功能是非留不可的。",
+  ],
+  "pv.pmail3": [
+    "The honest cost: it is an address, held on the same server as everything else, and whoever runs this board can read the file — the same trade a card asks for. Clear the box and it is gone from the row; delete your account and it goes with everything else. Anyone who can read your inbox can become you, which is true of every service that works this way.",
+    "老实说代价在哪：那是一个地址，和别的东西存在同一台服务器上，运行这个板的人能看到那个文件——和名片是同一笔交换。把框清空，它就从那一行里消失；把账号删掉，它跟着一起没。谁能看你的邮箱，谁就能变成你——所有这样做的服务都是这样。",
+  ],
   "pv.hcard":          ["Cards", "名片"],
   "pv.pcard1": [
     "A card is a WeChat id and one line you write yourself. It is the one place on this board that holds a way of reaching you off it — everything public is filtered for phone numbers, emails and WeChat ids, and a card is the deliberate exception to that. You only have one if you made one.",
@@ -1362,6 +1378,72 @@ export const STRINGS = {
   "key.hide":          ["Hide it", "藏起来"],
 
   "key.have":          ["Been here before?", "以前来过？"],
+
+  /* SIGNING IN, WHICH IS THE KEY WITH A DOOR PEOPLE RECOGNISE ON IT.
+   *
+   * The key above is the real mechanism and it stays. What it is not is a
+   * thing most people have ever seen: they do not save it, and they find out
+   * what it was for on the day they change phone. An address and six digits is
+   * the shape everybody already knows, and underneath it does exactly what
+   * pasting a key does — see the note above /api/signin.
+   *
+   * The address is never shown to anybody, which is said here rather than
+   * assumed: on a board that asks for no phone number and no documents, a box
+   * wanting an email needs to say in the same breath where it goes. */
+  "mail.title":        ["The way back in", "换手机之后怎么回来"],
+  "mail.body": [
+    "Leave an address and you can get back in from any phone: we send six digits, and that is the whole of it. Nobody on the board ever sees it.",
+    "留个邮箱。以后换手机，我们发你六位数字，你就能回来。板上没有人看得到这个地址。",
+  ],
+  "mail.ph":           ["your@email", "你的邮箱"],
+  "mail.save":         ["Save", "保存"],
+  "mail.saved":        ["Saved.", "存好了。"],
+  "mail.cleared":      ["Removed.", "已经删掉了。"],
+  "mail.bad":          ["That does not look like an address.", "这不太像一个邮箱地址。"],
+  "mail.taken":        ["Somebody here already uses that address.",
+                        "这个地址板上已经有人在用了。"],
+  "mail.off": [
+    "Sending mail is not set up on this board yet, so an address here would do nothing. Save your key instead.",
+    "这块板还没配好发信，留了地址也没用。先把钥匙存下来吧。",
+  ],
+
+  "in.title":          ["Sign in", "登录"],
+  "in.body":           ["The address on your profile. We send you six digits.",
+                        "用你资料里留的那个邮箱。我们发你六位数字。"],
+  "in.send":           ["Send me a code", "给我发验证码"],
+  "in.codeTitle":      ["Six digits", "六位数字"],
+  "in.codeBody": [
+    "Sent to {mail}. It works for ten minutes. If nothing arrives, look in the spam folder.",
+    "已经发到 {mail}，十分钟内有效。要是没收到，翻一下垃圾邮件。",
+  ],
+  "in.go":             ["Go in", "进去"],
+  "in.cancel":         ["Cancel", "取消"],
+  /* NOT "that address is not registered". The reply is the same whether or not
+     anybody here uses it — see /api/signin — so the words have to be true of
+     both cases, and this is what is true of both: if it is a member's address,
+     a code is on its way. */
+  "in.sent":           ["If that address belongs to somebody here, six digits are on their way.",
+                        "如果这个地址是这里某个人的，六位数字已经在路上了。"],
+  "in.bad":            ["That code is not right.", "这个验证码不对。"],
+  "in.left":           ["That code is not right. {n} tries left.",
+                        "验证码不对，还能试 {n} 次。"],
+  "in.old":            ["That code has run out. Ask for another.",
+                        "验证码过期了，重新要一个吧。"],
+  "in.spent":          ["Too many tries. Ask for another code.",
+                        "试太多次了，重新要个验证码。"],
+  /* Rebinding moves; it does not copy — so this is said before it happens
+     rather than discovered afterwards. See the note above /api/signin/code. */
+  "in.here": [
+    "This phone is already somebody here. Signing in leaves that person behind, and it would take their key to get back to them.",
+    "这台手机上已经是某个人了。登录之后，那个人就留在原处——要回去，得有他的钥匙。",
+  ],
+  "in.anyway":         ["Sign in anyway", "还是登录"],
+  "in.done":           ["Welcome back, {who}.", "欢迎回来，{who}。"],
+  "in.haveKey":        ["I have a key instead", "我有钥匙，用钥匙"],
+  "in.off": [
+    "Signing in by email is not set up on this board. Use your key.",
+    "这块板还没开邮箱登录。用钥匙进吧。",
+  ],
 
   /* LEAVING FOR GOOD. It lists what goes before it goes, because a plain
      "are you sure?" makes somebody guess, and the guess is always smaller

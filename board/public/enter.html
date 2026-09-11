@@ -243,6 +243,14 @@
   .keybox textarea{width:100%;margin:.7rem 0 0;border:1px solid var(--line);
     border-radius:.6rem;background:var(--paper);color:var(--ink);
     padding:.6rem .7rem;font:inherit;font-size:.9rem;resize:vertical}
+  .keybox input{width:100%;margin:.7rem 0 0;border:1px solid var(--line);
+    border-radius:.6rem;background:var(--paper);color:var(--ink);
+    padding:.6rem .7rem;font:inherit;font-size:.95rem}
+  #sicode{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    letter-spacing:.35em;text-align:center;font-size:1.15rem}
+  /* The key is the second way in, and the rule says so without a word. */
+  .keybox h2.second{margin:1.4rem 0 0;padding-top:1.1rem;
+    border-top:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -349,7 +357,21 @@
     <button class="keyopen" type="button" id="keyopen"
             aria-expanded="false" aria-controls="keybox"></button>
     <div class="keybox" id="keybox" hidden>
-      <h2 id="keytitle"></h2>
+      <!-- THE ADDRESS FIRST, THE KEY UNDER IT. This box used to open on the
+           word "key", which almost nobody reading it has met — and the person
+           who needs this screen is by definition the one who did not save
+           theirs. Six digits to an address is the shape everybody knows, and
+           underneath it does the same thing. -->
+      <h2 id="sititle"></h2>
+      <p id="sisay"></p>
+      <input id="simail" type="email" inputmode="email" autocomplete="email"
+             spellcheck="false" autocapitalize="off">
+      <input id="sicode" inputmode="numeric" autocomplete="one-time-code"
+             maxlength="6" spellcheck="false" hidden>
+      <button class="quiet wide" type="button" id="sigo"></button>
+      <p class="said" id="sisaid" hidden></p>
+
+      <h2 id="keytitle" class="second"></h2>
       <p id="keysay"></p>
       <p class="where" id="keywhere"></p>
       <textarea id="key" rows="2" spellcheck="false" autocapitalize="off"></textarea>
@@ -681,6 +703,11 @@ function words() {
   $("doornote").textContent = T("door.note");
   $("code").setAttribute("aria-label", T("door.title"));
 
+  $("sititle").textContent = T("in.title");
+  $("sisay").textContent = T("in.body");
+  $("simail").placeholder = T("mail.ph");
+  $("sigo").textContent = T("in.send");
+
   $("keyopen").textContent = T("door.keyOpen");
   $("listopen").textContent = T("door.noCode");
   $("keywhere").textContent = T("door.keyWhere");
@@ -699,6 +726,96 @@ function words() {
 }
 
 $("go").addEventListener("click", () => { if (TYPED.length === 6) enter(); });
+/* SIGNING IN AT THE DOOR.
+ *
+ * Same two steps as the sheet inside — address, then the six digits that come
+ * back to it — and the same reason for being here rather than only in there:
+ * the person who needs this screen is the one who did not save a key, and in
+ * "read" mode this page is the only one they can reach.
+ *
+ * On the way through the server sets the admission cookie, so a member who
+ * signs in is admitted without spending anybody's code. That is not a hole:
+ * they were admitted once already, and the invite row that says so moves with
+ * them — see rebind. */
+let SISTEP = "mail", SIMAIL = "";
+
+function siSaid(msg, bad) {
+  const said = $("sisaid");
+  said.hidden = false;
+  said.className = bad ? "said bad" : "said";
+  said.textContent = msg;
+}
+
+async function signIn() {
+  $("sigo").disabled = true;
+  try {
+    if (SISTEP === "mail") await siAsk();
+    else await siSpend();
+  } finally {
+    $("sigo").disabled = false;
+  }
+}
+
+async function siAsk() {
+  const mail = String($("simail").value || "").trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(mail)) return siSaid(T("mail.bad"), true);
+  let r;
+  try {
+    r = await fetch("/api/signin", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mail }),
+    });
+  } catch { return siSaid(T("door.offline"), true); }
+  if (r.status === 503) return siSaid(T("in.off"), true);
+  if (!r.ok) return siSaid(T("door.offline"), true);
+  /* On to the digits whether or not anybody here uses that address: the server
+     will not say which, and the line under the box is true either way. */
+  SISTEP = "code";
+  SIMAIL = mail;
+  $("sititle").textContent = T("in.codeTitle");
+  $("sisay").textContent = T("in.codeBody", { mail });
+  $("simail").hidden = true;
+  $("sicode").hidden = false;
+  $("sigo").textContent = T("in.go");
+  siSaid(T("in.sent"), false);
+  $("sicode").focus();
+}
+
+async function siSpend() {
+  const code = String($("sicode").value || "").replace(/\D/g, "").slice(0, 6);
+  if (code.length !== 6) return siSaid(T("in.bad"), true);
+  let r, d;
+  try {
+    r = await fetch("/api/signin/code", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      // `over` is always yes here: nobody standing at the door has a profile
+      // in this browser — that is the one case this page is for.
+      body: JSON.stringify({ mail: SIMAIL, code, device, over: "yes" }),
+    });
+    d = await r.json().catch(() => ({}));
+  } catch { return siSaid(T("door.offline"), true); }
+  if (!r.ok) {
+    if (d.error === "old") return siSaid(T("in.old"), true);
+    if (d.error === "spent") return siSaid(T("in.spent"), true);
+    return siSaid(Number(d.left) > 0 ? T("in.left", { n: d.left }) : T("in.bad"), true);
+  }
+  /* The key, and this page is the only place it will ever exist — the server
+     keeps a salted hash of it and never the line. Written before anything is
+     said on screen, for that reason. */
+  try { localStorage.setItem("board:device", d.key); } catch { /* private window */ }
+  device = d.key;
+  siSaid(T("in.done", { who: d.handle || "" }), false);
+  showIn("");
+}
+
+$("sigo").addEventListener("click", signIn);
+$("sicode").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); signIn(); }
+});
+$("simail").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); signIn(); }
+});
+
 $("keygo").addEventListener("click", useKey);
 /* Built on the first press rather than on load: it asks the server for the
    number waiting, and a door nobody has knocked on should not be making

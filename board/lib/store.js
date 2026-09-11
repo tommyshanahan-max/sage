@@ -473,6 +473,37 @@ export function cleanInvite(raw) {
 }
 
 /* ---------------------------------------------------------------------------
+ * A code sent to an address, and what is not kept about it
+ *
+ * The way back for somebody who never saved their key. They type the address
+ * on their profile, six digits arrive, and the digits put their rows onto the
+ * phone in their hand. One row per address while it is live, and the row goes
+ * the moment it is spent.
+ *
+ * THE CODE IS STORED HASHED, with the same salt as everything else. A live
+ * six-digit code sitting in board.json in the clear is a password file: anybody
+ * who can read that file could sign in as anybody who happened to be halfway
+ * through signing in. Hashed, reading the file tells them nothing they can use.
+ *
+ * `tries` is on the row and not in memory. Six digits is a million guesses if
+ * you are patient and a thousand if you are not; a counter that a restart
+ * resets is a counter somebody can reset. Five and the row is dead.
+ * ------------------------------------------------------------------------- */
+export function cleanSignin(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const mail = String(raw.mail ?? "").trim().toLowerCase().slice(0, 120);
+  const code = String(raw.code ?? "");
+  // No address, no hashed code, no row. Both are the whole of it.
+  if (!mail || !/^[a-f0-9]{32}$/.test(code)) return null;
+  return {
+    mail,
+    code,
+    at: String(raw.at ?? "").slice(0, 40) || new Date().toISOString(),
+    tries: Math.max(0, Math.min(20, Number(raw.tries) || 0)),
+  };
+}
+
+/* ---------------------------------------------------------------------------
  * An offer, and why it is a link rather than a screen
  *
  * Everything else on this board is for people who are already inside. An offer
@@ -762,6 +793,34 @@ export function cleanPerson(raw) {
     // reads to decide whether to ask.
     goal: s(raw.goal, 600),
     trade: s(raw.trade, 120),
+    /* AN ADDRESS, AND IT IS NOT A CONTACT.
+     *
+     * The rule above this file's CONTACT_SHAPED list says a profile carries no
+     * email, and that rule still holds: it is about what a profile SHOWS. A
+     * searchable directory of people with their addresses beside them is a
+     * targeting list, and this is not on the profile in that sense — it goes
+     * out to nobody, ever. shownPerson drops it for every reader but the owner,
+     * the same way it drops `views`, and no other route sends it anywhere.
+     *
+     * WHY IT EXISTS AT ALL, having gone this far without one. The identity here
+     * is a random number the browser made up, and the key is that number shown.
+     * It works, and most people will not save it: they do not know what a key
+     * is, and they find out what it was for on the day they change phone and
+     * everything they wrote is under a hash nobody can produce any more. This
+     * is the way back for people who never saved anything — type the address,
+     * read the code, be yourself again.
+     *
+     * IT IS OPTIONAL AND IT STAYS OPTIONAL. Nothing is gated on having one, the
+     * key still works on its own, and `forget` takes this with the row.
+     *
+     * Lowercased because somebody signing in will type it differently from the
+     * way they saved it, and an address that only matches its own capitalisation
+     * is a locked door with the key in it. Shaped loosely — one @, a dot after
+     * it — because the only real test of an address is whether mail arrives. */
+    mail: (() => {
+      const m = s(raw.mail, 120).trim().toLowerCase();
+      return /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(m) ? m : "";
+    })(),
     // Somewhere to be found that is not this board. See igHandle above for
     // what arrives in this box and what is kept out of it.
     ig: igHandle(raw.ig),
@@ -1382,6 +1441,17 @@ export function cleanBoard(raw) {
      makes "once" true. */
   const ran = (Array.isArray(raw?.ran) ? raw.ran : [])
     .filter((x) => typeof x === "string" && x.length < 60).slice(0, 50);
+  /* OUTSTANDING SIGN-IN CODES. One live row per address — asking again while
+     one is out replaces it rather than adding a second, so the last code sent
+     is the only one that works and an old mail is not a spare key. */
+  const signins = [];
+  const seenMail = new Set();
+  for (const r of (Array.isArray(raw?.signins) ? raw.signins : [])) {
+    const v = cleanSignin(r);
+    if (!v || seenMail.has(v.mail)) continue;
+    seenMail.add(v.mail);
+    signins.push(v);
+  }
   const offers = [];
   const seenOffer = new Set();
   for (const r of (Array.isArray(raw?.offers) ? raw.offers : [])) {
@@ -1393,7 +1463,7 @@ export function cleanBoard(raw) {
     offers.push(o);
   }
   return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
-    offers, shuts, groups, says, counts: cleanCounts(raw?.counts) };
+    offers, shuts, groups, says, signins, counts: cleanCounts(raw?.counts) };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an
@@ -1563,8 +1633,14 @@ export function forget(board, me) {
     rows += was - board[key].length;
   };
 
+  /* The addresses go with the rows, and so does any code out to one of them.
+     Taken before `people` is dropped, because after that there is nothing left
+     here that knows what their address was. */
+  const mails = new Set(mine.map((q) => q.mail).filter(Boolean));
+
   drop("people", (q) => q.by !== me);
   drop("posts", (p) => p.by !== me);
+  if (mails.size) drop("signins", (v) => !mails.has(v.mail));
   // Both directions: what they follow, and everybody following the person they
   // were. An id in follows that names nobody is a follower count that lies.
   drop("follows", (f) => f.by !== me && !ids.has(f.who));

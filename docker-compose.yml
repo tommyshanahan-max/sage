@@ -893,6 +893,12 @@ services:
       # without a deploy, which is the thing you want within reach on the one
       # surface two people use to reach each other.
       BOARD_NOTES: ${TOMSCODING_BOARD_NOTES:-on}
+      # SIX DIGITS TO AN ADDRESS, so somebody who never saved their key can get
+      # back in. All three unset means the board says so and offers the key
+      # instead — see lib/mail.js, and the warning there about 163 and QQ.
+      BOARD_MAIL_URL: ${TOMSCODING_BOARD_MAIL_URL:-}
+      BOARD_MAIL_KEY: ${TOMSCODING_BOARD_MAIL_KEY:-}
+      BOARD_MAIL_FROM: ${TOMSCODING_BOARD_MAIL_FROM:-}
       # How many introductions one browser may send in a day. Messages inside
       # an open thread do not count against it.
       BOARD_NOTES_A_DAY: ${TOMSCODING_BOARD_NOTES_A_DAY:-5}
