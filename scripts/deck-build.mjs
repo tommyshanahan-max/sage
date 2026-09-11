@@ -27,8 +27,22 @@ import path from "node:path";
 
 const name = process.argv[2] || "aiden";
 const SRC = path.join("cfm", "deck", name + ".html");
-const OUT = path.join("cfm", "public");
-const BASE = process.env.DECK_BASE || "https://crowdfundme.app";
+/* WHERE THE PAGE IS SERVED FROM, AND IT IS A DECISION PER DECK.
+ *
+ * crowdfundme is where the share offers live, and a deck that offers somebody
+ * equity belongs on it. A deck that asks somebody to join The Exchange does
+ * not: a stranger taps a link, sees a domain called crowdfundme, and reads
+ * "this man wants my money" before reading a word of it.
+ *
+ *   node deck-build.mjs hk --board
+ *
+ * puts it on the board's own domain instead. Both write a d-*.html with an
+ * unguessable name and both keep it in urls.json, so a link already sent keeps
+ * working whichever side it was built for. */
+const ONBOARD = process.argv.includes("--board");
+const OUT = ONBOARD ? path.join("board", "public") : path.join("cfm", "public");
+const BASE = process.env.DECK_BASE
+  || (ONBOARD ? "https://liuxuesheng.io" : "https://crowdfundme.app");
 
 /* THE CARD SAYS THE COMPANY, NOT THE PERSON. <title> is "The Exchange for
    Aiden", which is right in a browser tab; the card is the half that gets
