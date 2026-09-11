@@ -1,0 +1,21 @@
+# THE OLD NAME, KEPT ALIVE AS A REDIRECT.
+#
+# liuxuesheng.io was the board's address for the whole of its first life, and
+# that address is in places this repo cannot reach: invite links sent by
+# WeChat, a message pasted into a group of two hundred agents, the last slide
+# of a deck sent to Hong Kong, and the bio of an Instagram account. Turning it
+# off would break every one of them silently — a tapped link that goes nowhere
+# reads as the company being gone, not as the company having moved.
+#
+# So it answers forever and sends every path to the same path on the new name.
+# `permanent` because it is: a 301 is cached by browsers and by WeChat, which
+# is the point.
+#
+# ITS OWN FILE AND ITS OWN VARIABLE. Caddy substitutes one variable per
+# address, and two site blocks sharing an address is a startup failure that
+# takes down every other site on this box. TOMSCODING_BOARD_OLD_DOMAIN is set
+# only while the old name still resolves; unset, this binds an internal
+# .localhost that nothing points at and does nothing.
+{$TOMSCODING_BOARD_OLD_DOMAIN:oldboard.localhost} {
+	redir https://{$TOMSCODING_BOARD_DOMAIN}{uri} permanent
+}

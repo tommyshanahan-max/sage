@@ -22,9 +22,10 @@ const HERE = path.dirname(new URL(import.meta.url).pathname);
 const OUT = path.join(HERE, "out");
 /* AND A SECOND COPY WHERE META CAN FETCH IT. The publishing API takes a URL
    and will not accept an upload, so the picture has to be on the open web
-   before it can be posted. site/ is served by Caddy off disk at
-   thexchange.app with no container and no invitation gate — see post.mjs. */
-const WEB = path.join(HERE, "..", "..", "site", "g");
+   before it can be posted.
+   board/public/g, and /g/ is in OPEN_PATHS — these have to be readable with
+   no invitation, by a machine at Meta that will never have a code. */
+const WEB = path.join(HERE, "..", "..", "board", "public", "g");
 
 /* The pairs. Each one is a real sentence somebody could say in the app — the
    roles come from ROLES in board/lib/store.js, so a pair that could never
