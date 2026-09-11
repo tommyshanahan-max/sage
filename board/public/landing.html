@@ -86,20 +86,47 @@
   /* The section already pads; this used to add its own on top of an eyebrow
      that is no longer there, which left a hand's width of empty dark above the
      pills — the first thing on the band being nothing. */
-  .one{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
-    padding:.4rem 0 .6rem}
-  .one .does{display:flex;justify-content:center;margin:0;padding:0}
-  /* Centred, because the phone under it is. The pills wrap to two lines on a
-     narrow screen and were left-aligned against a centred screenshot, which
-     reads as two things that were laid out by different people. */
-  .one .doesline{text-align:center}
-  .one .shot.card{width:min(78vw,300px);height:auto;border-radius:1.4rem;
-    box-shadow:0 18px 44px rgba(8,12,20,.28)}
+  .one{display:flex;flex-direction:column;align-items:center;gap:1.3rem;
+    padding:.4rem 0 .6rem;text-align:center}
+  .big{font-family:var(--serif);font-weight:400;font-size:clamp(2.1rem,9vw,3.4rem);
+    line-height:1.05;margin:0;letter-spacing:-.01em}
+  .say{margin:0;max-width:34rem;font-size:clamp(1.02rem,4.2vw,1.25rem);
+    line-height:1.5;color:var(--ink-2)}
+  .say b{color:var(--ink);font-weight:650;white-space:nowrap}
+
+  /* The two cards, before and after. Stacked on a phone: side by side at that
+     width is two things too small to read rather than one comparison. */
+  .twocards{display:grid;gap:.9rem;width:100%;max-width:38rem;margin:.4rem 0 0;
+    grid-template-columns:1fr;text-align:left}
+  .minicard{background:var(--card);border:1px solid var(--line);border-radius:1.1rem;
+    padding:.9rem}
+  .mini-face{height:7.5rem;border-radius:.8rem;display:grid;place-items:center;
+    background:linear-gradient(150deg,hsl(320 26% 64%),hsl(344 24% 42%));
+    font-family:var(--serif);font-size:3rem;color:rgba(255,255,255,.85)}
+  .mini-name{margin:.65rem 0 0;display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+  .mini-name b{font-family:var(--serif);font-weight:400;font-size:1.25rem}
+  .mini-name small{color:var(--muted);font-size:.86rem}
+  .mini-say{margin:.5rem 0 0;font-size:.92rem;color:var(--ink-2);
+    display:flex;flex-wrap:wrap;align-items:center;gap:.3rem}
+  .mini-say i{font-style:normal;font-weight:650;font-size:.86rem;padding:.18rem .6rem;
+    border-radius:99px;background:var(--accent);color:var(--accent-ink)}
+  .mini-btn{display:block;margin:.75rem 0 0;text-align:center;padding:.6rem;
+    border-radius:99px;background:var(--accent);color:var(--accent-ink);font-weight:650}
+  .mini-btn.ghost{background:none;border:1px solid var(--line);color:var(--ink)}
+  .minicard.matched{display:flex;flex-direction:column;justify-content:center}
+  .mini-tag{margin:0;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;
+    font-weight:700;color:var(--accent)}
+  .mini-why{margin:.55rem 0 0;color:var(--ink-2);line-height:1.5;font-size:.95rem}
+  .mini-id{margin:.75rem 0 0;padding:.6rem .8rem;border:1px solid var(--line);
+    border-radius:.6rem;background:var(--paper);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.95rem}
+  @media (min-width:620px){
+    .twocards{grid-template-columns:1fr 1fr;gap:1rem}
+  }
   .onewhy{margin:0;max-width:26rem;text-align:center;font-size:1.05rem;
     line-height:1.6;color:var(--ink-2)}
   @media (min-width:740px){
     .one{gap:1.9rem;padding:.8rem 0 1rem}
-    .one .shot.card{width:330px}
     .onewhy{font-size:1.1rem}
   }
   .doeswhy{margin:.7rem 0 0;font-size:1.02rem;line-height:1.55;
@@ -381,31 +408,59 @@
   </div>
 </div>
 
-<!-- ONE SENTENCE AND ONE SCREEN.
-     This was three numbered steps with arrows between them — the sentence, a
-     match, a conversation — and people still said they did not get it. Three
-     steps is a thing to be studied, and nobody studies a page a friend
-     forwarded them; they look at it for four seconds and decide.
+<!-- WHAT IT IS, IN ONE COMPARISON AND TWO CARDS.
+     Third attempt at this band and the first one people read. It was three
+     numbered steps, then one sentence over a whole screenshot of the app, and
+     both were still being explained to strangers by Tom in WeChat afterwards.
 
-     So: the sentence, and the screen it produces. That is the whole product —
-     you say one line, and you are shown the person who said the other half of
-     it. Everything the three steps were explaining is visible in the one
-     screen: her face, her line, and the two buttons. The steps were describing
-     a picture that was sitting right underneath them.
+     The comparison does the work a paragraph could not: everybody already
+     knows what both of those are, and the shape of the thing lands before the
+     first sentence is finished. It was an eyebrow for a while, four words that
+     scrolled past. It is the headline now.
 
-     Not a drawing of the app and not a slide from a deck. The decks are
-     written to one named person and carry that person's offer, which is not a
-     thing to put on the open web. -->
+     TWO CARDS RATHER THAN ONE SCREEN. The old frame showed a person you could
+     follow and stopped, so the payoff — a contact actually crossing — was a
+     sentence underneath. Before and after, side by side, is the whole product:
+     here is somebody, and here is what happens when it goes both ways.
+
+     DRAWN IN HTML, NOT SHOT FROM THE APP. Both cards are translated, both
+     resize, and neither is a 300KB screenshot on a page opened over a phone
+     connection in China. -->
 <section class="frames">
   <div class="wrap">
     <div class="one">
-      <div class="does">
-        <p class="doesline">
-          <b id="does1"></b><i id="does2"></i><b id="does3"></b><i id="does4"></i>
-        </p>
+      <h2 class="big" id="landbig"></h2>
+      <p class="say" id="landsay"></p>
+
+      <div class="twocards">
+        <!-- BEFORE. A person, their line, and the one button. -->
+        <div class="minicard">
+          <div class="mini-face"><span id="miniletter">m</span></div>
+          <p class="mini-name"><b id="mininame"></b><small id="miniwho"></small></p>
+          <p class="mini-say">
+            <span id="minisay1"></span><i id="minisay2"></i>
+            <span id="minisay3"></span><i id="minisay4"></i>
+          </p>
+          <span class="mini-btn" id="minifollow"></span>
+        </div>
+
+        <!-- AFTER. Both sides said yes, so a contact crossed. The id is the
+             only thing on this page that looks like a real detail, and it is
+             invented — mia_chen_sh belongs to nobody. -->
+        <div class="minicard matched">
+          <p class="mini-tag"><span aria-hidden="true">✓</span> <span id="minimatched"></span></p>
+          <p class="mini-why" id="miniwhy"></p>
+          <p class="mini-id">mia_chen_sh</p>
+          <!-- MESSAGE, NOT "OPEN WECHAT". The board does not open WeChat and
+               must not draw a button that says it does — and the more
+               important half is that it does not need to: a matched pair have
+               a room here, which is the safer thing to offer two people who
+               have just met than "here is my WeChat, go". The id crossing is
+               what they choose to do next. -->
+          <span class="mini-btn ghost" id="minigo"></span>
+        </div>
       </div>
-      <img class="shot card" src="/frame-2.png" alt=""
-        width="585" height="1170" loading="lazy">
+
       <p class="onewhy" id="onewhy"></p>
     </div>
   </div>
@@ -553,11 +608,27 @@ function paint() {
   drawFew();
   $("asking").textContent = T("land.head");
   $("onlyline").textContent = T("land.only");
-  $("does1").textContent = T("land.does1");
-  $("does2").textContent = T("land.does2");
-  $("does3").textContent = T("land.does3");
-  $("does4").textContent = T("land.does4");
   $("onewhy").textContent = T("land.one");
+  $("landbig").textContent = T("land.big");
+  /* The blank sentence is the bold half and has to stay one unbroken run, so
+     it is two nodes rather than a string with markup in it — this page never
+     puts translated text through innerHTML. */
+  $("landsay").replaceChildren(
+    document.createTextNode(T("land.say1") + " "),
+    Object.assign(document.createElement("b"), { textContent: T("land.say2") }),
+    document.createTextNode(" " + T("land.say3")));
+  $("mininame").textContent = T("land.miniName");
+  $("miniwho").textContent = T("land.miniWho");
+  $("minisay1").textContent = T("land.does1");
+  /* WITH THE ARTICLE. role.agent is the bare word, used in pickers where it
+     sits under a label; in a sentence it has to read as a sentence. */
+  $("minisay2").textContent = T("land.miniRole1");
+  $("minisay3").textContent = T("land.does3");
+  $("minisay4").textContent = T("land.miniRole2");
+  $("minifollow").textContent = T("land.miniFollow");
+  $("minimatched").textContent = T("land.miniMatched");
+  $("miniwhy").textContent = T("land.miniWhy");
+  $("minigo").textContent = T("land.miniGo");
   $("doorsEyebrow").textContent = T("land.doors");
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");

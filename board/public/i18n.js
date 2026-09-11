@@ -766,8 +766,30 @@ export const STRINGS = {
      them. This says the only thing the picture does not: that it goes both
      ways, and that nothing happens until it does.
      中文写的不是翻的：「对上眼」就是这个意思，比「匹配」这种词实在。 */
-  "land.one":          ["You say your line. You are shown whoever said the other half of it — and neither of you is told until you both say yes.",
-                        "你说你那一句，就能看到说了另一半的人。两边都点了头，才互相知道。"],
+  /* WHAT IT IS, IN FOUR WORDS. It was an eyebrow for a while and it scrolled
+     past; it is the headline now, because everybody already knows what both of
+     those are and the shape of the thing lands before the sentence is
+     finished. Not translated — both names are read in English in Chinese tech
+     and entertainment circles, and 领英×探探 would name two products that are
+     not these and are not what anybody means. */
+  "land.big":          ["LinkedIn \u00d7 Tinder.", "LinkedIn \u00d7 Tinder\u3002"],
+  "land.say1":         ["You say one line \u2014", "你说一句话 \u2014\u2014"],
+  "land.say2":         ["I am a ___ looking for a ___", "我是 ___，在找 ___"],
+  "land.say3":         ["\u2014 and it finds the people who said the other half.",
+                        "\u2014\u2014 然后它把说了另一半的人找给你。"],
+  "land.miniName":     ["Mia", "Mia"],
+  "land.miniWho":      ["Agent \u00b7 Shanghai", "\u7ecf\u7eaa\u4eba \u00b7 \u4e0a\u6d77"],
+  "land.miniFollow":   ["Follow", "关注"],
+  "land.miniMatched":  ["You matched", "对上了"],
+  "land.miniWhy":      ["She followed you back, and you sent her your card.",
+                        "她也关注了你，你把名片给了她。"],
+  "land.miniGo":       ["Message", "发消息"],
+  "land.miniRole1":    ["an Agent", "经纪人"],
+  "land.miniRole2":    ["a Performer", "演员"],
+  /* The line under both cards, and the only one that is a promise rather than
+     a description. It is why this is not a directory. */
+  "land.one":          ["Nobody's contact opens until both sides agree.",
+                        "两边都点了头，联系方式才出现。"],
   "land.step1":        ["Step 1 · Say it once", "第一步 · 说一句话"],
   "land.step2":        ["Step 2 · You match", "第二步 · 匹配上"],
   "land.step3":        ["Step 3 · Connect and do business", "第三步 · 联系上，开始谈"],
