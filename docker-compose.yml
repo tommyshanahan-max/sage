@@ -896,6 +896,10 @@ services:
       # SIX DIGITS TO AN ADDRESS, so somebody who never saved their key can get
       # back in. All three unset means the board says so and offers the key
       # instead — see lib/mail.js, and the warning there about 163 and QQ.
+      # WHETHER THE BOARD SAYS ANYTHING AT ALL ABOUT A SHARE, to people who are
+      # outside the door. Off. A sentence read by a stranger is a promise, and
+      # nobody has decided this one — see SAY_STAKE in board/server.js.
+      BOARD_STAKE_SAY: ${TOMSCODING_BOARD_STAKE_SAY:-}
       BOARD_MAIL_URL: ${TOMSCODING_BOARD_MAIL_URL:-}
       BOARD_MAIL_KEY: ${TOMSCODING_BOARD_MAIL_KEY:-}
       BOARD_MAIL_FROM: ${TOMSCODING_BOARD_MAIL_FROM:-}

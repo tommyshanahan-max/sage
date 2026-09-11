@@ -1625,6 +1625,24 @@ const ledgerOn = () => SEATS > 0 && Boolean(UNTIL);
  */
 const SEAT_OUTSIDE = process.env.BOARD_SEAT_OUTSIDE === "1";
 
+/* AND WHETHER THE IDEA IS SAID AT ALL, WHICH IS NOT THE SAME QUESTION.
+ *
+ * There was one sentence here for the case where the arithmetic is hidden —
+ * "the first hundred people in will be offered a share of this board" — and
+ * it was shown whenever the block above was OFF, on the reasoning that
+ * somebody deciding whether to bother should know there is something here.
+ *
+ * That made a promise to forty-six strangers the default state of the
+ * product, and the default came from the absence of a different switch. It is
+ * also not true: nobody has decided that the first hundred are offered
+ * anything. The sentence is honest about being unsettled and that does not
+ * help — an intention read by somebody outside the door is a promise, and
+ * this one was never made.
+ *
+ * So it has a switch of its own and the switch is off. Saying it has to be
+ * somebody deciding to say it. */
+const SAY_STAKE = process.env.BOARD_STAKE_SAY === "1";
+
 /* THE TWO TESTS, WHICH NOBODY WAS TAKING.
  *
  * Twenty-two people on the list and not one had a level or a type, so two
@@ -2477,9 +2495,22 @@ app.get("/api/wait/me", async (req, res) => {
        looking at their own card, and a card that hid it from them would read
        as an upload that failed. photoState travels with it so the page can
        say plainly that nobody else can see it yet. */
+    /* WHETHER THEY HAVE A WAY BACK, AND NEVER WHAT IT IS.
+     *
+     * The contact is the one field on this row shown to nobody, and the room
+     * page says so about itself — see the note above putCard. Sending it here
+     * so somebody can read their own address would put it in a page, and a
+     * page that holds it is a page one bug away from showing it.
+     *
+     * A boolean is the whole of what the screen needs: an address means six
+     * digits can bring them back, a WeChat id means they are one lost phone
+     * away from losing their place and nothing had told them. They can write
+     * a new one without this ever having read the old one. */
     you: { name: mine.name, room: mine.room, why: mine.why, at: mine.at,
       levelBand: mine.levelBand, type: mine.type, me: mine.me, want: mine.want,
-      photo: mine.photo, photoState: mine.photoState },
+      photo: mine.photo, photoState: mine.photoState,
+      canSignIn: /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/
+        .test(String(mine.reach || "").trim().toLowerCase()) },
     ahead, waiting: open.length, others, featured, seat,
     /* THE ONE LINE, WHEN THE BLOCK ITSELF IS OFF.
      *
@@ -2489,7 +2520,8 @@ app.get("/api/wait/me", async (req, res) => {
      * something here. It is a sentence, not a block — no seat, no points, no
      * percentage, no money, and nothing to click. One switch does both: the
      * block is on, or the sentence is. */
-    soon: !SEAT_OUTSIDE,
+    // Its own switch now, and never the absence of another. See SAY_STAKE.
+    soon: !SEAT_OUTSIDE && SAY_STAKE,
     tests: TESTS_ON,
     /* THEIR LINK, ALWAYS — not only when the seat block is on.
      *
@@ -2542,8 +2574,20 @@ app.post("/api/wait/card", express.json({ limit: "2kb" }), async (req, res) => {
      * Cleaned one field at a time, against a row that is otherwise theirs, so
      * every rule stays in cleanWait rather than being restated here.
      */
+    /* AN ADDRESS SOMEBODY ELSE IS WAITING WITH. Two open rows behind one
+       address means six digits find the first of them and the other person
+       is quietly locked out of their own place — so it is refused rather than
+       written. Only against addresses: two people can and do give the same
+       office WeChat. */
+    const want = String(req.body?.reach ?? "").trim().toLowerCase();
+    if (want && /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(want)
+        && board.waits.some((w) => !w.done && w.by !== me
+          && String(w.reach || "").trim().toLowerCase() === want)) {
+      return { error: "reachTaken" };
+    }
+
     const put = { ...was };
-    for (const k of ["levelBand", "type", "me", "want", "name", "room", "why"]) {
+    for (const k of ["levelBand", "type", "me", "want", "name", "room", "why", "reach"]) {
       if (req.body?.[k] === undefined) continue;
       const tried = store.cleanWait({ ...was, [k]: req.body[k] });
       /* `why` is the one field that is allowed to become nothing: it is
@@ -2557,9 +2601,12 @@ app.post("/api/wait/card", express.json({ limit: "2kb" }), async (req, res) => {
     if (!row) return { error: "row" };
     board.waits[at] = row;
     return { on: true, you: { levelBand: row.levelBand, type: row.type,
-      me: row.me, want: row.want, name: row.name, room: row.room,
-      why: row.why } };
+      me: row.me, want: row.want, name: row.name, room: row.room, why: row.why,
+      // Whether it works as a way back, never the thing itself. See above.
+      canSignIn: /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/
+        .test(String(row.reach || "").trim().toLowerCase()) } };
   });
+  if (out?.error === "reachTaken") return res.status(409).json(out);
   if (out?.error) return res.status(400).json(out);
   res.json(out);
 });

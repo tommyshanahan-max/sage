@@ -1423,6 +1423,20 @@ export const STRINGS = {
     "留个邮箱。以后换手机，我们发你六位数字，你就能回来。板上没有人看得到这个地址。",
   ],
   "mail.ph":           ["your@email", "你的邮箱"],
+  /* The waiting room's version of the same question. Written for somebody who
+     has not been let in yet: what they stand to lose is a place in a queue,
+     not a page. See the note beside it in room.html — the box is write-only,
+     so it says which state they are in rather than showing an address back. */
+  "wr.backLab":        ["If you change phone", "万一你换了手机"],
+  "wr.backYes": [
+    "You gave an email, so six digits can put you back on this row.",
+    "你留的是邮箱，六位数字就能把你放回这一行。",
+  ],
+  "wr.backNo": [
+    "You gave a WeChat id, which cannot bring you back. Leave an email and your place survives a new phone.",
+    "你留的是微信号，换手机就找不回来了。留个邮箱，位置就还在。",
+  ],
+  "wr.backNew":        ["A different email", "换一个邮箱"],
   "mail.keep":         ["Save it", "存下来"],
   "mail.saved":        ["Saved.", "存好了。"],
   "mail.cleared":      ["Removed.", "已经删掉了。"],

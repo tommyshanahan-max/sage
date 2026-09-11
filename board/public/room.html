@@ -220,6 +220,10 @@
   .seatrest .h{margin:0 0 .5rem;font-size:.76rem;text-transform:uppercase;
     letter-spacing:.08em;color:var(--muted)}
   .seatex{margin:.8rem 0 0;font-size:.75rem;line-height:1.55;color:var(--muted)}
+  /* What the way back is in, said above the box that changes it. */
+  .backsay{margin:.15rem 0 .5rem;font-size:.82rem;line-height:1.5}
+  .backsay.ok{color:var(--muted)}
+  .backsay.warn{color:var(--accent)}
   .soonnote{margin:1.4rem 0 0;padding:.9rem 1rem;border-left:2px solid var(--accent);
     background:var(--raise);border-radius:0 8px 8px 0;font-size:.88rem;color:var(--ink-2)}
   /* Sharing, as its own panel rather than a line inside something else. */
@@ -549,6 +553,10 @@ async function putCard(body) {
       body: JSON.stringify(body),
     }).then((r) => r.json());
     if (out && out.on && DATA && DATA.you) Object.assign(DATA.you, out.you);
+    /* The one refusal worth its own word: somebody else is waiting with that
+       address, and six digits sent to it would find their row rather than
+       this one. Anything else is "that did not work". */
+    if (out && out.error === "reachTaken") return "taken";
     return Boolean(out && out.on);
   } catch { return false; }
 }
@@ -1074,6 +1082,36 @@ function drawYou(box) {
   }
   form.append(rooms);
 
+  /* THE WAY BACK IN, ON THE ROW IT BELONGS TO.
+   *
+   * Their place lives on this browser. Change phone, clear Safari, or open
+   * the link in WeChat rather than the browser they joined in, and they meet
+   * the join form — fill it in and the list has two rows for one person and
+   * they have lost their place.
+   *
+   * Six digits to the address they gave puts them back on their own row, and
+   * only if what they typed was an address. Whoever gave a WeChat id has no
+   * way back and nothing had said so.
+   *
+   * WRITE ONLY. The page is told whether it works, never what it is: the
+   * contact is the one field here shown to nobody, and a page holding it is a
+   * page one bug away from showing it — see the note under Save. So this box
+   * is always empty and typing in it replaces what is on the row. */
+  form.append(el("label", null, T("wr.backLab")));
+  /* `warn`, not `no`: this page already has a .no for the red line under a
+     form that refused, and the two collided — the nudge inherited an error's
+     colour by accident, which is the cascade deciding what something means. */
+  const backsay = el("p", "backsay " + (you.canSignIn ? "ok" : "warn"));
+  backsay.textContent = T(you.canSignIn ? "wr.backYes" : "wr.backNo");
+  form.append(backsay);
+  const reach = el("input");
+  reach.type = "email";
+  reach.inputMode = "email";
+  reach.autocomplete = "email";
+  reach.maxLength = 80;
+  reach.placeholder = T(you.canSignIn ? "wr.backNew" : "mail.ph");
+  form.append(reach);
+
   const save = el("button", "save", T("wr.editSave"));
   save.type = "button";
   const said = el("p", "said");
@@ -1088,10 +1126,23 @@ function drawYou(box) {
        have to be handed to this page first. It is the one thing on the row
        shown to nobody, and a page that holds it is a page one bug away from
        showing it. This route edits the fields it is given and never sees it. */
-    const ok = await putCard({ name: name.value, why: why.value, room });
+    /* An empty box is "leave it alone", never "delete it": this field is
+       write-only, so somebody who cannot see what is there cannot be asked to
+       retype it to keep it. */
+    const want = reach.value.trim().toLowerCase();
+    if (want && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(want)) {
+      no.textContent = T("mail.bad");
+      save.disabled = false;
+      save.textContent = T("wr.editSave");
+      return;
+    }
+    const ok = await putCard({ name: name.value, why: why.value, room,
+      ...(want ? { reach: want } : {}) });
     save.disabled = false;
     save.textContent = T("wr.editSave");
+    if (ok === "taken") { no.textContent = T("mail.taken"); return; }
     if (!ok) { no.textContent = T("act.again"); return; }
+    reach.value = "";
     said.textContent = T("wr.saved");
     await load();
     draw();
