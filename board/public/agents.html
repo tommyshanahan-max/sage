@@ -163,7 +163,11 @@ function paint() {
   $("has").append(b);
 }
 
-setLang(pickLang());
+/* CHINESE UNLESS SOMEBODY HAS SAID OTHERWISE. This page is one link sent to
+   one group, and that group is Chinese — an English default here is the app
+   guessing wrong for almost everybody who opens it. A saved choice still wins
+   inside pickLang, so the 中文 / EN switch sticks. */
+setLang(pickLang("zh"));
 paint();
 $("langslot").append(langButton(() => {
   paint();
