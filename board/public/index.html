@@ -6257,7 +6257,20 @@ function qRow(w) {
   if (w.type) tags.append(el("span", null, w.type));
   if (w.want) tags.append(el("span", null, T("role.p." + w.want)));
   if (w.brought) tags.append(el("span", null, T("brw.qbrought", { n: w.brought })));
-  if (w.vouches) tags.append(el("span", null, T("brw.qvouches", { n: w.vouches })));
+  /* WHO VOUCHED, NAMED. A member scrolling past "2 vouched" reads a number;
+     the same row saying "Ivy vouched" is somebody they know standing behind a
+     stranger, and that is the only thing on this list that moves anybody.
+     Two names and then a count — three names is wider than the row. */
+  if (w.vouches) {
+    const names = (w.vouchedBy || []).map((n) => n || T("board.someone"));
+    let tag = T("brw.qvouches", { n: w.vouches });
+    if (names.length) {
+      const who = names.slice(0, 2).join(T("brw.qjoin"));
+      const rest = w.vouches - Math.min(2, names.length);
+      tag = rest > 0 ? T("brw.qvplus", { who, n: rest }) : T("brw.qvby", { who });
+    }
+    tags.append(el("span", null, tag));
+  }
   if (tags.childNodes.length) mid.append(tags);
 
   /* THE VOUCH, and it moves them one place — see queueOrder on the server.

@@ -2121,6 +2121,10 @@ export const STRINGS = {
   "brw.vouch":         ["Vouch", "推荐"],
   "brw.vouched":       ["Vouched", "已推荐"],
   "brw.qvouches":      ["{n} vouched", "{n} 人推荐"],
+  /* NAMED, because a name is the whole of a vouch — see /api/queue. The count
+     stays for the rows with more names than fit. */
+  "brw.qvby":          ["{who} vouched", "{who} 推荐了"],
+  "brw.qvplus":        ["{who} +{n}", "{who} +{n}"],
   /* THE ONE SETTING, AND IT READS AS A STATE. It said "coming soon" for a
      day, next to a tick box in the profile form that had done exactly this
      since the form existed — so the tray was telling people a lie about

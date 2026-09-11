@@ -2725,6 +2725,28 @@ app.get("/api/queue", async (req, res) => {
    * namespaces with some of the same words in them). Both wrong readings show
    * as nobody waiting, every time. Same trap as /api/faces; same note there.
    */
+  /* WHO SPOKE FOR THEM, BY NAME, and it is the whole weight of a vouch.
+   *
+   * "2 vouched" is a number. "Ivy vouched" is somebody this member already
+   * knows putting their name to a stranger, and it is the only thing on this
+   * list that can move anybody. The count was here from the start and the
+   * names were nowhere, which left the row saying that something happened
+   * without saying the one part of it that carries.
+   *
+   * MEMBERS ONLY, like everything else on this route. It never reaches the
+   * person waiting: /api/wait/me carries names out of the queue and nothing
+   * from inside. Resolved from the profile at read time rather than stored,
+   * the same as the panel — somebody who changes what they are called should
+   * not leave a trail of rows crediting who they used to be. Blank where the
+   * profile has gone, and the page says "someone" rather than a gap: the
+   * vouch still happened. */
+  const nameOf = new Map(board.people.map((q) => [q.by, q.handle]));
+  const spoke = new Map();
+  for (const v of board.vouches || []) {
+    if (!spoke.has(v.wait)) spoke.set(v.wait, []);
+    spoke.get(v.wait).push(nameOf.get(v.by) || "");
+  }
+
   const shown = order.map((x) => x.w).filter((w) => w.shown);
   const says = [];
   for (const q of board.people) {
@@ -2761,6 +2783,8 @@ app.get("/api/queue", async (req, res) => {
       name: x.w.name, room: x.w.room, why: x.w.why,
       levelBand: x.w.levelBand, type: x.w.type, want: x.w.want,
       brought: x.n || 0, vouches: x.v || 0,
+      // Six is more names than the row can draw; the count carries the rest.
+      vouchedBy: (spoke.get(x.w.id) || []).slice(0, 6),
       /* Whether this reader has already vouched, so the button can say so
          rather than offering a thing that would do nothing. */
       mine: (board.vouches || []).some((v) => v.wait === x.w.id && v.by === me),
