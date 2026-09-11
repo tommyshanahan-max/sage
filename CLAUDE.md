@@ -37,6 +37,21 @@ the name the door says out loud ("Tom let you in"). `FOR` is the person the
 code is for. Putting the recipient in `WHO` mints a code that credits them
 with bringing themselves in.
 
+**The invite is settled — don't redesign it.** Tom likes it as it stands, both
+halves. The printed message (`scripts/invite.mjs`) is a block between two rules,
+ready to paste into WeChat, with the link and the code on separate lines. The
+page it opens (`board/public/enter.html`) greets the person by name, says who
+let them in, counts down to the deadline, and takes six characters. What makes
+it work, and what any change has to keep:
+
+- **The link alone opens nothing.** The code travels beside it, so a link
+  forwarded by accident is not a way in.
+- **Named.** "Ray — this is the board I mentioned", and the door says "Tom let
+  you in". Not "You have been invited".
+- **A visible clock.** The deadline is in the link and the page counts it down,
+  so "good for 24 hours" is true without anybody remembering to make it true.
+- **One person, once.** Spent on arrival.
+
 `make cfm-project ID=... NAME="..."` before any offer for a project the ledger
 has never heard of — otherwise the offer comes back as "bad", which is true
 and no help at all.
