@@ -538,6 +538,31 @@ gram-post: ## Post one: make gram-post NAME=agent-producer [DRY=1]
 	set -a; . ./.env; set +a; \
 	  node scripts/gram/post.mjs "$(NAME)" $(if $(DRY),--dry,)
 
+demo-board: ## Fill the demo board — the one a reviewer sees: make demo-board
+	@# THE OTHER BOARD. `make demo` puts two invented neighbours beside a real
+	@# member on the REAL board. This fills the demo container, where nobody is
+	@# real and nothing here can touch board_data.
+	@#
+	@# Safe to run twice: the script works out who is already there.
+	@#
+	@# It refuses any board with a door on it, so a wrong container name is a
+	@# refusal rather than eight invented people in the real room.
+	@grep -qE '^COMPOSE_PROFILES=.*board-demo' .env \
+	  || { echo 'board-demo is not in COMPOSE_PROFILES — the container is not running'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board-demo \
+	  /seed/demo-board.mjs http://board-demo:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --device "$$(grep -E '^TOMSCODING_BOARD_DEMO_DEVICE=' .env | tail -1 | cut -d= -f2- | grep . || echo demoreviewer00000000000000000001)"
+
+demo-board-rm: ## Empty the demo board completely: make demo-board-rm
+	@# The volume, not the rows. Everything in it is invented, so there is
+	@# nothing to preserve and nothing to be careful about — which is the one
+	@# place on this box where that is true.
+	$(COMPOSE) stop board-demo
+	$(COMPOSE) rm -f board-demo
+	docker volume rm -f tc_board_demo_data 2>/dev/null \
+	  || docker volume rm -f $$(docker volume ls -q | grep board_demo_data | head -1) 2>/dev/null || true
+	@echo 'Gone. make up, then make demo-board.'
+
 demo: ## Two people who are not real, so you can see a full room: make demo WHO="Tom" [N=2]
 	@# For "show me what it looks like when I have connections". They are named,
 	@# their sentences answer yours, and they are gone again in one command.

@@ -197,6 +197,75 @@ app.get("/api/contact", (_req, res) =>
  * host makes a bad share card for the forger and changes nothing here.
  */
 const PAGES = new Map();
+/* ---- THE DEMO BOARD -------------------------------------------------------
+ *
+ * EVERY BROWSER THAT ARRIVES HERE IS THE SAME PERSON. Set BOARD_DEMO_DEVICE
+ * and this deployment stops being a board with members and becomes one room
+ * with one seat in it that anybody may sit in.
+ *
+ * WHY IT HAS TO EXIST. App Review will not approve an app a reviewer cannot
+ * get into, and the door here is the product: six characters, named, spent on
+ * arrival, dead in a day. A reviewer needs credentials that work every time,
+ * months apart, on every update — which is a permanent hole in the exact
+ * mechanism the board is built on. So they are not let into this board at all.
+ * They are sent to a second one, with nobody real in it, and handed a seat
+ * that already has matches, cards and two conversations in it. An empty
+ * account is not a demonstration of a messenger.
+ *
+ * WHY IT IS A PINNED DEVICE AND NOT A LOGIN. The identity here is a random
+ * number the browser made up and keeps in localStorage. Pinning that number is
+ * therefore the whole of "be this person" — no new concept, no new table, no
+ * session, and nothing downstream that has to learn about demo mode. Every
+ * route below still answers about whoever the device says they are; it is only
+ * that on this one deployment the device always says the same thing.
+ *
+ * WHY IT IS SAFE ON THE REAL BOARD. It is a string of HTML, empty unless the
+ * variable is set, and the variable is set on one container whose entire
+ * purpose is this. Set it on the real board and every arrival would become one
+ * member — which is why it is named for what it does and lives here rather
+ * than being inferred from a hostname or a NODE_ENV.
+ *
+ * The script runs before the app's own modules: it is written into the page
+ * rather than fetched, and localStorage is synchronous, so the device is
+ * already pinned by the time anything reads it.
+ */
+/* THE OTHER HALF, AND IT LIVES ON THE REAL BOARD. These two are set on the
+ * board with the real members on it; the two above are set on the demo one.
+ * A code typed at the real door that matches this is not admitted to anything
+ * — it is answered with the demo board's address, and that browser goes there.
+ *
+ * WHY THE CODE IS ON THE REAL DOOR AT ALL, rather than the app shipping the
+ * demo address for review and the real one after. That is Guideline 2.3.1,
+ * behaviour altered after review, and every update is re-reviewed, so it is
+ * caught the first time a fix ships. This way the app points at the real board
+ * from the first build to the last and never changes: the reviewer simply has
+ * a key that opens a different room, the same as it did before approval and
+ * the same as it will next year.
+ *
+ * IT NEVER SPENDS AND NEVER EXPIRES, which is exactly what makes it unsafe as
+ * an invite and exactly what App Review needs. It is safe here because it
+ * admits nobody to this board: it cannot be redeemed, it writes nothing, it
+ * touches no row, and the worst a leaked copy does is send a stranger to a
+ * room full of people who do not exist.
+ *
+ * Unset, none of this is reachable and the door behaves as it always has. */
+const DEMO_CODE = store.cleanCode(process.env.BOARD_DEMO_CODE || "");
+/* An origin and nothing else — no path, no query. It is handed straight to
+   location.assign() on the door page, so anything that is not a bare host is a
+   redirect somebody could have chosen. http and a port are allowed so the pair
+   can be run on a laptop; in front of a reviewer it is https, because the app
+   navigates to it and App Transport Security will not follow plain http. */
+const DEMO_URL = (() => {
+  const want = String(process.env.BOARD_DEMO_URL || "").replace(/\/+$/, "");
+  return /^https?:\/\/[a-z0-9.-]+(?::\d{2,5})?$/i.test(want) ? want : "";
+})();
+
+const DEMO_DEVICE = String(process.env.BOARD_DEMO_DEVICE || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64);
+const DEMO_TAG = DEMO_DEVICE
+  ? '<script>try{localStorage.setItem("board:device",'
+    + JSON.stringify(DEMO_DEVICE) + ')}catch(e){}</script>'
+  : "";
+
 async function page(file, req, res, next) {
   try {
     if (!PAGES.has(file)) PAGES.set(file, await readFile("public/" + file, "utf8"));
@@ -219,7 +288,8 @@ async function page(file, req, res, next) {
       .replace(/[^A-Za-z0-9/?=&._~:@+-]/g, "").slice(0, 512);
     res.send(PAGES.get(file)
       .split("{{HERE}}").join(here)
-      .split("{{ORIGIN}}").join(origin));
+      .split("{{ORIGIN}}").join(origin)
+      .split("{{DEMO}}").join(DEMO_TAG));
   } catch (e) { next(e); }
 }
 
@@ -909,6 +979,15 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
   if (!code) {
     t.n += 1; t.at = now; tries.set(me, t);
     return res.status(400).json({ error: "bad", left: Math.max(0, 5 - t.n) });
+  }
+
+  /* THE REVIEWER, SENT NEXT DOOR — checked before anything that reads the
+     board file, because this answer involves no row and no member.
+     safeEqual rather than ===: the codes are short, the door is public, and a
+     timing answer about the first character is a free character. */
+  if (DEMO_CODE && DEMO_URL && safeEqual(code, DEMO_CODE)) {
+    tries.delete(me);
+    return res.json({ ok: true, elsewhere: DEMO_URL });
   }
 
   /* A WAITING PERSON'S WAY BACK, checked before the invites.

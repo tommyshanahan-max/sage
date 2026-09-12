@@ -980,6 +980,82 @@ services:
     cpu_shares: ${TOMSCODING_BOARD_CPU_SHARES:-128}
 
   # ---------------------------------------------------------------------------
+  # The demo board: the same app, with nobody real in it.
+  #
+  # WHAT IT IS FOR. App Review will not approve an app a reviewer cannot get
+  # into, and the door on the real board is the product: six characters, named,
+  # spent on arrival, dead in a day. Giving Apple credentials that survive that
+  # means putting a permanent hole in it. So the reviewer is not let into the
+  # real board at all — they type a code at the real door, it answers with this
+  # address, and they land here, in a room where every person is invented.
+  #
+  # It doubles as the thing to send somebody you are raising from. A live link
+  # to the whole app beats a deck, and no member's face is in it.
+  #
+  # THE SAME IMAGE AS THE REAL BOARD, deliberately. A demo built from a
+  # different branch is a demo that stops being true, and the one it stops
+  # being true for is a reviewer deciding whether the app does what it says.
+  #
+  # SHARES NOTHING WITH THE REAL BOARD. Its own volume, its own salt, its own
+  # hostname and therefore its own cookies, its own service worker and its own
+  # localStorage. There is no configuration of this that can read board_data.
+  #
+  # Off unless asked for: add `board-demo` to COMPOSE_PROFILES in .env.
+  board-demo:
+    build:
+      context: ./board
+    image: tomscoding-board:latest
+    container_name: tomscoding-board-demo
+    restart: unless-stopped
+    profiles: ["board-demo"]
+    user: "1000:1000"
+    environment:
+      BOARD_DIR: /data
+      # The seeding script talks to this over the admin routes, so it needs a
+      # key. The same one as the real board is fine and is one less secret to
+      # keep: it opens a board with nothing on it worth opening.
+      BOARD_ADMIN_KEY: ${TOMSCODING_BOARD_KEY:-}
+      # ITS OWN SALT, AND A LITERAL DEFAULT RATHER THAN EMPTY. Nothing here is
+      # a real person, so this protects nobody — but an empty salt is the one
+      # state the real board must never be in, and a default of "" copied from
+      # this block into that one is exactly how that happens.
+      BOARD_SALT: ${TOMSCODING_BOARD_DEMO_SALT:-demo-board-not-a-secret}
+      # NO DOOR. Unset means the app serves everything to anybody with the
+      # address, which is what a demo is. The reviewer has already been through
+      # the real door to get the address at all.
+      BOARD_INVITE: ""
+      # EVERY BROWSER HERE IS THE SAME PERSON. Without this a reviewer arrives
+      # as nobody, with an empty inbox and a form asking for a photograph, and
+      # an empty messenger is what an unfinished app looks like. With it they
+      # are the seeded member: matches, cards, two conversations. See DEMO_TAG
+      # in board/server.js, and `make demo-board`, which seeds against exactly
+      # this value.
+      BOARD_DEMO_DEVICE: ${TOMSCODING_BOARD_DEMO_DEVICE:-demoreviewer00000000000000000001}
+      BOARD_NOTES: "on"
+      # Apple asks for a person a reader can reach on any app carrying other
+      # people's words (Guideline 1.2), and the reviewer is looking for it on
+      # the app in front of them, which is this one.
+      BOARD_CONTACT: ${TOMSCODING_BOARD_CONTACT:-}
+      # DELIBERATELY ABSENT: no ANTHROPIC_API_KEY, so the translate button does
+      # not appear rather than appearing and billing; no BOARD_HOOK_URL, so
+      # nothing here reaches the real panel's queue; no mail, no hostess. A
+      # demo board that can spend money or send a message is a demo board that
+      # can do something nobody meant it to.
+      BOARD_BRING_DAYS: "0"
+      BOARD_TESTS: ${TOMSCODING_BOARD_TESTS:-}
+    volumes:
+      - board_demo_data:/data
+    expose:
+      - "8080"
+    networks:
+      - tomscoding
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_BOARD_DEMO_MEMORY:-192m}
+    cpu_shares: 64
+
+  # ---------------------------------------------------------------------------
   # Ferry: a private room where two people read different languages.
   #
   # Off unless asked for, like every optional thing here. Add `ferry` to
@@ -1069,6 +1145,10 @@ volumes:
   # anything: this is a separate product and the day it moves to its own box is
   # a day it should be one `docker volume` to carry.
   board_data:
+  # The demo board's, and the whole point of it being a separate one. Nothing
+  # in here is a real person, and nothing in board_data is reachable from the
+  # container that mounts this.
+  board_demo_data:
   # Who each product is shared with, and what has gone out. Shared between the
   # owner's seat and the partner seats rather than living in a project
   # directory: a partner's snapshot is read-only, and the two seats call the

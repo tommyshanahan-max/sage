@@ -1,0 +1,41 @@
+# The demo board — the same app with nobody real in it.
+#
+# Where a reviewer lands. They type a code at the real board's door, it answers
+# with this address, and they arrive here as the one seeded member: matches,
+# cards and two conversations already in the room. Nothing they can reach from
+# here touches a real person, because nothing real is in this container.
+#
+# It is also the link to send somebody you are raising from.
+#
+# Inert until TOMSCODING_BOARD_DEMO_DOMAIN is set: unset, it binds an internal
+# .localhost name and requests no certificate. THAT FALLBACK MUST STAY DISTINCT
+# FROM EVERY OTHER ONE IN THIS DIRECTORY — two site blocks sharing an address
+# is a startup failure, not a warning, and it takes the real board down with
+# it. `demo.localhost` was checked against every other file here before it was
+# written. Grep before changing it:
+#   grep -ho ':[a-z0-9-]*\.localhost' docker/sites/*.caddy | sort -u
+{$TOMSCODING_BOARD_DEMO_DOMAIN:demo.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# NOT INDEXED, EVER. A room of invented people under the product's own name
+	# is the one page here that must never turn up in a search for it — a
+	# stranger finding this instead of the real board reads eight fabricated
+	# members as the membership. The real board sends its own robots.txt; this
+	# header is on every response and does not depend on a crawler asking for
+	# a file first.
+	header X-Robots-Tag "noindex, nofollow"
+
+	# No /a/ counter block, unlike board.caddy. Visits to a demo are not a
+	# figure anybody should be reading beside real ones, and the reviewer is
+	# not a visitor worth counting.
+	handle {
+		reverse_proxy board-demo:8080
+	}
+}

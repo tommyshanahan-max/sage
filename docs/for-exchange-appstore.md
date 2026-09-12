@@ -30,21 +30,52 @@ were let in and are coming back, which is every member the board has.
 
 ### 1. The reviewer cannot get in — Guideline 2.1
 
-This is the blocker, it is specific to this product, and it is not a packaging
-problem. App Review requires working credentials in App Store Connect, and a
-reviewer who meets a door rejects the app without reading further.
+**Built, 12 Sep.** The rest of this section is how, and what it costs to run.
 
-The door is six characters, named, spent on arrival, and dead in 24 hours.
-Every one of those properties is deliberate and three of them are the reason
-the board is worth being in. A reviewer needs a code that is **not** spent on
-arrival and does **not** expire — a permanent hole in the exact mechanism the
-product is built on.
+App Review requires working credentials, and a reviewer who meets a door
+rejects the app without reading further. The door here is six characters,
+named, spent on arrival, dead in 24 hours. Every one of those is deliberate and
+three of them are the reason the board is worth being in — so the reviewer is
+not let into this board at all.
 
-The way through it is a room the reviewer is admitted to that contains nobody
-real: a demo identity, a handful of invented members, the messenger working
-against them. It is a fortnight of work and it is honest — it is what the
-reviewer is entitled to see, which is the app functioning, not the membership.
-Doing it any other way means a live code sitting in a form at Apple.
+**A second board, with nobody real in it.** `board-demo` in docker-compose: the
+same image, its own volume, its own salt, its own hostname and therefore its
+own cookies, and no door. Nothing in it is a person. Nothing that mounts it can
+read `board_data`.
+
+**Reached through the real door, permanently.** The reviewer types the code
+from App Store Connect at the real board; `/api/enter` recognises it and
+answers with the demo board's address instead of admitting anybody. The code
+never spends and never expires — which is what makes it useless as an invite
+and exactly what App Review needs — and it is safe because it redeems nothing
+and writes nothing.
+
+This is the shape that matters, and the alternative is a rejection: **the app
+must point at the real board from the first build to the last.** Shipping the
+demo address for review and switching after approval is Guideline 2.3.1, and
+every update is re-reviewed, so it is caught the first time a fix ships. Here
+nothing switches — the reviewer just has a key to a different room, the same
+key, before approval and next year.
+
+**They land as somebody, not as nobody.** `BOARD_DEMO_DEVICE` pins every
+browser arriving at the demo board to one identity, so a reviewer opens the app
+already in a seat with eight people in Browse, four connections in Cards and
+two conversations in Messages. An empty account is not a demonstration of a
+messenger, and an empty messenger is what 4.2 looks like from the other side of
+the desk. `make demo-board` seeds it; safe to run twice.
+
+**What it costs to keep.** The demo host has to stay up for as long as the app
+is listed — every update is re-reviewed against it. Take it down and the next
+release is rejected.
+
+**What goes in App Store Connect**, under App Review Information:
+
+- Sign-in required: yes
+- User name: the code (the board asks for nothing else)
+- Password: the code again — there is no second field
+- Notes: say that the app is invite-only, that this code opens a demonstration
+  board of sample accounts rather than the live membership, and that it does
+  not expire
 
 ### 2. There is no reason for it to be an app — Guideline 4.2
 

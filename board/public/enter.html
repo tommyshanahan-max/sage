@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- Empty on every deployment but the demo board, where it pins this
+     browser to the one seeded identity. See BOARD_DEMO_DEVICE in server.js. -->
+{{DEMO}}
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
@@ -625,6 +628,14 @@ async function enter() {
        their card is, so that is where they go. No "you are in" screen — they
        are not in, and telling them so for a second before the page changes
        would be the wrong thing to have said. */
+    /* THE REVIEWER'S CODE, WHICH ADMITS NOBODY. It is answered with an
+       address rather than a welcome: a second board, nobody real on it, and a
+       seat already full of matches and conversations. App Review needs
+       credentials that work on every update for as long as the app is listed,
+       and this door cannot give them that without giving it to everybody.
+       Straight there with no screen in between — there is nothing true to say
+       on this one, because they have not come in. */
+    if (r.ok && d.elsewhere) { location.assign(d.elsewhere); return; }
     if (r.ok && d.waiting) { location.assign("/room"); return; }
     /* A MEMBER'S WAY BACK, and the same reasoning: they are already in, their
        rows are already on this browser, and the "you are in" screen is written
