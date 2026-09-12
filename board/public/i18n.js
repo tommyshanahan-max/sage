@@ -82,6 +82,17 @@ export const STRINGS = {
     "想放到主屏幕：点右上角 \u22ef，用浏览器打开。",
   ],
   "ins.no":  ["Not now", "以后再说"],
+
+  /* THE BUZZ. Said as what it does for them, not as "enable notifications" —
+     the thing somebody wants is to stop missing messages, and "notifications"
+     is the word every app uses just before it starts sending things nobody
+     asked for. The board sends exactly one kind and this says so. */
+  "push.ask":  [
+    "Get told when somebody writes to you.",
+    "有人给你留言时，通知你一声。",
+  ],
+  "push.on":   ["Turn on", "打开"],
+  "push.wait": ["…", "…"],
   "board.someone":     ["someone", "某人"],
   /* The board's own voice on the feed. Not "The Tutor" — he is the card at the
      top of the app that helps somebody work out what to do, and a notice from

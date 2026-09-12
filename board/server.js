@@ -35,6 +35,7 @@ import { translate, configured as translateReady } from "./lib/translate.js";
 import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js";
 import { send as sendMail, configured as mailReady } from "./lib/mail.js";
 import * as intake from "./lib/intake.js";
+import * as push from "./lib/push.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -4648,6 +4649,63 @@ function threadState(board, me, them) {
 }
 
 /* Writing to somebody. */
+/* ---------------------------------------------------------------------------
+ * BEING TOLD SOMETHING ARRIVED
+ *
+ * The board has never had a way to reach anybody. Somebody writes, the other
+ * person is not looking at the tab, and that is the end of it — which is the
+ * whole reason a messenger with real people in it can still feel empty.
+ *
+ * Three routes and no new concept: the browser asks for the key, subscribes
+ * itself with its own push service, and hands back a URL to buzz. Nothing is
+ * ever sent through it but the buzz; see lib/push.js.
+ *
+ * DARK WITHOUT A KEYPAIR. /api/push/key answers with nothing, and the switch
+ * does not appear. A permission prompt on a board that cannot send is worse
+ * than no feature at all: browsers remember a refusal and will not ask again,
+ * so one pointless prompt today costs the real one for ever.
+ */
+app.get("/api/push/key", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ key: push.publicKey() });
+});
+
+app.post("/api/push/on", express.json({ limit: "8kb" }), gate, async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  if (!push.configured()) return res.status(503).json({ error: "off" });
+  const sub = push.cleanSub(req.body?.sub);
+  if (!sub) return res.status(400).json({ error: "bad" });
+  await change((board) => {
+    board.pushes = board.pushes || [];
+    /* KEYED ON THE ENDPOINT, NOT THE DEVICE. A browser rotates its endpoint
+       and re-subscribes; a member signs in on a second phone. Both are one row
+       each, and the same endpoint arriving twice is the same phone. */
+    const had = board.pushes.find((x) => x.endpoint === sub.endpoint);
+    if (had) { had.by = me; had.keys = sub.keys; return { ok: true }; }
+    const row = store.cleanPush({ by: me, ...sub });
+    if (row) board.pushes.push(row);
+    return { ok: true };
+  });
+  res.json({ ok: true });
+});
+
+app.post("/api/push/off", express.json({ limit: "8kb" }), gate, async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const endpoint = String(req.body?.endpoint || "");
+  await change((board) => {
+    board.pushes = (board.pushes || []).filter((x) => (
+      /* Their own row and no other. An endpoint is not a secret — it arrives
+         from the browser — so a request to forget one may only forget a row
+         belonging to the device asking. Without the `by` test this is a route
+         for turning off somebody else's notifications. */
+      !(x.by === me && (!endpoint || x.endpoint === endpoint))));
+    return { ok: true };
+  });
+  res.json({ ok: true });
+});
+
 app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   const who = String(req.body?.who || "");
@@ -4721,7 +4779,37 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
   // Nothing is told to the panel. A note nobody reported is not the admin's to
   // know about, and a webhook carrying one would make that untrue.
   res.status(201).json({ ok: true, id: out.note.id, answering: out.answering });
+
+  /* AND THEN THE PHONE, AFTER THE ANSWER HAS ALREADY GONE BACK.
+   *
+   * Deliberately not awaited. The sender is watching their own message appear;
+   * a push service having a slow afternoon must not be something they wait
+   * for, and whether the other person's phone buzzed is not an outcome the
+   * sender is entitled to know anyway.
+   *
+   * Nothing is sent WITH it — see lib/push.js. The buzz says a message
+   * arrived; who and what are behind the door, where they belong. */
+  tellThem(out.note.to).catch(() => { /* a push that failed is a push that did not arrive */ });
 });
+
+/** Buzz every device a member has turned this on for, and drop the ones the
+ *  browser has thrown away. Never throws. */
+async function tellThem(to) {
+  if (!push.configured() || !to) return;
+  const board = await store.load(FILE);
+  const subs = (board.pushes || []).filter((x) => x.by === to);
+  if (!subs.length) return;
+  const dead = await push.tell(subs);
+  if (!dead.length) return;
+  /* A SEPARATE WRITE, AND ONLY WHEN THERE IS SOMETHING TO FORGET. An
+     uninstalled app or a cleared site leaves an endpoint that will 410 for
+     ever; kept, it is one doomed request per message per dead phone. */
+  const gone = new Set(dead);
+  await change((b) => {
+    b.pushes = (b.pushes || []).filter((x) => !gone.has(x.endpoint));
+    return { ok: true };
+  });
+}
 
 /* Mine, both directions.
  *

@@ -1254,6 +1254,35 @@ export function cleanShut(raw) {
   return { by, who, at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
 }
 
+/* A DEVICE THAT WANTS TO BE TOLD.
+ *
+ * One row per browser per member, not per member: the same person on a phone
+ * and a laptop is two subscriptions and both should buzz. `by` is the device
+ * hash every other row here is keyed on, so forgetting a member takes their
+ * subscriptions with it and nothing else has to know.
+ *
+ * The endpoint is the primary key rather than the device, because that is what
+ * the push service hands back as dead and it is what the browser changes
+ * underneath us when it rotates one. Two rows with the same endpoint would be
+ * two notifications for one phone.
+ *
+ * NOTHING HERE IDENTIFIES ANYBODY. A URL at Apple or Google and two keys the
+ * browser made up. See lib/push.js for why no payload is ever sent to it.
+ */
+export function cleanPush(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const by = String(raw.by || "").slice(0, 64);
+  const endpoint = String(raw.endpoint || "");
+  if (!by || !/^https:\/\/[^\s]{10,500}$/.test(endpoint)) return null;
+  const k = raw.keys && typeof raw.keys === "object" ? raw.keys : {};
+  const p256dh = String(k.p256dh || "");
+  const auth = String(k.auth || "");
+  if (!/^[A-Za-z0-9\-_=]{20,200}$/.test(p256dh)) return null;
+  if (!/^[A-Za-z0-9\-_=]{8,100}$/.test(auth)) return null;
+  return { by, endpoint, keys: { p256dh, auth },
+    at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
+}
+
 export const followersOf = (follows, id) =>
   follows.reduce((n, f) => n + (f.who === id ? 1 : 0), 0);
 
@@ -1670,8 +1699,21 @@ export function cleanBoard(raw) {
     writes.push(w);
   }
 
+  /* Deduplicated on the ENDPOINT and not on by+endpoint: a browser that
+     re-subscribes after the member's row was rebound would otherwise leave two
+     rows pointing at one phone, and that phone would buzz twice per message. */
+  const seenPush = new Set();
+  const pushes = [];
+  for (const r of (Array.isArray(raw?.pushes) ? raw.pushes : [])) {
+    const x = cleanPush(r);
+    if (!x || seenPush.has(x.endpoint)) continue;
+    seenPush.add(x.endpoint);
+    pushes.push(x);
+  }
+
   return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
-    offers, shuts, groups, says, signins, writes, counts: cleanCounts(raw?.counts) };
+    offers, shuts, groups, says, signins, writes, pushes,
+    counts: cleanCounts(raw?.counts) };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an

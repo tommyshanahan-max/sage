@@ -389,6 +389,10 @@
 
   <div id="listview">
     <p class="ins" id="install" hidden></p>
+    <!-- And the second half of that ask. On iOS this only appears once the app
+         IS on the home screen — Safari has no web push in a browser tab — so
+         the two strips are never up together and never compete. -->
+    <p class="ins" id="notify" hidden></p>
     <!-- WHO YOU CAN WRITE TO. WeChat hides starting a chat behind the ＋ in
          the corner, and its billion users know it is there. Nobody here does,
          and this strip is the whole reason the inbox stopped being a dead end,
@@ -489,6 +493,7 @@
 <script type="module">
 import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
 import { offerInstall } from "/install.js";
+import { offerNotify } from "/notify.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -702,6 +707,9 @@ function paint() {
   /* Not for the waiting list and not for an invited arrival: both are being
      asked to get in, and two asks at once is neither. */
   offerInstall($("install"), !WAITING);
+  // Deliberately not awaited: it asks the board for the key and the browser
+  // for its registration, and the list must not wait on either.
+  offerNotify($("notify"), !WAITING);
   if (WAITING) $("waitbar").textContent = T("note.onList");
   $("tabmego").href = YOU.handle
     ? "/p/" + encodeURIComponent(YOU.handle.toLowerCase()) : "/browse";

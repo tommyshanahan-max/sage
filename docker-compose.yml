@@ -973,6 +973,14 @@ services:
       #
       # Unset on any box that has no demo board, which is the default: the door
       # then behaves exactly as it always has.
+      # TELLING SOMEBODY A MESSAGE ARRIVED. Dark without a pair: /api/push/key
+      # answers with nothing and the switch never appears, which is deliberate
+      # — a browser remembers a refused permission for ever, so one prompt on a
+      # board that cannot send costs the real prompt permanently.
+      # `make board-keys` mints them. Once; see the note there.
+      BOARD_VAPID_PUBLIC: ${TOMSCODING_BOARD_VAPID_PUBLIC:-}
+      BOARD_VAPID_PRIVATE: ${TOMSCODING_BOARD_VAPID_PRIVATE:-}
+      BOARD_VAPID_SUBJECT: ${TOMSCODING_BOARD_VAPID_SUBJECT:-}
       BOARD_DEMO_CODE: ${TOMSCODING_BOARD_DEMO_CODE:-}
       BOARD_DEMO_URL: ${TOMSCODING_BOARD_DEMO_URL:-}
     volumes:

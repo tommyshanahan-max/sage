@@ -129,3 +129,47 @@ self.addEventListener("fetch", (event) => {
     }
   })());
 });
+
+/* ---------------------------------------------------------------------------
+ * THE BUZZ
+ *
+ * THERE IS NOTHING IN IT AND THAT IS THE DESIGN. The server sends a push with
+ * no payload at all — see board/lib/push.js — so there is nothing to parse,
+ * nothing to get wrong, and nothing a lock screen can leak. One wording, and
+ * the name of whoever wrote is behind the door where it belongs.
+ *
+ * It is also why this file needs no key and no decryption: the two hard parts
+ * of web push, the encryption and the library that does it, are both absent
+ * because there is no message to encrypt.
+ *
+ * ONE TAG, so eleven replies while somebody is asleep are one line on the lock
+ * screen and not eleven. renotify so the eleventh still buzzes.
+ *
+ * THE WORDING IS IN ENGLISH AND CHINESE TOGETHER rather than picked. A service
+ * worker has no access to the page's language — it wakes with no page at all —
+ * and reading localStorage is not available to it either. Two short halves is
+ * honest for a board where both languages are in every room anyway, and it is
+ * better than guessing wrong on somebody's lock screen.
+ */
+self.addEventListener("push", (e) => {
+  e.waitUntil(self.registration.showNotification("The Exchange 交换", {
+    body: "Somebody wrote to you · 有人给你留言了",
+    icon: "/icon-512.png",
+    badge: "/favicon.png",
+    tag: "board-note",
+    renotify: true,
+  }));
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  e.waitUntil((async () => {
+    /* An open tab is focused rather than a second one opened — somebody who
+       has the board open on a laptop and taps the phone notification should
+       land in the conversation, not in a duplicate window. */
+    for (const c of await self.clients.matchAll({ type: "window", includeUncontrolled: true })) {
+      if (c.url.includes("/notes") && "focus" in c) return c.focus();
+    }
+    if (self.clients.openWindow) return self.clients.openWindow("/notes");
+  })());
+});
