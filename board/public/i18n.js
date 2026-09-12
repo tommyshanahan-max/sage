@@ -734,9 +734,43 @@ export const STRINGS = {
      waiting" alone is a queue for nothing. */
   "land.few":          ["{in} inside. {out} waiting to be let in.",
                         "里面 {in} 个人，门外 {out} 个在等。"],
+  /* WHAT IT IS, TO SOMEBODY WHO HAS NEVER HEARD OF IT.
+   *
+   * This said "One line instead of a CV. Invite only — everybody here was let
+   * in by somebody already in." Three faults, and they only showed once an
+   * unfamiliar person read it.
+   *
+   * "One line instead of a CV" answers a question nobody has asked yet — the
+   * line is further down the page and they have not seen it. From outside the
+   * product it is jargon.
+   *
+   * It explained the MECHANIC, which is now the entire band underneath: the
+   * sentence, the two pickers, the person who answers. The hero was saying the
+   * same thing worse, thirty pixels higher up.
+   *
+   * And it stacked two claims in one breath, so neither landed.
+   *
+   * NOT "a marketplace". A marketplace is a place you browse and transact in,
+   * which is a directory of people — the exact thing the line above this one
+   * promises it is not. The two would contradict each other with four
+   * centimetres between them.
+   *
+   * What is left is the sentence Tom actually says out loud when he explains
+   * it, which the invitation and the door's link card already use. Saying it
+   * in three places is not repetition; it is the thing having a name.
+   *
+   * 人脉 rather than a translation of "network": in a mainland ear the English
+   * word means Facebook, and 人脉 is the people you can actually call. */
   "land.only": [
-    "One line instead of a CV. Invite only — everybody here was let in by somebody already in.",
-    "写一句话就行，不用简历。只能被邀请进来——这里的每个人，都是里面的人放进来的。"],
+    "A private club for doing business through who you know.",
+    "一个靠人脉做生意的私人圈子。"],
+  /* Who it is for and how you get in — the half of the old line worth keeping,
+     on its own, small, beside the button it explains. It is the reason the
+     button says "waiting list" rather than "sign up", and a stranger who does
+     not read it wonders why they cannot simply join. */
+  "land.onlyhow": [
+    "Cross-border investment and entertainment, mostly. Invite only — everybody here was let in by somebody already in.",
+    "主要是跨境投资和影视娱乐。只能被邀请进来——这里的每个人，都是里面的人放进来的。"],
   /* THREE FRAMES, ONE STORY, and the order is the argument: two people who do
      not know each other, then the only thing this product does.
      They were three unrelated screens — browse, cards, the door — which showed

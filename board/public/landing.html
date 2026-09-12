@@ -229,6 +229,11 @@
     .one{gap:1.9rem;padding:.8rem 0 1rem}
     .onewhy{font-size:1.1rem}
   }
+  /* Smaller and quieter than the line above it: one of these is what the thing
+     is and the other is the rules of entry, and they should not look like two
+     sentences of equal weight. */
+  .onlyhow{margin:.8rem 0 0;font-size:.92rem;line-height:1.55;color:var(--muted);
+    max-width:32rem}
   .doeswhy{margin:.7rem 0 0;font-size:1.02rem;line-height:1.55;
     color:var(--ink-2)}
   @media (max-width:380px){
@@ -490,6 +495,7 @@
            further down and in the door's own words — by which point somebody
            has already decided whether to bother. -->
       <p class="only" id="onlyline"></p>
+      <p class="onlyhow" id="onlyhow"></p>
       <!-- HOW FEW. The page says "invite only" and that is a policy; this is
            the fact underneath it, and a fact is what makes a policy believed.
            Drawn only when the server sends both numbers — it withholds the
@@ -718,6 +724,7 @@ function paint() {
   drawFew();
   $("asking").textContent = T("land.head");
   $("onlyline").textContent = T("land.only");
+  $("onlyhow").textContent = T("land.onlyhow");
   $("onewhy").textContent = T("land.one");
   $("landbig").textContent = T("land.big");
   $("phTop").textContent = T("land.phTop");
