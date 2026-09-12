@@ -51,6 +51,56 @@
     background:var(--accent-soft);font-size:.86rem;color:var(--ink-2);
     line-height:1.5}
   .wrband b{display:block;color:var(--ink);font-size:.98rem;font-weight:500}
+  /* THE WAITING ROOM, WHICH IS A DIFFERENT BAND FROM BEING ON THE LIST.
+     Warmer than the blue one above it so that being moved up reads as having
+     happened rather than as the same notice with new words in it. */
+  .wrband.up{background:var(--goldbg,#F6EEDA);
+    border:1px solid var(--goldline,#E5D4A8)}
+  .wrband .clock{display:block;margin:.4rem 0 0;font-size:.8rem;font-weight:600;
+    color:var(--gold,#8A6A1F)}
+  .wrband .todo{margin:.5rem 0 0;padding:0;list-style:none;font-size:.84rem}
+  .wrband .todo li{margin:.15rem 0;color:var(--ink-2)}
+  .wrband .todo li.on{color:var(--good,#1F7A4D)}
+  .wrband .todo i{font-style:normal;margin-right:.4rem}
+
+  /* THE HOME SCREEN, OFFERED ON THEIR OWN PAGE. install.js decides whether
+     there is anything to offer — WeChat cannot install and says so instead;
+     iOS gets the share-sheet instruction; Chrome gets a button. Same strip as
+     Browse and Messages, because a sentence that differs between screens
+     reads as two different apps. */
+  .ins{display:flex;align-items:center;justify-content:center;gap:.5rem;
+    margin:1rem 0 0;padding:.55rem .9rem;border-radius:.75rem;
+    background:var(--accent-soft);color:var(--accent);font-size:.78rem;
+    letter-spacing:.02em;text-align:left}
+  .ins button{border:0;background:none;color:inherit;font:inherit;padding:0;
+    flex:0 0 auto;cursor:pointer}
+  .insgo{background:var(--accent);color:var(--accent-ink);border-radius:99px;
+    padding:.2rem .8rem;font-size:.78rem}
+  .insno{font-size:1.1rem;line-height:1;opacity:.7;padding:0 .2rem}
+  .insico{width:1em;height:1em;vertical-align:-.2em;display:inline-block}
+
+  /* LOSING THE PLACE — the one warning on this page that is about something
+     that cannot be undone. Its own colour, its own box, and the field that
+     fixes it inside it: a warning that says to go and open a form somewhere
+     else is a warning that gets read and not acted on. */
+  .lose{margin:1rem 0 0;padding:.9rem .95rem;border-radius:.75rem;
+    background:var(--badbg,#FBEAE8);border:1px solid var(--badline,#F2C9C4)}
+  .lose b{display:block;color:var(--ink);font-size:.95rem;font-weight:600;
+    margin:0 0 .25rem}
+  .lose p{margin:0 0 .6rem;font-size:.84rem;line-height:1.55;color:var(--ink-2)}
+  .lose .go{display:flex;gap:.5rem}
+  .lose input{flex:1;min-width:0;border:1px solid var(--line);background:var(--paper);
+    border-radius:99px;padding:.55rem .9rem;font:inherit;font-size:.92rem;
+    color:var(--ink);outline:none}
+  .lose button{flex:0 0 auto;border:0;border-radius:99px;background:var(--ink);
+    color:var(--paper);font:inherit;font-size:.9rem;padding:.55rem 1.1rem}
+  .lose button[disabled]{opacity:.5}
+  .lose .said{margin:.5rem 0 0;font-size:.82rem;color:var(--good,#1F7A4D)}
+  .lose .no{margin:.5rem 0 0;font-size:.82rem;color:var(--bad,#B3261E)}
+  @media (prefers-color-scheme:dark){
+    .wrband.up{background:#2A2312;border-color:#453A1C}
+    .lose{background:#2A1614;border-color:#4A2420}
+  }
   .wrband .q{display:block;margin:.35rem 0 0;font-size:.8rem;color:var(--accent);
     font-weight:600}
 
@@ -356,6 +406,7 @@
 
 <script type="module">
 import { T, setLang, pickLang, langButton, when } from "/i18n.js";
+import { offerInstall } from "/install.js";
 import { device } from "/wait.js";
 /* The same pipeline the board behind the door uses — HEIC in, JPEG out,
    the right way up, small enough to arrive over Chinese mobile data. */
@@ -867,6 +918,57 @@ function shareBox(link, ahead) {
   return out;
 }
 
+/** The box that stops somebody losing their place.
+ *
+ *  It writes to the same route the edit form does and never reads the field
+ *  it is writing: `reach` is the one thing on this row shown to nobody, so an
+ *  empty box means "leave it alone" and a filled one replaces it. Somebody
+ *  who typed a WeChat id and adds an address here loses the WeChat id, which
+ *  is the trade and is why the text says what the address is FOR rather than
+ *  asking for "your email".
+ */
+function loseBox() {
+  const box = el("div", "lose");
+  box.append(el("b", null, T("lose.head")));
+  box.append(el("p", null, T("lose.why")));
+  const go = el("div", "go");
+  const input = el("input");
+  input.type = "email";
+  input.inputMode = "email";
+  input.autocomplete = "email";
+  input.maxLength = 80;
+  input.placeholder = T("mail.ph");
+  const save = el("button", null, T("lose.save"));
+  save.type = "button";
+  go.append(input, save);
+  box.append(go);
+  const said = el("p", "said");
+  const no = el("p", "no");
+  box.append(said, no);
+
+  save.addEventListener("click", async () => {
+    const want = input.value.trim().toLowerCase();
+    no.textContent = "";
+    said.textContent = "";
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(want)) { no.textContent = T("mail.bad"); return; }
+    save.disabled = true;
+    save.textContent = T("me.working");
+    const ok = await putCard({ reach: want });
+    save.disabled = false;
+    save.textContent = T("lose.save");
+    /* TWO ROWS BEHIND ONE ADDRESS means six digits find the first of them and
+       the other person is locked out of their own place — refused by the
+       server rather than written. See /api/wait/card. */
+    if (ok === "taken") { no.textContent = T("mail.taken"); return; }
+    if (!ok) { no.textContent = T("act.again"); return; }
+    input.value = "";
+    said.textContent = T("lose.done");
+    await load();
+    draw();
+  });
+  return box;
+}
+
 function drawWait(box) {
   const you = DATA.you;
 
@@ -878,7 +980,78 @@ function drawWait(box) {
      same, and only one of them is worth working at. */
   band.append(el("span", "q", T("wr.ahead",
     { n: (DATA.ahead || 0) + 1, t: DATA.waiting || 1 })));
+
+  /* MOVED UP, AND THE PAGE HAD NEVER SAID SO.
+   *
+   * The server has been sending up / upDone / upLeft since the waiting room
+   * was built and nothing drew any of them — so the entire experience of
+   * being moved up was a grey line on the app saying the buttons do not work
+   * yet. That is a demotion with extra steps, and it is why the stage felt
+   * flat.
+   *
+   * WHAT IS LEFT, ITEMISED, because "finish your page" with no idea what is
+   * missing is a demand rather than an invitation. The clock is only shown
+   * once it is running — it starts when they first open it, not when they
+   * were lifted (see upSeen), so before that there is honestly no deadline
+   * to name. */
+  if (DATA.up) {
+    band.className = "wrband up";
+    fill(band);
+    band.append(el("b", null, T("wroom.head")));
+    band.append(document.createTextNode(T("wroom.body")));
+    const todo = el("ul", "todo");
+    const item = (done, key) => {
+      const li = el("li", done ? "on" : "");
+      li.append(el("i", null, done ? "✓" : "○"), document.createTextNode(T(key)));
+      return li;
+    };
+    todo.append(item(Boolean(you.photo), "wroom.needPhoto"));
+    todo.append(item(Boolean(you.me && you.want), "wroom.needSay"));
+    band.append(todo);
+    if (DATA.upDone) band.append(el("span", "clock", T("wroom.done")));
+    else if (typeof DATA.upLeft === "number") {
+      band.append(el("span", "clock", T("wroom.left", { n: DATA.upLeft })));
+    }
+  }
   box.append(band);
+
+  /* AND THE THING THAT CANNOT BE UNDONE.
+   *
+   * Their place lives in this browser's storage and nowhere else. Change
+   * phone, clear Safari, or — the common one — open the link in WeChat's
+   * browser rather than the one they joined in, and they meet the join form:
+   * fill it in and the list holds two rows for one person and they have lost
+   * their place, their photograph and their card.
+   *
+   * Six digits to an address puts them back. Whoever typed a WeChat id into
+   * the contact box has no way back at all, and the only place that said so
+   * was a line inside the edit form further down this page, which somebody
+   * who has not opened the form has never seen.
+   *
+   * SHOWN TO THE PEOPLE WITH SOMETHING TO LOSE, and not to all fifty-four. A
+   * red box on every screen is a red box nobody reads. Somebody in the
+   * waiting room is on a clock and about to spend real effort; somebody who
+   * has uploaded a face has already spent it.
+   *
+   * WRITE ONLY, like the box in the edit form below: the page is told whether
+   * a way back exists, never what it is. */
+  if (!you.canSignIn && (DATA.up || you.photo || you.me)) box.append(loseBox());
+
+  /* AND THE HOME SCREEN, on the page they were sent a link to.
+   *
+   * The order matters and is the order the things can be lost in: what you
+   * are doing here, then the thing that cannot be undone, then the app. A
+   * strip about the home screen above a warning about losing the row would be
+   * the smaller ask on top of the larger one.
+   *
+   * WeChat's browser is the case this exists for. It cannot install anything
+   * and its storage is the most fragile there is, and it is where most of
+   * these links get opened — install.js says "open it in your browser"
+   * there rather than drawing a button that cannot work. */
+  const strip = el("p", "ins");
+  strip.hidden = true;
+  box.append(strip);
+  offerInstall(strip, true);
 
   const full = Boolean(you.levelBand && you.type && you.want);
 

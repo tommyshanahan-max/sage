@@ -231,11 +231,31 @@ async function tell(id) {
   const w = (d.waits || []).find((x) => x.id === id);
   if (!w) { console.error("  no row with that id"); process.exit(1); }
   const zh = isZh(w.name) || isZh(w.why);
+  /* THREE PARAGRAPHS AND THE LINK, AND THE SECOND ONE IS NOT HOUSEKEEPING.
+   *
+   * Their place lives in the browser they open this in and nowhere else, and
+   * the ordinary way to open a WeChat link is WeChat's own browser — whose
+   * storage is the most fragile there is and which cannot put anything on a
+   * home screen. So somebody who does the whole thing in there can lose the
+   * photograph and the card they just spent twenty minutes on, and the board
+   * has no way to tell them afterwards because the row is what held the way
+   * to reach them.
+   *
+   * Said here rather than only on the page, because by the time they are ON
+   * the page they are already in the wrong browser. The page says it too —
+   * see loseBox in room.html — and that one is the safety net, not the plan.
+   *
+   * Short, because this is pasted into a chat. Two sentences each, no
+   * numbered steps, and the reason before the instruction in both. */
   const line = zh
     ? [
         w.name + "，轮到你了。",
         "",
         "你现在可以进去看看里面有些什么人了。先把自己的那页填好——一张照片，和一句话说你是谁、在找什么。填好了我这边才好放你进来。",
+        "",
+        "打开的时候用 Safari（或者手机自带的浏览器），别在微信里面填：微信里存不住，换个地方打开你填的东西就没了。填的时候留一个邮箱，那是唯一能把你的位置找回来的办法。",
+        "",
+        "在 Safari 里打开之后，点一下「分享」再选「添加到主屏幕」，用起来就跟一个 App 一样了。",
         "",
         PUBLIC + "/room",
       ]
@@ -243,6 +263,10 @@ async function tell(id) {
         w.name + " — your turn came up.",
         "",
         "You can see who is in there now. Finish your own page first: a photo, and one line saying what you are and what you are looking for. That is what I read before letting anybody in.",
+        "",
+        "Open it in Safari rather than inside WeChat — WeChat forgets, and everything you fill in goes with it. Put an email in when it asks: that is the only way to get your place back.",
+        "",
+        "Once it is open in Safari, tap Share and Add to Home Screen. Then it works like an app.",
         "",
         PUBLIC + "/room",
       ];

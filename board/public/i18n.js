@@ -116,6 +116,35 @@ export const STRINGS = {
     "Have a look around. Nothing works for you yet, and that is not you doing it wrong. Finish your page: it is what somebody reads when they decide.",
     "先随便看看。现在什么都还点不动，不是你操作错了。把自己的主页填完整——有人做决定的时候，看的就是这个。",
   ],
+  /* WHAT IS LEFT AND HOW LONG THERE IS. The server has been sending all
+     three of these since the waiting room was built and no page drew any of
+     them, so being moved up was a grey line saying the buttons do not work
+     yet. "Finish your page" with no idea what is missing is a demand. */
+  "wroom.needPhoto":   ["A photo", "一张照片"],
+  "wroom.needSay":     ["What you are and what you are looking for",
+                        "你是做什么的，在找什么"],
+  /* The clock only appears once it is running — it starts when they open it,
+     not when they were moved up, so before that there is honestly no deadline
+     to name. */
+  "wroom.left":        ["{n} hours left", "还剩 {n} 小时"],
+  "wroom.done":        ["Finished. Somebody will read it.", "填完了，会有人来看。"],
+
+  /* LOSING THE PLACE, which is the one thing on this board that cannot be
+     undone. Their row lives in this browser's storage and nowhere else, and
+     the commonest way to lose it is not a lost phone — it is opening the link
+     in WeChat's browser rather than the one they joined in.
+     The heading says what is at stake rather than naming a feature: "Sign in
+     with email" is a setting, "this phone is the only place your place
+     exists" is a reason. */
+  "lose.head":         ["This phone is the only place you exist",
+                        "你现在只存在于这一台手机上"],
+  "lose.why": [
+    "Your place, your photo and your card live in this browser and nowhere else. Change phone, clear it, or open the link somewhere else and they are gone — and joining again puts a second you at the back of the list. Leave an email and six digits bring you back.",
+    "你的位置、照片和卡片只存在这个浏览器里，别的地方都没有。换手机、清了缓存，或者从别的地方打开链接，就都没了——重新填一遍只会让你多出一个人排在最后面。留个邮箱，六位数字就能把你找回来。",
+  ],
+  "lose.save":         ["Save it", "保存"],
+  "lose.done":         ["Saved. Your place can come back now.", "存好了。现在能把位置找回来了。"],
+
   "push.head": ["Know when somebody writes", "有人给你留言，第一时间知道"],
   "push.later":["Not now", "以后再说"],
   "push.ask":  [
