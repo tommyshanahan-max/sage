@@ -348,7 +348,13 @@ board-keys: ## Make the keypair the board needs to buzz a phone: make board-keys
 	@# key cannot be reached by a token signed with the new one, and its row
 	@# sits in the file looking alive. Everybody who turned this on silently
 	@# stops being told, and the only fix is asking each of them again.
-	@node scripts/board-keys.mjs
+	@# RUN INSIDE THE BOARD'S OWN CONTAINER, like every other script target
+	@# here. The first version of this called `node` on the host, and the host
+	@# has no node — nothing on this box does, which is the whole point of it
+	@# being containers. `node: command not found`, from a target whose entire
+	@# job is to print two strings.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" \
+	  --entrypoint node board /seed/board-keys.mjs
 
 ferry-keys: ## Make the keypair Ferry needs to send notifications
 	@# VAPID: the standard that lets a server push to Apple's and Google's
