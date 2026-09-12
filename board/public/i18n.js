@@ -2562,6 +2562,12 @@ export const STRINGS = {
      two cards and an arrow cannot draw. */
   "cards.capYours":    ["Send yours to get theirs", "先发你的，才能拿到他的"],
   "cards.capSent":     ["Sent — waiting for theirs", "已发出——等他的"],
+  // Theirs arrived first. The row looked finished while the other person was
+  // still waiting on you, so it now says which way round it is.
+  "cards.capTheirs":   ["They sent theirs — send yours", "他发过来了——把你的发给他"],
+  /* THE END OF IT. Not "matched", which is the beginning: this is two people
+     who have each other's details and can now talk anywhere they like. */
+  "cards.swapDone":    ["Connected — swap complete", "已连上——名片互换完成"],
   "cards.giveHow": [
     "{who} gets your WeChat and a line from you. You get theirs if they send it back.",
     "{who}会收到你的微信号和你写的一句话。对方回发，你才拿到他们的。"],
