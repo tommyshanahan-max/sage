@@ -75,6 +75,13 @@ Decks live in `cfm/deck/<name>.html`, built with
 ## Writing
 
 - Answers short. Screens and bullets over paragraphs.
+- **Write for somebody doing something else.** Everybody reading this product
+  is half-looking at a phone — in a taxi, in a queue, between two other
+  things. They read the bold line and maybe one more. So: the fact first, one
+  sentence, and stop. Reassurance, context and the reason it works that way
+  are all things to leave out; if a screen needs them, the screen is wrong.
+  Three sentences where one does is the commonest fault here and it is worth
+  re-reading every new string for it.
 - Strings go in `board/public/i18n.js`, in **both** languages, and the Chinese
   is written rather than translated. After every edit:
   `grep -o '^  "[a-zA-Z0-9._]*":' board/public/i18n.js | sort | uniq -d`

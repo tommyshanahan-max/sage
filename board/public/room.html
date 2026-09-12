@@ -1344,7 +1344,12 @@ function drawWait(box) {
     band.className = "wrband up";
     fill(band);
     band.append(el("b", null, T("wroom.head")));
-    band.append(document.createTextNode(T("wroom.body")));
+    /* The list below carries what is missing, so this says only the thing the
+       list cannot: the app is dead for them. Gone entirely once both are
+       ticked — at that point the clock line says they are finished and a line
+       about nothing working would be the last thing they read. */
+    const left = (you.photo ? 0 : 1) + (you.me && you.want ? 0 : 1);
+    if (left) band.append(document.createTextNode(T(left > 1 ? "wroom.body2" : "wroom.body1")));
     const todo = el("ul", "todo");
     const item = (done, key) => {
       const li = el("li", done ? "on" : "");

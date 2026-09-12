@@ -112,20 +112,30 @@ export const STRINGS = {
     "还没开放——你在等候室里。先把自己的主页填好，会有人来看。",
   ],
   "wroom.head": ["You are in the waiting room", "你在等候室"],
-  /* Three sentences cut to one. It explained that nothing working is not their
-     fault, which is a thing to worry about only if you have been left staring
-     at it — and the itemised list underneath already says what to do. */
-  "wroom.body": [
-    "Nothing works yet. Finish your page \u2014 that is what somebody reads.",
-    "现在什么都还点不动。把这页填完——有人要看的就是这个。",
+  /* THREE SENTENCES, THEN ONE, THEN THIS.
+     It explained that nothing working is not their fault, and then that
+     finishing the page is what somebody reads. Both true, and both saying in
+     prose what the ticked list two lines below says as a list. So the prose
+     stops at the one fact the list cannot carry — that the app is dead for
+     them — and hands straight over.
+     Counted, because "1 things left" is the sort of thing a person reading
+     with half their attention does notice. Same reason act.reply1 exists. */
+  "wroom.body2": [
+    "Nothing works yet. Two things left \u2014",
+    "现在还点不动。还差两样——",
+  ],
+  "wroom.body1": [
+    "Nothing works yet. One thing left \u2014",
+    "现在还点不动。还差一样——",
   ],
   /* WHAT IS LEFT AND HOW LONG THERE IS. The server has been sending all
      three of these since the waiting room was built and no page drew any of
      them, so being moved up was a grey line saying the buttons do not work
      yet. "Finish your page" with no idea what is missing is a demand. */
   "wroom.needPhoto":   ["A photo", "一张照片"],
-  "wroom.needSay":     ["What you are and what you are looking for",
-                        "你是做什么的，在找什么"],
+  /* "What you are and what you are looking for" was eight words on a tick
+     item read at a glance. The board calls it the sentence everywhere else. */
+  "wroom.needSay":     ["Your sentence", "一句话"],
   /* The clock only appears once it is running — it starts when they open it,
      not when they were moved up, so before that there is honestly no deadline
      to name. */
@@ -141,9 +151,13 @@ export const STRINGS = {
      exists" is a reason. */
   "lose.head":         ["This phone is the only place you exist",
                         "你现在只存在于这一台手机上"],
+  /* Four sentences to one. It explained what is lost, how it gets lost, what
+     happens if you rejoin, and then the fix — read at a glance, all of that
+     is in the way of the box underneath it. The heading already says what is
+     at stake; this says what to do about it. */
   "lose.why": [
-    "Your place, your photo and your card live in this browser and nowhere else. Change phone, clear it, or open the link somewhere else and they are gone — and joining again puts a second you at the back of the list. Leave an email and six digits bring you back.",
-    "你的位置、照片和卡片只存在这个浏览器里，别的地方都没有。换手机、清了缓存，或者从别的地方打开链接，就都没了——重新填一遍只会让你多出一个人排在最后面。留个邮箱，六位数字就能把你找回来。",
+    "Leave an email and six digits bring it back.",
+    "留个邮箱，六位数字就能找回来。",
   ],
   "lose.save":         ["Save it", "保存"],
   "lose.done":         ["Saved. Your place can come back now.", "存好了。现在能把位置找回来了。"],
@@ -3317,19 +3331,19 @@ export const STRINGS = {
    * nothing until somebody answers it.
    */
   "but.hookUp": [
-    "{who} — you are one of three who came off the list this week. {n} are still on it.",
-    "{who}——这周从名单上提上来三个人，你是其中一个。还有 {n} 个在等着。",
+    "{who} — you are one of three off the list this week. {n} are not.",
+    "{who}——这周提上来三个，你是一个。另外 {n} 个没有。",
   ],
   /* Somebody who has not been moved up yet and opened this anyway. The
      scarcity line above would be a lie to them, and the true thing is better
      anyway: the page is what decides the order. */
   "but.hookList": [
-    "{who} — you are number {n} of {t}. The ones who get moved up first are the ones with a finished page.",
-    "{who}——你排在第 {n} 位，一共 {t} 个人。先被提上来的，都是主页填完整的。",
+    "{who} — you are {n} of {t}. Finished pages get moved up first.",
+    "{who}——你排第 {n}，一共 {t} 个。填完的先被提上来。",
   ],
   "but.ask": [
-    "Two things and you are done. What do you actually do?",
-    "两件事就填完了。你是做什么的？",
+    "Two things and you are done. What do you do?",
+    "填两样就好了。你是做什么的？",
   ],
   /* Closed, and gettable back. Not a pitch for a feature — his name and the
      one thing he is for. */
