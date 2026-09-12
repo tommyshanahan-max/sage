@@ -38,13 +38,21 @@
 /* v4: the front of this place is /browse. A worker installed under v3 holds a
    shell whose first entry was /feed, and a home-screen icon added then still
    opens there. Bumping the name drops every older cache on activate. */
-const CACHE = "board-v5";
+/* v6: the front is Messages. The app has four tabs now and /notes is the
+   first; the manifest's start_url moved with it, so a home-screen icon opens
+   on the conversations. /feed leaves the shell entirely — the tab is hidden
+   and off.js has it off, and a worker that still caches it can serve a dead
+   surface offline to somebody who cannot reach it online. */
+const CACHE = "board-v6";
 
 // The shell: enough to open and be recognisable with no network. Deliberately
 // not the API — a cached /api/board is a cached set of somebody's posts, and
 // those go stale in minutes and may have been taken down since.
+/* /buddies came out: the file is still in public/ but nothing routes to it, so
+   the entry was a 404 the old cache.add() swallowed without a word. A shell
+   list is only worth having if a wrong line in it is loud. */
 const SHELL = [
-  "/browse", "/feed", "/cards", "/buddies", "/type", "/site.css", "/i18n.js", "/live.js",
+  "/notes", "/browse", "/cards", "/type", "/site.css", "/i18n.js", "/live.js",
   "/favicon.png", "/icon-512.png",
 ];
 
@@ -53,7 +61,20 @@ self.addEventListener("install", (event) => {
     const cache = await caches.open(CACHE);
     // Individually, and never fatal: one missing file must not stop the worker
     // installing, or a typo here breaks the site for everyone who has it.
-    await Promise.all(SHELL.map((u) => cache.add(u).catch(() => {})));
+    //
+    // NOT cache.add — IT FOLLOWS REDIRECTS AND KEEPS THE ANSWER UNDER THE
+    // ADDRESS THAT WAS ASKED FOR. Every page in this shell sits behind the
+    // door, and a browser that is not admitted gets a 302 to /enter; cache.add
+    // follows it, gets a perfectly good 200, and files the password box under
+    // /notes. The member that browser later becomes then meets the door every
+    // time they open the app without a signal. Fetched by hand so the redirect
+    // is visible and can be refused.
+    await Promise.all(SHELL.map(async (u) => {
+      try {
+        const r = await fetch(u, { credentials: "same-origin" });
+        if (r.ok && !r.redirected) await cache.put(u, r);
+      } catch (e) { /* offline at install, or gone: the shell is a nicety */ }
+    }));
     await self.skipWaiting();
   })());
 });
@@ -97,9 +118,11 @@ self.addEventListener("fetch", (event) => {
       // A navigation with nothing cached for it still deserves the app rather
       // than the browser's offline page, if the shell is there.
       if (req.mode === "navigate") {
-        // Browse, not the feed. Offline and with nothing cached for this
-        // address, the app should open on the people.
-        const shell = await caches.match("/browse");
+        // Messages first, Browse behind it. Offline and with nothing cached
+        // for this address, the app should open where it opens online — and
+        // /browse stays as the fallback's fallback because a worker installed
+        // before v6 has that cached and not /notes.
+        const shell = await caches.match("/notes") || await caches.match("/browse");
         if (shell) return shell;
       }
       throw new Error("offline and nothing cached");

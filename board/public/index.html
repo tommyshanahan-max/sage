@@ -127,6 +127,19 @@
      thing somebody arriving from a friend's link should read. */
   .invite{margin:0 -1.15rem .9rem;padding:.5rem 1.15rem;background:var(--accent-soft);
     color:var(--accent);font-size:.78rem;letter-spacing:.02em;text-align:center}
+  /* The same strip, carrying a sentence, sometimes a button, and always an ×.
+     Flex rather than text-align because the × has to sit at the end however
+     long the sentence wraps to — centred text with a floated × puts it in the
+     middle of the second line in Chinese, which is shorter. */
+  .ins{display:flex;align-items:center;justify-content:center;gap:.5rem;text-align:left}
+  .ins button{border:0;background:none;color:inherit;font:inherit;padding:0;
+    flex:0 0 auto}
+  .insgo{background:var(--accent);color:var(--accent-ink);border-radius:99px;
+    padding:.2rem .8rem;font-size:.78rem}
+  .insno{font-size:1.1rem;line-height:1;opacity:.7;padding:0 .2rem}
+  /* Sized to the line it sits in and nudged down: the glyph's optical centre
+     is above its box centre, so on the baseline it floats. */
+  .insico{width:1em;height:1em;vertical-align:-.2em;display:inline-block}
   .top{display:flex;align-items:center;gap:.9rem;margin:.5rem 0 1.6rem}
   #langslot{margin-left:auto;flex:0 0 auto;display:flex}
   /* The mark: a disc with 留 in it, at the same proportions everywhere it is
@@ -1912,6 +1925,9 @@
   <!-- While it is true. An empty room reads as a dead product unless it says
        it is not open yet. -->
   <p class="invite" id="invite"></p>
+  <!-- And the member's half of it: the home screen, offered once. install.js
+       decides whether there is anything to offer this browser at all. -->
+  <p class="invite ins" id="install" hidden></p>
   <div class="top">
     <!-- The mark itself, square. This used to point at /share.png, which was a
          400px square and is now a 1200x630 link card — a wide image in a round
@@ -2898,6 +2914,7 @@ import { T, when, lang, setLang, pickLang, langButton, STRINGS } from "/i18n.js"
 import { shrink, asBase64 } from "/photo.js";
 import { stageFor, stageName, crownMark } from "/crown.js";
 import { OFF } from "/off.js";
+import { offerInstall } from "/install.js";
 import { dailyCard, dailyDone } from "/daily.js";
 import { BANDS } from "/level-cards.js";
 
@@ -4377,6 +4394,10 @@ $("tform").addEventListener("submit", async (e) => {
 function paintNav() {
   $("invite").textContent = T("site.invite");
   $("invite").hidden = Boolean(ME && ME.handle);
+  // The other half of that line. Members only, and only where it is possible —
+  // see install.js. Here rather than at load because paintNav is what runs
+  // again when the language changes, and the copy is language-shaped.
+  offerInstall($("install"), Boolean(ME && ME.handle));
   $("navbrowselabel").textContent = T("nav.browse");
   $("navfeedlabel").textContent = T("nav.feed");
   $("navcardslabel").textContent = T("nav.cards");

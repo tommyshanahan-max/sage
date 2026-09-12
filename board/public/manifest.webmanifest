@@ -2,7 +2,7 @@
   "name": "The Exchange 交换",
   "short_name": "交换",
   "description": "Find the other half of what you are doing in China. One side asks, the other answers. Nothing to install. No account. No VPN.",
-  "start_url": "/browse",
+  "start_url": "/notes",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -16,8 +16,8 @@
     { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
+    { "name": "Messages", "url": "/notes" },
     { "name": "Browse people", "url": "/browse" },
-    { "name": "The Tutor", "url": "/feed" },
-    { "name": "Messages", "url": "/notes" }
+    { "name": "Cards", "url": "/cards" }
   ]
 }

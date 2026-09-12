@@ -56,6 +56,32 @@ export const STRINGS = {
     "Not public yet \u2014 invite only.",
     "尚未公开，目前只能通过邀请进入。",
   ],
+
+  /* THE HOME SCREEN. The other half of the same strip: the invite line is what
+     a stranger reads, this is what a member reads, and they are never both up.
+     install.js decides which of the three a phone gets.
+
+     NAMED, NOT DESCRIBED. "Add to Home Screen" and "添加到主屏幕" are the exact
+     words iOS prints in the share sheet in each language — a paraphrase sends
+     somebody looking for a row that is not there. Same reason for ⋯: it is the
+     glyph WeChat draws, not a description of it. */
+  "ins.ios": [
+    "Put The Exchange on your home screen \u2014 tap {icon}, then Add to Home Screen.",
+    "把「交换」放到主屏幕：点 {icon}，选「添加到主屏幕」。",
+  ],
+  "ins.can": [
+    "Put The Exchange on your home screen.",
+    "把「交换」放到主屏幕。",
+  ],
+  "ins.go":  ["Add", "添加"],
+  /* WeChat cannot install anything, so this says how to get out of WeChat
+     rather than how to install — and it says where the button is, because ⋯ in
+     the corner is not somewhere anybody looks unless told. */
+  "ins.wx": [
+    "To keep this on your home screen: tap \u22ef top right, open in the browser.",
+    "想放到主屏幕：点右上角 \u22ef，用浏览器打开。",
+  ],
+  "ins.no":  ["Not now", "以后再说"],
   "board.someone":     ["someone", "某人"],
   /* The board's own voice on the feed. Not "The Tutor" — he is the card at the
      top of the app that helps somebody work out what to do, and a notice from
