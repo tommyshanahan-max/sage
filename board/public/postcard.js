@@ -78,12 +78,19 @@ export async function drawCard(who, T) {
   c.width = W; c.height = H;
   const x = c.getContext("2d");
 
-  // ---- the paper ----------------------------------------------------------
+  /* ---- the paper ---------------------------------------------------------
+   *
+   * THE SAME THREE STOPS AS THE ARRIVAL, not a second brown that is nearly
+   * it. The card and the screen it came from have to be the same object, and
+   * the first version drifted: one wash instead of three, no bleed, and it
+   * came out flat and brown where the screen is lit.
+   */
   x.fillStyle = INK;
   x.fillRect(0, 0, W, H);
-  const wash = x.createRadialGradient(W / 2, H * 0.3, 40, W / 2, H * 0.42, W * 0.9);
-  wash.addColorStop(0, "#241E19");
-  wash.addColorStop(1, INK);
+  const wash = x.createRadialGradient(W / 2, H * 0.34, 40, W / 2, H * 0.34, W * 0.95);
+  wash.addColorStop(0, "#221D18");
+  wash.addColorStop(0.52, "#161310");
+  wash.addColorStop(1, "#100E0C");
   x.fillStyle = wash;
   x.fillRect(0, 0, W, H);
 
@@ -101,8 +108,11 @@ export async function drawCard(who, T) {
   const face = await loadFace(who.photo);
   const R = 150;
   const faceY = 330;                    // centre of the circle
-  const chopY = face ? faceY + R + 96 : 300;
-  const nameY = chopY + 52 + 104;       // half the chop, then a clear line
+  /* Without a face the whole block moves down. Hung from the top it left a
+     third of the card empty under the line, which on something somebody is
+     about to post reads as a card that failed to finish loading. */
+  const chopY = face ? faceY + R + 126 : 470;
+  const nameY = chopY + 98 + 104;       // half the chop, then a clear line
 
   if (face) {
     /* Drawn to cover the circle rather than squashed into it — a face
@@ -128,12 +138,25 @@ export async function drawCard(who, T) {
   /* Off true by four degrees, like the one on the arrival. A chop pressed by
      a person is never square to the page, and that is most of what stops it
      reading as an app icon. */
-  const s = 104;
+  /* THE SIZE IT IS ON THE SCREEN, which is the bug this had: 104 on a
+     1080-wide card is under a tenth of the width, where on the arrival the
+     chop is nearly a fifth of it. Half the size is a different mark. */
+  const s = 196;
+
+  /* The ink that soaked past the edge — the signature the first version left
+     off entirely, and the reason the card read as brown paper rather than as
+     something stamped. */
+  const bleed = x.createRadialGradient(W / 2, chopY, 10, W / 2, chopY, 340);
+  bleed.addColorStop(0, "rgba(178,42,31,.30)");
+  bleed.addColorStop(1, "rgba(178,42,31,0)");
+  x.fillStyle = bleed;
+  x.fillRect(0, chopY - 340, W, 680);
+
   x.save();
   x.translate(W / 2, chopY);
   x.rotate(-4 * Math.PI / 180);
   x.fillStyle = RED;
-  const r2 = 14, hx = s / 2;
+  const r2 = 26, hx = s / 2;
   x.beginPath();
   x.moveTo(-hx + r2, -hx);
   x.arcTo(hx, -hx, hx, hx, r2);
@@ -141,14 +164,14 @@ export async function drawCard(who, T) {
   x.arcTo(-hx, hx, -hx, -hx, r2);
   x.arcTo(-hx, -hx, hx, -hx, r2);
   x.fill();
-  x.strokeStyle = "rgba(247,237,230,.34)";
-  x.lineWidth = 6;
-  x.strokeRect(-hx + 9, -hx + 9, s - 18, s - 18);
+  x.strokeStyle = "rgba(247,237,230,.32)";
+  x.lineWidth = 11;
+  x.strokeRect(-hx + 17, -hx + 17, s - 34, s - 34);
   x.fillStyle = "#F7EDE6";
-  x.font = `400 56px ${SERIF}`;
+  x.font = `400 106px ${SERIF}`;
   x.textAlign = "center";
   x.textBaseline = "middle";
-  x.fillText("交", 0, 4);
+  x.fillText("交", 0, 8);
   x.restore();
 
   // ---- their name ---------------------------------------------------------
