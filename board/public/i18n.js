@@ -3800,6 +3800,9 @@ export const STRINGS = {
     "你们匹配上了，所以这个对话会一直开着。任何一方随时都可以退出，退出时也不会通知对方。",
   ],
   "note.leave":        ["Leave this chat", "退出这个对话"],
+  // On the button a swipe uncovers, where there is room for two words and the
+  // name is already on the row it belongs to.
+  "note.leaveShort":   ["Leave", "退出"],
   "note.leaveSure": [
     "Leave the chat with {who}? Neither of you can write again. {who} is not told.",
     "退出和 {who} 的对话？之后你们都不能再写了。{who} 不会收到通知。",

@@ -76,11 +76,27 @@
      time, and a dot if it is unread. Everything a WeChat row has and nothing
      else — the buttons that used to sit under every message live inside the
      conversation now, which is where you are when you want them. */
-  .trow{display:flex;align-items:center;gap:.8rem;width:100%;border:0;
-    background:none;padding:.75rem .1rem;text-align:left;font:inherit;
-    color:var(--ink);cursor:pointer;border-bottom:1px solid var(--hair)}
-  .trow:last-child{border-bottom:0}
+  /* THE ROW SITS ON TOP OF THE WAY OUT. Dragging it left uncovers the button
+     underneath rather than moving a button in from the side: one element
+     moves, the thing revealed was always there, and nothing has to be
+     measured. */
+  .swipe{position:relative;overflow:hidden;border-bottom:1px solid var(--hair)}
+  .swipe:last-child{border-bottom:0}
+  .swipe .wipe{position:absolute;top:0;right:0;bottom:0;width:6rem;border:0;
+    background:var(--t5);color:#fff;font:inherit;font-size:.88rem;
+    cursor:pointer;padding:0}
+  /* IT SHRINKS RATHER THAN SLIDING. Translating the whole row took its left
+     edge off the screen — the face and the name went with it, so the thing
+     you were about to leave was the one thing you could no longer see. */
+  .trow{position:relative;display:flex;align-items:center;gap:.8rem;width:100%;
+    border:0;background:var(--paper);padding:.75rem .1rem;text-align:left;
+    font:inherit;color:var(--ink);cursor:pointer;
+    transition:width .16s ease;touch-action:pan-y}
+  .swipe.open .trow{width:calc(100% - 6.4rem)}
+  @media (prefers-reduced-motion:reduce){.trow{transition:none}}
   .trow:hover{background:var(--raise)}
+  /* The row has to be opaque or the button under it shows through. */
+  .swipe.open .trow{background:var(--paper)}
   .trow .avwrap{position:relative;flex:0 0 auto}
   /* A rounded SQUARE, which is what a messenger uses and what tells this row
      apart at a glance from the round faces in the strip above it. */
@@ -698,11 +714,39 @@ function drawList(T0) {
   for (const t of T0) box.append(listRow(t));
 }
 
-/** One person, one row. */
+/** One person, one row.
+ *
+ *  DRAG IT LEFT TO LEAVE THE CONVERSATION. The way out was three taps down
+ *  inside the thread, behind the ⋯ — which is where it belongs for something
+ *  permanent, and is also where nobody looks when they are clearing a list.
+ *  Every messenger on this phone does it with a swipe, so this does too.
+ *
+ *  It is the same act as "Leave this chat" and just as permanent: both sides
+ *  lose it, and neither is told who left. So the swipe reveals a button and
+ *  does not do it — a gesture that deletes on release is a gesture that
+ *  deletes by accident in a pocket.
+ */
 function listRow(t) {
+  const wrap = el("div", "swipe");
+  const out = el("button", "wipe", T("note.leaveShort"));
+  out.type = "button";
+  out.addEventListener("click", async () => {
+    if (!window.confirm(T("note.leaveSure", { who: t.handle || "—" }))) return;
+    out.disabled = true;
+    try {
+      const r = await fetch("/api/note/shut", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, who: t.who }),
+      });
+      if (!r.ok) throw new Error("no");
+      await load();
+    } catch { out.disabled = false; }
+  });
+  wrap.append(out);
+
   const b = el("button", "trow");
   b.type = "button";
-  const wrap = el("div", "avwrap");
+  const wrap2 = el("div", "avwrap");
   const av = el("div", "av", initial(t.handle));
   av.style.background = wash(t.handle);
   if (t.photo) {
@@ -710,8 +754,8 @@ function listRow(t) {
       { src: "/api/public-media?id=" + encodeURIComponent(t.photo), alt: "", loading: "lazy" });
     img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
   }
-  wrap.append(av);
-  if (t.unread) wrap.append(el("span", "dot"));
+  wrap2.append(av);
+  if (t.unread) wrap2.append(el("span", "dot"));
   const mid = el("div", "mid");
   const nm = el("div", "nm");
   nm.append(el("b", null, t.handle || "—"));
@@ -725,9 +769,42 @@ function listRow(t) {
   if (t.last.mine) prev.append(el("span", "k", T("note.youSaid") + " "));
   prev.append(document.createTextNode(t.last.text || ""));
   mid.append(nm, prev);
-  b.append(wrap, mid);
-  b.addEventListener("click", () => openThread(t.who));
-  return b;
+  b.append(wrap2, mid);
+  b.addEventListener("click", () => {
+    if (dragged) { dragged = false; return; }
+    // A row that is open is a row somebody dragged. Tapping it puts it back
+    // rather than opening the conversation, which is what a thumb expects.
+    if (wrap.classList.contains("open")) { wrap.classList.remove("open"); return; }
+    openThread(t.who);
+  });
+
+  /* THE DRAG. Pointer events, so a mouse on a laptop behaves like a thumb.
+     Horizontal only: a list is scrolled vertically far more often than a row
+     is swiped, and stealing that is the way to make a list feel broken. */
+  let x0 = 0, y0 = 0, decided = "", dragged = false;
+  b.addEventListener("pointerdown", (e) => {
+    x0 = e.clientX; y0 = e.clientY; decided = ""; dragged = false;
+  });
+  b.addEventListener("pointermove", (e) => {
+    if (!x0) return;
+    const dx = e.clientX - x0, dy = e.clientY - y0;
+    if (!decided) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      decided = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+    }
+    if (decided !== "x") return;
+    e.preventDefault();
+    wrap.classList.toggle("open", dx < -34);
+  });
+  /* A DRAG THAT STARTS AND ENDS ON THE SAME ELEMENT STILL FIRES A CLICK. So
+     the row opened and the click that ended the drag immediately closed it
+     again — the swipe looked like it did nothing at all. The flag survives
+     until the next press, which is the only thing it has to outlive. */
+  const done = () => { dragged = decided === "x"; x0 = 0; decided = ""; };
+  b.addEventListener("pointerup", done);
+  b.addEventListener("pointercancel", done);
+  wrap.append(b);
+  return wrap;
 }
 
 function openThread(who) {

@@ -4684,8 +4684,22 @@ app.get("/api/notes", notesOff, async (req, res) => {
     return o ? { kind: o.kind || "job", give: o.give, money: o.money, at: o.tookAt } : undefined;
   };
 
-  const rows = store.notesFor(board.notes, me);
+  const rows0 = store.notesFor(board.notes, me);
   const other = (n) => (n.by === me ? n.to : n.by);
+  /* A CONVERSATION YOU LEFT IS OFF YOUR LIST.
+   *
+   * Leaving has always meant the thread closes for both of you and what was
+   * said stays said — it does not erase anything, and it should not. But the
+   * row stayed in the list of the person who left it, closed, for ever: a
+   * swipe that clears a row and then leaves the row there is a gesture that
+   * looks broken.
+   *
+   * Only for the one who left. If they walked out, you still see it, closed,
+   * because that is a thing that happened to you and hiding it would be the
+   * app deciding what you are allowed to notice.
+   */
+  const iLeft = new Set(board.shuts.filter((x) => x.by === me).map((x) => x.who));
+  const rows = rows0.filter((n) => !iLeft.has(other(n)));
   const state = new Map();
   for (const n of rows) {
     if (!state.has(other(n))) state.set(other(n), threadState(board, me, other(n)));
