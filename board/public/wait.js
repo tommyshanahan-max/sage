@@ -102,6 +102,22 @@ export function wFromUrl() {
   } catch { return ""; }
 }
 
+/** And the third: the code of an announcement somebody pasted into a group.
+ *
+ *  Not on the query string — it is the path. The poster's address IS /a/CODE,
+ *  and the form is on that page rather than one tap further on, because a link
+ *  read in a WeChat group loses most of the people it reaches at every tap.
+ *
+ *  Six characters of the invite alphabet, and checked against the table by the
+ *  server before it is written: a made-up address credits nothing rather than
+ *  inventing a post. */
+export function aFromUrl() {
+  try {
+    const m = /^\/a\/([A-Z0-9]{4,12})$/i.exec(location.pathname);
+    return m ? m[1].toUpperCase() : "";
+  } catch { return ""; }
+}
+
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -301,7 +317,7 @@ export function waitBox() {
         body: JSON.stringify({
           name: name.value.trim(), reach: reach.value.trim(),
           why: why.value.trim(), room, device: device(),
-          via: viaFromUrl(), w: wFromUrl(), quiet: quietHere(),
+          via: viaFromUrl(), w: wFromUrl(), a: aFromUrl(), quiet: quietHere(),
         }),
       });
       const d = await r.json().catch(() => ({}));

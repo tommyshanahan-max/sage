@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Empty on every deployment but the demo board. See BOARD_DEMO_DEVICE. -->
+{{DEMO}}
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>{{A_TITLE}} · 交换 The Exchange</title>
+<meta name="description" content="{{A_BODY}}">
+
+<!-- THE CARD, AND IT IS DIFFERENT EVERY TIME THIS PAGE IS SERVED.
+     Every other page here takes the board's own card, which is right: they
+     are all the same page for everybody. This one is a poster, pasted into a
+     group chat, and a chat client builds its card from these four tags
+     without ever running the script below. Served with the board's default
+     card, every announcement ever written would arrive in a group as the same
+     grey box saying "Invite only" — the picture and the name are the entire
+     reason somebody taps. So they are written per request; see page() and
+     /a/:code in server.js. -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="{{A_TITLE}}">
+<meta property="og:description" content="{{A_BODY}}">
+<meta property="og:image" content="{{A_IMAGE}}">
+<meta property="og:url" content="{{HERE}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="/site.css">
+
+<style>
+  /* THE POSTER, AND THEN THE FORM. In that order and on one page.
+   *
+   * The first version of this had a button at the bottom that went to /join.
+   * That is one more tap, and a link read in a WeChat group loses most of the
+   * people it reaches at every tap — the form has to be on the thing they
+   * already opened. waitBox() is the same form the four other doors use, so
+   * there is one form on this board and not five.
+   */
+  .awrap{max-width:30rem;margin:0 auto;padding:1.4rem 1.15rem 3rem}
+  .abrand{display:flex;align-items:center;gap:.6rem;margin:0 0 1.4rem}
+  .abrand i{width:2.1rem;height:2.1rem;border-radius:.55rem;background:var(--ink);
+    color:var(--paper);display:grid;place-items:center;font-style:normal;
+    font:400 1rem/1 var(--serif)}
+  .abrand b{font:400 1.05rem/1.15 var(--serif);color:var(--ink)}
+  .abrand small{display:block;font-size:.7rem;color:var(--muted)}
+  .abrand .l{margin-left:auto}
+
+  /* THE PICTURE FIRST AND FULL WIDTH. This is the half of the page that is
+     read at a glance in a scrolling group chat, and a face beside a paragraph
+     is a face nobody looks at. Its own aspect box so the page does not jump
+     when it lands — a poster that reflows under a thumb is a poster that gets
+     tapped in the wrong place. */
+  .ashot{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;
+    border-radius:1.1rem;background:var(--raise);margin:0 0 1.2rem}
+  .atitle{font:400 clamp(1.5rem,6vw,2rem)/1.2 var(--serif);color:var(--ink);
+    margin:0 0 .7rem}
+  .abody{font-size:1rem;line-height:1.65;color:var(--ink-2);margin:0 0 1.6rem;
+    white-space:pre-wrap}
+
+  /* The rule between the news and the form: two different things, and a form
+     that looks like the end of the paragraph gets read as part of it. */
+  .arule{border:0;border-top:1px solid var(--hair);margin:0 0 1.5rem}
+  .aask{font:400 1.15rem/1.3 var(--serif);color:var(--ink);margin:0 0 .35rem}
+  .asub{font-size:.92rem;line-height:1.6;color:var(--ink-2);margin:0 0 1.3rem}
+  .ahas{display:inline-block;margin:1.4rem 0 0;font-size:.85rem;color:var(--muted);
+    text-decoration:none}
+  .ahas b{color:var(--ink-2);font-weight:600}
+  /* Taken down, or never there. Says which without saying who. */
+  .agone{font-size:1rem;line-height:1.6;color:var(--ink-2);margin:0 0 1.6rem}
+</style>
+</head>
+<body>
+<div class="awrap">
+  <div class="abrand">
+    <i>交</i>
+    <b>The Exchange<small>交换</small></b>
+    <span class="l" id="langslot"></span>
+  </div>
+
+  <img class="ashot" id="shot" alt="" hidden>
+  <h1 class="atitle" id="title"></h1>
+  <p class="abody" id="body"></p>
+
+  <hr class="arule">
+  <p class="aask" id="ask"></p>
+  <p class="asub" id="asub"></p>
+  <div id="waitslot"></div>
+
+  <a class="ahas" id="has" href="/enter"></a>
+</div>
+
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+import { waitBox, tally } from "/wait.js";
+
+const $ = (id) => document.getElementById(id);
+const CODE = (/^\/a\/([A-Za-z0-9]{4,12})$/.exec(location.pathname) || [])[1] || "";
+
+let POST = null;
+
+function paint() {
+  $("ask").textContent = T("ann.ask");
+  $("asub").textContent = T("ann.sub");
+  $("has").innerHTML = "";
+  $("has").append(document.createTextNode(T("join.has") + " "));
+  const b = document.createElement("b");
+  b.textContent = T("join.hasGo");
+  $("has").append(b);
+
+  if (POST === "gone") {
+    $("title").textContent = T("ann.gone");
+    $("body").className = "agone";
+    $("body").textContent = T("ann.goneWhy");
+    return;
+  }
+  if (!POST) return;
+  /* THE WORDS ARE NOT TRANSLATED AND THE FURNITURE IS.
+     Everything else on this board exists twice in i18n.js because the board
+     wrote it. This is one person's sentence about another person, typed once,
+     and running it through a machine would put words in their mouth in a
+     language they cannot check — in a group chat, under the board's name. So
+     the poster stays exactly as it was written and only the page around it
+     changes language. */
+  $("title").textContent = POST.title;
+  $("body").textContent = POST.body || "";
+  $("body").hidden = !POST.body;
+}
+
+setLang(pickLang());
+paint();
+$("langslot").append(langButton(() => {
+  paint();
+  // The form is built from strings, so it is rebuilt rather than translated
+  // in place — half of it in one language is worse than either.
+  $("waitslot").textContent = "";
+  $("waitslot").append(waitBox());
+}));
+$("waitslot").append(waitBox());
+
+/* The picture is set before the text arrives when it can be: it is what the
+   page is, and a poster that draws its headline first and its face a second
+   later reads as a page still loading. The id is in the card tag already —
+   read from there rather than waiting for the fetch. */
+try {
+  const og = document.querySelector('meta[property="og:image"]');
+  const src = og && og.getAttribute("content") || "";
+  if (/\/api\/announce-media\?/.test(src)) {
+    $("shot").src = src;
+    $("shot").hidden = false;
+  }
+} catch { /* the fetch below sets it too */ }
+
+fetch("/api/announce/" + encodeURIComponent(CODE))
+  .then((r) => r.json())
+  .then((d) => {
+    POST = d && d.gone ? "gone" : d;
+    if (d && d.photo) {
+      $("shot").src = "/api/announce-media?id=" + encodeURIComponent(d.photo);
+      $("shot").hidden = false;
+    }
+    if (d && d.gone) $("shot").hidden = true;
+    paint();
+  })
+  .catch(() => { POST = "gone"; paint(); });
+
+/* Counted like every other door — opened, begun, joined. Three integers by
+   day and room, and nothing in the record can name anybody. The poster's own
+   count is separate and is in the row: see `seen` in cleanAnnounce. */
+tally("door");
+</script>
+</body>
+</html>

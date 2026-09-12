@@ -282,7 +282,13 @@ const DEMO_TAG = DEMO_DEVICE
     + JSON.stringify(DEMO_DEVICE) + ')}catch(e){}</script>'
   : "";
 
-async function page(file, req, res, next) {
+/* `extra` is a map of placeholder -> value, for the one page whose preview
+ * card is different every time it is served. Everything else on this board is
+ * the same HTML for everybody and takes the three fixed substitutions below;
+ * an announcement carries its own title and its own picture into a chat, so
+ * those have to be written per request or WeChat draws the board's default
+ * card over somebody's news. Values are escaped by the caller. */
+async function page(file, req, res, next, extra = null) {
   try {
     if (!PAGES.has(file)) PAGES.set(file, await readFile("public/" + file, "utf8"));
     const proto = String(req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0];
@@ -302,10 +308,12 @@ async function page(file, req, res, next) {
      * link it is previewing. */
     const here = origin + String(req.originalUrl || req.url || "/")
       .replace(/[^A-Za-z0-9/?=&._~:@+-]/g, "").slice(0, 512);
-    res.send(PAGES.get(file)
+    let out = PAGES.get(file)
       .split("{{HERE}}").join(here)
       .split("{{ORIGIN}}").join(origin)
-      .split("{{DEMO}}").join(DEMO_TAG));
+      .split("{{DEMO}}").join(DEMO_TAG);
+    for (const [k, v] of Object.entries(extra || {})) out = out.split(k).join(v);
+    res.send(out);
   } catch (e) { next(e); }
 }
 
@@ -388,7 +396,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|o(?:\/|$)|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -2693,9 +2701,18 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
     /* quiet IS taken from the request, and shown is not. See the note on
        `quiet` in cleanWait: it can only ever hide the sender from other people
        waiting, so a browser sending it is asking for less and not more. */
+    /* AND THE THIRD KIND OF LINK: a poster in a group chat. Checked against
+       the table like the other two, so a made-up code credits nothing rather
+       than inventing a post. It moves nobody up the queue — see fromA in
+       cleanWait: an announcement is advertising, and advertising does not
+       buy a place. It answers one question, which is whether that post
+       brought anybody. */
+    const asent = store.cleanCode(req.body?.a);
+    const afrom = asent && board.announces.find((x) => x.code === asent);
     const row = store.cleanWait({ name, reach, why: req.body?.why,
       room: req.body?.room, by: me, via: from ? from.id : "",
       fromWait: wfrom ? wfrom.id : "", shown: true,
+      fromA: afrom ? afrom.code : "",
       quiet: req.body?.quiet === true });
     if (!row) return { error: "both" };
     /* CHANGING THE ANSWER MUST NOT EMPTY THE CARD. This replaces the row
@@ -2712,7 +2729,10 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
         photo: was.photo, photoState: was.photoState,
         // Who brought them is a fact about how they arrived, not something a
         // second visit to the form should be able to rewrite.
-        via: was.via || row.via, fromWait: was.fromWait || row.fromWait };
+        via: was.via || row.via, fromWait: was.fromWait || row.fromWait,
+        // Same rule: where they came from is a fact about how they arrived,
+        // and a second visit to the form does not get to rewrite it.
+        fromA: was.fromA || row.fromA };
     } else board.waits.push(row);
     return { ok: true, again: at >= 0 };
   });
@@ -4556,6 +4576,228 @@ app.post("/api/admin/offer", admin, express.json({ limit: "8kb" }), async (req, 
   res.status(201).json(out);
 });
 
+/* ---------------------------------------------------------------------------
+ * ANNOUNCEMENTS — the one thing on this board written to leave it
+ *
+ * Everything else here points inward. The feed is behind the door, a profile
+ * is behind the door, and the only thing that ever crossed into a chat was a
+ * link to a form. A form is not news. "Damon Russell just joined" is, and the
+ * board had no way to say it to the two hundred people in a WeChat group who
+ * would care.
+ *
+ * So: a picture, a line, and JOIN THE WAITING LIST, at an address with no
+ * door on it. Written in the app behind the +, pasted into a group, and the
+ * button at the bottom lands on the join form that already exists with the
+ * poster's code riding in the query — so the answer to "did that post bring
+ * anybody" is a number rather than a feeling.
+ *
+ * WHAT IT DOES NOT DO, and this is the line the feature lives behind: it
+ * reads nobody's row. Not the name, not the face, not the sentence. Whoever
+ * writes it types every word and picks the picture. The standing rule on this
+ * board is that a member's page is not legible outside the door — see the
+ * long note above OPEN_PATHS about /p/:handle and public-media — and a share
+ * button that quietly published a profile because it was convenient would
+ * break that rule while looking like a feature. An announcement is one
+ * person's own words about somebody, which is what they would have typed into
+ * the chat themselves; what the board adds is the picture, its name on it,
+ * and the button.
+ * ------------------------------------------------------------------------- */
+
+/** May this browser write one. A published page AND the flag — see
+ *  canAnnounce in store.js for why the flag is handed out one person at a
+ *  time. The admin key passes without either, so the box can always post. */
+async function mayAnnounce(req) {
+  if (KEY && safeEqual(String(req.get("x-admin-secret") || ""), KEY)) return "box";
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!me) return "";
+  const board = await store.load(FILE);
+  const q = board.people.find((x) => x.by === me && x.state === "published" && x.canAnnounce);
+  return q ? me : "";
+}
+
+/** Write one. */
+app.post("/api/announce", express.json({ limit: "36mb" }), async (req, res) => {
+  const who = await mayAnnounce(req);
+  if (!who) return res.status(403).json({ error: "no" });
+  const title = String(req.body?.title || "").trim();
+  if (!title) return res.status(400).json({ error: "title" });
+
+  /* THE PICTURE IS OPTIONAL AND THE PAGE IS NOT MUCH WITHOUT ONE. A link
+     pasted into WeChat draws a card from og:image, and a card with no picture
+     is a grey box with a line of text in it — which in a group chat scrolling
+     past at speed is indistinguishable from a link nobody should tap. Said on
+     the composer rather than refused here: whoever runs the board is allowed
+     to post news about somebody whose photograph they do not have. */
+  let photo = "";
+  const data = String(req.body?.photo || "");
+  if (data) {
+    const buf = Buffer.from(data, "base64");
+    if (buf.length > MEDIA_MAX) return res.status(413).json({ error: "tooBig" });
+    photo = (await putMedia(buf, String(req.body?.photoType || ""))) || "";
+    if (!photo) return res.status(415).json({ error: "badType" });
+  }
+
+  const out = await change((board) => {
+    /* A CODE NOBODY ELSE HOLDS. Minted here rather than in cleanAnnounce so
+       it can be checked against the rows that exist — cleanAnnounce cannot
+       see them, and two posters at one address means the later one silently
+       replaces a page already sitting in somebody's chat history. */
+    let code = store.newCode();
+    for (let i = 0; i < 20 && board.announces.some((a) => a.code === code); i++) {
+      code = store.newCode();
+    }
+    const row = store.cleanAnnounce({
+      title, body: req.body?.body, photo, code,
+      by: who === "box" ? "" : who, at: new Date().toISOString(),
+    });
+    if (!row) return { error: "title" };
+    board.announces.push(row);
+    return { code: row.code };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.status(201).json({ ...out, at: "/a/" + out.code });
+});
+
+/** Everything this browser has posted, and whether it worked.
+ *
+ *  TWO NUMBERS AND THEY MEAN DIFFERENT THINGS. `seen` is how many opened it,
+ *  which says whether the group was the right group. `joined` is how many put
+ *  their name down off it, which is the only one worth acting on — a poster
+ *  read four hundred times that brought nobody was the wrong poster, and
+ *  without the second number it reads as a triumph. */
+app.get("/api/announce", async (req, res) => {
+  const who = await mayAnnounce(req);
+  if (!who) return res.status(403).json({ error: "no" });
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const joined = new Map();
+  for (const w of board.waits) {
+    if (w.fromA) joined.set(w.fromA, (joined.get(w.fromA) || 0) + 1);
+  }
+  res.json({
+    announces: board.announces
+      .filter((a) => who === "box" || a.by === who)
+      .slice()
+      .reverse()
+      .map((a) => ({
+        code: a.code, title: a.title, body: a.body, photo: a.photo,
+        at: a.at, state: a.state, seen: a.seen, joined: joined.get(a.code) || 0,
+      })),
+  });
+});
+
+/** Take one down. It stays as a row — see `state` in cleanAnnounce: a link
+ *  that has been in a group chat for a week goes on being tapped, and a page
+ *  saying the announcement is gone is a different thing from a 404. */
+app.delete("/api/announce", express.json({ limit: "2kb" }), async (req, res) => {
+  const who = await mayAnnounce(req);
+  if (!who) return res.status(403).json({ error: "no" });
+  const code = store.cleanCode(req.body?.code);
+  if (!code) return res.status(400).json({ error: "code" });
+  const out = await change((board) => {
+    const a = board.announces.find((x) => x.code === code
+      && (who === "box" || x.by === who));
+    if (!a) return { error: "nobody" };
+    a.state = "removed";
+    return { ok: true };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.json(out);
+});
+
+/** What the public page draws. Outside the door, so it carries exactly what
+ *  the person who wrote it typed and nothing else — no author, no member
+ *  count, no list. */
+app.get("/api/announce/:code", async (req, res) => {
+  const code = store.cleanCode(req.params.code);
+  if (!code) return res.status(404).json({ error: "no" });
+  const board = await store.load(FILE);
+  const a = board.announces.find((x) => x.code === code);
+  if (!a) return res.status(404).json({ error: "no" });
+  res.set("Cache-Control", "no-store");
+  if (a.state !== "published") return res.json({ gone: true });
+  /* COUNTED HERE, not on the page request, and the difference is every link
+     preview robot in China. WeChat fetches the page itself to build the card
+     — once per group it is pasted into, sometimes more — and counting those
+     makes a number that goes up when nobody came. This runs from a browser
+     that executed the page's script, which is the nearest thing to a person
+     that can be counted without counting people.
+     Not awaited: a reader must never wait on a write. */
+  change((b) => {
+    const row = b.announces.find((x) => x.code === code);
+    if (row) row.seen = Math.min(9_999_999, (row.seen || 0) + 1);
+    return { ok: true };
+  }).catch(() => { /* a number, and the next reader adds one */ });
+  res.json({ title: a.title, body: a.body, photo: a.photo, at: a.at });
+});
+
+/** THE PICTURE, AND ONLY AN ANNOUNCEMENT'S.
+ *
+ *  /api/public-media is behind the door on purpose — see the note above
+ *  OPEN_PATHS — so that a member's face is not fetchable by anybody holding
+ *  its id. This route is open, which is the entire point of an announcement,
+ *  so the id is looked up in board.announces before a byte is read. A
+ *  member's photograph cannot be fetched here whatever id is presented, and
+ *  the rule this board already made stands exactly as it was.
+ *
+ *  A REMOVED ONE STOPS BEING SERVED. Not for long — see the cache header —
+ *  because a picture of a person is the part of a taken-down poster that
+ *  actually matters, and a day of caching would leave it on screens after
+ *  somebody asked for it to come down.
+ */
+app.get("/api/announce-media", async (req, res) => {
+  const id = String(req.query.id || "");
+  const board = await store.load(FILE);
+  if (!board.announces.some((a) => a.photo === id && a.state === "published")) {
+    return res.status(404).json({ error: "no such file" });
+  }
+  const found = await findMedia(id);
+  if (!found) return res.status(404).json({ error: "no such file" });
+  res.set("Content-Type", found.type);
+  res.set("X-Content-Type-Options", "nosniff");
+  res.set("Cache-Control", "public, max-age=300");
+  res.sendFile(found.file);
+});
+
+/** The page itself.
+ *
+ *  THE PREVIEW CARD IS WRITTEN PER REQUEST, which is why this does not just
+ *  serve the file. A chat client builds its card from og: tags without ever
+ *  running the page's script, so an announcement served with the board's
+ *  default card would arrive in a group as "Invite only" and a stock picture
+ *  — the same link, the same grey box, however many different things were
+ *  posted. The title and the picture have to be in the HTML that comes back.
+ *
+ *  Escaped into an attribute, and the escape is the whole of the checking:
+ *  the title is somebody's typed text going into a quoted HTML attribute on
+ *  a page anybody can read.
+ */
+const attr = (v) => String(v || "")
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+app.get("/a/:code", async (req, res, next) => {
+  const code = store.cleanCode(req.params.code);
+  const board = await store.load(FILE);
+  const a = code && board.announces.find((x) => x.code === code
+    && x.state === "published");
+  const proto = String(req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0];
+  const host = String(req.get("host") || "").replace(/[^A-Za-z0-9.:-]/g, "").slice(0, 253);
+  const origin = host ? proto + "://" + host : "";
+  return page("announce.html", req, res, next, {
+    "{{A_TITLE}}": attr(a ? a.title : "交换 · The Exchange"),
+    /* The body is a paragraph and og:description is a line. Cut on a word,
+       not mid-character, and only the first line: a poster's opening sentence
+       is what somebody wrote to be read first. */
+    "{{A_BODY}}": attr(a
+      ? String(a.body || "").split("\n")[0].slice(0, 160)
+      : "A private board for people doing business across a border."),
+    "{{A_IMAGE}}": attr(a && a.photo
+      ? origin + "/api/announce-media?id=" + a.photo
+      : origin + "/share.png"),
+  });
+});
+
 /** Who may make one. Operator only, one person at a time, on purpose — see
  *  canOffer in store.js for why this is not derived from somebody's role. */
 app.post("/api/admin/can-offer", admin, express.json({ limit: "2kb" }), async (req, res) => {
@@ -4596,6 +4838,37 @@ app.get("/api/admin/can-offer", admin, async (_req, res) => {
     people: board.people
       .filter((q) => q.handle)
       .map((q) => ({ handle: q.handle, state: q.state, canOffer: Boolean(q.canOffer) })),
+  });
+});
+
+/** Who may write an announcement. The same shape as can-offer above and for
+ *  a harder reason — see canAnnounce in store.js. One person at a time. */
+app.post("/api/admin/can-announce", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").trim().toLowerCase();
+  const on = req.body?.on !== false;
+  if (!who) return res.status(400).json({ error: "who" });
+  const out = await change((board) => {
+    // A handle is not unique. Refuse rather than guess — same as can-offer.
+    const all = board.people.filter((x) => String(x.handle || "").toLowerCase() === who);
+    const id = String(req.body?.id || "");
+    const q = id ? all.find((x) => x.id === id) : all.length === 1 ? all[0] : null;
+    if (!q && all.length > 1) {
+      return { error: "which", rows: all.map((x) => ({ id: x.id, state: x.state, canAnnounce: Boolean(x.canAnnounce) })) };
+    }
+    if (!q) return { error: "nobody" };
+    q.canAnnounce = on;
+    Object.assign(q, store.cleanPerson(q));
+    return { handle: q.handle, canAnnounce: q.canAnnounce, state: q.state, rows: all.length };
+  });
+  if (out?.error) return res.status(out.error === "which" ? 409 : 404).json(out);
+  res.json(out);
+});
+
+app.get("/api/admin/can-announce", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  res.json({
+    people: board.people.filter((q) => q.handle)
+      .map((q) => ({ handle: q.handle, state: q.state, canAnnounce: Boolean(q.canAnnounce) })),
   });
 });
 
@@ -5892,6 +6165,9 @@ app.get("/api/me", async (req, res) => {
     // Whether the panel shows the offer block. The check that matters is
     // on POST /api/offer; this only decides whether a button is drawn.
     canOffer: Boolean(mine && mine.canOffer),
+    // Whether the + draws the third line. The check that matters is on
+    // POST /api/announce; this only decides whether a button exists.
+    canAnnounce: Boolean(mine && mine.canAnnounce),
   });
 });
 

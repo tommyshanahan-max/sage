@@ -1663,6 +1663,15 @@ export const STRINGS = {
     "之所以能这样，是因为计数发生在读者自己的手机上。他的浏览器知道自己打开过哪些页面、哪几天打开的——就像它已经知道他屏蔽了谁一样——然后只告诉我们一件事：这次是不是他今天第一次打开，以及他是不是已经来过三天。于是一个数字加一。别的什么都没写下来。",
   ],
 
+  /* AN ANNOUNCEMENT IS THE ONE PAGE HERE ANYBODY CAN OPEN, so the one number
+     it keeps has to be on this page too. Somebody reading it has not agreed to
+     anything and may never have heard of this board — which is exactly the
+     person a counter is easiest to be quiet about. */
+  "pv.pcount3": [
+    "A poster somebody pasted into a group chat counts the same way, and it is the only thing on this board readable without a password. One number: how many browsers opened it. Not who, not from where, not which chat it was forwarded into — none of that is asked for and none of it is written down. Putting your name down on it is the ordinary waiting list, below.",
+    "别人转到群里的那种页面也是一样的算法，而且那是这个板子上唯一不用口令就能打开的东西。只有一个数字：有多少个浏览器打开过。不记谁、不记从哪儿来、不记被转到了哪个群——这些都不问，也都不写下来。在上面留名字，就是下面说的那个普通的候补名单。",
+  ],
+
   /* THE WAITING LIST IS THE FIRST THING WE HOLD ABOUT SOMEBODY WHO IS NOT A
      MEMBER, so it gets its own section rather than a clause. The waitlist form
      promises three things — nobody but the operator reads it, none of it
@@ -3202,6 +3211,76 @@ export const STRINGS = {
      else · put up a profile for somebody you represent", and vague standing
      on its own between two other lines that each name who they are about. */
   "plus.run":          ["Put somebody up", "帮别人建主页"],
+  /* ---- ANNOUNCEMENTS ------------------------------------------------------
+     A poster written to leave this board. Everything else in this file is
+     said to somebody who is already here or standing at the door; half of
+     these are read in a WeChat group by people who have never heard of any of
+     it, which is why the Chinese is short and says what the thing is rather
+     than what it is called. */
+  "plus.ann":          ["Announce somebody", "发一条消息"],
+  "ann.head":          ["Announce somebody", "发一条消息"],
+  /* WHAT IT IS FOR, said before the first field, because the thing that makes
+     this different from every other box on the board is where it ends up. */
+  "ann.why": [
+    "A page to paste into a WeChat group. A picture, a line, and the waiting list at the bottom.",
+    "做一张可以发到微信群里的页面：一张图、一句话，底下是候补名单。",
+  ],
+  "ann.title":         ["The headline", "标题"],
+  "ann.titleHint":     ["Damon Russell just joined", "比如：Damon Russell 加入了"],
+  "ann.body":          ["The rest of it", "正文"],
+  "ann.bodyHint": [
+    "Who they are, and what they are here to do. A few lines.",
+    "他是谁，来这儿想做什么。几句话就行。",
+  ],
+  "ann.photo":         ["Add a picture", "加一张图"],
+  "ann.photoAgain":    ["Change the picture", "换一张图"],
+  /* SAID, NOT ENFORCED. The server takes one without a picture: whoever runs
+     the board is allowed to post news about somebody whose photograph they do
+     not have. But a link with no picture arrives in a group chat as a grey
+     box, and that is worth knowing before rather than after. */
+  "ann.photoWhy": [
+    "Without one, the link shows up in WeChat as a grey box.",
+    "没有图的话，链接发到微信里就是一个灰框。",
+  ],
+  "ann.post":          ["Post it", "发布"],
+  "ann.posting":       ["…", "…"],
+  "ann.made":          ["It is up.", "已经发布了。"],
+  "ann.madeWhy": [
+    "Copy the link and paste it into the group. Anybody can open it.",
+    "复制链接发到群里。谁都能打开。",
+  ],
+  "ann.copy":          ["Copy the link", "复制链接"],
+  "ann.copied":        ["Copied", "已复制"],
+  "ann.mine":          ["What you have put up", "你发过的"],
+  "ann.none":          ["Nothing yet.", "还没有。"],
+  /* TWO NUMBERS AND ONLY THE SECOND ONE MEANS ANYTHING. See the note on
+     /api/announce in server.js: a poster opened four hundred times that
+     brought nobody was the wrong poster, and the first number alone reads as
+     a triumph. */
+  "ann.seen":          ["{n} opened it", "{n} 人打开过"],
+  "ann.joined":        ["{n} put their name down", "{n} 人留了名字"],
+  "ann.rm":            ["Take it down", "撤下"],
+  "ann.rmSure": [
+    "Take it down? The link keeps working and says it is gone.",
+    "撤下这条？链接还能打开，但会显示已经撤下了。",
+  ],
+  "ann.gone":          ["This has been taken down.", "这条已经撤下了。"],
+  "ann.goneWhy": [
+    "The board is still here. You can still put your name down.",
+    "板子还在。你还是可以留个名字。",
+  ],
+  "ann.bad":           ["That did not go up. Try again.", "没发出去，再试一次。"],
+  "ann.need":          ["It needs a headline.", "得有个标题。"],
+  /* ON THE POSTER ITSELF, above the form. Not "Join the waiting list" as a
+     heading — the button says that. This is the question somebody in a group
+     chat is actually answering, which is whether this has anything to do with
+     them. */
+  "ann.ask":           ["Want in?", "想进来吗？"],
+  "ann.sub": [
+    "A private board for people doing business across a border. Put your name down — somebody already inside decides.",
+    "一个做跨境生意的人的私密板子。留个名字——由里面的人来决定。",
+  ],
+
   "inv.sheetTitle":    ["Bring somebody in", "带一个人进来"],
   "inv.head":          ["Bring someone in", "带一个人进来"],
   "inv.tap":           ["Today’s password. One person, then it changes.",

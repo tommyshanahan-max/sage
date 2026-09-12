@@ -168,6 +168,20 @@ export function cleanWait(raw) {
      */
     via: /^[a-f0-9]{20}$/.test(String(raw.via || "")) ? String(raw.via) : "",
 
+    /* WHICH ANNOUNCEMENT THEY CAME OFF, when they came off one.
+     *
+     * `via` is a member's id and `fromWait` is a waiting row's — this is the
+     * third kind of link and it names neither, because a poster in a group
+     * chat is not a person vouching. It is here to answer one question and no
+     * other: did that post bring anybody. Nothing in the queue order reads
+     * it, and nothing about a row's place depends on it — an announcement is
+     * advertising, and advertising does not move somebody up a queue.
+     *
+     * The CODE and not the id, so it survives the row being rewritten, and
+     * checked against the table before it is written — see /api/wait — so a
+     * made-up address credits nothing rather than inventing a post. */
+    fromA: cleanCode(raw.fromA) || "",
+
     /* WHETHER THEY AGREED TO BE SEEN, and nothing about them is shown to
      * anybody until they did.
      *
@@ -556,6 +570,75 @@ export function cleanVouch(raw) {
   const wait = /^[a-f0-9]{20}$/.test(String(raw.wait || "")) ? String(raw.wait) : "";
   if (!by || !wait) return null;
   return { by, wait, at: String(raw.at ?? "").slice(0, 40) || new Date().toISOString() };
+}
+
+/* ---------------------------------------------------------------------------
+ * AN ANNOUNCEMENT — a poster, written to be pasted into a WeChat group
+ *
+ * The board could tell the people already inside that somebody good had
+ * arrived, and could tell nobody else. Everything else here points inward:
+ * the feed is behind the door, a profile is behind the door, and the only
+ * thing that ever crossed into a chat was a link to a form. A form is not
+ * news. "Damon Russell just joined" is.
+ *
+ * SO THIS IS THE ONE THING ON THIS BOARD WRITTEN TO LEAVE IT. A picture, a
+ * line, and a way to put your name down, at an address with no door on it,
+ * which means it has to be treated as published to the entire internet —
+ * because that is what pasting it into a group of two hundred agents is.
+ *
+ * NOTHING IS DRAWN FROM ANYBODY'S ROW. Not the name, not the face, not the
+ * sentence. Whoever writes it types every word and chooses the picture, and
+ * the row it is about is never read. That is the whole reason this can exist
+ * at all: the standing rule is that a member's page is not legible outside
+ * the door — see the note above OPEN_PATHS in server.js about /p/:handle and
+ * public-media — and a feature that quietly published a profile because it
+ * was convenient would break it while looking like a share button.
+ *
+ * So an announcement is the author's own words about somebody, the same as a
+ * sentence they would have typed into the chat themselves. What it adds is
+ * the picture, the board's name on it, and the button at the bottom.
+ */
+export function cleanAnnounce(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").trim().slice(0, n);
+  const title = s(raw.title, 90);
+  const body = s(raw.body, 900);
+  if (!title) return null;
+  return {
+    id: /^[a-f0-9]{20}$/.test(String(raw.id || "")) ? String(raw.id) : newId(),
+    /* THE ADDRESS, AND IT IS SHORT ON PURPOSE. This is read off a phone in a
+       group chat and forwarded by people who will not check it. Same alphabet
+       as an invite code — no O, no 0, no I, no 1 — for the same reason: a
+       character somebody can mistype is a link that goes nowhere with no way
+       to tell why. */
+    code: cleanCode(raw.code) || newCode(),
+    title,
+    body,
+    /* A PICTURE, AND IT IS NOT HELD.
+       Everywhere else on this board a photograph waits to be looked at before
+       anybody else sees it, because it was uploaded by somebody nobody has
+       vouched for. This one is uploaded by whoever runs the board, who is the
+       person the queue would be waiting for. Holding it would mean an
+       announcement could not be written and shared in the same minute, which
+       is the only way news gets shared at all. */
+    photo: /^[a-f0-9]{20}$/.test(String(raw.photo || "")) ? String(raw.photo) : "",
+    // Who wrote it, as a device hash, so they can take their own down.
+    by: s(raw.by, 64),
+    at: s(raw.at, 40) || new Date().toISOString(),
+    /* TAKEN DOWN IS A STATE AND NOT A DELETE. A link that has been in a
+       WeChat group for a week goes on being tapped, and the difference between
+       a page that says the announcement is gone and a page that 404s is the
+       difference between a board that took something down and a board that
+       looks broken. */
+    state: ["published", "removed"].includes(raw.state) ? raw.state : "published",
+    /* HOW MANY OPENED IT. One integer, and deliberately nothing else — no
+       address, no device, no row per visit. The question worth asking after
+       pasting a link into a group is "did anybody come", and that is a
+       number. Who came is none of the board's business, and there is nothing
+       here capable of holding a person. Same call, and the same reasoning, as
+       the tally counters in server.js. */
+    seen: Math.max(0, Math.min(9_999_999, Math.round(Number(raw.seen)) || 0)),
+  };
 }
 
 export function cleanInvite(raw) {
@@ -1112,6 +1195,18 @@ export function cleanPerson(raw) {
      * of people, decided one at a time.
      */
     canOffer: raw.canOffer === true,
+    /* WHO MAY WRITE ONE THAT LEAVES THE BOARD.
+     *
+     * Not derived from a role and not given to every member, for a harder
+     * reason than canOffer above: an announcement is a page on the open
+     * internet with this board's name on it, carrying a photograph and a
+     * claim about a named person. A member who could publish one unreviewed
+     * could publish anything, under the board's name, to anybody — and the
+     * first anyone here would know of it is a screenshot.
+     *
+     * So it is the operator's, handed out one person at a time, exactly the
+     * way the offer flag is. `make announcer WHO=Tom`. */
+    canAnnounce: raw.canAnnounce === true,
     /* What they are looking for. Three at most — see ROOMS above for why that
        number and not a bigger one. Unknown keys are dropped rather than
        refused: this field is written from a page, and a page written today is
@@ -1822,6 +1917,18 @@ export function cleanBoard(raw) {
     blocks.push(x);
   }
 
+  /* Announcements, newest last, one row per code. A duplicate code would be
+     two posters at one address, and the later one silently wins on a page
+     already pasted into a chat. */
+  const seenA = new Set();
+  const announces = [];
+  for (const r of (Array.isArray(raw?.announces) ? raw.announces : [])) {
+    const a = cleanAnnounce(r);
+    if (!a || seenA.has(a.code)) continue;
+    seenA.add(a.code);
+    announces.push(a);
+  }
+
   const seenPush = new Set();
   const pushes = [];
   for (const r of (Array.isArray(raw?.pushes) ? raw.pushes : [])) {
@@ -1832,7 +1939,7 @@ export function cleanBoard(raw) {
   }
 
   return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
-    offers, shuts, groups, says, signins, writes, pushes, blocks,
+    offers, shuts, groups, says, signins, writes, pushes, blocks, announces,
     counts: cleanCounts(raw?.counts) };
 }
 
@@ -2011,6 +2118,12 @@ export function forget(board, me) {
     if (p.clip) media.push(p.clip);
   }
   for (const w of board.waits) if (w.by === me && w.photo) media.push(w.photo);
+  /* AND THE POSTERS THEY WROTE, which is the one kind of row here that is
+     readable by anybody on the internet. A forgotten account leaving a page
+     with its author's words and somebody's face on it, live at an address
+     already pasted into a group chat, is the loudest possible version of not
+     forgetting them. */
+  for (const a of board.announces) if (a.by === me && a.photo) media.push(a.photo);
 
   /* Rows are replaced rather than spliced, because half of them are
      deduplicated on load and a splice inside a loop over the same array is how
@@ -2055,6 +2168,7 @@ export function forget(board, me) {
      row rather than a person, so the notes drop above — which matches on a
      person's device hash — does not reach them. */
   drop("writes", (w) => w.by !== me);
+  drop("announces", (a) => a.by !== me);
 
   /* Only the groups this person was actually in. Filtering every group by its
      size would take out any group that was already below three for some other

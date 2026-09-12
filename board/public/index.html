@@ -2060,6 +2060,13 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16z M14 6l4 4"/></svg>
         <span></span>
       </a>
+      <!-- The one line here that writes something READABLE OUTSIDE THE DOOR.
+           Hidden for everybody but the handful given the flag — see
+           canAnnounce in store.js. -->
+      <button type="button" id="plusann" role="menuitem" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11v2h3l5 4V7l-5 4H3Z M15 9a4 4 0 0 1 0 6 M18 6a8 8 0 0 1 0 12"/></svg>
+        <span></span>
+      </button>
       <a href="/onboard" id="plusrun" role="menuitem" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M2 20a7 7 0 0 1 14 0 M18 8v6M15 11h6"/></svg>
         <span></span>
@@ -2550,6 +2557,63 @@
       <button class="ghost" type="button" id="invshut"></button>
     </div>
   </div>
+</div>
+
+<!-- ANNOUNCING SOMEBODY, BEHIND THE ＋.
+     The one thing written here that is meant to leave the board. Every other
+     composer on this page files into somewhere only members can read; this
+     makes a page at an address with no door on it, to be pasted into a WeChat
+     group — so the sheet says that above the first field rather than after
+     the press.
+     WHAT IT DOES NOT DO: read anybody's row. Not the name, not the face, not
+     the sentence. Every word is typed here and the picture is chosen here.
+     See the long note above the announcement routes in server.js for why that
+     line is where the feature lives. -->
+<div class="sheet" id="annsheet" hidden>
+  <form class="card" id="annform">
+    <h2 id="anntitle"></h2>
+    <!-- .menote is centred, which is right for a caption under a photograph
+         and wrong for two sentences explaining what a form does. -->
+    <p class="menote" id="annwhy" style="text-align:left"></p>
+
+    <!-- The picture first, because it is the half of the poster that is read
+         at a glance in a scrolling group chat, and because the line under it
+         is worth reading before somebody has typed three paragraphs. -->
+    <div class="shot" id="annshot" hidden><img id="annimg" alt=""></div>
+    <div class="row">
+      <button class="ghost" type="button" id="annpic"></button>
+    </div>
+    <p class="menote" id="annpicwhy" style="text-align:left"></p>
+    <input type="file" id="annfile" hidden accept="image/*">
+
+    <div class="field"><input id="annhead" maxlength="90"></div>
+    <textarea id="annbody" rows="5" maxlength="900"></textarea>
+
+    <!-- After it is up: the address, and one press to get it onto the
+         clipboard. The link is the entire deliverable — a sheet that posted
+         and then closed would leave somebody hunting for what they just
+         made. -->
+    <div id="anndone" hidden>
+      <p class="said" id="anndonesay"></p>
+      <div class="field"><input id="annlink" readonly></div>
+      <div class="row"><button class="ghost" type="button" id="anncopy"></button></div>
+    </div>
+
+    <!-- SAID IN THE SHEET. say() writes to #said on the page underneath, and
+         this sheet covers it — an error reported there is an error nobody
+         sees, on the one composer whose output is public. -->
+    <p class="said" id="annsay" hidden></p>
+
+    <div class="row">
+      <button class="ghost" type="button" id="annshut"></button>
+      <button class="go" type="submit" id="anngo"></button>
+    </div>
+
+    <!-- What is already out there, and whether it worked. Two numbers: how
+         many opened it, and how many put their name down. Only the second
+         one is worth acting on. -->
+    <div id="annmine"></div>
+  </form>
 </div>
 
 <div class="sheet" id="mesheet" hidden>
@@ -3078,6 +3142,11 @@ function topicColour(name) {
 /* Whether this member may put somebody else up — the same test /api/run/add
    applies, answered once by paintRun and read by the ＋ menu. */
 let CANRUN = false;
+/* Whether the ＋ draws the announce line. Set from /api/me; the check that
+   matters is on POST /api/announce, and this only decides whether a button
+   exists. Nobody's browser is trusted with the decision — a person who set
+   this by hand in a console would get a 403 from the server. */
+let CANANN = false;
 let device = "";
 try {
   device = localStorage.getItem("board:device") || "";
@@ -4307,6 +4376,175 @@ function openInvite() {
 }
 $("invshut").addEventListener("click", () => { $("invsheet").hidden = true; });
 
+/* ---- ANNOUNCING SOMEBODY ------------------------------------------------
+ *
+ * A poster to paste into a WeChat group: a picture, a headline, a few lines,
+ * and the waiting-list form at the bottom of the page it makes. The only
+ * composer on this board whose output is readable without a code.
+ */
+let ANNPIC = null;      // { data, type } — held here until the post is made
+
+/* WHO IS ASKING. The shim at the top of this file only adds this header while
+   somebody is being somebody else, so a route that identifies by device says
+   so itself — which is what every other /api/me call here does. Leaving it off
+   was a 403 on all four of these, from a server that was right. */
+const annHead = () => (device
+  ? { "Content-Type": "application/json", "x-board-device": device }
+  : { "Content-Type": "application/json" });
+
+const annSay = (words) => {
+  const n = $("annsay");
+  n.textContent = words || "";
+  n.hidden = !words;
+  n.classList.toggle("bad", Boolean(words));
+};
+
+function drawAnnMine(rows) {
+  const box = $("annmine");
+  box.textContent = "";
+  if (!rows) return;                       // not asked yet
+  const h = document.createElement("p");
+  h.className = "said";
+  h.textContent = T("ann.mine");
+  box.append(h);
+  if (!rows.length) {
+    const p = document.createElement("p");
+    p.className = "menote";
+    p.textContent = T("ann.none");
+    box.append(p);
+    return;
+  }
+  for (const a of rows) {
+    const row = document.createElement("div");
+    row.className = "said";
+    const t = document.createElement("b");
+    t.textContent = a.title;
+    row.append(t);
+    const n = document.createElement("small");
+    n.style.display = "block";
+    n.style.color = "var(--muted)";
+    /* BOTH NUMBERS, IN THIS ORDER, and the second is the one that means
+       something — see the note on /api/announce in server.js. A poster read
+       four hundred times that brought nobody was the wrong poster. */
+    n.textContent = T("ann.seen", { n: a.seen }) + " · " + T("ann.joined", { n: a.joined })
+      + (a.state === "removed" ? " · " + T("ann.gone") : "");
+    row.append(n);
+    if (a.state !== "removed") {
+      const rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "ghost";
+      rm.style.marginTop = ".4rem";
+      rm.textContent = T("ann.rm");
+      rm.addEventListener("click", async () => {
+        if (!confirm(T("ann.rmSure"))) return;
+        await fetch("/api/announce", {
+          method: "DELETE", headers: annHead(),
+          body: JSON.stringify({ code: a.code }),
+        }).catch(() => {});
+        loadAnnMine();
+      });
+      row.append(rm);
+    }
+    box.append(row);
+  }
+}
+
+async function loadAnnMine() {
+  try {
+    const r = await fetch("/api/announce", { headers: annHead() });
+    const d = await r.json();
+    drawAnnMine(Array.isArray(d.announces) ? d.announces : []);
+  } catch { /* the sheet still works without the list */ }
+}
+
+function openAnnounce() {
+  ANNPIC = null;
+  $("anntitle").textContent = T("ann.head");
+  $("annwhy").textContent = T("ann.why");
+  $("annpic").textContent = T("ann.photo");
+  $("annpicwhy").textContent = T("ann.photoWhy");
+  $("annhead").placeholder = T("ann.titleHint");
+  $("annbody").placeholder = T("ann.bodyHint");
+  $("anngo").textContent = T("ann.post");
+  $("annshut").textContent = T("post.cancel");
+  $("anncopy").textContent = T("ann.copy");
+  $("anndonesay").textContent = T("ann.made") + " " + T("ann.madeWhy");
+  $("annhead").value = "";
+  $("annbody").value = "";
+  $("annshot").hidden = true;
+  $("anndone").hidden = true;
+  $("anngo").disabled = false;
+  annSay("");
+  $("annsheet").hidden = false;
+  loadAnnMine();
+}
+$("annshut").addEventListener("click", () => { $("annsheet").hidden = true; });
+
+$("annpic").addEventListener("click", () => $("annfile").click());
+$("annfile").addEventListener("change", async () => {
+  const f = $("annfile").files && $("annfile").files[0];
+  if (!f) return;
+  /* SHRUNK HERE, like every other picture on this board. A phone photograph
+     is four megabytes and this one is going into a link preview, where what
+     matters is that it arrives at all on a train. */
+  try {
+    const small = await shrink(f, 1600);
+    /* shrink() says no by RETURNING rather than throwing — a HEIC in a browser
+       that cannot decode HEIC is the real case, and the first version of this
+       read .data off the refusal and uploaded the string "undefined". */
+    if (!small || small.error || !small.data) throw new Error(small && small.error || "no");
+    ANNPIC = { data: small.data, type: small.type };
+    $("annimg").src = "data:" + small.type + ";base64," + small.data;
+    $("annshot").hidden = false;
+    $("annpic").textContent = T("ann.photoAgain");
+  } catch (err) { annSay(String(err.message || "") || T("ann.bad")); }
+  $("annfile").value = "";
+});
+
+$("annform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const title = $("annhead").value.trim();
+  if (!title) return annSay(T("ann.need"));
+  $("anngo").disabled = true;
+  $("anngo").textContent = T("ann.posting");
+  try {
+    const r = await fetch("/api/announce", {
+      method: "POST", headers: annHead(),
+      body: JSON.stringify({
+        title, body: $("annbody").value.trim(),
+        photo: ANNPIC ? ANNPIC.data : "", photoType: ANNPIC ? ANNPIC.type : "",
+      }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.code) throw new Error("no");
+    $("annlink").value = location.origin + "/a/" + d.code;
+    $("anndone").hidden = false;
+    annSay("");
+    /* The link IS the thing they just made, and the sheet is taller than the
+       screen — without this the press appears to do nothing and the address
+       sits below the fold. */
+    try { $("anndone").scrollIntoView({ block: "center", behavior: "smooth" }); } catch { /* old browser */ }
+    loadAnnMine();
+  } catch {
+    annSay(T("ann.bad"));
+  }
+  $("anngo").disabled = false;
+  $("anngo").textContent = T("ann.post");
+});
+
+$("anncopy").addEventListener("click", async () => {
+  const v = $("annlink").value;
+  try {
+    await navigator.clipboard.writeText(v);
+    $("anncopy").textContent = T("ann.copied");
+  } catch {
+    /* No clipboard permission — WeChat's browser refuses it on some builds.
+       Selecting the field is the fallback everybody already knows what to do
+       with, and it is better than a button that silently does nothing. */
+    $("annlink").select();
+  }
+});
+
 /* THE ＋ IS A MENU, which is what a plus in that corner is everywhere else.
    One press, three things you can start: write to somebody, bring somebody in,
    put somebody up. The exception is a member for whom only one of them is
@@ -4328,12 +4566,15 @@ function plusItems() {
   // Only for somebody who may speak for other people — /api/run/add refuses
   // anybody who is themselves somebody's client. paintRun sets this.
   if (CANRUN) out.push(["plusrun", "plus.run", null]);
+  // The one line that publishes outside the door. See canAnnounce in store.js
+  // for why it is handed out one person at a time.
+  if (CANANN) out.push(["plusann", "plus.ann", openAnnounce]);
   return out;
 }
 
 function drawPlus() {
   const items = plusItems();
-  for (const id of ["plusnotes", "pluswrite", "plusinv", "plusrun"]) {
+  for (const id of ["plusnotes", "pluswrite", "plusinv", "plusrun", "plusann"]) {
     const n = $(id);
     const row = items.find((x) => x[0] === id);
     n.hidden = !row;
@@ -4357,6 +4598,7 @@ $("fab").addEventListener("click", (e) => {
   $("fab").setAttribute("aria-expanded", "true");
 });
 $("plusinv").addEventListener("click", () => { shutPlus(); openInvite(); });
+$("plusann").addEventListener("click", () => { shutPlus(); openAnnounce(); });
 
 /* openWrite and everything it drew moved to notes.html — see the note where
    the sheet's markup used to be. */
@@ -9275,6 +9517,9 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
        string when they answered it on the way in, "" when nobody asked. */
     SAYME = typeof d.sayMe === "string" ? d.sayMe : "";
     CANOFFER = Boolean(d.canOffer);
+    // And the ＋ menu's announce line, which is the same kind of permission.
+    CANANN = Boolean(d.canAnnounce);
+    drawPlus();
     drawMkOffer();
     WAITING = typeof d.waiting === "number" ? d.waiting : null;
     MEMBERS = Number(d.people || 0);
