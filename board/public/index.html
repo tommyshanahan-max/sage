@@ -1845,8 +1845,16 @@
   .qmid{min-width:0;flex:1}
   .qmid .qn{font-weight:650}
   .qmid em{font-style:normal;color:var(--muted)}
+  /* TWO LINES, AND THEN IT STOPS.
+     This was unbounded, so one person with a full CV in the box owned six rows
+     of a list everybody else got two lines of — and on a list read by
+     scrolling, length is loudness. Nobody should be able to take the top of
+     somebody else's row by writing more.
+     The rest is not lost: it is on their page, which is where somebody who
+     stopped on them goes next. */
   .qmid small{display:block;color:var(--muted);font-size:.84rem;margin-top:.1rem;
-    overflow-wrap:anywhere}
+    overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;
+    -webkit-box-orient:vertical;overflow:hidden}
   .qtags{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.3rem}
   .qtags span{font-size:.7rem;border:1px solid var(--line);border-radius:99px;
     padding:.1rem .45rem;color:var(--muted)}

@@ -28,7 +28,31 @@ const arg = (n) => { const i = rest.indexOf("--" + n); return i >= 0 ? rest[i + 
    Every row is still somebody who actually asked. The public page says "N
    people are waiting" and that number has to be true; this writes down an ask
    that arrived somewhere else, it does not invent a queue. */
+/* THE ROOMS THIS LIST USES, WHICH ARE NOT THE ROOMS THE BOARD USES.
+ *
+ * WAITROOMS is film/invest/raise/trade/other; the member rooms are talent,
+ * agent, hire, raise and the rest. They overlap on one word and mean different
+ * things, and cleanWait falls back to "other" for anything it does not know —
+ * silently, which is how ROOM=talent and ROOM=agent both filed two film people
+ * under "Something else" with nothing on any screen to say so.
+ *
+ * Refused here rather than corrected: "did you mean film" is a guess, and a
+ * guess about which room somebody belongs in is the one thing this list is
+ * for. */
+const WAITROOMS = ["film", "invest", "raise", "trade", "other"];
+
 async function add(name, reach, why, room) {
+  if (room && !WAITROOMS.includes(room)) {
+    console.error("");
+    console.error("  There is no waiting room called \"" + room + "\".");
+    console.error("  This list has five:  " + WAITROOMS.join("  "));
+    console.error("");
+    console.error("  They are not the board's rooms. talent, agent and the rest");
+    console.error("  belong on a member's sentence, not here \u2014 film is where");
+    console.error("  actors, agents and producers all wait.");
+    console.error("");
+    process.exit(1);
+  }
   const r = await fetch(base + "/api/waiting/add", {
     method: "POST", headers: head, body: JSON.stringify({ name, reach, why, room }),
   });
