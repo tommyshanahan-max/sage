@@ -3431,7 +3431,12 @@ export const STRINGS = {
     "老莫关掉了。下面的格子照常填。",
   ],
   "but.back":          ["Bring him back", "让他回来"],
-  "but.no":            ["Not for me", "不用了"],
+  /* SAID LITERALLY, because the people this is for are the people who would
+     not believe a euphemism. "Not for me" is a preference; this names the
+     thing they object to and offers to remove it. A board whose whole pitch
+     is that a person decides cannot also be the board that insists a machine
+     talks to you first. */
+  "but.no":            ["Don't like AI? Send him away", "不喜欢 AI？让他走"],
   "but.ph":            ["Type, or hold the mic", "打字，或者按住话筒"],
   "but.send":          ["Send", "发送"],
   "but.thinking":      ["…", "…"],

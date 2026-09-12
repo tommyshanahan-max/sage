@@ -178,6 +178,9 @@
   .buthead b{font-size:.92rem;font-weight:600;color:var(--ink)}
   .butshut{margin:1rem 0 0;text-align:center}
   .butgone{margin:0 0 .5rem;font-size:.82rem;color:var(--muted)}
+  .butoff{display:block;margin:.5rem auto 0;border:0;background:none;
+    color:var(--muted);font:inherit;font-size:.78rem;padding:.25rem;
+    cursor:pointer;text-decoration:underline;text-underline-offset:2px}
   .butshut button{border:1px solid var(--line);background:var(--card);
     border-radius:99px;padding:.45rem 1.1rem;font:inherit;font-size:.85rem;
     color:var(--ink-2)}
@@ -1338,19 +1341,18 @@ function butlerPanel() {
   const box = el("div", "but");
 
   const head = el("div", "buthead");
-  head.append(el("i", "butmark", "\u4EA4"));
-  head.append(el("b", null, T("but.name")));
-  if (T("but.sub")) head.append(el("small", null, T("but.sub")));
-  const x = el("button", "x", "×");
-  x.type = "button";
-  x.setAttribute("aria-label", T("post.cancel"));
-  x.addEventListener("click", () => {
-    if (BUTMIC) BUTMIC.stop();
-    try { window.speechSynthesis.cancel(); } catch { /* nothing speaking */ }
-    BUT.open = false;
-    draw();
-  });
-  head.append(x);
+  /* His face: a cap and shoulders, not the board's 交 mark — see .butface. */
+  const face = el("i", "butface");
+  face.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none"'
+    + ' stroke="currentColor" stroke-width="1.7" stroke-linecap="round"'
+    + ' stroke-linejoin="round">'
+    + '<path d="M5 9h14M6 9c0-2.2 2.7-3.5 6-3.5S18 6.8 18 9"/>'
+    + '<path d="M7.5 19v-2.4a4.5 4.5 0 0 1 9 0V19"/><path d="M12 12.4v1.2"/></svg>';
+  head.append(face);
+  const who = document.createElement("div");
+  who.append(el("b", null, T("but.name")));
+  if (T("but.sub")) who.append(el("small", null, " " + T("but.sub")));
+  head.append(who);
   box.append(head);
 
   const said = el("div", "butsay");
@@ -1479,7 +1481,27 @@ function butlerPanel() {
   // a keyboard that opens the moment somebody taps "talk to him" covers the
   // line he just said.
   if (BUT.turns.length > 2) setTimeout(() => { try { input.focus(); } catch { /* gone */ } }, 0);
-  return box;
+
+  /* THE KILL SWITCH, SAID LITERALLY, and under the panel rather than as a
+     cross in its corner. A × reads as closing something that will be back
+     tomorrow, and this one does not come back until they ask for it.
+     Naming the thing people object to is what makes the offer believable:
+     "Not for me" is a preference, "Don't like AI? Send him away" is an
+     answer. A board whose whole pitch is that a person decides cannot also
+     be the board that insists a machine talks to you first. */
+  const off = el("button", "butoff", T("but.no"));
+  off.type = "button";
+  off.addEventListener("click", () => {
+    if (BUTMIC) BUTMIC.stop();
+    try { window.speechSynthesis.cancel(); } catch { /* nothing speaking */ }
+    try { localStorage.setItem(BUTKEY, "1"); } catch { /* private window */ }
+    BUT.open = false;
+    draw();
+  });
+
+  const out = document.createDocumentFragment();
+  out.append(box, off);
+  return out;
 }
 
 /** One round trip. */
