@@ -4379,6 +4379,18 @@ export const STRINGS = {
   "note.gone":         ["That person is not on the list any more.", "这个人已经不在名单上了。"],
   "note.failed":       ["It did not send. Try again.", "没有发出去，再试一次。"],
 
+  /* MO WRITES THE FIRST ONE. The blank box in front of a stranger's card is
+     where this board stops working — two people who answer each other exactly
+     and neither of them types. He proposes; the text lands in the box; Send is
+     still theirs to press. Never on a conversation that has already started —
+     that would mean handing somebody else's words to a model. */
+  "draft.go":          ["Mo can start it", "让 Mo 起个头"],
+  "draft.doing":       ["Writing…", "在写…"],
+  "draft.again":       ["Have another go", "再来一条"],
+  "draft.yours":       ["Change it before you send it — it goes out as you.",
+                        "发出去之前改一改，署的是你的名。"],
+  "draft.failed":      ["He could not. Write your own.", "他写不出来，你自己写吧。"],
+
   /* GROUPS. The words are plain on purpose: a group is an ordinary thing and
      the only sentence here doing real work is the one about who can be in it. */
   "grp.title":         ["Groups", "群组"],

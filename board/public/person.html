@@ -335,6 +335,19 @@
   .sheet .row button{flex:1 1 auto;min-width:0}
   .sheet .said{margin:.6rem 0 0;font-size:.85rem;color:var(--muted)}
   .sheet .said.bad{color:#B4232A}
+  /* MO'S OFFER TO WRITE THE FIRST ONE. Quieter than Send, deliberately: he is
+     a way to start the message and not the way, and a button that shouts
+     louder than the one that actually sends it would be read as the one to
+     press. Its own width and margin because it lives inside two different
+     boxes — the sheet and the match card — and the match card makes every
+     button a full-width pill. */
+  .draft{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:.6rem 0 0}
+  .draft button{flex:0 0 auto;width:auto;margin:0;padding:.45rem .85rem;
+    font:inherit;font-size:.85rem;border-radius:99px;border:1px solid var(--line);
+    background:transparent;color:var(--ink-2);cursor:pointer}
+  .draft button:disabled{opacity:.55;cursor:default}
+  .draft .tiny{margin:0;flex:1 1 10rem;font-size:.78rem;line-height:1.45;
+    color:var(--muted)}
   /* A line saying where a thread has got to, where the button used to be. */
   .held{margin:0 1.15rem .7rem;padding:.75rem .9rem;background:var(--raise);
     border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
@@ -505,6 +518,7 @@ function matchBox(q) {
       const send = el("button", null, T("note.send"));
       send.type = "button";
       const out = el("p", "said");
+      const draft = draftRow(ta, q);
       send.addEventListener("click", async () => {
         const text = ta.value.trim();
         if (!text) { ta.focus(); return; }
@@ -516,11 +530,11 @@ function matchBox(q) {
             body: JSON.stringify({ device, who: q.id, text }),
           });
           if (!r.ok) throw new Error("no");
-          ta.remove(); send.remove();
+          ta.remove(); send.remove(); draft.remove();
           out.textContent = T("match.chatSent");
         } catch { out.textContent = T("act.again"); send.disabled = false; }
       });
-      chat.append(ta, send, out);
+      chat.append(ta, draft, send, out);
       ta.focus();
     });
     chat.append(go);
@@ -1147,6 +1161,80 @@ function paint() {
   box.append(el("p", "safety", T("bud.safety")));
 }
 
+/* MO WRITES THE FIRST ONE.
+ *
+ * The blank box in front of a stranger's card is where this whole board stops
+ * working. Two people whose sentences answer each other exactly, a Send
+ * button, and neither of them types — because writing cold to somebody in your
+ * own industry, in your second language, is the part nobody does. Every other
+ * screen here is about getting these two in front of each other and then they
+ * both close the tab.
+ *
+ * HE PROPOSES, HE NEVER SENDS. The text lands in the box, the button under it
+ * is still Send and it is still theirs to press, and the line underneath says
+ * out loud that it goes out with their name on it. Same rule as the sentence
+ * he proposes in the waiting room.
+ *
+ * WHATEVER THEY HAVE ALREADY TYPED IS KEPT. Half a sentence in the box is not
+ * a thing to overwrite — it is the point they were trying to make, and he
+ * makes it. The button says so once they have started.
+ *
+ * THE FIRST MESSAGE ONLY. The server refuses a pair who have already written
+ * to each other, because drafting a reply means handing it what the other
+ * person wrote — in a room this product says only the two of them can see.
+ * If it refuses, the button goes away rather than explaining itself.
+ */
+function draftRow(box, q) {
+  const row = el("div", "draft");
+  const go = el("button", null, T("draft.go"));
+  go.type = "button";
+  const said = el("p", "tiny");
+  said.hidden = true;
+
+  go.addEventListener("click", async () => {
+    go.disabled = true;
+    const was = go.textContent;
+    go.textContent = T("draft.doing");
+    said.hidden = true;
+    try {
+      const r = await fetch("/api/butler-draft", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          device, who: q.id, lang: lang() === "zh" ? "zh" : "en",
+          /* What is in the box goes up with it. He is finishing their
+             sentence, not replacing it. */
+          started: box.value.trim().slice(0, 300),
+        }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        /* A pair who are already talking is not a failure to report — it is
+           a button that should never have been on this screen. It leaves
+           quietly. Anything else says so once. */
+        if (d.error === "thread" || d.error === "gone") { row.remove(); return; }
+        throw new Error("no");
+      }
+      box.value = d.say || "";
+      box.focus();
+      /* The cursor at the end, not the start: the next thing they do is
+         change the last line of it. */
+      box.setSelectionRange(box.value.length, box.value.length);
+      said.textContent = T("draft.yours");
+      said.hidden = false;
+      go.textContent = T("draft.again");
+      go.disabled = false;
+    } catch {
+      said.textContent = T("draft.failed");
+      said.hidden = false;
+      go.textContent = was;
+      go.disabled = false;
+    }
+  });
+
+  row.append(go, said);
+  return row;
+}
+
 /* The sheet. Two lines and a send, and an honest sentence about what happens
  * to them. */
 function sheet(q) {
@@ -1161,6 +1249,9 @@ function sheet(q) {
   box.maxLength = 600;
   box.placeholder = T("note.placeholder");
   card.append(box);
+  /* Not on an answer — see draftRow(). A reply would mean sending him what
+     they wrote to you. */
+  if (!answering) card.append(draftRow(box, q));
 
   const said = el("p", "said");
   const row = el("div", "row");

@@ -3502,11 +3502,20 @@ app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
       const others = board.people.filter((q) => q.by !== me && q.handle
         && q.state === "published" && store.scopeFits(mine, q)
         && store.sharedRooms(mine, q).length > 0);
+      /* HIS SENTENCE IS IN `say`, AND THIS READ IT OFF THE WRONG ROW SHAPE.
+         `me` and `want` are fields on a WAITING row; a member's row carries
+         `say`, an array of up to three of those pairs. So every member who
+         asked him anything was described to him as somebody with no sentence
+         at all — which is exactly the case facts() treats as "do not mention
+         it", so nothing looked broken and he simply never knew what the
+         person in front of him was on the board for. Same two fields, two
+         different tables, one silent wrong answer. */
+      const first = (Array.isArray(mine.say) ? mine.say : [])[0] || {};
       const out = await butler.ask(req.body?.turns, me, {
-        name: String(mine.name || "").split(/\s+/)[0] || "",
+        name: mine.handle || String(mine.name || "").split(/\s+/)[0] || "",
         member: true,
-        me: mine.me || "",
-        want: mine.want || "",
+        me: first.me || "",
+        want: first.want || "",
         photo: Boolean(mine.photo),
         matches: others.length,
       });
@@ -3593,6 +3602,91 @@ app.post("/api/butler-voice", express.json({ limit: "4kb" }), async (req, res) =
      shared. A phone holding his openers for a week helps nobody. */
   res.set("Cache-Control", "no-store, private");
   res.send(out.audio);
+});
+
+/* MO WRITES THE FIRST MESSAGE.
+ *
+ * The one part of this board nobody does. Two people whose sentences answer
+ * each other exactly, a Send button, and an empty box — and writing cold to a
+ * stranger in your own industry, in your second language, is where it stops. A
+ * board whose matches never open a conversation is a directory with extra
+ * steps.
+ *
+ * IT PROPOSES AND NEVER WRITES, the same rule as everything else he does. The
+ * text lands in the box; Send is untouched; nothing leaves until a person
+ * presses it. See the note above draft() in lib/butler.js for what he is given
+ * and what he is refused.
+ *
+ * THE FIRST MESSAGE ONLY. Once there is a thread, drafting a reply would mean
+ * sending the other person's words to a model — words written in a room this
+ * product says only the two of them can see. That is a decision about the
+ * promise this board makes and not a thing to add quietly, so a pair who have
+ * already written to each other are refused here.
+ *
+ * EVERYTHING HE IS GIVEN IS ALREADY ON THE SCREEN of the person asking: both
+ * sentences, both card lines, and the pair of words that put them together.
+ * No contact, no device, no id, nothing from anybody else's row.
+ */
+app.post("/api/butler-draft", notesOff, express.json({ limit: "8kb" }), async (req, res) => {
+  if (!butler.configured()) return res.status(503).json({ error: "unconfigured" });
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const who = String(req.body?.who || "");
+  if (!me) return res.status(400).json({ error: "no" });
+  if (!/^[a-f0-9]{20}$/.test(who)) return res.status(404).json({ error: "gone" });
+
+  const board = await store.load(FILE);
+  const mine = board.people.find((q) => q.by === me);
+  const them = board.people.find((q) => q.id === who && q.state === "published");
+  /* The same answer for somebody who never existed and somebody who took
+     themselves down, so this cannot be used to ask which ids are real — the
+     rule /api/note runs on, and it has to be the same rule or this route is
+     the way round it. */
+  if (!them || !mine || !mine.handle || them.by === me) {
+    return res.status(404).json({ error: "gone" });
+  }
+
+  /* THE SAME TEST THE SEND BUTTON PASSES. A draft for a message that cannot
+     be sent is worse than no button: it writes somebody a paragraph and then
+     refuses to deliver it. */
+  const state = threadState(board, me, them.by);
+  if (!state.can) return res.status(400).json({ error: state.why || "no" });
+
+  /* ALREADY TALKING — the boundary in the note above. Refused here rather
+     than hidden only on the page, because a rule that lives in a button is a
+     rule the next screen forgets. */
+  const already = board.notes.some((n) => (n.by === me && n.to === them.by)
+    || (n.by === them.by && n.to === me));
+  if (already) return res.status(400).json({ error: "thread" });
+
+  const pairs = pairState(board, me, them).shared;
+  /* THE SENTENCE LIVES IN `say`, NOT IN `me`/`want`. Those two are the shape
+     of a WAITING row — the stage before there is a person at all — and a
+     member's row carries `say`, up to three pairs of them. The card line is
+     `goal`; `why` on a person row is the "why should we let you in" answer and
+     is emptied the moment they are published. Read the wrong pair of fields
+     and every block sent up says "no card line" while the code looks
+     perfectly correct, which is what this did first. */
+  const card = (q) => ({
+    name: q.handle || String(q.name || "").split(/\s+/)[0] || "",
+    says: Array.isArray(q.say) ? q.say : [],
+    where: String(q.campus || "").slice(0, 60),
+    line: String(q.goal || "").replace(/\s+/g, " ").slice(0, 240),
+  });
+  const out = await butler.draft({
+    from: card(mine),
+    to: card(them),
+    pairs: pairs.map((p) => p.mine + " ↔ " + p.theirs),
+    started: req.body?.started,
+    lang: req.body?.lang,
+    who: me,
+  });
+  if (out.error) {
+    const code = out.error === "slow-down" || out.error === "busy" ? 429
+      : out.error === "unconfigured" ? 503 : 400;
+    return res.status(code).json(out);
+  }
+  res.set("Cache-Control", "no-store");
+  res.json(out);
 });
 
 /* WHO CAN BRING SOMEBODY IN, for whoever runs the box.
