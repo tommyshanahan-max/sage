@@ -58,6 +58,17 @@ async function add(name, reach, why, room) {
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) {
+    if (d.error === "taken") {
+      console.error("");
+      console.error("  \"" + reach + "\" is already how " + d.who + " is reached.");
+      console.error("  Rows are deduplicated on that, so adding " + name + " under it");
+      console.error("  would have replaced " + d.who + " and said nothing.");
+      console.error("");
+      console.error("  Give them one of their own \u2014 a WeChat id, an address,");
+      console.error("  an Instagram handle, or \"ask Tom - " + String(name).split(" ")[0].toLowerCase() + "\".");
+      console.error("");
+      process.exit(1);
+    }
     console.error(d.error === "both" ? "A name and a way to reach them, both." : "It did not save.");
     process.exit(1);
   }

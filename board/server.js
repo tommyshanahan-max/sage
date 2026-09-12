@@ -3706,6 +3706,17 @@ app.post("/api/waiting/add", express.json({ limit: "4kb" }), admin, async (req, 
          their sentence, their place in the waiting room. Only the three fields
          this route is actually given are written. */
       const had = board.waits[at];
+      /* TWO DIFFERENT PEOPLE UNDER ONE ADDRESS, which the dedup above cannot
+         see. Merging is right when it is the same person asking twice — the
+         same WeChat id typed again is one person, not two. It is catastrophic
+         when the address is a placeholder: two rows reading "ask Tom" are two
+         people, and the second one silently becomes the first.
+         It happened within the hour, to a row that had already been added,
+         looked for, and not found. So the name is checked, and a different
+         name under the same address is refused rather than written. */
+      if (had.name && row.name && had.name.toLowerCase() !== row.name.toLowerCase()) {
+        return { error: "taken", who: had.name };
+      }
       board.waits[at] = {
         ...had,
         name: row.name,
