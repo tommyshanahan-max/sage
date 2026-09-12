@@ -3362,13 +3362,19 @@ export const STRINGS = {
    * explanation and is the line somebody repeats to a friend. Card, not page:
    * the board already calls it a card everywhere else, and a card is a thing
    * rather than a screen. */
+  /* FIVE SENTENCES TO THREE. Spoken, this is the first thing anybody hears
+     from the place, and the long version had two sentences doing the same
+     job as the image at the end of it. Kept: the count, what to do, and the
+     picture of somebody still standing there in March.
+     "You just became the last of them" was also only true on the day they
+     joined — their number is true every day after it too. */
   "wel.sayList": [
-    "{who}. There are {t} people out here tonight and you just became the last of them. Put up a face. Tell me in one line what you do and who you're after. That's the whole trick. The ones who can't be bothered are still out here in March.",
-    "{who}。今晚门口站着 {t} 个人，你刚成了最后一个。放张照片，用一句话说清楚你做什么、想找谁。就这么点事。懒得弄的那些，三月份还站在这儿。",
+    "{who}. {t} of you out here tonight, and you're number {n}. Put up a face, tell me what you do. The ones who can't be bothered are still out here in March.",
+    "{who}。今晚外面 {t} 个人，你排第 {n}。放张照片，说说你做什么。懒得弄的那些，三月份还站在这儿。",
   ],
   "wel.sayUp": [
-    "{who}. Three people came off that list this week. You're one of them. Look around all you like — nothing works yet, that's how this part goes. Face on the card, one line under it, and somebody inside reads it. You've got three days.",
-    "{who}。这周从名单上提上来三个人，你是一个。随便看，什么都还点不动——这一段就是这样。照片放上，底下写一句话，里面就有人看。三天。",
+    "{who}. Three came off that list this week and you're one of them. Nothing works yet — that's this part. A face, one line, and somebody inside reads it. Three days.",
+    "{who}。这周提上来三个人，你是一个。什么都还点不动，这一段就是这样。照片，一句话，里面就有人看。三天。",
   ],
 
   /* ---- WHO HE IS ----------------------------------------------------------

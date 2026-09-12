@@ -1160,17 +1160,28 @@ const canHearOut = () => typeof window !== "undefined" && "speechSynthesis" in w
  * macOS, then a network voice — remote synthesis is nearly always better than
  * the on-device fallback — then anything at all in the language.
  */
-const GOOD = /siri|enhanced|premium|neural|natural/i;
-const NAMED = /samantha|ava|allison|serena|daniel|karen|moira|tingting|ting-ting|sinji|li-?mu|meijia/i;
+const GOOD = /siri|neural|natural|premium|enhanced/i;
+/* THE ONES TO AVOID, and this was the bug. macOS ships Samantha, Alex,
+   Victoria and Fred as local voices, and they are the flat 2005 robots
+   everybody recognises — Samantha was in the preferred list, so on Chrome on
+   a Mac this was actively choosing the worst voice on the machine. */
+const OLD = /samantha|alex|victoria|fred|albert|junior|ralph|zarvox|whisper|bells|bad news|good news|organ|cellos|trinoids|bubbles|boing|jester|superstar|wobble|rocko|shelley|grandma|grandpa|eddy|flo|reed|sandy/i;
 function bestVoice(tag) {
   const want = tag.slice(0, 2).toLowerCase();
   const all = (window.speechSynthesis.getVoices() || [])
     .filter((v) => String(v.lang || "").toLowerCase().startsWith(want));
   if (!all.length) return null;
-  return all.find((v) => GOOD.test(v.name))
-    || all.find((v) => NAMED.test(v.name))
-    || all.find((v) => v.localService === false)
-    || all[0];
+  const ok = all.filter((v) => !OLD.test(v.name));
+  const pool = ok.length ? ok : all;
+  return pool.find((v) => GOOD.test(v.name))          // iOS and Android's best
+    /* REMOTE BEFORE LOCAL on anything that has both. Chrome's network voices
+       are a different generation from the ones baked into the OS, and on a
+       desktop they are the whole difference between a person and a station
+       announcement. iOS has no remote voices, so it falls past this to the
+       Siri ones above. */
+    || pool.find((v) => v.localService === false)
+    || pool.find((v) => /google/i.test(v.name))
+    || pool[0];
 }
 
 /** THE CIRCLE, AND THE WORDS LIGHTING UP UNDER IT.
