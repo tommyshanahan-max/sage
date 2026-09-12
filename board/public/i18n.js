@@ -3002,6 +3002,11 @@ export const STRINGS = {
     "里面别写微信号或电话——他就是用这个链接回你的。有效期一天，只给一个人，只能用一次。",
   ],
   "wn.mkGo":           ["Make the note", "生成便条"],
+  /* THE PHONE'S OWN SHEET, which is how this actually reaches WeChat. The
+     first version offered Copy and nothing else, and left somebody holding a
+     block of text with no idea what to do with it. */
+  "wn.mkShare":        ["Send it", "发出去"],
+  "wn.mkDone":         ["Done", "完成"],
   "wn.mkTill":         ["Good for a day. One person, once.", "一天内有效，只给一个人，只能用一次。"],
   "wn.mkStanding": [
     "You cannot bring people to the door yet — same as an invite. Your profile page says what is left.",

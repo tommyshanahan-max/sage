@@ -326,6 +326,15 @@
   /* .menote centres in this sheet, which is right for a one-line aside under
      a control and wrong for three lines saying what a press gives away. */
   #repsay{text-align:left}
+  /* The written note, as it will arrive. Wrapped, not scrolled: somebody about
+     to send four lines to a person has to be able to read them. */
+  /* Both full width and stacked: on a phone the thing you press should be the
+     width of your thumb's reach, and there is nothing to weigh them against. */
+  #wrout .wide{display:block;width:100%;margin:.5rem 0 0}
+  .wrblock{margin:.2rem 0 .9rem;padding:.8rem .9rem;border-radius:.7rem;
+    background:var(--raise);border:1px solid var(--line);color:var(--ink);
+    font:inherit;font-size:.92rem;line-height:1.55;white-space:pre-wrap;
+    overflow-wrap:anywhere;max-height:15rem;overflow-y:auto}
   .keyval{display:flex;gap:.5rem;align-items:center;margin:.7rem 0 0}
   .keyval code{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;
@@ -2496,23 +2505,39 @@
 <div class="sheet" id="wrsheet" hidden>
   <div class="card">
     <h2 id="wrtitle"></h2>
-    <p class="hint" id="wrhint"></p>
-    <div class="field"><input id="wrto" maxlength="40" autocomplete="off"></div>
-    <textarea id="wrline" rows="4" maxlength="600"></textarea>
-    <p class="menote" id="wrwhy"></p>
-    <div class="row">
-      <button class="ghost" type="button" id="wrshut"></button>
-      <button class="go" type="button" id="wrgo"></button>
+    <!-- THE FORM AND THE RESULT ARE TWO STATES OF ONE SHEET, not two things
+         stacked. Left both on screen, the way out sat above the block it was
+         a way out of, and the fields you had finished with pushed the message
+         you were about to send off the bottom. -->
+    <div id="wrform">
+      <p class="hint" id="wrhint"></p>
+      <div class="field"><input id="wrto" maxlength="40" autocomplete="off"></div>
+      <textarea id="wrline" rows="4" maxlength="600"></textarea>
+      <p class="menote" id="wrwhy"></p>
+      <div class="row">
+        <button class="ghost" type="button" id="wrshut"></button>
+        <button class="go" type="button" id="wrgo"></button>
+      </div>
     </div>
     <p class="said" id="wrsaid" hidden></p>
     <!-- WHAT COMES OUT IS ONE BLOCK TO PASTE, like the invite script's. The
          link and the code do not travel together by accident: here the code IS
          the link, because the person on the other end has no app to type it
          into yet. -->
+    <!-- THE BLOCK, SET AS THE MESSAGE IT IS. It was a .keyval code — one
+         line, nowrap, scrolling sideways — which is right for a six-character
+         code and wrong for four lines somebody is about to send to a person:
+         you could not read what you were about to say. -->
     <div id="wrout" hidden>
-      <div class="keyval"><code id="wrurl"></code></div>
-      <div class="keyrow"><button type="button" class="go" id="wrcopy"></button></div>
+      <pre class="wrblock" id="wrurl"></pre>
+      <!-- SEND IS THE WHOLE POINT, so it is the width of the sheet. The
+           phone's own sheet has WeChat and WhatsApp in it, which is where
+           this is going; Copy is the fallback for a desktop and for WeChat's
+           own browser, where a page may not open a sheet at all. -->
+      <button type="button" class="go wide" id="wrshare"></button>
+      <button type="button" class="ghost wide" id="wrcopy"></button>
       <p class="menote" id="wrtill"></p>
+      <div class="row"><button class="ghost" type="button" id="wrdone"></button></div>
     </div>
   </div>
 </div>
@@ -4227,15 +4252,19 @@ function openWrite() {
   $("wrwhy").textContent = T("wn.mkWhy");
   $("wrshut").textContent = T("post.cancel");
   $("wrgo").textContent = T("wn.mkGo");
+  $("wrshare").textContent = T("wn.mkShare");
   $("wrcopy").textContent = T("cards.copy");
   $("wrsaid").hidden = true;
   $("wrout").hidden = true;
+  $("wrform").hidden = false;
   $("wrgo").hidden = false;
+  $("wrdone").textContent = T("wn.mkDone");
   $("wrsheet").hidden = false;
   $("wrto").focus();
 }
 $("pluswrite").addEventListener("click", () => { shutPlus(); openWrite(); });
 $("wrshut").addEventListener("click", () => { $("wrsheet").hidden = true; });
+$("wrdone").addEventListener("click", () => { $("wrsheet").hidden = true; });
 
 $("wrgo").addEventListener("click", async () => {
   const said = $("wrsaid");
@@ -4268,7 +4297,8 @@ $("wrgo").addEventListener("click", async () => {
       || "act.again");
   }
   $("wrgo").disabled = false;
-  $("wrgo").hidden = true;
+  // The form has done its job. What is left is the message and how to send it.
+  $("wrform").hidden = true;
   said.hidden = true;
   /* THE WHOLE BLOCK, NOT THE CODE. The person on the other end has no app to
      type six characters into — the link IS the code here, which is the one
@@ -4279,8 +4309,26 @@ $("wrgo").addEventListener("click", async () => {
   $("wrurl").textContent = words;
   $("wrtill").textContent = T("wn.mkTill");
   $("wrout").hidden = false;
+
+  /* THE PHONE'S OWN SHARE SHEET, which is the whole answer to "how do I get
+     this into WeChat". It lists WeChat, WhatsApp, Messages and everything else
+     installed, and it is one tap.
+     Two cases where it is not available and both are handled rather than
+     hidden: inside WeChat's browser a page may not open a sheet at all — the
+     ⋯ menu is the only way — and a desktop has no sheet. Both get the
+     clipboard and a line saying so. */
+  const share = $("wrshare");
+  share.hidden = IN_WECHAT || !navigator.share;
+  share.onclick = () => {
+    navigator.share({ text: words })
+      .catch(() => { /* dismissed is not a failure */ });
+  };
+  $("wrcopy").classList.toggle("go", share.hidden);
+  $("wrcopy").classList.toggle("ghost", !share.hidden);
   $("wrcopy").onclick = () => {
-    $("wrcopy").textContent = T(copyText(words) ? "cards.copied" : "act.again");
+    const ok = copyText(words);
+    $("wrcopy").textContent = T(ok ? (IN_WECHAT ? "act.wxCopied" : "cards.copied")
+                                   : "act.copyFail");
   };
 });
 // Anywhere else, and Escape. A menu you have to press its own button again to
