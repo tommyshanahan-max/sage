@@ -34,42 +34,50 @@
   .lede{color:var(--muted);margin:0 0 1.4rem;line-height:1.6;max-width:44rem;
     font-size:.95rem}
 
-  /* TWO CHOICES, NOT TWO PARAGRAPHS.
-     This was a heading and three lines of prose each, which is an essay in
-     front of a person who has not done anything yet — they read none of it and
-     the two options might as well not have been there. A choice has to be
-     readable at a glance from across the desk: the name big, one line under
-     it, and the thing to press. If it needs a second line it is not a choice,
-     it is an explanation, and it belongs somewhere else. */
-  .twoways{display:grid;gap:1.1rem;margin:0 0 2rem;
-    grid-template-columns:repeat(auto-fit,minmax(20rem,1fr))}
-  .way{border:1px solid var(--hair);border-radius:1rem;padding:1.4rem 1.5rem;
-    background:var(--raise);display:flex;flex-direction:column;gap:.5rem}
-  .way b{display:block;font-family:var(--serif,Georgia,serif);font-weight:400;
-    font-size:1.6rem;line-height:1.15;margin:0}
-  .way p{margin:0;color:var(--ink-2);line-height:1.5;font-size:1.02rem;flex:1}
-  .way a{font-size:1rem;font-weight:600;color:var(--accent);margin-top:.3rem}
-  /* Numbered because he asked for one and two, and because the numbers do
-     work here: they say "there are exactly two of these" before either has
-     been read, which is the fact somebody needs first. */
-  .num{display:grid;place-items:center;width:1.9rem;height:1.9rem;border-radius:50%;
-    background:var(--accent);color:#fff;font-weight:700;font-size:1rem;
-    font-variant-numeric:tabular-nums}
-  .skip{margin:-.6rem 0 2rem;font-size:.95rem}
-  .skip a{color:var(--muted)}
-  .pic{width:100%;max-width:13rem;height:auto;margin:.2rem 0 .6rem;display:block}
-  .pic .ln{fill:none;stroke-width:2.5}
-  .pic .ln.hot{stroke:var(--accent)}
-  .pic .ln.dim{stroke:var(--line)}
-  .pic .fl.hot{fill:var(--accent)}
-  .pic .fl.soft{fill:var(--accent-soft)}
-  .pic .fl.dim{fill:var(--line)}
-  .mine{margin:0 0 1.4rem;padding:1rem 1.1rem;border:1px solid var(--accent-soft);
-    border-radius:.9rem;background:var(--accent-soft)}
-  .mine label{display:block;font-size:.9rem;color:var(--ink-2);margin:0 0 .55rem;line-height:1.55}
-  .mine .two{display:flex;gap:.6rem;flex-wrap:wrap}
-  .mine input{flex:1;min-width:12rem;padding:.65rem .8rem;font:inherit;
-    border:1px solid var(--line);border-radius:.6rem;background:var(--paper);color:var(--ink)}
+  /* ---- the two steps ------------------------------------------------------
+     Numbered because they are an order, not a menu: your page exists first
+     because theirs are built out of it. Step two greys out until step one has
+     a name — the form saying what it needs, rather than a rule being read out.
+  */
+  .step{margin:0 0 1.6rem}
+  .step.waiting{opacity:.4;pointer-events:none}
+  .stepno{display:flex;align-items:center;gap:.7rem;margin:0 0 .8rem}
+  .stepno span{display:grid;place-items:center;width:1.9rem;height:1.9rem;
+    border-radius:50%;background:var(--accent);color:#fff;font-weight:700;
+    font-size:1rem;font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .stepno b{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:1.5rem}
+
+  /* The avatar is the one control every app on earth opens with, and it is the
+     same one the board itself uses on a profile — same circle, same plus in
+     the corner — so this screen is recognised rather than learnt. */
+  .you{display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap}
+  .avatar{position:relative;width:5.5rem;height:5.5rem;flex:0 0 auto;padding:0;
+    border:0;background:none;cursor:pointer}
+  .av-in{position:absolute;inset:0;border-radius:50%;overflow:hidden;
+    background:var(--raise);border:1px dashed var(--line);display:grid;
+    place-items:center;color:var(--muted);font-size:1.8rem;
+    font-family:var(--serif,Georgia,serif)}
+  .av-in img{width:100%;height:100%;object-fit:cover;display:block}
+  .av-plus{position:absolute;right:0;bottom:0;width:1.8rem;height:1.8rem;
+    border-radius:50%;background:var(--accent);color:#fff;display:grid;
+    place-items:center;font-weight:700;border:2px solid var(--paper)}
+  .yourow{flex:1;min-width:15rem}
+  .yourow label{display:block;font-size:.9rem;color:var(--ink-2);margin:0 0 .5rem;
+    line-height:1.55}
+  .yourow .two{display:flex;gap:.6rem;flex-wrap:wrap}
+  .yourow input{flex:1;min-width:11rem;padding:.65rem .8rem;font:inherit;
+    border:1px solid var(--line);border-radius:.6rem;background:var(--raise);color:var(--ink)}
+  /* ON A PHONE THE AVATAR GOES ON TOP, centred, the way it does in every app
+     anybody has set a profile up in. Beside a four-line label it floats in the
+     middle of a paragraph, attached to nothing. */
+  @media (max-width:640px){
+    .you{flex-direction:column;align-items:stretch;gap:.9rem}
+    .avatar{margin:0 auto}
+    .yourow{min-width:0}
+    .yourow .two{flex-direction:column}
+    .yourow input,.yourow .go{width:100%}
+  }
+  .note{margin:.8rem 0 0;color:var(--muted);font-size:.92rem;line-height:1.55;max-width:38rem}
   .roles{display:flex;flex-wrap:wrap;gap:.4rem;margin:0 0 1rem;align-items:center}
   .roles b{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;
     color:var(--muted);margin-right:.4rem;font-weight:600}
@@ -91,8 +99,13 @@
   .field.small b{font-size:1rem;margin:0;flex:1}
   .field.small p{display:none}
   .field.small .drop-pic{display:none}
-  .drop-pic{margin:0 auto 1rem;max-width:6.5rem}
-  .drop-pic .ln{stroke-linecap:round;stroke-linejoin:round}
+  /* The line-art rules lived in the block that held the two option cards, and
+     went out with it — leaving an SVG with no fill rule, which is a solid
+     black folder. Kept here now, beside the only drawing left. */
+  .drop-pic{width:100%;max-width:6.5rem;height:auto;margin:0 auto 1rem;display:block}
+  .drop-pic .ln{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+  .drop-pic .ln.hot{stroke:var(--accent)}
+  .drop-pic .ln.dim{stroke:var(--line)}
   .field.small .go{margin:0}
   .field b{display:block;font-family:var(--serif,Georgia,serif);font-weight:400;
     font-size:1.5rem;color:var(--ink);margin:0 0 .5rem}
@@ -164,79 +177,40 @@
   <h1 id="head"></h1>
   <p class="lede" id="lede"></p>
 
-  <!-- TWO THINGS, AND THE PAGE ONLY EVER MENTIONED ONE.
-       An agent arriving here has a row of their own and nine people to put up,
-       and the console talked about nothing but the nine. So somebody could
-       finish the whole import and never learn they were on the board
-       themselves — which is the half that makes the other half worth doing,
-       because a producer meets the roster by meeting the agent. Said plainly,
-       side by side, before anything is asked of them. -->
-  <!-- DRAWN, NOT DESCRIBED.
-       The difference between these two is one page and several pages, which is
-       a picture rather than a sentence — and a sentence is the thing somebody
-       skips. Line art, inline, no request: this is read from mainland China,
-       where an icon font that has to be fetched is an icon that never arrives.
-       aria-hidden because the heading under each already says it; a screen
-       reader should not be read two drawings of a rectangle. -->
-  <div class="twoways">
-    <div class="way">
-      <span class="num">1</span>
-      <svg class="pic" viewBox="0 0 120 68" aria-hidden="true">
-        <rect class="ln hot" x="38" y="6" width="44" height="56" rx="6"/>
-        <circle class="fl hot" cx="60" cy="24" r="7"/>
-        <rect class="fl soft" x="47" y="38" width="26" height="4" rx="2"/>
-        <rect class="fl soft" x="51" y="47" width="18" height="4" rx="2"/>
-      </svg>
-      <b id="wayonehead"></b>
-      <p id="wayone"></p>
-      <a id="wayonego" href="/browse?edit=1"></a>
-    </div>
-    <div class="way">
-      <span class="num">2</span>
-      <svg class="pic" viewBox="0 0 120 68" aria-hidden="true">
-        <!-- One in front and two behind it. They are separate pages standing
-             beside yours, not a list living inside it, and that is the whole
-             thing this drawing has to get across. -->
-        <rect class="ln dim" x="4"  y="12" width="34" height="44" rx="5"/>
-        <circle class="fl dim" cx="21" cy="26" r="5"/>
-        <rect class="fl dim" x="12" y="38" width="18" height="3" rx="1.5"/>
-        <rect class="ln dim" x="82" y="12" width="34" height="44" rx="5"/>
-        <circle class="fl dim" cx="99" cy="26" r="5"/>
-        <rect class="fl dim" x="90" y="38" width="18" height="3" rx="1.5"/>
-        <rect class="ln hot" x="41" y="6" width="38" height="56" rx="6"/>
-        <circle class="fl hot" cx="60" cy="24" r="7"/>
-        <rect class="fl soft" x="48" y="38" width="24" height="4" rx="2"/>
-        <rect class="fl soft" x="52" y="47" width="16" height="4" rx="2"/>
-      </svg>
-      <b id="waytwohead"></b>
-      <p id="waytwo"></p>
-      <a id="waytwogo" href="/run"></a>
-    </div>
-  </div>
+  <!-- A SETUP FORM, NOT A FORK.
+       This offered two numbered options and asked an agent to choose between
+       them before doing anything, which is not how any app they have ever used
+       begins. Every one of them does the same three things: a photograph, a
+       name, and then the next thing. Choosing between abstractions is what you
+       do once you understand a product, not on the screen where you meet it.
 
-  <!-- THE THIRD OPTION, WHICH IS NEITHER.
-       Somebody who has just come through the door at eleven at night and wants
-       to look round first should be able to, and a screen with two ways
-       forward and none out is a screen people close rather than leave. It is
-       safe to offer now and would not have been an hour ago: the link back to
-       this page sits on their profile, so skipping is putting it off rather
-       than losing it. -->
-  <p class="skip"><a href="/browse" id="skipgo"></a></p>
+       So the two options became what they always were underneath — an order.
+       You first, because their pages are built from yours: the sentence, the
+       city, and the line that says who represents them. Then them. Step two is
+       dimmed until step one has a name, which is the form telling the truth
+       about what it needs rather than a rule being enforced. -->
+  <section class="step" id="step1">
+    <p class="stepno"><span>1</span><b id="s1head"></b></p>
 
-  <!-- ASKED ONCE, AND ONLY OF SOMEBODY WHO HAS NOT SAID IT.
-       An agent arriving on an agent invite has a row and no name on it: the
-       door made the row so this page has a roster to hang things off, and put
-       nothing on it that they did not type. Their people's pages are made in
-       their name and their WeChat is the one that crosses, so the board has to
-       know what to call them before any of that means anything. One field, at
-       the top, gone the moment it is answered. -->
-  <div class="mine" id="mine" hidden>
-    <label for="myname" id="mylabel"></label>
-    <div class="two">
-      <input id="myname" autocomplete="name">
-      <button class="go" id="mysave" type="button"></button>
+    <div class="you">
+      <button class="avatar" type="button" id="avgo" aria-label="Add a photo">
+        <span class="av-in" id="avin"></span><span class="av-plus">+</span>
+      </button>
+      <div class="yourow">
+        <label for="myname" id="mylabel"></label>
+        <div class="two">
+          <input id="myname" autocomplete="name">
+          <button class="go" id="mysave" type="button"></button>
+        </div>
+      </div>
     </div>
-  </div>
+    <input type="file" id="avfile" accept="image/*" hidden>
+    <p class="note" id="s1say"></p>
+  </section>
+
+  <section class="step" id="step2">
+    <p class="stepno"><span>2</span><b id="s2head"></b></p>
+    <p class="note" id="s2say"></p>
 
   <div class="roles"><b id="rolehead"></b><span id="roles"></span></div>
 
@@ -260,6 +234,9 @@
     <button class="go" id="make" type="button"></button>
     <p id="tally"></p>
   </div>
+  </section>
+
+  <p class="skip"><a href="/browse" id="skipgo"></a></p>
 </main>
 
 <script type="module">
@@ -289,13 +266,58 @@ const isPic = (f) => f && /^image\//.test(f.type || "");
 /* Whether this browser has a page with a name on it. Everything here needs
    one: a roster hangs off it, and their people's sentences are built from it.
    Checked once on load and again after they answer. */
+/* THE AVATAR, THE SAME ONE THE BOARD USES.
+ *
+ * Read in the browser and posted as base64 to the route that already takes a
+ * profile photograph — no new endpoint, no second queue, and it lands in the
+ * same place with the same rules: held until somebody has looked at it, which
+ * is true of every face on this board and is not going to stop being true
+ * because an agent uploaded it.
+ */
+$("avgo").onclick = () => $("avfile").click();
+$("avfile").onchange = async () => {
+  const f = $("avfile").files[0];
+  if (!f) return;
+  if (f.size > 25 * 1024 * 1024) return say(T("ob.toobig"), true);
+  say(T("ob.sending"));
+  const b64 = await new Promise((ok) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result).split(",")[1] || "");
+    r.onerror = () => ok("");
+    r.readAsDataURL(f);
+  });
+  if (!b64) return say(T("run.failed"), true);
+  const out = await fetch("/api/me", {
+    method: "PUT", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ device, photo: b64, photoType: f.type || "image/jpeg" }),
+  }).then((x) => x.json()).catch(() => ({ error: "failed" }));
+  if (out.error) return say(T("run.failed"), true);
+  say("");
+  drawYou(out.person);
+};
+
+/* Both halves of step one, from whatever /api/me last said. */
+function drawYou(person) {
+  const box = $("avin");
+  box.replaceChildren();
+  if (person && person.photo) {
+    box.append(el("img", { src: "/api/public-media?id=" + encodeURIComponent(person.photo), alt: "" }));
+  } else {
+    box.textContent = ((person && person.handle) || "?").trim().slice(0, 1).toUpperCase();
+  }
+  if (person && person.handle) $("myname").value = person.handle;
+  /* Step two waits on a name and nothing else. A photograph is worth asking
+     for and is not worth blocking on — plenty of agents will add theirs from a
+     phone later, and none of them should be stuck here because of it. */
+  $("step2").classList.toggle("waiting", !(person && person.handle));
+}
+
 async function askName() {
   const d = await fetch("/api/me", { headers: { "x-board-device": device } })
     .then((r) => r.json()).catch(() => null);
-  const has = Boolean(d && d.person && d.person.handle);
-  $("mine").hidden = has;
-  if (!has) $("myname").focus();
-  return has;
+  drawYou(d && d.person);
+  if (!(d && d.person && d.person.handle)) $("myname").focus();
+  return Boolean(d && d.person && d.person.handle);
 }
 
 $("mysave").onclick = async () => {
@@ -309,8 +331,8 @@ $("mysave").onclick = async () => {
   $("mysave").disabled = false;
   if (r.error === "contact") return say(T("run.contact"), true);
   if (r.error) return say(T("run.failed"), true);
-  $("mine").hidden = true;
   say("");
+  drawYou(r.person);
 };
 
 const ROLES = ["performer", "director", "writer", "crew"];
@@ -554,12 +576,10 @@ function paint() {
   set("fieldsub", "ob.fieldsub");
   set("browse", "ob.choose");
   set("skipgo", "ob.skip");
-  set("wayonehead", "ob.wayone.head");
-  set("wayone", "ob.wayone.body");
-  set("wayonego", "ob.wayone.go");
-  set("waytwohead", "ob.waytwo.head");
-  set("waytwo", "ob.waytwo.body");
-  set("waytwogo", "ob.waytwo.go");
+  set("s1head", "ob.s1head");
+  set("s1say", "ob.s1say");
+  set("s2head", "ob.s2head");
+  set("s2say", "ob.s2say");
   set("mylabel", "ob.mylabel");
   set("mysave", "ob.mysave");
   $("myname").placeholder = T("ob.myph");

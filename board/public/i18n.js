@@ -561,7 +561,8 @@ export const STRINGS = {
   "ob.welcome":     ["Welcome", "欢迎"],
   "ob.skip":        ["Or skip this for now \u2014 it will be on your profile when you want it.",
                      "也可以先放着——想弄的时候在你主页上找得到。"],
-  "ob.lede":        ["As an agent you have two options.", "作为经纪人，你有两个选择。"],
+  /* Two steps, not two options — the page stopped being a fork. */
+  "ob.lede":        ["Two things, in this order.", "两步，按顺序来。"],
   "ob.rolehead":    ["They are", "他们是"],
   "ob.fieldhead":   ["Drag it all in here", "全拖到这儿"],
   "ob.fieldsub":    ["A folder, or a pile. Nothing is made until you say so.", "一个文件夹，或者一堆文件。你不点，什么都不建。"],
@@ -585,12 +586,6 @@ export const STRINGS = {
      rather than as steps: plenty of agents will do one and not the other, and
      numbering them would make the second look like homework.
      一个人和一群人是两件事，所以并排放，不是第一步第二步。 */
-  "ob.wayone.head": ["Your own page", "你自己的主页"],
-  "ob.wayone.body": ["Producers and brands find you here.", "制片方、品牌方从这儿找到你。"],
-  "ob.wayone.go":   ["Finish it \u2192", "去填好 \u2192"],
-  "ob.waytwo.head": ["The people you represent", "你带的人"],
-  "ob.waytwo.body": ["A page each. You run all of them.", "一人一个主页，全归你管。"],
-  "ob.waytwo.go":   ["See who you run \u2192", "看名单 \u2192"],
   "ob.trayhead":    ["Could not tell whose these are \u2014 drag them onto somebody",
                      "这几个不知道是谁的——拖到对应的人身上"],
   "ob.guessed":     ["Worked out", "猜的"],
@@ -612,6 +607,23 @@ export const STRINGS = {
      nothing on it. Not "create your profile": they are not here to make a
      profile, they are here to put nine people up, and this is the one fact
      that has to exist first. */
+  /* ---- two steps, in the order the board actually needs them --------------
+   * This was two numbered options to choose between, and an agent had to pick
+   * one before doing anything — which is not how any app they have ever used
+   * begins. Every one of them opens with a photograph, a name, and then the
+   * next thing.
+   * Their pages are built out of the agent's: the sentence, the city, and the
+   * line saying who represents them. So it is not a menu, it is an order, and
+   * the numbers finally mean what numbers mean. */
+  "ob.s1head":      ["You", "你自己"],
+  "ob.s1say":       ["Your page is what producers and brands find. Everybody you add starts from it \u2014 your sentence, your city, and the line on their page saying you represent them.",
+                     "制片方、品牌方是通过你的主页找到你的。你加进来的每个人也都从这儿来——你那句话、你的城市，还有他们主页上写的「由你代理」。"],
+  "ob.s2head":      ["The people you represent", "你带的人"],
+  "ob.s2say":       ["A page each, all run from this login. Drag their files in and it writes the pages; you read them before anybody else does.",
+                     "一人一个主页，都用你这个账号管。把他们的资料拖进来，主页它来写；别人看到之前你先过一遍。"],
+  "ob.toobig":      ["That photo is too big. Anything under 25MB is fine.",
+                     "这张照片太大了，25MB 以内都行。"],
+  "ob.sending":     ["Sending the photo\u2026", "照片上传中……"],
   "ob.mylabel":     ["First \u2014 what should the board call you? Their pages say they are represented by you, and it is your WeChat that crosses.",
                      "先说一下，板上叫你什么？他们的主页上会写「由你代理」，对方最后加的也是你的微信。"],
   "ob.myph":        ["Your name", "你的名字"],
