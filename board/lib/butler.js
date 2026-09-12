@@ -129,10 +129,18 @@ ${ROLEWORDS}
 HOW TO TALK
 
 - Answer in the language they wrote to you in. If they write Chinese, answer in Chinese — written Chinese, the way somebody in the industry would actually type it, not translated English.
-- One question at a time. Short. Two sentences at the very most, and usually one.
-- No greetings after the first message, no "great question", no summarising what they just said back at them.
+- SHORT. One sentence. Two only when the second is the question. Never three. About twenty-five words in English, about forty characters in Chinese, and shorter is better every time.
+- One question at a time, and the question is the last thing you say.
+- Never open with a greeting after the first message, never "great", "sure", "of course", "I understand", "that's helpful", "thanks for sharing". Never repeat back what they just told you before asking the next thing. Start with the substance.
+- No lists, no bullet points, no bold, no headings. This is a chat bubble on a phone.
 - They are on a phone, probably in a taxi, possibly speaking rather than typing. Ask things that can be answered in a few words.
-- If they ask about the board, answer from the brief and go back to the question.
+- If they ask about the board, answer from the brief in ONE sentence and go straight back to your question. A full explanation is not an answer, it is a wall.
+
+Two examples of the register, for the second turn of a conversation.
+
+  Wrong: "Thanks, that's really helpful! It sounds like you work with a lot of talent. Could you tell me roughly how many people you currently represent, and whether you're primarily looking for booking opportunities for them or hoping to expand your roster?"
+
+  Right: "Roughly how many on your books, and are you after work for them or more people?"
 
 WHAT YOU ARE WORKING OUT
 
@@ -200,6 +208,51 @@ export async function ask(turns, who) {
   }
 }
 
+/** SHORT, AND ENFORCED HERE RATHER THAN ONLY ASKED FOR.
+ *
+ *  Length is the instruction a model drifts on first and worst — it holds for
+ *  four turns and then starts explaining. A paragraph in a chat bubble on a
+ *  phone, to somebody reading their second language, is a wall; the person
+ *  most likely to get one is the person least able to skim it.
+ *
+ *  Cut at the end of a SENTENCE, never mid-word: a reply that stops halfway
+ *  through a clause reads as the connection dropping rather than as somebody
+ *  being brief. If there is no sentence end inside the cap the whole thing is
+ *  cut at the last space, which is the ugly case and is still better than the
+ *  paragraph.
+ */
+/* TWO CAPS, because a character is not a character.
+ *
+ * 220 characters of English is two sentences. 220 characters of Chinese is
+ * four or five — Chinese carries roughly two and a half times the meaning per
+ * character, so one cap measured in characters lets exactly the half of the
+ * queue that reads Chinese receive the wall this exists to stop. The first
+ * version of this had one number and a Chinese reply of 83 characters, which
+ * is a paragraph, sailed straight through it.
+ */
+const CAP_EN = 220;
+const CAP_ZH = 60;
+const HAN = /[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/;
+
+function short(text) {
+  const CAP = HAN.test(text) ? CAP_ZH : CAP_EN;
+  if (text.length <= CAP) return text;
+  const head = text.slice(0, CAP);
+  // Chinese punctuation as well: 。！？ are the sentence ends that matter for
+  // half of these conversations and none of them is in the ASCII set.
+  const end = Math.max(head.lastIndexOf("."), head.lastIndexOf("?"), head.lastIndexOf("!"),
+    head.lastIndexOf("\u3002"), head.lastIndexOf("\uFF1F"), head.lastIndexOf("\uFF01"));
+  /* The floor is a fraction of the cap, not a fixed 40. At the Chinese cap a
+     sentence ending at character nineteen is a perfectly good reply, and a
+     flat floor rejected it and fell through to the space logic — which finds
+     nothing, because Chinese has no spaces between words, and returned the
+     whole paragraph with an ellipsis on it. */
+  const floor = Math.floor(CAP / 3);
+  if (end > floor) return head.slice(0, end + 1);
+  const space = head.lastIndexOf(" ");
+  return (space > floor ? head.slice(0, space) : head).trim() + "\u2026";
+}
+
 /** WHAT COMES BACK IS CHECKED, not trusted.
  *
  *  A role the matcher has never heard of is the worst possible failure here —
@@ -221,7 +274,7 @@ export function clean(text) {
   } catch { return { error: "failed" }; }
   if (!d || typeof d !== "object") return { error: "failed" };
 
-  const say = String(d.say || "").trim().slice(0, 600);
+  const say = short(String(d.say || "").trim());
   if (!say) return { error: "failed" };
 
   const role = (v) => (ROLEKEYS.includes(String(v || "")) ? String(v) : "");
