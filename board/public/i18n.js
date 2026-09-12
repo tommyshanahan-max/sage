@@ -3506,6 +3506,11 @@ export const STRINGS = {
   /* Closed, and gettable back. Not a pitch for a feature — his name and the
      one thing he is for. */
   "but.shut":          ["Ask Mo", "问问老莫"],
+  /* THE FLOATING BUTTON AND THE WAY OUT OF IT. Both read by a screen reader
+     and by nobody else — the button is his face, and the veil is the dark
+     behind the sheet. They still have to say what they do, in both. */
+  "but.open":          ["Ask Mo", "问问老莫"],
+  "but.close":         ["Close", "关掉"],
   /* THE KILL SWITCH, AND IT IS A REAL ONE.
    *
    * Plenty of people do not want to be talked to by a machine, and a board
