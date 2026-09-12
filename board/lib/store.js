@@ -1915,6 +1915,17 @@ export function forget(board, me) {
   drop("notes", (n) => n.by !== me && n.to !== me);
   drop("waits", (w) => w.by !== me);
   drop("vouches", (v) => v.by !== me);
+  /* THE PHONE STOPS BUZZING, AND THIS IS THE ONE THAT IS NOT A TIDY-UP.
+     Every other line here removes a row nobody would see again. A push
+     subscription left behind is an ACTION: the board goes on waking the phone
+     of somebody who asked to be forgotten, for as long as the browser keeps
+     the subscription. That is the promise this whole function exists to make,
+     broken by the one table that reaches outward. */
+  drop("pushes", (x) => x.by !== me);
+  /* And the notes they wrote to somebody who is not here. `to` is a waiting
+     row rather than a person, so the notes drop above — which matches on a
+     person's device hash — does not reach them. */
+  drop("writes", (w) => w.by !== me);
 
   /* Only the groups this person was actually in. Filtering every group by its
      size would take out any group that was already below three for some other

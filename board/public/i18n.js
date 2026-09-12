@@ -1578,6 +1578,22 @@ export const STRINGS = {
     "它不是端到端加密的，本页也不会告诉你它是。传输走 HTTPS，存放在我们自己运行的服务器上。你们任何一方都可以一键退出对话：退出后双方都不能再写，对方也不会被告知是谁退出的，而已经说过的话会留在原处——退出是结束对话，不是抹掉对话，这样事后举报才仍然成立。",
   ],
 
+  /* BEING TOLD A MESSAGE ARRIVED. Its own section rather than a clause under
+     Messages, because it is the first thing this board does that REACHES
+     OUTWARD — every other row here sits still until somebody opens a page, and
+     this one wakes a phone. A person is owed the shape of that: what is
+     stored, what travels, and what a lock screen can therefore leak, which is
+     nothing. */
+  "pv.hpush":          ["Being told a message arrived", "消息提醒是怎么做的"],
+  "pv.ppush1": [
+    "If you turn notifications on, your browser makes a subscription and we keep it: a web address at Apple, Google or Mozilla that reaches this browser, and two keys your browser generated. That is the whole row. It carries no name, no address, and nothing that says who you are — and if you never turn it on, none of it is stored at all.",
+    "如果你打开了消息提醒，浏览器会生成一个订阅，我们把它存下来：一个苹果、谷歌或 Mozilla 那边的网址（能找到这个浏览器），加上浏览器自己生成的两把钥匙。整行就这些。里面没有名字、没有联系方式，也没有任何能指认你的东西——如果你从来没打开过，这些我们一条都不会存。",
+  ],
+  "pv.ppush2": [
+    "Nothing is sent through it. The notification carries no message, no name and not even which conversation it came from — it says somebody wrote to you, and that is all it is capable of saying. So a phone on a table with the screen showing gives nothing away, and it means we cannot leak on a lock screen what we would not say anywhere else. Turning it off removes the subscription, and deleting your account takes it with everything else.",
+    "我们不会通过它发送任何内容。提醒里没有消息正文、没有名字，连是哪一段对话都没有——它只说「有人给你留言了」，也只能说这一句。所以手机放在桌上亮着屏，别人也看不到什么；这也意味着我们不可能在锁屏上泄露那些本来就不该说出去的东西。关掉提醒就会删掉这个订阅，注销账号也会把它一并带走。",
+  ],
+
   /* COUNTING READERS IS NEW, so it is a section and not a clause. The point
      worth making is the shape of it: a number went up, and the thing that
      could have been written down — who read what — was not. */

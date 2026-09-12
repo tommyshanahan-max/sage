@@ -90,8 +90,15 @@ install can already do push on iOS** (16.4 and up, installed only) and on
 Android. Push is a reason to finish the web app, not a reason to build a native
 one.
 
-If a native build happens anyway, it needs more than a webview in it or it
-comes back.
+**Built, 12 Sep.** The board now tells a phone when a message arrives — a
+subscription per device, and a notification that carries nothing but the buzz.
+So the honest sentence about this app changed today: it was a website in a
+shell this morning, and it is a messenger that reaches your phone tonight.
+That is the 4.2 argument, and it is the same argument on both distributions,
+which is the test of whether it is a real one.
+
+A native build still needs more than a webview in it. But the thing it needed
+most is no longer missing.
 
 ### 3. It cannot reach the people it is for
 
@@ -109,15 +116,43 @@ shop window, so the thing can be looked up by somebody deciding whether to put
 money in. That is a real reason. It is not a growth reason, and it should not
 be paid for out of the growth budget.
 
-## What is already in hand, if it goes ahead
+## What is already in hand — checked against the code, 12 Sep
 
-The four things Apple asks of anything where people can post are mostly built:
-report a post, block a person, delete an account and take the data with it, and
-a published privacy page. That is the part that usually takes a fortnight, and
-it is done.
+An earlier draft of this file said the four things Apple asks of anything
+carrying other people's words were "mostly built" and called that a fortnight
+already saved. Three of the four hold up. One was overstated, and it is the one
+a reviewer tests.
 
-The cost is a Mac, the developer programme, the demo room in §1, and whatever
-§2 turns out to need.
+**Report — built.** Two server routes, one for a post and one for a message,
+and a report puts the thing at the head of the admin queue rather than in a
+mailbox. Guideline 1.2 expects action inside a day and that is where it
+happens.
+
+**Block — one half server-side, one half not, and say so.**
+
+  - *Leaving a conversation* is real: `shuts` is a row on the server,
+    `threadState` refuses the pair in BOTH directions, and it is permanent.
+    Neither person can write again. That is the half a reviewer tests, and it
+    is done.
+  - *Hiding somebody from Browse* is `board:blocked` in localStorage — THAT
+    BROWSER ONLY. The same member on a laptop sees them again, and the board
+    has no idea. It is not a block, it is a preference, and a reviewer who
+    checks it on two devices finds that out.
+
+  Worth closing before submitting, and it is small: the row already has a
+  natural home beside `shuts`.
+
+**Delete the account — built.** `/api/me/forget`, reachable from Profile, and
+it takes the photographs and every row with it rather than hiding a
+tombstone. 5.1.1(v) wants exactly this and wants it inside the app.
+
+**A published contact — built, but check it is switched on.** `BOARD_CONTACT`
+is read by the server and printed in the footer; unset in `.env`, the line
+exists in the code and appears nowhere on the page. `grep BOARD_CONTACT .env`
+before submitting.
+
+The cost is a Mac, the developer programme, the demo room in §1 (done), the
+push work in §2 (done), and the Browse half of blocking above.
 
 ## The order
 
