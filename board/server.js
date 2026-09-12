@@ -5160,6 +5160,11 @@ app.get("/api/run", gate, async (req, res) => {
          — had no way back to the console they were invited for. The sentence
          is the honest test: it is what they told the board they are. */
       agent: me.say.some((x) => x.me === "agent"),
+      /* WHETHER SOMEBODY SPEAKS FOR THEM, which is the one thing that rules
+         out speaking for anybody else — no chains, per /api/run/add. The app
+         offers the "someone else" box off this, so the offer and the rule are
+         the same fact rather than two that can drift apart. */
+      client: !!me.runBy,
     } : null,
     run: run.map((q) => ({
       id: q.id, handle: q.handle, state: q.state, looking: q.looking,

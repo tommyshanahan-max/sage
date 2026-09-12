@@ -514,7 +514,12 @@ function pickRow(w, n) {
       const g = document.createElement("optgroup");
       g.label = T(head);
       for (const k of keys) {
-        const o = el("option", null, T((wanting ? "role.a." : "role.") + k));
+        /* THE ARTICLE COMES WITH THE WORD, on this side too — see say.iam.
+         A native select shows the option's own text when it is shut, so the
+         pill cannot say one thing in the list and another in the sentence;
+         the list reads "a Director / an Agent / Crew" and the sentence reads
+         correctly for all three. */
+      const o = el("option", null, T("role.a." + k));
         o.value = k;
         if (k === now) o.selected = true;
         g.append(o);

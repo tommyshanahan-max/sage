@@ -395,18 +395,22 @@ export const STRINGS = {
     "在中国、以及跟中国打交道的人。影视、资金、招人、语言——不同的房间，同一栋楼；而真正值钱的引荐，往往是跨房间的那些。",
   ],
 
-  /* THE SENTENCE. "I am a Director looking for an Agent." The English needs
-     the article on the second half only — "I am a Director" then "looking for
-     an Agent" — so the roles are written twice: bare, and with the article
-     that goes in front of them. Chinese needs neither, and both lists are the
-     same words there. */
-  "say.iam":           ["I am a", "我是"],
+  /* THE SENTENCE. "I am a Director looking for an Agent."
+     The article used to be glued on here — "I am a" + the bare role — which
+     is right fourteen times out of fifteen and wrong on the fifteenth: the
+     app said "I am a Agent", on Tom's own card, in a screenshot. English
+     articles depend on the word after them, so they belong to the word, and
+     the words that carry them already existed for the other half of the
+     sentence (role.a.*, including "Crew", which takes none at all). Both
+     halves use them now and this is left with just the verb. Chinese needs no
+     article on either side and is unchanged. */
+  "say.iam":           ["I am", "我是"],
   "say.in":            ["in", "在"],
   "say.lookingFor":    ["looking for", "我在找"],
   /* The second and third lines. "And a Founder looking for an Investor" —
      where they are does not change between one sentence and the next, so it
      is asked once, on the first line, and not repeated. */
-  "say.and":           ["and a", "还是"],
+  "say.and":           ["and", "还是"],
   /* THE LINE WHEN WHAT THEY ARE IS ALREADY KNOWN. It read "I am an Investor
      looking for —", with the first half a word nobody could change. A control
      that does not respond, in the middle of the one thing on the screen that
@@ -1836,6 +1840,26 @@ export const STRINGS = {
   // email to reset to and nobody to appeal to — which is the price of holding
   // nothing about anybody.
   // ---------------------------------------------------------------------
+  // ---------------------------------------------------------------------
+  // SOMEBODY ELSE'S PROFILE, FROM YOUR OWN.
+  //
+  // The console was reachable only by people who came through the agent door
+  // or who already had somebody on their roster — which meant a member who
+  // decided halfway through that they wanted to put a friend up had no way to
+  // do it and no way to find out it was possible. The server never had that
+  // rule: /api/run/add has always only asked that you have a page of your own
+  // and are not yourself run by somebody. This is that permission, said out
+  // loud, on the screen where somebody is already editing a profile.
+  // ---------------------------------------------------------------------
+  "me.runTitle":       ["Someone else", "帮别人建"],
+  "me.runBody": [
+    "Put up a profile for somebody you represent, and run it from your phone. They never need the app.",
+    "你可以帮你代管的人建个主页，在你手机上打理。他们本人不用下载、不用注册。",
+  ],
+  "me.runGo":          ["Add someone", "加一个人"],
+  /* Two links, because by the time there is a roster the console is the
+     useful screen and the setup page is a detour. */
+  "me.runMore":        ["The people you speak for", "你代管的人"],
   "key.title":         ["Your key", "你的钥匙"],
   /* It used to say "this one line is how you get back in", which was true
      until the box above it existed and reads as a contradiction now. The key

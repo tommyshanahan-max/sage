@@ -310,6 +310,11 @@
   .keybox h3{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
   .keybox p{margin:.4rem 0 0;font-size:.85rem;line-height:1.55;color:var(--ink-2)}
   .keybox .warn{color:var(--accent)}
+  /* .keyrow styles buttons; these two are links because they go to another
+     page, so they need the button look spelled out. */
+  .keybox .keyrow a{display:inline-block;text-decoration:none}
+  .keybox .keyrow a#runmore{font-size:.85rem;color:var(--ink-2);padding:.3rem 0}
+  .keybox .keyrow a#runmore:hover{color:var(--accent)}
   .keyval{display:flex;gap:.5rem;align-items:center;margin:.7rem 0 0}
   .keyval code{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;
@@ -2351,6 +2356,21 @@
     </div>
     <p class="said" id="mesaid" hidden></p>
 
+    <!-- SOMEBODY ELSE'S PROFILE, FROM YOUR OWN.
+         Tom had made a profile for a friend and asked whether having one of
+         his own ruled it out. It never did — the server only asks that you
+         have a page and are not yourself somebody's client — but nothing on
+         any screen said so, and the console was reachable only through the
+         agent door or by already having a roster. So it was a permission that
+         existed and could not be found. Here it is, on the form somebody is
+         already filling in, above the key and below the save. -->
+    <div class="keybox" id="runbox" hidden>
+      <h3 id="runtitle"></h3>
+      <p id="runbody"></p>
+      <div class="keyrow"><a class="go" id="rungo" href="/onboard"></a></div>
+      <div class="keyrow"><a id="runmore" href="/run" hidden></a></div>
+    </div>
+
     <!-- THE WAY BACK, on the screen somebody is already on when they are
          setting themselves up.
          There are no accounts here, so being the same person on a second
@@ -2715,8 +2735,22 @@ window.fetch = (input, init) => {
   const as = beingAs();
   if (!as) return rawFetch(input, init);
   const h = new Headers((init && init.headers) || (input instanceof Request ? input.headers : undefined));
-  // Only where this browser has already said who it is. Anything else is a
-  // page load or a public read, and neither is done as anybody.
+  /* AND MOST OF THIS FILE DOES NOT USE THAT HEADER. The rule started as "add
+     it wherever x-board-device already is", which read as safe and was not:
+     about thirty writes in here put the device in the JSON BODY instead —
+     the sentence under Browse among them — so they sailed past this shim
+     without the as-header, the middleware never entered, and the edit landed
+     on the agent's own row rather than the person they were being. Silent,
+     and in the one direction this feature must never fail.
+     So: every write to the API carries both headers while somebody is being
+     somebody. The server decides whether to honour it — an id that is not a
+     row this browser runs falls through as themselves, and the door asks
+     store.hashDevice about the real browser on purpose. Reads are left alone;
+     they are the same either way and a page load is nobody. */
+  const url = String(input instanceof Request ? input.url : input || "");
+  const way = String((init && init.method) || (input instanceof Request ? input.method : "GET")).toUpperCase();
+  const write = way !== "GET" && way !== "HEAD" && /^\/api\//.test(url);
+  if (write && device && !h.get("x-board-device")) h.set("x-board-device", device);
   if (h.get("x-board-device")) h.set("x-board-as", as);
   return rawFetch(input, { ...(init || {}), headers: h });
 };
@@ -7964,7 +7998,12 @@ function rolePick(now, onPick, wanting) {
     const g = document.createElement("optgroup");
     g.label = T(half);
     for (const k of keys) {
-      const o = el("option", null, T((wanting ? "role.a." : "role.") + k));
+      /* THE ARTICLE COMES WITH THE WORD, on this side too — see say.iam.
+         A native select shows the option's own text when it is shut, so the
+         pill cannot say one thing in the list and another in the sentence;
+         the list reads "a Director / an Agent / Crew" and the sentence reads
+         correctly for all three. */
+      const o = el("option", null, T("role.a." + k));
       o.value = k;
       if (k === now) o.selected = true;
       g.append(o);
@@ -8333,6 +8372,11 @@ $("meform").addEventListener("submit", async (e) => {
   // The name here is the name posts go out under, so the two stay in step.
   try { localStorage.setItem("board:who", handle); } catch { /* fine */ }
   said.hidden = false; said.classList.remove("bad"); said.textContent = T("me.saved");
+  /* THE BOX BELOW THIS BUTTON DEPENDS ON WHAT THE BUTTON JUST DID. "Someone
+     else" is offered to anybody with a page, and somebody filling this in for
+     the first time did not have one when the page loaded — so without this it
+     appears on their next visit instead of the moment it becomes true. */
+  paintRun();
   setTimeout(() => { $("mesheet").hidden = true; }, 900);
 });
 
@@ -8395,6 +8439,22 @@ function paintRun() {
          every agent for their first ten minutes — had no way back to the
          console they were invited for. A dead end on the one screen the whole
          invite was about. */
+      /* THE BOX IN THE PROFILE FORM IS SHOWN TO EVERYBODY WITH A PAGE, which
+         is not the same audience as the link in the header. The header link
+         is a way back to a console you are already using; the box is how
+         somebody finds out the console exists. The one exclusion is a person
+         an agent already speaks for — /api/run/add refuses them, so offering
+         it would be an offer that fails on press. */
+      if (d.me.handle && !d.me.client && !d.as) {
+        $("runtitle").textContent = T("me.runTitle");
+        $("runbody").textContent = T("me.runBody");
+        $("rungo").textContent = T("me.runGo");
+        // With a roster, the console is the useful screen and the setup page
+        // is a detour — so the second line appears only once there is one.
+        $("runmore").textContent = T("me.runMore");
+        $("runmore").hidden = !runs;
+        $("runbox").hidden = false;
+      }
       if (!runs && !d.me.agent) return;
       const go = $("gorun");
       /* And it points at whichever of the two is useful. With a roster, the
