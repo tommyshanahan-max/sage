@@ -229,11 +229,6 @@
     .one{gap:1.9rem;padding:.8rem 0 1rem}
     .onewhy{font-size:1.1rem}
   }
-  /* Smaller and quieter than the line above it: one of these is what the thing
-     is and the other is the rules of entry, and they should not look like two
-     sentences of equal weight. */
-  .onlyhow{margin:.8rem 0 0;font-size:.92rem;line-height:1.55;color:var(--muted);
-    max-width:32rem}
   .doeswhy{margin:.7rem 0 0;font-size:1.02rem;line-height:1.55;
     color:var(--ink-2)}
   @media (max-width:380px){
@@ -494,8 +489,17 @@
            makes the rest worth reading. It was only ever said on the form
            further down and in the door's own words — by which point somebody
            has already decided whether to bother. -->
-      <p class="only" id="onlyline"></p>
-      <p class="onlyhow" id="onlyhow"></p>
+      <!-- NOTHING HERE. The hero carried two paragraphs — what the club is, and
+           who it is for and how you get in — and both of them were explaining a
+           page whose next screen explains itself. A stranger now reads a name,
+           one headline and two buttons, and is looking at the working sentence
+           three seconds sooner.
+
+           The lines are not lost: what the club is is on the door's link card,
+           which is what somebody reads in WeChat before they tap anything, and
+           invite-only is said by the button itself saying "waiting list"
+           rather than "sign up". See land.only and land.onlyhow, kept in
+           i18n.js for whoever needs them next. -->
       <!-- HOW FEW. The page says "invite only" and that is a policy; this is
            the fact underneath it, and a fact is what makes a policy believed.
            Drawn only when the server sends both numbers — it withholds the
@@ -723,8 +727,7 @@ function paint() {
   // drawn in. The hostess box learnt the same lesson two hours ago.
   drawFew();
   $("asking").textContent = T("land.head");
-  $("onlyline").textContent = T("land.only");
-  $("onlyhow").textContent = T("land.onlyhow");
+
   $("onewhy").textContent = T("land.one");
   $("landbig").textContent = T("land.big");
   $("phTop").textContent = T("land.phTop");
