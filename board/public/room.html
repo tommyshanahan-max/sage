@@ -672,14 +672,40 @@
   .modock.drag{cursor:grabbing;box-shadow:0 10px 26px rgba(10,14,24,.5);
     transform:scale(1.07)}
   @keyframes dockin{from{opacity:0;transform:scale(.5)}}
-  /* HE FLIES TO THE CORNER, because there were two of him. The arrival's
-     circle and the floating one are the same character with the same face,
-     and drawing both at once on the same screen says they are not. So only
-     one exists at a time: the big one during the arrival, and on the last
-     press it travels to where the small one lives and hands over. */
-  .orb.away{position:fixed;z-index:8;margin:0;transition:
-    transform .62s cubic-bezier(.5,0,.2,1), width .62s ease, height .62s ease}
-  @media (prefers-reduced-motion:reduce){ .orb.away{transition:none} }
+
+  /* "PRESS ME", ONCE, THE FIRST TIME HE APPEARS IN THE CORNER.
+     The same move as the arrow at the photo chip: a small pointer and the
+     reason beside it, because a blue circle that has just faded in at the
+     edge of a screen is furniture until somebody says what it is. It says
+     it once in a person's life — board:momet in localStorage — because the
+     second time it is a thing nagging you about a button you already know.
+     Fixed and aimed at his left, since he starts life on the right. */
+  .mopoint{position:fixed;z-index:7;display:flex;align-items:center;gap:.25rem;
+    pointer-events:none;animation:pointin .45s .25s backwards}
+  .mopoint span{background:var(--accent);color:var(--accent-ink);
+    border-radius:.6rem;padding:.34rem .66rem;font-size:.76rem;font-weight:600;
+    line-height:1.25;white-space:nowrap;
+    box-shadow:0 3px 12px rgba(10,14,24,.34)}
+  .mopoint i{width:0;height:0;
+    border-top:.42rem solid transparent;border-bottom:.42rem solid transparent;
+    border-left:.46rem solid var(--accent);
+    animation:pointnudge 1.7s .9s ease-in-out 3}
+  @keyframes pointnudge{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
+  /* Parked against the left edge: the label goes to his right and the arrow
+     turns round, because an arrow pointing off the side of a screen points
+     at nothing. */
+  .mopoint.flip{flex-direction:row-reverse}
+  .mopoint.flip i{border-left:0;border-right:.46rem solid var(--accent)}
+  @keyframes pointnudgeL{0%,100%{transform:translateX(0)}50%{transform:translateX(-3px)}}
+  .mopoint.flip i{animation-name:pointnudgeL}
+  .mopoint.go{opacity:0;transition:opacity .3s}
+  @media (prefers-reduced-motion:reduce){
+    .mopoint{animation:none}
+    .mopoint i{animation:none}
+  }
+  /* There is no flying version of him any more — see the note by the
+     IntersectionObserver in welcomeOrb. He is left behind by the scroll and
+     the small one fades in once he is off the screen. */
 
   /* HE OPENS UPWARDS FROM THE BOTTOM, not out of wherever he was parked. A
      panel hung off a draggable button lands half off-screen the moment
@@ -1271,8 +1297,9 @@ function shareBox(link, ahead) {
  * IT PROPOSES AND NEVER WRITES. What comes back appears as the sentence it
  * would put on their card, with a button. Nothing is stored by talking.
  */
-/* True from the moment the arrival is drawn until his circle has finished
-   travelling to the corner. See moFloat and flyToCorner. */
+/* True from the moment the arrival is drawn until his circle has scrolled off
+   the screen and the small one has taken over. See moFloat, and the
+   scroll-settle at the end of welcomeOrb. */
 let ARRIVING = false;
 
 let BUT = null;          // { turns: [], open: bool, put: {...}|null, busy: bool }
@@ -1522,68 +1549,75 @@ function welcomeOrb(you) {
          that they end on "a photo and one line" — so the thing that takes
          those is what the last press produces, rather than something to go
          and find further down a page they have not scrolled. */
+      go.remove();
+
+      /* HE DOES NOT FLY. HE IS LEFT BEHIND, AND CATCHES UP.
+       *
+       * The first version animated his circle across the screen into the
+       * corner — a FLIP transform onto the dock's rect. It worked and it was
+       * wrong twice over: the geometry is fiddly enough to land him off the
+       * edge of a phone, and nobody was watching anyway, because the card
+       * scrolling up takes the eye with it.
+       *
+       * This is better and it is the obvious thing. He stays exactly where he
+       * is, in the hero, and the page scrolls down to the card — so he goes
+       * off the top of the screen on his own, the way anything does. The
+       * moment he is actually gone, the small one fades in at the corner.
+       * Nothing moves that a person did not move; he is simply still there
+       * when they look for him, smaller, out of the way.
+       *
+       */
       const card = document.querySelector(".pc");
+      const reveal = () => {
+        if (!ARRIVING) return;
+        ARRIVING = false;
+        /* AND THE BIG ONE GOES. On a tall phone the scroll does not carry the
+           hero far enough off and both of him end up on screen — which is the
+           exact thing this whole arrangement exists to prevent. He does not
+           need to be strictly out of view for this to read: the corner one
+           appears, the middle one is gone, and that IS him moving. */
+        orb.hidden = true;
+        moFloat(Boolean(DATA.butler));
+        pointAtMo();
+      };
+
+      /* WHEN THE SCROLL HAS SETTLED, NOT WHEN HE IS STRICTLY GONE.
+       *
+       * First this watched the hero leave the viewport, then the circle
+       * itself, and on a tall phone neither happens: scrollIntoView puts the
+       * card in the MIDDLE of the screen, so on anything taller than about
+       * 900 points the arrival is still half in view above it and an
+       * IntersectionObserver waiting for "gone" waits for ever. Both times it
+       * fell through to a four-second timeout with neither of him on screen,
+       * which is the one outcome worse than having two.
+       *
+       * So it waits for the scroll to stop moving instead. That is the moment
+       * the page means — they have arrived at the card, wherever the hero
+       * ended up — and it happens at the same time on a short screen and a
+       * tall one. A quarter-second of stillness, a floor of 450ms so it never
+       * beats the scroll it is waiting for, and a 3s ceiling for a browser
+       * that fires no scroll events at all because the page could not move.
+       */
+      let quiet = 0;
+      let done = false;
+      const settled = () => {
+        if (done) return;
+        done = true;
+        window.removeEventListener("scroll", nudge);
+        clearTimeout(quiet);
+        reveal();
+      };
+      const nudge = () => { clearTimeout(quiet); quiet = setTimeout(settled, 260); };
+      window.addEventListener("scroll", nudge, { passive: true });
+      setTimeout(() => { if (!quiet) nudge(); }, 450);
+      setTimeout(settled, 3000);
+
       if (card) {
         card.classList.add("arrive");
         try { card.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* old browser */ }
       }
-      go.remove();
-      flyToCorner(orb);
     });
     box.append(go);
-  }
-
-  /* HIS CIRCLE TRAVELS TO THE CORNER AND BECOMES THE DOCK.
-   *
-   * There were two of him: the big one in the middle that talks, and the
-   * small one in the corner you press when stuck. Same face, same blue, same
-   * character — and two of them on one screen says they are not the same
-   * person, which undoes the whole point of giving the voice a name.
-   *
-   * So one exists at a time. The big one does the arrival; on the last press
-   * it takes off, lands exactly where the small one lives, and the small one
-   * takes over underneath it. FLIP rather than an animated left/top: the
-   * fixed position is set to where it already is, so nothing moves, and then
-   * a transform carries it — which the compositor can do at sixty frames on
-   * a phone and a layout animation cannot.
-   */
-  function flyToCorner(o) {
-    const from = o.getBoundingClientRect();
-    /* Where he is going. moDock() makes the button if it does not exist yet
-       and parks it at the saved spot, hidden — so the target is real even
-       though nothing has been drawn there. */
-    const dock = DATA.butler && !moOff() ? moDock() : null;
-    if (!dock) { o.remove(); return; }
-    /* MEASURED, THEN HIDDEN. A hidden element has a zero rect, so it has to
-       be on the page to be aimed at — and visible for even one frame is the
-       flash of a second Mo appearing in the corner before the first one has
-       left. Measure, hide, fly, reveal on landing. */
-    const to = dock.getBoundingClientRect();
-    dock.hidden = true;
-
-    o.style.left = from.left + "px";
-    o.style.top = from.top + "px";
-    o.style.width = from.width + "px";
-    o.style.height = from.height + "px";
-    o.classList.add("away");
-    /* Next frame, or the browser folds the two style changes into one and
-       there is nothing to transition between. */
-    requestAnimationFrame(() => {
-      const k = to.width / from.width;
-      o.style.transform =
-        `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${k})`;
-      o.style.opacity = ".9";
-    });
-    const land = () => {
-      ARRIVING = false;
-      o.remove();
-      moFloat(Boolean(DATA.butler));
-    };
-    o.addEventListener("transitionend", land, { once: true });
-    /* A browser that runs no transitions at all — reduced motion, or a tab
-       that was in the background — never fires transitionend, and he would
-       be gone from both places. */
-    setTimeout(() => { if (document.body.contains(o)) land(); }, 900);
   }
 
   orb.addEventListener("click", () => {
@@ -2024,6 +2058,59 @@ function moFloat(wanted) {
     const sheet = document.querySelector(".mosheet");
     if (sheet) { sheet.textContent = ""; sheet.append(butlerPanel()); }
   }
+}
+
+/* SAID ONCE IN A PERSON'S LIFE. The second showing of "press me" is a page
+   nagging somebody about a button they already know. */
+const METKEY = "board:momet";
+
+/** The arrow at the corner, the first time he ever appears there.
+ *
+ *  A blue circle fading in at the edge of a screen is furniture until
+ *  somebody says what it is — the same problem the photo chip had, and the
+ *  same answer: point at it and give the reason in four words. Positioned
+ *  against his actual rect rather than the corner, because he is draggable
+ *  and the arrow has to find him wherever he was left.
+ */
+function pointAtMo() {
+  if (!MODOCK || MODOCK.hidden) return;
+  try { if (localStorage.getItem(METKEY) === "1") return; } catch { /* private window */ }
+  if (document.querySelector(".mopoint")) return;
+
+  const p = el("div", "mopoint");
+  p.append(el("span", null, T("but.press")), el("i"));
+  document.body.append(p);
+
+  const place = () => {
+    const r = MODOCK.getBoundingClientRect();
+    p.style.top = Math.round(r.top + r.height / 2 - p.offsetHeight / 2) + "px";
+    /* To his left, and flipped to his right if he has been parked against the
+       left edge — an arrow pointing off the side of the screen points at
+       nothing. */
+    const w = p.offsetWidth;
+    /* 14, not 8: at eight the arrowhead sits under the circle's own shadow
+       and the pill's corner disappears behind him. */
+    if (r.left - w - 14 >= 6) {
+      p.style.left = Math.round(r.left - w - 14) + "px";
+      p.classList.remove("flip");
+    } else {
+      p.style.left = Math.round(r.right + 14) + "px";
+      p.classList.add("flip");
+    }
+  };
+  place();
+  window.addEventListener("resize", place);
+
+  const gone = () => {
+    try { localStorage.setItem(METKEY, "1"); } catch { /* private window */ }
+    window.removeEventListener("resize", place);
+    p.classList.add("go");
+    setTimeout(() => p.remove(), 320);
+  };
+  /* Pressing him is the point, so pressing him takes it away. Otherwise it
+     goes on its own — it has been read by then, or it never will be. */
+  MODOCK.addEventListener("pointerdown", gone, { once: true });
+  setTimeout(gone, 7000);
 }
 
 const BUTKEY = "board:nomo";
@@ -2683,8 +2770,8 @@ function draw() {
   if (DATA.butler && !BUT) BUT = butlerStart();
   /* NOT WHILE THE ARRIVAL IS RUNNING. Two of him on one screen — the big one
      in the middle talking and the small one in the corner waiting — says they
-     are two different characters. The big one becomes the small one on the
-     last press; see flyToCorner. */
+     are two different characters. The big one is left behind by the scroll
+     and the small one fades in once he is gone. */
   moFloat(Boolean(DATA.butler) && !ARRIVING);
 
   /* NOT WHILE HE IS OPEN. draw() runs on every turn of the conversation, and

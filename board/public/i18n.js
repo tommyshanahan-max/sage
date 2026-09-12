@@ -3521,6 +3521,10 @@ export const STRINGS = {
      behind the sheet. They still have to say what they do, in both. */
   "but.open":          ["Ask Mo", "问问老莫"],
   "but.close":         ["Close", "关掉"],
+  /* The arrow at the corner, said once ever. Four words: what he is, and
+     that pressing is the thing. "Ask Mo" is on the button itself already —
+     this is the half that says he is a person and not an icon. */
+  "but.press":         ["Stuck? Ask Mo", "卡住了？问老莫"],
   /* THE KILL SWITCH, AND IT IS A REAL ONE.
    *
    * Plenty of people do not want to be talked to by a machine, and a board
