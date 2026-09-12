@@ -3362,19 +3362,29 @@ export const STRINGS = {
    * explanation and is the line somebody repeats to a friend. Card, not page:
    * the board already calls it a card everywhere else, and a card is a thing
    * rather than a screen. */
-  /* FIVE SENTENCES TO THREE. Spoken, this is the first thing anybody hears
-     from the place, and the long version had two sentences doing the same
-     job as the image at the end of it. Kept: the count, what to do, and the
-     picture of somebody still standing there in March.
-     "You just became the last of them" was also only true on the day they
-     joined — their number is true every day after it too. */
+  /* WHAT IT IS FOR, WHICH THE COLD VERSION NEVER SAID.
+   *
+   * It told them where they stood and what to do, and never once why any of
+   * it was worth doing. Tom's note was the right one: welcome them, say what
+   * the place gets them, then the two things. A stranger who has just tapped
+   * a link out of a group chat is owed the middle sentence.
+   *
+   * NO CONGRATULATIONS ON THIS ONE. They joined a list; nobody chose them
+   * yet, and saying otherwise is the kind of flattery that gets found out on
+   * the next screen. The lifted version below is where that line belongs,
+   * because there it is true.
+   */
   "wel.sayList": [
-    "{who}. {t} of you out here tonight, and you're number {n}. Put up a face, tell me what you do. The ones who can't be bothered are still out here in March.",
-    "{who}。今晚外面 {t} 个人，你排第 {n}。放张照片，说说你做什么。懒得弄的那些，三月份还站在这儿。",
+    "Welcome, {who}. You're on the list — {t} people are, and you're number {n}. What's in here is people worth knowing, on both sides of the border. Two things move you up: a photo, and one line about what you do and who you're after.",
+    "欢迎你，{who}。你在名单上了——一共 {t} 个人，你排第 {n}。里面都是两边值得认识的人。想往前挪就两样：一张照片，和一句话说清楚你做什么、想找谁。",
   ],
+  /* AND HERE THE CONGRATULATIONS IS TRUE. Three people came off a list of
+     fifty-six this week and they are one of them — somebody picked them.
+     That is the one moment in this whole product worth saying well done
+     about, so it gets said. */
   "wel.sayUp": [
-    "{who}. Three came off that list this week and you're one of them. Nothing works yet — that's this part. A face, one line, and somebody inside reads it. Three days.",
-    "{who}。这周提上来三个人，你是一个。什么都还点不动，这一段就是这样。照片，一句话，里面就有人看。三天。",
+    "Welcome, {who}. You're off the list — three people were this week and you're one of them. What's in here is people worth knowing, on both sides of the border. Nothing works for you yet. Two things and it's done: a photo, and one line about what you do and who you're after. Three days.",
+    "欢迎你，{who}。你从名单上提上来了——这周就三个人，你是一个。里面都是两边值得认识的人。现在什么都还点不动。还差两样：一张照片，和一句话说清楚你做什么、想找谁。三天时间。",
   ],
 
   /* ---- WHO HE IS ----------------------------------------------------------
