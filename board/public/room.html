@@ -657,8 +657,9 @@
      panel hung off a draggable button lands half off-screen the moment
      somebody has parked it in a corner, and a conversation is a thing you
      read from the bottom anyway. */
-  .moveil{position:fixed;inset:0;z-index:6;border:0;padding:0;
-    background:rgba(8,11,18,.45);animation:veilin .25s}
+  /* The veil is gone — see moOpen. A panel that covers the screen in order to
+     be asked about the screen is a panel you close, look, remember and
+     reopen. The page behind him stays lit and stays scrollable. */
   /* CLEAR OF THE TAB BAR, which is fixed at the bottom and stays there under
      the veil. Flush to the bottom edge put the kill switch straight across
      "Waiting" and "You" — two sets of words in the same place, one of them
@@ -672,14 +673,19 @@
     bottom:0;width:100%;max-width:34rem;
     padding:0 .7rem calc(4.2rem + env(safe-area-inset-bottom));
     animation:sheetin .3s cubic-bezier(.2,.7,.3,1)}
-  .mosheet .but{margin:0}
-  .mosheet .butsay{max-height:46vh}
-  /* The kill switch sits below the white panel, which on the sheet means it
-     sits on the veil — grey-on-grey, over the dimmed tab bar showing through.
-     It is the one control on this panel that has to stay legible to somebody
-     who came looking for it. */
-  .mosheet .butoff{margin:.75rem auto 0;color:rgba(255,255,255,.82)}
-  @keyframes veilin{from{opacity:0}}
+  /* HIS OWN SHADOW NOW THAT THERE IS NO VEIL BEHIND HIM: without one he would
+     sit flat on the page as though he were part of it. */
+  .mosheet .but{margin:0;box-shadow:0 -6px 34px rgba(8,11,18,.34)}
+  /* SHORTER, because the page behind him is the point. 46vh plus the form and
+     the header took two thirds of a phone, which is a veil by another name. */
+  .mosheet .butsay{max-height:30vh}
+  /* White was for the dark veil, and the veil is gone — so it was white text
+     on the lit page, which is the one control here that has to stay legible
+     to somebody who came looking for it. Its own plate instead, so it reads
+     against whatever the page happens to have under it. */
+  .mosheet .butoff{margin:.6rem auto 0;color:var(--ink-2);
+    background:var(--card);border-radius:99px;padding:.3rem .8rem;
+    box-shadow:0 2px 10px rgba(8,11,18,.18)}
   /* Both transforms, or the centring is dropped for the length of the
      animation and the sheet slides up from the right. */
   @keyframes sheetin{from{transform:translateX(-50%) translateY(105%)}
@@ -687,7 +693,6 @@
   @media (prefers-reduced-motion:reduce){
     .modock{animation:none}
     .mosheet{animation:none}
-    .moveil{animation:none}
   }
 </style>
 </head>
@@ -1544,6 +1549,18 @@ function butlerPanel() {
   who.append(el("b", null, T("but.name")));
   if (T("but.sub")) who.append(el("small", null, " " + T("but.sub")));
   head.append(who);
+
+  /* A WAY OUT, IN THE HEADER, and it had never been drawn. The CSS for it has
+     been sitting in this file the whole time; the only way to shut him was to
+     tap the dark behind the sheet, which is a thing you have to already know.
+     A word rather than a ×: it closes a panel that comes straight back when
+     you press him again, which is not what a cross means. */
+  if (MOSHUT) {
+    const x = el("button", "x", T("but.close"));
+    x.type = "button";
+    x.addEventListener("click", () => { if (MOSHUT) MOSHUT(); });
+    head.append(x);
+  }
   box.append(head);
 
   const said = el("div", "butsay");
@@ -1841,24 +1858,34 @@ function moDock() {
    show his question for ever and never his answer. */
 function moOpen() {
   if (MOSHUT) return;
-  const veil = el("button", "moveil");
-  veil.type = "button";
-  veil.setAttribute("aria-label", T("but.close"));
+
+  /* NO VEIL, AND THE PAGE BEHIND HIM STILL WORKS.
+   *
+   * He opened as a modal over a dimmed page, which is exactly wrong for what
+   * he is for: the questions somebody asks a doorman are about the thing in
+   * front of them — this box, that button, what this word means — and a panel
+   * that covers the screen to be asked about the screen is a panel you have to
+   * close, look, remember, and reopen.
+   *
+   * So he sits at the bottom and nothing behind him is blocked. Scroll the
+   * page with him open, find the thing, ask about it while looking at it.
+   * The cost is that tapping away no longer closes him, which is why the
+   * header now has a word that does. */
   const sheet = el("div", "mosheet");
-  sheet.append(butlerPanel());
-  document.body.append(veil, sheet);
-  if (MODOCK) MODOCK.hidden = true;
+  document.body.append(sheet);
+  /* MOSHUT before the panel is built: the close button in its header is only
+     drawn when there is a sheet to close. */
   MOSHUT = () => {
-    veil.remove();
     sheet.remove();
+    document.removeEventListener("keydown", esc);
     MOSHUT = null;
     if (MODOCK && !moOff()) MODOCK.hidden = false;
     if (BUTMIC) { BUTMIC.stop(); BUTMIC = null; }
   };
-  veil.addEventListener("click", MOSHUT);
   const esc = (e) => { if (e.key === "Escape" && MOSHUT) MOSHUT(); };
   document.addEventListener("keydown", esc);
-  veil.addEventListener("remove", () => document.removeEventListener("keydown", esc));
+  sheet.append(butlerPanel());
+  if (MODOCK) MODOCK.hidden = true;
 }
 
 /* WHAT draw() CALLS. Three jobs: put him on the screen when he is wanted,
