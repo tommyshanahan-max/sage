@@ -2683,7 +2683,15 @@
     <!-- Five rows, not three. The field holds six hundred characters and
          people arrive with a paragraph already written; a box the height of a
          one-liner tells them to write one. -->
-    <textarea id="megoal" rows="5"></textarea>
+    <!-- THREE ROWS AND A CEILING, AND THE SIZE OF THE BOX IS THE POINT.
+         Five rows and six hundred characters is an instruction to fill them,
+         and what comes back is a CV. The people worth having on here are not
+         the ones who write the most, and a board where length reads as
+         standing rewards exactly the wrong person.
+         240 is two sentences. The cap on the row stays at 600 so that nobody
+         who already wrote more loses a word of it — this shapes what is
+         written next, it does not go back and cut. -->
+    <textarea id="megoal" rows="3" maxlength="240"></textarea>
     <p class="menote" id="mewhy"></p>
 
     <button class="morego" type="button" id="memorego"

@@ -2217,9 +2217,13 @@ export const STRINGS = {
      on" and sized like a one-liner, so members with a bio already written
      could not see where to put it. Same field, same store; it is named for
      what people arrive wanting to write. */
+  /* ASKS FOR TWO SENTENCES, and says so, because the box asking for "a few
+     lines" got paragraphs. What reads best on this board is somebody saying
+     plainly what they do and what they want; the ones worth having are not the
+     ones who write the most. */
   "me.goal": [
-    "A few lines about you — what you do, and what you are here for.",
-    "写几句你自己——你做什么，来这儿想干什么。",
+    "Two sentences. What you do, and what you are here for.",
+    "两句话就够：你做什么，来这儿想干什么。",
   ],
   "me.here":           ["How long you have been here", "你来多久了"],
   "me.posts":          ["posts", "条内容"],
