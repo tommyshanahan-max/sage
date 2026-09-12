@@ -3322,6 +3322,13 @@ export const STRINGS = {
      is WRITTEN SEPARATELY below — the same words read aloud are too clipped
      for the ear, and a sentence written to be heard is a different sentence. */
   "wel.hi":            ["Welcome, {who}", "欢迎你，{who}"],
+  /* ONE LINE UNDER THE NAME, AND THE MESSAGE ITSELF FOLDED AWAY BEHIND IT.
+     Six lines of serif under a circle is a wall, and a wall under a welcome
+     is the first thing anybody scrolls past. This says there is something
+     here and lets the circle be the thing on the screen. */
+  "wel.got":           ["There's a message for you", "有条消息给你"],
+  "wel.read":          ["Read it instead", "看文字"],
+  "wel.hide":          ["Hide it", "收起来"],
   "wel.play":          ["Hear this", "听一下"],
 
   /* ---- THE CARD THEY CAN POST --------------------------------------------
@@ -3431,8 +3438,8 @@ export const STRINGS = {
      not to be. So: he contracts and the board does not, and that difference
      is the whole of his voice. */
   "but.hookUp": [
-    "{who}. Three came off the list this week. {n} didn't.",
-    "{who}。这周提上来三个。剩下 {n} 个没有。",
+    "{who}. Three came off the list this week and you're one of them. Good week for you.",
+    "{who}。这周就提上来三个人，你是一个。你这周运气不错。",
   ],
   /* Somebody who has not been moved up yet and opened this anyway. The
      scarcity line above would be a lie to them, and the true thing is better
@@ -3444,16 +3451,20 @@ export const STRINGS = {
   /* "Finished pages get moved up first" is a rule being read out. The people
      who get moved up are people, and saying so is the same fact with
      somebody in it. */
+  /* WARM, BRIEF, AND FUNNY ABOUT THE SITUATION RATHER THAN ABOUT THEM.
+     "Blank card. Nobody's ever moved up on one of those" is correct and it
+     is a man reading out a rule. This is the same fact with somebody behind
+     it, and the joke is at the card's expense. */
   "but.hookList": [
-    "{who}. Blank card. Nobody's ever moved up on one of those.",
-    "{who}。卡片是空的。空卡片没人挪得动。",
+    "{who}. Your card says your name and nothing else. Hard to fall for that.",
+    "{who}。你的卡片上就一个名字，别的什么都没有。这谁看得上啊。",
   ],
   /* "What do you do?" on its own reads as a job interview. The "actually" is
      what makes it somebody asking rather than a field label, and it was cut
      once for brevity and had to come back. */
   "but.ask": [
-    "Two things and you're done here. So what do you actually do?",
-    "两样东西，填完就完事了。你到底是做什么的？",
+    "Two things and you're done. So \u2014 what is it you actually do?",
+    "两样东西，填完就完事了。说说吧，你到底是做什么的？",
   ],
   /* Closed, and gettable back. Not a pitch for a feature — his name and the
      one thing he is for. */

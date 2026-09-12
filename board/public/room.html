@@ -142,7 +142,13 @@
   .orbwrap.on .ring.b{animation-delay:.9s}
   @keyframes ping{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.5);opacity:0}}
   @media (prefers-reduced-motion:reduce){.orbwrap.on .ring{animation:none;opacity:.35}}
+  .herogot{position:relative;margin:.65rem 0 0;font-size:.9rem;color:#B08A6A}
   .orbsay{position:relative;margin:.75rem 0 0;font-size:.78rem;color:#8A7663}
+  /* The way in for somebody who will not play sound. Small, under everything,
+     and it says what it does rather than naming a feature. */
+  .heroread{position:relative;margin:.9rem 0 0;border:0;background:none;
+    color:#8A7663;font:inherit;font-size:.78rem;padding:.25rem;cursor:pointer;
+    text-decoration:underline;text-underline-offset:3px}
 
   /* The message. Greyed until spoken, then it is ink. */
   .tell{position:relative;margin:1.1rem auto 0;max-width:21rem;
@@ -1238,6 +1244,13 @@ function welcomeOrb(you) {
     return box;
   }
 
+  /* FOLDED AWAY UNTIL IT IS WANTED. Six lines of serif under a circle is a
+     wall, and a wall under a welcome is the first thing anybody scrolls past
+     — so the circle is the only thing on the screen and the words arrive
+     with the voice. Anybody who will not play audio, on a train or in a
+     meeting, gets the same words off one small control. */
+  tell.hidden = true;
+
   const wrap = el("div", "orbwrap");
   wrap.append(el("i", "ring"), el("i", "ring b"));
   const orb = el("button", "orb");
@@ -1255,7 +1268,11 @@ function welcomeOrb(you) {
     orb.setAttribute("aria-pressed", "false");
     orb.innerHTML = PLAY;
     orb.setAttribute("aria-label", T("wel.play"));
-    hint.textContent = T("wel.play");
+    /* NOTHING UNDER IT AT REST. A triangle inside a circle that size is the
+       most understood control there is, and "Hear this" written under it was
+       a caption on a picture of a play button. It only speaks while it is
+       speaking, where the word is Stop and is worth having. */
+    hint.textContent = "";
     wrap.classList.remove("on");
     lightAll(true);
   };
@@ -1273,6 +1290,8 @@ function welcomeOrb(you) {
       rest();
       return;
     }
+    tell.hidden = false;
+    read.textContent = T("wel.hide");
     lightAll(false);
     going();
     /* onboundary is the real thing and Safari does not always fire it — it
@@ -1298,9 +1317,17 @@ function welcomeOrb(you) {
     });
   });
 
+  const read = el("button", "heroread", T("wel.read"));
+  read.type = "button";
+  read.addEventListener("click", () => {
+    tell.hidden = !tell.hidden;
+    read.textContent = T(tell.hidden ? "wel.read" : "wel.hide");
+    if (!tell.hidden) lightAll(true);
+  });
+
   rest();
   wrap.append(orb);
-  box.append(wrap, hint, tell);
+  box.append(wrap, hint, tell, read);
   return box;
 }
 
@@ -1738,6 +1765,7 @@ function drawWait(box) {
   hero.append(el("i", "bleed"));
   hero.append(el("i", "seal", "\u4EA4"));
   hero.append(el("span", "wrhi", T("wel.hi", { who: first })));
+  hero.append(el("p", "herogot", T("wel.got")));
   hero.append(welcomeOrb(you));
 
   /* THE NUMBER GOES ON THE HERO, and the band under it goes away entirely
@@ -1749,8 +1777,14 @@ function drawWait(box) {
      band was carrying that the hero was not is the position, so the position
      moves up: fifth of six and fifth of ninety read the same without it, and
      only one of them is worth working at. */
-  hero.append(el("p", "heroq", T("wr.ahead",
-    { n: (DATA.ahead || 0) + 1, t: DATA.waiting || 1 })));
+  /* THE POSITION IS FOR PEOPLE STANDING IN THE QUEUE. Somebody who has been
+     moved up is not in it any more, and telling them they are 56th of 56 on
+     the screen that just congratulated them for getting out is the exact
+     opposite of what happened to them. The band below carries their state. */
+  if (!DATA.up) {
+    hero.append(el("p", "heroq", T("wr.ahead",
+      { n: (DATA.ahead || 0) + 1, t: DATA.waiting || 1 })));
+  }
 
   const band = el("div", "wrband");
 
