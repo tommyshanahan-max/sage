@@ -156,10 +156,10 @@
   /* The little play triangle, tucked at the foot of him rather than replacing
      him: at rest it has to be clear this is a thing you press, and a face
      alone on a dark screen is a portrait. */
-  .orb i{position:absolute;right:.1rem;bottom:.1rem;width:1.6rem;height:1.6rem;
+  .orb i{position:absolute;right:-.1rem;bottom:-.1rem;width:2.1rem;height:2.1rem;
     border-radius:50%;background:#F2E7DC;color:#12100E;
-    display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.35)}
-  .orb i svg{width:.8rem;height:.8rem;margin-left:.08rem}
+    display:grid;place-items:center;box-shadow:0 3px 9px rgba(0,0,0,.45)}
+  .orb i svg{width:1.05rem;height:1.05rem;margin-left:.1rem}
   .orbwrap.on .orb i{display:none}
   .orb:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
   /* The ring only exists while it is talking, so the circle at rest is one
@@ -672,6 +672,14 @@
   .modock.drag{cursor:grabbing;box-shadow:0 10px 26px rgba(10,14,24,.5);
     transform:scale(1.07)}
   @keyframes dockin{from{opacity:0;transform:scale(.5)}}
+  /* HE FLIES TO THE CORNER, because there were two of him. The arrival's
+     circle and the floating one are the same character with the same face,
+     and drawing both at once on the same screen says they are not. So only
+     one exists at a time: the big one during the arrival, and on the last
+     press it travels to where the small one lives and hands over. */
+  .orb.away{position:fixed;z-index:8;margin:0;transition:
+    transform .62s cubic-bezier(.5,0,.2,1), width .62s ease, height .62s ease}
+  @media (prefers-reduced-motion:reduce){ .orb.away{transition:none} }
 
   /* HE OPENS UPWARDS FROM THE BOTTOM, not out of wherever he was parked. A
      panel hung off a draggable button lands half off-screen the moment
@@ -1263,6 +1271,10 @@ function shareBox(link, ahead) {
  * IT PROPOSES AND NEVER WRITES. What comes back appears as the sentence it
  * would put on their card, with a button. Nothing is stored by talking.
  */
+/* True from the moment the arrival is drawn until his circle has finished
+   travelling to the corner. See moFloat and flyToCorner. */
+let ARRIVING = false;
+
 let BUT = null;          // { turns: [], open: bool, put: {...}|null, busy: bool }
 let BUTMIC = null;
 
@@ -1346,6 +1358,11 @@ function welcomeOrb(you) {
 
   let at = -1;                 // which beat has landed
   let timer = null;
+
+  /* The dock is suppressed until this finishes — see moFloat. Set here rather
+     than in drawWait so that a page without an arrival never sets it and
+     never has to clear it. */
+  if (DATA.butler && !moOff()) ARRIVING = true;
 
   const wrap = el("div", "orbwrap");
   wrap.append(el("i", "ring"), el("i", "ring b"));
@@ -1481,7 +1498,6 @@ function welcomeOrb(you) {
       hint.textContent = T("wel.ready");
       return;
     }
-    orb.hidden = true;
     hint.textContent = "";
 
     /* AND WHERE HELP IS, ONCE — not as a third beat.
@@ -1512,8 +1528,62 @@ function welcomeOrb(you) {
         try { card.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* old browser */ }
       }
       go.remove();
+      flyToCorner(orb);
     });
     box.append(go);
+  }
+
+  /* HIS CIRCLE TRAVELS TO THE CORNER AND BECOMES THE DOCK.
+   *
+   * There were two of him: the big one in the middle that talks, and the
+   * small one in the corner you press when stuck. Same face, same blue, same
+   * character — and two of them on one screen says they are not the same
+   * person, which undoes the whole point of giving the voice a name.
+   *
+   * So one exists at a time. The big one does the arrival; on the last press
+   * it takes off, lands exactly where the small one lives, and the small one
+   * takes over underneath it. FLIP rather than an animated left/top: the
+   * fixed position is set to where it already is, so nothing moves, and then
+   * a transform carries it — which the compositor can do at sixty frames on
+   * a phone and a layout animation cannot.
+   */
+  function flyToCorner(o) {
+    const from = o.getBoundingClientRect();
+    /* Where he is going. moDock() makes the button if it does not exist yet
+       and parks it at the saved spot, hidden — so the target is real even
+       though nothing has been drawn there. */
+    const dock = DATA.butler && !moOff() ? moDock() : null;
+    if (!dock) { o.remove(); return; }
+    /* MEASURED, THEN HIDDEN. A hidden element has a zero rect, so it has to
+       be on the page to be aimed at — and visible for even one frame is the
+       flash of a second Mo appearing in the corner before the first one has
+       left. Measure, hide, fly, reveal on landing. */
+    const to = dock.getBoundingClientRect();
+    dock.hidden = true;
+
+    o.style.left = from.left + "px";
+    o.style.top = from.top + "px";
+    o.style.width = from.width + "px";
+    o.style.height = from.height + "px";
+    o.classList.add("away");
+    /* Next frame, or the browser folds the two style changes into one and
+       there is nothing to transition between. */
+    requestAnimationFrame(() => {
+      const k = to.width / from.width;
+      o.style.transform =
+        `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${k})`;
+      o.style.opacity = ".9";
+    });
+    const land = () => {
+      ARRIVING = false;
+      o.remove();
+      moFloat(Boolean(DATA.butler));
+    };
+    o.addEventListener("transitionend", land, { once: true });
+    /* A browser that runs no transitions at all — reduced motion, or a tab
+       that was in the background — never fires transitionend, and he would
+       be gone from both places. */
+    setTimeout(() => { if (document.body.contains(o)) land(); }, 900);
   }
 
   orb.addEventListener("click", () => {
@@ -2611,7 +2681,11 @@ function draw() {
      A doorman who leaves once you are through the door is a doorman you
      cannot ask anything. */
   if (DATA.butler && !BUT) BUT = butlerStart();
-  moFloat(Boolean(DATA.butler));
+  /* NOT WHILE THE ARRIVAL IS RUNNING. Two of him on one screen — the big one
+     in the middle talking and the small one in the corner waiting — says they
+     are two different characters. The big one becomes the small one on the
+     last press; see flyToCorner. */
+  moFloat(Boolean(DATA.butler) && !ARRIVING);
 
   /* NOT WHILE HE IS OPEN. draw() runs on every turn of the conversation, and
      yanking the page behind the sheet back to the top each time means the
