@@ -70,7 +70,21 @@
   /* ON A PHONE THE AVATAR GOES ON TOP, centred, the way it does in every app
      anybody has set a profile up in. Beside a four-line label it floats in the
      middle of a paragraph, attached to nothing. */
+  /* ONE THUMB, HALF AN EYE.
+     These people set this up on a phone, badly lit, mid-something-else. So on
+     a phone the explanations go — they are true and nobody is reading them —
+     and everything you press gets bigger than a thumb. What is left is a face,
+     a name, and a button. */
   @media (max-width:640px){
+    .step .note{display:none}
+    .stepno b{font-size:1.7rem}
+    .avatar{width:7rem;height:7rem}
+    .av-plus{width:2.2rem;height:2.2rem;font-size:1.1rem}
+    .yourow label{font-size:1rem}
+    .yourow input{padding:.9rem 1rem;font-size:1.05rem}
+    .go{padding:.95rem 1.5rem;font-size:1.05rem}
+    .roles button{padding:.6rem 1.1rem;font-size:1rem}
+    .field{padding:2.2rem 1rem}
     .you{flex-direction:column;align-items:stretch;gap:.9rem}
     .avatar{margin:0 auto}
     .yourow{min-width:0}
@@ -223,7 +237,14 @@
     <b id="fieldhead"></b>
     <p id="fieldsub"></p>
     <button class="go flat" id="browse" type="button"></button>
-    <input id="files" type="file" multiple hidden>
+    <!-- TWO PICKERS, BECAUSE THERE ARE TWO KINDS OF DEVICE.
+         A phone has no folders. It has a camera roll, and the agents this is
+         for are on one all day — so on a phone the button opens photos and
+         nothing else, and the words stop talking about dragging, which is not
+         a thing a thumb does. The folder picker is still there on a laptop,
+         where the folder-per-person really does exist and is better evidence
+         than anything a machine can infer. Same route either way. -->
+    <input id="files" type="file" multiple accept="image/*" hidden>
   </div>
 
   <div id="said"></div>
@@ -530,8 +551,21 @@ $("make").onclick = async () => {
   say(T("ob.made", { n: (r.added || []).length }));
 };
 
+/* Coarse pointer and no hover is a touch device; it is also what every phone
+   answers and no laptop does, including a laptop with a touchscreen, which is
+   the case a width test gets wrong. */
+const PHONE = window.matchMedia
+  && window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+
 const field = $("field");
 $("browse").onclick = () => $("files").click();
+if (!PHONE) {
+  // webkitdirectory on a phone offers nothing and on some it offers a broken
+  // sheet, so it is set only where a folder is a real thing.
+  $("files").setAttribute("webkitdirectory", "");
+  $("files").setAttribute("directory", "");
+  $("files").removeAttribute("accept");
+}
 $("files").onchange = () => sort([...$("files").files]);
 for (const e of ["dragenter", "dragover"]) {
   field.addEventListener(e, (ev) => { ev.preventDefault(); field.classList.add("over"); });
@@ -572,9 +606,9 @@ function paint() {
   set("head", "ob.welcome");
   set("lede", "ob.lede");
   set("rolehead", "ob.rolehead");
-  set("fieldhead", "ob.fieldhead");
-  set("fieldsub", "ob.fieldsub");
-  set("browse", "ob.choose");
+  set("fieldhead", PHONE ? "ob.phonehead" : "ob.fieldhead");
+  set("fieldsub", PHONE ? "ob.phonesub" : "ob.fieldsub");
+  set("browse", PHONE ? "ob.phonego" : "ob.choose");
   set("skipgo", "ob.skip");
   set("s1head", "ob.s1head");
   set("s1say", "ob.s1say");

@@ -567,6 +567,12 @@ export const STRINGS = {
   "ob.fieldhead":   ["Drag it all in here", "全拖到这儿"],
   "ob.fieldsub":    ["A folder, or a pile. Nothing is made until you say so.", "一个文件夹，或者一堆文件。你不点，什么都不建。"],
   "ob.choose":      ["Choose files", "选文件"],
+  /* The same step, said to a thumb. No folders, no dragging — a camera roll,
+     which is where these photographs already are. */
+  "ob.phonehead":   ["Their photos", "他们的照片"],
+  "ob.phonesub":    ["Pick as many as you like. Nothing is made until you say so.",
+                     "想选几张选几张。你不点，什么都不建。"],
+  "ob.phonego":     ["Choose photos", "从相册选"],
   "ob.reading":     ["Reading {n} files and working out who is who\u2026", "正在看这 {n} 个文件，分一下谁是谁……"],
   "ob.sorted":      ["{n} people. The names and the words came out of the files \u2014 check them, and drag a file onto somebody else if it landed wrong.",
                      "分出来 {n} 个人。名字和介绍都是从文件里读出来的——核对一下，分错了就把文件拖到别人那儿。"],
@@ -624,8 +630,10 @@ export const STRINGS = {
   "ob.toobig":      ["That photo is too big. Anything under 25MB is fine.",
                      "这张照片太大了，25MB 以内都行。"],
   "ob.sending":     ["Sending the photo\u2026", "照片上传中……"],
-  "ob.mylabel":     ["First \u2014 what should the board call you? Their pages say they are represented by you, and it is your WeChat that crosses.",
-                     "先说一下，板上叫你什么？他们的主页上会写「由你代理」，对方最后加的也是你的微信。"],
+  /* Six words. The reason — their pages say you represent them, your WeChat is
+     the one that crosses — is in ob.s1say, which a laptop shows and a phone
+     does not, because on a phone this is read with half an eye. */
+  "ob.mylabel":     ["What should we call you?", "叫你什么？"],
   "ob.myph":        ["Your name", "你的名字"],
   "ob.mysave":      ["That is me", "就叫这个"],
   "role.a.writer":     ["a Writer", "编剧"],
