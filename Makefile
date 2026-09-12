@@ -773,6 +773,28 @@ room-keep: ## Keep only these in Browse: make room-keep KEEP="Keith,Axel,Hugo" [
 	  /seed/room-keep.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --keep "$(KEEP)" $(if $(GO),--go,)
 
+waiting-up: ## Move one into the waiting room now: make waiting-up ID=...
+	@# Three a day go up on their own, off the top of the queue — see liftSome
+	@# in board/server.js. This is for the one you want looked at today
+	@# regardless of where they are standing.
+	@#
+	@# It does NOT let them in. They can read the app and finish their page;
+	@# every button tells them the rest is coming. Letting in is still
+	@# make waiting-in, and still a separate decision.
+	@# Inside the container, like every other script target here. The board is
+	@# not published on the host — caddy is the only way in from outside, and
+	@# curl on the box reaches neither.
+	@test -n "$(ID)" || { echo "which one? make waiting-up ID=..."; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --up "$(ID)"
+
+waiting-down: ## Put one back on the list from the waiting room: make waiting-down ID=...
+	@test -n "$(ID)" || { echo "which one? make waiting-down ID=..."; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --down "$(ID)"
+
 waiting-back: ## Put one back on the list: make waiting-back ID=...
 	@# Undoes an admit. The code minted for them is a separate thing and keeps
 	@# working until it is taken back:  make invite-off CODE=...

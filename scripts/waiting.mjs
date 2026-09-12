@@ -180,6 +180,25 @@ function draft(w) {
     + body + "\n";
 }
 
+async function lift(id, on) {
+  const r = await fetch(BASE + "/api/waiting/up", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-admin-secret": KEY },
+    body: JSON.stringify({ id, on }),
+  });
+  const d = await r.json().catch(() => ({}));
+  console.log("");
+  if (!r.ok) { console.log("  " + (d.error === "gone" ? "no row with that id" : d.error || r.status)); }
+  else if (on) {
+    console.log("  " + (d.name || "They") + " is in the waiting room.");
+    console.log("  They can read the app and finish their page. Nothing works for them yet.");
+    console.log("  Let them in with:  make waiting-in ID=" + id + "  && make invite WHO=\"their name\"");
+  } else {
+    console.log("  " + (d.name || "They") + " is back on the list.");
+  }
+  console.log("");
+}
+
 async function main() {
   if (arg("admit")) return admit(arg("admit"), arg("max"));
   if (arg("name")) return add(arg("name"), arg("reach"), arg("why"), arg("room"));
@@ -193,6 +212,11 @@ async function main() {
      against one row; they type it at the same box a member uses, and it hands
      back their place and their card rather than opening the door. */
   if (arg("key")) return backKey(arg("key"));
+  /* THE WAITING ROOM. Not admission and not a `done` — see the note on `up`
+     in lib/store.js. They can read the app and finish their page; letting them
+     in is still --in and still a separate decision. */
+  if (arg("up")) return lift(arg("up"), true);
+  if (arg("down")) return lift(arg("down"), false);
   if (arg("back")) return mark(arg("back"), { done: "" });
   if (arg("in")) return mark(arg("in"), { done: "in" });
   if (arg("no")) return mark(arg("no"), { done: "no" });
