@@ -2609,7 +2609,13 @@ export const STRINGS = {
   "cards.qrHowWx": [
     "Press and hold the code to save it, then Scan · from album.",
     "长按二维码保存，再用扫一扫 · 从相册选取。"],
-  "cards.openWx":      ["Open WeChat", "打开微信"],
+  /* "Open WeChat" is gone, string and all. WeChat has no link that opens a
+     chat with somebody you have never spoken to, so the button could only
+     launch the app and abandon the person on whatever screen it was left on.
+     It survived because there was nowhere else to talk; Messages is a real
+     messenger now, and the button under a card is the conversation. */
+  // The conversation, from the card. Both of you agreed to talk by swapping.
+  "cards.talk":        ["Message them", "给他发消息"],
   "cards.idHow": [
     "In WeChat: search, paste the id, Add.",
     "在微信里搜索，粘贴微信号，添加。"],

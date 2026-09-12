@@ -6394,6 +6394,16 @@ function drawCards() {
       owe.append(go);
       foot.append(owe);
     }
+    /* AND THE WAY TO SAY SOMETHING, on a row that until now ended in a
+     * contact string. Two people who have swapped cards have already agreed
+     * to talk; making them go and find each other in another tab was the last
+     * thing on this screen still assuming the conversation happens elsewhere.
+     * The thread is addressed by person id, which is what /notes reads. */
+    if (m.card && m.gave) {
+      const talk = el("a", "wxgo", T("cards.talk"));
+      talk.href = "/notes#" + encodeURIComponent(m.id);
+      foot.append(talk);
+    }
     // What they wrote when they handed it over — see .said in the CSS.
     if (m.card && m.note) foot.append(el("p", "said", m.note));
 
@@ -6432,11 +6442,15 @@ function drawCards() {
       /* Launching WeChat is only worth offering to somebody who is not already
          inside it, and only next to an id they can paste — on its own it is
          the dead button again. */
-      if (!IN_WECHAT) {
-        const open = el("a", "wxgo", T("cards.openWx"));
-        open.href = "weixin://";
-        foot.append(open);
-      }
+      /* "OPEN WECHAT" IS GONE. It was always half a button — WeChat has no
+         link that opens a chat with somebody you have never spoken to, so all
+         it could do was launch the app and abandon the person on whatever
+         screen it was left on. It survived because there was nowhere else to
+         talk. There is now: Messages is a real messenger, and a pair who have
+         swapped cards are a pair who can write to each other here. So the
+         button under a card is the conversation, and the id below it is for
+         carrying the person off this board when they want to — which is what
+         it was always actually for. */
       foot.append(el("p", "how", T("cards.idHow")));
       if (m.card.line) foot.append(el("p", "line", m.card.line));
     } else if (m.card && m.card.qr) {
