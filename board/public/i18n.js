@@ -3351,6 +3351,16 @@ export const STRINGS = {
      one, so it takes the smaller word. */
   "brw.connect":       ["Follow", "关注"],
   "brw.connected":     ["Following", "已关注"],
+  /* THE QUEUE, ON THE DOOR. The one number that argues for this place to
+     somebody who has never heard of it, and it was being fetched and thrown
+     away. Not "only N spots left" and not a percentage — a count of real
+     people who asked, which is what it is and all it needs to be.
+     The English needs the plural; the Chinese does not, which is why the two
+     are shaped differently rather than one being a translation of the other. */
+  "door.queue": [
+    "{n} people are waiting to get in.",
+    "已经有 {n} 个人在排队等着进来。",
+  ],
   "door.noCode":       ["I do not have one — put me on the list",
                         "我没有口令——把我加到名单里"],
   "door.note":         ["No account, no password, no phone number. The code is the whole of it.",

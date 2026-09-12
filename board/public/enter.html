@@ -133,6 +133,10 @@
   #hello .go small{display:block;font-weight:400;font-size:.76rem;opacity:.85;
     margin-top:.12rem}
   #hello .note{margin:1rem 0 0}
+  /* Quiet on purpose. A number that shouts reads as marketing; the same number
+     said plainly reads as a fact, and it is a fact. */
+  .queue{margin:0 0 .7rem;text-align:center;font-size:.82rem;color:var(--muted)}
+  .queue b{color:var(--ink-2);font-weight:500;font-variant-numeric:tabular-nums}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
     font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
   main{max-width:34rem;margin:0 auto;padding:0 1.15rem 4rem}
@@ -464,6 +468,14 @@
        a code, and a row is keyed to a name and a way to be reached rather than
        to the browser it was typed in — so it works there exactly as well. -->
   <section id="listwrap" hidden>
+    <!-- THE QUEUE, WHICH IS THE WHOLE ARGUMENT AND WAS NOT ON THIS PAGE.
+         /api/hello has published this number all along and the door read one
+         field out of that response and threw the rest away. A stranger sent a
+         link by a member landed on a code box with nothing to type into it and
+         no evidence that anybody wants in — which is every person any member
+         has ever forwarded this to.
+         Above the button rather than below it: it is the reason to press it. -->
+    <p class="queue" id="queueline" hidden></p>
     <button class="keyopen" type="button" id="listopen"
             aria-expanded="false" aria-controls="listbox"></button>
     <div class="keybox" id="listbox" hidden><div id="waitslot"></div></div>
@@ -540,6 +552,14 @@ try {
  */
 let TYPED = "";
 let ERR = false;
+/* How many are outside, or 0 before the answer lands. Kept rather than drawn
+   once: the language switch repaints this page from the top, and a number
+   fetched before that would otherwise vanish on the first press.
+   UP HERE WITH THE REST OF THE STATE, not beside the fetch that fills it.
+   `let` does not hoist a value, and the painter calls drawQueue() several
+   hundred lines earlier — which is a temporal dead zone, not an undefined,
+   and it took the whole page down rather than leaving one line blank. */
+let QUEUE = 0;
 
 /* ---------------------------------------------------------------------------
  * THE CLOCK
@@ -886,6 +906,7 @@ function words() {
 
   $("keyopen").textContent = T("door.keyOpen");
   $("listopen").textContent = T("door.noCode");
+  drawQueue();
   $("keywhere").textContent = T("door.keyWhere");
   $("keytitle").textContent = T("door.keyTitle");
   $("keysay").textContent = T("door.keySay");
@@ -1148,10 +1169,33 @@ $("hostessform").addEventListener("submit", (e) => { e.preventDefault(); askNow(
 /* Drawn only if there is anybody on the door. The same one field the public
    page reads, from the same route, so a board with the feature off shows no
    box rather than a box that answers everything with an error. */
+function drawQueue() {
+  const el = $("queueline");
+  if (!el) return;
+  el.hidden = !QUEUE;
+  if (!QUEUE) return;
+  const b = document.createElement("b");
+  b.textContent = String(QUEUE);
+  const words = T("door.queue").split("{n}");
+  el.textContent = "";
+  el.append(document.createTextNode(words[0]), b,
+    document.createTextNode(words.slice(1).join("{n}")));
+}
+
 fetch("/api/hello", { cache: "no-store" })
   .then((r) => r.json())
-  .then((d) => { if (d && d.hostess) { $("hostess").hidden = false; drawHostess(); } })
-  .catch(() => { /* no box, and the door is unaffected */ });
+  .then((d) => {
+    if (d && d.hostess) { $("hostess").hidden = false; drawHostess(); }
+    /* ABSENT RATHER THAN ZERO, and the server decides which. `waiting` comes
+       back null below WAITING_FLOOR — five — because "2 people are waiting" is
+       a worse advertisement than saying nothing, and nearly a name besides. So
+       there is no number to hide here: if it arrived, it is worth showing. */
+    if (d && typeof d.waiting === "number" && d.waiting > 0) {
+      QUEUE = d.waiting;
+      drawQueue();
+    }
+  })
+  .catch(() => { /* no box, no number, and the door is unaffected */ });
 </script>
 </body>
 </html>
