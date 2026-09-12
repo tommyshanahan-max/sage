@@ -958,6 +958,17 @@ services:
       BOARD_STAKE_SALE: ${TOMSCODING_BOARD_STAKE_SALE:-}
       BOARD_STAKE_CUT: ${TOMSCODING_BOARD_STAKE_CUT:-}
       BOARD_TESTS: ${TOMSCODING_BOARD_TESTS:-}
+      # THE REVIEWER'S CODE, AND WHERE IT SENDS THEM. Both must be set for
+      # either to do anything. That code typed at this board's door admits
+      # nobody: it is answered with the demo board's address, and that browser
+      # goes there. It never spends and never expires, which is what App Review
+      # needs and what makes it useless as an invite — see DEMO_CODE in
+      # board/server.js for why that is safe.
+      #
+      # Unset on any box that has no demo board, which is the default: the door
+      # then behaves exactly as it always has.
+      BOARD_DEMO_CODE: ${TOMSCODING_BOARD_DEMO_CODE:-}
+      BOARD_DEMO_URL: ${TOMSCODING_BOARD_DEMO_URL:-}
     volumes:
       - board_data:/data
     expose:
