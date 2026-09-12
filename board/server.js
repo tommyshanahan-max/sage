@@ -3438,17 +3438,37 @@ app.post("/api/wait/photo", express.json({ limit: "36mb" }), async (req, res) =>
  * butler.js are the second line; this is the first.
  * ------------------------------------------------------------------------- */
 app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
-  if (!butler.configured()) return res.status(503).json({ error: "unconfigured" });
+  /* EVERY REFUSAL SAYS WHICH ONE IT WAS.
+   *
+   * The page turns all of them into the same red line — "He is not answering"
+   * — which is right for the person reading it and useless for anybody trying
+   * to fix it. Only the thrown case logged, so a route that refused before it
+   * ever called the model left no trace at all: no key, no row, over the cap
+   * and an empty body were four different bugs with one symptom and no
+   * evidence. Keys and message text never go in here, only the reason. */
+  const no = (code, why, extra) => {
+    console.error(`butler: ${code} ${why}${extra ? " " + extra : ""}`);
+    return res.status(code).json({ error: why });
+  };
+
+  if (!butler.configured()) return no(503, "unconfigured");
   const { row, who: me } = await waitingRow(req, res);
   /* Not "are they up" — anybody on the list with a row may use it. Somebody
      who fills their card in before their turn comes up is the best possible
      outcome of this feature, not an abuse of it. */
-  if (!row) return res.status(403).json({ error: "who" });
+  if (!row) {
+    /* Which half was missing: no device header at all is a different bug from
+       a device that names nobody on the list. */
+    const said = String(req.get("x-board-device") || "");
+    return no(403, "who", said ? "device sent, no row" : "no device header");
+  }
   const out = await butler.ask(req.body?.turns, me || row.id);
   if (out.error) {
     const code = out.error === "slow-down" ? 429
       : out.error === "busy" ? 429
       : out.error === "unconfigured" ? 503 : 400;
+    /* "failed" has already logged its status and message in butler.ask. */
+    if (out.error !== "failed") console.error(`butler: ${code} ${out.error}`);
     return res.status(code).json(out);
   }
   res.set("Cache-Control", "no-store");
