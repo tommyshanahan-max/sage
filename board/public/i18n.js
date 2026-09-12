@@ -3778,8 +3778,15 @@ export const STRINGS = {
   "note.sent":         ["Sent. It is theirs to answer now.", "已发送。等对方回复。"],
   "note.waiting":      ["You have written to {who}. It is theirs to answer.",
                         "你已经写给 {who} 了。等对方回复。"],
-  "note.closed":       ["You have both written. Carry on where you swapped.",
-                        "你们都写过了。到交换的地方继续聊吧。"],
+  /* IT SAID "Carry on where you swapped", which assumed a swap. Two people
+     who have used up an introduction have very often swapped nothing — and
+     that line was the only thing on the screen, so it was advice to go
+     somewhere that does not exist. What actually reopens this is the follow,
+     both ways: see matched() in server.js. */
+  "note.closed": [
+    "One message each — that is the whole introduction. It opens into a real conversation once you have both followed each other.",
+    "各发一条——开场白就这么多。等你们互相关注了，这里就会变成可以一直聊的对话。",
+  ],
   /* AN OPEN THREAD, which only two people who matched ever have. The words
      are deliberately plainer than the introduction's: an introduction is a
      thing you compose, a conversation is a thing you are in. */
@@ -3892,6 +3899,10 @@ export const STRINGS = {
   // this one is under, said once, where somebody about to type can see it.
   "note.openSub":      ["Open — either of you can write", "开放对话——谁都可以写"],
   "note.oneSub":       ["One answer", "只能回一条"],
+  // Short labels for the header. The sentence explaining each one is the
+  // paragraph at the bottom of the thread — see note.closed and note.waiting.
+  "note.waitSub":      ["Waiting for them", "等对方回复"],
+  "note.doneSub":      ["Introduction finished", "开场白结束"],
   "note.dealOpen":     ["You agreed a piece of work", "你们谈成了一件事"],
   "note.canSub": [
     "You followed each other. Tap a face to write, or to pick up where you left off.",

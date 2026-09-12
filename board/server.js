@@ -4584,6 +4584,12 @@ app.get("/api/notes", notesOff, async (req, res) => {
       // An open thread is a conversation rather than an introduction, and the
       // page says so and offers the way out of it.
       open: Boolean(st.open),
+      /* AND WHICH KIND OF SHUT IT IS, when it is shut. The page was choosing
+         between two sentences off `open` alone, so a thread that had used up
+         its one message each was told to "carry on where you swapped" —
+         advice about a swap that had never happened. Four states, four
+         answers; threadState already knows which. */
+      why: st.why || "",
       /* HOW MANY LINES ARE LEFT, on a thread an offer opened. Shown rather
          than discovered: a box that refuses the seventh message without ever
          having said there were six is a bug the person blames on themselves. */

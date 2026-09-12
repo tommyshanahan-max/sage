@@ -438,6 +438,36 @@ function wash(name) {
   return "linear-gradient(150deg,hsl(" + h + " 26% 74%),hsl(" + ((h + 24) % 360) + " 24% 52%))";
 }
 
+/* WeChat's own browser will not open a share sheet — the ⋯ menu at the top of
+   ITS window is the only way — so the honest fallback there is the clipboard
+   and a line saying where the real control is. Same test the rest of the app
+   uses. */
+const IN_WECHAT = /micromessenger/i.test(navigator.userAgent);
+
+/** Put something on the clipboard, and say whether it worked. The modern API
+ *  needs a secure context and a permission; the old one needs a node in the
+ *  document. Both are tried because half the phones here are on one and half
+ *  on the other. */
+function copyText(text) {
+  try {
+    const t = document.createElement("textarea");
+    t.value = text;
+    t.setAttribute("readonly", "");
+    t.style.position = "fixed";
+    t.style.opacity = "0";
+    document.body.append(t);
+    t.select();
+    const ok = document.execCommand && document.execCommand("copy");
+    t.remove();
+    if (ok) return true;
+  } catch { /* fall through to the async one */ }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).catch(() => {});
+    return true;
+  }
+  return false;
+}
+
 let device = "";
 try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
 
@@ -612,9 +642,14 @@ function drawThread(t) {
   /* WHAT KIND OF CONVERSATION THIS IS, under their name. An open thread, a
      counted one an offer opened, or an introduction with one answer in it —
      three different rules, and somebody typing deserves to know which. */
+  /* A SHORT LABEL UP HERE, THE EXPLANATION DOWN THERE. Both were coming out
+     of the same two-way choice, so a finished introduction said "This
+     conversation is closed" at the top and a paragraph about following each
+     other at the bottom — two different accounts of one state. */
   $("twhosub").textContent = last.deal ? T("note.dealOpen")
     : last.open ? T("note.openSub")
-    : last.canAnswer ? T("note.oneSub") : T("note.shut");
+    : last.canAnswer ? T("note.oneSub")
+    : T({ shut: "note.shut", waiting: "note.waitSub" }[last.why] || "note.doneSub");
 
   const pin = $("tpin");
   pin.hidden = !last.deal;
@@ -647,7 +682,17 @@ function drawThread(t) {
   const can = Boolean(last.canAnswer);
   $("twrite").hidden = !can;
   $("tshut").hidden = can;
-  if (!can) $("tshut").textContent = T(last.open ? "note.shut" : "note.closed");
+  /* FOUR KINDS OF SHUT, FOUR SENTENCES. It picked between two off `open`, so a
+     thread that had spent its one message each read "Carry on where you
+     swapped" — advice about a swap that had never happened, on a screen where
+     there was nothing else to go on. */
+  if (!can) {
+    $("tshut").textContent = T({
+      shut: "note.shut",            // somebody walked out
+      waiting: "note.waiting",      // you wrote, they have not answered
+      spent: "note.linesSpent",     // an offer's lines are used up
+    }[last.why] || "note.closed", { who: t.handle || "—", n: 0 });
+  }
   /* A SHORT PROMPT, NOT THE EXAMPLE. note.placeholder is two lines of "Hi —
      performer, Sydney, free from March…", which is the right thing in a form
      with room for it and wrong in a one-line box, where it is clipped in the
@@ -678,6 +723,31 @@ function drawMenu(t) {
   const go = el("a", null, T("note.openProfile"));
   go.href = "/p/" + encodeURIComponent((t.handle || "").toLowerCase());
   menu.append(go);
+
+  /* SHARING THEM, from inside the conversation. Every other screen that shows
+     a person can send their page to somebody; this one could not, which is
+     odd on the screen where you are most likely to be thinking about who else
+     should know them — and it is the only thing left to do on a conversation
+     that has run out of messages. The phone's own sheet, so WeChat and
+     WhatsApp are one tap. */
+  const sh = el("button", null, T("act.share"));
+  sh.type = "button";
+  sh.addEventListener("click", () => {
+    const url = location.origin + "/p/"
+      + encodeURIComponent((t.handle || "").toLowerCase());
+    const done = (key) => {
+      sh.textContent = T(key);
+      setTimeout(() => { sh.textContent = T("act.share"); }, 2600);
+    };
+    if (IN_WECHAT) return done(copyText(url) ? "act.wxCopied" : "act.wxUseMenu");
+    if (navigator.share) {
+      navigator.share({ title: t.handle || "", url })
+        .catch(() => { /* dismissed is not a failure */ });
+      return;
+    }
+    done(copyText(url) ? "act.copied" : "act.copyFail");
+  });
+  menu.append(sh);
 
   if (t.last.open) {
     const out = el("button", "warn", T("note.leave"));
