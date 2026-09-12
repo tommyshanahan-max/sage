@@ -62,36 +62,86 @@
    * it is a hero rather than a line is that a welcome the size of body text is
    * not a welcome, it is a label.
    */
-  .hero{margin:.6rem 0 0;padding:2.1rem 1.1rem 1.6rem;border-radius:1.1rem;
+  /* ---- THE ARRIVAL, AND IT IS THE FIRST THING ANYBODY SEES OF THIS PLACE ---
+   *
+   * The rest of this board is a working tool and looks like one, correctly.
+   * This one screen is not: it is the door of somewhere, opened for somebody
+   * by name, and it is the only impression most people will ever form. A
+   * gradient with a heading on it is a settings page with a nice mood.
+   *
+   * So it is dark whatever the phone is set to — the one place in the product
+   * that commits, the way the lobby of a building is darker and quieter than
+   * the offices upstairs — and everything in it is drawn rather than loaded,
+   * because a hero that arrives in pieces over a mainland connection is worse
+   * than no hero.
+   */
+  .hero{margin:.6rem 0 0;padding:2.4rem 1.2rem 2rem;border-radius:1.3rem;
     text-align:center;position:relative;overflow:hidden;
-    background:linear-gradient(168deg,var(--accent-soft),var(--raise) 62%)}
-  /* THE DOOR, drawn rather than stated. Two leaves standing open behind the
-     name — the whole story of this page in one shape, and it costs nothing:
-     no image to load on a Chinese mobile connection, no file to serve. */
+    background:radial-gradient(120% 90% at 50% 0%,#243050 0%,#131A2A 45%,#0B0F18 100%);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+  /* Light falling through the gap, which is the whole picture: a door open a
+     little way and somebody standing in it. Two shapes, no file. */
+  .hero .glow{position:absolute;left:50%;top:-22%;width:15rem;height:15rem;
+    transform:translateX(-50%);border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,rgba(124,160,255,.30),transparent 62%)}
   .hero .door{position:absolute;inset:0;display:grid;place-items:center;
-    opacity:.16;pointer-events:none}
-  .hero .door svg{width:13rem;height:13rem;color:var(--accent)}
+    opacity:.2;pointer-events:none}
+  .hero .door svg{width:15rem;height:15rem;color:#9FB6F0}
   .hero .mk{position:relative;display:inline-grid;place-items:center;
-    width:2.5rem;height:2.5rem;border-radius:.65rem;background:var(--ink);
-    color:var(--paper);font:400 1.15rem/1 var(--serif);margin:0 0 .9rem}
+    width:2.6rem;height:2.6rem;border-radius:.7rem;
+    background:rgba(255,255,255,.94);color:#131A2A;
+    font:400 1.2rem/1 var(--serif);margin:0 0 1rem;
+    box-shadow:0 6px 18px rgba(0,0,0,.35)}
   .wrhi{position:relative;display:block;margin:0;font-family:var(--serif);
-    font-weight:400;font-size:clamp(2rem,10vw,2.9rem);line-height:1.05;
-    letter-spacing:-.01em;color:var(--ink);text-wrap:balance}
-  .herosub{position:relative;margin:.7rem auto 0;max-width:20rem;
-    font-size:.95rem;line-height:1.55;color:var(--ink-2)}
-  .heroq{position:relative;margin:.8rem 0 0;font-size:.85rem;font-weight:600;
-    color:var(--accent)}
+    font-weight:400;font-size:clamp(2.1rem,10.5vw,3rem);line-height:1.02;
+    letter-spacing:-.015em;color:#F4F6FB;text-wrap:balance}
+  .heroq{position:relative;margin:1.1rem 0 0;font-size:.78rem;font-weight:600;
+    letter-spacing:.08em;text-transform:uppercase;color:#8FA8E4}
+
+  /* ---- THE CIRCLE ---------------------------------------------------------
+   *
+   * Ray's invite is a message somebody sent you. This is the same thing: one
+   * round thing in the middle of the screen that you press, and then somebody
+   * talks to you. Not a labelled button in a row of controls — those are
+   * furniture, and nobody presses furniture.
+   *
+   * IT DOES BOTH AT ONCE. The words are on the screen the whole time, greyed,
+   * and light up as they are spoken. So it works with the sound off, it works
+   * for somebody whose phone is on silent in a meeting, and for everybody else
+   * it is a person reading you in. The text is not a transcript that appears
+   * afterwards — following the words while they are said is most of what makes
+   * a second language readable at all.
+   */
+  .orbwrap{position:relative;margin:1.3rem 0 0;display:grid;place-items:center}
+  .orb{width:5.4rem;height:5.4rem;border-radius:50%;border:0;cursor:pointer;
+    background:#F4F6FB;color:#131A2A;display:grid;place-items:center;padding:0;
+    box-shadow:0 12px 34px rgba(0,0,0,.45);transition:transform .12s ease-out}
+  .orb:active{transform:scale(.96)}
+  .orb svg{width:1.9rem;height:1.9rem;fill:currentColor;stroke:none;
+    margin-left:.18rem}
+  .orb[aria-pressed="true"] svg{margin-left:0}
+  .orb:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+  /* The ring only exists while it is talking, so the circle at rest is one
+     clean shape rather than a control with decoration around it. */
+  .ring{position:absolute;width:5.4rem;height:5.4rem;border-radius:50%;
+    border:2px solid rgba(244,246,251,.7);opacity:0;pointer-events:none}
+  .orbwrap.on .ring{animation:ping 1.8s ease-out infinite}
+  .orbwrap.on .ring.b{animation-delay:.9s}
+  @keyframes ping{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.5);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.orbwrap.on .ring{animation:none;opacity:.35}}
+  .orbsay{position:relative;margin:.75rem 0 0;font-size:.78rem;color:#7E8CAC}
+
+  /* The message. Greyed until spoken, then it is ink. */
+  .tell{position:relative;margin:1.1rem auto 0;max-width:21rem;
+    font-family:var(--serif);font-size:1.06rem;line-height:1.62;
+    color:#5C6B8C}
+  .tell w{color:inherit;transition:color .14s ease-out}
+  .tell w.lit{color:#EDF1F9}
   .wrband b{display:block;color:var(--ink);font-size:.98rem;font-weight:500}
   /* Played rather than only read. speechSynthesis speaks Chinese on every
      phone here; level.html has used it for months. Its own button, never
      automatic — a page that starts talking on a train is a page somebody
      shuts. */
-  .wrplay{position:relative;margin:1rem 0 0;display:inline-flex;align-items:center;gap:.4rem;
-    border:1px solid var(--line);background:var(--card);color:var(--ink);
-    border-radius:99px;font:inherit;font-size:.82rem;padding:.35rem .85rem;
-    cursor:pointer}
-  .wrplay svg{width:.85rem;height:.85rem;fill:currentColor}
-  .wrplay[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
   /* THE WAITING ROOM, WHICH IS A DIFFERENT BAND FROM BEING ON THE LIST.
      Warmer than the blue one above it so that being moved up reads as having
      happened rather than as the same notice with new words in it. */
@@ -115,20 +165,28 @@
     background:var(--card);overflow:hidden}
   .buthead{display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;
     border-bottom:1px solid var(--hair)}
-  /* THE MARK, so he is somebody rather than a panel. The board's own
-     character, small, in its own square — the same object the door and the
-     poster wear. */
-  .butmark{width:1.7rem;height:1.7rem;border-radius:.45rem;background:var(--ink);
-    color:var(--paper);display:grid;place-items:center;font-style:normal;
-    font:400 .85rem/1 var(--serif)}
+  /* HIS FACE. It was the board's own 交 mark, which is also the app icon and
+     also the welcome above — so he read as the software talking rather than
+     somebody talking. A cap and shoulders is legible before anybody reads a
+     word, and a peaked cap is one of the few uniforms that means the same
+     thing in Guangzhou and in Sydney. */
+  .butface{flex:0 0 auto;width:2.1rem;height:2.1rem;border-radius:50%;
+    background:var(--accent-soft);color:var(--accent);display:grid;
+    place-items:center;font-style:normal}
+  .butface svg{width:1.45rem;height:1.45rem}
+  .buthead small{color:var(--muted);font-size:.76rem}
   .buthead b{font-size:.92rem;font-weight:600;color:var(--ink)}
   .butshut{margin:1rem 0 0;text-align:center}
+  .butgone{margin:0 0 .5rem;font-size:.82rem;color:var(--muted)}
   .butshut button{border:1px solid var(--line);background:var(--card);
     border-radius:99px;padding:.45rem 1.1rem;font:inherit;font-size:.85rem;
     color:var(--ink-2)}
   .buthead small{color:var(--muted);font-size:.76rem}
+  /* A word, not a ×. A cross reads as closing a panel that will be back
+     tomorrow, and this one will not come back until they ask for it. */
   .buthead .x{margin-left:auto;border:0;background:none;color:var(--muted);
-    font-size:1.2rem;line-height:1;padding:.1rem .3rem;cursor:pointer}
+    font:inherit;font-size:.78rem;padding:.2rem .1rem;cursor:pointer;
+    text-decoration:underline;text-underline-offset:2px}
   .butsay{padding:.8rem .9rem;display:flex;flex-direction:column;gap:.55rem;
     max-height:20rem;overflow-y:auto}
   .bub{max-width:85%;padding:.55rem .8rem;border-radius:1rem;font-size:.9rem;
@@ -1086,7 +1144,127 @@ function bestVoice(tag) {
     || all[0];
 }
 
-function speakOut(text, onEnd) {
+/** THE CIRCLE, AND THE WORDS LIGHTING UP UNDER IT.
+ *
+ *  One round thing in the middle that you press, and then somebody talks to
+ *  you — the same shape as the invite, which is a message somebody sent you
+ *  rather than a page with controls on it.
+ *
+ *  BOTH AT ONCE. The words are on the screen the whole time in grey and turn
+ *  to ink as they are said, so it reads with the sound off and it is a person
+ *  reading you in with the sound on. Following the words while they are
+ *  spoken is most of what makes a second language legible at all, which is
+ *  half of who this board is for.
+ */
+function welcomeOrb(you) {
+  /* First name here too. "Welcome, Jack Daniels" read aloud is a summons;
+     "Welcome, Jack" is somebody letting you in. */
+  const first = (you.name || "").split(/\s+/)[0] || you.name || "";
+  const words = DATA.up
+    ? T("wel.sayUp", { who: first })
+    : T("wel.sayList", { who: first,
+        n: (DATA.ahead || 0) + 1, t: DATA.waiting || 1 });
+
+  const box = document.createElement("div");
+
+  /* Split once, keeping each word's offset in the original string, because
+     that offset is what onboundary reports back. Punctuation travels with the
+     word before it so nothing is left dangling grey at the end of a line. */
+  const parts = [];
+  const re = /\S+\s*/g;
+  let m;
+  while ((m = re.exec(words))) parts.push({ at: m.index, text: m[0] });
+
+  const tell = el("p", "tell");
+  const spans = parts.map((w) => {
+    const n = document.createElement("w");
+    n.textContent = w.text;
+    tell.append(n);
+    return n;
+  });
+
+  const lightTo = (charIndex) => {
+    for (let i = 0; i < parts.length; i++) {
+      spans[i].classList.toggle("lit", parts[i].at <= charIndex);
+    }
+  };
+  const lightAll = (on) => spans.forEach((n) => n.classList.toggle("lit", on));
+
+  if (!canHearOut()) {
+    /* No voice on this browser. The message is the point, so it is simply
+       read rather than hidden behind a control that cannot work. */
+    lightAll(true);
+    box.append(tell);
+    return box;
+  }
+
+  const wrap = el("div", "orbwrap");
+  wrap.append(el("i", "ring"), el("i", "ring b"));
+  const orb = el("button", "orb");
+  orb.type = "button";
+  orb.setAttribute("aria-pressed", "false");
+  const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>';
+  const STOP = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+    + '<rect x="6" y="5" width="4" height="14" rx="1"/>'
+    + '<rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  const hint = el("p", "orbsay");
+  let timer = null;
+
+  const rest = () => {
+    if (timer) { clearInterval(timer); timer = null; }
+    orb.setAttribute("aria-pressed", "false");
+    orb.innerHTML = PLAY;
+    orb.setAttribute("aria-label", T("wel.play"));
+    hint.textContent = T("wel.play");
+    wrap.classList.remove("on");
+    lightAll(true);
+  };
+  const going = () => {
+    orb.setAttribute("aria-pressed", "true");
+    orb.innerHTML = STOP;
+    orb.setAttribute("aria-label", T("wel.stop"));
+    hint.textContent = T("wel.stop");
+    wrap.classList.add("on");
+  };
+
+  orb.addEventListener("click", () => {
+    if (orb.getAttribute("aria-pressed") === "true") {
+      try { window.speechSynthesis.cancel(); } catch { /* nothing speaking */ }
+      rest();
+      return;
+    }
+    lightAll(false);
+    going();
+    /* onboundary is the real thing and Safari does not always fire it — it
+       depends on the voice, and the good voices are the ones most likely to
+       skip it. So a timer starts alongside and whichever arrives first wins:
+       a real boundary event turns the timer off. Estimated from length at the
+       rate the utterance is actually using, which is close enough that nobody
+       watching can tell which one is driving. */
+    let real = false;
+    const ms = Math.max(40, (words.length * 62) / spans.length);
+    let at = 0;
+    timer = setInterval(() => {
+      if (real || at >= spans.length) return;
+      spans[at++].classList.add("lit");
+    }, ms);
+    speakOut(words, {
+      onWord(charIndex) {
+        real = true;
+        if (timer) { clearInterval(timer); timer = null; }
+        lightTo(charIndex);
+      },
+      onEnd: rest,
+    });
+  });
+
+  rest();
+  wrap.append(orb);
+  box.append(wrap, hint, tell);
+  return box;
+}
+
+function speakOut(text, on) {
   if (!canHearOut()) return;
   const tag = lang() === "zh" ? "zh-CN" : "en-US";
   try {
@@ -1104,9 +1282,14 @@ function speakOut(text, onEnd) {
     /* Fractionally below centre. The difference between somebody telling you
        something and somebody asking you for something. */
     u.pitch = 0.95;
-    if (onEnd) { u.onend = onEnd; u.onerror = onEnd; }
+    const done = on && (typeof on === "function" ? on : on.onEnd);
+    if (done) { u.onend = done; u.onerror = done; }
+    if (on && on.onWord) u.onboundary = (e) => on.onWord(e.charIndex || 0);
     window.speechSynthesis.speak(u);
-  } catch (e) { if (onEnd) onEnd(); /* an utterance with no voice behind it */ }
+  } catch (e) {
+    const done = on && (typeof on === "function" ? on : on.onEnd);
+    if (done) done();   /* an utterance with no voice behind it */
+  }
 }
 
 /* THE LIST ARRIVES LATE ON EVERY BROWSER. getVoices() is empty on the first
@@ -1334,18 +1517,38 @@ async function butlerTurn() {
  *
  *  Shut is a line, not a card. Closing him should not leave a panel behind
  *  advertising him. */
+/** Turned off, and the way back.
+ *
+ *  A real kill switch rather than a session dismissal: plenty of people do
+ *  not want to be talked to by a machine, and a board whose whole pitch is
+ *  that a person decides is the worst possible place to insist otherwise. It
+ *  stays shut across reloads until they ask for him back.
+ *
+ *  Said plainly on the way out. Somebody who shut it by accident needs to
+ *  know there is a way back, and somebody who shut it on purpose is owed the
+ *  confirmation that it stayed shut.
+ */
+const BUTKEY = "board:nomo";
+const moOff = () => { try { return localStorage.getItem(BUTKEY) === "1"; } catch { return false; } };
+
 function butlerShut() {
-  const box = el("p", "butshut");
-  const go = el("button", null, T("but.shut"));
+  const box = el("div", "butshut");
+  if (moOff()) box.append(el("p", "butgone", T("but.gone")));
+  const go = el("button", null, T(moOff() ? "but.back" : "but.shut"));
   go.type = "button";
-  go.addEventListener("click", () => { BUT.open = true; draw(); });
+  go.addEventListener("click", () => {
+    try { localStorage.removeItem(BUTKEY); } catch { /* private window */ }
+    BUT.open = true;
+    draw();
+  });
   box.append(go);
   return box;
 }
 
 const butlerStart = () => ({
   turns: [{ from: "you", text: butlerFirst() }, { from: "you", text: T("but.ask") }],
-  open: true, put: null, busy: false, no: "",
+  // Off means off, across reloads — see BUTKEY above.
+  open: !moOff(), put: null, busy: false, no: "",
 });
 
 /** The box that stops somebody losing their place.
@@ -1412,10 +1615,11 @@ function drawWait(box) {
     + '<path d="M50 22 18 12v76l32-10z"/><path d="M50 22l32-10v76l-32-10z"/>'
     + '<path d="M50 22v56"/><circle cx="42" cy="52" r="1.8" fill="currentColor"/>'
     + '<circle cx="58" cy="52" r="1.8" fill="currentColor"/></svg>';
+  hero.append(el("i", "glow"));
   hero.append(door);
   hero.append(el("i", "mk", "\u4EA4"));
   hero.append(el("span", "wrhi", T("wel.hi", { who: first })));
-  hero.append(el("p", "herosub", T(DATA.up ? "wel.subUp" : "wel.subList")));
+  hero.append(welcomeOrb(you));
 
   /* THE NUMBER GOES ON THE HERO, and the band under it goes away entirely
      while they are only on the list.
@@ -1467,38 +1671,6 @@ function drawWait(box) {
     else if (typeof DATA.upLeft === "number") {
       band.append(el("span", "clock", T("wroom.left", { n: DATA.upLeft })));
     }
-  }
-  /* THE SPOKEN VERSION. Written for the ear in i18n.js rather than read off
-     the screen — the same words aloud are too clipped, and somebody hearing a
-     sentence cannot glance back over it. Only drawn where there is a voice. */
-  if (canHearOut()) {
-    const total = DATA.waiting || 1;
-    const words = DATA.up
-      ? T("wel.sayUp", { who: you.name || "" })
-      : T("wel.sayList", { who: you.name || "", n: (DATA.ahead || 0) + 1, t: total });
-    const play = el("button", "wrplay");
-    play.type = "button";
-    play.setAttribute("aria-pressed", "false");
-    const label = () => {
-      play.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">'
-        + (play.getAttribute("aria-pressed") === "true"
-          ? '<rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/>'
-          : '<path d="M7 4v16l13-8z"/>') + "</svg>";
-      play.append(document.createTextNode(
-        T(play.getAttribute("aria-pressed") === "true" ? "wel.stop" : "wel.play")));
-    };
-    label();
-    play.addEventListener("click", () => {
-      const on = play.getAttribute("aria-pressed") === "true";
-      try { window.speechSynthesis.cancel(); } catch { /* nothing speaking */ }
-      if (on) { play.setAttribute("aria-pressed", "false"); label(); return; }
-      play.setAttribute("aria-pressed", "true");
-      label();
-      /* The button has to come back on its own when the voice stops, or it
-         sits there saying Stop over a silent page. */
-      speakOut(words, () => { play.setAttribute("aria-pressed", "false"); label(); });
-    });
-    hero.append(play);
   }
   box.append(hero);
   if (DATA.up) box.append(band);

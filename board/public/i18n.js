@@ -3322,32 +3322,46 @@ export const STRINGS = {
      is WRITTEN SEPARATELY below — the same words read aloud are too clipped
      for the ear, and a sentence written to be heard is a different sentence. */
   "wel.hi":            ["Welcome, {who}", "欢迎你，{who}"],
-  /* One line under the name and no more. It says which side of the door they
-     are on, which is the only thing they do not already know. */
-  "wel.subList": [
-    "You are at the door of a private board. Somebody inside decides who comes in.",
-    "你现在在一个私密板子的门口。谁能进来，由里面的人决定。",
-  ],
-  "wel.subUp": [
-    "You have been moved up. Have a look around while somebody reads your page.",
-    "你被提上来了。先随便看看，有人正在看你的主页。",
-  ],
   "wel.play":          ["Hear this", "听一下"],
   "wel.stop":          ["Stop", "停"],
-  /* SPOKEN. Longer than the screen and plainer, because there is no glancing
-     back over a sentence somebody said to you. Says where they are, what is
-     being asked, and what it gets them — in that order. */
+  /* SPOKEN, AND IT IS THE FIRST THING ANYBODY HEARS FROM THIS PLACE.
+   *
+   * The first draft was correct and dorky: "fill in your page: a photograph,
+   * and one line saying what you are and what you are looking for". That is
+   * instructions. Somebody working the door of a place worth getting into
+   * does not read you the instructions, he tells you how it goes — dry, sure
+   * of himself, and shorter than you expected.
+   *
+   * "Blank cards stay outside" does the same job as two sentences of
+   * explanation and is the line somebody repeats to a friend. Card, not page:
+   * the board already calls it a card everywhere else, and a card is a thing
+   * rather than a screen. */
   "wel.sayList": [
-    "Welcome, {who}. You are on the list at The Exchange. There are {t} people waiting and you are number {n}. While you wait, fill in your page: a photograph, and one line saying what you are and what you are looking for. The people with finished pages are the ones who get moved up first.",
-    "欢迎你，{who}。你已经在交换的名单上了。现在一共 {t} 个人在等，你排第 {n}。等着的时候先把自己的主页填好：一张照片，再加一句话说清楚你是做什么的、在找什么。主页填完整的人，会被优先提上来。",
+    "Welcome, {who}. {t} of you at the door tonight, and you're number {n}. Get a face on your card and one line about what you do and who you want. That's what moves people up. Blank cards stay outside.",
+    "欢迎你，{who}。今晚门口 {t} 个人，你排第 {n}。放张照片，再用一句话说清楚你做什么、想找谁——就靠这个往前挪。卡片空着的，一直在门外。",
   ],
   "wel.sayUp": [
-    "Welcome, {who}. You have been moved up into the waiting room. You can look around the whole app now, though nothing will work for you yet. Finish your page — a photograph, and one line about what you are and what you are looking for — and somebody inside reads it and decides. You have three days from the moment you opened this.",
-    "欢迎你，{who}。你已经被提到等候室了。现在整个应用你都能看，只是什么都还点不动。把主页填完整——一张照片，再加一句话说清楚你是做什么的、在找什么——里面的人会看过之后再决定。从你打开这个页面算起，你有三天时间。",
+    "{who}, you're through the first door. Three came off the list this week and you're one of them. Have a look around — nothing works yet, that's the deal. Get a face and a line on your card and somebody inside takes a look. Three days.",
+    "{who}，第一道门过了。这周就提上来三个人，你是一个。先随便看看——什么都还点不动，就是这样。照片和那句话填上，里面就有人来看。三天。",
   ],
 
-  "but.name":          ["The doorman", "门房"],
-  "but.sub":           ["", ""],
+  /* ---- WHO HE IS ----------------------------------------------------------
+   *
+   * HE IS BRANDING, not a feature. He is the first thing anybody meets here,
+   * he is the only voice in the product that is a person, and he is the same
+   * one at every door — so he gets a name, a face and a temperament, and all
+   * three stay put.
+   *
+   * MO, AND 老莫 IN CHINESE. One syllable, holds in both mouths, and 莫 is a
+   * real surname — 老莫 is exactly what you call the man who has been on the
+   * door of your building for fifteen years. Warm without being cute, and it
+   * does not claim to be one of the members: "Wei" or "Anna" would read as a
+   * person on the board, and somebody would eventually ask which one.
+   *
+   * "On the door" rather than a title. He is not Head of Member Onboarding.
+   */
+  "but.name":          ["Mo", "老莫"],
+  "but.sub":           ["on the door", "看门的"],
   /* ---- THE FIRST THING HE SAYS ---------------------------------------------
    *
    * IT IS THE INVITE'S JOB, NOT A CHATBOT'S. The invite works — see the note
@@ -3389,8 +3403,8 @@ export const STRINGS = {
      who get moved up are people, and saying so is the same fact with
      somebody in it. */
   "but.hookList": [
-    "{who} — the ones who get moved up are the ones who've filled this in.",
-    "{who}——被提上来的，都是把这页填好了的。",
+    "{who} — nobody moves up off a blank card. Yours is blank.",
+    "{who}——空卡片是挪不动的。你的还空着。",
   ],
   /* "What do you do?" on its own reads as a job interview. The "actually" is
      what makes it somebody asking rather than a field label, and it was cut
@@ -3401,7 +3415,23 @@ export const STRINGS = {
   ],
   /* Closed, and gettable back. Not a pitch for a feature — his name and the
      one thing he is for. */
-  "but.shut":          ["Ask the doorman", "问问门房"],
+  "but.shut":          ["Ask Mo", "问问老莫"],
+  /* THE KILL SWITCH, AND IT IS A REAL ONE.
+   *
+   * Plenty of people do not want to be talked to by a machine, and a board
+   * whose whole pitch is that a person decides is the worst possible place to
+   * insist otherwise. Closing him stays closed — across reloads, across
+   * sessions, until they ask for him back.
+   *
+   * Said plainly on the way out rather than as a silent dismissal, because
+   * somebody who shut it by accident needs to know there is a way back, and
+   * somebody who shut it on purpose is owed the confirmation. */
+  "but.gone": [
+    "Mo is off. The fields below work the same.",
+    "老莫关掉了。下面的格子照常填。",
+  ],
+  "but.back":          ["Bring him back", "让他回来"],
+  "but.no":            ["Not for me", "不用了"],
   "but.ph":            ["Type, or hold the mic", "打字，或者按住话筒"],
   "but.send":          ["Send", "发送"],
   "but.thinking":      ["…", "…"],
