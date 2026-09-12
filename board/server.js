@@ -4444,8 +4444,63 @@ app.get("/api/notes", notesOff, async (req, res) => {
      wrongness that makes a screen feel broken without anybody being able to
      say why. Sent once rather than per row: it is the same person on every
      one of them. */
+  /* WHO YOU CAN WRITE TO, AND THE REASON THE INBOX IS NOT A DEAD END.
+   *
+   * Messages could only ever be REPLIED to. Starting one meant remembering a
+   * name, finding the profile, and pressing hello there — so the tab, opened
+   * by somebody with nothing in it, was a screen that said "no messages" and
+   * offered no way to have any. An inbox you cannot write from is a mailbox.
+   *
+   * This is that list, and it invents no permission: it is exactly the people
+   * threadState would already say yes to — matched (mutual follow, scope fits,
+   * a room in common) or holding an accepted offer with you — minus anybody
+   * you are already talking to, because that thread is on the page below.
+   *
+   * The rule is still enforced where it always was. This list makes it
+   * visible; /api/note decides. */
+  const mine = board.people.find((q) => q.by === me);
+  const talking = new Set(rows.map(other));
+  let can = [];
+  if (mine && mine.state === "published") {
+    /* NARROWED BEFORE threadState IS ASKED. It walks the follows, the shuts
+       and the offers for each pair, and asking it about every published row
+       on the board to find the handful who can be written to is the same
+       answer for a great deal more work. Everybody who qualifies either
+       follows this person or has taken an offer with them, and both of those
+       are one pass over a list that is already in memory. */
+    const near = new Set();
+    for (const f of board.follows) if (f.who === mine.id) near.add(f.by);
+    for (const o of board.offers) {
+      if (!o.tookAt || o.off) continue;
+      if (o.by === me) near.add(o.tookBy);
+      else if (o.tookBy === me) near.add(o.by);
+    }
+    for (const q of board.people) {
+      if (!q.by || q.by === me || q.state !== "published" || !q.handle) continue;
+      if (talking.has(q.by) || !near.has(q.by)) continue;
+      const st = threadState(board, me, q.by);
+      if (!st.can) continue;
+      can.push({
+        who: q.id, handle: q.handle, at: q.at,
+        photo: q.photoState === "published" ? q.photo : "",
+        // WHY they are on this list, because the two are not the same
+        // conversation: a match is two people who both said yes, and a deal is
+        // a piece of work with a date on it.
+        why: st.deal ? "deal" : "match",
+      });
+    }
+    /* A deal ahead of a match, and after that the most recent. A wall of faces
+       is not a list of people to write to — twenty-four is already more than
+       anybody works through, and the ones with a piece of work attached are
+       the ones with something to say today. */
+    can.sort((x, y) => (x.why === y.why ? String(y.at).localeCompare(String(x.at))
+                                        : (x.why === "deal" ? -1 : 1)));
+    can = can.slice(0, 24).map(({ at, ...rest }) => rest);
+  }
+
   res.json({
     notes,
+    can,
     you: name(me),
     unread: notes.filter((n) => !n.mine && !n.seen).length,
   });

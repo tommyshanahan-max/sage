@@ -3615,8 +3615,12 @@ export const STRINGS = {
     "Only {who} sees this. Put your WeChat in it if you want them to reach you — that is what it is for. You get one message; they can answer once. After that you carry on wherever you swapped.",
     "只有 {who} 能看到。想让对方联系你，就把微信号写进去——这条消息就是干这个用的。你只能发一条，对方可以回一条。之后就到你们交换的地方去聊。",
   ],
-  "note.placeholder":  ["Hi — I am also at Tsinghua on Tuesdays. WeChat: …",
-                        "你好——我周二也在清华。微信：…"],
+  /* IT SAID "I am also at Tsinghua on Tuesdays", which is what this board was
+     before it was this one. An example is doing real work in a box like this
+     — it shows the length and the shape as well as the subject — so it is
+     rewritten rather than removed. */
+  "note.placeholder":  ["Hi — performer, Sydney, free from March. Saw you are casting. WeChat: …",
+                        "你好——演员，悉尼，三月后有档期。看到你在选角。微信：…"],
   "note.send":         ["Send it", "发送"],
   "note.sending":      ["Sending…", "发送中…"],
   "note.answerIt":     ["Answer", "回复"],
@@ -3701,9 +3705,34 @@ export const STRINGS = {
   "note.inbox":        ["Messages", "私信"],
   "note.inboxSub":     ["Introductions to you, and the ones you sent.", "别人写给你的，和你写出去的。"],
   "note.none":         ["Nothing yet", "还没有消息"],
+  /* IT STILL TALKED ABOUT STUDYING TOGETHER, which is what this board was
+     before it was this one. */
   "note.noneBody": [
-    "When somebody writes to you about studying together, it lands here. Nobody can write to you twice, and nobody can see this but you.",
-    "有人想约你一起学习时，消息会到这里。没有人能给你连发两条，也没有人能看到这里。",
+    "Follow somebody who follows you back and you can write to each other here. Nobody can write to you twice, and nobody can see this but you.",
+    "你关注的人也关注了你，你们就能在这里互相写消息。没有人能给你连发两条，也没有人能看到这里。",
+  ],
+  // The other empty inbox: there IS somebody to write to, right above this.
+  "note.noneYet": [
+    "Nothing here yet. Pick somebody above and say the first thing.",
+    "这里还是空的。在上面挑一个人，先说第一句。",
+  ],
+
+  /* ---------------------------------------------------------------------
+     WHO YOU CAN WRITE TO. The inbox could only be replied to, so a person
+     who opened it with nothing in it got a screen that said "no messages"
+     and no way to have any. These are the people the server would already
+     say yes to — nothing here is a new permission.
+     --------------------------------------------------------------------- */
+  "note.canHead":      ["You can write to", "你可以写给"],
+  "note.canSub": [
+    "Both of you followed the other, so the door is open either way.",
+    "你们互相关注了，所以谁先开口都行。",
+  ],
+  "note.canDeal":      ["deal", "已成交"],
+  "note.canTo":        ["To {who}", "写给 {who}"],
+  "note.canHow": [
+    "Say who you are and what you want from them. One line does it — this is an introduction, not a pitch.",
+    "说清楚你是谁、想找他做什么。一句话就够——这是打个招呼，不是提案。",
   ],
   "note.fromThem":     ["{who} wrote to you", "{who} 写给你"],
   "note.toThem":       ["You wrote to {who}", "你写给 {who}"],

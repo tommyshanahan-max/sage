@@ -1765,11 +1765,12 @@
         <i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></i>
         <span id="navnewlabel">Put something up</span>
       </button>
-      <!-- Messages is held back for V1. A private inbox is worth having when
-           there are enough people for somebody to write to; until then it is a
-           tab that opens an empty room. The routes and the page still work for
-           anybody with the address. -->
-      <a href="/notes" id="navnotes" hidden>
+      <!-- Messages, on. It was held back because a private inbox is worth
+           having only when there is somebody to write to and a way to do it —
+           and there was neither: the page could be replied to and never
+           started from. Both are there now (see the strip at the top of
+           notes.html), so the tab is a room with people in it. -->
+      <a href="/notes" id="navnotes">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
         <span id="navnoteslabel">Messages</span>
         <i class="badge" id="navnotesn" hidden></i>

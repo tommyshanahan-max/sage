@@ -163,6 +163,43 @@
   .note .said.bad{color:var(--t5)}
   /* Unread. A dot rather than a colour wash: the message is what should be
      read, not the fact that it is new. */
+  /* A ROW OF FACES, SCROLLED SIDEWAYS. Down the page they would push the
+     conversations that already exist off the screen, which gets the priority
+     backwards — the inbox is what somebody opened this for. */
+  .cansub{margin:.1rem 0 .7rem;font-size:.82rem;line-height:1.5;color:var(--muted)}
+  .can{display:flex;gap:.9rem;overflow-x:auto;padding:.1rem .1rem 1.1rem;
+    margin:0 0 .4rem;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .can::-webkit-scrollbar{display:none}
+  .can .one{flex:0 0 auto;width:4.4rem;border:0;background:none;padding:0;
+    font:inherit;cursor:pointer;text-align:center;color:var(--ink)}
+  .can .one b{display:block;margin:.4rem 0 0;font-size:.78rem;font-weight:600;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .can .one i{display:block;font-style:normal;font-size:.66rem;color:var(--accent);
+    letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+  /* The ring is the whole affordance: these are faces you may write to, and a
+     face on this board is otherwise a link to a profile. */
+  .can .av{width:3.5rem;height:3.5rem;font-size:1.35rem;margin:0 auto;
+    box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--accent)}
+  .can .one.on .av{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--ink)}
+
+  /* Writing the first one, in the same place the reply box appears — so the
+     two halves of this screen behave the same way. */
+  .newnote{margin:0 0 1.4rem;padding:.9rem;border:1px solid var(--line);
+    border-radius:.8rem;background:var(--raise)}
+  .newnote b{display:block;font-size:.95rem}
+  .newnote .how{margin:.45rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
+  .newnote textarea{width:100%;min-height:5.5rem;resize:vertical;font:inherit;
+    margin:.6rem 0 0;padding:.7rem;border:1px solid var(--line);border-radius:.6rem;
+    background:var(--paper);color:var(--ink)}
+  .newnote .acts{display:flex;gap:.5rem;margin:.6rem 0 0;flex-wrap:wrap}
+  .newnote .acts button{border:1px solid var(--line);background:var(--paper);
+    color:var(--ink);border-radius:99px;padding:.5rem .95rem;font:inherit;
+    font-size:.86rem;cursor:pointer}
+  .newnote .acts button.primary{background:var(--accent);border-color:var(--accent);
+    color:var(--accent-ink)}
+  .newnote .said{margin:.5rem 0 0;font-size:.83rem;color:var(--muted)}
+  .newnote .said.bad{color:var(--t5)}
+
   .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--accent);
     flex:0 0 auto;margin-top:.5rem}
   .dot.spent{background:transparent}
@@ -190,6 +227,19 @@
       <p id="sub"></p>
     </div>
     <span id="langslot"></span>
+  </div>
+
+  <!-- WHO YOU CAN WRITE TO, ABOVE WHAT YOU HAVE ALREADY SAID.
+       The inbox could only be replied to: starting a conversation meant
+       remembering a name, finding the profile and pressing hello there, so
+       somebody who opened this tab with nothing in it got a screen that said
+       "no messages" and offered no way to have any. These are the people the
+       server would already say yes to — nothing new is permitted here, it is
+       the existing rule made visible. -->
+  <div id="canwrap" hidden>
+    <div class="rule"><span id="canlabel"></span><i></i></div>
+    <p class="cansub" id="cansub"></p>
+    <div class="can" id="can"></div>
   </div>
 
   <div class="rule"><span id="rulelabel"></span><i></i></div>
@@ -224,15 +274,20 @@ let device = "";
 try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
 
 let NOTES = [], UNREAD = 0, YOU = { handle: "", photo: "" };
+/* The people this person may start a conversation with, and which of them is
+   open. One at a time: two compose boxes on a screen is two half-written
+   messages and no way to tell which send button belongs to which. */
+let CAN = [], WRITING = "";
 
 async function load() {
   try {
     const d = await fetch("/api/notes", { cache: "no-store",
       headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
     NOTES = d.notes || [];
+    CAN = d.can || [];
     YOU = d.you || { handle: "", photo: "" };
     UNREAD = d.unread || 0;
-  } catch { NOTES = []; UNREAD = 0; YOU = { handle: "", photo: "" }; }
+  } catch { NOTES = []; CAN = []; UNREAD = 0; YOU = { handle: "", photo: "" }; }
   paint();
 
   /* Marked read after they are on the screen, not before. Doing it in the
@@ -254,15 +309,112 @@ function paint() {
   $("back").setAttribute("aria-label", T("nav.back"));
   $("sub").textContent = UNREAD ? T("note.newOnes", { n: UNREAD }) : T("note.inboxSub");
 
+  drawCan();
+
   const box = $("list");
   fill(box);
   $("none").hidden = NOTES.length > 0;
   if (!NOTES.length) {
     fill($("none"));
-    $("none").append(el("b", null, T("note.none")), el("p", null, T("note.noneBody")));
+    /* TWO EMPTY INBOXES, AND THEY ARE NOT THE SAME SCREEN. With nobody to
+       write to, "no messages" is the whole truth and the answer is to go and
+       follow people. With a row of faces above it, saying nothing is here
+       reads as a dead end directly underneath the way out of it. */
+    $("none").append(el("b", null, T("note.none")),
+      el("p", null, T(CAN.length ? "note.noneYet" : "note.noneBody")));
     return;
   }
   for (const n of NOTES) box.append(row(n));
+}
+
+/** One face in the strip: their picture, their name, and what puts them on
+ *  the list. Pressing opens the box under it. */
+function drawCan() {
+  $("canwrap").hidden = !CAN.length;
+  if (!CAN.length) { WRITING = ""; return; }
+  $("canlabel").textContent = T("note.canHead");
+  $("cansub").textContent = T("note.canSub");
+  const strip = $("can");
+  fill(strip);
+  for (const q of CAN) {
+    const b = el("button", "one" + (WRITING === q.who ? " on" : ""));
+    b.type = "button";
+    const av = el("span", "av");
+    av.textContent = initial(q.handle);
+    av.style.background = wash(q.handle);
+    if (q.photo) {
+      const img = Object.assign(document.createElement("img"),
+        { src: "/api/public-media?id=" + encodeURIComponent(q.photo), alt: "", loading: "lazy" });
+      img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
+    }
+    b.append(av, el("b", null, q.handle));
+    // Only the deal is worth a word. "Matched" under every face is a label on
+    // the one thing every face on this strip has in common.
+    if (q.why === "deal") b.append(el("i", null, T("note.canDeal")));
+    b.addEventListener("click", () => {
+      // Pressing the open one shuts it, which is what a person expects of a
+      // thing that toggled open.
+      WRITING = WRITING === q.who ? "" : q.who;
+      drawCan();
+      drawNew();
+    });
+    strip.append(b);
+  }
+  drawNew();
+}
+
+/** The box for a first message. Same shape and same route as a reply — this
+ *  screen should not have two ways of typing on it. */
+function drawNew() {
+  const old = document.getElementById("newnote");
+  if (old) old.remove();
+  const q = CAN.find((x) => x.who === WRITING);
+  if (!q) return;
+
+  const wrap = el("div", "newnote");
+  wrap.id = "newnote";
+  wrap.append(el("b", null, T("note.canTo", { who: q.handle })));
+  wrap.append(el("p", "how", T(q.why === "deal" ? "note.openHow" : "note.canHow")));
+  const ta = document.createElement("textarea");
+  ta.maxLength = 600;
+  ta.placeholder = T("note.placeholder");
+  wrap.append(ta);
+  const said = el("p", "said");
+  const acts = el("div", "acts");
+  const send = el("button", "primary", T("note.send"));
+  send.type = "button";
+  const go = el("a", null, T("note.openProfile"));
+  go.href = "/p/" + encodeURIComponent((q.handle || "").toLowerCase());
+  send.addEventListener("click", async () => {
+    const text = ta.value.trim();
+    if (!text) { ta.focus(); return; }
+    send.disabled = true;
+    said.classList.remove("bad");
+    said.textContent = T("note.sending");
+    try {
+      const r = await fetch("/api/note", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, who: q.who, text }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "no");
+      // Sent: they are a thread now, not a face on the strip, and load()
+      // redraws both halves off one answer.
+      WRITING = "";
+      await load();
+    } catch (err) {
+      said.classList.add("bad");
+      const known = { profile: "note.needProfile", enough: "note.enough",
+                      gone: "note.gone", closed: "note.closed",
+                      spent: "note.linesSpent" };
+      said.textContent = T(known[String(err.message)] || "note.failed", { who: q.handle });
+      send.disabled = false;
+    }
+  });
+  acts.append(send, go);
+  wrap.append(acts, said);
+  $("canwrap").append(wrap);
+  ta.focus();
 }
 
 function row(n) {
