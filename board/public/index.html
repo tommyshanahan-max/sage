@@ -655,6 +655,46 @@
   .bell{position:relative;flex:0 0 auto;width:2.4rem;height:2.4rem;padding:0;
     border:1px solid var(--line);background:var(--raise);border-radius:50%;
     display:grid;place-items:center;margin-left:auto}
+  /* The plus, in the corner. Same disc as the bell so the two read as one pair
+     of controls, filled because one of them is the thing you came to do and
+     the other is something that happened to you. `margin-left:auto` is on
+     whichever comes first, so it is on both and the later one is reset. */
+  .plus{position:relative;flex:0 0 auto;width:2.4rem;height:2.4rem;padding:0;
+    border:0;background:var(--accent);border-radius:50%;cursor:pointer;
+    display:grid;place-items:center;margin-left:auto}
+  .plus svg{width:1.35rem;height:1.35rem;stroke:var(--accent-ink);fill:none;
+    stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .plus + .bell{margin-left:.5rem}
+  /* AND THE MASTHEAD HAS TO FIT THEM BOTH NOW. Adding the plus put a third
+     control in a row that had two, and on a 430px phone that pushed "The
+     Exchange" onto a second line and made the header half again as tall — the
+     title wrapping is what you see, the thing that caused it is the button in
+     the corner. So the corner gets tighter rather than the name getting
+     smaller: a shorter gap, a smaller mark, smaller discs. Phone only; above
+     36rem there was never a problem. */
+  @media (max-width:35.99rem){
+    .top{gap:.55rem}
+    .mark{width:3.3rem;height:3.3rem;font-size:1.72rem}
+    .plus,.bell{width:2.1rem;height:2.1rem}
+    .plus svg{width:1.2rem;height:1.2rem}
+    .bell svg{width:1.1rem;height:1.1rem}
+    .plus + .bell{margin-left:.35rem}
+    #langslot{margin-left:.35rem}
+    /* Flex hands a child its longest word before it takes room from a sibling,
+       so without this the tagline under the title is what widens the column. */
+    .top .name{min-width:0}
+    .top .name p{overflow:hidden;text-overflow:ellipsis}
+    /* And the title itself comes down a notch, because the tightening above
+       was not enough on its own: at 1.85rem "The Exchange" still wanted more
+       width than a phone has left once the corner holds three controls, and a
+       masthead whose name breaks over two lines looks like a bug rather than
+       a big title. */
+    .top h1{font-size:1.5rem}
+  }
+  /* Read aloud, never drawn: the corner has no room for a label and the button
+     must still say what it does to a screen reader. */
+  .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+    clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
   .bell + #langslot{margin-left:.5rem}
   .bell svg{width:1.25rem;height:1.25rem;stroke:var(--ink-2);fill:none;stroke-width:1.7;
     stroke-linecap:round;stroke-linejoin:round}
@@ -1325,12 +1365,7 @@
   .bar a[aria-current="page"]{color:var(--accent)}
   .bar svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.7;
     stroke-linecap:round;stroke-linejoin:round}
-  .bar .new{flex:0 0 auto}
-  .bar .new i{width:3.4rem;height:3.4rem;border-radius:50%;background:var(--accent);
-    color:var(--accent-ink);display:grid;place-items:center;font-style:normal;
-    box-shadow:var(--shadow);margin-top:-1.1rem}
-  .bar .new i svg{width:1.6rem;height:1.6rem;stroke-width:2.2}
-  .bar .new span{margin-top:.1rem}
+  /* .bar .new is gone with the middle button — see the markup. */
 
   /* ---- the same nav, at the top, on a desktop -----------------------------
    *
@@ -1363,16 +1398,16 @@
     .bar a:hover,.bar button:hover{background:var(--raise);color:var(--ink)}
     .bar a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
     .bar svg{width:1.15rem;height:1.15rem}
-    /* The + stops being the big round thing lifted out of the bar and becomes
-       an ordinary primary button, because on a desktop it is not competing
-       with a thumb. */
-    .bar .new i{width:auto;height:auto;border-radius:0;background:none;
-      color:inherit;box-shadow:none;margin:0;display:inline-grid}
-    .bar .new i svg{width:1.15rem;height:1.15rem;stroke-width:2}
-    .bar .new{background:var(--accent);color:var(--accent-ink);
-      border-radius:99px;padding:.45rem 1rem}
-    .bar .new:hover{background:var(--accent);color:var(--accent-ink);filter:brightness(1.05)}
-    .bar .new span{margin:0}
+    /* The + is no longer in the bar at all — it is in the masthead corner with
+       the bell. On a desktop there is room for the word beside the sign, and a
+       header button that says what it does beats one that has to be hovered. */
+    .plus{width:auto;height:auto;border-radius:99px;padding:.45rem .95rem;
+      grid-auto-flow:column;align-items:center;gap:.4rem;
+      color:var(--accent-ink);font:inherit;font-size:.88rem}
+    .plus:hover{filter:brightness(1.05)}
+    .plus svg{width:1.15rem;height:1.15rem;stroke-width:2}
+    .plus .vh{position:static;width:auto;height:auto;margin:0;overflow:visible;
+      clip:auto;clip-path:none;white-space:nowrap}
     /* The masthead was a two-item row and is a three-item row now. Without a
        basis the title had none: flex shrinks a child to its longest word
        before it takes space from a sibling, so the masthead broke over two lines
@@ -1739,50 +1774,61 @@
            somebody looks when they are thinking about who else is here. -->
     </div>
     <nav class="bar" id="bar">
-      <a href="/browse" id="navbrowse">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z M9 15c1.5-2 4.5-2 6 0"/><circle cx="12" cy="10" r="2.2"/></svg>
-        <span id="navbrowselabel">Browse</span>
-        <i class="badge" id="navbrowsen" hidden></i>
-      </a>
-      <!-- CARDS TOOK THE FEED'S SLOT. The feed opens on "not yet" until members
-           are posting, and a bar with a tab that opens on an apology in it is
-           a bar with a wasted slot. Cards has the opposite property: the
-           moment anybody matches with you there is something on the shelf, and
-           a card with its contact line still blank is worth looking at.
-           The feed's tab is hidden rather than deleted — /feed#id is what a
-           shared post looks like, showView still names it, and showTranslate
-           still reads its aria-current. Same treatment as Messages below. -->
-      <a href="/feed" id="navfeed" hidden>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-        <span id="navfeedlabel">Feed</span>
+      <!-- FOUR TABS, IN WECHAT'S POSITIONS.
+           Not imitation for its own sake. Tom's people open WeChat forty times
+           a day, and a thumb that has learned where Chats and Me live does not
+           re-read a bar it recognises — it presses. This one had Browse first
+           and Messages fourth, which is that order backwards, plus a fifth
+           button in the middle of a bar WeChat keeps four wide. Every
+           destination is the same one it was; only where the thumb finds it
+           has changed.
+             Messages ← 微信      Cards ← 通讯录 (the cards people handed you)
+             Browse   ← 发现      Profile ← 我
+           Putting something up moved to the top right of the screen, which is
+           where WeChat keeps its own plus. -->
+      <a href="/notes" id="navnotes">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
+        <span id="navnoteslabel">Messages</span>
+        <i class="badge" id="navnotesn" hidden></i>
       </a>
       <a href="/cards" id="navcards">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M3 10h18"/></svg>
         <span id="navcardslabel">Cards</span>
         <i class="badge" id="navcardsn" hidden></i>
       </a>
-      <button class="new" id="fab" type="button">
-        <i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></i>
-        <span id="navnewlabel">Put something up</span>
-      </button>
-      <!-- Messages, on. It was held back because a private inbox is worth
-           having only when there is somebody to write to and a way to do it —
-           and there was neither: the page could be replied to and never
-           started from. Both are there now (see the strip at the top of
-           notes.html), so the tab is a room with people in it. -->
-      <a href="/notes" id="navnotes">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
-        <span id="navnoteslabel">Messages</span>
-        <i class="badge" id="navnotesn" hidden></i>
+      <a href="/browse" id="navbrowse">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z M9 15c1.5-2 4.5-2 6 0"/><circle cx="12" cy="10" r="2.2"/></svg>
+        <span id="navbrowselabel">Browse</span>
+        <i class="badge" id="navbrowsen" hidden></i>
+      </a>
+      <!-- The feed opens on "not yet" until members are posting, so its tab is
+           hidden rather than deleted — /feed#id is what a shared post looks
+           like, showView still names it, and showTranslate still reads its
+           aria-current. -->
+      <a href="/feed" id="navfeed" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        <span id="navfeedlabel">Feed</span>
       </a>
       <a href="#" id="navme">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
         <span id="navmelabel">Profile</span>
       </a>
     </nav>
+    <!-- PUTTING SOMETHING UP, out of the bar and into the corner.
+         It was the raised disc in the middle of five tabs, which is Instagram's
+         shape, not WeChat's — and the bar is the one part of this app that has
+         to read as WeChat's, because that is the muscle memory every person
+         here arrives with. WeChat keeps its plus top right; so does this. The
+         button is the same button: same id, same handler, same sheet. All that
+         went is the label under it, which a corner icon does not have room for
+         and does not need — it is on the aria-label instead. -->
+    <button class="plus" type="button" id="fab">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      <span class="vh" id="navnewlabel">Put something up</span>
+    </button>
     <!-- ONE PLACE FOR WHAT IS ADDRESSED TO YOU. A bell rather than a fifth tab:
-         the bar has four and a button in it already, and this has to be
-         reachable from the top of the page where people look. -->
+         the bar is four wide and this has to be reachable from the top of the
+         page where people look. -->
     <button class="bell" type="button" id="bell" aria-controls="notif" aria-expanded="false">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a5 5 0 0 1 5 5v3.5l1.6 2.6H5.4L7 12.5V9a5 5 0 0 1 5-5Z M10 18.4a2 2 0 0 0 4 0"/></svg>
       <i class="badge" id="belln" hidden></i>
@@ -4001,7 +4047,11 @@ function paintNav() {
   $("navbrowselabel").textContent = T("nav.browse");
   $("navfeedlabel").textContent = T("nav.feed");
   $("navcardslabel").textContent = T("nav.cards");
+  // Read aloud rather than drawn now the button lives in the corner — the
+  // title carries it for a pointer, the span for a screen reader.
   $("navnewlabel").textContent = T("nav.new");
+  $("fab").setAttribute("aria-label", T("nav.new"));
+  $("fab").title = T("nav.new");
   $("navmelabel").textContent = T("nav.profile");
   // Profile goes to your own page once you have one, and before that it opens
   // the editor. There is nothing on this page to scroll to any more: this tab

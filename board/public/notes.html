@@ -71,6 +71,29 @@
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
     font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
   main{max-width:34rem;margin:0 auto;padding:1.4rem 1.15rem 5rem}
+  /* The bar, copied from index.html so the four tabs sit in the same places on
+     every screen that has them. Same rules, same breakpoints. */
+  .bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:35;
+    width:100%;max-width:34rem;display:flex;
+    align-items:center;justify-content:space-around;
+    padding:.35rem .5rem calc(.35rem + env(safe-area-inset-bottom));
+    background:var(--paper);border-top:1px solid var(--line)}
+  @media (min-width:36rem) and (max-width:57.99rem){
+    .bar{border-left:1px solid var(--line);border-right:1px solid var(--line);
+      border-radius:1rem 1rem 0 0}
+  }
+  .bar a{flex:1;min-width:0;color:var(--muted);
+    display:flex;flex-direction:column;align-items:center;gap:.15rem;
+    padding:.45rem .2rem;font-size:.64rem;text-decoration:none;letter-spacing:.02em}
+  .bar a span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar a[aria-current="page"]{color:var(--accent)}
+  .bar svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.7;
+    stroke-linecap:round;stroke-linejoin:round}
+  /* On a wide screen index.html moves its bar into the masthead. This page has
+     no masthead to move it into, so it stays where it is and simply stops
+     being full-bleed. */
+  @media (min-width:58rem){ .bar{border-radius:1rem 1rem 0 0;
+    border-left:1px solid var(--line);border-right:1px solid var(--line)} }
   button{font:inherit;cursor:pointer}
   a{color:inherit}
   img{max-width:100%}
@@ -249,6 +272,34 @@
   <p class="safety" id="safety"></p>
 </main>
 
+<!-- THE SAME FOUR TABS, SO THIS IS NOT A PLACE YOU LEAVE THE APP TO REACH.
+     Messages is a tab in the bar now, and a tab that opens a screen with a
+     back arrow and no bar on it is a link dressed as a tab — the bar vanishes
+     under the thumb that just used it, which is exactly the disorientation
+     four familiar positions were meant to remove.
+     Markup and links only. index.html's bar is wired to a view switcher
+     because three of its tabs are the same document; here there is nothing to
+     switch, so a copy with the current one marked is the whole of it and
+     there is no second set of handlers to keep in step. -->
+<nav class="bar">
+  <a href="/notes" aria-current="page">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
+    <span id="tabnotes"></span>
+  </a>
+  <a href="/cards">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M3 10h18"/></svg>
+    <span id="tabcards"></span>
+  </a>
+  <a href="/browse">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z M9 15c1.5-2 4.5-2 6 0"/><circle cx="12" cy="10" r="2.2"/></svg>
+    <span id="tabbrowse"></span>
+  </a>
+  <a href="/browse" id="tabmego">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
+    <span id="tabme"></span>
+  </a>
+</nav>
+
 <script type="module">
 import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
 
@@ -306,6 +357,16 @@ function paint() {
   $("title").textContent = T("note.inbox");
   $("rulelabel").textContent = T("note.inbox");
   $("safety").textContent = T("note.safety");
+  $("tabnotes").textContent = T("note.inbox");
+  $("tabcards").textContent = T("nav.cards");
+  $("tabbrowse").textContent = T("nav.browse");
+  $("tabme").textContent = T("nav.profile");
+  /* PROFILE GOES TO YOUR OWN PAGE, and this screen already knows the handle —
+     /api/notes sends it so the lines you wrote can carry your face. Without a
+     page yet there is nowhere to send anybody, so it falls back to Browse,
+     where the Professor's first card is the offer to make one. */
+  $("tabmego").href = YOU.handle
+    ? "/p/" + encodeURIComponent(YOU.handle.toLowerCase()) : "/browse";
   $("back").setAttribute("aria-label", T("nav.back"));
   $("sub").textContent = UNREAD ? T("note.newOnes", { n: UNREAD }) : T("note.inboxSub");
 
