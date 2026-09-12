@@ -269,8 +269,14 @@ export async function ask(turns, who) {
        had its own line and the one case with no line at all — answered, but
        too late to matter — was the case we were actually in. A number here
        says which. */
-    console.error(`butler: ok ${took}ms ${text.length} chars`);
-    return clean(text);
+    const out = clean(text);
+    /* AND SAY WHEN THE ANSWER WAS THROWN AWAY. The route does not log
+       "failed" — it assumes this function's catch already did — so a reply
+       rejected HERE, after a perfectly good call, was the one path with no
+       line anywhere. That is exactly what the prose bug was. */
+    if (out.error) console.error(`butler: dropped ${took}ms ${JSON.stringify(text.slice(0, 120))}`);
+    else console.error(`butler: ok ${took}ms ${text.length} chars`);
+    return out;
   } catch (e) {
     /* A model that is down, over quota or slow is not a reason to show a red
        screen to somebody filling in a form. The page says the butler is
@@ -346,15 +352,36 @@ function short(text) {
  *  called on its own is a boundary nobody checks.
  */
 export function clean(text) {
+  /* PROSE IS A PERFECTLY GOOD ANSWER, and throwing it away was the last bug
+   * of the night.
+   *
+   * This asked for JSON and accepted nothing else: a reply that came back as
+   * a plain sentence failed JSON.parse and was discarded whole, the route
+   * answered 400, and the page said "He is not answering" over a reply that
+   * was sitting right there and was good. It is not even unusual for a model
+   * to drop the braces on a chatty turn — "what's your name" is not a
+   * question that feels like a form — so the first answer of a conversation
+   * would land and the third would vanish.
+   *
+   * The JSON is only ever needed for the PROPOSAL: me, want, why, the three
+   * fields that put a Keep button under his message. The sentence needs
+   * none of it. So: parse if it parses, and if it does not, the whole reply
+   * IS the sentence and there is simply no proposal in it. Strictness here
+   * was protecting nothing — every field below is still checked one at a
+   * time, and a reply with no fields at all just has nothing to check.
+   */
+  const bare = String(text || "")
+    .replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
   let d = null;
   try {
-    // A model that wrapped its JSON in a fence, which happens.
-    const bare = text.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
     d = JSON.parse(bare);
-  } catch { return { error: "failed" }; }
-  if (!d || typeof d !== "object") return { error: "failed" };
+  } catch { /* he said a sentence rather than a form */ }
+  if (!d || typeof d !== "object" || Array.isArray(d)) d = { say: bare };
 
   const say = short(String(d.say || "").trim());
+  /* Nothing at all is still a failure — an empty bubble is worse than the
+     line saying he is not answering, because it looks like the board lost
+     what somebody said. */
   if (!say) return { error: "failed" };
 
   const role = (v) => (ROLEKEYS.includes(String(v || "")) ? String(v) : "");
