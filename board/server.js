@@ -3679,16 +3679,42 @@ app.post("/api/waiting/add", express.json({ limit: "4kb" }), admin, async (req, 
   const reach = String(req.body?.reach || "").trim();
   if (!name || !reach) return res.status(400).json({ error: "both" });
   const out = await change((board) => {
+    /* SHOWN, AND IT WAS NOT, WHICH MADE THIS ROUTE WRITE INVISIBLE ROWS.
+     *
+     * The members' waiting list shows the people who agreed to be seen — see
+     * `shown` in cleanWait. A row that joined through the form carries it,
+     * because the form is where the agreeing happens. A row typed in here
+     * carried nothing, so every person the operator added by hand landed on
+     * the list and appeared to nobody: not vouchable, not visible, and no way
+     * to tell from any screen that anything was wrong.
+     *
+     * Default true, because adding somebody here IS the operator saying they
+     * asked — that is what the target's own note means by "every row is still
+     * a real ask". `shown: false` in the body keeps one private. */
     const row = store.cleanWait({ name, reach, why: req.body?.why,
-      room: req.body?.room });
+      room: req.body?.room, shown: req.body?.shown !== false });
     if (!row) return { error: "both" };
     /* Deduplicated on the way somebody is reached, newest winning. Adding the
        same WeChat id twice is one person asking twice, not two people. */
     const at = board.waits.findIndex((w) =>
       w.reach.toLowerCase() === row.reach.toLowerCase());
     if (at >= 0) {
-      board.waits[at] = { ...row, id: board.waits[at].id, at: board.waits[at].at };
-      return { ok: true, again: true, id: board.waits[at].id };
+      /* MERGED, NOT REPLACED. This overwrote the whole row with a fresh one,
+         so running the same wait-add twice — which is exactly what somebody
+         does when they are not sure it worked the first time — threw away
+         everything the person had filled in since: their card, their photo,
+         their sentence, their place in the waiting room. Only the three fields
+         this route is actually given are written. */
+      const had = board.waits[at];
+      board.waits[at] = {
+        ...had,
+        name: row.name,
+        reach: row.reach,
+        why: row.why || had.why,
+        room: row.room || had.room,
+        shown: row.shown || had.shown,
+      };
+      return { ok: true, again: true, id: had.id };
     }
     board.waits.push(row);
     return { ok: true, id: row.id };

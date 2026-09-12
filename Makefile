@@ -463,6 +463,10 @@ wait-add: ## Write it down:  make wait-add NAME="Wei" REACH="wechat weilin88" RO
 	@# For somebody who asked in a WeChat thread or in person. Every row is
 	@# still a real ask — the public page says how many are waiting and that
 	@# number has to be true.
+	@# They appear on the members' waiting list, where a member can vouch for
+	@# them — which is the point of writing them down. That did not happen
+	@# until 12 Sep: this route never set `shown`, so every row added here was
+	@# on the list and visible to nobody.
 	@test -n "$(NAME)" -a -n "$(REACH)" || { echo 'both: make wait-add NAME="Wei" REACH="wechat weilin88" [WHY="..."]'; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \

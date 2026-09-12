@@ -181,9 +181,12 @@ function draft(w) {
 }
 
 async function lift(id, on) {
-  const r = await fetch(BASE + "/api/waiting/up", {
+  /* `base` and `head`, which is what this file calls them — I wrote BASE and
+     KEY from the other script in this directory and it threw a ReferenceError
+     with the id already typed out on the command line. */
+  const r = await fetch(base + "/api/waiting/up", {
     method: "POST",
-    headers: { "content-type": "application/json", "x-admin-secret": KEY },
+    headers: head,
     body: JSON.stringify({ id, on }),
   });
   const d = await r.json().catch(() => ({}));
