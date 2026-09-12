@@ -70,13 +70,24 @@ export function cleanWait(raw) {
   const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").trim().slice(0, n);
   const name = s(raw.name, 40);
   const reach = s(raw.reach, 80);
-  if (!name || !reach) return null;
+  /* A WAY TO BE REACHED, EXCEPT WHEN THERE ALREADY IS ONE.
+   *
+   * The form on the public page asks for one and the row is nothing without
+   * it. A row that came from a written note is different: the member who
+   * wrote it is already talking to them, in the app, and demanding an email
+   * as well would be asking a stranger for a contact detail in order to
+   * answer a message. So `fromWrite` stands in for it — see cleanWrite — and
+   * the panel reads that row as "answer them where they replied". */
+  const fromWrite = /^[a-f0-9]{20}$/.test(String(raw.fromWrite || ""))
+    ? String(raw.fromWrite) : "";
+  if (!name || (!reach && !fromWrite)) return null;
   return {
     id: /^[a-f0-9]{20}$/.test(String(raw.id || "")) ? String(raw.id) : newId(),
     name,
     // One way to be reached, in whatever shape they typed it. Not validated
     // into an email: half of the people this is for do not use one.
     reach,
+    fromWrite,
     // Why they want in, in their own words. The only thing a member vouching
     // for a stranger has to go on.
     why: s(raw.why, 300),
@@ -206,6 +217,51 @@ export function cleanWait(raw) {
        door. Same alphabet as an invite code, so it can be read down a phone
        and typed without ambiguity. */
     back: cleanCode(raw.back) || "",
+  };
+}
+
+/** A NOTE WRITTEN TO SOMEBODY WHO IS NOT HERE YET.
+ *
+ * The board had two ways in: an invite code, which lets one person straight
+ * through on a member's word, and a link anybody could post anywhere, which
+ * put whoever followed it in the queue. The second arrived with nothing on it
+ * — a name and a reason typed into a form by a stranger — so a member deciding
+ * whether to vouch had nothing to read.
+ *
+ * This replaces it. A member writes one line to one person by name; the app
+ * mints a code and prints a block to paste into WeChat; the person opens it,
+ * reads what was written to them, and replies. The reply IS their place in the
+ * queue — their words, answering a real question, addressed to somebody who
+ * already knows them.
+ *
+ * It is not the invite and must not become it. An invite is somebody let in on
+ * a member's word; this is somebody put in the queue, and they wait there until
+ * a member vouches. Same alphabet and the same one-day clock, because both are
+ * read down a phone and neither should work six months later out of a chat.
+ */
+export function cleanWrite(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = String(raw.id || "");
+  if (!/^[a-f0-9]{20}$/.test(id)) return null;
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").trim().slice(0, n);
+  const code = cleanCode(raw.code) || "";
+  if (!code) return null;
+  return {
+    id,
+    code,
+    // The member who wrote it, as the device hash everything else is keyed on.
+    by: s(raw.by, 64),
+    // What they called the person. The page says it back to them: "Ray — Tom
+    // wrote to you" is a different thing arriving than "You have been invited".
+    to: s(raw.to, 40),
+    // The line itself. This is the whole pitch and the reason to answer.
+    line: s(raw.line, 600),
+    at: s(raw.at, 40) || new Date().toISOString(),
+    till: s(raw.till, 40),
+    /* SPENT ON ARRIVAL, like an invite. One person, once — a note that still
+       works after it has been answered is a second stranger arriving under
+       somebody else's name. */
+    wait: /^[a-f0-9]{20}$/.test(String(raw.wait || "")) ? String(raw.wait) : "",
   };
 }
 
@@ -1605,8 +1661,17 @@ export function cleanBoard(raw) {
     seenOffer.add(o.code);
     offers.push(o);
   }
+  const seenW = new Set();
+  const writes = [];
+  for (const r of (Array.isArray(raw?.writes) ? raw.writes : [])) {
+    const w = cleanWrite(r);
+    if (!w || seenW.has(w.id)) continue;
+    seenW.add(w.id);
+    writes.push(w);
+  }
+
   return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
-    offers, shuts, groups, says, signins, counts: cleanCounts(raw?.counts) };
+    offers, shuts, groups, says, signins, writes, counts: cleanCounts(raw?.counts) };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an

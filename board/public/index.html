@@ -1961,6 +1961,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         <span></span>
       </button>
+      <button type="button" id="pluswrite" role="menuitem">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16z M14 6l4 4"/></svg>
+        <span></span>
+      </button>
       <a href="/onboard" id="plusrun" role="menuitem" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M2 20a7 7 0 0 1 14 0 M18 8v6M15 11h6"/></svg>
         <span></span>
@@ -2430,6 +2434,38 @@
      ids, same handlers, same drawMyInvite. A second copy of a screen that
      prints live codes is two things to keep in step and one of them will
      eventually print a stale one. -->
+<!-- WRITING TO SOMEBODY WHO IS NOT HERE YET.
+     This replaces the link a member could post anywhere. That link put whoever
+     followed it in the queue with nothing attached, so a member deciding
+     whether to vouch had a name and a form to read — and in practice nobody
+     was ever brought in without a private message from somebody who already
+     knew them. The message was doing the work and the board could not see it.
+     One line to one person by name; what comes out is a block to paste into
+     WeChat, the same shape as the invite message, which is settled. -->
+<div class="sheet" id="wrsheet" hidden>
+  <div class="card">
+    <h2 id="wrtitle"></h2>
+    <p class="hint" id="wrhint"></p>
+    <div class="field"><input id="wrto" maxlength="40" autocomplete="off"></div>
+    <textarea id="wrline" rows="4" maxlength="600"></textarea>
+    <p class="menote" id="wrwhy"></p>
+    <div class="row">
+      <button class="ghost" type="button" id="wrshut"></button>
+      <button class="go" type="button" id="wrgo"></button>
+    </div>
+    <p class="said" id="wrsaid" hidden></p>
+    <!-- WHAT COMES OUT IS ONE BLOCK TO PASTE, like the invite script's. The
+         link and the code do not travel together by accident: here the code IS
+         the link, because the person on the other end has no app to type it
+         into yet. -->
+    <div id="wrout" hidden>
+      <div class="keyval"><code id="wrurl"></code></div>
+      <div class="keyrow"><button type="button" class="go" id="wrcopy"></button></div>
+      <p class="menote" id="wrtill"></p>
+    </div>
+  </div>
+</div>
+
 <div class="sheet" id="invsheet" hidden>
   <div class="card">
     <h2 id="invsheettitle"></h2>
@@ -4091,6 +4127,9 @@ function plusItems() {
   // Writing is always offered: /notes says plainly who you can write to, and
   // says what to do about it when the answer is nobody.
   out.push(["plusnotes", "plus.write", null]);
+  // Two different acts with the same verb, and the difference is the whole
+  // point: one is a member you matched with, the other is a stranger you know.
+  out.push(["pluswrite", "plus.reach", openWrite]);
   out.push(["plusinv", "inv.sheetTitle", openInvite]);
   // Only for somebody who may speak for other people — /api/run/add refuses
   // anybody who is themselves somebody's client. paintRun sets this.
@@ -4100,7 +4139,7 @@ function plusItems() {
 
 function drawPlus() {
   const items = plusItems();
-  for (const id of ["plusnotes", "plusinv", "plusrun"]) {
+  for (const id of ["plusnotes", "pluswrite", "plusinv", "plusrun"]) {
     const n = $(id);
     const row = items.find((x) => x[0] === id);
     n.hidden = !row;
@@ -4124,6 +4163,75 @@ $("fab").addEventListener("click", (e) => {
   $("fab").setAttribute("aria-expanded", "true");
 });
 $("plusinv").addEventListener("click", () => { shutPlus(); openInvite(); });
+
+/* ---- WRITING TO SOMEBODY WHO IS NOT HERE YET ----------------------------
+ * One line to one person by name. What comes back is an address to paste into
+ * WeChat — the same shape as the invite script's block, which is settled and
+ * which people already know how to use. */
+function openWrite() {
+  $("wrtitle").textContent = T("wn.mkTitle");
+  $("wrhint").textContent = T("wn.mkHint");
+  $("wrto").placeholder = T("wn.mkName");
+  $("wrline").placeholder = T("wn.mkLine");
+  $("wrwhy").textContent = T("wn.mkWhy");
+  $("wrshut").textContent = T("post.cancel");
+  $("wrgo").textContent = T("wn.mkGo");
+  $("wrcopy").textContent = T("cards.copy");
+  $("wrsaid").hidden = true;
+  $("wrout").hidden = true;
+  $("wrgo").hidden = false;
+  $("wrsheet").hidden = false;
+  $("wrto").focus();
+}
+$("pluswrite").addEventListener("click", () => { shutPlus(); openWrite(); });
+$("wrshut").addEventListener("click", () => { $("wrsheet").hidden = true; });
+
+$("wrgo").addEventListener("click", async () => {
+  const said = $("wrsaid");
+  const to = $("wrto").value.trim();
+  const line = $("wrline").value.trim();
+  const bad = (key, extra) => {
+    said.hidden = false; said.classList.add("bad");
+    said.textContent = T(key, extra || {});
+    $("wrgo").disabled = false;
+  };
+  if (!to) { $("wrto").focus(); return; }
+  if (!line) { $("wrline").focus(); return; }
+  $("wrgo").disabled = true;
+  said.hidden = false; said.classList.remove("bad");
+  said.textContent = T("wn.sending");
+  let d = null;
+  try {
+    d = await fetch("/api/write", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ device, to, line }),
+    }).then((r) => r.json());
+  } catch { return bad("act.again"); }
+  if (!d || !d.ok) {
+    /* THE CONTACT RULE, NAMED. A WeChat id in the line is the one refusal
+       somebody will not guess at — the link is how they answer, and a contact
+       detail in the text takes the conversation off the board before it has
+       started. */
+    if (d && d.error === "contact") return bad("wn.mkNoContact", { what: d.what });
+    return bad({ standing: "wn.mkStanding", nopage: "post.needName" }[d && d.error]
+      || "act.again");
+  }
+  $("wrgo").disabled = false;
+  $("wrgo").hidden = true;
+  said.hidden = true;
+  /* THE WHOLE BLOCK, NOT THE CODE. The person on the other end has no app to
+     type six characters into — the link IS the code here, which is the one
+     place this differs from the invite and the reason it can be pasted into a
+     chat on its own. */
+  const url = location.origin + "/w/" + d.code;
+  const words = T("wn.mkBlock", { who: d.to, line, url });
+  $("wrurl").textContent = words;
+  $("wrtill").textContent = T("wn.mkTill");
+  $("wrout").hidden = false;
+  $("wrcopy").onclick = () => {
+    $("wrcopy").textContent = T(copyText(words) ? "cards.copied" : "act.again");
+  };
+});
 // Anywhere else, and Escape. A menu you have to press its own button again to
 // close is a menu people leave open.
 document.addEventListener("click", (e) => {
@@ -4764,8 +4872,8 @@ function drawMyInvite() {
      checks it against the roll, so one sent before the profile exists would
      quietly credit nobody — better no button than a button doing half of what
      it says. */
-  $("myinvshare").hidden = !(ME && ME.id && ME.handle);
-  $("myinvshare").textContent = T("inv.share");
+  // Retired — see the note where its handler used to be.
+  $("myinvshare").hidden = true;
 }
 
 /* THE SEAT AND THE SHARE.
@@ -4987,8 +5095,8 @@ function drawNeed(b) {
    * Still only once there is a page to credit: the link carries an id the
    * server checks against the roll, and one sent before the profile exists
    * would quietly credit nobody. */
-  $("myinvshare").hidden = !(ME && ME.id && ME.handle);
-  $("myinvshare").textContent = T("inv.share");
+  // Retired — see the note where its handler used to be.
+  $("myinvshare").hidden = true;
   $("myinvlab").textContent = T("inv.needHead");
   const box = $("myinvneed");
   box.hidden = false;
@@ -5092,27 +5200,17 @@ $("myinvmore").addEventListener("click", async () => {
   b.disabled = false;
 });
 
-$("myinvshare").addEventListener("click", () => {
-  if (!(ME && ME.id)) return;
-  const rooms = Array.isArray(ME.rooms) ? ME.rooms : [];
-  const door = rooms.includes("talent") || rooms.includes("agent") ? "/r/film"
-    : rooms.includes("invest") ? "/r/invest"
-    : rooms.includes("raise") ? "/r/raise"
-    : rooms.includes("buy") || rooms.includes("sell") ? "/r/trade"
-    : "/about";
-  const url = location.origin + door + "?via=" + ME.id;
-  const words = T("inv.shareSay", { url });
-  const say = (w) => {
-    $("myinvshare").textContent = w;
-    setTimeout(drawMyInvite, 3000);
-  };
-  if (!IN_WECHAT && navigator.share) {
-    navigator.share({ title: T("site.title"), text: words })
-      .catch(() => { if (copyText(words)) say(T("inv.copied")); });
-    return;
-  }
-  say(T(copyText(words) ? "inv.copied" : "inv.copyNo", { code: url }));
-});
+/* THE LINK A MEMBER COULD POST ANYWHERE IS RETIRED, and this is the button
+   that made it. It put whoever followed it in the queue with nothing attached
+   — a name and a reason typed into a form by a stranger — so a member deciding
+   whether to vouch had nothing to read, and in practice nobody was ever
+   brought in without a private message from somebody who already knew them.
+   The message was doing the work and the board could not see it.
+   Written notes are that message, made part of the board: one line to one
+   person, and their answer is their place in the queue. See openWrite and
+   /api/write. The room doors still take ?via= — a link already pasted
+   somewhere keeps working and still credits whoever sent it. */
+$("myinvshare").hidden = true;
 
 /* THE SAME INVITE, ON THE FEED, ON ITS OWN.
  *

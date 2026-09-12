@@ -2958,7 +2958,112 @@ export const STRINGS = {
   /* THE ＋ MENU. Three things you can START, which is what a plus means.
      Setting up a profile is deliberately not one of them: the Profile tab
      does that, and after the first time it is a line that means nothing. */
-  "plus.write":        ["Write to somebody", "给谁写点什么"],
+  /* TWO LINES WITH THE SAME VERB, and the difference between them is the
+     whole point of the second one: one is a member you matched with, the
+     other is somebody you know who is not here. */
+  "plus.write":        ["Message a member", "给成员发消息"],
+  "plus.reach":        ["Write to somebody new", "写给还没进来的人"],
+
+  /* ---- AND THE MEMBER'S HALF: writing one. -------------------------------
+     The output is a whole block to paste, not six characters. This is the one
+     place the invite's rule is deliberately broken — there the link and the
+     code travel separately, so a forwarded link is not a way in. Here the
+     person on the other end has no app to type a code into, and the link
+     opens one note written to one person and nothing else, so it can carry
+     itself. */
+  "wn.mkTitle":        ["Write to somebody", "写给一个人"],
+  "wn.mkHint": [
+    "One line to one person. They read it, answer it, and their answer is what puts them on the list.",
+    "一句话，写给一个人。他看到、回你一句，这句回复就是他排进名单的凭据。",
+  ],
+  "wn.mkName":         ["Their name", "他叫什么"],
+  /* NO NAME IN THE EXAMPLE. The block puts their name on the first line
+     already, and an example that starts with one teaches people to write it
+     twice — which is exactly what the first test of this produced: "Ray —
+     Ray — this is the board I mentioned." */
+  "wn.mkLine": [
+    "This is the board I mentioned. Mostly film and money, crossing into China. Worth you being on it.",
+    "就是我跟你说的那个板。主要是影视和资金，跟中国有来往的。你该在上面。",
+  ],
+  "wn.mkWhy": [
+    "No WeChat id or phone number in it — the link is how they answer. It works for a day, for one person, once.",
+    "里面别写微信号或电话——他就是用这个链接回你的。有效期一天，只给一个人，只能用一次。",
+  ],
+  "wn.mkGo":           ["Make the note", "生成便条"],
+  "wn.mkTill":         ["Good for a day. One person, once.", "一天内有效，只给一个人，只能用一次。"],
+  "wn.mkStanding": [
+    "You cannot bring people to the door yet — same as an invite. Your profile page says what is left.",
+    "你还不能带人到门口——和邀请码一样的条件。你的资料页上写着还差什么。",
+  ],
+  "wn.mkNoContact": [
+    "Take out {what}. The link is how they answer you — a contact detail in the line takes it off the board before it has started.",
+    "请去掉 {what}。他就是用这个链接回你的——把联系方式写进去，等于还没开始就把话题挪走了。",
+  ],
+  /* THE BLOCK ITSELF, ready to paste. Two rules, both from the invite script,
+     which is settled: the person's name first so it is addressed, and the
+     link on its own line so a phone makes it tappable. */
+  "wn.mkBlock": [
+    "{who} —\n\n{line}\n\nIt is invite only. Answer here and I will vouch for you:\n{url}",
+    "{who}——\n\n{line}\n\n那边是邀请制。在这里回我一句，我帮你担保：\n{url}",
+  ],
+
+
+  /* ---------------------------------------------------------------------
+     A NOTE WRITTEN TO SOMEBODY WHO IS NOT HERE YET.
+     Replaces the link a member could post anywhere, which arrived with
+     nothing on it. Named wn.* and not wr.*, which is already the waiting
+     room three hundred lines down.
+     The voice is the invite's: a person wrote to a person. "You have been
+     invited" is a system talking; "Tom wrote to you" is not.
+     --------------------------------------------------------------------- */
+  "wn.title":          ["A note for you", "有人写给你"],
+  "wn.wrote":          ["{who} wrote to you", "{who} 写给你"],
+  "wn.onThe":          ["on The Exchange", "在 The Exchange 上"],
+  "wn.answerHead":     ["Write back", "回他一句"],
+  "wn.answerLede": [
+    "Your answer goes to {who} and puts you on the list. Say who you are and what you are after — that is what somebody reads when they decide.",
+    "你的回复会发给 {who}，同时把你放进等候名单。说说你是谁、在找什么——别人就是看这个来决定的。",
+  ],
+  "wn.yourName":       ["Your name", "你的名字"],
+  "wn.yourReply":      ["Your answer", "你的回复"],
+  "wn.replyPh": [
+    "Performer, Sydney, free from March. Two features and a series.",
+    "演员，悉尼，三月后有档期。两部电影、一部剧集。",
+  ],
+  "wn.send":           ["Send it", "发送"],
+  "wn.sending":        ["Sending…", "发送中…"],
+  /* THIS IS A QUEUE AND NOT A DOOR, said before they write rather than after.
+     Somebody who answers expecting to be let straight in and finds a waiting
+     list has been misled by leaving it out. */
+  /* NO MARKUP IN IT. It went out with a literal <b> in the text, because the
+     page sets this with textContent — which is the right way to put words on
+     a screen and the wrong place to put tags. */
+  "wn.next": [
+    "Invite only. Answering puts you on the list — you are in when a member vouches for you, and {who} is the one who wrote, so that is usually them.",
+    "这里是邀请制。回复只是把你放进名单——要有成员为你担保才算进来；写给你的是 {who}，通常也就是他。",
+  ],
+  "wn.doneHead":       ["Sent", "已发送"],
+  "wn.doneBody": [
+    "{who} has your answer. You are on the list until somebody vouches for you.",
+    "{who} 收到了你的回复。在有人为你担保之前，你先在名单上等着。",
+  ],
+  "wn.doneGo":         ["See where you are", "看看排到哪了"],
+  "wn.spentHead":      ["Already answered", "已经回过了"],
+  "wn.spentBody": [
+    "This note was written for one person and has been answered. Ask whoever sent it for another.",
+    "这张便条只给一个人，而且已经回过了。找发给你的人再要一张。",
+  ],
+  "wn.oldHead":        ["This has run out", "这个已经过期了"],
+  "wn.oldBody": [
+    "A note is good for a day. Ask whoever sent it for another.",
+    "便条只在一天内有效。找发给你的人再要一张。",
+  ],
+  "wn.badCode":        ["That link does not work", "这个链接用不了"],
+  "wn.badBody": [
+    "Check it came through whole — the address may have been cut in half on its way to you.",
+    "看看链接是不是完整——转发的时候有时候会被截断。",
+  ],
+
   /* NOT me.runGo, which is "Add someone" — right under a box headed "Someone
      else · put up a profile for somebody you represent", and vague standing
      on its own between two other lines that each name who they are about. */

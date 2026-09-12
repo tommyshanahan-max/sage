@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="交换">
+<title>A note for you</title>
+<!-- NO LINK PREVIEW WORTH HAVING. This address is one person's note to one
+     person; a card rendered in a group chat would show a stranger's line to
+     everybody in it. So: nothing to crawl, and noindex. -->
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t5:#D4485C;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --shadow:0 2px 6px rgba(21,27,40,.07),0 10px 28px rgba(21,27,40,.09);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t5:#F0687C;
+      --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --t5:#F0687C;
+    --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+  }
+  :root[data-lang="zh"]{
+    --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong",Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    line-height:1.6;-webkit-font-smoothing:antialiased}
+  main{max-width:30rem;margin:0 auto;padding:2rem 1.15rem 4rem}
+  .langrow{display:flex;justify-content:flex-end;margin:0 0 1.2rem}
+
+  /* WHO WROTE IT, FIRST AND BY NAME. The whole difference between this and a
+     link somebody posted in a group chat is that a person sent it to a person.
+     The face is the proof; the name is the reason to read on. */
+  .from{display:flex;align-items:center;gap:.8rem;margin:0 0 1.1rem}
+  .av{width:3.2rem;height:3.2rem;border-radius:50%;flex:0 0 auto;display:grid;
+    place-items:center;overflow:hidden;background:var(--accent);
+    color:var(--accent-ink);font-family:var(--serif);font-size:1.4rem}
+  .av img{width:100%;height:100%;object-fit:cover;display:block}
+  /* SCOPED TO .t, NOT TO EVERY span IN HERE. `.from span` also matched the
+     avatar — which is a span — and beat `.av` on specificity, so the letter
+     inside it came out muted grey at caption size on a blue disc and read as
+     an empty circle. The name had the same problem for the same reason. */
+  .from .t{flex:1;min-width:0}
+  .from .t b{display:block;font-family:var(--serif);font-weight:400;
+    font-size:1.25rem;line-height:1.2;color:var(--ink)}
+  .from .t span{display:block;font-size:.84rem;color:var(--muted)}
+
+  /* THE LINE, SET AS SOMETHING SOMEBODY WROTE. Serif, large, in its own
+     surface — not a quote block with a bar, which reads as a citation. */
+  .said{margin:0 0 1.4rem;padding:1rem 1.1rem;border-radius:1rem;
+    background:var(--raise);border:1px solid var(--line);
+    font-family:var(--serif);font-size:1.14rem;line-height:1.6;
+    white-space:pre-wrap;overflow-wrap:anywhere}
+
+  h1{margin:0 0 .5rem;font-family:var(--serif);font-weight:400;font-size:1.5rem;
+    line-height:1.25}
+  .lede{margin:0 0 1.4rem;color:var(--ink-2);font-size:.95rem}
+
+  label{display:block;margin:0 0 1rem}
+  label span{display:block;margin:0 0 .35rem;font-size:.78rem;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--muted);font-weight:700}
+  input,textarea{width:100%;font:inherit;font-size:1rem;padding:.75rem .85rem;
+    border:1px solid var(--line);border-radius:.7rem;background:var(--raise);
+    color:var(--ink);resize:vertical}
+  textarea{min-height:7rem;line-height:1.55}
+  .go{width:100%;border:0;border-radius:99px;padding:.85rem;background:var(--accent);
+    color:var(--accent-ink);font:inherit;font-size:1rem;font-weight:650;cursor:pointer}
+  .go:disabled{opacity:.5}
+  .said2{margin:.7rem 0 0;font-size:.86rem;color:var(--muted);text-align:center}
+  .said2.bad{color:var(--t5)}
+
+  /* WHAT HAPPENS NEXT, said before they answer and not after. Somebody typing
+     a reply is owed the truth that this is a queue and not a door. */
+  .next{margin:1.2rem 0 0;padding:.8rem .9rem;border-radius:.8rem;
+    background:var(--accent-soft);color:var(--ink-2);font-size:.86rem;
+    line-height:1.6}
+  .next b{color:var(--ink)}
+
+  .done{text-align:center;padding:2rem 0}
+  .done .tick{width:3.4rem;height:3.4rem;border-radius:50%;margin:0 auto 1rem;
+    background:var(--accent);color:var(--accent-ink);display:grid;
+    place-items:center;font-size:1.7rem}
+  .done h1{margin-bottom:.6rem}
+  .done p{margin:0 auto;max-width:24rem;color:var(--ink-2)}
+  .gone{text-align:center;padding:3rem 0;color:var(--muted)}
+  .gone b{display:block;font-family:var(--serif);font-weight:400;font-size:1.3rem;
+    color:var(--ink);margin:0 0 .5rem}
+  .foot{margin:2.4rem 0 0;text-align:center;font-size:.8rem;color:var(--muted)}
+  .foot a{color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <div class="langrow"><span id="langslot"></span></div>
+  <div id="view"></div>
+  <p class="foot"><a href="/privacy" id="footpriv"></a></p>
+</main>
+
+<script type="module">
+import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
+pickLang();
+
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
+  if (x !== undefined) n.textContent = x; return n; };
+const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
+const initial = (s) => (String(s || "?").trim()[0] || "?").toLowerCase();
+
+/* THE CODE IS IN THE ADDRESS AND NOWHERE ELSE. The link alone opens this page
+   and this page alone: it shows one line written to one person and gives away
+   nothing about the board. That is what lets it be sent over WeChat, where a
+   forwarded message is a thing that happens. */
+const CODE = (location.pathname.split("/").filter(Boolean)[1] || "").toUpperCase();
+
+/* The same random number every other page here keeps. It is what makes the
+   row that is about to be written theirs, and what lets them come back to it. */
+let device = "";
+try {
+  device = localStorage.getItem("board:device") || "";
+  if (!device) {
+    device = (crypto.randomUUID ? crypto.randomUUID()
+      : String(Date.now()) + Math.random().toString(16).slice(2));
+    localStorage.setItem("board:device", device);
+  }
+} catch { /* private window: it still works, it just forgets */ }
+
+let NOTE = null;
+
+async function load() {
+  try {
+    NOTE = await fetch("/api/write/" + encodeURIComponent(CODE), { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { gone: "bad" }));
+  } catch { NOTE = { gone: "bad" }; }
+  paint();
+}
+
+function paint() {
+  document.title = T("wn.title");
+  $("footpriv").textContent = T("site.privacy");
+  const box = $("view");
+  fill(box);
+  if (!NOTE || NOTE.gone) return drawGone(box);
+  drawNote(box);
+}
+
+/** A link that has been answered, or run out. Two sentences, not one: somebody
+ *  holding a dead link should know which kind of dead it is, because one of
+ *  them is worth asking for another and the other is not. */
+function drawGone(box) {
+  const d = el("div", "gone");
+  /* THREE, NOT TWO. It was spent-or-expired, so an address that never named a
+     note at all — a typo, a truncated paste — told somebody their link had run
+     out, which sends them back to ask for another one exactly like it. */
+  const key = (NOTE && NOTE.gone) || "bad";
+  const head = { spent: "wn.spentHead", old: "wn.oldHead" }[key] || "wn.badCode";
+  const body = { spent: "wn.spentBody", old: "wn.oldBody" }[key] || "wn.badBody";
+  d.append(el("b", null, T(head)));
+  d.append(el("p", null, T(body)));
+  box.append(d);
+}
+
+function drawNote(box) {
+  /* WHO WROTE IT. Named, with their face, because "Tom wrote to you" and
+     "You have been invited" are not the same thing arriving — the first is a
+     person and the second is a system. Same rule as the invite door, which is
+     settled and works. */
+  const who = el("div", "from");
+  const av = el("span", "av", initial(NOTE.from));
+  if (NOTE.photo) {
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/public-media?id=" + encodeURIComponent(NOTE.photo), alt: "" });
+    img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
+  }
+  const t = el("span", "t");
+  t.append(el("b", null, T("wn.wrote", { who: NOTE.from || T("board.someone") })));
+  t.append(el("span", null, T("wn.onThe")));
+  who.append(av, t);
+  box.append(who);
+
+  box.append(el("div", "said", NOTE.line));
+
+  box.append(el("h1", null, T("wn.answerHead")));
+  box.append(el("p", "lede", T("wn.answerLede", { who: NOTE.from || T("board.someone") })));
+
+  const nameL = el("label");
+  nameL.append(el("span", null, T("wn.yourName")));
+  const name = document.createElement("input");
+  name.maxLength = 40;
+  name.autocomplete = "off";
+  // Prefilled with what they were called: the person who wrote knows their
+  // name, and making them type it again is a form asking for something it has.
+  name.value = NOTE.to || "";
+  nameL.append(name);
+  box.append(nameL);
+
+  const replyL = el("label");
+  replyL.append(el("span", null, T("wn.yourReply")));
+  const reply = document.createElement("textarea");
+  reply.maxLength = 600;
+  reply.placeholder = T("wn.replyPh");
+  replyL.append(reply);
+  box.append(replyL);
+
+  const go = el("button", "go", T("wn.send"));
+  go.type = "button";
+  const said = el("p", "said2");
+  box.append(go, said);
+
+  /* AND WHAT IT GETS THEM, BEFORE THEY WRITE IT. This is a queue, not a door,
+     and somebody who answers expecting to be let in and finds a waiting list
+     has been misled by omission. */
+  box.append(el("p", "next", T("wn.next", { who: NOTE.from || T("board.someone") })));
+
+  go.addEventListener("click", async () => {
+    const nm = name.value.trim();
+    const rp = reply.value.trim();
+    if (!nm) { name.focus(); return; }
+    if (!rp) { reply.focus(); return; }
+    go.disabled = true;
+    said.classList.remove("bad");
+    said.textContent = T("wn.sending");
+    let d = null;
+    try {
+      d = await fetch("/api/write/reply", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, code: CODE, name: nm, reply: rp }),
+      }).then((r) => r.json());
+    } catch { d = null; }
+    if (!d || (!d.ok && !d.already)) {
+      go.disabled = false;
+      said.classList.add("bad");
+      said.textContent = T({ spent: "wn.spentHead", old: "wn.oldHead",
+                             bad: "wn.badCode" }[d && d.error] || "act.again");
+      return;
+    }
+    // Already a member, opening a note out of curiosity: send them in rather
+    // than tell them they are on a list they are not on.
+    if (d.already) { location.href = "/browse"; return; }
+    drawDone(NOTE.from);
+  });
+}
+
+function drawDone(from) {
+  const box = $("view");
+  fill(box);
+  const d = el("div", "done");
+  d.append(el("div", "tick", "✓"));
+  d.append(el("h1", null, T("wn.doneHead")));
+  d.append(el("p", null, T("wn.doneBody", { who: from || T("board.someone") })));
+  box.append(d);
+  /* WHERE THEY WAIT. The waiting room is a real screen with something to do in
+     it — a card they can fill in, which is the other thing a member vouching
+     has to read. Offered rather than forced: answering was the ask. */
+  const go = el("a", "go", T("wn.doneGo"));
+  go.href = "/waiting";
+  go.style.display = "block";
+  go.style.textAlign = "center";
+  go.style.textDecoration = "none";
+  go.style.marginTop = "1.4rem";
+  box.append(go);
+}
+
+$("langslot").append(langButton(paint));
+setLang(pickLang());
+load();
+</script>
+</body>
+</html>

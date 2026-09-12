@@ -302,7 +302,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|r\/|o(?:\/|$)|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|o(?:\/|$)|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -795,6 +795,8 @@ const codesTaken = (board) => new Set([
   // And the code an agent reads down the phone to somebody who is already
   // here — see /api/run/rep. Same door, same six characters, same set.
   ...board.people.map((q) => q.rep),
+  // And a note written to somebody who is not here yet — see /api/write.
+  ...board.writes.map((w) => w.code),
 ].filter(Boolean));
 
 /* ---------------------------------------------------------------------------
@@ -826,6 +828,12 @@ app.get(["/join", "/join/"], (req, res, next) => page("join.html", req, res, nex
 app.get(["/agents", "/agents/"], (req, res, next) => page("agents.html", req, res, next));
 
 app.get(["/o", "/o/", "/o/:code"], (req, res, next) => page("offer.html", req, res, next));
+/* A NOTE SOMEBODY WAS WRITTEN. Outside the door, like /enter and /i/<code>:
+   the whole point is that it opens for a person the board has never heard of.
+   It gives nothing away — see /api/write/:code, which answers with the line
+   they were sent and the name of whoever sent it and nothing else. */
+app.get(["/w/:code"], (req, res, next) => page("write.html", req, res, next));
+
 app.get(["/enter", "/enter/", "/i/:code"], (req, res, next) =>
   page("enter.html", req, res, next));
 
@@ -2511,6 +2519,155 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
      those are exactly the ones who would otherwise lose the row when their
      browser forgets itself. See waitingRow. */
   if (me && (out?.ok || out?.again)) setWaitCookie(res, me);
+  res.json(out);
+});
+
+/* ---------------------------------------------------------------------------
+ * WRITING TO SOMEBODY WHO IS NOT HERE YET
+ *
+ * This replaces the link a member could post anywhere. That link put whoever
+ * followed it in the queue with nothing attached — a name and a reason typed
+ * into a form by a stranger — so the member deciding whether to vouch had
+ * nothing to read, and in practice nobody was ever brought in without a
+ * private message from somebody who already knew them. The message was doing
+ * the work and the board could not see it.
+ *
+ * So the message is the way in. A member writes one line to one person by
+ * name; this mints a code; the member pastes the block into WeChat; the person
+ * opens it, reads what was written TO THEM, and answers. The answer is their
+ * place in the queue.
+ *
+ * IT IS NOT THE INVITE AND MUST NOT BECOME IT. An invite code lets somebody
+ * straight in on a member's word. This puts them in the queue and they wait
+ * there until a member vouches — which is the existing machinery, untouched.
+ * Same alphabet and the same one-day clock as an invite, because both are read
+ * down a phone and neither should still work six months later out of a chat.
+ * ------------------------------------------------------------------------- */
+
+/** Minting one. Behind the same standing test as an invite: bringing people
+ *  to the door is the thing a board like this has to ration, and rationing it
+ *  in two different ways would be two things to explain and one to get wrong. */
+app.post("/api/write", express.json({ limit: "4kb" }), gate, async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const to = String(req.body?.to || "").trim().slice(0, 40);
+  const line = String(req.body?.line || "").trim().slice(0, 600);
+  if (!to) return res.status(400).json({ error: "name" });
+  if (!line) return res.status(400).json({ error: "line" });
+  /* THE PROFILE RULE APPLIES TO A LINE WRITTEN TO A STRANGER exactly as it
+     applies to one written on a profile: no contact details in it. The link
+     itself is the way to answer, and a WeChat id in the text is a way to take
+     the conversation off the board before it has started. */
+  const shaped = store.contactShaped(line);
+  if (shaped) return res.status(400).json({ error: "contact", what: shaped });
+
+  let why = "";
+  const out = await change((board) => {
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine || !mine.handle) { why = "nopage"; return null; }
+    const rank = standing(board, me);
+    if (!rank.can) { why = "standing"; return null; }
+    const taken = codesTaken(board);
+    let code = store.newCode();
+    for (let i = 0; i < 50 && taken.has(code); i++) code = store.newCode();
+    if (taken.has(code)) { why = "again"; return null; }
+    const row = store.cleanWrite({
+      id: store.newId(), code, by: me, to, line,
+      till: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    });
+    if (!row) { why = "bad"; return null; }
+    board.writes.push(row);
+    return { code: row.code, till: row.till, to: row.to, from: mine.handle };
+  });
+  if (!out) return res.status(400).json({ error: why || "no" });
+  res.json({ ok: true, ...out });
+});
+
+/** What the person who opened the link is looking at. No device needed and
+ *  nothing about the board given away: the name they were called, who wrote
+ *  it, their face, and the line. */
+app.get("/api/write/:code", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const code = String(req.params.code || "").trim().toUpperCase();
+  if (!store.cleanCode(code)) return res.status(404).json({ error: "no" });
+  const board = await store.load(FILE);
+  const w = board.writes.find((x) => x.code === code);
+  if (!w) return res.status(404).json({ error: "no" });
+  // Spent, or out of time. Two different sentences on the page, so somebody
+  // holding a dead link knows which kind of dead it is.
+  if (w.wait) return res.json({ gone: "spent" });
+  if (w.till && new Date(w.till) < new Date()) return res.json({ gone: "old" });
+  const from = board.people.find((q) => q.by === w.by);
+  res.json({
+    to: w.to,
+    line: w.line,
+    from: from ? from.handle : "",
+    photo: from && from.photoState === "published" ? from.photo : "",
+  });
+});
+
+/** THE ANSWER, WHICH IS THE THING THAT PUTS THEM IN THE QUEUE.
+ *
+ * Not admission. They land on the waiting list with their reply as the reason
+ * — which is the point of the whole path: a member deciding whether to vouch
+ * reads a real answer to a real question rather than a form.
+ *
+ * Spent here, in the same change() that writes the row, so two taps on a slow
+ * phone cannot make two strangers.
+ */
+app.post("/api/write/reply", express.json({ limit: "8kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const code = String(req.body?.code || "").trim().toUpperCase();
+  const name = String(req.body?.name || "").trim().slice(0, 40);
+  const reply = String(req.body?.reply || "").trim().slice(0, 600);
+  if (!me) return res.status(400).json({ error: "no" });
+  if (!store.cleanCode(code)) return res.status(400).json({ error: "bad" });
+  if (!name) return res.status(400).json({ error: "name" });
+  if (!reply) return res.status(400).json({ error: "reply" });
+
+  let why = "";
+  const out = await change((board) => {
+    const w = board.writes.find((x) => x.code === code);
+    if (!w) { why = "bad"; return null; }
+    if (w.wait) { why = "spent"; return null; }
+    if (w.till && new Date(w.till) < new Date()) { why = "old"; return null; }
+    // Already a member, opening a note out of curiosity. Nothing to do and
+    // nothing to spend: they are through the door, which is further than this
+    // goes.
+    if (board.people.some((q) => q.by === me)) return { already: true };
+    const from = board.people.find((q) => q.by === w.by && q.state === "published");
+
+    const row = store.cleanWait({
+      name,
+      // No email asked for: the member who wrote to them is already talking to
+      // them. See the note on fromWrite in cleanWait.
+      reach: "",
+      fromWrite: w.id,
+      why: reply,
+      by: me,
+      via: from ? from.id : "",
+      shown: true,
+    });
+    if (!row) { why = "bad"; return null; }
+    /* ONE ROW PER BROWSER, like the form. Somebody who was already waiting and
+       then gets written to keeps their row and gains the answer — losing a
+       card they had filled in because a friend sent them a note would be the
+       worst possible reward for answering it. */
+    const at = board.waits.findIndex((x) => x.by === me);
+    if (at >= 0) {
+      const was = board.waits[at];
+      board.waits[at] = { ...was, name: was.name || row.name,
+        why: reply, fromWrite: w.id, via: was.via || row.via };
+    } else {
+      board.waits.push(row);
+    }
+    w.wait = (at >= 0 ? board.waits[at].id : row.id);
+    return { ok: true, from: from ? from.handle : "" };
+  });
+  if (!out) return res.status(400).json({ error: why || "no" });
+  // The same cookie the form sets, for the same reason: most people answer
+  // once and close the tab, and those are the ones whose browser forgets.
+  if (out.ok) setWaitCookie(res, me);
   res.json(out);
 });
 
