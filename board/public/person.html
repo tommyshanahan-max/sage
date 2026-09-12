@@ -101,6 +101,29 @@
     margin-left:-.3rem}
   .bar svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.8;
     stroke-linecap:round;stroke-linejoin:round}
+  /* The four tabs, copied from index.html. Named .tabs and not .bar because
+     .bar on this page is already the row at the top with the back arrow in it,
+     and one class doing two jobs on one page is a rule nobody can change
+     safely afterwards. */
+  .tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:35;
+    width:100%;max-width:34rem;display:flex;
+    align-items:center;justify-content:space-around;
+    padding:.35rem .5rem calc(.35rem + env(safe-area-inset-bottom));
+    background:var(--paper);border-top:1px solid var(--line)}
+  @media (min-width:36rem){
+    .tabs{border-left:1px solid var(--line);border-right:1px solid var(--line);
+      border-radius:1rem 1rem 0 0}
+  }
+  .tabs a{flex:1;min-width:0;color:var(--muted);
+    display:flex;flex-direction:column;align-items:center;gap:.15rem;
+    padding:.45rem .2rem;font-size:.64rem;text-decoration:none;letter-spacing:.02em}
+  .tabs a span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tabs a[aria-current="page"]{color:var(--accent)}
+  .tabs svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.7;
+    stroke-linecap:round;stroke-linejoin:round}
+  /* Room for it, or the last thing on the page sits under it. */
+  body.hastabs main{padding-bottom:5rem}
+
   .lang{margin-left:auto;border:1px solid var(--line);background:var(--raise);
     color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1}
 
@@ -305,6 +328,32 @@
   </div>
   <div id="body"></div>
 </main>
+
+<!-- THE FOUR TABS, BUT ONLY ON YOUR OWN PAGE.
+     Profile is a tab in the bar now, and this is where it lands — so arriving
+     here and finding no bar means the tab you just pressed deleted the bar
+     you pressed it with. Somebody ELSE's profile keeps the back arrow and no
+     bar, because that is a screen you were pushed into from somewhere, which
+     is exactly how WeChat treats the same two cases. Drawn by the painter
+     below, off q.mine. -->
+<nav class="tabs" id="tabs" hidden>
+  <a href="/notes">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
+    <span id="tabnotes"></span>
+  </a>
+  <a href="/cards">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M3 10h18"/></svg>
+    <span id="tabcards"></span>
+  </a>
+  <a href="/browse">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z M9 15c1.5-2 4.5-2 6 0"/><circle cx="12" cy="10" r="2.2"/></svg>
+    <span id="tabbrowse"></span>
+  </a>
+  <a href="" aria-current="page" id="tabme">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
+    <span id="tabmelabel"></span>
+  </a>
+</nav>
 
 <script type="module">
 import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
@@ -949,6 +998,22 @@ function paint() {
     const ed = el("a", "edit", T("me.editWhat"));
     ed.href = "/feed?edit=1";
     meet.append(ed);
+  }
+
+  /* AND THE BAR, because this is where the Profile tab lands. A tab that
+     deletes the bar it was pressed with is the disorientation the four fixed
+     positions exist to remove. With it up, the back arrow goes: a root tab has
+     nothing behind it, and an arrow that says otherwise is a lie about where
+     somebody is. */
+  if (q.mine) {
+    $("tabnotes").textContent = T("note.inbox");
+    $("tabcards").textContent = T("nav.cards");
+    $("tabbrowse").textContent = T("nav.browse");
+    $("tabmelabel").textContent = T("nav.profile");
+    $("tabme").href = location.pathname;
+    $("tabs").hidden = false;
+    document.body.classList.add("hastabs");
+    $("back").hidden = true;
   }
 
   // Directly under Follow, because somebody who opened a shared link has two

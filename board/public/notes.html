@@ -242,7 +242,12 @@
 <body>
 <main>
   <div class="top">
-    <button class="back" id="back" aria-label="Back">
+    <!-- HIDDEN. Messages is a tab in the bar now, and a root tab has nothing
+         behind it — an arrow that says otherwise is a lie about where somebody
+         is. Kept in the markup rather than deleted: this page is still opened
+         directly from a notification and from /p/<handle>, and if the bar is
+         ever taken off it the way back has to come with it. -->
+    <button class="back" id="back" aria-label="Back" hidden>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
     </button>
     <div>
