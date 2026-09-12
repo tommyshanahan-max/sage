@@ -9747,6 +9747,7 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
        under his sentence. */
     mountMo({
       on: Boolean(d.butler) && Boolean(ME),
+      where: "browse",
       first: () => [{ from: "you", text: T("but.hookIn") }],
     });
     /* drawTodo BELONGS HERE and was missing. The list is made out of ME, and

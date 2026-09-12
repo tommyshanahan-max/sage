@@ -2152,6 +2152,7 @@ function draw() {
      and the small one fades in once the page has stopped moving. */
   mountMo({
     on: Boolean(DATA.butler) && !ARRIVING,
+    where: "wait",
     /* The whole opening, not one line: what he says first is the only part of
        him that differs between a door and a room, so the page that knows
        which it is hands over both turns. */

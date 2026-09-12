@@ -628,6 +628,7 @@ async function load() {
        which returns before this. */
     mountMo({
       on: Boolean(d.butler) && !d.waiting && Boolean(YOU && YOU.handle),
+      where: "notes",
       first: () => [{ from: "you", text: T("but.hookIn") }],
     });
   } catch { NOTES = []; CAN = []; UNREAD = 0; YOU = { handle: "", photo: "" }; }

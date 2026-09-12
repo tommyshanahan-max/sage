@@ -3463,6 +3463,80 @@ app.post("/api/wait/photo", express.json({ limit: "36mb" }), async (req, res) =>
  * anybody outside the door, is a bill anybody can run up. The caps in
  * butler.js are the second line; this is the first.
  * ------------------------------------------------------------------------- */
+/* WHICH SCREEN HE IS STANDING ON, AND WHAT IS TRUE OF IT.
+ *
+ * He was the same doorman on every page. Mounted on Messages he knew nothing
+ * about Messages — so "why has nobody answered me" got the waiting room's
+ * answer, or a shrug, from somebody standing in the middle of the screen that
+ * has the answer on it.
+ *
+ * THE PAGE SAYS WHICH SCREEN, NOT WHAT IS ON IT. One word, checked against
+ * the list below, and everything else is read from the board here. A page that
+ * could tell him what it was showing would be a page that could tell him
+ * anything.
+ *
+ * COUNTS, NEVER CONTENTS — the same rule as the member block above. How many
+ * conversations are waiting on them is a fact about their own screen. Who the
+ * other person is, and a word of what anybody wrote, is not his to hold.
+ */
+const SCREENS = ["wait", "browse", "notes"];
+
+function screenFacts(board, me, mine, where) {
+  if (where === "browse") {
+    const mutual = board.follows.filter((f) => f.by === me).filter((f) => {
+      const q = board.people.find((x) => x.id === f.who);
+      return q && board.follows.some((g) => g.by === q.by && g.who === mine.id);
+    }).length;
+    return [
+      "They are on BROWSE. It deals them one card at a time — the people whose sentence answers theirs, first — and the two buttons are Follow and Next. Following is one-sided and silent: the other person is not told, and nothing opens until they follow back.",
+      mutual > 0
+        ? `${mutual} of the people they followed have followed them back. Those are the ones they can write to.`
+        : "Nobody they have followed has followed them back yet. Until somebody does there is nobody for them to write to, and the only thing that changes it is getting through more cards.",
+    ];
+  }
+
+  if (where === "notes") {
+    /* Every conversation they are in, as counts. Notes carry device hashes on
+       both sides, so this never touches a name. */
+    const between = new Map();
+    for (const n of board.notes) {
+      const other = n.by === me ? n.to : (n.to === me ? n.by : null);
+      if (!other) continue;
+      const arr = between.get(other) || [];
+      arr.push(n);
+      between.set(other, arr);
+    }
+    let theirs = 0, ours = 0, unanswered = 0;
+    for (const arr of between.values()) {
+      const last = arr[arr.length - 1];
+      if (last.to === me) theirs += 1;
+      else {
+        ours += 1;
+        if (arr.every((n) => n.by === me)) unanswered += 1;
+      }
+    }
+    const mutual = board.follows.filter((f) => f.by === me).filter((f) => {
+      const q = board.people.find((x) => x.id === f.who);
+      return q && board.follows.some((g) => g.by === q.by && g.who === mine.id);
+    }).length;
+
+    const bits = [
+      "They are on MESSAGES. The faces along the top are the people who followed them back — tapping one writes to them or picks the conversation up. Under that is every conversation, newest first.",
+      `${mutual} people have followed them back.`,
+    ];
+    if (theirs > 0) bits.push(`${theirs} of their conversations are waiting on THEM to answer. Worth saying once if it comes up; never twice.`);
+    if (unanswered > 0) {
+      bits.push(`${unanswered} of the messages they sent have had no reply at all. If they ask why: nobody here is obliged to answer, an introduction is a thing somebody decides about rather than a thing owed back, and the honest answer is that it happens. Do not invent a reason and do not promise one is coming.`);
+    } else if (ours > 0) {
+      bits.push(`${ours} conversations are waiting on the other person.`);
+    }
+    if (!between.size) bits.push("They have no conversations at all yet. Nothing has gone wrong; there is simply nobody they have written to and nobody who has written to them.");
+    return bits;
+  }
+
+  return [];
+}
+
 app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
   /* EVERY REFUSAL SAYS WHICH ONE IT WAS.
    *
@@ -3511,6 +3585,10 @@ app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
          person in front of him was on the board for. Same two fields, two
          different tables, one silent wrong answer. */
       const first = (Array.isArray(mine.say) ? mine.say : [])[0] || {};
+      /* The page names the screen; screenFacts works out what is true of it.
+         An unknown word is simply no screen — never a reason to refuse a
+         question. */
+      const where = SCREENS.includes(String(req.body?.where || "")) ? String(req.body.where) : "";
       const out = await butler.ask(req.body?.turns, me, {
         name: mine.handle || String(mine.name || "").split(/\s+/)[0] || "",
         member: true,
@@ -3518,6 +3596,7 @@ app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
         want: first.want || "",
         photo: Boolean(mine.photo),
         matches: others.length,
+        screen: screenFacts(board, me, mine, where),
       });
       if (out.error) {
         const code = out.error === "slow-down" || out.error === "busy" ? 429

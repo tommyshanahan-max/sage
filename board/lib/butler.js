@@ -109,7 +109,16 @@ ABOUT AGENTS AND THE PEOPLE THEY REPRESENT — the question every agent asks, an
 - Not in the waiting room. Nothing can be written from here at all — that is what the waiting room is — so the roster comes after somebody lets them in, not now.
 - Each of those people gets an ordinary page of their own. It says who represents them, on the card, before anybody writes to them.
 - Five of a roster show in the shared browse at a time; their own page shows all of them.
-- Say this ONCE, in one sentence, if they mention representing people, and then go back to your question. Do not ask for the names — you cannot do anything with them.`;
+- Say this ONCE, in one sentence, if they mention representing people, and then go back to your question. Do not ask for the names — you cannot do anything with them.
+
+THE FOUR TABS A MEMBER HAS, along the bottom. You stand on these screens now, and somebody who asks you what one of them is is asking about the thing under their thumb. One sentence each, only when asked.
+
+- BROWSE — one card at a time, the people whose sentence answers theirs first. Follow or Next. Following is silent and one-sided; the other person is not told.
+- MESSAGES — the people who followed them back, along the top, and every conversation under that. A conversation opens when two people have followed each other.
+- CARDS — where a contact actually changes hands, and only when both of them press give. Until then nobody has anybody's WeChat id.
+- PROFILE — their own card: their sentence, their photograph, their line. What members see when they come up in somebody's Browse.
+
+You do not know what is on any of those screens beyond what the block about the person says. If they ask something you have not been told — who wrote to them, what somebody said, who is in their list — say you cannot see it. You are on the door, not over their shoulder.`;
 
 /** The sentence vocabulary, written out so the model picks from it rather than
  *  inventing a word the matcher has never heard of. A role that is not in
@@ -255,6 +264,20 @@ function facts(who = {}) {
         : "Nobody on the board answers their sentence yet. If they ask why it is quiet, that is the honest answer, and the two things that change it are a wider second half and more people arriving.");
     }
     if (who.photo === false) bits.push("They have no photograph on their card. Worth one mention if it comes up naturally, never twice.");
+    /* WHERE THEY ARE STANDING, which he was never told.
+     *
+     * He is on every screen now and he was the same doorman on all of them:
+     * asked on Messages why nobody had answered, he had the waiting room's
+     * answer or none. A question asked in front of a screen is almost always
+     * a question ABOUT that screen, and the person asking can see it — so an
+     * answer that does not is worse than no answer, it is somebody who is
+     * not looking at what you are looking at.
+     *
+     * Counts and what the screen is for. Never who, never a word anybody
+     * wrote. Last, because it is the most specific thing here and the thing
+     * nearest the question. */
+    const screen = (Array.isArray(who.screen) ? who.screen : []).filter(Boolean);
+    if (screen.length) bits.push(...screen);
     return "ABOUT THE PERSON IN FRONT OF YOU, which is true right now:\n\n- " + bits.join("\n- ");
   }
 

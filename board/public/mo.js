@@ -559,7 +559,15 @@ async function butlerTurn() {
     const r = await fetch("/api/butler", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-board-device": device() },
-      body: JSON.stringify({ turns: BUT.turns }),
+      /* WHICH SCREEN HE IS STANDING ON.
+       *
+       * He was the same doorman everywhere: mounted on Messages he knew
+       * nothing about Messages, so "why has nobody answered me" and "who are
+       * these people at the top" got the waiting room's answer or none. A
+       * word, and the server works out what is true of that screen for this
+       * person — the page is not trusted to say what is on it, only which
+       * one it is. */
+      body: JSON.stringify({ turns: BUT.turns, where: (HOST && HOST.where) || "" }),
       signal: AbortSignal.timeout ? AbortSignal.timeout(25_000) : undefined,
     });
     const d = await r.json().catch(() => ({}));
@@ -905,6 +913,18 @@ export const moIsOpen = () => Boolean(MOSHUT);
  *  call only updates who is asking. Called with `on: false` he leaves — which
  *  is how a page that is still loading avoids drawing a doorman who does not
  *  yet know who he is talking to.
+ */
+/** Give a page its Mo.
+ *
+ *  @param {object} host
+ *    `on`       whether he shows at all
+ *    `first()`  the opening turns, as an array
+ *    `where`    which screen this is — "wait", "browse", "notes". The server
+ *               turns it into what is true of that screen for this person;
+ *               nothing about the page's contents is sent from here.
+ *    `onKeep`   what to do with a proposal, where the page has somewhere to
+ *               put one. No onKeep, no Keep button.
+ *    `onChange` redraw, for a page holding a way back to him
  */
 export function mountMo(host) {
   dress();
