@@ -2953,6 +2953,9 @@ export const STRINGS = {
   /* A headline, not a label. An uppercase micro-label set large only gets
      shouty; a sentence in the serif everything else here is set in reads as
      the offer it is. */
+  /* THE SHEET THE ＋ OPENS. Its own title, because inv.head sits above a code
+     inside a box and this stands at the top of a screen. */
+  "inv.sheetTitle":    ["Bring somebody in", "带一个人进来"],
   "inv.head":          ["Bring someone in", "带一个人进来"],
   "inv.tap":           ["Today’s password. One person, then it changes.",
                         "今天的口令。进一个人，然后就换。"],

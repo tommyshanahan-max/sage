@@ -841,6 +841,14 @@
     color:var(--muted);font-size:.82rem;text-align:left;padding:.2rem 0}
   .swap:hover{color:var(--accent)}
 
+  /* The way into the composer, on the screen its output lands on. */
+  .feedpost{margin:0 0 1.1rem}
+  .feedpost button{width:100%;border:1px dashed var(--line);background:var(--raise);
+    color:var(--ink-2);border-radius:.8rem;padding:.75rem;font:inherit;
+    font-size:.92rem;cursor:pointer}
+  .feedpost button:hover{border-style:solid;color:var(--accent);
+    border-color:var(--accent)}
+
   /* ---- the report card ----------------------------------------------------
    * One fold over the card of the day and the two tests. Its head is the whole
    * thing when shut, so it carries the summary and a dot when there is
@@ -2285,6 +2293,13 @@
   </div><!-- /vbrowse -->
 
   <div id="vfeed" hidden>
+  <!-- PUTTING SOMETHING UP, AND THIS IS NOW THE ONLY WAY IN.
+       The ＋ in the masthead opened this composer and nothing else did, so
+       moving the ＋ to the invite would have quietly killed posting — a
+       feature dying because the one button that reached it was repointed is
+       how features die without anybody deciding. The feed is where a post
+       goes, so the way to make one is here. -->
+  <p class="feedpost"><button type="button" id="feedpost"></button></p>
   <!-- THE FEED, BEFORE THERE IS ONE.
        It is not empty — there are seeded posts, the board announcing that
        somebody joined, cards put up from the box. All real rows, none of them
@@ -2369,6 +2384,25 @@
 </main>
 
 <button class="tfab" id="tfab" aria-label="Translate">译</button>
+
+<!-- INVITING SOMEBODY, BEHIND THE ＋.
+     The plus used to open the post composer, which files into /feed — and the
+     Feed tab is hidden until members are posting, so the loudest control on
+     the screen wrote to a page with no way in. On an invite-only board the one
+     "create" that matters is bringing somebody through the door.
+     The block inside is MOVED here at load, not copied: same element, same
+     ids, same handlers, same drawMyInvite. A second copy of a screen that
+     prints live codes is two things to keep in step and one of them will
+     eventually print a stale one. -->
+<div class="sheet" id="invsheet" hidden>
+  <div class="card">
+    <h2 id="invsheettitle"></h2>
+    <div id="invslot"></div>
+    <div class="row">
+      <button class="ghost" type="button" id="invshut"></button>
+    </div>
+  </div>
+</div>
 
 <div class="sheet" id="mesheet" hidden>
   <form class="card" id="meform">
@@ -3993,7 +4027,32 @@ function openSheet(open) {
     $("note").focus();
   }
 }
-$("fab").addEventListener("click", () => openSheet(true));
+/* THE ＋ OPENS THE INVITE. It opened the post composer, and posts go to
+   /feed, whose tab is hidden until members are posting — so the biggest
+   control in the masthead wrote to a screen nobody could reach. Posting is
+   not gone: /feed still works and showView still names it. It is simply not
+   what the corner of an invite-only board should be for. */
+$("fab").addEventListener("click", () => {
+  // Drawn before it is shown: a member may not have had a code when the page
+  // loaded, and this is the one screen where a stale code is worse than none.
+  loadMyInvite();
+  $("invsheettitle").textContent = T("inv.sheetTitle");
+  $("invshut").textContent = T("post.cancel");
+  $("invsheet").hidden = false;
+});
+$("invshut").addEventListener("click", () => { $("invsheet").hidden = true; });
+
+$("feedpost").addEventListener("click", () => openSheet(true));
+
+/* MOVED, NOT COPIED. The invite block was in the masthead area of every tab;
+   it lives in the sheet now and Browse is a block shorter for it. One element
+   means drawMyInvite, the code button, Send and Share all keep working with
+   no second set of anything. */
+{
+  const slot = document.getElementById("invslot");
+  const box = document.getElementById("myinv");
+  if (slot && box) slot.append(box);
+}
 
 /* WeChat on iOS scrolls the page to bring an input above the keyboard and then
    does not scroll back when it closes, leaving the board sitting half off the
@@ -4155,8 +4214,11 @@ function paintNav() {
   // Read aloud rather than drawn now the button lives in the corner — the
   // title carries it for a pointer, the span for a screen reader.
   $("navnewlabel").textContent = T("nav.new");
-  $("fab").setAttribute("aria-label", T("nav.new"));
-  $("fab").title = T("nav.new");
+  $("feedpost").textContent = T("nav.new");
+  // It opens the invite now, not the composer — see the handler.
+  $("fab").setAttribute("aria-label", T("inv.sheetTitle"));
+  $("fab").title = T("inv.sheetTitle");
+  $("navnewlabel").textContent = T("inv.sheetTitle");
   $("navmelabel").textContent = T("nav.profile");
   // Profile goes to your own page once you have one, and before that it opens
   // the editor. There is nothing on this page to scroll to any more: this tab
@@ -4573,6 +4635,12 @@ function drawAsk() {
 
 function drawMyInvite() {
   const b = $("myinv");
+  /* AND THE ＋ ITSELF, because it opens this and nothing else now. A button in
+     the masthead that opens an empty sheet is the dead button again wearing a
+     different coat — so it appears for somebody who has a code, or a reason
+     they have not got one, and stays away from everybody else. */
+  const fab = $("fab");
+  if (fab) fab.hidden = !(MYCODE || MYNEED.length);
   /* THREE STATES, not two. A code; no code and a reason; nothing at all.
      The third is somebody who is not a member — there is nothing to say to
      them here and the box stays away. */
