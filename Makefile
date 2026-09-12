@@ -255,6 +255,29 @@ announcer: ## Who may write an announcement, or let one:  make announcer [WHO=To
 	  /seed/announce.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  can-announce $(if $(WHO),--who "$(WHO)",) $(if $(ID),--id "$(ID)",) $(if $(OFF),--off,)
 
+voices: ## Which voices the ElevenLabs account has, to pick one
+	@# The voice IS the first impression. Listen to a few on elevenlabs.io,
+	@# then put the id in .env as ELEVENLABS_VOICE_ID before running `make
+	@# voice` — the default is a stock preset and picking it by default is not
+	@# the same as choosing it.
+	@# Not in the board container: it has no ELEVENLABS_API_KEY and no reason
+	@# to. This runs on the box, against .env, and writes nothing.
+	@set -a; . ./.env; set +a; node scripts/voice.mjs --list
+
+voice: ## Render the arrival's four beats, both languages:  make voice [FORCE=1]
+	@# ONCE, NOT PER VISIT. The beats carry no name and no number — see the
+	@# note on wel.b1Up in i18n.js — so the audio is a constant and belongs in
+	@# the repository beside the string it speaks. The box never holds a TTS
+	@# key at runtime, the arrival never waits on an API, and a visit costs
+	@# nothing.
+	@#
+	@# The files it writes are part of the product. Commit them, or the next
+	@# `git reset --hard` on this box throws them away and the arrival goes
+	@# quiet again:
+	@#
+	@#   git add board/public/voice && git commit -m "The arrival's voice" && git push
+	@set -a; . ./.env; set +a; node scripts/voice.mjs $(if $(FORCE),--force,)
+
 announcements: ## Every poster, its link, and whether it brought anybody
 	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/announce.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \

@@ -3406,9 +3406,15 @@ export const STRINGS = {
     "A photo, and one line about what you do. That moves you up. Somebody inside opens the door.",
     "\u4e00\u5f20\u7167\u7247\uff0c\u4e00\u53e5\u8bdd\u8bf4\u4f60\u505a\u4ec0\u4e48\u3002\u8fd9\u6837\u80fd\u5f80\u524d\u632a\u3002\u95e8\u662f\u91cc\u9762\u7684\u4eba\u5f00\u7684\u3002",
   ],
+  /* NO NAME IN ANY BEAT NOW, and that is what makes the voice possible. The
+     four beats are a fixed script, so they are rendered once through real TTS
+     and served as four files per language — a name in the text would mean
+     synthesising a line per person, per arrival, for money, over the network,
+     while somebody waits. The title above says "Welcome, Damon" in
+     forty-point serif; the voice does not need to say it a second time. */
   "wel.b1Up": [
-    "You're off the list, {who}. I'm here to help. I'll keep it quick.",
-    "{who}\uff0c\u4f60\u5df2\u7ecf\u63d0\u4e0a\u6765\u4e86\u3002\u6211\u6765\u5e2e\u4f60\uff0c\u5f88\u5feb\u5c31\u597d\u3002",
+    "You're off the list. I'm here to help, and I'll keep it quick.",
+    "\u4f60\u5df2\u7ecf\u63d0\u4e0a\u6765\u4e86\u3002\u6211\u6765\u5e2e\u4f60\uff0c\u5f88\u5feb\u5c31\u597d\u3002",
   ],
   "wel.b2Up": [
     "A photo, and one line about what you do. Then somebody inside reads it and opens the door.",
