@@ -139,13 +139,28 @@
    */
   .orbwrap{position:relative;margin:1.3rem 0 0;display:grid;place-items:center}
   /* Paper on ink, so the one thing to press is the one bright thing. */
+  /* THE CIRCLE IS MO. It was a cream disc with a play triangle in it, and the
+     blue circle in the corner was somebody else entirely — so the voice that
+     greets you, the face on the panel and the button you press when stuck
+     were three unrelated objects on one screen. They are one person: same
+     blue, same face, same size. Pressing the one in the middle of the
+     arrival and pressing the one in the corner are then obviously the same
+     gesture, which is what makes the line under the last button mean
+     anything. */
   .orb{width:5.4rem;height:5.4rem;border-radius:50%;border:0;cursor:pointer;
-    background:#F2E7DC;color:#12100E;display:grid;place-items:center;padding:0;
+    background:var(--accent);color:var(--accent-ink);display:grid;
+    place-items:center;padding:0;
     box-shadow:0 12px 34px rgba(0,0,0,.5);transition:transform .12s ease-out}
   .orb:active{transform:scale(.96)}
-  .orb svg{width:1.9rem;height:1.9rem;fill:currentColor;stroke:none;
-    margin-left:.18rem}
-  .orb[aria-pressed="true"] svg{margin-left:0}
+  .orb svg{width:2.6rem;height:2.6rem;fill:currentColor;stroke:none}
+  /* The little play triangle, tucked at the foot of him rather than replacing
+     him: at rest it has to be clear this is a thing you press, and a face
+     alone on a dark screen is a portrait. */
+  .orb i{position:absolute;right:.1rem;bottom:.1rem;width:1.6rem;height:1.6rem;
+    border-radius:50%;background:#F2E7DC;color:#12100E;
+    display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+  .orb i svg{width:.8rem;height:.8rem;margin-left:.08rem}
+  .orbwrap.on .orb i{display:none}
   .orb:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
   /* The ring only exists while it is talking, so the circle at rest is one
      clean shape rather than a control with decoration around it. */
@@ -626,6 +641,11 @@
   .tabs button{flex:1;padding:.9rem 0;border:0;background:none;font:inherit;
     font-size:.9rem;font-weight:600;color:var(--muted);cursor:pointer}
   .tabs button.on{color:var(--accent)}
+
+  /* Under the last press of the arrival, quiet: it is a thing to remember,
+     not a thing to do now. */
+  .heromo{margin:1rem 0 0;font-size:.82rem;line-height:1.5;
+    color:rgba(239,230,220,.62)}
 
   .quietlink{display:inline-block;margin:1rem 0 0;color:var(--accent);
     font-size:.9rem}
@@ -1331,8 +1351,14 @@ function welcomeOrb(you) {
   wrap.append(el("i", "ring"), el("i", "ring b"));
   const orb = el("button", "orb");
   orb.type = "button";
-  const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>';
-  const NEXT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l8 7-8 7z"/></svg>';
+  orb.style.position = "relative";
+  /* HIS FACE, NOT A PLAY BUTTON — the same MOFACE the panel head and the
+     floating circle use. One constant, so the three can never drift into
+     three different people. The little triangle rides at the foot of him. */
+  const TRI = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>';
+  const CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l8 7-8 7z"/></svg>';
+  const PLAY = MOFACE + '<i>' + TRI + '</i>';
+  const NEXT = MOFACE + '<i>' + CHEV + '</i>';
   orb.innerHTML = PLAY;
   orb.setAttribute("aria-label", T("wel.play"));
   const hint = el("p", "orbsay");
@@ -1457,6 +1483,22 @@ function welcomeOrb(you) {
     }
     orb.hidden = true;
     hint.textContent = "";
+
+    /* AND WHERE HELP IS, ONCE — not as a third beat.
+     *
+     * He asked for the welcome to say that Mo is there whenever they are
+     * stuck, and it is worth saying. Not spoken, though: two beats end on
+     * "I'll keep it quick" and a third one about a feature is the page
+     * breaking its own promise to introduce a button.
+     * So it is read rather than heard, and it sits under the last press,
+     * where their eyes already are — and it names the thing they can see out
+     * of the corner of their eye rather than describing a feature. Only when
+     * he is actually on the screen: an arrow pointing at a circle somebody
+     * has sent away is worse than no arrow. */
+    if (DATA.butler && !moOff()) {
+      box.append(el("p", "heromo", T("wel.mo")));
+    }
+
     const go = el("button", "heroshow", T("wel.show"));
     go.type = "button";
     go.addEventListener("click", () => {

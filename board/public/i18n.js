@@ -3390,6 +3390,14 @@ export const STRINGS = {
    * a person says when they meet you at a door: I'm helping, this won't take
    * long.
    *
+   * AND IT SAYS WHO IS TALKING, which it did not for a whole evening. "I'm
+   * here to help, I'll keep it quick" is a voice out of nowhere: a stranger's
+   * phone starts talking and never says whose voice it is or where the help
+   * is coming from. Naming him in the first four words costs nothing and
+   * makes the rest of the screen cohere — the voice, the blue circle in the
+   * corner and the line under the last button are all one person now, and a
+   * person is a thing you press when you are stuck.
+   *
    * AND IT DOES NOT SAY WELCOME, because the title two inches above says it
    * in forty-point serif with their name on it. It did for one draft, while
    * this was still spoken — heard, a greeting that skips the greeting sounds
@@ -3399,8 +3407,8 @@ export const STRINGS = {
    * the name, because it is news rather than a greeting.
    */
   "wel.b1List": [
-    "I'm here to help. I'll keep it quick.",
-    "\u6211\u6765\u5e2e\u4f60\uff0c\u5f88\u5feb\u5c31\u597d\u3002",
+    "Mo. I'm on the door here. I'll keep this quick.",
+    "\u6211\u662f\u8001\u83ab\uff0c\u770b\u95e8\u7684\u3002\u5f88\u5feb\u5c31\u597d\u3002",
   ],
   "wel.b2List": [
     "A photo, and one line about what you do. That moves you up. Somebody inside opens the door.",
@@ -3413,8 +3421,8 @@ export const STRINGS = {
      while somebody waits. The title above says "Welcome, Damon" in
      forty-point serif; the voice does not need to say it a second time. */
   "wel.b1Up": [
-    "You're off the list. I'm here to help, and I'll keep it quick.",
-    "\u4f60\u5df2\u7ecf\u63d0\u4e0a\u6765\u4e86\u3002\u6211\u6765\u5e2e\u4f60\uff0c\u5f88\u5feb\u5c31\u597d\u3002",
+    "Mo, on the door. You're off the list \u2014 I'll keep this quick.",
+    "\u6211\u662f\u8001\u83ab\uff0c\u770b\u95e8\u7684\u3002\u4f60\u5df2\u7ecf\u63d0\u4e0a\u6765\u4e86\uff0c\u5f88\u5feb\u5c31\u597d\u3002",
   ],
   "wel.b2Up": [
     "A photo, and one line about what you do. Then somebody inside reads it and opens the door.",
@@ -3424,6 +3432,13 @@ export const STRINGS = {
      thing you answer — "Continue" is a thing you obey. */
   "wel.ready":         ["Ready?", "准备好了吗？"],
   "wel.show":          ["Show me", "带我看看"],
+  /* Read, never spoken — see the note in welcomeOrb. It names the thing they
+     can already see in the corner of the screen rather than describing a
+     feature, and "any time" is the whole point: he does not go away. */
+  "wel.mo": [
+    "Stuck at any point \u2014 the blue circle is Mo. He's on the door all night.",
+    "\u4ec0\u4e48\u65f6\u5019\u5361\u4f4f\u4e86\uff0c\u70b9\u90a3\u4e2a\u84dd\u5708\u5708\u2014\u2014\u8001\u83ab\u5728\u95e8\u53e3\uff0c\u4e00\u665a\u4e0a\u90fd\u5728\u3002",
+  ],
 
 
   /* ---- WHO HE IS ----------------------------------------------------------
