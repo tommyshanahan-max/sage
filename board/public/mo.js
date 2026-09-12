@@ -167,7 +167,19 @@ const MOCSS = `
     touch-action:none;animation:dockin .35s .2s backwards}
   .modock svg{width:1.85rem;height:1.85rem;pointer-events:none}
   .modock.drag{cursor:grabbing;box-shadow:0 10px 26px rgba(10,14,24,.5);
-    transform:scale(1.07)}/* "PRESS ME", ONCE, THE FIRST TIME HE APPEARS IN THE CORNER.
+    transform:scale(1.07)}
+  /* HOLDING HIM. He grows and a ring goes round him, so a thumb that is
+     already covering most of the circle can still see that it worked —
+     the whole affordance has to live at the edges, because the middle of it
+     is under a finger. */
+  .modock.hear{transform:scale(1.12);
+    box-shadow:0 0 0 .34rem rgba(47,107,255,.3), 0 10px 26px rgba(10,14,24,.5)}
+  .modock.hear::after{content:"";position:absolute;inset:-.55rem;
+    border-radius:50%;border:2px solid var(--accent);
+    animation:moping 1.3s ease-out infinite}
+  @keyframes moping{from{transform:scale(.86);opacity:.85}
+    to{transform:scale(1.18);opacity:0}}
+  @media (prefers-reduced-motion:reduce){ .modock.hear::after{animation:none} }/* "PRESS ME", ONCE, THE FIRST TIME HE APPEARS IN THE CORNER.
      The same move as the arrow at the photo chip: a small pointer and the
      reason beside it, because a blue circle that has just faded in at the
      edge of a screen is furniture until somebody says what it is. It says
@@ -559,9 +571,67 @@ export function moDock() {
      gesture happened to leave the circle. */
   let down = null;
   const MOVED = 6;        // px before a tap becomes a drag
+  /* HOLD HIM AND TALK. THREE GESTURES ON ONE CIRCLE, AND THEY HAVE TO BE
+   * TELLABLE APART WITHOUT ANYBODY BEING TAUGHT THEM.
+   *
+   *   tap            open him and type
+   *   drag           move him out of the way
+   *   press and hold speak, and it sends when you let go
+   *
+   * The distinction is the same one a person already makes with every other
+   * button on a phone, so nothing has to be explained: a tap is short, a drag
+   * moves, and a hold is a hold. 400ms before the microphone opens, which is
+   * long enough that nobody triggers it by pressing firmly and short enough
+   * that it feels like the button responded rather than lagged.
+   *
+   * WHY IT SENDS ON RELEASE. Holding to talk and letting go to send is the
+   * one voice gesture everybody in China already has in their thumbs, because
+   * it is how WeChat works. Copying it means the most important control on
+   * this screen needs no instruction at all in the market this board is for.
+   */
+  const HOLD = 400;
+  let hold = 0;
+  let talking = false;
+
+  const stopTalk = (send) => {
+    if (!talking) return;
+    talking = false;
+    btn.classList.remove("hear");
+    if (BUTMIC) { BUTMIC.stop(); BUTMIC = null; }
+    if (!send) return;
+    /* The words land in the sheet's own box — see moOpen, which is already
+       open by now — so releasing sends exactly what is on the screen, and a
+       recogniser that heard nothing sends nothing. */
+    const form = document.querySelector(".mosheet .butform");
+    const box = form && form.querySelector("input[type=text]");
+    if (form && box && box.value.trim()) {
+      form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+    }
+  };
+
+  const startTalk = () => {
+    if (!canHear()) return;
+    /* He opens first: the words have to go somewhere visible, and somebody
+       holding a button wants to see that it is listening. */
+    moOpen();
+    const box = document.querySelector(".mosheet .butform input[type=text]");
+    if (!box) return;
+    talking = true;
+    btn.classList.add("hear");
+    BUTMIC = listen(box, lang() === "zh" ? "zh-CN" : "en-US", {
+      onState(on) { if (!on) { BUTMIC = null; } },
+      /* No microphone, no permission, no network to the recogniser: he stops
+         listening and the box is still a box. See speak.js on where this
+         genuinely does not work. */
+      onError() { stopTalk(false); },
+    });
+  };
+
   btn.addEventListener("pointerdown", (e) => {
     down = { x: e.clientX, y: e.clientY, l: btn.offsetLeft, t: btn.offsetTop, moved: false };
     try { btn.setPointerCapture(e.pointerId); } catch { /* older browser */ }
+    clearTimeout(hold);
+    hold = setTimeout(startTalk, HOLD);
   });
   btn.addEventListener("pointermove", (e) => {
     if (!down) return;
@@ -571,6 +641,10 @@ export function moDock() {
       if (Math.abs(dx) + Math.abs(dy) < MOVED) return;
       down.moved = true;
       btn.classList.add("drag");
+      /* Moving him is not talking to him. Whichever of the two the hand meant,
+         it did not mean both. */
+      clearTimeout(hold);
+      stopTalk(false);
     }
     const pad = 10;
     const maxX = Math.max(1, window.innerWidth - btn.offsetWidth - pad * 2);
@@ -580,7 +654,12 @@ export function moDock() {
   const up = () => {
     const was = down;
     down = null;
+    clearTimeout(hold);
     btn.classList.remove("drag");
+    /* Let go of a hold and it sends. This is checked before the tap, because
+       a hold IS a press that was never moved and would otherwise fall through
+       to "open him" — which it has already done, on the way in. */
+    if (talking) { stopTalk(true); return; }
     if (!was) return;
     if (was.moved) {
       try { localStorage.setItem(SPOTKEY, JSON.stringify(spot)); } catch { /* private window */ }
@@ -589,7 +668,14 @@ export function moDock() {
     moOpen();
   };
   btn.addEventListener("pointerup", up);
-  btn.addEventListener("pointercancel", () => { down = null; btn.classList.remove("drag"); });
+  btn.addEventListener("pointercancel", () => {
+    down = null;
+    clearTimeout(hold);
+    /* Cancelled is not released: a call arriving mid-sentence must not send
+       half of one. */
+    stopTalk(false);
+    btn.classList.remove("drag");
+  });
   return btn;
 }
 
