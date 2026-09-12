@@ -614,6 +614,26 @@ export function cleanAnnounce(raw) {
     code: cleanCode(raw.code) || newCode(),
     title,
     body,
+    /* THE SAME POSTER IN THE OTHER LANGUAGE, WHEN THERE IS ONE.
+     *
+     * Half this board reads Chinese and half does not, and a poster is pasted
+     * into one group at a time. So it carries both and the page shows the
+     * reader theirs — which is how every other string here already works.
+     *
+     * NOT TRANSLATED WHEN IT IS READ, and the difference is the whole reason
+     * these are fields rather than a call at read time. A machine's opinion of
+     * what somebody said about a named person, in a group chat, under this
+     * board's name, is not something to produce behind anybody's back. These
+     * are written in the composer, by a person, who read them before pressing
+     * post — the button offers a draft and the draft is editable. What ends up
+     * here is what they agreed to send.
+     *
+     * EITHER MAY BE EMPTY, including both. Somebody posting to an Australian
+     * group has no use for a Chinese version and must not be made to make one;
+     * the page falls back to whichever exists.
+     */
+    titleZh: s(raw.titleZh, 90),
+    bodyZh: s(raw.bodyZh, 900),
     /* A PICTURE, AND IT IS NOT HELD.
        Everywhere else on this board a photograph waits to be looked at before
        anybody else sees it, because it was uploaded by somebody nobody has

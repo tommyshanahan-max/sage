@@ -2589,6 +2589,23 @@
     <div class="field"><input id="annhead" maxlength="90"></div>
     <textarea id="annbody" rows="5" maxlength="900"></textarea>
 
+    <!-- THE SAME POSTER IN THE OTHER LANGUAGE.
+         Half this board reads Chinese and a poster goes into one group at a
+         time, so it carries both and the page shows the reader theirs.
+         The button writes a DRAFT into fields that stay editable, and the line
+         under it says to read it: what goes out is a person's decision, not a
+         model's. It is the same translator the board already has at /api/
+         translate — rate-limited per browser and capped for the day, because
+         a public endpoint that calls a model is a bill anybody can run up. -->
+    <div class="row">
+      <button class="ghost" type="button" id="anntr"></button>
+    </div>
+    <div id="annzh" hidden>
+      <p class="menote" id="annzhwhy" style="text-align:left"></p>
+      <div class="field"><input id="annheadzh" maxlength="90"></div>
+      <textarea id="annbodyzh" rows="5" maxlength="900"></textarea>
+    </div>
+
     <!-- After it is up: the address, and one press to get it onto the
          clipboard. The link is the entire deliverable — a sheet that posted
          and then closed would leave somebody hunting for what they just
@@ -4469,8 +4486,15 @@ function openAnnounce() {
   $("annshut").textContent = T("post.cancel");
   $("anncopy").textContent = T("ann.copy");
   $("anndonesay").textContent = T("ann.made") + " " + T("ann.madeWhy");
+  $("anntr").textContent = T("ann.tr");
+  $("annzhwhy").textContent = T("ann.trWhy");
+  $("annheadzh").placeholder = T("ann.titleHint");
+  $("annbodyzh").placeholder = T("ann.bodyHint");
   $("annhead").value = "";
   $("annbody").value = "";
+  $("annheadzh").value = "";
+  $("annbodyzh").value = "";
+  $("annzh").hidden = true;
   $("annshot").hidden = true;
   $("anndone").hidden = true;
   $("anngo").disabled = false;
@@ -4479,6 +4503,65 @@ function openAnnounce() {
   loadAnnMine();
 }
 $("annshut").addEventListener("click", () => { $("annsheet").hidden = true; });
+
+/* TRANSLATING THE POSTER, IN PIECES.
+ *
+ * /api/translate takes 600 characters and the body takes 900, so a long one
+ * has to go in more than one call. Split on the blank lines the author already
+ * put in rather than at character 600: a paragraph cut in half mid-sentence
+ * comes back as two sentences that do not join up, and the join is the part
+ * nobody proof-reads.
+ *
+ * A paragraph longer than the cap on its own is sent as it is and refused by
+ * the server, which is the honest failure — better than quietly translating
+ * the first two thirds of it.
+ */
+function annChunks(text, cap) {
+  const out = [];
+  let at = "";
+  for (const para of String(text || "").split(/\n{2,}/)) {
+    if (!at) { at = para; continue; }
+    if ((at + "\n\n" + para).length <= cap) { at += "\n\n" + para; continue; }
+    out.push(at);
+    at = para;
+  }
+  if (at) out.push(at);
+  return out;
+}
+
+$("anntr").addEventListener("click", async () => {
+  const title = $("annhead").value.trim();
+  const body = $("annbody").value.trim();
+  if (!title && !body) return annSay(T("ann.need"));
+  $("anntr").disabled = true;
+  const was = $("anntr").textContent;
+  $("anntr").textContent = T("tr.working");
+  annSay("");
+  try {
+    /* The direction is detected from the text, never chosen — see the note at
+       the top of lib/translate.js. English in, Chinese out. So there is no
+       language to pass and nothing here to get the wrong way round. */
+    if (title) {
+      const t = await askTranslate(title);
+      if (t.error) throw new Error(t.error);
+      $("annheadzh").value = t.text || "";
+    }
+    if (body) {
+      const parts = [];
+      for (const chunk of annChunks(body, 560)) {
+        const t = await askTranslate(chunk);
+        if (t.error) throw new Error(t.error);
+        parts.push(t.text || "");
+      }
+      $("annbodyzh").value = parts.join("\n\n");
+    }
+    $("annzh").hidden = false;
+  } catch (err) {
+    annSay(String(err.message || "") || T("ann.bad"));
+  }
+  $("anntr").disabled = false;
+  $("anntr").textContent = was;
+});
 
 $("annpic").addEventListener("click", () => $("annfile").click());
 $("annfile").addEventListener("change", async () => {
@@ -4512,6 +4595,9 @@ $("annform").addEventListener("submit", async (e) => {
       method: "POST", headers: annHead(),
       body: JSON.stringify({
         title, body: $("annbody").value.trim(),
+        // Sent as the fields stand, translated or edited or typed by hand.
+        // Whatever is in them is what was agreed to.
+        titleZh: $("annheadzh").value.trim(), bodyZh: $("annbodyzh").value.trim(),
         photo: ANNPIC ? ANNPIC.data : "", photoType: ANNPIC ? ANNPIC.type : "",
       }),
     });

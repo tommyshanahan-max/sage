@@ -94,7 +94,7 @@
 </div>
 
 <script type="module">
-import { T, setLang, pickLang, langButton } from "/i18n.js";
+import { T, setLang, pickLang, langButton, lang } from "/i18n.js";
 import { waitBox, tally } from "/wait.js";
 
 const $ = (id) => document.getElementById(id);
@@ -118,16 +118,23 @@ function paint() {
     return;
   }
   if (!POST) return;
-  /* THE WORDS ARE NOT TRANSLATED AND THE FURNITURE IS.
-     Everything else on this board exists twice in i18n.js because the board
-     wrote it. This is one person's sentence about another person, typed once,
-     and running it through a machine would put words in their mouth in a
-     language they cannot check — in a group chat, under the board's name. So
-     the poster stays exactly as it was written and only the page around it
-     changes language. */
-  $("title").textContent = POST.title;
-  $("body").textContent = POST.body || "";
-  $("body").hidden = !POST.body;
+  /* THE READER'S OWN LANGUAGE, WHEN THE POSTER WAS WRITTEN IN IT.
+     Nothing is translated here and nothing is translated on the way out
+     either — these two fields were written in the composer, by a person, who
+     read them before pressing post. A machine's opinion of what somebody said
+     about a named person, produced behind their back in a group chat under
+     this board's name, is exactly what the composer's button exists to stop
+     being: it offers a draft, and the draft is editable.
+     Either half may be missing — somebody posting to an Australian group has
+     no use for a Chinese version — so each falls back on its own rather than
+     the pair falling back together. A Chinese headline with an English list of
+     names under it is a real poster; a Chinese headline over an empty body is
+     a bug. */
+  const zh = lang() === "zh";
+  $("title").textContent = (zh && POST.titleZh) || POST.title;
+  const body = (zh && POST.bodyZh) || POST.body || "";
+  $("body").textContent = body;
+  $("body").hidden = !body;
 }
 
 setLang(pickLang());

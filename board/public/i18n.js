@@ -3242,6 +3242,16 @@ export const STRINGS = {
     "Without one, the link shows up in WeChat as a grey box.",
     "没有图的话，链接发到微信里就是一个灰框。",
   ],
+  /* THE OTHER LANGUAGE. Offered rather than done: the button writes a draft
+     into fields that stay editable, and the line under it says to read it.
+     "Write it in Chinese" rather than "Translate" — what is being made is a
+     second poster, which he then owns, not a machine's rendering he is asked
+     to trust. */
+  "ann.tr":            ["Write it in Chinese too", "再写一版中文"],
+  "ann.trWhy": [
+    "A draft. Read it before you post — this goes out under your name, about somebody with a name.",
+    "这是草稿。发出去之前先看一遍——这是用你的名义发的，说的也是一个有名有姓的人。",
+  ],
   "ann.post":          ["Post it", "发布"],
   "ann.posting":       ["…", "…"],
   "ann.made":          ["It is up.", "已经发布了。"],

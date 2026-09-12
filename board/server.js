@@ -4648,6 +4648,12 @@ app.post("/api/announce", express.json({ limit: "36mb" }), async (req, res) => {
     }
     const row = store.cleanAnnounce({
       title, body: req.body?.body, photo, code,
+      /* The other language, as the composer agreed to send it. Taken as
+         written and not checked against the first: half a poster is a person's
+         decision to make, and a server that refused a Chinese title with an
+         English body would refuse the commonest real case — a headline worth
+         translating and three lines that are a list of names. */
+      titleZh: req.body?.titleZh, bodyZh: req.body?.bodyZh,
       by: who === "box" ? "" : who, at: new Date().toISOString(),
     });
     if (!row) return { error: "title" };
@@ -4680,7 +4686,8 @@ app.get("/api/announce", async (req, res) => {
       .slice()
       .reverse()
       .map((a) => ({
-        code: a.code, title: a.title, body: a.body, photo: a.photo,
+        code: a.code, title: a.title, body: a.body,
+        titleZh: a.titleZh, bodyZh: a.bodyZh, photo: a.photo,
         at: a.at, state: a.state, seen: a.seen, joined: joined.get(a.code) || 0,
       })),
   });
@@ -4728,7 +4735,8 @@ app.get("/api/announce/:code", async (req, res) => {
     if (row) row.seen = Math.min(9_999_999, (row.seen || 0) + 1);
     return { ok: true };
   }).catch(() => { /* a number, and the next reader adds one */ });
-  res.json({ title: a.title, body: a.body, photo: a.photo, at: a.at });
+  res.json({ title: a.title, body: a.body,
+    titleZh: a.titleZh, bodyZh: a.bodyZh, photo: a.photo, at: a.at });
 });
 
 /** THE PICTURE, AND ONLY AN ANNOUNCEMENT'S.
@@ -4784,13 +4792,28 @@ app.get("/a/:code", async (req, res, next) => {
   const proto = String(req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0];
   const host = String(req.get("host") || "").replace(/[^A-Za-z0-9.:-]/g, "").slice(0, 253);
   const origin = host ? proto + "://" + host : "";
+  /* WHICH LANGUAGE THE CARD IS IN, and a crawler cannot be asked.
+   *
+   * A chat client fetches this once, from a datacentre, with no reader and no
+   * preference — so the card is whatever is written here and there is no
+   * second chance at it. The Chinese wins when it exists, because the reason
+   * anybody wrote one is that this link is going into a Chinese group; a
+   * poster with no Chinese version is being sent somewhere else and shows the
+   * English.
+   *
+   * ?l=en forces the English for the case the rule above gets wrong: one
+   * poster, written in both, pasted into a Chinese group AND into a room full
+   * of Australian agents. The page itself always shows the reader their own
+   * language and has the switch on it — this is only about the card. */
+  const wantEn = String(req.query.l || "") === "en";
+  const zh = a && a.titleZh && !wantEn;
   return page("announce.html", req, res, next, {
-    "{{A_TITLE}}": attr(a ? a.title : "交换 · The Exchange"),
+    "{{A_TITLE}}": attr(a ? (zh ? a.titleZh : a.title) : "交换 · The Exchange"),
     /* The body is a paragraph and og:description is a line. Cut on a word,
        not mid-character, and only the first line: a poster's opening sentence
        is what somebody wrote to be read first. */
     "{{A_BODY}}": attr(a
-      ? String(a.body || "").split("\n")[0].slice(0, 160)
+      ? String((zh ? (a.bodyZh || a.body) : a.body) || "").split("\n")[0].slice(0, 160)
       : "A private board for people doing business across a border."),
     "{{A_IMAGE}}": attr(a && a.photo
       ? origin + "/api/announce-media?id=" + a.photo
