@@ -12,6 +12,19 @@ mockup is a decision written down. When the thing gets built, the argument for
 why it looks like that is in here, in the file, next to the thing it argues
 about.
 
+## reach.html
+
+One message by hand, then the board reaches them. The argument for opening
+notifications to the waiting room instead of trying to automate a personal
+WeChat account — which has no API, gets the account banned, and on this board
+the account IS the contact list.
+
+Four steps: the message you paste, what they land on, when the ask happens
+(after they finish, not on arrival), and what the board can send from then on.
+
+Not built. Both halves exist; notify.js just refuses anybody who is not a
+member, which is exactly the person who needs it.
+
 ## social.html
 
 The Social panel, from the Jrend Tap deck, pointed at the catalogue Study Pal

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reaching somebody in the waiting room</title>
+<!--
+  ONE MESSAGE BY HAND, AND THEN THE BOARD CAN REACH THEM.
+
+  The argument this file exists to make. A reach on the waiting list is a
+  WeChat id far more often than an address, and nothing on this box can send to
+  one of those: no API, and the ones that exist by driving a desktop client get
+  the account banned. For a person whose WeChat account IS their contact list,
+  that is not a trade worth making.
+
+  So the board stops trying to be a WeChat sender and does the one thing it
+  can: it gets a channel of its own, once, at the moment the person is most
+  willing to give it.
+
+  THE MOMENT MATTERS. Nobody grants notifications to an app they have not seen.
+  They grant them to an app that has just told them something they wanted to
+  hear — and "your turn came up" is the only thing this board ever says that
+  somebody has been waiting three weeks for. Asking then is asking at the one
+  moment the answer is yes.
+
+  WHAT IT REPLACES: Tom, remembering, in a chat window, at midnight.
+-->
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FA; --ink:#101828; --ink-2:#344054;
+    --muted:#667085; --line:#E4E7EC; --accent:#3F68D8; --accent-ink:#fff;
+    --accent-soft:#E8ECF7; --wx:#07C160;
+    --serif:ui-serif,Georgia,"Songti SC",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    padding:2.4rem 1.15rem 4rem}
+  .wrap{max-width:70rem;margin:0 auto}
+  h1{font-family:var(--serif);font-weight:400;font-size:2rem;margin:0 0 .3rem}
+  .lede{margin:0 0 .4rem;color:var(--ink-2);font-size:1rem;max-width:44rem;line-height:1.6}
+  .sub{margin:0 0 2.6rem;color:var(--muted);font-size:.88rem;max-width:44rem;line-height:1.6}
+  .flow{display:flex;gap:1.1rem;align-items:flex-start;flex-wrap:wrap}
+  .step{flex:1 1 15rem;min-width:15rem;position:relative}
+  .n{display:flex;align-items:center;gap:.55rem;margin:0 0 .7rem}
+  .n b{width:1.6rem;height:1.6rem;border-radius:50%;background:var(--accent);
+    color:var(--accent-ink);display:grid;place-items:center;font-size:.82rem;
+    font-weight:500;flex:0 0 auto}
+  .n span{font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+  .who{margin:.7rem 0 0;font-size:.8rem;color:var(--muted);line-height:1.55}
+  .who em{font-style:normal;color:var(--ink-2)}
+
+  /* A phone, drawn rather than photographed, so it costs nothing to load. */
+  .ph{border:1px solid var(--line);border-radius:1.5rem;background:var(--raise);
+    padding:.5rem;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+  .scr{background:#fff;border-radius:1.1rem;overflow:hidden;min-height:20rem;
+    display:flex;flex-direction:column}
+
+  /* 1 — the chat */
+  .wxtop{background:#EDEDED;padding:.5rem .7rem;font-size:.76rem;color:#333;
+    border-bottom:1px solid #E0E0E0;text-align:center}
+  .wxbody{background:#EDEDED;flex:1;padding:.8rem .7rem}
+  .bub{background:#fff;border-radius:.5rem;padding:.6rem .7rem;font-size:.78rem;
+    line-height:1.55;max-width:92%;color:#181818}
+  .bub a{color:var(--accent);text-decoration:none;word-break:break-all}
+  .bub .gap{height:.55rem}
+
+  /* 2 — the waiting room */
+  .apptop{padding:.9rem .85rem .4rem}
+  .apptop h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.15rem}
+  .apptop p{margin:.15rem 0 0;font-size:.74rem;color:var(--muted)}
+  .card{margin:.7rem .85rem;padding:.75rem .8rem;border-radius:.8rem;
+    background:var(--accent-soft);border:1px solid rgba(63,104,216,.22)}
+  .card b{display:block;font-weight:500;font-size:.86rem;margin:0 0 .2rem}
+  .card p{margin:0;font-size:.75rem;line-height:1.5;color:var(--ink-2)}
+  .todo{margin:.2rem .85rem;padding:0;list-style:none}
+  .todo li{display:flex;gap:.5rem;align-items:center;padding:.5rem 0;
+    border-bottom:1px solid var(--line);font-size:.8rem}
+  .todo li:last-child{border-bottom:0}
+  .tick{width:1.05rem;height:1.05rem;border-radius:50%;border:1.5px solid var(--line);
+    flex:0 0 auto}
+  .tick.on{background:var(--accent);border-color:var(--accent)}
+  .clock{margin:.5rem .85rem 0;font-size:.72rem;color:var(--muted)}
+
+  /* 3 — the ask */
+  .bell{display:flex;gap:.6rem;align-items:flex-start;margin:.7rem .85rem;
+    padding:.75rem .8rem;border-radius:.8rem;background:var(--accent-soft);
+    border:1px solid rgba(63,104,216,.22)}
+  .bico{width:1.8rem;height:1.8rem;border-radius:50%;background:var(--accent);
+    color:#fff;display:grid;place-items:center;flex:0 0 auto;font-size:.9rem}
+  .bell b{display:block;font-size:.82rem;font-weight:500;margin:0 0 .1rem}
+  .bell p{margin:0 0 .5rem;font-size:.72rem;line-height:1.45;color:var(--ink-2)}
+  .on2{border:0;background:var(--accent);color:#fff;border-radius:99px;
+    padding:.35rem .8rem;font:inherit;font-size:.75rem}
+  .later{border:0;background:none;color:var(--muted);font:inherit;font-size:.72rem;
+    padding:.35rem .3rem}
+
+  /* 4 — the lock screen */
+  .lock{background:linear-gradient(165deg,#20293a,#0e131d);flex:1;
+    padding:1.6rem .7rem;display:flex;flex-direction:column;gap:.7rem}
+  .lockt{text-align:center;color:#fff;font-weight:200;font-size:2.6rem;
+    letter-spacing:-.02em;margin:.4rem 0 1rem}
+  .note{background:rgba(255,255,255,.16);border-radius:.75rem;padding:.55rem .65rem;
+    backdrop-filter:blur(8px)}
+  .note .h{display:flex;gap:.4rem;align-items:center;font-size:.66rem;
+    color:rgba(255,255,255,.7);margin:0 0 .2rem}
+  .note .h i{width:.9rem;height:.9rem;border-radius:.2rem;background:var(--accent);
+    display:inline-block}
+  .note b{display:block;color:#fff;font-size:.76rem;font-weight:500}
+  .note p{margin:.1rem 0 0;color:rgba(255,255,255,.82);font-size:.72rem;line-height:1.4}
+
+  .after{margin:3rem 0 0;padding:1.4rem 1.5rem;border-radius:1rem;
+    background:var(--raise);border:1px solid var(--line);max-width:52rem}
+  .after h3{margin:0 0 .5rem;font-family:var(--serif);font-weight:400;font-size:1.15rem}
+  .after p{margin:0 0 .7rem;font-size:.88rem;line-height:1.6;color:var(--ink-2)}
+  .after ul{margin:0;padding-left:1.1rem;font-size:.88rem;line-height:1.7;color:var(--ink-2)}
+  .after b{font-weight:500;color:var(--ink)}
+  .no{margin:1rem 0 0;font-size:.84rem;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>One message by hand, then the board reaches them</h1>
+  <p class="lede">
+    Nothing here can send to a WeChat id. So the board asks for a channel of its
+    own — once, at the only moment somebody actually wants to hear from it.
+  </p>
+  <p class="sub">
+    Not built. The waiting room and the notifications both exist; what is missing
+    is that the switch is members-only, so the person who most needs it cannot
+    reach it.
+  </p>
+
+  <div class="flow">
+    <div class="step">
+      <div class="n"><b>1</b><span>You, once</span></div>
+      <div class="ph"><div class="scr">
+        <div class="wxtop">Wei</div>
+        <div class="wxbody">
+          <div class="bub">
+            Wei — your turn came up.
+            <div class="gap"></div>
+            You can see who is in there now. Finish your own page first: a photo,
+            and one line saying what you are and what you are looking for.
+            <div class="gap"></div>
+            <a href="#">thexchange.app/room</a>
+          </div>
+        </div>
+      </div></div>
+      <p class="who"><em>make waiting-tell ID=…</em> writes it. You paste it into
+        WeChat. This is the only handmade step, and it happens once per person.</p>
+    </div>
+
+    <div class="step">
+      <div class="n"><b>2</b><span>They open it</span></div>
+      <div class="ph"><div class="scr">
+        <div class="apptop">
+          <h2>Your turn</h2>
+          <p>You can look around while you finish this.</p>
+        </div>
+        <div class="card">
+          <b>You are in the waiting room</b>
+          <p>Nothing works for you yet. That is not you doing it wrong.</p>
+        </div>
+        <ul class="todo">
+          <li><span class="tick on"></span> A photo</li>
+          <li><span class="tick"></span> I am a … looking for a …</li>
+        </ul>
+        <p class="clock">Three days left. The clock started when you opened this.</p>
+      </div></div>
+      <p class="who">The clock starts <em>here</em>, not when they were lifted —
+        so nothing is spent while the message sits unread.</p>
+    </div>
+
+    <div class="step">
+      <div class="n"><b>3</b><span>The ask</span></div>
+      <div class="ph"><div class="scr">
+        <div class="apptop">
+          <h2>Your turn</h2>
+          <p>You can look around while you finish this.</p>
+        </div>
+        <div class="bell">
+          <span class="bico">&#9679;</span>
+          <div>
+            <b>Know when somebody writes</b>
+            <p>Your phone buzzes. Nothing is in it but that — no name, no message.</p>
+            <button class="on2">Turn on</button>
+            <button class="later">Not now</button>
+          </div>
+        </div>
+        <ul class="todo">
+          <li><span class="tick on"></span> A photo</li>
+          <li><span class="tick on"></span> I am a Performer looking for an Agent</li>
+        </ul>
+        <p class="clock">Done. Somebody will read this.</p>
+      </div></div>
+      <p class="who"><em>Asked after they finish, not before.</em> Nobody grants
+        notifications to an app they have not seen — they grant them to one that
+        just told them something they had waited three weeks for.</p>
+    </div>
+
+    <div class="step">
+      <div class="n"><b>4</b><span>From then on</span></div>
+      <div class="ph"><div class="scr">
+        <div class="lock">
+          <div class="lockt">9:41</div>
+          <div class="note">
+            <p class="h"><i></i> THE EXCHANGE</p>
+            <b>Two days left</b>
+            <p>Finish your page and somebody will read it.</p>
+          </div>
+          <div class="note">
+            <p class="h"><i></i> THE EXCHANGE</p>
+            <b>You are in</b>
+            <p>Ivy vouched for you.</p>
+          </div>
+        </div>
+      </div></div>
+      <p class="who">No WeChat, no API, no account to get banned. The board owns
+        the channel and it costs nothing to send.</p>
+    </div>
+  </div>
+
+  <div class="after">
+    <h3>What has to change</h3>
+    <p>
+      Both halves are built. The switch simply refuses the people who need it:
+      <b>notify.js</b> draws nothing unless the reader is a member, and somebody
+      in the waiting room is not one.
+    </p>
+    <ul>
+      <li><b>Let the waiting room subscribe.</b> The gate already allows their
+        own writes; <code>/api/push/on</code> joins <code>/api/wait/*</code> as
+        something they may do.</li>
+      <li><b>Ask after the page is finished, not on arrival.</b> An ask before
+        they have seen anything is the prompt that gets refused for ever.</li>
+      <li><b>Then the clock can speak for itself</b> — one buzz at twenty-four
+        hours left, which is the difference between somebody being swept back
+        and somebody remembering.</li>
+    </ul>
+    <p class="no">
+      What this is instead of: automating a personal WeChat account. There is no
+      API for one, the libraries that fake it get the account banned, and on this
+      board the account is the contact list. Not a trade worth making for a
+      notification.
+    </p>
+  </div>
+</div>
+</body>
+</html>
