@@ -397,7 +397,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -531,6 +531,10 @@ app.use(async (req, res, next) => {
     }
     if (req.method === "GET") return next();
     if (/^\/api\/wait\//.test(req.path)) return next();
+    /* Kept, though OPEN_PATHS now lets /api/butler past before this line ever
+       runs. It documents the intent at the place somebody will look, and if
+       the path is ever taken back out of OPEN_PATHS the waiting room does not
+       silently lose him again. */
     /* THE DOORMAN, WHO IS FOR EXACTLY THESE PEOPLE.
      *
      * Mo lives on the waiting room screen and his whole job is getting a
