@@ -910,6 +910,24 @@ export function cleanPerson(raw) {
     // so it does not go public before somebody has looked.
     photo: /^[a-f0-9]{20}$/.test(String(raw.photo || "")) ? String(raw.photo) : "",
     cover: /^[a-f0-9]{20}$/.test(String(raw.cover || "")) ? String(raw.cover) : "",
+    /* WHERE THE FACE IS IN THE FRAME, top to bottom, as a percentage.
+     *
+     * A card is a tall rectangle and a photograph is whatever shape the phone
+     * took it in, so one of them gets cropped. Centred is the right default
+     * and it is wrong for the commonest photograph there is — somebody
+     * standing, head near the top — which comes out as a picture of a chest.
+     *
+     * 0 is the top of the photograph and 100 the bottom, which is what
+     * object-position means, so the number goes straight into CSS with nothing
+     * to convert and nothing to get backwards later.
+     *
+     * Vertical only. Faces end up too high or too low; almost nobody needs to
+     * slide a portrait sideways, and a second axis is a second thing to
+     * explain on a screen that should be one drag. */
+    photoAt: (() => {
+      const n = Math.round(Number(raw.photoAt));
+      return Number.isFinite(n) && n >= 0 && n <= 100 ? n : 50;
+    })(),
     // Whether those two have been through the queue. Kept apart from `state`
     // because the words are useful long before the picture is: a profile can be
     // live and readable while its photograph is still waiting.

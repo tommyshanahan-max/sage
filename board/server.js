@@ -4963,6 +4963,9 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
     /* "li" takes 200 rather than 120: a LinkedIn share URL is long, and a save
        that truncated the link before cleanPerson could read the slug out of it
        would silently drop the field. */
+    // Where the face sits in the frame. A number, so it is set apart from the
+    // text fields below rather than being sliced to 120 characters.
+    if (req.body.photoAt !== undefined) q.photoAt = Number(req.body.photoAt);
     for (const k of ["handle", "level", "campus", "goal", "trade", "here", "age", "type", "levelBand", "ig", "li"]) {
       if (req.body[k] !== undefined) {
         q[k] = String(req.body[k]).slice(0, k === "goal" ? 600 : k === "li" ? 200 : 120);

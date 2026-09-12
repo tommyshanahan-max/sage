@@ -854,6 +854,10 @@ export const STRINGS = {
   "art.maker":         ["a Manufacturer", "工厂"],
   "art.buyer":         ["a Buyer", "采购方"],
   "art.brand":         ["a Brand", "品牌方"],
+  /* Under the crop box. Says what to do and nothing about why — the box is
+     the card's own shape, so the reason is visible. */
+  "me.cropSay":        ["Drag the photo to move your face into the frame.",
+                        "拖一下照片，把脸挪到框里合适的位置。"],
 
   /* The app's own chrome, drawn round the card. Taken from the real screens so
      somebody who joins recognises the page they were shown. */

@@ -334,6 +334,15 @@
   .mepic .in{position:absolute;inset:0;border-radius:50%;overflow:hidden;
     display:grid;place-items:center}
   .mepic img{width:100%;height:100%;object-fit:cover;display:block}
+  /* The card's own proportions, so this is not an approximation of the crop —
+     it is the crop. */
+  .crop{margin:.2rem 0 .1rem}
+  .cropbox{position:relative;margin:0 auto;width:min(15rem,72vw);aspect-ratio:4/5;
+    border-radius:1rem;overflow:hidden;background:var(--raise);cursor:grab;
+    touch-action:none}
+  .cropbox.hold{cursor:grabbing}
+  .cropbox img{width:100%;height:100%;object-fit:cover;display:block;
+    user-select:none;-webkit-user-drag:none;pointer-events:none}
   .mepic .plus{position:absolute;right:-1px;bottom:-1px;width:1.5rem;height:1.5rem;
     border-radius:50%;background:var(--accent);color:var(--accent-ink);
     display:grid;place-items:center;font-size:1rem;font-family:var(--sans);
@@ -2206,6 +2215,18 @@
       <span class="in" id="mepicin"></span><span class="plus">+</span>
     </button>
     <p class="menote" id="mepicsay"></p>
+
+    <!-- WHERE THE FACE SITS, dragged rather than typed.
+         A card is a tall rectangle and a photograph is whatever shape the
+         phone took it in, so one of them gets cropped. Centred is right for
+         most and wrong for the commonest photograph there is — somebody
+         standing, head near the top — which comes out as a picture of a chest.
+         Shown at the card's own shape, so what is dragged here is exactly what
+         everybody else will see. Hidden until there is a photograph to move. -->
+    <div class="crop" id="crop" hidden>
+      <div class="cropbox" id="cropbox"><img id="cropimg" alt=""></div>
+      <p class="menote" id="cropsay"></p>
+    </div>
 
     <!-- A photograph and a name. That is the whole form.
          Everything else was asked for at the same moment and none of it was
@@ -6196,6 +6217,9 @@ function personCard(q, live) {
   if (q.photo) {
     const img = Object.assign(document.createElement("img"),
       { src: "/api/public-media?id=" + encodeURIComponent(q.photo), alt: "", loading: "eager" });
+    // Where they put the face. Absent or nonsense means the middle, which is
+    // what object-fit does on its own.
+    if (Number.isFinite(Number(q.photoAt))) img.style.objectPosition = "50% " + Number(q.photoAt) + "%";
     img.addEventListener("error", () => { img.remove(); box.prepend(el("div", "noshot", initial(q.handle))); });
     box.append(img);
   } else {
@@ -7180,9 +7204,68 @@ for (const [input, key] of [["mephoto", "photo"]]) {
   });
 }
 
+/* ---- WHERE THE FACE SITS -------------------------------------------------
+ *
+ * Dragged, not typed. A slider would be a number somebody has to map onto a
+ * picture in their head; dragging the picture is the picture moving.
+ *
+ * SAVED WHEN THE DRAG ENDS, not while it moves — a request per pixel is a
+ * request per pixel. The board redraws from the local number immediately, so
+ * it is the network that waits, not the person.
+ *
+ * touch-action:none on the box, so a vertical drag on a phone moves the face
+ * instead of scrolling the sheet. That is the one line that makes this work at
+ * all on the device most of these photographs were taken on.
+ */
+let cropAt = 50, cropFrom = 0, cropWas = 50;
+
+function drawCrop() {
+  const wrap = $("crop"), img = $("cropimg");
+  const has = Boolean(ME && ME.photo);
+  wrap.hidden = !has;
+  if (!has) return;
+  cropAt = Number(ME.photoAt);
+  if (!Number.isFinite(cropAt)) cropAt = 50;
+  img.src = "/api/public-media?id=" + encodeURIComponent(ME.photo);
+  img.style.objectPosition = "50% " + cropAt + "%";
+  $("cropsay").textContent = T("me.cropSay");
+}
+
+(() => {
+  const box = $("cropbox"), img = $("cropimg");
+  if (!box) return;
+  const at = (v) => {
+    cropAt = Math.max(0, Math.min(100, Math.round(v)));
+    img.style.objectPosition = "50% " + cropAt + "%";
+  };
+  box.addEventListener("pointerdown", (e) => {
+    if (!(ME && ME.photo)) return;
+    box.setPointerCapture(e.pointerId);
+    box.classList.add("hold");
+    cropFrom = e.clientY; cropWas = cropAt;
+  });
+  box.addEventListener("pointermove", (e) => {
+    if (!box.hasPointerCapture || !box.classList.contains("hold")) return;
+    /* Dragging DOWN should bring the top of the photograph into view, which
+       means the percentage goes down — the opposite of the finger. Backwards
+       once and it feels broken in a way nobody can name. */
+    at(cropWas - ((e.clientY - cropFrom) / box.clientHeight) * 100);
+  });
+  const done = async () => {
+    if (!box.classList.contains("hold")) return;
+    box.classList.remove("hold");
+    if (!ME || cropAt === Number(ME.photoAt)) return;
+    const out = await saveMe({ photoAt: cropAt });
+    if (out && out.error) alert(out.error);
+  };
+  box.addEventListener("pointerup", done);
+  box.addEventListener("pointercancel", done);
+})();
+
 /* The avatar inside the editor. Same picture, same picker, drawn from ME so it
  * updates the moment the upload comes back. */
 function drawMePic() {
+  drawCrop();
   const box = $("mepicin");
   fill(box);
   if (ME && ME.photo) {
