@@ -32,6 +32,57 @@ const RED = "#B22A1F";
 const TAN = "#B08A6A";
 const DIM = "#6A5A4B";
 
+/* ---- THE WAY BACK ---------------------------------------------------------
+ *
+ * The card used to print "thexchange.app" as a line of text and stop there.
+ * Somebody seeing it in a WeChat group had to read the address, leave the
+ * app, open a browser and type it — four steps, in a group they were
+ * half-scrolling — and a poster nobody can act on is a poster that does
+ * nothing. Scanning a code is the most-used gesture in the app this gets
+ * posted into; it is one step and it is already a reflex.
+ *
+ * THE MATRIX IS WRITTEN OUT, NOT ENCODED HERE. The address never changes, so
+ * shipping a QR encoder to every phone to compute the same 625 bits each time
+ * is a few hundred lines of Reed-Solomon and bit-masking that can only ever
+ * be wrong. It is a constant, it lives here as one, and you can read the
+ * finder squares in the source.
+ *
+ * https://thexchange.app — version 2, error correction M, 25×25. With the
+ * scheme, so a scanner opens it rather than searching for it. Regenerate with
+ * the `qrcode` package if the address ever moves:
+ *   node -e 'const q=require("qrcode").create("https://thexchange.app",
+ *     {errorCorrectionLevel:"M"});const n=q.modules.size;for(let y=0;y<n;y++){
+ *     let r="";for(let i=0;i<n;i++)r+=q.modules.data[y*n+i]?"#":".";
+ *     console.log(r)}'
+ */
+const QR = [
+  "#######.#######...#######",
+  "#.....#.######..#.#.....#",
+  "#.###.#.##...##...#.###.#",
+  "#.###.#..##..##.#.#.###.#",
+  "#.###.#.#.#.###.#.#.###.#",
+  "#.....#..#..###.#.#.....#",
+  "#######.#.#.#.#.#.#######",
+  ".............####........",
+  "#..#######..#.#.##..#.###",
+  "..####..##.#..##...#####.",
+  "##..#####.....####..##..#",
+  "#...#..#.#.##.#.####.####",
+  "#...#.##..##...##.#.....#",
+  "#.####..#.#.##.##...#..#.",
+  "###.#.####...#.####.#####",
+  "#..###.#.##.#.#.####.##.#",
+  "#....##....###..#####.##.",
+  "........####..#.#...#.##.",
+  "#######.##..###.#.#.#...#",
+  "#.....#.##.#.####...#....",
+  "#.###.#.##.#.#.######..##",
+  "#.###.#.#...####.##....##",
+  "#.###.#..###.#.#....#####",
+  "#.....#..#.###...#.##.###",
+  "#######.##.###..###..#..#",
+];
+
 const SERIF = 'Georgia,"Songti SC","Noto Serif CJK SC","Times New Roman",serif';
 const SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",'
   + '"Hiragino Sans GB","Microsoft YaHei",sans-serif';

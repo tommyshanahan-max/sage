@@ -112,30 +112,19 @@ export const STRINGS = {
     "还没开放——你在等候室里。先把自己的主页填好，会有人来看。",
   ],
   "wroom.head": ["You are in the waiting room", "你在等候室"],
-  /* THREE SENTENCES, THEN ONE, THEN THIS.
-     It explained that nothing working is not their fault, and then that
-     finishing the page is what somebody reads. Both true, and both saying in
-     prose what the ticked list two lines below says as a list. So the prose
-     stops at the one fact the list cannot carry — that the app is dead for
-     them — and hands straight over.
-     Counted, because "1 things left" is the sort of thing a person reading
-     with half their attention does notice. Same reason act.reply1 exists. */
-  "wroom.body2": [
-    "Nothing works yet. Two things left \u2014",
-    "现在什么都点不动。还差两样——",
-  ],
-  "wroom.body1": [
-    "Nothing works yet. One thing left \u2014",
-    "现在什么都点不动。还差一样——",
-  ],
-  /* WHAT IS LEFT AND HOW LONG THERE IS. The server has been sending all
-     three of these since the waiting room was built and no page drew any of
-     them, so being moved up was a grey line saying the buttons do not work
-     yet. "Finish your page" with no idea what is missing is a demand. */
-  "wroom.needPhoto":   ["A photo", "一张照片"],
-  /* "What you are and what you are looking for" was eight words on a tick
-     item read at a glance. The board calls it the sentence everywhere else. */
-  "wroom.needSay":     ["Your sentence", "一句话"],
+  /* "Nothing works yet. One thing left —" went with the tick list under it.
+     It was a heading, then prose, then a list of two with one already ticked
+     — four things to read before reaching the one that mattered. The count
+     is the heading now and the rest is a button. */
+  /* THE COUNT, AND THEN A BUTTON EACH. This was a tick list — "○ A photo",
+     "✓ Your sentence" — under a line of prose, on a screen with a clock
+     running. An empty circle beside two words is a status; somebody on a
+     deadline needs an instruction. The count is the heading now and every
+     outstanding item is a button, so needPhoto/needSay are gone: the buttons
+     say what they do (wr.photoAdd, and needSayGo below). */
+  "wroom.needOne":     ["One thing left", "还差一样"],
+  "wroom.needTwo":     ["Two things left", "还差两样"],
+  "wroom.needSayGo":   ["Write your sentence", "写你那句话"],
   /* The clock only appears once it is running — it starts when they open it,
      not when they were moved up, so before that there is honestly no deadline
      to name. */

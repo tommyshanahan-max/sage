@@ -514,12 +514,13 @@ app.use(async (req, res, next) => {
    * Whoever runs the board reads what they wrote and decides. */
   const upRow = await inWaitingRoom(req);
   if (upRow) {
-    /* THE CLOCK STARTS HERE, ONCE. The first request this browser makes while
-       they are up is the moment they saw it — there is no other signal, and
-       waiting for them to press something would start the clock at the second
-       thing they did rather than the first.
-       Not awaited: a page load must not wait on a write, and a stamp that
-       lands a second late costs nothing. */
+    /* THE CLOCK IS STARTED IN /api/wait/me, NOT HERE. This line is several
+       lines below `if (OPEN_PATHS.test(req.path)) return next()`, and
+       OPEN_PATHS matches both /room and /api/wait — so for the person this
+       stamp is about it never ran. It is kept as a backstop for any other
+       path they reach; the real one is in /api/wait/me, where seeing the
+       clock and starting it are the same event.
+       Not awaited: a page load must not wait on a write. */
     if (!upRow.upSeen) {
       change((board) => {
         const w = board.waits.find((x) => x.id === upRow.id);
@@ -3109,6 +3110,33 @@ app.get("/api/wait/me", async (req, res) => {
   if (me && board.people.some((q) => q.by === me)) return res.json({ inside: true });
 
   if (!mine) return res.json({ on: false });
+
+  /* THE CLOCK STARTS HERE, AND IT WAS NOT STARTING ANYWHERE.
+   *
+   * It was stamped in the gate middleware, which never runs for these people:
+   * OPEN_PATHS matches /room and /api/wait and returns next() several lines
+   * ABOVE the stamp. So the two things somebody in the waiting room actually
+   * does — open the room, and this request — both skipped it, and upSeen was
+   * only ever written when they tapped something behind the door and got
+   * refused. Somebody who opened the room, read the band and closed it had no
+   * deadline at all; somebody who poked at /browse started a 72-hour clock by
+   * accident, at whatever moment they happened to poke.
+   *
+   * This request is the honest signal: it is the one every waiting-room page
+   * load makes, and it is the request that hands back the number of hours
+   * left. Seeing the clock and starting the clock are now the same event.
+   *
+   * Not awaited — a page load must not wait on a write, and this response
+   * carries upLeft from the row as it was read, so the first load says the
+   * full 72 and the stamp lands a moment later. */
+  if (mine.up && !mine.upSeen && !mine.done) {
+    change((board) => {
+      const w = board.waits.find((x) => x.id === mine.id);
+      if (!w || w.upSeen) return null;
+      w.upSeen = new Date().toISOString();
+      return { ok: true };
+    }).catch(() => { /* the next load stamps it */ });
+  }
 
   /* HOW MANY ARE AHEAD, and it is a queue position rather than a ranking.
      Everybody still waiting who is in front of them — by when they asked,

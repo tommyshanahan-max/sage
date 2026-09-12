@@ -50,6 +50,19 @@
   .wrband{margin:1rem 0 0;padding:.85rem .95rem;border-radius:.75rem;
     background:var(--accent-soft);font-size:.86rem;color:var(--ink-2);
     line-height:1.5}
+  /* THE COUNT, AT A SIZE SOMEBODY READS FROM ARM'S LENGTH. It was body text
+     over a tick list, which on a screen with a clock running is a status
+     panel — glanced at, not acted on. */
+  .wrband b.big{display:block;font-size:1.35rem;line-height:1.2;
+    color:var(--ink);font-weight:600;margin:0 0 .1rem}
+  /* AND THE THING THAT CLEARS IT, AS A BUTTON. Full width, because the whole
+     point is that it cannot be mistaken for a label — an empty circle beside
+     the words "A photo" is a status, and this is an instruction. */
+  .wrgo{display:block;width:100%;margin:.7rem 0 0;border:0;border-radius:.7rem;
+    background:var(--ink);color:var(--paper);font:inherit;font-size:1rem;
+    font-weight:600;padding:.8rem 1rem;cursor:pointer}
+  .wrgo + .wrgo{margin-top:.5rem}
+  .wrgo:active{transform:translateY(1px)}
   /* ---- THE ARRIVAL --------------------------------------------------------
    *
    * The page opened on "You are on the list." — true, and the middle of a
@@ -167,10 +180,9 @@
     border:1px solid var(--goldline,#E5D4A8)}
   .wrband .clock{display:block;margin:.4rem 0 0;font-size:.8rem;font-weight:600;
     color:var(--gold,#8A6A1F)}
-  .wrband .todo{margin:.5rem 0 0;padding:0;list-style:none;font-size:.84rem}
-  .wrband .todo li{margin:.15rem 0;color:var(--ink-2)}
-  .wrband .todo li.on{color:var(--good,#1F7A4D)}
-  .wrband .todo i{font-style:normal;margin-right:.4rem}
+  /* The clock goes UNDER the buttons and stays small. It is the pressure, not
+     the instruction — a deadline set in the same size as the thing to do
+     makes somebody read the deadline twice and the instruction not at all. */
 
   /* ---- THE BUTLER ---------------------------------------------------------
    *
@@ -1988,22 +2000,54 @@ function drawWait(box) {
   if (DATA.up) {
     band.className = "wrband up";
     fill(band);
-    band.append(el("b", null, T("wroom.head")));
-    /* The list below carries what is missing, so this says only the thing the
-       list cannot: the app is dead for them. Gone entirely once both are
-       ticked — at that point the clock line says they are finished and a line
-       about nothing working would be the last thing they read. */
-    const left = (you.photo ? 0 : 1) + (you.me && you.want ? 0 : 1);
-    if (left) band.append(document.createTextNode(T(left > 1 ? "wroom.body2" : "wroom.body1")));
-    const todo = el("ul", "todo");
-    const item = (done, key) => {
-      const li = el("li", done ? "on" : "");
-      li.append(el("i", null, done ? "✓" : "○"), document.createTextNode(T(key)));
-      return li;
-    };
-    todo.append(item(Boolean(you.photo), "wroom.needPhoto"));
-    todo.append(item(Boolean(you.me && you.want), "wroom.needSay"));
-    band.append(todo);
+
+    /* A COUNT AND THE BUTTONS THAT CLEAR IT.
+     *
+     * This was a heading, a line of prose, and a tick list: "You are in the
+     * waiting room / Nothing works yet. One thing left — / ○ A photo / ✓ Your
+     * sentence". Four facts, none of them a thing to press, and the one that
+     * matters — go and add a photograph — was a small empty circle in a list.
+     * It read as a status panel on a screen where somebody is on a clock, and
+     * a status panel is a thing you glance at, not a thing you act on.
+     *
+     * So the count is the heading, and every outstanding item is a button
+     * that does it. A tick list of one is not a list, and a list of two where
+     * one is already ticked is a list of one with a distraction on it — the
+     * finished half is not news, so it is not drawn at all.
+     */
+    const todo = [];
+    if (!you.photo) todo.push({ key: "wr.photoAdd", go: "photo" });
+    if (!(you.me && you.want)) todo.push({ key: "wroom.needSayGo", go: "say" });
+
+    if (!todo.length) {
+      /* Finished. Nothing to press and nothing to count — the clock line
+         below carries the only thing still true. */
+      band.append(el("b", null, T("wroom.head")));
+    } else {
+      band.append(el("b", "big", T(todo.length > 1 ? "wroom.needTwo" : "wroom.needOne")));
+      for (const t of todo) {
+        const go = el("button", "wrgo", T(t.key));
+        go.type = "button";
+        go.addEventListener("click", () => {
+          const card = document.querySelector(".pc");
+          if (t.go === "photo") {
+            /* Straight into the picker. click() on the card runs the handler
+               the card already has, and it is still inside this tap's user
+               gesture — which is what iOS requires before it will open a file
+               chooser at all. */
+            if (card) card.click();
+            return;
+          }
+          /* The sentence is a form further down the page. Nothing to open, so
+             put it in front of them. */
+          const form = document.querySelector(".wrq, .pcpills, .under");
+          const to = form || card;
+          if (to) { try { to.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* old browser */ } }
+        });
+        band.append(go);
+      }
+    }
+
     if (DATA.upDone) band.append(el("span", "clock", T("wroom.done")));
     else if (typeof DATA.upLeft === "number") {
       band.append(el("span", "clock", T("wroom.left", { n: DATA.upLeft })));
@@ -2057,7 +2101,9 @@ function drawWait(box) {
      What stays in the flow is the way BACK. Somebody who sent him away has
      no floating button to press, so the offer to have him back has to live
      somewhere a person can find it, and it lives where he used to be. */
-  if (DATA.butler && !(you.me && you.want) && moOff()) {
+  /* The way back to him, for somebody who sent him away and has no floating
+     button left to press. Whatever state they are in — see moFloat. */
+  if (DATA.butler && moOff()) {
     if (!BUT) BUT = butlerStart();
     box.append(butlerShut());
   }
@@ -2408,13 +2454,17 @@ function draw() {
   else drawYou(box);
 
   /* MO, LAST, because he is not in the page — see moFloat. Only when the box
-     has a key for him (butler.configured(), or a panel that offers a
-     conversation and answers 503 is worse than no panel), and only while the
-     sentence is still missing: somebody who has finished does not need a
-     doorman floating over the screen offering to help them finish. */
-  const you = DATA.you || {};
-  if (DATA.butler && !(you.me && you.want) && !BUT) BUT = butlerStart();
-  moFloat(Boolean(DATA.butler) && !(you.me && you.want));
+     has a key for him: butler.configured(), because a doorman who answers
+     503 is worse than no doorman.
+     AND WHATEVER STATE THEY ARE IN. He used to go the moment the sentence
+     was filled in — "somebody who has finished does not need help
+     finishing", which was true of a panel taking up a third of the screen
+     and is not true of a circle in the corner. Finishing the sentence is
+     when the questions start: how long, who reads it, what happens next.
+     A doorman who leaves once you are through the door is a doorman you
+     cannot ask anything. */
+  if (DATA.butler && !BUT) BUT = butlerStart();
+  moFloat(Boolean(DATA.butler));
 
   /* NOT WHILE HE IS OPEN. draw() runs on every turn of the conversation, and
      yanking the page behind the sheet back to the top each time means the
