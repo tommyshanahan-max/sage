@@ -36,13 +36,18 @@ console.log("");
 console.log("  Two lines for .env on the box. The private one is a secret and");
 console.log("  belongs nowhere else — not in a commit, not in a chat.");
 console.log("");
-console.log("BOARD_VAPID_PUBLIC=" + b64(point));
-console.log("BOARD_VAPID_PRIVATE=" + priv.d);
+/* THE NAMES .env ON THE BOX ACTUALLY USES, which are not the names the
+   container sees. docker-compose maps TOMSCODING_BOARD_VAPID_PUBLIC into
+   BOARD_VAPID_PUBLIC, and printing the inner name gave two lines that could be
+   pasted straight into .env and do absolutely nothing — no error, no warning,
+   and a switch that stays hidden for a reason nobody could see. */
+console.log("TOMSCODING_BOARD_VAPID_PUBLIC=" + b64(point));
+console.log("TOMSCODING_BOARD_VAPID_PRIVATE=" + priv.d);
 console.log("");
 console.log("  And a contact address for the push services, so they have");
 console.log("  somebody to write to. Yours, never a member's:");
 console.log("");
-console.log("BOARD_VAPID_SUBJECT=mailto:you@example.com");
+console.log("TOMSCODING_BOARD_VAPID_SUBJECT=mailto:you@example.com");
 console.log("");
 console.log("  Mint these ONCE. A new pair orphans every subscription there is.");
 console.log("");
