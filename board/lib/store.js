@@ -1254,6 +1254,38 @@ export function cleanShut(raw) {
   return { by, who, at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
 }
 
+/* ONE PERSON NOT WANTING TO SEE ANOTHER.
+ *
+ * WHY THIS IS A ROW NOW AND WAS NOT BEFORE. The old block lived in
+ * localStorage, and the comment above it in index.html gave a good reason:
+ * "there are no accounts here, so a block cannot be a thing done TO somebody
+ * — it is a thing done to your own copy of the board." That was true when it
+ * was written. It is not any more: follows, cards, grants and shuts are all
+ * keyed to a person, and `shuts` in particular already does exactly this shape
+ * of thing on the server.
+ *
+ * AND THE BROWSER VERSION HAD STOPPED WORKING. It was only ever applied to
+ * POSTS — one filter, in the feed's list — and the feed is off. Browse has
+ * never consulted it. So the "also block them" checkbox under a report has
+ * been writing to a set nothing reads, which is the worst state for a safety
+ * control to be in: present, pressed, and doing nothing.
+ *
+ * NOT THE SAME AS A SHUT, and the difference is the whole design:
+ *   shut   is MUTUAL and about one conversation. Either side ends it, neither
+ *          can write again, and both of them know.
+ *   block  is ONE WAY and about a person. They leave your Browse and they
+ *          cannot write to you. You do not leave theirs, and they are never
+ *          told — a block somebody is notified about is a block people are
+ *          afraid to use.
+ */
+export function cleanBlock(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const by = String(raw.by || "").slice(0, 64);
+  const who = String(raw.who || "");
+  if (!by || !/^[a-f0-9]{20}$/.test(who)) return null;
+  return { by, who, at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
+}
+
 /* A DEVICE THAT WANTS TO BE TOLD.
  *
  * One row per browser per member, not per member: the same person on a phone
@@ -1702,6 +1734,17 @@ export function cleanBoard(raw) {
   /* Deduplicated on the ENDPOINT and not on by+endpoint: a browser that
      re-subscribes after the member's row was rebound would otherwise leave two
      rows pointing at one phone, and that phone would buzz twice per message. */
+  const blocks = [];
+  const seenBlock = new Set();
+  for (const r of (Array.isArray(raw?.blocks) ? raw.blocks : [])) {
+    const x = cleanBlock(r);
+    if (!x) continue;
+    const k = x.by + "\u0000" + x.who;
+    if (seenBlock.has(k)) continue;
+    seenBlock.add(k);
+    blocks.push(x);
+  }
+
   const seenPush = new Set();
   const pushes = [];
   for (const r of (Array.isArray(raw?.pushes) ? raw.pushes : [])) {
@@ -1712,7 +1755,7 @@ export function cleanBoard(raw) {
   }
 
   return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
-    offers, shuts, groups, says, signins, writes, pushes,
+    offers, shuts, groups, says, signins, writes, pushes, blocks,
     counts: cleanCounts(raw?.counts) };
 }
 
@@ -1922,6 +1965,10 @@ export function forget(board, me) {
      the subscription. That is the promise this whole function exists to make,
      broken by the one table that reaches outward. */
   drop("pushes", (x) => x.by !== me);
+  /* Both directions, like follows and grants above: the blocks this person
+     made, and the ones naming them. A row pointing at somebody who no longer
+     exists can never be acted on and never be undone. */
+  drop("blocks", (x) => x.by !== me && !ids.has(x.who));
   /* And the notes they wrote to somebody who is not here. `to` is a waiting
      row rather than a person, so the notes drop above — which matches on a
      person's device hash — does not reach them. */

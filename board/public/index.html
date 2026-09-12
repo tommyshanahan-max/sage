@@ -3190,19 +3190,74 @@ let photo = null;             // { data, type }
 let liked = new Set();        // what this browser has already liked
 try { liked = new Set(JSON.parse(localStorage.getItem("board:liked") || "[]")); } catch { /* fine */ }
 
-/* People this reader does not want to see, kept in this browser and nowhere
- * else. There are no accounts here, so a block cannot be a thing done TO
- * somebody — it is a thing done to your own copy of the board. That is the
- * honest version and it has a property the server-side kind does not: it
- * cannot be used as a weapon, because nobody else is affected by it.
+/* People this reader does not want to see.
  *
- * It is per-browser, and it goes when site data goes. Said plainly on the
- * page rather than quietly true. */
+ * THIS USED TO LIVE ONLY IN THIS BROWSER, and the reasoning was good at the
+ * time: "there are no accounts here, so a block cannot be a thing done TO
+ * somebody — it is a thing done to your own copy of the board", with the
+ * property that it could not be used as a weapon. Two things changed.
+ *
+ * One, there ARE identities now — follows, cards, grants and shuts are all
+ * keyed to a person, and a shut is already a server row of exactly this shape.
+ * Two, and worse: the browser list was only ever applied to POSTS, in the
+ * feed's filter, and the feed is off. Browse never consulted it. So the "also
+ * block them" checkbox under a report had been writing to a set nothing read —
+ * a safety control that is present, pressed, and does nothing, which is the
+ * worst state one can be in.
+ *
+ * It is a row now: they leave your Browse, they cannot write to you, it
+ * follows you to your other phone, and they are never told. The set below is
+ * kept as the MIGRATION SOURCE only — whatever this browser blocked before
+ * today is handed over once, and then it is the server's.
+ */
 let blocked = new Set();
 try { blocked = new Set(JSON.parse(localStorage.getItem("board:blocked") || "[]")); } catch { /* fine */ }
 const saveBlocked = () => {
   try { localStorage.setItem("board:blocked", JSON.stringify([...blocked])); } catch { /* fine */ }
 };
+
+/** Block one person, by id, on the server. Their row disappears from Browse on
+ *  the next load and they cannot write. Never told. */
+async function blockThem(id, on = true) {
+  if (!id) return false;
+  try {
+    const r = await fetch("/api/block", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-board-device": device },
+      body: JSON.stringify({ device, who: id, on }),
+    });
+    return r.ok;
+  } catch { return false; }
+}
+
+/* WHAT THIS BROWSER BLOCKED BEFORE THE LIST MOVED, handed over once.
+ *
+ * The old set holds HANDLES, which is what a person can change; the rows hold
+ * ids. So the names are matched against the deck the first time it loads with
+ * somebody in it, and whoever is found is sent in one request. A handle that
+ * matches nobody is somebody who left, and is dropped rather than kept for
+ * ever against a name that might one day belong to a different person.
+ *
+ * Marked done whether or not anybody matched: this must not run on every load
+ * for the life of the browser, and a second run would re-block somebody who
+ * has since been deliberately unblocked. */
+async function migrateBlocks() {
+  try {
+    if (localStorage.getItem("board:blockmoved") === "1") return;
+    if (!blocked.size) { localStorage.setItem("board:blockmoved", "1"); return; }
+    if (!Array.isArray(PEOPLE) || !PEOPLE.length) return;   // try again next load
+    const ids = PEOPLE.filter((q) => blocked.has((q.handle || "").toLowerCase()))
+      .map((q) => q.id).filter(Boolean);
+    if (ids.length) {
+      await fetch("/api/block", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-board-device": device },
+        body: JSON.stringify({ device, who: ids, on: true }),
+      });
+    }
+    localStorage.setItem("board:blockmoved", "1");
+  } catch { /* next load */ }
+}
 let reported = new Set();
 try { reported = new Set(JSON.parse(localStorage.getItem("board:reported") || "[]")); } catch { /* fine */ }
 
@@ -4105,9 +4160,13 @@ $("reportform").addEventListener("submit", async (e) => {
     return;
   }
   const p = reporting;
-  // Blocking is this browser's own business and needs no server, so it happens
-  // whether or not the report goes through.
-  if ($("alsoblock").checked && p.handle) { blocked.add(p.handle.toLowerCase()); saveBlocked(); }
+  /* Blocked whether or not the report goes through — the two are separate
+     decisions and the one about what this person has to look at should not
+     wait on a network. By id now: a handle is what somebody can change, so
+     blocking one was a block they could walk out of by renaming themselves. */
+  if ($("alsoblock").checked && p.id) {
+    blockThem(p.id).then((ok) => { if (ok) PEOPLE = PEOPLE.filter((q) => q.id !== p.id); });
+  }
 
   try {
     const r = await fetch("/api/report", {
@@ -6059,6 +6118,11 @@ async function loadPeople() {
     PEOPLE = shuffled((d && d.people) || []);
   } catch { PEOPLE = []; }
   drawDeck();
+  /* Here because it needs the deck: the old list holds handles and the rows
+     hold ids, so the names can only be matched once there is somebody to match
+     them against. Not awaited — nothing on this screen waits on it, and it
+     runs at most once per browser ever. */
+  migrateBlocks();
   /* THE PANEL IS BUILT FROM FOUR FETCHES THAT LAND WHEN THEY LAND. Drawn once
      at startup it reported whichever of them had arrived — the row about who
      joined came and went depending on the network. Every loader redraws it. */

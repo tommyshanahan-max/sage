@@ -197,13 +197,19 @@ export const STRINGS = {
   "rep.r4":            ["Not safe for a public feed", "不适合公开发布"],
   "rep.r5":            ["Somebody's private details", "泄露他人隐私"],
   "rep.more":          ["Anything else worth knowing…", "还有什么要补充的…"],
-  "rep.alsoBlock":     ["Also hide everything from ", "同时在这台手机上隐藏 "],
-  "rep.alsoBlock2":    [" on this phone", " 发布的全部内容"],
+  /* "on this phone" was true and is not any more — a block is a row now, so it
+     follows the person to their laptop, and it stops messages as well as
+     hiding a face. Both halves of what it does, because a safety control that
+     undersells itself is one people do not press. It does not say the other
+     person is not told; nothing on this screen should raise the question. */
+  "rep.alsoBlock":     ["Also block ", "同时屏蔽 "],
+  "rep.alsoBlock2":    [" \u2014 they leave Browse and cannot write to you",
+                        " —— 他不会再出现在你的「看看」里，也不能再给你留言"],
   "rep.go":            ["Report it", "提交举报"],
   "rep.needReason":    ["Pick a reason, or write one. A report with nothing in it cannot be acted on.",
                         "选一个理由，或者写一个。没有内容的举报无法处理。"],
-  "rep.failed":        ["That did not send. Try once more — and it is already hidden from you either way.",
-                        "没有发送成功。再试一次——不过它已经对你隐藏了。"],
+  "rep.failed":        ["That did not send. Try once more \u2014 and they are blocked either way.",
+                        "没有发送成功。再试一次——不过屏蔽已经生效了。"],
   "rep.sent":          ["Sent. A person reads every one of these.", "已提交。每一条都由人来看。"],
 
   // ---- the landing page ----------------------------------------------------

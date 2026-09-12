@@ -2343,7 +2343,14 @@ app.get("/api/people", async (req, res) => {
   const board = await store.load(FILE);
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
-  const live = board.people.filter((q) => q.state === "published" && q.looking && q.handle);
+  /* PEOPLE THIS READER HAS BLOCKED DO NOT APPEAR. One way: they leave this
+     reader's Browse and this reader does not leave theirs. Done here rather
+     than in the page because the old version was done in the page, in
+     localStorage, and had quietly stopped being applied at all — see
+     cleanBlock in store.js. */
+  const iBlocked = new Set(board.blocks.filter((x) => x.by === me).map((x) => x.who));
+  const live = board.people.filter((q) => (
+    q.state === "published" && q.looking && q.handle && !iBlocked.has(q.id)));
   res.json({
     // Whether this reader already follows them, so the deck's one button can
     // say which of the two things it is about to do. A fact about the reader,
@@ -4550,6 +4557,29 @@ function writePair(board, me, them) {
 }
 
 function threadState(board, me, them) {
+  /* BLOCKED EITHER WAY CLOSES THE THREAD, and the two readings differ.
+     Reading this as the blocker, the conversation is gone. Reading it as the
+     person blocked, the conversation is ALSO gone — and it has to be, because
+     the alternative is a thread that looks open and swallows every message
+     sent into it, which is worse for them than being told nothing. Neither is
+     told which of the two happened, and "shut" is what both are called: a
+     person who can tell a block from somebody leaving has been told they were
+     blocked. */
+  /* TWO KINDS OF NAME IN ONE TEST, which is what made the first version of
+     this do nothing. A block row is (by: device hash, who: PERSON ID) —
+     `who` is an id because a handle is something people can change and a block
+     they can rename their way out of is not one. threadState works in device
+     hashes on both sides. So `x.who === them` was comparing an id to a hash
+     and never matched: Browse filtered correctly, messages did not, and the
+     half that was broken is the half that matters most.
+     Resolved through the rows, both directions, and it covers an agent's
+     people too — a represented person is their own row with their own id. */
+  const idsOf = (by) => board.people.filter((q) => q.by === by).map((q) => q.id);
+  const mineIds = idsOf(me), theirIds = idsOf(them);
+  if (board.blocks.some((x) => (x.by === me && theirIds.includes(x.who))
+    || (x.by === them && mineIds.includes(x.who)))) {
+    return { can: false, why: "shut", open: false };
+  }
   if (board.shuts.some((x) => (x.by === me && x.who === them)
     || (x.by === them && x.who === me))) {
     return { can: false, why: "shut", open: false };
@@ -4665,6 +4695,58 @@ function threadState(board, me, them) {
  * than no feature at all: browsers remember a refusal and will not ask again,
  * so one pointless prompt today costs the real one for ever.
  */
+/* ---------------------------------------------------------------------------
+ * BLOCKING SOMEBODY
+ *
+ * One way, silent, and undoable by the person who did it. See cleanBlock in
+ * store.js for why this stopped being a localStorage set and what the
+ * difference is between this and a shut.
+ *
+ * `who` is a person id and not a handle. The old browser list keyed on
+ * handles, which is what somebody can change: block a handle and they rename
+ * themselves and they are back. An id is the row.
+ */
+app.post("/api/block", express.json({ limit: "8kb" }), gate, async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const on = req.body?.on !== false;
+  /* An array, because the first thing this has to do on a browser that has
+     never sent one is hand over whatever that browser blocked before the list
+     moved to the server. One request, not eleven. */
+  const want = Array.isArray(req.body?.who) ? req.body.who : [req.body?.who];
+  const ids = [...new Set(want.map(String).filter((x) => /^[a-f0-9]{20}$/.test(x)))].slice(0, 200);
+  if (!ids.length) return res.status(400).json({ error: "bad" });
+
+  const out = await change((board) => {
+    const mine = board.people.filter((q) => q.by === me).map((q) => q.id);
+    for (const who of ids) {
+      // Blocking yourself is a mistake, not a wish.
+      if (mine.includes(who)) continue;
+      const had = board.blocks.findIndex((x) => x.by === me && x.who === who);
+      if (on && had < 0) board.blocks.push(store.cleanBlock({ by: me, who }));
+      if (!on && had >= 0) board.blocks.splice(had, 1);
+    }
+    return { n: board.blocks.filter((x) => x.by === me).length };
+  });
+  res.json({ ok: true, blocked: out.n });
+});
+
+/** Who this reader has blocked, so the page can draw the list and unblock from
+ *  it. Theirs alone — there is no route here that says who blocked anybody. */
+app.get("/api/blocks", async (req, res) => {
+  const board = await store.load(FILE);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  res.set("Cache-Control", "no-store");
+  if (!me) return res.json({ blocks: [] });
+  const mine = board.blocks.filter((x) => x.by === me);
+  res.json({
+    blocks: mine.map((x) => {
+      const q = board.people.find((p) => p.id === x.who);
+      return { who: x.who, handle: (q && q.handle) || "", at: x.at };
+    }),
+  });
+});
+
 app.get("/api/push/key", (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({ key: push.publicKey() });

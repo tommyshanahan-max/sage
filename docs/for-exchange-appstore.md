@@ -128,19 +128,21 @@ and a report puts the thing at the head of the admin queue rather than in a
 mailbox. Guideline 1.2 expects action inside a day and that is where it
 happens.
 
-**Block — one half server-side, one half not, and say so.**
+**Block — built, 12 Sep, and it was worse than this file first said.**
 
-  - *Leaving a conversation* is real: `shuts` is a row on the server,
-    `threadState` refuses the pair in BOTH directions, and it is permanent.
-    Neither person can write again. That is the half a reviewer tests, and it
-    is done.
-  - *Hiding somebody from Browse* is `board:blocked` in localStorage — THAT
-    BROWSER ONLY. The same member on a laptop sees them again, and the board
-    has no idea. It is not a block, it is a preference, and a reviewer who
-    checks it on two devices finds that out.
+The browser list was not merely per-browser. It was only ever applied to
+POSTS, in the feed's filter, and the feed is off — Browse never consulted it.
+So the "also block them" checkbox under a report had been writing to a set
+nothing read: a safety control that is present, pressed, and does nothing.
 
-  Worth closing before submitting, and it is small: the row already has a
-  natural home beside `shuts`.
+It is a row now. They leave your Browse, they cannot write to you and you
+cannot write to them, it follows you to your other phone, and they are never
+told. Keyed on the person id rather than the handle, because a block somebody
+can rename their way out of is not one. Whatever a browser had blocked before
+is handed over once, on the next load, and then forgotten.
+
+Separately, *leaving a conversation* (`shuts`) was already right: mutual,
+permanent, server-side.
 
 **Delete the account — built.** `/api/me/forget`, reachable from Profile, and
 it takes the photographs and every row with it rather than hiding a
@@ -151,8 +153,8 @@ is read by the server and printed in the footer; unset in `.env`, the line
 exists in the code and appears nowhere on the page. `grep BOARD_CONTACT .env`
 before submitting.
 
-The cost is a Mac, the developer programme, the demo room in §1 (done), the
-push work in §2 (done), and the Browse half of blocking above.
+The cost left is a Mac and the developer programme. §1 is done, §2 is done,
+and the four things above are now four.
 
 ## The order
 
