@@ -858,6 +858,14 @@ export const STRINGS = {
      the card's own shape, so the reason is visible. */
   "me.cropSay":        ["Drag the photo to move your face into the frame.",
                         "拖一下照片，把脸挪到框里合适的位置。"],
+  /* WHEN A GHOST PRESSES FOLLOW. The board's own logic said back to them, not
+     a rule quoted at them: they can see these people because those people let
+     themselves be seen.
+     中文写的不是翻的：「露个面」比「开启可见性」像人话。 */
+  "fol.needShow":      ["You can see these people because they let themselves be seen. Turn on Show me in Browse and you can follow them.",
+                        "你能看到这些人，是因为他们愿意露面。你也露个面，就能关注他们了。"],
+  "fol.needPage":      ["Put a name on your page first. You can see these people because they let themselves be seen.",
+                        "先给自己的主页起个名字。你能看到这些人，是因为他们愿意露面。"],
 
   /* The app's own chrome, drawn round the card. Taken from the real screens so
      somebody who joins recognises the page they were shown. */

@@ -4773,16 +4773,49 @@ app.post("/api/follow", express.json({ limit: "8kb" }), gate, async (req, res) =
   if (!me || !/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "no" });
   const on = req.body?.on !== false;
 
+  let why = "";
   const out = await change((board) => {
     const target = board.people.find((x) => x.id === who && x.state === "published");
     if (!target) return null;
     // Following yourself is not a thing anybody means to do.
     if (target.by === me) return { count: store.followersOf(board.follows, who), following: false };
+
+    /* YOU CANNOT REACH FOR SOMEBODY WHILE YOU ARE A GHOST.
+     *
+     * Everybody arrives invited, lands on Browse, and can look at everybody
+     * forever without ever being in it. On a board where the whole mechanic is
+     * two people choosing each other, that is the failure mode: everybody
+     * looking, nobody showing, and the people who did show wondering why the
+     * room is empty.
+     *
+     * The rule is not a setup form. Asking somebody to write a bio for a room
+     * they have not seen yet is how you lose them at the door, and the bios you
+     * get that way are written to get past a screen. This is the board's own
+     * logic instead: you can see them because they let themselves be seen.
+     *
+     * Only on following, never on reading. Looking is what they were invited
+     * for; it is reaching that has to be mutual. And only on turning it ON —
+     * unfollowing always works, because a rule that traps somebody in a follow
+     * is a rule about them rather than about the room.
+     *
+     * A PERSON AN AGENT SPEAKS FOR PASSES. They are visible — on their agent's
+     * page, with a card of their own — they are simply not in the Browse deck,
+     * because only five of any agent's roster is (see RUN_SHOW). Without this
+     * clause four of Andy's nine could never follow anybody, which is a cap on
+     * a shared room turning into a punishment for the people it was protecting.
+     */
+    const mine = board.people.find((x) => x.by === me);
+    const seen = mine && mine.state === "published" && mine.handle
+      && (mine.looking || mine.runBy);
+    if (on && !seen) { why = mine && mine.handle ? "hidden" : "nopage"; return null; }
     const had = board.follows.findIndex((f) => f.by === me && f.who === who);
     if (on && had < 0) board.follows.push(store.cleanFollow({ by: me, who }));
     if (!on && had >= 0) board.follows.splice(had, 1);
     return { count: store.followersOf(board.follows, who), following: on };
   });
+  // Told apart, because they are different things to do next: one is a toggle
+  // and the other is a name and a sentence.
+  if (why) return res.status(409).json({ error: why });
   if (!out) return res.status(404).json({ error: "no such person" });
   res.json({ ok: true, ...out });
 });

@@ -6092,8 +6092,13 @@ function drawFollowers() {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ device, who: f.id, on: want }),
         });
-        if (!r.ok) throw new Error("no");
-        const d = await r.json();
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          // Not a failure to be swallowed: they pressed Follow and the board
+          // is asking for one thing back.
+          if (d.error === "hidden" || d.error === "nopage") askToShow(d.error);
+          throw new Error("no");
+        }
         f.following = Boolean(d.following);
       } catch { f.following = !want; }
       b.textContent = T(f.following ? "bud.following" : "fol.back");
@@ -6211,6 +6216,20 @@ $("mine").addEventListener("click", () => {
   if ($("mine").dataset.go === "mail") { openBack(); return; }
   openMe();
 });
+
+/* ---- TURNED AWAY FOR BEING INVISIBLE -------------------------------------
+ *
+ * The server refuses a follow from somebody who is not in Browse themselves —
+ * see /api/follow. What matters here is that the refusal is not an error
+ * message but the next thing to do: one of these is a toggle they already have
+ * and the other is a name they have not typed. Both open the same sheet, and
+ * the sentence says which.
+ */
+async function askToShow(kind) {
+  const say = T(kind === "nopage" ? "fol.needPage" : "fol.needShow");
+  if (!confirm(say)) return;
+  openMe();
+}
 
 function personCard(q, live) {
   const box = el("div", "pc");
@@ -6835,8 +6854,12 @@ function drawDeck() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ device, who: q.id, on: want }),
       });
-      if (!r.ok) throw new Error("no");
-      const d = await r.json();
+      const d0 = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        if (d0.error === "hidden" || d0.error === "nopage") askToShow(d0.error);
+        throw new Error("no");
+      }
+      const d = d0;
       q.following = Boolean(d.following);
       /* Stamped on this phone for the grade. The server knows the follow but
          not the day the reader pressed it — a follow row carries a date, but
