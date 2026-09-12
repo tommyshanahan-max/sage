@@ -1558,6 +1558,14 @@
     background:rgba(255,255,255,.2);color:#fff;border-radius:99px;
     padding:.25rem .55rem .25rem .65rem}
   .pc .type.you{background:var(--accent);letter-spacing:.06em}
+  /* ALREADY FOLLOWING, as a mark rather than a button — see personCard. It is
+     pressable (it is how you undo one from here) so it says so: a cursor, a
+     tick, and a focus ring that is visible on a photograph. */
+  .pc .type.fol{letter-spacing:.04em;cursor:pointer;background:rgba(255,255,255,.28);
+    border:1px solid rgba(255,255,255,.55)}
+  .pc .type.fol::before{content:"\2713\00a0"}
+  .pc .type.fol:hover{background:rgba(255,255,255,.42)}
+  .pc .type.fol:focus-visible{outline:2px solid #fff;outline-offset:2px}
   /* THE MARK, on the photograph beside the name. Same badge family as the four
      letters — it is one more thing about this person, not a decoration on
      them — but it carries its own name in words, because a shape nobody can
@@ -1597,6 +1605,15 @@
     font-variant-numeric:tabular-nums}
   .atdoor b{display:block;margin:0 0 .1rem;color:var(--ink);font-weight:600;
     font-size:1.05rem}
+  /* WITH NOBODY WAITING IT IS NOT A DOOR, IT IS A COUNT. The box and the big
+     bold line are for "20 people want in" — the interesting half. Wearing them
+     to say "6 people in the room" made the quietest fact on the screen the
+     loudest thing on it, louder than the filter above and competing with the
+     face below. Same line, said once, in the voice of a caption. */
+  .atdoor.just{background:none;padding:.1rem 0 0;margin:0 0 .7rem;text-align:left;
+    font-size:.82rem}
+  .atdoor.just b{display:inline;margin:0;color:var(--muted);font-weight:400;
+    font-size:.82rem}
   /* THE NUMBER IS THE WAY TO THE LIST, for a member. Same line, same weight —
      it is still a fact first — with a chevron in the accent to say it goes
      somewhere. A button rather than a link because it opens something further
@@ -1701,8 +1718,16 @@
   /* THE SENTENCE, ON THE FACE. Set as a line of text with the two roles as
      pills inside it rather than as a row of chips: it is something a person
      wrote, and it should read as words with two of them emphasised. */
-  .psay{margin:.6rem 0 0;font-size:.9rem;line-height:1.9;
+  /* ITS OWN SLOT, DIRECTLY UNDER THE NAME. An empty one on a card with no
+     sentence (somebody who joined before it existed) would be a gap under
+     every such name, so it collapses. */
+  .psaywrap:empty{display:none}
+  .psay{margin:.45rem 0 0;font-size:.9rem;line-height:1.9;
     color:rgba(255,255,255,.82)}
+  /* Now that it sits above the city and the bio rather than at the bottom of
+     the card, the space belongs under it. */
+  .psaywrap + .where{margin-top:.5rem}
+  .psaywrap .pchips{margin-top:.45rem}
   .psay .pchip{display:inline-block;vertical-align:.05em}
   /* The other sentences, as a count rather than as more pills. Quiet enough
      that it reads as a footnote on the one above it. */
@@ -1769,7 +1794,16 @@
       onerror="this.replaceWith(document.createTextNode('\u7559'))"></div>
     <div class="name">
       <h1 id="boardname">The Board</h1>
-      <p id="count">Anyone can read. Anyone can post.</p>
+      <!-- THE LINE UNDER THE NAME IS HIDDEN ON BROWSE AND SAYS THE SAME THING
+           TWICE WHEN IT IS NOT. The masthead carried the mark, the name, the
+           count and "invite only" — on every tab, every visit, none of it
+           changing — and under it Browse already prints "20 want in · 6 are
+           in" as a line in the body, which is the same number in the same
+           screen. So the count goes back to the body line it came from (see
+           drawDoor) and this stays for the pages that have no such line.
+           Not deleted: it is still the honest fallback before anybody has been
+           counted, and every string that writes to it still works. -->
+      <p id="count" hidden>Anyone can read. Anyone can post.</p>
       <!-- The member's own invite, beside the count, because that is where
            somebody looks when they are thinking about who else is here. -->
     </div>
@@ -2094,7 +2128,11 @@
        switches between them and the addresses stay real, so /browse and
        /feed are still two places you can send somebody. See showView. -->
   <div id="vbrowse">
-  <div class="rule"><span id="brwlabel">Browse students</span><i></i></div>
+  <!-- "BROWSE PEOPLE" is what the tab under this screen says. A heading that
+       repeats the tab that opened it is a line of the screen spent saying
+       where you already know you are. Hidden rather than removed: drawStrings
+       still writes to it and /feed still wants a rule of its own. -->
+  <div class="rule" id="brwrule" hidden><span id="brwlabel">Browse students</span><i></i></div>
   <!-- The affordance the profile block used to carry: a missing face with a +
        on it. One row rather than the four hundred pixels it cost before, and
        it is gone the moment there is a photo. -->
@@ -2117,16 +2155,10 @@
        not exist. It is the one line that says this place is worth being in,
        so it goes where the eye lands. The queue leads and the membership
        follows: how many want in is the half worth reading. -->
+  <!-- WHO IS OUTSIDE, AND HOW MANY ARE IN. Above the filter rather than under
+       it, so the screen reads down in the order somebody thinks: this is the
+       room, this is what I am looking for in it, these are the people. -->
   <p class="atdoor" id="atdoor"></p>
-  <div class="deck" id="deck"></div>
-  <div class="pacts" id="pacts" hidden></div>
-  <p class="pcount" id="pcount"></p>
-  <!-- The safety paragraph was here, under the deck: four lines of fine print
-       between the faces and the waiting list, on the screen people came to
-       look at people. It is true and it is worth saying once — so it is on
-       /privacy, where somebody who wants it can find it, and linked from the
-       footer of every page rather than standing in the middle of one. -->
-  <div class="bnone" id="bnone" hidden></div>
 
   <!-- THE SENTENCE, AND IT IS THE WHOLE QUESTION.
        Two pills say what eleven tick boxes said, and the sentence IS the rule:
@@ -2145,10 +2177,13 @@
        the fold opens itself for anybody who has not answered it, and Browse
        is where a new member lands. See drawSayHead.
 
-       IT SITS BETWEEN THE TWO ROOMS. It closes the people who are in and
-       opens the people who are waiting, which is the one place on this page
-       where somebody has just finished looking and is ready to change what
-       they are looking for. -->
+       AND NOW IT SITS ABOVE THE DECK RATHER THAN UNDER IT. Between the two
+       rooms was a reasonable place — somebody who has just finished looking is
+       ready to change what they are looking for — but it put the control that
+       DECIDES who you are shown underneath the person it showed you, below
+       "1 of 6", off the bottom of a phone. A filter under its own results
+       reads as a footer. It is the reason these six and not others, so it goes
+       where a reason goes: first. -->
   <section class="saysay" id="saysay" hidden>
     <!-- SHUT, IT IS THE ICON AND THE SENTENCE. Two dropdowns and a save
          line, open all the time, for a thing somebody changes about twice a
@@ -2163,6 +2198,16 @@
       <p class="saysaid" id="saysaid" hidden></p>
     </div>
   </section>
+  <div class="deck" id="deck"></div>
+  <div class="pacts" id="pacts" hidden></div>
+  <p class="pcount" id="pcount"></p>
+  <!-- The safety paragraph was here, under the deck: four lines of fine print
+       between the faces and the waiting list, on the screen people came to
+       look at people. It is true and it is worth saying once — so it is on
+       /privacy, where somebody who wants it can find it, and linked from the
+       footer of every page rather than standing in the middle of one. -->
+  <div class="bnone" id="bnone" hidden></div>
+
 
   <!-- AND THE QUEUE ITSELF, under the people who are already in.
        The number above says how many; this says who, so that somebody in here
@@ -3332,6 +3377,11 @@ function draw() {
     ? T("board.inRoom", { n: inRoom })
     : T(shut ? "inv.taglineShut" : "board.tagline");
   $("invite").textContent = T(shut ? "inv.locked" : "site.invite");
+  /* AND ONLY TO SOMEBODY IT IS NEWS TO. "Not public yet — invite only" is the
+     first thing a stranger arriving from a shared link should read and the
+     four hundredth time a member has read it. It was a full-width band above
+     the masthead on every visit. Members know; they let people in. */
+  $("invite").hidden = Boolean(ME && ME.handle);
 
   const box = $("board"); fill(box);
   const list = posts.filter((p) => (
@@ -4044,6 +4094,7 @@ $("tform").addEventListener("submit", async (e) => {
  * losing your place in a feed is what makes people not press it twice. */
 function paintNav() {
   $("invite").textContent = T("site.invite");
+  $("invite").hidden = Boolean(ME && ME.handle);
   $("navbrowselabel").textContent = T("nav.browse");
   $("navfeedlabel").textContent = T("nav.feed");
   $("navcardslabel").textContent = T("nav.cards");
@@ -6365,6 +6416,14 @@ function personCard(q, live) {
   const line = el("div", "nameline");
   line.append(el("h2", null, q.handle || T("board.someone")));
   if (q.mine) line.append(el("b", "type you", T("brw.you")));
+  /* ALREADY FOLLOWING THEM, SAID ON THE CARD. It was a button under the deck,
+     in the primary slot, reading "Following" — which is a STATE and not an
+     act: nothing happens when you press it except undoing something you meant.
+     A first-time reader saw two equal buttons of which one was inert. States
+     live on the thing they are about, so it is a mark beside the name, and the
+     row below is left with the one button that does something. Only when it is
+     already true; not following is a decision, and that keeps its button. */
+  if (!q.mine && q.following) line.append(el("b", "type fol", T("brw.connected")));
   if (q.type) line.append(el("b", "type", q.type));
   /* Only if they put their level on their page. The mark is the level worn,
      so somebody who kept the number keeps the number. */
@@ -6376,6 +6435,15 @@ function personCard(q, live) {
     line.append(worn);
   }
   scrim.append(line);
+  /* THE SENTENCE GOES HERE, DIRECTLY UNDER THE NAME — see the block below that
+     builds it, which used to run after the city and the bio and append to the
+     bottom of the scrim. It is the one thing on this card that explains the
+     whole product ("I am a Producer looking for a Performer"), and it was the
+     last line, under a paragraph, where a thumb covers it. Name, then why they
+     are on your screen, then the detail: two cards deep and somebody has
+     learned how this board works without being told. */
+  const psay = el("div", "psaywrap");
+  scrim.append(psay);
   /* "BEIJING · BEIJING" WAS ON EVERY OTHER CARD. campus and here are two
      different questions — which campus, and how long they have been in the
      country — and plenty of people answer both with the name of a city. Two
@@ -6436,11 +6504,11 @@ function personCard(q, live) {
       if (says.length > 1) {
         line2.append(el("span", "psaymore", T("brw.sayMore", { n: says.length - 1 })));
       }
-      scrim.append(line2);
+      psay.append(line2);
     } else if (Array.isArray(q.rooms) && q.rooms.length) {
       const chips = el("div", "pchips");
       for (const r of q.rooms) chips.append(el("span", "pchip" + (shared.has(r) ? " on" : ""), T("room." + r)));
-      scrim.append(chips);
+      psay.append(chips);
     }
   }
   box.append(scrim);
@@ -6788,16 +6856,21 @@ function drawDoor(people) {
      said. This line's job was always the QUEUE; how many are in was the
      reassuring half beside it. With nobody waiting there is nothing here to
      say, and the line goes. */
-  box.hidden = !WAITING;
+  /* AND IT CARRIES THE COUNT AGAIN. The note above is what was true when the
+     masthead printed it: saying it twice on one screen read as the app not
+     knowing what it had just said. The masthead does not print it any more —
+     the top third of Browse was four things that never change — so this line
+     is the only place the number lives, and it is the better one: a line in
+     the body somebody reads, not chrome they stop seeing. */
+  box.hidden = !(WAITING || some);
+  box.classList.toggle("just", !WAITING);
   if (WAITING) {
     box.append(doorGo(atdoor(WAITING)));
     if (some) box.append(document.createTextNode(inside(some)));
+  } else if (some) {
+    box.append(el("b", null, T("board.inRoom", { n: some })));
   }
-
-  /* AND THE MASTHEAD, HERE, because this is where the number arrives.
-     The line under the name is drawn with the feed, which paints before
-     anybody has been counted — so it fell back to the tagline and stayed
-     there. Corrected the moment the count is known, which is now. */
+  // Kept in step for the screens that still show it — see the note on #count.
   if (some && $("count")) $("count").textContent = T("board.inRoom", { n: some });
 }
 
@@ -6848,7 +6921,7 @@ function drawDeck() {
   $("brwlabel").textContent = T("brw.title");
 
   drawMine();
-  // The sentence sits under the deck it decides — see the note in the markup.
+  // The sentence sits above the deck it decides — see the note in the markup.
   drawSays();
 
   const deck = $("deck");
@@ -6950,6 +7023,26 @@ function drawDeck() {
    * bigger word on the bigger act. */
   const fol = el("button", "primary", "");
   fol.type = "button";
+  /* THE MARK ON THE CARD IS THE SAME CONTROL. personCard puts "✓ Following"
+     beside the name when it is already true, and if that were only a label
+     there would be no way to undo a follow from this screen at all — the deck
+     card does not open the profile, so the button below was the only path.
+     So it is pressable, and it is not a second implementation: it runs the one
+     handler below. */
+  const chip = top.querySelector(".type.fol");
+  if (chip) {
+    chip.setAttribute("role", "button");
+    chip.setAttribute("tabindex", "0");
+    chip.setAttribute("aria-pressed", "true");
+    chip.title = T("brw.connected");
+    // The card is a drag surface; without this, pressing the mark starts a
+    // flick and the tap lands on whoever comes next. Same reason as Share.
+    chip.addEventListener("pointerdown", (ev) => ev.stopPropagation());
+    chip.addEventListener("click", (ev) => { ev.stopPropagation(); fol.click(); });
+    chip.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); fol.click(); }
+    });
+  }
   const paintFollow = () => {
     fol.textContent = T(q.following ? "brw.connected" : "brw.connect");
     fol.classList.toggle("on", Boolean(q.following));
@@ -6989,11 +7082,31 @@ function drawDeck() {
       }
     } catch { q.following = !want; }
     paintFollow();
+    /* THE MARK AND THE ROW HAVE TO AGREE. The row used to be the only thing
+       that changed, so repainting the button was the whole job; now the card
+       carries the state too, and the row is one button or two depending on it.
+       Redrawing the deck settles all three from one place — AT has not moved,
+       so it is the same card, not the next one. */
+    drawDeck();
   });
   const on = el("button", null, T("brw.next"));
   on.type = "button";
   on.addEventListener("click", nextPerson);
-  acts.append(fol, on);
+  /* TWO BUTTONS WHILE THERE IS A DECISION, ONE WHEN THERE IS NOT.
+     Following is on the card now (see personCard), so a row that still carried
+     it would be saying the same thing twice with the inert half in the loud
+     slot. Somebody not yet followed gets Follow beside Next, as before, and
+     Next takes the quiet button. Somebody already followed gets Next alone,
+     full width, in the accent — because moving on is then the only thing left
+     to do on this card.
+     `fol` is still built and still wired either way: unfollowing is done by
+     pressing the mark on the card, which calls the same handler. */
+  if (q.following) {
+    on.className = "primary";
+    acts.append(on);
+  } else {
+    acts.append(fol, on);
+  }
 }
 
 /* Flick to move on. Pointer events rather than touch events, so a mouse on a
