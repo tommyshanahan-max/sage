@@ -732,8 +732,15 @@ export const STRINGS = {
      the door, which is also what the four rooms are called.
      Both halves or neither. "41 inside" alone is a small company; "120
      waiting" alone is a queue for nothing. */
-  "land.few":          ["{in} inside. {out} waiting to be let in.",
-                        "里面 {in} 个人，门外 {out} 个在等。"],
+  /* THE POLICY AND THE FACT, in one line, because the paragraph that carried
+     the policy is gone from the hero.
+     "Invite only" on its own is a claim anybody can make. The two numbers
+     after it are what make it believed — and they are never a target and never
+     rounded: whatever this says tonight is what is actually in the file. The
+     server withholds the queue below a floor, because a number that small is
+     nearly a name, and then this line does not draw at all. */
+  "land.few":          ["Invite only. {in} inside, {out} waiting to be let in.",
+                        "只能被邀请进来。里面 {in} 个人，门外 {out} 个在等。"],
   /* WHAT IT IS, TO SOMEBODY WHO HAS NEVER HEARD OF IT.
    *
    * This said "One line instead of a CV. Invite only — everybody here was let
