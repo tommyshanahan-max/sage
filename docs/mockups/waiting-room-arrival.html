@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Exchange — the waiting room, from inside it</title>
+
+<!-- WHAT THIS ARGUES.
+     The waiting room is built and it is a punishment. Three people a day come
+     off the list, and what they get is the whole app with every button dead: a
+     403 `soon` on every write and one grey line saying the rest is coming.
+
+     That is worse than the list. The list has a card to fill in, a queue
+     position, and three little tests to take — `wr.*` in i18n.js, a whole
+     screen of things to do. Being promoted currently means losing all of it
+     and gaining an app that does nothing.
+
+     So the stage needs something it gives that the list cannot, and it has
+     one thing, which is also the only thing this board owns: WHO IS IN IT.
+
+     Three phones, in the order they happen:
+       1  arrival   — what they are given, said as three things, not one
+       2  browse    — the room, real, with the locked control saying the truth
+       3  written   — a member writes, and the reply box is open
+
+     THE ONE NEW RULE: THE DOOR OPENS FROM THE INSIDE. Somebody in the waiting
+     room cannot start a conversation and can always answer one, and answering
+     admits them. That is not a new mechanism — admittedReq() already says a
+     published person row IS membership — it is the existing mechanism pointed
+     at the person a member chose.
+
+     Self-contained, no build, no external request. Fake people. -->
+
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD;
+    --ink:#151B28; --ink-2:#4E5968; --muted:#7A8699;
+    --line:#DFE4EC; --hair:#E7EBF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --gold:#8A6A1F; --goldbg:#F6EEDA; --goldline:#E5D4A8;
+    --good:#1F7A4D; --goodbg:#E4F3EA;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+           "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#0B0E15; --raise:#141924; --card:#1B212D;
+      --ink:#E9EDF5; --ink-2:#A3B0C4; --muted:#7D8AA0;
+      --line:#232B3A; --hair:#1C2330;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --gold:#D8B45C; --goldbg:#2A2312; --goldline:#453A1C;
+      --good:#5FD39B; --goodbg:#102A1D;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#5A6070;font-family:var(--sans);color:var(--ink);
+    -webkit-font-smoothing:antialiased;padding:2rem 1rem;
+    display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .phone{width:390px;height:800px;background:var(--paper);border-radius:2.2rem;
+    overflow:hidden;display:flex;flex-direction:column;position:relative;
+    box-shadow:0 24px 60px rgba(0,0,0,.35)}
+  .label{color:#EEF0F4;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
+    margin:0 0 .6rem;font-weight:600}
+  figure{margin:0}
+  figcaption{color:#C8CEDA;font-size:.82rem;line-height:1.55;max-width:390px;
+    margin:.7rem 0 0}
+  figcaption b{color:#FFF;font-weight:600}
+  .body{flex:1 1 auto;overflow:auto;padding:1.1rem .95rem 2rem}
+
+  /* ---- 1. ARRIVAL -------------------------------------------------------
+     NOT A BANNER. The thing that is wrong with the screen today is that the
+     news arrives as a grey toast on top of an app that then refuses you, so
+     the first thing that happens is a refusal. This is a screen, it is the
+     only thing on it, and it is read before anything is touched. */
+  .crest{text-align:center;padding:2.6rem 1rem 1.4rem}
+  .crest .up{display:inline-block;font-size:.68rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--gold);background:var(--goldbg);
+    border:1px solid var(--goldline);border-radius:999px;padding:.3rem .8rem;
+    font-weight:600}
+  .crest h1{margin:1rem 0 .5rem;font-family:var(--serif);font-weight:400;
+    font-size:1.85rem;line-height:1.2}
+  .crest p{margin:0;color:var(--ink-2);font-size:.95rem;line-height:1.6}
+
+  /* THREE THINGS, NUMBERED, because they really are a sequence: you can see
+     them, they can see you, and one of them writing is the way out. A bullet
+     list would say these are three unrelated perks. */
+  .gift{list-style:none;margin:1.6rem 0 0;padding:0;display:flex;
+    flex-direction:column;gap:.55rem}
+  .gift li{background:var(--card);border:1px solid var(--hair);border-radius:1rem;
+    padding:.9rem 1rem;display:flex;gap:.85rem;align-items:flex-start}
+  .gift .n{flex:0 0 auto;width:1.55rem;height:1.55rem;border-radius:50%;
+    background:var(--accent-soft);color:var(--accent);font-size:.78rem;
+    font-weight:700;display:flex;align-items:center;justify-content:center}
+  .gift h3{margin:0 0 .18rem;font-size:.98rem;font-weight:600}
+  .gift p{margin:0;color:var(--ink-2);font-size:.86rem;line-height:1.5}
+
+  /* THE CLOCK, HELD RATHER THAN THREATENED. Same 72 hours, same sweep back to
+     the list. "You have 3 days or you are out" and "your seat is held for 3
+     days" are the same fact, and only one of them is a reason to open it. */
+  .held{margin:1.1rem 0 0;background:var(--goldbg);border:1px solid var(--goldline);
+    border-radius:1rem;padding:.85rem 1rem;display:flex;gap:.7rem;align-items:center}
+  .held .k{font-family:var(--serif);font-size:1.3rem;color:var(--gold);line-height:1}
+  .held p{margin:0;font-size:.85rem;color:var(--ink-2);line-height:1.45}
+  .held b{color:var(--ink)}
+
+  .go{display:block;width:100%;margin:1.2rem 0 0;border:0;border-radius:999px;
+    background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:600;
+    font-size:1rem;padding:.85rem;cursor:pointer}
+  .after{margin:.6rem 0 0;text-align:center;color:var(--muted);font-size:.78rem}
+
+  /* ---- 2. BROWSE --------------------------------------------------------- */
+  .top{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    padding:.85rem .95rem;background:var(--card);border-bottom:1px solid var(--hair)}
+  .top h2{margin:0;font-size:1rem;font-weight:600}
+  .pill{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--gold);background:var(--goldbg);border:1px solid var(--goldline);
+    border-radius:999px;padding:.22rem .6rem;font-weight:600}
+  .who{background:var(--card);border:1px solid var(--hair);border-radius:1.1rem;
+    padding:.95rem 1rem;margin:0 0 .7rem}
+  .whead{display:flex;gap:.75rem;align-items:center}
+  .face{flex:0 0 auto;width:2.9rem;height:2.9rem;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    font-weight:600;font-size:.95rem;letter-spacing:.02em}
+  .f1{background:linear-gradient(140deg,#3F68D8,#6E4FC8)}
+  .f2{background:linear-gradient(140deg,#1F7A4D,#4FA36E)}
+  .f3{background:linear-gradient(140deg,#A5562B,#C98A3C)}
+  .nm{margin:0;font-size:1rem;font-weight:600}
+  .sent{margin:.1rem 0 0;color:var(--ink-2);font-size:.83rem;line-height:1.4}
+  .why{margin:.7rem 0 0;color:var(--ink-2);font-size:.86rem;line-height:1.5}
+
+  /* THE LOCKED CONTROL, SAYING SOMETHING. A greyed "Follow" is a button that
+     looks alive, does nothing and explains nothing — which is what the screen
+     does today, forty times. One line per card instead, and it is not about
+     what is withheld, it is about what can still happen. */
+  .canwrite{margin:.75rem 0 0;padding-top:.7rem;border-top:1px dashed var(--line);
+    display:flex;gap:.5rem;align-items:center;color:var(--good);font-size:.82rem}
+  .canwrite .lk{font-size:.9rem}
+  .foot{flex:0 0 auto;padding:.8rem .95rem 1.1rem;background:var(--card);
+    border-top:1px solid var(--hair);color:var(--ink-2);font-size:.83rem;
+    line-height:1.5;text-align:center}
+  .foot b{color:var(--ink)}
+
+  /* ---- 3. SOMEBODY WROTE ------------------------------------------------- */
+  .hit{background:var(--goodbg);border:1px solid transparent;border-radius:1.1rem;
+    padding:1rem;margin:0 0 .8rem}
+  .hit .eye{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--good);font-weight:700}
+  .hit h3{margin:.4rem 0 .3rem;font-family:var(--serif);font-weight:400;font-size:1.25rem}
+  .hit p{margin:0;color:var(--ink-2);font-size:.87rem;line-height:1.55}
+  .msg{background:var(--card);border:1px solid var(--hair);border-radius:1.1rem;
+    padding:.95rem 1rem}
+  .bub{margin:.75rem 0 0;background:var(--raise);border-radius:1rem 1rem 1rem .3rem;
+    padding:.75rem .9rem;color:var(--ink);font-size:.9rem;line-height:1.55}
+  .box{margin:.9rem 0 0;background:var(--raise);border:1px solid var(--line);
+    border-radius:1rem;padding:.75rem .9rem;color:var(--muted);font-size:.9rem;
+    display:flex;justify-content:space-between;align-items:center}
+  .send{background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;
+    font:inherit;font-size:.82rem;font-weight:600;padding:.4rem .95rem}
+  .opens{margin:.8rem 0 0;background:var(--accent-soft);border-radius:1rem;
+    padding:.85rem 1rem;color:var(--ink-2);font-size:.85rem;line-height:1.55}
+  .opens b{color:var(--ink)}
+
+  /* ---- the argument ------------------------------------------------------ */
+  .note{width:100%;max-width:1250px;background:var(--raise);border-radius:1.4rem;
+    padding:1.6rem 1.8rem;margin:1rem auto 0;color:var(--ink-2);
+    font-size:.95rem;line-height:1.7}
+  .note h2{margin:0 0 .8rem;font-family:var(--serif);font-weight:400;
+    font-size:1.35rem;color:var(--ink)}
+  .note p{margin:0 0 .9rem}
+  .note b{color:var(--ink)}
+  .note code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em}
+  .note p:last-child{margin:0}
+</style>
+</head>
+<body>
+
+<!-- ============ 1. ARRIVAL ============ -->
+<figure>
+  <p class="label">1 · They open it</p>
+  <div class="phone">
+    <div class="body">
+      <div class="crest">
+        <span class="up">Moved up</span>
+        <h1>You are in the waiting room.</h1>
+        <p>Three people came off the list this week. You are one of them.</p>
+      </div>
+
+      <ul class="gift">
+        <li>
+          <span class="n">1</span>
+          <div>
+            <h3>You can see everybody.</h3>
+            <p>The whole room, real names, who they are looking for. Nobody
+               on the list sees this.</p>
+          </div>
+        </li>
+        <li>
+          <span class="n">2</span>
+          <div>
+            <h3>They can see you.</h3>
+            <p>Your page is in front of members from today. That is what the
+               fifty-one behind you are waiting for.</p>
+          </div>
+        </li>
+        <li>
+          <span class="n">3</span>
+          <div>
+            <h3>If one of them writes, you can answer.</h3>
+            <p>And answering is the way in. You do not have to be picked
+               twice.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div class="held">
+        <span class="k">3</span>
+        <p><b>Your seat is held for three days.</b> The clock started when you
+           opened this. Finish your page and it stops.</p>
+      </div>
+
+      <button class="go">Finish my page</button>
+      <p class="after">Two things left — a photo and your sentence.</p>
+    </div>
+  </div>
+  <figcaption><b>The news is the screen, not a toast.</b> Today it arrives as a
+    grey line on top of an app that then refuses the first thing they touch, so
+    the first event is a refusal. Three things, numbered, because they are a
+    sequence and not three perks.</figcaption>
+</figure>
+
+<!-- ============ 2. BROWSE ============ -->
+<figure>
+  <p class="label">2 · The room, real</p>
+  <div class="phone">
+    <div class="top">
+      <h2>Browse</h2>
+      <span class="pill">Waiting room</span>
+    </div>
+    <div class="body">
+
+      <div class="who">
+        <div class="whead">
+          <span class="face f1">DR</span>
+          <div>
+            <p class="nm">Damon Russell</p>
+            <p class="sent">I am a Director looking for a Producer</p>
+          </div>
+        </div>
+        <p class="why">Atlanta. Features and documentary. Shooting in Asia next
+           spring.</p>
+        <p class="canwrite"><span class="lk">→</span> Damon can write to you.</p>
+      </div>
+
+      <div class="who">
+        <div class="whead">
+          <span class="face f2">AW</span>
+          <div>
+            <p class="nm">Anna Wu</p>
+            <p class="sent">I am an Agent looking for Talent</p>
+          </div>
+        </div>
+        <p class="why">Beijing. Represents nine performers. Works with Australian
+           and Chinese productions.</p>
+        <p class="canwrite"><span class="lk">→</span> Anna can write to you.</p>
+      </div>
+
+      <div class="who">
+        <div class="whead">
+          <span class="face f3">JD</span>
+          <div>
+            <p class="nm">Jason Dolan</p>
+            <p class="sent">I am a Producer looking for a Writer</p>
+          </div>
+        </div>
+        <p class="why">Los Angeles. SAG. Two features in development.</p>
+        <p class="canwrite"><span class="lk">→</span> Jason can write to you.</p>
+      </div>
+
+    </div>
+    <p class="foot"><b>You can read everything here.</b><br>
+      You cannot write first. You can always write back.</p>
+  </div>
+  <figcaption><b>A greyed button is a lie told forty times.</b> One true line
+    per card instead, and it is about what can still happen rather than what
+    is withheld. The bar at the bottom is the whole rule, said once, where
+    <code>sawSoon()</code> currently says it forty times.</figcaption>
+</figure>
+
+<!-- ============ 3. SOMEBODY WROTE ============ -->
+<figure>
+  <p class="label">3 · The way out</p>
+  <div class="phone">
+    <div class="top">
+      <h2>Anna Wu</h2>
+      <span class="pill">Waiting room</span>
+    </div>
+    <div class="body">
+
+      <div class="hit">
+        <p class="eye">Somebody wrote to you</p>
+        <h3>Anna Wu read your page.</h3>
+        <p>She is an agent in Beijing looking for talent. You are a performer
+           looking for an agent.</p>
+      </div>
+
+      <div class="msg">
+        <div class="whead">
+          <span class="face f2">AW</span>
+          <div>
+            <p class="nm">Anna Wu</p>
+            <p class="sent">Agent · Beijing</p>
+          </div>
+        </div>
+        <p class="bub">I saw your reel. Are you free to talk next week? I have
+          two productions casting in Sydney.</p>
+      </div>
+
+      <div class="box">
+        <span>Write back…</span>
+        <button class="send">Send</button>
+      </div>
+
+      <p class="opens"><b>Answering lets you in.</b> A member wanted to talk to
+        you, and that is the whole test. Nobody has to press anything in an
+        admin panel for this to happen.</p>
+
+    </div>
+  </div>
+  <figcaption><b>The door opens from the inside.</b> Not a new mechanism —
+    <code>admittedReq()</code> already treats a published person row as
+    membership. This points the existing one at the person a member chose,
+    which is a better filter than the one Tom runs by hand at eleven at
+    night.</figcaption>
+</figure>
+
+<!-- ============ THE ARGUMENT ============ -->
+<div class="note">
+  <h2>The waiting room is currently a demotion</h2>
+
+  <p>The list is not empty for the person on it. It has a card to fill in, a
+    queue position, and three small tests — <code>wr.*</code> in
+    <code>i18n.js</code> is an entire screen of things to do. Being moved up
+    means losing all of that and receiving an app where every button answers
+    <code>soon</code>. <b>The promotion is the worse experience</b>, which is
+    why it feels flat: it is flat.</p>
+
+  <p><b>There is exactly one thing this board owns, and it is who is in it.</b>
+    So that is what the stage should hand over. Not a feature unlocked early —
+    the room itself, with the real names in it. Anybody can put a queue counter
+    on a door. Nobody else can show these fifty people.</p>
+
+  <p><b>Being seen is the reward, not being able to look.</b> Reading the room
+    is nice for ten minutes. Knowing that your page is now in front of members
+    — that the thing you are two fields away from finishing is being read
+    today — is the reason to finish it in the next hour rather than on
+    Thursday. It also fixes the other half of the board: members have had
+    nobody new to look at.</p>
+
+  <p><b>The door opens from the inside.</b> One rule, and it replaces most of
+    the admin work: somebody in the waiting room cannot start a conversation
+    and can always answer one, and answering admits them. A member choosing to
+    write is a stronger signal than anything readable off a card, it arrives
+    without anybody being at a desk, and it means the three lifted each week
+    are not waiting on Tom twice.</p>
+
+  <p><b>Held, not threatened.</b> The seventy-two hours do not change and
+    neither does the sweep back to the list. "Three days or you are out" and
+    "your seat is held for three days" are the same fact, and only one of them
+    is a reason to open the app.</p>
+
+  <p><b>What it would take.</b> The gate in <code>server.js</code> already
+    refuses by method, which is the part that is hard to get right, and it
+    already lets <code>/api/wait/*</code> through. This needs: the arrival
+    screen instead of a toast; the per-card line instead of
+    <code>sawSoon()</code> firing on every press; a lifted person's finished
+    card included in what members browse; and one exception in the gate —
+    a reply on a thread a member opened, which admits them on send. Strings in
+    both languages, as ever.</p>
+</div>
+
+</body>
+</html>

@@ -54,6 +54,45 @@ than an argument for something that does not: the section is in
 `board/public/waiting.html` above the queue, `liftSome()` in `board/server.js`
 lifts three a day and sweeps anybody past 72 hours back.
 
+## waiting-room-arrival.html
+
+The waiting room from inside it — what the person who got moved up actually
+sees. The argument that the stage as built is a **demotion**.
+
+The list is not empty for the person on it: a card to fill in, a queue
+position, and three small tests (`wr.*` in `i18n.js` is a whole screen of
+things to do). Being moved up means losing all of that and receiving an app
+where every button answers `soon`. The promotion is the worse experience.
+
+Three phones, in the order they happen — arrival, the room, and a member
+writing.
+
+What it asserts, so it can be argued with:
+
+- **There is one thing this board owns, and it is who is in it.** So that is
+  what the stage hands over. Not a feature unlocked early — the room itself,
+  with the real names in it. Anybody can put a queue counter on a door.
+- **Being seen is the reward, not being able to look.** Reading the room is
+  nice for ten minutes; knowing your page is in front of members *today* is
+  the reason to finish it in the next hour. It also fixes the other half of
+  the board — members have had nobody new to look at.
+- **The door opens from the inside.** Somebody in the waiting room cannot
+  start a conversation and can always answer one, and answering admits them.
+  Not a new mechanism: `admittedReq()` already treats a published person row
+  as membership. A member choosing to write is a stronger filter than anything
+  readable off a card, and it does not need anybody at a desk.
+- **A greyed button is a lie told forty times.** One true line per card —
+  *"Damon can write to you"* — instead of `sawSoon()` firing on every press.
+- **Held, not threatened.** The 72 hours and the sweep back to the list do not
+  change. "Three days or you are out" and "your seat is held for three days"
+  are the same fact, and only one of them is a reason to open the app.
+
+Not built. The hard part is done — the gate refuses by method rather than by
+route, and already lets `/api/wait/*` through. What is missing: the arrival
+screen instead of a toast, the per-card line, a lifted person's finished card
+in what members browse, and one gate exception for a reply on a thread a
+member opened.
+
 ## social.html
 
 The Social panel, from the Jrend Tap deck, pointed at the catalogue Study Pal
