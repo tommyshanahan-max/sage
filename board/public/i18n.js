@@ -122,11 +122,11 @@ export const STRINGS = {
      with half their attention does notice. Same reason act.reply1 exists. */
   "wroom.body2": [
     "Nothing works yet. Two things left \u2014",
-    "现在还点不动。还差两样——",
+    "现在什么都点不动。还差两样——",
   ],
   "wroom.body1": [
     "Nothing works yet. One thing left \u2014",
-    "现在还点不动。还差一样——",
+    "现在什么都点不动。还差一样——",
   ],
   /* WHAT IS LEFT AND HOW LONG THERE IS. The server has been sending all
      three of these since the waiting room was built and no page drew any of
@@ -140,7 +140,7 @@ export const STRINGS = {
      not when they were moved up, so before that there is honestly no deadline
      to name. */
   "wroom.left":        ["{n} hours left", "还剩 {n} 小时"],
-  "wroom.done":        ["Finished. Somebody will read it.", "填完了，会有人来看。"],
+  "wroom.done":        ["Done. Somebody reads it from here.", "填完了。接下来有人看。"],
 
   /* LOSING THE PLACE, which is the one thing on this board that cannot be
      undone. Their row lives in this browser's storage and nowhere else, and
@@ -156,11 +156,11 @@ export const STRINGS = {
      is in the way of the box underneath it. The heading already says what is
      at stake; this says what to do about it. */
   "lose.why": [
-    "Leave an email and six digits bring it back.",
-    "留个邮箱，六位数字就能找回来。",
+    "Lose this phone and you lose your place, your face, the lot. Leave an email and you don't.",
+    "手机丢了，位置、照片，全都没了。留个邮箱就不会。",
   ],
   "lose.save":         ["Save it", "保存"],
-  "lose.done":         ["Saved. Your place can come back now.", "存好了。现在能把位置找回来了。"],
+  "lose.done":         ["Done. Your place survives the phone now.", "好了。以后手机没了，位置还在。"],
 
   "push.head": ["Know when somebody writes", "有人给你留言，第一时间知道"],
   "push.later":["Not now", "以后再说"],
@@ -1280,8 +1280,8 @@ export const STRINGS = {
   "wr.title":        ["While you wait", "等着的时候"],
   "wr.on":           ["You are on the list.", "你已经在名单上了。"],
   "wr.onWhy": [
-    "Members are looking through the people at the door. This is what they see of you.",
-    "里面的人在翻门口这些人的卡片。他们看到的你，就是这一张。",
+    "Members go through the people at the door. This card is all they get of you.",
+    "里面的人会翻门口这些卡片。他们能看到的你，就这一张。",
   ],
   /* THEIR NUMBER AND THE SIZE OF THE QUEUE, in one line. "5 asked before
      you" gave the gap without the scale — being fifth of six and fifth of
@@ -1293,10 +1293,10 @@ export const STRINGS = {
   "wr.yourcard":     ["Your card", "你的卡片"],
   /* The empty card, said out loud. A screen that draws three blanks and says
      nothing about them reads as a page that failed to load. */
-  "wr.thin":         ["Three empty spaces. Nothing to go on but a sentence.",
-                        "三个空格。除了一句话，没别的可看。"],
-  "wr.full":         ["Three things a member can judge without meeting you.",
-                        "三件事，不用见面就能判断。"],
+  "wr.thin":         ["Three gaps and a sentence. Not much to go on.",
+                        "三个空，一句话。没多少可看的。"],
+  "wr.full":         ["Enough for somebody to decide without meeting you.",
+                        "够了，不用见面也能定。"],
   /* NOT "Fill them in". That is a to-do list, and a to-do list handed to
      somebody at a door is an entrance exam however gently it is worded — at
      which point the busy people leave, and the busy people are who this is
@@ -3323,6 +3323,32 @@ export const STRINGS = {
      for the ear, and a sentence written to be heard is a different sentence. */
   "wel.hi":            ["Welcome, {who}", "欢迎你，{who}"],
   "wel.play":          ["Hear this", "听一下"],
+
+  /* ---- THE CARD THEY CAN POST --------------------------------------------
+   *
+   * Nobody shares a waiting list. People share three things: proof they are
+   * in, news about somebody impressive, and access they can give away. This
+   * board had machinery for the third and nothing at all for the first — a
+   * person on the list had nothing to show for it, and "I am 55th" is not a
+   * thing anybody posts.
+   *
+   * So: one image, their name, their line, and the chop. Drawn in their own
+   * browser on a canvas — no server, no file, and nothing about them leaves
+   * this device to make it. What they do with it afterwards is theirs.
+   */
+  "post.mine":         ["Get your card", "把你的卡片存下来"],
+  "post.why": [
+    "Yours to post. The people you'd send it to are the people who should be in here.",
+    "存下来，想发哪儿发哪儿。你会发给的那几个人，本来就该在这儿。",
+  ],
+  "post.keep":         ["Save it", "保存"],
+  "post.kept":         ["Saved", "已保存"],
+  /* iOS Safari and WeChat both refuse a script-started download, and a button
+     that silently does nothing is worse than no button. Press and hold is
+     what everybody on those two already does with a picture. */
+  "post.hold":         ["Press and hold the card to save it", "长按卡片保存"],
+  "post.on":           ["ON THE LIST", "在名单上"],
+  "post.in":           ["MEMBER", "成员"],
   "wel.stop":          ["Stop", "停"],
   /* SPOKEN, AND IT IS THE FIRST THING ANYBODY HEARS FROM THIS PLACE.
    *
@@ -3337,12 +3363,12 @@ export const STRINGS = {
    * the board already calls it a card everywhere else, and a card is a thing
    * rather than a screen. */
   "wel.sayList": [
-    "Welcome, {who}. {t} of you at the door tonight, and you're number {n}. Get a face on your card and one line about what you do and who you want. That's what moves people up. Blank cards stay outside.",
-    "欢迎你，{who}。今晚门口 {t} 个人，你排第 {n}。放张照片，再用一句话说清楚你做什么、想找谁——就靠这个往前挪。卡片空着的，一直在门外。",
+    "{who}. There are {t} people out here tonight and you just became the last of them. Put up a face. Tell me in one line what you do and who you're after. That's the whole trick. The ones who can't be bothered are still out here in March.",
+    "{who}。今晚门口站着 {t} 个人，你刚成了最后一个。放张照片，用一句话说清楚你做什么、想找谁。就这么点事。懒得弄的那些，三月份还站在这儿。",
   ],
   "wel.sayUp": [
-    "{who}, you're through the first door. Three came off the list this week and you're one of them. Have a look around — nothing works yet, that's the deal. Get a face and a line on your card and somebody inside takes a look. Three days.",
-    "{who}，第一道门过了。这周就提上来三个人，你是一个。先随便看看——什么都还点不动，就是这样。照片和那句话填上，里面就有人来看。三天。",
+    "{who}. Three people came off that list this week. You're one of them. Look around all you like — nothing works yet, that's how this part goes. Face on the card, one line under it, and somebody inside reads it. You've got three days.",
+    "{who}。这周从名单上提上来三个人，你是一个。随便看，什么都还点不动——这一段就是这样。照片放上，底下写一句话，里面就有人看。三天。",
   ],
 
   /* ---- WHO HE IS ----------------------------------------------------------
@@ -3389,8 +3415,8 @@ export const STRINGS = {
      not to be. So: he contracts and the board does not, and that difference
      is the whole of his voice. */
   "but.hookUp": [
-    "{who} — you're one of three off the list this week. {n} aren't.",
-    "{who}——这周就提上来三个，你是一个。另外 {n} 个还在等。",
+    "{who}. Three came off the list this week. {n} didn't.",
+    "{who}。这周提上来三个。剩下 {n} 个没有。",
   ],
   /* Somebody who has not been moved up yet and opened this anyway. The
      scarcity line above would be a lie to them, and the true thing is better
@@ -3403,15 +3429,15 @@ export const STRINGS = {
      who get moved up are people, and saying so is the same fact with
      somebody in it. */
   "but.hookList": [
-    "{who} — nobody moves up off a blank card. Yours is blank.",
-    "{who}——空卡片是挪不动的。你的还空着。",
+    "{who}. Blank card. Nobody's ever moved up on one of those.",
+    "{who}。卡片是空的。空卡片没人挪得动。",
   ],
   /* "What do you do?" on its own reads as a job interview. The "actually" is
      what makes it somebody asking rather than a field label, and it was cut
      once for brevity and had to come back. */
   "but.ask": [
-    "Two things and you're done. So what do you actually do?",
-    "就两样，填完就行。你是做什么的？",
+    "Two things and you're done here. So what do you actually do?",
+    "两样东西，填完就完事了。你到底是做什么的？",
   ],
   /* Closed, and gettable back. Not a pitch for a feature — his name and the
      one thing he is for. */
@@ -3427,8 +3453,8 @@ export const STRINGS = {
    * somebody who shut it by accident needs to know there is a way back, and
    * somebody who shut it on purpose is owed the confirmation. */
   "but.gone": [
-    "Mo is off. The fields below work the same.",
-    "老莫关掉了。下面的格子照常填。",
+    "Mo's gone. Everything below still works.",
+    "老莫走了。下面的东西照样填。",
   ],
   "but.back":          ["Bring him back", "让他回来"],
   /* SAID LITERALLY, because the people this is for are the people who would

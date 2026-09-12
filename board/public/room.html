@@ -191,6 +191,18 @@
   .buthead b{font-size:.92rem;font-weight:600;color:var(--ink)}
   .butshut{margin:1rem 0 0;text-align:center}
   .butgone{margin:0 0 .5rem;font-size:.82rem;color:var(--muted)}
+  /* ---- THE CARD THEY CAN POST --------------------------------------------
+     One image, made on their own device, and the only thing somebody standing
+     outside can do that helps them and helps the board at once. */
+  .mine{margin:1rem 0 0;padding:.9rem;border:1px solid var(--hair);
+    border-radius:.9rem;background:var(--card);text-align:center}
+  .mine p{margin:0 0 .7rem;font-size:.86rem;line-height:1.5;color:var(--ink-2)}
+  .mine .go{border:0;border-radius:99px;background:var(--ink);color:var(--paper);
+    font:inherit;font-size:.9rem;padding:.55rem 1.2rem;cursor:pointer}
+  .mine img{display:block;width:100%;max-width:19rem;margin:.9rem auto 0;
+    border-radius:.7rem;box-shadow:0 10px 26px rgba(0,0,0,.3)}
+  .mine .how{margin:.6rem 0 0;font-size:.78rem;color:var(--muted)}
+  .mine .row2{display:flex;gap:.5rem;justify-content:center;margin:.7rem 0 0}
   .butoff{display:block;margin:.5rem auto 0;border:0;background:none;
     color:var(--muted);font:inherit;font-size:.78rem;padding:.25rem;
     cursor:pointer;text-decoration:underline;text-underline-offset:2px}
@@ -604,6 +616,7 @@
 import { T, setLang, pickLang, langButton, when, lang } from "/i18n.js";
 import { offerInstall } from "/install.js";
 import { canHear, listen } from "/speak.js";
+import { drawCard } from "/postcard.js";
 import { device } from "/wait.js";
 /* The same pipeline the board behind the door uses — HEIC in, JPEG out,
    the right way up, small enough to arrive over Chinese mobile data. */
@@ -1589,6 +1602,69 @@ const butlerStart = () => ({
   open: !moOff(), put: null, busy: false, no: "",
 });
 
+/** THE CARD THEY CAN POST.
+ *
+ *  Nobody shares a waiting list. People share proof they are in, news about
+ *  somebody impressive, and access they can give away — and this board had
+ *  the third and nothing at all for the first. A person on the list had
+ *  nothing to show for it.
+ *
+ *  Made in their own browser, so nothing about them travels anywhere to
+ *  produce a picture of themselves, and the board never learns whether they
+ *  posted it. See postcard.js.
+ */
+function mineBox(you) {
+  const box = el("div", "mine");
+  box.append(el("p", null, T("post.why")));
+  const go = el("button", "go", T("post.mine"));
+  go.type = "button";
+  box.append(go);
+
+  go.addEventListener("click", async () => {
+    go.disabled = true;
+    go.textContent = T("me.working");
+    try {
+      const url = await drawCard({
+        name: you.name || "",
+        why: you.why || "",
+        /* Their own photograph whatever state it is in. It is theirs, it is
+           already on their screen, and a card of themselves with a grey
+           circle where their face goes is not a card anybody posts. */
+        photo: you.photo ? "/api/wait-media?id=" + encodeURIComponent(you.photo) : "",
+        member: false,
+      }, T);
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = "";
+      go.remove();
+      box.append(img);
+
+      /* iOS Safari and WeChat both refuse a download a script started, and a
+         button that silently does nothing is worse than no button. Press and
+         hold is what everybody on those two already does with a picture, so
+         that is what they are told; everywhere else gets the button. */
+      const wx = /MicroMessenger/i.test(navigator.userAgent);
+      const ios = /iPad|iPhone|iPod/.test(navigator.userAgent)
+        || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      if (wx || ios) {
+        box.append(el("p", "how", T("post.hold")));
+      } else {
+        const row = el("div", "row2");
+        const save = el("a", "go", T("post.keep"));
+        save.href = url;
+        save.download = "the-exchange.png";
+        save.addEventListener("click", () => { save.textContent = T("post.kept"); });
+        row.append(save);
+        box.append(row);
+      }
+    } catch (e) {
+      go.disabled = false;
+      go.textContent = T("post.mine");
+    }
+  });
+  return box;
+}
+
 /** The box that stops somebody losing their place.
  *
  *  It writes to the same route the edit form does and never reads the field
@@ -1728,6 +1804,11 @@ function drawWait(box) {
    * WRITE ONLY, like the box in the edit form below: the page is told whether
    * a way back exists, never what it is. */
   if (!you.canSignIn && (DATA.up || you.photo || you.me)) box.append(loseBox());
+
+  /* Offered once there is something on the card worth showing. A card with a
+     name on it and nothing else is not a thing anybody posts, and offering it
+     before there is would teach them the offer is worthless. */
+  if (you.name && (you.photo || you.why)) box.append(mineBox(you));
 
   /* AND THE HOME SCREEN, on the page they were sent a link to.
    *
