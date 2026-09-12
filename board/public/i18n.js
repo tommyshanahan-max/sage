@@ -3279,6 +3279,54 @@ export const STRINGS = {
   /* THE MIC. On the composer's four fields. Not a feature of the board so
      much as a way of filling a box, which is why the labels say what the
      button does to THIS field rather than announcing dictation. */
+  /* ---- THE BUTLER ---------------------------------------------------------
+     The waiting room asks a stranger for one sentence in a vocabulary of
+     thirteen words nobody has been shown, and that sentence is the whole
+     board. He is the translator between what somebody says about themselves
+     and the word the matcher needs.
+
+     NOT "AI assistant" ANYWHERE. Two reasons, and the first is about who these
+     people are: somebody who has been told a machine is handling them
+     answers a machine. The second is that the words carry a promise — an
+     assistant does things for you, and this one does exactly one thing and
+     then hands it back for a person to agree to. "The doorman" is what he
+     actually is: he stands at the door, he knows how the place works, and he
+     writes nothing down. */
+  "but.name":          ["The doorman", "门房"],
+  "but.sub":           ["helps you finish", "帮你把这页填完"],
+  "but.offerHead":     ["Not sure what to put?", "不知道该怎么填？"],
+  "but.offerWhy": [
+    "Tell him what you do in your own words and he will work out the rest.",
+    "用你自己的话说说你是做什么的，剩下的他来想。",
+  ],
+  "but.open":          ["Talk to him", "跟他说"],
+  /* THE FIRST LINE, WRITTEN HERE AND NOT ASKED OF THE MODEL. Before anybody
+     has typed, the only signal there is is the language the page is being read
+     in — and a greeting that arrives in the wrong one is a greeting nobody
+     answers. It also sets the language for everything after it, because he
+     answers in the language he was addressed in. */
+  "but.first": [
+    "What do you do? Tell me the way you would tell somebody at a party — I will sort out the wording.",
+    "你是做什么的？就像跟人随口介绍自己那样说就行，措辞我来弄。",
+  ],
+  "but.ph":            ["Type, or hold the mic", "打字，或者按住话筒"],
+  "but.send":          ["Send", "发送"],
+  "but.thinking":      ["…", "…"],
+  "but.hear":          ["Hear it", "听一遍"],
+  /* WHAT HE IS PROPOSING, and the button says what pressing it does to the
+     card rather than "OK" — this is the one moment in the conversation where
+     something gets written down. */
+  "but.keep":          ["Put this on my card", "就用这个"],
+  "but.redo":          ["Not quite", "不太对"],
+  "but.slow": [
+    "Give him a moment — a lot has been asked at once.",
+    "等一下——一下子问得太多了。",
+  ],
+  "but.off": [
+    "He is not answering. The fields below still work.",
+    "他没回应。下面的格子照样能填。",
+  ],
+
   "mic.go":            ["Say it instead", "用说的"],
   "mic.stop":          ["Stop", "停"],
   "mic.no": [

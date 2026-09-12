@@ -63,6 +63,77 @@
   .wrband .todo li.on{color:var(--good,#1F7A4D)}
   .wrband .todo i{font-style:normal;margin-right:.4rem}
 
+  /* ---- THE BUTLER ---------------------------------------------------------
+   *
+   * A conversation, not a form, and drawn as one: their words on the right,
+   * his on the left, the box at the bottom. Everybody has used this screen
+   * before, which is the point — the person who most needs it is the one least
+   * likely to work out a novel one.
+   */
+  .but{margin:1rem 0 0;border:1px solid var(--hair);border-radius:.9rem;
+    background:var(--card);overflow:hidden}
+  .buthead{display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;
+    border-bottom:1px solid var(--hair)}
+  .buthead b{font-size:.92rem;font-weight:600;color:var(--ink)}
+  .buthead small{color:var(--muted);font-size:.76rem}
+  .buthead .x{margin-left:auto;border:0;background:none;color:var(--muted);
+    font-size:1.2rem;line-height:1;padding:.1rem .3rem;cursor:pointer}
+  .butsay{padding:.8rem .9rem;display:flex;flex-direction:column;gap:.55rem;
+    max-height:20rem;overflow-y:auto}
+  .bub{max-width:85%;padding:.55rem .8rem;border-radius:1rem;font-size:.9rem;
+    line-height:1.5}
+  .bub.him{align-self:flex-start;background:var(--raise);color:var(--ink);
+    border-bottom-left-radius:.3rem}
+  .bub.her{align-self:flex-end;background:var(--accent);color:var(--accent-ink);
+    border-bottom-right-radius:.3rem}
+  .bub.wait{color:var(--muted)}
+  /* HEARING IT. speechSynthesis speaks Chinese on every phone here and
+     level.html has used it for months. Its own small button under his line
+     rather than speaking automatically: a page that starts talking in a quiet
+     carriage is a page somebody closes. */
+  .hear{align-self:flex-start;border:0;background:none;padding:.1rem .2rem;
+    color:var(--muted);font-size:.76rem;cursor:pointer;margin:-.35rem 0 0}
+  .butform{display:flex;gap:.5rem;align-items:center;padding:.7rem .9rem;
+    border-top:1px solid var(--hair)}
+  .butform input{flex:1;min-width:0;border:1px solid var(--line);
+    background:var(--raise);border-radius:99px;padding:.55rem .9rem;font:inherit;
+    font-size:.92rem;color:var(--ink);outline:none}
+  .butform button{flex:0 0 auto;border:0;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);font:inherit;font-size:.88rem;
+    padding:.55rem 1rem}
+  .butform .mic{width:2.3rem;height:2.3rem;border-radius:50%;padding:0;
+    border:1px solid var(--line);background:var(--raise);color:var(--ink-2);
+    display:grid;place-items:center}
+  .butform .mic svg{width:1.05rem;height:1.05rem;fill:none;stroke:currentColor;
+    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .butform .mic[aria-pressed="true"]{background:var(--bad,#B3261E);color:#fff;
+    border-color:transparent;animation:micon 1.4s ease-in-out infinite}
+  @keyframes micon{0%,100%{opacity:1}50%{opacity:.62}}
+  @media (prefers-reduced-motion:reduce){.butform .mic[aria-pressed="true"]{animation:none}}
+  /* WHAT HE IS PROPOSING, shown as the thing itself — the sentence as it will
+     read on their card — and not as "me: agent, want: talent". They are
+     agreeing to a sentence, so a sentence is what they are shown. */
+  .butput{margin:0;padding:.8rem .9rem;border-top:1px solid var(--hair);
+    background:var(--accent-soft)}
+  .butput .line{font-family:var(--serif);font-size:1rem;color:var(--ink);
+    line-height:1.4;margin:0 0 .3rem}
+  .butput .why{margin:0 0 .7rem;font-size:.86rem;color:var(--ink-2);line-height:1.5}
+  .butput .row2{display:flex;gap:.5rem}
+  .butput .keep{border:0;border-radius:99px;background:var(--ink);color:var(--paper);
+    font:inherit;font-size:.88rem;padding:.5rem 1.1rem}
+  .butput .no{border:1px solid var(--line);border-radius:99px;background:none;
+    color:var(--ink-2);font:inherit;font-size:.88rem;padding:.5rem 1rem}
+  .butno{margin:.5rem .9rem .8rem;font-size:.82rem;color:var(--bad,#B3261E)}
+  /* Before it is opened: one line and a button, so the panel is an offer
+     rather than a conversation somebody has to close. */
+  .butoffer{margin:1rem 0 0;padding:.8rem .9rem;border-radius:.9rem;
+    border:1px solid var(--hair);background:var(--card);display:flex;
+    align-items:center;gap:.7rem}
+  .butoffer p{margin:0;flex:1;font-size:.86rem;line-height:1.45;color:var(--ink-2)}
+  .butoffer p b{display:block;color:var(--ink);font-weight:600;font-size:.92rem}
+  .butoffer button{flex:0 0 auto;border:0;border-radius:99px;background:var(--accent);
+    color:var(--accent-ink);font:inherit;font-size:.88rem;padding:.5rem 1.1rem}
+
   /* THE HOME SCREEN, OFFERED ON THEIR OWN PAGE. install.js decides whether
      there is anything to offer — WeChat cannot install and says so instead;
      iOS gets the share-sheet instruction; Chrome gets a button. Same strip as
@@ -405,8 +476,9 @@
 </nav>
 
 <script type="module">
-import { T, setLang, pickLang, langButton, when } from "/i18n.js";
+import { T, setLang, pickLang, langButton, when, lang } from "/i18n.js";
 import { offerInstall } from "/install.js";
+import { canHear, listen } from "/speak.js";
 import { device } from "/wait.js";
 /* The same pipeline the board behind the door uses — HEIC in, JPEG out,
    the right way up, small enough to arrive over Chinese mobile data. */
@@ -918,6 +990,235 @@ function shareBox(link, ahead) {
   return out;
 }
 
+/* ---- THE BUTLER ----------------------------------------------------------
+ *
+ * The waiting room asks a stranger for one sentence in a vocabulary of
+ * thirteen words nobody has been shown, and that sentence is the whole board.
+ * This is the translator between what somebody says about themselves and the
+ * word the matcher needs. See lib/butler.js for the rules it works under.
+ *
+ * IT PROPOSES AND NEVER WRITES. What comes back appears as the sentence it
+ * would put on their card, with a button. Nothing is stored by talking.
+ */
+let BUT = null;          // { turns: [], open: bool, put: {...}|null, busy: bool }
+let BUTMIC = null;
+
+/** The browser's own voice, which speaks Chinese on every phone here —
+ *  level.html and daily.js have used it for months. Its own button under his
+ *  line rather than automatic: a page that starts talking in a quiet carriage
+ *  is a page somebody closes. */
+const canHearOut = () => typeof window !== "undefined" && "speechSynthesis" in window;
+function speakOut(text) {
+  if (!canHearOut()) return;
+  const tag = lang() === "zh" ? "zh-CN" : "en-US";
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = tag;
+    const want = tag.slice(0, 2);
+    const v = (window.speechSynthesis.getVoices() || [])
+      .find((x) => String(x.lang || "").toLowerCase().startsWith(want));
+    if (v) u.voice = v;
+    /* Slower than default. The person being read to is hearing their second
+       language on a phone speaker, which is the case default rate is worst
+       for — the same 0.85 daily.js settled on. */
+    u.rate = 0.85;
+    window.speechSynthesis.speak(u);
+  } catch { /* an utterance with no voice behind it */ }
+}
+
+/** The first thing he says, written here in both languages rather than asked
+ *  of the model — before they have typed anything the only signal there is is
+ *  the language they are reading the page in, and a greeting that arrives in
+ *  the wrong one is a greeting nobody answers. */
+const butlerFirst = () => T("but.first");
+
+function butlerPanel() {
+  const box = el("div", "but");
+
+  const head = el("div", "buthead");
+  head.append(el("b", null, T("but.name")));
+  head.append(el("small", null, T("but.sub")));
+  const x = el("button", "x", "×");
+  x.type = "button";
+  x.setAttribute("aria-label", T("post.cancel"));
+  x.addEventListener("click", () => {
+    if (BUTMIC) BUTMIC.stop();
+    try { window.speechSynthesis.cancel(); } catch { /* nothing speaking */ }
+    BUT.open = false;
+    draw();
+  });
+  head.append(x);
+  box.append(head);
+
+  const said = el("div", "butsay");
+  for (const t of BUT.turns) {
+    const b = el("div", "bub " + (t.from === "you" ? "him" : "her"), t.text);
+    said.append(b);
+    /* Only his lines get a speaker. Reading somebody their own words back is
+       not a feature. */
+    if (t.from === "you" && canHearOut()) {
+      const hear = el("button", "hear", T("but.hear"));
+      hear.type = "button";
+      hear.addEventListener("click", () => speakOut(t.text));
+      said.append(hear);
+    }
+  }
+  if (BUT.busy) said.append(el("div", "bub him wait", T("but.thinking")));
+  box.append(said);
+  // Newest at the bottom, which is where a conversation is read from.
+  setTimeout(() => { try { said.scrollTop = said.scrollHeight; } catch { /* not yet */ } }, 0);
+
+  /* WHAT HE IS PROPOSING — shown as the sentence it will be, because that is
+     what they are agreeing to. "me: agent, want: talent" is a database row and
+     nobody can check a database row against themselves. */
+  if (BUT.put) {
+    const put = el("div", "butput");
+    /* The same words the pills under this use — say.iam and role.a.*, which
+       carry their own article so "a Director" and "an Agent" and "Crew" all
+       read correctly. A second way of writing the sentence would eventually
+       disagree with the first. */
+    /* Joined with a space in English and with nothing in Chinese. Chinese
+       does not put spaces between words, and "我是 经纪人 我在找 制片人" reads
+       like a form with the labels left in. */
+    put.append(el("p", "line", [T("say.iam"), T("role.a." + BUT.put.me),
+      T("say.lookingFor"), T("role.a." + BUT.put.want)].join(lang() === "zh" ? "" : " ")));
+    if (BUT.put.why) put.append(el("p", "why", BUT.put.why));
+    const row2 = el("div", "row2");
+    const keep = el("button", "keep", T("but.keep"));
+    keep.type = "button";
+    keep.addEventListener("click", async () => {
+      keep.disabled = true;
+      keep.textContent = T("me.working");
+      const ok = await putCard({ me: BUT.put.me, want: BUT.put.want,
+        ...(BUT.put.why ? { why: BUT.put.why } : {}) });
+      if (!ok) { keep.disabled = false; keep.textContent = T("but.keep"); return; }
+      BUT.put = null;
+      BUT.open = false;
+      await load();
+      draw();
+    });
+    const no = el("button", "no", T("but.redo"));
+    no.type = "button";
+    no.addEventListener("click", () => {
+      /* Not a refusal to be argued with — it goes back to the conversation
+         with the proposal withdrawn, and he is told why in their own turn. */
+      BUT.put = null;
+      draw();
+    });
+    row2.append(keep, no);
+    put.append(row2);
+    box.append(put);
+  }
+
+  if (BUT.no) box.append(el("p", "butno", BUT.no));
+
+  const form = el("form", "butform");
+  const input = el("input");
+  input.type = "text";
+  input.maxLength = 600;
+  input.placeholder = T("but.ph");
+  input.autocomplete = "off";
+  form.append(input);
+
+  /* THE MIC. Speaking is the point for half these people: the person filling
+     this in is on a phone, in their second language, one thumb at a time. Not
+     drawn where the browser has no recogniser — see speak.js, and the note
+     there about where it does and does not work. */
+  if (canHear()) {
+    const mic = el("button", "mic");
+    mic.type = "button";
+    mic.setAttribute("aria-pressed", "false");
+    mic.setAttribute("aria-label", T("mic.go"));
+    mic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+      + '<path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z"/>'
+      + '<path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+    mic.addEventListener("click", () => {
+      if (BUTMIC) { BUTMIC.stop(); BUTMIC = null; return; }
+      BUT.no = "";
+      BUTMIC = listen(input, lang() === "zh" ? "zh-CN" : "en-US", {
+        onState(on) {
+          mic.setAttribute("aria-pressed", on ? "true" : "false");
+          if (!on) BUTMIC = null;
+        },
+        onError(why) {
+          BUT.no = T(why === "not-allowed" ? "mic.no" : "mic.off");
+          draw();
+        },
+      });
+    });
+    form.append(mic);
+  }
+
+  const go = el("button", null, T("but.send"));
+  go.type = "submit";
+  form.append(go);
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (BUTMIC) { BUTMIC.stop(); BUTMIC = null; }
+    const text = input.value.trim();
+    if (!text || BUT.busy) return;
+    BUT.turns.push({ from: "them", text });
+    BUT.busy = true;
+    BUT.no = "";
+    input.value = "";
+    draw();
+    await butlerTurn();
+  });
+  box.append(form);
+
+  // Focus only once the panel is on the page, and never on the first draw —
+  // a keyboard that opens the moment somebody taps "talk to him" covers the
+  // line he just said.
+  if (BUT.turns.length > 1) setTimeout(() => { try { input.focus(); } catch { /* gone */ } }, 0);
+  return box;
+}
+
+/** One round trip. */
+async function butlerTurn() {
+  try {
+    const r = await fetch("/api/butler", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-board-device": device() },
+      body: JSON.stringify({ turns: BUT.turns }),
+    });
+    const d = await r.json().catch(() => ({}));
+    BUT.busy = false;
+    if (!r.ok || d.error) {
+      BUT.no = T(d.error === "slow-down" || d.error === "busy" ? "but.slow" : "but.off");
+      draw();
+      return;
+    }
+    BUT.turns.push({ from: "you", text: d.say });
+    /* A proposal is shown only when all of it survived the checks on the way
+       back — see clean() in butler.js. Half a sentence is not something to put
+       a Keep button under. */
+    BUT.put = d.ready ? { me: d.me, want: d.want, why: d.why } : null;
+  } catch {
+    BUT.busy = false;
+    BUT.no = T("but.off");
+  }
+  draw();
+}
+
+/** The offer, before anybody has said anything to him. */
+function butlerOffer() {
+  const box = el("div", "butoffer");
+  const p = el("p");
+  p.append(el("b", null, T("but.offerHead")));
+  p.append(document.createTextNode(T("but.offerWhy")));
+  box.append(p);
+  const go = el("button", null, T("but.open"));
+  go.type = "button";
+  go.addEventListener("click", () => {
+    BUT = { turns: [{ from: "you", text: butlerFirst() }], open: true, put: null, busy: false, no: "" };
+    draw();
+  });
+  box.append(go);
+  return box;
+}
+
 /** The box that stops somebody losing their place.
  *
  *  It writes to the same route the edit form does and never reads the field
@@ -1048,6 +1349,15 @@ function drawWait(box) {
    * and its storage is the most fragile there is, and it is where most of
    * these links get opened — install.js says "open it in your browser"
    * there rather than drawing a button that cannot work. */
+  /* THE BUTLER, above the card and below the two things that can be lost.
+     Only when the box has a key for him — see butler.configured() — because a
+     panel that offers a conversation and answers 503 is worse than no panel.
+     And only while the sentence is still missing: somebody who has finished
+     does not need to be offered help finishing. */
+  if (DATA.butler && !(you.me && you.want)) {
+    box.append(BUT && BUT.open ? butlerPanel() : butlerOffer());
+  }
+
   const strip = el("p", "ins");
   strip.hidden = true;
   box.append(strip);

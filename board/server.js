@@ -35,6 +35,7 @@ import { translate, configured as translateReady } from "./lib/translate.js";
 import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js";
 import { send as sendMail, configured as mailReady } from "./lib/mail.js";
 import * as intake from "./lib/intake.js";
+import * as butler from "./lib/butler.js";
 import * as push from "./lib/push.js";
 /* THE SWITCH FILE, READ BY THE SERVER TOO.
  *
@@ -3244,6 +3245,10 @@ app.get("/api/wait/me", async (req, res) => {
      * whether they have the face and the sentence that end the clock. The page
      * says all three, because "finish your page" with no idea what is missing
      * or how long is left is a demand rather than an invitation. */
+    /* Whether there is a butler to draw. It needs a key on the box, so a page
+       that drew the panel unconditionally would offer a conversation that
+       answers 503 — which is worse than no panel. */
+    butler: butler.configured(),
     up: Boolean(mine.up),
     upDone: store.waitDone(mine),
     upSeen: Boolean(mine.upSeen),
@@ -3380,6 +3385,45 @@ app.post("/api/wait/photo", express.json({ limit: "36mb" }), async (req, res) =>
     board.waits[at] = store.cleanWait({ ...board.waits[at], photo: id, photoState: "held" });
     return { on: true, photo: id, photoState: "held" };
   });
+  res.json(out);
+});
+
+/* ---------------------------------------------------------------------------
+ * THE BUTLER
+ *
+ * Somebody to talk to while you finish your page. The waiting room asks a
+ * stranger for one sentence — "I am a ___ looking for a ___" — in a vocabulary
+ * of thirteen words nobody has been shown, and that sentence is the whole
+ * board: it decides who they are shown and who is shown them. A model agent in
+ * Guangzhou with forty people on her books does not think of herself as
+ * `agent looking for talent`; she thinks "I have people and I need work for
+ * them". This is the translator between those two.
+ *
+ * IT PROPOSES AND NEVER WRITES. Nothing here touches the row. What comes back
+ * goes into the fields on the page as a suggestion, and a person presses a
+ * button. See the note at the top of lib/butler.js for why that rule is the
+ * whole design, and what is checked on the way back.
+ *
+ * THE WAITING ROOM ONLY, and this is a cost decision rather than a feature
+ * one: a route that calls a model, on a board with no accounts, reached by
+ * anybody outside the door, is a bill anybody can run up. The caps in
+ * butler.js are the second line; this is the first.
+ * ------------------------------------------------------------------------- */
+app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
+  if (!butler.configured()) return res.status(503).json({ error: "unconfigured" });
+  const { row, who: me } = await waitingRow(req, res);
+  /* Not "are they up" — anybody on the list with a row may use it. Somebody
+     who fills their card in before their turn comes up is the best possible
+     outcome of this feature, not an abuse of it. */
+  if (!row) return res.status(403).json({ error: "who" });
+  const out = await butler.ask(req.body?.turns, me || row.id);
+  if (out.error) {
+    const code = out.error === "slow-down" ? 429
+      : out.error === "busy" ? 429
+      : out.error === "unconfigured" ? 503 : 400;
+    return res.status(code).json(out);
+  }
+  res.set("Cache-Control", "no-store");
   res.json(out);
 });
 
