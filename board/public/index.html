@@ -326,15 +326,6 @@
   /* .menote centres in this sheet, which is right for a one-line aside under
      a control and wrong for three lines saying what a press gives away. */
   #repsay{text-align:left}
-  /* The written note, as it will arrive. Wrapped, not scrolled: somebody about
-     to send four lines to a person has to be able to read them. */
-  /* Both full width and stacked: on a phone the thing you press should be the
-     width of your thumb's reach, and there is nothing to weigh them against. */
-  #wrout .wide{display:block;width:100%;margin:.5rem 0 0}
-  .wrblock{margin:.2rem 0 .9rem;padding:.8rem .9rem;border-radius:.7rem;
-    background:var(--raise);border:1px solid var(--line);color:var(--ink);
-    font:inherit;font-size:.92rem;line-height:1.55;white-space:pre-wrap;
-    overflow-wrap:anywhere;max-height:15rem;overflow-y:auto}
   .keyval{display:flex;gap:.5rem;align-items:center;margin:.7rem 0 0}
   .keyval code{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;
@@ -2021,10 +2012,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         <span></span>
       </button>
-      <button type="button" id="pluswrite" role="menuitem">
+      <a href="/notes#new" id="pluswrite" role="menuitem">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16z M14 6l4 4"/></svg>
         <span></span>
-      </button>
+      </a>
       <a href="/onboard" id="plusrun" role="menuitem" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M2 20a7 7 0 0 1 14 0 M18 8v6M15 11h6"/></svg>
         <span></span>
@@ -2502,45 +2493,10 @@
      knew them. The message was doing the work and the board could not see it.
      One line to one person by name; what comes out is a block to paste into
      WeChat, the same shape as the invite message, which is settled. -->
-<div class="sheet" id="wrsheet" hidden>
-  <div class="card">
-    <h2 id="wrtitle"></h2>
-    <!-- THE FORM AND THE RESULT ARE TWO STATES OF ONE SHEET, not two things
-         stacked. Left both on screen, the way out sat above the block it was
-         a way out of, and the fields you had finished with pushed the message
-         you were about to send off the bottom. -->
-    <div id="wrform">
-      <p class="hint" id="wrhint"></p>
-      <div class="field"><input id="wrto" maxlength="40" autocomplete="off"></div>
-      <textarea id="wrline" rows="4" maxlength="600"></textarea>
-      <p class="menote" id="wrwhy"></p>
-      <div class="row">
-        <button class="ghost" type="button" id="wrshut"></button>
-        <button class="go" type="button" id="wrgo"></button>
-      </div>
-    </div>
-    <p class="said" id="wrsaid" hidden></p>
-    <!-- WHAT COMES OUT IS ONE BLOCK TO PASTE, like the invite script's. The
-         link and the code do not travel together by accident: here the code IS
-         the link, because the person on the other end has no app to type it
-         into yet. -->
-    <!-- THE BLOCK, SET AS THE MESSAGE IT IS. It was a .keyval code — one
-         line, nowrap, scrolling sideways — which is right for a six-character
-         code and wrong for four lines somebody is about to send to a person:
-         you could not read what you were about to say. -->
-    <div id="wrout" hidden>
-      <pre class="wrblock" id="wrurl"></pre>
-      <!-- SEND IS THE WHOLE POINT, so it is the width of the sheet. The
-           phone's own sheet has WeChat and WhatsApp in it, which is where
-           this is going; Copy is the fallback for a desktop and for WeChat's
-           own browser, where a page may not open a sheet at all. -->
-      <button type="button" class="go wide" id="wrshare"></button>
-      <button type="button" class="ghost wide" id="wrcopy"></button>
-      <p class="menote" id="wrtill"></p>
-      <div class="row"><button class="ghost" type="button" id="wrdone"></button></div>
-    </div>
-  </div>
-</div>
+<!-- THE WRITE SHEET IS GONE. Writing to somebody who is not here is writing
+     the first message of a conversation, and it happens in Messages now — see
+     drawWriteNew in notes.html. What was here was four steps: a name, a line,
+     "make the note", and then a block of text with a Send button under it. -->
 
 <div class="sheet" id="invsheet" hidden>
   <div class="card">
@@ -4205,7 +4161,12 @@ function plusItems() {
   out.push(["plusnotes", "plus.write", null]);
   // Two different acts with the same verb, and the difference is the whole
   // point: one is a member you matched with, the other is a stranger you know.
-  out.push(["pluswrite", "plus.reach", openWrite]);
+  /* IT OPENS MESSAGES, not a sheet on this page. Writing to somebody who is
+     not here is writing the first message of a conversation, so it happens on
+     the screen conversations happen on — see drawWriteNew in notes.html. The
+     sheet that used to be here was four steps: a name, a line, "make the
+     note", and then a block of text with a Send button under it. */
+  out.push(["pluswrite", "plus.reach", null]);
   out.push(["plusinv", "inv.sheetTitle", openInvite]);
   // Only for somebody who may speak for other people — /api/run/add refuses
   // anybody who is themselves somebody's client. paintRun sets this.
@@ -4240,97 +4201,8 @@ $("fab").addEventListener("click", (e) => {
 });
 $("plusinv").addEventListener("click", () => { shutPlus(); openInvite(); });
 
-/* ---- WRITING TO SOMEBODY WHO IS NOT HERE YET ----------------------------
- * One line to one person by name. What comes back is an address to paste into
- * WeChat — the same shape as the invite script's block, which is settled and
- * which people already know how to use. */
-function openWrite() {
-  $("wrtitle").textContent = T("wn.mkTitle");
-  $("wrhint").textContent = T("wn.mkHint");
-  $("wrto").placeholder = T("wn.mkName");
-  $("wrline").placeholder = T("wn.mkLine");
-  $("wrwhy").textContent = T("wn.mkWhy");
-  $("wrshut").textContent = T("post.cancel");
-  $("wrgo").textContent = T("wn.mkGo");
-  $("wrshare").textContent = T("wn.mkShare");
-  $("wrcopy").textContent = T("cards.copy");
-  $("wrsaid").hidden = true;
-  $("wrout").hidden = true;
-  $("wrform").hidden = false;
-  $("wrgo").hidden = false;
-  $("wrdone").textContent = T("wn.mkDone");
-  $("wrsheet").hidden = false;
-  $("wrto").focus();
-}
-$("pluswrite").addEventListener("click", () => { shutPlus(); openWrite(); });
-$("wrshut").addEventListener("click", () => { $("wrsheet").hidden = true; });
-$("wrdone").addEventListener("click", () => { $("wrsheet").hidden = true; });
-
-$("wrgo").addEventListener("click", async () => {
-  const said = $("wrsaid");
-  const to = $("wrto").value.trim();
-  const line = $("wrline").value.trim();
-  const bad = (key, extra) => {
-    said.hidden = false; said.classList.add("bad");
-    said.textContent = T(key, extra || {});
-    $("wrgo").disabled = false;
-  };
-  if (!to) { $("wrto").focus(); return; }
-  if (!line) { $("wrline").focus(); return; }
-  $("wrgo").disabled = true;
-  said.hidden = false; said.classList.remove("bad");
-  said.textContent = T("wn.sending");
-  let d = null;
-  try {
-    d = await fetch("/api/write", {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ device, to, line }),
-    }).then((r) => r.json());
-  } catch { return bad("act.again"); }
-  if (!d || !d.ok) {
-    /* THE CONTACT RULE, NAMED. A WeChat id in the line is the one refusal
-       somebody will not guess at — the link is how they answer, and a contact
-       detail in the text takes the conversation off the board before it has
-       started. */
-    if (d && d.error === "contact") return bad("wn.mkNoContact", { what: d.what });
-    return bad({ standing: "wn.mkStanding", nopage: "post.needName" }[d && d.error]
-      || "act.again");
-  }
-  $("wrgo").disabled = false;
-  // The form has done its job. What is left is the message and how to send it.
-  $("wrform").hidden = true;
-  said.hidden = true;
-  /* THE WHOLE BLOCK, NOT THE CODE. The person on the other end has no app to
-     type six characters into — the link IS the code here, which is the one
-     place this differs from the invite and the reason it can be pasted into a
-     chat on its own. */
-  const url = location.origin + "/w/" + d.code;
-  const words = T("wn.mkBlock", { who: d.to, line, url });
-  $("wrurl").textContent = words;
-  $("wrtill").textContent = T("wn.mkTill");
-  $("wrout").hidden = false;
-
-  /* THE PHONE'S OWN SHARE SHEET, which is the whole answer to "how do I get
-     this into WeChat". It lists WeChat, WhatsApp, Messages and everything else
-     installed, and it is one tap.
-     Two cases where it is not available and both are handled rather than
-     hidden: inside WeChat's browser a page may not open a sheet at all — the
-     ⋯ menu is the only way — and a desktop has no sheet. Both get the
-     clipboard and a line saying so. */
-  const share = $("wrshare");
-  share.hidden = IN_WECHAT || !navigator.share;
-  share.onclick = () => {
-    navigator.share({ text: words })
-      .catch(() => { /* dismissed is not a failure */ });
-  };
-  $("wrcopy").classList.toggle("go", share.hidden);
-  $("wrcopy").classList.toggle("ghost", !share.hidden);
-  $("wrcopy").onclick = () => {
-    const ok = copyText(words);
-    $("wrcopy").textContent = T(ok ? (IN_WECHAT ? "act.wxCopied" : "cards.copied")
-                                   : "act.copyFail");
-  };
-});
+/* openWrite and everything it drew moved to notes.html — see the note where
+   the sheet's markup used to be. */
 // Anywhere else, and Escape. A menu you have to press its own button again to
 // close is a menu people leave open.
 document.addEventListener("click", (e) => {
@@ -7774,11 +7646,6 @@ function viewNow() {
      asked for it just now — a reload, a bookmark, a link — rather than a
      four-year-old shortcut opening where the app used to live. */
   if (location.pathname === "/cards" || location.pathname === "/cards/") return "cards";
-  /* EXCEPT THE ONES THAT ARE AN INSTRUCTION RATHER THAN A POST. "#write" is
-     Messages' ＋ arriving here to open the write sheet — see the handler at
-     the bottom of this file — and a hash is otherwise a post id, so without
-     this it opened the feed and the sheet never appeared. */
-  if (location.hash === "#write") return "browse";
   if (location.hash && location.hash.length > 1) return "feed";
   return "browse";
 }
@@ -9309,14 +9176,8 @@ $("repdo").addEventListener("click", async () => {
   paintRun();
 });
 
-/* ARRIVING WITH SOMETHING TO DO. Messages has a ＋ at the head of its strip
-   and the sheet it opens lives here, so the link carries the intent in the
-   hash rather than the sheet being built a second time over there. Cleared on
-   arrival so a reload is an ordinary one. */
-if (location.hash === "#write") {
-  history.replaceState(null, "", location.pathname);
-  setTimeout(openWrite, 0);
-}
+/* "#write" used to bring the write sheet up on this page. The ＋ in Messages
+   opens it there now, where the conversation is. */
 
 drawBeing();
 paintRun();

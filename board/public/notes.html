@@ -110,6 +110,14 @@
     font-size:1.15rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;
     white-space:nowrap}
   .thead .tname span{display:block;font-size:.76rem;color:var(--muted)}
+  /* The name, as a box, on the screen where a conversation's name would be. */
+  .tnew{flex:1;min-width:0}
+  .tnew span{display:block;font-size:.66rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);font-weight:700}
+  .tnew input{width:100%;border:0;background:none;font:inherit;
+    font-family:var(--serif);font-size:1.2rem;color:var(--ink);padding:.1rem 0}
+  .tnew input:focus{outline:none}
+  .tnew input::placeholder{color:var(--muted)}
   .more{border:0;background:none;padding:.3rem;color:var(--ink-2);cursor:pointer}
   .more svg{width:1.35rem;height:1.35rem;fill:currentColor;stroke:none}
   .menu{margin:-.5rem 0 .9rem;padding:.3rem;border:1px solid var(--line);
@@ -343,7 +351,7 @@
       <h1 id="title"></h1>
       <p id="sub"></p>
     </div>
-    <span id="langslot"></span>
+    <span id="langhome"></span>
   </div>
 
   <div id="listview">
@@ -376,6 +384,22 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
       </button>
       <a class="tname" id="twho" href="#"><b id="twhoname"></b><span id="twhosub"></span></a>
+      <!-- WRITING TO SOMEBODY WHO IS NOT HERE. The same screen, with the one
+           thing that differs: there is no name yet, so the name is a box.
+           Everything else — the bubbles, the composer, the send arrow — is the
+           conversation view, because it IS one: you are writing the first
+           message of a thread that does not exist yet. -->
+      <label class="tnew" id="tnew" hidden>
+        <span id="tnewk"></span>
+        <input id="tnewname" maxlength="40" autocomplete="off">
+      </label>
+      <!-- THE LANGUAGE BUTTON LIVES IN WHICHEVER HEADER IS UP. It was in the
+           list's header only, which this screen hides — so opening a
+           conversation, or the screen where you write a note that is about to
+           go to somebody in Chinese, took the toggle away. One button, moved
+           between the two slots on every paint, rather than two buttons to
+           keep in step. -->
+      <span id="langaway"></span>
       <button class="more" id="tmore" aria-label="More" aria-expanded="false">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>
       </button>
@@ -480,7 +504,19 @@ function copyText(text) {
 }
 
 let device = "";
-try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
+try {
+  device = localStorage.getItem("board:device") || "";
+  /* MADE HERE IF IT IS NOT THERE, which it is not for exactly one visitor:
+     somebody arriving on /w/<code> who has never opened this board. Every
+     other page assumes a device because every other page is behind the door.
+     Their answer is written against it, so without this the reply was refused
+     for having nobody behind it — which is how it failed the first time. */
+  if (!device) {
+    device = (crypto.randomUUID ? crypto.randomUUID()
+      : String(Date.now()) + Math.random().toString(16).slice(2));
+    localStorage.setItem("board:device", device);
+  }
+} catch { /* private window: it still works, it just forgets */ }
 
 let NOTES = [], UNREAD = 0, YOU = { handle: "", photo: "" };
 /* SOMEBODY A MEMBER WROTE TO, WHO IS ON THE LIST AND NOT THROUGH THE DOOR.
@@ -493,6 +529,18 @@ let WAITING = false;
 let CAN = [];
 
 async function load() {
+  /* AN INVITED ARRIVAL HAS NO INBOX YET. They are nobody to this server until
+     they answer, so asking for one would be a 403 before the screen has drawn
+     — and the screen is the whole point. The note itself is public to whoever
+     holds the link; that is all this needs. */
+  if (INVITED) {
+    try {
+      NOTE = await fetch("/api/write/" + encodeURIComponent(INVITED),
+        { cache: "no-store" }).then((r) => (r.ok ? r.json() : { gone: "bad" }));
+    } catch { NOTE = { gone: "bad" }; }
+    paint();
+    return;
+  }
   try {
     const d = await fetch("/api/notes", { cache: "no-store",
       headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
@@ -520,6 +568,23 @@ async function load() {
    list. It lives in the hash so the phone's own back gesture closes a thread
    instead of leaving the app, and a reload puts you back in it. */
 const openWho = () => (location.hash || "").replace(/^#/, "");
+
+/* ---- ARRIVING ON A WRITTEN NOTE ------------------------------------------
+ *
+ * /w/<code> is THIS page. It was a screen of its own that explained the board
+ * and had a form on it, which is a page ABOUT an app; what somebody should get
+ * when a friend sends them a message is the app, with the message in it.
+ *
+ * So they land in the messenger: the line written to them as the first
+ * bubble, the person who wrote it at the top, a box at the bottom, and the
+ * same four tabs everybody else has. Answering is sending a message. There is
+ * no form, and the name is the one the member wrote on the note — they knew
+ * who they were writing to.
+ */
+const INVITED = /^\/w\//.test(location.pathname)
+  ? decodeURIComponent(location.pathname.split("/").filter(Boolean)[1] || "").toUpperCase()
+  : "";
+let NOTE = null;
 
 /** The flat list of messages, grouped into one entry per person. The server
  *  sends messages because that is what they are; a messenger shows people. */
@@ -560,13 +625,28 @@ function blank(who) {
   };
 }
 
+/** The one language button, put in whichever header is on screen. */
+function homeLang() {
+  const slot = openWho() ? $("langaway") : $("langhome");
+  if (LANGBTN && LANGBTN.parentNode !== slot) slot.append(LANGBTN);
+}
+let LANGBTN = null;
+
 function paint() {
   const who = openWho();
+  homeLang();
+  if (INVITED) return drawInvited();
   const T0 = threads();
   /* A CONVERSATION THAT HAS NOT HAPPENED YET IS STILL A CONVERSATION.
      Tapping a face in the strip opens this screen with nothing in it and the
      box at the bottom — which is what every messenger does and what the inline
      box under the strip was standing in for. */
+  /* "#new" IS A CONVERSATION WITH NOBODY YET. Writing to somebody who is not
+     on the board used to be a sheet on another screen with four steps in it —
+     name, line, make the note, then a block of text and a Send button. It is
+     this screen now, with the name as a box, because what you are doing is
+     writing the first message of a thread. */
+  if (who === "new") { drawWriteNew(); return; }
   const here = who && (T0.find((t) => t.who === who) || blank(who));
   $("listview").hidden = Boolean(here);
   $("listtop").hidden = Boolean(here);
@@ -658,7 +738,206 @@ function openThread(who) {
    thing: they change the hash, and this redraws. */
 window.addEventListener("hashchange", () => { paint(); window.scrollTo(0, 0); });
 
+/** THE SCREEN SOMEBODY SEES WHEN A FRIEND SENDS THEM A NOTE.
+ *
+ *  The app, with the message in it. Their friend's name at the top, the line
+ *  as the first bubble, a box at the bottom, and the same four tabs everybody
+ *  else has — which for them lead to the door, and that is the honest next
+ *  step for somebody who is not in yet.
+ *
+ *  No name asked for. The member wrote the note to a person by name; asking
+ *  them to type it back is a form pretending to be a conversation. */
+function drawInvited() {
+  $("listview").hidden = true;
+  $("listtop").hidden = true;
+  $("threadview").hidden = false;
+  $("tnew").hidden = true;
+  $("tmore").hidden = true;
+  $("tmenu").hidden = true;
+  $("tpin").hidden = true;
+  $("tleft").hidden = true;
+  $("back").hidden = true;          // there is nothing behind this
+  $("twho").hidden = false;
+  $("twho").href = "#";
+
+  const talk = $("talk");
+  fill(talk);
+
+  if (!NOTE || NOTE.gone) {
+    $("twhoname").textContent = T("wn.title");
+    $("twhosub").textContent = "";
+    const key = (NOTE && NOTE.gone) || "bad";
+    talk.append(el("p", "when",
+      T({ spent: "wn.spentBody", old: "wn.oldBody" }[key] || "wn.badBody")));
+    $("twrite").hidden = true;
+    $("tshut").hidden = false;
+    $("tshut").textContent = T({ spent: "wn.spentHead", old: "wn.oldHead" }[key]
+      || "wn.badCode");
+    drawInvitedTabs();
+    return;
+  }
+
+  $("twhoname").textContent = NOTE.from || T("board.someone");
+  $("twhosub").textContent = T("wn.onThe");
+  talk.append(el("p", "when", T("wn.wrote", { who: NOTE.from || T("board.someone") })));
+  const bub = el("div", "bub them");
+  bub.textContent = NOTE.line;
+  talk.append(bub);
+  /* WHAT ANSWERING DOES, before they answer. A queue is not a door, and
+     somebody who writes back expecting to be let in has been misled by
+     leaving it out. One line, where a message would be. */
+  talk.append(el("p", "when", T("wn.next", { who: NOTE.from || T("board.someone") })));
+
+  $("twrite").hidden = false;
+  $("tshut").hidden = true;
+  /* SHORT. wn.replyPh is an example of what to say — two lines, right in a
+     form with room for it and clipped mid-word in a one-line composer. Two
+     words here, and the line above the box already says what to write. */
+  $("tbox").placeholder = T("wn.answerHead");
+  $("tsaid").hidden = true;
+  drawInvitedTabs();
+}
+
+/** The bar, for somebody who has not answered yet. All four, because the
+ *  point of arriving here is seeing what this is — and three of them lead to
+ *  the door, which is what there is for them until somebody vouches. */
+function drawInvitedTabs() {
+  $("tabnotes").textContent = T("note.inbox");
+  $("tabcards").textContent = T("nav.cards");
+  $("tabbrowse").textContent = T("nav.browse");
+  $("tabme").textContent = T("nav.profile");
+  for (const id of ["tabcardsgo", "tabbrowsego", "tabmego"]) $(id).hidden = false;
+  $("waitbar").hidden = true;
+  $("tabmego").href = "/waiting";
+}
+
+/** Answering is sending a message. It writes their waiting row, turns the
+ *  note into a thread, and reloads onto the real conversation. */
+async function sendInvited() {
+  const text = $("tbox").value.trim();
+  if (!text) { $("tbox").focus(); return; }
+  $("tsend").disabled = true;
+  say(T("wn.sending"));
+  let d = null;
+  try {
+    d = await fetch("/api/write/reply", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, code: INVITED, name: NOTE.to, reply: text }),
+    }).then((r) => r.json());
+  } catch { d = null; }
+  $("tsend").disabled = false;
+  if (!d || (!d.ok && !d.already)) {
+    return say(T({ spent: "wn.spentHead", old: "wn.oldHead", bad: "wn.badCode" }[d && d.error]
+      || "act.again"), true);
+  }
+  if (d.already) { location.href = "/browse"; return; }
+  // Onto the thread it just became — same screen, real conversation.
+  location.href = d.who ? "/notes#" + encodeURIComponent(d.who) : "/notes";
+}
+
+/* ---- WRITING TO SOMEBODY WHO IS NOT HERE ---------------------------------
+ *
+ * Type a name, type a message, press send. The board mints a one-person link,
+ * and the phone's own share sheet opens with the whole thing ready for WeChat.
+ * Three taps, on the screen they already know how to use.
+ *
+ * What was sent stays on screen as a bubble afterwards — the sheet can be
+ * dismissed by accident, and a message you cannot get back is worse than an
+ * extra button. */
+let MADE = null;
+
+function drawWriteNew() {
+  $("listview").hidden = true;
+  $("listtop").hidden = true;
+  $("threadview").hidden = false;
+  $("twho").hidden = true;
+  $("tmore").hidden = true;
+  $("tmenu").hidden = true;
+  $("tpin").hidden = true;
+  $("tleft").hidden = true;
+  $("tnew").hidden = false;
+  $("tnewk").textContent = T("wn.mkTo");
+  $("tnewname").placeholder = T("wn.mkName");
+
+  const talk = $("talk");
+  fill(talk);
+  if (MADE) {
+    /* SENT. The block as it went, as a bubble — because that is what it is —
+       with the two ways to send it again underneath. */
+    const bub = el("div", "bub mine");
+    bub.textContent = MADE.words;
+    talk.append(bub);
+    const row = el("div", "again");
+    if (!IN_WECHAT && navigator.share) {
+      const b2 = el("button", "primary", T("wn.mkShare"));
+      b2.type = "button";
+      b2.addEventListener("click", () => {
+        navigator.share({ text: MADE.words }).catch(() => {});
+      });
+      row.append(b2);
+    }
+    const cp = el("button", null, T("cards.copy"));
+    cp.type = "button";
+    cp.addEventListener("click", () => {
+      cp.textContent = T(copyText(MADE.words)
+        ? (IN_WECHAT ? "act.wxCopied" : "cards.copied") : "act.copyFail");
+    });
+    row.append(cp);
+    talk.append(row);
+    talk.append(el("p", "when", T("wn.mkTill")));
+  } else {
+    // One line, where the first bubble will be, saying what pressing send does.
+    talk.append(el("p", "when", T("wn.mkHint")));
+  }
+
+  $("twrite").hidden = false;
+  $("tshut").hidden = true;
+  $("tbox").placeholder = T("wn.mkLine");
+  $("tsaid").hidden = true;
+}
+
+/** Mint the note and hand it straight to the share sheet. */
+async function sendNew() {
+  const to = $("tnewname").value.trim();
+  const line = $("tbox").value.trim();
+  if (!to) { $("tnewname").focus(); return; }
+  if (!line) { $("tbox").focus(); return; }
+  $("tsend").disabled = true;
+  say(T("wn.sending"));
+  let d = null;
+  try {
+    d = await fetch("/api/write", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, to, line }),
+    }).then((r) => r.json());
+  } catch { d = null; }
+  $("tsend").disabled = false;
+  if (!d || !d.ok) {
+    const known = { contact: "wn.mkNoContact", standing: "wn.mkStanding",
+                    nopage: "note.needProfile" };
+    return say(T(known[d && d.error] || "act.again", { what: (d && d.what) || "" }), true);
+  }
+  MADE = { words: T("wn.mkBlock", { who: d.to, line,
+    url: location.origin + "/w/" + d.code }) };
+  $("tbox").value = "";
+  $("tbox").style.height = "auto";
+  $("tsaid").hidden = true;
+  drawWriteNew();
+  /* STRAIGHT INTO THE SHEET. This is the whole point of the change: the note
+     is made and sent in one press rather than made, displayed, and then sent
+     from a second screen. */
+  if (!IN_WECHAT && navigator.share) {
+    navigator.share({ text: MADE.words }).catch(() => { /* dismissed is fine */ });
+  } else {
+    copyText(MADE.words);
+    say(T(IN_WECHAT ? "act.wxCopied" : "cards.copied"));
+  }
+}
+
 function drawThread(t) {
+  $("twho").hidden = false;
+  $("tmore").hidden = false;
+  $("tnew").hidden = true;
   $("twhoname").textContent = t.handle || "—";
   // No page to open for somebody on the list — see drawMenu.
   const onList = String(t.who || "").startsWith("w:");
@@ -860,6 +1139,10 @@ $("tbox").addEventListener("input", () => {
 
 $("tsend").addEventListener("click", async () => {
   const who = openWho();
+  // Writing to somebody who is not here yet is the same button on the same
+  // screen — see drawWriteNew.
+  if (who === "new") return sendNew();
+  if (INVITED) return sendInvited();
   const b = $("tbox");
   const text = b.value.trim();
   if (!who || !text) { b.focus(); return; }
@@ -910,7 +1193,7 @@ function drawCan() {
     /* FIRST, and it is a person-shaped hole rather than a face: the dashed
        ring says the circle is empty and the ＋ says what fills it. */
     const add = el("a", "one add");
-    add.href = "/browse#write";
+    add.href = "#new";
     const plus = el("span", "av", "\uFF0B");
     add.append(plus, el("b", null, T("note.canNew")));
     strip.append(add);
@@ -951,7 +1234,7 @@ function drawCan() {
    one listener, above, beside the thread it belongs to. */
 
 setLang(pickLang());
-$("langslot").append(langButton(paint));
+LANGBTN = langButton(paint);
 load();
 </script>
 </body>

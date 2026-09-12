@@ -2984,9 +2984,10 @@ export const STRINGS = {
      opens one note written to one person and nothing else, so it can carry
      itself. */
   "wn.mkTitle":        ["Write to somebody", "写给一个人"],
+  // One line, where the first bubble will be.
   "wn.mkHint": [
-    "One line to one person. They read it, answer it, and their answer is what puts them on the list.",
-    "一句话，写给一个人。他看到、回你一句，这句回复就是他排进名单的凭据。",
+    "They read it, answer it, and their answer puts them on the list.",
+    "他看到、回你一句，这句回复就是他排进名单的凭据。",
   ],
   "wn.mkName":         ["Their name", "他叫什么"],
   /* NO NAME IN THE EXAMPLE. The block puts their name on the first line
@@ -3001,7 +3002,10 @@ export const STRINGS = {
     "No WeChat id or phone number in it — the link is how they answer. It works for a day, for one person, once.",
     "里面别写微信号或电话——他就是用这个链接回你的。有效期一天，只给一个人，只能用一次。",
   ],
-  "wn.mkGo":           ["Make the note", "生成便条"],
+  /* wn.mkGo ("Make the note") is retired with the sheet it was on: making and
+     sending are one press now, and the press is the send arrow in the
+     messenger. */
+  "wn.mkTo":           ["To", "写给"],
   /* THE PHONE'S OWN SHEET, which is how this actually reaches WeChat. The
      first version offered Copy and nothing else, and left somebody holding a
      block of text with no idea what to do with it. */

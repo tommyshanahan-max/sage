@@ -855,11 +855,20 @@ app.get(["/join", "/join/"], (req, res, next) => page("join.html", req, res, nex
 app.get(["/agents", "/agents/"], (req, res, next) => page("agents.html", req, res, next));
 
 app.get(["/o", "/o/", "/o/:code"], (req, res, next) => page("offer.html", req, res, next));
-/* A NOTE SOMEBODY WAS WRITTEN. Outside the door, like /enter and /i/<code>:
-   the whole point is that it opens for a person the board has never heard of.
-   It gives nothing away — see /api/write/:code, which answers with the line
-   they were sent and the name of whoever sent it and nothing else. */
-app.get(["/w/:code"], (req, res, next) => page("write.html", req, res, next));
+/* A NOTE SOMEBODY WAS WRITTEN, AND IT IS THE MESSENGER.
+ *
+ * This served a page of its own: an explanation of the board with a form
+ * under it. That is a page ABOUT an app, and what somebody should get when a
+ * friend sends them a message is the app, with the message in it — their
+ * friend at the top, the line as the first bubble, a box at the bottom, and
+ * the same four tabs everybody else has.
+ *
+ * Outside the door, like /enter and /i/<code>: the whole point is that it
+ * opens for a person the board has never heard of. It gives nothing away —
+ * notes.html asks /api/write/:code, which answers with the line they were
+ * sent and the name of whoever sent it and nothing else, and it does not ask
+ * for an inbox until they have answered and have one. */
+app.get(["/w/:code"], (req, res, next) => page("notes.html", req, res, next));
 
 app.get(["/enter", "/enter/", "/i/:code"], (req, res, next) =>
   page("enter.html", req, res, next));
