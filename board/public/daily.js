@@ -27,6 +27,7 @@
 import { T } from "/i18n.js";
 import { CARDS } from "/level-cards.js";
 import { crownMark, stageName } from "/crown.js";
+import { OFF } from "/off.js";
 
 const KEY = "board:daily";
 const LEVELKEY = "board:level";
@@ -273,8 +274,11 @@ export function dailyCard(bare) {
        cards have moved into the next band. */
     if (d.moved === "up" && Math.ceil(level / 2) !== Math.ceil(was / 2)) {
       const un = el("div", "dband");
-      un.append(crownMark(Math.ceil(level / 2), "1.4rem"));
-      un.append(el("span", null, T("day.band", { name: stageName(Math.ceil(level / 2)) })));
+      // The crowns are off — see off.js.
+      if (!OFF.crowns) {
+        un.append(crownMark(Math.ceil(level / 2), "1.4rem"));
+        un.append(el("span", null, T("day.band", { name: stageName(Math.ceil(level / 2)) })));
+      }
       box.append(un);
     }
   };

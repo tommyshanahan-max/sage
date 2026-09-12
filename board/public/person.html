@@ -358,6 +358,7 @@
 <script type="module">
 import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
 import { stageFor, stageName, crownMark } from "/crown.js";
+import { OFF } from "/off.js";
 
 const HANDLE = "{{HANDLE}}";
 const IN_WECHAT = /micromessenger/i.test(navigator.userAgent);
@@ -742,7 +743,8 @@ function paint() {
   const line = el("div", "nameline");
   line.append(el("h1", null, q.handle));
   if (q.type) line.append(el("b", "type", q.type));
-  const rank = stageFor(q.levelBand);
+  // The crowns are off — see off.js.
+  const rank = OFF.crowns ? 0 : stageFor(q.levelBand);
   if (rank) {
     const worn = el("b", "rank");
     worn.append(crownMark(rank, "1.05rem"));

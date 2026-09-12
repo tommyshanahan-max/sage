@@ -2897,6 +2897,7 @@ import { T, when, lang, setLang, pickLang, langButton, STRINGS } from "/i18n.js"
    is in front of the door, needs the same one. See photo.js. */
 import { shrink, asBase64 } from "/photo.js";
 import { stageFor, stageName, crownMark } from "/crown.js";
+import { OFF } from "/off.js";
 import { dailyCard, dailyDone } from "/daily.js";
 import { BANDS } from "/level-cards.js";
 
@@ -4867,6 +4868,8 @@ function loadStake() {
 }
 
 function drawStake() {
+  // Off — see off.js.
+  if (OFF.stake) { const b2 = $("stake"); if (b2) b2.hidden = true; return; }
   const box = $("stake");
   if (!box) return;
   /* Members only, and only where there is a ledger. Somebody with no page has
@@ -5867,7 +5870,7 @@ function drawProf() {
     const n = Math.max(1, Math.min(10, Number(lvl.level) || 1));
     const w = lvl.which === "en" ? "en" : "zh";
     const medal = el("div", "nowmedal");
-    medal.append(crownMark(stageFor((w === "zh" ? "ZH " : "EN ") + n), "2.4rem"));
+    if (!OFF.crowns) medal.append(crownMark(stageFor((w === "zh" ? "ZH " : "EN ") + n), "2.4rem"));
     now.append(medal);
     now.append(el("p", "nowcap", T("prof.now")));
     now.append(el("p", "nowbig", P(BANDS[w][n - 1])));
@@ -5883,7 +5886,7 @@ function drawProf() {
        first mark is drawn faint above it — what is on offer, shown rather than
        described, and it fills the hole the medallion would have left. */
     const medal = el("div", "nowmedal empty");
-    medal.append(crownMark(1, "2.4rem"));
+    if (!OFF.crowns) medal.append(crownMark(1, "2.4rem"));
     now.append(medal);
     now.append(el("p", "nowcap", T("prof.now")));
     now.append(el("p", "nowbig none", T("prof.nolevelBig")));
@@ -5952,6 +5955,8 @@ function drawTalk() {
   // is not the first thing to show on an empty profile.
   row.hidden = !(ME && ME.handle);
   $("gonotes").firstChild.textContent = T("note.inbox");
+  // Groups are off — see off.js.
+  $("gogroups").hidden = OFF.groups;
   $("gogroups").firstChild.textContent = T("grp.title");
   // Left alone when paintRun has already decided which of the two this is.
   if (!$("gorun").dataset.set) $("gorun").firstChild.textContent = T("run.title");
@@ -6873,7 +6878,8 @@ function personCard(q, live) {
   if (q.type) line.append(el("b", "type", q.type));
   /* Only if they put their level on their page. The mark is the level worn,
      so somebody who kept the number keeps the number. */
-  const rank = stageFor(q.levelBand);
+  // The crowns are off — see off.js.
+  const rank = OFF.crowns ? 0 : stageFor(q.levelBand);
   if (rank) {
     const worn = el("b", "rank");
     worn.append(crownMark(rank, "1rem"));
@@ -8496,6 +8502,8 @@ let CANOFFER = false;
  * needs the thing in front of them to be the form, not a history.
  */
 function drawMkOffer() {
+  // Off — see off.js.
+  if (OFF.offers) { const b2 = $("mkoffer"); if (b2) b2.hidden = true; return; }
   const box = $("mkoffer");
   if (!box) return;
   // See MAKE_OFFERS above. The flag still decides who could; this decides
