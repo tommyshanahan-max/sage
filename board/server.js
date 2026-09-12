@@ -3487,7 +3487,23 @@ app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
     const said = String(req.get("x-board-device") || "");
     return no(403, "who", said ? "device sent, no row" : "no device header");
   }
-  const out = await butler.ask(req.body?.turns, me || row.id);
+  /* WHAT HE IS TOLD ABOUT THEM — see facts() in lib/butler.js. He was told
+     nothing, guessed, and told somebody who was only on the list that she had
+     three days left. The hours are computed the same way /api/wait/me
+     computes them, from upSeen rather than upAt, because the clock starts
+     when they first saw it. Nothing here that is not already on their own
+     screen: no contact, no device, no id. */
+  const hours = row.up && row.upSeen && UP_HOURS > 0
+    ? Math.max(0, Math.round((Date.parse(row.upSeen) + UP_HOURS * 3600_000 - Date.now()) / 3600_000))
+    : null;
+  const out = await butler.ask(req.body?.turns, me || row.id, {
+    name: String(row.name || "").split(/\s+/)[0] || "",
+    up: Boolean(row.up),
+    left: hours,
+    photo: Boolean(row.photo),
+    me: row.me || "",
+    want: row.want || "",
+  });
   if (out.error) {
     const code = out.error === "slow-down" ? 429
       : out.error === "busy" ? 429
