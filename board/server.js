@@ -36,6 +36,7 @@ import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js"
 import { send as sendMail, configured as mailReady } from "./lib/mail.js";
 import * as intake from "./lib/intake.js";
 import * as butler from "./lib/butler.js";
+import * as say from "./lib/say.js";
 import * as push from "./lib/push.js";
 /* THE SWITCH FILE, READ BY THE SERVER TOO.
  *
@@ -397,7 +398,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -3550,6 +3551,48 @@ app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
   }
   res.set("Cache-Control", "no-store");
   res.json(out);
+});
+
+/* MO, OUT LOUD.
+ *
+ * The arrival's four beats are files — fixed text, rendered once by
+ * scripts/voice.mjs, no key on the box and no cost per visit. His replies are
+ * different every time, so there is nothing to render in advance and this is
+ * the one thing on this board that calls a voice service while somebody
+ * waits.
+ *
+ * WHAT IT WILL AND WILL NOT SPEAK. Only text, only 400 characters of it, only
+ * for somebody with a row, and capped per device and per day — the same shape
+ * as the conversation itself. It does not check that the words came from him,
+ * because it cannot: the honest protection is the cap and the length, not a
+ * comparison it would have to keep state for.
+ *
+ * HIS OPENERS ARE FREE AFTER THE FIRST PERSON. Everybody who opens the panel
+ * hears the same one or two lines, so the cache in lib/say.js turns them into
+ * one purchase for the whole board rather than one per arrival.
+ */
+app.post("/api/butler-voice", express.json({ limit: "4kb" }), async (req, res) => {
+  if (!say.configured()) return res.status(503).json({ error: "unconfigured" });
+  const { row, who: me } = await waitingRow(req, res);
+  let ok = Boolean(row);
+  if (!ok && me) {
+    const board = await store.load(FILE);
+    ok = board.people.some((q) => q.by === me);
+  }
+  if (!ok) return res.status(403).json({ error: "who" });
+
+  const out = await say.speak(req.body?.text, req.body?.lang, me || (row && row.id) || "anon");
+  if (out.error) {
+    const code = out.error === "slow-down" || out.error === "busy" ? 429
+      : out.error === "unconfigured" ? 503 : 400;
+    return res.status(code).json(out);
+  }
+  res.set("Content-Type", "audio/mpeg");
+  /* Private, because it is addressed to one person's conversation — and no
+     store, because the cache that matters is the one on the box, where it is
+     shared. A phone holding his openers for a week helps nobody. */
+  res.set("Cache-Control", "no-store, private");
+  res.send(out.audio);
 });
 
 /* WHO CAN BRING SOMEBODY IN, for whoever runs the box.

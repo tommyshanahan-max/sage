@@ -3521,6 +3521,11 @@ export const STRINGS = {
      behind the sheet. They still have to say what they do, in both. */
   "but.open":          ["Ask Mo", "问问老莫"],
   "but.close":         ["Close", "关掉"],
+  /* Under his newest line only. "Hear it" while it is not playing, and the
+     same button says "Stop" while it is — one control, two states, rather
+     than a second button appearing beside the first. */
+  "but.hear":          ["Hear it", "听一遍"],
+  "but.hearing":       ["Stop", "停"],
   /* The arrow at the corner, said once ever. Four words: what he is, and
      that pressing is the thing. "Ask Mo" is on the button itself already —
      this is the half that says he is a person and not an icon. */

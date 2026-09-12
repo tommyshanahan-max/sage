@@ -108,6 +108,10 @@ const MOCSS = `
   .bub.her{align-self:flex-end;background:var(--accent);color:var(--accent-ink);
     border-bottom-right-radius:.3rem}
   .bub.wait{color:var(--muted)}
+  /* Under his newest line, small and grey: it is an offer, not the point of
+     the panel. */
+  .hear{align-self:flex-start;border:0;background:none;padding:.1rem .2rem;
+    color:var(--muted);font-size:.76rem;cursor:pointer;margin:-.35rem 0 0}
   .butform{display:flex;gap:.5rem;align-items:center;padding:.7rem .9rem;
     border-top:1px solid var(--hair)}
   .butform input{flex:1;min-width:0;border:1px solid var(--line);
@@ -268,6 +272,52 @@ let HOST = null;
 let BUT = null;          // { turns: [], put: {...}|null, busy: bool, no: "" }
 let BUTMIC = null;
 
+/* ---- HIM, OUT LOUD ---------------------------------------------------------
+ *
+ * The browser's own voice was cut from this board months of hours ago tonight
+ * — on Chrome/macOS it tops out at a lift announcing a floor, and a character
+ * with a name and a face given that voice stops being a character. This is the
+ * real one: the same two voices the arrival uses, through /api/butler-voice.
+ *
+ * ASKED FOR, NEVER AUTOMATIC. A panel that starts talking in a quiet carriage
+ * is a panel somebody closes, and every line costs real money on somebody's
+ * account. One small button under the newest thing he said.
+ */
+let sound = null;
+let playing = "";
+
+function speakLine(text) {
+  try { if (sound) { sound.pause(); sound = null; } } catch { /* gone */ }
+  if (playing === text) { playing = ""; repaint(); return; }
+  playing = text;
+  repaint();
+  fetch("/api/butler-voice", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-board-device": device() },
+    body: JSON.stringify({ text, lang: lang() === "zh" ? "zh" : "en" }),
+  })
+    .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
+    .then((blob) => {
+      /* Still the line they asked for? They may have pressed another, or
+         closed him, while this was in the air. */
+      if (playing !== text) return;
+      const url = URL.createObjectURL(blob);
+      sound = new Audio(url);
+      const done = () => {
+        URL.revokeObjectURL(url);
+        if (playing === text) { playing = ""; repaint(); }
+      };
+      sound.addEventListener("ended", done, { once: true });
+      sound.addEventListener("error", done, { once: true });
+      return sound.play().catch(done);
+    })
+    .catch(() => {
+      /* No key on the box, over the cap, or a refused autoplay. The words are
+         on the screen either way, which is why this says nothing. */
+      if (playing === text) { playing = ""; repaint(); }
+    });
+}
+
 /** Redraw him, and only him.
  *
  *  This used to be the host page's draw(), which is why he could only live on
@@ -336,8 +386,21 @@ function butlerPanel() {
      lift announcing a floor. A character with a name and a face, given that
      voice, stops being a character. He is better read than heard until there
      is real TTS behind him. */
-  BUT.turns.forEach((t) => {
+  /* HIS NEWEST LINE GETS A SPEAKER, AND ONLY HIS NEWEST.
+     It was under every line of his, which on the opening — two at once — put
+     two identical grey buttons in a panel of four elements. The line worth
+     hearing is the one that has just arrived; the ones above it have been
+     read. Never under her own: reading somebody their own words back is not
+     a feature. */
+  let lastHim = -1;
+  BUT.turns.forEach((t, i) => { if (t.from === "you") lastHim = i; });
+  BUT.turns.forEach((t, i) => {
     said.append(el("div", "bub " + (t.from === "you" ? "him" : "her"), t.text));
+    if (i !== lastHim || BUT.busy) return;
+    const hear = el("button", "hear", T(playing === t.text ? "but.hearing" : "but.hear"));
+    hear.type = "button";
+    hear.addEventListener("click", () => speakLine(t.text));
+    said.append(hear);
   });
   if (BUT.busy) said.append(el("div", "bub him wait", T("but.thinking")));
   box.append(said);
@@ -704,6 +767,10 @@ export function moOpen() {
   /* MOSHUT before the panel is built: the close button in its header is only
      drawn when there is a sheet to close. */
   MOSHUT = () => {
+    /* Closing him stops him talking. A voice continuing out of a panel that
+       is no longer on the screen is the board haunting somebody. */
+    try { if (sound) { sound.pause(); sound = null; } } catch { /* gone */ }
+    playing = "";
     sheet.remove();
     document.removeEventListener("keydown", esc);
     MOSHUT = null;
