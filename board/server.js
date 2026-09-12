@@ -36,6 +36,21 @@ import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js"
 import { send as sendMail, configured as mailReady } from "./lib/mail.js";
 import * as intake from "./lib/intake.js";
 import * as push from "./lib/push.js";
+/* THE SWITCH FILE, READ BY THE SERVER TOO.
+ *
+ * public/off.js is a client module and this is the one thing on the server
+ * that has to agree with it. Its own comment warned about exactly this case —
+ * "standing() counts posts made this week as part of earning an invite code.
+ * Take the posts away and the invite economy loses a leg" — and then the feed
+ * was hidden and nobody checked what the box had BRING_SAID set to. It was 2.
+ * Every member has been unable to earn an invite code since, with no error and
+ * nothing on any screen to say why, on the one mechanism the whole thing grows
+ * by.
+ *
+ * Importing it rather than adding a second env var, because a second switch is
+ * the thing off.js exists to prevent: one file says what is off, and now it
+ * says it to both halves. */
+import { OFF } from "./public/off.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -2292,7 +2307,11 @@ function standing(board, me) {
   const said = board.posts.filter((p) => p.by === me && p.state === "published"
     && !p.like && !p.report
     && Date.now() - Date.parse(p.at || "") < BRING_WEEK * 86400000).length;
-  if (said < BRING_SAID) need.push("said");
+  /* NOT ASKED FOR WHEN THERE IS NOWHERE TO SAY IT. A requirement to post,
+     on a board with the feed switched off and no composer in the ＋ menu, is
+     a condition no member can ever satisfy — so it is not a bar, it is a
+     closed door with no handle. See OFF above. */
+  if (!OFF.feed && said < BRING_SAID) need.push("said");
 
   /* THE GUESTS. Found the same way the "brought in by" line on a profile is
      found — through the invite rows — so there is no second record of who
