@@ -525,46 +525,41 @@
      link between. It is the only moment on this board where two people have
      actually reached each other, and it had no drawing at all — the row went
      from a dashed outline straight to a WeChat id. */
-  .done2{margin:0 0 .9rem}
-  .dhead{display:flex;align-items:center;justify-content:center;gap:.5rem;
-    margin:0 0 .9rem;font-family:var(--serif);font-size:1.08rem;color:var(--ink)}
-  .dhead .tick{flex:0 0 auto;width:1.4rem;height:1.4rem;border-radius:50%;
-    background:var(--t2);color:#fff;font-style:normal;font-size:.85rem;
-    line-height:1.4rem;text-align:center;font-family:var(--sans)}
-  /* A fixed middle column so the two cards are the same width whatever is in
-     them — a swap drawn with one card wider than the other reads as a ranking. */
-  .drow{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.5rem}
-  .dcard{display:flex;flex-direction:column;align-items:center;gap:.45rem;
-    min-width:0;padding:.9rem .6rem;border-radius:.9rem;background:var(--raise);
-    border:1px solid var(--line);text-align:center}
-  .dav{width:3.6rem;height:3.6rem;border-radius:50%;overflow:hidden;display:grid;
-    place-items:center;background:var(--accent);color:var(--accent-ink);
-    font-family:var(--serif);font-size:1.5rem}
-  .dav img{width:100%;height:100%;object-fit:cover;display:block}
-  /* The colour is spelled out. This sits inside the shelf row, where the
-     surrounding text is muted, so without it the two names — the whole point
-     of the panel — came out the same grey as the captions. */
-  .dcard b{font-family:var(--serif);font-weight:400;font-size:1.1rem;line-height:1.15;
-    color:var(--ink);
-    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  /* The sentence's left half, as the pill Browse and the shelf already use —
-     dark here because it is the loudest thing on a quiet white card. */
-  .drole{background:var(--ink);color:var(--paper);border-radius:99px;
-    padding:.15rem .6rem;font-size:.78rem;font-weight:700;max-width:100%;
+  /* ---- THE SWAP, FINISHED -------------------------------------------------
+     Two faces overlapping and both names on one line. It was two cards with an
+     arrow between them, which draws the TRANSACTION — and the transaction is
+     over. Two circles that overlap say "joined", which is what is true now,
+     and they say it without a direction to read. */
+  .done2{margin:0 0 1rem}
+  .pair{display:flex;align-items:center;gap:.9rem;padding:.8rem .9rem;
+    border-radius:.9rem;background:var(--raise);border:1px solid var(--line)}
+  .faces{flex:0 0 auto;display:flex;align-items:center}
+  .faces span{width:3.2rem;height:3.2rem;border-radius:50%;overflow:hidden;
+    display:grid;place-items:center;background:var(--accent);
+    color:var(--accent-ink);font-family:var(--serif);font-size:1.35rem;
+    box-shadow:0 0 0 3px var(--raise)}
+  .faces span img{width:100%;height:100%;object-fit:cover;display:block}
+  /* The overlap IS the drawing. The ring is the surface behind it, so the one
+     in front reads as in front rather than as two discs touching. */
+  .faces .f2{margin-left:-1.05rem}
+  .pwho{flex:1;min-width:0}
+  .pwho b{display:block;font-family:var(--serif);font-weight:400;font-size:1.3rem;
+    line-height:1.2;color:var(--ink);overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  /* A multiplication sign, spaced. "&" reads as a list of two; this reads as
+     the two of them together, which is the thing that happened. */
+  .pwho b .x{font-style:normal;color:var(--muted);margin:0 .4rem;font-size:1.05rem}
+  .pwho span{display:block;margin:.15rem 0 0;font-size:.82rem;color:var(--muted);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .dwhere{font-size:.74rem;color:var(--muted);max-width:100%;overflow:hidden;
-    text-overflow:ellipsis;white-space:nowrap}
-  /* THE LINK, DRAWN RATHER THAN FAKED OUT OF TWO PSEUDO-ELEMENTS. The first
-     go at this was a filled circle with a ring inside it, which is a drawing
-     of a button, not of two things joined. An arrowhead each way, because it
-     went in both directions — that is the whole difference between this state
-     and the one above it. */
-  .dlink{width:2.9rem;height:2.2rem;flex:0 0 auto;display:block}
-  .dlink svg{width:100%;height:100%;display:block}
+  .dhead{display:flex;align-items:center;justify-content:center;gap:.5rem;
+    margin:.7rem 0 0;font-family:var(--serif);font-size:1rem;color:var(--ink-2)}
+  .dhead .tick{flex:0 0 auto;width:1.3rem;height:1.3rem;border-radius:50%;
+    background:var(--t2);color:#fff;font-style:normal;font-size:.8rem;
+    line-height:1.3rem;text-align:center;font-family:var(--sans)}
   @media (max-width:23rem){
-    .drow{gap:.3rem}
-    .dcard{padding:.7rem .4rem}
-    .dav{width:3rem;height:3rem;font-size:1.3rem}
+    .faces span{width:2.7rem;height:2.7rem;font-size:1.15rem}
+    .faces .f2{margin-left:-.9rem}
+    .pwho b{font-size:1.12rem}
   }
 
   /* THE LINE THEY WROTE, above their id rather than under it. It is the only
@@ -6509,32 +6504,46 @@ function drawCards() {
  *  Only ever drawn when both cards have gone: it is a result, not a state. */
 function done(m) {
   const box = el("div", "done2");
+
+  /* TWO FACES OVERLAPPING, AND BOTH NAMES ON ONE LINE.
+   *
+   * It was two separate cards with an arrow between them, which draws the
+   * TRANSACTION — this went there, that came back. The transaction is over.
+   * What is true now is that these two people are joined, and two circles
+   * overlapping say that in a way an arrow between two boxes cannot: there is
+   * no longer a direction to read.
+   *
+   * "Hugo × Elena" rather than a sentence about them, for the same reason the
+   * pills replaced the paragraph on the shelf: their names ARE the fact. */
+  const pair = el("div", "pair");
+  const faces = el("span", "faces");
+  faces.append(faceInto(el("span", "f1"), (ME && ME.handle) || "", (ME && ME.photo) || ""));
+  faces.append(faceInto(el("span", "f2"), m.handle, m.photo));
+  pair.append(faces);
+
+  const who = el("div", "pwho");
+  const line = el("b");
+  line.append(document.createTextNode((ME && ME.handle) || T("board.someone")));
+  // A multiplication sign, not an ampersand: "&" reads as a list of two, "×"
+  // reads as the two of them together, which is the thing that happened.
+  line.append(el("i", "x", "\u00d7"));
+  line.append(document.createTextNode(m.handle || T("board.someone")));
+  who.append(line);
+  /* THE TWO ROLES, which is why this pair is a pair at all — and the only
+     thing from the old two-card drawing worth keeping, because a name tells
+     you who and a role tells you why. */
+  const mine = firstRole(ME && ME.say);
+  const theirs = firstRole(m.say);
+  if (mine && theirs) {
+    who.append(el("span", null, mine + " \u00b7 " + theirs));
+  }
+  pair.append(who);
+  box.append(pair);
+
   const head = el("p", "dhead");
   head.append(el("i", "tick", "\u2713"));
   head.append(document.createTextNode(T("cards.swapDone")));
   box.append(head);
-
-  const row = el("div", "drow");
-  row.append(oneCard((ME && ME.handle) || "", (ME && ME.photo) || "",
-    firstRole(ME && ME.say), [(ME && ME.campus) || "", (ME && ME.trade) || ""]));
-  const link = el("span", "dlink");
-  link.setAttribute("aria-hidden", "true");
-  /* A chain link in a disc, an arrowhead each side. Written as markup rather
-     than assembled from borders: it is a picture, and a picture made of
-     ::before and ::after is one nobody can change afterwards. */
-  link.innerHTML = '<svg viewBox="0 0 58 44" fill="none">'
-    + '<circle cx="29" cy="22" r="13" fill="var(--accent)"/>'
-    + '<g stroke="var(--accent-ink)" stroke-width="2.1" stroke-linecap="round">'
-    + '<path d="M26.4 25.6a3.6 3.6 0 0 1 0-5.1l2.4-2.4a3.6 3.6 0 0 1 5.1 5.1l-1 1"/>'
-    + '<path d="M31.6 18.4a3.6 3.6 0 0 1 0 5.1l-2.4 2.4a3.6 3.6 0 0 1-5.1-5.1l1-1"/>'
-    + '</g>'
-    + '<g stroke="var(--accent)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">'
-    + '<path d="M13 22h-9M7.5 18 3.5 22l4 4"/>'
-    + '<path d="M45 22h9M50.5 18l4 4-4 4"/>'
-    + '</g></svg>';
-  row.append(link);
-  row.append(oneCard(m.handle, m.photo, firstRole(m.say), [m.campus, m.here]));
-  box.append(row);
   return box;
 }
 
@@ -6545,15 +6554,8 @@ function firstRole(say) {
   return r ? T("role.a." + r.me) : "";
 }
 
-function oneCard(handle, photo, role, lines) {
-  const c = el("div", "dcard");
-  c.append(faceInto(el("span", "dav"), handle, photo));
-  c.append(el("b", null, handle || T("board.someone")));
-  if (role) c.append(el("span", "drole", role));
-  const under = [...new Set((lines || []).filter(Boolean))].join(" \u00b7 ");
-  if (under) c.append(el("span", "dwhere", under));
-  return c;
-}
+/* oneCard and the link glyph are gone with the two-card drawing they made —
+   see done(), which is two overlapping faces now. */
 
 /** TWO CARDS CHANGING HANDS, drawn. Yours on the left, theirs on the right,
  *  an arrow between. Yours is solid once it has gone and carries a tick;
