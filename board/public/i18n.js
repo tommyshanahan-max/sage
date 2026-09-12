@@ -3293,22 +3293,44 @@ export const STRINGS = {
      actually is: he stands at the door, he knows how the place works, and he
      writes nothing down. */
   "but.name":          ["The doorman", "门房"],
-  "but.sub":           ["helps you finish", "帮你把这页填完"],
-  "but.offerHead":     ["Not sure what to put?", "不知道该怎么填？"],
-  "but.offerWhy": [
-    "Tell him what you do in your own words and he will work out the rest.",
-    "用你自己的话说说你是做什么的，剩下的他来想。",
+  "but.sub":           ["", ""],
+  /* ---- THE FIRST THING HE SAYS ---------------------------------------------
+   *
+   * IT IS THE INVITE'S JOB, NOT A CHATBOT'S. The invite works — see the note
+   * in CLAUDE.md about why it is settled — because it is NAMED, carries one
+   * true number, and asks for one thing. "Ray — this is the board I
+   * mentioned", a visible clock, six characters. It never explains itself.
+   *
+   * What was here first was "What do you do? Tell me the way you would tell
+   * somebody at a party", sitting under a card that asked "Not sure what to
+   * put?". That is a feature introducing itself to somebody who has not been
+   * greeted yet, and the question it opens with is a form field with a friendly
+   * voice on it.
+   *
+   * So he knows who she is and says so, and the fact he leads with is the one
+   * that makes the place worth being in: she was picked, and most people were
+   * not. Then one short question. Two bubbles, said before anything is sent
+   * anywhere — these are strings on this page, so the conversation costs
+   * nothing until somebody answers it.
+   */
+  "but.hookUp": [
+    "{who} — you are one of three who came off the list this week. {n} are still on it.",
+    "{who}——这周从名单上提上来三个人，你是其中一个。还有 {n} 个在等着。",
   ],
-  "but.open":          ["Talk to him", "跟他说"],
-  /* THE FIRST LINE, WRITTEN HERE AND NOT ASKED OF THE MODEL. Before anybody
-     has typed, the only signal there is is the language the page is being read
-     in — and a greeting that arrives in the wrong one is a greeting nobody
-     answers. It also sets the language for everything after it, because he
-     answers in the language he was addressed in. */
-  "but.first": [
-    "What do you do? Tell me the way you would tell somebody at a party — I will sort out the wording.",
-    "你是做什么的？就像跟人随口介绍自己那样说就行，措辞我来弄。",
+  /* Somebody who has not been moved up yet and opened this anyway. The
+     scarcity line above would be a lie to them, and the true thing is better
+     anyway: the page is what decides the order. */
+  "but.hookList": [
+    "{who} — you are number {n} of {t}. The ones who get moved up first are the ones with a finished page.",
+    "{who}——你排在第 {n} 位，一共 {t} 个人。先被提上来的，都是主页填完整的。",
   ],
+  "but.ask": [
+    "Two things and you are done. What do you actually do?",
+    "两件事就填完了。你是做什么的？",
+  ],
+  /* Closed, and gettable back. Not a pitch for a feature — his name and the
+     one thing he is for. */
+  "but.shut":          ["Ask the doorman", "问问门房"],
   "but.ph":            ["Type, or hold the mic", "打字，或者按住话筒"],
   "but.send":          ["Send", "发送"],
   "but.thinking":      ["…", "…"],

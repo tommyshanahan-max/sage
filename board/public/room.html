@@ -74,7 +74,17 @@
     background:var(--card);overflow:hidden}
   .buthead{display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;
     border-bottom:1px solid var(--hair)}
+  /* THE MARK, so he is somebody rather than a panel. The board's own
+     character, small, in its own square — the same object the door and the
+     poster wear. */
+  .butmark{width:1.7rem;height:1.7rem;border-radius:.45rem;background:var(--ink);
+    color:var(--paper);display:grid;place-items:center;font-style:normal;
+    font:400 .85rem/1 var(--serif)}
   .buthead b{font-size:.92rem;font-weight:600;color:var(--ink)}
+  .butshut{margin:1rem 0 0;text-align:center}
+  .butshut button{border:1px solid var(--line);background:var(--card);
+    border-radius:99px;padding:.45rem 1.1rem;font:inherit;font-size:.85rem;
+    color:var(--ink-2)}
   .buthead small{color:var(--muted);font-size:.76rem}
   .buthead .x{margin-left:auto;border:0;background:none;color:var(--muted);
     font-size:1.2rem;line-height:1;padding:.1rem .3rem;cursor:pointer}
@@ -1027,18 +1037,43 @@ function speakOut(text) {
   } catch { /* an utterance with no voice behind it */ }
 }
 
-/** The first thing he says, written here in both languages rather than asked
- *  of the model — before they have typed anything the only signal there is is
- *  the language they are reading the page in, and a greeting that arrives in
- *  the wrong one is a greeting nobody answers. */
-const butlerFirst = () => T("but.first");
+/** THE FIRST THING HE SAYS, and it is the invite's job rather than a
+ *  chatbot's.
+ *
+ *  The invite works because it is NAMED, carries one true number, and asks for
+ *  one thing — and it never explains itself. This does the same with what the
+ *  board already knows about the person standing in front of it: her name, and
+ *  whether she was picked.
+ *
+ *  Written here rather than asked of the model, for three reasons. It is the
+ *  only turn where the language cannot be inferred from what they typed, so it
+ *  has to come from the page. It is the turn that must not be improvised — a
+ *  wrong number in the first sentence is the whole impression. And it costs
+ *  nothing: the conversation does not reach the model until somebody answers
+ *  it.
+ */
+function butlerFirst() {
+  const who = (DATA.you && DATA.you.name) || "";
+  const total = DATA.waiting || 1;
+  return DATA.up
+    /* The fact worth leading with is the one that makes the place worth being
+       in: she was picked and most people were not. UP_A_DAY is three on the
+       box; the string says three because changing it is a deploy, and a number
+       drawn from the air here would be the one thing in this sentence that was
+       not true. */
+    ? T("but.hookUp", { who, n: Math.max(0, total - 3) })
+    /* And to somebody who has not been moved up, the same sentence would be a
+       lie. The true one is better anyway: the page decides the order. */
+    : T("but.hookList", { who, n: (DATA.ahead || 0) + 1, t: total });
+}
 
 function butlerPanel() {
   const box = el("div", "but");
 
   const head = el("div", "buthead");
+  head.append(el("i", "butmark", "\u4EA4"));
   head.append(el("b", null, T("but.name")));
-  head.append(el("small", null, T("but.sub")));
+  if (T("but.sub")) head.append(el("small", null, T("but.sub")));
   const x = el("button", "x", "×");
   x.type = "button";
   x.setAttribute("aria-label", T("post.cancel"));
@@ -1052,18 +1087,23 @@ function butlerPanel() {
   box.append(head);
 
   const said = el("div", "butsay");
-  for (const t of BUT.turns) {
-    const b = el("div", "bub " + (t.from === "you" ? "him" : "her"), t.text);
-    said.append(b);
-    /* Only his lines get a speaker. Reading somebody their own words back is
-       not a feature. */
-    if (t.from === "you" && canHearOut()) {
+  /* ONE SPEAKER, UNDER THE LAST THING HE SAID.
+     It was under every line of his, which on the opening — two of his at once
+     — put two identical grey buttons in a panel of four elements. The line
+     worth hearing is the one that has just arrived; the ones above it have
+     been read. Never under her own: reading somebody their own words back is
+     not a feature. */
+  let lastHim = -1;
+  BUT.turns.forEach((t, i) => { if (t.from === "you") lastHim = i; });
+  BUT.turns.forEach((t, i) => {
+    said.append(el("div", "bub " + (t.from === "you" ? "him" : "her"), t.text));
+    if (i === lastHim && canHearOut() && !BUT.busy) {
       const hear = el("button", "hear", T("but.hear"));
       hear.type = "button";
       hear.addEventListener("click", () => speakOut(t.text));
       said.append(hear);
     }
-  }
+  });
   if (BUT.busy) said.append(el("div", "bub him wait", T("but.thinking")));
   box.append(said);
   // Newest at the bottom, which is where a conversation is read from.
@@ -1171,7 +1211,7 @@ function butlerPanel() {
   // Focus only once the panel is on the page, and never on the first draw —
   // a keyboard that opens the moment somebody taps "talk to him" covers the
   // line he just said.
-  if (BUT.turns.length > 1) setTimeout(() => { try { input.focus(); } catch { /* gone */ } }, 0);
+  if (BUT.turns.length > 2) setTimeout(() => { try { input.focus(); } catch { /* gone */ } }, 0);
   return box;
 }
 
@@ -1202,22 +1242,27 @@ async function butlerTurn() {
   draw();
 }
 
-/** The offer, before anybody has said anything to him. */
-function butlerOffer() {
-  const box = el("div", "butoffer");
-  const p = el("p");
-  p.append(el("b", null, T("but.offerHead")));
-  p.append(document.createTextNode(T("but.offerWhy")));
-  box.append(p);
-  const go = el("button", null, T("but.open"));
+/** HE IS ALREADY THERE. There used to be a card here first — "Not sure what
+ *  to put? … Talk to him" — which is a feature introducing itself to somebody
+ *  who has not been greeted yet, and one more thing to read before the thing
+ *  itself. He opens having said his two lines, and they cost nothing: both are
+ *  strings on this page, and the model is not reached until she answers.
+ *
+ *  Shut is a line, not a card. Closing him should not leave a panel behind
+ *  advertising him. */
+function butlerShut() {
+  const box = el("p", "butshut");
+  const go = el("button", null, T("but.shut"));
   go.type = "button";
-  go.addEventListener("click", () => {
-    BUT = { turns: [{ from: "you", text: butlerFirst() }], open: true, put: null, busy: false, no: "" };
-    draw();
-  });
+  go.addEventListener("click", () => { BUT.open = true; draw(); });
   box.append(go);
   return box;
 }
+
+const butlerStart = () => ({
+  turns: [{ from: "you", text: butlerFirst() }, { from: "you", text: T("but.ask") }],
+  open: true, put: null, busy: false, no: "",
+});
 
 /** The box that stops somebody losing their place.
  *
@@ -1355,7 +1400,8 @@ function drawWait(box) {
      And only while the sentence is still missing: somebody who has finished
      does not need to be offered help finishing. */
   if (DATA.butler && !(you.me && you.want)) {
-    box.append(BUT && BUT.open ? butlerPanel() : butlerOffer());
+    if (!BUT) BUT = butlerStart();
+    box.append(BUT.open ? butlerPanel() : butlerShut());
   }
 
   const strip = el("p", "ins");
