@@ -6625,7 +6625,29 @@ async function loadPeople() {
      *
      * Your own card says it is yours and offers the edit rather than a follow
      * button that would refuse itself. */
-    PEOPLE = shuffled((d && d.people) || []);
+    /* MATCHED FIRST, AND THIS IS THE PRODUCT'S OWN CLAIM.
+     *
+     * "You say one line and it finds the people who said the other half" is
+     * on the front page, and what Browse actually did was hand back everybody
+     * published, shuffled, in whatever order they came out of the file. A
+     * Producer looking for a Performer opened the deck and got a Founder
+     * looking for a Founder, because the deck had never consulted the
+     * matching at all.
+     *
+     * NOT FILTERED, ORDERED. Filtering is the obvious fix and it is wrong at
+     * this size: with seven people in the room a strict filter is an empty
+     * screen, and an empty screen teaches somebody the board is dead rather
+     * than that their second half is narrow. Everybody is still here; the
+     * people whose sentence answers yours are simply at the front, which is
+     * what the claim actually promises.
+     *
+     * `shared` is the matcher's own answer — scopeFits plus sharedRooms, the
+     * same pair of functions /api/cards and the messenger decide on — computed
+     * per reader on the server. Shuffled within each group, so the order
+     * inside "matched" is not a ranking of people either. */
+    const all = shuffled((d && d.people) || []);
+    const fits = (q) => Array.isArray(q.shared) && q.shared.length > 0;
+    PEOPLE = [...all.filter(fits), ...all.filter((q) => !fits(q))];
   } catch { PEOPLE = []; }
   drawDeck();
   /* Here because it needs the deck: the old list holds handles and the rows

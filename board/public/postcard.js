@@ -246,22 +246,75 @@ export async function drawCard(who, T) {
     }
   }
 
-  // ---- standing, at the foot ---------------------------------------------
+  /* ---- THE FOOT, WORKED OUT BEFORE ANYTHING IS DRAWN ----------------------
+   *
+   * Same lesson as the chop above, learned the same way: the first version of
+   * this put the QR at a fixed offset from the bottom without accounting for
+   * its own height, so it hung off the end of the card and the wordmark and
+   * the address were painted straight through it. Four numbers, decided here,
+   * and then four things are drawn at them.
+   */
+  const dot = 6;                        // one module, in card pixels
+  const quiet = 4 * dot;                // the specified four-module margin
+  const qn = QR.length;                 // 25
+  const qbox = qn * dot + quiet * 2;    // 198
+  const qy = H - 96 - qbox;             // its top, leaving room for the address
+  const markY = qy - 34;                // the wordmark sits above it
+  const standY = qy - 96;               // and the standing above that
+
+  // ---- where they stand ---------------------------------------------------
   /* NOT THEIR QUEUE NUMBER. "55th of 55" is the one fact on this card nobody
      would post, and a card people do not post is a card that does nothing.
      Where they stand, not how far back. */
+  x.textAlign = "center";
   x.fillStyle = DIM;
   x.font = `600 26px ${SANS}`;
-  const on = T(who.member ? "post.in" : "post.on");
-  x.fillText(spaced(on), W / 2, H - 232);
+  x.fillText(spaced(T(who.member ? "post.in" : "post.on")), W / 2, standY);
 
   x.fillStyle = PAPER;
   x.font = `400 46px ${SERIF}`;
-  x.fillText("交换  The Exchange", W / 2, H - 164);
+  x.fillText("交换  The Exchange", W / 2, markY);
+
+  /* ---- THE WAY BACK -------------------------------------------------------
+   *
+   * The card printed "thexchange.app" as a line of text and stopped there.
+   * Somebody seeing it in a WeChat group had to read the address, leave the
+   * app, open a browser and type it — four steps, in a group they were
+   * half-scrolling, and a poster nobody can act on is a poster that does
+   * nothing. Scanning is one step and it is already a reflex in the app this
+   * gets posted into.
+   *
+   * ON A PALE PLATE, WITH ITS QUIET ZONE. A QR on a dark ground does not
+   * scan: readers look for dark modules on light, and the four-module margin
+   * is specification rather than padding — without it the card's own dark
+   * edge reads as part of the code. This is the one thing here that is not
+   * the board's palette, and it is not decoration: it is the only part of the
+   * card that has to work in a camera.
+   *
+   * The address stays underneath it in words, for the person whose hands are
+   * full and who will type it later.
+   */
+  const qx = Math.round((W - qbox) / 2);
+  x.fillStyle = "#F4EFE8";
+  x.beginPath();
+  /* roundRect is on everything that matters, but a browser without it should
+     get a square plate rather than no code at all. */
+  if (x.roundRect) x.roundRect(qx, qy, qbox, qbox, 10);
+  else x.rect(qx, qy, qbox, qbox);
+  x.fill();
+
+  x.fillStyle = "#12100E";
+  for (let r = 0; r < qn; r++) {
+    const row = QR[r];
+    for (let col = 0; col < qn; col++) {
+      if (row[col] !== "#") continue;
+      x.fillRect(qx + quiet + col * dot, qy + quiet + r * dot, dot, dot);
+    }
+  }
 
   x.fillStyle = DIM;
-  x.font = `400 30px ${SANS}`;
-  x.fillText("thexchange.app", W / 2, H - 110);
+  x.font = `400 26px ${SANS}`;
+  x.fillText("thexchange.app", W / 2, H - 52);
 
   return c.toDataURL("image/png");
 }
