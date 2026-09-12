@@ -66,37 +66,49 @@
    *
    * The rest of this board is a working tool and looks like one, correctly.
    * This one screen is not: it is the door of somewhere, opened for somebody
-   * by name, and it is the only impression most people will ever form. A
-   * gradient with a heading on it is a settings page with a nice mood.
+   * by name, and for most people it is the only impression they will ever
+   * form of the place.
    *
-   * So it is dark whatever the phone is set to — the one place in the product
-   * that commits, the way the lobby of a building is darker and quieter than
-   * the offices upstairs — and everything in it is drawn rather than loaded,
-   * because a hero that arrives in pieces over a mainland connection is worse
-   * than no hero.
+   * A RED CHOP ON DARK PAPER. 印章 — the seal that makes a document real in
+   * China, and the reason it beat the four other directions it was drawn
+   * against: it is the only one that is about the thing this board actually
+   * is. Not a lobby, not a stage door, not an opening title — all of those
+   * are somebody's industry. A chop is what turns a piece of paper into an
+   * agreement between two sides, which is the whole product, and every
+   * Chinese member reads it before they read a word.
+   *
+   * It is also the only one of the six nobody else in this market can copy
+   * without looking like they copied it.
+   *
+   * Drawn, not loaded: a first impression that arrives in pieces over a
+   * mainland connection is worse than none. No image, no font, no request.
    */
-  .hero{margin:.6rem 0 0;padding:2.4rem 1.2rem 2rem;border-radius:1.3rem;
-    text-align:center;position:relative;overflow:hidden;
-    background:radial-gradient(120% 90% at 50% 0%,#243050 0%,#131A2A 45%,#0B0F18 100%);
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
-  /* Light falling through the gap, which is the whole picture: a door open a
-     little way and somebody standing in it. Two shapes, no file. */
-  .hero .glow{position:absolute;left:50%;top:-22%;width:15rem;height:15rem;
-    transform:translateX(-50%);border-radius:50%;pointer-events:none;
-    background:radial-gradient(circle,rgba(124,160,255,.30),transparent 62%)}
-  .hero .door{position:absolute;inset:0;display:grid;place-items:center;
-    opacity:.2;pointer-events:none}
-  .hero .door svg{width:15rem;height:15rem;color:#9FB6F0}
-  .hero .mk{position:relative;display:inline-grid;place-items:center;
-    width:2.6rem;height:2.6rem;border-radius:.7rem;
-    background:rgba(255,255,255,.94);color:#131A2A;
-    font:400 1.2rem/1 var(--serif);margin:0 0 1rem;
-    box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .hero{margin:.6rem 0 0;padding:2.6rem 1.2rem 2rem;border-radius:1.3rem;
+    text-align:center;position:relative;overflow:hidden;background:#12100E;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+  /* The paper it is stamped on: warm, and lit from where the stamp lands. */
+  .hero .paper{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(95% 72% at 50% 34%,#221D18 0%,#161310 52%,#100E0C 100%)}
+  /* THE CHOP. Square, red, the character reversed out of it, and off true by
+     four degrees — a chop pressed by a person is never square to the page,
+     and that is most of what stops this looking like an app icon. The inner
+     ring is the carved border every seal has. */
+  .hero .seal{position:relative;display:inline-grid;place-items:center;
+    width:4.6rem;height:4.6rem;margin:0 0 1.2rem;border-radius:.45rem;
+    background:#B22A1F;color:#F7EDE6;font:400 2.15rem/1 var(--serif);
+    font-style:normal;transform:rotate(-4deg);
+    box-shadow:inset 0 0 0 3px rgba(247,237,230,.32),
+               0 10px 30px rgba(178,42,31,.38)}
+  /* The ink that has soaked past the edge. Two degrees the other way so the
+     bleed does not sit square under the stamp. */
+  .hero .bleed{position:absolute;left:50%;top:2.2rem;width:9rem;height:9rem;
+    transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,rgba(178,42,31,.26),transparent 62%)}
   .wrhi{position:relative;display:block;margin:0;font-family:var(--serif);
     font-weight:400;font-size:clamp(2.1rem,10.5vw,3rem);line-height:1.02;
-    letter-spacing:-.015em;color:#F4F6FB;text-wrap:balance}
+    letter-spacing:-.015em;color:#EFE6DC;text-wrap:balance}
   .heroq{position:relative;margin:1.1rem 0 0;font-size:.78rem;font-weight:600;
-    letter-spacing:.08em;text-transform:uppercase;color:#8FA8E4}
+    letter-spacing:.1em;text-transform:uppercase;color:#B08A6A}
 
   /* ---- THE CIRCLE ---------------------------------------------------------
    *
@@ -113,9 +125,10 @@
    * a second language readable at all.
    */
   .orbwrap{position:relative;margin:1.3rem 0 0;display:grid;place-items:center}
+  /* Paper on ink, so the one thing to press is the one bright thing. */
   .orb{width:5.4rem;height:5.4rem;border-radius:50%;border:0;cursor:pointer;
-    background:#F4F6FB;color:#131A2A;display:grid;place-items:center;padding:0;
-    box-shadow:0 12px 34px rgba(0,0,0,.45);transition:transform .12s ease-out}
+    background:#F2E7DC;color:#12100E;display:grid;place-items:center;padding:0;
+    box-shadow:0 12px 34px rgba(0,0,0,.5);transition:transform .12s ease-out}
   .orb:active{transform:scale(.96)}
   .orb svg{width:1.9rem;height:1.9rem;fill:currentColor;stroke:none;
     margin-left:.18rem}
@@ -124,19 +137,19 @@
   /* The ring only exists while it is talking, so the circle at rest is one
      clean shape rather than a control with decoration around it. */
   .ring{position:absolute;width:5.4rem;height:5.4rem;border-radius:50%;
-    border:2px solid rgba(244,246,251,.7);opacity:0;pointer-events:none}
+    border:2px solid rgba(178,42,31,.85);opacity:0;pointer-events:none}
   .orbwrap.on .ring{animation:ping 1.8s ease-out infinite}
   .orbwrap.on .ring.b{animation-delay:.9s}
   @keyframes ping{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.5);opacity:0}}
   @media (prefers-reduced-motion:reduce){.orbwrap.on .ring{animation:none;opacity:.35}}
-  .orbsay{position:relative;margin:.75rem 0 0;font-size:.78rem;color:#7E8CAC}
+  .orbsay{position:relative;margin:.75rem 0 0;font-size:.78rem;color:#8A7663}
 
   /* The message. Greyed until spoken, then it is ink. */
   .tell{position:relative;margin:1.1rem auto 0;max-width:21rem;
     font-family:var(--serif);font-size:1.06rem;line-height:1.62;
-    color:#5C6B8C}
+    color:#6A5A4B}
   .tell w{color:inherit;transition:color .14s ease-out}
-  .tell w.lit{color:#EDF1F9}
+  .tell w.lit{color:#EFE6DC}
   .wrband b{display:block;color:var(--ink);font-size:.98rem;font-weight:500}
   /* Played rather than only read. speechSynthesis speaks Chinese on every
      phone here; level.html has used it for months. Its own button, never
@@ -1343,11 +1356,14 @@ function butlerPanel() {
   const head = el("div", "buthead");
   /* His face: a cap and shoulders, not the board's 交 mark — see .butface. */
   const face = el("i", "butface");
-  face.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none"'
-    + ' stroke="currentColor" stroke-width="1.7" stroke-linecap="round"'
-    + ' stroke-linejoin="round">'
-    + '<path d="M5 9h14M6 9c0-2.2 2.7-3.5 6-3.5S18 6.8 18 9"/>'
-    + '<path d="M7.5 19v-2.4a4.5 4.5 0 0 1 9 0V19"/><path d="M12 12.4v1.2"/></svg>';
+  /* FILLED, NOT DRAWN. The first version was line art at 1.7 stroke inside a
+     20px circle, which came out as an arch and a dot — a silhouette is the
+     only thing that survives at this size. Brim, crown, shoulders, and the
+     gap between them reads as the face without one being drawn. */
+  face.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">'
+    + '<path d="M6.3 8.2c0-2.6 2.5-4.2 5.7-4.2s5.7 1.6 5.7 4.2z"/>'
+    + '<rect x="3.6" y="8.4" width="16.8" height="1.9" rx=".95"/>'
+    + '<path d="M4.3 20.4c0-3.8 3.5-5.9 7.7-5.9s7.7 2.1 7.7 5.9z"/></svg>';
   head.append(face);
   const who = document.createElement("div");
   who.append(el("b", null, T("but.name")));
@@ -1631,15 +1647,9 @@ function drawWait(box) {
      room says "Welcome, Jack", never "Welcome, Jack Daniels". */
   const first = (you.name || "").split(/\s+/)[0] || you.name || "";
   const hero = el("div", "hero");
-  const door = el("div", "door");
-  door.innerHTML = '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor"'
-    + ' stroke-width="2.2" stroke-linejoin="round" aria-hidden="true">'
-    + '<path d="M50 22 18 12v76l32-10z"/><path d="M50 22l32-10v76l-32-10z"/>'
-    + '<path d="M50 22v56"/><circle cx="42" cy="52" r="1.8" fill="currentColor"/>'
-    + '<circle cx="58" cy="52" r="1.8" fill="currentColor"/></svg>';
-  hero.append(el("i", "glow"));
-  hero.append(door);
-  hero.append(el("i", "mk", "\u4EA4"));
+  hero.append(el("i", "paper"));
+  hero.append(el("i", "bleed"));
+  hero.append(el("i", "seal", "\u4EA4"));
   hero.append(el("span", "wrhi", T("wel.hi", { who: first })));
   hero.append(welcomeOrb(you));
 
