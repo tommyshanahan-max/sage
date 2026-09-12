@@ -3326,10 +3326,9 @@ export const STRINGS = {
      Six lines of serif under a circle is a wall, and a wall under a welcome
      is the first thing anybody scrolls past. This says there is something
      here and lets the circle be the thing on the screen. */
-  "wel.got":           ["There's a message for you", "有条消息给你"],
-  "wel.read":          ["Read it instead", "看文字"],
-  "wel.hide":          ["Hide it", "收起来"],
-  "wel.play":          ["Hear this", "听一下"],
+  /* The circle reveals the line a word at a time; nothing is heard. "Hear
+     this" was the label while it spoke. */
+  "wel.play":          ["Read it to me", "给我看"],
 
   /* ---- THE CARD THEY CAN POST --------------------------------------------
    *
@@ -3356,7 +3355,9 @@ export const STRINGS = {
   "post.hold":         ["Press and hold the card to save it", "长按卡片保存"],
   "post.on":           ["ON THE LIST", "在名单上"],
   "post.in":           ["MEMBER", "成员"],
-  "wel.stop":          ["Stop", "停"],
+  /* Pressed mid-reveal: the rest of the line at once, for somebody who reads
+     faster than the pace. */
+  "wel.stop":          ["All of it", "全部显示"],
   /* SPOKEN, AND BROKEN INTO BEATS SO SOMEBODY HAS TO ANSWER.
    *
    * It was one paragraph. A paragraph is a thing you scroll past, and this
@@ -3380,26 +3381,41 @@ export const STRINGS = {
    * is the whole of it. The state and the clock were repeating the band
    * directly underneath anyway.
    *
-   * AND NEITHER BEAT SAYS "WELCOME". The title two inches above says it in
-   * forty-point serif. Spoken it still has to name them — that is the whole
-   * trick the invite runs on — so the voice greets them a different way:
-   * "Good week, Simon", "So, Simon". Named, not repeated.
+   * BEAT TWO ALSO SAYS WHAT THE TWO THINGS DO NOT DO. "A photo and one line"
+   * on its own reads as the price of admission, so somebody fills it in,
+   * presses the board and finds every button dead — which is the worst
+   * possible moment to learn that a person decides. It costs half a line to
+   * say it here instead, before they have spent anything on the wrong idea.
+   *
+   * PLAIN, AND SHORT. Beat one used to be atmosphere — "{t} of you out there
+   * tonight", "both sides of the border". It was writing, and it read as
+   * writing, which is the one thing a first line cannot do. It now says what
+   * a person says when they meet you at a door: I'm helping, this won't take
+   * long.
+   *
+   * AND IT DOES NOT SAY WELCOME, because the title two inches above says it
+   * in forty-point serif with their name on it. It did for one draft, while
+   * this was still spoken — heard, a greeting that skips the greeting sounds
+   * like it started mid-sentence. Read, one inch under the same word, it is
+   * just the screen saying the same thing twice. Nothing talks now, so the
+   * title has it and the beat gets on with it. The `up` line still opens on
+   * the name, because it is news rather than a greeting.
    */
   "wel.b1List": [
-    "So, {who}. {t} of you out there tonight. In here is people worth knowing, both sides of the border.",
-    "\u6b22\u8fce\u4f60\uff0c{who}\u3002\u4eca\u665a\u5916\u9762 {t} \u4e2a\u4eba\u3002\u91cc\u9762\u90fd\u662f\u4e24\u8fb9\u503c\u5f97\u8ba4\u8bc6\u7684\u4eba\u3002",
+    "I'm here to help. I'll keep it quick.",
+    "\u6211\u6765\u5e2e\u4f60\uff0c\u5f88\u5feb\u5c31\u597d\u3002",
   ],
   "wel.b2List": [
-    "Two things move you up. A photo, and one line about what you do.",
-    "\u4e24\u6837\u5c31\u80fd\u5f80\u524d\u632a\uff1a\u4e00\u5f20\u7167\u7247\uff0c\u4e00\u53e5\u8bdd\u8bf4\u4f60\u505a\u4ec0\u4e48\u3002",
+    "A photo, and one line about what you do. That moves you up. Somebody inside opens the door.",
+    "\u4e00\u5f20\u7167\u7247\uff0c\u4e00\u53e5\u8bdd\u8bf4\u4f60\u505a\u4ec0\u4e48\u3002\u8fd9\u6837\u80fd\u5f80\u524d\u632a\u3002\u95e8\u662f\u91cc\u9762\u7684\u4eba\u5f00\u7684\u3002",
   ],
   "wel.b1Up": [
-    "Good week, {who}. Three came off the list and you're one of them. In here is people worth knowing, both sides of the border.",
-    "\u6b22\u8fce\u4f60\uff0c{who}\u3002\u8fd9\u5468\u63d0\u4e0a\u6765\u4e09\u4e2a\u4eba\uff0c\u4f60\u662f\u4e00\u4e2a\u3002\u91cc\u9762\u90fd\u662f\u4e24\u8fb9\u503c\u5f97\u8ba4\u8bc6\u7684\u4eba\u3002",
+    "You're off the list, {who}. I'm here to help. I'll keep it quick.",
+    "{who}\uff0c\u4f60\u5df2\u7ecf\u63d0\u4e0a\u6765\u4e86\u3002\u6211\u6765\u5e2e\u4f60\uff0c\u5f88\u5feb\u5c31\u597d\u3002",
   ],
   "wel.b2Up": [
-    "Two things and you're done. A photo, and one line about what you do.",
-    "\u4e24\u6837\u5c31\u5b8c\u4e8b\u4e86\uff1a\u4e00\u5f20\u7167\u7247\uff0c\u4e00\u53e5\u8bdd\u8bf4\u4f60\u505a\u4ec0\u4e48\u3002",
+    "A photo, and one line about what you do. Then somebody inside reads it and opens the door.",
+    "\u4e00\u5f20\u7167\u7247\uff0c\u4e00\u53e5\u8bdd\u8bf4\u4f60\u505a\u4ec0\u4e48\u3002\u586b\u5b8c\u91cc\u9762\u7684\u4eba\u770b\u4e00\u773c\uff0c\u518d\u7ed9\u4f60\u5f00\u95e8\u3002",
   ],
   /* The press between the two beats. A question, because a question is the
      thing you answer — "Continue" is a thing you obey. */
@@ -3506,7 +3522,6 @@ export const STRINGS = {
   "but.ph":            ["Type, or hold the mic", "打字，或者按住话筒"],
   "but.send":          ["Send", "发送"],
   "but.thinking":      ["…", "…"],
-  "but.hear":          ["Hear it", "听一遍"],
   /* WHAT HE IS PROPOSING, and the button says what pressing it does to the
      card rather than "OK" — this is the one moment in the conversation where
      something gets written down. */

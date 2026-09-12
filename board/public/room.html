@@ -160,10 +160,6 @@
   @keyframes cardin{from{opacity:0;transform:translateY(-14px) scale(.97)}}
   @media (prefers-reduced-motion:reduce){.pc.arrive{animation:none}}
   .wrband b{display:block;color:var(--ink);font-size:.98rem;font-weight:500}
-  /* Played rather than only read. speechSynthesis speaks Chinese on every
-     phone here; level.html has used it for months. Its own button, never
-     automatic — a page that starts talking on a train is a page somebody
-     shuts. */
   /* THE WAITING ROOM, WHICH IS A DIFFERENT BAND FROM BEING ON THE LIST.
      Warmer than the blue one above it so that being moved up reads as having
      happened rather than as the same notice with new words in it. */
@@ -233,12 +229,6 @@
   .bub.her{align-self:flex-end;background:var(--accent);color:var(--accent-ink);
     border-bottom-right-radius:.3rem}
   .bub.wait{color:var(--muted)}
-  /* HEARING IT. speechSynthesis speaks Chinese on every phone here and
-     level.html has used it for months. Its own small button under his line
-     rather than speaking automatically: a page that starts talking in a quiet
-     carriage is a page somebody closes. */
-  .hear{align-self:flex-start;border:0;background:none;padding:.1rem .2rem;
-    color:var(--muted);font-size:.76rem;cursor:pointer;margin:-.35rem 0 0}
   .butform{display:flex;gap:.5rem;align-items:center;padding:.7rem .9rem;
     border-top:1px solid var(--hair)}
   .butform input{flex:1;min-width:0;border:1px solid var(--line);
@@ -1150,48 +1140,29 @@ function shareBox(link, ahead) {
 let BUT = null;          // { turns: [], open: bool, put: {...}|null, busy: bool }
 let BUTMIC = null;
 
-/** The browser's own voice, which speaks Chinese on every phone here —
- *  level.html and daily.js have used it for months. Its own button under his
- *  line rather than automatic: a page that starts talking in a quiet carriage
- *  is a page somebody closes. */
-const canHearOut = () => typeof window !== "undefined" && "speechSynthesis" in window;
-
-/* THE BEST VOICE ON THE DEVICE, NOT THE FIRST ONE.
+/* NOTHING ON THIS PAGE TALKS, AND IT IS ON PURPOSE.
  *
- * getVoices() comes back in no useful order, and the first match for a
- * language is usually the oldest and worst one the phone ships — the flat
- * robot everybody recognises as a machine reading a screen. Every iPhone and
- * most Android phones also carry a far better one under a name, and picking
- * it is the whole difference between a doorman and a lift announcement.
+ * There was a speechSynthesis voice here — on the arrival beats and on a
+ * "Hear it" under Mo's last line — with a careful voice picker in front of
+ * it. The picker worked: it skipped the flat 2005 macOS voices (Samantha,
+ * Alex, Victoria, Fred; Samantha had been in the *preferred* list, which is
+ * how Chrome on a Mac ended up choosing the worst voice on the machine) and
+ * preferred Siri / Neural / Premium, then remote synthesis over local.
  *
- * In order: a voice the platform itself marks as good (Siri, Enhanced,
- * Premium, Neural), then a named one known to be the good one on iOS and
- * macOS, then a network voice — remote synthesis is nearly always better than
- * the on-device fallback — then anything at all in the language.
+ * It still was not good enough. The ceiling is set by the browser, not by the
+ * picking: an iPhone gets a Siri voice and sounds like a person, and Chrome
+ * on macOS tops out at Google's network voice, which is a lift announcing a
+ * floor. The first thing this place says to somebody cannot be a coin toss on
+ * which browser they happened to open it in, and losing that toss is worse
+ * than saying nothing. Same for Mo — a character with a name and a face read
+ * aloud in that voice stops being a character.
+ *
+ * The beats already lit word by word underneath the speech (the fallback for
+ * Safari, which often never fires onboundary); that reveal is now the whole
+ * performance and it needs no sound. If a voice comes back it will be real
+ * TTS, rendered once per language and served as a file — not the browser's.
  */
-const GOOD = /siri|neural|natural|premium|enhanced/i;
-/* THE ONES TO AVOID, and this was the bug. macOS ships Samantha, Alex,
-   Victoria and Fred as local voices, and they are the flat 2005 robots
-   everybody recognises — Samantha was in the preferred list, so on Chrome on
-   a Mac this was actively choosing the worst voice on the machine. */
-const OLD = /samantha|alex|victoria|fred|albert|junior|ralph|zarvox|whisper|bells|bad news|good news|organ|cellos|trinoids|bubbles|boing|jester|superstar|wobble|rocko|shelley|grandma|grandpa|eddy|flo|reed|sandy/i;
-function bestVoice(tag) {
-  const want = tag.slice(0, 2).toLowerCase();
-  const all = (window.speechSynthesis.getVoices() || [])
-    .filter((v) => String(v.lang || "").toLowerCase().startsWith(want));
-  if (!all.length) return null;
-  const ok = all.filter((v) => !OLD.test(v.name));
-  const pool = ok.length ? ok : all;
-  return pool.find((v) => GOOD.test(v.name))          // iOS and Android's best
-    /* REMOTE BEFORE LOCAL on anything that has both. Chrome's network voices
-       are a different generation from the ones baked into the OS, and on a
-       desktop they are the whole difference between a person and a station
-       announcement. iOS has no remote voices, so it falls past this to the
-       Siri ones above. */
-    || pool.find((v) => v.localService === false)
-    || pool.find((v) => /google/i.test(v.name))
-    || pool[0];
-}
+
 
 /** THE CIRCLE, AND THE WORDS LIGHTING UP UNDER IT.
  *
@@ -1212,14 +1183,13 @@ function welcomeOrb(you) {
    * the first thing anybody hears from the place — so it arrives the way a
    * person would say it: a line, then you say something back, then the rest.
    *
-   * The first beat is who they are and what has just happened to them. The
-   * second is what the place gets them and the two things to do. The button
-   * between is a question, because a question is the thing you answer;
-   * "Continue" is a thing you obey.
+   * The first beat is hello and a promise that this is short. The second is
+   * the two things to do. The button between is a question, because a
+   * question is the thing you answer; "Continue" is a thing you obey.
    */
   const beats = DATA.up
     ? [T("wel.b1Up", { who: you.first }), T("wel.b2Up")]
-    : [T("wel.b1List", { who: you.first, t: DATA.waiting || 1 })];
+    : [T("wel.b1List", { who: you.first })];
   if (!DATA.up) beats.push(T("wel.b2List"));
 
   const box = document.createElement("div");
@@ -1247,42 +1217,69 @@ function welcomeOrb(you) {
   function land(i) {
     const words = beats[i];
     const para = el("p", "beat");
+    /* A UNIT IS A WORD IN ENGLISH AND A CHARACTER IN CHINESE.
+       This split on whitespace, which in Chinese is no split at
+       all: 我来帮你，很快就好。is one run with no spaces in it, so the whole
+       beat was one unit and the Chinese arrival flashed its line up complete
+       while the English one revealed word by word. Han runs are cut per
+       character, which is how the language is read anyway. Same rule as
+       lines() in postcard.js. */
     const parts = [];
-    const re = /\S+\s*/g;
+    const HANC = "\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\u3000-\u303F\uFF00-\uFF65";
+    /* The Latin run has to stop at a Han character as well as at a space, or
+       \S+ swallows the entire Chinese line the moment a name precedes it —
+       "Simon，你已经…" is one unbroken run of non-space. */
+    const re = new RegExp("[" + HANC + "]|[^\\s" + HANC + "]+\\s*", "g");
     let m;
-    while ((m = re.exec(words))) parts.push({ at: m.index, text: m[0] });
+    while ((m = re.exec(words))) parts.push(m[0]);
     const spans = parts.map((w) => {
       const n = document.createElement("w");
-      n.textContent = w.text;
+      n.textContent = w;
       para.append(n);
       return n;
     });
     said.append(para);
-    const lightTo = (c) => spans.forEach((n, k) => n.classList.toggle("lit", parts[k].at <= c));
-    const lightAll = (on) => spans.forEach((n) => n.classList.toggle("lit", on));
 
-    if (!canHearOut()) { lightAll(true); after(i); return; }
-
+    /* IT DOES NOT TALK, AND THAT IS THE POINT.
+     *
+     * This used to speak the beat through speechSynthesis and light the words
+     * off its word boundaries. The browser's voice is the problem: on iOS it
+     * gets a Siri voice and sounds like somebody, and on Chrome/macOS the
+     * ceiling is Google's network voice, which is a station announcement. The
+     * first thing the place says to a person cannot be a coin toss on which
+     * browser they opened it in, and the losing side of that toss is worse
+     * than silence. A real voice here means real TTS, rendered once per
+     * language and served as a file — until then, nothing.
+     *
+     * So the beat lands the way it always looked: one word at a time, at a
+     * reading pace. It was already doing this underneath the voice as the
+     * Safari fallback, because Safari often never fires onboundary. That
+     * fallback is now the whole thing.
+     */
     wrap.classList.add("on");
     hint.textContent = T("wel.stop");
     orb.setAttribute("aria-label", T("wel.stop"));
-    let real = false;
-    const ms = Math.max(40, (words.length * 62) / spans.length);
+    /* PACED BY THE LINE, NOT BY THE WORD. Long words take longer to read than
+       short ones, so the gap comes from the characters either side of it —
+       otherwise "I'm" and "congratulations" get the same beat and the whole
+       thing limps.
+       38ms a character, which is about 26 a second. It was 74 and a beat took
+       six and a half seconds, on the screen that had just said it would keep
+       this quick — a promise the page was breaking while making it. At 38 a
+       beat lands in two to three and still reads as somebody talking rather
+       than text appearing. */
+    const ms = Math.max(110, Math.round((words.length * 38) / spans.length));
     let k = 0;
     timer = setInterval(() => {
-      if (real || k >= spans.length) return;
+      if (k >= spans.length) {
+        clearInterval(timer); timer = null;
+        wrap.classList.remove("on");
+        /* A breath on the last word before the button changes under them. */
+        setTimeout(() => after(i), 260);
+        return;
+      }
       spans[k++].classList.add("lit");
     }, ms);
-    const done = () => {
-      if (timer) { clearInterval(timer); timer = null; }
-      lightAll(true);
-      wrap.classList.remove("on");
-      after(i);
-    };
-    speakOut(words, {
-      onWord(c) { real = true; if (timer) { clearInterval(timer); timer = null; } lightTo(c); },
-      onEnd: done,
-    });
   }
 
   /* WHAT THE BUTTON SAYS NEXT, and on the last beat it stops being a button
@@ -1315,8 +1312,8 @@ function welcomeOrb(you) {
 
   orb.addEventListener("click", () => {
     if (wrap.classList.contains("on")) {
-      /* Speaking. Stop, and leave the beat on the screen finished. */
-      try { window.speechSynthesis.cancel(); } catch { /* nothing speaking */ }
+      /* Mid-reveal. Somebody who reads faster than the pace presses again and
+         gets the rest of the line at once, rather than waiting it out. */
       if (timer) { clearInterval(timer); timer = null; }
       wrap.classList.remove("on");
       said.querySelectorAll("w").forEach((n) => n.classList.add("lit"));
@@ -1330,46 +1327,6 @@ function welcomeOrb(you) {
 
   return box;
 }
-
-function speakOut(text, on) {
-  if (!canHearOut()) return;
-  const tag = lang() === "zh" ? "zh-CN" : "en-US";
-  try {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = tag;
-    const v = bestVoice(tag);
-    if (v) u.voice = v;
-    /* NOT 0.85. daily.js reads single words to somebody learning them, where
-       slow is right. This is a person greeting you, and a greeting delivered
-       slowly sounds like an announcement in a station. Just under natural in
-       English; a touch slower in Chinese, which is genuinely harder to follow
-       at speed on a phone speaker. */
-    u.rate = tag === "zh-CN" ? 0.92 : 0.97;
-    /* Fractionally below centre. The difference between somebody telling you
-       something and somebody asking you for something. */
-    u.pitch = 0.95;
-    const done = on && (typeof on === "function" ? on : on.onEnd);
-    if (done) { u.onend = done; u.onerror = done; }
-    if (on && on.onWord) u.onboundary = (e) => on.onWord(e.charIndex || 0);
-    window.speechSynthesis.speak(u);
-  } catch (e) {
-    const done = on && (typeof on === "function" ? on : on.onEnd);
-    if (done) done();   /* an utterance with no voice behind it */
-  }
-}
-
-/* THE LIST ARRIVES LATE ON EVERY BROWSER. getVoices() is empty on the first
-   call and fills in asynchronously, so a page that reads it once at load
-   picks nothing and falls back to the default — which is the bug this whole
-   function exists to avoid. Touched once here so the list is warm by the time
-   anybody presses play. */
-try {
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.addEventListener?.("voiceschanged", () => {
-    try { window.speechSynthesis.getVoices(); } catch { /* gone */ }
-  }, { once: true });
-} catch { /* no voice on this browser at all */ }
 
 /** THE FIRST THING HE SAYS, and it is the invite's job rather than a
  *  chatbot's.
@@ -1429,16 +1386,13 @@ function butlerPanel() {
      worth hearing is the one that has just arrived; the ones above it have
      been read. Never under her own: reading somebody their own words back is
      not a feature. */
-  let lastHim = -1;
-  BUT.turns.forEach((t, i) => { if (t.from === "you") lastHim = i; });
-  BUT.turns.forEach((t, i) => {
+  /* AND THEN THE HEAR BUTTON WENT. Mo read his line in the browser's own
+     voice, which on Chrome/macOS is Google's network voice and sounds like a
+     lift announcing a floor. A character with a name and a face, given that
+     voice, stops being a character. He is better read than heard until there
+     is real TTS behind him. */
+  BUT.turns.forEach((t) => {
     said.append(el("div", "bub " + (t.from === "you" ? "him" : "her"), t.text));
-    if (i === lastHim && canHearOut() && !BUT.busy) {
-      const hear = el("button", "hear", T("but.hear"));
-      hear.type = "button";
-      hear.addEventListener("click", () => speakOut(t.text));
-      said.append(hear);
-    }
   });
   if (BUT.busy) said.append(el("div", "bub him wait", T("but.thinking")));
   box.append(said);
@@ -1560,7 +1514,6 @@ function butlerPanel() {
   off.type = "button";
   off.addEventListener("click", () => {
     if (BUTMIC) BUTMIC.stop();
-    try { window.speechSynthesis.cancel(); } catch { /* nothing speaking */ }
     try { localStorage.setItem(BUTKEY, "1"); } catch { /* private window */ }
     BUT.open = false;
     draw();
