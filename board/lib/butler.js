@@ -233,7 +233,16 @@ export async function ask(turns, who) {
   } catch (e) {
     /* A model that is down, over quota or slow is not a reason to show a red
        screen to somebody filling in a form. The page says the butler is
-       unavailable and the fields are still fields. */
+       unavailable and the fields are still fields.
+     *
+     * BUT SAY WHY, IN THE LOG. This swallowed everything into "failed" and
+     * the only symptom anywhere was one red line on a phone — a key that has
+     * never worked, a model the account cannot reach, a container with no way
+     * out to the internet and an SDK that is not installed all looked exactly
+     * alike, and the only way to tell them apart was to guess. One line to
+     * stderr, with the status and the message and never the key. */
+    const status = e && (e.status || e.code) ? ` ${e.status || e.code}` : "";
+    console.error(`butler:${status} ${String((e && e.message) || e).slice(0, 300)}`);
     return { error: String(e && e.status) === "429" ? "slow-down" : "failed" };
   }
 }

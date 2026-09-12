@@ -36,12 +36,25 @@
 
 import { writeFile, mkdir, access } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { STRINGS } from "../board/public/i18n.js";
-import { beatUnits } from "../board/public/beat.js";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const OUT = path.join(HERE, "..", "board", "public", "voice");
+
+/* IT RUNS IN THE BOARD CONTAINER, like every other script target — there is no
+   node on the box itself, which is the whole reason the Makefile mounts
+   scripts/ at /seed and runs `--entrypoint node board`. So neither the strings
+   nor the output directory can be reached by a path relative to this file:
+   inside the container /seed/voice.mjs has no ../board above it, and anything
+   written to /app/public lands in the image and is gone with the container.
+   BOARD_PUBLIC points at the public directory (/app/public in there), VOICE_OUT
+   at a bind mount back into the repository. Both default to the repository
+   layout so the script still runs straight from a checkout. */
+const PUB = process.env.BOARD_PUBLIC || path.join(HERE, "..", "board", "public");
+const OUT = process.env.VOICE_OUT || path.join(PUB, "voice");
+
+const here = (f) => pathToFileURL(path.join(PUB, f)).href;
+const { STRINGS } = await import(here("i18n.js"));
+const { beatUnits } = await import(here("beat.js"));
 
 const KEY = process.env.ELEVENLABS_API_KEY || "";
 /* Stock ElevenLabs preset, available on every account. Warm, male, unhurried
@@ -177,7 +190,7 @@ async function main() {
       await say(key, lang, text);
     }
   }
-  console.log(`\n  Written to board/public/voice/.`);
+  console.log(`\n  Written to board/public/voice/ (${OUT}).`);
   console.log(`  They are part of the product, so commit them:`);
   console.log(`\n    git add board/public/voice && git commit -m "The arrival's voice" && git push\n`);
 }

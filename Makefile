@@ -255,14 +255,25 @@ announcer: ## Who may write an announcement, or let one:  make announcer [WHO=To
 	  /seed/announce.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  can-announce $(if $(WHO),--who "$(WHO)",) $(if $(ID),--id "$(ID)",) $(if $(OFF),--off,)
 
+# The ElevenLabs key, pulled the same way every other target here pulls one.
+#
+# NOT `. ./.env`. Sourcing it as shell ran `Feed: command not found` on line 56
+# and died on line 97 — TOMSCODING_BOARD_MAIL_FROM=The Exchange <onboarding@...>
+# is a perfectly good env line and an invalid shell one. grep and cut read the
+# file as what it is.
+XI_KEY = $$(grep -E '^ELEVENLABS_API_KEY=' .env | tail -1 | cut -d= -f2-)
+XI_VOICE = $$(grep -E '^ELEVENLABS_VOICE_ID=' .env | tail -1 | cut -d= -f2-)
+
 voices: ## Which voices the ElevenLabs account has, to pick one
 	@# The voice IS the first impression. Listen to a few on elevenlabs.io,
 	@# then put the id in .env as ELEVENLABS_VOICE_ID before running `make
 	@# voice` — the default is a stock preset and picking it by default is not
 	@# the same as choosing it.
-	@# Not in the board container: it has no ELEVENLABS_API_KEY and no reason
-	@# to. This runs on the box, against .env, and writes nothing.
-	@set -a; . ./.env; set +a; node scripts/voice.mjs --list
+	@# In the container, like every other script target: there is no node on
+	@# the box. `make voices` on the host was 127, command not found.
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" \
+	  -e ELEVENLABS_API_KEY="$(XI_KEY)" -e BOARD_PUBLIC=/app/public \
+	  --entrypoint node board /seed/voice.mjs --list
 
 voice: ## Render the arrival's four beats, both languages:  make voice [FORCE=1]
 	@# ONCE, NOT PER VISIT. The beats carry no name and no number — see the
@@ -271,12 +282,22 @@ voice: ## Render the arrival's four beats, both languages:  make voice [FORCE=1]
 	@# key at runtime, the arrival never waits on an API, and a visit costs
 	@# nothing.
 	@#
-	@# The files it writes are part of the product. Commit them, or the next
-	@# `git reset --hard` on this box throws them away and the arrival goes
-	@# quiet again:
-	@#
-	@#   git add board/public/voice && git commit -m "The arrival's voice" && git push
-	@set -a; . ./.env; set +a; node scripts/voice.mjs $(if $(FORCE),--force,)
+	@# --user 0:0 and a bind mount, which is the pair that makes this work. The
+	@# board runs as 1000 and writes only to its volume; this has to write into
+	@# the checkout, and a bind mount Docker creates is owned by root. It is an
+	@# admin task run by hand, not a serving path.
+	@mkdir -p board/public/voice
+	@$(COMPOSE) run --rm --no-deps -T --user 0:0 \
+	  -v "$(CURDIR)/scripts:/seed:ro" -v "$(CURDIR)/board/public/voice:/out" \
+	  -e ELEVENLABS_API_KEY="$(XI_KEY)" -e ELEVENLABS_VOICE_ID="$(XI_VOICE)" \
+	  -e BOARD_PUBLIC=/app/public -e VOICE_OUT=/out \
+	  --entrypoint node board /seed/voice.mjs $(if $(FORCE),--force,)
+	@echo
+	@echo "  The files are part of the product — commit them, or the next"
+	@echo "  git reset --hard on this box throws them away:"
+	@echo
+	@echo "    git add board/public/voice && git commit -m 'The arrival voice' && git push"
+	@echo
 
 announcements: ## Every poster, its link, and whether it brought anybody
 	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
