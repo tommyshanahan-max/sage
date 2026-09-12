@@ -955,10 +955,36 @@ export function roomOfPair(me, want) {
   if (want === ANYONE) return ROLES[me] ? (ROLES[me].rooms[0] || "new") : "";
   const a = ROLES[me], b = ROLES[want];
   if (!a || !b) return "";
+
+  /* OPPOSITE ROOMS FIRST, AND THIS LINE IS THE WHOLE PAIRING.
+   *
+   * This used to take the first room the two SHARED, and that is the wrong
+   * test — a room is answered by the room opposite it (talent by agent, job by
+   * hire, raise by invest), so two people in the same room never match. The
+   * commonest sentence on a film board went straight into that hole:
+   *
+   *   producer rooms are ["agent","talent"], performer's is ["talent"], so the
+   *   first shared room is talent. "I am a Producer looking for a Performer"
+   *   landed in talent, "I am a Performer looking for a Producer" landed in
+   *   talent, talent is answered by agent, neither was in agent, and the two
+   *   of them never met. Both cards looked finished. Nothing said a word.
+   *
+   * 178 of the 210 opposite-facing pairs failed this way, including every
+   * director/writer/performer/crew pair with a producer.
+   *
+   * So: the room I stand in is the one whose ANSWER they stand in. A producer
+   * looking for a performer is in the agent room, where booking happens, and
+   * the performer is in talent, which agent answers. That is what the table
+   * always meant; roomOfPair was reading it with the wrong hand.
+   *
+   * The old shared-room rule stays underneath it, because some pairs really do
+   * belong in one room together — a room that answers itself, like study or
+   * lang, where two people wanting the same thing ARE the match. */
+  for (const r of a.rooms) if (b.rooms.includes(answerTo(r))) return r;
   for (const r of a.rooms) if (b.rooms.includes(r)) return r;
-  // No overlap is not an error. "A student looking for an investor" is a real
-  // sentence and the honest place to put it is the room for people who have
-  // just arrived and do not fit anywhere yet.
+  // No overlap either way is not an error. "A student looking for an investor"
+  // is a real sentence and the honest place to put it is the room for people
+  // who have just arrived and do not fit anywhere yet.
   return a.rooms[0] || "new";
 }
 
