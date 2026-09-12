@@ -3247,6 +3247,23 @@ export const STRINGS = {
      "Write it in Chinese" rather than "Translate" — what is being made is a
      second poster, which he then owns, not a machine's rendering he is asked
      to trust. */
+  /* THE MIC. On the composer's four fields. Not a feature of the board so
+     much as a way of filling a box, which is why the labels say what the
+     button does to THIS field rather than announcing dictation. */
+  "mic.go":            ["Say it instead", "用说的"],
+  "mic.stop":          ["Stop", "停"],
+  "mic.no": [
+    "The microphone is switched off for this page. Your browser's settings can turn it back on.",
+    "这个页面的麦克风被关掉了，可以在浏览器设置里重新打开。",
+  ],
+  /* SAID ONCE AND THEN THE BUTTON GOES. Chrome's recogniser is Google's and
+     Google is not reachable from the mainland, so this is not a thing to try
+     again — the keyboard's own dictation key still works and is on every
+     phone. */
+  "mic.off": [
+    "Speaking did not work here. Your phone keyboard's own mic still does.",
+    "这里用不了语音输入。手机键盘上自带的那个话筒还是能用的。",
+  ],
   "ann.tr":            ["Write it in Chinese too", "再写一版中文"],
   "ann.trWhy": [
     "A draft. Read it before you post — this goes out under your name, about somebody with a name.",
