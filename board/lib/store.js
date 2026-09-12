@@ -65,6 +65,19 @@ export const newId = () => randomUUID().replace(/-/g, "").slice(0, 20);
  */
 export const WAITROOMS = ["film", "invest", "raise", "trade", "other"];
 
+/* WHETHER SOMEBODY HAS ACTUALLY FILLED THEIR PAGE IN.
+ *
+ * A face and a sentence, which is what this board is and what it asks of every
+ * member. Deliberately the two things the OPERATOR cannot set: wait-add writes
+ * a name, a way to reach them and a line about them, and nothing here — so
+ * this tests whether the person themselves turned up, not whether somebody
+ * typed them in.
+ *
+ * Not `why`. It is on plenty of rows already because whoever added them wrote
+ * it, and a test that half the list passes without doing anything is not a
+ * test. */
+export const waitDone = (w) => Boolean(w && w.photo && w.me && w.want);
+
 export function cleanWait(raw) {
   if (!raw || typeof raw !== "object") return null;
   const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").trim().slice(0, n);
@@ -113,6 +126,30 @@ export function cleanWait(raw) {
      * restart, a missed day or a hand-picked promotion all come out right. */
     up: raw.up === true,
     upAt: String(raw.upAt || "").slice(0, 40),
+    /* HOW MANY TIMES THEY HAVE HAD A TURN.
+     *
+     * Somebody lifted into the waiting room who does not finish their page
+     * goes back on the list — see the sweep in server.js. Without this they
+     * would be top of the queue again the next morning and lifted again the
+     * same day, for ever, while the person behind them never got a turn.
+     * So a turn is counted, and the picker takes people who have not had one
+     * before it comes back round to people who have. */
+    ups: Math.max(0, Math.min(99, Math.round(Number(raw.ups)) || 0)),
+    /* WHEN THEY FIRST SAW IT, AND THE CLOCK RUNS FROM HERE — not from the
+     * moment they were lifted.
+     *
+     * Nothing on this board can reach most of these people. A reach is a
+     * WeChat id far more often than an address, and no server sends to those:
+     * whoever runs the board tells them by hand, in a chat, when they get to
+     * it. A three-day clock started at the lift is therefore a clock running
+     * on somebody who has not been told they are being timed, and two of the
+     * three days can be gone before the message is even sent.
+     *
+     * So: lifted, then told, then they open it — and only then does the clock
+     * start. Set by the gate the first time they ask this board for anything
+     * while they are up. Until it is set there is no deadline at all, and the
+     * panel can see at a glance who has not heard yet. */
+    upSeen: String(raw.upSeen || "").slice(0, 40),
     // Which pile they are in while they wait. "other" when they did not say —
     // a stranger who skipped the question is not a stranger to leave off the
     // list.

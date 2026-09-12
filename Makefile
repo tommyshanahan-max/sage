@@ -793,6 +793,15 @@ waiting-up: ## Move one into the waiting room now: make waiting-up ID=...
 	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --up "$(ID)"
 
+waiting-tell: ## The message to send somebody in the waiting room: make waiting-tell ID=...
+	@# Nothing on this board can reach a WeChat id, so the board writes the
+	@# message and you paste it. Their three days start when they OPEN it, not
+	@# when you send it — see upSeen in board/lib/store.js.
+	@test -n "$(ID)" || { echo "which one? make waiting-tell ID=..."; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/waiting.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --tell "$(ID)"
+
 waiting-down: ## Put one back on the list from the waiting room: make waiting-down ID=...
 	@test -n "$(ID)" || { echo "which one? make waiting-down ID=..."; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \

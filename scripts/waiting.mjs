@@ -215,6 +215,49 @@ function draft(w) {
     + body + "\n";
 }
 
+/* THE MESSAGE THAT ACTUALLY REACHES THEM, because nothing here does.
+ *
+ * A reach on this list is a WeChat id far more often than an address, and no
+ * server sends to one of those. So the board does not pretend: it writes the
+ * message and somebody pastes it into a chat, the same way make invite does.
+ *
+ * Between two rules so it can be selected in one gesture on a phone, and short
+ * because it is going into a chat window and a paragraph in a chat window is
+ * not read. Their name, what changed, what to do, and the link.
+ */
+async function tell(id) {
+  const r = await fetch(base + "/api/waiting", { headers: head });
+  const d = await r.json().catch(() => ({}));
+  const w = (d.waits || []).find((x) => x.id === id);
+  if (!w) { console.error("  no row with that id"); process.exit(1); }
+  const zh = isZh(w.name) || isZh(w.why);
+  const line = zh
+    ? [
+        w.name + "，轮到你了。",
+        "",
+        "你现在可以进去看看里面有些什么人了。先把自己的那页填好——一张照片，和一句话说你是谁、在找什么。填好了我这边才好放你进来。",
+        "",
+        PUBLIC + "/room",
+      ]
+    : [
+        w.name + " — your turn came up.",
+        "",
+        "You can see who is in there now. Finish your own page first: a photo, and one line saying what you are and what you are looking for. That is what I read before letting anybody in.",
+        "",
+        PUBLIC + "/room",
+      ];
+  console.log("");
+  console.log("  Send this to " + w.name + " on " + (w.reach || "\u2014") + ":");
+  console.log("");
+  console.log("  ---------------------------------------------------------");
+  for (const l of line) console.log("  " + l);
+  console.log("  ---------------------------------------------------------");
+  console.log("");
+  console.log("  The three-day clock starts when they OPEN it, not now \u2014 so");
+  console.log("  there is no hurry on your side and none wasted on theirs.");
+  console.log("");
+}
+
 async function lift(id, on) {
   /* `base` and `head`, which is what this file calls them — I wrote BASE and
      KEY from the other script in this directory and it threw a ReferenceError
@@ -253,6 +296,7 @@ async function main() {
   /* THE WAITING ROOM. Not admission and not a `done` — see the note on `up`
      in lib/store.js. They can read the app and finish their page; letting them
      in is still --in and still a separate decision. */
+  if (arg("tell")) return tell(arg("tell"));
   if (arg("up")) return lift(arg("up"), true);
   if (arg("down")) return lift(arg("down"), false);
   if (arg("back")) return mark(arg("back"), { done: "" });

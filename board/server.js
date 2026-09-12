@@ -505,6 +505,20 @@ app.use(async (req, res, next) => {
    * Whoever runs the board reads what they wrote and decides. */
   const upRow = await inWaitingRoom(req);
   if (upRow) {
+    /* THE CLOCK STARTS HERE, ONCE. The first request this browser makes while
+       they are up is the moment they saw it — there is no other signal, and
+       waiting for them to press something would start the clock at the second
+       thing they did rather than the first.
+       Not awaited: a page load must not wait on a write, and a stamp that
+       lands a second late costs nothing. */
+    if (!upRow.upSeen) {
+      change((board) => {
+        const w = board.waits.find((x) => x.id === upRow.id);
+        if (!w || w.upSeen) return null;
+        w.upSeen = new Date().toISOString();
+        return { ok: true };
+      }).catch(() => { /* the next request stamps it */ });
+    }
     if (req.method === "GET") return next();
     if (/^\/api\/wait\//.test(req.path)) return next();
     if (req.path.startsWith("/api/")) {
@@ -2985,6 +2999,12 @@ function queueOrder(board) {
  * at midnight would otherwise skip a day in silence.
  */
 const UP_A_DAY = num("BOARD_UP_A_DAY", 3);
+/* HOW LONG THEY HAVE. Three days, which is long enough for somebody who saw
+   the message on a Friday and is free on a Sunday, and short enough that the
+   waiting room does not quietly become a second list that also never moves.
+   A waiting room with no clock on it is the thing this whole mechanism was
+   built to stop. */
+const UP_HOURS = num("BOARD_UP_HOURS", 72);
 
 const sameDay = (a, b) => {
   const x = new Date(a), y = new Date(b);
@@ -2997,19 +3017,52 @@ async function liftSome() {
   try {
     await change((board) => {
       const now = new Date().toISOString();
+      let sent = 0;
+
+      /* THE CLOCK, FIRST — and it runs before the lift so the places it frees
+       * are filled the same hour rather than the next day.
+       *
+       * Three days in the waiting room with a face and a sentence to write.
+       * Somebody who does not is not being judged for it: they were early,
+       * they were busy, the moment was wrong. They go back on the list with
+       * their place intact and their turn counted.
+       *
+       * WHAT IS NOT DONE HERE: nothing is deleted, nothing is refused, and
+       * nobody is told they failed. The row goes back to how it was. */
+      if (UP_HOURS > 0) {
+        const dead = Date.now() - UP_HOURS * 3600_000;
+        for (const w of board.waits) {
+          if (!w.up || w.done) continue;
+          if (store.waitDone(w)) continue;               // they turned up
+          /* FROM upSeen, NOT upAt. The clock starts when they first open the
+             board, because nothing here can reach a WeChat id and the message
+             telling them goes by hand. Never opened it, no deadline — they
+             have not had their turn yet, they have only been given one. */
+          const at = Date.parse(w.upSeen || "") || 0;
+          if (!at || at > dead) continue;
+          w.up = false;
+          w.upAt = "";
+          w.upSeen = "";
+          sent += 1;
+        }
+      }
+
       const today = board.waits.filter((w) => w.up && w.upAt && sameDay(w.upAt, now)).length;
       const room = UP_A_DAY - today;
-      if (room <= 0) return null;
+      if (room <= 0) return sent ? { n: 0, sent } : null;
       /* IN QUEUE ORDER, which is the order the room itself shows and the one
          the people waiting can watch work — somebody who brought two people in
-         is two places further up and should go up two days sooner. */
-      const next = queueOrder(board)
-        .map((x) => x.w)
-        .filter((w) => !w.done && !w.up)
+         is two places further up and should go up two days sooner.
+         BUT A FIRST TURN BEFORE A SECOND. Somebody swept back for not filling
+         their page is still near the top of the queue, so without this they
+         would be lifted again the same day, for ever, and the person behind
+         them would never get a turn. */
+      const waiting = queueOrder(board).map((x) => x.w).filter((w) => !w.done && !w.up);
+      const next = [...waiting.filter((w) => !w.ups), ...waiting.filter((w) => w.ups)]
         .slice(0, room);
-      if (!next.length) return null;
-      for (const w of next) { w.up = true; w.upAt = now; }
-      return { n: next.length };
+      if (!next.length) return sent ? { n: 0, sent } : null;
+      for (const w of next) { w.up = true; w.upAt = now; w.ups = (w.ups || 0) + 1; }
+      return { n: next.length, sent };
     });
   } catch (e) {
     // A day not moved is a day not moved. Never worth taking the board down.
@@ -3165,6 +3218,18 @@ app.get("/api/wait/me", async (req, res) => {
       canSignIn: /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/
         .test(String(mine.reach || "").trim().toLowerCase()) },
     ahead, waiting: open.length, others, featured, seat,
+    /* THE WAITING ROOM, TO THE PERSON IN IT.
+     *
+     * `up` is the stage; `left` is how many hours of it remain; `done` is
+     * whether they have the face and the sentence that end the clock. The page
+     * says all three, because "finish your page" with no idea what is missing
+     * or how long is left is a demand rather than an invitation. */
+    up: Boolean(mine.up),
+    upDone: store.waitDone(mine),
+    upSeen: Boolean(mine.upSeen),
+    upLeft: mine.up && mine.upSeen && UP_HOURS > 0
+      ? Math.max(0, Math.round((Date.parse(mine.upSeen) + UP_HOURS * 3600_000 - Date.now()) / 3600_000))
+      : null,
     /* THE ONE LINE, WHEN THE BLOCK ITSELF IS OFF.
      *
      * Turning the seat block off took the whole idea off the screen with it,
