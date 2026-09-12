@@ -685,6 +685,12 @@ services:
       # address would have answered nothing on the day it was moved, silently,
       # which is the one thing that file exists to prevent. Found by
       # check-sites.py the first time it was pointed at a real .env.
+      # The demo board's hostname. Caddy needs it BY NAME here, like every other
+      # one: board-demo.caddy substitutes it, and a variable this container has
+      # never heard of falls through to the .localhost fallback — which `make
+      # up` catches as NOT PASSED TO CADDY rather than letting it bind a name
+      # nobody can reach.
+      TOMSCODING_BOARD_DEMO_DOMAIN: ${TOMSCODING_BOARD_DEMO_DOMAIN:-demo.localhost}
       TOMSCODING_BOARD_OLD_DOMAIN: ${TOMSCODING_BOARD_OLD_DOMAIN:-oldboard.localhost}
       TOMSCODING_BOARD_OLD_WWW: ${TOMSCODING_BOARD_OLD_WWW:-oldboardwww.localhost}
       TOMSCODING_BOARD_WWW: ${TOMSCODING_BOARD_WWW:-www.board.localhost}
