@@ -1059,6 +1059,33 @@ let BUTMIC = null;
  *  line rather than automatic: a page that starts talking in a quiet carriage
  *  is a page somebody closes. */
 const canHearOut = () => typeof window !== "undefined" && "speechSynthesis" in window;
+
+/* THE BEST VOICE ON THE DEVICE, NOT THE FIRST ONE.
+ *
+ * getVoices() comes back in no useful order, and the first match for a
+ * language is usually the oldest and worst one the phone ships — the flat
+ * robot everybody recognises as a machine reading a screen. Every iPhone and
+ * most Android phones also carry a far better one under a name, and picking
+ * it is the whole difference between a doorman and a lift announcement.
+ *
+ * In order: a voice the platform itself marks as good (Siri, Enhanced,
+ * Premium, Neural), then a named one known to be the good one on iOS and
+ * macOS, then a network voice — remote synthesis is nearly always better than
+ * the on-device fallback — then anything at all in the language.
+ */
+const GOOD = /siri|enhanced|premium|neural|natural/i;
+const NAMED = /samantha|ava|allison|serena|daniel|karen|moira|tingting|ting-ting|sinji|li-?mu|meijia/i;
+function bestVoice(tag) {
+  const want = tag.slice(0, 2).toLowerCase();
+  const all = (window.speechSynthesis.getVoices() || [])
+    .filter((v) => String(v.lang || "").toLowerCase().startsWith(want));
+  if (!all.length) return null;
+  return all.find((v) => GOOD.test(v.name))
+    || all.find((v) => NAMED.test(v.name))
+    || all.find((v) => v.localService === false)
+    || all[0];
+}
+
 function speakOut(text, onEnd) {
   if (!canHearOut()) return;
   const tag = lang() === "zh" ? "zh-CN" : "en-US";
@@ -1066,18 +1093,33 @@ function speakOut(text, onEnd) {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = tag;
-    const want = tag.slice(0, 2);
-    const v = (window.speechSynthesis.getVoices() || [])
-      .find((x) => String(x.lang || "").toLowerCase().startsWith(want));
+    const v = bestVoice(tag);
     if (v) u.voice = v;
-    /* Slower than default. The person being read to is hearing their second
-       language on a phone speaker, which is the case default rate is worst
-       for — the same 0.85 daily.js settled on. */
-    u.rate = 0.85;
+    /* NOT 0.85. daily.js reads single words to somebody learning them, where
+       slow is right. This is a person greeting you, and a greeting delivered
+       slowly sounds like an announcement in a station. Just under natural in
+       English; a touch slower in Chinese, which is genuinely harder to follow
+       at speed on a phone speaker. */
+    u.rate = tag === "zh-CN" ? 0.92 : 0.97;
+    /* Fractionally below centre. The difference between somebody telling you
+       something and somebody asking you for something. */
+    u.pitch = 0.95;
     if (onEnd) { u.onend = onEnd; u.onerror = onEnd; }
     window.speechSynthesis.speak(u);
   } catch (e) { if (onEnd) onEnd(); /* an utterance with no voice behind it */ }
 }
+
+/* THE LIST ARRIVES LATE ON EVERY BROWSER. getVoices() is empty on the first
+   call and fills in asynchronously, so a page that reads it once at load
+   picks nothing and falls back to the default — which is the bug this whole
+   function exists to avoid. Touched once here so the list is warm by the time
+   anybody presses play. */
+try {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.addEventListener?.("voiceschanged", () => {
+    try { window.speechSynthesis.getVoices(); } catch { /* gone */ }
+  }, { once: true });
+} catch { /* no voice on this browser at all */ }
 
 /** THE FIRST THING HE SAYS, and it is the invite's job rather than a
  *  chatbot's.

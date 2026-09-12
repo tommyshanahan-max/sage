@@ -3367,9 +3367,16 @@ export const STRINGS = {
    * anywhere — these are strings on this page, so the conversation costs
    * nothing until somebody answers it.
    */
+  /* HE IS THE ONE THING ON THIS SCREEN THAT IS A PERSON, AND HE HAS TO SOUND
+     LIKE ONE. The board's own voice does not use contractions anywhere —
+     "You are on the list", "Nothing works for you yet" — which is right for
+     the house and wrong in a chat bubble. Written out in full, the doorman
+     read like a form with a friendly font, which is exactly what he is there
+     not to be. So: he contracts and the board does not, and that difference
+     is the whole of his voice. */
   "but.hookUp": [
-    "{who} — you are one of three off the list this week. {n} are not.",
-    "{who}——这周提上来三个，你是一个。另外 {n} 个没有。",
+    "{who} — you're one of three off the list this week. {n} aren't.",
+    "{who}——这周就提上来三个，你是一个。另外 {n} 个还在等。",
   ],
   /* Somebody who has not been moved up yet and opened this anyway. The
      scarcity line above would be a lie to them, and the true thing is better
@@ -3378,13 +3385,19 @@ export const STRINGS = {
      they stand, and hearing it twice in two inches reads as a page that is
      not listening to itself. What is left is the half the welcome does not
      carry: what moves them. */
+  /* "Finished pages get moved up first" is a rule being read out. The people
+     who get moved up are people, and saying so is the same fact with
+     somebody in it. */
   "but.hookList": [
-    "{who} — finished pages get moved up first. Yours is empty.",
-    "{who}——填完的先被提上来。你的还是空的。",
+    "{who} — the ones who get moved up are the ones who've filled this in.",
+    "{who}——被提上来的，都是把这页填好了的。",
   ],
+  /* "What do you do?" on its own reads as a job interview. The "actually" is
+     what makes it somebody asking rather than a field label, and it was cut
+     once for brevity and had to come back. */
   "but.ask": [
-    "Two things and you are done. What do you do?",
-    "填两样就好了。你是做什么的？",
+    "Two things and you're done. So what do you actually do?",
+    "就两样，填完就行。你是做什么的？",
   ],
   /* Closed, and gettable back. Not a pitch for a feature — his name and the
      one thing he is for. */
