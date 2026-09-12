@@ -142,20 +142,23 @@
   .orbwrap.on .ring.b{animation-delay:.9s}
   @keyframes ping{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.5);opacity:0}}
   @media (prefers-reduced-motion:reduce){.orbwrap.on .ring{animation:none;opacity:.35}}
-  .herogot{position:relative;margin:.65rem 0 0;font-size:.9rem;color:#B08A6A}
   .orbsay{position:relative;margin:.75rem 0 0;font-size:.78rem;color:#8A7663}
-  /* The way in for somebody who will not play sound. Small, under everything,
-     and it says what it does rather than naming a feature. */
-  .heroread{position:relative;margin:.9rem 0 0;border:0;background:none;
-    color:#8A7663;font:inherit;font-size:.78rem;padding:.25rem;cursor:pointer;
-    text-decoration:underline;text-underline-offset:3px}
 
   /* The message. Greyed until spoken, then it is ink. */
-  .tell{position:relative;margin:1.1rem auto 0;max-width:21rem;
-    font-family:var(--serif);font-size:1.06rem;line-height:1.62;
-    color:#6A5A4B}
-  .tell w{color:inherit;transition:color .14s ease-out}
-  .tell w.lit{color:#EFE6DC}
+  /* The beats, each one landing under the last. Nothing is on screen before
+     the first press — the name and the circle are the whole of it at rest. */
+  .beats{position:relative;margin:0}
+  .beat{margin:1.1rem auto 0;max-width:21rem;font-family:var(--serif);
+    font-size:1.06rem;line-height:1.62;color:#6A5A4B}
+  .beat w{color:inherit;transition:color .14s ease-out}
+  .beat w.lit{color:#EFE6DC}
+  .heroshow{position:relative;margin:1.2rem 0 0;border:0;border-radius:99px;
+    background:#F2E7DC;color:#12100E;font:inherit;font-size:.95rem;
+    font-weight:600;padding:.6rem 1.5rem;cursor:pointer}
+  /* The card coming up to meet them on the last press. */
+  .pc.arrive{animation:cardin .5s cubic-bezier(.2,.7,.3,1)}
+  @keyframes cardin{from{opacity:0;transform:translateY(-14px) scale(.97)}}
+  @media (prefers-reduced-motion:reduce){.pc.arrive{animation:none}}
   .wrband b{display:block;color:var(--ink);font-size:.98rem;font-weight:500}
   /* Played rather than only read. speechSynthesis speaks Chinese on every
      phone here; level.html has used it for months. Its own button, never
@@ -1203,131 +1206,128 @@ function bestVoice(tag) {
  *  half of who this board is for.
  */
 function welcomeOrb(you) {
-  /* First name here too. "Welcome, Jack Daniels" read aloud is a summons;
-     "Welcome, Jack" is somebody letting you in. */
-  const first = (you.name || "").split(/\s+/)[0] || you.name || "";
-  const words = DATA.up
-    ? T("wel.sayUp", { who: first })
-    : T("wel.sayList", { who: first,
-        n: (DATA.ahead || 0) + 1, t: DATA.waiting || 1 });
+  /* TWO BEATS, AND A PRESS BETWEEN THEM.
+   *
+   * It was one paragraph. A paragraph is a thing you scroll past, and this is
+   * the first thing anybody hears from the place — so it arrives the way a
+   * person would say it: a line, then you say something back, then the rest.
+   *
+   * The first beat is who they are and what has just happened to them. The
+   * second is what the place gets them and the two things to do. The button
+   * between is a question, because a question is the thing you answer;
+   * "Continue" is a thing you obey.
+   */
+  const beats = DATA.up
+    ? [T("wel.b1Up", { who: you.first }), T("wel.b2Up")]
+    : [T("wel.b1List", { who: you.first, t: DATA.waiting || 1 })];
+  if (!DATA.up) beats.push(T("wel.b2List"));
 
   const box = document.createElement("div");
+  const said = el("div", "beats");
+  box.append(said);
 
-  /* Split once, keeping each word's offset in the original string, because
-     that offset is what onboundary reports back. Punctuation travels with the
-     word before it so nothing is left dangling grey at the end of a line. */
-  const parts = [];
-  const re = /\S+\s*/g;
-  let m;
-  while ((m = re.exec(words))) parts.push({ at: m.index, text: m[0] });
-
-  const tell = el("p", "tell");
-  const spans = parts.map((w) => {
-    const n = document.createElement("w");
-    n.textContent = w.text;
-    tell.append(n);
-    return n;
-  });
-
-  const lightTo = (charIndex) => {
-    for (let i = 0; i < parts.length; i++) {
-      spans[i].classList.toggle("lit", parts[i].at <= charIndex);
-    }
-  };
-  const lightAll = (on) => spans.forEach((n) => n.classList.toggle("lit", on));
-
-  if (!canHearOut()) {
-    /* No voice on this browser. The message is the point, so it is simply
-       read rather than hidden behind a control that cannot work. */
-    lightAll(true);
-    box.append(tell);
-    return box;
-  }
-
-  /* FOLDED AWAY UNTIL IT IS WANTED. Six lines of serif under a circle is a
-     wall, and a wall under a welcome is the first thing anybody scrolls past
-     — so the circle is the only thing on the screen and the words arrive
-     with the voice. Anybody who will not play audio, on a train or in a
-     meeting, gets the same words off one small control. */
-  tell.hidden = true;
+  let at = -1;                 // which beat has landed
+  let timer = null;
 
   const wrap = el("div", "orbwrap");
   wrap.append(el("i", "ring"), el("i", "ring b"));
   const orb = el("button", "orb");
   orb.type = "button";
-  orb.setAttribute("aria-pressed", "false");
   const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>';
-  const STOP = '<svg viewBox="0 0 24 24" aria-hidden="true">'
-    + '<rect x="6" y="5" width="4" height="14" rx="1"/>'
-    + '<rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  const NEXT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l8 7-8 7z"/></svg>';
+  orb.innerHTML = PLAY;
+  orb.setAttribute("aria-label", T("wel.play"));
   const hint = el("p", "orbsay");
-  let timer = null;
+  wrap.append(orb);
+  box.append(wrap, hint);
 
-  const rest = () => {
-    if (timer) { clearInterval(timer); timer = null; }
-    orb.setAttribute("aria-pressed", "false");
-    orb.innerHTML = PLAY;
-    orb.setAttribute("aria-label", T("wel.play"));
-    /* NOTHING UNDER IT AT REST. A triangle inside a circle that size is the
-       most understood control there is, and "Hear this" written under it was
-       a caption on a picture of a play button. It only speaks while it is
-       speaking, where the word is Stop and is worth having. */
-    hint.textContent = "";
-    wrap.classList.remove("on");
-    lightAll(true);
-  };
-  const going = () => {
-    orb.setAttribute("aria-pressed", "true");
-    orb.innerHTML = STOP;
-    orb.setAttribute("aria-label", T("wel.stop"));
-    hint.textContent = T("wel.stop");
+  /* Each beat is its own paragraph and lights word by word as it is spoken —
+     so it reads with the sound off, and with the sound on it is somebody
+     reading you in. */
+  function land(i) {
+    const words = beats[i];
+    const para = el("p", "beat");
+    const parts = [];
+    const re = /\S+\s*/g;
+    let m;
+    while ((m = re.exec(words))) parts.push({ at: m.index, text: m[0] });
+    const spans = parts.map((w) => {
+      const n = document.createElement("w");
+      n.textContent = w.text;
+      para.append(n);
+      return n;
+    });
+    said.append(para);
+    const lightTo = (c) => spans.forEach((n, k) => n.classList.toggle("lit", parts[k].at <= c));
+    const lightAll = (on) => spans.forEach((n) => n.classList.toggle("lit", on));
+
+    if (!canHearOut()) { lightAll(true); after(i); return; }
+
     wrap.classList.add("on");
-  };
-
-  orb.addEventListener("click", () => {
-    if (orb.getAttribute("aria-pressed") === "true") {
-      try { window.speechSynthesis.cancel(); } catch { /* nothing speaking */ }
-      rest();
-      return;
-    }
-    tell.hidden = false;
-    read.textContent = T("wel.hide");
-    lightAll(false);
-    going();
-    /* onboundary is the real thing and Safari does not always fire it — it
-       depends on the voice, and the good voices are the ones most likely to
-       skip it. So a timer starts alongside and whichever arrives first wins:
-       a real boundary event turns the timer off. Estimated from length at the
-       rate the utterance is actually using, which is close enough that nobody
-       watching can tell which one is driving. */
+    hint.textContent = T("wel.stop");
+    orb.setAttribute("aria-label", T("wel.stop"));
     let real = false;
     const ms = Math.max(40, (words.length * 62) / spans.length);
-    let at = 0;
+    let k = 0;
     timer = setInterval(() => {
-      if (real || at >= spans.length) return;
-      spans[at++].classList.add("lit");
+      if (real || k >= spans.length) return;
+      spans[k++].classList.add("lit");
     }, ms);
+    const done = () => {
+      if (timer) { clearInterval(timer); timer = null; }
+      lightAll(true);
+      wrap.classList.remove("on");
+      after(i);
+    };
     speakOut(words, {
-      onWord(charIndex) {
-        real = true;
-        if (timer) { clearInterval(timer); timer = null; }
-        lightTo(charIndex);
-      },
-      onEnd: rest,
+      onWord(c) { real = true; if (timer) { clearInterval(timer); timer = null; } lightTo(c); },
+      onEnd: done,
     });
+  }
+
+  /* WHAT THE BUTTON SAYS NEXT, and on the last beat it stops being a button
+     to press and becomes the way into the thing they were sent here to do. */
+  function after(i) {
+    if (i < beats.length - 1) {
+      orb.innerHTML = NEXT;
+      orb.setAttribute("aria-label", T("wel.ready"));
+      hint.textContent = T("wel.ready");
+      return;
+    }
+    orb.hidden = true;
+    hint.textContent = "";
+    const go = el("button", "heroshow", T("wel.show"));
+    go.type = "button";
+    go.addEventListener("click", () => {
+      /* THE CARD COMES UP TO MEET THEM. The whole point of the two beats is
+         that they end on "a photo and one line" — so the thing that takes
+         those is what the last press produces, rather than something to go
+         and find further down a page they have not scrolled. */
+      const card = document.querySelector(".pc");
+      if (card) {
+        card.classList.add("arrive");
+        try { card.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* old browser */ }
+      }
+      go.remove();
+    });
+    box.append(go);
+  }
+
+  orb.addEventListener("click", () => {
+    if (wrap.classList.contains("on")) {
+      /* Speaking. Stop, and leave the beat on the screen finished. */
+      try { window.speechSynthesis.cancel(); } catch { /* nothing speaking */ }
+      if (timer) { clearInterval(timer); timer = null; }
+      wrap.classList.remove("on");
+      said.querySelectorAll("w").forEach((n) => n.classList.add("lit"));
+      after(at);
+      return;
+    }
+    if (at >= beats.length - 1) return;
+    at += 1;
+    land(at);
   });
 
-  const read = el("button", "heroread", T("wel.read"));
-  read.type = "button";
-  read.addEventListener("click", () => {
-    tell.hidden = !tell.hidden;
-    read.textContent = T(tell.hidden ? "wel.read" : "wel.hide");
-    if (!tell.hidden) lightAll(true);
-  });
-
-  rest();
-  wrap.append(orb);
-  box.append(wrap, hint, tell, read);
   return box;
 }
 
@@ -1760,12 +1760,12 @@ function drawWait(box) {
   /* THE ARRIVAL, and it is the first thing on the page. First name only: a
      room says "Welcome, Jack", never "Welcome, Jack Daniels". */
   const first = (you.name || "").split(/\s+/)[0] || you.name || "";
+  you.first = first;
   const hero = el("div", "hero");
   hero.append(el("i", "paper"));
   hero.append(el("i", "bleed"));
   hero.append(el("i", "seal", "\u4EA4"));
   hero.append(el("span", "wrhi", T("wel.hi", { who: first })));
-  hero.append(el("p", "herogot", T("wel.got")));
   hero.append(welcomeOrb(you));
 
   /* THE NUMBER GOES ON THE HERO, and the band under it goes away entirely

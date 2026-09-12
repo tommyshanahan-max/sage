@@ -3357,42 +3357,55 @@ export const STRINGS = {
   "post.on":           ["ON THE LIST", "在名单上"],
   "post.in":           ["MEMBER", "成员"],
   "wel.stop":          ["Stop", "停"],
-  /* SPOKEN, AND IT IS THE FIRST THING ANYBODY HEARS FROM THIS PLACE.
+  /* SPOKEN, AND BROKEN INTO BEATS SO SOMEBODY HAS TO ANSWER.
    *
-   * The first draft was correct and dorky: "fill in your page: a photograph,
-   * and one line saying what you are and what you are looking for". That is
-   * instructions. Somebody working the door of a place worth getting into
-   * does not read you the instructions, he tells you how it goes — dry, sure
-   * of himself, and shorter than you expected.
+   * It was one paragraph. A paragraph is a thing you scroll past, and this
+   * one is the first thing anybody hears from the place — so it arrives the
+   * way a person would say it: a line, a pause, and then you say something
+   * back before they carry on. Two beats, one press between them, each one
+   * spoken as it lands.
    *
-   * "Blank cards stay outside" does the same job as two sentences of
-   * explanation and is the line somebody repeats to a friend. Card, not page:
-   * the board already calls it a card everywhere else, and a card is a thing
-   * rather than a screen. */
-  /* WHAT IT IS FOR, WHICH THE COLD VERSION NEVER SAID.
-   *
-   * It told them where they stood and what to do, and never once why any of
-   * it was worth doing. Tom's note was the right one: welcome them, say what
-   * the place gets them, then the two things. A stranger who has just tapped
-   * a link out of a group chat is owed the middle sentence.
-   *
-   * NO CONGRATULATIONS ON THIS ONE. They joined a list; nobody chose them
-   * yet, and saying otherwise is the kind of flattery that gets found out on
-   * the next screen. The lifted version below is where that line belongs,
-   * because there it is true.
+   * WHAT EACH BEAT IS FOR. The first is who they are and what just happened
+   * to them. The second is what the place gets them and the two things to do.
+   * Nothing in either beat that would still be there if it were cut.
    */
-  "wel.sayList": [
-    "Welcome, {who}. You're on the list — {t} people are, and you're number {n}. What's in here is people worth knowing, on both sides of the border. Two things move you up: a photo, and one line about what you do and who you're after.",
-    "欢迎你，{who}。你在名单上了——一共 {t} 个人，你排第 {n}。里面都是两边值得认识的人。想往前挪就两样：一张照片，和一句话说清楚你做什么、想找谁。",
+  /* HOOK, THEN CLOSE. Nothing after the close.
+   *
+   * Beat two used to carry the value, the state, the two things and the
+   * deadline — four sentences of selling AFTER they had already pressed
+   * Ready, which is the yes. Too much information kills a sale, and past the
+   * close every extra sentence is a chance to change your mind.
+   *
+   * So: beat one is why they should care, beat two is the ask, and the ask
+   * is the whole of it. The state and the clock were repeating the band
+   * directly underneath anyway.
+   *
+   * AND NEITHER BEAT SAYS "WELCOME". The title two inches above says it in
+   * forty-point serif. Spoken it still has to name them — that is the whole
+   * trick the invite runs on — so the voice greets them a different way:
+   * "Good week, Simon", "So, Simon". Named, not repeated.
+   */
+  "wel.b1List": [
+    "So, {who}. {t} of you out there tonight. In here is people worth knowing, both sides of the border.",
+    "\u6b22\u8fce\u4f60\uff0c{who}\u3002\u4eca\u665a\u5916\u9762 {t} \u4e2a\u4eba\u3002\u91cc\u9762\u90fd\u662f\u4e24\u8fb9\u503c\u5f97\u8ba4\u8bc6\u7684\u4eba\u3002",
   ],
-  /* AND HERE THE CONGRATULATIONS IS TRUE. Three people came off a list of
-     fifty-six this week and they are one of them — somebody picked them.
-     That is the one moment in this whole product worth saying well done
-     about, so it gets said. */
-  "wel.sayUp": [
-    "Welcome, {who}. You're off the list — three people were this week and you're one of them. What's in here is people worth knowing, on both sides of the border. Nothing works for you yet. Two things and it's done: a photo, and one line about what you do and who you're after. Three days.",
-    "欢迎你，{who}。你从名单上提上来了——这周就三个人，你是一个。里面都是两边值得认识的人。现在什么都还点不动。还差两样：一张照片，和一句话说清楚你做什么、想找谁。三天时间。",
+  "wel.b2List": [
+    "Two things move you up. A photo, and one line about what you do.",
+    "\u4e24\u6837\u5c31\u80fd\u5f80\u524d\u632a\uff1a\u4e00\u5f20\u7167\u7247\uff0c\u4e00\u53e5\u8bdd\u8bf4\u4f60\u505a\u4ec0\u4e48\u3002",
   ],
+  "wel.b1Up": [
+    "Good week, {who}. Three came off the list and you're one of them. In here is people worth knowing, both sides of the border.",
+    "\u6b22\u8fce\u4f60\uff0c{who}\u3002\u8fd9\u5468\u63d0\u4e0a\u6765\u4e09\u4e2a\u4eba\uff0c\u4f60\u662f\u4e00\u4e2a\u3002\u91cc\u9762\u90fd\u662f\u4e24\u8fb9\u503c\u5f97\u8ba4\u8bc6\u7684\u4eba\u3002",
+  ],
+  "wel.b2Up": [
+    "Two things and you're done. A photo, and one line about what you do.",
+    "\u4e24\u6837\u5c31\u5b8c\u4e8b\u4e86\uff1a\u4e00\u5f20\u7167\u7247\uff0c\u4e00\u53e5\u8bdd\u8bf4\u4f60\u505a\u4ec0\u4e48\u3002",
+  ],
+  /* The press between the two beats. A question, because a question is the
+     thing you answer — "Continue" is a thing you obey. */
+  "wel.ready":         ["Ready?", "准备好了吗？"],
+  "wel.show":          ["Show me", "带我看看"],
+
 
   /* ---- WHO HE IS ----------------------------------------------------------
    *
