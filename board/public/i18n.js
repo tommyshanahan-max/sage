@@ -626,6 +626,25 @@ export const STRINGS = {
   /* Two steps, not two options — the page stopped being a fork. */
   "ob.lede":        ["Two things, in this order.", "两步，按顺序来。"],
   "ob.rolehead":    ["They are", "他们是"],
+  /* ONE PERSON FIRST. The words are about the outcome, not the mechanism —
+     "put them on the board" is what the agent wants; "create a profile" is
+     what the software does. And the Chinese says 放上去, which is where they
+     go, rather than a word for creating a record. */
+  "ob.p1ph":        ["Their name", "他的名字"],
+  "ob.p1save":      ["Put them up", "放上去"],
+  "ob.p1say": [
+    "One at a time, and they are on the board the moment you press it. Add the next one straight after.",
+    "一次一个，一按就在板上了。接着加下一个。",
+  ],
+  "ob.p1needName":  ["A name first.", "先写名字。"],
+  "ob.p1up":        ["on the board", "已上线"],
+  /* The pile, offered rather than imposed. Somebody with forty performers
+     should find this; somebody with three should never have to think about
+     folders at all. */
+  "ob.pileOpen": [
+    "Got a folder of their photos? Add several at once",
+    "有一整个文件夹的照片？可以一次加好几个",
+  ],
   "ob.fieldhead":   ["Drag it all in here", "全拖到这儿"],
   "ob.fieldsub":    ["A folder, or a pile. Nothing is made until you say so.", "一个文件夹，或者一堆文件。你不点，什么都不建。"],
   "ob.choose":      ["Choose files", "选文件"],
@@ -687,8 +706,8 @@ export const STRINGS = {
   "ob.s1say":       ["Your page is what producers and brands find. Everybody you add starts from it \u2014 your sentence, your city, and the line on their page saying you represent them.",
                      "制片方、品牌方是通过你的主页找到你的。你加进来的每个人也都从这儿来——你那句话、你的城市，还有他们主页上写的「由你代理」。"],
   "ob.s2head":      ["The people you represent", "你带的人"],
-  "ob.s2say":       ["A page each, all run from this login. Drag their files in and it writes the pages; you read them before anybody else does.",
-                     "一人一个主页，都用你这个账号管。把他们的资料拖进来，主页它来写；别人看到之前你先过一遍。"],
+  "ob.s2say":       ["A page each, all run from this login. Nothing is published until you have read it.",
+                     "一人一个主页，都用你这个账号管。别人看到之前，你先过一遍。"],
   "ob.toobig":      ["That photo is too big. Anything under 25MB is fine.",
                      "这张照片太大了，25MB 以内都行。"],
   "ob.sending":     ["Sending the photo\u2026", "照片上传中……"],

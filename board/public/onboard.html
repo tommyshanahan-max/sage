@@ -92,6 +92,9 @@
     .avatar{margin:0 auto}
     .yourow{min-width:0}
     .yourow .two{flex-direction:column}
+    .onerow{align-items:flex-start}
+    .onefields{flex-direction:column}
+    .onefields input,.onefields button{width:100%}
     .yourow input,.yourow .go{width:100%}
   }
   .note{margin:.8rem 0 0;color:var(--muted);font-size:.92rem;line-height:1.55;max-width:38rem}
@@ -105,6 +108,32 @@
 
   /* The drop target is the page, not a box in it: somebody dragging two
      hundred files is not aiming. */
+  /* The one-person block. Same shape as step 1's own row, deliberately: the
+     agent has just filled that in for themselves, so the second thing they do
+     looks like the first thing they did. */
+  .one{margin:1.1rem 0 0}
+  .onerow{display:flex;align-items:center;gap:1rem}
+  .avatar.small{width:4.2rem;height:4.2rem}
+  /* Wraps, and the input keeps a floor — "Their name" beside a button reading
+     "Put them up" is two words of visible field on a phone, which is the shape
+     that makes people think a form is broken. Same arrangement step 1 uses for
+     its own name and button, because it is the same row asked twice. */
+  .onefields{flex:1;min-width:0;display:flex;gap:.6rem;flex-wrap:wrap}
+  .onefields input{flex:1;min-width:9rem;padding:.65rem .8rem;font:inherit;
+    border:1px solid var(--line);border-radius:.6rem;background:var(--raise);color:var(--ink)}
+  /* Each person as they land, so the board is visibly filling up rather than
+     a counter going from 0 to 9 at the end. */
+  .done{margin:1rem 0 0;display:flex;flex-direction:column;gap:.5rem}
+  .done .row{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;
+    background:var(--raise);border:1px solid var(--line);border-radius:.9rem}
+  .done .row img,.done .row span.no{width:2.1rem;height:2.1rem;flex:0 0 auto;
+    border-radius:50%;object-fit:cover;background:var(--line);display:grid;
+    place-items:center;font-size:.9rem;color:var(--muted)}
+  .done .row b{font-weight:500}
+  .done .row i{margin-left:auto;font-style:normal;font-size:.8rem;color:var(--muted)}
+  /* The pile's way in: a line, not a field. */
+  .asline{border:0;background:none;font:inherit;color:var(--muted);
+    text-decoration:underline;text-underline-offset:.2em;cursor:pointer;padding:0}
   .field{border:2px dashed var(--line);border-radius:1.2rem;padding:3.4rem 1.5rem;
     text-align:center;background:var(--raise);transition:background .12s,border-color .12s}
   .field.over{border-color:var(--accent);background:var(--accent-soft)}
@@ -231,7 +260,37 @@
 
   <div class="roles"><b id="rolehead"></b><span id="roles"></span></div>
 
-  <div class="field" id="field">
+  <!-- ONE PERSON, AND THEY GO UP THE MOMENT YOU PRESS IT.
+       What was here first was the pile: drag a folder in, wait, then read and
+       edit nine drafts before a single row existed. That is nine people times
+       four fields of work before anything at all appears on the board, on a
+       screen that has so far shown the agent nothing that looks like the
+       product — and it assumes an organised folder of headshots on the device
+       in their hand, which is a phone.
+       So the first ask is one name. They are on the board in one press, the
+       agent SEES it, and then they are offered another. The pile is still
+       here and still the right tool for somebody with forty performers; it is
+       an accelerator now rather than the entrance. -->
+  <div class="one" id="onebox">
+    <div class="onerow">
+      <button class="avatar small" type="button" id="p1go" aria-label="Add a photo">
+        <span class="av-in" id="p1in"></span><span class="av-plus">+</span>
+      </button>
+      <div class="onefields">
+        <input id="p1name" autocomplete="off">
+        <button class="go" id="p1save" type="button"></button>
+      </div>
+    </div>
+    <input type="file" id="p1file" accept="image/*" hidden>
+    <p class="note" id="p1say"></p>
+    <div class="done" id="p1done" hidden></div>
+  </div>
+
+  <!-- The pile, behind a line, for whoever has a folder. -->
+  <p class="skip"><button class="asline" type="button" id="pileopen"
+     aria-expanded="false" aria-controls="field"></button></p>
+
+  <div class="field" id="field" hidden>
     <svg class="pic drop-pic" viewBox="0 0 120 84" aria-hidden="true">
       <path class="ln dim" d="M10 74V22a5 5 0 0 1 5-5h26l8 9h56a5 5 0 0 1 5 5v43a5 5 0 0 1-5 5H15a5 5 0 0 1-5-5Z"/>
       <path class="ln hot" d="M60 8v32"/>
@@ -364,6 +423,116 @@ $("mysave").onclick = async () => {
   if (r.error) return say(T("run.failed"), true);
   say("");
   drawYou(r.person);
+};
+
+/* ---- ONE PERSON, ON THE BOARD, NOW ---------------------------------------
+ *
+ * The pile below is still the right tool for an agent with forty performers.
+ * It is the wrong FIRST tool for all of them, because it asks for everything
+ * before it gives anything: nine people, four fields each, read and corrected,
+ * and only then does a single row exist. An agent who has so far seen nothing
+ * that looks like the product is being asked to do half an hour of data entry
+ * on faith.
+ *
+ * So: one name, one press, they are up. Then another. The agent watches the
+ * list grow, which is the same thing the pile does in the end and is the
+ * opposite experience of it.
+ *
+ * THE PHOTO IS HELD, NOT SENT, until the row exists — there is nobody to
+ * attach it to before that. Held in memory only, and dropped if they change
+ * their mind about the name.
+ */
+let p1photo = null;   // { b64, type }
+
+$("p1go").onclick = () => $("p1file").click();
+$("p1file").onchange = async () => {
+  const f = $("p1file").files[0];
+  if (!f) return;
+  if (f.size > 25 * 1024 * 1024) return say(T("ob.toobig"), true);
+  const b64 = await new Promise((ok) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result).split(",")[1] || "");
+    r.onerror = () => ok("");
+    r.readAsDataURL(f);
+  });
+  if (!b64) return say(T("run.failed"), true);
+  p1photo = { b64, type: f.type || "image/jpeg" };
+  const box = $("p1in");
+  box.replaceChildren(el("img", { src: "data:" + p1photo.type + ";base64," + b64, alt: "" }));
+  say("");
+};
+
+function p1clear() {
+  $("p1name").value = "";
+  p1photo = null;
+  $("p1in").replaceChildren();
+  $("p1name").focus();
+}
+
+/** One row per person as they land. The board filling up, visibly. */
+function p1add(person) {
+  const row = el("div", { className: "row" });
+  if (person.photo) {
+    row.append(el("img", { src: "/api/public-media?id=" + encodeURIComponent(person.photo), alt: "" }));
+  } else {
+    row.append(el("span", { className: "no",
+      textContent: (person.handle || "?").trim().slice(0, 1).toUpperCase() }));
+  }
+  row.append(el("b", { textContent: person.handle || "" }));
+  row.append(el("i", { textContent: T("ob.p1up") }));
+  $("p1done").hidden = false;
+  $("p1done").prepend(row);
+}
+
+$("p1save").onclick = async () => {
+  const name = $("p1name").value.trim();
+  if (!name) { say(T("ob.p1needName"), true); $("p1name").focus(); return; }
+  $("p1save").disabled = true;
+  say(T("ob.sending"));
+  /* One name, not a list. /api/run/add takes newline-separated names and the
+     role picker above decides the left half of their sentence — see the note
+     on that route for why the role cannot be inherited from the agent's own. */
+  const r = await fetch("/api/run/add", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-board-device": device },
+    body: JSON.stringify({ device, names: name, role }),
+  }).then((x) => x.json()).catch(() => ({ error: "failed" }));
+  if (r.error === "contact") { $("p1save").disabled = false; return say(T("run.contact"), true); }
+  if (r.error === "full") { $("p1save").disabled = false; return say(T("run.full"), true); }
+  /* `added`, not `made`. The route's internal variable is `made` and what it
+     sends is `added` — read from the source rather than from the response, the
+     first press would have said "that did not work" over a person who was
+     already on the board. */
+  if (r.error || !r.added || !r.added[0]) { $("p1save").disabled = false; return say(T("run.failed"), true); }
+
+  let person = r.added[0];
+  /* AND NOW THE FACE, AS THEM. x-board-as is how one browser writes a row it
+     does not own — the middleware checks the row really is one this agent
+     runs, and every hashDevice below it answers with the represented person.
+     Both headers: the device says who is asking, the as says who they are
+     asking as, and a write carrying only one of them lands on the wrong row.
+     A failed photograph is not a failed person — they are already up. */
+  if (p1photo) {
+    const out = await fetch("/api/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json",
+        "x-board-device": device, "x-board-as": person.id },
+      body: JSON.stringify({ device, photo: p1photo.b64, photoType: p1photo.type }),
+    }).then((x) => x.json()).catch(() => ({ error: "failed" }));
+    if (out && out.person) person = { ...person, ...out.person };
+  }
+  $("p1save").disabled = false;
+  say("");
+  p1add(person);
+  p1clear();
+};
+
+/* The pile, behind a line. Opened once and it stays open. */
+$("pileopen").onclick = () => {
+  const on = $("field").hidden;
+  $("field").hidden = !on;
+  $("pileopen").setAttribute("aria-expanded", String(on));
+  if (on) $("field").scrollIntoView({ block: "nearest", behavior: "smooth" });
 };
 
 const ROLES = ["performer", "director", "writer", "crew"];
@@ -627,6 +796,14 @@ function paint() {
   set("s2say", "ob.s2say");
   set("mylabel", "ob.mylabel");
   set("mysave", "ob.mysave");
+  set("p1save", "ob.p1save");
+  set("p1say", "ob.p1say");
+  set("pileopen", "ob.pileOpen");
+  $("p1name").placeholder = T("ob.p1ph");
+  /* Rows already on screen keep their label through a language switch — the
+     list is the record of what the agent has done and redrawing it from
+     scratch would lose it. */
+  for (const i of $("p1done").querySelectorAll("i")) i.textContent = T("ob.p1up");
   $("myname").placeholder = T("ob.myph");
   set("trayhead", "ob.trayhead");
   drawRoles();

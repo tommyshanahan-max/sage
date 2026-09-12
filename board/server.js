@@ -5940,7 +5940,18 @@ app.post("/api/run/add", express.json({ limit: "8kb" }), gate, async (req, res) 
            nothing on the right — an agent looking for anyone — passes that
            through, which is the correct reading: so is the performer. */
         say: (mine.say.length ? mine.say : [{ me: "", want: store.ANYONE }])
-          .map((x) => ({ me: role, want: x.want })),
+        /* THE RIGHT HALF IS WHAT THE AGENT *IS*, NOT WHAT THEY WANT, and it
+           was the other way round in all three of the places that make a
+           represented row — which made a nonsense of the one sentence this
+           whole board is built on.
+           Andy says "I am an Agent looking for a Performer". His performers
+           are performers looking for an AGENT. Copying his `want` gave them
+           "I am a Performer looking for a Performer", printed on the card of
+           every person any agent has ever added.
+           IT MATCHED ANYWAY, which is why nobody caught it: roomOfPair works
+           the room out from the pair and landed on `talent` either way, so
+           the only place it was wrong was the place people read. */
+          .map((x) => ({ me: role, want: x.me || store.ANYONE })),
         where: mine.where, wants: mine.wants,
         trade: mine.trade, campus: mine.campus,
         looking: !overShow(board, real, ""),
@@ -6119,7 +6130,7 @@ app.post("/api/run/drop", gate,
         speaks: d.speaks, age: d.age,
         photo: d.photoId,
         say: (mine.say.length ? mine.say : [{ me: "", want: store.ANYONE }])
-          .map((x) => ({ me: role, want: x.want })),
+          .map((x) => ({ me: role, want: x.me || store.ANYONE })),
         where: mine.where, wants: mine.wants,
         // Not in Browse and not anywhere until somebody has read it.
         looking: false,
@@ -6232,7 +6243,7 @@ app.post("/api/run/make", gate,
         handle: r.handle, goal: r.goal, trade: r.trade, campus: r.campus,
         speaks: r.speaks, age: r.age, photo: r.photo,
         say: (mine.say.length ? mine.say : [{ me: "", want: store.ANYONE }])
-          .map((x) => ({ me: role, want: x.want })),
+          .map((x) => ({ me: role, want: x.me || store.ANYONE })),
         where: mine.where, wants: mine.wants,
         looking: false,
       });
