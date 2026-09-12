@@ -1352,6 +1352,14 @@ export const STRINGS = {
   "wr.photoBig":     ["That photo is too large to send. Try another.",
                       "这张照片太大了，传不上去。换一张试试。"],
   "wr.photoAdd":     ["Add a photo", "加一张照片"],
+  /* THE ARROW UNDER THE CHIP. The chip says what to press; this says why,
+     which is the half a pill that size has no room for. It appears the
+     moment the card drops into view after "Show me" — the press before it
+     ended on "a photo and one line", and without this the answer to "where"
+     is a small white pill in the corner of a lavender rectangle.
+     Not "Upload a photo": the chip next to it already says Add, and the one
+     thing worth spending these few words on is the consequence. */
+  "wr.photoPoint":   ["A photo moves you up", "加张照片，就能往前挪"],
   "wr.photoAgain":   ["Change the photo", "换一张照片"],
   /* The third state, in the same words as the other two. "Was not put up"
      described the mechanism; "did not pass" describes the check the other
