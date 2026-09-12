@@ -719,6 +719,20 @@
   .plus svg{width:1.35rem;height:1.35rem;stroke:var(--accent-ink);fill:none;
     stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
   .plus + .bell{margin-left:.5rem}
+  /* The menu it opens. Anchored to the masthead rather than to the button, so
+     it cannot be pushed off the right edge of a narrow phone by a wide item. */
+  .top{position:relative}
+  .plusmenu{position:absolute;top:100%;right:0;z-index:60;min-width:13rem;
+    margin-top:.35rem;padding:.3rem;border:1px solid var(--line);
+    border-radius:.8rem;background:var(--raise);box-shadow:var(--shadow);
+    display:flex;flex-direction:column}
+  .plusmenu a,.plusmenu button{display:flex;align-items:center;gap:.65rem;
+    border:0;background:none;padding:.65rem .7rem;font:inherit;font-size:.92rem;
+    color:var(--ink);text-align:left;text-decoration:none;cursor:pointer;
+    border-radius:.55rem}
+  .plusmenu a:hover,.plusmenu button:hover{background:var(--paper)}
+  .plusmenu svg{width:1.2rem;height:1.2rem;flex:0 0 auto;stroke:var(--ink-2);
+    fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   /* AND THE MASTHEAD HAS TO FIT THEM BOTH NOW. Adding the plus put a third
      control in a row that had two, and on a 430px phone that pushed "The
      Exchange" onto a second line and made the header half again as tall — the
@@ -1930,6 +1944,28 @@
       <i class="badge" id="belln" hidden></i>
     </button>
     <span id="langslot"></span>
+    <!-- WHAT THE ＋ OPENS. WeChat's plus is a menu, not a button — new chat,
+         add a friend, scan — and this is the same three-line answer to the
+         same question: what can I start from here. "Set up your profile" is
+         deliberately not on it: the Profile tab does that, and after the first
+         time it is an item that means nothing.
+         Each line hides itself when it is not available, and if only one is
+         left the ＋ does that thing directly rather than opening a menu with
+         one line in it. -->
+    <div class="plusmenu" id="plusmenu" hidden role="menu">
+      <a href="/notes" id="plusnotes" role="menuitem">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
+        <span></span>
+      </a>
+      <button type="button" id="plusinv" role="menuitem">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span></span>
+      </button>
+      <a href="/onboard" id="plusrun" role="menuitem" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M2 20a7 7 0 0 1 14 0 M18 8v6M15 11h6"/></svg>
+        <span></span>
+      </a>
+    </div>
   </div>
 
   <!-- Follows and the card of the day, in the one tray. Anything that is FOR
@@ -2906,6 +2942,9 @@ function topicColour(name) {
 // A random number this browser made up. Hashed on the server before it is
 // written down; it identifies a browser, never a person, and the only thing it
 // buys is being able to take your own post back.
+/* Whether this member may put somebody else up — the same test /api/run/add
+   applies, answered once by paintRun and read by the ＋ menu. */
+let CANRUN = false;
 let device = "";
 try {
   device = localStorage.getItem("board:device") || "";
@@ -4032,15 +4071,65 @@ function openSheet(open) {
    control in the masthead wrote to a screen nobody could reach. Posting is
    not gone: /feed still works and showView still names it. It is simply not
    what the corner of an invite-only board should be for. */
-$("fab").addEventListener("click", () => {
+/** The invite sheet, from wherever it was asked for. */
+function openInvite() {
   // Drawn before it is shown: a member may not have had a code when the page
   // loaded, and this is the one screen where a stale code is worse than none.
   loadMyInvite();
   $("invsheettitle").textContent = T("inv.sheetTitle");
   $("invshut").textContent = T("post.cancel");
   $("invsheet").hidden = false;
-});
+}
 $("invshut").addEventListener("click", () => { $("invsheet").hidden = true; });
+
+/* THE ＋ IS A MENU, which is what a plus in that corner is everywhere else.
+   One press, three things you can start: write to somebody, bring somebody in,
+   put somebody up. The exception is a member for whom only one of them is
+   available — then the menu would be a list of one, so the ＋ just does it. */
+function plusItems() {
+  const out = [];
+  // Writing is always offered: /notes says plainly who you can write to, and
+  // says what to do about it when the answer is nobody.
+  out.push(["plusnotes", "plus.write", null]);
+  out.push(["plusinv", "inv.sheetTitle", openInvite]);
+  // Only for somebody who may speak for other people — /api/run/add refuses
+  // anybody who is themselves somebody's client. paintRun sets this.
+  if (CANRUN) out.push(["plusrun", "plus.run", null]);
+  return out;
+}
+
+function drawPlus() {
+  const items = plusItems();
+  for (const id of ["plusnotes", "plusinv", "plusrun"]) {
+    const n = $(id);
+    const row = items.find((x) => x[0] === id);
+    n.hidden = !row;
+    if (row) n.querySelector("span").textContent = T(row[1]);
+  }
+}
+
+function shutPlus() {
+  $("plusmenu").hidden = true;
+  $("fab").setAttribute("aria-expanded", "false");
+}
+
+$("fab").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const items = plusItems();
+  if (items.length === 1) { (items[0][2] || (() => { location.href = $(items[0][0]).href; }))(); return; }
+  const menu = $("plusmenu");
+  if (!menu.hidden) { shutPlus(); return; }
+  drawPlus();
+  menu.hidden = false;
+  $("fab").setAttribute("aria-expanded", "true");
+});
+$("plusinv").addEventListener("click", () => { shutPlus(); openInvite(); });
+// Anywhere else, and Escape. A menu you have to press its own button again to
+// close is a menu people leave open.
+document.addEventListener("click", (e) => {
+  if (!$("plusmenu").hidden && !$("plusmenu").contains(e.target)) shutPlus();
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") shutPlus(); });
 
 $("feedpost").addEventListener("click", () => openSheet(true));
 
@@ -8847,6 +8936,9 @@ function paintRun() {
            be seen or pressed. */
         $("repgo").textContent = T("me.repGo");
         $("repgo").hidden = d.me.client;
+        // And the ＋ menu's third line, which is the same permission.
+        CANRUN = !d.me.client;
+        drawPlus();
         $("repopen").hidden = true;
         $("rungo").hidden = d.me.client;
         $("runbody").textContent = d.me.client

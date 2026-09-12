@@ -2955,6 +2955,14 @@ export const STRINGS = {
      the offer it is. */
   /* THE SHEET THE ＋ OPENS. Its own title, because inv.head sits above a code
      inside a box and this stands at the top of a screen. */
+  /* THE ＋ MENU. Three things you can START, which is what a plus means.
+     Setting up a profile is deliberately not one of them: the Profile tab
+     does that, and after the first time it is a line that means nothing. */
+  "plus.write":        ["Write to somebody", "给谁写点什么"],
+  /* NOT me.runGo, which is "Add someone" — right under a box headed "Someone
+     else · put up a profile for somebody you represent", and vague standing
+     on its own between two other lines that each name who they are about. */
+  "plus.run":          ["Put somebody up", "帮别人建主页"],
   "inv.sheetTitle":    ["Bring somebody in", "带一个人进来"],
   "inv.head":          ["Bring someone in", "带一个人进来"],
   "inv.tap":           ["Today’s password. One person, then it changes.",
