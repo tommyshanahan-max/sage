@@ -12,8 +12,7 @@
 <link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/site.css">
-<style>
-  /* THE ROOM FOR SOMEBODY ON THE LIST.
+<style>/* THE ROOM FOR SOMEBODY ON THE LIST.
    *
    * The queue used to end at one sentence — "You are on the list." — and that
    * sentence was the whole of the product for everybody who had not been
@@ -25,15 +24,16 @@
    * scored against a pass mark, and the moment it reads as an exam the busy
    * people stop bothering — and the busy people are who the board is for.
    */
+  
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
        /* The tab bar is fixed to the bottom, so the last card needs room to
           finish above it rather than under it. */
        padding-bottom:4.6rem}
-  main{max-width:30rem;margin:0 auto;padding:0 1rem 1.6rem}
-
-  /* .top and .wrap are site.css's header and are reused deliberately — it is
+  main{max-width:30rem;margin:0 auto;padding:0 1rem 1.6rem}/* .top and .wrap are site.css's header and are reused deliberately — it is
      the same bar this board draws on every page. Only what differs is set
      here: it sticks, and it is as narrow as the column under it. */
+
+  
   .top{position:sticky;top:0;z-index:5;background:var(--card);
        border-bottom:1px solid var(--hair)}
   .top .wrap{max-width:30rem;margin:0 auto;padding:.7rem 1rem;
@@ -49,21 +49,20 @@
 
   .wrband{margin:1rem 0 0;padding:.85rem .95rem;border-radius:.75rem;
     background:var(--accent-soft);font-size:.86rem;color:var(--ink-2);
-    line-height:1.5}
-  /* THE COUNT, AT A SIZE SOMEBODY READS FROM ARM'S LENGTH. It was body text
+    line-height:1.5}/* THE COUNT, AT A SIZE SOMEBODY READS FROM ARM'S LENGTH. It was body text
      over a tick list, which on a screen with a clock running is a status
      panel — glanced at, not acted on. */
+  
   .wrband b.big{display:block;font-size:1.35rem;line-height:1.2;
-    color:var(--ink);font-weight:600;margin:0 0 .1rem}
-  /* AND THE THING THAT CLEARS IT, AS A BUTTON. Full width, because the whole
+    color:var(--ink);font-weight:600;margin:0 0 .1rem}/* AND THE THING THAT CLEARS IT, AS A BUTTON. Full width, because the whole
      point is that it cannot be mistaken for a label — an empty circle beside
      the words "A photo" is a status, and this is an instruction. */
+  
   .wrgo{display:block;width:100%;margin:.7rem 0 0;border:0;border-radius:.7rem;
     background:var(--ink);color:var(--paper);font:inherit;font-size:1rem;
     font-weight:600;padding:.8rem 1rem;cursor:pointer}
   .wrgo + .wrgo{margin-top:.5rem}
-  .wrgo:active{transform:translateY(1px)}
-  /* ---- THE ARRIVAL --------------------------------------------------------
+  .wrgo:active{transform:translateY(1px)}/* ---- THE ARRIVAL --------------------------------------------------------
    *
    * The page opened on "You are on the list." — true, and the middle of a
    * conversation nobody has had. Somebody who has just tapped a link out of a
@@ -74,8 +73,7 @@
    * invite makes — see CLAUDE.md on why that one is settled — and the reason
    * it is a hero rather than a line is that a welcome the size of body text is
    * not a welcome, it is a label.
-   */
-  /* ---- THE ARRIVAL, AND IT IS THE FIRST THING ANYBODY SEES OF THIS PLACE ---
+   *//* ---- THE ARRIVAL, AND IT IS THE FIRST THING ANYBODY SEES OF THIS PLACE ---
    *
    * The rest of this board is a working tool and looks like one, correctly.
    * This one screen is not: it is the door of somewhere, opened for somebody
@@ -96,24 +94,26 @@
    * Drawn, not loaded: a first impression that arrives in pieces over a
    * mainland connection is worse than none. No image, no font, no request.
    */
+  
+  
   .hero{margin:.6rem 0 0;padding:2.6rem 1.2rem 2rem;border-radius:1.3rem;
     text-align:center;position:relative;overflow:hidden;background:#12100E;
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
-  /* The paper it is stamped on: warm, and lit from where the stamp lands. */
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}/* The paper it is stamped on: warm, and lit from where the stamp lands. */
+  
   .hero .paper{position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(95% 72% at 50% 34%,#221D18 0%,#161310 52%,#100E0C 100%)}
-  /* THE CHOP. Square, red, the character reversed out of it, and off true by
+    background:radial-gradient(95% 72% at 50% 34%,#221D18 0%,#161310 52%,#100E0C 100%)}/* THE CHOP. Square, red, the character reversed out of it, and off true by
      four degrees — a chop pressed by a person is never square to the page,
      and that is most of what stops this looking like an app icon. The inner
      ring is the carved border every seal has. */
+  
   .hero .seal{position:relative;display:inline-grid;place-items:center;
     width:4.6rem;height:4.6rem;margin:0 0 1.2rem;border-radius:.45rem;
     background:#B22A1F;color:#F7EDE6;font:400 2.15rem/1 var(--serif);
     font-style:normal;transform:rotate(-4deg);
     box-shadow:inset 0 0 0 3px rgba(247,237,230,.32),
-               0 10px 30px rgba(178,42,31,.38)}
-  /* The ink that has soaked past the edge. Two degrees the other way so the
+               0 10px 30px rgba(178,42,31,.38)}/* The ink that has soaked past the edge. Two degrees the other way so the
      bleed does not sit square under the stamp. */
+  
   .hero .bleed{position:absolute;left:50%;top:2.2rem;width:9rem;height:9rem;
     transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
     background:radial-gradient(circle,rgba(178,42,31,.26),transparent 62%)}
@@ -121,9 +121,7 @@
     font-weight:400;font-size:clamp(2.1rem,10.5vw,3rem);line-height:1.02;
     letter-spacing:-.015em;color:#EFE6DC;text-wrap:balance}
   .heroq{position:relative;margin:1.1rem 0 0;font-size:.78rem;font-weight:600;
-    letter-spacing:.1em;text-transform:uppercase;color:#B08A6A}
-
-  /* ---- THE CIRCLE ---------------------------------------------------------
+    letter-spacing:.1em;text-transform:uppercase;color:#B08A6A}/* ---- THE CIRCLE ---------------------------------------------------------
    *
    * Ray's invite is a message somebody sent you. This is the same thing: one
    * round thing in the middle of the screen that you press, and then somebody
@@ -137,9 +135,9 @@
    * afterwards — following the words while they are said is most of what makes
    * a second language readable at all.
    */
-  .orbwrap{position:relative;margin:1.3rem 0 0;display:grid;place-items:center}
-  /* Paper on ink, so the one thing to press is the one bright thing. */
-  /* THE CIRCLE IS MO. It was a cream disc with a play triangle in it, and the
+
+  
+  .orbwrap{position:relative;margin:1.3rem 0 0;display:grid;place-items:center}/* Paper on ink, so the one thing to press is the one bright thing. *//* THE CIRCLE IS MO. It was a cream disc with a play triangle in it, and the
      blue circle in the corner was somebody else entirely — so the voice that
      greets you, the face on the panel and the button you press when stuck
      were three unrelated objects on one screen. They are one person: same
@@ -147,34 +145,36 @@
      arrival and pressing the one in the corner are then obviously the same
      gesture, which is what makes the line under the last button mean
      anything. */
+  
+  
   .orb{width:5.4rem;height:5.4rem;border-radius:50%;border:0;cursor:pointer;
     background:var(--accent);color:var(--accent-ink);display:grid;
     place-items:center;padding:0;
     box-shadow:0 12px 34px rgba(0,0,0,.5);transition:transform .12s ease-out}
   .orb:active{transform:scale(.96)}
-  .orb svg{width:2.6rem;height:2.6rem;fill:currentColor;stroke:none}
-  /* The little play triangle, tucked at the foot of him rather than replacing
+  .orb svg{width:2.6rem;height:2.6rem;fill:currentColor;stroke:none}/* The little play triangle, tucked at the foot of him rather than replacing
      him: at rest it has to be clear this is a thing you press, and a face
      alone on a dark screen is a portrait. */
+  
   .orb i{position:absolute;right:-.1rem;bottom:-.1rem;width:2.1rem;height:2.1rem;
     border-radius:50%;background:#F2E7DC;color:#12100E;
     display:grid;place-items:center;box-shadow:0 3px 9px rgba(0,0,0,.45)}
   .orb i svg{width:1.05rem;height:1.05rem;margin-left:.1rem}
   .orbwrap.on .orb i{display:none}
-  .orb:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-  /* The ring only exists while it is talking, so the circle at rest is one
+  .orb:focus-visible{outline:3px solid var(--ink);outline-offset:3px}/* The ring only exists while it is talking, so the circle at rest is one
      clean shape rather than a control with decoration around it. */
+  
   .ring{position:absolute;width:5.4rem;height:5.4rem;border-radius:50%;
     border:2px solid rgba(178,42,31,.85);opacity:0;pointer-events:none}
   .orbwrap.on .ring{animation:ping 1.8s ease-out infinite}
   .orbwrap.on .ring.b{animation-delay:.9s}
   @keyframes ping{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.5);opacity:0}}
   @media (prefers-reduced-motion:reduce){.orbwrap.on .ring{animation:none;opacity:.35}}
-  .orbsay{position:relative;margin:.75rem 0 0;font-size:.78rem;color:#8A7663}
-
-  /* The message. Greyed until spoken, then it is ink. */
-  /* The beats, each one landing under the last. Nothing is on screen before
+  .orbsay{position:relative;margin:.75rem 0 0;font-size:.78rem;color:#8A7663}/* The message. Greyed until spoken, then it is ink. *//* The beats, each one landing under the last. Nothing is on screen before
      the first press — the name and the circle are the whole of it at rest. */
+
+  
+  
   .beats{position:relative;margin:0}
   .beat{margin:1.1rem auto 0;max-width:21rem;font-family:var(--serif);
     font-size:1.06rem;line-height:1.62;color:#6A5A4B}
@@ -182,50 +182,22 @@
   .beat w.lit{color:#EFE6DC}
   .heroshow{position:relative;margin:1.2rem 0 0;border:0;border-radius:99px;
     background:#F2E7DC;color:#12100E;font:inherit;font-size:.95rem;
-    font-weight:600;padding:.6rem 1.5rem;cursor:pointer}
-  /* The card coming up to meet them on the last press. */
+    font-weight:600;padding:.6rem 1.5rem;cursor:pointer}/* The card coming up to meet them on the last press. */
+  
   .pc.arrive{animation:cardin .5s cubic-bezier(.2,.7,.3,1)}
   @keyframes cardin{from{opacity:0;transform:translateY(-14px) scale(.97)}}
   @media (prefers-reduced-motion:reduce){.pc.arrive{animation:none}}
-  .wrband b{display:block;color:var(--ink);font-size:.98rem;font-weight:500}
-  /* THE WAITING ROOM, WHICH IS A DIFFERENT BAND FROM BEING ON THE LIST.
+  .wrband b{display:block;color:var(--ink);font-size:.98rem;font-weight:500}/* THE WAITING ROOM, WHICH IS A DIFFERENT BAND FROM BEING ON THE LIST.
      Warmer than the blue one above it so that being moved up reads as having
      happened rather than as the same notice with new words in it. */
+  
   .wrband.up{background:var(--goldbg,#F6EEDA);
     border:1px solid var(--goldline,#E5D4A8)}
   .wrband .clock{display:block;margin:.4rem 0 0;font-size:.8rem;font-weight:600;
-    color:var(--gold,#8A6A1F)}
-  /* The clock goes UNDER the buttons and stays small. It is the pressure, not
-     the instruction — a deadline set in the same size as the thing to do
-     makes somebody read the deadline twice and the instruction not at all. */
-
-  /* ---- THE BUTLER ---------------------------------------------------------
-   *
-   * A conversation, not a form, and drawn as one: their words on the right,
-   * his on the left, the box at the bottom. Everybody has used this screen
-   * before, which is the point — the person who most needs it is the one least
-   * likely to work out a novel one.
-   */
-  .but{margin:1rem 0 0;border:1px solid var(--hair);border-radius:.9rem;
-    background:var(--card);overflow:hidden}
-  .buthead{display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;
-    border-bottom:1px solid var(--hair)}
-  /* HIS FACE. It was the board's own 交 mark, which is also the app icon and
-     also the welcome above — so he read as the software talking rather than
-     somebody talking. A cap and shoulders is legible before anybody reads a
-     word, and a peaked cap is one of the few uniforms that means the same
-     thing in Guangzhou and in Sydney. */
-  .butface{flex:0 0 auto;width:2.1rem;height:2.1rem;border-radius:50%;
-    background:var(--accent-soft);color:var(--accent);display:grid;
-    place-items:center;font-style:normal}
-  .butface svg{width:1.45rem;height:1.45rem}
-  .buthead small{color:var(--muted);font-size:.76rem}
-  .buthead b{font-size:.92rem;font-weight:600;color:var(--ink)}
-  .butshut{margin:1rem 0 0;text-align:center}
-  .butgone{margin:0 0 .5rem;font-size:.82rem;color:var(--muted)}
-  /* ---- THE CARD THEY CAN POST --------------------------------------------
+    color:var(--gold,#8A6A1F)}/* ---- THE CARD THEY CAN POST --------------------------------------------
      One image, made on their own device, and the only thing somebody standing
      outside can do that helps them and helps the board at once. */
+  
   .mine{margin:1rem 0 0;padding:.9rem;border:1px solid var(--hair);
     border-radius:.9rem;background:var(--card);text-align:center}
   .mine p{margin:0 0 .7rem;font-size:.86rem;line-height:1.5;color:var(--ink-2)}
@@ -235,73 +207,14 @@
     border-radius:.7rem;box-shadow:0 10px 26px rgba(0,0,0,.3)}
   .mine .how{margin:.6rem 0 0;font-size:.78rem;color:var(--muted)}
   .mine .row2{display:flex;gap:.5rem;justify-content:center;margin:.7rem 0 0}
-  .butoff{display:block;margin:.5rem auto 0;border:0;background:none;
-    color:var(--muted);font:inherit;font-size:.78rem;padding:.25rem;
-    cursor:pointer;text-decoration:underline;text-underline-offset:2px}
-  .butshut button{border:1px solid var(--line);background:var(--card);
-    border-radius:99px;padding:.45rem 1.1rem;font:inherit;font-size:.85rem;
-    color:var(--ink-2)}
-  .buthead small{color:var(--muted);font-size:.76rem}
-  /* A word, not a ×. A cross reads as closing a panel that will be back
-     tomorrow, and this one will not come back until they ask for it. */
-  .buthead .x{margin-left:auto;border:0;background:none;color:var(--muted);
-    font:inherit;font-size:.78rem;padding:.2rem .1rem;cursor:pointer;
-    text-decoration:underline;text-underline-offset:2px}
-  .butsay{padding:.8rem .9rem;display:flex;flex-direction:column;gap:.55rem;
-    max-height:20rem;overflow-y:auto}
-  .bub{max-width:85%;padding:.55rem .8rem;border-radius:1rem;font-size:.9rem;
-    line-height:1.5}
-  .bub.him{align-self:flex-start;background:var(--raise);color:var(--ink);
-    border-bottom-left-radius:.3rem}
-  .bub.her{align-self:flex-end;background:var(--accent);color:var(--accent-ink);
-    border-bottom-right-radius:.3rem}
-  .bub.wait{color:var(--muted)}
-  .butform{display:flex;gap:.5rem;align-items:center;padding:.7rem .9rem;
-    border-top:1px solid var(--hair)}
-  .butform input{flex:1;min-width:0;border:1px solid var(--line);
-    background:var(--raise);border-radius:99px;padding:.55rem .9rem;font:inherit;
-    font-size:.92rem;color:var(--ink);outline:none}
-  .butform button{flex:0 0 auto;border:0;border-radius:99px;
-    background:var(--accent);color:var(--accent-ink);font:inherit;font-size:.88rem;
-    padding:.55rem 1rem}
-  .butform .mic{width:2.3rem;height:2.3rem;border-radius:50%;padding:0;
-    border:1px solid var(--line);background:var(--raise);color:var(--ink-2);
-    display:grid;place-items:center}
-  .butform .mic svg{width:1.05rem;height:1.05rem;fill:none;stroke:currentColor;
-    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-  .butform .mic[aria-pressed="true"]{background:var(--bad,#B3261E);color:#fff;
-    border-color:transparent;animation:micon 1.4s ease-in-out infinite}
   @keyframes micon{0%,100%{opacity:1}50%{opacity:.62}}
-  @media (prefers-reduced-motion:reduce){.butform .mic[aria-pressed="true"]{animation:none}}
-  /* WHAT HE IS PROPOSING, shown as the thing itself — the sentence as it will
-     read on their card — and not as "me: agent, want: talent". They are
-     agreeing to a sentence, so a sentence is what they are shown. */
-  .butput{margin:0;padding:.8rem .9rem;border-top:1px solid var(--hair);
-    background:var(--accent-soft)}
-  .butput .line{font-family:var(--serif);font-size:1rem;color:var(--ink);
-    line-height:1.4;margin:0 0 .3rem}
-  .butput .why{margin:0 0 .7rem;font-size:.86rem;color:var(--ink-2);line-height:1.5}
-  .butput .row2{display:flex;gap:.5rem}
-  .butput .keep{border:0;border-radius:99px;background:var(--ink);color:var(--paper);
-    font:inherit;font-size:.88rem;padding:.5rem 1.1rem}
-  .butput .no{border:1px solid var(--line);border-radius:99px;background:none;
-    color:var(--ink-2);font:inherit;font-size:.88rem;padding:.5rem 1rem}
-  .butno{margin:.5rem .9rem .8rem;font-size:.82rem;color:var(--bad,#B3261E)}
-  /* Before it is opened: one line and a button, so the panel is an offer
-     rather than a conversation somebody has to close. */
-  .butoffer{margin:1rem 0 0;padding:.8rem .9rem;border-radius:.9rem;
-    border:1px solid var(--hair);background:var(--card);display:flex;
-    align-items:center;gap:.7rem}
-  .butoffer p{margin:0;flex:1;font-size:.86rem;line-height:1.45;color:var(--ink-2)}
-  .butoffer p b{display:block;color:var(--ink);font-weight:600;font-size:.92rem}
-  .butoffer button{flex:0 0 auto;border:0;border-radius:99px;background:var(--accent);
-    color:var(--accent-ink);font:inherit;font-size:.88rem;padding:.5rem 1.1rem}
-
-  /* THE HOME SCREEN, OFFERED ON THEIR OWN PAGE. install.js decides whether
+  @media (prefers-reduced-motion:reduce){.butform .mic[aria-pressed="true"]{animation:none}}/* THE HOME SCREEN, OFFERED ON THEIR OWN PAGE. install.js decides whether
      there is anything to offer — WeChat cannot install and says so instead;
      iOS gets the share-sheet instruction; Chrome gets a button. Same strip as
      Browse and Messages, because a sentence that differs between screens
      reads as two different apps. */
+
+  
   .ins{display:flex;align-items:center;justify-content:center;gap:.5rem;
     margin:1rem 0 0;padding:.55rem .9rem;border-radius:.75rem;
     background:var(--accent-soft);color:var(--accent);font-size:.78rem;
@@ -311,12 +224,12 @@
   .insgo{background:var(--accent);color:var(--accent-ink);border-radius:99px;
     padding:.2rem .8rem;font-size:.78rem}
   .insno{font-size:1.1rem;line-height:1;opacity:.7;padding:0 .2rem}
-  .insico{width:1em;height:1em;vertical-align:-.2em;display:inline-block}
-
-  /* LOSING THE PLACE — the one warning on this page that is about something
+  .insico{width:1em;height:1em;vertical-align:-.2em;display:inline-block}/* LOSING THE PLACE — the one warning on this page that is about something
      that cannot be undone. Its own colour, its own box, and the field that
      fixes it inside it: a warning that says to go and open a form somewhere
      else is a warning that gets read and not acted on. */
+
+  
   .lose{margin:1rem 0 0;padding:.9rem .95rem;border-radius:.75rem;
     background:var(--badbg,#FBEAE8);border:1px solid var(--badline,#F2C9C4)}
   .lose b{display:block;color:var(--ink);font-size:.95rem;font-weight:600;
@@ -336,17 +249,17 @@
     .lose{background:#2A1614;border-color:#4A2420}
   }
   .wrband .q{display:block;margin:.35rem 0 0;font-size:.8rem;color:var(--accent);
-    font-weight:600}
-
-  /* THEIR CARD, DRAWN AS A MEMBER WILL SEE IT and not as a form they filled
+    font-weight:600}/* THEIR CARD, DRAWN AS A MEMBER WILL SEE IT and not as a form they filled
      in. The whole argument of this screen is that the card is the thing, so
      it is shown as the thing. */
+
+  
   .pc{position:relative;margin:1rem 0 0;aspect-ratio:4/3;border-radius:1rem;
-      overflow:hidden;background:linear-gradient(150deg,#C9D3E6,#93A5C4)}
-  /* NO PHOTOGRAPH IS NOT A HOLE. A wash and an initial — the same object the
+      overflow:hidden;background:linear-gradient(150deg,#C9D3E6,#93A5C4)}/* NO PHOTOGRAPH IS NOT A HOLE. A wash and an initial — the same object the
      result card draws — so a card without a face is still a card, and the
      photograph becomes one more slot that fills rather than the thing
      standing between somebody and being seen at all. */
+  
   .pc .ini{position:absolute;inset:0;display:flex;align-items:center;
     justify-content:center;font-family:var(--serif);font-size:5rem;
     color:rgba(255,255,255,.34);line-height:1;padding-bottom:2.6rem}
@@ -359,11 +272,11 @@
     font-weight:600;backdrop-filter:blur(6px)}
   .pc .said{position:absolute;left:.9rem;right:.9rem;bottom:.85rem;color:#fff}
   .pc .nm{font-family:var(--serif);font-size:1.35rem;line-height:1.15}
-  .pc .ln{margin:.25rem 0 0;font-size:.82rem;line-height:1.45;opacity:.94}
-  /* The pills, under the picture rather than laid over the bottom of it.
+  .pc .ln{margin:.25rem 0 0;font-size:.82rem;line-height:1.45;opacity:.94}/* The pills, under the picture rather than laid over the bottom of it.
      On the photograph they were white-on-whatever — dashed outlines over a
      face, unreadable on a bright patch — and a thing somebody is meant to
      act on should not read as a caption. */
+  
   .pcwrap{margin:1rem 0 0}
   .pcwrap .pc{margin:0}
   .pcwrap .chips{margin:.55rem 0 0;display:flex;gap:.35rem;flex-wrap:wrap}
@@ -373,22 +286,20 @@
     border:1px dashed var(--line)}
   .under{margin:.5rem 0 0;font-size:.79rem;color:var(--muted);text-align:center}
   .under.bad{color:#b3261e}
-  .under.wait{color:var(--accent)}
-  /* The card is a button ONLY where it is the photograph control — the
+  .under.wait{color:var(--accent)}/* The card is a button ONLY where it is the photograph control — the
      Waiting tab. The same card is drawn on the You tab above a form that has
      its own button, and a pointer cursor on something that does nothing is a
      promise the page does not keep. The chip is the only thing that says the
      card is tappable, so it sits on the corner a thumb reaches and never
      covers the name or the line. */
+  
   .pc.tap{cursor:pointer}
   .pc.tap.busy{opacity:.65;pointer-events:none}
   .shotchip{position:absolute;top:.7rem;right:.7rem;padding:.22rem .65rem;
     border-radius:99px;background:rgba(255,255,255,.92);color:#151B28;
     font-size:.7rem;font-weight:600}
   .shotchip.wait{background:rgba(255,255,255,.72)}
-  .shotchip.bad{background:#b3261e;color:#fff}
-
-  /* THE ARROW AT THE PHOTO CHIP, and it only exists because of what happens
+  .shotchip.bad{background:#b3261e;color:#fff}/* THE ARROW AT THE PHOTO CHIP, and it only exists because of what happens
      one press earlier. The arrival ends on "a photo and one line", presses
      Show me, and drops the card into view — and the card is a pretty
      lavender rectangle with a small white pill in the corner. Somebody who
@@ -398,6 +309,8 @@
      Inside .pc, which is overflow:hidden — anything hung outside the card
      gets cut off, and this is why it sits under the chip rather than beside
      it. pointer-events:none so it never eats the tap it is pointing at. */
+
+  
   .shotpoint{position:absolute;top:2.5rem;right:.7rem;display:flex;
     flex-direction:column;align-items:flex-end;gap:.2rem;pointer-events:none;
     animation:pointin .4s .5s backwards}
@@ -414,11 +327,11 @@
   @media (prefers-reduced-motion:reduce){
     .shotpoint{animation:none}
     .shotpoint i{animation:none}
-  }
-
-  /* NOT .rule — site.css already owns that, and it is the bordered card the
+  }/* NOT .rule — site.css already owns that, and it is the bordered card the
      house-rules page is made of. Checked against the stylesheet before this
      was written rather than after, which is the lesson from doors.html. */
+
+  
   .wrhead{display:flex;align-items:center;gap:.7rem;margin:1.5rem 0 .1rem;
     font-size:.64rem;letter-spacing:.15em;text-transform:uppercase;
     color:var(--muted)}
@@ -441,11 +354,11 @@
     font-size:.82rem;font-weight:600;cursor:pointer;text-decoration:none}
   .row.ok .go{border-color:var(--hair);color:var(--muted)}
   .row .got{flex:none;font-size:.85rem;font-weight:600;
-    color:var(--good, #2E7D5B)}
-
-  /* The third one answers here rather than on a page of its own: it is two
+    color:var(--good, #2E7D5B)}/* The third one answers here rather than on a page of its own: it is two
      choices, and sending somebody to another screen and back for two choices
      is most of the reason people abandon a form. */
+
+  
   .pick{margin:.6rem 0 0;padding:.95rem;background:var(--card);
     border:1px solid var(--hair);border-radius:.75rem}
   .pick .row.bare{margin:0 0 .85rem;padding:0;background:none;border:0}
@@ -462,11 +375,11 @@
   .pick .save{margin:.75rem 0 0;width:100%;padding:.6rem;border:0;
     border-radius:99px;background:var(--accent);color:var(--accent-ink);
     font:inherit;font-weight:600;font-size:.9rem;cursor:pointer}
-  .pick .said{margin:.5rem 0 0;font-size:.83rem;color:var(--good, #2E7D5B)}
-
-  /* The others, as a list and not a deck. Somebody waiting is not choosing
+  .pick .said{margin:.5rem 0 0;font-size:.83rem;color:var(--good, #2E7D5B)}/* The others, as a list and not a deck. Somebody waiting is not choosing
      anybody — the choosing is the members' half — so these are people to
      recognise, at the size a name and a line need and no larger. */
+
+  
   .who{display:flex;align-items:center;gap:.75rem;margin:.6rem 0 0;
     padding:.8rem .95rem;background:var(--card);border:1px solid var(--hair);
     border-radius:.75rem}
@@ -482,19 +395,19 @@
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .who .tags{margin:.25rem 0 0;display:flex;gap:.3rem;flex-wrap:wrap}
   .who .tags span{padding:.1rem .45rem;border-radius:99px;background:var(--raise);
-    color:var(--muted);font-size:.7rem}
+    color:var(--muted);font-size:.7rem}/* ---- the seat ---- */
 
-  /* ---- the seat ---- */
+  
   .seat{margin:.6rem 0 0;padding:1rem;background:var(--card);
     border:1px solid var(--hair);border-radius:.85rem}
   .seatn{display:flex;align-items:baseline;gap:.5rem}
   .seatn b{font-family:var(--serif);font-weight:400;font-size:2.4rem;line-height:1;
     color:var(--accent);font-variant-numeric:tabular-nums}
   .seatn span{font-size:.9rem;color:var(--ink-2)}
-  .seatleft{margin:.5rem 0 0;font-size:.82rem;color:var(--muted)}
-  /* The hundred as a hundred dots: filled, yours, and the ones still open. A
+  .seatleft{margin:.5rem 0 0;font-size:.82rem;color:var(--muted)}/* The hundred as a hundred dots: filled, yours, and the ones still open. A
      number out of a hundred is a claim; this is the same fact as a picture,
      and it needs no translating. */
+  
   .dots{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;margin:.75rem 0 0}
   .dots i{aspect-ratio:1;border-radius:50%;background:var(--line)}
   .dots i.on{background:var(--accent);opacity:.5}
@@ -507,10 +420,10 @@
   .way .t small{display:block;margin:.1rem 0 0;font-size:.76rem;color:var(--muted);
     line-height:1.4}
   .way .v{flex:none;font-size:.8rem;font-weight:600;color:var(--accent)}
-  .way .v.grey{color:var(--muted);font-weight:500}
-  /* The share, and the one act that moves it. The block used to lead with the
+  .way .v.grey{color:var(--muted);font-weight:500}/* The share, and the one act that moves it. The block used to lead with the
      seat number — 41 points at seat 24, the smallest number on the screen in
      the largest type. It leads with what somebody actually gets now. */
+  
   .seatnow{margin:0;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;
     color:var(--muted)}
   .seatbig{margin:.15rem 0 0;font-size:2.4rem;line-height:1.05;letter-spacing:-.025em;
@@ -534,14 +447,14 @@
   .seatrest{margin:1.05rem 0 0;padding-top:.85rem;border-top:1px solid var(--hair)}
   .seatrest .h{margin:0 0 .5rem;font-size:.76rem;text-transform:uppercase;
     letter-spacing:.08em;color:var(--muted)}
-  .seatex{margin:.8rem 0 0;font-size:.75rem;line-height:1.55;color:var(--muted)}
-  /* What the way back is in, said above the box that changes it. */
+  .seatex{margin:.8rem 0 0;font-size:.75rem;line-height:1.55;color:var(--muted)}/* What the way back is in, said above the box that changes it. */
+  
   .backsay{margin:.15rem 0 .5rem;font-size:.82rem;line-height:1.5}
   .backsay.ok{color:var(--muted)}
   .backsay.warn{color:var(--accent)}
   .soonnote{margin:1.4rem 0 0;padding:.9rem 1rem;border-left:2px solid var(--accent);
-    background:var(--raise);border-radius:0 8px 8px 0;font-size:.88rem;color:var(--ink-2)}
-  /* Sharing, as its own panel rather than a line inside something else. */
+    background:var(--raise);border-radius:0 8px 8px 0;font-size:.88rem;color:var(--ink-2)}/* Sharing, as its own panel rather than a line inside something else. */
+  
   .wrshare{margin:1.4rem 0 0;background:var(--card);border:1px solid var(--line);
     border-radius:14px;padding:1.1rem}
   .wrshare .sharenow{display:flex;align-items:baseline;gap:.45rem;margin:0 0 .5rem;
@@ -557,9 +470,9 @@
     justify-content:center;gap:.5rem}
   .wrshare .sharego svg{width:1.1rem;height:1.1rem;fill:none;stroke:currentColor;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .wrshare .hold{margin:.9rem 0 .35rem;font-size:.78rem;color:var(--muted)}
-  /* The address itself, readable and selectable. WeChat's browser often has
+  .wrshare .hold{margin:.9rem 0 .35rem;font-size:.78rem;color:var(--muted)}/* The address itself, readable and selectable. WeChat's browser often has
      neither a share sheet nor a clipboard, and then this is the whole way. */
+  
   .wrshare .shareurl{margin:0;padding:.6rem .7rem;background:var(--raise);
     border:1px solid var(--hair);border-radius:8px;font-size:.8rem;
     color:var(--ink-2);word-break:break-all;user-select:all;-webkit-user-select:all}
@@ -569,14 +482,14 @@
     font:inherit;font-weight:600;font-size:.9rem;cursor:pointer}
   .seatsaid{margin:.5rem 0 0;font-size:.83rem;color:var(--muted);text-align:center}
   .seatsaid.on{color:var(--good, #2E7D5B)}
-  .seatfine{margin:.7rem 0 0;font-size:.75rem;color:var(--muted);line-height:1.5}
-
-  /* NOT .post, NOT .band. site.css owns both: .post is the feed's own card,
+  .seatfine{margin:.7rem 0 0;font-size:.75rem;color:var(--muted);line-height:1.5}/* NOT .post, NOT .band. site.css owns both: .post is the feed's own card,
      laid out as a flex row with an avatar column — which squeezed this card's
      byline into a stripe down its right-hand side — and .band is the tinted
      full-width strip the marketing page is built from. Both were caught by
      comparing every class in this file against the stylesheet, which is the
      check that should have run before the file was written. */
+
+  
   .wrpost{margin:.6rem 0 0;padding:.95rem 1.05rem;background:var(--card);
     border:1px solid var(--hair);border-radius:.75rem}
   .wrpost p{margin:0;font-size:.93rem;line-height:1.55}
@@ -590,17 +503,17 @@
 
   .none{margin:.6rem 0 0;padding:.95rem 1.05rem;background:var(--card);
     border:1px solid var(--hair);border-radius:.75rem;font-size:.88rem;
-    color:var(--ink-2);line-height:1.5}
-
-  /* ---- the You tab ---- */
-  /* NOT .shot — site.css owns that too, as a centred flex column for the
+    color:var(--ink-2);line-height:1.5}/* ---- the You tab ---- *//* NOT .shot — site.css owns that too, as a centred flex column for the
      phone mock-ups on the marketing page. It was quietly making this box
      centre its contents, which is why the photo button rendered as a narrow
      pill instead of the full-width button it is written as. */
+
+  
+  
   .wrshot{margin:1rem 0 0;padding:1rem;background:var(--card);
-    border:1px solid var(--hair);border-radius:.8rem}
-  /* A label wrapping a hidden file input: the styled control every browser
+    border:1px solid var(--hair);border-radius:.8rem}/* A label wrapping a hidden file input: the styled control every browser
      agrees on, and it opens the camera on a phone. */
+  
   .shotgo{display:block;width:100%;padding:.7rem;border:1px solid var(--accent);
     border-radius:99px;background:none;color:var(--accent);font:inherit;
     font-weight:600;font-size:.92rem;text-align:center;cursor:pointer}
@@ -627,128 +540,35 @@
     border-radius:99px;background:var(--accent);color:var(--accent-ink);
     font:inherit;font-weight:600;font-size:.95rem;cursor:pointer}
   .form .said{margin:.55rem 0 0;font-size:.85rem;color:var(--good, #2E7D5B)}
-  .form .no{margin:.55rem 0 0;font-size:.85rem;color:#b3261e}
-
-  /* ---- the two tabs ----
+  .form .no{margin:.55rem 0 0;font-size:.85rem;color:#b3261e}/* ---- the two tabs ----
      There were three. The third was a feed, and the feed is behind the door:
      the tab would have been either a locked screen or the blurred shape they
      already scrolled past on the way in, on their first evening. It arrives
      the day somebody brings them in, and its arriving is part of what that
      feels like. */
+
+  
   .tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;
     background:var(--card);border-top:1px solid var(--hair);
     padding-bottom:env(safe-area-inset-bottom)}
   .tabs button{flex:1;padding:.9rem 0;border:0;background:none;font:inherit;
     font-size:.9rem;font-weight:600;color:var(--muted);cursor:pointer}
-  .tabs button.on{color:var(--accent)}
-
-  /* Under the last press of the arrival, quiet: it is a thing to remember,
+  .tabs button.on{color:var(--accent)}/* Under the last press of the arrival, quiet: it is a thing to remember,
      not a thing to do now. */
+
+  
   .heromo{margin:1rem 0 0;font-size:.82rem;line-height:1.5;
     color:rgba(239,230,220,.62)}
 
   .quietlink{display:inline-block;margin:1rem 0 0;color:var(--accent);
     font-size:.9rem}
-
-  /* ---- MO, FLOATING ------------------------------------------------------
-     He was a panel in the page, between the two things that can be lost and
-     the card. That is a doorman standing in the corridor: always there,
-     always in the way, and scrolled past before he is needed. The waiting
-     room is the screen this board asks the most of somebody, so everything
-     on it that is not the two things is noise.
-     So he stands in the corner of the screen instead and is dragged wherever
-     they want him. Fixed, so he keeps up with the scroll; moveable, because
-     a thing fixed over the one control somebody is reaching for is worse
-     than no help at all — and on a 430pt screen there is always something
-     under him. */
-  .modock{position:fixed;z-index:6;width:3.1rem;height:3.1rem;border-radius:50%;
-    border:0;background:var(--accent);color:var(--accent-ink);padding:0;
-    display:flex;align-items:center;justify-content:center;cursor:grab;
-    box-shadow:0 5px 18px rgba(10,14,24,.38);
-    /* Pointer events do the dragging, so the browser must not also be
-       scrolling the page under the finger. */
-    touch-action:none;animation:dockin .35s .2s backwards}
-  .modock svg{width:1.85rem;height:1.85rem;pointer-events:none}
-  .modock.drag{cursor:grabbing;box-shadow:0 10px 26px rgba(10,14,24,.5);
-    transform:scale(1.07)}
   @keyframes dockin{from{opacity:0;transform:scale(.5)}}
-
-  /* "PRESS ME", ONCE, THE FIRST TIME HE APPEARS IN THE CORNER.
-     The same move as the arrow at the photo chip: a small pointer and the
-     reason beside it, because a blue circle that has just faded in at the
-     edge of a screen is furniture until somebody says what it is. It says
-     it once in a person's life — board:momet in localStorage — because the
-     second time it is a thing nagging you about a button you already know.
-     Fixed and aimed at his left, since he starts life on the right. */
-  .mopoint{position:fixed;z-index:7;display:flex;align-items:center;gap:.25rem;
-    pointer-events:none;animation:pointin .45s .25s backwards}
-  .mopoint span{background:var(--accent);color:var(--accent-ink);
-    border-radius:.6rem;padding:.34rem .66rem;font-size:.76rem;font-weight:600;
-    line-height:1.25;white-space:nowrap;
-    box-shadow:0 3px 12px rgba(10,14,24,.34)}
-  .mopoint i{width:0;height:0;
-    border-top:.42rem solid transparent;border-bottom:.42rem solid transparent;
-    border-left:.46rem solid var(--accent);
-    animation:pointnudge 1.7s .9s ease-in-out 3}
   @keyframes pointnudge{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
-  /* Parked against the left edge: the label goes to his right and the arrow
-     turns round, because an arrow pointing off the side of a screen points
-     at nothing. */
-  .mopoint.flip{flex-direction:row-reverse}
-  .mopoint.flip i{border-left:0;border-right:.46rem solid var(--accent)}
-  @keyframes pointnudgeL{0%,100%{transform:translateX(0)}50%{transform:translateX(-3px)}}
-  .mopoint.flip i{animation-name:pointnudgeL}
-  .mopoint.go{opacity:0;transition:opacity .3s}
-  @media (prefers-reduced-motion:reduce){
-    .mopoint{animation:none}
-    .mopoint i{animation:none}
-  }
-  /* There is no flying version of him any more — see the note by the
-     IntersectionObserver in welcomeOrb. He is left behind by the scroll and
-     the small one fades in once he is off the screen. */
-
-  /* HE OPENS UPWARDS FROM THE BOTTOM, not out of wherever he was parked. A
-     panel hung off a draggable button lands half off-screen the moment
-     somebody has parked it in a corner, and a conversation is a thing you
-     read from the bottom anyway. */
-  /* The veil is gone — see moOpen. A panel that covers the screen in order to
-     be asked about the screen is a panel you close, look, remember and
-     reopen. The page behind him stays lit and stays scrollable. */
-  /* CLEAR OF THE TAB BAR, which is fixed at the bottom and stays there under
-     the veil. Flush to the bottom edge put the kill switch straight across
-     "Waiting" and "You" — two sets of words in the same place, one of them
-     dimmed, and the eye cannot tell which layer it is reading. ~3.4rem of
-     tabs plus a gap. */
-  /* AND NOT THE FULL WIDTH OF A DESKTOP. Left and right at 0 is right on a
-     phone and absurd on a 1900px window — a conversation of six-word bubbles
-     stretched across a metre of screen. The page's own column is ~34rem, so
-     the sheet takes the same and sits under the middle of it. */
-  .mosheet{position:fixed;z-index:7;left:50%;transform:translateX(-50%);
-    bottom:0;width:100%;max-width:34rem;
-    padding:0 .7rem calc(4.2rem + env(safe-area-inset-bottom));
-    animation:sheetin .3s cubic-bezier(.2,.7,.3,1)}
-  /* HIS OWN SHADOW NOW THAT THERE IS NO VEIL BEHIND HIM: without one he would
-     sit flat on the page as though he were part of it. */
-  .mosheet .but{margin:0;box-shadow:0 -6px 34px rgba(8,11,18,.34)}
-  /* SHORTER, because the page behind him is the point. 46vh plus the form and
-     the header took two thirds of a phone, which is a veil by another name. */
-  .mosheet .butsay{max-height:30vh}
-  /* White was for the dark veil, and the veil is gone — so it was white text
-     on the lit page, which is the one control here that has to stay legible
-     to somebody who came looking for it. Its own plate instead, so it reads
-     against whatever the page happens to have under it. */
-  .mosheet .butoff{margin:.6rem auto 0;color:var(--ink-2);
-    background:var(--card);border-radius:99px;padding:.3rem .8rem;
-    box-shadow:0 2px 10px rgba(8,11,18,.18)}
-  /* Both transforms, or the centring is dropped for the length of the
+  @keyframes pointnudgeL{0%,100%{transform:translateX(0)}50%{transform:translateX(-3px)}}/* Both transforms, or the centring is dropped for the length of the
      animation and the sheet slides up from the right. */
+  
   @keyframes sheetin{from{transform:translateX(-50%) translateY(105%)}
-    to{transform:translateX(-50%) translateY(0)}}
-  @media (prefers-reduced-motion:reduce){
-    .modock{animation:none}
-    .mosheet{animation:none}
-  }
-</style>
+    to{transform:translateX(-50%) translateY(0)}}</style>
 </head>
 <body>
 
@@ -776,6 +596,11 @@ import { offerInstall } from "/install.js";
 import { canHear, listen } from "/speak.js";
 import { drawCard } from "/postcard.js";
 import { beatUnits } from "/beat.js";
+/* Mo is his own module so that every page can have him — see mo.js. What this
+   page adds is the only thing it knows that he does not: how he opens to
+   somebody standing at a door, and what to do when they keep the sentence he
+   proposes. */
+import { mountMo, moFloat, moDock, moOff, moGoneRow, moIsOpen, pointAtMo, MOFACE } from "/mo.js";
 import { device } from "/wait.js";
 /* The same pipeline the board behind the door uses — HEIC in, JPEG out,
    the right way up, small enough to arrive over Chinese mobile data. */
@@ -1301,9 +1126,14 @@ function shareBox(link, ahead) {
    the screen and the small one has taken over. See moFloat, and the
    scroll-settle at the end of welcomeOrb. */
 let ARRIVING = false;
+/* AND ONCE PER PAGE LOAD. The arrival is a thing that happens to somebody
+   when they open the room, not a thing the page re-enacts every time it
+   redraws itself — and it redraws on every turn of a conversation and every
+   press of a pill. Without this, sending Mo away and asking for him back
+   redrew the room, started the arrival again, and hid the circle that had
+   just been asked for. */
+let ARRIVED = false;
 
-let BUT = null;          // { turns: [], open: bool, put: {...}|null, busy: bool }
-let BUTMIC = null;
 
 /* NOTHING ON THIS PAGE TALKS, AND IT IS ON PURPOSE.
  *
@@ -1389,7 +1219,7 @@ function welcomeOrb(you) {
   /* The dock is suppressed until this finishes — see moFloat. Set here rather
      than in drawWait so that a page without an arrival never sets it and
      never has to clear it. */
-  if (DATA.butler && !moOff()) ARRIVING = true;
+  if (!ARRIVED && DATA.butler && !moOff()) ARRIVING = true;
 
   const wrap = el("div", "orbwrap");
   wrap.append(el("i", "ring"), el("i", "ring b"));
@@ -1571,6 +1401,7 @@ function welcomeOrb(you) {
       const reveal = () => {
         if (!ARRIVING) return;
         ARRIVING = false;
+        ARRIVED = true;
         /* AND THE BIG ONE GOES. On a tall phone the scroll does not carry the
            hero far enough off and both of him end up on screen — which is the
            exact thing this whole arrangement exists to prevent. He does not
@@ -1671,229 +1502,6 @@ function butlerFirst() {
     : T("but.hookList", { who });
 }
 
-/* HIS FACE, IN ONE PLACE. Drawn at 20px in the panel head and at 30 in the
-   floating button, and the two must never drift apart — the button is how
-   somebody recognises him before they have read his name.
-   FILLED, NOT DRAWN. The first version was line art at 1.7 stroke inside a
-   20px circle, which came out as an arch and a dot — a silhouette is the only
-   thing that survives at this size. Brim, crown, shoulders, and the gap
-   between them reads as the face without one being drawn. */
-const MOFACE = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">'
-  + '<path d="M6.3 8.2c0-2.6 2.5-4.2 5.7-4.2s5.7 1.6 5.7 4.2z"/>'
-  + '<rect x="3.6" y="8.4" width="16.8" height="1.9" rx=".95"/>'
-  + '<path d="M4.3 20.4c0-3.8 3.5-5.9 7.7-5.9s7.7 2.1 7.7 5.9z"/></svg>';
-
-function butlerPanel() {
-  const box = el("div", "but");
-
-  const head = el("div", "buthead");
-  /* His face: a cap and shoulders, not the board's 交 mark — see .butface. */
-  const face = el("i", "butface");
-  face.innerHTML = MOFACE;
-  head.append(face);
-  const who = document.createElement("div");
-  who.append(el("b", null, T("but.name")));
-  if (T("but.sub")) who.append(el("small", null, " " + T("but.sub")));
-  head.append(who);
-
-  /* A WAY OUT, IN THE HEADER, and it had never been drawn. The CSS for it has
-     been sitting in this file the whole time; the only way to shut him was to
-     tap the dark behind the sheet, which is a thing you have to already know.
-     A word rather than a ×: it closes a panel that comes straight back when
-     you press him again, which is not what a cross means. */
-  if (MOSHUT) {
-    const x = el("button", "x", T("but.close"));
-    x.type = "button";
-    x.addEventListener("click", () => { if (MOSHUT) MOSHUT(); });
-    head.append(x);
-  }
-  box.append(head);
-
-  const said = el("div", "butsay");
-  /* ONE SPEAKER, UNDER THE LAST THING HE SAID.
-     It was under every line of his, which on the opening — two of his at once
-     — put two identical grey buttons in a panel of four elements. The line
-     worth hearing is the one that has just arrived; the ones above it have
-     been read. Never under her own: reading somebody their own words back is
-     not a feature. */
-  /* AND THEN THE HEAR BUTTON WENT. Mo read his line in the browser's own
-     voice, which on Chrome/macOS is Google's network voice and sounds like a
-     lift announcing a floor. A character with a name and a face, given that
-     voice, stops being a character. He is better read than heard until there
-     is real TTS behind him. */
-  BUT.turns.forEach((t) => {
-    said.append(el("div", "bub " + (t.from === "you" ? "him" : "her"), t.text));
-  });
-  if (BUT.busy) said.append(el("div", "bub him wait", T("but.thinking")));
-  box.append(said);
-  // Newest at the bottom, which is where a conversation is read from.
-  setTimeout(() => { try { said.scrollTop = said.scrollHeight; } catch { /* not yet */ } }, 0);
-
-  /* WHAT HE IS PROPOSING — shown as the sentence it will be, because that is
-     what they are agreeing to. "me: agent, want: talent" is a database row and
-     nobody can check a database row against themselves. */
-  if (BUT.put) {
-    const put = el("div", "butput");
-    /* The same words the pills under this use — say.iam and role.a.*, which
-       carry their own article so "a Director" and "an Agent" and "Crew" all
-       read correctly. A second way of writing the sentence would eventually
-       disagree with the first. */
-    /* Joined with a space in English and with nothing in Chinese. Chinese
-       does not put spaces between words, and "我是 经纪人 我在找 制片人" reads
-       like a form with the labels left in. */
-    put.append(el("p", "line", [T("say.iam"), T("role.a." + BUT.put.me),
-      T("say.lookingFor"), T("role.a." + BUT.put.want)].join(lang() === "zh" ? "" : " ")));
-    if (BUT.put.why) put.append(el("p", "why", BUT.put.why));
-    const row2 = el("div", "row2");
-    const keep = el("button", "keep", T("but.keep"));
-    keep.type = "button";
-    keep.addEventListener("click", async () => {
-      keep.disabled = true;
-      keep.textContent = T("me.working");
-      const ok = await putCard({ me: BUT.put.me, want: BUT.put.want,
-        ...(BUT.put.why ? { why: BUT.put.why } : {}) });
-      if (!ok) { keep.disabled = false; keep.textContent = T("but.keep"); return; }
-      BUT.put = null;
-      /* Done. The sheet closes itself rather than sitting over the card they
-         just filled in — the whole point of the proposal was to get them off
-         this conversation and onto the board. */
-      if (MOSHUT) MOSHUT();
-      await load();
-      draw();
-    });
-    const no = el("button", "no", T("but.redo"));
-    no.type = "button";
-    no.addEventListener("click", () => {
-      /* Not a refusal to be argued with — it goes back to the conversation
-         with the proposal withdrawn, and he is told why in their own turn. */
-      BUT.put = null;
-      draw();
-    });
-    row2.append(keep, no);
-    put.append(row2);
-    box.append(put);
-  }
-
-  if (BUT.no) box.append(el("p", "butno", BUT.no));
-
-  const form = el("form", "butform");
-  const input = el("input");
-  input.type = "text";
-  input.maxLength = 600;
-  input.placeholder = T("but.ph");
-  input.autocomplete = "off";
-  form.append(input);
-
-  /* THE MIC. Speaking is the point for half these people: the person filling
-     this in is on a phone, in their second language, one thumb at a time. Not
-     drawn where the browser has no recogniser — see speak.js, and the note
-     there about where it does and does not work. */
-  if (canHear()) {
-    const mic = el("button", "mic");
-    mic.type = "button";
-    mic.setAttribute("aria-pressed", "false");
-    mic.setAttribute("aria-label", T("mic.go"));
-    mic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">'
-      + '<path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z"/>'
-      + '<path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
-    mic.addEventListener("click", () => {
-      if (BUTMIC) { BUTMIC.stop(); BUTMIC = null; return; }
-      BUT.no = "";
-      BUTMIC = listen(input, lang() === "zh" ? "zh-CN" : "en-US", {
-        onState(on) {
-          mic.setAttribute("aria-pressed", on ? "true" : "false");
-          if (!on) BUTMIC = null;
-        },
-        onError(why) {
-          BUT.no = T(why === "not-allowed" ? "mic.no" : "mic.off");
-          draw();
-        },
-      });
-    });
-    form.append(mic);
-  }
-
-  const go = el("button", null, T("but.send"));
-  go.type = "submit";
-  form.append(go);
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (BUTMIC) { BUTMIC.stop(); BUTMIC = null; }
-    const text = input.value.trim();
-    if (!text || BUT.busy) return;
-    BUT.turns.push({ from: "them", text });
-    BUT.busy = true;
-    BUT.no = "";
-    input.value = "";
-    draw();
-    await butlerTurn();
-  });
-  box.append(form);
-
-  // Focus only once the panel is on the page, and never on the first draw —
-  // a keyboard that opens the moment somebody taps "talk to him" covers the
-  // line he just said.
-  if (BUT.turns.length > 2) setTimeout(() => { try { input.focus(); } catch { /* gone */ } }, 0);
-
-  /* THE KILL SWITCH, SAID LITERALLY, and under the panel rather than as a
-     cross in its corner. A × reads as closing something that will be back
-     tomorrow, and this one does not come back until they ask for it.
-     Naming the thing people object to is what makes the offer believable:
-     "Not for me" is a preference, "Don't like AI? Send him away" is an
-     answer. A board whose whole pitch is that a person decides cannot also
-     be the board that insists a machine talks to you first. */
-  const off = el("button", "butoff", T("but.no"));
-  off.type = "button";
-  off.addEventListener("click", () => {
-    if (BUTMIC) BUTMIC.stop();
-    try { localStorage.setItem(BUTKEY, "1"); } catch { /* private window */ }
-    /* Both halves: the sheet goes now, and moFloat keeps the button off on
-       every redraw from here because moOff() is true. */
-    if (MOSHUT) MOSHUT();
-    draw();
-  });
-
-  const out = document.createDocumentFragment();
-  out.append(box, off);
-  return out;
-}
-
-/** One round trip. */
-async function butlerTurn() {
-  try {
-    /* A DEFINED WAIT, because the undefined one is what broke him. The first
-       turn of a conversation came back and every one after it did not — each
-       turn carries the whole conversation back up, so they get slower, and
-       somewhere past the browser's own patience the request died with no
-       error anywhere and a server that had answered nobody. 25 seconds,
-       just past the server's own 20, so his timeout wins and can be logged
-       rather than this one silently beating it. */
-    const r = await fetch("/api/butler", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-board-device": device() },
-      body: JSON.stringify({ turns: BUT.turns }),
-      signal: AbortSignal.timeout ? AbortSignal.timeout(25_000) : undefined,
-    });
-    const d = await r.json().catch(() => ({}));
-    BUT.busy = false;
-    if (!r.ok || d.error) {
-      BUT.no = T(d.error === "slow-down" || d.error === "busy" ? "but.slow" : "but.off");
-      draw();
-      return;
-    }
-    BUT.turns.push({ from: "you", text: d.say });
-    /* A proposal is shown only when all of it survived the checks on the way
-       back — see clean() in butler.js. Half a sentence is not something to put
-       a Keep button under. */
-    BUT.put = d.ready ? { me: d.me, want: d.want, why: d.why } : null;
-  } catch {
-    BUT.busy = false;
-    BUT.no = T("but.off");
-  }
-  draw();
-}
-
 /** HE IS ALREADY THERE. There used to be a card here first — "Not sure what
  *  to put? … Talk to him" — which is a feature introducing itself to somebody
  *  who has not been greeted yet, and one more thing to read before the thing
@@ -1913,233 +1521,6 @@ async function butlerTurn() {
  *  know there is a way back, and somebody who shut it on purpose is owed the
  *  confirmation that it stayed shut.
  */
-/* ---- MO, FLOATING -------------------------------------------------------
- *
- * The button lives on document.body rather than in the page box, because the
- * page box is emptied and rebuilt by draw() on every keystroke he answers —
- * a dock inside it would be destroyed and rebuilt mid-drag, and would lose
- * where somebody had just put it. So: drawn once, kept, and told to show or
- * hide itself. moFloat() below is the single thing draw() calls.
- */
-const SPOTKEY = "board:mospot";
-let MODOCK = null;      // the button, once made
-let MOSHUT = null;      // closes the open sheet, or null when none is open
-
-/* WHERE HE IS PARKED, AS FRACTIONS OF THE FREE SPACE rather than pixels. A
-   phone turned on its side, or a desktop window dragged narrower, would
-   otherwise leave him off the edge of the screen with no way to reach him.
-   Default: bottom right, clear of the two tabs. */
-function moSpot() {
-  try {
-    const v = JSON.parse(localStorage.getItem(SPOTKEY) || "");
-    if (typeof v.x === "number" && typeof v.y === "number") return v;
-  } catch { /* nothing saved, or a private window */ }
-  return { x: 1, y: 0.84 };
-}
-
-function moPark(btn, fx, fy) {
-  const pad = 10;
-  const w = btn.offsetWidth || 50;
-  const h = btn.offsetHeight || 50;
-  /* The tab bar is fixed at the bottom and is about 3.4rem tall. He may be
-     parked over it — somebody who drags him there has decided that — but he
-     does not START there. That is what the 0.84 default is for. */
-  const maxX = Math.max(0, window.innerWidth - w - pad * 2);
-  const maxY = Math.max(0, window.innerHeight - h - pad * 2);
-  const x = Math.min(1, Math.max(0, fx));
-  const y = Math.min(1, Math.max(0, fy));
-  btn.style.left = (pad + x * maxX) + "px";
-  btn.style.top = (pad + y * maxY) + "px";
-  return { x, y };
-}
-
-function moDock() {
-  if (MODOCK) return MODOCK;
-  const btn = el("button", "modock");
-  btn.type = "button";
-  btn.innerHTML = MOFACE;
-  document.body.append(btn);
-  MODOCK = btn;
-
-  let spot = moSpot();
-  const replace = () => { spot = moPark(btn, spot.x, spot.y); };
-  replace();
-  window.addEventListener("resize", replace);
-
-  /* DRAG, AND A TAP IS A DRAG THAT WENT NOWHERE. Pointer events so one path
-     covers mouse, touch and pen; setPointerCapture so a finger that slides
-     off the button keeps dragging it rather than dropping it where the
-     gesture happened to leave the circle. */
-  let down = null;
-  const MOVED = 6;        // px before a tap becomes a drag
-  btn.addEventListener("pointerdown", (e) => {
-    down = { x: e.clientX, y: e.clientY, l: btn.offsetLeft, t: btn.offsetTop, moved: false };
-    try { btn.setPointerCapture(e.pointerId); } catch { /* older browser */ }
-  });
-  btn.addEventListener("pointermove", (e) => {
-    if (!down) return;
-    const dx = e.clientX - down.x;
-    const dy = e.clientY - down.y;
-    if (!down.moved) {
-      if (Math.abs(dx) + Math.abs(dy) < MOVED) return;
-      down.moved = true;
-      btn.classList.add("drag");
-    }
-    const pad = 10;
-    const maxX = Math.max(1, window.innerWidth - btn.offsetWidth - pad * 2);
-    const maxY = Math.max(1, window.innerHeight - btn.offsetHeight - pad * 2);
-    spot = moPark(btn, (down.l + dx - pad) / maxX, (down.t + dy - pad) / maxY);
-  });
-  const up = () => {
-    const was = down;
-    down = null;
-    btn.classList.remove("drag");
-    if (!was) return;
-    if (was.moved) {
-      try { localStorage.setItem(SPOTKEY, JSON.stringify(spot)); } catch { /* private window */ }
-      return;
-    }
-    moOpen();
-  };
-  btn.addEventListener("pointerup", up);
-  btn.addEventListener("pointercancel", () => { down = null; btn.classList.remove("drag"); });
-  return btn;
-}
-
-/* THE SHEET. Its contents are butlerPanel(), the same one that used to sit in
-   the page, and it is re-rendered by draw() through moFloat below — his reply
-   arrives by the page redrawing, so a sheet that draw() cannot reach would
-   show his question for ever and never his answer. */
-function moOpen() {
-  if (MOSHUT) return;
-
-  /* NO VEIL, AND THE PAGE BEHIND HIM STILL WORKS.
-   *
-   * He opened as a modal over a dimmed page, which is exactly wrong for what
-   * he is for: the questions somebody asks a doorman are about the thing in
-   * front of them — this box, that button, what this word means — and a panel
-   * that covers the screen to be asked about the screen is a panel you have to
-   * close, look, remember, and reopen.
-   *
-   * So he sits at the bottom and nothing behind him is blocked. Scroll the
-   * page with him open, find the thing, ask about it while looking at it.
-   * The cost is that tapping away no longer closes him, which is why the
-   * header now has a word that does. */
-  const sheet = el("div", "mosheet");
-  document.body.append(sheet);
-  /* MOSHUT before the panel is built: the close button in its header is only
-     drawn when there is a sheet to close. */
-  MOSHUT = () => {
-    sheet.remove();
-    document.removeEventListener("keydown", esc);
-    MOSHUT = null;
-    if (MODOCK && !moOff()) MODOCK.hidden = false;
-    if (BUTMIC) { BUTMIC.stop(); BUTMIC = null; }
-  };
-  const esc = (e) => { if (e.key === "Escape" && MOSHUT) MOSHUT(); };
-  document.addEventListener("keydown", esc);
-  sheet.append(butlerPanel());
-  if (MODOCK) MODOCK.hidden = true;
-}
-
-/* WHAT draw() CALLS. Three jobs: put him on the screen when he is wanted,
-   take him off when he is not, and keep an open sheet in step with the state
-   the redraw was called for. */
-function moFloat(wanted) {
-  if (!wanted || moOff()) {
-    if (MOSHUT) MOSHUT();
-    if (MODOCK) MODOCK.hidden = true;
-    return;
-  }
-  const btn = moDock();
-  btn.setAttribute("aria-label", T("but.open"));
-  btn.hidden = Boolean(MOSHUT);
-  if (MOSHUT) {
-    const sheet = document.querySelector(".mosheet");
-    if (sheet) { sheet.textContent = ""; sheet.append(butlerPanel()); }
-  }
-}
-
-/* SAID ONCE IN A PERSON'S LIFE. The second showing of "press me" is a page
-   nagging somebody about a button they already know. */
-const METKEY = "board:momet";
-
-/** The arrow at the corner, the first time he ever appears there.
- *
- *  A blue circle fading in at the edge of a screen is furniture until
- *  somebody says what it is — the same problem the photo chip had, and the
- *  same answer: point at it and give the reason in four words. Positioned
- *  against his actual rect rather than the corner, because he is draggable
- *  and the arrow has to find him wherever he was left.
- */
-function pointAtMo() {
-  if (!MODOCK || MODOCK.hidden) return;
-  try { if (localStorage.getItem(METKEY) === "1") return; } catch { /* private window */ }
-  if (document.querySelector(".mopoint")) return;
-
-  const p = el("div", "mopoint");
-  p.append(el("span", null, T("but.press")), el("i"));
-  document.body.append(p);
-
-  const place = () => {
-    const r = MODOCK.getBoundingClientRect();
-    p.style.top = Math.round(r.top + r.height / 2 - p.offsetHeight / 2) + "px";
-    /* To his left, and flipped to his right if he has been parked against the
-       left edge — an arrow pointing off the side of the screen points at
-       nothing. */
-    const w = p.offsetWidth;
-    /* 14, not 8: at eight the arrowhead sits under the circle's own shadow
-       and the pill's corner disappears behind him. */
-    if (r.left - w - 14 >= 6) {
-      p.style.left = Math.round(r.left - w - 14) + "px";
-      p.classList.remove("flip");
-    } else {
-      p.style.left = Math.round(r.right + 14) + "px";
-      p.classList.add("flip");
-    }
-  };
-  place();
-  window.addEventListener("resize", place);
-
-  const gone = () => {
-    try { localStorage.setItem(METKEY, "1"); } catch { /* private window */ }
-    window.removeEventListener("resize", place);
-    p.classList.add("go");
-    setTimeout(() => p.remove(), 320);
-  };
-  /* Pressing him is the point, so pressing him takes it away. Otherwise it
-     goes on its own — it has been read by then, or it never will be. */
-  MODOCK.addEventListener("pointerdown", gone, { once: true });
-  setTimeout(gone, 7000);
-}
-
-const BUTKEY = "board:nomo";
-const moOff = () => { try { return localStorage.getItem(BUTKEY) === "1"; } catch { return false; } };
-
-function butlerShut() {
-  const box = el("div", "butshut");
-  if (moOff()) box.append(el("p", "butgone", T("but.gone")));
-  const go = el("button", null, T(moOff() ? "but.back" : "but.shut"));
-  go.type = "button";
-  go.addEventListener("click", () => {
-    try { localStorage.removeItem(BUTKEY); } catch { /* private window */ }
-    /* draw() puts the button back through moFloat; opening the sheet as well
-       is what they just asked for by pressing this. */
-    draw();
-    moOpen();
-  });
-  box.append(go);
-  return box;
-}
-
-/* No `open` any more. Whether he is on the screen is moOff(), and whether the
-   sheet is up is MOSHUT — two facts in two places instead of a third copy on
-   this object that had to be kept in step with both. */
-const butlerStart = () => ({
-  turns: [{ from: "you", text: butlerFirst() }, { from: "you", text: T("but.ask") }],
-  put: null, busy: false, no: "",
-});
-
 /** THE CARD THEY CAN POST.
  *
  *  Nobody shares a waiting list. People share proof they are in, news about
@@ -2407,10 +1788,7 @@ function drawWait(box) {
      somewhere a person can find it, and it lives where he used to be. */
   /* The way back to him, for somebody who sent him away and has no floating
      button left to press. Whatever state they are in — see moFloat. */
-  if (DATA.butler && moOff()) {
-    if (!BUT) BUT = butlerStart();
-    box.append(butlerShut());
-  }
+  if (DATA.butler && moOff()) box.append(moGoneRow());
 
   const strip = el("p", "ins");
   strip.hidden = true;
@@ -2767,17 +2145,31 @@ function draw() {
      when the questions start: how long, who reads it, what happens next.
      A doorman who leaves once you are through the door is a doorman you
      cannot ask anything. */
-  if (DATA.butler && !BUT) BUT = butlerStart();
+
   /* NOT WHILE THE ARRIVAL IS RUNNING. Two of him on one screen — the big one
      in the middle talking and the small one in the corner waiting — says they
      are two different characters. The big one is left behind by the scroll
-     and the small one fades in once he is gone. */
-  moFloat(Boolean(DATA.butler) && !ARRIVING);
+     and the small one fades in once the page has stopped moving. */
+  mountMo({
+    on: Boolean(DATA.butler) && !ARRIVING,
+    /* The whole opening, not one line: what he says first is the only part of
+       him that differs between a door and a room, so the page that knows
+       which it is hands over both turns. */
+    first: () => [
+      { from: "you", text: butlerFirst() },
+      { from: "you", text: T("but.ask") },
+    ],
+    /* The one thing only this screen can do with what he proposes. The member
+       pages pass no onKeep at all, which also takes the Keep button away
+       rather than leaving a dead one under his sentence. */
+    onKeep: (card) => putCard(card),
+    onChange: async () => { await load(); draw(); },
+  });
 
   /* NOT WHILE HE IS OPEN. draw() runs on every turn of the conversation, and
      yanking the page behind the sheet back to the top each time means the
      card they were looking at is gone when they close him. */
-  if (!MOSHUT) window.scrollTo(0, 0);
+  if (!moIsOpen()) window.scrollTo(0, 0);
 }
 
 async function load() {

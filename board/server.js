@@ -3481,7 +3481,43 @@ app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
   /* Not "are they up" — anybody on the list with a row may use it. Somebody
      who fills their card in before their turn comes up is the best possible
      outcome of this feature, not an abuse of it. */
+  /* AND MEMBERS, WHO ARE MOST OF THE BOARD AND COULD NOT REACH HIM AT ALL.
+   *
+   * This answered 403 to anybody without a waiting row — so the one person
+   * here whose job is answering questions was unreachable from every screen
+   * where somebody has a real one. A member asking "why is it quiet" or
+   * "what does this word mean" had nobody.
+   *
+   * WHAT HE IS TOLD ABOUT THEM, and it is deliberately almost nothing: their
+   * own name, their own sentence, whether their own card has a face, and HOW
+   * MANY people answer their sentence. A count and not a list — no name, no
+   * company, not a word anybody wrote. He is a doorman, not a way to read the
+   * room, and the difference has to hold in what he is handed rather than in
+   * what he is asked not to say. */
   if (!row) {
+    const board = await store.load(FILE);
+    const mine = me ? board.people.find((q) => q.by === me) : null;
+    if (mine) {
+      const others = board.people.filter((q) => q.by !== me && q.handle
+        && q.state === "published" && store.scopeFits(mine, q)
+        && store.sharedRooms(mine, q).length > 0);
+      const out = await butler.ask(req.body?.turns, me, {
+        name: String(mine.name || "").split(/\s+/)[0] || "",
+        member: true,
+        me: mine.me || "",
+        want: mine.want || "",
+        photo: Boolean(mine.photo),
+        matches: others.length,
+      });
+      if (out.error) {
+        const code = out.error === "slow-down" || out.error === "busy" ? 429
+          : out.error === "unconfigured" ? 503 : 400;
+        if (out.error !== "failed") console.error(`butler: ${code} ${out.error}`);
+        return res.status(code).json(out);
+      }
+      res.set("Cache-Control", "no-store");
+      return res.json(out);
+    }
     /* Which half was missing: no device header at all is a different bug from
        a device that names nobody on the list. */
     const said = String(req.get("x-board-device") || "");
