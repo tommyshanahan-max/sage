@@ -485,6 +485,21 @@ export const STRINGS = {
    * which describes a setting, but "everything you write is hers", which
    * describes a consequence. */
   "run.title":      ["The people you speak for", "你代管的人"],
+  /* SOMEBODY WHO IS ALREADY ON THE BOARD. Adding a name mints a row for
+     somebody who has never opened this; this is for the person who has, and
+     it is six characters they type rather than a handle you pick — the press
+     belongs to whoever holds the row. */
+  "run.repTitle":   ["Already on here?", "他已经在上面了？"],
+  "run.repBody": [
+    "Do not add their name again — that makes a second them. Get these six characters to them and they type them into their own profile.",
+    "别再输一次他的名字，那会多出一个他。把下面这六个字符给他，让他在自己的资料页里填进去。",
+  ],
+  "run.repGo":      ["Get the six characters", "拿六个字符"],
+  "run.repWhere":   ["They open Profile › Edit, and it is at the bottom.", "他打开「个人主页 › 编辑」，在最下面。"],
+  "run.repTill":    ["Good for a day.", "一天内有效。"],
+  "run.repAgain":   ["New code", "换一个"],
+  "run.repNo":      ["Could not make one. Try again.", "没生成成功，再试一次。"],
+
   "run.board":      ["The board", "返回"],
   "run.lede":       ["Everyone here has their own page and their own matches. You run all of them from this login — and the conversations come to you.",
                      "他们每个人都有自己的主页、自己的匹配。你用一个账号全部代管，谈事的时候对方找的是你。"],
@@ -1857,6 +1872,28 @@ export const STRINGS = {
     "你可以帮你代管的人建个主页，在你手机上打理。他们本人不用下载、不用注册。",
   ],
   "me.runGo":          ["Add someone", "加一个人"],
+  /* THE OTHER HALF OF THE QUESTION, and it is asked on this side of the wire
+     on purpose. Whoever holds the row presses the button — see /api/me/agent.
+     The sentence under it is not softened: it says what the agent will be
+     able to do, because a person handing over their account is exactly who
+     this board must not be vague with. */
+  "me.repGo":          ["Somebody handles this for me", "有人帮我打理这个号"],
+  "me.repSay": [
+    "Ask them for their six characters. They will be able to post as you, read your cards and follow for you — it is your account, in their hands. They can hand it back.",
+    "找他要那六个字符。给了之后，他就能用你的身份发内容、看你的名片、替你关注——这个号还是你的，但在他手里。他也可以再还给你。",
+  ],
+  "me.repLab":         ["Their six characters", "他的六个字符"],
+  "me.repDo":          ["Hand it over", "交给他"],
+  "me.repOk":          ["Done. {who} runs this now.", "好了。现在由 {who} 打理。"],
+  "me.repBad":         ["Those six do not work.", "这六个字符用不了。"],
+  "me.repOld":         ["That code has run out. Ask for another.", "这个码过期了，让他再给一个。"],
+  "me.repSelf":        ["That is your own code.", "这是你自己的码。"],
+  "me.repAlready":     ["Somebody already handles this.", "已经有人在帮你打理了。"],
+  "me.repRuns":        ["You speak for other people, so nobody may speak for you.", "你在替别人打理，所以不能再让别人替你打理。"],
+  "me.repFull":        ["Their list is full.", "他那边满了。"],
+  // Shown instead of everything above, once it is done.
+  "me.client":         ["{who} handles this account.", "这个号由 {who} 打理。"],
+
   /* Two links, because by the time there is a roster the console is the
      useful screen and the setup page is a detour. */
   "me.runMore":        ["The people you speak for", "你代管的人"],

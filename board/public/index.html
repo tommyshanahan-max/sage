@@ -315,6 +315,17 @@
   .keybox .keyrow a{display:inline-block;text-decoration:none}
   .keybox .keyrow a#runmore{font-size:.85rem;color:var(--ink-2);padding:.3rem 0}
   .keybox .keyrow a#runmore:hover{color:var(--accent)}
+  /* Six characters read down a phone. Wide, spaced and upper-case for the
+     same reason the door's box is: the alphabet has no ambiguous letters in
+     it and the box should not put any back. */
+  #repcode{text-transform:uppercase;letter-spacing:.22em;font-size:1.15rem;
+    text-align:center;font-family:var(--mono,ui-monospace,monospace)}
+  #repgo{border:0;background:none;padding:.5rem 0;font:inherit;font-size:.85rem;
+    color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  #repgo:hover{color:var(--accent)}
+  /* .menote centres in this sheet, which is right for a one-line aside under
+     a control and wrong for three lines saying what a press gives away. */
+  #repsay{text-align:left}
   .keyval{display:flex;gap:.5rem;align-items:center;margin:.7rem 0 0}
   .keyval code{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;
@@ -2369,6 +2380,23 @@
       <p id="runbody"></p>
       <div class="keyrow"><a class="go" id="rungo" href="/onboard"></a></div>
       <div class="keyrow"><a id="runmore" href="/run" hidden></a></div>
+      <!-- AND THE SAME QUESTION FROM THE OTHER SIDE. Somebody whose agent is
+           already on here needs the opposite of the button above, and it is
+           the same box because only one of the two ever applies to a person.
+           Shut by default: it is the rarer half and it hands an account over,
+           so it is not a control anybody should be able to press by
+           accident. -->
+      <button type="button" id="repgo"></button>
+      <div id="repopen" hidden>
+        <p class="menote" id="repsay"></p>
+        <p class="seglabel" id="replab"></p>
+        <div class="field">
+          <input id="repcode" maxlength="6" autocomplete="off"
+                 autocapitalize="characters" spellcheck="false">
+        </div>
+        <div class="keyrow"><button type="button" class="go" id="repdo"></button></div>
+        <p class="said" id="repsaid" hidden></p>
+      </div>
     </div>
 
     <!-- THE WAY BACK, on the screen somebody is already on when they are
@@ -7349,6 +7377,9 @@ function openMe(joining) {
   // Asked once per opening of the sheet, not once ever.
   ASKEDPIC = false;
   $("metitle").textContent = T(made ? "me.editTitle" : "me.newTitle");
+  // Drawn again here so it follows a language change: paintRun fetches, and
+  // the language button does not.
+  $("repgo").textContent = T("me.repGo");
   $("mename").placeholder = T("me.name");
   $("mecampus").placeholder = T("me.campus");
   $("meage").placeholder = T("me.age");
@@ -8445,7 +8476,7 @@ function paintRun() {
          somebody finds out the console exists. The one exclusion is a person
          an agent already speaks for — /api/run/add refuses them, so offering
          it would be an offer that fails on press. */
-      if (d.me.handle && !d.me.client && !d.as) {
+      if (d.me.handle && !d.as) {
         $("runtitle").textContent = T("me.runTitle");
         $("runbody").textContent = T("me.runBody");
         $("rungo").textContent = T("me.runGo");
@@ -8453,6 +8484,21 @@ function paintRun() {
         // is a detour — so the second line appears only once there is one.
         $("runmore").textContent = T("me.runMore");
         $("runmore").hidden = !runs;
+        /* SOMEBODY ALREADY HANDLES THIS. Then neither half of the box is a
+           question any more: it is a fact, and the only honest thing to show
+           is which. Handing it back is the agent's press, at /run — the row
+           is theirs to release, which is the same rule that put the press to
+           give it away on this side. */
+        /* AND ITS LABEL, which was the whole of it the first time round: an
+           empty button has no size, so it was there, unhidden, and could not
+           be seen or pressed. */
+        $("repgo").textContent = T("me.repGo");
+        $("repgo").hidden = d.me.client;
+        $("repopen").hidden = true;
+        $("rungo").hidden = d.me.client;
+        $("runbody").textContent = d.me.client
+          ? T("me.client", { who: d.me.agentName || T("board.someone") })
+          : T("me.runBody");
         $("runbox").hidden = false;
       }
       if (!runs && !d.me.agent) return;
@@ -8467,6 +8513,55 @@ function paintRun() {
     })
     .catch(() => { /* no link rather than a broken one */ });
 }
+
+/* HANDING YOUR OWN ACCOUNT TO SOMEBODY. Shut until asked for, because it is
+   the rarer half of the box and the more consequential press in it. */
+$("repgo").addEventListener("click", () => {
+  const box = $("repopen");
+  box.hidden = !box.hidden;
+  if (!box.hidden) {
+    $("repsay").textContent = T("me.repSay");
+    $("replab").textContent = T("me.repLab");
+    $("repdo").textContent = T("me.repDo");
+    $("repsaid").hidden = true;
+    $("repcode").focus();
+  }
+});
+$("repdo").addEventListener("click", async () => {
+  const said = $("repsaid");
+  const code = $("repcode").value.trim().toUpperCase();
+  const fail = (key) => {
+    said.hidden = false; said.classList.add("bad"); said.textContent = T(key);
+    $("repdo").disabled = false;
+  };
+  if (code.length !== 6) return fail("me.repBad");
+  $("repdo").disabled = true;
+  let d = null;
+  try {
+    d = await fetch("/api/me/agent", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ device, code }),
+    }).then((r) => r.json());
+  } catch { return fail("act.again"); }
+  if (!d || !d.ok) {
+    /* EVERY REFUSAL SAYS WHICH ONE. "That did not work" over six different
+       causes is the message that makes somebody type the same wrong code
+       four times — and two of these ("you speak for other people", "theirs
+       is full") are not the person's mistake at all. */
+    return fail({
+      bad: "me.repBad", old: "me.repOld", self: "me.repSelf",
+      already: "me.repAlready", runs: "me.repRuns", chain: "me.repRuns",
+      full: "me.repFull", nopage: "post.needName",
+    }[d && d.error] || "me.repBad");
+  }
+  $("repdo").disabled = false;
+  said.hidden = false; said.classList.remove("bad");
+  said.textContent = T("me.repOk", { who: d.who || T("board.someone") });
+  $("repcode").value = "";
+  // The box above this is now describing the wrong world — it still offers to
+  // add somebody, which this press just made impossible.
+  paintRun();
+});
 
 drawBeing();
 paintRun();

@@ -792,6 +792,9 @@ const codesTaken = (board) => new Set([
   // one box at the door reads all of them, so two of them colliding would
   // send somebody to the wrong place with the right code.
   ...board.people.map((q) => q.back),
+  // And the code an agent reads down the phone to somebody who is already
+  // here — see /api/run/rep. Same door, same six characters, same set.
+  ...board.people.map((q) => q.rep),
 ].filter(Boolean));
 
 /* ---------------------------------------------------------------------------
@@ -5165,6 +5168,11 @@ app.get("/api/run", gate, async (req, res) => {
          offers the "someone else" box off this, so the offer and the rule are
          the same fact rather than two that can drift apart. */
       client: !!me.runBy,
+      // And who, so the line can say it. A handle and nothing else: the row
+      // that speaks for them is not this page's business beyond its name.
+      agentName: me.runBy
+        ? (board.people.find((x) => x.by === me.runBy)?.handle || "")
+        : "",
     } : null,
     run: run.map((q) => ({
       id: q.id, handle: q.handle, state: q.state, looking: q.looking,
@@ -5637,6 +5645,103 @@ app.post("/api/run/hand", express.json({ limit: "2kb" }), gate, async (req, res)
   });
   if (!out) return res.status(404).json({ error: "nope" });
   res.json({ ok: true, ...out });
+});
+
+/* SOMEBODY WHO IS ALREADY HERE.
+ *
+ * /api/run/add makes rows for people who have never opened the app. This is
+ * the other half of the question, and it cannot be done the same way round.
+ *
+ * The obvious shape — the agent types a handle and ticks "this one is mine" —
+ * is an account takeover with a button on it. Whoever holds runBy posts as
+ * that person, reads their cards, follows and unfollows for them. Handing
+ * that over is the single most consequential press on this board, and it is
+ * not the agent's to make.
+ *
+ * So it goes the way /api/run/hand already goes, read backwards: the press
+ * belongs to whoever holds the row now. The agent mints six characters here
+ * and reads them down a phone; the person types them into their own profile
+ * at /api/me/agent, having been told in one sentence what it does.
+ *
+ * A day, like an invite, and for the same reason: a code with no clock on it
+ * is a code somebody finds in a chat six months later.
+ */
+app.post("/api/run/rep", express.json({ limit: "2kb" }), gate, async (req, res) => {
+  const real = store.hashDevice(String(req.body?.device || ""), SALT);
+  if (!real) return res.status(400).json({ error: "no" });
+  let why = "";
+  const out = await change((board) => {
+    const mine = board.people.find((q) => q.by === real);
+    if (!mine) { why = "nopage"; return null; }
+    // The same no-chains rule /api/run/add enforces, checked at the minting
+    // end so a code that could never be spent is never read out loud.
+    if (mine.runBy) { why = "run"; return null; }
+    const had = board.people.filter((q) => q.runBy === real && q.by !== real).length;
+    if (had >= store.RUN_MAX) { why = "full"; return null; }
+    const taken = codesTaken(board);
+    let code = store.newCode();
+    for (let i = 0; i < 50 && taken.has(code); i++) code = store.newCode();
+    if (taken.has(code)) { why = "again"; return null; }
+    /* ONE LIVE CODE PER AGENT. Minting a second replaces the first rather
+       than adding to it: two codes in the wild, both of which hand an account
+       over, is twice the thing that can go wrong for no gain — an agent
+       taking on two people reads the second one out after the first is
+       spent. */
+    mine.rep = code;
+    mine.repTill = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    return { code, till: mine.repTill, handle: mine.handle };
+  });
+  if (!out) return res.status(400).json({ error: why || "no" });
+  res.json({ ok: true, ...out });
+});
+
+/* AND THE PRESS ITSELF, on the row being handed over, by the person holding
+ * it. Everything this route can refuse, it refuses before anything is written;
+ * what it cannot do is undo somebody's mind, which is why the screen that
+ * sends it says plainly what the agent will be able to do.
+ *
+ * There is a way back out: /api/run/hand, which the agent can spend to return
+ * the row, and which clears runBy before the person spends the code rather
+ * than after — see the note there.
+ */
+app.post("/api/me/agent", express.json({ limit: "2kb" }), gate, async (req, res) => {
+  // store.hashDevice ON PURPOSE, like the door. This is the one row nobody may
+  // hand over on somebody else's behalf, so it asks about the real browser and
+  // never about whoever it might currently be acting as.
+  const me = store.hashDevice(String(req.body?.device || ""), SALT);
+  const code = String(req.body?.code || "").trim().toUpperCase();
+  if (!me || !code) return res.status(400).json({ error: "no" });
+  let why = "";
+  const out = await change((board) => {
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine) { why = "nopage"; return null; }
+    const agent = board.people.find((q) => q.rep && q.rep === code);
+    if (!agent) { why = "bad"; return null; }
+    if (!agent.repTill || new Date(agent.repTill) < new Date()) { why = "old"; return null; }
+    // Their own code, typed into their own profile. Not an error worth a
+    // scary word — it is somebody testing what the six characters do.
+    if (agent.by === me) { why = "self"; return null; }
+    if (mine.runBy) { why = "already"; return null; }
+    /* NO CHAINS, BOTH WAYS. Somebody who speaks for other people may not
+       become somebody else's client, because two links and there is no
+       answering who a conversation is actually with. The agent end was
+       checked when the code was minted; this is the other end, and it has to
+       be checked again here because the roster can have grown since. */
+    if (board.people.some((q) => q.runBy === me && q.by !== me)) { why = "runs"; return null; }
+    if (agent.runBy) { why = "chain"; return null; }
+    const had = board.people.filter((q) => q.runBy === agent.by && q.by !== agent.by).length;
+    if (had >= store.RUN_MAX) { why = "full"; return null; }
+    mine.runBy = agent.by;
+    mine.agent = agent.id;
+    // Spent. One person, once — the same rule the invite has, for the same
+    // reason: a code that still works after it has been used is a code that
+    // hands a second account over to somebody who was only told about one.
+    agent.rep = "";
+    agent.repTill = "";
+    return { ok: true, who: agent.handle };
+  });
+  if (!out) return res.status(400).json({ error: why || "no" });
+  res.json(out);
 });
 
 /* THE SENTENCE ON ITS OWN, saved where it is read.

@@ -1040,6 +1040,24 @@ export function cleanPerson(raw) {
      * No chains: a row that is run cannot itself run anybody. Enforced where
      * rows are made rather than here, because this function cannot see the
      * board it is part of. */
+    /* A CODE THAT SAYS "THIS PERSON IS MY CLIENT", and the person types it.
+     *
+     * /api/run/add mints rows for people who are not here. The other half —
+     * somebody who already has an account and wants their agent to run it —
+     * cannot work that way round, because the agent picking a handle off a
+     * list would be an account takeover with a button on it: whoever holds
+     * `runBy` posts as them and reads their cards.
+     *
+     * So it goes the way /api/run/hand already goes, which is the same rule
+     * read the other direction: the press belongs to whoever holds the row
+     * now. The agent mints six characters, reads them down a phone, and the
+     * person types them into their own profile. `rep` is on the AGENT's row
+     * and names the agent; `repTill` is when it stops working.
+     *
+     * Same alphabet as an invite, and minted against codesTaken with the rest
+     * so no two codes at the door can mean two things. */
+    rep: cleanCode(raw.rep) || "",
+    repTill: s(raw.repTill, 40),
     runBy: s(raw.runBy, 64),
     agent: /^[a-f0-9]{20}$/.test(String(raw.agent || "")) ? String(raw.agent) : "",
   };

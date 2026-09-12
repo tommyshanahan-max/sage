@@ -257,6 +257,13 @@
   </div>
   </section>
 
+  <!-- THE ONE CASE THIS SCREEN CANNOT HANDLE, said rather than left to be
+       discovered. Everything above makes rows for people who have never
+       opened the app; somebody who is already on here has to type six
+       characters into their own profile instead, and doing it this way round
+       would make a second, empty them. One line, to the page that mints the
+       code. -->
+  <p class="skip"><a href="/run" id="repgo"></a></p>
   <p class="skip"><a href="/browse" id="skipgo"></a></p>
 </main>
 
@@ -609,6 +616,7 @@ function paint() {
   set("fieldhead", PHONE ? "ob.phonehead" : "ob.fieldhead");
   set("fieldsub", PHONE ? "ob.phonesub" : "ob.fieldsub");
   set("browse", PHONE ? "ob.phonego" : "ob.choose");
+  set("repgo", "run.repTitle");
   set("skipgo", "ob.skip");
   set("s1head", "ob.s1head");
   set("s1say", "ob.s1say");

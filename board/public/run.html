@@ -105,6 +105,14 @@
   .flat{background:none;border:1px solid var(--line);color:var(--ink-2)}
   .said{margin:.9rem 0 0;padding:.7rem .85rem;border-radius:.7rem;background:var(--accent-soft);
     color:var(--ink-2);font-size:.88rem;line-height:1.55}
+  .rep{margin:1.8rem 0 0;padding-top:1.2rem;border-top:1px solid var(--line)}
+  .repbody{margin:.35rem 0 0;font-size:.86rem;line-height:1.55;color:var(--ink-2)}
+  /* The code itself, at the size somebody reads down a phone from across a
+     room. It is the whole point of the block; everything else here is a
+     caption on it. */
+  .repcode{display:block;margin:.9rem 0 0;padding:.7rem;border-radius:.7rem;
+    background:var(--accent-soft);color:var(--ink);text-align:center;
+    font-size:1.7rem;letter-spacing:.3em;text-indent:.3em}
   .said.bad{background:#FBEEE4;color:#8A3D14}
   @media (prefers-color-scheme:dark){.said.bad{background:#2A1A10;color:#E8905A}}
 
@@ -154,6 +162,23 @@
   <p class="count" id="orhead" style="margin-top:1.4rem"></p>
   <textarea id="names" rows="3"></textarea>
   <p><button class="go" id="add" type="button"><span id="addgo"></span></button></p>
+
+  <!-- SOMEBODY WHO IS ALREADY ON THE BOARD.
+       Under the names box because that is where the mistake gets made: an
+       agent whose client already has an account types the name in here again
+       and ends up with two of them, one of which nobody is behind. So the
+       answer sits where the wrong move is, and says not to make it. -->
+  <div class="rep">
+    <p class="eyebrow" id="rephead"></p>
+    <p class="repbody" id="repbody"></p>
+    <p><button class="go flat" id="repgo" type="button"></button></p>
+    <div id="repout" hidden>
+      <code class="repcode" id="repcode"></code>
+      <p class="repbody" id="repwhere"></p>
+      <p class="repbody" id="reptill"></p>
+      <p><button class="go flat" id="repagain" type="button"></button></p>
+    </div>
+  </div>
 
   <div id="said"></div>
   <div id="review"></div>
@@ -457,10 +482,33 @@ function paint() {
   set("dropwhy", "run.dropwhy");
   set("orhead", "run.orhead");
   set("addgo", "run.addgo");
+  set("rephead", "run.repTitle");
+  set("repbody", "run.repBody");
+  set("repgo", "run.repGo");
+  set("repwhere", "run.repWhere");
+  set("reptill", "run.repTill");
+  set("repagain", "run.repAgain");
   document.getElementById("names").placeholder = T("run.namesph");
   drawRoles();
   if (STATE) { drawRail(STATE); drawRoster(STATE); }
 }
+
+/* SIX CHARACTERS, MINTED HERE AND READ DOWN A PHONE. The code hands an
+   account over when the person types it, so it is deliberately not something
+   this page shows until it is asked for — and asking again replaces it rather
+   than adding a second, which is the server's rule as well. */
+async function mintRep() {
+  const b = document.getElementById("repgo");
+  b.disabled = true;
+  const r = await post("/api/run/rep", {});
+  b.disabled = false;
+  if (!r || !r.ok || !r.code) { say(T("run.repNo"), true); return; }
+  document.getElementById("repcode").textContent = r.code;
+  document.getElementById("repout").hidden = false;
+  b.hidden = true;
+}
+document.getElementById("repgo").onclick = mintRep;
+document.getElementById("repagain").onclick = mintRep;
 
 document.getElementById("lang").append(langButton(() => paint()));
 paint();
