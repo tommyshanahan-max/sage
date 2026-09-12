@@ -263,6 +263,10 @@ announcer: ## Who may write an announcement, or let one:  make announcer [WHO=To
 # file as what it is.
 XI_KEY = $$(grep -E '^ELEVENLABS_API_KEY=' .env | tail -1 | cut -d= -f2-)
 XI_VOICE = $$(grep -E '^ELEVENLABS_VOICE_ID=' .env | tail -1 | cut -d= -f2-)
+# One voice each, if .env names them. Unset, both fall back to XI_VOICE and it
+# is one person in both languages — see the note in scripts/voice.mjs.
+XI_VOICE_EN = $$(grep -E '^ELEVENLABS_VOICE_ID_EN=' .env | tail -1 | cut -d= -f2-)
+XI_VOICE_ZH = $$(grep -E '^ELEVENLABS_VOICE_ID_ZH=' .env | tail -1 | cut -d= -f2-)
 
 voices: ## Which voices the ElevenLabs account has, to pick one
 	@# The voice IS the first impression. Listen to a few on elevenlabs.io,
@@ -290,6 +294,7 @@ voice: ## Render the arrival's four beats, both languages:  make voice [FORCE=1]
 	@$(COMPOSE) run --rm --no-deps -T --user 0:0 \
 	  -v "$(CURDIR)/scripts:/seed:ro" -v "$(CURDIR)/board/public/voice:/out" \
 	  -e ELEVENLABS_API_KEY="$(XI_KEY)" -e ELEVENLABS_VOICE_ID="$(XI_VOICE)" \
+	  -e ELEVENLABS_VOICE_ID_EN="$(XI_VOICE_EN)" -e ELEVENLABS_VOICE_ID_ZH="$(XI_VOICE_ZH)" \
 	  -e BOARD_PUBLIC=/app/public -e VOICE_OUT=/out \
 	  --entrypoint node board /seed/voice.mjs $(if $(FORCE),--force,)
 	@echo

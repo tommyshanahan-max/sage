@@ -61,6 +61,19 @@ const KEY = process.env.ELEVENLABS_API_KEY || "";
    — a doorman rather than an announcement. Override it once you have listened
    to a few: this is the whole of the first impression. */
 const VOICE = process.env.ELEVENLABS_VOICE_ID || "pNInz6obpgDQGcFmaJgB";
+/* ONE VOICE EACH, IF YOU WANT IT. The first version used one voice for both
+   languages, on the reasoning that two different people greeting you
+   depending on which button you pressed is worse than one accent. That is
+   true of an accent and not true of this: a multilingual voice reading
+   Chinese reads it like somebody who learned it, and half the people arriving
+   here are Chinese and will hear that in the first second. A native voice for
+   each language is two people, and two people who each sound right beat one
+   who sounds right in one language and foreign in the other.
+   Unset, both fall back to VOICE and it is one person again. */
+const VOICE_FOR = {
+  en: process.env.ELEVENLABS_VOICE_ID_EN || VOICE,
+  zh: process.env.ELEVENLABS_VOICE_ID_ZH || VOICE,
+};
 /* One model for both languages. The alternative is a second voice for the
    Chinese, and two different people greeting you depending on which button
    you pressed is worse than one accent. */
@@ -121,6 +134,7 @@ function unitTimes(text, alignment) {
 }
 
 async function say(key, lang, text) {
+  const voice = VOICE_FOR[lang] || VOICE;
   const stem = path.join(OUT, `${key}.${lang}`);
   if (!process.argv.includes("--force")) {
     try {
@@ -131,7 +145,7 @@ async function say(key, lang, text) {
   }
 
   const r = await fetch(
-    api(`/text-to-speech/${VOICE}/with-timestamps?output_format=mp3_44100_128`),
+    api(`/text-to-speech/${voice}/with-timestamps?output_format=mp3_44100_128`),
     {
       method: "POST",
       headers: { "xi-api-key": KEY, "Content-Type": "application/json" },
@@ -173,7 +187,7 @@ async function main() {
   if (process.argv.includes("--list")) return list();
 
   await mkdir(OUT, { recursive: true });
-  console.log(`\n  voice ${VOICE}, model ${MODEL}\n`);
+  console.log(`\n  English ${VOICE_FOR.en}\n  Chinese ${VOICE_FOR.zh}\n  model   ${MODEL}\n`);
   for (const key of BEATS) {
     const pair = STRINGS[key];
     if (!pair) { console.error(`  ${key} is not in i18n.js`); process.exit(1); }
