@@ -3083,6 +3083,10 @@ import { OFF } from "/off.js";
 import { offerInstall } from "/install.js";
 import { dailyCard, dailyDone } from "/daily.js";
 import { BANDS } from "/level-cards.js";
+/* THE DOORMAN, ON THE BOARD ITSELF. He was only ever on the waiting room —
+   see mo.js — which meant the one person here whose job is answering
+   questions was unreachable from every screen where a member has one. */
+import { mountMo } from "/mo.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -9712,6 +9716,17 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
     MEMBERS = Number(d.people || 0);
     drawStake();
     RANK = d.rank || "";
+
+    /* HIM, ONCE /api/me HAS LANDED and not before: he greets people by
+       knowing who they are, and a doorman drawn while the page still thinks
+       nobody is home is a doorman who has to be redrawn a second later.
+       No onKeep — there is nothing on this screen for him to propose, and
+       passing none takes the Keep button away rather than leaving a dead one
+       under his sentence. */
+    mountMo({
+      on: Boolean(d.butler) && Boolean(ME),
+      first: () => [{ from: "you", text: T("but.hookIn") }],
+    });
     /* drawTodo BELONGS HERE and was missing. The list is made out of ME, and
        the only other place it is drawn is loadMyInvite, which runs before
        /api/me has landed — so somebody with a page, a photo and rooms was

@@ -5828,6 +5828,11 @@ app.get("/api/notes", notesOff, async (req, res) => {
     you: mine ? name(me) : { who: "", handle: (wait && wait.name) || "", photo: "" },
     waiting: Boolean(wait),
     unread: notes.filter((n) => !n.mine && !n.seen).length,
+    /* Whether there is a doorman to draw, same as /api/me and /api/wait/me.
+       Messages is the screen where somebody most often has a question they
+       would rather ask than guess at — what to write, whether to write at
+       all — so it is the last place he should be missing from. */
+    butler: butler.configured(),
   });
 });
 
@@ -6360,6 +6365,10 @@ app.get("/api/me", async (req, res) => {
     // Whether the + draws the third line. The check that matters is on
     // POST /api/announce; this only decides whether a button exists.
     canAnnounce: Boolean(mine && mine.canAnnounce),
+    /* Whether there is a doorman to draw — the same flag /api/wait/me carries
+       for the waiting room, and for the same reason: a circle that offers a
+       conversation and answers 503 is worse than no circle. */
+    butler: butler.configured(),
   });
 });
 

@@ -3525,6 +3525,16 @@ export const STRINGS = {
      that pressing is the thing. "Ask Mo" is on the button itself already —
      this is the half that says he is a person and not an icon. */
   "but.press":         ["Stuck? Ask Mo", "卡住了？问老莫"],
+  /* WHAT HE SAYS TO SOMEBODY WHO IS ALREADY IN, and it is one line rather
+     than two. At the door he has a job — get the sentence — so he opens with
+     a hook and a question. Inside, the person has a question or they would
+     not have pressed him, and a doorman who greets a member with a question
+     of his own has taken the floor from somebody who wanted it. He says who
+     he is, says he is there, and shuts up. */
+  "but.hookIn": [
+    "Mo. I'm on the door here \u2014 anything you need, ask.",
+    "\u6211\u662f\u8001\u83ab\uff0c\u770b\u95e8\u7684\u3002\u6709\u4e8b\u513f\u5c31\u95ee\u3002",
+  ],
   /* THE KILL SWITCH, AND IT IS A REAL ONE.
    *
    * Plenty of people do not want to be talked to by a machine, and a board

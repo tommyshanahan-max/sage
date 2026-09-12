@@ -517,6 +517,9 @@
 import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
 import { offerInstall } from "/install.js";
 import { offerNotify } from "/notify.js";
+/* The doorman, here too — see mo.js. Messages is where somebody most often
+   has a question they would rather ask than guess at. */
+import { mountMo } from "/mo.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -612,6 +615,13 @@ async function load() {
     CAN = d.can || [];
     YOU = d.you || { handle: "", photo: "" };
     UNREAD = d.unread || 0;
+    /* Only for somebody who is IN. An invited arrival reading one note is not
+       a member and has nobody to ask about; see the INVITED branch above,
+       which returns before this. */
+    mountMo({
+      on: Boolean(d.butler) && !d.waiting && Boolean(YOU && YOU.handle),
+      first: () => [{ from: "you", text: T("but.hookIn") }],
+    });
   } catch { NOTES = []; CAN = []; UNREAD = 0; YOU = { handle: "", photo: "" }; }
   paint();
 
