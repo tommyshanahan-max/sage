@@ -112,9 +112,12 @@ export const STRINGS = {
     "还没开放——你在等候室里。先把自己的主页填好，会有人来看。",
   ],
   "wroom.head": ["You are in the waiting room", "你在等候室"],
+  /* Three sentences cut to one. It explained that nothing working is not their
+     fault, which is a thing to worry about only if you have been left staring
+     at it — and the itemised list underneath already says what to do. */
   "wroom.body": [
-    "Have a look around. Nothing works for you yet, and that is not you doing it wrong. Finish your page: it is what somebody reads when they decide.",
-    "先随便看看。现在什么都还点不动，不是你操作错了。把自己的主页填完整——有人做决定的时候，看的就是这个。",
+    "Nothing works yet. Finish your page \u2014 that is what somebody reads.",
+    "现在什么都还点不动。把这页填完——有人要看的就是这个。",
   ],
   /* WHAT IS LEFT AND HOW LONG THERE IS. The server has been sending all
      three of these since the waiting room was built and no page drew any of
