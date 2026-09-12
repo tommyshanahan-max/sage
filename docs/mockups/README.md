@@ -25,6 +25,35 @@ Four steps: the message you paste, what they land on, when the ask happens
 Not built. Both halves exist; notify.js just refuses anybody who is not a
 member, which is exactly the person who needs it.
 
+## waiting-room.html
+
+The admin panel's waiting room — the three people lifted off the list, above the
+rest of the queue at `/waiting`.
+
+Three cards in the three states they are actually in, because a panel that drew
+them the same way would be three names and no idea which one to touch:
+
+- **Not told yet** — nothing has reached them, so no clock is running. The only
+  row with a job on it, and the only thing on this screen that cannot happen
+  without Tom: nothing here can send to a WeChat id. `Copy the message` is
+  `make waiting-tell` as a button.
+- **Looking around · 41 hours left** — they opened it, the 72 hours started, the
+  page is half done. Nothing to do but wait.
+- **Finished** — face, sentence, and the sentence itself shown, because that is
+  what he would be reading to decide.
+
+The dots (photo / sentence) are on all three rows: the clock and the page are
+two different facts, and the first row is the one that shows they can be apart.
+
+`Let them in` is greyed until the page is finished — letting somebody in before
+there is anything to read is the queue moving for its own sake. Nothing on the
+screen admits anybody by itself.
+
+**Built**, which is why this one is a picture of something that exists rather
+than an argument for something that does not: the section is in
+`board/public/waiting.html` above the queue, `liftSome()` in `board/server.js`
+lifts three a day and sweeps anybody past 72 hours back.
+
 ## social.html
 
 The Social panel, from the Jrend Tap deck, pointed at the catalogue Study Pal

@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The waiting room, in the panel</title>
+<!--
+  WHAT THE TOP OF /waiting LOOKS LIKE ONCE THREE PEOPLE HAVE BEEN LIFTED.
+
+  Above the fifty-odd names, because it is the shorter list and the only one
+  with anything to do in it. A panel where the work sits below fifty names is a
+  panel where the work does not get done.
+
+  THE THREE STATES ARE THE POINT, and they are not the same job:
+
+    not told yet   the board lifted them and nothing has reached them. Their
+                   three days have not started. This is YOUR move, and it is
+                   the only one that cannot happen without you.
+    looking        they opened it, the clock is running, the page is half done.
+                   Nothing to do but wait.
+    finished       a face and a sentence. The clock stopped. This is the row
+                   that wants a decision.
+
+  A panel that showed these three identically would be a list of three people
+  and no idea which one to touch.
+-->
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FA; --ink:#101828; --ink-2:#344054;
+    --muted:#667085; --line:#E4E7EC; --accent:#3F68D8; --accent-ink:#fff;
+    --warn:#B54708; --warn-soft:#FEF0C7; --good:#067647; --good-soft:#DCFAE6;
+    --serif:ui-serif,Georgia,"Songti SC",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    padding:2rem 1.15rem 4rem}
+  .wrap{max-width:44rem;margin:0 auto}
+  h1{font-family:var(--serif);font-weight:400;font-size:1.7rem;margin:0 0 .2rem}
+  .url{margin:0 0 1.8rem;font-size:.82rem;color:var(--muted);font-family:ui-monospace,monospace}
+
+  .dhead{display:flex;align-items:center;gap:.8rem;margin:1.6rem 0 .2rem}
+  .dhead span{font-size:.72rem;letter-spacing:.14em;color:var(--muted)}
+  .dhead i{flex:1;height:1px;background:var(--line)}
+  .dhead b{font-size:.74rem;font-weight:500}
+  .uphead span{color:var(--accent)}
+  .uphead b{background:var(--accent);color:#fff;border-radius:99px;padding:.12rem .6rem}
+  .upsay{margin:.3rem 0 1rem;font-size:.85rem;line-height:1.55;color:var(--muted)}
+
+  .who{background:var(--raise);border:1px solid var(--line);border-radius:.9rem;
+    padding:.9rem 1rem;margin:0 0 .7rem}
+  .wtop{display:flex;align-items:baseline;gap:.6rem}
+  .nm{font-weight:500;font-size:1rem}
+  .when{margin-left:auto;font-size:.76rem;color:var(--muted)}
+  .why{margin:.35rem 0 0;font-size:.86rem;line-height:1.5;color:var(--ink-2)}
+  .reach{display:inline-block;margin:.45rem 0 0;font-size:.78rem;color:var(--muted);
+    font-family:ui-monospace,monospace}
+
+  .state{display:inline-flex;align-items:center;gap:.35rem;margin:.6rem 0 0;
+    font-size:.74rem;padding:.2rem .6rem;border-radius:99px}
+  .state.told{background:var(--warn-soft);color:var(--warn)}
+  .state.look{background:var(--line);color:var(--ink-2)}
+  .state.done{background:var(--good-soft);color:var(--good)}
+
+  .acts{display:flex;gap:.5rem;flex-wrap:wrap;margin:.75rem 0 0}
+  .acts button{border:0;border-radius:99px;padding:.45rem 1rem;font:inherit;
+    font-size:.85rem;cursor:pointer}
+  .acts .in{background:var(--accent);color:#fff}
+  .acts .back{background:transparent;color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--line)}
+  .acts .tell{background:transparent;color:var(--warn);box-shadow:inset 0 0 0 1px currentColor}
+  .acts .in[disabled]{background:var(--line);color:var(--muted);cursor:default}
+
+  .bits{margin:.6rem 0 0;display:flex;gap:.9rem;font-size:.76rem;color:var(--muted)}
+  .bits s{text-decoration:none;display:inline-flex;align-items:center;gap:.3rem}
+  .dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--line);display:inline-block}
+  .dot.on{background:var(--good)}
+
+  .rest{opacity:.55;margin-top:2rem}
+  .rest .who{padding:.7rem 1rem}
+
+  .note{margin:2.2rem 0 0;padding:1.2rem 1.3rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:.9rem;font-size:.86rem;
+    line-height:1.6;color:var(--ink-2)}
+  .note b{color:var(--ink);font-weight:500}
+  .note code{font-family:ui-monospace,monospace;font-size:.82em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The waiting room</h1>
+  <p class="url">thexchange.app/waiting — above the fifty-three</p>
+
+  <div class="dhead uphead">
+    <span>THE WAITING ROOM</span><i></i><b>3 to decide</b>
+  </div>
+  <p class="upsay">
+    They can see the app and finish their page. Nothing works for them yet.
+    Read what they wrote, then let them in or put them back.
+  </p>
+
+  <!-- 1. Lifted, and nothing has reached them. The only row with a job on it. -->
+  <div class="who">
+    <div class="wtop"><span class="nm">Wei</span><span class="when">2 days</span></div>
+    <p class="why">Camera operator, Shanghai. Eight years.</p>
+    <span class="reach">wechat wei_films</span>
+    <div class="state told">Not told yet — no clock running</div>
+    <!-- The dots are on all three rows on purpose: the clock and the page are
+         two different facts, and Wei's row is the one that shows they can be
+         apart. Nothing done, and nothing counting down either. -->
+    <div class="bits">
+      <s><i class="dot"></i> photo</s>
+      <s><i class="dot"></i> sentence</s>
+    </div>
+    <div class="acts">
+      <button class="tell">Copy the message</button>
+      <button class="back">Back to the list</button>
+      <button class="in" disabled>Let them in</button>
+    </div>
+  </div>
+
+  <!-- 2. Opened it, clock running, page half done. Nothing to do. -->
+  <div class="who">
+    <div class="wtop"><span class="nm">Liza</span><span class="when">2 days</span></div>
+    <p class="why">Stylist. Worked with Vogue China twice.</p>
+    <span class="reach">liza@mail.com</span>
+    <div class="state look">Looking around · 41 hours left</div>
+    <div class="bits">
+      <s><i class="dot on"></i> photo</s>
+      <s><i class="dot"></i> sentence</s>
+    </div>
+    <div class="acts">
+      <button class="back">Back to the list</button>
+      <button class="in" disabled>Let them in</button>
+    </div>
+  </div>
+
+  <!-- 3. Finished. The row that wants a decision. -->
+  <div class="who">
+    <div class="wtop"><span class="nm">Anna</span><span class="when">2 days</span></div>
+    <p class="why">Actor, Beijing. Two features, one on Youku.</p>
+    <span class="reach">wechat anna_bj</span>
+    <div class="state done">Finished · I am a Performer looking for an Agent</div>
+    <div class="bits">
+      <s><i class="dot on"></i> photo</s>
+      <s><i class="dot on"></i> sentence</s>
+    </div>
+    <div class="acts">
+      <button class="in">Let them in</button>
+      <button class="back">Back to the list</button>
+    </div>
+  </div>
+
+  <div class="rest">
+    <div class="dhead"><span>FILM &amp; TV</span><i></i><b>31 waiting</b></div>
+    <div class="who">
+      <div class="wtop"><span class="nm">Bella</span><span class="when">today</span></div>
+      <p class="why">Actor, Australia.</p>
+    </div>
+    <div class="who">
+      <div class="wtop"><span class="nm">Damon Russell</span><span class="when">today</span></div>
+      <p class="why">Director and producer, Atlanta. Tom has worked with him.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <p style="margin:0 0 .7rem">
+      <b>Three states, three different jobs.</b> A panel that drew them the same
+      way would be three names and no idea which one to touch.
+    </p>
+    <p style="margin:0 0 .7rem">
+      <b>Not told yet</b> is the only one that cannot happen without you — nothing
+      here can send to a WeChat id. <code>Copy the message</code> is
+      <code>make waiting-tell</code> as a button. Their three days have not
+      started and will not until they open it.
+    </p>
+    <p style="margin:0">
+      <b>Let them in is greyed until the page is finished</b>, because a face and
+      a sentence is what you would be reading to decide, and letting somebody in
+      before there is anything to read is the queue moving for its own sake.
+      It is still your press. Nothing on this screen admits anybody by itself.
+    </p>
+  </div>
+</div>
+</body>
+</html>
