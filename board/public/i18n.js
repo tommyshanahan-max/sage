@@ -2531,9 +2531,14 @@ export const STRINGS = {
      It said "your sentence and theirs answer each other", which is how the
      matching works and not how a person thinks about it. What they want to
      know is who these people are and whether anything has already gone out. */
+  /* FOUR SENTENCES BECAME ONE. It read "This is where the fun starts.
+     Everyone here is looking for what you've got. Nobody has your WeChat yet.
+     Press Connect to send it." — an explanation of a mechanism that is now
+     DRAWN on every row underneath it: two cards and an arrow. A paragraph
+     above a picture of the same thing is the paragraph nobody reads. */
   "cards.what": [
-    "This is where the fun starts. Everyone here is looking for what you\u2019ve got. Nobody has your WeChat yet. Press Connect to send it.",
-    "好戏从这里开始。这里的每个人，找的正是你有的。现在还没人拿到你的微信。点「建立联系」就发过去。"],
+    "Swap details. Yours goes first.",
+    "互换联系方式。你先发。"],
   "cards.none":        ["No cards yet.", "还没有名片。"],
   "cards.noneWhy": [
     "A card lands here when you and somebody else follow each other and want the same kind of thing. Nothing arrives on its own — go and look at who is here.",
@@ -2548,6 +2553,15 @@ export const STRINGS = {
     "Neither of you has sent anything yet.",
     "你们都还没发出任何东西。"],
   "cards.give":        ["Connect with {who}", "和{who}建立联系"],
+  /* THE BUTTON ON THE SHELF DROPS THE NAME. It is directly under the row that
+     says who this is, so repeating it makes a longer button saying the same
+     thing. cards.give keeps the name because it heads the SHEET, where the
+     row is no longer on screen. */
+  "cards.giveGo":      ["Connect", "建立联系"],
+  /* THE ONE LINE UNDER THE PICTURE — whose move it is, which is the only part
+     two cards and an arrow cannot draw. */
+  "cards.capYours":    ["Send yours to get theirs", "先发你的，才能拿到他的"],
+  "cards.capSent":     ["Sent — waiting for theirs", "已发出——等他的"],
   "cards.giveHow": [
     "{who} gets your WeChat and a line from you. You get theirs if they send it back.",
     "{who}会收到你的微信号和你写的一句话。对方回发，你才拿到他们的。"],

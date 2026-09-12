@@ -3815,6 +3815,10 @@ app.get("/api/matches", async (req, res) => {
       photo: q.photoState === "published" ? q.photo : "",
       campus: q.campus,
       here: q.here,
+      /* THEIR SENTENCE, so the shelf can print the same two pills Browse
+         prints instead of a paragraph describing them — see drawCards. Only
+         the pair, never anything else off the row. */
+      say: Array.isArray(q.say) ? q.say.map((r) => ({ me: r.me, want: r.want })) : [],
       shared: st.shared,
       gave: st.gave,
       given: st.given,
