@@ -245,6 +245,29 @@
     padding:.2rem .8rem;font-size:.78rem}
   .insno{font-size:1.1rem;line-height:1;opacity:.7;padding:0 .2rem}
   .insico{width:1em;height:1em;vertical-align:-.2em;display:inline-block}
+
+  /* THE ONE ASK ON THIS PAGE THAT IS WORTH INTERRUPTING FOR, and it was a
+     tinted one-liner that read like a cookie banner. A messenger nobody is
+     told about is a messenger nobody comes back to; this is the return loop
+     and it gets a card.
+     Still under the list rather than over it: somebody with unread messages
+     came here to read them, and a product that blocks the thing you opened it
+     for in order to ask for a permission is the reason people refuse. */
+  .bell{display:flex;gap:.9rem;align-items:flex-start;margin:0 0 1.1rem;
+    padding:1rem 1.05rem;border-radius:1rem;background:var(--accent-soft);
+    border:1px solid color-mix(in srgb,var(--accent) 22%,transparent)}
+  .bell .ico{flex:0 0 auto;width:2.3rem;height:2.3rem;border-radius:50%;
+    background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+  .bell .ico svg{width:1.2rem;height:1.2rem;fill:none;stroke:currentColor;
+    stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .bell .words{flex:1;min-width:0}
+  .bell b{display:block;font-weight:500;font-size:.98rem;margin:0 0 .15rem}
+  .bell p{margin:0 0 .75rem;font-size:.86rem;line-height:1.5;color:var(--muted)}
+  .bell .row{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+  .bell .on{border:0;background:var(--accent);color:var(--accent-ink);
+    border-radius:99px;padding:.5rem 1.1rem;font:inherit;font-size:.9rem;cursor:pointer}
+  .bell .no{border:0;background:none;color:var(--muted);font:inherit;
+    font-size:.86rem;cursor:pointer;padding:.5rem .4rem}
   .rule{display:flex;align-items:center;gap:.9rem;margin:0 0 .3rem}
   .rule span{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
     color:var(--muted);white-space:nowrap}
@@ -392,7 +415,7 @@
     <!-- And the second half of that ask. On iOS this only appears once the app
          IS on the home screen — Safari has no web push in a browser tab — so
          the two strips are never up together and never compete. -->
-    <p class="ins" id="notify" hidden></p>
+    <div class="bell" id="notify" hidden></div>
     <!-- WHO YOU CAN WRITE TO. WeChat hides starting a chat behind the ＋ in
          the corner, and its billion users know it is there. Nobody here does,
          and this strip is the whole reason the inbox stopped being a dead end,

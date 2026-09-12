@@ -99,9 +99,11 @@ export const STRINGS = {
      the thing somebody wants is to stop missing messages, and "notifications"
      is the word every app uses just before it starts sending things nobody
      asked for. The board sends exactly one kind and this says so. */
+  "push.head": ["Know when somebody writes", "有人给你留言，第一时间知道"],
+  "push.later":["Not now", "以后再说"],
   "push.ask":  [
-    "Get told when somebody writes to you.",
-    "有人给你留言时，通知你一声。",
+    "Your phone buzzes. Nothing is in it but that \u2014 no name, no message.",
+    "手机会响一下。里面什么都没有——没有名字，也没有内容。",
   ],
   "push.on":   ["Turn on", "打开"],
   "push.wait": ["…", "…"],
