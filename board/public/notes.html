@@ -32,8 +32,16 @@
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta name="color-scheme" content="light dark">
 <style>
+  /* THE THIRD SURFACE, AND IT WAS MISSING FROM THIS PAGE ONLY.
+     paper is the ground, raise is lifted off it, card is lifted off that. This
+     page keeps its own copy of site.css's palette and the copy had two of the
+     three — which nothing on the page itself used, so nothing looked wrong
+     until Mo arrived. He is drawn on card, so his whole panel came out
+     transparent: bubbles, header and the box floating over the message list
+     with the page reading straight through them. A module mounted on a page
+     it does not own is only as complete as that page's tokens. */
   :root{
-    --paper:#EEF0F4; --raise:#F7F8FB; --ink:#151B28; --ink-2:#4E5968;
+    --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD; --ink:#151B28; --ink-2:#4E5968;
     --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
     --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
     --t1:#3F68D8; --t2:#2A9D63; --t3:#D99038; --t4:#7268C4; --t5:#D4485C; --t6:#2F8C9E;
@@ -44,7 +52,7 @@
   }
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
-      --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
       --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
       --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
       --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
@@ -52,7 +60,7 @@
     }
   }
   :root[data-theme="dark"]{
-    --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
     --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
     --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
     --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;

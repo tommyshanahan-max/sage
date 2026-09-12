@@ -70,8 +70,14 @@ const MOCSS = `
   
 
   
+  /* CARD, AND A FALLBACK UNDER IT. He is drawn on the third surface —
+     paper is the ground, raise is lifted off it, card is lifted off that —
+     and he mounts on pages that keep their own copy of the palette. One of
+     those copies was missing --card, so his whole panel came out
+     transparent and the message list read straight through it. A missing
+     token should cost him one step of separation, not the panel. */
   .but{margin:1rem 0 0;border:1px solid var(--hair);border-radius:.9rem;
-    background:var(--card);overflow:hidden}
+    background:var(--card,var(--raise,#FCFCFD));overflow:hidden}
   .buthead{display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;
     border-bottom:1px solid var(--hair)}/* HIS FACE. It was the board's own 交 mark, which is also the app icon and
      also the welcome above — so he read as the software talking rather than
@@ -90,7 +96,7 @@ const MOCSS = `
   .butoff{display:block;margin:.5rem auto 0;border:0;background:none;
     color:var(--muted);font:inherit;font-size:.78rem;padding:.25rem;
     cursor:pointer;text-decoration:underline;text-underline-offset:2px}
-  .butshut button{border:1px solid var(--line);background:var(--card);
+  .butshut button{border:1px solid var(--line);background:var(--card,var(--raise,#FCFCFD));
     border-radius:99px;padding:.45rem 1.1rem;font:inherit;font-size:.85rem;
     color:var(--ink-2)}
   .buthead small{color:var(--muted);font-size:.76rem}/* A word, not a ×. A cross reads as closing a panel that will be back
@@ -144,7 +150,7 @@ const MOCSS = `
      rather than a conversation somebody has to close. */
   
   .butoffer{margin:1rem 0 0;padding:.8rem .9rem;border-radius:.9rem;
-    border:1px solid var(--hair);background:var(--card);display:flex;
+    border:1px solid var(--hair);background:var(--card,var(--raise,#FCFCFD));display:flex;
     align-items:center;gap:.7rem}
   .butoffer p{margin:0;flex:1;font-size:.86rem;line-height:1.45;color:var(--ink-2)}
   .butoffer p b{display:block;color:var(--ink);font-weight:600;font-size:.92rem}
@@ -248,7 +254,7 @@ const MOCSS = `
      against whatever the page happens to have under it. */
   
   .mosheet .butoff{margin:.6rem auto 0;color:var(--ink-2);
-    background:var(--card);border-radius:99px;padding:.3rem .8rem;
+    background:var(--card,var(--raise,#FCFCFD));border-radius:99px;padding:.3rem .8rem;
     box-shadow:0 2px 10px rgba(8,11,18,.18)}
   @media (prefers-reduced-motion:reduce){
     .modock{animation:none}
