@@ -4695,8 +4695,30 @@ app.post("/api/group/report", notesOff, express.json({ limit: "16kb" }), async (
 app.post("/api/note/seen", notesOff, express.json({ limit: "8kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
+  /* ONE CONVERSATION, OR ALL OF THEM.
+   *
+   * It was all of them, always, because the page WAS the messages: everything
+   * unread was on the screen the moment it loaded, so marking the lot was the
+   * truth. The page is a list of people now, and a list whose unread marks
+   * clear themselves the instant you look at the list is a list that cannot
+   * tell you which of five conversations is the new one. So a thread being
+   * opened says whose, and only that one is marked.
+   * No `who` still means all of them — /p/<handle> and the notification both
+   * open this page without one, and both of those really are "I have seen my
+   * messages". */
+  const who = String(req.body?.who || "");
   await change((board) => {
-    for (const n of board.notes) if (n.to === me) n.seen = true;
+    /* A PERSON ID, NOT A DEVICE HASH. `who` is what every other route on this
+       page takes — the public id on a row — and notes are keyed on the salted
+       hash behind it. Resolving here rather than asking the browser for a hash
+       it must never be told. */
+    const them = who ? (board.people.find((x) => x.id === who) || {}).by : "";
+    if (who && !them) return;
+    for (const n of board.notes) {
+      if (n.to !== me) continue;
+      if (them && n.by !== them) continue;
+      n.seen = true;
+    }
   });
   res.json({ ok: true });
 });

@@ -71,6 +71,97 @@
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
     font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
   main{max-width:34rem;margin:0 auto;padding:1.4rem 1.15rem 5rem}
+  /* ---- the list of people -------------------------------------------------
+     One row per PERSON, not per message: avatar, name, the last line, the
+     time, and a dot if it is unread. Everything a WeChat row has and nothing
+     else — the buttons that used to sit under every message live inside the
+     conversation now, which is where you are when you want them. */
+  .trow{display:flex;align-items:center;gap:.8rem;width:100%;border:0;
+    background:none;padding:.75rem .1rem;text-align:left;font:inherit;
+    color:var(--ink);cursor:pointer;border-bottom:1px solid var(--hair)}
+  .trow:last-child{border-bottom:0}
+  .trow:hover{background:var(--raise)}
+  .trow .avwrap{position:relative;flex:0 0 auto}
+  /* A rounded SQUARE, which is what a messenger uses and what tells this row
+     apart at a glance from the round faces in the strip above it. */
+  .trow .av{width:2.9rem;height:2.9rem;border-radius:.7rem;display:grid;
+    place-items:center;color:#fff;font-family:var(--serif);font-size:1.25rem;
+    overflow:hidden}
+  .trow .av img{width:100%;height:100%;object-fit:cover;display:block}
+  .trow .dot{position:absolute;top:-.15rem;right:-.15rem;min-width:.62rem;
+    height:.62rem;border-radius:99px;background:var(--t5);
+    box-shadow:0 0 0 2px var(--paper)}
+  .trow .mid{flex:1;min-width:0}
+  .trow .nm{display:flex;align-items:baseline;gap:.5rem}
+  .trow .nm b{flex:1;min-width:0;font-family:var(--serif);font-weight:400;
+    font-size:1.02rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .trow .nm time{flex:0 0 auto;font-size:.72rem;color:var(--muted)}
+  .trow .prev{margin:.15rem 0 0;font-size:.85rem;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .trow .prev .k{color:var(--accent);font-weight:600}
+
+  /* ---- the conversation ---------------------------------------------------
+     Bubbles, because a conversation is two people and the side of the screen
+     is how you tell at a glance which of them is talking. */
+  .thead{display:flex;align-items:center;gap:.6rem;padding:.2rem 0 .9rem;
+    border-bottom:1px solid var(--hair);margin:0 0 .9rem}
+  .thead .tname{flex:1;min-width:0;text-decoration:none;color:var(--ink)}
+  .thead .tname b{display:block;font-family:var(--serif);font-weight:400;
+    font-size:1.15rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .thead .tname span{display:block;font-size:.76rem;color:var(--muted)}
+  .more{border:0;background:none;padding:.3rem;color:var(--ink-2);cursor:pointer}
+  .more svg{width:1.35rem;height:1.35rem;fill:currentColor;stroke:none}
+  .menu{margin:-.5rem 0 .9rem;padding:.3rem;border:1px solid var(--line);
+    border-radius:.7rem;background:var(--raise);display:flex;flex-direction:column}
+  .menu button,.menu a{border:0;background:none;padding:.6rem .7rem;font:inherit;
+    font-size:.9rem;text-align:left;color:var(--ink);cursor:pointer;
+    text-decoration:none;border-radius:.5rem}
+  .menu button:hover,.menu a:hover{background:var(--paper)}
+  .menu .warn{color:var(--t5)}
+
+  /* THE CONVERSATION FILLS THE SCREEN, so the box is at the bottom of it and
+     not floating under the last bubble. A short thread otherwise put the
+     thing you type into halfway up a phone, with nothing under it. */
+  #threadview{display:flex;flex-direction:column;
+    min-height:calc(100dvh - 7.6rem)}
+  .talk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
+    gap:.55rem;padding:.2rem 0 .6rem}
+  .bub{max-width:82%;padding:.6rem .8rem;border-radius:1.05rem;font-size:.95rem;
+    line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+  /* Theirs on the left in the raised surface, yours on the right in the accent.
+     Same convention as every messenger on the phone this is read on. */
+  .bub.them{align-self:flex-start;background:var(--raise);color:var(--ink);
+    border:1px solid var(--line);border-bottom-left-radius:.35rem}
+  .bub.mine{align-self:flex-end;background:var(--accent);color:var(--accent-ink);
+    border-bottom-right-radius:.35rem}
+  .when{align-self:center;font-size:.7rem;color:var(--muted);margin:.4rem 0 .1rem}
+  .bub.flag{outline:1px solid var(--t5);outline-offset:2px}
+
+  .pinwrap{margin:0 0 .9rem;border:1px solid var(--accent);border-radius:.6rem;
+    padding:.5rem .6rem;background:var(--raise)}
+  .pinwrap .k{display:block;font-size:.6rem;letter-spacing:.12em;
+    text-transform:uppercase;font-weight:700;color:var(--accent);margin:0 0 .25rem}
+  .pinwrap p{margin:0;font-size:.88rem;line-height:1.5}
+  .pinwrap p.money{margin-top:.2rem;font-weight:700}
+  .left{margin:.2rem 0 .6rem;font-size:.78rem;color:var(--muted);text-align:center}
+  .shut{margin:.6rem 0;padding:.7rem;border-radius:.7rem;background:var(--raise);
+    font-size:.86rem;color:var(--ink-2);text-align:center}
+
+  /* The box, at the bottom, above the tabs — where a thumb already is. */
+  .write{position:sticky;bottom:4.6rem;display:flex;align-items:flex-end;gap:.5rem;
+    padding:.5rem 0 .2rem;background:var(--paper)}
+  .write textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:.95rem;
+    overflow:hidden;
+    padding:.6rem .8rem;border:1px solid var(--line);border-radius:1.1rem;
+    background:var(--raise);color:var(--ink);max-height:8rem}
+  .send{flex:0 0 auto;width:2.4rem;height:2.4rem;border:0;border-radius:50%;
+    background:var(--accent);color:var(--accent-ink);display:grid;
+    place-items:center;cursor:pointer}
+  .send svg{width:1.1rem;height:1.1rem;fill:currentColor;stroke:none;
+    margin-left:-.1rem}
+  .send:disabled{opacity:.45}
+
   /* The bar, copied from index.html so the four tabs sit in the same places on
      every screen that has them. Same rules, same breakpoints. */
   .bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:35;
@@ -207,21 +298,7 @@
 
   /* Writing the first one, in the same place the reply box appears — so the
      two halves of this screen behave the same way. */
-  .newnote{margin:0 0 1.4rem;padding:.9rem;border:1px solid var(--line);
-    border-radius:.8rem;background:var(--raise)}
-  .newnote b{display:block;font-size:.95rem}
-  .newnote .how{margin:.45rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
-  .newnote textarea{width:100%;min-height:5.5rem;resize:vertical;font:inherit;
-    margin:.6rem 0 0;padding:.7rem;border:1px solid var(--line);border-radius:.6rem;
-    background:var(--paper);color:var(--ink)}
-  .newnote .acts{display:flex;gap:.5rem;margin:.6rem 0 0;flex-wrap:wrap}
-  .newnote .acts button{border:1px solid var(--line);background:var(--paper);
-    color:var(--ink);border-radius:99px;padding:.5rem .95rem;font:inherit;
-    font-size:.86rem;cursor:pointer}
-  .newnote .acts button.primary{background:var(--accent);border-color:var(--accent);
-    color:var(--accent-ink)}
-  .newnote .said{margin:.5rem 0 0;font-size:.83rem;color:var(--muted)}
-  .newnote .said.bad{color:var(--t5)}
+  /* .newnote is gone with the inline first-message box — see drawCan. */
 
   .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--accent);
     flex:0 0 auto;margin-top:.5rem}
@@ -241,15 +318,14 @@
 </head>
 <body>
 <main>
-  <div class="top">
-    <!-- HIDDEN. Messages is a tab in the bar now, and a root tab has nothing
-         behind it — an arrow that says otherwise is a lie about where somebody
-         is. Kept in the markup rather than deleted: this page is still opened
-         directly from a notification and from /p/<handle>, and if the bar is
-         ever taken off it the way back has to come with it. -->
-    <button class="back" id="back" aria-label="Back" hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
-    </button>
+  <!-- TWO SCREENS IN ONE PAGE, because that is the shape of every messenger
+       anybody here already uses: a list of PEOPLE, and a conversation that
+       opens on top of it. What was here was an email inbox — a flat list of
+       individual messages, each with four buttons under it — which is a shape
+       nobody has to learn and nobody recognises either.
+       The thread lives at #<person id> so the phone's own back gesture works
+       and a reload keeps you where you were. -->
+  <div class="top" id="listtop">
     <div>
       <h1 id="title"></h1>
       <p id="sub"></p>
@@ -257,24 +333,51 @@
     <span id="langslot"></span>
   </div>
 
-  <!-- WHO YOU CAN WRITE TO, ABOVE WHAT YOU HAVE ALREADY SAID.
-       The inbox could only be replied to: starting a conversation meant
-       remembering a name, finding the profile and pressing hello there, so
-       somebody who opened this tab with nothing in it got a screen that said
-       "no messages" and offered no way to have any. These are the people the
-       server would already say yes to — nothing new is permitted here, it is
-       the existing rule made visible. -->
-  <div id="canwrap" hidden>
-    <div class="rule"><span id="canlabel"></span><i></i></div>
-    <p class="cansub" id="cansub"></p>
-    <div class="can" id="can"></div>
+  <div id="listview">
+    <!-- WHO YOU CAN WRITE TO. WeChat hides starting a chat behind the ＋ in
+         the corner, and its billion users know it is there. Nobody here does,
+         and this strip is the whole reason the inbox stopped being a dead end,
+         so it stays visible. The one deliberate departure on this page. -->
+    <div id="canwrap" hidden>
+      <div class="rule"><span id="canlabel"></span><i></i></div>
+      <p class="cansub" id="cansub"></p>
+      <div class="can" id="can"></div>
+    </div>
+
+    <div class="rule" id="listrule"><span id="rulelabel"></span><i></i></div>
+    <div id="list"></div>
+    <div class="none" id="none" hidden></div>
+    <p class="safety" id="safety"></p>
   </div>
 
-  <div class="rule"><span id="rulelabel"></span><i></i></div>
-  <div id="list"></div>
-  <div class="none" id="none" hidden></div>
-
-  <p class="safety" id="safety"></p>
+  <!-- THE CONVERSATION. Header with the way back and their name, the lines as
+       bubbles, and the box at the bottom where a thumb already is. -->
+  <div id="threadview" hidden>
+    <div class="thead">
+      <button class="back" id="back" aria-label="Back">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <a class="tname" id="twho" href="#"><b id="twhoname"></b><span id="twhosub"></span></a>
+      <button class="more" id="tmore" aria-label="More" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>
+      </button>
+    </div>
+    <!-- Leaving and reporting are behind the ⋯, as they are in every app that
+         has them: they are rare, permanent, and do not belong beside the box
+         somebody types in. -->
+    <div class="menu" id="tmenu" hidden></div>
+    <div class="pinwrap" id="tpin" hidden></div>
+    <div class="talk" id="talk"></div>
+    <p class="left" id="tleft" hidden></p>
+    <p class="shut" id="tshut" hidden></p>
+    <div class="write" id="twrite" hidden>
+      <textarea id="tbox" rows="1" maxlength="600"></textarea>
+      <button class="send" id="tsend" aria-label="Send">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 8-16 8 3-8z"/></svg>
+      </button>
+    </div>
+    <p class="said" id="tsaid" hidden></p>
+  </div>
 </main>
 
 <!-- THE SAME FOUR TABS, SO THIS IS NOT A PLACE YOU LEAVE THE APP TO REACH.
@@ -333,7 +436,7 @@ let NOTES = [], UNREAD = 0, YOU = { handle: "", photo: "" };
 /* The people this person may start a conversation with, and which of them is
    open. One at a time: two compose boxes on a screen is two half-written
    messages and no way to tell which send button belongs to which. */
-let CAN = [], WRITING = "";
+let CAN = [];
 
 async function load() {
   try {
@@ -358,52 +461,330 @@ async function load() {
   }
 }
 
+/* WHICH SCREEN IS UP. The person id of the open conversation, or "" for the
+   list. It lives in the hash so the phone's own back gesture closes a thread
+   instead of leaving the app, and a reload puts you back in it. */
+const openWho = () => (location.hash || "").replace(/^#/, "");
+
+/** The flat list of messages, grouped into one entry per person. The server
+ *  sends messages because that is what they are; a messenger shows people. */
+function threads() {
+  const by = new Map();
+  for (const n of NOTES) {
+    if (!n.who) continue;
+    let t = by.get(n.who);
+    if (!t) {
+      t = { who: n.who, handle: n.handle, photo: n.photo, notes: [], unread: 0 };
+      by.set(n.who, t);
+    }
+    // The newest name and face win: a thread carries several messages and the
+    // person may have changed either since the first of them.
+    if (n.handle) t.handle = n.handle;
+    if (n.photo) t.photo = n.photo;
+    t.notes.push(n);
+    if (!n.mine && !n.seen) t.unread += 1;
+  }
+  for (const t of by.values()) {
+    t.notes.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+    t.last = t.notes[t.notes.length - 1];
+  }
+  return [...by.values()].sort((a, b) =>
+    String(b.last.at).localeCompare(String(a.last.at)));
+}
+
+/** Somebody on the can-write-to list with no thread yet, in the shape the
+ *  thread screen expects. `last` is what drawThread reads the rules off; for a
+ *  first message they are the server's own answer — it said yes to this person
+ *  by putting them on the list at all. */
+function blank(who) {
+  const q = CAN.find((x) => x.who === who);
+  if (!q) return null;
+  return {
+    who, handle: q.handle, photo: q.photo, notes: [], unread: 0, fresh: true,
+    last: { canAnswer: true, open: q.why === "deal", deal: undefined, at: "" },
+  };
+}
+
 function paint() {
-  $("title").textContent = T("note.inbox");
-  $("rulelabel").textContent = T("note.inbox");
-  $("safety").textContent = T("note.safety");
+  const who = openWho();
+  const T0 = threads();
+  /* A CONVERSATION THAT HAS NOT HAPPENED YET IS STILL A CONVERSATION.
+     Tapping a face in the strip opens this screen with nothing in it and the
+     box at the bottom — which is what every messenger does and what the inline
+     box under the strip was standing in for. */
+  const here = who && (T0.find((t) => t.who === who) || blank(who));
+  $("listview").hidden = Boolean(here);
+  $("listtop").hidden = Boolean(here);
+  $("threadview").hidden = !here;
+  document.title = T("note.inbox");
   $("tabnotes").textContent = T("note.inbox");
   $("tabcards").textContent = T("nav.cards");
   $("tabbrowse").textContent = T("nav.browse");
   $("tabme").textContent = T("nav.profile");
-  /* PROFILE GOES TO YOUR OWN PAGE, and this screen already knows the handle —
-     /api/notes sends it so the lines you wrote can carry your face. Without a
-     page yet there is nowhere to send anybody, so it falls back to Browse,
-     where the Professor's first card is the offer to make one. */
   $("tabmego").href = YOU.handle
     ? "/p/" + encodeURIComponent(YOU.handle.toLowerCase()) : "/browse";
   $("back").setAttribute("aria-label", T("nav.back"));
-  $("sub").textContent = UNREAD ? T("note.newOnes", { n: UNREAD }) : T("note.inboxSub");
+  if (here) { drawThread(here); return; }
+  /* A HASH NAMING A CONVERSATION THAT IS NOT THERE. Left over from a thread
+     somebody walked out of, or a stale link — the list is the honest answer
+     rather than an empty screen with a back arrow. */
+  if (who) history.replaceState(null, "", location.pathname);
+  drawList(T0);
+}
+
+function drawList(T0) {
+  $("title").textContent = T("note.inbox");
+  $("rulelabel").textContent = T("note.inbox");
+  $("safety").textContent = T("note.safety");
+  const unread = T0.reduce((n, t) => n + t.unread, 0);
+  $("sub").textContent = unread ? T("note.newOnes", { n: unread }) : T("note.inboxSub");
 
   drawCan();
 
   const box = $("list");
   fill(box);
-  $("none").hidden = NOTES.length > 0;
-  if (!NOTES.length) {
+  $("listrule").hidden = !T0.length;
+  $("none").hidden = T0.length > 0;
+  if (!T0.length) {
     fill($("none"));
-    /* TWO EMPTY INBOXES, AND THEY ARE NOT THE SAME SCREEN. With nobody to
-       write to, "no messages" is the whole truth and the answer is to go and
-       follow people. With a row of faces above it, saying nothing is here
-       reads as a dead end directly underneath the way out of it. */
     $("none").append(el("b", null, T("note.none")),
       el("p", null, T(CAN.length ? "note.noneYet" : "note.noneBody")));
     return;
   }
-  for (const n of NOTES) box.append(row(n));
+  for (const t of T0) box.append(listRow(t));
 }
 
+/** One person, one row. */
+function listRow(t) {
+  const b = el("button", "trow");
+  b.type = "button";
+  const wrap = el("div", "avwrap");
+  const av = el("div", "av", initial(t.handle));
+  av.style.background = wash(t.handle);
+  if (t.photo) {
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/public-media?id=" + encodeURIComponent(t.photo), alt: "", loading: "lazy" });
+    img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
+  }
+  wrap.append(av);
+  if (t.unread) wrap.append(el("span", "dot"));
+  const mid = el("div", "mid");
+  const nm = el("div", "nm");
+  nm.append(el("b", null, t.handle || "—"));
+  const time = el("time", null, when(t.last.at));
+  time.dateTime = t.last.at;
+  nm.append(time);
+  const prev = el("p", "prev");
+  /* "You:" IN FRONT OF YOUR OWN LAST LINE. Without it a row whose newest
+     message is one you sent reads as one they sent, and the whole list is a
+     guess about who spoke last. */
+  if (t.last.mine) prev.append(el("span", "k", T("note.youSaid") + " "));
+  prev.append(document.createTextNode(t.last.text || ""));
+  mid.append(nm, prev);
+  b.append(wrap, mid);
+  b.addEventListener("click", () => openThread(t.who));
+  return b;
+}
+
+function openThread(who) {
+  location.hash = "#" + who;   // a real history entry, so Back closes it
+}
+
+/* The phone's own back gesture, and the arrow in the header, are the same
+   thing: they change the hash, and this redraws. */
+window.addEventListener("hashchange", () => { paint(); window.scrollTo(0, 0); });
+
+function drawThread(t) {
+  $("twhoname").textContent = t.handle || "—";
+  $("twho").href = "/p/" + encodeURIComponent((t.handle || "").toLowerCase());
+  $("tmenu").hidden = true;
+  $("tmore").setAttribute("aria-expanded", "false");
+  const last = t.last;
+  /* WHAT KIND OF CONVERSATION THIS IS, under their name. An open thread, a
+     counted one an offer opened, or an introduction with one answer in it —
+     three different rules, and somebody typing deserves to know which. */
+  $("twhosub").textContent = last.deal ? T("note.dealOpen")
+    : last.open ? T("note.openSub")
+    : last.canAnswer ? T("note.oneSub") : T("note.shut");
+
+  const pin = $("tpin");
+  pin.hidden = !last.deal;
+  if (last.deal) {
+    fill(pin);
+    pin.append(el("span", "k",
+      T(last.deal.kind === "project" ? "note.dealProject" : "note.dealJob")));
+    pin.append(el("p", null, last.deal.give));
+    if (last.deal.money) pin.append(el("p", "money", last.deal.money));
+  }
+
+  const talk = $("talk");
+  fill(talk);
+  let day = "";
+  for (const n of t.notes) {
+    // A date only where it changes. A stamp on every line is a column of
+    // grey down the side of a conversation nobody is reading it for.
+    const d = String(n.at).slice(0, 10);
+    if (d !== day) { day = d; talk.append(el("p", "when", when(n.at))); }
+    const bub = el("div", "bub " + (n.mine ? "mine" : "them") + (n.reported ? " flag" : ""));
+    bub.textContent = n.text || "";
+    talk.append(bub);
+  }
+
+  const left = $("tleft");
+  left.hidden = typeof last.left !== "number";
+  if (!left.hidden) {
+    left.textContent = T(last.left ? "note.linesLeft" : "note.linesSpent", { n: last.left });
+  }
+  const can = Boolean(last.canAnswer);
+  $("twrite").hidden = !can;
+  $("tshut").hidden = can;
+  if (!can) $("tshut").textContent = T(last.open ? "note.shut" : "note.closed");
+  /* A SHORT PROMPT, NOT THE EXAMPLE. note.placeholder is two lines of "Hi —
+     performer, Sydney, free from March…", which is the right thing in a form
+     with room for it and wrong in a one-line box, where it is clipped in the
+     middle of a word. The example still does its work where it belongs: on a
+     conversation with nothing in it yet. */
+  $("tbox").placeholder = T(t.fresh ? "note.placeholder" : "note.boxPh");
+  $("tsaid").hidden = true;
+
+  /* AND IT IS READ NOW. Opening the conversation is what reading it means —
+     the list marks nothing, so the dot beside a name survives until somebody
+     actually goes in. */
+  if (t.unread && device) {
+    fetch("/api/note/seen", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, who: t.who }),
+    }).then(() => { for (const n of t.notes) n.seen = true; })
+      .catch(() => { /* it stays unread, which is the safe way to be wrong */ });
+  }
+
+  drawMenu(t);
+}
+
+/** Leaving, reporting, and their page: rare, permanent or elsewhere, so none
+ *  of them sits beside the box somebody types in. */
+function drawMenu(t) {
+  const menu = $("tmenu");
+  fill(menu);
+  const go = el("a", null, T("note.openProfile"));
+  go.href = "/p/" + encodeURIComponent((t.handle || "").toLowerCase());
+  menu.append(go);
+
+  if (t.last.open) {
+    const out = el("button", "warn", T("note.leave"));
+    out.type = "button";
+    out.addEventListener("click", async () => {
+      if (!window.confirm(T("note.leaveSure", { who: t.handle || "—" }))) return;
+      out.disabled = true;
+      try {
+        const r = await fetch("/api/note/shut", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device, who: t.who }),
+        });
+        if (!r.ok) throw new Error("no");
+        await load();
+      } catch { out.disabled = false; say(T("note.failed"), true); }
+    });
+    menu.append(out);
+  }
+
+  // Reporting is of one message, and only one you received: the newest of
+  // theirs, which is what somebody pressing this means.
+  const theirs = [...t.notes].reverse().find((n) => !n.mine);
+  if (theirs) {
+    if (theirs.reported) {
+      menu.append(el("span", null, T("note.reported")));
+    } else {
+      const rep = el("button", "warn", T("note.report"));
+      rep.type = "button";
+      rep.addEventListener("click", async () => {
+        const why = window.prompt(T("note.reportWhy"), "");
+        if (why === null) return;
+        rep.disabled = true;
+        try {
+          await fetch("/api/note/report", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device, id: theirs.id, why }),
+          });
+          theirs.reported = true;
+          say(T("note.reported"));
+          drawMenu(t);
+        } catch { rep.disabled = false; say(T("note.failed"), true); }
+      });
+      menu.append(rep);
+    }
+  }
+}
+
+const say = (text, bad) => {
+  const p = $("tsaid");
+  p.hidden = false;
+  p.classList.toggle("bad", Boolean(bad));
+  p.textContent = text;
+};
+
+$("tmore").addEventListener("click", () => {
+  const m = $("tmenu");
+  m.hidden = !m.hidden;
+  $("tmore").setAttribute("aria-expanded", String(!m.hidden));
+});
+$("back").addEventListener("click", () => {
+  // history.back rather than clearing the hash, so the entry this made is
+  // spent rather than stacked — otherwise the phone's own Back walks through
+  // every thread that was opened.
+  if (history.length > 1) history.back();
+  else history.replaceState(null, "", location.pathname), paint();
+});
+
+/* The box grows with what is typed, to a limit, because a one-line box for a
+   paragraph is a box people give up on. */
+$("tbox").addEventListener("input", () => {
+  const b = $("tbox");
+  b.style.height = "auto";
+  b.style.height = Math.min(b.scrollHeight, 128) + "px";
+});
+
+$("tsend").addEventListener("click", async () => {
+  const who = openWho();
+  const b = $("tbox");
+  const text = b.value.trim();
+  if (!who || !text) { b.focus(); return; }
+  $("tsend").disabled = true;
+  say(T("note.sending"));
+  try {
+    const r = await fetch("/api/note", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, who, text }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "no");
+    b.value = "";
+    b.style.height = "auto";
+    $("tsaid").hidden = true;
+    await load();
+    // Newest line at the bottom, which is where a conversation is read from.
+    window.scrollTo(0, document.body.scrollHeight);
+  } catch (err) {
+    const known = { profile: "note.needProfile", enough: "note.enough",
+                    gone: "note.gone", closed: "note.closed",
+                    spent: "note.linesSpent" };
+    say(T(known[String(err.message)] || "note.failed", { who: $("twhoname").textContent }), true);
+  }
+  $("tsend").disabled = false;
+});
+
 /** One face in the strip: their picture, their name, and what puts them on
- *  the list. Pressing opens the box under it. */
+ *  the list. Pressing opens the conversation, empty, with the box at the
+ *  bottom — the same screen an existing thread opens. */
 function drawCan() {
   $("canwrap").hidden = !CAN.length;
-  if (!CAN.length) { WRITING = ""; return; }
+  if (!CAN.length) return;
   $("canlabel").textContent = T("note.canHead");
   $("cansub").textContent = T("note.canSub");
   const strip = $("can");
   fill(strip);
   for (const q of CAN) {
-    const b = el("button", "one" + (WRITING === q.who ? " on" : ""));
+    const b = el("button", "one");
     b.type = "button";
     const av = el("span", "av");
     av.textContent = initial(q.handle);
@@ -417,255 +798,21 @@ function drawCan() {
     // Only the deal is worth a word. "Matched" under every face is a label on
     // the one thing every face on this strip has in common.
     if (q.why === "deal") b.append(el("i", null, T("note.canDeal")));
-    b.addEventListener("click", () => {
-      // Pressing the open one shuts it, which is what a person expects of a
-      // thing that toggled open.
-      WRITING = WRITING === q.who ? "" : q.who;
-      drawCan();
-      drawNew();
-    });
+    b.addEventListener("click", () => openThread(q.who));
     strip.append(b);
   }
-  drawNew();
 }
 
-/** The box for a first message. Same shape and same route as a reply — this
- *  screen should not have two ways of typing on it. */
-function drawNew() {
-  const old = document.getElementById("newnote");
-  if (old) old.remove();
-  const q = CAN.find((x) => x.who === WRITING);
-  if (!q) return;
+/* The box for a first message used to live here, under the strip. It is the
+   thread screen now — see blank() and drawThread — so that writing the first
+   line and writing the fifth are the same screen rather than two, and a
+   conversation never has two places to type into it. */
 
-  const wrap = el("div", "newnote");
-  wrap.id = "newnote";
-  wrap.append(el("b", null, T("note.canTo", { who: q.handle })));
-  wrap.append(el("p", "how", T(q.why === "deal" ? "note.openHow" : "note.canHow")));
-  const ta = document.createElement("textarea");
-  ta.maxLength = 600;
-  ta.placeholder = T("note.placeholder");
-  wrap.append(ta);
-  const said = el("p", "said");
-  const acts = el("div", "acts");
-  const send = el("button", "primary", T("note.send"));
-  send.type = "button";
-  const go = el("a", null, T("note.openProfile"));
-  go.href = "/p/" + encodeURIComponent((q.handle || "").toLowerCase());
-  send.addEventListener("click", async () => {
-    const text = ta.value.trim();
-    if (!text) { ta.focus(); return; }
-    send.disabled = true;
-    said.classList.remove("bad");
-    said.textContent = T("note.sending");
-    try {
-      const r = await fetch("/api/note", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ device, who: q.who, text }),
-      });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.error || "no");
-      // Sent: they are a thread now, not a face on the strip, and load()
-      // redraws both halves off one answer.
-      WRITING = "";
-      await load();
-    } catch (err) {
-      said.classList.add("bad");
-      const known = { profile: "note.needProfile", enough: "note.enough",
-                      gone: "note.gone", closed: "note.closed",
-                      spent: "note.linesSpent" };
-      said.textContent = T(known[String(err.message)] || "note.failed", { who: q.handle });
-      send.disabled = false;
-    }
-  });
-  acts.append(send, go);
-  wrap.append(acts, said);
-  $("canwrap").append(wrap);
-  ta.focus();
-}
 
-function row(n) {
-  const box = el("div", "note" + (n.mine ? " mine" : ""));
-  box.append(el("div", "dot" + (n.mine || n.seen ? " spent" : "")));
-
-  /* WHOEVER WROTE THE LINE, and it opens them. A list of messages from names
-     you cannot put a face to is the same problem the feed had.
-     On the lines you sent that is YOU. It was the other person on every row,
-     which drew the same initial twice down a thread and read as one person
-     talking to themselves — while the line beside it said "You wrote to Wei".
-     A picture that contradicts the sentence next to it makes a screen feel
-     broken without anybody being able to say why. */
-  const face = n.mine ? YOU : n;
-  if (face.handle) {
-    const av = Object.assign(document.createElement("a"), {
-      className: "av small",
-      href: "/p/" + encodeURIComponent(face.handle.toLowerCase()),
-      textContent: initial(face.handle),
-    });
-    av.setAttribute("aria-label", face.handle);
-    av.style.background = wash(face.handle);
-    if (face.photo) {
-      const img = Object.assign(document.createElement("img"),
-        { src: "/api/public-media?id=" + encodeURIComponent(face.photo), alt: "", loading: "lazy" });
-      img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
-    }
-    box.append(av);
-  }
-
-  const m = el("div", "m");
-  const line = el("div", "line");
-  line.append(el("b", null,
-    T(n.mine ? "note.toThem" : "note.fromThem", { who: n.handle || "—" })));
-  const t = el("time", null, when(n.at));
-  t.dateTime = n.at;
-  line.append(t);
-  m.append(line, el("div", "text", n.text));
-
-  /* WHAT WAS AGREED, ABOVE THE TALK.
-   *
-   * On the newest line of the thread only — the terms are a fact about the two
-   * of you, not about each message, and repeating them under every line turns
-   * the one thing worth reading into wallpaper.
-   *
-   * This is the only reason to type in here rather than in WeChat: the offer
-   * somebody accepted sits over the conversation and cannot scroll away from
-   * either of them. */
-  if (n.deal && n.last !== false) {
-    const pin = el("div", "pin");
-    pin.append(el("span", "k",
-      T(n.deal.kind === "project" ? "note.dealProject" : "note.dealJob")));
-    pin.append(el("p", null, n.deal.give));
-    if (n.deal.money) pin.append(el("p", "money", n.deal.money));
-    m.append(pin);
-  }
-
-  const acts = el("div", "acts");
-  if (n.handle) {
-    const go = el("a", null, T("note.openProfile"));
-    go.href = "/p/" + encodeURIComponent(n.handle.toLowerCase());
-    acts.append(go);
-  }
-
-  const said = el("p", "said");
-
-  /* THE BOX TO WRITE IN, on the newest message of the thread and nowhere else.
-     A reply box under every line of a conversation is five boxes that all do
-     the same thing, and in an open thread there are lines. */
-  /* HOW MANY LINES ARE LEFT, said before they are spent rather than after.
-     A box that refuses the seventh message without ever having mentioned six
-     is a bug the person blames on themselves. */
-  if (typeof n.left === "number" && n.last !== false) {
-    const cap = el("p", "left" + (n.left ? "" : " spent"),
-      T(n.left ? "note.linesLeft" : "note.linesSpent", { n: n.left }));
-    m.append(cap);
-  }
-
-  if (n.canAnswer && n.last !== false) {
-    const ans = el("button", "primary", T(n.open ? "note.write" : "note.answerIt"));
-    ans.type = "button";
-    ans.addEventListener("click", () => {
-      ans.remove();
-      const wrap = el("div", "reply");
-      const ta = document.createElement("textarea");
-      ta.maxLength = 600;
-      ta.placeholder = T("note.placeholder");
-      wrap.append(ta, el("p", "how", T(n.open ? "note.openHow" : "note.answerHow")));
-      const send = el("button", "primary", T("note.send"));
-      send.type = "button";
-      send.addEventListener("click", async () => {
-        const text = ta.value.trim();
-        if (!text) { ta.focus(); return; }
-        send.disabled = true;
-        said.classList.remove("bad");
-        said.textContent = T("note.sending");
-        try {
-          const r = await fetch("/api/note", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ device, who: n.who, text }),
-          });
-          const d = await r.json().catch(() => ({}));
-          if (!r.ok) throw new Error(d.error || "no");
-          await load();
-        } catch (err) {
-          said.classList.add("bad");
-          const known = { profile: "note.needProfile", enough: "note.enough",
-                          gone: "note.gone", closed: "note.closed",
-                          spent: "note.linesSpent" };
-          said.textContent = T(known[String(err.message)] || "note.failed", { who: n.handle });
-          send.disabled = false;
-        }
-      });
-      const acts2 = el("div", "acts");
-      acts2.append(send);
-      wrap.append(acts2);
-      m.append(wrap);
-      ta.focus();
-    });
-    acts.append(ans);
-  }
-
-  /* THE WAY OUT, on an open conversation and on its newest line so it sits
-     where the person is already looking. One press and no reason asked: a
-     private room is only safe if leaving it costs nothing and needs no
-     sentence. The other person is never told who left. */
-  if (n.open && n.last !== false && n.who) {
-    const out = el("button", "warn", T("note.leave"));
-    out.type = "button";
-    out.addEventListener("click", async () => {
-      if (!window.confirm(T("note.leaveSure", { who: n.handle || "—" }))) return;
-      out.disabled = true;
-      try {
-        const r = await fetch("/api/note/shut", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ device, who: n.who }),
-        });
-        if (!r.ok) throw new Error("no");
-        await load();
-      } catch {
-        out.disabled = false;
-        said.classList.add("bad");
-        said.textContent = T("note.failed");
-      }
-    });
-    acts.append(out);
-  }
-
-  // Reporting, and only on something you received. Reporting your own message
-  // is not a thing, and offering it would suggest it was.
-  if (!n.mine) {
-    if (n.reported) {
-      acts.append(el("span", null, T("note.reported")));
-    } else {
-      const rep = el("button", "warn", T("note.report"));
-      rep.type = "button";
-      rep.addEventListener("click", async () => {
-        const why = window.prompt(T("note.reportWhy"), "");
-        if (why === null) return;
-        rep.disabled = true;
-        try {
-          await fetch("/api/note/report", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ device, id: n.id, why }),
-          });
-          said.textContent = T("note.reported");
-          rep.remove();
-        } catch {
-          rep.disabled = false;
-          said.classList.add("bad");
-          said.textContent = T("note.failed");
-        }
-      });
-      acts.append(rep);
-    }
-  }
-
-  m.append(acts, said);
-  box.append(m);
-  return box;
-}
-
-$("back").addEventListener("click", () => {
-  if (history.length > 1) history.back(); else location.href = "/browse";
-});
+/* THE OLD BACK HANDLER WAS HERE and it survived the rewrite, so one press ran
+   history.back() TWICE — out of the thread, then out of /notes entirely, and
+   the button that closes a conversation dropped you on Browse. The arrow has
+   one listener, above, beside the thread it belongs to. */
 
 setLang(pickLang());
 $("langslot").append(langButton(paint));

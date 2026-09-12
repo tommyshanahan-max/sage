@@ -3724,6 +3724,24 @@ export const STRINGS = {
      say yes to — nothing here is a new permission.
      --------------------------------------------------------------------- */
   "note.canHead":      ["You can write to", "你可以写给"],
+  /* ---------------------------------------------------------------------
+     THE LIST OF PEOPLE, AND THE CONVERSATION.
+     This screen was a flat list of individual messages with four buttons
+     under each — an email inbox, which is a shape nobody has to learn and
+     nobody recognises either. It is a list of people now, and the talk is
+     its own screen, which is the shape on every phone this is read on.
+     --------------------------------------------------------------------- */
+  // In front of your own last line in the list, so a row does not read as
+  // something they said when it was you.
+  "note.youSaid":      ["You:", "你："],
+  // The one-line box in an open conversation. The long example belongs to a
+  // conversation that has nothing in it yet — see drawThread.
+  "note.boxPh":        ["Write a message", "写点什么"],
+  // Under their name at the top of a conversation: which of the three rules
+  // this one is under, said once, where somebody about to type can see it.
+  "note.openSub":      ["Open — either of you can write", "开放对话——谁都可以写"],
+  "note.oneSub":       ["One answer", "只能回一条"],
+  "note.dealOpen":     ["You agreed a piece of work", "你们谈成了一件事"],
   "note.canSub": [
     "Both of you followed the other, so the door is open either way.",
     "你们互相关注了，所以谁先开口都行。",
