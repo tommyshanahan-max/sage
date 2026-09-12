@@ -3859,7 +3859,11 @@ export const STRINGS = {
      and no way to have any. These are the people the server would already
      say yes to — nothing here is a new permission.
      --------------------------------------------------------------------- */
-  "note.canHead":      ["You can write to", "你可以写给"],
+  /* IT SAID "YOU CAN WRITE TO", which is a permission and not a group of
+     people — and permissions change, so the row emptied itself the moment
+     somebody used it. These are the people you are connected to; whether you
+     can write today is a fact about one of them, said under their face. */
+  "note.canHead":      ["Your people", "你的人"],
   /* ---------------------------------------------------------------------
      THE LIST OF PEOPLE, AND THE CONVERSATION.
      This screen was a flat list of individual messages with four buttons
@@ -3879,9 +3883,11 @@ export const STRINGS = {
   "note.oneSub":       ["One answer", "只能回一条"],
   "note.dealOpen":     ["You agreed a piece of work", "你们谈成了一件事"],
   "note.canSub": [
-    "Both of you followed the other, so the door is open either way.",
-    "你们互相关注了，所以谁先开口都行。",
+    "You followed each other. Tap a face to write, or to pick up where you left off.",
+    "你们互相关注了。点一下头像就能写，或者接着上次聊。",
   ],
+  // An introduction is one message until they answer — see threadState.
+  "note.canWait":      ["waiting", "等回复"],
   "note.canDeal":      ["deal", "已成交"],
   "note.canTo":        ["To {who}", "写给 {who}"],
   "note.canHow": [

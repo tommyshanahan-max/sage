@@ -290,6 +290,10 @@
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .can .one i{display:block;font-style:normal;font-size:.66rem;color:var(--accent);
     letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+  /* Waiting on them is a state, not a thing to do — so it is said in the
+     quiet voice, and the ring around the face comes off with it. */
+  .can .one i.quiet{color:var(--muted)}
+  .can .one.hold .av{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--line)}
   /* The ring is the whole affordance: these are faces you may write to, and a
      face on this board is otherwise a link to a profile. */
   .can .av{width:3.5rem;height:3.5rem;font-size:1.35rem;margin:0 auto;
@@ -337,7 +341,12 @@
     <!-- WHO YOU CAN WRITE TO. WeChat hides starting a chat behind the ＋ in
          the corner, and its billion users know it is there. Nobody here does,
          and this strip is the whole reason the inbox stopped being a dead end,
-         so it stays visible. The one deliberate departure on this page. -->
+         so it stays visible. The one deliberate departure on this page.
+         EVERYBODY, including people you already have a thread with — see the
+         note in /api/notes. It is the stories row it looks like: your people.
+         The list underneath is your conversations, which is a different
+         question, and the same face appearing in both is how every messenger
+         with a row at the top already works. -->
     <div id="canwrap" hidden>
       <div class="rule"><span id="canlabel"></span><i></i></div>
       <p class="cansub" id="cansub"></p>
@@ -784,7 +793,7 @@ function drawCan() {
   const strip = $("can");
   fill(strip);
   for (const q of CAN) {
-    const b = el("button", "one");
+    const b = el("button", "one" + (q.why === "wait" ? " hold" : ""));
     b.type = "button";
     const av = el("span", "av");
     av.textContent = initial(q.handle);
@@ -797,7 +806,11 @@ function drawCan() {
     b.append(av, el("b", null, q.handle));
     // Only the deal is worth a word. "Matched" under every face is a label on
     // the one thing every face on this strip has in common.
+    /* A word under the face only where it says something. "Matched" under
+       every one of them is a label on the thing they all have in common; a
+       deal and an unanswered introduction are not. */
     if (q.why === "deal") b.append(el("i", null, T("note.canDeal")));
+    else if (q.why === "wait") b.append(el("i", "quiet", T("note.canWait")));
     b.addEventListener("click", () => openThread(q.who));
     strip.append(b);
   }

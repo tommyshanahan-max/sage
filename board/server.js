@@ -4614,13 +4614,25 @@ app.get("/api/notes", notesOff, async (req, res) => {
    *
    * This is that list, and it invents no permission: it is exactly the people
    * threadState would already say yes to — matched (mutual follow, scope fits,
-   * a room in common) or holding an accepted offer with you — minus anybody
-   * you are already talking to, because that thread is on the page below.
+   * a room in common) or holding an accepted offer with you.
    *
    * The rule is still enforced where it always was. This list makes it
    * visible; /api/note decides. */
   const mine = board.people.find((q) => q.by === me);
-  const talking = new Set(rows.map(other));
+  /* EVERYBODY YOU CAN WRITE TO, INCLUDING THE ONES YOU ALREADY HAVE.
+   *
+   * This used to subtract anybody with a thread, on the reasoning that their
+   * conversation was on the page below. What that actually did was empty the
+   * strip out exactly as somebody learned to use it: write to all three of
+   * your matches and the row of faces disappears, and the one affordance that
+   * says "these are the people you can reach" is gone at the moment it has
+   * proved useful. Tom hit it on his own phone with three threads open.
+   *
+   * So it is the stories row it looks like: your people, always there, in one
+   * place. The list underneath is your CONVERSATIONS, which is a different
+   * question — the same person appearing in both is how every messenger with
+   * a row of faces at the top already works.
+   */
   let can = [];
   if (mine && mine.state === "published") {
     /* NARROWED BEFORE threadState IS ASKED. It walks the follows, the shuts
@@ -4638,24 +4650,43 @@ app.get("/api/notes", notesOff, async (req, res) => {
     }
     for (const q of board.people) {
       if (!q.by || q.by === me || q.state !== "published" || !q.handle) continue;
-      if (talking.has(q.by) || !near.has(q.by)) continue;
+      if (!near.has(q.by)) continue;
       const st = threadState(board, me, q.by);
-      if (!st.can) continue;
+      /* THE ROW IS YOUR PEOPLE, NOT YOUR PERMISSIONS.
+       *
+       * It was `if (!st.can) continue`, which is a different question and made
+       * the strip disappear exactly when it had been used. An introduction is
+       * one message until they answer — so writing to three people leaves
+       * three faces that cannot be written to today, `can` goes false on all
+       * of them, and the row of faces empties. Tom watched it happen on his
+       * own phone with three threads open.
+       *
+       * Somebody you are connected to is still somebody you are connected to
+       * while you wait for their answer. The one exclusion is a conversation
+       * that ended: if either of you walked out, they are not your people any
+       * more and the face would be an offer that goes nowhere.
+       */
+      if (st.why === "shut") continue;
       can.push({
         who: q.id, handle: q.handle, at: q.at,
         photo: q.photoState === "published" ? q.photo : "",
-        // WHY they are on this list, because the two are not the same
-        // conversation: a match is two people who both said yes, and a deal is
-        // a piece of work with a date on it.
-        why: st.deal ? "deal" : "match",
+        // WHY they are on this list, because the three are not the same
+        // conversation: a match is two people who both said yes, a deal is a
+        // piece of work with a date on it, and `wait` is an introduction that
+        // has been sent and not yet answered.
+        why: st.deal ? "deal" : st.can || st.open ? "match" : "wait",
       });
     }
     /* A deal ahead of a match, and after that the most recent. A wall of faces
        is not a list of people to write to — twenty-four is already more than
        anybody works through, and the ones with a piece of work attached are
        the ones with something to say today. */
-    can.sort((x, y) => (x.why === y.why ? String(y.at).localeCompare(String(x.at))
-                                        : (x.why === "deal" ? -1 : 1)));
+    /* Deals first, then people you can write to now, then the ones you are
+       waiting on — and inside each, most recent. The order is what a thumb
+       reads first, so it is the ones with something to do today. */
+    const rank = { deal: 0, match: 1, wait: 2 };
+    can.sort((x, y) => (rank[x.why] - rank[y.why])
+      || String(y.at).localeCompare(String(x.at)));
     can = can.slice(0, 24).map(({ at, ...rest }) => rest);
   }
 
