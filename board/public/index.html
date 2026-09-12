@@ -3095,9 +3095,42 @@ const AS_KEY = "board:as";
 const beingAs = () => { try { return localStorage.getItem(AS_KEY) || ""; } catch { return ""; } };
 
 const rawFetch = window.fetch.bind(window);
+
+/* ---- "COMING SOON", SAID ONCE ------------------------------------------
+ *
+ * Somebody in the waiting room can read the whole app and change nothing —
+ * the gate refuses every write with 403 `soon`. This is where that becomes a
+ * sentence, and it is deliberately HERE rather than in forty buttons.
+ *
+ * A screen where each control is separately disabled is a screen that gets one
+ * of them wrong, and the one it gets wrong is a button that looks alive, does
+ * nothing, and says nothing. Catching the answer instead means a route added
+ * next month is covered without anybody remembering it exists.
+ *
+ * Once every few seconds, not once per request: pressing Connect fires three,
+ * and three identical lines stacked up reads as an error rather than an
+ * explanation. */
+let SOON_AT = 0;
+function sawSoon() {
+  const now = Date.now();
+  if (now - SOON_AT < 6000) return;
+  SOON_AT = now;
+  try { say(T("wroom.line"), 5000); } catch (e) { /* before say exists */ }
+}
+
 window.fetch = (input, init) => {
   const as = beingAs();
-  if (!as) return rawFetch(input, init);
+  if (!as) {
+    return rawFetch(input, init).then((r) => {
+      if (r && r.status === 403) {
+        /* Cloned, because reading the body consumes it and the caller is
+           entitled to its own copy of an answer it may want to read. */
+        r.clone().json().then((d) => { if (d && d.error === "soon") sawSoon(); })
+          .catch(() => { /* not json, not ours */ });
+      }
+      return r;
+    });
+  }
   const h = new Headers((init && init.headers) || (input instanceof Request ? input.headers : undefined));
   /* AND MOST OF THIS FILE DOES NOT USE THAT HEADER. The rule started as "add
      it wherever x-board-device already is", which read as safe and was not:

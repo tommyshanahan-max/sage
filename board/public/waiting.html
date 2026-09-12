@@ -37,6 +37,19 @@
   .dhead{display:flex;align-items:center;gap:.8rem;margin:1.8rem 0 .2rem;
     font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
     color:var(--muted)}
+  /* The waiting room, marked as the part with work in it. Everything below is
+     a list to read; this is a list to act on, and it should not look the same. */
+  .uphead span{color:var(--accent,#3F68D8)}
+  .uphead b{background:var(--accent,#3F68D8);color:#fff;border-radius:99px;
+    padding:.1rem .55rem;font-size:.72rem}
+  .upsay{margin:.2rem 0 .8rem;font-size:.85rem;line-height:1.5;opacity:.7;max-width:34rem}
+  .gap{height:1.6rem}
+  .acts{display:flex;gap:.5rem;flex-wrap:wrap;margin:.7rem 0 0}
+  .acts button{border:0;border-radius:99px;padding:.45rem 1rem;font:inherit;
+    font-size:.85rem;cursor:pointer}
+  .acts .in{background:var(--accent,#3F68D8);color:#fff}
+  .acts .back{background:transparent;color:inherit;opacity:.6;
+    box-shadow:inset 0 0 0 1px currentColor}
   .dhead i{flex:1;height:1px;background:var(--hair)}
   .dhead b{color:var(--accent);font-weight:600;letter-spacing:.04em}
 
@@ -145,7 +158,45 @@ function card(w) {
   if (w.done) {
     box.append(el("span", "done", w.done === "in" ? "let in" : "turned down"));
   }
+  /* THE TWO DECISIONS, AND THEY ARE SEPARATE BUTTONS ON PURPOSE.
+     "They can see the app" and "they are in" are different calls, and a panel
+     that makes them one control is a panel that eventually makes the second by
+     accident. Only on a row that is up — the queue below is a list to read,
+     not a list to act on, and a Let in beside forty-seven names is an invitation
+     to press the wrong one. */
+  if (w.up && !w.done) {
+    const row = el("div", "acts");
+    const inb = el("button", "in", "Let them in");
+    inb.type = "button";
+    inb.onclick = () => act(inb, "/api/waiting/admit", { id: w.id });
+    const back = el("button", "back", "Back to the list");
+    back.type = "button";
+    back.onclick = () => act(back, "/api/waiting/up", { id: w.id, on: false });
+    row.append(inb, back);
+    box.append(row);
+  }
   return box;
+}
+
+/** One press, one request, and the whole page redrawn from what the server
+ *  says afterwards — a panel that patches its own copy is a panel that
+ *  disagrees with the board about who is in. */
+async function act(btn, path, body) {
+  btn.disabled = true;
+  const was = btn.textContent;
+  btn.textContent = "…";
+  try {
+    const r = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-secret": keep.get() || "" },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error("no");
+    await tryKey(keep.get(), false);
+  } catch {
+    btn.disabled = false;
+    btn.textContent = was;
+  }
 }
 
 function draw(waits) {
@@ -153,6 +204,32 @@ function draw(waits) {
   rooms.replaceChildren();
 
   const open = waits.filter((w) => !w.done);
+
+  /* THE WAITING ROOM, FIRST AND ABOVE EVERYTHING.
+   *
+   * Three a day arrive here on their own — see liftSome in server.js — and
+   * this is the list that exists to be acted on. They can read the app and
+   * finish their page; nobody is in until somebody presses a button here.
+   *
+   * Above the queue because it is the shorter list and the only one with
+   * anything to do in it. A panel where the work is below forty-seven names
+   * is a panel where the work does not get done. */
+  const up = open.filter((w) => w.up);
+  if (up.length) {
+    /* Longest in the room first: somebody moved up four days ago and still not
+       decided on is the one this section exists to nag about. */
+    up.sort((a, b) => String(a.upAt || "").localeCompare(String(b.upAt || "")));
+    const head = el("div", "dhead uphead");
+    head.append(el("span", null, "THE WAITING ROOM"));
+    head.append(el("i"));
+    head.append(el("b", null, up.length + " to decide"));
+    rooms.append(head);
+    rooms.append(el("p", "upsay",
+      "They can see the app and finish their page. Nothing works for them yet. "
+      + "Read what they wrote, then let them in or put them back."));
+    for (const w of up) rooms.append(card(w));
+    rooms.append(el("div", "gap"));
+  }
   $("sub").textContent = open.length
     ? open.length + (open.length === 1 ? " person is waiting." : " people are waiting.")
     : "Nobody is waiting.";
@@ -164,7 +241,9 @@ function draw(waits) {
   }
 
   for (const key of ORDER) {
-    const some = waits.filter((w) => (w.room || "other") === key);
+    /* Not the ones upstairs. They have their own section above and a row in
+       two places is a row somebody acts on twice. */
+    const some = waits.filter((w) => (w.room || "other") === key && !(w.up && !w.done));
     if (!some.length) continue;
     /* Waiting first inside each room, oldest first: the person who has been
        standing there longest is the one this page exists to remind you of. */

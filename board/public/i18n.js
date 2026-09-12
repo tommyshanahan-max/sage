@@ -99,6 +99,23 @@ export const STRINGS = {
      the thing somebody wants is to stop missing messages, and "notifications"
      is the word every app uses just before it starts sending things nobody
      asked for. The board sends exactly one kind and this says so. */
+  /* THE WAITING ROOM, SAID TO THE PERSON IN IT. Not "you do not have
+     permission" — they have not done anything wrong and nothing is being
+     withheld from them as a judgement. They are early, which is the truth and
+     is also the better thing to be told. */
+  /* wroom.*, NOT soon.*. "soon.head" already exists further down this file and
+     belongs to a different screen — index.html reads it for #soonhead, which
+     says "Not open yet." Two keys of the same name is the later one winning
+     silently and a sentence appearing on a page nobody was looking at. */
+  "wroom.line": [
+    "Not yet — you are in the waiting room. Finish your page and somebody will look at it.",
+    "还没开放——你在等候室里。先把自己的主页填好，会有人来看。",
+  ],
+  "wroom.head": ["You are in the waiting room", "你在等候室"],
+  "wroom.body": [
+    "Have a look around. Nothing works for you yet, and that is not you doing it wrong. Finish your page: it is what somebody reads when they decide.",
+    "先随便看看。现在什么都还点不动，不是你操作错了。把自己的主页填完整——有人做决定的时候，看的就是这个。",
+  ],
   "push.head": ["Know when somebody writes", "有人给你留言，第一时间知道"],
   "push.later":["Not now", "以后再说"],
   "push.ask":  [

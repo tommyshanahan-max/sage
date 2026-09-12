@@ -487,6 +487,31 @@ app.use(async (req, res, next) => {
    * Just these paths. Browse, Cards and the rest stay behind the door. */
   if (/^\/(notes\/?$|api\/notes$|api\/note$|api\/note\/)/.test(req.path)
       && await wroteTo(req)) return next();
+
+  /* SOMEBODY IN THE WAITING ROOM, WHO MAY READ EVERYTHING AND CHANGE NOTHING.
+   *
+   * The stage between the list and the room. They see the app as it really is
+   * — the people, the rooms, the sentences — because a board you have been
+   * told about and never seen is a board you forget about. And every write
+   * answers the same way, in one place rather than in forty buttons: `soon`,
+   * which the app turns into one line saying the rest is coming.
+   *
+   * GET AND NOTHING ELSE, and the method is the whole test. It does not depend
+   * on anybody remembering to gate a new route: a route added next month is a
+   * POST and is refused by this line without being written down anywhere.
+   *
+   * Their own page is the exception — /api/wait/card and /api/wait/photo are
+   * how they finish it, and finishing it is the entire point of the stage.
+   * Whoever runs the board reads what they wrote and decides. */
+  const upRow = await inWaitingRoom(req);
+  if (upRow) {
+    if (req.method === "GET") return next();
+    if (/^\/api\/wait\//.test(req.path)) return next();
+    if (req.path.startsWith("/api/")) {
+      return res.status(403).json({ error: "soon" });
+    }
+    return next();   // a page, which is a read
+  }
   // Anything with a dot in the last segment is a file: the stylesheet and the
   // modules the door is built from have to load for the door to work at all.
   if (/\.[a-z0-9]{2,5}$/i.test(req.path)) return next();
@@ -694,6 +719,19 @@ async function admitted(device) {
  *  answered it. Read off the same wait cookie the waiting room uses, or the
  *  device header — a browser that cleared itself still holds the cookie, and
  *  the conversation is the one thing they came back for. */
+/** The row of somebody in the waiting room, or null. Read off the same wait
+ *  cookie the room itself uses, or the device header — a browser that cleared
+ *  itself still holds the cookie. */
+async function inWaitingRoom(req) {
+  const said = String(req.get("x-board-device") || req.body?.device || "");
+  const me = store.hashDevice(said, SALT) || waitCookie(req);
+  if (!me) return null;
+  try {
+    const board = await store.load(FILE);
+    return board.waits.find((w) => w.by === me && w.up && !w.done) || null;
+  } catch { return null; }
+}
+
 async function wroteTo(req) {
   const said = String(req.get("x-board-device") || req.body?.device || "");
   const me = store.hashDevice(said, SALT) || waitCookie(req);
@@ -2924,6 +2962,66 @@ function queueOrder(board) {
  *  hash of the number their browser made up. Nobody can ask this about
  *  anybody else, because the only thing it will answer about is the asker.
  */
+/* ---------------------------------------------------------------------------
+ * THREE A DAY, INTO THE WAITING ROOM
+ *
+ * A queue that never moves stops being scarcity and becomes a dead list, and
+ * the people standing in it are the first to work that out. So the board moves
+ * the top of it up by itself, every day, without anybody having to remember.
+ *
+ * THE WAITING ROOM IS NOT ADMISSION. It is the stage before it: they can read
+ * the whole app and finish their own page, every write answers "coming soon",
+ * and whoever runs the board reads what they filled in and decides. Nobody
+ * gets in without a person saying so — that rule is the product and this does
+ * not touch it. What this automates is the LOOKING AT, which is the part that
+ * was not happening.
+ *
+ * COUNTED, NOT SCHEDULED. It asks how many went up today and tops the number
+ * back up to UP_A_DAY. No cron, no marker, no "last run" to fall out of step:
+ * a restart, a day the box was down, and a promotion done by hand all come out
+ * right, because the only question asked is about the rows themselves.
+ *
+ * Hourly rather than at midnight, for the same reason: a box that was asleep
+ * at midnight would otherwise skip a day in silence.
+ */
+const UP_A_DAY = num("BOARD_UP_A_DAY", 3);
+
+const sameDay = (a, b) => {
+  const x = new Date(a), y = new Date(b);
+  return x.getUTCFullYear() === y.getUTCFullYear() && x.getUTCMonth() === y.getUTCMonth()
+    && x.getUTCDate() === y.getUTCDate();
+};
+
+async function liftSome() {
+  if (UP_A_DAY <= 0) return;
+  try {
+    await change((board) => {
+      const now = new Date().toISOString();
+      const today = board.waits.filter((w) => w.up && w.upAt && sameDay(w.upAt, now)).length;
+      const room = UP_A_DAY - today;
+      if (room <= 0) return null;
+      /* IN QUEUE ORDER, which is the order the room itself shows and the one
+         the people waiting can watch work — somebody who brought two people in
+         is two places further up and should go up two days sooner. */
+      const next = queueOrder(board)
+        .map((x) => x.w)
+        .filter((w) => !w.done && !w.up)
+        .slice(0, room);
+      if (!next.length) return null;
+      for (const w of next) { w.up = true; w.upAt = now; }
+      return { n: next.length };
+    });
+  } catch (e) {
+    // A day not moved is a day not moved. Never worth taking the board down.
+    console.error("waiting room lift failed:", (e && e.message) || e);
+  }
+}
+
+/* Once on the way up, so a box that has been down for a week catches up the
+   moment it returns, and then every hour. */
+setTimeout(() => { liftSome(); }, 20_000).unref?.();
+setInterval(() => { liftSome(); }, 3600_000).unref?.();
+
 app.get("/api/wait/me", async (req, res) => {
   res.set("Cache-Control", "no-store");
   /* Either key — the browser's own id, or the cookie it was given when it
@@ -3504,6 +3602,35 @@ app.get("/api/waiting", admin, async (_req, res) => {
  *  they filled in. A code that could be either would be one typo away from
  *  admitting a stranger.
  */
+/* MOVED BY HAND, EITHER WAY.
+ *
+ * The picker takes three a day off the top, which is the right default and is
+ * not a decision about a person. This is: somebody read a row and wants them
+ * looked at now, or wants them back in the queue because the moment was wrong.
+ *
+ * Neither of these admits anybody. Admission is /api/waiting/admit and stays a
+ * separate act with a separate button, because "let them see the app" and "let
+ * them in" are different decisions and a panel that makes them one control is
+ * a panel that will eventually make the second by accident.
+ */
+app.post("/api/waiting/up", express.json({ limit: "1kb" }), admin, async (req, res) => {
+  const id = String(req.body?.id || "");
+  const on = req.body?.on !== false;
+  const out = await change((board) => {
+    const w = board.waits.find((x) => x.id === id);
+    if (!w) return { error: "gone" };
+    if (w.done) return { error: "done" };
+    w.up = on;
+    /* The day is stamped going up and cleared coming back, because it is what
+       the picker counts. Left behind, somebody moved down this morning would
+       still be one of today's three and the queue would stall. */
+    w.upAt = on ? new Date().toISOString() : "";
+    return { ok: true, name: w.name };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.json(out);
+});
+
 app.post("/api/waiting/key", express.json({ limit: "1kb" }), admin, async (req, res) => {
   const id = String(req.query.id || req.body?.id || "");
   const out = await change((board) => {

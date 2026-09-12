@@ -97,6 +97,22 @@ export function cleanWait(raw) {
     // Let in, or turned down. The row stays until somebody deletes it, so the
     // same person is not asked twice.
     done: ["", "in", "no"].includes(raw.done) ? raw.done : "",
+    /* THE WAITING ROOM — a stage between the list and the room itself.
+     *
+     * NOT A FOURTH `done`. `done` means the row is resolved and out of the
+     * queue; somebody in the waiting room is still IN it and still has a place
+     * in the order. They are simply being looked at.
+     *
+     * What it buys them: they can read the whole app and finish their own
+     * page. What it does not: a single write. Every button answers "coming
+     * soon" — see the gate in server.js. Whoever runs the board reads what
+     * they filled in and decides.
+     *
+     * `upAt` is the day they were moved, and it is what the picker counts to
+     * know whether today's three have gone up. No separate marker, so a
+     * restart, a missed day or a hand-picked promotion all come out right. */
+    up: raw.up === true,
+    upAt: String(raw.upAt || "").slice(0, 40),
     // Which pile they are in while they wait. "other" when they did not say —
     // a stranger who skipped the question is not a stranger to leave off the
     // list.
