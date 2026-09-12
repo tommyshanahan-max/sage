@@ -531,6 +531,27 @@ app.use(async (req, res, next) => {
     }
     if (req.method === "GET") return next();
     if (/^\/api\/wait\//.test(req.path)) return next();
+    /* THE DOORMAN, WHO IS FOR EXACTLY THESE PEOPLE.
+     *
+     * Mo lives on the waiting room screen and his whole job is getting a
+     * sentence out of somebody standing at the door — and the door was
+     * refusing him. /api/butler is a POST and it is not under /api/wait/, so
+     * every message anybody in the waiting room sent him came back 403
+     * "soon", which the page prints as "He is not answering". It was never
+     * the key, the model or the network; it was this line.
+     *
+     * WHICH IS THE COST OF THE RULE ABOVE, and the rule is still right. "The
+     * method is the test" means a route added next month is refused without
+     * anybody writing it down — no new write can leak through by being
+     * forgotten. The flip side is that a route which SHOULD be open has to be
+     * remembered here, and this one was not. Two months of silence and an
+     * evening finding it, for a feature that was working the whole time.
+     *
+     * It is safe: /api/butler writes nothing to the board. It takes a
+     * conversation, answers it, and the only thing that can change a row is
+     * the proposal — which goes through /api/wait/card like everything else,
+     * and through this gate on its own account. */
+    if (req.path === "/api/butler") return next();
     if (req.path.startsWith("/api/")) {
       return res.status(403).json({ error: "soon" });
     }
