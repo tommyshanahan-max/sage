@@ -7774,6 +7774,11 @@ function viewNow() {
      asked for it just now — a reload, a bookmark, a link — rather than a
      four-year-old shortcut opening where the app used to live. */
   if (location.pathname === "/cards" || location.pathname === "/cards/") return "cards";
+  /* EXCEPT THE ONES THAT ARE AN INSTRUCTION RATHER THAN A POST. "#write" is
+     Messages' ＋ arriving here to open the write sheet — see the handler at
+     the bottom of this file — and a hash is otherwise a post id, so without
+     this it opened the feed and the sheet never appeared. */
+  if (location.hash === "#write") return "browse";
   if (location.hash && location.hash.length > 1) return "feed";
   return "browse";
 }
@@ -9303,6 +9308,15 @@ $("repdo").addEventListener("click", async () => {
   // add somebody, which this press just made impossible.
   paintRun();
 });
+
+/* ARRIVING WITH SOMETHING TO DO. Messages has a ＋ at the head of its strip
+   and the sheet it opens lives here, so the link carries the intent in the
+   hash rather than the sheet being built a second time over there. Cleared on
+   arrival so a reload is an ordinary one. */
+if (location.hash === "#write") {
+  history.replaceState(null, "", location.pathname);
+  setTimeout(openWrite, 0);
+}
 
 drawBeing();
 paintRun();

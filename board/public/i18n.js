@@ -3910,6 +3910,19 @@ export const STRINGS = {
   ],
   // An introduction is one message until they answer — see threadState.
   "note.canWait":      ["waiting", "等回复"],
+  // The ＋ at the head of the strip, and what the strip says with nobody in it.
+  /* ONE WORD. The tile is 4.4rem wide like every other face in the strip, so
+     "Someone new" came out as "Someone…" — and a label with an ellipsis in it
+     is a label that failed. Under a ＋, one word is the whole sentence. */
+  "note.canNew":       ["Someone", "新的人"],
+  "note.canNone": [
+    "Nobody yet. Write to somebody who is not here — their answer puts them on the list.",
+    "还没有人。可以写给还没进来的人——他回你一句，就排进名单了。",
+  ],
+  /* SOMEBODY ON THE LIST, IN THE MESSENGER. They have the conversation with
+     whoever wrote to them and nothing else — so the bar says where they
+     stand rather than offering three tabs that bounce off a door. */
+  "note.onList":       ["You are on the list — see where you are", "你在名单上——看看排到哪了"],
   "note.canDeal":      ["deal", "已成交"],
   "note.canTo":        ["To {who}", "写给 {who}"],
   "note.canHow": [

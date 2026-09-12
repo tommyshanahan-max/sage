@@ -263,29 +263,24 @@ function drawNote(box) {
     // Already a member, opening a note out of curiosity: send them in rather
     // than tell them they are on a list they are not on.
     if (d.already) { location.href = "/browse"; return; }
-    drawDone(NOTE.from);
+    /* AND STRAIGHT INTO THE CONVERSATION.
+     *
+     * This showed a "Sent" screen with a link to the waiting room, which is a
+     * receipt for a thing they have just done. What actually happened is that
+     * they are now in a messenger with the person who wrote to them — the
+     * line they read and the answer they gave are its first two messages —
+     * and that is the thing to be looking at. The waiting room is one line
+     * away, in the bar at the bottom.
+     */
+    location.href = d.who ? "/notes#" + encodeURIComponent(d.who) : "/notes";
   });
 }
 
-function drawDone(from) {
-  const box = $("view");
-  fill(box);
-  const d = el("div", "done");
-  d.append(el("div", "tick", "✓"));
-  d.append(el("h1", null, T("wn.doneHead")));
-  d.append(el("p", null, T("wn.doneBody", { who: from || T("board.someone") })));
-  box.append(d);
-  /* WHERE THEY WAIT. The waiting room is a real screen with something to do in
-     it — a card they can fill in, which is the other thing a member vouching
-     has to read. Offered rather than forced: answering was the ask. */
-  const go = el("a", "go", T("wn.doneGo"));
-  go.href = "/waiting";
-  go.style.display = "block";
-  go.style.textAlign = "center";
-  go.style.textDecoration = "none";
-  go.style.marginTop = "1.4rem";
-  box.append(go);
-}
+/* drawDone is gone with the receipt it drew — a reply lands in /notes now,
+   in the conversation it just started. See the note where it used to be
+   called. The strings for it (wn.doneHead and the rest) are kept: the same
+   screen is the right answer if this is ever opened somewhere a redirect
+   cannot go. */
 
 $("langslot").append(langButton(paint));
 setLang(pickLang());

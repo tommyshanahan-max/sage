@@ -389,6 +389,18 @@ app.use(async (req, res, next) => {
      itself and belongs behind the door like the rest of it. */
   if (req.path === "/" && !ROOT_IS_BOARD) return next();
   if (OPEN_PATHS.test(req.path)) return next();
+  /* SOMEBODY A MEMBER WROTE TO, ON THEIR WAY TO THAT CONVERSATION.
+   *
+   * They are not admitted — they are on the list, which is the whole point —
+   * so the door would send them to a password box for a code nobody gave
+   * them. But the note they answered put them in a messenger with the person
+   * who wrote it, and that conversation is the only thing they can see: every
+   * route below works out who is asking and answers about them alone, and
+   * threadState refuses any pair but this one.
+   *
+   * Just these paths. Browse, Cards and the rest stay behind the door. */
+  if (/^\/(notes\/?$|api\/notes$|api\/note$|api\/note\/)/.test(req.path)
+      && await wroteTo(req)) return next();
   // Anything with a dot in the last segment is a file: the stylesheet and the
   // modules the door is built from have to load for the door to work at all.
   if (/\.[a-z0-9]{2,5}$/i.test(req.path)) return next();
@@ -592,6 +604,21 @@ async function admitted(device) {
 
 /* The gate on writing. Reading is never gated by this — see the note above on
  * why "post" is the setting to want. */
+/** Whether this browser is somebody a member wrote a note to and who
+ *  answered it. Read off the same wait cookie the waiting room uses, or the
+ *  device header — a browser that cleared itself still holds the cookie, and
+ *  the conversation is the one thing they came back for. */
+async function wroteTo(req) {
+  const said = String(req.get("x-board-device") || req.body?.device || "");
+  const me = store.hashDevice(said, SALT) || waitCookie(req);
+  if (!me) return false;
+  try {
+    const board = await store.load(FILE);
+    return board.waits.some((w) => w.by === me && !w.done && w.fromWrite
+      && board.writes.some((x) => x.id === w.fromWrite));
+  } catch { return false; }
+}
+
 const gate = async (req, res, next) => {
   if (INVITE !== "post" && INVITE !== "read") return next();
   const device = req.body?.device || req.get("x-board-device");
@@ -2662,7 +2689,30 @@ app.post("/api/write/reply", express.json({ limit: "8kb" }), async (req, res) =>
       board.waits.push(row);
     }
     w.wait = (at >= 0 ? board.waits[at].id : row.id);
-    return { ok: true, from: from ? from.handle : "" };
+
+    /* AND THE NOTE BECOMES A CONVERSATION.
+     *
+     * It ended on a "Sent" screen with a link to the waiting room, which is a
+     * receipt — and the thing this whole path is for is that somebody is now
+     * IN the app, talking to the person who brought them. So the line that was
+     * written to them and the answer they gave are written as the first two
+     * messages of a thread, and the reply lands them in Messages with it open.
+     *
+     * Written here rather than at minting time because a note has no reader
+     * until somebody opens it: before this moment there is no browser to
+     * address the first message to.
+     */
+    if (w.by) {
+      board.notes.push(store.cleanNote({
+        id: store.newId(), at: w.at || new Date().toISOString(),
+        by: w.by, to: me, text: w.line,
+      }));
+      board.notes.push(store.cleanNote({
+        id: store.newId(), at: new Date().toISOString(),
+        by: me, to: w.by, text: reply,
+      }));
+    }
+    return { ok: true, from: from ? from.handle : "", who: from ? from.id : "" };
   });
   if (!out) return res.status(400).json({ error: why || "no" });
   // The same cookie the form sets, for the same reason: most people answer
@@ -4394,6 +4444,22 @@ function matched(board, me, them) {
  *
  *  Order matters: leaving beats everything, including a match. Somebody who
  *  walked out does not get walked back in by a follow. */
+/** Whether these two are a member and somebody that member wrote a note to.
+ *  Either way round, and only while the person is still waiting: once they are
+ *  let in they are an ordinary member and the ordinary rules apply to them,
+ *  which is the right moment for this to stop being special. */
+function writePair(board, me, them) {
+  const pair = (a, b) => board.waits.some((w) => w.by === b && !w.done && w.fromWrite
+    && board.writes.some((x) => x.id === w.fromWrite && x.by === a));
+  if (!me || !them) return false;
+  // Nobody who has a page of their own is "waiting" — see the note above.
+  const aMember = board.people.some((q) => q.by === me);
+  const bMember = board.people.some((q) => q.by === them);
+  if (aMember && !bMember) return pair(me, them);
+  if (bMember && !aMember) return pair(them, me);
+  return false;
+}
+
 function threadState(board, me, them) {
   if (board.shuts.some((x) => (x.by === me && x.who === them)
     || (x.by === them && x.who === me))) {
@@ -4415,6 +4481,32 @@ function threadState(board, me, them) {
      be withdrawn. */
   const deal = board.offers.find((o) => o.tookAt && !o.off
     && ((o.by === me && o.tookBy === them) || (o.by === them && o.tookBy === me)));
+
+  /* SOMEBODY WHO WAS WRITTEN TO, AND THE MEMBER WHO WROTE.
+   *
+   * Checked before the match and before the two-message rule, because neither
+   * applies: one of these two is not a member at all, so there is nobody to
+   * match with and no profile to follow. What there is, is a member who wrote
+   * a note by name and a person who answered it — which is a conversation
+   * somebody deliberately started, and the only one this person can have.
+   *
+   * It stays open while they wait. That is the point: the queue used to be a
+   * form and a silence, and it is now the person who invited you, in a
+   * messenger, able to ask you something before they vouch.
+   *
+   * ONE MEMBER AND ONE PERSON, and no other pair. A waiting person asking
+   * about anybody else on this board falls through to the rules below and is
+   * refused there, which is where it has always been decided.
+   */
+  const wrote = writePair(board, me, them);
+  if (wrote) {
+    const last = between[between.length - 1];
+    return {
+      can: true, open: true, why: "wrote",
+      answering: last && last.to === me ? last.id : "",
+      deal: deal ? deal.code : "",
+    };
+  }
 
   /* MATCHED: an open thread. Still not a free channel — the same daily count
      applies, so a matched pair is a conversation and not a firehose, and the
@@ -4475,20 +4567,41 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
   const re = String(req.body?.re || "");
   if (!me) return res.status(400).json({ error: "no" });
   if (!text) return res.status(400).json({ error: "empty" });
-  if (!/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "gone" });
+  /* TWO SHAPES OF ADDRESS. A person id, which is every member; and "w:<id>",
+     which is somebody on the list a member wrote to — they have no profile and
+     therefore no person id, and the member still has to be able to answer
+     them. Nothing else is accepted. */
+  if (!/^(?:[a-f0-9]{20}|w:[a-f0-9]{20})$/.test(who)) {
+    return res.status(400).json({ error: "gone" });
+  }
 
   const out = await change((board) => {
-    const target = board.people.find((x) => x.id === who && x.state === "published");
+    const target = who.startsWith("w:")
+      ? (() => {
+          const w = board.waits.find((x) => x.id === who.slice(2) && !x.done && x.fromWrite);
+          // Shaped like a person for the checks below, and deliberately
+          // without an id: there is no page and nothing to open.
+          return w && w.by ? { id: "", by: w.by, handle: w.name, state: "published" } : null;
+        })()
+      : board.people.find((x) => x.id === who && x.state === "published");
     // The same answer for a person who does not exist and one who has taken
     // themselves down, so this cannot be used to ask which ids are real.
     if (!target) return { error: "gone" };
     if (target.by === me) return { error: "self" };
 
-    // You need a profile to write to somebody. Not a rule for its own sake:
-    // an introduction from a name that does not exist is not one, and the
-    // person receiving it has nothing to decide about.
+    /* YOU NEED A PROFILE TO WRITE TO SOMEBODY. Not a rule for its own sake:
+       an introduction from a name that does not exist is not one, and the
+       person receiving it has nothing to decide about.
+       EXCEPT THE PERSON A MEMBER WROTE TO. They have no profile by
+       definition — they are on the list — and they are not introducing
+       themselves to a stranger; they are answering somebody who wrote to them
+       by name and knows exactly who they are. Their name is on the waiting
+       row, which is what the member reads. Any other pair still needs one,
+       and writePair is false for every other pair. */
     const mine = board.people.find((q) => q.by === me);
-    if (!mine || !mine.handle) return { error: "profile" };
+    if ((!mine || !mine.handle) && !writePair(board, me, target.by)) {
+      return { error: "profile" };
+    }
 
     const state = threadState(board, me, target.by);
     if (!state.can) return { error: state.why };
@@ -4536,8 +4649,19 @@ app.get("/api/notes", notesOff, async (req, res) => {
   // device hash on either end never leaves this function.
   const name = (hash) => {
     const q = board.people.find((x) => x.by === hash);
-    return q ? { who: q.id, handle: q.handle, photo: q.photoState === "published" ? q.photo : "" }
-             : { who: "", handle: "", photo: "" };
+    if (q) {
+      return { who: q.id, handle: q.handle,
+               photo: q.photoState === "published" ? q.photo : "" };
+    }
+    /* SOMEBODY ON THE LIST WHO WAS WRITTEN TO. They have no profile — that is
+       what being on the list means — so this used to answer with an empty
+       name, and the member's own inbox showed a conversation with nobody. The
+       waiting row carries the name they gave when they answered, which is the
+       name the member is deciding about. `who` stays empty: there is no page
+       to open, and the thread is addressed by it, so it is filled below. */
+    const w = board.waits.find((x) => x.by === hash && !x.done && x.fromWrite);
+    if (w) return { who: "w:" + w.id, handle: w.name, photo: "", onList: true };
+    return { who: "", handle: "", photo: "" };
   };
 
   /* THE STATE OF EACH THREAD, WORKED OUT ONCE PER PERSON rather than once per
@@ -4696,10 +4820,19 @@ app.get("/api/notes", notesOff, async (req, res) => {
     can = can.slice(0, 24).map(({ at, ...rest }) => rest);
   }
 
+  /* SOMEBODY WHO IS NOT A MEMBER, READING THE ONE CONVERSATION THEY HAVE.
+   *
+   * A person a member wrote to lands here with a thread and nothing else —
+   * no page, no Browse, no Cards. The page needs to know that, because the
+   * other three tabs would send them to a door, and their own name comes off
+   * the waiting row rather than a profile they do not have. */
+  const wait = mine ? null
+    : board.waits.find((w) => w.by === me && !w.done && w.fromWrite);
   res.json({
     notes,
     can,
-    you: name(me),
+    you: mine ? name(me) : { who: "", handle: (wait && wait.name) || "", photo: "" },
+    waiting: Boolean(wait),
     unread: notes.filter((n) => !n.mine && !n.seen).length,
   });
 });

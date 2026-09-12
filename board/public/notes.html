@@ -178,6 +178,9 @@
     padding:.45rem .2rem;font-size:.64rem;text-decoration:none;letter-spacing:.02em}
   .bar a span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bar a[aria-current="page"]{color:var(--accent)}
+  /* The one line a waiting person gets instead of three tabs they cannot use. */
+  .bar a.waitbar{flex:1;flex-direction:row;justify-content:center;
+    font-size:.82rem;color:var(--ink-2);letter-spacing:0}
   .bar svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.7;
     stroke-linecap:round;stroke-linejoin:round}
   /* On a wide screen index.html moves its bar into the masthead. This page has
@@ -294,6 +297,12 @@
      quiet voice, and the ring around the face comes off with it. */
   .can .one i.quiet{color:var(--muted)}
   .can .one.hold .av{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--line)}
+  /* The ＋ at the head of the strip. A dashed ring rather than a filled disc:
+     it is the space a person goes in, not a person. */
+  .can a.one{text-decoration:none}
+  .can .one.add .av{background:none;border:2px dashed var(--line);
+    color:var(--accent);font-size:1.5rem;font-family:var(--sans);box-shadow:none}
+  .can .one.add:hover .av{border-color:var(--accent)}
   /* The ring is the whole affordance: these are faces you may write to, and a
      face on this board is otherwise a link to a profile. */
   .can .av{width:3.5rem;height:3.5rem;font-size:1.35rem;margin:0 auto;
@@ -403,11 +412,11 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
     <span id="tabnotes"></span>
   </a>
-  <a href="/cards">
+  <a href="/cards" id="tabcardsgo">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M3 10h18"/></svg>
     <span id="tabcards"></span>
   </a>
-  <a href="/browse">
+  <a href="/browse" id="tabbrowsego">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z M9 15c1.5-2 4.5-2 6 0"/><circle cx="12" cy="10" r="2.2"/></svg>
     <span id="tabbrowse"></span>
   </a>
@@ -415,6 +424,8 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
     <span id="tabme"></span>
   </a>
+  <!-- In place of the three tabs, for somebody on the list. -->
+  <a class="waitbar" href="/waiting" id="waitbar" hidden></a>
 </nav>
 
 <script type="module">
@@ -472,6 +483,10 @@ let device = "";
 try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
 
 let NOTES = [], UNREAD = 0, YOU = { handle: "", photo: "" };
+/* SOMEBODY A MEMBER WROTE TO, WHO IS ON THE LIST AND NOT THROUGH THE DOOR.
+   They have one conversation and nothing else, so the other three tabs would
+   send them to a password box. */
+let WAITING = false;
 /* The people this person may start a conversation with, and which of them is
    open. One at a time: two compose boxes on a screen is two half-written
    messages and no way to tell which send button belongs to which. */
@@ -482,6 +497,7 @@ async function load() {
     const d = await fetch("/api/notes", { cache: "no-store",
       headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
     NOTES = d.notes || [];
+    WAITING = Boolean(d.waiting);
     CAN = d.can || [];
     YOU = d.you || { handle: "", photo: "" };
     UNREAD = d.unread || 0;
@@ -560,6 +576,15 @@ function paint() {
   $("tabcards").textContent = T("nav.cards");
   $("tabbrowse").textContent = T("nav.browse");
   $("tabme").textContent = T("nav.profile");
+  /* THE BAR IS FOR MEMBERS. Somebody on the list has one conversation and
+     three tabs that would bounce them off a door, so they get the one line
+     that is true for them instead: where they stand, and how to get in. */
+  /* THE ANCHORS, NOT THE LABELS INSIDE THEM. tabcards and tabbrowse are the
+     <span>s that hold the words — hiding those left two tabs that were still
+     there, still tappable, and now wordless. */
+  for (const id of ["tabcardsgo", "tabbrowsego", "tabmego"]) $(id).hidden = WAITING;
+  $("waitbar").hidden = !WAITING;
+  if (WAITING) $("waitbar").textContent = T("note.onList");
   $("tabmego").href = YOU.handle
     ? "/p/" + encodeURIComponent(YOU.handle.toLowerCase()) : "/browse";
   $("back").setAttribute("aria-label", T("nav.back"));
@@ -635,7 +660,10 @@ window.addEventListener("hashchange", () => { paint(); window.scrollTo(0, 0); })
 
 function drawThread(t) {
   $("twhoname").textContent = t.handle || "—";
-  $("twho").href = "/p/" + encodeURIComponent((t.handle || "").toLowerCase());
+  // No page to open for somebody on the list — see drawMenu.
+  const onList = String(t.who || "").startsWith("w:");
+  $("twho").href = onList ? "#"
+    : "/p/" + encodeURIComponent((t.handle || "").toLowerCase());
   $("tmenu").hidden = true;
   $("tmore").setAttribute("aria-expanded", "false");
   const last = t.last;
@@ -720,9 +748,15 @@ function drawThread(t) {
 function drawMenu(t) {
   const menu = $("tmenu");
   fill(menu);
-  const go = el("a", null, T("note.openProfile"));
-  go.href = "/p/" + encodeURIComponent((t.handle || "").toLowerCase());
-  menu.append(go);
+  /* SOMEBODY ON THE LIST HAS NO PAGE, so there is nothing to open and nothing
+     to share. Their whole account of themselves is the answer they wrote in
+     this conversation, which is already on the screen. */
+  const onList = String(t.who || "").startsWith("w:");
+  if (!onList) {
+    const go = el("a", null, T("note.openProfile"));
+    go.href = "/p/" + encodeURIComponent((t.handle || "").toLowerCase());
+    menu.append(go);
+  }
 
   /* SHARING THEM, from inside the conversation. Every other screen that shows
      a person can send their page to somebody; this one could not, which is
@@ -732,6 +766,7 @@ function drawMenu(t) {
      WhatsApp are one tap. */
   const sh = el("button", null, T("act.share"));
   sh.type = "button";
+  sh.hidden = onList;
   sh.addEventListener("click", () => {
     const url = location.origin + "/p/"
       + encodeURIComponent((t.handle || "").toLowerCase());
@@ -856,12 +891,30 @@ $("tsend").addEventListener("click", async () => {
  *  the list. Pressing opens the conversation, empty, with the box at the
  *  bottom — the same screen an existing thread opens. */
 function drawCan() {
-  $("canwrap").hidden = !CAN.length;
-  if (!CAN.length) return;
+  /* THE STRIP IS THERE FOR A MEMBER EVEN WITH NOBODY IN IT, because the first
+     thing in it is the ＋. Messages had no way to start anything at all —
+     WeChat's own ＋ is top right on this screen and this is the same answer in
+     the place the eye is already going. Not in the tab bar: four tabs in
+     WeChat's positions is the whole point of that bar, and a fifth thing in it
+     is the recognition gone.
+     Somebody on the list does not get it — they cannot write notes, and the
+     one conversation they have is the one they are in. */
+  $("canwrap").hidden = WAITING || (!CAN.length && !YOU.handle);
+  if ($("canwrap").hidden) return;
   $("canlabel").textContent = T("note.canHead");
-  $("cansub").textContent = T("note.canSub");
+  $("cansub").textContent = T(CAN.length ? "note.canSub" : "note.canNone");
   const strip = $("can");
   fill(strip);
+
+  if (YOU.handle) {
+    /* FIRST, and it is a person-shaped hole rather than a face: the dashed
+       ring says the circle is empty and the ＋ says what fills it. */
+    const add = el("a", "one add");
+    add.href = "/browse#write";
+    const plus = el("span", "av", "\uFF0B");
+    add.append(plus, el("b", null, T("note.canNew")));
+    strip.append(add);
+  }
   for (const q of CAN) {
     const b = el("button", "one" + (q.why === "wait" ? " hold" : ""));
     b.type = "button";
