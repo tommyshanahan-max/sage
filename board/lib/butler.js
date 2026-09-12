@@ -221,14 +221,55 @@ export async function ask(turns, who) {
   try {
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const client = new Anthropic({ apiKey: KEY });
+    const began = Date.now();
     const res = await client.messages.create({
-      model: "claude-opus-5",
-      max_tokens: 700,
-      system: SYSTEM,
+      /* NOT OPUS, AND THIS IS THE WHOLE BUG ABOVE. Mo answers one line in
+         under thirty words. The heavy model spent twenty seconds and more
+         producing it, behind a system prompt of several thousand words, and
+         somewhere in that wait the browser gave up — the request SUCCEEDED on
+         the server every time, so nothing failed and nothing logged, and the
+         page showed "He is not answering" over a reply that arrived after
+         nobody was listening. The one failure mode that leaves no trace.
+         A doorman asking "what do you do" does not need the largest model
+         there is; he needs to answer before somebody puts the phone down. */
+      /* ONE ENV VAR, because which model he is is a judgement about the
+         writing and not a thing to redeploy for. BOARD_BUTLER_MODEL in .env
+         moves him; claude-opus-5 is the heavier one if a line ever reads
+         thin. Sonnet by default: he writes one sentence under thirty words
+         to a brief several thousand words long, which is a register problem
+         rather than a reasoning one, and the half of this that was actually
+         failing was the wait. */
+      model: process.env.BOARD_BUTLER_MODEL || "claude-sonnet-5",
+      /* His cap is 220 characters of English (see short()), so 700 was room
+         to write four times what would ever be sent. Generation time scales
+         with what is actually produced, and a model asked for a paragraph
+         writes one before the cap cuts it. */
+      max_tokens: 300,
+      /* CACHED, and this is most of the speed. SYSTEM is the brief, the
+         fifteen role words and the rules on how to talk — several thousand
+         words, identical on every turn of every conversation on the board,
+         and it was being read from scratch each time before he could say
+         anything at all. Marked here it is held between calls, so the wait
+         is his sentence rather than the whole rulebook.
+         It is also why the model matters less than it looks: the expensive
+         part was never the thinking. */
+      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
       messages: said,
+    }, {
+      /* THE HANG IS A FAILURE AND HAS TO LOOK LIKE ONE. Without this a slow
+         call sits until the SDK's own default, long past the point where the
+         person has given up, and returns success to nobody. Twenty seconds is
+         already twice as long as anyone waits for a chat bubble. */
+      timeout: 20_000,
     });
+    const took = Date.now() - began;
     const text = (res.content || []).filter((c) => c.type === "text")
       .map((c) => c.text).join("").trim();
+    /* SUCCESSES ARE LOGGED TOO, and only because of tonight. Every failure
+       had its own line and the one case with no line at all — answered, but
+       too late to matter — was the case we were actually in. A number here
+       says which. */
+    console.error(`butler: ok ${took}ms ${text.length} chars`);
     return clean(text);
   } catch (e) {
     /* A model that is down, over quota or slow is not a reason to show a red

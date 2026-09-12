@@ -900,6 +900,12 @@ services:
       # — per browser, per day, and per request — and the button does not appear
       # at all without a key, rather than appearing and failing.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # WHICH MODEL THE DOORMAN IS. A judgement about his writing, not a
+      # thing to redeploy for: set BOARD_BUTLER_MODEL in .env and restart.
+      # Empty means the default in lib/butler.js, which is Sonnet — he says
+      # one sentence under thirty words and the part that was failing was
+      # the wait, not the thinking. claude-opus-5 if a line reads thin.
+      BOARD_BUTLER_MODEL: ${BOARD_BUTLER_MODEL:-}
       BOARD_TRANSLATE_BURST: ${TOMSCODING_BOARD_TRANSLATE_BURST:-30}
       BOARD_TRANSLATE_DAY: ${TOMSCODING_BOARD_TRANSLATE_DAY:-2000}
       # THE DOOR. Unset means there is no door: the code in server.js reads

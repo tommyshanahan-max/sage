@@ -1716,10 +1716,18 @@ function butlerPanel() {
 /** One round trip. */
 async function butlerTurn() {
   try {
+    /* A DEFINED WAIT, because the undefined one is what broke him. The first
+       turn of a conversation came back and every one after it did not — each
+       turn carries the whole conversation back up, so they get slower, and
+       somewhere past the browser's own patience the request died with no
+       error anywhere and a server that had answered nobody. 25 seconds,
+       just past the server's own 20, so his timeout wins and can be logged
+       rather than this one silently beating it. */
     const r = await fetch("/api/butler", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-board-device": device() },
       body: JSON.stringify({ turns: BUT.turns }),
+      signal: AbortSignal.timeout ? AbortSignal.timeout(25_000) : undefined,
     });
     const d = await r.json().catch(() => ({}));
     BUT.busy = false;
