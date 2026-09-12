@@ -3309,6 +3309,43 @@ export const STRINGS = {
      then hands it back for a person to agree to. "The doorman" is what he
      actually is: he stands at the door, he knows how the place works, and he
      writes nothing down. */
+  /* ---- THE WELCOME --------------------------------------------------------
+     THE SAME JOB THE INVITE DOES. Ray's invite works because it says his name
+     out loud and then one thing. This page opened on "You are on the list." —
+     true, and it starts in the middle of a conversation nobody has had. A
+     person who has just tapped a link from a chat does not know where they
+     are, and the first thing a room does with somebody who has just walked in
+     is use their name.
+
+     PLAYED, NOT JUST READ, for the same reason the doorman speaks: half these
+     people are reading their second language on a phone. The spoken version
+     is WRITTEN SEPARATELY below — the same words read aloud are too clipped
+     for the ear, and a sentence written to be heard is a different sentence. */
+  "wel.hi":            ["Welcome, {who}", "欢迎你，{who}"],
+  /* One line under the name and no more. It says which side of the door they
+     are on, which is the only thing they do not already know. */
+  "wel.subList": [
+    "You are at the door of a private board. Somebody inside decides who comes in.",
+    "你现在在一个私密板子的门口。谁能进来，由里面的人决定。",
+  ],
+  "wel.subUp": [
+    "You have been moved up. Have a look around while somebody reads your page.",
+    "你被提上来了。先随便看看，有人正在看你的主页。",
+  ],
+  "wel.play":          ["Hear this", "听一下"],
+  "wel.stop":          ["Stop", "停"],
+  /* SPOKEN. Longer than the screen and plainer, because there is no glancing
+     back over a sentence somebody said to you. Says where they are, what is
+     being asked, and what it gets them — in that order. */
+  "wel.sayList": [
+    "Welcome, {who}. You are on the list at The Exchange. There are {t} people waiting and you are number {n}. While you wait, fill in your page: a photograph, and one line saying what you are and what you are looking for. The people with finished pages are the ones who get moved up first.",
+    "欢迎你，{who}。你已经在交换的名单上了。现在一共 {t} 个人在等，你排第 {n}。等着的时候先把自己的主页填好：一张照片，再加一句话说清楚你是做什么的、在找什么。主页填完整的人，会被优先提上来。",
+  ],
+  "wel.sayUp": [
+    "Welcome, {who}. You have been moved up into the waiting room. You can look around the whole app now, though nothing will work for you yet. Finish your page — a photograph, and one line about what you are and what you are looking for — and somebody inside reads it and decides. You have three days from the moment you opened this.",
+    "欢迎你，{who}。你已经被提到等候室了。现在整个应用你都能看，只是什么都还点不动。把主页填完整——一张照片，再加一句话说清楚你是做什么的、在找什么——里面的人会看过之后再决定。从你打开这个页面算起，你有三天时间。",
+  ],
+
   "but.name":          ["The doorman", "门房"],
   "but.sub":           ["", ""],
   /* ---- THE FIRST THING HE SAYS ---------------------------------------------
@@ -3337,9 +3374,13 @@ export const STRINGS = {
   /* Somebody who has not been moved up yet and opened this anyway. The
      scarcity line above would be a lie to them, and the true thing is better
      anyway: the page is what decides the order. */
+  /* NO NUMBER IN THIS ONE. The welcome directly above it already says where
+     they stand, and hearing it twice in two inches reads as a page that is
+     not listening to itself. What is left is the half the welcome does not
+     carry: what moves them. */
   "but.hookList": [
-    "{who} — you are {n} of {t}. Finished pages get moved up first.",
-    "{who}——你排第 {n}，一共 {t} 个。填完的先被提上来。",
+    "{who} — finished pages get moved up first. Yours is empty.",
+    "{who}——填完的先被提上来。你的还是空的。",
   ],
   "but.ask": [
     "Two things and you are done. What do you do?",

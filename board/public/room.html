@@ -50,7 +50,48 @@
   .wrband{margin:1rem 0 0;padding:.85rem .95rem;border-radius:.75rem;
     background:var(--accent-soft);font-size:.86rem;color:var(--ink-2);
     line-height:1.5}
+  /* ---- THE ARRIVAL --------------------------------------------------------
+   *
+   * The page opened on "You are on the list." — true, and the middle of a
+   * conversation nobody has had. Somebody who has just tapped a link out of a
+   * WeChat group does not know where they are, and the first thing a room does
+   * with a person who has walked in is use their name.
+   *
+   * So: their name, large, and nothing else in the frame. The same move the
+   * invite makes — see CLAUDE.md on why that one is settled — and the reason
+   * it is a hero rather than a line is that a welcome the size of body text is
+   * not a welcome, it is a label.
+   */
+  .hero{margin:.6rem 0 0;padding:2.1rem 1.1rem 1.6rem;border-radius:1.1rem;
+    text-align:center;position:relative;overflow:hidden;
+    background:linear-gradient(168deg,var(--accent-soft),var(--raise) 62%)}
+  /* THE DOOR, drawn rather than stated. Two leaves standing open behind the
+     name — the whole story of this page in one shape, and it costs nothing:
+     no image to load on a Chinese mobile connection, no file to serve. */
+  .hero .door{position:absolute;inset:0;display:grid;place-items:center;
+    opacity:.16;pointer-events:none}
+  .hero .door svg{width:13rem;height:13rem;color:var(--accent)}
+  .hero .mk{position:relative;display:inline-grid;place-items:center;
+    width:2.5rem;height:2.5rem;border-radius:.65rem;background:var(--ink);
+    color:var(--paper);font:400 1.15rem/1 var(--serif);margin:0 0 .9rem}
+  .wrhi{position:relative;display:block;margin:0;font-family:var(--serif);
+    font-weight:400;font-size:clamp(2rem,10vw,2.9rem);line-height:1.05;
+    letter-spacing:-.01em;color:var(--ink);text-wrap:balance}
+  .herosub{position:relative;margin:.7rem auto 0;max-width:20rem;
+    font-size:.95rem;line-height:1.55;color:var(--ink-2)}
+  .heroq{position:relative;margin:.8rem 0 0;font-size:.85rem;font-weight:600;
+    color:var(--accent)}
   .wrband b{display:block;color:var(--ink);font-size:.98rem;font-weight:500}
+  /* Played rather than only read. speechSynthesis speaks Chinese on every
+     phone here; level.html has used it for months. Its own button, never
+     automatic — a page that starts talking on a train is a page somebody
+     shuts. */
+  .wrplay{position:relative;margin:1rem 0 0;display:inline-flex;align-items:center;gap:.4rem;
+    border:1px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:99px;font:inherit;font-size:.82rem;padding:.35rem .85rem;
+    cursor:pointer}
+  .wrplay svg{width:.85rem;height:.85rem;fill:currentColor}
+  .wrplay[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
   /* THE WAITING ROOM, WHICH IS A DIFFERENT BAND FROM BEING ON THE LIST.
      Warmer than the blue one above it so that being moved up reads as having
      happened rather than as the same notice with new words in it. */
@@ -1018,7 +1059,7 @@ let BUTMIC = null;
  *  line rather than automatic: a page that starts talking in a quiet carriage
  *  is a page somebody closes. */
 const canHearOut = () => typeof window !== "undefined" && "speechSynthesis" in window;
-function speakOut(text) {
+function speakOut(text, onEnd) {
   if (!canHearOut()) return;
   const tag = lang() === "zh" ? "zh-CN" : "en-US";
   try {
@@ -1033,8 +1074,9 @@ function speakOut(text) {
        language on a phone speaker, which is the case default rate is worst
        for — the same 0.85 daily.js settled on. */
     u.rate = 0.85;
+    if (onEnd) { u.onend = onEnd; u.onerror = onEnd; }
     window.speechSynthesis.speak(u);
-  } catch { /* an utterance with no voice behind it */ }
+  } catch (e) { if (onEnd) onEnd(); /* an utterance with no voice behind it */ }
 }
 
 /** THE FIRST THING HE SAYS, and it is the invite's job rather than a
@@ -1064,7 +1106,7 @@ function butlerFirst() {
     ? T("but.hookUp", { who, n: Math.max(0, total - 3) })
     /* And to somebody who has not been moved up, the same sentence would be a
        lie. The true one is better anyway: the page decides the order. */
-    : T("but.hookList", { who, n: (DATA.ahead || 0) + 1, t: total });
+    : T("but.hookList", { who });
 }
 
 function butlerPanel() {
@@ -1318,14 +1360,34 @@ function loseBox() {
 function drawWait(box) {
   const you = DATA.you;
 
-  const band = el("div", "wrband");
-  band.append(el("b", null, T("wr.on")));
-  band.append(document.createTextNode(T("wr.onWhy")));
-  /* Their number and how many are in the queue with them. The gap on its own
-     said nothing about the scale — fifth of six and fifth of ninety read the
-     same, and only one of them is worth working at. */
-  band.append(el("span", "q", T("wr.ahead",
+  /* THE ARRIVAL, and it is the first thing on the page. First name only: a
+     room says "Welcome, Jack", never "Welcome, Jack Daniels". */
+  const first = (you.name || "").split(/\s+/)[0] || you.name || "";
+  const hero = el("div", "hero");
+  const door = el("div", "door");
+  door.innerHTML = '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor"'
+    + ' stroke-width="2.2" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M50 22 18 12v76l32-10z"/><path d="M50 22l32-10v76l-32-10z"/>'
+    + '<path d="M50 22v56"/><circle cx="42" cy="52" r="1.8" fill="currentColor"/>'
+    + '<circle cx="58" cy="52" r="1.8" fill="currentColor"/></svg>';
+  hero.append(door);
+  hero.append(el("i", "mk", "\u4EA4"));
+  hero.append(el("span", "wrhi", T("wel.hi", { who: first })));
+  hero.append(el("p", "herosub", T(DATA.up ? "wel.subUp" : "wel.subList")));
+
+  /* THE NUMBER GOES ON THE HERO, and the band under it goes away entirely
+     while they are only on the list.
+     The two of them were saying the same thing in a row — the hero said they
+     are at the door of a private board that somebody inside decides about,
+     and the band said members are looking through the people at the door.
+     One of those is enough, and the one with their name on it wins. What the
+     band was carrying that the hero was not is the position, so the position
+     moves up: fifth of six and fifth of ninety read the same without it, and
+     only one of them is worth working at. */
+  hero.append(el("p", "heroq", T("wr.ahead",
     { n: (DATA.ahead || 0) + 1, t: DATA.waiting || 1 })));
+
+  const band = el("div", "wrband");
 
   /* MOVED UP, AND THE PAGE HAD NEVER SAID SO.
    *
@@ -1364,7 +1426,40 @@ function drawWait(box) {
       band.append(el("span", "clock", T("wroom.left", { n: DATA.upLeft })));
     }
   }
-  box.append(band);
+  /* THE SPOKEN VERSION. Written for the ear in i18n.js rather than read off
+     the screen — the same words aloud are too clipped, and somebody hearing a
+     sentence cannot glance back over it. Only drawn where there is a voice. */
+  if (canHearOut()) {
+    const total = DATA.waiting || 1;
+    const words = DATA.up
+      ? T("wel.sayUp", { who: you.name || "" })
+      : T("wel.sayList", { who: you.name || "", n: (DATA.ahead || 0) + 1, t: total });
+    const play = el("button", "wrplay");
+    play.type = "button";
+    play.setAttribute("aria-pressed", "false");
+    const label = () => {
+      play.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+        + (play.getAttribute("aria-pressed") === "true"
+          ? '<rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/>'
+          : '<path d="M7 4v16l13-8z"/>') + "</svg>";
+      play.append(document.createTextNode(
+        T(play.getAttribute("aria-pressed") === "true" ? "wel.stop" : "wel.play")));
+    };
+    label();
+    play.addEventListener("click", () => {
+      const on = play.getAttribute("aria-pressed") === "true";
+      try { window.speechSynthesis.cancel(); } catch { /* nothing speaking */ }
+      if (on) { play.setAttribute("aria-pressed", "false"); label(); return; }
+      play.setAttribute("aria-pressed", "true");
+      label();
+      /* The button has to come back on its own when the voice stops, or it
+         sits there saying Stop over a silent page. */
+      speakOut(words, () => { play.setAttribute("aria-pressed", "false"); label(); });
+    });
+    hero.append(play);
+  }
+  box.append(hero);
+  if (DATA.up) box.append(band);
 
   /* AND THE THING THAT CANNOT BE UNDONE.
    *
