@@ -1765,6 +1765,15 @@ const shownPerson = (q, mine) => ({
   photo: (q.photoState === "published" || mine) ? q.photo : "",
   cover: (q.photoState === "published" || mine) ? q.cover : "",
   photoPending: mine && q.photoState !== "published" && Boolean(q.photo || q.cover),
+  /* THE GALLERY, FILTERED HERE AND NOWHERE ELSE, for the same reason the
+     address is: a route written next month must not be able to publish a
+     picture nobody has looked at by forgetting to think about it.
+     The owner sees all of theirs with the state on each, so a held one reads
+     as waiting rather than as an upload that failed. Everybody else sees only
+     what has been through the queue. */
+  shots: mine
+    ? (q.shots || [])
+    : (q.shots || []).filter((x) => x.state === "published").map((x) => ({ id: x.id })),
   by: undefined,
 });
 
@@ -5676,8 +5685,9 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
   };
   const face = await shot(req.body?.photo, req.body?.photoType);
   const back = await shot(req.body?.cover, req.body?.coverType);
-  if (face?.tooBig || back?.tooBig) return res.status(413).json({ error: "tooBig" });
-  if (face?.badType || back?.badType) return res.status(415).json({ error: "badType" });
+  const shotOne = await shot(req.body?.shot, req.body?.shotType);
+  if (face?.tooBig || back?.tooBig || shotOne?.tooBig) return res.status(413).json({ error: "tooBig" });
+  if (face?.badType || back?.badType || shotOne?.badType) return res.status(415).json({ error: "badType" });
 
   const out = await change((board) => {
     let q = board.people.find((x) => x.by === me);
@@ -5751,6 +5761,26 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
     const asRead = REVIEW_PHOTOS && !openStill(board) ? "held" : "published";
     if (face?.id) { q.photo = face.id; q.photoState = asRead; }
     if (back?.id) { q.cover = back.id; q.photoState = asRead; }
+    /* ONE MORE PICTURE, AND IT QUEUES LIKE THE FACE DID. Same asRead above:
+       while the room is still open they go straight up, and once it is not
+       they wait. A gallery that skipped the queue would be the way round it.
+
+       ONE PER SAVE rather than a list. The page sends them one at a time as
+       they are chosen, so a slow connection loses one picture instead of six,
+       and the 36mb ceiling on this route is about one file and not about a
+       folder. */
+    if (shotOne?.id) {
+      q.shots = Array.isArray(q.shots) ? q.shots : [];
+      if (q.shots.length >= store.SHOTS_MAX) return { error: "shotsFull" };
+      q.shots.push({ id: shotOne.id, state: asRead, at: new Date().toISOString() });
+    }
+    /* AND TAKING ONE DOWN. The file itself is left on disk: media is shared by
+       id and reference-counted nowhere, so deleting it here would be deleting
+       whatever else happens to point at it. forget() is where files go. */
+    if (req.body.dropShot !== undefined) {
+      const want = String(req.body.dropShot || "");
+      q.shots = (Array.isArray(q.shots) ? q.shots : []).filter((x) => x.id !== want);
+    }
 
     /* THE WORDS GO UP; THE PICTURE WAITS.
      *
@@ -5805,7 +5835,14 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
   /* An address another member already has. Refused by name so the form can
      say which field, rather than a save that quietly did four of five things.
      Checked here because `change` is where the other rows are visible. */
+  /* EVERY ERROR THIS CHANGE CAN RETURN, not just the one that existed when
+     the line was written. The route ends by wrapping whatever came back as
+     `person`, so an unlisted error went out as {"person":{"error":"..."}} —
+     truthy, shaped like a profile, and the page assigned it over ME and drew
+     an empty one. Adding an error to the change above and forgetting this line
+     is a bug in the screen, not in the save. */
   if (out?.error === "mailTaken") return res.status(409).json(out);
+  if (out?.error === "shotsFull") return res.status(409).json(out);
 
   // Told either way, and told which: a photograph that went straight up is
   // still worth knowing about, and calling it held when it is not would put a

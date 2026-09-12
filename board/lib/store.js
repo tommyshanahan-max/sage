@@ -988,6 +988,22 @@ export function cleanPerson(raw) {
     // because the words are useful long before the picture is: a profile can be
     // live and readable while its photograph is still waiting.
     photoState: STATES.includes(raw.photoState) ? raw.photoState : "held",
+    /* THE OTHER PICTURES. A face is who you are and these are what you look
+       like in work — a performer is cast off several, and the board was
+       asking them to choose one.
+       EACH CARRIES ITS OWN STATE rather than riding on the face's. A person
+       whose headshot was approved is not a person whose next five uploads are
+       approved, and making the face a key to the rest is how a reviewed board
+       stops being one. */
+    shots: (Array.isArray(raw.shots) ? raw.shots : [])
+      .map((x) => {
+        const id = String((x && x.id) || "");
+        if (!/^[a-f0-9]{20}$/.test(id)) return null;
+        return { id, state: STATES.includes(x.state) ? x.state : "held",
+          at: String((x && x.at) || "").slice(0, 40) || new Date().toISOString() };
+      })
+      .filter(Boolean)
+      .slice(0, SHOTS_MAX),
     /* HOW MANY PEOPLE OPENED THIS PAGE, AND HOW MANY CAME BACK.
      *
      * Two counters and NO READING HISTORY. `views` is a date to a number,
@@ -1446,6 +1462,14 @@ export function cleanNote(raw) {
  * them: somebody who has found the agent has chosen to look.
  */
 export const RUN_MAX = 40;
+
+/* HOW MANY PICTURES ONE PERSON MAY PUT UP BESIDES THEIR FACE.
+ *
+ * Six, because a performer is cast off several looks and one headshot is a
+ * weak card — and because six is where a page stops being a profile and starts
+ * being a portfolio, which is a different product with a different moderation
+ * bill. Every one of these goes through the same queue the face does. */
+export const SHOTS_MAX = 6;
 export const RUN_SHOW = 5;
 
 export const GROUP_MAX = 10;
@@ -1921,6 +1945,11 @@ export function forget(board, me) {
   for (const q of mine) {
     if (q.photo) media.push(q.photo);
     if (q.cover) media.push(q.cover);
+    /* And the gallery. Six files per person that would otherwise sit on the
+       disk after the row naming them is gone — pictures of somebody who asked
+       to be forgotten, kept because a loop two lines above only knew about two
+       fields. */
+    for (const sh of (q.shots || [])) if (sh.id) media.push(sh.id);
   }
   for (const c of board.cards) if (c.by === me && c.qr) media.push(c.qr);
   for (const p of board.posts) {

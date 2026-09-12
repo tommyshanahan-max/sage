@@ -128,6 +128,23 @@
   /* The strip that says this is not open yet. Quiet, full width, above
      everything — it is a status, not an announcement, and it is the first
      thing somebody arriving from a friend's link should read. */
+  /* The gallery in the profile sheet. A scrolling strip, same shape it takes
+     on the profile page, so what somebody arranges here is what they saw. */
+  .meshots{margin:.2rem 0 1.1rem}
+  .meshots .strip{display:flex;gap:.5rem;overflow-x:auto;padding:.2rem 0 .4rem}
+  .meshots .strip::-webkit-scrollbar{display:none}
+  .meshots .cell{position:relative;flex:0 0 auto;width:5.4rem;aspect-ratio:3/4;
+    border-radius:.7rem;overflow:hidden;background:var(--raise)}
+  .meshots .cell img{width:100%;height:100%;object-fit:cover;display:block}
+  .meshots .cell.waiting img{opacity:.45}
+  .meshots .cell .wait{position:absolute;left:.25rem;right:.25rem;bottom:.25rem;
+    text-align:center;font-size:.62rem;padding:.1rem;border-radius:.3rem;
+    background:var(--paper);color:var(--muted)}
+  /* The × on each, top right, big enough for a thumb. A gallery you can fill
+     and not empty is a gallery people are afraid to put anything in. */
+  .meshots .cell .x{position:absolute;top:.2rem;right:.2rem;width:1.5rem;height:1.5rem;
+    border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:.95rem;
+    line-height:1;display:grid;place-items:center;cursor:pointer;padding:0}
   .invite{margin:0 -1.15rem .9rem;padding:.5rem 1.15rem;background:var(--accent-soft);
     color:var(--accent);font-size:.78rem;letter-spacing:.02em;text-align:center}
   /* The same strip, carrying a sentence, sometimes a button, and always an ×.
@@ -2534,6 +2551,17 @@
       <span class="in" id="mepicin"></span><span class="plus">+</span>
     </button>
     <p class="menote" id="mepicsay"></p>
+
+    <!-- THE OTHER PICTURES. Under the face and visibly secondary: the card is
+         still one photograph and this is the rest of the answer for somebody
+         who has stopped on you. A performer is cast off several looks and the
+         board was asking them to pick one. -->
+    <div class="meshots" id="meshots">
+      <p class="menote" id="meshotsay"></p>
+      <div class="strip" id="meshotstrip"></div>
+      <button class="ghost" type="button" id="meshotadd"></button>
+    </div>
+    <input type="file" id="meshotfile" hidden accept="image/*">
 
     <!-- WHERE THE FACE SITS, dragged rather than typed.
          A card is a tall rectangle and a photograph is whatever shape the
@@ -8070,8 +8098,78 @@ function drawMePic() {
      somewhere, and the block that used to say it is off the page. */
   $("mepicsay").textContent = !(ME && ME.photo) ? T("me.needPhoto")
     : ME.photoPending ? T("me.photoHeld") : "";
+  drawMeShots();
 }
 $("mepicgo").addEventListener("click", () => $("mephoto").click());
+
+/* ---- THE OTHER PICTURES -------------------------------------------------
+ *
+ * Six, sent one at a time as they are chosen rather than gathered and posted
+ * together: a slow connection then loses one picture instead of six, and each
+ * one appears the moment it lands, which is the difference between a control
+ * that works and a control you press again.
+ *
+ * Each goes into the same queue the face does — see asRead in /api/me. A
+ * gallery that skipped review would be the way round review.
+ */
+function drawMeShots() {
+  const strip = $("meshotstrip");
+  fill(strip);
+  const shots = (ME && Array.isArray(ME.shots)) ? ME.shots : [];
+  for (const sh of shots) {
+    const cell = el("div", "cell" + (sh.state && sh.state !== "published" ? " waiting" : ""));
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/public-media?id=" + encodeURIComponent(sh.id), alt: "", loading: "lazy" });
+    img.addEventListener("error", () => cell.remove());
+    cell.append(img);
+    if (sh.state && sh.state !== "published") cell.append(el("span", "wait", T("shot.waiting")));
+    const x = el("button", "x", "\u00d7");
+    x.type = "button";
+    x.setAttribute("aria-label", T("shot.drop"));
+    x.addEventListener("click", async () => {
+      x.disabled = true;
+      const r = await fetch("/api/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "x-board-device": device },
+        body: JSON.stringify({ device, dropShot: sh.id }),
+      }).then((v) => v.json()).catch(() => ({ error: "failed" }));
+      if (r && r.person && r.person.handle !== undefined) { ME = r.person; drawMeShots(); }
+      else x.disabled = false;
+    });
+    cell.append(x);
+    strip.append(cell);
+  }
+  const full = shots.length >= 6;
+  $("meshotadd").hidden = full;
+  $("meshotadd").textContent = T("shot.add");
+  $("meshotsay").textContent = full ? T("shot.full") : T("shot.more");
+}
+
+$("meshotadd").addEventListener("click", () => $("meshotfile").click());
+$("meshotfile").addEventListener("change", async (e) => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  $("meshotadd").disabled = true;
+  try {
+    /* Shrunk on the phone, like the face. A 12-megapixel photograph straight
+       off a camera roll is four seconds of upload on a Chinese mobile network
+       and nothing on any screen here is drawn bigger than 1000px. */
+    const small = await shrink(f, 1000);
+    const r = await fetch("/api/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "x-board-device": device },
+      body: JSON.stringify({ device, shot: small.data, shotType: small.type }),
+    }).then((v) => v.json()).catch(() => ({ error: "failed" }));
+    /* `handle !== undefined` and not merely truthy: a refusal used to come
+       back shaped like a person and would be assigned straight over ME. */
+    if (r && r.person && r.person.handle !== undefined) { ME = r.person; drawMeShots(); }
+    else say(T(r && r.error === "shotsFull" ? "shot.full" : "act.again"), 3000);
+  } catch (err) {
+    say(T("act.again"), 3000);
+  }
+  $("meshotadd").disabled = false;
+});
 
 /* The days somebody is free, 0–6. Drawn rather than a row of checkboxes: seven
  * of those is a wall of text, and a week reads as a shape. */

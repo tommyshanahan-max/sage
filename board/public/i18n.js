@@ -83,6 +83,18 @@ export const STRINGS = {
   ],
   "ins.no":  ["Not now", "以后再说"],
 
+  /* THE OTHER PICTURES. Said as a state, not as an apology — a person who has
+     just uploaded something wants to know it arrived, and "waiting" says that
+     where "pending review" says they may have done something wrong. */
+  "shot.waiting":  ["waiting", "审核中"],
+  "shot.add":      ["Add a photo", "加一张照片"],
+  "shot.more": [
+    "Up to six more, for the work. Your face stays the one on your card.",
+    "最多再放六张，放你的作品。名片上还是用你那张头像。",
+  ],
+  "shot.full":     ["That is six — take one down to add another.", "已经六张了，想加就先撤一张。"],
+  "shot.drop":     ["Take down", "撤下"],
+
   /* THE BUZZ. Said as what it does for them, not as "enable notifications" —
      the thing somebody wants is to stop missing messages, and "notifications"
      is the word every app uses just before it starts sending things nobody

@@ -131,6 +131,37 @@
      A profile reached from the deck used to shrink the face to a six-rem
      circle over a decorative band — the photograph is the thing somebody
      followed the link for, so it keeps the size it had. */
+  /* NAMED .looks AND NOT .shots, WHICH IS TAKEN. site.css already defines
+     .shots as a three-column grid for the marketing page, this file loads
+     site.css, and the first version of this silently inherited it — six
+     portraits laid out as a wide grid running off the left edge of a phone.
+     The fourth collision of its kind on this board. Grep before naming one:
+       grep -rn '\.thename\b' public/*.css public/*.html
+     A STRIP THAT SCROLLS, NOT A GRID THAT WRAPS. Six pictures in a grid push
+     everything below them off a phone screen; a row you swipe keeps the
+     sentence and the buttons where they were, and swiping sideways through
+     someone's looks is the gesture every casting app already taught. */
+  /* scroll-padding AS WELL AS padding, and it is not decoration. A snap port
+     snaps the first cell to the start of the SCROLL area, which ignores the
+     container's own padding — so the strip opened with the first portrait
+     jammed against the left edge of the phone while every other block on the
+     page sat inside a gutter, and the padding was there the whole time doing
+     nothing anybody could see. scroll-padding is what tells the snap where
+     "start" actually is. */
+  .looks{display:flex;gap:.5rem;overflow-x:auto;margin:0 0 1.2rem;padding:0 1.15rem .2rem;
+    scroll-padding-inline:1.15rem;
+    scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  .looks::-webkit-scrollbar{display:none}
+  .lookcell{position:relative;flex:0 0 auto;width:7.2rem;aspect-ratio:3/4;
+    border-radius:.9rem;overflow:hidden;background:var(--raise);scroll-snap-align:start}
+  .lookcell img{width:100%;height:100%;object-fit:cover;display:block}
+  /* Dimmed, with the reason on it. Its owner is the only person who is sent a
+     held picture at all, and to them "waiting" and "failed" look the same
+     without this. */
+  .lookcell.waiting img{opacity:.45}
+  .lookcell .wait{position:absolute;left:.35rem;right:.35rem;bottom:.35rem;
+    text-align:center;font-size:.68rem;letter-spacing:.02em;padding:.15rem .3rem;
+    border-radius:.4rem;background:var(--paper);color:var(--muted)}
   .shot{position:relative;margin:0 1.15rem 1rem;border-radius:1.3rem;overflow:hidden;
     height:max(15rem, min(66vh, 36rem));
     background:var(--raise);box-shadow:var(--shadow);
@@ -756,6 +787,33 @@ function paint() {
   if (where) scrim.append(el("p", "where", where));
   shot.append(scrim);
   box.append(shot);
+
+  /* THE OTHER PICTURES, UNDER THE CARD.
+   *
+   * A performer is cast off several looks and the board was asking them to
+   * choose one. Under the face rather than instead of it: the card is who they
+   * are and stays the thing Browse shows, and this is the rest of the answer
+   * for somebody who has already stopped on them.
+   *
+   * A held one is drawn for its owner with a mark on it, because "waiting to
+   * be looked at" and "the upload failed" look identical otherwise and only
+   * one of them is worth doing anything about. Nobody else is sent them at
+   * all — see shownPerson. */
+  const shots = Array.isArray(q.shots) ? q.shots : [];
+  if (shots.length) {
+    const strip = el("div", "looks");
+    for (const sh of shots) {
+      const cell = el("div", "lookcell" + (sh.state && sh.state !== "published" ? " waiting" : ""));
+      const im = Object.assign(document.createElement("img"), {
+        src: "/api/public-media?id=" + encodeURIComponent(sh.id), alt: "", loading: "lazy",
+      });
+      im.addEventListener("error", () => cell.remove());
+      cell.append(im);
+      if (sh.state && sh.state !== "published") cell.append(el("span", "wait", T("shot.waiting")));
+      strip.append(cell);
+    }
+    box.append(strip);
+  }
 
   /* Your own page, while your photograph is still in the queue.
    *
