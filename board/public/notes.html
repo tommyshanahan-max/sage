@@ -157,8 +157,17 @@
   /* ---- the conversation ---------------------------------------------------
      Bubbles, because a conversation is two people and the side of the screen
      is how you tell at a glance which of them is talking. */
-  .thead{display:flex;align-items:center;gap:.6rem;padding:.2rem 0 .9rem;
-    border-bottom:1px solid var(--hair);margin:0 0 .9rem}
+  /* THE HEADER STAYS. It scrolled away with the conversation, and in a room
+     with a keyboard up that left a screen with no room name on it and no way
+     back — which is the one thing a chat header is for. Sticky to the top,
+     with the page's own background under it so bubbles do not show through as
+     they pass beneath.
+     The negative top margin cancels main's padding, so it sits flush against
+     the top of the screen when it lands rather than an inch down. */
+  .thead{position:sticky;top:0;z-index:20;background:var(--paper);
+    display:flex;align-items:center;gap:.6rem;
+    margin:-1.4rem 0 .9rem;padding:1.4rem 0 .7rem;
+    border-bottom:1px solid var(--hair)}
   .thead .tname{flex:1;min-width:0;text-decoration:none;color:var(--ink)}
   .thead .tname b{display:block;font-family:var(--serif);font-weight:400;
     font-size:1.15rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;
