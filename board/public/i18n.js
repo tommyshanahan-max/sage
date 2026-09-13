@@ -1227,6 +1227,11 @@ export const STRINGS = {
   /* The quiet half of the room, listed under the talk for a member only.
      Most of a queue writes one line on the form and then nothing. */
   "dr.silent":         ["{n} here haven't said anything", "还有 {n} 个人一句话没说"],
+  /* The same list with nothing above it. "Haven't said anything" then
+     describes the room, not the people in it, and the room already said
+     so one line higher — so that line goes and this one does both. */
+  "dr.none":           ["{n} here, nobody talking yet", "门口 {n} 个人，还没人开口"],
+  "dr.all":            ["Show all {n}", "看全部 {n} 个"],
   /* On the screen of somebody standing at the door. It was a form and a
      clock; the room is the same wait with the silence taken out. */
   "dr.yours":          ["Your room", "你这间"],

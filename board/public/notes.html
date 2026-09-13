@@ -205,6 +205,12 @@
      six names in accent blue reads as six buttons, and the bubbles are what
      somebody is here to read. */
   .dwho .reach{color:inherit;text-decoration:underline dotted;text-underline-offset:3px}
+  /* The rest of the room, on a tap. A full-width row rather than a button
+     shape: it is the last item in a list of people and it opens more of them,
+     so it belongs to the list rather than sitting on top of it. */
+  .domore{display:block;width:100%;margin:.2rem 0 .6rem;padding:.75rem 0;
+    border:0;border-top:1px solid var(--line);background:none;cursor:pointer;
+    font:inherit;font-size:.88rem;color:var(--accent)}
   /* The doorman's own lines, told apart by the paper they are on rather than
      by a label: he is the one voice in the room that is not a person. */
   .bub.bot{background:var(--raise);border-color:var(--t3);border-left-width:3px}
@@ -1347,6 +1353,12 @@ async function sendNew() {
  *  inside or still waiting. That second one is what somebody at the door is
  *  actually looking for: is anybody in there listening.
  */
+/* The room whose list is open past the first six. One room, not a flag: open
+   another and it shuts, which is right — the six exist so a room is a
+   conversation, and every room reopening as eighteen names is the list this
+   was built to stop. */
+let DOORALL = "";
+
 async function drawDoor(key) {
   $("listview").hidden = true;
   $("listtop").hidden = true;
@@ -1376,7 +1388,14 @@ async function drawDoor(key) {
   $("twhosub").textContent = T("dr.sub", { n: DOOR.n });
 
   fill(talk);
-  if (!DOOR.says.length) talk.append(el("p", "when", T("dr.quiet")));
+  /* ONE ACCOUNT OF A SILENT ROOM, NOT TWO. This said "Nobody has said anything
+     yet." and then the list below it said "18 here haven't said anything",
+     stacked, about the same silence. The list's own heading carries it now —
+     see below — and this line is for the case where there is nothing at all to
+     say it over. */
+  if (!DOOR.says.length && !(DOOR.how === "member" && QUEUE.length)) {
+    talk.append(el("p", "when", T("dr.quiet")));
+  }
   let day = "";
   for (const m of DOOR.says) {
     const dd = String(m.at).slice(0, 10);
@@ -1423,8 +1442,26 @@ async function drawDoor(key) {
     const quiet = QUEUE.filter((w) =>
       (WAITROOMS.includes(w.room) ? w.room : "other") === key && !said.has(w.id));
     if (quiet.length) {
-      talk.append(el("p", "when", T("dr.silent", { n: quiet.length })));
-      for (const w of quiet) {
+      /* WHAT THE HEADING SAYS DEPENDS ON WHETHER THE ROOM HAS TALKED. With
+         nothing above it, "haven't said anything" is the state of the room and
+         not of these people; with a conversation above it, it is the opposite.
+         Same list, and the line over it has to be true either way. */
+      talk.append(el("p", "when",
+        T(DOOR.says.length ? "dr.silent" : "dr.none", { n: quiet.length })));
+      /* THE FRONT OF THE QUEUE FIRST, and only the front of it.
+       *
+       * Eighteen rows made the room a list again — the thing the rooms were
+       * built to stop, reproduced one screen further in, with the composer
+       * pushed under eighteen strangers. Six, then the rest on a tap.
+       *
+       * First come, one place up per person somebody brought in: `place` is
+       * the board's own queue order, decided in queueOrder and not worked out
+       * again here. Showing six of eighteen makes the order matter, so it is
+       * the order the board already uses and not a second one. */
+      quiet.sort((a, b) => (a.place ?? 1e9) - (b.place ?? 1e9)
+        || String(a.at).localeCompare(String(b.at)));
+      const some = DOORALL === key ? quiet : quiet.slice(0, 6);
+      for (const w of some) {
         const a = el("a", "wperson");
         a.href = "#w:" + w.id;
         const av = el("span", "av small", initial(w.name));
@@ -1440,6 +1477,13 @@ async function drawDoor(key) {
         a.append(av, m);
         if (w.vouches) a.append(el("span", "wv", T("note.waitVouched", { n: w.vouches })));
         talk.append(a);
+      }
+      if (DOORALL !== key && quiet.length > some.length) {
+        const more = el("button", "domore");
+        more.type = "button";
+        more.textContent = T("dr.all", { n: quiet.length });
+        more.addEventListener("click", () => { DOORALL = key; drawDoor(key); });
+        talk.append(more);
       }
     }
   }
