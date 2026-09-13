@@ -4414,6 +4414,13 @@ export const STRINGS = {
     "Leave the chat with {who}? Neither of you can write again. {who} is not told.",
     "退出和 {who} 的对话？之后你们都不能再写了。{who} 不会收到通知。",
   ],
+  /* Clearing a thread off your own list — the other button on that menu
+     closes it for both of you. "Delete" because that is the word the phone
+     has taught everybody, and the sentence under it is the whole difference:
+     it is your copy, and they are not told. */
+  "note.clear":        ["Delete this conversation", "\u5220\u6389\u8fd9\u6bb5\u5bf9\u8bdd"],
+  "note.clearSure":    ["Delete it from your phone? They keep theirs, and are not told.",
+                        "\u4ece\u4f60\u8fd9\u8fb9\u5220\u6389\uff1f\u5bf9\u65b9\u90a3\u8fb9\u8fd8\u5728\uff0c\u4e5f\u4e0d\u4f1a\u77e5\u9053\u3002"],
   "note.shut":         ["This conversation is closed.", "这个对话已经结束了。"],
   "note.needProfile":  ["Fill in your own profile first — an introduction from nobody is not one.",
                         "先填好自己的资料——没有名字的自我介绍不算自我介绍。"],

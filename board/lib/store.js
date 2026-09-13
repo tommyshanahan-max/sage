@@ -1648,6 +1648,33 @@ export function cleanShut(raw) {
   return { by, who, at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
 }
 
+/** A CONVERSATION CLEARED OFF ONE PERSON'S OWN LIST.
+ *
+ *  NOT LEAVING, WHICH IS THE OTHER BUTTON. Leaving closes the thread for both
+ *  of you and is a thing done TO the conversation; this is a thing done to
+ *  your own copy of it. Nobody is told, nothing is shut, and if they write
+ *  again the thread comes back — which is what every messenger on this phone
+ *  does with it, and the reason blocking is a separate thing that already
+ *  exists for the case where you want them to stop.
+ *
+ *  WHY IT HAD TO EXIST. Leaving takes a thread off the leaver's list, so the
+ *  only rows you could never clear were the ones somebody else left — a
+ *  conversation that ended, that you cannot reopen and cannot put away, on
+ *  your screen for ever.
+ *
+ *  LATEST WINS, unlike shuts. Clearing a thread, getting a new message and
+ *  clearing it again are three real events and the second clear has to move
+ *  the line — a first-writing-wins row would silently do nothing the second
+ *  time.
+ */
+export function cleanHide(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const by = String(raw.by || "").slice(0, 64);
+  const who = String(raw.who || "").slice(0, 64);
+  if (!by || !who || by === who) return null;
+  return { by, who, at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
+}
+
 /* ONE PERSON NOT WANTING TO SEE ANOTHER.
  *
  * WHY THIS IS A ROW NOW AND WAS NOT BEFORE. The old block lived in
@@ -2113,6 +2140,22 @@ export function cleanBoard(raw) {
     shuts.push(x);
   }
 
+  /* Conversations somebody cleared off their own list, one row per direction
+     and the LATEST kept — see cleanHide for why this is the opposite of the
+     rule above it. */
+  const hides = [];
+  const hid = new Map();
+  for (const r of (Array.isArray(raw?.hides) ? raw.hides : [])) {
+    const x = cleanHide(r);
+    if (!x) continue;
+    const key = x.by + ":" + x.who;
+    const at = hid.get(key);
+    if (at && String(at.at) >= String(x.at)) continue;
+    if (at) hides.splice(hides.indexOf(at), 1);
+    hid.set(key, x);
+    hides.push(x);
+  }
+
   /* Groups, and what was said in them. Deduplicated on id like everything
      else; a message whose group is gone is dropped rather than kept as an
      orphan nobody can read or report. */
@@ -2229,7 +2272,7 @@ export function cleanBoard(raw) {
   }
 
   return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
-    offers, shuts, groups, says, signins, writes, pushes, blocks, announces,
+    offers, shuts, hides, groups, says, signins, writes, pushes, blocks, announces,
     counts: cleanCounts(raw?.counts) };
 }
 

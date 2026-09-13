@@ -6405,7 +6405,18 @@ app.get("/api/notes", notesOff, async (req, res) => {
    * app deciding what you are allowed to notice.
    */
   const iLeft = new Set(board.shuts.filter((x) => x.by === me).map((x) => x.who));
-  const rows = rows0.filter((n) => !iLeft.has(other(n)));
+  /* AND A CONVERSATION CLEARED OFF THIS LIST — see cleanHide.
+   *
+   * Everything up to the moment they cleared it, gone from their screen and
+   * from nobody else's. The rows are still there and the other person's copy
+   * is untouched; if anything arrives after that line the thread comes back
+   * carrying only what is new, which is what every messenger on this phone
+   * does and the reason blocking is a different button.
+   */
+  const cleared = new Map();
+  for (const x of board.hides || []) if (x.by === me) cleared.set(x.who, x.at);
+  const rows = rows0.filter((n) => !iLeft.has(other(n))
+    && !(cleared.has(other(n)) && String(n.at) <= String(cleared.get(other(n)))));
   const state = new Map();
   for (const n of rows) {
     if (!state.has(other(n))) state.set(other(n), threadState(board, me, other(n)));
@@ -6595,6 +6606,31 @@ app.post("/api/note/shut", notesOff, express.json({ limit: "2kb" }), async (req,
     if (!target || target.by === me) return { error: "gone" };
     if (board.shuts.some((x) => x.by === me && x.who === target.by)) return { ok: true };
     board.shuts.push(store.cleanShut({ by: me, who: target.by }));
+    return { ok: true };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** Clearing one off your own list. Not leaving — see cleanHide. */
+app.post("/api/note/hide", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const who = String(req.body?.who || "");
+  if (!me) return res.status(400).json({ error: "no" });
+  if (!/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "gone" });
+  const out = await change((board) => {
+    /* TWO KINDS OF THREAD AND BOTH CAN BE CLEARED. A member has a profile; a
+       person on the waiting list has a row and no profile at all, and their
+       thread is addressed by the row's id — see `name` in /api/notes. Leaving
+       only ever worked for the first, which left the one conversation most
+       likely to be finished with as the one that could not be put away. */
+    const q = board.people.find((x) => x.id === who);
+    const w = !q && board.waits.find((x) => x.id === who);
+    const hash = q ? q.by : (w ? w.by : "");
+    if (!hash || hash === me) return { error: "gone" };
+    board.hides = board.hides || [];
+    board.hides = board.hides.filter((x) => !(x.by === me && x.who === hash));
+    board.hides.push(store.cleanHide({ by: me, who: hash }));
     return { ok: true };
   });
   if (out?.error) return res.status(400).json(out);

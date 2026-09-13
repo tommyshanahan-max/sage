@@ -1774,6 +1774,37 @@ function drawMenu(t) {
     menu.append(out);
   }
 
+  /* CLEARING IT OFF YOUR OWN LIST, and it is not the button above it.
+   *
+   * Leaving closes the conversation for both of you. This closes nothing,
+   * tells nobody, and takes the rows off your screen — which is the gesture
+   * people actually mean by deleting a chat, and the only one that could ever
+   * clear a thread somebody ELSE walked out of. Those were permanent: an ended
+   * conversation you cannot reopen and cannot put away.
+   *
+   * Under leave and above report, because it is the least severe of the three
+   * and the list runs in that order. */
+  const del = el("button", null, T("note.clear"));
+  del.type = "button";
+  del.addEventListener("click", async () => {
+    if (!window.confirm(T("note.clearSure"))) return;
+    del.disabled = true;
+    try {
+      const r = await fetch("/api/note/hide", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        // A waiting person's thread is addressed by their row — see blank().
+        body: JSON.stringify({ device, who: String(t.who || "").replace(/^w:/, "") }),
+      });
+      if (!r.ok) throw new Error("no");
+      /* Back to the list, because the thread this menu is attached to is about
+         to not be there. Replace rather than push: the entry that opened it
+         now points at a conversation this browser cannot see. */
+      history.replaceState(null, "", location.pathname);
+      await load();
+    } catch { del.disabled = false; say(T("note.failed"), true); }
+  });
+  menu.append(del);
+
   // Reporting is of one message, and only one you received: the newest of
   // theirs, which is what somebody pressing this means.
   const theirs = [...t.notes].reverse().find((n) => !n.mine);
