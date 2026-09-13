@@ -737,7 +737,12 @@ export function moDock() {
      off the button keeps dragging it rather than dropping it where the
      gesture happened to leave the circle. */
   let down = null;
-  const MOVED = 6;        // px before a tap becomes a drag
+  /* SIX PIXELS WAS THE OTHER HALF OF THE GLITCH, and it is measured as
+     |dx|+|dy|, so three pixels in each direction crossed it. A thumb on glass
+     rolls further than that just pressing down — so a hold that had already
+     opened the microphone was cancelled mid-sentence by a finger that never
+     meant to move, silently, and it looked like the mic not recording. */
+  const MOVED = 14;       // px before a tap becomes a drag
   /* HOLD HIM AND TALK. THREE GESTURES ON ONE CIRCLE, AND THEY HAVE TO BE
    * TELLABLE APART WITHOUT ANYBODY BEING TAUGHT THEM.
    *
@@ -807,7 +812,18 @@ export function moDock() {
       /* No microphone, no permission, no network to the recogniser: he stops
          listening and the box is still a box. See speak.js on where this
          genuinely does not work. */
-      onError() { stopTalk(false); },
+      /* AND IT SAYS SO. This stopped quietly, which is why a microphone that
+         refused — no permission, no route to the recogniser, the last session
+         not yet handed back — was indistinguishable from a button that did
+         nothing. The words are still typeable either way; the point is that
+         somebody knows which of the two just happened. */
+      onError(why) {
+        stopTalk(false);
+        moOpen();
+        BUT.no = T(why === "not-allowed" || why === "service-not-allowed"
+          ? "but.micNo" : "but.micOff");
+        repaint();
+      },
     });
   };
 
@@ -819,6 +835,11 @@ export function moDock() {
   });
   btn.addEventListener("pointermove", (e) => {
     if (!down) return;
+    /* ONCE HE IS LISTENING, A MOVING FINGER IS A RESTING FINGER. Somebody
+       holding a button and speaking into a phone is not trying to drag
+       anything, and their hand does not hold still for eight seconds.
+       Cancelling there threw away the sentence they were halfway through. */
+    if (talking) return;
     const dx = e.clientX - down.x;
     const dy = e.clientY - down.y;
     if (!down.moved) {

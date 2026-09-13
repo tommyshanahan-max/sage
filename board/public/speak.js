@@ -38,6 +38,30 @@ export const canHear = () => {
   } catch { return false; }
 };
 
+/* ONE RECOGNISER AT A TIME, AND THIS IS THE "SOMETIMES IT DOESN'T RECORD".
+ *
+ * The microphone is a single resource and the browser gives it to one
+ * recogniser. Start a second while the first still holds it and start()
+ * throws InvalidStateError — which this file caught, reported as "failed",
+ * and the caller turned into stopping quietly. So the FIRST hold worked, and
+ * a hold a second later did nothing at all, and it looked like the button
+ * being flaky rather than like a resource not yet handed back.
+ *
+ * It is not instant, either: stop() lets the last phrase finish being
+ * recognised, so the session is still alive for a moment after the finger
+ * comes up. Anybody who lets go and immediately holds again lands in exactly
+ * that window.
+ *
+ * A screen with ONE mic button that toggles never hits this — there is only
+ * ever one session and it is never started twice in a row. A button held and
+ * released and held again hits it constantly.
+ *
+ * So: whoever holds it is remembered, a new one takes it off the old one
+ * first, and a start that still throws is retried once after a beat rather
+ * than being reported as a failure the person can do nothing about.
+ */
+let ALIVE = null;
+
 /** Start listening into a field.
  *
  *  Returns a handle with .stop(). Calling it twice is harmless.
@@ -96,6 +120,7 @@ export function listen(field, lang, on = {}) {
        would put an error on the screen of somebody who is mid-sentence. */
     if (e && e.error === "no-speech") return;
     live = false;
+    if (ALIVE === rec) ALIVE = null;
     on.onError && on.onError(String((e && e.error) || "failed"));
     on.onState && on.onState(false);
   };
@@ -104,21 +129,47 @@ export function listen(field, lang, on = {}) {
      `continuous` says. Restarting keeps a long dictation going; the flag is
      what tells this apart from the stop button, which must actually stop. */
   rec.onend = () => {
+    if (ALIVE === rec) ALIVE = null;
     if (!live) { on.onState && on.onState(false); return; }
-    try { rec.start(); } catch { live = false; on.onState && on.onState(false); }
+    try { rec.start(); ALIVE = rec; } catch { live = false; on.onState && on.onState(false); }
   };
 
-  try {
-    rec.start();
-    live = true;
-    on.onState && on.onState(true);
-  } catch (err) {
-    on.onError && on.onError("failed");
+  /* Somebody who let go before it ever started. Without this the microphone
+     opens a moment later with nobody holding the button. */
+  let dropped = false;
+  let retried = false;
+
+  const begin = () => {
+    if (dropped) return;
+    try {
+      rec.start();
+      ALIVE = rec;
+      live = true;
+      on.onState && on.onState(true);
+    } catch {
+      /* Almost always the previous session not having let go yet — see the
+         note above ALIVE. One retry, then say so. */
+      if (!retried) { retried = true; setTimeout(begin, 250); return; }
+      on.onError && on.onError("busy");
+    }
+  };
+
+  if (ALIVE && ALIVE !== rec) {
+    const old = ALIVE;
+    ALIVE = null;
+    /* abort(), not stop(), on the one being replaced: its words are not
+       wanted and stop() would spend another moment delivering them. */
+    try { old.abort(); } catch { /* already gone */ }
+    setTimeout(begin, 60);
+  } else {
+    begin();
   }
 
   return {
     stop() {
       live = false;
+      dropped = true;
+      if (ALIVE === rec) ALIVE = null;
       /* stop(), not abort(): stop lets the last phrase finish being recognised
          and delivered, abort throws it away. The word somebody was saying as
          they reached for the button is usually the one they meant. */

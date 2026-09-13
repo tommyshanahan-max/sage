@@ -3479,7 +3479,7 @@ app.post("/api/wait/photo", express.json({ limit: "36mb" }), async (req, res) =>
  * conversations are waiting on them is a fact about their own screen. Who the
  * other person is, and a word of what anybody wrote, is not his to hold.
  */
-const SCREENS = ["wait", "browse", "notes"];
+const SCREENS = ["wait", "browse", "notes", "profile", "person"];
 
 function screenFacts(board, me, mine, where) {
   if (where === "browse") {
@@ -3492,6 +3492,32 @@ function screenFacts(board, me, mine, where) {
       mutual > 0
         ? `${mutual} of the people they followed have followed them back. Those are the ones they can write to.`
         : "Nobody they have followed has followed them back yet. Until somebody does there is nobody for them to write to, and the only thing that changes it is getting through more cards.",
+    ];
+  }
+
+  /* THEIR OWN PAGE. What is missing from it is the useful thing here — this
+     is the one screen where the answer to "why is it quiet" is often
+     something they can fix in a minute. */
+  if (where === "profile") {
+    const followers = board.follows.filter((f) => f.who === mine.id).length;
+    const bits = [
+      "They are on THEIR OWN PAGE. It is what a member sees when they come up in somebody's Browse: their sentence, their photograph, and the line under it.",
+      followers > 0
+        ? `${followers} people are following them.`
+        : "Nobody is following them yet.",
+    ];
+    if (!mine.photo) bits.push("There is no photograph on it. On a board where nobody has met, that is the single thing most likely to be why it is quiet, and it is worth one straight sentence here — this is the screen where they can fix it.");
+    if (!String(mine.goal || "").trim()) bits.push("The line under their sentence is empty. It is what a member reads when deciding about them.");
+    return bits;
+  }
+
+  /* SOMEBODY ELSE'S PAGE. He is told nothing about that person — the member
+     is looking straight at them and can read it. What he is for here is the
+     machinery: what Follow does, what a match is, what giving a card means. */
+  if (where === "person") {
+    return [
+      "They are looking at ANOTHER MEMBER'S PAGE. You are not told anything about that person — the card is right there in front of them — and you must not guess at a name, a credit or a reason.",
+      "What you can explain: following is one-sided and silent, and the other person is not told. Nothing opens until both of them have followed. Then they can write to each other here, and a contact only changes hands when both press give.",
     ];
   }
 
@@ -6482,6 +6508,10 @@ app.get("/api/person", async (req, res) => {
     // stranger has that a profile is a person.
     posts: live.filter((p) => store.isOwnPost(p)
       && (p.handle || "").toLowerCase() === want).slice(0, 5),
+    /* Whether there is a doorman to put on this screen — the same flag
+       /api/me and /api/notes carry, so the page can mount him without a
+       second request and he never appears as a circle that answers nothing. */
+    butler: butler.configured(),
   });
 });
 

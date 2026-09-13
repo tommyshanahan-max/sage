@@ -401,6 +401,7 @@
 
 <script type="module">
 import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
+import { mountMo } from "/mo.js";
 import { stageFor, stageName, crownMark } from "/crown.js";
 import { OFF } from "/off.js";
 
@@ -449,9 +450,14 @@ let PAIR = { mutual: false, shared: [], can: false, gave: false, given: false, c
 let MYCARD = null;
 
 async function load() {
+  /* Outside the try, because the mount below is outside it too — `d` is
+     scoped to the block and reading it there is a ReferenceError, not a
+     falsy value. */
+  let hasMo = false;
   try {
     const d = await fetch("/api/person?handle=" + encodeURIComponent(HANDLE),
       { headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
+    hasMo = Boolean(d.butler);
     PERSON = d.person; POSTS = d.posts || [];
     THREAD = (d.person && d.person.thread) || { can: false, why: "" };
     await loadCard();
@@ -460,6 +466,29 @@ async function load() {
       || { mutual: false, shared: [], can: false, gave: false, given: false, card: null };
   } catch { PERSON = null; }
   paint();
+
+  /* HIM, HERE TOO — and this was the page he was missing from.
+   *
+   * He is on Browse, on Messages and at the door, and the one screen a member
+   * spends longest on is their own page: the photograph they have not added,
+   * the line they have not written, the sentence that is quietly matching
+   * nobody. That is the screen where "why is it quiet" has an answer they can
+   * act on in a minute, and there was nobody standing on it.
+   *
+   * TWO SCREENS IN ONE FILE. Their own page and somebody else's are the same
+   * HTML and are not the same room: on theirs he is told what is missing from
+   * it, and on a stranger's he is told nothing about that person at all —
+   * they are looking straight at the card and can read it. See screenFacts
+   * in server.js.
+   *
+   * No onKeep: there is nothing on this screen for him to propose into. The
+   * sentence is changed through Edit your page, like everything else here.
+   */
+  mountMo({
+    on: hasMo && Boolean(PERSON),
+    where: PERSON && PERSON.mine ? "profile" : "person",
+    first: () => [{ from: "you", text: T("but.hookIn") }],
+  });
 }
 
 
