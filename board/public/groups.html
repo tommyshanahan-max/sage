@@ -223,6 +223,9 @@
   /* THE ROOM ITSELF. Bubbles, oldest at the top, because that is what a
      conversation is and the inbox shape this page started from read as a pile
      of separate letters. */
+  /* The room reporting itself: who came in, who went out. Centred and quiet —
+     it is a fact between two people's sentences, not one of them. */
+  .evt{margin:.9rem 0;text-align:center;font-size:.76rem;color:var(--muted)}
   .said{display:flex;gap:.6rem;margin:0 0 .9rem;align-items:flex-start}
   .said.mine{flex-direction:row-reverse}
   .said .av{width:2rem;height:2rem;font-size:.85rem;box-shadow:none}
@@ -707,6 +710,14 @@ function paintRoom(g) {
      away behind ⋯, which is where a WeChat user looks for them. */
 
   for (const m of g.says) {
+    /* WHAT HAPPENED TO THE ROOM, drawn as a line across it rather than as a
+       bubble from Mo. It is not somebody talking — it is the room reporting
+       itself, which is what every group chat on this phone does with a thin
+       grey line in the middle and no avatar beside it. */
+    if (m.evt) {
+      box.append(el("p", "evt", T("mo." + m.evt.kind, { who: m.evt.who })));
+      continue;
+    }
     const row = el("div", "said" + (m.mine ? " mine" : ""));
     if (!m.mine) row.append(face(m, "small"));
     const wrap = el("div");

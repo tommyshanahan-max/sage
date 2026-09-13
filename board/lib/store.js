@@ -1929,6 +1929,20 @@ export function cleanSay(raw) {
     at: s(raw.at, 40) || new Date().toISOString(),
     text: s(raw.text, 600),
     report: s(raw.report, 400),
+    /* WHAT HAPPENED TO THE ROOM, when this line is about the room rather than
+     * something somebody said. Who joined, who was taken out, who walked.
+     *
+     * STORED AS A FACT AND NOT AS A SENTENCE. Mo's warning line is stored text
+     * and is therefore in one language for ever, which is wrong on a board
+     * half of which reads Chinese — the house rule is that strings live in
+     * i18n.js in both languages and the server stores what is true. So this
+     * carries a kind and a name and the page writes the sentence, in whichever
+     * language it is being read in.
+     *
+     * `who` is a handle, never a device hash: it is drawn on a screen. */
+    ...(raw.evt && ["in", "out", "left"].includes(String(raw.evt.kind))
+      ? { evt: { kind: String(raw.evt.kind), who: s(raw.evt.who, 40) } }
+      : {}),
   };
 }
 

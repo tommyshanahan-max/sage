@@ -4511,6 +4511,12 @@ export const STRINGS = {
   /* The other half of the ＋, and the words for it. "Take out" and not
      "remove": it is a room, and what happens is that somebody is no longer in
      it — which is also what it will read like to them. */
+  /* The room reporting itself. Stored as a fact and written here, in both
+     languages — see cleanSay and moSays. Somebody's name and the shortest
+     true sentence: it sits between two people talking and is not one of them. */
+  "mo.in":             ["{who} came in", "{who} \u8fdb\u6765\u4e86"],
+  "mo.out":            ["{who} was taken out", "{who} \u88ab\u79fb\u51fa\u4e86"],
+  "mo.left":           ["{who} left", "{who} \u8d70\u4e86"],
   "grp.outTop":        ["Take out", "移出"],
   "grp.outDone":       ["Done", "完成"],
   "grp.outHow":        ["Tap somebody to take them out of this room.",

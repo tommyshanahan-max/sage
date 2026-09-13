@@ -6703,6 +6703,9 @@ app.get("/api/groups", notesOff, async (req, res) => {
       says: board.says.filter((m) => m.group === g.id)
         .sort((a, b) => String(a.at).localeCompare(String(b.at)))
         .map((m) => ({ id: m.id, at: m.at, text: m.text,
+          // What happened to the room, when the line is about the room — see
+          // moSays. The page writes the sentence; this is the fact.
+          evt: m.evt || null,
           mine: m.by === me, reported: Boolean(m.report),
           ...(m.by === store.MO
             ? { who: store.MO, handle: MO_NAME, photo: "", bot: true }
@@ -6776,6 +6779,7 @@ app.post("/api/group/add", notesOff, express.json({ limit: "4kb" }), async (req,
     // A guest who turns out to be a member already is not both.
     g.guests = (g.guests || []).filter((h) => h !== q.by);
     Object.assign(g, store.cleanGroup(g));
+    moSays(board, g.id, "in", q.handle);
     return { ok: true, handle: q.handle };
   });
   if (out?.error) {
@@ -6877,6 +6881,30 @@ function doorAccess(board, me, key) {
      see the note over WAITROOMS in scripts/waiting.mjs. */
   if (w && (w.room || "other") === key) return "wait";
   return "";
+}
+
+/** MO SAYS WHAT HAPPENED TO THE ROOM.
+ *
+ *  He is a member of every one of them and he is silent — that is the bargain,
+ *  and it holds: this is not him reading anything. It is the room's own state,
+ *  said out loud by the one member whose job that is.
+ *
+ *  IT EXISTS BECAUSE TAKING SOMEBODY OUT WAS SILENT. Somebody vanished from a
+ *  room of four and the other three were told nothing, which is worse than the
+ *  removal — a person you were talking to on Tuesday is gone on Wednesday and
+ *  the room has no account of it. Joining had the same hole from the other
+ *  side: a stranger's first line arriving in a room that never said they had
+ *  come in.
+ *
+ *  A FACT, NOT A SENTENCE. `evt` carries the kind and the name and the page
+ *  writes the words, in whichever language it is being read in — see cleanSay,
+ *  and the house rule that strings live in i18n.js in both languages.
+ */
+function moSays(board, group, kind, who) {
+  if (!who) return;
+  board.says.push(store.cleanSay({
+    id: store.newId(), group, by: store.MO, text: "", evt: { kind, who },
+  }));
 }
 
 /** Saying something in one. */
@@ -7028,6 +7056,11 @@ app.post("/api/group/leave", notesOff, express.json({ limit: "2kb" }), async (re
     }
     if (!g || !g.members.includes(me)) return { error: "gone" };
     g.members = g.members.filter((m) => m !== me);
+    /* A member walking out is named. A guest is not — they never said who they
+       were, so there is no name to say, and "somebody left" is a sentence that
+       makes a room of four look over its shoulder for no reason. */
+    moSays(board, g.id, "left",
+      (board.people.find((q) => q.by === me) || {}).handle);
     /* NOBODY LEFT IS NOT AN EMPTY ROOM, it is no room. The messages go with it
        — there is nobody who could read or report them, and a file full of
        conversations nobody is in is a file of other people's words kept for
@@ -7083,6 +7116,7 @@ app.post("/api/group/out", notesOff, express.json({ limit: "2kb" }), async (req,
     g.members = g.members.filter((m) => m !== hash);
     g.guests = (g.guests || []).filter((m) => m !== hash);
     if (g.members.length + (g.guests || []).length === was) return { error: "gone" };
+    moSays(board, g.id, "out", them.handle);
     /* The same end a room comes to when people leave it: nobody left is not an
        empty room, it is no room. See the leave route. */
     if (g.members.length < 2) {
