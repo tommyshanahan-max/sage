@@ -1251,13 +1251,13 @@ export const STRINGS = {
                         "拉个人进这个房间 — 名字"],
   "dr.sendGone":       ["Sent to {name}.", "已经发给{name}了。"],
   "dr.sendWords": [
-    "{name} — this is the {room} room at The Exchange. Put your name down here and I will see it.\n\n{url}",
-    "{name}，这是 The Exchange 的{room}房间。在这里留个名字，我这边看得到。\n\n{url}"],
+    "{name} — the {room} room at The Exchange.\n\n{url}\n\nPut your name down and I will see it.",
+    "{name}，The Exchange 的{room}房间。\n\n{url}\n\n留个名字，我这边看得到。"],
   /* In WeChat the share sheet is not ours, so the whole block is copied and
      pasted by hand — same words, and the link has to survive being one line. */
   "dr.sendWordsWx": [
-    "{name} — this is the {room} room at The Exchange.\n\n{url}\n\nPut your name down and I will see it.",
-    "{name}，这是 The Exchange 的{room}房间。\n\n{url}\n\n留个名字，我这边看得到。"],
+    "{name} — the {room} room at The Exchange.\n\n{url}\n\nPut your name down and I will see it.",
+    "{name}，The Exchange 的{room}房间。\n\n{url}\n\n留个名字，我这边看得到。"],
   "dr.here":           ["{n} at this door", "这个门口 {n} 个人"],
   "dr.spoke":          ["said something", "说过话"],
   /* Where they stand in the queue. First come, one place up per person
