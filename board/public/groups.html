@@ -188,9 +188,15 @@
   .pick:disabled{opacity:.4}
   .pick b{flex:1;min-width:0;font-family:var(--serif);font-weight:400;font-size:1.15rem;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pick span{flex:0 0 auto;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  /* .tag AND NOT `.pick span`, WHICH IS WHAT IT WAS.
+     The avatar is a <span> too, so `.pick span` painted the letter inside it
+     --muted: rgb(138,147,159) on an accent-blue disc, measured. Every other
+     face on the board is ink on its own colour; here the one screen whose
+     whole job is picking people BY FACE had two grey smudges on it. The class
+     is on the word, so the face is out of its reach. */
+  .pick .tag{flex:0 0 auto;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
     color:var(--muted)}
-  .pick.on span{color:var(--accent)}
+  .pick.on .tag{color:var(--accent)}
   /* A ring rather than a filled disc: picked should not erase the face it is
      drawn over. Fern learned that one the hard way and wrote it down. */
   .pick.on .av{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--accent)}
@@ -280,19 +286,36 @@ const initial = (name) => (String(name || "?").trim()[0] || "?").toLowerCase();
 let device = "";
 try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
 
-let GROUPS = [], CANADD = [], MAX = 10;
+let GROUPS = [], CANADD = [], MAX = 5;
 /* Which room is open, or "" for the list. Kept in the address so the back
    button leaves a room rather than the page. */
 let OPEN = new URLSearchParams(location.search).get("g") || "";
 let PICKED = [], PICKING = false;
 
+/* A COLOUR PER PERSON, FROM THEIR OWN NAME — the same routine, and so the
+   same colour, as notes.html and the card in room.html. This page never had
+   it: every letter avatar was the one accent blue, so a picker listing four
+   people who had not uploaded a photo was four identical blue circles.
+   Not random: it has to be the same tomorrow, and the same to them as it is
+   to the person reading. */
+function wash(name) {
+  let h = 0;
+  for (const ch of String(name || "?")) h = (h * 31 + ch.codePointAt(0)) % 360;
+  return "linear-gradient(150deg,hsl(" + h + " 26% 74%),hsl(" + ((h + 24) % 360) + " 24% 52%))";
+}
+
 /** A face, or a letter where there is none. */
 function face(p, cls) {
   const a = el("span", "av" + (cls ? " " + cls : ""), initial(p.handle));
+  a.style.background = wash(p.handle);
   if (p.photo) {
     const img = Object.assign(document.createElement("img"),
       { src: "/api/public-media?id=" + encodeURIComponent(p.photo), alt: "", loading: "lazy" });
-    img.addEventListener("load", () => { a.textContent = ""; a.append(img); });
+    img.addEventListener("load", () => {
+      a.textContent = "";
+      a.style.background = "";
+      a.append(img);
+    });
   }
   return a;
 }
@@ -303,7 +326,7 @@ async function load() {
       headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
     GROUPS = d.groups || [];
     CANADD = d.canAdd || [];
-    MAX = Number(d.max) || 10;
+    MAX = Number(d.max) || 5;
   } catch { GROUPS = []; CANADD = []; }
   paint();
 }
@@ -401,7 +424,7 @@ function picker() {
     b.type = "button";
     b.disabled = !on && full;
     b.append(face(c), el("b", null, c.handle),
-      el("span", null, T(on ? "grp.added" : "grp.add")));
+      el("span", "tag", T(on ? "grp.added" : "grp.add")));
     b.addEventListener("click", () => {
       PICKED = on ? PICKED.filter((x) => x !== c.who) : [...PICKED, c.who];
       paint();
