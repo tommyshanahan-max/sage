@@ -1220,18 +1220,15 @@ export const STRINGS = {
      because the same sentence means two different things from inside. */
   /* dr. and not door., which is already the public door pages' namespace and
      already had a door.sub in it. The duplicate check caught it. */
-  "dr.sub":            ["{n} at the door · anyone inside can read", "门口 {n} 个人 · 里面的人都看得到"],
+  "dr.sub":            ["anyone inside can read", "里面的人都看得到"],
   "dr.inside":         ["inside", "已经在里面"],
   "dr.waiting":        ["waiting", "还在等"],
   "dr.quiet":          ["Nobody has said anything yet.", "还没有人说话。"],
-  /* The quiet half of the room, listed under the talk for a member only.
-     Most of a queue writes one line on the form and then nothing. */
-  "dr.silent":         ["{n} here haven't said anything", "还有 {n} 个人一句话没说"],
-  /* The same list with nothing above it. "Haven't said anything" then
-     describes the room, not the people in it, and the room already said
-     so one line higher — so that line goes and this one does both. */
-  "dr.none":           ["{n} here, nobody talking yet", "门口 {n} 个人，还没人开口"],
-  "dr.all":            ["Show all {n}", "看全部 {n} 个"],
+  /* The people screen, behind ⋯ and for a member only. A room is the talk; who
+     is in it is something you go and look at, the way a WeChat group keeps its
+     four hundred members one tap away and shows you the conversation. */
+  "dr.here":           ["{n} at this door", "这个门口 {n} 个人"],
+  "dr.spoke":          ["said something", "说过话"],
   /* On the screen of somebody standing at the door. It was a form and a
      clock; the room is the same wait with the silence taken out. */
   "dr.yours":          ["Your room", "你这间"],

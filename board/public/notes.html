@@ -198,19 +198,26 @@
   .bub.mine{align-self:flex-end;background:var(--accent);color:var(--accent-ink);
     border-bottom-right-radius:.35rem}
   .when{align-self:center;font-size:.7rem;color:var(--muted);margin:.4rem 0 .1rem}
-  /* Who said it and which side of the door they are on. Under the bubble,
+  /* A ROOM IS NOT A THREAD, AND WAS DRAWN LIKE ONE.
+   *
+   * In a two-person thread the left-hand bubble can only be one person, so a
+   * face beside it says nothing and there isn't one. In a room of eighteen the
+   * face is the fastest thing on the screen to read and the name belongs over
+   * the bubble, not under it — which is WeChat, which is what everybody on
+   * this board reads all day. Same shape as a group room in groups.html: one
+   * shape for a room, not two. */
+  .said{display:flex;gap:.55rem;align-items:flex-start;align-self:stretch}
+  .said.mine{flex-direction:row-reverse}
+  .said .av{width:2rem;height:2rem;font-size:.85rem;flex:0 0 auto;box-shadow:none}
+  .said .col{display:flex;flex-direction:column;min-width:0;max-width:82%}
+  .said .bub{max-width:100%}
+  /* Who said it and which side of the door they are on. Over the bubble,
      small, because it is a thing you check rather than read. */
-  .dwho{margin:-.3rem 0 .7rem;font-size:.72rem;color:var(--muted)}
+  .dwho{margin:0 0 .2rem;font-size:.72rem;color:var(--muted)}
   /* A name that opens a thread. Underlined rather than coloured: a room of
      six names in accent blue reads as six buttons, and the bubbles are what
      somebody is here to read. */
   .dwho .reach{color:inherit;text-decoration:underline dotted;text-underline-offset:3px}
-  /* The rest of the room, on a tap. A full-width row rather than a button
-     shape: it is the last item in a list of people and it opens more of them,
-     so it belongs to the list rather than sitting on top of it. */
-  .domore{display:block;width:100%;margin:.2rem 0 .6rem;padding:.75rem 0;
-    border:0;border-top:1px solid var(--line);background:none;cursor:pointer;
-    font:inherit;font-size:.88rem;color:var(--accent)}
   /* The doorman's own lines, told apart by the paper they are on rather than
      by a label: he is the one voice in the room that is not a person. */
   .bub.bot{background:var(--raise);border-color:var(--t3);border-left-width:3px}
@@ -1353,18 +1360,107 @@ async function sendNew() {
  *  inside or still waiting. That second one is what somebody at the door is
  *  actually looking for: is anybody in there listening.
  */
-/* The room whose list is open past the first six. One room, not a flag: open
-   another and it shuts, which is right — the six exist so a room is a
-   conversation, and every room reopening as eighteen names is the list this
-   was built to stop. */
-let DOORALL = "";
+/* A FACE FOR SOMEBODY IN A DOOR ROOM.
+ *
+ * The line carries a name and never a photograph — the room is a list of says,
+ * not of people. The picture, where there is one, is on the queue row this
+ * member already has, found by the `wid` the route sent. Nothing to look up
+ * for a member's own line: this board does not put a member's photograph on
+ * what they said.
+ */
+function doorFace(m) {
+  const name = m.handle || "?";
+  const av = el("span", "av small", initial(name));
+  av.style.background = wash(name);
+  const w = m.wid && QUEUE.find((x) => x.id === m.wid);
+  if (w && w.photo) {
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/wait-media?id=" + encodeURIComponent(w.photo), alt: "", loading: "lazy" });
+    img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
+  }
+  return av;
+}
+
+/* The name over the bubble, and which side of the door they are on. A name
+ * alone is not enough in here: the same sentence from somebody inside and
+ * somebody waiting means two different things to whoever is reading it.
+ *
+ * For a member it is also the way to reach them. The room only holds people
+ * who have spoken; the ones who have not are behind ⋯ — so without this, the
+ * moment somebody at the door said something they became the one person in
+ * the room nobody could write to, which is backwards: they had just given a
+ * reason to. `wid` reaches a member and nobody else; see /api/door.
+ */
+function doorName(m) {
+  const who = el("p", "dwho");
+  const label = (m.handle || T("board.someone"))
+    + (m.bot ? "" : " \u00B7 " + T(m.inside ? "dr.inside" : "dr.waiting"));
+  if (m.wid) {
+    const a = el("a", "reach");
+    a.href = "#w:" + m.wid;
+    a.textContent = label;
+    who.append(a);
+  } else {
+    who.append(document.createTextNode(label));
+  }
+  return who;
+}
+
+/* WHO IS IN THE ROOM, BEHIND ⋯ AND NOT IN FRONT OF THE CONVERSATION.
+ *
+ * This was under the talk, and on the real board that meant Film & TV opened
+ * as eighteen strangers with the box to type in below all of them. A WeChat
+ * group of four hundred opens as the conversation and nothing else: the count
+ * is in the title and the members are one tap away. A room is the talk. The
+ * people in it are something you check.
+ *
+ * Everybody, not the front six — a screen somebody opened on purpose to see
+ * who is here should show who is here. Queue order, the board's own: first
+ * come, one place up per person somebody brought in, decided in queueOrder and
+ * not worked out again on this screen.
+ */
+function doorPeople(key) {
+  const box = el("div", "dinfo");
+  const said = new Set((DOOR.says || []).map((m) => m.wid).filter(Boolean));
+  const rows = QUEUE.filter((w) =>
+    (WAITROOMS.includes(w.room) ? w.room : "other") === key)
+    .sort((a, b) => (a.place ?? 1e9) - (b.place ?? 1e9)
+      || String(a.at).localeCompare(String(b.at)));
+  box.append(el("p", "when", T("dr.here", { n: rows.length })));
+  for (const w of rows) {
+    const a = el("a", "wperson");
+    a.href = "#w:" + w.id;
+    const av = el("span", "av small", initial(w.name));
+    av.style.background = wash(w.name);
+    if (w.photo) {
+      const img = Object.assign(document.createElement("img"),
+        { src: "/api/wait-media?id=" + encodeURIComponent(w.photo), alt: "", loading: "lazy" });
+      img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
+    }
+    const m = el("div", "wm");
+    m.append(el("b", null, w.name));
+    /* What they wrote on the way in, which is the whole of what anybody knows
+       about them — and "said something in here", which is the other half of
+       what this screen is for. */
+    if (w.why) m.append(el("span", null, w.why));
+    a.append(av, m);
+    if (said.has(w.id)) a.append(el("span", "wv", T("dr.spoke")));
+    else if (w.vouches) a.append(el("span", "wv", T("note.waitVouched", { n: w.vouches })));
+    box.append(a);
+  }
+  return box;
+}
+
+/* The room whose people are open. One room, not a flag — opening another shuts
+   it, and `back` shuts it before it leaves the room, the way a phone's back
+   button behaves everywhere else. */
+let DOORINFO = "";
 
 async function drawDoor(key) {
   $("listview").hidden = true;
   $("listtop").hidden = true;
   $("threadview").hidden = false;
   $("tnew").hidden = true;
-  $("tmore").hidden = true;
   $("tmenu").hidden = true;
   $("tpin").hidden = true;
   $("tleft").hidden = true;
@@ -1383,109 +1479,51 @@ async function drawDoor(key) {
   if (!DOOR) {
     $("twhosub").textContent = T("note.gone", { who: "" });
     $("twrite").hidden = true;
+    $("tmore").hidden = true;
     return;
   }
-  $("twhosub").textContent = T("dr.sub", { n: DOOR.n });
+  /* THE COUNT IN THE TITLE AND NOT THE LINE UNDER IT — "Beijing Apt Rentals
+     (406)", which is the shape of every group on the phone this is read on.
+     With ⋯ now in the corner, the old one-line sub wrapped to two and pushed
+     the conversation down; and the count belongs to the room's name anyway.
+     What is left under it is the one thing somebody needs told. */
+  $("twhoname").textContent = T("waitroom." + key) + "  (" + DOOR.n + ")";
+  $("twhosub").textContent = T("dr.sub");
+
+  /* ⋯ IN THE TOP RIGHT, which is where somebody looks for the people in a
+     room because it is where every messenger on their phone keeps them. Only
+     for a member: it opens the queue, and the queue is not a waiting person's
+     to read. */
+  const act = $("tmore");
+  act.hidden = !(DOOR.how === "member" && QUEUE.length);
+  act.onclick = () => { DOORINFO = DOORINFO === key ? "" : key; drawDoor(key); };
 
   fill(talk);
-  /* ONE ACCOUNT OF A SILENT ROOM, NOT TWO. This said "Nobody has said anything
-     yet." and then the list below it said "18 here haven't said anything",
-     stacked, about the same silence. The list's own heading carries it now —
-     see below — and this line is for the case where there is nothing at all to
-     say it over. */
-  if (!DOOR.says.length && !(DOOR.how === "member" && QUEUE.length)) {
-    talk.append(el("p", "when", T("dr.quiet")));
+  if (DOORINFO === key) {
+    act.hidden = true;                 // back is the way out, as in groups.html
+    talk.append(doorPeople(key));
+    $("twrite").hidden = true;
+    $("tshut").hidden = true;
+    $("tsaid").hidden = true;
+    window.scrollTo(0, 0);
+    return;
   }
+
+  if (!DOOR.says.length) talk.append(el("p", "when", T("dr.quiet")));
   let day = "";
   for (const m of DOOR.says) {
     const dd = String(m.at).slice(0, 10);
     if (dd !== day) { day = dd; talk.append(el("p", "when", when(m.at))); }
+    const row = el("div", "said" + (m.mine ? " mine" : ""));
+    if (!m.mine) row.append(doorFace(m));
+    const col = el("div", "col");
+    if (!m.mine) col.append(doorName(m));
     const bub = el("div", "bub " + (m.mine ? "mine" : "them")
       + (m.reported ? " flag" : "") + (m.bot ? " bot" : ""));
     bub.textContent = m.text || "";
-    talk.append(bub);
-    if (!m.mine) {
-      /* WHO SAID IT AND WHICH SIDE OF THE DOOR THEY ARE ON. A name alone is
-         not enough in here: the same sentence from somebody inside and
-         somebody waiting means two different things to a person reading it. */
-      const who = el("p", "dwho");
-      /* AND A WAY TO REACH THEM, for a member, on the name itself.
-       *
-       * The list under the talk only holds the people who have said nothing —
-       * so the moment somebody at the door spoke, they dropped off the only
-       * list with a link on it and became the one person in the room nobody
-       * could write to. Their name is the obvious place for it and was doing
-       * nothing. `wid` reaches a member and nobody else; see /api/door. */
-      const label = (m.handle || T("board.someone"))
-        + (m.bot ? "" : " \u00B7 " + T(m.inside ? "dr.inside" : "dr.waiting"));
-      if (m.wid) {
-        const a = el("a", "reach");
-        a.href = "#w:" + m.wid;
-        a.textContent = label;
-        who.append(a);
-      } else {
-        who.append(document.createTextNode(label));
-      }
-      talk.append(who);
-    }
-  }
-  /* THE ONES WHO HAVE NOT SAID ANYTHING, under the conversation.
-   *
-   *  A room is the loud half. Most people in a queue write the one line on
-   *  the form and then nothing, and those are exactly the people a member is
-   *  deciding about — so the list that used to drop down under the room row
-   *  lives here instead, below the talk, with what they wrote on the way in
-   *  and who spoke for them. Tapping one opens a thread with them, which is
-   *  the only thing a member can do about somebody at the door. */
-  if (DOOR.how === "member") {
-    const said = new Set(DOOR.says.map((m) => m.wid).filter(Boolean));
-    const quiet = QUEUE.filter((w) =>
-      (WAITROOMS.includes(w.room) ? w.room : "other") === key && !said.has(w.id));
-    if (quiet.length) {
-      /* WHAT THE HEADING SAYS DEPENDS ON WHETHER THE ROOM HAS TALKED. With
-         nothing above it, "haven't said anything" is the state of the room and
-         not of these people; with a conversation above it, it is the opposite.
-         Same list, and the line over it has to be true either way. */
-      talk.append(el("p", "when",
-        T(DOOR.says.length ? "dr.silent" : "dr.none", { n: quiet.length })));
-      /* THE FRONT OF THE QUEUE FIRST, and only the front of it.
-       *
-       * Eighteen rows made the room a list again — the thing the rooms were
-       * built to stop, reproduced one screen further in, with the composer
-       * pushed under eighteen strangers. Six, then the rest on a tap.
-       *
-       * First come, one place up per person somebody brought in: `place` is
-       * the board's own queue order, decided in queueOrder and not worked out
-       * again here. Showing six of eighteen makes the order matter, so it is
-       * the order the board already uses and not a second one. */
-      quiet.sort((a, b) => (a.place ?? 1e9) - (b.place ?? 1e9)
-        || String(a.at).localeCompare(String(b.at)));
-      const some = DOORALL === key ? quiet : quiet.slice(0, 6);
-      for (const w of some) {
-        const a = el("a", "wperson");
-        a.href = "#w:" + w.id;
-        const av = el("span", "av small", initial(w.name));
-        av.style.background = wash(w.name);
-        if (w.photo) {
-          const img = Object.assign(document.createElement("img"),
-            { src: "/api/wait-media?id=" + encodeURIComponent(w.photo), alt: "", loading: "lazy" });
-          img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
-        }
-        const m = el("div", "wm");
-        m.append(el("b", null, w.name));
-        if (w.why) m.append(el("span", null, w.why));
-        a.append(av, m);
-        if (w.vouches) a.append(el("span", "wv", T("note.waitVouched", { n: w.vouches })));
-        talk.append(a);
-      }
-      if (DOORALL !== key && quiet.length > some.length) {
-        const more = el("button", "domore");
-        more.type = "button";
-        more.textContent = T("dr.all", { n: quiet.length });
-        more.addEventListener("click", () => { DOORALL = key; drawDoor(key); });
-        talk.append(more);
-      }
-    }
+    col.append(bub);
+    row.append(col);
+    talk.append(row);
   }
   $("twrite").hidden = false;
   $("tshut").hidden = true;
@@ -1699,6 +1737,10 @@ $("tmore").addEventListener("click", () => {
   $("tmore").setAttribute("aria-expanded", String(!m.hidden));
 });
 $("back").addEventListener("click", () => {
+  /* THE PEOPLE SCREEN IS A SCREEN, so back shuts it rather than leaving the
+     room out from under it. It is opened from inside a room and has no hash
+     of its own — there is nothing for history.back to undo. */
+  if (DOORINFO) { const k = DOORINFO; DOORINFO = ""; drawDoor(k); return; }
   // history.back rather than clearing the hash, so the entry this made is
   // spent rather than stacked — otherwise the phone's own Back walks through
   // every thread that was opened.
