@@ -1589,7 +1589,10 @@ $("tsend").addEventListener("click", async () => {
   } catch (err) {
     const known = { profile: "note.needProfile", enough: "note.enough",
                     gone: "note.gone", closed: "note.closed",
-                    spent: "note.linesSpent" };
+                    spent: "note.linesSpent",
+                    // See the note in /api/group/say: the one refusal that
+                    // points at a way of doing the thing rather than at a rule.
+                    contact: "note.noContact" };
     say(T(known[String(err.message)] || "note.failed", { who: $("twhoname").textContent }), true);
   }
   $("tsend").disabled = false;

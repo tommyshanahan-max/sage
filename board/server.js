@@ -6156,6 +6156,13 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
       return { error: "enough" };
     }
 
+    /* THE SAME RULE, IN THE OTHER PLACE TWO PEOPLE TALK. See the long note in
+       /api/group/say: a rule that holds in a room and not in a thread is a
+       rule with a gap in it, and the thread is where two matched people are
+       most likely to try. */
+    const shaped = store.contactShaped(text);
+    if (shaped) return { error: "contact", what: shaped };
+
     const note = store.cleanNote({
       id: store.newId(), at: new Date().toISOString(),
       by: me, to: target.by, re, text,
@@ -6678,6 +6685,33 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
      * looking at a conversation away to work out why they cannot answer it.
      * The page turns this word into the box that fixes it. */
     if (!g.members.includes(me)) return { error: "profile" };
+
+    /* A WECHAT ID PASTED INTO A ROOM IS THE WHOLE PRODUCT GOING OUT OF THE
+     * WINDOW, AND THIS IS THE ONE THING HERE THAT IS REFUSED RATHER THAN
+     * FLAGGED.
+     *
+     * Everything else the doorman notices is delivered and marked — see the
+     * note over screen() — because a regex is wrong about people and the cost
+     * of silencing somebody's ordinary sentence is higher than the cost of a
+     * visible warning. This is the exception, for three reasons that do not
+     * apply to any of the others.
+     *
+     * It is objective. An email address is an email address; nobody has to
+     * judge whether it was meant unkindly.
+     *
+     * It is already the rule everywhere else on this board. cleanPerson
+     * refuses contact-shaped text in a profile and has since the beginning —
+     * see contactShaped — and a rule that holds on a page and not in a
+     * message is not a rule, it is a suggestion with a gap in it.
+     *
+     * And the thing they are trying to do has a way to do it, one tap away.
+     * A card moves a contact when both of them press give. Refusing this is
+     * not stopping anybody, it is pointing at the door that works — which is
+     * why the answer carries the matched text, so they can see which bit.
+     */
+    const shaped = store.contactShaped(text);
+    if (shaped) return { error: "contact", what: shaped };
+
     board.says.push(store.cleanSay({ id: store.newId(), group: id, by: me, text }));
 
     /* WHAT WAKES THE DOORMAN, and it is a regex on this box — see screen() in

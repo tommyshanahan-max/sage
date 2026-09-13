@@ -4485,6 +4485,13 @@ export const STRINGS = {
      this" happens while reading the conversation, so the way to act on it
      belongs in the conversation. */
   "note.startGroup":   ["Start a group with them", "拉个群"],
+  /* THE ONE REFUSAL THAT POINTS AT A DOOR RATHER THAN AT A RULE. A WeChat id
+     pasted into a conversation is the card mechanic going out of the window,
+     and the thing they are trying to do is one tap away — so this says where,
+     not "no". See the long note over /api/group/say. */
+  "note.noContact": [
+    "Not here. Contacts change hands by card — you both press give, and it moves once.",
+    "这里不行。联系方式是通过名片给的——两个人都按「给」，才会过去一次。"],
   /* The line between the faces and the name box. Not a heading: it separates
      two answers to the same question and says so in one word. */
   /* ONE BOX. Typing filters the people you have matched with; a name nobody

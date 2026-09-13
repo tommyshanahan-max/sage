@@ -248,6 +248,7 @@
     background:var(--raise);color:var(--ink)}
   .compose button{flex:0 0 auto;border:0;border-radius:99px;background:var(--accent);
     color:var(--accent-ink);padding:.7rem 1.15rem;font-size:.95rem}
+  .saycsaid{margin:.6rem 0 0;font-size:.85rem;line-height:1.55;color:var(--t5)}
 
   /* The join box. Deliberately the shape of the composer it replaces — same
      margin, same corner, same width — so the screen does not jump when
@@ -748,14 +749,26 @@ function paintRoom(g) {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ device, group: g.id, text }),
       });
-      if (!r.ok) throw new Error("no");
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "no");
       ta.value = "";
+      said.textContent = "";
       await load();
-    } catch { /* the text is still in the box */ }
+    } catch (e) {
+      /* THE TEXT STAYS IN THE BOX, and now the reason is under it. Every
+         refusal here was silent: the send button came back enabled, the line
+         was still typed, and nothing on the screen said why it had not gone.
+         A composer that quietly does nothing is one somebody presses four more
+         times. */
+      said.textContent = T(String(e.message) === "contact"
+        ? "note.noContact" : "act.again");
+    }
     send.disabled = false;
   });
   c.append(ta, send);
   box.append(c);
+  const said = el("p", "saycsaid");
+  box.append(said);
 
   return box;
 }
