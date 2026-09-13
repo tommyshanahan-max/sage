@@ -352,6 +352,17 @@ function stopSound() {
  * Set when the mic sends, cleared the moment the submit reads it — one
  * answer, not a mode, and nothing is remembered between turns. */
 let spoken = false;
+/* NO VOICE ON THIS BOARD AT ALL, once it has said so once.
+ *
+ * The route answers 503 when the box has no key for it, and the failure was
+ * invisible: a grey "Hear it" under every line of his that did nothing when
+ * pressed, for ever, because his words are on the screen either way and the
+ * catch says nothing. A button that cannot work should not be on the screen —
+ * the same rule the translate button already follows.
+ *
+ * Only 503, which means unconfigured. A cap or a bad afternoon is a different
+ * thing and the button belongs there, because tomorrow it works. */
+let mute = false;
 
 function speakLine(text) {
   stopSound();
@@ -363,7 +374,12 @@ function speakLine(text) {
     headers: { "Content-Type": "application/json", "x-board-device": device() },
     body: JSON.stringify({ text, lang: lang() === "zh" ? "zh" : "en" }),
   })
-    .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
+    .then((r) => {
+      /* 503 is the box saying it has no voice. Remembered, so the offer goes
+         away rather than standing there failing. */
+      if (r.status === 503) { mute = true; repaint(); }
+      return r.ok ? r.blob() : Promise.reject(new Error(String(r.status)));
+    })
     .then((blob) => {
       /* Still the line they asked for? They may have pressed another, or
          closed him, while this was in the air. */
@@ -462,7 +478,7 @@ function butlerPanel() {
   BUT.turns.forEach((t, i) => { if (t.from === "you") lastHim = i; });
   BUT.turns.forEach((t, i) => {
     said.append(el("div", "bub " + (t.from === "you" ? "him" : "her"), t.text));
-    if (i !== lastHim || BUT.busy) return;
+    if (i !== lastHim || BUT.busy || mute) return;
     const hear = el("button", "hear", T(playing === t.text ? "but.hearing" : "but.hear"));
     hear.type = "button";
     /* Primed here, in the handler, not inside speakLine — by the time the
@@ -655,7 +671,7 @@ async function butlerTurn(outLoud) {
        the button back at rest on its own, and his words are on the screen
        either way, so a voice service having an afternoon must not read as him
        not answering at all. */
-    if (outLoud && d.say) speakLine(d.say);
+    if (outLoud && !mute && d.say) speakLine(d.say);
   } catch {
     BUT.busy = false;
     BUT.no = T("but.off");
@@ -768,7 +784,17 @@ export function moDock() {
   };
 
   const startTalk = () => {
-    if (!canHear()) return;
+    /* NOTHING AT ALL WAS THE OLD ANSWER, and a button that does nothing when
+       held reads as broken rather than as a feature this browser does not
+       have. Firefox has no recogniser; neither does an iPhone in some
+       standalone builds. Say so, once, in the panel — and the box is still a
+       box. */
+    if (!canHear()) {
+      moOpen();
+      BUT.no = T("but.noMic");
+      repaint();
+      return;
+    }
     /* He opens first: the words have to go somewhere visible, and somebody
        holding a button wants to see that it is listening. */
     moOpen();

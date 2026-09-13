@@ -4391,6 +4391,11 @@ export const STRINGS = {
                         "发出去之前改一改，署的是你的名。"],
   "draft.failed":      ["He could not. Write your own.", "他写不出来，你自己写吧。"],
 
+  /* HOLDING HIM WHERE THERE IS NO RECOGNISER. Firefox has none, and neither
+     does an iPhone in some standalone builds — and the hold did nothing at
+     all, which reads as a broken button rather than as a missing feature. */
+  "but.noMic":         ["No voice in this browser. Type it.", "这个浏览器不支持语音，打字吧。"],
+
   /* GROUPS. The words are plain on purpose: a group is an ordinary thing and
      the only sentence here doing real work is the one about who can be in it. */
   "grp.title":         ["Groups", "群组"],

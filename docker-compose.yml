@@ -906,6 +906,26 @@ services:
       # one sentence under thirty words and the part that was failing was
       # the wait, not the thinking. claude-opus-5 if a line reads thin.
       BOARD_BUTLER_MODEL: ${BOARD_BUTLER_MODEL:-}
+      # HIS VOICE, AND IT WAS NEVER HANDED TO THIS CONTAINER.
+      #
+      # The arrival's four beats are files, rendered once by scripts/voice.mjs
+      # and committed — the Makefile passes the key to THAT one-off container,
+      # which is why `make voices` worked and looked like the whole story. Mo's
+      # replies are different every time, so lib/say.js buys them while
+      # somebody waits, from in here, and in here there was no key: every
+      # request came back 503 unconfigured and the page said nothing, because
+      # his words are on the screen either way. He was mute and nothing said so.
+      #
+      # Same key, same two voices as the arrival. A board that speaks with one
+      # voice at the door and another in the panel is two products.
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      ELEVENLABS_VOICE_ID: ${ELEVENLABS_VOICE_ID:-}
+      ELEVENLABS_VOICE_ID_EN: ${ELEVENLABS_VOICE_ID_EN:-}
+      ELEVENLABS_VOICE_ID_ZH: ${ELEVENLABS_VOICE_ID_ZH:-}
+      ELEVENLABS_MODEL: ${ELEVENLABS_MODEL:-}
+      # What he may spend saying it — see lib/say.js. Per device, per day.
+      BOARD_SAY_TURNS: ${TOMSCODING_BOARD_SAY_TURNS:-60}
+      BOARD_SAY_DAY: ${TOMSCODING_BOARD_SAY_DAY:-800}
       BOARD_TRANSLATE_BURST: ${TOMSCODING_BOARD_TRANSLATE_BURST:-30}
       BOARD_TRANSLATE_DAY: ${TOMSCODING_BOARD_TRANSLATE_DAY:-2000}
       # THE DOOR. Unset means there is no door: the code in server.js reads
