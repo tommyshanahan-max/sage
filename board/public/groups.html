@@ -323,6 +323,10 @@
      － tile is the only thing on this screen that turns it into one. */
   .faces.outing .cell.out .av{box-shadow:0 0 0 2px var(--t5)}
   .faces.outing .cell.out span:last-child{color:var(--t5)}
+  /* The link row, at the top and marked as the different kind of thing it is:
+     everything under it is somebody already here. */
+  .pick.invite{border-bottom:1px solid var(--line);margin-bottom:.35rem;
+    padding-bottom:.7rem}
   .info .add .plus{width:3.2rem;height:3.2rem;border-radius:50%;display:grid;place-items:center;
     border:1px dashed var(--line);color:var(--muted);font-size:1.5rem;line-height:1}
   .info .leave{margin-top:.6rem}
@@ -812,6 +816,8 @@ function paintRoom(g) {
 function addScreen(g) {
   const box = el("div", "addscreen");
   const list = el("div", "addlist");
+  // Made before draw() so the invite row can put the cursor in it.
+  const find = document.createElement("input");
 
   /* ONE BOX, AND IT SEARCHES BEFORE IT OFFERS TO INVITE.
    *
@@ -826,9 +832,38 @@ function addScreen(g) {
    * this board has never been — see the note over cleanPerson. The list is
    * already in the page; no name leaves it to ask a question.
    */
+  /* THE LINK IS THE FIRST ROW AND IT IS ALWAYS THERE.
+   *
+   * "Add somebody to this room" means, nine times out of ten, sending a link
+   * into WeChat. It was reachable — type a name, and if nobody on the board
+   * matched it, an invite row appeared under the empty result — which put the
+   * commonest thing behind a search that had to fail first. Nobody finds that.
+   *
+   * And it appeared ONLY when nothing matched, so a room with a Keith in it
+   * had no way to invite a different Keith at all.
+   *
+   * So it is the top row of the screen, before the people, with the typed name
+   * on it when there is one and an ask for it when there is not.
+   */
+  const inviteRow = (nm) => {
+    const row = el("button", "pick invite");
+    row.type = "button";
+    row.append(el("span", "av new", "\uFF0B"),
+      el("b", null, nm ? T("grp.inviteName", { name: nm }) : T("grp.inviteNew")),
+      el("span", "tag", T("grp.invite")));
+    row.addEventListener("click", () => {
+      /* No name yet is not a refusal: it is the one thing still needed, and
+         the box above is where it goes. The door greets them by it. */
+      if (!nm) { find.focus(); return; }
+      mint(g, nm, list);
+    });
+    return row;
+  };
+
   const draw = (q) => {
     fill(list);
     const want = q.trim().toLowerCase();
+    list.append(inviteRow(q.trim()));
     const inRoom = new Set((g.who || []).map((m) => m.who));
     const left = (CANADD || []).filter((c) => !inRoom.has(c.who));
     const hit = want
@@ -863,19 +898,6 @@ function addScreen(g) {
       list.append(row);
     }
 
-    /* THE INVITE IS WHAT A NAME NOBODY MATCHES MEANS. Not a second control and
-       not a mode — the same typing, one row further down, once there is
-       nothing on this board it could have meant. */
-    if (want && !hit.length) {
-      const row = el("button", "pick");
-      row.type = "button";
-      const tag = el("span", "tag", T("grp.invite"));
-      const face2 = el("span", "av new", "\uFF0B");
-      row.append(face2, el("b", null, T("grp.inviteName", { name: q.trim() })), tag);
-      row.addEventListener("click", () => mint(g, q.trim(), list));
-      list.append(row);
-    }
-
     // Nothing typed and nobody left to add: say which of the two it is.
     if (!want && !left.length) {
       list.append(el("p", "saidline", T("grp.addAllIn")));
@@ -883,7 +905,6 @@ function addScreen(g) {
   };
 
   box.append(el("p", "addlede", T("grp.addLede", { room: g.name || nameOf(g) })));
-  const find = document.createElement("input");
   find.className = "fld find";
   find.maxLength = 40;
   find.placeholder = T("grp.findName");

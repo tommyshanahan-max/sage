@@ -4560,10 +4560,16 @@ export const STRINGS = {
      person somebody is before they start typing their name. */
   "grp.findName":      ["Type a name", "输入名字"],
   "grp.invite":        ["Invite", "邀请"],
+  /* The top row of the add screen, before anybody already here. Sending a
+     link into WeChat is what "add somebody" means nine times out of ten, and
+     it used to be behind a search that had to fail first. */
+  "grp.inviteNew":     ["Send a link", "\u53d1\u4e2a\u94fe\u63a5"],
   "grp.inviteName":    ["Invite {name}", "邀请 {name}"],
+  /* The row above this one now offers the link, so the second sentence this
+     used to carry is said twice on one screen. */
   "grp.addAllIn": [
-    "Everybody you have matched with is already in here. Type a name to invite somebody new.",
-    "和你匹配上的人都在里面了。输入名字可以邀请新的人。"],
+    "Everybody you have matched with is already in here.",
+    "和你匹配上的人都在里面了。"],
   "grp.outsideName":   ["Their name", "他的名字"],
   "grp.outsideGo":     ["Make their invite", "生成邀请"],
   "grp.roomPlain":     ["a conversation", "一个对话"],
