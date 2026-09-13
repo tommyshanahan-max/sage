@@ -3229,10 +3229,20 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
      *
      * Only for somebody who came in through a door. A row made on the public
      * form belongs to no room yet and there is nothing to announce it to. */
-    if (viaRoom && !board.waits.some((w) => w.by === me)) {
+    if (viaRoom && !board.waits.some((w) => w.by === me && !w.done)) {
       moSays(board, store.doorRoom(String(req.body?.room || "")), "in", name);
     }
-    const at = me ? board.waits.findIndex((w) => w.by === me) : -1;
+    /* THE LIVE ROW, NOT MERELY THE FIRST ONE.
+     *
+     * This took the first row for the browser whether or not it was done,
+     * while everything that READS a name — see `named` in /api/door — takes
+     * the first row that is not. A browser with an old, finished row in front
+     * of a live one therefore renamed the dead row and left the room showing
+     * the name on the other: somebody typed Brendan and the room went on
+     * calling him by a name from a fortnight ago.
+     *
+     * One rule for both: the row that is still standing at the door. */
+    const at = me ? board.waits.findIndex((w) => w.by === me && !w.done) : -1;
     if (at >= 0) {
       const was = board.waits[at];
       board.waits[at] = { ...row, id: was.id, at: was.at,

@@ -1256,6 +1256,10 @@ export const STRINGS = {
      nobody else's — see the note in door.html about why this is not stored.
      Two things and stop: they are in, and how to not lose it. The "how" is on
      the line under it, which knows what phone they are holding. */
+  /* Above the box on a room door, and not inside it: a placeholder goes
+     away when somebody types, which is exactly when they most need to be
+     told what they are typing. */
+  "dr.askName":        ["What should this room call you?", "这屋里怎么称呼你？"],
   "dr.moWelcome":      ["{name} — you are in. Say what you are looking for.\n\nKeep this on your home screen or you will have to find the link again.",
                         "{name}，进来了。说说你在找什么。\n\n把它存到桌面，不然下次还得翻链接。"],
   "dr.sendLink":       ["Send", "发送"],

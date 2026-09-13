@@ -71,6 +71,8 @@
     border:0;border-radius:1.1rem;background:var(--accent);color:var(--accent-ink);
     cursor:pointer;white-space:nowrap}
   .foot button:disabled{opacity:.5}
+  .foot .ask{margin:0 0 .45rem;font-size:.86rem;color:var(--ink)}
+  .foot .ask b{font-weight:700}
   .foot .note{margin:.5rem 0 0;font-size:.74rem;color:var(--muted)}
   .foot .note.bad{color:var(--t5)}
   .foot .lang{margin-left:auto}
@@ -86,6 +88,11 @@
   </div>
   <div class="talk" id="talk"></div>
   <div class="foot">
+    <!-- THE NAME STEP SAYS SO, ABOVE THE BOX. It said so in the placeholder,
+         which vanishes the moment somebody types — so the first thing typed
+         became their name, and somebody who meant to say "Amazing" to the room
+         is now called Amazing in it. A label does not vanish. -->
+    <p class="ask" id="ask" hidden></p>
     <div class="row">
       <input id="box" maxlength="600" autocomplete="off">
       <button id="go" type="button">—</button>
@@ -140,6 +147,11 @@ function paint() {
   $("go").textContent = T(IN ? "note.send" : "wait.goRoom");
   $("box").placeholder = T(IN ? "dr.say" : "wait.name");
   $("box").maxLength = IN ? 600 : 40;
+  /* The one line that stops somebody naming themselves after the first thing
+     they meant to say. Gone the moment they are in, because from then on the
+     box is what it looks like. */
+  $("ask").hidden = IN;
+  if (!IN) $("ask").textContent = T("dr.askName");
 
   const talk = $("talk");
   talk.textContent = "";
