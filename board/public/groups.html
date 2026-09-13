@@ -696,7 +696,8 @@ function paintRoom(g) {
     wrap.append(el("div", "bub", m.text));
     const meta = el("div", "meta");
     meta.append(el("span", null, (m.mine ? "" : (m.handle || "") + " · ") + when(m.at)));
-    if (!m.mine) {
+    // Reporting the doorman to the doorman is not a thing anybody means to do.
+    if (!m.mine && !m.bot) {
       if (m.reported) {
         meta.append(el("span", null, T("note.reported")));
       } else {

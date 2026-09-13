@@ -6447,6 +6447,26 @@ function groupable(board, me) {
       photo: q.photoState === "published" ? q.photo : "" }));
 }
 
+/* HIS NAME, IN ONE PLACE. The page has i18n and the server does not, and a
+ * line he says is stored — so it is stored in whatever language it was written
+ * in, like everybody else's, rather than becoming a key the page resolves
+ * later. BOARD_BUTLER_NAME in .env for a board that calls him something else.
+ */
+const MO_NAME = (process.env.BOARD_BUTLER_NAME || "Mo").slice(0, 24);
+
+/* WHAT HE SAYS WHEN THE WIRE TRIPS. Stored like anybody else's line, so it is
+ * written once in one language rather than being a key the page resolves —
+ * see the note over MO_NAME. It is the sentence already printed under every
+ * conversation on this board, said by somebody in the room at the moment it
+ * stops being general advice.
+ * Not an accusation, and deliberately not addressed to whoever wrote the line:
+ * the tripwire is a regex and regexes are wrong about people. It tells the
+ * room what is true and leaves the judgement to them. */
+const MO_WATCH = (process.env.BOARD_BUTLER_WATCH
+  || "Nobody here should ask you for money, a deposit, or photographs of your"
+   + " documents. If that is what just happened, report it \u2014 I have passed"
+   + " it on either way.").slice(0, 600);
+
 /** The groups this person is in, with who is in them and what was said. */
 app.get("/api/groups", notesOff, async (req, res) => {
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
@@ -6464,6 +6484,12 @@ app.get("/api/groups", notesOff, async (req, res) => {
      list with one word on it. `who` is drawn from members either way, so a
      guest is not in the faces along the top and nobody in there sees a
      stranger who has not said who they are. */
+  /* THE DOORMAN IS IN EVERY ROOM, and he is in `who` rather than in members:
+     he holds no seat, cannot be counted against the cap, cannot leave and
+     cannot be left with. A row in the file would be a member with none of a
+     member's properties, which is the kind of second meaning that goes wrong
+     quietly. He is drawn, not stored. */
+  const mo = { who: store.MO, handle: MO_NAME, photo: "", bot: true };
   const groups = board.groups
     .filter((g) => g.members.includes(me) || (g.guests || []).includes(me))
     .map((g) => ({
@@ -6480,12 +6506,14 @@ app.get("/api/groups", notesOff, async (req, res) => {
             .map((x) => ({ code: x.code, until: x.until }))
         : [],
       // Names and faces, never the device hashes the group is stored under.
-      who: g.members.map(name).filter(Boolean),
+      who: [...g.members.map(name).filter(Boolean), mo],
       says: board.says.filter((m) => m.group === g.id)
         .sort((a, b) => String(a.at).localeCompare(String(b.at)))
         .map((m) => ({ id: m.id, at: m.at, text: m.text,
           mine: m.by === me, reported: Boolean(m.report),
-          ...(name(m.by) || { who: "", handle: "", photo: "" }) })),
+          ...(m.by === store.MO
+            ? { who: store.MO, handle: MO_NAME, photo: "", bot: true }
+            : (name(m.by) || { who: "", handle: "", photo: "" })) })),
     }));
   res.json({ groups, canAdd: groupable(board, me), max: store.GROUP_MAX });
 });
@@ -6610,9 +6638,57 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
      * The page turns this word into the box that fixes it. */
     if (!g.members.includes(me)) return { error: "profile" };
     board.says.push(store.cleanSay({ id: store.newId(), group: id, by: me, text }));
-    return { ok: true };
+
+    /* WHAT WAKES THE DOORMAN, and it is a regex on this box — see screen() in
+       store.js. He is in every room and reads none of them; this runs where
+       the message is already being written down, sends nothing anywhere, and
+       is the only thing that makes him aware a line exists.
+       IT DOES NOT BLOCK. The line above has already been pushed. A tripwire
+       that refused to deliver would be a censor, and would be wrong about
+       somebody's ordinary sentence inside a week. */
+    const tripped = store.screen(text);
+    if (tripped) {
+      /* MARKED THE WAY A REPORT MARKS ONE, so it reaches whoever runs the
+         board through the machinery that already exists — and without anybody
+         in the room having had to report a stranger. */
+      const mine = board.says[board.says.length - 1];
+      if (mine) mine.report = "screen: " + tripped;
+      board.says.push(store.cleanSay({
+        id: store.newId(), group: id, by: store.MO, text: MO_WATCH,
+      }));
+    }
+    return { ok: true, tripped: Boolean(tripped) };
   });
   if (out?.error) return res.status(400).json(out);
+
+  /* AND ANSWERING, WHEN SOMEBODY ACTUALLY ASKS HIM.
+   *
+   * Outside the write above, because it calls a model and a request that holds
+   * the file lock while it waits is a room nobody else can speak in. The line
+   * is already saved by here; his answer arriving a second later is how a
+   * person answering would look anyway.
+   *
+   * THE QUESTION AND NOTHING ELSE GOES OUT. Not the room, not who is in it,
+   * not the line before it. He is a doorman who can be asked how the place
+   * works, and the price of that is that he cannot answer "what did she mean
+   * by that" — which is exactly the question he should not be able to answer.
+   */
+  const asked = store.forMo(text);
+  if (asked && butler.configured()) {
+    const said = await butler.ask([{ from: "them", text: asked }], "grp:" + id)
+      .catch(() => ({ error: "no" }));
+    const line = said && said.text ? String(said.text).slice(0, 600) : "";
+    if (line) {
+      await change((board) => {
+        const g = board.groups.find((x) => x.id === id);
+        if (!g) return null;
+        board.says.push(store.cleanSay({
+          id: store.newId(), group: id, by: store.MO, text: line,
+        }));
+        return true;
+      }).catch(() => { /* his silence is not the sender's problem */ });
+    }
+  }
   res.json(out);
 });
 

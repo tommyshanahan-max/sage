@@ -459,6 +459,82 @@ const CONTACT_SHAPED = [
   /\d{3,4}\s?(?:室|号楼|栋|单元)/,                        // a room or building number
 ];
 
+/* THE DOORMAN, AS A ROW AUTHOR.
+ *
+ * Not a device hash and it cannot collide with one: every other `by` on this
+ * board is 32 hex characters. Two letters, so a row written by him is told
+ * apart from a row written by a person by looking, and nobody's browser can
+ * claim to be him.
+ */
+export const MO = "mo";
+
+/* WHAT WAKES HIM, AND IT IS A REGEX ON THIS BOX AND NOTHING ELSE.
+ *
+ * He is in every room and he does not read them. That is the whole bargain: a
+ * member's private conversation never reaches a model, and a face in the list
+ * that people assume is listening would be worse than no face at all.
+ *
+ * So the screening is local. These patterns run on the server where the
+ * message is already being stored, cost nothing, and send nothing anywhere.
+ * When one trips, and only then, he says something in the room and the line
+ * is marked so it reaches whoever runs the board without anybody having to
+ * report it.
+ *
+ * WHAT IT IS FOR is the sentence already printed under every conversation on
+ * this board: nobody here should ask you for money, a deposit, or photographs
+ * of your documents. That is the harm this board has actually named, and a
+ * narrow tripwire aimed at it is worth more than a wide one aimed at rudeness
+ * — this is a room of adults doing business, and a doorman who interrupts an
+ * argument is a doorman people route around.
+ *
+ * IT DOES NOT BLOCK. A false positive costs one visible line from him and
+ * nothing else; the message goes through either way. A tripwire that refuses
+ * to deliver would be a censor, and it would be wrong about somebody's
+ * perfectly ordinary sentence within the week.
+ *
+ * BOTH LANGUAGES, because half of this board reads Chinese and a screen that
+ * only works in English is a screen that does not work.
+ */
+const ASKING_FOR = [
+  // Money up front, in the shapes people actually write it.
+  /\b(?:deposit|down\s?payment|wire|transfer|western\s?union|upfront|up\s?front)\b/i,
+  /\b(?:send|pay|give|lend)\s+(?:me|us)\s+(?:\$|¥|€|£|\d|money|cash|rmb|usd)/i,
+  /* NO \b ON THE CHINESE ONES. It is ASCII-only in JavaScript, so it never
+     matches beside a Chinese character — \b保证金\b can never fire. The same
+     trap is written up over CONTACT_SHAPED above, and it caught this too:
+     "先付一笔保证金" passed the screen clean until the test printed it. */
+  /(?:处理费|保证金|押金|定金|手续费|汇款|转账|打款|先付款|先转账)/,
+  /(?:借|打)\s*(?:我|给我)\s*\d/,
+  // Papers. The one ask on this board that is never innocent.
+  /\b(?:passport|id\s?card|identity\s?card|visa\s?page|bank\s?statement|driver'?s?\s?licen[cs]e)\b/i,
+  /(?:护照|身份证|签证页|银行流水|驾照)/,
+  /\b(?:photo|picture|scan|copy)\s+of\s+your\s+(?:passport|id|licen[cs]e|card|documents?)\b/i,
+];
+
+/** Whether a line trips the doorman. Returns what matched, so the room can be
+ *  told which kind of thing it was rather than being told something vague. */
+export function screen(text) {
+  const t = String(text || "");
+  for (const re of ASKING_FOR) {
+    const m = t.match(re);
+    if (m) return m[0].trim().slice(0, 60);
+  }
+  return "";
+}
+
+/** Whether a line is addressed to him. Only the start, and only his name: a
+ *  message that mentions him in passing is not a question for him, and a
+ *  doorman who answers every sentence with his name in it is one nobody can
+ *  talk about. */
+export function forMo(text) {
+  const t = String(text || "").trim();
+  /* Two shapes, because \b works for one alphabet and not the other. The
+     English name needs a boundary so "Monday" is not a question for him; the
+     Chinese one must not have it, for the reason written over ASKING_FOR. */
+  const m = /^(?:@\s*)?(?:mo\b|老莫|莫)[\s,，:：、]*(.*)$/is.exec(t);
+  return m ? (m[1] || "").trim() : "";
+}
+
 /** Whether some text is asking to be contacted off the board. Returns the
  *  first thing that matched, so the person can be told which bit to change
  *  rather than being told "no" about the whole paragraph. */
