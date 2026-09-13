@@ -4988,6 +4988,12 @@ function paintNav() {
   $("navbrowselabel").textContent = T("nav.browse");
   $("navfeedlabel").textContent = T("nav.feed");
   $("navcardslabel").textContent = T("nav.cards");
+  /* AND MESSAGES, WHICH THIS NEVER TOUCHED. Every other tab was painted from
+     i18n.js and this one kept the word written into the HTML — so the whole
+     Chinese board had 看看 名片 我的 and, sitting between them, "Messages".
+     The other two pages with this bar paint it from note.inbox; only here was
+     it missed, and it is the first tab, on the left, where the eye starts. */
+  $("navnoteslabel").textContent = T("note.inbox");
   // Read aloud rather than drawn now the button lives in the corner — the
   // title carries it for a pointer, the span for a screen reader.
   $("navnewlabel").textContent = T("nav.new");

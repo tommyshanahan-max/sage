@@ -4384,12 +4384,12 @@ export const STRINGS = {
      and neither of them types. He proposes; the text lands in the box; Send is
      still theirs to press. Never on a conversation that has already started —
      that would mean handing somebody else's words to a model. */
-  "draft.go":          ["Mo can start it", "让 Mo 起个头"],
-  "draft.doing":       ["Writing…", "在写…"],
-  "draft.again":       ["Have another go", "再来一条"],
+  "draft.go":          ["Mo can start it", "让老莫起个头"],
+  "draft.doing":       ["Writing…", "他在写…"],
+  "draft.again":       ["Have another go", "再写一条"],
   "draft.yours":       ["Change it before you send it — it goes out as you.",
-                        "发出去之前改一改，署的是你的名。"],
-  "draft.failed":      ["He could not. Write your own.", "他写不出来，你自己写吧。"],
+                        "发出去之前改改，落的是你的名字。"],
+  "draft.failed":      ["He could not. Write your own.", "他写不出来，还是你自己写吧。"],
 
   /* HOLDING HIM WHERE THERE IS NO RECOGNISER. Firefox has none, and neither
      does an iPhone in some standalone builds — and the hold did nothing at
@@ -4399,9 +4399,9 @@ export const STRINGS = {
      button. Two reasons worth telling apart: the phone said no, and
      everything else. */
   "but.micNo":         ["The microphone is blocked. Type it instead.",
-                        "麦克风被挡住了，打字吧。"],
-  "but.micOff":        ["That did not come through. Tap him again, or type it.",
-                        "没听清，再按一下，或者直接打字。"],
+                        "手机没让用麦克风，打字吧。"],
+  "but.micOff":        ["That did not come through. Hold him again, or type it.",
+                        "没听清。再按一下，或者直接打字。"],
 
   /* GROUPS. The words are plain on purpose: a group is an ordinary thing and
      the only sentence here doing real work is the one about who can be in it. */

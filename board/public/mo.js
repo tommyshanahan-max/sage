@@ -262,6 +262,47 @@ const MOCSS = `
   }
 `;
 
+/* THE LANGUAGE BUTTON DOES NOT REACH HIM, AND THAT IS WHY HE WAS ENGLISH ON
+ * A CHINESE SCREEN.
+ *
+ * Every page redraws itself when somebody presses 中文 — and he is not in the
+ * page. He is on document.body, outside all of it, precisely so that a page
+ * rebuilding its own contents cannot destroy him mid-drag. The cost was that
+ * the one thing on the screen actually talking to somebody kept whichever
+ * language it happened to be built in: a Chinese board with an English
+ * doorman, or an English board with 关掉 and 听一遍 under it.
+ *
+ * Watched here rather than added to the four pages that mount him, because a
+ * rule that lives in four call sites is a rule the fifth page forgets — which
+ * is exactly how the profile page ended up with no Mo at all.
+ *
+ * HIS OPENING LINES CHANGE, WHAT ANYBODY SAID DOES NOT. The opener is the
+ * page's own string and belongs in the page's language. A conversation is
+ * what two people actually said, and retranslating that would be putting
+ * words in somebody's mouth — so once there is a line from THEM, the history
+ * is left exactly as it was said and only the chrome changes.
+ */
+let watching = false;
+function watchLang() {
+  if (watching || !window.MutationObserver) return;
+  watching = true;
+  let was = document.documentElement.getAttribute("data-lang") || "";
+  new MutationObserver(() => {
+    const now = document.documentElement.getAttribute("data-lang") || "";
+    if (now === was) return;
+    was = now;
+    if (BUT && !BUT.turns.some((t) => t.from === "them")
+      && HOST && typeof HOST.first === "function") {
+      BUT.turns = HOST.first();
+    }
+    /* His voice is the other language's voice now, and a line half spoken in
+       the one they just left is worse than silence. */
+    stopSound();
+    playing = "";
+    repaint();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-lang"] });
+}
+
 let dressed = false;
 function dress() {
   if (dressed) return;
@@ -1067,6 +1108,7 @@ export const moIsOpen = () => Boolean(MOSHUT);
  */
 export function mountMo(host) {
   dress();
+  watchLang();
   HOST = host;
   /* His conversation is made as soon as a page claims him, not when he is
      first shown. The waiting room mounts him with on:false for the length of
