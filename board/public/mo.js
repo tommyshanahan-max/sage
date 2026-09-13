@@ -291,9 +291,70 @@ let BUTMIC = null;
  */
 let sound = null;
 let playing = "";
+/* The blob currently in him, so it can be handed back. One at a time. */
+let heard = "";
+
+/* A few samples of silence — see primeSound(). */
+const SILENT = "data:audio/wav;base64,UklGRmQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA";
+
+/** Mark his audio element as user-started, inside the gesture that asked.
+ *
+ *  WHY THIS EXISTS, AND WHY IT MUST BE CALLED FROM THE HANDLER ITSELF.
+ *
+ *  A phone only lets a page start audio from a user gesture. His line has to
+ *  be asked for, bought and downloaded first, so play() is always most of a
+ *  second and one await too late — by then the gesture is over and the phone
+ *  refuses. The ELEMENT, though, keeps the permission once it has played
+ *  something: so it plays silence now, while the finger is still down, and
+ *  the real line goes into the same element when it arrives.
+ *
+ *  Without this he was mute on an iPhone, and mute in the worst way — the
+ *  catch in speakLine puts the button back at rest and says nothing, because
+ *  his words are on the screen either way. It looks exactly like a board with
+ *  no voice at all.
+ *
+ *  ONE ELEMENT FOR EVER, for the same reason: a new Audio() is a new
+ *  permission to ask for.
+ */
+function primeSound() {
+  if (!sound) {
+    sound = new Audio();
+    /* Or iOS takes the whole screen for it, which for two seconds of a
+       doorman's voice is somebody's phone going full-screen black. */
+    sound.playsInline = true;
+  }
+  try {
+    sound.src = SILENT;
+    const go = sound.play();
+    if (go && go.catch) go.catch(() => { /* nothing to be done about it */ });
+  } catch { /* no audio on this thing */ }
+}
+
+/** Stop him and hand the blob back. Keeps the element — see primeSound. */
+function stopSound() {
+  if (!sound) return;
+  try { sound.pause(); } catch { /* gone */ }
+  sound.onended = null;
+  sound.onerror = null;
+  if (heard) { try { URL.revokeObjectURL(heard); } catch { /* gone */ } heard = ""; }
+}
+/* WHETHER THEY SPOKE TO HIM, WHICH DECIDES WHETHER HE SPEAKS BACK.
+ *
+ * Somebody who held the mic and asked out loud is holding a phone to their
+ * face waiting for an answer, and a grey "Hear it" to press is the wrong
+ * thing to hand them. Somebody who typed is in a meeting, on a train, next to
+ * somebody — and a phone that starts talking on its own there is the reason
+ * people turn a thing off.
+ *
+ * So the rule is the one a person would use: you spoke, he speaks. You typed,
+ * he does not, and Hear it is still under his line if you want it.
+ *
+ * Set when the mic sends, cleared the moment the submit reads it — one
+ * answer, not a mode, and nothing is remembered between turns. */
+let spoken = false;
 
 function speakLine(text) {
-  try { if (sound) { sound.pause(); sound = null; } } catch { /* gone */ }
+  stopSound();
   if (playing === text) { playing = ""; repaint(); return; }
   playing = text;
   repaint();
@@ -307,14 +368,13 @@ function speakLine(text) {
       /* Still the line they asked for? They may have pressed another, or
          closed him, while this was in the air. */
       if (playing !== text) return;
-      const url = URL.createObjectURL(blob);
-      sound = new Audio(url);
-      const done = () => {
-        URL.revokeObjectURL(url);
-        if (playing === text) { playing = ""; repaint(); }
-      };
-      sound.addEventListener("ended", done, { once: true });
-      sound.addEventListener("error", done, { once: true });
+      /* The same element the gesture primed, never a new one. */
+      if (!sound) { sound = new Audio(); sound.playsInline = true; }
+      heard = URL.createObjectURL(blob);
+      const done = () => { if (playing === text) { playing = ""; repaint(); } };
+      sound.onended = done;
+      sound.onerror = done;
+      sound.src = heard;
       return sound.play().catch(done);
     })
     .catch(() => {
@@ -405,7 +465,9 @@ function butlerPanel() {
     if (i !== lastHim || BUT.busy) return;
     const hear = el("button", "hear", T(playing === t.text ? "but.hearing" : "but.hear"));
     hear.type = "button";
-    hear.addEventListener("click", () => speakLine(t.text));
+    /* Primed here, in the handler, not inside speakLine — by the time the
+       line has been bought the gesture is over. See primeSound(). */
+    hear.addEventListener("click", () => { primeSound(); speakLine(t.text); });
     said.append(hear);
   });
   if (BUT.busy) said.append(el("div", "bub him wait", T("but.thinking")));
@@ -505,12 +567,15 @@ function butlerPanel() {
     if (BUTMIC) { BUTMIC.stop(); BUTMIC = null; }
     const text = input.value.trim();
     if (!text || BUT.busy) return;
+    /* Typed, unless the mic set it a moment ago on its way into this submit. */
+    const outLoud = spoken;
+    spoken = false;
     BUT.turns.push({ from: "them", text });
     BUT.busy = true;
     BUT.no = "";
     input.value = "";
     repaint();
-    await butlerTurn();
+    await butlerTurn(outLoud);
   });
   box.append(form);
 
@@ -546,8 +611,11 @@ function butlerPanel() {
   return out;
 }
 
-/** One round trip. */
-async function butlerTurn() {
+/** One round trip.
+ *
+ *  @param {boolean} outLoud  they asked with their voice, so answer with his.
+ */
+async function butlerTurn(outLoud) {
   try {
     /* A DEFINED WAIT, because the undefined one is what broke him. The first
        turn of a conversation came back and every one after it did not — each
@@ -582,6 +650,12 @@ async function butlerTurn() {
        back — see clean() in butler.js. Half a sentence is not something to put
        a Keep button under. */
     BUT.put = d.ready ? { me: d.me, want: d.want, why: d.why } : null;
+    /* HE ANSWERS THE WAY HE WAS ASKED. Not a setting and not remembered: the
+       next typed line is silent again. Failing is silent too — speakLine puts
+       the button back at rest on its own, and his words are on the screen
+       either way, so a voice service having an afternoon must not read as him
+       not answering at all. */
+    if (outLoud && d.say) speakLine(d.say);
   } catch {
     BUT.busy = false;
     BUT.no = T("but.off");
@@ -682,6 +756,13 @@ export function moDock() {
     const form = document.querySelector(".mosheet .butform");
     const box = form && form.querySelector("input[type=text]");
     if (form && box && box.value.trim()) {
+      /* Before the submit, not after: the handler is async and reads it in
+         its first lines. */
+      spoken = true;
+      /* And the phone is told now, while the finger is still on him, that
+         audio is wanted — the answer itself is a second away and too late to
+         ask. See primeSound(). */
+      primeSound();
       form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
     }
   };
@@ -783,7 +864,7 @@ export function moOpen() {
   MOSHUT = () => {
     /* Closing him stops him talking. A voice continuing out of a panel that
        is no longer on the screen is the board haunting somebody. */
-    try { if (sound) { sound.pause(); sound = null; } } catch { /* gone */ }
+    stopSound();
     playing = "";
     sheet.remove();
     document.removeEventListener("keydown", esc);
