@@ -107,6 +107,12 @@ let ROOM = null;
 /* Whether this browser is in the room yet. The one bit that decides what the
    box at the bottom is: a name, or a message. */
 let IN = false;
+/* Their name, from the moment they give it until they leave the page. Mo's
+   welcome hangs on it — see paint(). */
+let WELCOME = "";
+/* His name comes from the room he is a member of, so the two screens cannot
+   disagree about what he is called. */
+let MO_NAME = "Mo";
 
 $("langslot").append(langButton(() => { paint(); }));
 
@@ -123,6 +129,7 @@ async function load() {
     }).then((r) => (r.ok ? r.json() : null));
   } catch { ROOM = null; }
   IN = Boolean(ROOM && ROOM.how && ROOM.how !== "peek");
+  for (const m of (ROOM && ROOM.says) || []) if (m.bot && m.handle) MO_NAME = m.handle;
   paint();
 }
 
@@ -153,6 +160,16 @@ function paint() {
       w.textContent = when(m.at);
       talk.append(w);
     }
+    /* WHAT HAPPENED TO THE ROOM, drawn as a line across it rather than a
+       bubble from anybody — the room reporting itself, which is what every
+       group chat on this phone does with it. See moSays. */
+    if (m.evt) {
+      const e = document.createElement("p");
+      e.className = "when";
+      e.textContent = T("mo." + m.evt.kind, { who: m.evt.who });
+      talk.append(e);
+      continue;
+    }
     const row = document.createElement("div");
     row.className = "said" + (m.mine ? " mine" : "");
     if (!m.mine) {
@@ -176,6 +193,35 @@ function paint() {
     bub.textContent = m.text || "";
     col.append(bub);
     row.append(col);
+    talk.append(row);
+  }
+  /* MO, TO THE PERSON WHO JUST ARRIVED, AND TO NOBODY ELSE.
+   *
+   * Tom asked for him to say welcome and to say how to keep this. The welcome
+   * belongs in the room and is already there — the line above says somebody
+   * came in. The instruction does not: it is advice for one person on one
+   * phone, and posting it would put twenty-four identical copies of "here is
+   * how to add a home screen icon" in a room people are trying to read.
+   *
+   * So it is drawn, not stored. It looks like him because it is him, and it
+   * goes at the bottom where they are looking. */
+  if (WELCOME) {
+    const row = document.createElement("div");
+    row.className = "said";
+    const av = document.createElement("span");
+    av.className = "av";
+    av.textContent = "\u83AB";
+    av.style.background = "var(--t3)";
+    const col = document.createElement("div");
+    col.className = "col";
+    const who = document.createElement("p");
+    who.className = "who";
+    who.textContent = MO_NAME;
+    const bub = document.createElement("div");
+    bub.className = "bub";
+    bub.textContent = T("dr.moWelcome", { name: WELCOME });
+    col.append(who, bub);
+    row.append(av, col);
     talk.append(row);
   }
   window.scrollTo(0, document.body.scrollHeight);
@@ -205,7 +251,8 @@ $("go").addEventListener("click", async () => {
       if (!r.ok) throw new Error("no");
       $("box").value = "";
       IN = true;
-      tell("dr.inNow");
+      WELCOME = v;
+      $("note").hidden = true;
       /* The home screen, asked for once, at the only moment it is obviously
          worth it: they are in a room and about to want to come back to it. */
       offerInstall($("install"), true);
@@ -233,6 +280,12 @@ $("box").addEventListener("keydown", (e) => {
 });
 
 load();
+
+/* THE ROOM KEEPS BEING TRUE WHILE IT IS OPEN. Twenty seconds, and again the
+   moment somebody comes back to it — which is the one that matters, because a
+   phone puts this tab to sleep the instant they switch to WeChat. */
+setInterval(() => { if (!document.hidden) load(); }, 20000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
 </script>
 </body>
 </html>

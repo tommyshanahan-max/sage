@@ -3220,6 +3220,18 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
        correction to a typo in a name would otherwise silently throw away a
        level, a type and a sentence. Carried over by name, so a field added
        here later has to be thought about rather than lost quietly. */
+    /* THE ROOM SAYS SOMEBODY CAME IN.
+     *
+     * The same line a group room gets when the maker adds somebody — see
+     * moSays. Without it a stranger's first sentence arrives in a room that
+     * never said they had arrived, which is the thing that makes a room feel
+     * like a room rather than a feed with strangers in it.
+     *
+     * Only for somebody who came in through a door. A row made on the public
+     * form belongs to no room yet and there is nothing to announce it to. */
+    if (viaRoom && !board.waits.some((w) => w.by === me)) {
+      moSays(board, store.doorRoom(String(req.body?.room || "")), "in", name);
+    }
     const at = me ? board.waits.findIndex((w) => w.by === me) : -1;
     if (at >= 0) {
       const was = board.waits[at];
@@ -7006,6 +7018,12 @@ app.get("/api/door", notesOff, async (req, res) => {
       .sort((a, b) => String(a.at).localeCompare(String(b.at)))
       .slice(how === "peek" ? -12 : -200)
       .map((m) => ({ id: m.id, at: m.at, text: m.text,
+                     /* What happened to the room rather than something said in
+                        it — see moSays. Sent here as well as from /api/groups:
+                        without it his arrival lines arrived as empty bubbles
+                        with a face on them, which is worse than not sending
+                        them at all. */
+                     evt: m.evt || null,
                      mine: how !== "peek" && m.by === me,
                      reported: Boolean(m.report), ...named(m.by) })),
   });

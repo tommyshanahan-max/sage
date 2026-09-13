@@ -1252,9 +1252,12 @@ export const STRINGS = {
                         "这屋里正在说 · 门口 {n} 个人"],
   "land.roomGo":       ["Put your name down to answer them",
                         "留个名字就能接上话"],
-  /* The moment somebody is in a room for the first time, said where the
-     box they just typed into is. */
-  "dr.inNow":          ["You are in. Say something.", "进来了，说句话吧。"],
+  /* The doorman, to the person who has just walked in, on their screen and
+     nobody else's — see the note in door.html about why this is not stored.
+     Two things and stop: they are in, and how to not lose it. The "how" is on
+     the line under it, which knows what phone they are holding. */
+  "dr.moWelcome":      ["{name} — you are in. Say what you are looking for.\n\nKeep this on your home screen or you will have to find the link again.",
+                        "{name}，进来了。说说你在找什么。\n\n把它存到桌面，不然下次还得翻链接。"],
   "dr.sendLink":       ["Send", "发送"],
   "dr.sendWho":        ["Add somebody to this room — their name",
                         "拉个人进这个房间 — 名字"],

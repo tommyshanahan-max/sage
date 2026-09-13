@@ -1720,6 +1720,13 @@ async function drawDoor(key) {
   for (const m of DOOR.says) {
     const dd = String(m.at).slice(0, 10);
     if (dd !== day) { day = dd; talk.append(el("p", "when", when(m.at))); }
+    /* The room reporting itself — who came in, who went out. A line across the
+       room, not a bubble from him: see moSays, and the same shape groups.html
+       draws. Without this branch these arrived as empty bubbles. */
+    if (m.evt) {
+      talk.append(el("p", "when", T("mo." + m.evt.kind, { who: m.evt.who })));
+      continue;
+    }
     const row = el("div", "said" + (m.mine ? " mine" : ""));
     if (!m.mine) row.append(doorFace(m));
     const col = el("div", "col");
@@ -1737,7 +1744,36 @@ async function drawDoor(key) {
   $("tshut").hidden = true;
   $("tsaid").hidden = true;
   window.scrollTo(0, document.body.scrollHeight);
+  doorWatch(key);
 }
+
+/* A ROOM THAT IS OPEN HAS TO KEEP BEING TRUE.
+ *
+ * It was drawn once and never again. Somebody said something in a room while
+ * it was on the screen and the screen did not know; coming back to the app
+ * from WeChat showed whatever was there when it was last opened, which is how
+ * a chat that works looks like a chat that has lost a message.
+ *
+ * Every twenty seconds while the room is in front of somebody, and once the
+ * moment they come back to it — the second is what matters on a phone, where
+ * a person is away for two minutes and the timer is asleep for all of it.
+ * Only while the hash still names this room: a timer outliving the screen it
+ * belongs to is a fetch nobody asked for, for ever.
+ */
+let DOORTICK = 0;
+function doorWatch(key) {
+  clearInterval(DOORTICK);
+  const alive = () => openWho() === "d:" + key && !document.hidden;
+  DOORTICK = setInterval(() => {
+    if (openWho() !== "d:" + key) { clearInterval(DOORTICK); return; }
+    if (alive() && !DOORINFO) drawDoor(key);
+  }, 20000);
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) return;
+  const who = openWho();
+  if (who.startsWith("d:") && !DOORINFO) drawDoor(who.slice(2));
+});
 
 function drawThread(t) {
   $("twho").hidden = false;
