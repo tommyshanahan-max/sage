@@ -4469,6 +4469,8 @@ export const STRINGS = {
      long one broke "Talk film" onto two lines. */
   "grp.addTop":        ["Add", "加人"],
   "grp.addLede":       ["Who goes into “{room}”?", "谁进「{room}」？"],
+  // What ⋯ opens. Only ever read by a screen reader; the dots are the label.
+  "grp.info":          ["About this group", "群聊信息"],
   /* The line between the faces and the name box. Not a heading: it separates
      two answers to the same question and says so in one word. */
   "grp.addOr":         ["or", "或者"],

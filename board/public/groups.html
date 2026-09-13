@@ -295,11 +295,24 @@
   .orline{margin:1rem 0 .8rem;font-size:.78rem;letter-spacing:.08em;
     text-transform:uppercase;color:var(--muted);text-align:center}
   .addscreen{margin:.4rem 0 0}
+  /* The member grid. Four across on a phone, which is what a roomful of five
+     wants and what the eye reads as a group rather than as a list. */
+  .info{margin:.4rem 0 0}
+  .info .faces{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem .6rem;margin:0 0 1.3rem}
+  .info .cell{display:flex;flex-direction:column;align-items:center;gap:.45rem;
+    background:none;border:0;padding:0;font:inherit;color:inherit;min-width:0}
+  .info .cell span:last-child{font-size:.75rem;line-height:1.3;color:var(--muted);
+    text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  .info .cell .av{width:3.2rem;height:3.2rem;box-shadow:none}
+  .info .add .plus{width:3.2rem;height:3.2rem;border-radius:50%;display:grid;place-items:center;
+    border:1px dashed var(--line);color:var(--muted);font-size:1.5rem;line-height:1}
+  .info .leave{margin-top:.6rem}
   .addlede{margin:0 0 1.1rem;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
   /* One action in the header, beside the language switch. Text, not a filled
      button: the filled one on this screen is Send it. */
-  .topact{margin-left:auto;flex:0 0 auto;border:0;background:none;color:var(--accent);
-    font:inherit;font-size:.95rem;padding:.42rem .2rem}
+  .topact{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink-2);font:inherit;font-size:1.1rem;line-height:1;border-radius:99px;
+    padding:.42rem .8rem}
   .topact + #langslot,.topact ~ #langslot{margin-left:.6rem}
   .outdone .go{width:100%;margin:.9rem 0 0;padding:.75rem;border:0;border-radius:99px;
     background:var(--accent);color:var(--accent-ink);font:inherit;font-size:1rem}
@@ -401,6 +414,18 @@ let PICKED = [], PICKING = false;
  * In the header now, where it is one tap from anywhere, and it opens over the
  * room rather than inside it. */
 let ADDING = false;
+/* THE ROOM'S OWN PAGE, BORROWED FROM THE ONE EVERY PERSON ON THIS BOARD
+ * ALREADY USES.
+ *
+ * In WeChat everything about a group lives behind ⋯ in the top right: who is
+ * in it as a grid of faces, a ＋ tile at the end of that grid to add somebody,
+ * the name, and leaving at the bottom. A Chinese user does not read that
+ * screen, they already know it.
+ *
+ * So the chat is the chat — faces and a leave button are not things anybody
+ * needs in front of them while reading it — and all of it is one tap away, in
+ * the place the hand already goes. */
+let INFO = false;
 
 /* A COLOUR PER PERSON, FROM THEIR OWN NAME — the same routine, and so the
    same colour, as notes.html and the card in room.html. This page never had
@@ -443,6 +468,7 @@ async function load() {
 
 function go(id) {
   ADDING = false;
+  INFO = false;
   OPEN = id;
   const u = new URL(location.href);
   if (id) u.searchParams.set("g", id); else u.searchParams.delete("g");
@@ -609,21 +635,21 @@ function paintRoom(g) {
   fill(box);
 
   const act = $("topact");
-  act.hidden = !g.mine;
-  act.textContent = T("grp.addTop");
-  act.onclick = () => { ADDING = true; paint(); };
+  /* ⋯ AND NOT "ADD". Add is one of the things behind it, not the only one,
+     and ⋯ in the top right of a chat is the gesture everybody already has. */
+  act.hidden = false;
+  act.textContent = "\u22EF";
+  act.setAttribute("aria-label", T("grp.info"));
+  act.onclick = () => { INFO = true; ADDING = false; paint(); };
 
-  if (ADDING && g.mine) {
-    act.hidden = true;
-    box.append(addScreen(g));
-    return;
-  }
+  if (ADDING) { act.hidden = true; box.append(addScreen(g)); return; }
+  if (INFO) { act.hidden = true; box.append(infoScreen(g)); return; }
 
-  // Who is in it, said out loud. In a room of six, knowing who is reading is
-  // the difference between a conversation and a broadcast.
-  const who = el("div", "inroom");
-  for (const p of g.who) who.append(el("span", null, p.handle));
-  box.append(who);
+  /* THE FACES USED TO BE HERE, as a row of chips over the first message.
+     Knowing who is reading still matters — that note was right — but it is
+     something you check, not something you need in front of you while you
+     read. The count is in the line under the title, and the faces are one tap
+     away behind ⋯, which is where a WeChat user looks for them. */
 
   for (const m of g.says) {
     const row = el("div", "said" + (m.mine ? " mine" : ""));
@@ -692,27 +718,9 @@ function paintRoom(g) {
   c.append(ta, send);
   box.append(c);
 
-  /* AND HERE, WHICH IS WHERE SOMEBODY ACTUALLY LOOKS FOR IT.
-   *
-   * The first version put this only on the screen where a room is made. That
-   * is one of the two moments it is wanted; the other is standing in a room
-   * you already have, with two people in it, thinking of a third. Tom went
-   * looking for it here and it was not here.
-   *
-   * ONLY IN YOUR OWN ROOM. Membership is drawn from whoever made it and
-   * leaving is the only exit, so somebody else's room is not yours to add to —
-   * the route refuses it either way, and a button that is drawn and refuses is
-   * worse than one that is not there. */
-  box.append(leaveButton(g));
   return box;
 }
 
-/** ONE BUTTON, THEN THE TWO ANSWERS TO "WHO".
- *
- *  It was a bare row saying "somebody not on here yet", which is the second
- *  half of a question the screen never asked. Adding a person is one thing you
- *  want to do; whether they already have an account is a detail of how.
- */
 /** The add screen. Over the room, not inside it: your people, then a box for
  *  a name. Both at once, because whoever you have in mind is already either a
  *  face on this board or a name in your phone and you know which. */
@@ -953,6 +961,33 @@ function joinBox() {
   return box;
 }
 
+/** WHO IS IN IT, AND THE WAY OUT — one page, behind ⋯.
+ *
+ *  A grid of faces with a ＋ tile at the end, the same shape as the one in a
+ *  WeChat group. The ＋ is only there for the room's maker: membership is
+ *  drawn from their matches and the route refuses anybody else, and a tile
+ *  that is drawn and refuses is worse than one that is not there. */
+function infoScreen(g) {
+  const box = el("div", "info");
+  const grid = el("div", "faces");
+  for (const m of g.who) {
+    const cell = el("div", "cell");
+    cell.append(face(m), el("span", null, m.handle));
+    grid.append(cell);
+  }
+  if (g.mine) {
+    const add = el("button", "cell add");
+    add.type = "button";
+    add.append(el("span", "plus", "\uFF0B"), el("span", null, T("grp.addTop")));
+    add.addEventListener("click", () => { INFO = false; ADDING = true; paint(); });
+    grid.append(add);
+  }
+  box.append(grid);
+  // The count is already under the title on this screen. Twice is noise.
+  box.append(leaveButton(g));
+  return box;
+}
+
 /** Walking out. Yours to take, guest or member, and the one control on this
  *  screen that is never conditional on anything. */
 function leaveButton(g) {
@@ -975,7 +1010,8 @@ $("back").addEventListener("click", () => {
   // Out of a room to the list, out of the list to the board. One button, and
   // it always goes back one step rather than off the page.
   if (PICKING) { PICKING = false; paint(); return; }
-  if (ADDING) { ADDING = false; paint(); return; }
+  if (ADDING) { ADDING = false; INFO = true; paint(); return; }
+  if (INFO) { INFO = false; paint(); return; }
   if (OPEN) { go(""); return; }
   if (history.length > 1) history.back(); else location.href = "/feed";
 });
