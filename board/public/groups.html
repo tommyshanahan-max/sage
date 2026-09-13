@@ -316,6 +316,10 @@
   .info .cell span:last-child{font-size:.75rem;line-height:1.3;color:var(--muted);
     text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
   .info .cell .av{width:3.2rem;height:3.2rem;box-shadow:none}
+  /* A face you are about to take out: the ring says it is a target, and the
+     － tile is the only thing on this screen that turns it into one. */
+  .faces.outing .cell.out .av{box-shadow:0 0 0 2px var(--t5)}
+  .faces.outing .cell.out span:last-child{color:var(--t5)}
   .info .add .plus{width:3.2rem;height:3.2rem;border-radius:50%;display:grid;place-items:center;
     border:1px dashed var(--line);color:var(--muted);font-size:1.5rem;line-height:1}
   .info .leave{margin-top:.6rem}
@@ -691,7 +695,7 @@ function paintRoom(g) {
   act.hidden = false;
   act.textContent = "\u22EF";
   act.setAttribute("aria-label", T("grp.info"));
-  act.onclick = () => { INFO = true; ADDING = false; paint(); };
+  act.onclick = () => { INFO = true; ADDING = false; OUTING = false; paint(); };
 
   if (ADDING) { act.hidden = true; box.append(addScreen(g)); return; }
   if (INFO) { act.hidden = true; box.append(infoScreen(g)); return; }
@@ -1117,6 +1121,30 @@ function joinBox() {
   return box;
 }
 
+/* Whether the grid is a list of faces or a list of people to take out. Off
+   every time the screen is opened: a destructive mode that is remembered is a
+   destructive mode somebody walks back into. */
+let OUTING = false;
+
+/** Taking somebody out. Asked first, because there is no undo on this screen
+ *  and putting them back means a code and a message — see /api/group/out. */
+async function takeOut(g, handle) {
+  if (!window.confirm(T("grp.outSure", { who: handle }))) return;
+  try {
+    const r = await fetch("/api/group/out", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, group: g.id, who: handle }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "no");
+    /* A room of two, minus one, is no room — the server says so and the screen
+       has to agree rather than repaint an id that is gone. */
+    if (d.gone) { OPEN = ""; INFO = false; }
+    OUTING = false;
+    await load();
+  } catch { window.alert(T("act.again")); }
+}
+
 /** WHO IS IN IT, AND THE WAY OUT — one page, behind ⋯.
  *
  *  A grid of faces with a ＋ tile at the end, the same shape as the one in a
@@ -1125,20 +1153,40 @@ function joinBox() {
  *  that is drawn and refuses is worse than one that is not there. */
 function infoScreen(g) {
   const box = el("div", "info");
-  const grid = el("div", "faces");
+  const grid = el("div", "faces" + (OUTING ? " outing" : ""));
   for (const m of g.who) {
-    const cell = el("div", "cell");
+    /* IN OUT MODE EVERY FACE IS A BUTTON, and only then. A room where a face
+       is always tappable is a room where somebody removes a person by
+       mis-tapping while scrolling — which is the one mistake here that cannot
+       be undone from this screen. Same as WeChat: the － turns the grid into a
+       thing you are choosing from, and the faces go back to being faces. */
+    const can = OUTING && m.handle && !m.self && !m.bot;
+    const cell = el(can ? "button" : "div", "cell" + (can ? " out" : ""));
+    if (can) cell.type = "button";
     cell.append(face(m), el("span", null, m.handle));
+    if (can) cell.addEventListener("click", () => takeOut(g, m.handle));
     grid.append(cell);
   }
   if (g.mine) {
     const add = el("button", "cell add");
     add.type = "button";
     add.append(el("span", "plus", "\uFF0B"), el("span", null, T("grp.addTop")));
-    add.addEventListener("click", () => { INFO = false; ADDING = true; paint(); });
+    add.addEventListener("click", () => { OUTING = false; INFO = false; ADDING = true; paint(); });
     grid.append(add);
+    /* THE OTHER HALF OF THE ＋, and beside it, which is where a WeChat group
+       keeps it. Somebody put four people in a room and one of them turned out
+       to be wrong for it; without this the only fix is abandoning the room. */
+    if (g.who.filter((m) => m.handle && !m.self && !m.bot).length) {
+      const out = el("button", "cell add");
+      out.type = "button";
+      out.append(el("span", "plus", "\uFF0D"),
+        el("span", null, T(OUTING ? "grp.outDone" : "grp.outTop")));
+      out.addEventListener("click", () => { OUTING = !OUTING; paint(); });
+      grid.append(out);
+    }
   }
   box.append(grid);
+  if (OUTING) box.append(el("p", "hint", T("grp.outHow")));
 
   /* WHAT IS HOLDING THE OTHER SEATS.
    *

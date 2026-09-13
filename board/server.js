@@ -6615,7 +6615,13 @@ app.get("/api/groups", notesOff, async (req, res) => {
             .map((x) => ({ code: x.code, until: x.until }))
         : [],
       // Names and faces, never the device hashes the group is stored under.
-      who: [...g.members.map(name).filter(Boolean), mo],
+      /* `self` so the screen can tell which face is the reader's own without
+         being told a hash. The maker's ＋/－ needs it: taking yourself out is
+         leaving, which is its own button further down the same screen. */
+      who: [...g.members.map((h) => {
+        const n = name(h);
+        return n && { ...n, self: h === me };
+      }).filter(Boolean), mo],
       says: board.says.filter((m) => m.group === g.id)
         .sort((a, b) => String(a.at).localeCompare(String(b.at)))
         .map((m) => ({ id: m.id, at: m.at, text: m.text,
@@ -6955,6 +6961,60 @@ app.post("/api/group/leave", notesOff, express.json({ limit: "2kb" }), async (re
     return { ok: true };
   });
   if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** TAKING SOMEBODY OUT OF A ROOM YOU MADE.
+ *
+ *  The other half of the ＋. Somebody put four people in a room and one of them
+ *  turned out to be wrong for it; without this the only fix is everybody
+ *  leaving and the room being made again, which nobody does — they abandon the
+ *  room and the four people stop talking.
+ *
+ *  ONLY THE PERSON WHO MADE IT. Not "any member", which would be a room where
+ *  the quickest hand wins an argument, and not an admin — whoever runs this
+ *  board does not reach into a conversation, which is the rule the whole of
+ *  the rest of this file is built on.
+ *
+ *  AND NOT YOURSELF. Walking out is leave, it is one tap away, and a maker who
+ *  could remove themselves would be a room with nobody who can let anybody in.
+ *
+ *  What they said stays. It is the room's conversation and the people still in
+ *  it were part of it; silently deleting half the sentences somebody read last
+ *  week is a worse thing to do to them than the removal it was tidying up
+ *  after. The same rule the leave route already follows.
+ */
+app.post("/api/group/out", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.group || "");
+  const who = String(req.body?.who || "");
+  if (!me || !who) return res.status(400).json({ error: "no" });
+  const out = await change((board) => {
+    const g = board.groups.find((x) => x.id === id);
+    if (!g || !g.members.includes(me)) return { error: "gone" };
+    if (g.by !== me) return { error: "notyours" };
+    /* WHO, BY HANDLE. The screen has handles and never device hashes, and it
+       should stay that way: a page that can name the hash of a browser is a
+       page that can be asked to. Resolved here, where the board already
+       knows both. */
+    const them = board.people.find((q) => q.handle && q.handle === who);
+    const hash = them && them.by;
+    if (!hash) return { error: "gone" };
+    if (hash === me) return { error: "self" };
+    const was = g.members.length + (g.guests || []).length;
+    g.members = g.members.filter((m) => m !== hash);
+    g.guests = (g.guests || []).filter((m) => m !== hash);
+    if (g.members.length + (g.guests || []).length === was) return { error: "gone" };
+    /* The same end a room comes to when people leave it: nobody left is not an
+       empty room, it is no room. See the leave route. */
+    if (g.members.length < 2) {
+      board.groups = board.groups.filter((x) => x.id !== id);
+      board.says = board.says.filter((m) => m.group !== id);
+      return { ok: true, gone: true };
+    }
+    return { ok: true };
+  });
+  if (out?.error) return res.status(out.error === "notyours" ? 403 : 400).json(out);
   res.json(out);
 });
 

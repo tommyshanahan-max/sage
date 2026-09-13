@@ -4502,6 +4502,14 @@ export const STRINGS = {
   /* In the header, beside the title, where there is room for one word. The
      long one broke "Talk film" onto two lines. */
   "grp.addTop":        ["Add", "加人"],
+  /* The other half of the ＋, and the words for it. "Take out" and not
+     "remove": it is a room, and what happens is that somebody is no longer in
+     it — which is also what it will read like to them. */
+  "grp.outTop":        ["Take out", "移出"],
+  "grp.outDone":       ["Done", "完成"],
+  "grp.outHow":        ["Tap somebody to take them out of this room.",
+                        "点一下谁，就把谁移出这个房间。"],
+  "grp.outSure":       ["Take {who} out of this room?", "把 {who} 移出这个房间？"],
   "grp.addLede":       ["Who goes into “{room}”?", "谁进「{room}」？"],
   // What ⋯ opens. Only ever read by a screen reader; the dots are the label.
   "grp.info":          ["About this group", "群聊信息"],
