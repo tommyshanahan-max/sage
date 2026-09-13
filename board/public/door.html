@@ -48,8 +48,12 @@
    * in. What they can do is see where they stand, and the one line under the
    * room is that — not a menu, because a menu of one thing is a menu that
    * teases four things that are not there. */
-  .out{display:block;margin:.55rem 0 0;font-size:.8rem;color:var(--muted);
-    text-align:center}
+  /* TWO, NOT ONE. Where they stand, and their own page — which they can fill
+     in from the list, before anybody has let them in, and which is the thing
+     that makes them ready to be let in. It was one unlabelled link to a screen
+     with both on it, which is a door with no sign on it. */
+  .outs{display:flex;gap:1.4rem;justify-content:center;margin:.55rem 0 0}
+  .outs a{font-size:.8rem;color:var(--muted)}
 
   .talk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
     gap:.55rem;padding:1rem 0 .8rem}
@@ -111,7 +115,9 @@
     </div>
     <p class="note" id="note" hidden></p>
     <p class="ins" id="install" hidden></p>
-    <a class="out" id="out" href="/room" hidden></a>
+    <p class="outs" id="outs" hidden>
+      <a href="/room" id="out"></a><a href="/room#you" id="outyou"></a>
+    </p>
   </div>
 </main>
 
@@ -169,8 +175,9 @@ function paint() {
   /* Only once they are in it: somebody who has not given a name has no place
      to go and look at, and a link to one would be a dead end with a word on
      it. The header carries it too, which is where a person looks. */
-  $("out").hidden = !IN;
+  $("outs").hidden = !IN;
   $("out").textContent = T("dr.myPlace");
+  $("outyou").textContent = T("dr.myPage");
   $("rlink").removeAttribute("href");
   if (IN) $("rlink").href = "/room";
 

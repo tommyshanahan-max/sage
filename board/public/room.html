@@ -2302,6 +2302,11 @@ for (const [id, pane] of [["tabWait", "wait"], ["tabYou", "you"]]) {
   $(id).addEventListener("click", () => { PANE = pane; draw(); });
 }
 
+/* A LINK CAN NAME WHICH TAB. The door page has two lines under the room now —
+   where I stand, and their own page — and without this the second one landed
+   on the first, which is a link that does not do what it says. */
+if (location.hash === "#you") PANE = "you";
+
 setLang(pickLang());
 $("langslot").append(langButton(draw));
 draw();

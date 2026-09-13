@@ -1262,6 +1262,10 @@ export const STRINGS = {
   /* The one way out of a door room, and there is only one on purpose:
      there is no profile to make until somebody is let in. Where they
      stand is the thing they can actually go and look at. */
+  /* Their own page, which they can fill in from the list — a photograph and
+     the sentence — and which is the thing that makes them ready to be let
+     in rather than a name somebody has to decide about blind. */
+  "dr.myPage":         ["Your page \u2192", "你的资料 \u2192"],
   "dr.myPlace":        ["Where I stand \u2192", "我排到哪了 \u2192"],
   "dr.askName":        ["What should this room call you?", "这屋里怎么称呼你？"],
   "dr.moWelcome":      ["{name} — you are in. Say what you are looking for.\n\nKeep this on your home screen or you will have to find the link again.",
