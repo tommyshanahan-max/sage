@@ -42,8 +42,18 @@ for (const g of rooms) {
      code for this room is already sitting in one of its seats — see groupRoom
      — so a room of three with a code out has room for one, not two. Saying so
      here is the difference between that being a rule and being a surprise. */
+  /* WHEN IT LAST MOVED. A room of four that said nothing for a week and a
+     room of four talking every day are the same row without this, and they
+     are not the same thing to anybody running a board. */
+  const quiet = g.last
+    ? Math.floor((Date.now() - Date.parse(g.last)) / 86400000)
+    : -1;
   const bits = [
     g.said + " said",
+    !g.said ? "" : quiet <= 0 ? "today" : quiet === 1 ? "yesterday" : quiet + " days quiet",
+    /* THE ONE THING ON THIS LIST THAT NEEDS SOMEBODY TO DO SOMETHING, so it
+       says so in those words rather than as another number in a row. */
+    g.flags ? "\u26A0 " + g.flags + " flagged \u2014 make flags" : "",
     g.guests ? g.guests + " reading, not in yet" : "",
     g.held ? g.held + " code" + (g.held === 1 ? "" : "s") + " out" : "",
     g.room ? "room for " + g.room + " more" : "full",

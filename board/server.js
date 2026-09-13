@@ -1633,6 +1633,38 @@ app.post("/api/group-invite", notesOff, express.json({ limit: "4kb" }), async (r
  * something anybody has in their head. Names and counts, never a word anybody
  * said in one — the operator reading private conversations is a different
  * product from this and `make group-invite` does not need it. */
+/* THE FLAGGED LINES, AND ONLY THOSE.
+ *
+ * The one sanctioned way anybody reads a word said inside a room. A line
+ * arrives here because a person in the room reported it or because the
+ * doorman's tripwire marked it — both of which are somebody saying out loud
+ * that this particular line should be looked at.
+ *
+ * There is no route that returns a room's conversation, and there should not
+ * be. Everything said on this board is in a file on this box in plain text and
+ * the product has never claimed otherwise — but a file somebody could open for
+ * a reason is a different thing from a screen that shows them conversations,
+ * and the second one would have to be written on the privacy page.
+ */
+app.get("/api/flags", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const name = (h) => h === store.MO ? MO_NAME
+    : ((board.people.find((q) => q.by === h) || {}).handle || "");
+  res.json({
+    flags: board.says.filter((m) => m.report).map((m) => {
+      const g = board.groups.find((x) => x.id === m.group);
+      return {
+        at: m.at, why: m.report, text: m.text, who: name(m.by),
+        room: g ? (g.name || "") : "", roomId: m.group,
+        // Who else was in the room to see it, which is the other half of how
+        // bad a thing is.
+        with: g ? g.members.map(name).filter(Boolean) : [],
+      };
+    }).sort((a, b) => String(b.at).localeCompare(String(a.at))),
+  });
+});
+
 app.get("/api/rooms", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
@@ -1644,6 +1676,15 @@ app.get("/api/rooms", admin, async (_req, res) => {
       who: g.members.map(name).filter(Boolean),
       guests: (g.guests || []).length,
       said: board.says.filter((m) => m.group === g.id).length,
+      /* WHAT IS HAPPENING IN IT, WITHOUT A WORD OF WHAT WAS SAID.
+       * When it last moved, and how many lines are marked — by somebody
+       * reporting one or by the doorman's tripwire. A room that has gone
+       * quiet and a room with something wrong in it are the two things
+       * whoever runs this board needs to know, and neither of them needs the
+       * conversation. See `make flags` for the one sanctioned way in. */
+      last: board.says.filter((m) => m.group === g.id)
+        .reduce((a, m) => (String(m.at) > a ? String(m.at) : a), ""),
+      flags: board.says.filter((m) => m.group === g.id && m.report).length,
       /* SEATS HELD BY CODES NOBODY HAS SPENT, counted the same way the door
          counts them. A listing that says "room for 2" while minting refuses
          is a listing nobody trusts again. */

@@ -37,4 +37,8 @@ cfm/package-lock.json
 # without Secure is a board handing them to anybody on the network.
 board/server.nosec.mjs
 cfm/server.nosec.mjs
+# The same file in the root, which is where it lands when the recipe in
+# CLAUDE.md is run from the wrong directory. One was committed empty on
+# 9 September and sat there until tonight.
+server.nosec.mjs
 cfm/node_modules/
