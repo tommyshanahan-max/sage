@@ -451,7 +451,18 @@ const CONTACT_SHAPED = [
   // Split from the line below because \b is ASCII-only in JavaScript: it never
   // matches beside a Chinese character, so \b微信\b can never fire. Caught by
   // the test, not by reading — which is why the test exists.
-  /\b(?:wechat|weixin|vx|wx|qq|whatsapp|line|kakao|telegram|tg|instagram|ig|snap(?:chat)?)\b\s*[:：]?\s*[\w.@_-]{3,}/i,
+  /\b(?:wechat|weixin|vx|wx|qq|whatsapp|kakao|telegram|tg|instagram|ig|snapchat)\b\s*[:：]?\s*[\w.@_-]{3,}/i,
+  /* LINE AND SNAP ARE ORDINARY ENGLISH WORDS, and the rule above only asks
+     for three word characters after the app's name. So on a board full of
+     film people "line producer" was refused as a contact detail — and so were
+     "drop me a line tomorrow" and "in line with". Nadia's first sentence in a
+     door room, thrown back at her, which is the worst possible place for a
+     false positive.
+     They get a stricter shape instead: a colon, or a following token that is
+     not an ordinary word — one carrying a digit, a dot, an underscore or a
+     hyphen, which is what an id looks like and what a job title does not. */
+  /\b(?:line|snap)\s*(?:id)?\s*[:：]\s*[\w.@_-]{3,}/i,
+  /\b(?:line|snap)\s*(?:id)?\s+(?=[\w.@_-]*[\d._-])[\w.@_-]{3,}/i,
   /(?:微信|微信号|威信|扣扣|企鹅号)\s*[:：]?\s*[\w.@_-]{2,}/,
   /\b(?:my|add)\s*(?:wechat|weixin|vx|wx|qq)\b/i,
   /加\s*(?:微信|我|一下)/,
@@ -2058,7 +2069,17 @@ export function cleanBoard(raw) {
   const sids = new Set();
   for (const r of (Array.isArray(raw?.says) ? raw.says : [])) {
     const m = cleanSay(r);
-    if (!m || sids.has(m.id) || !gids.has(m.group)) continue;
+    /* A LINE POINTING AT A GROUP THAT IS GONE GOES WITH IT — that is the rule,
+       and it is right: the room was deleted when the last person left it and
+       the words in it belong to nobody.
+       A DOOR ROOM HAS NO GROUP ROW AND NEVER WILL. It is derived, not stored —
+       see doorRoom() — so every line said at the door matched "group that does
+       not exist" and was quietly deleted on the next load. The route answered
+       ok, the file kept nothing, and the screen came back empty with nothing
+       anywhere saying why. Exactly the quiet kind of wrong the comment over
+       doorRoom() warns about, ten minutes after writing it. */
+    if (!m || sids.has(m.id)) continue;
+    if (!gids.has(m.group) && !doorKey(m.group)) continue;
     sids.add(m.id);
     says.push(m);
   }

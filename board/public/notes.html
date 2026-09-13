@@ -198,6 +198,13 @@
   .bub.mine{align-self:flex-end;background:var(--accent);color:var(--accent-ink);
     border-bottom-right-radius:.35rem}
   .when{align-self:center;font-size:.7rem;color:var(--muted);margin:.4rem 0 .1rem}
+  /* Who said it and which side of the door they are on. Under the bubble,
+     small, because it is a thing you check rather than read. */
+  .dwho{margin:-.3rem 0 .7rem;font-size:.72rem;color:var(--muted)}
+  /* The doorman's own lines, told apart by the paper they are on rather than
+     by a label: he is the one voice in the room that is not a person. */
+  .bub.bot{background:var(--raise);border-color:var(--t3);border-left-width:3px}
+
   .bub.flag{outline:1px solid var(--t5);outline-offset:2px}
 
   .pinwrap{margin:0 0 .9rem;border:1px solid var(--accent);border-radius:.6rem;
@@ -349,7 +356,6 @@
   .wroom .wm{flex:1;min-width:0}
   .wroom .wn{flex:0 0 auto;font-size:.8rem;color:var(--muted);border:1px solid var(--line);
     border-radius:99px;padding:.1rem .6rem}
-  .wroom.on .wn{border-color:var(--accent);color:var(--accent)}
   .wperson{display:flex;align-items:center;gap:.8rem;padding:.7rem 0 .7rem 1rem;
     border-bottom:1px solid var(--hair);text-decoration:none;color:inherit}
   .wperson .wm{flex:1;min-width:0}
@@ -668,7 +674,10 @@ let CAN = [];
    the ordinary answer for anybody who is not one — so a failure leaves this
    empty and the section hidden, and says nothing. */
 let QUEUE = [];
-let OPENROOM = "";
+/* The door room on screen, and what was said in it. Fetched when one is
+   opened rather than with the inbox: five rooms of conversation is a lot to
+   carry for a screen most people open to read one message. */
+let DOOR = null;
 const WAITROOMS = ["film", "invest", "raise", "trade", "other"];
 
 /* THE GROUPS THIS PERSON IS IN, LISTED HERE AND NOT ON A PAGE OF THEIR OWN.
@@ -844,6 +853,11 @@ function paint() {
      this screen now, with the name as a box, because what you are doing is
      writing the first message of a thread. */
   if (who === "new") { drawWriteNew(); return; }
+  /* A ROOM AT THE DOOR, ON THE SAME SCREEN A CONVERSATION USES. It is a
+     conversation: a header with the way back, lines as bubbles, and the box at
+     the bottom. Building it a second screen of its own would be two screens
+     that have to stay in step about what a message looks like. */
+  if (who.startsWith("d:")) { drawDoor(who.slice(2)); return; }
   const here = who && (T0.find((t) => t.who === who) || blank(who));
   $("listview").hidden = Boolean(here);
   $("listtop").hidden = Boolean(here);
@@ -905,9 +919,8 @@ function drawWaiting() {
   for (const key of WAITROOMS) {
     const rows = byRoom.get(key) || [];
     if (!rows.length) continue;
-    const open = OPENROOM === key;
 
-    const head = el("button", "wroom" + (open ? " on" : ""));
+    const head = el("button", "wroom");
     head.type = "button";
     const mid = el("div", "wm");
     mid.append(el("b", null, T("waitroom." + key)));
@@ -917,31 +930,12 @@ function drawWaiting() {
     mid.append(el("span", null, rows.slice(0, 3).map((w) => w.name).join(", ")
       + (rows.length > 3 ? T("note.waitMore", { n: rows.length - 3 }) : "")));
     head.append(mid, el("span", "wn", String(rows.length)));
-    head.addEventListener("click", () => { OPENROOM = open ? "" : key; paint(); });
+    /* THE ROOM, NOT A DRAWER OF NAMES. It expanded in place to a list of
+       people, which is what this was before the rooms existed; the list is
+       still under the conversation, where it belongs — the people who have
+       not said anything yet are the ones a member is deciding about. */
+    head.addEventListener("click", () => { location.hash = "#d:" + key; });
     box.append(head);
-    if (!open) continue;
-
-    for (const w of rows) {
-      const a = el("a", "wperson");
-      a.href = "#w:" + w.id;
-      const av = el("span", "av small", initial(w.name));
-      av.style.background = wash(w.name);
-      if (w.photo) {
-        const img = Object.assign(document.createElement("img"),
-          { src: "/api/wait-media?id=" + encodeURIComponent(w.photo), alt: "", loading: "lazy" });
-        img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
-      }
-      const m = el("div", "wm");
-      m.append(el("b", null, w.name));
-      /* What they wrote on the way in, which is the whole of what anybody
-         knows about them — and the only thing worth reading here. */
-      if (w.why) m.append(el("span", null, w.why));
-      a.append(av, m);
-      /* WHO SPOKE FOR THEM. A stranger somebody in here has already put their
-         name to is a different row from a stranger nobody has. */
-      if (w.vouches) a.append(el("span", "wv", T("note.waitVouched", { n: w.vouches })));
-      box.append(a);
-    }
   }
 }
 
@@ -1341,6 +1335,101 @@ async function sendNew() {
   }
 }
 
+/** A ROOM AT THE DOOR, drawn on the thread screen.
+ *
+ *  The people in it have not been vouched for by anybody, which is the whole
+ *  difference between this and a group — so the line under the name says who
+ *  can read it, and every message says whether the person who wrote it is
+ *  inside or still waiting. That second one is what somebody at the door is
+ *  actually looking for: is anybody in there listening.
+ */
+async function drawDoor(key) {
+  $("listview").hidden = true;
+  $("listtop").hidden = true;
+  $("threadview").hidden = false;
+  $("tnew").hidden = true;
+  $("tmore").hidden = true;
+  $("tmenu").hidden = true;
+  $("tpin").hidden = true;
+  $("tleft").hidden = true;
+  $("twho").href = "#";
+  $("twhoname").textContent = T("waitroom." + key);
+  $("twhosub").textContent = "";
+
+  const talk = $("talk");
+  fill(talk);
+  try {
+    const d = await fetch("/api/door?room=" + encodeURIComponent(key), { cache: "no-store",
+      headers: device ? { "x-board-device": device } : {} }).then((r) =>
+        (r.ok ? r.json() : null));
+    DOOR = d;
+  } catch { DOOR = null; }
+  if (!DOOR) {
+    $("twhosub").textContent = T("note.gone", { who: "" });
+    $("twrite").hidden = true;
+    return;
+  }
+  $("twhosub").textContent = T("dr.sub", { n: DOOR.n });
+
+  fill(talk);
+  if (!DOOR.says.length) talk.append(el("p", "when", T("dr.quiet")));
+  let day = "";
+  for (const m of DOOR.says) {
+    const dd = String(m.at).slice(0, 10);
+    if (dd !== day) { day = dd; talk.append(el("p", "when", when(m.at))); }
+    const bub = el("div", "bub " + (m.mine ? "mine" : "them")
+      + (m.reported ? " flag" : "") + (m.bot ? " bot" : ""));
+    bub.textContent = m.text || "";
+    talk.append(bub);
+    if (!m.mine) {
+      /* WHO SAID IT AND WHICH SIDE OF THE DOOR THEY ARE ON. A name alone is
+         not enough in here: the same sentence from somebody inside and
+         somebody waiting means two different things to a person reading it. */
+      const who = el("p", "dwho");
+      who.append(document.createTextNode((m.handle || T("board.someone"))
+        + (m.bot ? "" : " \u00B7 " + T(m.inside ? "dr.inside" : "dr.waiting"))));
+      talk.append(who);
+    }
+  }
+  /* THE ONES WHO HAVE NOT SAID ANYTHING, under the conversation.
+   *
+   *  A room is the loud half. Most people in a queue write the one line on
+   *  the form and then nothing, and those are exactly the people a member is
+   *  deciding about — so the list that used to drop down under the room row
+   *  lives here instead, below the talk, with what they wrote on the way in
+   *  and who spoke for them. Tapping one opens a thread with them, which is
+   *  the only thing a member can do about somebody at the door. */
+  if (DOOR.how === "member") {
+    const said = new Set(DOOR.says.map((m) => m.wid).filter(Boolean));
+    const quiet = QUEUE.filter((w) =>
+      (WAITROOMS.includes(w.room) ? w.room : "other") === key && !said.has(w.id));
+    if (quiet.length) {
+      talk.append(el("p", "when", T("dr.silent", { n: quiet.length })));
+      for (const w of quiet) {
+        const a = el("a", "wperson");
+        a.href = "#w:" + w.id;
+        const av = el("span", "av small", initial(w.name));
+        av.style.background = wash(w.name);
+        if (w.photo) {
+          const img = Object.assign(document.createElement("img"),
+            { src: "/api/wait-media?id=" + encodeURIComponent(w.photo), alt: "", loading: "lazy" });
+          img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
+        }
+        const m = el("div", "wm");
+        m.append(el("b", null, w.name));
+        if (w.why) m.append(el("span", null, w.why));
+        a.append(av, m);
+        if (w.vouches) a.append(el("span", "wv", T("note.waitVouched", { n: w.vouches })));
+        talk.append(a);
+      }
+    }
+  }
+  $("twrite").hidden = false;
+  $("tshut").hidden = true;
+  $("tsaid").hidden = true;
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
 function drawThread(t) {
   $("twho").hidden = false;
   $("tmore").hidden = false;
@@ -1565,8 +1654,9 @@ $("tbox").addEventListener("input", () => {
 $("tsend").addEventListener("click", async () => {
   const who = openWho();
   // Writing to somebody who is not here yet is the same button on the same
-  // screen — see drawWriteNew.
+  // screen — see drawWriteNew. A room at the door is the same again.
   if (who === "new") return sendNew();
+  if (who.startsWith("d:")) return sendDoor(who.slice(2));
   if (INVITED) return sendInvited();
   const b = $("tbox");
   const text = b.value.trim();
@@ -1597,6 +1687,34 @@ $("tsend").addEventListener("click", async () => {
   }
   $("tsend").disabled = false;
 });
+
+/** Saying something in a room at the door. The same route a group uses — a
+ *  door room's lines live in `says` beside everybody else's, which is why the
+ *  contact rule and the doorman's tripwire apply to it without a line of new
+ *  code here. */
+async function sendDoor(key) {
+  const b = $("tbox");
+  const text = b.value.trim();
+  if (!text || !DOOR) { b.focus(); return; }
+  $("tsend").disabled = true;
+  say(T("note.sending"));
+  try {
+    const r = await fetch("/api/group/say", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, group: DOOR.id, text }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "no");
+    b.value = "";
+    b.style.height = "auto";
+    $("tsaid").hidden = true;
+    await drawDoor(key);
+  } catch (err) {
+    const known = { contact: "note.noContact", gone: "note.gone" };
+    say(T(known[String(err.message)] || "note.failed", { who: "" }), true);
+  }
+  $("tsend").disabled = false;
+}
 
 /** One face in the strip: their picture, their name, and what puts them on
  *  the list. Pressing opens the conversation, empty, with the box at the

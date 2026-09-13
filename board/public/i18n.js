@@ -1214,6 +1214,23 @@ export const STRINGS = {
      the door has no page to follow, and the only thing a member can do about
      them is write to them or vouch. So it lives on Messages, by room. */
   "note.waitHead":     ["At the door", "门口"],
+  /* A ROOM AT THE DOOR. The people in it have not been vouched for by
+     anybody, so the line under the name says who can read it — and every
+     message says which side of the door the person who wrote it is on,
+     because the same sentence means two different things from inside. */
+  /* dr. and not door., which is already the public door pages' namespace and
+     already had a door.sub in it. The duplicate check caught it. */
+  "dr.sub":            ["{n} at the door · anyone inside can read", "门口 {n} 个人 · 里面的人都看得到"],
+  "dr.inside":         ["inside", "已经在里面"],
+  "dr.waiting":        ["waiting", "还在等"],
+  "dr.quiet":          ["Nobody has said anything yet.", "还没有人说话。"],
+  /* The quiet half of the room, listed under the talk for a member only.
+     Most of a queue writes one line on the form and then nothing. */
+  "dr.silent":         ["{n} here haven't said anything", "还有 {n} 个人一句话没说"],
+  /* On the screen of somebody standing at the door. It was a form and a
+     clock; the room is the same wait with the silence taken out. */
+  "dr.yours":          ["Your room", "你这间"],
+  "dr.say":            ["Say something to the room", "跟这屋里的人说点什么"],
   "note.waitSub2": [
     "{n} people are waiting. Open a room to read what they wrote, or write to one of them.",
     "有 {n} 个人在等。点开看他们写了什么，也可以直接找他们说话。"],

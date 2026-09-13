@@ -558,6 +558,28 @@ app.use(async (req, res, next) => {
      * the proposal — which goes through /api/wait/card like everything else,
      * and through this gate on its own account. */
     if (req.path === "/api/butler") return next();
+    /* AND THE ROOM THEY ARE STANDING IN.
+     *
+     * The second write ever opened in this gate, and it is worth being exact
+     * about why it is safe, because the rule above — the method is the test —
+     * is the thing that has kept this board from leaking a write for months.
+     *
+     * This does not grant anything. It lets the request reach a route that
+     * then decides, and that route's decision is doorAccess(): a member, or
+     * somebody waiting in THAT room and no other. A waiting person who posts
+     * the id of a member's private group gets "gone" from the same check that
+     * refuses a stranger, because the check is on the room and not on the
+     * path. Opening the path without that check would be the hole; the check
+     * was written first, and this line is what lets anybody reach it.
+     *
+     * The two reads beside it carry no write at all. /api/door is the room
+     * itself, which they are entitled to read or there is no room; /api/queue
+     * is refused to them on its own account, further in.
+     *
+     * WHAT IT IS FOR. A queue is a form and a silence, and forty-seven people
+     * are standing in one. This is the line that lets them talk to each other
+     * while they wait, which is the difference between a queue and a room. */
+    if (req.path === "/api/group/say" || req.path === "/api/door") return next();
     if (req.path.startsWith("/api/")) {
       return res.status(403).json({ error: "soon" });
     }
@@ -6660,6 +6682,55 @@ app.post("/api/group-invite/off", notesOff, express.json({ limit: "1kb" }), asyn
   });
   if (out?.error) return res.status(out.error === "notyours" ? 403 : 409).json(out);
   res.json(out);
+});
+
+/** One room at the door, read by somebody entitled to read it.
+ *
+ *  The same shape for both kinds of reader, because it is the same room. What
+ *  differs is one word on each line — `inside` — which is the only thing
+ *  anybody needs to tell a member from somebody still waiting, and the reason
+ *  it matters is that it is what a waiting person is looking for: is anybody
+ *  in there reading this.
+ */
+app.get("/api/door", notesOff, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT) || waitCookie(req);
+  const key = String(req.query.room || "");
+  const id = store.doorRoom(key);
+  if (!id) return res.status(404).json({ error: "no" });
+  const board = await store.load(FILE);
+  const how = doorAccess(board, me, key);
+  if (!how) return res.status(403).json({ error: "no" });
+
+  /* TWO PLACES A NAME CAN COME FROM, and neither of them carries a way to
+     reach anybody: a member's handle, or the name somebody typed on the way
+     in. Never the device hash the row is stored under. */
+  const named = (h) => {
+    if (h === store.MO) return { handle: MO_NAME, inside: false, bot: true };
+    const q = board.people.find((x) => x.by === h && x.handle);
+    if (q) return { handle: q.handle, inside: true, bot: false };
+    const w = board.waits.find((x) => x.by === h && !x.done);
+    /* THE ROW ID, FOR A MEMBER ONLY. Not to name them — the name is already
+       here — but so the screen can tell who in the room has never said
+       anything, which is the list a member was reading before the room
+       existed and still the one they are deciding from. Never to somebody
+       waiting: the ids are the way into a thread, which is a member's. */
+    return { handle: (w && w.name) || "", inside: false, bot: false,
+             ...(w && how === "member" ? { wid: w.id } : {}) };
+  };
+
+  res.json({
+    room: key, id, how,
+    /* HOW MANY ARE STANDING IN IT. The people, not the lines — a room of one
+       person talking to themselves and a room of six is the thing somebody
+       wants to know before they read a word of it. */
+    n: board.waits.filter((w) => !w.done && (w.room || "other") === key && w.shown).length,
+    says: board.says.filter((m) => m.group === id)
+      .sort((a, b) => String(a.at).localeCompare(String(b.at)))
+      .slice(-200)
+      .map((m) => ({ id: m.id, at: m.at, text: m.text,
+                     mine: m.by === me, reported: Boolean(m.report), ...named(m.by) })),
+  });
 });
 
 /** WHO MAY READ AND WRITE IN A DOOR ROOM.
