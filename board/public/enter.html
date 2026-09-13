@@ -503,7 +503,30 @@ import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
 import { waitBox } from "/wait.js";
 
 const $ = (id) => document.getElementById(id);
-const IN_WECHAT = /micromessenger/i.test(navigator.userAgent);
+/* AN IN-APP BROWSER, AND WECHAT IS NOT THE ONLY ONE.
+ *
+ * This checked for WeChat and nothing else, which was right when WeChat was
+ * the only way anybody arrived. Instagram, Facebook and LINE all open a link
+ * in a webview with its own storage — identical problem, no warning: somebody
+ * tapping an invite in an Instagram DM spent their code inside Instagram, and
+ * their page now lives in a browser they will never deliberately open again.
+ * The failure is silent and it costs the whole account.
+ *
+ * The wall itself was already written generically — three dots, open in
+ * browser, copy the link. Only the detection and one sentence knew the name
+ * of the app. */
+const APPS = [
+  [/micromessenger/i, "wx"],
+  [/instagram/i, "Instagram"],
+  [/\bFBAN|\bFBAV|FB_IAB/i, "Facebook"],
+  [/\bLine\//i, "LINE"],
+];
+const IN_APP = (() => {
+  const ua = String(navigator.userAgent || "");
+  for (const [re, name] of APPS) if (re.test(ua)) return name;
+  return "";
+})();
+const IN_WECHAT = IN_APP === "wx";
 
 /* ?new=1 HOLDS THE DOOR SHUT, for whoever runs this.
  *
@@ -842,7 +865,7 @@ function hearIt() {
  * link sees it at all — a "Welcome." to somebody nobody greeted is worse than
  * arriving at the lock. */
 function route() {
-  const wx = IN_WECHAT && !sessionStorage.getItem("board:anyway") && !PREVIEW;
+  const wx = Boolean(IN_APP) && !sessionStorage.getItem("board:anyway") && !PREVIEW;
   const greet = !wx && !PREVIEW && (FOR || FROM) && !sessionStorage.getItem("board:greeted");
   $("wx").hidden = !wx;
   $("hello").hidden = !greet;
@@ -870,7 +893,11 @@ function words() {
   if (!$("hostess").hidden) drawHostess();
   $("wxtitle").textContent = T("door.wxTitle");
   $("wxsub").textContent = T("door.wxSub");
-  $("wxsay").textContent = T("door.wxSay");
+  /* WeChat keeps its own sentence — it names 微信, which reads better to the
+     half of this board that arrives through it. Everything else is named
+     from the user agent. */
+  $("wxsay").textContent = IN_WECHAT || !IN_APP
+    ? T("door.wxSay") : T("door.appSay", { app: IN_APP });
   $("wxzh").textContent = T("door.wxZh");
   $("wxstep1").textContent = T("door.wxStep1");
   $("wxstep2").textContent = T("door.wxStep2");

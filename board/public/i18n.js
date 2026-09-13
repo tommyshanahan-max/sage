@@ -3122,6 +3122,16 @@ export const STRINGS = {
   "door.wxCopyNo":     ["Hold the address bar to copy it", "长按地址栏复制"],
   "door.wxNote":       ["Your code still works there. Use it once you have arrived.",
                         "口令在那边一样能用。到了再输。"],
+  /* THE SAME WALL, FOR THE OTHER APPS THAT HAVE ONE. Instagram, Facebook and
+     LINE all open links in a webview with its own storage, exactly like
+     WeChat — and only WeChat was ever detected, so somebody arriving from an
+     Instagram DM got no warning at all and their page landed in a browser
+     they will never open again on purpose. Named, because "this app" is
+     vaguer than the phone in their hand. */
+  "door.appSay": [
+    "You are in {app}'s own browser. It keeps its own storage, so a page opened here and the same page opened in Safari are two different people — and the one you use your code in is the one your profile lives in.",
+    "你现在在 {app} 自带的浏览器里。它的存储是单独的：在这里打开，和在 Safari 里打开，算两个人——你在哪个浏览器里用口令，主页就长在哪个浏览器里。",
+  ],
   "door.wxAnyway":     ["Use it here anyway", "还是在这里用"],
 
   "door.title":        ["You have been invited", "有人邀请你"],
