@@ -408,6 +408,11 @@ function speakLine(text) {
   fetch("/api/butler-voice", {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-board-device": device() },
+    /* The page's language goes up as a FALLBACK only. Which of his two voices
+       reads the line is decided from the line itself, on the box — see
+       voiceFor() in lib/say.js. Deciding it here, from the toggle, is how an
+       English-reading member asking a question in Chinese got his Chinese
+       answer read out by the English voice. */
     body: JSON.stringify({ text, lang: lang() === "zh" ? "zh" : "en" }),
   })
     .then((r) => {

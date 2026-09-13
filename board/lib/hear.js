@@ -90,11 +90,23 @@ export async function hear(audio, type, lang, who) {
     const body = new FormData();
     body.append("file", new Blob([audio], { type: base }), "said." + ext);
     body.append("model_id", MODEL);
-    /* A HINT AND NOT A RULE. Somebody writing the board in Chinese still says
-       an English name out loud halfway through a sentence, and pinning the
-       language turns that into nonsense. This says which to expect; the
-       service is still free to hear the other. */
-    body.append("language_code", String(lang) === "zh" ? "zho" : "eng");
+    /* NO LANGUAGE PINNED, AND THAT IS DELIBERATE.
+     *
+     * The obvious thing is to pass whichever language the page is set to. It
+     * is also wrong, and wrong in the way that matters here: on a board where
+     * half the people work across a border, the language somebody is READING
+     * the app in says very little about the language they will speak into
+     * their phone. Somebody with the English toggle on says a sentence in
+     * Chinese constantly; that is the whole point of the place.
+     *
+     * Pinned to the wrong one, the transcriber does not shrug — it produces
+     * confident nonsense, and the person watches their own words come back as
+     * somebody else's. Left to detect, it gets code-switching right too, which
+     * is most of what actually gets said around here.
+     *
+     * `lang` is still taken so the caller need not know that; it is the
+     * fallback in lib/say.js on the way back out, where the LINE decides.
+     */
     /* Nobody is diarising a single person talking into their own phone, and
        it is slower. */
     body.append("diarize", "false");
