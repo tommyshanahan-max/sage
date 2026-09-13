@@ -485,7 +485,20 @@ async function load() {
    * sentence is changed through Edit your page, like everything else here.
    */
   mountMo({
-    on: hasMo && Boolean(PERSON),
+    /* THE FLOATING MO IS OFF, and this line is the whole of the switch.
+    *
+    * There are two of him now and only one of them is load-bearing. He is a
+    * member of every room — silent, woken by the tripwire, answered when
+    * somebody starts a line with his name — and that is the one people met
+    * and understood. A second Mo as a button in the corner of three other
+    * screens is the same character in two places with two different jobs,
+    * which is how a doorman turns into a widget.
+    *
+    * Nothing else is removed: the conversation is still mounted, mo.js is
+    * untouched, and the waiting room still opens with him on purpose. Put
+    * `on:` back to the expression beside it to bring the button back.
+    */
+    on: false,   // hasMo && Boolean(PERSON)
     where: PERSON && PERSON.mine ? "profile" : "person",
     first: () => [{ from: "you", text: T("but.hookIn") }],
   });

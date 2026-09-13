@@ -1955,6 +1955,12 @@
     font-size:6rem}
   /* .psafety is gone — the safety note lives on /privacy now. */
   .footpriv{color:var(--muted);text-decoration:underline;text-underline-offset:.2em}
+  /* The end of the preview. Quiet — it is a fact, not a sales page: the number
+     is the whole of the argument and a paragraph under it would weaken it. */
+  .wall{margin:1.1rem 0 0;padding:1.1rem 1.15rem;border-radius:.8rem;
+    background:var(--raise);border:1px solid var(--line);text-align:center}
+  .wall b{display:block;font-family:var(--serif);font-weight:400;font-size:1.25rem}
+  .wall p{margin:.35rem 0 0;font-size:.85rem;color:var(--muted)}
   .bnone{margin:0 0 1.9rem;padding:1.6rem 1.1rem;text-align:center;color:var(--muted);
     background:var(--raise);border:1px solid var(--line);border-radius:1rem}
   .bnone b{display:block;font-family:var(--serif);font-weight:400;font-size:1.15rem;
@@ -2422,6 +2428,9 @@
   </section>
   <div class="deck" id="deck"></div>
   <div class="pacts" id="pacts" hidden></div>
+  <!-- THE END OF THE PREVIEW, for somebody still at the door. Five members and
+       then a number: see the peek branch in /api/people. -->
+  <div class="wall" id="bwall" hidden></div>
   <p class="pcount" id="pcount"></p>
   <!-- The safety paragraph was here, under the deck: four lines of fine print
        between the faces and the waiting list, on the screen people came to
@@ -6601,6 +6610,9 @@ async function countNotes() {
  * between this and the app it borrows its shape from.
  */
 let PEOPLE = [], AT = 0;
+/* What the deck is not showing, when the reader is still at the door. Null for
+   a member, who is shown everybody. See the peek branch in /api/people. */
+let WALL = null;
 
 /* A FRESH CUT OF THE DECK EVERY TIME IT IS OPENED.
  *
@@ -6666,10 +6678,15 @@ async function loadPeople() {
      * same pair of functions /api/cards and the messenger decide on — computed
      * per reader on the server. Shuffled within each group, so the order
      * inside "matched" is not a ranking of people either. */
+    /* THE WALL, for somebody outside. The server sends five people and a count
+       of the ones it is not sending; the deck below draws the five and then
+       says how many more there are, which is the whole reason to stay on the
+       list. */
+    WALL = (d && d.wall) || null;
     const all = shuffled((d && d.people) || []);
     const fits = (q) => Array.isArray(q.shared) && q.shared.length > 0;
     PEOPLE = [...all.filter(fits), ...all.filter((q) => !fits(q))];
-  } catch { PEOPLE = []; }
+  } catch { PEOPLE = []; WALL = null; }
   drawDeck();
   /* Here because it needs the deck: the old list holds handles and the rows
      hold ids, so the names can only be matched once there is somebody to match
@@ -8032,6 +8049,20 @@ function drawDeck() {
   // Counted in people, not in cards: yours is the ask at the end, not the
   // fourth of four students.
   $("pcount").textContent = people && !mine ? T("brw.of", { n: AT + 1, total: people }) : "";
+  /* THE PREVIEW ENDS AND SAYS SO. Drawn under the deck rather than as a card
+     in it: it is not a person, and a sixth card that is a wall is a card
+     somebody swipes past looking for the face that is not there.
+     The follow buttons go with it — they are about a relationship somebody
+     outside the door does not have, and a button the door would refuse is a
+     worse screen than no button. */
+  const wall = $("bwall");
+  wall.hidden = !WALL;
+  if (WALL) {
+    $("pacts").hidden = true;
+    fill(wall);
+    wall.append(el("b", null, T("wall.head", { n: WALL.more })));
+    wall.append(el("p", null, T("wall.sub")));
+  }
   drawDoor(people);
   drawQueue();
   drawSetts();
@@ -9767,7 +9798,20 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
        passing none takes the Keep button away rather than leaving a dead one
        under his sentence. */
     mountMo({
-      on: Boolean(d.butler) && Boolean(ME),
+      /* THE FLOATING MO IS OFF, and this line is the whole of the switch.
+      *
+      * There are two of him now and only one of them is load-bearing. He is a
+      * member of every room — silent, woken by the tripwire, answered when
+      * somebody starts a line with his name — and that is the one people met
+      * and understood. A second Mo as a button in the corner of three other
+      * screens is the same character in two places with two different jobs,
+      * which is how a doorman turns into a widget.
+      *
+      * Nothing else is removed: the conversation is still mounted, mo.js is
+      * untouched, and the waiting room still opens with him on purpose. Put
+      * `on:` back to the expression beside it to bring the button back.
+      */
+      on: false,   // Boolean(d.butler) && Boolean(ME)
       where: "browse",
       first: () => [{ from: "you", text: T("but.hookIn") }],
     });

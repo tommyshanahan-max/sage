@@ -580,6 +580,11 @@ app.use(async (req, res, next) => {
      * are standing in one. This is the line that lets them talk to each other
      * while they wait, which is the difference between a queue and a room. */
     if (req.path === "/api/group/say" || req.path === "/api/door") return next();
+    /* AND BROWSE, WHICH ANSWERS THEM WITH FIVE PEOPLE AND A WALL — see the
+       peek branch in /api/people. It is a read, it carries no contact detail
+       (a profile never does), and the people on it were put there one at a
+       time by whoever runs the board. */
+    if (req.path === "/api/people") return next();
     if (req.path.startsWith("/api/")) {
       return res.status(403).json({ error: "soon" });
     }
@@ -2809,6 +2814,37 @@ app.get("/api/people", async (req, res) => {
   const board = await store.load(FILE);
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
+
+  /* BROWSE, FROM OUTSIDE THE DOOR, AND THEN A WALL.
+   *
+   * The waiting room was a form and a clock. The one thing that would make
+   * somebody stay in it is seeing who is inside — so a handful of members are
+   * browsable from out there, chosen one at a time by whoever runs the board
+   * (see `peek` in cleanPerson), and after them the list stops and says how
+   * many it is not showing.
+   *
+   * FIVE, NOT FIFTY. Browsing is what people came for; a preview that goes on
+   * long enough to answer "is this worth waiting for" is doing its job, and
+   * one that goes on longer is just the board, given away at the door.
+   *
+   * NOTHING ABOUT THE READER on these cards. No `following`, no `mine`, no
+   * `shared` — those are facts about a relationship a person outside the door
+   * does not have, and a card that offered a button which the door would
+   * refuse is a worse screen than one that does not.
+   */
+  const w = board.waits.find((x) => x.by === me && !x.done);
+  if (w && !board.people.some((q) => q.by === me && q.state === "published")) {
+    const live = board.people.filter((q) =>
+      q.state === "published" && q.looking && q.handle);
+    const some = live.filter((q) => q.peek).slice(0, PEEK_N);
+    return res.json({
+      people: some.map((q) => ({ ...shownPerson(q, false), peek: true })),
+      /* HOW MANY ARE NOT ON THE SCREEN. The wall has to be a number or it is
+         a locked door with nothing behind it — "43 more inside" is the whole
+         reason to stay on the list. */
+      wall: { more: Math.max(0, live.length - some.length) },
+    });
+  }
   /* PEOPLE THIS READER HAS BLOCKED DO NOT APPEAR. One way: they leave this
      reader's Browse and this reader does not leave theirs. Done here rather
      than in the page because the old version was done in the page, in
@@ -3397,6 +3433,12 @@ function queueOrder(board) {
  * at midnight would otherwise skip a day in silence.
  */
 const UP_A_DAY = num("BOARD_UP_A_DAY", 3);
+/* HOW MANY MEMBERS SOMEBODY AT THE DOOR MAY BROWSE. Five, because browsing is
+   what people came for and a preview long enough to answer "is this worth
+   waiting for" has done its job; one that goes on longer is the board, given
+   away at the door. An env var so it can be turned down to nothing on a board
+   that does not want it at all. */
+const PEEK_N = num("BOARD_PEEK", 5);
 /* HOW LONG THEY HAVE. Three days, which is long enough for somebody who saw
    the message on a Friday and is free on a Sunday, and short enough that the
    waiting room does not quietly become a second list that also never moves.
@@ -4639,6 +4681,42 @@ app.post("/api/waiting", express.json({ limit: "2kb" }), admin, async (req, res)
 });
 
 /** Choose the one post that shows outside. Admin only, and one at a time. */
+/** WHO IS BROWSABLE FROM OUTSIDE THE DOOR. `make peek WHO=ray`, one at a time.
+ *
+ *  Not a role and not a default: everybody else on this board decided to be in
+ *  a directory that MEMBERS read, and these few are in one that strangers
+ *  read. That is not a difference to hand somebody by flipping a switch they
+ *  did not know about, which is why it is the operator's and why the list is
+ *  meant to stay short.
+ */
+app.post("/api/peek", express.json({ limit: "2kb" }), admin, async (req, res) => {
+  const want = String(req.body?.who || "").trim().toLowerCase();
+  const on = req.body?.on !== false;
+  const out = await change((board) => {
+    const q = board.people.find((x) =>
+      String(x.handle || "").toLowerCase() === want && x.state === "published");
+    if (!q) return { error: "gone" };
+    q.peek = on;
+    return { ok: true, who: q.handle, on };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.json(out);
+});
+
+app.get("/api/peek", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const live = board.people.filter((q) =>
+    q.state === "published" && q.looking && q.handle);
+  res.json({
+    max: PEEK_N,
+    shown: live.filter((q) => q.peek).map((q) => q.handle),
+    /* Everybody who COULD be, so the command is a choice rather than a guess
+       at a spelling. Same reason `make featured` lists what it lists. */
+    could: live.filter((q) => !q.peek).map((q) => q.handle),
+  });
+});
+
 app.post("/api/feature", express.json({ limit: "2kb" }), admin, async (req, res) => {
   const id = String(req.body?.id || "");
   const on = req.body?.on !== false;

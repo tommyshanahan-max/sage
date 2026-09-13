@@ -1411,6 +1411,20 @@ export function cleanPerson(raw) {
      * of people, decided one at a time.
      */
     canOffer: raw.canOffer === true,
+    /* SHOWN TO PEOPLE STILL AT THE DOOR.
+     *
+     * The waiting room is a form and a clock, and the one thing that would
+     * make somebody stay in it is seeing who is inside. So a handful of
+     * members are browsable from outside: enough to answer "is this worth
+     * waiting for", and then a wall.
+     *
+     * The operator's, one person at a time, exactly like canOffer above and
+     * for a harder reason. Everybody else on this board decided to be in a
+     * directory that members read. These few are in one that strangers read,
+     * and that is not a thing to be opted into by a switch somebody flips
+     * without noticing what it means. `make peek WHO=ray`.
+     */
+    peek: raw.peek === true,
     /* WHO MAY WRITE ONE THAT LEAVES THE BOARD.
      *
      * Not derived from a role and not given to every member, for a harder

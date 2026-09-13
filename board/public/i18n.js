@@ -1220,6 +1220,12 @@ export const STRINGS = {
      because the same sentence means two different things from inside. */
   /* dr. and not door., which is already the public door pages' namespace and
      already had a door.sub in it. The duplicate check caught it. */
+  /* The end of Browse, for somebody still at the door. The number is the whole
+     argument — a paragraph under it would weaken it, and the person reading is
+     already deciding whether to keep waiting rather than whether to be sold
+     to. */
+  "wall.head":         ["{n} more inside", "里面还有 {n} 个人"],
+  "wall.sub":          ["You see the rest when you are in.", "进来了就都看得到。"],
   "dr.sub":            ["anyone inside can read", "里面的人都看得到"],
   "dr.inside":         ["inside", "已经在里面"],
   "dr.waiting":        ["waiting", "还在等"],
