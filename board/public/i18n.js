@@ -4457,6 +4457,49 @@ export const STRINGS = {
     "写个名字和一句话，就能回话了。",
   ],
   "grp.joinName":      ["Your name", "你的名字"],
+  /* BRINGING IN SOMEBODY WHO IS NOT ON HERE. The picker is where a member
+     finds out the third person has no account, and this is the row that does
+     something about it rather than sending them away to look for a code. */
+  "grp.outside":       ["＋ Somebody not on here yet", "＋ 还没在这里的人"],
+  "grp.outsideName":   ["Their name", "他的名字"],
+  "grp.outsideGo":     ["Make their invite", "生成邀请"],
+  "grp.roomPlain":     ["a conversation", "一个对话"],
+  "grp.outMade":       ["{name}'s way into “{room}”:", "{name} 进「{room}」的入口："],
+  /* A room does not have to be named, and “a conversation” inside the quote
+     marks read like the name somebody had given it. Its own line instead. */
+  "grp.outMadePlain":  ["{name}'s way in:", "{name} 的入口："],
+  "grp.outCopy":       ["Copy the message", "复制这段话"],
+  /* The one thing that can still go wrong is the half that is not on screen.
+     Said once, under the code, rather than as a warning. */
+  "grp.outSend": [
+    "Send the code with the link. The link on its own opens nothing.",
+    "口令要和链接一起发。光有链接打不开。"],
+  /* The message a MEMBER sends, which is not the one the board sends. Theirs
+     is a cold pitch to somebody who has never heard of this; this is one
+     person telling another to come into a room they are already in. Short
+     enough to read in a chat window without scrolling. */
+  "grp.shared": [
+    "{name} — come into this. It is a private board, and there is a room on it with {who} in it called “{room}”.\n\nYou can read it before you say anything.\n\n{url}\n\nCode: {code} — good for 48 hours, one person.",
+    "{name}，进来聊。这是个私密的板子，里面有个群叫「{room}」，{who} 在里面。\n\n可以先看，不用马上说话。\n\n{url}\n\n口令：{code}——48 小时内有效，只能一个人用。"],
+  /* Inside WeChat this is being pasted into WeChat, and whoever taps it lands
+     in the browser that forgets them — so that version carries the way out.
+     Same shape as inv.sharedWx. */
+  "grp.sharedWx": [
+    "{name} — come into this. It is a private board, and there is a room on it with {who} in it called “{room}”.\n\nYou can read it before you say anything.\n\n{url}\n\nCode: {code} — good for 48 hours, one person.\n\nOpen it in Safari rather than inside WeChat — WeChat keeps its own storage and you would end up with two of you.",
+    "{name}，进来聊。这是个私密的板子，里面有个群叫「{room}」，{who} 在里面。\n\n可以先看，不用马上说话。\n\n{url}\n\n口令：{code}——48 小时内有效，只能一个人用。\n\n请用 Safari 打开，别在微信里打开——微信的浏览器自己存一份，会变成两个你。"],
+  /* WHY IT DID NOT WORK, and each of these is a different thing to do next. */
+  "grp.outNoStanding": [
+    "You cannot bring anybody in yet. Your own invite in Profile says what is missing.",
+    "你现在还不能带人进来。个人页里的邀请那块会说还差什么。"],
+  "grp.outSpent": [
+    "That is today's invite spent. There is another tomorrow.",
+    "今天的邀请用掉了。明天还有一个。"],
+  "grp.outFull": [
+    "This room is full. Five people, counting anybody holding a code for it.",
+    "这个群满了。五个人，拿着口令还没进来的也算。"],
+  "grp.outAlone": [
+    "Add somebody you have matched with first. A room is you, them, and whoever the code is for.",
+    "先加一个已经匹配上的人。一个群是你、他，加上拿口令的那个人。"],
   "grp.joinGo":        ["Put me in", "加我进去"],
   /* The one refusal worth its own words. See contactShaped: a name with a
      phone number or a WeChat id in it is turned down deliberately, and "try

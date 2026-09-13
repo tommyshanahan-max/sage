@@ -1531,6 +1531,102 @@ app.post("/api/invite", admin, express.json({ limit: "8kb" }), async (req, res) 
   res.status(201).json({ made, room });
 });
 
+/* A MEMBER BRINGING SOMEBODY INTO THEIR OWN ROOM.
+ *
+ * The same code the box mints, asked for from the app by the person whose room
+ * it is. It exists because the picker is where somebody notices the person
+ * they want is not on here: one match, a button that will not go, and the
+ * third person sitting in their phone rather than on this board.
+ *
+ * STANDING IS THE AUTHORITY, exactly as it is for the code in their header.
+ * A group invite is a person let in, and an invite ceiling with a second door
+ * beside it is not a ceiling. Nothing new is decided here — this asks
+ * standing(), spends one of the day's allowance, and refuses with the same
+ * words the header uses.
+ *
+ * THE ROOM IS THEIRS OR THIS MAKES IT. An existing room only when they made it
+ * — membership is drawn from the maker's matches and leaving is the only exit,
+ * so somebody else's room is not theirs to add to. Otherwise it is created
+ * here from people they have matched with, with the code holding the last
+ * seat: the case the picker is looking at.
+ */
+app.post("/api/group-invite", notesOff, express.json({ limit: "4kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = hashDevice(String(req.body?.device || req.get("x-board-device") || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  if (INVITE && !(await admittedReq(req))) {
+    return res.status(403).json({ error: "invite", where: "/enter" });
+  }
+  const board0 = await store.load(FILE);
+  const rank = standing(board0, me);
+  if (!rank.can) return res.status(409).json({ error: "standing", need: rank.need, guests: rank.guests });
+
+  const want = String(req.body?.group || "");
+  const withWho = (Array.isArray(req.body?.who) ? req.body.who : [])
+    .map((x) => String(x || "")).filter((x) => /^[a-f0-9]{20}$/.test(x));
+  const label = String(req.body?.name || "").slice(0, 60);
+  const today = dayKey(Date.now());
+
+  let bad = "";
+  const out = await change((board) => {
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine || !mine.handle) { bad = "profile"; return null; }
+    /* THE DAY'S ALLOWANCE, COUNTED INSIDE THE QUEUE. Same as the header's
+       code: two taps on a slow connection would otherwise spend two. */
+    const perDay = rank.staff ? Infinity : Math.max(1, Number(rank.perDay) || 1);
+    const todays = board.invites.filter((v) => v.by === me && dayKey(v.at) === today);
+    if (todays.length >= perDay) { bad = "spent"; return null; }
+
+    let g = want ? board.groups.find((x) => x.id === want) : null;
+    if (want && (!g || g.by !== me)) { bad = "notyours"; return null; }
+    if (!g) {
+      const allowed = new Set(groupable(board, me).map((c) => c.who));
+      const members = [me];
+      for (const id of withWho) {
+        if (!allowed.has(id)) continue;
+        const q = board.people.find((x) => x.id === id);
+        if (q && !members.includes(q.by)) members.push(q.by);
+      }
+      if (members.length < 2) { bad = "alone"; return null; }
+      if (members.length + 1 > store.GROUP_MAX) { bad = "full"; return null; }
+      g = store.cleanGroup({ id: store.newId(), by: me, members, name: label });
+      if (!g) { bad = "alone"; return null; }
+      board.groups.push(g);
+    }
+    /* SEATS, COUNTING THE CODES NOBODY HAS SPENT. The same sum the box does —
+       see the note over POST /api/invite — because a room that fills from one
+       door and not the other is a cap with a hole in it. */
+    const held = board.invites.filter((x) => x.grp === g.id && !x.off && !x.usedBy
+      && !store.inviteOver(x)).length;
+    if (store.groupRoom(g) - held < 1) { bad = "full"; return null; }
+
+    const have = codesTaken(board);
+    let code = store.newCode();
+    while (have.has(code)) code = store.newCode();
+    const v = store.cleanInvite({
+      code, who: mine.handle, at: new Date().toISOString(), by: me, grp: g.id,
+      /* FORTY-EIGHT HOURS, the same as every code minted for one named person
+         — see the note on `make invite`. A dead code is a person who decided
+         to come in and was turned away. */
+      until: new Date(Date.now() + 48 * 3600_000).toISOString(),
+    });
+    board.invites.push(v);
+    return {
+      code: v.code, until: v.until, group: g.id, name: g.name,
+      // Their own name, so the link can greet whoever it is for with who let
+      // them in. The page has no other way to know it.
+      from: mine.handle,
+      who: g.members.map((h) => (board.people.find((q) => q.by === h) || {}).handle)
+        .filter(Boolean),
+    };
+  });
+  if (bad) {
+    return res.status(bad === "profile" || bad === "notyours" ? 403 : 409).json({ error: bad });
+  }
+  if (!out) return res.status(409).json({ error: "no" });
+  res.json(out);
+});
+
 /* THE ROOMS, FOR WHOEVER RUNS THE BOARD.
  *
  * Only so a group invite can be minted: the code needs an id and an id is not
