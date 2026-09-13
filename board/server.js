@@ -1417,12 +1417,65 @@ app.post("/api/invite", admin, express.json({ limit: "8kb" }), async (req, res) 
      for. Refused rather than dropped when the room is not there or is full:
      minting a code that says "this puts you in the conversation" and quietly
      does not is worse than not minting one. */
-  const grp = String(req.body?.grp || "");
+  let grp = String(req.body?.grp || "");
+  /* MAKING THE ROOM AND THE CODE IN ONE ACT.
+   *
+   * A room has to exist before anybody can be invited into it, and making one
+   * takes three people who are already members. So the case this whole path
+   * was built for — I have one person, and the third is the one I am bringing
+   * in — could not be reached: you were two short of a room you were only
+   * making in order to invite somebody into.
+   *
+   * The third seat is held by the code. Same cap, same clock, and `make
+   * groups` counts it the same way, so the room is three from the moment it
+   * exists with one of them still walking in. If the code runs out unspent it
+   * is a room of two, which is a thread with extra steps and not a danger —
+   * the listing says "1 code out" while that is pending, which is the only
+   * thing anybody needs to know about it.
+   *
+   * THE MAKER IS A REAL NAME ON THE BOARD, not the label. Everywhere else
+   * `who` is a note to self about who vouched and is never checked against
+   * anything. Here somebody has to OWN the room — it is their matches the
+   * membership is drawn from, and leaving is the only exit — so it is looked
+   * up, and refused by name when it is not found rather than quietly making a
+   * room belonging to nobody. */
+  const wantRoom = req.body?.room && typeof req.body.room === "object"
+    ? req.body.room : null;
   const made = [];
   let bad = "";
+  let badWho = [];
   await change((board) => {
-    const g = grp ? board.groups.find((x) => x.id === grp) : null;
+    let g = grp ? board.groups.find((x) => x.id === grp) : null;
     if (grp && !g) { bad = "noroom"; return null; }
+
+    if (!g && wantRoom) {
+      const find = (name) => board.people.find((q) => q.state === "published"
+        && (q.handle || "").toLowerCase() === String(name || "").trim().toLowerCase());
+      const maker = find(wantRoom.by);
+      if (!maker) { bad = "nomaker"; badWho = [String(wantRoom.by || "")]; return null; }
+      const names = (Array.isArray(wantRoom.with) ? wantRoom.with : [])
+        .map((x) => String(x || "").trim()).filter(Boolean);
+      if (!names.length) { bad = "alone"; return null; }
+      /* THE SAME GATE THE APP'S PICKER USES, and read from the same function:
+         only people who have matched with whoever is making it. A room minted
+         from the box that skipped the rule the button enforces would be a
+         second, quieter way into somebody's messages. */
+      const allowed = new Map(groupable(board, maker.by).map((c) => [c.handle, c]));
+      const members = [maker.by];
+      for (const nm of names) {
+        const q = find(nm);
+        if (!q || !allowed.has(q.handle)) { badWho.push(nm); continue; }
+        if (!members.includes(q.by)) members.push(q.by);
+      }
+      if (badWho.length) { bad = "notmatched"; return null; }
+      if (members.length + n > store.GROUP_MAX) { bad = "full"; return null; }
+      if (members.length + n < 3) { bad = "few"; return null; }
+      g = store.cleanGroup({ id: store.newId(), by: maker.by, members,
+                             name: String(wantRoom.name || "").slice(0, 60) });
+      if (!g) { bad = "few"; return null; }
+      board.groups.push(g);
+      grp = g.id;
+    }
     /* COUNTED AGAINST THE SAME CAP THE ROOM HAS, and counted BEFORE anybody
        walks in: somebody holding an unspent code for this room is already
        taking the seat. n codes for one room need n seats.
@@ -1453,7 +1506,11 @@ app.post("/api/invite", admin, express.json({ limit: "8kb" }), async (req, res) 
     }
     return true;
   });
-  if (bad) return res.status(bad === "full" ? 409 : 404).json({ error: bad });
+  if (bad) {
+    const code = bad === "full" || bad === "few" || bad === "notmatched"
+      || bad === "alone" ? 409 : 404;
+    return res.status(code).json({ error: bad, who: badWho });
+  }
   /* THE ROOM'S NAME AND WHO IS IN IT, so the message can say what the code
      opens into. "Here is your way in" is the wrong sentence for a code that
      drops somebody into a conversation between three named people; that IS

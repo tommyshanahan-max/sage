@@ -120,15 +120,52 @@ async function main() {
    * is the invitation, and it belongs in the message rather than being a
    * surprise on the other side of a password box. */
   const group = arg("group");
+  /* OR THE ROOM DOES NOT EXIST YET, AND THIS MAKES IT.
+   *
+   * Making one takes three people who are already members, which is two more
+   * than somebody usually has when the third is the person they are bringing
+   * in. So the room and the code are one act: --with names whoever is already
+   * on the board, the code holds the last seat, and the room is three from the
+   * moment it exists. See the note over /api/invite. */
+  const withWhom = arg("with").split(",").map((x) => x.trim()).filter(Boolean);
+  const wantName = arg("name");
   const r = await fetch(base + "/api/invite", {
     method: "POST", headers: head,
-    body: JSON.stringify({ who, n, hours, kind: agent ? "agent" : "", grp: group }),
+    body: JSON.stringify({ who, n, hours, kind: agent ? "agent" : "", grp: group,
+      /* `who` is the maker as well as the label here, and it has to be a real
+         name on the board — somebody owns a room. See the note on the route. */
+      room: !group && withWhom.length
+        ? { by: who, with: withWhom, name: wantName } : undefined }),
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) {
     if (d.error === "noroom") {
       console.error("");
       console.error("  There is no room with that id.  make groups");
+      console.error("");
+    } else if (d.error === "nomaker") {
+      console.error("");
+      console.error("  Nobody on this board is called \"" + (d.who || []).join("") + "\".");
+      console.error("  WHO is the name on your own profile here, not a label \u2014");
+      console.error("  somebody has to own the room.  make who");
+      console.error("");
+    } else if (d.error === "notmatched") {
+      console.error("");
+      console.error("  Not matched with you yet: " + (d.who || []).join(", "));
+      console.error("  Only people who have matched with you can be in a room");
+      console.error("  you make \u2014 the same rule the app's picker uses.");
+      console.error("");
+      console.error('  make pair A="' + who + '" B="' + (d.who || [""])[0] + '"');
+      console.error("");
+    } else if (d.error === "alone") {
+      console.error("");
+      console.error("  WITH needs at least one person already on the board.");
+      console.error("  A room is you, them, and whoever the code is for.");
+      console.error("");
+    } else if (d.error === "few") {
+      console.error("");
+      console.error("  That is not enough people for a room. Three minimum,");
+      console.error("  counting you and counting the code you are minting.");
       console.error("");
     } else if (d.error === "full") {
       console.error("");

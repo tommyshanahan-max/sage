@@ -376,7 +376,7 @@ groups: ## The rooms and their ids:  make groups
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/groups.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
 
-group-invite: ## Into one conversation:  make group-invite GROUP=... WHO="Tom" FOR="Ava"
+group-invite: ## Into one conversation:  make group-invite WITH="Damon Russell" WHO="Tom" FOR="Ava" [NAME="Talk film"]
 	@# The same door as `make invite` and the same message shape — it is settled
 	@# and this does not redesign it. Two things differ.
 	@#
@@ -390,16 +390,30 @@ group-invite: ## Into one conversation:  make group-invite GROUP=... WHO="Tom" F
 	@# every word before they give anything, which is the opposite way round
 	@# from a blank profile form, and they can leave at any point.
 	@#
-	@# GROUP is the id from `make groups`. A room holds five, and somebody
-	@# holding an unspent code for it is already sitting in one of the seats.
-	@test -n "$(GROUP)" || { echo 'which room? make groups'; exit 1; }
-	@test -n "$(WHO)" || { echo 'who is vouching? make group-invite GROUP=... WHO="Tom" FOR="Ava"'; exit 1; }
+	@# TWO WAYS TO SAY WHICH ROOM.
+	@#
+	@# GROUP=<id from `make groups`> puts them into one that already exists.
+	@#
+	@# WITH="Damon Russell" makes the room as it mints the code, which is the
+	@# case this was built for and the one that could not be reached: making a
+	@# room takes three people who are already members, and the third is the
+	@# person you are bringing in. The code holds the last seat. Comma-separate
+	@# for more than one, and NAME= gives it a name.
+	@#
+	@# WHO is the name on YOUR OWN PROFILE when WITH is used, not a free label
+	@# — somebody owns a room, and it is their matches the membership is drawn
+	@# from. `make who` if you are not sure what it says.
+	@#
+	@# A room holds five, and somebody holding an unspent code for it is
+	@# already sitting in one of the seats.
+	@test -n "$(GROUP)$(WITH)" || { echo 'which room? GROUP=<id from make groups>, or WITH="their name" to make one'; exit 1; }
+	@test -n "$(WHO)" || { echo 'who is vouching? make group-invite WITH="Damon Russell" WHO="Tom" FOR="Ava"'; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T \
 	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
 	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --hours "$(if $(HOURS),$(HOURS),48)" --n "$(or $(N),1)" \
-	  --group "$(GROUP)"
+	  --group "$(GROUP)" --with "$(WITH)" --name "$(NAME)"
 
 agent-invite: ## Bring an agent in:  make agent-invite WHO="Tom" FOR="Andy" [HOURS=48]
 	@# The same door as `make invite` and the same message shape — it is settled
