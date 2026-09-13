@@ -7251,8 +7251,14 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
     const line = said && said.text ? String(said.text).slice(0, 600) : "";
     if (line) {
       await change((board) => {
-        const g = board.groups.find((x) => x.id === id);
-        if (!g) return null;
+        /* A DOOR ROOM HAS NO GROUP ROW, and this looked for one before writing.
+           So he answered every question anybody at the door asked him and the
+           answer was dropped on the floor — the ask went through, the model
+           ran, and the room stayed silent. Which is worse than not having him
+           there: they had seen his face in it and spoken to him.
+           The room still has to exist: a group they are in, or one of the five
+           at the door. Anything else is an id somebody made up. */
+        if (!board.groups.some((x) => x.id === id) && !store.doorKey(id)) return null;
         board.says.push(store.cleanSay({
           id: store.newId(), group: id, by: store.MO, text: line,
         }));
