@@ -6469,6 +6469,16 @@ app.get("/api/groups", notesOff, async (req, res) => {
     .map((g) => ({
       id: g.id, name: g.name, at: g.at, mine: g.by === me,
       guest: !g.members.includes(me),
+      /* CODES MINTED FOR THIS ROOM AND NOT YET SPENT, to whoever minted them.
+       * They hold seats — see groupRoom and the note over POST /api/invite —
+       * so a room of two can be full and the screen has to be able to say why
+       * in numbers rather than in a rule. Codes only, never the name they were
+       * written for: that goes in the link and is never stored. */
+      held: g.by === me
+        ? board.invites.filter((x) => x.grp === g.id && !x.off && !x.usedBy
+            && !store.inviteOver(x))
+            .map((x) => ({ code: x.code, until: x.until }))
+        : [],
       // Names and faces, never the device hashes the group is stored under.
       who: g.members.map(name).filter(Boolean),
       says: board.says.filter((m) => m.group === g.id)
@@ -6550,6 +6560,29 @@ app.post("/api/group/add", notesOff, express.json({ limit: "4kb" }), async (req,
   if (out?.error) {
     return res.status(out.error === "notyours" ? 403 : 409).json(out);
   }
+  res.json(out);
+});
+
+/** Taking back a code you minted for a room you made.
+ *
+ *  An unspent code sits in one of the room's five seats until it runs out, so
+ *  a room of two can refuse a third person because of two invites nobody
+ *  answered. Whoever minted it can stand it down; nobody else can, and a spent
+ *  one cannot be stood down at all — the person is already in.
+ */
+app.post("/api/group-invite/off", notesOff, express.json({ limit: "1kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || req.get("x-board-device") || ""), SALT);
+  const code = String(req.body?.code || "").toUpperCase();
+  if (!me || !code) return res.status(400).json({ error: "no" });
+  const out = await change((board) => {
+    const v = board.invites.find((x) => x.code === code);
+    if (!v || !v.grp) return { error: "gone" };
+    if (v.by !== me) return { error: "notyours" };
+    if (v.usedBy) return { error: "spent" };
+    v.off = true;
+    return { ok: true };
+  });
+  if (out?.error) return res.status(out.error === "notyours" ? 403 : 409).json(out);
   res.json(out);
 });
 

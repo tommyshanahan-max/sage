@@ -307,6 +307,16 @@
   .info .add .plus{width:3.2rem;height:3.2rem;border-radius:50%;display:grid;place-items:center;
     border:1px dashed var(--line);color:var(--muted);font-size:1.5rem;line-height:1}
   .info .leave{margin-top:.6rem}
+  .heldhead{margin:0 0 .5rem;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted)}
+  .heldrow{display:flex;align-items:center;gap:.8rem;padding:.7rem 0;
+    border-bottom:1px solid var(--hair)}
+  .heldrow .hm{flex:1;min-width:0}
+  .heldrow .hm b{display:block;font-family:var(--serif);font-weight:400;font-size:1.15rem;
+    letter-spacing:.08em}
+  .heldrow .hm span{display:block;font-size:.78rem;color:var(--muted)}
+  .heldoff{flex:0 0 auto;border:1px solid var(--line);background:none;color:var(--t5);
+    border-radius:99px;padding:.35rem .8rem;font:inherit;font-size:.8rem}
   .addlede{margin:0 0 1.1rem;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
   /* One action in the header, beside the language switch. Text, not a filled
      button: the filled one on this screen is Send it. */
@@ -894,7 +904,7 @@ function outsider(picked, label, group, bare) {
       const why = String(e.message);
       said.textContent = T(why === "standing" ? "grp.outNoStanding"
         : why === "spent" ? "grp.outSpent"
-        : why === "full" ? "grp.outFull"
+        : why === "full" ? "grp.outFullWhy"
         : why === "alone" ? "grp.outAlone"
         : "act.again");
     }
@@ -1005,6 +1015,41 @@ function infoScreen(g) {
     grid.append(add);
   }
   box.append(grid);
+
+  /* WHAT IS HOLDING THE OTHER SEATS.
+   *
+   * A code nobody has spent sits in one of the five until it runs out. Without
+   * this a room of two refuses a third person and the only account of it is a
+   * sentence about five people on a screen saying two — which reads as a bug,
+   * and was one the first time somebody hit it. Here they are, by code, with
+   * the way to stand one down. */
+  const held = g.mine ? (g.held || []) : [];
+  if (held.length) {
+    box.append(el("p", "heldhead", T("grp.heldHead", { n: held.length })));
+    for (const v of held) {
+      const row = el("div", "heldrow");
+      const left = el("div", "hm");
+      left.append(el("b", null, v.code));
+      left.append(el("span", null, v.until ? T("grp.heldTill", { when: when(v.until) })
+                                           : T("grp.heldOpen")));
+      const off = el("button", "heldoff", T("grp.heldOff"));
+      off.type = "button";
+      off.addEventListener("click", async () => {
+        off.disabled = true;
+        try {
+          const r = await fetch("/api/group-invite/off", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device, code: v.code }),
+          });
+          if (!r.ok) throw new Error("no");
+          await load();
+        } catch { off.textContent = T("act.again"); off.disabled = false; }
+      });
+      row.append(left, off);
+      box.append(row);
+    }
+  }
+
   // The count is already under the title on this screen. Twice is noise.
   box.append(leaveButton(g));
   return box;

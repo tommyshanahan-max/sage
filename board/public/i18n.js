@@ -4515,6 +4515,17 @@ export const STRINGS = {
   "grp.outFull": [
     "This room is full. Five people, counting anybody holding a code for it.",
     "这个群满了。五个人，拿着口令还没进来的也算。"],
+  /* THE SAME FACT, WITH SOMEWHERE TO GO. A room of two refusing a third
+     because of unspent codes reads as a bug if the only account of it is a
+     sentence about five people. The codes are on the group page, behind ⋯,
+     each with a way to stand it down. */
+  "grp.outFullWhy": [
+    "No room. Codes you have already sent are holding the seats — take one back under ⋯.",
+    "位置满了。你之前发出去还没人用的口令占着位子——在 ⋯ 里可以收回。"],
+  "grp.heldHead":      ["{n} codes out for this room", "这个群还有 {n} 个口令在外面"],
+  "grp.heldTill":      ["until {when}", "有效期到 {when}"],
+  "grp.heldOpen":      ["no deadline", "没有期限"],
+  "grp.heldOff":       ["Take back", "收回"],
   "grp.outAlone": [
     "Add somebody you have matched with first. A room is you, them, and whoever the code is for.",
     "先加一个已经匹配上的人。一个群是你、他，加上拿口令的那个人。"],
