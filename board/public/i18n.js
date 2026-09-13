@@ -4471,6 +4471,10 @@ export const STRINGS = {
   "grp.addLede":       ["Who goes into “{room}”?", "谁进「{room}」？"],
   // What ⋯ opens. Only ever read by a screen reader; the dots are the label.
   "grp.info":          ["About this group", "群聊信息"],
+  /* In the ⋯ of a one-to-one. The thought "somebody else should be in on
+     this" happens while reading the conversation, so the way to act on it
+     belongs in the conversation. */
+  "note.startGroup":   ["Start a group with them", "拉个群"],
   /* The line between the faces and the name box. Not a heading: it separates
      two answers to the same question and says so in one word. */
   "grp.addOr":         ["or", "或者"],

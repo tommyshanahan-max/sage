@@ -1314,6 +1314,24 @@ function drawMenu(t) {
     menu.append(go);
   }
 
+  /* A THIRD PERSON, FROM THE CONVERSATION THE TWO OF YOU ARE ALREADY HAVING.
+   *
+   * This is where somebody goes looking for it and it was not here. In WeChat
+   * the ⋯ of a one-to-one opens the two of you and a ＋, and tapping the ＋
+   * makes it a group — so "I should get Keith in on this" is one gesture from
+   * inside the thread that made you think it. Ours sent you to Messages, to a
+   * circle, to a picker, to find the person whose conversation you had just
+   * been reading.
+   *
+   * It opens the picker with them already added. Nothing is made here: a room
+   * still takes three, and the screen that makes one is the screen that makes
+   * every other one. */
+  if (!OFF.groups && !onList && t.last && t.last.open) {
+    const grp = el("a", null, T("note.startGroup"));
+    grp.href = "/groups?with=" + encodeURIComponent(t.who || "");
+    menu.append(grp);
+  }
+
   /* SHARING THEM, from inside the conversation. Every other screen that shows
      a person can send their page to somebody; this one could not, which is
      odd on the screen where you are most likely to be thinking about who else

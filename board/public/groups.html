@@ -403,6 +403,18 @@ let GROUPS = [], CANADD = [], MAX = 5;
    button leaves a room rather than the page. */
 let OPEN = new URLSearchParams(location.search).get("g") || "";
 let PICKED = [], PICKING = false;
+/* ARRIVING FROM A CONVERSATION, with the person in it already picked.
+ *
+ * The ⋯ of a one-to-one offers "start a group with them" — see drawMenu in
+ * notes.html — and it lands here. Without this that link would drop somebody
+ * on an empty picker and ask them to find the person whose thread they were
+ * reading a second ago.
+ *
+ * Read once and forgotten: it is an opening position, not a mode, and a
+ * reload should not put somebody back at the start of something they have
+ * moved on from. */
+const WITH = new URLSearchParams(location.search).get("with") || "";
+let usedWith = false;
 /* ADDING SOMEBODY IS ITS OWN SCREEN, NOT A BLOCK UNDER THE CONVERSATION.
  *
  * It lived at the bottom of the room, after the composer, which meant two
@@ -461,6 +473,16 @@ async function load() {
       headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
     GROUPS = d.groups || [];
     CANADD = d.canAdd || [];
+    /* Only if they really are somebody this person may put in a room. An id in
+       the address is a thing anybody can type; the picker's own gate decides,
+       as it does for every other name in it. */
+    if (WITH && !usedWith && !OPEN && CANADD.some((c) => c.who === WITH)) {
+      /* Once. load() runs again after every add and every invite, and without
+         this the picker would reopen under somebody who had just left it. */
+      usedWith = true;
+      PICKING = true;
+      PICKED = [WITH];
+    }
     MAX = Number(d.max) || 5;
   } catch { GROUPS = []; CANADD = []; }
   paint();
