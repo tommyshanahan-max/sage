@@ -108,15 +108,43 @@ async function main() {
    * and where the door puts them down: an agent lands on the console that
    * takes their folder rather than on a deck of strangers. */
   const agent = rest.includes("--agent");
+  /* AN INVITE INTO ONE CONVERSATION.
+   *
+   * Same door, same block between two rules, same code on its own line, same
+   * clock — the invite is settled and this does not redesign it. What changes
+   * is where the door puts them down and two sentences saying so, which is
+   * exactly the shape --agent already has.
+   *
+   * The two sentences are not decoration. "Here is your way in" is the wrong
+   * thing to say about a code that opens into three named people talking: THAT
+   * is the invitation, and it belongs in the message rather than being a
+   * surprise on the other side of a password box. */
+  const group = arg("group");
   const r = await fetch(base + "/api/invite", {
     method: "POST", headers: head,
-    body: JSON.stringify({ who, n, hours, kind: agent ? "agent" : "" }),
+    body: JSON.stringify({ who, n, hours, kind: agent ? "agent" : "", grp: group }),
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) {
-    console.error("The board refused it:", r.status, d.error || "");
+    if (d.error === "noroom") {
+      console.error("");
+      console.error("  There is no room with that id.  make groups");
+      console.error("");
+    } else if (d.error === "full") {
+      console.error("");
+      console.error("  That room is full. Five people, counting anybody holding");
+      console.error("  a code for it who has not walked in yet.");
+      console.error("");
+    } else console.error("The board refused it:", r.status, d.error || "");
     process.exit(1);
   }
+  /* WHO IS ALREADY IN THERE, named in the message. A list of names is what
+     makes this worth opening; "a group chat" is not. */
+  const room = d.room || null;
+  const roomName = room && room.name ? room.name : "";
+  const said = (list) => (list.length <= 1 ? list.join("")
+    : list.slice(0, -1).join(", ") + " and " + list[list.length - 1]);
+  const saidZh = (list) => list.join("\u3001");
 
   /* Printed as the message you actually send, because the failure mode of a
      bare code is somebody pasting it with no link and the person on the other
@@ -220,6 +248,17 @@ async function main() {
       forWhom && agent ? wrap("Do it on a laptop and you can drag the whole"
         + " folder in — headshots, CVs, all of it — and it does the typing.") : "",
       forWhom && agent ? "" : "",
+      /* A ROOM, AND WHO IS IN IT. Said before the link, because it is the
+         reason to open the link. Two lines: what it opens into, and that
+         nothing is expected of them the moment they arrive — which is the
+         thing somebody sent a group invite actually worries about. */
+      forWhom && room ? wrap("It opens straight into "
+        + (roomName ? "\u201c" + roomName + "\u201d" : "a conversation")
+        + (room.who.length ? ", with " + said(room.who) + " in it" : "")
+        + ".") : "",
+      forWhom && room ? wrap("You can read it before you say anything. Answering"
+        + " takes a name and one line about what you are looking for.") : "",
+      forWhom && room ? "" : "",
       forWhom ? wrap("Invite only, so here is your way in." + lasts) : "",
       forWhom ? "" : "",
       link,
@@ -241,6 +280,14 @@ async function main() {
       forWhom && agent ? "用电脑打开的话，整个文件夹拖进去就行——定妆照、简历，" : "",
       forWhom && agent ? "都不用你打字。" : "",
       forWhom && agent ? "" : "",
+      // 写的，不是翻的。收到群邀请的人第一反应是「进去是不是马上得说话」，
+      // 所以先说进去是什么，再说不用急着开口。
+      forWhom && room ? "点开直接进"
+        + (roomName ? "\u300c" + roomName + "\u300d" : "一个对话")
+        + (room.who.length ? "，里面有" + saidZh(room.who) : "") + "。" : "",
+      forWhom && room ? "可以先看，不用马上说话。想回话的时候，写个名字" : "",
+      forWhom && room ? "和一句你在找什么，就行了。" : "",
+      forWhom && room ? "" : "",
       forWhom ? "只能被邀请进来，这是你的入口。" + lastsZh : "",
       forWhom ? "" : "",
       link,

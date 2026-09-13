@@ -4448,6 +4448,23 @@ export const STRINGS = {
      anybody relaxes in. */
   "grp.flag":          ["Report", "举报"],
   "grp.placeholder":   ["Say something to the group.", "跟群里说点什么。"],
+  /* SOMEBODY INVITED STRAIGHT INTO THE ROOM, READING IT WITH NO NAME.
+     One sentence where the composer goes. Not "welcome", not an explanation of
+     what a profile is, and no reassurance: they can see the conversation, they
+     want to answer it, and this is the one thing in the way. */
+  "grp.joinAsk": [
+    "Put a name and one line on yourself, and you can answer.",
+    "写个名字和一句话，就能回话了。",
+  ],
+  "grp.joinName":      ["Your name", "你的名字"],
+  "grp.joinGo":        ["Put me in", "加我进去"],
+  /* The one refusal worth its own words. See contactShaped: a name with a
+     phone number or a WeChat id in it is turned down deliberately, and "try
+     again" would send somebody round the same loop for ever. */
+  "grp.joinNoContact": [
+    "A name, not a way to reach you. Contacts change hands here by hand.",
+    "写名字，别写联系方式。这里的联系方式是两个人自己给的。",
+  ],
   "grp.leave":         ["Leave this group", "退出这个群"],
   "grp.leaveSure": [
     "Leave this group? You will not see it again, and what you said stays where it is.",

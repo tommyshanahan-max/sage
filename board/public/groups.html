@@ -249,6 +249,30 @@
   .compose button{flex:0 0 auto;border:0;border-radius:99px;background:var(--accent);
     color:var(--accent-ink);padding:.7rem 1.15rem;font-size:.95rem}
 
+  /* The join box. Deliberately the shape of the composer it replaces — same
+     margin, same corner, same width — so the screen does not jump when
+     somebody writes their name and the real composer takes its place. */
+  .joinbox{margin:1.4rem 0 0;padding:1.1rem;border:1px solid var(--line);
+    border-radius:1rem;background:var(--raise)}
+  .joinbox .ask{margin:0 0 .9rem;font-size:.95rem;line-height:1.55;color:var(--ink)}
+  .joinbox .fld{width:100%;font:inherit;font-size:1rem;padding:.6rem .75rem;
+    border:1px solid var(--line);border-radius:.7rem;background:var(--paper);color:var(--ink)}
+  /* A GRID AND NOT A WRAPPING LINE. Laid out as one flowing sentence it read
+     "I am [a Director] looking for" and then dropped "[an Agent]" onto the
+     next row on its own — the words of the sentence orphaned by the width of
+     a select. Two rows of label-then-field keep it reading top to bottom as a
+     sentence at every width, which is the thing that had to survive. */
+  .joinbox .sent{display:grid;grid-template-columns:auto minmax(0,1fr);
+    align-items:center;gap:.55rem .6rem;margin:.85rem 0 0}
+  .joinbox .sent span{font-size:.95rem;color:var(--ink-2);white-space:nowrap}
+  .joinbox select{width:100%;min-width:0;font:inherit;font-size:1rem;
+    padding:.55rem .7rem;border:1px solid var(--line);border-radius:.7rem;
+    background:var(--paper);color:var(--ink)}
+  .joinbox .go{width:100%;margin:1.1rem 0 0;padding:.8rem;border:0;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);font-size:1rem}
+  .joinbox .go:disabled{opacity:.45}
+  .joinbox .saidline{margin:.7rem 0 0;font-size:.85rem;color:var(--t5)}
+
   .inroom{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 1.2rem}
   .inroom span{font-size:.8rem;color:var(--muted);border:1px solid var(--line);
     border-radius:99px;padding:.28rem .7rem}
@@ -515,6 +539,17 @@ function paintRoom(g) {
     box.append(row);
   }
 
+  /* THE PRICE OF SPEAKING, WHERE THE COMPOSER WOULD BE.
+   *
+   * Somebody invited straight into this room is reading it with no name. The
+   * conversation above is the reason they came and they have already had it;
+   * what they have not done is say who they are. So the ask sits exactly where
+   * the answer would go, and it is the same sentence the rest of the board
+   * runs on rather than a sign-up form wearing its clothes.
+   *
+   * LEAVING IS STILL UNDER IT. A room you cannot walk out of is not a room. */
+  if (g.guest) { box.append(joinBox()); box.append(leaveButton(g)); return box; }
+
   const c = el("div", "compose");
   const ta = document.createElement("textarea");
   ta.rows = 1;
@@ -540,6 +575,93 @@ function paintRoom(g) {
   c.append(ta, send);
   box.append(c);
 
+  box.append(leaveButton(g));
+  return box;
+}
+
+/* THE TWO HALVES OF THE SENTENCE, and the same two lists room.html offers.
+   Copied rather than shared because these are three small files that do not
+   import each other; if a role is ever added it goes in three places and this
+   comment is where somebody finds that out. */
+const MAKE = ["director", "writer", "performer", "crew", "founder", "maker", "student"];
+const BACK = ["agent", "producer", "brand", "buyer", "distributor",
+              "investor", "lawyer", "recruiter"];
+
+/** A name and one sentence, which is everything this board asks anybody for.
+ *  The article comes with the word — see the note in room.html — so the list
+ *  reads "a Director / an Agent / Crew" and the sentence reads correctly for
+ *  all three. */
+function joinBox() {
+  const box = el("div", "joinbox");
+  box.append(el("p", "ask", T("grp.joinAsk")));
+
+  const name = document.createElement("input");
+  name.className = "fld";
+  name.maxLength = 40;
+  name.placeholder = T("grp.joinName");
+  box.append(name);
+
+  const sel = (now) => {
+    const sl = document.createElement("select");
+    for (const [head, keys] of [["say.make", MAKE], ["say.back", BACK]]) {
+      const g = document.createElement("optgroup");
+      g.label = T(head);
+      for (const k of keys) {
+        const o = el("option", null, T("role.a." + k));
+        o.value = k;
+        if (k === now) o.selected = true;
+        g.append(o);
+      }
+      sl.append(g);
+    }
+    return sl;
+  };
+  const mine = sel("director"), want = sel("agent");
+  const line = el("div", "sent");
+  line.append(el("span", null, T("say.iam")), mine,
+              el("span", null, T("say.lookingFor")), want);
+  box.append(line);
+
+  const go2 = el("button", "go", T("grp.joinGo"));
+  go2.type = "button";
+  const said = el("p", "saidline");
+  go2.addEventListener("click", async () => {
+    const handle = name.value.trim();
+    /* THE NAME IS THE ONLY THING THAT CAN BE MISSING. Both halves of the
+       sentence start on a real answer, so the one way to press this with
+       nothing in it is to leave the name blank. Focus rather than a message:
+       the box is right there and an error under it says less than the cursor
+       being in it does. */
+    if (!handle) { name.focus(); return; }
+    go2.disabled = true;
+    said.textContent = "";
+    try {
+      const r = await fetch("/api/me", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, handle, looking: true,
+                               say: [{ me: mine.value, want: want.value }] }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "no");
+      // The room redraws with them in it and a composer where this box was.
+      await load();
+      return;
+    } catch (e) {
+      /* THE ONE REFUSAL WORTH ITS OWN WORDS. A name with a phone number or a
+         WeChat id in it is turned down by the server on purpose — see
+         contactShaped — and "try again" would send somebody round the same
+         loop for ever. */
+      said.textContent = T(String(e.message) === "contact" ? "grp.joinNoContact" : "act.again");
+    }
+    go2.disabled = false;
+  });
+  box.append(go2, said);
+  return box;
+}
+
+/** Walking out. Yours to take, guest or member, and the one control on this
+ *  screen that is never conditional on anything. */
+function leaveButton(g) {
   const out = el("button", "leave", T("grp.leave"));
   out.type = "button";
   out.addEventListener("click", async () => {
@@ -552,7 +674,7 @@ function paintRoom(g) {
     go("");
     await load();
   });
-  box.append(out);
+  return out;
 }
 
 $("back").addEventListener("click", () => {

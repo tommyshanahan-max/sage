@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who admit waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who admit groups group-invite waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -369,6 +369,37 @@ invite: ## Make an invite:  make invite WHO="you" FOR="them" [HOURS=48] [N=3]
 	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --hours "$(if $(HOURS),$(HOURS),48)" --n "$(or $(N),1)"
+
+groups: ## The rooms and their ids:  make groups
+	@# Only so a group invite can be minted. Names and counts, never a word
+	@# anybody said in one — see the note at the top of groups.mjs.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/groups.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+
+group-invite: ## Into one conversation:  make group-invite GROUP=... WHO="Tom" FOR="Ava"
+	@# The same door as `make invite` and the same message shape — it is settled
+	@# and this does not redesign it. Two things differ.
+	@#
+	@# The message says what the code opens into and who is already in there,
+	@# before the link, because that is the reason to open the link. "Here is
+	@# your way in" is the wrong sentence for a code that lands somebody in a
+	@# conversation between three named people.
+	@#
+	@# And the door puts them in that room rather than on Browse — reading it,
+	@# with the composer replaced by a name and one sentence. They can read
+	@# every word before they give anything, which is the opposite way round
+	@# from a blank profile form, and they can leave at any point.
+	@#
+	@# GROUP is the id from `make groups`. A room holds five, and somebody
+	@# holding an unspent code for it is already sitting in one of the seats.
+	@test -n "$(GROUP)" || { echo 'which room? make groups'; exit 1; }
+	@test -n "$(WHO)" || { echo 'who is vouching? make group-invite GROUP=... WHO="Tom" FOR="Ava"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T \
+	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
+	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --hours "$(if $(HOURS),$(HOURS),48)" --n "$(or $(N),1)" \
+	  --group "$(GROUP)"
 
 agent-invite: ## Bring an agent in:  make agent-invite WHO="Tom" FOR="Andy" [HOURS=48]
 	@# The same door as `make invite` and the same message shape — it is settled

@@ -1218,6 +1218,31 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
       });
       return res.json({ ok: true, by: got.who || "", agent: true, where: "/onboard" });
     }
+    /* AND SOMEBODY INVITED INTO ONE CONVERSATION.
+     *
+     * No row is made here, unlike the agent above — there is nothing for one
+     * to hang off yet and a nameless person in Browse is the thing this whole
+     * path exists to avoid. They go in as a guest of the room: they read it,
+     * and the composer asks for a name and a sentence. See `guests` on
+     * cleanGroup.
+     *
+     * THE ROOM MAY HAVE FILLED UP while the code sat in a chat window. The
+     * code still worked and they are still in — being turned away at this
+     * point over somebody else's timing would be the worst version of this —
+     * so they land on Browse like anybody else and the room is simply not
+     * mentioned. Minting checks the cap; this is the race, not the rule. */
+    if (got && got.grp) {
+      const landed = await change((board) => {
+        const g = board.groups.find((x) => x.id === got.grp);
+        if (!g || g.members.includes(me) || store.groupRoom(g) < 1) return false;
+        g.guests = [...(g.guests || []), me];
+        Object.assign(g, store.cleanGroup(g));
+        return true;
+      });
+      if (landed) {
+        return res.json({ ok: true, by: got.who || "", where: "/groups?g=" + got.grp });
+      }
+    }
     // The label is for whoever handed the code out, not for the person
     // spending it — what crosses the door is that somebody vouched.
     return res.json({ ok: true, by: got ? got.who : "" });
@@ -1388,8 +1413,29 @@ app.post("/api/invite", admin, express.json({ limit: "8kb" }), async (req, res) 
    * long-lived code and a typo with four extra zeros on it. */
   const hours = Math.max(0, Math.min(8760, Number(req.body?.hours) || 0));
   const until = hours ? new Date(Date.now() + hours * 3600_000).toISOString() : "";
+  /* A CODE THAT OPENS INTO ONE ROOM. See `grp` on cleanInvite for what it is
+     for. Refused rather than dropped when the room is not there or is full:
+     minting a code that says "this puts you in the conversation" and quietly
+     does not is worse than not minting one. */
+  const grp = String(req.body?.grp || "");
   const made = [];
+  let bad = "";
   await change((board) => {
+    const g = grp ? board.groups.find((x) => x.id === grp) : null;
+    if (grp && !g) { bad = "noroom"; return null; }
+    /* COUNTED AGAINST THE SAME CAP THE ROOM HAS, and counted BEFORE anybody
+       walks in: somebody holding an unspent code for this room is already
+       taking the seat. n codes for one room need n seats.
+       THE CODES ARE THE HALF THAT WAS MISSING. groupRoom() counts the people
+       in the room and the people reading it — both of which are only true
+       AFTER somebody walks through the door. Minting five codes for a room
+       with one seat passed every check and then turned four arrivals away at
+       the far end, which is the failure this cap exists to prevent, moved
+       later and made worse. A code that is spent, taken back or run out holds
+       nothing; every other one holds a seat. */
+    const held = g ? board.invites.filter((x) => x.grp === g.id && !x.off
+      && !x.usedBy && !store.inviteOver(x)).length : 0;
+    if (g && store.groupRoom(g) - held < n) { bad = "full"; return null; }
     const have = codesTaken(board);
     for (let i = 0; i < n; i++) {
       let code = store.newCode();
@@ -1400,13 +1446,61 @@ app.post("/api/invite", admin, express.json({ limit: "8kb" }), async (req, res) 
         // See `kind` on cleanInvite: what the door does on the way in, not a
         // permission of any sort.
         kind: req.body?.kind === "agent" ? "agent" : "",
+        grp,
       });
       board.invites.push(v);
       made.push(v);
     }
     return true;
   });
-  res.status(201).json({ made });
+  if (bad) return res.status(bad === "full" ? 409 : 404).json({ error: bad });
+  /* THE ROOM'S NAME AND WHO IS IN IT, so the message can say what the code
+     opens into. "Here is your way in" is the wrong sentence for a code that
+     drops somebody into a conversation between three named people; that IS
+     the invitation and it should be in the message rather than a surprise. */
+  let room = null;
+  if (grp) {
+    const board = await store.load(FILE);
+    const g = board.groups.find((x) => x.id === grp);
+    if (g) {
+      room = {
+        name: g.name,
+        who: g.members
+          .map((h) => board.people.find((q) => q.by === h))
+          .filter(Boolean).map((q) => q.handle).filter(Boolean),
+      };
+    }
+  }
+  res.status(201).json({ made, room });
+});
+
+/* THE ROOMS, FOR WHOEVER RUNS THE BOARD.
+ *
+ * Only so a group invite can be minted: the code needs an id and an id is not
+ * something anybody has in their head. Names and counts, never a word anybody
+ * said in one — the operator reading private conversations is a different
+ * product from this and `make group-invite` does not need it. */
+app.get("/api/rooms", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const name = (h) => (board.people.find((q) => q.by === h) || {}).handle || "";
+  res.json({
+    rooms: board.groups.map((g) => ({
+      id: g.id, name: g.name, at: g.at,
+      by: name(g.by),
+      who: g.members.map(name).filter(Boolean),
+      guests: (g.guests || []).length,
+      said: board.says.filter((m) => m.group === g.id).length,
+      /* SEATS HELD BY CODES NOBODY HAS SPENT, counted the same way the door
+         counts them. A listing that says "room for 2" while minting refuses
+         is a listing nobody trusts again. */
+      held: board.invites.filter((x) => x.grp === g.id && !x.off && !x.usedBy
+        && !store.inviteOver(x)).length,
+      room: Math.max(0, store.groupRoom(g) - board.invites.filter((x) =>
+        x.grp === g.id && !x.off && !x.usedBy && !store.inviteOver(x)).length),
+    })),
+    max: store.GROUP_MAX,
+  });
 });
 
 /* LETTING IN THE PEOPLE WHO ARE ALREADY HERE.
@@ -6211,10 +6305,17 @@ app.get("/api/groups", notesOff, async (req, res) => {
     return q ? { who: q.id, handle: q.handle,
       photo: q.photoState === "published" ? q.photo : "" } : null;
   };
+  /* THE ROOMS SOMEBODY IS IN, AND THE ONE THEY WERE INVITED INTO.
+     A guest reads a room exactly as a member does — that is the whole point of
+     letting them in before they have a name — so it comes back on the same
+     list with one word on it. `who` is drawn from members either way, so a
+     guest is not in the faces along the top and nobody in there sees a
+     stranger who has not said who they are. */
   const groups = board.groups
-    .filter((g) => g.members.includes(me))
+    .filter((g) => g.members.includes(me) || (g.guests || []).includes(me))
     .map((g) => ({
       id: g.id, name: g.name, at: g.at, mine: g.by === me,
+      guest: !g.members.includes(me),
       // Names and faces, never the device hashes the group is stored under.
       who: g.members.map(name).filter(Boolean),
       says: board.says.filter((m) => m.group === g.id)
@@ -6271,7 +6372,17 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
     const g = board.groups.find((x) => x.id === id);
     // The same answer for a group that never existed and one you are not in:
     // this must not become a way to ask which groups are real.
-    if (!g || !g.members.includes(me)) return { error: "gone" };
+    if (!g || !(g.members.includes(me) || (g.guests || []).includes(me))) {
+      return { error: "gone" };
+    }
+    /* A GUEST READS AND DOES NOT SPEAK, and this is the line that means it.
+     *
+     * Told apart from "gone" on purpose, and it is the one place in this file
+     * where the difference is worth leaking: they are IN the room, they can
+     * see it, and what is missing is a name. "Gone" would send somebody who is
+     * looking at a conversation away to work out why they cannot answer it.
+     * The page turns this word into the box that fixes it. */
+    if (!g.members.includes(me)) return { error: "profile" };
     board.says.push(store.cleanSay({ id: store.newId(), group: id, by: me, text }));
     return { ok: true };
   });
@@ -6286,6 +6397,14 @@ app.post("/api/group/leave", notesOff, express.json({ limit: "2kb" }), async (re
   if (!me) return res.status(400).json({ error: "no" });
   const out = await change((board) => {
     const g = board.groups.find((x) => x.id === id);
+    /* A GUEST LEAVES THE SAME WAY, and it has to work before it has to be
+       tidy: somebody put in a room they do not want to be in must be able to
+       walk out of it whether or not they ever wrote their name. A room nobody
+       can leave is the one thing this board must never be. */
+    if (g && (g.guests || []).includes(me)) {
+      g.guests = g.guests.filter((x) => x !== me);
+      return { ok: true };
+    }
     if (!g || !g.members.includes(me)) return { error: "gone" };
     g.members = g.members.filter((m) => m !== me);
     /* NOBODY LEFT IS NOT AN EMPTY ROOM, it is no room. The messages go with it
@@ -6313,8 +6432,15 @@ app.post("/api/group/report", notesOff, express.json({ limit: "16kb" }), async (
     const m = board.says.find((x) => x.id === id);
     if (!m) return { error: "gone" };
     const g = board.groups.find((x) => x.id === m.group);
-    // Only somebody in the room, and never your own words.
-    if (!g || !g.members.includes(me) || m.by === me) return { error: "gone" };
+    /* SOMEBODY IN THE ROOM, AND NEVER YOUR OWN WORDS.
+       A GUEST COUNTS. They were put in here by somebody else and are reading
+       every word of it before they have given a name — which makes them the
+       person in this room most likely to need this and the one who had it
+       taken away. Report is on the line under every message on their screen;
+       a button that is drawn and refuses is worse than one that is not there,
+       and on this particular button it is worse than that. */
+    const here = g && (g.members.includes(me) || (g.guests || []).includes(me));
+    if (!here || m.by === me) return { error: "gone" };
     m.report = why || "Reported";
     return { ok: true };
   });
@@ -6819,6 +6945,49 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
     }
     const clean = store.cleanPerson(q);
     Object.assign(q, clean);
+
+    /* THE GUEST BECOMES SOMEBODY.
+     *
+     * They were invited into one conversation and have been reading it without
+     * a name. This save is the name. They move from `guests` to `members` and
+     * the room gains a person — which is the first thing anybody already in it
+     * sees of them, and it has a face and a sentence on it rather than being a
+     * stranger who appeared yesterday.
+     *
+     * THE FOLLOWS, BOTH WAYS, WITH WHOEVER MADE THE ROOM. Every other person
+     * in there matched with them; this keeps that true rather than leaving one
+     * member who is in it by a different rule. Faking a follow is allowed here
+     * for the same reason it is in POST /api/pair and no other: the maker sent
+     * this code to this person, and this person walked through it and typed
+     * their name into that room. That is consent twice over, from both sides,
+     * and it is a stronger pair of acts than the two taps it stands in for.
+     *
+     * It opens a thread between them. It moves no contact: a card still needs
+     * both of them to press give. And it is not a promise that matched() comes
+     * back true — the rooms are the other half and neither of them has been
+     * asked about those yet. The group does not care; it reads `members`.
+     *
+     * NO CAP CHECK. A guest has held a seat in this room since the code was
+     * minted (see groupRoom), so moving one across leaves the total where it
+     * was. The cap is enforced at the two places somebody is ADDED. */
+    if (q.handle && q.state === "published") {
+      for (const g of board.groups) {
+        if (!(g.guests || []).includes(me)) continue;
+        g.guests = g.guests.filter((x) => x !== me);
+        if (!g.members.includes(me)) g.members.push(me);
+        const maker = board.people.find((x) => x.by === g.by);
+        if (maker && g.by !== me) {
+          const put = (by, who) => {
+            if (!who || board.follows.some((f) => f.by === by && f.who === who)) return;
+            const f = store.cleanFollow({ by, who });
+            if (f) board.follows.push(f);
+          };
+          put(me, maker.id);
+          put(g.by, q.id);
+        }
+        Object.assign(g, store.cleanGroup(g));
+      }
+    }
 
     /* Joining the list says so on the board.
      *

@@ -699,6 +699,22 @@ export function cleanInvite(raw) {
      * become one later by changing that sentence, and this is only about where
      * the door puts somebody down. */
     kind: raw.kind === "agent" ? "agent" : "",
+    /* WHICH ROOM IT OPENS INTO, WHEN IT OPENS INTO ONE.
+     *
+     * Empty is every code that has ever been minted and stays the default: a
+     * way on to the board, and Browse is where it puts you down.
+     *
+     * A group id here makes it a way into one conversation. The person lands
+     * in that room reading it — Tom's introduction, the two answers under it —
+     * and the composer is a name and a sentence. That is the same trade the
+     * waiting room already makes (read everything, write nothing, one thing to
+     * do), pointed at a room instead of at the board.
+     *
+     * ON THE INVITE AND NOT ON THE PERSON, for the same reason `kind` is: it
+     * describes the arrival and not the account. Somebody who came in through
+     * a group is an ordinary member the moment they have a sentence, and this
+     * field never means anything again. */
+    grp: /^[a-f0-9]{20}$/.test(String(raw.grp || "")) ? String(raw.grp) : "",
     /* WHEN IT STOPS WORKING, IF IT EVER DOES.
      *
      * Empty is the old behaviour and stays the default: a code works until it
@@ -1692,16 +1708,41 @@ export function cleanGroup(raw) {
   const members = [...new Set([by, ...(Array.isArray(raw.members) ? raw.members : [])
     .map((m) => String(m || "").slice(0, 64)).filter(Boolean)])].slice(0, GROUP_MAX);
   if (members.length < 2) return null;
+  /* SOMEBODY INVITED STRAIGHT INTO THE ROOM, BEFORE THEY ARE ANYBODY.
+   *
+   * A guest reads and cannot say a word. They are not in `members`, which is
+   * the list this room is drawn from and shown by — so nobody already in it
+   * watches a nameless stranger appear and wonders who that is. The moment
+   * they have a name and a sentence they move across (see PUT /api/me) and
+   * the room gains a person rather than a ghost.
+   *
+   * WHY NOT JUST MAKE THEM A MEMBER AND HIDE THEM. Because every rule in here
+   * reads `members`, and a member who is invisible to half of them is the kind
+   * of second meaning that goes wrong quietly a month later. Two lists, one
+   * meaning each.
+   *
+   * Never in both: a promotion that forgot to delete leaves somebody counted
+   * twice, and the count is what the cap is enforced on. */
+  const guests = [...new Set((Array.isArray(raw.guests) ? raw.guests : [])
+    .map((m) => String(m || "").slice(0, 64)).filter(Boolean))]
+    .filter((h) => !members.includes(h))
+    .slice(0, Math.max(0, GROUP_MAX - members.length));
   return {
     id,
     at: s(raw.at, 40) || new Date().toISOString(),
-    by, members,
+    by, members, guests,
     // What it is called. Optional: a group of four people who matched on the
     // same room does not need naming to be useful, and an empty name draws
     // itself from who is in it.
     name: s(raw.name, 60),
   };
 }
+
+/** Whether this room has space for one more person, counting the people
+ *  reading it who have not spoken yet. The cap is on the room, and somebody
+ *  holding an unspent code is already taking a seat in it. */
+export const groupRoom = (g) =>
+  Math.max(0, GROUP_MAX - ((g?.members || []).length + (g?.guests || []).length));
 
 /** One message in a group. Kept apart from notes because the two have
  *  different shapes at the receiving end — a note has one reader and a group
