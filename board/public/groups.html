@@ -290,14 +290,18 @@
   .outdone{margin:.9rem 0 0;padding:1rem;border:1px solid var(--line);
     border-radius:.9rem;background:var(--raise);text-align:center}
   .outdone .line{margin:0;font-size:.92rem;line-height:1.55;color:var(--ink)}
-  .outdone .code{display:block;margin:.6rem 0 0;font-family:var(--serif);
+  .outdone .code{display:block;margin:.5rem 0 0;font-family:var(--serif);
     font-size:1.9rem;letter-spacing:.12em;color:var(--ink)}
+  .orline{margin:1rem 0 .8rem;font-size:.78rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);text-align:center}
   .outdone .go{width:100%;margin:.9rem 0 0;padding:.75rem;border:0;border-radius:99px;
     background:var(--accent);color:var(--accent-ink);font:inherit;font-size:1rem}
   .outdone .hint{margin:.7rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
-  .outdone .url{margin:.7rem 0 0;padding:.55rem .7rem;border-radius:.6rem;
-    background:var(--paper);border:1px solid var(--hair);font-size:.82rem;
-    line-height:1.5;color:var(--ink-2);word-break:break-all;text-align:left}
+  /* Plain text, not a boxed field. It is there so the message can be checked
+     and so there is something to read out when a clipboard fails; a bordered
+     panel made it the loudest thing in a box whose point is six characters. */
+  .outdone .url{margin:.5rem 0 0;font-size:.76rem;line-height:1.5;
+    color:var(--muted);word-break:break-all}
   .outform{margin:.8rem 0 0}
   .outform .fld{width:100%;font:inherit;font-size:1rem;padding:.6rem .75rem;
     border:1px solid var(--line);border-radius:.7rem;background:var(--paper);color:var(--ink)}
@@ -689,31 +693,20 @@ function addSomeone(g) {
   pane.hidden = true;
   box.append(pane);
 
-  const choose = () => {
-    fill(pane);
-    const a = el("button", "pickway", T("grp.addMatched"));
-    a.type = "button";
-    const b2 = el("button", "pickway", T("grp.addOutside"));
-    b2.type = "button";
-    a.addEventListener("click", () => fromMatches());
-    b2.addEventListener("click", () => {
-      fill(pane);
-      pane.append(outsider(() => [], () => "", g.id, true));
-    });
-    pane.append(a, b2);
-  };
-
-  /* THE PEOPLE YOU MATCHED WITH WHO ARE NOT ALREADY IN HERE. Drawn from the
-     same CANADD the picker uses, minus the room — a list offering to add
-     somebody who is standing in front of you is a list nobody trusts. */
-  const fromMatches = () => {
+  /* BOTH AT ONCE, NOT A CHOICE FIRST.
+   *
+   * This asked "matched with, or not on here yet?" and then showed one of
+   * them. That is a question about the answer, put before the answer: whoever
+   * you have in mind is already either a face on this board or a name in your
+   * phone, and you know which. Showing both costs one screen of height and
+   * saves a tap and a decision.
+   *
+   * The faces come first because tapping one is finished in a tap, and the
+   * other half is a name, a press, and a paste into WeChat. */
+  const draw = () => {
     fill(pane);
     const inRoom = new Set((g.who || []).map((m) => m.who));
     const left = (CANADD || []).filter((c) => !inRoom.has(c.who));
-    if (!left.length) {
-      pane.append(el("p", "saidline", T("grp.addNobody")));
-      return;
-    }
     for (const c of left) {
       const row = el("button", "pick");
       row.type = "button";
@@ -736,11 +729,14 @@ function addSomeone(g) {
       });
       pane.append(row);
     }
+    // Only worth a line when there were faces above it to tell it apart from.
+    if (left.length) pane.append(el("p", "orline", T("grp.addOr")));
+    pane.append(outsider(() => [], () => "", g.id, true));
   };
 
   open.addEventListener("click", () => {
     pane.hidden = !pane.hidden;
-    if (!pane.hidden) choose();
+    if (!pane.hidden) draw();
   });
   return box;
 }
@@ -760,8 +756,11 @@ function done(nm, d, words, url) {
      telling somebody to send the code WITH the link. Nothing to check the
      message against, and nothing to fall back on if the clipboard silently
      did nothing, which is the failure this box was built for. */
-  box.append(el("p", "url", url));
+  /* THE CODE FIRST. It is the half that opens the door and the half nobody
+     can reconstruct; the link is the same address every time and is here to
+     be checked, not read. */
   box.append(el("b", "code", d.code));
+  box.append(el("p", "url", url));
   const again = el("button", "go", T("grp.outCopy"));
   again.type = "button";
   again.addEventListener("click", () => {
@@ -792,7 +791,8 @@ function outsider(picked, label, group, bare) {
   const who = document.createElement("input");
   who.className = "fld";
   who.maxLength = 40;
-  who.placeholder = T("grp.outsideName");
+  // The placeholder carries it when there is no button above saying it.
+  who.placeholder = bare ? T("grp.outsideNameNew") : T("grp.outsideName");
   const go2 = el("button", "go", T("grp.outsideGo"));
   go2.type = "button";
   const said = el("p", "saidline");

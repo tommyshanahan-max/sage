@@ -4465,11 +4465,10 @@ export const STRINGS = {
      somebody wants to do; whether they already have an account is a detail of
      how, and it was the whole of what the button used to say. */
   "grp.addSomeone":    ["＋ Add someone", "＋ 加人"],
-  "grp.addMatched":    ["Someone you have matched with", "已经和你匹配上的人"],
-  "grp.addOutside":    ["Someone not on here yet", "还没在这里的人"],
-  "grp.addNobody": [
-    "Everybody you have matched with is already in here.",
-    "和你匹配上的人都已经在里面了。"],
+  /* The line between the faces and the name box. Not a heading: it separates
+     two answers to the same question and says so in one word. */
+  "grp.addOr":         ["or", "或者"],
+  "grp.outsideNameNew": ["Name someone not on here yet", "写一个还没在这里的人"],
   "grp.outsideName":   ["Their name", "他的名字"],
   "grp.outsideGo":     ["Make their invite", "生成邀请"],
   "grp.roomPlain":     ["a conversation", "一个对话"],
