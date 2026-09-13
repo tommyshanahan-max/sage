@@ -1715,6 +1715,45 @@ app.get("/api/rooms", admin, async (_req, res) => {
       room: Math.max(0, store.groupRoom(g) - board.invites.filter((x) =>
         x.grp === g.id && !x.off && !x.usedBy && !store.inviteOver(x)).length),
     })),
+
+    /* THE FIVE ROOMS AT THE DOOR, on the same listing.
+     *
+     * They are not groups — no row, no members, an id derived from the name —
+     * so they were absent from the one screen called Rooms, which made that
+     * screen wrong rather than short: most people on this board are standing
+     * in one of these and none of them appeared.
+     *
+     * WHO IS IN ONE IS TWO LISTS, and they are not the same kind of thing.
+     * The people waiting in it, which is the queue read by room. And the
+     * members who have said something in it — not a membership, because every
+     * member can read every door room, but it is the honest answer to who is
+     * in there: a member who has never spoken in one is not in it in any sense
+     * somebody reading this screen means.
+     *
+     * NAMES AND COUNTS, NEVER A WORD ANYBODY SAID — the same rule the groups
+     * above follow. `make flags` is still the only way a line said in a room
+     * is read from outside it. */
+    doors: store.WAITROOMS_CHAT.map((key) => {
+      const id = store.doorRoom(key);
+      const said = board.says.filter((m) => m.group === id);
+      const spoke = new Set(said.map((m) => m.by));
+      return {
+        key, id,
+        waiting: board.waits.filter((w) => !w.done && (w.room || "other") === key)
+          .map((w) => ({ name: w.name, said: spoke.has(w.by) })),
+        /* Deduplicated on the handle and not on the hash: one person on two
+           phones is one person in the room, and printing them twice would be
+           a screen quietly disagreeing with the queue beside it. */
+        inside: [...new Set(board.people.filter((q) => q.handle && spoke.has(q.by))
+          .map((q) => q.handle))],
+        /* HIS LINES ARE NOT TRAFFIC. The doorman says something when the
+           tripwire goes off; counting that as the room talking would make a
+           silent room with one flag in it look busy. */
+        said: said.filter((m) => m.by !== store.MO).length,
+        last: said.reduce((a, m) => (String(m.at) > a ? String(m.at) : a), ""),
+        flags: said.filter((m) => m.report).length,
+      };
+    }),
     max: store.GROUP_MAX,
   });
 });

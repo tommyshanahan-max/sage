@@ -83,6 +83,9 @@
     text-align:left;cursor:pointer;text-decoration:underline dotted;
     text-underline-offset:3px}
   .reach.copy.done{color:var(--green);text-decoration:none}
+  /* The line under a room: what is happening in it, at the weight of a label
+     rather than of a sentence — the names above it are the row. */
+  .rbits{margin:.55rem 0 0;font-size:.78rem;color:var(--muted)}
   .tags{margin:.5rem 0 0;display:flex;gap:.4rem;flex-wrap:wrap}
   .tag{padding:.1rem .5rem;border-radius:99px;background:var(--rule);
     color:var(--ink-2);font-size:.72rem;font-weight:600}
@@ -195,6 +198,7 @@
       <button class="tab" id="tab-live"  role="tab" aria-selected="false" aria-controls="pane-live">Live</button>
       <button class="tab" id="tab-people" role="tab" aria-selected="false" aria-controls="pane-people">People</button>
       <button class="tab" id="tab-waiting" role="tab" aria-selected="false" aria-controls="pane-waiting">Waiting</button>
+      <button class="tab" id="tab-rooms" role="tab" aria-selected="false" aria-controls="pane-rooms">Rooms</button>
       <button class="tab" id="tab-app"   role="tab" aria-selected="false" aria-controls="pane-app">The app</button>
     </div>
   </header>
@@ -215,6 +219,10 @@
 
   <section id="pane-waiting" role="tabpanel" aria-labelledby="tab-waiting" hidden>
     <div class="list" id="waiting"></div>
+  </section>
+
+  <section id="pane-rooms" role="tabpanel" aria-labelledby="tab-rooms" hidden>
+    <div class="list" id="rooms"></div>
   </section>
 
   <section id="pane-app" role="tabpanel" aria-labelledby="tab-app" hidden>
@@ -262,7 +270,7 @@ let ORIGIN = "";
 let LOADED_FRAME = false;
 
 /* ---- tabs ---------------------------------------------------------------- */
-const PANES = ["queue", "live", "people", "waiting", "app"];
+const PANES = ["queue", "live", "people", "waiting", "rooms", "app"];
 function show(which) {
   for (const k of PANES) {
     $("tab-" + k).setAttribute("aria-selected", String(k === which));
@@ -693,6 +701,126 @@ async function loadWaiting() {
   }
 }
 
+/* ---- the rooms ----------------------------------------------------------- */
+/* EVERY ROOM ON THE BOARD AND WHO IS STANDING IN IT.
+ *
+ * Two kinds, and they are listed apart because they are not the same thing.
+ * The five at the door are made by nobody, hold whoever is waiting, and
+ * cannot be left. A group is made by a member, has a cap, and is the only one
+ * of the two anybody chose to be in.
+ *
+ * NAMES, NEVER A WORD SAID IN ONE. A line reaches this panel because somebody
+ * in the room reported it or the doorman's tripwire marked it, and by no other
+ * road — the flag count here is a pointer to `make flags`, not a way in.
+ */
+function roomBox(head, right, tone) {
+  const box = el("div", "post tone-" + (tone || "grey"));
+  const who = el("div", "who");
+  who.append(el("b", null, head));
+  if (right) who.append(el("span", "when", right));
+  box.append(who);
+  return box;
+}
+
+/* One name, and whether they have said anything in the room. Solid if they
+   have, outlined if they have not — a room of six where five are outlined is
+   a room nobody is talking in, readable without reading a number. */
+function nameTag(name, spoke) {
+  return el("span", "tag" + (spoke ? "" : " off"), name);
+}
+
+function drawDoorRoom(d, label) {
+  const n = d.waiting.length;
+  const box = roomBox(label, n ? n + " waiting" : "empty",
+    d.flags ? "red" : n ? "violet" : "grey");
+  if (n) {
+    const tags = el("div", "tags");
+    for (const w of d.waiting) tags.append(nameTag(w.name, w.said));
+    box.append(tags);
+  }
+  /* WHO INSIDE IS IN THERE. Every member can read every door room, so this is
+     not a membership — it is who has actually said something, which is what
+     somebody asking who is in the room means. */
+  if (d.inside.length) {
+    const line = el("p", "reachlab", "Inside, talking");
+    const tags = el("div", "tags");
+    for (const h of d.inside) tags.append(nameTag(h, true));
+    box.append(line, tags);
+  }
+  /* AN EMPTY ROOM SAYS "empty" AND STOPS. It was also printing "0 said",
+     which is the same fact twice and made the four quiet rooms as heavy on
+     the screen as the one with something happening in it. */
+  if (n || d.said) box.append(el("p", "rbits", roomBits(d).join("  \u00b7  ")));
+  return box;
+}
+
+function drawGroupRoom(g) {
+  const box = roomBox(g.name || "\u2014",
+    "made by " + (g.by || "\u2014") + (g.at ? " \u00b7 " + ago(g.at) : ""),
+    g.flags ? "red" : "green");
+  const tags = el("div", "tags");
+  for (const h of g.who) tags.append(nameTag(h, true));
+  if (g.guests) tags.append(el("span", "tag off", g.guests + " reading, not in yet"));
+  box.append(tags);
+  const bits = roomBits(g);
+  /* SEATS A CODE IS ALREADY SITTING IN. A room of three with a code out has
+     space for one, not two — saying so here is the difference between that
+     being a rule and being a surprise at the moment of minting. */
+  if (g.held) bits.push(g.held + " code" + (g.held === 1 ? "" : "s") + " out");
+  bits.push(g.room ? "room for " + g.room + " more" : "full");
+  box.append(el("p", "rbits", bits.join("  \u00b7  ")));
+  return box;
+}
+
+function roomBits(r) {
+  const quiet = r.last ? Math.floor((Date.now() - Date.parse(r.last)) / 86400000) : -1;
+  return [
+    r.said + " said",
+    !r.said ? "" : quiet <= 0 ? "today" : quiet === 1 ? "yesterday" : quiet + " days quiet",
+    /* The one thing on the row that needs somebody to do something, so it says
+       so in those words rather than as another number. */
+    r.flags ? "\u26A0 " + r.flags + " flagged \u2014 make flags" : "",
+  ].filter(Boolean);
+}
+
+async function loadRooms() {
+  const box = $("rooms");
+  try {
+    const r = await fetch("/api/feed/rooms", { cache: "no-store" });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || ("the server said " + r.status));
+    const doors = Array.isArray(d.doors) ? d.doors : [];
+    const groups = Array.isArray(d.rooms) ? d.rooms : [];
+    const busy = doors.filter((x) => x.waiting.length).length + groups.length;
+    $("tab-rooms").textContent = "Rooms" + (busy ? " \u00b7 " + busy : "");
+    const flags = [...doors, ...groups].reduce((a, x) => a + (x.flags || 0), 0);
+    $("tab-rooms").classList.toggle("urgent", flags > 0);
+
+    fill(box);
+    box.append(el("div", "rule", "At the door"));
+    const label = Object.fromEntries(WAITROOMS);
+    for (const [key, name] of WAITROOMS) {
+      const one = doors.find((x) => x.key === key);
+      if (one) box.append(drawDoorRoom(one, name));
+    }
+    /* Anything the board knows about and this screen does not have a name for.
+       Better a key than a room that quietly is not on the list. */
+    for (const one of doors) {
+      if (!label[one.key]) box.append(drawDoorRoom(one, one.key));
+    }
+
+    box.append(el("div", "rule", "Rooms members made"));
+    if (!groups.length) {
+      box.append(el("div", "none", "None yet. They are made in the app: "
+        + "Messages, the Groups circle, Start a group. Three people minimum."));
+    }
+    for (const g of groups) box.append(drawGroupRoom(g));
+  } catch (err) {
+    fill(box);
+    box.append(el("div", "none", "Could not read the rooms: " + (err.message || err)));
+  }
+}
+
 async function loadPeople() {
   const box = $("people");
   try {
@@ -792,7 +920,7 @@ function sage(on) {
   if (on && !SAGE_LOADED) { $("sageframe").src = "/sage?bare=1"; SAGE_LOADED = true; }
   // Coming back from a conversation, the queue may have moved — it can act on
   // it now. Cheap, and it stops the panel disagreeing with what was just done.
-  if (!on) { load(); loadPeople(); loadWaiting(); }
+  if (!on) { load(); loadPeople(); loadWaiting(); loadRooms(); }
 }
 $("pull").addEventListener("click", () => sage($("drawer").hidden));
 $("drawershut").addEventListener("click", () => sage(false));
@@ -816,7 +944,8 @@ fetch("/api/seat").then((r) => r.json()).then((d) => {
   // face as broken.
   loadPeople();
   loadWaiting();
-}).catch(() => { load(); loadPeople(); loadWaiting(); });
+  loadRooms();
+}).catch(() => { load(); loadPeople(); loadWaiting(); loadRooms(); });
 </script>
 </body>
 </html>

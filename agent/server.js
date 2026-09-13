@@ -2612,6 +2612,19 @@ app.get("/api/feed/waiting", feedDoor, async (_req, res) => {
   res.status(r.status).json(r.body);
 });
 
+/** THE ROOMS, AND WHO IS IN THEM.
+ *
+ *  Every room on the board: the ones members made, and the five at the door
+ *  that nobody made and nobody can leave. Names and counts — who is in it,
+ *  when it last moved, how many lines are marked. Never a word anybody said;
+ *  a reported line still reaches this seat as a report and by no other road.
+ */
+app.get("/api/feed/rooms", feedDoor, async (_req, res) => {
+  const r = await feed.call("/api/rooms");
+  res.set("Cache-Control", "no-store");
+  res.status(r.status).json(r.body);
+});
+
 /** A picture chosen here, for somebody named here.
  *
  *  The form is passed through rather than parsed: this seat has no business
