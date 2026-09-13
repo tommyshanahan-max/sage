@@ -4477,8 +4477,15 @@ export const STRINGS = {
   "note.startGroup":   ["Start a group with them", "拉个群"],
   /* The line between the faces and the name box. Not a heading: it separates
      two answers to the same question and says so in one word. */
-  "grp.addOr":         ["or", "或者"],
-  "grp.outsideNameNew": ["Name someone not on here yet", "写一个还没在这里的人"],
+  /* ONE BOX. Typing filters the people you have matched with; a name nobody
+     matches becomes an invite. Nobody should have to know which kind of
+     person somebody is before they start typing their name. */
+  "grp.findName":      ["Type a name", "输入名字"],
+  "grp.invite":        ["Invite", "邀请"],
+  "grp.inviteName":    ["Invite {name}", "邀请 {name}"],
+  "grp.addAllIn": [
+    "Everybody you have matched with is already in here. Type a name to invite somebody new.",
+    "和你匹配上的人都在里面了。输入名字可以邀请新的人。"],
   "grp.outsideName":   ["Their name", "他的名字"],
   "grp.outsideGo":     ["Make their invite", "生成邀请"],
   "grp.roomPlain":     ["a conversation", "一个对话"],

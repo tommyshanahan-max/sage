@@ -318,6 +318,12 @@
   .heldoff{flex:0 0 auto;border:1px solid var(--line);background:none;color:var(--t5);
     border-radius:99px;padding:.35rem .8rem;font:inherit;font-size:.8rem}
   .addlede{margin:0 0 1.1rem;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
+  .addscreen .find{width:100%;font:inherit;font-size:1rem;padding:.7rem .85rem;
+    border:1px solid var(--line);border-radius:.8rem;background:var(--raise);color:var(--ink)}
+  .addscreen .find:focus{outline:none;border-color:var(--accent)}
+  .addlist{margin:.8rem 0 0}
+  .addlist .saidline{margin:1.2rem 0 0;font-size:.9rem;line-height:1.6;color:var(--muted)}
+  .av.new{background:none;border:1px dashed var(--accent);color:var(--accent);font-size:1.4rem}
   /* One action in the header, beside the language switch. Text, not a filled
      button: the filled one on this screen is Send it. */
   .topact{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);background:var(--raise);
@@ -758,13 +764,31 @@ function paintRoom(g) {
  *  face on this board or a name in your phone and you know which. */
 function addScreen(g) {
   const box = el("div", "addscreen");
-  const draw = () => {
-    fill(box);
-    // The header says "Add" in one word; this says which room it is adding to.
-    box.append(el("p", "addlede", T("grp.addLede", { room: g.name || nameOf(g) })));
+  const list = el("div", "addlist");
+
+  /* ONE BOX, AND IT SEARCHES BEFORE IT OFFERS TO INVITE.
+   *
+   * The two halves used to be separate: your people as rows, a line saying OR,
+   * and a name box under it that looked nobody up. So typing "Keith" minted a
+   * code for a stranger called Keith while the real Keith sat in the list
+   * directly above it. Nobody should have to know which kind of person
+   * somebody is before they start typing their name.
+   *
+   * IT SEARCHES YOUR MATCHES AND NOTHING ELSE. Every name on the board would
+   * be a directory, and a directory of the people on here is the one thing
+   * this board has never been — see the note over cleanPerson. The list is
+   * already in the page; no name leaves it to ask a question.
+   */
+  const draw = (q) => {
+    fill(list);
+    const want = q.trim().toLowerCase();
     const inRoom = new Set((g.who || []).map((m) => m.who));
     const left = (CANADD || []).filter((c) => !inRoom.has(c.who));
-    for (const c of left) {
+    const hit = want
+      ? left.filter((c) => (c.handle || "").toLowerCase().includes(want))
+      : left;
+
+    for (const c of hit) {
       const row = el("button", "pick");
       row.type = "button";
       const tag = el("span", "tag", T("grp.add"));
@@ -779,22 +803,86 @@ function addScreen(g) {
           const d = await r.json().catch(() => ({}));
           if (!r.ok) throw new Error(d.error || "no");
           /* STRAIGHT BACK TO THE ROOM. Adding somebody is finished the moment
-             it works, and the thing worth seeing is their name in the list at
+             it works, and the thing worth seeing is their name in the faces at
              the top — not this screen with one fewer row on it. */
           ADDING = false;
+          INFO = false;
           await load();
         } catch (e) {
-          tag.textContent = T(String(e.message) === "full" ? "grp.outFull" : "act.again");
+          tag.textContent = T(String(e.message) === "full" ? "grp.outFullWhy" : "act.again");
           row.disabled = false;
         }
       });
-      box.append(row);
+      list.append(row);
     }
-    if (left.length) box.append(el("p", "orline", T("grp.addOr")));
-    box.append(outsider(() => [], () => "", g.id, true));
+
+    /* THE INVITE IS WHAT A NAME NOBODY MATCHES MEANS. Not a second control and
+       not a mode — the same typing, one row further down, once there is
+       nothing on this board it could have meant. */
+    if (want && !hit.length) {
+      const row = el("button", "pick");
+      row.type = "button";
+      const tag = el("span", "tag", T("grp.invite"));
+      const face2 = el("span", "av new", "\uFF0B");
+      row.append(face2, el("b", null, T("grp.inviteName", { name: q.trim() })), tag);
+      row.addEventListener("click", () => mint(g, q.trim(), list));
+      list.append(row);
+    }
+
+    // Nothing typed and nobody left to add: say which of the two it is.
+    if (!want && !left.length) {
+      list.append(el("p", "saidline", T("grp.addAllIn")));
+    }
   };
-  draw();
+
+  box.append(el("p", "addlede", T("grp.addLede", { room: g.name || nameOf(g) })));
+  const find = document.createElement("input");
+  find.className = "fld find";
+  find.maxLength = 40;
+  find.placeholder = T("grp.findName");
+  find.addEventListener("input", () => draw(find.value));
+  box.append(find);
+  box.append(list);
+  draw("");
   return box;
+}
+
+/** Minting the code, once a name has turned out to be nobody on this board.
+ *  The row it was tapped from is replaced by what it made — see done(). */
+async function mint(g, nm, list) {
+  fill(list);
+  const said = el("p", "saidline", T("note.sending"));
+  list.append(said);
+  try {
+    const r = await fetch("/api/group-invite", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, group: g.id }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "no");
+    /* THE LINK NEVER CARRIES THE CODE. Same rule as the header's invite and
+       the same reason: a forwarded link would otherwise be a way in. The name
+       goes in it so the door greets them; it opens nothing. */
+    const url = location.origin + "/enter?for=" + encodeURIComponent(nm)
+      + "&from=" + encodeURIComponent(d.from || "")
+      + (d.until ? "&t=" + Math.round(Date.parse(d.until) / 1000) : "");
+    const words = T(IN_WECHAT ? "grp.sharedWx" : "grp.shared",
+      { name: nm, room: d.name || T("grp.roomPlain"),
+        who: (d.who || []).join(lang() === "zh" ? "\u3001" : ", "),
+        url, code: d.code });
+    fill(list);
+    list.append(done(nm, d, words, url));
+    if (!IN_WECHAT && navigator.share) {
+      navigator.share({ title: T("site.title"), text: words }).catch(() => {});
+    } else copyText(words);
+  } catch (e) {
+    const why = String(e.message);
+    fill(list);
+    list.append(el("p", "saidline", T(why === "standing" ? "grp.outNoStanding"
+      : why === "spent" ? "grp.outSpent"
+      : why === "full" ? "grp.outFullWhy"
+      : "act.again")));
+  }
 }
 
 /** What the invite came out as: who it is for, the six characters in full,
@@ -836,22 +924,26 @@ function done(nm, d, words, url) {
 /** Bringing in somebody who has no account. `picked` and `label` are read at
  *  the moment of pressing rather than passed in, because both change under it
  *  while this is on screen. */
-function outsider(picked, label, group, bare) {
-  const box = el("div", bare ? "" : "outside");
+/** The invite half of the CREATE screen, where the list above it is a
+ *  multi-select for building a room rather than a search. In a room that
+ *  already exists this is one row in addScreen's own list instead — see the
+ *  note there.
+ *
+ *  `bare` used to make it the lower half of a panel; the add screen stopped
+ *  needing that, and a parameter with one caller and one value is a mode
+ *  nobody is in. */
+function outsider(picked, label, group) {
+  const box = el("div", "outside");
   const open = el("button", "outbtn", T("grp.outside"));
   open.type = "button";
-  if (!bare) box.append(open);
+  box.append(open);
 
-  /* The form keeps its class either way. It used to lose it in bare mode —
-     which is the mode the add screen uses — so the name box and the button
-     came out as raw browser controls sitting side by side. */
   const form = el("div", "outform");
-  form.hidden = !bare;
+  form.hidden = true;
   const who = document.createElement("input");
   who.className = "fld";
   who.maxLength = 40;
-  // The placeholder carries it when there is no button above saying it.
-  who.placeholder = bare ? T("grp.outsideNameNew") : T("grp.outsideName");
+  who.placeholder = T("grp.outsideName");
   const go2 = el("button", "go", T("grp.outsideGo"));
   go2.type = "button";
   const said = el("p", "saidline");
