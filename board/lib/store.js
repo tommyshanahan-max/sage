@@ -468,6 +468,42 @@ const CONTACT_SHAPED = [
  */
 export const MO = "mo";
 
+/* THE FIVE ROOMS AT THE DOOR, AS PLACES PEOPLE CAN TALK.
+ *
+ * A queue is a form and a silence. Forty-seven people filled one in and then
+ * waited, with nothing to do and no way to tell whether anything was
+ * happening — which is how a queue loses the people in it.
+ *
+ * A room is the same list with the silence taken out. The people waiting in
+ * film can talk to each other and to whoever inside is reading, and a member
+ * deciding whether to let somebody in has something better than three form
+ * fields to decide on.
+ *
+ * THE ID IS DERIVED, NOT STORED. A door room is not a group: nobody made it,
+ * nobody can leave it, it has no members and no cap. Giving it a row in
+ * board.groups would be a group with none of a group's properties, which is
+ * the kind of second meaning that goes wrong quietly three weeks later. So it
+ * gets a stable id computed from its name and the lines live in `says` beside
+ * everybody else's — which means report, the doorman's tripwire and the
+ * contact rule all already apply to it, without a line of new code.
+ *
+ * 'd0' and eighteen hex, so it cannot collide with newId()'s twenty random
+ * hex and can be told apart by looking.
+ */
+export const WAITROOMS_CHAT = ["film", "invest", "raise", "trade", "other"];
+
+export function doorRoom(key) {
+  if (!WAITROOMS_CHAT.includes(key)) return "";
+  return "d0" + createHash("sha256").update("door:" + key).digest("hex").slice(0, 18);
+}
+
+/** Which door room an id belongs to, or "". The one place the mapping is read
+ *  backwards, so a route can ask "is this a door room, and whose" without
+ *  knowing how the id was made. */
+export function doorKey(id) {
+  return WAITROOMS_CHAT.find((k) => doorRoom(k) === String(id)) || "";
+}
+
 /* WHAT WAKES HIM, AND IT IS A REGEX ON THIS BOX AND NOTHING ELSE.
  *
  * He is in every room and he does not read them. That is the whole bargain: a

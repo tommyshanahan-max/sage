@@ -6662,6 +6662,29 @@ app.post("/api/group-invite/off", notesOff, express.json({ limit: "1kb" }), asyn
   res.json(out);
 });
 
+/** WHO MAY READ AND WRITE IN A DOOR ROOM.
+ *
+ *  Two kinds of person and no third. A member, because deciding who to let in
+ *  is the job and reading what somebody says over a week beats reading three
+ *  form fields. And somebody waiting in THAT room — not in any other one,
+ *  which is the whole of the check that matters: the waiting-room gate exists
+ *  to stop a stranger writing anywhere on this board, and the one door opened
+ *  in it opens onto the one room they are already standing in.
+ *
+ *  Returns "member", "wait" or "".
+ */
+function doorAccess(board, me, key) {
+  if (!key || !me) return "";
+  const mine = board.people.find((q) => q.by === me && q.state === "published");
+  if (mine && mine.handle) return "member";
+  const w = board.waits.find((x) => x.by === me && !x.done);
+  /* THE ROOM THEY JOINED AND NOT THE ONE THEY ASKED FOR. cleanWait falls back
+     to "other" for anything it does not know, so the row is the authority —
+     see the note over WAITROOMS in scripts/waiting.mjs. */
+  if (w && (w.room || "other") === key) return "wait";
+  return "";
+}
+
 /** Saying something in one. */
 app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
@@ -6670,7 +6693,16 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
   if (!me) return res.status(400).json({ error: "no" });
   if (!text) return res.status(400).json({ error: "empty" });
 
+  const door = store.doorKey(id);
   const out = await change((board) => {
+    /* A DOOR ROOM IS NOT A GROUP and takes the other set of rules: no members,
+       no cap, nobody can leave it, and the people in it have not been vouched
+       for by anybody. Everything below this — the contact rule, the doorman's
+       tripwire, reporting — applies to it unchanged, which is the whole reason
+       its lines live in `says` beside everybody else's. */
+    if (door) {
+      if (!doorAccess(board, me, door)) return { error: "gone" };
+    } else {
     const g = board.groups.find((x) => x.id === id);
     // The same answer for a group that never existed and one you are not in:
     // this must not become a way to ask which groups are real.
@@ -6685,6 +6717,7 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
      * looking at a conversation away to work out why they cannot answer it.
      * The page turns this word into the box that fixes it. */
     if (!g.members.includes(me)) return { error: "profile" };
+    }
 
     /* A WECHAT ID PASTED INTO A ROOM IS THE WHOLE PRODUCT GOING OUT OF THE
      * WINDOW, AND THIS IS THE ONE THING HERE THAT IS REFUSED RATHER THAN
