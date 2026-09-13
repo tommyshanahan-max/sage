@@ -247,9 +247,17 @@
   .dinfo{align-self:stretch}
   /* The ＋ of a door, at the top where the people screen starts. Filled, not
      outlined: it is the one thing on this screen you do rather than read. */
-  .sendlink{display:block;width:100%;margin:.2rem 0 .4rem;padding:.7rem;
+  .sendbox{display:flex;gap:.5rem;align-items:stretch;margin:.2rem 0 .3rem}
+  /* .fld is groups.html's and this page does not have it — the box was a bare
+     browser input beside a filled button. Defined here rather than shared:
+     one field on one screen is not a design system. */
+  .sendbox .fld{flex:1;min-width:0;font:inherit;font-size:.95rem;
+    padding:.6rem .8rem;border:1px solid var(--line);border-radius:.7rem;
+    background:var(--raise);color:var(--ink)}
+  .sendsaid{margin:0 0 .6rem;font-size:.78rem;color:var(--t2)}
+  .sendlink{display:block;flex:0 0 auto;margin:0;padding:.7rem 1rem;
     border:0;border-radius:.7rem;background:var(--accent);color:var(--accent-ink);
-    font:inherit;font-size:.9rem;cursor:pointer}
+    font:inherit;font-size:.9rem;cursor:pointer;white-space:nowrap}
   .dinfo .dperson{border-bottom:1px solid var(--hair)}
   .dinfo .wperson{width:100%;border-bottom:0}
   /* The one action a door row carries, under it rather than on it: the row is
@@ -1505,24 +1513,49 @@ function doorPeople(key) {
    * greets everybody the same, and a name in a query string is a name on a
    * page anybody could open.
    */
-  const link = el("button", "sendlink");
-  link.type = "button";
-  link.textContent = T("dr.sendLink");
-  link.addEventListener("click", () => {
-    const nm = (window.prompt(T("dr.sendWho")) || "").trim().slice(0, 40);
-    if (!nm) return;
+  /* A FIELD AND A BUTTON, NOT A PROMPT.
+   *
+   * It was window.prompt, and on a phone that is the end of the gesture: the
+   * share sheet may only be opened from inside the tap that asked for it, and
+   * a prompt ends that tap. So the sheet was refused, the refusal was caught,
+   * and the button did nothing at all — the worst possible failure, because
+   * nothing on the screen said so.
+   *
+   * The Send press IS the gesture now. And if the sheet is still refused, the
+   * words are copied and the button says which happened, rather than leaving
+   * somebody to press it again.
+   */
+  const send = el("div", "sendbox");
+  const nameIn = document.createElement("input");
+  nameIn.className = "fld";
+  nameIn.maxLength = 40;
+  nameIn.placeholder = T("dr.sendWho");
+  const go = el("button", "sendlink");
+  go.type = "button";
+  go.textContent = T("dr.sendLink");
+  const sendSaid = el("p", "sendsaid");
+  go.addEventListener("click", async () => {
+    const nm = nameIn.value.trim().slice(0, 40);
+    if (!nm) { nameIn.focus(); return; }
     const url = location.origin + "/r/" + encodeURIComponent(key);
     const words = T(IN_WECHAT ? "dr.sendWordsWx" : "dr.sendWords",
       { name: nm, room: T("waitroom." + key), url });
     if (!IN_WECHAT && navigator.share) {
-      navigator.share({ title: T("site.title"), text: words }).catch(() => {});
-      return;
+      try {
+        await navigator.share({ title: T("site.title"), text: words });
+        sendSaid.textContent = T("dr.sendGone", { name: nm });
+        nameIn.value = "";
+        return;
+      } catch {
+        /* Dismissed, or refused by the browser. Either way the copy below is
+           the thing that still works, and silence is not an option. */
+      }
     }
-    link.textContent = T(copyText(words)
+    sendSaid.textContent = T(copyText(words)
       ? (IN_WECHAT ? "act.wxCopied" : "cards.copied") : "act.copyFail");
-    setTimeout(() => { link.textContent = T("dr.sendLink"); }, 3000);
   });
-  box.append(link);
+  send.append(nameIn, go);
+  box.append(send, sendSaid);
 
   box.append(el("p", "when", T("dr.here", { n: rows.length })));
   for (const w of rows) {

@@ -1246,8 +1246,10 @@ export const STRINGS = {
   /* The ＋ of a door. No code and nothing minted: a queue has no cap and no
      seat to hold, so it is a name, the public link for that room, and the
      phone's own share sheet. */
-  "dr.sendLink":       ["Send somebody this room", "把这个房间发给谁"],
-  "dr.sendWho":        ["Their first name?", "他叫什么？"],
+  "dr.sendLink":       ["Send", "发送"],
+  "dr.sendWho":        ["Add somebody to this room — their name",
+                        "拉个人进这个房间 — 名字"],
+  "dr.sendGone":       ["Sent to {name}.", "已经发给{name}了。"],
   "dr.sendWords": [
     "{name} — this is the {room} room at The Exchange. Put your name down here and I will see it.\n\n{url}",
     "{name}，这是 The Exchange 的{room}房间。在这里留个名字，我这边看得到。\n\n{url}"],
