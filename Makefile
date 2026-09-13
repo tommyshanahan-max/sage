@@ -334,7 +334,7 @@ offers: ## Every offer, and who took it
 	  /seed/offer.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  list
 
-invite: ## Make an invite:  make invite WHO="you" FOR="them" [HOURS=24] [N=3]
+invite: ## Make an invite:  make invite WHO="you" FOR="them" [HOURS=48] [N=3]
 	@# Prints the message to send, between two rules. One person each.
 	@#
 	@# WHO is whoever is vouching — it is the label on the row and the name the
@@ -343,9 +343,17 @@ invite: ## Make an invite:  make invite WHO="you" FOR="them" [HOURS=24] [N=3]
 	@# the door opens with their name on it and nothing is stored about them.
 	@# Neither name opens anything. The six characters still do that.
 	@#
-	@# HOURS is how long it lasts and the default is 24. A day is long enough
-	@# for somebody to see the message, sleep on it and still get in, and short
-	@# enough that a code forwarded into a group chat next week opens nothing.
+	@# HOURS is how long it lasts and the default is 48. It was 24, on the
+	@# reasoning that a day is long enough to see a message, sleep on it and
+	@# still get in. In practice these go out as an Instagram or WeChat DM on a
+	@# Sunday afternoon to somebody who is not at their desk, reads it that
+	@# evening, and opens it properly on Tuesday. A dead code is not a small
+	@# failure: it is a person who decided to come in and was turned away, and
+	@# the second invite never feels like the first one.
+	@# Forty-eight is still short enough that a code forwarded into a group chat
+	@# next week opens nothing, which is the whole point of there being a clock.
+	@# It also matches agent-invite, which has defaulted to 48 since the day it
+	@# was written, for the same reason and with better evidence.
 	@# HOURS=72 over a weekend; HOURS=0 for one that never stops, which is right
 	@# for a code you carry around and hand out in person.
 	@#
@@ -360,7 +368,7 @@ invite: ## Make an invite:  make invite WHO="you" FOR="them" [HOURS=24] [N=3]
 	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
 	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --hours "$(if $(HOURS),$(HOURS),24)" --n "$(or $(N),1)"
+	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --hours "$(if $(HOURS),$(HOURS),48)" --n "$(or $(N),1)"
 
 agent-invite: ## Bring an agent in:  make agent-invite WHO="Tom" FOR="Andy" [HOURS=48]
 	@# The same door as `make invite` and the same message shape — it is settled
