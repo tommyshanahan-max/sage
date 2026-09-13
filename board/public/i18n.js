@@ -1243,6 +1243,19 @@ export const STRINGS = {
                         "\u8ba9 {who} \u8fdb\u6765\uff1f\u4ed6\u4eec\u4f1a\u62ff\u5230\u623f\u95f4\uff0c\u4e09\u5929\u5185\u628a\u8d44\u6599\u586b\u597d\u3002"],
   "dr.letInDone":      ["Let in \u00b7 waiting for them to turn up",
                         "\u5df2\u7ecf\u8ba9\u8fdb\u6765\u4e86 \u00b7 \u7b49\u4ed6\u4eec\u73b0\u8eab"],
+  /* The ＋ of a door. No code and nothing minted: a queue has no cap and no
+     seat to hold, so it is a name, the public link for that room, and the
+     phone's own share sheet. */
+  "dr.sendLink":       ["Send somebody this room", "把这个房间发给谁"],
+  "dr.sendWho":        ["Their first name?", "他叫什么？"],
+  "dr.sendWords": [
+    "{name} — this is the {room} room at The Exchange. Put your name down here and I will see it.\n\n{url}",
+    "{name}，这是 The Exchange 的{room}房间。在这里留个名字，我这边看得到。\n\n{url}"],
+  /* In WeChat the share sheet is not ours, so the whole block is copied and
+     pasted by hand — same words, and the link has to survive being one line. */
+  "dr.sendWordsWx": [
+    "{name} — this is the {room} room at The Exchange.\n\n{url}\n\nPut your name down and I will see it.",
+    "{name}，这是 The Exchange 的{room}房间。\n\n{url}\n\n留个名字，我这边看得到。"],
   "dr.here":           ["{n} at this door", "这个门口 {n} 个人"],
   "dr.spoke":          ["said something", "说过话"],
   /* Where they stand in the queue. First come, one place up per person

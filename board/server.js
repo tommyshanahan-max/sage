@@ -466,6 +466,20 @@ app.use(async (req, res, next) => {
   acting.run({ real, by, as }, next);
 });
 
+/* THE DOOR HAS TO SEE WHO IS KNOCKING, AND ON A POST THE NAME IS IN THE BODY.
+ *
+ * The gate below identifies a browser from the x-board-device header or the
+ * wait cookie. /api/group/say carries neither: the pages send the device in
+ * the JSON body, which at gate time has not been parsed — so every message
+ * anybody at the door sent came back "invite", and the door rooms were
+ * read-only for the whole queue with nothing on any screen saying why.
+ *
+ * One path, parsed early. body-parser marks a request it has handled, so the
+ * route's own express.json() further down is a no-op rather than a second
+ * read of a stream that has already ended.
+ */
+app.use("/api/group/say", express.json({ limit: "16kb" }));
+
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
   // The operator's own routes carry the admin secret and are checked by their
@@ -593,6 +607,32 @@ app.use(async (req, res, next) => {
   // Anything with a dot in the last segment is a file: the stylesheet and the
   // modules the door is built from have to load for the door to work at all.
   if (/\.[a-z0-9]{2,5}$/i.test(req.path)) return next();
+
+  /* ON THE LIST, NOT YET LIFTED — AND THE ROOM AT THEIR DOOR IS STILL THEIRS.
+   *
+   * The rooms were built because a queue is a form and a silence and
+   * forty-seven people were standing in one. Then the gate above asked for
+   * `up`, so the only people who could talk in a door room were the three a
+   * day already through it — and the silence stayed exactly where it was, with
+   * the whole of the queue reading a screen they could not answer.
+   *
+   * So being on the list at all is enough for the room. Nothing else moves:
+   * `up` still decides who may fill in a card, and that is what being lifted
+   * is for. Every rule inside the room is unchanged — doorAccess still only
+   * gives them the one room they joined, the contact rule still refuses a
+   * WeChat id, the doorman's tripwire still runs, and anybody in there can
+   * report anybody.
+   *
+   * THE PAGES, TOO, or the room has no screen to be on: /room draws it, and a
+   * page they cannot load is a room they cannot reach. Reads only — the method
+   * is still the test, and the two writes named here are the two this is for.
+   */
+  const listRow = await onTheList(req);
+  if (listRow) {
+    if (req.path === "/api/door" || req.path === "/api/group/say") return next();
+    if (req.method === "GET") return next();
+    return res.status(403).json({ error: "soon" });
+  }
   if (await admittedReq(req)) return next();
   if (req.path.startsWith("/api/")) {
     return res.status(403).json({ error: "invite", where: "/enter" });
@@ -807,6 +847,19 @@ async function inWaitingRoom(req) {
   try {
     const board = await store.load(FILE);
     return board.waits.find((w) => w.by === me && w.up && !w.done) || null;
+  } catch { return null; }
+}
+
+/** On the waiting list at all, lifted or not. The narrower `up` question is
+ *  inWaitingRoom above; this one is only ever asked about the room at their
+ *  own door. */
+async function onTheList(req) {
+  const said = String(req.get("x-board-device") || req.body?.device || "");
+  const me = store.hashDevice(said, SALT) || waitCookie(req);
+  if (!me) return null;
+  try {
+    const board = await store.load(FILE);
+    return board.waits.find((w) => w.by === me && !w.done) || null;
   } catch { return null; }
 }
 

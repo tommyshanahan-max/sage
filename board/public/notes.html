@@ -245,6 +245,11 @@
      shrink to their content and sit in from the edge, out of line with the
      heading over them. */
   .dinfo{align-self:stretch}
+  /* The ＋ of a door, at the top where the people screen starts. Filled, not
+     outlined: it is the one thing on this screen you do rather than read. */
+  .sendlink{display:block;width:100%;margin:.2rem 0 .4rem;padding:.7rem;
+    border:0;border-radius:.7rem;background:var(--accent);color:var(--accent-ink);
+    font:inherit;font-size:.9rem;cursor:pointer}
   .dinfo .dperson{border-bottom:1px solid var(--hair)}
   .dinfo .wperson{width:100%;border-bottom:0}
   /* The one action a door row carries, under it rather than on it: the row is
@@ -1489,6 +1494,36 @@ function doorPeople(key) {
     (WAITROOMS.includes(w.room) ? w.room : "other") === key)
     .sort((a, b) => (a.place ?? 1e9) - (b.place ?? 1e9)
       || String(a.at).localeCompare(String(b.at)));
+  /* SENDING SOMEBODY THIS DOOR.
+   *
+   * The ＋ that was missing. A group room's is an invite with a code in it,
+   * because a room has a cap and a seat to hold; a door has neither — joining
+   * a queue is open, and the link is the public door for this room. So there
+   * is nothing to mint: a name, the link, and the phone's own share sheet.
+   *
+   * Their name goes in the message rather than in the link. The door page
+   * greets everybody the same, and a name in a query string is a name on a
+   * page anybody could open.
+   */
+  const link = el("button", "sendlink");
+  link.type = "button";
+  link.textContent = T("dr.sendLink");
+  link.addEventListener("click", () => {
+    const nm = (window.prompt(T("dr.sendWho")) || "").trim().slice(0, 40);
+    if (!nm) return;
+    const url = location.origin + "/r/" + encodeURIComponent(key);
+    const words = T(IN_WECHAT ? "dr.sendWordsWx" : "dr.sendWords",
+      { name: nm, room: T("waitroom." + key), url });
+    if (!IN_WECHAT && navigator.share) {
+      navigator.share({ title: T("site.title"), text: words }).catch(() => {});
+      return;
+    }
+    link.textContent = T(copyText(words)
+      ? (IN_WECHAT ? "act.wxCopied" : "cards.copied") : "act.copyFail");
+    setTimeout(() => { link.textContent = T("dr.sendLink"); }, 3000);
+  });
+  box.append(link);
+
   box.append(el("p", "when", T("dr.here", { n: rows.length })));
   for (const w of rows) {
     /* THE ROW AND ITS ACTION ARE ONE THING. Drawn as siblings, the rule under
