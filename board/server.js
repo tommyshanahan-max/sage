@@ -5236,6 +5236,25 @@ const attr = (v) => String(v || "")
   .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
 app.get("/a/:code", async (req, res, next) => {
+  /* A FILE IS NOT A POSTER, AND THIS ROUTE WAS ANSWERING FOR BOTH.
+   *
+   * The counter is loaded as <script src="/a/lx.js"> — first-party on purpose,
+   * proxied by Caddy on the box so nothing here is a third-party request. Off
+   * the box there is no Caddy, so the request landed HERE, matched :code, and
+   * came back 200 with announce.html in it. The browser parsed a poster as
+   * JavaScript and threw "Unexpected token '<'" on every page that loads the
+   * counter, with no stack and no clue what asked for it. An hour to find.
+   *
+   * It is not only a local annoyance. If that Caddy rule is ever reordered or
+   * dropped, the counter silently becomes an announcement page and the same
+   * error appears on the real board — and a 200 is the one status nothing
+   * anywhere will flag.
+   *
+   * A code is six characters and never contains a dot. Anything with one is a
+   * file that is missing, and a missing file is a 404: the same rule the gate
+   * above already uses to tell a page from a path. A mistyped code still gets
+   * the friendly page, which is the case that wanted it. */
+  if (/\.[a-z0-9]{2,5}$/i.test(String(req.params.code || ""))) return next();
   const code = store.cleanCode(req.params.code);
   const board = await store.load(FILE);
   const a = code && board.announces.find((x) => x.code === code
