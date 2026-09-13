@@ -201,6 +201,10 @@
   /* Who said it and which side of the door they are on. Under the bubble,
      small, because it is a thing you check rather than read. */
   .dwho{margin:-.3rem 0 .7rem;font-size:.72rem;color:var(--muted)}
+  /* A name that opens a thread. Underlined rather than coloured: a room of
+     six names in accent blue reads as six buttons, and the bubbles are what
+     somebody is here to read. */
+  .dwho .reach{color:inherit;text-decoration:underline dotted;text-underline-offset:3px}
   /* The doorman's own lines, told apart by the paper they are on rather than
      by a label: he is the one voice in the room that is not a person. */
   .bub.bot{background:var(--raise);border-color:var(--t3);border-left-width:3px}
@@ -1386,8 +1390,23 @@ async function drawDoor(key) {
          not enough in here: the same sentence from somebody inside and
          somebody waiting means two different things to a person reading it. */
       const who = el("p", "dwho");
-      who.append(document.createTextNode((m.handle || T("board.someone"))
-        + (m.bot ? "" : " \u00B7 " + T(m.inside ? "dr.inside" : "dr.waiting"))));
+      /* AND A WAY TO REACH THEM, for a member, on the name itself.
+       *
+       * The list under the talk only holds the people who have said nothing —
+       * so the moment somebody at the door spoke, they dropped off the only
+       * list with a link on it and became the one person in the room nobody
+       * could write to. Their name is the obvious place for it and was doing
+       * nothing. `wid` reaches a member and nobody else; see /api/door. */
+      const label = (m.handle || T("board.someone"))
+        + (m.bot ? "" : " \u00B7 " + T(m.inside ? "dr.inside" : "dr.waiting"));
+      if (m.wid) {
+        const a = el("a", "reach");
+        a.href = "#w:" + m.wid;
+        a.textContent = label;
+        who.append(a);
+      } else {
+        who.append(document.createTextNode(label));
+      }
       talk.append(who);
     }
   }
