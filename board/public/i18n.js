@@ -1246,6 +1246,12 @@ export const STRINGS = {
   /* The ＋ of a door. No code and nothing minted: a queue has no cap and no
      seat to hold, so it is a name, the public link for that room, and the
      phone's own share sheet. */
+  /* On a room door, over the last lines said in that room. It is the reason
+     somebody was sent the link, so it goes above the fold. */
+  "land.roomHead":     ["In this room now · {n} at the door",
+                        "这屋里正在说 · 门口 {n} 个人"],
+  "land.roomGo":       ["Put your name down to answer them",
+                        "留个名字就能接上话"],
   "dr.sendLink":       ["Send", "发送"],
   "dr.sendWho":        ["Add somebody to this room — their name",
                         "拉个人进这个房间 — 名字"],

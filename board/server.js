@@ -399,7 +399,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -6920,8 +6920,25 @@ app.get("/api/door", notesOff, async (req, res) => {
   const id = store.doorRoom(key);
   if (!id) return res.status(404).json({ error: "no" });
   const board = await store.load(FILE);
-  const how = doorAccess(board, me, key);
-  if (!how) return res.status(403).json({ error: "no" });
+  /* A STRANGER ON THE LINK SEES THE ROOM.
+   *
+   * The whole point of sending somebody a room is that they open the room.
+   * They were landing on the page that sells the board — a headline and two
+   * buttons — which is the right page for a cold address and the wrong one
+   * for "Brendan, come and talk to these people".
+   *
+   * WHAT IT COSTS, said plainly: anybody holding the link reads that
+   * conversation. The room's own header has always said "anyone inside can
+   * read", and there are no contact details in there to leak — the contact
+   * rule refuses them before they are stored. What is in there is first names
+   * and what people are looking for, which is the thing that would make
+   * somebody want in.
+   *
+   * A READ AND NOTHING ELSE. No `wid`, so no thread can be opened from it; no
+   * `mine`, because there is nothing of theirs in there yet; and the last
+   * dozen lines rather than two hundred, because it is a window and not an
+   * archive. Speaking still means joining, which is the box under it. */
+  const how = doorAccess(board, me, key) || "peek";
 
   /* TWO PLACES A NAME CAN COME FROM, and neither of them carries a way to
      reach anybody: a member's handle, or the name somebody typed on the way
@@ -6955,9 +6972,10 @@ app.get("/api/door", notesOff, async (req, res) => {
     n: board.waits.filter((w) => !w.done && (w.room || "other") === key && w.shown).length,
     says: board.says.filter((m) => m.group === id)
       .sort((a, b) => String(a.at).localeCompare(String(b.at)))
-      .slice(-200)
+      .slice(how === "peek" ? -12 : -200)
       .map((m) => ({ id: m.id, at: m.at, text: m.text,
-                     mine: m.by === me, reported: Boolean(m.report), ...named(m.by) })),
+                     mine: how !== "peek" && m.by === me,
+                     reported: Boolean(m.report), ...named(m.by) })),
   });
 });
 

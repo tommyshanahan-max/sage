@@ -480,6 +480,18 @@
      persuaded; making them scroll past a demonstration is asking them to be
      persuaded twice. The matcher is the first thing they meet inside, which is
      where a control you can actually use belongs. -->
+<style>
+  /* The room, on its own door. Quiet and dense — it is evidence, not a feed:
+     a stranger should be able to read the whole of it in one look and decide. */
+  .doorpeek{margin:1.1rem 0 0;padding:.9rem 1rem;border-radius:.9rem;
+    background:var(--raise,#fff);border:1px solid var(--line,#dfe3ea);text-align:left}
+  .dp-head{margin:0 0 .6rem;font-size:.72rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted,#6b7280)}
+  .dp-line{margin:0 0 .5rem;font-size:.92rem;line-height:1.5}
+  .dp-line b{font-weight:700}
+  .dp-line b::after{content:" · ";font-weight:400;color:var(--muted,#6b7280)}
+  .dp-go{display:inline-block;margin:.3rem 0 0;font-size:.9rem;font-weight:600}
+</style>
 <div class="hero">
   <div class="wrap">
     <div class="asking">
@@ -510,6 +522,13 @@
            Never a target and never rounded up: whatever it says tonight is
            what is actually in the file. -->
       <p class="fewline" id="fewline" hidden></p>
+      <!-- THE ROOM ITSELF, ON A ROOM DOOR. Somebody sent this link so that the
+           person opening it would see these people talking; landing them on a
+           headline and two buttons spends that. Drawn only for /r/:room, and
+           only when there is something in it — an empty box is a worse
+           argument than no box. See doorPeek below and the peek branch in
+           /api/door. -->
+      <div class="doorpeek" id="doorpeek" hidden></div>
       <!-- HIGH, not at the bottom of the page. Somebody who has read "invite
            only" is at the exact moment of wanting in; the form was four
            screens below that, which spends the feeling on scrolling. -->
@@ -1011,6 +1030,48 @@ $("langslot").append(langButton(() => {
 paint();
 paintRoom();
 $("waitslot").append(waitBox());
+
+/* THE LAST DOZEN LINES OF THE ROOM THIS LINK NAMES.
+ *
+ * Never awaited by anything: the page is finished without it and a door that
+ * waits on a fetch is a door that is blank on a bad connection. */
+(async () => {
+  const key = roomFromPath();
+  if (!key) return;
+  try {
+    const d = await fetch("/api/door?room=" + encodeURIComponent(key),
+      { cache: "no-store" }).then((r) => (r.ok ? r.json() : null));
+    if (!d || !d.says || !d.says.length) return;
+    const box = $("doorpeek");
+    box.textContent = "";
+    const head = document.createElement("p");
+    head.className = "dp-head";
+    head.textContent = T("land.roomHead", { n: d.n });
+    box.append(head);
+    for (const m of d.says) {
+      const row = document.createElement("div");
+      row.className = "dp-line";
+      const who = document.createElement("b");
+      who.textContent = m.handle || T("board.someone");
+      const said = document.createElement("span");
+      said.textContent = m.text || "";
+      row.append(who, said);
+      box.append(row);
+    }
+    /* The ask, where the last line ends. Same jump the buttons above make —
+       one anchor, so there is one form on this page and not two. */
+    const go = document.createElement("a");
+    go.className = "dp-go";
+    go.href = "#waitsection";
+    go.textContent = T("land.roomGo");
+    go.addEventListener("click", () => {
+      const w = $("waitsection");
+      if (w) setTimeout(() => { (w.querySelector("input") || {}).focus?.(); }, 320);
+    });
+    box.append(go);
+    box.hidden = false;
+  } catch { /* the page is finished without it */ }
+})();
 
 /* THE PRESS PUTS THE CURSOR IN THE BOX. A bare #waitsection jump leaves the
  * form on screen and the keyboard shut, and on a phone the section heading
