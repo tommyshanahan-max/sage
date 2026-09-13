@@ -283,6 +283,11 @@
   /* The doorman's own lines, told apart by the paper they are on rather than
      by a label: he is the one voice in the room that is not a person. */
   .bub.bot{background:var(--raise);border-color:var(--t3);border-left-width:3px}
+  /* His, and tappable. The dotted underline is the only cue: a play button on
+     every one of his lines is a row of controls in a conversation. */
+  .bub.hear{cursor:pointer;text-decoration:underline dotted var(--t3);
+    text-underline-offset:4px}
+  .bub.hearing{border-color:var(--t3);box-shadow:0 0 0 2px var(--t3)}
 
   .bub.flag{outline:1px solid var(--t5);outline-offset:2px}
 
@@ -675,7 +680,7 @@ import { offerNotify } from "/notify.js";
 import { OFF } from "/off.js";
 /* The doorman, here too — see mo.js. Messages is where somebody most often
    has a question they would rather ask than guess at. */
-import { mountMo } from "/mo.js";
+import { mountMo, moHear } from "/mo.js";
 import { atText, atPicker } from "/at.js";
 
 const $ = (id) => document.getElementById(id);
@@ -1444,6 +1449,23 @@ async function sendNew() {
  * for a member's own line: this board does not put a member's photograph on
  * what they said.
  */
+/* TAP TO HEAR HIM. One line at a time, asked for, never automatic — and the
+   cue goes away for good on a box with no voice, because a thing that cannot
+   work should not sit on the screen offering to. See moHear. */
+function hearable(bub, text) {
+  bub.classList.add("hear");
+  bub.setAttribute("role", "button");
+  bub.setAttribute("tabindex", "0");
+  const go = () => moHear(text, (on) => {
+    if (on === "off") { bub.classList.remove("hear", "hearing"); return; }
+    bub.classList.toggle("hearing", Boolean(on));
+  });
+  bub.addEventListener("click", go);
+  bub.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+  });
+}
+
 function doorFace(m) {
   const name = m.handle || "?";
   const av = el("span", "av small", initial(name));
@@ -1743,6 +1765,11 @@ async function drawDoor(key) {
     /* @somebody drawn as a mention rather than as the characters they typed.
        Never innerHTML: the text is somebody else's typing — see at.js. */
     atText(bub, m.text || "", doorNames(key));
+    /* HIS LINES ARE TAPPABLE AND NOBODY ELSE'S ARE.
+       He has a voice and it was only ever reachable inside his own panel,
+       which is off. A person's message read aloud by a machine is a different
+       and worse idea — it is his line, in his voice, or nothing. */
+    if (m.bot && m.text) hearable(bub, m.text);
     col.append(bub);
     row.append(col);
     talk.append(row);

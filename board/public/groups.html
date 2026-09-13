@@ -233,6 +233,9 @@
     border:1px solid var(--line);font-size:1rem;line-height:1.5;overflow-wrap:anywhere;
     white-space:pre-wrap}
   .said.mine .bub{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .bub.hear{cursor:pointer;text-decoration:underline dotted var(--t3);
+    text-underline-offset:4px}
+  .bub.hearing{border-color:var(--t3);box-shadow:0 0 0 2px var(--t3)}
   /* One line under the bubble carrying everything small: who, when, and the
      way to report it. Reporting used to be its own line under every incoming
      message, which put a red-ish call to action beside every sentence anybody
@@ -398,6 +401,7 @@
 <script type="module">
 import { T, when, setLang, pickLang, langButton, lang } from "/i18n.js";
 import { atText, atPicker } from "/at.js";
+import { moHear } from "/mo.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -690,6 +694,22 @@ function picker() {
 
 /* --------------------------------------------------------------- one room */
 
+/* Tap his line to hear it — see moHear. Asked for, one at a time, and the cue
+   goes for good on a box with no voice. */
+function hearMo(bub, text) {
+  bub.classList.add("hear");
+  bub.setAttribute("role", "button");
+  bub.setAttribute("tabindex", "0");
+  const go = () => moHear(text, (on) => {
+    if (on === "off") { bub.classList.remove("hear", "hearing"); return; }
+    bub.classList.toggle("hearing", Boolean(on));
+  });
+  bub.addEventListener("click", go);
+  bub.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+  });
+}
+
 function paintRoom(g) {
   $("title").textContent = g.name || nameOf(g);
   $("sub").textContent = T("grp.inIt", { n: g.who.length });
@@ -728,6 +748,10 @@ function paintRoom(g) {
     const bub = el("div", "bub");
     /* @somebody drawn as a mention. Never innerHTML — see at.js. */
     atText(bub, m.text || "", g.who.map((x) => x.handle).filter(Boolean));
+    /* HIS LINES ARE TAPPABLE AND NOBODY ELSE'S ARE. He has a voice and it was
+       only reachable inside his own panel, which is off. A person's message
+       read aloud by a machine is a different and worse idea. */
+    if (m.bot && m.text) hearMo(bub, m.text);
     wrap.append(bub);
     const meta = el("div", "meta");
     meta.append(el("span", null, (m.mine ? "" : (m.handle || "") + " · ") + when(m.at)));

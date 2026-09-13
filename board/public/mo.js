@@ -1111,6 +1111,55 @@ export const moIsOpen = () => Boolean(MOSHUT);
  *               put one. No onKeep, no Keep button.
  *    `onChange` redraw, for a page holding a way back to him
  */
+/** HIM, OUT LOUD, ANYWHERE HE SPEAKS.
+ *
+ *  speakLine above belongs to his panel: it repaints it, and it is the only
+ *  place on this board that could play him. He is a member of every room now
+ *  and his lines are ordinary messages in them, so the rooms need the same
+ *  thing without the panel attached to it.
+ *
+ *  ASKED FOR, NEVER AUTOMATIC, and the rule is the same one: a phone that
+ *  starts talking in a quiet carriage is a phone somebody silences for good.
+ *  The caller decides what is tapped; this only plays.
+ *
+ *  MUST BE CALLED FROM THE HANDLER ITSELF — see primeSound. A phone only lets
+ *  a page start audio inside the gesture that asked for it, and an await
+ *  before the prime is a gesture that has already ended.
+ *
+ *  `on` is called with true while it is playing and false when it stops, so a
+ *  caller can show which line is talking. It is called with "off" once and for
+ *  ever if this box has no voice at all — 503 — because a thing that cannot
+ *  work should not stay on the screen offering to.
+ */
+export function moHear(text, on) {
+  if (mute) { on && on("off"); return; }
+  primeSound();
+  stopSound();
+  if (playing === text) { playing = ""; on && on(false); return; }
+  playing = text;
+  on && on(true);
+  fetch("/api/butler-voice", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-board-device": device() },
+    body: JSON.stringify({ text, lang: lang() === "zh" ? "zh" : "en" }),
+  })
+    .then((r) => {
+      if (r.status === 503) { mute = true; on && on("off"); }
+      return r.ok ? r.blob() : Promise.reject(new Error(String(r.status)));
+    })
+    .then((blob) => {
+      if (playing !== text) return;
+      if (!sound) { sound = new Audio(); sound.playsInline = true; }
+      heard = URL.createObjectURL(blob);
+      const done = () => { if (playing === text) { playing = ""; on && on(false); } };
+      sound.onended = done;
+      sound.onerror = done;
+      sound.src = heard;
+      return sound.play().catch(done);
+    })
+    .catch(() => { if (playing === text) { playing = ""; on && on(false); } });
+}
+
 export function mountMo(host) {
   dress();
   watchLang();
