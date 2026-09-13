@@ -740,8 +740,13 @@ function paint() {
   document.title = T("site.title") + " — " + T("land.title");
   $("brandname").textContent = T("site.title");
   $("navopen").textContent = T("land.enter");
-  $("navjoin").textContent = T("land.joinbar");
-  $("ctajoin").textContent = T("land.join");
+  /* A ROOM DOOR SAYS THE ROOM. "Get on the waiting list" is what this page is
+     for when somebody arrives cold; on a link somebody was sent into a room it
+     names the wrong thing — the list is how the room is kept small, not what
+     they came for. */
+  const rk = roomFromPath();
+  $("navjoin").textContent = T(rk ? "wait.goRoom" : "land.joinbar");
+  $("ctajoin").textContent = T(rk ? "wait.goRoom" : "land.join");
   $("ctaenter").textContent = T("land.enter");
   $("eyeline").textContent = T("land.eyebrow");
   // Rebuilt with the words, not only when the numbers land — the language

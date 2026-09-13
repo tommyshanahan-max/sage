@@ -93,7 +93,19 @@ export function cleanWait(raw) {
    * the panel reads that row as "answer them where they replied". */
   const fromWrite = /^[a-f0-9]{20}$/.test(String(raw.fromWrite || ""))
     ? String(raw.fromWrite) : "";
-  if (!name || (!reach && !fromWrite)) return null;
+  /* OR A ROOM DOOR, WHICH ASKS FOR A NAME AND NOTHING ELSE.
+   *
+   * The third way a row can exist without a way to be reached, and the one
+   * that is now the common case: somebody tapped a link into a room, read
+   * three sentences and wants to answer them. Asking for a WeChat id at that
+   * moment is asking for a contact detail from a stranger in order to let
+   * them speak — which is the thing this board refuses everywhere else.
+   *
+   * The room is how they are reached. It is the room they are standing in and
+   * anybody inside can write to them there. */
+  const viaRoom = WAITROOMS_CHAT.includes(String(raw.viaRoom || ""))
+    ? String(raw.viaRoom) : "";
+  if (!name || (!reach && !fromWrite && !viaRoom)) return null;
   return {
     id: /^[a-f0-9]{20}$/.test(String(raw.id || "")) ? String(raw.id) : newId(),
     name,
@@ -101,6 +113,7 @@ export function cleanWait(raw) {
     // into an email: half of the people this is for do not use one.
     reach,
     fromWrite,
+    viaRoom,
     // Why they want in, in their own words. The only thing a member vouching
     // for a stranger has to go on.
     why: s(raw.why, 300),

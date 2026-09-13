@@ -225,7 +225,9 @@ export function waitBox() {
     chips.push([key, c]);
     rooms.append(c);
   }
-  form.append(el("p", "waitask", T("wait.which")), rooms);
+  /* A ROOM DOOR HAS ALREADY ANSWERED THIS. The link names the room, so five
+     chips are five ways to disagree with the thing you just tapped. */
+  if (!room) form.append(el("p", "waitask", T("wait.which")), rooms);
 
   const name = el("input");
   name.maxLength = 40;
@@ -244,6 +246,23 @@ export function waitBox() {
   why.placeholder = T("wait.why");
   const go = el("button", "btn", T("wait.go"));
   go.type = "submit";
+  /* ONE FIELD ON A ROOM DOOR.
+   *
+   * The list was the point, so the form asked for a way to be reached and a
+   * line about them. The rooms are the point now: somebody taps a link, reads
+   * three sentences from people they want to talk to, and the only thing
+   * between them and answering should be their own name.
+   *
+   * The other two are not deleted, they are moved: the line about them is what
+   * the room is for, and a way to be reached is a thing this board goes out of
+   * its way never to hold — see cleanPerson. The row stores a name and which
+   * door, and the rest is said in the room.
+   */
+  if (room) {
+    reach.hidden = true;
+    why.hidden = true;
+    go.textContent = T("wait.goRoom");
+  }
   form.append(name, reach, why, go);
   /* BEGUN, not focused. A tap that lands in a box and goes nowhere is not
      somebody trying; a typed character is. Once per page — the counter that
@@ -309,7 +328,8 @@ export function waitBox() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!name.value.trim() || !reach.value.trim()) return tell(T("wait.both"), true);
+    if (!name.value.trim()) return tell(T("wait.needName"), true);
+    if (!room && !reach.value.trim()) return tell(T("wait.both"), true);
     go.disabled = true;
     try {
       const r = await fetch("/api/wait", {
@@ -317,6 +337,10 @@ export function waitBox() {
         body: JSON.stringify({
           name: name.value.trim(), reach: reach.value.trim(),
           why: why.value.trim(), room, device: device(),
+          /* Which door they came through, so the row is allowed to carry no
+             way of being reached — see cleanWait. Checked against the path on
+             the server; a browser saying so does not make it true. */
+          viaRoom: room ? 1 : 0,
           via: viaFromUrl(), w: wFromUrl(), a: aFromUrl(), quiet: quietHere(),
         }),
       });

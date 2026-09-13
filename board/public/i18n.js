@@ -1252,6 +1252,9 @@ export const STRINGS = {
                         "这屋里正在说 · 门口 {n} 个人"],
   "land.roomGo":       ["Put your name down to answer them",
                         "留个名字就能接上话"],
+  /* The moment somebody is in a room for the first time, said where the
+     box they just typed into is. */
+  "dr.inNow":          ["You are in. Say something.", "进来了，说句话吧。"],
   "dr.sendLink":       ["Send", "发送"],
   "dr.sendWho":        ["Add somebody to this room — their name",
                         "拉个人进这个房间 — 名字"],
@@ -1291,6 +1294,10 @@ export const STRINGS = {
   "wait.reach":        ["WeChat or email", "微信或邮箱"],
   "wait.why":          ["One line about you (optional)", "一句话介绍自己（选填）"],
   "wait.go":           ["Join the list", "加入名单"],
+  /* On a room door, where the room is the point and the list is only how
+     the room is kept small. One field, and the button says what happens. */
+  "wait.goRoom":       ["Join this room", "进这个房间"],
+  "wait.needName":     ["Your name.", "写个名字。"],
   "wait.both":         ["A name and one way to reach you.", "名字和一个联系方式。"],
   "wait.done":         ["You are on the list.", "已经加进名单了。"],
   "wait.again":        ["Changed — the old answer is replaced.", "改好了，旧的那条已经被替换。"],

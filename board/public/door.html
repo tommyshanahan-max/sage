@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Exchange</title>
+<meta name="description" content="A room at The Exchange.">
+<meta property="og:title" content="交换 · The Exchange">
+<meta property="og:description" content="Somebody sent you into this room.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="{{HERE}}">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/site.css">
+<style>
+  /* THE LINK OPENS THE ROOM.
+   *
+   * It opened the page that sells the board — a headline, a pitch and two
+   * buttons — which is the right page for somebody who found the address cold
+   * and the wrong one for somebody a friend put into a conversation. This page
+   * is the conversation, and the only thing under it is a name.
+   *
+   * Deliberately small. It is the first thing most people will ever see of
+   * this, it is read on a phone in a taxi, and everything on it that is not
+   * the room or the box is something between the two. */
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
+  main{max-width:34rem;margin:0 auto;min-height:100dvh;
+    display:flex;flex-direction:column;padding:0 1.15rem}
+  .head{position:sticky;top:0;z-index:20;background:var(--paper);
+    display:flex;align-items:center;gap:.7rem;padding:1.1rem 0 .7rem;
+    border-bottom:1px solid var(--hair)}
+  .head .mk{width:2.2rem;height:2.2rem;border-radius:50%;flex:0 0 auto;
+    display:grid;place-items:center;background:var(--accent);color:#fff;
+    font-size:.95rem}
+  .head b{display:block;font-family:var(--serif);font-weight:400;font-size:1.15rem;
+    line-height:1.2}
+  .head span{display:block;font-size:.76rem;color:var(--muted)}
+  .head .nm{flex:1;min-width:0}
+
+  .talk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
+    gap:.55rem;padding:1rem 0 .8rem}
+  .said{display:flex;gap:.55rem;align-items:flex-start}
+  .said .av{width:2rem;height:2rem;font-size:.85rem;flex:0 0 auto;border-radius:50%;
+    display:grid;place-items:center;color:#fff}
+  .said .col{display:flex;flex-direction:column;min-width:0;max-width:82%}
+  .who{margin:0 0 .2rem;font-size:.72rem;color:var(--muted)}
+  .bub{padding:.6rem .8rem;border-radius:1.05rem;font-size:.95rem;line-height:1.5;
+    background:var(--raise);color:var(--ink);border:1px solid var(--line);
+    border-bottom-left-radius:.35rem;white-space:pre-wrap;overflow-wrap:anywhere}
+  .said.mine{flex-direction:row-reverse}
+  .said.mine .bub{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);
+    border-bottom-left-radius:1.05rem;border-bottom-right-radius:.35rem}
+  .when{align-self:center;font-size:.7rem;color:var(--muted);margin:.2rem 0}
+
+  /* WHERE THE COMPOSER GOES, BECAUSE IT IS WHAT THE COMPOSER BECOMES. The ask
+     is not a sign-up page in front of the room: it is the box you type in,
+     asking for a name the first time. */
+  .foot{position:sticky;bottom:0;background:var(--paper);
+    padding:.5rem 0 calc(.9rem + env(safe-area-inset-bottom));
+    border-top:1px solid var(--hair)}
+  .foot .row{display:flex;gap:.5rem;align-items:stretch}
+  .foot input{flex:1;min-width:0;font:inherit;font-size:1rem;padding:.7rem .9rem;
+    border:1px solid var(--line);border-radius:1.1rem;background:var(--raise);
+    color:var(--ink)}
+  .foot button{flex:0 0 auto;font:inherit;font-size:.95rem;padding:.7rem 1.1rem;
+    border:0;border-radius:1.1rem;background:var(--accent);color:var(--accent-ink);
+    cursor:pointer;white-space:nowrap}
+  .foot button:disabled{opacity:.5}
+  .foot .note{margin:.5rem 0 0;font-size:.74rem;color:var(--muted)}
+  .foot .note.bad{color:var(--t5)}
+  .foot .lang{margin-left:auto}
+  .ins{margin:.6rem 0 0}
+</style>
+</head>
+<body>
+<main>
+  <div class="head">
+    <div class="mk">交</div>
+    <div class="nm"><b id="rname">—</b><span id="rsub"></span></div>
+    <span id="langslot"></span>
+  </div>
+  <div class="talk" id="talk"></div>
+  <div class="foot">
+    <div class="row">
+      <input id="box" maxlength="600" autocomplete="off">
+      <button id="go" type="button">—</button>
+    </div>
+    <p class="note" id="note" hidden></p>
+    <p class="ins" id="install" hidden></p>
+  </div>
+</main>
+
+<script type="module">
+import { T, when, setLang, pickLang, langButton } from "/i18n.js";
+import { device, roomFromPath, viaFromUrl, wFromUrl } from "/wait.js";
+import { offerInstall } from "/install.js";
+
+setLang(pickLang());
+const $ = (id) => document.getElementById(id);
+const KEY = roomFromPath() || "other";
+let ROOM = null;
+/* Whether this browser is in the room yet. The one bit that decides what the
+   box at the bottom is: a name, or a message. */
+let IN = false;
+
+$("langslot").append(langButton(() => { paint(); }));
+
+const wash = (s) => {
+  let h = 0;
+  for (const ch of String(s)) h = (h * 31 + ch.codePointAt(0)) % 360;
+  return "hsl(" + h + " 34% 55%)";
+};
+
+async function load() {
+  try {
+    ROOM = await fetch("/api/door?room=" + encodeURIComponent(KEY), {
+      cache: "no-store", headers: { "x-board-device": device() },
+    }).then((r) => (r.ok ? r.json() : null));
+  } catch { ROOM = null; }
+  IN = Boolean(ROOM && ROOM.how && ROOM.how !== "peek");
+  paint();
+}
+
+function paint() {
+  $("rname").textContent = T("waitroom." + KEY)
+    + (ROOM ? "  (" + ROOM.n + ")" : "");
+  $("rsub").textContent = T("dr.sub");
+  $("go").textContent = T(IN ? "note.send" : "wait.goRoom");
+  $("box").placeholder = T(IN ? "dr.say" : "wait.name");
+  $("box").maxLength = IN ? 600 : 40;
+
+  const talk = $("talk");
+  talk.textContent = "";
+  if (!ROOM || !ROOM.says.length) {
+    const p = document.createElement("p");
+    p.className = "when";
+    p.textContent = T("dr.quiet");
+    talk.append(p);
+    return;
+  }
+  let day = "";
+  for (const m of ROOM.says) {
+    const dd = String(m.at).slice(0, 10);
+    if (dd !== day) {
+      day = dd;
+      const w = document.createElement("p");
+      w.className = "when";
+      w.textContent = when(m.at);
+      talk.append(w);
+    }
+    const row = document.createElement("div");
+    row.className = "said" + (m.mine ? " mine" : "");
+    if (!m.mine) {
+      const av = document.createElement("span");
+      av.className = "av";
+      av.textContent = (m.handle || "?").slice(0, 1).toUpperCase();
+      av.style.background = wash(m.handle || "?");
+      row.append(av);
+    }
+    const col = document.createElement("div");
+    col.className = "col";
+    if (!m.mine) {
+      const who = document.createElement("p");
+      who.className = "who";
+      who.textContent = (m.handle || T("board.someone"))
+        + (m.bot ? "" : " · " + T(m.inside ? "dr.inside" : "dr.waiting"));
+      col.append(who);
+    }
+    const bub = document.createElement("div");
+    bub.className = "bub";
+    bub.textContent = m.text || "";
+    col.append(bub);
+    row.append(col);
+    talk.append(row);
+  }
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
+const tell = (key, bad) => {
+  const n = $("note");
+  n.hidden = false;
+  n.classList.toggle("bad", Boolean(bad));
+  n.textContent = T(key);
+};
+
+$("go").addEventListener("click", async () => {
+  const v = $("box").value.trim();
+  if (!v) { $("box").focus(); return; }
+  $("go").disabled = true;
+  try {
+    if (!IN) {
+      /* A NAME AND NOTHING ELSE. Not an email, not a WeChat id, not a sentence
+         about themselves — see cleanWait. The room is how they are reached and
+         what they are looking for is the next thing they will type anyway. */
+      const r = await fetch("/api/wait", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: v, room: KEY, viaRoom: 1, device: device(),
+                               via: viaFromUrl(), w: wFromUrl() }),
+      });
+      if (!r.ok) throw new Error("no");
+      $("box").value = "";
+      IN = true;
+      tell("dr.inNow");
+      /* The home screen, asked for once, at the only moment it is obviously
+         worth it: they are in a room and about to want to come back to it. */
+      offerInstall($("install"), true);
+      await load();
+      $("box").focus();
+    } else {
+      const r = await fetch("/api/group/say", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device: device(), group: ROOM.id, text: v }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "no");
+      $("box").value = "";
+      $("note").hidden = true;
+      await load();
+    }
+  } catch (e) {
+    tell(String(e.message) === "contact" ? "note.noContact" : "act.again", true);
+  }
+  $("go").disabled = false;
+});
+
+$("box").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("go").click(); }
+});
+
+load();
+</script>
+</body>
+</html>

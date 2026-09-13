@@ -746,7 +746,25 @@ app.get(["/about", "/landing.html"], (req, res, next) => page("landing.html", re
  * the four names. An unknown one falls through to the ordinary front door
  * rather than a 404: a link somebody typed wrong should still open the board.
  */
-app.get("/r/:room", (req, res, next) => page("landing.html", req, res, next));
+/* THE LINK OPENS THE ROOM.
+ *
+ * This served the landing page — a headline, a pitch and two buttons — which
+ * is the right page for somebody who found the address cold and the wrong one
+ * for somebody a friend has just put into a conversation. They arrived at a
+ * sales page for a thing they had already agreed to.
+ *
+ * So /r/:room is the room: the last lines said in it, and a box asking for a
+ * first name. The landing page is still the landing page and is still at "/"
+ * and /about, which is where a cold address belongs.
+ */
+app.get("/r/:room", (req, res, next) => {
+  if (!store.WAITROOMS_CHAT.includes(String(req.params.room || ""))) {
+    // A campaign name rather than a room — /r/agents and the like. The sales
+    // page is the right answer for those and always was.
+    return page("landing.html", req, res, next);
+  }
+  return page("door.html", req, res, next);
+});
 
 /* The second front door.
  *
@@ -3140,7 +3158,19 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   const name = String(req.body?.name || "").trim();
   const reach = String(req.body?.reach || "").trim();
-  if (!name || !reach) return res.status(400).json({ error: "both" });
+  /* A ROOM DOOR ASKS FOR A NAME AND NOTHING ELSE.
+   *
+   * The list was the point, so the form asked for a way to be reached. The
+   * rooms are the point now, and the only thing that should stand between
+   * somebody and answering three sentences they have just read is their own
+   * name.
+   *
+   * CHECKED AGAINST THE ROOM, NOT AGAINST THE BROWSER'S WORD FOR IT. `viaRoom`
+   * counts only if `room` names a room this board actually has; otherwise any
+   * request could drop the requirement by claiming it. */
+  const viaRoom = Boolean(req.body?.viaRoom)
+    && store.WAITROOMS_CHAT.includes(String(req.body?.room || ""));
+  if (!name || (!reach && !viaRoom)) return res.status(400).json({ error: "both" });
 
   const out = await change((board) => {
     /* Already in, and asking anyway. Somebody who cleared their browser can
@@ -3178,6 +3208,8 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
     const afrom = asent && board.announces.find((x) => x.code === asent);
     const row = store.cleanWait({ name, reach, why: req.body?.why,
       room: req.body?.room, by: me, via: from ? from.id : "",
+      // Which door let them in with a name alone — see cleanWait.
+      viaRoom: viaRoom ? String(req.body?.room || "") : "",
       fromWait: wfrom ? wfrom.id : "", shown: true,
       fromA: afrom ? afrom.code : "",
       quiet: req.body?.quiet === true });
