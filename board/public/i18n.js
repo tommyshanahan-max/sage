@@ -1233,6 +1233,16 @@ export const STRINGS = {
   /* The people screen, behind ⋯ and for a member only. A room is the talk; who
      is in it is something you go and look at, the way a WeChat group keeps its
      four hundred members one tap away and shows you the conversation. */
+  /* Letting somebody in, from the room they are standing in — staff only, and
+     the route says so too. It does not make them a member: it moves them into
+     the waiting room proper with the clock running, and they still have to
+     turn up and say who they are. The confirm line says exactly that, because
+     the button would otherwise read as "admit" and it is not. */
+  "dr.letIn":          ["Let {who} in", "\u8ba9 {who} \u8fdb\u6765"],
+  "dr.letInSure":      ["Let {who} in? They get the room and 3 days to make a profile.",
+                        "\u8ba9 {who} \u8fdb\u6765\uff1f\u4ed6\u4eec\u4f1a\u62ff\u5230\u623f\u95f4\uff0c\u4e09\u5929\u5185\u628a\u8d44\u6599\u586b\u597d\u3002"],
+  "dr.letInDone":      ["Let in \u00b7 waiting for them to turn up",
+                        "\u5df2\u7ecf\u8ba9\u8fdb\u6765\u4e86 \u00b7 \u7b49\u4ed6\u4eec\u73b0\u8eab"],
   "dr.here":           ["{n} at this door", "这个门口 {n} 个人"],
   "dr.spoke":          ["said something", "说过话"],
   /* Where they stand in the queue. First come, one place up per person

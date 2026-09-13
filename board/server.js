@@ -4416,6 +4416,11 @@ app.get("/api/queue", async (req, res) => {
       name: x.w.name, room: x.w.room, why: x.w.why,
       levelBand: x.w.levelBand, type: x.w.type, want: x.w.want,
       brought: x.n || 0, vouches: x.v || 0,
+      /* ALREADY LET IN AND NOT YET ARRIVED. The door screen offers "let in" on
+         a row and has to know which rows it is not for; without it the button
+         sits on somebody who was admitted this morning and is still deciding
+         whether to make a page. */
+      up: Boolean(x.w.up),
       // Six is more names than the row can draw; the count carries the rest.
       vouchedBy: (spoke.get(x.w.id) || []).slice(0, 6),
       /* Whether this reader has already vouched, so the button can say so
@@ -6882,8 +6887,15 @@ app.get("/api/door", notesOff, async (req, res) => {
              ...(w && how === "member" ? { wid: w.id } : {}) };
   };
 
+  /* WHETHER THIS READER MAY LET SOMEBODY IN, so the screen can offer it.
+     Staff, and nobody else: admission is the operator's, and a board where any
+     member can open the door is not one with a door. Read from BOARD_STAFF the
+     same way standing() reads it. */
+  const mine = board.people.find((q) => q.by === me && q.handle);
+  const staff = Boolean(mine && STAFF.has(String(mine.handle).toLowerCase()));
+
   res.json({
-    room: key, id, how,
+    room: key, id, how, staff,
     /* HOW MANY ARE STANDING IN IT. The people, not the lines — a room of one
        person talking to themselves and a room of six is the thing somebody
        wants to know before they read a word of it. */
@@ -6894,6 +6906,51 @@ app.get("/api/door", notesOff, async (req, res) => {
       .map((m) => ({ id: m.id, at: m.at, text: m.text,
                      mine: m.by === me, reported: Boolean(m.report), ...named(m.by) })),
   });
+});
+
+/** LETTING SOMEBODY IN, FROM THE ROOM THEY ARE STANDING IN.
+ *
+ *  The same thing /api/waiting/up does and the same thing `make admit` does in
+ *  bulk — moved to where the decision is actually made. Whoever runs this
+ *  board reads the door on a phone, in the room, next to what the person
+ *  wrote and who spoke for them; going to a terminal to act on it meant the
+ *  reading and the deciding happened in two places on two machines, and the
+ *  second one usually did not happen.
+ *
+ *  STAFF, AND NOBODY ELSE. Admission is the operator's. A member can vouch,
+ *  which moves somebody up one place, and that is the whole of what a member
+ *  can do about the door — see /api/vouch. A board where any member can open
+ *  it is not a board with a door.
+ *
+ *  IT DOES NOT LET THEM IN. It moves them into the waiting room proper with
+ *  the clock running: they still have to open it, write a name and a line, and
+ *  put up a face. Nothing here mints a code and nothing here makes a member.
+ */
+app.post("/api/door/up", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.id || "");
+  if (!me || !id) return res.status(400).json({ error: "no" });
+  const out = await change((board) => {
+    const mine = board.people.find((q) => q.by === me && q.handle
+      && q.state === "published");
+    if (!mine || !STAFF.has(String(mine.handle).toLowerCase())) {
+      return { error: "notyours" };
+    }
+    const w = board.waits.find((x) => x.id === id);
+    if (!w || w.done) return { error: "gone" };
+    if (w.up) return { ok: true, name: w.name, already: true };
+    w.up = true;
+    /* Stamped, because it is what the picker counts — see /api/waiting/up and
+       liftSome. A row lifted by hand that did not carry the day would let the
+       automatic three go out on top of it. */
+    w.upAt = new Date().toISOString();
+    w.ups = (w.ups || 0) + 1;
+    return { ok: true, name: w.name };
+  });
+  if (out?.error) {
+    return res.status(out.error === "notyours" ? 403 : 404).json(out);
+  }
+  res.json(out);
 });
 
 /** WHO MAY READ AND WRITE IN A DOOR ROOM.

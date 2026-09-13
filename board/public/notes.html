@@ -245,7 +245,15 @@
      shrink to their content and sit in from the edge, out of line with the
      heading over them. */
   .dinfo{align-self:stretch}
-  .dinfo .wperson{width:100%}
+  .dinfo .dperson{border-bottom:1px solid var(--hair)}
+  .dinfo .wperson{width:100%;border-bottom:0}
+  /* The one action a door row carries, under it rather than on it: the row is
+     a link to a conversation, and a button inside a link is a tap nobody can
+     aim. */
+  .letin{display:block;margin:-.3rem 0 .7rem 3.6rem;padding:.3rem .85rem;
+    border:1px solid var(--accent);border-radius:99px;background:none;
+    font:inherit;font-size:.78rem;color:var(--accent);cursor:pointer}
+  .letsaid{margin:-.3rem 0 .7rem 3.6rem;font-size:.74rem;color:var(--t2)}
   .wend{flex:0 0 auto;margin-left:auto;display:flex;flex-direction:column;
     align-items:flex-end;gap:.15rem;font-size:.72rem;color:var(--muted);
     text-align:right}
@@ -1483,6 +1491,11 @@ function doorPeople(key) {
       || String(a.at).localeCompare(String(b.at)));
   box.append(el("p", "when", T("dr.here", { n: rows.length })));
   for (const w of rows) {
+    /* THE ROW AND ITS ACTION ARE ONE THING. Drawn as siblings, the rule under
+       the row fell between the person and their own button, so "Let in ·
+       waiting for them to turn up" read as belonging to the person below it.
+       One wrapper, one rule, under both. */
+    const wrap = el("div", "dperson");
     const a = el("a", "wperson");
     a.href = "#w:" + w.id;
     const av = el("span", "av small", initial(w.name));
@@ -1510,12 +1523,52 @@ function doorPeople(key) {
        which one they are is eighteen facts nobody asked for; the question is
        who is getting in soon, and that is answered by the top of the list
        saying so and the rest saying nothing. */
-    if (w.place === 1) end.append(el("span", "next", T("dr.next")));
+    /* SOMEBODY ALREADY LET IN IS NOT IN A QUEUE. "no. 2 in line" on a person
+       who is through the door and deciding whether to make a page is the
+       screen contradicting the line under it. */
+    if (w.up) { /* nothing: where they stand is said below */ }
+    else if (w.place === 1) end.append(el("span", "next", T("dr.next")));
     else if (w.place && w.place <= 3) end.append(el("span", null, T("dr.place", { n: w.place })));
     if (w.vouches) end.append(el("span", "vou", T("note.waitVouched", { n: w.vouches })));
     if (said.has(w.id)) end.append(el("span", null, T("dr.spoke")));
     if (end.childNodes.length) a.append(end);
-    box.append(a);
+    wrap.append(a);
+
+    /* LETTING THEM IN, FROM HERE.
+     *
+     * This is where the decision is actually made: in the room, next to what
+     * they wrote and who spoke for them. It used to be a command on the box,
+     * which meant reading happened on a phone and acting happened on a laptop
+     * — and the second one mostly did not happen.
+     *
+     * Under the row rather than on it, because the row is a link to a
+     * conversation and a button inside a link is a tap nobody can aim. Staff
+     * only; the route says so too. */
+    if (DOOR.staff && !w.up) {
+      const go = el("button", "letin");
+      go.type = "button";
+      go.textContent = T("dr.letIn", { who: w.name });
+      go.addEventListener("click", async () => {
+        if (!window.confirm(T("dr.letInSure", { who: w.name }))) return;
+        go.disabled = true;
+        try {
+          const r = await fetch("/api/door/up", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device, id: w.id }),
+          });
+          if (!r.ok) throw new Error("no");
+          /* The queue row this button reads from lives on the Messages load,
+             so the whole screen is refetched rather than the flag flipped
+             here — one account of who is in, not two. */
+          await load();
+          drawDoor(key);
+        } catch { go.disabled = false; go.textContent = T("act.again"); }
+      });
+      wrap.append(go);
+    } else if (DOOR.staff && w.up) {
+      wrap.append(el("p", "letsaid", T("dr.letInDone")));
+    }
+    box.append(wrap);
   }
   return box;
 }
