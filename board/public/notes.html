@@ -189,7 +189,9 @@
     min-height:calc(100dvh - 7.6rem)}
   .talk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
     gap:.55rem;padding:.2rem 0 .6rem}
-  /* For what is a screen rather than a conversation — see drawDoor. */
+  /* For what is a screen rather than a conversation — the people at this door,
+     behind ⋯. Bottom-aligned, a short list opened with half a screen of
+     nothing over it. */
   .talk.top{justify-content:flex-start}
   .bub{max-width:82%;padding:.6rem .8rem;border-radius:1.05rem;font-size:.95rem;
     line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -213,21 +215,19 @@
   .said .av{width:2rem;height:2rem;font-size:.85rem;flex:0 0 auto;box-shadow:none}
   .said .col{display:flex;flex-direction:column;min-width:0;max-width:82%}
   .said .bub{max-width:100%}
-  /* THE PEOPLE IN THE ROOM, behind ⋯. Four across and not WeChat's five:
-     it is the grid groups.html already uses for the same screen, and one
-     product disagreeing with itself about how wide a face is would be worse
-     than a column. */
-  .dinfo .faces{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem .6rem;
-    margin:.6rem 0 0}
-  .dinfo .cell{display:flex;flex-direction:column;align-items:center;gap:.45rem;
-    min-width:0;text-decoration:none;color:inherit}
-  .dinfo .cell .av{width:3.2rem;height:3.2rem;font-size:1.15rem;box-shadow:none}
-  .dinfo .cell span:last-child{font-size:.75rem;line-height:1.3;color:var(--muted);
-    text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-    max-width:100%}
-  .domore{display:block;width:100%;margin:1.2rem 0 .4rem;padding:.75rem 0;
-    border:0;background:none;cursor:pointer;font:inherit;font-size:.85rem;
-    color:var(--muted)}
+  /* The end of a row at the door: where they stand, then who spoke for them.
+     Right-aligned and stacked, so the eye runs down one column rather than
+     hunting for the second fact on each line. */
+  /* The rows are inside .talk, which is a flex column — without this they
+     shrink to their content and sit in from the edge, out of line with the
+     heading over them. */
+  .dinfo{align-self:stretch}
+  .dinfo .wperson{width:100%}
+  .wend{flex:0 0 auto;margin-left:auto;display:flex;flex-direction:column;
+    align-items:flex-end;gap:.15rem;font-size:.72rem;color:var(--muted);
+    text-align:right}
+  .wend .vou{color:var(--t2)}
+  .wend .next{color:var(--accent);font-weight:600}
 
   /* Who said it and which side of the door they are on. Over the bubble,
      small, because it is a thing you check rather than read. */
@@ -1429,57 +1429,59 @@ function doorName(m) {
  * This was under the talk, and on the real board that meant Film & TV opened
  * as eighteen strangers with the box to type in below all of them. A WeChat
  * group of four hundred opens as the conversation and nothing else: the count
- * is in the title, the members are one tap away. A room is the talk. The
+ * is in the title and the members are one tap away. A room is the talk. The
  * people in it are something you check.
  *
- * A GRID OF FACES AND NOT A LIST OF ROWS, which is both what that screen is in
- * WeChat and what a group room already is in groups.html — one shape for the
- * people in a room, not two. It answers the question somebody actually opens
- * it with: is there anybody in there I know. What they wrote on the way in is
- * a sentence you read about one person, and it is on that person, one tap
- * further, where reading it is what you came to do.
- *
- * Everybody, twenty at a time — the screen exists to show who is here.
- * Queue order, the board's own: first come, one place up per person somebody
- * brought in, decided in queueOrder and not worked out again here.
+ * Everybody, not the front six — a screen somebody opened on purpose to see
+ * who is here should show who is here. Queue order, the board's own: first
+ * come, one place up per person somebody brought in, decided in queueOrder and
+ * not worked out again on this screen.
  */
 function doorPeople(key) {
   const box = el("div", "dinfo");
+  const said = new Set((DOOR.says || []).map((m) => m.wid).filter(Boolean));
   const rows = QUEUE.filter((w) =>
     (WAITROOMS.includes(w.room) ? w.room : "other") === key)
     .sort((a, b) => (a.place ?? 1e9) - (b.place ?? 1e9)
       || String(a.at).localeCompare(String(b.at)));
   box.append(el("p", "when", T("dr.here", { n: rows.length })));
-
-  const grid = el("div", "faces");
-  const some = DOORMORE === key ? rows : rows.slice(0, 20);
-  for (const w of some) {
-    const cell = el("a", "cell");
-    cell.href = "#w:" + w.id;
-    const av = el("span", "av", initial(w.name));
+  for (const w of rows) {
+    const a = el("a", "wperson");
+    a.href = "#w:" + w.id;
+    const av = el("span", "av small", initial(w.name));
     av.style.background = wash(w.name);
     if (w.photo) {
       const img = Object.assign(document.createElement("img"),
         { src: "/api/wait-media?id=" + encodeURIComponent(w.photo), alt: "", loading: "lazy" });
       img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
     }
-    cell.append(av, el("span", null, w.name));
-    grid.append(cell);
-  }
-  box.append(grid);
-
-  if (DOORMORE !== key && rows.length > some.length) {
-    const more = el("button", "domore");
-    more.type = "button";
-    more.textContent = T("dr.more") + " \u2304";
-    more.addEventListener("click", () => { DOORMORE = key; drawDoor(key); });
-    box.append(more);
+    const m = el("div", "wm");
+    m.append(el("b", null, w.name));
+    /* What they wrote on the way in, which is the whole of what anybody knows
+       about them — and "said something in here", which is the other half of
+       what this screen is for. */
+    if (w.why) m.append(el("span", null, w.why));
+    a.append(av, m);
+    /* THE END OF THE ROW IS WHERE THEY STAND, which is the thing a member
+       reading this queue is deciding about and the reason the list beat a
+       grid of faces: who has been vouched for, and who is next through the
+       door. Stacked, because they are two answers and not one.
+       `place` is the board's own order and arrives on the row — see
+       queueOrder; nothing about the queue is worked out in a browser. */
+    const end = el("div", "wend");
+    /* ONLY THE FRONT OF THE QUEUE CARRIES A NUMBER. Eighteen rows each saying
+       which one they are is eighteen facts nobody asked for; the question is
+       who is getting in soon, and that is answered by the top of the list
+       saying so and the rest saying nothing. */
+    if (w.place === 1) end.append(el("span", "next", T("dr.next")));
+    else if (w.place && w.place <= 3) end.append(el("span", null, T("dr.place", { n: w.place })));
+    if (w.vouches) end.append(el("span", "vou", T("note.waitVouched", { n: w.vouches })));
+    if (said.has(w.id)) end.append(el("span", null, T("dr.spoke")));
+    if (end.childNodes.length) a.append(end);
+    box.append(a);
   }
   return box;
 }
-
-/* Opened past the first twenty, for one room. */
-let DOORMORE = "";
 
 /* The room whose people are open. One room, not a flag — opening another shuts
    it, and `back` shuts it before it leaves the room, the way a phone's back
@@ -1532,9 +1534,6 @@ async function drawDoor(key) {
   talk.classList.remove("top");
   if (DOORINFO === key) {
     act.hidden = true;                 // back is the way out, as in groups.html
-    /* THE TALK IS BOTTOM-ALIGNED so a short conversation sits above the box
-       rather than halfway up the phone. A grid of faces is not a conversation:
-       bottom-aligned it opened with half a screen of nothing over it. */
     talk.classList.add("top");
     talk.append(doorPeople(key));
     $("twrite").hidden = true;
