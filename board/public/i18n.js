@@ -1209,6 +1209,16 @@ export const STRINGS = {
 
   "wait.sentBy":       ["{who} thought you should be on this.", "{who} 觉得你该在这上面。"],
   "wait.which":        ["What are you here for?", "你是为了什么来的？"],
+  /* THE DOOR, ON THE SCREEN WHERE WRITING HAPPENS. The queue used to be at
+     the bottom of Browse, under a deck of people to follow — but a person at
+     the door has no page to follow, and the only thing a member can do about
+     them is write to them or vouch. So it lives on Messages, by room. */
+  "note.waitHead":     ["At the door", "门口"],
+  "note.waitSub2": [
+    "{n} people are waiting. Open a room to read what they wrote, or write to one of them.",
+    "有 {n} 个人在等。点开看他们写了什么，也可以直接找他们说话。"],
+  "note.waitMore":     [" and {n} more", "，还有 {n} 个"],
+  "note.waitVouched":  ["{n} vouched", "{n} 人担保"],
   "waitroom.film":     ["Film & TV", "影视"],
   "waitroom.invest":   ["Investing", "投资"],
   "waitroom.raise":    ["Raising", "融资"],

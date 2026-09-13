@@ -340,6 +340,23 @@
   .none button{border:0;background:var(--accent);color:var(--accent-ink);border-radius:99px;
     padding:.75rem 1.6rem;font-size:1rem}
 
+  /* The door, by room. A head you tap and the people under it. */
+  .wroom{display:flex;align-items:center;gap:.8rem;width:100%;text-align:left;
+    padding:.85rem 0;border:0;border-bottom:1px solid var(--hair);background:none;color:inherit}
+  .wroom .wm b{display:block;font-family:var(--serif);font-weight:400;font-size:1.1rem}
+  .wroom .wm span{display:block;font-size:.82rem;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wroom .wm{flex:1;min-width:0}
+  .wroom .wn{flex:0 0 auto;font-size:.8rem;color:var(--muted);border:1px solid var(--line);
+    border-radius:99px;padding:.1rem .6rem}
+  .wroom.on .wn{border-color:var(--accent);color:var(--accent)}
+  .wperson{display:flex;align-items:center;gap:.8rem;padding:.7rem 0 .7rem 1rem;
+    border-bottom:1px solid var(--hair);text-decoration:none;color:inherit}
+  .wperson .wm{flex:1;min-width:0}
+  .wperson .wm b{display:block;font-family:var(--serif);font-weight:400;font-size:1rem}
+  .wperson .wm span{display:block;font-size:.8rem;color:var(--muted);line-height:1.45}
+  .wperson .wv{flex:0 0 auto;font-size:.72rem;letter-spacing:.06em;color:var(--t2)}
+
   .safety{margin:2rem 0 0;padding:.95rem 1.05rem;background:var(--raise);
     border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
     font-size:.86rem;line-height:1.6;color:var(--ink-2)}
@@ -468,7 +485,25 @@
 
     <div class="rule" id="listrule"><span id="rulelabel"></span><i></i></div>
     <div id="list"></div>
+
+    <!-- THE PEOPLE AT THE DOOR, ON THE SCREEN WHERE WRITING HAPPENS.
+         The queue was at the bottom of Browse, under a deck somebody scrolls
+         to find people to follow. But a waiting person is not somebody to
+         follow — there is no page to follow — they are somebody to write to,
+         and this is the screen writing lives on. By room, because "who is
+         waiting" is a question about a room and not about forty-seven people
+         in a column. -->
+    <div id="waitwrap" hidden>
+      <div class="rule"><span id="waitlabel"></span><i></i></div>
+      <p class="cansub" id="waitsub"></p>
+      <div id="waitrooms"></div>
+    </div>
+
+    <!-- ABOVE THIS, NOT UNDER IT. "Nothing yet" is a screenful, and a member
+         with no conversations scrolling past all of it to reach the one part
+         of this screen that has anybody in it is the wrong way round. -->
     <div class="none" id="none" hidden></div>
+
     <p class="safety" id="safety"></p>
   </div>
 
@@ -629,6 +664,12 @@ let WAITING = false;
    open. One at a time: two compose boxes on a screen is two half-written
    messages and no way to tell which send button belongs to which. */
 let CAN = [];
+/* WHO IS AT THE DOOR, by room. Members only on the server — a 401 or 403 is
+   the ordinary answer for anybody who is not one — so a failure leaves this
+   empty and the section hidden, and says nothing. */
+let QUEUE = [];
+let OPENROOM = "";
+const WAITROOMS = ["film", "invest", "raise", "trade", "other"];
 
 /* THE GROUPS THIS PERSON IS IN, LISTED HERE AND NOT ON A PAGE OF THEIR OWN.
  *
@@ -675,6 +716,16 @@ async function load() {
         GROUPS = Array.isArray(g.groups) ? g.groups : [];
       } catch { GROUPS = []; }
     }
+    /* Not awaited with the notes either, and for the same reason: the queue is
+       a second question and the inbox must not wait on it. */
+    QUEUE = [];
+    if (YOU.handle) {
+      try {
+        const q = await fetch("/api/queue", { cache: "no-store" }).then((r) =>
+          (r.ok ? r.json() : { rows: [] }));
+        QUEUE = Array.isArray(q.rows) ? q.rows : [];
+      } catch { QUEUE = []; }
+    }
     /* Only for somebody who is IN. An invited arrival reading one note is not
        a member and has nobody to ask about; see the INVITED branch above,
        which returns before this. */
@@ -683,7 +734,7 @@ async function load() {
       where: "notes",
       first: () => [{ from: "you", text: T("but.hookIn") }],
     });
-  } catch { NOTES = []; CAN = []; UNREAD = 0; YOU = { handle: "", photo: "" }; }
+  } catch { NOTES = []; CAN = []; QUEUE = []; UNREAD = 0; YOU = { handle: "", photo: "" }; }
   paint();
 
   /* Marked read after they are on the screen, not before. Doing it in the
@@ -751,6 +802,18 @@ function threads() {
  *  first message they are the server's own answer — it said yes to this person
  *  by putting them on the list at all. */
 function blank(who) {
+  /* SOMEBODY AT THE DOOR OPENS A THREAD TOO. They have no page and no id on
+     the board — their whole account of themselves is the line they wrote on
+     the way in — so the name comes off the queue row. writePair on the server
+     is what actually lets the message through; see the note there. */
+  if (String(who).startsWith("w:")) {
+    const w = QUEUE.find((x) => "w:" + x.id === who);
+    if (!w) return null;
+    return {
+      who, handle: w.name, photo: "", notes: [], unread: 0, fresh: true,
+      last: { canAnswer: true, open: false, deal: undefined, at: "" },
+    };
+  }
   const q = CAN.find((x) => x.who === who);
   if (!q) return null;
   return {
@@ -816,6 +879,72 @@ function paint() {
   drawList(T0);
 }
 
+/** THE DOOR, BY ROOM.
+ *
+ *  Forty-seven names in one column is a list nobody reads. Five rooms with a
+ *  count and three names each is a question anybody can answer: is there
+ *  anybody in the room I care about. Tapping one opens it; tapping a person
+ *  opens a thread with them, which is the only thing a member can do about
+ *  somebody at the door and the reason this belongs on this screen.
+ */
+function drawWaiting() {
+  const wrap = $("waitwrap");
+  wrap.hidden = !QUEUE.length;
+  if (!QUEUE.length) return;
+  $("waitlabel").textContent = T("note.waitHead");
+  $("waitsub").textContent = T("note.waitSub2", { n: QUEUE.length });
+
+  const box = $("waitrooms");
+  fill(box);
+  const byRoom = new Map();
+  for (const w of QUEUE) {
+    const k = WAITROOMS.includes(w.room) ? w.room : "other";
+    byRoom.set(k, [...(byRoom.get(k) || []), w]);
+  }
+
+  for (const key of WAITROOMS) {
+    const rows = byRoom.get(key) || [];
+    if (!rows.length) continue;
+    const open = OPENROOM === key;
+
+    const head = el("button", "wroom" + (open ? " on" : ""));
+    head.type = "button";
+    const mid = el("div", "wm");
+    mid.append(el("b", null, T("waitroom." + key)));
+    /* THE NAMES, NOT JUST THE COUNT. "6 waiting" is a number somebody scrolls
+       past; "Nadia, Liza, Chen" is a row somebody opens because one of them
+       might be a person they know. Three, because four is wider than the row. */
+    mid.append(el("span", null, rows.slice(0, 3).map((w) => w.name).join(", ")
+      + (rows.length > 3 ? T("note.waitMore", { n: rows.length - 3 }) : "")));
+    head.append(mid, el("span", "wn", String(rows.length)));
+    head.addEventListener("click", () => { OPENROOM = open ? "" : key; paint(); });
+    box.append(head);
+    if (!open) continue;
+
+    for (const w of rows) {
+      const a = el("a", "wperson");
+      a.href = "#w:" + w.id;
+      const av = el("span", "av small", initial(w.name));
+      av.style.background = wash(w.name);
+      if (w.photo) {
+        const img = Object.assign(document.createElement("img"),
+          { src: "/api/wait-media?id=" + encodeURIComponent(w.photo), alt: "", loading: "lazy" });
+        img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
+      }
+      const m = el("div", "wm");
+      m.append(el("b", null, w.name));
+      /* What they wrote on the way in, which is the whole of what anybody
+         knows about them — and the only thing worth reading here. */
+      if (w.why) m.append(el("span", null, w.why));
+      a.append(av, m);
+      /* WHO SPOKE FOR THEM. A stranger somebody in here has already put their
+         name to is a different row from a stranger nobody has. */
+      if (w.vouches) a.append(el("span", "wv", T("note.waitVouched", { n: w.vouches })));
+      box.append(a);
+    }
+  }
+}
+
 function drawList(T0) {
   $("title").textContent = T("note.inbox");
   $("rulelabel").textContent = T("note.inbox");
@@ -824,6 +953,7 @@ function drawList(T0) {
   $("sub").textContent = unread ? T("note.newOnes", { n: unread }) : T("note.inboxSub");
 
   drawCan();
+  drawWaiting();
 
   const box = $("list");
   fill(box);
