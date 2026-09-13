@@ -1666,7 +1666,18 @@ export const RUN_MAX = 40;
 export const SHOTS_MAX = 6;
 export const RUN_SHOW = 5;
 
-export const GROUP_MAX = 10;
+/* FIVE, AND THE REASON IS A SCREENSHOT OF A WECHAT GROUP.
+ *
+ * 126 people called "Models (1)", and the top of it is a stranger advertising
+ * children's acting classes in Russian. That is what a group becomes the
+ * moment it is big enough that nobody in it is accountable to anybody: an
+ * audience, and then a place to sell to an audience.
+ *
+ * Ten was a number picked because it sounded small. Five is small enough that
+ * everybody in the room knows why each of the others is there, which is the
+ * only thing that stops it turning into the screenshot. The floor is three —
+ * two people already have a room, and it is better than this one. */
+export const GROUP_MAX = 5;
 
 export function cleanGroup(raw) {
   if (!raw || typeof raw !== "object") return null;

@@ -103,6 +103,14 @@
     border:0;background:var(--paper);padding:.75rem .1rem;text-align:left;
     font:inherit;color:var(--ink);cursor:pointer;
     transition:width .16s ease;touch-action:pan-y}
+  /* A GROUP'S ROW IS A LINK, and a link arrives underlined and blue. Said
+     here rather than inline so the two kinds of row cannot drift apart. */
+  a.trow{text-decoration:none;color:var(--ink)}
+  /* The rule between rows lives on .swipe, which a group row does not have —
+     it cannot be swiped away, because leaving a group is a different act with
+     a different warning on it. So it carries its own. */
+  #list > a.trow{border-bottom:1px solid var(--hair)}
+  #list > a.trow:last-child{border-bottom:0}
   .swipe.open .trow{width:calc(100% - 6.4rem)}
   @media (prefers-reduced-motion:reduce){.trow{transition:none}}
   .trow:hover{background:var(--raise)}
@@ -111,6 +119,25 @@
   .trow .avwrap{position:relative;flex:0 0 auto}
   /* A rounded SQUARE, which is what a messenger uses and what tells this row
      apart at a glance from the round faces in the strip above it. */
+  /* A GROUP'S FACE: the people in it, stacked, rather than one of them.
+     Three at most — a fourth at this size is a smudge — and the count lives
+     under the name instead. */
+  .pile{position:relative;overflow:visible;background:none!important}
+  .pile .sm{position:absolute;top:50%;left:50%;width:64%;height:64%;
+    border-radius:50%;display:grid;place-items:center;overflow:hidden;
+    font-size:.62em;color:#fff;border:2px solid var(--card,var(--raise));
+    transform:translate(-50%,-50%)}
+  .pile .sm img{width:100%;height:100%;object-fit:cover}
+  .pile .sm:nth-child(1){transform:translate(-85%,-70%)}
+  .pile .sm:nth-child(2){transform:translate(-15%,-70%)}
+  .pile .sm:nth-child(3){transform:translate(-50%,-10%)}
+  /* The ＋ circle's sibling: two blank heads, which says "more than one
+     person" before anybody reads the word under it. */
+  .one .pile.two{display:grid;place-items:center}
+  .one .pile.two i{position:absolute;width:42%;height:42%;border-radius:50%;
+    border:2px solid currentColor;opacity:.55}
+  .one .pile.two i:nth-child(1){transform:translate(-28%,-14%)}
+  .one .pile.two i:nth-child(2){transform:translate(28%,-14%)}
   .trow .av{width:2.9rem;height:2.9rem;border-radius:.7rem;display:grid;
     place-items:center;color:#fff;font-family:var(--serif);font-size:1.25rem;
     overflow:hidden}
@@ -525,6 +552,7 @@
 import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
 import { offerInstall } from "/install.js";
 import { offerNotify } from "/notify.js";
+import { OFF } from "/off.js";
 /* The doorman, here too — see mo.js. Messages is where somebody most often
    has a question they would rather ask than guess at. */
 import { mountMo } from "/mo.js";
@@ -602,6 +630,20 @@ let WAITING = false;
    messages and no way to tell which send button belongs to which. */
 let CAN = [];
 
+/* THE GROUPS THIS PERSON IS IN, LISTED HERE AND NOT ON A PAGE OF THEIR OWN.
+ *
+ * They had their own screen, reached from a tray on Browse, and in the months
+ * it existed nobody made one. That is not a feature nobody wants — it is a
+ * feature nobody found. A conversation with three people in it is a
+ * conversation, and the place a person looks for a conversation is Messages.
+ * Every messenger on the phone in their hand puts both in one list; this one
+ * sent them to a different tab and then wondered.
+ *
+ * So: the rows are here, mixed in with the two-person threads and sorted by
+ * what was said last. Opening one still goes to /groups?g=<id>, which already
+ * draws a group properly — the page was never the problem, the door was. */
+let GROUPS = [];
+
 async function load() {
   /* AN INVITED ARRIVAL HAS NO INBOX YET. They are nobody to this server until
      they answer, so asking for one would be a 403 before the screen has drawn
@@ -623,6 +665,16 @@ async function load() {
     CAN = d.can || [];
     YOU = d.you || { handle: "", photo: "" };
     UNREAD = d.unread || 0;
+    /* Not awaited with the notes: a groups table that is slow or off must not
+       hold up the inbox, and OFF.groups means there is nothing to ask for. */
+    GROUPS = [];
+    if (!OFF.groups && YOU.handle) {
+      try {
+        const g = await fetch("/api/groups", { cache: "no-store",
+          headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
+        GROUPS = Array.isArray(g.groups) ? g.groups : [];
+      } catch { GROUPS = []; }
+    }
     /* Only for somebody who is IN. An invited arrival reading one note is not
        a member and has nobody to ask about; see the INVITED branch above,
        which returns before this. */
@@ -775,15 +827,91 @@ function drawList(T0) {
 
   const box = $("list");
   fill(box);
-  $("listrule").hidden = !T0.length;
-  $("none").hidden = T0.length > 0;
-  if (!T0.length) {
+
+  /* ONE LIST, TWO SHAPES. A group and a two-person thread are the same thing
+     to somebody looking for where they last said something, so they are
+     sorted together by when that was — not grouped by kind, which would put
+     the newest thing on the screen below three older ones for no reason a
+     reader could see. */
+  const rows = [
+    ...T0.map((t) => ({ at: t.at || "", row: () => listRow(t) })),
+    ...GROUPS.map((g) => ({ at: lastAt(g), row: () => groupRow(g) })),
+  ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
+
+  $("listrule").hidden = !rows.length;
+  $("none").hidden = rows.length > 0;
+  if (!rows.length) {
     fill($("none"));
     $("none").append(el("b", null, T("note.none")),
       el("p", null, T(CAN.length ? "note.noneYet" : "note.noneBody")));
     return;
   }
-  for (const t of T0) box.append(listRow(t));
+  for (const r of rows) box.append(r.row());
+}
+
+/** When a group last had anything said in it — or when it was made, for one
+ *  nobody has spoken in yet, so it does not sink to the bottom on day one. */
+function lastAt(g) {
+  const says = Array.isArray(g.says) ? g.says : [];
+  return (says.length ? says[says.length - 1].at : g.at) || "";
+}
+
+/** One group, one row. The same shape as a person's row so the list reads as
+ *  one list — what differs is the face, which is the people in it rather than
+ *  one of them, and the name, which is theirs or the names themselves. */
+function groupRow(g) {
+  const who = (Array.isArray(g.who) ? g.who : []).filter(Boolean);
+  const title = g.name
+    || who.map((q) => q.handle).filter(Boolean).slice(0, 3).join("、")
+    || T("grp.title");
+
+  const a = el("a", "trow");
+  a.href = "/groups?g=" + encodeURIComponent(g.id);
+
+  /* THE FACES, STACKED. Up to three, because a fourth at this size is a
+     smudge — and the count under the name says how many there really are. */
+  const wrap2 = el("div", "avwrap");
+  const pile = el("div", "av pile");
+  for (const q of who.slice(0, 3)) {
+    const dot = el("span", "sm", initial(q.handle));
+    dot.style.background = wash(q.handle);
+    if (q.photo) {
+      const img = Object.assign(document.createElement("img"),
+        { src: "/api/public-media?id=" + encodeURIComponent(q.photo), alt: "", loading: "lazy" });
+      img.addEventListener("load", () => { dot.textContent = ""; dot.append(img); });
+    }
+    pile.append(dot);
+  }
+  wrap2.append(pile);
+
+  /* THE SAME BONES AS A PERSON'S ROW — .mid / .nm / .prev — because the list
+     is one list and a second set of classes is a second set of rules to keep
+     in step. The first version invented its own and came out underlined and
+     mis-aligned next to the rows above it. */
+  const mid = el("div", "mid");
+  const nm = el("div", "nm");
+  nm.append(el("b", null, title));
+  const time = el("time", null, when(lastAt(g)));
+  time.dateTime = lastAt(g);
+  nm.append(time);
+
+  const says = Array.isArray(g.says) ? g.says : [];
+  const last = says[says.length - 1];
+  const prev = el("p", "prev");
+  if (last) {
+    /* Who spoke, because in a room of five the name is half the message. */
+    if (last.mine) prev.append(el("span", "k", T("note.youSaid") + " "));
+    else if (last.handle) prev.append(el("span", "k", last.handle + ": "));
+    prev.append(document.createTextNode(last.text || ""));
+  } else {
+    /* Nothing said yet, so say who is in it instead — an empty room with
+       three names under it is still a reason to open it. */
+    prev.append(document.createTextNode(T("grp.inIt", { n: who.length })));
+  }
+
+  mid.append(nm, prev);
+  a.append(wrap2, mid);
+  return a;
 }
 
 /** One person, one row.
@@ -1346,6 +1474,22 @@ function drawCan() {
     const plus = el("span", "av", "\uFF0B");
     add.append(plus, el("b", null, T("note.canNew")));
     strip.append(add);
+
+    /* AND A GROUP, BESIDE IT. Two circles at the front of the strip, in the
+       place the eye already goes for "start something": one person, or three
+       to five. It used to be a link in a tray on Browse, which is the wrong
+       tab and a tray nobody opens — a room with people in it is a
+       conversation, and conversations are here.
+       Only where there is somebody to put in one: an empty group is a room
+       with you in it, and the page would refuse it anyway. */
+    if (!OFF.groups && CAN.length) {
+      const grp = el("a", "one add");
+      grp.href = "/groups";
+      const face = el("span", "av pile two");
+      face.append(el("i"), el("i"));
+      grp.append(face, el("b", null, T("grp.title")));
+      strip.append(grp);
+    }
   }
   for (const q of CAN) {
     const b = el("button", "one" + (q.why === "wait" ? " hold" : ""));

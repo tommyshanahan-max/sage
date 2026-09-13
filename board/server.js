@@ -6517,8 +6517,17 @@ app.get("/api/person", async (req, res) => {
   if (!want) return res.status(400).json({ error: "no" });
   const board = await store.load(FILE);
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
-  const q = board.people.find((x) =>
-    x.state === "published" && x.handle.toLowerCase() === want);
+  /* YOUR OWN PAGE IS YOURS WHATEVER STATE IT IS IN.
+   *
+   * `make hide` puts somebody back to held — out of Browse, out of matches,
+   * off their public page — and it hid them from THEMSELVES: their own
+   * profile answered "No profile yet", as though the board had forgotten a
+   * person who was standing in front of it. That is the wrong lesson to teach
+   * somebody about a place holding their work.
+   *
+   * Held means nobody else may see it. It has never meant they may not. */
+  const q = board.people.find((x) => x.handle.toLowerCase() === want
+    && (x.state === "published" || (me && x.by === me)));
   if (!q) return res.json({ person: null });
   const live = board.posts.filter((p) => p.state === "published");
   res.set("Cache-Control", "no-store");

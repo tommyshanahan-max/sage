@@ -30,9 +30,11 @@ export const OFF = {
      mechanic. It stays on. */
   crowns: true,
 
-  /* GROUPS. A page, a route, a table and a link in the nav, for something
-     nobody has used. */
-  groups: true,
+  /* GROUPS. Back on, capped at five, and reachable from Messages rather than
+     from a tray on Browse — which is why nobody had used it. A room for three
+     to five people who have each matched with whoever made it. See GROUP_MAX
+     in lib/store.js for why five and not ten. */
+  groups: false,
 
   /* SEATS AND WHAT A SEAT IS WORTH. A promise about being early, made to six
      people. It is honest and it is not wrong — there is simply nothing yet to
