@@ -294,7 +294,10 @@
     font-size:1.9rem;letter-spacing:.12em;color:var(--ink)}
   .outdone .go{width:100%;margin:.9rem 0 0;padding:.75rem;border:0;border-radius:99px;
     background:var(--accent);color:var(--accent-ink);font:inherit;font-size:1rem}
-  .outdone .saidline{margin:.7rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
+  .outdone .hint{margin:.7rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
+  .outdone .url{margin:.7rem 0 0;padding:.55rem .7rem;border-radius:.6rem;
+    background:var(--paper);border:1px solid var(--hair);font-size:.82rem;
+    line-height:1.5;color:var(--ink-2);word-break:break-all;text-align:left}
   .outform{margin:.8rem 0 0}
   .outform .fld{width:100%;font:inherit;font-size:1rem;padding:.6rem .75rem;
     border:1px solid var(--line);border-radius:.7rem;background:var(--paper);color:var(--ink)}
@@ -747,11 +750,17 @@ function addSomeone(g) {
  *  shown rather than only copied — a clipboard that silently did nothing is
  *  the failure this screen cannot afford, and six characters read off a screen
  *  are a way round it. */
-function done(nm, d, words) {
+function done(nm, d, words, url) {
   const box = el("div", "outdone");
   box.append(el("p", "line", d.name
     ? T("grp.outMade", { name: nm, room: d.name })
     : T("grp.outMadePlain", { name: nm })));
+  /* BOTH HALVES ON THE SCREEN. The code was shown and the link was not — it
+     existed only inside what the button put on the clipboard — under a line
+     telling somebody to send the code WITH the link. Nothing to check the
+     message against, and nothing to fall back on if the clipboard silently
+     did nothing, which is the failure this box was built for. */
+  box.append(el("p", "url", url));
   box.append(el("b", "code", d.code));
   const again = el("button", "go", T("grp.outCopy"));
   again.type = "button";
@@ -760,7 +769,12 @@ function done(nm, d, words) {
     setTimeout(() => { again.textContent = T("grp.outCopy"); }, 2400);
   });
   box.append(again);
-  box.append(el("p", "saidline", T("grp.outSend")));
+  /* Its own class, and NOT .note, which on this page is already a message row
+     — display:flex and a bottom border, neither of which this wants.
+     And not .saidline either: `.outform .saidline` is the red one for a
+     refusal, and in the room this box sits inside an .outform, so a plain
+     instruction came out looking like an error. */
+  box.append(el("p", "hint", T("grp.outSend")));
   return box;
 }
 
@@ -826,7 +840,7 @@ function outsider(picked, label, group, bare) {
          the clipboard, and the screen said nothing at all. The next thing
          anybody does with a button that appears to have done nothing is press
          it again, and the second press spends the day's other code. */
-      form.replaceWith(done(nm, d, words));
+      form.replaceWith(done(nm, d, words, url));
     } catch (e) {
       const why = String(e.message);
       said.textContent = T(why === "standing" ? "grp.outNoStanding"
