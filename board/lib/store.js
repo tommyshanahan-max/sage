@@ -585,6 +585,37 @@ export function forMo(text) {
 /** Whether some text is asking to be contacted off the board. Returns the
  *  first thing that matched, so the person can be told which bit to change
  *  rather than being told "no" about the whole paragraph. */
+/** The names @ can legitimately be followed by, taken out before the check.
+ *
+ *  @ IN A ROOM IS A MENTION, NOT A HANDLE SOMEWHERE ELSE. CONTACT_SHAPED reads
+ *  "@" plus three characters as an Instagram or Telegram handle, which it
+ *  usually is — and once rooms had an @ picker it was also every single
+ *  mention anybody made. "@Helya are you free Thursday?" came back refused as
+ *  a contact detail, which is the worst kind of wrong: the product offered the
+ *  gesture and then punished it.
+ *
+ *  So the names of the people in THAT room come out first and the rest of the
+ *  sentence is screened as it always was. @somebody who is not in the room is
+ *  still a handle for somewhere else and still refused.
+ *
+ *  Longest first, so a room holding both "Ana" and "Ana Wei" does not leave
+ *  " Wei" behind. No \b anywhere: it is ASCII-only in JavaScript and half the
+ *  names on this board are Chinese — the same trap written up below.
+ */
+export function unmention(text, names) {
+  const sorted = [...new Set(names || [])].filter(Boolean).sort((a, b) => b.length - a.length);
+  let out = "";
+  for (let i = 0; i < text.length;) {
+    if (text[i] === "@") {
+      const hit = sorted.find((n) => text.startsWith("@" + n, i));
+      if (hit) { out += " "; i += hit.length + 1; continue; }
+    }
+    out += text[i];
+    i += 1;
+  }
+  return out;
+}
+
 export function contactShaped(text) {
   const t = String(text || "");
   for (const re of CONTACT_SHAPED) {

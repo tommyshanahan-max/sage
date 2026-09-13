@@ -242,7 +242,18 @@
     text-decoration:underline;text-underline-offset:2px;opacity:.75}
   .said .rep:hover{color:var(--t5);opacity:1}
 
-  .compose{display:flex;gap:.6rem;align-items:flex-end;margin:1.4rem 0 0}
+  .compose{display:flex;gap:.6rem;align-items:flex-end;margin:1.4rem 0 0;
+    position:relative}
+  /* A name said at somebody, and the picker that puts it there. Over the box,
+     because under it is where the phone's own keyboard is. */
+  .bub .at{font-weight:600;color:var(--accent)}
+  .said.mine .bub .at{color:inherit;text-decoration:underline;text-underline-offset:2px}
+  .atmenu{position:absolute;bottom:100%;left:0;right:0;margin:0 0 .4rem;
+    display:flex;flex-wrap:wrap;gap:.35rem;padding:.5rem;border-radius:.8rem;
+    background:var(--raise);border:1px solid var(--line);
+    box-shadow:0 10px 30px rgba(0,0,0,.12);z-index:30}
+  .atmenu button{font:inherit;font-size:.85rem;padding:.35rem .7rem;border-radius:99px;
+    border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
   .compose textarea{flex:1;min-height:2.9rem;max-height:9rem;resize:vertical;font:inherit;
     padding:.65rem .8rem;border-radius:1rem;border:1px solid var(--line);
     background:var(--raise);color:var(--ink)}
@@ -375,6 +386,7 @@
 
 <script type="module">
 import { T, when, setLang, pickLang, langButton, lang } from "/i18n.js";
+import { atText, atPicker } from "/at.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -694,7 +706,10 @@ function paintRoom(g) {
     const row = el("div", "said" + (m.mine ? " mine" : ""));
     if (!m.mine) row.append(face(m, "small"));
     const wrap = el("div");
-    wrap.append(el("div", "bub", m.text));
+    const bub = el("div", "bub");
+    /* @somebody drawn as a mention. Never innerHTML — see at.js. */
+    atText(bub, m.text || "", g.who.map((x) => x.handle).filter(Boolean));
+    wrap.append(bub);
     const meta = el("div", "meta");
     meta.append(el("span", null, (m.mine ? "" : (m.handle || "") + " · ") + when(m.at)));
     // Reporting the doorman to the doorman is not a thing anybody means to do.
@@ -738,6 +753,9 @@ function paintRoom(g) {
   ta.rows = 1;
   ta.maxLength = 600;
   ta.placeholder = T("grp.placeholder");
+  /* @ somebody in the room — the same module the door rooms use, so the
+     gesture is one gesture and not two that drift apart. */
+  atPicker(ta, () => g.who.map((x) => x.handle).filter(Boolean));
   const send = el("button", null, T("note.send"));
   send.type = "button";
   send.addEventListener("click", async () => {

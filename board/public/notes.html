@@ -215,6 +215,20 @@
   .said .av{width:2rem;height:2rem;font-size:.85rem;flex:0 0 auto;box-shadow:none}
   .said .col{display:flex;flex-direction:column;min-width:0;max-width:82%}
   .said .bub{max-width:100%}
+  /* A NAME SAID AT SOMEBODY. Weight and the accent, not a background: a
+     sentence with three of these in it should still read as a sentence. */
+  .bub .at{font-weight:600;color:var(--accent)}
+  .bub.mine .at{color:inherit;text-decoration:underline;text-underline-offset:2px}
+  /* The picker, over the box rather than under it — under it is where the
+     phone's own keyboard is. */
+  .atmenu{position:absolute;bottom:100%;left:0;right:0;margin:0 0 .4rem;
+    display:flex;flex-wrap:wrap;gap:.35rem;padding:.5rem;border-radius:.8rem;
+    background:var(--raise);border:1px solid var(--line);
+    box-shadow:0 10px 30px rgba(0,0,0,.12);z-index:30}
+  .atmenu button{font:inherit;font-size:.85rem;padding:.35rem .7rem;border-radius:99px;
+    border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+  .write{position:relative}
+
   /* The end of a row at the door: where they stand, then who spoke for them.
      Right-aligned and stacked, so the eye runs down one column rather than
      hunting for the second fact on each line. */
@@ -632,6 +646,7 @@ import { OFF } from "/off.js";
 /* The doorman, here too — see mo.js. Messages is where somebody most often
    has a question they would rather ask than guess at. */
 import { mountMo } from "/mo.js";
+import { atText, atPicker } from "/at.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -1483,6 +1498,20 @@ function doorPeople(key) {
   return box;
 }
 
+/* WHO CAN BE @'D IN A DOOR ROOM: everybody at that door, and everybody inside
+ * who has said something in it. Not every member on the board — the point of
+ * the name is that the person can read the room it is said in.
+ *
+ * A waiting person's own view has no queue, so for them it is whoever has
+ * spoken. That is the honest list for somebody who cannot see the rest.
+ */
+function doorNames(key) {
+  const here = QUEUE.filter((w) =>
+    (WAITROOMS.includes(w.room) ? w.room : "other") === key).map((w) => w.name);
+  const spoke = (DOOR && DOOR.says || []).filter((m) => !m.bot).map((m) => m.handle);
+  return [...new Set([...here, ...spoke])].filter(Boolean);
+}
+
 /* The room whose people are open. One room, not a flag — opening another shuts
    it, and `back` shuts it before it leaves the room, the way a phone's back
    button behaves everywhere else. */
@@ -1554,7 +1583,9 @@ async function drawDoor(key) {
     if (!m.mine) col.append(doorName(m));
     const bub = el("div", "bub " + (m.mine ? "mine" : "them")
       + (m.reported ? " flag" : "") + (m.bot ? " bot" : ""));
-    bub.textContent = m.text || "";
+    /* @somebody drawn as a mention rather than as the characters they typed.
+       Never innerHTML: the text is somebody else's typing — see at.js. */
+    atText(bub, m.text || "", doorNames(key));
     col.append(bub);
     row.append(col);
     talk.append(row);
@@ -1780,6 +1811,13 @@ $("back").addEventListener("click", () => {
   // every thread that was opened.
   if (history.length > 1) history.back();
   else history.replaceState(null, "", location.pathname), paint();
+});
+
+/* @ IN A ROOM, and only in a room: a two-person thread has one other person
+   in it and typing their name at them says nothing. openWho tells which. */
+atPicker($("tbox"), () => {
+  const who = openWho();
+  return who.startsWith("d:") ? doorNames(who.slice(2)) : [];
 });
 
 /* The box grows with what is typed, to a limit, because a one-line box for a

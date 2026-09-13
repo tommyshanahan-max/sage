@@ -6805,6 +6805,11 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
 
   const door = store.doorKey(id);
   const out = await change((board) => {
+    /* WHO CAN BE @'D IN HERE, worked out before the rules below need it: the
+       people in this room, so a mention of one of them is read as a mention
+       and not as a handle for somewhere else. Filled in per kind of room
+       further down, where membership is already being checked. */
+    let mentionable = [];
     /* A DOOR ROOM IS NOT A GROUP and takes the other set of rules: no members,
        no cap, nobody can leave it, and the people in it have not been vouched
        for by anybody. Everything below this — the contact rule, the doorman's
@@ -6812,6 +6817,12 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
        its lines live in `says` beside everybody else's. */
     if (door) {
       if (!doorAccess(board, me, door)) return { error: "gone" };
+      /* Everybody at that door, and every member — a member reading a door
+         room is in it for this purpose whether or not they have spoken. */
+      mentionable = [
+        ...board.waits.filter((w) => !w.done && (w.room || "other") === door).map((w) => w.name),
+        ...board.people.filter((q) => q.handle).map((q) => q.handle),
+      ];
     } else {
     const g = board.groups.find((x) => x.id === id);
     // The same answer for a group that never existed and one you are not in:
@@ -6827,6 +6838,9 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
      * looking at a conversation away to work out why they cannot answer it.
      * The page turns this word into the box that fixes it. */
     if (!g.members.includes(me)) return { error: "profile" };
+    mentionable = g.members
+      .map((h) => (board.people.find((q) => q.by === h) || {}).handle)
+      .filter(Boolean);
     }
 
     /* A WECHAT ID PASTED INTO A ROOM IS THE WHOLE PRODUCT GOING OUT OF THE
@@ -6852,7 +6866,10 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
      * not stopping anybody, it is pointing at the door that works — which is
      * why the answer carries the matched text, so they can see which bit.
      */
-    const shaped = store.contactShaped(text);
+    /* The mentions come out first — see unmention. The rest of the sentence is
+       screened exactly as it always was, and @ somebody who is not in this
+       room is still a handle for somewhere else and still refused. */
+    const shaped = store.contactShaped(store.unmention(text, mentionable));
     if (shaped) return { error: "contact", what: shaped };
 
     board.says.push(store.cleanSay({ id: store.newId(), group: id, by: me, text }));
