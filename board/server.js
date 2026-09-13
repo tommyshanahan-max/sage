@@ -7753,28 +7753,113 @@ app.get("/api/count", async (_req, res) => {
  * Names, not device hashes: the operator has names. Nothing about either
  * person's device leaves this route.
  */
-app.get("/api/pair", admin, async (req, res) => {
-  const board = await store.load(FILE);
-  res.set("Cache-Control", "no-store");
-  const find = (name) => board.people.find(
-    (q) => (q.handle || "").toLowerCase() === String(name || "").trim().toLowerCase());
-  const a = find(req.query.a), b = find(req.query.b);
-  if (!a || !b) {
-    return res.status(404).json({ error: "who", missing: [!a && req.query.a, !b && req.query.b].filter(Boolean) });
-  }
+/** Everything the operator asked about two people, in the one shape both the
+ *  question and the making of it answer in. Names only — nothing about either
+ *  person's device leaves this route. */
+function pairReport(board, a, b) {
   const follows = (x, y) => board.follows.some((f) => f.by === x.by && f.who === y.id);
   const shared = store.sharedRooms(a, b);
-  res.json({
-    a: { name: a.handle, rooms: a.rooms || [], where: a.where || "cn", wants: a.wants || "any",
-         looking: Boolean(a.looking), state: a.state },
-    b: { name: b.handle, rooms: b.rooms || [], where: b.where || "cn", wants: b.wants || "any",
-         looking: Boolean(b.looking), state: b.state },
+  const side = (p) => ({ name: p.handle, rooms: p.rooms || [], where: p.where || "cn",
+                         wants: p.wants || "any", looking: Boolean(p.looking), state: p.state });
+  /* SHUT EITHER WAY BEATS A MATCH — see threadState, where leaving and
+     blocking both come before the match test. Reported because a pair that
+     passes all four tests and still has no thread is otherwise a bug hunt,
+     and this is the answer to it. */
+  const shut = board.blocks.some((x) => (x.by === a.by && x.who === b.id)
+      || (x.by === b.by && x.who === a.id))
+    || board.shuts.some((x) => (x.by === a.by && x.who === b.by)
+      || (x.by === b.by && x.who === a.by));
+  return {
+    a: side(a), b: side(b),
     aFollowsB: follows(a, b),
     bFollowsA: follows(b, a),
     scopeFits: store.scopeFits(a, b),
-    shared: shared.map((x) => x.mine + " \u2194 " + x.theirs),
+    shared: shared.map((x) => x.mine + " ↔ " + x.theirs),
+    shut,
     matched: matched(board, a.by, b.by),
+  };
+}
+
+/** The room A would have to tick for B's sentence to answer it, or "". Named
+ *  and never ticked — see the note on POST. "Which box, then" is the next
+ *  question every single time. */
+const roomToTick = (a, b) => (b.rooms || [])
+  .map(store.answerTo)
+  .find((r) => !(a.rooms || []).includes(r)) || "";
+
+const findByName = (board, name) => board.people.find(
+  (q) => (q.handle || "").toLowerCase() === String(name || "").trim().toLowerCase());
+
+app.get("/api/pair", admin, async (req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const a = findByName(board, req.query.a), b = findByName(board, req.query.b);
+  if (!a || !b) {
+    return res.status(404).json({ error: "who", missing: [!a && req.query.a, !b && req.query.b].filter(Boolean) });
+  }
+  res.json({ ...pairReport(board, a, b), tick: roomToTick(a, b) });
+});
+
+/* MAKING THE PAIR, which is the one thing on this board done on somebody
+ * else's behalf.
+ *
+ * A follow is the consent half, and the product never fakes one: /api/follow
+ * is a tap on their page, and pair.mjs says in so many words that nobody can
+ * do it for them. This breaks that rule on purpose, in one place, for the
+ * operator only. What it buys and what it does not is worth being exact
+ * about, because the difference is the whole reason it is allowed to exist.
+ *
+ * IT OPENS A THREAD AND NOTHING ELSE. Both follow rows go in, so the two of
+ * them can write to each other in Messages. No contact moves: a card still
+ * needs both of them to press give, and those two decisions are untouchable
+ * from here. So the worst this can do is put a conversation in front of
+ * somebody who was invited here to have one.
+ *
+ * IT CANNOT FAKE THE OTHER HALF, AND MUST NOT. The rooms decide whether two
+ * sentences answer each other, and the sentence is the whole product —
+ * rewriting somebody's so that a match comes out is the one thing this must
+ * never do. When the rooms do not pair it says which box would fix it and
+ * leaves the ticking to the person whose box it is.
+ *
+ * WHY IT EXISTS. Every person brought in by name — an invite minted for them,
+ * a room held open — arrived to a board where the person who invited them was
+ * unreachable until both of them had found each other in Browse and pressed
+ * the same button. That is the right rule between two strangers and the wrong
+ * one between somebody and the person who let them in.
+ *
+ *   make match A="Tom" B="Brendan"
+ */
+app.post("/api/pair", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const out = await change((board) => {
+    const a = findByName(board, req.body?.a), b = findByName(board, req.body?.b);
+    if (!a || !b) {
+      return { error: "who", missing: [!a && String(req.body?.a || ""),
+                                       !b && String(req.body?.b || "")].filter(Boolean) };
+    }
+    if (a.id === b.id) return { error: "self" };
+    /* BOTH PAGES PUBLISHED, because matched() reads two rows that are on the
+       board and a draft is not on it. Following a draft writes a row pointing
+       at somebody nobody can see and the thread still does not open — a silent
+       no, which is the exact failure this pair of routes exists to end. */
+    const draft = [a, b].filter((p) => p.state !== "published").map((p) => p.handle);
+    if (draft.length) return { error: "draft", who: draft };
+
+    const made = [];
+    const put = (x, y) => {
+      // Pressing Follow twice is one follow, and so is running this twice.
+      if (board.follows.some((f) => f.by === x.by && f.who === y.id)) return;
+      const f = store.cleanFollow({ by: x.by, who: y.id });
+      if (!f) return;
+      board.follows.push(f);
+      made.push(x.handle + " → " + y.handle);
+    };
+    put(a, b);
+    put(b, a);
+    return { made, ...pairReport(board, a, b), tick: roomToTick(a, b) };
   });
+  if (out.error === "who") return res.status(404).json(out);
+  if (out.error) return res.status(409).json(out);
+  res.json(out);
 });
 
 app.get("/api/public", admin, async (req, res) => {
