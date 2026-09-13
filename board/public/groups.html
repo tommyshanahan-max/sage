@@ -648,6 +648,19 @@ function paintRoom(g) {
   c.append(ta, send);
   box.append(c);
 
+  /* AND HERE, WHICH IS WHERE SOMEBODY ACTUALLY LOOKS FOR IT.
+   *
+   * The first version put this only on the screen where a room is made. That
+   * is one of the two moments it is wanted; the other is standing in a room
+   * you already have, with two people in it, thinking of a third. Tom went
+   * looking for it here and it was not here.
+   *
+   * ONLY IN YOUR OWN ROOM. Membership is drawn from whoever made it and
+   * leaving is the only exit, so somebody else's room is not yours to add to —
+   * the route refuses it either way, and a button that is drawn and refuses is
+   * worse than one that is not there. */
+  if (g.mine) box.append(outsider(() => [], () => "", g.id));
+
   box.append(leaveButton(g));
   return box;
 }
@@ -677,7 +690,7 @@ function done(nm, d, words) {
 /** Bringing in somebody who has no account. `picked` and `label` are read at
  *  the moment of pressing rather than passed in, because both change under it
  *  while this is on screen. */
-function outsider(picked, label) {
+function outsider(picked, label, group) {
   const box = el("div", "outside");
   const open = el("button", "outbtn", T("grp.outside"));
   open.type = "button";
@@ -708,7 +721,9 @@ function outsider(picked, label) {
     try {
       const r = await fetch("/api/group-invite", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ device, who: picked(), name: label() }),
+        body: JSON.stringify(group
+          ? { device, group }
+          : { device, who: picked(), name: label() }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "no");
