@@ -1228,7 +1228,7 @@ export const STRINGS = {
      is in it is something you go and look at, the way a WeChat group keeps its
      four hundred members one tap away and shows you the conversation. */
   "dr.here":           ["{n} at this door", "这个门口 {n} 个人"],
-  "dr.spoke":          ["said something", "说过话"],
+  "dr.more":           ["More people", "看更多人"],
   /* On the screen of somebody standing at the door. It was a form and a
      clock; the room is the same wait with the silence taken out. */
   "dr.yours":          ["Your room", "你这间"],

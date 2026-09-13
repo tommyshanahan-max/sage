@@ -189,6 +189,8 @@
     min-height:calc(100dvh - 7.6rem)}
   .talk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
     gap:.55rem;padding:.2rem 0 .6rem}
+  /* For what is a screen rather than a conversation — see drawDoor. */
+  .talk.top{justify-content:flex-start}
   .bub{max-width:82%;padding:.6rem .8rem;border-radius:1.05rem;font-size:.95rem;
     line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
   /* Theirs on the left in the raised surface, yours on the right in the accent.
@@ -211,6 +213,22 @@
   .said .av{width:2rem;height:2rem;font-size:.85rem;flex:0 0 auto;box-shadow:none}
   .said .col{display:flex;flex-direction:column;min-width:0;max-width:82%}
   .said .bub{max-width:100%}
+  /* THE PEOPLE IN THE ROOM, behind ⋯. Four across and not WeChat's five:
+     it is the grid groups.html already uses for the same screen, and one
+     product disagreeing with itself about how wide a face is would be worse
+     than a column. */
+  .dinfo .faces{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem .6rem;
+    margin:.6rem 0 0}
+  .dinfo .cell{display:flex;flex-direction:column;align-items:center;gap:.45rem;
+    min-width:0;text-decoration:none;color:inherit}
+  .dinfo .cell .av{width:3.2rem;height:3.2rem;font-size:1.15rem;box-shadow:none}
+  .dinfo .cell span:last-child{font-size:.75rem;line-height:1.3;color:var(--muted);
+    text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    max-width:100%}
+  .domore{display:block;width:100%;margin:1.2rem 0 .4rem;padding:.75rem 0;
+    border:0;background:none;cursor:pointer;font:inherit;font-size:.85rem;
+    color:var(--muted)}
+
   /* Who said it and which side of the door they are on. Over the bubble,
      small, because it is a thing you check rather than read. */
   .dwho{margin:0 0 .2rem;font-size:.72rem;color:var(--muted)}
@@ -1411,45 +1429,57 @@ function doorName(m) {
  * This was under the talk, and on the real board that meant Film & TV opened
  * as eighteen strangers with the box to type in below all of them. A WeChat
  * group of four hundred opens as the conversation and nothing else: the count
- * is in the title and the members are one tap away. A room is the talk. The
+ * is in the title, the members are one tap away. A room is the talk. The
  * people in it are something you check.
  *
- * Everybody, not the front six — a screen somebody opened on purpose to see
- * who is here should show who is here. Queue order, the board's own: first
- * come, one place up per person somebody brought in, decided in queueOrder and
- * not worked out again on this screen.
+ * A GRID OF FACES AND NOT A LIST OF ROWS, which is both what that screen is in
+ * WeChat and what a group room already is in groups.html — one shape for the
+ * people in a room, not two. It answers the question somebody actually opens
+ * it with: is there anybody in there I know. What they wrote on the way in is
+ * a sentence you read about one person, and it is on that person, one tap
+ * further, where reading it is what you came to do.
+ *
+ * Everybody, twenty at a time — the screen exists to show who is here.
+ * Queue order, the board's own: first come, one place up per person somebody
+ * brought in, decided in queueOrder and not worked out again here.
  */
 function doorPeople(key) {
   const box = el("div", "dinfo");
-  const said = new Set((DOOR.says || []).map((m) => m.wid).filter(Boolean));
   const rows = QUEUE.filter((w) =>
     (WAITROOMS.includes(w.room) ? w.room : "other") === key)
     .sort((a, b) => (a.place ?? 1e9) - (b.place ?? 1e9)
       || String(a.at).localeCompare(String(b.at)));
   box.append(el("p", "when", T("dr.here", { n: rows.length })));
-  for (const w of rows) {
-    const a = el("a", "wperson");
-    a.href = "#w:" + w.id;
-    const av = el("span", "av small", initial(w.name));
+
+  const grid = el("div", "faces");
+  const some = DOORMORE === key ? rows : rows.slice(0, 20);
+  for (const w of some) {
+    const cell = el("a", "cell");
+    cell.href = "#w:" + w.id;
+    const av = el("span", "av", initial(w.name));
     av.style.background = wash(w.name);
     if (w.photo) {
       const img = Object.assign(document.createElement("img"),
         { src: "/api/wait-media?id=" + encodeURIComponent(w.photo), alt: "", loading: "lazy" });
       img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
     }
-    const m = el("div", "wm");
-    m.append(el("b", null, w.name));
-    /* What they wrote on the way in, which is the whole of what anybody knows
-       about them — and "said something in here", which is the other half of
-       what this screen is for. */
-    if (w.why) m.append(el("span", null, w.why));
-    a.append(av, m);
-    if (said.has(w.id)) a.append(el("span", "wv", T("dr.spoke")));
-    else if (w.vouches) a.append(el("span", "wv", T("note.waitVouched", { n: w.vouches })));
-    box.append(a);
+    cell.append(av, el("span", null, w.name));
+    grid.append(cell);
+  }
+  box.append(grid);
+
+  if (DOORMORE !== key && rows.length > some.length) {
+    const more = el("button", "domore");
+    more.type = "button";
+    more.textContent = T("dr.more") + " \u2304";
+    more.addEventListener("click", () => { DOORMORE = key; drawDoor(key); });
+    box.append(more);
   }
   return box;
 }
+
+/* Opened past the first twenty, for one room. */
+let DOORMORE = "";
 
 /* The room whose people are open. One room, not a flag — opening another shuts
    it, and `back` shuts it before it leaves the room, the way a phone's back
@@ -1499,8 +1529,13 @@ async function drawDoor(key) {
   act.onclick = () => { DOORINFO = DOORINFO === key ? "" : key; drawDoor(key); };
 
   fill(talk);
+  talk.classList.remove("top");
   if (DOORINFO === key) {
     act.hidden = true;                 // back is the way out, as in groups.html
+    /* THE TALK IS BOTTOM-ALIGNED so a short conversation sits above the box
+       rather than halfway up the phone. A grid of faces is not a conversation:
+       bottom-aligned it opened with half a screen of nothing over it. */
+    talk.classList.add("top");
     talk.append(doorPeople(key));
     $("twrite").hidden = true;
     $("tshut").hidden = true;
