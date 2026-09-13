@@ -4465,6 +4465,10 @@ export const STRINGS = {
      somebody wants to do; whether they already have an account is a detail of
      how, and it was the whole of what the button used to say. */
   "grp.addSomeone":    ["＋ Add someone", "＋ 加人"],
+  /* In the header, beside the title, where there is room for one word. The
+     long one broke "Talk film" onto two lines. */
+  "grp.addTop":        ["Add", "加人"],
+  "grp.addLede":       ["Who goes into “{room}”?", "谁进「{room}」？"],
   /* The line between the faces and the name box. Not a heading: it separates
      two answers to the same question and says so in one word. */
   "grp.addOr":         ["or", "或者"],

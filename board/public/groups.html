@@ -294,6 +294,13 @@
     font-size:1.9rem;letter-spacing:.12em;color:var(--ink)}
   .orline{margin:1rem 0 .8rem;font-size:.78rem;letter-spacing:.08em;
     text-transform:uppercase;color:var(--muted);text-align:center}
+  .addscreen{margin:.4rem 0 0}
+  .addlede{margin:0 0 1.1rem;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
+  /* One action in the header, beside the language switch. Text, not a filled
+     button: the filled one on this screen is Send it. */
+  .topact{margin-left:auto;flex:0 0 auto;border:0;background:none;color:var(--accent);
+    font:inherit;font-size:.95rem;padding:.42rem .2rem}
+  .topact + #langslot,.topact ~ #langslot{margin-left:.6rem}
   .outdone .go{width:100%;margin:.9rem 0 0;padding:.75rem;border:0;border-radius:99px;
     background:var(--accent);color:var(--accent-ink);font:inherit;font-size:1rem}
   .outdone .hint{margin:.7rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
@@ -328,6 +335,7 @@
       <h1 id="title"></h1>
       <p id="sub"></p>
     </div>
+    <button class="topact" id="topact" type="button" hidden></button>
     <span id="langslot"></span>
   </div>
 
@@ -382,6 +390,17 @@ let GROUPS = [], CANADD = [], MAX = 5;
    button leaves a room rather than the page. */
 let OPEN = new URLSearchParams(location.search).get("g") || "";
 let PICKED = [], PICKING = false;
+/* ADDING SOMEBODY IS ITS OWN SCREEN, NOT A BLOCK UNDER THE CONVERSATION.
+ *
+ * It lived at the bottom of the room, after the composer, which meant two
+ * things went wrong as soon as a room had anything in it: you scrolled the
+ * whole conversation to reach it, and opening it pushed the conversation off
+ * the screen you were reading. A control you use twice in a room's life was
+ * sitting in the middle of the thing you use every day.
+ *
+ * In the header now, where it is one tap from anywhere, and it opens over the
+ * room rather than inside it. */
+let ADDING = false;
 
 /* A COLOUR PER PERSON, FROM THEIR OWN NAME — the same routine, and so the
    same colour, as notes.html and the card in room.html. This page never had
@@ -423,6 +442,7 @@ async function load() {
 }
 
 function go(id) {
+  ADDING = false;
   OPEN = id;
   const u = new URL(location.href);
   if (id) u.searchParams.set("g", id); else u.searchParams.delete("g");
@@ -441,6 +461,7 @@ function paint() {
 /* --------------------------------------------------------------- the list */
 
 function paintList() {
+  $("topact").hidden = true;
   $("title").textContent = T("grp.title");
   $("sub").textContent = GROUPS.length
     ? T("grp.count", { n: GROUPS.length }) : T("grp.sub");
@@ -587,6 +608,17 @@ function paintRoom(g) {
   const box = $("screen");
   fill(box);
 
+  const act = $("topact");
+  act.hidden = !g.mine;
+  act.textContent = T("grp.addTop");
+  act.onclick = () => { ADDING = true; paint(); };
+
+  if (ADDING && g.mine) {
+    act.hidden = true;
+    box.append(addScreen(g));
+    return;
+  }
+
   // Who is in it, said out loud. In a room of six, knowing who is reading is
   // the difference between a conversation and a broadcast.
   const who = el("div", "inroom");
@@ -671,8 +703,6 @@ function paintRoom(g) {
    * leaving is the only exit, so somebody else's room is not yours to add to —
    * the route refuses it either way, and a button that is drawn and refuses is
    * worse than one that is not there. */
-  if (g.mine) box.append(addSomeone(g));
-
   box.append(leaveButton(g));
   return box;
 }
@@ -683,28 +713,15 @@ function paintRoom(g) {
  *  half of a question the screen never asked. Adding a person is one thing you
  *  want to do; whether they already have an account is a detail of how.
  */
-function addSomeone(g) {
-  const box = el("div", "outside");
-  const open = el("button", "outbtn", T("grp.addSomeone"));
-  open.type = "button";
-  box.append(open);
-
-  const pane = el("div", "outform");
-  pane.hidden = true;
-  box.append(pane);
-
-  /* BOTH AT ONCE, NOT A CHOICE FIRST.
-   *
-   * This asked "matched with, or not on here yet?" and then showed one of
-   * them. That is a question about the answer, put before the answer: whoever
-   * you have in mind is already either a face on this board or a name in your
-   * phone, and you know which. Showing both costs one screen of height and
-   * saves a tap and a decision.
-   *
-   * The faces come first because tapping one is finished in a tap, and the
-   * other half is a name, a press, and a paste into WeChat. */
+/** The add screen. Over the room, not inside it: your people, then a box for
+ *  a name. Both at once, because whoever you have in mind is already either a
+ *  face on this board or a name in your phone and you know which. */
+function addScreen(g) {
+  const box = el("div", "addscreen");
   const draw = () => {
-    fill(pane);
+    fill(box);
+    // The header says "Add" in one word; this says which room it is adding to.
+    box.append(el("p", "addlede", T("grp.addLede", { room: g.name || nameOf(g) })));
     const inRoom = new Set((g.who || []).map((m) => m.who));
     const left = (CANADD || []).filter((c) => !inRoom.has(c.who));
     for (const c of left) {
@@ -721,23 +738,22 @@ function addSomeone(g) {
           });
           const d = await r.json().catch(() => ({}));
           if (!r.ok) throw new Error(d.error || "no");
+          /* STRAIGHT BACK TO THE ROOM. Adding somebody is finished the moment
+             it works, and the thing worth seeing is their name in the list at
+             the top — not this screen with one fewer row on it. */
+          ADDING = false;
           await load();
         } catch (e) {
           tag.textContent = T(String(e.message) === "full" ? "grp.outFull" : "act.again");
           row.disabled = false;
         }
       });
-      pane.append(row);
+      box.append(row);
     }
-    // Only worth a line when there were faces above it to tell it apart from.
-    if (left.length) pane.append(el("p", "orline", T("grp.addOr")));
-    pane.append(outsider(() => [], () => "", g.id, true));
+    if (left.length) box.append(el("p", "orline", T("grp.addOr")));
+    box.append(outsider(() => [], () => "", g.id, true));
   };
-
-  open.addEventListener("click", () => {
-    pane.hidden = !pane.hidden;
-    if (!pane.hidden) draw();
-  });
+  draw();
   return box;
 }
 
@@ -786,7 +802,10 @@ function outsider(picked, label, group, bare) {
   open.type = "button";
   if (!bare) box.append(open);
 
-  const form = el("div", bare ? "" : "outform");
+  /* The form keeps its class either way. It used to lose it in bare mode —
+     which is the mode the add screen uses — so the name box and the button
+     came out as raw browser controls sitting side by side. */
+  const form = el("div", "outform");
   form.hidden = !bare;
   const who = document.createElement("input");
   who.className = "fld";
@@ -956,6 +975,7 @@ $("back").addEventListener("click", () => {
   // Out of a room to the list, out of the list to the board. One button, and
   // it always goes back one step rather than off the page.
   if (PICKING) { PICKING = false; paint(); return; }
+  if (ADDING) { ADDING = false; paint(); return; }
   if (OPEN) { go(""); return; }
   if (history.length > 1) history.back(); else location.href = "/feed";
 });
