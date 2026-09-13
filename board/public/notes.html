@@ -1536,14 +1536,21 @@ function doorPeople(key) {
   const sendSaid = el("p", "sendsaid");
   go.addEventListener("click", async () => {
     const nm = nameIn.value.trim().slice(0, 40);
-    if (!nm) { nameIn.focus(); return; }
     const url = location.origin + "/r/" + encodeURIComponent(key);
-    const words = T(IN_WECHAT ? "dr.sendWordsWx" : "dr.sendWords",
-      { name: nm, room: T("waitroom." + key), url });
+    /* NO NAME IS A WECHAT GROUP, NOT A MISTAKE.
+     *
+     * The link never carried a name — it is the door for the room and every
+     * person who opens it types their own. Only the message was addressed, so
+     * pasting it into a group of forty read as a note to one person who was
+     * not there. Empty, and it says what the room is and who it is for. */
+    const words = nm
+      ? T(IN_WECHAT ? "dr.sendWordsWx" : "dr.sendWords",
+          { name: nm, room: T("waitroom." + key), url })
+      : T("dr.sendWordsMany", { room: T("waitroom." + key), url });
     if (!IN_WECHAT && navigator.share) {
       try {
         await navigator.share({ title: T("site.title"), text: words });
-        sendSaid.textContent = T("dr.sendGone", { name: nm });
+        sendSaid.textContent = nm ? T("dr.sendGone", { name: nm }) : T("dr.sendGoneMany");
         nameIn.value = "";
         return;
       } catch {

@@ -1999,6 +1999,13 @@ function doorBox() {
     if (!ROOM) { talk.append(el("p", "dquiet", T("act.again"))); return; }
     if (!ROOM.says.length) { talk.append(el("p", "dquiet", T("dr.quiet"))); return; }
     for (const m of ROOM.says) {
+      /* The room reporting itself — who came in, who went out. A line across
+         it, not a bubble from anybody: see moSays. Without this branch these
+         arrived as an empty bubble with a name under it. */
+      if (m.evt) {
+        talk.append(el("p", "dquiet", T("mo." + m.evt.kind, { who: m.evt.who })));
+        continue;
+      }
       const row = el("div", "dmsg" + (m.mine ? " mine" : ""));
       row.append(el("div", "dbub" + (m.bot ? " bot" : "") + (m.reported ? " flag" : ""), m.text || ""));
       if (!m.mine) {

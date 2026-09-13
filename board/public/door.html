@@ -40,7 +40,16 @@
   .head b{display:block;font-family:var(--serif);font-weight:400;font-size:1.15rem;
     line-height:1.2}
   .head span{display:block;font-size:.76rem;color:var(--muted)}
-  .head .nm{flex:1;min-width:0}
+  .head .nm{flex:1;min-width:0;text-decoration:none;color:inherit}
+  /* WHERE ELSE THERE IS TO GO, and for most of the time there is nowhere.
+   *
+   * This page is the whole app for somebody at the door, and that is the rule
+   * rather than an omission: there is no profile to make until they are let
+   * in. What they can do is see where they stand, and the one line under the
+   * room is that — not a menu, because a menu of one thing is a menu that
+   * teases four things that are not there. */
+  .out{display:block;margin:.55rem 0 0;font-size:.8rem;color:var(--muted);
+    text-align:center}
 
   .talk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
     gap:.55rem;padding:1rem 0 .8rem}
@@ -83,7 +92,7 @@
 <main>
   <div class="head">
     <div class="mk">交</div>
-    <div class="nm"><b id="rname">—</b><span id="rsub"></span></div>
+    <a class="nm" id="rlink" href="/room"><b id="rname">—</b><span id="rsub"></span></a>
     <span id="langslot"></span>
   </div>
   <div class="talk" id="talk"></div>
@@ -99,6 +108,7 @@
     </div>
     <p class="note" id="note" hidden></p>
     <p class="ins" id="install" hidden></p>
+    <a class="out" id="out" href="/room" hidden></a>
   </div>
 </main>
 
@@ -152,6 +162,13 @@ function paint() {
      box is what it looks like. */
   $("ask").hidden = IN;
   if (!IN) $("ask").textContent = T("dr.askName");
+  /* Only once they are in it: somebody who has not given a name has no place
+     to go and look at, and a link to one would be a dead end with a word on
+     it. The header carries it too, which is where a person looks. */
+  $("out").hidden = !IN;
+  $("out").textContent = T("dr.myPlace");
+  $("rlink").removeAttribute("href");
+  if (IN) $("rlink").href = "/room";
 
   const talk = $("talk");
   talk.textContent = "";

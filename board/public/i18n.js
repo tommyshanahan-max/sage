@@ -1259,12 +1259,22 @@ export const STRINGS = {
   /* Above the box on a room door, and not inside it: a placeholder goes
      away when somebody types, which is exactly when they most need to be
      told what they are typing. */
+  /* The one way out of a door room, and there is only one on purpose:
+     there is no profile to make until somebody is let in. Where they
+     stand is the thing they can actually go and look at. */
+  "dr.myPlace":        ["Where I stand \u2192", "我排到哪了 \u2192"],
   "dr.askName":        ["What should this room call you?", "这屋里怎么称呼你？"],
   "dr.moWelcome":      ["{name} — you are in. Say what you are looking for.\n\nKeep this on your home screen or you will have to find the link again.",
                         "{name}，进来了。说说你在找什么。\n\n把它存到桌面，不然下次还得翻链接。"],
   "dr.sendLink":       ["Send", "发送"],
-  "dr.sendWho":        ["Add somebody to this room — their name",
-                        "拉个人进这个房间 — 名字"],
+  "dr.sendWho":        ["Add somebody — their name, or leave it blank for a group",
+                        "拉人进来 — 写名字，发群里就留空"],
+  /* Pasted into a WeChat group of forty rather than sent to one person.
+     No name in it, because every one of them types their own on the door. */
+  "dr.sendWordsMany": [
+    "The {room} room at The Exchange — invite only, and this door is open until it fills.\n\n{url}\n\nPut your name in and you are in the room.",
+    "The Exchange 的{room}房间 — 只进熟人，这个门先开着。\n\n{url}\n\n写个名字就进来了。"],
+  "dr.sendGoneMany":   ["Sent.", "发出去了。"],
   "dr.sendGone":       ["Sent to {name}.", "已经发给{name}了。"],
   "dr.sendWords": [
     "{name} — the {room} room at The Exchange.\n\n{url}\n\nPut your name down and I will see it.",
