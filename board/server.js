@@ -6513,6 +6513,46 @@ app.post("/api/group", notesOff, express.json({ limit: "8kb" }), async (req, res
   res.json(out);
 });
 
+/** Adding somebody who is already a member of the board to a room you made.
+ *
+ *  The room could only ever be filled at the moment it was created, so a third
+ *  person thought of on Tuesday meant making a second room. Same rules as
+ *  making one: your matches only, read from groupable(), and the cap counts
+ *  the codes nobody has spent yet.
+ */
+app.post("/api/group/add", notesOff, express.json({ limit: "4kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.group || "");
+  const who = String(req.body?.who || "");
+  if (!me || !/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "no" });
+
+  const out = await change((board) => {
+    const g = board.groups.find((x) => x.id === id);
+    if (!g) return { error: "gone" };
+    /* ONLY THE ROOM'S OWN MAKER. Everybody in here matched with them, and
+       letting a member add their own matches would put somebody in a room
+       with a stranger they never agreed to hear from — which is the one rule
+       the whole feature rests on. */
+    if (g.by !== me) return { error: "notyours" };
+    if (!groupable(board, me).some((c) => c.who === who)) return { error: "notmatched" };
+    const q = board.people.find((x) => x.id === who);
+    if (!q) return { error: "gone" };
+    if (g.members.includes(q.by)) return { error: "already" };
+    const held = board.invites.filter((x) => x.grp === g.id && !x.off && !x.usedBy
+      && !store.inviteOver(x)).length;
+    if (store.groupRoom(g) - held < 1) return { error: "full" };
+    g.members.push(q.by);
+    // A guest who turns out to be a member already is not both.
+    g.guests = (g.guests || []).filter((h) => h !== q.by);
+    Object.assign(g, store.cleanGroup(g));
+    return { ok: true, handle: q.handle };
+  });
+  if (out?.error) {
+    return res.status(out.error === "notyours" ? 403 : 409).json(out);
+  }
+  res.json(out);
+});
+
 /** Saying something in one. */
 app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);

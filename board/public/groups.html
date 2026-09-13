@@ -282,6 +282,11 @@
   /* An outline, not a fill. One solid button to a screen, and on this one it
      is Create group. */
   .outform .go{background:none;color:var(--accent);border:1px solid var(--accent)}
+  /* The two answers to "who". Full width and stacked, because they are a
+     question and not a toolbar. */
+  .pickway{display:block;width:100%;margin:0 0 .6rem;padding:.8rem;border:1px solid var(--line);
+    border-radius:.9rem;background:var(--paper);color:var(--ink);font:inherit;font-size:1rem;
+    text-align:left}
   .outdone{margin:.9rem 0 0;padding:1rem;border:1px solid var(--line);
     border-radius:.9rem;background:var(--raise);text-align:center}
   .outdone .line{margin:0;font-size:.92rem;line-height:1.55;color:var(--ink)}
@@ -659,9 +664,81 @@ function paintRoom(g) {
    * leaving is the only exit, so somebody else's room is not yours to add to —
    * the route refuses it either way, and a button that is drawn and refuses is
    * worse than one that is not there. */
-  if (g.mine) box.append(outsider(() => [], () => "", g.id));
+  if (g.mine) box.append(addSomeone(g));
 
   box.append(leaveButton(g));
+  return box;
+}
+
+/** ONE BUTTON, THEN THE TWO ANSWERS TO "WHO".
+ *
+ *  It was a bare row saying "somebody not on here yet", which is the second
+ *  half of a question the screen never asked. Adding a person is one thing you
+ *  want to do; whether they already have an account is a detail of how.
+ */
+function addSomeone(g) {
+  const box = el("div", "outside");
+  const open = el("button", "outbtn", T("grp.addSomeone"));
+  open.type = "button";
+  box.append(open);
+
+  const pane = el("div", "outform");
+  pane.hidden = true;
+  box.append(pane);
+
+  const choose = () => {
+    fill(pane);
+    const a = el("button", "pickway", T("grp.addMatched"));
+    a.type = "button";
+    const b2 = el("button", "pickway", T("grp.addOutside"));
+    b2.type = "button";
+    a.addEventListener("click", () => fromMatches());
+    b2.addEventListener("click", () => {
+      fill(pane);
+      pane.append(outsider(() => [], () => "", g.id, true));
+    });
+    pane.append(a, b2);
+  };
+
+  /* THE PEOPLE YOU MATCHED WITH WHO ARE NOT ALREADY IN HERE. Drawn from the
+     same CANADD the picker uses, minus the room — a list offering to add
+     somebody who is standing in front of you is a list nobody trusts. */
+  const fromMatches = () => {
+    fill(pane);
+    const inRoom = new Set((g.who || []).map((m) => m.who));
+    const left = (CANADD || []).filter((c) => !inRoom.has(c.who));
+    if (!left.length) {
+      pane.append(el("p", "saidline", T("grp.addNobody")));
+      return;
+    }
+    for (const c of left) {
+      const row = el("button", "pick");
+      row.type = "button";
+      const tag = el("span", "tag", T("grp.add"));
+      row.append(face(c), el("b", null, c.handle), tag);
+      row.addEventListener("click", async () => {
+        row.disabled = true;
+        try {
+          const r = await fetch("/api/group/add", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device, group: g.id, who: c.who }),
+          });
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(d.error || "no");
+          await load();
+        } catch (e) {
+          tag.textContent = T(String(e.message) === "full" ? "grp.outFull" : "act.again");
+          row.disabled = false;
+        }
+      });
+      pane.append(row);
+    }
+  };
+
+  open.addEventListener("click", () => {
+    pane.hidden = !pane.hidden;
+    if (!pane.hidden) choose();
+  });
   return box;
 }
 
@@ -690,14 +767,14 @@ function done(nm, d, words) {
 /** Bringing in somebody who has no account. `picked` and `label` are read at
  *  the moment of pressing rather than passed in, because both change under it
  *  while this is on screen. */
-function outsider(picked, label, group) {
-  const box = el("div", "outside");
+function outsider(picked, label, group, bare) {
+  const box = el("div", bare ? "" : "outside");
   const open = el("button", "outbtn", T("grp.outside"));
   open.type = "button";
-  box.append(open);
+  if (!bare) box.append(open);
 
-  const form = el("div", "outform");
-  form.hidden = true;
+  const form = el("div", bare ? "" : "outform");
+  form.hidden = !bare;
   const who = document.createElement("input");
   who.className = "fld";
   who.maxLength = 40;
