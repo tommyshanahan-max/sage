@@ -3561,7 +3561,7 @@ export const STRINGS = {
      is that a person decides cannot also be the board that insists a machine
      talks to you first. */
   "but.no":            ["Don't like AI? Send him away", "不喜欢 AI？让他走"],
-  "but.ph":            ["Type, or hold the mic", "打字，或者按住话筒"],
+  "but.ph":            ["Type, or hold Mo and talk", "打字，或者按住老莫说"],
   "but.send":          ["Send", "发送"],
   "but.thinking":      ["…", "…"],
   /* WHAT HE IS PROPOSING, and the button says what pressing it does to the
@@ -4394,14 +4394,14 @@ export const STRINGS = {
   /* HOLDING HIM WHERE THERE IS NO RECOGNISER. Firefox has none, and neither
      does an iPhone in some standalone builds — and the hold did nothing at
      all, which reads as a broken button rather than as a missing feature. */
-  "but.noMic":         ["No voice in this browser. Type it.", "这个浏览器不支持语音，打字吧。"],
+  "but.noMic":         ["This browser cannot record. Type it.", "这个浏览器录不了音，打字吧。"],
   /* THE MICROPHONE REFUSED, which used to stop quietly and read as a dead
      button. Two reasons worth telling apart: the phone said no, and
      everything else. */
   "but.micNo":         ["The microphone is blocked. Type it instead.",
                         "麦克风被挡住了，打字吧。"],
-  "but.micOff":        ["The microphone didn't start — hold him again, or type it.",
-                        "麦克风没打开，再按一下，或者直接打字。"],
+  "but.micOff":        ["That did not come through. Tap him again, or type it.",
+                        "没听清，再按一下，或者直接打字。"],
 
   /* GROUPS. The words are plain on purpose: a group is an ordinary thing and
      the only sentence here doing real work is the one about who can be in it. */

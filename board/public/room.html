@@ -593,7 +593,8 @@
 <script type="module">
 import { T, setLang, pickLang, langButton, when, lang } from "/i18n.js";
 import { offerInstall } from "/install.js";
-import { canHear, listen } from "/speak.js";
+/* Nothing on this page uses either any more — Mo owns the microphone and he
+   lives in mo.js. Kept off the import list rather than left dangling. */
 import { drawCard } from "/postcard.js";
 import { beatUnits } from "/beat.js";
 /* Mo is his own module so that every page can have him — see mo.js. What this

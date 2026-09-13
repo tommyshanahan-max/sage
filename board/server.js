@@ -37,6 +37,7 @@ import { send as sendMail, configured as mailReady } from "./lib/mail.js";
 import * as intake from "./lib/intake.js";
 import * as butler from "./lib/butler.js";
 import * as say from "./lib/say.js";
+import * as hear from "./lib/hear.js";
 import * as push from "./lib/push.js";
 /* THE SWITCH FILE, READ BY THE SERVER TOO.
  *
@@ -398,7 +399,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|about|rules|privacy|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -3708,6 +3709,45 @@ app.post("/api/butler-voice", express.json({ limit: "4kb" }), async (req, res) =
   res.set("Cache-Control", "no-store, private");
   res.send(out.audio);
 });
+
+/* MO, LISTENING — and this replaces the browser's own recogniser.
+ *
+ * window.SpeechRecognition is free and instant and does not work for either
+ * group of people this board is for: it is DEFINED and dead in a standalone
+ * iPhone app, and it is Google's service, which is unreachable from inside
+ * China. See the header of lib/hear.js. So the phone records and this
+ * transcribes, from Tokyo, which both of them can reach.
+ *
+ * THE AUDIO IS NOT KEPT. It arrives, it goes to be transcribed, the text
+ * comes back, and the buffer is gone with the request. Nothing is written to
+ * the box and nothing is written to the row — what the person then does with
+ * the words is send them, or not, the same as if they had typed them.
+ */
+app.post("/api/butler-hear",
+  express.raw({ type: ["audio/*", "application/octet-stream"], limit: "2mb" }),
+  async (req, res) => {
+    if (!hear.configured()) return res.status(503).json({ error: "unconfigured" });
+    const { row, who: me } = await waitingRow(req, res);
+    let ok = Boolean(row);
+    if (!ok && me) {
+      const board = await store.load(FILE);
+      ok = board.people.some((q) => q.by === me);
+    }
+    if (!ok) return res.status(403).json({ error: "who" });
+
+    const out = await hear.hear(
+      req.body, req.get("content-type"),
+      String(req.query.lang || "en"), me || (row && row.id) || "anon",
+    );
+    if (out.error) {
+      const code = out.error === "slow-down" || out.error === "busy" ? 429
+        : out.error === "unconfigured" ? 503
+        : out.error === "long" ? 413 : 400;
+      return res.status(code).json(out);
+    }
+    res.set("Cache-Control", "no-store");
+    res.json(out);
+  });
 
 /* MO WRITES THE FIRST MESSAGE.
  *

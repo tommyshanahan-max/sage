@@ -3077,7 +3077,7 @@ import { T, when, lang, setLang, pickLang, langButton, STRINGS } from "/i18n.js"
 /* The photograph pipeline lives in its own file now: the waiting room, which
    is in front of the door, needs the same one. See photo.js. */
 import { shrink, asBase64 } from "/photo.js";
-import { canHear, listen } from "/speak.js";
+import { canHear, record } from "/speak.js";
 import { stageFor, stageName, crownMark } from "/crown.js";
 import { OFF } from "/off.js";
 import { offerInstall } from "/install.js";
@@ -4562,11 +4562,14 @@ $("annshut").addEventListener("click", () => {
 
 /* ---- SAYING IT INSTEAD OF TYPING IT --------------------------------------
  *
- * One mic per field, because a mic is a way of filling one box. The button is
- * not drawn at all on a browser without SpeechRecognition, and it hides itself
- * the moment a real attempt fails — which is the mainland case: Chrome's
- * recogniser is Google's, and Google is not reachable from there. See
- * speak.js. Nothing on this screen depends on it; every field is still a field.
+ * One mic per field, because a mic is a way of filling one box.
+ *
+ * IT RECORDS AND THE BOX IN TOKYO TURNS IT INTO WORDS. It used to be the
+ * browser's own SpeechRecognition, which is free and instant and does not
+ * work for either half of the people here: it is DEFINED and dead on an
+ * iPhone added to the home screen, and it is Google's service, unreachable
+ * from the mainland. See canHear() and record() in speak.js. Nothing on this
+ * screen depends on it either way; every field is still a field.
  */
 let ANNMIC = null;   // the one live session, or null. Only ever one at a time.
 
@@ -4586,21 +4589,33 @@ function annMic(btn, field, tag) {
        is two sets of words arriving in two boxes from one voice, and the
        second box is the one nobody is looking at. */
     if (ANNMIC && ANNMIC.btn === btn) { ANNMIC.h.stop(); return; }
-    if (ANNMIC) ANNMIC.h.stop();
+    if (ANNMIC) ANNMIC.h.drop();
     annSay("");
-    const h = listen(field, tag, {
+    const h = record(tag, {
+      device,
       onState(on) {
         btn.setAttribute("aria-pressed", on ? "true" : "false");
         label();
         if (!on && ANNMIC && ANNMIC.btn === btn) ANNMIC = null;
       },
+      /* The words APPEND rather than replace: somebody types a line, says the
+         next, and types a correction, and each of those has to survive the
+         others. */
+      onText(text) {
+        ANNMIC = null;
+        const said = String(text || "").trim();
+        if (!said) return;
+        const was = field.value ? field.value.replace(/\s+$/, "") + " " : "";
+        field.value = was + said;
+        try { field.selectionStart = field.selectionEnd = field.value.length; } catch { /* no caret */ }
+        field.dispatchEvent(new Event("input", { bubbles: true }));
+      },
       onError(why) {
+        ANNMIC = null;
         /* THE HONEST FAILURE. "not-allowed" is the microphone refused, which
-           is a thing they can change; anything else here is usually the
-           network, which on this board means China, and a button that will
-           fail every time should stop being on the screen. */
+           is a thing they can change; anything else is the box or the network
+           and is worth saying once. */
         annSay(T(why === "not-allowed" ? "mic.no" : "mic.off"));
-        if (why !== "not-allowed") btn.hidden = true;
       },
     });
     ANNMIC = { btn, h };

@@ -926,6 +926,14 @@ services:
       # What he may spend saying it — see lib/say.js. Per device, per day.
       BOARD_SAY_TURNS: ${TOMSCODING_BOARD_SAY_TURNS:-60}
       BOARD_SAY_DAY: ${TOMSCODING_BOARD_SAY_DAY:-800}
+      # AND HEARING THEM — see lib/hear.js. The browser's own recogniser is
+      # dead in a standalone iPhone app and is Google's service, which the
+      # mainland cannot reach, so the phone records and this box transcribes.
+      # Same key again. The audio is never written down anywhere.
+      BOARD_HEAR_TURNS: ${TOMSCODING_BOARD_HEAR_TURNS:-60}
+      BOARD_HEAR_DAY: ${TOMSCODING_BOARD_HEAR_DAY:-800}
+      BOARD_HEAR_BYTES: ${TOMSCODING_BOARD_HEAR_BYTES:-2000000}
+      ELEVENLABS_STT_MODEL: ${ELEVENLABS_STT_MODEL:-}
       BOARD_TRANSLATE_BURST: ${TOMSCODING_BOARD_TRANSLATE_BURST:-30}
       BOARD_TRANSLATE_DAY: ${TOMSCODING_BOARD_TRANSLATE_DAY:-2000}
       # THE DOOR. Unset means there is no door: the code in server.js reads

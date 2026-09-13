@@ -31,7 +31,7 @@
 
 import { T, lang } from "/i18n.js";
 import { device } from "/wait.js";
-import { canHear, listen } from "/speak.js";
+import { canHear, record } from "/speak.js";
 
 /* Its own, the way live.js and wait.js and daily.js each have their own. A
    module that has to be handed a DOM helper by four different pages is a
@@ -338,20 +338,15 @@ function stopSound() {
   sound.onerror = null;
   if (heard) { try { URL.revokeObjectURL(heard); } catch { /* gone */ } heard = ""; }
 }
-/* WHETHER THEY SPOKE TO HIM, WHICH DECIDES WHETHER HE SPEAKS BACK.
- *
- * Somebody who held the mic and asked out loud is holding a phone to their
- * face waiting for an answer, and a grey "Hear it" to press is the wrong
- * thing to hand them. Somebody who typed is in a meeting, on a train, next to
- * somebody — and a phone that starts talking on its own there is the reason
+/* HE ANSWERS THE WAY HE WAS ASKED — see askMo(), which is the one door in
+ * for both. Somebody who spoke into their phone is holding it to their face
+ * waiting for an answer, and a grey "Hear it" to press is the wrong thing to
+ * hand them. Somebody who typed is in a meeting, on a train, next to
+ * somebody, and a phone that starts talking on its own there is the reason
  * people turn a thing off.
  *
- * So the rule is the one a person would use: you spoke, he speaks. You typed,
- * he does not, and Hear it is still under his line if you want it.
- *
- * Set when the mic sends, cleared the moment the submit reads it — one
- * answer, not a mode, and nothing is remembered between turns. */
-let spoken = false;
+ * It used to be a flag set by one of the two mics and read by the form, which
+ * is exactly why the other mic did not count. */
 /* NO VOICE ON THIS BOARD AT ALL, once it has said so once.
  *
  * The route answers 503 when the box has no key for it, and the failure was
@@ -557,16 +552,29 @@ function butlerPanel() {
     mic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">'
       + '<path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z"/>'
       + '<path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+    /* The same gesture as the circle: press to talk, press again and it goes.
+       Drawn pressed if he is already listening, because a repaint builds this
+       button again from scratch and the recorder outlives it. */
+    mic.setAttribute("aria-pressed", BUTMIC ? "true" : "false");
     mic.addEventListener("click", () => {
-      if (BUTMIC) { BUTMIC.stop(); BUTMIC = null; return; }
+      if (BUTMIC) { BUTMIC.stop(); return; }
       BUT.no = "";
-      BUTMIC = listen(input, lang() === "zh" ? "zh-CN" : "en-US", {
-        onState(on) {
-          mic.setAttribute("aria-pressed", on ? "true" : "false");
-          if (!on) BUTMIC = null;
+      mic.setAttribute("aria-pressed", "true");
+      /* In the click, for the same reason as the circle — see primeSound. */
+      primeSound();
+      BUTMIC = record(lang() === "zh" ? "zh" : "en", {
+        device: device(),
+        onState(on) { mic.setAttribute("aria-pressed", on ? "true" : "false"); },
+        onText(text) {
+          BUTMIC = null;
+          const said = String(text || "").trim();
+          if (said) askMo(said, true);
+          else repaint();
         },
         onError(why) {
-          BUT.no = T(why === "not-allowed" ? "mic.no" : "mic.off");
+          BUTMIC = null;
+          BUT.no = T(why === "not-allowed" ? "but.micNo"
+            : why === "slow-down" || why === "busy" ? "but.slow" : "but.micOff");
           repaint();
         },
       });
@@ -578,20 +586,13 @@ function butlerPanel() {
   go.type = "submit";
   form.append(go);
 
-  form.addEventListener("submit", async (e) => {
+  form.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (BUTMIC) { BUTMIC.stop(); BUTMIC = null; }
     const text = input.value.trim();
     if (!text || BUT.busy) return;
-    /* Typed, unless the mic set it a moment ago on its way into this submit. */
-    const outLoud = spoken;
-    spoken = false;
-    BUT.turns.push({ from: "them", text });
-    BUT.busy = true;
-    BUT.no = "";
     input.value = "";
-    repaint();
-    await butlerTurn(outLoud);
+    /* Typed. Typed means he stays quiet — see butlerTurn. */
+    askMo(text, false);
   });
   box.append(form);
 
@@ -625,6 +626,28 @@ function butlerPanel() {
   const out = document.createDocumentFragment();
   out.append(box, off);
   return out;
+}
+
+/** Ask him something, however it was said.
+ *
+ *  ONE DOOR IN, and there were two. The form did all of this inline and the
+ *  microphone had to reach through a synthetic submit event to use it — which
+ *  is how the panel's own mic ended up NOT counting as having spoken to him,
+ *  so somebody who talked got a reply they then had to press a grey button to
+ *  hear. Typed or spoken, it comes through here now, and the only difference
+ *  between them is the one that should be: whether he answers out loud.
+ *
+ *  @param {string} text
+ *  @param {boolean} outLoud  they said it rather than typed it
+ */
+async function askMo(text, outLoud) {
+  const said = String(text || "").trim();
+  if (!said || BUT.busy) return;
+  BUT.turns.push({ from: "them", text: said });
+  BUT.busy = true;
+  BUT.no = "";
+  repaint();
+  await butlerTurn(outLoud);
 }
 
 /** One round trip.
@@ -732,96 +755,84 @@ export function moDock() {
   replace();
   window.addEventListener("resize", replace);
 
-  /* DRAG, AND A TAP IS A DRAG THAT WENT NOWHERE. Pointer events so one path
-     covers mouse, touch and pen; setPointerCapture so a finger that slides
-     off the button keeps dragging it rather than dropping it where the
-     gesture happened to leave the circle. */
-  let down = null;
-  /* SIX PIXELS WAS THE OTHER HALF OF THE GLITCH, and it is measured as
-     |dx|+|dy|, so three pixels in each direction crossed it. A thumb on glass
-     rolls further than that just pressing down — so a hold that had already
-     opened the microphone was cancelled mid-sentence by a finger that never
-     meant to move, silently, and it looked like the mic not recording. */
-  const MOVED = 14;       // px before a tap becomes a drag
-  /* HOLD HIM AND TALK. THREE GESTURES ON ONE CIRCLE, AND THEY HAVE TO BE
-   * TELLABLE APART WITHOUT ANYBODY BEING TAUGHT THEM.
+  /* TWO GESTURES, AND EACH ONE DOES EXACTLY ONE THING.
    *
-   *   tap            open him and type
-   *   drag           move him out of the way
-   *   press and hold speak, and it sends when you let go
+   *   tap          opens him, to type
+   *   press, talk, let go   sends what you said, and he answers out loud
+   *   drag         moves him out of the way
    *
-   * The distinction is the same one a person already makes with every other
-   * button on a phone, so nothing has to be explained: a tap is short, a drag
-   * moves, and a hold is a hold. 400ms before the microphone opens, which is
-   * long enough that nobody triggers it by pressing firmly and short enough
-   * that it feels like the button responded rather than lagged.
+   * The hold never opens the panel. Voice in, voice out, nothing on the
+   * screen — which is the whole point of talking to somebody instead of
+   * typing at them, and it is the gesture everybody in China already has in
+   * their thumbs from WeChat.
    *
-   * WHY IT SENDS ON RELEASE. Holding to talk and letting go to send is the
-   * one voice gesture everybody in China already has in their thumbs, because
-   * it is how WeChat works. Copying it means the most important control on
-   * this screen needs no instruction at all in the market this board is for.
+   * THE RECORDER STARTS ON pointerdown, AND THAT IS THE WHOLE IOS FIX.
+   * getUserMedia is only allowed from inside a user gesture, and a 400ms
+   * setTimeout is not inside one — so opening the microphone when the hold
+   * "became" a hold was refused by the phone, silently, every time. It starts
+   * the instant the finger lands, and a press that turns out to be a tap or a
+   * drag throws the audio away without sending it. The cost is the microphone
+   * being open for under half a second on a tap; the alternative is a feature
+   * that does not work on the device this board is built for.
    */
   const HOLD = 400;
-  let hold = 0;
-  let talking = false;
+  let down = null;
+  let downAt = 0;
+  let ring = 0;
+  /* Six was |dx|+|dy| < 6, so three pixels in each direction crossed it, and
+     a thumb on glass rolls further than that just pressing down. */
+  const MOVED = 14;
 
-  const stopTalk = (send) => {
-    if (!talking) return;
-    talking = false;
+  const dropRec = () => {
+    clearTimeout(ring);
     btn.classList.remove("hear");
-    if (BUTMIC) { BUTMIC.stop(); BUTMIC = null; }
-    if (!send) return;
-    /* The words land in the sheet's own box — see moOpen, which is already
-       open by now — so releasing sends exactly what is on the screen, and a
-       recogniser that heard nothing sends nothing. */
-    const form = document.querySelector(".mosheet .butform");
-    const box = form && form.querySelector("input[type=text]");
-    if (form && box && box.value.trim()) {
-      /* Before the submit, not after: the handler is async and reads it in
-         its first lines. */
-      spoken = true;
-      /* And the phone is told now, while the finger is still on him, that
-         audio is wanted — the answer itself is a second away and too late to
-         ask. See primeSound(). */
-      primeSound();
-      form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
-    }
+    const m = BUTMIC;
+    if (!m) return;
+    BUTMIC = null;
+    m.drop();
   };
 
-  const startTalk = () => {
-    /* NOTHING AT ALL WAS THE OLD ANSWER, and a button that does nothing when
-       held reads as broken rather than as a feature this browser does not
-       have. Firefox has no recogniser; neither does an iPhone in some
-       standalone builds. Say so, once, in the panel — and the box is still a
-       box. */
-    if (!canHear()) {
-      moOpen();
-      BUT.no = T("but.noMic");
-      repaint();
-      return;
-    }
-    /* He opens first: the words have to go somewhere visible, and somebody
-       holding a button wants to see that it is listening. */
-    moOpen();
-    const box = document.querySelector(".mosheet .butform input[type=text]");
-    if (!box) return;
-    talking = true;
-    btn.classList.add("hear");
-    BUTMIC = listen(box, lang() === "zh" ? "zh-CN" : "en-US", {
-      onState(on) { if (!on) { BUTMIC = null; } },
-      /* No microphone, no permission, no network to the recogniser: he stops
-         listening and the box is still a box. See speak.js on where this
-         genuinely does not work. */
-      /* AND IT SAYS SO. This stopped quietly, which is why a microphone that
-         refused — no permission, no route to the recogniser, the last session
-         not yet handed back — was indistinguishable from a button that did
-         nothing. The words are still typeable either way; the point is that
-         somebody knows which of the two just happened. */
+  const sendRec = () => {
+    clearTimeout(ring);
+    btn.classList.remove("hear");
+    if (BUTMIC) BUTMIC.stop();
+  };
+
+  /* A phone that cannot record at all. Remembered on the way down so that
+     LETTING GO can say so — a hold that produces nothing and explains nothing
+     is a dead button, and this was silent. */
+  let noMic = false;
+
+  const startRec = () => {
+    if (BUTMIC) return;
+    if (!canHear()) { noMic = true; return; }
+    noMic = false;
+    /* IN THE GESTURE. He answers out loud when he was asked out loud, and the
+       phone has to be told now — by the time his line is written and bought,
+       the press is long over. See primeSound(). */
+    primeSound();
+    /* The ring is the only thing on a timer, because it is only a picture. A
+       tap must not flash it. */
+    ring = setTimeout(() => btn.classList.add("hear"), HOLD);
+    BUTMIC = record(lang() === "zh" ? "zh" : "en", {
+      device: device(),
+      onState(on) { if (!on) { clearTimeout(ring); btn.classList.remove("hear"); } },
+      onText(text) {
+        BUTMIC = null;
+        const said = String(text || "").trim();
+        /* Nothing said. Not a failure and not worth a panel. */
+        if (!said) return;
+        askMo(said, true);
+      },
       onError(why) {
-        stopTalk(false);
+        BUTMIC = null;
+        clearTimeout(ring);
+        btn.classList.remove("hear");
+        /* THE ONE TIME THE HOLD OPENS HIM. A gesture that produced neither a
+           word nor a sound has to say what happened, or it is a dead button. */
         moOpen();
-        BUT.no = T(why === "not-allowed" || why === "service-not-allowed"
-          ? "but.micNo" : "but.micOff");
+        BUT.no = T(why === "not-allowed" ? "but.micNo"
+          : why === "slow-down" || why === "busy" ? "but.slow" : "but.micOff");
         repaint();
       },
     });
@@ -829,27 +840,21 @@ export function moDock() {
 
   btn.addEventListener("pointerdown", (e) => {
     down = { x: e.clientX, y: e.clientY, l: btn.offsetLeft, t: btn.offsetTop, moved: false };
+    downAt = Date.now();
     try { btn.setPointerCapture(e.pointerId); } catch { /* older browser */ }
-    clearTimeout(hold);
-    hold = setTimeout(startTalk, HOLD);
+    startRec();
   });
   btn.addEventListener("pointermove", (e) => {
     if (!down) return;
-    /* ONCE HE IS LISTENING, A MOVING FINGER IS A RESTING FINGER. Somebody
-       holding a button and speaking into a phone is not trying to drag
-       anything, and their hand does not hold still for eight seconds.
-       Cancelling there threw away the sentence they were halfway through. */
-    if (talking) return;
     const dx = e.clientX - down.x;
     const dy = e.clientY - down.y;
     if (!down.moved) {
       if (Math.abs(dx) + Math.abs(dy) < MOVED) return;
       down.moved = true;
       btn.classList.add("drag");
-      /* Moving him is not talking to him. Whichever of the two the hand meant,
-         it did not mean both. */
-      clearTimeout(hold);
-      stopTalk(false);
+      /* Moving him is not talking to him. Whichever the hand meant, it did
+         not mean both, and a dragged circle must never send. */
+      dropRec();
     }
     const pad = 10;
     const maxX = Math.max(1, window.innerWidth - btn.offsetWidth - pad * 2);
@@ -858,27 +863,33 @@ export function moDock() {
   });
   const up = () => {
     const was = down;
+    const held = Date.now() - downAt;
     down = null;
-    clearTimeout(hold);
     btn.classList.remove("drag");
-    /* Let go of a hold and it sends. This is checked before the tap, because
-       a hold IS a press that was never moved and would otherwise fall through
-       to "open him" — which it has already done, on the way in. */
-    if (talking) { stopTalk(true); return; }
-    if (!was) return;
+    if (!was) { dropRec(); return; }
     if (was.moved) {
       try { localStorage.setItem(SPOTKEY, JSON.stringify(spot)); } catch { /* private window */ }
       return;
     }
+    /* Let go of a hold and it goes. */
+    if (held >= HOLD && BUTMIC) { sendRec(); return; }
+    /* Held, and there was never a microphone to hold. */
+    if (held >= HOLD && noMic) {
+      moOpen();
+      BUT.no = T("but.noMic");
+      repaint();
+      return;
+    }
+    /* A tap. The half-second of audio is thrown away and he opens to type. */
+    dropRec();
     moOpen();
   };
   btn.addEventListener("pointerup", up);
   btn.addEventListener("pointercancel", () => {
     down = null;
-    clearTimeout(hold);
     /* Cancelled is not released: a call arriving mid-sentence must not send
        half of one. */
-    stopTalk(false);
+    dropRec();
     btn.classList.remove("drag");
   });
   return btn;

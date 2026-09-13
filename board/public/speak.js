@@ -31,151 +31,152 @@
  * still there on every phone.
  */
 
-/** Does this browser have it at all. */
+/** Does this browser have it at all.
+ *
+ *  THIS USED TO ASK ABOUT SpeechRecognition AND THE ANSWER WAS A LIE.
+ *
+ *  On an iPhone added to the home screen — which is how this board is meant
+ *  to be used — webkitSpeechRecognition is DEFINED and does nothing. The
+ *  check said yes, the button appeared, every press failed, and the person
+ *  was told "speaking did not work here" by an app that had just promised it
+ *  would. In China the API is there and Google is not, which is the same
+ *  story with a different cause.
+ *
+ *  So the question is now the one that can be answered honestly: can this
+ *  phone record? Recording works in a standalone iPhone app and works in
+ *  China, and the words are made out of the audio in Tokyo — see record()
+ *  below and lib/hear.js.
+ */
 export const canHear = () => {
   try {
-    return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+    return Boolean(navigator.mediaDevices
+      && navigator.mediaDevices.getUserMedia
+      && window.MediaRecorder);
   } catch { return false; }
 };
 
-/* ONE RECOGNISER AT A TIME, AND THIS IS THE "SOMETIMES IT DOESN'T RECORD".
+/* WHAT THE PHONE CAN ACTUALLY RECORD. Safari gives mp4, Chrome gives webm,
+   and the server refuses anything it does not recognise rather than paying to
+   find out. First supported wins. */
+const KINDS = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/wav"];
+
+function kind() {
+  try {
+    for (const k of KINDS) if (window.MediaRecorder.isTypeSupported(k)) return k;
+  } catch { /* no isTypeSupported */ }
+  return "";
+}
+
+/** Record, and hand back what was said.
  *
- * The microphone is a single resource and the browser gives it to one
- * recogniser. Start a second while the first still holds it and start()
- * throws InvalidStateError — which this file caught, reported as "failed",
- * and the caller turned into stopping quietly. So the FIRST hold worked, and
- * a hold a second later did nothing at all, and it looked like the button
- * being flaky rather than like a resource not yet handed back.
+ *  START IT FROM INSIDE THE GESTURE. getUserMedia in a setTimeout is not in a
+ *  user gesture on an iPhone and is refused — which is the other half of why
+ *  holding the button for 400ms and then opening the microphone never worked
+ *  there. This is called straight out of the tap.
  *
- * It is not instant, either: stop() lets the last phrase finish being
- * recognised, so the session is still alive for a moment after the finger
- * comes up. Anybody who lets go and immediately holds again lands in exactly
- * that window.
- *
- * A screen with ONE mic button that toggles never hits this — there is only
- * ever one session and it is never started twice in a row. A button held and
- * released and held again hits it constantly.
- *
- * So: whoever holds it is remembered, a new one takes it off the old one
- * first, and a start that still throws is retried once after a beat rather
- * than being reported as a failure the person can do nothing about.
+ *  @param on { onState(recording), onText(text), onError(why) }
+ *  @returns a handle with .stop() — send it — and .drop() — throw it away.
  */
-let ALIVE = null;
+export function record(lang, on = {}) {
+  let rec = null;
+  let stream = null;
+  let dead = false;
+  let sending = false;
+  const bits = [];
 
-/** Start listening into a field.
- *
- *  Returns a handle with .stop(). Calling it twice is harmless.
- *
- *  @param field    the <input> or <textarea> the words land in
- *  @param lang     a BCP-47 tag — "en-US" or "zh-CN"
- *  @param on       { onState(listening), onError(message) }
- */
-export function listen(field, lang, on = {}) {
-  const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!Rec) { on.onError && on.onError("none"); return { stop() {} }; }
-
-  const rec = new Rec();
-  rec.lang = lang || "en-US";
-  /* CONTINUOUS, because the thing being dictated is a paragraph. Left off, it
-     stops at the first pause and the second sentence is lost while somebody is
-     still talking — which reads as the button being broken rather than as a
-     setting. */
-  rec.continuous = true;
-  /* AND INTERIM RESULTS, for one reason only: a microphone that shows nothing
-     for four seconds is a microphone somebody presses again, which stops it.
-     The interim text is shown and then REPLACED by the final — it is never
-     left in the field, because interim text is the recogniser thinking out
-     loud and is frequently wrong. */
-  rec.interimResults = true;
-
-  /* WHAT WAS IN THE FIELD BEFORE, kept so dictation APPENDS.
-     Somebody types a line, dictates the next, and types a correction. Each of
-     those has to survive the others, which means the only thing this may ever
-     touch is the tail it added itself. */
-  const was = field.value ? field.value.replace(/\s+$/, "") + " " : "";
-  let settled = "";     // everything the recogniser has called final
-  let live = false;
-
-  const paint = (interim) => {
-    field.value = was + settled + interim;
-    /* The caret goes to the end, or a long dictation scrolls the box back to
-       the top and the speaker cannot see what they are saying. */
-    try { field.selectionStart = field.selectionEnd = field.value.length; } catch { /* input types without one */ }
-    try { field.scrollTop = field.scrollHeight; } catch { /* not scrollable */ }
+  const shut = () => {
+    try { if (stream) stream.getTracks().forEach((t) => t.stop()); } catch { /* gone */ }
+    stream = null;
   };
 
-  rec.onresult = (e) => {
-    let interim = "";
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const t = e.results[i][0].transcript;
-      if (e.results[i].isFinal) settled += t;
-      else interim += t;
-    }
-    paint(interim);
-  };
-
-  rec.onerror = (e) => {
-    /* "no-speech" is somebody pausing to think and is not a failure — Chrome
-       fires it after a few seconds of quiet and then carries on. Reporting it
-       would put an error on the screen of somebody who is mid-sentence. */
-    if (e && e.error === "no-speech") return;
-    live = false;
-    if (ALIVE === rec) ALIVE = null;
-    on.onError && on.onError(String((e && e.error) || "failed"));
+  const fail = (why) => {
+    if (dead) return;
+    dead = true;
+    shut();
     on.onState && on.onState(false);
+    on.onError && on.onError(why);
   };
 
-  /* CHROME ENDS THE SESSION ON ITS OWN after a stretch of silence, whatever
-     `continuous` says. Restarting keeps a long dictation going; the flag is
-     what tells this apart from the stop button, which must actually stop. */
-  rec.onend = () => {
-    if (ALIVE === rec) ALIVE = null;
-    if (!live) { on.onState && on.onState(false); return; }
-    try { rec.start(); ALIVE = rec; } catch { live = false; on.onState && on.onState(false); }
-  };
+  /* SIXTY SECONDS AND IT STOPS ITSELF. A phone in a pocket with the recorder
+     running is a bill and a privacy problem, and nobody says more than a
+     minute to a doorman. */
+  let cap = 0;
 
-  /* Somebody who let go before it ever started. Without this the microphone
-     opens a moment later with nobody holding the button. */
-  let dropped = false;
-  let retried = false;
-
-  const begin = () => {
-    if (dropped) return;
+  const send = async () => {
+    shut();
+    on.onState && on.onState(false);
+    if (dead) return;
+    const type = (rec && rec.mimeType) || kind() || "audio/webm";
+    const blob = new Blob(bits, { type });
+    /* Nothing was recorded — a tap on and straight off again. Not a failure
+       and not worth a line on the screen. */
+    if (blob.size < 1200) { dead = true; on.onText && on.onText(""); return; }
+    dead = true;
     try {
-      rec.start();
-      ALIVE = rec;
-      live = true;
-      on.onState && on.onState(true);
+      const r = await fetch("/api/butler-hear?lang=" + encodeURIComponent(lang === "zh" ? "zh" : "en"), {
+        method: "POST",
+        headers: { "Content-Type": type, "x-board-device": (on.device || "") },
+        body: blob,
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.text) { on.onError && on.onError(d.error || "failed"); return; }
+      on.onText && on.onText(d.text);
     } catch {
-      /* Almost always the previous session not having let go yet — see the
-         note above ALIVE. One retry, then say so. */
-      if (!retried) { retried = true; setTimeout(begin, 250); return; }
-      on.onError && on.onError("busy");
+      on.onError && on.onError("failed");
     }
   };
 
-  if (ALIVE && ALIVE !== rec) {
-    const old = ALIVE;
-    ALIVE = null;
-    /* abort(), not stop(), on the one being replaced: its words are not
-       wanted and stop() would spend another moment delivering them. */
-    try { old.abort(); } catch { /* already gone */ }
-    setTimeout(begin, 60);
-  } else {
-    begin();
-  }
+  navigator.mediaDevices.getUserMedia({ audio: true }).then((got) => {
+    if (dead) { got.getTracks().forEach((t) => t.stop()); return; }
+    stream = got;
+    const type = kind();
+    try {
+      rec = type ? new window.MediaRecorder(got, { mimeType: type }) : new window.MediaRecorder(got);
+    } catch {
+      return fail("kind");
+    }
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) bits.push(e.data); };
+    rec.onstop = () => { if (sending) send(); else { shut(); on.onState && on.onState(false); } };
+    rec.onerror = () => fail("failed");
+    try { rec.start(); } catch { return fail("failed"); }
+    on.onState && on.onState(true);
+    cap = setTimeout(() => { if (rec && rec.state === "recording") { sending = true; try { rec.stop(); } catch { /* gone */ } } }, 60_000);
+  }).catch((e) => {
+    /* The phone said no, or there is no microphone to say yes with. */
+    const why = e && (e.name === "NotAllowedError" || e.name === "SecurityError") ? "not-allowed" : "failed";
+    fail(why);
+  });
 
   return {
+    /* Let go and send it. */
     stop() {
-      live = false;
-      dropped = true;
-      if (ALIVE === rec) ALIVE = null;
-      /* stop(), not abort(): stop lets the last phrase finish being recognised
-         and delivered, abort throws it away. The word somebody was saying as
-         they reached for the button is usually the one they meant. */
-      try { rec.stop(); } catch { /* already stopped */ }
-      paint("");
+      clearTimeout(cap);
+      sending = true;
+      if (rec && rec.state === "recording") { try { rec.stop(); } catch { send(); } }
+      else if (!dead) { dead = true; shut(); on.onState && on.onState(false); on.onText && on.onText(""); }
+    },
+    /* Throw it away — a cancelled gesture must not send half a sentence. */
+    drop() {
+      clearTimeout(cap);
+      sending = false;
+      dead = true;
+      if (rec && rec.state === "recording") { try { rec.stop(); } catch { /* gone */ } }
+      shut();
       on.onState && on.onState(false);
     },
   };
 }
+
+/* THE BROWSER'S OWN RECOGNISER IS GONE FROM HERE, and it is worth saying why
+ * rather than leaving a gap.
+ *
+ * listen() wrapped window.SpeechRecognition: free, instant, no key, interim
+ * words appearing as somebody spoke. It is the better mechanism and it does
+ * not work for either half of the people this board is for — dead in a
+ * standalone iPhone app while reporting itself available, and Google's
+ * service, which the mainland cannot reach. Two silent failures, and the
+ * capability check could not tell you about either.
+ *
+ * record() above is slower, costs money and has no interim words. It works on
+ * both.
+ */
