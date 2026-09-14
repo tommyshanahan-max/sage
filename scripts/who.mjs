@@ -48,6 +48,12 @@ console.log("-".repeat(88));
 
 let out = 0;
 let noreach = 0;
+/* COUNTED BY REASON, because the reasons are not the same kind of thing and
+   the advice at the bottom used to treat them as one. See below. */
+const held = [];
+const theirs = [];
+const nameless = [];
+const inBrowse = [];
 for (const q of people.sort((a, b) => (b.at || "").localeCompare(a.at || ""))) {
   /* THE ORDER OF THESE IS THE ORDER THEY BITE. A profile with no name is not a
      profile yet; after that it is the switch; after that the queue. Only the
@@ -56,7 +62,10 @@ for (const q of people.sort((a, b) => (b.at || "").localeCompare(a.at || ""))) {
     : q.state !== "published" ? "the profile is " + q.state
     : !q.looking ? "\"Show me in Browse\" is off — only she can turn it on"
     : "";
-  if (why) out++;
+  if (why) out++; else inBrowse.push(q.handle);
+  if (!q.handle) nameless.push(q.handle || "—");
+  else if (q.state !== "published") held.push(q.handle);
+  else if (!q.looking) theirs.push(q.handle);
   if (!q.reach) noreach++;
   console.log(pad(q.handle || "—", 16) + pad(when(q.at), 11)
     + pad(why ? "no" : "yes", 10) + pad(q.reach || "— nothing", 24) + why);
@@ -69,15 +78,43 @@ for (const q of people.sort((a, b) => (b.at || "").localeCompare(a.at || ""))) {
 }
 
 console.log("");
-console.log(people.length + " with a page, " + (people.length - out) + " in Browse.");
+console.log(people.length + " with a page, " + inBrowse.length + " in Browse.");
+/* NAMED, not just counted. "5 in Browse" at the foot of twenty-three rows is a
+   number somebody has to scroll back up and re-read the table to check, and
+   the question this command gets asked is "who can I actually see". */
+if (inBrowse.length) console.log("  " + inBrowse.join("  "));
+
 if (noreach) {
   console.log("");
   console.log(noreach + " of them this board cannot reach at all: no card, and they");
   console.log("did not come through the list. Nothing was lost — it was never asked");
   console.log("for. The way to reach them now is the room they are already in.");
 }
-if (out) {
+
+/* THE ADVICE USED TO BE ONE SENTENCE FOR THREE DIFFERENT PROBLEMS, and it was
+   the wrong sentence for the commonest of them. It said "nobody can be put in
+   Browse for them — the switch is on their own phone", which is true of
+   `looking` and NOT true of a held profile: a hold is the review queue, it is
+   the operator's, and `make show` clears it. So eighteen people were sitting
+   behind a queue nobody had been told they could clear, under a line saying
+   there was nothing to be done. Each reason now says whose it is. */
+if (held.length) {
   console.log("");
-  console.log("Nobody can be put in Browse for them — the switch is on their own");
-  console.log("phone, under their name, and it is theirs to turn on.");
+  console.log(held.length + " " + (held.length === 1 ? "profile is" : "profiles are")
+    + " held for review. That is yours to clear:");
+  console.log('  make show WHO="' + held[0] + '"');
+  if (held.length > 1) console.log("  …and so on for: " + held.slice(1).join("  "));
+  console.log("Their words go up as written, so read the row before you do.");
+  console.log('If "Show me in Browse" is off underneath, they stay out — see below.');
+}
+if (theirs.length) {
+  console.log("");
+  console.log(theirs.length + " have \"Show me in Browse\" off. Nobody can turn that on");
+  console.log("for them — the switch is on their own phone, under their name:");
+  console.log("  " + theirs.join("  "));
+}
+if (nameless.length) {
+  console.log("");
+  console.log(nameless.length + " never finished the form — there is no name on the page,");
+  console.log("so there is nothing to show yet.");
 }
