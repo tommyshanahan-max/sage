@@ -376,18 +376,6 @@
 
   
   
-  .wrshot{margin:1rem 0 0;padding:1rem;background:var(--card);
-    border:1px solid var(--hair);border-radius:.8rem}/* A label wrapping a hidden file input: the styled control every browser
-     agrees on, and it opens the camera on a phone. */
-  
-  .shotgo{display:block;width:100%;padding:.7rem;border:1px solid var(--accent);
-    border-radius:99px;background:none;color:var(--accent);font:inherit;
-    font-weight:600;font-size:.92rem;text-align:center;cursor:pointer}
-  .shotgo.busy{opacity:.6;pointer-events:none}
-  .shotsaid{margin:.6rem 0 0;font-size:.83rem;color:var(--muted);line-height:1.5;
-    text-align:center}
-  .shotsaid.wait{color:var(--accent)}
-  .shotsaid.bad{color:#b3261e}
   .form{margin:1rem 0 0;padding:1rem;background:var(--card);
     border:1px solid var(--hair);border-radius:.8rem}
   .form label{display:block;margin:.75rem 0 .25rem;font-size:.82rem;
@@ -1250,21 +1238,25 @@ function drawWait(box) {
       for (const t of todo) {
         const go = el("button", "wrgo", T(t.key));
         go.type = "button";
+        /* BOTH OF THESE LIVE ON THE YOU TAB NOW, so the button changes tab
+           and then does the thing, rather than scrolling to something on
+           this page that is no longer on it.
+
+           THE PHOTOGRAPH CANNOT WAIT FOR A REDRAW. iOS opens a file chooser
+           only inside the tap that asked for it, so drawing the other tab
+           and then calling click() a frame later opens nothing at all. The
+           draw is synchronous and the card exists by the time it returns —
+           so the tap is still the same tap, and the picker opens. */
         go.addEventListener("click", () => {
-          const card = document.querySelector(".pc");
+          PANE = "you";
+          draw();
           if (t.go === "photo") {
-            /* Straight into the picker. click() on the card runs the handler
-               the card already has, and it is still inside this tap's user
-               gesture — which is what iOS requires before it will open a file
-               chooser at all. */
+            const card = document.querySelector(".pc");
             if (card) card.click();
             return;
           }
-          /* The sentence is a form further down the page. Nothing to open, so
-             put it in front of them. */
-          const form = document.querySelector(".wrq, .pcpills, .under");
-          const to = form || card;
-          if (to) { try { to.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* old browser */ } }
+          const form = document.querySelector(".wrq, .pcpills");
+          if (form) { try { form.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* old browser */ } }
         });
         band.append(go);
       }
@@ -1349,6 +1341,86 @@ function drawWait(box) {
   strip.hidden = true;
   box.append(strip);
   offerInstall(strip, true);
+
+  /* THE CARD IS ON THE YOU TAB, WHICH IS WHAT THE YOU TAB IS.
+   *
+   * This screen carried the card, the photograph, the two tests and the
+   * sentence — and so did the tab next to it. Two tabs, both mostly about
+   * one card, and the one called "Waiting" was the busier of the two. It had
+   * stopped being a waiting list and become a to-do page with a queue
+   * position at the top of it.
+   *
+   * One thing each now. Waiting is where you stand, what is holding you and
+   * what moves you up. You is your card, all of it, in one place — see
+   * drawYou, which is where this block went.
+   */
+
+  /* SHARING, AFTER THE CARD IS FINISHED.
+   *
+   * It sat directly under the picture, which put the ask before the card was
+   * worth sending — somebody who had not chosen what they are looking for
+   * was being handed a link to a half-filled page. Below the dropdowns it
+   * comes after the last thing they fill in, and before the people waiting
+   * with them, so the proof sits next to the ask. */
+  if (DATA.link) box.append(shareBox(DATA.link));
+
+  /* THE SEAT, when the switch is on. See SEAT_OUTSIDE in server.js — the
+     server sends nothing at all when it is off, so this whole block simply
+     does not exist rather than being hidden.
+
+     FOURTH, and the position is the argument. Above it the screen is about
+     being findable, which is what they came for and what the busy people
+     stay for. Directly below it are the other people waiting — so the moment
+     after somebody taps Send your link, the next thing on the screen is four
+     people who are here because somebody did. The proof sits next to the
+     ask. */
+  if (DATA.seat) box.append(seatBox(DATA.seat));
+  /* Or, with the block off, the sentence. See `soon` in server.js. */
+  else if (DATA.soon) box.append(el("p", "soonnote", T("wr.soon")));
+
+  /* THE OTHERS ARE IN THE ROOM, NOT IN A LIST UNDER IT.
+   *
+   * This was "Waiting with you" and a row each — face, name, their room,
+   * their line, their tags. It was the only way to know anybody else was
+   * there when this screen was a form and a clock.
+   *
+   * The room is above it now and it says the same thing three times over:
+   * Mo announces each arrival by name as it happens, the header counts them,
+   * and then a list at the foot of the page names them again with no new
+   * fact on it. A list of people you have just watched walk in is furniture.
+   *
+   * What it was carrying that the room was not — their line, and what they
+   * are looking for — belongs on a card somebody can read, which is what
+   * Browse is for and what the Inside tab now reaches.
+   */
+  if (DATA.featured.length) {
+    const ih = el("div", "wrhead");
+    ih.append(el("span", null, T("wr.inside")), el("i"));
+    box.append(ih);
+    const p = DATA.featured[0];
+    const card = el("div", "wrpost");
+    card.append(el("p", null, p.note));
+    card.append(el("p", "by", p.handle + " · " + when(p.at)));
+    box.append(card);
+  }
+
+  const lock = el("div", "locked");
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M6 11V8a6 6 0 0112 0v3M5 11h14v9H5z");
+  svg.append(path);
+  lock.append(svg, el("span", null, T("wr.locked")));
+  box.append(lock);
+}
+
+/** The room at this door, on the screen of somebody standing in it. */
+/** What members see, and the only screen that can change it. */
+function drawYou(box) {
+  const you = DATA.you;
+  const head = el("div", "wrhead");
+  head.append(el("span", null, T("wr.edit")), el("i"));
+  box.append(head);
 
   const full = Boolean(you.levelBand && you.type && you.want);
 
@@ -1436,96 +1508,19 @@ function drawWait(box) {
 
   box.append(pickRow(you, DATA.tests ? 3 : 1));
 
-  /* SHARING, AFTER THE CARD IS FINISHED.
-   *
-   * It sat directly under the picture, which put the ask before the card was
-   * worth sending — somebody who had not chosen what they are looking for
-   * was being handed a link to a half-filled page. Below the dropdowns it
-   * comes after the last thing they fill in, and before the people waiting
-   * with them, so the proof sits next to the ask. */
-  if (DATA.link) box.append(shareBox(DATA.link));
-
-  /* THE SEAT, when the switch is on. See SEAT_OUTSIDE in server.js — the
-     server sends nothing at all when it is off, so this whole block simply
-     does not exist rather than being hidden.
-
-     FOURTH, and the position is the argument. Above it the screen is about
-     being findable, which is what they came for and what the busy people
-     stay for. Directly below it are the other people waiting — so the moment
-     after somebody taps Send your link, the next thing on the screen is four
-     people who are here because somebody did. The proof sits next to the
-     ask. */
-  if (DATA.seat) box.append(seatBox(DATA.seat));
-  /* Or, with the block off, the sentence. See `soon` in server.js. */
-  else if (DATA.soon) box.append(el("p", "soonnote", T("wr.soon")));
-
-  /* THE OTHERS ARE IN THE ROOM, NOT IN A LIST UNDER IT.
-   *
-   * This was "Waiting with you" and a row each — face, name, their room,
-   * their line, their tags. It was the only way to know anybody else was
-   * there when this screen was a form and a clock.
-   *
-   * The room is above it now and it says the same thing three times over:
-   * Mo announces each arrival by name as it happens, the header counts them,
-   * and then a list at the foot of the page names them again with no new
-   * fact on it. A list of people you have just watched walk in is furniture.
-   *
-   * What it was carrying that the room was not — their line, and what they
-   * are looking for — belongs on a card somebody can read, which is what
-   * Browse is for and what the Inside tab now reaches.
-   */
-  if (DATA.featured.length) {
-    const ih = el("div", "wrhead");
-    ih.append(el("span", null, T("wr.inside")), el("i"));
-    box.append(ih);
-    const p = DATA.featured[0];
-    const card = el("div", "wrpost");
-    card.append(el("p", null, p.note));
-    card.append(el("p", "by", p.handle + " · " + when(p.at)));
-    box.append(card);
+  /* AND WHERE THE PHOTOGRAPH HAS GOT TO. A picture that is up but not yet
+     released looks identical to one that failed to send, and only one of
+     those is worth worrying about. */
+  if (you.photo && you.photoState !== "published") {
+    box.append(el("p", "under wait", T("wr.photoHeld")));
   }
 
-  const lock = el("div", "locked");
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", "M6 11V8a6 6 0 0112 0v3M5 11h14v9H5z");
-  svg.append(path);
-  lock.append(svg, el("span", null, T("wr.locked")));
-  box.append(lock);
-}
-
-/** The room at this door, on the screen of somebody standing in it. */
-/** What members see, and the only screen that can change it. */
-function drawYou(box) {
-  const you = DATA.you;
-  const head = el("div", "wrhead");
-  head.append(el("span", null, T("wr.edit")), el("i"));
-  box.append(head);
-
-  box.append(cardOf(you, false));
-
-  /* THE PHOTOGRAPH, ABOVE THE WORDS.
-   *
-   * It is the slot worth the most and the one nobody is required to fill, so
-   * it is offered first and never asked for twice. The line under it says
-   * exactly where it has got to — a picture that is up but not yet released
-   * looks identical to one that failed to send, and only one of those is
-   * worth worrying about. */
-  const shot = el("div", "wrshot");
-  const pick = el("button", "shotgo", T(you.photo ? "wr.photoAgain" : "wr.photoAdd"));
-  pick.type = "button";
-  const shotsaid = el("p", "shotsaid");
-  shotsaid.className = "shotsaid " + photoWord(you).how;
-  shotsaid.textContent = photoWord(you).words;
-  const picker = photoPicker(you, {
-    busy: (on) => { pick.className = on ? "shotgo busy" : "shotgo"; },
-    say: (words, how) => { shotsaid.className = "shotsaid " + (how || "");
-      shotsaid.textContent = words; },
-  });
-  pick.addEventListener("click", picker.open);
-  shot.append(pick, picker.input, shotsaid);
-  box.append(shot);
+  /* THERE WERE TWO OF THESE AND THEY DISAGREED. This tab had a card with an
+     "Add a photo" button beside it; the waiting tab had a card you tapped,
+     with a chip on it saying so. The tapped one is better — the thing a
+     person reaches for when they want to change their picture is the
+     picture — so it is the one that survived the merge, and the button is
+     gone rather than sitting next to it doing the same job. */
 
   const form = el("div", "form");
   const name = el("input");
