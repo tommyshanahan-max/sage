@@ -48,12 +48,18 @@
    * in. What they can do is see where they stand, and the one line under the
    * room is that — not a menu, because a menu of one thing is a menu that
    * teases four things that are not there. */
-  /* TWO, NOT ONE. Where they stand, and their own page — which they can fill
-     in from the list, before anybody has let them in, and which is the thing
-     that makes them ready to be let in. It was one unlabelled link to a screen
-     with both on it, which is a door with no sign on it. */
-  .outs{display:flex;gap:1.4rem;justify-content:center;margin:.55rem 0 0}
-  .outs a{font-size:.8rem;color:var(--muted)}
+  /* The bar, the same shape a member's four tabs have — see notes.html. Fixed
+     to the bottom, above the box, because it is where a thumb already is and
+     where every other app on this phone puts it. */
+  .bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:35;
+    width:100%;max-width:34rem;display:flex;
+    padding:.1rem .5rem calc(.35rem + env(safe-area-inset-bottom));
+    background:var(--paper);border-top:1px solid var(--line)}
+  .bar a{flex:1;text-align:center;padding:.65rem .2rem;font-size:.82rem;
+    font-weight:600;color:var(--muted);text-decoration:none}
+  .bar a.on{color:var(--accent)}
+  /* The bar sits over the bottom of the page, so the box has to clear it. */
+  body.withbar .foot{padding-bottom:calc(4.2rem + env(safe-area-inset-bottom))}
 
   .talk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
     gap:.55rem;padding:1rem 0 .8rem}
@@ -103,6 +109,17 @@
     <span id="langslot"></span>
   </div>
   <div class="talk" id="talk"></div>
+  <!-- THE THREE PLACES THIS PERSON HAS, AS A BAR.
+       This was two lines of small grey text under the box, and small grey text
+       is where I keep putting things that matter — it reads as a footnote and
+       gets scrolled past. A member has four tabs along the bottom of every
+       screen; somebody at the door has three, and they belong in the same
+       place, at the same weight, doing the same thing. -->
+  <nav class="bar" id="bar" hidden>
+    <a class="on" href="#" id="barRoom"></a>
+    <a href="/room" id="barQueue"></a>
+    <a href="/room#you" id="barYou"></a>
+  </nav>
   <div class="foot">
     <!-- THE NAME STEP SAYS SO, ABOVE THE BOX. It said so in the placeholder,
          which vanishes the moment somebody types — so the first thing typed
@@ -115,9 +132,7 @@
     </div>
     <p class="note" id="note" hidden></p>
     <p class="ins" id="install" hidden></p>
-    <p class="outs" id="outs" hidden>
-      <a href="/room" id="out"></a><a href="/room#you" id="outyou"></a>
-    </p>
+
   </div>
 </main>
 
@@ -175,9 +190,14 @@ function paint() {
   /* Only once they are in it: somebody who has not given a name has no place
      to go and look at, and a link to one would be a dead end with a word on
      it. The header carries it too, which is where a person looks. */
-  $("outs").hidden = !IN;
-  $("out").textContent = T("dr.myPlace");
-  $("outyou").textContent = T("dr.myPage");
+  /* Only once they are in the room: somebody who has not given a name has no
+     queue to look at and no page to fill in, and two tabs that lead to empty
+     screens are worse than a screen with no tabs. */
+  $("bar").hidden = !IN;
+  document.body.classList.toggle("withbar", IN);
+  $("barRoom").textContent = T("dr.barRoom");
+  $("barQueue").textContent = T("dr.barQueue");
+  $("barYou").textContent = T("dr.barYou");
   $("rlink").removeAttribute("href");
   if (IN) $("rlink").href = "/room";
 
