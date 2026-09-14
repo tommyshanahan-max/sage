@@ -2340,6 +2340,20 @@ export const STRINGS = {
   "bud.type":          ["Type sort", "性格测试"],
   "bud.follow":        ["Follow", "关注"],
   "bud.following":     ["Following", "已关注"],
+  /* The heading over the members in a door room — see doorInside. "In here"
+     rather than "Members": the room is the subject, and half the people on
+     this screen are outside it. */
+  "dr.inHere":         ["In this room", "这屋里的人"],
+  /* THE MOMENT IT BECOMES A CONVERSATION. Said on the screen where it
+     happened, once, and it names the one thing they can now do. Not "you have
+     matched" — nothing on this board calls itself a match to a person. */
+  "dr.bothNow":        ["{who} follows you too. You can write to each other now.",
+                        "{who} 也关注了你。你们现在可以互相留言了。"],
+  /* The two refusals, in the words of the thing to do about them. */
+  "brw.followNoPage":  ["Write your own page first — then you can follow people.",
+                        "先把自己的资料写了，才能关注别人。"],
+  "brw.followHidden":  ["Your page is not in Browse, so you cannot follow yet.",
+                        "你的资料还没进 Browse，所以还不能关注。"],
   // Who followed you, and the button that answers it.
   "fol.head":          ["Following you", "关注了你"],
   "fol.new":           ["{n} new", "{n} 个新的"],

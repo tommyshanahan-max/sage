@@ -251,6 +251,30 @@
      shrink to their content and sit in from the edge, out of line with the
      heading over them. */
   .dinfo{align-self:stretch}
+  /* THE MEMBERS IN THE ROOM, above the queue: they are the people a reader
+     can act on, and the queue below them is the people they are deciding
+     about. Two lists, in the order the decisions happen. */
+  .dinside{margin:0 0 1.1rem}
+  .dhead{margin:0 0 .4rem;font-size:.72rem;font-weight:600;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted)}
+  .drow{display:flex;align-items:center;gap:.6rem;padding:.5rem 0}
+  .drow + .drow{border-top:1px solid var(--hair)}
+  .dwho{flex:1 1 auto;display:flex;align-items:center;gap:.6rem;min-width:0;
+    color:inherit;text-decoration:none}
+  /* The name over what they are. Two lines, because side by side they read as
+     one word — "Hugowaiting" — and .wm's own rule only applies inside .wperson. */
+  .drow .wm{flex:1;min-width:0}
+  .drow .wm b{display:block;font-family:var(--serif);font-weight:400;font-size:1rem}
+  .drow .wm span{display:block;font-size:.78rem;color:var(--muted);line-height:1.4}
+  /* Follow is a decision, so it reads as one: filled while it is still to be
+     made, quiet once it has been. The same pair of states the deck uses. */
+  .dfollow{flex:0 0 auto;padding:.4rem .9rem;border:0;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);font:inherit;
+    font-size:.82rem;font-weight:600;cursor:pointer}
+  .dfollow.on{background:var(--card);border:1px solid var(--hair);color:var(--ink-2)}
+  .dfollow:disabled{opacity:.5}
+  /* What happened, under the row it happened on. Hidden until it has. */
+  .dboth{margin:0 0 .5rem;font-size:.78rem;line-height:1.45;color:var(--accent)}
   /* The ＋ of a door, at the top where the people screen starts. Filled, not
      outlined: it is the one thing on this screen you do rather than read. */
   .sendbox{display:flex;gap:.5rem;align-items:stretch;margin:.2rem 0 .3rem}
@@ -1618,8 +1642,101 @@ function doorName(m) {
  * come, one place up per person somebody brought in, decided in queueOrder and
  * not worked out again on this screen.
  */
+/** WHO IS IN THIS ROOM, AND THE ONE THING TO DO ABOUT THEM.
+ *
+ *  This screen listed the queue and nothing else, so a room with people
+ *  talking in it showed none of them — and the thing you want when you have
+ *  just read somebody's line was two screens away behind a face nobody knew
+ *  was tappable.
+ *
+ *  EVERYBODY WHO HAS SPOKEN, inside or out. There is no membership list for a
+ *  door room: who is "in this room" is who has said something in it, which is
+ *  also the only people you would have a reason to follow.
+ *
+ *  FOLLOWING IS SILENT AND ONE-SIDED and none of that changes here. They are
+ *  not told, nothing opens, and a thread only appears when both of them have
+ *  done it. Seeing somebody in a room has never meant being inside and it
+ *  still does not — what this opens is one conversation between two people
+ *  who chose each other, which is the alternative to a WeChat id in a message.
+ */
+function doorInside(key) {
+  const seen = new Map();
+  for (const m of DOOR.says || []) {
+    if (m.bot || m.mine || !m.handle || !m.fid) continue;
+    if (!seen.has(m.fid)) seen.set(m.fid, m);
+  }
+  if (!seen.size) return null;
+  const wrap = el("div", "dinside");
+  wrap.append(el("p", "dhead", T("dr.inHere")));
+  for (const m of seen.values()) {
+    const row = el("div", "drow");
+    /* A LINK ONLY WHERE ONE LEADS SOMEWHERE. A member's page for a member;
+       a door person's page for a member reading them. Otherwise the name is
+       a name, which is the truth rather than a link onto a refusal. */
+    const to = m.inside && m.handle ? "/p/" + encodeURIComponent(m.handle)
+      : m.wid ? "/q/" + encodeURIComponent(m.wid) : "";
+    const a = el(to ? "a" : "div", "dwho");
+    if (to) a.href = to;
+    const av = el("span", "av small", (m.handle || "?").slice(0, 1).toUpperCase());
+    av.style.background = wash(m.handle || "?");
+    if (m.photo) {
+      const img = Object.assign(document.createElement("img"),
+        { src: "/api/public-media?id=" + encodeURIComponent(m.photo), alt: "", loading: "lazy" });
+      img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
+    }
+    const mid = el("div", "wm");
+    mid.append(el("b", null, m.handle));
+    /* What they are, then which side of the door they are on. The role leads,
+       because that is what a reader is deciding about — same order the name
+       above a message uses. */
+    const bits = [];
+    if (m.role) bits.push(T("role.a." + m.role));
+    bits.push(T(m.inside ? "dr.barIn" : "wr.flag"));
+    mid.append(el("span", null, bits.join(" · ")));
+    a.append(av, mid);
+    row.append(a);
+
+    let on = Boolean(m.iFollow);
+    const b = el("button", "dfollow" + (on ? " on" : ""), T(on ? "bud.following" : "bud.follow"));
+    b.type = "button";
+    const note = el("p", "dboth");
+    note.hidden = true;
+    b.addEventListener("click", async (e) => {
+      e.preventDefault();
+      b.disabled = true;
+      try {
+        const r = await fetch("/api/follow", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device, who: m.fid, on: !on, room: key }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (r.ok) {
+          on = !on;
+          b.classList.toggle("on", on);
+          b.textContent = T(on ? "bud.following" : "bud.follow");
+          /* THE MOMENT IT BECOMES A CONVERSATION, said once and where it
+             happened. Without this, both of them have pressed a button and
+             nothing on either screen says the thing they can now do. */
+          note.hidden = !d.both;
+          if (d.both) note.textContent = T("dr.bothNow", { who: m.handle });
+        } else if (d.error === "nopage" || d.error === "hidden") {
+          note.hidden = false;
+          note.textContent = T(d.error === "hidden" ? "brw.followHidden" : "brw.followNoPage");
+        }
+      } catch { /* the button comes back and they can press it again */ }
+      b.disabled = false;
+    });
+    row.append(b);
+    wrap.append(row);
+    wrap.append(note);
+  }
+  return wrap;
+}
+
 function doorPeople(key) {
   const box = el("div", "dinfo");
+  const inside = doorInside(key);
+  if (inside) box.append(inside);
   const said = new Set((DOOR.says || []).map((m) => m.wid).filter(Boolean));
   const rows = QUEUE.filter((w) =>
     (WAITROOMS.includes(w.room) ? w.room : "other") === key)
@@ -1687,7 +1804,13 @@ function doorPeople(key) {
   send.append(nameIn, go);
   box.append(send, sendSaid);
 
-  box.append(el("p", "when", T("dr.here", { n: rows.length })));
+  /* THE QUEUE IS A MEMBER'S TO READ, and so is its count. /api/queue refuses
+     anybody else, so `rows` is empty for them — and "0 at this door", printed
+     under a room they are standing in with four other people, is the screen
+     telling them something false. */
+  if (DOOR.how === "member") {
+    box.append(el("p", "when", T("dr.here", { n: rows.length })));
+  }
   for (const w of rows) {
     /* THE ROW AND ITS ACTION ARE ONE THING. Drawn as siblings, the rule under
        the row fell between the person and their own button, so "Let in ·
@@ -1836,11 +1959,15 @@ async function drawDoor(key) {
   $("twhosub").textContent = T("dr.sub");
 
   /* ⋯ IN THE TOP RIGHT, which is where somebody looks for the people in a
-     room because it is where every messenger on their phone keeps them. Only
-     for a member: it opens the queue, and the queue is not a waiting person's
-     to read. */
+     room because it is where every messenger on their phone keeps them.
+     IT WAS MEMBERS ONLY, because the only thing behind it was the queue, and
+     the queue is not a waiting person's to read. It still is not — /api/queue
+     refuses them and QUEUE is empty for them. But the screen has a second
+     half now: who is in this room, and the follow that goes with it, which is
+     everybody's. So it opens when there is either. */
   const act = $("tmore");
-  act.hidden = !(DOOR.how === "member" && QUEUE.length);
+  const anyHere = (DOOR.says || []).some((m) => m.fid && !m.mine && !m.bot);
+  act.hidden = !((DOOR.how === "member" && QUEUE.length) || anyHere);
   act.onclick = () => { DOORINFO = DOORINFO === key ? "" : key; drawDoor(key); };
 
   fill(talk);

@@ -1727,11 +1727,26 @@ export function cleanPerson(raw) {
  * `by` is the follower's device hash, `who` is the followed person's id. The
  * asymmetry is deliberate: a follower has no profile necessarily, and should
  * not need one to read somebody. */
+/* TWO SHAPES OF ADDRESS, THE SAME TWO A NOTE TAKES.
+ *
+ * A person id, which is every member. And "w:<id>", which is somebody
+ * standing at a door — they have no profile and therefore no person id, and
+ * following them still has to mean something, because the room is where two
+ * people meet before either of them is inside.
+ *
+ * FOLLOWING IS NOT ACCESS AND THIS CHANGES NOTHING ABOUT THAT. It is silent,
+ * one-sided, tells them nothing, and opens nothing on its own. What it does
+ * is let two people who have read each other in a room say so — and when both
+ * have, they get somewhere to talk that is not WeChat. Browse, the member
+ * board and everybody behind the door are exactly as shut as they were.
+ */
+export const FOLLOW_ID = /^(?:[a-f0-9]{20}|w:[a-f0-9]{20})$/;
+
 export function cleanFollow(raw) {
   if (!raw || typeof raw !== "object") return null;
   const by = String(raw.by || "").slice(0, 64);
   const who = String(raw.who || "");
-  if (!by || !/^[a-f0-9]{20}$/.test(who)) return null;
+  if (!by || !FOLLOW_ID.test(who)) return null;
   return { by, who, at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
 }
 

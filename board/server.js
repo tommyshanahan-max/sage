@@ -6484,6 +6484,42 @@ const OFFER_LINES = Math.max(1, Number(process.env.BOARD_OFFER_LINES || 6));
  *  line up. The same four decisions pairState reports to a profile — read from
  *  the board rather than passed in, so nothing can claim a match by asserting
  *  one. */
+/** HOW SOMEBODY IS FOLLOWED, which is not the same as who they are.
+ *
+ *  A member is followed by their page id. Somebody at a door has no page, so
+ *  they are followed by "w:<row id>" — the same second address a note takes.
+ *  Returns "" for a browser that is neither, which follows nobody and is
+ *  followed by nobody.
+ */
+function followKey(board, h) {
+  if (!h) return "";
+  const q = board.people.find((x) => x.by === h && x.handle && x.state === "published");
+  if (q) return q.id;
+  const w = board.waits.find((x) => x.by === h && !x.done);
+  return w ? "w:" + w.id : "";
+}
+
+/** THEY FOLLOWED EACH OTHER, WHOEVER THEY ARE.
+ *
+ *  matched() below is the Browse mechanic: two members, whose sentences fit,
+ *  in a shared room. This is the other way two people on this board end up
+ *  talking — they stood in the same room, read each other, and both pressed
+ *  follow.
+ *
+ *  IT IS NOT A WAY IN. It opens one conversation between two people who chose
+ *  each other and nothing else: no Browse, no member list, nobody they could
+ *  not already see. Seeing somebody in a room has never meant being inside,
+ *  and this keeps it that way — what it stops is the only other place that
+ *  conversation could have gone, which is WeChat.
+ */
+function bothFollow(board, me, them) {
+  const a = followKey(board, me);
+  const b = followKey(board, them);
+  if (!a || !b) return false;
+  return board.follows.some((f) => f.by === me && f.who === b)
+    && board.follows.some((f) => f.by === them && f.who === a);
+}
+
 function matched(board, me, them) {
   const mine = board.people.find((q) => q.by === me);
   const theirs = board.people.find((q) => q.by === them);
@@ -6596,7 +6632,10 @@ function threadState(board, me, them) {
      lines off them for having also agreed to a piece of work would be exactly
      backwards. The terms still come with it — those are worth having over any
      conversation about the work they describe. */
-  if (matched(board, me, them)) {
+  /* Either way of choosing each other opens the same thread — see bothFollow.
+     The Browse match is two members whose sentences fit; this is two people
+     who stood in a room and both pressed follow. */
+  if (matched(board, me, them) || bothFollow(board, me, them)) {
     const last = between[between.length - 1];
     return {
       can: true, open: true, why: "open",
@@ -6765,10 +6804,16 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
   const out = await change((board) => {
     const target = who.startsWith("w:")
       ? (() => {
-          const w = board.waits.find((x) => x.id === who.slice(2) && !x.done && x.fromWrite);
+          const w = board.waits.find((x) => x.id === who.slice(2) && !x.done);
+          /* TWO WAYS TO BE REACHABLE WITHOUT A PAGE, and no third. Somebody a
+             member wrote to, who is answering them; and somebody who followed
+             this person in a room and was followed back. Anybody else on the
+             list is not addressable, which is what the door is for. */
+          if (!w || !w.by) return null;
+          if (!w.fromWrite && !bothFollow(board, me, w.by)) return null;
           // Shaped like a person for the checks below, and deliberately
           // without an id: there is no page and nothing to open.
-          return w && w.by ? { id: "", by: w.by, handle: w.name, state: "published" } : null;
+          return { id: "", by: w.by, handle: w.name, state: "published" };
         })()
       : board.people.find((x) => x.id === who && x.state === "published");
     // The same answer for a person who does not exist and one who has taken
@@ -6785,8 +6830,13 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
        by name and knows exactly who they are. Their name is on the waiting
        row, which is what the member reads. Any other pair still needs one,
        and writePair is false for every other pair. */
+    /* OR THE TWO OF THEM FOLLOWED EACH OTHER IN A ROOM — see bothFollow.
+       The profile rule is about an introduction from a name that does not
+       exist; two people who read each other in a room and both pressed follow
+       are not introducing themselves to a stranger either. */
     const mine = board.people.find((q) => q.by === me);
-    if ((!mine || !mine.handle) && !writePair(board, me, target.by)) {
+    if ((!mine || !mine.handle) && !writePair(board, me, target.by)
+        && !bothFollow(board, me, target.by)) {
       return { error: "profile" };
     }
 
@@ -7507,6 +7557,8 @@ app.get("/api/door", notesOff, async (req, res) => {
   /* TWO PLACES A NAME CAN COME FROM, and neither of them carries a way to
      reach anybody: a member's handle, or the name somebody typed on the way
      in. Never the device hash the row is stored under. */
+  /* Who this reader already follows, worked out once rather than per row. */
+  const iFollow = new Set(board.follows.filter((f) => f.by === me).map((f) => f.who));
   const named = (h) => {
     if (h === store.MO) return { handle: MO_NAME, inside: false, bot: true };
     const q = board.people.find((x) => x.by === h && x.handle);
@@ -7521,8 +7573,30 @@ app.get("/api/door", notesOff, async (req, res) => {
        of these people is a director, not which of them has been admitted.
        The role leads and the side of the door follows it. */
     const roleOf = (r) => (r && r.me) || "";
+    /* AND THEIR PAGE ID, FOR A MEMBER READER, so the room can offer Follow
+       where the decision is made rather than two screens away. Same rule as
+       `wid` below and for the same reason: an id is the way to act on
+       somebody, and acting is a member's. A reader still outside gets the
+       name and nothing to press.
+       Only for somebody who is actually followable — published and looking —
+       so the button is never offered against a refusal. */
+    /* HOW TO FOLLOW THEM, for anybody standing in this room.
+     *
+     * Not the same thing as `pid` and `wid` below, which are a member's way of
+     * ACTING on somebody — opening their page, opening a thread. This is the
+     * one button the room itself offers, and it is offered to everybody in the
+     * room because that is the whole change: two people who read each other in
+     * here can say so, and if both do they get somewhere to talk.
+     *
+     * It is not access and it hands over nothing. A wait id is only ever
+     * useful for following and for a thread the other person also agreed to —
+     * see /api/follow and the `w:` branch in /api/note. */
     if (q) return { handle: q.handle, inside: true, bot: false,
                     role: roleOf((Array.isArray(q.say) ? q.say : [])[0]),
+                    ...(q.state === "published" && (q.looking || q.runBy)
+                      ? { fid: q.id, iFollow: iFollow.has(q.id) } : {}),
+                    ...(how === "member" && q.state === "published"
+                      && (q.looking || q.runBy) ? { pid: q.id } : {}),
                     ...(q.peek && q.looking && q.state === "published" ? { peek: true } : {}) };
     const w = board.waits.find((x) => x.by === h && !x.done);
     /* THE ROW ID, FOR A MEMBER ONLY. Not to name them — the name is already
@@ -7532,6 +7606,8 @@ app.get("/api/door", notesOff, async (req, res) => {
        waiting: the ids are the way into a thread, which is a member's. */
     return { handle: (w && w.name) || "", inside: false, bot: false,
              role: (w && w.me) || "",
+             // Followable by anybody in the room with them — see above.
+             ...(w && w.shown ? { fid: "w:" + w.id, iFollow: iFollow.has("w:" + w.id) } : {}),
              ...(w && how === "member" ? { wid: w.id } : {}) };
   };
 
@@ -8280,15 +8356,44 @@ app.get("/api/followers", async (req, res) => {
 });
 
 /* Follow, and unfollow, which is the same button. */
-app.post("/api/follow", express.json({ limit: "8kb" }), gate, async (req, res) => {
+/* NOT BEHIND `gate`, AND THAT IS THE POINT OF THE WHOLE CHANGE.
+ *
+ * `gate` asks whether this browser spent an invite. Somebody who walked into
+ * a door room with a name did not — the room link is its own way in — so
+ * every one of them would be refused here, which is exactly the people this
+ * is for.
+ *
+ * What replaces it is stricter, not looser, and it is inside the write where
+ * it can be checked against the board rather than believed: you may follow
+ * somebody if you have a page that is out in Browse, OR if the two of you are
+ * standing in the same room. Neither is a thing a browser can claim. And a
+ * follow is only ever stored under the follower's own device hash, so nobody
+ * can press it on anybody else's behalf.
+ */
+app.post("/api/follow", express.json({ limit: "8kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   const who = String(req.body?.who || "");
-  if (!me || !/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "no" });
+  if (!me || !store.FOLLOW_ID.test(who)) return res.status(400).json({ error: "no" });
   const on = req.body?.on !== false;
+  /* WHICH ROOM THEY WERE BOTH STANDING IN, when that is how this was pressed.
+     Sent by the room screen; the checks below decide whether it is true. */
+  const room = String(req.body?.room || "");
 
   let why = "";
   const out = await change((board) => {
-    const target = board.people.find((x) => x.id === who && x.state === "published");
+    /* SOMEBODY AT A DOOR IS A PERSON YOU CAN FOLLOW.
+     *
+     * They have no page, so they are addressed as "w:<row>" — see cleanFollow.
+     * Shaped like a person here so every check below reads the same for both,
+     * and without an id, because there is no page to open.
+     */
+    const target = who.startsWith("w:")
+      ? (() => {
+          const w = board.waits.find((x) => x.id === who.slice(2) && !x.done && x.shown);
+          return w && w.by ? { id: "", by: w.by, handle: w.name, state: "published",
+                               wait: w } : null;
+        })()
+      : board.people.find((x) => x.id === who && x.state === "published");
     if (!target) return null;
     // Following yourself is not a thing anybody means to do.
     if (target.by === me) return { count: store.followersOf(board.follows, who), following: false };
@@ -8317,14 +8422,49 @@ app.post("/api/follow", express.json({ limit: "8kb" }), gate, async (req, res) =
      * clause four of Andy's nine could never follow anybody, which is a cap on
      * a shared room turning into a punishment for the people it was protecting.
      */
+    /* AND THE OTHER WAY TWO PEOPLE END UP ABLE TO REACH FOR EACH OTHER.
+     *
+     * The rule above is Browse's: you may reach for somebody because you let
+     * yourself be seen. It is the right rule for a deck of strangers and the
+     * wrong one for a room. Two people standing in the same room have already
+     * seen each other — their names are on their messages, their lines are on
+     * the screen — and telling one of them they may not press follow because
+     * they have not written a profile yet is the board refusing the one thing
+     * that would keep the conversation on it.
+     *
+     * SO: THE ROOM IS THE PERMISSION. Both of them in it, checked against the
+     * board rather than believed — `room` names a door this browser can open,
+     * and the person being followed is standing in it. Being in a room has
+     * never meant being inside and it still does not: this opens one
+     * conversation between two people who chose each other, and not one thing
+     * more. No Browse, no member list, nobody they could not already see.
+     */
+    const together = (() => {
+      if (!room || !store.WAITROOMS_CHAT.includes(room)) return false;
+      if (!doorAccess(board, me, room)) return false;
+      // The one being followed has to be standing in that same room.
+      if (target.wait) return (target.wait.room || "other") === room;
+      // A member is in every door room — but only counts as in THIS one if
+      // they have actually said something in it, which is how anybody came to
+      // be reading them.
+      const id = store.doorRoom(room);
+      return board.says.some((m) => m.group === id && m.by === target.by && m.text);
+    })();
+
     const mine = board.people.find((x) => x.by === me);
     const seen = mine && mine.state === "published" && mine.handle
       && (mine.looking || mine.runBy);
-    if (on && !seen) { why = mine && mine.handle ? "hidden" : "nopage"; return null; }
+    if (on && !seen && !together) {
+      why = mine && mine.handle ? "hidden" : "nopage";
+      return null;
+    }
     const had = board.follows.findIndex((f) => f.by === me && f.who === who);
     if (on && had < 0) board.follows.push(store.cleanFollow({ by: me, who }));
     if (!on && had >= 0) board.follows.splice(had, 1);
-    return { count: store.followersOf(board.follows, who), following: on };
+    /* AND WHETHER THAT WAS THE SECOND HALF OF IT. The page says "you can
+       write to them now" rather than leaving somebody to discover it. */
+    return { count: store.followersOf(board.follows, who), following: on,
+             both: on && bothFollow(board, me, target.by) };
   });
   // Told apart, because they are different things to do next: one is a toggle
   // and the other is a name and a sentence.
