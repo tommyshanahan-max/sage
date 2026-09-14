@@ -249,6 +249,21 @@ function doorWhere(m) {
   if (ROOM.how === "wait" && m.peek && m.handle) {
     return "/browse#p:" + encodeURIComponent(m.handle.toLowerCase());
   }
+  /* AND A MEMBER WHO HAS SPOKEN IN HERE.
+   *
+   * Tapping Nicole worked and tapping Tom did nothing, on the same screen,
+   * which reads as a broken app rather than as a rule. The rule it came from
+   * is real — members behind the door are not shown to somebody outside — but
+   * it does not reach this case: his handle is printed over his message, and
+   * /api/person answers to anybody who has one. The information was already
+   * theirs; only the link was missing.
+   *
+   * What they can do with it is still the follow, and that is unchanged: the
+   * page's own thread rules decide the rest, and for these two the answer is
+   * "not until you both follow". */
+  if (ROOM.how === "wait" && m.inside && m.handle && m.fid) {
+    return "/p/" + encodeURIComponent(m.handle.toLowerCase());
+  }
   /* AND THE PEOPLE STANDING AT THIS DOOR WITH THEM.
    *
    * This returned nothing, so for somebody who had just walked in every face

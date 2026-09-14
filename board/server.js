@@ -6640,6 +6640,21 @@ function threadState(board, me, them) {
     || (x.by === them && x.who === me))) {
     return { can: false, why: "shut", open: false };
   }
+  /* NO PAGE, NO INTRODUCTION — the same rule /api/note enforces, said here so
+   * the button and the route cannot disagree.
+   *
+   * This said "yes" to anybody with no conversation yet, because before the
+   * rooms the only people on this screen had pages. Now somebody at a door
+   * can reach a member's page, and "Say hello" was offered to them and then
+   * refused by the route: an introduction from a name that does not exist is
+   * not one. Two ways past it, both of them the other person having agreed —
+   * a member who wrote to them first, or a follow each way. */
+  const hasPage = board.people.some((q) => q.by === me && q.handle
+    && q.state === "published");
+  if (!hasPage && !writePair(board, me, them) && !bothFollow(board, me, them)) {
+    return { can: false, why: "profile", open: false };
+  }
+
   const notes = board.notes;
   const between = notes.filter(
     (n) => (n.by === me && n.to === them) || (n.by === them && n.to === me));

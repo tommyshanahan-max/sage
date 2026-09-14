@@ -1168,8 +1168,13 @@ function paint() {
    * which reads as a missing feature rather than a thread that is waiting on
    * them or one somebody left. */
   if (!q.mine && !THREAD.can && THREAD.why) {
-    box.append(el("p", "stateline",
-      T(THREAD.why === "closed" ? "note.closed" : "note.waiting", { who: q.handle })));
+    /* "profile" is somebody at a door reading a member's page — they can see
+       it and they have no page of their own, so there is nothing to write
+       from. The line says the two things that would change it rather than
+       describing a thread that does not exist. See threadState. */
+    const key = THREAD.why === "closed" ? "note.closed"
+      : THREAD.why === "profile" ? "note.needPage" : "note.waiting";
+    box.append(el("p", "stateline", T(key, { who: q.handle })));
   }
   /* YOUR KEY, on your own page.
    *

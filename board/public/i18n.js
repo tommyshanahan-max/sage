@@ -4528,6 +4528,11 @@ export const STRINGS = {
     "只能回一条，回完就结束了。想继续聊的话，把联系方式写进去。",
   ],
   "note.sent":         ["Sent. It is theirs to answer now.", "已发送。等对方回复。"],
+  /* Somebody at a door, on a member's page — see threadState. Two facts and
+     no apology: follow them, and write your own page. Both are things they
+     can go and do. */
+  "note.needPage":     ["Follow {who}. If they follow back you can write to each other — and write your own page, so there is something to follow.",
+                        "关注 {who}。他也关注你，你们就能互相留言——也把自己的资料写了，别人才有得看。"],
   "note.waiting":      ["You have written to {who}. It is theirs to answer.",
                         "你已经写给 {who} 了。等对方回复。"],
   /* IT SAID "Carry on where you swapped", which assumed a swap. Two people
