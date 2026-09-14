@@ -7757,7 +7757,21 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
     const said = await butler.ask([{ from: "them", text: asked }], "grp:" + id,
       { peek: shown, now: MO_NOW, state: now ? nowOn(now) : "" })
       .catch(() => ({ error: "no" }));
-    const line = said && said.text ? String(said.text).slice(0, 600) : "";
+    /* `say`, NOT `text`, AND THAT ONE WORD COST THE WHOLE FEATURE.
+     *
+     * clean() in lib/butler.js returns { say, me, want, why, ready } — the
+     * shape the card page has always read. This asked for `.text`, which is
+     * undefined on every reply he has ever written, so the line was empty
+     * every time and he has never once answered in a room. The model ran, the
+     * answer was 155 characters of perfectly good English, and it went in the
+     * bin between one property name and another.
+     *
+     * WHAT MADE IT SURVIVE A WHOLE NIGHT: the log said "silent — the model
+     * returned nothing", which was true of this variable and false of the
+     * world, and read exactly like a model refusing. Two lines above each
+     * other in the log — "ok 4083ms 155 chars" and "silent" — were the same
+     * question, and only together do they say where it went. */
+    const line = said && said.say ? String(said.say).slice(0, 600) : "";
     /* WHY HE WAS SILENT, WRITTEN DOWN.
      *
      * Somebody asks him something in a room, nothing comes back, and there was
@@ -7785,10 +7799,17 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
            The room still has to exist: a group they are in, or one of the five
            at the door. Anything else is an id somebody made up. */
         if (!board.groups.some((x) => x.id === id) && !store.doorKey(id)) return null;
-        board.says.push(store.cleanSay({
+        const row = store.cleanSay({
           id: store.newId(), group: id, by: store.MO, text: line,
-        }));
-        return true;
+        });
+        board.says.push(row);
+        return row.id;
+      }).then((moId) => {
+        /* AND HIS ANSWER READS IN BOTH LANGUAGES, like every other line in
+           the room — see renderSay. He answers in the language he was asked
+           in, so half the room would otherwise get his one useful sentence
+           in the wrong one. */
+        if (moId) renderSay(moId, line);
       }).catch(() => { /* his silence is not the sender's problem */ });
     }
   }
