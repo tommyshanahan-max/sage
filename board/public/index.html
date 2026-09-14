@@ -3110,7 +3110,7 @@
 </div>
 
 <script type="module">
-import { T, when, lang, setLang, pickLang, langButton, STRINGS } from "/i18n.js";
+import { T, when, lang, setLang, pickLang, langButton, STRINGS, pick } from "/i18n.js";
 /* The photograph pipeline lives in its own file now: the waiting room, which
    is in front of the door, needs the same one. See photo.js. */
 import { shrink, asBase64 } from "/photo.js";
@@ -7629,8 +7629,7 @@ function personCard(q, live) {
    * language, which is the honest failure and the one this had before.
    */
   if (q.goal) {
-    const mine = lang() === "zh" ? "zh" : "en";
-    const said = (q.goalAlt && q.goalLang && q.goalLang !== mine) ? q.goalAlt : q.goal;
+    const said = pick(q.goal, q.goalAlt, q.goalAlt2, q.goalLang);
     scrim.append(el("p", "goal", said));
   }
 
@@ -7872,10 +7871,8 @@ function qRow(w) {
   }
   mid.append(line);
   if (w.why) {
-    // In the reader's language where there is one — see whyAlt in cleanWait.
-    const my = lang() === "zh" ? "zh" : "en";
-    mid.append(el("small", null,
-      (w.whyAlt && w.whyLang && w.whyLang !== my) ? w.whyAlt : w.why));
+    // In the reader's language where there is one — see pick in i18n.js.
+    mid.append(el("small", null, pick(w.why, w.whyAlt, w.whyAlt2, w.whyLang)));
   }
   const tags = el("div", "qtags");
   if (w.type) tags.append(el("span", null, w.type));

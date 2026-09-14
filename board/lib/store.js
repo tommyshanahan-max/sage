@@ -78,6 +78,21 @@ export const WAITROOMS = ["film", "invest", "raise", "trade", "other"];
  * test. */
 export const waitDone = (w) => Boolean(w && w.photo && w.me && w.want);
 
+/** A LANGUAGE CODE, AND IT IS NOT ONE OF TWO.
+ *
+ *  These fields held "zh", "en" or nothing, because the board is written in
+ *  two languages and it was assumed the people would be. They are not: there
+ *  are Germans, Russians and Koreans in the queue, and a German line stored as
+ *  "en" because it uses the Latin alphabet is a line the English half of a
+ *  room is shown untranslated and the Chinese half reads fine.
+ *
+ *  Two lowercase letters, which is every ISO 639-1 code and nothing else.
+ */
+export function cleanLang(v) {
+  const c = String(v ?? "").trim().toLowerCase();
+  return /^[a-z]{2}$/.test(c) ? c : "";
+}
+
 export function cleanWait(raw) {
   if (!raw || typeof raw !== "object") return null;
   const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").trim().slice(0, n);
@@ -134,7 +149,15 @@ export function cleanWait(raw) {
        one reader who most needs to understand what they wrote. Rendered once
        when the line lands — see renderWhy. */
     whyAlt: s(raw.whyAlt, 300),
-    whyLang: raw.whyLang === "zh" ? "zh" : raw.whyLang === "en" ? "en" : "",
+    /* AND A THIRD LANGUAGE NEEDS TWO RENDERS, NOT ONE.
+       A German line is not English with an accent. `alt` holds the render into
+       the OTHER board language when the source is Chinese or English, which is
+       the ordinary case and covers both readers with one call. When the source
+       is neither — German, Russian, Korean — one render can only ever serve
+       half the room, so `alt` is the Chinese and this is the English. Empty
+       every other time. See renderPair in server.js. */
+    whyAlt2: s(raw.whyAlt2, 300),
+    whyLang: cleanLang(raw.whyLang),
     at: s(raw.at, 40) || new Date().toISOString(),
     // The browser that asked, so one person cannot fill the list on their own.
     by: s(raw.by, 64),
@@ -1321,7 +1344,9 @@ export function cleanPerson(raw) {
      * are without guessing. Empty until the render lands; the page falls back
      * to the original, which is always right and sometimes not theirs. */
     goalAlt: s(raw.goalAlt, 600),
-    goalLang: raw.goalLang === "zh" ? "zh" : raw.goalLang === "en" ? "en" : "",
+    // The English, when the line is in neither board language — see cleanWait.
+    goalAlt2: s(raw.goalAlt2, 600),
+    goalLang: cleanLang(raw.goalLang),
     trade: s(raw.trade, 120),
     /* AN ADDRESS, AND IT IS NOT A CONTACT.
      *
@@ -2057,7 +2082,9 @@ export function cleanSay(raw) {
      * looking at it — the state this is fixing, and the honest version of
      * it while a render is in flight. */
     alt: s(raw.alt, 600),
-    lang: raw.lang === "zh" ? "zh" : raw.lang === "en" ? "en" : "",
+    // The English, when the line is in neither board language — see cleanWait.
+    alt2: s(raw.alt2, 600),
+    lang: cleanLang(raw.lang),
     report: s(raw.report, 400),
     /* WHAT HAPPENED TO THE ROOM, when this line is about the room rather than
      * something somebody said. Who joined, who was taken out, who walked.

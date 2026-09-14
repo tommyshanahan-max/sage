@@ -169,7 +169,7 @@
 </main>
 
 <script type="module">
-import { T, when, lang, setLang, pickLang, langButton, moWelcome } from "/i18n.js";
+import { T, when, lang, setLang, pickLang, langButton, moWelcome, pick } from "/i18n.js";
 import { device, roomFromPath, viaFromUrl, wFromUrl } from "/wait.js";
 import { offerInstall } from "/install.js";
 import { moHear } from "/mo.js";
@@ -230,8 +230,7 @@ function saidIn(m) {
      English sentence handed back to you in Chinese is the app correcting you
      rather than helping. WeChat leaves yours alone for the same reason. */
   if (m.mine) return words;
-  const mine = lang() === "zh" ? "zh" : "en";
-  return (m.alt && m.lang && m.lang !== mine) ? m.alt : words;
+  return pick(words, m.alt, m.alt2, m.lang);
 }
 
 function doorWhere(m) {

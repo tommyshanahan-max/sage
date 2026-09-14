@@ -102,7 +102,7 @@
 </main>
 
 <script type="module">
-import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
+import { T, when, lang, setLang, pickLang, langButton, pick } from "/i18n.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t);
@@ -169,9 +169,7 @@ function draw() {
      the rooms make — see whyAlt in cleanWait. The original when there is no
      rendering yet, which is always right and sometimes not the reader's. */
   if (W.why) {
-    const mine = lang() === "zh" ? "zh" : "en";
-    box.append(el("p", "why",
-      (W.whyAlt && W.whyLang && W.whyLang !== mine) ? W.whyAlt : W.why));
+    box.append(el("p", "why", pick(W.why, W.whyAlt, W.whyAlt2, W.whyLang)));
   }
 
   const tags = el("div", "tags");

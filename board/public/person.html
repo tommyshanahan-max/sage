@@ -400,7 +400,7 @@
 </nav>
 
 <script type="module">
-import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
+import { T, when, lang, setLang, pickLang, langButton, pick } from "/i18n.js";
 import { mountMo } from "/mo.js";
 import { stageFor, stageName, crownMark } from "/crown.js";
 import { OFF } from "/off.js";
@@ -896,9 +896,8 @@ function paint() {
      carries, rendered once when the line was written. The original when there
      is no rendering yet, which is always right and sometimes not theirs. */
   if (q.goal) {
-    const mine = lang() === "zh" ? "zh" : "en";
     head.append(el("p", "goal",
-      (q.goalAlt && q.goalLang && q.goalLang !== mine) ? q.goalAlt : q.goal));
+      pick(q.goal, q.goalAlt, q.goalAlt2, q.goalLang)));
   }
 
   /* WHAT IS MISSING, ON YOUR OWN PAGE, AS THE THING THAT FIXES IT.

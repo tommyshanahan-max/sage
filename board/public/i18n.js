@@ -4974,6 +4974,34 @@ export function T(key, vars) {
  *  the previous welcome landed in and a collision steps one along, which is
  *  why this returns the slot as well as the words.
  */
+/** THE LINE, IN THE LANGUAGE THIS READER IS READING IN.
+ *
+ *  One function because there were six copies of it — on the cards, in three
+ *  rooms, on the queue and on a door person's page — and six copies of a rule
+ *  is six chances for one of them to be a version behind. Which is what
+ *  happened: they all assumed the world had two languages in it.
+ *
+ *    text  what they actually wrote
+ *    alt   the render into the other board language
+ *    alt2  the English, and ONLY when the source was neither — see cleanWait
+ *    lang  what it was written in, as two letters
+ *
+ *  Written in the reader's own language: their own words, always. Written in
+ *  the other board language: the one render, which is the reader's. Written in
+ *  a third — German, Russian, Korean — `alt` is the Chinese and `alt2` is the
+ *  English, and the reader gets whichever is theirs.
+ *
+ *  NOTHING RENDERED YET falls back to what they wrote. Always true, sometimes
+ *  not the reader's language, and better than an empty bubble.
+ */
+export function pick(text, alt, alt2, lang) {
+  const my = LANG === "zh" ? "zh" : "en";
+  const src = String(lang || "");
+  if (!src || src === my) return text;
+  if (src === "zh" || src === "en") return alt || text;
+  return (my === "zh" ? alt : alt2) || alt || text;
+}
+
 export function moWelcome(who, seed, before = -1) {
   const keys = ["mo.welcome", "mo.welcome2", "mo.welcome3",
                 "mo.welcome4", "mo.welcome5", "mo.welcome6"];

@@ -2304,18 +2304,57 @@ const rosterOf = (board, q) => board.people
  * a call to find that out is the definition of a bill for nothing.
  */
 const WORDY = /[\p{L}]{2}/u;
+
+/** BOTH LANGUAGES OF ONE LINE, WHATEVER IT WAS WRITTEN IN.
+ *
+ *  Returns { lang, alt, alt2 } or null.
+ *
+ *  ORDINARY CASE, ONE CALL. Written in Chinese or English, so one render
+ *  covers the other half of the room. `lang` is the source, `alt` is the
+ *  other, `alt2` is empty. That is every line on this board until somebody
+ *  writes in a third language, and it is the case worth not paying twice for.
+ *
+ *  THE THIRD LANGUAGE, TWO CALLS. German, Russian, Korean. One render can
+ *  only serve half the room — until now a German line came back as Chinese
+ *  and was stored as "en", so the Chinese half read it fine and the English
+ *  half was shown German. So the second call is made, and only then: `alt` is
+ *  the Chinese, `alt2` is the English, and `lang` says it is neither.
+ *
+ *  The script cannot decide this — German is Latin letters, the same as
+ *  English — so the model is asked, and `lang` in its answer is what settles
+ *  it. See the JSON shape in lib/translate.js.
+ */
+async function renderPair(words, by) {
+  const one = await translate(words, { by }).catch(() => null);
+  if (!one || one.error || !one.text) return null;
+  const lang = String(one.from || "").slice(0, 2).toLowerCase();
+  if (lang === "zh" || lang === "en" || !lang) {
+    return { lang: lang || "en", alt: one.text, alt2: "" };
+  }
+  /* Neither, so `one` is whichever the first pass produced — Chinese, since
+     the script guess reads non-Han as English and renders it to Chinese. The
+     second call is the English, asked for explicitly rather than guessed. */
+  const two = await translate(words, { by: by + ":en", to: "en" }).catch(() => null);
+  return {
+    lang,
+    alt: one.text,
+    alt2: two && !two.error && two.text ? two.text : "",
+  };
+}
+
 function renderSay(id, text) {
   const words = String(text || "").trim();
   if (!words || !WORDY.test(words) || !translateReady()) return;
-  translate(words, { by: "say:" + id })
+  renderPair(words, "say:" + id)
     .then((out) => {
-      if (!out || out.error || !out.text) return;
+      if (!out) return;
       return change((board) => {
         const m = board.says.find((x) => x.id === id);
         // Gone, or reported and removed while this was in flight.
         if (!m || String(m.text || "").trim() !== words) return null;
-        m.alt = out.text;
-        m.lang = out.from === "zh" ? "zh" : "en";
+        m.alt = out.alt;
+        m.alt2 = out.alt2;
+        m.lang = out.lang;
         return true;
       });
     })
@@ -2330,14 +2369,15 @@ function renderSay(id, text) {
 function renderWhy(id, text) {
   const words = String(text || "").trim();
   if (!words || !WORDY.test(words) || !translateReady()) return;
-  translate(words, { by: "why:" + id })
+  renderPair(words, "why:" + id)
     .then((out) => {
-      if (!out || out.error || !out.text) return;
+      if (!out) return;
       return change((board) => {
         const w = board.waits.find((x) => x.id === id);
         if (!w || String(w.why || "").trim() !== words) return null;
-        w.whyAlt = out.text;
-        w.whyLang = out.from === "zh" ? "zh" : "en";
+        w.whyAlt = out.alt;
+        w.whyAlt2 = out.alt2;
+        w.whyLang = out.lang;
         return true;
       });
     })
@@ -2364,16 +2404,17 @@ function renderWhy(id, text) {
 function renderBio(id, text) {
   const words = String(text || "").trim();
   if (!words || !translateReady()) return;
-  translate(words, { by: "bio:" + id })
+  renderPair(words, "bio:" + id)
     .then((out) => {
-      if (!out || out.error || !out.text) return;
+      if (!out) return;
       return change((board) => {
         const q = board.people.find((x) => x.id === id);
         // Gone, or written again while this was in flight — the newer line
         // wins and has its own render on the way.
         if (!q || String(q.goal || "").trim() !== words) return null;
-        q.goalAlt = out.text;
-        q.goalLang = out.from === "zh" ? "zh" : "en";
+        q.goalAlt = out.alt;
+        q.goalAlt2 = out.alt2;
+        q.goalLang = out.lang;
         return true;
       });
     })
@@ -3413,6 +3454,7 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
            is right — a rendering of words nobody wrote any more is worse than
            none. See whyAlt in cleanWait. */
         whyAlt: row.why === was.why ? (was.whyAlt || "") : "",
+        whyAlt2: row.why === was.why ? (was.whyAlt2 || "") : "",
         whyLang: row.why === was.why ? (was.whyLang || "") : "" };
     } else board.waits.push(row);
     const live = at >= 0 ? board.waits[at] : row;
@@ -3935,7 +3977,8 @@ app.get("/api/wait/me", async (req, res) => {
      * away from losing their place and nothing had told them. They can write
      * a new one without this ever having read the old one. */
     you: { name: mine.name, room: mine.room, why: mine.why,
-      whyAlt: mine.whyAlt || "", whyLang: mine.whyLang || "", at: mine.at,
+      whyAlt: mine.whyAlt || "", whyAlt2: mine.whyAlt2 || "",
+      whyLang: mine.whyLang || "", at: mine.at,
       levelBand: mine.levelBand, type: mine.type, me: mine.me, want: mine.want,
       photo: mine.photo, photoState: mine.photoState,
       canSignIn: /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/
@@ -4060,7 +4103,7 @@ app.post("/api/wait/card", express.json({ limit: "2kb" }), async (req, res) => {
     board.waits[at] = row;
     return { on: true, you: { levelBand: row.levelBand, type: row.type,
       me: row.me, want: row.want, name: row.name, room: row.room, why: row.why,
-      whyAlt: row.whyAlt || "", whyLang: row.whyLang || "",
+      whyAlt: row.whyAlt || "", whyAlt2: row.whyAlt2 || "", whyLang: row.whyLang || "",
       // Whether it works as a way back, never the thing itself. See above.
       canSignIn: /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/
         .test(String(row.reach || "").trim().toLowerCase()) } };
@@ -4691,7 +4734,7 @@ app.get("/api/queue", async (req, res) => {
       place: i + 1, id: x.w.id,
       name: x.w.name, room: x.w.room, why: x.w.why,
       // And the same line in the other language — see whyAlt in cleanWait.
-      whyAlt: x.w.whyAlt || "", whyLang: x.w.whyLang || "",
+      whyAlt: x.w.whyAlt || "", whyAlt2: x.w.whyAlt2 || "", whyLang: x.w.whyLang || "",
       /* BOTH HALVES OF THE SENTENCE. `want` alone said what they are looking
          for and not what they are, which is half of the only sentence this
          board runs on — enough for a row in a list and not enough for the
@@ -4748,7 +4791,7 @@ app.get("/api/queue/:id", async (req, res) => {
     .filter(Boolean);
   res.json({
     id: w.id, name: w.name, room: w.room, why: w.why,
-    whyAlt: w.whyAlt || "", whyLang: w.whyLang || "",
+    whyAlt: w.whyAlt || "", whyAlt2: w.whyAlt2 || "", whyLang: w.whyLang || "",
     me: w.me, want: w.want, type: w.type, levelBand: w.levelBand,
     at: w.at, up: Boolean(w.up),
     place: at + 1, waiting: order.length,
@@ -5075,6 +5118,7 @@ app.post("/api/waiting/add", express.json({ limit: "4kb" }), admin, async (req, 
         /* The rendering follows the line it was made from — see the same
            carry-over in /api/wait. */
         whyAlt: (row.why || had.why) === had.why ? (had.whyAlt || "") : "",
+        whyAlt2: (row.why || had.why) === had.why ? (had.whyAlt2 || "") : "",
         whyLang: (row.why || had.why) === had.why ? (had.whyLang || "") : "",
         room: row.room || had.room,
         shown: row.shown || had.shown,
@@ -7316,7 +7360,7 @@ app.get("/api/groups", notesOff, async (req, res) => {
                      /* The same line in the other language, rendered once when
                         it was said — see renderSay. The page picks; nobody
                         presses anything. */
-                     alt: m.alt || "", lang: m.lang || "",
+                     alt: m.alt || "", alt2: m.alt2 || "", lang: m.lang || "",
           // What happened to the room, when the line is about the room — see
           // moSays. The page writes the sentence; this is the fact.
           evt: m.evt || null,
@@ -7513,7 +7557,7 @@ app.get("/api/door", notesOff, async (req, res) => {
                      /* The same line in the other language, rendered once when
                         it was said — see renderSay. The page picks; nobody
                         presses anything. */
-                     alt: m.alt || "", lang: m.lang || "",
+                     alt: m.alt || "", alt2: m.alt2 || "", lang: m.lang || "",
                      /* What happened to the room rather than something said in
                         it — see moSays. Sent here as well as from /api/groups:
                         without it his arrival lines arrived as empty bubbles
@@ -9960,13 +10004,14 @@ app.post("/api/bios", admin, async (req, res) => {
   for (const m of says) {
     const words = String(m.text).trim();
     if (!/[\p{L}]{2}/u.test(words)) continue;
-    const out = await translate(words, { by: "say:" + m.id }).catch(() => null);
-    if (!out || out.error || !out.text) continue;
+    const out = await renderPair(words, "say:" + m.id);
+    if (!out) continue;
     await change((b) => {
       const row = b.says.find((x) => x.id === m.id);
       if (!row || String(row.text || "").trim() !== words) return null;
-      row.alt = out.text;
-      row.lang = out.from === "zh" ? "zh" : "en";
+      row.alt = out.alt;
+      row.alt2 = out.alt2;
+      row.lang = out.lang;
       return true;
     });
     lines += 1;
@@ -9983,13 +10028,14 @@ app.post("/api/bios", admin, async (req, res) => {
   for (const w of waits) {
     const words = String(w.why).trim();
     if (!/[\p{L}]{2}/u.test(words)) continue;
-    const out = await translate(words, { by: "why:" + w.id }).catch(() => null);
-    if (!out || out.error || !out.text) continue;
+    const out = await renderPair(words, "why:" + w.id);
+    if (!out) continue;
     await change((b) => {
       const row = b.waits.find((x) => x.id === w.id);
       if (!row || String(row.why || "").trim() !== words) return null;
-      row.whyAlt = out.text;
-      row.whyLang = out.from === "zh" ? "zh" : "en";
+      row.whyAlt = out.alt;
+      row.whyAlt2 = out.alt2;
+      row.whyLang = out.lang;
       return true;
     });
     asked += 1;
@@ -10000,13 +10046,14 @@ app.post("/api/bios", admin, async (req, res) => {
   const failed = [];
   for (const q of todo) {
     const words = String(q.goal).trim();
-    const out = await translate(words, { by: "bio:" + q.id }).catch(() => null);
-    if (!out || out.error || !out.text) { failed.push(q.handle); continue; }
+    const out = await renderPair(words, "bio:" + q.id);
+    if (!out) { failed.push(q.handle); continue; }
     await change((board2) => {
       const row = board2.people.find((x) => x.id === q.id);
       if (!row || String(row.goal || "").trim() !== words) return null;
-      row.goalAlt = out.text;
-      row.goalLang = out.from === "zh" ? "zh" : "en";
+      row.goalAlt = out.alt;
+      row.goalAlt2 = out.alt2;
+      row.goalLang = out.lang;
       return true;
     });
     done.push(q.handle);
