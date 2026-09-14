@@ -2516,6 +2516,22 @@ function renderBio(id, text) {
     .catch(() => { /* the line stands in one language; nothing is lost */ });
 }
 
+/* THE LAYER THE NEXT PERSON THROUGH THE DOOR WOULD LAND IN, and how many
+ * places are left in it.
+ *
+ * Counted on people with a page, which is the same count the public line and
+ * the member panel already use — "in" has to mean the same thing everywhere it
+ * is said, or the number that closes a layer disagrees with the number beside
+ * it on the next screen.
+ *
+ * WHY THE PLACES LEFT ARE WORTH SHOWING AT ALL. It is the only figure in this
+ * whole scheme that is true without anybody maintaining it, and it is the one
+ * that makes an edge mean something: a layer nobody can see filling is a layer
+ * nobody hurries for. See store.LAYERS for why there is no money beside it.
+ */
+const layerNow = (board) =>
+  store.layerLeft(board.people.filter((q) => q.state === "published" && q.handle).length);
+
 const shownPerson = (q, mine) => ({
   ...q,
   /* NOBODY ELSE'S BUSINESS. How many people opened somebody's page is a fact
@@ -2530,6 +2546,22 @@ const shownPerson = (q, mine) => ({
      own. Dropped here for the reason given above: a route added later must not
      be able to publish it by forgetting to. */
   mail: mine ? q.mail : undefined,
+  /* THE LAYER, AND NOT THE NUMBER UNDERNEATH IT.
+   *
+   * `seq` is where somebody stands in arrival order and it stays on the
+   * server. "You are the 47th member" is exactly the per-person precision the
+   * bands exist to remove: it invites two people who are meant to be identical
+   * to work out which of them is ahead, and it gives somebody a number they
+   * cannot repeat to anybody without explaining it. The band is the fact worth
+   * having, and it is the one a person says out loud. See store.LAYERS. */
+  seq: undefined,
+  layer: (() => {
+    const l = store.layerOf(q.seq);
+    // layerOf carries the arrival number for the server's own use. It does not
+    // leave the building — see the note above — so it comes off here, where
+    // the rest of what a reader may not have is taken off.
+    return l ? { key: l.key, n: l.n, of: l.of, upto: l.upto } : null;
+  })(),
   // A photograph nobody has looked at yet is shown to its owner and to no one
   // else. Words can be taken back; a face somebody has already saved cannot.
   photo: (q.photoState === "published" || mine) ? q.photo : "",
@@ -8945,6 +8977,10 @@ app.get("/api/me", async (req, res) => {
        themselves. What the floor costs in here is the whole point of the
        number — a queue of three that reads as no queue at all. */
     waiting,
+    /* WHICH LAYER IS FILLING, AND HOW MANY PLACES ARE LEFT IN IT. Their own
+       layer is on their card; this is the one still open, which is the half a
+       member can actually do something about. */
+    layerNow: layerNow(board),
     rank: rankOf(board, me),
     /* The half of the sentence they do not get to pick. Sent whether or not
        they have one: the page needs to know the difference between "fixed to

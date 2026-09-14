@@ -1187,6 +1187,61 @@ export function cleanOffer(raw) {
 export const LEVELS = ["Just starting", "HSK 1-2", "HSK 3", "HSK 4", "HSK 5", "HSK 6", "Beyond HSK"];
 
 /* ---------------------------------------------------------------------------
+ * THE LAYERS — where somebody stands in arrival order
+ *
+ * Six bands, and every band is worth the same in total. A band ten times
+ * larger is therefore worth a tenth per person, and inside a band everybody is
+ * identical. That last part is the reason it is bands and not a curve: a curve
+ * gives member 4,712 a different number from member 4,711 and neither of them
+ * can say their number out loud. "I am in the first hundred" is a thing a
+ * person repeats to somebody else, which is the entire point.
+ *
+ * WHY SIX IS FIXED, AND FIXED NOW. Each layer holds a sixth. Deciding the
+ * count on the first day means opening a later layer never changes what an
+ * earlier one holds — nobody's share moves because somebody else arrived. If
+ * the count were allowed to grow, every layer would quietly thin out and the
+ * only people who noticed would be the ones who had been here longest.
+ *
+ * WHY NO MONEY IS ANYWHERE NEAR THIS. A layer is a place, not a price. Written
+ * as a currency figure the same fact is worth less — the whole pool across
+ * 20,000 places averages about a hundred dollars, and the last layer about
+ * thirty — and it stops being a record of who was early and becomes a claim
+ * about what somebody will be paid. The product shows the layer and how many
+ * places are left in it. It shows no figure, converts to nothing and promises
+ * nothing, and that is a deliberate limit rather than an unfinished one: see
+ * the brief for counsel before any of it is ever expressed in a currency.
+ *
+ * THE EDGES ARE ARRIVAL COUNTS AND THEY CLOSE FOR GOOD. Past 20,000 there is
+ * no layer at all, which is what makes the earlier ones mean anything — the
+ * people after that arrive for the product, which is the right order.
+ */
+export const LAYERS = [
+  { key: "l1", upto: 3 },
+  { key: "l2", upto: 100 },
+  { key: "l3", upto: 1000 },
+  { key: "l4", upto: 4000 },
+  { key: "l5", upto: 10000 },
+  { key: "l6", upto: 20000 },
+];
+export const LAYER_CAP = LAYERS[LAYERS.length - 1].upto;
+
+/** Which layer an arrival number falls in, or null past the last edge. */
+export function layerOf(seq) {
+  const n = Number(seq);
+  if (!Number.isInteger(n) || n < 1 || n > LAYER_CAP) return null;
+  const i = LAYERS.findIndex((l) => n <= l.upto);
+  return i < 0 ? null : { ...LAYERS[i], n: i + 1, of: LAYERS.length, seq: n };
+}
+
+/** How many places are left in the layer the NEXT arrival would land in.
+ *  `taken` is how many people are already in. Null once the cap is reached. */
+export function layerLeft(taken) {
+  const t = Math.max(0, Number(taken) || 0);
+  const l = layerOf(t + 1);
+  return l ? { ...l, left: l.upto - t } : null;
+}
+
+/* ---------------------------------------------------------------------------
  * What somebody is looking for, and who it pairs with
  *
  * ELEVEN BOXES, SEVEN PAIRINGS. A tick box on its own cannot decide a match,
@@ -1417,6 +1472,11 @@ export function cleanPerson(raw) {
   return {
     id,
     at: s(raw.at, 40) || new Date().toISOString(),
+    /* Their place in the arrival order, stamped once and never recomputed.
+       Recomputing would mean somebody's layer moved because a record ahead of
+       them was deleted, and a layer that can move is not worth having. Zero
+       means not yet stamped; cleanBoard does that, in `at` order. */
+    seq: Number.isInteger(raw.seq) && raw.seq > 0 ? raw.seq : 0,
     state: STATES.includes(raw.state) ? raw.state : "held",
     handle: s(raw.handle, 40).replace(/^@+/, ""),
     level: LEVELS.includes(raw.level) ? raw.level : LEVELS[0],
@@ -2317,6 +2377,15 @@ export function cleanBoard(raw) {
     people.push(q);
   }
   people.sort((a, b) => (b.at || "").localeCompare(a.at || ""));
+
+  /* Stamp arrival numbers on anybody who has none, oldest first, carrying on
+     from the highest already given out. Runs on every load and every save, and
+     is a no-op once everybody has one — which is what makes the number stable:
+     it is assigned exactly once, in the order people actually arrived. */
+  let top = people.reduce((m, q) => Math.max(m, q.seq || 0), 0);
+  for (let i = people.length - 1; i >= 0; i--) {
+    if (!people[i].seq) people[i].seq = ++top;
+  }
 
   // Follows, deduplicated on the pair: pressing Follow twice is one follow.
   const seenF = new Set();

@@ -4951,6 +4951,33 @@ export const STRINGS = {
     "请去掉 {what} —— 这里的资料不放联系方式。等你们都决定了，再私下交换。",
   ],
   "err.general":       ["That did not go through.", "没有成功。"],
+
+  // ---- the layers ----------------------------------------------------------
+  /* SIX NAMES AND NOTHING ELSE. A layer is where somebody stands in arrival
+     order, and the name is the whole of what is shown — no figure, nothing
+     that converts to one. See store.LAYERS for why.
+
+     Written as the thing a person repeats rather than as a label: somebody
+     tells a friend "I'm in the first hundred", never "I am layer two of six".
+     The Chinese is the same sentence a Chinese speaker would actually say. */
+  "layer.l1":          ["First three", "最早的三个人"],
+  "layer.l2":          ["First hundred", "最早的一百人"],
+  "layer.l3":          ["First thousand", "最早的一千人"],
+  "layer.l4":          ["First four thousand", "最早的四千人"],
+  "layer.l5":          ["First ten thousand", "最早的一万人"],
+  "layer.l6":          ["Last ten thousand", "最后的一万人"],
+  "layer.head":        ["Arrival", "加入次序"],
+  "layer.mine":        ["You are in the {x}.", "你在{x}里。"],
+  "layer.theirs":      ["In the {x}.", "在{x}里。"],
+  "layer.left":        ["{n} places left.", "还剩 {n} 个位置。"],
+  "layer.last":        ["One place left.", "只剩 1 个位置。"],
+  /* The whole scheme in one line, because the layer name on its own reads as
+     a badge and this is the sentence that says it is a record. Everything
+     else about it — the sixths, the reason there are six — belongs on a page
+     somebody chose to open, not on the card. */
+  "layer.what":        ["Where you stand in the order people arrived. It closes at 20,000.",
+                        "按加入先后排的位置。到两万人就不再排了。"],
+  "layer.shut":        ["The layers closed at 20,000.", "两万人满了，不再排位置。"],
 };
 
 /* Which language, and where it comes from.
