@@ -238,7 +238,9 @@ function doorWhere(m) {
   if (m.bot) return "";
   if (ROOM.how === "member") {
     if (m.inside && m.handle) return "/p/" + encodeURIComponent(m.handle.toLowerCase());
-    return m.wid ? "/notes#w:" + m.wid : "";
+    // And a person at the door has one too — see /q/:id and the note in
+    // notes.html. The conversation is a button on it.
+    return m.wid ? "/q/" + encodeURIComponent(m.wid) : "";
   }
   /* ON THE LIST, NOT MERELY HOLDING THE LINK. The peek deck is served to a
      browser with a waiting row and refused to one without — /api/people

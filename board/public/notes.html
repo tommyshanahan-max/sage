@@ -1527,10 +1527,16 @@ function saidIn(m) {
 function doorWhere(m) {
   if (m.bot) return "";
   if (m.inside && m.handle) return "/p/" + encodeURIComponent(m.handle.toLowerCase());
-  /* `wid` reaches a member and nobody else — see named() in /api/door. Without
-     it there is nothing to open, which is the honest state rather than a link
-     that lands on a refusal. */
-  if (m.wid) return "#w:" + m.wid;
+  /* AND A PERSON AT THE DOOR HAS A PAGE TOO NOW.
+     It used to open the conversation with them — better than nothing, and
+     still landing a member in a chat with somebody they knew nothing about.
+     Everything a page is made of was already on the board; see /q/:id. The
+     conversation is a button on it, which is the profile-then-write shape
+     everybody already knows.
+     `wid` reaches a member and nobody else — see named() in /api/door —
+     so without it there is nothing to open, which is the honest state
+     rather than a link that lands on a refusal. */
+  if (m.wid) return "/q/" + encodeURIComponent(m.wid);
   return "";
 }
 

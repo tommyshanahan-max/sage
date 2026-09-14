@@ -777,6 +777,10 @@ app.get("/s/:token", (req, res, next) => {
   return page("snap.html", req, res, next, { "{{SNAP}}": given });
 });
 
+/* Somebody at the door, as a page. Behind the gate like every other page
+   about a person — see /api/queue/:id for what it holds and why. */
+app.get("/q/:id", (req, res, next) => page("waiting-person.html", req, res, next));
+
 app.get("/r/:room", (req, res, next) => {
   if (!store.WAITROOMS_CHAT.includes(String(req.params.room || ""))) {
     // A campaign name rather than a room — /r/agents and the like. The sales
@@ -4649,6 +4653,50 @@ app.get("/api/queue", async (req, res) => {
       mine: (board.vouches || []).some((v) => v.wait === x.w.id && v.by === me),
       photo: x.w.photoState === "published" ? x.w.photo : "",
     })),
+  });
+});
+
+/** ONE PERSON AT THE DOOR, AS A PAGE.
+ *
+ *  A member could tap a face in a room and land in a conversation with
+ *  somebody they knew nothing about. They have no /p/ page — they are not
+ *  members — but the board is holding everything a page is made of: their
+ *  name, their sentence, the line they wrote, their photograph, where they
+ *  stand and who has spoken for them.
+ *
+ *  AND IT IS WHAT MAKES THEM FILL IT IN. A page that exists and is half empty
+ *  is the reason to finish it; a form on a settings tab is not. Somebody at
+ *  the door who knows members can look at this writes the sentence.
+ *
+ *  MEMBERS ONLY, like the queue it is a row of — `gate` above has already
+ *  refused anybody else by the time this runs. `shown` decides it as well:
+ *  everybody who answered the older form was promised no member would ever
+ *  see their name, and that promise holds here exactly as it does in the
+ *  list.
+ */
+app.get("/api/queue/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const board = await store.load(FILE);
+  if (!board.people.some((q) => q.by === me && q.handle)) {
+    return res.status(403).json({ error: "members" });
+  }
+  const order = queueOrder(board);
+  const at = order.findIndex((x) => x.w.id === String(req.params.id || ""));
+  const row = at >= 0 ? order[at] : null;
+  if (!row || !row.w.shown) return res.status(404).json({ error: "gone" });
+  const w = row.w;
+  const spoke = (board.vouches || []).filter((v) => v.wait === w.id)
+    .map((v) => (board.people.find((q) => q.by === v.by) || {}).handle)
+    .filter(Boolean);
+  res.json({
+    id: w.id, name: w.name, room: w.room, why: w.why,
+    me: w.me, want: w.want, type: w.type, levelBand: w.levelBand,
+    at: w.at, up: Boolean(w.up),
+    place: at + 1, waiting: order.length,
+    brought: row.n || 0, vouches: row.v || 0, vouchedBy: spoke.slice(0, 6),
+    mine: (board.vouches || []).some((v) => v.wait === w.id && v.by === me),
+    photo: w.photoState === "published" ? w.photo : "",
   });
 });
 

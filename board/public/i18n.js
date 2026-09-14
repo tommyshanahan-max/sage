@@ -3049,6 +3049,42 @@ export const STRINGS = {
                         "名单上共 {n} 人，这些是同意公开的。"],
   "brw.qnone":         ["Nobody is waiting.", "目前没有人在等。"],
   "brw.qbrought":      ["brought {n} in", "带进来 {n} 人"],
+  /* ---- SOMEBODY AT THE DOOR, AS A PAGE ---------------------------------
+   *
+   * A member could tap a face in a room and land in a conversation with
+   * somebody they knew nothing about. They are not members and have no page
+   * of their own — but everything a page is made of is already on the board.
+   * See waiting-person.html.
+   *
+   * It also exists for the person at the door: a page that exists and is half
+   * empty is the reason to finish it, which a form on a settings tab is not.
+   * Hence wp.missing and the three lines under it, which name the hole rather
+   * than scoring the card. */
+  "wp.head":           ["At the door", "在门口"],
+  "wp.gone":           ["Nobody is at that address any more.", "这个人已经不在门口了。"],
+  "wp.place":          ["{n} of {t} waiting", "排第 {n}，共 {t} 人在等"],
+  "wp.up":             ["Moved up", "已经放进等候室"],
+  "wp.upWhy":          ["— finishing their page.", "—— 正在把资料填完。"],
+  "wp.came":           ["came {when}", "{when} 来的"],
+  "wp.vouched":        ["spoke for them.", "推荐了他。"],
+  "wp.vouchedMore":    ["and {n} more spoke for them.", "还有 {n} 个人也推荐了他。"],
+  "wp.vouch":          ["Speak for them", "推荐他"],
+  "wp.vouchedBy":      ["You spoke for them", "你已经推荐了"],
+  "wp.write":          ["Write to them", "给他写句话"],
+  /* NOT "incomplete" AND NOT A SCORE. What is missing, so a member knows what
+     they are not being told and the person at the door knows what to write. */
+  "wp.missing":        ["Not on this page yet:", "这页还缺："],
+  /* BARE NOUNS. They were written with the commas baked in, which reads fine
+     for three and reads broken for one: "Not on this page yet: a face,". The
+     page joins them. */
+  "wp.noFace":         ["a face", "一张脸"],
+  "wp.noSay":          ["their sentence", "那一句话"],
+  "wp.noLine":         ["a line about themselves", "一句自我介绍"],
+  "wp.and":            [" and ", "、"],
+  "wp.comma":          [", ", "、"],
+  /* The stop, because Chinese does not end a sentence with a Latin one and
+     the list is built in the page. */
+  "wp.stop":           [".", "。"],
 
   /* WAITING FOR YOU — the queue counted against the reader's own sentence.
      See the block above /api/queue's response.
