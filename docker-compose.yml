@@ -959,6 +959,12 @@ services:
       BOARD_MAIL_URL: ${TOMSCODING_BOARD_MAIL_URL:-}
       BOARD_MAIL_KEY: ${TOMSCODING_BOARD_MAIL_KEY:-}
       BOARD_MAIL_FROM: ${TOMSCODING_BOARD_MAIL_FROM:-}
+      # THE OPERATOR'S OWN LINK — /s/<this>, one address to keep on a home
+      # screen: what happened on the board since yesterday, on one screen,
+      # read in a queue. Read-only, and deliberately NOT the admin key, which
+      # opens every route here and would then be living in browser history.
+      # Unset means there is no such address at all. See `make snap`.
+      BOARD_SNAP: ${TOMSCODING_BOARD_SNAP:-}
       # How many introductions one browser may send in a day. Messages inside
       # an open thread do not count against it.
       BOARD_NOTES_A_DAY: ${TOMSCODING_BOARD_NOTES_A_DAY:-5}

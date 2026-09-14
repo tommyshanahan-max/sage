@@ -68,6 +68,18 @@ const MEDIA = path.join(DIR, "media");
 // form too, because /api/public takes it that way on the other side and the
 // point of this file is to be a drop-in for that.
 const KEY = (process.env.BOARD_ADMIN_KEY || "").trim();
+/* THE OPERATOR'S OWN LINK, and it is not the admin key.
+ *
+ * One address he can keep on a home screen and open in WeChat: what happened
+ * on the board since yesterday, on one screen, read in a queue. The admin key
+ * would do it in one line and must not — a URL lives in browser history, in
+ * WeChat's webview, and in whatever he pastes it into, and that key opens
+ * every route on this box. This one is its own secret, it is read-only, and
+ * changing the line in .env revokes it.
+ *
+ * Off unless set. A board with no BOARD_SNAP has no such address at all,
+ * rather than one behind a guessable word. */
+const SNAP = (process.env.BOARD_SNAP || "").trim();
 
 // Salts the device hash. Without one the hash is a rainbow table away from the
 // id it came from, which would make "anonymous" a claim rather than a fact.
@@ -399,7 +411,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|privacy|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|s\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|privacy|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -757,6 +769,14 @@ app.get(["/about", "/landing.html"], (req, res, next) => page("landing.html", re
  * first name. The landing page is still the landing page and is still at "/"
  * and /about, which is where a cold address belongs.
  */
+/* The page itself. The token is in the path so the whole thing is one
+   address to save to a home screen — no form, no key to remember. */
+app.get("/s/:token", (req, res, next) => {
+  const given = String(req.params.token || "");
+  if (!SNAP || !safeEqual(given, SNAP)) return res.status(404).send("Not found");
+  return page("snap.html", req, res, next, { "{{SNAP}}": given });
+});
+
 app.get("/r/:room", (req, res, next) => {
   if (!store.WAITROOMS_CHAT.includes(String(req.params.room || ""))) {
     // A campaign name rather than a room — /r/agents and the like. The sales
@@ -9497,6 +9517,106 @@ app.post("/api/bios", admin, async (_req, res) => {
   }
   res.json({ ok: true, done, failed,
     already: board.people.filter((q) => q.handle && q.goalAlt).length });
+});
+
+/* WHAT HAPPENED SINCE YESTERDAY, ON ONE SCREEN.
+ *
+ * The operator reads this board on a phone, in a queue, between two other
+ * things — the same way everybody else reads it. Everything he needs to know
+ * was spread across five commands at a terminal he is not sitting at, so it
+ * was read once a day at best and usually not at all.
+ *
+ * ORDERED BY WHAT HE CAN DO ABOUT IT. Who arrived and who spoke come first,
+ * because those are people waiting on a person; the counts come last, because
+ * a count is a thing to glance at. Names, not totals, wherever a name is what
+ * he would act on — "3 new at the door" is a number he cannot do anything
+ * with and "Liza, Brendan, Mei" is three decisions.
+ *
+ * READ-ONLY, AND ITS OWN SECRET. See SNAP. Nothing here changes anything, and
+ * the token that opens it opens nothing else.
+ */
+const snapGate = (req, res, next) => {
+  const given = String(req.query.t || req.params.token || "");
+  if (!SNAP || !safeEqual(given, SNAP)) return res.status(404).send("Not found");
+  next();
+};
+
+app.get("/api/snap", snapGate, async (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  const board = await store.load(FILE);
+  const now = Date.now();
+  const since = (iso, hours) => (Date.parse(iso || "") || 0) > now - hours * 3600_000;
+
+  /* A DAY, NOT A CALENDAR DAY. He might open it at midnight or at noon, and
+     "since yesterday" meaning "since 00:00" is a screen that says nothing
+     every morning and everything every evening. */
+  const DAY = 24;
+
+  const open = board.waits.filter((w) => !w.done);
+  const at = (w) => w.at;
+
+  const rooms = store.WAITROOMS_CHAT.map((key) => {
+    const id = store.doorRoom(key);
+    const said = board.says.filter((m) => m.group === id);
+    return {
+      room: key,
+      /* People standing in it, not lines in it — the thing worth knowing
+         before reading a word. Same count the door header shows. */
+      n: open.filter((w) => (w.room || "other") === key && w.shown).length,
+      /* WHAT PEOPLE SAID, not what the room said about itself. Mo announces
+         every arrival, so counting every line made three people walking in
+         look like eight messages — the one number on this row that is meant
+         to mean "somebody is talking in here". */
+      today: said.filter((m) => since(m.at, DAY) && !m.evt && m.text).length,
+      last: said.length ? said[said.length - 1].at : "",
+    };
+  }).filter((r) => r.n || r.today);
+
+  /* THE ONES A PERSON IS WAITING ON. A profile held with something written on
+     it is somebody who did the work and is sitting behind a queue; a
+     photograph in the queue is the same. Both are his, and both are the kind
+     of thing that goes unnoticed for a week. */
+  const held = board.people.filter((q) => q.handle && q.state !== "published"
+    && String(q.goal || "").trim()).map((q) => q.handle);
+  const faces = board.people.filter((q) => q.handle && q.photo
+    && q.photoState !== "published").map((q) => q.handle);
+
+  res.json({
+    at: new Date().toISOString(),
+    /* WHO ARRIVED, by name and room. */
+    came: open.filter((w) => since(at(w), DAY))
+      .sort((a, b) => String(b.at).localeCompare(String(a.at)))
+      .slice(0, 20)
+      .map((w) => ({ name: w.name, room: w.room || "other", at: w.at })),
+    /* WHO SPOKE, and what they said. The line itself, because the whole point
+       of the rooms is that somebody says something worth answering, and a
+       count of messages is exactly the thing that does not tell him that. */
+    said: board.says.filter((m) => since(m.at, DAY) && m.by !== store.MO && m.text)
+      .sort((a, b) => String(b.at).localeCompare(String(a.at)))
+      .slice(0, 12)
+      .map((m) => {
+        const q = board.people.find((x) => x.by === m.by && x.handle);
+        const w = board.waits.find((x) => x.by === m.by && !x.done);
+        return {
+          who: q ? q.handle : (w ? w.name : ""),
+          inside: Boolean(q),
+          room: store.doorKey(m.group) || "",
+          text: String(m.text).slice(0, 140),
+          at: m.at,
+        };
+      }),
+    rooms,
+    waiting: { held, faces },
+    /* AND THE SHAPE OF THE PLACE, last, because it changes slowly. */
+    board: {
+      inBrowse: board.people.filter((q) =>
+        q.state === "published" && q.looking && q.handle).length,
+      peek: board.people.filter((q) => q.peek && q.looking
+        && q.state === "published" && q.handle).length,
+      asked: board.waits.length,
+      outside: open.length,
+    },
+  });
 });
 
 app.get("/api/faces", admin, async (_req, res) => {

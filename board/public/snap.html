@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Exchange · today</title>
+<!-- NOT FOR A CRAWLER AND NOT FOR A LINK CARD. This address is one person's,
+     and a preview of it in a chat would put the board's private state into
+     somebody else's conversation. -->
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Today">
+<link rel="stylesheet" href="/site.css">
+<style>
+  /* ---- WHAT HAPPENED SINCE YESTERDAY ------------------------------------
+   *
+   * Read in a queue, on a phone, between two other things — the same way
+   * everybody else reads this board. So it is one column, it answers in the
+   * order the operator can act, and the largest thing on it is a name rather
+   * than a number: "3 new at the door" is nothing he can do, and "Liza,
+   * Brendan, Mei" is three decisions.
+   *
+   * NOT A DASHBOARD. No charts, no sparklines, no tiles reading zero. A block
+   * with nothing in it is not drawn, so a quiet day is a short screen and a
+   * busy one is a long one, which is the fastest thing to read at a glance.
+   */
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%}
+  main{max-width:34rem;margin:0 auto;padding:1.2rem 1.1rem 3rem}
+
+  .top{display:flex;align-items:baseline;gap:.6rem;margin:0 0 1.4rem}
+  .top b{font-family:var(--serif);font-weight:400;font-size:1.5rem}
+  .top span{margin-left:auto;font-size:.78rem;color:var(--muted)}
+
+  /* The heading of a block, and it is a label rather than a sentence: the
+     block under it is the content and a heading that explains it is a heading
+     nobody needs. */
+  h2{margin:1.6rem 0 .6rem;font-size:.72rem;font-weight:600;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted)}
+  h2:first-of-type{margin-top:0}
+
+  .card{background:var(--card);border:1px solid var(--hair);border-radius:.8rem;
+    padding:.9rem 1rem}
+  .card + .card{margin-top:.5rem}
+
+  /* SOMEBODY WHO ARRIVED. Name first and large, because the name is what he
+     recognises and what he decides about; the room is the second half of the
+     same line, because which door they came to is most of what he needs. */
+  .who{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+  .who b{font-family:var(--serif);font-weight:400;font-size:1.15rem}
+  .who em{font-style:normal;color:var(--accent);font-size:.86rem}
+  .who i{font-style:normal;margin-left:auto;font-size:.74rem;color:var(--muted)}
+  /* Arrivals are rows in one card rather than a card each — see the note in
+     draw(). The rule between them is what a card's edge was doing. */
+  .who.rowed{padding:.5rem 0}
+  .who.rowed + .who.rowed{border-top:1px solid var(--hair)}
+
+  /* WHAT SOMEBODY SAID, and it is the line rather than a count of lines. The
+     whole point of the rooms is that somebody writes something worth
+     answering; "4 messages today" is exactly the fact that does not say so. */
+  .said{margin:.4rem 0 0;font-size:.95rem;line-height:1.55;overflow-wrap:anywhere}
+  .side{font-size:.74rem;color:var(--muted)}
+
+  /* A ROOM, as a row: how many are standing in it and whether anything was
+     said today. The rooms with nobody and nothing are not drawn at all. */
+  .rm{display:flex;align-items:baseline;gap:.6rem;padding:.55rem 0}
+  .rm + .rm{border-top:1px solid var(--hair)}
+  .rm b{font-weight:500;font-size:.98rem}
+  .rm span{margin-left:auto;font-size:.86rem;color:var(--ink-2)}
+  .rm em{font-style:normal;font-size:.86rem;color:var(--accent)}
+
+  /* THE ONES A PERSON IS WAITING ON, and this block is the reason the page
+     exists: a held profile is somebody who did the work and is sitting behind
+     a queue nobody remembered to clear. Warm, because it is a job. */
+  .todo{background:var(--accent-soft);border:0}
+  .todo b{display:block;font-size:1rem;font-weight:600;margin:0 0 .2rem}
+  .todo p{margin:0;font-size:.9rem;line-height:1.5;color:var(--ink-2)}
+  .todo code{font-family:var(--mono,ui-monospace,monospace);font-size:.85rem;
+    background:var(--paper);padding:.1rem .35rem;border-radius:.3rem}
+
+  /* THE SHAPE OF THE PLACE, last and small: it changes slowly and it is a
+     thing to glance at rather than act on. */
+  .nums{display:flex;gap:.4rem;flex-wrap:wrap;margin:.2rem 0 0}
+  /* TWO BY TWO. At a narrower basis four of these wrap three-and-one, which
+     leaves the last number sitting alone across the width looking like a
+     conclusion. Two rows of two is a block. */
+  .nums div{flex:1 1 44%;background:var(--card);border:1px solid var(--hair);
+    border-radius:.7rem;padding:.7rem .8rem}
+  .nums b{display:block;font-family:var(--serif);font-weight:400;font-size:1.5rem;
+    line-height:1.1}
+  .nums span{font-size:.74rem;color:var(--muted)}
+
+  .quiet{color:var(--muted);font-size:.95rem;margin:0}
+  .links{margin:1.8rem 0 0;display:flex;gap:.5rem;flex-wrap:wrap}
+  .links a{flex:1 1 8rem;text-align:center;padding:.7rem;border-radius:99px;
+    background:var(--ink);color:var(--paper);text-decoration:none;font-size:.92rem;
+    font-weight:600}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><b>Today</b><span id="when"></span></div>
+  <div id="body"><p class="quiet">…</p></div>
+  <div class="links">
+    <a href="/browse">Browse</a>
+    <a href="/r/film">Film &amp; TV</a>
+    <a href="/notes">Messages</a>
+  </div>
+</main>
+
+<script type="module">
+const T = "{{SNAP}}";
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => { const n = document.createElement(t);
+  if (c) n.className = c; if (x !== undefined) n.textContent = x; return n; };
+
+const ROOMS = { film: "Film & TV", invest: "Investment", raise: "Raising",
+                trade: "Trade", other: "Other" };
+const room = (k) => ROOMS[k] || k || "";
+
+/* Time as somebody says it out loud. Nothing here is older than a day, so
+   there is no case past hours and the units stop there. */
+function ago(iso) {
+  const m = Math.round((Date.now() - (Date.parse(iso || "") || 0)) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return m + "m ago";
+  const h = Math.round(m / 60);
+  return h + "h ago";
+}
+
+function block(title, node) {
+  const wrap = document.createDocumentFragment();
+  wrap.append(el("h2", null, title), node);
+  return wrap;
+}
+
+async function draw() {
+  let d = null;
+  try {
+    d = await fetch("/api/snap?t=" + encodeURIComponent(T), { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null));
+  } catch { /* below */ }
+  const box = $("body");
+  box.textContent = "";
+  if (!d) {
+    box.append(el("p", "quiet", "Could not read the board just now."));
+    return;
+  }
+  $("when").textContent = new Date(d.at).toLocaleTimeString([], {
+    hour: "2-digit", minute: "2-digit" });
+
+  /* AT THE DOOR, first, because every name here is a person who did something
+     and is waiting to hear back. */
+  if (d.came.length) {
+    /* ONE CARD, A ROW EACH. A card per name is three cards for three people
+       and most of a screen for six, on a page whose whole promise is that it
+       is read in a queue. The name still leads and is still the largest thing
+       in the row; what goes is the furniture around it. */
+    const c = el("div", "card");
+    for (const w of d.came) {
+      const line = el("div", "who rowed");
+      line.append(el("b", null, w.name || "somebody"),
+        el("em", null, room(w.room)), el("i", null, ago(w.at)));
+      c.append(line);
+    }
+    box.append(block("Came to the door", c));
+  }
+
+  /* WHAT WAS SAID. The line itself — see the note on .said. */
+  if (d.said.length) {
+    const list = document.createDocumentFragment();
+    for (const m of d.said) {
+      const c = el("div", "card");
+      const line = el("div", "who");
+      line.append(el("b", null, m.who || "somebody"),
+        el("em", null, room(m.room)), el("i", null, ago(m.at)));
+      c.append(line);
+      c.append(el("p", "said", m.text));
+      c.append(el("p", "side", m.inside ? "inside" : "waiting"));
+      list.append(c);
+    }
+    box.append(block("Said in a room", list));
+  }
+
+  /* WAITING ON YOU. Drawn only when there is something to do — a panel that
+     reads "nothing to do" three days running is a panel somebody stops
+     opening, and this whole page is meant to be opened. */
+  const jobs = document.createDocumentFragment();
+  if (d.waiting.held.length) {
+    const c = el("div", "card todo");
+    c.append(el("b", null, d.waiting.held.length
+      + (d.waiting.held.length === 1 ? " page is held" : " pages are held")));
+    c.append(el("p", null, d.waiting.held.join(", ")
+      + " wrote a line and nobody has let the page through yet."));
+    const how = el("p", null, "");
+    how.append(document.createTextNode("On the box: "));
+    how.append(el("code", null, "make who"));
+    c.append(how);
+    jobs.append(c);
+  }
+  if (d.waiting.faces.length) {
+    const c = el("div", "card todo");
+    c.append(el("b", null, d.waiting.faces.length
+      + (d.waiting.faces.length === 1 ? " photograph is waiting" : " photographs are waiting")));
+    c.append(el("p", null, d.waiting.faces.join(", ")
+      + " — nobody else can see them until somebody looks."));
+    jobs.append(c);
+  }
+  if (jobs.childNodes.length) box.append(block("Waiting on you", jobs));
+
+  /* THE ROOMS, with the empty ones left out — see the filter on the server. */
+  if (d.rooms && d.rooms.length) {
+    const c = el("div", "card");
+    for (const r of d.rooms) {
+      const row = el("div", "rm");
+      row.append(el("b", null, room(r.room)));
+      if (r.today) row.append(el("em", null, r.today + " today"));
+      row.append(el("span", null, r.n + " at the door"));
+      c.append(row);
+    }
+    box.append(block("Rooms", c));
+  }
+
+  const nums = el("div", "nums");
+  for (const [n, what] of [[d.board.inBrowse, "in Browse"],
+                           [d.board.peek, "shown outside"],
+                           [d.board.outside, "still outside"],
+                           [d.board.asked, "have asked"]]) {
+    const one = el("div");
+    one.append(el("b", null, String(n)), el("span", null, what));
+    nums.append(one);
+  }
+  box.append(block("The board", nums));
+
+  if (!d.came.length && !d.said.length && !jobs.childNodes.length) {
+    /* A QUIET DAY SAID PLAINLY, under the counts rather than instead of them:
+       the counts are still true and still worth a glance, and "nothing
+       happened" printed over an empty screen reads as a page that failed. */
+    box.append(el("p", "quiet", "Nobody new and nothing said since yesterday."));
+  }
+}
+
+draw();
+/* It is a page somebody leaves open on a phone. Redrawn when they come back
+   to it rather than on a timer, which on a phone is a timer that does not
+   run anyway. */
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") draw();
+});
+</script>
+</body>
+</html>

@@ -534,6 +534,31 @@ post-improved: ## Name one person whose level moved this week, as The Professor
 	  /seed/post-improved.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  $(if $(DRY),--dry,) $(if $(AGAIN),--again,)
 
+snap: ## The link for your phone — what happened since yesterday: make snap
+	@# One address to save to a home screen and open in WeChat. Read-only, and
+	@# its own secret rather than the admin key: a URL lives in browser history
+	@# and in whatever it gets pasted into, and the admin key opens every route
+	@# on this box.
+	@#
+	@# Off until BOARD_SNAP is in .env. With nothing there this prints a line
+	@# to paste and the deploy that switches it on.
+	@printf '\n'
+	@if grep -qE '^TOMSCODING_BOARD_SNAP=.+' .env; then \
+	  echo "  Your link — save it to your home screen:"; \
+	  echo ""; \
+	  echo "    https://$$(grep -E '^TOMSCODING_DOMAIN=' .env | tail -1 | cut -d= -f2-)/s/$$(grep -E '^TOMSCODING_BOARD_SNAP=' .env | tail -1 | cut -d= -f2-)"; \
+	  echo ""; \
+	  echo "  Anybody with it can read it, so it goes nowhere but your phone."; \
+	  echo "  To revoke: change that line in .env and make deploy."; \
+	else \
+	  echo "  No link yet. Put this line in .env:"; \
+	  echo ""; \
+	  echo "    TOMSCODING_BOARD_SNAP=$$(head -c 18 /dev/urandom | od -An -tx1 | tr -d ' \n')"; \
+	  echo ""; \
+	  echo "  Then:  make deploy && make snap"; \
+	fi
+	@printf '\n'
+
 bios: ## Render every card's line into the other language, once: make bios
 	@# The language button switches everything on the board except the line on
 	@# a card, which is the person's own words. Each one is now rendered into
