@@ -8860,6 +8860,18 @@ app.get("/api/person", async (req, res) => {
   const live = board.posts.filter((p) => p.state === "published");
   res.set("Cache-Control", "no-store");
   res.json({
+    /* HOW MANY PLACES ARE LEFT IN THE LAYER STILL FILLING.
+     *
+     * Beside `person` rather than inside it, because it is a fact about the
+     * board and not about them — and it is on a page rather than on the feed,
+     * which is the whole decision. A row at the top of the deck saying the
+     * same thing every visit is the app talking about itself in the place
+     * people came to look at other people; that is why the fourth state came
+     * out of drawMine. This is a fact somebody went and looked at.
+     *
+     * Their own page only. On somebody else's it answers a question nobody
+     * asked and turns their card into a recruitment poster. */
+    layerNow: (me && q.by === me) ? layerNow(board) : null,
     person: {
       ...shownPerson(q, q.by === me),
       mine: q.by === me,

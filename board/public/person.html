@@ -263,6 +263,10 @@
   .fact dt{flex:0 0 6.6rem;margin:0;font-size:.7rem;letter-spacing:.12em;
     text-transform:uppercase;color:var(--muted)}
   .fact dd{margin:0;flex:1;font-size:.96rem}
+  /* The places left, under the layer it belongs to. Quieter than the value
+     above it: the layer is the fact, this is the thing you can still do
+     something about, and two lines of equal weight read as two facts. */
+  .fact dd small{display:block;font-size:.8rem;color:var(--muted);margin-top:.15rem}
   .days{display:flex;gap:.25rem;flex-wrap:wrap}
   .days b{width:1.8rem;height:1.8rem;display:grid;place-items:center;border-radius:.4rem;
     font-size:.73rem;font-weight:500;background:var(--raise);border:1px solid var(--line);
@@ -447,6 +451,9 @@ let PERSON = null, POSTS = [], THREAD = { can: false, why: "" };
    whether two people may swap contact details is a second opinion, and the
    two will disagree eventually. */
 let PAIR = { mutual: false, shared: [], can: false, gave: false, given: false, card: null };
+/* The layer still filling, and how many places are left in it. Sent with your
+   own page and with nobody else's — see /api/person. */
+let LEFT = null;
 let MYCARD = null;
 
 async function load() {
@@ -459,6 +466,7 @@ async function load() {
       { headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
     hasMo = Boolean(d.butler);
     PERSON = d.person; POSTS = d.posts || [];
+    LEFT = d.layerNow || null;
     THREAD = (d.person && d.person.thread) || { can: false, why: "" };
     await loadCard();
     if (d.person) tellSeen(d.person.id, d.person.mine);
@@ -968,7 +976,18 @@ function paint() {
      drops `seq` on the way out, because "the 47th member" invites a
      comparison between two people the scheme treats as identical, and it is
      not a thing anybody can repeat to a friend. See store.LAYERS. */
-  if (q.layer) fact(T("layer.head"), T("layer." + q.layer.key));
+  if (q.layer) {
+    const v = el("span");
+    v.append(document.createTextNode(T("layer." + q.layer.key)));
+    /* AND HOW MANY PLACES ARE LEFT, on your own page only. It is the one
+       figure in the scheme that is true without anybody maintaining it, and
+       the only one that makes an edge mean anything — a layer nobody can see
+       filling is a layer nobody hurries for. */
+    const now = q.mine && LEFT;
+    if (now) v.append(el("small", null, now.left === 1
+      ? T("layer.last") : T("layer.left", { n: now.left })));
+    fact(T("layer.head"), v);
+  }
 
   if (q.li) {
     const a = el("a", "out");
