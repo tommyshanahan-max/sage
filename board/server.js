@@ -2979,8 +2979,129 @@ function stakeOf(board, who) {
      them work out why it never moves. */
   if (!seat || seat > SEATS) return { ...zero, seat };
 
-  const myPosts = board.posts.filter((p) => p.by === who && live(p) && !p.re);
-  const myIds = new Set(myPosts.map((p) => p.id));
+  const parts = [{ key: "found", n: seat, points: FOUND(seat) }, ...actsOf(board, who)]
+    .filter((r) => r.points > 0);
+
+  return { points: parts.reduce((a, r) => a + r.points, 0), parts, seat };
+}
+
+/* ---------------------------------------------------------------------------
+ * THE PIN OVER A DOOR ROOM — a second, larger ledger
+ *
+ * The founding ledger above is a hundred seats and a closing date. This is the
+ * same idea run to a much larger number and pinned where people already are.
+ * Everything it shows is read from the board; the only thing stored for it is
+ * who pressed Join, and that goes in a file of its own beside board.json so
+ * cleanBoard never has to know about it.
+ *
+ * OFF UNLESS BOARD_LEDGER_GOAL IS SET, and that is not a detail. With it unset
+ * the endpoint answers {on:false} and the pin is never drawn, which means this
+ * whole thing ships dark and turning it on is a deliberate act taken on the
+ * box. It is the feature most likely to need turning off in a hurry.
+ *
+ * WHAT THE COPY SAYS, AND WHO HAS NOT READ IT. The pin tells members the
+ * company intends to make a share offer at the goal, allocated by points. That
+ * is question 14 in the brief written for counsel and no lawyer has answered
+ * it. It is here because the operator asked for it twice, knowing that; it is
+ * recorded here because the next person reading this file should not have to
+ * reconstruct whether anybody thought about it.
+ *
+ * THE CURVE IS FLATTER THAN THE FOUNDING ONE. 1000/n^0.35 puts place 1 at
+ * 1,000 and place 50,000 at 23 — a 43-fold spread, against the founding
+ * ladder's 200/sqrt(n). Over tens of thousands a steeper curve hands the tail
+ * a number too small to be worth telling anybody, and the tail is almost
+ * everybody.
+ * ------------------------------------------------------------------------- */
+
+/** The goal. Unset, none of this exists. */
+const LGOAL = Math.max(0, Math.round(Number(process.env.BOARD_LEDGER_GOAL || 0)));
+/** The exponent. Lower is flatter; 0 would pay everybody the same. */
+const LCURVE = (() => {
+  const v = Number(process.env.BOARD_LEDGER_CURVE);
+  return Number.isFinite(v) && v > 0 && v <= 1 ? v : 0.35;
+})();
+/** What place one is worth. Everything else falls away from it. */
+const LHEAD = 1000;
+/** Guests counted for one member. Beyond this the board is one person's. */
+const LCUTOFF = (() => {
+  const v = Number(process.env.BOARD_LEDGER_CUTOFF);
+  return Number.isInteger(v) && v > 0 ? v : 10;
+})();
+/** What share of the company the offer would be for, as text. Never a sum of
+ *  money: a percentage is a description of a structure, a dollar figure is a
+ *  claim about what somebody will be paid. */
+const LSPLIT = String(process.env.BOARD_LEDGER_SPLIT || "").trim().slice(0, 40);
+/** When, in the operator's own words. Unset, the copy says at the goal. */
+const LBY = String(process.env.BOARD_LEDGER_BY || "").trim().slice(0, 60);
+
+const pinOn = () => LGOAL > 0;
+/** What a place is worth. Place 1 = LHEAD, falling away on LCURVE. */
+const PLACE = (n) => (n >= 1 && n <= LGOAL ? Math.round(LHEAD / Math.pow(n, LCURVE)) : 0);
+
+/* WHO PRESSED JOIN, IN A FILE OF ITS OWN.
+ *
+ * Beside board.json rather than in it. This is a prototype and cleanBoard is
+ * the thing every other feature on this board trusts to be right — a field
+ * added to it for a widget that may come out next week is a field every future
+ * reader has to work out the status of. One file, one purpose, deletable. */
+const LFILE = path.join(DIR, "ledger-proto.json");
+async function joins() {
+  try {
+    const d = JSON.parse(await readFile(LFILE, "utf8"));
+    return Array.isArray(d?.joined) ? d.joined.filter((x) => typeof x === "string") : [];
+  } catch { return []; }
+}
+async function joined(who) {
+  const all = await joins();
+  if (all.includes(who)) return all;
+  all.push(who);
+  const tmp = LFILE + ".tmp";
+  await writeFile(tmp, JSON.stringify({ joined: all }, null, 2) + "\n", "utf8");
+  await rename(tmp, LFILE);
+  return all;
+}
+
+/** One member's line on the pin. Everything read, nothing stored. */
+function pinFor(board, who) {
+  const mine = board.people.find((q) => q.by === who && q.handle);
+  /* THE PLACE IS THE STAMPED ARRIVAL NUMBER, not a position worked out from
+     the dates each time. Derived, it moves: two rows that were never published
+     were holding seats 2 and 3 of the first three on the live board until the
+     stamp was fixed, and a place that moves after somebody has told a friend
+     where they stand is worse than no place at all. See cleanBoard. */
+  const place = mine && mine.seq ? mine.seq : 0;
+  const members = board.people.filter((q) => q.state === "published" && q.handle).length;
+  if (!place || place > LGOAL) {
+    return { on: true, place: 0, members, goal: LGOAL, split: LSPLIT, by: LBY };
+  }
+  const acts = actsOf(board, who, LCUTOFF).filter((r) => r.points > 0);
+  const placePts = PLACE(place);
+  return {
+    on: true, place, placePts,
+    parts: acts,
+    acts: acts.reduce((a, r) => a + r.points, 0),
+    total: placePts + acts.reduce((a, r) => a + r.points, 0),
+    members, goal: LGOAL, split: LSPLIT, by: LBY, cutoff: LCUTOFF,
+  };
+}
+
+/** WHAT SOMEBODY HAS DONE FOR OTHER PEOPLE, priced on WORTH and nothing else.
+ *
+ * Lifted out of stakeOf so the founding ledger and the pin over a door room
+ * read one set of rules. The note over WORTH says why in so many words — "two
+ * places is how a screen ends up promising a number the ledger does not pay" —
+ * and a second copy of this, written at four in the morning to get a widget up,
+ * is exactly the way that happens.
+ *
+ * `cap` bounds the guests counted, because the pin's cohort is tens of
+ * thousands rather than a hundred and one member who brings two hundred people
+ * in would otherwise be the whole board. Unbounded when it is not given, which
+ * is what the founding ledger has always done.
+ */
+function actsOf(board, who, cap = Infinity) {
+  const live = (p) => p.state === "published" && !p.like && !p.report;
+  const myIds = new Set(board.posts
+    .filter((p) => p.by === who && live(p) && !p.re).map((p) => p.id));
 
   /* DISTINCT PEOPLE WHO ANSWERED, not answers. One enthusiastic friend
      replying nine times is one person finding you worth answering. */
@@ -3011,15 +3132,13 @@ function stakeOf(board, who) {
     .filter((p) => p.by === who && live(p))
     .map((p) => weekKey(new Date(Date.parse(p.at || "") || Date.now())))).size;
 
-  const parts = [
-    { key: "found",  n: seat,           points: FOUND(seat) },
-    { key: "guests", n: guests.length,  points: guests.length * WORTH.guest },
+  const kept = Math.min(guests.length, cap);
+  return [
+    { key: "guests", n: kept,           points: kept * WORTH.guest },
     { key: "heard",  n: answerers.size, points: answerers.size * WORTH.heard },
     { key: "cards",  n: cards,          points: cards * WORTH.card },
     { key: "weeks",  n: weeks,          points: weeks * WORTH.week },
-  ].filter((r) => r.points > 0);
-
-  return { points: parts.reduce((a, r) => a + r.points, 0), parts, seat };
+  ];
 }
 
 /** One member's share of the cohort, as a percentage of everybody's points. */
@@ -8051,6 +8170,53 @@ app.get("/api/door", notesOff, async (req, res) => {
  *  the clock running: they still have to open it, write a name and a line, and
  *  put up a face. Nothing here mints a code and nothing here makes a member.
  */
+/** ONE MEMBER'S LINE ON THE PIN, for the room they are standing in.
+ *
+ * Their own and nobody else's. A pin that showed the room a table of everybody
+ * would be a leaderboard, and a leaderboard is a different product: it makes
+ * the number a thing to beat somebody at rather than a record of what you did.
+ *
+ * `room` is taken and checked so the pin cannot be read from outside a door,
+ * but nothing in the answer depends on which door it is — the ledger is one
+ * board-wide thing and showing a per-room figure would invite the reading that
+ * there are five ledgers.
+ */
+app.get("/api/ledger/pin", notesOff, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  if (!pinOn()) return res.json({ on: false });
+  const key = String(req.query.room || "");
+  if (!store.WAITROOMS_CHAT.includes(key)) return res.status(400).json({ error: "no" });
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!me) return res.json({ on: false });
+  const board = await store.load(FILE);
+  /* Standing at this door, by the board's own reckoning rather than the
+     browser's. Somebody who is neither a member nor waiting has no line. */
+  const how = doorAccess(board, me, key);
+  if (!how) return res.json({ on: false });
+  const out = pinFor(board, me);
+  res.json({ ...out, joined: (await joins()).includes(me) });
+});
+
+/** PRESSED JOIN.
+ *
+ * Written to a file of its own, and it is the only thing this feature stores.
+ * Idempotent: pressing it twice is pressing it once, because a button that can
+ * be pressed twice into two rows is a count that is wrong the first time
+ * somebody double-taps on a slow connection.
+ */
+app.post("/api/ledger/join", notesOff, express.json({ limit: "1kb" }), async (req, res) => {
+  if (!pinOn()) return res.status(404).json({ error: "off" });
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const board = await store.load(FILE);
+  const mine = board.people.find((q) => q.by === me && q.handle);
+  /* A page first. Joining is a claim on a place in an order, and somebody with
+     no page is not yet in that order — cleanBoard has not stamped them. */
+  if (!mine || !mine.seq) return res.status(403).json({ error: "profile" });
+  await joined(me);
+  res.json({ ok: true, ...pinFor(board, me), joined: true });
+});
+
 app.post("/api/door/up", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   const id = String(req.body?.id || "");

@@ -4952,6 +4952,78 @@ export const STRINGS = {
   ],
   "err.general":       ["That did not go through.", "没有成功。"],
 
+  // ---- the pin over a door room -------------------------------------------
+  /* A SECOND, LARGER LEDGER, pinned where people already are. The parts of it
+     reuse stake.p.* above rather than getting a second set of words: one set
+     of weights and one way of saying them, or a screen ends up describing a
+     number a different screen does not pay.
+
+     WHAT THE NOTE SAYS. It tells members the company intends a share offer at
+     the goal. That is question 14 in the brief written for counsel and nobody
+     qualified has answered it. Written plainly rather than softened, because a
+     hedged version of the same sentence is the same sentence with the reader
+     less able to judge it. */
+  "pin.head":          ["Your ledger", "你的账"],
+  "pin.place":         ["Place #{n}", "第 {n} 位"],
+  "pin.forPlace":      ["For your place", "位置分"],
+  "pin.forActs":       ["For what you've done", "做事分"],
+  "pin.toward":        ["{n} of {goal} members", "{goal} 人里的第 {n} 人"],
+  "pin.note": [
+    "The company intends to make a share offer at {goal} members, allocated by points. Nothing is signed before then.",
+    "到 {goal} 人的时候，公司打算按积分发一次股份认购。在那之前不签任何东西。",
+  ],
+  /* THE BUTTON'S WHOLE LABEL, read out as one sentence. A screen reader on a
+     button that says only "Your ledger" announces a number nobody heard and a
+     place nobody heard; the label carries the figures because the figures are
+     the button. */
+  "pin.label": [
+    "Your ledger: {total} points, place {n} of {goal}. Opens the ledger.",
+    "你的账：{total} 分，第 {n} 位，共 {goal} 人。点开查看。",
+  ],
+  "pin.none": [
+    "You are past the last place. You are a member like any other and the ledger is closed.",
+    "位置已经排完了。你跟其他人一样是会员，只是不再排位置。",
+  ],
+  "pin.needPage":      ["Put a page up first.", "先把你的主页建起来。"],
+
+  // the five views
+  "pin.vOver":         ["Your ledger", "你的账"],
+  "pin.vRules":        ["How it is counted", "怎么算的"],
+  "pin.vJoin":         ["Join the ledger", "加入"],
+  "pin.vGoal":         ["At {goal}", "到 {goal} 人"],
+  "pin.vRec":          ["What is recorded", "记录了什么"],
+  "pin.back":          ["Back", "返回"],
+
+  "pin.rules": [
+    "Two halves. Your place is the order your page went up, and it never moves. What you have done is counted from the board and moves every week.",
+    "分两半。位置分看你的主页什么时候建的，定了就不动。做事分从board上算，每周都在变。",
+  ],
+  "pin.rulesCurve": [
+    "An earlier place is worth more, but not by as much as you would think: place 1 is 1,000 and the last place is 23.",
+    "来得早分高，但没高多少：第 1 位是 1000 分，最后一位是 23 分。",
+  ],
+  "pin.rulesCap": [
+    "At most {n} of the people you brought in are counted. Past that the board would be one person's.",
+    "你带进来的人最多算 {n} 个。再多，这个board就成一个人的了。",
+  ],
+  "pin.joinWhat": [
+    "Joining records that you want to be counted. It is not a payment and it is not a signature.",
+    "加入只是记下你想被算进去。不用付钱，也不用签字。",
+  ],
+  "pin.joinDo":        ["Count me in", "算我一个"],
+  "pin.joinedYes":     ["You are in the ledger.", "你已经在账上了。"],
+  "pin.goalWhat": [
+    "This screen opens at {goal} members. Until then there is nothing on it and nothing to sign.",
+    "到 {goal} 人这一页才会打开。在那之前这里什么都没有，也没什么好签的。",
+  ],
+  "pin.goalSplit":     ["The offer would be for {what}.", "认购的部分是{what}。"],
+  "pin.goalShut":      ["Not open yet", "还没开"],
+  "pin.recWhat": [
+    "Your place, and whether you pressed Count me in. Everything else on this screen is worked out from the board each time you open it and is not stored.",
+    "只记你的位置，和你有没有按过“算我一个”。这一页其他数字都是每次打开时现算的，不存。",
+  ],
+  "pin.recNo":         ["No money, no documents, no bank details.", "不涉及钱，不涉及文件，不涉及银行账号。"],
+
   // ---- the layers ----------------------------------------------------------
   /* SIX NAMES AND NOTHING ELSE. A layer is where somebody stands in arrival
      order, and the name is the whole of what is shown — no figure, nothing
