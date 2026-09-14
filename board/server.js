@@ -2260,6 +2260,42 @@ const rosterOf = (board, q) => board.people
     photo: x.photoState === "published" ? x.photo : "",
   }));
 
+/* THE OTHER LANGUAGE OF ONE PERSON'S LINE, RENDERED ONCE AND KEPT.
+ *
+ * See goalAlt in cleanPerson for why this exists at all. The short of it: the
+ * language button switches every string on the board except the one on the
+ * card, because that one is theirs — so the card was the only English thing
+ * on a Chinese screen, on the screen that IS the product.
+ *
+ * NOT IN THE REQUEST PATH. Nothing waits on this: the save answers, and the
+ * render lands a second later. A model on the far side of a mainland
+ * connection must never be the reason somebody's profile takes four seconds
+ * to save, and a failure here must cost the save nothing.
+ *
+ * ONCE PER LINE, NOT ONCE PER READER. Checked against the text it was made
+ * from, so re-saving a profile without touching the line spends nothing, and
+ * changing one word re-renders. `translate` detects the direction from the
+ * text, so a Chinese line gets an English one and nobody has to say which.
+ */
+function renderBio(id, text) {
+  const words = String(text || "").trim();
+  if (!words || !translateReady()) return;
+  translate(words, { by: "bio:" + id })
+    .then((out) => {
+      if (!out || out.error || !out.text) return;
+      return change((board) => {
+        const q = board.people.find((x) => x.id === id);
+        // Gone, or written again while this was in flight — the newer line
+        // wins and has its own render on the way.
+        if (!q || String(q.goal || "").trim() !== words) return null;
+        q.goalAlt = out.text;
+        q.goalLang = out.from === "zh" ? "zh" : "en";
+        return true;
+      });
+    })
+    .catch(() => { /* the line stands in one language; nothing is lost */ });
+}
+
 const shownPerson = (q, mine) => ({
   ...q,
   /* NOBODY ELSE'S BUSINESS. How many people opened somebody's page is a fact
@@ -7942,6 +7978,11 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
   if (face?.tooBig || back?.tooBig || shotOne?.tooBig) return res.status(413).json({ error: "tooBig" });
   if (face?.badType || back?.badType || shotOne?.badType) return res.status(415).json({ error: "badType" });
 
+  /* WHETHER THE LINE ITSELF CHANGED, read inside the write where the old one
+     is still there. The page saves the whole profile on every edit, so
+     without this, picking a new photograph would re-render a sentence nobody
+     touched — see renderBio. */
+  let bioChanged = false;
   const out = await change((board) => {
     let q = board.people.find((x) => x.by === me);
     if (!q) {
@@ -7966,7 +8007,17 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
     if (req.body.photoAt !== undefined) q.photoAt = Number(req.body.photoAt);
     for (const k of ["handle", "level", "campus", "goal", "trade", "here", "age", "type", "levelBand", "ig", "li"]) {
       if (req.body[k] !== undefined) {
-        q[k] = String(req.body[k]).slice(0, k === "goal" ? 600 : k === "li" ? 200 : 120);
+        const next = String(req.body[k]).slice(0, k === "goal" ? 600 : k === "li" ? 200 : 120);
+        if (k === "goal" && next.trim() !== String(q.goal || "").trim()) {
+          bioChanged = true;
+          /* The old rendering is of the old sentence and is now wrong in a way
+             that is worse than missing: it would be shown, in Chinese, saying
+             something they have just stopped saying. Cleared here and filled
+             again when the new one lands. */
+          q.goalAlt = "";
+          q.goalLang = "";
+        }
+        q[k] = next;
       }
     }
     /* THE ADDRESS, SAVED WITH THE FORM AND NOT BESIDE IT.
@@ -8147,6 +8198,11 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
     tell(out.photoState === "published" ? "published" : "held",
       { ...out, note: "New profile photo" });
   }
+  /* AND THE OTHER LANGUAGE OF THE LINE, after the answer rather than before
+     it — see renderBio. Only when it changed: the page saves the whole
+     profile on every edit, so without this check picking a new photograph
+     would re-translate a sentence nobody touched. */
+  if (bioChanged) renderBio(out.id, out.goal);
   res.json({ person: shownPerson(out, true) });
 });
 
@@ -9406,6 +9462,43 @@ app.post("/api/person/out", admin, express.json({ limit: "1kb" }), async (req, r
 // Everybody with a name, so the panel can show a person and the picture they
 // have. Held profiles included: somebody whose words are still in the queue is
 // exactly who an operator might be about to put a face to.
+/* THE LINES THAT WERE WRITTEN BEFORE ANY OF THIS EXISTED.
+ *
+ * renderBio runs when somebody saves a line, which does nothing for the cards
+ * already on the board — and those are the ones a reader sees. One pass, one
+ * call per card, and it says what it did.
+ *
+ * ONE AT A TIME, NOT ALL AT ONCE. Twenty cards in parallel is twenty requests
+ * to the same provider in the same second, which is the shape that earns a
+ * 429 and leaves half the board done. It is a command somebody runs from a
+ * terminal and waits ten seconds for.
+ *
+ * SKIPS WHAT IS ALREADY RENDERED, so running it twice costs nothing and
+ * running it after adding one card renders one card.
+ */
+app.post("/api/bios", admin, async (_req, res) => {
+  if (!translateReady()) return res.status(503).json({ error: "unconfigured" });
+  const board = await store.load(FILE);
+  const todo = board.people.filter((q) => q.handle && String(q.goal || "").trim() && !q.goalAlt);
+  const done = [];
+  const failed = [];
+  for (const q of todo) {
+    const words = String(q.goal).trim();
+    const out = await translate(words, { by: "bio:" + q.id }).catch(() => null);
+    if (!out || out.error || !out.text) { failed.push(q.handle); continue; }
+    await change((board2) => {
+      const row = board2.people.find((x) => x.id === q.id);
+      if (!row || String(row.goal || "").trim() !== words) return null;
+      row.goalAlt = out.text;
+      row.goalLang = out.from === "zh" ? "zh" : "en";
+      return true;
+    });
+    done.push(q.handle);
+  }
+  res.json({ ok: true, done, failed,
+    already: board.people.filter((q) => q.handle && q.goalAlt).length });
+});
+
 app.get("/api/faces", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");

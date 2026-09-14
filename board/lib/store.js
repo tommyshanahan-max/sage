@@ -1265,6 +1265,30 @@ export function cleanPerson(raw) {
     // What they are working towards, in their own words. The thing somebody
     // reads to decide whether to ask.
     goal: s(raw.goal, 600),
+    /* THE SAME LINE IN THE OTHER LANGUAGE, AND IT IS RENDERED ONCE.
+     *
+     * Everything else on this board is a key in i18n.js and follows the
+     * language button. This line cannot be — it is the person's own words —
+     * so a reader who put the whole screen into Chinese read a Chinese screen
+     * with an English paragraph in the middle of it, on the card that is the
+     * whole product, and reasonably concluded the toggle was broken.
+     *
+     * THE FIRST FIX WAS A TAP, and it was the wrong one. A button under every
+     * card, one model call each time anybody pressed it — which is the reason
+     * /api/translate is rate-limited in the first place — and it still left
+     * the toggle looking broken to anybody who did not notice a button.
+     *
+     * Written once instead, when the line is written, and stored beside it.
+     * The toggle then swaps text: no call, no wait, no bill, and it is the
+     * same rendering for everybody, which is what makes it a translation of
+     * the board rather than of one reader's session.
+     *
+     * `goalLang` is which of the two `goal` is, detected from the text rather
+     * than asked — see translate() — so the page knows which way round they
+     * are without guessing. Empty until the render lands; the page falls back
+     * to the original, which is always right and sometimes not theirs. */
+    goalAlt: s(raw.goalAlt, 600),
+    goalLang: raw.goalLang === "zh" ? "zh" : raw.goalLang === "en" ? "en" : "",
     trade: s(raw.trade, 120),
     /* AN ADDRESS, AND IT IS NOT A CONTACT.
      *

@@ -534,6 +534,14 @@ post-improved: ## Name one person whose level moved this week, as The Professor
 	  /seed/post-improved.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  $(if $(DRY),--dry,) $(if $(AGAIN),--again,)
 
+bios: ## Render every card's line into the other language, once: make bios
+	@# The language button switches everything on the board except the line on
+	@# a card, which is the person's own words. Each one is now rendered into
+	@# the other language when it is written; this is for the cards that were
+	@# already up. Safe to run twice — it skips what is done.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/bios.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+
 card: ## Put somebody real on the board: make card NAME="Ray Chen" ME=investor WANT=producer LINE="..."
 	@# ONLY FOR SOMEBODY YOU KNOW, whose card you could read out to them and
 	@# have them say "yes, that's me". The line goes up as theirs. `make demo`

@@ -891,7 +891,15 @@ function paint() {
   box.append(meet);
 
   const head = el("div", "head");
-  if (q.goal) head.append(el("p", "goal", q.goal));
+  /* IN THE LANGUAGE THIS READER IS READING IN. The same choice the deck makes
+     — see personCard in index.html — between two strings the row already
+     carries, rendered once when the line was written. The original when there
+     is no rendering yet, which is always right and sometimes not theirs. */
+  if (q.goal) {
+    const mine = lang() === "zh" ? "zh" : "en";
+    head.append(el("p", "goal",
+      (q.goalAlt && q.goalLang && q.goalLang !== mine) ? q.goalAlt : q.goal));
+  }
 
   /* WHAT IS MISSING, ON YOUR OWN PAGE, AS THE THING THAT FIXES IT.
    *
