@@ -1312,6 +1312,13 @@ export const STRINGS = {
   "waitroom.raise":    ["Raising", "融资"],
   "waitroom.trade":    ["Factories & buyers", "工厂与买家"],
   "waitroom.other":    ["Something else", "别的"],
+  /* THE SIXTH DOOR, AND THE ONLY ONE THAT IS NOT ABOUT WHAT SOMEBODY DOES.
+     Everybody can stand in it whatever they came for, because where you are in
+     the order people arrived is the same question for a producer and a
+     financier. See WAITROOMS_CHAT. */
+  "waitroom.rewards":  ["Early adopter rewards", "早期加入者奖励"],
+  "wr.rooms":          ["Rooms at the door", "门口的房间"],
+  "wr.roomsAll":       ["Everybody, whatever you do", "不管你做哪行，都能进"],
   "wait.name":         ["Your name", "你的名字"],
   /* Short enough not to be cut off in the box it sits in. It was three
      examples and a clause, and the clause was the half that got truncated. */

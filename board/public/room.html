@@ -424,7 +424,19 @@
      animation and the sheet slides up from the right. */
   
   @keyframes sheetin{from{transform:translateX(-50%) translateY(105%)}
-    to{transform:translateX(-50%) translateY(0)}}</style>
+    to{transform:translateX(-50%) translateY(0)}}
+  /* THE ROOMS UNDER THE DOOR. A list, not a tab, because there is more than
+     one of them now — see drawWait. */
+  .wrrooms{margin:1.2rem 0 0;display:grid;gap:.4rem}
+  .wrroomsk{margin:0 0 .1rem;font-size:.66rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);font-weight:700}
+  :root[data-lang="zh"] .wrroomsk{letter-spacing:0;text-transform:none;font-size:.76rem}
+  .wrroom{display:flex;align-items:baseline;gap:.55rem;text-decoration:none;
+    color:inherit;background:var(--card);border:1px solid var(--line);
+    border-radius:.7rem;padding:.7rem .8rem}
+  .wrroom b{font-size:.95rem;font-weight:700}
+  .wrroom span{font-size:.78rem;color:var(--muted)}
+</style>
 </head>
 <body>
 
@@ -1287,6 +1299,29 @@ function drawWait(box) {
   const rew = el("div", "pinslot");
   box.append(rew);
   mountLedgerPin(rew, "wait", device());
+
+  /* THE ROOMS UNDER THE DOOR, AS A LIST.
+   *
+   * The Room tab is one link to the one door somebody was filed under, which
+   * was right while every door was about what a person does. It is not right
+   * now there is a door that is about all of them: a room nobody can find is
+   * not a room, and the tab can only ever point at one.
+   *
+   * Their own first, because that is the one with their people in it. */
+  const mine = DATA.room || "other";
+  const rooms = el("div", "wrrooms");
+  rooms.append(el("p", "wrroomsk", T("wr.rooms")));
+  for (const key of [mine, "rewards"]) {
+    if (key === "rewards" && mine === "rewards") continue;
+    const a = el("a", "wrroom");
+    a.href = "/r/" + encodeURIComponent(key);
+    a.append(el("b", null, T("waitroom." + key)));
+    /* The one that is not about what they do says so, because a row in a list
+       of trades that is not a trade reads as a mistake otherwise. */
+    if (key === "rewards") a.append(el("span", null, T("wr.roomsAll")));
+    rooms.append(a);
+  }
+  box.append(rooms);
 
   /* THE ROOM IS THE ROOM TAB. IT WAS ON THIS SCREEN TOO.
    *

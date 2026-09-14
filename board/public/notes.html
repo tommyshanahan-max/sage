@@ -1076,10 +1076,14 @@ function paint() {
  */
 function drawWaiting() {
   const wrap = $("waitwrap");
-  wrap.hidden = !QUEUE.length;
-  if (!QUEUE.length) return;
+  /* SHOWN EVEN WITH NOBODY WAITING, which it was not. The block was a list of
+     piles of people, so an empty queue meant an empty block and it hid itself.
+     There is a room under this heading now that is not a pile of anybody — it
+     is always there and always open — so the heading is too. */
+  wrap.hidden = false;
   $("waitlabel").textContent = T("note.waitHead");
-  $("waitsub").textContent = T("note.waitSub2", { n: QUEUE.length });
+  $("waitsub").textContent = QUEUE.length
+    ? T("note.waitSub2", { n: QUEUE.length }) : "";
 
   const box = $("waitrooms");
   fill(box);
@@ -1110,6 +1114,21 @@ function drawWaiting() {
     head.addEventListener("click", () => { location.hash = "#d:" + key; });
     box.append(head);
   }
+
+  /* THE SIXTH DOOR, LAST AND ALWAYS. Same row, same type, same everything —
+     it is one of the rooms at the door and a row that looked different would
+     read as an advertisement sitting in a list of rooms.
+     Outside the loop because that loop is driven by who is waiting, and
+     nobody is ever filed under this one: it is open to all of them at once,
+     so it has no pile of its own to be drawn from. */
+  const all = el("button", "wroom");
+  all.type = "button";
+  const mid = el("div", "wm");
+  mid.append(el("b", null, T("waitroom.rewards")));
+  mid.append(el("span", null, T("wr.roomsAll")));
+  all.append(mid, el("span", "wn", ""));
+  all.addEventListener("click", () => { location.hash = "#d:rewards"; });
+  box.append(all);
 }
 
 function drawList(T0) {

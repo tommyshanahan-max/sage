@@ -563,7 +563,23 @@ export const MO = "mo";
  * 'd0' and eighteen hex, so it cannot collide with newId()'s twenty random
  * hex and can be told apart by looking.
  */
-export const WAITROOMS_CHAT = ["film", "invest", "raise", "trade", "other"];
+/* SIX DOORS TO STAND AT, AND FIVE BUCKETS TO BE FILED UNDER.
+ *
+ * The two lists were the same five until now and they are not the same thing.
+ * WAITROOMS above is which pile somebody waits in — it decides who is admitted
+ * together, so it is a property of a person. This is which rooms exist to talk
+ * in, which is a property of the board.
+ *
+ * "rewards" is here and deliberately not there. It is a room anybody can stand
+ * in whatever they came for, because what it is about — where you are in the
+ * order people arrived — is the same question for a producer and a financier.
+ * Nobody is ever filed under it: cleanWait only accepts a WAITROOMS key and
+ * falls back to "other", so a row can never claim it.
+ */
+export const WAITROOMS_CHAT = ["film", "invest", "raise", "trade", "other", "rewards"];
+
+/** The one door that is not about what somebody does. See above. */
+export const OPEN_DOOR = "rewards";
 
 export function doorRoom(key) {
   if (!WAITROOMS_CHAT.includes(key)) return "";

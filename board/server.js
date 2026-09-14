@@ -8227,8 +8227,10 @@ app.get("/api/ledger/pin", notesOff, async (req, res) => {
   const gid = String(req.query.group || "");
   if (!key && !gid) return res.status(400).json({ error: "no" });
   if (key && !LPLACES.includes(key)) return res.status(400).json({ error: "no" });
-  // A place nobody listed shows nothing, and says so the same way off does.
-  if (key && !LROOMS.has(key)) return res.json({ on: false });
+  /* A place nobody listed shows nothing, and says so the same way off does —
+     except the rewards door, which needs no listing. A room named for the
+     thing and then empty of it would be the app's own joke. */
+  if (key && key !== store.OPEN_DOOR && !LROOMS.has(key)) return res.json({ on: false });
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   /* THE WAITING ROOM, WHICH IS BEFORE ANY DOOR. Somebody here is not a member
      and may have no member row at all, so the cookie is the identity — the
@@ -8333,6 +8335,13 @@ function doorAccess(board, me, key) {
   const mine = board.people.find((q) => q.by === me && q.state === "published");
   if (mine && mine.handle) return "member";
   const w = board.waits.find((x) => x.by === me && !x.done);
+  /* THE ONE DOOR THAT IS OPEN TO EVERYBODY WAITING, whichever pile they are
+     in. Every other door is about what somebody does, so standing at one you
+     were not filed under would be standing in a room of strangers who have
+     nothing to do with you. This one is about where you are in the order
+     people arrived, which is the same question for all of them — and a room
+     about that which half the waiting list cannot open is not a room. */
+  if (w && key === store.OPEN_DOOR) return "wait";
   /* THE ROOM THEY JOINED AND NOT THE ONE THEY ASKED FOR. cleanWait falls back
      to "other" for anything it does not know, so the row is the authority —
      see the note over WAITROOMS in scripts/waiting.mjs. */
