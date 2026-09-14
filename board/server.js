@@ -3230,7 +3230,20 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
      * Only for somebody who came in through a door. A row made on the public
      * form belongs to no room yet and there is nothing to announce it to. */
     if (viaRoom && !board.waits.some((w) => w.by === me && !w.done)) {
-      moSays(board, store.doorRoom(String(req.body?.room || "")), "in", name);
+      const door = store.doorRoom(String(req.body?.room || ""));
+      moSays(board, door, "in", name);
+      /* AND HE SAYS SOMETHING TO THEM, IN THE ROOM.
+       *
+       * This was on their own screen and nobody else's, to keep twenty-four
+       * copies of the same instruction out of a conversation. Wrong call: the
+       * rooms are quiet, people arrive and nobody answers them, and one line
+       * from the doorman is the difference between a room and an empty page
+       * with strangers posting into it.
+       *
+       * The instruction is still theirs alone — the home-screen line knows
+       * which phone they are holding and belongs under the box. This is the
+       * greeting, which belongs where everybody can see somebody was greeted. */
+      moSays(board, door, "welcome", name);
     }
     /* THE LIVE ROW, NOT MERELY THE FIRST ONE.
      *

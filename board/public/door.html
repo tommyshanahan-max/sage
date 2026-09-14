@@ -149,9 +149,6 @@ let ROOM = null;
 /* Whether this browser is in the room yet. The one bit that decides what the
    box at the bottom is: a name, or a message. */
 let IN = false;
-/* Their name, from the moment they give it until they leave the page. Mo's
-   welcome hangs on it — see paint(). */
-let WELCOME = "";
 /* His name comes from the room he is a member of, so the two screens cannot
    disagree about what he is called. */
 let MO_NAME = "Mo";
@@ -223,13 +220,16 @@ function paint() {
     /* WHAT HAPPENED TO THE ROOM, drawn as a line across it rather than a
        bubble from anybody — the room reporting itself, which is what every
        group chat on this phone does with it. See moSays. */
-    if (m.evt) {
+    /* A line across the room for what happened to it; a bubble from him for
+       what he said to somebody. See moSays. */
+    if (m.evt && m.evt.kind !== "welcome") {
       const e = document.createElement("p");
       e.className = "when";
       e.textContent = T("mo." + m.evt.kind, { who: m.evt.who });
       talk.append(e);
       continue;
     }
+    const said = m.evt ? T("mo.welcome", { who: m.evt.who }) : (m.text || "");
     const row = document.createElement("div");
     row.className = "said" + (m.mine ? " mine" : "");
     if (!m.mine) {
@@ -250,43 +250,16 @@ function paint() {
     }
     const bub = document.createElement("div");
     bub.className = "bub";
-    bub.textContent = m.text || "";
+    bub.textContent = said;
     // His lines are tappable and nobody else's are — see hearable().
-    if (m.bot && m.text) hearable(bub, m.text);
+    if (m.bot && said) hearable(bub, said);
     col.append(bub);
     row.append(col);
     talk.append(row);
   }
-  /* MO, TO THE PERSON WHO JUST ARRIVED, AND TO NOBODY ELSE.
-   *
-   * Tom asked for him to say welcome and to say how to keep this. The welcome
-   * belongs in the room and is already there — the line above says somebody
-   * came in. The instruction does not: it is advice for one person on one
-   * phone, and posting it would put twenty-four identical copies of "here is
-   * how to add a home screen icon" in a room people are trying to read.
-   *
-   * So it is drawn, not stored. It looks like him because it is him, and it
-   * goes at the bottom where they are looking. */
-  if (WELCOME) {
-    const row = document.createElement("div");
-    row.className = "said";
-    const av = document.createElement("span");
-    av.className = "av";
-    av.textContent = "\u83AB";
-    av.style.background = "var(--t3)";
-    const col = document.createElement("div");
-    col.className = "col";
-    const who = document.createElement("p");
-    who.className = "who";
-    who.textContent = MO_NAME;
-    const bub = document.createElement("div");
-    bub.className = "bub";
-    bub.textContent = T("dr.moWelcome", { name: WELCOME });
-    hearable(bub, bub.textContent);
-    col.append(who, bub);
-    row.append(av, col);
-    talk.append(row);
-  }
+  /* HIS WELCOME IS IN THE ROOM NOW, not drawn here for one pair of eyes —
+     see moSays. What stays theirs alone is the home-screen line under the box,
+     which knows which phone they are holding. */
   window.scrollTo(0, document.body.scrollHeight);
 }
 
@@ -330,7 +303,6 @@ $("go").addEventListener("click", async () => {
       if (!r.ok) throw new Error("no");
       $("box").value = "";
       IN = true;
-      WELCOME = v;
       $("note").hidden = true;
       /* The home screen, asked for once, at the only moment it is obviously
          worth it: they are in a room and about to want to come back to it. */

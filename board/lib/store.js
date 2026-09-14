@@ -1990,8 +1990,13 @@ export function cleanSay(raw) {
      * carries a kind and a name and the page writes the sentence, in whichever
      * language it is being read in.
      *
-     * `who` is a handle, never a device hash: it is drawn on a screen. */
-    ...(raw.evt && ["in", "out", "left"].includes(String(raw.evt.kind))
+     * `who` is a handle, never a device hash: it is drawn on a screen.
+     *
+     * "welcome" IS THE ODD ONE and is drawn as a bubble from him rather than a
+     * line across the room, because it is him talking to somebody. It is here
+     * rather than as stored text for the same reason as the rest: his warning
+     * line is English for ever, and half of this board reads Chinese. */
+    ...(raw.evt && ["in", "out", "left", "welcome"].includes(String(raw.evt.kind))
       ? { evt: { kind: String(raw.evt.kind), who: s(raw.evt.who, 40) } }
       : {}),
   };

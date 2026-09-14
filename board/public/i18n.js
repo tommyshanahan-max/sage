@@ -1252,23 +1252,14 @@ export const STRINGS = {
                         "这屋里正在说 · 门口 {n} 个人"],
   "land.roomGo":       ["Put your name down to answer them",
                         "留个名字就能接上话"],
-  /* The doorman, to the person who has just walked in, on their screen and
-     nobody else's — see the note in door.html about why this is not stored.
-     Two things and stop: they are in, and how to not lose it. The "how" is on
-     the line under it, which knows what phone they are holding. */
-  /* Above the box on a room door, and not inside it: a placeholder goes
-     away when somebody types, which is exactly when they most need to be
-     told what they are typing. */
   /* The three places somebody at the door has, along the bottom — the same
-     shape and the same weight a member's four tabs have. They were two lines
-     of small grey text under the box, which is a footnote, and a footnote is
-     where I keep putting the thing that matters. */
+     shape and the same weight a member's four tabs have. They were two
+     lines of small grey text under the box, which is a footnote, and a
+     footnote is where I keep putting the thing that matters. */
   "dr.barRoom":        ["Room", "房间"],
   "dr.barQueue":       ["The queue", "排队"],
   "dr.barYou":         ["You", "你"],
   "dr.askName":        ["What should this room call you?", "这屋里怎么称呼你？"],
-  "dr.moWelcome":      ["{name} — you are in. Say what you are looking for.\n\nKeep this on your home screen or you will have to find the link again.",
-                        "{name}，进来了。说说你在找什么。\n\n把它存到桌面，不然下次还得翻链接。"],
   "dr.sendLink":       ["Send", "发送"],
   "dr.sendWho":        ["Add somebody — their name, or leave it blank for a group",
                         "拉人进来 — 写名字，发群里就留空"],
@@ -4579,6 +4570,11 @@ export const STRINGS = {
   /* The room reporting itself. Stored as a fact and written here, in both
      languages — see cleanSay and moSays. Somebody's name and the shortest
      true sentence: it sits between two people talking and is not one of them. */
+  /* Him, to somebody who has just walked in, where everybody can see they
+     were greeted. Short: the room is quiet and the point is that somebody
+     is home, not that there is a paragraph to read. */
+  "mo.welcome":        ["{who} — welcome. Say what you're looking for: the people who can answer it are reading this room.",
+                        "{who}，欢迎。说说你在找什么 —— 能接上话的人都在看这屋。"],
   "mo.in":             ["{who} came in", "{who} \u8fdb\u6765\u4e86"],
   "mo.out":            ["{who} was taken out", "{who} \u88ab\u79fb\u51fa\u4e86"],
   "mo.left":           ["{who} left", "{who} \u8d70\u4e86"],

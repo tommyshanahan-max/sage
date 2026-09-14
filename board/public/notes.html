@@ -1752,10 +1752,14 @@ async function drawDoor(key) {
     /* The room reporting itself — who came in, who went out. A line across the
        room, not a bubble from him: see moSays, and the same shape groups.html
        draws. Without this branch these arrived as empty bubbles. */
-    if (m.evt) {
+    /* WHAT HAPPENED TO THE ROOM is a line across it; WHAT HE SAID TO SOMEBODY
+       is a bubble from him. Same mechanism, two shapes, because one is the
+       room reporting itself and the other is a member talking. */
+    if (m.evt && m.evt.kind !== "welcome") {
       talk.append(el("p", "when", T("mo." + m.evt.kind, { who: m.evt.who })));
       continue;
     }
+    const said = m.evt ? T("mo.welcome", { who: m.evt.who }) : (m.text || "");
     const row = el("div", "said" + (m.mine ? " mine" : ""));
     if (!m.mine) row.append(doorFace(m));
     const col = el("div", "col");
@@ -1764,12 +1768,12 @@ async function drawDoor(key) {
       + (m.reported ? " flag" : "") + (m.bot ? " bot" : ""));
     /* @somebody drawn as a mention rather than as the characters they typed.
        Never innerHTML: the text is somebody else's typing — see at.js. */
-    atText(bub, m.text || "", doorNames(key));
+    atText(bub, said, doorNames(key));
     /* HIS LINES ARE TAPPABLE AND NOBODY ELSE'S ARE.
        He has a voice and it was only ever reachable inside his own panel,
        which is off. A person's message read aloud by a machine is a different
        and worse idea — it is his line, in his voice, or nothing. */
-    if (m.bot && m.text) hearable(bub, m.text);
+    if (m.bot && said) hearable(bub, said);
     col.append(bub);
     row.append(col);
     talk.append(row);

@@ -2002,12 +2002,14 @@ function doorBox() {
       /* The room reporting itself — who came in, who went out. A line across
          it, not a bubble from anybody: see moSays. Without this branch these
          arrived as an empty bubble with a name under it. */
-      if (m.evt) {
+      if (m.evt && m.evt.kind !== "welcome") {
         talk.append(el("p", "dquiet", T("mo." + m.evt.kind, { who: m.evt.who })));
         continue;
       }
+      // What he said to somebody is a bubble from him, not a line — see moSays.
+      const said = m.evt ? T("mo.welcome", { who: m.evt.who }) : (m.text || "");
       const row = el("div", "dmsg" + (m.mine ? " mine" : ""));
-      row.append(el("div", "dbub" + (m.bot ? " bot" : "") + (m.reported ? " flag" : ""), m.text || ""));
+      row.append(el("div", "dbub" + (m.bot ? " bot" : "") + (m.reported ? " flag" : ""), said));
       if (!m.mine) {
         row.append(el("p", "dname", (m.handle || T("board.someone"))
           + (m.bot ? "" : " \u00B7 " + T(m.inside ? "dr.inside" : "dr.waiting"))));

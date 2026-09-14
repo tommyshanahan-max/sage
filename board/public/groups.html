@@ -738,20 +738,22 @@ function paintRoom(g) {
        bubble from Mo. It is not somebody talking — it is the room reporting
        itself, which is what every group chat on this phone does with a thin
        grey line in the middle and no avatar beside it. */
-    if (m.evt) {
+    if (m.evt && m.evt.kind !== "welcome") {
       box.append(el("p", "evt", T("mo." + m.evt.kind, { who: m.evt.who })));
       continue;
     }
+    // What he said to somebody is a bubble from him — see moSays.
+    const said = m.evt ? T("mo.welcome", { who: m.evt.who }) : (m.text || "");
     const row = el("div", "said" + (m.mine ? " mine" : ""));
     if (!m.mine) row.append(face(m, "small"));
     const wrap = el("div");
     const bub = el("div", "bub");
     /* @somebody drawn as a mention. Never innerHTML — see at.js. */
-    atText(bub, m.text || "", g.who.map((x) => x.handle).filter(Boolean));
+    atText(bub, said, g.who.map((x) => x.handle).filter(Boolean));
     /* HIS LINES ARE TAPPABLE AND NOBODY ELSE'S ARE. He has a voice and it was
        only reachable inside his own panel, which is off. A person's message
        read aloud by a machine is a different and worse idea. */
-    if (m.bot && m.text) hearMo(bub, m.text);
+    if (m.bot && said) hearMo(bub, said);
     wrap.append(bub);
     const meta = el("div", "meta");
     meta.append(el("span", null, (m.mine ? "" : (m.handle || "") + " · ") + when(m.at)));
