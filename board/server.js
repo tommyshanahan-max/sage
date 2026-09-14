@@ -9194,6 +9194,15 @@ app.get("/api/public", admin, async (req, res) => {
       fromWait: waitOf(q) ? waitOf(q).id : "",
       fromWaitName: waitOf(q) ? waitOf(q).name : "",
       reach: reachOf(q),
+      /* WHETHER THERE IS ANYTHING ON THE PAGE, as a yes or no and never the
+         words themselves. `make who` lists the profiles held for review and
+         the operator's next move is releasing them — but a page with no
+         sentence and no line on it goes into Browse as a name over an empty
+         card, which makes the deck worse rather than fuller. That is the whole
+         decision, and it was being made blind: eighteen names, no way to tell
+         which six were worth the command. A boolean answers it and carries
+         nothing out of here that the panel does not already show. */
+      hasCard: Boolean(q.goal || (Array.isArray(q.say) && q.say.length)),
     })),
   });
 });

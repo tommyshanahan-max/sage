@@ -51,6 +51,11 @@ let noreach = 0;
 /* COUNTED BY REASON, because the reasons are not the same kind of thing and
    the advice at the bottom used to treat them as one. See below. */
 const held = [];
+/* HELD, AND NOTHING ON THE PAGE. Split from the rest because the command is
+   the same and the answer is not: releasing somebody with no sentence and no
+   line puts a name over an empty card into the deck, which makes Browse worse
+   rather than fuller. See hasCard in the payload. */
+const blank = [];
 const theirs = [];
 const nameless = [];
 const inBrowse = [];
@@ -64,7 +69,7 @@ for (const q of people.sort((a, b) => (b.at || "").localeCompare(a.at || ""))) {
     : "";
   if (why) out++; else inBrowse.push(q.handle);
   if (!q.handle) nameless.push(q.handle || "—");
-  else if (q.state !== "published") held.push(q.handle);
+  else if (q.state !== "published") (q.hasCard ? held : blank).push(q.handle);
   else if (!q.looking) theirs.push(q.handle);
   if (!q.reach) noreach++;
   console.log(pad(q.handle || "—", 16) + pad(when(q.at), 11)
@@ -100,12 +105,19 @@ if (noreach) {
    there was nothing to be done. Each reason now says whose it is. */
 if (held.length) {
   console.log("");
-  console.log(held.length + " " + (held.length === 1 ? "profile is" : "profiles are")
-    + " held for review. That is yours to clear:");
-  console.log('  make show WHO="' + held[0] + '"');
-  if (held.length > 1) console.log("  …and so on for: " + held.slice(1).join("  "));
+  console.log(held.length + " held for review WITH something on the page. Those are");
+  console.log("yours to clear, and they are the ones worth the command:");
+  for (const h of held) console.log('  make show WHO="' + h + '"');
   console.log("Their words go up as written, so read the row before you do.");
   console.log('If "Show me in Browse" is off underneath, they stay out — see below.');
+}
+if (blank.length) {
+  console.log("");
+  console.log(blank.length + " held with NOTHING on the page — no sentence, no line.");
+  console.log("Releasing one puts a name over an empty card into the deck, which");
+  console.log("makes Browse worse rather than fuller. Leave them until they write");
+  console.log("something, or ask them in the room they are already in:");
+  console.log("  " + blank.join("  "));
 }
 if (theirs.length) {
   console.log("");
