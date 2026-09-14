@@ -7184,6 +7184,39 @@ const MO_NOW = String(process.env.BOARD_BUTLER_NOW || "").slice(0, 400).trim();
 const ROOM_WORDS = { film: "Film & TV", invest: "Investment", raise: "Raising",
   trade: "Trade", other: "the other room" };
 
+/* WHO IS STANDING IN THIS ROOM, so he can put two of them together.
+ *
+ * The one thing a doorman in a room is for. Katy comes to the film door and
+ * says she is a model looking for shoots; Hugo is standing in the same room
+ * and he is a producer; and nobody introduces them, because the only person
+ * whose job that is has never been told who is in the room he is in.
+ *
+ * NOTHING HERE IS A DISCLOSURE. This is the door room, and everybody in it
+ * sees the others — their name is on every message and their line is on the
+ * queue screen. He is saying out loud what is already on the screen of the
+ * person he is saying it to. The rule he must never bend is the OTHER one:
+ * who is INSIDE, behind the door, which is peekFor and nothing else.
+ *
+ * First names and their own words. Never a contact, never a photograph,
+ * never a word of what anybody said in the room — see the note over the ask:
+ * he is given nobody's messages, and that has not changed.
+ */
+function roomFolk(board, key, me) {
+  if (!store.WAITROOMS_CHAT.includes(key)) return [];
+  return board.waits
+    .filter((w) => !w.done && w.shown && w.by !== me
+      && (w.room || "other") === key && String(w.name || "").trim())
+    .slice(-12)
+    .map((w) => ({
+      name: String(w.name).trim().split(/\s+/)[0],
+      me: w.me || "",
+      want: w.want || "",
+      // Their own line, which is the whole of what anybody knows about them.
+      note: String(w.why || "").replace(/\s+/g, " ").slice(0, 120),
+    }))
+    .filter((x) => x.note || (x.me && x.want));
+}
+
 function nowOn(board) {
   const week = Date.now() - 7 * 86400_000;
   const at = (x) => Date.parse(x || "") || 0;
@@ -7836,6 +7869,8 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
       want: sentence.want || "",
       up: Boolean(w && w.up),
       photo: Boolean((mine && mine.photo) || (w && w.photo)),
+      // And who else is standing here — see roomFolk.
+      folk: now && door ? roomFolk(now, door, me) : [],
     }).catch(() => ({ error: "no" }));
     /* `say`, NOT `text`, AND THAT ONE WORD COST THE WHOLE FEATURE.
      *
