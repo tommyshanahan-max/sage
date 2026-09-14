@@ -571,14 +571,15 @@ handroom: ## A room you keep by hand: make handroom [WHO="Ray Chen"] [OFF=1] [NA
 	  /seed/handroom.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --name "$(NAME)" --who "$(WHO)" $(if $(OFF),--off,)
 
-layers: ## Who is in which layer: make layers
+layers: ## Who is in which layer: make layers [FIX=1]
 	@# The arrival number is stamped once, in the order of the date on each
 	@# person's row, and nobody moves after that. A card written late for
 	@# somebody who was here from the start carries a late date and lands in the
 	@# wrong band for good — so read the first three back as three people you
 	@# recognise, while it is still cheap to fix.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
-	  /seed/layers.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+	  /seed/layers.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  $(if $(FIX),--fix,)
 
 mo-say: ## One line from the doorman, in every room: make mo-say WHAT="..." [ROOM=film]
 	@# YOUR SENTENCE, NOT HIS. No model runs on this: he may not invent a fact

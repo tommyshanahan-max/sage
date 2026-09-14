@@ -11,13 +11,38 @@
  * three people you recognise is the only check there is, and the only moment
  * it is cheap to do is before anybody has been told.
  *
- *   make layers
+ *   make layers          who is in which band
+ *   make layers FIX=1    deal the seats again from the beginning
+ *
+ * FIX exists because the first rule shipped wrong: every row was stamped, so
+ * two profiles that were never published took seats 2 and 3 of the first three
+ * and the real members started at 4. It refuses once the first hundred is
+ * full — up to there nobody has been told anything a re-deal would make
+ * untrue, and past it somebody has said "I am in the first hundred" out loud.
  */
 
-const [, , base, key] = process.argv;
+const [, , base, key, ...rest] = process.argv;
 if (!base || !key) {
-  console.error("usage: layers.mjs <board url> <admin key>");
+  console.error("usage: layers.mjs <board url> <admin key> [--fix]");
   process.exit(2);
+}
+
+if (rest.includes("--fix")) {
+  const f = await fetch(base + "/api/layers", {
+    method: "POST",
+    headers: { "x-admin-secret": key, "Content-Type": "application/json" },
+    body: JSON.stringify({ restamp: true }),
+  });
+  const g = await f.json().catch(() => ({}));
+  console.log("");
+  if (g.error === "told") {
+    console.log("  Too late. " + g.people + " people are in, and past the first");
+    console.log("  hundred somebody has already been told which band they are in.");
+    console.log("");
+    process.exit(1);
+  }
+  if (!f.ok) { console.log("  That did not go through."); console.log(""); process.exit(1); }
+  console.log("  Dealt again. " + g.dealt + (g.dealt === 1 ? " seat." : " seats."));
 }
 
 const r = await fetch(base + "/api/layers", { headers: { "x-admin-secret": key } });

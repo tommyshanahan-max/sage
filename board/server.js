@@ -1920,6 +1920,42 @@ app.get("/api/layers", admin, async (_req, res) => {
   });
 });
 
+/** DEAL THE SEATS AGAIN FROM THE BEGINNING.
+ *
+ * A destructive command, and it exists because the first rule shipped wrong:
+ * every row was stamped, so two profiles that were never published took seats
+ * 2 and 3 of the first three and the real members started at 4. A number that
+ * is never recomputed is only worth having if the first deal was right, and
+ * this is the one way back.
+ *
+ * IT REFUSES ONCE THE FIRST HUNDRED IS FULL. Up to there the board is small
+ * enough that nobody has been told anything a re-deal would make untrue.
+ * Past it, somebody has said "I am in the first hundred" to somebody else, and
+ * a command that can quietly make that false is worse than a wrong seat. The
+ * guard is the point of the route, not a detail of it.
+ *
+ * Order comes from the date on each row, the same as the ordinary stamp.
+ */
+app.post("/api/layers", admin, express.json({ limit: "1kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  if (req.body?.restamp !== true) return res.status(400).json({ error: "no" });
+  const board = await store.load(FILE);
+  const inside = board.people.filter((q) => q.state === "published" && q.handle);
+  if (inside.length > store.LAYERS[1].upto) {
+    return res.status(409).json({ error: "told", people: inside.length });
+  }
+  for (const q of board.people) q.seq = 0;
+  // Oldest first. board.people is newest-first, so this walks it backwards —
+  // the same direction cleanBoard stamps in, for the same reason.
+  let n = 0;
+  for (let i = board.people.length - 1; i >= 0; i--) {
+    const q = board.people[i];
+    if (q.state === "published" && q.handle) q.seq = ++n;
+  }
+  await store.save(FILE, board);
+  res.json({ ok: true, dealt: n });
+});
+
 app.get("/api/rooms", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");

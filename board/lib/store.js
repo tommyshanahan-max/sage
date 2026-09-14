@@ -2381,10 +2381,27 @@ export function cleanBoard(raw) {
   /* Stamp arrival numbers on anybody who has none, oldest first, carrying on
      from the highest already given out. Runs on every load and every save, and
      is a no-op once everybody has one — which is what makes the number stable:
-     it is assigned exactly once, in the order people actually arrived. */
+     it is assigned exactly once, in the order people actually arrived.
+
+     ONLY PEOPLE WHO ARE ACTUALLY IN, and this was wrong on the live board
+     first. It stamped every row, so two profiles that were never published
+     and had no name on them took seats 2 and 3 — half of the first three,
+     permanently, held by nobody. Meanwhile the layer screens counted only
+     published members with a handle, so the board said 95 places left while
+     the next arrival was really getting seat 8. Two meanings of "in", and the
+     expensive one was invisible.
+
+     A seat is now taken by the same person the screens call a member, and by
+     nobody else. Somebody who fills their page later is stamped then, at the
+     back — which is right: they were not in until they were in.
+
+     Being hidden afterwards does not give the seat back. The stamp is already
+     on the row and it stays there, so `make hide` cannot quietly move
+     everybody who arrived after them. */
+  const inside = (q) => q.state === "published" && q.handle;
   let top = people.reduce((m, q) => Math.max(m, q.seq || 0), 0);
   for (let i = people.length - 1; i >= 0; i--) {
-    if (!people[i].seq) people[i].seq = ++top;
+    if (!people[i].seq && inside(people[i])) people[i].seq = ++top;
   }
 
   // Follows, deduplicated on the pair: pressing Follow twice is one follow.
