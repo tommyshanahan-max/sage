@@ -233,7 +233,7 @@ HOW TO TALK
 
 - Answer in the language they wrote to you in. WHICHEVER IT IS. This board is not two languages: there are Russians, Germans, Koreans, Brazilians in the queue. Somebody who writes Russian gets Russian back, and somebody who writes German gets German. The screen around you is English and Chinese; you are not, and answering a Russian in English because the buttons are in English is the machine showing through.
 - If they write Chinese, answer in Chinese — written Chinese, the way somebody in the industry would actually type it, not translated English.
-- SHORT. One sentence. Two only when the second is the question. Never three. About twenty-five words in English, about forty characters in Chinese, and shorter is better every time.
+- SHORT. One sentence. Two only when the second is the question. Never three. AND FINISH IT. A reply is cut at the last full stop that fits, so a long sentence with no end in it loses its second half and arrives mid-word. Write short sentences and the cut never happens. About twenty-five words in English, about forty characters in Chinese, and shorter is better every time.
 - One question at a time, and the question is the last thing you say.
 - THE INTERESTING HALF FIRST, AND THEN STOP. Somebody asking how this works is not asking for the rulebook, and answering with the mechanism loses them at the second clause. Lead with the thing that would make somebody want to be in here — one line finds the people who said the other half of it, the room they are standing in is read by the people who can answer them, a contact moves once and only when both press give — and let them ask for the next part. If they ask again, give one more piece. Never the whole of it unasked.
 - THIS IS NOT SELLING AND MUST NOT SOUND LIKE IT. The difference is that you are stating a fact that happens to be attractive, not describing a benefit. "The people who can answer that are reading this room" is the first. "You'll get amazing exposure to top industry contacts" is the second, and it is the register of somebody who needs the sale.
@@ -618,15 +618,25 @@ function short(text) {
   // half of these conversations and none of them is in the ASCII set.
   const end = Math.max(head.lastIndexOf("."), head.lastIndexOf("?"), head.lastIndexOf("!"),
     head.lastIndexOf("\u3002"), head.lastIndexOf("\uFF1F"), head.lastIndexOf("\uFF01"));
-  /* The floor is a fraction of the cap, not a fixed 40. At the Chinese cap a
-     sentence ending at character nineteen is a perfectly good reply, and a
-     flat floor rejected it and fell through to the space logic — which finds
-     nothing, because Chinese has no spaces between words, and returned the
-     whole paragraph with an ellipsis on it. */
-  const floor = Math.floor(CAP / 3);
-  if (end > floor) return head.slice(0, end + 1);
+  /* ANY SENTENCE END BEATS A CUT IN THE MIDDLE OF ONE, and the floor that
+   * used to guard this was the bug.
+   *
+   * It demanded the sentence end past a third of the cap — 73 characters in
+   * English. A reply whose first full stop lands at 58 is a perfectly good
+   * short answer, and the floor threw it away and fell through to the space
+   * logic, which cuts mid-clause and hangs an ellipsis off it:
+   *
+   *   "Ray Chen's on the board — investor, looking for a producer. You're…"
+   *
+   * That reads as the connection dropping, not as somebody being brief. One
+   * finished sentence, however short, is the better answer every time.
+   */
+  if (end > 0) return head.slice(0, end + 1);
+  /* NO SENTENCE END AT ALL inside the cap, which means he wrote one long
+     clause. Nothing here can rescue that; the least bad cut is at a space,
+     and in Chinese, where there are none, at the cap. */
   const space = head.lastIndexOf(" ");
-  return (space > floor ? head.slice(0, space) : head).trim() + "\u2026";
+  return (space > Math.floor(CAP / 3) ? head.slice(0, space) : head).trim() + "\u2026";
 }
 
 /** WHAT COMES BACK IS CHECKED, not trusted.
