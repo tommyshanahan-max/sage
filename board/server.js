@@ -7600,6 +7600,8 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
   /* The wait row whose line this message just became, if it did — rendered
      into the other language after the write, like everything else here. */
   let whyFor = "";
+  /* Whether this line is a reply to something he just said — see below. */
+  let stillMo = false;
   const out = await change((board) => {
     /* WHO CAN BE @'D IN HERE, worked out before the rules below need it: the
        people in this room, so a mention of one of them is read as a mention
@@ -7673,6 +7675,31 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
     const shaped = store.contactShaped(store.unmention(text, mentionable));
     if (shaped) return { error: "contact", what: shaped };
 
+    /* IS THIS LINE STILL TO HIM? — read before the push, so it looks at the
+     * room as it was a moment ago.
+     *
+     * "@Mo are there investors coming?" got an answer. "How can I contact
+     * him?", the next line, got nothing, because it had no @ on it — and a
+     * doorman who needs to be addressed by name on every single line is not
+     * somebody having a conversation, he is a command line.
+     *
+     * NARROW ON PURPOSE, because the opposite failure is worse: him joining
+     * in on a room that was not talking to him. All three have to hold — he
+     * spoke last, the line before his was this same person's, and it was
+     * within three minutes. That is a two-person exchange still in progress
+     * and nothing else is.
+     *
+     * The tripwire line is not an invitation. It is the one thing he says
+     * without being asked (see MO_WATCH), so the person it lands on has not
+     * started a conversation with him and their next line is to the room.
+     */
+    const rows = board.says.filter((m) => m.group === id && !m.evt && m.text);
+    const was = rows[rows.length - 1];
+    const before = rows[rows.length - 2];
+    stillMo = Boolean(was && was.by === store.MO && was.text !== MO_WATCH
+      && before && before.by === me
+      && Date.now() - (Date.parse(was.at || "") || 0) < 3 * 60_000);
+
     board.says.push(store.cleanSay({ id: store.newId(), group: id, by: me, text }));
     /* Held so the render can be started after this write commits — see
        renderSay, which must not run inside the lock. */
@@ -7742,12 +7769,24 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
    * is already saved by here; his answer arriving a second later is how a
    * person answering would look anyway.
    *
-   * THE QUESTION AND NOTHING ELSE GOES OUT. Not the room, not who is in it,
-   * not the line before it. He is a doorman who can be asked how the place
-   * works, and the price of that is that he cannot answer "what did she mean
-   * by that" — which is exactly the question he should not be able to answer.
+   * WHAT GOES OUT: THIS PERSON'S OWN LINES AND HIS OWN, AND NOTHING ELSE.
+   *
+   * It was the one question and nothing else, which is why he could not hold
+   * a conversation — asked "are there investors coming", told "Film producer"
+   * a line earlier, he had never seen the second and answered as if he had
+   * walked in. Every line was the first line.
+   *
+   * So he is given the exchange: what THIS person said and what HE said back,
+   * last ten, and nobody else's words at any point. Which keeps the thing the
+   * old rule was actually protecting — he still cannot answer "what did she
+   * mean by that", because he has never seen a word she wrote, and that is
+   * exactly the question he should not be able to answer. What he gains is
+   * the ability to remember what you told him thirty seconds ago, which is
+   * the difference between a doorman and a form.
    */
-  const asked = store.forMo(text);
+  /* Named, or still talking to him — see stillMo. A line in a conversation he
+     is already in does not have to carry his name to be addressed to him. */
+  const asked = store.forMo(text) || (stillMo ? String(text).trim() : "");
   if (asked && butler.configured()) {
     /* AND IN A ROOM HE IS TOLD THE SAME FEW. Somebody at a door asking him
        what is inside is the commonest question there is, and until now he had
@@ -7772,7 +7811,19 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
       (q) => q.by === me && q.state === "published" && q.handle);
     const w = now && now.waits.find((x) => x.by === me && !x.done);
     const sentence = (mine && mine.say && mine.say[0]) || w || {};
-    const said = await butler.ask([{ from: "them", text: asked }], "grp:" + id, {
+    /* HIS SIDE AND THEIRS, in order, ending with the question just asked —
+       which is already in the file, pushed by the change() above. An @ is
+       taken off each of their lines: it addressed him, it is not part of what
+       they said. */
+    const turns = (now ? now.says : [])
+      .filter((m) => m.group === id && m.text && !m.evt
+        && (m.by === me || m.by === store.MO))
+      .slice(-10)
+      .map((m) => (m.by === store.MO
+        ? { from: "you", text: m.text }
+        : { from: "them", text: store.forMo(m.text) || m.text }));
+    const said = await butler.ask(turns.length ? turns
+      : [{ from: "them", text: asked }], "grp:" + id, {
       // A room, which turns the card off — see facts().
       room: true,
       peek: shown,

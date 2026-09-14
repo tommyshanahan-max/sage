@@ -420,7 +420,23 @@ export async function ask(turns, who, about) {
       role: t && t.from === "you" ? "assistant" : "user",
       content: String((t && t.text) || "").slice(0, MAX_CHARS),
     }))
-    .filter((m) => m.content);
+    .filter((m) => m.content)
+    /* RUNS OF ONE VOICE BECOME ONE TURN. The API takes alternating roles and
+       nothing else, and a room is not a form: somebody says three things
+       before he gets a word in, which is exactly the case the group route
+       sends. Joined rather than dropped — each line is something they said
+       and the last one is usually the question. */
+    .reduce((out, m) => {
+      const last = out[out.length - 1];
+      if (last && last.role === m.role) {
+        last.content = (last.content + "\n" + m.content).slice(-MAX_CHARS);
+      } else out.push(m);
+      return out;
+    }, []);
+  /* And it has to START with them. A stored exchange can begin on his side —
+     the ten-line window can open just after something he said — and the API
+     refuses a conversation that opens with the assistant. */
+  while (said.length && said[0].role === "assistant") said.shift();
 
   /* AN EMPTY CONVERSATION IS THE OPENING. The page asks for the first line
      rather than hard-coding it here, so the greeting is in the language they
