@@ -222,6 +222,12 @@
   .said{display:flex;gap:.55rem;align-items:flex-start;align-self:stretch}
   .said.mine{flex-direction:row-reverse}
   .said .av{width:2rem;height:2rem;font-size:.85rem;flex:0 0 auto;box-shadow:none}
+  /* A FACE THAT GOES SOMEWHERE LOOKS LIKE ONE. Not a colour change — the disc
+     already wears a colour drawn from the name — but a ring, which reads as a
+     thing to press at this size and leaves the letter alone. The ones that go
+     nowhere are left exactly as they were, so the difference is the signal. */
+  a.av.go{text-decoration:none;cursor:pointer}
+  a.av.go:hover,a.av.go:focus-visible{box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--accent)}
   .said .col{display:flex;flex-direction:column;min-width:0;max-width:82%}
   .said .bub{max-width:100%}
   /* A NAME SAID AT SOMEBODY. Weight and the accent, not a background: a
@@ -1466,9 +1472,33 @@ function hearable(bub, text) {
   });
 }
 
+/** WHERE A FACE IN A ROOM GOES, and it is somewhere for both kinds of person.
+ *
+ *  A member has a page: /p/handle. Somebody at the door has no page — their
+ *  whole account of themselves is the line they wrote on the way in — but the
+ *  board is holding that line, and the conversation with them is where it is
+ *  already shown. So the face goes to the same place the name under it goes,
+ *  which is the whole point: two halves of one person should not lead to two
+ *  different answers, and tapping a face is what people try first.
+ *
+ *  Nothing for Mo, who is not a person, and nothing for somebody the room has
+ *  no handle for. A face that does nothing is not given the ring that says it
+ *  would. */
+function doorWhere(m) {
+  if (m.bot) return "";
+  if (m.inside && m.handle) return "/p/" + encodeURIComponent(m.handle.toLowerCase());
+  /* `wid` reaches a member and nobody else — see named() in /api/door. Without
+     it there is nothing to open, which is the honest state rather than a link
+     that lands on a refusal. */
+  if (m.wid) return "#w:" + m.wid;
+  return "";
+}
+
 function doorFace(m) {
   const name = m.handle || "?";
-  const av = el("span", "av small", initial(name));
+  const to = doorWhere(m);
+  const av = el(to ? "a" : "span", "av small" + (to ? " go" : ""), initial(name));
+  if (to) av.href = to;
   av.style.background = wash(name);
   const w = m.wid && QUEUE.find((x) => x.id === m.wid);
   if (w && w.photo) {
@@ -1493,9 +1523,14 @@ function doorName(m) {
   const who = el("p", "dwho");
   const label = (m.handle || T("board.someone"))
     + (m.bot ? "" : " \u00B7 " + T(m.inside ? "dr.inside" : "dr.waiting"));
-  if (m.wid) {
+  /* A MEMBER'S NAME WAS THE ONE THING IN HERE THAT WENT NOWHERE. This linked
+     for somebody at the door — the way to write to them — and was plain text
+     for a member, who is the one person in the room with a page to open. Both
+     now, through doorWhere, which is also what the face uses. */
+  const to = doorWhere(m);
+  if (to) {
     const a = el("a", "reach");
-    a.href = "#w:" + m.wid;
+    a.href = to;
     a.textContent = label;
     who.append(a);
   } else {

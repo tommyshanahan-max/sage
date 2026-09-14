@@ -1226,6 +1226,13 @@ export const STRINGS = {
      to. */
   "wall.head":         ["{n} more inside", "里面还有 {n} 个人"],
   "wall.sub":          ["You see the rest when you are in.", "进来了就都看得到。"],
+  /* AND HOW MANY ARE OUTSIDE IT WITH THEM. The five faces say the place is
+     worth getting into; this says somebody else already decided that. It is
+     the one number on this screen that is about the reader's own position,
+     and it was the only screen facing a stranger that did not carry it.
+     Absent under five — see WAITING_FLOOR. */
+  "wall.queue":        ["{n} people are waiting to get in.",
+                        "还有 {n} 个人在门外等着。"],
   "dr.sub":            ["anyone inside can read", "里面的人都看得到"],
   "dr.inside":         ["inside", "已经在里面"],
   "dr.waiting":        ["waiting", "还在等"],

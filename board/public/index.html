@@ -1979,6 +1979,14 @@
     background:var(--raise);border:1px solid var(--line);text-align:center}
   .wall b{display:block;font-family:var(--serif);font-weight:400;font-size:1.25rem}
   .wall p{margin:.35rem 0 0;font-size:.85rem;color:var(--muted)}
+  /* THE QUEUE, AND IT IS NOT FINE PRINT. Same size as the line above the
+     faces, in ink rather than grey, with a rule over it so it reads as its
+     own fact rather than as a footnote to the wall — the thing it says is
+     that other people already decided this was worth waiting for, and that
+     is the whole reason the screen exists. */
+  .wall .wq{margin:.9rem 0 0;padding:.8rem 0 0;border-top:1px solid var(--line);
+    font-size:1rem;color:var(--ink)}
+  .wall .wq.only{margin:0;padding:0;border-top:0}
   .bnone{margin:0 0 1.9rem;padding:1.6rem 1.1rem;text-align:center;color:var(--muted);
     background:var(--raise);border:1px solid var(--line);border-radius:1rem}
   .bnone b{display:block;font-family:var(--serif);font-weight:400;font-size:1.15rem;
@@ -8175,6 +8183,19 @@ function drawDeck() {
     if (WALL.more) {
       wall.append(el("b", null, T("wall.head", { n: WALL.more })));
       wall.append(el("p", null, T("wall.sub")));
+    }
+    /* WHO IS OUTSIDE IT WITH THEM, under the faces rather than in the wall:
+       the wall is about what is behind the door and this is about the queue
+       they are standing in, and a block that is hidden when the membership
+       happens to fit on one screen would take the queue with it. */
+    if (WALL.waiting) {
+      wall.hidden = false;
+      /* The rule over it separates it from the wall above. With the whole
+         membership on screen there IS no wall above — `more` is nought — and
+         the rule was left sitting at the top of an otherwise empty box,
+         underlining nothing. */
+      wall.append(el("p", "wq" + (WALL.more ? "" : " only"),
+        T("wall.queue", { n: WALL.waiting })));
     }
   }
   drawDoor(people);

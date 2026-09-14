@@ -83,8 +83,15 @@
   .said{display:flex;gap:.55rem;align-items:flex-start}
   .said .av{width:2rem;height:2rem;font-size:.85rem;flex:0 0 auto;border-radius:50%;
     display:grid;place-items:center;color:#fff}
+  /* A FACE THAT GOES SOMEWHERE LOOKS LIKE ONE. A ring rather than a colour —
+     the disc already wears one drawn from the name — and only on the ones a
+     reader can actually follow, so the difference is the signal. */
+  .said a.av.go{text-decoration:none;cursor:pointer}
+  .said a.av.go:hover,.said a.av.go:focus-visible{
+    box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--accent)}
   .said .col{display:flex;flex-direction:column;min-width:0;max-width:82%}
   .who{margin:0 0 .2rem;font-size:.72rem;color:var(--muted)}
+  .who .reach{color:var(--accent);text-decoration:none}
   .bub{padding:.6rem .8rem;border-radius:1.05rem;font-size:.95rem;line-height:1.5;
     background:var(--raise);color:var(--ink);border:1px solid var(--line);
     border-bottom-left-radius:.35rem;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -263,8 +270,24 @@ function paint() {
     const row = document.createElement("div");
     row.className = "said" + (m.mine ? " mine" : "");
     if (!m.mine) {
-      const av = document.createElement("span");
-      av.className = "av";
+      /* THE FACE GOES WHERE THE PERSON IS, FOR A READER WHO CAN GET THERE.
+       *
+       * A member reading this room can open a member's page, and can open the
+       * conversation with somebody still at the door — the board holds their
+       * line either way, and tapping a face is what anybody tries first.
+       *
+       * A READER STILL AT THE DOOR GETS NOTHING, and that is the gate rather
+       * than a gap. /p/ is behind it, and `wid` — the way into a conversation
+       * — is never sent to somebody outside; see named() in /api/door. A link
+       * that lands on a refusal is worse than a face that is plainly just a
+       * face, so theirs stays a plain one and never wears the ring. */
+      const to = ROOM.how !== "member" || m.bot ? ""
+        : m.inside && m.handle ? "/p/" + encodeURIComponent(m.handle.toLowerCase())
+        : m.wid ? "/notes#w:" + m.wid
+        : "";
+      const av = document.createElement(to ? "a" : "span");
+      av.className = "av" + (to ? " go" : "");
+      if (to) av.href = to;
       av.textContent = (m.handle || "?").slice(0, 1).toUpperCase();
       av.style.background = wash(m.handle || "?");
       row.append(av);
@@ -274,8 +297,23 @@ function paint() {
     if (!m.mine) {
       const who = document.createElement("p");
       who.className = "who";
-      who.textContent = (m.handle || T("board.someone"))
+      const label = (m.handle || T("board.someone"))
         + (m.bot ? "" : " · " + T(m.inside ? "dr.inside" : "dr.waiting"));
+      // The same target as the face above it. Two halves of one person must
+      // not lead to two different answers.
+      const toName = ROOM.how !== "member" || m.bot ? ""
+        : m.inside && m.handle ? "/p/" + encodeURIComponent(m.handle.toLowerCase())
+        : m.wid ? "/notes#w:" + m.wid
+        : "";
+      if (toName) {
+        const a = document.createElement("a");
+        a.className = "reach";
+        a.href = toName;
+        a.textContent = label;
+        who.append(a);
+      } else {
+        who.textContent = label;
+      }
       col.append(who);
     }
     const bub = document.createElement("div");

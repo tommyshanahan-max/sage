@@ -2913,7 +2913,19 @@ app.get("/api/people", async (req, res) => {
       /* HOW MANY ARE NOT ON THE SCREEN. The wall has to be a number or it is
          a locked door with nothing behind it — "43 more inside" is the whole
          reason to stay on the list. */
-      wall: { more: Math.max(0, live.length - some.length) },
+      wall: { more: Math.max(0, live.length - some.length),
+        /* AND HOW MANY ARE OUTSIDE IT WITH THEM. This reader is on the list;
+           the five faces above say the place is worth getting into, and this
+           says they are not the only one who thinks so. It is on every other
+           screen that faces a stranger and it was missing from the one screen
+           a person at the door actually looks at.
+           Absent rather than zero below the floor, the same rule /api/hello
+           keeps: under five it stops describing a queue and starts describing
+           an empty room. */
+        waiting: (() => {
+          const n = board.waits.filter((x) => !x.done).length;
+          return n >= WAITING_FLOOR ? n : null;
+        })() },
     });
   }
   /* PEOPLE THIS READER HAS BLOCKED DO NOT APPEAR. One way: they leave this
