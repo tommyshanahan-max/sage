@@ -198,10 +198,18 @@ export async function mountLedgerPin(box, room, device, group) {
      is exactly what it was before this file existed. The answer goes back to
      the caller so a room with something else to put there can. */
   if (!d || !d.on) { hideLedgerPin(box); return false; }
+  /* THE SLOT IS PART OF WHAT A REDRAW WOULD CHANGE, and leaving it out was the
+     bug that made the panel vanish. SHOWN lives in the module, so going from
+     one room to another with the same numbers made the guard say there was
+     nothing to do — and there was: the old slot had gone from the page with
+     the old room and the new one was still empty. Third time tonight that a
+     guard against needless redraws did not know everything a redraw changes;
+     the others were the language and the preview. */
+  const moved = !LAST || LAST.box !== box;
   LAST = { box, room, device, group };
   d.lang = lang();
   d.preview = PREVIEW;
-  if (same(SHOWN, d)) return true;
+  if (!moved && same(SHOWN, d)) return true;
   SHOWN = d;
 
   style();
