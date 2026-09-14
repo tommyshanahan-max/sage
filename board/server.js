@@ -3046,8 +3046,9 @@ const LBY = String(process.env.BOARD_LEDGER_BY || "").trim().slice(0, 60);
  * it themselves — so it is the one room where showing somebody this cannot
  * surprise anybody, and it is the place to look at it before a real door does.
  */
+const LPLACES = ["wait", ...store.WAITROOMS_CHAT];
 const LROOMS = new Set(String(process.env.BOARD_LEDGER_ROOMS || "")
-  .split(",").map((x) => x.trim().toLowerCase()).filter((x) => store.WAITROOMS_CHAT.includes(x)));
+  .split(",").map((x) => x.trim().toLowerCase()).filter((x) => LPLACES.includes(x)));
 
 const pinOn = () => LGOAL > 0;
 /** What a place is worth. Place 1 = LHEAD, falling away on LCURVE. */
@@ -3086,8 +3087,25 @@ function pinFor(board, who) {
      where they stand is worse than no place at all. See cleanBoard. */
   const place = mine && mine.seq ? mine.seq : 0;
   const members = board.people.filter((q) => q.state === "published" && q.handle).length;
-  if (!place || place > LGOAL) {
-    return { on: true, place: 0, members, goal: LGOAL, split: LSPLIT, by: LBY };
+  /* NOT IN YET, AND THE ANSWER IS NOT A NOUGHT.
+   *
+   * Somebody standing in the waiting room has no place, because a place is
+   * stamped when a page goes up. Telling them they have none is true and
+   * useless: what they came to find out is whether it is worth going on, and
+   * the honest answer to that is the place they would get if they did, and
+   * what it is worth. It moves down while they think about it, which is the
+   * whole of the argument for not thinking about it long.
+   *
+   * Past the goal there is genuinely nothing, and that is said instead. */
+  const next = members + 1;
+  if (!place) {
+    return next > LGOAL
+      ? { on: true, place: 0, shut: true, members, goal: LGOAL, split: LSPLIT, by: LBY }
+      : { on: true, place: 0, soon: next, soonPts: PLACE(next),
+          members, goal: LGOAL, split: LSPLIT, by: LBY };
+  }
+  if (place > LGOAL) {
+    return { on: true, place: 0, shut: true, members, goal: LGOAL, split: LSPLIT, by: LBY };
   }
   const acts = actsOf(board, who, LCUTOFF).filter((r) => r.points > 0);
   const placePts = PLACE(place);
@@ -8202,10 +8220,22 @@ app.get("/api/ledger/pin", notesOff, async (req, res) => {
   const key = String(req.query.room || "");
   const gid = String(req.query.group || "");
   if (!key && !gid) return res.status(400).json({ error: "no" });
-  if (key && !store.WAITROOMS_CHAT.includes(key)) return res.status(400).json({ error: "no" });
-  // A door nobody listed shows nothing, and says so the same way off does.
+  if (key && !LPLACES.includes(key)) return res.status(400).json({ error: "no" });
+  // A place nobody listed shows nothing, and says so the same way off does.
   if (key && !LROOMS.has(key)) return res.json({ on: false });
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  /* THE WAITING ROOM, WHICH IS BEFORE ANY DOOR. Somebody here is not a member
+     and may have no member row at all, so the cookie is the identity — the
+     same one /api/wait/me runs on. Everywhere else needs the device. */
+  if (key === "wait") {
+    const w = await inWaitingRoom(req);
+    if (!w) return res.json({ on: false });
+    const board = await store.load(FILE);
+    return res.json({
+      ...pinFor(board, me || w.by),
+      joined: Boolean(me) && (await joins()).includes(me),
+    });
+  }
   if (!me) return res.json({ on: false });
   const board = await store.load(FILE);
   if (gid) {

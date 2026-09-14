@@ -4984,6 +4984,16 @@ export const STRINGS = {
     "Your rewards: {total} points, place {n} of {goal}. Opens the details.",
     "你的奖励：{total} 分，第 {n} 位，共 {goal} 人。点开查看。",
   ],
+  /* BEFORE THEY ARE IN. The place they would get, and what it is worth —
+     which falls while they are reading it, and that is the argument. Not a
+     nought and not a welcome: the one thing somebody standing outside came to
+     find out is whether going on is worth it. */
+  "pin.soon":          ["Your place would be #{n}", "你会排到第 {n} 位"],
+  "pin.soonWorth":     ["Worth {p} points today.", "今天值 {p} 分。"],
+  "pin.soonHow": [
+    "It is yours when your page goes up, and it never moves after that. It falls by one every time somebody else finishes theirs first.",
+    "主页一建好，位置就是你的，之后不再变。每有一个人先建好，你的位置就往后退一位。",
+  ],
   "pin.none": [
     "You are past the last place. You are a member like any other and the ledger is closed.",
     "位置已经排完了。你跟其他人一样是会员，只是不再排位置。",

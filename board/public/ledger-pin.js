@@ -73,6 +73,10 @@ const CSS = `
   .lpnote{margin:0;padding-top:.45rem;border-top:1px solid var(--hair);
     font-size:.74rem;line-height:1.45;color:var(--ink-2)}
   .lpnone{margin:0;font-size:.82rem;color:var(--muted);line-height:1.5}
+  /* The place-to-be reads as a sentence rather than a figure, so the big line
+     is words and the number under it is the one that falls. */
+  .lp .lpbig:has(+ .lpsoonw){font-size:1.15rem;font-weight:700;line-height:1.3}
+  .lpsoonw{margin:0;font-size:.9rem;font-weight:700}
   .lpshut{padding:.6rem .7rem;background:var(--raise);border-radius:.6rem}
 
   .lpview{background:var(--raise);border:1px solid var(--line);border-radius:.6rem;
@@ -180,6 +184,32 @@ function overview(box, d, device) {
   /* PAST THE LAST PLACE. Said rather than shown as a nought: a zero that never
      moves teaches somebody the thing is broken, and they are right to think so
      because for them it is. */
+  if (d.shut) {
+    const wrap = el("div", "lp lpshut");
+    wrap.append(el("p", "lpnone", T("pin.none")));
+    return wrap;
+  }
+
+  /* NOT IN YET. The place they would get rather than the place they have, and
+     the number under it falls while they read — which is the entire reason
+     this is in front of the door instead of behind it. */
+  if (!d.place && d.soon) {
+    const b = el("button", "lp");
+    b.type = "button";
+    b.setAttribute("aria-label", T("pin.label",
+      { total: num(d.soonPts), n: num(d.soon), goal: num(d.goal) }));
+    const head = el("div", "lphead");
+    head.append(el("span", "lpk", T("pin.head")));
+    head.append(el("i", "lpgo", "\u203A"));
+    b.append(head);
+    b.append(el("div", "lpbig", T("pin.soon", { n: num(d.soon) })));
+    b.append(el("p", "lpsoonw", T("pin.soonWorth", { p: num(d.soonPts) })));
+    b.append(el("p", "lpnote", T("pin.soonHow")));
+    b.append(el("p", "lpnote", T("pin.note", { goal: num(d.goal) })));
+    b.addEventListener("click", () => { VIEW = "rules"; paint(box, d, device); });
+    return b;
+  }
+
   if (!d.place) {
     const wrap = el("div", "lp lpshut");
     wrap.append(el("p", "lpnone", T("pin.none")));

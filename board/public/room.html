@@ -455,6 +455,7 @@ import { offerNotify } from "/notify.js";
 /* Nothing on this page uses either any more — Mo owns the microphone and he
    lives in mo.js. Kept off the import list rather than left dangling. */
 import { drawCard } from "/postcard.js";
+import { mountLedgerPin } from "/ledger-pin.js";
 import { beatUnits } from "/beat.js";
 /* Mo is his own module so that every page can have him — see mo.js. What this
    page adds is the only thing it knows that he does not: how he opens to
@@ -1270,6 +1271,22 @@ function drawWait(box) {
   }
   box.append(hero);
   if (DATA.up) box.append(band);
+
+  /* THE REWARDS, BEFORE THE DOOR RATHER THAN BEHIND IT.
+   *
+   * Behind a door it can only be read by somebody already through one, which
+   * makes it worthless as a reason to come in — and a link to it cannot be
+   * shared, because the thing on the other end of the link is shut. Here it is
+   * the first screen after an invite, which is the one moment somebody is
+   * deciding whether to go on.
+   *
+   * They have no place yet. What they are shown is the place they would get
+   * and what it is worth, and that number falls every time somebody else
+   * finishes a page first — see pinFor. Dark unless the box lists `wait` in
+   * BOARD_LEDGER_ROOMS, like everywhere else this appears. */
+  const rew = el("div", "pinslot");
+  box.append(rew);
+  mountLedgerPin(rew, "wait", device());
 
   /* THE ROOM IS THE ROOM TAB. IT WAS ON THIS SCREEN TOO.
    *
