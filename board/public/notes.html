@@ -1761,7 +1761,15 @@ function doorNames(key) {
   const here = QUEUE.filter((w) =>
     (WAITROOMS.includes(w.room) ? w.room : "other") === key).map((w) => w.name);
   const spoke = (DOOR && DOOR.says || []).filter((m) => !m.bot).map((m) => m.handle);
-  return [...new Set([...here, ...spoke])].filter(Boolean);
+  /* AND THE DOORMAN, FIRST. He is in every room and he was the one person in
+     it the @ picker would not offer — so the gesture the room teaches did not
+     work on the one who answers. First because he is who somebody reaches for
+     when they are stuck, which is when they go looking for the picker at all.
+     His name comes off the bot line rather than being written here: it is an
+     env var on the box and can be something other than Mo. */
+  const mo = ((DOOR && DOOR.says) || []).find((m) => m.bot);
+  return [...new Set([...(mo && mo.handle ? [mo.handle] : []), ...here, ...spoke])]
+    .filter(Boolean);
 }
 
 /* The room whose people are open. One room, not a flag — opening another shuts

@@ -820,6 +820,9 @@ function paintRoom(g) {
   ta.placeholder = T("grp.placeholder");
   /* @ somebody in the room — the same module the door rooms use, so the
      gesture is one gesture and not two that drift apart. */
+  /* g.who already carries him — the doorman is in every room's `who` rather
+     than in its members; see the note in /api/groups. So he is offered here
+     without anything extra, and @ him works the way @ anybody does. */
   atPicker(ta, () => g.who.map((x) => x.handle).filter(Boolean));
   const send = el("button", null, T("note.send"));
   send.type = "button";

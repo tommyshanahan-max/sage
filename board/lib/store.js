@@ -602,8 +602,34 @@ export function forMo(text) {
   /* Two shapes, because \b works for one alphabet and not the other. The
      English name needs a boundary so "Monday" is not a question for him; the
      Chinese one must not have it, for the reason written over ASKING_FOR. */
+  /* HIS NAME AND NOTHING ELSE IS STILL A QUESTION. "@Mo" on its own is
+     somebody calling him over, and a doorman who answers that with silence is
+     worse than one who says hello — but "" out of here means "not for him",
+     so what goes back is what they actually typed. He can read being called
+     over; that is most of what a doorman does. */
   const m = /^(?:@\s*)?(?:mo\b|老莫|莫)[\s,，:：、]*(.*)$/is.exec(t);
-  return m ? (m[1] || "").trim() : "";
+  if (m) return (m[1] || "").trim() || t;
+
+  /* AND ANYWHERE IN THE LINE, IF IT IS AN @.
+   *
+   * He could only be summoned by starting a message with his name, so "Hey
+   * @Mo, what is this place?" — which is how anybody who has used a group
+   * chat asks — went into the room and got no answer. The room offers the @
+   * gesture; the gesture has to work on him.
+   *
+   * THE @ IS REQUIRED HERE and it is not required at the start. A bare "Mo"
+   * opening a message is somebody addressing him; a bare "Mo" in the middle
+   * of one is usually somebody talking ABOUT him — "I'll ask Mo later" is not
+   * a question for him, and answering it would be the doorman interrupting.
+   *
+   * WHAT HE IS ASKED is the line with the mention taken out, because that is
+   * what the person meant: the @ is how you got his attention, not part of
+   * the question. */
+  const at = /@\s*(?:mo\b|老莫|莫)[\s,，:：、]*/i;
+  if (!at.test(t)) return "";
+  const rest = t.replace(at, " ").replace(/\s+/g, " ").trim();
+  // Same as above: what they typed, rather than nothing.
+  return rest || t;
 }
 
 /** Whether some text is asking to be contacted off the board. Returns the

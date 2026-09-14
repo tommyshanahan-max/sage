@@ -7436,7 +7436,11 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
       if (!doorAccess(board, me, door)) return { error: "gone" };
       /* Everybody at that door, and every member — a member reading a door
          room is in it for this purpose whether or not they have spoken. */
+      /* HIM TOO, in every room. @ somebody who is not in the room is read as a
+         handle for somewhere else and refused — which was true of the doorman
+         himself, so "ask @Mo" came back as a contact detail. See unmention. */
       mentionable = [
+        MO_NAME,
         ...board.waits.filter((w) => !w.done && (w.room || "other") === door).map((w) => w.name),
         ...board.people.filter((q) => q.handle).map((q) => q.handle),
       ];
@@ -7455,9 +7459,10 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
      * looking at a conversation away to work out why they cannot answer it.
      * The page turns this word into the box that fixes it. */
     if (!g.members.includes(me)) return { error: "profile" };
-    mentionable = g.members
+    // Him too — he is in every room. Same reason as at the door above.
+    mentionable = [MO_NAME, ...g.members
       .map((h) => (board.people.find((q) => q.by === h) || {}).handle)
-      .filter(Boolean);
+      .filter(Boolean)];
     }
 
     /* A WECHAT ID PASTED INTO A ROOM IS THE WHOLE PRODUCT GOING OUT OF THE
