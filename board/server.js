@@ -1882,6 +1882,44 @@ app.get("/api/room/hand", admin, async (req, res) => {
   });
 });
 
+/** WHO IS IN WHICH LAYER, AND HOW MANY PLACES ARE LEFT IN THE ONE FILLING.
+ *
+ * A read, and only a read. The arrival number is stamped once and never
+ * recomputed — see cleanBoard — so the useful thing this answers is whether
+ * the order it was stamped in is the order people actually arrived. The
+ * timestamps on the rows decide that, and a row imported late for somebody who
+ * was here from the start carries the wrong date. This is how you find that
+ * out while it is still cheap to fix.
+ *
+ * Names rather than counts for the small layers, because "the first three" is
+ * a claim about three specific people and reading it back is the only way to
+ * check it. Counts past a hundred, where a list stops being readable.
+ */
+app.get("/api/layers", admin, async (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  const board = await store.load(FILE);
+  const inside = board.people
+    .filter((q) => q.state === "published" && q.handle && q.seq)
+    .sort((a, b) => a.seq - b.seq);
+  res.json({
+    cap: store.LAYER_CAP,
+    people: inside.length,
+    now: store.layerLeft(inside.length),
+    layers: store.LAYERS.map((l, i) => {
+      const from = i ? store.LAYERS[i - 1].upto + 1 : 1;
+      const some = inside.filter((q) => q.seq >= from && q.seq <= l.upto);
+      return {
+        key: l.key, n: i + 1, of: store.LAYERS.length,
+        from, upto: l.upto, places: l.upto - from + 1,
+        in: some.length,
+        // Readable while a layer is small enough to read. Past that a list of
+        // names is not a thing anybody checks, it is a thing anybody scrolls.
+        who: l.upto <= 100 ? some.map((q) => q.handle) : [],
+      };
+    }),
+  });
+});
+
 app.get("/api/rooms", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
