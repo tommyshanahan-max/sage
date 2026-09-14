@@ -32,6 +32,83 @@ const el = (tag, cls, text) => {
 };
 const num = (v) => Number(v || 0).toLocaleString(lang() === "zh" ? "zh-CN" : "en");
 
+/* THE PIN'S OWN STYLES, CARRIED BY THE MODULE.
+ *
+ * They started in notes.html. Then the pin went into a hand-kept room too, and
+ * groups.html does not load site.css — so the choice was a second copy of this
+ * block in a second page, or one copy that travels with the thing it styles.
+ * A second copy is how two rooms end up looking different by a fortnight.
+ *
+ * Injected once, guarded by id: every page that imports this gets the styling
+ * and no page gets it twice. Tokens only, so it follows whatever theme the
+ * page it lands in is wearing.
+ */
+const CSS = `
+  /* THE LEDGER PIN, in the same slot as a deal but not wearing its border.
+     A deal is one fact about one thread and gets the accent outline; this sits
+     over every visit to the room, and an accent box at the top of a room every
+     time somebody opens it is a banner. Quiet card, loud number. */
+  .pinwrap.ledgerpin{border-color:var(--line);padding:0;background:transparent}
+  /* A group room has no deal slot to borrow, so the pin brings its own gap. */
+  .pinslot{margin:0 0 1.2rem}
+  .lp{display:block;width:100%;text-align:left;font:inherit;color:inherit;
+    background:var(--raise);border:1px solid var(--line);border-radius:.6rem;
+    padding:.7rem .75rem;cursor:pointer;display:grid;gap:.45rem}
+  .lp:hover{border-color:var(--muted)}
+  .lphead{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+  .lpk{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;
+    font-weight:700;color:var(--muted)}
+  :root[data-lang="zh"] .lpk{letter-spacing:0;text-transform:none;font-size:.7rem}
+  .lpgo{font-style:normal;color:var(--muted)}
+  .lpbig{font-size:1.6rem;font-weight:700;line-height:1;letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums}
+  .lpbits{display:grid;gap:.15rem;font-size:.8rem;color:var(--ink-2)}
+  .lpbits div{display:flex;justify-content:space-between;gap:1rem}
+  .lpbits b{font-weight:700;font-variant-numeric:tabular-nums}
+  .lptow{display:grid;gap:.25rem;font-size:.74rem;color:var(--muted)}
+  .lpbar{height:3px;background:var(--hair);border-radius:99px;overflow:hidden}
+  .lpbar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+  /* The sentence nobody may miss, so it is on the face of the button and not
+     behind it. See the note over pin.note in i18n.js. */
+  .lpnote{margin:0;padding-top:.45rem;border-top:1px solid var(--hair);
+    font-size:.74rem;line-height:1.45;color:var(--ink-2)}
+  .lpnone{margin:0;font-size:.82rem;color:var(--muted);line-height:1.5}
+  .lpshut{padding:.6rem .7rem;background:var(--raise);border-radius:.6rem}
+
+  .lpview{background:var(--raise);border:1px solid var(--line);border-radius:.6rem;
+    padding:.7rem .75rem;display:grid;gap:.6rem}
+  .lptabs{display:flex;gap:.3rem;flex-wrap:wrap}
+  .lptab{font:inherit;font-size:.72rem;padding:.25rem .5rem;border-radius:99px;
+    border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+  .lptab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .lph{margin:0;font-size:1rem;font-weight:700}
+  .lph:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .lpbody{display:grid;gap:.5rem}
+  .lpbody p{margin:0;font-size:.82rem;line-height:1.55;color:var(--ink-2)}
+  .lplist{list-style:none;margin:.2rem 0 0;padding:0;display:grid;gap:.25rem}
+  .lplist li{display:flex;justify-content:space-between;gap:1rem;font-size:.8rem}
+  .lplist b{font-variant-numeric:tabular-nums}
+  .lpdo{font:inherit;font-weight:700;padding:.5rem .9rem;border-radius:99px;
+    border:0;background:var(--accent);color:#fff;cursor:pointer;justify-self:start}
+  .lpyes{margin:0;font-size:.82rem;font-weight:700}
+  .lpsay{margin:0;font-size:.78rem;color:var(--muted)}
+  .lpshutlab{font-size:.6rem!important;letter-spacing:.12em;text-transform:uppercase;
+    font-weight:700;color:var(--muted)}
+  .lpno{font-weight:700}
+  .lpback{font:inherit;font-size:.78rem;background:transparent;border:0;
+    color:var(--accent);cursor:pointer;padding:0;justify-self:start}
+`;
+
+let styled = false;
+function style() {
+  if (styled || document.getElementById("ledgerpin-css")) { styled = true; return; }
+  const tag = document.createElement("style");
+  tag.id = "ledgerpin-css";
+  tag.textContent = CSS;
+  document.head.append(tag);
+  styled = true;
+}
+
 /* What is on screen now, so a refresh that changes nothing does nothing. The
    view is in here too: a redraw that reset somebody to the overview while they
    were reading the rules would be the same bug wearing a different hat. */
@@ -63,25 +140,33 @@ export function hideLedgerPin(box) {
  * `box` is the room's existing pin slot. `room` is the door. `device` is the
  * browser's own id, sent as a header the same way every other read here does.
  */
-export async function mountLedgerPin(box, room, device) {
-  if (!box) return;
+export async function mountLedgerPin(box, room, device, group) {
+  if (!box) return false;
   let d = null;
   try {
-    d = await fetch("/api/ledger/pin?room=" + encodeURIComponent(room),
+    /* A door by its key, or a hand-kept room by its id. One endpoint because
+       what it answers is the same either way — the reader's own line — and two
+       would be two places for the access rule to disagree. */
+    const q = group ? "group=" + encodeURIComponent(group)
+      : "room=" + encodeURIComponent(room);
+    d = await fetch("/api/ledger/pin?" + q,
       { cache: "no-store", headers: device ? { "x-board-device": device } : {} })
       .then((r) => (r.ok ? r.json() : null));
   } catch { d = null; }
 
   /* OFF IS OFF AND IT IS SILENT. No placeholder, no "coming soon" — the room
-     is exactly what it was before this file existed. */
-  if (!d || !d.on) { hideLedgerPin(box); return; }
+     is exactly what it was before this file existed. The answer goes back to
+     the caller so a room with something else to put there can. */
+  if (!d || !d.on) { hideLedgerPin(box); return false; }
   d.lang = lang();
-  if (same(SHOWN, d)) return;
+  if (same(SHOWN, d)) return true;
   SHOWN = d;
 
+  style();
   box.hidden = false;
   box.classList.add("ledgerpin");
   paint(box, d, device);
+  return true;
 }
 
 function paint(box, d, device) {

@@ -3034,6 +3034,21 @@ const LSPLIT = String(process.env.BOARD_LEDGER_SPLIT || "").trim().slice(0, 40);
 /** When, in the operator's own words. Unset, the copy says at the goal. */
 const LBY = String(process.env.BOARD_LEDGER_BY || "").trim().slice(0, 60);
 
+/* WHICH DOORS CARRY IT, AND BY DEFAULT NONE DO.
+ *
+ * The goal switch turns the ledger on; this decides where anybody sees it. An
+ * empty list means no door room shows it at all, which is the default on
+ * purpose: turning the ledger on and having five rooms full of people read a
+ * sentence about share offers in the same breath is one env var too few.
+ *
+ * A hand-kept room always carries it when the ledger is on, and needs no
+ * listing. That is what a hand-kept room is — the operator put every person in
+ * it themselves — so it is the one room where showing somebody this cannot
+ * surprise anybody, and it is the place to look at it before a real door does.
+ */
+const LROOMS = new Set(String(process.env.BOARD_LEDGER_ROOMS || "")
+  .split(",").map((x) => x.trim().toLowerCase()).filter((x) => store.WAITROOMS_CHAT.includes(x)));
+
 const pinOn = () => LGOAL > 0;
 /** What a place is worth. Place 1 = LHEAD, falling away on LCURVE. */
 const PLACE = (n) => (n >= 1 && n <= LGOAL ? Math.round(LHEAD / Math.pow(n, LCURVE)) : 0);
@@ -8185,14 +8200,25 @@ app.get("/api/ledger/pin", notesOff, async (req, res) => {
   res.set("Cache-Control", "no-store");
   if (!pinOn()) return res.json({ on: false });
   const key = String(req.query.room || "");
-  if (!store.WAITROOMS_CHAT.includes(key)) return res.status(400).json({ error: "no" });
+  const gid = String(req.query.group || "");
+  if (!key && !gid) return res.status(400).json({ error: "no" });
+  if (key && !store.WAITROOMS_CHAT.includes(key)) return res.status(400).json({ error: "no" });
+  // A door nobody listed shows nothing, and says so the same way off does.
+  if (key && !LROOMS.has(key)) return res.json({ on: false });
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   if (!me) return res.json({ on: false });
   const board = await store.load(FILE);
-  /* Standing at this door, by the board's own reckoning rather than the
-     browser's. Somebody who is neither a member nor waiting has no line. */
-  const how = doorAccess(board, me, key);
-  if (!how) return res.json({ on: false });
+  if (gid) {
+    /* A HAND-KEPT ROOM AND NO OTHER. An ordinary group is people who matched;
+       this is a list the operator typed, which is the only room where nobody
+       can arrive without having been put there. */
+    const g = board.groups.find((x) => x.id === gid && x.hand);
+    if (!g || !g.members.includes(me)) return res.json({ on: false });
+  } else {
+    /* Standing at this door, by the board's own reckoning rather than the
+       browser's. Somebody who is neither a member nor waiting has no line. */
+    if (!doorAccess(board, me, key)) return res.json({ on: false });
+  }
   const out = pinFor(board, me);
   res.json({ ...out, joined: (await joins()).includes(me) });
 });

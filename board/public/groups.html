@@ -415,6 +415,7 @@
 
 <script type="module">
 import { T, when, setLang, pickLang, langButton, lang, moWelcome, pick } from "/i18n.js";
+import { mountLedgerPin, hideLedgerPin } from "/ledger-pin.js";
 import { atText, atPicker } from "/at.js";
 import { moHear } from "/mo.js";
 
@@ -804,7 +805,18 @@ function paintRoom(g) {
    *
    * Three facts and no currency. See /api/groups for why the figure is not
    * here and what has to happen before it could be. */
-  if (g.hand && (LAYER || LEFT)) box.append(ledger(g));
+  /* ONE OF THE TWO, NEVER BOTH. A hand-kept room is where the rewards pin is
+     looked at before any real door sees it — so when the pin is on it takes
+     the top of this room, and the bands panel steps aside. Two panels both
+     telling somebody where they stand, disagreeing about the maths, is worse
+     than either of them on its own. */
+  const pin = el("div", "pinslot");
+  if (g.hand) box.append(pin);
+  if (g.hand) {
+    mountLedgerPin(pin, "", device, g.id).then((on) => {
+      if (!on && (LAYER || LEFT)) pin.replaceWith(ledger(g));
+    });
+  }
 
   /* THE FACES USED TO BE HERE, as a row of chips over the first message.
      Knowing who is reading still matters — that note was right — but it is

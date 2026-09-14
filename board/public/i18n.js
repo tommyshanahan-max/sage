@@ -4963,7 +4963,11 @@ export const STRINGS = {
      qualified has answered it. Written plainly rather than softened, because a
      hedged version of the same sentence is the same sentence with the reader
      less able to judge it. */
-  "pin.head":          ["Your ledger", "你的账"],
+  /* "REWARDS" RATHER THAN "LEDGER", which is the operator's own word and the
+     better one. A ledger is a financial instrument and the word does half the
+     work of making somebody read this as one; rewards for turning up early is
+     what it actually is, and it is what the room it lives in is called. */
+  "pin.head":          ["Your rewards", "你的奖励"],
   "pin.place":         ["Place #{n}", "第 {n} 位"],
   "pin.forPlace":      ["For your place", "位置分"],
   "pin.forActs":       ["For what you've done", "做事分"],
@@ -4977,8 +4981,8 @@ export const STRINGS = {
      place nobody heard; the label carries the figures because the figures are
      the button. */
   "pin.label": [
-    "Your ledger: {total} points, place {n} of {goal}. Opens the ledger.",
-    "你的账：{total} 分，第 {n} 位，共 {goal} 人。点开查看。",
+    "Your rewards: {total} points, place {n} of {goal}. Opens the details.",
+    "你的奖励：{total} 分，第 {n} 位，共 {goal} 人。点开查看。",
   ],
   "pin.none": [
     "You are past the last place. You are a member like any other and the ledger is closed.",
@@ -4987,9 +4991,9 @@ export const STRINGS = {
   "pin.needPage":      ["Put a page up first.", "先把你的主页建起来。"],
 
   // the five views
-  "pin.vOver":         ["Your ledger", "你的账"],
+  "pin.vOver":         ["Your rewards", "你的奖励"],
   "pin.vRules":        ["How it is counted", "怎么算的"],
-  "pin.vJoin":         ["Join the ledger", "加入"],
+  "pin.vJoin":         ["Join in", "加入"],
   "pin.vGoal":         ["At {goal}", "到 {goal} 人"],
   "pin.vRec":          ["What is recorded", "记录了什么"],
   "pin.back":          ["Back", "返回"],
@@ -5011,7 +5015,7 @@ export const STRINGS = {
     "加入只是记下你想被算进去。不用付钱，也不用签字。",
   ],
   "pin.joinDo":        ["Count me in", "算我一个"],
-  "pin.joinedYes":     ["You are in the ledger.", "你已经在账上了。"],
+  "pin.joinedYes":     ["You are counted in.", "已经把你算上了。"],
   "pin.goalWhat": [
     "This screen opens at {goal} members. Until then there is nothing on it and nothing to sign.",
     "到 {goal} 人这一页才会打开。在那之前这里什么都没有，也没什么好签的。",
