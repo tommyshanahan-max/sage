@@ -9400,6 +9400,32 @@ app.get("/api/faces", admin, async (_req, res) => {
   });
 });
 
+/* THE PANEL COULD NOT SEE A SINGLE FACE.
+ *
+ * Every row in its People tab said "would not load", because the picture was
+ * fetched from /api/public-media — which is behind the door on purpose (see
+ * the long note above OPEN_PATHS), and the panel is a different origin with no
+ * board cookie on it. So the operator uploaded a photograph, the upload
+ * worked, and the panel showed the same grey circle as before: indisting-
+ * uishable from a failure, and reported as one.
+ *
+ * NOT FIXED BY OPENING public-media. That route stays shut for the reason it
+ * was shut: a member's face should not be fetchable by anybody holding its id.
+ * This is the same bytes behind the admin key, which the panel already holds
+ * and already uses to put the picture there in the first place.
+ *
+ * no-store, because the whole point of looking at it is to see the one that
+ * was just uploaded.
+ */
+app.get("/api/face/img", admin, async (req, res) => {
+  const found = await findMedia(req.query.id);
+  if (!found) return res.status(404).json({ error: "no such file" });
+  res.set("Content-Type", found.type);
+  res.set("X-Content-Type-Options", "nosniff");
+  res.set("Cache-Control", "no-store");
+  res.sendFile(found.file);
+});
+
 // Putting a picture on somebody from the panel.
 //
 // It goes straight up. The queue exists to catch what a stranger uploads

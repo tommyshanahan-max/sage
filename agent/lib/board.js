@@ -59,6 +59,22 @@ export async function send(path, { method = "POST", contentType, body, timeoutMs
   }
 }
 
+/** Bytes, not JSON. `send` and `call` both read the body as text, which turns
+ *  a photograph into mojibake — so anything that is a file comes through here
+ *  and the caller passes the buffer on untouched. Returns null when this seat
+ *  has no credentials, and the Response otherwise, whatever its status. */
+export async function fetchRaw(path, { timeoutMs = 20_000 } = {}) {
+  if (!configured()) return null;
+  try {
+    return await fetch(BASE + path, {
+      headers: { "x-admin-secret": KEY },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch {
+    return null;
+  }
+}
+
 /** One upstream call. Returns the status and the parsed body, and never throws
  *  for an HTTP error — the caller passes both on, so a 401 from the board
  *  arrives here as a 401 rather than as a 500 that hides it. */

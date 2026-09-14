@@ -2630,6 +2630,24 @@ app.get("/api/feed/rooms", feedDoor, async (_req, res) => {
  *  The form is passed through rather than parsed: this seat has no business
  *  decoding a photograph, and a route that does is a route that can be made to
  *  decode something else. It arrives as bytes and leaves as the same bytes. */
+/* The picture, through the same door as everything else in this panel.
+ *
+ * The rows used to point their <img> straight at the board's public media
+ * route, which is behind the board's own door — so every face in the People
+ * tab read "would not load" and an upload that had worked looked like one that
+ * had not. Proxied here instead: the seat's admin key is what is allowed to
+ * see it, and it is the same key that put the picture there. */
+app.get("/api/feed/face/img", feedDoor, async (req, res) => {
+  const id = String(req.query.id || "");
+  if (!id) return res.status(400).json({ error: "which picture?" });
+  const r = await feed.fetchRaw("/api/face/img?id=" + encodeURIComponent(id));
+  if (!r) return res.status(503).json({ error: "this seat has no Feed credentials" });
+  if (!r.ok) return res.status(r.status).json({ error: "the board said " + r.status });
+  res.set("Content-Type", r.headers.get("content-type") || "application/octet-stream");
+  res.set("Cache-Control", "no-store");
+  res.send(Buffer.from(await r.arrayBuffer()));
+});
+
 app.post("/api/feed/face", feedDoor,
   express.raw({ type: "multipart/form-data", limit: "36mb" }),
   async (req, res) => {

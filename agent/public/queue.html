@@ -352,7 +352,16 @@ function picture(box, id, where) {
   img.className = "shot";
   img.loading = "lazy";
   img.alt = "";
-  img.src = ORIGIN + (where || "/api/public-media") + "?id=" + encodeURIComponent(id);
+  /* A MEMBER'S PICTURE COMES THROUGH THIS SEAT; A WAITING PERSON'S DOES NOT.
+     /api/public-media is behind the board's door, and this panel is a
+     different origin with no board cookie — so reading it directly failed
+     every time, on the screen whose whole job is deciding whether to publish
+     a picture you have looked at. /api/feed/face/img is the same bytes behind
+     the seat's admin key. /api/wait-media is open by design and serves wait
+     rows only, so it is read straight, as it always was. */
+  img.src = where && where !== "/api/public-media"
+    ? ORIGIN + where + "?id=" + encodeURIComponent(id)
+    : "/api/feed/face/img?id=" + encodeURIComponent(id);
   img.addEventListener("error", () => {
     const note = el("div", "missing",
       "There is a photograph on this and it would not load from " + (ORIGIN || "the app")
@@ -472,9 +481,14 @@ function drawPerson(q) {
     img.className = "face";
     img.loading = "lazy";
     img.alt = "";
-    // Cache-busted on the id, which changes every time a new file is stored,
-    // so a replaced picture does not keep showing the old one.
-    img.src = ORIGIN + "/api/public-media?id=" + encodeURIComponent(q.photo);
+    /* THROUGH THIS SEAT, NOT STRAIGHT AT THE BOARD.
+       It pointed at the board's own public media route, which is behind the
+       board's door — and this panel is a different origin with no board cookie
+       on it, so every face said "would not load" and an upload that had worked
+       was indistinguishable from one that had not. See /api/feed/face/img.
+       The id changes every time a new file is stored, so a replaced picture
+       never keeps showing the old one. */
+    img.src = "/api/feed/face/img?id=" + encodeURIComponent(q.photo);
     img.addEventListener("error", () => img.replaceWith(el("div", "noface", "would not load")));
     row.append(img);
   } else {
@@ -485,7 +499,12 @@ function drawPerson(q) {
   info.append(el("div", "pname", q.handle || "somebody"));
   const bits = [];
   if (q.campus) bits.push(q.campus);
-  bits.push(q.looking ? "on the study buddy list" : "not on the list");
+  /* WHAT `looking` MEANS HERE, which is not what it was called. It is the
+     switch that decides whether somebody appears in Browse at all — the deck
+     of faces this board is for — and it was labelled with the name of the
+     product that used to be here. "Ray Chen · on the study buddy list" is a
+     line that makes the operator doubt the row rather than read it. */
+  bits.push(q.looking ? "in Browse" : "not in Browse");
   if (q.photoState && q.photoState !== "published" && q.photo) bits.push("photo waiting in the queue");
   if (q.state !== "published") bits.push("profile not published");
   info.append(el("div", "pmeta", bits.join(" · ")));
