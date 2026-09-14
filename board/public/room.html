@@ -290,27 +290,7 @@
   .pick .save{margin:.75rem 0 0;width:100%;padding:.6rem;border:0;
     border-radius:99px;background:var(--accent);color:var(--accent-ink);
     font:inherit;font-weight:600;font-size:.9rem;cursor:pointer}
-  .pick .said{margin:.5rem 0 0;font-size:.83rem;color:var(--good, #2E7D5B)}/* The others, as a list and not a deck. Somebody waiting is not choosing
-     anybody — the choosing is the members' half — so these are people to
-     recognise, at the size a name and a line need and no larger. */
-
-  
-  .who{display:flex;align-items:center;gap:.75rem;margin:.6rem 0 0;
-    padding:.8rem .95rem;background:var(--card);border:1px solid var(--hair);
-    border-radius:.75rem}
-  .who .av{flex:none;width:2.2rem;height:2.2rem;border-radius:99px;
-    display:flex;align-items:center;justify-content:center;overflow:hidden;
-    font-family:var(--serif);font-size:.95rem;color:#fff}
-  .who .av img{width:100%;height:100%;object-fit:cover;display:block}
-  .who .mid{flex:1;min-width:0}
-  .who .mid b{font-size:.94rem;font-weight:500}
-  .who .mid em{font-style:normal;color:var(--accent);font-size:.86rem}
-  .who .mid small{display:block;margin:.1rem 0 0;font-size:.82rem;
-    color:var(--ink-2);line-height:1.4;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .who .tags{margin:.25rem 0 0;display:flex;gap:.3rem;flex-wrap:wrap}
-  .who .tags span{padding:.1rem .45rem;border-radius:99px;background:var(--raise);
-    color:var(--muted);font-size:.7rem}/* ---- the seat ---- */
+  .pick .said{margin:.5rem 0 0;font-size:.83rem;color:var(--good, #2E7D5B)}/* ---- the seat ---- */
 
   
   .seat{margin:.6rem 0 0;padding:1rem;background:var(--card);
@@ -1501,14 +1481,21 @@ function drawWait(box) {
   /* Or, with the block off, the sentence. See `soon` in server.js. */
   else if (DATA.soon) box.append(el("p", "soonnote", T("wr.soon")));
 
-  /* The others. Nobody who answered the older form is in here — see `shown`
-     in store.js — so on the first day this list is empty and says so. */
-  const oh = el("div", "wrhead");
-  oh.append(el("span", null, T("wr.others")), el("i"));
-  box.append(oh);
-  if (!DATA.others.length) box.append(el("div", "none", T("wr.othersNone")));
-  for (const w of DATA.others) box.append(whoRow(w));
-
+  /* THE OTHERS ARE IN THE ROOM, NOT IN A LIST UNDER IT.
+   *
+   * This was "Waiting with you" and a row each — face, name, their room,
+   * their line, their tags. It was the only way to know anybody else was
+   * there when this screen was a form and a clock.
+   *
+   * The room is above it now and it says the same thing three times over:
+   * Mo announces each arrival by name as it happens, the header counts them,
+   * and then a list at the foot of the page names them again with no new
+   * fact on it. A list of people you have just watched walk in is furniture.
+   *
+   * What it was carrying that the room was not — their line, and what they
+   * are looking for — belongs on a card somebody can read, which is what
+   * Browse is for and what the Inside tab now reaches.
+   */
   if (DATA.featured.length) {
     const ih = el("div", "wrhead");
     ih.append(el("span", null, T("wr.inside")), el("i"));
@@ -1607,36 +1594,6 @@ function doorBox() {
 
   load();
   return box;
-}
-
-function whoRow(w) {
-  const row = el("div", "who");
-  const av = el("span", "av", w.photo ? "" : initial(w.name));
-  av.style.background = wash(w.name);
-  /* The face where there is one. Only released photographs reach this list at
-     all — the server drops the id otherwise — so nothing here has to decide
-     whether it is allowed to be shown. */
-  if (w.photo) {
-    const img = document.createElement("img");
-    img.src = "/api/wait-media?id=" + encodeURIComponent(w.photo);
-    img.alt = "";
-    img.loading = "lazy";
-    av.append(img);
-  }
-  row.append(av);
-  const mid = el("div", "mid");
-  const line = el("div");
-  line.append(el("b", null, w.name), document.createTextNode(" · "),
-    el("em", null, T("waitroom." + (w.room || "other"))));
-  mid.append(line);
-  if (w.why) mid.append(el("small", null, w.why));
-  const tags = el("div", "tags");
-  if (w.levelBand) tags.append(el("span", null, bandWords(w.levelBand)));
-  if (w.type) tags.append(el("span", null, w.type));
-  if (w.want) tags.append(el("span", null, T("wr.wants", { who: T("role.p." + w.want) })));
-  if (tags.childNodes.length) mid.append(tags);
-  row.append(mid);
-  return row;
 }
 
 /** What members see, and the only screen that can change it. */

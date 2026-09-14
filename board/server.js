@@ -3684,40 +3684,23 @@ app.get("/api/wait/me", async (req, res) => {
   const ahead = Math.max(0, order.findIndex((x) => x.w.id === mine.id));
   const broughtIn = (order.find((x) => x.w.id === mine.id) || {}).n || 0;
 
-  /* THE OTHERS, AND ONLY THE ONES WHO SAID SO.
+  /* THE OTHERS USED TO TRAVEL FROM HERE AND NO LONGER DO.
    *
-   * `shown` and nothing else decides this. Everybody who answered the older
-   * form — which promised them that no member would ever see their name — is
-   * absent from this list for ever, and absent from it here as well as from
-   * the members' side, because "the others waiting" are not members either
-   * and were never covered by anything they agreed to.
+   * The room page carried a list of everybody else waiting — name, room and
+   * face, in queue order, for anybody who had said they could be listed. It
+   * was the only way to know somebody else was out there when that screen was
+   * a form and a clock.
    *
-   * What travels is what the card shows: a name, their room, the line they
-   * wrote, and the three things they filled in. NOT the contact, which is
-   * the one promise the new wording still makes in full, and not the id or
-   * the device.
+   * The room is on that screen now. Mo announces each arrival by name as it
+   * happens, so a list underneath naming the same people is the same fact a
+   * third time — and it is a fact about other people, so the cheapest fix is
+   * to stop sending it rather than to stop drawing it. Nobody's name now
+   * leaves this route except the reader's own.
+   *
+   * `shown` and `quiet` still decide the members' list in /api/queue, which
+   * is where a name is read by somebody who can actually do something with
+   * it. See cleanWait.
    */
-  /* IN QUEUE ORDER, which `open` already is. It was sorted by how full a card
-     was, which read as a ranking of people and was a second order competing
-     with the one that decides anything. There is one order now and this is
-     the one place somebody waiting can watch it work. */
-  /* NAMES, NOT REASONS.
-     This used to carry `why` — the line somebody writes about themselves — to
-     everybody else in the queue. It is the most personal thing on the row and
-     it was written to persuade whoever decides, not to be read by the other
-     thirty-four people standing outside. A name and which room is enough to
-     feel that the queue is real; the rest goes to the members, who are the
-     ones it was written for. */
-  const others = open
-    // `quiet` goes out here and stays in /api/queue — see cleanWait. The
-    // people inside can vouch for a name; the people beside you in the queue
-    // can only read it, and on some doors they are your competition.
-    .filter((w) => w.shown && !w.quiet && w.by !== me)
-    .slice(0, 60)
-    .map((w) => ({ name: w.name, room: w.room,
-      // Released only. An id nobody can guess is not a reason to hand out one
-      // that has not been looked at.
-      photo: w.photoState === "published" ? w.photo : "" }));
 
   /* THEIR SEAT, IF THE SWITCH IS ON. See SEAT_OUTSIDE.
    *
@@ -3804,7 +3787,7 @@ app.get("/api/wait/me", async (req, res) => {
       photo: mine.photo, photoState: mine.photoState,
       canSignIn: /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/
         .test(String(mine.reach || "").trim().toLowerCase()) },
-    ahead, waiting: open.length, others, featured, seat,
+    ahead, waiting: open.length, featured, seat,
     /* THE WAITING ROOM, TO THE PERSON IN IT.
      *
      * `up` is the stage; `left` is how many hours of it remain; `done` is
