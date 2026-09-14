@@ -8188,14 +8188,14 @@ function drawDeck() {
        the wall is about what is behind the door and this is about the queue
        they are standing in, and a block that is hidden when the membership
        happens to fit on one screen would take the queue with it. */
-    if (WALL.waiting) {
+    if (WALL.asked) {
       wall.hidden = false;
       /* The rule over it separates it from the wall above. With the whole
          membership on screen there IS no wall above — `more` is nought — and
          the rule was left sitting at the top of an otherwise empty box,
          underlining nothing. */
       wall.append(el("p", "wq" + (WALL.more ? "" : " only"),
-        T("wall.queue", { n: WALL.waiting })));
+        T("wall.queue", { n: WALL.asked })));
     }
   }
   drawDoor(people);

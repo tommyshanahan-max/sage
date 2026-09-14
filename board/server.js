@@ -2914,18 +2914,21 @@ app.get("/api/people", async (req, res) => {
          a locked door with nothing behind it — "43 more inside" is the whole
          reason to stay on the list. */
       wall: { more: Math.max(0, live.length - some.length),
-        /* AND HOW MANY ARE OUTSIDE IT WITH THEM. This reader is on the list;
-           the five faces above say the place is worth getting into, and this
-           says they are not the only one who thinks so. It is on every other
-           screen that faces a stranger and it was missing from the one screen
-           a person at the door actually looks at.
+        /* HOW MANY HAVE ASKED TO GET IN, WHICH IS NOT HOW MANY ARE STILL
+           OUTSIDE.
+           This reader is on the list; the five faces above say the place is
+           worth getting into, and this says they are not the only one who
+           thinks so. That is a fact about demand, so it counts everybody who
+           ever asked — the ones already admitted are the strongest evidence
+           of it, and dropping them means the number falls every time the door
+           opens, which is exactly backwards.
+           The wording carries the difference: "have asked", never "are
+           waiting". Sixty people waiting, when twenty of them are inside, is
+           a lie on the screen whose whole job is to be worth believing.
            Absent rather than zero below the floor, the same rule /api/hello
            keeps: under five it stops describing a queue and starts describing
            an empty room. */
-        waiting: (() => {
-          const n = board.waits.filter((x) => !x.done).length;
-          return n >= WAITING_FLOOR ? n : null;
-        })() },
+        asked: board.waits.length >= WAITING_FLOOR ? board.waits.length : null },
     });
   }
   /* PEOPLE THIS READER HAS BLOCKED DO NOT APPEAR. One way: they leave this
