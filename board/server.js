@@ -4320,6 +4320,8 @@ app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
     // The few already on their screen, and nobody else — see peekFor.
     peek: peekFor(board),
     now: MO_NOW,
+    // And what the board can count about itself — see nowOn.
+    state: nowOn(board),
   });
   if (out.error) {
     const code = out.error === "slow-down" ? 429
@@ -7163,6 +7165,58 @@ const MO_NAME = (process.env.BOARD_BUTLER_NAME || "Mo").slice(0, 24);
  */
 const MO_NOW = String(process.env.BOARD_BUTLER_NOW || "").slice(0, 400).trim();
 
+/* AND WHAT THE BOARD ITSELF KNOWS, WHICH IS MOST OF THE ANSWER.
+ *
+ * "@Mo what's the updates" came back silent, and the reason was that the one
+ * true thing he had about the world was a sentence in .env that nobody had
+ * written. Which is the wrong shape for the question: the board knows exactly
+ * what has happened this week — who arrived, at which door, how much was said,
+ * how many are inside — and it knows it without anybody remembering to type
+ * it. MO_NOW stays for the thing only a person knows ("two co-pros are casting
+ * in Beijing this month"). This is the rest.
+ *
+ * COUNTS AND ROOMS, NEVER A NAME. The rule about who he may name does not bend
+ * for a number: the only people he can say out loud are the few already
+ * browsable from outside, and those come from peekFor. Nothing here is new
+ * disclosure either — the door already prints how many have asked and how many
+ * are in Browse, on the page somebody is standing on while they ask him.
+ */
+const ROOM_WORDS = { film: "Film & TV", invest: "Investment", raise: "Raising",
+  trade: "Trade", other: "the other room" };
+
+function nowOn(board) {
+  const week = Date.now() - 7 * 86400_000;
+  const at = (x) => Date.parse(x || "") || 0;
+  const live = board.waits.filter((w) => !w.done);
+  const came = live.filter((w) => at(w.at) > week);
+  const inBrowse = board.people.filter(
+    (q) => q.handle && q.state === "published" && q.looking).length;
+  /* What people said, not what Mo said. A room where the only voice is his is
+     a quiet room, and counting his own lines into "busy" would be him telling
+     somebody the place is lively on the strength of his own welcomes. */
+  const spoke = board.says.filter((m) => m.text && !m.evt && m.by !== store.MO
+    && at(m.at) > week).length;
+  const doors = {};
+  for (const w of came) {
+    const k = store.WAITROOMS_CHAT.includes(w.room || "") ? w.room : "other";
+    doors[k] = (doors[k] || 0) + 1;
+  }
+  const top = Object.entries(doors).sort((a, b) => b[1] - a[1])[0];
+  const bits = [];
+  if (came.length) {
+    bits.push(came.length + (came.length === 1 ? " person has" : " people have")
+      + " come to the door in the last seven days");
+  }
+  if (top && top[1] > 1) bits.push("the busiest door is " + ROOM_WORDS[top[0]]);
+  if (live.length) bits.push(live.length + " are waiting at the door now");
+  if (inBrowse) bits.push(inBrowse + " people are in Browse");
+  if (spoke) {
+    bits.push(spoke + (spoke === 1 ? " thing was" : " things were")
+      + " said in the rooms this week");
+  }
+  return bits.length ? bits.join("; ") + "." : "";
+}
+
 const MO_WATCH = (process.env.BOARD_BUTLER_WATCH
   || "Nobody here should ask you for money, a deposit, or photographs of your"
    + " documents. If that is what just happened, report it \u2014 I have passed"
@@ -7696,9 +7750,13 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
     /* Read again rather than closed over: `board` up there belongs to the
        change() that already committed, and this runs outside that lock on
        purpose — see the note above about not holding it across a model call. */
-    const shown = await store.load(FILE).then(peekFor).catch(() => []);
+    /* One read, both answers: who he may name, and what the board counts
+       about itself. See peekFor and nowOn. */
+    const now = await store.load(FILE).catch(() => null);
+    const shown = now ? peekFor(now) : [];
     const said = await butler.ask([{ from: "them", text: asked }], "grp:" + id,
-      { peek: shown, now: MO_NOW }).catch(() => ({ error: "no" }));
+      { peek: shown, now: MO_NOW, state: now ? nowOn(now) : "" })
+      .catch(() => ({ error: "no" }));
     const line = said && said.text ? String(said.text).slice(0, 600) : "";
     /* WHY HE WAS SILENT, WRITTEN DOWN.
      *
@@ -7715,6 +7773,7 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
       console.error("butler: silent in " + (store.doorKey(id) || "a room")
         + " — " + ((said && said.error) || "the model returned nothing")
         + (MO_NOW ? "" : " (BOARD_BUTLER_NOW is empty)"));
+      // Which is worth knowing but is no longer the whole story — see nowOn.
     }
     if (line) {
       await change((board) => {

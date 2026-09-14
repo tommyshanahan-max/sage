@@ -301,6 +301,14 @@ function facts(who = {}) {
     bits.push(`WHAT IS GOING ON HERE AT THE MOMENT, from whoever runs the board. True as of today. Use it when it answers what was asked and never add to it: ${who.now}`);
   }
 
+  /* WHAT THE BOARD COUNTED ABOUT ITSELF a second ago — see nowOn in server.js.
+     Somebody asking "what's new" is asking whether the place is alive, and
+     these are the true answer to that. They are counts and they stay counts:
+     no name comes with them, and a number is not a promise. */
+  if (who.state) {
+    bits.push(`THE STATE OF THIS BOARD, counted from it a second ago. Use these when they answer what was asked. Say the number as it is: never round it up, never call it "a lot" or "plenty", and never turn it into a prediction about what any of it will do for the person asking. No names come with these counts and you must not attach one: ${who.state}`);
+  }
+
   const shown = Array.isArray(who.peek) ? who.peek.filter(Boolean) : [];
   if (shown.length) {
     bits.push("PEOPLE YOU MAY NAME, and the only ones ever. These few are already browsable from outside the door, so they are on this person's screen whether you mention them or not:");

@@ -1068,10 +1068,11 @@ mo: ## Why Mo said nothing: what he is missing, and what he last refused
 	  echo "  A model to think with   NO — ANTHROPIC_API_KEY in .env. Without it he cannot say anything at all."; \
 	fi
 	@if grep -qE '^TOMSCODING_BOARD_BUTLER_NOW=.+' .env 2>/dev/null; then \
-	  echo "  Something to report     yes"; \
+	  echo "  A line of your own      yes"; \
 	else \
-	  echo "  Something to report     NO — TOMSCODING_BOARD_BUTLER_NOW in .env is the line he reads out"; \
-	  echo "                          when somebody asks what is new. Empty, and he has nothing to answer with."; \
+	  echo "  A line of your own      no — he answers from the board's own numbers either way."; \
+	  echo "                          TOMSCODING_BOARD_BUTLER_NOW in .env is for the thing only you"; \
+	  echo "                          know, like a co-production casting in Beijing this month."; \
 	fi
 	@echo ""
 	@out=$$($(COMPOSE) logs --tail=4000 board 2>/dev/null | grep "butler: silent" | tail -5); \
