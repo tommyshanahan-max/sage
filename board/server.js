@@ -4862,6 +4862,53 @@ app.get("/api/queue/:id", async (req, res) => {
   });
 });
 
+/** MO SAYS SOMETHING TO EVERY DOOR, AND IT IS THE OPERATOR'S SENTENCE.
+ *
+ *  There was no way to tell the rooms anything. Somebody runs this board, and
+ *  the only voice reaching the people in it was a welcome and an answer to a
+ *  question somebody thought to ask. A week where three investors came in, or
+ *  a date the door opens, or "photographs are being looked at tomorrow" —
+ *  none of it could reach the twenty-two people standing in Film & TV.
+ *
+ *  VERBATIM, AND THAT IS THE POINT. No model runs on this. Mo may not invent
+ *  a fact about the world (see MO_NOW and the brief), and an announcement is
+ *  nothing but a fact about the world — so the operator writes the sentence
+ *  and he says it, unchanged. What he adds is that it arrives in the room
+ *  people are already reading, in his voice, which is the one they know.
+ *
+ *  The contact rule applies to him as it does to everybody: a WeChat id in an
+ *  announcement is the board handing out a contact from the one account
+ *  nobody can refuse.
+ */
+app.post("/api/mo/say", admin, express.json({ limit: "4kb" }), async (req, res) => {
+  const text = String(req.body?.text || "").trim().slice(0, 600);
+  if (!text) return res.status(400).json({ error: "empty" });
+  const shaped = store.contactShaped(text);
+  if (shaped) return res.status(400).json({ error: "contact", what: shaped });
+  /* One room, or all five. A door named that this board does not have is a
+     typo, and writing it into nothing would look like it worked. */
+  const one = String(req.body?.room || "").trim();
+  if (one && !store.WAITROOMS_CHAT.includes(one)) {
+    return res.status(400).json({ error: "room" });
+  }
+  const rooms = one ? [one] : store.WAITROOMS_CHAT;
+  const made = [];
+  await change((board) => {
+    for (const key of rooms) {
+      const row = store.cleanSay({
+        id: store.newId(), group: store.doorRoom(key), by: store.MO, text,
+      });
+      board.says.push(row);
+      made.push({ room: key, id: row.id });
+    }
+    return true;
+  });
+  /* And in both languages, like every other line in a room — started after the
+     write, never inside it. See renderSay. */
+  for (const m of made) renderSay(m.id, text);
+  res.json({ ok: true, rooms: made.map((m) => m.room) });
+});
+
 /** Vouch for somebody waiting, or take it back. Members only, one per person.
  *
  *  It moves them one place, the same as bringing somebody in does — see
