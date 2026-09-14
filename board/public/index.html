@@ -1957,6 +1957,12 @@
   .footpriv{color:var(--muted);text-decoration:underline;text-underline-offset:.2em}
   /* The end of the preview. Quiet — it is a fact, not a sales page: the number
      is the whole of the argument and a paragraph under it would weaken it. */
+  /* The bar as somebody at the door gets it: four words, no icons. The
+     members' version is icon-and-label and those icons name screens that are
+     not theirs yet. */
+  .bar.doorbar a{flex:1;text-align:center;padding:.75rem .2rem;font-size:.82rem;
+    font-weight:600;color:var(--muted);text-decoration:none;display:block}
+  .bar.doorbar a.on{color:var(--accent)}
   .wall{margin:1.1rem 0 0;padding:1.1rem 1.15rem;border-radius:.8rem;
     background:var(--raise);border:1px solid var(--line);text-align:center}
   .wall b{display:block;font-family:var(--serif);font-weight:400;font-size:1.25rem}
@@ -5142,7 +5148,10 @@ async function drawTutor() {
      see the note on the element. */
   const back = $("backline");
   if (back) {
-    const nobody = !(ME && ME.handle);
+    /* Not for somebody at the door. This is async and settles after drawDeck,
+       so hiding it there was undone a moment later — the sign-in row came
+       back on its own under the wall. The condition belongs here. */
+    const nobody = !(ME && ME.handle) && !WALL;
     back.hidden = !nobody;
     if (nobody) {
       fill(back);
@@ -8059,6 +8068,39 @@ function drawDeck() {
   wall.hidden = !WALL;
   if (WALL) {
     $("pacts").hidden = true;
+    /* THE MEMBERS' SCREEN, WITH A STRANGER STANDING IN IT.
+     *
+     * This is Browse, and for somebody at the door it was Browse with all its
+     * furniture still on: a prompt to add a photograph to a page they have
+     * not got, a filter for a sentence they have not written, an invite to
+     * sign in, and a bar where three of the four tabs are doors that refuse
+     * them. Five good cards in the middle of four things that do not work.
+     *
+     * And no way back. They came from a room and there was nothing on the
+     * screen to return them to it, which is the worst of it: the one thing
+     * they had is the thing they lost by tapping this.
+     *
+     * So the furniture goes and the bar becomes theirs — see door.html, which
+     * is where the same three destinations live. */
+    for (const id of ["mine", "saysay", "invite", "brwrule", "todo", "backline"]) {
+      const n = $(id);
+      if (n) n.hidden = true;
+    }
+    const bar = $("bar");
+    if (bar) {
+      fill(bar);
+      /* Room first, because that is where they came from and what they came
+         back for. Then the three the door has. */
+      for (const [href, key, on] of [["/room#room", "dr.barRoom", false],
+                                     ["/browse", "dr.barIn", true],
+                                     ["/room", "dr.barQueue", false],
+                                     ["/room#you", "dr.barYou", false]]) {
+        const a = el("a", on ? "on" : null, T(key));
+        a.href = href;
+        bar.append(a);
+      }
+      bar.classList.add("doorbar");
+    }
     fill(wall);
     wall.append(el("b", null, T("wall.head", { n: WALL.more })));
     wall.append(el("p", null, T("wall.sub")));

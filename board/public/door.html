@@ -117,6 +117,12 @@
        place, at the same weight, doing the same thing. -->
   <nav class="bar" id="bar" hidden>
     <a class="on" href="#" id="barRoom"></a>
+    <!-- WHO IS INSIDE, which they could not reach from here at all.
+         A few members are browsable from outside the door — chosen one at a
+         time by whoever runs the board — and the whole point of them is that
+         somebody standing at the door can see who is worth waiting for. There
+         was no way to. See the peek branch in /api/people. -->
+    <a href="/browse" id="barIn"></a>
     <a href="/room" id="barQueue"></a>
     <a href="/room#you" id="barYou"></a>
   </nav>
@@ -193,6 +199,7 @@ function paint() {
   $("bar").hidden = !IN;
   document.body.classList.toggle("withbar", IN);
   $("barRoom").textContent = T("dr.barRoom");
+  $("barIn").textContent = T("dr.barIn");
   $("barQueue").textContent = T("dr.barQueue");
   $("barYou").textContent = T("dr.barYou");
   $("rlink").removeAttribute("href");

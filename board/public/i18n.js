@@ -1257,6 +1257,10 @@ export const STRINGS = {
      lines of small grey text under the box, which is a footnote, and a
      footnote is where I keep putting the thing that matters. */
   "dr.barRoom":        ["Room", "房间"],
+  /* The few members somebody outside can see, and then a wall with a number
+     on it. "Inside" rather than "Browse": what is behind it is people who
+     are in, which is the thing they are deciding about. */
+  "dr.barIn":          ["Inside", "里面"],
   "dr.barQueue":       ["The queue", "排队"],
   "dr.barYou":         ["You", "你"],
   "dr.askName":        ["What should this room call you?", "这屋里怎么称呼你？"],
