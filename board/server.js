@@ -7730,6 +7730,12 @@ app.get("/api/groups", notesOff, async (req, res) => {
     .map((g) => ({
       id: g.id, name: g.name, at: g.at, mine: g.by === me,
       guest: !g.members.includes(me),
+      /* A ROOM THE OPERATOR KEEPS BY HAND, which is the one room that carries
+         the ledger at the top of it. Everywhere else it would be the app
+         talking about itself over the top of a conversation; here the room is
+         about the thing the ledger describes and everybody in it was put there
+         on purpose. */
+      hand: Boolean(g.hand),
       /* CODES MINTED FOR THIS ROOM AND NOT YET SPENT, to whoever minted them.
        * They hold seats — see groupRoom and the note over POST /api/invite —
        * so a room of two can be full and the screen has to be able to say why
@@ -7763,7 +7769,30 @@ app.get("/api/groups", notesOff, async (req, res) => {
             ? { who: store.MO, handle: MO_NAME, photo: "", bot: true }
             : (name(m.by) || { who: "", handle: "", photo: "" })) })),
     }));
-  res.json({ groups, canAdd: groupable(board, me), max: store.GROUP_MAX });
+  /* THE LEDGER, AND IT IS THE SAME TWO FACTS THAT ARE ON A PERSON'S PAGE.
+   *
+   * Which band you are in, and how many places are left in the one still
+   * filling. Sent once for the reader rather than per room, because it is a
+   * fact about them and the board — not about any room — and a figure computed
+   * twice is a figure that can disagree with itself.
+   *
+   * NO CURRENCY, AND THAT IS THE WHOLE OF THE DECISION. The prototype this
+   * comes from put a dollar value per person at the top of the room. Priced
+   * off the company's own deck the entire pool over 20,000 places averages
+   * about a hundred dollars, so the figure is worth less to the person holding
+   * it than the band name is — and a number that rises as the room grows,
+   * shown to people who are in the room, is the thing the brief for counsel
+   * exists to ask about. Bands ship today. The figure waits. */
+  const mine = board.people.find((q) => q.by === me && q.handle);
+  res.json({
+    groups, canAdd: groupable(board, me), max: store.GROUP_MAX,
+    layer: mine && mine.seq ? (() => {
+      const l = store.layerOf(mine.seq);
+      // The arrival number stays here, the same as it does in shownPerson.
+      return l ? { key: l.key, n: l.n, of: l.of } : null;
+    })() : null,
+    layerNow: layerNow(board),
+  });
 });
 
 /** Making one. */

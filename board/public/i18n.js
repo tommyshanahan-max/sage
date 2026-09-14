@@ -4978,6 +4978,13 @@ export const STRINGS = {
   "layer.what":        ["Where you stand in the order people arrived. It closes at 20,000.",
                         "按加入先后排的位置。到两万人就不再排了。"],
   "layer.shut":        ["The layers closed at 20,000.", "两万人满了，不再排位置。"],
+  /* THE PANEL AT THE TOP OF THE CROWDFUND ROOM. Three rows and a line under
+     them. The line is said every time and is never behind a tap: the panel is
+     a record of who was early, and a disclaimer somebody has to go looking
+     for is one nobody has read. */
+  "led.open":          ["Filling now", "正在排"],
+  "led.what":          ["A record of who was early. Not money, and not a share of anything.",
+                        "只是记录谁来得早。不是钱，也不是股份。"],
 };
 
 /* Which language, and where it comes from.

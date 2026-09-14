@@ -226,6 +226,21 @@
   /* The room reporting itself: who came in, who went out. Centred and quiet —
      it is a fact between two people's sentences, not one of them. */
   .evt{margin:.9rem 0;text-align:center;font-size:.76rem;color:var(--muted)}
+
+  /* THE LEDGER. A card across the top of the hand-kept room, quiet enough that
+     the conversation under it is still the page. Label left, fact right — the
+     shape of the rows on a person's page, so the same two facts do not look
+     like two different kinds of thing in two places. */
+  .ledger{margin:0 0 1.2rem;padding:.85rem .95rem;background:var(--raise);
+    border:1px solid var(--line);border-radius:.8rem;display:grid;gap:.4rem}
+  .lrow{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+  .lrow .lk{flex:0 0 6.4rem;font-size:.68rem;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--muted)}
+  :root[data-lang="zh"] .lrow .lk{letter-spacing:0;text-transform:none;font-size:.76rem}
+  .lrow b{font-size:.95rem;font-weight:600}
+  .lrow small{color:var(--muted);font-size:.8rem}
+  .lwhat{margin:.35rem 0 0;padding-top:.5rem;border-top:1px solid var(--hair);
+    font-size:.78rem;color:var(--muted);line-height:1.5}
   .said{display:flex;gap:.6rem;margin:0 0 .9rem;align-items:flex-start}
   .said.mine{flex-direction:row-reverse}
   .said .av{width:2rem;height:2rem;font-size:.85rem;box-shadow:none}
@@ -443,6 +458,10 @@ let device = "";
 try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
 
 let GROUPS = [], CANADD = [], MAX = 5;
+/* The ledger: which band you are in, and how many places are left in the one
+   still filling. Drawn at the top of the room the operator keeps by hand and
+   nowhere else — see /api/groups. */
+let LAYER = null, LEFT = null;
 /* Which room is open, or "" for the list. Kept in the address so the back
    button leaves a room rather than the page. */
 let OPEN = new URLSearchParams(location.search).get("g") || "";
@@ -528,7 +547,9 @@ async function load() {
       PICKED = [WITH];
     }
     MAX = Number(d.max) || 5;
-  } catch { GROUPS = []; CANADD = []; }
+    LAYER = d.layer || null;
+    LEFT = d.layerNow || null;
+  } catch { GROUPS = []; CANADD = []; LAYER = null; LEFT = null; }
   paint();
 }
 
@@ -725,6 +746,36 @@ function saidIn(m) {
   return pick(words, m.alt, m.alt2, m.lang);
 }
 
+/** The panel across the top of the hand-kept room. */
+function ledger(g) {
+  const box = el("div", "ledger");
+  const row = (k, name, left) => {
+    const r = el("div", "lrow");
+    r.append(el("span", "lk", T(k)));
+    r.append(el("b", null, T("layer." + name)));
+    if (left) r.append(el("small", null, left === 1
+      ? T("layer.last") : T("layer.left", { n: left })));
+    box.append(r);
+  };
+  /* ONE ROW WHEN YOUR BAND IS THE BAND STILL FILLING, which for everybody
+     here it will be for a long time. Two rows printed "First hundred" twice
+     under two different labels, which reads as two facts and is one. */
+  if (LAYER && LEFT && LAYER.key === LEFT.key) row("layer.head", LAYER.key, LEFT.left);
+  else {
+    if (LAYER) row("layer.head", LAYER.key, 0);
+    if (LEFT) row("led.open", LEFT.key, LEFT.left);
+  }
+  /* NO COUNT OF THE ROOM IN HERE. The line under the title already says how
+     many people are in it, and the same number twice on one screen reads as
+     a banner rather than a fact. */
+  /* SAID EVERY TIME, under the numbers rather than behind a tap. The panel is
+     a record of who was early and it must not be read as a promise of money;
+     a disclaimer somebody has to go looking for is a disclaimer nobody has
+     read. One line, and it is the last thing in the box. */
+  box.append(el("p", "lwhat", T("led.what")));
+  return box;
+}
+
 function paintRoom(g) {
   $("title").textContent = g.name || nameOf(g);
   $("sub").textContent = T("grp.inIt", { n: g.who.length });
@@ -741,6 +792,19 @@ function paintRoom(g) {
 
   if (ADDING) { act.hidden = true; box.append(addScreen(g)); return; }
   if (INFO) { act.hidden = true; box.append(infoScreen(g)); return; }
+
+  /* THE LEDGER, ACROSS THE TOP OF THIS ONE ROOM.
+   *
+   * Only the room the operator keeps by hand. In an ordinary room a panel
+   * that says the same thing every visit is the app talking about itself over
+   * the top of a conversation — the reason the fourth state came out of
+   * drawMine on the feed. This room is about the thing the panel describes and
+   * everybody in it was put here on purpose, so here it is the point rather
+   * than an interruption.
+   *
+   * Three facts and no currency. See /api/groups for why the figure is not
+   * here and what has to happen before it could be. */
+  if (g.hand && (LAYER || LEFT)) box.append(ledger(g));
 
   /* THE FACES USED TO BE HERE, as a row of chips over the first message.
      Knowing who is reading still matters — that note was right — but it is
