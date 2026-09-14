@@ -7,11 +7,28 @@
 <meta name="description" content="A room at The Exchange.">
 <meta property="og:title" content="交换 · The Exchange">
 <meta property="og:description" content="Somebody sent you into this room.">
-<meta property="og:image" content="{{ORIGIN}}/share.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
+<!-- SQUARE, BECAUSE THIS LINK IS A WECHAT LINK.
+     This is the address that goes into a group chat, and that is the whole of
+     its job. WeChat draws a link card as a small SQUARE thumbnail beside two
+     lines of text: hand it a 1200x630 and it has a wide picture to fit in a
+     square hole, which is the "broken, no image" card. share-square.png is the
+     same mark at 640x640. Everywhere else keeps the wide one — see enter.html
+     and landing.html, which are read by crawlers that want 1.91:1.
+
+     AND WECHAT CACHES THE CARD AGAINST THE URL, hard and for a long time. A
+     link whose card was built before this change keeps the old card; adding
+     anything to the query string (?v=2) is a different URL and gets a fresh
+     one. That is the way to tell a bad card from a cached one. -->
+<meta property="og:image" content="{{ORIGIN}}/share-square.png">
+<meta property="og:image:width" content="640">
+<meta property="og:image:height" content="640">
 <meta property="og:url" content="{{HERE}}">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
+<!-- The same image again as a real <img>, and it is not decoration: WeChat's
+     reader falls back to the first picture IN THE DOCUMENT when it does not
+     like the og: tag, and this page is a conversation drawn by script, so
+     without this there is no picture in it at all for it to find. One pixel,
+     off the top, never seen by a person. -->
 <link rel="icon" href="/favicon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -102,6 +119,8 @@
 </style>
 </head>
 <body>
+<img src="/share-square.png" alt="" width="1" height="1" aria-hidden="true"
+  style="position:absolute;top:-10px;left:-10px;width:1px;height:1px;opacity:.01">
 <main>
   <div class="head">
     <div class="mk">交</div>

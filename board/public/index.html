@@ -1755,6 +1755,18 @@
   .pc .goal{margin:.6rem 0 0;font-family:var(--serif);font-size:1.02rem;line-height:1.5;
     color:rgba(255,255,255,.92);display:-webkit-box;-webkit-line-clamp:3;
     -webkit-box-orient:vertical;overflow:hidden}
+/* THE TRANSLATION, AND THE THING THAT ASKS FOR IT. Under the line rather
+     than replacing it: half the readers here are reading their second
+     language and following the two together is most of what makes it
+     legible — same reasoning as the feed's. The button is a chip because a
+     row of small grey words on a photograph is a control nobody sees. */
+  .pc .goalzh{margin:.45rem 0 0;font-family:var(--serif);font-size:1.02rem;
+    line-height:1.5;color:rgba(255,255,255,.92)}
+  .pc .goalgo{margin:.55rem 0 0;border:0;border-radius:99px;font:inherit;
+    font-size:.78rem;font-weight:600;padding:.3rem .7rem;cursor:pointer;
+    background:rgba(255,255,255,.18);color:#fff;
+    -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+  .pc .goalgo:active{transform:translateY(1px)}
   .pc .pdays{display:flex;gap:.25rem;margin:.7rem 0 0;flex-wrap:wrap}
   .pc .pdays b{width:1.7rem;height:1.7rem;display:grid;place-items:center;border-radius:.4rem;
     font-size:.7rem;font-weight:500;background:rgba(255,255,255,.16);color:rgba(255,255,255,.6)}
@@ -7570,7 +7582,51 @@ function personCard(q, live) {
      that is supposed to make a stranger look like a person. */
   const where = [...new Set([q.campus, q.here].filter(Boolean))].join(" · ");
   if (where) scrim.append(el("p", "where", where));
-  if (q.goal) scrim.append(el("p", "goal", q.goal));
+  if (q.goal) {
+    scrim.append(el("p", "goal", q.goal));
+    /* THE ONE THING ON THIS CARD THAT DOES NOT FOLLOW THE LANGUAGE BUTTON.
+     *
+     * Everything else on the board is a key in i18n.js and switches with the
+     * toggle. This line is the person's own words, so it cannot be — and a
+     * reader who has just put the whole app into Chinese reads a Chinese
+     * screen with an English paragraph in the middle of it and concludes the
+     * toggle is broken. It is not broken; it is the one place where there is
+     * nothing to switch TO.
+     *
+     * NOT TRANSLATED AUTOMATICALLY. Every card on every toggle is a model
+     * call per card, and the whole reason /api/translate is capped per browser
+     * per day is that this is somebody's bill. So it is one tap, the same one
+     * the feed has had on posts all along — and the tap is the fix for the
+     * confusion as long as it is visible, which is why it is a chip on the
+     * card and not four grey words under it.
+     *
+     * Only where a reader would want it: the button offers the language they
+     * are READING in, so it does not sit there in English on an English line
+     * offering to make it English. */
+    if (translateOn && q.goal.trim()) {
+      const said = el("p", "goalzh");
+      said.hidden = true;
+      const go = el("button", "goalgo", T("tr.thisPost"));
+      go.type = "button";
+      go.addEventListener("click", async (e) => {
+        /* The card is a tap target itself — it opens the person — so a button
+           on it has to keep its own tap. */
+        e.stopPropagation();
+        if (!said.hidden) {
+          said.hidden = true; go.textContent = T("tr.thisPost"); return;
+        }
+        if (said.dataset.got) { said.hidden = false; go.textContent = T("tr.hide"); return; }
+        go.textContent = T("tr.working");
+        const out = await askTranslate(q.goal);
+        go.textContent = out.error ? T("tr.thisPost") : T("tr.hide");
+        if (out.error) { said.textContent = out.error; said.hidden = false; return; }
+        said.dataset.got = "1";
+        said.textContent = out.text;
+        said.hidden = false;
+      });
+      scrim.append(said, go);
+    }
+  }
   /* WHAT THEY ARE LOOKING FOR, ON THE CARD ITSELF. This is the half of the
      feature that works at eight people: a match needs two people to have
      followed each other, which is rare on a small board, but a label saying
