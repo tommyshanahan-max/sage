@@ -274,6 +274,44 @@ function facts(who = {}) {
   const bits = [];
   if (who.name) bits.push(`Their name is ${who.name}. Use it sparingly — once, at most.`);
 
+  /* THE FEW MEMBERS SOMEBODY OUTSIDE CAN ALREADY SEE, and the only people on
+   * this board he may ever name.
+   *
+   * The rule above — you do not know who is in there — stands for everybody
+   * else and is the reason this is safe. These are the handful put outside the
+   * door one at a time by whoever runs the board (see `peek` in cleanPerson);
+   * their handle and their sentence are already on the screen of anybody
+   * standing at that door. Him mentioning one is pointing at what is in front
+   * of them, not opening the room.
+   *
+   * WHAT HE MAY SAY ABOUT THEM IS WHAT THEY SAID. Their sentence and their own
+   * line, in their own terms. Never a prediction of what they would do for
+   * somebody, never a company, never a credit, never a name with an adjective
+   * in front of it. "Andy is a performer looking for an agent, twenty-two
+   * years mostly drama" is a fact somebody can read for themselves. "Andy
+   * could change your career" is an invention about a real person who is not
+   * in the conversation, and it is the thing that would make this board a
+   * place nobody serious stays in.
+   */
+  /* WHAT IS HAPPENING RIGHT NOW, written by the person who knows — see MO_NOW
+     in server.js. It is the only thing he is told about the state of the world
+     and he did not work it out: he may use it when it answers what was asked,
+     in his own words, and he must not extend it by a single detail. */
+  if (who.now) {
+    bits.push(`WHAT IS GOING ON HERE AT THE MOMENT, from whoever runs the board. True as of today. Use it when it answers what was asked and never add to it: ${who.now}`);
+  }
+
+  const shown = Array.isArray(who.peek) ? who.peek.filter(Boolean) : [];
+  if (shown.length) {
+    bits.push("PEOPLE YOU MAY NAME, and the only ones ever. These few are already browsable from outside the door, so they are on this person's screen whether you mention them or not:");
+    for (const q of shown) {
+      const line = [q.handle, q.me && q.want ? `${q.me} looking for ${q.want}` : "", q.note]
+        .filter(Boolean).join(" \u2014 ");
+      bits.push("  " + line);
+    }
+    bits.push("Use at most one of them, and only when it answers what was asked. Quote what their line says and stop. Never predict what they would do for anybody, never give them a company or a credit they did not write, and never reach for an adjective. If they ask who else is in there: that is the wall, and the honest answer is that a person decides who comes in and you are not shown the room.");
+  }
+
   /* SOMEBODY WHO IS ALREADY IN, which is most of the board and until now
      could not reach him at all: the route answered 403 to anybody without a
      waiting row, so the one person whose job is answering questions was

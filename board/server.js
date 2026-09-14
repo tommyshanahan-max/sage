@@ -4166,6 +4166,9 @@ app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
     photo: Boolean(row.photo),
     me: row.me || "",
     want: row.want || "",
+    // The few already on their screen, and nobody else — see peekFor.
+    peek: peekFor(board),
+    now: MO_NOW,
   });
   if (out.error) {
     const code = out.error === "slow-down" ? 429
@@ -4902,6 +4905,22 @@ app.post("/api/waiting", express.json({ limit: "2kb" }), admin, async (req, res)
  *  did not know about, which is why it is the operator's and why the list is
  *  meant to stay short.
  */
+/** THE FEW HE MAY NAME. The same people /api/people shows somebody outside the
+ *  door, in the shape facts() wants — see the note over `peek` in cleanPerson
+ *  and the block in lib/butler.js about what he may say of them. */
+function peekFor(board) {
+  return board.people
+    .filter((q) => q.state === "published" && q.looking && q.handle && q.peek)
+    .slice(0, PEEK_N)
+    .map((q) => {
+      const first = (Array.isArray(q.say) ? q.say : [])[0] || {};
+      return { handle: q.handle, me: first.me || "", want: first.want || "",
+               /* Their own words about themselves, which is the only
+                  description of anybody he is ever allowed to repeat. */
+               note: String(q.note || "").slice(0, 160) };
+    });
+}
+
 app.post("/api/peek", express.json({ limit: "2kb" }), admin, async (req, res) => {
   const want = String(req.body?.who || "").trim().toLowerCase();
   const on = req.body?.on !== false;
@@ -6898,6 +6917,21 @@ const MO_NAME = (process.env.BOARD_BUTLER_NAME || "Mo").slice(0, 24);
  * Not an accusation, and deliberately not addressed to whoever wrote the line:
  * the tripwire is a regex and regexes are wrong about people. It tells the
  * room what is true and leaves the judgement to them. */
+/* WHAT IS ACTUALLY HAPPENING, IN THE OPERATOR'S OWN WORDS.
+ *
+ * Tom asked for him to talk about co-productions in development, and he cannot
+ * — there is nothing on this board that knows about one, and a doorman who
+ * invents a film to make somebody stay is the exact failure this whole brief
+ * is written to prevent.
+ *
+ * So it is handed to him instead. One or two true sentences in .env, written
+ * by the person who knows: BOARD_BUTLER_NOW="Two co-pros are casting in
+ * Beijing this month." He may use it when it answers what was asked, in his
+ * own words, and it is the only thing about the state of the world he has.
+ * When it stops being true it is deleted, the same rule as the brief itself.
+ */
+const MO_NOW = String(process.env.BOARD_BUTLER_NOW || "").slice(0, 400).trim();
+
 const MO_WATCH = (process.env.BOARD_BUTLER_WATCH
   || "Nobody here should ask you for money, a deposit, or photographs of your"
    + " documents. If that is what just happened, report it \u2014 I have passed"
@@ -7347,8 +7381,16 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
    */
   const asked = store.forMo(text);
   if (asked && butler.configured()) {
-    const said = await butler.ask([{ from: "them", text: asked }], "grp:" + id)
-      .catch(() => ({ error: "no" }));
+    /* AND IN A ROOM HE IS TOLD THE SAME FEW. Somebody at a door asking him
+       what is inside is the commonest question there is, and until now he had
+       nothing true to answer it with — so he refused, which reads as a board
+       with nothing in it. See peekFor and the block in lib/butler.js. */
+    /* Read again rather than closed over: `board` up there belongs to the
+       change() that already committed, and this runs outside that lock on
+       purpose — see the note above about not holding it across a model call. */
+    const shown = await store.load(FILE).then(peekFor).catch(() => []);
+    const said = await butler.ask([{ from: "them", text: asked }], "grp:" + id,
+      { peek: shown, now: MO_NOW }).catch(() => ({ error: "no" }));
     const line = said && said.text ? String(said.text).slice(0, 600) : "";
     if (line) {
       await change((board) => {
