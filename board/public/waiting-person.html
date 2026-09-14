@@ -154,13 +154,18 @@ function draw() {
   /* WHERE THEY STAND, and which of the two states they are in. Somebody moved
      up is not in the queue any more, and telling them they are 12th of 40
      when they are past that is the page disagreeing with the door. */
-  const state = el("p", "state");
-  if (W.up) {
-    state.append(el("b", null, T("wp.up")), document.createTextNode(" " + T("wp.upWhy")));
-  } else {
-    state.append(el("b", null, T("wp.place", { n: W.place, t: W.waiting })));
+  /* WHERE THEY STAND IS A MEMBER'S FACT. Somebody standing in the same room
+     is shown the person, not the board's decision about them — see the
+     reduced branch in /api/queue/:id. */
+  if (!W.room0) {
+    const state = el("p", "state");
+    if (W.up) {
+      state.append(el("b", null, T("wp.up")), document.createTextNode(" " + T("wp.upWhy")));
+    } else {
+      state.append(el("b", null, T("wp.place", { n: W.place, t: W.waiting })));
+    }
+    box.append(state);
   }
-  box.append(state);
 
   if (W.me && W.want) {
     const say = el("p", "say");
@@ -182,7 +187,7 @@ function draw() {
   if (W.brought) tags.append(el("span", null, T("brw.qbrought", { n: W.brought })));
   if (tags.childNodes.length) box.append(tags);
 
-  if (W.vouches) {
+  if (W.vouches && !W.room0) {
     const v = el("div", "vouch");
     const names = (W.vouchedBy || []).slice(0, 2).join(", ");
     v.append(el("b", null, names || T("board.someone")),
@@ -195,10 +200,10 @@ function draw() {
   /* THE HOLE, NAMED. Two of them and it is still one line: a member is
      deciding and needs to know what they are not being told, and the person
      at the door is the one who can fix it. */
-  const missing = [];
-  if (!W.photo) missing.push(T("wp.noFace"));
-  if (!(W.me && W.want)) missing.push(T("wp.noSay"));
-  if (!W.why) missing.push(T("wp.noLine"));
+  const missing = W.room0 ? [] : [];
+  if (!W.photo && !W.room0) missing.push(T("wp.noFace"));
+  if (!(W.me && W.want) && !W.room0) missing.push(T("wp.noSay"));
+  if (!W.why && !W.room0) missing.push(T("wp.noLine"));
   if (missing.length) {
     /* Joined here rather than with the punctuation baked into each string:
        three of them read as a list and one of them read as a sentence that
@@ -255,6 +260,7 @@ function draw() {
   const vouch = el("button", "second" + (W.mine ? " on" : ""),
     T(W.mine ? "wp.vouchedBy" : "wp.vouch"));
   vouch.type = "button";
+  vouch.hidden = Boolean(W.room0);
   vouch.addEventListener("click", async () => {
     vouch.disabled = true;
     try {

@@ -249,6 +249,17 @@ function doorWhere(m) {
   if (ROOM.how === "wait" && m.peek && m.handle) {
     return "/browse#p:" + encodeURIComponent(m.handle.toLowerCase());
   }
+  /* AND THE PEOPLE STANDING AT THIS DOOR WITH THEM.
+   *
+   * This returned nothing, so for somebody who had just walked in every face
+   * in the room was dead — on a screen where tapping a face is the first
+   * thing anybody tries, and where they can now follow these people. The id
+   * is already on the row as `fid` for the follow, so nothing new is
+   * disclosed by linking it; /api/queue/:id shows them what the room shows
+   * and no more. */
+  if (ROOM.how === "wait" && !m.inside && m.fid && m.fid.startsWith("w:")) {
+    return "/q/" + encodeURIComponent(m.fid.slice(2));
+  }
   return "";
 }
 

@@ -4788,14 +4788,51 @@ app.get("/api/queue/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   const board = await store.load(FILE);
-  if (!board.people.some((q) => q.by === me && q.handle)) {
-    return res.status(403).json({ error: "members" });
-  }
+  /* TWO KINDS OF READER, AND THEY ARE SHOWN DIFFERENT PAGES.
+   *
+   * A member, who is deciding about this person: the whole of it, including
+   * where they stand in the queue and which members have vouched.
+   *
+   * AND SOMEBODY STANDING IN THE SAME ROOM, which this refused outright —
+   * so two people at a door could follow each other and neither could open
+   * the other's page. Tapping a face did nothing, which on a screen where
+   * every other face leads somewhere reads as the app being broken.
+   *
+   * They get what the room already shows them — the name, the sentence, the
+   * line, the photograph — and the button to follow. Not the queue position
+   * and not who vouched: those are the board deciding about somebody, and
+   * that is a member's business and the operator's.
+   */
+  const member = board.people.some((q) => q.by === me && q.handle);
+  const mine = member ? null : board.waits.find((w) => w.by === me && !w.done);
+  if (!member && !mine) return res.status(403).json({ error: "members" });
   const order = queueOrder(board);
   const at = order.findIndex((x) => x.w.id === String(req.params.id || ""));
   const row = at >= 0 ? order[at] : null;
   if (!row || !row.w.shown) return res.status(404).json({ error: "gone" });
   const w = row.w;
+  /* The same room, checked on the row rather than on anything the browser
+     says. A different door is a different room and this is not their page. */
+  if (!member && (w.room || "other") !== (mine.room || "other")) {
+    return res.status(403).json({ error: "members" });
+  }
+  if (!member) {
+    return res.json({
+      id: w.id, name: w.name, room: w.room, why: w.why,
+      whyAlt: w.whyAlt || "", whyAlt2: w.whyAlt2 || "", whyLang: w.whyLang || "",
+      me: w.me, want: w.want, type: w.type, levelBand: w.levelBand,
+      at: w.at,
+      photo: w.photoState === "published" ? w.photo : "",
+      fid: "w:" + w.id,
+      iFollow: board.follows.some((f) => f.by === me && f.who === "w:" + w.id),
+      both: bothFollow(board, me, w.by),
+      // Writing needs the follow both ways, the same as it does for a member.
+      canWrite: bothFollow(board, me, w.by),
+      // What they are NOT shown, said once so the page can leave the block out
+      // rather than drawing an empty one.
+      room0: true,
+    });
+  }
   const spoke = (board.vouches || []).filter((v) => v.wait === w.id)
     .map((v) => (board.people.find((q) => q.by === v.by) || {}).handle)
     .filter(Boolean);

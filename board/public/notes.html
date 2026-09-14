@@ -1580,6 +1580,10 @@ function doorWhere(m) {
      so without it there is nothing to open, which is the honest state
      rather than a link that lands on a refusal. */
   if (m.wid) return "/q/" + encodeURIComponent(m.wid);
+  /* And a room-mate reaches the same page, reduced — see the branch in
+     /api/queue/:id. The id is already on the row as `fid`, because that is
+     what the follow is addressed to, so linking it discloses nothing new. */
+  if (m.fid && m.fid.startsWith("w:")) return "/q/" + encodeURIComponent(m.fid.slice(2));
   return "";
 }
 
@@ -1678,7 +1682,11 @@ function doorInside(key) {
        a door person's page for a member reading them. Otherwise the name is
        a name, which is the truth rather than a link onto a refusal. */
     const to = m.inside && m.handle ? "/p/" + encodeURIComponent(m.handle)
-      : m.wid ? "/q/" + encodeURIComponent(m.wid) : "";
+      : m.wid ? "/q/" + encodeURIComponent(m.wid)
+      /* A room-mate can open it too now — see the reduced branch in
+         /api/queue/:id. The id is already here for the follow. */
+      : (m.fid && m.fid.startsWith("w:")) ? "/q/" + encodeURIComponent(m.fid.slice(2))
+      : "";
     const a = el(to ? "a" : "div", "dwho");
     if (to) a.href = to;
     const av = el("span", "av small", (m.handle || "?").slice(0, 1).toUpperCase());
