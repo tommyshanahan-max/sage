@@ -265,6 +265,7 @@ function overview(box, d, device) {
   const head = el("button", "lphead");
   head.type = "button";
   head.setAttribute("aria-expanded", OPEN ? "true" : "false");
+  head.setAttribute("aria-controls", "lpin-body");
 
   const left = el("div", "lpleft");
   const eye = el("div", "lpeyebrow");
@@ -297,7 +298,27 @@ function overview(box, d, device) {
   head.setAttribute("aria-label", T("pin.label",
     { total: num(d.place ? d.total : d.soonPts || 0),
       n: num(d.place || d.soon || 0), goal: num(d.goal) }));
-  head.addEventListener("click", () => { OPEN = !OPEN; paint(box, d, device); });
+  /* THE LABEL IS THE WHOLE BUTTON, so its insides are hidden from the reader
+     that uses it. Without this a screen reader announces the label and then
+     reads the same figures again out of the spans underneath, which is the
+     sentence twice and neither time as a sentence. Taken from the other
+     session's build, which had it and mine did not. */
+  for (const n of head.children) n.setAttribute("aria-hidden", "true");
+  head.addEventListener("click", () => {
+    OPEN = !OPEN;
+    paint(box, d, device);
+    /* FOCUS FOLLOWS THE OPENING, but without yanking the room. preventScroll
+       and then scrollIntoView on the nearest edge: a reader who opened this
+       from halfway down a conversation should not lose their place in it. */
+    if (OPEN) {
+      const h = box.querySelector(".lph, .lpk");
+      if (h) {
+        h.tabIndex = -1;
+        try { h.focus({ preventScroll: true }); } catch { h.focus(); }
+        h.scrollIntoView({ block: "nearest" });
+      }
+    }
+  });
   wrap.append(head);
 
   if (OPEN && !d.shut) wrap.append(body(d, device));
@@ -308,6 +329,7 @@ function overview(box, d, device) {
 
 function body(d, device) {
   const w = el("div", "lpbody");
+  w.id = "lpin-body";
 
   /* WHERE THE POINTS CAME FROM, itemised. A total nobody can take apart is a
      number somebody has to trust; a total with its rows under it is one they
@@ -332,10 +354,18 @@ function body(d, device) {
   if (d.scale && d.scale.length) {
     w.append(el("p", "lpk", T("pin.scale")));
     const sc = el("div", "lpscale");
+    /* A LIST, SAID AS A LIST. Five boxes of two numbers read out as ten loose
+       numbers unless each cell carries its own sentence — "#100: 200 points",
+       and the one you are in says so. Their build had this and mine did not. */
+    sc.setAttribute("role", "list");
     for (const m of d.scale) {
       const cell = el("div", "lpcell" + (m.at === d.band ? " on" : ""));
+      cell.setAttribute("role", "listitem");
+      cell.setAttribute("aria-label", "#" + num(m.at) + ": " + T("pin.points", { n: num(m.pts) })
+        + (m.at === d.band ? " — " + T("pin.yours") : ""));
       cell.append(el("span", null, "#" + num(m.at)));
       cell.append(el("b", null, num(m.pts)));
+      for (const n of cell.children) n.setAttribute("aria-hidden", "true");
       sc.append(cell);
     }
     w.append(sc);
@@ -365,7 +395,11 @@ function body(d, device) {
   w.append(tw);
   const bar = el("div", "lpbar");
   const fill = el("i");
-  fill.style.width = Math.max(0.6, Math.min(100, (d.members / d.goal) * 100)) + "%";
+  const pctDone = Math.min(100, (d.members / d.goal) * 100);
+  fill.style.width = Math.max(0.6, pctDone) + "%";
+  /* A BAR WITH NO VALUE IS A DECORATION. Given one, it is the fact it draws. */
+  bar.setAttribute("role", "img");
+  bar.setAttribute("aria-label", pct(pctDone));
   bar.append(fill);
   w.append(bar);
 

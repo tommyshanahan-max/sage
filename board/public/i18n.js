@@ -4986,6 +4986,7 @@ export const STRINGS = {
   "pin.until":         ["Points from what you do keep counting until {date}.",
                         "做事分一直算到 {date}。"],
   "pin.scale":         ["The sliding scale", "分数怎么递减"],
+  "pin.yours":         ["yours", "你在这格"],
   "pin.scaleHow":      ["The highlighted box is the band your place is in.",
                         "亮起来的那格就是你所在的区间。"],
   "pin.pool":          ["Your share of the pool", "你占的比例"],
