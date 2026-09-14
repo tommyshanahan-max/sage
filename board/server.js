@@ -7546,6 +7546,22 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
     const said = await butler.ask([{ from: "them", text: asked }], "grp:" + id,
       { peek: shown, now: MO_NOW }).catch(() => ({ error: "no" }));
     const line = said && said.text ? String(said.text).slice(0, 600) : "";
+    /* WHY HE WAS SILENT, WRITTEN DOWN.
+     *
+     * Somebody asks him something in a room, nothing comes back, and there was
+     * no way to tell from anywhere whether the question reached him, whether
+     * the model refused, whether the day's cap had gone, or whether the answer
+     * was written and the page had simply not redrawn yet. Four very different
+     * problems and one symptom, which is how an afternoon goes.
+     *
+     * The question is not logged — that is somebody's message and the rule
+     * about what this box writes down applies to him as much as to anybody.
+     * The reason is. */
+    if (!line) {
+      console.error("butler: silent in " + (store.doorKey(id) || "a room")
+        + " — " + ((said && said.error) || "the model returned nothing")
+        + (MO_NOW ? "" : " (BOARD_BUTLER_NOW is empty)"));
+    }
     if (line) {
       await change((board) => {
         /* A DOOR ROOM HAS NO GROUP ROW, and this looked for one before writing.
