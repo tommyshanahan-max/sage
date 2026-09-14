@@ -163,9 +163,16 @@
   /* THE CONVERSATION FILLS THE SCREEN, so the box is at the bottom of it and
      not floating under the last bubble. A short thread otherwise put the
      thing you type into halfway up a phone, with nothing under it. */
-  #threadview{display:flex;flex-direction:column;
-    min-height:calc(100dvh - 7.6rem)}
-  .talk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
+  /* THE APP STRETCHES THIS TO THE FULL SCREEN AND PUSHES THE CONVERSATION TO
+     THE BOTTOM OF IT, which is right in a real room: a room has enough in it
+     to fill the screen, and what you want under your thumb is the newest line
+     and the box.
+     This page has five messages. Stretched, they sat at the bottom of a phone
+     with a whole screen of nothing between them and the ledger — the page
+     read as broken before anybody got as far as reading it. A demo is one
+     screenful by definition, so it is laid out as one. */
+  #threadview{display:flex;flex-direction:column}
+  .talk{display:flex;flex-direction:column;justify-content:flex-start;
     gap:.55rem;padding:.2rem 0 .6rem}
   /* For what is a screen rather than a conversation — the people at this door,
      behind ⋯. Bottom-aligned, a short list opened with half a screen of
@@ -338,7 +345,11 @@
   .status.bad{color:var(--t5)}
 
   /* The box, at the bottom, above the tabs — where a thumb already is. */
-  .write{position:sticky;bottom:4.6rem;display:flex;align-items:flex-end;gap:.5rem;
+  /* NOT STICKY HERE. In the app the box rides above the tab bar over a
+     conversation you scroll; on a page that is one screen long there is
+     nothing to scroll and it simply sat on top of the last message. It goes
+     where it falls, which on one screen is the bottom anyway. */
+  .write{position:static;display:flex;align-items:flex-end;gap:.5rem;
     padding:.5rem 0 .2rem;background:var(--paper)}
   .write textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:.95rem;
     overflow:hidden;
