@@ -4659,7 +4659,8 @@ export const STRINGS = {
    * person happened to get.
    *
    * Picked by moWelcome() from the message id, so it is stable: the same
-   * arrival reads the same way on every redraw and to everybody in the room.
+   * arrival reads the same way on every redraw and to everybody in the room —
+   * and never the same as the welcome directly above it.
    * The Chinese ones are written rather than translated, and they are not a
    * line-for-line match of the English — same job, said the way it would be
    * said. */
@@ -4964,8 +4965,16 @@ export function T(key, vars) {
  *  So it is derived from the message id, which is random, fixed, and already
  *  on the row. A cheap sum is enough — this is picking one of six, not
  *  hashing anything that matters.
+ *
+ *  AND NEVER THE SAME LINE TWICE RUNNING. One in six is a coin that comes up
+ *  the same twice often enough to be the first thing on the screen, and it
+ *  did: Hugo and Katy walked in a minute apart and got the same sentence,
+ *  word for word, one above the other. A random pick is not the point — six
+ *  welcomes that do not repeat back to back is. So the caller passes the slot
+ *  the previous welcome landed in and a collision steps one along, which is
+ *  why this returns the slot as well as the words.
  */
-export function moWelcome(who, seed) {
+export function moWelcome(who, seed, before = -1) {
   const keys = ["mo.welcome", "mo.welcome2", "mo.welcome3",
                 "mo.welcome4", "mo.welcome5", "mo.welcome6"];
   /* A SUM OF THE CHARACTERS WAS NOT ENOUGH. Ids made a moment apart share
@@ -4974,7 +4983,11 @@ export function moWelcome(who, seed) {
      which is the thing this exists to stop. Multiply as well as add. */
   let n = 5381;
   for (const ch of String(seed || "")) n = ((n * 33) ^ ch.charCodeAt(0)) >>> 0;
-  return T(keys[n % keys.length], { who });
+  let at = n % keys.length;
+  /* The RESOLVED slot of the one above, not its raw pick — otherwise a run of
+     three collides again one step to the right. */
+  if (at === before) at = (at + 1) % keys.length;
+  return { text: T(keys[at], { who }), at };
 }
 
 export function when(iso) {

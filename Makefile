@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: mo back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1054,6 +1054,36 @@ feature: ## Show one post outside the door: make feature ID=... [ASKED=1]
 feature-off: ## Take the featured post down
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/feature.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --off
+
+mo: ## Why Mo said nothing: what he is missing, and what he last refused
+	@# FOUR PROBLEMS, ONE SYMPTOM. Somebody @'s him in a room and nothing comes
+	@# back: no key, no line to read out, the model refused, or the day's cap
+	@# is gone. They look identical from a phone, and the afternoon goes on
+	@# guessing. The reasons are already written down — see the note over
+	@# "butler: silent" in board/server.js. This reads them out.
+	@echo ""
+	@if grep -qE '^ANTHROPIC_API_KEY=.+' .env 2>/dev/null; then \
+	  echo "  A model to think with   yes"; \
+	else \
+	  echo "  A model to think with   NO — ANTHROPIC_API_KEY in .env. Without it he cannot say anything at all."; \
+	fi
+	@if grep -qE '^TOMSCODING_BOARD_BUTLER_NOW=.+' .env 2>/dev/null; then \
+	  echo "  Something to report     yes"; \
+	else \
+	  echo "  Something to report     NO — TOMSCODING_BOARD_BUTLER_NOW in .env is the line he reads out"; \
+	  echo "                          when somebody asks what is new. Empty, and he has nothing to answer with."; \
+	fi
+	@echo ""
+	@out=$$($(COMPOSE) logs --tail=4000 board 2>/dev/null | grep "butler: silent" | tail -5); \
+	if [ -n "$$out" ]; then \
+	  echo "  The last few times he said nothing:"; \
+	  echo "$$out" | sed "s/^.*butler: /    /"; \
+	else \
+	  echo "  He has not been asked anything he could not answer."; \
+	fi
+	@echo ""
+	@echo "  The question itself is never written down. Only the reason."
+	@echo ""
 
 who: ## Who has a page, and who is actually in Browse
 	@# For "she added herself but I cannot see her". The public list holds only

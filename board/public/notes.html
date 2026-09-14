@@ -1845,6 +1845,8 @@ async function drawDoor(key) {
 
   if (!DOOR.says.length) talk.append(el("p", "when", T("dr.quiet")));
   let day = "";
+  // Which of Mo's six welcomes the last one used, so the next is never it.
+  let lastWel = -1;
   for (const m of DOOR.says) {
     const dd = String(m.at).slice(0, 10);
     if (dd !== day) { day = dd; talk.append(el("p", "when", when(m.at))); }
@@ -1858,11 +1860,17 @@ async function drawDoor(key) {
       talk.append(el("p", "when", T("mo." + m.evt.kind, { who: m.evt.who })));
       continue;
     }
-    /* SIX WELCOMES, PICKED FROM THE MESSAGE ID. Five people walking in got
+    /* SIX WELCOMES, AND NO TWO RUNNING THE SAME. Five people walking in got
        five identical bubbles, which is the loudest "a machine did this" on
-       the first screen anybody sees. Stable per message so the room reads the
-       same on every redraw and to everybody in it — see moWelcome. */
-    const said = m.evt ? moWelcome(m.evt.who, m.id) : saidIn(m);
+       the first screen anybody sees; one in six then put the same sentence
+       under itself twice, which reads the same way. The slot the last one
+       landed in is carried down the room — see moWelcome. */
+    let said;
+    if (m.evt) {
+      const w = moWelcome(m.evt.who, m.id, lastWel);
+      lastWel = w.at;
+      said = w.text;
+    } else said = saidIn(m);
     const row = el("div", "said" + (m.mine ? " mine" : ""));
     if (!m.mine) row.append(doorFace(m));
     const col = el("div", "col");
