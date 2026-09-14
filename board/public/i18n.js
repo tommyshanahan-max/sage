@@ -3870,6 +3870,11 @@ export const STRINGS = {
      see the note where it is set. */
   "board.inRoom":      ["{n} people in the room. Invite only.",
                         "房间里有 {n} 个人。邀请制。"],
+  /* ONE IS NOT "1 people". English needs the second string; the Chinese line
+     is the same sentence either way, which is why this is a key and not a
+     count check in the page. */
+  "board.inRoom1":     ["One person in the room. Invite only.",
+                        "房间里有 1 个人。邀请制。"],
   "inv.one":           ["One person each, and a new one tomorrow.",
                         "一个口令进一个人，明天再给你一个新的。"],
   "door.sub":          ["Not open to everybody yet", "还没有对所有人开放"],

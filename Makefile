@@ -534,6 +534,20 @@ post-improved: ## Name one person whose level moved this week, as The Professor
 	  /seed/post-improved.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  $(if $(DRY),--dry,) $(if $(AGAIN),--again,)
 
+card: ## Put somebody real on the board: make card NAME="Ray Chen" ME=investor WANT=producer LINE="..."
+	@# ONLY FOR SOMEBODY YOU KNOW, whose card you could read out to them and
+	@# have them say "yes, that's me". The line goes up as theirs. `make demo`
+	@# is the other thing and it invents people on purpose; this one is for the
+	@# people you brought, before they are holding a phone.
+	@#
+	@# Run it again on the same name to edit the line. Then:
+	@#   make peek WHO="Ray Chen"   to show them at the door
+	@#   make back WHO="Ray Chen"   to hand them the page for real
+	@test -n "$(NAME)" || { echo 'whose card? make card NAME="Ray Chen" ME=investor WANT=producer LINE="..."'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/card.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --name "$(NAME)" --me "$(ME)" --want "$(WANT)" --line "$(LINE)" --by "$(or $(BY),Tom)"
+
 hide: ## Take somebody out of Browse:  make hide WHO="their name"
 	@# Reversible, silent, and nothing is deleted — see person-out.mjs.
 	@test -n "$(WHO)" || { echo 'which one? make hide WHO="their name"'; exit 1; }

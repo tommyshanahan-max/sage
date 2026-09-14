@@ -3865,7 +3865,7 @@ function draw() {
    * said on the way in. */
   const inRoom = MEMBERS || (Array.isArray(PEOPLE) ? PEOPLE.length : 0);
   $("count").textContent = inRoom
-    ? T("board.inRoom", { n: inRoom })
+    ? inRoomWords(inRoom)
     : T(shut ? "inv.taglineShut" : "board.tagline");
   $("invite").textContent = T(shut ? "inv.locked" : "site.invite");
   /* AND ONLY TO SOMEBODY IT IS NEWS TO. "Not public yet — invite only" is the
@@ -7987,10 +7987,18 @@ function drawDoor(people) {
     box.append(doorGo(atdoor(WAITING)));
     if (some) box.append(document.createTextNode(inside(some)));
   } else if (some) {
-    box.append(el("b", null, T("board.inRoom", { n: some })));
+    box.append(el("b", null, inRoomWords(some)));
   }
   // Kept in step for the screens that still show it — see the note on #count.
-  if (some && $("count")) $("count").textContent = T("board.inRoom", { n: some });
+  if (some && $("count")) $("count").textContent = inRoomWords(some);
+}
+
+/* "1 people in the room" — which is what a stranger saw on the first day of
+   a room, on the line whose whole job is to make the place sound real. One
+   key for one and one for the rest; the Chinese is the same sentence either
+   way and says so where it is written. */
+function inRoomWords(n) {
+  return T(n === 1 ? "board.inRoom1" : "board.inRoom", { n });
 }
 
 /* The waiting number, as a way in when there is a list behind it.
@@ -8101,9 +8109,17 @@ function drawDeck() {
       }
       bar.classList.add("doorbar");
     }
+    /* "0 MORE INSIDE" IS NOT A WALL, IT IS AN EMPTY BOARD ANNOUNCING ITSELF.
+       The peek is short on purpose and on a new room it can be the whole of
+       the membership, so the number behind it is nought — and a panel saying
+       there is nothing else here is the one thing this block must never say.
+       Shown only when there is something behind it. */
     fill(wall);
-    wall.append(el("b", null, T("wall.head", { n: WALL.more })));
-    wall.append(el("p", null, T("wall.sub")));
+    wall.hidden = !WALL.more;
+    if (WALL.more) {
+      wall.append(el("b", null, T("wall.head", { n: WALL.more })));
+      wall.append(el("p", null, T("wall.sub")));
+    }
   }
   drawDoor(people);
   drawQueue();
