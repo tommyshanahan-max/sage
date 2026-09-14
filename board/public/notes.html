@@ -739,8 +739,12 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
     <span id="tabme"></span>
   </a>
-  <!-- In place of the three tabs, for somebody on the list. -->
-  <a class="waitbar" href="/waiting" id="waitbar" hidden></a>
+  <!-- In place of the three tabs, for somebody on the list.
+       /room AND NOT /waiting. /waiting is the operator's screen — it asks for
+       an admin key — so the one bar a person at the door is given led them to
+       a password box for somebody else's tool. /room is their own: where they
+       stand, and the form that makes their page. -->
+  <a class="waitbar" href="/room" id="waitbar" hidden></a>
 </nav>
 
 <script type="module">

@@ -4798,6 +4798,20 @@ app.get("/api/queue/:id", async (req, res) => {
     brought: row.n || 0, vouches: row.v || 0, vouchedBy: spoke.slice(0, 6),
     mine: (board.vouches || []).some((v) => v.wait === w.id && v.by === me),
     photo: w.photoState === "published" ? w.photo : "",
+    /* FOLLOW, WHICH IS NOW THE FIRST THING TO DO ABOUT SOMEBODY, and the two
+       older buttons beside it are a member's powers rather than the ordinary
+       one. See /api/follow. */
+    fid: "w:" + w.id,
+    iFollow: board.follows.some((f) => f.by === me && f.who === "w:" + w.id),
+    both: bothFollow(board, me, w.by),
+    /* AND WHETHER WRITING TO THEM WOULD ACTUALLY WORK.
+     *
+     * The button was always there and the route behind it was not: a note to
+     * somebody at a door is refused unless they are answering a member who
+     * wrote to them, or the two of you follow each other. So "Write to them"
+     * on anybody who walked into a room under their own steam led to "gone".
+     * The page asks first now. */
+    canWrite: Boolean(w.fromWrite) || bothFollow(board, me, w.by),
   });
 });
 
@@ -8440,6 +8454,19 @@ app.post("/api/follow", express.json({ limit: "8kb" }), async (req, res) => {
      * more. No Browse, no member list, nobody they could not already see.
      */
     const together = (() => {
+      /* A FOLLOW BACK IS ALWAYS ALLOWED, and without this the pair had a dead
+       * end in it. A member reads a room without ever posting in it, follows
+       * somebody standing in it — fine, she is in the room — and when she goes
+       * to follow him back he is not "in" that room by any test the board can
+       * make, because he has never said a word in it. So the second half could
+       * never happen and the two of them could never talk.
+       *
+       * Somebody who has already reached for you has opted into exactly this.
+       * Answering it needs no other permission. */
+      const mineKey = followKey(board, me);
+      if (mineKey && board.follows.some((f) => f.by === target.by && f.who === mineKey)) {
+        return true;
+      }
       if (!room || !store.WAITROOMS_CHAT.includes(room)) return false;
       if (!doorAccess(board, me, room)) return false;
       // The one being followed has to be standing in that same room.

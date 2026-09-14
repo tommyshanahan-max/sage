@@ -88,6 +88,9 @@
   .second{background:var(--card);border:1px solid var(--hair);color:var(--ink)}
   .second.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
+  /* What happened, under the buttons it happened on. */
+  .both{margin:.8rem 0 0;font-size:.9rem;line-height:1.5;color:var(--accent)}
+
   .quiet{margin:2rem 1.1rem;color:var(--muted)}
 </style>
 </head>
@@ -206,9 +209,45 @@ function draw() {
   }
 
   const acts = el("div", "acts");
-  const write = el("a", "go", T("wp.write"));
-  write.href = "/notes#w:" + encodeURIComponent(W.id);
-  acts.append(write);
+
+  /* FOLLOW FIRST, because it is the one thing anybody can do about anybody —
+   * and because the two below it are not what a reader means when they have
+   * just read somebody's line and want to say so.
+   *
+   * The other two are a member's powers and they read like it once they are
+   * in second place: speaking for somebody moves them up the queue, and
+   * writing to them is a message to a stranger. Follow is the ordinary act,
+   * it is silent, and if they follow back the two of them get a room.
+   */
+  const foll = el("button", "go" + (W.iFollow ? " second" : ""),
+    T(W.iFollow ? "bud.following" : "bud.follow"));
+  foll.type = "button";
+  const bothLine = el("p", "both");
+  bothLine.hidden = !W.both;
+  if (W.both) bothLine.textContent = T("wp.bothNow", { who: W.name });
+  foll.addEventListener("click", async () => {
+    foll.disabled = true;
+    try {
+      const r = await fetch("/api/follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-board-device": device },
+        body: JSON.stringify({ device, who: W.fid, on: !W.iFollow, room: W.room }),
+      });
+      if (r.ok) { await load(); draw(); return; }
+    } catch { /* the button comes back */ }
+    foll.disabled = false;
+  });
+  acts.append(foll);
+
+  /* WRITING, ONLY WHERE IT WOULD WORK. A note to somebody at a door is
+     refused unless they are answering a member who wrote to them or the two
+     of you follow each other — so this button led to "gone" for everybody who
+     walked into a room on their own. It waits for the follow now. */
+  if (W.canWrite) {
+    const write = el("a", "second", T("wp.write"));
+    write.href = "/notes#w:" + encodeURIComponent(W.id);
+    acts.append(write);
+  }
 
   /* VOUCHING IS THE ONE THING A MEMBER CAN DO ABOUT THE DOOR — admission is
      the operator's. It moves them one place and it is taken back the same
@@ -231,6 +270,7 @@ function draw() {
   });
   acts.append(vouch);
   box.append(acts);
+  box.append(bothLine);
 }
 
 $("back").addEventListener("click", (e) => {

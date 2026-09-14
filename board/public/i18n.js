@@ -3085,6 +3085,9 @@ export const STRINGS = {
   "wp.vouch":          ["Speak for them", "推荐他"],
   "wp.vouchedBy":      ["You spoke for them", "你已经推荐了"],
   "wp.write":          ["Write to them", "给他写句话"],
+  // The same fact the room says, on the page — see dr.bothNow.
+  "wp.bothNow":        ["{who} follows you too. You can write to each other now.",
+                        "{who} 也关注了你。你们现在可以互相留言了。"],
   /* NOT "incomplete" AND NOT A SCORE. What is missing, so a member knows what
      they are not being told and the person at the door knows what to write. */
   /* The space after the colon is in the English string and not in the
@@ -4867,7 +4870,11 @@ export const STRINGS = {
   /* SOMEBODY ON THE LIST, IN THE MESSENGER. They have the conversation with
      whoever wrote to them and nothing else — so the bar says where they
      stand rather than offering three tabs that bounce off a door. */
-  "note.onList":       ["You are on the list — see where you are", "你在名单上——看看排到哪了"],
+  /* THE ONE BAR SOMEBODY AT THE DOOR IS GIVEN, so it says the thing they can
+     do rather than the thing they are. "See where you are" is a queue
+     position; the page it opens is where they write their own — which is also
+     what moves them up it. */
+  "note.onList":       ["Your page — finish it and you move up", "你的资料——写完就往前排"],
   "note.canDeal":      ["deal", "已成交"],
   "note.canTo":        ["To {who}", "写给 {who}"],
   "note.canHow": [
