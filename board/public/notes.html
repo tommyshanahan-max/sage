@@ -759,7 +759,30 @@ import { OFF } from "/off.js";
 /* The doorman, here too — see mo.js. Messages is where somebody most often
    has a question they would rather ask than guess at. */
 import { mountMo, moHear } from "/mo.js";
-import { mountLedgerPin, hideLedgerPin } from "/ledger-pin.js";
+
+/* THE PIN IS LOADED SEPARATELY AND ITS FAILURE IS NOT THIS PAGE'S.
+ *
+ * It was a static import at the top of the module. A static import that
+ * cannot be resolved does not fail quietly and locally — it stops the whole
+ * module from ever executing, so Messages renders as a blank white screen
+ * with nothing in the console a person could see. One missing file and the
+ * only screen this app opens on is dead.
+ *
+ * That can happen for reasons that have nothing to do with this feature: a
+ * browser holding a cached copy of this page from before the file existed, a
+ * deploy caught halfway, a worker serving one and not the other. The pin is
+ * off by default and is the least important thing on the screen; it must not
+ * be able to take the room with it.
+ *
+ * Loaded on demand and wrapped, so a missing or broken pin costs the pin. */
+let PIN = null, pinTried = false;
+async function pin() {
+  if (pinTried) return PIN;
+  pinTried = true;
+  try { PIN = await import("/ledger-pin.js"); } catch { PIN = null; }
+  return PIN;
+}
+
 import { atText, atPicker } from "/at.js";
 
 const $ = (id) => document.getElementById(id);
@@ -2024,7 +2047,7 @@ async function drawDoor(key) {
      BOARD_LEDGER_GOAL set, in which case this is silent and the room is
      exactly what it was. It redraws only when a number changed — see the note
      in ledger-pin.js about the twenty-second refresh and screen readers. */
-  mountLedgerPin($("tpin"), key, device);
+  pin().then((m) => m && m.mountLedgerPin($("tpin"), key, device));
 
   /* ⋯ IN THE TOP RIGHT, which is where somebody looks for the people in a
      room because it is where every messenger on their phone keeps them.
@@ -2044,7 +2067,7 @@ async function drawDoor(key) {
     act.hidden = true;                 // back is the way out, as in groups.html
     talk.classList.add("top");
     // Not the room, so not the room's pin. See hideLedgerPin.
-    hideLedgerPin($("tpin"));
+    pin().then((m) => m && m.hideLedgerPin($("tpin")));
     talk.append(doorPeople(key));
     $("twrite").hidden = true;
     $("tshut").hidden = true;

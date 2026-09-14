@@ -467,7 +467,29 @@ import { offerNotify } from "/notify.js";
 /* Nothing on this page uses either any more — Mo owns the microphone and he
    lives in mo.js. Kept off the import list rather than left dangling. */
 import { drawCard } from "/postcard.js";
-import { mountLedgerPin } from "/ledger-pin.js";
+
+/* THE PIN IS LOADED SEPARATELY AND ITS FAILURE IS NOT THIS PAGE'S.
+ *
+ * It was a static import at the top of the module. A static import that
+ * cannot be resolved does not fail quietly and locally — it stops the whole
+ * module from ever executing, so Messages renders as a blank white screen
+ * with nothing in the console a person could see. One missing file and the
+ * only screen this app opens on is dead.
+ *
+ * That can happen for reasons that have nothing to do with this feature: a
+ * browser holding a cached copy of this page from before the file existed, a
+ * deploy caught halfway, a worker serving one and not the other. The pin is
+ * off by default and is the least important thing on the screen; it must not
+ * be able to take the room with it.
+ *
+ * Loaded on demand and wrapped, so a missing or broken pin costs the pin. */
+let PIN = null, pinTried = false;
+async function pin() {
+  if (pinTried) return PIN;
+  pinTried = true;
+  try { PIN = await import("/ledger-pin.js"); } catch { PIN = null; }
+  return PIN;
+}
 import { beatUnits } from "/beat.js";
 /* Mo is his own module so that every page can have him — see mo.js. What this
    page adds is the only thing it knows that he does not: how he opens to
@@ -1298,7 +1320,7 @@ function drawWait(box) {
    * BOARD_LEDGER_ROOMS, like everywhere else this appears. */
   const rew = el("div", "pinslot");
   box.append(rew);
-  mountLedgerPin(rew, "wait", device());
+  pin().then((m) => m && m.mountLedgerPin(rew, "wait", device()));
 
   /* THE ROOMS UNDER THE DOOR, AS A LIST.
    *

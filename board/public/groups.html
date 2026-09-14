@@ -415,7 +415,29 @@
 
 <script type="module">
 import { T, when, setLang, pickLang, langButton, lang, moWelcome, pick } from "/i18n.js";
-import { mountLedgerPin, hideLedgerPin } from "/ledger-pin.js";
+
+/* THE PIN IS LOADED SEPARATELY AND ITS FAILURE IS NOT THIS PAGE'S.
+ *
+ * It was a static import at the top of the module. A static import that
+ * cannot be resolved does not fail quietly and locally — it stops the whole
+ * module from ever executing, so Messages renders as a blank white screen
+ * with nothing in the console a person could see. One missing file and the
+ * only screen this app opens on is dead.
+ *
+ * That can happen for reasons that have nothing to do with this feature: a
+ * browser holding a cached copy of this page from before the file existed, a
+ * deploy caught halfway, a worker serving one and not the other. The pin is
+ * off by default and is the least important thing on the screen; it must not
+ * be able to take the room with it.
+ *
+ * Loaded on demand and wrapped, so a missing or broken pin costs the pin. */
+let PIN = null, pinTried = false;
+async function pin() {
+  if (pinTried) return PIN;
+  pinTried = true;
+  try { PIN = await import("/ledger-pin.js"); } catch { PIN = null; }
+  return PIN;
+}
 import { atText, atPicker } from "/at.js";
 import { moHear } from "/mo.js";
 
@@ -810,12 +832,11 @@ function paintRoom(g) {
      the top of this room, and the bands panel steps aside. Two panels both
      telling somebody where they stand, disagreeing about the maths, is worse
      than either of them on its own. */
-  const pin = el("div", "pinslot");
-  if (g.hand) box.append(pin);
+  const slot = el("div", "pinslot");
+  if (g.hand) box.append(slot);
   if (g.hand) {
-    mountLedgerPin(pin, "", device, g.id).then((on) => {
-      if (!on && (LAYER || LEFT)) pin.replaceWith(ledger(g));
-    });
+    pin().then((m) => (m ? m.mountLedgerPin(slot, "", device, g.id) : false))
+      .then((on) => { if (!on && (LAYER || LEFT)) slot.replaceWith(ledger(g)); });
   }
 
   /* THE FACES USED TO BE HERE, as a row of chips over the first message.
