@@ -99,6 +99,8 @@ const CSS = `
   .lpshutlab{font-size:.6rem!important;letter-spacing:.12em;text-transform:uppercase;
     font-weight:700;color:var(--muted)}
   .lpno{font-weight:700}
+  .lpflip{font:inherit;font-size:.72rem;background:transparent;border:0;
+    color:var(--muted);cursor:pointer;padding:.45rem 0 0;text-decoration:underline}
   .lpback{font:inherit;font-size:.78rem;background:transparent;border:0;
     color:var(--accent);cursor:pointer;padding:0;justify-self:start}
 `;
@@ -119,6 +121,11 @@ function style() {
 let SHOWN = null;
 let VIEW = "over";
 let BUSY = false;
+/* THE OPERATOR LOOKING AT THE ARRIVAL SCREEN. They are a member, so they can
+   never see it any other way — the alternative is a second phone and a spare
+   invite code. Staff only, and the server decides that, not this flag. */
+let PREVIEW = false;
+let LAST = null;
 
 /* THE LANGUAGE IS IN HERE, and leaving it out was a real bug rather than a
    theoretical one: the toggle redraws the room, no number has changed, the
@@ -128,7 +135,7 @@ let BUSY = false;
 const same = (a, b) =>
   a && b && a.place === b.place && a.total === b.total
   && a.members === b.members && a.joined === b.joined && a.goal === b.goal
-  && a.lang === b.lang;
+  && a.lang === b.lang && a.preview === b.preview && a.soon === b.soon;
 
 /** Take the pin out of the room. */
 export function hideLedgerPin(box) {
@@ -151,8 +158,8 @@ export async function mountLedgerPin(box, room, device, group) {
     /* A door by its key, or a hand-kept room by its id. One endpoint because
        what it answers is the same either way — the reader's own line — and two
        would be two places for the access rule to disagree. */
-    const q = group ? "group=" + encodeURIComponent(group)
-      : "room=" + encodeURIComponent(room);
+    const q = (group ? "group=" + encodeURIComponent(group)
+      : "room=" + encodeURIComponent(room)) + (PREVIEW ? "&preview=1" : "");
     d = await fetch("/api/ledger/pin?" + q,
       { cache: "no-store", headers: device ? { "x-board-device": device } : {} })
       .then((r) => (r.ok ? r.json() : null));
@@ -162,7 +169,9 @@ export async function mountLedgerPin(box, room, device, group) {
      is exactly what it was before this file existed. The answer goes back to
      the caller so a room with something else to put there can. */
   if (!d || !d.on) { hideLedgerPin(box); return false; }
+  LAST = { box, room, device, group };
   d.lang = lang();
+  d.preview = PREVIEW;
   if (same(SHOWN, d)) return true;
   SHOWN = d;
 
@@ -176,6 +185,26 @@ export async function mountLedgerPin(box, room, device, group) {
 function paint(box, d, device) {
   box.textContent = "";
   box.append(VIEW === "over" ? overview(box, d, device) : view(box, d, device));
+  if (d.staff) box.append(flip(d));
+}
+
+/* THE TOGGLE, AND IT SAYS WHICH WAY IT WILL GO rather than which way it is.
+   A control labelled with the state you are already in is the one nobody
+   presses — the same reason the language button says the language it switches
+   to. Drawn only where the server said staff, so this is not a client-side
+   rule anybody can turn on by editing a flag in their own browser. */
+function flip(d) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "lpflip";
+  b.textContent = T(PREVIEW ? "pin.seeMine" : "pin.seeNew");
+  b.addEventListener("click", async () => {
+    PREVIEW = !PREVIEW;
+    SHOWN = null;              // the shape changed, so the guard must not hold
+    VIEW = "over";
+    if (LAST) await mountLedgerPin(LAST.box, LAST.room, LAST.device, LAST.group);
+  });
+  return b;
 }
 
 /* ---- the button ---------------------------------------------------------- */

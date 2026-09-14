@@ -4999,6 +4999,11 @@ export const STRINGS = {
     "位置已经排完了。你跟其他人一样是会员，只是不再排位置。",
   ],
   "pin.needPage":      ["Put a page up first.", "先把你的主页建起来。"],
+  /* The operator's toggle, and it names the screen it will go to rather than
+     the one it is on — a control labelled with the state you are already in is
+     the one nobody presses. */
+  "pin.seeNew":        ["See it as a new arrival", "看看新来的人看到什么"],
+  "pin.seeMine":       ["See it as yours", "看回你自己的"],
 
   // the five views
   "pin.vOver":         ["Your rewards", "你的奖励"],

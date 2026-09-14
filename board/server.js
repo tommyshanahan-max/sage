@@ -3077,9 +3077,15 @@ async function joined(who) {
   return all;
 }
 
-/** One member's line on the pin. Everything read, nothing stored. */
-function pinFor(board, who) {
-  const mine = board.people.find((q) => q.by === who && q.handle);
+/** One member's line on the pin. Everything read, nothing stored.
+ *
+ * `asNew` asks for the shape somebody standing outside would see instead of
+ * the reader's own. It exists because the operator cannot see that screen any
+ * other way: they are a member, the arrival view is for people who are not,
+ * and the only honest alternative is a second phone and a spare invite code.
+ * Staff only — see the check at the route. */
+function pinFor(board, who, asNew) {
+  const mine = asNew ? null : board.people.find((q) => q.by === who && q.handle);
   /* THE PLACE IS THE STAMPED ARRIVAL NUMBER, not a position worked out from
      the dates each time. Derived, it moves: two rows that were never published
      were holding seats 2 and 3 of the first three on the live board until the
@@ -8244,6 +8250,17 @@ app.get("/api/ledger/pin", notesOff, async (req, res) => {
        can arrive without having been put there. */
     const g = board.groups.find((x) => x.id === gid && x.hand);
     if (!g || !g.members.includes(me)) return res.json({ on: false });
+    /* THE ARRIVAL VIEW, FOR THE PERSON WHO CANNOT OTHERWISE SEE IT. Staff, in
+       a room they keep by hand, and nowhere else: the toggle is a tool for
+       checking what a stranger reads, not a mode anybody else can enter. */
+    const boss = STAFF.has(String((board.people.find((q) => q.by === me) || {}).handle || "")
+      .toLowerCase());
+    if (boss) {
+      return res.json({
+        ...pinFor(board, me, String(req.query.preview || "") === "1"),
+        staff: true, joined: (await joins()).includes(me),
+      });
+    }
   } else {
     /* Standing at this door, by the board's own reckoning rather than the
        browser's. Somebody who is neither a member nor waiting has no line. */
