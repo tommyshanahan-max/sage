@@ -7942,6 +7942,36 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
       }
     }
 
+    /* AND, NOW AND THEN, HE TELLS THEM TO WRITE THEIR PAGE.
+     *
+     * The room is where they are and the page is what gets them out of it:
+     * nobody can be vouched for on a name alone, and a card with a sentence
+     * on it is the whole of what a member reads before deciding. People have
+     * been talking in these rooms for days without one.
+     *
+     * INTERMITTENTLY, AND THAT WORD IS THE FEATURE. A doorman who says this
+     * once is useful; one who says it after every message is the reason
+     * people mute a room. So: not on their first line, because their first
+     * line is an introduction and answering it with a chore is the worst
+     * possible welcome; not twice in two days; and never to somebody who has
+     * already done it.
+     *
+     * IT IS A LINE IN THE ROOM, not a private one — the same shape as the
+     * welcome. Everybody seeing that the doorman asks for this is most of
+     * what makes it ordinary rather than a telling-off.
+     */
+    if (door) {
+      const mine = board.waits.find((w) => w.by === me && !w.done);
+      const done = mine && mine.me && mine.want && mine.photo;
+      const said = board.says.filter((m) => m.group === id && m.by === me && m.text).length;
+      const ago = mine && mine.nudged
+        ? Date.now() - (Date.parse(mine.nudged) || 0) : Infinity;
+      if (mine && !done && said >= 2 && ago > 2 * 86400_000) {
+        mine.nudged = new Date().toISOString();
+        moSays(board, id, "page", mine.name);
+      }
+    }
+
     /* WHAT WAKES THE DOORMAN, and it is a regex on this box — see screen() in
        store.js. He is in every room and reads none of them; this runs where
        the message is already being written down, sends nothing anywhere, and

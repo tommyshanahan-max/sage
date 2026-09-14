@@ -755,7 +755,12 @@ function paintRoom(g) {
        bubble from Mo. It is not somebody talking — it is the room reporting
        itself, which is what every group chat on this phone does with a thin
        grey line in the middle and no avatar beside it. */
-    if (m.evt && m.evt.kind !== "welcome") {
+    /* Two of his lines are bubbles rather than a rule across the room: the
+       welcome, and the nudge to write a page. Both are him talking to
+       somebody. A group room never carries the nudge — it is the door
+       rooms that hold people without a page — but the branch matches so
+       the three rooms cannot drift. */
+    if (m.evt && m.evt.kind !== "welcome" && m.evt.kind !== "page") {
       box.append(el("p", "evt", T("mo." + m.evt.kind, { who: m.evt.who })));
       continue;
     }
@@ -766,7 +771,9 @@ function paintRoom(g) {
        under itself twice, which reads the same way. The slot the last one
        landed in is carried down the room — see moWelcome. */
     let said;
-    if (m.evt) {
+    if (m.evt && m.evt.kind === "page") {
+      said = T("mo.page", { who: m.evt.who });
+    } else if (m.evt) {
       const w = moWelcome(m.evt.who, m.id, lastWel);
       lastWel = w.at;
       said = w.text;

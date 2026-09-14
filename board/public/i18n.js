@@ -3080,10 +3080,15 @@ export const STRINGS = {
   "wp.up":             ["Moved up", "已经放进等候室"],
   "wp.upWhy":          ["— finishing their page.", "—— 正在把资料填完。"],
   "wp.came":           ["came {when}", "{when} 来的"],
-  "wp.vouched":        ["spoke for them.", "推荐了他。"],
-  "wp.vouchedMore":    ["and {n} more spoke for them.", "还有 {n} 个人也推荐了他。"],
-  "wp.vouch":          ["Speak for them", "推荐他"],
-  "wp.vouchedBy":      ["You spoke for them", "你已经推荐了"],
+  /* VOUCH, BECAUSE THAT IS THE WORD. "Speak for them" was an attempt to say
+     it without the jargon, and the jargon was already the plain word —
+     everybody in this queue knows what vouching is, and the board says it
+     everywhere else (brw.vouch, rules.bring, note.waitVouched). One name for
+     one act. The Chinese was already 推荐/担保 and stays as it is. */
+  "wp.vouched":        ["vouched for them.", "推荐了他。"],
+  "wp.vouchedMore":    ["and {n} more vouched for them.", "还有 {n} 个人也推荐了他。"],
+  "wp.vouch":          ["Vouch for them", "推荐他"],
+  "wp.vouchedBy":      ["You vouched", "你已经推荐了"],
   "wp.write":          ["Write to them", "给他写句话"],
   // The same fact the room says, on the page — see dr.bothNow.
   "wp.bothNow":        ["{who} follows you too. You can write to each other now.",
@@ -4693,6 +4698,13 @@ export const STRINGS = {
                         "{who} 刚进来。说说你想要什么，这儿总有人知道该找谁。"],
   "mo.welcome6":       ["Welcome, {who}. The quickest way in is one sentence about what you need — this room reads it.",
                         "欢迎，{who}。最快的办法就是一句话说清你要什么 —— 这屋的人都看得到。"],
+  /* THE NUDGE, SAID IN THE ROOM — see the block in /api/group/say. Named,
+     because an unaddressed "everybody should write a page" is for nobody. The
+     reason comes with it: not "please complete your profile", which is a form
+     asking to be filled in, but what it gets them, which is the only thing
+     that would make anybody do it. */
+  "mo.page":           ["{who} — write your page when you get a minute. Nobody can vouch for a name, and your page is what they read.",
+                        "{who}，有空把你的资料写了。光有名字没人能替你担保，他们看的就是你那一页。"],
   "mo.in":             ["{who} came in", "{who} \u8fdb\u6765\u4e86"],
   "mo.out":            ["{who} was taken out", "{who} \u88ab\u79fb\u51fa\u4e86"],
   "mo.left":           ["{who} left", "{who} \u8d70\u4e86"],

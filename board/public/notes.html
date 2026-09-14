@@ -2000,7 +2000,10 @@ async function drawDoor(key) {
     /* WHAT HAPPENED TO THE ROOM is a line across it; WHAT HE SAID TO SOMEBODY
        is a bubble from him. Same mechanism, two shapes, because one is the
        room reporting itself and the other is a member talking. */
-    if (m.evt && m.evt.kind !== "welcome") {
+    /* Two of his lines are bubbles rather than a rule across the room:
+       the welcome, and the nudge to write a page. Both are him talking to
+       somebody; everything else here is the room reporting itself. */
+    if (m.evt && m.evt.kind !== "welcome" && m.evt.kind !== "page") {
       talk.append(el("p", "when", T("mo." + m.evt.kind, { who: m.evt.who })));
       continue;
     }
@@ -2010,7 +2013,9 @@ async function drawDoor(key) {
        under itself twice, which reads the same way. The slot the last one
        landed in is carried down the room — see moWelcome. */
     let said;
-    if (m.evt) {
+    if (m.evt && m.evt.kind === "page") {
+      said = T("mo.page", { who: m.evt.who });
+    } else if (m.evt) {
       const w = moWelcome(m.evt.who, m.id, lastWel);
       lastWel = w.at;
       said = w.text;

@@ -140,6 +140,14 @@ export function cleanWait(raw) {
      * a record of a message leaving, not of one being read. */
     told: s(raw.told, 40),
     toldBy: ["hand", "mail"].includes(String(raw.toldBy || "")) ? String(raw.toldBy) : "",
+    /* WHEN MO LAST SAID "WRITE YOUR PAGE" TO THEM IN A ROOM.
+     *
+     * A separate field from `told` above, which is the operator's record of
+     * having sent somebody the room link by hand. This is the room's own, and
+     * its whole job is to stop the same line arriving twice: a doorman who
+     * says it once is useful and one who says it every time is the reason
+     * people mute a room. See the nudge in /api/group/say. */
+    nudged: s(raw.nudged, 40),
     // Why they want in, in their own words. The only thing a member vouching
     // for a stranger has to go on.
     why: s(raw.why, 300),
@@ -2215,7 +2223,10 @@ export function cleanSay(raw) {
      * line across the room, because it is him talking to somebody. It is here
      * rather than as stored text for the same reason as the rest: his warning
      * line is English for ever, and half of this board reads Chinese. */
-    ...(raw.evt && ["in", "out", "left", "welcome"].includes(String(raw.evt.kind))
+    /* "page" is the nudge to write one — see the block in /api/group/say. A
+       kind missing from this list is dropped without a word, which is how the
+       first version of that nudge did nothing at all. */
+    ...(raw.evt && ["in", "out", "left", "welcome", "page"].includes(String(raw.evt.kind))
       ? { evt: { kind: String(raw.evt.kind), who: s(raw.evt.who, 40) } }
       : {}),
   };

@@ -309,7 +309,10 @@ function paint() {
        group chat on this phone does with it. See moSays. */
     /* A line across the room for what happened to it; a bubble from him for
        what he said to somebody. See moSays. */
-    if (m.evt && m.evt.kind !== "welcome") {
+    /* Two of his lines are bubbles rather than a rule across the room:
+       the welcome, and the nudge to write a page. Both are him talking to
+       somebody; everything else here is the room reporting itself. */
+    if (m.evt && m.evt.kind !== "welcome" && m.evt.kind !== "page") {
       const e = document.createElement("p");
       e.className = "when";
       e.textContent = T("mo." + m.evt.kind, { who: m.evt.who });
@@ -322,7 +325,9 @@ function paint() {
        under itself twice, which reads the same way. The slot the last one
        landed in is carried down the room — see moWelcome. */
     let said;
-    if (m.evt) {
+    if (m.evt && m.evt.kind === "page") {
+      said = T("mo.page", { who: m.evt.who });
+    } else if (m.evt) {
       const w = moWelcome(m.evt.who, m.id, lastWel);
       lastWel = w.at;
       said = w.text;
