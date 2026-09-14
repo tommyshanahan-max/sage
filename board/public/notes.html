@@ -499,6 +499,10 @@
     padding:.75rem 1.6rem;font-size:1rem}
 
   /* The door, by room. A head you tap and the people under it. */
+  /* One of these rows is a link now rather than a button, so it needs the
+     colour and the underline taken off it — the same thing a.trow does above
+     for the same reason. */
+  a.wroom{text-decoration:none;color:inherit}
   .wroom{display:flex;align-items:center;gap:.8rem;width:100%;text-align:left;
     padding:.85rem 0;border:0;border-bottom:1px solid var(--hair);background:none;color:inherit}
   .wroom .wm b{display:block;font-family:var(--serif);font-weight:400;font-size:1.1rem}
@@ -1121,13 +1125,19 @@ function drawWaiting() {
      Outside the loop because that loop is driven by who is waiting, and
      nobody is ever filed under this one: it is open to all of them at once,
      so it has no pile of its own to be drawn from. */
-  const all = el("button", "wroom");
-  all.type = "button";
+  /* IT OPENS /rewards, WHICH IS A PAGE AND NOT A ROOM, and that is the whole
+     of it for now. The page is self-contained — invented people, invented
+     numbers, no network call, and its own Demo banner before anything else —
+     so it works for somebody who is not on this board and can be sent to
+     them, which a room they are not in cannot.
+     To point this at the real door room instead, the line below becomes
+     location.hash = "#d:rewards". Both exist; only this row moves. */
+  const all = el("a", "wroom");
+  all.href = "/rewards";
   const mid = el("div", "wm");
   mid.append(el("b", null, T("waitroom.rewards")));
   mid.append(el("span", null, T("wr.roomsAll")));
   all.append(mid, el("span", "wn", ""));
-  all.addEventListener("click", () => { location.hash = "#d:rewards"; });
   box.append(all);
 }
 

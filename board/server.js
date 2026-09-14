@@ -411,7 +411,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|s\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|privacy|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|s\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -809,6 +809,23 @@ app.get(["/privacy", "/privacy/"], (req, res, next) => page("privacy.html", req,
 /* The house rules. Behind the door like everything else — they describe how
    people behave in here, and out there they would be a leaflet. */
 app.get(["/rules", "/rules/"], (req, res, next) => page("rules.html", req, res, next));
+
+/** THE REWARDS ROOM, AS A PAGE RATHER THAN A ROOM.
+ *
+ * A self-contained copy of the Film & TV door with the ledger pinned across
+ * it: invented people, invented numbers, no network call of any kind, and its
+ * own banner at the top saying so. It is the thing to send somebody who is not
+ * on this board and cannot be shown a room they are not in.
+ *
+ * OPEN ON PURPOSE. Behind the door it could not be sent to anybody, which is
+ * the only reason it exists. Nothing on it is real, nothing on it is read from
+ * this board, and it takes nothing from whoever opens it.
+ *
+ * It is a design and not a deploy: it shares no code with the live pin, so a
+ * change to one does not change the other, and it says "Demo" before it says
+ * anything else. The room under the door is the real one.
+ */
+app.get(["/rewards", "/rewards/"], (req, res, next) => page("rewards.html", req, res, next));
 /* THE STUDY-BUDDY LIST IS OFF FOR V1, for the same reason as the inbox and by
  * the same mechanism: not broken, just not this version. Browse is the same
  * people with their faces on, and two ways into one list is a choice between a
