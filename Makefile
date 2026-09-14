@@ -1055,17 +1055,23 @@ feature-off: ## Take the featured post down
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/feature.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --off
 
-mo: ## Why Mo said nothing: what he is missing, and what he last refused
+mo: ## Why Mo said nothing: what he is missing, and what he last did
 	@# FOUR PROBLEMS, ONE SYMPTOM. Somebody @'s him in a room and nothing comes
-	@# back: no key, no line to read out, the model refused, or the day's cap
-	@# is gone. They look identical from a phone, and the afternoon goes on
-	@# guessing. The reasons are already written down — see the note over
-	@# "butler: silent" in board/server.js. This reads them out.
+	@# back: no key, the model refused, the day's cap is gone, or the question
+	@# never reached him at all. They look identical from a phone, and the
+	@# afternoon goes on guessing. Every outcome is already written down — see
+	@# the console.error calls in board/lib/butler.js and the "butler: silent"
+	@# note in board/server.js. This reads them out.
 	@echo ""
-	@if grep -qE '^ANTHROPIC_API_KEY=.+' .env 2>/dev/null; then \
+	@# AS THE CONTAINER SEES IT, not as .env reads. Those are two different
+	@# questions and only one of them is the one that matters: a key in .env
+	@# that compose does not pass through is a key the process does not have,
+	@# and grepping the file would say yes to it.
+	@if [ "$$($(COMPOSE) exec -T board node -e 'process.stdout.write(process.env.ANTHROPIC_API_KEY?"y":"n")' 2>/dev/null)" = "y" ]; then \
 	  echo "  A model to think with   yes"; \
 	else \
-	  echo "  A model to think with   NO — ANTHROPIC_API_KEY in .env. Without it he cannot say anything at all."; \
+	  echo "  A model to think with   NO — the board container has no ANTHROPIC_API_KEY."; \
+	  echo "                          It goes in .env, and the board has to be restarted after."; \
 	fi
 	@if grep -qE '^TOMSCODING_BOARD_BUTLER_NOW=.+' .env 2>/dev/null; then \
 	  echo "  A line of your own      yes"; \
@@ -1075,15 +1081,18 @@ mo: ## Why Mo said nothing: what he is missing, and what he last refused
 	  echo "                          know, like a co-production casting in Beijing this month."; \
 	fi
 	@echo ""
-	@out=$$($(COMPOSE) logs --tail=4000 board 2>/dev/null | grep "butler: silent" | tail -5); \
+	@# EVERY OUTCOME, not only the silences — "ok" lines are how you tell a
+	@# question that reached him and failed from one that never reached him.
+	@out=$$($(COMPOSE) logs --tail=4000 board 2>/dev/null | grep "butler:" | tail -8); \
 	if [ -n "$$out" ]; then \
-	  echo "  The last few times he said nothing:"; \
-	  echo "$$out" | sed "s/^.*butler: /    /"; \
+	  echo "  The last few times he was asked something:"; \
+	  echo "$$out" | sed "s/^.*butler:/   /"; \
 	else \
-	  echo "  He has not been asked anything he could not answer."; \
+	  echo "  He has not been asked anything since the board last started."; \
+	  echo "  If somebody @'d him before that, the log went with the old container."; \
 	fi
 	@echo ""
-	@echo "  The question itself is never written down. Only the reason."
+	@echo "  The question itself is never written down. Only what happened to it."
 	@echo ""
 
 who: ## Who has a page, and who is actually in Browse
