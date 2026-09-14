@@ -19,16 +19,23 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="交换">
-<title>The Tutor</title>
+<!-- THE NAME OF THE PRODUCT THAT USED TO BE HERE. WeChat prints the title
+     above the page in its own browser, so every person who opened a shared
+     link read "The Tutor" over a board called The Exchange — and so did every
+     link card, and every browser tab, and every home-screen bookmark. -->
+<title>交换 · The Exchange</title>
 <!-- What WeChat puts on the card when somebody forwards this into a chat or
      onto Moments. WeChat's crawler reads the title, this description, and the
      first large image in the page — it does not run scripts, so all three have
      to be in the served HTML. The og: tags cost nothing and are what every
      other platform reads. -->
-<meta name="description" content="A noticeboard for people living in and visiting China. Anyone can read, anyone can post. No account, no app to install.">
+<!-- Same again. "Anyone can read, anyone can post" describes the open
+     noticeboard this was; the board has a door on it now and the description
+     a stranger reads has to say so. -->
+<meta name="description" content="A private board for people doing business through who they know — cross-border investment and entertainment. Invite only.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="The Tutor">
-<meta property="og:description" content="A noticeboard for people living in and visiting China. Anyone can read, anyone can post.">
+<meta property="og:title" content="交换 · The Exchange">
+<meta property="og:description" content="Invite only. One sentence decides who you are shown: I am a ___ looking for a ___.">
 <meta property="og:image" content="{{ORIGIN}}/share.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -2069,6 +2076,13 @@
         <span id="navmelabel">Profile</span>
       </a>
     </nav>
+    <!-- THE BAR FOR SOMEBODY STILL OUTSIDE, and a second element rather than
+         the one above with its contents replaced. paintNav() writes into the
+         tabs above by id on every redraw; emptying that nav left it writing
+         into holes, which threw and took the whole language repaint with it.
+         Room · Inside · The queue · You — the same four, in the same order, as
+         door.html. Filled and shown by drawDeck when the wall is up. -->
+    <nav class="bar doorbar" id="doorbar" hidden></nav>
     <!-- PUTTING SOMETHING UP, out of the bar and into the corner.
          It was the raised disc in the middle of five tabs, which is Instagram's
          shape, not WeChat's — and the bar is the one part of this app that has
@@ -8158,9 +8172,23 @@ function drawDeck() {
       const n = $(id);
       if (n) n.hidden = true;
     }
+    /* ITS OWN BAR, NOT THE MEMBERS' BAR EMPTIED OUT.
+     *
+     * This used to fill() #bar and append four anchors, which destroyed every
+     * element in it — and paintNav() writes into those by id on every redraw.
+     * So the first language toggle threw on the first missing one and took
+     * the whole of repaint() down with it: the button changed, the banner
+     * changed, and nothing below them did. The page looked like a broken
+     * toggle and was a broken bar.
+     *
+     * Two bars, one shown. Nothing that reaches into the nav by id can find a
+     * hole where its element used to be. */
     const bar = $("bar");
-    if (bar) {
-      fill(bar);
+    const door = $("doorbar");
+    if (bar) bar.hidden = true;
+    if (door) {
+      door.hidden = false;
+      fill(door);
       /* Room first, because that is where they came from and what they came
          back for. Then the three the door has. */
       for (const [href, key, on] of [["/room#room", "dr.barRoom", false],
@@ -8169,9 +8197,8 @@ function drawDeck() {
                                      ["/room#you", "dr.barYou", false]]) {
         const a = el("a", on ? "on" : null, T(key));
         a.href = href;
-        bar.append(a);
+        door.append(a);
       }
-      bar.classList.add("doorbar");
     }
     /* "0 MORE INSIDE" IS NOT A WALL, IT IS AN EMPTY BOARD ANNOUNCING ITSELF.
        The peek is short on purpose and on a new room it can be the whole of
