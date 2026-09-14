@@ -3788,6 +3788,8 @@ app.get("/api/wait/me", async (req, res) => {
       canSignIn: /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/
         .test(String(mine.reach || "").trim().toLowerCase()) },
     ahead, waiting: open.length, featured, seat,
+    // Whether the Inside tab has anything behind it — see peekN.
+    peekN: peekN(board),
     /* THE WAITING ROOM, TO THE PERSON IN IT.
      *
      * `up` is the stage; `left` is how many hours of it remain; `done` is
@@ -4891,6 +4893,23 @@ app.post("/api/waiting", express.json({ limit: "2kb" }), admin, async (req, res)
 /** THE FEW HE MAY NAME. The same people /api/people shows somebody outside the
  *  door, in the shape facts() wants — see the note over `peek` in cleanPerson
  *  and the block in lib/butler.js about what he may say of them. */
+/** HOW MANY MEMBERS A PERSON AT THE DOOR CAN ACTUALLY SEE.
+ *
+ *  Zero is the ordinary answer on a board where nobody has been chosen yet,
+ *  and it has to travel, because a tab called "Inside" that opens an empty
+ *  page is worse than no tab: it says the place is empty, which is the one
+ *  thing the door is there to disprove. Both doors hide the tab on 0.
+ *
+ *  NOT FIXED BY SHOWING SOMEBODY AUTOMATICALLY. See `peek` in cleanPerson —
+ *  everybody else on this board agreed to be in a directory MEMBERS read, and
+ *  this is one STRANGERS read. Filling it by picking the best-looking cards
+ *  would opt people into that without anybody deciding it. The empty door is
+ *  the honest state; `make peeks` lists who could be shown and `make peek
+ *  WHO=...` shows them.
+ */
+const peekN = (board) => board.people.filter((q) =>
+  q.state === "published" && q.looking && q.handle && q.peek).length;
+
 function peekFor(board) {
   return board.people
     .filter((q) => q.state === "published" && q.looking && q.handle && q.peek)
@@ -7138,6 +7157,8 @@ app.get("/api/door", notesOff, async (req, res) => {
 
   res.json({
     room: key, id, how, staff,
+    // Whether the Inside tab has anything behind it — see peekN.
+    peekN: peekN(board),
     /* HOW MANY ARE STANDING IN IT. The people, not the lines — a room of one
        person talking to themselves and a room of six is the thing somebody
        wants to know before they read a word of it. */

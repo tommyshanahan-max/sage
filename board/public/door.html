@@ -200,6 +200,10 @@ function paint() {
   document.body.classList.toggle("withbar", IN);
   $("barRoom").textContent = T("dr.barRoom");
   $("barIn").textContent = T("dr.barIn");
+  /* Same rule one tab along: nobody is shown from outside on a new board —
+     see peekN in server.js — and "Inside" opening an empty page says the
+     place is empty, which is what the door exists to disprove. */
+  $("barIn").hidden = !(ROOM && ROOM.peekN);
   $("barQueue").textContent = T("dr.barQueue");
   $("barYou").textContent = T("dr.barYou");
   $("rlink").removeAttribute("href");

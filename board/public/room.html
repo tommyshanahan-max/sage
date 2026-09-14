@@ -47,29 +47,6 @@
     background:var(--accent-soft);color:var(--accent);font-size:.72rem;
     font-weight:600}
 
-  /* THE ROOM AT THIS DOOR. Bubbles, because it is a conversation and looking
-     like one is the whole point — the screen it replaces was a form. */
-  .doorbox{margin:1.6rem 0 0}
-  .dtalk{margin:.9rem 0 0}
-  .dmsg{margin:0 0 .8rem}
-  .dmsg.mine{display:flex;flex-direction:column;align-items:flex-end}
-  .dbub{display:inline-block;max-width:82%;padding:.6rem .85rem;border-radius:1rem;
-    background:var(--raise);border:1px solid var(--hair);font-size:.95rem;line-height:1.5;
-    text-align:left;overflow-wrap:anywhere}
-  .dmsg.mine .dbub{background:var(--accent);color:var(--accent-ink);border-color:transparent}
-  .dbub.bot{border-color:var(--t3);border-left-width:3px}
-  .dbub.flag{outline:1px solid var(--t5);outline-offset:2px}
-  .dname{margin:.25rem 0 0;font-size:.74rem;color:var(--muted)}
-  .dquiet{margin:.9rem 0;font-size:.9rem;color:var(--muted);text-align:center}
-  .dwrite{display:flex;gap:.55rem;align-items:flex-end;margin:1rem 0 0}
-  .dwrite textarea{flex:1;min-height:2.8rem;max-height:8rem;resize:vertical;font:inherit;
-    font-size:1rem;padding:.6rem .8rem;border-radius:1rem;border:1px solid var(--line);
-    background:var(--raise);color:var(--ink)}
-  .dsend{flex:0 0 auto;border:0;border-radius:99px;background:var(--accent);
-    color:var(--accent-ink);padding:.65rem 1.1rem;font:inherit;font-size:.95rem}
-  .dsend:disabled{opacity:.45}
-  .dsaid{margin:.6rem 0 0;font-size:.85rem;line-height:1.55;color:var(--t5)}
-
   .wrband{margin:1rem 0 0;padding:.85rem .95rem;border-radius:.75rem;
     background:var(--accent-soft);font-size:.86rem;color:var(--ink-2);
     line-height:1.5}/* THE COUNT, AT A SIZE SOMEBODY READS FROM ARM'S LENGTH. It was body text
@@ -1301,22 +1278,23 @@ function drawWait(box) {
   box.append(hero);
   if (DATA.up) box.append(band);
 
-  /* THE ROOM THEY ARE STANDING IN.
+  /* THE ROOM IS THE ROOM TAB. IT WAS ON THIS SCREEN TOO.
    *
-   * This screen has been a form and a clock. Somebody fills in three fields
-   * and then waits, with nothing to do and no way to tell whether anything is
-   * happening — which is how a queue loses the people in it.
+   * It was put here because this screen had been a form and a clock —
+   * somebody fills in three fields and then waits, with nothing to do and no
+   * way to tell whether anything is happening, which is how a queue loses the
+   * people in it. Embedding the conversation was the fix, and it was the
+   * right one while /room was the only page these people had.
    *
-   * The room is the same wait with the silence taken out. The people at the
-   * same door can talk to each other, and a member reading it can say
-   * something, and the line under a message says which side of the door the
-   * person who wrote it is on — because "is anybody in there listening" is the
-   * whole question somebody in a queue has.
+   * It is not any more. /r/:room is where they land and where they talk, and
+   * the first tab in the bar goes straight back to it. Two copies of one
+   * conversation on one screen, one of them a second scroll down from the
+   * other — and the copy up here was a snapshot with no polling on it, so it
+   * could sit there quietly disagreeing with the live one.
    *
-   * Drawn for anybody with a row, not only somebody who has been moved up: a
-   * person who is 40th and talking to the other 39 is the best thing that can
-   * happen to this list. */
-  box.append(doorBox());
+   * What is left on this screen is the three things only this screen does:
+   * where you stand, your card, and the link that moves you up.
+   */
 
   /* AND THE THING THAT CANNOT BE UNDONE.
    *
@@ -1518,84 +1496,6 @@ function drawWait(box) {
 }
 
 /** The room at this door, on the screen of somebody standing in it. */
-function doorBox() {
-  const key = (DATA.you && DATA.you.room) || "other";
-  const box = el("section", "doorbox");
-  box.append(el("div", "rule", T("dr.yours")));
-  const talk = el("div", "dtalk");
-  box.append(talk);
-
-  const write = el("div", "dwrite");
-  const ta = document.createElement("textarea");
-  ta.rows = 1;
-  ta.maxLength = 600;
-  ta.placeholder = T("dr.say");
-  const send = el("button", "dsend", T("note.send"));
-  send.type = "button";
-  const said = el("p", "dsaid");
-  write.append(ta, send);
-  box.append(write, said);
-
-  let ROOM = null;
-  const draw = () => {
-    fill(talk);
-    if (!ROOM) { talk.append(el("p", "dquiet", T("act.again"))); return; }
-    if (!ROOM.says.length) { talk.append(el("p", "dquiet", T("dr.quiet"))); return; }
-    for (const m of ROOM.says) {
-      /* The room reporting itself — who came in, who went out. A line across
-         it, not a bubble from anybody: see moSays. Without this branch these
-         arrived as an empty bubble with a name under it. */
-      if (m.evt && m.evt.kind !== "welcome") {
-        talk.append(el("p", "dquiet", T("mo." + m.evt.kind, { who: m.evt.who })));
-        continue;
-      }
-      // What he said to somebody is a bubble from him, not a line — see moSays.
-      const said = m.evt ? T("mo.welcome", { who: m.evt.who }) : (m.text || "");
-      const row = el("div", "dmsg" + (m.mine ? " mine" : ""));
-      row.append(el("div", "dbub" + (m.bot ? " bot" : "") + (m.reported ? " flag" : ""), said));
-      if (!m.mine) {
-        row.append(el("p", "dname", (m.handle || T("board.someone"))
-          + (m.bot ? "" : " \u00B7 " + T(m.inside ? "dr.inside" : "dr.waiting"))));
-      }
-      talk.append(row);
-    }
-  };
-
-  const load = async () => {
-    try {
-      ROOM = await fetch("/api/door?room=" + encodeURIComponent(key), { cache: "no-store",
-        headers: { "x-board-device": device() } }).then((r) => (r.ok ? r.json() : null));
-    } catch { ROOM = null; }
-    draw();
-  };
-
-  send.addEventListener("click", async () => {
-    const text = ta.value.trim();
-    if (!text || !ROOM) { ta.focus(); return; }
-    send.disabled = true;
-    said.textContent = "";
-    try {
-      const r = await fetch("/api/group/say", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ device: device(), group: ROOM.id, text }),
-      });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.error || "no");
-      ta.value = "";
-      await load();
-    } catch (e) {
-      /* The contact rule applies at the door too, and this is the screen where
-         somebody is most likely to try it: they are waiting, they want to be
-         reachable, and pasting a WeChat id feels like helping. */
-      said.textContent = T(String(e.message) === "contact" ? "note.noContact" : "act.again");
-    }
-    send.disabled = false;
-  });
-
-  load();
-  return box;
-}
-
 /** What members see, and the only screen that can change it. */
 function drawYou(box) {
   const you = DATA.you;
@@ -1737,7 +1637,12 @@ function draw() {
   const room = (DATA && DATA.you && DATA.you.room) || "";
   $("tabRoom").textContent = T("dr.barRoom");
   $("tabRoom").href = room ? "/r/" + encodeURIComponent(room) : "/";
+  /* AND IT IS NOT THERE AT ALL WHEN THERE IS NOTHING BEHIND IT. Nobody has
+     been chosen for the door on a new board — see peekN in server.js — and a
+     tab called "Inside" that opens an empty page says the place is empty,
+     which is the one thing the door exists to disprove. */
   $("tabIn").textContent = T("dr.barIn");
+  $("tabIn").hidden = !(DATA && DATA.peekN);
   $("tabWait").textContent = T("wr.tabWait");
   $("tabYou").textContent = T("wr.tabYou");
   $("tabWait").className = PANE === "wait" ? "on" : "";

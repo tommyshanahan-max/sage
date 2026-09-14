@@ -1291,7 +1291,6 @@ export const STRINGS = {
   "dr.place":          ["no. {n} in line", "排第 {n}"],
   /* On the screen of somebody standing at the door. It was a form and a
      clock; the room is the same wait with the silence taken out. */
-  "dr.yours":          ["Your room", "你这间"],
   "dr.say":            ["Say something to the room", "跟这屋里的人说点什么"],
   "note.waitSub2": [
     "{n} people are waiting. Open a room to read what they wrote, or write to one of them.",
