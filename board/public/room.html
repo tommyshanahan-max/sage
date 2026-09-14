@@ -85,132 +85,24 @@
     background:var(--ink);color:var(--paper);font:inherit;font-size:1rem;
     font-weight:600;padding:.8rem 1rem;cursor:pointer}
   .wrgo + .wrgo{margin-top:.5rem}
-  .wrgo:active{transform:translateY(1px)}/* ---- THE ARRIVAL --------------------------------------------------------
+  .wrgo:active{transform:translateY(1px)}/* ---- THEIR NAME AND THEIR PLACE ----------------------------------------
    *
-   * The page opened on "You are on the list." — true, and the middle of a
-   * conversation nobody has had. Somebody who has just tapped a link out of a
-   * WeChat group does not know where they are, and the first thing a room does
-   * with a person who has walked in is use their name.
+   * This was a title page: 2.6rem of padding, a red chop on dark paper, the
+   * name at 3rem, and the position under it in a small uppercase eyebrow.
+   * See the note in the script where the arrival used to be built — it
+   * belonged to a screen that was the first thing anybody saw, and this is
+   * not that screen any more.
    *
-   * So: their name, large, and nothing else in the frame. The same move the
-   * invite makes — see CLAUDE.md on why that one is settled — and the reason
-   * it is a hero rather than a line is that a welcome the size of body text is
-   * not a welcome, it is a label.
-   *//* ---- THE ARRIVAL, AND IT IS THE FIRST THING ANYBODY SEES OF THIS PLACE ---
-   *
-   * The rest of this board is a working tool and looks like one, correctly.
-   * This one screen is not: it is the door of somewhere, opened for somebody
-   * by name, and for most people it is the only impression they will ever
-   * form of the place.
-   *
-   * A RED CHOP ON DARK PAPER. 印章 — the seal that makes a document real in
-   * China, and the reason it beat the four other directions it was drawn
-   * against: it is the only one that is about the thing this board actually
-   * is. Not a lobby, not a stage door, not an opening title — all of those
-   * are somebody's industry. A chop is what turns a piece of paper into an
-   * agreement between two sides, which is the whole product, and every
-   * Chinese member reads it before they read a word.
-   *
-   * It is also the only one of the six nobody else in this market can copy
-   * without looking like they copied it.
-   *
-   * Drawn, not loaded: a first impression that arrives in pieces over a
-   * mainland connection is worse than none. No image, no font, no request.
+   * One line now, and it is still the largest thing on the page, because it
+   * is the only reason somebody opens this tab. Serif, ink on paper, no
+   * frame: the page it sits on is the same working tool as the rest of the
+   * board, which is what this screen honestly is.
    */
   
-  
-  .hero{margin:.6rem 0 0;padding:2.6rem 1.2rem 2rem;border-radius:1.3rem;
-    text-align:center;position:relative;overflow:hidden;background:#12100E;
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}/* The paper it is stamped on: warm, and lit from where the stamp lands. */
-  
-  .hero .paper{position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(95% 72% at 50% 34%,#221D18 0%,#161310 52%,#100E0C 100%)}/* THE CHOP. Square, red, the character reversed out of it, and off true by
-     four degrees — a chop pressed by a person is never square to the page,
-     and that is most of what stops this looking like an app icon. The inner
-     ring is the carved border every seal has. */
-  
-  .hero .seal{position:relative;display:inline-grid;place-items:center;
-    width:4.6rem;height:4.6rem;margin:0 0 1.2rem;border-radius:.45rem;
-    background:#B22A1F;color:#F7EDE6;font:400 2.15rem/1 var(--serif);
-    font-style:normal;transform:rotate(-4deg);
-    box-shadow:inset 0 0 0 3px rgba(247,237,230,.32),
-               0 10px 30px rgba(178,42,31,.38)}/* The ink that has soaked past the edge. Two degrees the other way so the
-     bleed does not sit square under the stamp. */
-  
-  .hero .bleed{position:absolute;left:50%;top:2.2rem;width:9rem;height:9rem;
-    transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
-    background:radial-gradient(circle,rgba(178,42,31,.26),transparent 62%)}
-  .wrhi{position:relative;display:block;margin:0;font-family:var(--serif);
-    font-weight:400;font-size:clamp(2.1rem,10.5vw,3rem);line-height:1.02;
-    letter-spacing:-.015em;color:#EFE6DC;text-wrap:balance}
-  .heroq{position:relative;margin:1.1rem 0 0;font-size:.78rem;font-weight:600;
-    letter-spacing:.1em;text-transform:uppercase;color:#B08A6A}/* ---- THE CIRCLE ---------------------------------------------------------
-   *
-   * Ray's invite is a message somebody sent you. This is the same thing: one
-   * round thing in the middle of the screen that you press, and then somebody
-   * talks to you. Not a labelled button in a row of controls — those are
-   * furniture, and nobody presses furniture.
-   *
-   * IT DOES BOTH AT ONCE. The words are on the screen the whole time, greyed,
-   * and light up as they are spoken. So it works with the sound off, it works
-   * for somebody whose phone is on silent in a meeting, and for everybody else
-   * it is a person reading you in. The text is not a transcript that appears
-   * afterwards — following the words while they are said is most of what makes
-   * a second language readable at all.
-   */
-
-  
-  .orbwrap{position:relative;margin:1.3rem 0 0;display:grid;place-items:center}/* Paper on ink, so the one thing to press is the one bright thing. *//* THE CIRCLE IS MO. It was a cream disc with a play triangle in it, and the
-     blue circle in the corner was somebody else entirely — so the voice that
-     greets you, the face on the panel and the button you press when stuck
-     were three unrelated objects on one screen. They are one person: same
-     blue, same face, same size. Pressing the one in the middle of the
-     arrival and pressing the one in the corner are then obviously the same
-     gesture, which is what makes the line under the last button mean
-     anything. */
-  
-  
-  .orb{width:5.4rem;height:5.4rem;border-radius:50%;border:0;cursor:pointer;
-    background:var(--accent);color:var(--accent-ink);display:grid;
-    place-items:center;padding:0;
-    box-shadow:0 12px 34px rgba(0,0,0,.5);transition:transform .12s ease-out}
-  .orb:active{transform:scale(.96)}
-  .orb svg{width:2.6rem;height:2.6rem;fill:currentColor;stroke:none}/* The little play triangle, tucked at the foot of him rather than replacing
-     him: at rest it has to be clear this is a thing you press, and a face
-     alone on a dark screen is a portrait. */
-  
-  .orb i{position:absolute;right:-.1rem;bottom:-.1rem;width:2.1rem;height:2.1rem;
-    border-radius:50%;background:#F2E7DC;color:#12100E;
-    display:grid;place-items:center;box-shadow:0 3px 9px rgba(0,0,0,.45)}
-  .orb i svg{width:1.05rem;height:1.05rem;margin-left:.1rem}
-  .orbwrap.on .orb i{display:none}
-  .orb:focus-visible{outline:3px solid var(--ink);outline-offset:3px}/* The ring only exists while it is talking, so the circle at rest is one
-     clean shape rather than a control with decoration around it. */
-  
-  .ring{position:absolute;width:5.4rem;height:5.4rem;border-radius:50%;
-    border:2px solid rgba(178,42,31,.85);opacity:0;pointer-events:none}
-  .orbwrap.on .ring{animation:ping 1.8s ease-out infinite}
-  .orbwrap.on .ring.b{animation-delay:.9s}
-  @keyframes ping{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.5);opacity:0}}
-  @media (prefers-reduced-motion:reduce){.orbwrap.on .ring{animation:none;opacity:.35}}
-  .orbsay{position:relative;margin:.75rem 0 0;font-size:.78rem;color:#8A7663}/* The message. Greyed until spoken, then it is ink. *//* The beats, each one landing under the last. Nothing is on screen before
-     the first press — the name and the circle are the whole of it at rest. */
-
-  
-  
-  .beats{position:relative;margin:0}
-  .beat{margin:1.1rem auto 0;max-width:21rem;font-family:var(--serif);
-    font-size:1.06rem;line-height:1.62;color:#6A5A4B}
-  .beat w{color:inherit;transition:color .14s ease-out}
-  .beat w.lit{color:#EFE6DC}
-  .heroshow{position:relative;margin:1.2rem 0 0;border:0;border-radius:99px;
-    background:#F2E7DC;color:#12100E;font:inherit;font-size:.95rem;
-    font-weight:600;padding:.6rem 1.5rem;cursor:pointer}/* The card coming up to meet them on the last press. */
-  
-  .pc.arrive{animation:cardin .5s cubic-bezier(.2,.7,.3,1)}
-  @keyframes cardin{from{opacity:0;transform:translateY(-14px) scale(.97)}}
-  @media (prefers-reduced-motion:reduce){.pc.arrive{animation:none}}
-  .wrband b{display:block;color:var(--ink);font-size:.98rem;font-weight:500}/* THE WAITING ROOM, WHICH IS A DIFFERENT BAND FROM BEING ON THE LIST.
+  .wrhi{margin:1rem 0 0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.5rem,6.5vw,1.95rem);line-height:1.2;
+    letter-spacing:-.01em;color:var(--ink);text-wrap:balance}
+    .wrband b{display:block;color:var(--ink);font-size:.98rem;font-weight:500}/* THE WAITING ROOM, WHICH IS A DIFFERENT BAND FROM BEING ON THE LIST.
      Warmer than the blue one above it so that being moved up reads as having
      happened rather than as the same notice with new words in it. */
   
@@ -480,12 +372,6 @@
   
   .wrshare{margin:1.4rem 0 0;background:var(--card);border:1px solid var(--line);
     border-radius:14px;padding:1.1rem}
-  .wrshare .sharenow{display:flex;align-items:baseline;gap:.45rem;margin:0 0 .5rem;
-    flex-wrap:wrap}
-  .wrshare .sharenow .lab{font-size:.9rem;color:var(--ink-2)}
-  .wrshare .sharenow b{font-size:2.2rem;line-height:1;letter-spacing:-.02em;
-    font-weight:650;color:var(--accent)}
-  .wrshare .sharenow .of{font-size:.9rem;color:var(--ink-2)}
   .wrshare .sharewhy{margin:0 0 .85rem;font-size:.88rem;color:var(--ink-2)}
   .wrshare .sharego{width:100%;border:0;border-radius:99px;background:var(--accent);
     color:var(--accent-ink);padding:.85rem;font-size:1rem;font-weight:600;
@@ -574,14 +460,16 @@
   .tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;
     background:var(--card);border-top:1px solid var(--hair);
     padding-bottom:env(safe-area-inset-bottom)}
-  .tabs button{flex:1;padding:.9rem 0;border:0;background:none;font:inherit;
-    font-size:.9rem;font-weight:600;color:var(--muted);cursor:pointer}
-  .tabs button.on{color:var(--accent)}/* Under the last press of the arrival, quiet: it is a thing to remember,
-     not a thing to do now. */
-
+/* FOUR, AND TWO OF THEM LEAVE THE PAGE. Room and Inside are anchors — the
+     conversation they came from, and the people the whole thing is for. They
+     are the same four in the same order as the bar on door.html, because a
+     bar that changes under somebody as they move between two screens of the
+     same app is a bar nobody learns. */
   
-  .heromo{margin:1rem 0 0;font-size:.82rem;line-height:1.5;
-    color:rgba(239,230,220,.62)}
+  .tabs button,.tabs a{flex:1;padding:.9rem 0;border:0;background:none;
+    font:inherit;font-size:.9rem;font-weight:600;color:var(--muted);
+    cursor:pointer;text-align:center;text-decoration:none}
+  .tabs button.on,.tabs a.on{color:var(--accent)}
 
   .quietlink{display:inline-block;margin:1rem 0 0;color:var(--accent);
     font-size:.9rem}
@@ -609,12 +497,14 @@
 </main>
 
 <nav class="tabs" id="tabs" hidden>
+  <a id="tabRoom"></a>
+  <a href="/browse" id="tabIn"></a>
   <button type="button" id="tabWait"></button>
   <button type="button" id="tabYou"></button>
 </nav>
 
 <script type="module">
-import { T, setLang, pickLang, langButton, when, lang } from "/i18n.js";
+import { T, setLang, pickLang, langButton, when } from "/i18n.js";
 import { offerInstall } from "/install.js";
 /* Nothing on this page uses either any more — Mo owns the microphone and he
    lives in mo.js. Kept off the import list rather than left dangling. */
@@ -624,7 +514,10 @@ import { beatUnits } from "/beat.js";
    page adds is the only thing it knows that he does not: how he opens to
    somebody standing at a door, and what to do when they keep the sentence he
    proposes. */
-import { mountMo, moFloat, moDock, moOff, moGoneRow, moIsOpen, pointAtMo, MOFACE } from "/mo.js";
+/* moDock, pointAtMo and MOFACE went with the arrival — they were the
+   hand-off from the big circle in the middle of the page to the small one in
+   the corner, and there is only one of him now. */
+import { mountMo, moFloat, moOff, moGoneRow, moIsOpen } from "/mo.js";
 import { device } from "/wait.js";
 /* The same pipeline the board behind the door uses — HEIC in, JPEG out,
    the right way up, small enough to arrive over Chinese mobile data. */
@@ -1074,20 +967,20 @@ function seatBox(seat) {
  *  too. So the address is printed underneath, selectable, for the case where
  *  both fail and somebody has to press and hold it like any other text.
  */
-function shareBox(link, ahead) {
+function shareBox(link) {
   const url = location.origin + link;
   const wrap = el("div", "wrshare");
   const head = el("div", "wrhead");
   head.append(el("span", null, T("wr.shareHead")), el("i"));
 
-  /* THEIR PLACE, AS THE HEADLINE. It was a grey line under the sentence
-     explaining it — the fact set smaller than the explanation. Big number
-     first, then what moves it, then the button that moves it. */
-  const now = el("div", "sharenow");
-  now.append(el("span", "lab", T("wr.sharePlace")));
-  now.append(el("b", null, "#" + ((ahead || 0) + 1)));
-  now.append(el("span", "of", T("wr.shareOf", { t: (DATA && DATA.waiting) || 1 })));
-  wrap.append(now);
+  /* THE PLACE IS AT THE TOP OF THE PAGE NOW, NOT IN HERE TOO.
+     This block led with "You are #1 of 5 waiting" in a big number, which was
+     right when the top of the page was a welcome and the position was an
+     eyebrow under it. The first line of the page says it now, so saying it
+     again three blocks down is the screen disagreeing with itself about
+     which one is the fact.
+     What is left is the only thing this block is for: what moves it, and
+     the button that moves it. */
   wrap.append(el("p", "sharewhy", T("wr.shareWhy")));
 
   const go = el("button", "sharego");
@@ -1146,355 +1039,27 @@ function shareBox(link, ahead) {
  * IT PROPOSES AND NEVER WRITES. What comes back appears as the sentence it
  * would put on their card, with a button. Nothing is stored by talking.
  */
-/* True from the moment the arrival is drawn until his circle has scrolled off
-   the screen and the small one has taken over. See moFloat, and the
-   scroll-settle at the end of welcomeOrb. */
-let ARRIVING = false;
-/* AND ONCE PER PAGE LOAD. The arrival is a thing that happens to somebody
-   when they open the room, not a thing the page re-enacts every time it
-   redraws itself — and it redraws on every turn of a conversation and every
-   press of a pill. Without this, sending Mo away and asking for him back
-   redrew the room, started the arrival again, and hid the circle that had
-   just been asked for. */
-let ARRIVED = false;
-
-
-/* NOTHING ON THIS PAGE TALKS, AND IT IS ON PURPOSE.
+/* THE ARRIVAL IS AT THE DOOR NOW, NOT HERE.
  *
- * There was a speechSynthesis voice here — on the arrival beats and on a
- * "Hear it" under Mo's last line — with a careful voice picker in front of
- * it. The picker worked: it skipped the flat 2005 macOS voices (Samantha,
- * Alex, Victoria, Fred; Samantha had been in the *preferred* list, which is
- * how Chrome on a Mac ended up choosing the worst voice on the machine) and
- * preferred Siri / Neural / Premium, then remote synthesis over local.
+ * This page opened on a title page: a dark card with a red chop on it, the
+ * person's name at 3rem, and Mo's circle in the middle reading them in over
+ * two beats with the words lighting up as he said them. It was the right
+ * screen when this WAS the first screen — somebody tapped a link out of a
+ * WeChat group and landed here knowing nothing.
  *
- * It still was not good enough. The ceiling is set by the browser, not by the
- * picking: an iPhone gets a Siri voice and sounds like a person, and Chrome
- * on macOS tops out at Google's network voice, which is a lift announcing a
- * floor. The first thing this place says to somebody cannot be a coin toss on
- * which browser they happened to open it in, and losing that toss is worse
- * than saying nothing. Same for Mo — a character with a name and a face read
- * aloud in that voice stops being a character.
+ * They land in the room now. /r/:room opens the conversation, Mo greets them
+ * in it by name, and this page is the second thing they see, reached from a
+ * tab. A second welcome, with a seal on it, to somebody who has already been
+ * welcomed and has come here to find out where they stand — so the ceremony
+ * goes and the one fact it was wrapped around stays: their name and their
+ * position, one line, at the top.
  *
- * The beats already lit word by word underneath the speech (the fallback for
- * Safari, which often never fires onboundary); that reveal is now the whole
- * performance and it needs no sound. If a voice comes back it will be real
- * TTS, rendered once per language and served as a file — not the browser's.
+ * WHAT WENT WITH IT, so it can be found: welcomeOrb() — the circle, the two
+ * beats, the per-word lighting, the mp3-plus-timings loader under /voice, and
+ * the scroll-settle that handed Mo from the middle of the page to the corner.
+ * All of it is in the history of this file. If the beats are wanted again the
+ * place for them is door.html, which is where people now arrive.
  */
-
-
-/** THE CIRCLE, AND THE WORDS LIGHTING UP UNDER IT.
- *
- *  One round thing in the middle that you press, and then somebody talks to
- *  you — the same shape as the invite, which is a message somebody sent you
- *  rather than a page with controls on it.
- *
- *  BOTH AT ONCE. The words are on the screen the whole time in grey and turn
- *  to ink as they are said, so it reads with the sound off and it is a person
- *  reading you in with the sound on. Following the words while they are
- *  spoken is most of what makes a second language legible at all, which is
- *  half of who this board is for.
- */
-function welcomeOrb(you) {
-  /* TWO BEATS, AND A PRESS BETWEEN THEM.
-   *
-   * It was one paragraph. A paragraph is a thing you scroll past, and this is
-   * the first thing anybody hears from the place — so it arrives the way a
-   * person would say it: a line, then you say something back, then the rest.
-   *
-   * The first beat is hello and a promise that this is short. The second is
-   * the two things to do. The button between is a question, because a
-   * question is the thing you answer; "Continue" is a thing you obey.
-   */
-  const keys = DATA.up ? ["wel.b1Up", "wel.b2Up"] : ["wel.b1List", "wel.b2List"];
-  const beats = keys.map((k) => T(k));
-
-  /* WHERE THE VOICE LIVES. One file per beat per language, rendered once by
-     scripts/voice.mjs and committed — the beats carry no name and no number,
-     which is exactly what lets them be files. If a file is not there the
-     request 404s, the Audio element errors, and the words run on a timer;
-     nothing on this screen waits on any of it. */
-  const tag = lang() === "zh" ? "zh" : "en";
-  const beatSrc = keys.map((k) => `/voice/${k}.${tag}.mp3`);
-  const beatAt = keys.map(() => null);
-
-  /* The timings, fetched beside the audio rather than inlined: a missing one
-     is a 404 and a null, which is the same as "light the words on a timer".
-     Started now, not at the press — a beat that has to wait for a JSON file
-     before its first word lights is a beat that stutters on a slow phone. */
-  keys.forEach((k, i) => {
-    fetch(`/voice/${k}.${tag}.json`, { cache: "force-cache" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((v) => { beatAt[i] = v; })
-      .catch(() => { /* no timings for this one */ });
-  });
-
-  /* Set by land() while a beat is playing, so pressing the circle mid-beat
-     stops the voice as well as the words. */
-  let stopBeat = null;
-
-  const box = document.createElement("div");
-  const said = el("div", "beats");
-  box.append(said);
-
-  let at = -1;                 // which beat has landed
-  let timer = null;
-
-  /* The dock is suppressed until this finishes — see moFloat. Set here rather
-     than in drawWait so that a page without an arrival never sets it and
-     never has to clear it. */
-  if (!ARRIVED && DATA.butler && !moOff()) ARRIVING = true;
-
-  const wrap = el("div", "orbwrap");
-  wrap.append(el("i", "ring"), el("i", "ring b"));
-  const orb = el("button", "orb");
-  orb.type = "button";
-  orb.style.position = "relative";
-  /* HIS FACE, NOT A PLAY BUTTON — the same MOFACE the panel head and the
-     floating circle use. One constant, so the three can never drift into
-     three different people. The little triangle rides at the foot of him. */
-  const TRI = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>';
-  const CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l8 7-8 7z"/></svg>';
-  const PLAY = MOFACE + '<i>' + TRI + '</i>';
-  const NEXT = MOFACE + '<i>' + CHEV + '</i>';
-  orb.innerHTML = PLAY;
-  orb.setAttribute("aria-label", T("wel.play"));
-  const hint = el("p", "orbsay");
-  wrap.append(orb);
-  box.append(wrap, hint);
-
-  /* Each beat is its own paragraph and lights word by word as it is spoken —
-     so it reads with the sound off, and with the sound on it is somebody
-     reading you in. */
-  function land(i) {
-    const words = beats[i];
-    const para = el("p", "beat");
-    /* Cut by beat.js, which scripts/voice.mjs also uses to turn the voice's
-       per-character timings into one start time per unit. If the two ever
-       disagreed about where a sentence breaks, every word after the first
-       mismatch would light on the wrong sound. */
-    const spans = beatUnits(words).map((u) => {
-      const n = document.createElement("w");
-      n.textContent = u.text;
-      para.append(n);
-      return n;
-    });
-    said.append(para);
-
-    wrap.classList.add("on");
-    hint.textContent = T("wel.stop");
-    orb.setAttribute("aria-label", T("wel.stop"));
-
-    let k = 0;
-    const step = () => {
-      if (k < spans.length) spans[k++].classList.add("lit");
-      return k >= spans.length;
-    };
-    const finish = () => {
-      if (timer) { clearInterval(timer); timer = null; }
-      for (const n of spans) n.classList.add("lit");
-      wrap.classList.remove("on");
-      /* A breath on the last word before the button changes under them. */
-      setTimeout(() => after(i), 260);
-    };
-
-    /* THE VOICE, IF IT HAS BEEN RENDERED.
-     *
-     * Four fixed beats, two languages, eight files made once by
-     * scripts/voice.mjs and committed — see the note at the top of it for why
-     * this is a file and not a request, and why the browser's own voice was
-     * cut rather than tuned. A real one on an arrival is worth the trouble; a
-     * station announcement is worse than silence, which is what the timer
-     * below is.
-     *
-     * THE PAGE WORKS WITHOUT THEM. Nothing here is required: no file, a
-     * blocked autoplay, a codec the browser will not take, a phone on silent
-     * — every one of those falls through to the reveal on a timer, which is
-     * what this screen did all evening and is not a degraded thing. The audio
-     * is asked to play, and the words are NOT waiting on it to say yes. */
-    const src = beatSrc[i];
-    const timings = beatAt[i];
-    let voice = null;
-    if (src) {
-      try {
-        voice = new Audio(src);
-        voice.preload = "auto";
-      } catch { voice = null; }
-    }
-
-    if (voice && timings && timings.at && timings.at.length === spans.length) {
-      /* ON THE VOICE, NOT NEAR IT. One start time per unit, from the same
-         beatUnits() split the renderer used. timeupdate fires every 15-250ms
-         depending on the browser, which is too coarse on its own for a word
-         landing — so it only ever catches up, and rAF does the rest. */
-      let raf = 0;
-      const follow = () => {
-        const t = voice.currentTime;
-        while (k < spans.length && timings.at[k] <= t) spans[k++].classList.add("lit");
-        if (k < spans.length) raf = requestAnimationFrame(follow);
-      };
-      const done = () => { cancelAnimationFrame(raf); finish(); };
-      voice.addEventListener("ended", done, { once: true });
-      voice.addEventListener("error", done, { once: true });
-      voice.play().then(() => { raf = requestAnimationFrame(follow); }).catch(() => {
-        /* Autoplay refused, or no sound on this device. The words still
-           arrive — they just arrive on a timer. */
-        voice = null;
-        runTimer();
-      });
-      stopBeat = () => { try { voice && voice.pause(); } catch { /* gone */ } cancelAnimationFrame(raf); };
-      return;
-    }
-
-    /* Audio there but no timings — the renderer could not line the characters
-       up, so the words run on the timer while the voice plays underneath.
-       Close enough to read along with, and honest about not being exact. */
-    if (voice) {
-      voice.play().catch(() => { voice = null; });
-      stopBeat = () => { try { voice && voice.pause(); } catch { /* gone */ } };
-    }
-    runTimer();
-
-    function runTimer() {
-      /* PACED BY THE LINE, NOT BY THE WORD. Long words take longer to read
-         than short ones, so the gap comes from the characters either side of
-         it — otherwise "I'm" and "congratulations" get the same beat and the
-         whole thing limps.
-         38ms a character, which is about 26 a second. It was 74 and a beat
-         took six and a half seconds, on the screen that had just said it
-         would keep this quick — a promise the page was breaking while making
-         it. At 38 a beat lands in two to three and still reads as somebody
-         talking rather than text appearing. */
-      const ms = Math.max(110, Math.round((words.length * 38) / spans.length));
-      timer = setInterval(() => { if (step()) finish(); }, ms);
-    }
-  }
-
-  /* WHAT THE BUTTON SAYS NEXT, and on the last beat it stops being a button
-     to press and becomes the way into the thing they were sent here to do. */
-  function after(i) {
-    if (i < beats.length - 1) {
-      orb.innerHTML = NEXT;
-      orb.setAttribute("aria-label", T("wel.ready"));
-      hint.textContent = T("wel.ready");
-      return;
-    }
-    hint.textContent = "";
-
-    /* AND WHERE HELP IS, ONCE — not as a third beat.
-     *
-     * He asked for the welcome to say that Mo is there whenever they are
-     * stuck, and it is worth saying. Not spoken, though: two beats end on
-     * "I'll keep it quick" and a third one about a feature is the page
-     * breaking its own promise to introduce a button.
-     * So it is read rather than heard, and it sits under the last press,
-     * where their eyes already are — and it names the thing they can see out
-     * of the corner of their eye rather than describing a feature. Only when
-     * he is actually on the screen: an arrow pointing at a circle somebody
-     * has sent away is worse than no arrow. */
-    if (DATA.butler && !moOff()) {
-      box.append(el("p", "heromo", T("wel.mo")));
-    }
-
-    const go = el("button", "heroshow", T("wel.show"));
-    go.type = "button";
-    go.addEventListener("click", () => {
-      /* THE CARD COMES UP TO MEET THEM. The whole point of the two beats is
-         that they end on "a photo and one line" — so the thing that takes
-         those is what the last press produces, rather than something to go
-         and find further down a page they have not scrolled. */
-      go.remove();
-
-      /* HE DOES NOT FLY. HE IS LEFT BEHIND, AND CATCHES UP.
-       *
-       * The first version animated his circle across the screen into the
-       * corner — a FLIP transform onto the dock's rect. It worked and it was
-       * wrong twice over: the geometry is fiddly enough to land him off the
-       * edge of a phone, and nobody was watching anyway, because the card
-       * scrolling up takes the eye with it.
-       *
-       * This is better and it is the obvious thing. He stays exactly where he
-       * is, in the hero, and the page scrolls down to the card — so he goes
-       * off the top of the screen on his own, the way anything does. The
-       * moment he is actually gone, the small one fades in at the corner.
-       * Nothing moves that a person did not move; he is simply still there
-       * when they look for him, smaller, out of the way.
-       *
-       */
-      const card = document.querySelector(".pc");
-      const reveal = () => {
-        if (!ARRIVING) return;
-        ARRIVING = false;
-        ARRIVED = true;
-        /* AND THE BIG ONE GOES. On a tall phone the scroll does not carry the
-           hero far enough off and both of him end up on screen — which is the
-           exact thing this whole arrangement exists to prevent. He does not
-           need to be strictly out of view for this to read: the corner one
-           appears, the middle one is gone, and that IS him moving. */
-        orb.hidden = true;
-        moFloat(Boolean(DATA.butler));
-        pointAtMo();
-      };
-
-      /* WHEN THE SCROLL HAS SETTLED, NOT WHEN HE IS STRICTLY GONE.
-       *
-       * First this watched the hero leave the viewport, then the circle
-       * itself, and on a tall phone neither happens: scrollIntoView puts the
-       * card in the MIDDLE of the screen, so on anything taller than about
-       * 900 points the arrival is still half in view above it and an
-       * IntersectionObserver waiting for "gone" waits for ever. Both times it
-       * fell through to a four-second timeout with neither of him on screen,
-       * which is the one outcome worse than having two.
-       *
-       * So it waits for the scroll to stop moving instead. That is the moment
-       * the page means — they have arrived at the card, wherever the hero
-       * ended up — and it happens at the same time on a short screen and a
-       * tall one. A quarter-second of stillness, a floor of 450ms so it never
-       * beats the scroll it is waiting for, and a 3s ceiling for a browser
-       * that fires no scroll events at all because the page could not move.
-       */
-      let quiet = 0;
-      let done = false;
-      const settled = () => {
-        if (done) return;
-        done = true;
-        window.removeEventListener("scroll", nudge);
-        clearTimeout(quiet);
-        reveal();
-      };
-      const nudge = () => { clearTimeout(quiet); quiet = setTimeout(settled, 260); };
-      window.addEventListener("scroll", nudge, { passive: true });
-      setTimeout(() => { if (!quiet) nudge(); }, 450);
-      setTimeout(settled, 3000);
-
-      if (card) {
-        card.classList.add("arrive");
-        try { card.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* old browser */ }
-      }
-    });
-    box.append(go);
-  }
-
-  orb.addEventListener("click", () => {
-    if (wrap.classList.contains("on")) {
-      /* Mid-beat. Somebody who reads faster than the voice presses again and
-         gets the rest of the line at once — which has to stop the voice too,
-         or the room is left with a disembodied sentence finishing over a
-         screen that has already moved on. */
-      if (stopBeat) { stopBeat(); stopBeat = null; }
-      if (timer) { clearInterval(timer); timer = null; }
-      wrap.classList.remove("on");
-      said.querySelectorAll("w").forEach((n) => n.classList.add("lit"));
-      after(at);
-      return;
-    }
-    if (at >= beats.length - 1) return;
-    at += 1;
-    land(at);
-  });
-
-  return box;
-}
 
 /** THE FIRST THING HE SAYS, and it is the invite's job rather than a
  *  chatbot's.
@@ -1662,34 +1227,25 @@ function loseBox() {
 function drawWait(box) {
   const you = DATA.you;
 
-  /* THE ARRIVAL, and it is the first thing on the page. First name only: a
-     room says "Welcome, Jack", never "Welcome, Jack Daniels". */
+  /* THEIR NAME AND THEIR PLACE, ON ONE LINE, AND IT IS THE WHOLE TOP OF THE
+     PAGE. First name only: a room says "Jack", never "Jack Daniels".
+
+     NOT SMALL AND NOT GREY. It is the only reason this tab exists — somebody
+     opens it to find out where they stand — so it is the largest thing on the
+     screen. The position is IN the sentence rather than under it in an
+     uppercase eyebrow: two lines saying one fact is how the eyebrow ends up
+     being the half nobody reads.
+
+     THE POSITION IS FOR PEOPLE STANDING IN THE QUEUE. Somebody who has been
+     moved up is not in it any more, and telling them they are 56th of 56 on
+     the screen that just congratulated them for getting out is the opposite
+     of what happened to them — the band below carries their state instead. */
   const first = (you.name || "").split(/\s+/)[0] || you.name || "";
   you.first = first;
-  const hero = el("div", "hero");
-  hero.append(el("i", "paper"));
-  hero.append(el("i", "bleed"));
-  hero.append(el("i", "seal", "\u4EA4"));
-  hero.append(el("span", "wrhi", T("wel.hi", { who: first })));
-  hero.append(welcomeOrb(you));
-
-  /* THE NUMBER GOES ON THE HERO, and the band under it goes away entirely
-     while they are only on the list.
-     The two of them were saying the same thing in a row — the hero said they
-     are at the door of a private board that somebody inside decides about,
-     and the band said members are looking through the people at the door.
-     One of those is enough, and the one with their name on it wins. What the
-     band was carrying that the hero was not is the position, so the position
-     moves up: fifth of six and fifth of ninety read the same without it, and
-     only one of them is worth working at. */
-  /* THE POSITION IS FOR PEOPLE STANDING IN THE QUEUE. Somebody who has been
-     moved up is not in it any more, and telling them they are 56th of 56 on
-     the screen that just congratulated them for getting out is the exact
-     opposite of what happened to them. The band below carries their state. */
-  if (!DATA.up) {
-    hero.append(el("p", "heroq", T("wr.ahead",
-      { n: (DATA.ahead || 0) + 1, t: DATA.waiting || 1 })));
-  }
+  const hero = el("p", "wrhi");
+  hero.textContent = DATA.up
+    ? T("wel.hi", { who: first })
+    : T("wr.youAre", { who: first, n: (DATA.ahead || 0) + 1, t: DATA.waiting || 1 });
 
   const band = el("div", "wrband");
 
@@ -1929,7 +1485,7 @@ function drawWait(box) {
    * was being handed a link to a half-filled page. Below the dropdowns it
    * comes after the last thing they fill in, and before the people waiting
    * with them, so the proof sits next to the ask. */
-  if (DATA.link) box.append(shareBox(DATA.link, DATA.ahead));
+  if (DATA.link) box.append(shareBox(DATA.link));
 
   /* THE SEAT, when the switch is on. See SEAT_OUTSIDE in server.js — the
      server sends nothing at all when it is off, so this whole block simply
@@ -2215,6 +1771,16 @@ function draw() {
   fill(box);
   document.title = T("wr.title") + " · " + T("site.title");
   $("brandname").textContent = T("site.title");
+  /* THE ROOM THEY CAME FROM, AND THE PEOPLE IT IS FOR.
+     Somebody standing in the queue could reach neither. The room was a page
+     they had to have kept open, and Browse — the five faces the door shows
+     from outside — was reachable only from door.html, which they had left.
+     Both are a tab now, and /browse knows what to do with somebody who is
+     still outside: see the wall branch in index.html. */
+  const room = (DATA && DATA.you && DATA.you.room) || "";
+  $("tabRoom").textContent = T("dr.barRoom");
+  $("tabRoom").href = room ? "/r/" + encodeURIComponent(room) : "/";
+  $("tabIn").textContent = T("dr.barIn");
   $("tabWait").textContent = T("wr.tabWait");
   $("tabYou").textContent = T("wr.tabYou");
   $("tabWait").className = PANE === "wait" ? "on" : "";
@@ -2266,12 +1832,12 @@ function draw() {
      A doorman who leaves once you are through the door is a doorman you
      cannot ask anything. */
 
-  /* NOT WHILE THE ARRIVAL IS RUNNING. Two of him on one screen — the big one
-     in the middle talking and the small one in the corner waiting — says they
-     are two different characters. The big one is left behind by the scroll
-     and the small one fades in once the page has stopped moving. */
+  /* HE IS ONLY EVER IN THE CORNER HERE. There used to be a second, larger
+     one in the middle of the arrival, and a hand-off between them — see the
+     note where the arrival was. One of him now, from the moment the page
+     draws. */
   mountMo({
-    on: Boolean(DATA.butler) && !ARRIVING,
+    on: Boolean(DATA.butler),
     where: "wait",
     /* The whole opening, not one line: what he says first is the only part of
        him that differs between a door and a room, so the page that knows

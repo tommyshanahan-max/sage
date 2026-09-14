@@ -1371,6 +1371,13 @@ export const STRINGS = {
      thing. */
   "wr.ahead":        ["You are number {n} of {t} waiting",
                       "你排在第 {n} 位，共 {t} 人在等"],
+  /* THE WHOLE TOP OF THE QUEUE TAB, and it is their name and their number in
+     one sentence. It replaced a welcome at 3rem with the position under it in
+     a small uppercase line — two lines saying one thing, and the half that
+     mattered was the small one. Their name first because a room uses it; the
+     number second because that is what they opened this to find out. */
+  "wr.youAre":       ["{who} — you are {n} of {t} waiting",
+                      "{who}，你排第 {n}，一共 {t} 人在等"],
   "wr.aheadNone":    ["You are first in the queue", "你排在最前面"],
   "wr.yourcard":     ["Your card", "你的卡片"],
   /* The empty card, said out loud. A screen that draws three blanks and says
