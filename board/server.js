@@ -3410,8 +3410,18 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
      *
      * Only for somebody who came in through a door. A row made on the public
      * form belongs to no room yet and there is nothing to announce it to. */
-    if (viaRoom && !board.waits.some((w) => w.by === me && !w.done)) {
-      const door = store.doorRoom(String(req.body?.room || ""));
+    /* AND SOMEBODY WHO MOVES TO ANOTHER DOOR IS AN ARRIVAL AT THAT ONE.
+     *
+     * The test was "no live row at all", which is right for a first arrival
+     * and silent for the other case: somebody standing at the investment door
+     * opens the film link, and the replace below moves their row to film —
+     * where the room never says they came in, and Mo never greets them,
+     * because the board can see they were already somewhere. They walked into
+     * a room of twenty people and it said nothing. */
+    const had = board.waits.find((w) => w.by === me && !w.done);
+    const asked = String(req.body?.room || "");
+    if (viaRoom && (!had || (had.room || "other") !== asked)) {
+      const door = store.doorRoom(asked);
       moSays(board, door, "in", name);
       /* AND HE SAYS SOMETHING TO THEM, IN THE ROOM.
        *
