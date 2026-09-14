@@ -272,6 +272,31 @@ const aOrAn = (w) => (/^[aeiou]/i.test(w) ? "an " : "a ") + w;
 
 function facts(who = {}) {
   const bits = [];
+
+  /* A ROOM IS NOT THE CARD, and this is the line that had to be written.
+   *
+   * His job everywhere else is to get two things out of somebody: the
+   * sentence and a line about what they do. That is right on the card page,
+   * where a person is filling one in and nobody else is watching. In a room
+   * it produced this, three times in a row, to a member who had asked him a
+   * question:
+   *
+   *   Here. What do you do?
+   *   One's browsable from out there right now — Ray Chen ... What do you do?
+   *   That's me. What do you do?
+   *
+   * Somebody asked him something in front of twenty other people and got an
+   * interview. It reads as a machine with one script, and it is worse than
+   * silence because it is public.
+   *
+   * FIRST, because every other block below assumes the card.
+   */
+  if (who.room) {
+    bits.push("WHERE YOU ARE: in a room, and everybody in it reads what you say. You were asked something in front of them.");
+    bits.push("SO YOUR JOB HERE IS TO ANSWER AND STOP. One line. You are not collecting anybody's sentence in here and you must not ask for one — not \"what do you do\", not \"what are you looking for\", not any version of it. A question back to somebody who asked you a question is the worst line you have, and in a room the whole room reads it.");
+    bits.push("If you cannot answer, say so in one line. That is a better answer than a question.");
+  }
+
   if (who.name) bits.push(`Their name is ${who.name}. Use it sparingly — once, at most.`);
 
   /* THE FEW MEMBERS SOMEBODY OUTSIDE CAN ALREADY SEE, and the only people on
@@ -317,6 +342,10 @@ function facts(who = {}) {
         .filter(Boolean).join(" \u2014 ");
       bits.push("  " + line);
     }
+    /* AND NOT IN THE WORDS OF THIS BRIEF. He said "One's browsable from out
+       there right now — Ray Chen", which is this paragraph read out loud.
+       Whoever is asking does not know what "out there" means. */
+    bits.push("SAY IT LIKE A PERSON. \"Browsable\", \"from outside the door\" and \"out there\" are words from this instruction and not words anybody says — never repeat them. \"Ray Chen is on the board, investor looking for a producer\" is the whole of it.");
     bits.push("Use at most one of them, and only when it answers what was asked. Quote what their line says and stop. Never predict what they would do for anybody, never give them a company or a credit they did not write, and never reach for an adjective. If they ask who else is in there: that is the wall, and the honest answer is that a person decides who comes in and you are not shown the room.");
   }
 
@@ -333,7 +362,10 @@ function facts(who = {}) {
         ? `They have ${who.matches} people on the board whose sentence answers theirs. You know the number and nothing else about them — not a name, not a company, not a word of what anybody wrote.`
         : "Nobody on the board answers their sentence yet. If they ask why it is quiet, that is the honest answer, and the two things that change it are a wider second half and more people arriving.");
     }
-    if (who.photo === false) bits.push("They have no photograph on their card. Worth one mention if it comes up naturally, never twice.");
+    /* AND NOT IN A ROOM. "You have no photograph" to somebody who asked
+       about investors, in front of twenty people, is the card's nudge
+       arriving on the wrong screen. */
+    if (who.photo === false && !who.room) bits.push("They have no photograph on their card. Worth one mention if it comes up naturally, never twice.");
     /* WHERE THEY ARE STANDING, which he was never told.
      *
      * He is on every screen now and he was the same doorman on all of them:
@@ -351,7 +383,11 @@ function facts(who = {}) {
     return "ABOUT THE PERSON IN FRONT OF YOU, which is true right now:\n\n- " + bits.join("\n- ");
   }
 
-  bits.push("YOUR JOB WITH THEM: get two things out of them, the sentence and one line about what they actually do. Everything else you say is in service of that.");
+  /* THE CARD-FILLING JOB, and only where a card is being filled in. In a room
+     it is the wrong job entirely — see the block at the top. */
+  if (!who.room) {
+    bits.push("YOUR JOB WITH THEM: get two things out of them, the sentence and one line about what they actually do. Everything else you say is in service of that.");
+  }
   if (who.up) {
     bits.push("They are IN THE WAITING ROOM: already moved up, and the clock is running.");
     if (typeof who.left === "number") {
@@ -362,9 +398,15 @@ function facts(who = {}) {
   } else {
     bits.push("They are ON THE LIST and have NOT been moved up yet. There is NO clock on them and you must not say there is — no three days, no hours, no deadline of any kind. What moves them up is finishing the sentence and a photograph, and somebody inside deciding.");
   }
-  if (who.photo) bits.push("They already have a photograph on their card.");
-  else bits.push("They have no photograph yet.");
-  if (who.me && who.want) bits.push(`Their sentence already reads: I am ${aOrAn(who.me)} looking for ${aOrAn(who.want)}. Do not ask for it again — ask what they actually do, in their own words.`);
+  if (!who.room) {
+    if (who.photo) bits.push("They already have a photograph on their card.");
+    else bits.push("They have no photograph yet.");
+  }
+  if (who.me && who.want) {
+    bits.push(who.room
+      ? `Their sentence reads: I am ${aOrAn(who.me)} looking for ${aOrAn(who.want)}. You already know what they do. There is nothing to ask them.`
+      : `Their sentence already reads: I am ${aOrAn(who.me)} looking for ${aOrAn(who.want)}. Do not ask for it again — ask what they actually do, in their own words.`);
+  }
   return "ABOUT THE PERSON IN FRONT OF YOU, which is true right now:\n\n- " + bits.join("\n- ");
 }
 

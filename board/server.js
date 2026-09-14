@@ -7208,8 +7208,14 @@ function nowOn(board) {
       + " come to the door in the last seven days");
   }
   if (top && top[1] > 1) bits.push("the busiest door is " + ROOM_WORDS[top[0]]);
-  if (live.length) bits.push(live.length + " are waiting at the door now");
-  if (inBrowse) bits.push(inBrowse + " people are in Browse");
+  /* Counted out in words, because he is told to say the number as it is —
+     and "1 people are in Browse" is a number he would quietly reword. */
+  if (live.length) {
+    bits.push(live.length + (live.length === 1 ? " is" : " are") + " waiting at the door now");
+  }
+  if (inBrowse) {
+    bits.push(inBrowse + (inBrowse === 1 ? " person is" : " people are") + " in Browse");
+  }
   if (spoke) {
     bits.push(spoke + (spoke === 1 ? " thing was" : " things were")
       + " said in the rooms this week");
@@ -7754,9 +7760,32 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
        about itself. See peekFor and nowOn. */
     const now = await store.load(FILE).catch(() => null);
     const shown = now ? peekFor(now) : [];
-    const said = await butler.ask([{ from: "them", text: asked }], "grp:" + id,
-      { peek: shown, now: MO_NOW, state: now ? nowOn(now) : "" })
-      .catch(() => ({ error: "no" }));
+    /* WHO IS ASKING, WHICH THE ROOM NEVER SAID.
+     *
+     * He was handed the question and nothing else, so `member` was never set
+     * and he ran the card-filling script at everybody — including at a member
+     * with a page, a sentence and nothing left to fill in, three times in a
+     * row. See the room block in facts(): the script is off in here either
+     * way, and this is the other half of it, which is knowing whether he is
+     * talking to somebody who is in or somebody still outside. */
+    const mine = now && now.people.find(
+      (q) => q.by === me && q.state === "published" && q.handle);
+    const w = now && now.waits.find((x) => x.by === me && !x.done);
+    const sentence = (mine && mine.say && mine.say[0]) || w || {};
+    const said = await butler.ask([{ from: "them", text: asked }], "grp:" + id, {
+      // A room, which turns the card off — see facts().
+      room: true,
+      peek: shown,
+      now: MO_NOW,
+      state: now ? nowOn(now) : "",
+      member: Boolean(mine),
+      // First names only, the way the card page does it.
+      name: String((mine && mine.handle) || (w && w.name) || "").split(/\s+/)[0] || "",
+      me: sentence.me || "",
+      want: sentence.want || "",
+      up: Boolean(w && w.up),
+      photo: Boolean((mine && mine.photo) || (w && w.photo)),
+    }).catch(() => ({ error: "no" }));
     /* `say`, NOT `text`, AND THAT ONE WORD COST THE WHOLE FEATURE.
      *
      * clean() in lib/butler.js returns { say, me, want, why, ready } — the
