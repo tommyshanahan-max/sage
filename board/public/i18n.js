@@ -1379,10 +1379,16 @@ export const STRINGS = {
                       "{who}，你排第 {n}，一共 {t} 人在等"],
   "wr.aheadNone":    ["You are first in the queue", "你排在最前面"],
   "wr.yourcard":     ["Your card", "你的卡片"],
-  /* The empty card, said out loud. A screen that draws three blanks and says
-     nothing about them reads as a page that failed to load. */
-  "wr.thin":         ["Three gaps and a sentence. Not much to go on.",
-                        "三个空，一句话。没多少可看的。"],
+  /* THE EMPTY CARD, AND IT SAYS WHAT THE CARD IS FOR RATHER THAN MARKING IT.
+     It read "Three gaps and a sentence. Not much to go on." — true, and it is
+     a grade, delivered under somebody's own face, on the first screen they
+     see. The line beside it for a finished card says what the card DOES ("
+     enough for somebody to decide without meeting you"), and that is the
+     right register for both: a fact about what gets read, not a mark out of
+     three. A blank card still says so — it is blank — so nothing is lost by
+     not announcing it. */
+  "wr.thin":         ["A face is what makes somebody stop on your card.",
+                        "让人停下来的，是那张脸。"],
   "wr.full":         ["Enough for somebody to decide without meeting you.",
                         "够了，不用见面也能定。"],
   /* NOT "Fill them in". That is a to-do list, and a to-do list handed to
