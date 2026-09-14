@@ -1693,7 +1693,12 @@ function doorPeople(key) {
     /* What they wrote on the way in, which is the whole of what anybody knows
        about them — and "said something in here", which is the other half of
        what this screen is for. */
-    if (w.why) m.append(el("span", null, w.why));
+    if (w.why) {
+      // In the reader's language where there is one — see whyAlt in cleanWait.
+      const my = lang() === "zh" ? "zh" : "en";
+      m.append(el("span", null,
+        (w.whyAlt && w.whyLang && w.whyLang !== my) ? w.whyAlt : w.why));
+    }
     a.append(av, m);
     /* THE END OF THE ROW IS WHERE THEY STAND, which is the thing a member
        reading this queue is deciding about and the reason the list beat a
@@ -1970,8 +1975,13 @@ function drawThread(t) {
         el("em", null, T("say.lookingFor")), el("b", null, T("role.a." + w.want)));
       mid.append(say);
     }
-    // Their own words, which is the whole of what they said on the way in.
-    if (w.why) mid.append(el("p", "twhy", w.why));
+    /* Their own words, in the reader's language where there is a rendering —
+       see whyAlt in cleanWait. */
+    if (w.why) {
+      const my = lang() === "zh" ? "zh" : "en";
+      mid.append(el("p", "twhy",
+        (w.whyAlt && w.whyLang && w.whyLang !== my) ? w.whyAlt : w.why));
+    }
     const tags = el("div", "qtags");
     if (w.room) tags.append(el("span", null, T("waitroom." + w.room)));
     if (w.type) tags.append(el("span", null, w.type));

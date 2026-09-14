@@ -3073,7 +3073,10 @@ export const STRINGS = {
   "wp.write":          ["Write to them", "给他写句话"],
   /* NOT "incomplete" AND NOT A SCORE. What is missing, so a member knows what
      they are not being told and the person at the door knows what to write. */
-  "wp.missing":        ["Not on this page yet:", "这页还缺："],
+  /* The space after the colon is in the English string and not in the
+     Chinese one: a full-width colon carries its own width, so joining with a
+     space put a gap in the middle of a Chinese sentence. */
+  "wp.missing":        ["Not on this page yet: ", "这页还缺："],
   /* BARE NOUNS. They were written with the commas baked in, which reads fine
      for three and reads broken for one: "Not on this page yet: a face,". The
      page joins them. */

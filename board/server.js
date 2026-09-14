@@ -2322,6 +2322,28 @@ function renderSay(id, text) {
     .catch(() => { /* the line stands in one language, as it did before */ });
 }
 
+/* THE OTHER LANGUAGE OF A WAITING PERSON'S LINE. renderBio for a wait row —
+ * see the note there, and the one over whyAlt in cleanWait. The member
+ * deciding about somebody at the door is the reader who most needs to
+ * understand what they wrote, and half of them read Chinese.
+ */
+function renderWhy(id, text) {
+  const words = String(text || "").trim();
+  if (!words || !WORDY.test(words) || !translateReady()) return;
+  translate(words, { by: "why:" + id })
+    .then((out) => {
+      if (!out || out.error || !out.text) return;
+      return change((board) => {
+        const w = board.waits.find((x) => x.id === id);
+        if (!w || String(w.why || "").trim() !== words) return null;
+        w.whyAlt = out.text;
+        w.whyLang = out.from === "zh" ? "zh" : "en";
+        return true;
+      });
+    })
+    .catch(() => { /* the line stands in one language */ });
+}
+
 /* THE OTHER LANGUAGE OF ONE PERSON'S LINE, RENDERED ONCE AND KEPT.
  *
  * See goalAlt in cleanPerson for why this exists at all. The short of it: the
@@ -3285,6 +3307,11 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
     && store.WAITROOMS_CHAT.includes(String(req.body?.room || ""));
   if (!name || (!reach && !viaRoom)) return res.status(400).json({ error: "both" });
 
+  /* The row whose line wants rendering into the other language, if it has one
+     and nothing has rendered it yet — started after the write, like every other
+     model call on this box. See renderWhy. */
+  let whyFor = "";
+  let whyText = "";
   const out = await change((board) => {
     /* Already in, and asking anyway. Somebody who cleared their browser can
        land on the public page while still being a member in the file; telling
@@ -3379,8 +3406,19 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
         via: was.via || row.via, fromWait: was.fromWait || row.fromWait,
         // Same rule: where they came from is a fact about how they arrived,
         // and a second visit to the form does not get to rewrite it.
-        fromA: was.fromA || row.fromA };
+        fromA: was.fromA || row.fromA,
+        /* AND THE OTHER LANGUAGE OF THEIR LINE, kept when the line itself did
+           not change. Without this, correcting a typo in a name threw away a
+           rendering and paid for it again. A new line drops the old one, which
+           is right — a rendering of words nobody wrote any more is worse than
+           none. See whyAlt in cleanWait. */
+        whyAlt: row.why === was.why ? (was.whyAlt || "") : "",
+        whyLang: row.why === was.why ? (was.whyLang || "") : "" };
     } else board.waits.push(row);
+    const live = at >= 0 ? board.waits[at] : row;
+    if (String(live.why || "").trim() && !live.whyAlt) {
+      whyFor = live.id; whyText = live.why;
+    }
     return { ok: true, again: at >= 0 };
   });
   if (out?.error) return res.status(400).json(out);
@@ -3389,6 +3427,7 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
      those are exactly the ones who would otherwise lose the row when their
      browser forgets itself. See waitingRow. */
   if (me && (out?.ok || out?.again)) setWaitCookie(res, me);
+  if (whyFor) renderWhy(whyFor, whyText);
   res.json(out);
 });
 
@@ -3895,7 +3934,8 @@ app.get("/api/wait/me", async (req, res) => {
      * digits can bring them back, a WeChat id means they are one lost phone
      * away from losing their place and nothing had told them. They can write
      * a new one without this ever having read the old one. */
-    you: { name: mine.name, room: mine.room, why: mine.why, at: mine.at,
+    you: { name: mine.name, room: mine.room, why: mine.why,
+      whyAlt: mine.whyAlt || "", whyLang: mine.whyLang || "", at: mine.at,
       levelBand: mine.levelBand, type: mine.type, me: mine.me, want: mine.want,
       photo: mine.photo, photoState: mine.photoState,
       canSignIn: /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/
@@ -3959,6 +3999,9 @@ app.get("/api/wait/me", async (req, res) => {
 app.post("/api/wait/card", express.json({ limit: "2kb" }), async (req, res) => {
   const { row, who: me } = await waitingRow(req, res);
   if (!me && !row) return res.status(400).json({ error: "who" });
+  // A rewritten line wants rendering again — see renderWhy, and the note below.
+  let whyFor = "";
+  let whyText = "";
   const out = await change((board) => {
     const at = board.waits.findIndex((w) => w.by === me && !w.done);
     /* No row is not an error worth a red screen: a member takes the same
@@ -4006,15 +4049,25 @@ app.post("/api/wait/card", express.json({ limit: "2kb" }), async (req, res) => {
     }
     const row = store.cleanWait(put);
     if (!row) return { error: "row" };
+    /* A REWRITTEN LINE DROPS ITS OLD RENDERING. `put` is spread from the row
+       they had, so without this an edited line kept the other-language text of
+       the line before it — a Chinese reader would be shown words nobody had
+       written since Tuesday. Cleared here and rendered again below. */
+    if (String(row.why || "") !== String(was.why || "")) {
+      row.whyAlt = ""; row.whyLang = "";
+      if (String(row.why || "").trim()) { whyFor = row.id; whyText = row.why; }
+    }
     board.waits[at] = row;
     return { on: true, you: { levelBand: row.levelBand, type: row.type,
       me: row.me, want: row.want, name: row.name, room: row.room, why: row.why,
+      whyAlt: row.whyAlt || "", whyLang: row.whyLang || "",
       // Whether it works as a way back, never the thing itself. See above.
       canSignIn: /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/
         .test(String(row.reach || "").trim().toLowerCase()) } };
   });
   if (out?.error === "reachTaken") return res.status(409).json(out);
   if (out?.error) return res.status(400).json(out);
+  if (whyFor) renderWhy(whyFor, whyText);
   res.json(out);
 });
 
@@ -4635,6 +4688,8 @@ app.get("/api/queue", async (req, res) => {
     rows: order.filter((x) => x.w.shown).slice(0, 120).map((x, i) => ({
       place: i + 1, id: x.w.id,
       name: x.w.name, room: x.w.room, why: x.w.why,
+      // And the same line in the other language — see whyAlt in cleanWait.
+      whyAlt: x.w.whyAlt || "", whyLang: x.w.whyLang || "",
       /* BOTH HALVES OF THE SENTENCE. `want` alone said what they are looking
          for and not what they are, which is half of the only sentence this
          board runs on — enough for a row in a list and not enough for the
@@ -4691,6 +4746,7 @@ app.get("/api/queue/:id", async (req, res) => {
     .filter(Boolean);
   res.json({
     id: w.id, name: w.name, room: w.room, why: w.why,
+    whyAlt: w.whyAlt || "", whyLang: w.whyLang || "",
     me: w.me, want: w.want, type: w.type, levelBand: w.levelBand,
     at: w.at, up: Boolean(w.up),
     place: at + 1, waiting: order.length,
@@ -4967,6 +5023,9 @@ app.post("/api/waiting/add", express.json({ limit: "4kb" }), admin, async (req, 
   const name = String(req.body?.name || "").trim();
   const reach = String(req.body?.reach || "").trim();
   if (!name || !reach) return res.status(400).json({ error: "both" });
+  // Same as the public form: a line typed in here gets its other language too.
+  let whyFor = "";
+  let whyText = "";
   const out = await change((board) => {
     /* SHOWN, AND IT WAS NOT, WHICH MADE THIS ROUTE WRITE INVISIBLE ROWS.
      *
@@ -5011,15 +5070,24 @@ app.post("/api/waiting/add", express.json({ limit: "4kb" }), admin, async (req, 
         name: row.name,
         reach: row.reach,
         why: row.why || had.why,
+        /* The rendering follows the line it was made from — see the same
+           carry-over in /api/wait. */
+        whyAlt: (row.why || had.why) === had.why ? (had.whyAlt || "") : "",
+        whyLang: (row.why || had.why) === had.why ? (had.whyLang || "") : "",
         room: row.room || had.room,
         shown: row.shown || had.shown,
       };
+      if (String(board.waits[at].why || "").trim() && !board.waits[at].whyAlt) {
+        whyFor = had.id; whyText = board.waits[at].why;
+      }
       return { ok: true, again: true, id: had.id };
     }
     board.waits.push(row);
+    if (String(row.why || "").trim()) { whyFor = row.id; whyText = row.why; }
     return { ok: true, id: row.id };
   });
   if (out?.error) return res.status(400).json(out);
+  if (whyFor) renderWhy(whyFor, whyText);
   res.json(out);
 });
 
@@ -7469,6 +7537,9 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
      started once the write has committed. Set inside and read outside: a
      model call must never happen while the file lock is held. */
   let saidId = "";
+  /* The wait row whose line this message just became, if it did — rendered
+     into the other language after the write, like everything else here. */
+  let whyFor = "";
   const out = await change((board) => {
     /* WHO CAN BE @'D IN HERE, worked out before the rules below need it: the
        people in this room, so a mention of one of them is read as a mention
@@ -7546,6 +7617,41 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
     /* Held so the render can be started after this write commits — see
        renderSay, which must not run inside the lock. */
     saidId = board.says[board.says.length - 1].id;
+
+    /* THE FIRST THING SOMEBODY SAYS AT A DOOR IS THEIR INTRODUCTION.
+     *
+     * People arrive at a room with a name and nothing else — the door asks
+     * for a name and that is deliberate, it is the whole reason anybody gets
+     * as far as the room. Then Mo says "say what you're looking for", and
+     * they do:
+     *
+     *   Hi! I'm a professional model and actress. I would like to have film
+     *   shootings.
+     *
+     * Which is their introduction, written in their own words, in answer to
+     * the question their own card asks. And it went into the room and nowhere
+     * else — so their card, their row in the queue and their page all stayed
+     * blank, and every screen a member reads them on said nothing.
+     *
+     * THE FIRST ONE ONLY, AND ONLY INTO AN EMPTY LINE. The second message is
+     * a conversation, not an introduction, and a line somebody wrote on the
+     * You tab is theirs and is not overwritten by something they said in a
+     * room. Theirs to change either way — this fills a blank, it does not
+     * take the pen.
+     *
+     * NOTHING NEW IS DISCLOSED. The same members who can read the room can
+     * read the queue; this moves their own sentence from one screen they are
+     * on to another. */
+    if (door) {
+      const mine = board.waits.find((w) => w.by === me && !w.done);
+      if (mine && !String(mine.why || "").trim()) {
+        const line = String(text).trim().slice(0, 300);
+        /* Long enough to be an introduction. "hi" and "在吗" are somebody
+           checking the room is alive, and putting that on their card is
+           worse than leaving it empty. */
+        if (line.length >= 12) { mine.why = line; whyFor = mine.id; }
+      }
+    }
 
     /* WHAT WAKES THE DOORMAN, and it is a regex on this box — see screen() in
        store.js. He is in every room and reads none of them; this runs where
@@ -7632,6 +7738,7 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
      model on the far side of a mainland connection must not be why sending
      one takes four seconds. */
   if (saidId) renderSay(saidId, text);
+  if (whyFor) renderWhy(whyFor, String(text).trim().slice(0, 300));
   res.json(out);
 });
 
@@ -9670,6 +9777,29 @@ app.post("/api/bios", admin, async (req, res) => {
     lines += 1;
   }
 
+  /* AND THE LINES OF THE PEOPLE STILL AT THE DOOR. renderWhy runs when one
+     lands, which does nothing for the sixty rows already standing there — and
+     those are the ones a member is reading when they decide whether to vouch.
+     Capped like the messages: a call each, from a terminal somebody is
+     sitting at. */
+  const waits = board.waits.filter((w) => !w.done && String(w.why || "").trim()
+    && !w.whyAlt).slice(0, CAP);
+  let asked = 0;
+  for (const w of waits) {
+    const words = String(w.why).trim();
+    if (!/[\p{L}]{2}/u.test(words)) continue;
+    const out = await translate(words, { by: "why:" + w.id }).catch(() => null);
+    if (!out || out.error || !out.text) continue;
+    await change((b) => {
+      const row = b.waits.find((x) => x.id === w.id);
+      if (!row || String(row.why || "").trim() !== words) return null;
+      row.whyAlt = out.text;
+      row.whyLang = out.from === "zh" ? "zh" : "en";
+      return true;
+    });
+    asked += 1;
+  }
+
   const todo = board.people.filter((q) => q.handle && String(q.goal || "").trim() && !q.goalAlt);
   const done = [];
   const failed = [];
@@ -9686,7 +9816,7 @@ app.post("/api/bios", admin, async (req, res) => {
     });
     done.push(q.handle);
   }
-  res.json({ ok: true, done, failed, lines,
+  res.json({ ok: true, done, failed, lines, asked,
     already: board.people.filter((q) => q.handle && q.goalAlt).length });
 });
 

@@ -165,7 +165,14 @@ function draw() {
       el("em", null, T("say.lookingFor")), el("b", null, T("role.a." + W.want)));
     box.append(say);
   }
-  if (W.why) box.append(el("p", "why", W.why));
+  /* IN THE LANGUAGE THIS READER IS READING IN. The same choice the cards and
+     the rooms make — see whyAlt in cleanWait. The original when there is no
+     rendering yet, which is always right and sometimes not the reader's. */
+  if (W.why) {
+    const mine = lang() === "zh" ? "zh" : "en";
+    box.append(el("p", "why",
+      (W.whyAlt && W.whyLang && W.whyLang !== mine) ? W.whyAlt : W.why));
+  }
 
   const tags = el("div", "tags");
   if (W.room) tags.append(el("span", null, T("waitroom." + W.room)));
@@ -197,7 +204,7 @@ function draw() {
        had been cut off. */
     const list = missing.length === 1 ? missing[0]
       : missing.slice(0, -1).join(T("wp.comma")) + T("wp.and") + missing[missing.length - 1];
-    box.append(el("div", "gap", T("wp.missing") + " " + list + T("wp.stop")));
+    box.append(el("div", "gap", T("wp.missing") + list + T("wp.stop")));
   }
 
   const acts = el("div", "acts");

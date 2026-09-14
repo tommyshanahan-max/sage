@@ -7871,7 +7871,12 @@ function qRow(w) {
       el("em", null, T("waitroom." + w.room)));
   }
   mid.append(line);
-  if (w.why) mid.append(el("small", null, w.why));
+  if (w.why) {
+    // In the reader's language where there is one — see whyAlt in cleanWait.
+    const my = lang() === "zh" ? "zh" : "en";
+    mid.append(el("small", null,
+      (w.whyAlt && w.whyLang && w.whyLang !== my) ? w.whyAlt : w.why));
+  }
   const tags = el("div", "qtags");
   if (w.type) tags.append(el("span", null, w.type));
   if (w.want) tags.append(el("span", null, T("role.p." + w.want)));

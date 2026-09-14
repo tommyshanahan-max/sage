@@ -128,6 +128,13 @@ export function cleanWait(raw) {
     // Why they want in, in their own words. The only thing a member vouching
     // for a stranger has to go on.
     why: s(raw.why, 300),
+    /* AND THE SAME LINE IN THE OTHER LANGUAGE. Exactly goalAlt on a person and
+       alt on a message, for the reason written over both: half this board
+       reads Chinese, and a member deciding about somebody at the door is the
+       one reader who most needs to understand what they wrote. Rendered once
+       when the line lands — see renderWhy. */
+    whyAlt: s(raw.whyAlt, 300),
+    whyLang: raw.whyLang === "zh" ? "zh" : raw.whyLang === "en" ? "en" : "",
     at: s(raw.at, 40) || new Date().toISOString(),
     // The browser that asked, so one person cannot fill the list on their own.
     by: s(raw.by, 64),

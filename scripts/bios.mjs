@@ -51,10 +51,17 @@ if (d.lines) {
   console.log("");
 }
 
+/* And the people still at the door, who are the ones being decided about. */
+if (d.asked) {
+  console.log("  " + d.asked + " line" + (d.asked === 1 ? "" : "s")
+    + " at the door now read" + (d.asked === 1 ? "s" : "") + " in both languages.");
+  console.log("");
+}
+
 if (!d.done.length && !d.failed.length) {
-  console.log(d.lines
+  console.log(d.lines || d.asked
     ? "  Every card with a line already had both."
-    : "  Nothing to do — the cards and the rooms are already done.");
+    : "  Nothing to do — the cards, the rooms and the door are already done.");
 } else {
   if (d.done.length) {
     console.log("  Rendered " + d.done.length + ":");
