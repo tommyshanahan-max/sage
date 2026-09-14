@@ -1,0 +1,522 @@
+<title>The 50,000 Ledger</title>
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --good:#2A9D63; --warn:#B8741F; --warn-soft:#FBF1E3;
+    --t2:#2A9D63; --t4:#7268C4; --t6:#2F8C9E;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC","Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --shadow:0 1px 2px rgba(21,27,40,.05),0 10px 30px rgba(21,27,40,.08);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --good:#4EBE88; --warn:#E4A65A; --warn-soft:#2A2114;
+      --t2:#4EBE88; --t4:#9187E0; --t6:#4FA9BC;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.32);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --good:#4EBE88; --warn:#E4A65A; --warn-soft:#2A2114;
+    --t2:#4EBE88; --t4:#9187E0; --t6:#4FA9BC;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.32);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;
+    padding-inline:20px;padding-block:0 72px}
+  .wrap{max-width:1080px;margin:0 auto}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  .num{font-variant-numeric:tabular-nums}
+  .ph{background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 4px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  .mast{display:flex;align-items:center;gap:.55rem;padding-block:22px 0;color:var(--ink-2);font-size:.85rem}
+  .mast svg{width:1.15em;height:1.15em;color:var(--accent)}
+  .mast b{color:var(--ink);font-weight:600}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(2rem,4.2vw,2.8rem);line-height:1.08;letter-spacing:-.02em;
+    margin:1.3rem 0 .6rem;text-wrap:balance;max-width:22ch}
+  .lede{margin:0;max-width:64ch;color:var(--ink-2);font-size:1.02rem}
+  .draft{margin:14px 0 0;max-width:64ch;background:var(--warn-soft);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;font-size:.88rem}
+  .draft b{color:var(--warn)}
+
+  .stage{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:40px;margin-top:30px;align-items:start}
+  @media (max-width:820px){.stage{grid-template-columns:1fr}}
+
+  /* the phone — the one lifted object */
+  .phone{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;
+    display:flex;flex-direction:column;height:760px;max-width:100%}
+  .top{display:flex;align-items:center;gap:.6rem;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .top .back{all:unset;cursor:pointer;width:26px;height:26px;display:grid;place-items:center;color:var(--ink-2);border-radius:6px}
+  .top .back svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+  .top .t b{display:block;font-family:var(--serif);font-weight:400;font-size:1.1rem;line-height:1.2}
+  .top .t span{display:block;font-size:.76rem;color:var(--muted)}
+  .scr{padding:14px 16px 18px;display:grid;gap:14px;align-content:start;flex:1;overflow-y:auto}
+  .scr h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.35rem;line-height:1.2;letter-spacing:-.01em}
+  .scr h2:focus{outline:none}
+  .scr p{margin:0}
+  .k{font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600}
+  .soft{color:var(--ink-2);font-size:.86rem}
+  .tiny{color:var(--muted);font-size:.76rem;line-height:1.5}
+
+  .pinbtn{all:unset;display:block;cursor:pointer;border-radius:12px}
+  .pin{border:1px solid var(--line);border-radius:12px;background:var(--raise);padding:10px 12px;display:grid;
+    grid-template-columns:1fr auto;gap:.1rem .8rem;align-items:center}
+  .pin .big{font-family:var(--serif);font-size:1.6rem;line-height:1.1;letter-spacing:-.02em}
+  .pin .r{grid-column:2;grid-row:1 / span 3;text-align:right;font-size:.74rem;color:var(--ink-2);line-height:1.25}
+  .pin .r b{display:block;font-size:.95rem;color:var(--ink)}
+  .status{display:inline-flex;align-items:center;gap:.35rem;font-size:.76rem;color:var(--ink-2)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+  .dot.on{background:var(--good)}
+
+  .bubble{display:grid;grid-template-columns:28px 1fr;gap:8px;font-size:.86rem}
+  .bubble .av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:.72rem;font-weight:600}
+  .bubble .nm{font-size:.74rem;font-weight:600}
+  .bubble p{background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:7px 10px;margin-top:2px}
+
+  .rows{display:grid;border-top:1px solid var(--hair)}
+  .rows div{display:grid;grid-template-columns:1fr auto;gap:.8rem;padding:7px 0;border-bottom:1px solid var(--hair);font-size:.84rem;
+    font-variant-numeric:tabular-nums}
+  .rows div > span:first-child{color:var(--ink-2)}
+  .rows div > span:last-child{font-weight:600}
+  .rows .sub{display:block;font-size:.72rem;color:var(--muted);font-weight:400}
+
+  /* the sliding scale, sized in order of place — earlier is bigger */
+  .scale{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;align-items:end}
+  .mk{border:1px solid var(--line);border-radius:9px;padding:6px 7px;background:var(--card);text-align:left}
+  .mk .w{font-size:.66rem;color:var(--muted)}
+  .mk .v{font-family:var(--serif);line-height:1.1;margin-top:1px}
+  .mk.you{border-color:var(--accent);background:var(--accent-soft)}
+  .bar{height:6px;border-radius:99px;background:var(--hair);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent);border-radius:99px;min-width:3px}
+  .both{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .both div{border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:var(--card)}
+  .both b{display:block;font-size:.8rem;margin-bottom:2px}
+  .both span{font-size:.8rem;color:var(--ink-2)}
+  .terms{display:grid;border-top:1px solid var(--hair);margin:0}
+  .terms div{padding:9px 0;border-bottom:1px solid var(--hair)}
+  .terms dt{font-size:.8rem;font-weight:600}
+  .terms dd{margin:2px 0 0;font-size:.84rem;color:var(--ink-2)}
+  .fld{display:grid;gap:5px}
+  .fld label{font-size:.84rem;font-weight:600}
+  select,input[type=text]{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 11px;width:100%}
+  .chk{display:grid;grid-template-columns:20px 1fr;gap:8px;align-items:start;font-size:.86rem}
+  .chk input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--accent)}
+  .note{border-radius:10px;padding:9px 11px;font-size:.82rem;background:var(--warn-soft);border:1px solid var(--line)}
+  .fine{border-radius:10px;padding:9px 11px;font-size:.82rem;background:var(--accent-soft);border:1px solid var(--line)}
+  .future{border:1px dashed var(--warn);border-radius:10px;padding:8px 10px;font-size:.8rem;color:var(--ink)}
+  .future b{color:var(--warn)}
+  .btn{font:inherit;font-size:.92rem;font-weight:600;border-radius:11px;padding:11px 14px;cursor:pointer;border:1px solid var(--accent);
+    background:var(--accent);color:var(--accent-ink);width:100%}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
+  .btn.ghost{background:var(--card);color:var(--ink);border-color:var(--line)}
+  .link{all:unset;cursor:pointer;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+  .receipt{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:6px;background:var(--raise)}
+  .receipt div{display:flex;justify-content:space-between;gap:1rem;font-size:.84rem}
+  .receipt div span:first-child{color:var(--ink-2)}
+
+  .stepnav{display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:var(--card)}
+  .stepnav .btn{width:auto;flex:0 0 auto;padding:9px 14px}
+  .stepnav .where{flex:1;text-align:center;font-size:.78rem;color:var(--ink-2)}
+
+  /* levers */
+  .levers{display:grid;gap:18px}
+  .levers h2,.below h2{font-family:var(--serif);font-weight:400;font-size:1.45rem;margin:0;letter-spacing:-.01em}
+  .hint{margin:-10px 0 0;color:var(--ink-2);font-size:.9rem;max-width:54ch}
+  .ctl{display:grid;gap:6px}
+  .ctl .row{display:flex;justify-content:space-between;gap:1rem;align-items:baseline}
+  .ctl label,.ctl .lab{font-weight:600;font-size:.9rem}
+  .ctl output{font-variant-numeric:tabular-nums;font-size:.9rem;color:var(--ink-2)}
+  .ctl small{color:var(--muted);font-size:.78rem}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .seg{display:flex;flex-wrap:wrap;gap:6px}
+  .seg button{font:inherit;font-size:.86rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:7px 12px;cursor:pointer}
+  .seg button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+  .readout{background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-family:var(--mono);font-size:.78rem;
+    line-height:1.7;color:var(--ink-2);overflow-x:auto}
+  .readout b{color:var(--ink);font-weight:600}
+  .whybox{display:grid;gap:10px}
+  .whybox h3{margin:0;font-size:1rem}
+  .whybox ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+  .whybox li{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 12px}
+  .whybox li b{display:block;font-size:.88rem}
+  .whybox li span{font-size:.85rem;color:var(--ink-2)}
+
+  .below{margin-top:60px;display:grid;gap:14px}
+  .below > p{margin:0;color:var(--ink-2);max-width:64ch}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);
+    border-radius:14px;overflow:hidden}
+  .cell{background:var(--card);padding:14px 16px}
+  .cell b{display:block;font-size:.92rem;margin-bottom:3px}
+  .cell span{font-size:.86rem;color:var(--ink-2)}
+  .cell.warn{background:var(--raise)}
+  .cell.warn b{color:var(--warn)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="mast">
+      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" aria-hidden="true"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg>
+      <b>The Exchange</b><span aria-hidden="true">·</span><span>the ledger, open to the first 50,000</span>
+    </div>
+    <h1>Everyone up to 50,000 earns points, and the earlier you joined, the more</h1>
+    <p class="lede">Each member gets a place number the day they join. The place gives points on a sliding scale, and what they do adds more. If the board reaches 50,000 members, the company makes a proper share offer to everyone on the ledger, allocated by points. Until then, points are a record, not a promise.</p>
+    <p class="draft" role="note"><b>A design draft, not a legal document or legal advice.</b> A signed promise of shares to 50,000 people counts as a public share offer, so this version doesn't make one. Points are earned under published rules, and the shares come through a registered or exempt offer only if 50,000 is reached. Anything in <span class="ph">brackets</span> is a decision for you and a lawyer.</p>
+  </header>
+
+  <div class="stage">
+    <section class="phone" aria-label="Phone screen">
+      <div class="top">
+        <button class="back" type="button" id="topback" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></button>
+        <div class="t"><b id="toptitle">Film &amp; TV (186)</b><span id="topsub">anyone inside can read</span></div>
+      </div>
+      <div class="scr" id="scr"></div>
+      <div class="stepnav">
+        <button class="btn ghost" type="button" id="prev">Back</button>
+        <span class="where" id="where" aria-live="polite"></span>
+        <button class="btn" type="button" id="next">Next</button>
+      </div>
+    </section>
+
+    <div class="levers">
+      <section aria-labelledby="tryh" style="display:grid;gap:18px">
+        <h2 id="tryh">Try it</h2>
+        <p class="hint">Move these and the phone recalculates. They're the numbers you and a lawyer would set.</p>
+
+        <div class="ctl">
+          <div class="row"><label for="place">When this member joined (place number)</label><output id="oPlace" class="num">#1,204</output></div>
+          <input type="range" id="place" min="0" max="1000" step="1" value="0">
+          <small>The slider moves faster at the late end, so the early places are easy to reach.</small>
+        </div>
+
+        <div class="ctl">
+          <span class="lab" id="curvelab">How much being early counts</span>
+          <div class="seg" role="group" aria-labelledby="curvelab">
+            <button type="button" data-k="0.25" aria-pressed="false">Gentle</button>
+            <button type="button" data-k="0.35" aria-pressed="true">Even</button>
+            <button type="button" data-k="0.5" aria-pressed="false">Steep</button>
+          </div>
+          <small id="curvenote"></small>
+        </div>
+
+        <div class="ctl">
+          <div class="row"><label for="act">Points from what they've done</label><output id="oAct" class="num">60</output></div>
+          <input type="range" id="act" min="0" max="1500" step="10" value="60">
+          <small>People they brought in who stayed (first 10 count), introductions, people who answered them, active weeks.</small>
+        </div>
+
+        <div class="ctl">
+          <div class="row"><label for="members">Members on the board today</label><output id="oMembers" class="num">1,380</output></div>
+          <input type="range" id="members" min="100" max="50000" step="10" value="1380">
+        </div>
+
+        <div class="ctl">
+          <div class="row"><label for="split">Share of the pool decided by place</label><output id="oSplit" class="num">70%</output></div>
+          <input type="range" id="split" min="0" max="100" step="5" value="70">
+          <small>The rest is decided by what people did, worked out when points stop counting.</small>
+        </div>
+
+        <div class="readout num" id="readout" aria-label="The arithmetic"></div>
+      </section>
+
+      <section class="whybox" aria-labelledby="whyh">
+        <h3 id="whyh">Why this screen is built this way</h3>
+        <ul id="whylist"></ul>
+      </section>
+    </div>
+  </div>
+
+  <section class="below" aria-labelledby="lawh">
+    <h2 id="lawh">What a lawyer still has to decide</h2>
+    <p>Opening it to 50,000 people moves the hard part to the day you hit the number. These settle whether that day can happen cleanly.</p>
+    <div class="grid">
+      <div class="cell warn"><b>The wording of the intention</b><span>It has to be a genuine statement of what the company plans, not a promise dressed as one. Pushed hard enough, a "not a promise" can still be treated as an offer.</span></div>
+      <div class="cell"><b>The offer route at 50,000</b><span>A registered public offer, an exempt offer, or a user share programme like Reddit's in 2024, and in which places.</span></div>
+      <div class="cell"><b>Members in mainland China</b><span>Whether they can take part in an offer from a company outside China, or need a different route or alternative.</span></div>
+      <div class="cell"><b>The company and the pool</b><span>Which company, where it's registered, what share of it the pool is, and whether later investors can shrink it.</span></div>
+      <div class="cell"><b>The place / activity split</b><span>How much is fixed by when you joined, and how much is earned. Fixed-by-place is simplest to defend; earned is the better incentive.</span></div>
+      <div class="cell"><b>Recruiting</b><span>Whether a cap on counted guests is enough that bringing people in isn't the main way to earn, especially under China's pyramid-selling rules.</span></div>
+      <div class="cell"><b>Changing the rules</b><span>Whether points already earned are protected if the rules change, and how much notice members get.</span></div>
+      <div class="cell"><b>A sale before 50,000, and tax</b><span>What ledger holders get, if anything, if the board is sold first; and when shares received for contributing are taxed.</span></div>
+    </div>
+  </section>
+</div>
+
+<div class="sr" role="status" aria-live="polite" id="live"></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const MAX = 50000, SCALE = 1000;
+  const st = { step: 0, place: 1204, k: 0.35, act: 60, members: 1380, split: 70,
+               where: "", agreed: false, joined: false, name: "", o1: false, o2: false };
+  const int = (n) => Math.round(n).toLocaleString("en-US");
+  const pctFmt = (x) => {
+    if (x >= 1) return x.toFixed(2) + "%";
+    if (x >= 0.01) return x.toFixed(3) + "%";
+    return x.toFixed(4) + "%";
+  };
+
+  let SUM = 0, SUMK = null;
+  const placePts = (n, k = st.k) => Math.round(SCALE / Math.pow(Math.max(1, n), k));
+  function sumFor(k) { if (SUMK === k) return SUM; let t = 0; for (let n = 1; n <= MAX; n++) t += placePts(n, k); SUM = t; SUMK = k; return t; }
+
+  // slider position 0..1000 → place 1..50,000 on a log scale
+  const toPlace = (v) => Math.max(1, Math.round(Math.exp((v / 1000) * Math.log(MAX))));
+  const toSlider = (p) => Math.round(Math.log(Math.max(1, p)) / Math.log(MAX) * 1000);
+
+  const STEPS = ["In the room", "Opened", "The rules", "Join the ledger", "At 50,000", "Recorded"];
+
+  const WHY = [
+    [["No money, and no share price", "The pin shows points and a place. A value would be a projection, and a projection shown to a room is promotion."],
+     ["The condition is the whole board", "It counts toward 50,000 members, the same number the rules use, not the room's own count."],
+     ["It says 'offer', not 'shares'", "Points count toward a share offer if 50,000 is reached. That's what's true, so that's all it says."],
+     ["Only you see your line", "No ranking, and nobody sees anyone else's points."]],
+    [["Your place share never falls", "It's worked out against every place up to 50,000, so it's fixed the day you join. A number that shrinks as people arrive is a grievance."],
+     ["Earned points are settled later", "The part decided by what you did is only worked out when points stop counting, and the screen says so."],
+     ["The scale is shown, not hidden", "Everyone can see what place #1 and place #50,000 get, so being late is a known trade, not a surprise."],
+     ["Both outcomes, the same size", "If 50,000 isn't reached, the points stay a record and nothing is offered. Said beside the good outcome."]],
+    [["Points aren't shares", "No cash value, can't be sold or transferred, and not a promise of shares. That's what keeps a 50,000-person ledger from being a public share offer."],
+     ["Recruiting is capped", "Only the first 10 people you bring in count. Joining earns, doing earns, recruiting helps but can't dominate."],
+     ["Earned points are protected", "If the rules change, what you've earned stays. Suggested, for a lawyer to confirm."],
+     ["Plain words, both languages", "Members read English and Chinese; the real rules need both."]],
+    [["Joining isn't signing for shares", "No legal name, because nothing is being promised yet. Just agreeing to the points rules."],
+     ["Where you live, asked now", "It doesn't change your points, but it decides whether and how you can take part in an offer later."],
+     ["One clear confirmation", "That points aren't shares and have no cash value."]],
+    [["Only exists if 50,000 is reached", "This is the moment money and shares enter, and it happens through a proper offer document, not a chat pin."],
+     ["Your allocation comes from your points", "The ledger decides the split, so the offer can't quietly favour anyone."],
+     ["Now it's a signature", "Typed full legal name, the offer document read, and a period to change your mind."],
+     ["Eligibility by place", "Some members may need a different route, or may not be able to take part where they live. Said to them directly."]],
+    [["What was agreed is kept", "Rules version, date and place number, sealed monthly so it can't be quietly changed."],
+     ["The room learns nothing personal", "It sees places taken and the count toward 50,000. Never your points or your choices."]],
+  ];
+
+  const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c; if (x !== undefined) n.textContent = x; return n; };
+  const frag = (s) => { const t = document.createElement("template"); t.innerHTML = s.trim(); return t.content; };
+
+  function calc() {
+    const sum = sumFor(st.k);
+    const pp = placePts(st.place);
+    const placeShare = (pp / sum) * st.split;           // % of the whole pool from place
+    return { pp, sum, total: pp + st.act, placeShare, taken: Math.min(st.members, MAX) };
+  }
+
+  function pinHTML(c) {
+    return `<div class="pin">
+      <span class="k">Your ledger · place #${int(st.place)}</span>
+      <span class="big num">${int(c.total)} points</span>
+      <span class="status"><i class="dot${st.joined ? " on" : ""}"></i>${st.joined ? "On the ledger" : "Counts toward a share offer at 50,000"}</span>
+      <span class="r"><b class="num">${int(c.taken)}</b>of 50,000<br>members</span>
+    </div>`;
+  }
+
+  function screen() {
+    const s = $("scr"); s.textContent = "";
+    const c = calc();
+    const i = st.step;
+    $("toptitle").textContent = i === 0 ? "Film & TV (186)" : i === 4 ? "Share offer" : "Your ledger";
+    $("topsub").textContent = i === 0 ? "anyone inside can read" : "The Exchange";
+    $("topback").hidden = i === 0;
+
+    if (i === 0) {
+      s.append(frag(`<h2 tabindex="-1" class="sr">In the room</h2>`));
+      const b = el("button", "pinbtn"); b.type = "button";
+      b.setAttribute("aria-label", `Your ledger: place ${int(st.place)}, ${int(c.total)} points. ${st.joined ? "On the ledger." : "Counts toward a share offer at 50,000 members."} ${int(c.taken)} of 50,000 members. Open.`);
+      b.innerHTML = pinHTML(c);
+      b.firstElementChild.setAttribute("aria-hidden", "true");
+      b.onclick = () => go(1);
+      s.append(b);
+      s.append(frag(`
+        <div class="bubble"><span class="av" style="background:var(--t4)">LW</span><div><div class="nm">Lin Wei</div><p>Anyone here worked with a completion bond on a co-production?</p></div></div>
+        <div class="bubble"><span class="av" style="background:var(--t2)">R</span><div><div class="nm">Ray</div><p>Yes, twice. Happy to talk you through what they check.</p></div></div>
+        <div class="bubble"><span class="av" style="background:var(--t6)">周</span><div><div class="nm">周静</div><p>下周我在上海，可以约个咖啡。</p></div></div>`));
+    }
+
+    if (i === 1) {
+      s.append(frag(`<h2 tabindex="-1">Your place on the ledger</h2>`));
+      s.append(frag(pinHTML(c)));
+      const rows = el("div", "rows");
+      rows.innerHTML = `
+        <div><span>Place #${int(st.place)}<span class="sub">fixed the day you joined</span></span><span>${int(c.pp)}</span></div>
+        <div><span>What you've done<span class="sub">keeps growing until points stop counting</span></span><span>${int(st.act)}</span></div>
+        <div><span>Total</span><span>${int(c.total)}</span></div>`;
+      s.append(rows);
+
+      s.append(frag(`<div><p class="k">The sliding scale</p></div>`));
+      const sc = el("div", "scale num");
+      const marks = [1, 100, 1000, 10000, 50000];
+      marks.forEach((m, idx) => {
+        const you = st.place <= m && (idx === 0 || st.place > marks[idx - 1]);
+        const d = el("div", "mk" + (you ? " you" : ""));
+        d.append(el("div", "w", "#" + int(m)));
+        const v = el("div", "v", int(placePts(m))); v.style.fontSize = (1.25 - idx * 0.1) + "rem";
+        d.append(v); sc.append(d);
+      });
+      sc.setAttribute("aria-label", "Points by place: " + marks.map((m) => `place ${int(m)}, ${int(placePts(m))} points`).join("; "));
+      s.append(sc);
+      s.append(frag(`<p class="tiny">The highlighted box is the band your place falls in.</p>`));
+
+      s.append(frag(`<div><p class="k">Your share of the pool</p>
+        <p class="num"><b>${pctFmt(c.placeShare)}</b> <span class="soft">from your place, and it never falls</span></p>
+        <p class="tiny">Plus a share of the other ${100 - st.split}%, worked out from what everyone did when points stop counting on <span class="ph">31 December 2027</span>.</p></div>`));
+
+      const prog = Math.min(100, (c.taken / MAX) * 100);
+      s.append(frag(`<div><p class="k">Toward 50,000</p>
+        <p class="num"><b>${int(c.taken)}</b> <span class="soft">members, by <span class="ph">31 December 2029</span></span></p>
+        <div class="bar" role="img" aria-label="${prog.toFixed(1)} percent of the way"><i style="width:${prog}%"></i></div></div>`));
+
+      s.append(frag(`<div class="both">
+        <div><b>If 50,000 is reached</b><span>The company intends to make a share offer to everyone on the ledger, allocated by points, through a proper offer document.</span></div>
+        <div><b>If it isn't</b><span>Points stay a record of who built the board. No shares are offered.</span></div></div>`));
+      const b = el("button", "btn", "Read the rules"); b.type = "button"; b.onclick = () => go(2); s.append(b);
+    }
+
+    if (i === 2) {
+      s.append(frag(`<h2 tabindex="-1">The rules, in plain words</h2>`));
+      s.append(frag(`<p class="soft">A summary. <button class="link" type="button">Read the full rules</button> · <button class="link" type="button" lang="zh-Hans">中文版</button></p>`));
+      const dl = el("dl", "terms");
+      const terms = [
+        ["Points aren't shares", "They have no cash value, can't be sold or transferred, and aren't a promise of shares."],
+        ["How you earn them", `Your place number, on the sliding scale above. Then people you brought in who stayed and posted (the first <span class="ph">10</span> count), introductions that landed, people who answered you, and active weeks.`],
+        ["What the company intends", `If the board reaches 50,000 members by <span class="ph">31 December 2029</span>, to offer shares in <span class="ph">[Company] Limited</span> to everyone on the ledger, allocated by points. The offer will have its own document and its own terms.`],
+        ["The pool", `<span class="ph">70%</span> split by place, fixed when you join. <span class="ph">30%</span> split by what people did, fixed on <span class="ph">31 December 2027</span>.`],
+        ["If the rules change", "Points you've already earned are kept. You'll be told before any change."],
+        ["Mistakes", "Points given in error, or earned by gaming the rules, can be corrected."],
+        ["It may never happen", "The board may not reach 50,000. The company may fail. Nothing is owed if it doesn't."],
+      ];
+      for (const [t, d] of terms) { const row = el("div"); row.append(el("dt", null, t)); const dd = el("dd"); dd.innerHTML = d; row.append(dd); dl.append(row); }
+      s.append(dl);
+    }
+
+    if (i === 3) {
+      if (st.joined) {
+        s.append(frag(`<h2 tabindex="-1">You're on the ledger</h2><p class="soft">Go to the next step to see what happens at 50,000.</p>`));
+      } else {
+        s.append(frag(`<h2 tabindex="-1">Join the ledger</h2>`));
+        s.append(frag(`<p class="fine">You're not signing for shares. Nothing is being promised yet, so there's no legal name to type. You're agreeing to the points rules.</p>`));
+        const f = el("div", "fld");
+        f.append(frag(`<label for="wherein">Where do you live?</label>
+          <select id="wherein"><option value="">Choose one</option><option value="hk">Hong Kong</option><option value="cn">Mainland China</option><option value="else">Somewhere else</option></select>`));
+        s.append(f);
+        const note = el("p", "note"); note.id = "wnote"; note.hidden = true; s.append(note);
+        s.append(frag(`<label class="chk"><input type="checkbox" id="agree"><span>I understand points aren't shares and have no cash value.</span></label>`));
+        const b = el("button", "btn", "Join the ledger"); b.type = "button"; b.id = "joinbtn"; s.append(b);
+        const w = $("wherein"); w.value = st.where; $("agree").checked = st.agreed;
+        const paint = () => {
+          const n = $("wnote"); n.hidden = !st.where;
+          n.textContent = st.where === "cn"
+            ? "You earn points the same as everyone. If an offer happens, people in mainland China may need a different route to take part, and you'll be told directly."
+            : st.where === "else" ? "You earn points the same as everyone. Whether you can take part in an offer depends on the rules where you live."
+            : st.where === "hk" ? "You earn points the same as everyone." : "";
+          b.disabled = !(st.where && st.agreed);
+        };
+        w.onchange = () => { st.where = w.value; paint(); };
+        $("agree").onchange = (e) => { st.agreed = e.target.checked; paint(); };
+        b.onclick = () => { if (!(st.where && st.agreed)) return; st.joined = true; announce("Joined the ledger."); go(4); };
+        paint();
+      }
+    }
+
+    if (i === 4) {
+      s.append(frag(`<p class="future"><b>This screen only exists if the board reaches 50,000.</b> It's here so you can see where shares and signatures come in.</p>`));
+      s.append(frag(`<h2 tabindex="-1">A share offer, for people on the ledger</h2>`));
+      s.append(frag(`<div class="rows">
+        <div><span>Your points at the cut-off</span><span>${int(c.total)}</span></div>
+        <div><span>Your allocation<span class="sub">worked out from your points</span></span><span><span class="ph">[shares]</span></span></div>
+        <div><span>Price</span><span><span class="ph">[set in the offer]</span></span></div></div>`));
+      if (st.where === "cn") s.append(frag(`<p class="note">You live in mainland China. The offer document explains the route for you, or the alternative if you can't take part directly.</p>`));
+      s.append(frag(`<p class="soft"><button class="link" type="button">Read the offer document</button> · <button class="link" type="button" lang="zh-Hans">中文版</button></p>`));
+      s.append(frag(`<div class="fld"><label for="legal">Type your full legal name</label><input type="text" id="legal" autocomplete="name" placeholder="As on your ID"></div>`));
+      s.append(frag(`<label class="chk"><input type="checkbox" id="o1"><span>I've read the offer document.</span></label>`));
+      s.append(frag(`<label class="chk"><input type="checkbox" id="o2"><span>I understand the shares may lose value or be worth nothing.</span></label>`));
+      s.append(frag(`<p class="tiny">You can change your mind within <span class="ph">14</span> days.</p>`));
+      const b = el("button", "btn", "Take up the offer"); b.type = "button"; s.append(b);
+      const ok = () => st.name.trim().length > 3 && st.o1 && st.o2;
+      const upd = () => { b.disabled = !ok(); };
+      $("legal").value = st.name; $("o1").checked = st.o1; $("o2").checked = st.o2;
+      $("legal").oninput = (e) => { st.name = e.target.value; upd(); };
+      $("o1").onchange = (e) => { st.o1 = e.target.checked; upd(); };
+      $("o2").onchange = (e) => { st.o2 = e.target.checked; upd(); };
+      b.onclick = () => { if (ok()) go(5); };
+      upd();
+    }
+
+    if (i === 5) {
+      s.append(frag(`<h2 tabindex="-1">What's recorded</h2>`));
+      const d = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+      const r = el("div", "receipt num");
+      [["Place", "#" + int(st.place)], ["Points today", int(c.total)], ["Rules", "Version 1.0"],
+       ["Joined the ledger", st.joined ? d : "Not yet"], ["Lives in", ({ hk: "Hong Kong", cn: "Mainland China", else: "Elsewhere" })[st.where] || "Not given"],
+       ["Share offer", st.name.trim() ? "Taken up by " + st.name.trim() + " (at 50,000)" : "Only if 50,000 is reached"]]
+        .forEach(([a, b]) => { const row = el("div"); row.append(el("span", null, a), el("span", null, b)); r.append(row); });
+      s.append(r);
+      s.append(frag(`<p class="soft">Sealed at the end of each month, so the record can't be quietly changed.</p>`));
+      s.append(frag(`<p class="fine"><b>What the room sees:</b> "${int(c.taken)} of 50,000 members." Never your place, points or choices.</p>`));
+      const back = el("button", "btn", "Back to the room"); back.type = "button"; back.onclick = () => go(0); s.append(back);
+    }
+  }
+
+  function why() {
+    const ul = $("whylist"); ul.textContent = "";
+    for (const [t, d] of WHY[st.step]) { const li = el("li"); li.append(el("b", null, t), el("span", null, d)); ul.append(li); }
+    $("whyh").textContent = "Why this screen is built this way: " + STEPS[st.step].toLowerCase();
+  }
+
+  function levers() {
+    const c = calc();
+    $("oPlace").textContent = "#" + int(st.place);
+    $("place").setAttribute("aria-valuetext", "place " + int(st.place));
+    $("oAct").textContent = int(st.act);
+    $("oMembers").textContent = int(st.members);
+    $("oSplit").textContent = st.split + "%";
+    $("curvenote").textContent = `Place #1 gets ${int(placePts(1))} points, #1,000 gets ${int(placePts(1000))}, #50,000 gets ${int(placePts(50000))}.`;
+    $("readout").innerHTML =
+      `place points = round(1000 ÷ place<sup>${st.k}</sup>) = <b>${int(c.pp)}</b><br>` +
+      `all 50,000 places = <b>${int(c.sum)}</b> points<br>` +
+      `place share = ${int(c.pp)} ÷ ${int(c.sum)} × ${st.split}% = <b>${pctFmt(c.placeShare)}</b> of the pool<br>` +
+      `activity share = ${int(st.act)} ÷ everyone's, at the cut-off`;
+  }
+
+  function nextState() {
+    $("prev").disabled = st.step === 0;
+    $("next").disabled = st.step === STEPS.length - 1 || (st.step === 3 && !st.joined);
+    $("where").textContent = `Step ${st.step + 1} of ${STEPS.length}: ${STEPS[st.step]}`;
+  }
+
+  function announce(t) { $("live").textContent = t; }
+
+  function go(i, focus = true) {
+    st.step = Math.max(0, Math.min(STEPS.length - 1, i));
+    screen(); why(); nextState();
+    if (focus) { const h = $("scr").querySelector("h2"); if (h) h.focus({ preventScroll: true }); }
+  }
+  function refresh() { const keep = st.step; levers(); screen(); why(); nextState(); st.step = keep; }
+
+  $("next").onclick = () => go(st.step + 1);
+  $("prev").onclick = () => go(st.step - 1);
+  $("topback").onclick = () => go(st.step - 1);
+
+  $("place").value = toSlider(st.place);
+  $("place").addEventListener("input", (e) => { st.place = toPlace(+e.target.value); refresh(); });
+  $("act").addEventListener("input", (e) => { st.act = +e.target.value; refresh(); });
+  $("members").addEventListener("input", (e) => { st.members = +e.target.value; refresh(); });
+  $("split").addEventListener("input", (e) => { st.split = +e.target.value; refresh(); });
+  document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+    st.k = +b.dataset.k;
+    document.querySelectorAll(".seg button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    refresh();
+  }));
+
+  levers();
+  go(1, false);
+})();
+</script>

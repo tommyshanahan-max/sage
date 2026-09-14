@@ -1,0 +1,1284 @@
+<title>Exchange Film Room</title>
+<meta name="color-scheme" content="light dark">
+<style>
+  /* THE THIRD SURFACE, AND IT WAS MISSING FROM THIS PAGE ONLY.
+     paper is the ground, raise is lifted off it, card is lifted off that. This
+     page keeps its own copy of site.css's palette and the copy had two of the
+     three — which nothing on the page itself used, so nothing looked wrong
+     until Mo arrived. He is drawn on card, so his whole panel came out
+     transparent: bubbles, header and the box floating over the message list
+     with the page reading straight through them. A module mounted on a page
+     it does not own is only as complete as that page's tokens. */
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t1:#3F68D8; --t2:#2A9D63; --t3:#D99038; --t4:#7268C4; --t5:#D4485C; --t6:#2F8C9E;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --shadow:0 2px 6px rgba(21,27,40,.07),0 10px 28px rgba(21,27,40,.09);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
+      --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
+    --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+  }
+  :root[data-lang="zh"]{
+    --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif;
+  }
+  :root[data-lang="zh"] body{line-height:1.75}
+  :root[data-lang="zh"] .rule span,
+  :root[data-lang="zh"] .fact dt{text-transform:none;letter-spacing:.02em}
+  [hidden]{display:none!important}
+
+  *{box-sizing:border-box}
+  /* One size up, the same as everywhere else — see the note in index.html. */
+  html{font-size:17px;-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
+  main{max-width:34rem;margin:0 auto;padding:1.4rem 1.15rem 5rem}
+  /* ---- the list of people -------------------------------------------------
+     One row per PERSON, not per message: avatar, name, the last line, the
+     time, and a dot if it is unread. Everything a WeChat row has and nothing
+     else — the buttons that used to sit under every message live inside the
+     conversation now, which is where you are when you want them. */
+  /* THE ROW SITS ON TOP OF THE WAY OUT. Dragging it left uncovers the button
+     underneath rather than moving a button in from the side: one element
+     moves, the thing revealed was always there, and nothing has to be
+     measured. */
+  .swipe{position:relative;overflow:hidden;border-bottom:1px solid var(--hair)}
+  .swipe:last-child{border-bottom:0}
+  .swipe .wipe{position:absolute;top:0;right:0;bottom:0;width:6rem;border:0;
+    background:var(--t5);color:#fff;font:inherit;font-size:.88rem;
+    cursor:pointer;padding:0}
+  /* IT SHRINKS RATHER THAN SLIDING. Translating the whole row took its left
+     edge off the screen — the face and the name went with it, so the thing
+     you were about to leave was the one thing you could no longer see. */
+  .trow{position:relative;display:flex;align-items:center;gap:.8rem;width:100%;
+    border:0;background:var(--paper);padding:.75rem .1rem;text-align:left;
+    font:inherit;color:var(--ink);cursor:pointer;
+    transition:width .16s ease;touch-action:pan-y}
+  /* A GROUP'S ROW IS A LINK, and a link arrives underlined and blue. Said
+     here rather than inline so the two kinds of row cannot drift apart. */
+  a.trow{text-decoration:none;color:var(--ink)}
+  /* The rule between rows lives on .swipe, which a group row does not have —
+     it cannot be swiped away, because leaving a group is a different act with
+     a different warning on it. So it carries its own. */
+  #list > a.trow{border-bottom:1px solid var(--hair)}
+  #list > a.trow:last-child{border-bottom:0}
+  .swipe.open .trow{width:calc(100% - 6.4rem)}
+  @media (prefers-reduced-motion:reduce){.trow{transition:none}}
+  .trow:hover{background:var(--raise)}
+  /* The row has to be opaque or the button under it shows through. */
+  .swipe.open .trow{background:var(--paper)}
+  .trow .avwrap{position:relative;flex:0 0 auto}
+  /* A rounded SQUARE, which is what a messenger uses and what tells this row
+     apart at a glance from the round faces in the strip above it. */
+  /* A GROUP'S FACE: the people in it, stacked, rather than one of them.
+     Three at most — a fourth at this size is a smudge — and the count lives
+     under the name instead. */
+  .pile{position:relative;overflow:visible;background:none!important}
+  .pile .sm{position:absolute;top:50%;left:50%;width:64%;height:64%;
+    border-radius:50%;display:grid;place-items:center;overflow:hidden;
+    font-size:.62em;color:#fff;border:2px solid var(--card,var(--raise));
+    transform:translate(-50%,-50%)}
+  .pile .sm img{width:100%;height:100%;object-fit:cover}
+  .pile .sm:nth-child(1){transform:translate(-85%,-70%)}
+  .pile .sm:nth-child(2){transform:translate(-15%,-70%)}
+  .pile .sm:nth-child(3){transform:translate(-50%,-10%)}
+  /* The ＋ circle's sibling: two blank heads, which says "more than one
+     person" before anybody reads the word under it. */
+  .one .pile.two{display:grid;place-items:center}
+  .one .pile.two i{position:absolute;width:42%;height:42%;border-radius:50%;
+    border:2px solid currentColor;opacity:.55}
+  .one .pile.two i:nth-child(1){transform:translate(-28%,-14%)}
+  .one .pile.two i:nth-child(2){transform:translate(28%,-14%)}
+  .trow .av{width:2.9rem;height:2.9rem;border-radius:.7rem;display:grid;
+    place-items:center;color:#fff;font-family:var(--serif);font-size:1.25rem;
+    overflow:hidden}
+  .trow .av img{width:100%;height:100%;object-fit:cover;display:block}
+  .trow .dot{position:absolute;top:-.15rem;right:-.15rem;min-width:.62rem;
+    height:.62rem;border-radius:99px;background:var(--t5);
+    box-shadow:0 0 0 2px var(--paper)}
+  .trow .mid{flex:1;min-width:0}
+  .trow .nm{display:flex;align-items:baseline;gap:.5rem}
+  .trow .nm b{flex:1;min-width:0;font-family:var(--serif);font-weight:400;
+    font-size:1.02rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .trow .nm time{flex:0 0 auto;font-size:.72rem;color:var(--muted)}
+  .trow .prev{margin:.15rem 0 0;font-size:.85rem;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .trow .prev .k{color:var(--accent);font-weight:600}
+
+  /* ---- the conversation ---------------------------------------------------
+     Bubbles, because a conversation is two people and the side of the screen
+     is how you tell at a glance which of them is talking. */
+  /* THE HEADER STAYS. It scrolled away with the conversation, and in a room
+     with a keyboard up that left a screen with no room name on it and no way
+     back — which is the one thing a chat header is for. Sticky to the top,
+     with the page's own background under it so bubbles do not show through as
+     they pass beneath.
+     The negative top margin cancels main's padding, so it sits flush against
+     the top of the screen when it lands rather than an inch down. */
+  .thead{position:sticky;top:0;z-index:20;background:var(--paper);
+    display:flex;align-items:center;gap:.6rem;
+    margin:-1.4rem 0 .9rem;padding:1.4rem 0 .7rem;
+    border-bottom:1px solid var(--hair)}
+  .thead .tname{flex:1;min-width:0;text-decoration:none;color:var(--ink)}
+  .thead .tname b{display:block;font-family:var(--serif);font-weight:400;
+    font-size:1.15rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .thead .tname span{display:block;font-size:.76rem;color:var(--muted)}
+  /* The name, as a box, on the screen where a conversation's name would be. */
+  .tnew{flex:1;min-width:0}
+  .tnew span{display:block;font-size:.66rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);font-weight:700}
+  .tnew input{width:100%;border:0;background:none;font:inherit;
+    font-family:var(--serif);font-size:1.2rem;color:var(--ink);padding:.1rem 0}
+  .tnew input:focus{outline:none}
+  .tnew input::placeholder{color:var(--muted)}
+  .more{border:0;background:none;padding:.3rem;color:var(--ink-2);cursor:pointer}
+  .more svg{width:1.35rem;height:1.35rem;fill:currentColor;stroke:none}
+  .menu{margin:-.5rem 0 .9rem;padding:.3rem;border:1px solid var(--line);
+    border-radius:.7rem;background:var(--raise);display:flex;flex-direction:column}
+  .menu button,.menu a{border:0;background:none;padding:.6rem .7rem;font:inherit;
+    font-size:.9rem;text-align:left;color:var(--ink);cursor:pointer;
+    text-decoration:none;border-radius:.5rem}
+  .menu button:hover,.menu a:hover{background:var(--paper)}
+  .menu .warn{color:var(--t5)}
+
+  /* THE CONVERSATION FILLS THE SCREEN, so the box is at the bottom of it and
+     not floating under the last bubble. A short thread otherwise put the
+     thing you type into halfway up a phone, with nothing under it. */
+  #threadview{display:flex;flex-direction:column;
+    min-height:calc(100dvh - 7.6rem)}
+  .talk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
+    gap:.55rem;padding:.2rem 0 .6rem}
+  /* For what is a screen rather than a conversation — the people at this door,
+     behind ⋯. Bottom-aligned, a short list opened with half a screen of
+     nothing over it. */
+  .talk.top{justify-content:flex-start}
+  .bub{max-width:82%;padding:.6rem .8rem;border-radius:1.05rem;font-size:.95rem;
+    line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+  /* Theirs on the left in the raised surface, yours on the right in the accent.
+     Same convention as every messenger on the phone this is read on. */
+  .bub.them{align-self:flex-start;background:var(--raise);color:var(--ink);
+    border:1px solid var(--line);border-bottom-left-radius:.35rem}
+  .bub.mine{align-self:flex-end;background:var(--accent);color:var(--accent-ink);
+    border-bottom-right-radius:.35rem}
+  .when{align-self:center;font-size:.7rem;color:var(--muted);margin:.4rem 0 .1rem}
+  /* A ROOM IS NOT A THREAD, AND WAS DRAWN LIKE ONE.
+   *
+   * In a two-person thread the left-hand bubble can only be one person, so a
+   * face beside it says nothing and there isn't one. In a room of eighteen the
+   * face is the fastest thing on the screen to read and the name belongs over
+   * the bubble, not under it — which is WeChat, which is what everybody on
+   * this board reads all day. Same shape as a group room in groups.html: one
+   * shape for a room, not two. */
+  .said{display:flex;gap:.55rem;align-items:flex-start;align-self:stretch}
+  .said.mine{flex-direction:row-reverse}
+  .said .av{width:2rem;height:2rem;font-size:.85rem;flex:0 0 auto;box-shadow:none}
+  /* A FACE THAT GOES SOMEWHERE LOOKS LIKE ONE. Not a colour change — the disc
+     already wears a colour drawn from the name — but a ring, which reads as a
+     thing to press at this size and leaves the letter alone. The ones that go
+     nowhere are left exactly as they were, so the difference is the signal. */
+  a.av.go{text-decoration:none;cursor:pointer}
+  a.av.go:hover,a.av.go:focus-visible{box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--accent)}
+  .said .col{display:flex;flex-direction:column;min-width:0;max-width:82%}
+  .said .bub{max-width:100%}
+  /* A NAME SAID AT SOMEBODY. Weight and the accent, not a background: a
+     sentence with three of these in it should still read as a sentence. */
+  .bub .at{font-weight:600;color:var(--accent)}
+  .bub.mine .at{color:inherit;text-decoration:underline;text-underline-offset:2px}
+  /* The picker, over the box rather than under it — under it is where the
+     phone's own keyboard is. */
+  .atmenu{position:absolute;bottom:100%;left:0;right:0;margin:0 0 .4rem;
+    display:flex;flex-wrap:wrap;gap:.35rem;padding:.5rem;border-radius:.8rem;
+    background:var(--raise);border:1px solid var(--line);
+    box-shadow:0 10px 30px rgba(0,0,0,.12);z-index:30}
+  .atmenu button{font:inherit;font-size:.85rem;padding:.35rem .7rem;border-radius:99px;
+    border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+  .write{position:relative}
+
+  /* The end of a row at the door: where they stand, then who spoke for them.
+     Right-aligned and stacked, so the eye runs down one column rather than
+     hunting for the second fact on each line. */
+  /* The rows are inside .talk, which is a flex column — without this they
+     shrink to their content and sit in from the edge, out of line with the
+     heading over them. */
+  .dinfo{align-self:stretch}
+  /* THE MEMBERS IN THE ROOM, above the queue: they are the people a reader
+     can act on, and the queue below them is the people they are deciding
+     about. Two lists, in the order the decisions happen. */
+  .dinside{margin:0 0 1.1rem}
+  .dhead{margin:0 0 .4rem;font-size:.72rem;font-weight:600;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted)}
+  .drow{display:flex;align-items:center;gap:.6rem;padding:.5rem 0}
+  .drow + .drow{border-top:1px solid var(--hair)}
+  .dwho{flex:1 1 auto;display:flex;align-items:center;gap:.6rem;min-width:0;
+    color:inherit;text-decoration:none}
+  /* The name over what they are. Two lines, because side by side they read as
+     one word — "Hugowaiting" — and .wm's own rule only applies inside .wperson. */
+  .drow .wm{flex:1;min-width:0}
+  .drow .wm b{display:block;font-family:var(--serif);font-weight:400;font-size:1rem}
+  .drow .wm span{display:block;font-size:.78rem;color:var(--muted);line-height:1.4}
+  /* Follow is a decision, so it reads as one: filled while it is still to be
+     made, quiet once it has been. The same pair of states the deck uses. */
+  .dfollow{flex:0 0 auto;padding:.4rem .9rem;border:0;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);font:inherit;
+    font-size:.82rem;font-weight:600;cursor:pointer}
+  .dfollow.on{background:var(--card);border:1px solid var(--hair);color:var(--ink-2)}
+  .dfollow:disabled{opacity:.5}
+  /* What happened, under the row it happened on. Hidden until it has. */
+  .dboth{margin:0 0 .5rem;font-size:.78rem;line-height:1.45;color:var(--accent)}
+  /* The ＋ of a door, at the top where the people screen starts. Filled, not
+     outlined: it is the one thing on this screen you do rather than read. */
+  .sendbox{display:flex;gap:.5rem;align-items:stretch;margin:.2rem 0 .3rem}
+  /* .fld is groups.html's and this page does not have it — the box was a bare
+     browser input beside a filled button. Defined here rather than shared:
+     one field on one screen is not a design system. */
+  .sendbox .fld{flex:1;min-width:0;font:inherit;font-size:.95rem;
+    padding:.6rem .8rem;border:1px solid var(--line);border-radius:.7rem;
+    background:var(--raise);color:var(--ink)}
+  .sendsaid{margin:0 0 .6rem;font-size:.78rem;color:var(--t2)}
+  .sendlink{display:block;flex:0 0 auto;margin:0;padding:.7rem 1rem;
+    border:0;border-radius:.7rem;background:var(--accent);color:var(--accent-ink);
+    font:inherit;font-size:.9rem;cursor:pointer;white-space:nowrap}
+  .dinfo .dperson{border-bottom:1px solid var(--hair)}
+  .dinfo .wperson{width:100%;border-bottom:0}
+  /* The one action a door row carries, under it rather than on it: the row is
+     a link to a conversation, and a button inside a link is a tap nobody can
+     aim. */
+  .letin{display:block;margin:-.3rem 0 .7rem 3.6rem;padding:.3rem .85rem;
+    border:1px solid var(--accent);border-radius:99px;background:none;
+    font:inherit;font-size:.78rem;color:var(--accent);cursor:pointer}
+  .letsaid{margin:-.3rem 0 .7rem 3.6rem;font-size:.74rem;color:var(--t2)}
+  .wend{flex:0 0 auto;margin-left:auto;display:flex;flex-direction:column;
+    align-items:flex-end;gap:.15rem;font-size:.72rem;color:var(--muted);
+    text-align:right}
+  .wend .vou{color:var(--t2)}
+  .wend .next{color:var(--accent);font-weight:600}
+
+  /* Who said it and which side of the door they are on. Over the bubble,
+     small, because it is a thing you check rather than read. */
+  .dwho{margin:0 0 .2rem;font-size:.72rem;color:var(--muted)}
+  /* A name that opens a thread. Underlined rather than coloured: a room of
+     six names in accent blue reads as six buttons, and the bubbles are what
+     somebody is here to read. */
+  .dwho .reach{color:inherit;text-decoration:underline dotted;text-underline-offset:3px}
+  /* The doorman's own lines, told apart by the paper they are on rather than
+     by a label: he is the one voice in the room that is not a person. */
+  .bub.bot{background:var(--raise);border-color:var(--t3);border-left-width:3px}
+  /* His, and tappable. The dotted underline is the only cue: a play button on
+     every one of his lines is a row of controls in a conversation. */
+  .bub.hear{cursor:pointer;text-decoration:underline dotted var(--t3);
+    text-underline-offset:4px}
+  .bub.hearing{border-color:var(--t3);box-shadow:0 0 0 2px var(--t3)}
+
+  .bub.flag{outline:1px solid var(--t5);outline-offset:2px}
+
+/* THEIR CARD, ABOVE THE CONVERSATION. Not a bordered box on a screen that
+     already has bubbles in it — a row with a face on it, the same shape the
+     queue uses, so the two screens agree about what a person at the door
+     looks like. */
+  .tcard{display:flex;gap:.75rem;align-items:flex-start;margin:0 0 .2rem;
+    padding:.85rem 1rem;background:var(--raise);border-bottom:1px solid var(--hair)}
+  .tcard .qav{flex:0 0 auto;width:3rem;height:3rem;border-radius:50%;
+    display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);
+    font-size:1.15rem;overflow:hidden}
+  .tcard .qav img{width:100%;height:100%;object-fit:cover;display:block}
+  .tcard .qmid{flex:1;min-width:0}
+  /* The sentence, at a size somebody reads first — it is the only thing here
+     that decides anything. */
+  .tcard .tsay{margin:0;font-size:.98rem;line-height:1.5}
+  .tcard .tsay em{font-style:normal;color:var(--muted)}
+  .tcard .tsay b{font-weight:600;margin:0 .28rem}
+  .tcard .twhy{margin:.3rem 0 0;font-size:.9rem;line-height:1.5;color:var(--ink-2);
+    overflow-wrap:anywhere}
+  .tcard .qtags{margin:.4rem 0 0;display:flex;gap:.3rem;flex-wrap:wrap}
+  .tcard .qtags span{padding:.1rem .45rem;border-radius:99px;background:var(--card);
+    border:1px solid var(--hair);font-size:.74rem;color:var(--ink-2)}
+  .pinwrap{margin:0 0 .9rem;border:1px solid var(--accent);border-radius:.6rem;
+    padding:.5rem .6rem;background:var(--raise)}
+  .pinwrap .k{display:block;font-size:.6rem;letter-spacing:.12em;
+    text-transform:uppercase;font-weight:700;color:var(--accent);margin:0 0 .25rem}
+  .pinwrap p{margin:0;font-size:.88rem;line-height:1.5}
+  .pinwrap p.money{margin-top:.2rem;font-weight:700}
+  .left{margin:.2rem 0 .6rem;font-size:.78rem;color:var(--muted);text-align:center}
+  .shut{margin:.6rem 0;padding:.7rem;border-radius:.7rem;background:var(--raise);
+    font-size:.86rem;color:var(--ink-2);text-align:center}
+
+  /* WHAT THE SCREEN SAYS BACK — sending, sent, refused.
+   *
+   * It wore class="said", which on this page is the CHAT ROW: a flex
+   * container stretched across the width for a face and a bubble. So every
+   * status line this screen has ever shown — "Sending…", "Reported", and the
+   * refusal for a contact in a message — rendered as bare full-size black
+   * text hanging under the box, outside the conversation, looking like the
+   * page had broken. One character of class name.
+   *
+   * Small, quiet, under the box, and red when it is a refusal. The same shape
+   * as the line under the door's own box — see .foot .note in door.html.
+   */
+  .status{margin:.45rem 0 .2rem;font-size:.78rem;line-height:1.45;
+    color:var(--muted);text-align:center}
+  .status.bad{color:var(--t5)}
+
+  /* The box, at the bottom, above the tabs — where a thumb already is. */
+  .write{position:sticky;bottom:4.6rem;display:flex;align-items:flex-end;gap:.5rem;
+    padding:.5rem 0 .2rem;background:var(--paper)}
+  .write textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:.95rem;
+    overflow:hidden;
+    padding:.6rem .8rem;border:1px solid var(--line);border-radius:1.1rem;
+    background:var(--raise);color:var(--ink);max-height:8rem}
+  .send{flex:0 0 auto;width:2.4rem;height:2.4rem;border:0;border-radius:50%;
+    background:var(--accent);color:var(--accent-ink);display:grid;
+    place-items:center;cursor:pointer}
+  .send svg{width:1.1rem;height:1.1rem;fill:currentColor;stroke:none;
+    margin-left:-.1rem}
+  .send:disabled{opacity:.45}
+
+  /* The bar, copied from index.html so the four tabs sit in the same places on
+     every screen that has them. Same rules, same breakpoints. */
+  .bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:35;
+    width:100%;max-width:34rem;display:flex;
+    align-items:center;justify-content:space-around;
+    padding:.35rem .5rem calc(.35rem + env(safe-area-inset-bottom));
+    background:var(--paper);border-top:1px solid var(--line)}
+  @media (min-width:36rem) and (max-width:57.99rem){
+    .bar{border-left:1px solid var(--line);border-right:1px solid var(--line);
+      border-radius:1rem 1rem 0 0}
+  }
+  .bar a{flex:1;min-width:0;color:var(--muted);
+    display:flex;flex-direction:column;align-items:center;gap:.15rem;
+    padding:.45rem .2rem;font-size:.64rem;text-decoration:none;letter-spacing:.02em}
+  .bar a span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar a[aria-current="page"]{color:var(--accent)}
+  /* The one line a waiting person gets instead of three tabs they cannot use. */
+  .bar a.waitbar{flex:1;flex-direction:row;justify-content:center;
+    font-size:.82rem;color:var(--ink-2);letter-spacing:0}
+  .bar svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.7;
+    stroke-linecap:round;stroke-linejoin:round}
+  /* On a wide screen index.html moves its bar into the masthead. This page has
+     no masthead to move it into, so it stays where it is and simply stops
+     being full-bleed. */
+  @media (min-width:58rem){ .bar{border-radius:1rem 1rem 0 0;
+    border-left:1px solid var(--line);border-right:1px solid var(--line)} }
+  button{font:inherit;cursor:pointer}
+  a{color:inherit}
+  img{max-width:100%}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  .top{display:flex;align-items:center;gap:.8rem;margin:0 0 1.3rem}
+  .top h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.75rem;line-height:1.1}
+  .top p{margin:.15rem 0 0;font-size:.85rem;color:var(--muted)}
+  .back{border:0;background:none;color:var(--ink);padding:.2rem;margin-left:-.3rem;
+    display:grid;place-items:center;flex:0 0 auto}
+  .back svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round}
+  .lang{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1}
+
+  /* THE HOME SCREEN, OFFERED ONCE. Same strip and same words as the one on
+     Browse — install.js holds both, because a sentence that differs between
+     two tabs of the same app reads as two different apps. Inside #listview so
+     it goes away with the list when a conversation opens: an ask about the
+     home screen on top of somebody's message is an ask in the wrong place. */
+  .ins{display:flex;align-items:center;justify-content:center;gap:.5rem;
+    margin:0 -1.15rem .9rem;padding:.5rem 1.15rem;background:var(--accent-soft);
+    color:var(--accent);font-size:.78rem;letter-spacing:.02em;text-align:left}
+  .ins button{border:0;background:none;color:inherit;font:inherit;padding:0;
+    flex:0 0 auto;cursor:pointer}
+  .insgo{background:var(--accent);color:var(--accent-ink);border-radius:99px;
+    padding:.2rem .8rem;font-size:.78rem}
+  .insno{font-size:1.1rem;line-height:1;opacity:.7;padding:0 .2rem}
+  .insico{width:1em;height:1em;vertical-align:-.2em;display:inline-block}
+
+  /* THE ONE ASK ON THIS PAGE THAT IS WORTH INTERRUPTING FOR, and it was a
+     tinted one-liner that read like a cookie banner. A messenger nobody is
+     told about is a messenger nobody comes back to; this is the return loop
+     and it gets a card.
+     Still under the list rather than over it: somebody with unread messages
+     came here to read them, and a product that blocks the thing you opened it
+     for in order to ask for a permission is the reason people refuse. */
+  .bell{display:flex;gap:.9rem;align-items:flex-start;margin:0 0 1.1rem;
+    padding:1rem 1.05rem;border-radius:1rem;background:var(--accent-soft);
+    border:1px solid color-mix(in srgb,var(--accent) 22%,transparent)}
+  .bell .ico{flex:0 0 auto;width:2.3rem;height:2.3rem;border-radius:50%;
+    background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+  .bell .ico svg{width:1.2rem;height:1.2rem;fill:none;stroke:currentColor;
+    stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .bell .words{flex:1;min-width:0}
+  .bell b{display:block;font-weight:500;font-size:.98rem;margin:0 0 .15rem}
+  .bell p{margin:0 0 .75rem;font-size:.86rem;line-height:1.5;color:var(--muted)}
+  .bell .row{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+  .bell .on{border:0;background:var(--accent);color:var(--accent-ink);
+    border-radius:99px;padding:.5rem 1.1rem;font:inherit;font-size:.9rem;cursor:pointer}
+  .bell .no{border:0;background:none;color:var(--muted);font:inherit;
+    font-size:.86rem;cursor:pointer;padding:.5rem .4rem}
+  .rule{display:flex;align-items:center;gap:.9rem;margin:0 0 .3rem}
+  .rule span{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);white-space:nowrap}
+  .rule i{flex:1;height:1px;background:var(--line)}
+
+  /* A person in the list. The same row the feed uses, so the two read as one
+     product rather than two screens that happen to share a palette. */
+  .who{display:flex;gap:.9rem;padding:1.2rem 0;border-bottom:1px solid var(--hair);
+    width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;
+    align-items:flex-start}
+  .av{width:3.4rem;height:3.4rem;border-radius:50%;flex:0 0 auto;background:var(--accent);
+    color:var(--accent-ink);display:grid;place-items:center;font-family:var(--serif);
+    font-size:1.35rem;line-height:1;overflow:hidden;
+    box-shadow:0 0 0 3px var(--paper),0 0 0 4px var(--accent-soft)}
+  .av img{width:100%;height:100%;object-fit:cover;display:block}
+  .m{flex:1;min-width:0}
+  .nameline{display:flex;align-items:baseline;gap:.5rem}
+  .nameline b{font-family:var(--serif);font-weight:400;font-size:1.15rem;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nameline .lv{margin-left:auto;flex:0 0 auto;font-size:.72rem;letter-spacing:.05em;
+    border:1px solid var(--line);border-radius:99px;padding:.16rem .55rem;color:var(--muted)}
+  .where{margin:.15rem 0 0;font-size:.83rem;color:var(--muted)}
+  .goal{margin:.45rem 0 0;font-family:var(--serif);font-size:1rem;line-height:1.5;
+    color:var(--ink-2);overflow-wrap:anywhere}
+  .days{display:flex;gap:.25rem;margin:.55rem 0 0;flex-wrap:wrap}
+  .days b{width:1.75rem;height:1.75rem;display:grid;place-items:center;border-radius:.4rem;
+    font-size:.72rem;font-weight:500;background:var(--paper);border:1px solid var(--line);
+    color:var(--muted)}
+  .days b.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+  .none{padding:3rem .5rem;text-align:center;color:var(--muted)}
+  .none b{display:block;font-family:var(--serif);font-weight:400;font-size:1.3rem;
+    color:var(--ink);margin:0 0 .4rem}
+  .none p{margin:0 auto 1.3rem;max-width:26rem;font-size:.95rem;line-height:1.6}
+  .none button{border:0;background:var(--accent);color:var(--accent-ink);border-radius:99px;
+    padding:.75rem 1.6rem;font-size:1rem}
+
+  /* The door, by room. A head you tap and the people under it. */
+  .wroom{display:flex;align-items:center;gap:.8rem;width:100%;text-align:left;
+    padding:.85rem 0;border:0;border-bottom:1px solid var(--hair);background:none;color:inherit}
+  .wroom .wm b{display:block;font-family:var(--serif);font-weight:400;font-size:1.1rem}
+  .wroom .wm span{display:block;font-size:.82rem;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wroom .wm{flex:1;min-width:0}
+  .wroom .wn{flex:0 0 auto;font-size:.8rem;color:var(--muted);border:1px solid var(--line);
+    border-radius:99px;padding:.1rem .6rem}
+  .wperson{display:flex;align-items:center;gap:.8rem;padding:.7rem 0 .7rem 1rem;
+    border-bottom:1px solid var(--hair);text-decoration:none;color:inherit}
+  .wperson .wm{flex:1;min-width:0}
+  .wperson .wm b{display:block;font-family:var(--serif);font-weight:400;font-size:1rem}
+  .wperson .wm span{display:block;font-size:.8rem;color:var(--muted);line-height:1.45}
+  .wperson .wv{flex:0 0 auto;font-size:.72rem;letter-spacing:.06em;color:var(--t2)}
+
+  .safety{margin:2rem 0 0;padding:.95rem 1.05rem;background:var(--raise);
+    border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
+    font-size:.86rem;line-height:1.6;color:var(--ink-2)}
+
+  /* A note. Two shapes, not one with a modifier: what somebody sent you is a
+     thing to decide about, what you sent is a receipt. Making them look the
+     same made a page where you could not tell at a glance which was which. */
+  .note{padding:1.15rem 0;border-bottom:1px solid var(--hair);display:flex;gap:.9rem;
+    align-items:flex-start}
+  .note .m{flex:1 1 auto;min-width:0}
+  .note .line{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+  .note .line b{font-family:var(--serif);font-weight:400;font-size:1.08rem}
+  .note .line time{margin-left:auto;font-size:.78rem;color:var(--muted);flex:0 0 auto}
+  .note .text{margin:.45rem 0 0;font-family:var(--serif);font-size:1.02rem;line-height:1.55;
+    overflow-wrap:anywhere;white-space:pre-wrap}
+  .note.mine .text{color:var(--ink-2)}
+  .note .acts{display:flex;gap:.5rem;margin:.75rem 0 0;flex-wrap:wrap}
+  .note .acts button,.note .acts a{border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);border-radius:99px;padding:.5rem 1.05rem;font-size:.87rem;
+    text-decoration:none;display:inline-block}
+  .note .acts button.primary{background:var(--accent);border-color:var(--accent);
+    color:var(--accent-ink)}
+  .note .acts button.warn{color:var(--t5)}
+  .note .said{margin:.55rem 0 0;font-size:.83rem;color:var(--muted)}
+
+  /* The terms an accepted offer put over the thread. Bordered in the accent
+     rather than tucked into the muted voice: it is the thing on this screen
+     that both people are working from. */
+  .note .pin{margin:.6rem 0 0;border:1px solid var(--accent);border-radius:.55rem;
+    padding:.45rem .55rem;background:var(--paper)}
+  .note .pin .k{display:block;font-size:.6rem;letter-spacing:.12em;
+    text-transform:uppercase;font-weight:700;color:var(--accent);margin:0 0 .25rem}
+  .note .pin p{margin:0;font-size:.86rem;line-height:1.5;color:var(--ink)}
+  .note .pin p.money{margin-top:.2rem;font-weight:700}
+  .note .left{margin:.5rem 0 0;font-size:.76rem;color:var(--muted)}
+  .note .left.spent{color:var(--ink-2)}
+  .note .said.bad{color:var(--t5)}
+  /* Unread. A dot rather than a colour wash: the message is what should be
+     read, not the fact that it is new. */
+  /* A ROW OF FACES, SCROLLED SIDEWAYS. Down the page they would push the
+     conversations that already exist off the screen, which gets the priority
+     backwards — the inbox is what somebody opened this for. */
+  .cansub{margin:.1rem 0 .7rem;font-size:.82rem;line-height:1.5;color:var(--muted)}
+  .can{display:flex;gap:.9rem;overflow-x:auto;padding:.1rem .1rem 1.1rem;
+    margin:0 0 .4rem;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .can::-webkit-scrollbar{display:none}
+  .can .one{flex:0 0 auto;width:4.4rem;border:0;background:none;padding:0;
+    font:inherit;cursor:pointer;text-align:center;color:var(--ink)}
+  .can .one b{display:block;margin:.4rem 0 0;font-size:.78rem;font-weight:600;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .can .one i{display:block;font-style:normal;font-size:.66rem;color:var(--accent);
+    letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+  /* Waiting on them is a state, not a thing to do — so it is said in the
+     quiet voice, and the ring around the face comes off with it. */
+  .can .one i.quiet{color:var(--muted)}
+  .can .one.hold .av{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--line)}
+  /* The ＋ at the head of the strip. A dashed ring rather than a filled disc:
+     it is the space a person goes in, not a person. */
+  .can a.one{text-decoration:none}
+  .can .one.add .av{background:none;border:2px dashed var(--line);
+    color:var(--accent);font-size:1.5rem;font-family:var(--sans);box-shadow:none}
+  .can .one.add:hover .av{border-color:var(--accent)}
+  /* The ring is the whole affordance: these are faces you may write to, and a
+     face on this board is otherwise a link to a profile. */
+  .can .av{width:3.5rem;height:3.5rem;font-size:1.35rem;margin:0 auto;
+    box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--accent)}
+  .can .one.on .av{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--ink)}
+
+  /* Writing the first one, in the same place the reply box appears — so the
+     two halves of this screen behave the same way. */
+  /* .newnote is gone with the inline first-message box — see drawCan. */
+
+  .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--accent);
+    flex:0 0 auto;margin-top:.5rem}
+  .dot.spent{background:transparent}
+  a.av{color:var(--accent-ink);text-decoration:none}
+  .av.small{width:2.8rem;height:2.8rem;font-size:1.1rem;box-shadow:none}
+
+  /* Answering, in place. There is only ever one answer, so a sheet with its
+     own screen would be more ceremony than the thing deserves. */
+  .reply{margin:.75rem 0 0}
+  .reply textarea{width:100%;min-height:5.5rem;resize:vertical;font:inherit;
+    padding:.65rem .75rem;border-radius:.7rem;border:1px solid var(--line);
+    background:var(--raise);color:var(--ink)}
+  .reply .how{margin:.5rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
+
+
+  #tpin.lpin{position:sticky;z-index:15;margin:0 0 .9rem;padding:0;border:1px solid var(--line);
+    border-radius:.8rem;background:var(--raise);box-shadow:0 6px 18px -10px rgba(21,27,40,.25);overflow:hidden}
+  .lpin .lbtn{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:.1rem .8rem;
+    width:100%;padding:.7rem .9rem;cursor:pointer;align-items:center}
+  .lpin .lbtn:focus-visible{outline:2px solid var(--accent);outline-offset:-3px;border-radius:.8rem}
+  .lpin .lk{grid-column:1;display:flex;gap:.5rem;align-items:center;font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .lpin .lk i{font-style:normal;letter-spacing:.06em;border:1px solid var(--line);border-radius:99px;padding:0 .4rem}
+  .lpin .lf{grid-column:1;font-family:var(--serif);font-size:1.55rem;line-height:1.1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .lpin .lst{grid-column:1;display:flex;align-items:center;gap:.35rem;font-size:.76rem;color:var(--ink-2)}
+  .lpin .lst i{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+  .lpin .lst i.on{background:#2A9D63}
+  .lpin .ls{grid-column:2;grid-row:1 / span 3;display:flex;align-items:center;gap:.45rem;font-size:.72rem;color:var(--ink-2)}
+  .lpin .ls .c{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;text-align:right}
+  .lpin .ls .c b{font-size:.96rem;color:var(--ink);font-variant-numeric:tabular-nums}
+  .lpin .ls svg{width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:2;transition:transform .25s ease}
+  .lpin .lbtn[aria-expanded="true"] .ls svg{transform:rotate(180deg)}
+  .lpin .lbody{padding:0 .9rem .95rem;display:grid;gap:.85rem;max-height:62vh;overflow-y:auto}
+  .lpin h3{margin:0;font-family:var(--serif);font-weight:400;font-size:1.15rem;line-height:1.25}
+  .lpin h3:focus{outline:none}
+  .lpin .kk{margin:0 0 .3rem;font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600}
+  .lpin p{margin:0}
+  .lpin .soft{font-size:.84rem;color:var(--ink-2)}
+  .lpin .tiny{font-size:.74rem;line-height:1.5;color:var(--muted)}
+  .lpin .rows > div{display:grid;grid-template-columns:1fr auto;gap:.7rem;padding:.42rem 0;border-top:1px solid var(--hair);font-size:.82rem;font-variant-numeric:tabular-nums}
+  .lpin .rows > div > span:first-child{color:var(--ink-2)}
+  .lpin .rows > div > span:last-child{font-weight:600;color:var(--ink)}
+  .lpin .rows .n{display:block;font-size:.7rem;color:var(--muted);font-weight:400}
+  .lpin .rows > div.tot > span{color:var(--ink)}
+  .lpin .scale{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;align-items:end;font-variant-numeric:tabular-nums}
+  .lpin .mk{border:1px solid var(--line);border-radius:.5rem;padding:.3rem .35rem;background:var(--card)}
+  .lpin .mk .w{font-size:.62rem;color:var(--muted)}
+  .lpin .mk .v{font-family:var(--serif);line-height:1.1}
+  .lpin .mk.you{border-color:var(--accent);background:var(--accent-soft)}
+  .lpin .bar{height:6px;border-radius:99px;background:var(--hair);overflow:hidden;margin-top:.35rem}
+  .lpin .bar i{display:block;height:100%;min-width:3px;background:var(--accent);border-radius:99px}
+  .lpin .both{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+  .lpin .both div{border:1px solid var(--line);border-radius:.6rem;padding:.5rem .55rem;background:var(--card)}
+  .lpin .both b{display:block;font-size:.78rem;margin-bottom:.1rem}
+  .lpin .both span{font-size:.78rem;color:var(--ink-2)}
+  .lpin dl{margin:0;border-top:1px solid var(--hair)}
+  .lpin dl div{padding:.5rem 0;border-bottom:1px solid var(--hair)}
+  .lpin dt{font-size:.8rem;font-weight:600}
+  .lpin dd{margin:.1rem 0 0;font-size:.82rem;color:var(--ink-2)}
+  .lpin .fine{border-radius:.6rem;padding:.55rem .65rem;font-size:.8rem;background:var(--accent-soft);border:1px solid var(--line)}
+  .lpin .note{border-radius:.6rem;padding:.55rem .65rem;font-size:.8rem;background:var(--raise);border:1px dashed var(--line)}
+  .lpin .future{border-radius:.6rem;padding:.55rem .65rem;font-size:.8rem;border:1px dashed #B8741F}
+  .lpin .fld{display:grid;gap:.3rem}
+  .lpin label.f{font-size:.82rem;font-weight:600}
+  .lpin select,.lpin input[type=text]{font:inherit;font-size:.9rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:.55rem;padding:.5rem .6rem;width:100%;box-sizing:border-box}
+  .lpin .chk{display:grid;grid-template-columns:20px 1fr;gap:.5rem;align-items:start;font-size:.84rem}
+  .lpin .chk input{width:18px;height:18px;margin:.1rem 0 0;accent-color:var(--accent)}
+  .lpin .acts{display:grid;gap:.45rem}
+  .lpin .pb{font:inherit;font-size:.9rem;font-weight:600;border-radius:.65rem;padding:.6rem .8rem;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink,#fff);width:100%}
+  .lpin .pb.g{background:var(--card);color:var(--ink);border-color:var(--line)}
+  .lpin .pb[disabled]{opacity:.45;cursor:not-allowed}
+  .lpin .rec > div{display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;border-top:1px solid var(--hair);font-size:.82rem}
+  .lpin .rec > div > span:first-child{color:var(--ink-2)}
+  @media (prefers-reduced-motion:reduce){.lpin .ls svg{transition:none}}
+  
+  /* ---- demo only ---- */
+  .demo{max-width:34rem;margin:0 auto;padding:.55rem 1.15rem;display:flex;align-items:center;gap:.6rem;
+    font-family:var(--sans);font-size:.78rem;color:var(--ink-2);background:var(--paper);border-bottom:1px dashed var(--line)}
+  .demo b{color:var(--ink)}
+  .demo span{flex:1}
+  .demo button{font:inherit;font-size:.78rem;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:99px;padding:.3rem .7rem;cursor:pointer;white-space:nowrap}
+  .demo button:focus-visible,.lang:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  #talk .av{text-decoration:none}
+  .srx{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+
+<div class="demo" role="note">
+  <span id="demotext"><b>Demo.</b> Invented people and numbers. Nothing here is an offer of shares.</span>
+  <button type="button" id="joinsim">Someone joins</button>
+</div>
+<main>
+  <div id="threadview">
+    <div class="thead">
+      <a class="tname" id="twho" href="#" aria-disabled="true"><b id="twhoname">Film &amp; TV  (186)</b><span id="twhosub">anyone inside can read</span></a>
+      <span id="langaway"><button type="button" class="lang" id="langbtn" lang="zh-Hans">中文</button></span>
+    </div>
+    <div class="pinwrap" id="tpin" hidden></div>
+    <div class="talk" id="talk"></div>
+    <div class="write" id="twrite">
+      <label for="tbox" class="srx" id="tboxlab">Say something to the room</label>
+      <textarea id="tbox" rows="1" maxlength="600" placeholder="Say something to the room"></textarea>
+      <button class="send" id="tsend" type="button" aria-label="Send">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 8-16 8 3-8z"></path></svg>
+      </button>
+    </div>
+  </div>
+</main>
+<nav class="bar">
+  <a href="#" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg><span id="tabnotes">Messages</span></a>
+  <a href="#" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M3 10h18"/></svg><span id="tabcards">Cards</span></a>
+  <a href="#" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z M9 15c1.5-2 4.5-2 6 0"/><circle cx="12" cy="10" r="2.2"/></svg><span id="tabbrowse">Browse</span></a>
+  <a href="#" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg><span id="tabme">You</span></a>
+</nav>
+
+<script>
+(() => {
+/* A demo of the Exchange's Film & TV door room with the 50,000 ledger pinned
+   on top. The room's markup and styles are the app's own (notes.html); the
+   people, messages and numbers are invented, and nothing leaves the page. */
+
+let LANG = "en";
+const lang = () => LANG;
+const S = {
+  en: {
+    ledger: "Your ledger", place: "place #{n}", proto: "Prototype", points: "{n} points",
+    counts: "Counts toward a share offer at {goal}", onLedger: "On the ledger",
+    ofGoal: "of {goal}", membersWord: "members",
+    noPlace: "No place yet", noPlaceSub: "You get a place on the ledger the day you're let in.",
+    hOverview: "Your place on the ledger", hRules: "The rules, in plain words", hJoin: "Join the ledger",
+    hOffer: "A share offer, for people on the ledger", hRecord: "What's recorded",
+    placeRow: "Place #{n}", placeSub: "fixed the day you joined",
+    doneRow: "What you've done", doneSub: "Points from what you do keep counting until {date}.", total: "Total",
+    guests: "{n} people you brought in who stayed", guestsCap: "{n} people you brought in who stayed (first {cap} count)",
+    cards: "{n} introductions that landed", heard: "{n} people who answered you", weeks: "{n} active weeks",
+    scale: "The sliding scale", scaleNote: "The highlighted box is the band your place is in.",
+    share: "Your share of the pool", shareLine: "from your place, and it never falls",
+    shareRest: "Plus a share of the other {rest}%, from what everyone did, fixed on {date}.",
+    toward: "Toward {goal}", towardLine: "members, by {date}",
+    ifYes: "If {goal} is reached", ifYesP: "The company intends to make a share offer to everyone on the ledger, allocated by points, with its own offer document.",
+    ifNo: "If it isn't", ifNoP: "Points stay a record of who built the board. No shares are offered.",
+    readRules: "Read the rules", join: "Join the ledger", atGoal: "What happens at {goal}", seeRecord: "What's recorded", back: "Back",
+    r1t: "Points aren't shares", r1: "They have no cash value, can't be sold or transferred, and aren't a promise of shares.",
+    r2t: "How you earn them", r2: "Your place number, on the sliding scale. Then people you brought in who stayed and posted (the first {cap} count), introductions that landed, people who answered you, and active weeks.",
+    r3t: "What the company intends", r3: "If the board reaches {goal} members by {by}, to offer shares to everyone on the ledger, allocated by points. The offer will have its own document and its own terms.",
+    r4t: "The pool", r4: "{split}% split by place, fixed when you join. {rest}% split by what people did, fixed on {cutoff}.",
+    r5t: "If the rules change", r5: "Points you've already earned are kept. You'll be told before any change.",
+    r6t: "Mistakes", r6: "Points given in error, or earned by gaming the rules, can be corrected.",
+    r7t: "It may never happen", r7: "The board may not reach {goal}. The company may fail. Nothing is owed if it doesn't happen.",
+    joinFine: "You're not signing for shares. Nothing is being promised yet, so there's no legal name to type. You're agreeing to the points rules.",
+    where: "Where do you live?", choose: "Choose one", hk: "Hong Kong", cn: "Mainland China", else: "Somewhere else",
+    whereHk: "You earn points the same as everyone.",
+    whereCn: "You earn points the same as everyone. If an offer happens, people in mainland China may need a different route to take part, and you'll be told directly.",
+    whereElse: "You earn points the same as everyone. Whether you can take part in an offer depends on the rules where you live.",
+    agree: "I understand points aren't shares and have no cash value.",
+    joinedSay: "You're on the ledger.", joinFail: "That didn't go through. Try again.",
+    future: "This only opens if the board reaches {goal}. It's here so you can see where shares and signatures come in.",
+    cutoffPts: "Your points at the cut-off", alloc: "Your allocation", allocSub: "worked out from your points", price: "Price",
+    inOffer: "[set in the offer]", sharesPh: "[shares]", readOffer: "The offer document",
+    legal: "Type your full legal name", o1: "I've read the offer document.", o2: "I understand the shares may lose value or be worth nothing.",
+    cool: "You'll be able to change your mind within 14 days.", take: "Take up the offer", notOpen: "Not open: the board hasn't reached {goal}.",
+    recPlace: "Place", recPts: "Points today", recRules: "Rules", recJoined: "Joined the ledger", recWhere: "Lives in",
+    recOffer: "Share offer", recOfferV: "Only if {goal} is reached", notYet: "Not yet", notGiven: "Not given",
+    sealed: "Sealed at the end of each month, so the record can't be quietly changed.",
+    roomSees: "What the room sees: {m} of {goal} members. Never your place, points or choices.",
+    pin: "Your ledger: place {place}, {pts} points. {status}. {m} of {goal} members. Double-tap to open.",
+    pinNo: "Your ledger: no place yet. You get one the day you're let in.",
+    say: "The board now has {m} members.",
+  },
+  zh: {
+    ledger: "你的账本", place: "第 {n} 位", proto: "原型", points: "{n} 分",
+    counts: "达到 {goal} 人时计入认股", onLedger: "已加入账本",
+    ofGoal: "/ {goal}", membersWord: "位成员",
+    noPlace: "还没有位次", noPlaceSub: "被放进来的那天，你就会在账本上有一个位次。",
+    hOverview: "你在账本上的位次", hRules: "规则，用大白话说", hJoin: "加入账本",
+    hOffer: "给账本上的人的认股要约", hRecord: "记录了什么",
+    placeRow: "第 {n} 位", placeSub: "加入那天就定下",
+    doneRow: "你做过的事", doneSub: "你做的事带来的分数会一直累积到 {date}。", total: "合计",
+    guests: "{n} 位你带进来并留下的人", guestsCap: "{n} 位你带进来并留下的人（前 {cap} 位计分）",
+    cards: "{n} 次促成的引荐", heard: "{n} 个回复过你的人", weeks: "{n} 个活跃周",
+    scale: "递减规则", scaleNote: "高亮的格子是你的位次所在区间。",
+    share: "你在池子里的份额", shareLine: "来自你的位次，不会下降",
+    shareRest: "另外 {rest}% 按大家做过的事分配，在 {date} 定下。",
+    toward: "距离 {goal}", towardLine: "位成员，截止 {date}",
+    ifYes: "如果达到 {goal}", ifYesP: "公司打算向账本上的每个人发出认股要约，按分数分配，并有单独的要约文件。",
+    ifNo: "如果没有达到", ifNoP: "分数仍然记录着是谁建起了这个看板。不会有认股要约。",
+    readRules: "阅读规则", join: "加入账本", atGoal: "达到 {goal} 时会怎样", seeRecord: "记录了什么", back: "返回",
+    r1t: "分数不是股份", r1: "分数没有现金价值，不能出售或转让，也不是股份的承诺。",
+    r2t: "怎么得分", r2: "你的位次，按递减规则计分。另外还有你带进来并留下发帖的人（前 {cap} 位计分）、促成的引荐、回复过你的人，以及活跃周。",
+    r3t: "公司打算怎么做", r3: "如果看板在 {by} 之前达到 {goal} 位成员，公司打算向账本上的每个人发出认股要约，按分数分配。要约会有单独的文件和条款。",
+    r4t: "池子", r4: "{split}% 按位次分配，加入时定下。{rest}% 按大家做过的事分配，在 {cutoff} 定下。",
+    r5t: "如果规则改变", r5: "你已经得到的分数会保留。任何改变之前都会通知你。",
+    r6t: "出错的情况", r6: "错发的分数，或者钻规则空子得到的分数，可以更正。",
+    r7t: "也可能不会发生", r7: "看板可能达不到 {goal}。公司可能失败。如果没有发生，没有人欠你任何东西。",
+    joinFine: "你不是在签认股协议。现在还没有任何承诺，所以不需要输入法定姓名。你只是同意分数规则。",
+    where: "你住在哪里？", choose: "请选择", hk: "香港", cn: "中国大陆", else: "其他地方",
+    whereHk: "你和所有人一样得分。",
+    whereCn: "你和所有人一样得分。如果将来有认股要约，住在中国大陆的人可能需要不同的参与方式，我们会直接告诉你。",
+    whereElse: "你和所有人一样得分。能否参与认股要约取决于你所在地的规定。",
+    agree: "我明白分数不是股份，也没有现金价值。",
+    joinedSay: "你已经加入账本。", joinFail: "没有成功，请再试一次。",
+    future: "只有看板达到 {goal} 时才会开放。放在这里是为了让你看到股份和签名在哪一步出现。",
+    cutoffPts: "截止时你的分数", alloc: "你的配额", allocSub: "按你的分数计算", price: "价格",
+    inOffer: "［在要约中确定］", sharesPh: "［股数］", readOffer: "要约文件",
+    legal: "输入你的法定全名", o1: "我已经读过要约文件。", o2: "我明白股份可能贬值，甚至一文不值。",
+    cool: "你可以在 14 天内改变主意。", take: "接受要约", notOpen: "尚未开放：看板还没有达到 {goal}。",
+    recPlace: "位次", recPts: "今天的分数", recRules: "规则", recJoined: "加入账本", recWhere: "居住地",
+    recOffer: "认股要约", recOfferV: "只有达到 {goal} 才会有", notYet: "还没有", notGiven: "未填写",
+    sealed: "每月底封存，所以记录不能被悄悄改动。",
+    roomSees: "房间里看到的：{m} / {goal} 位成员。永远看不到你的位次、分数或选择。",
+    pin: "你的账本：第 {place} 位，{pts} 分。{status}。{m} / {goal} 位成员。双击打开。",
+    pinNo: "你的账本：还没有位次。被放进来的那天就会有。",
+    say: "看板现在有 {m} 位成员。",
+  },
+};
+const ROOM = {
+  en: { title: "Film & TV", sub: "anyone inside can read", say: "Say something to the room", messages: "Messages", cards: "Cards",
+        browse: "Browse", you: "You", demo: "<b>Demo.</b> Invented people and numbers. Nothing here is an offer of shares.",
+        joins: "Someone joins", producer: "Producer", director: "Director", inside: "inside", now: "now", ago: "7h",
+        welcome: "{who} — welcome. Say what you're looking for: the people who can answer it are reading this room.", other: "中文" },
+  zh: { title: "影视", sub: "里面的人都看得到", say: "跟这屋里的人说点什么", messages: "私信", cards: "名片",
+        browse: "看看", you: "我", demo: "<b>演示。</b>人物和数字都是虚构的。这里没有任何认股要约。",
+        joins: "有人加入", producer: "制片人", director: "导演", inside: "已经在里面", now: "刚刚", ago: "7 小时前",
+        welcome: "{who}，欢迎。说说你在找什么：能回答你的人正在看这个房间。", other: "English" },
+};
+const R = (k, o = {}) => (ROOM[LANG][k] || "").replace(/\{(\w+)\}/g, (_, x) => o[x] ?? "");
+
+const L = () => (lang() === "zh" ? "zh" : "en");
+const T = (k, o = {}) => (S[L()][k] || "").replace(/\{(\w+)\}/g, (_, x) => (o[x] ?? ""));
+const int = (n) => Math.round(Number(n) || 0).toLocaleString("en-US");
+const pct = (x) => (x >= 1 ? x.toFixed(2) : x >= 0.01 ? x.toFixed(3) : x.toFixed(4)) + "%";
+const day = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso + (iso.length === 10 ? "T00:00:00" : ""));
+  return L() === "zh" ? `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
+    : d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+};
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c; if (x !== undefined) n.textContent = x; return n; };
+const $ = (id) => document.getElementById(id);
+
+/* ---- the numbers, as the server computed them for member #1,204 ---- */
+const curve = (n) => Math.round(1000 / Math.pow(Math.max(1, n), 0.35));
+const SUM = (() => { let t = 0; for (let n = 1; n <= 50000; n++) t += curve(n); return t; })();
+const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+                set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+const DATA = {
+  on: true, goal: 50000, by: "2029-12-31", cutoff: "2027-12-31", split: 70, rules: "1.0", guestCap: 10,
+  members: 1380, member: true, place: 1204, placePoints: curve(1204),
+  parts: [{ key: "guests", n: 2, counted: 2, points: 200 }, { key: "heard", n: 4, points: 80 }, { key: "weeks", n: 5, points: 50 }],
+  marks: [1, 100, 1000, 10000, 50000].map((n) => ({ n, points: curve(n) })),
+  joined: store.get("exchange-demo-joined"),
+};
+DATA.activity = DATA.parts.reduce((a, p) => a + p.points, 0);
+DATA.total = DATA.placePoints + DATA.activity;
+DATA.placeShare = DATA.placePoints / SUM * DATA.split;
+
+/* Kept across the room's twenty-second repaint: which view is open, what was
+   half-filled in, and the last member count, so nothing snaps shut, loses a
+   choice, or announces itself for no reason. */
+const state = { open: false, view: "overview", where: "", agreed: false,
+  name: "", o1: false, o2: false, lastM: null, sayTimer: 0, device: "", room: "", focusNext: false };
+
+function styles() {}
+
+function live(text) {
+  let n = document.getElementById("lpin-live");
+  if (!n) {
+    n = el("div");
+    n.id = "lpin-live";
+    n.setAttribute("role", "status");
+    n.setAttribute("aria-live", "polite");
+    n.style.cssText = "position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap";
+    document.body.append(n);
+  }
+  n.textContent = "";
+  setTimeout(() => { n.textContent = text; }, 60);
+}
+
+function rows(pairs) {
+  const box = el("div", "rows");
+  for (const [left, right, sub, cls] of pairs) {
+    const d = el("div", cls);
+    const l = el("span", null, left);
+    if (sub) l.append(el("span", "n", sub));
+    d.append(l, el("span", null, right));
+    box.append(d);
+  }
+  return box;
+}
+
+function button(text, cls, fn) {
+  const b = el("button", "pb" + (cls ? " " + cls : ""), text);
+  b.type = "button";
+  b.addEventListener("click", fn);
+  return b;
+}
+
+let SLOT = null;
+
+function show(view) {
+  state.view = view;
+  state.focusNext = true;
+  draw();
+}
+
+/* ---- the views ---------------------------------------------------------- */
+
+function overview(d) {
+  const f = document.createDocumentFragment();
+  f.append(el("h3", null, T("hOverview")));
+  const actParts = d.parts.map((p) => [
+    p.key === "guests"
+      ? (p.n > d.guestCap ? T("guestsCap", { n: p.n, cap: d.guestCap }) : T("guests", { n: p.n }))
+      : T(p.key, { n: p.n }),
+    int(p.points),
+  ]);
+  f.append(rows([
+    [T("placeRow", { n: int(d.place) }), int(d.placePoints), T("placeSub")],
+    ...actParts,
+    [T("total"), int(d.total), "", "tot"],
+  ]));
+  if (d.cutoff) f.append(el("p", "tiny", T("doneSub", { date: day(d.cutoff) })));
+
+  const scaleWrap = el("div");
+  scaleWrap.append(el("p", "kk", T("scale")));
+  const sc = el("div", "scale");
+  sc.setAttribute("role", "list");
+  d.marks.forEach((m, i) => {
+    const prev = i ? d.marks[i - 1].n : 0;
+    const you = d.place <= m.n && d.place > prev;
+    const box = el("div", "mk" + (you ? " you" : ""));
+    box.setAttribute("role", "listitem");
+    box.setAttribute("aria-label", `#${int(m.n)}: ${T("points", { n: int(m.points) })}${you ? " ←" : ""}`);
+    box.append(el("div", "w", "#" + int(m.n)));
+    const v = el("div", "v", int(m.points));
+    v.style.fontSize = (1.15 - i * 0.08) + "rem";
+    box.append(v);
+    sc.append(box);
+  });
+  scaleWrap.append(sc, el("p", "tiny", T("scaleNote")));
+  f.append(scaleWrap);
+
+  const share = el("div");
+  share.append(el("p", "kk", T("share")));
+  const sl = el("p");
+  sl.append(el("b", null, pct(d.placeShare)), el("span", "soft", " " + T("shareLine")));
+  share.append(sl);
+  if (d.cutoff) share.append(el("p", "tiny", T("shareRest", { rest: 100 - d.split, date: day(d.cutoff) })));
+  f.append(share);
+
+  const prog = el("div");
+  prog.append(el("p", "kk", T("toward", { goal: int(d.goal) })));
+  const pl = el("p");
+  pl.append(el("b", null, int(d.members)), el("span", "soft", " " + T("towardLine", { date: day(d.by) })));
+  const bar = el("div", "bar");
+  const fillPct = Math.min(100, (d.members / d.goal) * 100);
+  bar.setAttribute("role", "img");
+  bar.setAttribute("aria-label", fillPct.toFixed(2) + "%");
+  const fillEl = el("i");
+  fillEl.style.width = fillPct + "%";
+  bar.append(fillEl);
+  prog.append(pl, bar);
+  f.append(prog);
+
+  const both = el("div", "both");
+  const a = el("div"); a.append(el("b", null, T("ifYes", { goal: int(d.goal) })), el("span", null, T("ifYesP")));
+  const b = el("div"); b.append(el("b", null, T("ifNo")), el("span", null, T("ifNoP")));
+  both.append(a, b);
+  f.append(both);
+
+  const acts = el("div", "acts");
+  acts.append(button(T("readRules"), "", () => show("rules")));
+  acts.append(d.joined
+    ? button(T("seeRecord"), "g", () => show("record"))
+    : button(T("join"), "g", () => show("join")));
+  acts.append(button(T("atGoal", { goal: int(d.goal) }), "g", () => show("offer")));
+  f.append(acts);
+  return f;
+}
+
+function rules(d) {
+  const f = document.createDocumentFragment();
+  f.append(el("h3", null, T("hRules")));
+  const dl = el("dl");
+  const o = { cap: d.guestCap, goal: int(d.goal), by: day(d.by), split: d.split, rest: 100 - d.split, cutoff: day(d.cutoff) };
+  for (const n of [1, 2, 3, 4, 5, 6, 7]) {
+    const row = el("div");
+    row.append(el("dt", null, T("r" + n + "t", o)), el("dd", null, T("r" + n, o)));
+    dl.append(row);
+  }
+  f.append(dl);
+  const acts = el("div", "acts");
+  if (!d.joined) acts.append(button(T("join"), "", () => show("join")));
+  acts.append(button(T("back"), "g", () => show("overview")));
+  f.append(acts);
+  return f;
+}
+
+function join(d) {
+  const f = document.createDocumentFragment();
+  f.append(el("h3", null, T("hJoin")));
+  f.append(el("p", "fine", T("joinFine")));
+
+  const fld = el("div", "fld");
+  const lab = el("label", "f", T("where"));
+  lab.htmlFor = "lpin-where";
+  const sel = el("select");
+  sel.id = "lpin-where";
+  for (const [v, k] of [["", "choose"], ["hk", "hk"], ["cn", "cn"], ["else", "else"]]) {
+    const opt = el("option", null, T(k));
+    opt.value = v;
+    sel.append(opt);
+  }
+  sel.value = state.where;
+  fld.append(lab, sel);
+  f.append(fld);
+
+  const note = el("p", "note");
+  f.append(note);
+
+  const chk = el("label", "chk");
+  const box = el("input");
+  box.type = "checkbox";
+  box.id = "lpin-agree";
+  box.checked = state.agreed;
+  chk.append(box, el("span", null, T("agree")));
+  f.append(chk);
+
+  const go = button(T("join"), "", async () => {
+    if (!(state.where && state.agreed)) return;
+    go.disabled = true;
+    try {
+      DATA.joined = { at: new Date().toISOString(), where: state.where, rules: DATA.rules };
+      store.set("exchange-demo-joined", DATA.joined);
+      live(T("joinedSay"));
+      await refresh();
+      show("record");
+    } catch {
+      go.disabled = false;
+      live(T("joinFail"));
+    }
+  });
+  const paint = () => {
+    note.hidden = !state.where;
+    note.textContent = state.where === "cn" ? T("whereCn") : state.where === "else" ? T("whereElse") : state.where === "hk" ? T("whereHk") : "";
+    go.disabled = !(state.where && state.agreed);
+  };
+  sel.addEventListener("change", () => { state.where = sel.value; paint(); });
+  box.addEventListener("change", () => { state.agreed = box.checked; paint(); });
+  paint();
+
+  const acts = el("div", "acts");
+  acts.append(go, button(T("back"), "g", () => show("overview")));
+  f.append(acts);
+  return f;
+}
+
+function offer(d) {
+  const f = document.createDocumentFragment();
+  f.append(el("p", "future", T("future", { goal: int(d.goal) })));
+  f.append(el("h3", null, T("hOffer")));
+  f.append(rows([
+    [T("cutoffPts"), int(d.total)],
+    [T("alloc"), T("sharesPh"), T("allocSub")],
+    [T("price"), T("inOffer")],
+  ]));
+  if (d.joined && d.joined.where === "cn") f.append(el("p", "note", T("whereCn")));
+
+  const doc = button(T("readOffer"), "g", () => {});
+  doc.disabled = true;
+  f.append(doc);
+
+  const fld = el("div", "fld");
+  const lab = el("label", "f", T("legal"));
+  lab.htmlFor = "lpin-legal";
+  const inp = el("input");
+  inp.type = "text";
+  inp.id = "lpin-legal";
+  inp.autocomplete = "name";
+  inp.value = state.name;
+  inp.addEventListener("input", () => { state.name = inp.value; });
+  fld.append(lab, inp);
+  f.append(fld);
+  for (const k of ["o1", "o2"]) {
+    const c = el("label", "chk");
+    const b = el("input");
+    b.type = "checkbox";
+    b.checked = state[k];
+    b.addEventListener("change", () => { state[k] = b.checked; });
+    c.append(b, el("span", null, T(k)));
+    f.append(c);
+  }
+  f.append(el("p", "tiny", T("cool")));
+  /* Shut, and it says why. Nothing can be taken up before the goal. */
+  const take = button(T("take"), "", () => {});
+  take.disabled = true;
+  take.setAttribute("aria-describedby", "lpin-notopen");
+  const why = el("p", "tiny", T("notOpen", { goal: int(d.goal) }));
+  why.id = "lpin-notopen";
+  const acts = el("div", "acts");
+  acts.append(take, why, button(T("back"), "g", () => show("overview")));
+  f.append(acts);
+  return f;
+}
+
+function record(d) {
+  const f = document.createDocumentFragment();
+  f.append(el("h3", null, T("hRecord")));
+  const rec = el("div", "rec");
+  const where = d.joined ? T(d.joined.where) : T("notGiven");
+  for (const [a, b] of [
+    [T("recPlace"), "#" + int(d.place)],
+    [T("recPts"), int(d.total)],
+    [T("recRules"), d.joined ? d.joined.rules : d.rules],
+    [T("recJoined"), d.joined ? day(d.joined.at.slice(0, 10)) : T("notYet")],
+    [T("recWhere"), where],
+    [T("recOffer"), T("recOfferV", { goal: int(d.goal) })],
+  ]) {
+    const row = el("div");
+    row.append(el("span", null, a), el("span", null, b));
+    rec.append(row);
+  }
+  f.append(rec);
+  f.append(el("p", "soft", T("sealed")));
+  f.append(el("p", "fine", T("roomSees", { m: int(d.members), goal: int(d.goal) })));
+  const acts = el("div", "acts");
+  acts.append(button(T("back"), "g", () => show("overview")));
+  f.append(acts);
+  return f;
+}
+
+/* ---- drawing ------------------------------------------------------------ */
+
+function draw() {
+  const d = DATA;
+  const slot = SLOT;
+  if (!d || !slot) return;
+  styles();
+  const head = document.querySelector("#threadview .thead");
+  slot.style.top = head ? head.offsetHeight + "px" : "0px";
+  slot.classList.add("lpin");
+  slot.hidden = false;
+  while (slot.firstChild) slot.removeChild(slot.firstChild);
+
+  const btn = el("button", "lbtn");
+  btn.type = "button";
+  btn.setAttribute("aria-expanded", String(state.open));
+  btn.setAttribute("aria-controls", "lpin-body");
+
+  const k = el("span", "lk", d.member ? T("ledger") + " · " + T("place", { n: int(d.place) }) : T("ledger"));
+  const fig = el("span", "lf", d.member ? T("points", { n: int(d.total) }) : T("noPlace"));
+  const stl = el("span", "lst");
+  const dot = el("i", d.joined ? "on" : "");
+  const statusText = !d.member ? T("noPlaceSub") : d.joined ? T("onLedger") : T("counts", { goal: int(d.goal) });
+  stl.append(dot, el("span", null, statusText));
+  const side = el("span", "ls");
+  const c = el("span", "c");
+  c.append(el("b", null, int(d.members)), el("span", null, T("ofGoal", { goal: int(d.goal) })), el("span", null, T("membersWord")));
+  side.append(c);
+  side.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg>');
+  for (const n of [k, fig, stl, side]) n.setAttribute("aria-hidden", "true");
+  btn.setAttribute("aria-label", d.member
+    ? T("pin", { place: int(d.place), pts: int(d.total), status: statusText, m: int(d.members), goal: int(d.goal) })
+    : T("pinNo"));
+  btn.append(k, fig, stl, side);
+  slot.append(btn);
+
+  const body = el("div", "lbody");
+  body.id = "lpin-body";
+  body.hidden = !state.open;
+  btn.addEventListener("click", () => {
+    state.open = !state.open;
+    btn.setAttribute("aria-expanded", String(state.open));
+    body.hidden = !state.open;
+    if (!state.open) state.view = "overview";
+  });
+
+  if (d.member) {
+    const views = { overview, rules, join, offer, record };
+    const view = (state.view === "join" && d.joined) ? "record" : state.view;
+    body.append((views[view] || overview)(d));
+  } else {
+    body.append(el("p", "soft", T("noPlaceSub")));
+  }
+  slot.append(body);
+
+  if (state.focusNext) {
+    state.focusNext = false;
+    const h = body.querySelector("h3");
+    if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); h.scrollIntoView({ block: "nearest" }); }
+  }
+}
+
+async function refresh() { return DATA; }
+
+/** Fetch this reader's line for a door room and draw it into `slot`. */
+async function mountLedgerPin(slot, room, device) {
+  if (!slot) return;
+  if (state.room !== room) { state.room = room; state.open = false; state.view = "overview"; state.lastM = null; }
+  state.device = device || "";
+  const before = DATA ? JSON.stringify(DATA) : "";
+  const fresh = SLOT !== slot || !slot.classList.contains("lpin") || slot.hidden;
+  SLOT = slot;
+  const d = await refresh();
+  if (!d) { hideLedgerPin(slot); return; }
+
+  /* NOT REPAINTED FOR NOTHING. The room redraws every twenty seconds, and a pin
+     rebuilt each time throws a screen reader back to its first line and
+     scrolls the pin to the top — every twenty seconds, for somebody who was in
+     the middle of reading it. So it only redraws when a number changed, and
+     never while focus is inside it: somebody choosing or typing is not
+     repainted under their fingers. The numbers catch up on the next quiet
+     refresh. */
+  const changed = JSON.stringify(d) !== before;
+  const busy = slot.contains(document.activeElement);
+  if (fresh || (changed && !busy)) draw();
+
+  if (state.lastM !== null && d.members !== state.lastM) {
+    clearTimeout(state.sayTimer);
+    const text = T("say", { m: int(d.members) });
+    state.sayTimer = setTimeout(() => live(text), 1200);
+  }
+  state.lastM = d.members;
+}
+
+/** Take the pin down, for the screens in a room that are not the talk. */
+function hideLedgerPin(slot) {
+  if (!slot) return;
+  slot.hidden = true;
+  slot.classList.remove("lpin");
+}
+
+
+/* ---- the room ---- */
+const PEOPLE = {
+  lin: { name: "Lin Wei", role: "producer", g: ["#ABC5CE", "#677BA2"] },
+  ray: { name: "Ray", role: "director", g: ["#ABBDCE", "#676DA2"] },
+  aiden: { name: "Aiden", role: "director", g: ["#CEABCD", "#A26789"] },
+  zhou: { name: "周静", role: "director", g: ["#AFCEAB", "#67A278"] },
+  mo: { name: "Mo", bot: true, g: ["#C9D3F2", "#3F68D8"] },
+};
+const SAID = [
+  { who: "lin", text: "Anyone here worked with a completion bond on a co-production? Our lender wants one." },
+  { who: "ray", text: "Yes, twice. Happy to talk you through what they actually check." },
+  { who: "aiden", text: "Posting the deck for the documentary slate this afternoon." },
+  { who: "zhou", text: "下周我在上海，可以约个咖啡。" },
+  { mine: true, text: "@Ray send it my way too, I want to see how the bond is priced." },
+];
+const NAMES = ["Keanu", "Mei Ling", "Brendan", "Tiger", "Curt", "Ian", "陈晓", "Sofia", "Nora", "Felix"];
+let joins = 0;
+
+function bubble(bub, text) {
+  const parts = String(text).split(/(@[A-Za-z一-龥]+)/);
+  for (const p of parts) {
+    if (!p) continue;
+    if (p.startsWith("@")) bub.append(el("b", "at", p)); else bub.append(document.createTextNode(p));
+  }
+}
+
+function drawRoom() {
+  document.documentElement.lang = LANG === "zh" ? "zh-Hans" : "en";
+  document.documentElement.setAttribute("data-lang", LANG);
+  $("twhoname").textContent = R("title") + "  (" + (186 + joins) + ")";
+  $("twhosub").textContent = R("sub");
+  $("tbox").placeholder = R("say"); $("tboxlab").textContent = R("say");
+  $("tabnotes").textContent = R("messages"); $("tabcards").textContent = R("cards");
+  $("tabbrowse").textContent = R("browse"); $("tabme").textContent = R("you");
+  $("demotext").innerHTML = R("demo"); $("joinsim").textContent = R("joins");
+  const lb = $("langbtn"); lb.textContent = R("other"); lb.lang = LANG === "zh" ? "en" : "zh-Hans";
+
+  const talk = $("talk");
+  talk.textContent = "";
+  talk.append(el("p", "when", R("ago")));
+  for (const m of SAID) {
+    const row = el("div", "said" + (m.mine ? " mine" : ""));
+    const col = el("div", "col");
+    if (!m.mine) {
+      const p = PEOPLE[m.who];
+      const av = el("span", "av small", p.bot ? "M" : [...p.name][0].toLowerCase());
+      av.setAttribute("aria-hidden", "true");
+      av.style.background = `linear-gradient(150deg, ${p.g[0]}, ${p.g[1]})`;
+      row.append(av);
+      col.append(el("p", "dwho", p.bot ? p.name : `${p.name} · ${R(p.role)} · ${R("inside")}`));
+    }
+    const bub = el("div", "bub " + (m.mine ? "mine" : "them") + (m.who === "mo" ? " bot" : ""));
+    bubble(bub, m.welcome ? R("welcome", { who: m.welcome }) : m.text);
+    col.append(bub);
+    row.append(col);
+    talk.append(row);
+  }
+}
+
+$("tsend").addEventListener("click", () => {
+  const box = $("tbox");
+  const text = box.value.trim();
+  if (!text) { box.focus(); return; }
+  SAID.push({ mine: true, text });
+  box.value = "";
+  drawRoom();
+  window.scrollTo(0, document.body.scrollHeight);
+});
+$("tbox").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("tsend").click(); }
+});
+$("joinsim").addEventListener("click", () => {
+  const who = NAMES[joins % NAMES.length];
+  joins++;
+  DATA.members += 1;
+  SAID.push({ who: "mo", welcome: who });
+  drawRoom();
+  window.scrollTo(0, document.body.scrollHeight);
+  // The count changed in place, so repaint the pin unless somebody is inside it.
+  mountLedgerPin($("tpin")).then(() => { if (!$("tpin").contains(document.activeElement)) draw(); });
+});
+$("langbtn").addEventListener("click", () => {
+  LANG = LANG === "en" ? "zh" : "en";
+  drawRoom();
+  state.lastM = DATA.members;
+  draw();
+});
+$("twho").addEventListener("click", (e) => e.preventDefault());
+document.querySelectorAll(".bar a").forEach((a) => a.addEventListener("click", (e) => e.preventDefault()));
+
+drawRoom();
+mountLedgerPin($("tpin"));
+window.scrollTo(0, 0);
+})();
+</script>
