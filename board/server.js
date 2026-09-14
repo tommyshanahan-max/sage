@@ -1850,7 +1850,18 @@ app.post("/api/room/hand", admin, express.json({ limit: "8kb" }), async (req, re
     }
     const members = g.members.filter((h) => !goners.has(h));
     for (const h of wanted) if (!members.includes(h)) members.push(h);
-    if (members.length < 2) return { error: "few" };
+    /* ONE IS ENOUGH HERE, and two was wrong. Every other room on this board
+       needs two people because one person in a room of their own is not a
+       thing anybody means to make. A hand-kept room is the opposite: it is
+       opened by the person who will do the putting, before anybody has been
+       put in it, and it stands with only them in it for as long as that takes
+       — which is why cleanGroup already allows it.
+
+       The route did not. So `make handroom WHO="Tom"` on a room that already
+       existed with Tom alone in it came back "that would leave the room with
+       nobody in it", about a room with somebody in it. Two rules for one
+       thing, and the one further from the data won. */
+    if (members.length < 1) return { error: "few" };
     if (members.length > store.HAND_MAX) return { error: "many" };
     /* The maker stays in it. Taking the row's own `by` out leaves a room whose
        maker is not in it, which cleanGroup puts straight back on the next
