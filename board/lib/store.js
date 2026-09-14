@@ -2003,6 +2003,28 @@ export function cleanSay(raw) {
     id, group, by,
     at: s(raw.at, 40) || new Date().toISOString(),
     text: s(raw.text, 600),
+    /* THE SAME MESSAGE IN THE OTHER LANGUAGE.
+     *
+     * The board is half Chinese and half English and the rooms are where
+     * those two halves are supposed to meet — a Chinese agent and an
+     * Australian director standing at the same door is the whole product.
+     * A room where each of them reads the other's messages as a wall of
+     * characters they cannot parse is not a room, it is two rooms.
+     *
+     * So the same shape as goalAlt on a person: rendered once when the line
+     * is said, stored beside it, and the language button swaps text. Not on
+     * a tap — a button is a thing people do not see, and "obvious" was the
+     * requirement. Not per reader either: one rendering, the same for
+     * everybody, which is what makes it the room's Chinese rather than one
+     * person's session's.
+     *
+     * `lang` is which of the two `text` is, detected from the text rather
+     * than asked. Empty until the render lands; the page shows what was
+     * typed, which is always right and sometimes unreadable to the person
+     * looking at it — the state this is fixing, and the honest version of
+     * it while a render is in flight. */
+    alt: s(raw.alt, 600),
+    lang: raw.lang === "zh" ? "zh" : raw.lang === "en" ? "en" : "",
     report: s(raw.report, 400),
     /* WHAT HAPPENED TO THE ROOM, when this line is about the room rather than
      * something somebody said. Who joined, who was taken out, who walked.

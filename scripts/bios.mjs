@@ -12,6 +12,11 @@
  *
  * Safe to run twice. Safe to run after adding one card — it renders one card.
  *
+ * It does the messages in the rooms too — the last fortnight of them, which
+ * is the whole of what anybody scrolls back through. A room reading in one
+ * language for everything before today and both after it is a room somebody
+ * gives up on.
+ *
  *   make bios
  */
 
@@ -39,8 +44,17 @@ if (!r.ok) {
   process.exit(1);
 }
 
+/* The rooms first, because that is the half somebody notices. */
+if (d.lines) {
+  console.log("  " + d.lines + " message" + (d.lines === 1 ? "" : "s")
+    + " in the rooms now read in both languages.");
+  console.log("");
+}
+
 if (!d.done.length && !d.failed.length) {
-  console.log("  Nothing to do — every card with a line already has both.");
+  console.log(d.lines
+    ? "  Every card with a line already had both."
+    : "  Nothing to do — the cards and the rooms are already done.");
 } else {
   if (d.done.length) {
     console.log("  Rendered " + d.done.length + ":");

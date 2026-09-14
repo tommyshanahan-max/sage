@@ -1508,6 +1508,22 @@ function hearable(bub, text) {
  *  Nothing for Mo, who is not a person, and nothing for somebody the room has
  *  no handle for. A face that does nothing is not given the ring that says it
  *  would. */
+/* WHICH OF THE TWO A READER SEES, and it is a choice between two strings the
+   message already carries — rendered once when it was said, see renderSay.
+   The original when there is no rendering yet, or when it is already in the
+   reader's language: what was typed is always right and sometimes unreadable
+   to the person looking at it, which is the state this is fixing and the
+   honest version of it while a render is in flight. */
+function saidIn(m) {
+  const words = m.text || "";
+  /* NOT YOUR OWN. You wrote it, you know what it says, and reading your own
+     English sentence handed back to you in Chinese is the app correcting you
+     rather than helping. WeChat leaves yours alone for the same reason. */
+  if (m.mine) return words;
+  const mine = lang() === "zh" ? "zh" : "en";
+  return (m.alt && m.lang && m.lang !== mine) ? m.alt : words;
+}
+
 function doorWhere(m) {
   if (m.bot) return "";
   if (m.inside && m.handle) return "/p/" + encodeURIComponent(m.handle.toLowerCase());
@@ -1545,8 +1561,13 @@ function doorFace(m) {
  */
 function doorName(m) {
   const who = el("p", "dwho");
-  const label = (m.handle || T("board.someone"))
-    + (m.bot ? "" : " \u00B7 " + T(m.inside ? "dr.inside" : "dr.waiting"));
+  /* NAME · WHAT THEY ARE · WHICH SIDE OF THE DOOR — see the same line in
+     door.html. The role is the fact a reader is deciding on; the side of the
+     door is the qualifier on it. */
+  const label = [m.handle || T("board.someone"),
+    m.bot ? "" : (m.role ? T("role." + m.role) : ""),
+    m.bot ? "" : T(m.inside ? "dr.inside" : "dr.waiting"),
+  ].filter(Boolean).join(" \u00B7 ");
   /* A MEMBER'S NAME WAS THE ONE THING IN HERE THAT WENT NOWHERE. This linked
      for somebody at the door — the way to write to them — and was plain text
      for a member, who is the one person in the room with a page to open. Both
@@ -1822,7 +1843,7 @@ async function drawDoor(key) {
        five identical bubbles, which is the loudest "a machine did this" on
        the first screen anybody sees. Stable per message so the room reads the
        same on every redraw and to everybody in it — see moWelcome. */
-    const said = m.evt ? moWelcome(m.evt.who, m.id) : (m.text || "");
+    const said = m.evt ? moWelcome(m.evt.who, m.id) : saidIn(m);
     const row = el("div", "said" + (m.mine ? " mine" : ""));
     if (!m.mine) row.append(doorFace(m));
     const col = el("div", "col");

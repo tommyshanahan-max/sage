@@ -2280,6 +2280,44 @@ const rosterOf = (board, q) => board.people
     photo: x.photoState === "published" ? x.photo : "",
   }));
 
+/* THE OTHER LANGUAGE OF ONE MESSAGE, RENDERED ONCE AND KEPT.
+ *
+ * Same shape as renderBio and for a harder reason. The board is half Chinese
+ * and half English, and the rooms are where those two halves are supposed to
+ * meet — a Chinese agent and an Australian director at the same door is the
+ * whole product. A room where each reads the other as characters they cannot
+ * parse is not a room, it is two rooms with one scrollbar.
+ *
+ * NOT ON A TAP. A button is a thing people do not see, and the requirement
+ * was that this be obvious. Rendered when the line is said, so the language
+ * button swaps text and nobody has to know a feature exists.
+ *
+ * NOT IN THE REQUEST PATH. The message is already written down and already
+ * delivered; this lands a second later and a failure costs it nothing.
+ *
+ * SKIPPED WHERE IT WOULD SAY NOTHING. A line with no letters in it — a
+ * number, an emoji, a link on its own — has no other language, and spending
+ * a call to find that out is the definition of a bill for nothing.
+ */
+const WORDY = /[\p{L}]{2}/u;
+function renderSay(id, text) {
+  const words = String(text || "").trim();
+  if (!words || !WORDY.test(words) || !translateReady()) return;
+  translate(words, { by: "say:" + id })
+    .then((out) => {
+      if (!out || out.error || !out.text) return;
+      return change((board) => {
+        const m = board.says.find((x) => x.id === id);
+        // Gone, or reported and removed while this was in flight.
+        if (!m || String(m.text || "").trim() !== words) return null;
+        m.alt = out.text;
+        m.lang = out.from === "zh" ? "zh" : "en";
+        return true;
+      });
+    })
+    .catch(() => { /* the line stands in one language, as it did before */ });
+}
+
 /* THE OTHER LANGUAGE OF ONE PERSON'S LINE, RENDERED ONCE AND KEPT.
  *
  * See goalAlt in cleanPerson for why this exists at all. The short of it: the
@@ -7023,6 +7061,9 @@ app.get("/api/groups", notesOff, async (req, res) => {
   const name = (hash) => {
     const q = board.people.find((x) => x.by === hash);
     return q ? { who: q.id, handle: q.handle,
+      /* WHAT THEY ARE, under the name. The only fact anybody in a room is
+         deciding on — see the note in named() at /api/door. */
+      role: ((Array.isArray(q.say) ? q.say : [])[0] || {}).me || "",
       photo: q.photoState === "published" ? q.photo : "" } : null;
   };
   /* THE ROOMS SOMEBODY IS IN, AND THE ONE THEY WERE INVITED INTO.
@@ -7063,6 +7104,10 @@ app.get("/api/groups", notesOff, async (req, res) => {
       says: board.says.filter((m) => m.group === g.id)
         .sort((a, b) => String(a.at).localeCompare(String(b.at)))
         .map((m) => ({ id: m.id, at: m.at, text: m.text,
+                     /* The same line in the other language, rendered once when
+                        it was said — see renderSay. The page picks; nobody
+                        presses anything. */
+                     alt: m.alt || "", lang: m.lang || "",
           // What happened to the room, when the line is about the room — see
           // moSays. The page writes the sentence; this is the fact.
           evt: m.evt || null,
@@ -7217,7 +7262,14 @@ app.get("/api/door", notesOff, async (req, res) => {
        this room that lead anywhere for somebody who has not been let in. Sent
        so the page can link exactly those and leave the rest plain, rather
        than offering a link that lands on a refusal. */
+    /* WHAT THEY ARE, under the name, and it is the fact the room is for.
+       The line said "inside" or "waiting", which is true and is about the
+       board's process — a Chinese agent scrolling a room is deciding which
+       of these people is a director, not which of them has been admitted.
+       The role leads and the side of the door follows it. */
+    const roleOf = (r) => (r && r.me) || "";
     if (q) return { handle: q.handle, inside: true, bot: false,
+                    role: roleOf((Array.isArray(q.say) ? q.say : [])[0]),
                     ...(q.peek && q.looking && q.state === "published" ? { peek: true } : {}) };
     const w = board.waits.find((x) => x.by === h && !x.done);
     /* THE ROW ID, FOR A MEMBER ONLY. Not to name them — the name is already
@@ -7226,6 +7278,7 @@ app.get("/api/door", notesOff, async (req, res) => {
        existed and still the one they are deciding from. Never to somebody
        waiting: the ids are the way into a thread, which is a member's. */
     return { handle: (w && w.name) || "", inside: false, bot: false,
+             role: (w && w.me) || "",
              ...(w && how === "member" ? { wid: w.id } : {}) };
   };
 
@@ -7248,6 +7301,10 @@ app.get("/api/door", notesOff, async (req, res) => {
       .sort((a, b) => String(a.at).localeCompare(String(b.at)))
       .slice(how === "peek" ? -12 : -200)
       .map((m) => ({ id: m.id, at: m.at, text: m.text,
+                     /* The same line in the other language, rendered once when
+                        it was said — see renderSay. The page picks; nobody
+                        presses anything. */
+                     alt: m.alt || "", lang: m.lang || "",
                      /* What happened to the room rather than something said in
                         it — see moSays. Sent here as well as from /api/groups:
                         without it his arrival lines arrived as empty bubbles
@@ -7360,6 +7417,10 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
   if (!text) return res.status(400).json({ error: "empty" });
 
   const door = store.doorKey(id);
+  /* The id of the line this call writes, so the other-language render can be
+     started once the write has committed. Set inside and read outside: a
+     model call must never happen while the file lock is held. */
+  let saidId = "";
   const out = await change((board) => {
     /* WHO CAN BE @'D IN HERE, worked out before the rules below need it: the
        people in this room, so a mention of one of them is read as a mention
@@ -7429,6 +7490,9 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
     if (shaped) return { error: "contact", what: shaped };
 
     board.says.push(store.cleanSay({ id: store.newId(), group: id, by: me, text }));
+    /* Held so the render can be started after this write commits — see
+       renderSay, which must not run inside the lock. */
+    saidId = board.says[board.says.length - 1].id;
 
     /* WHAT WAKES THE DOORMAN, and it is a regex on this box — see screen() in
        store.js. He is in every room and reads none of them; this runs where
@@ -7494,6 +7558,11 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
       }).catch(() => { /* his silence is not the sender's problem */ });
     }
   }
+  /* AND THE OTHER LANGUAGE OF IT — after the answer, never before. See
+     renderSay: the message is already written and already delivered, and a
+     model on the far side of a mainland connection must not be why sending
+     one takes four seconds. */
+  if (saidId) renderSay(saidId, text);
   res.json(out);
 });
 
@@ -9500,9 +9569,38 @@ app.post("/api/person/out", admin, express.json({ limit: "1kb" }), async (req, r
  * SKIPS WHAT IS ALREADY RENDERED, so running it twice costs nothing and
  * running it after adding one card renders one card.
  */
-app.post("/api/bios", admin, async (_req, res) => {
+app.post("/api/bios", admin, async (req, res) => {
   if (!translateReady()) return res.status(503).json({ error: "unconfigured" });
   const board = await store.load(FILE);
+
+  /* AND THE MESSAGES ALREADY IN THE ROOMS. renderSay runs when a line is
+     said, which does nothing for the ones already there — and a room that
+     reads in one language for everything before today and both languages
+     after it is a room somebody scrolls back through and gives up on.
+     RECENT ONES ONLY, AND CAPPED. Messages accumulate for ever and every one
+     is a call; the rooms are where people are reading now, so a fortnight is
+     the whole of what anybody scrolls. */
+  const DAYS = Math.max(1, Math.min(90, Number(req.query.days) || 14));
+  const CAP = 200;
+  const cut = Date.now() - DAYS * 86400_000;
+  const says = board.says.filter((m) => m.text && !m.alt && !m.evt
+    && (Date.parse(m.at || "") || 0) > cut).slice(-CAP);
+  let lines = 0;
+  for (const m of says) {
+    const words = String(m.text).trim();
+    if (!/[\p{L}]{2}/u.test(words)) continue;
+    const out = await translate(words, { by: "say:" + m.id }).catch(() => null);
+    if (!out || out.error || !out.text) continue;
+    await change((b) => {
+      const row = b.says.find((x) => x.id === m.id);
+      if (!row || String(row.text || "").trim() !== words) return null;
+      row.alt = out.text;
+      row.lang = out.from === "zh" ? "zh" : "en";
+      return true;
+    });
+    lines += 1;
+  }
+
   const todo = board.people.filter((q) => q.handle && String(q.goal || "").trim() && !q.goalAlt);
   const done = [];
   const failed = [];
@@ -9519,7 +9617,7 @@ app.post("/api/bios", admin, async (_req, res) => {
     });
     done.push(q.handle);
   }
-  res.json({ ok: true, done, failed,
+  res.json({ ok: true, done, failed, lines,
     already: board.people.filter((q) => q.handle && q.goalAlt).length });
 });
 

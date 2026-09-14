@@ -169,7 +169,7 @@
 </main>
 
 <script type="module">
-import { T, when, setLang, pickLang, langButton, moWelcome } from "/i18n.js";
+import { T, when, lang, setLang, pickLang, langButton, moWelcome } from "/i18n.js";
 import { device, roomFromPath, viaFromUrl, wFromUrl } from "/wait.js";
 import { offerInstall } from "/install.js";
 import { moHear } from "/mo.js";
@@ -218,6 +218,22 @@ async function load() {
  *  stay plain, because a link that lands on a refusal is worse than a face
  *  that is plainly just a face.
  */
+/* WHICH OF THE TWO A READER SEES, and it is a choice between two strings the
+   message already carries — rendered once when it was said, see renderSay.
+   The original when there is no rendering yet, or when it is already in the
+   reader's language: what was typed is always right and sometimes unreadable
+   to the person looking at it, which is the state this is fixing and the
+   honest version of it while a render is in flight. */
+function saidIn(m) {
+  const words = m.text || "";
+  /* NOT YOUR OWN. You wrote it, you know what it says, and reading your own
+     English sentence handed back to you in Chinese is the app correcting you
+     rather than helping. WeChat leaves yours alone for the same reason. */
+  if (m.mine) return words;
+  const mine = lang() === "zh" ? "zh" : "en";
+  return (m.alt && m.lang && m.lang !== mine) ? m.alt : words;
+}
+
 function doorWhere(m) {
   if (m.bot) return "";
   if (ROOM.how === "member") {
@@ -301,7 +317,7 @@ function paint() {
        five identical bubbles, which is the loudest "a machine did this" on
        the first screen anybody sees. Stable per message so the room reads the
        same on every redraw and to everybody in it — see moWelcome. */
-    const said = m.evt ? moWelcome(m.evt.who, m.id) : (m.text || "");
+    const said = m.evt ? moWelcome(m.evt.who, m.id) : saidIn(m);
     const row = document.createElement("div");
     row.className = "said" + (m.mine ? " mine" : "");
     if (!m.mine) {
@@ -329,8 +345,17 @@ function paint() {
     if (!m.mine) {
       const who = document.createElement("p");
       who.className = "who";
-      const label = (m.handle || T("board.someone"))
-        + (m.bot ? "" : " · " + T(m.inside ? "dr.inside" : "dr.waiting"));
+      /* NAME · WHAT THEY ARE · WHICH SIDE OF THE DOOR.
+         It was name and side of the door only — true, and about the board's
+         process. The thing a person scrolling a room is deciding on is
+         whether this one is a director or an agent, so that goes in the
+         middle, where the eye is already. Absent for anybody who has not
+         written their sentence yet, rather than a gap with a separator
+         either side of it. */
+      const label = [m.handle || T("board.someone"),
+        m.bot ? "" : (m.role ? T("role." + m.role) : ""),
+        m.bot ? "" : T(m.inside ? "dr.inside" : "dr.waiting"),
+      ].filter(Boolean).join(" · ");
       // The same target as the face above it. Two halves of one person must
       // not lead to two different answers.
       const toName = doorWhere(m);
