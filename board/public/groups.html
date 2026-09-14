@@ -399,7 +399,7 @@
 </main>
 
 <script type="module">
-import { T, when, setLang, pickLang, langButton, lang } from "/i18n.js";
+import { T, when, setLang, pickLang, langButton, lang, moWelcome } from "/i18n.js";
 import { atText, atPicker } from "/at.js";
 import { moHear } from "/mo.js";
 
@@ -743,7 +743,11 @@ function paintRoom(g) {
       continue;
     }
     // What he said to somebody is a bubble from him — see moSays.
-    const said = m.evt ? T("mo.welcome", { who: m.evt.who }) : (m.text || "");
+    /* SIX WELCOMES, PICKED FROM THE MESSAGE ID. Five people walking in got
+       five identical bubbles, which is the loudest "a machine did this" on
+       the first screen anybody sees. Stable per message so the room reads the
+       same on every redraw and to everybody in it — see moWelcome. */
+    const said = m.evt ? moWelcome(m.evt.who, m.id) : (m.text || "");
     const row = el("div", "said" + (m.mine ? " mine" : ""));
     if (!m.mine) row.append(face(m, "small"));
     const wrap = el("div");

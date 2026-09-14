@@ -546,7 +546,10 @@ snap: ## The link for your phone — what happened since yesterday: make snap
 	@if grep -qE '^TOMSCODING_BOARD_SNAP=.+' .env; then \
 	  echo "  Your link — save it to your home screen:"; \
 	  echo ""; \
-	  echo "    https://$$(grep -E '^TOMSCODING_DOMAIN=' .env | tail -1 | cut -d= -f2-)/s/$$(grep -E '^TOMSCODING_BOARD_SNAP=' .env | tail -1 | cut -d= -f2-)"; \
+	  echo "    https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')/s/$$(grep -E '^TOMSCODING_BOARD_SNAP=' .env | tail -1 | cut -d= -f2-)"; \
+	  echo ""; \
+	  echo "  The board's own domain, not the workspace's — this printed a"; \
+	  echo "  code.tomscoding.com address once, which serves a different app."; \
 	  echo ""; \
 	  echo "  Anybody with it can read it, so it goes nowhere but your phone."; \
 	  echo "  To revoke: change that line in .env and make deploy."; \

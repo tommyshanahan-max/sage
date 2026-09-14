@@ -297,6 +297,27 @@
 
   .bub.flag{outline:1px solid var(--t5);outline-offset:2px}
 
+/* THEIR CARD, ABOVE THE CONVERSATION. Not a bordered box on a screen that
+     already has bubbles in it — a row with a face on it, the same shape the
+     queue uses, so the two screens agree about what a person at the door
+     looks like. */
+  .tcard{display:flex;gap:.75rem;align-items:flex-start;margin:0 0 .2rem;
+    padding:.85rem 1rem;background:var(--raise);border-bottom:1px solid var(--hair)}
+  .tcard .qav{flex:0 0 auto;width:3rem;height:3rem;border-radius:50%;
+    display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);
+    font-size:1.15rem;overflow:hidden}
+  .tcard .qav img{width:100%;height:100%;object-fit:cover;display:block}
+  .tcard .qmid{flex:1;min-width:0}
+  /* The sentence, at a size somebody reads first — it is the only thing here
+     that decides anything. */
+  .tcard .tsay{margin:0;font-size:.98rem;line-height:1.5}
+  .tcard .tsay em{font-style:normal;color:var(--muted)}
+  .tcard .tsay b{font-weight:600;margin:0 .28rem}
+  .tcard .twhy{margin:.3rem 0 0;font-size:.9rem;line-height:1.5;color:var(--ink-2);
+    overflow-wrap:anywhere}
+  .tcard .qtags{margin:.4rem 0 0;display:flex;gap:.3rem;flex-wrap:wrap}
+  .tcard .qtags span{padding:.1rem .45rem;border-radius:99px;background:var(--card);
+    border:1px solid var(--hair);font-size:.74rem;color:var(--ink-2)}
   .pinwrap{margin:0 0 .9rem;border:1px solid var(--accent);border-radius:.6rem;
     padding:.5rem .6rem;background:var(--raise)}
   .pinwrap .k{display:block;font-size:.6rem;letter-spacing:.12em;
@@ -635,6 +656,9 @@
          has them: they are rare, permanent, and do not belong beside the box
          somebody types in. -->
     <div class="menu" id="tmenu" hidden></div>
+    <!-- Who the person at the door is, above the conversation with them —
+         see drawThread. Empty and hidden for a member, who has a page. -->
+    <div class="tcard" id="tcard" hidden></div>
     <div class="pinwrap" id="tpin" hidden></div>
     <div class="talk" id="talk"></div>
     <p class="left" id="tleft" hidden></p>
@@ -680,7 +704,7 @@
 </nav>
 
 <script type="module">
-import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
+import { T, when, lang, setLang, pickLang, langButton, moWelcome } from "/i18n.js";
 import { offerInstall } from "/install.js";
 import { offerNotify } from "/notify.js";
 import { OFF } from "/off.js";
@@ -1794,7 +1818,11 @@ async function drawDoor(key) {
       talk.append(el("p", "when", T("mo." + m.evt.kind, { who: m.evt.who })));
       continue;
     }
-    const said = m.evt ? T("mo.welcome", { who: m.evt.who }) : (m.text || "");
+    /* SIX WELCOMES, PICKED FROM THE MESSAGE ID. Five people walking in got
+       five identical bubbles, which is the loudest "a machine did this" on
+       the first screen anybody sees. Stable per message so the room reads the
+       same on every redraw and to everybody in it — see moWelcome. */
+    const said = m.evt ? moWelcome(m.evt.who, m.id) : (m.text || "");
     const row = el("div", "said" + (m.mine ? " mine" : ""));
     if (!m.mine) row.append(doorFace(m));
     const col = el("div", "col");
@@ -1871,6 +1899,51 @@ function drawThread(t) {
     : last.open ? T("note.openSub")
     : last.canAnswer ? T("note.oneSub")
     : T({ shut: "note.shut", waiting: "note.waitSub" }[last.why] || "note.doneSub");
+
+  /* WHO THEY ARE, ON THE SCREEN THAT OPENS WHEN YOU TAP THEIR FACE.
+   *
+   * Somebody at the door has no page, so a face in a room opens the
+   * conversation with them — see doorWhere. That landed on a name, a grey
+   * "waiting", and an empty box: tapping a person and arriving somewhere that
+   * says nothing about them is worse than the face doing nothing at all.
+   *
+   * Everything needed is already on this screen. /api/queue sends the row —
+   * their photograph, their sentence, the line they wrote on the way in — and
+   * the queue on Browse has been drawing it all along. It goes here, above
+   * the conversation, so the tap lands on the person and the way to answer
+   * them is directly underneath.
+   */
+  const card = $("tcard");
+  const w = onList && QUEUE.find((x) => "w:" + x.id === t.who);
+  card.hidden = !w;
+  if (w) {
+    fill(card);
+    const av = el("span", "qav", w.photo ? "" : initial(w.name));
+    if (w.photo) {
+      const img = document.createElement("img");
+      img.src = "/api/wait-media?id=" + encodeURIComponent(w.photo);
+      img.alt = ""; img.loading = "lazy";
+      img.addEventListener("error", () => { img.remove(); av.textContent = initial(w.name); });
+      av.append(img);
+    }
+    const mid = el("div", "qmid");
+    /* THE SENTENCE, WHOLE. It is the only thing on this board that decides
+       anything, and a card showing half of it says less than the name. */
+    if (w.me && w.want) {
+      const say = el("p", "tsay");
+      say.append(el("em", null, T("say.iam")), el("b", null, T("role.a." + w.me)),
+        el("em", null, T("say.lookingFor")), el("b", null, T("role.a." + w.want)));
+      mid.append(say);
+    }
+    // Their own words, which is the whole of what they said on the way in.
+    if (w.why) mid.append(el("p", "twhy", w.why));
+    const tags = el("div", "qtags");
+    if (w.room) tags.append(el("span", null, T("waitroom." + w.room)));
+    if (w.type) tags.append(el("span", null, w.type));
+    if (w.vouches) tags.append(el("span", null, T("brw.qvouches", { n: w.vouches })));
+    if (tags.childNodes.length) mid.append(tags);
+    card.append(av, mid);
+  }
 
   const pin = $("tpin");
   pin.hidden = !last.deal;

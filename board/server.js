@@ -4593,7 +4593,11 @@ app.get("/api/queue", async (req, res) => {
     rows: order.filter((x) => x.w.shown).slice(0, 120).map((x, i) => ({
       place: i + 1, id: x.w.id,
       name: x.w.name, room: x.w.room, why: x.w.why,
-      levelBand: x.w.levelBand, type: x.w.type, want: x.w.want,
+      /* BOTH HALVES OF THE SENTENCE. `want` alone said what they are looking
+         for and not what they are, which is half of the only sentence this
+         board runs on — enough for a row in a list and not enough for the
+         card at the top of a conversation with them. */
+      levelBand: x.w.levelBand, type: x.w.type, me: x.w.me, want: x.w.want,
       brought: x.n || 0, vouches: x.v || 0,
       /* ALREADY LET IN AND NOT YET ARRIVED. The door screen offers "let in" on
          a row and has to know which rows it is not for; without it the button

@@ -4604,8 +4604,38 @@ export const STRINGS = {
   /* Him, to somebody who has just walked in, where everybody can see they
      were greeted. Short: the room is quiet and the point is that somebody
      is home, not that there is a paragraph to read. */
+  /* SIX OF THEM, BECAUSE FIVE PEOPLE WALKING IN GOT FIVE IDENTICAL BUBBLES.
+   *
+   * A doorman who greets the whole room with the same sentence word for word
+   * is a doorman nobody believes, and the room is the first thing anybody
+   * sees of this place. The reader is scrolling past four of these before
+   * they reach their own; the repetition is the loudest thing on the screen
+   * and it says "a machine did this" more clearly than anything in the words.
+   *
+   * ALL SIX DO THE SAME JOB, and that is the rule for adding one: use the
+   * name, say the one thing to do — write what you are looking for — and say
+   * why it works, which is that the people who could answer are reading. The
+   * words change; the instruction never does. A variant that asked for
+   * something else would make the room's advice depend on which bubble a
+   * person happened to get.
+   *
+   * Picked by moWelcome() from the message id, so it is stable: the same
+   * arrival reads the same way on every redraw and to everybody in the room.
+   * The Chinese ones are written rather than translated, and they are not a
+   * line-for-line match of the English — same job, said the way it would be
+   * said. */
   "mo.welcome":        ["{who} — welcome. Say what you're looking for: the people who can answer it are reading this room.",
                         "{who}，欢迎。说说你在找什么 —— 能接上话的人都在看这屋。"],
+  "mo.welcome2":       ["{who} is here. One line about what you need — the people who could do something about it are in this room.",
+                        "{who} 来了。说一句你要什么，屋里就有能帮上忙的人。"],
+  "mo.welcome3":       ["Welcome, {who}. Nobody can introduce you to anything until you say what you are after.",
+                        "欢迎，{who}。你不开口说要什么，别人没法给你搭线。"],
+  "mo.welcome4":       ["{who} — good to have you. Write what you are looking for; the right person is usually already reading.",
+                        "{who}，来得好。把你在找的写出来 —— 对的人多半已经在看了。"],
+  "mo.welcome5":       ["{who} just walked in. Say what you want out of this and somebody here will know who to point you at.",
+                        "{who} 刚进来。说说你想要什么，这儿总有人知道该找谁。"],
+  "mo.welcome6":       ["Welcome, {who}. The quickest way in is one sentence about what you need — this room reads it.",
+                        "欢迎，{who}。最快的办法就是一句话说清你要什么 —— 这屋的人都看得到。"],
   "mo.in":             ["{who} came in", "{who} \u8fdb\u6765\u4e86"],
   "mo.out":            ["{who} was taken out", "{who} \u88ab\u79fb\u51fa\u4e86"],
   "mo.left":           ["{who} left", "{who} \u8d70\u4e86"],
@@ -4884,6 +4914,30 @@ export function T(key, vars) {
  *
  * Not a format string away from English: Chinese puts the unit after the
  * number and needs 前 on the end, and "just now" is not "0 minutes". */
+/** WHICH OF MO'S WELCOMES THIS ONE IS.
+ *
+ *  Stable rather than random: the same arrival has to read the same way on
+ *  every redraw — the room polls, and a greeting that reworded itself every
+ *  twenty seconds would be stranger than one that repeated. And the same way
+ *  for everybody, because two people in one room quoting different sentences
+ *  at each other is a room that cannot be talked about.
+ *
+ *  So it is derived from the message id, which is random, fixed, and already
+ *  on the row. A cheap sum is enough — this is picking one of six, not
+ *  hashing anything that matters.
+ */
+export function moWelcome(who, seed) {
+  const keys = ["mo.welcome", "mo.welcome2", "mo.welcome3",
+                "mo.welcome4", "mo.welcome5", "mo.welcome6"];
+  /* A SUM OF THE CHARACTERS WAS NOT ENOUGH. Ids made a moment apart share
+     most of their characters, so a plain sum lands them in the same bucket
+     and six arrivals in a row drew three of one line and three of another —
+     which is the thing this exists to stop. Multiply as well as add. */
+  let n = 5381;
+  for (const ch of String(seed || "")) n = ((n * 33) ^ ch.charCodeAt(0)) >>> 0;
+  return T(keys[n % keys.length], { who });
+}
+
 export function when(iso) {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";

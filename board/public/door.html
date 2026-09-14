@@ -169,7 +169,7 @@
 </main>
 
 <script type="module">
-import { T, when, setLang, pickLang, langButton } from "/i18n.js";
+import { T, when, setLang, pickLang, langButton, moWelcome } from "/i18n.js";
 import { device, roomFromPath, viaFromUrl, wFromUrl } from "/wait.js";
 import { offerInstall } from "/install.js";
 import { moHear } from "/mo.js";
@@ -297,7 +297,11 @@ function paint() {
       talk.append(e);
       continue;
     }
-    const said = m.evt ? T("mo.welcome", { who: m.evt.who }) : (m.text || "");
+    /* SIX WELCOMES, PICKED FROM THE MESSAGE ID. Five people walking in got
+       five identical bubbles, which is the loudest "a machine did this" on
+       the first screen anybody sees. Stable per message so the room reads the
+       same on every redraw and to everybody in it — see moWelcome. */
+    const said = m.evt ? moWelcome(m.evt.who, m.id) : (m.text || "");
     const row = document.createElement("div");
     row.className = "said" + (m.mine ? " mine" : "");
     if (!m.mine) {
