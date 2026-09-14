@@ -4975,10 +4975,42 @@ export const STRINGS = {
      work of making somebody read this as one; rewards for turning up early is
      what it actually is, and it is what the room it lives in is called. */
   "pin.head":          ["Your rewards", "你的奖励"],
+  "pin.proto":         ["Prototype", "测试中"],
+  "pin.points":        ["{n} points", "{n} 分"],
+  "pin.ofGoal":        ["of {goal} members", "共 {goal} 人"],
+  "pin.onIt":          ["On the ledger", "已经在账上"],
+  "pin.notOn":         ["Not counted in yet", "还没算进去"],
+  "pin.yourPlace":     ["Your place on the ledger", "你在账上的位置"],
+  "pin.placeWhen":     ["fixed the day you joined", "加入那天就定了"],
+  "pin.total":         ["Total", "合计"],
+  "pin.until":         ["Points from what you do keep counting until {date}.",
+                        "做事分一直算到 {date}。"],
+  "pin.scale":         ["The sliding scale", "分数怎么递减"],
+  "pin.scaleHow":      ["The highlighted box is the band your place is in.",
+                        "亮起来的那格就是你所在的区间。"],
+  "pin.pool":          ["Your share of the pool", "你占的比例"],
+  "pin.shareNever":    ["from your place, and it never falls",
+                        "来自你的位置，这部分永远不会掉"],
+  "pin.shareRest":     ["Plus a share of the other {rest}%, from what everyone did, fixed on {date}.",
+                        "另外 {rest}% 按大家做了多少分，{date} 那天定下来。"],
+  "pin.toward":        ["Toward {goal}", "离 {goal} 还有多远"],
+  "pin.members":       ["members", "人"],
+  "pin.byDate":        ["by {date}", "目标 {date}"],
+  "pin.ifYes":         ["If {goal} is reached", "如果到了 {goal} 人"],
+  "pin.ifYesBody": [
+    "The company intends to make a share offer to everyone on the ledger, allocated by points, with its own offer document.",
+    "公司打算给账上的每个人一次股份认购，按积分分配，另有正式认购文件。",
+  ],
+  "pin.ifNo":          ["If it isn't", "如果没到"],
+  "pin.ifNoBody": [
+    "Points stay a record of who built the board. No shares are offered.",
+    "积分就只是谁一起把这个board做起来的记录。没有股份。",
+  ],
+  "pin.rulesGo":       ["Read the rules", "看规则"],
+  "pin.rulesHide":     ["Close the rules", "收起规则"],
   "pin.place":         ["Place #{n}", "第 {n} 位"],
   "pin.forPlace":      ["For your place", "位置分"],
   "pin.forActs":       ["For what you've done", "做事分"],
-  "pin.toward":        ["{n} of {goal} members", "{goal} 人里的第 {n} 人"],
   "pin.note": [
     "The company intends to make a share offer at {goal} members, allocated by points. Nothing is signed before then.",
     "到 {goal} 人的时候，公司打算按积分发一次股份认购。在那之前不签任何东西。",
@@ -5013,12 +5045,8 @@ export const STRINGS = {
   "pin.seeMine":       ["See it as yours", "看回你自己的"],
 
   // the five views
-  "pin.vOver":         ["Your rewards", "你的奖励"],
-  "pin.vRules":        ["How it is counted", "怎么算的"],
-  "pin.vJoin":         ["Join in", "加入"],
   "pin.vGoal":         ["At {goal}", "到 {goal} 人"],
   "pin.vRec":          ["What is recorded", "记录了什么"],
-  "pin.back":          ["Back", "返回"],
 
   "pin.rules": [
     "Two halves. Your place is the order your page went up, and it never moves. What you have done is counted from the board and moves every week.",

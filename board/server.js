@@ -3023,16 +3023,48 @@ const LCURVE = (() => {
 /** What place one is worth. Everything else falls away from it. */
 const LHEAD = 1000;
 /** Guests counted for one member. Beyond this the board is one person's. */
-const LCUTOFF = (() => {
-  const v = Number(process.env.BOARD_LEDGER_CUTOFF);
+const LGUESTS = (() => {
+  const v = Number(process.env.BOARD_LEDGER_GUESTS);
   return Number.isInteger(v) && v > 0 ? v : 10;
 })();
-/** What share of the company the offer would be for, as text. Never a sum of
- *  money: a percentage is a description of a structure, a dollar figure is a
- *  claim about what somebody will be paid. */
-const LSPLIT = String(process.env.BOARD_LEDGER_SPLIT || "").trim().slice(0, 40);
-/** When, in the operator's own words. Unset, the copy says at the goal. */
-const LBY = String(process.env.BOARD_LEDGER_BY || "").trim().slice(0, 60);
+/* HOW THE POOL IS DIVIDED: this much by place, the rest by what people did.
+ *
+ * Seventy and thirty. The place half is fixed the day somebody joins and can
+ * never fall, which is what makes it worth arriving for; the other half keeps
+ * moving until the cutoff, which is what makes it worth staying for. One
+ * number without the other is either a lottery you won by being early or a
+ * treadmill with no reason to have come. */
+const LSPLIT = (() => {
+  const v = Number(process.env.BOARD_LEDGER_SPLIT);
+  return Number.isFinite(v) && v >= 0 && v <= 100 ? v : 70;
+})();
+/** The day the counting stops, and the day the goal is meant to be reached.
+ *  Dates rather than prose: the screen says them in whichever language it is
+ *  being read in, and a date typed as English prose cannot be. */
+const LUNTIL = String(process.env.BOARD_LEDGER_UNTIL || "").trim().slice(0, 10);
+const LBY = String(process.env.BOARD_LEDGER_BY || "").trim().slice(0, 10);
+
+/* THE WHOLE POOL OF PLACE POINTS, which a share is divided by.
+ *
+ * Every place from 1 to the goal, added up once at boot. Against the places
+ * taken so far instead, an early share would read as an enormous fraction and
+ * then fall as the board fills — and a number that only ever goes down is a
+ * grievance waiting to happen. The same argument as POOL above, at a larger
+ * scale. */
+const LPOOL = (() => {
+  let t = 0;
+  for (let n = 1; n <= Math.min(LGOAL, 1e6); n++) t += 1000 / Math.pow(n, LCURVE);
+  return t;
+})();
+
+/** The five markers on the sliding scale, and what a place at each is worth.
+ *  Powers of ten up to the goal: it is the shape of the curve said in five
+ *  numbers, which is the only way anybody reads a curve on a phone. */
+const LSCALE = (() => {
+  const marks = [1, 100, 1000, 10000, 50000, 100000].filter((n) => n <= LGOAL);
+  if (LGOAL && marks[marks.length - 1] !== LGOAL) marks.push(LGOAL);
+  return marks;
+})();
 
 /* WHICH DOORS CARRY IT, AND BY DEFAULT NONE DO.
  *
@@ -3106,23 +3138,44 @@ function pinFor(board, who, asNew) {
   const next = members + 1;
   if (!place) {
     return next > LGOAL
-      ? { on: true, place: 0, shut: true, members, goal: LGOAL, split: LSPLIT, by: LBY }
+      ? { on: true, place: 0, shut: true, ...common(members) }
       : { on: true, place: 0, soon: next, soonPts: PLACE(next),
-          members, goal: LGOAL, split: LSPLIT, by: LBY };
+          scale: LSCALE.map((at) => ({ at, pts: PLACE(at) })),
+          band: LSCALE.find((at) => next <= at) || LSCALE[LSCALE.length - 1],
+          share: LPOOL ? (PLACE(next) / LPOOL) * (LSPLIT / 100) * 100 : 0,
+          ...common(members) };
   }
   if (place > LGOAL) {
-    return { on: true, place: 0, shut: true, members, goal: LGOAL, split: LSPLIT, by: LBY };
+    return { on: true, place: 0, shut: true, ...common(members) };
   }
-  const acts = actsOf(board, who, LCUTOFF).filter((r) => r.points > 0);
+  const acts = actsOf(board, who, LGUESTS).filter((r) => r.points > 0);
   const placePts = PLACE(place);
+  const done = acts.reduce((a, r) => a + r.points, 0);
   return {
     on: true, place, placePts,
     parts: acts,
-    acts: acts.reduce((a, r) => a + r.points, 0),
-    total: placePts + acts.reduce((a, r) => a + r.points, 0),
-    members, goal: LGOAL, split: LSPLIT, by: LBY, cutoff: LCUTOFF,
+    acts: done,
+    total: placePts + done,
+    /* THE HALF OF THE POOL THEIR PLACE ALONE IS WORTH, and the sentence that
+       goes with it on the screen is "and it never falls" — which is true, and
+       is the only figure here that is. It is their place over every place
+       there will ever be, times the place half of the split. */
+    share: LPOOL ? (placePts / LPOOL) * (LSPLIT / 100) * 100 : 0,
+    /* THE CURVE IN FIVE NUMBERS, and which of them their place sits under.
+       A curve drawn on a phone is a picture nobody reads; five boxes with the
+       one you are in lit up is the same fact and it is read at a glance. */
+    scale: LSCALE.map((at) => ({ at, pts: PLACE(at) })),
+    band: LSCALE.find((at) => place <= at) || LSCALE[LSCALE.length - 1],
+    ...common(members),
   };
 }
+
+/** The things every shape of the answer carries, so three returns cannot come
+ *  to three different views of the same board. */
+const common = (members) => ({
+  members, goal: LGOAL, split: LSPLIT, rest: 100 - LSPLIT,
+  until: LUNTIL, by: LBY, guests: LGUESTS,
+});
 
 /** WHAT SOMEBODY HAS DONE FOR OTHER PEOPLE, priced on WORTH and nothing else.
  *

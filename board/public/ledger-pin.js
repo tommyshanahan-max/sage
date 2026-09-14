@@ -44,65 +44,95 @@ const num = (v) => Number(v || 0).toLocaleString(lang() === "zh" ? "zh-CN" : "en
  * page it lands in is wearing.
  */
 const CSS = `
-  /* THE LEDGER PIN, in the same slot as a deal but not wearing its border.
-     A deal is one fact about one thread and gets the accent outline; this sits
-     over every visit to the room, and an accent box at the top of a room every
-     time somebody opens it is a banner. Quiet card, loud number. */
-  .pinwrap.ledgerpin{border-color:var(--line);padding:0;background:transparent}
-  /* A group room has no deal slot to borrow, so the pin brings its own gap. */
-  .pinslot{margin:0 0 1.2rem}
-  .lp{display:block;width:100%;text-align:left;font:inherit;color:inherit;
-    background:var(--raise);border:1px solid var(--line);border-radius:.6rem;
-    padding:.7rem .75rem;cursor:pointer;display:grid;gap:.45rem}
-  .lp:hover{border-color:var(--muted)}
-  .lphead{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
-  .lpk{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;
-    font-weight:700;color:var(--muted)}
-  :root[data-lang="zh"] .lpk{letter-spacing:0;text-transform:none;font-size:.7rem}
-  .lpgo{font-style:normal;color:var(--muted)}
-  .lpbig{font-size:1.6rem;font-weight:700;line-height:1;letter-spacing:-.02em;
+  /* THE LEDGER PANEL. It opens in place under a chevron rather than replacing
+     the room, which is what every expandable thing on this phone does — and
+     the first version, four tab screens behind a button, answered every
+     question and was dead on the page. */
+  .pinwrap.ledgerpin{border-color:transparent;padding:0;background:transparent}
+  .pinslot{margin:0 0 1.1rem}
+  .lp{background:var(--card);border:1px solid var(--line);border-radius:.9rem;
+    overflow:hidden}
+  .lphead{display:flex;align-items:flex-start;gap:.8rem;width:100%;text-align:left;
+    font:inherit;color:inherit;background:transparent;border:0;cursor:pointer;
+    padding:.95rem 1rem}
+  .lpleft{flex:1;min-width:0}
+  .lpeyebrow{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;
+    font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--muted);font-weight:700}
+  :root[data-lang="zh"] .lpeyebrow{letter-spacing:0;text-transform:none;font-size:.74rem}
+  .lptag{font-style:normal;letter-spacing:.1em;border:1px solid var(--line);
+    border-radius:99px;padding:.1rem .4rem;color:var(--muted)}
+  /* The number is the reason anybody looks, so it is the biggest thing here —
+     and in the serif, like the name at the top of the room. */
+  .lpbig{font-family:var(--serif,Georgia,serif);font-size:1.75rem;line-height:1.1;
+    letter-spacing:-.02em;margin:.3rem 0 0}
+  .lpon{display:flex;align-items:center;gap:.4rem;margin:.3rem 0 0;
+    font-size:.82rem;color:var(--ink-2)}
+  .lpon2{margin:.25rem 0 0;font-size:.86rem;font-weight:700}
+  .lpdot{width:.5rem;height:.5rem;border-radius:50%;background:#2E9E5B;flex:0 0 auto}
+  .lpright{text-align:right;flex:0 0 auto}
+  .lpright b{display:block;font-size:1.05rem;font-weight:700;
     font-variant-numeric:tabular-nums}
-  .lpbits{display:grid;gap:.15rem;font-size:.8rem;color:var(--ink-2)}
-  .lpbits div{display:flex;justify-content:space-between;gap:1rem}
-  .lpbits b{font-weight:700;font-variant-numeric:tabular-nums}
-  .lptow{display:grid;gap:.25rem;font-size:.74rem;color:var(--muted)}
-  .lpbar{height:3px;background:var(--hair);border-radius:99px;overflow:hidden}
-  .lpbar i{display:block;height:100%;background:var(--accent);border-radius:99px}
-  /* The sentence nobody may miss, so it is on the face of the button and not
-     behind it. See the note over pin.note in i18n.js. */
-  .lpnote{margin:0;padding-top:.45rem;border-top:1px solid var(--hair);
-    font-size:.74rem;line-height:1.45;color:var(--ink-2)}
-  .lpnone{margin:0;font-size:.82rem;color:var(--muted);line-height:1.5}
-  /* The place-to-be reads as a sentence rather than a figure, so the big line
-     is words and the number under it is the one that falls. */
-  .lp .lpbig:has(+ .lpsoonw){font-size:1.15rem;font-weight:700;line-height:1.3}
-  .lpsoonw{margin:0;font-size:.9rem;font-weight:700}
-  .lpshut{padding:.6rem .7rem;background:var(--raise);border-radius:.6rem}
+  .lpright span{display:block;font-size:.72rem;color:var(--muted);line-height:1.3}
+  .lpchev{font-style:normal;color:var(--muted);flex:0 0 auto;transition:transform .15s}
+  .lpchev.up{transform:rotate(180deg)}
 
-  .lpview{background:var(--raise);border:1px solid var(--line);border-radius:.6rem;
-    padding:.7rem .75rem;display:grid;gap:.6rem}
-  .lptabs{display:flex;gap:.3rem;flex-wrap:wrap}
-  .lptab{font:inherit;font-size:.72rem;padding:.25rem .5rem;border-radius:99px;
-    border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
-  .lptab.on{background:var(--accent);border-color:var(--accent);color:#fff}
-  .lph{margin:0;font-size:1rem;font-weight:700}
-  .lph:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-  .lpbody{display:grid;gap:.5rem}
-  .lpbody p{margin:0;font-size:.82rem;line-height:1.55;color:var(--ink-2)}
-  .lplist{list-style:none;margin:.2rem 0 0;padding:0;display:grid;gap:.25rem}
-  .lplist li{display:flex;justify-content:space-between;gap:1rem;font-size:.8rem}
-  .lplist b{font-variant-numeric:tabular-nums}
-  .lpdo{font:inherit;font-weight:700;padding:.5rem .9rem;border-radius:99px;
-    border:0;background:var(--accent);color:#fff;cursor:pointer;justify-self:start}
-  .lpyes{margin:0;font-size:.82rem;font-weight:700}
+  .lpbody{padding:0 1rem 1rem;display:grid;gap:.5rem;border-top:1px solid var(--hair)}
+  .lph{margin:.8rem 0 .1rem;font-family:var(--serif,Georgia,serif);
+    font-size:1.1rem;font-weight:600}
+  .lpk{margin:.7rem 0 0;font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--muted);font-weight:700}
+  :root[data-lang="zh"] .lpk{letter-spacing:0;text-transform:none;font-size:.74rem}
+
+  .lprows{display:grid}
+  .lprow{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+    padding:.6rem 0;border-bottom:1px solid var(--hair);font-size:.88rem}
+  .lprow small{display:block;color:var(--muted);font-size:.76rem;margin-top:.1rem}
+  .lprow b{font-weight:700;font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .lprow.sum{border-bottom:0;font-weight:700}
+
+  /* Five boxes, the one you are in lit. A line chart of a power law on a phone
+     is a picture of nothing. */
+  .lpscale{display:flex;gap:.35rem;overflow-x:auto;padding:.15rem 0 .25rem}
+  .lpcell{flex:1 0 auto;min-width:3.9rem;border:1px solid var(--line);
+    border-radius:.5rem;padding:.4rem .5rem;background:var(--raise)}
+  .lpcell.on{border-color:var(--accent);border-width:2px;background:var(--card)}
+  .lpcell span{display:block;font-size:.66rem;color:var(--muted)}
+  .lpcell b{display:block;font-family:var(--serif,Georgia,serif);font-size:1.05rem;
+    font-weight:600;font-variant-numeric:tabular-nums}
+
+  .lpshare{margin:.1rem 0 0;font-size:.92rem;color:var(--ink-2)}
+  .lpshare b{font-size:1.05rem;font-weight:700;color:var(--ink)}
+  .lptoward{margin:.1rem 0 0;font-size:.92rem;color:var(--ink-2)}
+  .lptoward b{font-size:1.05rem;font-weight:700;color:var(--ink);
+    font-variant-numeric:tabular-nums}
+  .lpbar{height:4px;background:var(--hair);border-radius:99px;overflow:hidden;
+    margin-top:.15rem}
+  .lpbar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+  .lpsmall{margin:.1rem 0 0;font-size:.78rem;color:var(--muted);line-height:1.5}
+
+  /* Both endings, the same size. The second card is what makes the first
+     believable. */
+  .lptwo{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.7rem}
+  @media (max-width:420px){ .lptwo{grid-template-columns:1fr} }
+  .lpcard{border:1px solid var(--line);border-radius:.6rem;padding:.65rem .7rem;
+    background:var(--raise)}
+  .lpcard b{display:block;font-size:.88rem;margin-bottom:.25rem}
+  .lpcard p{margin:0;font-size:.8rem;line-height:1.5;color:var(--ink-2)}
+
+  .lprules{margin-top:.8rem;width:100%;font:inherit;font-weight:700;font-size:.92rem;
+    padding:.75rem;border-radius:.6rem;border:0;background:var(--accent);color:#fff;
+    cursor:pointer}
+  .lprulesbox{display:grid;gap:.45rem;padding-top:.6rem}
+  .lprulesbox p{margin:0;font-size:.82rem;line-height:1.55;color:var(--ink-2)}
+  .lpjoin{display:grid;gap:.4rem;margin-top:.8rem;padding-top:.8rem;
+    border-top:1px solid var(--hair)}
+  .lpdo{font:inherit;font-weight:700;padding:.55rem 1rem;border-radius:99px;border:0;
+    background:var(--accent);color:#fff;cursor:pointer;justify-self:start}
+  .lpyes{margin:0;font-size:.86rem;font-weight:700}
   .lpsay{margin:0;font-size:.78rem;color:var(--muted)}
-  .lpshutlab{font-size:.6rem!important;letter-spacing:.12em;text-transform:uppercase;
-    font-weight:700;color:var(--muted)}
-  .lpno{font-weight:700}
   .lpflip{font:inherit;font-size:.72rem;background:transparent;border:0;
-    color:var(--muted);cursor:pointer;padding:.45rem 0 0;text-decoration:underline}
-  .lpback{font:inherit;font-size:.78rem;background:transparent;border:0;
-    color:var(--accent);cursor:pointer;padding:0;justify-self:start}
+    color:var(--muted);cursor:pointer;padding:.5rem 1rem 0;text-decoration:underline}
 `;
 
 let styled = false;
@@ -119,7 +149,6 @@ function style() {
    view is in here too: a redraw that reset somebody to the overview while they
    were reading the rules would be the same bug wearing a different hat. */
 let SHOWN = null;
-let VIEW = "over";
 let BUSY = false;
 /* THE OPERATOR LOOKING AT THE ARRIVAL SCREEN. They are a member, so they can
    never see it any other way — the alternative is a second phone and a spare
@@ -184,7 +213,7 @@ export async function mountLedgerPin(box, room, device, group) {
 
 function paint(box, d, device) {
   box.textContent = "";
-  box.append(VIEW === "over" ? overview(box, d, device) : view(box, d, device));
+  box.append(overview(box, d, device));
   if (d.staff) box.append(flip(d));
 }
 
@@ -201,203 +230,240 @@ function flip(d) {
   b.addEventListener("click", async () => {
     PREVIEW = !PREVIEW;
     SHOWN = null;              // the shape changed, so the guard must not hold
-    VIEW = "over";
+    OPEN = false;
     if (LAST) await mountLedgerPin(LAST.box, LAST.room, LAST.device, LAST.group);
   });
   return b;
 }
 
-/* ---- the button ---------------------------------------------------------- */
+/* ---- the panel ----------------------------------------------------------- */
+
+/* OPEN AND SHUT IN PLACE, rather than four screens behind a button.
+ *
+ * The first version was a button that replaced the room with a tab bar. It
+ * answered every question and it was dead on the page: one number, and
+ * everything that made the number interesting was behind a tap nobody takes in
+ * a chat room. This opens downward under a chevron and the room stays where it
+ * is — which is also what every expandable thing on the phone this is read on
+ * does. */
+let OPEN = false;
 
 function overview(box, d, device) {
-  /* PAST THE LAST PLACE. Said rather than shown as a nought: a zero that never
-     moves teaches somebody the thing is broken, and they are right to think so
-     because for them it is. */
-  if (d.shut) {
-    const wrap = el("div", "lp lpshut");
-    wrap.append(el("p", "lpnone", T("pin.none")));
-    return wrap;
+  const wrap = el("div", "lp");
+
+  /* THE HEAD, AND IT IS A BUTTON WHETHER OR NOT IT IS OPEN. Tapping the
+     numbers is the gesture; a chevron that is the only hit target is a
+     four-millimetre target on a phone. */
+  const head = el("button", "lphead");
+  head.type = "button";
+  head.setAttribute("aria-expanded", OPEN ? "true" : "false");
+
+  const left = el("div", "lpleft");
+  const eye = el("div", "lpeyebrow");
+  eye.append(el("span", null, T("pin.head")
+    + (d.place ? " · " + T("pin.place", { n: num(d.place) }) : "")));
+  eye.append(el("i", "lptag", T("pin.proto")));
+  left.append(eye);
+
+  /* THE NUMBER, AS BIG AS THE NAME AT THE TOP OF THE ROOM. It is the whole
+     reason anybody looks at this, so it is the largest thing in it. */
+  left.append(el("div", "lpbig", d.place
+    ? T("pin.points", { n: num(d.total) })
+    : d.soon ? T("pin.soon", { n: num(d.soon) }) : T("pin.none")));
+  if (d.place) {
+    const on = el("p", "lpon");
+    on.append(el("i", "lpdot"));
+    on.append(document.createTextNode(T(d.joined ? "pin.onIt" : "pin.notOn")));
+    left.append(on);
+  } else if (d.soon) {
+    left.append(el("p", "lpon2", T("pin.soonWorth", { p: num(d.soonPts) })));
+  }
+  head.append(left);
+
+  const right = el("div", "lpright");
+  right.append(el("b", null, num(d.members)));
+  right.append(el("span", null, T("pin.ofGoal", { goal: num(d.goal) })));
+  head.append(right);
+  head.append(el("i", "lpchev" + (OPEN ? " up" : ""), "⌄"));
+
+  head.setAttribute("aria-label", T("pin.label",
+    { total: num(d.place ? d.total : d.soonPts || 0),
+      n: num(d.place || d.soon || 0), goal: num(d.goal) }));
+  head.addEventListener("click", () => { OPEN = !OPEN; paint(box, d, device); });
+  wrap.append(head);
+
+  if (OPEN && !d.shut) wrap.append(body(d, device));
+  return wrap;
+}
+
+/* ---- everything under the chevron ---------------------------------------- */
+
+function body(d, device) {
+  const w = el("div", "lpbody");
+
+  /* WHERE THE POINTS CAME FROM, itemised. A total nobody can take apart is a
+     number somebody has to trust; a total with its rows under it is one they
+     can check, and checking it is what makes it theirs. */
+  if (d.place) {
+    w.append(el("h3", "lph", T("pin.yourPlace")));
+    const rows = el("div", "lprows");
+    rows.append(row(T("pin.place", { n: num(d.place) }), d.placePts, T("pin.placeWhen")));
+    for (const r of d.parts || []) {
+      rows.append(row(T("stake.p." + r.key + (r.n === 1 ? "1" : ""), { n: num(r.n) }),
+        r.points));
+    }
+    rows.append(row(T("pin.total"), d.total, "", true));
+    w.append(rows);
+    if (d.until) w.append(el("p", "lpsmall", T("pin.until", { date: theDay(d.until) })));
   }
 
-  /* NOT IN YET. The place they would get rather than the place they have, and
-     the number under it falls while they read — which is the entire reason
-     this is in front of the door instead of behind it. */
-  if (!d.place && d.soon) {
-    const b = el("button", "lp");
-    b.type = "button";
-    b.setAttribute("aria-label", T("pin.label",
-      { total: num(d.soonPts), n: num(d.soon), goal: num(d.goal) }));
-    const head = el("div", "lphead");
-    head.append(el("span", "lpk", T("pin.head")));
-    head.append(el("i", "lpgo", "\u203A"));
-    b.append(head);
-    b.append(el("div", "lpbig", T("pin.soon", { n: num(d.soon) })));
-    b.append(el("p", "lpsoonw", T("pin.soonWorth", { p: num(d.soonPts) })));
-    b.append(el("p", "lpnote", T("pin.soonHow")));
-    b.append(el("p", "lpnote", T("pin.note", { goal: num(d.goal) })));
-    b.addEventListener("click", () => { VIEW = "rules"; paint(box, d, device); });
-    return b;
+  /* THE CURVE, AS FIVE BOXES WITH YOURS LIT. A line chart of a power law on a
+     phone is a picture of nothing; this is the same fact and it is read at a
+     glance — and it answers the question everybody actually has, which is not
+     "what is my number" but "how much better would it have been to be early". */
+  if (d.scale && d.scale.length) {
+    w.append(el("p", "lpk", T("pin.scale")));
+    const sc = el("div", "lpscale");
+    for (const m of d.scale) {
+      const cell = el("div", "lpcell" + (m.at === d.band ? " on" : ""));
+      cell.append(el("span", null, "#" + num(m.at)));
+      cell.append(el("b", null, num(m.pts)));
+      sc.append(cell);
+    }
+    w.append(sc);
+    w.append(el("p", "lpsmall", T("pin.scaleHow")));
   }
 
-  if (!d.place) {
-    const wrap = el("div", "lp lpshut");
-    wrap.append(el("p", "lpnone", T("pin.none")));
-    return wrap;
+  /* THE SHARE, AND THE ONLY PROMISE ON THE SCREEN THAT IS ARITHMETIC RATHER
+     THAN INTENTION: this half is fixed the day somebody joins and cannot fall,
+     because the pool it is divided by is every place there will ever be rather
+     than the places taken so far. */
+  if (typeof d.share === "number" && d.share > 0) {
+    w.append(el("p", "lpk", T("pin.pool")));
+    const sh = el("p", "lpshare");
+    sh.append(el("b", null, pct(d.share)));
+    sh.append(document.createTextNode(" " + T("pin.shareNever")));
+    w.append(sh);
+    w.append(el("p", "lpsmall", T("pin.shareRest", {
+      rest: num(d.rest), date: d.until ? theDay(d.until) : "",
+    })));
   }
 
-  const b = el("button", "lp");
-  b.type = "button";
-  /* The whole sentence, once. See the note at the top of this file. */
-  b.setAttribute("aria-label", T("pin.label",
-    { total: num(d.total), n: num(d.place), goal: num(d.goal) }));
-
-  const head = el("div", "lphead");
-  head.append(el("span", "lpk", T("pin.head")));
-  head.append(el("i", "lpgo", "›"));
-  b.append(head);
-
-  b.append(el("div", "lpbig", num(d.total)));
-
-  const bits = el("div", "lpbits");
-  bits.append(bit(T("pin.place", { n: num(d.place) }), d.placePts));
-  if (d.acts) bits.append(bit(T("pin.forActs"), d.acts));
-  b.append(bits);
-
-  /* HOW FAR THE BOARD IS, not how far they are. The bar is the only thing on
-     the pin that moves for a reason outside the reader's own doing, which is
-     what makes it worth watching. */
-  const on = el("div", "lptow");
-  on.append(el("span", null, T("pin.toward", { n: num(d.members), goal: num(d.goal) })));
+  w.append(el("p", "lpk", T("pin.toward", { goal: num(d.goal) })));
+  const tw = el("p", "lptoward");
+  tw.append(el("b", null, num(d.members)));
+  tw.append(document.createTextNode(" " + T("pin.members")
+    + (d.by ? " · " + T("pin.byDate", { date: theDay(d.by) }) : "")));
+  w.append(tw);
   const bar = el("div", "lpbar");
   const fill = el("i");
   fill.style.width = Math.max(0.6, Math.min(100, (d.members / d.goal) * 100)) + "%";
   bar.append(fill);
-  on.append(bar);
-  b.append(on);
+  w.append(bar);
 
-  b.append(el("p", "lpnote", T("pin.note", { goal: num(d.goal) })));
-  b.addEventListener("click", () => { VIEW = "rules"; paint(box, d, device); });
-  return b;
+  /* BOTH OUTCOMES, SIDE BY SIDE AND THE SAME SIZE.
+   *
+   * The second card is the one that makes the first believable. A screen that
+   * only describes the good ending is an advertisement; one that says plainly
+   * what happens if the number is never reached is a record, and a person can
+   * tell the difference in a second even if they could not say why. */
+  const two = el("div", "lptwo");
+  two.append(card(T("pin.ifYes", { goal: num(d.goal) }), T("pin.ifYesBody", { goal: num(d.goal) })));
+  two.append(card(T("pin.ifNo"), T("pin.ifNoBody")));
+  w.append(two);
+
+  const go = el("button", "lprules");
+  go.type = "button";
+  go.textContent = T("pin.rulesGo");
+  go.addEventListener("click", () => { RULES = !RULES; paintRules(w, d, go); });
+  w.append(go);
+  const rw = el("div", "lprulesbox");
+  rw.hidden = !RULES;
+  w.append(rw);
+  if (RULES) paintRules(w, d, go, rw);
+
+  if (!d.joined && d.place) w.append(joinRow(d, device));
+  return w;
 }
 
-const bit = (label, points) => {
-  const r = el("div");
-  r.append(el("span", null, label));
+let RULES = false;
+
+function paintRules(w, d, go, box) {
+  const rw = box || w.querySelector(".lprulesbox");
+  if (!rw) return;
+  rw.hidden = !RULES;
+  go.textContent = T(RULES ? "pin.rulesHide" : "pin.rulesGo");
+  if (!RULES) { rw.textContent = ""; return; }
+  rw.textContent = "";
+  for (const k of ["pin.rules", "pin.rulesCurve", "pin.recWhat", "pin.recNo"]) {
+    rw.append(el("p", null, T(k, { n: num(d.guests || 10) })));
+  }
+  rw.append(el("p", null, T("pin.rulesCap", { n: num(d.guests || 10) })));
+}
+
+function joinRow(d, device) {
+  const box = el("div", "lpjoin");
+  box.append(el("p", "lpsmall", T("pin.joinWhat")));
+  const go = el("button", "lpdo", T("pin.joinDo"));
+  go.type = "button";
+  const say = el("p", "lpsay");
+  say.hidden = true;
+  go.addEventListener("click", async () => {
+    if (BUSY) return;
+    BUSY = true; go.disabled = true;
+    try {
+      const r = await fetch("/api/ledger/join", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device }),
+      });
+      const g = await r.json().catch(() => ({}));
+      if (r.ok && g.ok) {
+        d.joined = true;
+        if (SHOWN) SHOWN.joined = true;
+        go.replaceWith(el("p", "lpyes", T("pin.joinedYes")));
+      } else {
+        say.hidden = false;
+        say.textContent = T(g.error === "profile" ? "pin.needPage" : "err.general");
+        go.disabled = false;
+      }
+    } catch {
+      say.hidden = false; say.textContent = T("err.general"); go.disabled = false;
+    }
+    BUSY = false;
+  });
+  box.append(go, say);
+  return box;
+}
+
+/* ---- small pieces -------------------------------------------------------- */
+
+function row(label, points, under, big) {
+  const r = el("div", "lprow" + (big ? " sum" : ""));
+  const l = el("div");
+  l.append(el("span", null, label));
+  if (under) l.append(el("small", null, under));
+  r.append(l);
   r.append(el("b", null, num(points)));
   return r;
-};
-
-/* ---- the four screens behind it ------------------------------------------ */
-
-function view(box, d, device) {
-  const wrap = el("div", "lpview");
-
-  const top = el("div", "lptabs");
-  for (const [key, label] of [
-    ["rules", T("pin.vRules")],
-    ["join", T("pin.vJoin")],
-    ["goal", T("pin.vGoal", { goal: num(d.goal) })],
-    ["rec", T("pin.vRec")],
-  ]) {
-    const t = el("button", "lptab" + (VIEW === key ? " on" : ""), label);
-    t.type = "button";
-    t.setAttribute("aria-current", VIEW === key ? "true" : "false");
-    t.addEventListener("click", () => { VIEW = key; paint(box, d, device); });
-    top.append(t);
-  }
-  wrap.append(top);
-
-  /* THE HEADING TAKES FOCUS. A view that swapped under somebody using a screen
-     reader without moving focus has not changed for them — they are still
-     somewhere in the old one, reading text that is gone. */
-  const h = el("h3", "lph", headOf(d));
-  h.tabIndex = -1;
-  wrap.append(h);
-  wrap.append(body(d, device));
-
-  const back = el("button", "lpback", T("pin.back"));
-  back.type = "button";
-  back.addEventListener("click", () => { VIEW = "over"; paint(box, d, device); });
-  wrap.append(back);
-
-  // After it is in the document, not before — focus on a detached node is lost.
-  queueMicrotask(() => { try { h.focus(); } catch { /* not focusable yet */ } });
-  return wrap;
 }
 
-const headOf = (d) => VIEW === "rules" ? T("pin.vRules")
-  : VIEW === "join" ? T("pin.vJoin")
-  : VIEW === "goal" ? T("pin.vGoal", { goal: num(d.goal) })
-  : T("pin.vRec");
+function card(head, bodyText) {
+  const c = el("div", "lpcard");
+  c.append(el("b", null, head));
+  c.append(el("p", null, bodyText));
+  return c;
+}
 
-function body(d, device) {
-  const box = el("div", "lpbody");
+/* A percentage with enough places to be a number rather than a nought. Four
+   decimals because at fifty thousand places two of them are always zero. */
+const pct = (v) => (v >= 1 ? v.toFixed(2) : v.toFixed(4)) + "%";
 
-  if (VIEW === "rules") {
-    box.append(el("p", null, T("pin.rules")));
-    box.append(el("p", null, T("pin.rulesCurve")));
-    box.append(el("p", null, T("pin.rulesCap", { n: num(d.cutoff || 10) })));
-    /* Their own parts, in the words the founding ledger already uses for the
-       same acts — stake.p.* rather than a second set. */
-    if (d.parts && d.parts.length) {
-      const list = el("ul", "lplist");
-      for (const r of d.parts) {
-        const k = "stake.p." + r.key + (r.n === 1 ? "1" : "");
-        const li = el("li");
-        li.append(el("span", null, T(k, { n: num(r.n) })));
-        li.append(el("b", null, num(r.points)));
-        list.append(li);
-      }
-      box.append(list);
-    }
-    return box;
-  }
-
-  if (VIEW === "join") {
-    box.append(el("p", null, T("pin.joinWhat")));
-    if (d.joined) { box.append(el("p", "lpyes", T("pin.joinedYes"))); return box; }
-    const go = el("button", "lpdo", T("pin.joinDo"));
-    go.type = "button";
-    const say = el("p", "lpsay");
-    say.hidden = true;
-    go.addEventListener("click", async () => {
-      if (BUSY) return;
-      BUSY = true; go.disabled = true;
-      try {
-        const r = await fetch("/api/ledger/join", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ device }),
-        });
-        const g = await r.json().catch(() => ({}));
-        if (r.ok && g.ok) {
-          d.joined = true;
-          if (SHOWN) SHOWN.joined = true;
-          go.replaceWith(el("p", "lpyes", T("pin.joinedYes")));
-        } else {
-          say.hidden = false;
-          say.textContent = T(g.error === "profile" ? "pin.needPage" : "err.general");
-          go.disabled = false;
-        }
-      } catch {
-        say.hidden = false; say.textContent = T("err.general"); go.disabled = false;
-      }
-      BUSY = false;
-    });
-    box.append(go, say);
-    return box;
-  }
-
-  if (VIEW === "goal") {
-    /* SHUT, AND IT SAYS SO. A disabled screen that looks like a working one is
-       worse than no screen: somebody taps it, nothing happens, and what they
-       learn is that the app is broken rather than that the date has not come. */
-    box.append(el("p", "lpshutlab", T("pin.goalShut")));
-    box.append(el("p", null, T("pin.goalWhat", { goal: num(d.goal) })));
-    if (d.split) box.append(el("p", null, T("pin.goalSplit", { what: d.split })));
-    return box;
-  }
-
-  box.append(el("p", null, T("pin.recWhat")));
-  box.append(el("p", "lpno", T("pin.recNo")));
-  return box;
+/* A day, said the way the language says days. Not a format string away from
+   English — see `when` in i18n.js, which this follows. */
+function theDay(iso) {
+  const d = new Date(String(iso) + "T00:00:00Z");
+  if (Number.isNaN(d.getTime())) return String(iso);
+  return lang() === "zh"
+    ? d.getUTCFullYear() + "年" + (d.getUTCMonth() + 1) + "月" + d.getUTCDate() + "日"
+    : d.toLocaleDateString("en", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 }
