@@ -7152,7 +7152,13 @@ app.get("/api/door", notesOff, async (req, res) => {
   const named = (h) => {
     if (h === store.MO) return { handle: MO_NAME, inside: false, bot: true };
     const q = board.people.find((x) => x.by === h && x.handle);
-    if (q) return { handle: q.handle, inside: true, bot: false };
+    /* WHETHER A READER STILL OUTSIDE COULD REACH THEM. The door shows a few
+       members from outside — see peekFor — and those are the only faces in
+       this room that lead anywhere for somebody who has not been let in. Sent
+       so the page can link exactly those and leave the rest plain, rather
+       than offering a link that lands on a refusal. */
+    if (q) return { handle: q.handle, inside: true, bot: false,
+                    ...(q.peek && q.looking && q.state === "published" ? { peek: true } : {}) };
     const w = board.waits.find((x) => x.by === h && !x.done);
     /* THE ROW ID, FOR A MEMBER ONLY. Not to name them — the name is already
        here — but so the screen can tell who in the room has never said

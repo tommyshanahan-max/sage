@@ -204,6 +204,37 @@ async function load() {
   paint();
 }
 
+/** WHERE A FACE IN THIS ROOM GOES, and it depends on who is reading it.
+ *
+ *  A MEMBER can open a member's page, and can open the conversation with
+ *  somebody still at the door — the board holds their line either way.
+ *
+ *  SOMEBODY STILL OUTSIDE cannot open either: /p/ is behind the gate and the
+ *  id that reaches a conversation is never sent to them, both on purpose. But
+ *  they are not shut out of everything. The door shows a few members from
+ *  outside, and one of those faces speaking in the room is a person they can
+ *  actually go and look at — so it goes to that person's card in the peek.
+ *  `peek` on the say is what says which; see named() in /api/door. The rest
+ *  stay plain, because a link that lands on a refusal is worse than a face
+ *  that is plainly just a face.
+ */
+function doorWhere(m) {
+  if (m.bot) return "";
+  if (ROOM.how === "member") {
+    if (m.inside && m.handle) return "/p/" + encodeURIComponent(m.handle.toLowerCase());
+    return m.wid ? "/notes#w:" + m.wid : "";
+  }
+  /* ON THE LIST, NOT MERELY HOLDING THE LINK. The peek deck is served to a
+     browser with a waiting row and refused to one without — /api/people
+     answers "invite" — so for a stranger this link would land on the enter
+     form, which is the exact failure this whole flow was built to stop. They
+     have a name field in front of them; that is their way to these faces. */
+  if (ROOM.how === "wait" && m.peek && m.handle) {
+    return "/browse#p:" + encodeURIComponent(m.handle.toLowerCase());
+  }
+  return "";
+}
+
 function paint() {
   $("rname").textContent = T("waitroom." + KEY)
     + (ROOM ? "  (" + ROOM.n + ")" : "");
@@ -281,10 +312,7 @@ function paint() {
        * — is never sent to somebody outside; see named() in /api/door. A link
        * that lands on a refusal is worse than a face that is plainly just a
        * face, so theirs stays a plain one and never wears the ring. */
-      const to = ROOM.how !== "member" || m.bot ? ""
-        : m.inside && m.handle ? "/p/" + encodeURIComponent(m.handle.toLowerCase())
-        : m.wid ? "/notes#w:" + m.wid
-        : "";
+      const to = doorWhere(m);
       const av = document.createElement(to ? "a" : "span");
       av.className = "av" + (to ? " go" : "");
       if (to) av.href = to;
@@ -301,10 +329,7 @@ function paint() {
         + (m.bot ? "" : " · " + T(m.inside ? "dr.inside" : "dr.waiting"));
       // The same target as the face above it. Two halves of one person must
       // not lead to two different answers.
-      const toName = ROOM.how !== "member" || m.bot ? ""
-        : m.inside && m.handle ? "/p/" + encodeURIComponent(m.handle.toLowerCase())
-        : m.wid ? "/notes#w:" + m.wid
-        : "";
+      const toName = doorWhere(m);
       if (toName) {
         const a = document.createElement("a");
         a.className = "reach";

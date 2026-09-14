@@ -6729,6 +6729,23 @@ async function loadPeople() {
     const all = shuffled((d && d.people) || []);
     const fits = (q) => Array.isArray(q.shared) && q.shared.length > 0;
     PEOPLE = [...all.filter(fits), ...all.filter((q) => !fits(q))];
+    /* OPENED AT ONE PERSON, when the address asked for one.
+     *
+     * A face in a door room is a link for somebody still outside — the few
+     * members the door shows are the only people out there they can reach —
+     * and the link has to land on that person rather than on whoever the
+     * shuffle put first, or it is a door that opens onto a different room.
+     * See doorWhere in door.html.
+     *
+     * Quietly ignored when the handle is not in the deck: the peek is short
+     * and who is in it can change between the room being drawn and the tap.
+     * Landing on the first card is the right failure. */
+    const want = (location.hash.match(/^#p:(.+)$/) || [])[1];
+    if (want) {
+      const at = PEOPLE.findIndex((q) =>
+        String(q.handle || "").toLowerCase() === decodeURIComponent(want).toLowerCase());
+      if (at >= 0) AT = at;
+    }
   } catch { PEOPLE = []; WALL = null; }
   drawDeck();
   /* Here because it needs the deck: the old list holds handles and the rows
@@ -8486,6 +8503,9 @@ function viewNow() {
      asked for it just now — a reload, a bookmark, a link — rather than a
      four-year-old shortcut opening where the app used to live. */
   if (location.pathname === "/cards" || location.pathname === "/cards/") return "cards";
+  /* #p:<handle> is Browse opened at one person — see the deck loader — and
+     not a post id, so it must not send the page to the feed. */
+  if (/^#p:/.test(location.hash)) return "browse";
   if (location.hash && location.hash.length > 1) return "feed";
   return "browse";
 }
