@@ -4703,8 +4703,13 @@ export const STRINGS = {
      reason comes with it: not "please complete your profile", which is a form
      asking to be filled in, but what it gets them, which is the only thing
      that would make anybody do it. */
-  "mo.page":           ["{who} — write your page when you get a minute. Nobody can vouch for a name, and your page is what they read.",
-                        "{who}，有空把你的资料写了。光有名字没人能替你担保，他们看的就是你那一页。"],
+  /* WRITTEN PLAIN, on the second attempt. The first said "nobody can vouch
+     for a name", which is a neat line and not a sentence: vouch for a name
+     as opposed to what? It is the exact fault the brief tells Mo to avoid —
+     clever, and needing a second read. Three sentences, one idea each, and
+     the words a person would use. */
+  "mo.page":           ["{who} — write your page when you get a minute. Right now people here only see your name. Your page says what you do, and that is what they read before they let anybody in.",
+                        "{who}，有空把资料写了。现在别人只看得到你的名字。你那一页写的是你做什么的，他们决定放谁进来，看的就是这个。"],
   "mo.in":             ["{who} came in", "{who} \u8fdb\u6765\u4e86"],
   "mo.out":            ["{who} was taken out", "{who} \u88ab\u79fb\u51fa\u4e86"],
   "mo.left":           ["{who} left", "{who} \u8d70\u4e86"],
