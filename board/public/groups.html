@@ -847,6 +847,8 @@ function paintRoom(g) {
       ta.value = "";
       said.textContent = "";
       await load();
+      // It went, and something came out of it — see stripContact.
+      if (Array.isArray(d.took) && d.took.length) said.textContent = T("note.tookOut");
     } catch (e) {
       /* THE TEXT STAYS IN THE BOX, and now the reason is under it. Every
          refusal here was silent: the send button came back enabled, the line

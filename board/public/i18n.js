@@ -4698,6 +4698,14 @@ export const STRINGS = {
   "note.noContact": [
     "Not here. Contacts change hands by card — you both press give, and it moves once.",
     "这里不行。联系方式是通过名片给的——两个人都按「给」，才会过去一次。"],
+  /* WHAT WENT, AND THE MESSAGE WENT ANYWAY. The old line said "not here" to
+     somebody whose whole sentence had just been thrown away; this says what
+     came out of a message that was sent. Different fact, different line.
+     THE ID IS NOT QUOTED BACK. It is gone, and printing it on the screen it
+     was just taken off is the one place it should not be. */
+  "note.tookOut": [
+    "Sent. The contact came out of it — contacts change hands by card.",
+    "已发送。里面的联系方式去掉了——联系方式是通过名片给的。"],
   /* The line between the faces and the name box. Not a heading: it separates
      two answers to the same question and says so in one word. */
   /* ONE BOX. Typing filters the people you have matched with; a name nobody

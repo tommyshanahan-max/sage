@@ -7665,7 +7665,7 @@ function moSays(board, group, kind, who) {
 app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   const id = String(req.body?.group || "");
-  const text = String(req.body?.text || "").trim().slice(0, 600);
+  let text = String(req.body?.text || "").trim().slice(0, 600);
   if (!me) return res.status(400).json({ error: "no" });
   if (!text) return res.status(400).json({ error: "empty" });
 
@@ -7679,6 +7679,9 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
   let whyFor = "";
   /* Whether this line is a reply to something he just said — see below. */
   let stillMo = false;
+  /* What was taken out of it on the way in, for the sender's eyes only — see
+     stripContact. It never goes into the room. */
+  let took = [];
   const out = await change((board) => {
     /* WHO CAN BE @'D IN HERE, worked out before the rules below need it: the
        people in this room, so a mention of one of them is read as a mention
@@ -7749,8 +7752,30 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
     /* The mentions come out first — see unmention. The rest of the sentence is
        screened exactly as it always was, and @ somebody who is not in this
        room is still a handle for somewhere else and still refused. */
-    const shaped = store.contactShaped(store.unmention(text, mentionable));
-    if (shaped) return { error: "contact", what: shaped };
+    /* THE CONTACT COMES OUT. THE MESSAGE GOES IN.
+     *
+     * This refused the whole message, and that is the wrong end of the rule.
+     * Somebody wrote "@hugo I know a venture capital investor I can connect
+     * you with, my wechat is tomshan88" — a member doing the exact thing this
+     * board is for, with four words on the end that cannot be here — and got
+     * a red line and lost the sentence. Nobody retypes it. They go to WeChat,
+     * which is the outcome the rule exists to prevent: refusing it made the
+     * thing it forbids more likely.
+     *
+     * So the id comes out and the rest is posted. What was taken goes back to
+     * the sender alone, on their own screen, never into the room — a line
+     * quoting the WeChat id out loud has published it to everybody in here.
+     *
+     * The rule has not moved an inch: no contact detail reaches this board,
+     * and a card is still the only way one changes hands. See stripContact,
+     * which keeps mentions of people standing in this room. */
+    const cut = store.stripContact(text, mentionable);
+    /* NOTHING LEFT BUT THE CONTACT. "wechat tomshan88" on its own is not a
+       message with a problem in it — it is the problem, and there is nothing
+       to post. Still refused, and now it is the only thing that is. */
+    if (!cut.text) return { error: "contact", what: cut.took[0] || "" };
+    took = cut.took;
+    text = cut.text;
 
     /* IS THIS LINE STILL TO HIM? — read before the push, so it looks at the
      * room as it was a moment ago.
@@ -7835,7 +7860,7 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
         id: store.newId(), group: id, by: store.MO, text: MO_WATCH,
       }));
     }
-    return { ok: true, tripped: Boolean(tripped) };
+    return { ok: true, tripped: Boolean(tripped), took };
   });
   if (out?.error) return res.status(400).json(out);
 

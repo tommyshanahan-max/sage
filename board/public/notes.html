@@ -2306,6 +2306,10 @@ async function sendDoor(key) {
     b.style.height = "auto";
     $("tsaid").hidden = true;
     await drawDoor(key);
+    /* IT WENT, AND SOMETHING CAME OUT OF IT. Said after the redraw so they see
+       their own message land first and then what is missing from it — the
+       other order reads as a refusal. Not red: nothing failed. */
+    if (Array.isArray(d.took) && d.took.length) say(T("note.tookOut"));
   } catch (err) {
     const known = { contact: "note.noContact", gone: "note.gone" };
     say(T(known[String(err.message)] || "note.failed", { who: "" }), true);

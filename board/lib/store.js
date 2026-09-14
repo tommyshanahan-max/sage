@@ -696,6 +696,104 @@ export function unmention(text, names) {
   return out;
 }
 
+/** THE CONTACT OUT, THE MESSAGE THROUGH.
+ *
+ *  Returns { text, took }.
+ *
+ *  WHY THIS EXISTS. The rule was enforced by refusing the whole message, and
+ *  that is the wrong end of it. Somebody wrote:
+ *
+ *    "@hugo I know a venture capital investor I can connect you with,
+ *     my wechat is tomshan88"
+ *
+ *  — which is a member doing exactly what this board is for, with four words
+ *  on the end that cannot be here. They got a red line and lost the sentence.
+ *  Nobody retypes it; they go to WeChat, which is the outcome the rule exists
+ *  to prevent. The rule made the thing it forbids more likely.
+ *
+ *  So the contact comes out and the rest goes in. What was taken is handed
+ *  back to the sender — on their screen, never into the room, because a
+ *  refusal that quotes the WeChat id out loud has published it.
+ *
+ *  MENTIONS SURVIVE. "@hugo" is a person standing in this room, not a handle
+ *  for somewhere else, and the pattern for one is the same shape as the other.
+ *  They are lifted out before the strip and put back after — same list the
+ *  room already uses to decide what counts as a mention.
+ *
+ *  EVERY PATTERN, REPEATEDLY. contactShaped stops at the first hit because it
+ *  only ever had to answer yes or no. Two WeChat ids in one line is one line
+ *  with two of them in it.
+ */
+export function stripContact(raw, names = []) {
+  let t = String(raw ?? "");
+  const took = [];
+
+  /* Mentions out first, into slots. \u0000 cannot be typed and cannot survive
+     a JSON round trip from a browser, so a slot can never collide with
+     anything somebody actually wrote. */
+  const held = [];
+  const sorted = [...new Set(names || [])].filter(Boolean).sort((a, b) => b.length - a.length);
+  if (sorted.length) {
+    let out = "";
+    for (let i = 0; i < t.length;) {
+      if (t[i] === "@") {
+        const hit = sorted.find((n) => t.startsWith("@" + n, i));
+        if (hit) {
+          out += "\u0000" + held.length + "\u0000";
+          held.push("@" + hit);
+          i += hit.length + 1;
+          continue;
+        }
+      }
+      out += t[i];
+      i += 1;
+    }
+    t = out;
+  }
+
+  /* THE PHRASE PATTERNS TAKE THE ID WITH THEM.
+   *
+   * CONTACT_SHAPED only ever had to answer yes or no, so "my wechat" is a
+   * whole pattern on its own — and it matches BEFORE the one that wants an id
+   * after the app's name. Strip with those and you get:
+   *
+   *   "my wechat is tomshan88"  ->  "is tomshan88"
+   *
+   * which is the id still sitting there with its label removed. So the strip
+   * runs a wider version of those two first: the phrase, an optional "is" or
+   * colon, and the token after it. Only here — what counts as contact-shaped
+   * is unchanged, and this is what comes out when it is. */
+  const STRIP_FIRST = [
+    /\b(?:my|add(?:\s+me)?(?:\s+on)?)\s*(?:wechat|weixin|vx|wx|qq|line|telegram|whatsapp|signal)\b(?:\s*(?:id|is|are|[:：]))?\s*[\w.@_-]{2,}/ig,
+    /(?:加|我的)?\s*(?:微信|微信号|威信|扣扣|企鹅号)\s*(?:是|[:：])?\s*[\w.@_-]{2,}/g,
+  ];
+  for (const re of [...STRIP_FIRST, ...CONTACT_SHAPED]) {
+    const all = new RegExp(re.source, re.flags.includes("g") ? re.flags : re.flags + "g");
+    t = t.replace(all, (m) => {
+      const trimmed = m.trim();
+      if (trimmed) took.push(trimmed.slice(0, 60));
+      /* A space rather than nothing: several of these patterns eat the
+         whitespace in front of the match, and removing it outright welds the
+         words on either side together. */
+      return " ";
+    });
+  }
+
+  // The mentions back where they were.
+  t = t.replace(/\u0000(\d+)\u0000/g, (_, n) => held[Number(n)] ?? "");
+  /* Tidied, because what is left of "call me on +86 138 0000 0000 tomorrow"
+     is a sentence with a hole in it, and the hole should not also be three
+     spaces and a stranded comma. */
+  t = t.replace(/\s+/g, " ").replace(/\s+([,.!?;:，。！？])/g, "$1").trim();
+  /* AND THE PUNCTUATION THAT WAS POINTING AT IT. "happy to introduce you — my
+     wechat is tomshan88" leaves "happy to introduce you —", which is a
+     sentence reaching for something that is not there any more. Dashes and
+     colons at either end go with it; a full stop does not, because a sentence
+     that ended before the contact did is a finished sentence. */
+  t = t.replace(/^[\s,.;:，。、—–-]+/, "").replace(/[\s,;:，、—–-]+$/, "").trim();
+  return { text: t, took };
+}
+
 export function contactShaped(text) {
   const t = String(text || "");
   for (const re of CONTACT_SHAPED) {

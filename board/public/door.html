@@ -450,6 +450,10 @@ $("go").addEventListener("click", async () => {
       $("box").value = "";
       $("note").hidden = true;
       await load();
+      /* It went, and something came out of it — see stripContact. After the
+         redraw, so their own line lands first; and not red, because nothing
+         failed. */
+      if (Array.isArray(d.took) && d.took.length) tell("note.tookOut");
     }
   } catch (e) {
     tell(String(e.message) === "contact" ? "note.noContact" : "act.again", true);
