@@ -114,6 +114,17 @@ export function cleanWait(raw) {
     reach,
     fromWrite,
     viaRoom,
+    /* WHEN THEY WERE TOLD THE ROOM IS OPEN, and by which road.
+     *
+     * Forty-seven people joined a queue and then the queue became a room they
+     * could talk in — and not one of them knows, because nothing on this board
+     * can reach into WeChat. So somebody has to tell them, one at a time, and
+     * the only thing worse than that job is doing it twice to the same person.
+     *
+     * Set when `make tell-rooms` prints their block or sends their mail. It is
+     * a record of a message leaving, not of one being read. */
+    told: s(raw.told, 40),
+    toldBy: ["hand", "mail"].includes(String(raw.toldBy || "")) ? String(raw.toldBy) : "",
     // Why they want in, in their own words. The only thing a member vouching
     // for a stranger has to go on.
     why: s(raw.why, 300),

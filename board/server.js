@@ -4564,6 +4564,94 @@ app.post("/api/vouch", express.json({ limit: "1kb" }), async (req, res) => {
   res.json(out);
 });
 
+/** WHO HAS NOT BEEN TOLD THE ROOM IS OPEN.
+ *
+ *  The queue became a room people can talk in and not one of them knows,
+ *  because nothing on this board can reach into WeChat. Somebody has to tell
+ *  them one at a time; this is the list to work down, and the row remembers
+ *  that it was done so nobody is told twice.
+ *
+ *  IT DOES NOT SEND ANYTHING. The script decides: an address goes by mail, and
+ *  everybody else is printed for a person to paste. Marking is a second call,
+ *  after the message has actually left — see POST below.
+ */
+app.get("/api/tell-rooms", admin, async (req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const again = req.query.again === "1";
+  const rows = board.waits
+    .filter((w) => !w.done && (again || !w.told))
+    .sort((a, b) => String(a.at || "").localeCompare(String(b.at || "")));
+  res.json({
+    rooms: store.WAITROOMS_CHAT,
+    /* An address, or something else they typed. The script sends to the first
+       and prints the second; this only says which it is. */
+    rows: rows.map((w) => ({
+      id: w.id, name: w.name, room: w.room || "other",
+      reach: w.reach || "", why: w.why || "",
+      mail: /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(String(w.reach || "")),
+      told: w.told || "", toldBy: w.toldBy || "",
+    })),
+    told: board.waits.filter((w) => !w.done && w.told).length,
+    waiting: board.waits.filter((w) => !w.done).length,
+  });
+});
+
+/** One of them, by mail, and marked in the same breath.
+ *
+ *  The text is written by the script rather than here: it is prose in two
+ *  languages and a subject line, and the server's job is the sending and the
+ *  marking. Never logged — see lib/mail.js on why an address in a log is the
+ *  same record as an address in a row, kept longer.
+ */
+app.post("/api/tell-mail", express.json({ limit: "8kb" }), admin, async (req, res) => {
+  if (!mailReady()) return res.status(503).json({ error: "unconfigured" });
+  const id = String(req.body?.id || "");
+  const text = String(req.body?.text || "").slice(0, 2000);
+  if (!id || !text) return res.status(400).json({ error: "no" });
+  const board = await store.load(FILE);
+  const w = board.waits.find((x) => x.id === id && !x.done);
+  if (!w || !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(String(w.reach || ""))) {
+    return res.status(404).json({ error: "gone" });
+  }
+  const ok = await sendMail({
+    to: w.reach,
+    subject: "The Exchange \u2014 your room is open",
+    text,
+  });
+  if (!ok) return res.status(502).json({ error: "failed" });
+  /* MARKED ONLY AFTER IT WENT. A row that says it was told when nothing left
+     is worse than one that says nothing: it takes the person off the list
+     whoever runs this board is working down. */
+  await change((b) => {
+    const row = b.waits.find((x) => x.id === id);
+    if (!row) return null;
+    row.told = new Date().toISOString();
+    row.toldBy = "mail";
+    return true;
+  }).catch(() => {});
+  res.json({ ok: true });
+});
+
+/** Marking them told, after the message has left and not before. */
+app.post("/api/tell-rooms", express.json({ limit: "16kb" }), admin, async (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(String).slice(0, 500) : [];
+  const how = req.body?.how === "mail" ? "mail" : "hand";
+  if (!ids.length) return res.json({ ok: true, n: 0 });
+  const out = await change((board) => {
+    const at = new Date().toISOString();
+    let n = 0;
+    for (const w of board.waits) {
+      if (!ids.includes(w.id) || w.done) continue;
+      w.told = at;
+      w.toldBy = how;
+      n += 1;
+    }
+    return { ok: true, n };
+  });
+  res.json(out);
+});
+
 app.get("/api/waiting", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
