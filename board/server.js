@@ -6873,27 +6873,47 @@ app.get("/api/push/key", (req, res) => {
   res.json({ key: push.publicKey() });
 });
 
-app.post("/api/push/on", express.json({ limit: "8kb" }), gate, async (req, res) => {
+/* NOT BEHIND `gate`, for the same reason /api/follow is not.
+ *
+ * `gate` asks whether this browser spent an invite. Somebody who walked into
+ * a door room with a name did not — and they are exactly the people this is
+ * for: they are waiting, they get @'d, and nothing tells them. A subscription
+ * is a device asking to be buzzed and is only ever used to buzz that device,
+ * so the check that matters is that there is a person behind it at all, which
+ * is done in the write below.
+ */
+app.post("/api/push/on", express.json({ limit: "8kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   if (!push.configured()) return res.status(503).json({ error: "off" });
   const sub = push.cleanSub(req.body?.sub);
   if (!sub) return res.status(400).json({ error: "bad" });
-  await change((board) => {
+  const out = await change((board) => {
     board.pushes = board.pushes || [];
     /* KEYED ON THE ENDPOINT, NOT THE DEVICE. A browser rotates its endpoint
        and re-subscribes; a member signs in on a second phone. Both are one row
        each, and the same endpoint arriving twice is the same phone. */
     const had = board.pushes.find((x) => x.endpoint === sub.endpoint);
     if (had) { had.by = me; had.keys = sub.keys; return { ok: true }; }
+    /* SOMEBODY REAL BEHIND IT, which is what `gate` used to be standing in
+       for: a member's page, or a live row at a door. A browser that is neither
+       has nothing on this board to be told about, and every row stored here is
+       a request this server will later make to the internet. */
+    const real = board.people.some((q) => q.by === me)
+      || board.waits.some((w) => w.by === me && !w.done);
+    if (!real) return { error: "who" };
     const row = store.cleanPush({ by: me, ...sub });
     if (row) board.pushes.push(row);
     return { ok: true };
   });
+  // Refused rather than quietly stored, so the page can stop asking.
+  if (out && out.error) return res.status(403).json(out);
   res.json({ ok: true });
 });
 
-app.post("/api/push/off", express.json({ limit: "8kb" }), gate, async (req, res) => {
+// Turning it off is never gated — see the note on /api/push/on, and the rule
+// everywhere else here that taking something back always works.
+app.post("/api/push/off", express.json({ limit: "8kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   const endpoint = String(req.body?.endpoint || "");
@@ -7881,12 +7901,18 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
   /* What was taken out of it on the way in, for the sender's eyes only — see
      stripContact. It never goes into the room. */
   let took = [];
+  /* THE PHONES TO BUZZ. Filled inside the write, where who is in this room is
+     already being worked out, and spent after it — a push service having a
+     slow afternoon must not be something the sender waits for. */
+  let buzz = [];
   const out = await change((board) => {
     /* WHO CAN BE @'D IN HERE, worked out before the rules below need it: the
        people in this room, so a mention of one of them is read as a mention
        and not as a handle for somewhere else. Filled in per kind of room
        further down, where membership is already being checked. */
     let mentionable = [];
+    // Name -> the browser it belongs to, for the buzz. See below.
+    const whose = new Map();
     /* A DOOR ROOM IS NOT A GROUP and takes the other set of rules: no members,
        no cap, nobody can leave it, and the people in it have not been vouched
        for by anybody. Everything below this — the contact rule, the doorman's
@@ -7904,6 +7930,13 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
         ...board.waits.filter((w) => !w.done && (w.room || "other") === door).map((w) => w.name),
         ...board.people.filter((q) => q.handle).map((q) => q.handle),
       ];
+      /* AND WHOSE PHONE EACH NAME BELONGS TO — see the buzz below. Built here
+         because this is where the room's membership is already in hand, and
+         nowhere else on this route knows it. */
+      for (const w of board.waits) {
+        if (!w.done && (w.room || "other") === door && w.name) whose.set(w.name, w.by);
+      }
+      for (const q of board.people) if (q.handle) whose.set(q.handle, q.by);
     } else {
     const g = board.groups.find((x) => x.id === id);
     // The same answer for a group that never existed and one you are not in:
@@ -7923,6 +7956,10 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
     mentionable = [MO_NAME, ...g.members
       .map((h) => (board.people.find((q) => q.by === h) || {}).handle)
       .filter(Boolean)];
+    for (const h of g.members) {
+      const q = board.people.find((x) => x.by === h);
+      if (q && q.handle) whose.set(q.handle, h);
+    }
     }
 
     /* A WECHAT ID PASTED INTO A ROOM IS THE WHOLE PRODUCT GOING OUT OF THE
@@ -7968,6 +8005,27 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
      * The rule has not moved an inch: no contact detail reaches this board,
      * and a card is still the only way one changes hands. See stripContact,
      * which keeps mentions of people standing in this room. */
+    /* WHO WAS ACTUALLY @'D, AND THEIR PHONE.
+     *
+     * An @ in a room buzzed nobody. Somebody writes "@Ray this is the one you
+     * asked about" and Ray finds out two days later, or never — and the whole
+     * reason for putting the app on a home screen is that it tells you when
+     * somebody wants you.
+     *
+     * ONLY AN @, and that is the line. Every message in a busy room going to
+     * twenty-two lock screens is how a room gets muted, and a muted room is
+     * worse than a quiet one. Being named is the signal; the rest is reading.
+     *
+     * The same test unmention uses, so the thing that counts as a mention here
+     * and the thing the room draws as one cannot come apart. Not the doorman,
+     * who has no phone, and not yourself. */
+    for (const name of new Set(mentionable)) {
+      if (!name || name === MO_NAME) continue;
+      if (!text.includes("@" + name)) continue;
+      const to = whose.get(name);
+      if (to && to !== me) buzz.push(to);
+    }
+
     const cut = store.stripContact(text, mentionable);
     /* NOTHING LEFT BUT THE CONTACT. "wechat tomshan88" on its own is not a
        message with a problem in it — it is the problem, and there is nothing
@@ -8232,6 +8290,14 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
      one takes four seconds. */
   if (saidId) renderSay(saidId, text);
   if (whyFor) renderWhy(whyFor, String(text).trim().slice(0, 300));
+  /* THE BUZZ, AFTER THE WRITE AND NEVER AWAITED. The line is already saved and
+     already on its way to everybody reading; whether somebody's phone lit up
+     is not an outcome the sender is entitled to wait for. Nothing goes WITH it
+     — see lib/push.js: the buzz says somebody wants you, and who and what are
+     behind the door where they belong. */
+  for (const to of new Set(buzz)) {
+    tellThem(to).catch(() => { /* a push that failed is a push that did not arrive */ });
+  }
   res.json(out);
 });
 

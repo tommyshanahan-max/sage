@@ -451,6 +451,7 @@
 <script type="module">
 import { T, setLang, pickLang, langButton, when } from "/i18n.js";
 import { offerInstall } from "/install.js";
+import { offerNotify } from "/notify.js";
 /* Nothing on this page uses either any more — Mo owns the microphone and he
    lives in mo.js. Kept off the import list rather than left dangling. */
 import { drawCard } from "/postcard.js";
@@ -1341,6 +1342,23 @@ function drawWait(box) {
   strip.hidden = true;
   box.append(strip);
   offerInstall(strip, true);
+
+  /* AND THE SWITCH THAT TELLS THEM WHEN SOMEBODY WANTS THEM.
+   *
+   * An @ in a room buzzes a phone now, and the people it matters most to —
+   * standing at a door, waiting to be noticed — were never offered it. It was
+   * on Messages, behind a test that hid it from exactly them: two asks at once
+   * is neither, and Messages is where the home-screen ask lives.
+   *
+   * HERE INSTEAD, which is their own page and where they are already finishing
+   * things. notify.js decides whether to show anything at all — never on load,
+   * never before the app is on the home screen on iOS, never without keys on
+   * the box — so on the screen this is one line that appears when it can work
+   * and nothing when it cannot. */
+  const buzz = el("p", "ins");
+  buzz.hidden = true;
+  box.append(buzz);
+  offerNotify(buzz, true);
 
   /* THE CARD IS ON THE YOU TAB, WHICH IS WHAT THE YOU TAB IS.
    *
