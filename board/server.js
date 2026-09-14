@@ -1700,6 +1700,13 @@ app.post("/api/group-invite", notesOff, express.json({ limit: "4kb" }), async (r
     if (todays.length >= perDay) { bad = "spent"; return null; }
 
     let g = want ? board.groups.find((x) => x.id === want) : null;
+    /* AND NEVER A ROOM THE OPERATOR KEEPS. An invite is a seat given away by
+       somebody in the room; that room's seats are not theirs to give — being
+       in it depends on something this board cannot see. See /api/room/hand.
+       Flagged through `bad` like every other refusal here, so it comes back
+       as a 409 rather than as a 200 carrying an error a page would read as
+       success. */
+    if (g && g.hand) { bad = "hand"; return null; }
     if (want && (!g || g.by !== me)) { bad = "notyours"; return null; }
     if (!g) {
       const allowed = new Set(groupable(board, me).map((c) => c.who));
@@ -1784,6 +1791,94 @@ app.get("/api/flags", admin, async (_req, res) => {
         with: g ? g.members.map(name).filter(Boolean) : [],
       };
     }).sort((a, b) => String(b.at).localeCompare(String(a.at))),
+  });
+});
+
+/** A ROOM KEPT BY HAND, FOR PEOPLE THE BOARD CANNOT TELL APART BY ITSELF.
+ *
+ *  Every other room here is made by the app out of things the app knows: who
+ *  matched, who is at which door. This one exists for the opposite case — a
+ *  room whose list depends on something that happened somewhere else and that
+ *  no rule in this file can check. An offer signed on the cfm ledger, for
+ *  instance: the board has no idea, and should not be taught to guess.
+ *
+ *  SO THE GATE IS A PERSON WITH THE LEDGER IN FRONT OF THEM. Nobody joins it,
+ *  nobody is invited into it, and there is no link. One command puts somebody
+ *  in and one takes them out, and both are run by whoever runs the board.
+ *
+ *  IT IS AN ORDINARY ROOM IN EVERY OTHER RESPECT, deliberately: the contact
+ *  rule, the doorman's tripwire, reporting, the other language, @ and the
+ *  buzz all work because it is the same `groups` row everything else reads.
+ *  A sixth kind of room would have been a sixth set of those to get wrong.
+ */
+app.post("/api/room/hand", admin, express.json({ limit: "8kb" }), async (req, res) => {
+  const name = String(req.body?.name || "").trim().slice(0, 60);
+  if (!name) return res.status(400).json({ error: "name" });
+  const add = (Array.isArray(req.body?.add) ? req.body.add : [])
+    .map((x) => String(x || "").trim().toLowerCase()).filter(Boolean);
+  const drop = (Array.isArray(req.body?.drop) ? req.body.drop : [])
+    .map((x) => String(x || "").trim().toLowerCase()).filter(Boolean);
+
+  let miss = [];
+  const out = await change((board) => {
+    const byHandle = (h) => board.people.find(
+      (q) => String(q.handle || "").toLowerCase() === h && q.handle);
+    /* NAMED, NOT GUESSED. A handle this board has never heard of is said back
+       rather than skipped: a typo that silently adds nobody is a room the
+       operator believes somebody is in. */
+    const wanted = [];
+    for (const h of add) {
+      const q = byHandle(h);
+      if (!q) { miss.push(h); continue; }
+      wanted.push(q.by);
+    }
+    const goners = new Set(drop.map((h) => (byHandle(h) || {}).by).filter(Boolean));
+    for (const h of drop) if (!byHandle(h)) miss.push(h);
+    if (miss.length) return { error: "who", miss };
+
+    let g = board.groups.find((x) => x.hand && x.name === name);
+    if (!g) {
+      /* THE FIRST PERSON IN IS THE ROOM'S MAKER, because a group row has to
+         have one — see cleanGroup. It is whoever the operator named first,
+         which on this board is the operator. */
+      if (!wanted.length) return { error: "empty" };
+      g = store.cleanGroup({ id: store.newId(), by: wanted[0],
+        members: wanted, name, hand: true }, store.HAND_MAX);
+      if (!g) return { error: "no" };
+      board.groups.push(g);
+      return { ok: true, made: true, id: g.id, who: g.members.length };
+    }
+    const members = g.members.filter((h) => !goners.has(h));
+    for (const h of wanted) if (!members.includes(h)) members.push(h);
+    if (members.length < 2) return { error: "few" };
+    if (members.length > store.HAND_MAX) return { error: "many" };
+    /* The maker stays in it. Taking the row's own `by` out leaves a room whose
+       maker is not in it, which cleanGroup puts straight back on the next
+       load — so it would look done and undo itself. */
+    const fresh = store.cleanGroup({ ...g, members, hand: true }, store.HAND_MAX);
+    if (!fresh) return { error: "no" };
+    board.groups[board.groups.indexOf(g)] = fresh;
+    return { ok: true, id: fresh.id, who: fresh.members.length };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** Who is in one. Names, never a word anybody said — same rule as /api/rooms. */
+app.get("/api/room/hand", admin, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const name = String(req.query.name || "").trim().slice(0, 60);
+  const board = await store.load(FILE);
+  const g = board.groups.find((x) => x.hand && x.name === name);
+  if (!g) return res.json({ room: null });
+  const who = (h) => (board.people.find((q) => q.by === h) || {}).handle || "";
+  res.json({
+    room: {
+      id: g.id, name: g.name, at: g.at,
+      who: g.members.map(who).filter(Boolean),
+      said: board.says.filter((m) => m.group === g.id).length,
+      flags: board.says.filter((m) => m.group === g.id && m.report).length,
+    },
   });
 });
 
@@ -7613,6 +7708,10 @@ app.post("/api/group/add", notesOff, express.json({ limit: "4kb" }), async (req,
 
   const out = await change((board) => {
     const g = board.groups.find((x) => x.id === id);
+    /* NOT A ROOM THE OPERATOR KEEPS. Its list is set from outside the app,
+       because being in it depends on something this board cannot see — see
+       /api/room/hand. One keeper, and no second way in or out. */
+    if (g.hand) return { error: "gone" };
     if (!g) return { error: "gone" };
     /* ONLY THE ROOM'S OWN MAKER. Everybody in here matched with them, and
        letting a member add their own matches would put somebody in a room
@@ -8364,6 +8463,10 @@ app.post("/api/group/out", notesOff, express.json({ limit: "2kb" }), async (req,
   if (!me || !who) return res.status(400).json({ error: "no" });
   const out = await change((board) => {
     const g = board.groups.find((x) => x.id === id);
+    /* NOT A ROOM THE OPERATOR KEEPS. Its list is set from outside the app,
+       because being in it depends on something this board cannot see — see
+       /api/room/hand. One keeper, and no second way in or out. */
+    if (g.hand) return { error: "gone" };
     if (!g || !g.members.includes(me)) return { error: "gone" };
     if (g.by !== me) return { error: "notyours" };
     /* WHO, BY HANDLE. The screen has handles and never device hashes, and it

@@ -2117,7 +2117,21 @@ export const RUN_SHOW = 5;
  * two people already have a room, and it is better than this one. */
 export const GROUP_MAX = 5;
 
-export function cleanGroup(raw) {
+/* A ROOM THE OPERATOR KEEPS BY HAND, AND WHY IT HAS ITS OWN CEILING.
+ *
+ * Five is right for a room somebody makes out of their own matches: it is a
+ * conversation, and a conversation with nine people in it is a feed. It is
+ * wrong for the one room that is not made that way — a room whose list is set
+ * from outside the app, person by person, because being in it depends on
+ * something this board cannot see. An offer on a ledger, for instance.
+ *
+ * MARKED `hand`, AND THE MARK MATTERS MORE THAN THE NUMBER. The ordinary ways
+ * a room changes — Add somebody, Take out, minting an invite — all refuse a
+ * room carrying it. One list, one keeper, and no second way in.
+ */
+export const HAND_MAX = 60;
+
+export function cleanGroup(raw, cap = GROUP_MAX) {
   if (!raw || typeof raw !== "object") return null;
   const id = String(raw.id || "");
   if (!/^[a-f0-9]{20}$/.test(id)) return null;
@@ -2128,8 +2142,13 @@ export function cleanGroup(raw) {
      hand cannot produce a group of forty. The maker is always in it: a group
      you made and are not in is not a thing anybody means to make. */
   const members = [...new Set([by, ...(Array.isArray(raw.members) ? raw.members : [])
-    .map((m) => String(m || "").slice(0, 64)).filter(Boolean)])].slice(0, GROUP_MAX);
-  if (members.length < 2) return null;
+    .map((m) => String(m || "").slice(0, 64)).filter(Boolean)])].slice(0, cap);
+  /* TWO, UNLESS THE OPERATOR KEEPS IT. "A group you made and are not in is not
+     a thing anybody means to make" — and neither is a group of one. Both are
+     true of a room somebody makes out of their matches. A hand-kept room is
+     opened before anybody has been put in it, by the person who will do the
+     putting, so it is allowed to stand with one. See HAND_MAX. */
+  if (members.length < (raw.hand ? 1 : 2)) return null;
   /* SOMEBODY INVITED STRAIGHT INTO THE ROOM, BEFORE THEY ARE ANYBODY.
    *
    * A guest reads and cannot say a word. They are not in `members`, which is
@@ -2148,7 +2167,7 @@ export function cleanGroup(raw) {
   const guests = [...new Set((Array.isArray(raw.guests) ? raw.guests : [])
     .map((m) => String(m || "").slice(0, 64)).filter(Boolean))]
     .filter((h) => !members.includes(h))
-    .slice(0, Math.max(0, GROUP_MAX - members.length));
+    .slice(0, Math.max(0, cap - members.length));
   return {
     id,
     at: s(raw.at, 40) || new Date().toISOString(),
@@ -2157,6 +2176,8 @@ export function cleanGroup(raw) {
     // same room does not need naming to be useful, and an empty name draws
     // itself from who is in it.
     name: s(raw.name, 60),
+    // Kept by the operator rather than by whoever made it — see HAND_MAX.
+    ...(raw.hand ? { hand: true } : {}),
   };
 }
 
@@ -2421,7 +2442,10 @@ export function cleanBoard(raw) {
   const groups = [];
   const gids = new Set();
   for (const r of (Array.isArray(raw?.groups) ? raw.groups : [])) {
-    const g = cleanGroup(r);
+    /* THE CAP THE ROW ITSELF ASKS FOR. A hand-kept room read back with the
+       ordinary ceiling would lose everybody past the fifth on the next load —
+       silently, and only on a restart, which is the worst way to find out. */
+    const g = cleanGroup(r, r && r.hand ? HAND_MAX : GROUP_MAX);
     if (!g || gids.has(g.id)) continue;
     gids.add(g.id);
     groups.push(g);
