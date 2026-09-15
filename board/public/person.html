@@ -369,6 +369,9 @@
        it is not open yet. -->
   <p class="invite" id="invite"></p>
   <div class="bar">
+    <!-- href is the fallback for a cold open; the handler prefers the real
+         history so the arrow returns where you came from — the group, the
+         thread, the deck — rather than dropping everybody on Browse. -->
     <a class="back" href="/browse" id="back" aria-label="Back">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
     </a>
@@ -408,6 +411,42 @@ import { T, when, lang, setLang, pickLang, langButton, pick } from "/i18n.js";
 import { mountMo } from "/mo.js";
 import { stageFor, stageName, crownMark } from "/crown.js";
 import { OFF } from "/off.js";
+
+/* DID SOMEBODY PUSH US HERE, or is this where they landed?
+ *
+ * The difference decides whether the back arrow is honest. Same origin and a
+ * different path means a tap inside the app — a face in a group, a name in a
+ * thread, a card in Browse — and there is a real screen behind this one. An
+ * empty referrer is a typed address, a bookmark or a cold open of the
+ * home-screen install, where going back leads out of the app or nowhere.
+ *
+ * Read once: it is a property of this navigation and does not change while
+ * the page is open, and reading it inside a painter that runs on every
+ * language switch would be four reads of the same fact. */
+const pushedHere = (() => {
+  let yes = false;
+  try {
+    const r = document.referrer;
+    if (r) {
+      const u = new URL(r);
+      yes = u.origin === location.origin && u.pathname !== location.pathname;
+    }
+  } catch (e) { /* an opaque referrer is a no */ }
+  return () => yes;
+})();
+
+/* The arrow returns where you came from when there is a there — the group's
+   members grid, a thread, the deck — instead of dropping everybody on Browse.
+   The href stays as the fallback and is what a cold open follows. */
+document.addEventListener("DOMContentLoaded", () => {
+  const b = document.getElementById("back");
+  if (!b) return;
+  b.addEventListener("click", (e) => {
+    if (!pushedHere()) return;          // let the href do its job
+    e.preventDefault();
+    history.back();
+  });
+});
 import { mountWalletCard } from "/wallet-card.js";
 
 const HANDLE = "{{HANDLE}}";
@@ -1166,7 +1205,22 @@ function paint() {
     $("tabme").href = location.pathname;
     $("tabs").hidden = false;
     document.body.classList.add("hastabs");
-    $("back").hidden = true;
+    /* THE ARROW GOES ONLY IF THIS IS A ROOT TAB, WHICH IT IS NOT ALWAYS.
+     *
+     * It was hidden on your own page full stop, on the reasoning above: the
+     * tab bar is up, Profile is one of its four, and a root tab has nothing
+     * behind it. True when you got here by pressing Profile. Not true at all
+     * when somebody pushed you here — tapping your own face in a group's
+     * members grid lands on this page with the bar up, no arrow, and, in a
+     * home-screen install, no browser chrome either. A dead end on your own
+     * profile, reachable in two taps.
+     *
+     * So it asks where this page came from instead of assuming. Same origin
+     * and a different path means somebody navigated here from inside the app
+     * and there is somewhere real to go back to; no referrer means a typed
+     * address or a cold open, where the arrow would be the lie the note above
+     * is about. */
+    $("back").hidden = !pushedHere();
   }
 
   // Directly under Follow, because somebody who opened a shared link has two
