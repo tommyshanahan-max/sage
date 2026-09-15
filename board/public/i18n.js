@@ -4709,6 +4709,19 @@ export const STRINGS = {
     "Anybody you have matched with. You are always in it, so there is room for {n} more.",
     "任何跟你匹配上的人都可以加。你自己一定在里面，所以还能再加 {n} 个。",
   ],
+  /* The same line for whoever runs the board, whose list is not their matches
+     — see groupable(). Said plainly rather than left as the members' sentence
+     over a list of people they never matched with. */
+  "grp.whoAll": [
+    "Anybody on the board. You are always in it, so there is room for {n} more.",
+    "板子上的任何人都可以加。你自己一定在里面，所以还能再加 {n} 个。",
+  ],
+  /* THE SEARCH OVER THE LIST OF PEOPLE, once the list is long enough to need
+     one. A placeholder rather than a label: the box is under a line that
+     already says what this screen is for, and a second heading over it would
+     be a heading about a text box. */
+  "grp.find":          ["Type a name", "输入名字"],
+  "grp.findNone":      ["Nobody by that name.", "没有叫这个名字的。"],
   "grp.add":           ["Add", "加入"],
   "grp.added":         ["Added", "已加"],
   "grp.namePlaceholder": ["Call it something. Optional.", "起个名字。可以不写。"],

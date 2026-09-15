@@ -183,6 +183,14 @@
     background:none;color:var(--accent);border-radius:99px;font-size:1rem}
   .picker{margin:0 0 1.6rem}
   .picker .lede{margin:.8rem 0 0;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
+  /* The search over the people, when there are enough of them to need one.
+     Full width and a real search field so iOS offers the clear button. */
+  .pfind{width:100%;box-sizing:border-box;margin:.2rem 0 .4rem;
+    padding:.7rem .9rem;border:1px solid var(--hair);border-radius:.7rem;
+    background:var(--paper);color:var(--ink);font:inherit;font-size:1rem;
+    -webkit-appearance:none;appearance:none}
+  .pfind:focus{outline:none;border-color:var(--accent)}
+  .pfind::placeholder{color:var(--muted)}
   .pick{display:flex;width:100%;gap:.9rem;align-items:center;padding:.85rem 0;
     border:0;border-top:1px solid var(--hair);background:none;text-align:left}
   .pick:disabled{opacity:.4}
@@ -480,7 +488,7 @@ function copyText(text) {
 let device = "";
 try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
 
-let GROUPS = [], CANADD = [], MAX = 5;
+let GROUPS = [], CANADD = [], MAX = 5, STAFF = false;
 /* The ledger: which band you are in, and how many places are left in the one
    still filling. Drawn at the top of the room the operator keeps by hand and
    nowhere else — see /api/groups. */
@@ -570,6 +578,7 @@ async function load() {
       PICKED = [WITH];
     }
     MAX = Number(d.max) || 5;
+    STAFF = Boolean(d.staff);
     LAYER = d.layer || null;
     LEFT = d.layerNow || null;
   } catch { GROUPS = []; CANADD = []; LAYER = null; LEFT = null; }
@@ -663,22 +672,56 @@ function picker() {
 
   // You are always in it, so there is room for one fewer than the cap.
   const room = MAX - 1;
-  box.append(el("p", "lede", T("grp.who", { n: room })));
+  box.append(el("p", "lede", T(STAFF ? "grp.whoAll" : "grp.who", { n: room })));
 
-  const full = PICKED.length >= room;
-  for (const c of CANADD) {
-    const on = PICKED.includes(c.who);
-    const b = el("button", "pick" + (on ? " on" : ""));
-    b.type = "button";
-    b.disabled = !on && full;
-    b.append(face(c), el("b", null, c.handle),
-      el("span", "tag", T(on ? "grp.added" : "grp.add")));
-    b.addEventListener("click", () => {
-      PICKED = on ? PICKED.filter((x) => x !== c.who) : [...PICKED, c.who];
-      paint();
-    });
-    box.append(b);
+  /* TYPE A NAME RATHER THAN SCROLL FOR ONE.
+   *
+   * This was every person you could add, as a row, in one column. That is
+   * readable at eight and useless at eighty, and the list only grows — so the
+   * screen got worse at its job every time the board got better at its own.
+   *
+   * ALWAYS, NOT PAST SOME NUMBER. It was written to appear only over a dozen
+   * people, which is a rule that hides the box on the board that asked for it
+   * — there are eight members today. A search box over eight names costs a
+   * line; a list of eighty with no search costs the feature. */
+  const rows = el("div");
+  let find = "";
+  const q = document.createElement("input");
+  q.className = "pfind";
+  q.type = "search";
+  q.autocomplete = "off";
+  q.placeholder = T("grp.find");
+  /* ONLY THE ROWS ARE REDRAWN, not the page. paint() rebuilds this whole
+     screen and would take the keyboard down with it on the first letter. */
+  q.addEventListener("input", () => { find = q.value.trim().toLowerCase(); draw(); });
+  box.append(q, rows);
+
+  function draw() {
+    while (rows.firstChild) rows.removeChild(rows.firstChild);
+    const full = PICKED.length >= room;
+    /* ANYBODY ALREADY PICKED STAYS VISIBLE whatever is typed. Typing a third
+       name and watching the first two vanish reads as having lost them. */
+    const show = CANADD.filter((c) => PICKED.includes(c.who)
+      || !find || String(c.handle || "").toLowerCase().includes(find));
+    if (!show.length) {
+      rows.append(el("p", "lede", T("grp.findNone")));
+      return;
+    }
+    for (const c of show) {
+      const on = PICKED.includes(c.who);
+      const b = el("button", "pick" + (on ? " on" : ""));
+      b.type = "button";
+      b.disabled = !on && full;
+      b.append(face(c), el("b", null, c.handle),
+        el("span", "tag", T(on ? "grp.added" : "grp.add")));
+      b.addEventListener("click", () => {
+        PICKED = on ? PICKED.filter((x) => x !== c.who) : [...PICKED, c.who];
+        paint();
+      });
+      rows.append(b);
+    }
   }
+  draw();
 
   const name = document.createElement("input");
   name.maxLength = 60;

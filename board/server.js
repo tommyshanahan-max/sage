@@ -8370,6 +8370,11 @@ app.get("/api/groups", notesOff, async (req, res) => {
   const mine = board.people.find((q) => q.by === me && q.handle);
   res.json({
     groups, canAdd: groupable(board, me), max: store.GROUP_MAX,
+    /* So the line over the picker can say what the list actually is. For a
+       member it is the people they matched with; for whoever runs the board
+       it is everybody, and a screen that said "anybody you have matched with"
+       over a list of strangers would be the screen lying about itself. */
+    staff: isStaff(board, me),
     layer: mine && mine.seq ? (() => {
       const l = store.layerOf(mine.seq);
       // The arrival number stays here, the same as it does in shownPerson.
