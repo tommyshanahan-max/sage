@@ -8492,10 +8492,23 @@ app.get("/api/ledger/pin", notesOff, async (req, res) => {
         staff: true, joined: (await joins()).includes(me),
       });
     }
-  } else {
-    /* Standing at this door, by the board's own reckoning rather than the
-       browser's. Somebody who is neither a member nor waiting has no line. */
-    if (!doorAccess(board, me, key)) return res.json({ on: false });
+  } else if (!doorAccess(board, me, key)) {
+    /* A STRANGER ON THE LINK, AT THE ONE DOOR THAT IS OPEN TO EVERYBODY.
+     *
+     * "Somebody who is neither a member nor waiting has no line" was the rule,
+     * and at every other door it still is. Here it was backwards: this room is
+     * the one that gets sent to people, and the person it is sent to is by
+     * definition neither — so the whole reason to share it showed them nothing.
+     *
+     * What they get is the arrival view, which is the honest one: the place
+     * they WOULD have, what it is worth, and what it falls to if they wait.
+     * No member's name, no count of who is inside, nothing they could not read
+     * off the room they are already looking at.
+     *
+     * `outside` so the screen can offer them the one thing they can actually
+     * do — see the note over saveRow in ledger-pin.js. */
+    if (key !== store.OPEN_DOOR) return res.json({ on: false });
+    return res.json({ ...pinFor(board, me), outside: true, joined: false });
   }
   const out = pinFor(board, me);
   res.json({ ...out, joined: (await joins()).includes(me) });

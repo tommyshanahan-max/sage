@@ -123,6 +123,10 @@
   .foot .note.bad{color:var(--t5)}
   .foot .lang{margin-left:auto}
   .ins{margin:.6rem 0 0}
+  /* The pin's own slot. ledger-pin.js draws everything inside it and clears
+     this box's border and padding itself — see .pinwrap.ledgerpin there — so
+     all this owes it is the gap under the header. */
+  .pinwrap{margin:0 0 .9rem}
 </style>
 </head>
 <body>
@@ -134,6 +138,12 @@
     <a class="nm" id="rlink" href="/room"><b id="rname">—</b><span id="rsub"></span></a>
     <span id="langslot"></span>
   </div>
+  <!-- THE REWARDS PIN, AND THIS PAGE IS WHERE IT MATTERS MOST.
+       It was mounted in the members' door rooms and in the waiting room and
+       not here — and here is what a shared link opens. So the one screen a
+       stranger sees, the whole reason the room gets sent to anybody, was the
+       only one with no pin on it. -->
+  <div class="pinwrap" id="dpin" hidden></div>
   <div class="talk" id="talk"></div>
   <!-- THE THREE PLACES THIS PERSON HAS, AS A BAR.
        This was two lines of small grey text under the box, and small grey text
@@ -173,6 +183,18 @@ import { T, when, lang, setLang, pickLang, langButton, moWelcome, pick } from "/
 import { device, roomFromPath, viaFromUrl, wFromUrl } from "/wait.js";
 import { offerInstall } from "/install.js";
 import { moHear } from "/mo.js";
+
+/* DYNAMIC, AND WRAPPED, FOR THE REASON WRITTEN IN notes.html. A static import
+   that fails takes the whole page script with it — no room, no box, no error
+   in the console, a white wall. The pin is the least important thing on this
+   screen and it is not allowed to be the thing that breaks it. */
+let PIN = null, pinTried = false;
+async function pin() {
+  if (pinTried) return PIN;
+  pinTried = true;
+  try { PIN = await import("/ledger-pin.js"); } catch { PIN = null; }
+  return PIN;
+}
 
 setLang(pickLang());
 const $ = (id) => document.getElementById(id);
@@ -298,6 +320,10 @@ function paint() {
      screens are worse than a screen with no tabs. */
   $("bar").hidden = !IN;
   document.body.classList.toggle("withbar", IN);
+  /* mountLedgerPin decides whether there is anything to draw — the ledger may
+     be off, or this door may not be one that carries it. It hides the slot
+     itself when there is not, so this does not have to know. */
+  pin().then((m) => m && m.mountLedgerPin($("dpin"), KEY, device()));
   $("barRoom").textContent = T("dr.barRoom");
   $("barIn").textContent = T("dr.barIn");
   /* Same rule one tab along: nobody is shown from outside on a new board —

@@ -5158,6 +5158,11 @@ export const STRINGS = {
      stamped when a page goes up, so the panel dead-ended for exactly the
      reader it was written for. No button can hand them a place; this is the
      one that moves them — see queueOrder, one step per person brought in. */
+  /* THE CONDITION, NOT A SUGGESTION. A place is kept against the browser, and
+     a tab opened inside WeChat is not a browser anybody comes back to — so
+     "save it" is the difference between having a place and not. */
+  "pin.saveWhat":      ["Save The Exchange to your home screen. That is where your place is kept.",
+                        "把 The Exchange 存到桌面。你的位置就记在这上面。"],
   "pin.upDo":          ["Bring somebody in", "拉个人进来"],
   "pin.upWhat":        ["You move up one place for every person you bring in.",
                         "每带进来一个人，你就往前排一位。"],

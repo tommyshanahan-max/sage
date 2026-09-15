@@ -314,6 +314,10 @@ const CSS = `
     border-radius:.75rem;border:0;background:var(--d-key);color:#0B0E15;
     cursor:pointer;width:100%}
   .lpyes{margin:0;font-size:1.02rem;font-weight:700;color:#35D08A}
+  /* The one condition on the place, said at the weight of a condition rather
+     than at the weight of a footnote. */
+  .lpsave{margin:0;font-size:1rem;font-weight:600;line-height:1.5;
+    color:var(--d-ink2)}
   .lpsay{margin:0;font-size:.94rem;color:var(--d-mute)}
   /* The way out, at the end of the way in. Quiet — it is not a thing to do,
      it is a thing to stop doing — but full width, because a small control at
@@ -367,7 +371,7 @@ const same = (a, b) =>
      everything a redraw changes; the others are named above. */
   && (a.tier || {}).left === (b.tier || {}).left
   && (a.tier || {}).key === (b.tier || {}).key
-  && a.moneyAt === b.moneyAt;
+  && a.moneyAt === b.moneyAt && a.outside === b.outside;
 
 /** Take the pin out of the room. */
 export function hideLedgerPin(box) {
@@ -732,14 +736,13 @@ function atGoal(d, device) {
     sl.value = String(at());
     sl.id = "lpin-slide";
     sl.setAttribute("aria-label", T("pin.slideWhat"));
+    /* THE ENDS ARE THE ENDS. The left one was a readout of where the thumb was
+       standing, which at rest made the pair read "50,000 — 50,000": a range
+       with one stop in it, which is a control nobody would touch. Where it is
+       standing is already the headline above it, in words. */
     const ends = el("div", "lpslideends");
-    const here = el("span", null, num(at()));
-    ends.append(here, el("span", null, num(d.goal)));
-    sl.addEventListener("input", () => {
-      SLIDE = Number(sl.value);
-      draw();
-      here.textContent = num(at());
-    });
+    ends.append(el("span", null, num(floor)), el("span", null, num(d.goal)));
+    sl.addEventListener("input", () => { SLIDE = Number(sl.value); draw(); });
     box.append(sl, ends);
     box.append(el("span", "no", T("pin.slideWhat")));
   }
@@ -764,6 +767,12 @@ function atGoal(d, device) {
     yes.append(el("p", "lpyes", T("pin.joinedYes")));
     wrap.append(yes);
   }
+  /* A STRANGER WHO OPENED THE LINK — see the outside branch in the pin route.
+     Theirs is the one act on this screen that is not about the ledger at all:
+     a place is kept against the browser, and a tab inside WeChat is not a
+     browser anybody comes back to. So it is the home screen, and it is said as
+     the condition it actually is rather than as a suggestion. */
+  else if (d.outside) wrap.append(saveRow());
   /* AND SOMEBODY WHO IS NOT IN YET GETS THE ACT THAT IS ACTUALLY THEIRS.
    *
    * They had the figure and nothing to do with it — "Count me in" needs a
@@ -776,8 +785,29 @@ function atGoal(d, device) {
    * that moves them: the queue goes by arrival, one place up per person they
    * bring in — see queueOrder — so the act is the room's own door, and the
    * sentence beside it says what pressing it does. */
-  if (!d.place && d.soon && d.room) wrap.append(upRow(d));
+  /* NOT THE STRANGER, THOUGH. They are not standing in the queue at all, so
+     "you move up one place for every person you bring in" is a sentence about
+     a position they do not have. Theirs is saveRow, above, and one act is the
+     right number of acts on a screen. */
+  if (!d.place && d.soon && d.room && !d.outside) wrap.append(upRow(d));
   return wrap;
+}
+
+/** SAVE IT, OR THE PLACE IS NOT KEPT.
+ *
+ *  THE SENTENCE AND NOTHING ELSE. door.html already calls offerInstall — it
+ *  knows what WeChat can and cannot do, that iOS needs it said in words
+ *  because no API reaches its share sheet, and when Chrome has a real button
+ *  to offer. A second copy of that widget in here would be the same prompt
+ *  twice on one screen, and the second one would be the one that drifts.
+ *
+ *  What was missing was never the button. It was anybody saying why it
+ *  matters, next to the number it decides.
+ */
+function saveRow() {
+  const box = el("div", "lpjoin");
+  box.append(el("p", "lpsave", T("pin.saveWhat")));
+  return box;
 }
 
 /** Bring somebody in, and move up one place. The room's public door, the
