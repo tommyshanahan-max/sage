@@ -23,6 +23,19 @@
  * the start of another counts — "Ray" and "Ray Chen" are one person far more
  * often than they are two.
  *
+ * WHICH IS WHY A NAME IS NOT ENOUGH TO DELETE ON. Two people called Peter in a
+ * queue of sixty is ordinary, and a row is somebody's place in it. So every
+ * group is tested against something a name cannot fake:
+ *
+ *   same contact   the two rows carry the same `reach`, typed twice. One
+ *                  person, no judgement required.
+ *   same browser   the same `by` — the same phone made both rows. Also one
+ *                  person: a device id is not shared.
+ *   (nothing)      a name and nothing else. MAY BE TWO PEOPLE. Left alone.
+ *
+ * The values themselves are never printed, only whether they match. That is
+ * the whole of what the decision needs.
+ *
  *   make twice
  */
 import { readFile } from "node:fs/promises";
@@ -58,13 +71,28 @@ if (!twice.length) {
   for (const g of twice) {
     console.log("  " + g.name);
     // Oldest first: the first row is nearly always the one with the card on it.
-    for (const w of g.rows.sort((a, c) => String(a.at).localeCompare(String(c.at)))) {
+    const rows = g.rows.sort((a, c) => String(a.at).localeCompare(String(c.at)));
+    let linked = false;
+    for (const [i, w] of rows.entries()) {
+      /* Against every EARLIER row, not just the one above: three rows where
+         the first and third are the same person and the second is somebody
+         else is a shape this has to survive. */
+      const before = rows.slice(0, i);
+      const reach = key(w.reach);
+      const tie = reach && before.some((o) => key(o.reach) === reach) ? "same contact"
+        : w.by && before.some((o) => o.by === w.by) ? "same browser"
+        : "";
+      if (tie) linked = true;
       console.log("      " + pad(day(w.at), 12) + pad(w.why ? "has a card" : "no card", 12)
         + pad(w.done === "in" ? "let in" : w.done === "no" ? "turned down" : "waiting", 13)
-        + w.id);
+        + pad(w.id, 22) + tie);
+    }
+    if (!linked) {
+      console.log("      ↑ nothing but the name links these. May be two people — leave them.");
     }
     console.log("");
   }
+  console.log("  A row marked same contact or same browser is one person twice.");
   console.log("  Delete the empty one and keep what they wrote:");
   console.log("      make waiting-rm ID=...");
   console.log("");
