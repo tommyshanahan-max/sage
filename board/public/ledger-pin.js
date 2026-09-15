@@ -705,6 +705,15 @@ function body(d, device) {
       pair.append(worth(T("pin.wNow"), money(d.money),
         T("pin.wAtSale", { sale: money(d.sale) })));
       w.append(pair);
+    }
+    /* THE WHOLE NOTE, WHENEVER THERE IS ANY CURRENCY ON THE PANEL AT ALL.
+       It used to live inside the block above, which is today's figure — so an
+       operator who published only what a share comes to at the goal got a
+       screen with money on it and no account of where the money came from. The
+       short line beside the headline figure says nobody has valued this; this
+       is the part that says it is not a forecast and not an offer, and that
+       the other half of the pool is not priced. */
+    if (typeof d.money === "number" || typeof d.moneyAt === "number") {
       w.append(el("p", "lpsmall", T("pin.moneyNot")));
     }
     w.append(el("p", "lpsmall", T("pin.shareRest", {

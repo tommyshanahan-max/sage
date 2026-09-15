@@ -3136,8 +3136,13 @@ const LSALE = Math.max(0, Number(process.env.BOARD_LEDGER_SALE || 0));
 const LSALE_AT = Math.max(0, Number(process.env.BOARD_LEDGER_SALE_AT || 0));
 const LCUT = Math.min(100, Math.max(0, Number(process.env.BOARD_LEDGER_CUT || 0)));
 /* Not `moneyOn` — the seat ledger above owns that name, and two switches with
-   one name is how a screen ends up gated on the wrong one. */
-const pinMoneyOn = () => LSALE > 0 && LCUT > 0;
+   one name is how a screen ends up gated on the wrong one.
+   EITHER FIGURE TURNS IT ON, and that matters. It was SALE and CUT, so putting
+   "what your share comes to at the goal" on the screen forced a second number
+   onto it — what the company is worth TODAY — which is a weaker claim, a
+   smaller figure, and one the operator may have no wish to publish. The two
+   are separate sentences and either can be said without the other. */
+const pinMoneyOn = () => LCUT > 0 && (LSALE > 0 || LSALE_AT > 0);
 
 const pinOn = () => LGOAL > 0;
 /** What a place is worth: the tier it falls in, and nought past the last. */
@@ -3236,13 +3241,13 @@ function pinFor(board, who, asNew) {
           scale: LSCALE.map((at) => ({ at, pts: PLACE(at) })),
           band: LSCALE.find((at) => next <= at) || LSCALE[LSCALE.length - 1],
           share: LPOOL ? (PLACE(next) / LPOOL) * (LSPLIT / 100) * 100 : 0,
-          money: pinMoneyOn() && LPOOL
+          money: pinMoneyOn() && LSALE > 0 && LPOOL
             ? Math.round(LSALE * (LCUT / 100) * (PLACE(next) / LPOOL) * (LSPLIT / 100))
             : null,
           moneyAt: pinMoneyOn() && LSALE_AT > 0 && LPOOL
             ? Math.round(LSALE_AT * (LCUT / 100) * (PLACE(next) / LPOOL) * (LSPLIT / 100))
             : null,
-          sale: pinMoneyOn() ? LSALE : null,
+          sale: pinMoneyOn() && LSALE > 0 ? LSALE : null,
           saleAt: pinMoneyOn() && LSALE_AT > 0 ? LSALE_AT : null,
           cut: pinMoneyOn() ? LCUT : null,
           ...common(members, board) };
@@ -3269,13 +3274,16 @@ function pinFor(board, who, asNew) {
     /* What that share comes to at the operator's own two numbers, or null.
        Rounded to whole units: a figure this soft printed to the cent is a
        precision nobody has earned. */
-    money: pinMoneyOn() && LPOOL
+    /* NULL, NOT NOUGHT, when no figure for today was given. Rounded, an unset
+       LSALE came out as a real number — and "$0" beside somebody's share is
+       the screen making a claim rather than declining to. */
+    money: pinMoneyOn() && LSALE > 0 && LPOOL
       ? Math.round(LSALE * (LCUT / 100) * (placePts / LPOOL) * (LSPLIT / 100))
       : null,
     moneyAt: pinMoneyOn() && LSALE_AT > 0 && LPOOL
       ? Math.round(LSALE_AT * (LCUT / 100) * (placePts / LPOOL) * (LSPLIT / 100))
       : null,
-    sale: pinMoneyOn() ? LSALE : null,
+    sale: pinMoneyOn() && LSALE > 0 ? LSALE : null,
     saleAt: pinMoneyOn() && LSALE_AT > 0 ? LSALE_AT : null,
     cut: pinMoneyOn() ? LCUT : null,
     /* THE CURVE IN FIVE NUMBERS, and which of them their place sits under.
