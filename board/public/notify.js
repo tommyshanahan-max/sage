@@ -45,6 +45,59 @@ const device = () => {
   try { return localStorage.getItem("board:device") || ""; } catch (e) { return ""; }
 };
 
+/* ---------------------------------------------------------------------------
+ * INSIDE THE APP, WHERE NONE OF THE ABOVE EXISTS
+ *
+ * The App Store build is these same pages in a WKWebView, and a WKWebView has
+ * no Push API — no PushManager, no Notification, nothing to subscribe to. So
+ * everything below this line would have hidden the switch and the app would
+ * have shipped with the one feature that makes it an app quietly missing.
+ *
+ * The native half asks Apple instead and hands the board a device token. Same
+ * card, same words, same one-ask-after-a-gesture rule; only the plumbing
+ * behind the button changes. See board/lib/apns.js for the other end.
+ */
+const NATIVE = (() => {
+  try { return Boolean(window.Capacitor?.isNativePlatform?.()); } catch (e) { return false; }
+})();
+const bell = () => {
+  try { return window.Capacitor?.Plugins?.PushNotifications || null; } catch (e) { return null; }
+};
+
+/* THE TOKEN ARRIVES LATER AND ONCE.
+ *
+ * register() resolves when the request has gone to Apple, not when the token
+ * comes back — that is an event, and it can fire before anybody presses
+ * anything if the app was already registered from a previous launch. So the
+ * listener is attached at import and never inside a handler: attached in the
+ * button instead, a token that arrived a moment early would land on nobody.
+ */
+let TOLD = "";
+async function sendToken(token) {
+  const t = String(token || "").trim().toLowerCase();
+  // The same token twice is the same phone. Apple re-sends on every launch.
+  if (!t || t === TOLD) return;
+  TOLD = t;
+  try {
+    await fetch("/api/push/on", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-board-device": device() },
+      body: JSON.stringify({ device: device(), apns: t }),
+    });
+  } catch (e) { TOLD = ""; }   // let the next launch try again
+}
+if (NATIVE && bell()) {
+  bell().addListener("registration", (t) => sendToken(t && t.value));
+  /* WORTH ONE LINE IN THE CONSOLE AND NOTHING ON SCREEN. A registration that
+     fails is a phone that will not buzz, and the causes — no entitlement, a
+     provisioning profile without push, the simulator — are all things only
+     whoever built it can fix. The person holding the phone can do nothing
+     with the news. */
+  bell().addListener("registrationError", (e) => {
+    console.error("push: Apple refused to register this device", e && e.error);
+  });
+}
+
 let KEY = null;   // null = not asked yet, "" = the board cannot send
 
 /** Subscribe this browser and tell the board. Used by the silent path above
@@ -73,6 +126,11 @@ export async function offerNotify(slot, member) {
   const hide = () => { slot.hidden = true; while (slot.firstChild) slot.removeChild(slot.firstChild); };
 
   if (!member) return hide();
+
+  /* THE APP TAKES A DIFFERENT ROAD ENTIRELY — see NATIVE above. Before the
+     feature checks, because every one of them is false in a WKWebView. */
+  if (NATIVE) return offerNative(slot, hide);
+
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return hide();
   /* DENIED IS FINAL AND SILENT. There is no way to ask again from here, and a
      row saying "turn this on in your browser settings" is a row nobody acts on
@@ -115,6 +173,49 @@ export async function offerNotify(slot, member) {
   // thrown is a row that only takes up space.
   if (await reg.pushManager.getSubscription()) return hide();
 
+  card(slot, hide, async () => {
+    /* THE PROMPT, and it must be inside this handler. Safari only allows it
+       from a user gesture, and an await before it can end the gesture — so
+       the key was fetched above, before the card was ever drawn. */
+    const ok = await Notification.requestPermission();
+    if (ok !== "granted") return hide();
+    if (!await subscribe(reg, KEY)) throw new Error("refused");
+    hide();
+  });
+}
+
+/** The same switch, asking Apple instead of the browser.
+ *
+ *  Quiet when the answer is already yes — the app remembers the grant across
+ *  launches, so somebody who turned this on last week must not be shown a
+ *  button offering to turn it on. Same rule as the granted branch above, and
+ *  the same reason it is written twice rather than shared: the two halves have
+ *  nothing in common but the shape.
+ */
+async function offerNative(slot, hide) {
+  const push = bell();
+  if (!push) return hide();
+  try { if (localStorage.getItem("board:nobell") === "1") return hide(); } catch (e) { /* private mode */ }
+  let now = "prompt";
+  try { now = (await push.checkPermissions()).receive; } catch (e) { return hide(); }
+  if (now === "denied") return hide();
+  if (now === "granted") {
+    /* register() every launch, deliberately: the token can change and Apple
+       re-issues it through the listener, which is where it is sent from. */
+    try { await push.register(); } catch (e) { /* nothing to show for it */ }
+    return hide();
+  }
+  card(slot, hide, async () => {
+    const asked = await push.requestPermissions();
+    if (asked.receive !== "granted") return hide();
+    await push.register();
+    hide();
+  });
+}
+
+/** The card, drawn once and used by both halves. What it does when pressed is
+ *  the only thing that differs, so that is the only thing passed in. */
+function card(slot, hide, onYes) {
   slot.hidden = false;
   while (slot.firstChild) slot.removeChild(slot.firstChild);
 
@@ -156,13 +257,7 @@ export async function offerNotify(slot, member) {
     go.disabled = true;
     go.textContent = T("push.wait");
     try {
-      /* THE PROMPT, and it must be inside this handler. Safari only allows it
-         from a user gesture, and an await before it can end the gesture — so
-         the key was fetched above, before the card was ever drawn. */
-      const ok = await Notification.requestPermission();
-      if (ok !== "granted") return hide();
-      if (!await subscribe(reg, KEY)) throw new Error("refused");
-      hide();
+      await onYes(go);
     } catch (e) {
       go.disabled = false;
       go.textContent = T("push.on");
