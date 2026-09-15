@@ -1,0 +1,1220 @@
+<title>Exchange Wallet</title>
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#6E7789; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --money:#C9731F; --money-ink:#FFFFFF; --money-soft:#FBEBD9;
+    --good:#2A9D63; --good-soft:#E3F4EA; --bad:#C7394E; --bad-soft:#FBE7EA;
+    --t2:#2A9D63; --t3:#D99038; --t4:#7268C4; --t6:#2F8C9E;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC","Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --shadow:0 2px 6px rgba(21,27,40,.07),0 10px 28px rgba(21,27,40,.09);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#8592A6; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --money:#E89A4A; --money-ink:#1A1206; --money-soft:#2B2014;
+      --good:#4EBE88; --good-soft:#12261C; --bad:#F0687C; --bad-soft:#2C1519;
+      --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t6:#4FA9BC;
+      --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#8592A6; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --money:#E89A4A; --money-ink:#1A1206; --money-soft:#2B2014;
+    --good:#4EBE88; --good-soft:#12261C; --bad:#F0687C; --bad-soft:#2C1519;
+    --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t6:#4FA9BC;
+    --shadow:0 2px 6px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.34);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;
+    padding-inline:16px;padding-block:0 32px;-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* ---- page ---- */
+  .page{max-width:1040px;margin:0 auto;display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:36px;align-items:start;padding-top:18px}
+  @media (max-width:880px){.page{grid-template-columns:1fr}.map{display:none}.map.open{display:block}}
+  .demo{grid-column:1 / -1;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;font-size:.9rem;color:var(--ink-2)}
+  .demo b{color:var(--ink)}
+  .demo .grow{flex:1;min-width:14rem}
+  .chipbtn{font-size:.88rem;font-weight:600;border:1px solid var(--line);background:var(--card);border-radius:99px;padding:.4rem .8rem;cursor:pointer}
+  .chipbtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+  @media (min-width:881px){#mapbtn{display:none}}
+
+  /* ---- the phone ---- */
+  .phone{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;
+    height:min(820px,calc(100dvh - 90px));min-height:600px;display:flex;flex-direction:column;max-width:100%}
+  @media (max-width:880px){.phone{height:calc(100dvh - 80px);border-radius:18px}}
+  .bar-top{display:flex;align-items:center;gap:.4rem;padding:.7rem .6rem .55rem;border-bottom:1px solid var(--hair);background:var(--paper);min-height:3.6rem}
+  .bar-top h1{flex:1;margin:0;font-family:var(--serif);font-weight:400;font-size:1.2rem;line-height:1.2;text-align:center}
+  .bar-top h1:focus{outline:none}
+  .bar-top .sub{display:block;font-family:var(--sans);font-size:.8rem;color:var(--muted)}
+  .ib{width:2.6rem;height:2.6rem;border:0;background:transparent;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--ink-2);flex:0 0 auto}
+  .ib svg{width:1.25rem;height:1.25rem;stroke:currentColor;fill:none;stroke-width:2}
+  .ib.ghost{visibility:hidden}
+  .screen{flex:1;overflow-y:auto;padding:1rem 1rem 1.4rem;display:flex;flex-direction:column;gap:.9rem}
+  .tabs{display:flex;border-top:1px solid var(--line);background:var(--paper);padding:.2rem .3rem calc(.3rem + env(safe-area-inset-bottom))}
+  .tabs button{flex:1;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:.1rem;padding:.45rem .2rem;
+    font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer}
+  .tabs svg{width:1.3rem;height:1.3rem;stroke:currentColor;fill:none;stroke-width:1.8}
+  .tabs button[aria-current="page"]{color:var(--accent)}
+
+  /* ---- building blocks ---- */
+  p{margin:0}
+  .lead{font-size:1rem;color:var(--ink-2)}
+  .small{font-size:.86rem;color:var(--muted);line-height:1.5}
+  .k{font-size:.8rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;margin-top:.3rem}
+  .hero{font-family:var(--serif);font-size:1.6rem;line-height:1.2;margin:.2rem 0 0;font-weight:400;text-wrap:balance}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px}
+  .list{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .row{display:flex;align-items:center;gap:.75rem;width:100%;padding:.75rem .85rem;border:0;border-top:1px solid var(--hair);background:transparent;text-align:left;cursor:pointer}
+  .row:first-child{border-top:0}
+  .row[disabled]{cursor:default}
+  .row .m{flex:1;min-width:0}
+  .row .m b{display:block;font-weight:600;font-size:.98rem}
+  .row .m span{display:block;font-size:.86rem;color:var(--ink-2)}
+  .row .e{font-size:.92rem;color:var(--ink-2);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .row .e.in{color:var(--good)}
+  .row .chev{width:1rem;height:1rem;stroke:var(--muted);fill:none;stroke-width:2;flex:0 0 auto}
+  .row[role="radio"] .tick{width:1.2rem;height:1.2rem;stroke:var(--accent);fill:none;stroke-width:2.6;visibility:hidden;flex:0 0 auto}
+  .row[aria-checked="true"]{background:var(--accent-soft)}
+  .row[aria-checked="true"] .tick{visibility:visible}
+  .badge{width:2.4rem;height:2.4rem;border-radius:.65rem;display:grid;place-items:center;flex:0 0 auto;background:var(--raise);border:1px solid var(--line);
+    font-size:.78rem;font-weight:700;color:var(--ink-2);letter-spacing:.02em}
+  .badge.round{border-radius:50%;color:#fff;border:0;font-size:.95rem}
+  .badge.money{background:var(--money-soft);color:var(--money);border-color:transparent}
+  .pill{display:inline-block;font-size:.78rem;font-weight:600;border-radius:99px;padding:.1rem .5rem;background:var(--raise);border:1px solid var(--line);color:var(--ink-2)}
+  .pill.good{background:var(--good-soft);color:var(--good);border-color:transparent}
+  .pill.warn{background:var(--money-soft);color:var(--money);border-color:transparent}
+  .btn{display:block;width:100%;border:0;border-radius:12px;padding:.85rem 1rem;font-size:1rem;font-weight:700;cursor:pointer;background:var(--accent);color:var(--accent-ink);text-align:center}
+  .btn.money{background:var(--money);color:var(--money-ink)}
+  .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line);font-weight:600}
+  .btn.danger{background:var(--card);color:var(--bad);border:1px solid var(--line);font-weight:600}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
+  .stack{display:grid;gap:.55rem}
+  .push{margin-top:auto}
+  .note{border-radius:12px;padding:.7rem .8rem;font-size:.92rem;border:1px solid var(--line)}
+  .note.info{background:var(--accent-soft)}
+  .note.warn{background:var(--money-soft)}
+  .note.bad{background:var(--bad-soft)}
+  .note.good{background:var(--good-soft)}
+  .steps{display:flex;gap:.3rem}
+  .steps i{flex:1;height:4px;border-radius:99px;background:var(--line)}
+  .steps i.on{background:var(--accent)}
+  .field{display:grid;gap:.3rem}
+  .field label,.field legend{font-size:.92rem;font-weight:600}
+  .field input,.field select{font:inherit;font-size:1rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.65rem .75rem;width:100%}
+  fieldset{border:0;margin:0;padding:0}
+  .sum{display:grid;border-top:1px solid var(--hair)}
+  .sum div{display:flex;justify-content:space-between;gap:1rem;padding:.6rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
+  .sum div > span:first-child{color:var(--ink-2)}
+  .sum div > span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+  .sum .tot > span{font-weight:700;color:var(--ink)!important}
+  .bigamt{font-size:2.4rem;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;line-height:1.1}
+  .center{text-align:center}
+  .done-ic{width:3.6rem;height:3.6rem;border-radius:50%;display:grid;place-items:center;margin:1rem auto .2rem;background:var(--good-soft);color:var(--good)}
+  .done-ic svg{width:1.9rem;height:1.9rem;stroke:currentColor;fill:none;stroke-width:2.6}
+  .done-ic.money{background:var(--money-soft);color:var(--money)}
+  .spin{width:2.4rem;height:2.4rem;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);margin:2rem auto .5rem;animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .toggle{display:flex;align-items:center;gap:.75rem;padding:.75rem .85rem;border-top:1px solid var(--hair)}
+  .toggle:first-child{border-top:0}
+  .toggle .m{flex:1}
+  .toggle .m b{display:block;font-weight:600;font-size:.98rem}
+  .toggle .m span{display:block;font-size:.86rem;color:var(--ink-2)}
+  .sw{position:relative;width:3rem;height:1.8rem;border-radius:99px;border:0;background:var(--line);cursor:pointer;flex:0 0 auto}
+  .sw::after{content:"";position:absolute;top:.2rem;left:.2rem;width:1.4rem;height:1.4rem;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .sw[aria-checked="true"]{background:var(--good)}
+  .sw[aria-checked="true"]::after{left:1.4rem}
+
+  /* wallet home */
+  .balance{border-radius:18px;padding:1.1rem 1.1rem 1rem;background:var(--money);color:var(--money-ink)}
+  .balance .l{font-size:.9rem;opacity:.9}
+  .balance .v{font-size:2.3rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:.1rem}
+  .balance .s{font-size:.85rem;opacity:.9;margin-top:.2rem}
+  .acts{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
+  .act{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:.6rem .2rem;display:flex;flex-direction:column;align-items:center;gap:.3rem;
+    cursor:pointer;font-size:.82rem;font-weight:600}
+  .act svg{width:1.35rem;height:1.35rem;stroke:var(--money);fill:none;stroke-width:2}
+
+  /* amount entry */
+  .amountbox{display:flex;align-items:baseline;justify-content:center;gap:.35rem;padding:.2rem 0}
+  .amountbox label{font-size:1.5rem;font-weight:600;color:var(--ink-2)}
+  .amountbox input{width:8ch;border:0;background:transparent;color:var(--ink);font:inherit;font-size:2.6rem;font-weight:700;padding:0;font-variant-numeric:tabular-nums}
+  .amountbox input:focus{outline:none;box-shadow:0 2px 0 var(--accent)}
+  .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}
+  .keys button{border:0;border-radius:12px;background:var(--card);border:1px solid var(--hair);font-size:1.35rem;font-weight:500;padding:.55rem 0;cursor:pointer}
+  .keys button:active{background:var(--accent-soft)}
+
+  /* chat */
+  .room{gap:.7rem}
+  .when{align-self:center;font-size:.8rem;color:var(--muted)}
+  .said{display:flex;gap:.5rem;align-items:flex-start}
+  .said.mine{flex-direction:row-reverse}
+  .said .av{width:2rem;height:2rem;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:.85rem;font-weight:600;flex:0 0 auto}
+  .said .col{display:flex;flex-direction:column;min-width:0;max-width:82%}
+  .said.mine .col{align-items:flex-end}
+  .dwho{font-size:.8rem;color:var(--muted);margin:0 0 .15rem}
+  .bub{padding:.55rem .8rem;border-radius:1.05rem;font-size:.95rem;background:var(--card);border:1px solid var(--line)}
+  .said.mine .bub{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .at{font-weight:600;color:var(--accent)}
+  .said.mine .at{color:inherit;text-decoration:underline}
+  .xfer{width:15.5rem;max-width:100%;border:0;padding:0;border-radius:1rem;overflow:hidden;text-align:left;cursor:pointer;background:var(--money);color:var(--money-ink)}
+  .xfer.done{background:var(--money-soft);color:var(--ink)}
+  .xfer .t{display:flex;gap:.65rem;align-items:center;padding:.75rem .85rem}
+  .xfer .ic{width:2.2rem;height:2.2rem;border-radius:50%;border:2px solid currentColor;display:grid;place-items:center;flex:0 0 auto}
+  .xfer.done .ic{color:var(--money)}
+  .xfer .ic svg{width:1.1rem;height:1.1rem;stroke:currentColor;fill:none;stroke-width:2.2}
+  .xfer .a{font-size:1.15rem;font-weight:700;font-variant-numeric:tabular-nums}
+  .xfer .f{font-size:.88rem;opacity:.92}
+  .xfer .foot{background:var(--card);color:var(--ink-2);font-size:.82rem;padding:.4rem .85rem;border:1px solid var(--line);border-top:0;border-radius:0 0 1rem 1rem}
+  .write{display:flex;gap:.45rem;align-items:flex-end;padding:.55rem .7rem;border-top:1px solid var(--line);background:var(--paper)}
+  .write textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:.95rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:1.2rem;padding:.55rem .85rem}
+  .round{width:2.5rem;height:2.5rem;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
+  .round svg{width:1.15rem;height:1.15rem;stroke:currentColor;fill:none;stroke-width:2}
+  .round.send{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .round.send svg{fill:currentColor;stroke:none}
+
+  /* sheet inside the phone */
+  .scrim{position:absolute;inset:0;background:rgba(11,14,21,.45);z-index:20}
+  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--card);border-radius:18px 18px 0 0;padding:.6rem 1rem 1.1rem;display:grid;gap:.7rem;
+    box-shadow:0 -10px 30px rgba(11,14,21,.25)}
+  .sheet h2{margin:.2rem 0 0;font-family:var(--serif);font-weight:400;font-size:1.15rem;text-align:center}
+  .sheet h2:focus{outline:none}
+  .grab{width:2.4rem;height:.3rem;border-radius:99px;background:var(--line);margin:0 auto}
+
+  /* the provider's page, drawn as somewhere else */
+  .provider{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
+  .provider .url{display:flex;align-items:center;gap:.45rem;padding:.5rem .75rem;background:var(--raise);border-bottom:1px solid var(--line);font-size:.85rem;color:var(--ink-2)}
+  .provider .url svg{width:.9rem;height:.9rem;stroke:var(--good);fill:none;stroke-width:2.2}
+  .provider .pb{padding:1rem;display:grid;gap:.7rem}
+  .provider .pb b{font-size:1.05rem}
+  .fake{border:1px dashed var(--line);border-radius:10px;padding:.65rem .75rem;color:var(--muted);font-size:.9rem}
+
+  .timeline{list-style:none;margin:0;padding:0;display:grid;gap:0}
+  .timeline li{position:relative;padding:0 0 .9rem 1.6rem}
+  .timeline li::before{content:"";position:absolute;left:.35rem;top:.3rem;width:.6rem;height:.6rem;border-radius:50%;background:var(--line)}
+  .timeline li.on::before{background:var(--good)}
+  .timeline li::after{content:"";position:absolute;left:.62rem;top:1rem;bottom:0;width:2px;background:var(--hair)}
+  .timeline li:last-child::after{display:none}
+  .timeline b{display:block;font-size:.95rem}
+  .timeline span{font-size:.86rem;color:var(--ink-2)}
+
+  /* screen map */
+  .map{position:sticky;top:12px}
+  .map h2{font-family:var(--serif);font-weight:400;font-size:1.5rem;margin:.1rem 0 .2rem}
+  .map > p{color:var(--ink-2);margin:0 0 .8rem;max-width:52ch}
+  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+  .grp{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:.7rem .8rem}
+  .grp h3{margin:0 0 .35rem;font-size:.95rem}
+  .grp ol{margin:0;padding:0;list-style:none;display:grid;gap:.1rem}
+  .grp button{width:100%;text-align:left;border:0;background:transparent;border-radius:8px;padding:.3rem .4rem;font-size:.9rem;color:var(--ink-2);cursor:pointer}
+  .grp button:hover{background:var(--raise);color:var(--ink)}
+  .grp button[aria-current="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .about{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:.9rem 1rem}
+  .about h3{margin:0 0 .3rem;font-size:1rem}
+  .about p,.about li{font-size:.9rem;color:var(--ink-2)}
+  .about ul{margin:.3rem 0 0;padding-left:1.1rem;display:grid;gap:.3rem}
+  @media (prefers-reduced-motion:reduce){.spin{animation:none}.sw::after{transition:none}}
+</style>
+
+<div class="page">
+  <div class="demo" role="note">
+    <span class="grow"><b>Demo.</b> The Exchange wallet, every screen. Invented people and money; nothing is sent and nothing is connected.</span>
+    <span class="sr" id="startlab">Start as</span>
+    <span role="group" aria-labelledby="startlab" style="display:flex;gap:.4rem">
+      <button class="chipbtn" type="button" id="startNew" aria-pressed="true">New to the wallet</button>
+      <button class="chipbtn" type="button" id="startSet" aria-pressed="false">Wallet set up</button>
+    </span>
+    <button class="chipbtn" type="button" id="mapbtn" aria-expanded="false" aria-controls="map">All screens</button>
+  </div>
+
+  <section class="phone" aria-label="Phone">
+    <div class="bar-top">
+      <button class="ib" type="button" id="backbtn" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg></button>
+      <h1 id="title" tabindex="-1"></h1>
+      <button class="ib" type="button" id="topact"><svg viewBox="0 0 24 24" aria-hidden="true" id="topicon"></svg></button>
+    </div>
+    <div class="screen" id="screen"></div>
+    <div id="footer"></div>
+    <nav class="tabs" id="tabs" aria-label="App">
+      <button type="button" data-tab="messages"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>Messages</button>
+      <button type="button" data-tab="cards"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M3 10h18"/></svg>Cards</button>
+      <button type="button" data-tab="browse"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z M9 15c1.5-2 4.5-2 6 0"/><circle cx="12" cy="10" r="2.2"/></svg>Browse</button>
+      <button type="button" data-tab="profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>Profile</button>
+    </nav>
+    <div id="overlay"></div>
+  </section>
+
+  <aside class="map" id="map" aria-labelledby="maph">
+    <h2 id="maph">Every screen</h2>
+    <p>Tap any screen to jump to it. What you do carries through — a payment you make shows in Activity and in the chat — unless the screen needs the other starting point.</p>
+    <div class="groups" id="groups"></div>
+    <div class="about">
+      <h3>What this is built on</h3>
+      <ul>
+        <li><b>Details stay with the provider.</b> Identity checks, bank logins, card numbers and PayPal passwords are only ever typed on Stripe's or PayPal's own page. The Exchange keeps a reference, never the details.</li>
+        <li><b>Every payment is confirmed on the phone</b> with Face ID or the phone's own passcode.</li>
+        <li><b>Money waits to be accepted</b> and comes back after 24 hours if it isn't.</li>
+        <li><b>Two ways to build it:</b> money passing straight between connected accounts through Stripe or PayPal, which carry most of the licensing; or a wallet balance the Exchange holds, which usually needs a licence of its own (a stored value licence in Hong Kong, money transmitter licences in the US).</li>
+        <li><b>Mainland China:</b> paying in yuan normally runs through WeChat Pay or Alipay, which is why they appear for that region.</li>
+        <li>Fees and limits shown are examples. This is a design, not legal advice.</li>
+      </ul>
+    </div>
+  </aside>
+</div>
+<div class="sr" role="status" aria-live="polite" id="live"></div>
+
+<script>
+(() => {
+/* The Exchange wallet, every screen, as one clickable phone. A tiny router: each
+   screen is a function that returns its title and its body; going forward
+   pushes, Back pops. Invented people and money throughout. */
+
+const $ = (id) => document.getElementById(id);
+function h(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === false || v === null || v === undefined) continue;
+    if (k === "class") n.className = v;
+    else if (k === "text") n.textContent = v;
+    else if (k === "html") n.innerHTML = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c !== null && c !== undefined && c !== false) n.append(c instanceof Node ? c : document.createTextNode(c));
+  return n;
+}
+const ICON = {
+  chev: '<path d="M9 5l7 7-7 7"/>', check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  send: '<path d="M5 12h14M13 6l6 6-6 6"/>', req: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+  add: '<path d="M12 5v14M5 12h14"/>', out: '<path d="M4 20h16M12 16V4M7 9l5-5 5 5"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
+  wallet: '<path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm0 0 2-3h12v3M16 13h2"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  swap: '<path d="M5 9h13l-3-3M19 15H6l3 3"/>',
+};
+const svg = (name, cls) => { const s = document.createElementNS("http://www.w3.org/2000/svg", "svg"); s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true"); if (cls) s.setAttribute("class", cls); s.innerHTML = ICON[name]; return s; };
+const say = (t) => { const n = $("live"); n.textContent = ""; setTimeout(() => { n.textContent = t; }, 60); };
+const later = (ms, fn) => setTimeout(fn, ms);
+
+/* ---- state ---- */
+const REGION = {
+  hk: { name: "Hong Kong", cur: "HKD", sym: "HK$", word: "Hong Kong dollars", send: 20000, recv: 50000 },
+  cn: { name: "Mainland China", cur: "CNY", sym: "¥", word: "yuan", send: 5000, recv: 20000 },
+  us: { name: "United States", cur: "USD", sym: "US$", word: "US dollars", send: 2500, recv: 10000 },
+  other: { name: "Somewhere else", cur: "USD", sym: "US$", word: "US dollars", send: 1000, recv: 5000 },
+};
+const PEOPLE = {
+  ray: { name: "Ray", role: "Director", g: ["#ABBDCE", "#676DA2"], paidBefore: false, canBePaid: true },
+  lin: { name: "Lin Wei", role: "Producer", g: ["#ABC5CE", "#677BA2"], paidBefore: true, canBePaid: true },
+  aiden: { name: "Aiden", role: "Director", g: ["#CEABCD", "#A26789"], paidBefore: false, canBePaid: false },
+  zhou: { name: "周静", role: "Director", g: ["#AFCEAB", "#67A278"], paidBefore: false, canBePaid: true },
+  keith: { name: "Keith", role: "Financier", g: ["#CEC4AB", "#A28967"], paidBefore: true, canBePaid: true },
+  brendan: { name: "Brendan", role: "Writer", g: ["#ABCEC0", "#67A28F"], paidBefore: false, canBePaid: true },
+};
+const PROVIDERS = {
+  bank: { tag: "BANK", title: "Bank account", via: "Stripe", host: "connect.stripe.com", fee: 0, arrives: "1–2 working days",
+    what: "Choose your bank and log in to it. Your bank shares the account with the Exchange, not your password.", made: "HSBC ···· 6789" },
+  card: { tag: "CARD", title: "Debit or credit card", via: "Stripe", host: "checkout.stripe.com", fee: 0.03, arrives: "Instantly",
+    what: "Enter your card on Stripe's page. The Exchange only ever sees the last four digits.", made: "Visa ···· 4242" },
+  paypal: { tag: "PP", title: "PayPal", via: "PayPal", host: "www.paypal.com", fee: 0.03, arrives: "Instantly",
+    what: "Log in to PayPal and approve the Exchange. You can remove it from PayPal at any time.", made: "PayPal · t•••@example.com" },
+  wechat: { tag: "WX", title: "WeChat Pay", via: "WeChat Pay", host: "pay.weixin.qq.com", fee: 0, arrives: "Instantly",
+    what: "Approve the Exchange in WeChat. Payments in yuan run through WeChat Pay.", made: "WeChat Pay · 微信支付" },
+};
+
+let S;
+function fresh(setUp) {
+  S = {
+    setup: setUp, region: setUp ? "hk" : "", verified: setUp ? "verified" : "none", faceId: true, notify: true, confirmEach: true,
+    balance: setUp ? 1580 : 0, sources: setUp ? [{ id: "src1", p: "bank", name: PROVIDERS.bank.made, def: true }, { id: "src2", p: "card", name: PROVIDERS.card.made }] : [],
+    payout: setUp ? "wallet" : "",
+    activity: setUp ? [
+      { id: "t1", kind: "in", who: "lin", amount: 300, note: "Script notes", when: "Tue 14:02", state: "accepted", src: "wallet" },
+      { id: "t2", kind: "add", amount: 1000, when: "Mon 09:40", state: "done", src: "src1" },
+      { id: "t3", kind: "out", who: "keith", amount: 220, note: "Dinner", when: "Sun 21:15", state: "accepted", src: "wallet" },
+    ] : [],
+    incoming: [{ id: "in1", who: "lin", amount: 300, note: "Coffee & script notes", state: "waiting" }],
+    requests: [{ id: "rq1", dir: "in", who: "ray", amount: 800, note: "Bond terms read-through", state: "open" }],
+    chat: [
+      { who: "lin", text: "Anyone here worked with a completion bond on a co-production? Our lender wants one." },
+      { who: "ray", text: "Yes, twice. Happy to read your bond terms properly — I charge for a read-through." },
+      { card: "request", ref: "rq1" },
+      { who: "lin", text: "Thanks for the notes yesterday — sending something for the coffee." },
+      { card: "incoming", ref: "in1" },
+    ],
+    draft: {}, tab: "profile",
+  };
+}
+fresh(false);
+const R = () => REGION[S.region || "hk"];
+const money = (n) => R().sym + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const spoken = (n) => `${Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 })} ${R().word}`;
+const src = (id) => id === "wallet" ? { id: "wallet", tag: "W", name: "Exchange wallet", p: "wallet" } : S.sources.find((s) => s.id === id);
+const prov = (s) => s.p === "wallet" ? { fee: 0, arrives: "Instantly", via: "" } : PROVIDERS[s.p];
+const defaultSrc = () => (S.sources.find((s) => s.def) || S.sources[0] || { id: "wallet" }).id;
+let seq = 10;
+const nid = (p) => p + (++seq);
+
+/* ---- router ---- */
+const nav = { stack: [], cur: null };
+function go(id, params = {}, opts = {}) {
+  if (opts.replace) nav.cur = { id, params };
+  else { if (nav.cur) nav.stack.push(nav.cur); nav.cur = { id, params }; }
+  paint();
+}
+function reset(id, params = {}) { nav.stack = []; nav.cur = { id, params }; paint(); }
+function back() { if (!nav.stack.length) return; nav.cur = nav.stack.pop(); paint(); }
+function backTo(id) { while (nav.stack.length && nav.cur.id !== id) nav.cur = nav.stack.pop(); paint(); }
+
+function paint() {
+  closeSheet(true);
+  const scr = SCREENS[nav.cur.id];
+  const out = scr(nav.cur.params);
+  $("title").textContent = "";
+  $("title").append(out.title, out.sub ? h("span", { class: "sub", text: out.sub }) : "");
+  $("backbtn").classList.toggle("ghost", !nav.stack.length || out.noBack);
+  $("backbtn").disabled = !nav.stack.length || out.noBack;
+  const ta = $("topact");
+  if (out.action) {
+    ta.classList.remove("ghost"); ta.disabled = false;
+    ta.setAttribute("aria-label", out.action.label);
+    $("topicon").innerHTML = ICON[out.action.icon];
+    ta.onclick = out.action.run;
+  } else { ta.classList.add("ghost"); ta.disabled = true; ta.removeAttribute("aria-label"); ta.onclick = null; }
+  const screen = $("screen");
+  screen.textContent = "";
+  screen.className = "screen" + (out.cls ? " " + out.cls : "");
+  screen.append(out.body);
+  screen.scrollTop = out.scrollEnd ? screen.scrollHeight : 0;
+  $("footer").textContent = "";
+  if (out.footer) $("footer").append(out.footer);
+  const tabs = $("tabs");
+  tabs.hidden = !out.tab;
+  for (const b of tabs.querySelectorAll("button")) b.setAttribute("aria-current", b.dataset.tab === out.tab ? "page" : "false");
+  if (out.tab) S.tab = out.tab;
+  $("title").focus({ preventScroll: true });
+  for (const b of document.querySelectorAll(".grp button")) b.setAttribute("aria-current", String(b.dataset.screen === nav.cur.id));
+}
+
+/* ---- pieces ---- */
+function row(o) {
+  if (!o.onclick && !o.radio) {
+    const d = h("div", { class: "row" });
+    if (o.lead) d.append(o.lead);
+    d.append(h("span", { class: "m" }, h("b", { text: o.title }), o.sub ? h("span", { text: o.sub }) : ""));
+    if (o.end) d.append(h("span", { class: "e" + (o.endIn ? " in" : ""), text: o.end }));
+    return d;
+  }
+  const b = h("button", { class: "row", type: "button", onclick: o.onclick, disabled: o.disabled, role: o.radio ? "radio" : null, "aria-checked": o.radio ? String(Boolean(o.checked)) : null });
+  if (o.lead) b.append(o.lead);
+  b.append(h("span", { class: "m" }, h("b", { text: o.title }), o.sub ? h("span", { text: o.sub }) : ""));
+  if (o.end) b.append(h("span", { class: "e" + (o.endIn ? " in" : ""), text: o.end }));
+  if (o.radio) b.append(svg("check", "tick")); else if (!o.disabled) b.append(svg("chev", "chev"));
+  return b;
+}
+const badge = (text, cls) => h("span", { class: "badge" + (cls ? " " + cls : ""), "aria-hidden": "true", text });
+function face(id) { const p = PEOPLE[id]; const b = badge([...p.name][0], "round"); b.style.background = `linear-gradient(150deg, ${p.g[0]}, ${p.g[1]})`; return b; }
+const btn = (text, cls, onclick, extra = {}) => h("button", { class: "btn" + (cls ? " " + cls : ""), type: "button", onclick, ...extra, text });
+const note = (cls, ...kids) => h("p", { class: "note " + cls }, ...kids);
+const steps = (n, of) => h("div", { class: "steps", role: "img", "aria-label": `Step ${n} of ${of}` }, ...Array.from({ length: of }, (_, i) => h("i", { class: i < n ? "on" : "" })));
+function frag(...kids) { const f = document.createDocumentFragment(); for (const k of kids.flat()) if (k) f.append(k); return f; }
+function confirmBtn(label, cls, onDone) {
+  const b = btn(S.faceId ? `Confirm with Face ID` : "Confirm with phone passcode", cls, () => {
+    b.disabled = true; b.textContent = "Confirming…"; say("Confirming.");
+    later(900, onDone);
+  });
+  b.setAttribute("aria-label", `${label}. ${S.faceId ? "Confirm with Face ID" : "Confirm with phone passcode"}`);
+  return b;
+}
+function amountEntry(initial, onChange, labelText) {
+  let v = initial ? String(initial) : "";
+  const clean = (s) => {
+    s = String(s).replace(/[^\d.]/g, "");
+    const i = s.indexOf("."); if (i >= 0) s = s.slice(0, i + 1) + s.slice(i + 1).replace(/\./g, "").slice(0, 2);
+    if (s.length > 1 && s[0] === "0" && s[1] !== ".") s = s.replace(/^0+/, "");
+    return s.slice(0, 9);
+  };
+  const inp = h("input", { id: "amt", inputmode: "decimal", autocomplete: "off", placeholder: "0", "aria-label": `${labelText}, in ${R().word}` });
+  inp.value = v;
+  const set = (nv, speak) => { v = clean(nv); inp.value = v; onChange(Number(v || 0)); if (speak) say(v ? spoken(v) : "Zero"); };
+  inp.addEventListener("input", () => set(inp.value));
+  const keys = h("div", { class: "keys" });
+  for (const k of ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"]) {
+    keys.append(h("button", { type: "button", "aria-label": k === "⌫" ? "Delete" : k === "." ? "Point" : k, text: k,
+      onclick: () => set(k === "⌫" ? v.slice(0, -1) : v + k, true) }));
+  }
+  later(0, () => onChange(Number(v || 0)));
+  return frag(h("div", { class: "amountbox" }, h("label", { for: "amt", text: R().sym }), inp), keys);
+}
+function openSheet(title, body) {
+  const ov = $("overlay");
+  ov.textContent = "";
+  const scrim = h("div", { class: "scrim", onclick: () => closeSheet() });
+  const sh = h("div", { class: "sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": "sheeth" },
+    h("div", { class: "grab", "aria-hidden": "true" }), h("h2", { id: "sheeth", tabindex: "-1", text: title }), body,
+    btn("Cancel", "ghost", () => closeSheet()));
+  ov.append(scrim, sh);
+  for (const n of [$("screen"), $("tabs"), document.querySelector(".bar-top"), $("footer")]) n.setAttribute("inert", "");
+  $("sheeth").focus();
+}
+function closeSheet(silent) {
+  const ov = $("overlay");
+  if (!ov.childNodes.length) return;
+  ov.textContent = "";
+  for (const n of [$("screen"), $("tabs"), document.querySelector(".bar-top"), $("footer")]) n.removeAttribute("inert");
+}
+function needsWallet(nextId, params) {
+  if (!S.setup) { go("setup-welcome", { then: nextId, thenParams: params }); return true; }
+  if (S.verified !== "verified") { go("verify-needed"); return true; }
+  return false;
+}
+function activityLine(t) {
+  const who = t.who ? PEOPLE[t.who].name : "";
+  const title = t.kind === "in" ? `From ${who}` : t.kind === "out" ? `To ${who}` : t.kind === "add" ? "Added money" : t.kind === "withdraw" ? "Withdrawn to bank" : "Payment";
+  const status = { waiting: "Waiting to be accepted", accepted: "Completed", done: "Completed", returned: "Returned to you", cancelled: "Cancelled", processing: "On its way", declined: "Declined" }[t.state] || "";
+  const sign = t.kind === "in" || t.kind === "add" ? "+" : "−";
+  return { title, status, sign, amountText: sign + money(t.amount), inbound: sign === "+" };
+}
+
+/* ---- screens ---- */
+const SCREENS = {
+
+  /* PROFILE — where the wallet lives */
+  profile() {
+    const widget = S.setup
+      ? h("section", { class: "balance", "aria-labelledby": "pw" },
+          h("div", { style: "display:flex;justify-content:space-between;align-items:baseline;gap:.5rem" },
+            h("p", { class: "l", id: "pw", text: "Wallet" }),
+            h("button", { type: "button", class: "chipbtn", style: "background:transparent;color:inherit;border-color:currentColor", onclick: () => go("wallet"), text: "Open" })),
+          h("p", { class: "v", text: money(S.balance) }),
+          h("p", { class: "s", text: S.incoming.some((x) => x.state === "waiting") ? "1 payment waiting for you to accept" : S.verified === "verified" ? `${R().cur} · verified` : `${R().cur} · confirm your identity to send` }),
+          h("div", { style: "display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.7rem" },
+            h("button", { type: "button", class: "btn ghost", onclick: () => { if (!needsWallet("send-to")) go("send-to"); }, text: "Send" }),
+            h("button", { type: "button", class: "btn ghost", onclick: () => go("request-to"), text: "Request" })))
+      : h("section", { class: "card", style: "padding:1rem;display:grid;gap:.6rem", "aria-labelledby": "pw" },
+          h("div", { style: "display:flex;gap:.7rem;align-items:center" }, badge("W", "money"),
+            h("div", {}, h("b", { id: "pw", text: "Wallet" }), h("p", { class: "small", text: "Send and receive money with people you've met here" }))),
+          S.incoming.some((x) => x.state === "waiting") ? note("warn", "Lin Wei sent you money. Set up your wallet to accept it.") : "",
+          btn("Set up your wallet", "money", () => go("setup-welcome")));
+    return { title: "Profile", tab: "profile", body: frag(
+      h("div", { class: "card", style: "padding:1rem;display:flex;gap:.8rem;align-items:center" },
+        h("span", { class: "badge round", "aria-hidden": "true", style: "background:linear-gradient(150deg,#C9D3F2,#3F68D8);width:3rem;height:3rem", text: "T" }),
+        h("div", {}, h("b", { text: "Tom" }), h("p", { class: "small", text: "Producer · member since March" }))),
+      widget,
+      h("div", { class: "list" },
+        row({ title: "Your page", sub: "What members see" }),
+        row({ title: "Invites", sub: "People you've vouched for" }),
+        row({ title: "Settings", sub: "Language, notifications" })),
+    ) };
+  },
+
+  /* MESSAGES — the room, with money in it */
+  room() {
+    const body = h("div", { class: "stack room", style: "gap:.7rem" });
+    body.append(h("p", { class: "when", text: "Today" }));
+    for (const m of S.chat) {
+      const mine = m.mine || m.card === "sent" || m.card === "myrequest";
+      const r = h("div", { class: "said" + (mine ? " mine" : "") });
+      const col = h("div", { class: "col" });
+      const whoId = m.who || (m.card === "request" ? S.requests.find((x) => x.id === m.ref).who : m.card === "incoming" ? S.incoming.find((x) => x.id === m.ref).who : null);
+      if (!mine && whoId) {
+        const av = h("span", { class: "av", "aria-hidden": "true", text: [...PEOPLE[whoId].name][0] });
+        av.style.background = `linear-gradient(150deg, ${PEOPLE[whoId].g[0]}, ${PEOPLE[whoId].g[1]})`;
+        r.append(av);
+        col.append(h("p", { class: "dwho", text: `${PEOPLE[whoId].name} · ${PEOPLE[whoId].role}` }));
+      }
+      if (m.card) col.append(chatCard(m)); else {
+        const bub = h("div", { class: "bub" });
+        for (const part of String(m.text).split(/(@\w+)/)) if (part) bub.append(part.startsWith("@") ? h("b", { class: "at", text: part }) : part);
+        col.append(bub);
+      }
+      r.append(col); body.append(r);
+    }
+    const ta = h("textarea", { id: "tbox", rows: "1", placeholder: "Say something to the room", "aria-label": "Say something to the room" });
+    const footer = h("div", { class: "write" },
+      h("button", { class: "round", type: "button", "aria-label": "Money: send or request", "aria-haspopup": "dialog", onclick: () => moneySheet() }, svg("add")),
+      ta,
+      h("button", { class: "round send", type: "button", "aria-label": "Send message", onclick: () => { const v = ta.value.trim(); if (!v) return; S.chat.push({ mine: true, text: v }); paint(); } },
+        (() => { const s = svg("send"); s.innerHTML = '<path d="M4 4l16 8-16 8 3-8z"/>'; return s; })()));
+    return { title: "Film & TV", sub: "186 · anyone inside can read", tab: "messages", body, footer, scrollEnd: true,
+      action: { label: "Wallet", icon: "wallet", run: () => S.setup ? go("wallet") : go("setup-welcome") } };
+  },
+
+  cards() { return { title: "Cards", tab: "cards", body: frag(h("p", { class: "lead", text: "Not part of this demo." })) }; },
+  browse() { return { title: "Browse", tab: "browse", body: frag(h("p", { class: "lead", text: "Not part of this demo." })) }; },
+
+  /* SETUP */
+  "setup-welcome"(p) {
+    return { title: "Wallet", body: frag(
+      steps(1, 6),
+      h("p", { class: "hero", text: "Send and receive money with people you've met here" }),
+      h("div", { class: "list" },
+        row({ lead: badge("→", "money"), title: "Pay someone in a chat", sub: "For a read-through, a coffee, a deposit", disabled: true }),
+        row({ lead: badge("↓", "money"), title: "Get paid", sub: "Into your wallet, or straight to your bank", disabled: true }),
+        row({ lead: badge("⛨", "money"), title: "Your details stay with your bank", sub: "Logins and card numbers go to Stripe or PayPal, never to the Exchange", disabled: true })),
+      h("p", { class: "small", text: "Setting up takes about three minutes. You'll need an ID card or passport." }),
+      h("div", { class: "stack push" }, btn("Set up wallet", "", () => go("setup-region", p)), btn("Not now", "ghost", () => back())),
+    ) };
+  },
+
+  "setup-region"(p) {
+    const list = h("div", { class: "list", role: "radiogroup", "aria-label": "Where you live" });
+    const cont = btn("Continue", "", () => go("setup-terms", p), { disabled: !S.region });
+    for (const [id, r] of Object.entries(REGION)) {
+      list.append(row({ radio: true, checked: S.region === id, title: r.name, sub: `Wallet in ${r.word}`, onclick: () => { S.region = id; paint(); } }));
+    }
+    return { title: "Where you live", body: frag(
+      steps(2, 6),
+      h("p", { class: "lead", text: "This decides your wallet's currency and which rules apply to it." }),
+      list,
+      S.region === "cn" ? note("info", "In mainland China, payments in yuan run through WeChat Pay or Alipay. You'll connect one of those in a moment.") : "",
+      h("div", { class: "push" }, cont),
+    ) };
+  },
+
+  "setup-terms"(p) {
+    const box = h("input", { type: "checkbox", id: "agree" });
+    const cont = btn("Agree and continue", "", () => go("setup-verify", p), { disabled: true });
+    box.addEventListener("change", () => { cont.disabled = !box.checked; });
+    return { title: "Before you start", body: frag(
+      steps(2, 6),
+      h("div", { class: "list" },
+        row({ title: "The wallet is run with Stripe", sub: "Stripe holds and moves the money. The Exchange never has your bank details.", disabled: true }),
+        row({ title: "Payments can't always be reversed", sub: "Once someone accepts your money, getting it back depends on them.", disabled: true }),
+        row({ title: "Only pay people you've dealt with", sub: "The Exchange will never ask you to send money to unlock anything.", disabled: true }),
+        row({ title: "Fees and limits", sub: `No fee from your wallet or bank. 3% from a card or PayPal. Up to ${money(R().send)} a day once verified.`, disabled: true })),
+      h("label", { style: "display:flex;gap:.6rem;align-items:flex-start;font-size:.95rem" }, box, h("span", { text: "I've read the wallet terms and Stripe's terms." })),
+      h("div", { class: "push" }, cont),
+    ) };
+  },
+
+  "setup-verify"(p) {
+    return { title: "Confirm it's you", body: frag(
+      steps(3, 6),
+      h("p", { class: "lead", text: "The law requires anyone who moves money to check who they're dealing with. Stripe does the check, on its own page." }),
+      h("div", { class: "list" },
+        row({ lead: badge("1"), title: "A photo of your ID card or passport", disabled: true }),
+        row({ lead: badge("2"), title: "A quick selfie to match it", disabled: true })),
+      h("p", { class: "small", text: "The Exchange only learns whether you passed, never the photos." }),
+      h("div", { class: "stack push" },
+        btn("Continue to Stripe", "", () => go("handoff", { p: "identity", host: "verify.stripe.com", via: "Stripe", title: "Verify your identity", what: "Take a photo of your ID and a selfie. Stripe checks them and tells the Exchange only whether you passed.", then: "setup-verifying", thenParams: p })),
+        btn("Do this later", "ghost", () => { S.verified = "none"; go("setup-security", p); })),
+    ) };
+  },
+
+  handoff(p) {
+    const body = frag(
+      note("info", `You're leaving the Exchange for ${p.via}'s own page. When you're done, ${p.via} sends you back.`),
+      h("div", { class: "provider", role: "group", "aria-label": `${p.via}'s page, simulated` },
+        h("div", { class: "url" }, svg("lock"), h("span", { text: p.host })),
+        h("div", { class: "pb" },
+          h("b", { text: p.title }),
+          h("p", { class: "small", text: p.what }),
+          h("p", { class: "fake", text: "In the real app, this is where you'd type into " + p.via + "'s page. Nothing is entered in this demo." }),
+          btn(p.p === "identity" ? "Submit (demo)" : "Approve (demo)", "", () => go(p.then, { ...p.thenParams, provider: p.p }, { replace: true })))),
+      btn(`Cancel and go back`, "ghost", () => back()),
+    );
+    return { title: p.via, body };
+  },
+
+  "setup-verifying"(p) {
+    later(1600, () => { if (nav.cur.id !== "setup-verifying") return; S.verified = "verified"; say("Identity confirmed."); go("setup-verified", p, { replace: true }); });
+    return { title: "Checking", noBack: true, body: frag(h("div", { class: "spin", role: "img", "aria-label": "Checking" }), h("p", { class: "center lead", text: "Stripe is checking your ID. This usually takes under a minute." })) };
+  },
+  "setup-verified"(p) {
+    return { title: "Confirmed", noBack: true, body: frag(
+      h("div", { class: "done-ic" }, svg("check")), h("p", { class: "hero center", text: "You're verified" }),
+      h("p", { class: "center lead", text: `You can send up to ${money(R().send)} a day.` }),
+      h("div", { class: "push" }, btn("Continue", "", () => go("setup-security", p))),
+    ) };
+  },
+
+  "setup-security"(p) {
+    const sw = h("button", { class: "sw", type: "button", role: "switch", "aria-checked": String(S.faceId), "aria-labelledby": "fid" , onclick: () => { S.faceId = !S.faceId; sw.setAttribute("aria-checked", String(S.faceId)); } });
+    return { title: "Keep it safe", body: frag(
+      steps(4, 6),
+      h("p", { class: "lead", text: "Every payment is confirmed on this phone, so nobody else can send your money even if they open your account." }),
+      h("div", { class: "list" },
+        h("div", { class: "toggle" }, h("span", { class: "m" }, h("b", { id: "fid", text: "Use Face ID" }), h("span", { text: "Otherwise you'll use the phone's own passcode." })), sw)),
+      h("div", { class: "push" }, btn("Continue", "", () => go("setup-source", p))),
+    ) };
+  },
+
+  "setup-source"(p) {
+    const opts = S.region === "cn" ? ["wechat", "card"] : ["bank", "card", "paypal"];
+    const list = h("div", { class: "list" });
+    for (const id of opts) {
+      const pr = PROVIDERS[id];
+      list.append(row({ lead: badge(pr.tag), title: pr.title, sub: `${pr.fee ? Math.round(pr.fee * 100) + "% fee" : "No fee"} · through ${pr.via}`,
+        onclick: () => go("handoff", { p: id, host: pr.host, via: pr.via, title: `Connect ${pr.title}`, what: pr.what, then: "connected", thenParams: { ...p, next: "setup-payout" } }) }));
+    }
+    return { title: "How you'll pay", body: frag(
+      steps(5, 6),
+      h("p", { class: "lead", text: "Connect something to pay from. You can add more later." }),
+      S.sources.length ? h("div", { class: "list" }, ...S.sources.map((s) => row({ lead: badge(PROVIDERS[s.p].tag), title: s.name, sub: "Connected", disabled: true }))) : "",
+      list,
+      h("div", { class: "stack push" }, btn(S.sources.length ? "Continue" : "Skip for now", S.sources.length ? "" : "ghost", () => go("setup-payout", p))),
+    ) };
+  },
+
+  connected(p) {
+    const pr = PROVIDERS[p.provider];
+    if (!S.sources.some((s) => s.p === p.provider)) {
+      S.sources.push({ id: nid("src"), p: p.provider, name: pr.made, def: !S.sources.length });
+      say(`${pr.made} connected.`);
+    }
+    return { title: "Connected", noBack: true, body: frag(
+      h("div", { class: "done-ic" }, svg("check")), h("p", { class: "hero center", text: pr.made }),
+      h("p", { class: "center lead", text: `Connected through ${pr.via}.` }),
+      h("div", { class: "push" }, btn("Continue", "", () => {
+        if (p.next === "back-to-methods") { backTo("methods"); return; }
+        if (p.next === "back-to-source") { nav.stack = nav.stack.filter((x) => !["handoff", "connected", "add-method"].includes(x.id)); backTo(p.returnTo || "send-amount"); return; }
+        nav.stack = nav.stack.filter((x) => x.id !== "handoff");
+        go(p.next || "wallet", p, { replace: true });
+      })),
+    ) };
+  },
+
+  "setup-payout"(p) {
+    const list = h("div", { class: "list", role: "radiogroup", "aria-label": "Where money you receive goes" });
+    const choices = [["wallet", "Keep it in my wallet", "Spend it here, or withdraw whenever you like"]];
+    const bank = S.sources.find((s) => s.p === "bank");
+    if (bank) choices.push(["bank", `Straight to ${bank.name}`, "Arrives in 1–2 working days"]);
+    if (!S.payout) S.payout = "wallet";
+    for (const [id, t, s] of choices) list.append(row({ radio: true, checked: S.payout === id, title: t, sub: s, onclick: () => { S.payout = id; paint(); } }));
+    return { title: "Getting paid", body: frag(
+      steps(6, 6),
+      h("p", { class: "lead", text: "When someone sends you money, where should it go?" }),
+      list,
+      !bank ? h("p", { class: "small", text: "Connect a bank account to have money sent straight there." }) : "",
+      h("div", { class: "push" }, btn("Finish", "", () => { S.setup = true; go("setup-done", p); })),
+    ) };
+  },
+
+  "setup-done"(p) {
+    return { title: "All set", noBack: true, body: frag(
+      h("div", { class: "done-ic money" }, svg("wallet")), h("p", { class: "hero center", text: "Your wallet is ready" }),
+      h("div", { class: "sum" },
+        h("div", {}, h("span", { text: "Currency" }), h("span", { text: `${R().name} · ${R().cur}` })),
+        h("div", {}, h("span", { text: "Identity" }), h("span", { text: S.verified === "verified" ? "Confirmed" : "Not yet — needed to send" })),
+        h("div", {}, h("span", { text: "Pay from" }), h("span", { text: S.sources.length ? S.sources.map((s) => s.name).join(", ") : "Nothing connected yet" })),
+        h("div", {}, h("span", { text: "Money you receive" }), h("span", { text: S.payout === "bank" ? "Straight to your bank" : "Stays in your wallet" })),
+        h("div", {}, h("span", { text: "Confirm payments" }), h("span", { text: S.faceId ? "Face ID" : "Phone passcode" }))),
+      h("div", { class: "push" }, btn("Open wallet", "money", () => {
+        if (p.then) { reset(S.tab === "messages" ? "room" : "profile"); go(p.then, p.thenParams || {}); }
+        else { reset("profile"); go("wallet"); }
+      })),
+    ) };
+  },
+
+  "verify-needed"() {
+    return { title: "Confirm it's you first", body: frag(
+      h("p", { class: "lead", text: "You can receive money now, but sending needs your identity confirmed. It takes about two minutes, on Stripe's page." }),
+      h("div", { class: "stack push" },
+        btn("Confirm my identity", "", () => go("handoff", { p: "identity", host: "verify.stripe.com", via: "Stripe", title: "Verify your identity", what: "Take a photo of your ID and a selfie.", then: "verify-later-done", thenParams: {} })),
+        btn("Not now", "ghost", () => back())),
+    ) };
+  },
+  "verify-later-done"() {
+    later(1400, () => { if (nav.cur.id !== "verify-later-done") return; S.verified = "verified"; say("Identity confirmed."); paint(); });
+    if (S.verified !== "verified") return { title: "Checking", noBack: true, body: frag(h("div", { class: "spin", role: "img", "aria-label": "Checking" }), h("p", { class: "center lead", text: "Stripe is checking your ID." })) };
+    return { title: "Confirmed", noBack: true, body: frag(h("div", { class: "done-ic" }, svg("check")), h("p", { class: "hero center", text: "You're verified" }),
+      h("div", { class: "push" }, btn("Back to wallet", "", () => { reset("profile"); go("wallet"); }))) };
+  },
+
+  /* WALLET HOME */
+  wallet() {
+    const acts = h("div", { class: "acts" },
+      h("button", { class: "act", type: "button", onclick: () => { if (!needsWallet("send-to")) go("send-to"); } }, svg("send"), "Send"),
+      h("button", { class: "act", type: "button", onclick: () => go("request-to") }, svg("req"), "Request"),
+      h("button", { class: "act", type: "button", onclick: () => { if (!needsWallet("add-amount")) go("add-amount"); } }, svg("add"), "Add"),
+      h("button", { class: "act", type: "button", onclick: () => go("withdraw-amount") }, svg("out"), "Withdraw"));
+    const waiting = S.incoming.filter((x) => x.state === "waiting");
+    const openReq = S.requests.filter((x) => x.state === "open");
+    const recent = h("div", { class: "list" });
+    const items = S.activity.slice(0, 4);
+    if (!items.length) recent.append(row({ title: "Nothing yet", sub: "Payments you send and receive show here", disabled: true }));
+    for (const t of items) { const a = activityLine(t); recent.append(row({ lead: t.who ? face(t.who) : badge(t.kind === "add" ? "+" : "↑", "money"), title: a.title, sub: `${a.status} · ${t.when}`, end: a.amountText, endIn: a.inbound, onclick: () => go("tx", { id: t.id }) })); }
+    return { title: "Wallet", action: { label: "Wallet settings", icon: "gear", run: () => go("settings") }, body: frag(
+      h("div", { class: "balance" }, h("p", { class: "l", text: "Balance" }), h("p", { class: "v", text: money(S.balance) }),
+        h("p", { class: "s", text: S.verified === "verified" ? `${R().cur} · verified · send up to ${money(R().send)} a day` : `${R().cur} · confirm your identity to send` })),
+      acts,
+      S.verified !== "verified" ? note("warn", "Confirm your identity to send money. ", h("button", { type: "button", class: "chipbtn", onclick: () => go("verify-needed"), text: "Confirm now" })) : "",
+      waiting.length || openReq.length ? h("p", { class: "k", text: "Needs you" }) : "",
+      waiting.length || openReq.length ? h("div", { class: "list" },
+        ...waiting.map((x) => row({ lead: face(x.who), title: `${PEOPLE[x.who].name} sent you ${money(x.amount)}`, sub: "Accept within 24 hours", onclick: () => go("receive", { id: x.id }) })),
+        ...openReq.map((x) => x.dir === "in"
+          ? row({ lead: face(x.who), title: `${PEOPLE[x.who].name} requested ${money(x.amount)}`, sub: x.note, onclick: () => go("request-detail", { id: x.id }) })
+          : row({ lead: face(x.who), title: `You requested ${money(x.amount)} from ${PEOPLE[x.who].name}`, sub: "Waiting for them", onclick: () => go("request-detail", { id: x.id }) }))) : "",
+      h("div", { style: "display:flex;justify-content:space-between;align-items:baseline" }, h("p", { class: "k", text: "Recent" }),
+        h("button", { type: "button", class: "chipbtn", onclick: () => go("activity"), text: "See all" })),
+      recent,
+      h("div", { class: "list" },
+        row({ lead: badge("⇄"), title: "Payment methods", sub: S.sources.length ? S.sources.map((s) => s.name).join(" · ") : "Nothing connected", onclick: () => go("methods") }),
+        row({ lead: badge("⚑"), title: "Help and safety", sub: "Report a payment, spot a scam", onclick: () => go("help") })),
+    ) };
+  },
+
+  /* ADD MONEY */
+  "add-amount"() {
+    const d = S.draft = { kind: "add", amount: S.draft.kind === "add" ? S.draft.amount : 0, src: S.sources.find((s) => s.p !== "paypal")?.id || "" };
+    const cont = btn("Continue", "", () => go("add-review"), { disabled: true });
+    const body = frag(
+      h("p", { class: "lead center", text: "Add money to your wallet" }),
+      amountEntry(d.amount, (v) => { d.amount = v; cont.disabled = !(v > 0) || !d.src; }, "Amount to add"),
+      d.src ? h("div", { class: "list" }, row({ lead: badge(PROVIDERS[src(d.src).p].tag), title: `From ${src(d.src).name}`, sub: `${PROVIDERS[src(d.src).p].fee ? "3% fee" : "No fee"}`, disabled: true }))
+        : note("warn", "Connect a bank or card first. ", h("button", { type: "button", class: "chipbtn", text: "Connect", onclick: () => go("add-method", { returnTo: "add-amount" }) })),
+      h("div", { class: "push" }, cont));
+    return { title: "Add money", body };
+  },
+  "add-review"() {
+    const d = S.draft, s = src(d.src), fee = Math.round(d.amount * PROVIDERS[s.p].fee * 100) / 100;
+    return { title: "Check", body: frag(
+      h("p", { class: "bigamt", text: money(d.amount) }), h("p", { class: "center lead", text: "into your wallet" }),
+      h("div", { class: "sum" },
+        h("div", {}, h("span", { text: "From" }), h("span", { text: s.name })),
+        h("div", {}, h("span", { text: "Fee" }), h("span", { text: fee ? money(fee) : "No fee" })),
+        h("div", { class: "tot" }, h("span", { text: "Charged" }), h("span", { text: money(d.amount + fee) })),
+        h("div", {}, h("span", { text: "Available" }), h("span", { text: PROVIDERS[s.p].arrives === "Instantly" ? "Straight away" : "In 1–2 working days" }))),
+      h("div", { class: "push" }, confirmBtn(`Add ${spoken(d.amount)}`, "money", () => {
+        S.balance += d.amount;
+        S.activity.unshift({ id: nid("t"), kind: "add", amount: d.amount, when: "Now", state: "done", src: d.src });
+        say(`${spoken(d.amount)} added.`);
+        go("add-done", {}, { replace: true });
+      })),
+    ) };
+  },
+  "add-done"() {
+    return { title: "Added", noBack: true, body: frag(h("div", { class: "done-ic money" }, svg("check")), h("p", { class: "bigamt", text: money(S.draft.amount) }),
+      h("p", { class: "center lead", text: `Your balance is now ${money(S.balance)}.` }), h("div", { class: "push" }, btn("Done", "", () => { reset("profile"); go("wallet"); }))) };
+  },
+
+  /* SEND */
+  "send-to"() {
+    const q = h("input", { id: "who", placeholder: "Search people you've met", autocomplete: "off" });
+    const list = h("div", { class: "list" });
+    const draw = () => {
+      list.textContent = "";
+      const term = q.value.trim().toLowerCase();
+      for (const [id, p] of Object.entries(PEOPLE)) {
+        if (term && !p.name.toLowerCase().includes(term)) continue;
+        list.append(row({ lead: face(id), title: p.name, sub: `${p.role} · ${p.paidBefore ? "paid before" : "not paid before"}${p.canBePaid ? "" : " · hasn't set up a wallet"}`,
+          onclick: () => { S.draft = { kind: "send", who: id, amount: 0, note: "", src: "wallet" }; go("send-amount"); } }));
+      }
+      if (!list.childNodes.length) list.append(row({ title: "Nobody by that name", sub: "You can only pay people on the Exchange", disabled: true }));
+    };
+    q.addEventListener("input", draw);
+    draw();
+    return { title: "Send to", body: frag(h("div", { class: "field" }, h("label", { for: "who", text: "Who are you paying?" }), q),
+      h("p", { class: "k", text: "People you've talked to" }), list) };
+  },
+  "send-amount"() {
+    const d = S.draft; const p = PEOPLE[d.who];
+    if (!d.src) d.src = "wallet";
+    const s = src(d.src);
+    const over = note("bad", "That's more than your balance. Pay from a bank or card instead, or add money.");
+    const limit = note("bad", `That's over your daily limit of ${money(R().send)}.`);
+    const cont = btn("Continue", "", () => go("send-review"), { disabled: true });
+    const upd = (v) => { d.amount = v; const o = d.src === "wallet" && v > S.balance; const l = v > R().send; over.hidden = !o; limit.hidden = !l; cont.disabled = !(v > 0) || o || l; };
+    const noteIn = h("input", { id: "note", maxlength: "40", placeholder: "e.g. Bond terms read-through" }); noteIn.value = d.note || "";
+    noteIn.addEventListener("input", () => { d.note = noteIn.value; });
+    return { title: `Pay ${p.name}`, body: frag(
+      !p.canBePaid ? note("info", `${p.name} hasn't set up a wallet. They'll be asked to before they can accept.`) : "",
+      amountEntry(d.amount, upd, `Amount to send to ${p.name}`),
+      over, limit,
+      h("div", { class: "field" }, h("label", { for: "note", text: "What's it for?" }), noteIn),
+      h("div", { class: "list" }, row({ lead: badge(s.p === "wallet" ? "W" : PROVIDERS[s.p].tag, s.p === "wallet" ? "money" : ""), title: `Pay from ${s.name}`,
+        sub: s.p === "wallet" ? `Balance ${money(S.balance)} · no fee` : `${PROVIDERS[s.p].fee ? "3% fee" : "No fee"}`, end: "Change", onclick: () => go("send-source") })),
+      h("div", { class: "push" }, cont),
+    ) };
+  },
+  "send-source"() {
+    const d = S.draft;
+    const list = h("div", { class: "list", role: "radiogroup", "aria-label": "Pay from" });
+    for (const s of [src("wallet"), ...S.sources]) {
+      const pr = prov(s);
+      list.append(row({ radio: true, checked: d.src === s.id, lead: badge(s.p === "wallet" ? "W" : PROVIDERS[s.p].tag, s.p === "wallet" ? "money" : ""), title: s.name,
+        sub: s.p === "wallet" ? `Balance ${money(S.balance)} · no fee` : `${pr.fee ? Math.round(pr.fee * 100) + "% fee" : "No fee"} · ${pr.arrives.toLowerCase()}`,
+        onclick: () => { d.src = s.id; back(); } }));
+    }
+    return { title: "Pay from", body: frag(list,
+      h("div", { class: "list" }, row({ lead: badge("+"), title: "Connect a bank, card or PayPal", sub: "On their own secure page", onclick: () => go("add-method", { returnTo: "send-amount" }) }))) };
+  },
+  "send-review"() {
+    const d = S.draft, p = PEOPLE[d.who], s = src(d.src), pr = prov(s);
+    const fee = Math.round(d.amount * pr.fee * 100) / 100;
+    return { title: "Check and send", body: frag(
+      h("p", { class: "bigamt", text: money(d.amount) }), h("p", { class: "center lead", text: `to ${p.name}${d.note ? " · " + d.note : ""}` }),
+      h("div", { class: "sum" },
+        h("div", {}, h("span", { text: "Pay from" }), h("span", { text: s.name })),
+        h("div", {}, h("span", { text: "Fee" }), h("span", { text: fee ? money(fee) : "No fee" })),
+        h("div", { class: "tot" }, h("span", { text: "Total" }), h("span", { text: money(d.amount + fee) })),
+        h("div", {}, h("span", { text: `${p.name} gets it` }), h("span", { text: "When they accept" })),
+        h("div", {}, h("span", { text: "If not accepted" }), h("span", { text: "Back to you in 24 hours" }))),
+      !p.paidBefore ? note("warn", `You haven't paid ${p.name} before. Only send money to someone you've actually dealt with. Once they accept, the Exchange can't reverse it.`) : "",
+      d.fromRequest ? h("p", { class: "small", text: `This pays ${p.name}'s request.` }) : "",
+      h("div", { class: "push" }, confirmBtn(`Send ${spoken(d.amount)} to ${p.name}`, "money", () => {
+        if (d.src === "wallet") S.balance -= d.amount + fee;
+        const t = { id: nid("t"), kind: "out", who: d.who, amount: d.amount, note: d.note, when: "Now", state: "waiting", src: d.src, fee };
+        S.activity.unshift(t);
+        S.chat.push({ card: "sent", ref: t.id });
+        if (d.fromRequest) { const r = S.requests.find((x) => x.id === d.fromRequest); if (r) r.state = "paid"; }
+        p.paidBefore = true;
+        say(`${spoken(d.amount)} sent to ${p.name}.`);
+        go("send-done", { id: t.id }, { replace: true });
+        later(6000, () => { if (t.state === "waiting") { t.state = "accepted"; say(`${p.name} accepted ${spoken(t.amount)}.`); if (["room", "wallet", "tx", "activity"].includes(nav.cur.id)) paint(); } });
+      })),
+    ) };
+  },
+  "send-done"(q) {
+    const t = S.activity.find((x) => x.id === q.id), p = PEOPLE[t.who];
+    return { title: "Sent", noBack: true, body: frag(h("div", { class: "done-ic money" }, svg("check")), h("p", { class: "bigamt", text: money(t.amount) }),
+      h("p", { class: "center lead", text: `sent to ${p.name}` }),
+      h("p", { class: "center small", text: `${p.name} has 24 hours to accept. You'll get a notification when they do.` }),
+      h("div", { class: "stack push" }, btn("View payment", "ghost", () => go("tx", { id: t.id }, { replace: true })), btn("Done", "", () => { reset(S.tab === "messages" ? "room" : "profile"); if (S.tab !== "messages") go("wallet"); }))) };
+  },
+
+  /* REQUEST */
+  "request-to"() {
+    const list = h("div", { class: "list" });
+    for (const [id, p] of Object.entries(PEOPLE)) list.append(row({ lead: face(id), title: p.name, sub: p.role, onclick: () => { S.draft = { kind: "request", who: id, amount: 0, note: "" }; go("request-amount"); } }));
+    return { title: "Request from", body: frag(h("p", { class: "lead", text: "They'll see your request in your conversation, and can pay it with one tap." }), list) };
+  },
+  "request-amount"() {
+    const d = S.draft, p = PEOPLE[d.who];
+    const noteIn = h("input", { id: "note", maxlength: "40", placeholder: "e.g. Script coverage" }); noteIn.value = d.note || "";
+    const post = btn("Send request", "", () => {
+      const r = { id: nid("rq"), dir: "out", who: d.who, amount: d.amount, note: d.note || "Request", state: "open" };
+      S.requests.push(r); S.chat.push({ card: "myrequest", ref: r.id });
+      say(`Request for ${spoken(d.amount)} sent to ${p.name}.`);
+      go("request-sent", { id: r.id }, { replace: true });
+    }, { disabled: true });
+    const check = () => { post.disabled = !(d.amount > 0) || !d.note.trim(); };
+    noteIn.addEventListener("input", () => { d.note = noteIn.value; check(); });
+    return { title: `Request from ${p.name}`, body: frag(
+      amountEntry(d.amount, (v) => { d.amount = v; check(); }, `Amount to request from ${p.name}`),
+      h("div", { class: "field" }, h("label", { for: "note", text: "What's it for?" }), noteIn),
+      h("p", { class: "small", text: "A request can't take money on its own. It only shows what you're asking for." }),
+      h("div", { class: "push" }, post)) };
+  },
+  "request-sent"(q) {
+    const r = S.requests.find((x) => x.id === q.id);
+    return { title: "Requested", noBack: true, body: frag(h("div", { class: "done-ic" }, svg("check")), h("p", { class: "bigamt", text: money(r.amount) }),
+      h("p", { class: "center lead", text: `requested from ${PEOPLE[r.who].name} · ${r.note}` }),
+      h("div", { class: "push" }, btn("Done", "", () => { reset("profile"); go("wallet"); }))) };
+  },
+  "request-detail"(q) {
+    const r = S.requests.find((x) => x.id === q.id), p = PEOPLE[r.who];
+    if (r.dir === "in") {
+      return { title: "Request", body: frag(
+        h("div", { style: "display:flex;gap:.7rem;align-items:center" }, face(r.who), h("div", {}, h("b", { text: p.name }), h("p", { class: "small", text: p.role }))),
+        h("p", { class: "bigamt", text: money(r.amount) }), h("p", { class: "center lead", text: r.note }),
+        r.state === "paid" ? note("good", "You've paid this.") : r.state === "declined" ? note("info", "You declined this request.") : "",
+        r.state === "open" ? h("div", { class: "stack push" },
+          btn(`Pay ${money(r.amount)}`, "money", () => { if (needsWallet("request-detail", q)) return; S.draft = { kind: "send", who: r.who, amount: r.amount, note: r.note, src: defaultSrc(), fromRequest: r.id }; if (S.draft.src === "wallet" && r.amount > S.balance) S.draft.src = S.sources[0]?.id || "wallet"; go("send-review"); }),
+          btn("Decline", "ghost", () => { r.state = "declined"; say("Request declined."); paint(); })) : "") };
+    }
+    return { title: "Your request", body: frag(h("p", { class: "bigamt", text: money(r.amount) }), h("p", { class: "center lead", text: `from ${p.name} · ${r.note}` }),
+      note("info", r.state === "open" ? `Waiting for ${p.name} to pay.` : r.state === "cancelled" ? "You cancelled this request." : "Paid."),
+      r.state === "open" ? h("div", { class: "push" }, btn("Cancel request", "danger", () => { r.state = "cancelled"; say("Request cancelled."); paint(); })) : "") };
+  },
+
+  /* RECEIVE */
+  receive(q) {
+    const x = S.incoming.find((i) => i.id === q.id), p = PEOPLE[x.who];
+    if (x.state !== "waiting") return { title: "Payment", body: frag(note(x.state === "accepted" ? "good" : "info", x.state === "accepted" ? `You accepted ${money(x.amount)} from ${p.name}.` : `You declined this. The money went back to ${p.name}.`), h("div", { class: "push" }, btn("Back", "ghost", () => back()))) };
+    return { title: "Money for you", body: frag(
+      h("div", { style: "display:flex;gap:.7rem;align-items:center" }, face(x.who), h("div", {}, h("b", { text: p.name }), h("p", { class: "small", text: p.role }))),
+      h("p", { class: "bigamt", text: money(x.amount) }), h("p", { class: "center lead", text: x.note }),
+      !S.setup ? note("info", "Set up your wallet to accept it. You don't need to confirm your identity just to receive.") : "",
+      h("div", { class: "sum" }, h("div", {}, h("span", { text: "Goes to" }), h("span", { text: S.payout === "bank" ? (S.sources.find((s) => s.p === "bank")?.name || "Your bank") : "Your wallet" })),
+        h("div", {}, h("span", { text: "Accept by" }), h("span", { text: "Tomorrow, 14:02" }))),
+      h("div", { class: "stack push" },
+        btn(S.setup ? "Accept" : "Set up wallet to accept", "money", () => {
+          if (!S.setup) { go("setup-welcome", { then: "receive", thenParams: q }); return; }
+          x.state = "accepted"; S.balance += S.payout === "bank" ? 0 : x.amount;
+          S.activity.unshift({ id: nid("t"), kind: "in", who: x.who, amount: x.amount, note: x.note, when: "Now", state: S.payout === "bank" ? "processing" : "accepted", src: "wallet" });
+          say(`Accepted ${spoken(x.amount)} from ${p.name}.`); go("receive-done", q, { replace: true });
+        }),
+        btn("Decline and send it back", "ghost", () => { x.state = "declined"; say(`Declined. The money went back to ${p.name}.`); paint(); })),
+    ) };
+  },
+  "receive-done"(q) {
+    const x = S.incoming.find((i) => i.id === q.id);
+    return { title: "Accepted", noBack: true, body: frag(h("div", { class: "done-ic" }, svg("check")), h("p", { class: "bigamt", text: money(x.amount) }),
+      h("p", { class: "center lead", text: S.payout === "bank" ? "On its way to your bank · 1–2 working days" : `In your wallet · balance ${money(S.balance)}` }),
+      h("div", { class: "push" }, btn("Done", "", () => back()))) };
+  },
+
+  /* WITHDRAW */
+  "withdraw-amount"() {
+    const bank = S.sources.find((s) => s.p === "bank");
+    S.draft = { kind: "withdraw", amount: 0, src: bank?.id };
+    const d = S.draft;
+    const over = note("bad", "That's more than your balance.");
+    const cont = btn("Continue", "", () => go("withdraw-review"), { disabled: true });
+    if (!bank) return { title: "Withdraw", body: frag(note("info", "Connect a bank account to withdraw to."), h("div", { class: "push" }, btn("Connect a bank account", "", () => go("handoff", { p: "bank", host: PROVIDERS.bank.host, via: "Stripe", title: "Connect a bank account", what: PROVIDERS.bank.what, then: "connected", thenParams: { next: "back-to-methods" } })))) };
+    return { title: "Withdraw", body: frag(
+      h("p", { class: "lead center", text: `Available ${money(S.balance)}` }),
+      amountEntry(0, (v) => { d.amount = v; over.hidden = !(v > S.balance); cont.disabled = !(v > 0) || v > S.balance; }, "Amount to withdraw"),
+      over,
+      h("div", { class: "list" }, row({ lead: badge("BANK"), title: `To ${bank.name}`, sub: "No fee · 1–2 working days", disabled: true })),
+      h("div", { class: "push" }, cont)) };
+  },
+  "withdraw-review"() {
+    const d = S.draft, b = src(d.src);
+    return { title: "Check", body: frag(h("p", { class: "bigamt", text: money(d.amount) }), h("p", { class: "center lead", text: `to ${b.name}` }),
+      h("div", { class: "sum" }, h("div", {}, h("span", { text: "Fee" }), h("span", { text: "No fee" })), h("div", {}, h("span", { text: "Arrives" }), h("span", { text: "1–2 working days" }))),
+      h("div", { class: "push" }, confirmBtn(`Withdraw ${spoken(d.amount)}`, "", () => {
+        S.balance -= d.amount;
+        S.activity.unshift({ id: nid("t"), kind: "withdraw", amount: d.amount, when: "Now", state: "processing", src: d.src });
+        say(`Withdrawal of ${spoken(d.amount)} started.`); go("withdraw-done", {}, { replace: true });
+      }))) };
+  },
+  "withdraw-done"() {
+    return { title: "On its way", noBack: true, body: frag(h("div", { class: "done-ic" }, svg("check")), h("p", { class: "bigamt", text: money(S.draft.amount) }),
+      h("p", { class: "center lead", text: "on its way to your bank · 1–2 working days" }), h("div", { class: "push" }, btn("Done", "", () => { reset("profile"); go("wallet"); }))) };
+  },
+
+  /* ACTIVITY */
+  activity() {
+    const filters = ["All", "In", "Out"];
+    const f = nav.cur.params.f || "All";
+    const seg = h("div", { role: "group", "aria-label": "Show", style: "display:flex;gap:.4rem" },
+      ...filters.map((x) => h("button", { class: "chipbtn", type: "button", "aria-pressed": String(x === f), text: x, onclick: () => { nav.cur.params.f = x; paint(); } })));
+    const list = h("div", { class: "list" });
+    const items = S.activity.filter((t) => f === "All" || (f === "In" ? activityLine(t).inbound : !activityLine(t).inbound));
+    if (!items.length) list.append(row({ title: "Nothing here yet", disabled: true }));
+    for (const t of items) { const a = activityLine(t); list.append(row({ lead: t.who ? face(t.who) : badge(t.kind === "add" ? "+" : "↑", "money"), title: a.title, sub: `${a.status} · ${t.when}`, end: a.amountText, endIn: a.inbound, onclick: () => go("tx", { id: t.id }) })); }
+    return { title: "Activity", body: frag(seg, list, h("div", { class: "list" }, row({ title: "Monthly statements", sub: "Download a PDF for each month", onclick: () => say("Not in this demo.") }))) };
+  },
+  tx(q) {
+    const t = S.activity.find((x) => x.id === q.id); const a = activityLine(t); const p = t.who ? PEOPLE[t.who] : null;
+    const s = src(t.src) || src("wallet");
+    const tl = h("ol", { class: "timeline" });
+    const step = (on, b, sp) => tl.append(h("li", { class: on ? "on" : "" }, h("b", { text: b }), h("span", { text: sp })));
+    if (t.kind === "out") { step(true, "Sent", t.when); step(t.state !== "waiting", t.state === "cancelled" || t.state === "returned" ? "Returned to you" : `Accepted by ${p.name}`, t.state === "waiting" ? "Waiting · up to 24 hours" : "Done"); }
+    else if (t.kind === "in") { step(true, `Sent by ${p.name}`, t.when); step(true, "You accepted", t.when); if (t.state === "processing") step(false, "Arrives in your bank", "1–2 working days"); }
+    else if (t.kind === "withdraw") { step(true, "Started", t.when); step(false, "Arrives in your bank", "1–2 working days"); }
+    else { step(true, "Added", t.when); }
+    return { title: a.title, body: frag(
+      h("p", { class: "bigamt", text: a.amountText }),
+      h("p", { class: "center" }, h("span", { class: "pill " + (t.state === "waiting" || t.state === "processing" ? "warn" : "good"), text: a.status })),
+      tl,
+      h("div", { class: "sum" },
+        t.note ? h("div", {}, h("span", { text: "For" }), h("span", { text: t.note })) : "",
+        h("div", {}, h("span", { text: t.kind === "in" ? "Went to" : "Paid from" }), h("span", { text: s.name })),
+        t.fee ? h("div", {}, h("span", { text: "Fee" }), h("span", { text: money(t.fee) })) : "",
+        h("div", {}, h("span", { text: "Reference" }), h("span", { text: "EX-" + t.id.toUpperCase() + "-7Q2" }))),
+      h("div", { class: "stack push" },
+        t.kind === "out" && t.state === "waiting" ? btn("Cancel payment", "danger", () => { t.state = "cancelled"; if (t.src === "wallet") S.balance += t.amount + (t.fee || 0); say("Payment cancelled. The money is back with you."); paint(); }) : "",
+        p ? btn(`Message ${p.name}`, "ghost", () => { reset("room"); }) : "",
+        btn("Report a problem", "ghost", () => go("report", { id: t.id }))),
+    ) };
+  },
+  report(q) {
+    const reasons = ["I didn't make this payment", "I was asked to pay to unlock something", "I paid but didn't get what was agreed", "Something else"];
+    let pick = "";
+    const list = h("div", { class: "list", role: "radiogroup", "aria-label": "What happened" });
+    const sendB = btn("Send report", "", () => { say("Report sent."); go("report-done", q, { replace: true }); }, { disabled: true });
+    const draw = () => { list.textContent = ""; for (const r of reasons) list.append(row({ radio: true, checked: pick === r, title: r, onclick: () => { pick = r; sendB.disabled = false; draw(); list.querySelector('[aria-checked="true"]').focus(); } })); };
+    draw();
+    return { title: "Report a problem", body: frag(h("p", { class: "lead", text: "What happened?" }), list,
+      note("warn", "If you think it's a scam, don't send any more money, and don't move the conversation to another app."), h("div", { class: "push" }, sendB)) };
+  },
+  "report-done"() {
+    return { title: "Reported", noBack: true, body: frag(h("div", { class: "done-ic" }, svg("check")), h("p", { class: "hero center", text: "Thanks, we've got it" }),
+      h("p", { class: "center lead", text: "Someone from the Exchange will reply in Messages within one working day. If money can still be stopped, it will be." }),
+      h("div", { class: "push" }, btn("Done", "", () => back()))) };
+  },
+
+  /* PAYMENT METHODS */
+  methods() {
+    const list = h("div", { class: "list" });
+    if (!S.sources.length) list.append(row({ title: "Nothing connected", sub: "Connect a bank, card or PayPal to pay from", disabled: true }));
+    for (const s of S.sources) list.append(row({ lead: badge(PROVIDERS[s.p].tag), title: s.name, sub: `${s.def ? "Default · " : ""}through ${PROVIDERS[s.p].via}`, onclick: () => go("method", { id: s.id }) }));
+    return { title: "Payment methods", body: frag(list,
+      h("div", { class: "list" }, row({ lead: badge("+"), title: "Connect a bank, card or PayPal", sub: "On their own secure page", onclick: () => go("add-method", { returnTo: "methods" }) })),
+      h("p", { class: "small", text: "The Exchange stores a reference to each account and the last four digits. Never a login, password or full card number." })) };
+  },
+  "add-method"(q) {
+    const opts = S.region === "cn" ? ["wechat", "card", "bank"] : ["bank", "card", "paypal"];
+    const list = h("div", { class: "list" });
+    for (const id of opts) {
+      const pr = PROVIDERS[id];
+      const done = S.sources.some((s) => s.p === id);
+      list.append(row({ lead: badge(pr.tag), title: pr.title, sub: done ? "Already connected" : `${pr.fee ? "3% fee" : "No fee"} · through ${pr.via}`, disabled: done,
+        onclick: () => go("handoff", { p: id, host: pr.host, via: pr.via, title: `Connect ${pr.title}`, what: pr.what, then: "connected",
+          thenParams: { next: q.returnTo === "methods" ? "back-to-methods" : "back-to-source", returnTo: q.returnTo } }) }));
+    }
+    return { title: "Connect", body: frag(h("p", { class: "lead", text: "You'll finish on the provider's own page." }), list) };
+  },
+  method(q) {
+    const s = S.sources.find((x) => x.id === q.id);
+    if (!s) return { title: "Removed", body: frag(note("info", "This method was removed."), h("div", { class: "push" }, btn("Back", "ghost", () => back()))) };
+    return { title: s.name, body: frag(
+      h("div", { class: "sum" },
+        h("div", {}, h("span", { text: "Connected through" }), h("span", { text: PROVIDERS[s.p].via })),
+        h("div", {}, h("span", { text: "Fee when you pay" }), h("span", { text: PROVIDERS[s.p].fee ? "3%" : "No fee" })),
+        h("div", {}, h("span", { text: "Default" }), h("span", { text: s.def ? "Yes" : "No" }))),
+      h("div", { class: "stack push" },
+        !s.def ? btn("Make default", "ghost", () => { S.sources.forEach((x) => { x.def = x.id === s.id; }); say(`${s.name} is now your default.`); paint(); }) : "",
+        btn("Remove", "danger", () => openSheet(`Remove ${s.name}?`, frag(
+          h("p", { class: "lead center", text: `You can connect it again later. ${PROVIDERS[s.p].via} keeps its own record until you remove the Exchange there too.` }),
+          btn("Remove", "danger", () => { S.sources = S.sources.filter((x) => x.id !== s.id); if (s.def && S.sources[0]) S.sources[0].def = true; say(`${s.name} removed.`); closeSheet(); back(); }))))),
+    ) };
+  },
+
+  /* SETTINGS */
+  settings() {
+    const sw = (key, labelId) => { const b = h("button", { class: "sw", type: "button", role: "switch", "aria-checked": String(S[key]), "aria-labelledby": labelId, onclick: () => { S[key] = !S[key]; b.setAttribute("aria-checked", String(S[key])); } }); return b; };
+    return { title: "Wallet settings", body: frag(
+      h("p", { class: "k", text: "Security" }),
+      h("div", { class: "list" },
+        h("div", { class: "toggle" }, h("span", { class: "m" }, h("b", { id: "s1", text: "Face ID for payments" }), h("span", { text: "Otherwise the phone's passcode" })), sw("faceId", "s1")),
+        h("div", { class: "toggle" }, h("span", { class: "m" }, h("b", { id: "s2", text: "Notify me about every payment" }), h("span", { text: "Sent, received, accepted, returned" })), sw("notify", "s2"))),
+      h("p", { class: "k", text: "Your wallet" }),
+      h("div", { class: "list" },
+        row({ title: "Limits", sub: S.verified === "verified" ? `Send up to ${money(R().send)} a day` : "Confirm your identity to send", onclick: () => go("limits") }),
+        row({ title: "Payment methods", sub: `${S.sources.length} connected`, onclick: () => go("methods") }),
+        row({ title: "Money you receive", sub: S.payout === "bank" ? "Straight to your bank" : "Stays in your wallet", onclick: () => go("setup-payout-edit") }),
+        row({ title: "Region and currency", sub: `${R().name} · ${R().cur}`, disabled: true })),
+      h("p", { class: "k", text: "Help" }),
+      h("div", { class: "list" },
+        row({ title: "Help and safety", sub: "Report a payment, spot a scam", onclick: () => go("help") }),
+        row({ title: "Close wallet", sub: "Withdraw your balance first", onclick: () => go("close") })),
+    ) };
+  },
+  "setup-payout-edit"() {
+    const list = h("div", { class: "list", role: "radiogroup", "aria-label": "Where money you receive goes" });
+    const bank = S.sources.find((s) => s.p === "bank");
+    list.append(row({ radio: true, checked: S.payout === "wallet", title: "Keep it in my wallet", sub: "Withdraw whenever you like", onclick: () => { S.payout = "wallet"; paint(); } }));
+    if (bank) list.append(row({ radio: true, checked: S.payout === "bank", title: `Straight to ${bank.name}`, sub: "1–2 working days", onclick: () => { S.payout = "bank"; paint(); } }));
+    return { title: "Money you receive", body: frag(list, !bank ? h("p", { class: "small", text: "Connect a bank account to have money sent straight there." }) : "") };
+  },
+  limits() {
+    const v = S.verified === "verified";
+    return { title: "Limits", body: frag(
+      h("p", { class: "lead", text: v ? "You're verified." : "Receiving works now. Sending needs your identity confirmed." }),
+      h("div", { class: "sum" },
+        h("div", {}, h("span", { text: "Send per day" }), h("span", { text: v ? money(R().send) : "Not yet" })),
+        h("div", {}, h("span", { text: "Receive per month" }), h("span", { text: money(R().recv) })),
+        h("div", {}, h("span", { text: "Wallet balance up to" }), h("span", { text: money(R().recv) }))),
+      h("p", { class: "small", text: "Example limits. The real ones depend on the licence and the provider." }),
+      !v ? h("div", { class: "push" }, btn("Confirm my identity", "", () => go("verify-needed"))) : "") };
+  },
+  help() {
+    return { title: "Help and safety", body: frag(
+      note("warn", h("b", { text: "The Exchange will never ask you to send money " }), "to unlock an introduction, a seat, or a feature. Anyone who does is not us."),
+      h("div", { class: "list" },
+        row({ title: "Report a payment", sub: "Choose it from Activity", onclick: () => go("activity") }),
+        row({ title: "Someone asked to move to another app to pay", sub: "That's the most common start of a scam", disabled: true }),
+        row({ title: "Money sent to the wrong person", sub: "If they haven't accepted, cancel it from the payment", disabled: true }),
+        row({ title: "Talk to someone", sub: "Replies in Messages within one working day", onclick: () => say("Not in this demo.") }))) };
+  },
+  close() {
+    const has = S.balance > 0;
+    return { title: "Close wallet", body: frag(
+      h("p", { class: "lead", text: "Closing removes your connected accounts and stops payments to and from you. Your payment history is kept, as the law requires." }),
+      has ? note("warn", `You still have ${money(S.balance)}. Withdraw it first.`) : "",
+      h("div", { class: "stack push" },
+        has ? btn("Withdraw balance", "", () => go("withdraw-amount")) : "",
+        btn("Close wallet", "danger", () => { S.setup = false; S.sources = []; S.verified = "none"; say("Wallet closed."); reset("profile"); }, { disabled: has }))) };
+  },
+};
+
+const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+/* the money cards in chat */
+function chatCard(m) {
+  let amount, noteText, foot, label, done = false, click = null, arrow = "swap";
+  if (m.card === "request") {
+    const r = S.requests.find((x) => x.id === m.ref); const p = PEOPLE[r.who];
+    amount = r.amount; noteText = r.note; arrow = "req";
+    if (r.state === "open") { foot = "Request · tap to pay"; label = `${p.name} requested ${spoken(r.amount)} for ${r.note}. Tap to pay.`; click = () => go("request-detail", { id: r.id }); }
+    else { done = true; foot = r.state === "paid" ? "Request · paid" : "Request · declined"; label = `${p.name}'s request for ${spoken(r.amount)}, ${r.state}.`; click = () => go("request-detail", { id: r.id }); }
+  } else if (m.card === "incoming") {
+    const x = S.incoming.find((i) => i.id === m.ref); const p = PEOPLE[x.who];
+    amount = x.amount; noteText = x.note;
+    if (x.state === "waiting") { foot = "Transfer · tap to accept"; label = `${p.name} sent you ${spoken(x.amount)} for ${x.note}. Tap to accept.`; }
+    else { done = true; foot = x.state === "accepted" ? "Transfer · you accepted" : "Transfer · you declined"; label = `${p.name} sent you ${spoken(x.amount)}. ${x.state === "accepted" ? "Accepted" : "Declined"}.`; }
+    click = () => go("receive", { id: x.id });
+  } else if (m.card === "sent") {
+    const t = S.activity.find((a) => a.id === m.ref); const p = PEOPLE[t.who];
+    amount = t.amount; noteText = t.note || "Transfer";
+    done = t.state !== "waiting";
+    foot = t.state === "waiting" ? `Transfer · waiting for ${p.name}` : t.state === "accepted" ? `Transfer · ${p.name} accepted` : "Transfer · cancelled";
+    label = `You sent ${spoken(t.amount)} to ${p.name}. ${cap(foot.split("· ")[1])}.`;
+    click = () => go("tx", { id: t.id });
+  } else {
+    const r = S.requests.find((x) => x.id === m.ref); const p = PEOPLE[r.who];
+    amount = r.amount; noteText = r.note; arrow = "req"; done = r.state !== "open";
+    foot = r.state === "open" ? `Request · waiting for ${p.name}` : `Request · ${r.state}`;
+    label = `You requested ${spoken(r.amount)} from ${p.name}. ${cap(foot.split("· ")[1])}.`;
+    click = () => go("request-detail", { id: r.id });
+  }
+  const b = h("button", { class: "xfer" + (done ? " done" : ""), type: "button", "aria-label": label, onclick: click },
+    h("span", { class: "t", "aria-hidden": "true" }, h("span", { class: "ic" }, svg(arrow)), h("span", {}, h("span", { class: "a", style: "display:block", text: money(amount) }), h("span", { class: "f", style: "display:block", text: noteText }))),
+    h("span", { class: "foot", style: "display:block", "aria-hidden": "true", text: foot }));
+  return b;
+}
+function moneySheet() {
+  openSheet("Money", frag(h("div", { class: "list" },
+    row({ lead: badge("→", "money"), title: "Send money", sub: "To someone in this room", onclick: () => { closeSheet(); if (!needsWallet("send-to")) go("send-to"); } }),
+    row({ lead: badge("↓", "money"), title: "Request money", sub: "Post a request they can pay", onclick: () => { closeSheet(); if (!S.setup) { go("setup-welcome", { then: "request-to" }); return; } go("request-to"); } }),
+    row({ lead: badge("W", "money"), title: "Wallet", sub: S.setup ? `Balance ${money(S.balance)}` : "Set up", onclick: () => { closeSheet(); S.setup ? go("wallet") : go("setup-welcome"); } }))));
+}
+
+/* ---- screen map ---- */
+const MAP = [
+  ["Where it lives", [["Profile · Wallet row", () => reset("profile")], ["Chat room with money in it", () => reset("room")], ["Money menu in the chat", () => { reset("room"); moneySheet(); }]]],
+  ["Setup", [["Welcome", () => { useNew(); reset("profile"); go("setup-welcome"); }], ["Where you live", () => { useNew(); reset("profile"); go("setup-region"); }], ["Terms", () => { useNew(); S.region = "hk"; reset("profile"); go("setup-terms"); }],
+    ["Confirm it's you", () => { useNew(); S.region = "hk"; reset("profile"); go("setup-verify"); }], ["Stripe's page (hand-off)", () => { useNew(); S.region = "hk"; reset("profile"); go("setup-verify"); go("handoff", { p: "identity", host: "verify.stripe.com", via: "Stripe", title: "Verify your identity", what: "Take a photo of your ID and a selfie.", then: "setup-verifying", thenParams: {} }); }],
+    ["Face ID", () => { useNew(); S.region = "hk"; reset("profile"); go("setup-security"); }], ["Connect a way to pay", () => { useNew(); S.region = "hk"; reset("profile"); go("setup-source"); }],
+    ["Where received money goes", () => { useNew(); S.region = "hk"; reset("profile"); go("setup-payout"); }], ["Wallet ready", () => { useNew(); S.region = "hk"; S.verified = "verified"; reset("profile"); go("setup-done"); }]]],
+  ["Wallet", [["Home", () => { useSet(); reset("profile"); go("wallet"); }], ["Activity", () => { useSet(); reset("profile"); go("wallet"); go("activity"); }], ["A payment's detail", () => { useSet(); reset("profile"); go("wallet"); go("tx", { id: S.activity[0].id }); }],
+    ["Report a problem", () => { useSet(); reset("profile"); go("wallet"); go("tx", { id: S.activity[0].id }); go("report", { id: S.activity[0].id }); }]]],
+  ["Moving money", [["Send: choose a person", () => { useSet(); reset("profile"); go("wallet"); go("send-to"); }],
+    ["Send: amount", () => { useSet(); S.draft = { kind: "send", who: "ray", amount: 0, note: "", src: "wallet" }; reset("profile"); go("wallet"); go("send-amount"); }],
+    ["Send: check and confirm", () => { useSet(); S.draft = { kind: "send", who: "ray", amount: 800, note: "Bond terms read-through", src: "wallet" }; reset("profile"); go("wallet"); go("send-review"); }],
+    ["Request money", () => { useSet(); reset("profile"); go("wallet"); go("request-to"); }], ["Pay a request", () => { useSet(); reset("room"); go("request-detail", { id: "rq1" }); }],
+    ["Accept incoming money", () => { useSet(); reset("room"); go("receive", { id: "in1" }); }], ["Add money", () => { useSet(); reset("profile"); go("wallet"); go("add-amount"); }], ["Withdraw", () => { useSet(); reset("profile"); go("wallet"); go("withdraw-amount"); }]]],
+  ["Accounts and settings", [["Payment methods", () => { useSet(); reset("profile"); go("wallet"); go("methods"); }], ["Connect: PayPal's page", () => { useSet(); reset("profile"); go("wallet"); go("methods"); go("add-method", { returnTo: "methods" }); go("handoff", { p: "paypal", host: PROVIDERS.paypal.host, via: "PayPal", title: "Connect PayPal", what: PROVIDERS.paypal.what, then: "connected", thenParams: { next: "back-to-methods" } }); }],
+    ["Settings", () => { useSet(); reset("profile"); go("wallet"); go("settings"); }], ["Limits", () => { useSet(); reset("profile"); go("wallet"); go("settings"); go("limits"); }],
+    ["Help and safety", () => { useSet(); reset("profile"); go("wallet"); go("help"); }], ["Not verified yet", () => { useSet(); S.verified = "none"; reset("profile"); go("wallet"); go("verify-needed"); }], ["Close wallet", () => { useSet(); reset("profile"); go("wallet"); go("settings"); go("close"); }]]],
+];
+const SCREEN_OF = { "Welcome": "setup-welcome", "Where you live": "setup-region", "Terms": "setup-terms", "Confirm it's you": "setup-verify", "Stripe's page (hand-off)": "handoff", "Face ID": "setup-security", "Connect a way to pay": "setup-source", "Where received money goes": "setup-payout", "Wallet ready": "setup-done",
+  "Home": "wallet", "Activity": "activity", "A payment's detail": "tx", "Report a problem": "report", "Send: choose a person": "send-to", "Send: amount": "send-amount", "Send: check and confirm": "send-review", "Request money": "request-to", "Pay a request": "request-detail", "Accept incoming money": "receive", "Add money": "add-amount", "Withdraw": "withdraw-amount",
+  "Payment methods": "methods", "Connect: PayPal's page": "handoff", "Settings": "settings", "Limits": "limits", "Help and safety": "help", "Not verified yet": "verify-needed", "Close wallet": "close", "Profile · Wallet row": "profile", "Chat room with money in it": "room" };
+function useNew() { if (S.setup) { fresh(false); markStart(false); } }
+function useSet() { if (!S.setup) { fresh(true); markStart(true); } }
+function markStart(set) { $("startNew").setAttribute("aria-pressed", String(!set)); $("startSet").setAttribute("aria-pressed", String(set)); }
+const groups = $("groups");
+for (const [name, items] of MAP) {
+  const ol = h("ol");
+  for (const [label, run] of items) ol.append(h("li", {}, h("button", { type: "button", "data-screen": SCREEN_OF[label] || "", text: label, onclick: () => { run(); if (matchMedia("(max-width:880px)").matches) { $("map").classList.remove("open"); $("mapbtn").setAttribute("aria-expanded", "false"); } } })));
+  groups.append(h("section", { class: "grp" }, h("h3", { text: name }), ol));
+}
+
+/* ---- wiring ---- */
+$("backbtn").onclick = back;
+$("tabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; reset({ messages: "room", cards: "cards", browse: "browse", profile: "profile" }[b.dataset.tab]); });
+$("startNew").onclick = () => { fresh(false); markStart(false); reset("profile"); say("Starting as someone new to the wallet."); };
+$("startSet").onclick = () => { fresh(true); markStart(true); reset("profile"); go("wallet"); say("Starting with a wallet already set up."); };
+$("mapbtn").onclick = () => { const o = $("map").classList.toggle("open"); $("mapbtn").setAttribute("aria-expanded", String(o)); if (o) $("maph").scrollIntoView({ block: "start" }); };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("overlay").childNodes.length) closeSheet(); });
+
+reset("profile");
+})();
+</script>
