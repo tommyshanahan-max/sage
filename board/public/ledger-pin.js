@@ -289,11 +289,14 @@ const CSS = `
     cursor:pointer}
   .lprulesbox{display:grid;gap:.5rem;padding-top:.7rem}
   .lprulesbox p{margin:0;font-size:.98rem;font-weight:500;line-height:1.6;color:var(--d-ink2)}
-  .lpjoin{display:grid;gap:.45rem;margin-top:.9rem;padding-top:.9rem;
-    border-top:1px solid var(--d-line)}
-  .lpdo{font:inherit;font-weight:700;font-size:1.04rem;padding:.65rem 1.2rem;
-    border-radius:99px;border:0;background:var(--d-key);color:#0B0E15;
-    cursor:pointer;justify-self:start}
+  /* IT SITS UNDER THE FIGURE NOW, not at the foot of the opened panel — so it
+     loses the rule above it (there is nothing above it to divide from) and the
+     button runs the full width. A pill aligned left under a figure that size
+     reads as a footnote, and this is the only act on the screen. */
+  .lpjoin{display:grid;gap:.45rem;margin-top:.55rem}
+  .lpdo{font:inherit;font-weight:700;font-size:1.06rem;padding:.8rem 1.2rem;
+    border-radius:.75rem;border:0;background:var(--d-key);color:#0B0E15;
+    cursor:pointer;width:100%}
   .lpyes{margin:0;font-size:1.02rem;font-weight:700;color:#35D08A}
   .lpsay{margin:0;font-size:.94rem;color:var(--d-mute)}
   /* The way out, at the end of the way in. Quiet — it is not a thing to do,
@@ -535,7 +538,7 @@ function overview(box, d, device) {
        screen that answers "why would I bother" — and the reader this is for is
        not a member yet and is looking at it in a queue. The figure is the
        hook; the funnel is why it is worth less if they wait. */
-    const at = atGoal(d);
+    const at = atGoal(d, device);
     if (at) wrap.append(at);
     const lad = ladder(d);
     if (lad) wrap.append(lad);
@@ -635,7 +638,7 @@ function ladder(d) {
  *  a sum about somebody's own stake with no account of where it came from is
  *  the thing that reads as a promise rather than as arithmetic.
  */
-function atGoal(d) {
+function atGoal(d, device) {
   if (typeof d.moneyAt !== "number" || !d.goal) return null;
   const wrap = el("div", "lpat");
   const box = el("div", "lpatbox");
@@ -650,6 +653,17 @@ function atGoal(d) {
      text below it that reads as belonging to whatever comes next. */
   box.append(el("span", "no", T("pin.moneyShort")));
   wrap.append(box);
+  /* THE WAY TO CLAIM IT, DIRECTLY UNDER THE FIGURE.
+   *
+   * It was the last thing inside the panel, so somebody had to open the
+   * chevron and scroll past the whole ledger to find the one button on the
+   * screen that does anything — and the report from the box was, exactly,
+   * "I don't see a way to claim it". A figure this size with no act beside it
+   * is a screen that asks to be admired.
+   *
+   * It is the same joinRow as before, moved rather than copied: two buttons
+   * posting the same thing is two states to keep in step. */
+  if (!d.joined && d.place) wrap.append(joinRow(d, device));
   return wrap;
 }
 
@@ -783,7 +797,7 @@ function body(d, device) {
   w.append(rw);
   if (RULES) paintRules(w, d, go, rw);
 
-  if (!d.joined && d.place) w.append(joinRow(d, device));
+  /* The join row is above the chevron now — see atGoal. */
 
   /* A WAY OUT AT THE BOTTOM, because the way in is at the top.
    *

@@ -3061,7 +3061,18 @@ const LGUESTS = (() => {
  * number without the other is either a lottery you won by being early or a
  * treadmill with no reason to have come. */
 const LSPLIT = (() => {
-  const v = Number(process.env.BOARD_LEDGER_SPLIT);
+  /* BLANK IS UNSET, AND NOUGHT IS NOUGHT.
+   *
+   * Number("") is 0, and 0 passes every test this had — finite, at least
+   * nought, at most a hundred — so a `TOMSCODING_BOARD_LEDGER_SPLIT=` line
+   * with nothing after it, which is exactly what .env.example seeds, set the
+   * place half to nought per cent of the pool. Every share on every screen
+   * came out 0%, every currency figure came out $0, and nothing anywhere said
+   * why. Nought is a legal value for this one, so blank cannot be allowed to
+   * mean it: the string is tested before the number is. */
+  const raw = String(process.env.BOARD_LEDGER_SPLIT ?? "").trim();
+  if (!raw) return 70;
+  const v = Number(raw);
   return Number.isFinite(v) && v >= 0 && v <= 100 ? v : 70;
 })();
 /** The day the counting stops, and the day the goal is meant to be reached.
