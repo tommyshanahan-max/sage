@@ -1227,19 +1227,55 @@ export const LEVELS = ["Just starting", "HSK 1-2", "HSK 3", "HSK 4", "HSK 5", "H
  * nothing, and that is a deliberate limit rather than an unfinished one: see
  * the brief for counsel before any of it is ever expressed in a currency.
  *
- * THE EDGES ARE ARRIVAL COUNTS AND THEY CLOSE FOR GOOD. Past 20,000 there is
- * no layer at all, which is what makes the earlier ones mean anything — the
- * people after that arrive for the product, which is the right order.
+ * THE EDGES ARE ARRIVAL COUNTS AND THEY CLOSE FOR GOOD. Past the last one
+ * there is no layer at all, which is what makes the earlier ones mean anything
+ * — the people after that arrive for the product, which is the right order.
+ *
+ * POWERS OF TEN, AND THAT IS THE WHOLE OF IT.
+ *
+ * It was 3 / 100 / 1,000 / 4,000 / 10,000 / 20,000 — six bands chosen to make
+ * the arithmetic land, and not one of those edges is a number anybody repeats.
+ * "I am in the first four thousand" is not a sentence a person says to a
+ * friend, and the layer exists to be said out loud.
+ *
+ * The first ten, the first hundred, the first thousand, the first ten
+ * thousand. Four, each worth the same in total, and because the sizes are
+ * 10 / 90 / 900 / 9,000 the points per place come out as 9,000 / 1,000 / 100 /
+ * 10 — a decimal ladder anybody can hold in their head and check. Missing a
+ * tier costs a factor of ten, which is the fact the screen is there to carry.
+ *
+ * THE LAST TIER IS NOT THE GOAL. The ledger closes at 10,000; the number of
+ * members the company is aiming at is a different, larger figure set on the
+ * box. Everybody after 10,000 is a member and can still earn the other half
+ * from what they do — they just arrive too late for a place.
  */
 export const LAYERS = [
-  { key: "l1", upto: 3 },
+  { key: "l1", upto: 10 },
   { key: "l2", upto: 100 },
   { key: "l3", upto: 1000 },
-  { key: "l4", upto: 4000 },
-  { key: "l5", upto: 10000 },
-  { key: "l6", upto: 20000 },
+  { key: "l4", upto: 10000 },
 ];
 export const LAYER_CAP = LAYERS[LAYERS.length - 1].upto;
+
+/** Where a layer starts. `n` is 1-based, as layerOf reports it. */
+export function layerFrom(n) {
+  return n > 1 ? LAYERS[n - 2].upto + 1 : 1;
+}
+
+/** WHAT ONE TIER HOLDS, IN POINTS, and every tier holds the same.
+ *
+ *  The figure itself is arbitrary and is never shown — only points per place
+ *  are — but it is 90,000 rather than 1 because 90,000 over the four sizes
+ *  divides exactly into 9,000 / 1,000 / 100 / 10. A number that divides
+ *  cleanly is a number nobody has to be told to round. */
+export const TIER_TOTAL = 90000;
+
+/** What a place is worth, from the tier it falls in. Nought past the cap. */
+export function tierPoints(seq) {
+  const l = layerOf(seq);
+  if (!l) return 0;
+  return Math.round(TIER_TOTAL / (l.upto - layerFrom(l.n) + 1));
+}
 
 /** Which layer an arrival number falls in, or null past the last edge. */
 export function layerOf(seq) {

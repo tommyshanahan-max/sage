@@ -155,6 +155,61 @@ const CSS = `
   .lpcell b{display:block;font-size:1.22rem;font-weight:700;margin-top:.1rem;
     font-variant-numeric:tabular-nums}
 
+  /* THE LADDER, AND IT IS NOT BEHIND THE CHEVRON.
+   *
+   * Four rungs, each with its own bar: the ones that are full, the one filling
+   * now, and the ones that have not opened. It is the whole scheme in the
+   * height of four rows, and it is the part that makes somebody move — a bar
+   * at forty per cent of a hundred is a thing that is happening, where "40 of
+   * 50,000" is a bar at a twelfth of one per cent and reads as hopeless.
+   *
+   * ALWAYS DRAWN. It replaced the five-box sliding scale, which said the same
+   * fact from behind a tap and a second tap after that. */
+  .lpladder{display:grid;gap:.55rem;padding:.1rem 1.1rem 1.05rem}
+  .lprung{position:relative;background:var(--d-card);border-radius:.7rem;
+    padding:.6rem .8rem .7rem}
+  .lprung.on{box-shadow:inset 0 0 0 1.5px var(--d-key)}
+  /* Shut is quieter, not hidden: a tier somebody missed is the argument. */
+  .lprung.rdone .nm,.lprung.rdone .ea{color:var(--d-mute)}
+  .lprungtop{display:flex;justify-content:space-between;align-items:baseline;gap:.7rem}
+  .lprung .nm{font-size:1rem;font-weight:700;min-width:0}
+  .lprung .st{flex:0 0 auto;font-size:.9rem;font-weight:700;color:var(--d-key);
+    font-variant-numeric:tabular-nums}
+  .lprung.rdone .st,.lprung.rsoon .st{color:var(--d-mute)}
+  /* TEN PIECES A ROW, AND THE ROW NARROWS AS IT GOES DOWN.
+   *
+   * A continuous bar says "some of it is done". Ten pieces say how many are
+   * left, because a person counts them — and on the top row one piece is one
+   * person, so the first ten is a thing you watch go.
+   *
+   * THE TAPER IS A SCALE, NOT A SHAPE. Each row is as wide as what one place
+   * in it is worth, on a decade scale: 9,000 / 1,000 / 100 / 10 points is four
+   * decades, so the rows are 100 / 75 / 50 / 25 per cent and the narrowing IS
+   * the fact. Drawn as a taper chosen to look like a funnel it would be a
+   * chart of nothing, which is worse than no chart. */
+  .lpseg{display:flex;gap:2px;margin:.5rem auto 0;height:10px}
+  .lpseg span{flex:1;min-width:0;background:var(--d-line);border-radius:2px;
+    overflow:hidden}
+  .lpseg span i{display:block;height:100%;background:var(--d-key)}
+  .lprung.rdone .lpseg span i{background:var(--d-mute)}
+  /* EXCEPT WHEN IT IS THEIRS. Full means gone for everybody else and means
+     got in for the reader, and the same grey for both says the wrong one. */
+  .lprung.on .lpseg span i{background:var(--d-key)}
+  .lprung.on.rdone .nm,.lprung.on.rdone .st{color:var(--d-ink)}
+  .lprung .ea{margin:.1rem 0 0;font-size:.84rem;font-weight:500;color:var(--d-ink2)}
+  /* WHAT IT COMES TO IF THE TARGET IS REACHED, which is the question the whole
+     panel is read to answer and was four taps down. One box, one figure, and
+     the two numbers it stands on named underneath it. */
+  .lpat{padding:0 1.1rem 1.05rem}
+  .lpatbox{background:var(--d-card);border-radius:.7rem;padding:.85rem .9rem;
+    box-shadow:inset 0 0 0 1.5px var(--d-key)}
+  .lpatbox .k{display:block;font-size:.84rem;letter-spacing:.06em;font-weight:700;
+    text-transform:uppercase;color:var(--d-mute);line-height:1.3}
+  :root[data-lang="zh"] .lpatbox .k{letter-spacing:0;text-transform:none;font-size:.92rem}
+  .lpatbox .v{display:block;font-size:1.9rem;font-weight:700;margin-top:.15rem;
+    letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .lpatbox .u{display:block;font-size:.84rem;font-weight:500;color:var(--d-ink2);
+    margin-top:.2rem;line-height:1.4}
   .lpshare,.lptoward{margin:.15rem 0 0;font-size:1.04rem;font-weight:500;color:var(--d-ink2)}
   .lpshare b,.lptoward b{font-size:1.25rem;font-weight:700;color:var(--d-ink);
     font-variant-numeric:tabular-nums}
@@ -244,7 +299,13 @@ let LAST = null;
 const same = (a, b) =>
   a && b && a.place === b.place && a.total === b.total
   && a.members === b.members && a.joined === b.joined && a.goal === b.goal
-  && a.lang === b.lang && a.preview === b.preview && a.soon === b.soon;
+  && a.lang === b.lang && a.preview === b.preview && a.soon === b.soon
+  /* THE LADDER AND THE FIGURE AT THE GOAL, both of which are now on screen
+     without a tap. Fourth time a guard against needless redraws did not know
+     everything a redraw changes; the others are named above. */
+  && (a.tier || {}).left === (b.tier || {}).left
+  && (a.tier || {}).key === (b.tier || {}).key
+  && a.moneyAt === b.moneyAt;
 
 /** Take the pin out of the room. */
 export function hideLedgerPin(box) {
@@ -368,14 +429,23 @@ function overview(box, d, device) {
     big.append(el("span", null, T("pin.none")));
   }
   left.append(big);
+  /* THE TIER IS THE HALF THEY REPEAT. "Place #41" is a receipt; "in the first
+     hundred" is what somebody tells a friend, so both are on the line and the
+     tier is the half that survives being read at a glance. Whether they have
+     pressed Join is a different fact and gets its own quiet line — it used to
+     sit here in the tier's place, which spent the loudest line on the screen
+     saying nothing anybody wanted to know. */
   if (d.place) {
     const on = el("p", "lpon");
     on.append(el("i", "lpdot"));
     on.append(document.createTextNode(T("pin.place", { n: num(d.place) })
-      + " · " + T(d.joined ? "pin.onIt" : "pin.notOn")));
+      + (d.yourTier ? " · " + T("layer." + d.yourTier.key) : "")));
     left.append(on);
+    if (!d.joined) left.append(el("p", "lpsmall", T("pin.notOn")));
   } else if (d.soon) {
     left.append(el("p", "lpon2", T("pin.soonWorth", { p: num(d.soonPts) })));
+    if (d.soonTier) left.append(el("p", "lpsmall",
+      T("pin.soonTier", { tier: T("layer." + d.soonTier.key) })));
   }
   head.append(left);
 
@@ -412,7 +482,111 @@ function overview(box, d, device) {
   });
   wrap.append(head);
 
+  /* BOTH OF THESE SIT OUTSIDE THE CHEVRON ON PURPOSE. They are the two things
+     somebody opened this to find out — which tier is filling, and what it
+     comes to if the target is reached — and everything that was behind a tap
+     was read by nobody. */
+  if (!d.shut) {
+    const lad = ladder(d);
+    if (lad) wrap.append(lad);
+    const at = atGoal(d);
+    if (at) wrap.append(at);
+  }
+
   if (OPEN && !d.shut) wrap.append(body(d, device));
+  return wrap;
+}
+
+/** THE FOUR TIERS, EACH WITH ITS OWN BAR.
+ *
+ *  Full, filling, or not open yet — said three ways because they are three
+ *  different facts and a single grey bar says none of them. The reader's own
+ *  rung carries the accent ring.
+ */
+/* THE FOUR WIDTHS, AS DECADES. See the note over .lpseg: a place in the first
+   ten is worth 9,000 points and one in the last tier is worth 10, which is
+   four decades, so the rows step a quarter each. Held here as a list rather
+   than worked out from the points because a row that fell to a hair's width on
+   some future set of tiers would be a bug nobody would think to look for. */
+const SEGW = ["100%", "75%", "50%", "25%"];
+
+function ladder(d) {
+  if (!d.tiers || !d.tiers.length) return null;
+  const mine = (d.yourTier || d.soonTier || {}).key || "";
+  const wrap = el("div", "lpladder");
+  wrap.setAttribute("role", "list");
+  for (const t of d.tiers) {
+    const taken = Math.min(t.size, Math.max(0, d.members - t.from + 1));
+    const full = taken >= t.size;
+    const open = taken > 0;
+    /* NAMESPACED MODIFIERS, and that is not fussiness. They were `shut` and
+       `soon`, and this page already has a `.shut` with text-align:center on
+       it — so the one rung that was full had its line centred and nothing in
+       this file said why. A class this generic on an element this deep is a
+       collision waiting for whoever adds the next one. */
+    const row = el("div", "lprung"
+      + (t.key === mine ? " on" : "") + (full ? " rdone" : open ? "" : " rsoon"));
+    row.setAttribute("role", "listitem");
+    const top = el("div", "lprungtop");
+    /* THE NAME ALONE ON THE LINE. "First hundred · 1,000 points each" beside
+       "57 left" wraps at phone width, and a wrapped rung reads as two rungs.
+       What it is worth goes under, where it has the width to be a sentence. */
+    top.append(el("b", "nm", T("layer." + t.key)));
+    const state = full ? T("pin.tFull")
+      : open ? T(t.size - taken === 1 ? "pin.tOne" : "pin.tLeft", { n: num(t.size - taken) })
+      : T("pin.tOpens", { n: num(t.from) });
+    top.append(el("span", "st", state));
+    row.append(top);
+    row.append(el("p", "ea", T("pin.tEach", { n: num(t.pts) })));
+
+    /* TEN PIECES, AND THE LAST ONE IN IS A PART-PIECE. Rounding it up or down
+       would make a row of ten read as full one person early or one person
+       late, and on the top row that person is a tenth of the tier. */
+    const seg = el("div", "lpseg");
+    seg.style.width = SEGW[Math.min(SEGW.length - 1, t.n - 1)];
+    for (let k = 0; k < 10; k++) {
+      const cell = el("span");
+      const on = Math.max(0, Math.min(1, (taken * 10) / t.size - k));
+      const fill = el("i");
+      fill.style.width = on * 100 + "%";
+      cell.append(fill);
+      seg.append(cell);
+    }
+    row.append(seg);
+
+    /* SAID ONCE, AS A SENTENCE. Four rungs of three loose numbers read out as
+       twelve of them; each rung carries its own line and its insides are
+       hidden from the reader that uses it. */
+    row.setAttribute("aria-label", T("layer." + t.key) + " — "
+      + T("pin.tEach", { n: num(t.pts) }) + " — " + state
+      + (t.key === mine ? " — " + T("pin.yours") : ""));
+    for (const n of row.children) n.setAttribute("aria-hidden", "true");
+    wrap.append(row);
+  }
+  return wrap;
+}
+
+/** WHAT THE READER'S SHARE COMES TO IF THE TARGET IS REACHED.
+ *
+ *  Off entirely unless the operator has typed both numbers — see pinMoneyOn.
+ *  The two it stands on are named under the figure in the same breath, because
+ *  a sum about somebody's own stake with no account of where it came from is
+ *  the thing that reads as a promise rather than as arithmetic.
+ */
+function atGoal(d) {
+  if (typeof d.moneyAt !== "number" || !d.goal) return null;
+  const wrap = el("div", "lpat");
+  const box = el("div", "lpatbox");
+  box.append(el("span", "k", T("pin.atGoal", { goal: num(d.goal) })));
+  box.append(el("b", "v", money(d.moneyAt)));
+  box.append(el("span", "u", T("pin.atGoalHow",
+    { sale: money(d.saleAt), share: pct(d.share) })));
+  wrap.append(box);
+  /* ONE LINE HERE, THE WHOLE OF IT UNDER THE CHEVRON. The full note is four
+     sentences and it was the tallest thing on a panel whose job is to be read
+     in a taxi. What has to be beside the figure, always, is that nobody has
+     valued this — the rest is for whoever opens the panel. */
+  wrap.append(el("p", "lpsmall", T("pin.moneyShort")));
   return wrap;
 }
 
@@ -456,30 +630,11 @@ function body(d, device) {
     if (d.until) w.append(el("p", "lpsmall", T("pin.until", { date: theDay(d.until) })));
   }
 
-  /* THE CURVE, AS FIVE BOXES WITH YOURS LIT. A line chart of a power law on a
-     phone is a picture of nothing; this is the same fact and it is read at a
-     glance — and it answers the question everybody actually has, which is not
-     "what is my number" but "how much better would it have been to be early". */
-  if (SCALE && d.scale && d.scale.length) {
-    w.append(el("p", "lpk", T("pin.scale")));
-    const sc = el("div", "lpscale");
-    /* A LIST, SAID AS A LIST. Five boxes of two numbers read out as ten loose
-       numbers unless each cell carries its own sentence — "#100: 200 points",
-       and the one you are in says so. Their build had this and mine did not. */
-    sc.setAttribute("role", "list");
-    for (const m of d.scale) {
-      const cell = el("div", "lpcell" + (m.at === d.band ? " on" : ""));
-      cell.setAttribute("role", "listitem");
-      cell.setAttribute("aria-label", "#" + num(m.at) + ": " + T("pin.points", { n: num(m.pts) })
-        + (m.at === d.band ? " — " + T("pin.yours") : ""));
-      cell.append(el("span", null, "#" + num(m.at)));
-      cell.append(el("b", null, num(m.pts)));
-      for (const n of cell.children) n.setAttribute("aria-hidden", "true");
-      sc.append(cell);
-    }
-    w.append(sc);
-    w.append(el("p", "lpsmall", T("pin.scaleHow")));
-  }
+  /* THE FIVE-BOX SLIDING SCALE IS GONE. It sampled a curve at five places to
+     answer "how much better would it have been to be early" — which the ladder
+     at the top of the panel now answers outright, in the tiers' own names and
+     without a tap. Two pictures of one fact is one of them saying it wrong,
+     and this was the one behind two taps. */
 
   /* THE SHARE, AND THE ONLY PROMISE ON THE SCREEN THAT IS ARITHMETIC RATHER
      THAN INTENTION: this half is fixed the day somebody joins and cannot fall,
@@ -501,13 +656,13 @@ function body(d, device) {
          Only the sale figure differs between the two — the share is divided
          by every place there will ever be, so it does not move — and the
          label on each says which figure it is standing on. */
+      /* ONLY TODAY'S. The figure at the goal is the box above the chevron —
+         see atGoal — and printing it again down here made the panel look like
+         it was making the case twice. This is the other half of that
+         comparison and the half that is small. */
       const pair = el("div", "lppair");
       pair.append(worth(T("pin.wNow"), money(d.money),
         T("pin.wAtSale", { sale: money(d.sale) })));
-      if (typeof d.moneyAt === "number") {
-        pair.append(worth(T("pin.wGoal", { goal: num(d.goal) }), money(d.moneyAt),
-          T("pin.wAtSale", { sale: money(d.saleAt) }), true));
-      }
       w.append(pair);
       w.append(el("p", "lpsmall", T("pin.moneyNot")));
     }
@@ -547,7 +702,7 @@ function body(d, device) {
   go.type = "button";
   go.textContent = T("pin.rulesGo");
   go.addEventListener("click", () => {
-    RULES = !RULES; SCALE = RULES;
+    RULES = !RULES;
     if (LAST && LAST.box) paint(LAST.box, SHOWN, LAST.device);
   });
   w.append(go);
@@ -584,12 +739,6 @@ function body(d, device) {
 }
 
 let RULES = false;
-/* The sliding scale is drawn with the rules and not before them. It explains
-   the curve, which is a question somebody asks after "where do I stand" — and
-   read cold, five boxes of numbers is the least intuitive thing on the panel.
-   Now and at the goal, side by side, is what took its place. */
-let SCALE = false;
-
 function paintRules(w, d, go, box) {
   const rw = box || w.querySelector(".lprulesbox");
   if (!rw) return;

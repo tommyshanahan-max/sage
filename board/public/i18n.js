@@ -5028,6 +5028,25 @@ export const STRINGS = {
   "pin.total":         ["Total", "合计"],
   "pin.until":         ["Points from what you do keep counting until {date}.",
                         "做事分一直算到 {date}。"],
+  /* THE LADDER, ACROSS THE TOP AND NEVER BEHIND A TAP. Four rungs, three
+     states: shut, filling, not open yet. The one that is filling carries the
+     only number on the panel that falls while somebody reads it. */
+  "pin.tFull":         ["Full", "满了"],
+  "pin.tLeft":         ["{n} left", "还剩 {n} 个"],
+  "pin.tOne":          ["1 left", "只剩 1 个"],
+  "pin.tOpens":        ["Opens at {n}", "第 {n} 位开始"],
+  "pin.tEach":         ["{n} points each", "每人 {n} 分"],
+  /* The figure the whole panel is read to find, and it was four taps down.
+     The two numbers it stands on are said under it, in one line, because a
+     sum about somebody's own stake with nothing behind it reads as a promise
+     rather than as arithmetic. */
+  "pin.moneyShort":    ["Nobody has valued this company.", "还没有人给这家公司估过值。"],
+  "pin.atGoal":        ["If we reach {goal} members", "如果做到 {goal} 人"],
+  "pin.atGoalHow":     ["Your {share} of the pool, if the company sold at {sale}.",
+                        "按公司卖 {sale} 算，你占池子的 {share}。"],
+  /* THE TIER NAME LEADS, because it is capitalised as a label — "In the First
+     hundred" put a capital in the middle of a sentence. */
+  "pin.soonTier":      ["{tier}, if you join now.", "现在加入的话，在{tier}里。"],
   "pin.scale":         ["The sliding scale", "分数怎么递减"],
   "pin.yours":         ["yours", "你在这格"],
   "pin.scaleHow":      ["The highlighted box is the band your place is in.",
@@ -5131,12 +5150,12 @@ export const STRINGS = {
      Written as the thing a person repeats rather than as a label: somebody
      tells a friend "I'm in the first hundred", never "I am layer two of six".
      The Chinese is the same sentence a Chinese speaker would actually say. */
-  "layer.l1":          ["First three", "最早的三个人"],
+  /* POWERS OF TEN, because those are the four a person already has a phrase
+     for. "First four thousand" was a label; "first hundred" is a boast. */
+  "layer.l1":          ["First ten", "最早的十个人"],
   "layer.l2":          ["First hundred", "最早的一百人"],
   "layer.l3":          ["First thousand", "最早的一千人"],
-  "layer.l4":          ["First four thousand", "最早的四千人"],
-  "layer.l5":          ["First ten thousand", "最早的一万人"],
-  "layer.l6":          ["Last ten thousand", "最后的一万人"],
+  "layer.l4":          ["First ten thousand", "最早的一万人"],
   "layer.head":        ["Arrival", "加入次序"],
   "layer.mine":        ["You are in the {x}.", "你在{x}里。"],
   "layer.theirs":      ["In the {x}.", "在{x}里。"],
@@ -5146,9 +5165,9 @@ export const STRINGS = {
      a badge and this is the sentence that says it is a record. Everything
      else about it — the sixths, the reason there are six — belongs on a page
      somebody chose to open, not on the card. */
-  "layer.what":        ["Where you stand in the order people arrived. It closes at 20,000.",
-                        "按加入先后排的位置。到两万人就不再排了。"],
-  "layer.shut":        ["The layers closed at 20,000.", "两万人满了，不再排位置。"],
+  "layer.what":        ["Where you stand in the order people arrived. It closes at 10,000.",
+                        "按加入先后排的位置。到一万人就不再排了。"],
+  "layer.shut":        ["The layers closed at 10,000.", "一万人满了，不再排位置。"],
   /* THE PANEL AT THE TOP OF THE CROWDFUND ROOM. Three rows and a line under
      them. The line is said every time and is never behind a tap: the panel is
      a record of who was early, and a disclaimer somebody has to go looking

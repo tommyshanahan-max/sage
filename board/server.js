@@ -3023,22 +3023,29 @@ function stakeOf(board, who) {
  * recorded here because the next person reading this file should not have to
  * reconstruct whether anybody thought about it.
  *
- * THE CURVE IS FLATTER THAN THE FOUNDING ONE. 1000/n^0.35 puts place 1 at
- * 1,000 and place 50,000 at 23 — a 43-fold spread, against the founding
- * ladder's 200/sqrt(n). Over tens of thousands a steeper curve hands the tail
- * a number too small to be worth telling anybody, and the tail is almost
- * everybody.
+ * IT IS TIERS NOW, NOT A CURVE, and that was the whole redesign.
+ *
+ * A place used to be worth 1000/n^0.35 — smooth, defensible, and unsayable.
+ * Member 4,712 got a different number from member 4,711 and neither of them
+ * could repeat it to anybody. Worse, the screen led with the goal: "40 of
+ * 50,000", a bar at a twelfth of one per cent, which is a mountain with no top
+ * in sight and the opposite of a reason to join this afternoon.
+ *
+ * So the ledger stands on store.LAYERS: the first ten, the first hundred, the
+ * first thousand, the first ten thousand. Each tier is worth the same in
+ * total, so points per place are 9,000 / 1,000 / 100 / 10, and the screen
+ * leads with the tier that is filling and how many places are left before it
+ * shuts. That number is small, true, falls while you look at it, and is a
+ * sentence somebody says out loud.
+ *
+ * THE GOAL IS STILL THE GOAL and it is a different number. The tiers close at
+ * 10,000; BOARD_LEDGER_GOAL is how many members the company is aiming at
+ * before any of this means anything. Everybody past 10,000 is a member with no
+ * place, earning the other half from what they do.
  * ------------------------------------------------------------------------- */
 
 /** The goal. Unset, none of this exists. */
 const LGOAL = Math.max(0, Math.round(Number(process.env.BOARD_LEDGER_GOAL || 0)));
-/** The exponent. Lower is flatter; 0 would pay everybody the same. */
-const LCURVE = (() => {
-  const v = Number(process.env.BOARD_LEDGER_CURVE);
-  return Number.isFinite(v) && v > 0 && v <= 1 ? v : 0.35;
-})();
-/** What place one is worth. Everything else falls away from it. */
-const LHEAD = 1000;
 /** Guests counted for one member. Beyond this the board is one person's. */
 const LGUESTS = (() => {
   const v = Number(process.env.BOARD_LEDGER_GUESTS);
@@ -3063,25 +3070,22 @@ const LBY = String(process.env.BOARD_LEDGER_BY || "").trim().slice(0, 10);
 
 /* THE WHOLE POOL OF PLACE POINTS, which a share is divided by.
  *
- * Every place from 1 to the goal, added up once at boot. Against the places
- * taken so far instead, an early share would read as an enormous fraction and
- * then fall as the board fills — and a number that only ever goes down is a
- * grievance waiting to happen. The same argument as POOL above, at a larger
- * scale. */
-const LPOOL = (() => {
-  let t = 0;
-  for (let n = 1; n <= Math.min(LGOAL, 1e6); n++) t += 1000 / Math.pow(n, LCURVE);
-  return t;
-})();
+ * Every place there will ever be, which is now every place in every tier —
+ * four tiers worth the same, so four times one tier's total. Against the
+ * places taken so far instead, an early share would read as an enormous
+ * fraction and then fall as the board fills, and a number that only ever goes
+ * down is a grievance waiting to happen. The same argument as POOL above.
+ *
+ * IT NO LONGER MOVES WITH THE GOAL, and that is the point of tiers: raising
+ * the target from 50,000 members to 100,000 used to quietly halve what every
+ * existing member's place was worth as a fraction. Now the goal is what the
+ * company is aiming at and the pool is what the ledger holds, and the two are
+ * free to be different numbers. */
+const LPOOL = store.LAYERS.length * store.TIER_TOTAL;
 
-/** The five markers on the sliding scale, and what a place at each is worth.
- *  Powers of ten up to the goal: it is the shape of the curve said in five
- *  numbers, which is the only way anybody reads a curve on a phone. */
-const LSCALE = (() => {
-  const marks = [1, 100, 1000, 10000, 50000, 100000].filter((n) => n <= LGOAL);
-  if (LGOAL && marks[marks.length - 1] !== LGOAL) marks.push(LGOAL);
-  return marks;
-})();
+/** The ladder, as its own edges: what a place in each tier is worth. Four
+ *  numbers rather than a curve in five samples — they are the thing itself. */
+const LSCALE = store.LAYERS.map((l) => l.upto);
 
 /* WHICH DOORS CARRY IT, AND BY DEFAULT NONE DO.
  *
@@ -3134,8 +3138,8 @@ const LCUT = Math.min(100, Math.max(0, Number(process.env.BOARD_LEDGER_CUT || 0)
 const pinMoneyOn = () => LSALE > 0 && LCUT > 0;
 
 const pinOn = () => LGOAL > 0;
-/** What a place is worth. Place 1 = LHEAD, falling away on LCURVE. */
-const PLACE = (n) => (n >= 1 && n <= LGOAL ? Math.round(LHEAD / Math.pow(n, LCURVE)) : 0);
+/** What a place is worth: the tier it falls in, and nought past the last. */
+const PLACE = (n) => store.tierPoints(n);
 
 /* WHO PRESSED JOIN, IN A FILE OF ITS OWN.
  *
@@ -3217,16 +3221,31 @@ function pinFor(board, who, asNew) {
    *
    * Past the goal there is genuinely nothing, and that is said instead. */
   const next = members + 1;
+  /* SHUT IS THE LAST TIER'S EDGE, NOT THE GOAL. They used to be the same
+     number and are not any more: the ledger closes at 10,000 and the company
+     is aiming at a larger figure. Past the cap there is no place to be had,
+     which is what this screen is about — the other half, for what somebody
+     does, is not on this pin. */
   if (!place) {
-    return next > LGOAL
+    return !store.layerOf(next)
       ? { on: true, place: 0, shut: true, ...common(members, board) }
       : { on: true, place: 0, soon: next, soonPts: PLACE(next),
+          soonTier: store.layerOf(next),
           scale: LSCALE.map((at) => ({ at, pts: PLACE(at) })),
           band: LSCALE.find((at) => next <= at) || LSCALE[LSCALE.length - 1],
           share: LPOOL ? (PLACE(next) / LPOOL) * (LSPLIT / 100) * 100 : 0,
+          money: pinMoneyOn() && LPOOL
+            ? Math.round(LSALE * (LCUT / 100) * (PLACE(next) / LPOOL) * (LSPLIT / 100))
+            : null,
+          moneyAt: pinMoneyOn() && LSALE_AT > 0 && LPOOL
+            ? Math.round(LSALE_AT * (LCUT / 100) * (PLACE(next) / LPOOL) * (LSPLIT / 100))
+            : null,
+          sale: pinMoneyOn() ? LSALE : null,
+          saleAt: pinMoneyOn() && LSALE_AT > 0 ? LSALE_AT : null,
+          cut: pinMoneyOn() ? LCUT : null,
           ...common(members, board) };
   }
-  if (place > LGOAL) {
+  if (!store.layerOf(place)) {
     return { on: true, place: 0, shut: true, ...common(members, board) };
   }
   const acts = actsOf(board, who, LGUESTS).filter((r) => r.points > 0);
@@ -3234,6 +3253,9 @@ function pinFor(board, who, asNew) {
   const done = acts.reduce((a, r) => a + r.points, 0);
   return {
     on: true, place, placePts,
+    /* WHICH TIER THEY ARE IN, which is the thing they tell people. The number
+       is what it is worth; the tier is what it is called. */
+    yourTier: store.layerOf(place),
     parts: acts,
     acts: done,
     total: placePts + done,
@@ -3263,14 +3285,50 @@ function pinFor(board, who, asNew) {
   };
 }
 
+/** THE TIER FILLING RIGHT NOW, which is the whole front of the screen.
+ *
+ *  Not "40 of 50,000". That bar is a twelfth of one per cent and it says the
+ *  thing is hopeless; this one says sixty places left in the first hundred,
+ *  which is small, true, falls while somebody reads it, and is a sentence they
+ *  repeat. `nextPts` is there so the screen can say what missing it costs
+ *  without anybody having to work out the factor themselves.
+ *
+ *  Null once the last tier has closed — see the note over store.LAYERS. */
+function tierNow(members) {
+  const l = store.layerLeft(members);
+  if (!l) return null;
+  const from = store.layerFrom(l.n);
+  return {
+    key: l.key, n: l.n, of: l.of, from, upto: l.upto,
+    left: l.left, size: l.upto - from + 1,
+    taken: Math.max(0, members - from + 1),
+    pts: store.tierPoints(members + 1),
+    /* What the place after this tier shuts is worth. Nought when this is the
+       last one, and then the screen says the ledger closes rather than that
+       the next place is worth nothing — a different fact. */
+    nextPts: store.tierPoints(l.upto + 1),
+  };
+}
+
 /** The things every shape of the answer carries, so three returns cannot come
  *  to three different views of the same board. */
 const common = (members, board) => ({
   members, goal: LGOAL, split: LSPLIT, rest: 100 - LSPLIT,
   until: LUNTIL, by: LBY, guests: LGUESTS,
-  /* PLACES LEFT BEFORE THE DOOR SHUTS, which is the only one of the three
-     figures across the top that falls rather than rises. */
-  left: Math.max(0, LGOAL - members),
+  cap: store.LAYER_CAP,
+  tier: tierNow(members),
+  /* THE LADDER ITSELF, so the screen can draw all four tiers with the reader's
+     own lit. Sent rather than hard-coded in the browser: two copies of this
+     table is how a screen ends up promising a number the ledger does not pay.
+     See the note over actsOf, which is the same argument. */
+  tiers: store.LAYERS.map((l, i) => {
+    const from = store.layerFrom(i + 1);
+    return { key: l.key, n: i + 1, from, upto: l.upto,
+             size: l.upto - from + 1, pts: store.tierPoints(l.upto) };
+  }),
+  /* PLACES LEFT BEFORE THE LEDGER SHUTS FOR GOOD. The tier's own `left` is
+     the urgent one; this is the long one, and they are different numbers. */
+  left: Math.max(0, store.LAYER_CAP - members),
   trend: board ? trendOf(board) : [],
 });
 
