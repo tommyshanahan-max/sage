@@ -20,6 +20,8 @@
  * same trap is written up over CONTACT_SHAPED in lib/store.js and has caught
  * this codebase twice.
  */
+import { T, STRINGS } from "/i18n.js";
+import { NATIVE } from "/native.js";
 
 /** The names in a piece of text that are @somebody, drawn as such.
  *
@@ -28,6 +30,11 @@
  *  else's typing and the one thing this must not do is put it in innerHTML.
  */
 export function atText(box, text, names) {
+  /* A ROOM SOMEBODY SENT YOU IS A DOOR, NOT AN ADDRESS — see the note above
+     roomIn. Taken out of the sentence before the @ pass runs, so the name it
+     leaves behind reads like a sentence. */
+  const room = roomIn(text);
+  if (room) text = withoutRoom(text);
   const sorted = [...new Set(names)].filter(Boolean).sort((a, b) => b.length - a.length);
   let run = "";
   const flush = () => { if (run) { box.append(document.createTextNode(run)); run = ""; } };
@@ -48,6 +55,102 @@ export function atText(box, text, names) {
     i += 1;
   }
   flush();
+  if (room) {
+    /* THE BUBBLE HAS TO OPEN FOR IT. A bubble is sized from the sentence in
+       it, and "Come in here too" is four words wide — which squeezed the door
+       into a column and broke the room's name across three lines. The width
+       is the bubble's to give, so the bubble is marked and the stylesheets
+       give it a floor. */
+    box.classList.add("hasroom");
+    box.append(doorRow(room));
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * A ROOM SOMEBODY SENT YOU, DRAWN AS A DOOR.
+ *
+ * "Tell somebody already on here" put the room's address into a message, and
+ * a message on this board is textContent — nothing here has ever turned a URL
+ * into a link, deliberately, because somebody else's typing does not go in
+ * innerHTML. So it arrived as characters: not blue, not tappable, and the
+ * person it was sent to had to select a URL on a phone and paste it into a
+ * browser. That is not a thing anybody does for a chat invitation, and it
+ * read as being told about a room rather than being let into one.
+ *
+ * So the address comes out of the sentence and a row goes under it, the same
+ * shape as the rooms on the Messages screen — because that is where pressing
+ * it lands, and a button that looks like the thing it opens needs no label
+ * explaining itself.
+ *
+ * STILL NOT A LINKIFIER, and that is the point. One shape is recognised —
+ * /r/<key> where the key is a room this build has a name for — and everything
+ * else in the sentence stays the characters somebody typed. A general "make
+ * anything that looks like a URL clickable" is how a board like this ends up
+ * carrying somebody's phishing link with a tap target on it.
+ *
+ * ANY HOSTNAME, DELIBERATELY. The board has been at two names this year and
+ * the messages sent under the old one are still sitting in conversations.
+ * What makes this a room is the path and a key that resolves; the host in
+ * front of it is not information.
+ */
+const DOOR = /https?:\/\/\S*\/r\/([a-zA-Z]+)\S*/;
+
+/** The room key in a piece of text, or "" — and "" for a key this build has
+ *  no name for, so an unknown room is left as the characters it came as
+ *  rather than drawn as a door onto nothing. */
+function roomIn(text) {
+  const hit = DOOR.exec(String(text || ""));
+  if (!hit) return "";
+  const key = hit[1].toLowerCase();
+  if (!STRINGS["waitroom." + key]) return "";
+  /* EXCEPT THE ONE ROOM THE APP DOES NOT HAVE. The rewards room is web-only
+     — see the long note over inApp in server.js — and the row for it is left
+     out of the app's own Messages list for the same reason. A button here
+     would be the one that got through anyway, and it would open a room with
+     its contents missing. The address stays in the sentence, which is honest
+     about being something to open elsewhere. */
+  if (NATIVE && key === "rewards") return "";
+  return key;
+}
+
+/** The sentence with the address taken out of it.
+ *
+ *  And with whatever was holding the address on — "a room here for Film & TV
+ *  — https://…" leaves a dangling dash, and a blank line left behind by a URL
+ *  on its own line leaves a hole. Done here rather than by rewording the
+ *  string that mints these, because the messages already sent cannot be
+ *  reworded and they are the ones this was built for.
+ */
+function withoutRoom(text) {
+  return String(text).replace(DOOR, "")
+    .replace(/[ \t]+$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[\s\u2014:,\uFF1A\uFF0C-]+$/, "")
+    .trim();
+}
+
+/** The door itself. An anchor and not a button: it goes somewhere, so it
+ *  should open in a new tab on a long press like everything else that does. */
+function doorRow(key) {
+  const a = document.createElement("a");
+  a.className = "goroom";
+  /* THE ROOM INSIDE THE APP, NOT THE PUBLIC DOOR AT /r/. Everybody reading a
+     message is already through the gate; /r/ is the page for a cold address
+     and would show them their own board from the outside. */
+  a.href = "/notes#d:" + key;
+  const mid = document.createElement("span");
+  mid.className = "gm";
+  const name = document.createElement("b");
+  name.textContent = T("waitroom." + key);
+  const what = document.createElement("span");
+  what.textContent = T("at.goRoom");
+  mid.append(name, what);
+  const chev = document.createElement("span");
+  chev.className = "gc";
+  chev.textContent = "\u203A";
+  chev.setAttribute("aria-hidden", "true");
+  a.append(mid, chev);
+  return a;
 }
 
 /** The picker, wired to a textarea.

@@ -259,6 +259,35 @@
      sentence with three of these in it should still read as a sentence. */
   .bub .at{font-weight:600;color:var(--accent)}
   .bub.mine .at{color:inherit;text-decoration:underline;text-underline-offset:2px}
+  /* A ROOM SENT IN A MESSAGE, AS A DOOR TO PRESS. Same shape as a room row on
+     the Messages screen, sized to sit inside a bubble — see at.js. It wears
+     the bubble's own colour rather than the accent, because a bubble is
+     already a colour and two of them fight. */
+  /* WIDE ENOUGH TO BE A DOOR. A bubble is shrink-to-fit, so on "Come in here
+     too" the row was squeezed to the width of four words and the room's own
+     name came out as "Film…" — a button naming nothing. So nothing in here
+     clips or is allowed to shrink below its own contents: the room's name
+     reports its real width, the bubble is sized from it, and a four-word
+     message opens wide enough to hold the door it is carrying.
+     THE FLOOR IS ON THE BUBBLE AND NOT ON THE ROW, which was two wrong tries.
+     A group bubble's own max-width is a percentage of a shrink-to-fit wrapper
+     — so it can never be wider than the sentence in it, and a floor on the row
+     inside just hung the row out over the bubble's right edge. The bubble is
+     the thing that has to open, so the bubble is what carries the floor, and
+     it is only ever set on a bubble that is carrying a door. */
+  /* A BUBBLE WITH A DOOR IN IT OPENS TO FIT IT — see above. Set from at.js,
+     where the door is appended, so a bubble of plain text is untouched. */
+  .bub.hasroom{min-width:14rem}
+  .bub .goroom{display:flex;align-items:center;gap:.7rem;margin:.55rem 0 .05rem;
+    padding:.5rem .7rem;border:1px solid currentColor;border-radius:.75rem;
+    text-decoration:none;color:inherit;white-space:normal;max-width:100%}
+  .bub .goroom .gm{flex:1}
+  .bub .goroom .gm b{display:block;font-family:var(--serif);font-weight:400;
+    font-size:1rem;line-height:1.3}
+  .bub .goroom .gm span{display:block;font-size:.76rem;opacity:.7}
+  .bub .goroom .gc{flex:0 0 auto;font-size:1.15rem;opacity:.6}
+  .bub.them .goroom{border-color:var(--line);background:var(--paper)}
+  .bub.mine .goroom{border-color:rgba(255,255,255,.45)}
   /* The picker, over the box rather than under it — under it is where the
      phone's own keyboard is. */
   .atmenu{position:absolute;bottom:100%;left:0;right:0;margin:0 0 .4rem;
@@ -2554,7 +2583,17 @@ function drawThread(t) {
     const d = String(n.at).slice(0, 10);
     if (d !== day) { day = d; talk.append(el("p", "when", when(n.at))); }
     const bub = el("div", "bub " + (n.mine ? "mine" : "them") + (n.reported ? " flag" : ""));
-    bub.textContent = n.text || "";
+    /* THROUGH atText, WHICH IS WHERE A ROOM IN A MESSAGE BECOMES A DOOR.
+     *
+     * This was textContent, and this is the screen "tell somebody already on
+     * here" writes to — so the one message on the board that carries a room's
+     * address was the one message drawn as flat characters. Damon was sent a
+     * room and got a URL to select and paste.
+     *
+     * No names passed: @ is a room's gesture and there are two people in here,
+     * so there is nobody to mark. The room shape is the whole reason for the
+     * call — see the long note over DOOR in at.js. */
+    atText(bub, n.text || "", []);
     talk.append(bub);
   }
 

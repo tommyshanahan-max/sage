@@ -1317,6 +1317,9 @@ export const STRINGS = {
   "dr.tellNone":       ["Nobody by that name.", "没有叫这个名字的。"],
   /* The line that lands in the box, theirs to change before it goes. Short,
      and it says what the room is for rather than selling it. */
+  /* UNDER A ROOM SENT IN A MESSAGE. Two words, because the room's own name is
+     the line above it and this one only has to say that pressing goes in. */
+  "at.goRoom":         ["Go in", "进去"],
   "dr.tellWords": [
     "There's a room here for {room} — {url}",
     "这儿有个 {room} 的房间，你可以来看看：{url}",
