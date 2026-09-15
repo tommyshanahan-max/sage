@@ -549,11 +549,18 @@ function overview(box, d, device) {
   });
   wrap.append(head);
 
-  /* BOTH OF THESE SIT OUTSIDE THE CHEVRON ON PURPOSE. They are the two things
-     somebody opened this to find out — which tier is filling, and what it
-     comes to if the target is reached — and everything that was behind a tap
-     was read by nobody. */
-  if (!d.shut) {
+  /* AND ALL OF IT IS BEHIND THE CHEVRON AGAIN.
+   *
+   * The figure and the funnel were pulled out in front of it because behind a
+   * tap they were read by nobody — and that was true, and the cure was worse:
+   * a lit panel, a slider, a button and four tiers is most of a phone screen,
+   * standing on top of the conversation in a room people came to talk in. A
+   * pin that has to be scrolled past is not a pin.
+   *
+   * So the head is the whole of it at rest — points, place, tier — and one tap
+   * opens the case. That is what a chevron is for, and the number in the head
+   * is enough of a reason to press it. */
+  if (OPEN && !d.shut) {
     /* THE MONEY FIRST, THEN THE FUNNEL. It sat under the ladder, which put
        four tiers and a sentence between somebody and the only line on this
        screen that answers "why would I bother" — and the reader this is for is
@@ -749,6 +756,14 @@ function atGoal(d, device) {
    * It is the same joinRow as before, moved rather than copied: two buttons
    * posting the same thing is two states to keep in step. */
   if (!d.joined && d.place) wrap.append(joinRow(d, device));
+  /* AND SAY SO WHEN THEY ALREADY HAVE. Joined, the row simply was not drawn —
+     so somebody who pressed it yesterday came back to a panel with no button
+     and no confirmation, which reads as the press having done nothing. */
+  else if (d.joined && d.place) {
+    const yes = el("div", "lpjoin");
+    yes.append(el("p", "lpyes", T("pin.joinedYes")));
+    wrap.append(yes);
+  }
   /* AND SOMEBODY WHO IS NOT IN YET GETS THE ACT THAT IS ACTUALLY THEIRS.
    *
    * They had the figure and nothing to do with it — "Count me in" needs a
