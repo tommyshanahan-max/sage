@@ -1148,19 +1148,24 @@ function drawWaiting() {
      Outside the loop because that loop is driven by who is waiting, and
      nobody is ever filed under this one: it is open to all of them at once,
      so it has no pile of its own to be drawn from. */
-  /* IT OPENS /rewards, WHICH IS A PAGE AND NOT A ROOM, and that is the whole
-     of it for now. The page is self-contained — invented people, invented
-     numbers, no network call, and its own Demo banner before anything else —
-     so it works for somebody who is not on this board and can be sent to
-     them, which a room they are not in cannot.
-     To point this at the real door room instead, the line below becomes
-     location.hash = "#d:rewards". Both exist; only this row moves. */
-  const all = el("a", "wroom");
-  all.href = "/rewards";
+  /* THE REAL ROOM, AND IT POINTED AT THE DEMO FOR HALF A DAY.
+   *
+   * /rewards is a self-contained page with invented people on it, made to be
+   * sent to somebody who is not on this board. It was wired here while the
+   * real room was broken, and the cost of that was the operator opening his
+   * own app, tapping a row with his own board's name on it, and finding four
+   * strangers he had never heard of talking in it.
+   *
+   * A row inside the app goes to the thing inside the app. The demo is a link
+   * you send, and a link you send does not need a row in anybody's Messages
+   * to be sendable — which was the entire argument for it existing. */
+  const all = el("button", "wroom");
+  all.type = "button";
   const mid = el("div", "wm");
   mid.append(el("b", null, T("waitroom.rewards")));
   mid.append(el("span", null, T("wr.roomsAll")));
   all.append(mid, el("span", "wn", ""));
+  all.addEventListener("click", () => { location.hash = "#d:rewards"; });
   box.append(all);
 }
 
