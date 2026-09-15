@@ -1,0 +1,559 @@
+<title>The Room Ledger</title>
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t1:#3F68D8; --t2:#2A9D63; --t3:#D99038; --t4:#7268C4; --t5:#D4485C; --t6:#2F8C9E;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC","Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --shadow:0 1px 2px rgba(21,27,40,.05),0 10px 30px rgba(21,27,40,.08);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.32);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --t1:#5C8DFF; --t2:#4EBE88; --t3:#E4A65A; --t4:#9187E0; --t5:#F0687C; --t6:#4FA9BC;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.32);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.55;padding-inline:20px;padding-block:0 64px}
+  .wrap{max-width:1080px;margin:0 auto}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* ---- masthead ---- */
+  .mast{display:flex;align-items:center;gap:.55rem;padding-block:22px 0;color:var(--ink-2);font-size:.85rem}
+  .mast svg{width:1.15em;height:1.15em;color:var(--accent)}
+  .mast b{color:var(--ink);font-weight:600}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(2rem,4.2vw,2.9rem);line-height:1.08;
+    letter-spacing:-.02em;margin:1.4rem 0 .6rem;text-wrap:balance;max-width:20ch}
+  .lede{margin:0;max-width:62ch;color:var(--ink-2);font-size:1.02rem}
+
+  /* ---- stage ---- */
+  .stage{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:40px;margin-top:34px;align-items:start}
+  @media (max-width:820px){.stage{grid-template-columns:1fr}}
+
+  /* the room — the one lifted object on the page */
+  .room{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);
+    overflow:hidden;display:flex;flex-direction:column;height:720px;max-width:100%}
+  .rtop{display:flex;align-items:center;gap:.6rem;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--card)}
+  .rtop .rn{font-weight:600;font-size:.95rem;line-height:1.2}
+  .rtop .rc{font-size:.78rem;color:var(--muted)}
+  .rtop .face{width:32px;height:32px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+    display:grid;place-items:center;font-family:var(--serif);font-size:1rem}
+  .scroll{flex:1;overflow-y:auto;position:relative}
+
+  /* THE PIN */
+  .pin{position:sticky;top:0;z-index:2;background:var(--raise);border-bottom:1px solid var(--line)}
+  .pinbtn{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:.2rem .8rem;
+    width:100%;padding:12px 16px;cursor:pointer;align-items:center}
+  .pinbtn:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+  .plab{grid-column:1;font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+  .pfig{grid-column:1;display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+  .pfig .big{font-family:var(--serif);font-size:1.75rem;line-height:1.05;letter-spacing:-.02em}
+  .pfig .sub{font-size:.8rem;color:var(--ink-2)}
+  .pside{grid-column:2;grid-row:1 / span 2;display:flex;align-items:center;gap:.5rem;color:var(--ink-2);font-size:.8rem}
+  .pside .count{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+  .pside .count b{font-size:1rem;color:var(--ink);font-weight:600}
+  .chev{width:18px;height:18px;transition:transform .25s ease;color:var(--muted)}
+  .pinbtn[aria-expanded="true"] .chev{transform:rotate(180deg)}
+  .bump{animation:bump .6s ease}
+  @keyframes bump{0%{color:var(--accent)}100%{color:inherit}}
+
+  .pbody{padding:2px 16px 16px;display:grid;gap:14px;max-height:430px;overflow-y:auto}
+  .sec h3{margin:0 0 6px;font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+  .sum{display:grid;gap:0;border-top:1px solid var(--hair)}
+  .sum div{display:grid;grid-template-columns:1fr auto;gap:.8rem;padding:7px 0;border-bottom:1px solid var(--hair);font-size:.84rem}
+  .sum span:first-child{color:var(--ink-2)}
+  .sum span:last-child{font-weight:600}
+  .sum .note{display:block;font-size:.72rem;color:var(--muted);font-weight:400}
+  .sum .you span:last-child{color:var(--accent)}
+
+  /* three marks, sized in order — today, the middle, the one worth doing this for */
+  .ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:end}
+  .mk{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 9px}
+  .mk .w{font-size:.7rem;color:var(--muted)}
+  .mk .v{font-family:var(--serif);line-height:1.1;letter-spacing:-.01em;margin-top:2px}
+  .mk:nth-child(1) .v{font-size:1rem}
+  .mk:nth-child(2) .v{font-size:1.2rem}
+  .mk:nth-child(3) .v{font-size:1.45rem}
+  .mk:nth-child(1){border-color:var(--accent)}
+
+  .lift{background:var(--accent-soft);border:1px solid var(--line);border-radius:10px;padding:10px 11px}
+  .lift .lab{font-size:.78rem;font-weight:600;margin:0 0 3px}
+  .lad{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+  .lad .from{color:var(--muted);text-decoration:line-through;font-size:.9rem}
+  .lad .to{font-size:1.35rem;font-weight:650;letter-spacing:-.02em}
+  .lift p{margin:3px 0 0;font-size:.78rem;color:var(--ink-2)}
+
+  .pts{display:grid;gap:0}
+  .pts div{display:flex;justify-content:space-between;gap:.8rem;font-size:.82rem;padding:4px 0;color:var(--ink-2)}
+  .pts div span:last-child{color:var(--ink);font-variant-numeric:tabular-nums}
+  .pts .tot{border-top:1px solid var(--hair);margin-top:3px;padding-top:6px;color:var(--ink);font-weight:600}
+  .fine{margin:0;font-size:.74rem;line-height:1.5;color:var(--muted)}
+  .plain{margin:0;font-size:.82rem;color:var(--ink-2)}
+
+  /* messages */
+  .msgs{padding:14px 16px 8px;display:grid;gap:12px}
+  .m{display:grid;grid-template-columns:30px 1fr;gap:9px}
+  .m .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:.78rem;font-weight:600}
+  .m .nm{font-size:.78rem;font-weight:600}
+  .m .nm time{font-weight:400;color:var(--muted);margin-left:.35rem}
+  .m p{margin:1px 0 0;font-size:.88rem;color:var(--ink)}
+  .sys{text-align:center;font-size:.74rem;color:var(--muted)}
+  .sys.new{color:var(--accent)}
+  .comp{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:var(--card)}
+  .comp div{flex:1;border:1px solid var(--line);border-radius:18px;padding:8px 13px;color:var(--muted);font-size:.86rem}
+
+  /* ---- levers ---- */
+  .levers{display:grid;gap:18px}
+  .levers h2,.spec h2{font-family:var(--serif);font-weight:400;font-size:1.45rem;margin:0;letter-spacing:-.01em}
+  .levers .hint{margin:-10px 0 0;color:var(--ink-2);font-size:.9rem;max-width:52ch}
+  .ctl{display:grid;gap:6px}
+  .ctl .row{display:flex;justify-content:space-between;gap:1rem;align-items:baseline}
+  .ctl label{font-weight:600;font-size:.9rem}
+  .ctl output{font-variant-numeric:tabular-nums;font-size:.9rem;color:var(--ink-2)}
+  .ctl small{color:var(--muted);font-size:.78rem}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+  .btns{display:flex;flex-wrap:wrap;gap:8px}
+  button.b{font:inherit;font-size:.88rem;border-radius:9px;padding:9px 14px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+  button.b.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  button.b[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+  .readout{background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-family:var(--mono);font-size:.8rem;line-height:1.7;color:var(--ink-2);overflow-x:auto}
+  .readout b{color:var(--ink);font-weight:600}
+
+  /* ---- spec ---- */
+  .spec{margin-top:64px;display:grid;gap:18px}
+  .spec > p{margin:0;color:var(--ink-2);max-width:64ch}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .cell{background:var(--card);padding:18px 20px}
+  .cell h3{margin:0 0 8px;font-size:1rem;font-weight:600}
+  .cell p,.cell li{font-size:.88rem;color:var(--ink-2)}
+  .cell p{margin:0 0 8px}
+  .cell ul{margin:0;padding-left:1.1rem;display:grid;gap:5px}
+  .cell code{font-family:var(--mono);font-size:.8rem;color:var(--ink);background:var(--raise);padding:1px 5px;border-radius:4px}
+  .cell.warn{background:var(--raise)}
+  .cell.warn h3{color:var(--t5)}
+  .q{counter-reset:q;list-style:none;padding:0 !important}
+  .q li{counter-increment:q;position:relative;padding-left:1.6rem}
+  .q li::before{content:counter(q);position:absolute;left:0;top:.05rem;width:1.15rem;height:1.15rem;border-radius:50%;
+    background:var(--accent-soft);color:var(--accent);font-size:.7rem;display:grid;place-items:center;font-weight:600}
+
+  @media (prefers-reduced-motion:reduce){.chev{transition:none}.bump{animation:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="mast">
+      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" aria-hidden="true"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg>
+      <b>The Exchange</b><span aria-hidden="true">·</span><span>design for the room</span>
+    </div>
+    <h1>The room ledger, pinned to the top of the chat</h1>
+    <p class="lede">Every person in a room sees their own line: the board's illustrative sale figure, worked out from how many people are active in it, multiplied down to their share. When the room grows, everybody's figure grows with it. It uses the points the board already keeps; the only new number is a figure per member.</p>
+  </header>
+
+  <div class="stage">
+    <!-- THE ROOM -->
+    <section class="room" id="room" aria-label="Example chat room">
+      <div class="rtop">
+        <span class="face" aria-hidden="true">F</span>
+        <div>
+          <div class="rn">Film &amp; finance · Shanghai</div>
+          <div class="rc num" id="rc">412 members active this month</div>
+        </div>
+      </div>
+
+      <div class="scroll">
+        <aside class="pin" aria-label="Your ledger">
+          <button class="pinbtn" id="pinbtn" type="button" aria-expanded="false" aria-controls="pbody">
+            <span class="plab" id="plab" aria-hidden="true">Your ledger</span>
+            <span class="pfig" aria-hidden="true"><span class="big num" id="pbig">$169</span><span class="sub" id="psub">if the board sold at today's size</span></span>
+            <span class="pside" aria-hidden="true">
+              <span class="count"><b class="num" id="pcount">412</b><span id="phere">here</span></span>
+              <svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg>
+            </span>
+            <span class="sr" id="pinsr"></span>
+          </button>
+
+          <div class="pbody" id="pbody" hidden>
+            <div class="sec" id="secHow">
+              <h3 id="hHow">How it's worked out</h3>
+              <div class="sum num" id="sum"></div>
+            </div>
+            <div class="sec" id="secGrow">
+              <h3 id="hGrow">As the room grows</h3>
+              <div class="ladder num" id="ladder"></div>
+            </div>
+            <div class="lift" id="lift"></div>
+            <div class="sec" id="secPts">
+              <h3 id="hPts">Your points</h3>
+              <div class="pts" id="pts"></div>
+            </div>
+            <p class="plain" id="plain" hidden></p>
+            <p class="fine" id="fine"></p>
+          </div>
+        </aside>
+
+        <div class="msgs" id="msgs">
+          <div class="sys">Today</div>
+          <div class="m"><span class="av" style="background:var(--t4)">LW</span><div><div class="nm">Lin Wei<time>09:12</time></div><p>Anyone here worked with a completion bond on a co-production? Our lender wants one.</p></div></div>
+          <div class="m"><span class="av" style="background:var(--t2)">R</span><div><div class="nm">Ray<time>09:20</time></div><p>Yes, twice. Happy to talk you through what they actually check.</p></div></div>
+          <div class="m"><span class="av" style="background:var(--t3)">AC</span><div><div class="nm">Aiden Chen<time>09:41</time></div><p>Posting the deck for the documentary slate this afternoon.</p></div></div>
+          <div class="m"><span class="av" style="background:var(--t6)">周</span><div><div class="nm">周静<time>10:03</time></div><p>下周我在上海，可以约个咖啡。</p></div></div>
+        </div>
+      </div>
+
+      <div class="comp"><div>Say something to the room</div></div>
+    </section>
+
+    <!-- THE LEVERS -->
+    <section class="levers" aria-labelledby="hTry">
+      <h2 id="hTry">Try it</h2>
+      <p class="hint">These are the inputs the board would hold. Move them and the pin on the left recalculates, the way it would for one member while the room fills up.</p>
+
+      <div class="ctl">
+        <div class="row"><label for="members">People active in the room</label><output id="oMembers" for="members" class="num">412</output></div>
+        <input type="range" id="members" min="10" max="3000" step="1" value="412">
+        <div class="btns"><button type="button" class="b pri" id="join">Someone joins and posts</button></div>
+      </div>
+
+      <div class="ctl">
+        <div class="row"><label for="per">Figure per active member</label><output id="oPer" for="per" class="num">$40</output></div>
+        <input type="range" id="per" min="0" max="150" step="5" value="40">
+        <small>Set by the board. At $0 no money appears anywhere and the pin shows points instead.</small>
+      </div>
+
+      <div class="ctl">
+        <div class="row"><label for="cut">Share of a sale members hold</label><output id="oCut" for="cut" class="num">10%</output></div>
+        <input type="range" id="cut" min="0" max="30" step="1" value="10">
+      </div>
+
+      <div class="ctl">
+        <label for="who">Whose ledger you're looking at</label>
+        <select id="who">
+          <option value="f24">Seat 24, two guests who stayed</option>
+          <option value="f3">Seat 3, an early connector</option>
+          <option value="late">Joined after the first hundred</option>
+        </select>
+      </div>
+
+      <div class="ctl">
+        <span style="font-weight:600;font-size:.9rem" id="langlab">Language on the pin</span>
+        <div class="btns" role="group" aria-labelledby="langlab">
+          <button type="button" class="b" id="en" aria-pressed="true">English</button>
+          <button type="button" class="b" id="zh" aria-pressed="false">中文</button>
+        </div>
+      </div>
+
+      <div class="readout num" id="readout" aria-label="The arithmetic, as the server would run it"></div>
+    </section>
+  </div>
+
+  <!-- THE SPEC -->
+  <section class="spec" aria-labelledby="hSpec">
+    <h2 id="hSpec">How it works, and what it must not do</h2>
+    <p>The board already has most of this. <code>stakeOf()</code> in <code>board/server.js</code> scores every member (an early seat, guests who stay, introductions, people who answered, active weeks), and the waiting room turns those points into dollars from one fixed sale figure. This design makes that sale figure grow with the room and moves it from the waiting room to the top of the chat.</p>
+
+    <div class="grid">
+      <div class="cell">
+        <h3>The formula</h3>
+        <p><code>sale = active members × per-member figure</code></p>
+        <p><code>yours = sale × members' share × your points ÷ founding pool</code></p>
+        <p>The founding pool is every point the first hundred seats can hold (3,717 at today's weights), not today's members. That keeps anyone's share from shrinking as the hundred fill, which is the reason the code already divides this way.</p>
+      </div>
+      <div class="cell">
+        <h3>Who counts as active</h3>
+        <p>A member whose page is up and who has posted in the last 30 days. Not everyone who ever joined: a head count that includes people who left is the easiest number here to inflate, and it's what a buyer would discount first.</p>
+        <p>The pin shows the count it used, so nobody has to trust it.</p>
+      </div>
+      <div class="cell">
+        <h3>Rules it keeps</h3>
+        <ul>
+          <li><b>No default figure.</b> Until the board sets one, the pin shows points and a percentage, and no dollar sign appears.</li>
+          <li><b>Only you see your line.</b> The room shares one count; nobody sees anyone else's figure. No ranking.</li>
+          <li><b>It says what it is,</b> every time: an illustration, not a valuation or an offer.</li>
+          <li><b>It stops on the closing date,</b> like the ledger already does.</li>
+        </ul>
+      </div>
+      <div class="cell">
+        <h3>With a screen reader</h3>
+        <p>The pin is one button whose label is a whole sentence: <i>"Your ledger: $169 if the board sold at today's size. Expand to see how it's worked out."</i></p>
+        <p>When someone joins, it waits a moment and says once: <i>"The room is now 413 members. Your illustration is about $171."</i> It never announces every tick, and it never interrupts.</p>
+      </div>
+      <div class="cell warn">
+        <h3>Before the dollar figure goes live</h3>
+        <p>A number that tells a group of people what their share of a sale would be, and that grows when they bring others in, is the shape regulators read as offering an investment. Securities rules in Hong Kong, the US and mainland China can all reach it, and "recruit to raise your number" can read as a pyramid even when it isn't one.</p>
+        <p>I'm not a lawyer. Have one read the exact wording before a per-member figure is set on a live board. Points mode shows no money and can ship first.</p>
+      </div>
+      <div class="cell">
+        <h3>Where it goes in the code</h3>
+        <ul>
+          <li><code>board/server.js</code>: a new <code>BOARD_STAKE_PER_MEMBER</code> replaces the fixed <code>BOARD_STAKE_SALE</code>; the sale is worked out per request from the active count. <code>BOARD_STAKE_CUT</code> stays.</li>
+          <li>The room data gains a <code>ledger</code> object for the person asking, and only them.</li>
+          <li><code>board/public/room.html</code>: a sticky pin under the top bar, closed by default, updated from the arrival event Mo already announces.</li>
+          <li><code>board/public/i18n.js</code>: the pin's lines in English and Chinese.</li>
+        </ul>
+        <p>The share offers in <code>cfm/</code> (percentages with vesting) are a separate record and aren't part of this number.</p>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="cell">
+        <h3>Decisions that are yours</h3>
+        <ol class="q">
+          <li>The figure per active member. Well-known acquisitions have worked out at tens of dollars per monthly user (WhatsApp, 2014, about $42), but a small invite-only club usually sells on revenue, not heads.</li>
+          <li>Whether 30 days is the right window for "active".</li>
+          <li>What people who join after the first hundred get. Today the ledger gives them no share, so their pin says so plainly. The alternative is a second, smaller tier.</li>
+          <li>The members' share of a sale, and the exact words for what happens if one takes place.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="sr" role="status" aria-live="polite" id="live"></div>
+
+<script>
+(() => {
+  const SEATS = 100;
+  const FOUND = (n) => Math.round(200 / Math.sqrt(Math.max(1, n)));
+  const WORTH = { guest: 100, card: 40, heard: 20, week: 10 };
+  const POOL = (() => { let t = 0; for (let n = 1; n <= SEATS; n++) t += FOUND(n); return t; })();
+
+  const PEOPLE = {
+    f24:  { seat: 24,  guests: 2, cards: 1, heard: 3, weeks: 4 },
+    f3:   { seat: 3,   guests: 5, cards: 3, heard: 9, weeks: 10 },
+    late: { seat: 131, guests: 1, cards: 0, heard: 2, weeks: 3 },
+  };
+
+  const S = {
+    en: {
+      ledger: "Your ledger", here: "here", ifSold: "if the board sold at today's size",
+      ofHundred: "of what the founding hundred hold", noSeat: "No seat",
+      noSeatSub: "the first hundred filled before you joined",
+      how: "How it's worked out", grow: "As the room grows", pts: "Your points",
+      r1: "{m} active members × {pm} each", r1n: "illustrative sale",
+      r2: "Members hold {cut}%", r3: "Your {p} of {pool} founding points",
+      today: "Today · {m}", at: "At {m}",
+      lift: "Bring one person in who stays", liftP: "+100 points, and one more member in the count.",
+      seat: "Seat {n} of 100", guests: "{g} guests who stayed and posted", cards: "{c} introductions that landed",
+      heard: "{h} people who answered you", weeks: "{w} active weeks", total: "Total",
+      fine: "An illustration, not a valuation or an offer. The per-member figure is chosen by the board, not measured. Only you can see this line.",
+      noMoney: "The board hasn't set a figure per member, so this shows points. Money appears only once one is set.",
+      late: "Shares in this ledger went to the first hundred people. What you do here still grows the room, and that's what moves everyone else's figure.",
+      rc: "{m} members active this month",
+      pin: "Your ledger: {fig} {sub}. Expand to see how it's worked out.",
+      pinLate: "Your ledger: no seat. The first hundred filled before you joined. Expand for details.",
+      say: "The room is now {m} members. Your illustration is about {v}.",
+      sayPts: "The room is now {m} members.",
+      joined: "{n} joined and posted",
+    },
+    zh: {
+      ledger: "你的账本", here: "人在这里", ifSold: "按今天的人数出售时",
+      ofHundred: "占创始一百人总分", noSeat: "没有席位",
+      noSeatSub: "你加入之前，最早的一百人已经满了",
+      how: "怎么算出来的", grow: "人数增长时", pts: "你的分数",
+      r1: "{m} 位活跃成员 × 每人 {pm}", r1n: "示意出售价",
+      r2: "成员合计占 {cut}%", r3: "你在 {pool} 创始分里的 {p} 分",
+      today: "今天 · {m}", at: "{m} 人时",
+      lift: "带一个留下来的人进来", liftP: "多 100 分，人数也多一个。",
+      seat: "第 {n} 号席位（共 100）", guests: "{g} 位留下并发帖的客人", cards: "{c} 次促成的引荐",
+      heard: "{h} 个回复过你的人", weeks: "{w} 个活跃周", total: "合计",
+      fine: "这只是示意，不是估值，也不是要约。每位成员的金额由看板设定，不是测量出来的。只有你能看到这一行。",
+      noMoney: "看板还没有设定每位成员的金额，所以这里显示分数。设定之后才会出现钱数。",
+      late: "账本里的份额给了最早的一百个人。你在这里做的事仍然让房间变大，而房间变大会让其他人的数字上升。",
+      rc: "本月 {m} 位活跃成员",
+      pin: "你的账本：{fig}，{sub}。展开查看计算方法。",
+      pinLate: "你的账本：没有席位，你加入之前最早的一百人已经满了。展开查看详情。",
+      say: "房间现在有 {m} 人。你的示意金额约为 {v}。",
+      sayPts: "房间现在有 {m} 人。",
+      joined: "{n} 加入并发了帖",
+    },
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const st = { lang: "en", members: 412, per: 40, cut: 10, who: "f24", open: false };
+  const fill = (s, o) => s.replace(/\{(\w+)\}/g, (_, k) => (o[k] ?? ""));
+  const T = (k, o = {}) => fill(S[st.lang][k], o);
+  const cash = (n) => "$" + Math.round(n).toLocaleString("en-US");
+  const int = (n) => Math.round(n).toLocaleString("en-US");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const pointsOf = (p) => p.seat > SEATS ? 0
+    : FOUND(p.seat) + p.guests * WORTH.guest + p.cards * WORTH.card + p.heard * WORTH.heard + p.weeks * WORTH.week;
+  const moneyOn = () => st.per > 0 && st.cut > 0;
+  const moneyAt = (members, pts) => moneyOn() ? members * st.per * (st.cut / 100) * pts / POOL : null;
+
+  const STEPS = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000];
+  const nextTwo = (m) => { const a = STEPS.filter((s) => s > m); return [a[0] ?? m * 2, a[1] ?? m * 5]; };
+
+  function row(parent, left, right, cls, note) {
+    const d = document.createElement("div");
+    if (cls) d.className = cls;
+    const l = document.createElement("span"); l.textContent = left;
+    if (note) { const n = document.createElement("span"); n.className = "note"; n.textContent = note; l.append(n); }
+    const r = document.createElement("span"); r.textContent = right;
+    d.append(l, r); parent.append(d);
+  }
+
+  let shown = null;
+  function animateTo(el, text, value) {
+    if (reduced || shown === null || value === null || typeof shown !== "number") {
+      el.textContent = text; shown = value; return;
+    }
+    const from = shown, to = value, t0 = performance.now(), dur = 380;
+    shown = value;
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / dur);
+      el.textContent = cash(from + (to - from) * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(step); else el.textContent = text;
+    };
+    requestAnimationFrame(step);
+  }
+
+  function render() {
+    const p = PEOPLE[st.who];
+    const pts = pointsOf(p);
+    const late = p.seat > SEATS;
+    const you = moneyAt(st.members, pts);
+    const pc = (pts * 100 / POOL).toFixed(2);
+
+    $("room").lang = st.lang === "zh" ? "zh-Hans" : "en";
+    $("plab").textContent = T("ledger");
+    $("pcount").textContent = int(st.members);
+    $("phere").textContent = T("here");
+    $("rc").textContent = T("rc", { m: int(st.members) });
+
+    let fig, sub;
+    if (late) { fig = T("noSeat"); sub = T("noSeatSub"); $("pbig").textContent = fig; shown = null; }
+    else if (you !== null) { fig = cash(you); sub = T("ifSold"); animateTo($("pbig"), fig, you); }
+    else { fig = pc + "%"; sub = T("ofHundred"); $("pbig").textContent = fig; shown = null; }
+    $("psub").textContent = sub;
+    $("pinsr").textContent = late ? T("pinLate") : T("pin", { fig, sub });
+
+    // how it's worked out
+    const sum = $("sum"); sum.textContent = "";
+    const showMoney = !late && you !== null;
+    $("secHow").hidden = !showMoney; $("secGrow").hidden = !showMoney; $("lift").hidden = late;
+    $("hHow").textContent = T("how"); $("hGrow").textContent = T("grow"); $("hPts").textContent = T("pts");
+    if (showMoney) {
+      const sale = st.members * st.per;
+      row(sum, T("r1", { m: int(st.members), pm: cash(st.per) }), cash(sale), null, T("r1n"));
+      row(sum, T("r2", { cut: st.cut }), cash(sale * st.cut / 100));
+      row(sum, T("r3", { p: int(pts), pool: int(POOL) }), cash(you), "you");
+
+      const lad = $("ladder"); lad.textContent = "";
+      const [m2, m3] = nextTwo(st.members);
+      [[T("today", { m: int(st.members) }), st.members], [T("at", { m: int(m2) }), m2], [T("at", { m: int(m3) }), m3]]
+        .forEach(([w, m]) => {
+          const d = document.createElement("div"); d.className = "mk";
+          const a = document.createElement("div"); a.className = "w"; a.textContent = w;
+          const b = document.createElement("div"); b.className = "v"; b.textContent = cash(moneyAt(m, pts));
+          d.append(a, b); lad.append(d);
+        });
+    }
+
+    // the one act worth the most
+    const lift = $("lift"); lift.textContent = "";
+    if (!late) {
+      const lab = document.createElement("p"); lab.className = "lab"; lab.textContent = T("lift");
+      const lad = document.createElement("div"); lad.className = "lad num";
+      const f = document.createElement("span"); f.className = "from";
+      const t = document.createElement("span"); t.className = "to";
+      if (showMoney) { f.textContent = cash(you); t.textContent = cash(moneyAt(st.members + 1, pts + WORTH.guest)); }
+      else { f.textContent = int(pts); t.textContent = int(pts + WORTH.guest); }
+      const x = document.createElement("p"); x.textContent = T("liftP");
+      lad.append(f, t); lift.append(lab, lad, x);
+    }
+
+    // points
+    const ptsEl = $("pts"); ptsEl.textContent = "";
+    $("secPts").hidden = late;
+    if (!late) {
+      row(ptsEl, T("seat", { n: p.seat }), int(FOUND(p.seat)));
+      row(ptsEl, T("guests", { g: p.guests }), int(p.guests * WORTH.guest));
+      row(ptsEl, T("cards", { c: p.cards }), int(p.cards * WORTH.card));
+      row(ptsEl, T("heard", { h: p.heard }), int(p.heard * WORTH.heard));
+      row(ptsEl, T("weeks", { w: p.weeks }), int(p.weeks * WORTH.week));
+      row(ptsEl, T("total"), int(pts), "tot");
+    }
+
+    const plain = $("plain");
+    plain.hidden = !(late || you === null);
+    plain.textContent = late ? T("late") : T("noMoney");
+    $("fine").textContent = T("fine");
+
+    // levers
+    $("oMembers").textContent = int(st.members);
+    $("oPer").textContent = cash(st.per);
+    $("oCut").textContent = st.cut + "%";
+    const sale = st.members * st.per;
+    $("readout").innerHTML =
+      `POOL &nbsp;= Σ round(200/√n), n=1…100 = <b>${int(POOL)}</b><br>` +
+      `points = ${late ? "<b>0</b> (seat " + p.seat + " &gt; 100)" : "FOUND(" + p.seat + ")=" + FOUND(p.seat) + " + " + p.guests + "×100 + " + p.cards + "×40 + " + p.heard + "×20 + " + p.weeks + "×10 = <b>" + int(pts) + "</b>"}<br>` +
+      (moneyOn()
+        ? `sale &nbsp;&nbsp;= ${int(st.members)} × $${st.per} = <b>${cash(sale)}</b><br>yours &nbsp;= ${cash(sale)} × ${st.cut}% × ${int(pts)}/${int(POOL)} = <b>${cash(moneyAt(st.members, pts))}</b>`
+        : `money &nbsp;= <b>off</b> (no per-member figure or no members' share set)`);
+  }
+
+  // Say it once, after things settle — never on every step of a slider.
+  let sayTimer;
+  function announce() {
+    clearTimeout(sayTimer);
+    sayTimer = setTimeout(() => {
+      const p = PEOPLE[st.who];
+      const you = p.seat > SEATS ? null : moneyAt(st.members, pointsOf(p));
+      $("live").textContent = you === null ? T("sayPts", { m: int(st.members) }) : T("say", { m: int(st.members), v: cash(you) });
+    }, 1200);
+  }
+
+  $("pinbtn").addEventListener("click", () => {
+    st.open = !st.open;
+    $("pinbtn").setAttribute("aria-expanded", String(st.open));
+    $("pbody").hidden = !st.open;
+  });
+  $("members").addEventListener("input", (e) => { st.members = +e.target.value; render(); announce(); });
+  $("per").addEventListener("input", (e) => { st.per = +e.target.value; render(); });
+  $("cut").addEventListener("input", (e) => { st.cut = +e.target.value; render(); });
+  $("who").addEventListener("change", (e) => { st.who = e.target.value; shown = null; render(); });
+
+  const NAMES = ["Keith", "Mei Ling", "Brendan", "Tiger", "Curt", "Ian", "陈晓", "Sofia"];
+  let joinN = 0;
+  $("join").addEventListener("click", () => {
+    st.members = Math.min(3000, st.members + 1);
+    $("members").value = st.members;
+    const d = document.createElement("div"); d.className = "sys new";
+    d.textContent = T("joined", { n: NAMES[joinN++ % NAMES.length] });
+    $("msgs").append(d);
+    render();
+    const c = $("pcount"); c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump");
+    announce();
+  });
+
+  const setLang = (l) => {
+    st.lang = l; $("en").setAttribute("aria-pressed", String(l === "en")); $("zh").setAttribute("aria-pressed", String(l === "zh"));
+    shown = null; render();
+  };
+  $("en").addEventListener("click", () => setLang("en"));
+  $("zh").addEventListener("click", () => setLang("zh"));
+
+  // Open on the worked-out view so the first look shows what it does.
+  st.open = true; $("pinbtn").setAttribute("aria-expanded", "true"); $("pbody").hidden = false;
+  render();
+})();
+</script>
