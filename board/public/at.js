@@ -60,7 +60,31 @@ export function atPicker(ta, names) {
   const menu = document.createElement("div");
   menu.className = "atmenu";
   menu.hidden = true;
-  ta.insertAdjacentElement("beforebegin", menu);
+
+  /* PUT IN THE PAGE WHEN THERE IS A PAGE TO PUT IT IN, and not before.
+   *
+   * This did it once, here, with insertAdjacentElement. That works when the
+   * box already exists in the document — which is how the messages screen
+   * calls it, with an element out of the markup — and does NOTHING AT ALL
+   * when the box is a textarea that was created a line earlier and has not
+   * been appended yet. No error, no warning: insertAdjacentElement on an
+   * element with no parent returns null and inserts nowhere.
+   *
+   * That is how the groups screen called it, so @ worked in a door room and
+   * did nothing in a group for as long as both have existed. Typing @ and a
+   * name simply did not offer anybody, which reads as a feature nobody built
+   * rather than one silently dropped on the floor.
+   *
+   * So the insert is retried at the moment the menu is actually wanted, by
+   * which time the box is always in the page — it has just been typed into.
+   * Both call orders work now and the next screen to use this cannot hit it. */
+  const mount = () => {
+    if (!menu.isConnected && ta.parentElement) {
+      ta.insertAdjacentElement("beforebegin", menu);
+    }
+    return menu.isConnected;
+  };
+  mount();
 
   let at = -1;              // where the @ is, or -1
 
@@ -96,6 +120,7 @@ export function atPicker(ta, names) {
     const some = names().filter((n) => n && n.toLowerCase().includes(want)).slice(0, 6);
     if (!some.length) return shut();
 
+    if (!mount()) return shut();
     at = i;
     menu.textContent = "";
     for (const n of some) {
