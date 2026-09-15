@@ -1003,6 +1003,29 @@ services:
       BOARD_SEAT_OUTSIDE: ${TOMSCODING_BOARD_SEAT_OUTSIDE:-}
       BOARD_STAKE_SALE: ${TOMSCODING_BOARD_STAKE_SALE:-}
       BOARD_STAKE_CUT: ${TOMSCODING_BOARD_STAKE_CUT:-}
+      # THE LARGER LEDGER, the one pinned over a door room. Same rule as the
+      # seats above and for the same reason: empty by default, off entirely,
+      # and turning it on is a deliberate line in .env rather than something
+      # that arrives with a rebuild.
+      #
+      # A variable the server reads and the compose file does not pass is a
+      # variable the container never sees. These four were set in .env and the
+      # board was started without them, so pinOn() was false and the pin took
+      # itself off the screen — correctly, silently, and with nothing anywhere
+      # to say why. That is an hour nobody gets back.
+      #
+      # GOAL is the only one that switches it on. UNTIL is the day the counting
+      # stops, BY the day the goal is meant to be reached, SPLIT the percentage
+      # of the pool that goes by place rather than by what people did, ROOMS
+      # the doors that carry it (the rewards door always does), CURVE the
+      # exponent and GUESTS the cap on people one member is counted for.
+      BOARD_LEDGER_GOAL: ${TOMSCODING_BOARD_LEDGER_GOAL:-}
+      BOARD_LEDGER_UNTIL: ${TOMSCODING_BOARD_LEDGER_UNTIL:-}
+      BOARD_LEDGER_BY: ${TOMSCODING_BOARD_LEDGER_BY:-}
+      BOARD_LEDGER_SPLIT: ${TOMSCODING_BOARD_LEDGER_SPLIT:-}
+      BOARD_LEDGER_ROOMS: ${TOMSCODING_BOARD_LEDGER_ROOMS:-}
+      BOARD_LEDGER_CURVE: ${TOMSCODING_BOARD_LEDGER_CURVE:-}
+      BOARD_LEDGER_GUESTS: ${TOMSCODING_BOARD_LEDGER_GUESTS:-}
       BOARD_TESTS: ${TOMSCODING_BOARD_TESTS:-}
       # THE REVIEWER'S CODE, AND WHERE IT SENDS THEM. Both must be set for
       # either to do anything. That code typed at this board's door admits
