@@ -787,6 +787,7 @@ async function pin() {
 }
 
 import { atText, atPicker } from "/at.js";
+import { mountRoomMoney } from "/wallet-card.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -2136,6 +2137,8 @@ async function drawDoor(key) {
   $("twrite").hidden = false;
   $("tshut").hidden = true;
   $("tsaid").hidden = true;
+  /* Money in this room: a button in the box, and payments you're part of. */
+  mountRoomMoney({ talk, write: $("twrite"), room: key, device });
   window.scrollTo(0, document.body.scrollHeight);
   doorWatch(key);
 }

@@ -408,6 +408,7 @@ import { T, when, lang, setLang, pickLang, langButton, pick } from "/i18n.js";
 import { mountMo } from "/mo.js";
 import { stageFor, stageName, crownMark } from "/crown.js";
 import { OFF } from "/off.js";
+import { mountWalletCard } from "/wallet-card.js";
 
 const HANDLE = "{{HANDLE}}";
 const IN_WECHAT = /micromessenger/i.test(navigator.userAgent);
@@ -1002,6 +1003,9 @@ function paint() {
   // nobody goes back to edit is worse than no timetable.
   if (facts.children.length) head.append(facts);
   box.append(head);
+
+  /* YOUR WALLET, on your own page only. Draws nothing when the wallet is off. */
+  if (q.mine) mountWalletCard(box, device);
 
   /* Directly under the line that explains it, and above everything a stranger
      would read first. It was at the foot of the page under Report, which is
