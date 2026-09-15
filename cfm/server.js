@@ -19,6 +19,7 @@ import path from "node:path";
 import { readFile } from "node:fs/promises";
 import * as store from "./lib/store.js";
 import * as anchor from "./lib/anchor.js";
+import { createDemoHost } from "./lib/wallet/demo.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -171,6 +172,14 @@ async function page(file, req, res, next) {
  * stranger meeting a six-character box and no explanation just closes it. */
 app.get("/", (req, res, next) => page("landing.html", req, res, next));
 app.get("/o", (req, res, next) => page("index.html", req, res, next));
+
+/* THE WALLET, AS A DEMO ANYBODY CAN TRY — in development, on test money.
+   Every visitor gets a private sandbox in memory with four invented people;
+   nothing is written to disk and no money moves. The code is the board's
+   wallet, copied here by scripts/wallet-demo-sync.mjs; see lib/wallet/demo.js. */
+const WALLET_DEMO = createDemoHost({ secret: SALT || undefined });
+app.use(WALLET_DEMO.router);
+app.get(["/wallet", "/wallet/"], (req, res, next) => page("wallet.html", req, res, next));
 /* AN HOUR IS RIGHT FOR AN IMAGE AND WRONG FOR A PAGE.
  *
  * The fonts, the mark, the signature — those are named files whose contents
