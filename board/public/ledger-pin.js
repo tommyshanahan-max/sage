@@ -656,7 +656,7 @@ function body(d, device) {
     stats.append(stat(T("pin.forPlace"), num(d.placePts),
       T("pin.place", { n: num(d.place) }) + " · " + T("pin.placeWhen")));
     if (d.acts) stats.append(stat(T("pin.forActs"), num(d.acts),
-      T("pin.until", { date: d.until ? theDay(d.until) : "" }), true));
+      d.until ? T("pin.until", { date: theDay(d.until) }) : T("pin.untilNo"), true));
     stats.append(stat(T("pin.total"), num(d.total), ""));
     w.append(stats);
     w.append(el("h3", "lph", T("pin.yourPlace")));
@@ -716,9 +716,9 @@ function body(d, device) {
     if (typeof d.money === "number" || typeof d.moneyAt === "number") {
       w.append(el("p", "lpsmall", T("pin.moneyNot")));
     }
-    w.append(el("p", "lpsmall", T("pin.shareRest", {
-      rest: num(d.rest), date: d.until ? theDay(d.until) : "",
-    })));
+    w.append(el("p", "lpsmall", d.until
+      ? T("pin.shareRest", { rest: num(d.rest), date: theDay(d.until) })
+      : T("pin.shareRestNo", { rest: num(d.rest) })));
   }
 
   w.append(el("p", "lpk", T("pin.toward", { goal: num(d.goal) })));

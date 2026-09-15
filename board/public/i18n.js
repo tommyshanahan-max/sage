@@ -5026,6 +5026,13 @@ export const STRINGS = {
   "pin.yourPlace":     ["Your place on the ledger", "你在账上的位置"],
   "pin.placeWhen":     ["fixed the day you joined", "加入那天就定了"],
   "pin.total":         ["Total", "合计"],
+  /* THE SAME TWO SENTENCES WITH NO DATE IN THEM. BOARD_LEDGER_UNTIL is
+     optional, and unset the date substituted as an empty string — so the
+     panel said "counting until ." and "fixed on .", which is a screen with a
+     hole in it rather than a screen that left something out. */
+  "pin.untilNo":       ["Points from what you do keep counting.", "做事分会一直累加。"],
+  "pin.shareRestNo":   ["Plus a share of the other {rest}%, from what everyone did.",
+                        "再加上另外 {rest}% 里的一份，按大家做了什么算。"],
   "pin.until":         ["Points from what you do keep counting until {date}.",
                         "做事分一直算到 {date}。"],
   /* THE LADDER, ACROSS THE TOP AND NEVER BEHIND A TAP. Four rungs, three
