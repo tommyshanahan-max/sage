@@ -28,9 +28,21 @@ everything. Reaching for `rebuild` after a change to `board/` is the mistake.
 
 ## Offers and invites
 
-`make cfm-offer WHO="Ray"` — **first names**. Whatever goes in `WHO` is the
-name on the ledger and the name Tom reads back in `make cfm-offers`, so it
-should be what he calls the person, not their full name.
+**`WHO` is a first name, everywhere, on every target.** `make cfm-offer`,
+`make peek`, `make handroom`, `make invite`, `make card` — Tom calls people by
+their first name and that is what he types. Offering him a command with a full
+name in it is a command he has to edit before running, and it has been offered
+more than once.
+
+The exception is not an exception to that: on the board, `WHO` is the handle
+the person chose, so it is whatever they typed. Usually a first name. When it
+is not, `make who` is the only place that knows — read it rather than guessing
+from how somebody was described in chat, because a wrong handle fails with
+"Not on this board" and looks like the person is missing when they are not.
+
+`make cfm-offer WHO="Ray"` — whatever goes in `WHO` is the name on the ledger
+and the name Tom reads back in `make cfm-offers`, so it should be what he calls
+the person.
 
 `make invite WHO="Tom" FOR="Ian"` — `WHO` is whoever is *vouching*, and it is
 the name the door says out loud ("Tom let you in"). `FOR` is the person the
