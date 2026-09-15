@@ -47,6 +47,21 @@ node lib/wallet/smoke.mjs http://localhost:8091               # both routes over
 
 Open `http://localhost:8091/wallet` — you are Tom, with no wallet yet.
 
+## The public demo at crowdfundme.app/wallet
+
+Anybody can try the wallet there without an account. It says "In development ·
+a working demo on test money" at the top. Each visitor gets a private sandbox in
+memory (a cookie names it; nothing goes to disk; dropped after six hours or when
+there are more than 300) with four invented people: **You** (no wallet yet),
+**Mikko** in Helsinki (€300, a card), **Mia** in Sydney (A$120, has asked Mikko
+for A$80) and **Wei** in Shanghai (paid to his bank in yuan). "Switch person"
+lets a visitor send as one and accept as another; "Start the demo again" resets.
+
+It is the board's wallet code, copied into `cfm/lib/wallet` and
+`cfm/public/wallet.html` by `node scripts/wallet-demo-sync.mjs`. Edit the board's
+copy and re-run the sync; the copies say so at the top. Check it with
+`node board/lib/wallet/demo.check.mjs`.
+
 ## The decisions built in
 
 - **The Exchange never holds money or card details.** Card numbers, bank logins
