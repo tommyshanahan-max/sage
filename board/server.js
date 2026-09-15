@@ -8578,6 +8578,56 @@ function doorAccess(board, me, key) {
   return "";
 }
 
+/** WHAT MO IS TOLD ABOUT THE LEDGER, IN THE ROOM THAT CARRIES IT.
+ *
+ *  THE NUMBERS ARE pinFor's, NOT A SECOND SET. The house rule written over
+ *  actsOf, again and for the same reason: "two places is how a screen ends up
+ *  promising a number the ledger does not pay". If he learns the tiers from a
+ *  literal in here, then the day the tiers change he is the one still quoting
+ *  the old ones, confidently, in a room full of people.
+ *
+ *  It goes to a model, so what is in it matters. Their place and their own
+ *  points — which is their own screen read back to them — the tiers, which are
+ *  the same for everybody, and the goal. No other member, no names, nothing
+ *  about who is in.
+ *
+ *  Null when the ledger is off or this room does not carry it, and then he has
+ *  never heard of any of it, which is the right answer in a room where it does
+ *  not exist.
+ */
+function ledgerFor(board, who, key) {
+  if (!pinOn()) return null;
+  if (!key || (key !== store.OPEN_DOOR && !LROOMS.has(key))) return null;
+  const d = pinFor(board, who);
+  if (!d || !d.on) return null;
+  const tiers = (d.tiers || []).map((t) =>
+    `the first ${t.upto.toLocaleString()} — ${t.size.toLocaleString()} places, `
+    + `${t.pts.toLocaleString()} points each`);
+  const out = {
+    tiers,
+    filling: d.tier
+      ? `the first ${d.tier.upto.toLocaleString()}, ${d.tier.left.toLocaleString()} places left`
+      : "none — the last tier is full and the ledger is closed",
+    members: d.members,
+    goal: d.goal,
+    cap: d.cap,
+    mine: d.place
+      ? `place #${d.place}, ${d.total.toLocaleString()} points, ${d.share.toFixed(2)}% of the pool`
+      : d.soon
+        ? `not in yet. Their place would be #${d.soon}, worth ${d.soonPts.toLocaleString()} points`
+        : "",
+    /* The figure only when the operator put one on the box, and named as what
+       it is. He is told the arithmetic so he can say it, because a figure he
+       cannot account for is a figure he should not repeat. */
+    money: typeof d.moneyAt === "number"
+      ? `if the company sold for ${money0(d.saleAt)} at ${d.goal.toLocaleString()} members and the members' pool is ${d.cut}% of a sale, their share comes to ${money0(d.moneyAt)}`
+      : "",
+  };
+  return out;
+}
+
+const money0 = (v) => "$" + Math.round(Number(v) || 0).toLocaleString("en-US");
+
 /** MO SAYS WHAT HAPPENED TO THE ROOM.
  *
  *  He is a member of every one of them and he is silent — that is the bargain,
@@ -8949,6 +8999,11 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
       photo: Boolean((mine && mine.photo) || (w && w.photo)),
       // And who else is standing here — see roomFolk.
       folk: now && door ? roomFolk(now, door, me) : [],
+      /* THE REWARDS SCHEME, IN THE ROOM THAT CARRIES IT — see ledgerFor.
+         Somebody asks "how does this work" in the room built to explain it and
+         he had never heard of it, which is the one question he should be able
+         to answer better than anybody. */
+      ledger: now ? ledgerFor(now, me, store.doorKey(id)) : null,
     }).catch(() => ({ error: "no" }));
     /* `say`, NOT `text`, AND THAT ONE WORD COST THE WHOLE FEATURE.
      *

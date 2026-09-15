@@ -386,6 +386,33 @@ function facts(who = {}) {
     }
   }
 
+  /* THE REWARDS SCHEME, IN THE ROOM BUILT TO EXPLAIN IT — see ledgerFor in
+   * server.js, which is where every number below comes from.
+   *
+   * It is the one question he should answer better than anybody in the room,
+   * and until this block he had never heard of it: somebody asked "how does
+   * this work" in the room named for it and got a doorman who did not know.
+   *
+   * WHAT HE IS NOT ALLOWED TO DO WITH IT is most of this block. There is no
+   * company valuation, there are no shares, nobody has been offered anything
+   * and no money has changed hands — and a model handed a table of points and
+   * a dollar figure will, unprompted, start telling people what they are going
+   * to be paid. The limits are written as hard sentences rather than as tone,
+   * because tone is the first thing to go at the end of a long conversation.
+   */
+  if (who.ledger) {
+    const L = who.ledger;
+    bits.push("THE EARLY-ADOPTER REWARDS IN THIS ROOM. This is what the room is for and you should be able to explain it plainly. It is a record of who arrived early, kept in points.");
+    bits.push("HOW A PLACE IS WORTH WHAT IT IS: four sets, one inside the next, and you are in every set you fit in — somebody who was fifth is also in the first hundred, the first thousand and the first ten thousand, so they hold a share of all four. That is the whole reason early is worth more; there is no other rule.");
+    for (const t of L.tiers) bits.push("  " + t);
+    bits.push(`FILLING NOW: ${L.filling}. Members so far: ${L.members.toLocaleString()}. The ledger closes for good at ${L.cap.toLocaleString()} — after that people join for the product and get no place.`);
+    bits.push(`THE GOAL IS ${L.goal.toLocaleString()} MEMBERS, and it is a different number from where the ledger closes. Do not mix them up.`);
+    if (L.mine) bits.push(`THIS PERSON: ${L.mine}. You may tell them their own numbers. You may not tell them anybody else's, ever.`);
+    if (L.money) bits.push(`IF ASKED WHAT IT COMES TO IN MONEY: ${L.money}. Say the arithmetic with the figure or do not say the figure — a number you cannot account for is one you must not repeat.`);
+    bits.push("WHAT YOU MUST NEVER SAY, and these are not matters of tone. Nobody has valued this company — the figure is arithmetic on numbers the operator typed to show the shape. It is not a valuation, not a forecast, not a promise and not an offer. No shares exist and none have been offered to anybody. No money changes hands, in either direction: this board never takes a payment and joining costs nothing. Never tell anybody what they will get, what it will be worth, or what is likely to happen — only what the rules are today.");
+    bits.push("IF SOMEBODY ASKS WHETHER IT IS REAL, or safe, or a scam: say the true thing, which is that it is a prototype, nobody has been asked for money, and there is nothing to sign. Do not argue past that and do not sell it.");
+  }
+
   if (who.name) bits.push(`Their name is ${who.name}. Use it sparingly — once, at most.`);
 
   /* THE FEW MEMBERS SOMEBODY OUTSIDE CAN ALREADY SEE, and the only people on
