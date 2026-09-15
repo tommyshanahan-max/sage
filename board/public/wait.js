@@ -76,8 +76,25 @@ export function roomFromPath() {
   const here = (location.pathname || "").replace(/\/+$/, "") || "/";
   if (PAGES[here]) return PAGES[here];
   const m = /^\/r\/([a-z]+)/.exec(location.pathname || "");
-  const key = m ? m[1] : "";
-  return ["film", "invest", "raise", "trade", "other"].includes(key) ? key : "";
+  /* NO LIST HERE, AND THAT IS THE FIX RATHER THAN A SHORTCUT.
+   *
+   * It held ["film","invest","raise","trade","other"], so /r/rewards matched
+   * nothing, returned "", and door.html fell back to "other" — somebody shared
+   * the rewards room and whoever opened the link landed in a different room.
+   * A link that quietly opens the wrong page is the worst kind of broken,
+   * because both ends believe it worked.
+   *
+   * TWO LISTS THAT LOOK THE SAME AND ARE NOT. The five are the filing buckets
+   * — which pile a waiting person is put in — and rewards is deliberately not
+   * one of them (see doorAccess, where it is the door open to everybody
+   * waiting whichever pile they are in). The doors are six. This function is
+   * about doors, and it had the buckets.
+   *
+   * So it carries neither. The server already decided: /r/:room serves
+   * door.html for a real door and the sales page for anything else, tested
+   * against WAITROOMS_CHAT, which is the one place that list lives. A copy out
+   * here can only ever disagree with it, and this is what that looks like. */
+  return m ? m[1] : "";
 }
 
 /** The member whose link this is, or "" when nobody sent them. An id in the
