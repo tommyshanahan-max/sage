@@ -1795,7 +1795,12 @@ function saidIn(m) {
 }
 
 function doorWhere(m) {
-  if (m.bot) return "";
+  /* HE HAS A PAGE NOW, so his face opens it. This returned nothing because
+     until /mo existed there was nowhere for him to go, and he was the one face
+     in a room that did nothing when tapped — which is the question /mo was
+     written to answer: what is this thing in my messages. Not /p/, which is
+     for members and would have nothing to show for him. */
+  if (m.bot) return "/mo";
   if (m.inside && m.handle) return "/p/" + encodeURIComponent(m.handle.toLowerCase());
   /* AND A PERSON AT THE DOOR HAS A PAGE TOO NOW.
      It used to open the conversation with them — better than nothing, and
