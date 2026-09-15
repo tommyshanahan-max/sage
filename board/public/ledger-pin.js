@@ -396,6 +396,11 @@ export async function mountLedgerPin(box, room, device, group) {
   LAST = { box, room, device, group };
   d.lang = lang();
   d.preview = PREVIEW;
+  /* THE ROOM, SO THE PANEL CAN OFFER ITS OWN DOOR. Carried on the data rather
+     than threaded through paint(): the door is part of what the panel shows
+     somebody who is not in yet, and a second parameter down four calls is a
+     parameter somebody forgets on the fifth. */
+  d.room = room || "";
   if (!moved && same(SHOWN, d)) return true;
   SHOWN = d;
 
@@ -664,7 +669,57 @@ function atGoal(d, device) {
    * It is the same joinRow as before, moved rather than copied: two buttons
    * posting the same thing is two states to keep in step. */
   if (!d.joined && d.place) wrap.append(joinRow(d, device));
+  /* AND SOMEBODY WHO IS NOT IN YET GETS THE ACT THAT IS ACTUALLY THEIRS.
+   *
+   * They had the figure and nothing to do with it — "Count me in" needs a
+   * place, and a place is stamped when a page goes up, which cannot happen
+   * until they are let in. So the panel dead-ended for exactly the reader it
+   * was written for.
+   *
+   * There is no button that hands them a place, and one that pretended to
+   * would be the worst thing on this screen. What there is, is the one thing
+   * that moves them: the queue goes by arrival, one place up per person they
+   * bring in — see queueOrder — so the act is the room's own door, and the
+   * sentence beside it says what pressing it does. */
+  if (!d.place && d.soon && d.room) wrap.append(upRow(d));
   return wrap;
+}
+
+/** Bring somebody in, and move up one place. The room's public door, the
+ *  phone's own share sheet, and the clipboard when that is refused — which it
+ *  is inside WeChat, where this is most often read. */
+function upRow(d) {
+  const box = el("div", "lpjoin");
+  box.append(el("p", "lpsmall", T("pin.upWhat")));
+  const go = el("button", "lpdo", T("pin.upDo"));
+  go.type = "button";
+  const say = el("p", "lpsay");
+  say.hidden = true;
+  go.addEventListener("click", async () => {
+    const url = location.origin + "/r/" + encodeURIComponent(d.room);
+    /* THE PRESS IS THE GESTURE. A share sheet may only be opened from inside
+       the tap that asked for it — the same rule that turned the door's own ＋
+       from a prompt into a button. See doorPeople in notes.html. */
+    if (navigator.share) {
+      try { await navigator.share({ title: document.title, url }); return; }
+      catch { /* dismissed, or refused — the clipboard below still works */ }
+    }
+    let ok = false;
+    try {
+      const t = document.createElement("textarea");
+      t.value = url;
+      t.setAttribute("readonly", "");
+      t.style.cssText = "position:fixed;top:-1000px;opacity:0";
+      document.body.append(t);
+      t.select();
+      ok = document.execCommand("copy");
+      t.remove();
+    } catch { ok = false; }
+    say.hidden = false;
+    say.textContent = ok ? T("pin.upCopied") : url;
+  });
+  box.append(go, say);
+  return box;
 }
 
 /* ---- everything under the chevron ---------------------------------------- */

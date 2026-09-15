@@ -5149,6 +5149,14 @@ export const STRINGS = {
     "加入只是记下你想被算进去。不用付钱，也不用签字。",
   ],
   "pin.joinDo":        ["Count me in", "算我一个"],
+  /* FOR SOMEBODY NOT IN YET. "Count me in" needs a place and a place is
+     stamped when a page goes up, so the panel dead-ended for exactly the
+     reader it was written for. No button can hand them a place; this is the
+     one that moves them — see queueOrder, one step per person brought in. */
+  "pin.upDo":          ["Bring somebody in", "拉个人进来"],
+  "pin.upWhat":        ["You move up one place for every person you bring in.",
+                        "每带进来一个人，你就往前排一位。"],
+  "pin.upCopied":      ["Link copied. Send it to them.", "链接复制好了，发给他。"],
   "pin.joinedYes":     ["You are counted in.", "已经把你算上了。"],
   "pin.goalWhat": [
     "This screen opens at {goal} members. Until then there is nothing on it and nothing to sign.",
