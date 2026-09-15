@@ -664,6 +664,8 @@
     </div>
     <div class="col links">
       <a href="/rules" id="footRules"></a>
+      <!-- The required one, beside the one people read. See /terms. -->
+      <a href="/terms" id="footTerms"></a>
       <a href="/privacy" id="footPrivacy"></a>
       <!-- The way in for whoever runs it. Visible to everybody, which costs
            nothing: the page behind it is behind the invitation door, and the
@@ -771,6 +773,7 @@ function paint() {
   $("doorsEyebrow").textContent = T("land.doors");
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");
+  $("footTerms").textContent = T("tm.link");
   $("footPrivacy").textContent = T("land.privacy");
   $("footDoors").textContent = T("land.counted");
   $("footPanel").textContent = T("land.panel");

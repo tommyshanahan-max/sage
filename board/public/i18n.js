@@ -1933,6 +1933,75 @@ export const STRINGS = {
     "No address is set on this deployment yet.",
     "本部署尚未设置联系地址。",
   ],
+  /* ---- THE TERMS ---------------------------------------------------------
+     THE DOCUMENT SOMEBODY HAS TO HAVE AGREED TO, which is a different thing
+     from the house rules they actually read. An app store requires it for
+     anything carrying what people write, along with three specific promises:
+     that there is a way to report, a way to block, and that reports are acted
+     on within a day. Those are tm.act and tm.reach, and they are in a box on
+     the page rather than a paragraph among paragraphs, because the person who
+     needs them is being harassed and is not reading in order.
+
+     WRITTEN THE WAY EVERYTHING HERE IS WRITTEN. A wall of grey nobody reads is
+     not consent, it is a scroll bar. Short sentences, said once. */
+  "tm.title":          ["Terms", "使用条款"],
+  "tm.lede": [
+    "What you agree to by using The Exchange, and what happens when somebody behaves badly. The house rules are the part worth remembering; this is the part that has to be written down.",
+    "用 The Exchange 就等于同意这些，还有人乱来的时候会怎么处理。规矩那页是值得记住的部分，这页是必须白纸黑字写下来的部分。"],
+
+  "tm.what":           ["What this is", "这是什么"],
+  "tm.what.p": [
+    "A private board where people write who they are and what they are looking for, and talk to each other. It is run by one person and it is early. Nothing here is a guarantee that it will keep running.",
+    "一个私密的板子，大家写下自己是谁、在找什么，然后互相聊。一个人在运营，还很早期。这里没有任何承诺说它会一直开着。"],
+
+  "tm.who":            ["Who may use it", "谁能用"],
+  "tm.who.p": [
+    "Anyone eighteen or over. One person, one place on the board. Use a name people would recognise you by — not somebody else's.",
+    "满 18 岁的人。一个人在板子上只占一个位置。用别人认得出你的名字，别用别人的。"],
+
+  "tm.yours":          ["What you write stays yours", "你写的东西还是你的"],
+  "tm.yours.p": [
+    "You keep everything you write and every photograph you put up. You give this board permission to show it to the people you have shown it to, and nothing else — it is not sold, not licensed on, and not used to train anything.",
+    "你写的每句话、放的每张照片，都还是你的。你只是允许这个板子把它给你想给的人看，仅此而已——不卖，不转授权，也不拿去训练任何东西。"],
+
+  "tm.not":            ["What you may not do", "不能做的事"],
+  "tm.not.p": [
+    "Ask anybody for money, a deposit, or photographs of their documents. Harass anybody, or keep writing to somebody who has stopped answering. Put up somebody else's face or words as your own. Post anything sexual involving anybody under eighteen, or anything that is against the law where you are.",
+    "跟人要钱、要押金、要证件照。骚扰别人，或者对方已经不回了还一直发。把别人的脸或别人的话当成自己的发出来。发任何涉及未成年人的性内容，或者在你所在地属于违法的内容。"],
+
+  "tm.we":             ["What happens if you do", "做了会怎样"],
+  "tm.we.p": [
+    "The message goes, or the profile goes, or the person goes, depending on what it was. There is no warning system and no appeal queue — it is one person reading reports and deciding. Serious things are reported to whoever should hear about them.",
+    "看情况：删消息、删主页，或者把人请出去。没有警告制度，也没有申诉排队——就是一个人看举报然后做决定。严重的事会报给该知道的人。"],
+
+  "tm.leave":          ["Leaving", "退出"],
+  "tm.leave.p": [
+    "Delete everything and leave is on your own page and it does what it says: your profile, your posts and your photographs go, in one press, without asking anybody.",
+    "你自己的页面上有「删除全部内容并离开」，按一下就是字面意思：主页、发的东西、照片全都没了，不用问任何人。"],
+
+  "tm.none":           ["No promises", "不做保证"],
+  "tm.none.p": [
+    "This is a prototype run by one person. It may lose data, go down, or stop. It is not encrypted — whoever runs the board can read what is stored on it, which is said plainly on the privacy page too.",
+    "这是一个人做的原型。可能丢数据，可能挂掉，可能停掉。它没有加密——运营的人能看到存在上面的东西，隐私那页也是这么说的。"],
+
+  /* THE THREE PROMISES, TOGETHER AND IN A BOX. Reporting, blocking, and a day
+     to act. The address is substituted at serve time — see BOARD_CONTACT. */
+  "tm.act": [
+    "Every message and every profile can be reported, and anybody can be blocked. Reports are read within 24 hours and acted on. Nothing objectionable is meant to stay up, and anything that does is a failure rather than a policy.",
+    "每条消息、每个主页都可以举报，任何人都可以拉黑。举报 24 小时内会看并处理。这里不该留着任何不像话的内容，留着了是没做到，不是规定如此。"],
+  "tm.reach": [
+    "If the board itself is the problem, or a report was not acted on, write to {mail}.",
+    "如果问题出在这个板子本身，或者举报没人处理，写信到 {mail}。"],
+  /* NO ADDRESS SET ON THE BOX. Better than printing an empty string after
+     "write to", which is what the page did the first time it was read. */
+  "tm.reachNone": [
+    "If the board itself is the problem, or a report was not acted on, say so in any room — it reaches the person who runs it.",
+    "如果问题出在这个板子本身，或者举报没人处理，在任何一个群里说一声——运营的人看得到。"],
+  "tm.end": [
+    "These terms change when the board changes. The version you are reading is the one that applies.",
+    "板子变了，条款就会变。你现在看到的这版就是现在有效的那版。"],
+  "tm.link":           ["Terms", "使用条款"],
+
   "pv.back":           ["Back to the feed", "回到动态"],
 
 

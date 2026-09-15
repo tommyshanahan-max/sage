@@ -411,7 +411,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|s\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|s\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -809,6 +809,23 @@ app.get(["/privacy", "/privacy/"], (req, res, next) => page("privacy.html", req,
 /* The house rules. Behind the door like everything else — they describe how
    people behave in here, and out there they would be a leaflet. */
 app.get(["/rules", "/rules/"], (req, res, next) => page("rules.html", req, res, next));
+
+/* THE TERMS, WHICH ARE NOT THE HOUSE RULES.
+ *
+ * /rules is nine lines about behaviour and is the one people read. This is the
+ * one that has to exist: an app store will not carry anything that carries
+ * what people write without a terms document, a way to report, a way to block,
+ * and a stated commitment to act on reports within a day. The first three
+ * already existed; this page is where the fourth is said out loud.
+ *
+ * THE ADDRESS IS THE ONE THAT ALREADY EXISTS. BOARD_CONTACT was added for
+ * this exact reason — see the note over it near the top — so this page reuses
+ * it rather than introducing a second way to say the same thing. Unset, the
+ * page tells somebody to raise it in a room instead, which is true and is
+ * better than printing "write to " with nothing after it. */
+app.get(["/terms", "/terms/"], (req, res, next) =>
+  page("terms.html", req, res, next,
+    { "{{CONTACT}}": CONTACT.replace(/["\\<>]/g, "").slice(0, 120) }));
 
 /** THE REWARDS ROOM, AS A PAGE RATHER THAN A ROOM.
  *

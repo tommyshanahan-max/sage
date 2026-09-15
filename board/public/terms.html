@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Empty on every deployment but the demo board, where it pins this
+     browser to the one seeded identity. See BOARD_DEMO_DEVICE in server.js. -->
+{{DEMO}}
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>Terms — The Exchange</title>
+<meta name="description" content="What you agree to by using The Exchange, and what happens when somebody behaves badly.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="/site.css">
+<!-- WHERE TO WRITE WHEN THE BOARD ITSELF IS THE PROBLEM. Substituted at serve
+     time from BOARD_CONTACT rather than written into i18n.js, because it is an
+     address the operator owns and it belongs with the other things set on the
+     box. Unset, the page says so instead of printing an address nobody reads
+     — see tm.reachNone. -->
+<script>window.BOARD_CONTACT = "{{CONTACT}}";</script>
+<style>
+  /* THE SAME SHAPE AS THE HOUSE RULES, and that is deliberate. This is the
+     document a person is required to have agreed to; the rules page is the one
+     they actually read. Making them look alike means the required one is not a
+     wall of grey somebody scrolls past to reach a button — see the writing
+     rule in CLAUDE.md about somebody half-looking at a phone. */
+  .doc{max-width:34rem;margin:0 auto;padding:2.6rem 1.25rem 5rem}
+  .doc h1{margin:0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.9rem,4.5vw,2.6rem);line-height:1.12;letter-spacing:-.015em}
+  .doc .lede{margin:1.3rem 0 0;font-size:1.05rem;line-height:1.7;color:var(--ink-2)}
+  .doc h2{margin:2.6rem 0 0;font-size:1.05rem;font-weight:600;line-height:1.4}
+  .doc p{margin:.6rem 0 0;font-size:.98rem;line-height:1.7;color:var(--ink-2)}
+  /* THE ONE PARAGRAPH APPLE READS, and the one a person reporting somebody
+     needs to find in a hurry. It gets a box so it is not a paragraph among
+     paragraphs. */
+  .doc .hard{margin:1rem 0 0;padding:1rem 1.1rem;border:1px solid var(--accent);
+    border-radius:.7rem;background:var(--raise)}
+  .doc .hard p{margin:0;color:var(--ink)}
+  .doc .hard p + p{margin-top:.6rem}
+  .doc .end{margin:2.6rem 0 0;font-size:.92rem;line-height:1.7;color:var(--muted)}
+  .doc .back{display:inline-block;margin:2.4rem 0 0;font-size:.9rem;color:var(--muted);
+    text-decoration:none;border-bottom:1px solid var(--hair)}
+  .doc .back:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="wrap">
+    <a class="brand" href="/feed">
+      <i><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" style="width:1em;height:1em;display:block" aria-hidden="true"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg></i>
+      <span><b>The Exchange</b><small>交换</small></span>
+    </a>
+    <span id="langslot" style="margin-left:auto;display:flex;gap:.6rem;align-items:center"></span>
+  </div>
+</div>
+<div class="doc">
+  <h1 id="title"></h1>
+  <p class="lede" id="lede"></p>
+  <div id="body"></div>
+  <p class="end" id="end"></p>
+  <a class="back" href="/feed" id="back"></a>
+</div>
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+const $ = (id) => document.getElementById(id);
+
+/* THE SECTIONS, IN THE ORDER SOMEBODY NEEDS THEM.
+ *
+ * What this is, who may use it, what you may not do, what happens when
+ * somebody does it anyway, and how to leave. The fourth is the one an app
+ * store checks for and the one a person being harassed needs to find without
+ * reading the other four. */
+const PARTS = ["what", "who", "yours", "not", "we", "leave", "none"];
+
+function paint() {
+  $("title").textContent = T("tm.title");
+  $("lede").textContent = T("tm.lede");
+  $("end").textContent = T("tm.end");
+  $("back").textContent = T("pv.back");
+  document.title = T("tm.title") + " — " + T("site.title");
+
+  const box = $("body");
+  while (box.firstChild) box.removeChild(box.firstChild);
+  for (const key of PARTS) {
+    const h = document.createElement("h2");
+    h.textContent = T("tm." + key);
+    box.append(h);
+    const p = document.createElement("p");
+    p.textContent = T("tm." + key + ".p");
+    box.append(p);
+  }
+
+  /* THE COMMITMENT, LAST AND IN ITS OWN BOX. It is the thing this page exists
+     to state plainly: what is not tolerated, that reports are read within a
+     day, and where to write when the app itself is the problem. */
+  const hard = document.createElement("div");
+  hard.className = "hard";
+  const act = document.createElement("p");
+  act.textContent = T("tm.act");
+  hard.append(act);
+  const mail = String(window.BOARD_CONTACT || "").trim();
+  const reach = document.createElement("p");
+  reach.textContent = mail ? T("tm.reach", { mail }) : T("tm.reachNone");
+  hard.append(reach);
+  box.append(hard);
+}
+setLang(pickLang());
+$("langslot").append(langButton(paint));
+paint();
+</script>
+</body>
+</html>
