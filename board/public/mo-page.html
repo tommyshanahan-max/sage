@@ -25,6 +25,9 @@
    * board whose whole argument is that it does not tell them.
    *
    * So: who he is, what he will not do, and the way to ask him something. */
+  .top .back{display:flex;align-items:center;color:var(--ink-2);
+    text-decoration:none;padding:.2rem .5rem .2rem 0}
+  .top .back:active{opacity:.6}
   .mopage{max-width:34rem;margin:0 auto;padding:2.2rem 1.25rem 5rem}
   .mohead{display:flex;align-items:center;gap:1rem}
   .moface{width:4.6rem;height:4.6rem;flex:0 0 auto;border-radius:50%;
@@ -58,6 +61,15 @@
 <body>
 <div class="top">
   <div class="wrap">
+    <!-- THE WAY BACK, AT THE TOP WHERE A THUMB IS.
+         This page had one at the bottom, under everything, which is no way
+         back at all on a phone — and in a home-screen install there is no
+         browser chrome either, so tapping his face in a room landed people
+         on a screen they could not leave. Same rule as a profile: history
+         when somebody pushed you here, the brand link when they did not. -->
+    <a class="back" href="/notes" id="back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:1.35rem;height:1.35rem;display:block" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
+    </a>
     <a class="brand" href="/notes">
       <i><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" style="width:1em;height:1em;display:block" aria-hidden="true"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg></i>
       <span><b>The Exchange</b><small>交换</small></span>
@@ -89,6 +101,23 @@
 import { T, setLang, pickLang, langButton } from "/i18n.js";
 import { mountMo, moOpen } from "/mo.js";
 const $ = (id) => document.getElementById(id);
+
+/* Back to wherever they came from — a group's members grid, a room, a
+   conversation — rather than always to Messages. The href is the fallback for
+   somebody who opened this cold. Same shape as person.html. */
+const pushedHere = (() => {
+  try {
+    const r = document.referrer;
+    if (!r) return false;
+    const u = new URL(r);
+    return u.origin === location.origin && u.pathname !== location.pathname;
+  } catch (e) { return false; }
+})();
+$("back").addEventListener("click", (e) => {
+  if (!pushedHere) return;
+  e.preventDefault();
+  history.back();
+});
 
 /* HIS OWN PAGE IS THE ONE PLACE THE FLOATING BUTTON BELONGS.
  *
