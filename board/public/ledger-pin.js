@@ -44,95 +44,124 @@ const num = (v) => Number(v || 0).toLocaleString(lang() === "zh" ? "zh-CN" : "en
  * page it lands in is wearing.
  */
 const CSS = `
-  /* THE LEDGER PANEL. It opens in place under a chevron rather than replacing
-     the room, which is what every expandable thing on this phone does — and
-     the first version, four tab screens behind a button, answered every
-     question and was dead on the page. */
+  /* DARK, IN BOTH THEMES, AND THAT IS THE DECISION.
+   *
+   * Everything else on this board follows the reader's theme. This does not,
+   * because it is not the conversation — it is one object sitting over it, and
+   * an object that keeps its own ground reads as a thing rather than as a
+   * paragraph with a border. It is also how the panel gets its contrast for
+   * free: near-white on near-black is 15:1 everywhere, where the light version
+   * spent a morning failing to clear 4.5.
+   *
+   * The shape is a stack of cards with a coloured spine down the left, which
+   * is what a phone uses for a figure somebody is meant to take in at a
+   * glance. Label small and quiet, number large and bright, the line under it
+   * small again. Three of those, then the detail. */
   .pinwrap.ledgerpin{border-color:transparent;padding:0;background:transparent}
   .pinslot{margin:0 0 1.1rem}
-  .lp{background:var(--card);border:1px solid var(--line);border-radius:.9rem;
-    overflow:hidden}
-  .lphead{display:flex;align-items:flex-start;gap:.8rem;width:100%;text-align:left;
+
+  .lp{--d-bg:#10141C; --d-card:#1A1F2B; --d-line:#262D3B;
+      --d-ink:#F2F5FA; --d-ink2:#AFBACB; --d-mute:#8A97AB; --d-key:#5C8DFF;
+      background:var(--d-bg);border-radius:1rem;overflow:hidden;
+      color:var(--d-ink);
+      box-shadow:0 1px 2px rgba(6,9,15,.5),0 14px 34px -18px rgba(6,9,15,.7)}
+
+  .lphead{display:flex;align-items:flex-start;gap:.9rem;width:100%;text-align:left;
     font:inherit;color:inherit;background:transparent;border:0;cursor:pointer;
-    padding:.95rem 1rem}
+    padding:1.05rem 1.1rem}
   .lpleft{flex:1;min-width:0}
-  .lpeyebrow{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;
-    font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;
-    color:var(--muted);font-weight:700}
-  :root[data-lang="zh"] .lpeyebrow{letter-spacing:0;text-transform:none;font-size:.74rem}
-  .lptag{font-style:normal;letter-spacing:.1em;border:1px solid var(--line);
-    border-radius:99px;padding:.1rem .4rem;color:var(--muted)}
-  /* The number is the reason anybody looks, so it is the biggest thing here —
-     and in the serif, like the name at the top of the room. */
-  .lpbig{font-family:var(--serif,Georgia,serif);font-size:1.75rem;line-height:1.1;
-    letter-spacing:-.02em;margin:.3rem 0 0}
-  .lpon{display:flex;align-items:center;gap:.4rem;margin:.3rem 0 0;
-    font-size:.82rem;color:var(--ink-2)}
-  .lpon2{margin:.25rem 0 0;font-size:.86rem;font-weight:700}
-  .lpdot{width:.5rem;height:.5rem;border-radius:50%;background:#2E9E5B;flex:0 0 auto}
+  .lpeyebrow{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;
+    font-size:.84rem;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--d-mute);font-weight:700}
+  :root[data-lang="zh"] .lpeyebrow{letter-spacing:0;text-transform:none;font-size:.92rem}
+  .lptag{font-style:normal;letter-spacing:.04em;border:1px solid var(--d-line);
+    border-radius:99px;padding:.12rem .45rem;color:var(--d-mute);font-size:.78rem}
+  .lpunit{font-style:normal;font-size:1.05rem;font-weight:600;color:var(--d-mute);
+    margin-left:.4rem;letter-spacing:0}
+  .lpbig{font-size:2.3rem;font-weight:700;line-height:1.05;letter-spacing:-.025em;
+    margin:.35rem 0 0;font-variant-numeric:tabular-nums}
+  .lpon{display:flex;align-items:flex-start;gap:.45rem;margin:.35rem 0 0;
+    font-size:.98rem;color:var(--d-ink2)}
+  .lpon2{margin:.3rem 0 0;font-size:1.02rem;font-weight:700;color:var(--d-ink2)}
+  .lpdot{width:.5rem;height:.5rem;margin-top:.42em;border-radius:50%;
+    background:#35D08A;flex:0 0 auto}
   .lpright{text-align:right;flex:0 0 auto}
-  .lpright b{display:block;font-size:1.05rem;font-weight:700;
+  .lpright b{display:block;font-size:1.25rem;font-weight:700;
     font-variant-numeric:tabular-nums}
-  .lpright span{display:block;font-size:.72rem;color:var(--muted);line-height:1.3}
-  .lpchev{font-style:normal;color:var(--muted);flex:0 0 auto;transition:transform .15s}
+  .lpright span{display:block;font-size:.86rem;color:var(--d-mute);line-height:1.35}
+  .lpchev{font-style:normal;color:var(--d-mute);flex:0 0 auto;font-size:1.1rem;
+    transition:transform .15s}
   .lpchev.up{transform:rotate(180deg)}
 
-  .lpbody{padding:0 1rem 1rem;display:grid;gap:.5rem;border-top:1px solid var(--hair)}
-  .lph{margin:.8rem 0 .1rem;font-family:var(--serif,Georgia,serif);
-    font-size:1.1rem;font-weight:600}
-  .lpk{margin:.7rem 0 0;font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;
-    color:var(--muted);font-weight:700}
-  :root[data-lang="zh"] .lpk{letter-spacing:0;text-transform:none;font-size:.74rem}
+  .lpbody{padding:0 1.1rem 1.1rem;display:grid;gap:.6rem}
 
-  .lprows{display:grid}
+  /* THE THREE FIGURES, AS CARDS WITH A SPINE. The one thing somebody takes in
+     without reading: a coloured edge, a quiet label, a loud number. */
+  .lpstats{display:grid;gap:.5rem;margin-top:.2rem}
+  .lpstat{position:relative;background:var(--d-card);border-radius:.7rem;
+    padding:.75rem .85rem .75rem 1rem;overflow:hidden}
+  .lpstat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:var(--d-key)}
+  .lpstat.green::before{background:#35D08A}
+  .lpstat .k{display:block;font-size:.88rem;color:var(--d-mute)}
+  .lpstat .v{display:block;font-size:1.6rem;font-weight:700;line-height:1.15;
+    margin-top:.1rem;font-variant-numeric:tabular-nums}
+  .lpstat .u{display:block;font-size:.9rem;color:var(--d-ink2);margin-top:.15rem}
+
+  .lph{margin:.9rem 0 .1rem;font-size:1.22rem;font-weight:700}
+  .lpk{margin:.8rem 0 0;font-size:.84rem;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--d-mute);font-weight:700}
+  :root[data-lang="zh"] .lpk{letter-spacing:0;text-transform:none;font-size:.92rem}
+
+  .lprows{display:grid;background:var(--d-card);border-radius:.7rem;
+    padding:.2rem .85rem;margin-top:.15rem}
   .lprow{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
-    padding:.6rem 0;border-bottom:1px solid var(--hair);font-size:.88rem}
-  .lprow small{display:block;color:var(--muted);font-size:.76rem;margin-top:.1rem}
+    padding:.65rem 0;border-bottom:1px solid var(--d-line);font-size:1.04rem}
+  .lprow:last-child{border-bottom:0}
+  .lprow small{display:block;color:var(--d-mute);font-size:.9rem;margin-top:.1rem}
   .lprow b{font-weight:700;font-variant-numeric:tabular-nums;flex:0 0 auto}
-  .lprow.sum{border-bottom:0;font-weight:700}
+  .lprow.sum b{color:var(--d-key)}
 
-  /* Five boxes, the one you are in lit. A line chart of a power law on a phone
-     is a picture of nothing. */
-  .lpscale{display:flex;gap:.35rem;overflow-x:auto;padding:.15rem 0 .25rem}
-  .lpcell{flex:1 0 auto;min-width:3.9rem;border:1px solid var(--line);
-    border-radius:.5rem;padding:.4rem .5rem;background:var(--raise)}
-  .lpcell.on{border-color:var(--accent);border-width:2px;background:var(--card)}
-  .lpcell span{display:block;font-size:.66rem;color:var(--muted)}
-  .lpcell b{display:block;font-family:var(--serif,Georgia,serif);font-size:1.05rem;
-    font-weight:600;font-variant-numeric:tabular-nums}
-
-  .lpshare{margin:.1rem 0 0;font-size:.92rem;color:var(--ink-2)}
-  .lpshare b{font-size:1.05rem;font-weight:700;color:var(--ink)}
-  .lptoward{margin:.1rem 0 0;font-size:.92rem;color:var(--ink-2)}
-  .lptoward b{font-size:1.05rem;font-weight:700;color:var(--ink);
+  .lpscale{display:flex;gap:.4rem;overflow-x:auto;padding:.2rem 0 .3rem}
+  .lpcell{flex:1 0 auto;min-width:4.1rem;border-radius:.6rem;padding:.5rem .55rem;
+    background:var(--d-card)}
+  .lpcell.on{background:#1E2A45;box-shadow:inset 0 0 0 1.5px var(--d-key)}
+  .lpcell span{display:block;font-size:.86rem;color:var(--d-mute)}
+  .lpcell b{display:block;font-size:1.22rem;font-weight:700;margin-top:.1rem;
     font-variant-numeric:tabular-nums}
-  .lpbar{height:4px;background:var(--hair);border-radius:99px;overflow:hidden;
-    margin-top:.15rem}
-  .lpbar i{display:block;height:100%;background:var(--accent);border-radius:99px}
-  .lpsmall{margin:.1rem 0 0;font-size:.78rem;color:var(--muted);line-height:1.5}
 
-  /* Both endings, the same size. The second card is what makes the first
-     believable. */
-  .lptwo{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.7rem}
-  @media (max-width:420px){ .lptwo{grid-template-columns:1fr} }
-  .lpcard{border:1px solid var(--line);border-radius:.6rem;padding:.65rem .7rem;
-    background:var(--raise)}
-  .lpcard b{display:block;font-size:.88rem;margin-bottom:.25rem}
-  .lpcard p{margin:0;font-size:.8rem;line-height:1.5;color:var(--ink-2)}
+  .lpshare,.lptoward{margin:.15rem 0 0;font-size:1.04rem;color:var(--d-ink2)}
+  .lpshare b,.lptoward b{font-size:1.25rem;font-weight:700;color:var(--d-ink);
+    font-variant-numeric:tabular-nums}
+  .lpbar{height:5px;background:var(--d-line);border-radius:99px;overflow:hidden;
+    margin-top:.3rem}
+  .lpbar i{display:block;height:100%;background:var(--d-key);border-radius:99px}
+  .lpsmall{margin:.15rem 0 0;font-size:.94rem;color:var(--d-mute);line-height:1.55}
 
-  .lprules{margin-top:.8rem;width:100%;font:inherit;font-weight:700;font-size:.92rem;
-    padding:.75rem;border-radius:.6rem;border:0;background:var(--accent);color:#fff;
+  /* ONE COLUMN, ALWAYS. Two cards side by side on a phone is two columns of
+     four-word lines; the room this panel sits in is a phone by default. */
+  .lptwo{display:grid;gap:.55rem;margin-top:.9rem}
+  .lpcard{background:var(--d-card);border-radius:.7rem;padding:.75rem .8rem}
+  .lpcard b{display:block;font-size:1.04rem;margin-bottom:.3rem}
+  .lpcard p{margin:0;font-size:.96rem;line-height:1.55;color:var(--d-ink2)}
+
+  .lprules{margin-top:.9rem;width:100%;font:inherit;font-weight:700;font-size:1.08rem;
+    padding:.85rem;border-radius:.7rem;border:0;background:var(--d-key);color:#0B0E15;
     cursor:pointer}
-  .lprulesbox{display:grid;gap:.45rem;padding-top:.6rem}
-  .lprulesbox p{margin:0;font-size:.82rem;line-height:1.55;color:var(--ink-2)}
-  .lpjoin{display:grid;gap:.4rem;margin-top:.8rem;padding-top:.8rem;
-    border-top:1px solid var(--hair)}
-  .lpdo{font:inherit;font-weight:700;padding:.55rem 1rem;border-radius:99px;border:0;
-    background:var(--accent);color:#fff;cursor:pointer;justify-self:start}
-  .lpyes{margin:0;font-size:.86rem;font-weight:700}
-  .lpsay{margin:0;font-size:.78rem;color:var(--muted)}
-  .lpflip{font:inherit;font-size:.72rem;background:transparent;border:0;
-    color:var(--muted);cursor:pointer;padding:.5rem 1rem 0;text-decoration:underline}
+  .lprulesbox{display:grid;gap:.5rem;padding-top:.7rem}
+  .lprulesbox p{margin:0;font-size:.98rem;line-height:1.6;color:var(--d-ink2)}
+  .lpjoin{display:grid;gap:.45rem;margin-top:.9rem;padding-top:.9rem;
+    border-top:1px solid var(--d-line)}
+  .lpdo{font:inherit;font-weight:700;font-size:1.04rem;padding:.65rem 1.2rem;
+    border-radius:99px;border:0;background:var(--d-key);color:#0B0E15;
+    cursor:pointer;justify-self:start}
+  .lpyes{margin:0;font-size:1.02rem;font-weight:700;color:#35D08A}
+  .lpsay{margin:0;font-size:.94rem;color:var(--d-mute)}
+  .lpflip{font:inherit;font-size:.9rem;background:transparent;border:0;
+    color:var(--d-mute);cursor:pointer;padding:.6rem 1.1rem 0;text-decoration:underline}
+  .lpnone{margin:0;font-size:1rem;color:var(--d-ink2);line-height:1.55}
+  .lpshut{padding:1rem 1.1rem}
+  .lp :focus-visible{outline:2px solid var(--d-key);outline-offset:2px;border-radius:.4rem}
 `;
 
 let styled = false;
@@ -269,30 +298,41 @@ function overview(box, d, device) {
 
   const left = el("div", "lpleft");
   const eye = el("div", "lpeyebrow");
-  eye.append(el("span", null, T("pin.head")
-    + (d.place ? " · " + T("pin.place", { n: num(d.place) }) : "")));
+  eye.append(el("span", null, T("pin.head")));
   eye.append(el("i", "lptag", T("pin.proto")));
   left.append(eye);
 
   /* THE NUMBER, AS BIG AS THE NAME AT THE TOP OF THE ROOM. It is the whole
      reason anybody looks at this, so it is the largest thing in it. */
-  left.append(el("div", "lpbig", d.place
-    ? T("pin.points", { n: num(d.total) })
-    : d.soon ? T("pin.soon", { n: num(d.soon) }) : T("pin.none")));
+  /* THE NUMBER ALONE, WITH THE UNIT BESIDE IT AT A QUARTER THE SIZE.
+     "1,000 points" as one string at this size wraps to two lines on a phone
+     and the number stops being the thing you see first. */
+  const big = el("div", "lpbig");
+  if (d.place) {
+    big.append(el("span", null, num(d.total)));
+    big.append(el("i", "lpunit", T("pin.pointsWord")));
+  } else if (d.soon) {
+    big.append(el("span", null, T("pin.soon", { n: num(d.soon) })));
+  } else {
+    big.append(el("span", null, T("pin.none")));
+  }
+  left.append(big);
   if (d.place) {
     const on = el("p", "lpon");
     on.append(el("i", "lpdot"));
-    on.append(document.createTextNode(T(d.joined ? "pin.onIt" : "pin.notOn")));
+    on.append(document.createTextNode(T("pin.place", { n: num(d.place) })
+      + " · " + T(d.joined ? "pin.onIt" : "pin.notOn")));
     left.append(on);
   } else if (d.soon) {
     left.append(el("p", "lpon2", T("pin.soonWorth", { p: num(d.soonPts) })));
   }
   head.append(left);
 
-  const right = el("div", "lpright");
-  right.append(el("b", null, num(d.members)));
-  right.append(el("span", null, T("pin.ofGoal", { goal: num(d.goal) })));
-  head.append(right);
+  /* NO SECOND COLUMN. "40 of 50,000 members" sat on the right of the header
+     and wrapped to two lines, squeezing the left column until the eyebrow took
+     three. The same count is already under Toward 50,000 a few rows down,
+     where it is a fact about the board rather than something competing with
+     the reader's own number for the top of the screen. */
   head.append(el("i", "lpchev" + (OPEN ? " up" : ""), "⌄"));
 
   head.setAttribute("aria-label", T("pin.label",
@@ -334,7 +374,17 @@ function body(d, device) {
   /* WHERE THE POINTS CAME FROM, itemised. A total nobody can take apart is a
      number somebody has to trust; a total with its rows under it is one they
      can check, and checking it is what makes it theirs. */
+  /* THE THREE FIGURES FIRST, each on its own card with a spine. What somebody
+     takes in without reading — a quiet label, a loud number, a line under it —
+     before any table. The table is for the person who wants to check it. */
   if (d.place) {
+    const stats = el("div", "lpstats");
+    stats.append(stat(T("pin.forPlace"), num(d.placePts),
+      T("pin.place", { n: num(d.place) }) + " · " + T("pin.placeWhen")));
+    if (d.acts) stats.append(stat(T("pin.forActs"), num(d.acts),
+      T("pin.until", { date: d.until ? theDay(d.until) : "" }), true));
+    stats.append(stat(T("pin.total"), num(d.total), ""));
+    w.append(stats);
     w.append(el("h3", "lph", T("pin.yourPlace")));
     const rows = el("div", "lprows");
     rows.append(row(T("pin.place", { n: num(d.place) }), d.placePts, T("pin.placeWhen")));
@@ -478,6 +528,14 @@ function joinRow(d, device) {
 }
 
 /* ---- small pieces -------------------------------------------------------- */
+
+function stat(label, value, under, green) {
+  const c = el("div", "lpstat" + (green ? " green" : ""));
+  c.append(el("span", "k", label));
+  c.append(el("span", "v", value));
+  if (under) c.append(el("span", "u", under));
+  return c;
+}
 
 function row(label, points, under, big) {
   const r = el("div", "lprow" + (big ? " sum" : ""));

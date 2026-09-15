@@ -4977,6 +4977,7 @@ export const STRINGS = {
   "pin.head":          ["Your rewards", "你的奖励"],
   "pin.proto":         ["Prototype", "测试中"],
   "pin.points":        ["{n} points", "{n} 分"],
+  "pin.pointsWord":    ["points", "分"],
   "pin.ofGoal":        ["of {goal} members", "共 {goal} 人"],
   "pin.onIt":          ["On the ledger", "已经在账上"],
   "pin.notOn":         ["Not counted in yet", "还没算进去"],
