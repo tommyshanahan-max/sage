@@ -341,7 +341,13 @@
   .info{margin:.4rem 0 0}
   .info .faces{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem .6rem;margin:0 0 1.3rem}
   .info .cell{display:flex;flex-direction:column;align-items:center;gap:.45rem;
-    background:none;border:0;padding:0;font:inherit;color:inherit;min-width:0}
+    background:none;border:0;padding:0;font:inherit;color:inherit;min-width:0;
+    /* An <a> when it opens somebody's page — see infoScreen. Underlined and
+       blue by default, which would make a grid of faces look like a list of
+       links; the face is the affordance here, the way it is in a group on the
+       phone this is read on. */
+    text-decoration:none;cursor:pointer}
+  .info a.cell:active .av{opacity:.7}
   .info .cell span:last-child{font-size:.75rem;line-height:1.3;color:var(--muted);
     text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
   .info .cell .av{width:3.2rem;height:3.2rem;box-shadow:none}
@@ -1401,14 +1407,33 @@ function infoScreen(g) {
   const box = el("div", "info");
   const grid = el("div", "faces" + (OUTING ? " outing" : ""));
   for (const m of g.who) {
-    /* IN OUT MODE EVERY FACE IS A BUTTON, and only then. A room where a face
-       is always tappable is a room where somebody removes a person by
+    /* IN OUT MODE EVERY FACE IS A BUTTON THAT REMOVES, and only then. A room
+       where a face always removes is a room where somebody removes a person by
        mis-tapping while scrolling — which is the one mistake here that cannot
        be undone from this screen. Same as WeChat: the － turns the grid into a
        thing you are choosing from, and the faces go back to being faces. */
     const can = OUTING && m.handle && !m.self && !m.bot;
-    const cell = el(can ? "button" : "div", "cell" + (can ? " out" : ""));
+    /* AND OTHERWISE IT OPENS THEIR PAGE.
+     *
+     * This grid was the one place on the board showing people who were not
+     * tappable at all: four faces with names under them, and no way to find
+     * out who any of them is. Somebody put in a room by a mutual friend has
+     * the same question about everybody else in it that the whole board exists
+     * to answer, and the answer was one tab away with no route to it.
+     *
+     * The mis-tap argument above is about REMOVING somebody and does not
+     * reach this: opening a page is undone by the back arrow. So the grid is
+     * faces you can read in the ordinary state and a thing you choose from in
+     * out mode, which is the same two states it already had.
+     *
+     * NOT MO, who has no page, and not a guest, who has not made one yet —
+     * both come through here without a handle or with bot set, and a tile that
+     * leads to a 404 is worse than a tile that does nothing. */
+    const page = !OUTING && m.handle && !m.bot;
+    const cell = el(can ? "button" : page ? "a" : "div",
+      "cell" + (can ? " out" : ""));
     if (can) cell.type = "button";
+    if (page) cell.href = "/p/" + encodeURIComponent(String(m.handle).toLowerCase());
     cell.append(face(m), el("span", null, m.handle));
     if (can) cell.addEventListener("click", () => takeOut(g, m.handle));
     grid.append(cell);
