@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -369,6 +369,45 @@ invite: ## Make an invite:  make invite WHO="you" FOR="them" [HOURS=48] [N=3]
 	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" $(if $(FOR),--for "$(FOR)",) --hours "$(if $(HOURS),$(HOURS),48)" --n "$(or $(N),1)"
+
+invite-each: ## Thirty at once:  make invite-each WHO="Tom" NAMES="Ray,Ian,Mei" [HOURS=48]
+	@# ONE COMMAND, ONE BLOCK PER PERSON, AND THE INVITE ITSELF UNTOUCHED.
+	@#
+	@# `make invite` mints one. N=3 mints three for the SAME person, which is
+	@# not what a night of inviting thirty people looks like — that is thirty
+	@# commands, each waiting on a container, at midnight, and the failure mode
+	@# is a name typed into the wrong one.
+	@#
+	@# So this loops. It does not change invite.mjs by a character: the invite
+	@# is settled — the block between two rules, the link and the code on
+	@# separate lines, the named greeting, the clock, one person once — and a
+	@# batch is not a reason to reopen any of it. The loop is out here, one
+	@# container for the lot of them, calling the same script once per name.
+	@#
+	@# NAMES is comma separated because a name has a space in it more often
+	@# than it has a comma. Spaces around each one are trimmed.
+	@#
+	@# WHO is still whoever is vouching, and it is the same for all of them:
+	@# these are thirty people YOU are bringing in, so the door says your name
+	@# thirty times, which is the truth.
+	@#
+	@# Output is thirty blocks, each between two rules, in the order given.
+	@# Scroll back and paste them one at a time — and check the name at the top
+	@# of each before you send it, because the only thing worse than no invite
+	@# is one addressed to somebody else.
+	@test -n "$(NAMES)" || { echo ""; echo '  NAMES is empty. make invite-each WHO="Tom" NAMES="Ray,Ian,Mei"'; echo ""; exit 2; }
+	@test -n "$(WHO)" || { echo ""; echo '  WHO is empty — it is the name the door says out loud. Usually you.'; echo ""; exit 2; }
+	$(COMPOSE) run --rm --no-deps -T \
+	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
+	  -e INV_KEY="$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  -e INV_WHO="$(WHO)" -e INV_NAMES="$(NAMES)" -e INV_HOURS="$(if $(HOURS),$(HOURS),48)" \
+	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint sh board -c '\
+	    printf "%s" "$$INV_NAMES" | tr "," "\n" | while IFS= read -r one; do \
+	      one=$$(printf "%s" "$$one" | sed "s/^[[:space:]]*//;s/[[:space:]]*$$//"); \
+	      [ -z "$$one" ] && continue; \
+	      node /seed/invite.mjs http://board:8080 "$$INV_KEY" \
+	        --who "$$INV_WHO" --for "$$one" --hours "$$INV_HOURS" --n 1 || exit 1; \
+	    done'
 
 groups: ## The rooms and their ids:  make groups
 	@# Only so a group invite can be minted. Names and counts, never a word
