@@ -1,0 +1,77 @@
+# THE BOARD'S OTHER NAME, SERVING THE BOARD — not redirecting to it.
+#
+# ---------------------------------------------------------------------------
+# WHY THIS EXISTS INSTEAD OF oldboard.caddy'S REDIRECT
+#
+# Moving the board from liuxuesheng.io to thexchange.app by pointing the old
+# name at the new one looks free and is not. It signs everybody out.
+#
+# `board_in` and `board_wait` are set with no Domain attribute, so they are
+# HOST-ONLY cookies — they belong to liuxuesheng.io and are not sent to
+# thexchange.app, whatever redirect got the browser there. `board:device` in
+# localStorage is per-origin and goes the same way. So a 301 delivers every
+# member to a door asking for an invitation, and every person on the waiting
+# list to a form that makes a SECOND row with an empty card on it. That last
+# one is exactly what the wait cookie was built to prevent — the note above
+# waitCookie in server.js is about this failure, in the smaller case of Safari
+# clearing storage after seven days.
+#
+# Five members and forty-seven people in the queue is not a number that
+# survives being asked to start again.
+#
+# SO BOTH NAMES SERVE THE BOARD. Nobody is signed out, because nobody moves:
+# a member who has been using liuxuesheng.io keeps using liuxuesheng.io and
+# keeps their cookie, while the app, new invites and anybody arriving fresh
+# are on thexchange.app. The board itself does not care — it builds every
+# absolute address it prints from the Host header of the request (see the
+# three `const origin =` lines in server.js), so a link made on one name stays
+# on that name.
+#
+# WHAT IT COSTS, AND IT IS WORTH SAYING PLAINLY: two origins is two cookie
+# jars. Somebody who signs in on one name is a stranger on the other, once,
+# and has to get in again — by the six-digit code in /api/signin if they left
+# an address, or a fresh key from the panel if they did not. That is a cost
+# paid by whoever chooses to move, at a moment they chose, instead of being
+# paid by all fifty-two people at once on the evening of a deploy.
+#
+# WHEN THE OLD NAME IS RETIRED, which is once nobody is arriving on it any
+# more: empty this variable and set TOMSCODING_BOARD_OLD_DOMAIN to the same
+# host instead. oldboard.caddy then 301s it, and by then a redirect costs
+# nothing because there is no session left on it to lose.
+#
+# NEVER BOTH AT ONCE. Two site blocks sharing an address is a startup failure
+# that takes every other site on this box down with it — `make caddy-check`
+# catches it before a reload can, and is the reason that target exists.
+#
+# ---------------------------------------------------------------------------
+# THE BLOCK IS A COPY OF board.caddy's, DELIBERATELY.
+#
+# Caddy can factor this into a snippet, and a snippet is the right tool. It is
+# also syntax this config has never used, on a file where a mistake does not
+# degrade anything — it stops Caddy, and every site on the box with it. This
+# is the same shape as the block one file over, which is running.
+#
+# So: a copy, and the two stay in step by hand. Change one, change the other.
+{$TOMSCODING_BOARD_ALSO:boardalso.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	@admin path /admin /admin/
+	redir @admin https://{$TOMSCODING_FEED_DOMAIN}/
+
+	@count path /a/e /a/lx.js
+	handle @count {
+		uri strip_prefix /a
+		reverse_proxy analytics:3000
+	}
+
+	handle {
+		reverse_proxy board:8080
+	}
+}

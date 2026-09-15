@@ -18,32 +18,56 @@ you. The app asks Apple instead. See `board/lib/apns.js`.
 ## Before anything else: the domain
 
 `server.url` says `https://thexchange.app`, and **today the board is not there.**
-`env.tomscoding` has it at `liuxuesheng.io`, with `thexchange.app` serving the
-static page for strangers.
+The committed preset has it at `liuxuesheng.io`, with `thexchange.app` serving
+the static page for strangers. The URL is compiled into the binary — changing
+it later is a new build, a new submission and a new review — so it is settled
+before the first archive, not after.
 
-The URL is compiled into the binary. Changing it later is a new build, a new
-submission and a new review — so it is settled now, not after. Two ways:
+**Do not move it with a redirect.** That is the obvious way and it signs
+everybody out. `board_in` and `board_wait` carry no `Domain` attribute, so they
+are host-only cookies: they belong to `liuxuesheng.io` and are not sent to
+`thexchange.app` however the browser got there, and `board:device` in
+localStorage is per-origin and goes with them. A 301 hands every member a door
+asking for an invitation and every person in the queue a form that writes a
+second row with an empty card on it — which is the failure the wait cookie was
+built to prevent. Five members and forty-seven in the queue is not a number
+that survives being asked to start again.
 
-**Do the move first** (the one this is written for). `env.tomscoding` documents
-it as three lines that change together:
+**Both names serve the board instead.** `docker/sites/board-also.caddy` is the
+second block; nobody is signed out, because nobody moves. In `.env`:
 
 ```
 TOMSCODING_BOARD_DOMAIN=thexchange.app
-TOMSCODING_BOARD_OLD_DOMAIN=liuxuesheng.io
+TOMSCODING_BOARD_ALSO=liuxuesheng.io
+TOMSCODING_BOARD_WWW=www.thexchange.app
+TOMSCODING_BOARD_OLD_WWW=www.liuxuesheng.io
 TOMSCODING_SITE_DOMAIN=
+TOMSCODING_SITE_WWW=
 ```
 
-That last one must be emptied — two Caddy blocks on one address is a startup
-failure that takes every other site on the box down with it.
+Those last two must be emptied: the static site answers on `thexchange.app`
+today, and two Caddy blocks on one address is a startup failure that takes
+every other site on the box down with it. `make up` runs `check-sites.py` and
+refuses to deploy a collision, so the mistake is caught before the reload
+rather than after — both the collision above and the other one worth naming,
+`_ALSO` and `_OLD_DOMAIN` holding the same host at once.
 
-**Or point the app at the board where it is**, by editing one line here:
+**What emptying `SITE_DOMAIN` costs.** `site/index.html` goes — the page
+written for an investor or a journalist rather than for somebody holding an
+invite. The board answers `/` with `landing.html`, which is a different page
+for a different reader. The deck at `/d-…` and the `/g` images are already
+carried by `board/public`, so nothing that was sent to Hong Kong breaks.
 
-```
-"url": "https://liuxuesheng.io"
-```
+**What it costs the people on it.** Two origins is two cookie jars. Somebody
+who has been using `liuxuesheng.io` is a stranger on `thexchange.app` once,
+and gets back in with the six-digit code from `/api/signin` if they left an
+address, or a fresh key from the panel if they did not. That is a cost paid by
+whoever chooses to move, when they choose — not by all fifty-two at once on
+the evening of a deploy.
 
-It works, and it costs: the App Store listing says The Exchange and the address
-bar behind it says "overseas student", and the move becomes a resubmission.
+**Retiring the old name**, later, once nobody arrives on it: empty `_ALSO` and
+put the same host in `TOMSCODING_BOARD_OLD_DOMAIN`. `oldboard.caddy` 301s it,
+and by then a redirect costs nothing because there is no session left to lose.
 
 ---
 
