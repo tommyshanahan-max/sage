@@ -4993,6 +4993,13 @@ export const STRINGS = {
      never a forecast, which is the line the design this came from carried
      and the one thing on it no board could honestly draw. */
   "pin.sWorth":        ["Your place", "你的位置"],
+  /* NOW AND AT THE GOAL, SIDE BY SIDE. The share does not move between them —
+     it is divided by every place there will ever be — so the only thing that
+     differs is what the company is worth, and the label under each says which
+     figure it is standing on. */
+  "pin.wNow":          ["If it sold today", "如果今天卖掉"],
+  "pin.wGoal":         ["If it sold at {goal}", "如果到 {goal} 人时卖掉"],
+  "pin.wAtSale":       ["at {sale}", "按 {sale} 算"],
   "pin.moneyAt": [
     "at a sale of {sale}, with members holding {cut}% of the company.",
     "按 {sale} 的出售价、成员持有公司 {cut}% 来算。",

@@ -161,6 +161,19 @@ const CSS = `
   .lpbar{height:5px;background:var(--d-line);border-radius:99px;overflow:hidden;
     margin-top:.3rem}
   .lpbar i{display:block;height:100%;background:var(--d-key);border-radius:99px}
+  /* THE TWO FIGURES, SIDE BY SIDE. Same size, same weight: one is not the
+     promise and the other the small print. The second carries the accent
+     because it is the one that depends on something not having happened yet. */
+  .lppair{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem}
+  .lpworth{background:var(--d-card);border-radius:.7rem;padding:.8rem .75rem;
+    min-width:0}
+  .lpworth.key{box-shadow:inset 0 0 0 1.5px var(--d-key)}
+  .lpworth .k{display:block;font-size:.82rem;font-weight:600;color:var(--d-mute);
+    line-height:1.3}
+  .lpworth .v{display:block;font-size:1.55rem;font-weight:700;margin-top:.2rem;
+    letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .lpworth .u{display:block;font-size:.8rem;font-weight:500;color:var(--d-ink2);
+    margin-top:.15rem;line-height:1.35}
   .lpmoney{margin:.4rem 0 0;font-size:1.04rem;font-weight:500;color:var(--d-ink2)}
   .lpmoney b{display:block;font-size:1.8rem;font-weight:700;color:var(--d-ink);
     letter-spacing:-.02em;font-variant-numeric:tabular-nums}
@@ -447,7 +460,7 @@ function body(d, device) {
      phone is a picture of nothing; this is the same fact and it is read at a
      glance — and it answers the question everybody actually has, which is not
      "what is my number" but "how much better would it have been to be early". */
-  if (d.scale && d.scale.length) {
+  if (SCALE && d.scale && d.scale.length) {
     w.append(el("p", "lpk", T("pin.scale")));
     const sc = el("div", "lpscale");
     /* A LIST, SAID AS A LIST. Five boxes of two numbers read out as ten loose
@@ -483,11 +496,19 @@ function body(d, device) {
        plainly — a sum on a screen about somebody's own stake with no account
        of where it came from is the thing that reads as a promise. */
     if (typeof d.money === "number") {
-      const m = el("p", "lpmoney");
-      m.append(el("b", null, money(d.money)));
-      m.append(document.createTextNode(" " + T("pin.moneyAt",
-        { sale: money(d.sale), cut: num(d.cut) })));
-      w.append(m);
+      /* NOW AND AT THE GOAL, SIDE BY SIDE, which is the comparison anybody
+         actually wants and the one the sliding scale was failing to make.
+         Only the sale figure differs between the two — the share is divided
+         by every place there will ever be, so it does not move — and the
+         label on each says which figure it is standing on. */
+      const pair = el("div", "lppair");
+      pair.append(worth(T("pin.wNow"), money(d.money),
+        T("pin.wAtSale", { sale: money(d.sale) })));
+      if (typeof d.moneyAt === "number") {
+        pair.append(worth(T("pin.wGoal", { goal: num(d.goal) }), money(d.moneyAt),
+          T("pin.wAtSale", { sale: money(d.saleAt) }), true));
+      }
+      w.append(pair);
       w.append(el("p", "lpsmall", T("pin.moneyNot")));
     }
     w.append(el("p", "lpsmall", T("pin.shareRest", {
@@ -525,7 +546,10 @@ function body(d, device) {
   const go = el("button", "lprules");
   go.type = "button";
   go.textContent = T("pin.rulesGo");
-  go.addEventListener("click", () => { RULES = !RULES; paintRules(w, d, go); });
+  go.addEventListener("click", () => {
+    RULES = !RULES; SCALE = RULES;
+    if (LAST && LAST.box) paint(LAST.box, SHOWN, LAST.device);
+  });
   w.append(go);
   const rw = el("div", "lprulesbox");
   rw.hidden = !RULES;
@@ -560,6 +584,11 @@ function body(d, device) {
 }
 
 let RULES = false;
+/* The sliding scale is drawn with the rules and not before them. It explains
+   the curve, which is a question somebody asks after "where do I stand" — and
+   read cold, five boxes of numbers is the least intuitive thing on the panel.
+   Now and at the goal, side by side, is what took its place. */
+let SCALE = false;
 
 function paintRules(w, d, go, box) {
   const rw = box || w.querySelector(".lprulesbox");
@@ -707,6 +736,15 @@ function spark(d) {
   ends.append(el("span", null, theMonth(pts[pts.length - 1].t)));
   box.append(ends);
   return box;
+}
+
+/** One of the two worth cards: what it comes to, and at which sale figure. */
+function worth(label, value, under, key) {
+  const c = el("div", "lpworth" + (key ? " key" : ""));
+  c.append(el("span", "k", label));
+  c.append(el("span", "v", value));
+  c.append(el("span", "u", under));
+  return c;
 }
 
 function stat(label, value, under, green) {

@@ -3121,6 +3121,13 @@ const LROOMS = new Set(String(process.env.BOARD_LEDGER_ROOMS || "")
  * is a figure that would be wrong tomorrow. It is named and left unpriced.
  */
 const LSALE = Math.max(0, Number(process.env.BOARD_LEDGER_SALE || 0));
+/* AND WHAT IT MIGHT BE WORTH AT THE GOAL, which is the comparison anybody
+   actually wants and the one the sliding scale was failing to make.
+   THE SHARE ITSELF DOES NOT MOVE between the two — it is divided by every
+   place there will ever be, which is what stops it falling as the board fills.
+   So the only thing that differs is what the company is worth, and that is a
+   second number the operator types, not something this board can work out. */
+const LSALE_AT = Math.max(0, Number(process.env.BOARD_LEDGER_SALE_AT || 0));
 const LCUT = Math.min(100, Math.max(0, Number(process.env.BOARD_LEDGER_CUT || 0)));
 /* Not `moneyOn` — the seat ledger above owns that name, and two switches with
    one name is how a screen ends up gated on the wrong one. */
@@ -3241,7 +3248,11 @@ function pinFor(board, who, asNew) {
     money: pinMoneyOn() && LPOOL
       ? Math.round(LSALE * (LCUT / 100) * (placePts / LPOOL) * (LSPLIT / 100))
       : null,
+    moneyAt: pinMoneyOn() && LSALE_AT > 0 && LPOOL
+      ? Math.round(LSALE_AT * (LCUT / 100) * (placePts / LPOOL) * (LSPLIT / 100))
+      : null,
     sale: pinMoneyOn() ? LSALE : null,
+    saleAt: pinMoneyOn() && LSALE_AT > 0 ? LSALE_AT : null,
     cut: pinMoneyOn() ? LCUT : null,
     /* THE CURVE IN FIVE NUMBERS, and which of them their place sits under.
        A curve drawn on a phone is a picture nobody reads; five boxes with the
