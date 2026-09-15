@@ -5173,6 +5173,10 @@ export const STRINGS = {
   "pin.howNow":        ["you are here", "你在这一步"],
   "pin.saveWhat":      ["Save The Exchange to your home screen. That is where your place is kept.",
                         "把 The Exchange 存到桌面。你的位置就记在这上面。"],
+  /* THE ANSWER TO "WHERE DO I CLAIM IT", for the one state where the answer
+     is that you cannot yet. Silence here reads as a missing button. */
+  "pin.upNot":         ["Nothing to claim yet. The place is yours the day your page goes up.",
+                        "现在还领不了。主页建起来那天，位置才是你的。"],
   "pin.upDo":          ["Bring somebody in", "拉个人进来"],
   "pin.upWhat":        ["You move up one place for every person you bring in.",
                         "每带进来一个人，你就往前排一位。"],

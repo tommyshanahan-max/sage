@@ -861,6 +861,11 @@ function saveRow() {
  *  is inside WeChat, where this is most often read. */
 function upRow(d) {
   const box = el("div", "lpjoin");
+  /* SAY THAT THERE IS NOTHING TO PRESS, because a lit step with no button
+     under it reads as a screen that is broken rather than as a wait. "I don't
+     see where I claim the rewards yet" was said about exactly this state, by
+     somebody standing in the queue looking at a step marked "you are here". */
+  box.append(el("p", "lpsave", T("pin.upNot")));
   box.append(el("p", "lpsmall", T("pin.upWhat")));
   const go = el("button", "lpdo", T("pin.upDo"));
   go.type = "button";
