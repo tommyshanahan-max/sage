@@ -3099,6 +3099,33 @@ const LPLACES = ["wait", ...store.WAITROOMS_CHAT];
 const LROOMS = new Set(String(process.env.BOARD_LEDGER_ROOMS || "")
   .split(",").map((x) => x.trim().toLowerCase()).filter((x) => LPLACES.includes(x)));
 
+/* MONEY, AND ONLY IF THE OPERATOR DECIDED THE TWO NUMBERS.
+ *
+ * The same rule the seat ledger above runs on, and for the same reason. A sale
+ * figure and what share of the company the pool represents. Neither has a
+ * default and neither is guessed: unset, the panel shows points and a
+ * percentage and no currency appears anywhere on it.
+ *
+ * WHAT IT IS AND IS NOT. It is arithmetic on two numbers the operator typed:
+ * at a sale of X, a pool worth Y% of the company, your place is worth this
+ * much of it. The screen says that in those words. It is not a valuation,
+ * nobody has done one, and it is not a forecast — the design this came from
+ * carried a "Future Value, est. Mar 2027", which is a projection of a number
+ * that does not exist yet and is the one thing on that screen no board could
+ * honestly draw.
+ *
+ * ONLY THE PLACE HALF IS PRICED. That half is fixed the day somebody joins
+ * and divided by every place there will ever be, so it can be worked out
+ * today and cannot fall. The activity half is divided by what everybody does
+ * between now and the cut-off, and a figure whose denominator is still moving
+ * is a figure that would be wrong tomorrow. It is named and left unpriced.
+ */
+const LSALE = Math.max(0, Number(process.env.BOARD_LEDGER_SALE || 0));
+const LCUT = Math.min(100, Math.max(0, Number(process.env.BOARD_LEDGER_CUT || 0)));
+/* Not `moneyOn` — the seat ledger above owns that name, and two switches with
+   one name is how a screen ends up gated on the wrong one. */
+const pinMoneyOn = () => LSALE > 0 && LCUT > 0;
+
 const pinOn = () => LGOAL > 0;
 /** What a place is worth. Place 1 = LHEAD, falling away on LCURVE. */
 const PLACE = (n) => (n >= 1 && n <= LGOAL ? Math.round(LHEAD / Math.pow(n, LCURVE)) : 0);
@@ -3208,6 +3235,14 @@ function pinFor(board, who, asNew) {
        is the only figure here that is. It is their place over every place
        there will ever be, times the place half of the split. */
     share: LPOOL ? (placePts / LPOOL) * (LSPLIT / 100) * 100 : 0,
+    /* What that share comes to at the operator's own two numbers, or null.
+       Rounded to whole units: a figure this soft printed to the cent is a
+       precision nobody has earned. */
+    money: pinMoneyOn() && LPOOL
+      ? Math.round(LSALE * (LCUT / 100) * (placePts / LPOOL) * (LSPLIT / 100))
+      : null,
+    sale: pinMoneyOn() ? LSALE : null,
+    cut: pinMoneyOn() ? LCUT : null,
     /* THE CURVE IN FIVE NUMBERS, and which of them their place sits under.
        A curve drawn on a phone is a picture nobody reads; five boxes with the
        one you are in lit up is the same fact and it is read at a glance. */

@@ -161,6 +161,9 @@ const CSS = `
   .lpbar{height:5px;background:var(--d-line);border-radius:99px;overflow:hidden;
     margin-top:.3rem}
   .lpbar i{display:block;height:100%;background:var(--d-key);border-radius:99px}
+  .lpmoney{margin:.4rem 0 0;font-size:1.04rem;font-weight:500;color:var(--d-ink2)}
+  .lpmoney b{display:block;font-size:1.8rem;font-weight:700;color:var(--d-ink);
+    letter-spacing:-.02em;font-variant-numeric:tabular-nums}
   .lpsmall{margin:.15rem 0 0;font-size:.94rem;font-weight:500;color:var(--d-mute);line-height:1.55}
 
   /* ONE COLUMN, ALWAYS. Two cards side by side on a phone is two columns of
@@ -475,6 +478,18 @@ function body(d, device) {
     sh.append(el("b", null, pct(d.share)));
     sh.append(document.createTextNode(" " + T("pin.shareNever")));
     w.append(sh);
+    /* WHERE THE FIGURE CAME FROM, in the same breath as the figure. Two
+       numbers the operator typed and the arithmetic between them, said
+       plainly — a sum on a screen about somebody's own stake with no account
+       of where it came from is the thing that reads as a promise. */
+    if (typeof d.money === "number") {
+      const m = el("p", "lpmoney");
+      m.append(el("b", null, money(d.money)));
+      m.append(document.createTextNode(" " + T("pin.moneyAt",
+        { sale: money(d.sale), cut: num(d.cut) })));
+      w.append(m);
+      w.append(el("p", "lpsmall", T("pin.moneyNot")));
+    }
     w.append(el("p", "lpsmall", T("pin.shareRest", {
       rest: num(d.rest), date: d.until ? theDay(d.until) : "",
     })));
@@ -606,7 +621,14 @@ function three(d) {
     row.append(c);
   };
   one(T("pin.sMembers"), num(d.members), T("pin.sMembersU", { goal: num(d.goal) }));
-  one(T("pin.sShare"), typeof d.share === "number" ? pct(d.share) : "—", T("pin.sShareU"));
+  /* THE MIDDLE FIGURE BECOMES MONEY WHEN THE OPERATOR HAS SET BOTH NUMBERS,
+     and the percentage moves underneath it — the same fact, priced. Unset,
+     the percentage is the figure and no currency appears anywhere. */
+  if (typeof d.money === "number") {
+    one(T("pin.sWorth"), money(d.money), pct(d.share) + " " + T("pin.sShareU"));
+  } else {
+    one(T("pin.sShare"), typeof d.share === "number" ? pct(d.share) : "—", T("pin.sShareU"));
+  }
   one(T("pin.sLeft"), num(d.left), T("pin.sLeftU"));
   return row;
 }
@@ -715,6 +737,11 @@ function card(head, bodyText) {
 /* A percentage with enough places to be a number rather than a nought. Four
    decimals because at fifty thousand places two of them are always zero. */
 const pct = (v) => (v >= 1 ? v.toFixed(2) : v.toFixed(4)) + "%";
+
+/* Whole units. A figure this soft printed to the cent is a precision nobody
+   has earned, and the trailing ".00" is the half that makes it look audited. */
+const money = (v) => "$" + Number(v || 0).toLocaleString(
+  lang() === "zh" ? "zh-CN" : "en", { maximumFractionDigits: 0 });
 
 /** A month and a year, for an axis end. */
 function theMonth(iso) {

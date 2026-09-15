@@ -4987,6 +4987,20 @@ export const STRINGS = {
   "pin.sShareU":       ["of the pool", "占整个池子"],
   "pin.sLeft":         ["Places left", "剩余位置"],
   "pin.sLeftU":        ["before it shuts", "满了就不排了"],
+  /* MONEY, AND WHERE IT CAME FROM IN THE SAME BREATH. Two numbers the
+     operator typed and the arithmetic between them. Never "your share is
+     worth" as a statement of fact — "at a sale of X, it comes to Y" — and
+     never a forecast, which is the line the design this came from carried
+     and the one thing on it no board could honestly draw. */
+  "pin.sWorth":        ["Your place", "你的位置"],
+  "pin.moneyAt": [
+    "at a sale of {sale}, with members holding {cut}% of the company.",
+    "按 {sale} 的出售价、成员持有公司 {cut}% 来算。",
+  ],
+  "pin.moneyNot": [
+    "Nobody has valued this company. That is arithmetic on two numbers the operator chose, to show the shape — not a valuation, not a forecast, and not an offer. The half from what people do is not priced: it is divided by what everyone does before the cut-off, so it cannot be worked out yet.",
+    "没有人给这家公司做过估值。上面只是拿运营者自己定的两个数字算出来的，给你看个大概——不是估值，不是预测，也不是要约。做事分那一半没有算钱：它要按截止日之前大家做了多少来分，现在算不出来。",
+  ],
   "pin.trend":         ["Members over time", "成员增长"],
   "pin.trendAlt":      ["{n} members, from {from} to {to}.", "从 {from} 到 {to}，共 {n} 位成员。"],
   "pin.ofGoal":        ["of {goal} members", "共 {goal} 人"],
