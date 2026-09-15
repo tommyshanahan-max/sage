@@ -155,48 +155,69 @@ const CSS = `
   .lpcell b{display:block;font-size:1.22rem;font-weight:700;margin-top:.1rem;
     font-variant-numeric:tabular-nums}
 
-  /* THE LADDER, AND IT IS NOT BEHIND THE CHEVRON.
+  /* THE FUNNEL, AND IT IS NOT BEHIND THE CHEVRON.
    *
-   * Four rungs, each with its own bar: the ones that are full, the one filling
-   * now, and the ones that have not opened. It is the whole scheme in the
-   * height of four rows, and it is the part that makes somebody move — a bar
-   * at forty per cent of a hundred is a thing that is happening, where "40 of
-   * 50,000" is a bar at a twelfth of one per cent and reads as hopeless.
+   * A cone lying on its side: four slices, rising left to right, each filling
+   * from the bottom. The first ten is the tip and the first ten thousand is
+   * the mouth. It replaced four stacked rows, which said the same thing down
+   * the length of a phone screen; this says it in one picture the height of
+   * two lines of text, which is what somebody reading in a taxi gets.
+   *
+   * THE HEIGHTS ARE A SCALE, NOT A SHAPE. A tier holds 10, 90, 900 or 9,000
+   * places — four decades — so the top edge rises by an even quarter per
+   * slice and the slice heights come out 12 / 36 / 60 / 84 per cent. A cone
+   * drawn because a cone looks good would be a chart of nothing, which is
+   * worse than no chart at all.
+   *
+   * CLIP-PATH RATHER THAN SVG. Each slice is a plain box carved to a trapezoid
+   * by its own two top corners, and the fill inside it is carved by the same
+   * path — so a slice that is a third full is a third of that slice's own
+   * wedge, not a third of the strip. An SVG would need its own viewBox and
+   * would fight the panel's width; this is four divs.
    *
    * ALWAYS DRAWN. It replaced the five-box sliding scale, which said the same
    * fact from behind a tap and a second tap after that. */
-  .lpladder{display:grid;gap:.55rem;padding:.1rem 1.1rem 1.05rem}
-  .lprung{position:relative;background:var(--d-card);border-radius:.7rem;
-    padding:.6rem .8rem .7rem}
-  .lprung.on{box-shadow:inset 0 0 0 1.5px var(--d-key)}
-  /* Shut is quieter, not hidden: a tier somebody missed is the argument. */
-  .lprung.rdone .nm,.lprung.rdone .ea{color:var(--d-mute)}
-  .lprungtop{display:flex;justify-content:space-between;align-items:baseline;gap:.7rem}
-  .lprung .nm{font-size:1rem;font-weight:700;min-width:0}
-  .lprung .st{flex:0 0 auto;font-size:.9rem;font-weight:700;color:var(--d-key);
+  .lpfun{padding:.2rem 1.1rem 0}
+  .lpfunbox{background:var(--d-card);border-radius:.8rem;padding:.85rem .85rem .7rem}
+  .lpcone{display:flex;align-items:stretch;gap:3px;height:74px}
+  /* THE EMPTY CONE HAS TO BE VISIBLE OR THERE IS NO CONE. On --d-line it was
+     a shape you could only find by knowing it was there, and then the filled
+     part read as a flat bar with nothing above it. */
+  .lpsl{position:relative;flex:1;min-width:0;background:#333C4E;
+    clip-path:polygon(0 var(--a),100% var(--b),100% 100%,0 100%)}
+  /* EACH SLICE FILLS LEFT TO RIGHT, NOT BOTTOM TO TOP.
+   *
+   * Bottom-up was the obvious way and it could not be read: the first ten was
+   * FULL and the first hundred was a third full, and because the second wedge
+   * is three times the height of the first, both fills came out at the same
+   * height off the floor — one flat blue bar across two tiers in completely
+   * different states. Left to right, a full tier is a wholly coloured wedge
+   * and a third-full one is a third of a wedge, which is the same thing the
+   * label says. */
+  .lpsl i{position:absolute;left:0;top:0;bottom:0;background:var(--d-key)}
+  /* A TIER THAT IS GONE IS GREY — unless it is the reader's own, where full
+     means got in rather than missed, and one colour for both says the wrong
+     one of them. */
+  .lpsl.rdone i{background:var(--d-mute)}
+  .lpsl.on i{background:var(--d-key)}
+  /* NO RING ON THE READER'S OWN SLICE. An inset shadow is clipped away by the
+     clip-path that makes the wedge, so it drew nothing; and the head above
+     already says "Place #1 · First ten", which is the same fact in words. */
+  /* The four labels, on the same grid as the slices so each sits under its
+     own. Two lines: the edge, and what is happening in it. */
+  .lpkeys{display:flex;gap:3px;margin-top:.4rem}
+  .lpkey{flex:1;min-width:0;text-align:center}
+  .lpkey b{display:block;font-size:.88rem;font-weight:700;color:var(--d-ink2);
     font-variant-numeric:tabular-nums}
-  .lprung.rdone .st,.lprung.rsoon .st{color:var(--d-mute)}
-  /* TEN PIECES A ROW, AND THE ROW NARROWS AS IT GOES DOWN.
-   *
-   * A continuous bar says "some of it is done". Ten pieces say how many are
-   * left, because a person counts them — and on the top row one piece is one
-   * person, so the first ten is a thing you watch go.
-   *
-   * THE TAPER IS A SCALE, NOT A SHAPE. Each row is as wide as what one place
-   * in it is worth, on a decade scale: 9,000 / 1,000 / 100 / 10 points is four
-   * decades, so the rows are 100 / 75 / 50 / 25 per cent and the narrowing IS
-   * the fact. Drawn as a taper chosen to look like a funnel it would be a
-   * chart of nothing, which is worse than no chart. */
-  .lpseg{display:flex;gap:2px;margin:.5rem auto 0;height:10px}
-  .lpseg span{flex:1;min-width:0;background:var(--d-line);border-radius:2px;
-    overflow:hidden}
-  .lpseg span i{display:block;height:100%;background:var(--d-key)}
-  .lprung.rdone .lpseg span i{background:var(--d-mute)}
-  /* EXCEPT WHEN IT IS THEIRS. Full means gone for everybody else and means
-     got in for the reader, and the same grey for both says the wrong one. */
-  .lprung.on .lpseg span i{background:var(--d-key)}
-  .lprung.on.rdone .nm,.lprung.on.rdone .st{color:var(--d-ink)}
-  .lprung .ea{margin:.1rem 0 0;font-size:.84rem;font-weight:500;color:var(--d-ink2)}
+  .lpkey span{display:block;font-size:.76rem;font-weight:600;color:var(--d-mute);
+    line-height:1.3;margin-top:.05rem;overflow-wrap:anywhere}
+  .lpkey.on b{color:var(--d-ink)}
+  .lpkey.now span{color:var(--d-key)}
+  /* THE SENTENCE THE PICTURE IS THERE TO MAKE, said in words underneath it
+     because a picture nobody can quote is not a thing anybody repeats. */
+  .lpnow{margin:.75rem 0 0;font-size:1.12rem;font-weight:700;line-height:1.35}
+  .lpnow b{color:var(--d-key);font-variant-numeric:tabular-nums}
+  .lpnow2{margin:.2rem 0 0;font-size:.9rem;font-weight:500;color:var(--d-ink2)}
   /* WHAT IT COMES TO IF THE TARGET IS REACHED, which is the question the whole
      panel is read to answer and was four taps down. One box, one figure, and
      the two numbers it stands on named underneath it. */
@@ -497,72 +518,83 @@ function overview(box, d, device) {
   return wrap;
 }
 
-/** THE FOUR TIERS, EACH WITH ITS OWN BAR.
+/** THE FUNNEL: four slices of a cone on its side, and the sentence under it.
  *
- *  Full, filling, or not open yet — said three ways because they are three
- *  different facts and a single grey bar says none of them. The reader's own
- *  rung carries the accent ring.
+ *  The tip is the first ten and the mouth is the first ten thousand, because
+ *  that is the order they fill in and the order somebody loses them in. Each
+ *  slice fills from the bottom by how much of its own tier is taken.
+ *
+ *  See the note over .lpfun for why the heights are a scale rather than a
+ *  shape, and why it is clip-path and not an SVG.
  */
-/* THE FOUR WIDTHS, AS DECADES. See the note over .lpseg: a place in the first
-   ten is worth 9,000 points and one in the last tier is worth 10, which is
-   four decades, so the rows step a quarter each. Held here as a list rather
-   than worked out from the points because a row that fell to a hair's width on
-   some future set of tiers would be a bug nobody would think to look for. */
-const SEGW = ["100%", "75%", "50%", "25%"];
-
 function ladder(d) {
   if (!d.tiers || !d.tiers.length) return null;
   const mine = (d.yourTier || d.soonTier || {}).key || "";
-  const wrap = el("div", "lpladder");
-  wrap.setAttribute("role", "list");
-  for (const t of d.tiers) {
+  const wrap = el("div", "lpfun");
+  const box = el("div", "lpfunbox");
+
+  const cone = el("div", "lpcone");
+  const keys = el("div", "lpkeys");
+  /* THE TOP EDGE, AS ONE STRAIGHT LINE ACROSS ALL FOUR. Worked out per slice
+     from its two ends rather than given as four heights, so the slices join
+     into one cone instead of four boxes standing in a row. It starts at the
+     floor — the first ten is a triangle, which is what a tenth of a decade
+     looks like and is the honest size of it. */
+  const topAt = (i) => 100 - (i * 96) / d.tiers.length;
+  let now = null;
+  d.tiers.forEach((t, i) => {
     const taken = Math.min(t.size, Math.max(0, d.members - t.from + 1));
     const full = taken >= t.size;
     const open = taken > 0;
-    /* NAMESPACED MODIFIERS, and that is not fussiness. They were `shut` and
-       `soon`, and this page already has a `.shut` with text-align:center on
-       it — so the one rung that was full had its line centred and nothing in
-       this file said why. A class this generic on an element this deep is a
-       collision waiting for whoever adds the next one. */
-    const row = el("div", "lprung"
-      + (t.key === mine ? " on" : "") + (full ? " rdone" : open ? "" : " rsoon"));
-    row.setAttribute("role", "listitem");
-    const top = el("div", "lprungtop");
-    /* THE NAME ALONE ON THE LINE. "First hundred · 1,000 points each" beside
-       "57 left" wraps at phone width, and a wrapped rung reads as two rungs.
-       What it is worth goes under, where it has the width to be a sentence. */
-    top.append(el("b", "nm", T("layer." + t.key)));
-    const state = full ? T("pin.tFull")
+    if (open && !full) now = { t, taken };
+
+    const sl = el("div", "lpsl"
+      + (t.key === mine ? " on" : "") + (full ? " rdone" : ""));
+    sl.style.setProperty("--a", topAt(i) + "%");
+    sl.style.setProperty("--b", topAt(i + 1) + "%");
+    /* THE FILL IS THIS SLICE'S OWN FRACTION, ACROSS ITS OWN WIDTH — see the
+       note over .lpsl i for why it is across and not up. */
+    const fill = el("i");
+    fill.style.width = (taken / t.size) * 100 + "%";
+    sl.append(fill);
+    cone.append(sl);
+
+    const k = el("div", "lpkey"
+      + (t.key === mine ? " on" : "") + (open && !full ? " now" : ""));
+    k.append(el("b", null, num(t.upto)));
+    k.append(el("span", null, full ? T("pin.tFull")
       : open ? T(t.size - taken === 1 ? "pin.tOne" : "pin.tLeft", { n: num(t.size - taken) })
-      : T("pin.tOpens", { n: num(t.from) });
-    top.append(el("span", "st", state));
-    row.append(top);
-    row.append(el("p", "ea", T("pin.tEach", { n: num(t.pts) })));
+      : T("pin.tShut")));
+    keys.append(k);
+  });
 
-    /* TEN PIECES, AND THE LAST ONE IN IS A PART-PIECE. Rounding it up or down
-       would make a row of ten read as full one person early or one person
-       late, and on the top row that person is a tenth of the tier. */
-    const seg = el("div", "lpseg");
-    seg.style.width = SEGW[Math.min(SEGW.length - 1, t.n - 1)];
-    for (let k = 0; k < 10; k++) {
-      const cell = el("span");
-      const on = Math.max(0, Math.min(1, (taken * 10) / t.size - k));
-      const fill = el("i");
-      fill.style.width = on * 100 + "%";
-      cell.append(fill);
-      seg.append(cell);
-    }
-    row.append(seg);
+  /* ONE PICTURE, ONE SENTENCE, SAID ONCE. Four slices and four labels read out
+     as eight loose numbers; the cone is a picture and carries the sentence
+     underneath it as its label. */
+  cone.setAttribute("role", "img");
+  cone.setAttribute("aria-label", d.tiers.map((t) => {
+    const taken = Math.min(t.size, Math.max(0, d.members - t.from + 1));
+    return T("layer." + t.key) + ": " + (taken >= t.size ? T("pin.tFull")
+      : taken > 0 ? T("pin.tLeft", { n: num(t.size - taken) }) : T("pin.tShut"));
+  }).join(". "));
+  for (const n of keys.children) n.setAttribute("aria-hidden", "true");
+  box.append(cone, keys);
 
-    /* SAID ONCE, AS A SENTENCE. Four rungs of three loose numbers read out as
-       twelve of them; each rung carries its own line and its insides are
-       hidden from the reader that uses it. */
-    row.setAttribute("aria-label", T("layer." + t.key) + " — "
-      + T("pin.tEach", { n: num(t.pts) }) + " — " + state
-      + (t.key === mine ? " — " + T("pin.yours") : ""));
-    for (const n of row.children) n.setAttribute("aria-hidden", "true");
-    wrap.append(row);
+  /* THE NUMBER THAT FALLS WHILE SOMEBODY READS IT. It is the whole argument
+     for joining this afternoon rather than in March, so it is words and not
+     only a bar — a picture nobody can quote is not a thing anybody repeats. */
+  if (now) {
+    const line = el("p", "lpnow");
+    line.append(el("b", null, num(now.t.size - now.taken)));
+    /* THE MID-SENTENCE NAME, not the label. See layer.il1 in i18n.js. */
+    line.append(document.createTextNode(" " + T("pin.tNow",
+      { tier: T("layer.i" + now.t.key) })));
+    box.append(line);
+    box.append(el("p", "lpnow2", now.t.pts && d.tier && d.tier.nextPts
+      ? T("pin.tThen", { now: num(now.t.pts), next: num(d.tier.nextPts) })
+      : T("pin.tEach", { n: num(now.t.pts) })));
   }
+  wrap.append(box);
   return wrap;
 }
 

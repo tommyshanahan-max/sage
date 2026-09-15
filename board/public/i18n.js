@@ -5035,6 +5035,14 @@ export const STRINGS = {
   "pin.tLeft":         ["{n} left", "还剩 {n} 个"],
   "pin.tOne":          ["1 left", "只剩 1 个"],
   "pin.tOpens":        ["Opens at {n}", "第 {n} 位开始"],
+  /* Under a slice that has not opened. "Opens at 1,001" does not fit in a
+     quarter of a phone and the number is already the label above it. */
+  "pin.tShut":         ["Not open", "还没开"],
+  /* The line under the cone, and the only number on the panel that falls
+     while somebody is reading it. */
+  "pin.tNow":          ["places left in the {tier}", "个位置就满了（{tier}）"],
+  "pin.tThen":         ["{now} points each. After that, {next}.",
+                        "现在每人 {now} 分。满了以后每人 {next} 分。"],
   "pin.tEach":         ["{n} points each", "每人 {n} 分"],
   /* The figure the whole panel is read to find, and it was four taps down.
      The two numbers it stands on are said under it, in one line, because a
@@ -5156,6 +5164,15 @@ export const STRINGS = {
   "layer.l2":          ["First hundred", "最早的一百人"],
   "layer.l3":          ["First thousand", "最早的一千人"],
   "layer.l4":          ["First ten thousand", "最早的一万人"],
+  /* THE SAME FOUR, FOR THE MIDDLE OF A SENTENCE. The names above are labels
+     and are capitalised as labels, which put "in the First hundred" on a
+     screen with a capital in the middle of it. Written out rather than
+     lower-cased in code: that trick is English's and this file has two
+     languages in it. */
+  "layer.il1":         ["first ten", "最早的十个人"],
+  "layer.il2":         ["first hundred", "最早的一百人"],
+  "layer.il3":         ["first thousand", "最早的一千人"],
+  "layer.il4":         ["first ten thousand", "最早的一万人"],
   "layer.head":        ["Arrival", "加入次序"],
   "layer.mine":        ["You are in the {x}.", "你在{x}里。"],
   "layer.theirs":      ["In the {x}.", "在{x}里。"],
