@@ -1283,6 +1283,22 @@ export const STRINGS = {
   "dr.sendWordsMany": [
     "The {room} room at The Exchange — invite only, and this door is open until it fills.\n\n{url}\n\nPut your name in and you are in the room.",
     "The Exchange 的{room}房间 — 只进熟人，这个门先开着。\n\n{url}\n\n写个名字就进来了。"],
+  /* NO "OPEN IT IN SAFARI" ON THIS ONE, AND THAT IS A DECISION.
+   *
+   * It was written and then taken out before it shipped. WeChat is where these
+   * people are; a link that opens in WeChat and immediately tells somebody to
+   * go somewhere else loses most of them at the first tap, and it asks for
+   * something WeChat cannot do anyway — adding to the home screen on iOS is
+   * Safari's, not WeChat's. A funnel that begins by sending people out of the
+   * app they live in is not a funnel.
+   *
+   * The thing the warning was for is real and unfixed: a place is kept against
+   * the browser, and WeChat's browser is not Safari, so the same person in
+   * both is two people with two places. The answer to that is a way to carry a
+   * place from one browser to another, not a sentence telling somebody to
+   * start again somewhere else. Written down here so the next person to notice
+   * the problem does not re-add the sentence.
+   */
   "dr.here":           ["{n} at this door", "这个门口 {n} 个人"],
   "dr.spoke":          ["said something", "说过话"],
   /* Where they stand in the queue. First come, one place up per person
@@ -5173,6 +5189,11 @@ export const STRINGS = {
   "pin.howNow":        ["you are here", "你在这一步"],
   "pin.saveWhat":      ["Save The Exchange to your home screen. That is where your place is kept.",
                         "把 The Exchange 存到桌面。你的位置就记在这上面。"],
+  /* INSIDE WECHAT, WHERE THE SENTENCE ABOVE ASKS FOR SOMETHING THAT CANNOT BE
+     DONE. Adding to the home screen on iOS belongs to Safari; in here the
+     honest thing is what is true about this browser, and no instruction. */
+  "pin.saveWx":        ["Your place is kept in this browser. Come back to the room from here.",
+                        "你的位置记在这个浏览器里。下次还从这儿进来。"],
   /* THE ANSWER TO "WHERE DO I CLAIM IT", for the one state where the answer
      is that you cannot yet. Silence here reads as a missing button. */
   "pin.upNot":         ["Nothing to claim yet. The place is yours the day your page goes up.",

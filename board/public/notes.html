@@ -1853,6 +1853,9 @@ function doorPeople(key) {
     /* NO NAME IN IT, BECAUSE THERE IS NOWHERE FOR ONE TO COME FROM AND
        NOTHING FOR IT TO DO. Addressed, it read as a note to one person when
        it was pasted into a WeChat group of forty — which is where it goes. */
+    /* ONE MESSAGE, IN WECHAT AND OUT OF IT — see the note over
+       dr.sendWordsMany in i18n.js for why there is no "open it in Safari"
+       version of this and why that was a decision rather than an oversight. */
     const words = T("dr.sendWordsMany", { room: T("waitroom." + key), url });
     if (!IN_WECHAT && navigator.share) {
       try {

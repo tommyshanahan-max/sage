@@ -24,6 +24,9 @@
 
 import { T, lang } from "/i18n.js";
 
+/* Which browser this is, asked once. See saveRow for what turns on it. */
+const WECHAT = /micromessenger/i.test(navigator.userAgent || "");
+
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -852,7 +855,10 @@ function steps(d) {
  */
 function saveRow() {
   const box = el("div", "lpjoin");
-  box.append(el("p", "lpsave", T("pin.saveWhat")));
+  /* NOT THE HOME SCREEN INSIDE WECHAT, because WeChat cannot put anything on
+     the home screen — that is Safari's on iOS — and an instruction somebody
+     cannot follow is worse than none. What is true in here is said instead. */
+  box.append(el("p", "lpsave", T(WECHAT ? "pin.saveWx" : "pin.saveWhat")));
   return box;
 }
 
@@ -873,17 +879,32 @@ function upRow(d) {
   say.hidden = true;
   go.addEventListener("click", async () => {
     const url = location.origin + "/r/" + encodeURIComponent(d.room);
+    /* WORDS, NOT A BARE ADDRESS — and inside WeChat the words carry the way
+       out of WeChat. This shared the URL alone, so whoever got it opened it in
+       the browser they were already in and became a second person with a
+       different place. Same message the door's own ＋ sends; one string. */
+    const wx = WECHAT;
+    const words = T("dr.sendWordsMany", { room: T("waitroom." + d.room), url });
     /* THE PRESS IS THE GESTURE. A share sheet may only be opened from inside
        the tap that asked for it — the same rule that turned the door's own ＋
        from a prompt into a button. See doorPeople in notes.html. */
-    if (navigator.share) {
-      try { await navigator.share({ title: document.title, url }); return; }
-      catch { /* dismissed, or refused — the clipboard below still works */ }
+    /* THE ADDRESS IN `url` AND NOT INSIDE THE TEXT, so the sheet builds a card
+       from the page's own og: tags rather than showing a pasted sentence with
+       a grey square where the picture goes. Same rule as the door's ＋. */
+    if (!wx && navigator.share) {
+      try {
+        await navigator.share({
+          title: document.title,
+          text: words.split(url).join("").replace(/\n{3,}/g, "\n\n").trim(),
+          url,
+        });
+        return;
+      } catch { /* dismissed, or refused — the clipboard below still works */ }
     }
     let ok = false;
     try {
       const t = document.createElement("textarea");
-      t.value = url;
+      t.value = words;
       t.setAttribute("readonly", "");
       t.style.cssText = "position:fixed;top:-1000px;opacity:0";
       document.body.append(t);
@@ -893,6 +914,7 @@ function upRow(d) {
     } catch { ok = false; }
     say.hidden = false;
     say.textContent = ok ? T("pin.upCopied") : url;
+    if (!ok) say.style.userSelect = "text";
   });
   box.append(go, say);
   return box;
