@@ -4978,6 +4978,17 @@ export const STRINGS = {
   "pin.proto":         ["Prototype", "测试中"],
   "pin.points":        ["{n} points", "{n} 分"],
   "pin.pointsWord":    ["points", "分"],
+  /* The three figures across the top of the panel: one that rises, one that is
+     theirs and fixed, one that falls. Read side by side, so each label is two
+     words at most. */
+  "pin.sMembers":      ["Members", "成员"],
+  "pin.sMembersU":     ["of {goal}", "目标 {goal}"],
+  "pin.sShare":        ["Your share", "你的份额"],
+  "pin.sShareU":       ["of the pool", "占整个池子"],
+  "pin.sLeft":         ["Places left", "剩余位置"],
+  "pin.sLeftU":        ["before it shuts", "满了就不排了"],
+  "pin.trend":         ["Members over time", "成员增长"],
+  "pin.trendAlt":      ["{n} members, from {from} to {to}.", "从 {from} 到 {to}，共 {n} 位成员。"],
   "pin.ofGoal":        ["of {goal} members", "共 {goal} 人"],
   "pin.onIt":          ["On the ledger", "已经在账上"],
   "pin.notOn":         ["Not counted in yet", "还没算进去"],

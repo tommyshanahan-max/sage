@@ -61,9 +61,16 @@ const CSS = `
   .pinslot{margin:0 0 1.1rem}
 
   .lp{--d-bg:#10141C; --d-card:#1A1F2B; --d-line:#262D3B;
-      --d-ink:#F2F5FA; --d-ink2:#AFBACB; --d-mute:#8A97AB; --d-key:#5C8DFF;
+      --d-ink:#F2F5FA; --d-ink2:#D6DEEA; --d-mute:#B4C1D2; --d-key:#5C8DFF;
       background:var(--d-bg);border-radius:1rem;overflow:hidden;
       color:var(--d-ink);
+      /* LIGHT ON DARK LOSES APPARENT STROKE. Every ratio in here clears 5:1
+         and it still read as faint, which is the eye and not the arithmetic:
+         a light glyph on a dark ground blooms and thins. Antialiased rather
+         than the browser's subpixel default keeps the stems where they were
+         drawn, and the small text carries one more weight step than it would
+         on white for the same reason. */
+      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
       box-shadow:0 1px 2px rgba(6,9,15,.5),0 14px 34px -18px rgba(6,9,15,.7)}
 
   .lphead{display:flex;align-items:flex-start;gap:.9rem;width:100%;text-align:left;
@@ -81,7 +88,7 @@ const CSS = `
   .lpbig{font-size:2.3rem;font-weight:700;line-height:1.05;letter-spacing:-.025em;
     margin:.35rem 0 0;font-variant-numeric:tabular-nums}
   .lpon{display:flex;align-items:flex-start;gap:.45rem;margin:.35rem 0 0;
-    font-size:.98rem;color:var(--d-ink2)}
+    font-size:.98rem;font-weight:500;color:var(--d-ink2)}
   .lpon2{margin:.3rem 0 0;font-size:1.02rem;font-weight:700;color:var(--d-ink2)}
   .lpdot{width:.5rem;height:.5rem;margin-top:.42em;border-radius:50%;
     background:#35D08A;flex:0 0 auto}
@@ -97,16 +104,34 @@ const CSS = `
 
   /* THE THREE FIGURES, AS CARDS WITH A SPINE. The one thing somebody takes in
      without reading: a coloured edge, a quiet label, a loud number. */
+  /* THE THREE ACROSS THE TOP. Short numbers side by side, which is how a
+     phone reads three of them — stacked they become a list to scroll. */
+  .lp3{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.2rem;
+    background:var(--d-card);border-radius:.7rem;padding:.85rem .7rem}
+  .lp3c{min-width:0;text-align:center}
+  .lp3c .k{display:block;font-size:.8rem;font-weight:600;color:var(--d-mute);
+    line-height:1.3}
+  .lp3c .v{display:block;font-size:1.3rem;font-weight:700;margin-top:.2rem;
+    letter-spacing:-.01em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .lp3c .u{display:block;font-size:.78rem;font-weight:500;color:var(--d-ink2);
+    margin-top:.1rem;line-height:1.35}
+
+  /* The curve. One series, so the label over it is the legend. */
+  .lpspark{margin-top:.7rem}
+  .lpspark svg{display:block;width:100%;height:76px;margin-top:.2rem}
+  .lpends{display:flex;justify-content:space-between;font-size:.78rem;
+    font-weight:500;color:var(--d-mute);margin-top:.1rem}
+
   .lpstats{display:grid;gap:.5rem;margin-top:.2rem}
   .lpstat{position:relative;background:var(--d-card);border-radius:.7rem;
     padding:.75rem .85rem .75rem 1rem;overflow:hidden}
   .lpstat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
     background:var(--d-key)}
   .lpstat.green::before{background:#35D08A}
-  .lpstat .k{display:block;font-size:.88rem;color:var(--d-mute)}
+  .lpstat .k{display:block;font-size:.88rem;font-weight:600;color:var(--d-mute)}
   .lpstat .v{display:block;font-size:1.6rem;font-weight:700;line-height:1.15;
     margin-top:.1rem;font-variant-numeric:tabular-nums}
-  .lpstat .u{display:block;font-size:.9rem;color:var(--d-ink2);margin-top:.15rem}
+  .lpstat .u{display:block;font-size:.9rem;font-weight:500;color:var(--d-ink2);margin-top:.15rem}
 
   .lph{margin:.9rem 0 .1rem;font-size:1.22rem;font-weight:700}
   .lpk{margin:.8rem 0 0;font-size:.84rem;letter-spacing:.06em;text-transform:uppercase;
@@ -116,9 +141,9 @@ const CSS = `
   .lprows{display:grid;background:var(--d-card);border-radius:.7rem;
     padding:.2rem .85rem;margin-top:.15rem}
   .lprow{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
-    padding:.65rem 0;border-bottom:1px solid var(--d-line);font-size:1.04rem}
+    padding:.65rem 0;border-bottom:1px solid var(--d-line);font-size:1.04rem;font-weight:500}
   .lprow:last-child{border-bottom:0}
-  .lprow small{display:block;color:var(--d-mute);font-size:.9rem;margin-top:.1rem}
+  .lprow small{display:block;color:var(--d-mute);font-size:.9rem;font-weight:500;margin-top:.1rem}
   .lprow b{font-weight:700;font-variant-numeric:tabular-nums;flex:0 0 auto}
   .lprow.sum b{color:var(--d-key)}
 
@@ -126,30 +151,30 @@ const CSS = `
   .lpcell{flex:1 0 auto;min-width:4.1rem;border-radius:.6rem;padding:.5rem .55rem;
     background:var(--d-card)}
   .lpcell.on{background:#1E2A45;box-shadow:inset 0 0 0 1.5px var(--d-key)}
-  .lpcell span{display:block;font-size:.86rem;color:var(--d-mute)}
+  .lpcell span{display:block;font-size:.86rem;font-weight:600;color:var(--d-mute)}
   .lpcell b{display:block;font-size:1.22rem;font-weight:700;margin-top:.1rem;
     font-variant-numeric:tabular-nums}
 
-  .lpshare,.lptoward{margin:.15rem 0 0;font-size:1.04rem;color:var(--d-ink2)}
+  .lpshare,.lptoward{margin:.15rem 0 0;font-size:1.04rem;font-weight:500;color:var(--d-ink2)}
   .lpshare b,.lptoward b{font-size:1.25rem;font-weight:700;color:var(--d-ink);
     font-variant-numeric:tabular-nums}
   .lpbar{height:5px;background:var(--d-line);border-radius:99px;overflow:hidden;
     margin-top:.3rem}
   .lpbar i{display:block;height:100%;background:var(--d-key);border-radius:99px}
-  .lpsmall{margin:.15rem 0 0;font-size:.94rem;color:var(--d-mute);line-height:1.55}
+  .lpsmall{margin:.15rem 0 0;font-size:.94rem;font-weight:500;color:var(--d-mute);line-height:1.55}
 
   /* ONE COLUMN, ALWAYS. Two cards side by side on a phone is two columns of
      four-word lines; the room this panel sits in is a phone by default. */
   .lptwo{display:grid;gap:.55rem;margin-top:.9rem}
   .lpcard{background:var(--d-card);border-radius:.7rem;padding:.75rem .8rem}
   .lpcard b{display:block;font-size:1.04rem;margin-bottom:.3rem}
-  .lpcard p{margin:0;font-size:.96rem;line-height:1.55;color:var(--d-ink2)}
+  .lpcard p{margin:0;font-size:.96rem;font-weight:500;line-height:1.55;color:var(--d-ink2)}
 
   .lprules{margin-top:.9rem;width:100%;font:inherit;font-weight:700;font-size:1.08rem;
     padding:.85rem;border-radius:.7rem;border:0;background:var(--d-key);color:#0B0E15;
     cursor:pointer}
   .lprulesbox{display:grid;gap:.5rem;padding-top:.7rem}
-  .lprulesbox p{margin:0;font-size:.98rem;line-height:1.6;color:var(--d-ink2)}
+  .lprulesbox p{margin:0;font-size:.98rem;font-weight:500;line-height:1.6;color:var(--d-ink2)}
   .lpjoin{display:grid;gap:.45rem;margin-top:.9rem;padding-top:.9rem;
     border-top:1px solid var(--d-line)}
   .lpdo{font:inherit;font-weight:700;font-size:1.04rem;padding:.65rem 1.2rem;
@@ -374,7 +399,15 @@ function body(d, device) {
   /* WHERE THE POINTS CAME FROM, itemised. A total nobody can take apart is a
      number somebody has to trust; a total with its rows under it is one they
      can check, and checking it is what makes it theirs. */
-  /* THE THREE FIGURES FIRST, each on its own card with a spine. What somebody
+  /* THE BOARD ACROSS THE TOP, IN THREE FIGURES AND A LINE.
+     Members, the reader's share of the pool, and the places still open —
+     one that rises, one that is theirs and fixed, one that falls. Three
+     columns rather than three stacked cards because they are short numbers
+     and a phone reads them side by side in one glance. */
+  w.append(three(d));
+  if (d.trend && d.trend.length > 1) w.append(spark(d));
+
+  /* THEN THEIR OWN POINTS, each on its own card with a spine. What somebody
      takes in without reading — a quiet label, a loud number, a line under it —
      before any table. The table is for the person who wants to check it. */
   if (d.place) {
@@ -529,6 +562,98 @@ function joinRow(d, device) {
 
 /* ---- small pieces -------------------------------------------------------- */
 
+/** The three figures about the board, side by side. */
+function three(d) {
+  const row = el("div", "lp3");
+  const one = (k, v, u) => {
+    const c = el("div", "lp3c");
+    c.append(el("span", "k", k));
+    c.append(el("span", "v", v));
+    if (u) c.append(el("span", "u", u));
+    row.append(c);
+  };
+  one(T("pin.sMembers"), num(d.members), T("pin.sMembersU", { goal: num(d.goal) }));
+  one(T("pin.sShare"), typeof d.share === "number" ? pct(d.share) : "—", T("pin.sShareU"));
+  one(T("pin.sLeft"), num(d.left), T("pin.sLeftU"));
+  return row;
+}
+
+/* THE GROWTH CURVE.
+ *
+ * One series, so no legend: the label over it names it. An area under a 2px
+ * line, the last point marked and labelled — the only number on the chart,
+ * because a value on every point is a table drawn badly.
+ *
+ * The scale runs from zero to the highest point the line reaches, and the two
+ * labels name the first date and the last: every label on it is a value the
+ * chart actually gets to. The viewBox is taller and wider than the plot so the
+ * end dot and its label cannot be clipped by their own stroke.
+ *
+ * Text takes the panel's ink tokens rather than the line's colour — the line
+ * carries the identity, the words do not need to repeat it.
+ */
+function spark(d) {
+  const pts = d.trend;
+  const W = 300, H = 76, PL = 4, PR = 34, PT = 10, PB = 18;
+  const hi = Math.max(...pts.map((p) => p.n), 1);
+  const x = (i) => PL + (i * (W - PL - PR)) / (pts.length - 1);
+  const y = (n) => PT + (H - PT - PB) * (1 - n / hi);
+
+  const box = el("div", "lpspark");
+  const head = el("p", "lpk", T("pin.trend"));
+  box.append(head);
+
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", T("pin.trendAlt",
+    { n: num(pts[pts.length - 1].n), from: theDay(pts[0].t), to: theDay(pts[pts.length - 1].t) }));
+  svg.setAttribute("preserveAspectRatio", "none");
+
+  const line = pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.n).toFixed(1)}`).join("");
+  const area = document.createElementNS(ns, "path");
+  area.setAttribute("d", line + `L${x(pts.length - 1).toFixed(1)},${y(0)}L${x(0)},${y(0)}Z`);
+  area.setAttribute("fill", "rgba(92,141,255,.16)");
+  area.setAttribute("stroke", "none");
+  svg.append(area);
+
+  const path = document.createElementNS(ns, "path");
+  path.setAttribute("d", line);
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "#5C8DFF");
+  path.setAttribute("stroke-width", "2");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("vector-effect", "non-scaling-stroke");
+  svg.append(path);
+
+  const dot = document.createElementNS(ns, "circle");
+  dot.setAttribute("cx", x(pts.length - 1));
+  dot.setAttribute("cy", y(pts[pts.length - 1].n));
+  dot.setAttribute("r", "3.5");
+  dot.setAttribute("fill", "#5C8DFF");
+  svg.append(dot);
+
+  const cap = document.createElementNS(ns, "text");
+  cap.setAttribute("x", x(pts.length - 1) + 7);
+  cap.setAttribute("y", y(pts[pts.length - 1].n) + 4);
+  cap.setAttribute("fill", "#D6DEEA");
+  cap.setAttribute("font-size", "12");
+  cap.setAttribute("font-weight", "700");
+  cap.textContent = num(pts[pts.length - 1].n);
+  svg.append(cap);
+  box.append(svg);
+
+  /* Month and year on the axis, not the full date. An axis label is a
+     position, and "January 1, 2026" under a 76-pixel chart is a sentence. */
+  const ends = el("div", "lpends");
+  ends.append(el("span", null, theMonth(pts[0].t)));
+  ends.append(el("span", null, theMonth(pts[pts.length - 1].t)));
+  box.append(ends);
+  return box;
+}
+
 function stat(label, value, under, green) {
   const c = el("div", "lpstat" + (green ? " green" : ""));
   c.append(el("span", "k", label));
@@ -557,6 +682,15 @@ function card(head, bodyText) {
 /* A percentage with enough places to be a number rather than a nought. Four
    decimals because at fifty thousand places two of them are always zero. */
 const pct = (v) => (v >= 1 ? v.toFixed(2) : v.toFixed(4)) + "%";
+
+/** A month and a year, for an axis end. */
+function theMonth(iso) {
+  const d = new Date(String(iso) + "T00:00:00Z");
+  if (Number.isNaN(d.getTime())) return String(iso);
+  return lang() === "zh"
+    ? d.getUTCFullYear() + "\u5e74" + (d.getUTCMonth() + 1) + "\u6708"
+    : d.toLocaleDateString("en", { month: "short", year: "numeric", timeZone: "UTC" });
+}
 
 /* A day, said the way the language says days. Not a format string away from
    English — see `when` in i18n.js, which this follows. */

@@ -3126,6 +3126,36 @@ async function joined(who) {
   return all;
 }
 
+/** THE BOARD'S OWN GROWTH, as a handful of points across its whole life.
+ *
+ * Cumulative members at evenly spaced moments from the first arrival to now.
+ * Read from the arrival dates already on the rows — nothing is stored for it
+ * and nothing is projected from it. It is the one figure on this panel that
+ * moves for a reason outside the reader's own doing, which is what makes it
+ * worth drawing rather than stating.
+ *
+ * Eight points, because a phone-width sparkline with more is a texture.
+ */
+function trendOf(board) {
+  const at = board.people
+    .filter((q) => q.state === "published" && q.handle && q.at)
+    .map((q) => Date.parse(q.at)).filter((t) => Number.isFinite(t)).sort((a, b) => a - b);
+  if (at.length < 2) return [];
+  const first = at[0], last = Math.max(at[at.length - 1], Date.now());
+  const span = last - first;
+  if (span <= 0) return [];
+  const out = [];
+  for (let i = 0; i < 8; i++) {
+    const t = first + (span * i) / 7;
+    /* How many had arrived by then. A running index rather than a filter per
+       point: the same walk answers all eight. */
+    let n = 0;
+    while (n < at.length && at[n] <= t) n++;
+    out.push({ t: new Date(t).toISOString().slice(0, 10), n });
+  }
+  return out;
+}
+
 /** One member's line on the pin. Everything read, nothing stored.
  *
  * `asNew` asks for the shape somebody standing outside would see instead of
@@ -3155,15 +3185,15 @@ function pinFor(board, who, asNew) {
   const next = members + 1;
   if (!place) {
     return next > LGOAL
-      ? { on: true, place: 0, shut: true, ...common(members) }
+      ? { on: true, place: 0, shut: true, ...common(members, board) }
       : { on: true, place: 0, soon: next, soonPts: PLACE(next),
           scale: LSCALE.map((at) => ({ at, pts: PLACE(at) })),
           band: LSCALE.find((at) => next <= at) || LSCALE[LSCALE.length - 1],
           share: LPOOL ? (PLACE(next) / LPOOL) * (LSPLIT / 100) * 100 : 0,
-          ...common(members) };
+          ...common(members, board) };
   }
   if (place > LGOAL) {
-    return { on: true, place: 0, shut: true, ...common(members) };
+    return { on: true, place: 0, shut: true, ...common(members, board) };
   }
   const acts = actsOf(board, who, LGUESTS).filter((r) => r.points > 0);
   const placePts = PLACE(place);
@@ -3183,15 +3213,19 @@ function pinFor(board, who, asNew) {
        one you are in lit up is the same fact and it is read at a glance. */
     scale: LSCALE.map((at) => ({ at, pts: PLACE(at) })),
     band: LSCALE.find((at) => place <= at) || LSCALE[LSCALE.length - 1],
-    ...common(members),
+    ...common(members, board),
   };
 }
 
 /** The things every shape of the answer carries, so three returns cannot come
  *  to three different views of the same board. */
-const common = (members) => ({
+const common = (members, board) => ({
   members, goal: LGOAL, split: LSPLIT, rest: 100 - LSPLIT,
   until: LUNTIL, by: LBY, guests: LGUESTS,
+  /* PLACES LEFT BEFORE THE DOOR SHUTS, which is the only one of the three
+     figures across the top that falls rather than rises. */
+  left: Math.max(0, LGOAL - members),
+  trend: board ? trendOf(board) : [],
 });
 
 /** WHAT SOMEBODY HAS DONE FOR OTHER PEOPLE, priced on WORTH and nothing else.
