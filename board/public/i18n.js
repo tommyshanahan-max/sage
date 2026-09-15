@@ -1274,24 +1274,15 @@ export const STRINGS = {
   "dr.barQueue":       ["The queue", "排队"],
   "dr.barYou":         ["You", "你"],
   "dr.askName":        ["What should this room call you?", "这屋里怎么称呼你？"],
-  "dr.sendLink":       ["Send", "发送"],
-  "dr.sendWho":        ["Add somebody — their name, or leave it blank for a group",
-                        "拉人进来 — 写名字，发群里就留空"],
+  /* THE WHOLE CONTROL, and it says the errand rather than the mechanism.
+     It was a name box with "Send" beside it — two decisions for something
+     with neither, and the name was never used by anything on this side. */
+  "dr.addOne":         ["Add somebody to this room", "拉个人进这屋"],
   /* Pasted into a WeChat group of forty rather than sent to one person.
      No name in it, because every one of them types their own on the door. */
   "dr.sendWordsMany": [
     "The {room} room at The Exchange — invite only, and this door is open until it fills.\n\n{url}\n\nPut your name in and you are in the room.",
     "The Exchange 的{room}房间 — 只进熟人，这个门先开着。\n\n{url}\n\n写个名字就进来了。"],
-  "dr.sendGoneMany":   ["Sent.", "发出去了。"],
-  "dr.sendGone":       ["Sent to {name}.", "已经发给{name}了。"],
-  "dr.sendWords": [
-    "{name} — the {room} room at The Exchange.\n\n{url}\n\nPut your name down and I will see it.",
-    "{name}，The Exchange 的{room}房间。\n\n{url}\n\n留个名字，我这边看得到。"],
-  /* In WeChat the share sheet is not ours, so the whole block is copied and
-     pasted by hand — same words, and the link has to survive being one line. */
-  "dr.sendWordsWx": [
-    "{name} — the {room} room at The Exchange.\n\n{url}\n\nPut your name down and I will see it.",
-    "{name}，The Exchange 的{room}房间。\n\n{url}\n\n留个名字，我这边看得到。"],
   "dr.here":           ["{n} at this door", "这个门口 {n} 个人"],
   "dr.spoke":          ["said something", "说过话"],
   /* Where they stand in the queue. First come, one place up per person
