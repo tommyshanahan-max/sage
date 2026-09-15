@@ -1,0 +1,111 @@
+// What the wallet remembers, in a file of its own beside board.json.
+//
+// ITS OWN FILE, NOT A SECTION OF THE BOARD. board.json is rewritten on every
+// post, every follow, every line said in a room; a payment record sharing that
+// write would be lost or clobbered by whichever of them finished last, and the
+// board's cleaner would have to learn a schema it has no business knowing. The
+// wallet knows members only by the device hash the board already uses.
+//
+// AN EVENT LOG THAT CANNOT BE QUIETLY EDITED. Every change to money appends an
+// event carrying the hash of the event before it. Editing an old event means
+// redoing every hash since, and `verify()` finds the first place that was not
+// done. It is the same idea as the crowdfundme ledger's monthly seal, applied
+// to each event — and like that one it proves nothing was changed, not that
+// what was written was true.
+//
+// Writes are serialised. Two requests that each read, change and write the file
+// at once leave whichever finished last as the only one stored.
+
+import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
+import { createHash, randomBytes } from "node:crypto";
+import path from "node:path";
+
+export const newId = (prefix) => `${prefix}_${randomBytes(9).toString("hex")}`;
+
+const EMPTY = () => ({
+  v: 1,
+  wallets: {},       // by member hash
+  credentials: {},   // passkeys, by member hash
+  sources: {},       // ways to pay in, by id
+  beneficiaries: {}, // where money is paid out to, by id
+  quotes: {},
+  transfers: {},     // member to member
+  requests: {},
+  topups: {},
+  withdrawals: {},
+  sessions: {},      // hand-offs to the provider's own page
+  reports: {},
+  events: [],
+});
+
+const sha = (s) => createHash("sha256").update(s).digest("hex");
+const canon = (e) => JSON.stringify([e.seq, e.at, e.type, e.by || "", e.ref || "", e.data || {}, e.prev]);
+
+export function openLedger(dir) {
+  const file = path.join(dir, "wallet.json");
+  let cache = null;
+  let queue = Promise.resolve();
+
+  async function load() {
+    if (cache) return cache;
+    try {
+      cache = { ...EMPTY(), ...JSON.parse(await readFile(file, "utf8")) };
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
+      cache = EMPTY();
+    }
+    return cache;
+  }
+
+  async function save(data) {
+    await mkdir(dir, { recursive: true });
+    const tmp = file + ".tmp";
+    await writeFile(tmp, JSON.stringify(data, null, 1) + "\n", "utf8");
+    await rename(tmp, file);
+  }
+
+  /** Run `fn` against the data with nobody else writing. `fn` may throw to
+   *  refuse; nothing it changed is saved, because the cache is reloaded. */
+  function change(fn) {
+    const run = queue.then(async () => {
+      const data = await load();
+      const snapshot = JSON.stringify(data);
+      try {
+        const out = await fn(data, (type, fields) => append(data, type, fields));
+        await save(data);
+        return out;
+      } catch (err) {
+        cache = JSON.parse(snapshot);
+        throw err;
+      }
+    });
+    queue = run.catch(() => {});
+    return run;
+  }
+
+  function append(data, type, { by = "", ref = "", ...rest } = {}) {
+    const last = data.events[data.events.length - 1];
+    const e = { seq: (last?.seq || 0) + 1, at: new Date().toISOString(), type, by, ref, data: rest, prev: last?.hash || "" };
+    e.hash = sha(canon(e));
+    data.events.push(e);
+    return e;
+  }
+
+  async function read(fn) {
+    await queue;
+    return fn(await load());
+  }
+
+  /** The first event whose hash or link does not hold, or null. */
+  async function verify() {
+    const data = await read((d) => d);
+    let prev = "";
+    for (const e of data.events) {
+      if (e.prev !== prev || e.hash !== sha(canon(e))) return e.seq;
+      prev = e.hash;
+    }
+    return null;
+  }
+
+  return { change, read, verify, file };
+}
