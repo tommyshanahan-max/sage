@@ -3176,6 +3176,48 @@ const LCUT = Math.min(100, Math.max(0, Number(process.env.BOARD_LEDGER_CUT || 0)
 const pinMoneyOn = () => LCUT > 0 && (LSALE > 0 || LSALE_AT > 0);
 
 const pinOn = () => LGOAL > 0;
+
+/* IS THIS THE APP ASKING, RATHER THAN A BROWSER?
+ *
+ * ---------------------------------------------------------------------------
+ * WHY THE BOARD NEEDS TO KNOW, AND IT IS ONE SCREEN ONLY
+ *
+ * The rewards panel says, in pin.ifYesBody and on every render: "The company
+ * intends to make a share offer to everyone on the ledger, allocated by
+ * points, with its own offer document."
+ *
+ * That sentence is fine on a web page a member was invited to. Inside an App
+ * Store build it is a different thing in two ways, and both of them are real:
+ *
+ *   APPLE. Guideline 3.2.1(viii) — apps for financial trading, investing or
+ *   money management are to be submitted by the financial institution
+ *   performing the service. A screen putting a dollar figure on a stake reads
+ *   as exactly that, and 5.0 Legal sits behind it.
+ *
+ *   EVERYBODY ELSE. An offer of shares to people who are not accredited
+ *   investors is regulated conduct in the US, the UK, the EU and China. A
+ *   rejection costs a week. The other one does not.
+ *
+ * WHAT WAS TRIED FIRST AND IS NOT ENOUGH: emptying the three money variables.
+ * BOARD_LEDGER_CUT, _SALE and _SALE_AT only remove the FIGURES. The share
+ * offer sentence is not gated on them — it is drawn every time the panel is —
+ * so that leaves the promise up and takes away the arithmetic under it, which
+ * is the worst of both. Emptying BOARD_LEDGER_GOAL turns the whole panel off,
+ * and turns it off for the members already looking at it, because one
+ * container serves both hostnames and these are read once at boot.
+ *
+ * So: the panel is a web feature. It stays exactly as it is for everybody who
+ * was invited to it, and the app does not have it.
+ *
+ * HOW IT IS DETECTED. capacitor.config.json appends "TheExchangeApp" to the
+ * user agent, so the app announces itself on every request. A user agent is
+ * trivially forged and that is fine here: forging it HIDES a screen from you
+ * rather than revealing one, so the worst somebody can do with this is opt
+ * themselves out of a panel they could have read anyway.
+ *
+ * Nothing else in the app changes. This is not a cut-down build. */
+const inApp = (req) =>
+  /TheExchangeApp/.test(String(req.get("user-agent") || ""));
 /** What a place is worth: the tier it falls in, and nought past the last. */
 const PLACE = (n) => store.tierPoints(n);
 
@@ -8502,6 +8544,12 @@ app.get("/api/door", notesOff, async (req, res) => {
 app.get("/api/ledger/pin", notesOff, async (req, res) => {
   res.set("Cache-Control", "no-store");
   if (!pinOn()) return res.json({ on: false });
+  /* NOT IN THE APP — see the long note over inApp. Answered the same way an
+     unset BOARD_LEDGER_GOAL is answered, so there is no second "hidden" state
+     for the page to learn: ledger-pin.js has drawn nothing for {on:false}
+     since the day the feature was written, and that path is the one every
+     deployment without a ledger has been running. */
+  if (inApp(req)) return res.json({ on: false });
   const key = String(req.query.room || "");
   const gid = String(req.query.group || "");
   if (!key && !gid) return res.status(400).json({ error: "no" });
@@ -8573,6 +8621,10 @@ app.get("/api/ledger/pin", notesOff, async (req, res) => {
  */
 app.post("/api/ledger/join", notesOff, express.json({ limit: "1kb" }), async (req, res) => {
   if (!pinOn()) return res.status(404).json({ error: "off" });
+  /* And the button cannot be pressed from the app either, not merely hidden.
+     Claiming a place on a ledger is the act the share offer is about, and a
+     route that refuses only in the interface is a route that does not refuse. */
+  if (inApp(req)) return res.status(404).json({ error: "off" });
   const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
   const board = await store.load(FILE);
@@ -9066,7 +9118,12 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
          Somebody asks "how does this work" in the room built to explain it and
          he had never heard of it, which is the one question he should be able
          to answer better than anybody. */
-      ledger: now ? ledgerFor(now, me, store.doorKey(id)) : null,
+      /* AND HE IS NOT TOLD ABOUT IT IN THE APP EITHER. Handed the facts,
+         Mo explains the scheme when asked — which would put the share offer
+         back on a screen the panel was just taken off. Hiding a panel and
+         leaving the doorman able to describe it is not removing a feature.
+         See the note over inApp. */
+      ledger: now && !inApp(req) ? ledgerFor(now, me, store.doorKey(id)) : null,
     }).catch(() => ({ error: "no" }));
     /* `say`, NOT `text`, AND THAT ONE WORD COST THE WHOLE FEATURE.
      *

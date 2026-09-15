@@ -759,6 +759,7 @@ import { T, when, lang, setLang, pickLang, langButton, moWelcome, pick } from "/
 import { offerInstall } from "/install.js";
 import { offerNotify } from "/notify.js";
 import { OFF } from "/off.js";
+import { NATIVE } from "/native.js";
 /* The doorman, here too — see mo.js. Messages is where somebody most often
    has a question they would rather ask than guess at. */
 import { mountMo, moHear } from "/mo.js";
@@ -1106,11 +1107,17 @@ function paint() {
  */
 function drawWaiting() {
   const wrap = $("waitwrap");
-  /* SHOWN EVEN WITH NOBODY WAITING, which it was not. The block was a list of
-     piles of people, so an empty queue meant an empty block and it hid itself.
-     There is a room under this heading now that is not a pile of anybody — it
-     is always there and always open — so the heading is too. */
-  wrap.hidden = false;
+  /* THE HEADING FOLLOWS THE ROWS, AND IT IS DECIDED AT THE END.
+   *
+   * It used to hide itself when the queue was empty, because the block was a
+   * list of piles of people. Then the rewards room arrived under the same
+   * heading — always there, a pile of nobody — and the heading became
+   * unconditional to match.
+   *
+   * The app does not have that room, so the invariant is gone for it and the
+   * unconditional line left a heading over nothing on a quiet board. Counting
+   * what was actually appended is right in all three cases and cannot come
+   * apart from them again. */
   $("waitlabel").textContent = T("note.waitHead");
   $("waitsub").textContent = QUEUE.length
     ? T("note.waitSub2", { n: QUEUE.length }) : "";
@@ -1162,14 +1169,25 @@ function drawWaiting() {
    * A row inside the app goes to the thing inside the app. The demo is a link
    * you send, and a link you send does not need a row in anybody's Messages
    * to be sendable — which was the entire argument for it existing. */
-  const all = el("button", "wroom");
-  all.type = "button";
-  const mid = el("div", "wm");
-  mid.append(el("b", null, T("waitroom.rewards")));
-  mid.append(el("span", null, T("wr.roomsAll")));
-  all.append(mid, el("span", "wn", ""));
-  all.addEventListener("click", () => { location.hash = "#d:rewards"; });
-  box.append(all);
+  /* EXCEPT IN THE APP, WHICH DOES NOT HAVE THIS ROOM.
+   *
+   * The rewards panel is web-only — see the long note over inApp in
+   * server.js, and the two reasons there, one of which is not Apple's. The
+   * server already answers {on:false} to the app, so a row left here would
+   * open a room with its whole contents missing. A dead room in a list of live
+   * ones is worse than the thing that was taken out of it. */
+  if (!NATIVE) {
+    const all = el("button", "wroom");
+    all.type = "button";
+    const mid = el("div", "wm");
+    mid.append(el("b", null, T("waitroom.rewards")));
+    mid.append(el("span", null, T("wr.roomsAll")));
+    all.append(mid, el("span", "wn", ""));
+    all.addEventListener("click", () => { location.hash = "#d:rewards"; });
+    box.append(all);
+  }
+
+  wrap.hidden = !box.children.length;
 }
 
 function drawList(T0) {
