@@ -340,6 +340,11 @@
      wants and what the eye reads as a group rather than as a list. */
   .info{margin:.4rem 0 0}
   .info .faces{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem .6rem;margin:0 0 1.3rem}
+  /* A face beside a message, wrapped so it opens whoever said it. The
+     wrapper must not change the row's layout — it is a link around a
+     circle, not a link in a sentence. */
+  .facego{display:block;flex:0 0 auto;text-decoration:none;line-height:0}
+  .facego:active{opacity:.7}
   .info .cell{display:flex;flex-direction:column;align-items:center;gap:.45rem;
     background:none;border:0;padding:0;font:inherit;color:inherit;min-width:0;
     /* An <a> when it opens somebody's page — see infoScreen. Underlined and
@@ -552,6 +557,28 @@ function wash(name) {
 }
 
 /** A face, or a letter where there is none. */
+/** Where a face goes when it is tapped, or nowhere.
+ *
+ *  One place, because the members grid and the conversation both need the
+ *  same answer and two copies of it would disagree the first time somebody
+ *  changed one. Mo is not a member and /p/ has nothing to show for him.
+ */
+function faceHref(p) {
+  if (!p || !p.handle) return "";
+  return p.bot ? "/mo" : "/p/" + encodeURIComponent(String(p.handle).toLowerCase());
+}
+
+/** The face, wrapped so it opens that page — or handed straight back when
+ *  there is nowhere for it to go. */
+function faceLink(p, node) {
+  const href = faceHref(p);
+  if (!href) return node;
+  const a = el("a", "facego");
+  a.href = href;
+  a.append(node);
+  return a;
+}
+
 function face(p, cls) {
   const a = el("span", "av" + (cls ? " " + cls : ""), initial(p.handle));
   a.style.background = wash(p.handle);
@@ -925,7 +952,17 @@ function paintRoom(g) {
       said = w.text;
     } else said = saidIn(m);
     const row = el("div", "said" + (m.mine ? " mine" : ""));
-    if (!m.mine) row.append(face(m, "small"));
+    /* THE FACE BESIDE A LINE OPENS WHOEVER SAID IT.
+     *
+     * The same gesture as the members grid, in the place people actually
+     * reach for it: a name you do not recognise says something, and the face
+     * next to it is the thing under your thumb. It was the members screen or
+     * nothing, which is two taps and a screen you have to know exists.
+     *
+     * Mo goes to /mo, a member to their page, and anybody without a handle —
+     * a guest who has not made one — stays a plain face, because a tile that
+     * leads to a 404 is worse than one that does nothing. */
+    if (!m.mine) row.append(faceLink(m, face(m, "small")));
     const wrap = el("div");
     const bub = el("div", "bub");
     /* @somebody drawn as a mention. Never innerHTML — see at.js. */
@@ -1435,14 +1472,11 @@ function infoScreen(g) {
      * NOT A GUEST, though: somebody invited straight into the room has not
      * made a page yet, and a tile that leads to a 404 is worse than a tile
      * that does nothing. They arrive here with no handle. */
-    const page = !OUTING && m.handle;
-    const cell = el(can ? "button" : page ? "a" : "div",
+    const href = OUTING ? "" : faceHref(m);
+    const cell = el(can ? "button" : href ? "a" : "div",
       "cell" + (can ? " out" : ""));
     if (can) cell.type = "button";
-    if (page) {
-      cell.href = m.bot ? "/mo"
-        : "/p/" + encodeURIComponent(String(m.handle).toLowerCase());
-    }
+    if (href) cell.href = href;
     cell.append(face(m), el("span", null, m.handle));
     if (can) cell.addEventListener("click", () => takeOut(g, m.handle));
     grid.append(cell);
