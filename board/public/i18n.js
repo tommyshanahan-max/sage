@@ -1299,8 +1299,28 @@ export const STRINGS = {
    * start again somewhere else. Written down here so the next person to notice
    * the problem does not re-add the sentence.
    */
-  "dr.here":           ["{n} at this door", "这个门口 {n} 个人"],
+  /* WHAT IT COUNTS, SAID. "{n} at this door" left the reader to work out
+     whether that was people in the room, people waiting, or something
+     else — and at nought it read as broken. It is people waiting to be
+     let in, and the line is not drawn at all when there are none. */
+  "dr.here":           ["{n} waiting to get in here", "有 {n} 个人在门口等着进来"],
   "dr.spoke":          ["said something", "说过话"],
+  /* TELLING SOMEBODY ALREADY ON THE BOARD ABOUT A ROOM.
+     The button above this shares a public link, which is for somebody who is
+     not in yet. A member can already walk in — so what is wanted is to point
+     them at it, and the words say that rather than "invite", which would be
+     untrue and would read as a door being opened for somebody already through
+     it. */
+  "dr.tell":           ["Or tell somebody already on here",
+                        "或者告诉一个已经在这儿的人"],
+  "dr.tellPh":         ["Type a name", "输入名字"],
+  "dr.tellNone":       ["Nobody by that name.", "没有叫这个名字的。"],
+  /* The line that lands in the box, theirs to change before it goes. Short,
+     and it says what the room is for rather than selling it. */
+  "dr.tellWords": [
+    "There's a room here for {room} — {url}",
+    "这儿有个 {room} 的房间，你可以来看看：{url}",
+  ],
   /* Where they stand in the queue. First come, one place up per person
      somebody brought in — the order is queueOrder's and `place` arrives
      on the row rather than being counted again in a browser. */

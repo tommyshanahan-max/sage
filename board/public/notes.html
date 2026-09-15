@@ -315,6 +315,17 @@
   .sendlink .plus{font-size:1.05rem;line-height:1}
   /* Only ever speaks when the share sheet was refused and the words went to
      the clipboard instead. A sheet that opened is its own receipt. */
+  .tellwrap{margin:.7rem 0 0}
+  .tellfind{width:100%;box-sizing:border-box;margin:.35rem 0 0;
+    padding:.6rem .8rem;border:1px solid var(--hair);border-radius:.7rem;
+    background:var(--paper);color:var(--ink);font:inherit;font-size:.95rem;
+    -webkit-appearance:none;appearance:none}
+  .tellfind:focus{outline:none;border-color:var(--accent)}
+  .telllist{display:flex;flex-direction:column}
+  .tellone{display:flex;align-items:center;gap:.6rem;width:100%;border:0;
+    background:none;text-align:left;cursor:pointer;padding:.5rem .2rem;
+    color:var(--ink);font:inherit;font-size:.95rem}
+  .tellone:hover,.tellone:focus{background:var(--raise);outline:none}
   .sendsaid{margin:0 0 .6rem;font-size:.78rem;color:var(--t2)}
   .dinfo .dperson{border-bottom:1px solid var(--hair)}
   .dinfo .wperson{width:100%;border-bottom:0}
@@ -1554,6 +1565,16 @@ let MADE = null;
  * people open Messages to read one message and never press ＋. */
 let FOLK = null;
 const PICKED = new Map();
+/* SOMETHING TO SAY, CARRIED INTO THE CONVERSATION THAT IS ABOUT TO OPEN.
+ *
+ * Picking a person from a door room means "tell them about this room", and
+ * the honest shape of that is the message sitting in the box with the cursor
+ * after it — not a message sent on their behalf. They can change it, add to
+ * it, or close the screen and send nothing.
+ *
+ * Cleared as soon as it is used, so going back to the same thread an hour
+ * later does not find a room link waiting in the box. */
+let SAYNEXT = "";
 async function folk() {
   if (FOLK) return FOLK;
   try {
@@ -1819,6 +1840,60 @@ function doorWhere(m) {
   return "";
 }
 
+/** "Tell somebody who is already here" — a name box over the board's people.
+ *
+ *  The same two pieces as the ＋ on Messages and the group picker: one fetch
+ *  of /api/people, kept, and a list that narrows as letters arrive. Three
+ *  copies of the idea would be three that drift, so this one asks folk() as
+ *  well — see the note over it.
+ */
+function tellBox(key) {
+  const wrap = el("div", "tellwrap");
+  wrap.append(el("p", "when", T("dr.tell")));
+  const q = document.createElement("input");
+  q.className = "tellfind";
+  q.type = "search";
+  q.autocomplete = "off";
+  q.placeholder = T("dr.tellPh");
+  const list = el("div", "telllist");
+  wrap.append(q, list);
+
+  const draw = async () => {
+    const typed = q.value.trim().toLowerCase();
+    fill(list);
+    if (!typed) return;
+    const all = await folk();
+    if (q.value.trim().toLowerCase() !== typed) return;   // a later keystroke won
+    const hits = all.filter((p) => !p.mine && String(p.handle || "")
+      .toLowerCase().includes(typed)).slice(0, 6);
+    if (!hits.length) {
+      list.append(el("p", "when", T("dr.tellNone")));
+      return;
+    }
+    for (const p of hits) {
+      const b = el("button", "tellone");
+      b.type = "button";
+      const av = el("span", "av small");
+      av.textContent = initial(p.handle);
+      av.style.background = wash(p.handle);
+      b.append(av, el("b", null, p.handle));
+      b.addEventListener("click", () => {
+        /* The words first, then the move — drawThread reads SAYNEXT as it
+           paints, so setting it after the hash change would be too late. */
+        SAYNEXT = T("dr.tellWords", {
+          room: T("waitroom." + key),
+          url: location.origin + "/r/" + encodeURIComponent(key),
+        });
+        PICKED.set(p.id, { handle: p.handle, photo: p.photo || "" });
+        location.hash = "#" + encodeURIComponent(p.id);
+      });
+      list.append(b);
+    }
+  };
+  q.addEventListener("input", draw);
+  return wrap;
+}
+
 function doorFace(m) {
   const name = m.handle || "?";
   const to = doorWhere(m);
@@ -2057,16 +2132,46 @@ function doorPeople(key) {
            the thing that still works, and silence is not an option. */
       }
     }
-    sendSaid.textContent = T(copyText(words)
+    /* SAID, THEN GONE. This was set and never cleared, so "Copied" sat under
+       the button for the rest of the session — a receipt for something that
+       happened a minute ago, which reads as a label rather than an answer.
+       Four seconds is long enough to be read and short enough not to become
+       part of the screen. A failure stays up: that one is not a receipt, it
+       is the thing that went wrong. */
+    const ok = copyText(words);
+    sendSaid.textContent = T(ok
       ? (IN_WECHAT ? "act.wxCopied" : "cards.copied") : "act.copyFail");
+    if (ok) setTimeout(() => { sendSaid.textContent = ""; }, 4000);
   });
   box.append(go, sendSaid);
+
+  /* AND THE OTHER HALF OF "ADD SOMEBODY", WHICH WAS MISSING.
+   *
+   * The button above shares a public link, which is right for somebody who is
+   * not on the board. Every member can already walk into a door room, so for
+   * them there is nothing to add — what you actually want is to TELL one of
+   * them it is here, and there was no way to do that without leaving the room,
+   * finding them in Messages and typing the address out.
+   *
+   * So: type a name, tap the person, and the conversation opens with the line
+   * already in the box. Not sent — theirs to read, change and send, which is
+   * the difference between offering to write a message and writing one in
+   * somebody's name.
+   *
+   * Members only, because a person at the door has no page and cannot be
+   * written to from here. */
+  if (DOOR.how === "member") box.append(tellBox(key));
 
   /* THE QUEUE IS A MEMBER'S TO READ, and so is its count. /api/queue refuses
      anybody else, so `rows` is empty for them — and "0 at this door", printed
      under a room they are standing in with four other people, is the screen
      telling them something false. */
-  if (DOOR.how === "member") {
+  /* AND ONLY WHEN THERE IS SOMEBODY THERE. "0 at this door" does not say what
+     it counts and reads as broken — the note above got half of it, gating on
+     membership, and left the zero. What it counts is people waiting to be let
+     in, which is worth a line when there are any and worth nothing when there
+     are none. */
+  if (DOOR.how === "member" && rows.length) {
     box.append(el("p", "when", T("dr.here", { n: rows.length })));
   }
   for (const w of rows) {
@@ -2217,7 +2322,15 @@ async function drawDoor(key) {
      With ⋯ now in the corner, the old one-line sub wrapped to two and pushed
      the conversation down; and the count belongs to the room's name anyway.
      What is left under it is the one thing somebody needs told. */
-  $("twhoname").textContent = T("waitroom." + key) + "  (" + DOOR.n + ")";
+  /* THE COUNT IS PEOPLE WAITING AT THIS DOOR, NOT PEOPLE IN THE ROOM, and at
+     zero it says the opposite of what it means. The rewards door is the case
+     that made this obvious: nobody is ever filed under it — it is open to all
+     of them at once — so it read "Early adopter rewards (0)" to a member
+     standing in it with a place on the ledger and four thousand points. A
+     count that is structurally always nought is not a count.
+     Shown when there is somebody to count and left off when there is not. */
+  $("twhoname").textContent = T("waitroom." + key)
+    + (DOOR.n > 0 ? "  (" + DOOR.n + ")" : "");
   $("twhosub").textContent = T("dr.sub");
 
   /* THE LEDGER, ACROSS THE TOP OF THE ROOM. Dark unless the box has
@@ -2235,7 +2348,16 @@ async function drawDoor(key) {
      everybody's. So it opens when there is either. */
   const act = $("tmore");
   const anyHere = (DOOR.says || []).some((m) => m.fid && !m.mine && !m.bot);
-  act.hidden = !((DOOR.how === "member" && QUEUE.length) || anyHere);
+  /* AND A MEMBER ALWAYS HAS IT, BECAUSE THEY ALWAYS HAVE SOMETHING TO DO
+     BEHIND IT.
+     
+     It opened only when there was a queue to read or somebody to follow —
+     both facts about OTHER people — so a quiet room had no ⋯ at all, and the
+     one control that would make it less quiet lives behind that ⋯. A member
+     standing in an empty room could not invite anybody into it, which is the
+     exact moment they would want to. Adding somebody does not depend on
+     anybody already being there. */
+  act.hidden = !(DOOR.how === "member" || anyHere);
   act.onclick = () => { DOORINFO = DOORINFO === key ? "" : key; drawDoor(key); };
 
   fill(talk);
@@ -2474,6 +2596,15 @@ function drawThread(t) {
      conversation with nothing in it yet. */
   $("tbox").placeholder = T(t.fresh ? "note.placeholder" : "note.boxPh");
   $("tsaid").hidden = true;
+
+  /* WHAT THEY CAME HERE TO SAY, if they arrived from a room's "tell somebody"
+     list. Only into an empty box: a half-written message is somebody's, and
+     overwriting it would be the worst thing this could do. */
+  if (SAYNEXT && !$("tbox").value) {
+    $("tbox").value = SAYNEXT;
+    $("tbox").dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  SAYNEXT = "";
 
   /* AND IT IS READ NOW. Opening the conversation is what reading it means —
      the list marks nothing, so the dot beside a name survives until somebody
