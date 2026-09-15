@@ -4761,21 +4761,29 @@ export const STRINGS = {
   "grp.invite":        ["Invite", "邀请"],
   /* The top row of the add screen, before anybody already here. Sending a
      link into WeChat is what "add somebody" means nine times out of ten, and
-     it used to be behind a search that had to fail first. */
-  "grp.inviteNew":     ["Send a link", "\u53d1\u4e2a\u94fe\u63a5"],
+     it used to be behind a search that had to fail first.
+     AND IT SAYS WHAT IT DOES. "Send a link" is the mechanism, not the errand;
+     it also read as a second thing to do after typing a name, when it is the
+     only thing there is to do. */
+  "grp.inviteNew":     ["Add someone to the group", "\u52a0\u4e2a\u4eba\u8fdb\u7fa4"],
   "grp.inviteName":    ["Invite {name}", "邀请 {name}"],
   /* The row above this one now offers the link, so the second sentence this
      used to carry is said twice on one screen. */
   "grp.addAllIn": [
     "Everybody you have matched with is already in here.",
     "和你匹配上的人都在里面了。"],
-  "grp.outsideName":   ["Their name", "他的名字"],
+  /* OPTIONAL, AND IT SAYS SO. The door asks whoever arrives what their name
+     is; this one only decides whether the message opens "Ray —". */
+  "grp.outsideName":   ["Their name — optional", "他的名字（可不填）"],
   "grp.outsideGo":     ["Make their invite", "生成邀请"],
   "grp.roomPlain":     ["a conversation", "一个对话"],
   "grp.outMade":       ["{name}'s way into “{room}”:", "{name} 进「{room}」的入口："],
   /* A room does not have to be named, and “a conversation” inside the quote
      marks read like the name somebody had given it. Its own line instead. */
   "grp.outMadePlain":  ["{name}'s way in:", "{name} 的入口："],
+  /* Nobody typed a name, so the invite does not have one to say back. */
+  "grp.outMadeNo":     ["The way into “{room}”:", "进「{room}」的入口："],
+  "grp.outMadePlainNo": ["The way in:", "入口："],
   "grp.outCopy":       ["Copy the message", "复制这段话"],
   /* The one thing that can still go wrong is the half that is not on screen.
      Said once, under the code, rather than as a warning. */
@@ -4795,6 +4803,17 @@ export const STRINGS = {
   "grp.sharedWx": [
     "{name} — come into this. It is a private board, and there is a room on it with {who} in it called “{room}”.\n\nYou can read it before you say anything.\n\n{url}\n\nCode: {code} — good for 48 hours, one person.\n\nOpen it in Safari rather than inside WeChat — WeChat keeps its own storage and you would end up with two of you.",
     "{name}，进来聊。这是个私密的板子，里面有个群叫「{room}」，{who} 在里面。\n\n可以先看，不用马上说话。\n\n{url}\n\n口令：{code}——48 小时内有效，只能一个人用。\n\n请用 Safari 打开，别在微信里打开——微信的浏览器自己存一份，会变成两个你。"],
+  /* THE SAME MESSAGE WITH NOTHING ON THE FRONT OF IT. A name was required
+     before an invite could be made, and it never had to be: whoever arrives is
+     asked their name at the door and that is the one they keep. Written out
+     twice rather than substituting "" into the pair above, because "\u00a0— come
+     into this" is what that comes out as in somebody's chat window. */
+  "grp.sharedNo": [
+    "Come into this. It is a private board, and there is a room on it with {who} in it called “{room}”.\n\nYou can read it before you say anything.\n\n{url}\n\nCode: {code} — good for 48 hours, one person.",
+    "进来聊。这是个私密的板子，里面有个群叫「{room}」，{who} 在里面。\n\n可以先看，不用马上说话。\n\n{url}\n\n口令：{code}——48 小时内有效，只能一个人用。"],
+  "grp.sharedWxNo": [
+    "Come into this. It is a private board, and there is a room on it with {who} in it called “{room}”.\n\nYou can read it before you say anything.\n\n{url}\n\nCode: {code} — good for 48 hours, one person.\n\nOpen it in Safari rather than inside WeChat — WeChat keeps its own storage and you would end up with two of you.",
+    "进来聊。这是个私密的板子，里面有个群叫「{room}」，{who} 在里面。\n\n可以先看，不用马上说话。\n\n{url}\n\n口令：{code}——48 小时内有效，只能一个人用。\n\n请用 Safari 打开，别在微信里打开——微信的浏览器自己存一份，会变成两个你。"],
   /* WHY IT DID NOT WORK, and each of these is a different thing to do next. */
   "grp.outNoStanding": [
     "You cannot bring anybody in yet. Your own invite in Profile says what is missing.",

@@ -1013,12 +1013,13 @@ function addScreen(g) {
     row.append(el("span", "av new", "\uFF0B"),
       el("b", null, nm ? T("grp.inviteName", { name: nm }) : T("grp.inviteNew")),
       el("span", "tag", T("grp.invite")));
-    row.addEventListener("click", () => {
-      /* No name yet is not a refusal: it is the one thing still needed, and
-         the box above is where it goes. The door greets them by it. */
-      if (!nm) { find.focus(); return; }
-      mint(g, nm, list);
-    });
+    /* THE NAME IS NOT NEEDED, so it is not asked for. This used to put the
+       cursor back in the box instead of minting, on the grounds that the door
+       greets them by name — but the door asks whoever arrives what their name
+       is, and that is the one they keep. All the typed name ever bought was
+       "Welcome, Ray" over "Welcome" on one screen, at the price of a button
+       that appeared to do nothing. Typed, it still travels; blank, it mints. */
+    row.addEventListener("click", () => { mint(g, nm, list); });
     return row;
   };
 
@@ -1077,7 +1078,33 @@ function addScreen(g) {
   return box;
 }
 
-/** Minting the code, once a name has turned out to be nobody on this board.
+/* THE LINK NEVER CARRIES THE CODE. Same rule as the header's invite and the
+   same reason: a forwarded link would otherwise be a way in.
+   THE NAME IN IT IS OPTIONAL, and `nm` is "" when nobody typed one. */
+function enterUrl(nm, d) {
+  const q = [];
+  if (nm) q.push("for=" + encodeURIComponent(nm));
+  q.push("from=" + encodeURIComponent(d.from || ""));
+  if (d.until) q.push("t=" + Math.round(Date.parse(d.until) / 1000));
+  return location.origin + "/enter?" + q.join("&");
+}
+
+/** The message that travels beside the link. The same words either way; the
+ *  nameless pair simply has no "{name} — " on the front of it. Four strings
+ *  rather than a name substituted with an empty string, because "\u00a0— come into
+ *  this" is what that comes out as in a chat window. */
+function inviteWords(nm, d, url) {
+  return T("grp.shared" + (IN_WECHAT ? "Wx" : "") + (nm ? "" : "No"),
+    { name: nm, room: d.name || T("grp.roomPlain"),
+      /* THE SEPARATOR IS A WORD OF THE LANGUAGE, not punctuation that
+         travels. \u3001 between two English names reads as a typo in the
+         middle of a message somebody is about to send a stranger. */
+      who: (d.who || []).join(lang() === "zh" ? "\u3001" : ", "),
+      url, code: d.code });
+}
+
+/** Minting the code for somebody who is nobody on this board yet. `nm` is
+ *  whatever was typed in the box above, and "" is allowed.
  *  The row it was tapped from is replaced by what it made — see done(). */
 async function mint(g, nm, list) {
   fill(list);
@@ -1090,16 +1117,8 @@ async function mint(g, nm, list) {
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || "no");
-    /* THE LINK NEVER CARRIES THE CODE. Same rule as the header's invite and
-       the same reason: a forwarded link would otherwise be a way in. The name
-       goes in it so the door greets them; it opens nothing. */
-    const url = location.origin + "/enter?for=" + encodeURIComponent(nm)
-      + "&from=" + encodeURIComponent(d.from || "")
-      + (d.until ? "&t=" + Math.round(Date.parse(d.until) / 1000) : "");
-    const words = T(IN_WECHAT ? "grp.sharedWx" : "grp.shared",
-      { name: nm, room: d.name || T("grp.roomPlain"),
-        who: (d.who || []).join(lang() === "zh" ? "\u3001" : ", "),
-        url, code: d.code });
+    const url = enterUrl(nm, d);
+    const words = inviteWords(nm, d, url);
     fill(list);
     list.append(done(nm, d, words, url));
     if (!IN_WECHAT && navigator.share) {
@@ -1123,8 +1142,8 @@ async function mint(g, nm, list) {
 function done(nm, d, words, url) {
   const box = el("div", "outdone");
   box.append(el("p", "line", d.name
-    ? T("grp.outMade", { name: nm, room: d.name })
-    : T("grp.outMadePlain", { name: nm })));
+    ? T(nm ? "grp.outMade" : "grp.outMadeNo", { name: nm, room: d.name })
+    : T(nm ? "grp.outMadePlain" : "grp.outMadePlainNo", { name: nm })));
   /* BOTH HALVES ON THE SCREEN. The code was shown and the link was not — it
      existed only inside what the button put on the clipboard — under a line
      telling somebody to send the code WITH the link. Nothing to check the
@@ -1186,8 +1205,9 @@ function outsider(picked, label, group) {
   });
 
   go2.addEventListener("click", async () => {
+    /* Blank is allowed here for the same reason it is allowed on the add
+       screen — the door asks them their name. See the note over enterUrl. */
     const nm = who.value.trim();
-    if (!nm) { who.focus(); return; }
     go2.disabled = true;
     said.textContent = "";
     try {
@@ -1199,19 +1219,8 @@ function outsider(picked, label, group) {
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "no");
-      /* THE LINK NEVER CARRIES THE CODE. Same rule as the header's invite and
-         the same reason: a forwarded link would otherwise be a way in. The
-         name goes in it so the door greets them; it opens nothing. */
-      const url = location.origin + "/enter?for=" + encodeURIComponent(nm)
-        + "&from=" + encodeURIComponent(d.from || "")
-        + (d.until ? "&t=" + Math.round(Date.parse(d.until) / 1000) : "");
-      const words = T(IN_WECHAT ? "grp.sharedWx" : "grp.shared",
-        { name: nm, room: d.name || T("grp.roomPlain"),
-          /* THE SEPARATOR IS A WORD OF THE LANGUAGE, not punctuation that
-             travels. \u3001 between two English names reads as a typo in the
-             middle of a message somebody is about to send a stranger. */
-          who: (d.who || []).join(lang() === "zh" ? "\u3001" : ", "),
-          url, code: d.code });
+      const url = enterUrl(nm, d);
+      const words = inviteWords(nm, d, url);
       /* Inside WeChat a page may not open a share sheet — the ⋯ menu is the
          only way — so the clipboard is the honest version there, as it is
          everywhere else this app shares something. */
