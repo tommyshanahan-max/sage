@@ -185,16 +185,22 @@ const CSS = `
      part read as a flat bar with nothing above it. */
   .lpsl{position:relative;flex:1;min-width:0;background:#333C4E;
     clip-path:polygon(0 var(--a),100% var(--b),100% 100%,0 100%)}
-  /* EACH SLICE FILLS LEFT TO RIGHT, NOT BOTTOM TO TOP.
+  /* IT IS A LEVEL, AND THE LEVEL RISES ALONG THE ROOF.
    *
-   * Bottom-up was the obvious way and it could not be read: the first ten was
-   * FULL and the first hundred was a third full, and because the second wedge
-   * is three times the height of the first, both fills came out at the same
-   * height off the floor — one flat blue bar across two tiers in completely
-   * different states. Left to right, a full tier is a wholly coloured wedge
-   * and a third-full one is a third of a wedge, which is the same thing the
-   * label says. */
-  .lpsl i{position:absolute;left:0;top:0;bottom:0;background:var(--d-key)}
+   * Two wrong answers came before this one. Filled bottom-up by each slice's
+   * own fraction, the first ten (FULL) and the first hundred (a third full)
+   * drew blue to the same height, because the second wedge is three times the
+   * first — one flat bar across two tiers in completely different states.
+   * Filled left to right, a full tier was at least a wholly coloured wedge,
+   * but the blue in the tier still filling stood TALLER than the tier before
+   * it had ever reached, which is not what a thing filling up does.
+   *
+   * So the waterline tracks the cone's own roof. A tier starts filling at the
+   * height of its left-hand corner — which is exactly where the tier before it
+   * finished — and reaches its right-hand corner when it is full. The blue
+   * surface therefore only ever rises, it is continuous across the joins, and
+   * a full tier is a wedge filled to its own highest point. */
+  .lpsl i{position:absolute;left:0;right:0;bottom:0;background:var(--d-key)}
   /* A TIER THAT IS GONE IS GREY — unless it is the reader's own, where full
      means got in rather than missed, and one colour for both says the wrong
      one of them. */
@@ -552,10 +558,13 @@ function ladder(d) {
       + (t.key === mine ? " on" : "") + (full ? " rdone" : ""));
     sl.style.setProperty("--a", topAt(i) + "%");
     sl.style.setProperty("--b", topAt(i + 1) + "%");
-    /* THE FILL IS THIS SLICE'S OWN FRACTION, ACROSS ITS OWN WIDTH — see the
-       note over .lpsl i for why it is across and not up. */
+    /* THE WATERLINE, WHICH IS THIS SLICE'S TWO TOP CORNERS INTERPOLATED BY HOW
+       full the tier is — see the note over .lpsl i. Empty sits on the floor at
+       the left corner's height, full reaches the right corner, and the clip
+       path carves whatever is under it to the wedge. */
+    const line = topAt(i) + (topAt(i + 1) - topAt(i)) * (taken / t.size);
     const fill = el("i");
-    fill.style.width = (taken / t.size) * 100 + "%";
+    fill.style.height = (open ? 100 - line : 0) + "%";
     sl.append(fill);
     cone.append(sl);
 
