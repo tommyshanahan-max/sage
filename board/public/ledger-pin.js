@@ -182,6 +182,16 @@ const CSS = `
     cursor:pointer;justify-self:start}
   .lpyes{margin:0;font-size:1.02rem;font-weight:700;color:#35D08A}
   .lpsay{margin:0;font-size:.94rem;color:var(--d-mute)}
+  /* The way out, at the end of the way in. Quiet — it is not a thing to do,
+     it is a thing to stop doing — but full width, because a small control at
+     the foot of a long dark card is a control nobody finds. */
+  .lpclose{margin-top:.9rem;width:100%;font:inherit;font-weight:600;font-size:.94rem;
+    padding:.7rem;border-radius:.7rem;border:1px solid var(--d-line);
+    background:transparent;color:var(--d-mute);cursor:pointer}
+  .lpclose:hover{color:var(--d-ink);border-color:var(--d-mute)}
+  /* And the chevron reads as a control rather than a mark: a target the size
+     of a thumb, with a ring it can show when it has focus. */
+  .lpchev{padding:.15rem .3rem;border-radius:.4rem}
   .lpflip{font:inherit;font-size:.9rem;background:transparent;border:0;
     color:var(--d-mute);cursor:pointer;padding:.6rem 1.1rem 0;text-decoration:underline}
   .lpnone{margin:0;font-size:1rem;color:var(--d-ink2);line-height:1.55}
@@ -508,6 +518,29 @@ function body(d, device) {
   if (RULES) paintRules(w, d, go, rw);
 
   if (!d.joined && d.place) w.append(joinRow(d, device));
+
+  /* A WAY OUT AT THE BOTTOM, because the way in is at the top.
+   *
+   * The header is the toggle and tapping it again shuts the panel — which is
+   * no use once it is open, because by then the header is a screen and a half
+   * above and the reader is looking at the end of a long card with no control
+   * on it. A thing that opens downward needs its close where the opening ends.
+   *
+   * It scrolls the panel back into view as it shuts, so the room does not jump
+   * to wherever the foot of the card used to be. */
+  const shut = el("button", "lpclose", T("pin.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => {
+    OPEN = false;
+    const box = LAST && LAST.box;
+    if (box) {
+      paint(box, SHOWN, LAST.device);
+      box.scrollIntoView({ block: "nearest" });
+      const head = box.querySelector(".lphead");
+      if (head) { try { head.focus({ preventScroll: true }); } catch { /* older */ } }
+    }
+  });
+  w.append(shut);
   return w;
 }
 

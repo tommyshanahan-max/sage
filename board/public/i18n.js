@@ -5019,6 +5019,7 @@ export const STRINGS = {
     "Points stay a record of who built the board. No shares are offered.",
     "积分就只是谁一起把这个board做起来的记录。没有股份。",
   ],
+  "pin.close":         ["Close", "收起"],
   "pin.rulesGo":       ["Read the rules", "看规则"],
   "pin.rulesHide":     ["Close the rules", "收起规则"],
   "pin.place":         ["Place #{n}", "第 {n} 位"],
