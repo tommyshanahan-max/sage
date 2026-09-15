@@ -5124,9 +5124,14 @@ export const STRINGS = {
     "Two halves. Your place is the order your page went up, and it never moves. What you have done is counted from the board and moves every week.",
     "分两半。位置分看你的主页什么时候建的，定了就不动。做事分从board上算，每周都在变。",
   ],
+  /* WHY EARLIER IS WORTH MORE, WITHOUT A RULE ABOUT IT. The sets are nested,
+     so the answer is that you are in more of them — which somebody works out
+     for themselves in about a second and can then tell somebody else. It
+     described a curve ("place 1 is 1,000 and the last place is 23") that has
+     not existed since the tiers replaced it. */
   "pin.rulesCurve": [
-    "An earlier place is worth more, but not by as much as you would think: place 1 is 1,000 and the last place is 23.",
-    "来得早分高，但没高多少：第 1 位是 1000 分，最后一位是 23 分。",
+    "Four sets, one inside the next. The first ten are also in the first hundred, the first thousand and the first ten thousand — so they hold a share of all four.",
+    "四个圈，一个套一个。最早的十个人同时也在一百人、一千人、一万人里面，所以这四份都有他们的。",
   ],
   "pin.rulesCap": [
     "At most {n} of the people you brought in are counted. Past that the board would be one person's.",

@@ -3032,11 +3032,13 @@ function stakeOf(board, who) {
  * in sight and the opposite of a reason to join this afternoon.
  *
  * So the ledger stands on store.LAYERS: the first ten, the first hundred, the
- * first thousand, the first ten thousand. Each tier is worth the same in
- * total, so points per place are 9,000 / 1,000 / 100 / 10, and the screen
- * leads with the tier that is filling and how many places are left before it
- * shuts. That number is small, true, falls while you look at it, and is a
- * sentence somebody says out loud.
+ * first thousand, the first ten thousand — four NESTED sets, so a place in the
+ * first ten is also in the other three and holds a share of all four. Points
+ * per place come out 4,442 / 842 / 122 / 14 (see store.tierPoints for the
+ * weights and why they are not equal), and the screen leads with the set that
+ * is filling and how many places are left before it shuts. That number is
+ * small, true, falls while you look at it, and is a sentence somebody says
+ * out loud.
  *
  * THE GOAL IS STILL THE GOAL and it is a different number. The tiers close at
  * 10,000; BOARD_LEDGER_GOAL is how many members the company is aiming at
@@ -3070,18 +3072,18 @@ const LBY = String(process.env.BOARD_LEDGER_BY || "").trim().slice(0, 10);
 
 /* THE WHOLE POOL OF PLACE POINTS, which a share is divided by.
  *
- * Every place there will ever be, which is now every place in every tier —
- * four tiers worth the same, so four times one tier's total. Against the
- * places taken so far instead, an early share would read as an enormous
- * fraction and then fall as the board fills, and a number that only ever goes
- * down is a grievance waiting to happen. The same argument as POOL above.
+ * Every place there will ever be, which the store holds as one figure because
+ * the four sets it is split across are nested and unequal — see tierPoints.
+ * Against the places taken so far instead, an early share would read as an
+ * enormous fraction and then fall as the board fills, and a number that only
+ * ever goes down is a grievance waiting to happen. Same argument as POOL.
  *
  * IT NO LONGER MOVES WITH THE GOAL, and that is the point of tiers: raising
  * the target from 50,000 members to 100,000 used to quietly halve what every
  * existing member's place was worth as a fraction. Now the goal is what the
  * company is aiming at and the pool is what the ledger holds, and the two are
  * free to be different numbers. */
-const LPOOL = store.LAYERS.length * store.TIER_TOTAL;
+const LPOOL = store.PLACE_POOL;
 
 /** The ladder, as its own edges: what a place in each tier is worth. Four
  *  numbers rather than a curve in five samples — they are the thing itself. */

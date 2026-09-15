@@ -1239,10 +1239,11 @@ export const LEVELS = ["Just starting", "HSK 1-2", "HSK 3", "HSK 4", "HSK 5", "H
  * friend, and the layer exists to be said out loud.
  *
  * The first ten, the first hundred, the first thousand, the first ten
- * thousand. Four, each worth the same in total, and because the sizes are
- * 10 / 90 / 900 / 9,000 the points per place come out as 9,000 / 1,000 / 100 /
- * 10 — a decimal ladder anybody can hold in their head and check. Missing a
- * tier costs a factor of ten, which is the fact the screen is there to carry.
+ * thousand. FOUR NESTED SETS, not four bands: place 5 is in all four and holds
+ * a share of all four, which is why being early is worth more and why that
+ * needs no explaining. See tierPoints for what each set holds and why they are
+ * not equal. Missing a tier costs between five and nine times, which is the
+ * fact the screen is there to carry.
  *
  * THE LAST TIER IS NOT THE GOAL. The ledger closes at 10,000; the number of
  * members the company is aiming at is a different, larger figure set on the
@@ -1262,20 +1263,69 @@ export function layerFrom(n) {
   return n > 1 ? LAYERS[n - 2].upto + 1 : 1;
 }
 
-/** WHAT ONE TIER HOLDS, IN POINTS, and every tier holds the same.
- *
- *  The figure itself is arbitrary and is never shown — only points per place
- *  are — but it is 90,000 rather than 1 because 90,000 over the four sizes
- *  divides exactly into 9,000 / 1,000 / 100 / 10. A number that divides
- *  cleanly is a number nobody has to be told to round. */
-export const TIER_TOTAL = 90000;
+/** THE WHOLE PLACE POOL, IN POINTS. Arbitrary and never shown — only points
+ *  per place are — but a round number keeps the four figures it divides into
+ *  roundish, and nobody has to be told where to stop. */
+export const TIER_POOL = 360000;
 
-/** What a place is worth, from the tier it falls in. Nought past the cap. */
+/* WHAT EACH SET HOLDS, AND THEY ARE NOT EQUAL.
+ *
+ * Ten / twenty / thirty / forty per cent of the pool, widest set richest. Four
+ * equal sets was the obvious answer and it put a fifth of everything into the
+ * hands of ten people — of whom the operator is one. That is the first thing a
+ * lawyer circles and the first thing member eleven works out, and member
+ * eleven is the person the whole ladder exists to bring in.
+ *
+ * WHAT IT COSTS: nothing that matters. The ladder still steps 5.3, 6.9 and 8.7
+ * times a tier, against a flat ten. "Get in before the first hundred shuts or
+ * it is worth an eighth" is the same sentence as "a tenth"; nobody joins or
+ * fails to join in that gap. The concentration is the only number on this
+ * screen that cannot be changed later by editing a line in .env.
+ */
+const TIER_WEIGHT = [10, 20, 30, 40];
+
+/** WHAT A PLACE IS WORTH, AND THE SETS ARE NESTED.
+ *
+ *  Place 5 is in the first ten, AND the first hundred, AND the first thousand,
+ *  AND the first ten thousand — so it holds a share of all four. That is the
+ *  whole scheme, and it needs no rule about early people getting more: they
+ *  are in more of the circles, which is a thing somebody works out for
+ *  themselves in about a second.
+ *
+ *  It was disjoint bands, where a place fell in exactly one, and that made the
+ *  screen say something untrue: the fifth member is in the first hundred, and
+ *  a band scheme has to insist they are not.
+ *
+ *  Four values and then nought — 4,442 / 842 / 122 / 14 / 0. Nought past the
+ *  cap is not nothing for that member: the other half of the pool, for what
+ *  people do, is theirs on the same terms as everybody's. There is just no
+ *  place left to have.
+ */
 export function tierPoints(seq) {
-  const l = layerOf(seq);
-  if (!l) return 0;
-  return Math.round(TIER_TOTAL / (l.upto - layerFrom(l.n) + 1));
+  const n = Number(seq);
+  if (!Number.isInteger(n) || n < 1 || n > LAYER_CAP) return 0;
+  return Math.round(LAYERS.reduce((a, l, i) =>
+    a + (n <= l.upto ? (TIER_POOL * TIER_WEIGHT[i]) / 100 / l.upto : 0), 0));
 }
+
+/** THE POOL AS IT ACTUALLY ADDS UP, which is not TIER_POOL.
+ *
+ *  A place is worth a whole number of points, and the exact figures are
+ *  4,442.4 / 842.4 / 122.4 / 14.4 — so rounding each one down loses four
+ *  tenths of a point ten thousand times over, and the pool comes up 4,000
+ *  short of 360,000. Divided by the nominal figure, every share on every
+ *  screen would be understated by about one per cent and the whole column
+ *  would add up to 98.9% — which is the kind of thing somebody checks once,
+ *  finds, and never trusts again.
+ *
+ *  So a share is divided by what the places really come to. Summed once at
+ *  load over ten thousand of them, which costs nothing and survives any future
+ *  set of tiers or weights, where a cleverer closed form would not. */
+export const PLACE_POOL = (() => {
+  let t = 0;
+  for (let n = 1; n <= LAYER_CAP; n++) t += tierPoints(n);
+  return t;
+})();
 
 /** Which layer an arrival number falls in, or null past the last edge. */
 export function layerOf(seq) {

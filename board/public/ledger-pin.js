@@ -964,7 +964,15 @@ function card(head, bodyText) {
 
 /* A percentage with enough places to be a number rather than a nought. Four
    decimals because at fifty thousand places two of them are always zero. */
-const pct = (v) => (v >= 1 ? v.toFixed(2) : v.toFixed(4)) + "%";
+/* TWO SIGNIFICANT FIGURES UNDER ONE PER CENT, not four decimal places.
+ *
+ * Four decimals gave the first ten "0.8637%", which is a number typed by a
+ * machine — nobody says it and the last two digits are precision nobody has
+ * earned. Two decimals everywhere was the obvious fix and it prints "0.00%"
+ * for a place in the last tier, which is a screen telling somebody their share
+ * is nothing when it is not. Significant figures do both: 0.87%, then 0.034%,
+ * then 0.0039%, and never a nought that means "too small to say". */
+const pct = (v) => (v >= 1 ? v.toFixed(2) : Number(v).toPrecision(2)) + "%";
 
 /* Whole units. A figure this soft printed to the cent is a precision nobody
    has earned, and the trailing ".00" is the half that makes it look audited. */
