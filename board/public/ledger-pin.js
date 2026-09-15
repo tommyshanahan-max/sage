@@ -253,6 +253,22 @@ const CSS = `
     margin-top:.45rem;line-height:1.45}
   .lpatbox .no{display:block;margin:.35rem 0 0;font-size:.82rem;font-weight:600;
     color:var(--d-mute);line-height:1.4}
+  /* THE SLIDER. A thumb big enough to aim with on a phone, which the browser
+     default is not on a dark panel, and a track that reads as a track. */
+  .lpslide{-webkit-appearance:none;appearance:none;width:100%;margin:.9rem 0 0;
+    height:22px;background:transparent;cursor:pointer}
+  .lpslide::-webkit-slider-runnable-track{height:6px;border-radius:99px;
+    background:var(--d-line)}
+  .lpslide::-moz-range-track{height:6px;border-radius:99px;background:var(--d-line)}
+  .lpslide::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:22px;height:22px;margin-top:-8px;border-radius:50%;
+    background:var(--d-key);border:2px solid #0B0E15}
+  .lpslide::-moz-range-thumb{width:22px;height:22px;border-radius:50%;
+    background:var(--d-key);border:2px solid #0B0E15}
+  .lpslide:focus-visible{outline:2px solid var(--d-ink);outline-offset:3px}
+  .lpslideends{display:flex;justify-content:space-between;margin-top:-.1rem;
+    font-size:.78rem;font-weight:600;color:var(--d-mute);
+    font-variant-numeric:tabular-nums}
   .lpshare,.lptoward{margin:.15rem 0 0;font-size:1.04rem;font-weight:500;color:var(--d-ink2)}
   .lpshare b,.lptoward b{font-size:1.25rem;font-weight:700;color:var(--d-ink);
     font-variant-numeric:tabular-nums}
@@ -643,20 +659,84 @@ function ladder(d) {
  *  a sum about somebody's own stake with no account of where it came from is
  *  the thing that reads as a promise rather than as arithmetic.
  */
+/* WHERE THE SLIDER IS STANDING, kept in the module so a repaint does not throw
+   away what somebody dragged to. Clamped on read, because the goal and the
+   member count both move underneath it. */
+let SLIDE = null;
+
 function atGoal(d, device) {
   if (typeof d.moneyAt !== "number" || !d.goal) return null;
   const wrap = el("div", "lpat");
   const box = el("div", "lpatbox");
-  box.append(el("span", "k", T("pin.atGoal", { goal: num(d.goal) })));
-  box.append(el("b", "v", money(d.moneyAt)));
-  box.append(el("span", "u", T("pin.atGoalHow",
-    { sale: money(d.saleAt), share: pct(d.share) })));
+  const k = el("span", "k", "");
+  const v = el("b", "v", "");
+  const u = el("span", "u", "");
+
+  /* THE SLIDER, AND WHAT IT IS HONESTLY ALLOWED TO MOVE.
+   *
+   * Not the share. The share is divided by every place there will ever be, so
+   * it does not change when the board fills — that is the whole point of it
+   * and the reason it can be promised at all. What changes with the member
+   * count is what the COMPANY might be worth.
+   *
+   * AND THAT NEEDS NO NUMBER NOBODY HAS TYPED. The operator gave one figure:
+   * what it might be worth at the goal. Revenue is members times what a member
+   * pays, and a sale is revenue times a multiple — so value is linear in
+   * members, and the value at N is the figure at the goal times N over the
+   * goal. The deck's own arithmetic, read off the one number already on the
+   * box, with no invented price per member and no invented multiple.
+   *
+   * IT RESTS AT THE GOAL. Dragging left is the honest half — this is what it
+   * comes to if we only get half way — and the screen at rest says exactly
+   * what it said before the slider existed. */
+  const floor = Math.max(1, Math.min(d.members || 1, d.goal));
+  const at = () => Math.min(d.goal, Math.max(floor, SLIDE == null ? d.goal : SLIDE));
+  const saleAtN = (n) => Math.round((d.saleAt * n) / d.goal);
+  const mineAtN = (n) => Math.round(saleAtN(n) * (d.cut / 100) * (d.share / 100));
+  const draw = () => {
+    const n = at();
+    k.textContent = T("pin.atGoal", { goal: num(n) });
+    v.textContent = money(mineAtN(n));
+    u.textContent = T("pin.atGoalHow",
+      { sale: money(saleAtN(n)), share: pct(d.share) });
+  };
+
+  box.append(k);
+  box.append(v);
+  box.append(u);
   /* ONE LINE, INSIDE THE BOX. The full note is four sentences and it was the
      tallest thing on a panel whose job is to be read in a taxi, so the rest of
      it lives under the chevron — but this half cannot: a figure this size
      needs "nobody has valued this" in the same block of colour, not as grey
      text below it that reads as belonging to whatever comes next. */
   box.append(el("span", "no", T("pin.moneyShort")));
+
+  /* Only when there is a range to drag. A board whose member count has already
+     reached the goal has one number, and a slider with one stop is furniture. */
+  if (d.goal > floor && typeof d.cut === "number") {
+    const sl = document.createElement("input");
+    sl.type = "range";
+    sl.className = "lpslide";
+    sl.min = String(floor);
+    sl.max = String(d.goal);
+    /* A hundred stops however big the goal is: a step of one over fifty
+       thousand is a control that cannot be aimed with a thumb. */
+    sl.step = String(Math.max(1, Math.round((d.goal - floor) / 100)));
+    sl.value = String(at());
+    sl.id = "lpin-slide";
+    sl.setAttribute("aria-label", T("pin.slideWhat"));
+    const ends = el("div", "lpslideends");
+    const here = el("span", null, num(at()));
+    ends.append(here, el("span", null, num(d.goal)));
+    sl.addEventListener("input", () => {
+      SLIDE = Number(sl.value);
+      draw();
+      here.textContent = num(at());
+    });
+    box.append(sl, ends);
+    box.append(el("span", "no", T("pin.slideWhat")));
+  }
+  draw();
   wrap.append(box);
   /* THE WAY TO CLAIM IT, DIRECTLY UNDER THE FIGURE.
    *

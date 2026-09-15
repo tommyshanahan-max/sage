@@ -5056,6 +5056,11 @@ export const STRINGS = {
      sum about somebody's own stake with nothing behind it reads as a promise
      rather than as arithmetic. */
   "pin.moneyShort":    ["Nobody has valued this company.", "还没有人给这家公司估过值。"],
+  /* THE SLIDER SAYS WHAT IT MOVES, AND WHAT IT DOES NOT. Somebody dragging it
+     watches the percentage sit still while the money changes, which is the
+     scheme's one real promise demonstrated rather than asserted. */
+  "pin.slideWhat":     ["Drag to see other member numbers. Your share does not change.",
+                        "拖一下看别的人数。你的比例不会变。"],
   "pin.atGoal":        ["If we reach {goal} members", "如果做到 {goal} 人"],
   "pin.atGoalHow":     ["Your {share} of the pool, if the company sold at {sale}.",
                         "按公司卖 {sale} 算，你占池子的 {share}。"],
