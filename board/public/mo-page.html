@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+{{DEMO}}
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>Mo</title>
+<meta name="description" content="The doorman. Ask him anything about this board.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="/site.css">
+<style>
+  /* HIS PAGE, AND IT IS NOT A PROFILE.
+   *
+   * He turns up in every room's list of people and he is the only face there
+   * that could not be tapped — which is the question this page answers. But a
+   * member page says "I am a ___ looking for a ___" and carries Follow, a
+   * card and a match, and none of those are true of him. A card that looks
+   * like a member's, for something that is not a person, is a small lie on a
+   * board whose whole argument is that it does not tell them.
+   *
+   * So: who he is, what he will not do, and the way to ask him something. */
+  .mopage{max-width:34rem;margin:0 auto;padding:2.2rem 1.25rem 5rem}
+  .mohead{display:flex;align-items:center;gap:1rem}
+  .moface{width:4.6rem;height:4.6rem;flex:0 0 auto;border-radius:50%;
+    display:grid;place-items:center;background:var(--t5,#B8829A);color:#fff;
+    font-family:var(--serif);font-size:2rem;line-height:1}
+  .mopage h1{margin:0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.9rem,5vw,2.5rem);line-height:1.1;letter-spacing:-.015em}
+  .mopage .role{margin:.25rem 0 0;font-size:.95rem;color:var(--muted)}
+  .mopage .lede{margin:1.5rem 0 0;font-size:1.05rem;line-height:1.7;color:var(--ink-2)}
+  .moask{display:block;width:100%;margin:1.6rem 0 0;padding:.95rem 1rem;
+    border:0;border-radius:99px;background:var(--accent);color:#fff;
+    font:inherit;font-size:1rem;font-weight:600;cursor:pointer}
+  .moask:active{opacity:.85}
+  .mopage h2{margin:2.6rem 0 0;font-size:1.05rem;font-weight:600;line-height:1.4}
+  .mopage ul{margin:.7rem 0 0;padding:0;list-style:none}
+  .mopage li{position:relative;margin:.55rem 0 0;padding-left:1.1rem;
+    font-size:.98rem;line-height:1.65;color:var(--ink-2)}
+  .mopage li::before{content:"";position:absolute;left:0;top:.65em;
+    width:.35rem;height:.35rem;border-radius:50%;background:var(--muted)}
+  /* THE THREE THINGS HE WILL NOT DO, boxed. They are the reason to trust a
+     thing in your messages that is not a person, and they are the part
+     nobody could read until now — they live in his brief. */
+  .mono{margin:.9rem 0 0;padding:1rem 1.1rem;border:1px solid var(--accent);
+    border-radius:.7rem;background:var(--raise)}
+  .mono li{color:var(--ink)}
+  .mopage .end{margin:2.4rem 0 0;font-size:.9rem;line-height:1.7;color:var(--muted)}
+  .mopage .back{display:inline-block;margin:2rem 0 0;font-size:.9rem;
+    color:var(--muted);text-decoration:none;border-bottom:1px solid var(--hair)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="wrap">
+    <a class="brand" href="/notes">
+      <i><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" style="width:1em;height:1em;display:block" aria-hidden="true"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg></i>
+      <span><b>The Exchange</b><small>交换</small></span>
+    </a>
+    <span id="langslot" style="margin-left:auto;display:flex;gap:.6rem;align-items:center"></span>
+  </div>
+</div>
+<div class="mopage">
+  <div class="mohead">
+    <div class="moface" id="face">m</div>
+    <div>
+      <h1 id="name"></h1>
+      <p class="role" id="role"></p>
+    </div>
+  </div>
+  <p class="lede" id="lede"></p>
+  <button class="moask" type="button" id="ask"></button>
+
+  <h2 id="canHead"></h2>
+  <ul id="can"></ul>
+
+  <h2 id="wontHead"></h2>
+  <div class="mono"><ul id="wont"></ul></div>
+
+  <p class="end" id="end"></p>
+  <a class="back" href="/notes" id="back"></a>
+</div>
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+import { mountMo, moOpen } from "/mo.js";
+const $ = (id) => document.getElementById(id);
+
+/* HIS OWN PAGE IS THE ONE PLACE THE FLOATING BUTTON BELONGS.
+ *
+ * It is switched off on Messages, Browse and a profile, and the note in
+ * person.html says why: he is a member of every room, and a second him in the
+ * corner of three other screens is one character doing two jobs, which is how
+ * a doorman turns into a widget. That argument is about him being everywhere.
+ * Here he is the subject of the page — one place, one job — so the button is
+ * the point rather than a second copy of him. */
+mountMo({
+  on: true,
+  where: "mo",
+  first: () => [{ from: "you", text: T("but.hookIn") }],
+});
+
+function paint() {
+  $("name").textContent = T("but.name");
+  $("role").textContent = T("but.sub");
+  $("face").textContent = T("but.name").slice(0, 1).toLowerCase();
+  $("lede").textContent = T("mo.lede");
+  $("ask").textContent = T("mo.ask");
+  $("canHead").textContent = T("mo.canHead");
+  $("wontHead").textContent = T("mo.wontHead");
+  $("end").textContent = T("mo.end");
+  $("back").textContent = T("pv.back");
+  document.title = T("but.name") + " — " + T("site.title");
+  for (const [id, keys] of [["can", ["mo.can1", "mo.can2", "mo.can3", "mo.can4"]],
+                            ["wont", ["mo.wont1", "mo.wont2", "mo.wont3"]]]) {
+    const box = $(id);
+    while (box.firstChild) box.removeChild(box.firstChild);
+    for (const k of keys) {
+      const li = document.createElement("li");
+      li.textContent = T(k);
+      box.append(li);
+    }
+  }
+}
+$("ask").addEventListener("click", () => moOpen());
+setLang(pickLang());
+$("langslot").append(langButton(paint));
+paint();
+</script>
+</body>
+</html>

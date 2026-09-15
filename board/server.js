@@ -844,6 +844,12 @@ app.get(["/rules", "/rules/"], (req, res, next) => page("rules.html", req, res, 
  * it rather than introducing a second way to say the same thing. Unset, the
  * page tells somebody to raise it in a room instead, which is true and is
  * better than printing "write to " with nothing after it. */
+/* THE DOORMAN'S OWN PAGE. He is in every room's list of people and was the
+   only face there that could not be tapped — see mo-page.html for why it is
+   not a profile. Behind the door like the rest of the board: he answers
+   questions about a place you are already standing in, and the waiting room
+   reaches him through the GET rule in the gate. */
+app.get(["/mo", "/mo/"], (req, res, next) => page("mo-page.html", req, res, next));
 app.get(["/terms", "/terms/"], (req, res, next) =>
   page("terms.html", req, res, next,
     { "{{CONTACT}}": CONTACT.replace(/["\\<>]/g, "").slice(0, 120) }));

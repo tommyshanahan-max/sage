@@ -3727,6 +3727,56 @@ export const STRINGS = {
    */
   "but.name":          ["Mo", "老莫"],
   "but.sub":           ["on the door", "看门的"],
+  /* ---- HIS PAGE ------------------------------------------------------------
+   *
+   * He is in every room's list of people and he was the only face there that
+   * could not be tapped. This is the answer to that, and it is deliberately
+   * not a profile: he is not looking for anybody and there is nothing to
+   * match with.
+   *
+   * SAID PLAINLY THAT HE IS NOT A PERSON. Somebody who has worked out that
+   * the thing answering them is software trusts the board more, not less —
+   * and somebody who has not worked it out is being let believe something
+   * untrue in a product whose whole argument is that it does not do that. */
+  "mo.lede": [
+    "Mo is not a person — he is software, and he is on the door. He is in every room here, quiet until somebody says his name.",
+    "老莫不是人，是一段程序，站在门口。每个房间里都有他，不叫他就不出声。",
+  ],
+  "mo.ask":            ["Ask him something", "问他点什么"],
+  "mo.canHead":        ["What he can answer", "他能回答什么"],
+  "mo.can1": [
+    "How this board works, and what happens after you get in.",
+    "这个板子怎么运转，进来之后会怎样。",
+  ],
+  "mo.can2": [
+    "What to write in your one sentence, when you are stuck on it.",
+    "你那一句话该怎么写——卡住的时候问他。",
+  ],
+  "mo.can3": [
+    "What a word on a screen here means.",
+    "这里某个词是什么意思。",
+  ],
+  "mo.can4": [
+    "Why it is quiet, and what to do about it.",
+    "为什么这么安静，以及能做点什么。",
+  ],
+  "mo.wontHead":       ["What he will never do", "他绝不会做的事"],
+  "mo.wont1": [
+    "Pass on a WeChat id or an email. Contacts move by card, once, when both of you press give.",
+    "转交微信号或邮箱。联系方式只通过名片走一次，而且要两个人都按了「给」。",
+  ],
+  "mo.wont2": [
+    "Tell you who is in here. Not a name, not a count of anybody in particular.",
+    "告诉你这里都有谁。不说名字，也不说具体是哪些人。",
+  ],
+  "mo.wont3": [
+    "Tell you this board is encrypted. It is not, and he is told never to say that it is.",
+    "跟你说这个板子是加密的。它不是，而且他被要求绝不能这么说。",
+  ],
+  "mo.end": [
+    "He is told to say he does not know rather than guess, and he does not always get it right. Anything he says about somebody here is worth checking with them.",
+    "他被要求不知道就说不知道，不许瞎猜；但他也不是每次都对。他讲到别人的事，最好再跟本人确认一下。",
+  ],
   /* ---- THE FIRST THING HE SAYS ---------------------------------------------
    *
    * IT IS THE INVITE'S JOB, NOT A CHATBOT'S. The invite works — see the note

@@ -1426,14 +1426,23 @@ function infoScreen(g) {
      * faces you can read in the ordinary state and a thing you choose from in
      * out mode, which is the same two states it already had.
      *
-     * NOT MO, who has no page, and not a guest, who has not made one yet —
-     * both come through here without a handle or with bot set, and a tile that
-     * leads to a 404 is worse than a tile that does nothing. */
-    const page = !OUTING && m.handle && !m.bot;
+     * MO GOES SOMEWHERE ELSE. He is not a member and /p/ would have nothing
+     * to show, so his face opens /mo — what he is, what he can answer, and
+     * what he will never do. That is the question a face in a room with no
+     * page behind it was asking, and he was the only one of these that could
+     * not be tapped at all.
+     *
+     * NOT A GUEST, though: somebody invited straight into the room has not
+     * made a page yet, and a tile that leads to a 404 is worse than a tile
+     * that does nothing. They arrive here with no handle. */
+    const page = !OUTING && m.handle;
     const cell = el(can ? "button" : page ? "a" : "div",
       "cell" + (can ? " out" : ""));
     if (can) cell.type = "button";
-    if (page) cell.href = "/p/" + encodeURIComponent(String(m.handle).toLowerCase());
+    if (page) {
+      cell.href = m.bot ? "/mo"
+        : "/p/" + encodeURIComponent(String(m.handle).toLowerCase());
+    }
     cell.append(face(m), el("span", null, m.handle));
     if (can) cell.addEventListener("click", () => takeOut(g, m.handle));
     grid.append(cell);
