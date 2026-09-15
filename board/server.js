@@ -3588,6 +3588,18 @@ const GUEST_ROOM = num("BOARD_GUEST_ROOM", 3);
 const STAFF = new Set(String(process.env.BOARD_STAFF || "")
   .split(",").map((x) => x.trim().toLowerCase()).filter(Boolean));
 
+/** Is this device one of the operator's? By handle, because that is what
+ *  BOARD_STAFF holds and a handle is what a person knows about themselves.
+ *
+ *  Any of their rows counts: an operator who also keeps a page for a company
+ *  is the same person at the same door. Empty BOARD_STAFF answers false for
+ *  everybody, which is every deployment that has not set it. */
+function isStaff(board, by) {
+  if (!STAFF.size || !by) return false;
+  return board.people.some((q) => q.by === by
+    && STAFF.has(String(q.handle || "").toLowerCase()));
+}
+
 /* MEMBERS WHO MAY BRING MORE THAN ONE PERSON A DAY.
  *
  * BOARD_CODES="keith:3,peter:5" — a handle and how many people they may bring
@@ -7396,6 +7408,56 @@ function threadState(board, me, them) {
    * about anybody else on this board falls through to the rules below and is
    * refused there, which is where it has always been decided.
    */
+  /* WHOEVER RUNS THE BOARD CAN OPEN A CONVERSATION WITH ANYBODY ON IT.
+   *
+   * Everything below this line is the rule the board is built on: nothing
+   * happens between two people until each of them is what the other is
+   * looking for. That rule stays, for members, and it is what the landing page
+   * and the App Store listing both say.
+   *
+   * It was never the right rule for the person running the place. Putting two
+   * people in a room, answering somebody who has just arrived, telling a
+   * member their invite went out — all of it needed a match that has no
+   * meaning between an operator and a member, and the way round it was a
+   * command on the box and a name looked up by hand.
+   *
+   * BOARD_STAFF AND NOTHING ELSE. Not a flag on a row, which is a thing that
+   * can be set by a route somebody adds next month; a handle in the box's
+   * environment, read once at boot, changed only by whoever can already read
+   * the data. An empty BOARD_STAFF is a board where this does nothing.
+   *
+   * A BLOCK STILL HOLDS, and it is checked above this. Somebody who blocked
+   * the operator blocked the operator: an override that ignored that would
+   * make the block a suggestion, and the block is the one control on this
+   * board that has to mean exactly what it says.
+   *
+   * THE OTHER PERSON IS TOLD WHY. `why: "staff"` reaches the screen, which
+   * says who this is — see note.fromStaff. A message from somebody you never
+   * matched with, with no explanation, is the thing the match rule exists to
+   * prevent, and doing it silently would be building the bad version of this
+   * for one person instead of for everybody. */
+  if (isStaff(board, me)) {
+    const last = between[between.length - 1];
+    return {
+      can: true, open: true, why: "staff",
+      /* WHICH SIDE IS ASKING. The state is the same object for both of them,
+         so without this the line explaining who opened the thread would be
+         shown to the person who opened it, about themselves. */
+      byStaff: true,
+      answering: last && last.to === me ? last.id : "",
+      deal: deal ? deal.code : "",
+    };
+  }
+
+  if (isStaff(board, them)) {
+    const last = between[between.length - 1];
+    return {
+      can: true, open: true, why: "staff", byStaff: false,
+      answering: last && last.to === me ? last.id : "",
+      deal: deal ? deal.code : "",
+    };
+  }
+
   const wrote = writePair(board, me, them);
   if (wrote) {
     const last = between[between.length - 1];

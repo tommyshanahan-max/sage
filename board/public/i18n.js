@@ -4987,6 +4987,16 @@ export const STRINGS = {
      "Someone new" came out as "Someone…" — and a label with an ellipsis in it
      is a label that failed. Under a ＋, one word is the whole sentence. */
   "note.canNew":       ["Someone", "新的人"],
+  /* THE LINE ON A CONVERSATION NOBODY MATCHED INTO.
+     Said plainly and once. Not an apology and not a warning — whoever runs the
+     board writing to a member is an ordinary thing, and a screen that made it
+     sound like an intrusion would make every ordinary message read as one.
+     What it has to do is answer the question the reader is actually asking,
+     which is "how is this person in my messages". */
+  "note.fromStaff": [
+    "From whoever runs the board. You did not have to match to get this.",
+    "这条来自这个板子的管理者。不需要互相看对眼也会收到。",
+  ],
   "note.canNone": [
     "Nobody yet. Write to somebody who is not here — their answer puts them on the list.",
     "还没有人。可以写给还没进来的人——他回你一句，就排进名单了。",

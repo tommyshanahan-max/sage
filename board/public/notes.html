@@ -181,6 +181,31 @@
     font-family:var(--serif);font-size:1.2rem;color:var(--ink);padding:.1rem 0}
   .tnew input:focus{outline:none}
   .tnew input::placeholder{color:var(--muted)}
+  /* THE PEOPLE THE TYPED LETTERS MATCH. Over the conversation rather than
+     pushing it down: the list is transient and a header that jumped every
+     keystroke would be worse than no list. Anchored under the name box, which
+     is inside the sticky header, so it follows the box when the page moves. */
+  .tfind{position:absolute;left:0;right:0;top:100%;z-index:9;
+    background:var(--paper);border-bottom:1px solid var(--hair);
+    max-height:min(22rem,50vh);overflow-y:auto;
+    box-shadow:0 .6rem 1.4rem rgba(0,0,0,.09)}
+  @media (prefers-color-scheme:dark){.tfind{box-shadow:0 .6rem 1.4rem rgba(0,0,0,.5)}}
+  .tfind button{display:flex;align-items:center;gap:.7rem;width:100%;
+    border:0;background:none;text-align:left;cursor:pointer;
+    padding:.55rem .9rem;color:var(--ink);font:inherit}
+  .tfind button:hover,.tfind button:focus{background:var(--raise);outline:none}
+  .tfind .av{width:2.1rem;height:2.1rem;flex:0 0 auto;border-radius:50%;
+    display:grid;place-items:center;color:#fff;font-family:var(--serif);
+    font-size:.95rem;overflow:hidden}
+  .tfind .av img{width:100%;height:100%;object-fit:cover}
+  .tfind .fm{min-width:0}
+  .tfind .fm b{display:block;font-weight:600;font-size:.98rem}
+  /* Their sentence, which is how you tell two people with one name apart. */
+  .tfind .fm span{display:block;font-size:.82rem;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tfind p{margin:0;padding:.55rem .9rem;font-size:.85rem;color:var(--muted)}
+  .tstaff{margin:.2rem 0 .7rem;padding:.5rem .75rem;border-radius:.55rem;
+    background:var(--raise);color:var(--ink-2);font-size:.85rem;line-height:1.5}
   .more{border:0;background:none;padding:.3rem;color:var(--ink-2);cursor:pointer}
   .more svg{width:1.35rem;height:1.35rem;fill:currentColor;stroke:none}
   .menu{margin:-.5rem 0 .9rem;padding:.3rem;border:1px solid var(--line);
@@ -688,6 +713,12 @@
         <span id="tnewk"></span>
         <input id="tnewname" maxlength="40" autocomplete="off">
       </label>
+      <!-- WHO ON THE BOARD MATCHES WHAT IS BEING TYPED. Empty and hidden until
+           there is something to show; see findPeople(). It hangs under the
+           name box rather than replacing it, because the box still does its
+           original job — a name that is nobody here is somebody to write a
+           note to, and that is most of the names typed into it. -->
+      <div class="tfind" id="tfind" hidden></div>
       <!-- THE LANGUAGE BUTTON LIVES IN WHICHEVER HEADER IS UP. It was in the
            list's header only, which this screen hides — so opening a
            conversation, or the screen where you write a note that is about to
@@ -707,6 +738,8 @@
          see drawThread. Empty and hidden for a member, who has a page. -->
     <div class="tcard" id="tcard" hidden></div>
     <div class="pinwrap" id="tpin" hidden></div>
+    <!-- Who opened this, when it was not a match. See note.fromStaff. -->
+    <p class="tstaff" id="tstaff" hidden></p>
     <div class="talk" id="talk"></div>
     <p class="left" id="tleft" hidden></p>
     <p class="shut" id="tshut" hidden></p>
@@ -1028,7 +1061,18 @@ function blank(who) {
     };
   }
   const q = CAN.find((x) => x.who === who);
-  if (!q) return null;
+  if (!q) {
+    /* SOMEBODY CHOSEN FROM THE PICKER. Not a match, so not in CAN — see the
+       note where PICKED is written. The row is drawn from what was tapped and
+       the thread is empty; if the server refuses the write, the compose box is
+       hidden by the state it sends back, the same as any other closed thread. */
+    const p = PICKED.get(who);
+    if (!p) return null;
+    return {
+      who, handle: p.handle, photo: p.photo, notes: [], unread: 0, fresh: true,
+      last: { canAnswer: true, open: false, deal: undefined, at: "" },
+    };
+  }
   return {
     who, handle: q.handle, photo: q.photo, notes: [], unread: 0, fresh: true,
     last: { canAnswer: true, open: q.why === "deal", deal: undefined, at: "" },
@@ -1498,6 +1542,95 @@ async function sendInvited() {
  * extra button. */
 let MADE = null;
 
+/* EVERYBODY ON THE BOARD, FETCHED ONCE AND KEPT.
+ *
+ * /api/people is what Browse draws from, so this is the same list in the same
+ * order with the same people missing from it — somebody blocked, somebody who
+ * turned their page off. One source, so the picker cannot show a person Browse
+ * does not, which is the bug this kind of feature usually ships with.
+ *
+ * Fetched when the name box is first opened rather than with the inbox: most
+ * people open Messages to read one message and never press ＋. */
+let FOLK = null;
+const PICKED = new Map();
+async function folk() {
+  if (FOLK) return FOLK;
+  try {
+    const r = await fetch("/api/people", { cache: "no-store",
+      headers: device ? { "x-board-device": device } : {} });
+    FOLK = r.ok ? ((await r.json()).people || []) : [];
+  } catch { FOLK = []; }
+  return FOLK;
+}
+
+/** Who matches what has been typed, under the box, newest keystroke wins.
+ *
+ *  WHY THIS EXISTS. The ＋ was for writing to somebody who is NOT on the
+ *  board — it mints a note you send them outside the app — and there was no
+ *  way at all to start a conversation with somebody who IS on it except
+ *  finding their card in Browse and pressing through from there. For anybody
+ *  who knows who they want that is a search through a deck, one card at a
+ *  time, with no search in it.
+ *
+ *  THE BOX STILL DOES BOTH. Typing a name nobody here has shows nothing and
+ *  sending still mints the note, which is most of what this box is used for.
+ *  The list is an addition to the box, not a replacement for it.
+ *
+ *  MATCHED ANYWHERE IN THE HANDLE, not just the start: half the handles on
+ *  this board are two words and the half somebody remembers is not reliably
+ *  the first one.
+ */
+async function findPeople() {
+  const box = $("tfind");
+  const typed = $("tnewname").value.trim().toLowerCase();
+  const hide = () => { box.hidden = true; fill(box); };
+  if (!typed) return hide();
+
+  const all = await folk();
+  /* The box may have been cleared, or this screen left, while the list was
+     being fetched. Read it again rather than trusting the closure. */
+  if ($("tnewname").value.trim().toLowerCase() !== typed) return;
+
+  const hits = all.filter((q) => !q.mine && String(q.handle || "")
+    .toLowerCase().includes(typed)).slice(0, 8);
+  if (!hits.length) return hide();
+
+  fill(box);
+  for (const q of hits) {
+    const b = el("button");
+    b.type = "button";
+    const av = el("span", "av");
+    av.textContent = initial(q.handle);
+    av.style.background = wash(q.handle);
+    if (q.photo) {
+      const img = Object.assign(document.createElement("img"),
+        { src: q.photo, alt: "", loading: "lazy" });
+      fill(av);
+      av.append(img);
+    }
+    const mid = el("div", "fm");
+    mid.append(el("b", null, q.handle));
+    // Their own sentence, which is how two people with one name are told apart.
+    if (q.goal) mid.append(el("span", null, q.goal));
+    b.append(av, mid);
+    /* THE THREAD IS ADDRESSED BY PERSON ID — the same key the Cards screen
+       uses to open one, and what /notes reads out of the hash. `by` is the
+       device hash and never leaves the server; see shownPerson. */
+    b.addEventListener("click", () => {
+      hide();
+      $("tnewname").value = "";
+      /* KEPT, BECAUSE blank() LOOKS IN `CAN` AND THIS PERSON IS NOT IN IT.
+         CAN is the people you matched with; the whole point of the picker is
+         reaching somebody you did not. The name and face come from the row
+         just tapped — the server decides whether the thread opens. */
+      PICKED.set(q.id, { handle: q.handle, photo: q.photo || "" });
+      location.hash = "#" + encodeURIComponent(q.id);
+    });
+    box.append(b);
+  }
+  box.hidden = false;
+}
+
 function drawWriteNew() {
   $("listview").hidden = true;
   $("listtop").hidden = true;
@@ -1510,6 +1643,20 @@ function drawWriteNew() {
   $("tnew").hidden = false;
   $("tnewk").textContent = T("wn.mkTo");
   $("tnewname").placeholder = T("wn.mkName");
+  /* THE LIST IS BUILT FROM WHAT IS IN THE BOX, so it is cleared here: this
+     screen is redrawn on every paint and a stale list of matches for a name
+     that has since been sent is a list of the wrong people. */
+  $("tfind").hidden = true;
+  fill($("tfind"));
+  if (!$("tnewname").dataset.find) {
+    $("tnewname").dataset.find = "1";   // once, however many times this draws
+    $("tnewname").addEventListener("input", () => { findPeople(); });
+    /* Escape closes the list and leaves what was typed, because what was typed
+       is still a note somebody may want to send. */
+    $("tnewname").addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { $("tfind").hidden = true; fill($("tfind")); }
+    });
+  }
 
   const talk = $("talk");
   fill(talk);
@@ -2300,6 +2447,18 @@ function drawThread(t) {
       spent: "note.linesSpent",     // an offer's lines are used up
     }[last.why] || "note.closed", { who: t.handle || "—", n: 0 });
   }
+  /* WHY A STRANGER COULD WRITE TO YOU, said on the one screen it matters.
+   *
+   * Everywhere else on this board a conversation means both people chose it.
+   * This one did not, and a message from a name you have never matched with,
+   * with nothing saying how it got here, is exactly the thing the match rule
+   * exists to prevent. So it is labelled.
+   *
+   * Only for the person receiving it: byStaff is true for whoever opened the
+   * thread, and they do not need telling who they are. */
+  $("tstaff").hidden = !(last.why === "staff" && last.byStaff === false);
+  if (!$("tstaff").hidden) $("tstaff").textContent = T("note.fromStaff");
+
   /* A SHORT PROMPT, NOT THE EXAMPLE. note.placeholder is two lines of "Hi —
      performer, Sydney, free from March…", which is the right thing in a form
      with room for it and wrong in a one-line box, where it is clipped in the
