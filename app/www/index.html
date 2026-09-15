@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The Exchange</title>
+<!-- NOBODY SEES THIS, AND THAT IS THE POINT.
+     Capacitor requires a webDir on disk before `cap sync` will run, and this
+     is it. The app does not use it: capacitor.config.json sets server.url, so
+     the WKWebView loads the board from the server and every screen in the app
+     is a page the board served — which is why a change to board/public reaches
+     the app on the next deploy rather than on the next App Store review.
+     Deleting server.url is what would bring this file into play, and then it
+     would need to be the whole app. It is here so that this is not a blank
+     white page if that ever happens by accident. -->
+<style>
+  html,body{margin:0;height:100%}
+  body{background:#141A24;color:#EEF0F4;display:grid;place-items:center;
+    font:400 1rem/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    padding:2rem;text-align:center;box-sizing:border-box}
+  svg{width:4.5rem;height:4.5rem;display:block;margin:0 auto 1.4rem}
+  p{margin:0;opacity:.75;font-size:.95rem}
+</style>
+</head>
+<body>
+<div>
+  <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" aria-hidden="true">
+    <circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/>
+  </svg>
+  <p>Can’t reach the board · 连不上</p>
+</div>
+</body>
+</html>

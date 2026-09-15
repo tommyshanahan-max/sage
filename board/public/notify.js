@@ -23,6 +23,7 @@
  * that cannot send must not ask.
  */
 import { T } from "/i18n.js";
+import { NATIVE, bell } from "/native.js";
 
 const IOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
   || (/macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
@@ -55,14 +56,9 @@ const device = () => {
  *
  * The native half asks Apple instead and hands the board a device token. Same
  * card, same words, same one-ask-after-a-gesture rule; only the plumbing
- * behind the button changes. See board/lib/apns.js for the other end.
+ * behind the button changes. NATIVE and bell() are in native.js, because
+ * install.js needs the same answer; board/lib/apns.js is the other end.
  */
-const NATIVE = (() => {
-  try { return Boolean(window.Capacitor?.isNativePlatform?.()); } catch (e) { return false; }
-})();
-const bell = () => {
-  try { return window.Capacitor?.Plugins?.PushNotifications || null; } catch (e) { return null; }
-};
 
 /* THE TOKEN ARRIVES LATER AND ONCE.
  *
@@ -127,7 +123,7 @@ export async function offerNotify(slot, member) {
 
   if (!member) return hide();
 
-  /* THE APP TAKES A DIFFERENT ROAD ENTIRELY — see NATIVE above. Before the
+  /* THE APP TAKES A DIFFERENT ROAD ENTIRELY — see the note above. Before the
      feature checks, because every one of them is false in a WKWebView. */
   if (NATIVE) return offerNative(slot, hide);
 

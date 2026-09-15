@@ -1,0 +1,21 @@
+{
+  "name": "thexchange-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The App Store wrapper for The Exchange. The pages are the board's; this is the shell that lets Apple deliver a notification to them.",
+  "scripts": {
+    "sync": "cap sync ios",
+    "assets": "capacitor-assets generate --ios",
+    "open": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/ios": "8.5.2",
+    "@capacitor/push-notifications": "8.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.5.2"
+  }
+}

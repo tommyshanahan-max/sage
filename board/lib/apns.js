@@ -227,11 +227,25 @@ export function one(deviceToken) {
       done("fail");
     });
     req.end(JSON.stringify({
-      /* THE SAME WORDS EVERY TIME, and see the note at the top: the web half
-         sends no payload at all, and this sends the least Apple will accept.
-         No name, no room, no message, no count — nothing a lock screen can
-         leak. The wording is the app's to localise from the title alone. */
-      aps: { alert: { "title-loc-key": "PUSH_TITLE" }, sound: "default" },
+      /* THE SAME TWO CONSTANTS EVERY TIME, and see the note at the top: the
+         web half sends no payload at all, and this sends the least Apple will
+         accept. No name, no room, no message, no count — nothing a lock screen
+         can leak.
+
+         KEYS AND NOT WORDS. A loc-key names a line in the app's own
+         Localizable.strings, so the wire carries two fixed constants and iOS
+         picks the language from the phone — which is the right one, and is
+         something the board cannot know for a person who is asleep. The two
+         lines say what sw.js says on the web: who it is from, and that
+         somebody wrote. app/ios-strings/ holds both languages; without them
+         in the bundle the lock screen prints the key itself. */
+      aps: {
+        alert: { "title-loc-key": "PUSH_TITLE", "loc-key": "PUSH_BODY" },
+        sound: "default",
+        /* ONE LINE ON THE LOCK SCREEN, NOT ELEVEN, matching the web half's
+           tag: eleven replies while somebody is asleep collapse into one. */
+        "thread-id": "board-note",
+      },
     }));
   });
 }

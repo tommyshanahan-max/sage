@@ -29,6 +29,7 @@
  * one file, the same way off.js is one file.
  */
 import { T } from "/i18n.js";
+import { NATIVE } from "/native.js";
 
 const KEY = "board:noinstall";
 const WX = /micromessenger/i.test(navigator.userAgent);
@@ -41,6 +42,13 @@ const IOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
    the standard and is what Chrome answers; navigator.standalone is Safari's
    own, older, and still the only true answer on iOS. */
 function installed() {
+  /* THE APP IS THE INSTALL, AND NEITHER QUESTION BELOW KNOWS IT. A WKWebView
+     answers display-mode: browser and leaves navigator.standalone undefined,
+     so without this line somebody who went to the App Store, downloaded this
+     and opened it is told to tap a share glyph — in an app that has no share
+     sheet and nothing to add. It is the worst version of the strip: an
+     instruction that cannot be followed, shown to the person who did the most. */
+  if (NATIVE) return true;
   try { if (window.matchMedia("(display-mode: standalone)").matches) return true; } catch (e) { /* old X5 */ }
   return navigator.standalone === true;
 }

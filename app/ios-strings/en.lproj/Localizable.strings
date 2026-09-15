@@ -1,0 +1,12 @@
+/* The two lines on a lock screen, and the whole of what the app is told.
+
+   board/lib/apns.js sends the KEYS "PUSH_TITLE" and "PUSH_BODY" and nothing
+   else — no name, no room, no message, no count. The words are here so that
+   nothing about who wrote to whom ever travels to Apple, and so that iOS
+   picks the language from the phone rather than the board guessing it for
+   somebody who is asleep.
+
+   Without this file in the bundle the lock screen prints "PUSH_TITLE". */
+
+"PUSH_TITLE" = "The Exchange";
+"PUSH_BODY" = "Somebody wrote to you";

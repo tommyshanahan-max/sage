@@ -1,0 +1,12 @@
+# `npx cap add ios` writes this, and it is a build output: an Xcode project
+# regenerated from capacitor.config.json and package.json on every machine that
+# runs the command. Committing it means merge conflicts in a .pbxproj, which is
+# a file nobody can read a diff of.
+#
+# THE EXCEPTION, AND IT MATTERS: once the entitlement, the bundle id and the
+# signing team are set in Xcode they live in ios/App/App/App.entitlements and
+# ios/App/App.xcodeproj. Those are not regenerated — they are settings. If this
+# is ever built on a second machine, they are set again by hand from README.md,
+# which is why README.md lists them rather than assuming the folder survives.
+ios/
+node_modules/
