@@ -11,7 +11,7 @@
      it does not own is only as complete as that page's tokens. */
   :root{
     --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD; --ink:#151B28; --ink-2:#4E5968;
-    --muted:#6E7789; --line:#E3E6EC; --hair:#EAECF1;
+    --muted:#59626F; --line:#E3E6EC; --hair:#EAECF1;
     --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
     --t1:#3F68D8; --t2:#2A9D63; --t3:#D99038; --t4:#7268C4; --t5:#D4485C; --t6:#2F8C9E;
     --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
@@ -593,6 +593,15 @@
 
   #tpin.lpin{position:sticky;z-index:15;margin:0 0 .9rem;padding:0;border:1px solid var(--line);
     border-radius:.8rem;background:var(--raise);box-shadow:0 6px 18px -10px rgba(21,27,40,.25);overflow:hidden}
+  /* CONTRAST, MEASURED. The grey was #8A939F at 3.0:1 against the card, then
+     #6E7789 at 4.4 — both under the 4.5 a person needs for body text, and it
+     was carrying most of the panel: the rows, the scale labels, the line under
+     the share. Bigger type in the same grey is still grey.
+
+     Two changes. The grey is #59626F, which clears 4.5 on every surface this
+     page has and not only the lightest one. And the things somebody actually
+     reads came off it altogether — only the uppercase eyebrows are muted now.
+     Ratios computed, not eyeballed. */
   .lpin .lbtn{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:.1rem .8rem;
     width:100%;padding:.7rem .9rem;cursor:pointer;align-items:center}
   .lpin .lbtn:focus-visible{outline:2px solid var(--accent);outline-offset:-3px;border-radius:.8rem}
@@ -616,15 +625,15 @@
   .lpin .kk{margin:0 0 .3rem;font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600}
   .lpin p{margin:0}
   .lpin .soft{font-size:.84rem;color:var(--ink-2)}
-  .lpin .tiny{font-size:.82rem;line-height:1.5;color:var(--muted)}
+  .lpin .tiny{font-size:.82rem;line-height:1.5;color:var(--ink-2)}
   .lpin .rows > div{display:grid;grid-template-columns:1fr auto;gap:.7rem;padding:.42rem 0;border-top:1px solid var(--hair);font-size:.9rem;font-variant-numeric:tabular-nums}
   .lpin .rows > div > span:first-child{color:var(--ink-2)}
   .lpin .rows > div > span:last-child{font-weight:600;color:var(--ink)}
-  .lpin .rows .n{display:block;font-size:.78rem;color:var(--muted);font-weight:400}
+  .lpin .rows .n{display:block;font-size:.78rem;color:var(--ink-2);font-weight:400}
   .lpin .rows > div.tot > span{color:var(--ink)}
   .lpin .scale{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;align-items:end;font-variant-numeric:tabular-nums}
   .lpin .mk{border:1px solid var(--line);border-radius:.5rem;padding:.3rem .35rem;background:var(--card)}
-  .lpin .mk .w{font-size:.8rem;color:var(--muted)}
+  .lpin .mk .w{font-size:.8rem;color:var(--ink-2)}
   .lpin .mk .v{font-family:var(--serif);line-height:1.1}
   .lpin .mk.you{border-color:var(--accent);background:var(--accent-soft)}
   .lpin .bar{height:6px;border-radius:99px;background:var(--hair);overflow:hidden;margin-top:.35rem}
