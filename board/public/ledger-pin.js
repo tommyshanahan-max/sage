@@ -318,6 +318,21 @@ const CSS = `
      than at the weight of a footnote. */
   .lpsave{margin:0;font-size:1rem;font-weight:600;line-height:1.5;
     color:var(--d-ink2)}
+  /* HOW YOU ACTUALLY GET IT, which the panel described the prize of and never
+     the route to. Three steps, and the one you are on is lit — a list where
+     every row looks the same is a list nobody locates themselves in. */
+  .lpsteps{display:grid;gap:.55rem;margin:.95rem 0 0}
+  .lpstep{display:flex;gap:.65rem;align-items:flex-start;font-size:.95rem;
+    line-height:1.45;color:var(--d-mute)}
+  .lpstep .n{flex:0 0 1.4rem;height:1.4rem;border-radius:50%;
+    background:var(--d-line);color:var(--d-ink2);font-size:.76rem;font-weight:700;
+    display:flex;align-items:center;justify-content:center;margin-top:.08rem}
+  .lpstep.now{color:var(--d-ink);font-weight:600}
+  .lpstep.now .n{background:var(--d-key);color:#0B0E15}
+  .lpstep.done .n{background:#35D08A;color:#0B0E15}
+  .lpstep .tag{display:block;margin-top:.1rem;font-size:.8rem;font-weight:700;
+    color:var(--d-key)}
+  .lpstep.done .tag{color:#35D08A}
   .lpsay{margin:0;font-size:.94rem;color:var(--d-mute)}
   /* The way out, at the end of the way in. Quiet — it is not a thing to do,
      it is a thing to stop doing — but full width, because a small control at
@@ -758,6 +773,10 @@ function atGoal(d, device) {
    *
    * It is the same joinRow as before, moved rather than copied: two buttons
    * posting the same thing is two states to keep in step. */
+  /* THE ROUTE, NOT ONLY THE PRIZE. Everything above says what a place is
+     worth and nothing said how anybody gets one — "how does someone claim
+     this, it's not clear", and it was not. */
+  wrap.append(steps(d));
   if (!d.joined && d.place) wrap.append(joinRow(d, device));
   /* AND SAY SO WHEN THEY ALREADY HAVE. Joined, the row simply was not drawn —
      so somebody who pressed it yesterday came back to a panel with no button
@@ -791,6 +810,33 @@ function atGoal(d, device) {
      right number of acts on a screen. */
   if (!d.place && d.soon && d.room && !d.outside) wrap.append(upRow(d));
   return wrap;
+}
+
+/** THE THREE STEPS, WITH THE READER'S OWN MARKED.
+ *
+ *  Being let in is a step and not a formality, and leaving it out would be the
+ *  dead end this panel keeps producing: somebody told to put a page up who
+ *  cannot yet, because the card is behind being lifted — a few a day, in queue
+ *  order, and bringing somebody in moves you up it. Said plainly here rather
+ *  than discovered by a person who followed the instructions and found a door.
+ *
+ *  Which step somebody is on is the same test the rows below use: no member
+ *  row at all is step one, on the list is step two, a stamped place is step
+ *  three, and pressed is finished.
+ */
+function steps(d) {
+  const on = d.place ? (d.joined ? 4 : 3) : d.outside ? 1 : 2;
+  const box = el("div", "lpsteps");
+  ["pin.how1", "pin.how2", "pin.how3"].forEach((k, i) => {
+    const n = i + 1;
+    const row = el("div", "lpstep" + (n === on ? " now" : n < on ? " done" : ""));
+    row.append(el("i", "n", n < on ? "\u2713" : String(n)));
+    const txt = el("div", null, T(k));
+    if (n === on) txt.append(el("b", "tag", T("pin.howNow")));
+    row.append(txt);
+    box.append(row);
+  });
+  return box;
 }
 
 /** SAVE IT, OR THE PLACE IS NOT KEPT.

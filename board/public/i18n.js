@@ -5161,6 +5161,16 @@ export const STRINGS = {
   /* THE CONDITION, NOT A SUGGESTION. A place is kept against the browser, and
      a tab opened inside WeChat is not a browser anybody comes back to — so
      "save it" is the difference between having a place and not. */
+  /* THE ROUTE TO A PLACE, IN THREE LINES. The panel said what one was worth
+     and never how anybody gets one. Being let in is step two and it is a real
+     gate, not a formality — somebody told to put a page up who cannot yet is
+     the dead end this whole block exists to stop. */
+  "pin.how1":          ["Put your name in at the bottom of this room.",
+                        "在这屋最下面写个名字。"],
+  "pin.how2":          ["Get let in — a few a day, and bringing somebody in moves you up — then put your page up. That is when the place is yours.",
+                        "等着被放进来——一天就几个，带人进来能往前排——然后把主页建起来。位置那时候才算你的。"],
+  "pin.how3":          ["Press Count me in.", "点「算我一个」。"],
+  "pin.howNow":        ["you are here", "你在这一步"],
   "pin.saveWhat":      ["Save The Exchange to your home screen. That is where your place is kept.",
                         "把 The Exchange 存到桌面。你的位置就记在这上面。"],
   "pin.upDo":          ["Bring somebody in", "拉个人进来"],
