@@ -8136,9 +8136,23 @@ app.post("/api/note/hide", notesOff, express.json({ limit: "2kb" }), async (req,
 function groupable(board, me) {
   const mine = board.people.find((q) => q.by === me);
   if (!mine) return [];
+  /* WHOEVER RUNS THE BOARD CAN PUT ANYBODY IN A ROOM — see the long note over
+     inApp's neighbour, isStaff, and the one in threadState.
+     
+     The same reasoning as writing to somebody: a room is made out of the
+     maker's matches, which is the right rule for a member and has no meaning
+     for the operator. Putting two people together who should meet is the
+     commonest thing he does and it needed a match with each of them first,
+     or a command on the box.
+     
+     HERE AND NOT AT THE FOUR CALL SITES. This one function is the gate for
+     all of them — the picker on /groups, making a room, adding to one, and
+     minting a group invite — so the screen cannot offer a name the route then
+     refuses, which is the bug this kind of change ships with. */
+  const all = isStaff(board, me);
   return board.people
     .filter((q) => q.state === "published" && q.handle && q.by !== me
-      && matched(board, me, q.by))
+      && (all || matched(board, me, q.by)))
     .map((q) => ({ who: q.id, handle: q.handle,
       photo: q.photoState === "published" ? q.photo : "" }));
 }
