@@ -954,6 +954,16 @@ services:
       # without a deploy, which is the thing you want within reach on the one
       # surface two people use to reach each other.
       BOARD_NOTES: ${TOMSCODING_BOARD_NOTES:-on}
+      # The wallet (board/lib/wallet, docs/wallet.md). Off unless set: `test` is
+      # the stand-in provider where no money moves; `airwallex` is real and not
+      # ready yet. The keys are secrets and live only in .env on the box.
+      BOARD_WALLET: ${TOMSCODING_BOARD_WALLET:-}
+      BOARD_WALLET_TEST_CONFIRM: ${TOMSCODING_BOARD_WALLET_TEST_CONFIRM:-}
+      BOARD_WALLET_AIRWALLEX_CLIENT_ID: ${TOMSCODING_BOARD_WALLET_AIRWALLEX_CLIENT_ID:-}
+      BOARD_WALLET_AIRWALLEX_API_KEY: ${TOMSCODING_BOARD_WALLET_AIRWALLEX_API_KEY:-}
+      BOARD_WALLET_AIRWALLEX_WEBHOOK_SECRET: ${TOMSCODING_BOARD_WALLET_AIRWALLEX_WEBHOOK_SECRET:-}
+      BOARD_WALLET_AIRWALLEX_SANDBOX: ${TOMSCODING_BOARD_WALLET_AIRWALLEX_SANDBOX:-1}
+      BOARD_WALLET_PUBLIC_ORIGIN: ${TOMSCODING_BOARD_WALLET_PUBLIC_ORIGIN:-}
       # SIX DIGITS TO AN ADDRESS, so somebody who never saved their key can get
       # back in. All three unset means the board says so and offers the key
       # instead — see lib/mail.js, and the warning there about 163 and QQ.

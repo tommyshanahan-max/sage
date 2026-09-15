@@ -57,6 +57,7 @@ import * as pushApns from "./lib/apns.js";
  * the thing off.js exists to prevent: one file says what is off, and now it
  * says it to both halves. */
 import { OFF } from "./public/off.js";
+import { createWallet } from "./lib/wallet/index.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -495,6 +496,19 @@ app.use(async (req, res, next) => {
  */
 app.use("/api/group/say", express.json({ limit: "16kb" }));
 
+/* THE WALLET — everything about money is in lib/wallet/, and this is the whole
+   of what the board lends it: where to keep its file, and how to tell which
+   published member a request comes from. Off unless BOARD_WALLET names a
+   provider. The provider's webhooks are mounted here, ahead of the door below,
+   because a payment company is not a member; the wallet's own routes are
+   mounted after it, with the other pages. */
+const WALLET = createWallet({
+  dir: DIR,
+  loadPeople: async () => (await store.load(FILE)).people,
+  hashOf: (req) => hashDevice(String(req.get("x-board-device") || ""), SALT),
+});
+app.use(WALLET.webhooks);
+
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
   // The operator's own routes carry the admin secret and are checked by their
@@ -783,6 +797,10 @@ app.get("/s/:token", (req, res, next) => {
 /* Somebody at the door, as a page. Behind the gate like every other page
    about a person — see /api/queue/:id for what it holds and why. */
 app.get("/q/:id", (req, res, next) => page("waiting-person.html", req, res, next));
+
+/* The wallet's pages and API, behind the door like the rest of the board. */
+app.use(WALLET.routes);
+if (WALLET.on) app.get(["/wallet", "/wallet/"], (req, res, next) => page("wallet.html", req, res, next));
 
 app.get("/r/:room", (req, res, next) => {
   if (!store.WAITROOMS_CHAT.includes(String(req.params.room || ""))) {
