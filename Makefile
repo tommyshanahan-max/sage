@@ -1162,14 +1162,18 @@ mo: ## Why Mo said nothing: what he is missing, and what he last did
 	@echo "  The question itself is never written down. Only what happened to it."
 	@echo ""
 
-twice: ## Anybody on the waiting list twice: make twice
+twice: ## Anybody on the list twice: make twice [WHO="Liza"]
 	@# A waiting person's place is held by localStorage and a cookie, both
 	@# per-origin. The move to thexchange.app was made with a 301, so anybody
 	@# coming back on an old link met an empty form and filled it in again —
 	@# leaving two rows, one with their card and one with just a name.
-	@# Prints names, dates and ids only. Never reach, never the card's text.
-	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
-	  /seed/twice.mjs
+	@#
+	@# Bare: names, dates and ids, and which rows are provably one person.
+	@# WHO=: that one group in full, to decide the ones that are not provable.
+	@# A name typed in on purpose, rather than sixty-three rows of contact
+	@# details printed because somebody ran the summary.
+	$(COMPOSE) run --rm --no-deps -T -e WHO="$(WHO)" -v "$(CURDIR)/scripts:/seed:ro" \
+	  --entrypoint node board /seed/twice.mjs
 
 bells: ## Which phones the board can reach, browser and app: make bells
 	@# For the evening the app is first run onto a device. Xcode says whether

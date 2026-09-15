@@ -34,9 +34,24 @@
  *   (nothing)      a name and nothing else. MAY BE TWO PEOPLE. Left alone.
  *
  * The values themselves are never printed, only whether they match. That is
- * the whole of what the decision needs.
+ * the whole of what the decision needs — usually.
  *
- *   make twice
+ * WHEN IT IS NOT ENOUGH, AND ON THE REAL BOARD IT WAS NOT. The first run found
+ * a three-part name with diacritics on it twice, two days apart, one row with
+ * a card and one without. Obviously one person to anybody reading it, and
+ * neither test fired: a different browser, because that is what a move between
+ * hostnames does, and a different `reach`, because she typed whatever came to
+ * hand the second time.
+ *
+ * No amount of guessing fixes that. The person who knows is the one who reads
+ * this queue, and they need to see the two rows rather than a verdict about
+ * them. So: a name narrows it to that group and prints the rows whole.
+ *
+ *   make twice                 every name on the list more than once
+ *   make twice WHO="Liza"      those rows in full, to decide on
+ *
+ * The second form is a deliberate act with a name typed into it, not a dump,
+ * which is the distinction the rule above is actually about.
  */
 import { readFile } from "node:fs/promises";
 
@@ -60,6 +75,32 @@ for (const w of [...waits].sort((a, c) => key(c.name).length - key(a.name).lengt
 }
 
 const twice = groups.filter((g) => g.rows.length > 1);
+
+/* ONE GROUP, WHOLE. Matched on any part of the name so a first name finds a
+   full one — this is typed by somebody looking at the list above it. */
+const who = key(process.env.WHO || "");
+if (who) {
+  const hit = groups.filter((g) => g.k.includes(who) || who.includes(g.k));
+  console.log("");
+  if (!hit.length) {
+    console.log("  Nobody on the list by that name.");
+    console.log("");
+  }
+  for (const g of hit) {
+    for (const w of g.rows.sort((a, c) => String(a.at).localeCompare(String(c.at)))) {
+      console.log("  " + w.name + "   " + day(w.at) + "   " + w.id);
+      console.log("      reach    " + (w.reach || "—"
+        + (w.viaRoom ? " (came in through /r/" + w.viaRoom + ")" : "")
+        + (w.fromWrite ? " (answered a note)" : "")));
+      console.log("      browser  " + (w.by || "—"));
+      console.log("      card     " + (w.why || "(empty)"));
+      if (w.whyAlt) console.log("               " + w.whyAlt);
+      console.log("");
+    }
+  }
+  process.exit(0);
+}
+
 console.log("");
 if (!twice.length) {
   console.log("  " + waits.length + " on the list, nobody on it twice.");
@@ -93,7 +134,10 @@ if (!twice.length) {
     console.log("");
   }
   console.log("  A row marked same contact or same browser is one person twice.");
-  console.log("  Delete the empty one and keep what they wrote:");
+  console.log("  For the rest, read the rows and decide:");
+  console.log("      make twice WHO=\"" + twice[0].name.split(" ")[0] + "\"");
+  console.log("");
+  console.log("  Then delete the empty one and keep what they wrote:");
   console.log("      make waiting-rm ID=...");
   console.log("");
 }
