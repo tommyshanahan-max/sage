@@ -227,16 +227,32 @@ const CSS = `
   /* WHAT IT COMES TO IF THE TARGET IS REACHED, which is the question the whole
      panel is read to answer and was four taps down. One box, one figure, and
      the two numbers it stands on named underneath it. */
-  .lpat{padding:0 1.1rem 1.05rem}
-  .lpatbox{background:var(--d-card);border-radius:.7rem;padding:.85rem .9rem;
+  /* IT HAS TO CARRY THE WHOLE ARGUMENT ON ITS OWN.
+   *
+   * Somebody in the queue is deciding whether any of this is worth their
+   * afternoon, and this figure is the only line on the panel that answers it.
+   * As one more quiet card under the funnel it was a footnote — so it is a lit
+   * panel above everything else and the figure is the largest thing on the
+   * screen, larger than the reader's own points.
+   *
+   * WHAT IT MAY NOT DO IS OVERSTATE. The two numbers it stands on are named
+   * directly under it, and "Nobody has valued this company" is inside the same
+   * block rather than grey text below it. A figure this size with its caveat
+   * somewhere else is the screen making a promise. */
+  .lpat{padding:.15rem 1.1rem .55rem}
+  .lpatbox{background:linear-gradient(180deg,#1B2540 0%,var(--d-card) 100%);
+    border-radius:.85rem;padding:1rem .95rem 1.05rem;
     box-shadow:inset 0 0 0 1.5px var(--d-key)}
   .lpatbox .k{display:block;font-size:.84rem;letter-spacing:.06em;font-weight:700;
-    text-transform:uppercase;color:var(--d-mute);line-height:1.3}
+    text-transform:uppercase;color:var(--d-key);line-height:1.3}
   :root[data-lang="zh"] .lpatbox .k{letter-spacing:0;text-transform:none;font-size:.92rem}
-  .lpatbox .v{display:block;font-size:1.9rem;font-weight:700;margin-top:.15rem;
-    letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-  .lpatbox .u{display:block;font-size:.84rem;font-weight:500;color:var(--d-ink2);
-    margin-top:.2rem;line-height:1.4}
+  .lpatbox .v{display:block;font-size:2.9rem;font-weight:800;margin-top:.1rem;
+    line-height:1.02;letter-spacing:-.035em;font-variant-numeric:tabular-nums;
+    overflow-wrap:anywhere}
+  .lpatbox .u{display:block;font-size:.86rem;font-weight:500;color:var(--d-ink2);
+    margin-top:.45rem;line-height:1.45}
+  .lpatbox .no{display:block;margin:.35rem 0 0;font-size:.82rem;font-weight:600;
+    color:var(--d-mute);line-height:1.4}
   .lpshare,.lptoward{margin:.15rem 0 0;font-size:1.04rem;font-weight:500;color:var(--d-ink2)}
   .lpshare b,.lptoward b{font-size:1.25rem;font-weight:700;color:var(--d-ink);
     font-variant-numeric:tabular-nums}
@@ -514,10 +530,15 @@ function overview(box, d, device) {
      comes to if the target is reached — and everything that was behind a tap
      was read by nobody. */
   if (!d.shut) {
-    const lad = ladder(d);
-    if (lad) wrap.append(lad);
+    /* THE MONEY FIRST, THEN THE FUNNEL. It sat under the ladder, which put
+       four tiers and a sentence between somebody and the only line on this
+       screen that answers "why would I bother" — and the reader this is for is
+       not a member yet and is looking at it in a queue. The figure is the
+       hook; the funnel is why it is worth less if they wait. */
     const at = atGoal(d);
     if (at) wrap.append(at);
+    const lad = ladder(d);
+    if (lad) wrap.append(lad);
   }
 
   if (OPEN && !d.shut) wrap.append(body(d, device));
@@ -622,12 +643,13 @@ function atGoal(d) {
   box.append(el("b", "v", money(d.moneyAt)));
   box.append(el("span", "u", T("pin.atGoalHow",
     { sale: money(d.saleAt), share: pct(d.share) })));
+  /* ONE LINE, INSIDE THE BOX. The full note is four sentences and it was the
+     tallest thing on a panel whose job is to be read in a taxi, so the rest of
+     it lives under the chevron — but this half cannot: a figure this size
+     needs "nobody has valued this" in the same block of colour, not as grey
+     text below it that reads as belonging to whatever comes next. */
+  box.append(el("span", "no", T("pin.moneyShort")));
   wrap.append(box);
-  /* ONE LINE HERE, THE WHOLE OF IT UNDER THE CHEVRON. The full note is four
-     sentences and it was the tallest thing on a panel whose job is to be read
-     in a taxi. What has to be beside the figure, always, is that nobody has
-     valued this — the rest is for whoever opens the panel. */
-  wrap.append(el("p", "lpsmall", T("pin.moneyShort")));
   return wrap;
 }
 

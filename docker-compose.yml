@@ -1017,14 +1017,28 @@ services:
       # GOAL is the only one that switches it on. UNTIL is the day the counting
       # stops, BY the day the goal is meant to be reached, SPLIT the percentage
       # of the pool that goes by place rather than by what people did, ROOMS
-      # the doors that carry it (the rewards door always does), CURVE the
-      # exponent and GUESTS the cap on people one member is counted for.
+      # the doors that carry it (the rewards door always does), and GUESTS the
+      # cap on people one member is counted for.
       BOARD_LEDGER_GOAL: ${TOMSCODING_BOARD_LEDGER_GOAL:-}
       BOARD_LEDGER_UNTIL: ${TOMSCODING_BOARD_LEDGER_UNTIL:-}
       BOARD_LEDGER_BY: ${TOMSCODING_BOARD_LEDGER_BY:-}
       BOARD_LEDGER_SPLIT: ${TOMSCODING_BOARD_LEDGER_SPLIT:-}
       BOARD_LEDGER_ROOMS: ${TOMSCODING_BOARD_LEDGER_ROOMS:-}
       BOARD_LEDGER_GUESTS: ${TOMSCODING_BOARD_LEDGER_GUESTS:-}
+      # THE THREE THAT PUT CURRENCY ON THE PANEL, and they were missing from
+      # this list while being documented in .env.example and read by the
+      # server — which is the exact failure the paragraph above warns about,
+      # made twice. Set on the box, nothing happened, and nothing anywhere
+      # said why: the container never saw them.
+      #
+      # CUT is what percent of a sale the members' pool represents and is
+      # required for any of it to appear. Then either or both of SALE (what
+      # the company might be worth today) and SALE_AT (what it might be worth
+      # at the goal). Unset, the panel shows points and a percentage and no
+      # currency appears on it at all.
+      BOARD_LEDGER_CUT: ${TOMSCODING_BOARD_LEDGER_CUT:-}
+      BOARD_LEDGER_SALE: ${TOMSCODING_BOARD_LEDGER_SALE:-}
+      BOARD_LEDGER_SALE_AT: ${TOMSCODING_BOARD_LEDGER_SALE_AT:-}
       BOARD_TESTS: ${TOMSCODING_BOARD_TESTS:-}
       # THE REVIEWER'S CODE, AND WHERE IT SENDS THEM. Both must be set for
       # either to do anything. That code typed at this board's door admits
