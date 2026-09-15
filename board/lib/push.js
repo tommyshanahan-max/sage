@@ -40,6 +40,9 @@
  * `make board-keys` mints the pair.
  */
 import { createPrivateKey, sign as cryptoSign, randomBytes } from "node:crypto";
+/* The other half of the same job — see the note at the top of that file for
+   why an app cannot use anything in this one. */
+import * as apns from "./apns.js";
 
 const PUB = (process.env.BOARD_VAPID_PUBLIC || "").trim();
 const PRIV = (process.env.BOARD_VAPID_PRIVATE || "").trim();
@@ -174,10 +177,22 @@ async function one(sub) {
  *  the caller can drop them. Never throws: a notification that fails is a
  *  notification that did not arrive, and nothing upstream should care. */
 export async function tell(subs) {
-  if (!configured() || !Array.isArray(subs) || !subs.length) return [];
+  /* THE GATE IS PER ROW NOW, NOT FOR THE WHOLE CALL.
+   *
+   * It was `if (!configured())` — the VAPID pair — and that was right while
+   * every row was a browser. It is wrong the moment some rows are phones
+   * holding the app: a board with an APNs key and no VAPID pair would have
+   * told nobody anything, and said nothing about why. Each row is sent by
+   * whichever half it belongs to, and skipped when that half is unset. */
+  if (!Array.isArray(subs) || !subs.length) return [];
+  if (!configured() && !apns.configured()) return [];
   const dead = [];
   await Promise.all(subs.map(async (s) => {
-    if (await one(s) === "gone") dead.push(s.endpoint);
+    /* A device token has no endpoint to POST to — see cleanPush. */
+    const how = s && s.apns
+      ? (apns.configured() ? await apns.one(s.apns) : "fail")
+      : (configured() ? await one(s) : "fail");
+    if (how === "gone") dead.push(s.endpoint);
   }));
   return dead;
 }

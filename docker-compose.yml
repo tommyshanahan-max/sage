@@ -1057,6 +1057,23 @@ services:
       BOARD_VAPID_PUBLIC: ${TOMSCODING_BOARD_VAPID_PUBLIC:-}
       BOARD_VAPID_PRIVATE: ${TOMSCODING_BOARD_VAPID_PRIVATE:-}
       BOARD_VAPID_SUBJECT: ${TOMSCODING_BOARD_VAPID_SUBJECT:-}
+      # THE OTHER HALF OF THE SAME JOB — see the note at the top of
+      # board/lib/apns.js. The three above are Web Push and reach a browser;
+      # these four are Apple's and reach a phone holding the App Store build,
+      # which has no Push API at all and would otherwise ship with
+      # notifications silently off. Both run; a row is one kind or the other.
+      #
+      # KEY is the .p8's contents. It belongs to a TEAM rather than to an app,
+      # so a key already minted for another app in the same account is the one
+      # to use. HOST is "sandbox" while building against a development build
+      # and empty for the real one — a token from the wrong half is answered
+      # 400 BadDeviceToken, which reads like a broken token rather than a
+      # build talking to the wrong house.
+      BOARD_APNS_KEY: ${TOMSCODING_BOARD_APNS_KEY:-}
+      BOARD_APNS_KEY_ID: ${TOMSCODING_BOARD_APNS_KEY_ID:-}
+      BOARD_APNS_TEAM: ${TOMSCODING_BOARD_APNS_TEAM:-}
+      BOARD_APNS_TOPIC: ${TOMSCODING_BOARD_APNS_TOPIC:-}
+      BOARD_APNS_HOST: ${TOMSCODING_BOARD_APNS_HOST:-}
       BOARD_DEMO_CODE: ${TOMSCODING_BOARD_DEMO_CODE:-}
       BOARD_DEMO_URL: ${TOMSCODING_BOARD_DEMO_URL:-}
     volumes:

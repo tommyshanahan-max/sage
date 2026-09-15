@@ -39,6 +39,9 @@ import * as butler from "./lib/butler.js";
 import * as say from "./lib/say.js";
 import * as hear from "./lib/hear.js";
 import * as push from "./lib/push.js";
+/* Only for configured() at the subscribe route — the sending is push.tell's,
+   which picks the half by the row. See the note at the top of apns.js. */
+import * as pushApns from "./lib/apns.js";
 /* THE SWITCH FILE, READ BY THE SERVER TOO.
  *
  * public/off.js is a client module and this is the one thing on the server
@@ -7501,6 +7504,36 @@ app.get("/api/push/key", (req, res) => {
 app.post("/api/push/on", express.json({ limit: "8kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
+
+  /* TWO WAYS IN, BECAUSE A PHONE HOLDING THE APP CANNOT USE THE FIRST ONE.
+   *
+   * The browser sends `sub` — the endpoint and keys its push service handed
+   * it. The app sends `apns` — sixty-four hex characters Apple handed it, and
+   * nothing else, because a WKWebView has no Push API to produce the other
+   * shape. See lib/apns.js.
+   *
+   * ONE ROUTE AND NOT TWO. The gating below is the part worth getting right —
+   * somebody real behind the row, their own row and no other — and a second
+   * route would be a second copy of it, drifting. */
+  const apnsTok = String(req.body?.apns || "").trim().toLowerCase();
+  if (apnsTok) {
+    if (!pushApns.configured()) return res.status(503).json({ error: "off" });
+    const row = store.cleanPush({ by: me, apns: apnsTok });
+    if (!row) return res.status(400).json({ error: "bad" });
+    const out = await change((board) => {
+      board.pushes = board.pushes || [];
+      const had = board.pushes.find((x) => x.endpoint === row.endpoint);
+      if (had) { had.by = me; return { ok: true }; }
+      const real = board.people.some((q) => q.by === me)
+        || board.waits.some((w) => w.by === me && !w.done);
+      if (!real) return { error: "who" };
+      board.pushes.push(row);
+      return { ok: true };
+    });
+    if (out && out.error) return res.status(403).json(out);
+    return res.json({ ok: true });
+  }
+
   if (!push.configured()) return res.status(503).json({ error: "off" });
   const sub = push.cleanSub(req.body?.sub);
   if (!sub) return res.status(400).json({ error: "bad" });

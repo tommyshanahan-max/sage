@@ -2114,8 +2114,35 @@ export function cleanBlock(raw) {
 export function cleanPush(raw) {
   if (!raw || typeof raw !== "object") return null;
   const by = String(raw.by || "").slice(0, 64);
+  if (!by) return null;
+
+  /* TWO KINDS OF ROW, AND THE SECOND ONE IS A PHONE HOLDING THE APP.
+   *
+   * A browser subscription is a URL and two keys. A device token is sixty-four
+   * hex characters and nothing else — no URL to POST to, no keys, because
+   * Apple is the only place it means anything and the app is the only thing
+   * that can produce it. See lib/apns.js for why the app needs its own path at
+   * all: a WKWebView has no Push API, so an App Store build wrapping these
+   * pages would ship with notifications silently off.
+   *
+   * ONE TABLE, NOT TWO. The same person may have the site on one phone and the
+   * app on another, and both should buzz. Splitting them into two lists would
+   * mean two places to look when somebody says they stopped getting anything,
+   * and every caller would have to remember both.
+   *
+   * `endpoint` is kept as the identity of a row either way, because that is
+   * what tell() hands back as dead and what the caller drops on. For a device
+   * token it is the token with a scheme in front of it, which is never
+   * fetched — it exists so one field answers "which row" for both kinds. */
+  const apns = String(raw.apns || "").trim().toLowerCase();
+  if (apns) {
+    if (!/^[a-f0-9]{64,200}$/.test(apns)) return null;
+    return { by, apns, endpoint: "apns:" + apns,
+      at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
+  }
+
   const endpoint = String(raw.endpoint || "");
-  if (!by || !/^https:\/\/[^\s]{10,500}$/.test(endpoint)) return null;
+  if (!/^https:\/\/[^\s]{10,500}$/.test(endpoint)) return null;
   const k = raw.keys && typeof raw.keys === "object" ? raw.keys : {};
   const p256dh = String(k.p256dh || "");
   const auth = String(k.auth || "");
