@@ -185,11 +185,30 @@ async function ageRating(versionId, infoId) {
   try {
     await patch(`/ageRatingDeclarations/${id}`, "ageRatingDeclarations", id, attrs);
     say("age rating", `${Object.keys(attrs).length} answers · none, web access restricted, user content yes`);
+    return;
   } catch (e) {
-    /* NAMED, NOT SWALLOWED. If Apple has moved a field again, the message says
-       which one, and the run carries on to the things that did work. */
-    did.push(`  failed     age rating          ${e.message.split("\n").pop().trim()}`);
-    did.push("             do this one in the web form: None / Web access No / User content Yes");
+    /* ONE ODD FIELD SINKS THE WHOLE PATCH, and Apple will not say which one:
+       "an attribute in the provided entity has the wrong type" names no
+       attribute. It was a new social-media question wanting a URI where every
+       other field on the object takes an enum.
+       So: all at once first, because that is one call and usually works, and
+       one at a time when it does not. Thirteen calls is nothing, and the ones
+       that land are the ones that matter — a rating with twelve of thirteen
+       answers is a rating with one question left, which the web form shows in
+       red. Guessing at the odd field would be worse: a URI invented here goes
+       to App Review as a claim about how the app is moderated. */
+    did.push("  retrying   age rating          one field was refused — going one at a time");
+  }
+
+  const ok = [];
+  const no = [];
+  for (const [k, v] of Object.entries(attrs)) {
+    try { await patch(`/ageRatingDeclarations/${id}`, "ageRatingDeclarations", id, { [k]: v }); ok.push(k); }
+    catch { no.push(k); }
+  }
+  say("age rating", `${ok.length} of ${ok.length + no.length} answers`);
+  if (no.length) {
+    did.push(`             ${no.length} left for the web form: ${no.join(", ")}`);
   }
 }
 
