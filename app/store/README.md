@@ -263,6 +263,10 @@ then drive a browser with `TheExchangeApp/1` appended to the user agent **and**
 `window.Capacitor.isNativePlatform()` returning true. The server reads the
 first; `install.js` and `notes.html` read the second.
 
+`fill-listing.mjs` uploads the 6.7" set and Apple scales it down for every
+smaller phone, so the 6.5" copies are only wanted by a form that asks for both.
+`browse` goes first: the first screenshot is the one beside the name in search.
+
 **Two things to fix by hand before uploading**, because neither is worth faking
 in the seed data:
 

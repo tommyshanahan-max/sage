@@ -19,20 +19,22 @@
  * the refusal is a vague 409 that tells you nothing. Pressing Submit stays a
  * human act.
  *
- * FOUR THINGS THE API CANNOT DO, all of them web form only:
+ * TWO THINGS THE API CANNOT DO, both of them web form only:
  *   - App Privacy, the nutrition labels
  *   - EU trader status, without which the app is hidden in all 27 EU stores
- *   - Age rating
- *   - Screenshots (the API can, through a three-step upload with checksums;
- *     drag and drop is five seconds and this is not worth owning)
  * They are listed again at the end of a run so they are read rather than
  * remembered.
+ *
+ * It used to be four. The age rating and the screenshots were on that list
+ * because dragging five files into a browser is five seconds — which is true
+ * for somebody who can see where to drop them, and the wrong measure. Both
+ * are in the API and both are done here now.
  *
  *   make listing PHONE="+61 4xx xxx xxx"       from the Mac, and that is all
  *   node app/store/fill-listing.mjs --dry      to see it without doing it
  */
-import { createSign } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { createSign, createHash } from "node:crypto";
+import { readFile, readdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -134,6 +136,144 @@ const say = (what, value) => {
   did.push(`  ${WRITE ? "set" : "would set"}  ${what.padEnd(18)} ${one.slice(0, 64)}${one.length > 64 ? "…" : ""}`);
 };
 
+
+/** The age rating questionnaire, without the questionnaire.
+ *
+ *  ANSWERS DISCOVERED, NOT LISTED. Apple has renamed and re-shaped these
+ *  fields more than once — `seventeenPlus` went away, new ones arrived — and a
+ *  hard-coded list of thirteen attribute names is a list that breaks silently
+ *  on the day one of them is retired. So the current declaration is read
+ *  first, and only the keys Apple itself just returned are written back.
+ *
+ *  Everything that takes a level gets NONE, because the app has none of it.
+ *  The two that are not levels are the two that matter and both are argued in
+ *  README.md: web access is restricted (the webview is held to this board's
+ *  own hostnames), and there is user-generated content, which is what makes
+ *  this 17+ and is not worth arguing down — the app carries other people's
+ *  words and photographs, and a rating that pretends otherwise is the thing
+ *  that gets found later.
+ */
+async function ageRating(versionId) {
+  let decl;
+  try { decl = await get(`/appStoreVersions/${versionId}/ageRatingDeclaration`); }
+  catch { did.push("  skipped    age rating          no declaration on this version — web form"); return; }
+  const now = decl?.data?.attributes || {};
+  const id = decl?.data?.id;
+  if (!id) { did.push("  skipped    age rating          none returned — web form"); return; }
+
+  const attrs = {};
+  for (const [k, was] of Object.entries(now)) {
+    if (k === "kidsAgeBand" || k === "ageRatingOverride") continue;
+    if (/unrestrictedWebAccess/i.test(k)) attrs[k] = false;
+    else if (/userGenerated|userContent/i.test(k)) attrs[k] = true;
+    else if (typeof was === "string" || was === null) attrs[k] = "NONE";
+    else if (typeof was === "boolean") attrs[k] = false;
+  }
+  if (!Object.keys(attrs).length) {
+    did.push("  skipped    age rating          nothing recognised to set — web form");
+    return;
+  }
+  try {
+    await patch(`/ageRatingDeclarations/${id}`, "ageRatingDeclarations", id, attrs);
+    say("age rating", `${Object.keys(attrs).length} answers · none, web access restricted, user content yes`);
+  } catch (e) {
+    /* NAMED, NOT SWALLOWED. If Apple has moved a field again, the message says
+       which one, and the run carries on to the things that did work. */
+    did.push(`  failed     age rating          ${e.message.split("\n").pop().trim()}`);
+    did.push("             do this one in the web form: None / Web access No / User content Yes");
+  }
+}
+
+/** The screenshots, uploaded rather than dragged.
+ *
+ *  THREE STEPS PER FILE and none of them optional: reserve a slot and Apple
+ *  answers with the URLs to PUT the bytes at, the bytes go up, and then the
+ *  reservation is closed with an MD5 of what was sent. Miss the last one and
+ *  the screenshot exists, is empty, and blocks the submission with a message
+ *  about a missing asset.
+ *
+ *  6.7" ONLY. Apple scales that set down for every smaller phone, and the 6.5"
+ *  copies in shots/ are there for a form that wanted both.
+ *
+ *  ORDER IS THE ARGUMENT. `browse` first because it is the product in one
+ *  frame — the card and the sentence — and the first screenshot is the one
+ *  that appears in search results beside the name.
+ *
+ *  Nothing is uploaded twice: a set that already holds screenshots is left
+ *  exactly as it is, because re-running this to fix a phone number should not
+ *  quietly reorder the pictures.
+ */
+const SHOTS = ["browse", "notes", "cards", "room", "thread"];
+
+async function screenshots(localizationId) {
+  const dir = join(HERE, "shots");
+  let have;
+  try { have = await readdir(dir); }
+  catch { did.push("  skipped    screenshots        no shots/ folder"); return; }
+
+  const files = SHOTS.map((n) => `6.7-${n}.png`).filter((f) => have.includes(f));
+  if (!files.length) { did.push("  skipped    screenshots        no 6.7-*.png in shots/"); return; }
+
+  const sets = await get(`/appStoreVersionLocalizations/${localizationId}/appScreenshotSets`);
+  let set = sets.data.find((x) => x.attributes.screenshotDisplayType === "APP_IPHONE_67");
+
+  const already = set
+    ? (await get(`/appScreenshotSets/${set.id}/appScreenshots`)).data.length
+    : 0;
+  if (already) {
+    did.push(`  already    screenshots        ${already} up there — left alone`);
+    return;
+  }
+  if (!WRITE) { say("screenshots", `${files.length} · ${files.join(", ")}`); return; }
+
+  if (!set) {
+    const made = await call("POST", "/appScreenshotSets", {
+      data: {
+        type: "appScreenshotSets",
+        attributes: { screenshotDisplayType: "APP_IPHONE_67" },
+        relationships: {
+          appStoreVersionLocalization: {
+            data: { type: "appStoreVersionLocalizations", id: localizationId },
+          },
+        },
+      },
+    });
+    set = made.data;
+  }
+
+  for (const name of files) {
+    const bytes = await readFile(join(dir, name));
+    const made = await call("POST", "/appScreenshots", {
+      data: {
+        type: "appScreenshots",
+        attributes: { fileSize: bytes.length, fileName: name },
+        relationships: { appScreenshotSet: { data: { type: "appScreenshotSets", id: set.id } } },
+      },
+    });
+    const shot = made.data;
+    for (const op of shot.attributes.uploadOperations || []) {
+      const headers = {};
+      for (const h of op.requestHeaders || []) headers[h.name] = h.value;
+      /* The bytes go straight to Apple's storage, not to the API, so this one
+         carries no Authorization header — the URL is the credential and it is
+         good for minutes. */
+      const res = await fetch(op.url, {
+        method: op.method,
+        headers,
+        body: bytes.subarray(op.offset, op.offset + op.length),
+      });
+      if (!res.ok) throw new Error(`uploading ${name} → ${res.status} ${await res.text()}`);
+    }
+    await call("PATCH", `/appScreenshots/${shot.id}`, {
+      data: {
+        type: "appScreenshots", id: shot.id,
+        attributes: { uploaded: true, sourceFileChecksum: createHash("md5").update(bytes).digest("hex") },
+      },
+    });
+  }
+  say("screenshots", `${files.length} uploaded · ${files.join(", ")}`);
+}
+
 async function main() {
   const L = JSON.parse(await readFile(join(HERE, "listing.json"), "utf8"));
 
@@ -167,7 +307,7 @@ async function main() {
   if (!phone || /PUT YOUR/i.test(phone) || /x{2,}/i.test(phone)) {
     throw new Error(
       'No real phone number for App Review — they ring it if they cannot get in.\n'
-      + '    make listing PHONE="+61 412 345 678"   (your number, not the x\'s)');
+      + '    make listing PHONE="<the number you answer>"');
   }
 
   let key;
@@ -276,13 +416,14 @@ async function main() {
   say("review notes", R.notes);
   say("review contact", `${R.contactFirstName} ${R.contactLastName} · ${R.contactEmail}`);
 
+  await ageRating(version.id);
+  await screenshots(vLoc.id);
+
   console.log(did.join("\n"));
   console.log(`\n  Version ${vNumber}, ${WRITE ? "written" : "not written — this was --dry"}.\n`);
   console.log("  Still to do by hand, because the API cannot:\n");
   console.log("    App Privacy      the nutrition labels — README.md has all eight rows");
-  console.log("    EU trader        Digital Services Act; without it, hidden in 27 EU stores");
-  console.log("    Age rating       None / Web access No / User content Yes → expect 17+");
-  console.log("    Screenshots      drag app/store/shots/6.7-*.png in, browse first\n");
+  console.log("    EU trader        Digital Services Act; without it, hidden in 27 EU stores\n");
   console.log("  Then Add for Review → Submit.\n");
 }
 
