@@ -149,6 +149,21 @@ async function main() {
      would have been a reviewer ringing a number that does not exist, days
      later, with the app rejected and no reason given that points here. */
   const phone = String(L.review.contactPhone || "");
+  /* EVERY EXAMPLE EVER PRINTED, BY NAME. The first example was "+61 4xx xxx
+     xxx" and it went in verbatim; the guard learned to refuse x's, a number
+     shaped like a number was offered instead, and that went in verbatim too.
+     An example is a thing to paste — that is what makes it a good example and
+     what makes it dangerous here. So the examples themselves are the
+     blocklist, and any new one printed anywhere goes on this list. */
+  const EXAMPLES = ["+61 4xx xxx xxx", "+61 412 345 678"];
+  const bare = (t) => String(t).replace(/[^0-9a-z]/gi, "");
+  if (EXAMPLES.some((e) => bare(e) === bare(phone))) {
+    throw new Error(
+      "That is the example number, not yours — it has been pasted in twice now.\n"
+      + "    App Review rings it when they cannot get in, and a number that\n"
+      + "    rings nowhere is a rejection with no reason attached.\n"
+      + "    make listing PHONE=\"<your number>\"");
+  }
   if (!phone || /PUT YOUR/i.test(phone) || /x{2,}/i.test(phone)) {
     throw new Error(
       'No real phone number for App Review — they ring it if they cannot get in.\n'

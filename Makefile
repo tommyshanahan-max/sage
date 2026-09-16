@@ -1505,7 +1505,7 @@ privacy: ## Show what public records say about who runs these sites
 	@# would do, run by you, on you.
 	python3 scripts/privacy-check.py
 
-listing: ## Fill in the App Store listing from your Mac:  make listing PHONE="+61 412 345 678"
+listing: ## Fill in the App Store listing from your Mac:  make listing PHONE="<your number>"
 	@# THE ONLY TARGET IN HERE THAT RUNS ON THE LAPTOP AND NOT THE SERVER.
 	@#
 	@# The App Store Connect key is a .p8 in ~/.appstoreconnect on the Mac and
@@ -1520,7 +1520,7 @@ listing: ## Fill in the App Store listing from your Mac:  make listing PHONE="+6
 	@# Xcode owns and reset does not touch.
 	@test -n "$(PHONE)" || { \
 	  echo 'App Review needs a phone number — they ring it if they cannot get in.'; \
-	  echo '  make listing PHONE="+61 412 345 678"'; exit 1; }
+	  echo '  make listing PHONE="<your number>"'; exit 1; }
 	@test -d ~/.appstoreconnect/private_keys || { \
 	  echo "No App Store Connect key on this machine, so this is not the Mac."; \
 	  echo "Run it where Xcode is."; exit 1; }
