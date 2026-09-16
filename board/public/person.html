@@ -447,6 +447,7 @@ import { T, when, lang, setLang, pickLang, langButton, pick } from "/i18n.js";
 import { mountMo } from "/mo.js";
 import { stageFor, stageName, crownMark } from "/crown.js";
 import { OFF } from "/off.js";
+import { NATIVE } from "/native.js";
 
 /* DID SOMEBODY PUSH US HERE, or is this where they landed?
  *
@@ -1472,7 +1473,14 @@ function paint() {
        nothing at all. */
     fetch("/api/hello", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => { if (d && d.google) gwrap.hidden = false; })
+      /* AND NOT IN THE APP. Google will not run its sign-in screen inside an
+         embedded webview — it refuses the user agent — and Capacitor hands
+         accounts.google.com to Safari, where the cookies this flow set on the
+         way out do not exist, so the callback fails the state check and
+         redirects a browser the app cannot see. Nothing visible happens, twice.
+         Attaching is offered in a tab, where it works; the key above is the
+         road in the app, and it always was. */
+      .then((d) => { if (d && d.google && !NATIVE) gwrap.hidden = false; })
       .catch(() => { /* no button, and the key above is untouched */ });
 
     if (device) box.append(kb);

@@ -1360,7 +1360,14 @@ fetch("/api/hello", { cache: "no-store" })
   .then((r) => r.json())
   .then((d) => {
     if (d && d.hostess) { $("hostess").hidden = false; drawHostess(); }
-    if (d && d.google) { $("sipick").hidden = false; $("simailwrap").hidden = true; }
+    /* NOT IN THE APP — see the note over the same gate in person.html.
+       Google refuses to sign anybody in inside an embedded webview, and
+       Capacitor sends accounts.google.com out to Safari, where the cookies
+       this flow left behind are not. Either way the person comes back to
+       this screen exactly as they left it, which is what a circle is. So in
+       the app there is one road and it is the email box, which never leaves
+       the webview. */
+    if (d && d.google && !NATIVE) { $("sipick").hidden = false; $("simailwrap").hidden = true; }
     /* ABSENT RATHER THAN ZERO, and the server decides which. `waiting` comes
        back null below WAITING_FLOOR — five — because "2 people are waiting" is
        a worse advertisement than saying nothing, and nearly a name besides. So
