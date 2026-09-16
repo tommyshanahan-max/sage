@@ -201,6 +201,22 @@
   .goal{margin:1rem 0 0;font-family:var(--serif);font-size:1.1rem;line-height:1.6;
     color:var(--ink-2);text-align:left;width:100%;max-width:28rem}
 
+  /* THE SENTENCE THE WHOLE BOARD TURNS ON — see where it is built.
+     Bigger than the words under it and in the serif, because it is the one
+     line on the page doing that work; the two answers carry the accent and the
+     scaffolding between them does not, so it reads as a sentence and scans as
+     two words. Left, at the same width as everything else in the column. */
+  .says{margin:1.1rem 0 0;font-family:var(--serif);font-weight:400;
+    font-size:1.45rem;line-height:1.35;color:var(--ink);
+    text-align:left;width:100%;max-width:28rem;text-wrap:balance}
+  .says em{font-style:normal;color:var(--ink-2)}
+  /* THE GAP IS A MARGIN AND NOT A SPACE CHARACTER, the same as .tsay b on the
+     waiting card — say.iam is "I am" with no space on it, and Chinese does not
+     want one between 我是 and the role anyway. Matched to that rule so one
+     sentence does not sit differently in two places. */
+  .says b{font-weight:400;color:var(--accent);
+    border-bottom:1px solid var(--accent);padding-bottom:1px;margin:0 .28rem}
+
   /* ---- what they are looking for, and the card ---------------------------- */
   .chips{display:flex;flex-wrap:wrap;gap:.35rem;margin:1rem 0 0;justify-content:center}
   .chip{font-size:.78rem;padding:.3rem .65rem;border-radius:99px;
@@ -962,6 +978,32 @@ function paint() {
   box.append(meet);
 
   const head = el("div", "head");
+
+  /* THE SENTENCE, AND IT IS THE ONE THING ON THIS PAGE THAT DECIDES ANYTHING.
+   *
+   * "I am a ___ looking for a ___" is the whole of how this board works — it
+   * is what puts two people in front of each other — and it was the one fact
+   * a profile did not show. The room chips further down say which doors
+   * somebody is standing at; they do not say what that person is, and a reader
+   * deciding whether to follow was being asked to infer it from a bio.
+   *
+   * ABOVE THEIR OWN WORDS, NOT INSTEAD OF THEM. `goal` is what they wrote and
+   * it is better than anything generated; this is the line that makes it make
+   * sense. Same shape as the card on a door room and on a waiting row, so the
+   * sentence reads identically everywhere it appears.
+   *
+   * WHOLE OR NOT AT ALL. Half of it — "I am a producer looking for" — is worse
+   * than no line, and a row saved before both halves existed is a real row.
+   */
+  const pair = (Array.isArray(q.say) ? q.say : [])[0];
+  if (pair && pair.me && pair.want) {
+    const says = el("p", "says");
+    says.append(
+      el("em", null, T("say.iam")), el("b", null, T("role.a." + pair.me)),
+      el("em", null, T("say.lookingFor")), el("b", null, T("role.a." + pair.want)));
+    head.append(says);
+  }
+
   /* IN THE LANGUAGE THIS READER IS READING IN. The same choice the deck makes
      — see personCard in index.html — between two strings the row already
      carries, rendered once when the line was written. The original when there
