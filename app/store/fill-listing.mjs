@@ -195,9 +195,15 @@ async function ageRating(versionId, infoId) {
      no — one extra call for the handful that are boolean, and no guessing. */
   const INFO_URL = "https://thexchange.app/rules";
   const YES = ["userGeneratedContent", "messagingAndChat", "socialMedia"];
-  const LEAVE = ["ageAssurance", "parentalControls", "socialMediaAgeRestricted",
-                 "koreaAgeRating", "ageRatingOverrideV2", "kidsAgeBand",
-                 "ageRatingOverride", "developerAgeRatingInfoUrl"];
+  /* THESE WERE HELD BACK ON A SCRUPLE THAT DID NOT SURVIVE CONTACT.
+     ageAssurance, parentalControls and socialMediaAgeRestricted were left
+     unset because they read like claims about how the board polices who is on
+     it, and that is Tom's to answer rather than a script's. Apple refuses the
+     declaration without them — and the scruple was the wrong way round
+     anyway. The board has no age assurance, no parental controls and no age
+     gate on the social side, so the answer to all three is no, and no is a
+     statement of what is not there. Yes would have been the claim. */
+  const LEAVE = ["kidsAgeBand", "ageRatingOverride", "developerAgeRatingInfoUrl"];
 
   /* ALL OF IT AT ONCE, AND APPLE SAYS WHERE IT IS WRONG.
      The whole declaration is validated on every write, so one field of the
@@ -224,6 +230,17 @@ async function ageRating(versionId, infoId) {
       break;
     } catch (e) {
       why = e.message.split("\n").pop().trim();
+      /* MISSING, NOT WRONG. Apple will not take a partial declaration: leave a
+         field out and it asks for that one by name. Same loop, same principle
+         — it says what it wants, so put it in and go again. */
+      const need = /missing a required attribute:.*?'([^']+)'/i.exec(why)
+        || /must provide a value for the attribute '([^']+)'/i.exec(why);
+      if (need) {
+        const k = need[1];
+        if (k in body) break;
+        body[k] = YES.includes(k) ? true : "NONE";
+        continue;
+      }
       const m = /attribute '([^']+)'\.?\s*Expected a (\w+)/i.exec(why);
       if (!m) break;
       const [, field, wants] = m;
@@ -245,8 +262,7 @@ async function ageRating(versionId, infoId) {
     did.push("  failed     age rating          do this one in the web form");
     did.push(`             Apple said: ${why}`);
   }
-  did.push("             left for you, because they are yours to answer:");
-  did.push("             age assurance, parental controls, social media age restriction");
+  did.push("             no age assurance, no parental controls, no age gate — all true");
 }
 
 /** The screenshots, uploaded rather than dragged.
