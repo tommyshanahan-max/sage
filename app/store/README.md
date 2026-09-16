@@ -197,6 +197,13 @@ open in Safari, outside the app.
 
 ## Privacy — the nutrition labels
 
+**Web form only, and that is checked rather than assumed.** `fill-listing.mjs`
+asks Apple for the vocabulary under four names — `appDataUsageCategories`,
+`/v2/appDataUsageCategories`, `appPrivacyDataUsageCategories`,
+`dataUsageCategories` — and gets "the resource does not exist" to every one.
+There is no App Store Connect API for the labels. fastlane has none either,
+which is the other half of the evidence.
+
 Declare these and nothing else. Every row below was read off `cleanPerson` and the other `clean*` functions in
 `board/lib/store.js`, not recalled. Do that again if the profile gains a field —
 a nutrition label that is out of date is the kind of thing that is found later.

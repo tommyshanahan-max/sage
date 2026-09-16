@@ -19,7 +19,9 @@
  * the refusal is a vague 409 that tells you nothing. Pressing Submit stays a
  * human act.
  *
- * TWO THINGS THE API CANNOT DO, both of them web form only:
+ * TWO THINGS THE API CANNOT DO, both of them web form only. Not assumed —
+ * the privacy labels were looked for under four different names and Apple
+ * answered "the resource does not exist" to all four:
  *   - App Privacy, the nutrition labels
  *   - EU trader status, without which the app is hidden in all 27 EU stores
  * They are listed again at the end of a run so they are read rather than
@@ -625,7 +627,8 @@ async function main() {
   console.log(did.join("\n"));
   console.log(`\n  Version ${vNumber}, ${WRITE ? "written" : "not written — this was --dry"}.\n`);
   console.log("  Still to do by hand, because the API cannot:\n");
-  console.log("    EU trader        Digital Services Act; without it, hidden in 27 EU stores\n");
+  console.log("    App Privacy      the nutrition labels — README.md has all eight rows");
+  console.log("    EU trader        Digital Services Act; account-level, probably already done\n");
   console.log("  Then Add for Review → Submit.\n");
 }
 
