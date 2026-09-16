@@ -153,13 +153,22 @@ const say = (what, value) => {
  *  words and photographs, and a rating that pretends otherwise is the thing
  *  that gets found later.
  */
-async function ageRating(versionId) {
-  let decl;
-  try { decl = await get(`/appStoreVersions/${versionId}/ageRatingDeclaration`); }
-  catch { did.push("  skipped    age rating          no declaration on this version — web form"); return; }
+async function ageRating(versionId, infoId) {
+  /* HUNG OFF TWO DIFFERENT THINGS, DEPENDING ON THE AGE OF THE ACCOUNT. The
+     declaration used to belong to the version, and asking the version for it
+     is what every older example does — but on this app it 404s there and sits
+     on the appInfo instead, which is where it belongs: a rating is the app's,
+     not this release's. Ask both rather than pick, because the wrong guess
+     looks exactly like "you have no age rating" and the fix is silent. */
+  let decl = null;
+  for (const where of [`/appStoreVersions/${versionId}/ageRatingDeclaration`,
+                       `/appInfos/${infoId}/ageRatingDeclaration`]) {
+    try { const r = await get(where); if (r?.data?.id) { decl = r; break; } }
+    catch { /* not on this one */ }
+  }
   const now = decl?.data?.attributes || {};
   const id = decl?.data?.id;
-  if (!id) { did.push("  skipped    age rating          none returned — web form"); return; }
+  if (!id) { did.push("  skipped    age rating          not on the version or the app info — web form"); return; }
 
   const attrs = {};
   for (const [k, was] of Object.entries(now)) {
@@ -416,7 +425,7 @@ async function main() {
   say("review notes", R.notes);
   say("review contact", `${R.contactFirstName} ${R.contactLastName} · ${R.contactEmail}`);
 
-  await ageRating(version.id);
+  await ageRating(version.id, info.id);
   await screenshots(vLoc.id);
 
   console.log(did.join("\n"));
