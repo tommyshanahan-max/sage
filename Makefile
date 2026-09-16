@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1504,3 +1504,26 @@ privacy: ## Show what public records say about who runs these sites
 	@# changed and nothing is sent anywhere — it is the same lookup a stranger
 	@# would do, run by you, on you.
 	python3 scripts/privacy-check.py
+
+listing: ## Fill in the App Store listing from your Mac:  make listing PHONE="+61 4xx xxx xxx"
+	@# THE ONLY TARGET IN HERE THAT RUNS ON THE LAPTOP AND NOT THE SERVER.
+	@#
+	@# The App Store Connect key is a .p8 in ~/.appstoreconnect on the Mac and
+	@# that is where it should stay: the box has no business holding a key that
+	@# can publish an app, and a key that travelled to the box would have had to
+	@# travel through something first.
+	@#
+	@# It fetches before it runs, because the alternative is two commands and
+	@# the second one silently sending last week's words. reset --hard rather
+	@# than pull for the reason written over 'deploy' — and it is safe on this
+	@# checkout because the only thing here that is not in git is ios/, which
+	@# Xcode owns and reset does not touch.
+	@test -n "$(PHONE)" || { \
+	  echo 'App Review needs a phone number — they ring it if they cannot get in.'; \
+	  echo '  make listing PHONE="+61 4xx xxx xxx"'; exit 1; }
+	@test -d ~/.appstoreconnect/private_keys || { \
+	  echo "No App Store Connect key on this machine, so this is not the Mac."; \
+	  echo "Run it where Xcode is."; exit 1; }
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	  git fetch origin "$$branch" -q && git reset --hard -q "origin/$$branch"
+	@node app/store/fill-listing.mjs --phone "$(PHONE)"

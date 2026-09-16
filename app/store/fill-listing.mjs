@@ -28,8 +28,8 @@
  * They are listed again at the end of a run so they are read rather than
  * remembered.
  *
- *   node app/store/fill-listing.mjs            # says what it would do
- *   node app/store/fill-listing.mjs --write    # does it
+ *   make listing PHONE="+61 4xx xxx xxx"       from the Mac, and that is all
+ *   node app/store/fill-listing.mjs --dry      to see it without doing it
  */
 import { createSign } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -45,7 +45,16 @@ const ISSUER_ID = "27f759c2-092c-478d-a9ef-038927820519";
 const KEY_FILE = join(homedir(), ".appstoreconnect", "private_keys", `AuthKey_${KEY_ID}.p8`);
 
 const API = "https://api.appstoreconnect.apple.com/v1";
-const WRITE = process.argv.includes("--write");
+/* WRITES UNLESS TOLD NOT TO, which is the opposite of the usual and on purpose.
+   Every box this fills is overwritable and all of it was reviewed before it
+   ever reached listing.json, so a preview run is a step that costs a person
+   something and saves them nothing. --dry is still here for the machine that
+   wrote this and cannot run it. */
+const WRITE = !process.argv.includes("--dry");
+const argPhone = (() => {
+  const i = process.argv.indexOf("--phone");
+  return i > -1 ? String(process.argv[i + 1] || "").trim() : "";
+})();
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 /* ── A JWT that Apple will accept ──────────────────────────────────────────
@@ -128,10 +137,16 @@ const say = (what, value) => {
 async function main() {
   const L = JSON.parse(await readFile(join(HERE, "listing.json"), "utf8"));
 
-  if (/PUT YOUR/i.test(L.review.contactPhone)) {
+  /* THE ONE THING THIS FILE CANNOT KNOW. Everything else was decided weeks
+     ago; a phone number is Tom's and is not going in a repository. It comes in
+     on the command line rather than by editing JSON, because opening a JSON
+     file to change one string is a text editor, a syntax to not break, and a
+     save — three chances to be stopped, for one number. */
+  if (argPhone) L.review.contactPhone = argPhone;
+  if (!L.review.contactPhone || /PUT YOUR/i.test(L.review.contactPhone)) {
     throw new Error(
-      "listing.json still has the placeholder phone number in review.contactPhone.\n"
-      + "    App Review rings it if they cannot get in. Put a real number there first.");
+      'No phone number for App Review. They ring it if they cannot get in.\n'
+      + '    make listing PHONE="+61 4xx xxx xxx"');
   }
 
   let key;
@@ -232,7 +247,7 @@ async function main() {
   say("review contact", `${R.contactFirstName} ${R.contactLastName} · ${R.contactEmail}`);
 
   console.log(did.join("\n"));
-  console.log(`\n  Version ${vNumber}, ${WRITE ? "written" : "not written — add --write"}.\n`);
+  console.log(`\n  Version ${vNumber}, ${WRITE ? "written" : "not written — this was --dry"}.\n`);
   console.log("  Still to do by hand, because the API cannot:\n");
   console.log("    App Privacy      the nutrition labels — README.md has all eight rows");
   console.log("    EU trader        Digital Services Act; without it, hidden in 27 EU stores");

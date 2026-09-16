@@ -4,16 +4,18 @@ Every box, top to bottom, with what goes in it. The *reasoning* for each answer
 is in `README.md` next door — this file is only for the night you are sitting in
 front of the form and want to stop thinking.
 
-**Or don't.** `fill-listing.mjs` next door puts sections 1 and 4 up through the
-App Store Connect API from your Mac, in one command:
+**Or don't.** One command on the Mac does sections 1 and 4:
 
 ```
-node app/store/fill-listing.mjs            # says what it would do
-node app/store/fill-listing.mjs --write    # does it
+cd ~/tc && make listing PHONE="+61 4xx xxx xxx"
 ```
+
+It fetches, then fills in name, subtitle, description, keywords, promotional
+text, both URLs, the demo code and the review notes, attaches the build and
+answers export compliance.
 
 What it cannot do is sections 2 and 3, the age rating, and the screenshots —
-those are web form only, and they are the reason this file still exists.
+web form only, and the reason this file still exists.
 
 Open **appstoreconnect.apple.com** → **Apps** → **The Exchange 交换**.
 
