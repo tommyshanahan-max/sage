@@ -195,36 +195,55 @@ async function ageRating(versionId, infoId) {
      no — one extra call for the handful that are boolean, and no guessing. */
   const INFO_URL = "https://thexchange.app/rules";
   const YES = ["userGeneratedContent", "messagingAndChat", "socialMedia"];
-  const NO = ["unrestrictedWebAccess"];
   const LEAVE = ["ageAssurance", "parentalControls", "socialMediaAgeRestricted",
                  "koreaAgeRating", "ageRatingOverrideV2", "kidsAgeBand",
                  "ageRatingOverride", "developerAgeRatingInfoUrl"];
 
-  const tries = (k) =>
-    YES.includes(k) ? [true] : NO.includes(k) ? [false] : ["NONE", false];
-
-  const ok = [];
-  const no = [];
-  let why = "";
+  /* ALL OF IT AT ONCE, AND APPLE SAYS WHERE IT IS WRONG.
+     The whole declaration is validated on every write, so one field of the
+     wrong type fails all twenty-two and the error names that one field —
+     which is why answering them one at a time set nothing at all, twice.
+     Send the lot, read the attribute out of the refusal, correct that one,
+     send again. It converges in as many rounds as there are wrong guesses
+     and every round is a machine talking to a machine. Nothing here is
+     guessed at: the types come from Apple. */
+  const body = {};
   for (const k of Object.keys(now)) {
-    if (LEAVE.includes(k)) continue;
-    let landed = false;
-    for (const v of tries(k)) {
-      try {
-        await patch(`/ageRatingDeclarations/${id}`, "ageRatingDeclarations", id,
-          { [k]: v, developerAgeRatingInfoUrl: INFO_URL });
-        landed = true;
-        break;
-      } catch (e) { why = why || e.message.split("\n").pop().trim(); }
+    if (!LEAVE.includes(k)) body[k] = YES.includes(k) ? true : "NONE";
+  }
+  body.developerAgeRatingInfoUrl = INFO_URL;
+  body.unrestrictedWebAccess = false;
+
+  let why = "";
+  let landed = false;
+  const dropped = [];
+  for (let round = 0; round < 40; round++) {
+    try {
+      await patch(`/ageRatingDeclarations/${id}`, "ageRatingDeclarations", id, body);
+      landed = true;
+      break;
+    } catch (e) {
+      why = e.message.split("\n").pop().trim();
+      const m = /attribute '([^']+)'\.?\s*Expected a (\w+)/i.exec(why);
+      if (!m) break;
+      const [, field, wants] = m;
+      const was = body[field];
+      if (wants.toUpperCase() === "BOOLEAN") body[field] = YES.includes(field);
+      else if (wants.toUpperCase() === "STRING") body[field] = "NONE";
+      else { delete body[field]; dropped.push(field); continue; }
+      /* The correction has to actually change something, or this is a loop
+         that talks to Apple forty times and learns nothing. */
+      if (body[field] === was) { delete body[field]; dropped.push(field); }
     }
-    (landed ? ok : no).push(k);
   }
 
-  if (!WRITE) { say("age rating", `${Object.keys(now).length} answers`); return; }
-  say("age rating", `${ok.length} of ${ok.length + no.length} · info URL ${INFO_URL}`);
-  if (no.length) {
-    did.push(`             refused: ${no.join(", ")}`);
-    if (why) did.push(`             Apple said: ${why}`);
+  if (!WRITE) { say("age rating", `${Object.keys(body).length} answers`); return; }
+  if (landed) {
+    say("age rating", `${Object.keys(body).length} answers · info URL ${INFO_URL}`);
+    if (dropped.length) did.push(`             ${dropped.length} Apple would not take: ${dropped.join(", ")}`);
+  } else {
+    did.push("  failed     age rating          do this one in the web form");
+    did.push(`             Apple said: ${why}`);
   }
   did.push("             left for you, because they are yours to answer:");
   did.push("             age assurance, parental controls, social media age restriction");
