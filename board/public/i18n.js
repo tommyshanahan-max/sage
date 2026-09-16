@@ -1331,6 +1331,11 @@ export const STRINGS = {
    * people reading it who can reach Google at all are the ones outside the
    * mainland, and they do not need the idea explained. */
   "g.in":              ["Continue with Google", "用 Google 继续"],
+  /* On your own profile, under the key. The key is the honest mechanism and
+     almost nobody saves it; this says what attaching an account buys, not what
+     it is. No "link your account" — that is the plumbing's name for it. */
+  "g.tie":             ["Or attach a Google account, and any phone signed into it finds you again.",
+                        "也可以绑个 Google 账号，之后登录了这个账号的手机都能把你找回来。"],
   "g.or":              ["or, if you have a Google account", "或者，如果你有 Google 账号"],
   "g.ok":              ["Signed in. Everything is back.", "好了，都回来了。"],
   /* The other half: pressed by somebody who is already themselves. It says
