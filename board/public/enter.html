@@ -425,6 +425,14 @@
              maxlength="6" spellcheck="false" hidden>
       <button class="quiet wide" type="button" id="sigo"></button>
       <p class="said" id="sisaid" hidden></p>
+      <!-- AND THE OTHER WAY, UNDER THE ONE THE SECTION IS ABOUT.
+           It was above, and that put "The email address you left here" under a
+           heading with a Google button between it and the box it describes.
+           Below is also the truth: half the people this board is for cannot
+           reach Google at all, so it is one more door and never the door.
+           Hidden unless /api/hello says the box is configured. -->
+      <p class="where" id="siorline" hidden></p>
+      <button class="quiet wide" type="button" id="sigoogle" hidden></button>
 
       <h2 id="keytitle" class="second"></h2>
       <p id="keysay"></p>
@@ -930,6 +938,16 @@ function words() {
   $("sisay").textContent = T("in.body");
   $("simail").placeholder = T("mail.ph");
   $("sigo").textContent = T("in.send");
+  $("sigoogle").textContent = T("g.in");
+  $("siorline").textContent = T("g.or");
+  /* The box has to be open for the line under it to be read at all — somebody
+     who pressed this had it open a minute ago and the answer belongs where the
+     question was. */
+  if (GSAID) {
+    $("keybox").hidden = false;
+    $("keyopen").setAttribute("aria-expanded", "true");
+    siSaid(T(GSAID[0]), GSAID[1]);
+  }
 
   $("keyopen").textContent = T("door.keyOpen");
   $("listopen").textContent = T("door.noCode");
@@ -951,6 +969,62 @@ function words() {
 }
 
 $("go").addEventListener("click", () => { if (TYPED.length === 6) enter(); });
+
+/* SIGNING IN WITH GOOGLE, WHICH IS THE SAME ERRAND AS THE BOX BELOW IT.
+ *
+ * Not a login and not a way in — see the long note over /api/signin/google.
+ * It finds a person this board already has and moves them onto this browser,
+ * and an account nobody has attached finds nobody.
+ *
+ * A POST FIRST AND THEN A NAVIGATION, rather than a link. The one thing the
+ * callback cannot work out for itself is who this browser already is: the
+ * device id lives in localStorage and travels on a header, and a full-page
+ * redirect has no headers. So it is handed over here and waits in a cookie.
+ */
+async function goGoogle(btn) {
+  btn.disabled = true;
+  try {
+    const r = await fetch("/api/signin/google", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, next: location.pathname + location.search }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.url) throw new Error("no");
+    location.assign(d.url);
+  } catch {
+    btn.disabled = false;
+    siSaid(T("door.offline"), true);
+  }
+}
+$("sigoogle").addEventListener("click", () => goGoogle($("sigoogle")));
+
+/* WHAT HAPPENED, ON THE WAY BACK IN.
+ *
+ * The callback is a redirect and a redirect cannot hand a page a JSON body, so
+ * the outcome rides in the address and is read once. Taken back out of the bar
+ * afterwards: a reload would otherwise say it all again, and "signed in" on a
+ * page somebody came back to an hour later is a lie told by a leftover.
+ */
+/* READ HERE, SAID IN draw(). The words need a language and the language is
+   picked further down this file; resolving them at this line gave a Chinese
+   reader an English answer, and saying it in draw() also re-says it in the
+   other language when somebody presses 中文. The address is cleaned now
+   either way — a reload an hour later must not say "signed in" again. */
+const GSAID = (() => {
+  const said = new URLSearchParams(location.search).get("signin");
+  if (!said) return null;
+  try {
+    const u = new URL(location.href);
+    u.searchParams.delete("signin");
+    history.replaceState(null, "", u.pathname + (u.search || "") + u.hash);
+  } catch { /* an old kernel keeps the query string and nothing else breaks */ }
+  return {
+    ok: ["g.ok", false], joined: ["g.joined", false],
+    unknown: ["g.unknown", true], here: ["g.here", true],
+    other: ["g.other", true], again: ["g.again", true],
+    failed: ["g.failed", true],
+  }[said] || null;
+})();
 /* SIGNING IN AT THE DOOR.
  *
  * Same two steps as the sheet inside — address, then the six digits that come
@@ -1213,6 +1287,7 @@ fetch("/api/hello", { cache: "no-store" })
   .then((r) => r.json())
   .then((d) => {
     if (d && d.hostess) { $("hostess").hidden = false; drawHostess(); }
+    if (d && d.google) { $("sigoogle").hidden = false; $("siorline").hidden = false; }
     /* ABSENT RATHER THAN ZERO, and the server decides which. `waiting` comes
        back null below WAITING_FLOOR — five — because "2 people are waiting" is
        a worse advertisement than saying nothing, and nearly a name besides. So

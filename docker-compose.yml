@@ -1089,6 +1089,16 @@ services:
       BOARD_APNS_TEAM: ${TOMSCODING_BOARD_APNS_TEAM:-}
       BOARD_APNS_TOPIC: ${TOMSCODING_BOARD_APNS_TOPIC:-}
       BOARD_APNS_HOST: ${TOMSCODING_BOARD_APNS_HOST:-}
+      # A FOURTH WAY BACK IN — see board/lib/google.js. Not a login and not a
+      # door: it finds somebody this board already has and moves them onto the
+      # browser in front of them, which is the answer to Safari and a
+      # home-screen app not sharing storage. Unset, there is no button.
+      #
+      # The redirect URI is this host + /auth/google/cb, and the board answers
+      # on two names — BOTH have to be registered in the Google console or
+      # whichever one is missing fails at the callback.
+      BOARD_GOOGLE_ID: ${TOMSCODING_BOARD_GOOGLE_ID:-}
+      BOARD_GOOGLE_SECRET: ${TOMSCODING_BOARD_GOOGLE_SECRET:-}
       BOARD_DEMO_CODE: ${TOMSCODING_BOARD_DEMO_CODE:-}
       BOARD_DEMO_URL: ${TOMSCODING_BOARD_DEMO_URL:-}
     volumes:

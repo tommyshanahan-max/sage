@@ -1320,6 +1320,33 @@ export const STRINGS = {
   /* UNDER A ROOM SENT IN A MESSAGE. Two words, because the room's own name is
      the line above it and this one only has to say that pressing goes in. */
   "at.goRoom":         ["Go in", "进去"],
+  /* SIGNING IN WITH A GOOGLE ACCOUNT.
+   *
+   * The words never say "log in" or "account", because there is neither: what
+   * this does is find a person this board already has and put them back on the
+   * browser in front of them. "Find my place again" is the errand; everything
+   * else is the mechanism.
+   *
+   * The Chinese is written rather than translated, and it is shorter — the
+   * people reading it who can reach Google at all are the ones outside the
+   * mainland, and they do not need the idea explained. */
+  "g.in":              ["Continue with Google", "用 Google 继续"],
+  "g.or":              ["or, if you have a Google account", "或者，如果你有 Google 账号"],
+  "g.ok":              ["Signed in. Everything is back.", "好了，都回来了。"],
+  /* The other half: pressed by somebody who is already themselves. It says
+     what it bought them rather than "connected", which names the plumbing. */
+  "g.joined":          ["Done. You can find this board from any phone now.",
+                        "好了，以后换手机也能找回来。"],
+  /* NOT AN ERROR, AND IT MUST NOT READ AS ONE. The commonest way to arrive
+     here is doing it in the right order but on the wrong end: nobody attaches
+     an account from a browser the board has never met. */
+  "g.unknown":         ["No one here has that Google account yet. Turn it on from a phone you are already signed in on.",
+                        "这个 Google 账号还没跟这儿的人对上。先在已经登录的手机上打开它。"],
+  "g.here":            ["This browser is already somebody else.", "这个浏览器已经是别人了。"],
+  "g.other":           ["You already have a different Google account on here.",
+                        "你这儿已经连了另一个 Google 账号。"],
+  "g.again":           ["Try that again.", "再试一次。"],
+  "g.failed":          ["That did not work.", "没成功。"],
   "dr.tellWords": [
     "There's a room here for {room} — {url}",
     "这儿有个 {room} 的房间，你可以来看看：{url}",
@@ -1796,6 +1823,15 @@ export const STRINGS = {
   "pv.pmail4": [
     "If you are on the waiting list rather than in, the same six digits go to the way of reaching you that you typed on the form, when what you typed was an email address. It puts you back on your own row instead of making a second one. Nothing else is done with it.",
     "如果你还在等候名单上，同样的六位数字会发到你在表单里填的那个联系方式——前提是你填的是邮箱。它只是把你放回你自己那一行，而不是多出一行。除此之外不会用它做别的。",
+  ],
+  /* THE THIRD WAY BACK IN, AND WHAT IT COSTS. Said next to the address rather
+     than in its own section because it is the same errand — see lib/google.js.
+     What is worth naming is the thing somebody would not guess: the id stored
+     is Google's, not the address, and the board asked Google for nothing about
+     them beyond it. */
+  "pv.pmailg": [
+    "You can also attach a Google account, and then any phone signed in to it can find you again. What is kept is Google's own id for that account — a number — and the address on it. The board asks Google for nothing else: not your name, not your photograph, not anything in your mail. Turning it on is a thing you do from inside; an account nobody here has attached opens nothing.",
+    "你也可以绑一个 Google 账号，之后任何登录了这个账号的手机都能把你找回来。我们存的是 Google 给那个账号的编号，加上账号上的邮箱地址。除此之外什么都不要：不要你的名字，不要你的头像，也碰不到你的邮件。绑定要在里面做；没人绑过的账号，在这儿打不开任何门。",
   ],
   "pv.pmail3": [
     "The honest cost: it is an address, held on the same server as everything else, and whoever runs this board can read the file — the same trade a card asks for. Clear the box and it is gone from the row; delete your account and it goes with everything else. Anyone who can read your inbox can become you, which is true of every service that works this way.",

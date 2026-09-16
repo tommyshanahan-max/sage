@@ -39,6 +39,7 @@ import * as butler from "./lib/butler.js";
 import * as say from "./lib/say.js";
 import * as hear from "./lib/hear.js";
 import * as push from "./lib/push.js";
+import * as google from "./lib/google.js";
 /* Only for configured() at the subscribe route — the sending is push.tell's,
    which picks the half by the row. See the note at the top of apns.js. */
 import * as pushApns from "./lib/apns.js";
@@ -415,7 +416,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|i\/|w\/|r\/|s\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -1075,6 +1076,40 @@ const waitCookie = (req) => {
 const setWaitCookie = (res, hash) => {
   res.append("Set-Cookie", "board_wait=" + hash + "." + sign(hash)
     + "; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax; Secure");
+};
+
+/* AND THE THREE THAT LAST TEN MINUTES, FOR THE GOOGLE ROUND TRIP.
+ *
+ * A sign-in with Google leaves this box, spends time on accounts.google.com
+ * and comes back as a fresh GET carrying nothing of ours but cookies — no
+ * x-board-device header, because a full-page redirect is not a fetch. So
+ * everything the callback needs has to be left here on the way out.
+ *
+ * `board_gs` is the state, and it is the only one that is a security control:
+ * without it somebody can hand a victim a prepared callback URL and sign their
+ * browser into an account the attacker owns, then read what they write.
+ *
+ * `board_gd` is WHO THIS BROWSER ALREADY IS — the salted hash, never the key
+ * itself, which stays in localStorage where it has always been. It is what
+ * lets a member connect an account without being signed out, and what the row
+ * is moved onto when a known account comes back on a new phone.
+ *
+ * `board_gn` is where they were standing when they pressed it.
+ *
+ * All three are signed, short, and cleared on the way back in. A bare value in
+ * a cookie would be a login anybody could type.
+ */
+const shortCookie = (res, name, value) => {
+  res.append("Set-Cookie", name + "=" + value + "; Path=/; Max-Age=600"
+    + "; HttpOnly; SameSite=Lax; Secure");
+};
+const dropCookie = (res, name) => {
+  res.append("Set-Cookie", name + "=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax; Secure");
+};
+const signedCookie = (req, name, shape) => {
+  const m = new RegExp("(?:^|;\\s*)" + name + "=(" + shape + ")\\.([a-f0-9]{32})")
+    .exec(String(req.headers.cookie || ""));
+  return m && sign(m[1]) === m[2] ? m[1] : "";
 };
 
 /** Which waiting row belongs to the browser asking, by either key.
@@ -3990,6 +4025,10 @@ app.get("/api/hello", async (req, res) => {
     // when there is not, rather than a box that answers every question with
     // an error — see lib/hostess.js, which is off unless switched on.
     hostess: hostessReady(),
+    /* Whether there is a Google button to draw. Off unless the box is
+       configured — like push, mail and the hostess above — because a button
+       that cannot work is worse than one screen fewer. */
+    google: google.configured(),
     // The room this number is about, or "" when it is about the whole board.
     // Echoed so the page never holds its own copy of the four names.
     room: enough ? only : "",
@@ -6444,6 +6483,175 @@ app.post("/api/signin/code", express.json({ limit: "1kb" }), async (req, res) =>
   res.json({ ok: true, key, handle: out.handle,
     // Where the page should take them: their card, or the board.
     where: out.waiting ? "/room" : "" });
+});
+
+/* ---------------------------------------------------------------------------
+ * THE FOURTH DOOR ONTO THE SAME REBIND
+ *
+ * A key pasted in, a cookie a browser still has, six digits to an address —
+ * and now a Google account. One mechanism, four doors; see the long note over
+ * /api/signin for why none of them is a login and why there is still no
+ * session to be logged into.
+ *
+ * WHAT IT IS FOR, WHICH IS ONE THING. A person here is a random number in one
+ * browser's storage. On iOS, Safari and the same page added to the home screen
+ * DO NOT SHARE STORAGE — so the sequence this product asks for, join in
+ * WeChat and then add to the home screen so notifications work, hands somebody
+ * a blank board. That is written down as an open problem over dr.sendWordsMany
+ * in i18n.js. This is the answer: something to present that is not this
+ * browser.
+ *
+ * IT IS NOT A WAY IN, AND THAT IS THE DIFFERENCE FROM THE BOARD IT CAME FROM.
+ * `landed` lets anybody sign up, so a Google account there can make a person.
+ * This board is invite-only. An account nobody here has attached finds nobody
+ * and creates nothing — it cannot be a side entrance past the door.
+ *
+ * SO IT HAS TO BE ATTACHED FIRST, from inside, by somebody who is already
+ * themselves. That is the same two routes: pressing it while you are somebody
+ * attaches the account to your row, and pressing it on a strange browser
+ * afterwards moves your row onto that browser.
+ *
+ * NO ENUMERATION PROBLEM, unlike the address flow. To reach the callback at
+ * all somebody has to have completed a real sign-in to the account, so telling
+ * them whether that account is on this board tells them only about themselves.
+ * ------------------------------------------------------------------------- */
+
+/** The address to come back to, which is this host and not a configured one.
+ *
+ *  The board answers on two names — see board-also.caddy — and somebody who
+ *  signed in on one must come back to the one they were on, or the cookies set
+ *  on the way out are not sent back. BOTH have to be registered as redirect
+ *  URIs in the Google console; an unregistered one is refused by Google, which
+ *  is also why a forged Host header here buys nothing. */
+const googleBack = (req) => {
+  const proto = String(req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0];
+  const host = String(req.get("host") || "").replace(/[^A-Za-z0-9.:-]/g, "").slice(0, 253);
+  return host ? proto + "://" + host + "/auth/google/cb" : "";
+};
+
+/** Our own paths only, and it is not decoration.
+ *
+ *  `next` decides where the browser lands after a real Google sign-in. Left
+ *  open, it is an open redirect: a link that starts on this board, goes
+ *  through a genuine Google screen, and finishes on a page somebody else
+ *  controls that looks exactly like this asking for something. The domain is
+ *  real the whole way, which is what makes it work on people who check.
+ *
+ *  One leading slash and not two — "//evil.example" is protocol-relative and
+ *  a browser reads it as another host. */
+function nextPath(v) {
+  const path = String(v || "");
+  if (!path.startsWith("/") || path.startsWith("//") || path.includes("\\")) return "";
+  return path.slice(0, 200);
+}
+
+/** Start it. A POST rather than a link, because the one thing the callback
+ *  cannot get for itself is who this browser already is: the device id lives
+ *  in localStorage and rides on a header, and a full-page redirect carries no
+ *  headers. So the page hands it over here, it is hashed like everywhere else,
+ *  and the hash waits in a signed cookie for ten minutes. */
+app.post("/api/signin/google", express.json({ limit: "2kb" }), (req, res) => {
+  if (!google.configured()) return res.status(503).json({ error: "unconfigured" });
+  const back = googleBack(req);
+  if (!back) return res.status(400).json({ error: "no" });
+
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (me) shortCookie(res, "board_gd", me + "." + sign(me));
+  /* SIGNED IN THE FORM IT IS STORED IN. Signing the path and storing the
+     escaped path is a signature that never matches its own cookie — and the
+     failure is silent, because an unreadable cookie is indistinguishable from
+     one that was never set: everybody quietly lands on the door instead of
+     where they were. */
+  const where = encodeURIComponent(nextPath(req.body?.next));
+  if (where) shortCookie(res, "board_gn", where + "." + sign(where));
+
+  const nonce = store.newId();
+  shortCookie(res, "board_gs", nonce + "." + sign(nonce));
+  res.json({ url: google.authUrl(back, nonce) });
+});
+
+/** And come back from it. */
+app.get("/auth/google/cb", async (req, res) => {
+  /* EVERY FAILURE LANDS ON THE SAME SCREEN WITH THE SAME WORD. A callback that
+     explains which part went wrong is a callback that tells whoever is probing
+     it which part went wrong. The one exception is `unknown`, which is not a
+     failure of the flow — it is the board saying it has never heard of that
+     account, which the person asking already knows more about than we do. */
+  const home = (how) => {
+    for (const c of ["board_gs", "board_gd", "board_gn"]) dropCookie(res, c);
+    let where = "";
+    try { where = nextPath(decodeURIComponent(String(signedCookie(req, "board_gn", "[^;.]+") || ""))); }
+    catch { /* not ours after all */ }
+    const to = where || "/enter";
+    res.redirect(to + (to.includes("?") ? "&" : "?") + "signin=" + how);
+  };
+  if (!google.configured()) return home("failed");
+
+  const nonce = signedCookie(req, "board_gs", "[a-f0-9]{20}");
+  if (!nonce || nonce !== String(req.query.state || "")) return home("failed");
+
+  const who = await google.whoIs(String(req.query.code || ""), googleBack(req));
+  if (!who) return home("failed");
+
+  /* WHO THIS BROWSER ALREADY IS. The hash left on the way out, and the two
+     cookies as a fallback for a browser whose localStorage the page could not
+     read — private mode, mostly. */
+  const here = signedCookie(req, "board_gd", "[a-f0-9]{32}")
+    || inCookie(req) || waitCookie(req);
+
+  const out = await change((board) => {
+    const mine = board.people.find((q) => q.google === who.sub);
+    const waiting = mine ? null
+      : board.waits.find((w) => !w.done && w.google === who.sub);
+
+    /* A KNOWN ACCOUNT, ON WHATEVER BROWSER THIS IS. The person moves onto the
+       id this browser already has rather than being handed a new one: the
+       email flow mints a key and returns it in JSON, and a redirect has no
+       JSON to put one in. Nothing new to store, nothing for anybody to lose.
+
+       rebind is used rather than an assignment because it is the one function
+       that knows every table keyed on a device. */
+    const row = mine || waiting;
+    if (row) {
+      if (!here) return { error: "again" };
+      if (who.email && mine && mine.mail !== who.email) mine.mail = who.email;
+      if (row.by === here) return { ok: true, waiting: Boolean(waiting) };
+      /* THIS BROWSER IS SOMEBODY ELSE. Moving the row on top of them would
+         leave that person with no way back — the same thing the address flow
+         warns about before it does it. There is nowhere to put a warning in a
+         redirect, so it is refused and the screen says so. */
+      const taken = board.people.some((q) => q.by === here && q !== mine)
+        || board.waits.some((w) => !w.done && w.by === here && w !== waiting);
+      if (taken) return { error: "here" };
+      if (waiting) waiting.by = here;
+      else store.rebind(board, mine.by, here);
+      return { ok: true, waiting: Boolean(waiting) };
+    }
+
+    /* AN ACCOUNT THIS BOARD HAS NEVER SEEN, PRESSED BY SOMEBODY WHO IS ALREADY
+       HERE. This is the attaching half, and it is the only way a subject ever
+       gets onto a row. */
+    const meP = here && board.people.find((q) => q.by === here);
+    const meW = !meP && here && board.waits.find((w) => !w.done && w.by === here);
+    const at = meP || meW;
+    if (!at) return { error: "unknown" };
+    /* ALREADY NAMES A DIFFERENT ACCOUNT. Two accounts opening one person is
+       two people who both think they are them, and no way to tell later which
+       was meant. */
+    if (at.google && at.google !== who.sub) return { error: "other" };
+    at.google = who.sub;
+    if (meP && who.email && !meP.mail) meP.mail = who.email;
+    return { ok: true, joined: true, waiting: Boolean(meW) };
+  });
+
+  if (out?.error) return home(out.error);
+  /* THE COOKIE THAT MATCHES WHAT THEY ARE — the same rule as the address flow.
+     A member gets the admission cookie, which is why signing in is also being
+     let in; somebody on the list gets the waiting one, which admits them to
+     nothing and is only how /room finds their card. */
+  if (out.waiting) setWaitCookie(res, here);
+  else setCookie(res, here);
+  home(out.joined ? "joined" : "ok");
 });
 
 /** My own card, which is mine to read whether or not anybody else may. */

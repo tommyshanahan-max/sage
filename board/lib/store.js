@@ -129,6 +129,14 @@ export function cleanWait(raw) {
     reach,
     fromWrite,
     viaRoom,
+    /* AND THE SAME FOR SOMEBODY STILL ON THE LIST — see cleanPerson.
+     *
+     * Their whole identity is `by` on this one row, so they lose more than a
+     * member does when a browser forgets: they join again and the queue grows
+     * a second row with the same person on it. /api/signin/code already puts
+     * them back from an address for exactly that reason; this is the same
+     * door with a different key. */
+    google: /^\d{1,64}$/.test(String(raw.google || "")) ? String(raw.google) : "",
     /* WHEN THEY WERE TOLD THE ROOM IS OPEN, and by which road.
      *
      * Forty-seven people joined a queue and then the queue became a room they
@@ -1644,6 +1652,17 @@ export function cleanPerson(raw) {
       const m = s(raw.mail, 120).trim().toLowerCase();
       return /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(m) ? m : "";
     })(),
+    /* GOOGLE'S OWN ID FOR AN ACCOUNT, if this person attached one.
+     *
+     * Digits and nothing else — it is the `sub` claim, which is what is
+     * matched on rather than the address beside it. See lib/google.js for why
+     * an email is the wrong thing to key a person on, and the routes in
+     * server.js for what attaching one does and does not do.
+     *
+     * It is not a login and it opens no door: it is a fourth way to say "this
+     * browser is that person", alongside the device id, the cookie and the
+     * six digits. */
+    google: /^\d{1,64}$/.test(String(raw.google || "")) ? String(raw.google) : "",
     /* A MEMBER'S OWN WAY BACK, the same field a waiting row already has.
      *
      * Everything a member is hangs off `by`, a hash of a random number in one

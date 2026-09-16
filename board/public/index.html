@@ -2995,6 +2995,12 @@
   <form class="card" id="inform">
     <h2 id="inTitle"></h2>
     <p class="hint" id="inBody"></p>
+    <!-- THE SAME BUTTON AS THE DOOR, DOING THE OTHER HALF OF THE JOB.
+         Out there it finds a person; in here, pressed by somebody who is
+         already themselves, it attaches the account to them — and nothing
+         attaches it anywhere else, so without this the door's button would
+         never find anybody. One route, and the server decides which it is. -->
+    <button class="ghost wide" type="button" id="ingoogle" hidden></button>
     <div class="field" id="inmailwrap">
       <input id="inmail" type="email" inputmode="email" autocomplete="email"
              spellcheck="false" autocapitalize="off">
@@ -8603,6 +8609,32 @@ setLang(pickLang());
 $("langslot").append(langButton(repaint));
 paintNav();
 
+/* WHAT GOOGLE SAID, ON THE WAY BACK IN.
+ *
+ * The callback is a redirect and a redirect cannot hand a page a JSON body, so
+ * the outcome rides in the address. The sheet is reopened to say it, because
+ * the question was asked in the sheet and an answer anywhere else on this
+ * screen is an answer to nothing. Taken out of the address bar at once: a
+ * reload an hour later must not say "done" a second time. */
+(() => {
+  const said = new URLSearchParams(location.search).get("signin");
+  if (!said) return;
+  try {
+    const u = new URL(location.href);
+    u.searchParams.delete("signin");
+    history.replaceState(null, "", u.pathname + (u.search || "") + u.hash);
+  } catch { /* an old kernel keeps the query string and nothing else breaks */ }
+  const words = {
+    ok: ["g.ok", false], joined: ["g.joined", false],
+    unknown: ["g.unknown", true], here: ["g.here", true],
+    other: ["g.other", true], again: ["g.again", true],
+    failed: ["g.failed", true],
+  }[said];
+  if (!words) return;
+  openIn();
+  inSaid(T(words[0]), words[1]);
+})();
+
 fetch("/api/contact").then((r) => r.json()).then((d) => {
   translateOn = Boolean(d && d.translate);
   showTranslate();
@@ -9135,6 +9167,8 @@ function openIn() {
   $("inkey").textContent = T("in.haveKey");
   $("inHere").hidden = true;
   $("insaid").hidden = true;
+  $("ingoogle").textContent = T("g.in");
+  googleMaybe();
   $("insheet").hidden = false;
   $("inmail").focus();
 }
@@ -9156,6 +9190,40 @@ $("inkey").addEventListener("click", () => {
   $("insheet").hidden = true;
   openKeySheet();
 });
+
+/* SIGNING IN WITH GOOGLE — see the long note over /api/signin/google, and the
+   twin of this in enter.html. A POST and then a navigation, because the
+   callback comes back as a redirect and a redirect carries no header, so the
+   device this browser is has to be handed over before leaving. */
+$("ingoogle").addEventListener("click", async () => {
+  $("ingoogle").disabled = true;
+  try {
+    const r = await fetch("/api/signin/google", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, next: location.pathname + location.search }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.url) throw new Error("no");
+    location.assign(d.url);
+  } catch {
+    $("ingoogle").disabled = false;
+    inSaid(T("err.general"), true);
+  }
+});
+
+/* WHETHER THERE IS A BUTTON AT ALL, asked when the sheet opens rather than on
+   load: a board with no Google client id configured should cost every person
+   who never opens this sheet nothing at all. */
+let GASKED = false;
+async function googleMaybe() {
+  if (GASKED) return;
+  GASKED = true;
+  try {
+    const r = await fetch("/api/hello", { cache: "no-store" });
+    const d = await r.json();
+    $("ingoogle").hidden = !(d && d.google);
+  } catch { /* no button, and the address box below it is untouched */ }
+}
 
 $("inform").addEventListener("submit", async (e) => {
   e.preventDefault();
