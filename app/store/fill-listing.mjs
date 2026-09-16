@@ -265,6 +265,109 @@ async function ageRating(versionId, infoId) {
   did.push("             no age assurance, no parental controls, no age gate — all true");
 }
 
+
+/** The App Privacy nutrition labels.
+ *
+ *  THIS WAS ON THE BY-HAND LIST FOR A BAD REASON: that the API has no way to
+ *  set it. It has. `appDataUsages` is a row per (category, purpose) and per
+ *  (category, protection), hung off the app, and `appDataUsagesPublishState`
+ *  is the switch that makes the labels live. Nobody uses it — fastlane does
+ *  not — so it is easy to believe it is not there, and I said so twice before
+ *  going and looking.
+ *
+ *  THE VOCABULARY IS FETCHED, NOT TYPED OUT. Apple owns the list of category
+ *  ids and adds to it; a hard-coded "PHOTOS_OR_VIDEOS" that Apple renames is a
+ *  row that silently stops being declared. So the real list comes down first
+ *  and every row in listing.json is matched against it — and anything that
+ *  does not match is named, with the ids that do exist printed beside it,
+ *  rather than dropped.
+ *
+ *  EVERY ROW IS LINKED AND NONE IS TRACKING. Both of those are read off the
+ *  store in README.md rather than assumed, and both are load-bearing: this
+ *  board has no advertising identifier and no third-party analytics, and the
+ *  handles and the age on a profile are exactly the sort of thing a label
+ *  saying "name and photo" leaves out.
+ *
+ *  IT DOES NOT PUBLISH. The switch at the end is left alone: these labels are
+ *  a legal statement about what is kept about people, and the last word on it
+ *  is Tom's, not a script's at half past midnight.
+ */
+async function privacy(appId, L) {
+  const P = L.privacy;
+  if (!P?.rows?.length) return;
+
+  let cats, purposes, protections;
+  try {
+    [cats, purposes, protections] = await Promise.all([
+      get("/appDataUsageCategories?limit=200"),
+      get("/appDataUsagePurposes?limit=200"),
+      get("/appDataUsageDataProtections?limit=200"),
+    ]);
+  } catch (e) {
+    did.push("  skipped    app privacy         no appDataUsages on this account — web form");
+    did.push(`             Apple said: ${e.message.split("\n").pop().trim()}`);
+    return;
+  }
+
+  const have = new Set(cats.data.map((c) => c.id));
+  const missing = P.rows.map((r) => r.category).filter((c) => !have.has(c));
+  if (missing.length) {
+    did.push(`  failed     app privacy         Apple does not know: ${missing.join(", ")}`);
+    did.push(`             it does know: ${[...have].join(", ").slice(0, 300)}`);
+    return;
+  }
+  if (!purposes.data.some((x) => x.id === P.purpose)) {
+    did.push(`  failed     app privacy         no purpose ${P.purpose}; it has: ${purposes.data.map((x) => x.id).join(", ")}`);
+    return;
+  }
+  for (const pr of P.protections) {
+    if (!protections.data.some((x) => x.id === pr)) {
+      did.push(`  failed     app privacy         no protection ${pr}; it has: ${protections.data.map((x) => x.id).join(", ")}`);
+      return;
+    }
+  }
+
+  const already = await get(`/apps/${appId}/appDataUsages?limit=200`);
+  if (already.data.length) {
+    did.push(`  already    app privacy         ${already.data.length} rows declared — left alone`);
+    return;
+  }
+  if (!WRITE) { say("app privacy", `${P.rows.length} rows`); return; }
+
+  /* One row per (category, purpose) and one per (category, protection): the
+     resource carries a category and exactly one of the other two, which is
+     why eight data types are sixteen calls. */
+  let made = 0;
+  for (const row of P.rows) {
+    const links = [
+      { appDataUsagePurpose: P.purpose },
+      ...P.protections.map((pr) => ({ appDataUsageDataProtection: pr })),
+    ];
+    for (const link of links) {
+      const [kind, id] = Object.entries(link)[0];
+      const type = kind === "appDataUsagePurpose" ? "appDataUsagePurposes" : "appDataUsageDataProtections";
+      try {
+        await call("POST", "/appDataUsages", {
+          data: {
+            type: "appDataUsages",
+            relationships: {
+              app: { data: { type: "apps", id: appId } },
+              appDataUsageCategory: { data: { type: "appDataUsageCategories", id: row.category } },
+              [kind]: { data: { type, id } },
+            },
+          },
+        });
+        made++;
+      } catch (e) {
+        did.push(`             ${row.category} · ${id}: ${e.message.split("\n").pop().trim().slice(0, 90)}`);
+      }
+    }
+  }
+  say("app privacy", `${made} rows · linked, not tracking, app functionality`);
+  did.push("             NOT published — the labels are a legal statement, so you");
+  did.push("             press Publish in App Store Connect after reading them");
+}
+
 /** The screenshots, uploaded rather than dragged.
  *
  *  THREE STEPS PER FILE and none of them optional: reserve a slot and Apple
@@ -498,12 +601,12 @@ async function main() {
   say("review contact", `${R.contactFirstName} ${R.contactLastName} · ${R.contactEmail}`);
 
   await ageRating(version.id, info.id);
+  await privacy(app.id, L);
   await screenshots(vLoc.id);
 
   console.log(did.join("\n"));
   console.log(`\n  Version ${vNumber}, ${WRITE ? "written" : "not written — this was --dry"}.\n`);
   console.log("  Still to do by hand, because the API cannot:\n");
-  console.log("    App Privacy      the nutrition labels — README.md has all eight rows");
   console.log("    EU trader        Digital Services Act; without it, hidden in 27 EU stores\n");
   console.log("  Then Add for Review → Submit.\n");
 }

@@ -17,5 +17,45 @@
     "contactEmail": "tom@tomscoding.com",
     "contactPhone": "PUT YOUR PHONE NUMBER HERE",
     "notes": "The Exchange is invite only. The credentials above are a permanent code that\nopens a demonstration board of sample accounts — not the live membership. It\ndoes not expire and it admits nobody to the real board.\n\nType it at the door on the first screen.\n\nThe app is a messenger. The people, conversations and cards you will see are\ninvented for review.\n\nOn notifications: the app registers for Apple push and the board sends one\nwhen another member writes to you. The notification carries no name, no room\nand no message text — a lock screen is the least private surface a phone has,\nso what is sent is that something happened and nothing more.\n\nReport and block are on every profile and every message. A person reads every\nreport. Account deletion is on the Profile tab and removes the photographs and\nevery row.\n\nOn Guideline 4.2: the app delivers push notifications that the web version\ncannot deliver to this audience. Safari supports web push only for a page\nadded to the home screen, and most of these members arrive through WeChat's\nin-app browser, which cannot add anything to a home screen. For them the\nnotification has never been available at all, and being told somebody wrote to\nyou is the return loop of a messenger. This is not a convenience wrapper."
+  },
+  "privacy": {
+    "purpose": "APP_FUNCTIONALITY",
+    "protections": [
+      "DATA_LINKED_TO_YOU"
+    ],
+    "rows": [
+      {
+        "category": "NAME",
+        "why": "a handle, usually a first name"
+      },
+      {
+        "category": "EMAIL_ADDRESS",
+        "why": "sign-in codes only"
+      },
+      {
+        "category": "OTHER_USER_CONTACT_INFO",
+        "why": "Instagram and LinkedIn handles"
+      },
+      {
+        "category": "PHOTOS_OR_VIDEOS",
+        "why": "the profile photograph"
+      },
+      {
+        "category": "OTHER_USER_CONTENT",
+        "why": "the sentence, the card, messages"
+      },
+      {
+        "category": "DEVICE_ID",
+        "why": "the salted hash that is the account"
+      },
+      {
+        "category": "COARSE_LOCATION",
+        "why": "a city, typed, never a coordinate"
+      },
+      {
+        "category": "OTHER_DATA_TYPES",
+        "why": "age, languages, free days"
+      }
+    ]
   }
 }
