@@ -274,6 +274,9 @@
     text-underline-offset:3px}
   .keyopen:hover{color:var(--ink)}
   .keybox .where{margin:.5rem 0 0;font-size:.85rem;line-height:1.55;color:var(--muted)}
+  /* The word between two equal choices belongs between them, not hanging off
+     the left edge where it reads as a caption on the button above. */
+  #sipick .where{text-align:center;margin:.6rem 0}
   .keybox{margin:.7rem 0 0;padding:1rem 1.05rem;background:var(--raise);
     border:1px solid var(--line);border-radius:.9rem}
   .keybox h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
@@ -418,21 +421,29 @@
            theirs. Six digits to an address is the shape everybody knows, and
            underneath it does the same thing. -->
       <h2 id="sititle"></h2>
-      <p id="sisay"></p>
-      <input id="simail" type="email" inputmode="email" autocomplete="email"
-             spellcheck="false" autocapitalize="off">
-      <input id="sicode" inputmode="numeric" autocomplete="one-time-code"
-             maxlength="6" spellcheck="false" hidden>
-      <button class="quiet wide" type="button" id="sigo"></button>
+      <!-- TWO WAYS IN, AND BOTH OF THEM LOOK LIKE A WAY IN.
+           It was a bare email box with Send under it, and a Google button
+           below that — so one road was a form and the other was a button, and
+           only one of them read as a choice. Two buttons, and the box appears
+           under whichever is pressed.
+           ONLY WHEN THERE ARE TWO. With no Google client id configured there
+           is one road, and a button that reveals the box it could have shown
+           in the first place is a tap for nothing — so the box stays where it
+           is and this pair never appears. -->
+      <div id="sipick" hidden>
+        <button class="quiet wide" type="button" id="simailbtn"></button>
+        <p class="where" id="siorline"></p>
+        <button class="quiet wide" type="button" id="sigoogle"></button>
+      </div>
+      <div id="simailwrap">
+        <p id="sisay"></p>
+        <input id="simail" type="email" inputmode="email" autocomplete="email"
+               spellcheck="false" autocapitalize="off">
+        <input id="sicode" inputmode="numeric" autocomplete="one-time-code"
+               maxlength="6" spellcheck="false" hidden>
+        <button class="quiet wide" type="button" id="sigo"></button>
+      </div>
       <p class="said" id="sisaid" hidden></p>
-      <!-- AND THE OTHER WAY, UNDER THE ONE THE SECTION IS ABOUT.
-           It was above, and that put "The email address you left here" under a
-           heading with a Google button between it and the box it describes.
-           Below is also the truth: half the people this board is for cannot
-           reach Google at all, so it is one more door and never the door.
-           Hidden unless /api/hello says the box is configured. -->
-      <p class="where" id="siorline" hidden></p>
-      <button class="quiet wide" type="button" id="sigoogle" hidden></button>
 
       <h2 id="keytitle" class="second"></h2>
       <p id="keysay"></p>
@@ -939,6 +950,7 @@ function words() {
   $("simail").placeholder = T("mail.ph");
   $("sigo").textContent = T("in.send");
   $("sigoogle").textContent = T("g.in");
+  $("simailbtn").textContent = T("g.byMail");
   $("siorline").textContent = T("g.or");
   /* The box has to be open for the line under it to be read at all — somebody
      who pressed this had it open a minute ago and the answer belongs where the
@@ -997,6 +1009,15 @@ async function goGoogle(btn) {
   }
 }
 $("sigoogle").addEventListener("click", () => goGoogle($("sigoogle")));
+
+/* THE EMAIL HALF OF THE CHOICE. The pair collapses to the road taken — two
+   buttons with a form under one of them is a screen asking the question it has
+   already been answered. */
+$("simailbtn").addEventListener("click", () => {
+  $("sipick").hidden = true;
+  $("simailwrap").hidden = false;
+  $("simail").focus();
+});
 
 /* WHAT HAPPENED, ON THE WAY BACK IN.
  *
@@ -1287,7 +1308,7 @@ fetch("/api/hello", { cache: "no-store" })
   .then((r) => r.json())
   .then((d) => {
     if (d && d.hostess) { $("hostess").hidden = false; drawHostess(); }
-    if (d && d.google) { $("sigoogle").hidden = false; $("siorline").hidden = false; }
+    if (d && d.google) { $("sipick").hidden = false; $("simailwrap").hidden = true; }
     /* ABSENT RATHER THAN ZERO, and the server decides which. `waiting` comes
        back null below WAITING_FLOOR — five — because "2 people are waiting" is
        a worse advertisement than saying nothing, and nearly a name besides. So

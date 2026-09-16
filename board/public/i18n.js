@@ -1336,7 +1336,14 @@ export const STRINGS = {
      it is. No "link your account" — that is the plumbing's name for it. */
   "g.tie":             ["Or attach a Google account, and any phone signed into it finds you again.",
                         "也可以绑个 Google 账号，之后登录了这个账号的手机都能把你找回来。"],
-  "g.or":              ["or, if you have a Google account", "或者，如果你有 Google 账号"],
+  /* The two roads in, as two buttons. The email one names what arrives rather
+     than what it is — "six digits" is the thing somebody is deciding about. */
+  /* The last row under the name box on Messages, and the one that admits what
+     an invite-only board is: the person you want is often not in it yet. */
+  "wn.notHere":        ["Not on here yet?", "还不在这儿？"],
+  "wn.notHereSub":     ["Send them an invite", "发个邀请给他们"],
+  "g.byMail":          ["Send me six digits by email", "用邮箱收六位数字"],
+  "g.or":              ["or", "或者"],
   "g.ok":              ["Signed in. Everything is back.", "好了，都回来了。"],
   /* The other half: pressed by somebody who is already themselves. It says
      what it bought them rather than "connected", which names the plumbing. */

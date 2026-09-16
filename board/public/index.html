@@ -4847,6 +4847,19 @@ $("fab").addEventListener("click", (e) => {
   $("fab").setAttribute("aria-expanded", "true");
 });
 $("plusinv").addEventListener("click", () => { shutPlus(); openInvite(); });
+
+/* ARRIVED HERE TO DO EXACTLY THIS. The name box on Messages offers an invite
+   for somebody the board has never heard of, and the invite lives on this
+   screen — one copy, because two would drift. Cleaned out of the address at
+   once so a reload does not reopen a sheet nobody asked for twice. */
+if (new URLSearchParams(location.search).get("invite") === "1") {
+  try {
+    const u = new URL(location.href);
+    u.searchParams.delete("invite");
+    history.replaceState(null, "", u.pathname + (u.search || "") + u.hash);
+  } catch { /* an old kernel keeps the query string and nothing else breaks */ }
+  openInvite();
+}
 $("plusann").addEventListener("click", () => { shutPlus(); openAnnounce(); });
 
 /* openWrite and everything it drew moved to notes.html — see the note where
