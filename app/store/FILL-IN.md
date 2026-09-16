@@ -4,6 +4,17 @@ Every box, top to bottom, with what goes in it. The *reasoning* for each answer
 is in `README.md` next door — this file is only for the night you are sitting in
 front of the form and want to stop thinking.
 
+**Or don't.** `fill-listing.mjs` next door puts sections 1 and 4 up through the
+App Store Connect API from your Mac, in one command:
+
+```
+node app/store/fill-listing.mjs            # says what it would do
+node app/store/fill-listing.mjs --write    # does it
+```
+
+What it cannot do is sections 2 and 3, the age rating, and the screenshots —
+those are web form only, and they are the reason this file still exists.
+
 Open **appstoreconnect.apple.com** → **Apps** → **The Exchange 交换**.
 
 Three of these fields are a judgement rather than a fact and are marked
@@ -113,7 +124,7 @@ Order matters — the first is the one people see in search:
 ### Promotional Text
 
 ```
-Invite only. You write one sentence — I am a ___ looking for a ___ — and that sentence decides who you are shown. Nobody is ranked, nobody is browsed. Messages when somebody writes.
+Invite only. You write one sentence — I am a ___ looking for a ___ — and it decides who you are shown. Nobody is ranked, nobody is browsed. Messages when somebody writes.
 ```
 
 ### Description
@@ -152,7 +163,7 @@ with it.
 ### Keywords
 
 ```
-china,business,match,introduction,expat,shanghai,beijing,network,invite,producer,supplier,founder,chinese
+china,business,match,introduction,expat,shanghai,beijing,network,invite,producer,supplier,founder
 ```
 
 ### Support URL

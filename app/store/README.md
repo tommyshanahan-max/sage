@@ -1,5 +1,9 @@
 # App Store Connect, field by field
 
+`listing.json` next door holds this same copy as data, and
+`fill-listing.mjs` puts it up through the API. Edit the JSON, not this file,
+when the words change — this one is the reasoning.
+
 Everything here is ready to paste. Where a field is a judgement rather than a
 fact, the reasoning is under it — App Review reads the metadata as carefully as
 the app, and a line written to sound good is a line that gets asked about.
@@ -39,7 +43,7 @@ rather than this. The sentence *is* the product.
 ## Promotional text (170 max — editable without a new build)
 
 ```
-Invite only. You write one sentence — I am a ___ looking for a ___ — and that sentence decides who you are shown. Nobody is ranked, nobody is browsed. Messages when somebody writes.
+Invite only. You write one sentence — I am a ___ looking for a ___ — and it decides who you are shown. Nobody is ranked, nobody is browsed. Messages when somebody writes.
 ```
 
 ---
@@ -87,10 +91,17 @@ is read differently from one that does not.
 ## Keywords (100 max, comma-separated, no spaces after commas)
 
 ```
-china,business,match,introduction,expat,shanghai,beijing,network,invite,producer,supplier,founder,chinese
+china,business,match,introduction,expat,shanghai,beijing,network,invite,producer,supplier,founder
 ```
 
-98 characters. Not "chat" or "messenger" — the App Store is full of them and
+97 characters. It was 105 and over the limit until it was counted rather than
+estimated — `chinese` came out, because `china` is already there and the App
+Store does not reward the pair. The promotional text above was 181 against a
+limit of 170 for the same reason; "and that sentence decides" is now "and it
+decides". Count both again if either is edited: neither field is rejected
+loudly, the form simply refuses to save.
+
+Not "chat" or "messenger" — the App Store is full of them and
 this ranks nowhere against WeChat. The words worth owning are the specific
 ones: a city, a role, the thing somebody is actually looking for.
 

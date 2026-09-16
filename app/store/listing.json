@@ -1,0 +1,21 @@
+{
+  "bundleId": "app.thexchange",
+  "locale": "en-US",
+  "name": "The Exchange 交换",
+  "subtitle": "One sentence finds your match",
+  "promotionalText": "Invite only. You write one sentence — I am a ___ looking for a ___ — and it decides who you are shown. Nobody is ranked, nobody is browsed. Messages when somebody writes.",
+  "description": "The Exchange is a private board for people doing business in and around China.\n\nYou write one sentence about yourself:\n\n    I am a ___ looking for a ___\n\nThat sentence is the whole of your profile, and it decides who you see. A\nproducer looking for a writer is shown writers looking for a producer. Nobody\nelse. There is no feed, no ranking, and no list of everybody.\n\nBoth sides say yes, or nothing happens. When both of you do, a conversation\nopens and either one can write first.\n\n— Invite only. Somebody already inside vouched for you, and their name stays\n  on yours.\n— One sentence, not a CV. Change it and the room around you changes.\n— Rooms at the door for film and television, investment, fundraising and\n  trade, where people are waiting to be let in.\n— Report and block work, a person reads every report, and anything here can be\n  taken down.\n— English and Chinese throughout, written rather than translated.\n\nNotifications tell you somebody wrote. They never say who, or what they said.\n\nThe Exchange is not encrypted, and does not claim to be. It is a private room\nwith a door on it, over HTTPS. What is kept about you is listed in full on the\nprivacy page, and deleting your account takes the photographs and every row\nwith it.",
+  "keywords": "china,business,match,introduction,expat,shanghai,beijing,network,invite,producer,supplier,founder",
+  "supportUrl": "https://thexchange.app/rules",
+  "marketingUrl": "https://thexchange.app/",
+  "review": {
+    "demoAccountRequired": true,
+    "demoAccountName": "JY2GUA",
+    "demoAccountPassword": "JY2GUA",
+    "contactFirstName": "Thomas",
+    "contactLastName": "Shanahan",
+    "contactEmail": "tom@tomscoding.com",
+    "contactPhone": "PUT YOUR PHONE NUMBER HERE",
+    "notes": "The Exchange is invite only. The credentials above are a permanent code that\nopens a demonstration board of sample accounts — not the live membership. It\ndoes not expire and it admits nobody to the real board.\n\nType it at the door on the first screen.\n\nThe app is a messenger. The people, conversations and cards you will see are\ninvented for review.\n\nOn notifications: the app registers for Apple push and the board sends one\nwhen another member writes to you. The notification carries no name, no room\nand no message text — a lock screen is the least private surface a phone has,\nso what is sent is that something happened and nothing more.\n\nReport and block are on every profile and every message. A person reads every\nreport. Account deletion is on the Profile tab and removes the photographs and\nevery row.\n\nOn Guideline 4.2: the app delivers push notifications that the web version\ncannot deliver to this audience. Safari supports web push only for a page\nadded to the home screen, and most of these members arrive through WeChat's\nin-app browser, which cannot add anything to a home screen. For them the\nnotification has never been available at all, and being told somebody wrote to\nyou is the return loop of a messenger. This is not a convenience wrapper."
+  }
+}
