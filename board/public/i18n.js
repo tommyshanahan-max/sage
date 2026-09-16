@@ -2514,6 +2514,16 @@ export const STRINGS = {
   "fol.back":          ["Follow back", "回关"],
   "bud.followers":     ["{n} following them", "{n} 人关注"],
   "bud.followers1":    ["1 person follows them", "1 人关注"],
+  /* THE SAME TWO, ON YOUR OWN PAGE. "12 following them", read by the them in
+     question, is the page talking about its owner in the third person. */
+  "bud.followersMine":  ["{n} following you", "{n} 人关注你"],
+  "bud.followersMine1": ["1 person follows you", "1 人关注你"],
+  /* TWO WORDS OVER THE ROOM CHIPS, and they were not needed until the sentence
+     went in above them. A room is named as a first-person line here — "A model
+     or creative looking for an agent" — so under "I am a Producer looking for
+     an Agent" it read as a second, contradicting claim rather than as the
+     group somebody is standing in. */
+  "bud.hereFor":       ["Here for", "来这儿是为了"],
   "feed.onlyFollowing":["People I follow", "我关注的"],
   "post.orBuddy": [
     "Looking for someone to study with?",

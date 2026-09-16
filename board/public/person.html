@@ -218,6 +218,8 @@
     border-bottom:1px solid var(--accent);padding-bottom:1px;margin:0 .28rem}
 
   /* ---- what they are looking for, and the card ---------------------------- */
+  .chipcap{margin:1.1rem 0 -.5rem;font-size:.66rem;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--muted);text-align:center;width:100%}
   .chips{display:flex;flex-wrap:wrap;gap:.35rem;margin:1rem 0 0;justify-content:center}
   .chip{font-size:.78rem;padding:.3rem .65rem;border-radius:99px;
     background:var(--accent-soft);color:var(--accent);border:1px solid var(--line)}
@@ -1074,7 +1076,13 @@ function paint() {
      on purpose — see rankOf in server.js. It is here because it answers the
      question a profile is actually being read to answer: is this somebody
      who does things with people, or somebody who signed up. */
-  if (q.rank && q.rank !== "guest") fact(T("rank.headThem", { who: q.handle }), T("rank." + q.rank));
+  /* YOUR OWN PAGE SAYS "YOU", and it was saying "Tom" to Tom. The string for
+     it already existed — the deck on Browse has used it all along — and this
+     one call site simply never asked which page it was on. */
+  if (q.rank && q.rank !== "guest") {
+    fact(q.mine ? T("rank.head") : T("rank.headThem", { who: q.handle }),
+      T("rank." + q.rank));
+  }
 
   /* WHICH LAYER THEY ARE IN, which is the one fact on this page nobody can
      earn back later. A name and never the number underneath it: the server
@@ -1139,9 +1147,14 @@ function paint() {
    * board itself made — see broughtBy on the server. */
   if (q.brought) head.append(el("p", "brought", T("inv.brought", { who: q.brought })));
 
+  /* AND THE SAME ON THE LINE UNDER IT. "12 following them", read by the them
+     in question, is the page talking about its owner as though they were not
+     holding it. */
   if (q.followers) {
-    head.append(el("p", "count",
-      q.followers === 1 ? T("bud.followers1") : T("bud.followers", { n: q.followers })));
+    const one = q.followers === 1;
+    head.append(el("p", "count", q.mine
+      ? T(one ? "bud.followersMine1" : "bud.followersMine", { n: q.followers })
+      : T(one ? "bud.followers1" : "bud.followers", { n: q.followers })));
   }
 
   /* ---- what they are looking for -------------------------------------------
@@ -1151,7 +1164,19 @@ function paint() {
    * what you have in common tells nobody anything they could not work out. It
    * is here so that nobody has to.
    */
+  /* THE CHIPS NEEDED INTRODUCING THE MOMENT THE SENTENCE WENT IN ABOVE THEM.
+   *
+   * A room here is named as a first-person line — "A model or creative looking
+   * for an agent" — which was fine while it was the only sentence-shaped thing
+   * on the page. It is not now: the profile opens with "I am a Producer looking
+   * for an Agent", and a bare pill under it saying something different reads as
+   * a second, contradicting claim about the same person rather than as the
+   * group they are standing in.
+   *
+   * Two words above them fixes it. The chips are unchanged and still say what
+   * they always said; what changed is that the page now says what they are. */
   if (Array.isArray(q.rooms) && q.rooms.length) {
+    head.append(el("p", "chipcap", T("bud.hereFor")));
     const chips = el("div", "chips");
     for (const r of q.rooms) chips.append(el("span", "chip", T("room." + r)));
     head.append(chips);
