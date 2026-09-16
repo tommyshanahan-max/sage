@@ -94,6 +94,29 @@ const get = (p) => call("GET", p);
 const patch = (p, type, id, attributes) =>
   WRITE ? call("PATCH", p, { data: { type, id, attributes } }) : null;
 
+/** The localization to write into.
+ *
+ *  THE LOCALE IS NOT en-US JUST BECAUSE THE COPY IS IN ENGLISH. The primary
+ *  language is whatever was chosen when the app record was made, and this one
+ *  is English (Australia) — so a script that insists on en-US stops on a
+ *  listing that is perfectly fine and says the localization is missing, which
+ *  is true and completely misleading. Ask for the named one, take the only
+ *  one if it is not there, and say out loud which was used: with a single
+ *  English localization there is no wrong answer, and with several there
+ *  would be, so it refuses rather than guessing.
+ */
+function pick(rows, want, where) {
+  const named = rows.find((l) => l.attributes.locale === want);
+  if (named) return named;
+  if (rows.length === 1) {
+    console.log(`  (no ${want} on the ${where} — writing ${rows[0].attributes.locale} instead)`);
+    return rows[0];
+  }
+  throw new Error(`No ${want} localization on the ${where}, and ${rows.length} others to choose from:\n    `
+    + rows.map((l) => l.attributes.locale).join(", ")
+    + `\n    Put the right one in listing.json as "locale".`);
+}
+
 /* One line per box, so a dry run reads like a list of what is about to
    change and a real run reads like a receipt. */
 const did = [];
@@ -129,8 +152,7 @@ async function main() {
   const infos = await get(`/apps/${app.id}/appInfos`);
   const info = infos.data.find((i) => i.attributes.appStoreState !== "READY_FOR_SALE") || infos.data[0];
   const infoLocs = await get(`/appInfos/${info.id}/appInfoLocalizations`);
-  const infoLoc = infoLocs.data.find((l) => l.attributes.locale === L.locale);
-  if (!infoLoc) throw new Error(`No ${L.locale} localization on the app info.`);
+  const infoLoc = pick(infoLocs.data, L.locale, "app info");
   await patch(`/appInfoLocalizations/${infoLoc.id}`, "appInfoLocalizations", infoLoc.id,
     { name: L.name, subtitle: L.subtitle });
   say("name", L.name);
@@ -147,8 +169,7 @@ async function main() {
   const vNumber = version.attributes.versionString;
 
   const vLocs = await get(`/appStoreVersions/${version.id}/appStoreVersionLocalizations`);
-  const vLoc = vLocs.data.find((l) => l.attributes.locale === L.locale);
-  if (!vLoc) throw new Error(`No ${L.locale} localization on version ${vNumber}.`);
+  const vLoc = pick(vLocs.data, L.locale, `version ${vNumber}`);
   await patch(`/appStoreVersionLocalizations/${vLoc.id}`, "appStoreVersionLocalizations", vLoc.id, {
     description: L.description,
     keywords: L.keywords,
