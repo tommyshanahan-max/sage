@@ -3123,6 +3123,7 @@ import { shrink, asBase64 } from "/photo.js";
 import { canHear, record } from "/speak.js";
 import { stageFor, stageName, crownMark } from "/crown.js";
 import { OFF } from "/off.js";
+import { sheet } from "/share.js";
 import { offerInstall } from "/install.js";
 import { dailyCard, dailyDone } from "/daily.js";
 import { BANDS } from "/level-cards.js";
@@ -5802,7 +5803,10 @@ $("myinvsend").addEventListener("click", () => {
      way — so the clipboard is the honest version there, as it is everywhere
      else this app shares something. */
   if (!IN_WECHAT && navigator.share) {
-    navigator.share({ title: T("site.title"), text: words })
+    /* THE LINK IN THE FIELD THAT BUILDS THE CARD — see public/share.js. It
+       went as text with the address buried in it, so WhatsApp, Messenger and
+       WeChat all had nothing to fetch and drew a grey square. */
+    sheet({ title: T("site.title"), words, url })
       .catch(() => { if (copyText(words)) say(T("inv.copied")); });
     return;
   }
@@ -9567,16 +9571,18 @@ $("mkoffergo").addEventListener("click", makeOffer);
  * the ⋯ menu is the only way there, so the clipboard is the honest version,
  * which is what every other share in this app already does.
  *
- * The words carry the link rather than the link travelling bare, because what
- * lands in the chat should say what it is before somebody taps a strange
- * address. */
+ * The words say what it is before somebody taps a strange address — and the
+ * address ALSO goes in the sheet's own url field, which is the only way a
+ * preview card gets built. It used to travel only inside the sentence, and
+ * the card came out blank. See public/share.js. */
 $("mkofferout").addEventListener("click", () => {
   const url = $("mkofferout").textContent.trim();
   if (!url) return;
   const words = T("mko.share", { url });
   const note = (w) => { $("mkoffernote").textContent = w; };
   if (!IN_WECHAT && navigator.share) {
-    navigator.share({ title: T("site.title"), text: words })
+    // Same rule as the invite above it — see public/share.js.
+    sheet({ title: T("site.title"), words, url })
       .catch(() => note(copyText(words) ? T("mko.copied") : T("mko.copyfail")));
     return;
   }

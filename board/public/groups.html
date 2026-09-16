@@ -487,6 +487,7 @@ async function pin() {
   return PIN;
 }
 import { atText, atPicker } from "/at.js";
+import { sheet } from "/share.js";
 import { moHear } from "/mo.js";
 
 const $ = (id) => document.getElementById(id);
@@ -1237,7 +1238,10 @@ async function mint(g, nm, list) {
     fill(list);
     list.append(done(nm, d, words, url));
     if (!IN_WECHAT && navigator.share) {
-      navigator.share({ title: T("site.title"), text: words }).catch(() => {});
+      /* THE LINK IN THE FIELD THAT BUILDS THE CARD — see public/share.js.
+         This went as one blob with the address inside it, so the room a
+         member was inviting somebody into arrived as a grey square. */
+      sheet({ title: T("site.title"), words, url }).catch(() => {});
     } else copyText(words);
   } catch (e) {
     const why = String(e.message);

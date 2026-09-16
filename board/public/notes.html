@@ -864,6 +864,7 @@ async function pin() {
 }
 
 import { atText, atPicker } from "/at.js";
+import { sheet } from "/share.js";
 import { mountRoomMoney } from "/wallet-card.js";
 
 const $ = (id) => document.getElementById(id);
@@ -2191,23 +2192,12 @@ function doorPeople(key) {
     const words = T("dr.sendWordsMany", { room: T("waitroom." + key), url });
     if (!IN_WECHAT && navigator.share) {
       try {
-        /* THE LINK GOES IN `url`, NOT INSIDE THE TEXT.
-         *
-         * It was one blob — the words with the address in the middle of them
-         * — and that is a message, not a link. WeChat and everything else
-         * build their card from the `url` field: given only text, they have
-         * nothing to fetch, so the card comes out as the pasted sentence with
-         * a grey square where the picture goes. The page's own og: tags were
-         * right the whole time and were never asked for.
-         *
-         * The address comes out of the words for this path so it is not said
-         * twice. The copy-and-paste path below still carries it inline, where
-         * it has to be, because nothing is going to fetch anything there. */
-        await navigator.share({
-          title: T("site.title"),
-          text: words.split(url).join("").replace(/\n{3,}/g, "\n\n").trim(),
-          url,
-        });
+        /* THE LINK GOES IN `url` AND NOT INSIDE THE TEXT — the whole of why
+           is in public/share.js, which this used to do by hand and which the
+           three other shares in this app were doing wrong at the same time.
+           The copy-and-paste path below still carries the address inline,
+           where it has to be: nothing is going to fetch anything there. */
+        await sheet({ title: T("site.title"), words, url });
         /* THE SHEET IS THE RECEIPT. It said "Sent." under a share sheet the
            person had just watched open and use — a line telling somebody what
            they had that second done themselves. */
