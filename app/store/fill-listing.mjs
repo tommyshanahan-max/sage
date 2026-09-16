@@ -296,18 +296,36 @@ async function privacy(appId, L) {
   const P = L.privacy;
   if (!P?.rows?.length) return;
 
-  let cats, purposes, protections;
-  try {
-    [cats, purposes, protections] = await Promise.all([
-      get("/appDataUsageCategories?limit=200"),
-      get("/appDataUsagePurposes?limit=200"),
-      get("/appDataUsageDataProtections?limit=200"),
-    ]);
-  } catch (e) {
-    did.push("  skipped    app privacy         no appDataUsages on this account — web form");
-    did.push(`             Apple said: ${e.message.split("\n").pop().trim()}`);
+  /* THE PATH IS NOT WHERE I PUT IT FIRST, so it is looked for rather than
+     declared. /v1/appDataUsageCategories answered "the resource does not
+     exist", which is Apple saying the name is wrong, not that the feature is
+     missing — and the difference between those two is the whole question.
+     Every plausible spelling gets one GET, the first that answers is used,
+     and if none does then the list of what was tried is printed, which is a
+     fact somebody can act on instead of a shrug. */
+  const VOCAB = [
+    ["/appDataUsageCategories", "/appDataUsagePurposes", "/appDataUsageDataProtections"],
+    ["/v2/appDataUsageCategories", "/v2/appDataUsagePurposes", "/v2/appDataUsageDataProtections"],
+    ["/appPrivacyDataUsageCategories", "/appPrivacyDataUsagePurposes", "/appPrivacyDataUsageDataProtections"],
+    ["/dataUsageCategories", "/dataUsagePurposes", "/dataUsageDataProtections"],
+  ];
+  let cats, purposes, protections, said = "";
+  for (const [c, u, d] of VOCAB) {
+    try {
+      const url = (x) => (x.startsWith("/v2/") ? "https://api.appstoreconnect.apple.com" + x : x);
+      [cats, purposes, protections] = await Promise.all([
+        get(url(c) + "?limit=200"), get(url(u) + "?limit=200"), get(url(d) + "?limit=200"),
+      ]);
+      break;
+    } catch (e) { said = said || e.message.split("\n").pop().trim(); cats = null; }
+  }
+  if (!cats) {
+    did.push("  skipped    app privacy         not in this API — web form, README.md has the rows");
+    did.push(`             tried: ${VOCAB.map((v) => v[0]).join(", ")}`);
+    did.push(`             Apple said: ${said}`);
     return;
   }
+  did.push(`  found      app privacy         ${cats.data.length} categories, ${purposes.data.length} purposes`);
 
   const have = new Set(cats.data.map((c) => c.id));
   const missing = P.rows.map((r) => r.category).filter((c) => !have.has(c));
