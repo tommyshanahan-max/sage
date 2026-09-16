@@ -170,46 +170,64 @@ async function ageRating(versionId, infoId) {
   const id = decl?.data?.id;
   if (!id) { did.push("  skipped    age rating          not on the version or the app info — web form"); return; }
 
-  const attrs = {};
-  for (const [k, was] of Object.entries(now)) {
-    if (k === "kidsAgeBand" || k === "ageRatingOverride") continue;
-    if (/unrestrictedWebAccess/i.test(k)) attrs[k] = false;
-    else if (/userGenerated|userContent/i.test(k)) attrs[k] = true;
-    else if (typeof was === "string" || was === null) attrs[k] = "NONE";
-    else if (typeof was === "boolean") attrs[k] = false;
-  }
-  if (!Object.keys(attrs).length) {
-    did.push("  skipped    age rating          nothing recognised to set — web form");
-    return;
-  }
-  try {
-    await patch(`/ageRatingDeclarations/${id}`, "ageRatingDeclarations", id, attrs);
-    say("age rating", `${Object.keys(attrs).length} answers · none, web access restricted, user content yes`);
-    return;
-  } catch (e) {
-    /* ONE ODD FIELD SINKS THE WHOLE PATCH, and Apple will not say which one:
-       "an attribute in the provided entity has the wrong type" names no
-       attribute. It was a new social-media question wanting a URI where every
-       other field on the object takes an enum.
-       So: all at once first, because that is one call and usually works, and
-       one at a time when it does not. Thirteen calls is nothing, and the ones
-       that land are the ones that matter — a rating with twelve of thirteen
-       answers is a rating with one question left, which the web form shows in
-       red. Guessing at the odd field would be worse: a URI invented here goes
-       to App Review as a claim about how the app is moderated. */
-    did.push("  retrying   age rating          one field was refused — going one at a time");
-  }
+  /* THE 2025 QUESTIONNAIRE, WHICH IS TWENTY-SEVEN FIELDS AND THREE SHAPES.
+     Most take a level. Some are yes or no. One is a URL, and that one is why
+     the first attempt set nothing at all: every write is validated against the
+     whole object, so an empty developerAgeRatingInfoUrl fails the URI check no
+     matter which field is being written. It goes in on every call.
+
+     THE ANSWERS ARE THE APP'S, NOT CONVENIENT ONES. It carries other people's
+     words and photographs, it is a messenger, and people find each other on
+     it: user content yes, messaging yes, social yes. That is what makes it 17+
+     and it is not worth arguing down — a rating that pretends otherwise is the
+     thing that gets found later. Web access is restricted, which is true:
+     allowNavigation in capacitor.config.json holds the webview to this board's
+     own hostnames.
+
+     THE JUDGEMENT ONES ARE LEFT ALONE. ageAssurance, parentalControls,
+     socialMediaAgeRestricted, koreaAgeRating and the override are claims about
+     how the app polices who is on it, and this board has no age gate. Setting
+     any of them from here would be answering for Tom about something he has
+     not decided. They stay untouched and are named at the end.
+
+     TYPE PROBED, NOT ASSUMED. Apple has three shapes here and no public list
+     saying which field is which, so each one is tried as a level and then as
+     no — one extra call for the handful that are boolean, and no guessing. */
+  const INFO_URL = "https://thexchange.app/rules";
+  const YES = ["userGeneratedContent", "messagingAndChat", "socialMedia"];
+  const NO = ["unrestrictedWebAccess"];
+  const LEAVE = ["ageAssurance", "parentalControls", "socialMediaAgeRestricted",
+                 "koreaAgeRating", "ageRatingOverrideV2", "kidsAgeBand",
+                 "ageRatingOverride", "developerAgeRatingInfoUrl"];
+
+  const tries = (k) =>
+    YES.includes(k) ? [true] : NO.includes(k) ? [false] : ["NONE", false];
 
   const ok = [];
   const no = [];
-  for (const [k, v] of Object.entries(attrs)) {
-    try { await patch(`/ageRatingDeclarations/${id}`, "ageRatingDeclarations", id, { [k]: v }); ok.push(k); }
-    catch { no.push(k); }
+  let why = "";
+  for (const k of Object.keys(now)) {
+    if (LEAVE.includes(k)) continue;
+    let landed = false;
+    for (const v of tries(k)) {
+      try {
+        await patch(`/ageRatingDeclarations/${id}`, "ageRatingDeclarations", id,
+          { [k]: v, developerAgeRatingInfoUrl: INFO_URL });
+        landed = true;
+        break;
+      } catch (e) { why = why || e.message.split("\n").pop().trim(); }
+    }
+    (landed ? ok : no).push(k);
   }
-  say("age rating", `${ok.length} of ${ok.length + no.length} answers`);
+
+  if (!WRITE) { say("age rating", `${Object.keys(now).length} answers`); return; }
+  say("age rating", `${ok.length} of ${ok.length + no.length} · info URL ${INFO_URL}`);
   if (no.length) {
-    did.push(`             ${no.length} left for the web form: ${no.join(", ")}`);
+    did.push(`             refused: ${no.join(", ")}`);
+    if (why) did.push(`             Apple said: ${why}`);
   }
+  did.push("             left for you, because they are yours to answer:");
+  did.push("             age assurance, parental controls, social media age restriction");
 }
 
 /** The screenshots, uploaded rather than dragged.
