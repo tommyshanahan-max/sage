@@ -22,7 +22,7 @@
  * string when BOARD_VAPID_* is unset, and then there is no switch. A board
  * that cannot send must not ask.
  */
-import { T } from "/i18n.js";
+import { T, lang } from "/i18n.js";
 import { NATIVE, bell } from "/native.js";
 
 const IOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
@@ -78,7 +78,10 @@ async function sendToken(token) {
     await fetch("/api/push/on", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-board-device": device() },
-      body: JSON.stringify({ device: device(), apns: t }),
+      /* WHICH LANGUAGE TO BUZZ IN. The page knows and the lock screen cannot
+         ask — see the note over WORDS in board/lib/apns.js, and the one over
+         `lang` in cleanPush for why this replaced two loc-keys. */
+      body: JSON.stringify({ device: device(), apns: t, lang: lang() }),
     });
   } catch (e) { TOLD = ""; }   // let the next launch try again
 }

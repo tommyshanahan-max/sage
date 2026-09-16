@@ -7854,7 +7854,9 @@ app.post("/api/push/on", express.json({ limit: "8kb" }), async (req, res) => {
   const apnsTok = String(req.body?.apns || "").trim().toLowerCase();
   if (apnsTok) {
     if (!pushApns.configured()) return res.status(503).json({ error: "off" });
-    const row = store.cleanPush({ by: me, apns: apnsTok });
+    /* Which language this phone reads in, said by the page that knows — see
+       the note over `lang` in cleanPush. */
+    const row = store.cleanPush({ by: me, apns: apnsTok, lang: req.body?.lang });
     if (!row) return res.status(400).json({ error: "bad" });
     const out = await change((board) => {
       board.pushes = board.pushes || [];

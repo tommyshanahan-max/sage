@@ -189,8 +189,10 @@ export async function tell(subs) {
   const dead = [];
   await Promise.all(subs.map(async (s) => {
     /* A device token has no endpoint to POST to — see cleanPush. */
+    /* THE ROW'S OWN LANGUAGE — see cleanPush. "" is every row stored before
+       the field existed, and apns.js has a line for that case. */
     const how = s && s.apns
-      ? (apns.configured() ? await apns.one(s.apns) : "fail")
+      ? (apns.configured() ? await apns.one(s.apns, s.lang) : "fail")
       : (configured() ? await one(s) : "fail");
     if (how === "gone") dead.push(s.endpoint);
   }));

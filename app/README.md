@@ -180,13 +180,20 @@ this is ever built on a second machine they are set again by hand from here.
    - **+ Capability -> Push Notifications.**
    - **+ Capability -> Background Modes -> Remote notifications.**
 
-2. **The two lines on the lock screen.** Drag `app/ios-strings/en.lproj` and
-   `app/ios-strings/zh-Hans.lproj` into the App target ("Create folder
-   references" off, "Copy items if needed" on, target App ticked). The board
-   sends the *keys* `PUSH_TITLE` and `PUSH_BODY` and no words at all, so that
-   nothing about who wrote to whom travels to Apple and so that iOS picks the
-   language from the phone. Without these files the lock screen prints
-   `PUSH_TITLE`.
+2. **Nothing. This step is gone, and the folder it used is kept only as a
+   record.** It read: drag `app/ios-strings/*.lproj` into the App target, so
+   that the board could send the *keys* `PUSH_TITLE` and `PUSH_BODY` and let
+   iOS pick the language.
+
+   That was the better shape on the wire and it cost a manual step on every
+   machine that ever builds this, with a failure mode — a lock screen reading
+   `PUSH_TITLE` at everybody — that nobody finds until it is live. It was
+   dropped the first time somebody tried to do it in Xcode.
+
+   The board sends the words now, in the language the browser said it was
+   reading when it subscribed. Same two facts on the lock screen, nothing
+   about the message in either version, and one fewer thing to forget. See
+   `WORDS` in `board/lib/apns.js` and `lang` in `cleanPush`.
 
 3. **Info.plist -> `ITSAppUsesNonExemptEncryption` = `NO`.** Everything here is
    HTTPS, which is exempt. Unset, App Store Connect asks on every single upload.

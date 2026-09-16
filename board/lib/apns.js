@@ -150,7 +150,20 @@ function session() {
  *  on success, "fail" for everything else — the same three answers push.js
  *  gives, because tell() treats them the same way.
  */
-export function one(deviceToken) {
+/* WHAT A LOCK SCREEN SAYS, WHICH IS TWO FACTS AND NEITHER IS THE MESSAGE:
+ * who it is from, and that somebody wrote. The same two the web half's sw.js
+ * shows.
+ *
+ * BOTH LANGUAGES ON ONE LINE WHEN NOBODY SAID, which is every row stored
+ * before the field existed. It is not a fallback that reads as broken — the
+ * board's own name is written that way wherever it appears to strangers. */
+const WORDS = (lang) => (
+  lang === "zh" ? { title: "交换", body: "有人给你留言了" }
+  : lang === "en" ? { title: "The Exchange", body: "Somebody wrote to you" }
+  : { title: "交换 · The Exchange", body: "有人给你留言了 · Somebody wrote to you" }
+);
+
+export function one(deviceToken, lang) {
   return new Promise((resolve) => {
     /* SETTLED ONCE, WHATEVER HAPPENS.
      *
@@ -227,20 +240,26 @@ export function one(deviceToken) {
       done("fail");
     });
     req.end(JSON.stringify({
-      /* THE SAME TWO CONSTANTS EVERY TIME, and see the note at the top: the
-         web half sends no payload at all, and this sends the least Apple will
+      /* THE SAME TWO LINES EVERY TIME, and see the note at the top: the web
+         half sends no payload at all, and this sends the least Apple will
          accept. No name, no room, no message, no count — nothing a lock screen
-         can leak.
+         can leak, which is the property that matters and is unchanged.
 
-         KEYS AND NOT WORDS. A loc-key names a line in the app's own
-         Localizable.strings, so the wire carries two fixed constants and iOS
-         picks the language from the phone — which is the right one, and is
-         something the board cannot know for a person who is asleep. The two
-         lines say what sw.js says on the web: who it is from, and that
-         somebody wrote. app/ios-strings/ holds both languages; without them
-         in the bundle the lock screen prints the key itself. */
+         WORDS, AND THEY USED TO BE KEYS. A loc-key names a line in the app's
+         own Localizable.strings, so iOS picked the language and two constants
+         travelled instead of any text. That was the better shape on the wire
+         and it cost a manual step in Xcode on every machine that ever builds
+         this: two .lproj folders dragged into the target by hand, with the
+         failure mode being a lock screen that says "PUSH_TITLE" to everybody.
+         It was dropped the first time somebody tried to do it.
+
+         So the words travel, in the language the browser said it was reading
+         when it subscribed — which is the same guess iOS was making, made one
+         step earlier by something that also knows. Written here rather than in
+         i18n.js for the same reason MO_NAME is: this is the server, it has no
+         i18n, and a line it sends is stored in the language it was written in. */
       aps: {
-        alert: { "title-loc-key": "PUSH_TITLE", "loc-key": "PUSH_BODY" },
+        alert: WORDS(lang),
         sound: "default",
         /* ONE LINE ON THE LOCK SCREEN, NOT ELEVEN, matching the web half's
            tag: eleven replies while somebody is asleep collapse into one. */

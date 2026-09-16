@@ -2153,10 +2153,29 @@ export function cleanPush(raw) {
    * what tell() hands back as dead and what the caller drops on. For a device
    * token it is the token with a scheme in front of it, which is never
    * fetched — it exists so one field answers "which row" for both kinds. */
+  /* WHICH LANGUAGE THIS PHONE READS IN.
+   *
+   * Two constants used to travel instead of words — loc-keys, resolved out of
+   * the app bundle's own Localizable.strings, so that iOS picked the language
+   * and nothing about the message left this box. It was the right shape and it
+   * cost a manual step in Xcode for every build: two .lproj folders dragged in
+   * by hand, and a lock screen that prints "PUSH_TITLE" at everybody the day
+   * somebody forgets.
+   *
+   * The browser already knows what language it is reading in, and says so when
+   * it subscribes. Two fixed lines in that language leave instead, which is
+   * the same two facts on the same lock screen — who it is from, and that
+   * somebody wrote — with nothing about the message in them either way.
+   *
+   * "" for a row that never said, which is every row stored before this: those
+   * get both languages on one line, which is what this board's own name looks
+   * like anyway. */
+  const lang = raw.lang === "zh" ? "zh" : raw.lang === "en" ? "en" : "";
+
   const apns = String(raw.apns || "").trim().toLowerCase();
   if (apns) {
     if (!/^[a-f0-9]{64,200}$/.test(apns)) return null;
-    return { by, apns, endpoint: "apns:" + apns,
+    return { by, apns, lang, endpoint: "apns:" + apns,
       at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
   }
 
