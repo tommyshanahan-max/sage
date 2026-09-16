@@ -72,6 +72,32 @@ Decks live in `cfm/deck/<name>.html`, built with
 `node scripts/deck-build.mjs <name>`, and their addresses are kept in
 `cfm/deck/urls.json` so editing a deck never breaks a link already sent.
 
+## Fewer steps
+
+Tom is visually impaired. Assume the screen is hard and small text is worse.
+This is not a preference to accommodate now and then; it decides what counts
+as finished work.
+
+- **A command, not a place on a screen.** "Click the blue button top right" is
+  an instruction that cannot be followed. Everything that can be done from the
+  terminal should be handed over as one line to paste.
+- **Ask for output, not screenshots.** Anything needed back is something a
+  command can print.
+- **One command, not three.** If a thing needs a fetch and then a run, the
+  command does the fetch. If it needs a file edited first, the value comes in
+  as an argument instead. If it offers a preview run, ask whether the preview
+  is worth a step to somebody who has to do the whole thing twice — usually it
+  is not.
+- **A numbered list is usually unfinished work.** Handing over five steps is
+  handing over the part that was not automated. Wrap it in a `make` target and
+  hand over the target.
+- **Never make him do the same fiddly thing twice.** A step performed by hand,
+  once per machine, with no check that it happened, is a step that will be
+  wrong. Delete it or make something else do it.
+
+The test: read back what is about to be sent and count the things he has to do.
+If it is more than one, the work is not finished.
+
 ## Standing rules
 
 - **Laonei / StudyPal code stays out of this repo.** It is a separate product
