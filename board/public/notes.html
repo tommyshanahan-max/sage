@@ -1638,7 +1638,24 @@ async function findPeople() {
   const box = $("tfind");
   const typed = $("tnewname").value.trim().toLowerCase();
   const hide = () => { box.hidden = true; fill(box); };
-  if (!typed) return hide();
+
+  /* AN EMPTY BOX IS NOT NOTHING TO SAY, and it was treated as nothing.
+   *
+   * The row offering an invite only appeared once letters had been typed — so
+   * pressing ＋, which is the whole gesture for "add somebody", showed a name
+   * box and a blank screen under it. Somebody who wants to bring in a person
+   * this board has never heard of has no name to type that would ever produce
+   * the row telling them they can.
+   *
+   * So the row is there from the moment the screen opens. Nothing else is:
+   * a list of everybody on the board, unasked, is a directory, and this board
+   * does not publish one. */
+  if (!typed) {
+    fill(box);
+    box.append(inviteRow());
+    box.hidden = false;
+    return;
+  }
 
   const all = await folk();
   /* The box may have been cleared, or this screen left, while the list was
@@ -1686,18 +1703,23 @@ async function findPeople() {
     box.append(b);
   }
 
-  /* AND THE PERSON WHO IS NOT ON HERE AT ALL.
-   *
-   * The ＋ on Messages reached everybody already through the door and nobody
-   * else, which is the wrong half of what "add somebody" means when the board
-   * is invite-only: the people you most want to write to are the ones you have
-   * not brought in yet.
-   *
-   * IT DOES NOT MINT ANYTHING HERE. The invite is settled and it lives on one
-   * screen — a code, the message, and the phone's own share sheet. A second
-   * copy of it on this screen is a second copy to keep in step, and the one
-   * that drifted would be the one nobody watches. So this is a door to it.
-   */
+  box.append(inviteRow());
+  box.hidden = false;
+}
+
+/** AND THE PERSON WHO IS NOT ON HERE AT ALL.
+ *
+ *  The ＋ on Messages reached everybody already through the door and nobody
+ *  else, which is the wrong half of what "add somebody" means when the board
+ *  is invite-only: the people you most want to write to are the ones you have
+ *  not brought in yet.
+ *
+ *  IT DOES NOT MINT ANYTHING HERE. The invite is settled and it lives on one
+ *  screen — a code, the message, and the phone's own share sheet. A second
+ *  copy of it here is a second copy to keep in step, and the one that drifted
+ *  would be the one nobody watches. So this is a door to it.
+ */
+function inviteRow() {
   const inv = el("button", "inv");
   inv.type = "button";
   const iav = el("span", "av");
@@ -1710,9 +1732,7 @@ async function findPeople() {
      the tab bar points at. Sending a member to the landing page to fetch an
      invite is sending them out of the product. */
   inv.addEventListener("click", () => { location.assign("/browse?invite=1"); });
-  box.append(inv);
-
-  box.hidden = false;
+  return inv;
 }
 
 function drawWriteNew() {
@@ -1727,11 +1747,10 @@ function drawWriteNew() {
   $("tnew").hidden = false;
   $("tnewk").textContent = T("wn.mkTo");
   $("tnewname").placeholder = T("wn.mkName");
-  /* THE LIST IS BUILT FROM WHAT IS IN THE BOX, so it is cleared here: this
+  /* THE LIST IS BUILT FROM WHAT IS IN THE BOX, so it is rebuilt here: this
      screen is redrawn on every paint and a stale list of matches for a name
-     that has since been sent is a list of the wrong people. */
-  $("tfind").hidden = true;
-  fill($("tfind"));
+     that has since been sent is a list of the wrong people. With the box empty
+     that is the invite row and nothing else — see findPeople. */
   if (!$("tnewname").dataset.find) {
     $("tnewname").dataset.find = "1";   // once, however many times this draws
     $("tnewname").addEventListener("input", () => { findPeople(); });
@@ -1741,6 +1760,11 @@ function drawWriteNew() {
       if (e.key === "Escape") { $("tfind").hidden = true; fill($("tfind")); }
     });
   }
+  /* LAST, AND THAT IS THE WHOLE OF WHY THE ROW WAS MISSING. This was called
+     three lines up, where the fill() under it emptied the box a moment after
+     findPeople had filled it — the list was shown, and shown empty. It draws
+     its own contents, so nothing else here needs to clear them first. */
+  findPeople();
 
   const talk = $("talk");
   fill(talk);
