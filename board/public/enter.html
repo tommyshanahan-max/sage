@@ -245,7 +245,14 @@
   .anyway:hover{color:var(--ink)}
 
   /* Its own section now, so it needs the width the door used to give it. */
-  #listwrap{width:100%;max-width:22rem;margin:0 auto}
+  /* THE TWO DISCLOSURE ROWS SHARE AN EDGE, and they did not.
+     This block was narrower than the door above it, which nobody could see
+     while both rows were centred grey underlines. They are full-width rows
+     with a rule over them now, and two rules of different lengths stacked on
+     one screen reads as a mistake — because it is one. The box inside keeps
+     its own reading width. */
+  #listwrap{width:100%;margin:0 auto}
+  #listwrap .keybox{max-width:22rem;margin-left:auto;margin-right:auto}
   /* THE SAME BOX AS THE PUBLIC PAGE, deliberately — somebody who read the
      landing page and then opened their link should meet one thing twice, not
      two things once. Kept as its own copy rather than shared: these two pages
@@ -269,17 +276,37 @@
   .hsaid{margin:.85rem 0 0;font-size:.95rem;line-height:1.6;color:var(--ink);
     white-space:pre-wrap}
   .hnote{margin:.7rem 0 0;font-size:.8rem;line-height:1.5;color:var(--muted)}
-  .keyopen{display:block;width:100%;margin:1.6rem 0 0;border:0;background:none;
-    color:var(--muted);font-size:.9rem;padding:.5rem 0;text-decoration:underline;
-    text-underline-offset:3px}
-  .keyopen:hover{color:var(--ink)}
+  /* THE WAY BACK IN WAS A GREY UNDERLINE UNDER A BIG BLUE BUTTON.
+   *
+   * Everything above it is for somebody arriving with a code, and this one
+   * line is the entire screen for somebody who already has an account and
+   * lost the browser it lived in — which, on a board where a person IS a
+   * browser, is the commonest reason anybody ever comes back to this page.
+   * It was set smaller than the fine print under the code boxes.
+   *
+   * It is a row now: full width, a rule over it, the ink rather than the grey,
+   * and a chevron saying it opens rather than an underline saying it is a
+   * link. Still not a second blue button — one screen, one primary action,
+   * and the code is it. */
+  .keyopen{display:flex;align-items:center;justify-content:space-between;
+    gap:.6rem;width:100%;margin:1.6rem 0 0;padding:.95rem 0 .2rem;
+    border:0;border-top:1px solid var(--hair);background:none;
+    color:var(--ink);font-family:var(--serif);font-weight:400;font-size:1.12rem;
+    text-align:left}
+  .keyopen::after{content:"";flex:0 0 auto;width:.5rem;height:.5rem;
+    border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);
+    transform:rotate(45deg);margin-right:.2rem;
+    transition:transform .15s ease}
+  .keyopen[aria-expanded="true"]::after{transform:rotate(-135deg)}
+  .keyopen:hover{color:var(--accent)}
+  @media (prefers-reduced-motion:reduce){.keyopen::after{transition:none}}
   .keybox .where{margin:.5rem 0 0;font-size:.85rem;line-height:1.55;color:var(--muted)}
   /* The word between two equal choices belongs between them, not hanging off
      the left edge where it reads as a caption on the button above. */
   #sipick .where{text-align:center;margin:.6rem 0}
   .keybox{margin:.7rem 0 0;padding:1rem 1.05rem;background:var(--raise);
     border:1px solid var(--line);border-radius:.9rem}
-  .keybox h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
+  .keybox h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.25rem}
   .keybox p{margin:.4rem 0 0;font-size:.88rem;line-height:1.55;color:var(--ink-2)}
   .keybox textarea{width:100%;margin:.7rem 0 0;border:1px solid var(--line);
     border-radius:.6rem;background:var(--paper);color:var(--ink);

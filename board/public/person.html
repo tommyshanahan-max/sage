@@ -275,12 +275,26 @@
   }
   :root[data-theme="dark"] .match .warn{background:#2A1720;border-color:#4A2530;color:#F0A8B4}
 
-  .facts{margin:1.3rem 0 0;width:100%;max-width:28rem}
-  .fact{display:flex;gap:1rem;padding:.75rem 0;border-top:1px solid var(--hair);
-    align-items:baseline;text-align:left}
-  .fact dt{flex:0 0 6.6rem;margin:0;font-size:.7rem;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--muted)}
-  .fact dd{margin:0;flex:1;font-size:.96rem}
+  /* THE FACTS AS ONE OBJECT, which is the shape of the design Tom sent over.
+     Bare rows on the page read as a list of leftovers; inside a card with the
+     labels drawn as chips they read as a record — which is what they are, and
+     none of the words in them changed. The icon is the fixed part of the
+     label column so the values line up down the card whatever the chip says. */
+  .facts{margin:1.3rem 0 0;width:100%;max-width:28rem;
+    border:1px solid var(--line);border-radius:1rem;
+    background:var(--raise);overflow:hidden}
+  .fact{display:flex;gap:.75rem;padding:.8rem .9rem;
+    border-top:1px solid var(--hair);align-items:center;text-align:left}
+  .fact:first-child{border-top:0}
+  .fact .fk{flex:0 0 7.6rem;display:flex;align-items:center;gap:.45rem;min-width:0}
+  .fact .ico{flex:0 0 auto;width:1.05rem;height:1.05rem;color:var(--muted);
+    fill:none;stroke:currentColor;stroke-width:1.7;
+    stroke-linecap:round;stroke-linejoin:round}
+  .fact dt{margin:0;font-size:.63rem;letter-spacing:.07em;line-height:1.35;
+    text-transform:uppercase;color:var(--ink-2);
+    background:var(--paper);border:1px solid var(--line);
+    border-radius:.38rem;padding:.2rem .4rem;min-width:0}
+  .fact dd{margin:0;flex:1;min-width:0;font-size:.96rem;font-weight:500}
   /* The places left, under the layer it belongs to. Quieter than the value
      above it: the layer is the fact, this is the thing you can still do
      something about, and two lines of equal weight read as two facts. */
@@ -1040,16 +1054,46 @@ function paint() {
   }
 
   const facts = el("dl", "facts");
-  const fact = (label, value) => {
+  /* ONE GLYPH PER KIND OF FACT, drawn rather than fetched — the board carries
+     no icon font and one more request for seven small pictures is not worth a
+     page load. Stroked, 1.05rem, the same weight as the tab bar's. */
+  const GLYPH = {
+    level:  ["m12 3 9 4.6-9 4.6-9-4.6z", "m3 12.2 9 4.6 9-4.6", "m3 16.6 9 4.6 9-4.6"],
+    trade:  ["M4 8h13", "m14 5 3 3-3 3", "M20 16H7", "m10 19-3-3 3-3"],
+    speaks: ["M4 5h16v11H9l-5 4z"],
+    rank:   ["M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z",
+             "M5.5 11a6.5 6.5 0 0 0 13 0", "M12 17.5V21"],
+    layer:  ["M4 6h16v15H4z", "M4 10h16", "M8 3v4", "M16 3v4"],
+    ig:     ["M4 8a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z",
+             "M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z", "M17.2 7.2h.01"],
+    li:     ["M4 6h16v14H4z", "M8 10.5V17", "M8 8.2h.01", "M12 17v-4a2.2 2.2 0 0 1 4.4 0v4"],
+  };
+  const fact = (label, value, glyph) => {
     const d = el("div", "fact");
-    d.append(el("dt", null, label));
+    const fk = el("span", "fk");
+    const paths = GLYPH[glyph];
+    if (paths) {
+      const ns = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("class", "ico");
+      svg.setAttribute("aria-hidden", "true");
+      for (const dd of paths) {
+        const path = document.createElementNS(ns, "path");
+        path.setAttribute("d", dd);
+        svg.appendChild(path);
+      }
+      fk.append(svg);
+    }
+    fk.append(el("dt", null, label));
+    d.append(fk);
     const dd = el("dd");
     if (typeof value === "string") dd.textContent = value; else dd.append(value);
     d.append(dd); facts.append(d);
   };
-  if (q.level) fact(T("bud.level"), q.level);
-  if (q.trade) fact(T("bud.trades"), q.trade);
-  if (q.speaks && q.speaks.length) fact(T("bud.speaks"), q.speaks.join(" · "));
+  if (q.level) fact(T("bud.level"), q.level, "level");
+  if (q.trade) fact(T("bud.trades"), q.trade, "trade");
+  if (q.speaks && q.speaks.length) fact(T("bud.speaks"), q.speaks.join(" · "), "speaks");
   /* Somewhere to be found that is not this board.
    *
    * A link and not just text, but the handle is the visible part on purpose:
@@ -1063,7 +1107,7 @@ function paint() {
     a.target = "_blank";
     a.rel = "noopener nofollow";
     a.textContent = "@" + q.ig;
-    fact(T("me.igName"), a);
+    fact(T("me.igName"), a, "ig");
   }
 
   /* LINKEDIN, and the reverse of the Instagram note above. That one shows the
@@ -1081,7 +1125,7 @@ function paint() {
      one call site simply never asked which page it was on. */
   if (q.rank && q.rank !== "guest") {
     fact(q.mine ? T("rank.head") : T("rank.headThem", { who: q.handle }),
-      T("rank." + q.rank));
+      T("rank." + q.rank), "rank");
   }
 
   /* WHICH LAYER THEY ARE IN, which is the one fact on this page nobody can
@@ -1099,7 +1143,7 @@ function paint() {
     const now = q.mine && LEFT;
     if (now) v.append(el("small", null, now.left === 1
       ? T("layer.last") : T("layer.left", { n: now.left })));
-    fact(T("layer.head"), v);
+    fact(T("layer.head"), v, "layer");
   }
 
   if (q.li) {
@@ -1108,7 +1152,7 @@ function paint() {
     a.target = "_blank";
     a.rel = "noopener nofollow";
     a.textContent = q.li;
-    fact(T("me.liName"), a);
+    fact(T("me.liName"), a, "li");
   }
   // The free-days week is out for V1 everywhere it appeared. Two people who
   // want to study together arrange it between themselves, and a timetable
