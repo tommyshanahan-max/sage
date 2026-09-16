@@ -547,6 +547,7 @@
 <script type="module">
 import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
 import { waitBox } from "/wait.js";
+import { NATIVE } from "/native.js";
 
 const $ = (id) => document.getElementById(id);
 /* AN IN-APP BROWSER, AND WECHAT IS NOT THE ONLY ONE.
@@ -919,7 +920,12 @@ function route() {
   // With the wall and with the door. Not under the greeting, which is a
   // welcome to somebody who was named in a link and already has a code.
   $("listwrap").hidden = greet;
-  if (!wx && !greet) setTimeout(() => $("code").focus(), 60);
+  /* NOT IN THE APP. Focusing the code box throws the keyboard over the lower
+     half of the screen the moment the app opens — which is the app asking for
+     a password before it has said anything, and it read that way to the first
+     person who launched it. In a tab the keyboard is cheap and the code is
+     why they came; in the app it is neither. */
+  if (!wx && !greet && !NATIVE) setTimeout(() => $("code").focus(), 60);
 }
 
 $("orb").addEventListener("click", hearIt);
@@ -1188,6 +1194,25 @@ if (new URLSearchParams(location.search).get("in") === "1") {
     box.hidden = false;
     $("keyopen").setAttribute("aria-expanded", "true");
     setTimeout(() => $("simail")?.focus({ preventScroll: true }), 200);
+  }
+}
+
+/* IN THE APP, EVERYBODY IS THE PERSON BEHIND THE FOLD.
+   Nobody downloads an app to redeem an invitation — they were let in months
+   ago, in a browser, and the app is the second device. So the screen they
+   open on asks for a six-character code they no longer have, and the way in
+   is one line of grey text they have to know to press. That happened on the
+   first phone the build ever ran on: the sign-in was found by hunting, and
+   until it is found there is no session, no Messages, and no push token.
+   Unfolded, not reordered — the code box is still first, because an invited
+   person who installs the app before redeeming is rare but real.
+   NO FOCUS. On a launch, focusing the address throws the keyboard over half
+   the screen before the page has been read. */
+if (NATIVE) {
+  const box = $("keybox");
+  if (box) {
+    box.hidden = false;
+    $("keyopen").setAttribute("aria-expanded", "true");
   }
 }
 
