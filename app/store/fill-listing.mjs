@@ -143,10 +143,16 @@ async function main() {
      file to change one string is a text editor, a syntax to not break, and a
      save — three chances to be stopped, for one number. */
   if (argPhone) L.review.contactPhone = argPhone;
-  if (!L.review.contactPhone || /PUT YOUR/i.test(L.review.contactPhone)) {
+  /* AND IT HAS TO BE A REAL ONE. The example in the help is "+61 4xx xxx xxx"
+     and it went in verbatim, which is exactly what an example is for and
+     exactly what nobody notices: Apple accepts any string, so the failure
+     would have been a reviewer ringing a number that does not exist, days
+     later, with the app rejected and no reason given that points here. */
+  const phone = String(L.review.contactPhone || "");
+  if (!phone || /PUT YOUR/i.test(phone) || /x{2,}/i.test(phone)) {
     throw new Error(
-      'No phone number for App Review. They ring it if they cannot get in.\n'
-      + '    make listing PHONE="+61 4xx xxx xxx"');
+      'No real phone number for App Review — they ring it if they cannot get in.\n'
+      + '    make listing PHONE="+61 412 345 678"   (your number, not the x\'s)');
   }
 
   let key;
@@ -208,10 +214,19 @@ async function main() {
   if (!build) {
     did.push("  no build yet — upload finished processing? Attach it and re-run.");
   } else {
-    /* Export compliance, once per build. Without it the submission is
-       refused with a 409 that names nothing. */
-    await patch(`/builds/${build.id}`, "builds", build.id, { usesNonExemptEncryption: false });
-    say("encryption", "usesNonExemptEncryption = false");
+    /* Export compliance, once per build and ONLY once. Apple refuses a second
+       answer with "You cannot update when the value is already set" — and it
+       is usually already set, because ITSAppUsesNonExemptEncryption in the
+       Info.plist answers it at upload time. That is the good case, so it reads
+       as a line saying so rather than an error stopping the run before the
+       review notes are written. */
+    const enc = build.attributes.usesNonExemptEncryption;
+    if (enc === null || enc === undefined) {
+      await patch(`/builds/${build.id}`, "builds", build.id, { usesNonExemptEncryption: false });
+      say("encryption", "usesNonExemptEncryption = false");
+    } else {
+      did.push(`  already    encryption         answered in the build's Info.plist (${enc})`);
+    }
     if (WRITE) {
       await call("PATCH", `/appStoreVersions/${version.id}/relationships/build`,
         { data: { type: "builds", id: build.id } });
