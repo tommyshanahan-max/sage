@@ -4822,6 +4822,38 @@ export const STRINGS = {
 
   /* GROUPS. The words are plain on purpose: a group is an ordinary thing and
      the only sentence here doing real work is the one about who can be in it. */
+  /* THE MEMO PINNED TO A ROOM. Written for two people who have just met and
+     are about to move money, so every line is a fact rather than a feeling.
+     The Chinese is written, not translated — 定金 and 违约 are the words a
+     Hong Kong agent would use, and "deposit" back-translated is not. */
+  "deal.pin":          ["The deal", "这单的条件"],
+  "deal.hires":        ["{a} is hiring {b}", "{a} 找 {b} 办这件事"],
+  "deal.what":         ["What", "做什么"],
+  "deal.where":        ["Where", "在哪"],
+  "deal.when":         ["When", "什么时候"],
+  "deal.fee":          ["Fee", "总价"],
+  "deal.deposit":      ["Up front", "定金"],
+  "deal.covers":       ["Who pays what", "费用谁出"],
+  "deal.cancel":       ["If it is called off", "取消怎么算"],
+  "deal.agree":        ["Agree to this", "我同意"],
+  "deal.agreedBy":     ["{who} agreed {when}", "{who} 于 {when} 同意"],
+  "deal.waiting":      ["Waiting on {who}", "等 {who} 确认"],
+  "deal.both":         ["Both sides have agreed.", "双方都已同意。"],
+  "deal.witness":      ["You are in the room but not a party to this.",
+                        "你在房间里，但不是这单的当事人。"],
+  "deal.edit":         ["Change the terms", "改条件"],
+  "deal.clears":       ["Changing any line clears both ticks. Nobody is shown as having agreed to words they did not read.",
+                        "改动任何一条，双方的同意都会清空。没有人会被算作同意了自己没看过的条款。"],
+  /* SAID ON THE CARD AND NOT IN A FOOTER. Two people are about to move real
+     money on the strength of what is above this line, and the board is not a
+     party to it and cannot enforce a word. Better they read that here than
+     find it out later. */
+  "deal.notlaw":       ["This is a record of what was agreed, not a contract. It binds nobody and this board is not a party to it.",
+                        "这只是双方谈定内容的记录，不是合同。它没有法律约束力，本平台也不是当事方。"],
+  "deal.none":         ["No terms pinned yet.", "还没有定下条件。"],
+  "deal.write":        ["Pin the terms", "把条件钉上去"],
+  "deal.sides":        ["Both names have to be people in this room.",
+                        "买方和卖方都必须是这个房间里的人。"],
   "grp.title":         ["Groups", "群组"],
   "grp.sub":           ["Rooms with more than two people in them.", "两个人以上的房间。"],
   "grp.count":         ["{n} of them", "共 {n} 个"],

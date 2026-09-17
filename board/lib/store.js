@@ -2358,6 +2358,55 @@ export const GROUP_MAX = 5;
  */
 export const HAND_MAX = 60;
 
+/* ---------------------------------------------------------------------------
+ * THE DEAL PINNED TO A ROOM
+ *
+ * Two people who have just met need to agree what is being bought before they
+ * can usefully argue about anything else, and the argument they will actually
+ * have three weeks later is about what was said in the first ten messages.
+ * So: a short memo at the top of the room, in the words a person would use,
+ * and a record of who agreed to it and when.
+ *
+ * IT IS NOT A CONTRACT AND DOES NOT PRETEND TO BE. No governing law, no
+ * indemnities, no signature block — every one of those would be a promise
+ * this board cannot keep, made to people who are trusting it with a booking
+ * worth more than the board is. What it is: the thing both sides can point at.
+ *
+ * EIGHT FIELDS AND NO MORE. One per question that gets argued about in a
+ * talent booking — who, what, where, when, how much, how much up front, who
+ * pays for the flights, and what happens if it is called off. A ninth field
+ * would be a form, and a form is a thing people fill in badly rather than a
+ * thing they read.
+ *
+ * AGREEING IS APPEND-ONLY. A row goes on when somebody agrees and nothing
+ * takes it off, because "they agreed and then it changed" is exactly the fact
+ * the memo exists to hold. Editing the terms clears the agreements instead —
+ * loudly, on the card — so nobody is shown as having agreed to words they
+ * never read.
+ * ------------------------------------------------------------------------ */
+export const DEAL_FIELDS = ["what", "where", "when", "fee", "deposit", "covers", "cancel"];
+
+export function cleanDeal(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").replace(/[^\P{C}\n]/gu, "").trim().slice(0, n);
+  const out = {
+    title: s(raw.title, 80),
+    /* WHO PAYS AND WHO SUPPLIES, by handle, because a memo that says "Claire"
+       when there are two Claires on the board is a memo about nobody. */
+    hires: s(raw.hires, 64),
+    provides: s(raw.provides, 64),
+    by: s(raw.by, 64),
+    at: s(raw.at, 40) || new Date().toISOString(),
+    agreed: (Array.isArray(raw.agreed) ? raw.agreed : [])
+      .map((a) => ({ who: s(a?.who, 64), at: s(a?.at, 40) }))
+      .filter((a) => a.who && a.at)
+      .slice(0, 20),
+  };
+  for (const f of DEAL_FIELDS) out[f] = s(raw[f], 300);
+  if (!out.hires || !out.provides) return null;
+  return out;
+}
+
 export function cleanGroup(raw, cap = GROUP_MAX) {
   if (!raw || typeof raw !== "object") return null;
   const id = String(raw.id || "");
@@ -2403,6 +2452,8 @@ export function cleanGroup(raw, cap = GROUP_MAX) {
     // same room does not need naming to be useful, and an empty name draws
     // itself from who is in it.
     name: s(raw.name, 60),
+    // What the room is for, in terms, pinned above the conversation.
+    ...(raw.deal ? { deal: cleanDeal(raw.deal) } : {}),
     // Kept by the operator rather than by whoever made it — see HAND_MAX.
     ...(raw.hand ? { hand: true } : {}),
   };

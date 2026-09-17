@@ -440,6 +440,32 @@
     border-radius:99px;padding:.28rem .7rem}
   .leave{margin:2rem 0 0;width:100%;padding:.7rem;border:1px solid var(--line);
     background:none;color:var(--t5);border-radius:99px;font-size:.9rem}
+
+  /* THE MEMO. A pinned document rather than a bubble — a flat card with a rule
+     under the heading, so it does not read as somebody talking. It sits above
+     the first message and stays there, because the fact both sides will point
+     at in three weeks must not be a thing you scroll back to find. */
+  .dealpin{margin:0 0 1.1rem;padding:.9rem .95rem .85rem;border-radius:.9rem;
+    background:var(--paper);border:1px solid var(--line)}
+  .dealpin .dlab{margin:0 0 .35rem;font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .dealpin .dtitle{margin:0 0 .15rem;font-size:1.05rem;font-weight:700;line-height:1.25}
+  .dealpin .dwho{margin:0 0 .8rem;font-size:.85rem;color:var(--muted)}
+  .drows{display:grid;grid-template-columns:auto 1fr;gap:.35rem .9rem;margin:0 0 .85rem;
+    padding-top:.75rem;border-top:1px solid var(--line)}
+  .drows dt{font-size:.78rem;color:var(--muted);white-space:nowrap}
+  .drows dd{margin:0;font-size:.92rem;line-height:1.45}
+  .dmarks{display:flex;flex-direction:column;gap:.15rem;margin:0 0 .8rem;font-size:.8rem}
+  .dmarks p{margin:0}
+  .dmarks .dyes{color:#1F7A4C}
+  .dmarks .dno{color:var(--muted)}
+  .dmarks .dboth{margin-top:.25rem;font-weight:600;color:#1F7A4C}
+  .dgo{display:block;width:100%;padding:.75rem;border:0;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);font:inherit;font-size:1rem}
+  .dgo:disabled{opacity:.45}
+  .dsay{margin:0;font-size:.8rem;color:var(--muted)}
+  .dlaw{margin:.8rem 0 0;padding-top:.7rem;border-top:1px solid var(--line);
+    font-size:.72rem;line-height:1.5;color:var(--muted)}
 </style>
 
 </head>
@@ -905,6 +931,63 @@ function ledger(g) {
   return box;
 }
 
+/* The pinned memo.
+ *
+ *  READ-ONLY UNTIL IT IS YOURS TO SIGN. Everybody in the room sees the same
+ *  words; only the two named sides get the button, and the third person — the
+ *  one who made the introduction — is told in one line that they are a witness
+ *  rather than left wondering why there is nothing to press.
+ */
+function dealPin(g) {
+  const d = g.deal;
+  const box = el("div", "dealpin");
+  box.append(el("p", "dlab", T("deal.pin")));
+  if (d.title) box.append(el("h3", "dtitle", d.title));
+  box.append(el("p", "dwho", T("deal.hires", { a: d.hires, b: d.provides })));
+
+  const rows = el("dl", "drows");
+  for (const f of ["what", "where", "when", "fee", "deposit", "covers", "cancel"]) {
+    if (!d[f]) continue;
+    rows.append(el("dt", null, T("deal." + f)), el("dd", null, d[f]));
+  }
+  box.append(rows);
+
+  /* WHO AGREED AND WHEN, as a line each. Not two ticks in a corner: the date
+     is half the value of the record and a tick has nowhere to put one. */
+  const marks = el("div", "dmarks");
+  const when = (at) => new Date(at).toLocaleDateString(undefined,
+    { day: "numeric", month: "short", year: "numeric" });
+  for (const side of [d.hires, d.provides]) {
+    const got = d.agreed.find((a) => a.who === side);
+    marks.append(el("p", got ? "dyes" : "dno",
+      got ? T("deal.agreedBy", { who: side, when: when(got.at) })
+          : T("deal.waiting", { who: side })));
+  }
+  if (d.agreed.length >= 2) marks.append(el("p", "dboth", T("deal.both")));
+  box.append(marks);
+
+  const meIs = g.meHandle && (g.meHandle === d.hires || g.meHandle === d.provides);
+  const already = d.agreed.some((a) => a.who === g.meHandle);
+  if (meIs && !already) {
+    const go = el("button", "dgo", T("deal.agree"));
+    go.type = "button";
+    go.addEventListener("click", async () => {
+      go.disabled = true;
+      const r = await fetch("/api/group/deal/agree", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, group: g.id }),
+      });
+      if (r.ok) load(); else go.disabled = false;
+    });
+    box.append(go);
+  } else if (!meIs) {
+    box.append(el("p", "dsay", T("deal.witness")));
+  }
+
+  box.append(el("p", "dlaw", T("deal.notlaw")));
+  return box;
+}
+
 function paintRoom(g) {
   $("title").textContent = g.name || nameOf(g);
   $("sub").textContent = T("grp.inIt", { n: g.who.length });
@@ -938,6 +1021,11 @@ function paintRoom(g) {
      the top of this room, and the bands panel steps aside. Two panels both
      telling somebody where they stand, disagreeing about the maths, is worse
      than either of them on its own. */
+  /* THE MEMO, ABOVE EVERYTHING. It is pinned because it is the thing both
+     sides will point at in three weeks, and a fact that has to be scrolled
+     back to is a fact that gets remembered differently by each of them. */
+  if (g.deal) box.append(dealPin(g));
+
   const slot = el("div", "pinslot");
   if (g.hand) box.append(slot);
   if (g.hand) {

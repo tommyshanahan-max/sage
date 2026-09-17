@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1560,3 +1560,24 @@ claire-video: ## Shoot the episodes with Seedance: make claire-video [GO=1]
 	@# picks up exactly those.
 	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" \
 	  --entrypoint node claire /seed/claire-video.mjs "The Wife He Hired" $(if $(GO),--go,)
+
+deal: ## Pin the terms to a room: make deal ROOM=<id> HIRES="Claire" PROVIDES="Sasha" FEE="..." ...
+	@# THE ONE PLACE IN HERE WHERE A NAME IS NOT A FIRST NAME. On the board a
+	@# person is the handle they chose, so HIRES and PROVIDES are handles and
+	@# `make who` is the only place that knows them. A wrong one fails with
+	@# "not in that room", which is true and reads like the person is missing.
+	@#
+	@# Writing terms clears both agreements. There is no flag to keep them:
+	@# "they agreed" has to mean they agreed to these words.
+	@#
+	@# ROOM comes from `make groups`. The room itself is made by
+	@# `make group-invite WITH=... WHO=... FOR=...`, which mints the code and
+	@# the room together.
+	@test -n "$(ROOM)" || { echo 'Which room? `make groups` lists them.'; exit 1; }
+	@test -n "$(HIRES)" -a -n "$(PROVIDES)" || { \
+	  echo 'Both sides, by handle: make deal ROOM=... HIRES="Claire" PROVIDES="Sasha"'; exit 1; }
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" \
+	  -e ROOM="$(ROOM)" -e HIRES="$(HIRES)" -e PROVIDES="$(PROVIDES)" \
+	  -e TITLE="$(TITLE)" -e WHAT="$(WHAT)" -e WHERE="$(WHERE)" -e WHEN="$(WHEN)" \
+	  -e FEE="$(FEE)" -e DEPOSIT="$(DEPOSIT)" -e COVERS="$(COVERS)" -e CANCEL="$(CANCEL)" \
+	  --entrypoint node board /seed/deal.mjs

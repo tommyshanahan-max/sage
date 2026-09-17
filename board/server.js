@@ -8536,6 +8536,13 @@ app.get("/api/groups", notesOff, async (req, res) => {
          about the thing the ledger describes and everybody in it was put there
          on purpose. */
       hand: Boolean(g.hand),
+      /* THE MEMO, PINNED. Sent whole rather than as a flag with a second
+         fetch behind it: it is six short lines and it is the first thing
+         anybody opening this room needs to read. `me` is the reader's own
+         handle so the card can tell whether they are a party to it or a
+         witness, without the page having to work that out from faces. */
+      deal: g.deal || null,
+      meHandle: (board.people.find((q) => q.by === me) || {}).handle || "",
       /* CODES MINTED FOR THIS ROOM AND NOT YET SPENT, to whoever minted them.
        * They hold seats — see groupRoom and the note over POST /api/invite —
        * so a room of two can be full and the screen has to be able to say why
@@ -8628,6 +8635,75 @@ app.post("/api/group", notesOff, express.json({ limit: "8kb" }), async (req, res
     if (!g) return { error: "no" };
     board.groups.push(g);
     return { ok: true, id: g.id };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** The memo pinned to a room: what is being bought, and by whom.
+ *
+ *  WHO MAY WRITE IT: anybody in the room. Not only the maker — the person who
+ *  knows the fee is usually not the person who opened the conversation, and a
+ *  memo that has to be relayed through a third party is a memo with a typo in
+ *  the number.
+ *
+ *  EDITING CLEARS THE AGREEMENTS, and the card says so before the button is
+ *  pressed. "They agreed" has to mean they agreed to these words; carrying old
+ *  ticks onto new terms is the one thing this must never do, and it is the one
+ *  thing a naive implementation does by default.
+ */
+app.post("/api/group/deal", notesOff, express.json({ limit: "8kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.group || "");
+  if (!me || !/^[a-f0-9]{20}$/.test(id)) return res.status(400).json({ error: "no" });
+
+  const out = await change((board) => {
+    const g = board.groups.find((x) => x.id === id);
+    if (!g || !g.members.includes(me)) return { error: "no" };
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine) return { error: "no" };
+
+    const raw = req.body?.deal || {};
+    const deal = store.cleanDeal({ ...raw, by: me, at: new Date().toISOString(), agreed: [] });
+    if (!deal) return { error: "sides" };
+    /* Both sides have to be people in this room. A memo naming somebody who
+       cannot read it is a memo about a person who never agreed to anything. */
+    const handles = new Set(board.people.filter((q) => g.members.includes(q.by))
+      .map((q) => q.handle).filter(Boolean));
+    if (!handles.has(deal.hires) || !handles.has(deal.provides)) return { error: "sides" };
+    if (deal.hires === deal.provides) return { error: "sides" };
+
+    g.deal = deal;
+    Object.assign(g, store.cleanGroup(g));
+    return { ok: true };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** Agreeing to it. Append-only, once per person, and the row carries the time.
+ *
+ *  There is no un-agree. Somebody who changes their mind says so in the room,
+ *  where the other side can read it — a tick that can be quietly removed is
+ *  worth nothing to the person relying on it. */
+app.post("/api/group/deal/agree", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.group || "");
+  if (!me || !/^[a-f0-9]{20}$/.test(id)) return res.status(400).json({ error: "no" });
+
+  const out = await change((board) => {
+    const g = board.groups.find((x) => x.id === id);
+    if (!g || !g.deal || !g.members.includes(me)) return { error: "no" };
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine?.handle) return { error: "profile" };
+    /* Only the two named sides. Everybody else in the room can read it and
+       nobody else can be recorded as having agreed to it, because a room can
+       hold an introducer and an introducer is not a party. */
+    if (mine.handle !== g.deal.hires && mine.handle !== g.deal.provides) return { error: "side" };
+    if (g.deal.agreed.some((a) => a.who === mine.handle)) return { ok: true };
+    g.deal.agreed.push({ who: mine.handle, at: new Date().toISOString() });
+    Object.assign(g, store.cleanGroup(g));
+    return { ok: true };
   });
   if (out?.error) return res.status(400).json(out);
   res.json(out);
