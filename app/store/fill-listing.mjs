@@ -321,33 +321,37 @@ async function privacy(appId, L) {
       break;
     } catch (e) { said = said || e.message.split("\n").pop().trim(); cats = null; }
   }
+  /* THE VOCABULARY NOT BEING LISTABLE IS NOT THE SAME AS THE FEATURE NOT
+     EXISTING, and I called it that way once already. A collection can be
+     closed to GET while the resource that uses its ids is wide open, so the
+     only test that settles it is a write. Category ids are Apple's own
+     constants, they are in listing.json, and a POST that is refused will say
+     whether it is refused because the path is wrong or because the id is.
+     If the vocabulary did come down, the ids are checked against it first —
+     that is better — but its absence is no longer the end of the road. */
   if (!cats) {
-    did.push("  skipped    app privacy         not in this API — web form, README.md has the rows");
-    did.push(`             tried: ${VOCAB.map((v) => v[0]).join(", ")}`);
-    did.push(`             Apple said: ${said}`);
-    return;
-  }
+    did.push(`  probing    app privacy         no vocabulary endpoint (${VOCAB.length} names tried) — trying the write anyway`);
+    cats = null;
+  } else {
   did.push(`  found      app privacy         ${cats.data.length} categories, ${purposes.data.length} purposes`);
 
-  const have = new Set(cats.data.map((c) => c.id));
-  const missing = P.rows.map((r) => r.category).filter((c) => !have.has(c));
-  if (missing.length) {
-    did.push(`  failed     app privacy         Apple does not know: ${missing.join(", ")}`);
-    did.push(`             it does know: ${[...have].join(", ").slice(0, 300)}`);
-    return;
-  }
-  if (!purposes.data.some((x) => x.id === P.purpose)) {
-    did.push(`  failed     app privacy         no purpose ${P.purpose}; it has: ${purposes.data.map((x) => x.id).join(", ")}`);
-    return;
-  }
-  for (const pr of P.protections) {
-    if (!protections.data.some((x) => x.id === pr)) {
-      did.push(`  failed     app privacy         no protection ${pr}; it has: ${protections.data.map((x) => x.id).join(", ")}`);
+    const have = new Set(cats.data.map((c) => c.id));
+    const missing = P.rows.map((r) => r.category).filter((c) => !have.has(c));
+    if (missing.length) {
+      did.push(`  failed     app privacy         Apple does not know: ${missing.join(", ")}`);
+      did.push(`             it does know: ${[...have].join(", ").slice(0, 300)}`);
       return;
     }
+    did.push(`  found      app privacy         ${cats.data.length} categories, ${purposes.data.length} purposes`);
   }
 
-  const already = await get(`/apps/${appId}/appDataUsages?limit=200`);
+  let already;
+  try { already = await get(`/apps/${appId}/appDataUsages?limit=200`); }
+  catch (e) {
+    did.push("  failed     app privacy         no appDataUsages on this app either — web form");
+    did.push(`             Apple said: ${e.message.split("\n").pop().trim()}`);
+    return;
+  }
   if (already.data.length) {
     did.push(`  already    app privacy         ${already.data.length} rows declared — left alone`);
     return;
