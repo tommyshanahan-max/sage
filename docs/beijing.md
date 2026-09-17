@@ -5,6 +5,25 @@ built yet. It is waiting on one thing: a 对公账户 for 澳斯达（北京）�
 without which Aliyun will not verify the account, and without that there is no
 备案 and none of this can start.
 
+## Confirmed by the filing agent, 17 Sep 2026
+
+于海超, in WeChat, unprompted and in two lines:
+
+> 基于你目前的情况，是无法办理ICP许可证的。
+> 第一步，您需要在中国建一个网站（有域名）并办理ICP备案，而不是ICP许可证。
+> ICP备案在你的域名服务商那里就能直接做。
+
+So the warning at the bottom of this file is not a caution any more, it is a
+fact: the commercial 许可证 is out, the 备案 is the route, and it is filed
+through the registrar / host rather than through him. **Nothing that takes
+money can live on this domain**, and nothing said to a filing agent should
+suggest that it will — a second stage that sells services is a different
+filing, and mentioning it invites the wrong one.
+
+The first thing the domain has to serve is `china/index.html`: a login page
+that says what the site is, stores nothing, and hands the person to the board.
+It is written and waiting for a domain to sit on.
+
 ## Two problems, one filing
 
 **A link shared in WeChat shows a warning page.** WeChat checks the domain of

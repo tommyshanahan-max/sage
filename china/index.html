@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>交换</title>
+<meta name="description" content="会员制的介绍平台。写下你是做什么的、在找什么样的人。">
+<meta name="theme-color" content="#0B0D13">
+<!--
+  THE PAGE THE CHINA DOMAIN SERVES, AND THE WHOLE OF WHY IT EXISTS.
+
+  备案 requires a website. Not a plan for one — a domain, a mainland host, and
+  something at the address that matches what the filing says the site is. The
+  filing agent said it in one line on 17 Sep 2026: 第一步，您需要在中国建一个
+  网站（有域名）并办理ICP备案. This is that website.
+
+  IT IS A LOGIN PAGE AND IT IS NOT THE DOOR. board/public/enter.html is the
+  door — named, a code beside the link, a visible clock, spent on arrival —
+  and it is settled. This page does not ask for the code, does not post
+  anything, and does not decide anything. It says what the site is and hands
+  the person over. Two doors that both take codes would be two places for the
+  invite to be wrong.
+
+  IT STORES NOTHING, and that is the rule the whole Beijing arrangement is
+  built on — see docs/beijing.md. No form, no cookie, no localStorage, no
+  analytics, no beacon. There is nothing on this page that could write a row
+  even by accident, which is what makes "nothing of this is in China" a
+  sentence that can be said plainly.
+
+  NO EXTERNAL ANYTHING, for the reason landing/index.html gives: Google Fonts
+  and most CDNs are unreachable from the mainland, and one blocked stylesheet
+  leaves a visitor on an unstyled page. Every byte here is in this file.
+
+  NO MONEY ON THIS DOMAIN, EVER. The commercial ICP 许可证 is a different
+  document; foreign ownership in value-added telecom is capped and the agent
+  has now confirmed it is not obtainable as things stand. So this page sells
+  nothing, prices nothing, and mentions no transaction. Anything that takes
+  money lives somewhere else. If a future edit adds a price to this file, the
+  filing it sits under is the wrong one.
+
+  THE HANDOVER is the one link below, and it is written out in full rather
+  than built in script, so it works with JavaScript off — which is how a
+  reviewer's browser sometimes arrives.
+
+  WHAT IS STILL MISSING: the 备案 number itself, which does not exist until
+  the filing clears, and the 公安备案 number that follows within 30 days.
+  Both belong in the footer and both are checked. They are marked below.
+-->
+<style>
+  :root{
+    --paper:#0B0D13;
+    --card:#151925;
+    --edge:#232838;
+    --ink:#F2F4F8;
+    --ink-2:#A8B0C2;
+    --muted:#6F788C;
+    --gold:#D9A94E;
+    --serif:ui-serif,"Songti SC","Noto Serif CJK SC",Georgia,serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"PingFang SC",
+           "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  }
+  @media (prefers-color-scheme:light){
+    :root:not([data-theme="dark"]){
+      --paper:#EFF1F5;
+      --card:#FFFFFF;
+      --edge:#DDE2EA;
+      --ink:#161A22;
+      --ink-2:#4A5262;
+      --muted:#7B8496;
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;padding:0 20px;
+    background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:17px;line-height:1.7;
+    display:flex;flex-direction:column;align-items:center;
+    text-align:center;
+  }
+  /* margin-block:auto rather than justify-content on the body: the footer
+     carries the 备案 number and has to sit at the bottom, and an auto top
+     margin there would eat all the free space and push the page to the top. */
+  main{width:100%;max-width:26rem;padding:40px 0;margin-block:auto}
+  h1{
+    font-family:var(--serif);font-weight:600;
+    font-size:2.6rem;letter-spacing:.18em;
+    margin:0 0 18px;text-wrap:balance;
+  }
+  p.what{color:var(--ink-2);margin:0 auto 34px;max-width:20rem}
+  a.go{
+    display:block;padding:16px 20px;border-radius:12px;
+    background:var(--gold);color:#1A1405;
+    font-size:1.05rem;font-weight:600;letter-spacing:.06em;
+    text-decoration:none;
+  }
+  a.go:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+  p.note{color:var(--muted);font-size:.9rem;margin:20px 0 0}
+  footer{
+    /* At the bottom, which is where a 备案 number is looked for. */
+    color:var(--muted);font-size:.8rem;line-height:2;
+    padding:0 0 32px;
+  }
+  footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<main>
+  <h1>交换</h1>
+  <p class="what">写下你是做什么的、在找什么样的人。剩下的交给我们。</p>
+
+  <!-- THE HANDOVER. One link, written out, no script.
+       The board lives outside the mainland; this domain serves this page and
+       nothing else. Change the address here and nowhere else. -->
+  <a class="go" href="https://liuxuesheng.io/enter">登录</a>
+
+  <p class="note">交换是邀请制的，登录需要邀请码。</p>
+</main>
+
+<footer>
+  <!-- 备案号 goes here the day the filing clears, linked to beian.miit.gov.cn
+       as required. 公安备案号 follows within 30 days, on its own line. -->
+  <div>澳斯达（北京）经济贸易有限公司</div>
+</footer>
+
+</body>
+</html>
