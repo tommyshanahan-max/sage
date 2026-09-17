@@ -39,7 +39,13 @@
     "PORTRAITS AND SEEDANCE 2.5. Tom watched the first five and the actors kept",
     "changing. `videoModel` moves this series off the mini endpoint, and every",
     "person in `cast` gets a portrait that each of their shots carries as a",
-    "reference image — tested on shot 2.6 first, and both faces held."
+    "reference image — tested on shot 2.6 first, and both faces held.",
+    "",
+    "EVERY SHOT NAMES EVERYBODY IN IT. 'He shakes his head' carried no portrait,",
+    "and episode 2 got a different man for one shot. `wear` says what each person",
+    "has on in an episode — without it the portraits' plain grey top turned up",
+    "in the diner. Set from episode 6, which had not been shot when this was",
+    "found; 1 to 5 keep what they have rather than being paid for twice."
   ],
   "series": {
     "title": "The Wife He Hired",
@@ -176,7 +182,7 @@
       "shot": "A woman in a diner uniform stands beside a booth at night, holding a notepad. A well-dressed man seated opposite slides a folded document across the table towards her. Neon window light, steam, close on her hand not taking it.",
       "shots": [
         "Night, the diner nearly empty. The man in the charcoal overcoat pushes through the door, rain on his shoulders, and sits in the corner booth.",
-        "The young woman walks over with a notepad and asks: \"Coffee?\" He does not open the menu. He shakes his head once.",
+        "The young woman walks over to the booth with a notepad and asks: \"Coffee?\" The man, seated, does not open the menu. The man shakes his head once.",
         "Close on the man's hands as he takes a folded document from inside his coat and lays it flat on the diner table.",
         "The young woman in her diner uniform stands beside the booth at night, holding a notepad. The man, seated, slides a folded document across the table towards her. Neon window light, steam, close on her hand not taking it.",
         "Close on the young woman's face as she reads the first line, pink and blue neon flickering across it.",
@@ -196,7 +202,7 @@
       "hook": "She threw the card away. Then the hospital called about the deposit.",
       "shots": [
         "The diner booth. The young woman pushes the folded document back across the table and says: \"No.\" The man in the charcoal overcoat does not move.",
-        "The young woman leans in, firmer: \"I said no.\" He nods slowly, as if she had agreed with him.",
+        "The young woman leans in, firmer: \"I said no.\" The man, seated in the booth, nods slowly, as if she had agreed with him.",
         "The man tucks a white business card under the salt shaker, stands, and leaves money for a coffee he never drank.",
         "Close on a business card under a salt shaker. The young woman's hand hovers over it, then sweeps it into the bin with the used napkins.",
         "Late night, the diner half dark. The young woman mops the floor alone and keeps glancing at the bin.",
@@ -243,7 +249,7 @@
         "Close on the young woman's hand lifting the pen. It is heavier than she expected, and her fingers tremble slightly.",
         "Close on the page as the young woman signs her name slowly on the line.",
         "The man finally looks up, only at the page, and signs beneath her in one fast stroke. Without looking at it, he slides a small old photograph into a folder and closes it.",
-        "The young woman stands and meets his eyes: \"You'll regret this.\" He answers evenly: \"I already do.\"",
+        "The young woman stands and meets the man's eyes: \"You'll regret this.\" The man answers evenly: \"I already do.\"",
         "Wide shot: the young woman walks back across the bright lobby alone towards the glass doors, and they close behind her."
       ]
     },
@@ -266,7 +272,10 @@
         "The young woman slides the ring on. It fits perfectly. She stares at her own hand.",
         "The young woman looks up at the ceiling as faint footsteps cross the floor above.",
         "Night, a dim hallway. The young woman stands at the foot of a staircase that rises into darkness, one hand on the rail, and does not climb."
-      ]
+      ],
+      "wear": {
+        "the young woman": "a dark green wool coat over a plain white blouse"
+      }
     },
     {
       "n": 7,
@@ -286,7 +295,12 @@
         "The grandmother sees it, and the corner of her mouth lifts into a smile.",
         "Close on the grandmother taking a small notebook from under her blanket and writing one line.",
         "The couple leave the conservatory. Behind them the grandmother taps the notebook with her pen, eyes narrowed and amused."
-      ]
+      ],
+      "wear": {
+        "the young woman": "a simple pale yellow day dress",
+        "the man": "a dark navy suit, no tie",
+        "the grandmother": "a cream cardigan over a silk blouse, a tartan blanket on her knees"
+      }
     },
     {
       "n": 8,
@@ -306,7 +320,13 @@
         "The woman in emerald says softly: \"I know you.\"",
         "Close on the woman in emerald: \"You poured my champagne three years ago. I sent it back.\"",
         "The young woman's glass trembles in her hand. Across the room, the grandmother watches both of them from her wheelchair."
-      ]
+      ],
+      "wear": {
+        "the young woman": "a borrowed navy evening dress",
+        "the man": "a black tuxedo",
+        "the woman in emerald": "an emerald silk evening dress",
+        "the grandmother": "a black velvet jacket"
+      }
     },
     {
       "n": 9,
@@ -320,13 +340,18 @@
         "A party. Guests gather around the young woman and the man, and a smiling guest asks: \"So how did you two meet?\"",
         "The young woman opens her mouth and nothing comes. The man in the tuxedo rests a hand lightly on her back.",
         "The man starts talking easily, smiling at the guests: \"A rainy night. A little diner.\"",
-        "The guests laugh. He tells the story with his hands, warm and fluent. The young woman stares at him.",
-        "Close on the young woman as she realises he is telling it better than it happened.",
+        "The guests laugh. The man tells the story with his hands, warm and fluent. The young woman, beside him, stares at him.",
+        "Close on the young woman as she realises the man beside her is telling it better than it happened. The man is soft-focus in the foreground.",
         "At the edge of the crowd, the woman in emerald watches without smiling.",
-        "Later, a quiet balcony above the city lights. The young woman turns to him: \"Why did you do that?\"",
+        "Later, a quiet balcony above the city lights. The young woman turns to the man: \"Why did you do that?\"",
         "The man looks out at the city and says: \"I don't know.\"",
         "Close on the young woman and the man side by side on a dark balcony, not looking at each other. Hold on the silence."
-      ]
+      ],
+      "wear": {
+        "the young woman": "a borrowed navy evening dress",
+        "the man": "a black tuxedo",
+        "the woman in emerald": "an emerald silk evening dress"
+      }
     },
     {
       "n": 10,
@@ -346,7 +371,11 @@
         "She whispers: \"I have never seen this page.\" The man turns slowly to look at her.",
         "Behind them on the desk stands a framed photograph. The camera pushes slowly in: a party three years ago, the man in the foreground, and behind him a young waitress holding a tray.",
         "Close on the photograph: the waitress is the young woman, three years younger. Hold on her face, then cut to black."
-      ]
+      ],
+      "wear": {
+        "the young woman": "a plain white blouse and dark trousers",
+        "the man": "a charcoal suit"
+      }
     }
   ]
 }

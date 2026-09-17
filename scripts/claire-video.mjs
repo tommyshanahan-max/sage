@@ -211,15 +211,20 @@ const whoIn = (line) => {
   const low = " " + line.toLowerCase();
   return Object.keys(c).filter((k) => new RegExp("\\b" + k.toLowerCase() + "\\b").test(low));
 };
-const castFor = (line, withRefs) => {
+/* WHAT THEY HAVE ON. A reference image carries its clothes with it, and the
+   portraits' plain grey top turned up in the diner. An episode's `wear` names
+   each person's costume, and the prompt says to take only the face. */
+const castFor = (line, withRefs, wear) => {
   const c = series.cast;
   if (!c) return "";
   if (typeof c === "string") return c.trim();
   const who = whoIn(line);
   if (!who.length) return "";
   if (!withRefs) return "The people in this shot look like this: " + who.map((k) => c[k]).join("; ") + ". Nobody else appears.";
-  return who.map((k, i) => k.charAt(0).toUpperCase() + k.slice(1) + " is the person in reference image " + (i + 1)
-    + " (" + c[k].replace(/^the [a-z ]+? is /, "") + ").").join(" ")
+  return (wear ? "Take only each person's face and hair from their reference image; their clothes are as written here. " : "")
+    + who.map((k, i) => k.charAt(0).toUpperCase() + k.slice(1) + " is the person in reference image " + (i + 1)
+    + " (" + c[k].replace(/^the [a-z ]+? is /, "") + ")"
+    + (wear && wear[k] ? ", wearing " + wear[k] : "") + ".").join(" ")
     /* "Nobody else" was wrong for the lawyer, the housekeeper and forty
        guests; what matters is that no other lead turns up uninvited. */
     + " No other main character appears.";
@@ -282,7 +287,7 @@ for (const e of eps) {
        than not at all — and named so that it is reshot once they do. */
     const withRefs = REFS && who.every((k) => portraits[k]);
     const refs = withRefs ? who.map((k) => portraits[k].url) : [];
-    const prompt = [LOOK, castFor(line, withRefs), line].filter(Boolean).join(" ");
+    const prompt = [LOOK, castFor(line, withRefs, e.wear), line].filter(Boolean).join(" ");
     const h = hash([prompt, VIDEO_MODEL, ...who.map((k) => withRefs ? portraits[k].h : "")].join("|"));
     const file = PARTS + "/" + series.id + "-" + String(e.n).padStart(2, "0") + "-" + (i + 1) + "-" + h + ".mp4";
     shots.push({ i: i + 1, prompt, refs, h, file, have: await exists(file) });

@@ -162,6 +162,7 @@ export function cleanEpisode(raw, seriesId, was = null) {
        from the row being edited. */
     poster: was?.poster || "",
     shots: Array.isArray(was?.shots) ? was.shots : [],
+    wear: was?.wear || null,
     seconds: Math.max(0, Math.min(3600, Number(raw.seconds) || 0)),
     at: was?.at || new Date().toISOString(),
   };
