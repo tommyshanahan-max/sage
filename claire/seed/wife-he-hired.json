@@ -11,7 +11,9 @@
     "EPISODE 10 IS THE WALL. freeThrough is 10, so ten is the last free one and",
     "its closing line is the sentence the business runs on. It has to be the",
     "worst possible moment to be asked for money and the one moment where being",
-    "asked is bearable — she cannot walk away, and neither can they."
+    "asked is bearable — she cannot walk away, and neither can they.",
+    "",
+    "Episodes 2, 4 and 6 carry a `shot` line as well as a beat. Seedance refused those three beats as possibly copyright-related and gave no reason; the shot line describes the same moment as a camera setup, with no names and no story in it. The beat is unchanged, because the beat is the writing."
   ],
   "series": {
     "title": "The Wife He Hired",
@@ -26,70 +28,93 @@
   },
   "episodes": [
     {
-      "n": 1, "act": 1, "function": "ordinary world",
+      "n": 1,
+      "act": 1,
+      "function": "ordinary world",
       "title": "Double Shift",
       "seconds": 88,
       "beat": "Nora works the diner's close and the hospital's open. Her sister Mia has eleven weeks. The letter on the fridge says the surgery is not covered.",
       "hook": "Eleven weeks, and a number at the bottom of the page she reads twice."
     },
     {
-      "n": 2, "act": 1, "function": "inciting incident",
+      "n": 2,
+      "act": 1,
+      "function": "inciting incident",
       "title": "Booth Nine",
       "seconds": 92,
       "beat": "A man in a coat that costs a year of her rent sits in her section, does not order, and slides a contract across the table.",
-      "hook": "\"Ninety days. Say yes before I change my mind.\""
+      "hook": "\"Ninety days. Say yes before I change my mind.\"",
+      "shot": "A woman in a diner uniform stands beside a booth at night, holding a notepad. A well-dressed man seated opposite slides a folded document across the table towards her. Neon window light, steam, close on her hand not taking it."
     },
     {
-      "n": 3, "act": 1, "function": "debate",
+      "n": 3,
+      "act": 1,
+      "function": "debate",
       "title": "No",
       "seconds": 86,
       "beat": "She says no, twice, and means it. Adrian Cole does not argue; he leaves the contract on the table and his card under the salt.",
       "hook": "She threw the card away. Then the hospital called about the deposit."
     },
     {
-      "n": 4, "act": 1, "function": "debate",
+      "n": 4,
+      "act": 1,
+      "function": "debate",
       "title": "The Number",
       "seconds": 90,
       "beat": "At 2am she takes the contract out of the bin and flattens it. The fee is not close to the surgery. It is the surgery, exactly.",
-      "hook": "To the dollar. Nobody guesses a number to the dollar."
+      "hook": "To the dollar. Nobody guesses a number to the dollar.",
+      "shot": "A woman alone at a kitchen table at night, a single lamp on. She smooths out a creased sheet of paper and reads the last line. Close on her eyes, then on the paper. She puts a hand over her mouth."
     },
     {
-      "n": 5, "act": 1, "function": "act one turn",
+      "n": 5,
+      "act": 1,
+      "function": "act one turn",
       "title": "She Signs",
       "seconds": 94,
       "beat": "She signs in the lobby of a building she has only cleaned. He does not look up. The pen is heavier than she expected.",
       "hook": "\"You'll regret this.\" \"I already do.\""
     },
     {
-      "n": 6, "act": 2, "function": "rising",
+      "n": 6,
+      "act": 2,
+      "function": "rising",
       "title": "House Rules",
       "seconds": 89,
       "beat": "Separate rooms. No touching. No questions about the third floor. She is given a ring that fits perfectly and is not new.",
-      "hook": "It fit. Which meant somebody had measured her, and nobody ever had."
+      "hook": "It fit. Which meant somebody had measured her, and nobody ever had.",
+      "shot": "A woman walks down a wide corridor in a large modern house, carrying one small suitcase. A housekeeper opens a bedroom door and steps back. The woman looks at a ring on her own hand. Cool daylight, long shadows, no dialogue."
     },
     {
-      "n": 7, "act": 2, "function": "rising",
+      "n": 7,
+      "act": 2,
+      "function": "rising",
       "title": "Grandmother Vivian",
       "seconds": 96,
       "beat": "Vivian Cole is dying and sharper than anyone in the room. She asks Nora what she takes in her coffee. Adrian answers for her.",
       "hook": "He was wrong. Vivian smiled anyway — and wrote something down."
     },
     {
-      "n": 8, "act": 2, "function": "pinch",
+      "n": 8,
+      "act": 2,
+      "function": "pinch",
       "title": "Camille",
       "seconds": 93,
       "beat": "The engagement party's guest list arrives in person. Camille Vance holds a glass she does not drink from and looks at Nora for a beat too long.",
       "hook": "\"I know you. You poured my champagne three years ago and I sent it back.\""
     },
     {
-      "n": 9, "act": 2, "function": "rising",
+      "n": 9,
+      "act": 2,
+      "function": "rising",
       "title": "He Lies For Her",
       "seconds": 91,
       "beat": "Adrian invents a history for them in front of forty people, fluently, and it is better than the real one. Afterwards neither of them can explain it.",
       "hook": "\"Why did you do that?\" \"I don't know.\" It was the first true thing he had said to her."
     },
     {
-      "n": 10, "act": 2, "function": "rising",
+      "n": 10,
+      "act": 2,
+      "function": "rising",
       "title": "The Affidavit",
       "seconds": 99,
       "beat": "Vivian's lawyer reads the clause: if the marriage is a sham, the estate goes to Camille. Then he says an affidavit swearing exactly that was filed this morning — and slides it across the table. On the third page, in the box marked deponent, is Nora's signature. She has never seen the page before in her life. Behind her, the photograph from the engagement party sits on Vivian's desk, and in it, three years ago, Nora is standing behind Adrian holding a tray.",

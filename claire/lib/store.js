@@ -111,6 +111,14 @@ export function cleanEpisode(raw, seriesId, was = null) {
     act: [1, 2, 3].includes(Number(raw.act)) ? Number(raw.act) : 0,
     function: FUNCTIONS.includes(fn) ? fn : "",
     beat: clean(raw.beat, 600),
+    /* WHAT THE CAMERA SEES, WHEN THAT HAS TO DIFFER FROM WHAT HAPPENS.
+       Seedance refused three of ten beats as "possibly related to copyright
+       restrictions" — no reason given and no way to appeal, and the beats in
+       question were ordinary. A beat is the writer's record and should not be
+       rewritten to please a filter; `shot` is the sentence handed to the
+       generator instead, and it is empty for the nine episodes in ten where
+       the beat is fine on its own. */
+    shot: clean(raw.shot, 600),
     title: clean(raw.title, 90),
     hook: clean(raw.hook, 400),
     url: /^https?:\/\/\S{3,500}$/.test(String(raw.url || "")) ? String(raw.url).trim() : "",

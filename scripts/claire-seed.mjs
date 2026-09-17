@@ -63,7 +63,7 @@ for (const e of seed.episodes) {
   b.episodes.push({
     id: newId(), series: s.id,
     n: e.n, title: e.title, hook: e.hook || "",
-    act: e.act || 0, function: e.function || "", beat: e.beat || "",
+    act: e.act || 0, function: e.function || "", beat: e.beat || "", shot: e.shot || "",
     url: e.url || "", seconds: e.seconds || 90,
     at: new Date().toISOString(),
   });

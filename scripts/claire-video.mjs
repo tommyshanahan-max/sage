@@ -96,7 +96,11 @@ if (!GO) {
 await mkdir(OUT, { recursive: true });
 
 for (const e of eps) {
-  const prompt = LOOK + " " + (e.beat || e.title) + " The shot ends on: " + (e.hook || e.title);
+  /* `shot` wins where it exists. Three of the first ten beats were refused by
+     the generator with no reason given, and the answer to that is a sentence
+     written for the camera rather than a beat bent to fit a filter. */
+  const prompt = LOOK + " " + (e.shot || e.beat || e.title)
+    + (e.shot ? "" : " The shot ends on: " + (e.hook || e.title));
   process.stdout.write("  " + String(e.n).padStart(2) + "  " + e.title + " ... ");
   try {
     const task = await ark("/api/v3/contents/generations/tasks", {
