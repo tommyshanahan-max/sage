@@ -15,6 +15,7 @@
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import { randomUUID, createHash } from "node:crypto";
 import path from "node:path";
+import { statSync, readFileSync } from "node:fs";
 
 export const newId = () => randomUUID().replace(/-/g, "").slice(0, 16);
 
@@ -31,6 +32,27 @@ const EMPTY = { series: [], episodes: [], viewers: [], unlocks: [], plays: [] };
 
 let FILE = "";
 let cache = null;
+let seen = 0;
+
+/* THE FILE WINS WHEN SOMETHING ELSE WROTE IT. `make claire-video` and `make
+   claire-seed` write this file from another container while the server is
+   running. The server used to keep its own copy for good, and the next
+   write — a viewer's place, every five seconds while they watch — put that
+   stale copy back over the top: episode 1's ninety-second cut was joined,
+   saved, and gone again before the restart that was meant to show it. So
+   every read checks the file's time first and takes the newer one. A stat is
+   microseconds; the catalogue is small. */
+function fresh() {
+  if (!FILE) return;
+  try {
+    const m = statSync(FILE).mtimeMs;
+    if (m <= seen) return;
+    const next = JSON.parse(readFileSync(FILE, "utf8"));
+    for (const k of Object.keys(EMPTY)) if (!Array.isArray(next[k])) next[k] = [];
+    cache = next;
+    seen = m;
+  } catch { /* mid-rename or unreadable: keep what we have */ }
+}
 let writing = Promise.resolve();
 
 export async function open(dir) {
@@ -39,19 +61,22 @@ export async function open(dir) {
   try { cache = JSON.parse(await readFile(FILE, "utf8")); }
   catch { cache = structuredClone(EMPTY); }
   for (const k of Object.keys(EMPTY)) if (!Array.isArray(cache[k])) cache[k] = [];
+  try { seen = statSync(FILE).mtimeMs; } catch { /* no file yet */ }
   return cache;
 }
 
-export const read = () => cache;
+export const read = () => { fresh(); return cache; };
 
 /** Every write goes through here, serialised, and lands by rename.
  *  A half-written catalogue is the one failure that loses everything at once. */
 export function change(fn) {
   const next = writing.then(async () => {
+    fresh();
     const out = fn(cache);
     const tmp = FILE + ".tmp";
     await writeFile(tmp, JSON.stringify(cache, null, 2));
     await rename(tmp, FILE);
+    try { seen = statSync(FILE).mtimeMs; } catch { /* just written */ }
     return out;
   });
   writing = next.catch(() => {});
@@ -142,9 +167,9 @@ export function cleanEpisode(raw, seriesId, was = null) {
 }
 
 export const episodesOf = (id) =>
-  cache.episodes.filter((e) => e.series === id).sort((a, b) => a.n - b.n);
+  read().episodes.filter((e) => e.series === id).sort((a, b) => a.n - b.n);
 
-export const seriesById = (id) => cache.series.find((s) => s.id === id) || null;
+export const seriesById = (id) => read().series.find((s) => s.id === id) || null;
 
 /** Is this episode open to this viewer?
  *
@@ -154,12 +179,12 @@ export const seriesById = (id) => cache.series.find((s) => s.id === id) || null;
 export function canWatch(viewerId, series, ep) {
   if (!series.live) return false;
   if (ep.n <= series.freeThrough) return true;
-  return cache.unlocks.some((u) =>
+  return read().unlocks.some((u) =>
     u.by === viewerId && u.series === series.id && (u.whole || u.ep === ep.id));
 }
 
 export function viewer(id) {
-  return cache.viewers.find((v) => v.by === id) || null;
+  return read().viewers.find((v) => v.by === id) || null;
 }
 
 /** First arrival mints a row and a small pile of coins.
