@@ -348,6 +348,7 @@ else if (!KEY || !MODEL) {
   const queue = [...missing];
   const refused = [];
   let shot = 0;
+  let stopped = "";
   await Promise.all(Array.from({ length: AT_ONCE }, async () => {
     for (let job = queue.shift(); job; job = queue.shift()) {
       const tag = "  " + String(job.p.e.n).padStart(2) + "." + job.s.i;
@@ -367,12 +368,24 @@ else if (!KEY || !MODEL) {
       if (!job.s.have) {
         refused.push(job);
         console.log(tag + "  failed — " + String(last?.message).split("\n")[0].slice(0, 120));
+        /* AN ACCOUNT PROBLEM STOPS THE RUN. The first time BytePlus ran out of
+           credit, fifty-six more shots were sent into the same 403 and the log
+           told Tom to reword all of them. The reason is in the body, not the
+           status line, so it is said once, plainly, and the queue emptied. */
+        const why = String(last?.message).match(/"code":"(Account[A-Za-z]+|[A-Za-z]*Quota[A-Za-z]*|AuthenticationError|InvalidApiKey)"/);
+        if (why && !stopped) {
+          stopped = why[1];
+          queue.length = 0;
+          console.log("\n  STOPPED: the video account says " + stopped
+            + (stopped === "AccountOverdueError" ? " — the BytePlus balance is overdue. Top it up, then run this again." : ".") + "\n");
+        }
       }
     }
   }));
   console.log("");
   console.log("  " + shot + " of " + missing.length + " shots came back.");
-  if (refused.length) {
+  if (stopped) console.log("  Nothing is wrong with the shots: the account stopped the run (" + stopped + ").");
+  else if (refused.length) {
     console.log("  Refused or failed — reword these in the seed, reseed, and run again:");
     for (const j of refused) console.log("    episode " + j.p.e.n + ", shot " + j.s.i);
   }
