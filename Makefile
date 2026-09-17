@@ -1592,6 +1592,12 @@ app-state: ## Is the app submitted? Ask Apple, from your Mac:  make app-state
 	@#
 	@# Runs on the Mac for the same reason `listing` does: the .p8 lives there
 	@# and a key that travelled to the box would be a key in a chat log.
+	@#
+	@# IT FETCHES FIRST, like `listing`, so that asking the question is one
+	@# command rather than two — and so the answer is never given by a copy of
+	@# this script that is a week old.
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	  git fetch origin "$$branch" -q && git reset --hard -q "origin/$$branch"
 	@node app/store/state.mjs
 
 listing: ## Fill in the App Store listing from your Mac:  make listing PHONE="<your number>"
