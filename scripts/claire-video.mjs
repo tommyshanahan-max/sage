@@ -174,7 +174,23 @@ const series = b.series.find((s) => s.title === (process.argv[2] || "The Wife He
   || b.series[0];
 if (!series) { console.log("\n  No series in the catalogue. Run make claire-seed first.\n"); process.exit(0); }
 
-const cast = String(series.cast || "").trim();
+/* The cast is described per person, and a shot carries only the people it
+   names. One line describing everybody put the grandmother into diner shots,
+   and a generic description of the man is the likeliest reason seven of nine
+   shots with him in were refused as "copyright". A plain string still works. */
+const castFor = (line) => {
+  const c = series.cast;
+  if (!c) return "";
+  if (typeof c === "string") return c.trim();
+  const low = " " + line.toLowerCase();
+  const who = Object.entries(c).filter(([k]) => new RegExp("\\b" + k.toLowerCase() + "\\b").test(low)).map(([, v]) => v);
+  return who.length ? "The people in this shot look like this: " + who.join("; ") + ". Nobody else appears." : "";
+};
+const cast = series.cast;
+/* ONLY=2,5 shoots just those episodes — a test of a reworded episode should
+   cost that episode, not the whole run. Joins and stills still cover all. */
+const onlyArg = process.argv.find((a) => a.startsWith("--only="));
+const ONLY = onlyArg ? new Set(onlyArg.slice(7).split(",").map(Number).filter(Boolean)) : null;
 const eps = b.episodes.filter((e) => e.series === series.id).sort((a, c) => a.n - c.n);
 await mkdir(PARTS, { recursive: true });
 
@@ -186,7 +202,7 @@ for (const e of eps) {
     : [(e.shot || e.beat || e.title) + (e.shot ? "" : " The shot ends on: " + (e.hook || e.title))];
   const shots = [];
   for (const [i, line] of lines.entries()) {
-    const prompt = [LOOK, cast, line].filter(Boolean).join(" ");
+    const prompt = [LOOK, castFor(line), line].filter(Boolean).join(" ");
     const h = hash(prompt);
     const file = PARTS + "/" + series.id + "-" + String(e.n).padStart(2, "0") + "-" + (i + 1) + "-" + h + ".mp4";
     shots.push({ i: i + 1, prompt, h, file, have: await exists(file) });
@@ -195,7 +211,8 @@ for (const e of eps) {
   plan.push({ e, shots, name, done: e.url === "/v/" + name });
 }
 
-const missing = plan.flatMap((p) => p.shots.filter((s) => !s.have).map((s) => ({ p, s })));
+const missing = plan.filter((p) => !ONLY || ONLY.has(p.e.n))
+  .flatMap((p) => p.shots.filter((s) => !s.have).map((s) => ({ p, s })));
 const total = plan.reduce((n, p) => n + p.shots.length, 0);
 
 console.log("");
@@ -230,6 +247,7 @@ else if (!KEY || !MODEL) {
   process.exit(1);
 } else if (!GO) {
   for (const p of plan) {
+    if (ONLY && !ONLY.has(p.e.n)) continue;
     const n = p.shots.filter((s) => !s.have).length;
     if (n) console.log("  " + String(p.e.n).padStart(2) + "  " + p.e.title + " — " + n + " of " + p.shots.length + " shots to go");
   }

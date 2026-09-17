@@ -28,7 +28,13 @@
     "joined into one ninety-second episode by `make claire-video`. The people are",
     "never named in a shot — the series' `cast` line says what they look like,",
     "and is put in front of every one so the faces hold. Each episode's last",
-    "shot lands its hook, and the photograph is planted in 5 and paid off in 10."
+    "shot lands its hook, and the photograph is planted in 5 and paid off in 10.",
+    "",
+    "THE CAST IS PER PERSON, and only the people a shot names are described in it.",
+    "The first full run had seven of nine refusals in shots with the man in them,",
+    "all 'copyright restrictions'. A stock leading-man description probably drew a",
+    "face that looked like somebody real, so he has a beard and a scar now, and",
+    "nobody is described into a shot they are not in."
   ],
   "series": {
     "title": "The Wife He Hired",
@@ -40,7 +46,13 @@
     "bundleCents": 1999,
     "totalPlanned": 60,
     "live": true,
-    "cast": "Only the people this shot describes appear in it. When they appear they always look like this: the young woman is late twenties, slim, olive skin, dark brown hair in a low ponytail, tired dark eyes; the man is mid thirties, tall, clean-shaven, black hair swept back, still and watchful, in a charcoal overcoat or dark suit; the grandmother is late seventies, silver hair in a neat bun, cream cardigan, in a wheelchair, sharp eyes; the woman in emerald is early thirties, sleek blonde bob, emerald silk dress, composed; the younger sister is nineteen, thin and pale, short dark hair, hospital gown.",
+    "cast": {
+      "the young woman": "the young woman is late twenties, slim, olive skin, freckles across her nose, a small mole under her right eye, dark brown hair in a low ponytail, tired dark eyes",
+      "the man": "the man is mid thirties, lean, a close-cropped dark beard, a thin pale scar through his left eyebrow, short dark hair greying at the temples, still and watchful, in a charcoal overcoat or dark suit",
+      "the grandmother": "the grandmother is late seventies, silver hair in a neat bun, reading glasses on a chain, cream cardigan, in a wheelchair",
+      "the woman in emerald": "the woman in emerald is early thirties, a sleek copper-red bob, green eyes, an emerald silk dress, composed",
+      "the younger sister": "the younger sister is nineteen, thin and pale, short dark curly hair, a hospital gown"
+    },
     "arc": {
       "characters": [
         {
@@ -137,14 +149,14 @@
       "hook": "Eleven weeks, and a number at the bottom of the page she reads twice.",
       "shots": [
         "Night, a small roadside diner, rain on the window. Close on the young woman in a pale blue diner uniform wiping the counter; the clock behind her reads two minutes to midnight.",
-        "She pours the last coffee of the night for a tired trucker, smiles out of habit, and glances down at a missed call on her phone.",
-        "Dawn, a long hospital corridor. She walks fast, a raincoat over the diner uniform, pulling the tie out of her hair as she goes.",
+        "The young woman pours the last coffee of the night for a tired trucker, smiles out of habit, and glances down at a missed call on her phone.",
+        "Dawn, a long hospital corridor. The young woman walks fast, a raincoat over the diner uniform, pulling the tie out of her hair as she goes.",
         "A small hospital room. The younger sister sits up in bed, pale, and grins: \"You smell like fries.\" The young woman laughs and sits on the edge of the bed.",
-        "Close on their two hands together on a white blanket, a hospital wristband on the thin wrist. Soft morning light.",
+        "Close on the young woman's hand holding the younger sister's hand on a white blanket, a hospital wristband on the sister's thin wrist. Soft morning light.",
         "Morning, a tiny apartment kitchen. The young woman takes a letter from under a fridge magnet and unfolds it.",
-        "Close on the letter in her hands: a long column of figures, the heading out of focus. Her thumb stops at the bottom line.",
-        "She reads it a second time and sits down slowly on a kitchen chair, still in uniform, the light on her face.",
-        "Close-up: she folds the letter small, pushes it into her apron pocket, stands and ties the apron tight, jaw set."
+        "Close on a letter held in the young woman's hands: a long column of figures, the heading out of focus. Her thumb stops at the bottom line.",
+        "The young woman reads it a second time and sits down slowly on a kitchen chair, still in uniform, the light on her face.",
+        "Close-up: the young woman folds the letter small, pushes it into her apron pocket, stands and ties the apron tight, jaw set."
       ]
     },
     {
@@ -159,13 +171,13 @@
       "shots": [
         "Night, the diner nearly empty. The man in the charcoal overcoat pushes through the door, rain on his shoulders, and sits in the corner booth.",
         "The young woman walks over with a notepad and asks: \"Coffee?\" He does not open the menu. He shakes his head once.",
-        "Close on his hands as he takes a folded document from inside his coat and lays it flat on the table.",
-        "A woman in a diner uniform stands beside a booth at night, holding a notepad. A well-dressed man seated opposite slides a folded document across the table towards her. Neon window light, steam, close on her hand not taking it.",
-        "Close on her face as she reads the first line, pink and blue neon flickering across it.",
-        "He looks up at her for the first time, calm, and says: \"Ninety days. Married. Then you walk away.\"",
-        "She laughs once in disbelief and glances at the kitchen hatch, where the cook is watching.",
-        "He writes a number on a paper napkin and turns it to face her. Close on her eyes widening.",
-        "He stands, buttons his coat and says quietly: \"Say yes before I change my mind.\" He walks out into the rain; she stays by the booth with the document in her hand."
+        "Close on the man's hands as he takes a folded document from inside his coat and lays it flat on the diner table.",
+        "The young woman in her diner uniform stands beside the booth at night, holding a notepad. The man, seated, slides a folded document across the table towards her. Neon window light, steam, close on her hand not taking it.",
+        "Close on the young woman's face as she reads the first line, pink and blue neon flickering across it.",
+        "The man looks up at the young woman for the first time, calm, and says: \"Ninety days. Married. Then you walk away.\"",
+        "The young woman laughs once in disbelief and glances at the kitchen hatch, where the cook is watching.",
+        "The man writes a number on a paper napkin and turns it to face her. Close on her eyes widening.",
+        "The man stands, buttons his coat and says quietly: \"Say yes before I change my mind.\" He walks out into the rain; she stays by the booth with the document in her hand."
       ]
     },
     {
@@ -178,14 +190,14 @@
       "hook": "She threw the card away. Then the hospital called about the deposit.",
       "shots": [
         "The diner booth. The young woman pushes the folded document back across the table and says: \"No.\" The man in the charcoal overcoat does not move.",
-        "She leans in, firmer: \"I said no.\" He nods slowly, as if she had agreed with him.",
-        "He tucks a white business card under the salt shaker, stands, and leaves money for a coffee he never drank.",
-        "Close on the card under the salt shaker. Her hand hovers over it, then sweeps it into the bin with the used napkins.",
-        "Late night, the diner half dark. She mops the floor alone and keeps glancing at the bin.",
-        "Walking home under orange streetlights, hood up. Her phone buzzes in her pocket and she stops.",
-        "Close on her face lit by the phone as she answers: \"Yes, I'm her sister.\" Her expression falls.",
-        "Morning, a hospital billing counter. A clerk slides a form towards her; she reads it and grips the edge of the counter.",
-        "Back in the empty diner by daylight, she kneels by the bin, digs through it, and pulls out the white card. Hold on her face."
+        "The young woman leans in, firmer: \"I said no.\" He nods slowly, as if she had agreed with him.",
+        "The man tucks a white business card under the salt shaker, stands, and leaves money for a coffee he never drank.",
+        "Close on a business card under a salt shaker. The young woman's hand hovers over it, then sweeps it into the bin with the used napkins.",
+        "Late night, the diner half dark. The young woman mops the floor alone and keeps glancing at the bin.",
+        "Walking home under orange streetlights, hood up, the young woman stops. Her phone buzzes in her pocket and she stops.",
+        "Close on the young woman's face lit by the phone as she answers: \"Yes, I'm her sister.\" Her expression falls.",
+        "Morning, a hospital billing counter. A clerk slides a form towards the young woman; she reads it and grips the edge of the counter.",
+        "Back in the empty diner by daylight, the young woman kneels by the bin, digs through it, and pulls out the white card. Hold on her face."
       ]
     },
     {
@@ -199,14 +211,14 @@
       "shot": "A woman alone at a kitchen table at night, a single lamp on. She smooths out a creased sheet of paper and reads the last line. Close on her eyes, then on the paper. She puts a hand over her mouth.",
       "shots": [
         "Two in the morning, a small kitchen, one lamp on. The young woman sits at the table with a crumpled document and a cold mug of tea.",
-        "A woman alone at a kitchen table at night, a single lamp on. She smooths out a creased sheet of paper and reads the last line. Close on her eyes, then on the paper. She puts a hand over her mouth.",
-        "Close on her finger running down a column of figures, her lips moving silently.",
-        "She takes a folded hospital letter from her apron pocket and lays it beside the document. Close on the two pages side by side.",
-        "Close on her fingertip moving from one bottom line to the other. The two numbers are identical.",
-        "She sits back, stunned, and whispers: \"To the dollar.\"",
-        "She walks to a bedroom doorway and looks at an empty single bed with a worn stuffed rabbit on the pillow.",
-        "Back at the table, she turns the white business card over and over in her fingers.",
-        "Close-up: she picks up her phone, types a short message, her thumb hovering over send, the screen lighting her face. She presses it."
+        "The young woman alone at a kitchen table at night, a single lamp on. She smooths out a creased sheet of paper and reads the last line. Close on her eyes, then on the paper. She puts a hand over her mouth.",
+        "Close on the young woman's finger running down a column of figures, her lips moving silently.",
+        "The young woman takes a folded hospital letter from her apron pocket and lays it beside the document. Close on the two pages side by side.",
+        "Close on the young woman's fingertip moving from one bottom line to the other. The two numbers are identical.",
+        "The young woman sits back, stunned, and whispers: \"To the dollar.\"",
+        "The young woman walks to a bedroom doorway and looks at an empty single bed with a worn stuffed rabbit on the pillow.",
+        "Back at the table, the young woman turns the white business card over and over in her fingers.",
+        "Close-up: the young woman picks up her phone, types a short message, her thumb hovering over send, the screen lighting her face. She presses it."
       ]
     },
     {
@@ -219,14 +231,14 @@
       "hook": "\"You'll regret this.\" \"I already do.\"",
       "shots": [
         "Morning, the glass lobby of a tall office tower. The young woman walks in wearing her one good coat, looking up at the height of it.",
-        "A security guard nods her through. She glances at a cleaning cart parked by the lifts, and something like recognition crosses her face.",
+        "A security guard nods the young woman through. She glances at a cleaning cart parked by the lifts, and something like recognition crosses her face.",
         "A long marble table in a quiet corner of the lobby. The man in a charcoal suit sits reading papers and does not look up; a grey-haired lawyer stands beside him.",
-        "The lawyer lays the document and a heavy black fountain pen in front of her.",
-        "Close on her hand lifting the pen. It is heavier than she expected, and her fingers tremble slightly.",
-        "Close on the page as she signs her name slowly on the line.",
+        "The lawyer lays the document and a heavy black fountain pen on the marble table in front of the young woman.",
+        "Close on the young woman's hand lifting the pen. It is heavier than she expected, and her fingers tremble slightly.",
+        "Close on the page as the young woman signs her name slowly on the line.",
         "The man finally looks up, only at the page, and signs beneath her in one fast stroke. Without looking at it, he slides a small old photograph into a folder and closes it.",
-        "She stands and meets his eyes: \"You'll regret this.\" He answers evenly: \"I already do.\"",
-        "Wide shot: she walks back across the bright lobby alone towards the glass doors, and they close behind her."
+        "The young woman stands and meets his eyes: \"You'll regret this.\" He answers evenly: \"I already do.\"",
+        "Wide shot: the young woman walks back across the bright lobby alone towards the glass doors, and they close behind her."
       ]
     },
     {
@@ -240,14 +252,14 @@
       "shot": "A woman walks down a wide corridor in a large modern house, carrying one small suitcase. A housekeeper opens a bedroom door and steps back. The woman looks at a ring on her own hand. Cool daylight, long shadows, no dialogue.",
       "shots": [
         "A black car pulls up in front of a large modern house among tall trees. The young woman steps out holding one small suitcase.",
-        "A housekeeper, an older woman in grey, meets her at the front door and reads from a card: \"Separate rooms.\"",
+        "A housekeeper, an older woman in grey, meets the young woman at the front door and reads from a card: \"Separate rooms.\"",
         "Close on the card in the housekeeper's hand as she reads on: \"No touching. No questions about the third floor.\"",
-        "A woman walks down a wide corridor in a large modern house, carrying one small suitcase. A housekeeper opens a bedroom door and steps back. Cool daylight, long shadows, no dialogue.",
-        "A huge, white, empty bedroom. She sits on the edge of the bed, the suitcase unopened at her feet.",
-        "Close on a small velvet box resting on the pillow. She opens it: an old-fashioned gold ring, worn smooth.",
-        "She slides the ring on. It fits perfectly. She stares at her own hand.",
-        "She looks up at the ceiling as faint footsteps cross the floor above.",
-        "Night, a dim hallway. She stands at the foot of a staircase that rises into darkness, one hand on the rail, and does not climb."
+        "The young woman walks down a wide corridor in a large modern house, carrying one small suitcase. A housekeeper opens a bedroom door and steps back. Cool daylight, long shadows, no dialogue.",
+        "A huge, white, empty bedroom. The young woman sits on the edge of the bed, the suitcase unopened at her feet.",
+        "Close on a small velvet box resting on a pillow. The young woman opens it: an old-fashioned gold ring, worn smooth.",
+        "The young woman slides the ring on. It fits perfectly. She stares at her own hand.",
+        "The young woman looks up at the ceiling as faint footsteps cross the floor above.",
+        "Night, a dim hallway. The young woman stands at the foot of a staircase that rises into darkness, one hand on the rail, and does not climb."
       ]
     },
     {
@@ -279,9 +291,9 @@
       "beat": "The engagement party's guest list arrives in person. Camille Vance holds a glass she does not drink from and looks at Nora for a beat too long.",
       "hook": "\"I know you. You poured my champagne three years ago and I sent it back.\"",
       "shots": [
-        "Evening, a glittering party inside the house: string lights, guests in evening wear, a string quartet playing.",
+        "Evening, a glittering party inside a large modern house: string lights, guests in evening wear, a string quartet playing. The young woman and the man stand among the guests.",
         "The young woman, in a borrowed navy dress, stands stiffly beside the man in a black tuxedo, holding a glass she has not touched.",
-        "The front doors open and the woman in the emerald silk dress walks in. Heads turn.",
+        "The front doors open and the woman in emerald walks in. Heads turn.",
         "The woman in emerald takes a glass of champagne from a passing tray and crosses the room without drinking it.",
         "She stops in front of the young woman and looks at her a beat too long.",
         "Close on the young woman's face, trying to place her.",
@@ -299,15 +311,15 @@
       "beat": "Adrian invents a history for them in front of forty people, fluently, and it is better than the real one. Afterwards neither of them can explain it.",
       "hook": "\"Why did you do that?\" \"I don't know.\" It was the first true thing he had said to her.",
       "shots": [
-        "The party. Guests gather around the couple and a smiling man asks: \"So how did you two meet?\"",
+        "A party. Guests gather around the young woman and the man, and a smiling guest asks: \"So how did you two meet?\"",
         "The young woman opens her mouth and nothing comes. The man in the tuxedo rests a hand lightly on her back.",
-        "He starts talking easily, smiling at the guests: \"A rainy night. A little diner.\"",
+        "The man starts talking easily, smiling at the guests: \"A rainy night. A little diner.\"",
         "The guests laugh. He tells the story with his hands, warm and fluent. The young woman stares at him.",
         "Close on the young woman as she realises he is telling it better than it happened.",
         "At the edge of the crowd, the woman in emerald watches without smiling.",
         "Later, a quiet balcony above the city lights. The young woman turns to him: \"Why did you do that?\"",
         "The man looks out at the city and says: \"I don't know.\"",
-        "Close on both faces in the dark, not looking at each other. Hold on the silence."
+        "Close on the young woman and the man side by side on a dark balcony, not looking at each other. Hold on the silence."
       ]
     },
     {
@@ -320,10 +332,10 @@
       "hook": "Her own name, in her own hand, on a page she had never touched. And Vivian had kept the photograph for three years.",
       "shots": [
         "A wood-panelled study. A grey-haired lawyer sits behind a large desk; the young woman and the man sit opposite.",
-        "The lawyer reads from a document: \"If the marriage is not genuine, the estate passes to the other beneficiary.\"",
-        "He takes out a second document: \"An affidavit was filed this morning, swearing exactly that.\" He slides it across the desk.",
+        "A wood-panelled study. A grey-haired lawyer reads from a document to the young woman and the man: \"If the marriage is not genuine, the estate passes to the other beneficiary.\"",
+        "The grey-haired lawyer takes out a second document and says to the young woman and the man: \"An affidavit was filed this morning, swearing exactly that.\" He slides it across the desk.",
         "The man picks it up and turns the pages, his jaw tightening.",
-        "Close on the third page: a box labelled deponent, with a handwritten signature in it.",
+        "Close on the third page of a legal document on a desk: a box labelled deponent, with a handwritten signature in it, and the young woman's fingertip touching it.",
         "The young woman leans in. Close on her face as she recognises her own handwriting.",
         "She whispers: \"I have never seen this page.\" The man turns slowly to look at her.",
         "Behind them on the desk stands a framed photograph. The camera pushes slowly in: a party three years ago, the man in the foreground, and behind him a young waitress holding a tray.",
