@@ -156,7 +156,27 @@ of 备案 review and the bank account that gates it.
 
 ## Order
 
-1. 对公账户 for the WFOE. **Blocks everything.** 法人 in person, most banks.
+0. **Replace the company documents.** 17 Sep 2026: Tom cannot find them. No bank
+   will open a 对公账户 without the 营业执照 and the chops, so this now sits in
+   front of the step that already blocked everything else.
+
+   Two different problems wearing one name:
+
+   - **The 营业执照** is a reprint. The AMR that issued it reissues it, in
+     Beijing largely through e窗通, usually after a published 遗失声明. Annoying,
+     not serious — the company's record is the registry's, not the paper's.
+   - **The chops — 公章, 财务专用章, 法人章 — are the serious one**, and not
+     because they are hard to replace. A company chop in somebody else's hand
+     signs contracts in the company's name, and the loss declaration is what
+     ends that exposure. If they are lost rather than mislaid, the declaration
+     is worth doing for its own sake and before anything else, whatever it
+     costs in time. Re-carving is a 公安局 matter and a PSB-approved engraver.
+
+   于海超 does company services and is already in the chat — this is his trade,
+   and asking him what he needs is one message rather than a week of counters.
+   What he will ask for is which documents are gone and who the 法人 is.
+
+1. 对公账户 for the WFOE. **Blocks everything else.** 法人 in person, most banks.
 2. Aliyun 企业实名认证 — 企业银行卡收款认证, the third option.
 3. Buy `thexchange.cn` with an 企业 information template. Do the domain's own
    实名认证 the same day: `.cn` is suspended after five days without it.
