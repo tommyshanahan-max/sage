@@ -23,6 +23,15 @@
 	@app path /app /app/
 	redir @app https://{$TOMSCODING_BRAND_APP_DOMAIN}/
 
+	# WHERE A VIDEO SENDS SOMEBODY. The YouTube channel points at the study
+	# screen rather than the homepage — a person who has just heard a legend
+	# wants the thing that teaches them, not a page about an app. laonei.co is
+	# the brand and the name said out loud, so the short address lives here and
+	# the app keeps its own hostname, which is what the installed apps and the
+	# App Store listing were built against.
+	@study path /study /study/
+	redir @study https://{$TOMSCODING_BRAND_APP_DOMAIN}/talk/study
+
 	@seat1 path /admin /admin/ /admin/1 /admin/1/
 	redir @seat1 https://{$TOMSCODING_PARTNER_DOMAIN}/
 
