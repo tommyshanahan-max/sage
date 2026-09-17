@@ -691,6 +691,9 @@ services:
       # up` catches as NOT PASSED TO CADDY rather than letting it bind a name
       # nobody can reach.
       TOMSCODING_BOARD_DEMO_DOMAIN: ${TOMSCODING_BOARD_DEMO_DOMAIN:-demo.localhost}
+      # ClaireTv's hostname, for docker/sites/claire.caddy. Same rule as every
+      # line here: a block reads its domain from this container's environment.
+      TOMSCODING_CLAIRE_DOMAIN: ${TOMSCODING_CLAIRE_DOMAIN:-claire.localhost}
       # The board's other name, SERVING the board rather than redirecting to
       # it — see docker/sites/board-also.caddy for why a redirect signs
       # everybody out. Never equal to _OLD_DOMAIN: one host, one mechanism,

@@ -1,0 +1,31 @@
+# ClaireTv — vertical micro-drama, and /partner, the console it is run from.
+#
+# Inert until TOMSCODING_CLAIRE_DOMAIN is set: unset, it binds an internal
+# .localhost name and requests no certificate. `claire.localhost` was checked
+# against every other fallback in this directory before it was written — two
+# site blocks on one address is a startup failure that takes every site here
+# down. Grep before changing it:
+#   grep -ho ':[a-z0-9-]*\.localhost' docker/sites/*.caddy | sort -u
+#
+# The domain also has to be passed to the caddy service by name in
+# docker-compose.yml, or this block binds its fallback and the real hostname
+# gets ERR_SSL_PROTOCOL_ERROR. It is.
+{$TOMSCODING_CLAIRE_DOMAIN:claire.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# The partner console is a door with one key on it. Nothing under it
+	# belongs in a search result.
+	@partner path /partner /partner/*
+	header @partner X-Robots-Tag "noindex, nofollow"
+
+	handle {
+		reverse_proxy claire:8080
+	}
+}
