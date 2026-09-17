@@ -28,6 +28,25 @@ for (const k of ["series", "episodes", "viewers", "unlocks", "plays"]) {
   if (!Array.isArray(b[k])) b[k] = [];
 }
 
+/* A SHELF FILE HAS NO EPISODES. Six coming-soon titles are six series rows and
+   nothing else, and making that a second script would mean two things to keep
+   in step. Same file format, `series` as a list instead of one. */
+if (Array.isArray(seed.series)) {
+  for (const row of seed.series) {
+    let x = b.series.find((y) => y.title === row.title);
+    if (!x) { x = { id: newId(), at: new Date().toISOString() }; b.series.push(x); }
+    Object.assign(x, row, { id: x.id, at: x.at });
+  }
+  const tmp0 = store + ".tmp";
+  await writeFile(tmp0, JSON.stringify(b, null, 2));
+  await rename(tmp0, store);
+  console.log("");
+  console.log("  " + seed.series.length + " on the shelf:");
+  for (const row of seed.series) console.log("    " + row.title);
+  console.log("");
+  process.exit(0);
+}
+
 let s = b.series.find((x) => x.title === seed.series.title);
 if (!s) {
   s = { id: newId(), at: new Date().toISOString() };

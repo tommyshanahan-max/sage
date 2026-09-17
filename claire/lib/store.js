@@ -80,6 +80,11 @@ export function cleanSeries(raw, was = null) {
     totalPlanned: Number.isFinite(total) ? Math.max(0, Math.min(999, total)) : 0,
     art: /^[1-6]$/.test(String(raw.art)) ? String(raw.art) : "1",
     live: Boolean(raw.live),
+    /* COMING SOON IS NOT THE SAME AS NOT LIVE. A draft is something the
+       partner is still writing and nobody should see; a coming-soon title is
+       a promise on the shelf, and the shelf is most of what makes a catalogue
+       look like a catalogue rather than a prototype with one thing in it. */
+    soon: Boolean(raw.soon),
     at: was?.at || new Date().toISOString(),
   };
 }

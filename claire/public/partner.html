@@ -64,6 +64,27 @@
   .say{font-size:13px;color:var(--ember);min-height:19px;margin:8px 0 0}
   .muted{color:var(--mute);font-size:13px}
   details summary{cursor:pointer;font-weight:600;font-size:14px;padding:4px 0}
+  .huge{
+    display:block;width:100%;padding:20px;margin:6px 0;font-size:19px;font-weight:700;
+    background:var(--ember);border-color:var(--ember);color:#fff;border-radius:12px;
+  }
+  .maker{margin:10px 0 0}
+  .maker textarea{min-height:150px;font-size:14px;line-height:1.5}
+  .money{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;margin:24px 0 10px}
+  .mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .mlab{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-bottom:5px}
+  .mbig{font:700 42px/1 Georgia,serif;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .pill.demo{background:#F2EBE7;color:var(--mute)}
+  .chart{display:flex;align-items:flex-end;gap:10px;height:140px;margin:34px 0 6px}
+  .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%}
+  .barwrap{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;position:relative}
+  .bar{width:100%;max-width:46px;background:#E7CFD4;border-radius:4px 4px 0 0;position:relative}
+  .bar.top{background:var(--ember)}
+  .peak{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);
+    white-space:nowrap;font-size:11px;font-weight:700;color:var(--ember);
+    font-variant-numeric:tabular-nums}
+  .dlab{font-size:11px;color:var(--mute)}
+  .mnums{border-top:1px solid var(--soft);padding-top:16px;margin-top:20px}
   .shape{display:flex;flex-wrap:wrap;gap:6px 18px;margin:14px 0 2px;padding-top:12px;border-top:1px solid var(--soft)}
   .chk{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ember)}
   .chk.ok{color:var(--mute)}
@@ -156,18 +177,30 @@ async function refresh() {
   draw(r.data);
 }
 
-function draw(data) {
+async function draw(data) {
   const w = document.getElementById("wrap"); w.textContent = "";
   w.append(Object.assign(el("h1"), { innerHTML: "<i>Claire</i>Tv" }));
-  w.append(el("p", "sub", data.series.length + " series · " + data.viewers + " viewers"));
+  w.append(el("p", "sub", "Welcome, Claire. What do you want to do?"));
+
+  /* THE ONE THING SOMEBODY CAME HERE TO DO, at the size of the decision.
+     Every other control on this page edits something that already exists;
+     this is the only one that makes something, so it is the only one big
+     enough to press without reading first. */
+  const make = el("button", "huge", "\uFF0B  Create a new show");
+  make.type = "button";
+  const maker = el("div", "maker"); maker.hidden = true;
+  make.addEventListener("click", () => {
+    maker.hidden = !maker.hidden;
+    if (!maker.hidden) maker.querySelector("input")?.focus();
+  });
+  w.append(make, maker);
+  maker.append(newShowForm());
+
+  w.append(await moneyCard());
 
   w.append(el("h2", null, "Catalogue"));
-  if (!data.series.length) w.append(el("p", "muted", "Nothing yet. Add the first series below."));
-
+  if (!data.series.length) w.append(el("p", "muted", "Nothing yet."));
   for (const s of data.series) w.append(seriesCard(s, data.featured));
-
-  w.append(el("h2", null, "Add a series"));
-  w.append(seriesForm(null));
 
   const grant = el("details");
   grant.append(el("summary", null, "Top up a viewer"));
@@ -299,6 +332,92 @@ function seriesForm(s) {
     else say.textContent = r.data.error === "title" ? "It needs a title." : "That did not save.";
   });
   f.append(el("div", null, " "), save, say);
+  return f;
+}
+
+/* ---- the money ---------------------------------------------------------- */
+async function moneyCard() {
+  const box = el("div", "money");
+  const r = await api("/api/partner/stats");
+  if (r.status !== 200) return box;
+  const d = r.data;
+  const cash = (c) => "$" + (c / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const head = el("div", "mhead");
+  const left = el("div");
+  left.append(el("div", "mlab", "Last 7 days"));
+  left.append(el("div", "mbig", cash(d.cents)));
+  head.append(left);
+  if (d.demo) head.append(el("span", "pill demo", "Demo data"));
+  box.append(head);
+
+  /* ONE SCALE, ONE HUE, AND THE ONLY NUMBER WRITTEN ON THE CHART IS THE DAY
+     THAT EARNED MOST. Seven bars of one series need no legend, and seven
+     numbers on seven bars is a table with extra steps. */
+  const max = Math.max(1, ...d.days.map((x) => x.cents));
+  const best = d.days.reduce((a, b) => (b.cents > a.cents ? b : a), d.days[0]);
+  const chart = el("div", "chart");
+  for (const day of d.days) {
+    const col = el("div", "col");
+    const wrapb = el("div", "barwrap");
+    const bar = el("div", "bar" + (day === best ? " top" : ""));
+    bar.style.height = Math.max(3, (day.cents / max) * 100) + "%";
+    if (day === best) bar.append(el("span", "peak", cash(day.cents)));
+    wrapb.append(bar);
+    col.append(wrapb);
+    col.append(el("span", "dlab", new Date(day.day + "T12:00:00").toLocaleDateString(undefined, { weekday: "short" })));
+    chart.append(col);
+  }
+  box.append(chart);
+
+  const nums = el("div", "nums mnums");
+  const n = (v, label) => { const x = el("div", "num"); x.append(el("b", null, v), el("span", null, label)); return x; };
+  nums.append(n(d.viewers.toLocaleString(), "viewers"));
+  nums.append(n(d.plays.toLocaleString(), "episodes played"));
+  nums.append(n(d.reached.toLocaleString(), "reached the wall"));
+  nums.append(n(d.unlocks.toLocaleString(), "unlocked"));
+  nums.append(n(d.reached ? Math.round((d.unlocks / d.reached) * 100) + "%" : "\u2014", "paid at the wall"));
+  box.append(nums);
+  return box;
+}
+
+/* ---- making a show -------------------------------------------------------
+   Title, logline, and the episodes underneath, in that order and on one
+   screen. A show is one idea; splitting it over three forms is how the idea
+   arrives in three pieces. */
+function newShowForm() {
+  const f = el("div", "card");
+  f.append(field("Title", "nsTitle", ""));
+  f.append(field("Logline \u2014 one sentence, and it is the thing that sells it", "nsLog", ""));
+  const r = el("div", "row");
+  r.append(field("Free through episode", "nsFree", 10, "number"));
+  r.append(field("Coins per episode", "nsCoins", 60, "number"));
+  r.append(field("Whole series (cents)", "nsBundle", 1999, "number"));
+  r.append(field("Episodes planned", "nsTotal", 60, "number"));
+  f.append(r);
+
+  f.append(Object.assign(el("label"), { textContent: "Episodes \u2014 one per line. Title, a pipe, then the line it ends on." }));
+  const ta = document.createElement("textarea");
+  ta.id = "nsEps"; ta.rows = 8;
+  ta.placeholder = "Double Shift | Eleven weeks, and a number at the bottom of the page she reads twice.\nBooth Nine | Ninety days. Say yes before I change my mind.";
+  f.append(ta);
+
+  const go = el("button", "go", "Create the show"); go.type = "button";
+  const say = el("p", "say");
+  go.addEventListener("click", async () => {
+    const v = (id) => document.getElementById(id).value;
+    const made = await api("/api/partner/series", {
+      title: v("nsTitle"), blurb: v("nsLog"),
+      freeThrough: Number(v("nsFree")), coinsPerEpisode: Number(v("nsCoins")),
+      bundleCents: Number(v("nsBundle")), totalPlanned: Number(v("nsTotal")),
+      genre: "billionaire", art: String(1 + Math.floor(Math.random() * 6)), live: false,
+    });
+    if (made.status !== 200) { say.textContent = "It needs a title."; return; }
+    if (v("nsEps").trim()) await api("/api/partner/bulk", { series: made.data.id, lines: v("nsEps") });
+    refresh();
+  });
+  f.append(go, say);
+  f.append(el("p", "muted", "Created as a draft. Set it live from its card below once the episodes have film on them."));
   return f;
 }
 

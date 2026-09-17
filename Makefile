@@ -1550,6 +1550,9 @@ claire-seed: ## Put the demo series into ClaireTv: make claire-seed [SEED=claire
 	  -v "$(CURDIR)/scripts:/seed:ro" -v "$(CURDIR)/claire/seed:/series:ro" \
 	  --entrypoint node claire /seed/claire-seed.mjs \
 	  "/series/$(notdir $(or $(SEED),wife-he-hired.json))" /data/claire.json
+	@$(COMPOSE) run --rm --no-deps -T \
+	  -v "$(CURDIR)/scripts:/seed:ro" -v "$(CURDIR)/claire/seed:/series:ro" \
+	  --entrypoint node claire /seed/claire-seed.mjs /series/coming-soon.json /data/claire.json
 
 claire-video: ## Shoot the episodes with Seedance: make claire-video [GO=1]
 	@# Costs real money per second, so it says what it would shoot and stops

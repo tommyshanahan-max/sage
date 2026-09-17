@@ -1,0 +1,54 @@
+{
+  "_note": [
+    "The shelf. Six titles, no episodes, none of them live — they exist so the",
+    "homepage reads as a catalogue rather than as one series and a lot of black.",
+    "",
+    "They are real slates rather than filler: each one is a genre this audience",
+    "already pays for, and each has the turn in the title. If any of them is",
+    "never made, taking it off the shelf is one flag in the console."
+  ],
+  "series": [
+    {
+      "title": "Bound to the Alpha I Betrayed",
+      "blurb": "She testified against him. Then the pack chose her as his mate.",
+      "genre": "alpha", "art": "2", "totalPlanned": 72,
+      "freeThrough": 10, "coinsPerEpisode": 60, "bundleCents": 1999,
+      "live": false, "soon": true
+    },
+    {
+      "title": "She Divorced Him and Bought the Company",
+      "blurb": "He kept the house. She kept the only thing he could not replace.",
+      "genre": "revenge", "art": "3", "totalPlanned": 96,
+      "freeThrough": 10, "coinsPerEpisode": 60, "bundleCents": 1999,
+      "live": false, "soon": true
+    },
+    {
+      "title": "The Nanny Was the Heiress",
+      "blurb": "Two weeks before the will is read, she takes a job in her own house.",
+      "genre": "billionaire", "art": "4", "totalPlanned": 60,
+      "freeThrough": 10, "coinsPerEpisode": 60, "bundleCents": 1999,
+      "live": false, "soon": true
+    },
+    {
+      "title": "My Husband's Other Funeral",
+      "blurb": "She buried him in March. In September, she watched him bury someone else.",
+      "genre": "revenge", "art": "5", "totalPlanned": 80,
+      "freeThrough": 10, "coinsPerEpisode": 60, "bundleCents": 1999,
+      "live": false, "soon": true
+    },
+    {
+      "title": "Sold to the Rival Heir",
+      "blurb": "Her father's debt came due on the morning of her sister's wedding.",
+      "genre": "billionaire", "art": "6", "totalPlanned": 64,
+      "freeThrough": 10, "coinsPerEpisode": 60, "bundleCents": 1999,
+      "live": false, "soon": true
+    },
+    {
+      "title": "The Janitor Owns the Building",
+      "blurb": "They fired him on Friday. On Monday he signed their paychecks.",
+      "genre": "revenge", "art": "2", "totalPlanned": 60,
+      "freeThrough": 10, "coinsPerEpisode": 60, "bundleCents": 1999,
+      "live": false, "soon": true
+    }
+  ]
+}

@@ -22,7 +22,7 @@
     display:flex;flex-direction:column;
     padding-top:env(safe-area-inset-top,0px);
   }
-  .grow{flex:1}
+  .grow{flex:1 0 auto}
   button{font:inherit;cursor:pointer}
   .hide{display:none!important}
 
@@ -68,6 +68,17 @@
   .bar{height:2px;background:rgba(247,242,244,.16);border-radius:2px;margin-top:7px;position:relative}
   .bar b{position:absolute;left:0;top:0;bottom:0;background:var(--ember);border-radius:2px}
 
+  .tagline{margin:0 16px 12px;font-size:13px;color:var(--mist);letter-spacing:.01em}
+  .feature .facts{margin:12px 0 0;font-size:11px;color:var(--mist);
+    font-variant-numeric:tabular-nums}
+  .foot{margin:26px 16px 30px;font-size:12px;line-height:1.6;color:var(--mist)}
+  .poster.soon{opacity:.62}
+  .poster.soon .art{filter:saturate(.5)}
+  .soonflag{
+    position:absolute;top:6px;left:6px;font-size:9px;font-weight:800;
+    letter-spacing:.1em;text-transform:uppercase;color:#0E0A0C;
+    background:#C9BFC3;padding:3px 7px;border-radius:3px;line-height:1;
+  }
   .strip{display:flex;gap:10px;padding:0 16px 8px;overflow-x:auto;scrollbar-width:none}
   .strip::-webkit-scrollbar{display:none}
   .poster{flex:0 0 96px;background:none;border:0;padding:0;color:inherit;text-align:left}
@@ -195,7 +206,12 @@ function tabs(on) {
   }
 }
 
-/* ---- home ---------------------------------------------------------------- */
+/* ---- home ----------------------------------------------------------------
+   A HOMEPAGE, NOT A SCREEN. One series is playable and six are on the shelf,
+   and the shelf is most of the work: a platform with one title on it reads as
+   a prototype no matter how good the title is. The honest way to fill it is to
+   show what is actually coming and mark it as coming, rather than to pad the
+   row with things that open onto nothing without saying so. */
 async function home() {
   const { data } = await api("/api/home");
   coins = data.coins ?? 0;
@@ -204,26 +220,36 @@ async function home() {
   const bar = el("div", "appbar");
   const mark = el("div", "mark");
   mark.innerHTML = '<i>Claire</i><s>Tv</s>';
-  const c = el("button", "coins", "◆ " + coins);
+  const c = el("button", "coins", "\u25C6 " + coins);
   c.type = "button";
   c.addEventListener("click", () => { location.hash = "#coins"; });
   bar.append(mark, c);
   v.append(bar);
 
+  v.append(el("p", "tagline", "Vertical drama. Ninety seconds an episode."));
+
   if (!data.featured) {
-    v.append(Object.assign(el("div", "empty"), { innerHTML: "<b>Nothing published yet</b>Add a series in the partner console and set it live." }));
+    const e = el("div", "empty");
+    e.append(el("b", null, "Nothing published yet"));
+    e.append(document.createTextNode("Add a series in the partner console and set it live."));
+    v.append(e);
     tabs("home"); return;
   }
 
   const f = data.featured;
   const feat = el("div", "feature a" + f.art);
-  feat.append(el("div", "badge", "New today"));
+  feat.append(el("div", "badge", "Now playing"));
   feat.append(el("h2", null, f.title));
-  feat.append(el("p", null, f.blurb || (f.totalPlanned || f.episodes) + " episodes"));
-  const play = el("button", "play", "▶ Episode 1 · free");
+  if (f.blurb) feat.append(el("p", null, f.blurb));
+  const play = el("button", "play", "\u25B6  Watch episode 1 \u00B7 free");
   play.type = "button";
   play.addEventListener("click", () => { location.hash = "#s/" + f.id; });
   feat.append(play);
+  const facts = el("p", "facts");
+  facts.textContent = f.episodes + " of " + (f.totalPlanned || f.episodes) + " out"
+    + " \u00B7 free through " + f.freeThrough
+    + (f.minutes ? " \u00B7 " + f.minutes + " min so far" : "");
+  feat.append(facts);
   v.append(feat);
 
   if (data.resume) {
@@ -234,7 +260,7 @@ async function home() {
     const t = el("div"); t.style.flex = "1"; t.style.minWidth = "0";
     t.append(el("h3", null, data.resume.series.title));
     const total = data.resume.ep.seconds || 0;
-    t.append(el("div", "sm", "Episode " + data.resume.ep.n + (total ? " · " + mmss(data.resume.at) + " of " + mmss(total) : "")));
+    t.append(el("div", "sm", "Episode " + data.resume.ep.n + (total ? " \u00B7 " + mmss(data.resume.at) + " of " + mmss(total) : "")));
     const bar2 = el("div", "bar"); const fill = el("b");
     fill.style.width = total ? Math.min(100, (data.resume.at / total) * 100) + "%" : "4%";
     bar2.append(fill); t.append(bar2);
@@ -243,20 +269,38 @@ async function home() {
     s.append(r); v.append(s);
   }
 
-  if (data.top.length) {
+  const shelf = (title, rows, soon) => {
+    if (!rows.length) return;
     const s = el("div", "sect");
-    s.append(el("div", "hd", "Top this week"));
+    s.append(el("div", "hd", title));
     const strip = el("div", "strip");
-    data.top.forEach((t, i) => {
-      const p = el("button", "poster"); p.type = "button";
+    for (const t of rows) {
+      const p = el("button", "poster" + (soon ? " soon" : "")); p.type = "button";
       const art = el("div", "art a" + t.art);
-      art.append(el("span", "rank", String(i + 1)));
-      p.append(art, el("p", null, t.title), el("span", null, (t.totalPlanned || t.episodes) + " eps"));
-      p.addEventListener("click", () => { location.hash = "#s/" + t.id; });
+      if (soon) art.append(el("span", "soonflag", "Soon"));
+      p.append(art, el("p", null, t.title));
+      p.append(el("span", null, soon
+        ? (t.totalPlanned ? t.totalPlanned + " episodes" : "in production")
+        : (t.episodes + " out")));
+      if (soon) {
+        p.disabled = true;
+        p.title = t.blurb || "";
+      } else {
+        p.addEventListener("click", () => { location.hash = "#s/" + t.id; });
+      }
       strip.append(p);
-    });
+    }
     s.append(strip); v.append(s);
-  }
+  };
+
+  shelf("Also playing", data.top || [], false);
+  shelf("Coming soon", data.soon || [], true);
+
+  const foot = el("p", "foot");
+  foot.textContent = "New episodes every Friday. Ten free on every series, "
+    + "then unlock as you go \u2014 or take the whole run at once.";
+  v.append(foot);
+
   tabs("home");
 }
 

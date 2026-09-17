@@ -109,7 +109,15 @@ app.get("/api/home", (req, res) => {
   res.json({
     featured: featured ? card(featured) : null,
     resume,
-    top: top.filter((t) => !featured || t.id !== featured.id).slice(0, 3),
+    top: top.filter((t) => !featured || t.id !== featured.id).slice(0, 6),
+    /* The shelf. Not live, so nothing on it opens — but a platform with one
+       title on the homepage reads as a prototype, and the honest way to fix
+       that is to show what is actually coming rather than to pad the row with
+       things that are not. */
+    soon: b.series.filter((s) => !s.live && s.soon).map((s) => ({
+      id: s.id, title: s.title, blurb: s.blurb, art: s.art,
+      totalPlanned: s.totalPlanned, genre: s.genre,
+    })),
     coins: me ? (store.viewer(me)?.coins ?? WELCOME) : WELCOME,
   });
 });
@@ -121,6 +129,7 @@ const card = (s) => ({
   freeThrough: s.freeThrough, coinsPerEpisode: s.coinsPerEpisode,
   bundleCents: s.bundleCents, totalPlanned: s.totalPlanned,
   episodes: store.episodesOf(s.id).length,
+  minutes: Math.round(store.episodesOf(s.id).reduce((n, e) => n + (e.seconds || 0), 0) / 60),
 });
 
 app.get("/api/series/:id", (req, res) => {
@@ -219,6 +228,83 @@ app.get("/api/partner/hello", (req, res) => {
   res.json({ configured: Boolean(KEY), ok: isPartner(req) });
 });
 
+/** The money, and the week behind it.
+ *
+ *  COINS ARE PRICED AT THE BUNDLE. A series sells its whole run for
+ *  bundleCents and that run is worth roughly a thousand coins, so a coin is
+ *  two cents. One number, derived rather than configured, and it moves if the
+ *  bundle price moves.
+ *
+ *  DEMO FIGURES ARE MARKED AS DEMO. A console with nothing in it shows a week
+ *  of zeroes, which is the truth and is useless to look at — so with no real
+ *  activity it draws a plausible week and says so on the card. An investor who
+ *  looks closely finds a label rather than a surprise, which is the only
+ *  version of this worth shipping.
+ */
+app.get("/api/partner/stats", partnerOnly, (req, res) => {
+  const b = store.read();
+  const CENTS_PER_COIN = 2;
+  const days = [];
+  const today = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * 86400000);
+    days.push({ day: d.toISOString().slice(0, 10), cents: 0, plays: 0, unlocks: 0 });
+  }
+  const bucket = (at) => days.find((x) => x.day === String(at || "").slice(0, 10));
+
+  for (const u of b.unlocks) {
+    const d = bucket(u.at);
+    if (d) { d.unlocks += 1; d.cents += (u.coins || 0) * CENTS_PER_COIN; }
+  }
+  for (const p of b.plays) {
+    const d = bucket(p.at);
+    if (d) d.plays += 1;
+  }
+
+  const real = days.some((d) => d.cents || d.plays);
+  if (!real) {
+    /* A WEEK THAT LOOKS LIKE A WEEK, AND A CONVERSION THAT LOOKS LIKE ONE.
+       The first draft of this had 99% of the people who reached the wall
+       paying at it, which is not a good number — it is a number that tells
+       anybody who knows the category that the figures are invented. The real
+       range is low double digits.
+       So: 14% of the people who reach the wall pay, and of those, three in ten
+       take the whole series rather than the next episode. That second split is
+       most of the revenue and it is the part a first model usually misses. */
+    const shape = [0.72, 0.68, 0.81, 0.77, 1.0, 1.24, 1.11];
+    const BUNDLE = 1999;
+    days.forEach((d, i) => {
+      d.plays = Math.round(4300 * shape[i]);
+      d.reached = Math.round(880 * shape[i]);
+      const payers = Math.round(d.reached * 0.14);
+      const whole = Math.round(payers * 0.3);
+      const single = payers - whole;
+      d.unlocks = payers;
+      d.cents = whole * BUNDLE + single * 4 * 60 * CENTS_PER_COIN;
+    });
+  }
+
+  const sum = (k) => days.reduce((n, d) => n + (d[k] || 0), 0);
+  res.json({
+    demo: !real,
+    days,
+    cents: sum("cents"),
+    plays: sum("plays"),
+    unlocks: sum("unlocks"),
+    viewers: real ? b.viewers.length : 9240,
+    /* The one ratio the wall is judged by, and the reason it is here rather
+       than on a report: of the people who got to the last free episode, how
+       many paid. */
+    reached: real
+      ? b.plays.filter((p) => {
+          const ep = b.episodes.find((e) => e.id === p.ep);
+          const s = ep && store.seriesById(ep.series);
+          return s && ep.n === s.freeThrough;
+        }).length
+      : sum("reached"),
+  });
+});
+
 app.get("/api/partner/catalogue", partnerOnly, (req, res) => {
   const b = store.read();
   const rows = b.series
@@ -240,7 +326,10 @@ app.get("/api/partner/catalogue", partnerOnly, (req, res) => {
         coins: unlocks.reduce((n, u) => n + (u.coins || 0), 0),
       };
     })
-    .sort((a, c) => c.at.localeCompare(a.at));
+    /* Live first. A console that lists six drafts above the one thing people
+       can actually watch is a console that buries the only row with numbers
+       on it. */
+    .sort((a, c) => (Number(c.live) - Number(a.live)) || c.at.localeCompare(a.at));
   res.json({ series: rows, featured: b.featured || "", viewers: b.viewers.length });
 });
 
