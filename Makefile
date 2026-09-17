@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try china claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: try china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1581,6 +1581,18 @@ try: ## Open the board on THIS machine, with a room in it, before deploying: mak
 	  echo "  Tap Macau, March. Ctrl-C here when you have seen enough."; \
 	  echo; \
 	  wait $$pid
+
+app-state: ## Is the app submitted? Ask Apple, from your Mac:  make app-state
+	@# THE ANSWER TO A QUESTION THAT OTHERWISE LIVES ON A SCREEN. App Store
+	@# Connect knows whether the app is submitted; a screen is the one place
+	@# that answer is no use here, because it cannot be read out, pasted back,
+	@# or checked by the machine that did the work.
+	@#
+	@# Reads only. Safe at any point, including mid-review.
+	@#
+	@# Runs on the Mac for the same reason `listing` does: the .p8 lives there
+	@# and a key that travelled to the box would be a key in a chat log.
+	@node app/store/state.mjs
 
 listing: ## Fill in the App Store listing from your Mac:  make listing PHONE="<your number>"
 	@# THE ONLY TARGET IN HERE THAT RUNS ON THE LAPTOP AND NOT THE SERVER.
