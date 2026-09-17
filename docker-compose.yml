@@ -1182,6 +1182,11 @@ services:
       - claire_data:/data
     expose:
       - "8080"
+    # On caddy's network, or caddy cannot find it. Left off at first: the
+    # container came up healthy on compose's default network, and the site
+    # answered 502 with "lookup claire: no such host" in caddy's log.
+    networks:
+      - tomscoding
     mem_limit: 256m
     logging:
       driver: json-file
