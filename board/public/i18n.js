@@ -4852,6 +4852,24 @@ export const STRINGS = {
                         "这只是双方谈定内容的记录，不是合同。它没有法律约束力，本平台也不是当事方。"],
   /* PAYING IT. The board holds no money: it holds what two people said about
      money that moved somewhere else. Every line here has to keep saying so. */
+  /* THE PLATFORM'S TWO PER CENT. Its own words rather than the plan's, because
+     it is not one of the rows the two of them wrote and must not read like
+     one. */
+  "fee.lab":           ["The board's fee", "平台费"],
+  "fee.row":           ["Platform fee · {pct}%", "平台费 · {pct}%"],
+  "fee.ofFee":         ["{pct}% of the fee", "报酬的 {pct}%"],
+  "fee.payAt":         ["Paid at {where}", "在 {where} 支付"],
+  /* Not pay.open — that one says "their payment page", and the board is not a
+     them. A missing key renders as the key, in the middle of a sentence about
+     money, and says nothing about being missing. */
+  "fee.open":          ["Open the payment page", "打开收款页面"],
+  "fee.what": [
+    "{pct}% of the fee, for the introduction and the record kept here. Paid to whoever runs this board, not to either of you, and not held here either.",
+    "报酬的 {pct}%，是牵线和这份记录的费用。付给这个平台的运营者，不付给你们任何一方，平台也不经手这笔钱。",
+  ],
+  "fee.confirmed":     ["{who} confirmed it arrived, {when}", "{who} 确认已收到，{when}"],
+  "fee.denied":        ["{who} says it has not arrived, {when}", "{who} 说还没收到，{when}"],
+
   "pay.plan":          ["Payments", "付款安排"],
   "pay.sideHires":     ["Paying", "出钱方"],
   "pay.sideProvides":  ["Doing the work", "干活方"],
@@ -5246,9 +5264,16 @@ export const STRINGS = {
                         "哪里有问题？会有人看的。"],
   "note.reported":     ["Reported. Somebody will read it.", "已举报，会有人看的。"],
   "note.openProfile":  ["Open their profile", "查看对方资料"],
+  /* REWRITTEN THE DAY THE MEMO GOT A DEPOSIT FIELD. The old line said nobody
+     here should ask you for a deposit — written before two people could pin
+     terms that say one, so the board's own screen was telling people to report
+     the thing the board had just helped them agree. What the line is actually
+     for is the scam it was written to stop, which has a shape: somebody you
+     have not agreed anything with, asking you to send money now, or asking for
+     your documents. So it names that instead of banning a word. */
   "note.safety": [
-    "Nobody here should ask you for money, a deposit, or photographs of your documents. Report anybody who does.",
-    "这里不该有人向你要钱、要押金，或者要你证件的照片。遇到了就举报。",
+    "Money only after you have both agreed terms in writing, and only to the person you agreed them with. Nobody here needs photographs of your documents. Report anybody who asks.",
+    "先把条件白纸黑字说定，再谈钱，而且只付给你谈定的那个人。这里没有人需要你证件的照片，有人要就举报。",
   ],
 
   // ---- translate -----------------------------------------------------------

@@ -8862,6 +8862,57 @@ app.post("/api/group/deal/paid", notesOff, express.json({ limit: "2kb" }), async
  *  ONCE A DAY, PER ROW. A nudge that can be sent ten times in a minute is a
  *  way to shout at somebody through their lock screen.
  */
+/* ---------------------------------------------------------------------------
+ * THE PLATFORM'S TWO PER CENT, SAID BY THE SAME TWO TAPS
+ *
+ * The same shape as a plan row and for the same reason: a row that says paid
+ * because one person ticked it is not a record. What differs is who holds the
+ * other half. The plan's rows are between the two of them; this one is between
+ * the payer and whoever runs this board, so the confirming half is staff.
+ *
+ * NOBODY CAN CLAIM IT BUT THE PAYER, and nobody can confirm it but staff. A
+ * board that let the person being paid confirm their own fee would be a board
+ * where the fee row means nothing.
+ * ------------------------------------------------------------------------ */
+app.post("/api/group/deal/fee", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.group || "");
+  const kind = String(req.body?.kind || "");
+  if (!me || !/^[a-f0-9]{20}$/.test(id)) return res.status(400).json({ error: "no" });
+  if (!["claimed", "confirmed", "denied"].includes(kind)) return res.status(400).json({ error: "no" });
+  /* No page to pay it on means there is no fee, so there is nothing to say
+     about one — checked here as well as at the draw, because a client can ask
+     for anything. */
+  if (!DEAL_FEE_TO) return res.status(400).json({ error: "off" });
+
+  const out = await change((board) => {
+    const g = board.groups.find((x) => x.id === id);
+    if (!g || !g.deal || !g.members.includes(me)) return { error: "no" };
+    const d = g.deal;
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine?.handle) return { error: "profile" };
+
+    if (kind === "claimed" && mine.handle !== d.hires) return { error: "side" };
+    if (kind !== "claimed" && !isStaff(board, me)) return { error: "side" };
+
+    d.feePaid = Array.isArray(d.feePaid) ? d.feePaid : [];
+    if (d.feePaid.some((r) => r.kind === kind && r.who === mine.handle)) return { ok: true };
+    if (kind !== "claimed" && !d.feePaid.some((r) => r.kind === "claimed")) return { error: "unclaimed" };
+    d.feePaid.push({ kind, who: mine.handle, at: new Date().toISOString() });
+    Object.assign(g, store.cleanGroup(g));
+
+    /* Confirming is worth the payer's phone buzzing — it is the half they are
+       waiting on. Claiming is not: it is addressed to whoever runs the board,
+       who is reading it rather than waiting for it. */
+    const payer = kind === "claimed" ? "" :
+      (board.people.find((x) => g.members.includes(x.by) && x.handle === d.hires) || {}).by || "";
+    return { ok: true, tell: payer };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true });
+  if (out?.tell) tellThem(out.tell).catch(() => {});
+});
+
 app.post("/api/group/deal/nudge", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   const id = String(req.body?.group || "");

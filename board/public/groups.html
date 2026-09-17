@@ -469,6 +469,14 @@
 
   /* PAYING IT. Under the terms and above the fine print, because "has it been
      paid" is the second question anybody opening this room has. */
+  /* The board's own row, set apart from the plan on purpose: a fee that looks
+     like one of the rows the two of them wrote is a fee that got in without
+     being read. */
+  .dfee{margin:1rem 0 0;padding:.8rem .9rem;border-radius:.7rem;
+    border:1px dashed var(--line);background:var(--paper)}
+  .dfee .plab{margin:0 0 .5rem}
+  .dfee .prow{border:0;padding:0}
+  .pnote{margin:.6rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
   .dpay{margin:.85rem 0 0;padding-top:.75rem;border-top:1px solid var(--line)}
   .dpay .plab{margin:0 0 .5rem;font-size:.68rem;letter-spacing:.14em;
     text-transform:uppercase;color:var(--muted)}
@@ -1069,6 +1077,10 @@ function dealPin(g) {
   }
 
   if (d.plan && d.plan.length) box.append(payPart(g, d));
+  /* The board's own row, under the plan and outside it. Drawn only where the
+     board names a page to pay it on, which is nowhere unless it is switched
+     on. */
+  if (g.fee) box.append(feePart(g, d));
 
   box.append(el("p", "dlaw", T("deal.notlaw")));
   return box;
@@ -1213,6 +1225,80 @@ function showReceipt(g, d, i, claim, okd) {
   back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
   back.append(card);
   document.body.append(back);
+}
+
+/* THE PLATFORM'S TWO PER CENT.
+ *
+ * Deliberately the plainest thing on the card and never folded into the plan:
+ * a fee that looks like one of the rows the two of them wrote is a fee that
+ * got in without being read. It says whose it is, what it is a percentage of,
+ * and where it goes.
+ *
+ * WHEN THE FEE COULD NOT BE READ there is no figure, and the row says "2% of
+ * the fee" rather than a number somebody's software invented. See readMoney in
+ * lib/store.js for what counts as readable.
+ */
+function feePart(g, d) {
+  const f = g.fee;
+  const wrap = el("div", "dfee");
+  const when = (at) => new Date(at).toLocaleDateString(undefined,
+    { day: "numeric", month: "short" });
+  const said = (kind) => (f.paid || []).filter((r) => r.kind === kind);
+  const claim = said("claimed")[0];
+  const okd = said("confirmed")[0];
+  const no = said("denied").slice(-1)[0];
+
+  const r = el("div", "prow");
+  r.append(el("span", "pwhat", T("fee.row", { pct: f.pct })),
+           el("span", "pamt", f.amount || T("fee.ofFee", { pct: f.pct })));
+  r.append(el("span", "pchip" + (okd ? " on" : claim ? " half" : ""),
+    okd ? T("pay.paidChip") : claim ? T("pay.waitingChip") : T("pay.dueChip")));
+
+  for (const [row, key] of [[claim, "pay.claimed"], [okd, "fee.confirmed"], [no, "fee.denied"]]) {
+    if (row) r.append(el("p", "psaid", T(key, { who: row.who, when: when(row.at) })));
+  }
+
+  const acts = el("div", "pacts");
+  if (g.meHandle === d.hires && !claim) {
+    const b = el("button", "go", T("pay.iPaid"));
+    b.type = "button";
+    b.addEventListener("click", async () => {
+      b.disabled = true;
+      const res = await fetch("/api/group/deal/fee", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, group: g.id, kind: "claimed" }),
+      });
+      if (res.ok) load(); else b.disabled = false;
+    });
+    acts.append(b);
+  }
+  /* Confirming is staff's. STAFF is the reader's own flag, not a fact about
+     anybody else in the room, so hiding the button from everyone else gives
+     nothing away. The route checks it again regardless. */
+  if (claim && !okd && STAFF) {
+    const b = el("button", "go", T("pay.arrived"));
+    b.type = "button";
+    b.addEventListener("click", async () => {
+      b.disabled = true;
+      const res = await fetch("/api/group/deal/fee", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, group: g.id, kind: "confirmed" }),
+      });
+      if (res.ok) load(); else b.disabled = false;
+    });
+    acts.append(b);
+  }
+  if (acts.children.length) r.append(acts);
+  wrap.append(el("p", "plab", T("fee.lab")), r);
+
+  const line = el("p", "plink");
+  line.append(document.createTextNode(T("fee.payAt", { where: new URL(f.to).hostname }) + " "));
+  const a = el("a", "", T("fee.open"));
+  a.href = f.to; a.target = "_blank"; a.rel = "noopener noreferrer";
+  line.append(a);
+  wrap.append(line);
+  wrap.append(el("p", "pnote", T("fee.what", { pct: f.pct })));
+  return wrap;
 }
 
 function payPart(g, d) {
