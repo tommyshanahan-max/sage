@@ -2386,6 +2386,61 @@ export const HAND_MAX = 60;
  * ------------------------------------------------------------------------ */
 export const DEAL_FIELDS = ["what", "where", "when", "fee", "deposit", "covers", "cancel"];
 
+/* ---------------------------------------------------------------------------
+ * PAYING IT, WITHOUT THIS BOARD TOUCHING THE MONEY
+ *
+ * The memo already says the fee and what is up front. What it could not say is
+ * whether any of it has actually been paid — so the argument three weeks later
+ * moves from "what did we agree" to "did you pay me", which is worse, because
+ * the answer was in somebody's bank app and neither of them can point at it.
+ *
+ * SIX ROWS, EACH A LINE A PERSON WOULD SAY: a deposit, a couple of stages, the
+ * balance. Amounts are written the way the fee is — as words, not as money the
+ * board understands — because this board holds no money, converts nothing, and
+ * must never look like it does.
+ *
+ * THE LINK BELONGS TO WHOEVER IS BEING PAID, and only they can set it. It is
+ * their own PayPal, Wise, Payoneer or bank page: the payer leaves for it and
+ * comes back. Changing it is recorded like anything else here, because "the
+ * payment details changed quietly" is the shape of every invoice scam there is.
+ *
+ * TWO TAPS, ONE EACH. The payer says they paid; the person being paid says it
+ * arrived. Neither can mark the other's half. The board is not told by a bank
+ * and does not pretend to be — a row that says "paid" here means two people
+ * said so, and the card says exactly that.
+ * ------------------------------------------------------------------------ */
+export const PLAN_MAX = 6;
+
+/** One line of the payment plan: what it is for, how much, when it is due.
+ *  All three are words. A row with no amount is not a row. */
+function cleanPlanRow(raw, s) {
+  if (!raw || typeof raw !== "object") return null;
+  const row = { label: s(raw.label, 60), amount: s(raw.amount, 40), due: s(raw.due, 40) };
+  return row.amount ? row : null;
+}
+
+/** Who said what about one row, append-only. `kind` is claimed by the payer,
+ *  confirmed or denied by whoever is being paid. */
+function cleanPaidRow(raw, s) {
+  if (!raw || typeof raw !== "object") return null;
+  const i = Number(raw.i);
+  const kind = ["claimed", "confirmed", "denied"].includes(raw.kind) ? raw.kind : "";
+  const who = s(raw.who, 64), at = s(raw.at, 40);
+  if (!Number.isInteger(i) || i < 0 || i >= PLAN_MAX || !kind || !who || !at) return null;
+  return { i, kind, who, at };
+}
+
+/** A payment page belonging to the person being paid. Http(s) only, and never
+ *  rendered as anything but a link the payer chooses to follow. */
+export function cleanPayLink(raw) {
+  const v = String(raw ?? "").trim().slice(0, 200);
+  if (!v) return "";
+  try {
+    const u = new URL(v);
+    return u.protocol === "https:" || u.protocol === "http:" ? u.href.slice(0, 200) : "";
+  } catch { return ""; }
+}
+
 export function cleanDeal(raw) {
   if (!raw || typeof raw !== "object") return null;
   const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").replace(/[^\P{C}\n]/gu, "").trim().slice(0, n);
@@ -2403,6 +2458,20 @@ export function cleanDeal(raw) {
       .slice(0, 20),
   };
   for (const f of DEAL_FIELDS) out[f] = s(raw[f], 300);
+
+  /* THE PLAN AND WHAT HAS BEEN SAID ABOUT IT. Both survive an edit of the
+     terms — unlike the ticks, which are cleared, because agreeing is about
+     these words and paying is about money that has already moved. */
+  const plan = (Array.isArray(raw.plan) ? raw.plan : [])
+    .map((r) => cleanPlanRow(r, s)).filter(Boolean).slice(0, PLAN_MAX);
+  if (plan.length) out.plan = plan;
+  const payTo = cleanPayLink(raw.payTo);
+  if (payTo) out.payTo = payTo;
+  if (raw.payToAt) out.payToAt = s(raw.payToAt, 40);
+  const paid = (Array.isArray(raw.paid) ? raw.paid : [])
+    .map((r) => cleanPaidRow(r, s)).filter((r) => r && r.i < plan.length).slice(0, 60);
+  if (paid.length) out.paid = paid;
+
   if (!out.hires || !out.provides) return null;
   return out;
 }

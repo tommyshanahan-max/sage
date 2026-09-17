@@ -466,6 +466,59 @@
   .dsay{margin:0;font-size:.8rem;color:var(--muted)}
   .dlaw{margin:.8rem 0 0;padding-top:.7rem;border-top:1px solid var(--line);
     font-size:.72rem;line-height:1.5;color:var(--muted)}
+
+  /* PAYING IT. Under the terms and above the fine print, because "has it been
+     paid" is the second question anybody opening this room has. */
+  .dpay{margin:.85rem 0 0;padding-top:.75rem;border-top:1px solid var(--line)}
+  .dpay .plab{margin:0 0 .5rem;font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .prow{display:grid;grid-template-columns:1fr auto;gap:.1rem .7rem;
+    padding:.5rem 0;border-bottom:1px solid var(--line)}
+  .prow:last-of-type{border-bottom:0}
+  .prow .pwhat{font-size:.92rem}
+  .prow .pamt{font-size:.92rem;font-weight:700;text-align:right;white-space:nowrap}
+  .prow .pwhen{grid-column:1;font-size:.76rem;color:var(--muted)}
+  .prow .pchip{grid-column:2;justify-self:end;font-size:.62rem;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;padding:.1rem .45rem;border-radius:99px;
+    background:var(--line);color:var(--muted)}
+  .prow .pchip.on{background:#E4F2EA;color:#1F7A4C}
+  .prow .pchip.half{background:#F8EFD9;color:#8A6410}
+  .prow .psaid{grid-column:1/-1;margin:.2rem 0 0;font-size:.74rem;color:var(--muted);line-height:1.45}
+  .prow .pacts{grid-column:1/-1;display:flex;gap:.4rem;margin-top:.4rem;flex-wrap:wrap}
+  .prow button{border:1px solid var(--line);background:var(--card);color:var(--ink);
+    font:inherit;font-size:.78rem;padding:.35rem .7rem;border-radius:99px}
+  .prow button.go{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+  .prow button:disabled{opacity:.45}
+  .dpay .plink{margin:.7rem 0 0;font-size:.8rem;line-height:1.5}
+  .dpay .plink a{color:var(--accent)}
+  .dpay .pwarn{margin:.35rem 0 0;font-size:.74rem;color:#8A6410;background:#F8EFD9;
+    border-radius:.5rem;padding:.4rem .5rem;line-height:1.4}
+  .dpay .pset{display:flex;gap:.4rem;margin:.6rem 0 0}
+  .dpay .pset input{flex:1;min-width:0;font:inherit;font-size:.85rem;padding:.45rem .6rem;
+    border:1px solid var(--line);border-radius:.6rem;background:var(--card);color:var(--ink)}
+  .dpay .pset button{border:0;border-radius:.6rem;padding:.45rem .8rem;font:inherit;
+    font-size:.85rem;background:var(--accent);color:var(--accent-ink)}
+  .dpay .phint{margin:.35rem 0 0;font-size:.72rem;color:var(--muted);line-height:1.45}
+
+  /* WRITING THE MEMO. Two people in a room and no way to pin what they agreed
+     was a card that could only be made by an API call nobody in the room can
+     make. Kept to one screen: the七 lines that get argued about, and up to six
+     payments under them. */
+  .dwrite{margin:0 0 1.1rem;padding:.9rem .95rem;border-radius:.9rem;
+    background:var(--paper);border:1px dashed var(--line)}
+  .dwrite .wlab{margin:0 0 .6rem;font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .dwrite label{display:grid;gap:.15rem;margin:0 0 .5rem;font-size:.72rem;color:var(--muted)}
+  .dwrite input,.dwrite select{font:inherit;font-size:.9rem;padding:.45rem .6rem;color:var(--ink);
+    background:var(--card);border:1px solid var(--line);border-radius:.6rem;width:100%}
+  .dwrite .two{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+  .dwrite .prowset{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:.35rem;margin:0 0 .35rem}
+  .dwrite .prowset input{font-size:.82rem;padding:.35rem .5rem}
+  .dwrite .wgo{display:block;width:100%;margin-top:.6rem;padding:.7rem;border:0;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);font:inherit;font-size:.95rem}
+  .dwrite .whint{margin:.5rem 0 0;font-size:.72rem;color:var(--muted);line-height:1.45}
+  .dopen{display:block;width:100%;margin:0 0 1.1rem;padding:.7rem;border:1px dashed var(--line);
+    border-radius:.9rem;background:var(--paper);color:var(--ink);font:inherit;font-size:.9rem}
 </style>
 
 </head>
@@ -984,8 +1037,199 @@ function dealPin(g) {
     box.append(el("p", "dsay", T("deal.witness")));
   }
 
+  if (d.plan && d.plan.length) box.append(payPart(g, d));
+
   box.append(el("p", "dlaw", T("deal.notlaw")));
   return box;
+}
+
+/** WHAT HAS BEEN PAID, AND WHO SAID SO.
+ *
+ *  The board is never told by a bank. Each row carries two half-facts — the
+ *  payer says they paid, the other says it arrived — and reads as paid only
+ *  when it has both. Anything less says which half is missing, in words.
+ *
+ *  The payment page is the other side's own. Following it leaves this board,
+ *  and the line above the link says so rather than dressing it up as a button
+ *  that pays somebody.
+ */
+/** PINNING THE TERMS, from inside the room.
+ *
+ *  The memo could only be written by an API call, which meant it existed for
+ *  the operator and for nobody in the room it is about. This is the same seven
+ *  lines the card prints, plus the payments, in the order two people would say
+ *  them: who is hiring whom, what for, when, how much, and how it is paid.
+ *
+ *  NOTHING IS REQUIRED EXCEPT THE TWO SIDES. A memo saying only "Tom is hiring
+ *  Damon, A$2,400, deposit on signing" is worth pinning; a form that refuses it
+ *  until seven boxes are full is a form people close.
+ */
+function dealWriter(g, box) {
+  const open = el("button", "dopen", T("deal.write"));
+  open.type = "button";
+  const form = el("div", "dwrite");
+  form.hidden = true;
+  open.addEventListener("click", () => { form.hidden = !form.hidden; if (!form.hidden) form.querySelector("input,select")?.focus(); });
+
+  form.append(el("p", "wlab", T("deal.pin")));
+  const people = g.who.filter((w) => !w.bot && w.handle).map((w) => w.handle);
+  const pick = (name, label, value) => {
+    const l = el("label", null, label);
+    const sel = el("select");
+    sel.name = name;
+    for (const h of people) {
+      const o = el("option", null, h);
+      o.value = h;
+      if (h === value) o.selected = true;
+      sel.append(o);
+    }
+    l.append(sel);
+    return l;
+  };
+  const line = (name, label, ph) => {
+    const l = el("label", null, label);
+    const i = el("input");
+    i.name = name; i.placeholder = ph || "";
+    l.append(i);
+    return l;
+  };
+  const two = (a, b) => { const d = el("div", "two"); d.append(a, b); return d; };
+
+  form.append(two(pick("hires", T("pay.sideHires"), g.meHandle),
+                  pick("provides", T("pay.sideProvides"), people.find((h) => h !== g.meHandle))));
+  form.append(line("title", T("deal.what"), ""));
+  form.append(two(line("when", T("deal.when")), line("where", T("deal.where"))));
+  form.append(two(line("fee", T("deal.fee")), line("deposit", T("deal.deposit"))));
+
+  form.append(el("p", "wlab", T("pay.plan")));
+  const rows = [];
+  for (let i = 0; i < 3; i++) {
+    const r = el("div", "prowset");
+    const lab = el("input"); lab.placeholder = i === 0 ? T("deal.deposit") : T("pay.rowLabel");
+    const amt = el("input"); amt.placeholder = T("pay.rowAmount");
+    const due = el("input"); due.placeholder = T("pay.rowDue");
+    r.append(lab, amt, due);
+    rows.push([lab, amt, due]);
+    form.append(r);
+  }
+
+  const go = el("button", "wgo", T("deal.write"));
+  go.type = "button";
+  go.addEventListener("click", async () => {
+    const v = (n) => (form.querySelector(`[name="${n}"]`)?.value || "").trim();
+    const deal = {
+      title: v("title"), hires: v("hires"), provides: v("provides"),
+      what: v("title"), when: v("when"), where: v("where"), fee: v("fee"), deposit: v("deposit"),
+      plan: rows.map(([l, a, d]) => ({ label: l.value.trim(), amount: a.value.trim(), due: d.value.trim() }))
+        .filter((r) => r.amount),
+    };
+    if (deal.hires === deal.provides) { go.textContent = T("deal.sides"); return; }
+    go.disabled = true;
+    const res = await fetch("/api/group/deal", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, group: g.id, deal }),
+    });
+    if (res.ok) load(); else { go.disabled = false; go.textContent = T("deal.sides"); }
+  });
+  form.append(go);
+  form.append(el("p", "whint", T("deal.clears")));
+
+  const holder = el("div");
+  holder.append(open, form);
+  return holder;
+}
+
+function payPart(g, d) {
+  const wrap = el("div", "dpay");
+  wrap.append(el("p", "plab", T("pay.plan")));
+  const when = (at) => new Date(at).toLocaleDateString(undefined,
+    { day: "numeric", month: "short" });
+  const meHires = g.meHandle && g.meHandle === d.hires;
+  const mePaid = g.meHandle && g.meHandle === d.provides;
+  const said = (i, kind) => (d.paid || []).filter((r) => r.i === i && r.kind === kind);
+
+  d.plan.forEach((row, i) => {
+    const r = el("div", "prow");
+    r.append(el("span", "pwhat", row.label || T("pay.plan")), el("span", "pamt", row.amount));
+    if (row.due) r.append(el("span", "pwhen", T("pay.due", { when: row.due })));
+
+    const claim = said(i, "claimed")[0];
+    const okd = said(i, "confirmed")[0];
+    const no = said(i, "denied").slice(-1)[0];
+    const chip = el("span", "pchip" + (okd ? " on" : claim ? " half" : ""),
+      okd ? T("pay.paidChip") : claim ? T("pay.waitingChip") : T("pay.dueChip"));
+    r.append(chip);
+
+    /* WHO SAID WHAT, in sentences with dates on them. A tick would lose the
+       date, and the date is the half of this that settles arguments. */
+    for (const [row2, key] of [[claim, "pay.claimed"], [okd, "pay.confirmed"], [no, "pay.denied"]]) {
+      if (row2) r.append(el("p", "psaid", T(key, { who: row2.who, when: when(row2.at) })));
+    }
+    if (claim && okd) r.append(el("p", "psaid", T("pay.bothSaid")));
+
+    const acts = el("div", "pacts");
+    const tap = (kind, label, klass) => {
+      const b = el("button", klass || "", label);
+      b.type = "button";
+      b.addEventListener("click", async () => {
+        b.disabled = true;
+        const res = await fetch("/api/group/deal/paid", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device, group: g.id, i, kind }),
+        });
+        if (res.ok) load(); else b.disabled = false;
+      });
+      acts.append(b);
+    };
+    if (meHires && !claim) tap("claimed", T("pay.iPaid"), "go");
+    if (mePaid && claim && !okd) { tap("confirmed", T("pay.arrived"), "go"); if (!no) tap("denied", T("pay.notYet")); }
+    if (acts.children.length) r.append(acts);
+    wrap.append(r);
+  });
+
+  /* WHERE IT IS SENT. Shown to everybody in the room, editable only by the
+     person being paid — and if it has been changed, the payer is told so
+     before they are anywhere near the link. */
+  if (d.payTo) {
+    const line = el("p", "plink");
+    line.append(document.createTextNode(T("pay.payVia", { who: d.provides, where: new URL(d.payTo).hostname }) + " "));
+    const a = el("a", null, T("pay.open"));
+    a.href = d.payTo;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer nofollow";
+    line.append(a);
+    wrap.append(line);
+    if (meHires && d.payToAt) {
+      const old = Date.now() - Date.parse(d.payToAt) > 7 * 864e5;
+      if (!old) wrap.append(el("p", "pwarn", T("pay.linkChanged", { when: when(d.payToAt) })));
+    }
+    wrap.append(el("p", "phint", T("pay.leaves")));
+  } else if (meHires) {
+    wrap.append(el("p", "phint", T("pay.noLink", { who: d.provides })));
+  }
+
+  if (mePaid) {
+    const set = el("div", "pset");
+    const input = el("input");
+    input.type = "url";
+    input.placeholder = "https://paypal.me/…";
+    input.value = d.payTo || "";
+    input.setAttribute("aria-label", T("pay.setLink"));
+    const save = el("button", null, T("pay.save"));
+    save.type = "button";
+    save.addEventListener("click", async () => {
+      save.disabled = true;
+      const res = await fetch("/api/group/deal/payto", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, group: g.id, link: input.value.trim() }),
+      });
+      if (res.ok) load(); else save.disabled = false;
+    });
+    set.append(input, save);
+    wrap.append(set);
+    wrap.append(el("p", "phint", T("pay.linkHint")));
+  }
+  return wrap;
 }
 
 function paintRoom(g) {
@@ -1025,6 +1269,7 @@ function paintRoom(g) {
      sides will point at in three weeks, and a fact that has to be scrolled
      back to is a fact that gets remembered differently by each of them. */
   if (g.deal) box.append(dealPin(g));
+  else if (g.who.filter((w) => !w.bot).length >= 2) box.append(dealWriter(g, box));
 
   const slot = el("div", "pinslot");
   if (g.hand) box.append(slot);

@@ -8709,6 +8709,82 @@ app.post("/api/group/deal/agree", notesOff, express.json({ limit: "2kb" }), asyn
   res.json(out);
 });
 
+/** WHERE THE MONEY IS SENT, set only by the person being paid.
+ *
+ *  Their own PayPal, Wise, Payoneer or bank page. The board holds no money and
+ *  this is the whole of its involvement: it stores a link its own party put
+ *  there, and shows the other side where it came from and when it last changed.
+ *  A quiet change of payment details is the shape of every invoice scam, so the
+ *  time is kept and the card prints it.
+ */
+app.post("/api/group/deal/payto", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.group || "");
+  if (!me || !/^[a-f0-9]{20}$/.test(id)) return res.status(400).json({ error: "no" });
+
+  const out = await change((board) => {
+    const g = board.groups.find((x) => x.id === id);
+    if (!g || !g.deal || !g.members.includes(me)) return { error: "no" };
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine?.handle) return { error: "profile" };
+    /* Only the side being paid. The payer setting this would be the payer
+       choosing where their own money goes and calling it the other's. */
+    if (mine.handle !== g.deal.provides) return { error: "side" };
+    const link = store.cleanPayLink(req.body?.link);
+    if (!link && req.body?.link) return { error: "link" };
+    if (link) { g.deal.payTo = link; g.deal.payToAt = new Date().toISOString(); }
+    else { delete g.deal.payTo; delete g.deal.payToAt; }
+    Object.assign(g, store.cleanGroup(g));
+    return { ok: true };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** "I paid this one" and "it arrived", one tap each, and never both from the
+ *  same person.
+ *
+ *  THIS BOARD IS NOT TOLD BY A BANK. It cannot see PayPal, and pretending
+ *  otherwise would be the most expensive lie on the screen — so a row reads
+ *  "paid" only when the payer said they paid and the other side said it
+ *  arrived, and the card says that in those words.
+ *
+ *  APPEND-ONLY, like agreeing. A denial does not erase the claim; it sits under
+ *  it, which is what the two of them will need if it ever goes wrong.
+ */
+app.post("/api/group/deal/paid", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.group || "");
+  const i = Number(req.body?.i);
+  const kind = String(req.body?.kind || "");
+  if (!me || !/^[a-f0-9]{20}$/.test(id) || !Number.isInteger(i) || i < 0) return res.status(400).json({ error: "no" });
+  if (!["claimed", "confirmed", "denied"].includes(kind)) return res.status(400).json({ error: "no" });
+
+  const out = await change((board) => {
+    const g = board.groups.find((x) => x.id === id);
+    if (!g || !g.deal || !g.members.includes(me)) return { error: "no" };
+    const d = g.deal;
+    if (!Array.isArray(d.plan) || i >= d.plan.length) return { error: "row" };
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine?.handle) return { error: "profile" };
+
+    /* One half each: the payer claims, the paid confirms or denies. */
+    if (kind === "claimed" && mine.handle !== d.hires) return { error: "side" };
+    if (kind !== "claimed" && mine.handle !== d.provides) return { error: "side" };
+
+    d.paid = Array.isArray(d.paid) ? d.paid : [];
+    if (d.paid.some((r) => r.i === i && r.kind === kind && r.who === mine.handle)) return { ok: true };
+    /* Confirming what nobody has claimed is somebody ticking a box on their own.
+       The money may well have arrived; the record is still half a record. */
+    if (kind !== "claimed" && !d.paid.some((r) => r.i === i && r.kind === "claimed")) return { error: "unclaimed" };
+    d.paid.push({ i, kind, who: mine.handle, at: new Date().toISOString() });
+    Object.assign(g, store.cleanGroup(g));
+    return { ok: true };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
 /** Adding somebody who is already a member of the board to a room you made.
  *
  *  The room could only ever be filled at the moment it was created, so a third
