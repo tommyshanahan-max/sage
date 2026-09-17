@@ -519,6 +519,33 @@
   .dwrite .whint{margin:.5rem 0 0;font-size:.72rem;color:var(--muted);line-height:1.45}
   .dopen{display:block;width:100%;margin:0 0 1.1rem;padding:.7rem;border:1px dashed var(--line);
     border-radius:.9rem;background:var(--paper);color:var(--ink);font:inherit;font-size:.9rem}
+
+  /* THE RECEIPT, over the room and alone on the page when printed. */
+  .rsheet{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;
+    padding:1rem;z-index:40}
+  .rcard{background:var(--card);border:1px solid var(--line);border-radius:1rem;
+    padding:1.1rem 1.15rem;max-width:26rem;width:100%;max-height:90vh;overflow:auto}
+  .rcard .rlab{margin:0 0 .3rem;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .rcard .rtitle{margin:0 0 .7rem;font-size:1.05rem;line-height:1.3}
+  .rrows{display:grid;grid-template-columns:auto 1fr;gap:.35rem .9rem;margin:0 0 .8rem;
+    padding-top:.7rem;border-top:1px solid var(--line)}
+  .rrows dt{font-size:.78rem;color:var(--muted);white-space:nowrap}
+  .rrows dd{margin:0;font-size:.92rem}
+  .rsaid{padding-top:.7rem;border-top:1px solid var(--line);font-size:.85rem}
+  .rsaid .rk{margin:0 0 .3rem;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .rsaid p{margin:0 0 .2rem}
+  .rlaw{margin:.8rem 0 0;padding-top:.7rem;border-top:1px solid var(--line);
+    font-size:.72rem;line-height:1.5;color:var(--muted)}
+  .racts{display:flex;gap:.5rem;margin-top:.9rem}
+  .racts button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);
+    font:inherit;font-size:.85rem;padding:.55rem;border-radius:99px}
+  .racts button.go{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+  @media print{
+    body > *:not(.rsheet){display:none !important}
+    .rsheet{position:static;background:none;padding:0}
+    .rcard{border:0;max-width:none;box-shadow:none}
+    .racts{display:none}
+  }
 </style>
 
 </head>
@@ -1139,6 +1166,51 @@ function dealWriter(g, box) {
   return holder;
 }
 
+/** WHAT THE TWO OF THEM SAID, ON ONE PAGE, PRINTABLE.
+ *
+ *  Both statements with their dates, the row it belongs to, and where the
+ *  money was sent. It is called a receipt and never an invoice: this board
+ *  issued nothing, sold nothing and saw no money — and a page that implies
+ *  otherwise is the one somebody will wave at a tax office.
+ */
+function showReceipt(g, d, i, claim, okd) {
+  const row = d.plan[i];
+  const when = (at) => new Date(at).toLocaleDateString(undefined,
+    { day: "numeric", month: "short", year: "numeric" });
+  const back = el("div", "rsheet");
+  const card = el("div", "rcard");
+  card.append(el("p", "rlab", T("pay.rTitle")));
+  if (d.title) card.append(el("h3", "rtitle", d.title));
+  const dl = el("dl", "rrows");
+  const put = (k, v) => { if (v) dl.append(el("dt", null, k), el("dd", null, v)); };
+  put(T("pay.rFor"), row.label || T("pay.plan"));
+  put(T("pay.rAmount"), row.amount);
+  put(T("pay.rFrom"), d.hires);
+  put(T("pay.rTo"), d.provides);
+  if (d.payTo) { try { put(T("pay.rWhere"), new URL(d.payTo).hostname); } catch { /* not a link any more */ } }
+  card.append(dl);
+  const said = el("div", "rsaid");
+  said.append(el("p", "rk", T("pay.rSaid")));
+  said.append(el("p", null, T("pay.claimed", { who: claim.who, when: when(claim.at) })));
+  said.append(el("p", null, T("pay.confirmed", { who: okd.who, when: when(okd.at) })));
+  card.append(said);
+  card.append(el("p", "rlaw", T("pay.rNotTax")));
+
+  const acts = el("div", "racts");
+  const print = el("button", "go", T("pay.print"));
+  print.type = "button";
+  print.addEventListener("click", () => window.print());
+  const shut = el("button", "", T("pay.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => back.remove());
+  acts.append(print, shut);
+  card.append(acts);
+
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  back.append(card);
+  document.body.append(back);
+}
+
 function payPart(g, d) {
   const wrap = el("div", "dpay");
   wrap.append(el("p", "plab", T("pay.plan")));
@@ -1183,6 +1255,36 @@ function payPart(g, d) {
     };
     if (meHires && !claim) tap("claimed", T("pay.iPaid"), "go");
     if (mePaid && claim && !okd) { tap("confirmed", T("pay.arrived"), "go"); if (!no) tap("denied", T("pay.notYet")); }
+
+    /* A REMINDER SENT BY A PERSON, not by a clock — the due dates here are
+       words, and a date this board guessed at is one it will be wrong about at
+       seven in the morning. Once a day, and only by whoever is waiting. */
+    if (mePaid && !okd) {
+      const last = (d.nudges || []).filter((n) => n.i === i).slice(-1)[0];
+      const soon = last && Date.now() - Date.parse(last.at) < 20 * 3600 * 1000;
+      const b = el("button", "", soon ? T("pay.tooSoon") : T("pay.remind"));
+      b.type = "button";
+      b.disabled = Boolean(soon);
+      b.addEventListener("click", async () => {
+        b.disabled = true;
+        const res = await fetch("/api/group/deal/nudge", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device, group: g.id, i }),
+        });
+        b.textContent = res.ok ? T("pay.reminded") : T("pay.tooSoon");
+      });
+      acts.append(b);
+    }
+
+    /* THE RECEIPT IS THE TWO STATEMENTS, PRINTED. Not an invoice: nothing here
+       was issued by a seller or seen by a tax office, and calling it one would
+       be the most quietly expensive word on the screen. */
+    if (okd) {
+      const b = el("button", "", T("pay.receipt"));
+      b.type = "button";
+      b.addEventListener("click", () => showReceipt(g, d, i, claim, okd));
+      acts.append(b);
+    }
     if (acts.children.length) r.append(acts);
     wrap.append(r);
   });

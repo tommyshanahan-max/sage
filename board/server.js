@@ -8675,10 +8675,13 @@ app.post("/api/group/deal", notesOff, express.json({ limit: "8kb" }), async (req
 
     g.deal = deal;
     Object.assign(g, store.cleanGroup(g));
-    return { ok: true };
+    return { ok: true, tell: otherSide(board, g, mine.handle) };
   });
   if (out?.error) return res.status(400).json(out);
-  res.json(out);
+  res.json({ ok: true });
+  /* The other side is told there is something to read, and nothing of what it
+     says — the same rule every buzz on this board follows. */
+  if (out?.tell) tellThem(out.tell).catch(() => {});
 });
 
 /** Agreeing to it. Append-only, once per person, and the row carries the time.
@@ -8703,11 +8706,20 @@ app.post("/api/group/deal/agree", notesOff, express.json({ limit: "2kb" }), asyn
     if (g.deal.agreed.some((a) => a.who === mine.handle)) return { ok: true };
     g.deal.agreed.push({ who: mine.handle, at: new Date().toISOString() });
     Object.assign(g, store.cleanGroup(g));
-    return { ok: true };
+    return { ok: true, tell: otherSide(board, g, mine.handle) };
   });
   if (out?.error) return res.status(400).json(out);
-  res.json(out);
+  res.json({ ok: true });
+  if (out?.tell) tellThem(out.tell).catch(() => {});
 });
+
+/** The other party to a deal, by device hash. The memo names handles; the
+ *  buzz needs the person. */
+function otherSide(board, g, meHandle) {
+  const want = g.deal.hires === meHandle ? g.deal.provides : g.deal.hires;
+  const q = board.people.find((x) => g.members.includes(x.by) && x.handle === want);
+  return q ? q.by : "";
+}
 
 /** A ROOM FOR TWO, MADE FROM A CONVERSATION, so terms can be pinned over it.
  *
@@ -8820,10 +8832,52 @@ app.post("/api/group/deal/paid", notesOff, express.json({ limit: "2kb" }), async
     if (kind !== "claimed" && !d.paid.some((r) => r.i === i && r.kind === "claimed")) return { error: "unclaimed" };
     d.paid.push({ i, kind, who: mine.handle, at: new Date().toISOString() });
     Object.assign(g, store.cleanGroup(g));
-    return { ok: true };
+    return { ok: true, tell: otherSide(board, g, mine.handle) };
   });
   if (out?.error) return res.status(400).json(out);
-  res.json(out);
+  res.json({ ok: true });
+  /* "They say they paid" and "it arrived" are both worth a phone buzzing:
+     each is the other person's cue to do something. */
+  if (out?.tell) tellThem(out.tell).catch(() => {});
+});
+
+/** A REMINDER, SENT BY A PERSON RATHER THAN BY A CLOCK.
+ *
+ *  The due dates on a plan are words — "on signing", "25 Sep", "when episode
+ *  four is in" — because that is how two people write them, and a date this
+ *  board has guessed at is a date it will eventually be wrong about, loudly,
+ *  at seven in the morning. So there is no scheduler: whoever is waiting for
+ *  the money presses a button, and the other phone buzzes.
+ *
+ *  ONCE A DAY, PER ROW. A nudge that can be sent ten times in a minute is a
+ *  way to shout at somebody through their lock screen.
+ */
+app.post("/api/group/deal/nudge", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.group || "");
+  const i = Number(req.body?.i);
+  if (!me || !/^[a-f0-9]{20}$/.test(id) || !Number.isInteger(i) || i < 0) return res.status(400).json({ error: "no" });
+
+  const out = await change((board) => {
+    const g = board.groups.find((x) => x.id === id);
+    if (!g || !g.deal || !g.members.includes(me)) return { error: "no" };
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine?.handle) return { error: "profile" };
+    const d = g.deal;
+    if (!Array.isArray(d.plan) || i >= d.plan.length) return { error: "row" };
+    /* Only the person waiting to be paid, and only while it is unpaid. */
+    if (mine.handle !== d.provides) return { error: "side" };
+    if ((d.paid || []).some((r) => r.i === i && r.kind === "confirmed")) return { error: "done" };
+    d.nudges = Array.isArray(d.nudges) ? d.nudges : [];
+    const last = d.nudges.filter((n) => n.i === i).slice(-1)[0];
+    if (last && Date.now() - Date.parse(last.at) < 20 * 3600 * 1000) return { error: "soon" };
+    d.nudges.push({ i, at: new Date().toISOString() });
+    Object.assign(g, store.cleanGroup(g));
+    return { ok: true, tell: otherSide(board, g, mine.handle) };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true });
+  if (out?.tell) tellThem(out.tell).catch(() => {});
 });
 
 /** Adding somebody who is already a member of the board to a room you made.

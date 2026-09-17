@@ -2468,6 +2468,13 @@ export function cleanDeal(raw) {
   const payTo = cleanPayLink(raw.payTo);
   if (payTo) out.payTo = payTo;
   if (raw.payToAt) out.payToAt = s(raw.payToAt, 40);
+  /* Reminders sent by hand, kept only so a second one cannot follow twenty
+     minutes after the first. */
+  const nudges = (Array.isArray(raw.nudges) ? raw.nudges : [])
+    .map((n) => ({ i: Number(n?.i), at: s(n?.at, 40) }))
+    .filter((n) => Number.isInteger(n.i) && n.i >= 0 && n.i < PLAN_MAX && n.at)
+    .slice(-12);
+  if (nudges.length) out.nudges = nudges;
   const paid = (Array.isArray(raw.paid) ? raw.paid : [])
     .map((r) => cleanPaidRow(r, s)).filter((r) => r && r.i < plan.length).slice(0, 60);
   if (paid.length) out.paid = paid;
