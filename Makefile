@@ -1596,8 +1596,20 @@ app-state: ## Is the app submitted? Ask Apple, from your Mac:  make app-state
 	@# IT FETCHES FIRST, like `listing`, so that asking the question is one
 	@# command rather than two — and so the answer is never given by a copy of
 	@# this script that is a week old.
+	@#
+	@# BUT A FAILED FETCH MUST NOT STOP THE ANSWER, and the first version of
+	@# this got that wrong. GitHub over TLS times out from where Tom works,
+	@# often; Apple's API does not. Making the question depend on reaching
+	@# GitHub meant a bad minute on one network swallowed a question about a
+	@# different one — `SSL connection timeout`, Error 128, and nothing about
+	@# the app. So the fetch is tried, and if it cannot be had we say so and
+	@# ask Apple anyway with whatever is on this disk.
 	@branch=$$(git rev-parse --abbrev-ref HEAD); \
-	  git fetch origin "$$branch" -q && git reset --hard -q "origin/$$branch"
+	  if git fetch origin "$$branch" -q 2>/dev/null; then \
+	    git reset --hard -q "origin/$$branch"; \
+	  else \
+	    echo "  (could not reach GitHub — asking Apple with the copy on this disk)"; \
+	  fi
 	@node app/store/state.mjs
 
 listing: ## Fill in the App Store listing from your Mac:  make listing PHONE="<your number>"
