@@ -8380,6 +8380,12 @@ function groupable(board, me) {
  */
 const MO_NAME = (process.env.BOARD_BUTLER_NAME || "Mo").slice(0, 24);
 
+/* WHERE THE PLATFORM'S 2% IS PAID, and the whole of the switch. Unset, no fee
+   row is drawn anywhere and a deal is exactly what it was. It is a page
+   belonging to whoever runs this board — the board still never holds a cent,
+   the payer simply has a second person to pay. See feeOf() in lib/store.js. */
+const DEAL_FEE_TO = store.cleanPayLink(process.env.BOARD_DEAL_FEE_TO || "");
+
 /* WHAT HE SAYS WHEN THE WIRE TRIPS. Stored like anybody else's line, so it is
  * written once in one language rather than being a key the page resolves —
  * see the note over MO_NAME. It is the sentence already printed under every
@@ -8542,6 +8548,10 @@ app.get("/api/groups", notesOff, async (req, res) => {
          handle so the card can tell whether they are a party to it or a
          witness, without the page having to work that out from faces. */
       deal: g.deal || null,
+      /* Computed here rather than stored, so it is right when the terms are
+         edited and cannot be deleted by either side. Null when the board
+         names no page to pay it on. */
+      fee: g.deal ? store.feeOf(g.deal, DEAL_FEE_TO) : null,
       meHandle: (board.people.find((q) => q.by === me) || {}).handle || "",
       /* CODES MINTED FOR THIS ROOM AND NOT YET SPENT, to whoever minted them.
        * They hold seats — see groupRoom and the note over POST /api/invite —

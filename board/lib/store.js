@@ -2441,6 +2441,75 @@ export function cleanPayLink(raw) {
   } catch { return ""; }
 }
 
+/* ---------------------------------------------------------------------------
+ * THE PLATFORM'S TWO PER CENT
+ *
+ * WHY IT IS DERIVED AND NOT A ROW SOMEBODY TYPED. A fee the operator adds by
+ * hand is a fee he forgets on the deal that mattered, and a fee either side
+ * can delete is not a fee. So it is computed from the deal's own fee line
+ * every time the card is drawn, sits below the plan, and is not in `plan` at
+ * all — which also keeps it out of the six rows and out of their indexes.
+ *
+ * IT IS OFF UNLESS THERE IS SOMEWHERE TO PAY IT. BOARD_DEAL_FEE_TO holds the
+ * page the fee is paid on. Unset, no fee row is drawn and nothing about a deal
+ * changes — the same rule every optional part of this box follows.
+ *
+ * WHEN THE AMOUNT CANNOT BE READ, IT SAYS SO AND DOES NOT GUESS. "50% on
+ * agreeing" and "about forty thousand" are things a person wrote to another
+ * person; a machine that decides they mean a number will be wrong on a money
+ * screen, which is the worst place to be wrong. Then the row reads "2% of the
+ * fee" and the two of them work it out, which they can do.
+ * ------------------------------------------------------------------------ */
+export const FEE_PCT = 2;
+
+/** An amount, if the whole string is one and nothing else.
+ *
+ *  Deliberately strict. A mark in front or a code behind, digits, optional
+ *  cents — anything else, including a percentage, a range or a word, is a
+ *  sentence rather than a sum and comes back null. */
+export function readMoney(raw) {
+  const v = String(raw ?? "").trim();
+  if (!v || v.includes("%")) return null;
+  const m = /^(\S{0,4}?)\s?(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{1,2}))?\s?([A-Za-z]{0,3})$/.exec(v);
+  if (!m) return null;
+  const [, pre, whole, dec = "", post] = m;
+  if (pre && /\d/.test(pre)) return null;
+  /* A mark at both ends is somebody's typo, not two currencies. */
+  if (pre && post) return null;
+  const n = Number(whole.replace(/,/g, "") + (dec ? "." + dec : ""));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return { pre, post, n, grouped: whole.includes(",") };
+}
+
+/** Write a number back the way the person wrote theirs — their mark, their
+ *  grouping. "HK$450,000" gives "HK$9,000", not "9000 HKD". */
+export function money(shape, n) {
+  const round = Math.round(n * 100) / 100;
+  const exact = Math.abs(round - Math.round(round)) < 1e-9;
+  const fixed = exact ? String(Math.round(round)) : round.toFixed(2);
+  const [w, d] = fixed.split(".");
+  const body = shape.grouped ? w.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : w;
+  const out = body + (d ? "." + d : "");
+  return shape.pre ? shape.pre + out : shape.post ? out + " " + shape.post : out;
+}
+
+/** What the fee row says, or null when there is nowhere to pay it.
+ *  `amount` is a figure when the deal's fee could be read and empty when it
+ *  could not — the screen says "2% of the fee" in that case, in words. */
+export function feeOf(deal, to) {
+  const link = cleanPayLink(to);
+  if (!link || !deal) return null;
+  const shape = readMoney(deal.fee);
+  return {
+    pct: FEE_PCT,
+    amount: shape ? money(shape, shape.n * FEE_PCT / 100) : "",
+    to: link,
+    /* Append-only, like everything else two people say to each other here.
+       The payer says they paid it; whoever runs the board says it arrived. */
+    paid: (Array.isArray(deal.feePaid) ? deal.feePaid : []),
+  };
+}
+
 export function cleanDeal(raw) {
   if (!raw || typeof raw !== "object") return null;
   const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").replace(/[^\P{C}\n]/gu, "").trim().slice(0, n);
@@ -2478,6 +2547,17 @@ export function cleanDeal(raw) {
   const paid = (Array.isArray(raw.paid) ? raw.paid : [])
     .map((r) => cleanPaidRow(r, s)).filter((r) => r && r.i < plan.length).slice(0, 60);
   if (paid.length) out.paid = paid;
+
+  /* THE FEE'S OWN RECORD, kept apart from the plan's on purpose. Sharing the
+     plan's index would mean the fee's statements were dropped the moment the
+     plan got shorter, and dropped quietly. */
+  const feePaid = (Array.isArray(raw.feePaid) ? raw.feePaid : [])
+    .map((r) => ({
+      kind: ["claimed", "confirmed", "denied"].includes(r?.kind) ? r.kind : "",
+      who: s(r?.who, 64), at: s(r?.at, 40),
+    }))
+    .filter((r) => r.kind && r.who && r.at).slice(0, 20);
+  if (feePaid.length) out.feePaid = feePaid;
 
   if (!out.hires || !out.provides) return null;
   return out;
