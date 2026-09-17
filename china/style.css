@@ -1,0 +1,71 @@
+/* One stylesheet, same origin. See the note in china-build.mjs:
+   nothing on this site is fetched from another host, because most of them do
+   not resolve from the mainland and a blocked stylesheet is an unstyled page. */
+:root{
+  --paper:#0B0D13;
+  --ink:#F2F4F8;
+  --ink-2:#A8B0C2;
+  --muted:#6F788C;
+  --hair:#232838;
+  --gold:#D9A94E;
+  --serif:ui-serif,"Songti SC","Noto Serif CJK SC",Georgia,serif;
+  --sans:ui-sans-serif,system-ui,-apple-system,"PingFang SC",
+         "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --paper:#EFF1F5;
+    --ink:#161A22;
+    --ink-2:#4A5262;
+    --muted:#7B8496;
+    --hair:#DDE2EA;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;padding:0 20px;
+  background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:17px;line-height:1.8;
+  display:flex;flex-direction:column;align-items:center;
+}
+main{width:100%;max-width:26rem;margin-block:auto;padding:40px 0}
+/* A document is read rather than glanced at, so it starts at the top and is
+   given a wider measure than the one-line home page. */
+body.doc main{margin-block:0;max-width:34rem;padding:44px 0 32px}
+.hero{text-align:center}
+h1{
+  font-family:var(--serif);font-weight:600;
+  font-size:2rem;line-height:1.3;margin:0 0 16px;text-wrap:balance;
+}
+.hero h1{font-size:2.6rem;letter-spacing:.18em;margin-bottom:18px}
+h2{font-family:var(--serif);font-weight:600;font-size:1.15rem;
+   margin:2.2rem 0 .4rem;line-height:1.5}
+p{margin:0 0 1rem}
+.lede{color:var(--ink-2)}
+.hero .what{color:var(--ink-2);margin:0 auto 34px;max-width:20rem}
+a.go{
+  display:block;padding:16px 20px;border-radius:12px;margin-top:1.6rem;
+  background:var(--gold);color:#1A1405;text-align:center;
+  font-size:1.05rem;font-weight:600;letter-spacing:.06em;text-decoration:none;
+}
+.hero a.go{margin-top:0}
+a.go:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.note{color:var(--muted);font-size:.9rem;margin:20px 0 0;text-align:center}
+ol{margin:2rem 0 0;padding:0;list-style:none;counter-reset:r}
+ol li{counter-increment:r;padding:1.1rem 0 1.1rem 2.8rem;position:relative;
+  border-top:1px solid var(--hair)}
+ol li:last-child{border-bottom:1px solid var(--hair)}
+ol li::before{content:counter(r);position:absolute;left:0;top:1.15rem;
+  font-family:var(--serif);font-size:1.3rem;color:var(--gold);line-height:1}
+ol li b{display:block;font-weight:600;line-height:1.5}
+ol li span{display:block;margin:.3rem 0 0;font-size:.93rem;color:var(--ink-2)}
+.end{margin-top:2rem;font-size:.93rem;color:var(--muted)}
+footer{
+  width:100%;max-width:34rem;margin-top:auto;
+  color:var(--muted);font-size:.85rem;line-height:2.2;
+  padding:32px 0;text-align:center;
+}
+footer nav{display:flex;flex-wrap:wrap;gap:0 1.4rem;justify-content:center}
+footer a{color:var(--muted)}
+footer .who{margin-top:.8rem;font-size:.8rem}

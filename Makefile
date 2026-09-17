@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: try china claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1641,6 +1641,30 @@ claire-video: ## Shoot the episodes with Seedance: make claire-video [GO=1] [ONL
 	@# The server keeps the catalogue in memory, so new film is invisible until
 	@# it restarts. Seconds of downtime, against an app that shows nothing new.
 	@$(COMPOSE) restart claire >/dev/null && echo "  claire restarted, so the app shows it." 
+
+china: ## Build the site the China domain serves, and look at it: make china
+	@# RUNS WHEREVER NODE IS. No docker, no .env, nothing on the box — china/ is
+	@# five static files and a stylesheet, and the mainland server that will
+	@# serve them does not exist yet.
+	@#
+	@# BUILT FROM board/public/i18n.js, so the nine house rules and what the
+	@# board keeps cannot drift from what the board itself says. A filing
+	@# describes a website; the website has to stay the one described.
+	@#
+	@# It opens the browser because nothing else consumes china/ yet, so a
+	@# build nobody looks at is a build nobody checks. Ctrl-C stops it.
+	@command -v node >/dev/null || { \
+	  echo "No node on this machine, and the build is a node program."; exit 1; }
+	@set -e; \
+	  trap 'kill $$pid 2>/dev/null; echo; echo "  Stopped."; echo' EXIT; \
+	  trap 'exit 0' INT TERM; \
+	  node scripts/china-build.mjs --look & pid=$$!; \
+	  sleep 1; \
+	  url="http://127.0.0.1:$${PORT:-8390}/"; \
+	  (command -v open >/dev/null && open "$$url" 2>/dev/null) \
+	    || (command -v xdg-open >/dev/null && xdg-open "$$url" 2>/dev/null) \
+	    || true; \
+	  wait $$pid
 
 claire-episodes: ## Seed and shoot the ten full episodes: make claire-episodes GO=1
 	@# THE TWO COMMANDS THAT ALWAYS GO TOGETHER. The seed carries the shot list
