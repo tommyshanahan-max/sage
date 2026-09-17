@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClaireTv · partner</title>
+<style>
+  /* A working surface, not a shop window: lighter than the app on purpose, so
+     nobody confuses the console with the thing the audience sees. */
+  :root{
+    --ink:#15100F; --sheet:#FBF8F6; --line:#E2D9D4; --soft:#F2EBE7;
+    --ember:#C4243A; --gold:#8A6A20; --mute:#7C6F6A; --text:#1C1613;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--sheet);color:var(--text);
+    font:400 15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    padding:28px 20px 80px;
+  }
+  .wrap{max-width:880px;margin-inline:auto}
+  h1{font:700 26px/1.1 Georgia,serif;margin:0 0 4px;letter-spacing:-.01em}
+  h1 i{color:var(--ember)}
+  .sub{margin:0 0 26px;color:var(--mute);font-size:14px}
+  h2{font:600 15px/1.2 inherit;margin:34px 0 12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+  label{display:block;font-size:12px;font-weight:600;color:var(--mute);margin:0 0 5px}
+  input,select,textarea{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
+    font:inherit;background:#fff;color:inherit;
+  }
+  textarea{min-height:64px;resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--ember);outline-offset:1px}
+  .row{display:flex;flex-wrap:wrap;gap:12px}
+  .row>div{flex:1 1 150px;min-width:0}
+  button{
+    font:inherit;font-weight:600;cursor:pointer;border:1px solid var(--line);
+    background:#fff;color:inherit;padding:9px 15px;border-radius:8px;
+  }
+  button.go{background:var(--ember);border-color:var(--ember);color:#fff}
+  button.small{padding:5px 10px;font-size:13px;font-weight:500}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .head h3{margin:0;font:700 17px/1.2 Georgia,serif}
+  .pill{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    padding:3px 9px;border-radius:99px;background:var(--soft);color:var(--mute)}
+  .pill.live{background:#E8F3EC;color:#1F6B3C}
+  .pill.feat{background:#FBF0D8;color:var(--gold)}
+  /* THE THREE NUMBERS THE WALL IS JUDGED BY. Reached, paid, coins — in that
+     order, because the ratio between the first two is the only feedback the
+     freeThrough setting ever gets. */
+  .nums{display:flex;gap:26px;margin:14px 0 0;flex-wrap:wrap}
+  .num{min-width:74px}
+  .num b{display:block;font:700 22px/1 Georgia,serif;font-variant-numeric:tabular-nums}
+  .num span{font-size:11px;color:var(--mute);letter-spacing:.04em;text-transform:uppercase}
+  .eps{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+  .ep{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:14px;border-bottom:1px solid var(--soft)}
+  .ep .n{flex:0 0 34px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--mute)}
+  .ep .t{flex:1;min-width:0}
+  .ep .t b{display:block;font-weight:500}
+  .ep .t span{font-size:12px;color:var(--mute)}
+  .ep.wall{border-bottom:2px solid var(--ember)}
+  .wallnote{font-size:12px;color:var(--ember);font-weight:600;padding:8px 0 0}
+  .gate{max-width:380px;margin:60px auto;text-align:center}
+  .gate input{text-align:center;letter-spacing:.1em;margin:14px 0}
+  .say{font-size:13px;color:var(--ember);min-height:19px;margin:8px 0 0}
+  .muted{color:var(--mute);font-size:13px}
+  details summary{cursor:pointer;font-weight:600;font-size:14px;padding:4px 0}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap"></div>
+
+<script type="module">
+/* The key lives in this browser and nowhere else. It is sent on a header, not
+   a cookie, so nothing a stranger links to can carry it. Clearing site data
+   logs the partner out, which is the right behaviour on a shared laptop. */
+const KEYSTORE = "claire:partnerkey";
+let key = "";
+try { key = sessionStorage.getItem(KEYSTORE) || ""; } catch { key = ""; }
+
+const api = async (path, body) => {
+  const r = await fetch(path, {
+    method: body ? "POST" : "GET",
+    headers: { "x-claire-key": key, ...(body ? { "Content-Type": "application/json" } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+    cache: "no-store",
+  });
+  return { status: r.status, data: await r.json().catch(() => ({})) };
+};
+const el = (t, c, txt) => { const n = document.createElement(t); if (c) n.className = c; if (txt != null) n.textContent = txt; return n; };
+const field = (label, name, value, type = "text", extra = {}) => {
+  const d = el("div");
+  d.append(Object.assign(el("label"), { textContent: label, htmlFor: name }));
+  const i = document.createElement(extra.tag || "input");
+  if (!extra.tag) i.type = type;
+  i.id = name; i.name = name; i.value = value ?? "";
+  Object.assign(i, extra.props || {});
+  d.append(i);
+  return d;
+};
+const money = (c) => "$" + (c / 100).toFixed(2);
+
+/* ---- the door ------------------------------------------------------------ */
+async function gate(msg) {
+  const w = document.getElementById("wrap"); w.textContent = "";
+  const hello = await fetch("/api/partner/hello").then((r) => r.json()).catch(() => ({}));
+  const box = el("div", "gate");
+  box.append(Object.assign(el("h1"), { innerHTML: "<i>Claire</i>Tv" }));
+  if (!hello.configured) {
+    box.append(el("p", "sub", "No partner key is set on this server, so the console is closed. Set CLAIRE_PARTNER_KEY and restart."));
+    w.append(box); return;
+  }
+  box.append(el("p", "sub", "Partner console"));
+  const i = document.createElement("input");
+  i.type = "password"; i.id = "key"; i.placeholder = "key"; i.autocomplete = "off";
+  const go = el("button", "go", "Open");
+  go.type = "button";
+  const say = el("p", "say", msg || "");
+  const tryIt = async () => {
+    key = i.value.trim();
+    const r = await api("/api/partner/catalogue");
+    if (r.status === 200) { try { sessionStorage.setItem(KEYSTORE, key); } catch {} return draw(r.data); }
+    say.textContent = "That key was not accepted.";
+  };
+  go.addEventListener("click", tryIt);
+  i.addEventListener("keydown", (e) => { if (e.key === "Enter") tryIt(); });
+  box.append(i, go, say);
+  w.append(box);
+  i.focus();
+}
+
+/* ---- the catalogue ------------------------------------------------------- */
+async function refresh() {
+  const r = await api("/api/partner/catalogue");
+  if (r.status !== 200) return gate("Signed out.");
+  draw(r.data);
+}
+
+function draw(data) {
+  const w = document.getElementById("wrap"); w.textContent = "";
+  w.append(Object.assign(el("h1"), { innerHTML: "<i>Claire</i>Tv" }));
+  w.append(el("p", "sub", data.series.length + " series · " + data.viewers + " viewers"));
+
+  w.append(el("h2", null, "Catalogue"));
+  if (!data.series.length) w.append(el("p", "muted", "Nothing yet. Add the first series below."));
+
+  for (const s of data.series) w.append(seriesCard(s, data.featured));
+
+  w.append(el("h2", null, "Add a series"));
+  w.append(seriesForm(null));
+
+  const grant = el("details");
+  grant.append(el("summary", null, "Top up a viewer"));
+  const g = el("div", "card");
+  const row = el("div", "row");
+  row.append(field("Viewer id", "gv", ""), field("Coins", "gc", "100", "number"));
+  const gb = el("button", "go", "Grant"); gb.type = "button";
+  const gsay = el("p", "say");
+  gb.addEventListener("click", async () => {
+    const r = await api("/api/partner/grant", {
+      viewer: document.getElementById("gv").value.trim(),
+      coins: Number(document.getElementById("gc").value),
+    });
+    gsay.textContent = r.status === 200 ? "Balance is now " + r.data.coins : "No viewer with that id.";
+  });
+  g.append(row, el("div", null, " "), gb, gsay);
+  g.append(el("p", "muted", "Coins are granted, not sold. There is no payment on this build — this is how you comp a reviewer or make a refund good."));
+  grant.append(g);
+  w.append(el("h2", null, "Coins"), grant);
+}
+
+function seriesCard(s, featured) {
+  const c = el("div", "card");
+  const head = el("div", "head");
+  const left = el("div");
+  left.append(el("h3", null, s.title));
+  const tags = el("div"); tags.style.marginTop = "6px";
+  tags.append(el("span", s.live ? "pill live" : "pill", s.live ? "Live" : "Draft"));
+  if (featured === s.id) tags.append(document.createTextNode(" "), el("span", "pill feat", "Featured"));
+  left.append(tags);
+  head.append(left);
+
+  const acts = el("div");
+  const feat = el("button", "small", featured === s.id ? "Unfeature" : "Feature");
+  feat.type = "button";
+  feat.addEventListener("click", async () => {
+    await api("/api/partner/feature", { id: featured === s.id ? "" : s.id });
+    refresh();
+  });
+  acts.append(feat);
+  head.append(acts);
+  c.append(head);
+
+  if (s.blurb) c.append(el("p", "muted", s.blurb));
+
+  const nums = el("div", "nums");
+  const n = (v, label) => { const d = el("div", "num"); d.append(el("b", null, String(v)), el("span", null, label)); return d; };
+  nums.append(n(s.made + (s.totalPlanned ? " / " + s.totalPlanned : ""), "episodes"));
+  nums.append(n(s.freeThrough, "free through"));
+  nums.append(n(s.reached, "reached the wall"));
+  nums.append(n(s.paid, "paid"));
+  nums.append(n(s.coins, "coins taken"));
+  c.append(nums);
+
+  const edit = el("details");
+  edit.append(el("summary", null, "Edit series"));
+  edit.append(seriesForm(s));
+  c.append(edit);
+
+  const eps = el("details");
+  eps.append(el("summary", null, "Episodes (" + s.made + ")"));
+  const list = el("div", "eps");
+  for (const e of s.episodes) {
+    const row = el("div", "ep" + (e.n === s.freeThrough ? " wall" : ""));
+    row.append(el("div", "n", String(e.n)));
+    const t = el("div", "t");
+    t.append(el("b", null, e.title));
+    t.append(el("span", null, (e.hook ? "“" + e.hook + "”" : "no closing line") + (e.url ? "" : " · no video")));
+    row.append(t);
+    const del = el("button", "small", "Remove"); del.type = "button";
+    del.addEventListener("click", async () => {
+      await api("/api/partner/delete-episode", { id: e.id });
+      refresh();
+    });
+    row.append(del);
+    list.append(row);
+    if (e.n === s.freeThrough) {
+      list.append(el("p", "wallnote", "↑ free through here. The next episode is the one that has to be paid for — write its closing line first."));
+    }
+  }
+  eps.append(list, episodeForm(s));
+  c.append(eps);
+  return c;
+}
+
+function seriesForm(s) {
+  const f = el("div", "card");
+  const r1 = el("div", "row");
+  r1.append(field("Title", "t" + (s ? s.id : "new"), s?.title || ""));
+  f.append(r1);
+  const r2 = el("div", "row");
+  r2.append(field("One line about it", "b" + (s ? s.id : "new"), s?.blurb || "", "text"));
+  f.append(r2);
+  const r3 = el("div", "row");
+  r3.append(field("Free through episode", "f" + (s ? s.id : "new"), s?.freeThrough ?? 7, "number"));
+  r3.append(field("Coins per episode", "c" + (s ? s.id : "new"), s?.coinsPerEpisode ?? 60, "number"));
+  r3.append(field("Whole series (cents)", "p" + (s ? s.id : "new"), s?.bundleCents ?? 1999, "number"));
+  r3.append(field("Episodes planned", "n" + (s ? s.id : "new"), s?.totalPlanned ?? 84, "number"));
+  f.append(r3);
+
+  const r4 = el("div", "row");
+  const gd = el("div");
+  gd.append(Object.assign(el("label"), { textContent: "Genre" }));
+  const g = document.createElement("select"); g.id = "g" + (s ? s.id : "new");
+  for (const [v, label] of [["billionaire", "Billionaire"], ["alpha", "Alpha"], ["revenge", "Revenge"], ["other", "Other"]]) {
+    const o = document.createElement("option"); o.value = v; o.textContent = label;
+    if ((s?.genre || "billionaire") === v) o.selected = true;
+    g.append(o);
+  }
+  gd.append(g); r4.append(gd);
+
+  const ad = el("div");
+  ad.append(Object.assign(el("label"), { textContent: "Key art" }));
+  const a = document.createElement("select"); a.id = "a" + (s ? s.id : "new");
+  for (const v of ["1", "2", "3", "4", "5", "6"]) {
+    const o = document.createElement("option"); o.value = v; o.textContent = "Ground " + v;
+    if ((s?.art || "1") === v) o.selected = true;
+    a.append(o);
+  }
+  ad.append(a); r4.append(ad);
+
+  const ld = el("div");
+  ld.append(Object.assign(el("label"), { textContent: "Live" }));
+  const l = document.createElement("select"); l.id = "l" + (s ? s.id : "new");
+  for (const [v, label] of [["0", "Draft"], ["1", "Live"]]) {
+    const o = document.createElement("option"); o.value = v; o.textContent = label;
+    if (String(s?.live ? 1 : 0) === v) o.selected = true;
+    l.append(o);
+  }
+  ld.append(l); r4.append(ld);
+  f.append(r4);
+
+  const save = el("button", "go", s ? "Save" : "Add series"); save.type = "button";
+  const say = el("p", "say");
+  save.addEventListener("click", async () => {
+    const k = s ? s.id : "new";
+    const v = (p) => document.getElementById(p + k).value;
+    const r = await api("/api/partner/series", {
+      id: s?.id, title: v("t"), blurb: v("b"),
+      freeThrough: Number(v("f")), coinsPerEpisode: Number(v("c")),
+      bundleCents: Number(v("p")), totalPlanned: Number(v("n")),
+      genre: v("g"), art: v("a"), live: v("l") === "1",
+    });
+    if (r.status === 200) refresh();
+    else say.textContent = r.data.error === "title" ? "It needs a title." : "That did not save.";
+  });
+  f.append(el("div", null, " "), save, say);
+  return f;
+}
+
+function episodeForm(s) {
+  const f = el("div", "card");
+  const next = (s.episodes.at(-1)?.n || 0) + 1;
+  const r1 = el("div", "row");
+  r1.append(field("Number", "en" + s.id, next, "number"));
+  r1.append(field("Title", "et" + s.id, ""));
+  r1.append(field("Length (seconds)", "es" + s.id, 90, "number"));
+  f.append(r1);
+  const r2 = el("div", "row");
+  r2.append(field("Closing line", "eh" + s.id, "", "text"));
+  f.append(r2);
+  const r3 = el("div", "row");
+  r3.append(field("Video URL", "eu" + s.id, "", "url"));
+  f.append(r3);
+  f.append(el("p", "muted", "The video lives wherever you host it — this build stores a URL, not the file."));
+  const add = el("button", "go", "Add episode"); add.type = "button";
+  const say = el("p", "say");
+  add.addEventListener("click", async () => {
+    const v = (p) => document.getElementById(p + s.id).value;
+    const r = await api("/api/partner/episode", {
+      series: s.id, n: Number(v("en")), title: v("et"),
+      hook: v("eh"), url: v("eu"), seconds: Number(v("es")),
+    });
+    if (r.status === 200) refresh();
+    else say.textContent = r.data.error === "taken" ? "Episode " + r.data.n + " already exists." : "It needs a title.";
+  });
+  f.append(add, say);
+  return f;
+}
+
+/* ---- start --------------------------------------------------------------- */
+if (key) {
+  const r = await api("/api/partner/catalogue");
+  if (r.status === 200) draw(r.data); else gate();
+} else {
+  gate();
+}
+</script>
+</body>
+</html>

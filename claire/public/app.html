@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ClaireTv</title>
+<style>
+  /* One world, on purpose: a vertical-video app is a dark room. */
+  :root{
+    --ink:#0E0A0C; --panel:#191216; --edge:#2C2027;
+    --ember:#FF3B4E; --gold:#E8B75C; --mist:#9A8F94; --paper:#F7F2F4;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--ink);color:var(--paper);
+    font:400 15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;overscroll-behavior:none;
+  }
+  #app{
+    max-width:480px;margin-inline:auto;min-height:100%;
+    display:flex;flex-direction:column;
+    padding-top:env(safe-area-inset-top,0px);
+  }
+  .grow{flex:1}
+  button{font:inherit;cursor:pointer}
+  .hide{display:none!important}
+
+  .appbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px}
+  .mark{font:700 21px/1 Georgia,"Times New Roman",serif;letter-spacing:-.01em}
+  .mark i{font-style:italic;color:var(--ember)}
+  .mark s{
+    text-decoration:none;font-family:inherit;font-size:10px;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;vertical-align:5px;margin-left:3px;color:var(--mist);
+  }
+  .coins{
+    display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--gold);
+    border:1px solid rgba(232,183,92,.35);padding:5px 11px;border-radius:99px;
+    font-variant-numeric:tabular-nums;background:none;
+  }
+
+  .feature{
+    position:relative;margin:4px 16px 0;min-height:230px;border-radius:14px;overflow:hidden;
+    display:flex;flex-direction:column;justify-content:flex-end;padding:16px;
+  }
+  .badge{
+    position:absolute;top:12px;left:12px;font-size:9px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink);background:var(--gold);padding:3px 8px;border-radius:4px;
+  }
+  .feature h2{font:900 26px/1.02 Georgia,serif;margin:0 0 6px;letter-spacing:-.01em}
+  .feature p{margin:0 0 13px;font-size:12px;color:var(--mist)}
+  .play{
+    align-self:flex-start;display:inline-flex;align-items:center;gap:7px;background:var(--ember);
+    color:#fff;border:0;font-size:14px;font-weight:700;padding:10px 18px;border-radius:9px;
+  }
+
+  .sect{padding:20px 0 0}
+  .hd{
+    padding:0 16px 10px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);
+  }
+  .resume{
+    margin:0 16px;display:flex;gap:12px;align-items:center;width:calc(100% - 32px);
+    background:rgba(247,242,244,.05);border:0;border-radius:11px;padding:10px;text-align:left;color:inherit;
+  }
+  .thumb{flex:0 0 42px;height:58px;border-radius:7px}
+  .resume h3{margin:0 0 3px;font-size:13px;font-weight:600;line-height:1.25}
+  .resume .sm{font-size:11px;color:var(--mist);font-variant-numeric:tabular-nums}
+  .bar{height:2px;background:rgba(247,242,244,.16);border-radius:2px;margin-top:7px;position:relative}
+  .bar b{position:absolute;left:0;top:0;bottom:0;background:var(--ember);border-radius:2px}
+
+  .strip{display:flex;gap:10px;padding:0 16px 8px;overflow-x:auto;scrollbar-width:none}
+  .strip::-webkit-scrollbar{display:none}
+  .poster{flex:0 0 96px;background:none;border:0;padding:0;color:inherit;text-align:left}
+  .poster .art{height:128px;border-radius:9px;margin-bottom:7px;position:relative}
+  .poster .rank{
+    position:absolute;left:6px;bottom:4px;font:900 30px/.8 Georgia,serif;
+    color:rgba(247,242,244,.92);text-shadow:0 2px 8px rgba(0,0,0,.8);
+  }
+  .poster p{margin:0;font-size:11px;line-height:1.3;font-weight:500}
+  .poster span{font-size:10px;color:var(--mist)}
+
+  /* art — six grounds, so a catalogue with no stills still reads as a shelf */
+  .a1{background:radial-gradient(90% 60% at 72% 18%,#5A1A28 0,transparent 62%),linear-gradient(200deg,#3A1424,#1A0D14 68%,#140C10)}
+  .a2{background:radial-gradient(90% 60% at 72% 18%,#1E2B45 0,transparent 62%),linear-gradient(200deg,#1C2233,#0F1118)}
+  .a3{background:radial-gradient(90% 60% at 72% 18%,#4A3322 0,transparent 62%),linear-gradient(200deg,#33231A,#150F0C)}
+  .a4{background:radial-gradient(90% 60% at 72% 18%,#243D30 0,transparent 62%),linear-gradient(200deg,#1B2E24,#0D1611)}
+  .a5{background:radial-gradient(90% 60% at 72% 18%,#412244 0,transparent 62%),linear-gradient(200deg,#2C1730,#130B15)}
+  .a6{background:radial-gradient(90% 60% at 72% 18%,#4A2331 0,transparent 62%),linear-gradient(200deg,#38161F,#170A0E)}
+
+  /* series page */
+  .hero{min-height:200px;padding:18px;display:flex;flex-direction:column;justify-content:flex-end}
+  .hero h2{font:900 27px/1.04 Georgia,serif;margin:0 0 6px;letter-spacing:-.01em}
+  .hero .meta{font-size:12px;color:var(--mist);font-variant-numeric:tabular-nums}
+  .hero .meta b{color:var(--gold);font-weight:600}
+  .lab{
+    display:flex;justify-content:space-between;align-items:baseline;padding:18px 16px 12px;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);
+  }
+  .lab b{color:var(--gold);letter-spacing:0;text-transform:none;font-size:12px}
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;padding:0 16px}
+  .ep{
+    aspect-ratio:1;border:0;border-radius:8px;background:rgba(247,242,244,.07);color:var(--mist);
+    font-size:12px;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;
+  }
+  .ep.open{background:rgba(247,242,244,.16);color:var(--paper);font-weight:500}
+  .ep.locked{color:rgba(232,183,92,.55)}
+  .wall{display:flex;align-items:center;gap:10px;margin:16px;font-size:11px;color:var(--gold)}
+  .wall span{flex:1;height:1px;background:rgba(232,183,92,.35)}
+
+  /* player */
+  .stage{position:relative;flex:1;display:flex;flex-direction:column;justify-content:flex-end;min-height:56vh}
+  .stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+  .keyart{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font:900 84px/1 Georgia,serif;color:rgba(255,59,78,.13);user-select:none;
+  }
+  .hook{
+    position:relative;text-align:center;padding:0 28px 18px;font-size:16px;font-weight:500;
+    text-shadow:0 2px 12px rgba(0,0,0,.9);
+  }
+  .scrub{
+    position:relative;padding:0 18px 16px;display:flex;align-items:center;gap:10px;
+    font-size:11px;color:var(--mist);font-variant-numeric:tabular-nums;
+  }
+  .track{flex:1;height:3px;border-radius:2px;background:rgba(247,242,244,.18);position:relative}
+  .track b{position:absolute;left:0;top:0;bottom:0;background:var(--ember);border-radius:2px}
+
+  .sheet{
+    background:var(--panel);border-top:1px solid var(--edge);border-radius:18px 18px 0 0;
+    padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px));text-align:center;
+  }
+  .sheet .lock{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
+  .sheet h3{margin:0 0 5px;font-size:18px}
+  .sheet .small{margin:0 0 16px;font-size:13px;color:var(--mist)}
+  .buy{
+    display:block;width:100%;padding:14px;border:0;border-radius:11px;background:var(--ember);
+    color:#fff;font-size:15px;font-weight:700;margin-bottom:10px;
+  }
+  .buy[disabled]{opacity:.45}
+  .alt{font-size:13px;color:var(--mist);margin:0}
+  .alt button{background:none;border:0;color:var(--gold);font-weight:600;padding:0;font-size:13px}
+
+  .tabbar{
+    position:sticky;bottom:0;display:flex;justify-content:space-around;align-items:center;
+    padding:12px 0 calc(16px + env(safe-area-inset-bottom,0px));
+    border-top:1px solid var(--edge);background:rgba(14,10,12,.94);
+    backdrop-filter:blur(8px);font-size:11px;color:var(--mist);
+  }
+  .tabbar button{background:none;border:0;color:inherit;font-size:11px}
+  .tabbar button.on{color:var(--paper);font-weight:700}
+  .back{background:none;border:0;color:var(--paper);font-size:15px;padding:14px 16px 0;text-align:left}
+  .empty{padding:60px 24px;text-align:center;color:var(--mist);font-size:14px}
+  .empty b{display:block;color:var(--paper);font-size:16px;margin-bottom:6px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app"><div class="grow" id="view"></div><nav class="tabbar" id="tabs"></nav></div>
+
+<script type="module">
+/* A viewer IS a browser. The id is minted here, kept in localStorage and sent
+   on a header; the server never sees it unhashed after that. Private mode and
+   cleared storage both mean a new person, which is the honest answer. */
+const KEY = "claire:device";
+let device = "";
+try {
+  device = localStorage.getItem(KEY) || "";
+  if (!device) { device = crypto.randomUUID().replace(/-/g, ""); localStorage.setItem(KEY, device); }
+} catch { device = crypto.randomUUID().replace(/-/g, ""); }
+
+const api = async (path, body) => {
+  const r = await fetch(path, {
+    method: body ? "POST" : "GET",
+    headers: { "x-claire-device": device, ...(body ? { "Content-Type": "application/json" } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+    cache: "no-store",
+  });
+  return { status: r.status, data: await r.json().catch(() => ({})) };
+};
+
+const $ = (id) => document.getElementById(id);
+const el = (t, c, txt) => { const n = document.createElement(t); if (c) n.className = c; if (txt != null) n.textContent = txt; return n; };
+const mmss = (s) => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+const money = (c) => "$" + (c / 100).toFixed(2);
+
+let coins = 0;
+
+function tabs(on) {
+  const bar = $("tabs"); bar.textContent = "";
+  for (const [k, label] of [["home", "Home"], ["coins", "Coins"]]) {
+    const b = el("button", k === on ? "on" : "", label);
+    b.type = "button";
+    b.addEventListener("click", () => { location.hash = k === "home" ? "" : "#coins"; });
+    bar.append(b);
+  }
+}
+
+/* ---- home ---------------------------------------------------------------- */
+async function home() {
+  const { data } = await api("/api/home");
+  coins = data.coins ?? 0;
+  const v = $("view"); v.textContent = "";
+
+  const bar = el("div", "appbar");
+  const mark = el("div", "mark");
+  mark.innerHTML = '<i>Claire</i><s>Tv</s>';
+  const c = el("button", "coins", "◆ " + coins);
+  c.type = "button";
+  c.addEventListener("click", () => { location.hash = "#coins"; });
+  bar.append(mark, c);
+  v.append(bar);
+
+  if (!data.featured) {
+    v.append(Object.assign(el("div", "empty"), { innerHTML: "<b>Nothing published yet</b>Add a series in the partner console and set it live." }));
+    tabs("home"); return;
+  }
+
+  const f = data.featured;
+  const feat = el("div", "feature a" + f.art);
+  feat.append(el("div", "badge", "New today"));
+  feat.append(el("h2", null, f.title));
+  feat.append(el("p", null, f.blurb || (f.totalPlanned || f.episodes) + " episodes"));
+  const play = el("button", "play", "▶ Episode 1 · free");
+  play.type = "button";
+  play.addEventListener("click", () => { location.hash = "#s/" + f.id; });
+  feat.append(play);
+  v.append(feat);
+
+  if (data.resume) {
+    const s = el("div", "sect");
+    s.append(el("div", "hd", "Keep watching"));
+    const r = el("button", "resume"); r.type = "button";
+    r.append(el("div", "thumb a" + data.resume.series.art));
+    const t = el("div"); t.style.flex = "1"; t.style.minWidth = "0";
+    t.append(el("h3", null, data.resume.series.title));
+    const total = data.resume.ep.seconds || 0;
+    t.append(el("div", "sm", "Episode " + data.resume.ep.n + (total ? " · " + mmss(data.resume.at) + " of " + mmss(total) : "")));
+    const bar2 = el("div", "bar"); const fill = el("b");
+    fill.style.width = total ? Math.min(100, (data.resume.at / total) * 100) + "%" : "4%";
+    bar2.append(fill); t.append(bar2);
+    r.append(t);
+    r.addEventListener("click", () => { location.hash = "#s/" + data.resume.series.id; });
+    s.append(r); v.append(s);
+  }
+
+  if (data.top.length) {
+    const s = el("div", "sect");
+    s.append(el("div", "hd", "Top this week"));
+    const strip = el("div", "strip");
+    data.top.forEach((t, i) => {
+      const p = el("button", "poster"); p.type = "button";
+      const art = el("div", "art a" + t.art);
+      art.append(el("span", "rank", String(i + 1)));
+      p.append(art, el("p", null, t.title), el("span", null, (t.totalPlanned || t.episodes) + " eps"));
+      p.addEventListener("click", () => { location.hash = "#s/" + t.id; });
+      strip.append(p);
+    });
+    s.append(strip); v.append(s);
+  }
+  tabs("home");
+}
+
+/* ---- a series ------------------------------------------------------------ */
+async function series(id) {
+  const { status, data } = await api("/api/series/" + encodeURIComponent(id));
+  const v = $("view"); v.textContent = "";
+  if (status !== 200) { v.append(el("div", "empty", "That series is not here.")); tabs("home"); return; }
+  coins = data.coins ?? coins;
+  const s = data.series;
+
+  const back = el("button", "back", "‹  Back"); back.type = "button";
+  back.addEventListener("click", () => { location.hash = ""; });
+  v.append(back);
+
+  const hero = el("div", "hero a" + s.art);
+  hero.append(el("h2", null, s.title));
+  hero.append(el("div", "meta", (s.totalPlanned || data.episodes.length) + " episodes · " + s.coinsPerEpisode + " coins each"));
+  if (s.blurb) { const p = el("div", "meta"); p.style.marginTop = "6px"; p.textContent = s.blurb; hero.append(p); }
+  v.append(hero);
+
+  const lab = el("div", "lab");
+  lab.append(el("span", null, "Episodes"));
+  lab.append(el("b", null, "whole series " + money(s.bundleCents)));
+  v.append(lab);
+
+  const grid = el("div", "grid");
+  for (const e of data.episodes) {
+    const b = el("button", "ep " + (e.open ? "open" : "locked"), String(e.n));
+    b.type = "button";
+    b.addEventListener("click", () => { location.hash = "#w/" + e.id; });
+    grid.append(b);
+  }
+  v.append(grid);
+
+  if (s.freeThrough) {
+    const w = el("p", "wall");
+    w.append(el("span"), document.createTextNode("free through " + s.freeThrough), el("span"));
+    v.append(w);
+  }
+  tabs("home");
+}
+
+/* ---- watching ------------------------------------------------------------ */
+let ticker = null;
+async function watch(id) {
+  clearInterval(ticker);
+  const { status, data } = await api("/api/watch/" + encodeURIComponent(id));
+  const v = $("view"); v.textContent = "";
+
+  const back = el("button", "back", "‹  Back"); back.type = "button";
+  back.addEventListener("click", () => history.back());
+  v.append(back);
+
+  if (status === 402) {
+    /* THE WALL. Everything above it is still on screen — the sheet rises over
+       the episode rather than replacing it, because a locked door in an empty
+       room is easy to walk away from. */
+    /* The locked stage wears the series' own ground rather than going black.
+       A door in a dark empty room is easy to walk away from; a door in front
+       of the thing you were watching is not. */
+    const stage = el("div", "stage a" + (data.art || "1"));
+    stage.append(el("div", "keyart", "▶"));
+    stage.append(el("p", "hook", data.title || ("Episode " + data.n)));
+    v.append(stage);
+
+    const sheet = el("div", "sheet");
+    sheet.append(el("div", "lock", "Locked"));
+    sheet.append(el("h3", null, "Episode " + data.n));
+    sheet.append(el("p", "small", data.coins + " coins · you have " + data.have));
+    const buy = el("button", "buy", "Unlock · " + data.coins + " coins");
+    buy.type = "button";
+    buy.addEventListener("click", async () => {
+      buy.disabled = true;
+      const r = await api("/api/unlock", { ep: id });
+      if (r.status === 200) { watch(id); return; }
+      buy.disabled = false;
+      sheet.querySelector(".small").textContent =
+        r.data.error === "short" ? "Not enough coins — " + r.data.have + " of " + r.data.need : "That did not work.";
+    });
+    sheet.append(buy);
+    const alt = el("p", "alt");
+    const whole = el("button", null, "the whole series, " + money(data.bundleCents));
+    whole.type = "button";
+    whole.addEventListener("click", async () => {
+      const r = await api("/api/unlock", { ep: id, whole: true, series: data.series });
+      if (r.status === 200) watch(id);
+      else sheet.querySelector(".small").textContent = "Not enough coins for the bundle.";
+    });
+    alt.append(document.createTextNode("or "), whole);
+    sheet.append(alt);
+    v.append(sheet);
+    tabs("home");
+    return;
+  }
+
+  if (status !== 200) { v.append(el("div", "empty", "That episode is not here.")); tabs("home"); return; }
+
+  const stage = el("div", "stage");
+  if (data.url) {
+    const vid = document.createElement("video");
+    vid.src = data.url; vid.playsInline = true; vid.controls = true; vid.autoplay = true;
+    stage.append(vid);
+    /* Where somebody stopped, every five seconds. Not on every timeupdate,
+       which fires four times a second and would write more rows than it
+       watches frames. */
+    ticker = setInterval(() => {
+      if (vid.currentTime > 1) api("/api/mark", { ep: id, seconds: Math.floor(vid.currentTime) });
+    }, 5000);
+  } else {
+    stage.append(el("div", "keyart", "▶"));
+    stage.append(el("p", "hook", "No video on this episode yet."));
+  }
+  if (data.hook) stage.append(el("p", "hook", "“" + data.hook + "”"));
+  v.append(stage);
+  tabs("home");
+}
+
+/* ---- coins --------------------------------------------------------------- */
+async function wallet() {
+  const { data } = await api("/api/home");
+  coins = data.coins ?? 0;
+  const v = $("view"); v.textContent = "";
+  const back = el("button", "back", "‹  Back"); back.type = "button";
+  back.addEventListener("click", () => { location.hash = ""; });
+  v.append(back);
+  const box = el("div", "empty");
+  box.innerHTML =
+    "<b>" + coins + " coins</b>Coins are granted, not sold — there is no payment on this build yet. " +
+    "A partner can top you up from the console.";
+  v.append(box);
+  tabs("coins");
+}
+
+/* ---- routing ------------------------------------------------------------- */
+function route() {
+  const h = location.hash.slice(1);
+  if (h.startsWith("s/")) return series(h.slice(2));
+  if (h.startsWith("w/")) return watch(h.slice(2));
+  if (h === "coins") return wallet();
+  return home();
+}
+addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>

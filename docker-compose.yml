@@ -1144,6 +1144,40 @@ services:
   # localStorage. There is no configuration of this that can read board_data.
   #
   # Off unless asked for: add `board-demo` to COMPOSE_PROFILES in .env.
+  # ClaireTv: vertical micro-drama, and the console a partner runs it from.
+  #
+  # Off unless asked for, like every other optional service here — add `claire`
+  # to COMPOSE_PROFILES in .env to switch it on. A new product does not get to
+  # come up on the next deploy because it happens to be in the file.
+  claire:
+    build:
+      context: ./claire
+    image: tomscoding-claire:latest
+    container_name: tomscoding-claire
+    restart: unless-stopped
+    profiles: ["claire"]
+    user: "1000:1000"
+    environment:
+      CLAIRE_DIR: /data
+      # Salts the device hash, the same way the board's does. Without it the
+      # hash is a rainbow table away from the id the browser sent.
+      CLAIRE_SALT: ${TOMSCODING_CLAIRE_SALT:-}
+      # The partner console's whole door. Unset, /partner answers 503 and says
+      # so — a catalogue anybody can edit is worse than one nobody can.
+      CLAIRE_PARTNER_KEY: ${TOMSCODING_CLAIRE_PARTNER_KEY:-}
+      # Deliberately fewer than one episode costs: a welcome balance that opens
+      # the first locked episode teaches people that walls open by themselves.
+      CLAIRE_WELCOME_COINS: ${TOMSCODING_CLAIRE_WELCOME_COINS:-20}
+      PORT: "8080"
+    volumes:
+      - claire_data:/data
+    expose:
+      - "8080"
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
   board-demo:
     build:
       context: ./board
@@ -1288,6 +1322,11 @@ volumes:
   # anything: this is a separate product and the day it moves to its own box is
   # a day it should be one `docker volume` to carry.
   board_data:
+  # ClaireTv's catalogue, its coin ledger and who unlocked what. Its own
+  # volume for the same reason every other product here has one: a separate
+  # product, and the day it moves to its own box it should be one
+  # `docker volume` to carry.
+  claire_data:
   # The demo board's, and the whole point of it being a separate one. Nothing
   # in here is a real person, and nothing in board_data is reachable from the
   # container that mounts this.
