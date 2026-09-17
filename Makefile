@@ -1636,7 +1636,7 @@ claire-video: ## Shoot the episodes with Seedance: make claire-video [GO=1] [ONL
 	@# unless GO=1. Anything that fails keeps its empty url, so running it again
 	@# picks up exactly those.
 	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" \
-	  --entrypoint node claire /seed/claire-video.mjs "The Wife He Hired" $(if $(GO),--go,) $(if $(ONLY),--only=$(ONLY),)
+	  --entrypoint node claire /seed/claire-video.mjs "The Wife He Hired" $(if $(GO),--go,) $(if $(ONLY),--only=$(ONLY),) $(if $(GAPS),--gaps,)
 	@# The server keeps the catalogue in memory, so new film is invisible until
 	@# it restarts. Seconds of downtime, against an app that shows nothing new.
 	@$(COMPOSE) restart claire >/dev/null && echo "  claire restarted, so the app shows it." 

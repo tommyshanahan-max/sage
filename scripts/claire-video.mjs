@@ -64,6 +64,15 @@ const SECONDS = Number(process.env.CLAIRE_CLIP_SECONDS || 10);
    account's concurrency limit is not written down anywhere we have found, and
    four is few enough that a refusal for it would be a surprise. */
 const AT_ONCE = Math.max(1, Number(process.env.CLAIRE_SHOTS_AT_ONCE || 4));
+/* THREE TRIES A SHOT. The "copyright restrictions" refusal is on the output,
+   not the prompt, and it is not consistent: shots 2.1 and 2.3 came back on
+   one run and were refused on the next with nothing changed but the cast.
+   So a refusal is asked again rather than given up on. */
+const TRIES = Math.max(1, Number(process.env.CLAIRE_SHOT_TRIES || 3));
+/* GAPS=1 joins an episode that is one shot short. For a demo, an episode
+   that skips one ten-second setup plays better than a ten-second clip; left
+   off by default, because in a real release the gap is a jump nobody chose. */
+const GAPS = process.argv.includes("--gaps");
 
 /** The look, said once. Every prompt is this plus the cast plus the shot,
  *  because a series whose shots were each described from scratch looks like
@@ -213,11 +222,12 @@ for (const e of eps) {
 
 const missing = plan.filter((p) => !ONLY || ONLY.has(p.e.n))
   .flatMap((p) => p.shots.filter((s) => !s.have).map((s) => ({ p, s })));
-const total = plan.reduce((n, p) => n + p.shots.length, 0);
+const scope = plan.filter((p) => !ONLY || ONLY.has(p.e.n));
+const total = scope.reduce((n, p) => n + p.shots.length, 0);
 
 console.log("");
 console.log("  " + series.title);
-console.log("  " + eps.length + " episodes · " + total + " shots · " + (total - missing.length)
+console.log("  " + scope.length + " episodes · " + total + " shots · " + (total - missing.length)
   + " already shot · " + missing.length + " to shoot, " + SECONDS + "s each");
 if (!cast) console.log("  (no cast line on the series — faces will drift from shot to shot)");
 console.log("");
@@ -264,13 +274,22 @@ else if (!KEY || !MODEL) {
   await Promise.all(Array.from({ length: AT_ONCE }, async () => {
     for (let job = queue.shift(); job; job = queue.shift()) {
       const tag = "  " + String(job.p.e.n).padStart(2) + "." + job.s.i;
-      try {
-        await shoot(job.s.prompt, job.s.file);
-        job.s.have = true; shot++;
-        console.log(tag + "  shot");
-      } catch (err) {
+      let last = null;
+      for (let t = 1; t <= TRIES && !job.s.have; t++) {
+        try {
+          await shoot(job.s.prompt, job.s.file);
+          job.s.have = true; shot++;
+          console.log(tag + "  shot" + (t > 1 ? " (try " + t + ")" : ""));
+        } catch (err) {
+          last = err;
+          /* Only a refusal is worth asking again. A timeout or a bad key
+             will fail the same way three times, at three times the cost. */
+          if (!/PolicyViolation|SensitiveContent/.test(String(err.message))) break;
+        }
+      }
+      if (!job.s.have) {
         refused.push(job);
-        console.log(tag + "  failed — " + String(err.message).split("\n")[0].slice(0, 160));
+        console.log(tag + "  failed — " + String(last?.message).split("\n")[0].slice(0, 120));
       }
     }
   }));
@@ -289,10 +308,15 @@ else if (!KEY || !MODEL) {
 let joined = 0;
 const whole = [];
 for (const p of plan) {
-  if (p.shots.every((s) => s.have)) {
+  const got = p.shots.filter((s) => s.have);
+  if (got.length === p.shots.length || (GAPS && got.length >= p.shots.length - 1 && got.length > 1)) {
+    const name = got.length === p.shots.length ? p.name
+      : p.name.replace(/\.mp4$/, "-" + hash(got.map((s) => s.h).join()) + ".mp4");
+    p.done = p.e.url === "/v/" + name;
+    p.name = name;
     if (!p.done) {
       try {
-        await join(p.shots.map((s) => s.file), OUT + "/" + p.name);
+        await join(got.map((s) => s.file), OUT + "/" + p.name);
         const { stdout } = await run("ffprobe", ["-v", "error", "-show_entries", "format=duration",
           "-of", "csv=p=0", OUT + "/" + p.name]);
         await patch(p.e.id, { url: "/v/" + p.name, seconds: Math.round(Number(stdout) || 0) });
