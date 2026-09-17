@@ -128,15 +128,30 @@ If it is more than one, the work is not finished.
 
 ## Testing locally
 
-`page()` caches file contents, so a running test server will not pick up an
-HTML change — restart it.
+`make try` is the one for Tom: it stands the board up on whatever machine it is
+run on, with a room already in it, opens the browser, and takes everything away
+again on Ctrl-C. Nothing it does touches the server. That is what to hand over
+when he wants to see something before it is deployed — never the recipe below.
+
+```
+make try
+```
+
+The recipe it wraps, for working here. `page()` caches file contents, so a
+running test server will not pick up an HTML change — restart it.
 
 ```
 cd board && sed 's/; Secure//g' server.js > server.nosec.mjs
 BOARD_DIR=/tmp/bd BOARD_INVITE=off PORT=8391 BOARD_SALT=t node server.nosec.mjs
 ```
 
-Delete `server.nosec.mjs` afterwards. Kill servers by matching `PORT=` in
+Delete `server.nosec.mjs` afterwards.
+
+A seeded person row that skips `id` is dropped by `cleanPerson` on load, in
+silence: the screen renders, the person is simply not there, and whatever
+depended on knowing who the reader is says something untrue instead. Twenty
+hex characters — and only hex, so a name spelled into the id is a row that
+vanishes. Kill servers by matching `PORT=` in
 `/proc/*/environ` — never `pkill -f`, which on this box has killed the wrong
 node.
 

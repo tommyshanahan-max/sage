@@ -1538,6 +1538,11 @@ try: ## Open the board on THIS machine, with a room in it, before deploying: mak
 	@# `exec` in the subshell so the thing the trap kills is node and not a
 	@# shell holding node — otherwise Ctrl-C leaves the port occupied and the
 	@# second run of this fails in a way that looks like the first one worked.
+	@#
+	@# TWO TRAPS, BECAUSE CTRL-C IS NOT AN ERROR. One trap on EXIT does the
+	@# clearing up; a second on INT exits 0 so that pressing Ctrl-C — which is
+	@# how this is meant to end — does not print "make: *** Error 130" under
+	@# the goodbye.
 	@command -v node >/dev/null || { \
 	  echo "No node on this machine, and the board is a node program."; \
 	  echo "Run it where you run 'make listing'."; exit 1; }
@@ -1551,7 +1556,8 @@ try: ## Open the board on THIS machine, with a room in it, before deploying: mak
 	  dir=$$(mktemp -d); port=$${PORT:-8391}; salt=tryboard; room=bbbbbbbbbbbbbbbbbbbb; \
 	  sed 's/; Secure//g' board/server.js > board/server.nosec.mjs; \
 	  trap 'kill $$pid 2>/dev/null; rm -f board/server.nosec.mjs; rm -rf "$$dir"; \
-	        echo; echo "  Stopped. Nothing was kept, and nothing was deployed."; echo' EXIT INT TERM; \
+	        echo; echo "  Stopped. Nothing was kept, and nothing was deployed."; echo' EXIT; \
+	  trap 'exit 0' INT TERM; \
 	  node scripts/try.mjs "$$dir" "$$salt"; \
 	  ( cd board && exec env BOARD_DIR="$$dir" BOARD_SALT="$$salt" BOARD_INVITE=off PORT="$$port" \
 	      BOARD_DEMO_DEVICE=clairedevice0001 node server.nosec.mjs > "$$dir/board.log" 2>&1 ) & pid=$$!; \
