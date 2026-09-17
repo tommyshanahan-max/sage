@@ -537,10 +537,17 @@ async function main() {
   const info = infos.data.find((i) => i.attributes.appStoreState !== "READY_FOR_SALE") || infos.data[0];
   const infoLocs = await get(`/appInfos/${info.id}/appInfoLocalizations`);
   const infoLoc = pick(infoLocs.data, L.locale, "app info");
+  /* THE PRIVACY POLICY URL IS UP HERE, NOT WITH THE OTHER TWO.
+     Support and marketing URLs belong to the version; this one belongs to the
+     app, because it is true of the app rather than of a release. I set the
+     two that sat together and missed the one that did not, and Apple will not
+     take a submission without it — a blank that is only visible on a page
+     nobody had reason to open. */
   await patch(`/appInfoLocalizations/${infoLoc.id}`, "appInfoLocalizations", infoLoc.id,
-    { name: L.name, subtitle: L.subtitle });
+    { name: L.name, subtitle: L.subtitle, privacyPolicyUrl: L.privacyPolicyUrl });
   say("name", L.name);
   say("subtitle", L.subtitle);
+  say("privacy URL", L.privacyPolicyUrl);
 
   /* ── The version being prepared ──────────────────────────────────────── */
   const versions = await get(`/apps/${app.id}/appStoreVersions?limit=10`);
