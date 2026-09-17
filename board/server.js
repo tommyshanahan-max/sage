@@ -8709,6 +8709,47 @@ app.post("/api/group/deal/agree", notesOff, express.json({ limit: "2kb" }), asyn
   res.json(out);
 });
 
+/** A ROOM FOR TWO, MADE FROM A CONVERSATION, so terms can be pinned over it.
+ *
+ *  The memo lives in a room, and a room could only be made with three people
+ *  in it — so the two people who actually have something to agree about were
+ *  the only two who could not pin anything. This makes the room they are
+ *  already talking in: both of them, nobody else, opened from the thread.
+ *
+ *  THE SAME GATE AS WRITING TO THEM. If this board would not let them send a
+ *  message, it does not let them open a room either; the list threadState
+ *  already keeps is the only permission consulted.
+ */
+app.post("/api/note/terms", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.id || "");
+  if (!me || !/^[a-f0-9]{20}$/.test(id)) return res.status(400).json({ error: "no" });
+
+  const out = await change((board) => {
+    const mine = board.people.find((q) => q.by === me);
+    const them = board.people.find((q) => q.id === id);
+    if (!mine?.handle || !them || them.by === me) return { error: "no" };
+    /* Can they write to each other? That is the whole question, and the answer
+       is already computed for the thread they are standing in. */
+    const st = threadState(board, me, them.by);
+    if (!st || !(st.can || st.open)) return { error: "shut" };
+
+    /* One room per pair, made once. A second "Agree terms" a week later opens
+       the room they already have rather than a second one with the same two
+       people and a different memo in it. */
+    const had = board.groups.find((g) => !g.hand && g.members.length === 2
+      && g.members.includes(me) && g.members.includes(them.by));
+    if (had) return { ok: true, id: had.id, had: true };
+
+    const g = store.cleanGroup({ id: store.newId(), by: me, members: [me, them.by], name: "" });
+    if (!g) return { error: "no" };
+    board.groups.push(g);
+    return { ok: true, id: g.id };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
 /** WHERE THE MONEY IS SENT, set only by the person being paid.
  *
  *  Their own PayPal, Wise, Payoneer or bank page. The board holds no money and

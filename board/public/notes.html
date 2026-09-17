@@ -674,6 +674,12 @@
     padding:.65rem .75rem;border-radius:.7rem;border:1px solid var(--line);
     background:var(--raise);color:var(--ink)}
   .reply .how{margin:.5rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
+  /* PIN THE TERMS, from inside a conversation. Dashed like the room's own, so
+     it reads as a thing you may do rather than a thing you are being asked to. */
+  .tterms{display:block;width:calc(100% - 2rem);margin:.2rem 1rem .6rem;padding:.6rem;
+    border:1px dashed var(--line);border-radius:.8rem;background:var(--paper);
+    color:var(--ink);font:inherit;font-size:.9rem}
+  .tterms:disabled{opacity:.5}
 </style>
 
 </head>
@@ -781,6 +787,7 @@
          see drawThread. Empty and hidden for a member, who has a page. -->
     <div class="tcard" id="tcard" hidden></div>
     <div class="pinwrap" id="tpin" hidden></div>
+      <button id="tterms" class="tterms" type="button" hidden data-t="deal.write">Pin the terms</button>
     <!-- Who opened this, when it was not a match. See note.fromStaff. -->
     <p class="tstaff" id="tstaff" hidden></p>
     <div class="talk" id="talk"></div>
@@ -2609,6 +2616,31 @@ function drawThread(t) {
     if (w.vouches) tags.append(el("span", null, T("brw.qvouches", { n: w.vouches })));
     if (tags.childNodes.length) mid.append(tags);
     card.append(av, mid);
+  }
+
+  /* TERMS, FROM THE CONVERSATION THEY ARE ALREADY HAVING.
+   *
+   *  The memo and its payments live in a room, and two people could not make
+   *  one — so the pair with something to agree about were the only pair with
+   *  nowhere to pin it. This opens a room holding just the two of them and
+   *  goes straight there; a second press later finds the same room rather than
+   *  making another. */
+  const terms = $("tterms");
+  if (terms) {
+    terms.hidden = !(last.canAnswer || last.open);
+    terms.onclick = async () => {
+      terms.disabled = true;
+      try {
+        const r = await fetch("/api/note/terms", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device, id: t.who }),
+        });
+        const d = r.ok ? await r.json() : null;
+        /* ?g= is how that page opens one room; a #hash would land on the list. */
+        if (d?.id) location.href = "/groups?g=" + encodeURIComponent(d.id);
+        else terms.disabled = false;
+      } catch { terms.disabled = false; }
+    };
   }
 
   const pin = $("tpin");
