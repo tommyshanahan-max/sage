@@ -1,6 +1,7 @@
-/* One stylesheet, same origin. See the note in china-build.mjs:
-   nothing on this site is fetched from another host, because most of them do
-   not resolve from the mainland and a blocked stylesheet is an unstyled page. */
+/* One stylesheet, same origin, serving both languages. See the note in
+   china-build.mjs: nothing on this site is fetched from another host, because
+   most of them do not resolve from the mainland and a blocked stylesheet is an
+   unstyled page. */
 :root{
   --paper:#0B0D13;
   --ink:#F2F4F8;
@@ -38,12 +39,15 @@ h1{
   font-family:var(--serif);font-weight:600;
   font-size:2rem;line-height:1.3;margin:0 0 16px;text-wrap:balance;
 }
-.hero h1{font-size:2.6rem;letter-spacing:.18em;margin-bottom:18px}
+.hero h1{font-size:2.6rem;margin-bottom:18px}
+/* The letter-spacing is for 交换, two characters that want air between them.
+   It is wrong on "The Exchange", so it is set on the Chinese page only. */
+html[lang="zh-CN"] .hero h1{letter-spacing:.18em}
 h2{font-family:var(--serif);font-weight:600;font-size:1.15rem;
    margin:2.2rem 0 .4rem;line-height:1.5}
 p{margin:0 0 1rem}
 .lede{color:var(--ink-2)}
-.hero .what{color:var(--ink-2);margin:0 auto 34px;max-width:20rem}
+.hero .what{color:var(--ink-2);margin:0 auto 34px;max-width:22rem}
 a.go{
   display:block;padding:16px 20px;border-radius:12px;margin-top:1.6rem;
   background:var(--gold);color:#1A1405;text-align:center;
