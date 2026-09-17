@@ -5,6 +5,29 @@ built yet. It is waiting on one thing: a 对公账户 for 澳斯达（北京）�
 without which Aliyun will not verify the account, and without that there is no
 备案 and none of this can start.
 
+## Parked, 17 Sep 2026 — and what un-parks it
+
+**None of this blocks a booking.** The deal memo, the payment plan and the
+receipt need no company and no bank account, because the board never holds the
+money: one person pays another on the payee's own link and the board writes
+down what both of them said. Claire can hire Sasha the day it deploys.
+
+So what is below is not the critical path. It buys two things and only two:
+links that stop showing WeChat's 未完成ICP备案 warning, and WeChat login. Both
+are worth having when there are people arriving through WeChat. Neither is
+worth a fortnight of Beijing admin before there is anybody to arrive.
+
+Tom's call, and it is the right one: **the WFOE waits until the platform has
+users.** What un-parks it is traffic coming through WeChat, not a date.
+
+`china/` is built and committed — five pages in two languages, generated from
+the board's own strings by `make china`. It costs nothing to leave sitting
+there, and the day a domain exists it is a copy, not a project.
+
+The entity comes back for its own reasons, not this one: taking a cut,
+switching the wallet on, or selling anything through the app. All three mean
+handling money, which is the licence the agent has already ruled out.
+
 ## Confirmed by the filing agent, 17 Sep 2026
 
 于海超, in WeChat, unprompted and in two lines:
