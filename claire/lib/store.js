@@ -115,6 +115,7 @@ export function cleanSeries(raw, was = null) {
        shots were written against. Kept from the row, so saving a price in
        the console does not lose either. */
     cast: was?.cast || "",
+    videoModel: was?.videoModel || "",
     arc: was?.arc || null,
     at: was?.at || new Date().toISOString(),
   };

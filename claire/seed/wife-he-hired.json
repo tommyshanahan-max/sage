@@ -34,7 +34,12 @@
     "The first full run had seven of nine refusals in shots with the man in them,",
     "all 'copyright restrictions'. A stock leading-man description probably drew a",
     "face that looked like somebody real, so he has a beard and a scar now, and",
-    "nobody is described into a shot they are not in."
+    "nobody is described into a shot they are not in.",
+    "",
+    "PORTRAITS AND SEEDANCE 2.5. Tom watched the first five and the actors kept",
+    "changing. `videoModel` moves this series off the mini endpoint, and every",
+    "person in `cast` gets a portrait that each of their shots carries as a",
+    "reference image — tested on shot 2.6 first, and both faces held."
   ],
   "series": {
     "title": "The Wife He Hired",
@@ -136,7 +141,8 @@
           "shifts": "His first crack. Then a signature she never made, and the photograph."
         }
       ]
-    }
+    },
+    "videoModel": "dreamina-seedance-2-5-260628"
   },
   "episodes": [
     {

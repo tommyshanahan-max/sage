@@ -58,6 +58,11 @@ const PARTS = OUT + "/parts";
 const KEY = (process.env.ARK_API_KEY || "").trim();
 const BASE = (process.env.ARK_BASE || "https://ark.ap-southeast.bytepluses.com").replace(/\/+$/, "");
 const MODEL = (process.env.ARK_VIDEO_MODEL || "").trim();
+/* Where the portraits can be fetched from. Seedance takes a reference image
+   as a URL, and /v is already public on the claire site. */
+const PUBLIC = (process.env.CLAIRE_PUBLIC || "").replace(/\/+$/, "");
+const CAST_DIR = OUT + "/cast";
+const IMAGE_MODEL = (process.env.CLAIRE_IMAGE_MODEL || "seedream-5-0-260128").trim();
 const GO = process.argv.includes("--go");
 const SECONDS = Number(process.env.CLAIRE_CLIP_SECONDS || 10);
 /* Four at once. One at a time was three to seven hours for ninety shots; the
@@ -120,10 +125,13 @@ const ark = async (path, body) => {
   return json;
 };
 
-async function shoot(prompt, file) {
+async function shoot(prompt, file, refs = [], model = MODEL) {
   const task = await ark("/api/v3/contents/generations/tasks", {
-    model: MODEL,
-    content: [{ type: "text", text: prompt + " --ratio 9:16 --dur " + SECONDS }],
+    model,
+    content: [
+      { type: "text", text: prompt + " --ratio 9:16 --dur " + SECONDS },
+      ...refs.map((url) => ({ type: "image_url", image_url: { url }, role: "reference_image" })),
+    ],
   });
   const id = task?.id || task?.data?.id;
   if (!id) throw new Error("no task id in: " + JSON.stringify(task).slice(0, 300));
@@ -187,15 +195,73 @@ if (!series) { console.log("\n  No series in the catalogue. Run make claire-seed
    names. One line describing everybody put the grandmother into diner shots,
    and a generic description of the man is the likeliest reason seven of nine
    shots with him in were refused as "copyright". A plain string still works. */
-const castFor = (line) => {
+/* A FACE THAT HOLDS. Words alone gave every shot a new actor — Tom's note on
+   the first five episodes was that the people kept changing. So each person
+   has a portrait, made once with an image model and kept in /v/cast, and
+   every shot they are in is handed their portrait as a reference image. Tried
+   on shot 2.6 with Seedance 2.5 before any of this was written: both faces
+   came back as the portraits, scar and mole included.
+
+   Which people a shot names decides which portraits it carries, in order,
+   and the prompt says which reference is whom. */
+const slug = (k) => k.replace(/^the /, "").replace(/[^a-z]+/g, "-");
+const whoIn = (line) => {
+  const c = series.cast;
+  if (!c || typeof c === "string") return [];
+  const low = " " + line.toLowerCase();
+  return Object.keys(c).filter((k) => new RegExp("\\b" + k.toLowerCase() + "\\b").test(low));
+};
+const castFor = (line, withRefs) => {
   const c = series.cast;
   if (!c) return "";
   if (typeof c === "string") return c.trim();
-  const low = " " + line.toLowerCase();
-  const who = Object.entries(c).filter(([k]) => new RegExp("\\b" + k.toLowerCase() + "\\b").test(low)).map(([, v]) => v);
-  return who.length ? "The people in this shot look like this: " + who.join("; ") + ". Nobody else appears." : "";
+  const who = whoIn(line);
+  if (!who.length) return "";
+  if (!withRefs) return "The people in this shot look like this: " + who.map((k) => c[k]).join("; ") + ". Nobody else appears.";
+  return who.map((k, i) => k.charAt(0).toUpperCase() + k.slice(1) + " is the person in reference image " + (i + 1)
+    + " (" + c[k].replace(/^the [a-z ]+? is /, "") + ").").join(" ")
+    /* "Nobody else" was wrong for the lawyer, the housekeeper and forty
+       guests; what matters is that no other lead turns up uninvited. */
+    + " No other main character appears.";
 };
-const cast = series.cast;
+/* The model comes from the series when it names one: the mini endpoint in
+   .env is what the agent's desk uses, and a series that has moved to a better
+   model should not drag the desk with it. */
+const VIDEO_MODEL = String(series.videoModel || MODEL).trim();
+const REFS = Boolean(series.videoModel && PUBLIC && typeof series.cast === "object");
+
+async function portrait(k) {
+  const file = CAST_DIR + "/" + slug(k) + ".jpg";
+  if (await exists(file)) return file;
+  if (!GO) return "";
+  const who = series.cast[k].replace(/^the [a-z ]+? is /, "");
+  const prompt = "Photographic casting portrait of a fictional character for a drama, head and shoulders, "
+    + "facing camera, neutral grey studio background, soft light, natural skin, plain grey top, no text. "
+    + "The character is " + who.replace(/,\s*(in |wearing )?(an? )?[^,]*(overcoat|suit|dress|gown|cardigan|uniform)[^,]*/g, "") + ".";
+  /* The image model refuses faces the way the video model does — sometimes,
+     for no stated reason — so it is asked three times too. */
+  for (let t = 1; t <= 3; t++) {
+    try {
+      const got = await ark("/api/v3/images/generations",
+        { model: IMAGE_MODEL, prompt, size: "1600x2848", response_format: "url", watermark: false });
+      const res = await fetch(got.data[0].url);
+      await writeFile(file, Buffer.from(await res.arrayBuffer()));
+      console.log("  portrait: " + k);
+      return file;
+    } catch (err) {
+      if (t === 3) console.log("  portrait for " + k + " failed — " + String(err.message).split("\n")[0].slice(0, 120));
+    }
+  }
+  return "";
+}
+const portraits = {};
+if (REFS) {
+  await mkdir(CAST_DIR, { recursive: true });
+  for (const k of Object.keys(series.cast)) {
+    const f = await portrait(k);
+    if (f) portraits[k] = { url: PUBLIC + "/v/cast/" + slug(k) + ".jpg", h: hash(await readFile(f)) };
+  }
+}
 /* ONLY=2,5 shoots just those episodes — a test of a reworded episode should
    cost that episode, not the whole run. Joins and stills still cover all. */
 const onlyArg = process.argv.find((a) => a.startsWith("--only="));
@@ -211,10 +277,15 @@ for (const e of eps) {
     : [(e.shot || e.beat || e.title) + (e.shot ? "" : " The shot ends on: " + (e.hook || e.title))];
   const shots = [];
   for (const [i, line] of lines.entries()) {
-    const prompt = [LOOK, castFor(line), line].filter(Boolean).join(" ");
-    const h = hash(prompt);
+    const who = REFS ? whoIn(line) : [];
+    /* A shot whose portraits do not exist yet is shot without them rather
+       than not at all — and named so that it is reshot once they do. */
+    const withRefs = REFS && who.every((k) => portraits[k]);
+    const refs = withRefs ? who.map((k) => portraits[k].url) : [];
+    const prompt = [LOOK, castFor(line, withRefs), line].filter(Boolean).join(" ");
+    const h = hash([prompt, VIDEO_MODEL, ...who.map((k) => withRefs ? portraits[k].h : "")].join("|"));
     const file = PARTS + "/" + series.id + "-" + String(e.n).padStart(2, "0") + "-" + (i + 1) + "-" + h + ".mp4";
-    shots.push({ i: i + 1, prompt, h, file, have: await exists(file) });
+    shots.push({ i: i + 1, prompt, refs, h, file, have: await exists(file) });
   }
   const name = series.id + "-" + String(e.n).padStart(2, "0") + "-" + hash(shots.map((s) => s.h).join()) + ".mp4";
   plan.push({ e, shots, name, done: e.url === "/v/" + name });
@@ -229,7 +300,8 @@ console.log("");
 console.log("  " + series.title);
 console.log("  " + scope.length + " episodes · " + total + " shots · " + (total - missing.length)
   + " already shot · " + missing.length + " to shoot, " + SECONDS + "s each");
-if (!cast) console.log("  (no cast line on the series — faces will drift from shot to shot)");
+if (!series.cast) console.log("  (no cast line on the series — faces will drift from shot to shot)");
+console.log("  model " + VIDEO_MODEL + (REFS ? ", with a portrait for each person" : ", words only"));
 console.log("");
 
 /* Stills first, from whatever film each episode already has: free, and the
@@ -277,7 +349,7 @@ else if (!KEY || !MODEL) {
       let last = null;
       for (let t = 1; t <= TRIES && !job.s.have; t++) {
         try {
-          await shoot(job.s.prompt, job.s.file);
+          await shoot(job.s.prompt, job.s.file, job.s.refs, VIDEO_MODEL);
           job.s.have = true; shot++;
           console.log(tag + "  shot" + (t > 1 ? " (try " + t + ")" : ""));
         } catch (err) {
