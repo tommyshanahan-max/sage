@@ -1168,6 +1168,12 @@ services:
       # Deliberately fewer than one episode costs: a welcome balance that opens
       # the first locked episode teaches people that walls open by themselves.
       CLAIRE_WELCOME_COINS: ${TOMSCODING_CLAIRE_WELCOME_COINS:-20}
+      # Seedance, for `make claire-video`. The same key the agent's desk uses —
+      # one account, one bill. Unset, the app still works and the episodes have
+      # no film, which is the honest failure rather than a broken player.
+      ARK_API_KEY: ${TOMSCODING_ARK_API_KEY:-}
+      ARK_VIDEO_MODEL: ${TOMSCODING_ARK_VIDEO_MODEL:-}
+      ARK_BASE: ${TOMSCODING_ARK_BASE:-}
       PORT: "8080"
     volumes:
       - claire_data:/data

@@ -87,13 +87,27 @@ export function cleanSeries(raw, was = null) {
 /** An episode. `hook` is the line it ends on — the partner writes it down
  *  because the one at `freeThrough + 1` is the sentence the business runs on,
  *  and a field nobody fills in is a decision nobody made. */
+export const FUNCTIONS = [
+  "ordinary world", "inciting incident", "debate", "act one turn", "rising",
+  "pinch", "midpoint", "false victory", "complication", "all is lost",
+  "dark night", "climax", "resolution",
+];
+
 export function cleanEpisode(raw, seriesId, was = null) {
+  const fn = String(raw.function || "");
   return {
     id: was?.id || newId(),
     series: seriesId,
     n: Math.max(1, Math.min(999, Number(raw.n) || 1)),
+    /* act and function are the writer's, not the viewer's: they never leave
+       the console, and they are the only reason the shape can be checked at
+       all rather than felt. Kept on the row so the check is over the real
+       catalogue and not over a document beside it. */
+    act: [1, 2, 3].includes(Number(raw.act)) ? Number(raw.act) : 0,
+    function: FUNCTIONS.includes(fn) ? fn : "",
+    beat: clean(raw.beat, 600),
     title: clean(raw.title, 90),
-    hook: clean(raw.hook, 200),
+    hook: clean(raw.hook, 400),
     url: /^https?:\/\/\S{3,500}$/.test(String(raw.url || "")) ? String(raw.url).trim() : "",
     seconds: Math.max(0, Math.min(3600, Number(raw.seconds) || 0)),
     at: was?.at || new Date().toISOString(),

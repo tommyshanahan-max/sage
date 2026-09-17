@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: claire-key claire-count listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1541,3 +1541,19 @@ claire-key: ## Make the key the ClaireTv partner console opens with: make claire
 claire-count: ## What ClaireTv has: make claire-count
 	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" \
 	  --entrypoint node claire /seed/claire-count.mjs
+
+claire-seed: ## Put the demo series into ClaireTv: make claire-seed [SEED=claire/seed/wife-he-hired.json]
+	@# A demo needs a catalogue that already looks like a catalogue. Typing ten
+	@# episodes into a form to show somebody a product is the part of the demo
+	@# where they stop watching.
+	@$(COMPOSE) run --rm --no-deps -T \
+	  -v "$(CURDIR)/scripts:/seed:ro" -v "$(CURDIR)/claire/seed:/series:ro" \
+	  --entrypoint node claire /seed/claire-seed.mjs \
+	  "/series/$(notdir $(or $(SEED),wife-he-hired.json))" /data/claire.json
+
+claire-video: ## Shoot the episodes with Seedance: make claire-video [GO=1]
+	@# Costs real money per second, so it says what it would shoot and stops
+	@# unless GO=1. Anything that fails keeps its empty url, so running it again
+	@# picks up exactly those.
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" \
+	  --entrypoint node claire /seed/claire-video.mjs "The Wife He Hired" $(if $(GO),--go,)

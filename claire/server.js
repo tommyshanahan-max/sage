@@ -70,6 +70,11 @@ async function page(file, res) {
 app.get("/", (req, res) => page("app.html", res));
 app.get("/partner", (req, res) => page("partner.html", res));
 app.use(express.static("public", { maxAge: "1h", index: false }));
+/* The film lives in the data volume rather than in the image: it is made after
+   the build, it is the only thing here measured in megabytes, and a rebuild
+   should not throw it away. Served flat and cached hard — a clip never changes
+   once it exists, it is replaced by a new one with a new name. */
+app.use("/v", express.static(DIR + "/v", { maxAge: "7d", index: false }));
 
 /* ---- the app -------------------------------------------------------------- */
 
@@ -265,6 +270,71 @@ app.post("/api/partner/episode", partnerOnly, async (req, res) => {
     if (clash) return { error: "taken", n: row.n };
     if (was) Object.assign(was, row); else b.episodes.push(row);
     return { ok: true, id: row.id };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** Ten episodes in one paste.
+ *
+ *  THE FORM WAS THE PROBLEM. Adding a series meant the same five fields ten
+ *  times, and a writer who has just worked out what ten episodes are does not
+ *  want to meet a form ten times to say so. One box, one line each, numbered
+ *  from wherever the series has got to.
+ *
+ *  Atomic on purpose: ten POSTs from a page can half-succeed and leave a
+ *  series with episodes 1 to 6 and no way to tell whether 7 failed or was
+ *  never written.
+ */
+app.post("/api/partner/bulk", partnerOnly, async (req, res) => {
+  const out = await store.change((b) => {
+    const s = b.series.find((x) => x.id === String(req.body?.series || ""));
+    if (!s) return { error: "series" };
+    const lines = String(req.body?.lines || "").split("\n")
+      .map((l) => l.trim()).filter(Boolean).slice(0, 200);
+    if (!lines.length) return { error: "empty" };
+
+    let n = Math.max(0, ...b.episodes.filter((e) => e.series === s.id).map((e) => e.n));
+    const made = [];
+    for (const line of lines) {
+      /* "Title | the line it ends on" — and a line with no pipe is all title,
+         because somebody pasting a list of titles should not be punished for
+         not having written the hooks yet. */
+      const cut = line.indexOf("|");
+      const title = cut === -1 ? line : line.slice(0, cut);
+      const hook = cut === -1 ? "" : line.slice(cut + 1);
+      n += 1;
+      const row = store.cleanEpisode({ n, title, hook, seconds: 90 }, s.id);
+      if (!row.title) continue;
+      b.episodes.push(row);
+      made.push(row.n);
+    }
+    return { ok: true, made: made.length, from: made[0], to: made.at(-1) };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** Save the whole beat grid at once.
+ *
+ *  A writer moves three beats and renumbers two; sending that as five separate
+ *  saves means five chances for the grid on screen to stop matching the one on
+ *  disk. The grid is the unit of work, so it is the unit that is written. */
+app.post("/api/partner/beats", partnerOnly, async (req, res) => {
+  const out = await store.change((b) => {
+    const s = b.series.find((x) => x.id === String(req.body?.series || ""));
+    if (!s) return { error: "series" };
+    const rows = Array.isArray(req.body?.episodes) ? req.body.episodes.slice(0, 300) : [];
+    const seen = new Set();
+    for (const r of rows) {
+      const was = b.episodes.find((e) => e.id === String(r.id || "") && e.series === s.id);
+      if (!was) continue;
+      const row = store.cleanEpisode({ ...was, ...r }, s.id, was);
+      if (seen.has(row.n)) return { error: "taken", n: row.n };
+      seen.add(row.n);
+      Object.assign(was, row);
+    }
+    return { ok: true, saved: rows.length };
   });
   if (out?.error) return res.status(400).json(out);
   res.json(out);
