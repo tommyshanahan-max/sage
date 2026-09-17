@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: try deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1504,6 +1504,77 @@ privacy: ## Show what public records say about who runs these sites
 	@# changed and nothing is sent anywhere — it is the same lookup a stranger
 	@# would do, run by you, on you.
 	python3 scripts/privacy-check.py
+
+try: ## Open the board on THIS machine, with a room in it, before deploying: make try
+	@# THE SECOND TARGET IN HERE THAT RUNS ON THE LAPTOP AND NOT THE SERVER.
+	@# (The other is `listing`.) It needs node and nothing else — no docker, no
+	@# .env, no network path to the box — and it never touches the box.
+	@#
+	@# WHY IT IS ONE COMMAND AND NOT SEVEN. Standing the board up locally was a
+	@# recipe in CLAUDE.md: copy the server with the Secure flags stripped,
+	@# export four variables, seed a data directory, start it, remember the
+	@# port, open the browser, and delete the copy afterwards. Every one of
+	@# those is a place to be one character out, and the last one was forgotten
+	@# often enough that an empty server.nosec.mjs was once committed.
+	@#
+	@# WHY THE COPY WITH THE COOKIES CHANGED. A browser will not send a Secure
+	@# cookie over plain http, so on localhost the signed-in paths cannot be
+	@# walked at all — the room never loads and it reads as the feature being
+	@# broken. The copy is generated per run, gitignored, and deleted on the
+	@# way out, including on Ctrl-C.
+	@#
+	@# IT RUNS FROM board/ because server.js reads its pages from ./public. Run
+	@# from the repo root it starts, answers, and 500s on every page.
+	@#
+	@# THE DATA IS A TEMP DIRECTORY that goes with it. Nothing typed into this
+	@# survives the command, which is the point: it is a thing to look at, not
+	@# a place to keep anything.
+	@#
+	@# THE TWO LINES IN THE ROOM GO IN THROUGH THE REAL ROUTE, after the server
+	@# is up, rather than into the seed file. A message has a shape the seed
+	@# would then have to know and keep in step with; /api/group/say already
+	@# knows it.
+	@#
+	@# `exec` in the subshell so the thing the trap kills is node and not a
+	@# shell holding node — otherwise Ctrl-C leaves the port occupied and the
+	@# second run of this fails in a way that looks like the first one worked.
+	@command -v node >/dev/null || { \
+	  echo "No node on this machine, and the board is a node program."; \
+	  echo "Run it where you run 'make listing'."; exit 1; }
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	  echo "  fetching origin/$$branch"; \
+	  git fetch origin "$$branch" -q && git reset --hard -q "origin/$$branch"
+	@test -d board/node_modules || { \
+	  echo "  installing what the board needs (once on this machine)"; \
+	  npm install --prefix board --silent --no-audit --no-fund; }
+	@set -e; \
+	  dir=$$(mktemp -d); port=$${PORT:-8391}; salt=tryboard; room=bbbbbbbbbbbbbbbbbbbb; \
+	  sed 's/; Secure//g' board/server.js > board/server.nosec.mjs; \
+	  trap 'kill $$pid 2>/dev/null; rm -f board/server.nosec.mjs; rm -rf "$$dir"; \
+	        echo; echo "  Stopped. Nothing was kept, and nothing was deployed."; echo' EXIT INT TERM; \
+	  node scripts/try.mjs "$$dir" "$$salt"; \
+	  ( cd board && exec env BOARD_DIR="$$dir" BOARD_SALT="$$salt" BOARD_INVITE=off PORT="$$port" \
+	      BOARD_DEMO_DEVICE=clairedevice0001 node server.nosec.mjs > "$$dir/board.log" 2>&1 ) & pid=$$!; \
+	  for i in $$(seq 1 60); do \
+	    curl -fsS -o /dev/null "http://127.0.0.1:$$port/groups" 2>/dev/null && break; \
+	    sleep 0.25; \
+	  done; \
+	  curl -fsS -o /dev/null "http://127.0.0.1:$$port/groups" 2>/dev/null || { \
+	    echo "  The board did not start:"; sed 's/^/    /' "$$dir/board.log"; exit 1; }; \
+	  say() { curl -fsS -o /dev/null -X POST -H 'content-type: application/json' \
+	    -d "{\"device\":\"$$1\",\"group\":\"$$room\",\"text\":\"$$2\"}" \
+	    "http://127.0.0.1:$$port/api/group/say" || true; }; \
+	  say sashadevice00001 "Read it. The 14th works — I have him on hold until Friday."; \
+	  say tomdevice0000001 "Claire, Sasha. Terms are at the top. Both of you tap Agree and I will get out of the way."; \
+	  url="http://127.0.0.1:$$port/groups"; \
+	  (command -v open >/dev/null && open "$$url" 2>/dev/null) \
+	    || (command -v xdg-open >/dev/null && xdg-open "$$url" 2>/dev/null) \
+	    || true; \
+	  echo "  $$url"; \
+	  echo; \
+	  echo "  Tap Macau, March. Ctrl-C here when you have seen enough."; \
+	  echo; \
+	  wait $$pid
 
 listing: ## Fill in the App Store listing from your Mac:  make listing PHONE="<your number>"
 	@# THE ONLY TARGET IN HERE THAT RUNS ON THE LAPTOP AND NOT THE SERVER.
