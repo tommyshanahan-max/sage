@@ -128,6 +128,10 @@ const card = (s) => ({
   id: s.id, title: s.title, blurb: s.blurb, genre: s.genre, art: s.art,
   freeThrough: s.freeThrough, coinsPerEpisode: s.coinsPerEpisode,
   bundleCents: s.bundleCents, totalPlanned: s.totalPlanned,
+  /* The series' picture is its first episode's still: the frame somebody
+     will see first when they press play, rather than a poster that promises
+     a different programme. */
+  still: store.episodesOf(s.id).find((e) => e.poster)?.poster || "",
   episodes: store.episodesOf(s.id).length,
   minutes: Math.round(store.episodesOf(s.id).reduce((n, e) => n + (e.seconds || 0), 0) / 60),
 });
@@ -137,7 +141,7 @@ app.get("/api/series/:id", (req, res) => {
   const s = store.seriesById(req.params.id);
   if (!s || !s.live) return res.status(404).json({ error: "no" });
   const eps = store.episodesOf(s.id).map((e) => ({
-    id: e.id, n: e.n, title: e.title, seconds: e.seconds,
+    id: e.id, n: e.n, title: e.title, seconds: e.seconds, still: e.poster || "",
     open: me ? store.canWatch(me, s, e) : e.n <= s.freeThrough,
   }));
   res.json({ series: card(s), episodes: eps, coins: me ? (store.viewer(me)?.coins ?? WELCOME) : WELCOME });
@@ -160,7 +164,7 @@ app.get("/api/watch/:id", (req, res) => {
          ask a second time to find out what the bundle it is offering belongs
          to, and a sheet that needs two round trips to draw one button is a
          sheet that flickers. */
-      error: "locked", n: ep.n, title: ep.title, series: s.id, art: s.art,
+      error: "locked", n: ep.n, title: ep.title, series: s.id, art: s.art, still: ep.poster || "",
       coins: s.coinsPerEpisode, bundleCents: s.bundleCents,
       /* WELCOME, not 0, for somebody who has no row yet. A viewer row is only
          minted when they watch or spend, so the sheet used to say "you have 0"
@@ -169,7 +173,7 @@ app.get("/api/watch/:id", (req, res) => {
       have: me ? (store.viewer(me)?.coins ?? WELCOME) : WELCOME,
     });
   }
-  res.json({ id: ep.id, n: ep.n, title: ep.title, hook: ep.hook, url: ep.url, seconds: ep.seconds });
+  res.json({ id: ep.id, n: ep.n, title: ep.title, hook: ep.hook, url: ep.url, seconds: ep.seconds, still: ep.poster || "" });
 });
 
 /** Where somebody stopped. Written on a timer by the page, so it is the one

@@ -85,6 +85,12 @@ export function cleanSeries(raw, was = null) {
        a promise on the shelf, and the shelf is most of what makes a catalogue
        look like a catalogue rather than a prototype with one thing in it. */
     soon: Boolean(raw.soon),
+    /* The cast and the arc come from the seed, not the console: the cast line
+       is put in front of every shot so the faces hold, and the arc is what the
+       shots were written against. Kept from the row, so saving a price in
+       the console does not lose either. */
+    cast: was?.cast || "",
+    arc: was?.arc || null,
     at: was?.at || new Date().toISOString(),
   };
 }
@@ -121,7 +127,15 @@ export function cleanEpisode(raw, seriesId, was = null) {
     shot: clean(raw.shot, 600),
     title: clean(raw.title, 90),
     hook: clean(raw.hook, 400),
-    url: /^https?:\/\/\S{3,500}$/.test(String(raw.url || "")) ? String(raw.url).trim() : "",
+    /* /v/ as well as https: the film `make claire-video` makes is served from
+       this box, and a url check that knew only https wiped it from any
+       episode the partner saved — the edit that changed a title took the
+       video with it. */
+    url: /^(https?:\/\/\S{3,500}|\/v\/[\w.-]{1,200})$/.test(String(raw.url || "")) ? String(raw.url).trim() : "",
+    /* Made from the film, never typed, so the console cannot set them: kept
+       from the row being edited. */
+    poster: was?.poster || "",
+    shots: Array.isArray(was?.shots) ? was.shots : [],
     seconds: Math.max(0, Math.min(3600, Number(raw.seconds) || 0)),
     at: was?.at || new Date().toISOString(),
   };

@@ -6,6 +6,14 @@ FROM node:22-slim
 
 WORKDIR /app
 
+# ffmpeg, for `make claire-video`: an episode is nine generated shots joined
+# into one file, and its picture is a frame from that file. Nothing in the
+# server uses it; the script runs in this image because the film is in its
+# volume.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ffmpeg \
+ && rm -rf /var/lib/apt/lists/*
+
 COPY package.json ./
 RUN npm install --omit=dev --no-audit --no-fund
 

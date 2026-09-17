@@ -108,13 +108,23 @@
     font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);
   }
   .lab b{color:var(--gold);letter-spacing:0;text-transform:none;font-size:12px}
-  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;padding:0 16px}
+  /* THREE ACROSS, WITH THE FILM ON THEM. It was six numbered squares, and
+     Tom's first note on the app was that the episode screen had no pictures.
+     A frame of each episode, tall like the phone, with the number big enough
+     to read at arm's length. */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px}
   .ep{
-    aspect-ratio:1;border:0;border-radius:8px;background:rgba(247,242,244,.07);color:var(--mist);
-    font-size:12px;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;
+    position:relative;aspect-ratio:9/14;border:0;border-radius:10px;overflow:hidden;padding:8px;
+    background:rgba(247,242,244,.07);color:var(--paper);text-align:left;
+    display:flex;flex-direction:column;justify-content:flex-end;
   }
-  .ep.open{background:rgba(247,242,244,.16);color:var(--paper);font-weight:500}
-  .ep.locked{color:rgba(232,183,92,.55)}
+  .ep b{font:900 22px/1 Georgia,serif;font-variant-numeric:tabular-nums}
+  .ep span{margin-top:3px;font-size:11px;line-height:1.2;color:var(--mist)}
+  .ep.locked b{color:var(--gold)}
+  .ep .lk{
+    position:absolute;top:7px;right:7px;font-size:9px;font-weight:700;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink);background:var(--gold);padding:2px 6px;border-radius:4px;
+  }
   .wall{display:flex;align-items:center;gap:10px;margin:16px;font-size:11px;color:var(--gold)}
   .wall span{flex:1;height:1px;background:rgba(232,183,92,.35)}
 
@@ -191,6 +201,16 @@ const api = async (path, body) => {
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, txt) => { const n = document.createElement(t); if (c) n.className = c; if (txt != null) n.textContent = txt; return n; };
+/* A frame of the film behind a block, darkened at the foot so the words on it
+   stay readable. Nothing when there is no still: the coloured ground the
+   block already wears is the fallback. */
+const still = (n, url) => {
+  if (!url) return n;
+  n.style.backgroundImage = "linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.82)),url(\"" + url + "\")";
+  n.style.backgroundSize = "cover";
+  n.style.backgroundPosition = "center";
+  return n;
+};
 const mmss = (s) => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(Math.floor(s % 60)).padStart(2, "0");
 const money = (c) => "$" + (c / 100).toFixed(2);
 
@@ -237,7 +257,7 @@ async function home() {
   }
 
   const f = data.featured;
-  const feat = el("div", "feature a" + f.art);
+  const feat = still(el("div", "feature a" + f.art), f.still);
   feat.append(el("div", "badge", "Now playing"));
   feat.append(el("h2", null, f.title));
   if (f.blurb) feat.append(el("p", null, f.blurb));
@@ -256,7 +276,7 @@ async function home() {
     const s = el("div", "sect");
     s.append(el("div", "hd", "Keep watching"));
     const r = el("button", "resume"); r.type = "button";
-    r.append(el("div", "thumb a" + data.resume.series.art));
+    r.append(still(el("div", "thumb a" + data.resume.series.art), data.resume.series.still));
     const t = el("div"); t.style.flex = "1"; t.style.minWidth = "0";
     t.append(el("h3", null, data.resume.series.title));
     const total = data.resume.ep.seconds || 0;
@@ -276,7 +296,7 @@ async function home() {
     const strip = el("div", "strip");
     for (const t of rows) {
       const p = el("button", "poster" + (soon ? " soon" : "")); p.type = "button";
-      const art = el("div", "art a" + t.art);
+      const art = still(el("div", "art a" + t.art), t.still);
       if (soon) art.append(el("span", "soonflag", "Soon"));
       p.append(art, el("p", null, t.title));
       p.append(el("span", null, soon
@@ -316,7 +336,7 @@ async function series(id) {
   back.addEventListener("click", () => { location.hash = ""; });
   v.append(back);
 
-  const hero = el("div", "hero a" + s.art);
+  const hero = still(el("div", "hero a" + s.art), s.still);
   hero.append(el("h2", null, s.title));
   hero.append(el("div", "meta", (s.totalPlanned || data.episodes.length) + " episodes · " + s.coinsPerEpisode + " coins each"));
   if (s.blurb) { const p = el("div", "meta"); p.style.marginTop = "6px"; p.textContent = s.blurb; hero.append(p); }
@@ -329,8 +349,11 @@ async function series(id) {
 
   const grid = el("div", "grid");
   for (const e of data.episodes) {
-    const b = el("button", "ep " + (e.open ? "open" : "locked"), String(e.n));
+    const b = still(el("button", "ep " + (e.open ? "open" : "locked")), e.still);
     b.type = "button";
+    b.setAttribute("aria-label", "Episode " + e.n + ", " + e.title + (e.open ? "" : ", locked"));
+    if (!e.open) b.append(el("i", "lk", "Locked"));
+    b.append(el("b", null, String(e.n)), el("span", null, e.title));
     b.addEventListener("click", () => { location.hash = "#w/" + e.id; });
     grid.append(b);
   }
@@ -362,7 +385,7 @@ async function watch(id) {
     /* The locked stage wears the series' own ground rather than going black.
        A door in a dark empty room is easy to walk away from; a door in front
        of the thing you were watching is not. */
-    const stage = el("div", "stage a" + (data.art || "1"));
+    const stage = still(el("div", "stage a" + (data.art || "1")), data.still);
     stage.append(el("div", "keyart", "▶"));
     stage.append(el("p", "hook", data.title || ("Episode " + data.n)));
     v.append(stage);
@@ -403,6 +426,7 @@ async function watch(id) {
   if (data.url) {
     const vid = document.createElement("video");
     vid.src = data.url; vid.playsInline = true; vid.controls = true; vid.autoplay = true;
+    if (data.still) vid.poster = data.still;
     stage.append(vid);
     /* Where somebody stopped, every five seconds. Not on every timeupdate,
        which fires four times a second and would write more rows than it

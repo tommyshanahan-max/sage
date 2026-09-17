@@ -58,14 +58,22 @@ Object.assign(s, seed.series, { id: s.id, at: s.at });
    what the series is; a half-updated one where episode 6 is from last week is
    worse than either version on its own. Unlocks and play positions are left
    alone, because they belong to people rather than to the file. */
+/* THE FILM IS KEPT, THOUGH. It is not in the file — it was shot afterwards and
+   paid for — and replacing the rows used to throw away every url and still,
+   so a reseed to fix one word left the app with no video in it. Carried over
+   by episode number, and the id with it, so a viewer's place survives too. */
+const had = new Map(b.episodes.filter((e) => e.series === s.id).map((e) => [e.n, e]));
 b.episodes = b.episodes.filter((e) => e.series !== s.id);
 for (const e of seed.episodes) {
+  const was = had.get(e.n);
   b.episodes.push({
-    id: newId(), series: s.id,
+    id: was?.id || newId(), series: s.id,
     n: e.n, title: e.title, hook: e.hook || "",
     act: e.act || 0, function: e.function || "", beat: e.beat || "", shot: e.shot || "",
-    url: e.url || "", seconds: e.seconds || 90,
-    at: new Date().toISOString(),
+    shots: Array.isArray(e.shots) ? e.shots : [],
+    url: e.url || was?.url || "", poster: was?.poster || "",
+    seconds: (!e.url && was?.url && was?.seconds) || e.seconds || 90,
+    at: was?.at || new Date().toISOString(),
   });
 }
 

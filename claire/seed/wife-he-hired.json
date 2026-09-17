@@ -13,7 +13,22 @@
     "worst possible moment to be asked for money and the one moment where being",
     "asked is bearable — she cannot walk away, and neither can they.",
     "",
-    "Episodes 2, 4 and 6 carry a `shot` line as well as a beat. Seedance refused those three beats as possibly copyright-related and gave no reason; the shot line describes the same moment as a camera setup, with no names and no story in it. The beat is unchanged, because the beat is the writing."
+    "Episodes 2, 4 and 6 carry a `shot` line as well as a beat. Seedance refused those three beats as possibly copyright-related and gave no reason; the shot line describes the same moment as a camera setup, with no names and no story in it. The beat is unchanged, because the beat is the writing.",
+    "",
+    "THE ARC, UNDER THE BEATS. Written in the model Tom set down for microdrama",
+    "(~/Downloads/microdrama/design/02-player.html): each character is 'from X to",
+    "Y', wants one thing, avoids one thing, turns at one episode on a concrete",
+    "act, and ends somewhere they could not have started. The rival is decent,",
+    "which is worse than a villain; the sister is the one who says what neither",
+    "lead will, so the leads never explain the plot to each other. Turns are",
+    "placed against the sixty planned: only Adrian's first crack falls inside",
+    "the ten released.",
+    "",
+    "NINE SHOTS AN EPISODE. `shots` is what the camera sees, ten seconds each,",
+    "joined into one ninety-second episode by `make claire-video`. The people are",
+    "never named in a shot — the series' `cast` line says what they look like,",
+    "and is put in front of every one so the faces hold. Each episode's last",
+    "shot lands its hook, and the photograph is planted in 5 and paid off in 10."
   ],
   "series": {
     "title": "The Wife He Hired",
@@ -24,7 +39,92 @@
     "coinsPerEpisode": 60,
     "bundleCents": 1999,
     "totalPlanned": 60,
-    "live": true
+    "live": true,
+    "cast": "Only the people this shot describes appear in it. When they appear they always look like this: the young woman is late twenties, slim, olive skin, dark brown hair in a low ponytail, tired dark eyes; the man is mid thirties, tall, clean-shaven, black hair swept back, still and watchful, in a charcoal overcoat or dark suit; the grandmother is late seventies, silver hair in a neat bun, cream cardigan, in a wheelchair, sharp eyes; the woman in emerald is early thirties, sleek blonde bob, emerald silk dress, composed; the younger sister is nineteen, thin and pale, short dark hair, hospital gown.",
+    "arc": {
+      "characters": [
+        {
+          "name": "Nora",
+          "arc": "from surviving alone to letting herself be seen",
+          "wants": "to keep Mia alive without owing anybody for it.",
+          "avoids": "being looked after, because the last people who did it left.",
+          "turns": {
+            "ep": 30,
+            "act": "she tells Adrian the truth about the night in the photograph instead of handling it."
+          },
+          "ends": "asking for something for herself, out loud, and waiting for the answer."
+        },
+        {
+          "name": "Adrian Cole",
+          "arc": "from controlling the story to being known",
+          "wants": "the estate kept from anyone who would sell it, on his terms and nobody else's.",
+          "avoids": "why he chose her: he has seen her face before and has never let himself look closely.",
+          "turns": {
+            "ep": 31,
+            "act": "he takes the photograph out of the frame and asks her who she was that night."
+          },
+          "firstCrack": {
+            "ep": 9,
+            "act": "he lies for her in front of forty people, fluently, and cannot say why."
+          },
+          "ends": "telling the true version of how they met, which is worse than the one he invented and better to hear."
+        },
+        {
+          "name": "Vivian Cole",
+          "role": "the mentor, who tests",
+          "arc": "from testing everyone to trusting one person",
+          "wants": "to know who her grandson is before she dies.",
+          "avoids": "her own part in making him a man who answers for other people.",
+          "turns": {
+            "ep": 7,
+            "act": "she watches Nora take her coffee the way Nora likes it, and writes it down."
+          },
+          "ends": "leaving the house to the person who never asked for it."
+        },
+        {
+          "name": "Camille Vance",
+          "role": "the rival, and not a villain",
+          "arc": "decent, which is much worse for Nora than if she were cruel",
+          "wants": "Vivian's house kept as Vivian meant it, and she genuinely thinks that means her.",
+          "avoids": "the night she sent the champagne back and a waitress was fired for it.",
+          "notes": "present and never explained: she does not monologue, she remembers."
+        },
+        {
+          "name": "Mia",
+          "role": "the sister, who knows",
+          "arc": "the one who says the thing neither lead will",
+          "wants": "Nora to stop spending her life on her.",
+          "avoids": "saying how frightened she is.",
+          "notes": "carries the exposition from her hospital bed, so Nora and Adrian never have to explain the plot to each other."
+        }
+      ],
+      "phases": [
+        {
+          "eps": "1-3",
+          "nora": "tired, proud, saying no",
+          "adrian": "in control, unreadable",
+          "shifts": "Nothing yet. Who holds the power: him, and the hospital."
+        },
+        {
+          "eps": "4-5",
+          "nora": "cornered, choosing it anyway",
+          "adrian": "getting what he arranged",
+          "shifts": "She signs. The door closes behind her."
+        },
+        {
+          "eps": "6-8",
+          "nora": "a guest in her own marriage",
+          "adrian": "keeping his distance, answering for her",
+          "shifts": "Vivian notices her. Camille remembers her."
+        },
+        {
+          "eps": "9-10",
+          "nora": "exposed, and not by her own doing",
+          "adrian": "lying for her without deciding to",
+          "shifts": "His first crack. Then a signature she never made, and the photograph."
+        }
+      ]
+    }
   },
   "episodes": [
     {
@@ -34,7 +134,18 @@
       "title": "Double Shift",
       "seconds": 88,
       "beat": "Nora works the diner's close and the hospital's open. Her sister Mia has eleven weeks. The letter on the fridge says the surgery is not covered.",
-      "hook": "Eleven weeks, and a number at the bottom of the page she reads twice."
+      "hook": "Eleven weeks, and a number at the bottom of the page she reads twice.",
+      "shots": [
+        "Night, a small roadside diner, rain on the window. Close on the young woman in a pale blue diner uniform wiping the counter; the clock behind her reads two minutes to midnight.",
+        "She pours the last coffee of the night for a tired trucker, smiles out of habit, and glances down at a missed call on her phone.",
+        "Dawn, a long hospital corridor. She walks fast, a raincoat over the diner uniform, pulling the tie out of her hair as she goes.",
+        "A small hospital room. The younger sister sits up in bed, pale, and grins: \"You smell like fries.\" The young woman laughs and sits on the edge of the bed.",
+        "Close on their two hands together on a white blanket, a hospital wristband on the thin wrist. Soft morning light.",
+        "Morning, a tiny apartment kitchen. The young woman takes a letter from under a fridge magnet and unfolds it.",
+        "Close on the letter in her hands: a long column of figures, the heading out of focus. Her thumb stops at the bottom line.",
+        "She reads it a second time and sits down slowly on a kitchen chair, still in uniform, the light on her face.",
+        "Close-up: she folds the letter small, pushes it into her apron pocket, stands and ties the apron tight, jaw set."
+      ]
     },
     {
       "n": 2,
@@ -44,7 +155,18 @@
       "seconds": 92,
       "beat": "A man in a coat that costs a year of her rent sits in her section, does not order, and slides a contract across the table.",
       "hook": "\"Ninety days. Say yes before I change my mind.\"",
-      "shot": "A woman in a diner uniform stands beside a booth at night, holding a notepad. A well-dressed man seated opposite slides a folded document across the table towards her. Neon window light, steam, close on her hand not taking it."
+      "shot": "A woman in a diner uniform stands beside a booth at night, holding a notepad. A well-dressed man seated opposite slides a folded document across the table towards her. Neon window light, steam, close on her hand not taking it.",
+      "shots": [
+        "Night, the diner nearly empty. The man in the charcoal overcoat pushes through the door, rain on his shoulders, and sits in the corner booth.",
+        "The young woman walks over with a notepad and asks: \"Coffee?\" He does not open the menu. He shakes his head once.",
+        "Close on his hands as he takes a folded document from inside his coat and lays it flat on the table.",
+        "A woman in a diner uniform stands beside a booth at night, holding a notepad. A well-dressed man seated opposite slides a folded document across the table towards her. Neon window light, steam, close on her hand not taking it.",
+        "Close on her face as she reads the first line, pink and blue neon flickering across it.",
+        "He looks up at her for the first time, calm, and says: \"Ninety days. Married. Then you walk away.\"",
+        "She laughs once in disbelief and glances at the kitchen hatch, where the cook is watching.",
+        "He writes a number on a paper napkin and turns it to face her. Close on her eyes widening.",
+        "He stands, buttons his coat and says quietly: \"Say yes before I change my mind.\" He walks out into the rain; she stays by the booth with the document in her hand."
+      ]
     },
     {
       "n": 3,
@@ -53,7 +175,18 @@
       "title": "No",
       "seconds": 86,
       "beat": "She says no, twice, and means it. Adrian Cole does not argue; he leaves the contract on the table and his card under the salt.",
-      "hook": "She threw the card away. Then the hospital called about the deposit."
+      "hook": "She threw the card away. Then the hospital called about the deposit.",
+      "shots": [
+        "The diner booth. The young woman pushes the folded document back across the table and says: \"No.\" The man in the charcoal overcoat does not move.",
+        "She leans in, firmer: \"I said no.\" He nods slowly, as if she had agreed with him.",
+        "He tucks a white business card under the salt shaker, stands, and leaves money for a coffee he never drank.",
+        "Close on the card under the salt shaker. Her hand hovers over it, then sweeps it into the bin with the used napkins.",
+        "Late night, the diner half dark. She mops the floor alone and keeps glancing at the bin.",
+        "Walking home under orange streetlights, hood up. Her phone buzzes in her pocket and she stops.",
+        "Close on her face lit by the phone as she answers: \"Yes, I'm her sister.\" Her expression falls.",
+        "Morning, a hospital billing counter. A clerk slides a form towards her; she reads it and grips the edge of the counter.",
+        "Back in the empty diner by daylight, she kneels by the bin, digs through it, and pulls out the white card. Hold on her face."
+      ]
     },
     {
       "n": 4,
@@ -63,7 +196,18 @@
       "seconds": 90,
       "beat": "At 2am she takes the contract out of the bin and flattens it. The fee is not close to the surgery. It is the surgery, exactly.",
       "hook": "To the dollar. Nobody guesses a number to the dollar.",
-      "shot": "A woman alone at a kitchen table at night, a single lamp on. She smooths out a creased sheet of paper and reads the last line. Close on her eyes, then on the paper. She puts a hand over her mouth."
+      "shot": "A woman alone at a kitchen table at night, a single lamp on. She smooths out a creased sheet of paper and reads the last line. Close on her eyes, then on the paper. She puts a hand over her mouth.",
+      "shots": [
+        "Two in the morning, a small kitchen, one lamp on. The young woman sits at the table with a crumpled document and a cold mug of tea.",
+        "A woman alone at a kitchen table at night, a single lamp on. She smooths out a creased sheet of paper and reads the last line. Close on her eyes, then on the paper. She puts a hand over her mouth.",
+        "Close on her finger running down a column of figures, her lips moving silently.",
+        "She takes a folded hospital letter from her apron pocket and lays it beside the document. Close on the two pages side by side.",
+        "Close on her fingertip moving from one bottom line to the other. The two numbers are identical.",
+        "She sits back, stunned, and whispers: \"To the dollar.\"",
+        "She walks to a bedroom doorway and looks at an empty single bed with a worn stuffed rabbit on the pillow.",
+        "Back at the table, she turns the white business card over and over in her fingers.",
+        "Close-up: she picks up her phone, types a short message, her thumb hovering over send, the screen lighting her face. She presses it."
+      ]
     },
     {
       "n": 5,
@@ -72,7 +216,18 @@
       "title": "She Signs",
       "seconds": 94,
       "beat": "She signs in the lobby of a building she has only cleaned. He does not look up. The pen is heavier than she expected.",
-      "hook": "\"You'll regret this.\" \"I already do.\""
+      "hook": "\"You'll regret this.\" \"I already do.\"",
+      "shots": [
+        "Morning, the glass lobby of a tall office tower. The young woman walks in wearing her one good coat, looking up at the height of it.",
+        "A security guard nods her through. She glances at a cleaning cart parked by the lifts, and something like recognition crosses her face.",
+        "A long marble table in a quiet corner of the lobby. The man in a charcoal suit sits reading papers and does not look up; a grey-haired lawyer stands beside him.",
+        "The lawyer lays the document and a heavy black fountain pen in front of her.",
+        "Close on her hand lifting the pen. It is heavier than she expected, and her fingers tremble slightly.",
+        "Close on the page as she signs her name slowly on the line.",
+        "The man finally looks up, only at the page, and signs beneath her in one fast stroke. Without looking at it, he slides a small old photograph into a folder and closes it.",
+        "She stands and meets his eyes: \"You'll regret this.\" He answers evenly: \"I already do.\"",
+        "Wide shot: she walks back across the bright lobby alone towards the glass doors, and they close behind her."
+      ]
     },
     {
       "n": 6,
@@ -82,7 +237,18 @@
       "seconds": 89,
       "beat": "Separate rooms. No touching. No questions about the third floor. She is given a ring that fits perfectly and is not new.",
       "hook": "It fit. Which meant somebody had measured her, and nobody ever had.",
-      "shot": "A woman walks down a wide corridor in a large modern house, carrying one small suitcase. A housekeeper opens a bedroom door and steps back. The woman looks at a ring on her own hand. Cool daylight, long shadows, no dialogue."
+      "shot": "A woman walks down a wide corridor in a large modern house, carrying one small suitcase. A housekeeper opens a bedroom door and steps back. The woman looks at a ring on her own hand. Cool daylight, long shadows, no dialogue.",
+      "shots": [
+        "A black car pulls up in front of a large modern house among tall trees. The young woman steps out holding one small suitcase.",
+        "A housekeeper, an older woman in grey, meets her at the front door and reads from a card: \"Separate rooms.\"",
+        "Close on the card in the housekeeper's hand as she reads on: \"No touching. No questions about the third floor.\"",
+        "A woman walks down a wide corridor in a large modern house, carrying one small suitcase. A housekeeper opens a bedroom door and steps back. Cool daylight, long shadows, no dialogue.",
+        "A huge, white, empty bedroom. She sits on the edge of the bed, the suitcase unopened at her feet.",
+        "Close on a small velvet box resting on the pillow. She opens it: an old-fashioned gold ring, worn smooth.",
+        "She slides the ring on. It fits perfectly. She stares at her own hand.",
+        "She looks up at the ceiling as faint footsteps cross the floor above.",
+        "Night, a dim hallway. She stands at the foot of a staircase that rises into darkness, one hand on the rail, and does not climb."
+      ]
     },
     {
       "n": 7,
@@ -91,7 +257,18 @@
       "title": "Grandmother Vivian",
       "seconds": 96,
       "beat": "Vivian Cole is dying and sharper than anyone in the room. She asks Nora what she takes in her coffee. Adrian answers for her.",
-      "hook": "He was wrong. Vivian smiled anyway — and wrote something down."
+      "hook": "He was wrong. Vivian smiled anyway — and wrote something down.",
+      "shots": [
+        "A sunlit glass conservatory full of plants. The grandmother sits in a wheelchair with a blanket on her knees, watching the doorway.",
+        "The young woman walks in beside the man in a dark suit. He keeps a careful distance; she smooths her dress.",
+        "The grandmother looks her up and down and asks: \"How do you take your coffee?\"",
+        "Before she can answer, the man says: \"Black.\" The young woman's polite smile freezes.",
+        "Close on the young woman: a tiny pause, and she says nothing.",
+        "A maid sets down coffee. While the man looks away, the young woman quietly adds milk and two sugars to her cup.",
+        "The grandmother sees it, and the corner of her mouth lifts into a smile.",
+        "Close on the grandmother taking a small notebook from under her blanket and writing one line.",
+        "The couple leave the conservatory. Behind them the grandmother taps the notebook with her pen, eyes narrowed and amused."
+      ]
     },
     {
       "n": 8,
@@ -100,7 +277,18 @@
       "title": "Camille",
       "seconds": 93,
       "beat": "The engagement party's guest list arrives in person. Camille Vance holds a glass she does not drink from and looks at Nora for a beat too long.",
-      "hook": "\"I know you. You poured my champagne three years ago and I sent it back.\""
+      "hook": "\"I know you. You poured my champagne three years ago and I sent it back.\"",
+      "shots": [
+        "Evening, a glittering party inside the house: string lights, guests in evening wear, a string quartet playing.",
+        "The young woman, in a borrowed navy dress, stands stiffly beside the man in a black tuxedo, holding a glass she has not touched.",
+        "The front doors open and the woman in the emerald silk dress walks in. Heads turn.",
+        "The woman in emerald takes a glass of champagne from a passing tray and crosses the room without drinking it.",
+        "She stops in front of the young woman and looks at her a beat too long.",
+        "Close on the young woman's face, trying to place her.",
+        "The woman in emerald says softly: \"I know you.\"",
+        "Close on the woman in emerald: \"You poured my champagne three years ago. I sent it back.\"",
+        "The young woman's glass trembles in her hand. Across the room, the grandmother watches both of them from her wheelchair."
+      ]
     },
     {
       "n": 9,
@@ -109,7 +297,18 @@
       "title": "He Lies For Her",
       "seconds": 91,
       "beat": "Adrian invents a history for them in front of forty people, fluently, and it is better than the real one. Afterwards neither of them can explain it.",
-      "hook": "\"Why did you do that?\" \"I don't know.\" It was the first true thing he had said to her."
+      "hook": "\"Why did you do that?\" \"I don't know.\" It was the first true thing he had said to her.",
+      "shots": [
+        "The party. Guests gather around the couple and a smiling man asks: \"So how did you two meet?\"",
+        "The young woman opens her mouth and nothing comes. The man in the tuxedo rests a hand lightly on her back.",
+        "He starts talking easily, smiling at the guests: \"A rainy night. A little diner.\"",
+        "The guests laugh. He tells the story with his hands, warm and fluent. The young woman stares at him.",
+        "Close on the young woman as she realises he is telling it better than it happened.",
+        "At the edge of the crowd, the woman in emerald watches without smiling.",
+        "Later, a quiet balcony above the city lights. The young woman turns to him: \"Why did you do that?\"",
+        "The man looks out at the city and says: \"I don't know.\"",
+        "Close on both faces in the dark, not looking at each other. Hold on the silence."
+      ]
     },
     {
       "n": 10,
@@ -118,7 +317,18 @@
       "title": "The Affidavit",
       "seconds": 99,
       "beat": "Vivian's lawyer reads the clause: if the marriage is a sham, the estate goes to Camille. Then he says an affidavit swearing exactly that was filed this morning — and slides it across the table. On the third page, in the box marked deponent, is Nora's signature. She has never seen the page before in her life. Behind her, the photograph from the engagement party sits on Vivian's desk, and in it, three years ago, Nora is standing behind Adrian holding a tray.",
-      "hook": "Her own name, in her own hand, on a page she had never touched. And Vivian had kept the photograph for three years."
+      "hook": "Her own name, in her own hand, on a page she had never touched. And Vivian had kept the photograph for three years.",
+      "shots": [
+        "A wood-panelled study. A grey-haired lawyer sits behind a large desk; the young woman and the man sit opposite.",
+        "The lawyer reads from a document: \"If the marriage is not genuine, the estate passes to the other beneficiary.\"",
+        "He takes out a second document: \"An affidavit was filed this morning, swearing exactly that.\" He slides it across the desk.",
+        "The man picks it up and turns the pages, his jaw tightening.",
+        "Close on the third page: a box labelled deponent, with a handwritten signature in it.",
+        "The young woman leans in. Close on her face as she recognises her own handwriting.",
+        "She whispers: \"I have never seen this page.\" The man turns slowly to look at her.",
+        "Behind them on the desk stands a framed photograph. The camera pushes slowly in: a party three years ago, the man in the foreground, and behind him a young waitress holding a tray.",
+        "Close on the photograph: the waitress is the young woman, three years younger. Hold on her face, then cut to black."
+      ]
     }
   ]
 }
