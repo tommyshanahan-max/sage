@@ -163,6 +163,7 @@ export function cleanEpisode(raw, seriesId, was = null) {
     poster: was?.poster || "",
     shots: Array.isArray(was?.shots) ? was.shots : [],
     wear: was?.wear || null,
+    recap: Boolean(was?.recap),
     seconds: Math.max(0, Math.min(3600, Number(raw.seconds) || 0)),
     at: was?.at || new Date().toISOString(),
   };

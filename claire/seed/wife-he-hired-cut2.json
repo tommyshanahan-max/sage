@@ -1,0 +1,305 @@
+{
+  "_note": [
+    "THE NEW CUT. Tom watched the first long cut and asked for it shorter and better:",
+    "every episode opens by revisiting the last one's cliffhanger, then a hook, and",
+    "ends on a new cliffhanger. Eight episodes of about a minute, cut from the ten",
+    "below: 'Booth Nine' folded into 1, 'House Rules' into 4's ending. Written in",
+    "Tom's framework (microdrama/lib/series.ts and design/02-player.html): act,",
+    "function and hook on every episode, and the arc under the beats.",
+    "",
+    "SIX SHOTS AN EPISODE, AND A RECAP THAT COSTS NOTHING. The first shot is the",
+    "hook and the sixth the cliffhanger. `recap` puts the last five seconds of the",
+    "previous episode's final shot in front, cut from film already made.",
+    "",
+    "CAST TO MATCH THE NAMES. The first shoot let the model choose, and Mia came",
+    "out as a young man because her portrait never said she was a woman. Every",
+    "person's description now says who they are, and every shot names everybody in",
+    "it. The first cut stays live until this one is shot; `live` is off until then."
+  ],
+  "series": {
+    "title": "The Wife He Hired · new cut",
+    "blurb": "Ninety days, one signature, and a photograph he has never looked at closely.",
+    "genre": "billionaire",
+    "art": "1",
+    "freeThrough": 8,
+    "coinsPerEpisode": 60,
+    "bundleCents": 1999,
+    "totalPlanned": 60,
+    "live": false,
+    "cast": {
+      "the young woman": "the young woman is a white woman in her late twenties with Irish colouring: pale skin, freckles across her nose, a small mole under her right eye, auburn-brown hair in a low ponytail, tired grey-green eyes",
+      "the man": "the man is a white man in his mid thirties, lean, with a close-cropped dark beard, a thin pale scar through his left eyebrow, short dark brown hair greying at the temples, pale blue eyes, still and watchful",
+      "the grandmother": "the grandmother is a white woman in her late seventies, silver hair in a neat chignon, pearl earrings, reading glasses on a chain, sharp blue eyes, in a wheelchair",
+      "the woman in emerald": "the woman in emerald is a white woman in her early thirties, a sleek copper-red bob, green eyes, composed",
+      "the younger sister": "the younger sister is a white young woman of nineteen, the young woman's sister, thin and pale, freckles, short dark-auburn curly hair"
+    },
+    "arc": {
+      "characters": [
+        {
+          "name": "Nora",
+          "arc": "from surviving alone to letting herself be seen",
+          "wants": "to keep Mia alive without owing anybody for it.",
+          "avoids": "being looked after, because the last people who did it left.",
+          "turns": {
+            "ep": 30,
+            "act": "she tells Adrian the truth about the night in the photograph instead of handling it."
+          },
+          "ends": "asking for something for herself, out loud, and waiting for the answer."
+        },
+        {
+          "name": "Adrian Cole",
+          "arc": "from controlling the story to being known",
+          "wants": "the estate kept from anyone who would sell it, on his terms and nobody else's.",
+          "avoids": "why he chose her: he has seen her face before and has never let himself look closely.",
+          "turns": {
+            "ep": 31,
+            "act": "he takes the photograph out of the frame and asks her who she was that night."
+          },
+          "firstCrack": {
+            "ep": 7,
+            "act": "he lies for her in front of forty people, fluently, and cannot say why."
+          },
+          "ends": "telling the true version of how they met, which is worse than the one he invented and better to hear."
+        },
+        {
+          "name": "Vivian Cole",
+          "role": "the mentor, who tests",
+          "arc": "from testing everyone to trusting one person",
+          "wants": "to know who her grandson is before she dies.",
+          "avoids": "her own part in making him a man who answers for other people.",
+          "turns": {
+            "ep": 5,
+            "act": "she watches Nora fix her coffee the way Nora likes it, writes it down, and says what she has seen."
+          },
+          "ends": "leaving the house to the person who never asked for it."
+        },
+        {
+          "name": "Camille Vance",
+          "role": "the rival, and not a villain",
+          "arc": "decent, which is much worse for Nora than if she were cruel",
+          "wants": "Vivian's house kept as Vivian meant it, and she genuinely thinks that means her.",
+          "avoids": "the night she sent the champagne back and a waitress was fired for it.",
+          "notes": "present and never explained: she does not monologue, she remembers."
+        },
+        {
+          "name": "Mia",
+          "role": "the sister, who knows",
+          "arc": "the one who says the thing neither lead will",
+          "wants": "Nora to stop spending her life on her.",
+          "avoids": "saying how frightened she is.",
+          "notes": "carries the exposition from her hospital bed, so Nora and Adrian never have to explain the plot to each other."
+        }
+      ],
+      "phases": [
+        {
+          "eps": "1-3",
+          "nora": "tired, proud, saying no",
+          "adrian": "in control, unreadable",
+          "shifts": "Who holds the power: him, and the hospital. She says no, and goes back for the card."
+        },
+        {
+          "eps": "4",
+          "nora": "cornered, choosing it anyway",
+          "adrian": "getting what he arranged",
+          "shifts": "She signs. The ring fits, which nobody could have known."
+        },
+        {
+          "eps": "5-6",
+          "nora": "a guest in her own marriage",
+          "adrian": "answering for her",
+          "shifts": "Vivian sees through it. Camille remembers her."
+        },
+        {
+          "eps": "7-8",
+          "nora": "exposed, not by her own doing",
+          "adrian": "lying for her without deciding to",
+          "shifts": "His first crack. Then a signature she never made, and he admits he always knew who she was."
+        }
+      ]
+    },
+    "videoModel": "dreamina-seedance-2-5-260628"
+  },
+  "episodes": [
+    {
+      "n": 1,
+      "act": 1,
+      "function": "ordinary world",
+      "title": "Double Shift",
+      "beat": "Nora works the diner's close and the hospital's open; her sister Mia is getting worse and the surgery is not covered. That night a man in a coat that costs a year of her rent sits in her section and slides a contract across the table.",
+      "hook": "\"Ninety days. Married. Then you walk away.\"",
+      "wear": {
+        "the young woman": "a pale blue diner uniform with a white collar, an open dark raincoat over it",
+        "the man": "a charcoal overcoat over a dark suit",
+        "the younger sister": "a hospital gown"
+      },
+      "shots": [
+        "Night, a hospital corridor. The young woman runs toward a patient room as a monitor alarm sounds, and a nurse steps out and holds up a hand to stop her.",
+        "A hospital room. The younger sister lies in bed with an oxygen line, awake and pale, and says to the young woman: \"I'm fine. Stop looking at me like that.\"",
+        "Close on the young woman's hand holding the younger sister's hand on a white blanket, a hospital wristband on the sister's thin wrist. The younger sister squeezes back.",
+        "Morning, a tiny apartment kitchen. The young woman unfolds a hospital letter, reads the bottom line, and sits down slowly.",
+        "Night, an almost empty roadside diner, rain on the windows. The man sits in the corner booth. The young woman walks over with a notepad and asks: \"Coffee?\" The man does not look at the menu.",
+        "The man slides a folded contract across the diner table to the young woman and says quietly: \"Ninety days. Married. Then you walk away.\" Close on the young woman's face as she reads it."
+      ],
+      "seconds": 60,
+      "recap": false
+    },
+    {
+      "n": 2,
+      "act": 1,
+      "function": "debate",
+      "title": "No",
+      "beat": "She says no and means it. He leaves his card under the salt and walks out. Then the hospital calls about the deposit, and Mia tells her not to do anything stupid.",
+      "hook": "She said no. Then she went back for the card.",
+      "wear": {
+        "the young woman": "a pale blue diner uniform with a white collar; outside, a dark hooded raincoat",
+        "the man": "a charcoal overcoat over a dark suit",
+        "the younger sister": "a hospital gown"
+      },
+      "shots": [
+        "The diner booth at night. The young woman pushes the contract back across the table to the man and says: \"No.\" The man does not move.",
+        "The man lays a white business card under the salt shaker, stands, buttons his overcoat and walks out into the rain. The young woman watches him go.",
+        "Close on the young woman's hand sweeping the business card into the bin with the used napkins.",
+        "Late night, a dark wet street. The young woman walks home under streetlights, hood up. Her phone rings; she answers and stops dead: \"How much is the deposit?\"",
+        "The hospital room. The younger sister, in bed, watches the young woman's face and says: \"Whatever you're about to do for me, don't.\"",
+        "Dawn, the empty diner. The young woman kneels by the bin, digs through the napkins and pulls out the white business card. Close on the young woman's face."
+      ],
+      "seconds": 65,
+      "recap": true
+    },
+    {
+      "n": 3,
+      "act": 1,
+      "function": "debate",
+      "title": "The Number",
+      "beat": "At two in the morning she flattens the contract beside the hospital letter. The fee is not close to the surgery; it is the surgery, to the dollar. She texts him, and he answers at once.",
+      "hook": "\"Nine a.m. Bring a pen.\" He had been waiting up.",
+      "wear": {
+        "the young woman": "a faded grey cardigan over a pale blue diner uniform"
+      },
+      "shots": [
+        "Two in the morning, a small kitchen lit by one lamp. The young woman flattens a crumpled contract on the table beside a hospital letter.",
+        "Close on the young woman's fingertip moving from the fee on the contract to the total on the hospital letter. The two numbers are exactly the same.",
+        "The young woman sits back, stunned, and whispers: \"To the dollar. Nobody guesses to the dollar.\"",
+        "The young woman stands in a bedroom doorway and looks at an empty single bed with a worn stuffed rabbit on the pillow.",
+        "Close on the young woman typing a message on her phone, her thumb hovering, the screen lighting her face. She presses send.",
+        "The phone buzzes almost at once. The young woman reads the reply and her face goes still. A man's calm voice, off screen: \"Nine a.m. Bring a pen.\""
+      ],
+      "seconds": 65,
+      "recap": true
+    },
+    {
+      "n": 4,
+      "act": 1,
+      "function": "act one turn",
+      "title": "She Signs",
+      "beat": "She signs in the lobby of a building she has cleaned. He signs without looking up, and slides an old photograph into a folder without looking at that either. That night, in his house, a ring waits on her pillow.",
+      "hook": "It fit. Which meant somebody had measured her.",
+      "wear": {
+        "the young woman": "a dark green wool coat over a plain white blouse",
+        "the man": "a charcoal three-piece suit"
+      },
+      "shots": [
+        "Morning, the glass lobby of an office tower. The young woman walks in, looking up, and slows as she passes a cleaning cart she clearly recognises.",
+        "A long marble table. The man does not look up from his papers. A grey-haired lawyer places the contract and a heavy fountain pen in front of the young woman.",
+        "Close on the young woman's hand signing her name slowly on the contract.",
+        "The man signs beneath her in one fast stroke. Without looking at it, the man slides a small old photograph into a folder and closes it.",
+        "The young woman stands and says to the man: \"You'll regret this.\" The man answers evenly: \"I already do.\"",
+        "Night, a white bedroom in a large modern house. The young woman opens a velvet box on the pillow: an old gold ring. She slides it on. It fits perfectly. Close on the young woman's face."
+      ],
+      "seconds": 65,
+      "recap": true
+    },
+    {
+      "n": 5,
+      "act": 2,
+      "function": "rising",
+      "title": "Grandmother Vivian",
+      "beat": "Vivian Cole is dying and sharper than anyone in the room. She asks Nora how she takes her coffee; Adrian answers for her, wrong. Vivian watches Nora fix her own cup, writes something down, and calls after them.",
+      "hook": "\"You're not who he says you are, are you?\"",
+      "wear": {
+        "the young woman": "a simple pale yellow day dress",
+        "the man": "a dark navy suit, no tie",
+        "the grandmother": "a cream cardigan over a silk blouse, a tartan blanket on her knees"
+      },
+      "shots": [
+        "A sunlit glass conservatory full of plants. The grandmother, in a wheelchair, looks straight at the young woman and asks: \"How do you take your coffee?\"",
+        "Before the young woman can answer, the man beside her says: \"Black.\" The young woman's polite smile freezes.",
+        "While the man looks away, the young woman quietly adds milk and two sugars to her cup. The grandmother notices.",
+        "Close on the grandmother writing one line in a small notebook, a faint smile on her face.",
+        "A long corridor. The man walks the young woman out and neither of them speaks. Behind them, the grandmother's wheelchair appears in the doorway.",
+        "The grandmother calls out and the young woman turns. The grandmother says: \"You're not who he says you are, are you?\" The man stops walking."
+      ],
+      "seconds": 65,
+      "recap": true
+    },
+    {
+      "n": 6,
+      "act": 2,
+      "function": "pinch",
+      "title": "Camille",
+      "beat": "The engagement party. Camille Vance arrives, kisses Adrian's cheek, and looks at Nora a beat too long. She remembers her.",
+      "hook": "\"You poured my champagne three years ago. I sent it back.\"",
+      "wear": {
+        "the young woman": "a borrowed navy evening dress",
+        "the man": "a black tuxedo",
+        "the woman in emerald": "an emerald silk evening dress",
+        "the grandmother": "a black velvet jacket"
+      },
+      "shots": [
+        "Evening, a glittering party in a large house. The front doors open and the woman in emerald walks in. Heads turn. The young woman, beside the man, stiffens.",
+        "The woman in emerald takes a glass of champagne from a tray and crosses the room to the young woman and the man without drinking it.",
+        "The woman in emerald kisses the man's cheek and says: \"You didn't tell me you'd married.\" The man's jaw tightens.",
+        "The woman in emerald turns to the young woman and looks at her a beat too long. The young woman tries to smile.",
+        "Close on the woman in emerald as she says softly to the young woman: \"I know you.\"",
+        "The woman in emerald leans in to the young woman: \"You poured my champagne three years ago. I sent it back.\" The young woman's glass trembles. Across the room, the grandmother watches."
+      ],
+      "seconds": 65,
+      "recap": true
+    },
+    {
+      "n": 7,
+      "act": 2,
+      "function": "rising",
+      "title": "He Lies For Her",
+      "beat": "Asked how they met, Adrian invents a history for them in front of forty people, fluently, and it is better than the real one. Neither of them can say why. Camille can: she makes a call.",
+      "hook": "\"It's a lie. File it tonight.\"",
+      "wear": {
+        "the young woman": "a borrowed navy evening dress",
+        "the man": "a black tuxedo",
+        "the woman in emerald": "an emerald silk evening dress"
+      },
+      "shots": [
+        "The party. Guests crowd around the young woman and the man, and a smiling guest asks: \"So how did you two meet?\" The young woman freezes.",
+        "The man rests a hand on the young woman's back and starts talking easily to the guests: \"A rainy night. A little diner.\"",
+        "The guests laugh as the man tells the story with his hands. The young woman stares at the man, because it is better than what happened.",
+        "At the edge of the crowd, the woman in emerald watches the man without smiling and takes out her phone.",
+        "A balcony above the city lights. The young woman turns to the man: \"Why did you do that?\" The man looks out at the city: \"I don't know.\"",
+        "A dark hallway. The woman in emerald speaks quietly into her phone: \"It's a lie. File it tonight.\" She hangs up and looks back toward the party."
+      ],
+      "seconds": 65,
+      "recap": true
+    },
+    {
+      "n": 8,
+      "act": 2,
+      "function": "complication",
+      "title": "The Affidavit",
+      "beat": "Vivian's lawyer: an affidavit filed overnight swears the marriage is a sham. On page three, Nora's signature on a page she has never seen. On the desk, the photograph from the lobby: Nora, three years ago, holding a tray behind Adrian. He is not surprised.",
+      "hook": "\"I know. I've always known.\"",
+      "wear": {
+        "the young woman": "a plain white blouse and dark trousers",
+        "the man": "a charcoal suit"
+      },
+      "shots": [
+        "A wood-panelled study. A grey-haired lawyer slides a document across the desk to the young woman and the man: \"An affidavit was filed last night. It says your marriage is a lie.\"",
+        "The man flips through the document, jaw tight, and stops on the third page.",
+        "Close on the third page of the document: a box labelled deponent with a handwritten signature in it. The young woman's fingertip touches the signature.",
+        "The young woman, pale, says: \"That's my signature. I have never seen this page.\" The man turns slowly to look at the young woman.",
+        "On the desk behind them stands a framed photograph. The camera pushes in: a party three years ago, the man in front, and behind the man a young waitress holding a tray. The waitress is the young woman, three years younger.",
+        "The young woman stares at the photograph, then at the man. The man says quietly: \"I know. I've always known.\" Cut to black."
+      ],
+      "seconds": 65,
+      "recap": true
+    }
+  ]
+}

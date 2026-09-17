@@ -164,10 +164,14 @@ async function shoot(prompt, file, refs = [], model = MODEL) {
 /* Joined without re-encoding when the parts agree, which Seedance's always
    have (720x1280, h264, aac). Re-encoded when they do not, rather than
    producing a file that plays the first shot and then freezes. */
-async function join(parts, file) {
+async function join(parts, file, reencode = false) {
   const list = file + ".txt";
   await writeFile(list, parts.map((p) => "file '" + p + "'").join("\n") + "\n");
   try {
+    /* A recap is cut by us, not by Seedance, so its stream settings are not
+       guaranteed to match; a copy-join across a mismatch can succeed and still
+       play wrong. Re-encoded whenever one is in the cut. */
+    if (reencode) throw new Error("re-encode");
     await run("ffmpeg", ["-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", list,
       "-c", "copy", "-movflags", "+faststart", file]);
   } catch {
@@ -236,10 +240,13 @@ const VIDEO_MODEL = String(series.videoModel || MODEL).trim();
 const REFS = Boolean(series.videoModel && PUBLIC && typeof series.cast === "object");
 
 async function portrait(k) {
-  const file = CAST_DIR + "/" + slug(k) + ".jpg";
+  const file = CAST + "/" + slug(k) + ".jpg";
   if (await exists(file)) return file;
   if (!GO) return "";
-  const who = series.cast[k].replace(/^the [a-z ]+? is /, "");
+  /* WHO, NOT ONLY WHAT THEY LOOK LIKE. "Nineteen, thin and pale, short curly
+     hair" came back as a young man, and every shot of Nora's sister copied
+     him. The description starts with who the person is, so it stays. */
+  const who = k.replace(/^the /, "the ") + ": " + series.cast[k].replace(/^the [a-z ]+? is /, "");
   const prompt = "Photographic casting portrait of a fictional character for a drama, head and shoulders, "
     + "facing camera, neutral grey studio background, soft light, natural skin, plain grey top, no text. "
     + "The character is " + who.replace(/,\s*(in |wearing )?(an? )?[^,]*(overcoat|suit|dress|gown|cardigan|uniform)[^,]*/g, "") + ".";
@@ -259,12 +266,16 @@ async function portrait(k) {
   }
   return "";
 }
+/* A folder per series: the new cut is recast, and reusing the first cut's
+   portraits because the characters share a name would bring the old faces
+   straight back. */
+const CAST = CAST_DIR + "/" + series.id;
 const portraits = {};
 if (REFS) {
-  await mkdir(CAST_DIR, { recursive: true });
+  await mkdir(CAST, { recursive: true });
   for (const k of Object.keys(series.cast)) {
     const f = await portrait(k);
-    if (f) portraits[k] = { url: PUBLIC + "/v/cast/" + slug(k) + ".jpg", h: hash(await readFile(f)) };
+    if (f) portraits[k] = { url: PUBLIC + "/v/cast/" + series.id + "/" + slug(k) + ".jpg", h: hash(await readFile(f)) };
   }
 }
 /* ONLY=2,5 shoots just those episodes — a test of a reworded episode should
@@ -296,6 +307,12 @@ for (const e of eps) {
   plan.push({ e, shots, name, done: e.url === "/v/" + name });
 }
 
+/* --plan prints where every shot will be written, which is how the join and
+   the recap are tested with stand-in clips before a real one is paid for. */
+if (process.argv.includes("--plan")) {
+  for (const p of plan) for (const sh of p.shots) console.log("PLAN " + sh.file);
+  process.exit(0);
+}
 const missing = plan.filter((p) => !ONLY || ONLY.has(p.e.n))
   .flatMap((p) => p.shots.filter((s) => !s.have).map((s) => ({ p, s })));
 const scope = plan.filter((p) => !ONLY || ONLY.has(p.e.n));
@@ -400,13 +417,29 @@ const whole = [];
 for (const p of plan) {
   const got = p.shots.filter((s) => s.have);
   if (got.length === p.shots.length || (GAPS && got.length >= p.shots.length - 1 && got.length > 1)) {
-    const name = got.length === p.shots.length ? p.name
-      : p.name.replace(/\.mp4$/, "-" + hash(got.map((s) => s.h).join()) + ".mp4");
+    /* PREVIOUSLY. Tom's shape: every episode opens on the cliffhanger the last
+       one ended on. It is the last five seconds of the previous episode's final
+       shot — film already paid for — so it costs nothing. Without that shot
+       the episode is joined without it, and rejoined once it exists. */
+    const prev = plan.find((q) => q.e.n === p.e.n - 1);
+    const last = prev && prev.shots[prev.shots.length - 1];
+    const cut = [...got];
+    if (p.e.recap && last?.have) {
+      const f = PARTS + "/recap-" + last.h + ".mp4";
+      if (!(await exists(f))) {
+        await run("ffmpeg", ["-y", "-v", "error", "-sseof", "-5", "-i", last.file,
+          "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-c:a", "aac", "-movflags", "+faststart", f])
+          .catch((err) => console.log("  recap for " + p.e.n + " failed: " + String(err.message).split("\n")[0]));
+      }
+      if (await exists(f)) cut.unshift({ file: f, h: "recap-" + last.h, recap: true });
+    }
+    const name = cut.length === p.shots.length && !cut[0].recap ? p.name
+      : p.name.replace(/\.mp4$/, "-" + hash(cut.map((s) => s.h).join()) + ".mp4");
     p.done = p.e.url === "/v/" + name;
     p.name = name;
     if (!p.done) {
       try {
-        await join(got.map((s) => s.file), OUT + "/" + p.name);
+        await join(cut.map((s) => s.file), OUT + "/" + p.name, Boolean(cut[0].recap));
         const { stdout } = await run("ffprobe", ["-v", "error", "-show_entries", "format=duration",
           "-of", "csv=p=0", OUT + "/" + p.name]);
         await patch(p.e.id, { url: "/v/" + p.name, seconds: Math.round(Number(stdout) || 0) });

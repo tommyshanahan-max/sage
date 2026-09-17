@@ -72,6 +72,7 @@ for (const e of seed.episodes) {
     act: e.act || 0, function: e.function || "", beat: e.beat || "", shot: e.shot || "",
     shots: Array.isArray(e.shots) ? e.shots : [],
     wear: e.wear && typeof e.wear === "object" ? e.wear : null,
+    recap: Boolean(e.recap),
     url: e.url || was?.url || "", poster: was?.poster || "",
     seconds: (!e.url && was?.url && was?.seconds) || e.seconds || 90,
     at: was?.at || new Date().toISOString(),
