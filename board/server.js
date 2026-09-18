@@ -2097,6 +2097,45 @@ app.post("/api/room/hand", admin, express.json({ limit: "8kb" }), async (req, re
   res.json(out);
 });
 
+/** WHERE SOMEBODY'S MONEY GOES, set from the terminal.
+ *
+ *  A payee normally sets this themselves: the room shows them a button, Stripe
+ *  collects their bank and identity on its own pages, and the id comes back
+ *  here. That is the only way it happens in ordinary use and this route does
+ *  not change it.
+ *
+ *  THIS IS FOR TESTING THE OTHER END. A sandbox payee is onboarded from a
+ *  terminal rather than by a person tapping a button, so the id exists with
+ *  nobody to put it on. Without this the whole payment path cannot be walked
+ *  once: Pay only makes a Stripe session when the payee's account is ready,
+ *  and an account nobody's row points at is an account the board cannot see.
+ *
+ *  IT IS AN ACCOUNT ID AND NOTHING ELSE. Twenty to thirty-odd characters of
+ *  Stripe's own identifier, checked by cleanPerson. It is not a bank number,
+ *  it is useless to anybody who is not this platform, and the board has never
+ *  held anything more than this about where money goes.
+ */
+app.post("/api/person/payee", admin, express.json({ limit: "1kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").trim().toLowerCase();
+  const acct = String(req.body?.acct || "").trim();
+  const off = Boolean(req.body?.off);
+  if (!who) return res.status(400).json({ error: "who" });
+  if (!off && !/^acct_[A-Za-z0-9]{6,32}$/.test(acct)) return res.status(400).json({ error: "acct" });
+
+  const out = await change((board) => {
+    const q = board.people.find(
+      (x) => x.handle && String(x.handle).toLowerCase() === who);
+    if (!q) return { error: "who" };
+    /* cleanPerson keeps `payee` only when it is shaped like an account id, so
+       an empty string is how it is removed rather than a delete. */
+    q.payee = off ? "" : acct;
+    Object.assign(q, store.cleanPerson(q));
+    return { ok: true, handle: q.handle, payee: q.payee || "" };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
 /** A DEAL SHEET, PUT IN A REAL ROOM, SO IT CAN BE LOOKED AT ON A PHONE.
  *
  *  Every screen this board has can be stood up locally with `make try`, except

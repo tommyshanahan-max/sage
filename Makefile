@@ -610,6 +610,19 @@ handroom: ## A room you keep by hand: make handroom [WHO="Ray Chen"] [OFF=1] [NA
 	  /seed/handroom.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --name "$(NAME)" --who "$(WHO)" $(if $(OFF),--off,)
 
+payee: ## Where somebody's money goes: make payee WHO="Claire" ACCT=acct_… [OFF=1]
+	@# A payee normally sets this themselves — the room gives them a button and
+	@# Stripe takes their bank and identity on its own pages. This is for the
+	@# other end of a test: a sandbox payee onboarded from a terminal has an
+	@# account id and nobody to put it on, and until a row carries it the
+	@# payment path cannot be walked once.
+	@#
+	@# AN ACCOUNT ID AND NOTHING ELSE. Stripe's own identifier, useless to
+	@# anybody who is not this platform. Never a bank number.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/payee.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)" --acct "$(ACCT)" $(if $(OFF),--off,)
+
 dealsheet: ## An example deal in a real room: make dealsheet WHO="Tom" WITH="Christopher" [OFF=1]
 	@# TO SEE ONE ON A PHONE. `make try` shows every screen on a laptop, except
 	@# the only thing that matters about a deal: what it feels like arriving in
