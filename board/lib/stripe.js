@@ -35,10 +35,15 @@
  * the payer in their own app, with no chargeback mechanism of the kind cards
  * have. The exposure is essentially the card path.
  *
- * OFF UNLESS BOARD_STRIPE_KEY IS SET. Unset, every function here returns null
- * and the card falls back to the payee's own payment link, which is what the
- * board did before any of this and still does wherever Connect cannot reach —
- * mainland payees above all, whom Stripe does not support.
+ * OFF UNLESS BOARD_STRIPE_KEY IS SET, and `configured()` is how everything
+ * else asks. The calls themselves THROW when there is no key — they do not
+ * return null, whatever an earlier version of this note claimed — so a caller
+ * that skipped configured() and hoped for a null got an exception instead.
+ * Every route here checks first; the note was simply wrong.
+ *
+ * With it off the card falls back to the payee's own payment link, which is
+ * what the board did before any of this and still does wherever Connect cannot
+ * reach — mainland payees above all, whom Stripe does not onboard.
  * ------------------------------------------------------------------------ */
 const API = "https://api.stripe.com/v1";
 const KEY = (process.env.BOARD_STRIPE_KEY || "").trim();
@@ -64,12 +69,28 @@ export function form(obj, prefix = "", out = new URLSearchParams()) {
   return out;
 }
 
+/* PIN THE API VERSION, OR STRIPE MOVES UNDER YOU.
+ *
+ * Without this header an account is served whatever version its dashboard is
+ * set to, and that changes without anybody touching this repo. It is not
+ * theoretical: ui_mode: "embedded" was accepted when it was written and
+ * refused later, with no commit in between. A payment path that can break
+ * while nobody is looking is worse than one that breaks loudly on deploy.
+ *
+ * SET BY ENV RATHER THAN BAKED IN, because the right value is whatever the
+ * account is actually on, and this box has no way to ask Stripe. Unset, the
+ * old behaviour stands — the account default — which is at least what it was
+ * doing before. Put the version the dashboard shows into BOARD_STRIPE_VERSION
+ * and the shape of every call is fixed until somebody changes that line. */
+const VERSION = (process.env.BOARD_STRIPE_VERSION || "").trim();
+
 async function call(path, body, extra = {}) {
   if (!KEY) throw new Error("stripe is not configured");
   const res = await fetch(API + path, {
     method: body ? "POST" : "GET",
     headers: {
       Authorization: "Bearer " + KEY,
+      ...(VERSION ? { "Stripe-Version": VERSION } : {}),
       ...(body ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
       ...extra,
     },
@@ -111,7 +132,18 @@ export async function onboardLink({ account, refresh, done }) {
  *  somebody who abandoned it halfway has an id and no ability to take money. */
 export async function payeeReady(account) {
   const a = await call("/accounts/" + encodeURIComponent(account));
-  return Boolean(a?.charges_enabled && a?.payouts_enabled);
+  /* TRANSFERS AND PAYOUTS, NOT CHARGES.
+   *
+   * This asked for charges_enabled, which is whether the account can take a
+   * payment from a customer of its own. A payee here never does that: the
+   * charge is made on the platform and the money is transferred across. An
+   * account requesting only the transfers capability — which is all makePayee
+   * asks for — is never given charges_enabled, so this returned false for
+   * every payee who had in fact finished, for ever, and the room went on
+   * saying they had not set up. */
+  const transfers = a?.capabilities?.transfers;
+  return Boolean(a?.payouts_enabled
+    && (transfers === "active" || a?.charges_enabled));
 }
 
 /** THE CHARGE ITSELF.
