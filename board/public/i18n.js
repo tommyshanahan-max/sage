@@ -5018,6 +5018,16 @@ export const STRINGS = {
   "pay.rowLabel":      ["What for", "名目"],
   /* The one row a fee with no payment plan becomes. */
   "pay.whole":         ["The fee", "全款"],
+  /* Pay is always on the payer's row. Pressed before the other side has
+     anywhere to be paid, this is what it says. */
+  "pay.noWhere":       ["{who} has not said where to be paid.",
+                        "{who} 还没说钱付到哪。"],
+  "pay.noWhereWhy":    ["This board never holds your money, so it cannot take it and wait. Ask {who} to add it and the button will work.",
+                        "平台不经手你的钱，所以不能先收着等。让 {who} 填上，这个按钮就能用了。"],
+  "pay.askThem":       ["Ask them", "去问一下"],
+  "pay.askFailed":     ["That did not send — try again", "没发出去，再试一次"],
+  "pay.askText":       ["{who} — where should I send the money? Add it to the deal above and I will pay.",
+                        "{who}，钱付到哪？在上面的条件里填一下，我就付。"],
   "pay.rowAmount":     ["How much", "金额"],
   "pay.rowDue":        ["When", "什么时候"],
   "pay.none":          ["No payment plan on this one.", "这单没有分期安排。"],

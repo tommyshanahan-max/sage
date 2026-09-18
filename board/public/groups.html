@@ -1682,6 +1682,50 @@ async function payFrame({ secret, pk, row, d, to, how, demo }) {
   }
 }
 
+/* PRESSED PAY, AND THERE IS NOWHERE FOR IT TO GO.
+ *
+ * The other side has not set up a Stripe account and has not pasted a payment
+ * page of their own, so this board knows of no address for the money. It will
+ * not invent one and it will not hold it in the meantime — that is the whole
+ * design, and it is the one thing that would make this illegal.
+ *
+ * What the payer can do about it is ask, so that is the button. One message
+ * into the room they are both standing in, in their own language, rather than
+ * a dead end and a grey line of explanation. */
+function payNowhere(g, d) {
+  const back = el("div", "rsheet");
+  const card = el("div", "rcard");
+  /* No eyebrow. It read "How do you want to pay?" above a line saying there
+     is nowhere to pay — the question and its refusal stacked on one card. */
+  card.append(el("h3", "rtitle", T("pay.noWhere", { who: d.provides })));
+  card.append(el("p", "rnote", T("pay.noWhereWhy", { who: d.provides })));
+
+  const acts = el("div", "racts");
+  const ask = el("button", "go", T("pay.askThem"));
+  ask.type = "button";
+  ask.addEventListener("click", async () => {
+    ask.disabled = true;
+    try {
+      const r = await fetch("/api/group/say", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, group: g.id, text: T("pay.askText", { who: d.provides }) }),
+      });
+      if (r.ok) { back.remove(); load(); return; }
+    } catch { /* fall through and let them try again */ }
+    ask.disabled = false;
+    ask.textContent = T("pay.askFailed");
+  });
+  const no = el("button", "", T("pay.cancel"));
+  no.type = "button";
+  no.addEventListener("click", () => back.remove());
+  acts.append(ask, no);
+  card.append(acts);
+
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+}
+
 function payHow(g, d, row, to) {
   const back = el("div", "rsheet");
   const card = el("div", "rcard");
@@ -1800,10 +1844,21 @@ function payPart(g, d) {
        an unpaid row was a button that recorded a payment they had not made
        yet — and the thing they actually wanted was a link further down the
        card. */
-    if (meHires && !claim && (g.pay === "stripe" || d.payTo)) {
+    /* ALWAYS DRAWN FOR THE PAYER, even when there is nowhere to send it yet.
+       It used to appear only once the other side had somewhere to be paid, so
+       on a fresh deal the payer's row had "I paid this" and a grey line of
+       explanation, and the button that was supposed to be the point of the
+       screen was simply absent. A missing button reads as broken software,
+       not as a step somebody else has not done — that is exactly how it was
+       reported. Pressed with nowhere to pay, it says so and offers the one
+       thing the payer can actually do about it, which is ask. */
+    if (meHires && !claim) {
       const b = el("button", "go", T("pay.go"));
       b.type = "button";
-      b.addEventListener("click", () => payHow(g, d, { ...row, i }, d.payTo));
+      const ready = g.pay === "stripe" || Boolean(d.payTo);
+      b.addEventListener("click", () => (ready
+        ? payHow(g, d, { ...row, i }, d.payTo)
+        : payNowhere(g, d)));
       acts.append(b);
     }
     /* Secondary now that Pay is the blue one: recording a payment is what you
