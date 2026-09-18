@@ -1888,11 +1888,24 @@ function payPart(g, d) {
     r.append(chip);
 
     /* WHO SAID WHAT, in sentences with dates on them. A tick would lose the
-       date, and the date is the half of this that settles arguments. */
-    for (const [row2, key] of [[claim, "pay.claimed"], [okd, "pay.confirmed"], [no, "pay.denied"]]) {
-      if (row2) r.append(el("p", "psaid", T(key, { who: row2.who, when: when(row2.at) })));
+       date, and the date is the half of this that settles arguments.
+       EXCEPT WHEN NEITHER OF THEM SAID IT. A row the payment page wrote
+       carries `auto` on both halves, and the usual pair then puts words in
+       two people's mouths — "Claire confirmed it arrived" while Claire was
+       asleep and Stripe was the only witness. Same sentence the fee row
+       already uses; the key is named for where it was written, not for who
+       may use it. A claim they really did tap survives on its own line. */
+    if (okd?.auto) {
+      if (claim && !claim.auto) {
+        r.append(el("p", "psaid", T("pay.claimed", { who: claim.who, when: when(claim.at) })));
+      }
+      r.append(el("p", "psaid", T("fee.cleared", { when: when(okd.at) })));
+    } else {
+      for (const [row2, key] of [[claim, "pay.claimed"], [okd, "pay.confirmed"], [no, "pay.denied"]]) {
+        if (row2) r.append(el("p", "psaid", T(key, { who: row2.who, when: when(row2.at) })));
+      }
+      if (claim && okd) r.append(el("p", "psaid", T("pay.bothSaid")));
     }
-    if (claim && okd) r.append(el("p", "psaid", T("pay.bothSaid")));
 
     const acts = el("div", "pacts");
     const tap = (kind, label, klass) => {

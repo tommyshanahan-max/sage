@@ -4889,7 +4889,7 @@ export const STRINGS = {
   "pay.cardWhy":       ["Visa, Mastercard or UnionPay", "Visa、万事达或银联"],
   "pay.howNote": [
     "You pay {who} directly. This board never holds your money.",
-    "钱直接付给{who}，平台不经手。",
+    "钱直接付给 {who}，平台不经手。",
   ],
   "pay.cancel":        ["Not now", "先不付"],
   "pay.go":            ["Pay", "去付款"],
