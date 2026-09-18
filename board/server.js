@@ -8947,7 +8947,12 @@ app.post("/api/note/terms", notesOff, express.json({ limit: "2kb" }), async (req
   const out = await change((board) => {
     const mine = board.people.find((q) => q.by === me);
     const them = board.people.find((q) => q.id === id);
-    if (!mine?.handle || !them || them.by === me) return { error: "no" };
+    /* SEPARATED OUT SO THE SCREEN CAN SAY WHICH. All three of these used to
+       come back as "no", and the button caught "no", re-enabled itself and
+       said nothing — so somebody without a finished profile pressed Pin the
+       terms and watched it do nothing at all, with no way to find out why. */
+    if (!mine?.handle) return { error: "profile" };
+    if (!them || them.by === me) return { error: "no" };
     /* Can they write to each other? That is the whole question, and the answer
        is already computed for the thread they are standing in. */
     const st = threadState(board, me, them.by);

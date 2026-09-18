@@ -706,6 +706,7 @@
     font:inherit;font-size:1rem;cursor:pointer}
   .addsheet button:hover{background:var(--paper)}
   .addsheet button:disabled{opacity:.5}
+  .addwhy{margin:.15rem .3rem .4rem;font-size:.82rem;line-height:1.5;color:var(--ink-2)}
 </style>
 
 </head>
@@ -2671,7 +2672,14 @@ function drawThread(t) {
        Chinese, and said it silently. */
     addBtn.setAttribute("aria-label", T("note.more"));
     if (terms) terms.textContent = T("deal.write");
-    const canTerms = Boolean(last.canAnswer || last.open);
+    /* NOT ON A THREAD WITH SOMEBODY WHO IS NOT ON THE BOARD YET.
+       A waiting-room thread's `who` is "w:<id>", not a person id, and the
+       route takes twenty hex characters — so the + appeared, Pin the terms
+       came back "no", and the button did nothing at all. There is nothing to
+       fix on the route: two people cannot pin terms before one of them has
+       been let in. The + simply does not belong on that thread. */
+    const realPerson = /^[a-f0-9]{20}$/.test(String(t.who || ""));
+    const canTerms = Boolean((last.canAnswer || last.open) && realPerson);
     addBtn.hidden = !canTerms;
     if (!canTerms) addSheet.hidden = true;
     addBtn.onclick = () => {
@@ -2695,18 +2703,43 @@ function drawThread(t) {
     });
   }
   if (terms) {
+    /* IT HAS TO SAY WHEN IT CANNOT.
+     *
+     * This caught every failure, re-enabled the button and said nothing. On
+     * screen that is a button that does not work: you press Pin the terms, the
+     * panel sits there, and there is no way to find out that the board wanted
+     * a finished profile first, or that this thread is one you cannot write
+     * in. Reported as "it doesn't do anything", which is exactly what it did.
+     *
+     * The reason goes under the button rather than in an alert, because an
+     * alert on a phone is a thing to dismiss before you can read what is
+     * behind it. */
+    const say = (key) => {
+      let line = addSheet && addSheet.querySelector(".addwhy");
+      if (!line && addSheet) {
+        line = el("p", "addwhy");
+        addSheet.append(line);
+      }
+      if (line) line.textContent = T(key);
+    };
     terms.onclick = async () => {
       terms.disabled = true;
+      say("deal.trying");
       try {
         const r = await fetch("/api/note/terms", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ device, id: t.who }),
         });
-        const d = r.ok ? await r.json() : null;
+        const d = await r.json().catch(() => null);
         /* ?g= is how that page opens one room; a #hash would land on the list. */
-        if (d?.id) location.href = "/groups?g=" + encodeURIComponent(d.id);
-        else terms.disabled = false;
-      } catch { terms.disabled = false; }
+        if (r.ok && d?.id) { location.href = "/groups?g=" + encodeURIComponent(d.id); return; }
+        say(d?.error === "profile" ? "deal.needProfile"
+          : d?.error === "shut" ? "deal.shut"
+          : "deal.failed");
+      } catch {
+        say("deal.offline");
+      }
+      terms.disabled = false;
     };
   }
 
