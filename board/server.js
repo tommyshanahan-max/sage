@@ -9110,10 +9110,18 @@ app.post("/api/group/deal/payto", notesOff, express.json({ limit: "2kb" }), asyn
     /* Only the side being paid. The payer setting this would be the payer
        choosing where their own money goes and calling it the other's. */
     if (mine.handle !== g.deal.provides) return { error: "side" };
+    /* THE ROUTE, SET BY THE PERSON BEING PAID. Which way they are used to
+       being paid — see PAY_WITH in store.js. It travels with the link rather
+       than on its own route: they are one decision on one screen, and two
+       routes for one decision is two things to keep in step. */
+    if (req.body?.payWith !== undefined) {
+      if (store.PAY_WITH.includes(req.body.payWith)) g.deal.payWith = req.body.payWith;
+      else delete g.deal.payWith;
+    }
     const link = store.cleanPayLink(req.body?.link);
     if (!link && req.body?.link) return { error: "link" };
     if (link) { g.deal.payTo = link; g.deal.payToAt = new Date().toISOString(); }
-    else { delete g.deal.payTo; delete g.deal.payToAt; }
+    else if (req.body?.link !== undefined) { delete g.deal.payTo; delete g.deal.payToAt; }
     Object.assign(g, store.cleanGroup(g));
     return { ok: true };
   });

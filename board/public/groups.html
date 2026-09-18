@@ -1939,6 +1939,21 @@ function payPart(g, d) {
      fallback, and for a payee in the mainland it is still the only route. */
   if (g.pay === "stripe") {
     wrap.append(el("p", "phint", T("pay.inApp", { who: d.provides })));
+  } else if (d.payWith && d.payWith !== "page" && d.payWith !== "stripe") {
+    /* THE ROUTE THEY ACTUALLY USE, said to the payer in those words.
+       The board is not moving this money and does not pretend to: it says
+       which way it goes, who to ask for the address, and leaves the two taps
+       below as the record. A line telling somebody in Sydney to "open their
+       payment page" when the answer is a WeChat transfer is the board making
+       them retool for its own convenience. */
+    /* SAID TO THE PAYER ONLY. "Ask Claire for the details" is a sentence the
+       payer needs and a sentence Claire reads about herself — her own side of
+       this block is the picker below, which says the same thing from where
+       she is standing. */
+    if (meHires) {
+      wrap.append(el("p", "phint", T("route." + d.payWith, { who: d.provides })));
+      wrap.append(el("p", "phint", T("route.ask", { who: d.provides })));
+    }
   } else if (d.payTo) {
     const line = el("p", "plink");
     line.append(document.createTextNode(T("pay.payVia", { who: d.provides, where: new URL(d.payTo).hostname }) + " "));
@@ -1958,25 +1973,49 @@ function payPart(g, d) {
   }
 
   if (mePaid) {
+    /* HOW YOU ARE USED TO BEING PAID, asked of the person being paid and
+       nobody else. The link box only appears for the one route that needs a
+       link; asking a Chinese payee for a PayPal address is the board making
+       them retool to suit itself. */
     const set = el("div", "pset");
+    const pick = el("select");
+    pick.setAttribute("aria-label", T("route.how"));
+    for (const k of ["wechat", "alipay", "cnbank", "page"]) {
+      const o = el("option", null, T("route.name." + k));
+      o.value = k;
+      if (d.payWith === k) o.selected = true;
+      pick.append(o);
+    }
     const input = el("input");
     input.type = "url";
     input.placeholder = "https://paypal.me/…";
     input.value = d.payTo || "";
     input.setAttribute("aria-label", T("pay.setLink"));
+    const hint = el("p", "phint");
+    const sync = () => {
+      const page = pick.value === "page";
+      input.hidden = !page;
+      hint.textContent = page ? T("pay.linkHint") : T("route.noLink");
+    };
+    pick.addEventListener("change", sync);
+    sync();
+
     const save = el("button", null, T("pay.save"));
     save.type = "button";
     save.addEventListener("click", async () => {
       save.disabled = true;
       const res = await fetch("/api/group/deal/payto", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ device, group: g.id, link: input.value.trim() }),
+        body: JSON.stringify({ device, group: g.id, payWith: pick.value,
+          /* Only the page route carries one, and the field is sent even when
+             empty so switching away clears a stale address. */
+          link: pick.value === "page" ? input.value.trim() : "" }),
       });
       if (res.ok) load(); else save.disabled = false;
     });
-    set.append(input, save);
+    set.append(pick, input, save);
     wrap.append(set);
-    wrap.append(el("p", "phint", T("pay.linkHint")));
+    wrap.append(hint);
   }
   return wrap;
 }

@@ -2541,6 +2541,20 @@ export function money(shape, n) {
  * ------------------------------------------------------------------------ */
 export const CURRENCIES = ["cny", "aud", "hkd", "usd", "eur", "gbp", "jpy"];
 
+/* THE WAYS PEOPLE ACTUALLY GET PAID, in the order they are offered.
+ *
+ * Five, and no more, because every one of them has to be a thing the screen
+ * can say something true about. "Other" is deliberately absent: a route the
+ * board cannot describe is a route it should not appear to endorse.
+ *
+ *   stripe   in the app, out of the mainland — the only one carried end to end
+ *   wechat   WeChat Pay, which is what being paid looks like in China
+ *   alipay   the same, for people who use Alipay
+ *   cnbank   a Chinese bank account, for anything a wallet will not hold
+ *   page     their own PayPal, Wise or Payoneer page, for everywhere else
+ */
+export const PAY_WITH = ["stripe", "wechat", "alipay", "cnbank", "page"];
+
 /* ZERO-DECIMAL CURRENCIES. Stripe wants the smallest unit, and for most that
    is cents — 50.00 is 5000. For these there is no smaller unit: ¥5,000 is
    5000, not 500000. Getting it the usual way round would charge a hundred
@@ -2690,6 +2704,33 @@ export function cleanDeal(raw) {
      one per row: a plan whose deposit is in yuan and whose balance is in
      dollars is two deals wearing one hat. */
   if (CURRENCIES.includes(raw.cur)) out.cur = raw.cur;
+
+  /* HOW THE PERSON BEING PAID IS USED TO BEING PAID.
+   *
+   * THE BOARD IS THE BRIDGE, and a bridge that asks both ends to retool is
+   * not one. A payer in Beijing pays with WeChat because that is what paying
+   * looks like to them; a payee in Sydney takes bank transfers because that
+   * is what being paid looks like to them. Neither should be asked to learn
+   * the other's habit to do one job together.
+   *
+   * SO THIS IS THE ROUTE, NOT THE ADDRESS. The board records which way the
+   * money goes and tells each side what to do in the words they already use.
+   * It does not hold a WeChat id or a bank number: contacts on this board
+   * move by card, once, when both people press give, and a payment detail
+   * sitting on a deal row would be a second way round that rule. The two of
+   * them exchange the actual address in the room, which is where they are
+   * already talking.
+   *
+   * WHAT IS AUTOMATED AND WHAT IS NOT, honestly: "stripe" is the one the
+   * board can carry end to end today — out of the mainland, to a payee with
+   * an account. The rest are real routes that people already use, and for
+   * those this is a memo and a record rather than a payment. The screen says
+   * which it is looking at rather than implying the board moved anything.
+   *
+   * The day a payouts partner exists, the address goes to the partner and
+   * nothing on these screens has to change. That is why the route is worth
+   * writing down now, before the money can follow it. */
+  if (PAY_WITH.includes(raw.payWith)) out.payWith = raw.payWith;
 
   const payTo = cleanPayLink(raw.payTo);
   if (payTo) out.payTo = payTo;

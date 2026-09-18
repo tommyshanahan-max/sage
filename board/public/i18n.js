@@ -5019,6 +5019,24 @@ export const STRINGS = {
   /* The one row a fee with no payment plan becomes. */
   "pay.whole":         ["The fee", "全款"],
 
+  /* THE ROUTE THE PERSON BEING PAID ACTUALLY USES. The board is the bridge;
+     a bridge that asks both ends to retool is not one. It records which way
+     the money goes and never the address — contacts move by card here, and a
+     payment detail on a deal row would be a way round that. */
+  "route.how":         ["How you are paid", "你怎么收钱"],
+  "route.name.wechat": ["WeChat Pay", "微信支付"],
+  "route.name.alipay": ["Alipay", "支付宝"],
+  "route.name.cnbank": ["A Chinese bank account", "国内银行卡"],
+  "route.name.page":   ["My own payment page", "我自己的收款页面"],
+  "route.wechat":      ["{who} takes WeChat Pay.", "{who} 用微信收钱。"],
+  "route.alipay":      ["{who} takes Alipay.", "{who} 用支付宝收钱。"],
+  "route.cnbank":      ["{who} takes a transfer to a Chinese bank account.",
+                        "{who} 收国内银行转账。"],
+  "route.ask":         ["Ask {who} here for the details. This board does not hold them and does not move the money — you each say below when it is done.",
+                        "在这里问 {who} 要账号。平台不保存，也不经手这笔钱 —— 付完之后你们各自在下面确认一下。"],
+  "route.noLink":      ["Only you see this. Give the details to them in the conversation, not here.",
+                        "只有你看得到。账号在聊天里给对方，别填在这。"],
+
   /* EARNED HERE. Only ever on your own profile — see /api/earned, which has
      no way to ask about anybody else. Never a balance, and the card says so
      in the same breath as the number. */
