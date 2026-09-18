@@ -115,6 +115,27 @@
     color:rgba(251,246,238,.85);
   }
 
+  /* ---------- the two downloads ----------
+     Under the circle, not in it: the web app is still the first thing to press,
+     because it needs no store and no account. These are for the person who
+     wants it on the home screen, and each one says which phone it is for —
+     "Download" alone is a link somebody has to guess at. */
+  .get{
+    display:flex;flex-wrap:wrap;justify-content:center;gap:.75rem;
+    padding:0 clamp(1.4rem,6vw,2.5rem) clamp(2.2rem,6vw,3rem);
+  }
+  .get a{
+    display:inline-flex;flex-direction:column;gap:.15rem;
+    padding:.8rem 1.35rem;border-radius:10px;
+    border:1px solid var(--rule);background:var(--card);
+    color:var(--ink);text-decoration:none;
+    transition:border-color .16s ease,transform .16s ease;
+  }
+  .get a:hover{border-color:var(--red);transform:translateY(-1px)}
+  .get a:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+  .get .what{font-weight:600;font-size:.95rem}
+  .get .where{font-size:.8rem;color:var(--ink-2)}
+
   /* ---------- the problem ----------
      One sentence, at the size of a headline, because it is the whole argument
      and everything below it is detail. */
@@ -263,6 +284,17 @@
   <a href="/app">
     <span class="press">Press here to open it</span>
     <span class="host">{{or (env "TOMSCODING_BRAND_APP_DOMAIN") "liuxuesheng.help"}}</span>
+  </a>
+</div>
+
+<div class="get">
+  <a href="{{or (env "TOMSCODING_BRAND_IOS_URL") "https://apps.apple.com/app/id6809337940"}}">
+    <span class="what">iPhone</span>
+    <span class="where">App Store</span>
+  </a>
+  <a href="{{or (env "TOMSCODING_BRAND_ANDROID_URL") "https://liuxuesheng.help/talk/android"}}">
+    <span class="what">Android</span>
+    <span class="where">Download the app file</span>
   </a>
 </div>
 
