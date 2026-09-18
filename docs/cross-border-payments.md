@@ -164,8 +164,20 @@ And:
 - The receipt carries what the work was, where it was done, both parties, the
   amount, where it was sent and both statements with their dates.
 
+- The fee is confirmed by Stripe rather than by a person. `POST /api/hook/fee`
+  verifies Stripe's signature by hand (HMAC-SHA256 over `t.rawbody`, five
+  minutes' tolerance) and marks the fee cleared. Which deal it was travels as
+  `client_reference_id` — a group id, twenty hex characters naming a room and
+  nothing else. Off unless `BOARD_DEAL_FEE_SECRET` is set.
+- **Terms cannot be agreed until the fee has cleared.** It is the only lever
+  there is: nothing here holds the money, so there is nothing to deduct from,
+  and a fee that is a request on a screen is not a fee. Agreeing is the moment
+  both of them want the record, which is the moment it is worth paying for.
+  The card says so before the button is pressed rather than after.
+
 Not built: anything that would have this board arrange, check or hold a
-payment. It suggests and it records.
+payment. Stripe pays Tom directly and tells the board it happened, which is a
+sentence and not a settlement.
 
 ## Sources
 

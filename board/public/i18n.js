@@ -4926,6 +4926,21 @@ export const STRINGS = {
     "报酬的 {pct}%，是牵线和这份记录的费用，另加收款页面的手续费。付给这个平台的运营者，不付给你们任何一方，平台也不经手这笔钱。",
   ],
   "fee.confirmed":     ["{who} confirmed it arrived, {when}", "{who} 确认已收到，{when}"],
+  /* Written by the payment page rather than by a person, so it has no name in
+     it — see the webhook in server.js. */
+  "fee.cleared":       ["The payment page confirmed it cleared, {when}",
+                        "收款页面确认已到账，{when}"],
+  /* THE GATE. Said where the Agree button would be, and it says what to do
+     rather than only what is wrong: a button that refuses without a next step
+     is a dead end with a person standing in it. */
+  "deal.feeFirst": [
+    "The platform fee is paid before terms are agreed. It is on the card below.",
+    "先付平台费，再确认条件。就在下面那张卡片上。",
+  ],
+  "deal.feeWait": [
+    "Waiting for the payment page to confirm it. Usually a few seconds.",
+    "等收款页面确认，一般几秒钟。",
+  ],
   "fee.denied":        ["{who} says it has not arrived, {when}", "{who} 说还没收到，{when}"],
 
   "pay.plan":          ["Payments", "付款安排"],

@@ -510,6 +510,96 @@ const WALLET = createWallet({
 });
 app.use(WALLET.webhooks);
 
+/* ---------------------------------------------------------------------------
+ * STRIPE SAYS THE FEE CLEARED
+ *
+ * Mounted here with the wallet's webhooks and for the same reason written
+ * above: a payment company is not a member, so this route is ahead of the
+ * door and carries no device.
+ *
+ * WHY IT EXISTS. Without it the board's own fee is marked paid because Tom
+ * taps a button, which is not automation — it is a bottleneck with his name on
+ * it, and every deal in the world waits on him being awake. Stripe knows the
+ * moment the money clears and can say so.
+ *
+ * THE BOARD STILL NEVER TOUCHES THE MONEY. Stripe pays Tom directly. This is
+ * Stripe telling the board a thing happened, which is a sentence, not a
+ * settlement. Nothing here holds, routes or forwards anybody's funds, so none
+ * of it is the licensed business that docs/cross-border-payments.md is about.
+ *
+ * WHICH DEAL IT WAS: client_reference_id, put on the payment link by the card
+ * that drew it and handed back by Stripe untouched. It is a group id, which is
+ * twenty hex characters and names a room and nothing else — no person, no
+ * amount, nothing that means anything to Stripe or to anybody reading it.
+ *
+ * SIGNED, AND VERIFIED BY HAND. Twenty lines of HMAC against a dependency and
+ * its transitive tree, on a route that anybody on the internet can post to.
+ * The raw bytes matter: Stripe signs what it sent, so this cannot be behind
+ * express.json — parsing and re-serialising changes the bytes and every
+ * signature fails, which is a confusing afternoon.
+ *
+ * OFF UNLESS BOARD_DEAL_FEE_SECRET IS SET, like everything else optional here.
+ * ------------------------------------------------------------------------ */
+const FEE_SECRET = (process.env.BOARD_DEAL_FEE_SECRET || "").trim();
+
+/** Stripe's scheme: t=<unix>,v1=<hex>, HMAC-SHA256 over `${t}.${raw}`. */
+function stripeSaidIt(raw, header) {
+  if (!FEE_SECRET || !raw || !header) return false;
+  const parts = Object.fromEntries(String(header).split(",")
+    .map((x) => x.split("=")).filter((x) => x.length === 2));
+  const t = Number(parts.t);
+  if (!Number.isFinite(t)) return false;
+  /* Five minutes, so a signature somebody captured is not one they can post
+     again tomorrow. */
+  if (Math.abs(Date.now() / 1000 - t) > 300) return false;
+  const want = createHmac("sha256", FEE_SECRET).update(t + "." + raw).digest("hex");
+  const got = String(parts.v1 || "");
+  if (got.length !== want.length) return false;
+  return timingSafeEqual(Buffer.from(got), Buffer.from(want));
+}
+
+app.post("/api/hook/fee", express.raw({ type: "application/json", limit: "64kb" }),
+  async (req, res) => {
+    if (!FEE_SECRET) return res.status(404).json({ error: "off" });
+    const raw = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : "";
+    if (!stripeSaidIt(raw, req.get("stripe-signature"))) {
+      return res.status(400).json({ error: "signature" });
+    }
+    let event = null;
+    try { event = JSON.parse(raw); } catch { return res.status(400).json({ error: "body" }); }
+    /* One event and no others. A webhook that acts on everything Stripe sends
+       is a webhook nobody can reason about later. */
+    if (event?.type !== "checkout.session.completed") return res.json({ ok: true });
+
+    const session = event?.data?.object || {};
+    const id = String(session.client_reference_id || "");
+    if (!/^[a-f0-9]{20}$/.test(id)) return res.json({ ok: true });
+    if (session.payment_status && session.payment_status !== "paid") return res.json({ ok: true });
+
+    const out = await change((board) => {
+      const g = board.groups.find((x) => x.id === id);
+      if (!g || !g.deal) return { ok: true };
+      const d = g.deal;
+      d.feePaid = Array.isArray(d.feePaid) ? d.feePaid : [];
+      /* Stripe's word outranks a tap, so this writes `confirmed` whether or
+         not the payer claimed it first — the money has demonstrably arrived,
+         and waiting for somebody to press a button about it would be the
+         bottleneck this route exists to remove. Once, though: Stripe retries
+         a webhook it thinks was not received. */
+      if (d.feePaid.some((r) => r.kind === "confirmed")) return { ok: true };
+      /* `auto` rather than a reserved name in `who`. A handle here has no
+         character restrictions, so any sentinel string is a handle somebody
+         could one day choose, and the card would then credit a member with
+         confirming Stripe's payments. A flag cannot collide with anything. */
+      d.feePaid.push({ kind: "confirmed", who: "", auto: true, at: new Date().toISOString() });
+      Object.assign(g, store.cleanGroup(g));
+      return { ok: true, tell: (board.people.find((x) =>
+        g.members.includes(x.by) && x.handle === d.hires) || {}).by || "" };
+    });
+    res.json({ ok: true });
+    if (out?.tell) tellThem(out.tell).catch(() => {});
+  });
+
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
   // The operator's own routes carry the admin secret and are checked by their
@@ -8551,7 +8641,21 @@ app.get("/api/groups", notesOff, async (req, res) => {
       /* Computed here rather than stored, so it is right when the terms are
          edited and cannot be deleted by either side. Null when the board
          names no page to pay it on. */
-      fee: g.deal ? store.feeOf(g.deal, DEAL_FEE_TO) : null,
+      /* THE FEE, AND THE ROOM'S NAME TRAVELLING WITH IT. client_reference_id
+         is handed to Stripe on the way out and handed back untouched on the
+         webhook, which is the only way the board can tell which deal a
+         payment belonged to. A group id and nothing else: twenty hex
+         characters that name a room, no person, no amount. */
+      fee: g.deal ? (() => {
+        const f = store.feeOf(g.deal, DEAL_FEE_TO);
+        if (!f) return null;
+        try {
+          const u = new URL(f.to);
+          u.searchParams.set("client_reference_id", g.id);
+          f.to = u.href;
+        } catch { /* cleanPayLink already proved it parses; belt and braces */ }
+        return f;
+      })() : null,
       /* WHICH ROUTE THE MONEY SHOULD TAKE, worked out from where the two of
          them are. Computed here because only the server knows where anybody
          is: `where` is on the person row and never leaves it — the page is
@@ -8723,6 +8827,18 @@ app.post("/api/group/deal/agree", notesOff, express.json({ limit: "2kb" }), asyn
        hold an introducer and an introducer is not a party. */
     if (mine.handle !== g.deal.hires && mine.handle !== g.deal.provides) return { error: "side" };
     if (g.deal.agreed.some((a) => a.who === mine.handle)) return { ok: true };
+    /* THE FEE COMES FIRST, WHERE THERE IS ONE.
+     *
+     * Not a way of squeezing anybody: it is the only lever this board has.
+     * Nothing here holds the money, so there is nothing to deduct from, and a
+     * fee that is a polite request on a screen people can scroll past is not
+     * a fee. Agreeing is the moment both of them want the record, which is
+     * the moment the record is worth paying for.
+     *
+     * Off entirely unless the board names a page to pay a fee on, so a
+     * deployment with no fee behaves exactly as it did. */
+    const fee = store.feeOf(g.deal, DEAL_FEE_TO);
+    if (fee && !(fee.paid || []).some((r) => r.kind === "confirmed")) return { error: "fee" };
     g.deal.agreed.push({ who: mine.handle, at: new Date().toISOString() });
     Object.assign(g, store.cleanGroup(g));
     return { ok: true, tell: otherSide(board, g, mine.handle) };

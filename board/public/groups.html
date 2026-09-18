@@ -472,6 +472,8 @@
   /* The board's own row, set apart from the plan on purpose: a fee that looks
      like one of the rows the two of them wrote is a fee that got in without
      being read. */
+  .dwait{margin:.9rem 0 0;padding:.7rem .8rem;border-radius:.6rem;
+    background:var(--accent-soft);font-size:.92rem;line-height:1.6}
   .droute{margin:1rem 0 0;padding:.8rem .9rem;border-radius:.7rem;
     background:var(--accent-soft)}
   .droute .plab{margin:0 0 .45rem}
@@ -1072,7 +1074,15 @@ function dealPin(g) {
 
   const meIs = g.meHandle && (g.meHandle === d.hires || g.meHandle === d.provides);
   const already = d.agreed.some((a) => a.who === g.meHandle);
-  if (meIs && !already) {
+  /* THE FEE COMES FIRST, SAID BEFORE THE BUTTON IS PRESSED rather than after.
+     The route refuses it either way; a person who has to press a thing to
+     find out why it will not work has been made to feel stupid by software,
+     which is a choice somebody made. */
+  const feeDue = g.fee && !(g.fee.paid || []).some((r) => r.kind === "confirmed");
+  const feeAsked = g.fee && (g.fee.paid || []).some((r) => r.kind === "claimed");
+  if (meIs && !already && feeDue) {
+    box.append(el("p", "dwait", T(feeAsked ? "deal.feeWait" : "deal.feeFirst")));
+  } else if (meIs && !already) {
     const go = el("button", "dgo", T("deal.agree"));
     go.type = "button";
     go.addEventListener("click", async () => {
@@ -1295,7 +1305,11 @@ function feePart(g, d) {
     okd ? T("pay.paidChip") : claim ? T("pay.waitingChip") : T("pay.dueChip")));
 
   for (const [row, key] of [[claim, "pay.claimed"], [okd, "fee.confirmed"], [no, "fee.denied"]]) {
-    if (row) r.append(el("p", "psaid", T(key, { who: row.who, when: when(row.at) })));
+    if (!row) continue;
+    /* A row the payment page wrote has no name in it, so it gets its own
+       sentence rather than "undefined confirmed it arrived". */
+    const say = row.auto ? "fee.cleared" : key;
+    r.append(el("p", "psaid", T(say, { who: row.who, when: when(row.at) })));
   }
 
   const acts = el("div", "pacts");

@@ -2645,8 +2645,12 @@ export function cleanDeal(raw) {
     .map((r) => ({
       kind: ["claimed", "confirmed", "denied"].includes(r?.kind) ? r.kind : "",
       who: s(r?.who, 64), at: s(r?.at, 40),
+      /* Written by the payment page rather than by a person — see the note on
+         the webhook in server.js. It has no `who`, which is why the filter
+         below lets a row through without one when this is set. */
+      ...(r?.auto ? { auto: true } : {}),
     }))
-    .filter((r) => r.kind && r.who && r.at).slice(0, 20);
+    .filter((r) => r.kind && (r.who || r.auto) && r.at).slice(0, 20);
   if (feePaid.length) out.feePaid = feePaid;
 
   if (!out.hires || !out.provides) return null;
