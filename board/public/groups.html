@@ -740,6 +740,15 @@ let usedWith = false;
  * The parameter is then wiped from the address, so a reload later is not
  * mistaken for another payment. */
 const CAME_BACK = new URLSearchParams(location.search).get("paid") || "";
+/* ARRIVING TO WRITE THE TERMS, from the + in a conversation.
+ *
+ * Without this the + opened the room and the room said "Pin the terms" —
+ * the same words, a second time, on a screen somebody had just pressed those
+ * words to reach. Two identical buttons in a row read as the first one not
+ * having worked. The form is open when they land instead.
+ *
+ * Read once: a redraw a minute later must not reopen a form somebody closed. */
+let wantTerms = new URLSearchParams(location.search).get("terms") === "1";
 /* ADDING SOMEBODY IS ITS OWN SCREEN, NOT A BLOCK UNDER THE CONVERSATION.
  *
  * It lived at the bottom of the room, after the composer, which meant two
@@ -1225,7 +1234,23 @@ function dealWriter(g, box) {
   open.type = "button";
   const form = el("div", "dwrite");
   form.hidden = true;
-  open.addEventListener("click", () => { form.hidden = !form.hidden; if (!form.hidden) form.querySelector("input,select")?.focus(); });
+  /* THE TOGGLE CANNOT KEEP THE SUBMIT BUTTON'S WORDS. With the form open there
+     were two "Pin the terms" on one screen, one above the form and one under
+     it, and only the lower one does anything. Open, this is the way out. */
+  const sync = () => { open.textContent = form.hidden ? T("deal.write") : T("deal.notNow"); };
+  open.addEventListener("click", () => {
+    form.hidden = !form.hidden;
+    sync();
+    if (!form.hidden) form.querySelector("input,select")?.focus();
+  });
+  if (wantTerms) {
+    wantTerms = false;
+    form.hidden = false;
+    /* Scrolled to, not focused. Focusing a select on a phone throws the
+       keyboard or a picker over the form before it has been read. */
+    setTimeout(() => form.scrollIntoView({ block: "nearest" }), 0);
+  }
+  sync();
 
   form.append(el("p", "wlab", T("deal.pin")));
   const people = g.who.filter((w) => !w.bot && w.handle).map((w) => w.handle);
@@ -2548,12 +2573,19 @@ if (CAME_BACK) {
      never settles, and the row is one pull-to-refresh away anyway. */
   setTimeout(load, 2000);
   setTimeout(load, 6000);
-  try {
-    const u = new URL(location.href);
-    u.searchParams.delete("paid");
-    history.replaceState(null, "", u.pathname + u.search + u.hash);
-  } catch { /* an address we cannot rewrite is one we can leave alone */ }
 }
+
+/* Both of these are instructions for the moment of arrival, not state — a
+   reload an hour later should not re-run a payment check or reopen a form
+   somebody closed. Wiped from the address once read. */
+try {
+  const u = new URL(location.href);
+  if (u.searchParams.has("paid") || u.searchParams.has("terms")) {
+    u.searchParams.delete("paid");
+    u.searchParams.delete("terms");
+    history.replaceState(null, "", u.pathname + u.search + u.hash);
+  }
+} catch { /* an address we cannot rewrite is one we can leave alone */ }
 </script>
 </body>
 </html>

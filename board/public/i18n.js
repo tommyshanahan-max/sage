@@ -5061,6 +5061,7 @@ export const STRINGS = {
   "deal.write":        ["Pin the terms", "把条件钉上去"],
   /* What the + says when it cannot. It used to say nothing at all. */
   "deal.trying":       ["Opening a room…", "正在开房间…"],
+  "deal.notNow":       ["Not now", "先不写"],
   "deal.needProfile":  ["Finish your profile first — the terms need your name on them.",
                         "先把资料填完，条件上要有你的名字。"],
   "deal.shut":         ["You cannot write in this thread.", "这个对话你发不了消息。"],

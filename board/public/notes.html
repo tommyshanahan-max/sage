@@ -2732,7 +2732,13 @@ function drawThread(t) {
         });
         const d = await r.json().catch(() => null);
         /* ?g= is how that page opens one room; a #hash would land on the list. */
-        if (r.ok && d?.id) { location.href = "/groups?g=" + encodeURIComponent(d.id); return; }
+        /* &terms=1 opens the form on arrival. Without it the room greets them
+           with a button saying "Pin the terms" — the same words they just
+           pressed to get there, which reads as the first press having failed. */
+        if (r.ok && d?.id) {
+          location.href = "/groups?g=" + encodeURIComponent(d.id) + "&terms=1";
+          return;
+        }
         say(d?.error === "profile" ? "deal.needProfile"
           : d?.error === "shut" ? "deal.shut"
           : "deal.failed");
