@@ -614,6 +614,7 @@ async function pin() {
 import { atText, atPicker } from "/at.js";
 import { sheet } from "/share.js";
 import { moHear } from "/mo.js";
+import { NATIVE } from "/native.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -1080,7 +1081,24 @@ function dealPin(g) {
      which is a choice somebody made. */
   const feeDue = g.fee && !(g.fee.paid || []).some((r) => r.kind === "confirmed");
   const feeAsked = g.fee && (g.fee.paid || []).some((r) => r.kind === "claimed");
-  if (meIs && !already && feeDue) {
+  /* THE FEE IS NOT SHOWN IN THE APP, and this is a decision about Apple
+     rather than about the fee.
+     
+     An app that charges for something is expected to charge through in-app
+     purchase, and the carve-out is for services delivered in the real world.
+     A talent booking plainly is one; a fee for the introduction that arranged
+     it is arguable, and a reviewer who decides it is a digital service asks
+     for 15 to 30 per cent, which does not dent a two per cent margin, it
+     erases it. So the app does not mention the fee at all, and says where to
+     finish instead.
+     
+     THE SERVER GATE IS UNCHANGED, on purpose. This hides a row; it does not
+     open a way round. Agreeing is refused until the fee has cleared no matter
+     what is asking, so somebody who forged this flag would gain a tidier
+     screen and nothing else. */
+  if (meIs && !already && feeDue && NATIVE) {
+    box.append(el("p", "dwait", T("deal.inBrowser", { where: location.host })));
+  } else if (meIs && !already && feeDue) {
     box.append(el("p", "dwait", T(feeAsked ? "deal.feeWait" : "deal.feeFirst")));
   } else if (meIs && !already) {
     const go = el("button", "dgo", T("deal.agree"));
@@ -1105,7 +1123,7 @@ function dealPin(g) {
   /* The board's own row, under the plan and outside it. Drawn only where the
      board names a page to pay it on, which is nowhere unless it is switched
      on. */
-  if (g.fee) box.append(feePart(g, d));
+  if (g.fee && !NATIVE) box.append(feePart(g, d));
 
   box.append(el("p", "dlaw", T("deal.notlaw")));
   return box;
