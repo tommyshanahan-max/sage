@@ -610,6 +610,22 @@ handroom: ## A room you keep by hand: make handroom [WHO="Ray Chen"] [OFF=1] [NA
 	  /seed/handroom.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --name "$(NAME)" --who "$(WHO)" $(if $(OFF),--off,)
 
+dealsheet: ## An example deal in a real room: make dealsheet WHO="Tom" WITH="Christopher" [OFF=1]
+	@# TO SEE ONE ON A PHONE. `make try` shows every screen on a laptop, except
+	@# the only thing that matters about a deal: what it feels like arriving in
+	@# a room with somebody you know, with a number on it.
+	@#
+	@# WHO IS THE ONE PAYING, WITH is the one doing the work, and both are
+	@# handles — whatever the person typed when they arrived. `make who` lists
+	@# them; a wrong one comes back "not on this board".
+	@#
+	@# The memo says "(example)" in its own title, because a sheet that reads
+	@# like one somebody agreed to is a thing to be acted on a week later by
+	@# whoever forgot. OFF=1 takes it away.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/dealsheet.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)" --with "$(WITH)" $(if $(OFF),--off,)
+
 layers: ## Who is in which layer: make layers [FIX=1]
 	@# The arrival number is stamped once, in the order of the date on each
 	@# person's row, and nobody moves after that. A card written late for

@@ -2095,6 +2095,99 @@ app.post("/api/room/hand", admin, express.json({ limit: "8kb" }), async (req, re
   res.json(out);
 });
 
+/** A DEAL SHEET, PUT IN A REAL ROOM, SO IT CAN BE LOOKED AT ON A PHONE.
+ *
+ *  Every screen this board has can be stood up locally with `make try`, except
+ *  the one thing that matters about a deal: what it feels like arriving on
+ *  your own phone, in a room with somebody you know, with a number on it. That
+ *  cannot be screenshotted and it cannot be described.
+ *
+ *  So this fills one in — both sides named, terms complete, two instalments
+ *  with the first settled and the second due, and somewhere for the money to
+ *  go — and Mo says one line above it so it does not arrive out of nowhere.
+ *
+ *  IT SAYS WHAT IT IS, in its own title. A memo carrying invented numbers in
+ *  a room with a real person in it, indistinguishable from one they agreed to,
+ *  is the kind of thing somebody acts on a week later. OFF=1 takes it away.
+ */
+app.post("/api/room/deal", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const a = String(req.body?.who || "").trim().toLowerCase();
+  const b = String(req.body?.with || "").trim().toLowerCase();
+  const off = Boolean(req.body?.off);
+  if (!a || !b) return res.status(400).json({ error: "who" });
+  if (a === b) return res.status(400).json({ error: "same" });
+
+  let line = "";
+  const out = await change((board) => {
+    const find = (h) => board.people.find(
+      (q) => q.handle && String(q.handle).toLowerCase() === h);
+    const one = find(a), two = find(b);
+    const miss = [!one && a, !two && b].filter(Boolean);
+    if (miss.length) return { error: "who", miss };
+
+    /* The room the two of them already have, if there is one — the same rule
+       /api/note/terms follows, so this lands where they would have made it
+       themselves rather than opening a second room about the same thing. */
+    let g = board.groups.find((x) => !x.hand && x.members.length === 2
+      && x.members.includes(one.by) && x.members.includes(two.by));
+    if (!g) {
+      if (off) return { error: "none" };
+      g = store.cleanGroup({ id: store.newId(), by: one.by,
+        members: [one.by, two.by], name: "" });
+      if (!g) return { error: "no" };
+      board.groups.push(g);
+    }
+
+    if (off) {
+      delete g.deal;
+      Object.assign(g, store.cleanGroup(g));
+      return { ok: true, id: g.id, off: true };
+    }
+
+    const now = new Date();
+    const ago = (mins) => new Date(now.getTime() - mins * 60000).toISOString();
+    g.deal = store.cleanDeal({
+      title: "Two days filming in Shanghai (example)",
+      hires: one.handle, provides: two.handle,
+      by: one.by, at: ago(30), agreed: [{ who: two.handle, at: ago(20) }],
+      what: "Two shooting days, one camera operator, footage handed over on the second night",
+      where: "Shanghai",
+      when: "3 and 4 March",
+      fee: "¥20,000",
+      deposit: "Half on agreeing, half when the footage lands",
+      covers: one.handle + " pays flights and two nights' hotel",
+      cancel: "Called off inside 7 days, the deposit is kept",
+      doneIn: "cn",
+      payerIs: "person",
+      cur: "cny",
+      plan: [
+        { label: "Deposit", amount: "¥10,000", due: "on agreeing" },
+        { label: "Balance", amount: "¥10,000", due: "when the footage lands" },
+      ],
+      payTo: "https://wise.com/pay/example",
+      payToAt: ago(25),
+      paid: [
+        { i: 0, kind: "claimed", who: one.handle, at: ago(15) },
+        { i: 0, kind: "confirmed", who: two.handle, at: ago(10) },
+      ],
+    });
+    if (!g.deal) return { error: "no" };
+    Object.assign(g, store.cleanGroup(g));
+
+    /* Mo, so it does not arrive out of nowhere. His line is written here and
+       said word for word — no model runs on him, which is the reason anything
+       he says can be trusted. */
+    line = "Here is an example deal sheet, to see how one reads. The numbers are made up.";
+    const row = store.cleanSay({ id: store.newId(), group: g.id, by: store.MO, text: line });
+    board.says.push(row);
+    return { ok: true, id: g.id, say: row.id, who: [one.handle, two.handle] };
+  });
+  if (out?.error) return res.status(400).json(out);
+  /* Both languages, started after the write — see renderSay. */
+  if (out.say) renderSay(out.say, line);
+  res.json(out);
+});
+
 /** Who is in one. Names, never a word anybody said — same rule as /api/rooms. */
 app.get("/api/room/hand", admin, async (req, res) => {
   res.set("Cache-Control", "no-store");
