@@ -472,6 +472,16 @@
   /* The board's own row, set apart from the plan on purpose: a fee that looks
      like one of the rows the two of them wrote is a fee that got in without
      being read. */
+  /* Big rows with names in them. A grid of logos would be smaller, prettier
+     and unusable to somebody who cannot see a logo. */
+  .ways{display:grid;gap:.5rem;margin:.9rem 0 0}
+  .way{display:block;width:100%;text-align:left;padding:.85rem .95rem;
+    border:1px solid var(--line);border-radius:.8rem;background:var(--raise);
+    color:var(--ink);font:inherit;cursor:pointer}
+  .way b{display:block;font-size:1.05rem;font-weight:600;line-height:1.4}
+  .way span{display:block;margin:.15rem 0 0;font-size:.88rem;color:var(--ink-2)}
+  .way:hover{border-color:var(--accent)}
+  .rnote{margin:1rem 0 0;font-size:.88rem;line-height:1.6;color:var(--muted)}
   .dwait{margin:.9rem 0 0;padding:.7rem .8rem;border-radius:.6rem;
     background:var(--accent-soft);font-size:.92rem;line-height:1.6}
   .droute{margin:1rem 0 0;padding:.8rem .9rem;border-radius:.7rem;
@@ -1393,6 +1403,65 @@ function routePart(g, d) {
   return wrap;
 }
 
+/* HOW THEY WANT TO PAY.
+ *
+ * Asked on this board rather than left to whatever the payee's page happens to
+ * offer, because for a mainland payer the answer is the whole question: WeChat
+ * and Alipay are what they have, and a page that opens on a card form is a
+ * page they close.
+ *
+ * WHAT IT DOES WITH THE ANSWER, today: hands it to the payment page as a
+ * `method` on the query string and lets that page decide. Stripe Checkout
+ * reads exactly this and opens on the method asked for. A page that ignores it
+ * loses nothing — the payer picks again there, which is where they would have
+ * had to pick anyway.
+ *
+ * ONE SCREEN AND NO STEP ADDED, because without it they arrive at a stranger's
+ * checkout and hunt. Three rows, the order a mainland payer expects, and the
+ * line underneath says the one thing that matters: the money is not coming
+ * here.
+ */
+function payHow(g, d, row, to) {
+  const back = el("div", "rsheet");
+  const card = el("div", "rcard");
+  card.append(el("p", "rlab", T("pay.how")));
+  if (row) card.append(el("h3", "rtitle", (row.label || "") + " · " + (row.amount || "")));
+
+  const ways = el("div", "ways");
+  const way = (key, name, why) => {
+    const b = el("button", "way");
+    b.type = "button";
+    b.append(el("b", null, name), el("span", null, why));
+    b.addEventListener("click", () => {
+      let url = to;
+      try {
+        const u = new URL(to);
+        u.searchParams.set("method", key);
+        url = u.href;
+      } catch { /* not a URL we can add to; send them as-is */ }
+      window.open(url, "_blank", "noopener,noreferrer");
+      back.remove();
+    });
+    ways.append(b);
+  };
+  way("wechat", T("pay.wechat"), T("pay.wechatWhy"));
+  way("alipay", T("pay.alipay"), T("pay.alipayWhy"));
+  way("card", T("pay.card"), T("pay.cardWhy"));
+  card.append(ways);
+  card.append(el("p", "rnote", T("pay.howNote", { who: d.provides })));
+
+  const acts = el("div", "racts");
+  const no = el("button", "", T("pay.cancel"));
+  no.type = "button";
+  no.addEventListener("click", () => back.remove());
+  acts.append(no);
+  card.append(acts);
+
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+}
+
 function payPart(g, d) {
   const wrap = el("div", "dpay");
   wrap.append(el("p", "plab", T("pay.plan")));
@@ -1435,7 +1504,20 @@ function payPart(g, d) {
       });
       acts.append(b);
     };
-    if (meHires && !claim) tap("claimed", T("pay.iPaid"), "go");
+    /* PAY COMES BEFORE "I PAID THIS", because that is the order it happens in.
+       The first version offered only the claim, so the payer's one button on
+       an unpaid row was a button that recorded a payment they had not made
+       yet — and the thing they actually wanted was a link further down the
+       card. */
+    if (meHires && !claim && d.payTo) {
+      const b = el("button", "go", T("pay.go"));
+      b.type = "button";
+      b.addEventListener("click", () => payHow(g, d, row, d.payTo));
+      acts.append(b);
+    }
+    /* Secondary now that Pay is the blue one: recording a payment is what you
+       do after making it, not instead. */
+    if (meHires && !claim) tap("claimed", T("pay.iPaid"));
     if (mePaid && claim && !okd) { tap("confirmed", T("pay.arrived"), "go"); if (!no) tap("denied", T("pay.notYet")); }
 
     /* A REMINDER SENT BY A PERSON, not by a clock — the due dates here are

@@ -4859,6 +4859,34 @@ export const STRINGS = {
      a thing a friend who had done it before would say — not a rule quoted at
      somebody. Sourced in docs/cross-border-payments.md; if a rule there
      changes, these change with it. */
+  /* HOW THEY WANT TO PAY, ASKED BEFORE THEY LEAVE.
+   *
+   * WeChat first and Alipay second, because that is the order a mainland
+   * payer expects and a list in the wrong order reads as a list written by
+   * somebody who has not been here. Card last: it is the one everybody has and
+   * the one nobody in China reaches for first.
+   *
+   * No logos. Marks belong to Tencent and Ant and this board has no licence to
+   * draw them, and an image fetched from anywhere else does not load in the
+   * mainland anyway. The names do the work.
+   *
+   * One line each, and it says the thing that decides it — not how it works. */
+  "pay.how":           ["How do you want to pay?", "想用哪种方式付？"],
+  "pay.wechat":        ["WeChat Pay", "微信支付"],
+  "pay.wechatWhy":     ["Pay in WeChat, as you would anything else",
+                        "在微信里付，跟平常一样"],
+  "pay.alipay":        ["Alipay", "支付宝"],
+  "pay.alipayWhy":     ["Pay in Alipay, as you would anything else",
+                        "在支付宝里付，跟平常一样"],
+  "pay.card":          ["Card", "银行卡"],
+  "pay.cardWhy":       ["Visa, Mastercard or UnionPay", "Visa、万事达或银联"],
+  "pay.howNote": [
+    "You pay {who} directly. This board never holds your money.",
+    "钱直接付给{who}，平台不经手。",
+  ],
+  "pay.cancel":        ["Not now", "先不付"],
+  "pay.go":            ["Pay", "去付款"],
+
   "pay.rWork":         ["What for", "服务内容"],
   "route.lab":         ["Getting the money there", "钱怎么付过去"],
   "route.inWise": [
