@@ -148,8 +148,24 @@ And:
 - The fee row says "plus processing" rather than showing 2% beside a number
   that is not 2%.
 
-Not built yet: the route suggestion, the where-performed field, and the
-purpose line on the receipt.
+- `routeFor()` picks one of five routes from where the two sides are, whether
+  the payer is a person or a company, and the amount. The card shows it
+  between the plan and the board's fee, with "never split a payment" under
+  every route rather than only the ones with a cap in them — it is the mistake
+  with somebody's own name on a bank's report, and a warning that appears only
+  sometimes is one people learn to scroll past.
+- The ¥50,000 line is only applied when the amount is written in yuan. This
+  board has no exchange rate and will not invent one to decide a threshold;
+  where it cannot tell, it gives both rules and lets the two of them look at
+  the number.
+- `doneIn` is on the terms and prints with them, and on the receipt. `payerIs`
+  is on the memo because the same producer is a private individual on Saturday
+  and a company on Monday, and the two are paid for down different roads.
+- The receipt carries what the work was, where it was done, both parties, the
+  amount, where it was sent and both statements with their dates.
+
+Not built: anything that would have this board arrange, check or hold a
+payment. It suggests and it records.
 
 ## Sources
 

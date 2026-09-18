@@ -2532,6 +2532,63 @@ export function feeOf(deal, to) {
   };
 }
 
+/* ---------------------------------------------------------------------------
+ * WHICH WAY THE MONEY SHOULD GO
+ *
+ * Two people who have just agreed a booking across the Chinese border are
+ * about to get this wrong, and getting it wrong is not a wasted afternoon: a
+ * mainland payer who sends a business fee out of a personal allowance has
+ * broken a rule with their own name on it, and one who splits a payment to
+ * fit under a cap has done the thing banks watch for. Neither of them knows
+ * that, and neither should have to.
+ *
+ * So the card says which route belongs to this deal, from three facts it
+ * already has — where each side is, whether the payer is a person or a
+ * company, and how much. See docs/cross-border-payments.md for where every one
+ * of these routes comes from, with its source.
+ *
+ * IT SUGGESTS AND NEVER ARRANGES. The board does not send the money, does not
+ * check that this was followed, and is not a party to any of it. It is the
+ * sentence a friend who had done this before would say.
+ *
+ * NOTHING IS SAID WHERE THE BORDER IS NOT CROSSED. Two people in the same
+ * place do not need a foreign exchange lecture.
+ * ------------------------------------------------------------------------ */
+
+/** The ¥50,000-per-payment line that separates Wise from a bank wire.
+ *  Only applied when the amount is actually written in yuan: this board has
+ *  no exchange rate and will not invent one to decide a threshold. */
+function overFifty(amount) {
+  const m = readMoney(amount);
+  if (!m) return null;
+  const cny = /[¥￥]/.test(m.pre) || /^(CNY|RMB)$/i.test(m.post);
+  if (!cny) return null;
+  return m.n > 50000;
+}
+
+/** Which route this deal needs, or "" where it needs none.
+ *  `payer` and `payee` are "cn" or "out" — the WHERES on the two people. */
+export function routeFor(deal, payer, payee) {
+  if (!deal || !["cn", "out"].includes(payer) || !["cn", "out"].includes(payee)) return "";
+  if (payer === payee) return "";
+
+  if (payer === "out" && payee === "cn") {
+    /* The biggest single row decides it, because the cap is per payment and
+       the plan is what the payments will be. Falls back to the fee. */
+    const rows = Array.isArray(deal.plan) && deal.plan.length
+      ? deal.plan.map((r) => r.amount) : [deal.fee];
+    const over = rows.map(overFifty);
+    if (over.some((x) => x === true)) return "inBank";
+    if (over.every((x) => x === false)) return "inWise";
+    /* Unreadable, or not written in yuan: say both and let them look at the
+       number themselves, which they can do and this board cannot. */
+    return "inEither";
+  }
+
+  // Out of China: it turns entirely on who the payer is.
+  return deal.payerIs === "company" ? "outCompany" : "outPerson";
+}
+
 export function cleanDeal(raw) {
   if (!raw || typeof raw !== "object") return null;
   const s = (v, n) => String(v ?? "").replace(/\r\n?/g, "\n").replace(/[^\P{C}\n]/gu, "").trim().slice(0, n);
@@ -2556,6 +2613,17 @@ export function cleanDeal(raw) {
   const plan = (Array.isArray(raw.plan) ? raw.plan : [])
     .map((r) => cleanPlanRow(r, s)).filter(Boolean).slice(0, PLAN_MAX);
   if (plan.length) out.plan = plan;
+  /* WHO IS PAYING, AS A FACT ABOUT THE PAYMENT rather than about the person.
+     The same producer is a private individual booking a wedding singer on
+     Saturday and a company booking a crew on Monday, and the two are paid for
+     down completely different roads. */
+  if (["person", "company"].includes(raw.payerIs)) out.payerIs = raw.payerIs;
+  /* WHERE THE WORK IS DONE, because the Chinese tax treatment turns on it and
+     on nothing else — 6% VAT and 10% income tax apply where the service is
+     performed or consumed in China. Printed on the terms so the contract says
+     it, which is what a bank asks for. */
+  if (["cn", "out"].includes(raw.doneIn)) out.doneIn = raw.doneIn;
+
   const payTo = cleanPayLink(raw.payTo);
   if (payTo) out.payTo = payTo;
   if (raw.payToAt) out.payToAt = s(raw.payToAt, 40);

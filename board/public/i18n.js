@@ -4855,6 +4855,55 @@ export const STRINGS = {
   /* THE PLATFORM'S TWO PER CENT. Its own words rather than the plan's, because
      it is not one of the rows the two of them wrote and must not read like
      one. */
+  /* WHICH WAY THE MONEY SHOULD GO. One sentence per route, and each of them is
+     a thing a friend who had done it before would say — not a rule quoted at
+     somebody. Sourced in docs/cross-border-payments.md; if a rule there
+     changes, these change with it. */
+  "pay.rWork":         ["What for", "服务内容"],
+  "route.lab":         ["Getting the money there", "钱怎么付过去"],
+  "route.inWise": [
+    "Pay by Wise to their Alipay or UnionPay card, purpose Services. Under ¥50,000 a payment it arrives the same day.",
+    "用 Wise 付到对方的支付宝或银联卡，用途选「服务」。单笔 5 万元以内，当天就到。",
+  ],
+  "route.inBank": [
+    "Over ¥50,000 a payment, send it as a bank transfer. Their bank will ask what it is for — these terms are the contract.",
+    "单笔超过 5 万元，走银行电汇。对方银行会问这笔钱是做什么的——上面这份条件就是合同。",
+  ],
+  "route.inEither": [
+    "Under ¥50,000 a payment, Wise to their Alipay or UnionPay card, purpose Services. Above that, a bank transfer, with these terms as the contract.",
+    "单笔 5 万元以内，用 Wise 付到支付宝或银联卡，用途选「服务」。超过就走银行电汇，上面这份条件就是合同。",
+  ],
+  "route.outPerson": [
+    "Paying from your own pocket: pay on their business's WeChat Pay or Alipay page, the same as buying anything from abroad. It comes out of your own $50,000 a year.",
+    "个人出钱的话：在对方公司的微信支付或支付宝页面上付，跟在境外买东西一样，走你自己每年 5 万美元的额度。",
+  ],
+  "route.outCompany": [
+    "Paying as a company: a bank transfer from the company account, with a contract and an invoice. No size limit — but over US$50,000 in one payment needs a tax filing before the bank will send it.",
+    "公司出钱的话：从公司账户电汇，要有合同和发票。金额不限——但单笔超过 5 万美元，银行放款前要先做税务备案。",
+  ],
+  "route.never": [
+    "Never split one payment into several to stay under a limit. Banks watch for exactly that.",
+    "不要把一笔钱拆成几笔来凑额度。银行查的就是这个。",
+  ],
+  "route.notAdvice": [
+    "This is how it is usually done, not advice. The money goes directly between the two of you.",
+    "这只是一般的做法，不是建议。钱是你们两个人之间直接付的。",
+  ],
+
+  /* WHERE THE WORK IS DONE, and it is on the terms rather than in a settings
+     screen because the Chinese tax treatment turns on it and a bank asks the
+     contract, not the app. */
+  "deal.doneIn":       ["Work done in", "工作地点"],
+  "deal.doneCn":       ["Mainland China", "中国大陆"],
+  "deal.doneOut":      ["Outside mainland China", "中国大陆以外"],
+  "deal.doneWhy": [
+    "Chinese tax applies to work performed in the mainland, so the terms have to say which it is.",
+    "在中国大陆完成的工作要按中国的规定纳税，所以条件里必须写清楚是哪一种。",
+  ],
+  "deal.payerIs":      ["Paying as", "付款方身份"],
+  "deal.payerPerson":  ["A person", "个人"],
+  "deal.payerCompany": ["A company", "公司"],
+
   "fee.lab":           ["The board's fee", "平台费"],
   /* {pct}% is what the board keeps. The figure beside it is what the payer is
      charged — see FEE_KEEP in lib/store.js: surcharging is gone, so the

@@ -472,6 +472,11 @@
   /* The board's own row, set apart from the plan on purpose: a fee that looks
      like one of the rows the two of them wrote is a fee that got in without
      being read. */
+  .droute{margin:1rem 0 0;padding:.8rem .9rem;border-radius:.7rem;
+    background:var(--accent-soft)}
+  .droute .plab{margin:0 0 .45rem}
+  .rsay{margin:0;font-size:.95rem;line-height:1.65}
+  .rnever{margin:.55rem 0 0;font-size:.9rem;line-height:1.6;font-weight:500}
   .dfee{margin:1rem 0 0;padding:.8rem .9rem;border-radius:.7rem;
     border:1px dashed var(--line);background:var(--paper)}
   .dfee .plab{margin:0 0 .5rem}
@@ -1042,6 +1047,13 @@ function dealPin(g) {
     if (!d[f]) continue;
     rows.append(el("dt", null, T("deal." + f)), el("dd", null, d[f]));
   }
+  /* WHERE THE WORK IS DONE, on the terms with everything else. A bank asked
+     for the contract reads this line; it is not a setting and it does not
+     belong on a screen only the writer sees. */
+  if (d.doneIn) {
+    rows.append(el("dt", null, T("deal.doneIn")),
+      el("dd", null, T(d.doneIn === "cn" ? "deal.doneCn" : "deal.doneOut")));
+  }
   box.append(rows);
 
   /* WHO AGREED AND WHEN, as a line each. Not two ticks in a corner: the date
@@ -1077,6 +1089,9 @@ function dealPin(g) {
   }
 
   if (d.plan && d.plan.length) box.append(payPart(g, d));
+  /* The route, between the plan and the board's own row: it is about the
+     members' money, so it belongs with theirs and not with ours. */
+  if (g.route) box.append(routePart(g, d));
   /* The board's own row, under the plan and outside it. Drawn only where the
      board names a page to pay it on, which is nowhere unless it is switched
      on. */
@@ -1137,12 +1152,31 @@ function dealWriter(g, box) {
     return l;
   };
   const two = (a, b) => { const d = el("div", "two"); d.append(a, b); return d; };
+  /* A fixed choice rather than a typed line: both of these are read by code —
+     one decides which payment route is shown, the other decides whether
+     Chinese tax applies — and a machine cannot act on "Macau, probably". */
+  const one = (name, label, opts) => {
+    const l = el("label", null, label);
+    const sel = el("select");
+    sel.name = name;
+    for (const [v, t] of opts) {
+      const o = el("option", null, t);
+      o.value = v;
+      sel.append(o);
+    }
+    l.append(sel);
+    return l;
+  };
 
   form.append(two(pick("hires", T("pay.sideHires"), g.meHandle),
                   pick("provides", T("pay.sideProvides"), people.find((h) => h !== g.meHandle))));
   form.append(line("title", T("deal.what"), ""));
   form.append(two(line("when", T("deal.when")), line("where", T("deal.where"))));
   form.append(two(line("fee", T("deal.fee")), line("deposit", T("deal.deposit"))));
+  form.append(two(
+    one("doneIn", T("deal.doneIn"), [["out", T("deal.doneOut")], ["cn", T("deal.doneCn")]]),
+    one("payerIs", T("deal.payerIs"), [["person", T("deal.payerPerson")], ["company", T("deal.payerCompany")]])));
+  form.append(el("p", "whint", T("deal.doneWhy")));
 
   form.append(el("p", "wlab", T("pay.plan")));
   const rows = [];
@@ -1163,6 +1197,7 @@ function dealWriter(g, box) {
     const deal = {
       title: v("title"), hires: v("hires"), provides: v("provides"),
       what: v("title"), when: v("when"), where: v("where"), fee: v("fee"), deposit: v("deposit"),
+      doneIn: v("doneIn"), payerIs: v("payerIs"),
       plan: rows.map(([l, a, d]) => ({ label: l.value.trim(), amount: a.value.trim(), due: d.value.trim() }))
         .filter((r) => r.amount),
     };
@@ -1200,6 +1235,11 @@ function showReceipt(g, d, i, claim, okd) {
   const dl = el("dl", "rrows");
   const put = (k, v) => { if (v) dl.append(el("dt", null, k), el("dd", null, v)); };
   put(T("pay.rFor"), row.label || T("pay.plan"));
+  /* WHAT THE MONEY WAS FOR, in the words of the job rather than the row. A
+     bank asked to release a payment wants to see the service, and "Deposit"
+     on its own is not one. */
+  put(T("pay.rWork"), d.what || "");
+  if (d.doneIn) put(T("deal.doneIn"), T(d.doneIn === "cn" ? "deal.doneCn" : "deal.doneOut"));
   put(T("pay.rAmount"), row.amount);
   put(T("pay.rFrom"), d.hires);
   put(T("pay.rTo"), d.provides);
@@ -1298,6 +1338,26 @@ function feePart(g, d) {
   line.append(a);
   wrap.append(line);
   wrap.append(el("p", "pnote", T("fee.what", { pct: f.pct })));
+  return wrap;
+}
+
+/* WHICH WAY THE MONEY SHOULD GO.
+ *
+ * Shown only where the border is actually crossed — g.route is empty
+ * otherwise, and two people in the same place do not need a lecture on
+ * foreign exchange.
+ *
+ * The "never split a payment" line is under every route rather than only the
+ * ones with a cap in them. It is the one mistake here that is somebody's own
+ * name on a bank's report, and a warning that appears only sometimes is a
+ * warning people learn to scroll past.
+ */
+function routePart(g, d) {
+  const wrap = el("div", "droute");
+  wrap.append(el("p", "plab", T("route.lab")));
+  wrap.append(el("p", "rsay", T("route." + g.route)));
+  wrap.append(el("p", "rnever", T("route.never")));
+  wrap.append(el("p", "pnote", T("route.notAdvice")));
   return wrap;
 }
 

@@ -8552,6 +8552,15 @@ app.get("/api/groups", notesOff, async (req, res) => {
          edited and cannot be deleted by either side. Null when the board
          names no page to pay it on. */
       fee: g.deal ? store.feeOf(g.deal, DEAL_FEE_TO) : null,
+      /* WHICH ROUTE THE MONEY SHOULD TAKE, worked out from where the two of
+         them are. Computed here because only the server knows where anybody
+         is: `where` is on the person row and never leaves it — the page is
+         told the answer, not the two facts it came from. */
+      route: g.deal ? (() => {
+        const side = (h) => (board.people.find((q) =>
+          g.members.includes(q.by) && q.handle === h) || {}).where || "";
+        return store.routeFor(g.deal, side(g.deal.hires), side(g.deal.provides));
+      })() : "",
       meHandle: (board.people.find((q) => q.by === me) || {}).handle || "",
       /* CODES MINTED FOR THIS ROOM AND NOT YET SPENT, to whoever minted them.
        * They hold seats — see groupRoom and the note over POST /api/invite —
