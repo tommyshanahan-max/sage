@@ -82,6 +82,10 @@
 
   .top{display:flex;align-items:center;gap:.8rem;margin:0 0 1.3rem}
   .top h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.75rem;line-height:1.1}
+  /* "Macau, March" broke across two lines on a 390px screen, because ⋯ and
+     the language button take their width first and the title gets what is
+     left. Smaller, and it fits on one. */
+  @media (max-width:26rem){ .top h1{font-size:1.4rem} }
   .top p{margin:.15rem 0 0;font-size:.85rem;color:var(--muted)}
   .back{border:0;background:none;color:var(--ink);padding:.2rem;margin-left:-.3rem;
     display:grid;place-items:center;flex:0 0 auto}
@@ -1179,7 +1183,9 @@ function dealPin(g) {
       got ? T("deal.agreedBy", { who: side, when: when(got.at) })
           : T("deal.waiting", { who: side })));
   }
-  if (d.agreed.length >= 2) marks.append(el("p", "dboth", T("deal.both")));
+  /* "Both sides have agreed." used to follow the two lines that say so by
+     name and date. A summary of two lines you have just read is a third line
+     to read. The two green lines are the fact. */
   box.append(marks);
 
   const meIs = g.meHandle && (g.meHandle === d.hires || g.meHandle === d.provides);
@@ -1233,8 +1239,12 @@ function dealPin(g) {
   if (g.needsPayout) box.append(payoutSetup(g));
   if (d.plan && d.plan.length) box.append(payPart(g, d));
   /* The route, between the plan and the board's own row: it is about the
-     members' money, so it belongs with theirs and not with ours. */
-  if (g.route) box.append(routePart(g, d));
+     members' money, so it belongs with theirs and not with ours.
+     ONLY WHILE THERE IS MONEY LEFT TO MOVE. Four paragraphs on tax filings
+     and bank limits are worth reading once, before the first payment. Under
+     a plan whose every row says PAID they are four paragraphs about a thing
+     that already happened, on the card that was too long. */
+  if (g.route && owing(d)) box.append(routePart(g, d));
   /* The board's own row, under the plan and outside it. Drawn only where the
      board names a page to pay it on, which is nowhere unless it is switched
      on. */
@@ -1242,6 +1252,14 @@ function dealPin(g) {
 
   box.append(el("p", "dlaw", T("deal.notlaw")));
   return box;
+}
+
+/** Is anything on this plan still to pay. A deal with no plan at all counts
+ *  as owing: nothing has been settled, so the advice still applies. */
+function owing(d) {
+  if (!Array.isArray(d.plan) || !d.plan.length) return true;
+  return d.plan.some((row, i) =>
+    !(d.paid || []).some((r) => r.i === i && r.kind === "confirmed"));
 }
 
 /** WHAT HAS BEEN PAID, AND WHO SAID SO.
@@ -1812,9 +1830,8 @@ function shareBlock(g, d) {
 
   if (!live) {
     box.append(el("p", "psh", T("memo.send")));
-    box.append(el("p", "phint", T("memo.sendWhy", {
-      who: g.meHandle === d.hires ? d.provides : d.hires,
-    })));
+    /* No why-line. "Send these terms" above it and "Make the link" below it
+       are two thirds of the same sentence already. */
     const b = el("button", "", T(d.share ? "memo.sendAgain" : "memo.sendGo"));
     b.type = "button";
     b.addEventListener("click", () => mintShare(g, b));
@@ -1998,24 +2015,26 @@ function payPart(g, d) {
       okd ? T("pay.paidChip") : claim ? T("pay.waitingChip") : T("pay.dueChip"));
     r.append(chip);
 
-    /* WHO SAID WHAT, in sentences with dates on them. A tick would lose the
-       date, and the date is the half of this that settles arguments.
-       EXCEPT WHEN NEITHER OF THEM SAID IT. A row the payment page wrote
-       carries `auto` on both halves, and the usual pair then puts words in
-       two people's mouths — "Claire confirmed it arrived" while Claire was
-       asleep and Stripe was the only witness. Same sentence the fee row
-       already uses; the key is named for where it was written, not for who
-       may use it. A claim they really did tap survives on its own line. */
-    if (okd?.auto) {
-      if (claim && !claim.auto) {
-        r.append(el("p", "psaid", T("pay.claimed", { who: claim.who, when: when(claim.at) })));
-      }
-      r.append(el("p", "psaid", T("fee.cleared", { when: when(okd.at) })));
-    } else {
-      for (const [row2, key] of [[claim, "pay.claimed"], [okd, "pay.confirmed"], [no, "pay.denied"]]) {
+    /* WHO SAID WHAT — WHILE IT IS STILL BEING SAID.
+     *
+     * A settled row used to carry four lines under it: he says he paid, she
+     * says it arrived, both of you have said so, and a Receipt button. Four
+     * lines about a thing that is finished, on a card that also holds the
+     * terms, the route, the fee and the link. Tom read it on his phone and
+     * the word was "info overload", and he was right: this card ran to 2573
+     * pixels and most of it was history.
+     *
+     * So a settled row is one line — label, amount, PAID — and the dates go
+     * where they were always going to be looked up, which is the receipt.
+     * Nothing is lost: the Receipt button is right there and prints both
+     * statements with their dates, which is the half that settles arguments.
+     *
+     * A row still in motion keeps every sentence. That is when they are
+     * worth reading: somebody is waiting on somebody. */
+    if (!okd) {
+      for (const [row2, key] of [[claim, "pay.claimed"], [no, "pay.denied"]]) {
         if (row2) r.append(el("p", "psaid", T(key, { who: row2.who, when: when(row2.at) })));
       }
-      if (claim && okd) r.append(el("p", "psaid", T("pay.bothSaid")));
     }
 
     const acts = el("div", "pacts");
@@ -2100,8 +2119,10 @@ function payPart(g, d) {
      each other, on the screen where somebody is about to send ¥30,000.
      The payee's own field is further down and stays either way: it is their
      fallback, and for a payee in the mainland it is still the only route. */
+  /* Said to somebody about to press Pay. With every row settled it is a
+     sentence about a button that is no longer on the screen. */
   if (g.pay === "stripe") {
-    wrap.append(el("p", "phint", T("pay.inApp", { who: d.provides })));
+    if (owing(d)) wrap.append(el("p", "phint", T("pay.inApp", { who: d.provides })));
   } else if (d.payWith && d.payWith !== "page" && d.payWith !== "stripe") {
     /* THE ROUTE THEY ACTUALLY USE, said to the payer in those words.
        The board is not moving this money and does not pretend to: it says

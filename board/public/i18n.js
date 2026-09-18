@@ -5046,8 +5046,10 @@ export const STRINGS = {
      charged — see FEE_KEEP in lib/store.js: surcharging is gone, so the
      processing cost lives inside the price or it comes out of the fee. The row
      says so rather than showing 2% beside a number that is not 2%. */
-  "fee.row":           ["Platform fee · {pct}% + processing",
-                        "平台费 · {pct}% 加手续费"],
+  /* Just the name. "Platform fee · 2% + processing" sat under the eyebrow
+     "The board's fee" and above a note that says 2% plus processing — the
+     same fact three times in four inches. */
+  "fee.row":           ["Platform fee", "平台费"],
   "fee.ofFee":         ["{pct}% of the fee, plus processing",
                         "报酬的 {pct}%，另加手续费"],
   "fee.payAt":         ["Paid at {where}", "在 {where} 支付"],
@@ -5055,9 +5057,16 @@ export const STRINGS = {
      them. A missing key renders as the key, in the middle of a sentence about
      money, and says nothing about being missing. */
   "fee.open":          ["Open the payment page", "打开收款页面"],
+  /* THREE SENTENCES CUT TO ONE. What it was, in full:
+     "{pct}% of the fee, for the introduction and the record kept here, plus
+     what the payment page charges to process it. Paid to whoever runs this
+     board, not to either of you, and not held here either."
+     Everything after the first clause was answering a question nobody had
+     asked yet, on a card Tom read on his phone and called info overload. The
+     two facts a charge has to carry are what it is for and who gets it. */
   "fee.what": [
-    "{pct}% of the fee, for the introduction and the record kept here, plus what the payment page charges to process it. Paid to whoever runs this board, not to either of you, and not held here either.",
-    "报酬的 {pct}%，是牵线和这份记录的费用，另加收款页面的手续费。付给这个平台的运营者，不付给你们任何一方，平台也不经手这笔钱。",
+    "{pct}% of the fee plus processing, to whoever runs this board.",
+    "报酬的 {pct}% 加手续费，付给平台的运营者。",
   ],
   "fee.confirmed":     ["{who} confirmed it arrived, {when}", "{who} 确认已收到，{when}"],
   /* Written by the payment page rather than by a person, so it has no name in
