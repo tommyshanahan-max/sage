@@ -55,78 +55,82 @@
      layout sideways on the one screen that has a field. */
   body{font-family:var(--sans);font-size:16px;line-height:1.55;
     padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
-  main{max-width:34rem;margin:0 auto;padding:1.2rem 1rem 3rem}
+  main{max-width:34rem;margin:0 auto;padding:1rem .75rem 2.5rem}
+  /* Used by the gate and the four dead-link screens, which have no sheet to
+     hang a strip on. The memo itself carries its brand inside the sheet. */
   .brand{display:flex;align-items:center;gap:.55rem;margin:0 0 1rem}
   .brand img{width:1.4rem;height:1.4rem}
   .brand span{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
     color:var(--muted)}
-  .lang{margin-left:auto;border:1px solid var(--line);background:var(--raise);
-    color:var(--ink-2);font:inherit;font-size:.8rem;padding:.25rem .7rem;
-    border-radius:99px}
-  .card{background:var(--raise);border:1px solid var(--line);border-radius:1.1rem;
-    padding:1.15rem 1rem;box-shadow:var(--shadow);margin:0 0 .85rem}
-  .lab{margin:0 0 .45rem;font-size:.72rem;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--muted)}
-  h1{margin:0 0 .2rem;font-size:1.25rem;line-height:1.3}
-  .who{margin:0;color:var(--muted);font-size:.92rem}
-  .clock{display:inline-block;padding:.3rem .7rem;border-radius:99px;
-    background:var(--accent-soft);color:var(--accent);font-size:.78rem}
-  .clock.soon{background:rgba(212,72,92,.12);color:var(--t5)}
-  hr{border:0;border-top:1px solid var(--hair);margin:.95rem 0}
-  /* THE BILL, ABOVE EVERYTHING IT IS A BILL FOR.
-     The terms used to come first and ran to seven rows, so on a phone the Pay
-     button sat below the fold behind a wall of prose. Somebody who opened this
-     from a chat message came to settle an amount; the amount and the button
-     are what the first screen is for, and the terms are what they scroll to
-     when they want to check it. */
-  .due{margin:1rem 0 0}
-  /* THE NUMBER, IN THE SERIF AND BIG. It is the one thing on this page
-     somebody is deciding about, and at 1.9rem in the body face it sat level
-     with the title above it — two things asking to be read first. */
-  .dueLab{margin:0 0 .1rem;font-size:.72rem;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--muted)}
-  .dueRow{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;
-    margin:0 0 .15rem}
-  .dueRow .n{font-family:var(--serif);font-size:2.6rem;font-weight:400;
-    line-height:1.1;font-variant-numeric:tabular-nums}
-  .dueRow .k{font-size:.9rem;color:var(--muted)}
-  .dueWhen{margin:0 0 1rem;font-size:.88rem;color:var(--muted)}
-  /* A TABLE WITH RULES, NOT A STACK OF PARAGRAPHS.
-     Two columns, but the label column is a fixed 5.5rem rather than sized to
-     the longest label. Auto-sizing it to "If it is called off" left the values
-     about 210px wide on a 390px phone and every sentence over six words broke
-     across three lines. Fixed, the long labels wrap instead — a label is two
-     words and can afford to — and the values get the room.
-     The hairline between rows is what makes it scan: the eye follows a rule
-     down the page and stops at the row it wants, which whitespace alone does
-     not do. */
-  .term{display:grid;grid-template-columns:5.5rem 1fr;gap:0 .9rem;
-    padding:.7rem 0;border-top:1px solid var(--hair)}
-  .term:first-of-type{border-top:0;padding-top:.15rem}
-  .term dt{margin:0;font-size:.78rem;line-height:1.35;color:var(--muted)}
-  .term dd{margin:0;font-size:.95rem;line-height:1.45;white-space:pre-wrap}
-  dl{margin:0}
-  .prow{display:grid;grid-template-columns:1fr auto;gap:.15rem .7rem;
-    padding:.75rem 0;border-top:1px solid var(--hair)}
-  .prow:first-of-type{border-top:0;padding-top:.2rem}
-  .pwhat{font-weight:600}
-  .pamt{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
-  .pwhen{color:var(--muted);font-size:.84rem}
-  .pchip{justify-self:end;align-self:center;font-size:.72rem;letter-spacing:.06em;
-    text-transform:uppercase;padding:.16rem .6rem;border-radius:99px;
+  .brand .lang{margin-left:auto}
+  /* ONE SHEET. Rules divide it, not gaps: three bordered cards with their own
+     shadows were three boxes to cross for one piece of paper. */
+  .sheet{background:var(--raise);border:1px solid var(--line);
+    border-radius:1.1rem;box-shadow:var(--shadow);overflow:hidden}
+  .strip{display:flex;align-items:center;gap:.5rem;padding:.7rem .95rem;
+    border-bottom:1px solid var(--line)}
+  .strip img{width:1.1rem;height:1.1rem;flex:0 0 auto}
+  .sname{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted)}
+  .sstate{margin-left:auto;font-size:.68rem;letter-spacing:.12em;
+    text-transform:uppercase;padding:.2rem .6rem;border-radius:99px;
     background:var(--line);color:var(--ink-2)}
-  .pchip.on{background:rgba(42,157,99,.14);color:var(--t2)}
+  .sstate.on{background:rgba(42,157,99,.14);color:var(--t2)}
+  .lang{border:1px solid var(--line);background:var(--paper);color:var(--ink-2);
+    font:inherit;font-size:.78rem;padding:.2rem .6rem;border-radius:99px}
+  .body{padding:1.05rem .95rem 1.15rem}
+  h1{margin:0 0 .15rem;font-size:1.22rem;line-height:1.3}
+  .who{margin:0;color:var(--muted);font-size:.9rem}
+  .lab{margin:0 0 .45rem;font-size:.7rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  /* THE NUMBER, IN THE SERIF AND BIG. It is the one thing on this page
+     somebody is deciding about. */
+  .dueLab{margin:1rem 0 .05rem;font-size:.7rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .dueRow{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin:0}
+  .dueRow .n{font-family:var(--serif);font-size:2.7rem;font-weight:400;
+    line-height:1.08;font-variant-numeric:tabular-nums}
+  .dueRow .k{font-size:.88rem;color:var(--muted)}
+  .dueWhen{margin:.15rem 0 0;font-size:.86rem;color:var(--muted)}
+  .done{margin:1rem 0 0;font-size:1rem;color:var(--ink-2)}
   /* 3.25rem tall and the amount is written on it. A button that says only
      "Pay now" makes somebody look back up the page to check what they are
-     about to send; the amount on the button is the last thing they read
-     before they press it. */
-  .go{border:0;border-radius:99px;background:var(--accent);color:var(--accent-ink);
-    font:inherit;font-size:.95rem;font-weight:600;letter-spacing:.06em;
-    text-transform:uppercase;padding:.9rem 1.4rem;min-height:3.25rem;width:100%}
-  .prow .go{grid-column:1/-1;margin:.6rem 0 0}
-  .foot{margin:.9rem 0 0;font-size:.82rem;line-height:1.5;color:var(--muted)}
-  .small{margin:.8rem 0 0;font-size:.78rem;line-height:1.5;color:var(--muted);
+     about to send. */
+  .go{margin:1.1rem 0 0;border:0;border-radius:99px;background:var(--accent);
+    color:var(--accent-ink);font:inherit;font-size:.95rem;font-weight:600;
+    letter-spacing:.06em;text-transform:uppercase;padding:.9rem 1.4rem;
+    min-height:3.25rem;width:100%}
+  /* A TABLE WITH RULES. The label column is a fixed 5.5rem rather than sized
+     to the longest label: auto-sizing it to "If it is called off" left the
+     values about 210px wide on a 390px phone and every sentence over six
+     words broke across three lines. Fixed, the long labels wrap instead — a
+     label is two words and can afford to — and the values get the room. */
+  .terms{margin:0;border-top:1px solid var(--line)}
+  .term{display:grid;grid-template-columns:5.5rem 1fr;gap:0 .9rem;
+    padding:.62rem .95rem;border-top:1px solid var(--hair)}
+  .term:first-child{border-top:0}
+  .term dt{margin:0;font-size:.76rem;line-height:1.4;color:var(--muted)}
+  .term dd{margin:0;font-size:.93rem;line-height:1.45;white-space:pre-wrap}
+  .plan{padding:.9rem .95rem 1rem;border-top:1px solid var(--line)}
+  .prow{display:grid;grid-template-columns:1fr auto;gap:.1rem .7rem;
+    padding:.55rem 0;border-top:1px solid var(--hair)}
+  .prow:first-of-type{border-top:0;padding-top:0}
+  .pwhat{font-weight:600;font-size:.95rem}
+  .pamt{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+  .pwhen{color:var(--muted);font-size:.82rem}
+  .pchip{justify-self:end;align-self:center;font-size:.68rem;letter-spacing:.1em;
+    text-transform:uppercase;padding:.14rem .55rem;border-radius:99px;
+    background:var(--line);color:var(--ink-2)}
+  .pchip.on{background:rgba(42,157,99,.14);color:var(--t2)}
+  .prow .go{grid-column:1/-1;margin:.55rem 0 .15rem}
+  .sfoot{padding:.8rem .95rem 1rem;border-top:1px solid var(--line);
     text-align:center}
+  .sfoot p{margin:0 0 .5rem;font-size:.78rem;line-height:1.45;color:var(--muted)}
+  .clock{display:inline-block;padding:.28rem .7rem;border-radius:99px;
+    background:var(--accent-soft);color:var(--accent);font-size:.75rem}
+  .clock.soon{background:rgba(212,72,92,.12);color:var(--t5)}
+  .foot{margin:1rem 0 0;font-size:.82rem;line-height:1.5;color:var(--muted)}
+
   /* THE CODE GATE. Big field, because it is typed from a chat message by
      somebody holding the phone in one hand. */
   .gate{text-align:center;padding:2rem 1.15rem}
@@ -354,77 +358,91 @@ function draw() {
   repaint = draw;
   const m = STATE.memo;
   root.textContent = "";
-  root.append(head());
 
-  /* THE BILL FIRST. Whoever opened this came from a chat message to settle an
-     amount, so the amount and the button are the first screen. The terms are
-     what they scroll to when they want to check it — which is the opposite of
-     how this was built, and the reason the Pay button was under a wall. */
+  /* ONE SHEET, NOT THREE CARDS.
+   *
+   * It was a bill card, a terms card and a payments card, each with its own
+   * border, shadow and heading — three boxes to cross and two headings to
+   * read for one piece of paper. A memo is one piece of paper. Everything is
+   * in a single sheet now, divided by rules rather than by gaps, which is
+   * both shorter and easier to follow down.
+   */
+  const sheet = el("div", "sheet");
+
+  /* The strip along the top: whose paper this is, and what state it is in.
+     The state word on the right is the thing somebody wants before they read
+     anything — paid, or not. */
+  const strip = el("div", "strip");
+  const mark = el("img");
+  mark.src = "/mark.svg";
+  mark.alt = "";
+  strip.append(mark, el("span", "sname", T("memo.brand")));
   const next = m.plan.find((r) => r.state === "due");
+  strip.append(el("span", "sstate" + (next ? "" : " on"),
+    T("memo.chip." + (next ? "due" : "paid"))));
+  const slot = el("span", "langslot");
+  strip.append(slot);
+  sheet.append(strip);
 
-  const top = el("div", "card");
-  /* No eyebrow. It read "THE TERMS OF THIS DEAL" over an amount and a Pay
-     button, which is a label for the card below this one. */
-  top.append(el("h1", null, m.title || T("memo.untitled")));
-  top.append(el("p", "who", T("memo.between", { a: m.hires, b: m.provides })));
+  const body = el("div", "body");
+  body.append(el("h1", null, m.title || T("memo.untitled")));
+  body.append(el("p", "who", T("memo.between", { a: m.hires, b: m.provides })));
 
   if (next) {
-    const due = el("div", "due");
-    due.append(el("p", "dueLab", T("memo.asking", { who: m.provides })));
+    body.append(el("p", "dueLab", T("memo.asking", { who: m.provides })));
     const line = el("div", "dueRow");
     line.append(el("span", "n", next.amount), el("span", "k", next.label || ""));
-    due.append(line);
-    if (next.due) due.append(el("p", "dueWhen", T("memo.due", { when: next.due })));
+    body.append(line);
+    if (next.due) body.append(el("p", "dueWhen", T("memo.due", { when: next.due })));
+    /* THE BUTTON STAYS ABOVE THE TERMS. Their sheet puts it at the foot and
+       that works because their memo is four rows; ours can be seven, and at
+       the foot it is off the first screen again — which was the whole
+       complaint. Above them, the button and the first four rows both fit on
+       a 390x664 screen. */
     if (m.payeeReady) {
       const b = el("button", "go", T("memo.pay", { amount: next.amount }));
       b.type = "button";
       b.addEventListener("click", () => payHow(m, next));
-      due.append(b);
+      body.append(b);
     } else {
-      due.append(el("p", "foot", T("memo.notReady", { who: m.provides })));
+      body.append(el("p", "foot", T("memo.notReady", { who: m.provides })));
     }
-    top.append(due);
   } else {
-    /* NOTHING LEFT TO PAY, and said rather than left as an absence — a page
-       with no button on it reads as broken, not as finished. */
-    top.append(el("p", "foot", T("memo.allPaid")));
+    /* NOTHING LEFT TO PAY, said rather than left as an absence — a page with
+       no button reads as broken, not as finished. */
+    body.append(el("p", "done", T("memo.allPaid")));
   }
-  root.append(top);
+  sheet.append(body);
 
   if (m.terms.length) {
-    const card = el("div", "card");
-    card.append(el("p", "lab", T("memo.whatWasAgreed")));
-    const dl = el("dl");
+    const dl = el("dl", "terms");
     for (const [k, v] of m.terms) {
-      const box = el("div", "term");
-      box.append(el("dt", null, T("deal." + k)), el("dd", null, v));
-      dl.append(box);
+      const row = el("div", "term");
+      row.append(el("dt", null, T("deal." + k)), el("dd", null, v));
+      dl.append(row);
     }
-    card.append(dl);
-    root.append(card);
+    sheet.append(dl);
   }
 
-  /* The plan, only when it is more than the one row already at the top —
-     a card repeating "Balance ¥30,000 DUE" under the button that pays it is
-     a second thing to read that says nothing new. */
-  if (m.plan.length > 1) {
-    const card = el("div", "card");
-    card.append(el("p", "lab", T("memo.plan")));
-    for (const row of m.plan) card.append(planRow(m, row, next));
-    root.append(card);
+  /* The plan, only when it says something the block above does not — one due
+     row and nothing paid is already on the sheet twice over. */
+  if (m.plan.length > 1 || !next) {
+    const plan = el("div", "plan");
+    plan.append(el("p", "lab", T("memo.plan")));
+    for (const row of m.plan) plan.append(planRow(m, row, next));
+    sheet.append(plan);
   }
 
-  /* ONE LINE, and it is where the money goes. What this page cannot do used
-     to be a second sentence here; it now sits under the button that would
-     have been the place to look for it. */
-  root.append(el("p", "small", T("memo.straight", { who: m.provides })));
-
+  const foot = el("div", "sfoot");
+  foot.append(el("p", null, T("memo.straight", { who: m.provides })));
   const clock = clockLine(STATE.until);
-  if (clock) {
-    const wrap = el("p", "small");
-    wrap.append(clock);
-    root.append(wrap);
-  }
+  if (clock) foot.append(clock);
+  sheet.append(foot);
+
+  root.append(sheet);
+  /* Drawn last: langButton replaces the node it is given, so it has to be in
+     the document before the swap. */
+  slot.replaceWith(langButton(() => repaint()));
 }
 
 function planRow(m, row, next) {

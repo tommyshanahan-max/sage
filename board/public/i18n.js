@@ -4915,7 +4915,7 @@ export const STRINGS = {
      --------------------------------------------------------------------- */
   "memo.brand":        ["The Exchange", "交换"],
   "memo.untitled":     ["The terms", "这单的条件"],
-  "memo.between":      ["{a} hired {b} for this", "{a} 找 {b} 办这件事"],
+  "memo.between":      ["{a} hired {b}", "{a} 找 {b} 办的事"],
   "memo.plan":         ["Payments", "付款安排"],
   "memo.due":          ["Due {when}", "{when} 付"],
   "memo.chip.paid":    ["Paid", "已付"],
