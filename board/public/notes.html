@@ -674,12 +674,38 @@
     padding:.65rem .75rem;border-radius:.7rem;border:1px solid var(--line);
     background:var(--raise);color:var(--ink)}
   .reply .how{margin:.5rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
-  /* PIN THE TERMS, from inside a conversation. Dashed like the room's own, so
-     it reads as a thing you may do rather than a thing you are being asked to. */
-  .tterms{display:block;width:calc(100% - 2rem);margin:.2rem 1rem .6rem;padding:.6rem;
-    border:1px dashed var(--line);border-radius:.8rem;background:var(--paper);
-    color:var(--ink);font:inherit;font-size:.9rem}
-  .tterms:disabled{opacity:.5}
+  /* THE + BESIDE THE BOX.
+   *
+   * It replaced a dashed "Pin the terms" button sitting full-width above the
+   * conversation, which was one thing today and would have been three by
+   * Christmas, each of them taking a strip of every thread from everybody who
+   * will never press it. A + is where every phone keeps this and costs one
+   * line of nothing until it is wanted.
+   *
+   * Same size as Send and outlined rather than filled: it is the second thing
+   * on this bar, not a rival to it. */
+  /* addbtn and addsheet, not plus and more: .more is already the header's ⋯
+     and .plus is already inside .sendlink, and a second rule with either name
+     silently restyles the first. This file has had that once. */
+  .addbtn{flex:0 0 auto;width:2.4rem;height:2.4rem;border:1px solid var(--line);
+    border-radius:50%;background:var(--raise);color:var(--ink-2);
+    display:grid;place-items:center;cursor:pointer}
+  .addbtn svg{width:1.15rem;height:1.15rem;fill:none;stroke:currentColor;
+    stroke-width:2;stroke-linecap:round}
+  .addbtn[aria-expanded="true"]{background:var(--accent-soft);color:var(--accent)}
+  /* OPENS UPWARD, because downward is under the keyboard. Rows rather than a
+     grid of icons: a label that can be read is worth more than a picture that
+     has to be learned, and on this board more than most. */
+  /* The same shape as .menu above, with bigger rows. .menu is a rare thing
+     reached from a ⋯; this one is reached from the bar somebody's thumb is
+     already on, and its rows have to be findable without aiming. */
+  .addsheet{margin:0 0 .5rem;padding:.35rem;border:1px solid var(--line);
+    border-radius:.9rem;background:var(--raise);box-shadow:var(--shadow)}
+  .addsheet button{display:block;width:100%;text-align:left;padding:.85rem .9rem;
+    border:0;border-radius:.6rem;background:none;color:var(--ink);
+    font:inherit;font-size:1rem;cursor:pointer}
+  .addsheet button:hover{background:var(--paper)}
+  .addsheet button:disabled{opacity:.5}
 </style>
 
 </head>
@@ -787,13 +813,21 @@
          see drawThread. Empty and hidden for a member, who has a page. -->
     <div class="tcard" id="tcard" hidden></div>
     <div class="pinwrap" id="tpin" hidden></div>
-      <button id="tterms" class="tterms" type="button" hidden data-t="deal.write">Pin the terms</button>
     <!-- Who opened this, when it was not a match. See note.fromStaff. -->
     <p class="tstaff" id="tstaff" hidden></p>
     <div class="talk" id="talk"></div>
     <p class="left" id="tleft" hidden></p>
     <p class="shut" id="tshut" hidden></p>
+    <!-- WHAT ELSE YOU CAN DO HERE, behind a + beside the box — the place every
+         phone keeps it, so nobody has to be told. It opens upward because a
+         panel that opens downward is a panel under the keyboard. -->
+    <div class="addsheet" id="tadd" hidden>
+      <button id="tterms" type="button"></button>
+    </div>
     <div class="write" id="twrite" hidden>
+      <button class="addbtn" id="taddbtn" type="button" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
       <textarea id="tbox" rows="1" maxlength="600"></textarea>
       <button class="send" id="tsend" aria-label="Send">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 8-16 8 3-8z"/></svg>
@@ -2625,9 +2659,42 @@ function drawThread(t) {
    *  nowhere to pin it. This opens a room holding just the two of them and
    *  goes straight there; a second press later finds the same room rather than
    *  making another. */
+  /* THE + AND WHAT IS BEHIND IT. Hidden entirely where there is nothing to
+     offer — a + that opens an empty panel is worse than no +. */
+  const addBtn = $("taddbtn");
+  const addSheet = $("tadd");
   const terms = $("tterms");
+  if (addBtn && addSheet) {
+    /* THE LABELS ARE SET HERE AND NOT IN THE MARKUP. The button arrived with
+       data-t="deal.write" on it, which nothing in this repo reads — so it said
+       "Pin the terms" in English on a board half of whose members read
+       Chinese, and said it silently. */
+    addBtn.setAttribute("aria-label", T("note.more"));
+    if (terms) terms.textContent = T("deal.write");
+    const canTerms = Boolean(last.canAnswer || last.open);
+    addBtn.hidden = !canTerms;
+    if (!canTerms) addSheet.hidden = true;
+    addBtn.onclick = () => {
+      const open = addSheet.hidden;
+      addSheet.hidden = !open;
+      addBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    };
+    /* Escape and a tap anywhere else close it, because a panel that can only
+       be closed by the button that opened it is a panel people leave open. */
+    document.addEventListener("click", (e) => {
+      if (addSheet.hidden) return;
+      if (addSheet.contains(e.target) || addBtn.contains(e.target)) return;
+      addSheet.hidden = true;
+      addBtn.setAttribute("aria-expanded", "false");
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape" || addSheet.hidden) return;
+      addSheet.hidden = true;
+      addBtn.setAttribute("aria-expanded", "false");
+      addBtn.focus();
+    });
+  }
   if (terms) {
-    terms.hidden = !(last.canAnswer || last.open);
     terms.onclick = async () => {
       terms.disabled = true;
       try {

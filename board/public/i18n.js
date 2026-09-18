@@ -4942,6 +4942,9 @@ export const STRINGS = {
      menu. {where} is filled from location.host rather than written in: the
      board answers on two names — thexchange.app and liuxuesheng.io — and the
      right one to say is whichever this reader actually arrived on. */
+  /* The + beside the message box. Its label is read out rather than seen, so
+     it says what it opens rather than naming the shape it is drawn as. */
+  "note.more":         ["What else you can do here", "还能做什么"],
   "deal.inBrowser": [
     "Open this room at {where} in your browser to agree the terms.",
     "在浏览器里打开 {where}，进这个房间确认条件。",
