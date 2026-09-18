@@ -43,6 +43,7 @@ import * as google from "./lib/google.js";
 /* Only for configured() at the subscribe route — the sending is push.tell's,
    which picks the half by the row. See the note at the top of apns.js. */
 import * as pushApns from "./lib/apns.js";
+import * as stripe from "./lib/stripe.js";
 /* THE SWITCH FILE, READ BY THE SERVER TOO.
  *
  * public/off.js is a client module and this is the one thing on the server
@@ -572,9 +573,42 @@ app.post("/api/hook/fee", express.raw({ type: "application/json", limit: "64kb" 
     if (event?.type !== "checkout.session.completed") return res.json({ ok: true });
 
     const session = event?.data?.object || {};
-    const id = String(session.client_reference_id || "");
-    if (!/^[a-f0-9]{20}$/.test(id)) return res.json({ ok: true });
+    const ref = String(session.client_reference_id || "");
     if (session.payment_status && session.payment_status !== "paid") return res.json({ ok: true });
+
+    /* TWO SHAPES OF REFERENCE, AND THEY MEAN DIFFERENT THINGS. A bare group id
+       is the board's own fee, paid on its own link. `group:row` is a payment
+       between the two of them, made through Connect — the money went to the
+       payee's account and the board's cut was taken by Stripe on the way. */
+    const [id, rowPart] = ref.split(":");
+    if (!/^[a-f0-9]{20}$/.test(id)) return res.json({ ok: true });
+    const row = rowPart === undefined ? -1 : Number(rowPart);
+    if (rowPart !== undefined && !Number.isInteger(row)) return res.json({ ok: true });
+
+    if (row >= 0) {
+      const paid = await change((board) => {
+        const g = board.groups.find((x) => x.id === id);
+        if (!g || !g.deal) return { ok: true };
+        const d = g.deal;
+        if (!Array.isArray(d.plan) || row >= d.plan.length) return { ok: true };
+        d.paid = Array.isArray(d.paid) ? d.paid : [];
+        /* Both halves at once, because Stripe saw the money arrive and that is
+           a better witness than either of them. Once only: Stripe retries a
+           webhook it believes was not received. */
+        if (d.paid.some((r) => r.i === row && r.kind === "confirmed")) return { ok: true };
+        const at = new Date().toISOString();
+        if (!d.paid.some((r) => r.i === row && r.kind === "claimed")) {
+          d.paid.push({ i: row, kind: "claimed", who: d.hires, at });
+        }
+        d.paid.push({ i: row, kind: "confirmed", who: d.provides, at });
+        Object.assign(g, store.cleanGroup(g));
+        return { ok: true, tell: (board.people.find((x) =>
+          g.members.includes(x.by) && x.handle === d.provides) || {}).by || "" };
+      });
+      res.json({ ok: true });
+      if (paid?.tell) tellThem(paid.tell).catch(() => {});
+      return;
+    }
 
     const out = await change((board) => {
       const g = board.groups.find((x) => x.id === id);
@@ -8638,6 +8672,26 @@ app.get("/api/groups", notesOff, async (req, res) => {
          handle so the card can tell whether they are a party to it or a
          witness, without the page having to work that out from faces. */
       deal: g.deal || null,
+      /* HOW THIS DEAL CAN ACTUALLY BE PAID, worked out here because only the
+         server knows whether the payee has set up payouts. "stripe" means one
+         pass through Connect in the method the payer picks; "link" is the
+         payee's own page, which is what everybody had before and what a
+         mainland payee keeps. Empty means neither, and the card says so
+         rather than offering a button that cannot work. */
+      pay: g.deal ? (() => {
+        const them = board.people.find((q) =>
+          g.members.includes(q.by) && q.handle === g.deal.provides);
+        const readable = Array.isArray(g.deal.plan) && g.deal.plan.length
+          && g.deal.plan.every((r) => store.toMinor(r.amount, g.deal.cur));
+        if (stripe.configured() && them?.payee && readable) return "stripe";
+        return g.deal.payTo ? "link" : "";
+      })() : "",
+      /* Whether the reader is the one who needs to set payouts up, and has
+         not. Only ever true for the payee themselves. */
+      needsPayout: Boolean(g.deal && stripe.configured()
+        && (board.people.find((q) => q.by === me) || {}).handle === g.deal.provides
+        && (board.people.find((q) => q.by === me) || {}).where !== "cn"
+        && !(board.people.find((q) => q.by === me) || {}).payee),
       /* Computed here rather than stored, so it is right when the terms are
          edited and cannot be deleted by either side. Null when the board
          names no page to pay it on. */
@@ -8940,6 +8994,138 @@ app.post("/api/group/deal/payto", notesOff, express.json({ limit: "2kb" }), asyn
  *  APPEND-ONLY, like agreeing. A denial does not erase the claim; it sits under
  *  it, which is what the two of them will need if it ever goes wrong.
  */
+/* ---------------------------------------------------------------------------
+ * BEING PAID THROUGH THE BOARD, WITHOUT THE BOARD TOUCHING THE MONEY
+ *
+ * One corridor, built properly: somebody in the mainland paying somebody
+ * abroad, with WeChat or Alipay, in one pass that ends on the payee's own
+ * Stripe account.
+ *
+ * DESTINATION CHARGES AND NOTHING ELSE. The payer's money goes to the payee's
+ * connected account; the board's 2% is taken by Stripe as an application fee
+ * on the way past. Nothing is ever paid to this platform and forwarded — that
+ * is money transmission, and in China it is 二清, illegal outright under State
+ * Council Order 768. See docs/cross-border-payments.md.
+ *
+ * WHO THIS CANNOT REACH, and it is deliberate rather than missing: a payee in
+ * the mainland. Stripe does not support recipients there. They keep the
+ * payee's-own-link flow, which is what this board did before any of this and
+ * what the route card already tells them to use.
+ *
+ * OFF UNLESS BOARD_STRIPE_KEY IS SET.
+ * ------------------------------------------------------------------------ */
+
+/** Where a payer comes back to. Built from the request rather than a setting,
+ *  because the board answers on two names and the right one to return to is
+ *  whichever they left from. */
+const backHere = (req, path) => {
+  const proto = String(req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0];
+  const host = String(req.get("host") || "").replace(/[^A-Za-z0-9.:-]/g, "").slice(0, 253);
+  return proto + "://" + host + path;
+};
+
+/** SETTING UP PAYOUTS, which only the payee themselves can do.
+ *
+ *  Mints an Express account the first time and an onboarding link every time:
+ *  the link is single-use and expires, so storing one would store a thing that
+ *  stops working. Somebody who abandoned it halfway presses again and carries
+ *  on where they were. */
+app.post("/api/pay/onboard", notesOff, express.json({ limit: "1kb" }), async (req, res) => {
+  if (!stripe.configured()) return res.status(400).json({ error: "off" });
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+
+  const board = await store.load(FILE);
+  const mine = board.people.find((q) => q.by === me);
+  if (!mine?.handle) return res.status(400).json({ error: "profile" });
+  /* A MAINLAND PAYEE CANNOT BE ONBOARDED AT ALL, and being told so here beats
+     being walked through four Stripe screens that end in a refusal. */
+  if (mine.where === "cn") return res.status(400).json({ error: "mainland" });
+
+  try {
+    let acct = mine.payee;
+    if (!acct) {
+      const made = await stripe.makePayee({ email: mine.mail || "" });
+      acct = String(made?.id || "");
+      if (!acct) return res.status(502).json({ error: "stripe" });
+      await change((b) => {
+        const row = b.people.find((q) => q.id === mine.id);
+        if (row) row.payee = acct;
+        return { ok: true };
+      });
+    }
+    const link = await stripe.onboardLink({
+      account: acct,
+      refresh: backHere(req, "/groups"),
+      done: backHere(req, "/groups"),
+    });
+    if (!link?.url) return res.status(502).json({ error: "stripe" });
+    res.json({ ok: true, url: link.url });
+  } catch (err) {
+    /* The upstream message verbatim into the log and a plain word to the
+       screen: Stripe's text names the field it disliked and is exactly what is
+       needed here, and is exactly what should not be shown to a member. */
+    console.error("pay/onboard:", err.message);
+    res.status(502).json({ error: "stripe" });
+  }
+});
+
+/** THE CHARGE. Created per press, for one row of one plan, in the method the
+ *  payer already chose on the card. */
+app.post("/api/pay/start", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  if (!stripe.configured()) return res.status(400).json({ error: "off" });
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.group || "");
+  const i = Number(req.body?.i);
+  const method = String(req.body?.method || "card");
+  if (!me || !/^[a-f0-9]{20}$/.test(id) || !Number.isInteger(i) || i < 0) {
+    return res.status(400).json({ error: "no" });
+  }
+  if (!["wechat", "alipay", "card"].includes(method)) return res.status(400).json({ error: "no" });
+
+  const board = await store.load(FILE);
+  const g = board.groups.find((x) => x.id === id);
+  if (!g || !g.deal || !g.members.includes(me)) return res.status(400).json({ error: "no" });
+  const d = g.deal;
+  const mine = board.people.find((q) => q.by === me);
+  if (!mine?.handle) return res.status(400).json({ error: "profile" });
+  /* Only the payer starts a payment. Anybody else pressing this would be
+     paying somebody else's bill, which is not a thing to make easy. */
+  if (mine.handle !== d.hires) return res.status(400).json({ error: "side" });
+  if (!Array.isArray(d.plan) || i >= d.plan.length) return res.status(400).json({ error: "row" });
+
+  const row = d.plan[i];
+  const amount = store.toMinor(row.amount, d.cur);
+  if (!amount) return res.status(400).json({ error: "amount" });
+
+  const payee = board.people.find((q) => g.members.includes(q.by) && q.handle === d.provides);
+  if (!payee?.payee) return res.status(400).json({ error: "payee" });
+
+  /* THE BOARD'S CUT, IN THE SAME UNIT AND ROUNDED DOWN. Up would take a cent
+     more than two per cent, every time, from everybody — small, permanent and
+     exactly the kind of thing that is noticed once and never forgiven. */
+  const fee = Math.floor(amount * store.FEE_PCT / 100);
+
+  try {
+    const session = await stripe.checkout({
+      amount, currency: d.cur, fee,
+      destination: payee.payee,
+      method,
+      /* The room and the row, so the webhook knows what was paid. Both are
+         already public to the two of them and mean nothing to anybody else. */
+      ref: id + ":" + i,
+      done: backHere(req, "/groups?g=" + id),
+      back: backHere(req, "/groups?g=" + id),
+      label: row.label || d.title || "Payment",
+    });
+    if (!session?.url) return res.status(502).json({ error: "stripe" });
+    res.json({ ok: true, url: session.url });
+  } catch (err) {
+    console.error("pay/start:", err.message);
+    res.status(502).json({ error: "stripe" });
+  }
+});
+
 app.post("/api/group/deal/paid", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   const id = String(req.body?.group || "");

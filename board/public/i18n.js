@@ -4871,6 +4871,13 @@ export const STRINGS = {
    * mainland anyway. The names do the work.
    *
    * One line each, and it says the thing that decides it — not how it works. */
+  /* SETTING UP PAYOUTS. Said to the person being paid, once, and it says what
+     it is for rather than naming the company doing it — "connect your Stripe
+     account" is a sentence about our plumbing. */
+  "pay.setUp":         ["To be paid through the board, set up where the money goes.",
+                        "想通过平台收款，先设置收款账户。"],
+  "pay.setUpGo":       ["Set it up", "去设置"],
+  "pay.setUpNo":       ["That did not open — try again", "没打开，再试一次"],
   "pay.how":           ["How do you want to pay?", "想用哪种方式付？"],
   "pay.wechat":        ["WeChat Pay", "微信支付"],
   "pay.wechatWhy":     ["Pay in WeChat, as you would anything else",
@@ -4931,6 +4938,11 @@ export const STRINGS = {
     "Chinese tax applies to work performed in the mainland, so the terms have to say which it is.",
     "在中国大陆完成的工作要按中国的规定纳税，所以条件里必须写清楚是哪一种。",
   ],
+  /* THE CURRENCY, SAID RATHER THAN GUESSED. ¥ is the yuan and it is also the
+     yen — twenty times apart on a screen about money — and HK$, A$ and US$ all
+     end the same. The code is shown beside the symbol so the choice cannot be
+     made by eye alone. */
+  "deal.cur":          ["Currency", "币种"],
   "deal.payerIs":      ["Paying as", "付款方身份"],
   "deal.payerPerson":  ["A person", "个人"],
   "deal.payerCompany": ["A company", "公司"],

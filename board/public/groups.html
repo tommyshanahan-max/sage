@@ -474,6 +474,8 @@
      being read. */
   /* Big rows with names in them. A grid of logos would be smaller, prettier
      and unusable to somebody who cannot see a logo. */
+  .linky{border:0;background:none;padding:0;font:inherit;color:var(--accent);
+    text-decoration:underline;cursor:pointer}
   .ways{display:grid;gap:.5rem;margin:.9rem 0 0}
   .way{display:block;width:100%;text-align:left;padding:.85rem .95rem;
     border:1px solid var(--line);border-radius:.8rem;background:var(--raise);
@@ -1126,6 +1128,12 @@ function dealPin(g) {
     box.append(el("p", "dsay", T("deal.witness")));
   }
 
+  /* THE PAYEE SETS UP THEIR OWN PAYOUTS, and nobody can do it for them:
+     Stripe wants their name, their bank and their identity, and this board
+     should never be the thing holding any of it. Shown only to them, only
+     when they have not, and never to somebody in the mainland, whom Stripe
+     cannot pay at all. */
+  if (g.needsPayout) box.append(payoutSetup(g));
   if (d.plan && d.plan.length) box.append(payPart(g, d));
   /* The route, between the plan and the board's own row: it is about the
      members' money, so it belongs with theirs and not with ours. */
@@ -1210,7 +1218,12 @@ function dealWriter(g, box) {
                   pick("provides", T("pay.sideProvides"), people.find((h) => h !== g.meHandle))));
   form.append(line("title", T("deal.what"), ""));
   form.append(two(line("when", T("deal.when")), line("where", T("deal.where"))));
-  form.append(two(line("fee", T("deal.fee")), line("deposit", T("deal.deposit"))));
+  form.append(two(
+    line("fee", T("deal.fee")),
+    one("cur", T("deal.cur"), [["cny", "CNY ¥"], ["aud", "AUD A$"], ["hkd", "HKD HK$"],
+                               ["usd", "USD $"], ["eur", "EUR €"], ["gbp", "GBP £"],
+                               ["jpy", "JPY ¥"]])));
+  form.append(line("deposit", T("deal.deposit")));
   form.append(two(
     one("doneIn", T("deal.doneIn"), [["out", T("deal.doneOut")], ["cn", T("deal.doneCn")]]),
     one("payerIs", T("deal.payerIs"), [["person", T("deal.payerPerson")], ["company", T("deal.payerCompany")]])));
@@ -1235,7 +1248,7 @@ function dealWriter(g, box) {
     const deal = {
       title: v("title"), hires: v("hires"), provides: v("provides"),
       what: v("title"), when: v("when"), where: v("where"), fee: v("fee"), deposit: v("deposit"),
-      doneIn: v("doneIn"), payerIs: v("payerIs"),
+      doneIn: v("doneIn"), payerIs: v("payerIs"), cur: v("cur"),
       plan: rows.map(([l, a, d]) => ({ label: l.value.trim(), amount: a.value.trim(), due: d.value.trim() }))
         .filter((r) => r.amount),
     };
@@ -1421,6 +1434,28 @@ function routePart(g, d) {
  * line underneath says the one thing that matters: the money is not coming
  * here.
  */
+function payoutSetup(g) {
+  const wrap = el("div", "dwait");
+  wrap.append(document.createTextNode(T("pay.setUp") + " "));
+  const b = el("button", "linky", T("pay.setUpGo"));
+  b.type = "button";
+  b.addEventListener("click", async () => {
+    b.disabled = true;
+    try {
+      const r = await fetch("/api/pay/onboard", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device }),
+      });
+      const j = r.ok ? await r.json() : null;
+      if (j?.url) { location.href = j.url; return; }
+    } catch { /* below */ }
+    b.disabled = false;
+    b.textContent = T("pay.setUpNo");
+  });
+  wrap.append(b);
+  return wrap;
+}
+
 function payHow(g, d, row, to) {
   const back = el("div", "rsheet");
   const card = el("div", "rcard");
@@ -1432,13 +1467,32 @@ function payHow(g, d, row, to) {
     const b = el("button", "way");
     b.type = "button";
     b.append(el("b", null, name), el("span", null, why));
-    b.addEventListener("click", () => {
+    b.addEventListener("click", async () => {
+      /* THROUGH CONNECT WHERE IT CAN BE. The board asks Stripe for a checkout
+         in the method they just picked, and the money goes to the payee's own
+         account with the board's cut taken on the way past. Where it cannot —
+         a mainland payee, or a plan whose amounts are words — this is the
+         payee's own page with the method on the query string, which is what
+         everybody had before. */
+      if (g.pay === "stripe" && row) {
+        b.disabled = true;
+        try {
+          const r = await fetch("/api/pay/start", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device, group: g.id, i: row.i, method: key }),
+          });
+          const j = r.ok ? await r.json() : null;
+          if (j?.url) { location.href = j.url; return; }
+        } catch { /* fall through to the link */ }
+        b.disabled = false;
+      }
       let url = to;
       try {
         const u = new URL(to);
         u.searchParams.set("method", key);
         url = u.href;
       } catch { /* not a URL we can add to; send them as-is */ }
+      if (!url) { back.remove(); return; }
       window.open(url, "_blank", "noopener,noreferrer");
       back.remove();
     });
@@ -1509,10 +1563,10 @@ function payPart(g, d) {
        an unpaid row was a button that recorded a payment they had not made
        yet — and the thing they actually wanted was a link further down the
        card. */
-    if (meHires && !claim && d.payTo) {
+    if (meHires && !claim && (g.pay === "stripe" || d.payTo)) {
       const b = el("button", "go", T("pay.go"));
       b.type = "button";
-      b.addEventListener("click", () => payHow(g, d, row, d.payTo));
+      b.addEventListener("click", () => payHow(g, d, { ...row, i }, d.payTo));
       acts.append(b);
     }
     /* Secondary now that Pay is the blue one: recording a payment is what you

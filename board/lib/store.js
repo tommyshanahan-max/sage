@@ -1857,6 +1857,13 @@ export function cleanPerson(raw) {
     // Which side of the exchange they are standing on, and which side they
     // want. Both fall back to the answer that excludes nobody.
     where: WHERES.includes(raw.where) ? raw.where : "cn",
+    /* THE STRIPE ACCOUNT THEY ARE PAID INTO, where they have set one up.
+       An id and nothing else: the bank details, the identity documents and
+       the risk all live at Stripe, and this board holds a string that names
+       an account it cannot read. Empty for everybody who has not, which is
+       everybody in the mainland — Stripe does not support recipients there,
+       and they are paid on their own link instead. */
+    payee: /^acct_[A-Za-z0-9]{6,32}$/.test(String(raw.payee || "")) ? String(raw.payee) : "",
     wants: WANTS.includes(raw.wants) ? raw.wants : "any",
     why: (raw.state === "published") ? "" : s(raw.why, 400),
     by: s(raw.by, 64),
@@ -2514,6 +2521,36 @@ export function money(shape, n) {
   return shape.pre ? shape.pre + out : shape.post ? out + " " + shape.post : out;
 }
 
+/* ---------------------------------------------------------------------------
+ * WHICH CURRENCY, SAID RATHER THAN GUESSED
+ *
+ * ¥ is the yuan and it is also the yen, and a machine that picks one is wrong
+ * about the other by a factor of twenty on a screen about money. HK$ and A$
+ * and US$ all end in the same character. So the amount stays words — the
+ * payer's own words — and the currency is a separate, explicit choice, made
+ * once when the terms are written.
+ *
+ * It is what makes a charge possible at all: Stripe is told a code and an
+ * integer, and neither can come out of "HK$450,000" on its own.
+ * ------------------------------------------------------------------------ */
+export const CURRENCIES = ["cny", "aud", "hkd", "usd", "eur", "gbp", "jpy"];
+
+/* ZERO-DECIMAL CURRENCIES. Stripe wants the smallest unit, and for most that
+   is cents — 50.00 is 5000. For these there is no smaller unit: ¥5,000 is
+   5000, not 500000. Getting it the usual way round would charge a hundred
+   times too much, once, to somebody real. */
+const WHOLE = new Set(["jpy", "krw", "vnd", "clp", "isk"]);
+
+/** The integer Stripe is given, or null where the amount is not a number.
+ *  Rounds to the smallest unit rather than truncating: a half-cent lost on
+ *  every row is a rounding argument nobody wants to have. */
+export function toMinor(amount, cur) {
+  const m = readMoney(amount);
+  if (!m || !CURRENCIES.includes(cur)) return null;
+  const n = WHOLE.has(cur) ? Math.round(m.n) : Math.round(m.n * 100);
+  return n > 0 ? n : null;
+}
+
 /** What the fee row says, or null when there is nowhere to pay it.
  *  `amount` is a figure when the deal's fee could be read and empty when it
  *  could not — the screen says "2% of the fee" in that case, in words. */
@@ -2623,6 +2660,10 @@ export function cleanDeal(raw) {
      performed or consumed in China. Printed on the terms so the contract says
      it, which is what a bank asks for. */
   if (["cn", "out"].includes(raw.doneIn)) out.doneIn = raw.doneIn;
+  /* The currency every amount on this memo is in. One per deal rather than
+     one per row: a plan whose deposit is in yuan and whose balance is in
+     dollars is two deals wearing one hat. */
+  if (CURRENCIES.includes(raw.cur)) out.cur = raw.cur;
 
   const payTo = cleanPayLink(raw.payTo);
   if (payTo) out.payTo = payTo;
