@@ -4939,9 +4939,9 @@ export const STRINGS = {
   ],
   /* Said in the app instead of the fee, and it carries the address: "open this
      in your browser" without saying which page is a person hunting through a
-     menu. {where} is filled from location.host rather than written in — the
-     app points at thexchange.app, CLAUDE.md says liuxuesheng.io, and a
-     hard-coded guess is wrong on whichever day the other one is right. */
+     menu. {where} is filled from location.host rather than written in: the
+     board answers on two names — thexchange.app and liuxuesheng.io — and the
+     right one to say is whichever this reader actually arrived on. */
   "deal.inBrowser": [
     "Open this room at {where} in your browser to agree the terms.",
     "在浏览器里打开 {where}，进这个房间确认条件。",

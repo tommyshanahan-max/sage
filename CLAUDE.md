@@ -3,8 +3,12 @@
 Two products live in one repo and on one server (`~/tc`, Vultr Tokyo,
 `45.77.8.166`):
 
-- **The Exchange** — `board/`, at `liuxuesheng.io`. A private board where one
+- **The Exchange** — `board/`, at `thexchange.app`. A private board where one
   sentence — *I am a ___ looking for a ___* — decides who you are shown.
+  `liuxuesheng.io` serves the same board and is not a redirect: `board_in`,
+  `board_wait` and `board:device` are host-only, so a 301 would sign every
+  member out at once. Both names, until nobody arrives on the old one. See
+  the domain section of `app/README.md`.
 - **crowdfundme** — `cfm/`, at `crowdfundme.app`. The ledger the share offers
   are written on, and where the pitch decks are served from.
 

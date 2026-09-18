@@ -105,11 +105,13 @@ const OWN = {
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-/* THE HANDOVER, IN ONE PLACE. The board's address has moved once already
-   (docs/beijing.md still says thexchange.app, CLAUDE.md says liuxuesheng.io),
-   and a domain written into four pages is a domain that gets changed in
-   three. */
-const BOARD = process.env.CHINA_BOARD || "https://liuxuesheng.io";
+/* THE HANDOVER, IN ONE PLACE, because a domain written into four pages is a
+   domain that gets changed in three.
+   
+   thexchange.app, settled 18 Sep 2026. liuxuesheng.io serves the same board
+   and always will until nobody arrives on it — but a page being built today
+   should send people to the name the app is compiled against. */
+const BOARD = process.env.CHINA_BOARD || "https://thexchange.app";
 
 /* BOTH LANGUAGES, FROM ONE SOURCE, AND THAT IS THE POINT RATHER THAN A
    CONVENIENCE. A filing describes a website; an English page that says
