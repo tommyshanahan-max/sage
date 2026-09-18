@@ -1728,13 +1728,14 @@ async function payFrame({ secret, pk, row, d, to, how, demo }) {
  * What the payer can do about it is ask, so that is the button. One message
  * into the room they are both standing in, in their own language, rather than
  * a dead end and a grey line of explanation. */
-function payNowhere(g, d) {
+function payNowhere(g, d, why) {
   const back = el("div", "rsheet");
   const card = el("div", "rcard");
   /* No eyebrow. It read "How do you want to pay?" above a line saying there
      is nowhere to pay — the question and its refusal stacked on one card. */
-  card.append(el("h3", "rtitle", T("pay.noWhere", { who: d.provides })));
-  card.append(el("p", "rnote", T("pay.noWhereWhy", { who: d.provides })));
+  card.append(el("h3", "rtitle", T(why || "pay.noWhere", { who: d.provides })));
+  card.append(el("p", "rnote", T(why ? "pay.notReadyWhy" : "pay.noWhereWhy",
+    { who: d.provides })));
 
   const acts = el("div", "racts");
   const ask = el("button", "go", T("pay.askThem"));
@@ -1800,6 +1801,20 @@ function payHow(g, d, row, to) {
             payFrame({ demo: true, row, d, to, how: key });
             return;
           }
+          /* STRIPE WAS THE ROUTE AND STRIPE REFUSED. Do not fall through to
+             the link: the link is the OTHER route, and on a deal that was
+             going through Connect it is whatever happens to be sitting in the
+             field — on a seeded example, a fake address. That is how pressing
+             Pay ended up on somebody's 404: the charge was refused because the
+             payee had not finished setting up, and the board quietly opened a
+             made-up page instead of saying so.
+
+             The commonest reason by far is exactly that, so it is the sentence
+             shown. The payer cannot fix it either way; what they can do is
+             ask, which the sheet below already offers. */
+          back.remove();
+          payNowhere(g, d, "pay.notReady");
+          return;
         } catch { /* fall through to the link */ }
         b.disabled = false;
       }

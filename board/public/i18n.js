@@ -5058,6 +5058,12 @@ export const STRINGS = {
   "pay.noWhereWhy":    ["This board never holds your money, so it cannot take it and wait. Ask {who} to add it and the button will work.",
                         "平台不经手你的钱，所以不能先收着等。让 {who} 填上，这个按钮就能用了。"],
   "pay.askThem":       ["Ask them", "去问一下"],
+  /* Stripe was the route and Stripe refused. Nearly always because the payee
+     started setting up and did not finish. */
+  "pay.notReady":      ["{who} has not finished setting up payments.",
+                        "{who} 的收款还没设置完。"],
+  "pay.notReadyWhy":   ["The money has nowhere to land until they do. Nothing was charged. Ask {who} to finish it and try again.",
+                        "没设置完，钱就没地方到。这次没有扣钱。让 {who} 弄完再试。"],
   "pay.askFailed":     ["That did not send — try again", "没发出去，再试一次"],
   "pay.askText":       ["{who} — where should I send the money? Add it to the deal above and I will pay.",
                         "{who}，钱付到哪？在上面的条件里填一下，我就付。"],
