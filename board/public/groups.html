@@ -594,6 +594,25 @@
   .pslot{flex:1 1 auto;overflow:auto;padding:.7rem}
   .pnote{flex:0 0 auto;margin:0;padding:.6rem .95rem;border-top:1px solid var(--line);
     font-size:.72rem;line-height:1.5;color:var(--muted)}
+  /* THE MEMO LINK, IN THE ROOM. Set apart with a rule above it rather than in
+     a card of its own: it is a thing you do with the deal, not a second
+     subject, and another bordered box on this screen would read as one. */
+  .pshare{margin:1.1rem 0 0;padding:.95rem 0 0;border-top:1px solid var(--hair)}
+  .psh{margin:0 0 .3rem;font-size:.72rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .pblock{display:block;width:100%;margin:.55rem 0 0;font:inherit;
+    font-size:.85rem;line-height:1.6;padding:.7rem .8rem;border-radius:.7rem;
+    border:1px solid var(--line);background:var(--paper);color:var(--ink);
+    resize:vertical}
+  /* .pacts is scoped to .prow, so the share block's row of buttons had no
+     layout at all and sat as three unspaced boxes. Its own row instead, with
+     Copy first and full width: it is the one of the three anybody presses. */
+  .pshare .pacts{display:flex;gap:.45rem;margin:.6rem 0 0;flex-wrap:wrap}
+  .pshare .pacts button{border:1px solid var(--line);background:var(--raise);
+    color:var(--ink-2);font:inherit;font-size:.88rem;padding:.55rem 1rem;
+    border-radius:99px}
+  .pshare .pacts button.go{flex:1 1 100%;border:0;background:var(--accent);
+    color:var(--accent-ink);padding:.7rem 1.2rem}
   /* Above the note and darker than it, because it is the instruction and the
      note is only reassurance. Sits with the code, not with the small print. */
   .pscan{flex:0 0 auto;margin:0;padding:.55rem .95rem;border-top:1px solid var(--line);
@@ -670,6 +689,7 @@ import { atText, atPicker } from "/at.js";
 import { sheet } from "/share.js";
 import { moHear } from "/mo.js";
 import { NATIVE } from "/native.js";
+import { mountCheckout } from "/pay.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -1603,31 +1623,6 @@ function payoutSetup(g) {
   return wrap;
 }
 
-/* Stripe's script, fetched the first time somebody presses a payment method
-   and never before. A board that loads it on every room view is a board
-   telling js.stripe.com who is reading which room, all day, for nothing.
-   The promise is dropped on failure so a second press can try again — on a
-   phone that changed network between the two presses, it will work. */
-let stripeJs = null;
-function loadStripeJs() {
-  if (window.Stripe) return Promise.resolve(window.Stripe);
-  if (stripeJs) return stripeJs;
-  stripeJs = new Promise((ok, no) => {
-    const tag = document.createElement("script");
-    /* THE DAHLIA BUILD, NOT v3. Same file, but Stripe.js reads its version
-       from this path: under v3 initEmbeddedCheckout refuses any session that
-       is not ui_mode=embedded, and the server can no longer make one of those.
-       Under dahlia it takes embedded_page — the version the server pins. */
-    tag.src = "https://js.stripe.com/dahlia/stripe.js";
-    tag.async = true;
-    tag.onload = () => (window.Stripe ? ok(window.Stripe) : no(new Error("no Stripe")));
-    tag.onerror = () => no(new Error("blocked"));
-    document.head.append(tag);
-  });
-  stripeJs.catch(() => { stripeJs = null; });
-  return stripeJs;
-}
-
 /* THE PAYMENT, IN THE ROOM.
  *
  * What this replaces: location.href = session.url, which sent the payer to
@@ -1725,12 +1720,11 @@ async function payFrame({ secret, pk, row, d, to, how, demo }) {
   }
 
   try {
-    const Stripe = await loadStripeJs();
-    /* createEmbeddedCheckoutPage, because under dahlia initEmbeddedCheckout
-       throws "has been removed" before it draws anything. */
-    mounted = await Stripe(pk).createEmbeddedCheckoutPage({ clientSecret: secret });
+    /* The dahlia build and createEmbeddedCheckoutPage both live in pay.js
+       now — the memo page mounts the same checkout and those two lines are
+       the ones it would be expensive to have drift. */
+    mounted = await mountCheckout(slot, { secret, pk });
     wait.remove();
-    mounted.mount(slot);
   } catch (err) {
     stuck();
   }
@@ -1779,6 +1773,113 @@ function payNowhere(g, d, why) {
   back.append(card);
   back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
   document.body.append(back);
+}
+
+
+/* ===========================================================================
+ * SENDING THE TERMS INTO A CHAT
+ * ===========================================================================
+ *
+ * WHAT THIS SOLVES. The payer is in WeChat and is not going to install an app
+ * to settle a bill. Half the time they are not on this board at all. So the
+ * memo goes to them instead of them coming to it — a link they open where
+ * they already are, with Pay on the row that is due.
+ *
+ * WHY A MESSAGE TO PASTE AND NOT A SHARE SHEET. Inside WeChat's own browser a
+ * page may not open one, and outside it a share sheet on a desktop is a menu
+ * of things nobody wants. A block of text between two rules works everywhere
+ * and is what the door's invite already does — see scripts/invite.mjs. That
+ * shape is settled and this follows it rather than inventing a second one.
+ *
+ * THE LINK AND THE CODE ARE ON SEPARATE LINES AND BOTH ARE NEEDED. A memo
+ * says who is dealing with whom and for how much. Forwarded by accident it
+ * must not be a way in, which is the invite's first rule and the reason the
+ * code is typed rather than carried in the address.
+ * ------------------------------------------------------------------------ */
+function shareBlock(g, d) {
+  const box = el("div", "pshare");
+  const live = d.share && new Date(d.share.until) > new Date();
+
+  if (!live) {
+    box.append(el("p", "psh", T("memo.send")));
+    box.append(el("p", "phint", T("memo.sendWhy", {
+      who: g.meHandle === d.hires ? d.provides : d.hires,
+    })));
+    const b = el("button", "", T(d.share ? "memo.sendAgain" : "memo.sendGo"));
+    b.type = "button";
+    b.addEventListener("click", () => mintShare(g, b));
+    box.append(b);
+    return box;
+  }
+
+  box.append(el("p", "psh", T("memo.send")));
+  /* THE WHOLE MESSAGE, READY TO GO, and not three fields to assemble. The
+     rule this board is held to is that a thing needing two steps is a thing
+     not finished — so the link, the code and the deadline arrive as one
+     paste. */
+  const text = T("memo.block", {
+    to: d.share.to, title: d.title || "", url: shareUrl(d.share.t),
+    code: d.share.code,
+  });
+  const pre = el("textarea", "pblock");
+  pre.readOnly = true;
+  pre.rows = 9;
+  pre.value = text;
+  pre.setAttribute("aria-label", T("memo.send"));
+  box.append(pre);
+
+  const acts = el("div", "pacts");
+  const cp = el("button", "go", T("memo.copy"));
+  cp.type = "button";
+  cp.addEventListener("click", () => {
+    cp.textContent = copyText(text) ? T("memo.copied") : T("memo.sendFailed");
+  });
+  acts.append(cp);
+
+  const again = el("button", "", T("memo.sendAgain"));
+  again.type = "button";
+  again.addEventListener("click", () => mintShare(g, again));
+  acts.append(again);
+
+  const off = el("button", "", T("memo.sendOff"));
+  off.type = "button";
+  off.addEventListener("click", () => mintShare(g, off, true));
+  acts.append(off);
+  box.append(acts);
+
+  /* HOW LONG IS LEFT, not when it ends. when() formats a time in the past —
+     it printed "Live until now" for a deadline a day away — and "23h 59m" is
+     the number somebody decides on anyway. */
+  box.append(el("p", "phint", closesIn(d.share.until)));
+  return box;
+}
+
+/* Shared with memo.html, which says the same thing to the person holding the
+   link. Minutes under an hour, because "0h 12m" is a worse sentence. */
+function closesIn(until) {
+  const mins = Math.max(0, Math.floor((new Date(until) - new Date()) / 60000));
+  return mins < 60
+    ? T("memo.closesMins", { n: mins })
+    : T("memo.closesHours", { n: Math.floor(mins / 60), m: mins % 60 });
+}
+
+/* Built here rather than kept on the deal: the address a board is reached at
+   is whatever host the reader arrived on, and this board answers to two names
+   on purpose — a link minted under one and pasted to somebody who only knows
+   the other is a link to a place they have never heard of. */
+const shareUrl = (t) => location.origin + "/d/" + t;
+
+async function mintShare(g, btn, off) {
+  btn.disabled = true;
+  try {
+    const r = await fetch("/api/group/deal/share", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, group: g.id, ...(off ? { off: true } : {}) }),
+    });
+    if (r.ok) { load(); return; }
+  } catch { /* below */ }
+  btn.disabled = false;
+  btn.textContent = T("memo.sendFailed");
 }
 
 function payHow(g, d, row, to) {
@@ -2023,6 +2124,12 @@ function payPart(g, d) {
   } else if (meHires) {
     wrap.append(el("p", "phint", T("pay.noLink", { who: d.provides })));
   }
+
+  /* SENDING THE TERMS OUT OF THE ROOM. Either party, because either of them
+     might be the one who says "here, it's all written down" in the chat they
+     are already in. Never a witness — the server does not send them a share
+     to draw (see dealOut) and would refuse the mint anyway. */
+  if (meHires || mePaid) wrap.append(shareBlock(g, d));
 
   if (mePaid) {
     /* HOW YOU ARE USED TO BEING PAID, asked of the person being paid and

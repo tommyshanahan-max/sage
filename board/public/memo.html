@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+{{DEMO}}
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>The terms</title>
+<!-- WHAT THE PREVIEW CARD MAY SAY, WHICH IS ALMOST NOTHING.
+     This link is pasted into a chat, and WeChat renders the card before
+     anybody taps. Whatever is written here is read by every person in that
+     chat, including the eleven who were not meant to see a fee. So: no names,
+     no amounts, no deal title, and a description that does not even say which
+     two people are dealing. The page behind it asks for a code; the card in
+     front of it must not be a way round that. -->
+<meta name="description" content="Terms of a deal, and a way to pay them.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="交换 · The Exchange">
+<meta property="og:description" content="Somebody sent you the terms of a deal. You will need the code they sent with it.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="robots" content="noindex">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t2:#2A9D63; --t5:#D4485C;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --shadow:0 2px 6px rgba(21,27,40,.07),0 10px 28px rgba(21,27,40,.09);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t2:#3FBE7D; --t5:#F06A7C;
+      --shadow:0 2px 6px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink)}
+  body{font-family:var(--sans);font-size:15px;line-height:1.55;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+  main{max-width:34rem;margin:0 auto;padding:1.4rem 1.15rem 3rem}
+  .brand{display:flex;align-items:center;gap:.55rem;margin:0 0 1rem}
+  .brand img{width:1.4rem;height:1.4rem}
+  .brand span{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted)}
+  .lang{margin-left:auto;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink-2);font:inherit;font-size:.8rem;padding:.25rem .7rem;
+    border-radius:99px}
+  .card{background:var(--raise);border:1px solid var(--line);border-radius:1.1rem;
+    padding:1.2rem 1.15rem;box-shadow:var(--shadow)}
+  .lab{margin:0 0 .35rem;font-size:.72rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  h1{margin:0 0 .2rem;font-size:1.2rem;line-height:1.35}
+  .who{margin:0 0 .9rem;color:var(--muted);font-size:.93rem}
+  .clock{display:inline-block;margin:0 0 .2rem;padding:.3rem .7rem;
+    border-radius:99px;background:var(--accent-soft);color:var(--accent);
+    font-size:.78rem}
+  .clock.soon{background:rgba(212,72,92,.12);color:var(--t5)}
+  hr{border:0;border-top:1px solid var(--hair);margin:.95rem 0}
+  dl{display:grid;grid-template-columns:auto 1fr;gap:.4rem .9rem;margin:0}
+  dt{color:var(--muted);font-size:.86rem}
+  dd{margin:0;font-size:.95rem;white-space:pre-wrap}
+  .prow{display:grid;grid-template-columns:1fr auto;gap:.15rem .7rem;
+    padding:.9rem 0;border-top:1px solid var(--hair)}
+  .pwhat{font-weight:600}
+  .pamt{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+  .pwhen{color:var(--muted);font-size:.84rem}
+  .pchip{justify-self:end;font-size:.72rem;letter-spacing:.06em;
+    text-transform:uppercase;padding:.16rem .6rem;border-radius:99px;
+    background:var(--line);color:var(--ink-2)}
+  .pchip.on{background:rgba(42,157,99,.14);color:var(--t2)}
+  .go{border:0;border-radius:99px;background:var(--accent);color:var(--accent-ink);
+    font:inherit;font-size:1rem;padding:.8rem 1.4rem}
+  .prow .go{grid-column:1/-1;margin:.7rem 0 0;width:100%}
+  .foot{margin:1rem 0 0;font-size:.78rem;line-height:1.5;color:var(--muted)}
+  /* THE CODE GATE. Big field, because it is typed from a chat message by
+     somebody holding the phone in one hand. */
+  .gate{text-align:center;padding:2rem 1.15rem}
+  .gate h2{margin:0 0 .35rem;font-size:1.15rem}
+  .gate p{margin:0 0 1.3rem;color:var(--ink-2);font-size:.92rem}
+  .gate input{width:100%;max-width:13rem;margin:0 auto;display:block;
+    font:inherit;font-size:1.5rem;letter-spacing:.25em;text-align:center;
+    text-transform:uppercase;padding:.7rem .5rem;border-radius:.7rem;
+    border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+  .gate input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;
+    border-color:var(--accent)}
+  .gate .go{margin:1rem 0 0;width:100%;max-width:13rem}
+  button:focus-visible,a:focus-visible{outline:2px solid var(--accent);
+    outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;
+    transition:none!important}}
+  .bad{margin:.9rem 0 0;color:var(--t5);font-size:.88rem;min-height:1.2em}
+  .none{text-align:center;padding:3rem 1.15rem;color:var(--ink-2)}
+  .none b{display:block;color:var(--ink);font-size:1.1rem;margin:0 0 .4rem}
+  /* The payment panel. Same shape as the room's, because it is the same
+     thing: a full-height sheet with a way out at the top. */
+  .pframe{position:fixed;inset:0;z-index:40;background:var(--paper);
+    display:flex;flex-direction:column;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+  .phead{display:flex;align-items:baseline;gap:.55rem;padding:.75rem .95rem;
+    border-bottom:1px solid var(--line);flex:0 0 auto}
+  .phead b{font-size:.95rem;font-weight:600}
+  .phead .psub{font-size:.8rem;color:var(--muted)}
+  .pback{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);
+    background:var(--raise);color:var(--ink-2);font:inherit;font-size:.85rem;
+    padding:.4rem .85rem;border-radius:99px}
+  .pslot{flex:1 1 auto;overflow:auto;padding:.7rem}
+  .pscan{flex:0 0 auto;margin:0;padding:.55rem .95rem;
+    border-top:1px solid var(--line);font-size:.8rem;line-height:1.5;
+    color:var(--ink-2)}
+  .pnote{flex:0 0 auto;margin:0;padding:.6rem .95rem;
+    border-top:1px solid var(--line);font-size:.72rem;line-height:1.5;
+    color:var(--muted)}
+  .pwait{margin:2.5rem auto;max-width:22rem;text-align:center;font-size:.88rem;
+    line-height:1.6;color:var(--ink-2)}
+  .pwait b{display:block;color:var(--ink);font-size:1.02rem;margin:0 0 .35rem}
+  .pwait button{display:block;margin:1rem auto 0}
+  .pdemo{margin:1.2rem auto;max-width:22rem;padding:2.2rem 1.2rem;
+    text-align:center;border:1px dashed var(--line);border-radius:1rem}
+  .pdemo b{display:block;font-size:1.05rem;margin:0 0 .5rem}
+  .pdemo span{display:block;font-size:.88rem;line-height:1.6;color:var(--ink-2)}
+  .pdemo em{display:block;margin:.9rem 0 0;font-size:.78rem;font-style:normal;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  /* The method sheet. */
+  .rsheet{position:fixed;inset:0;z-index:50;background:rgba(21,27,40,.45);
+    display:flex;align-items:flex-end;justify-content:center}
+  .rcard{width:100%;max-width:34rem;background:var(--raise);
+    border-radius:1.1rem 1.1rem 0 0;padding:1.1rem 1.15rem
+    calc(1.1rem + env(safe-area-inset-bottom,0));max-height:88vh;overflow:auto}
+  .rtitle{margin:0 0 .9rem;font-size:1.05rem}
+  .ways{display:grid;gap:.6rem;margin:0 0 .9rem}
+  .way{text-align:left;border:1px solid var(--line);background:var(--paper);
+    color:var(--ink);font:inherit;padding:.8rem .9rem;border-radius:.8rem}
+  .way b{display:block;font-size:1rem;margin:0 0 .15rem}
+  .way span{display:block;font-size:.85rem;color:var(--ink-2)}
+  .racts{display:grid;gap:.5rem;margin:.9rem 0 0}
+  .racts button{border:1px solid var(--line);background:var(--paper);
+    color:var(--ink-2);font:inherit;padding:.75rem 1rem;border-radius:99px}
+</style>
+</head>
+<body>
+<main id="root"></main>
+<script type="module">
+/* THE DEAL MEMO, OUTSIDE THE DOOR
+ * ===========================================================================
+ *
+ * One deal, sent to one person, opened wherever they already are. They read
+ * the terms and they pay the row that is due. There is no board behind this
+ * page: no roster, no rooms, no other deals, and no way to become a member
+ * from here.
+ *
+ * WHAT IT DELIBERATELY WILL NOT DO. Agree, change the terms, or reply. Those
+ * are the app's, and the reason is in the server's header over these routes:
+ * a signature taken from a forwarded link is a signature argued about later.
+ * The foot of the page says so rather than leaving somebody hunting for a
+ * button that is not there.
+ *
+ * WHO THE VIEWER IS. A random id this browser keeps, hashed by the server —
+ * the same shape as the board's device, and deliberately not the same value.
+ * Somebody who is also a member should not be linkable from a memo they were
+ * sent to the rest of what they do here.
+ *
+ * BUILT TO LEAVE. Everything above the fetches is chrome; everything the
+ * server sends has already been through memoView, which is an allowlist. A
+ * standalone version of this keeps the page and swaps two URLs.
+ */
+import { T, when, setLang, pickLang, langButton, lang } from "/i18n.js";
+import { mountCheckout } from "/pay.js";
+
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+const root = document.getElementById("root");
+
+/* The token is the whole address: /d/<16 hex>. Read from the path rather than
+   a query so a link that loses its query string in a chat client still works. */
+const TOKEN = (location.pathname.match(/^\/d\/([a-f0-9]{16})/) || [])[1] || "";
+
+/* BACK FROM A PAYMENT — same race as the room's, same answer. Stripe returns
+   the payer here a second after they pay and the webhook has usually, but not
+   always, landed first. Two quiet re-reads rather than a row that says DUE
+   under somebody who just paid it and gets paid twice. */
+const CAME_BACK = new URLSearchParams(location.search).get("paid") || "";
+
+/* A random id this browser keeps for memos and nothing else. Twenty hex,
+   because that is what the server's hashDevice is fed everywhere else.
+   A private window that refuses storage still works — it simply asks for the
+   code again on the next visit, which is the correct failure. */
+let viewer = "";
+try {
+  viewer = localStorage.getItem("memo:viewer") || "";
+  if (!/^[a-f0-9]{20}$/.test(viewer)) {
+    viewer = [...crypto.getRandomValues(new Uint8Array(10))]
+      .map((b) => b.toString(16).padStart(2, "0")).join("");
+    localStorage.setItem("memo:viewer", viewer);
+  }
+} catch {
+  viewer = [...crypto.getRandomValues(new Uint8Array(10))]
+    .map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+let STATE = null;
+/* WHICH SCREEN TO DRAW AGAIN WHEN THE LANGUAGE CHANGES.
+   It was `draw` on every screen, and `draw` returns immediately with no memo
+   — so pressing 中文 on the code gate changed nothing at all, on the one
+   screen where somebody who reads Chinese is most likely to press it. Each
+   screen says how to redraw itself instead. */
+let repaint = () => {};
+
+function head() {
+  const bar = el("div", "brand");
+  const mark = el("img");
+  mark.src = "/mark.svg";
+  mark.alt = "";
+  bar.append(mark, el("span", null, T("memo.brand")));
+  const slot = el("span", "langslot");
+  bar.append(slot);
+  slot.replaceWith(langButton(() => repaint()));
+  return bar;
+}
+
+/* NOT A DEAD END AND NOT AN APOLOGY. Four things can be wrong with a link and
+   only one of them is the reader's to fix, so each says which it is and what
+   to do — "ask them for a new one" is an action; "invalid link" is not. */
+function gone(why) {
+  repaint = () => gone(why);
+  root.textContent = "";
+  root.append(head());
+  const box = el("div", "none");
+  box.append(el("b", null, T("memo." + why)));
+  box.append(el("p", null, T("memo." + why + "Why")));
+  root.append(box);
+}
+
+function gate(left) {
+  repaint = () => gate(left);
+  root.textContent = "";
+  root.append(head());
+  const box = el("div", "card gate");
+  box.append(el("h2", null, T("memo.gateTitle")));
+  box.append(el("p", null, T("memo.gateWhy")));
+
+  const input = el("input");
+  input.id = "memocode";
+  input.maxLength = 6;
+  input.autocomplete = "one-time-code";
+  input.inputMode = "text";
+  input.setAttribute("aria-label", T("memo.gateTitle"));
+  box.append(input);
+
+  const go = el("button", "go", T("memo.gateGo"));
+  go.type = "button";
+  const bad = el("p", "bad", left != null && left < 5 ? T("memo.codeBad", { left }) : "");
+  const send = async () => {
+    const code = input.value.trim().toUpperCase();
+    if (code.length !== 6) { bad.textContent = T("memo.codeShort"); return; }
+    go.disabled = true;
+    bad.textContent = "";
+    try {
+      const r = await fetch("/api/memo/open", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ t: TOKEN, code, viewer }),
+      });
+      const j = await r.json().catch(() => null);
+      if (r.ok && j?.ok) { STATE = j; draw(); return; }
+      if (j?.error === "code") { gate(j.left); return; }
+      if (j?.error === "full") { gone("full"); return; }
+      gone("gone");
+      return;
+    } catch { bad.textContent = T("memo.codeNet"); }
+    go.disabled = false;
+  };
+  go.addEventListener("click", send);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+
+  box.append(go, bad);
+  root.append(box);
+  input.focus();
+}
+
+/* HOW LONG IS LEFT, IN WORDS SOMEBODY CAN ACT ON. Drawn once per paint rather
+   than ticking: a second-by-second countdown on a page about money reads as
+   pressure, and the number that matters is hours. */
+function clockLine(until) {
+  const left = new Date(until) - new Date();
+  if (left <= 0) return null;
+  const mins = Math.floor(left / 60000);
+  const text = mins < 60
+    ? T("memo.closesMins", { n: mins })
+    : T("memo.closesHours", { n: Math.floor(mins / 60), m: mins % 60 });
+  const chip = el("span", "clock" + (mins < 60 ? " soon" : ""), text);
+  return chip;
+}
+
+function draw() {
+  if (!STATE) return;
+  repaint = draw;
+  const m = STATE.memo;
+  root.textContent = "";
+  root.append(head());
+
+  const card = el("div", "card");
+  card.append(el("p", "lab", T("memo.terms")));
+  card.append(el("h1", null, m.title || T("memo.untitled")));
+  card.append(el("p", "who", T("memo.between", { a: m.hires, b: m.provides })));
+  const clock = clockLine(STATE.until);
+  if (clock) card.append(clock);
+
+  if (m.terms.length) {
+    card.append(el("hr"));
+    const dl = el("dl");
+    for (const [k, v] of m.terms) {
+      dl.append(el("dt", null, T("deal." + k)), el("dd", null, v));
+    }
+    card.append(dl);
+  }
+
+  if (m.plan.length) {
+    card.append(el("hr"));
+    card.append(el("p", "lab", T("memo.plan")));
+    for (const row of m.plan) card.append(planRow(m, row));
+  }
+
+  /* THE TWO SENTENCES AT THE FOOT, and they are the only two. Where the money
+     goes, and what this page is not for. */
+  const foot = el("p", "foot");
+  foot.append(document.createTextNode(T("memo.straight", { who: m.provides })));
+  foot.append(el("br"));
+  foot.append(document.createTextNode(T("memo.appOnly")));
+  card.append(foot);
+
+  root.append(card);
+}
+
+function planRow(m, row) {
+  const r = el("div", "prow");
+  r.append(el("span", "pwhat", row.label || T("memo.plan")),
+           el("span", "pamt", row.amount));
+  if (row.due) r.append(el("span", "pwhen", T("memo.due", { when: row.due })));
+  r.append(el("span", "pchip" + (row.state === "paid" ? " on" : ""),
+    T("memo.chip." + row.state)));
+
+  /* Drawn only where it can do something: a settled row has nothing to pay,
+     and a payee with nowhere for the money to land gets a line instead of a
+     button that opens a refusal. */
+  if (row.state === "due") {
+    if (m.payeeReady) {
+      const b = el("button", "go", T("memo.pay", { amount: row.amount }));
+      b.type = "button";
+      b.addEventListener("click", () => payHow(m, row));
+      r.append(b);
+    } else {
+      const p = el("p", "foot", T("memo.notReady", { who: m.provides }));
+      p.style.gridColumn = "1/-1";
+      r.append(p);
+    }
+  }
+  return r;
+}
+
+function payHow(m, row) {
+  const back = el("div", "rsheet");
+  const card = el("div", "rcard");
+  card.append(el("p", "lab", T("pay.how")));
+  card.append(el("h3", "rtitle", (row.label || "") + " · " + (row.amount || "")));
+
+  const ways = el("div", "ways");
+  const way = (key, name, why) => {
+    const b = el("button", "way");
+    b.type = "button";
+    b.append(el("b", null, name), el("span", null, why));
+    b.addEventListener("click", async () => {
+      b.disabled = true;
+      try {
+        const r = await fetch("/api/memo/pay", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ t: TOKEN, viewer, i: row.i, method: key }),
+        });
+        const j = r.ok ? await r.json() : null;
+        if (j?.secret && j?.pk) {
+          back.remove();
+          payFrame({ secret: j.secret, pk: j.pk, row, m, how: key });
+          return;
+        }
+        if (j?.demo) {
+          back.remove();
+          payFrame({ row, m, how: key, demo: true });
+          return;
+        }
+      } catch { /* below */ }
+      b.disabled = false;
+      b.querySelector("span").textContent = T("memo.payFailed");
+    });
+    ways.append(b);
+  };
+  way("wechat", T("pay.wechat"), T("pay.wechatWhy"));
+  way("alipay", T("pay.alipay"), T("pay.alipayWhy"));
+  way("card", T("pay.card"), T("pay.cardWhy"));
+  card.append(ways);
+  card.append(el("p", "foot", T("pay.howNote", { who: m.provides })));
+
+  const acts = el("div", "racts");
+  const no = el("button", "", T("pay.cancel"));
+  no.type = "button";
+  no.addEventListener("click", () => back.remove());
+  acts.append(no);
+  card.append(acts);
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+}
+
+async function payFrame({ secret, pk, row, m, how, demo }) {
+  const frame = el("div", "pframe");
+  const head2 = el("div", "phead");
+  head2.append(el("b", null, row.label || m.title || ""));
+  if (row.amount) head2.append(el("span", "psub", row.amount));
+  const back = el("button", "pback", T("pay.frameBack"));
+  back.type = "button";
+  head2.append(back);
+
+  const slot = el("div", "pslot");
+  const wait = el("p", "pwait", T("pay.frameWait"));
+  slot.append(wait);
+
+  /* The same line the room draws, for the same reason: on a phone whose
+     handoff into the wallet does not fire, the payer is holding a code on the
+     screen they would have to scan it with. */
+  const scan = (how === "wechat" || how === "alipay")
+    ? el("p", "pscan", T("pay.scanSelf." + how)) : null;
+  const note = el("p", "pnote", T("pay.frameNote", { who: m.provides }));
+  frame.append(head2, slot, ...(scan ? [scan] : []), note);
+  document.body.append(frame);
+
+  let mounted = null;
+  back.addEventListener("click", () => {
+    try { if (mounted) mounted.destroy(); } catch { /* already gone */ }
+    frame.remove();
+    /* Ask the server rather than trusting the screen — the webhook may have
+       landed while the frame was up. */
+    reopen();
+  });
+
+  if (demo) {
+    wait.remove();
+    const box = el("div", "pdemo");
+    box.append(el("b", null, T("pay." + (how || "card"))));
+    box.append(el("span", null, T("pay.demoHere")));
+    box.append(el("em", null, T("pay.demoNot")));
+    slot.append(box);
+    return;
+  }
+
+  try {
+    mounted = await mountCheckout(slot, { secret, pk });
+    wait.remove();
+  } catch {
+    /* STRIPE WAS THE ROUTE AND STRIPE REFUSED. There is no payee link on this
+       page to fall through to — a memo carries no addresses — so it says what
+       happened and leaves them where they were. */
+    slot.textContent = "";
+    const box = el("div", "pwait");
+    box.append(el("b", null, T("pay.frameBlocked")));
+    box.append(el("span", null, T("memo.blockedWhy", { who: m.provides })));
+    slot.append(box);
+  }
+}
+
+/* Re-read without asking for the code: this browser is remembered, so the
+   same route answers with the memo. */
+async function reopen() {
+  try {
+    const r = await fetch("/api/memo/open", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ t: TOKEN, viewer }),
+    });
+    const j = await r.json().catch(() => null);
+    if (r.ok && j?.ok) { STATE = j; draw(); return; }
+    if (j?.error === "code") { gate(); return; }
+    gone(j?.error === "expired" ? "expired" : "gone");
+  } catch { /* leave what is on the screen */ }
+}
+
+setLang(pickLang());
+
+if (!TOKEN) {
+  gone("gone");
+} else {
+  reopen().then(() => {
+    if (CAME_BACK) {
+      setTimeout(reopen, 2000);
+      setTimeout(reopen, 6000);
+    }
+  });
+}
+
+/* Wiped once read, so a reload an hour later is not mistaken for a payment. */
+try {
+  const u = new URL(location.href);
+  if (u.searchParams.has("paid")) {
+    u.searchParams.delete("paid");
+    history.replaceState(null, "", u.pathname + u.search + u.hash);
+  }
+} catch { /* an address bar that will not be rewritten is not worth failing on */ }
+</script>
+</body>
+</html>

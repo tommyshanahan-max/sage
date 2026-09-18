@@ -31,6 +31,7 @@ import { timingSafeEqual, randomUUID, createHmac } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
 import * as store from "./lib/store.js";
+import * as memo from "./lib/memo.js";
 import { translate, configured as translateReady } from "./lib/translate.js";
 import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js";
 import { send as sendMail, configured as mailReady } from "./lib/mail.js";
@@ -417,7 +418,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|api\/memo\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -8782,6 +8783,28 @@ const MO_WATCH = (process.env.BOARD_BUTLER_WATCH
    + " it on either way.").slice(0, 600);
 
 /** The groups this person is in, with who is in them and what was said. */
+/** THE MEMO LINK IS NOT FOR THE WHOLE ROOM.
+ *
+ *  A room can hold more than the two people the deal is between — the
+ *  operator keeps some by hand, and a deal is often struck in a room with a
+ *  third person in it. They may read the memo, because they are standing in
+ *  the room it was pinned in. The share is different: its code opens the deal
+ *  from outside the door and its `saw` list is device hashes, which is nobody
+ *  else's to hold.
+ *
+ *  So: the two parties get the link, the code and the clock, and never the
+ *  viewer list; anybody else gets no share at all, which is also why the room
+ *  draws them no Send button.
+ */
+function dealOut(deal, handle) {
+  if (!deal) return null;
+  if (!deal.share) return deal;
+  const party = handle && [deal.hires, deal.provides].includes(handle);
+  const { share, ...rest } = deal;
+  if (!party) return rest;
+  return { ...rest, share: { t: share.t, code: share.code, to: share.to, until: share.until } };
+}
+
 app.get("/api/groups", notesOff, async (req, res) => {
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
@@ -8807,6 +8830,9 @@ app.get("/api/groups", notesOff, async (req, res) => {
      member's properties, which is the kind of second meaning that goes wrong
      quietly. He is drawn, not stored. */
   const mo = { who: store.MO, handle: MO_NAME, photo: "", bot: true };
+  /* The reader's own handle, read once — dealOut needs it per group and
+     finding it inside the map would be a scan of `people` per room. */
+  const myHandle = (board.people.find((q) => q.by === me) || {}).handle || "";
   const groups = board.groups
     .filter((g) => g.members.includes(me) || (g.guests || []).includes(me))
     .map((g) => ({
@@ -8823,7 +8849,7 @@ app.get("/api/groups", notesOff, async (req, res) => {
          anybody opening this room needs to read. `me` is the reader's own
          handle so the card can tell whether they are a party to it or a
          witness, without the page having to work that out from faces. */
-      deal: g.deal || null,
+      deal: dealOut(g.deal, myHandle),
       /* HOW THIS DEAL CAN ACTUALLY BE PAID, worked out here because only the
          server knows whether the payee has set up payouts. "stripe" means one
          pass through Connect in the method the payer picks; "link" is the
@@ -9257,6 +9283,42 @@ app.post("/api/pay/onboard", notesOff, express.json({ limit: "1kb" }), async (re
 
 /** THE CHARGE. Created per press, for one row of one plan, in the method the
  *  payer already chose on the card. */
+/* ONE CHECKOUT, ASKED FOR FROM TWO PLACES.
+ *
+ * The room asks for it (/api/pay/start) and so does a memo link opened from
+ * outside the door (/api/memo/pay). The two differ entirely in who is allowed
+ * to ask — membership on one, a token and a code on the other — and not at
+ * all in what is asked for. Keeping the money part in one function is the
+ * point: the cut, the rounding and the destination are the three things that
+ * must never quietly differ between two routes, and they did not stay the
+ * same by anybody remembering.
+ *
+ * It does no authorisation of its own. Every caller has already decided the
+ * asker may pay this row.
+ */
+async function startCheckout({ d, i, method, payeeAcct, ref, done }) {
+  const row = d.plan[i];
+  const amount = store.toMinor(row.amount, d.cur);
+  if (!amount) return { error: "amount" };
+  /* THE BOARD'S CUT, IN THE SAME UNIT AND ROUNDED DOWN. Up would take a cent
+     more than two per cent, every time, from everybody — small, permanent and
+     exactly the kind of thing that is noticed once and never forgiven. */
+  const fee = Math.floor(amount * store.FEE_PCT / 100);
+  try {
+    const session = await stripe.checkout({
+      amount, currency: d.cur, fee,
+      destination: payeeAcct,
+      method, ref, done,
+      label: row.label || d.title || "Payment",
+    });
+    if (!session?.client_secret) return { error: "stripe" };
+    return { secret: session.client_secret, pk: STRIPE_PK };
+  } catch (err) {
+    console.error("checkout:", err.message);
+    return { error: "stripe" };
+  }
+}
+
 app.post("/api/pay/start", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
   if (!stripe.configured() && !PAY_DEMO) return res.status(400).json({ error: "off" });
   const me = hashDevice(String(req.body?.device || ""), SALT);
@@ -9286,40 +9348,232 @@ app.post("/api/pay/start", notesOff, express.json({ limit: "2kb" }), async (req,
   const payee = board.people.find((q) => g.members.includes(q.by) && q.handle === d.provides);
   if (!payee?.payee) return res.status(400).json({ error: "payee" });
 
-  /* THE BOARD'S CUT, IN THE SAME UNIT AND ROUNDED DOWN. Up would take a cent
-     more than two per cent, every time, from everybody — small, permanent and
-     exactly the kind of thing that is noticed once and never forgiven. */
-  const fee = Math.floor(amount * store.FEE_PCT / 100);
-
   /* Everything above this line is the real thing — who is asking, which side
      of the deal they are on, whether the row exists and reads as money, who
      the payee is and whether they can be paid. Only the call to Stripe is
      skipped. */
   if (!stripe.configured()) return res.json({ ok: true, demo: true, method });
 
-  try {
-    const session = await stripe.checkout({
-      amount, currency: d.cur, fee,
-      destination: payee.payee,
-      method,
-      /* The room and the row, so the webhook knows what was paid. Both are
-         already public to the two of them and mean nothing to anybody else. */
-      ref: id + ":" + i,
-      done: backHere(req, "/groups?g=" + id + "&paid={CHECKOUT_SESSION_ID}"),
-      label: row.label || d.title || "Payment",
-    });
-    if (!session?.client_secret) return res.status(502).json({ error: "stripe" });
-    /* THE PUBLISHABLE KEY GOES DOWN WITH THE SECRET, not baked into the page.
-       It is public by design, but a page that carries it always is a page
-       telling every reader this board takes money — including the readers on
-       boards where it does not. It travels only to somebody who just pressed
-       pay. */
-    res.json({ ok: true, secret: session.client_secret, pk: STRIPE_PK });
-  } catch (err) {
-    console.error("pay/start:", err.message);
-    res.status(502).json({ error: "stripe" });
-  }
+  const out = await startCheckout({
+    d, i, method, payeeAcct: payee.payee,
+    /* The room and the row, so the webhook knows what was paid. Both are
+       already public to the two of them and mean nothing to anybody else. */
+    ref: id + ":" + i,
+    done: backHere(req, "/groups?g=" + id + "&paid={CHECKOUT_SESSION_ID}"),
+  });
+  if (out.error) return res.status(out.error === "amount" ? 400 : 502).json(out);
+  /* THE PUBLISHABLE KEY GOES DOWN WITH THE SECRET, not baked into the page.
+     It is public by design, but a page that carries it always is a page
+     telling every reader this board takes money — including the readers on
+     boards where it does not. It travels only to somebody who just pressed
+     pay. */
+  res.json({ ok: true, ...out });
 });
+
+/* ===========================================================================
+ * THE DEAL MEMO, SENT OUT OF THE ROOM
+ * ===========================================================================
+ *
+ * WHAT THIS IS FOR. The payer is in WeChat. They are not going to install an
+ * app to settle a bill, and half the time they are not on this board at all.
+ * So the memo goes to them: a link they open where they already are, the
+ * terms on it, and Pay on the row that is due.
+ *
+ * WHY A LINK AND NOT A PICTURE. The first shape for this was the memo
+ * screenshotted into the chat with Stripe's QR on it, because WeChat reads a
+ * code out of a saved image on a long press. It does — but Stripe mints that
+ * code for one payment and it expires, so a picture is payable for a while
+ * and then it is a photograph of nothing. A link mints a fresh code when it
+ * is opened, which is what makes the shelf life stop mattering.
+ *
+ * WHAT IT CANNOT DO, and this is the part worth defending. It cannot agree to
+ * the terms, change them, or reply. Paying is a thing a person can do from a
+ * link; a signature taken from a forwarded link outside the door is how a
+ * deal gets disputed a year later. Those stay in the app.
+ *
+ * WHAT IT IS NOT ALLOWED TO SEE. memoView in lib/memo.js is an allowlist, not
+ * the deal minus a few fields, so the room, the members, the device hashes,
+ * the payee's account id and the sentences about who said what are all absent
+ * rather than filtered.
+ *
+ * THE LIFT-OUT. lib/memo.js knows nothing about this board — see its header.
+ * Everything board-shaped is in these four routes: finding the deal, deciding
+ * who may mint, and resolving the payee. A standalone version replaces these
+ * and keeps that file.
+ * ------------------------------------------------------------------------ */
+
+/** Find the deal a token belongs to. Linear over the groups, which is the
+ *  same shape every other lookup in this file has and is nothing at this size.
+ *  Returns the group too, because the webhook's ref is keyed on its id. */
+function dealByToken(board, t) {
+  if (!t) return null;
+  for (const g of board.groups) {
+    if (g?.deal?.share?.t === t) return { g, d: g.deal };
+  }
+  return null;
+}
+
+/** MINTING ONE, which either side of the deal may do.
+ *
+ *  Not just the payee: the person who wants the money is usually the one who
+ *  sends the memo, but a producer who has agreed terms and wants them on
+ *  record in the chat is the same act from the other end.
+ *
+ *  A second mint replaces the first. See the note over `share` in cleanDeal —
+ *  two live links to one set of terms is two clocks nobody is watching.
+ */
+app.post("/api/group/deal/share", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = String(req.body?.group || "");
+  if (!me || !/^[a-f0-9]{20}$/.test(id)) return res.status(400).json({ error: "no" });
+  const off = Boolean(req.body?.off);
+
+  const out = await change((board) => {
+    const g = board.groups.find((x) => x.id === id);
+    if (!g || !g.deal || !g.members.includes(me)) return { error: "no" };
+    const d = g.deal;
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine?.handle) return { error: "profile" };
+    if (![d.hires, d.provides].includes(mine.handle)) return { error: "side" };
+
+    if (off) {
+      if (d.share) delete d.share;
+      Object.assign(g, store.cleanGroup(g));
+      return { ok: true, off: true };
+    }
+    /* Addressed to the other side by name, because that is who a memo is for
+       and because the page greets them with it — the same reason the door says
+       "Tom let you in" rather than "You have been invited". */
+    const to = mine.handle === d.hires ? d.provides : d.hires;
+    d.share = memo.newShare({ to });
+    Object.assign(g, store.cleanGroup(g));
+    return { ok: true, share: g.deal.share };
+  });
+  if (out?.error) return res.status(400).json(out);
+  if (out?.off) return res.json({ ok: true, off: true });
+  res.json({
+    ok: true,
+    url: backHere(req, "/d/" + out.share.t),
+    code: out.share.code,
+    until: out.share.until,
+    to: out.share.to,
+  });
+});
+
+/* The page itself, outside the door — see OPEN_PATHS. It carries no memo in
+   its HTML: the token is in the address and the address is forwardable, so
+   everything on it arrives after a code has been given. */
+app.get("/d/:t", (req, res, next) => page("memo.html", req, res, next));
+
+/** OPENING ONE.
+ *
+ *  Throttled on the same map and the same numbers as the front door: five
+ *  wrong codes an hour per browser, against 32^6. A memo is a smaller prize
+ *  than the board and the same arithmetic covers it.
+ */
+app.post("/api/memo/open", express.json({ limit: "1kb" }), async (req, res) => {
+  const viewer = hashDevice(String(req.body?.viewer || ""), SALT);
+  const t = memo.cleanToken(req.body?.t);
+  if (!viewer || !t) return res.status(400).json({ error: "no" });
+
+  const now = Date.now();
+  const key = "memo:" + viewer;
+  const tr = tries.get(key) || { n: 0, at: now };
+  if (tr.at < now - 3600_000) { tr.n = 0; tr.at = now; }
+  if (tr.n >= 5) return res.status(429).json({ error: "slow-down" });
+
+  const board = await store.load(FILE);
+  const found = dealByToken(board, t);
+  /* A token nobody has and an expired one answer the same way on purpose:
+     "gone" tells somebody holding a stale link what they need to know, and
+     tells somebody guessing tokens nothing about which guesses were close. */
+  if (!found) return res.status(404).json({ error: "gone" });
+
+  const got = memo.openShare(found.d.share, { code: req.body?.code, viewer, same: safeEqual });
+  if (got.error) {
+    if (got.error === "code") {
+      tr.n += 1; tr.at = now; tries.set(key, tr);
+      return res.status(400).json({ error: "code", left: Math.max(0, 5 - tr.n) });
+    }
+    return res.status(got.error === "gone" || got.error === "expired" ? 404 : 400).json(got);
+  }
+  tries.delete(key);
+
+  /* Remembered so this browser is never asked again — a memo is read on
+     Tuesday and paid on Friday, and a code demanded twice is a code lost. */
+  if (!found.d.share.saw.includes(viewer)) {
+    await change((b) => {
+      const f = dealByToken(b, t);
+      if (!f) return { ok: true };
+      f.d.share.saw = got.saw;
+      Object.assign(f.g, store.cleanGroup(f.g));
+      return { ok: true };
+    });
+  }
+
+  const payee = board.people.find(
+    (q) => found.g.members.includes(q.by) && q.handle === found.d.provides);
+  res.json({
+    ok: true,
+    to: found.d.share.to,
+    until: found.d.share.until,
+    memo: memo.memoView(found.d, {
+      /* Drawn as payable only when there is somewhere for the money to land
+         AND a payment system behind it. Either missing and the page says so
+         instead of offering a button that opens a refusal. */
+      payeeReady: Boolean(payee?.payee) && (stripe.configured() || PAY_DEMO),
+    }),
+  });
+});
+
+/** PAYING FROM ONE.
+ *
+ *  The same checkout the room asks for, authorised differently: membership
+ *  there, a remembered viewer here. Nothing about the money differs, which is
+ *  why both go through startCheckout.
+ */
+app.post("/api/memo/pay", express.json({ limit: "1kb" }), async (req, res) => {
+  if (!stripe.configured() && !PAY_DEMO) return res.status(400).json({ error: "off" });
+  const viewer = hashDevice(String(req.body?.viewer || ""), SALT);
+  const t = memo.cleanToken(req.body?.t);
+  const i = Number(req.body?.i);
+  const method = String(req.body?.method || "card");
+  if (!viewer || !t || !Number.isInteger(i) || i < 0) return res.status(400).json({ error: "no" });
+  if (!["wechat", "alipay", "card"].includes(method)) return res.status(400).json({ error: "no" });
+
+  const board = await store.load(FILE);
+  const found = dealByToken(board, t);
+  if (!found) return res.status(404).json({ error: "gone" });
+  const { g, d } = found;
+  /* No code here: this viewer gave it already and is remembered. An expired
+     link stops paying even for somebody who opened it while it was alive —
+     the deadline is on the link, not on the reading of it. */
+  if (!memo.shareLive(d.share)) return res.status(404).json({ error: "expired" });
+  if (!d.share.saw.includes(viewer)) return res.status(403).json({ error: "code" });
+  if (!Array.isArray(d.plan) || i >= d.plan.length) return res.status(400).json({ error: "row" });
+  /* A row already settled is not payable twice from a link somebody scrolled
+     back to. The room's own button is guarded by the chip; this is the guard
+     for the copy of the memo sitting in a chat. */
+  if ((d.paid || []).some((r) => r.i === i && r.kind === "confirmed")) {
+    return res.status(400).json({ error: "already" });
+  }
+
+  const payee = board.people.find((q) => g.members.includes(q.by) && q.handle === d.provides);
+  if (!payee?.payee) return res.status(400).json({ error: "payee" });
+  if (!stripe.configured()) return res.json({ ok: true, demo: true, method });
+
+  const out = await startCheckout({
+    d, i, method, payeeAcct: payee.payee,
+    ref: g.id + ":" + i,
+    /* Back to the memo, not to the room — the payer may have no way into the
+       room and landing them at a door they cannot open is worse than no
+       redirect at all. */
+    done: backHere(req, "/d/" + t + "?paid={CHECKOUT_SESSION_ID}"),
+  });
+  if (out.error) return res.status(out.error === "amount" ? 400 : 502).json(out);
+  res.json({ ok: true, ...out });
+});
+
 
 app.post("/api/group/deal/paid", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);

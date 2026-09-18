@@ -4906,6 +4906,72 @@ export const STRINGS = {
   "pay.frameBack":     ["Back", "返回"],
   /* Written for the payer who is already stuck, so it is the move and not an
      explanation of why the move is needed. */
+  /* ---------------------------------------------------------------------
+     THE DEAL MEMO, SENT OUT OF THE ROOM.
+     Written for somebody who is not a member, has never seen this board, and
+     is reading it inside a chat app with one thumb. So: no vocabulary from
+     the rest of the product, and every line is either a fact or a thing to
+     do. Nothing here reassures.
+     --------------------------------------------------------------------- */
+  "memo.brand":        ["The Exchange", "交换"],
+  "memo.terms":        ["The terms of this deal", "这单的条件"],
+  "memo.untitled":     ["The terms", "这单的条件"],
+  "memo.between":      ["{a} hired {b} for this", "{a} 找 {b} 办这件事"],
+  "memo.plan":         ["Payments", "付款安排"],
+  "memo.due":          ["Due {when}", "{when} 付"],
+  "memo.chip.paid":    ["Paid", "已付"],
+  "memo.chip.waiting": ["Waiting", "待确认"],
+  "memo.chip.due":     ["Due", "待付"],
+  "memo.pay":          ["Pay {amount}", "去付 {amount}"],
+  "memo.payFailed":    ["That did not open — try again", "没打开，再试一次"],
+  "memo.straight":     ["The money goes straight to {who}. The board never holds it.",
+                        "钱直接到 {who} 账上，平台不经手。"],
+  /* The one sentence that says what this page is not, and it is here rather
+     than on a button somebody hunts for. Agreeing is a signature and a
+     signature taken from a forwarded link is argued about later. */
+  "memo.appOnly":      ["To agree or change the terms, go back to the app — this page only pays.",
+                        "要同意或改条件，回 App 里说 —— 这里只能付款。"],
+  "memo.notReady":     ["{who} has not finished setting up payments, so this cannot be paid here yet.",
+                        "{who} 的收款还没设置好，暂时不能在这里付。"],
+  /* The clock. Hours, not seconds — a ticking number on a page about money
+     reads as pressure, and hours is the figure somebody acts on. */
+  "memo.closesHours":  ["This link closes in {n}h {m}m", "这个链接 {n} 小时 {m} 分后失效"],
+  "memo.closesMins":   ["This link closes in {n} minutes", "这个链接 {n} 分钟后失效"],
+  /* The gate. */
+  "memo.gateTitle":    ["Enter the code", "输入验证码"],
+  "memo.gateWhy":      ["Six characters, sent with this link.", "六位，跟链接一起发给你的。"],
+  "memo.gateGo":       ["Open the terms", "打开"],
+  "memo.codeBad":      ["Not that one. {left} tries left.", "不对。还能试 {left} 次。"],
+  "memo.codeShort":    ["Six characters.", "六位。"],
+  "memo.codeNet":      ["That did not send — try again", "没发出去，再试一次"],
+  /* The four ways a link is no good, each said as the thing it is. */
+  "memo.gone":         ["This link does not open anything.", "这个链接打不开东西。"],
+  "memo.goneWhy":      ["It may have been withdrawn, or the address is wrong. Ask whoever sent it for a new one.",
+                        "可能已经撤回，或者地址不对。找发给你的人再要一个。"],
+  "memo.expired":      ["This link has closed.", "这个链接已经过期。"],
+  "memo.expiredWhy":   ["They are good for a day. Ask whoever sent it for a new one.",
+                        "链接只有一天有效。找发给你的人再要一个。"],
+  "memo.full":         ["This link has been opened already.", "这个链接已经被人打开过。"],
+  "memo.fullWhy":      ["It opens on two devices and no more. Ask whoever sent it for a new one.",
+                        "一个链接最多两台设备打开。找发给你的人再要一个。"],
+  "memo.blockedWhy":   ["Your network may be blocking it. Ask {who} how else to pay.",
+                        "可能是网络挡住了。问一下 {who} 还能怎么付。"],
+  /* Minting one, in the room. */
+  "memo.send":         ["Send these terms", "把条件发出去"],
+  "memo.sendWhy":      ["A link {who} can open in WeChat, and pay from.",
+                        "{who} 在微信里就能打开、直接付款的链接。"],
+  "memo.sendGo":       ["Make the link", "生成链接"],
+  "memo.sendAgain":    ["Make a new one", "重新生成"],
+  "memo.sendOff":      ["Withdraw it", "撤回"],
+  "memo.sendFailed":   ["That did not work — try again", "没成功，再试一次"],
+  "memo.copy":         ["Copy the message", "复制这段话"],
+  "memo.copied":       ["Copied", "已复制"],
+  /* What gets pasted into the chat. The link and the code on separate lines,
+     because the two travel together and a link alone opens nothing — the
+     same rule as the door's invite, which Tom asked not to be redesigned. */
+  "memo.block":        ["{to} — here are the terms for {title}. You can pay from the same page.\n\n{url}\n\nOpen it and enter:\n{code}\n\nGood for 24 hours.",
+                        "{to} —— {title} 的条件在这里，尾款也可以直接在里面付。\n\n{url}\n\n打开后输入：\n{code}\n\n24 小时内有效。"],
+
   "pay.scanSelf.wechat": ["Can't scan your own screen? Screenshot the code, then long-press it in WeChat.",
                         "扫不了自己的屏幕？截屏，然后在微信里长按那张图。"],
   "pay.scanSelf.alipay": ["Can't scan your own screen? Screenshot the code, then long-press it in Alipay.",

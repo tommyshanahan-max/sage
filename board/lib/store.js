@@ -16,6 +16,7 @@
 import { mkdir, readFile, writeFile, rename, readdir, unlink, access } from "node:fs/promises";
 import { randomUUID, createHash, randomBytes } from "node:crypto";
 import path from "node:path";
+import { cleanShare, MEMO_ALPHABET } from "./memo.js";
 
 /** Where a post can be. Four, and each is a different fact:
  *
@@ -905,6 +906,13 @@ function inHandle(v) {
  * used" can tell somebody whether it was them.
  * ------------------------------------------------------------------------- */
 export const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+/* memo.js carries its own copy so it can leave this repo whole — see the note
+   over MEMO_ALPHABET there. Diverging would mint codes under one alphabet and
+   check them under the other, refusing every one with no error anywhere. */
+if (MEMO_ALPHABET !== CODE_ALPHABET) {
+  throw new Error("memo.js and store.js disagree about the code alphabet");
+}
 
 /** Six characters from that alphabet, uppercased, or "" if it is not one. */
 export const cleanCode = (v) => {
@@ -2731,6 +2739,13 @@ export function cleanDeal(raw) {
    * nothing on these screens has to change. That is why the route is worth
    * writing down now, before the money can follow it. */
   if (PAY_WITH.includes(raw.payWith)) out.payWith = raw.payWith;
+
+  /* THE MEMO LINK, WHEN ONE HAS BEEN MADE.
+     One per deal and replaced rather than added to: a second link to the same
+     terms is two clocks and two codes for one thing, and whoever is holding
+     the older one is holding something nobody remembers issuing. */
+  const share = cleanShare(raw.share);
+  if (share) out.share = share;
 
   const payTo = cleanPayLink(raw.payTo);
   if (payTo) out.payTo = payTo;
