@@ -8859,7 +8859,27 @@ app.post("/api/group/deal", notesOff, express.json({ limit: "8kb" }), async (req
     if (!mine) return { error: "no" };
 
     const raw = req.body?.deal || {};
-    const deal = store.cleanDeal({ ...raw, by: me, at: new Date().toISOString(), agreed: [] });
+    /* WHAT AN EDIT MUST NOT TAKE WITH IT.
+     *
+     * The ticks go, and that is the point — an edit that quietly kept an
+     * agreement would be somebody agreeing to words they never read. But
+     * everything else on this deal happened rather than being written: two
+     * people said a payment was made and arrived, somebody set where the money
+     * goes, somebody sent a reminder. Changing a date is not a reason for any
+     * of that to stop having happened.
+     *
+     * The form sends only the fields it draws, so without this the first edit
+     * to a deal turned a row both of them had signed off as PAID back into DUE
+     * — and there is no way to put that back except by both of them saying it
+     * again. Found by changing a fee on a deal whose deposit was settled. */
+    const before = g.deal || {};
+    const kept = {};
+    for (const f of ["paid", "nudges", "payTo", "payToAt", "feePaid"]) {
+      if (before[f] !== undefined) kept[f] = before[f];
+    }
+    const deal = store.cleanDeal({
+      ...kept, ...raw, by: me, at: new Date().toISOString(), agreed: [],
+    });
     if (!deal) return { error: "sides" };
     /* Both sides have to be people in this room. A memo naming somebody who
        cannot read it is a memo about a person who never agreed to anything. */

@@ -1231,21 +1231,35 @@ function dealPin(g) {
  *  Damon, A$2,400, deposit on signing" is worth pinning; a form that refuses it
  *  until seven boxes are full is a form people close.
  */
-function dealWriter(g, box) {
-  const open = el("button", "dopen", T("deal.write"));
+/** THE FORM, EMPTY OR FILLED WITH WHAT IS ALREADY THERE.
+ *
+ *  `was` is the deal being changed, or null for a new one. It used to be the
+ *  second only: once terms were pinned there was no way to alter them from the
+ *  screen at all, so the two people looking at a memo with a number they had
+ *  not settled on had Agree, Pay, and nothing in between. Somebody sent terms,
+ *  the other wanted one line different, and the board's answer was to argue
+ *  about it in the messages underneath.
+ *
+ *  CHANGING ANY LINE CLEARS BOTH TICKS, which the server does and the form
+ *  says. That is the point of allowing it: an edit that quietly kept an
+ *  agreement would be somebody agreeing to words they never read.
+ */
+function dealWriter(g, box, was) {
+  const first = () => (was ? T("deal.change") : T("deal.write"));
+  const open = el("button", "dopen", first());
   open.type = "button";
   const form = el("div", "dwrite");
   form.hidden = true;
   /* THE TOGGLE CANNOT KEEP THE SUBMIT BUTTON'S WORDS. With the form open there
      were two "Pin the terms" on one screen, one above the form and one under
      it, and only the lower one does anything. Open, this is the way out. */
-  const sync = () => { open.textContent = form.hidden ? T("deal.write") : T("deal.notNow"); };
+  const sync = () => { open.textContent = form.hidden ? first() : T("deal.notNow"); };
   open.addEventListener("click", () => {
     form.hidden = !form.hidden;
     sync();
     if (!form.hidden) form.querySelector("input,select")?.focus();
   });
-  if (wantTerms) {
+  if (wantTerms && !was) {
     wantTerms = false;
     form.hidden = false;
     /* Scrolled to, not focused. Focusing a select on a phone throws the
@@ -1254,7 +1268,7 @@ function dealWriter(g, box) {
   }
   sync();
 
-  form.append(el("p", "wlab", T("deal.pin")));
+  form.append(el("p", "wlab", T(was ? "deal.change" : "deal.pin")));
   const people = g.who.filter((w) => !w.bot && w.handle).map((w) => w.handle);
   const pick = (name, label, value) => {
     const l = el("label", null, label);
@@ -1273,6 +1287,7 @@ function dealWriter(g, box) {
     const l = el("label", null, label);
     const i = el("input");
     i.name = name; i.placeholder = ph || "";
+    if (was && was[name]) i.value = was[name];
     l.append(i);
     return l;
   };
@@ -1287,14 +1302,17 @@ function dealWriter(g, box) {
     for (const [v, t] of opts) {
       const o = el("option", null, t);
       o.value = v;
+      if (was && was[name] === v) o.selected = true;
       sel.append(o);
     }
     l.append(sel);
     return l;
   };
 
-  form.append(two(pick("hires", T("pay.sideHires"), g.meHandle),
-                  pick("provides", T("pay.sideProvides"), people.find((h) => h !== g.meHandle))));
+  form.append(two(
+    pick("hires", T("pay.sideHires"), was ? was.hires : g.meHandle),
+    pick("provides", T("pay.sideProvides"),
+      was ? was.provides : people.find((h) => h !== g.meHandle))));
   form.append(line("title", T("deal.what"), ""));
   form.append(two(line("when", T("deal.when")), line("where", T("deal.where"))));
   form.append(two(
@@ -1323,20 +1341,32 @@ function dealWriter(g, box) {
     if (!plan.hidden) plan.querySelector("input")?.focus();
   });
   form.append(more, plan);
+  /* Set after the rows below decide whether to unfold it. */
+  const syncMore = () => { more.textContent = plan.hidden ? T("deal.split") : T("deal.splitNo"); };
 
   plan.append(el("p", "wlab", T("pay.plan")));
   const rows = [];
+  /* A deal already split into instalments opens with them showing. One row is
+     the fee written back as a row by the pin below, not a plan somebody made,
+     so it stays folded away. */
+  const had = (was && Array.isArray(was.plan)) ? was.plan : [];
+  if (had.length > 1) { plan.hidden = false; }
   for (let i = 0; i < 3; i++) {
     const r = el("div", "prowset");
     const lab = el("input"); lab.placeholder = i === 0 ? T("deal.deposit") : T("pay.rowLabel");
     const amt = el("input"); amt.placeholder = T("pay.rowAmount");
     const due = el("input"); due.placeholder = T("pay.rowDue");
+    if (had.length > 1 && had[i]) {
+      lab.value = had[i].label || ""; amt.value = had[i].amount || ""; due.value = had[i].due || "";
+    }
     r.append(lab, amt, due);
     rows.push([lab, amt, due]);
     plan.append(r);
   }
 
-  const go = el("button", "wgo", T("deal.write"));
+  syncMore();
+
+  const go = el("button", "wgo", T(was ? "deal.save" : "deal.write"));
   go.type = "button";
   go.addEventListener("click", async () => {
     const v = (n) => (form.querySelector(`[name="${n}"]`)?.value || "").trim();
@@ -1987,8 +2017,16 @@ function paintRoom(g) {
   /* THE MEMO, ABOVE EVERYTHING. It is pinned because it is the thing both
      sides will point at in three weeks, and a fact that has to be scrolled
      back to is a fact that gets remembered differently by each of them. */
-  if (g.deal) box.append(dealPin(g));
-  else if (g.who.filter((w) => !w.bot).length >= 2) box.append(dealWriter(g, box));
+  /* THREE THINGS TO DO WITH TERMS SOMEBODY SENT YOU: agree, change, or pay.
+     Agree and Pay were on the memo and Change was not — so the person who
+     wanted one line different had nowhere to say it but the messages
+     underneath, and the terms stayed wrong while they argued. */
+  if (g.deal) {
+    box.append(dealPin(g));
+    if (g.meHandle === g.deal.hires || g.meHandle === g.deal.provides) {
+      box.append(dealWriter(g, box, g.deal));
+    }
+  } else if (g.who.filter((w) => !w.bot).length >= 2) box.append(dealWriter(g, box));
 
   const slot = el("div", "pinslot");
   if (g.hand) box.append(slot);

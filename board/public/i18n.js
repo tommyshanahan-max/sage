@@ -5075,6 +5075,8 @@ export const STRINGS = {
   "deal.trying":       ["Opening a room…", "正在开房间…"],
   "deal.notNow":       ["Not now", "先不写"],
   "deal.split":        ["Paid in instalments", "分期付"],
+  "deal.change":       ["Change the terms", "改条件"],
+  "deal.save":         ["Save the changes", "保存修改"],
   "deal.splitNo":      ["Paid in one", "一次付清"],
   "deal.needProfile":  ["Finish your profile first — the terms need your name on them.",
                         "先把资料填完，条件上要有你的名字。"],
