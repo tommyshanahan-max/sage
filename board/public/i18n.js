@@ -4904,6 +4904,12 @@ export const STRINGS = {
   "pay.frameNote":     ["The money goes straight to {who}. The board never holds it.",
                         "钱直接到 {who} 账上，平台不经手。"],
   "pay.frameBack":     ["Back", "返回"],
+  /* Written for the payer who is already stuck, so it is the move and not an
+     explanation of why the move is needed. */
+  "pay.scanSelf.wechat": ["Can't scan your own screen? Screenshot the code, then long-press it in WeChat.",
+                        "扫不了自己的屏幕？截屏，然后在微信里长按那张图。"],
+  "pay.scanSelf.alipay": ["Can't scan your own screen? Screenshot the code, then long-press it in Alipay.",
+                        "扫不了自己的屏幕？截屏，然后在支付宝里长按那张图。"],
   "pay.inApp":         ["You pay here. The money goes straight to {who} — the board never holds it.",
                         "就在这里付。钱直接到 {who} 账上，平台不经手。"],
   /* Only ever on a board stood up for a look. Says what it is, twice. */

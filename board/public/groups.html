@@ -594,6 +594,10 @@
   .pslot{flex:1 1 auto;overflow:auto;padding:.7rem}
   .pnote{flex:0 0 auto;margin:0;padding:.6rem .95rem;border-top:1px solid var(--line);
     font-size:.72rem;line-height:1.5;color:var(--muted)}
+  /* Above the note and darker than it, because it is the instruction and the
+     note is only reassurance. Sits with the code, not with the small print. */
+  .pscan{flex:0 0 auto;margin:0;padding:.55rem .95rem;border-top:1px solid var(--line);
+    font-size:.8rem;line-height:1.5;color:var(--ink-2)}
   .pwait{margin:2.5rem auto;max-width:22rem;text-align:center;font-size:.88rem;
     line-height:1.6;color:var(--ink-2)}
   .pwait b{display:block;color:var(--ink);font-size:1.02rem;margin:0 0 .35rem}
@@ -1657,7 +1661,21 @@ async function payFrame({ secret, pk, row, d, to, how, demo }) {
   slot.append(wait);
 
   const note = el("p", "pnote", T("pay.frameNote", { who: d.provides }));
-  frame.append(head, slot, note);
+
+  /* SCANNING YOUR OWN SCREEN IS THE ONE CASE NOBODY PLANS FOR. On a desktop
+     Stripe draws a QR and the payer lifts their phone to it, which needs no
+     help from us. On a phone the handoff into WeChat or Alipay usually fires
+     and there is no code at all. When it does not fire — another browser,
+     a webview, a blocked scheme — the payer is left holding a code on the
+     same screen they would have to scan it with, and the camera cannot see
+     itself. The way out is the one Tom filmed: screenshot it, then long-press
+     the picture inside WeChat, which reads a code out of an image. Only for
+     the two wallet routes; a card form has nothing to scan. */
+  const scan = (how === "wechat" || how === "alipay")
+    ? el("p", "pscan", T("pay.scanSelf." + how))
+    : null;
+
+  frame.append(head, slot, ...(scan ? [scan] : []), note);
   document.body.append(frame);
 
   let mounted = null;
