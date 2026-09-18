@@ -108,14 +108,30 @@ export async function payeeReady(account) {
  *  way they wanted to pay before they ever left, and a checkout that then
  *  offers all three again has thrown away the answer and the reason for
  *  asking. */
-export async function checkout({ amount, currency, fee, destination, method, ref, done, back, label }) {
+export async function checkout({ amount, currency, fee, destination, method, ref, done, label }) {
   const kinds = { wechat: "wechat_pay", alipay: "alipay", card: "card" };
   const kind = kinds[method] || "card";
   const body = {
     mode: "payment",
+    /* EMBEDDED, SO THE PAYER NEVER LEAVES THE ROOM. The alternative — a hosted
+       session — is a redirect to checkout.stripe.com, a domain nobody in
+       mainland China has any reason to trust and every reason to be unable to
+       reach. Embedded renders the same form inside a frame on this board, so
+       the address bar still says the board. Stripe's domains still have to
+       resolve for the frame to load; what changes is that a person paying does
+       not watch their app hand them to a foreign company mid-deal.
+
+       Why Stripe's own form and not our fields: WeChat Pay is not one flow. On
+       a desktop it is a QR code, on a phone it is a handoff into the WeChat app
+       and back, and Alipay is a third thing again. That is Stripe's code to get
+       right on three platforms, not ours to reimplement untested. */
+    ui_mode: "embedded",
     client_reference_id: ref,
-    success_url: done,
-    cancel_url: back,
+    /* Embedded takes one return_url in place of success and cancel. Stripe
+       fills in the session id; the room reads it only to know it should look
+       again, never as proof — proof is the webhook, which cannot be forged by
+       somebody editing a query string. */
+    return_url: done,
     payment_method_types: [kind],
     line_items: [{
       quantity: 1,

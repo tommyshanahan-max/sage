@@ -4894,6 +4894,23 @@ export const STRINGS = {
   "pay.cancel":        ["Not now", "先不付"],
   "pay.go":            ["Pay", "去付款"],
 
+  /* The payment happens inside the room. These are the frame around Stripe's
+     form — everything the payer reads that is ours, not theirs. */
+  "pay.frameWait":     ["Bringing up the payment…", "正在调出付款…"],
+  "pay.frameBlocked":  ["The payment form did not load.", "付款页面没打开。"],
+  "pay.frameWhy":      ["Your network may be blocking it. You can still pay {who} directly.",
+                        "可能是网络挡住了。也可以直接付给 {who}。"],
+  "pay.frameGo":       ["Pay them directly instead", "改成直接付"],
+  "pay.frameNote":     ["The money goes straight to {who}. The board never holds it.",
+                        "钱直接到 {who} 账上，平台不经手。"],
+  "pay.frameBack":     ["Back", "返回"],
+  "pay.inApp":         ["You pay here. The money goes straight to {who} — the board never holds it.",
+                        "就在这里付。钱直接到 {who} 账上，平台不经手。"],
+  /* Only ever on a board stood up for a look. Says what it is, twice. */
+  "pay.demoHere":      ["The payment screen opens here, inside the app.",
+                        "付款界面就在这里打开，不跳出去。"],
+  "pay.demoNot":       ["A look, not a payment", "只是看看，不会扣钱"],
+
   "pay.rWork":         ["What for", "服务内容"],
   "route.lab":         ["Getting the money there", "钱怎么付过去"],
   "route.inWise": [

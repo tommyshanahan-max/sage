@@ -12,11 +12,18 @@
  * that `make try` deletes when the server stops, and it never opens a socket
  * to anything.
  *
- * WHO YOU ARE WHEN YOU OPEN IT. Claire — because she is the one who has not
- * agreed yet, so Agree is a button you can press rather than a line of text
- * saying somebody already did. That is done with BOARD_DEMO_DEVICE, the same
- * mechanism the demo board uses, so there is no second way of being somebody
- * to get wrong.
+ * WHO YOU ARE WHEN YOU OPEN IT. Sasha, in Beijing, who is the one paying.
+ *
+ * It used to be Claire, and Claire was the one being paid. That made every
+ * payment screen in the room unreachable from the demo: the payer's buttons
+ * are the payer's, and standing in the payee's shoes you can watch them and
+ * press none of them. The direction this board was built for is money leaving
+ * the mainland, so the person to be is the one it leaves.
+ *
+ * She has also not agreed yet, so Agree is a button rather than a line of text
+ * saying somebody already did. That is BOARD_DEMO_DEVICE, the same mechanism
+ * the demo board uses, so there is no second way of being somebody to get
+ * wrong.
  *
  *   node scripts/try.mjs <dir> <salt>
  */
@@ -50,21 +57,33 @@ const ago = (mins) => new Date(now.getTime() - mins * 60000).toISOString();
    5a5ha... for Sasha — and 's' and 'h' are not hex digits, so those two rows
    were dropped on load while Claire's survived. The room opened with one
    person in it and no error anywhere. */
-const person = (name, id, me, want, where) => ({
+const person = (name, id, me, want, where, payee) => ({
   id, at: ago(600), state: "published", handle: name,
   level: "Just starting", campus: "", goal: "",
   looking: true, say: [{ me, want }], rooms: [], where, wants: "any",
   by: by(name),
+  /* WHERE THE MONEY LANDS, for somebody who has finished Stripe's onboarding.
+     Without it the room offers the payee's own link instead, which is the
+     older path and still the only one for a payee in the mainland. A made-up
+     id is enough to draw every screen; it is not enough to take a payment,
+     and this file never talks to Stripe. */
+  ...(payee ? { payee } : {}),
 });
 
 const board = {
   people: [
-    /* CLAIRE IS OUTSIDE AND SASHA IS IN THE MAINLAND, which is the whole
-       point of this room: it is the case the payment route exists for. Two
-       people in the same place show no route at all, and the screen then
-       looks like the feature is missing rather than not applicable. */
-    person("Claire", "c1a19e00000000000001", "producer", "agent", "out"),
-    person("Sasha", "5a54a000000000000002", "agent", "performer", "cn"),
+    /* SASHA IS IN THE MAINLAND AND PAYS; CLAIRE IS IN AUSTRALIA AND IS PAID.
+       That direction is the whole point of this room. Two people in the same
+       place show no route at all, and the screen then looks like the feature
+       is missing rather than not applicable.
+
+       It used to run the other way — Claire outside paying Sasha in — and
+       that room could never show the payment at all: Stripe does not take on
+       payees in the mainland, so the only thing on screen was the old link.
+       The demo was of the one case the new plumbing cannot serve. */
+    person("Sasha", "5a54a000000000000002", "producer", "screenwriter", "cn"),
+    person("Claire", "c1a19e00000000000001", "screenwriter", "producer", "out",
+           "acct_1PdemoAUonlyForLooking"),
     person("Tom", "70b00000000000000003", "founder", "anybody", "out"),
   ],
   groups: [{
@@ -78,25 +97,33 @@ const board = {
     name: "Macau, March",
     deal: {
       title: "Macau event, 14 March",
-      hires: "Claire",
-      provides: "Sasha",
+      hires: "Sasha",
+      provides: "Claire",
       by: by("Tom"),
       at: ago(55),
-      /* Sasha has agreed and Claire has not, so both halves of the card are on
-         screen at once: one side settled, one side still a button. */
-      agreed: [{ who: "Sasha", at: ago(40) }],
+      /* Claire has agreed and Sasha has not, so both halves of the card are on
+         screen at once: one side settled, one side still a button — and the
+         button is yours, because you are Sasha. */
+      agreed: [{ who: "Claire", at: ago(40) }],
       what: "One named artist, one appearance, 90 minutes on stage",
       where: "Macau",
       when: "14 March, doors 8pm",
       fee: "¥60,000",
       deposit: "50% on agreeing, balance on the night",
-      covers: "Claire pays flights, hotel and ground transport for the artist and one assistant",
+      covers: "Sasha pays flights, hotel and ground transport for the artist and one assistant",
       cancel: "Called off inside 14 days, the deposit is kept",
       /* Read by code rather than by a person: doneIn decides whether Chinese
          tax is mentioned, payerIs decides which way out of the mainland is
          suggested. */
       doneIn: "cn",
       payerIs: "company",
+      /* THE CURRENCY, WRITTEN DOWN, because ¥ alone is two currencies twenty
+         times apart and the room will not guess between yuan and yen. Without
+         it the plan reads as words rather than money and the card quietly
+         drops back to the payee's own link — which is what happened the first
+         time this seed was flipped, and it looked like the payment had been
+         built wrong rather than the seed being short a field. */
+      cur: "cny",
       /* THE NUMBERS ADD UP, and the first version's did not: a HK$450,000
          booking paid in two ¥30,000 instalments. Nobody would say so out
          loud, and anybody looking at the screen would quietly stop trusting
@@ -111,11 +138,11 @@ const board = {
         { label: "Deposit", amount: "¥30,000", due: "on signing" },
         { label: "Balance", amount: "¥30,000", due: "on the night" },
       ],
-      payTo: "https://wise.com/pay/sasha",
+      payTo: "https://wise.com/pay/claire",
       payToAt: ago(4320),
       paid: [
-        { i: 0, kind: "claimed", who: "Claire", at: ago(120) },
-        { i: 0, kind: "confirmed", who: "Sasha", at: ago(90) },
+        { i: 0, kind: "claimed", who: "Sasha", at: ago(120) },
+        { i: 0, kind: "confirmed", who: "Claire", at: ago(90) },
       ],
     },
   }],
@@ -125,6 +152,7 @@ await mkdir(dir, { recursive: true });
 await writeFile(path.join(dir, "board.json"), JSON.stringify(board, null, 2));
 
 console.log("");
-console.log("  Macau, March — Claire, Sasha and Tom, with the terms pinned.");
-console.log("  You are Claire. Sasha has agreed; you have not.");
+console.log("  Macau, March — Sasha, Claire and Tom, with the terms pinned.");
+console.log("  You are Sasha, in Beijing, paying Claire in Australia.");
+console.log("  Claire has agreed; you have not. The balance is still to pay.");
 console.log("");

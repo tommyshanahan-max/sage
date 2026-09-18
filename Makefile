@@ -1573,8 +1573,9 @@ try: ## Open the board on THIS machine, with a room in it, before deploying: mak
 	  trap 'exit 0' INT TERM; \
 	  node scripts/try.mjs "$$dir" "$$salt"; \
 	  ( cd board && exec env BOARD_DIR="$$dir" BOARD_SALT="$$salt" BOARD_INVITE=off PORT="$$port" \
-	      BOARD_DEMO_DEVICE=clairedevice0001 \
+	      BOARD_DEMO_DEVICE=sashadevice00001 \
 	      BOARD_DEAL_FEE_TO="$${FEE_TO:-https://buy.stripe.com/example}" \
+	      BOARD_PAY_DEMO=1 \
 	      node server.nosec.mjs > "$$dir/board.log" 2>&1 ) & pid=$$!; \
 	  for i in $$(seq 1 60); do \
 	    curl -fsS -o /dev/null "http://127.0.0.1:$$port/groups" 2>/dev/null && break; \
@@ -1585,15 +1586,15 @@ try: ## Open the board on THIS machine, with a room in it, before deploying: mak
 	  say() { curl -fsS -o /dev/null -X POST -H 'content-type: application/json' \
 	    -d "{\"device\":\"$$1\",\"group\":\"$$room\",\"text\":\"$$2\"}" \
 	    "http://127.0.0.1:$$port/api/group/say" || true; }; \
-	  say sashadevice00001 "Read it. The 14th works — I have him on hold until Friday."; \
-	  say tomdevice0000001 "Claire, Sasha. Terms are at the top. Both of you tap Agree and I will get out of the way."; \
+	  say clairedevice0001 "Read it. The 14th works — I have him on hold until Friday."; \
+	  say tomdevice0000001 "Sasha, Claire. Terms are at the top. Both of you tap Agree and I will get out of the way."; \
 	  url="http://127.0.0.1:$$port/groups"; \
 	  (command -v open >/dev/null && open "$$url" 2>/dev/null) \
 	    || (command -v xdg-open >/dev/null && xdg-open "$$url" 2>/dev/null) \
 	    || true; \
 	  echo "  $$url"; \
 	  echo; \
-	  echo "  Tap Macau, March. Ctrl-C here when you have seen enough."; \
+	  echo "  Tap Macau, March, then Pay on the balance. Ctrl-C when you have seen enough."; \
 	  echo; \
 	  wait $$pid
 

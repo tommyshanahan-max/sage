@@ -8509,6 +8509,24 @@ const MO_NAME = (process.env.BOARD_BUTLER_NAME || "Mo").slice(0, 24);
    belonging to whoever runs this board — the board still never holds a cent,
    the payer simply has a second person to pay. See feeOf() in lib/store.js. */
 const DEAL_FEE_TO = store.cleanPayLink(process.env.BOARD_DEAL_FEE_TO || "");
+/* Stripe's publishable key. Public by design — it is in the page source of
+   every shop that takes cards — but sent only to somebody who has pressed pay,
+   not baked into the board for everybody to read. Unset, /api/pay/start still
+   answers and the room falls back to the payee's link, as it did before. */
+const STRIPE_PK = (process.env.BOARD_STRIPE_PK || "").trim();
+/* A LOOK, NOT A PAYMENT.
+ *
+ * `make try` sets this so the payer's screens can be walked on a laptop with
+ * no Stripe account, no keys and no connected account — which is the only way
+ * to judge them before a deploy, and judging them before a deploy is the whole
+ * reason `make try` exists.
+ *
+ * It draws a stand-in where Stripe's form goes and says on the screen that it
+ * is one. It cannot take money: there is no key behind it and no account to
+ * take money into. It is never set on the box. Every guard on /api/pay/start —
+ * who is asking, which side they are on, whether the amount is a number —
+ * still runs, so what is skipped is the call to Stripe and nothing else. */
+const PAY_DEMO = process.env.BOARD_PAY_DEMO === "1";
 
 /* WHAT HE SAYS WHEN THE WIRE TRIPS. Stored like anybody else's line, so it is
  * written once in one language rather than being a key the page resolves —
@@ -8683,7 +8701,7 @@ app.get("/api/groups", notesOff, async (req, res) => {
           g.members.includes(q.by) && q.handle === g.deal.provides);
         const readable = Array.isArray(g.deal.plan) && g.deal.plan.length
           && g.deal.plan.every((r) => store.toMinor(r.amount, g.deal.cur));
-        if (stripe.configured() && them?.payee && readable) return "stripe";
+        if ((stripe.configured() || PAY_DEMO) && them?.payee && readable) return "stripe";
         return g.deal.payTo ? "link" : "";
       })() : "",
       /* Whether the reader is the one who needs to set payouts up, and has
@@ -9073,7 +9091,7 @@ app.post("/api/pay/onboard", notesOff, express.json({ limit: "1kb" }), async (re
 /** THE CHARGE. Created per press, for one row of one plan, in the method the
  *  payer already chose on the card. */
 app.post("/api/pay/start", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
-  if (!stripe.configured()) return res.status(400).json({ error: "off" });
+  if (!stripe.configured() && !PAY_DEMO) return res.status(400).json({ error: "off" });
   const me = hashDevice(String(req.body?.device || ""), SALT);
   const id = String(req.body?.group || "");
   const i = Number(req.body?.i);
@@ -9106,6 +9124,12 @@ app.post("/api/pay/start", notesOff, express.json({ limit: "2kb" }), async (req,
      exactly the kind of thing that is noticed once and never forgiven. */
   const fee = Math.floor(amount * store.FEE_PCT / 100);
 
+  /* Everything above this line is the real thing — who is asking, which side
+     of the deal they are on, whether the row exists and reads as money, who
+     the payee is and whether they can be paid. Only the call to Stripe is
+     skipped. */
+  if (!stripe.configured()) return res.json({ ok: true, demo: true, method });
+
   try {
     const session = await stripe.checkout({
       amount, currency: d.cur, fee,
@@ -9114,12 +9138,16 @@ app.post("/api/pay/start", notesOff, express.json({ limit: "2kb" }), async (req,
       /* The room and the row, so the webhook knows what was paid. Both are
          already public to the two of them and mean nothing to anybody else. */
       ref: id + ":" + i,
-      done: backHere(req, "/groups?g=" + id),
-      back: backHere(req, "/groups?g=" + id),
+      done: backHere(req, "/groups?g=" + id + "&paid={CHECKOUT_SESSION_ID}"),
       label: row.label || d.title || "Payment",
     });
-    if (!session?.url) return res.status(502).json({ error: "stripe" });
-    res.json({ ok: true, url: session.url });
+    if (!session?.client_secret) return res.status(502).json({ error: "stripe" });
+    /* THE PUBLISHABLE KEY GOES DOWN WITH THE SECRET, not baked into the page.
+       It is public by design, but a page that carries it always is a page
+       telling every reader this board takes money — including the readers on
+       boards where it does not. It travels only to somebody who just pressed
+       pay. */
+    res.json({ ok: true, secret: session.client_secret, pk: STRIPE_PK });
   } catch (err) {
     console.error("pay/start:", err.message);
     res.status(502).json({ error: "stripe" });

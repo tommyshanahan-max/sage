@@ -571,6 +571,43 @@
   .racts button{flex:1;border:1px solid var(--line);background:var(--raise);color:var(--ink);
     font:inherit;font-size:.85rem;padding:.55rem;border-radius:99px}
   .racts button.go{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+  /* THE PAYMENT, INSIDE THE ROOM.
+     Stripe's form is mounted here as a frame rather than a page the payer is
+     sent to. The old flow redirected to checkout.stripe.com — a foreign
+     domain, mid-deal, to somebody in Beijing who has never heard of it and
+     may not be able to reach it at all. Same form, same three methods, but
+     the address bar still says the board.
+     Full height, not a small centred card: a card form scrolled inside a
+     short box on a phone is how a payment gets abandoned. */
+  .pframe{position:fixed;inset:0;background:var(--paper);z-index:60;
+    display:flex;flex-direction:column;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .phead{display:flex;align-items:baseline;gap:.55rem;padding:.75rem .95rem;
+    border-bottom:1px solid var(--line);flex:0 0 auto}
+  .phead b{font-size:.95rem;font-weight:600}
+  .phead .psub{font-size:.8rem;color:var(--muted)}
+  .pback{margin-left:auto;align-self:center;border:1px solid var(--line);
+    background:var(--raise);color:var(--ink);font:inherit;font-size:.82rem;
+    padding:.4rem .85rem;border-radius:99px}
+  .pslot{flex:1 1 auto;overflow:auto;padding:.7rem}
+  .pnote{flex:0 0 auto;margin:0;padding:.6rem .95rem;border-top:1px solid var(--line);
+    font-size:.72rem;line-height:1.5;color:var(--muted)}
+  .pwait{margin:2.5rem auto;max-width:22rem;text-align:center;font-size:.88rem;
+    line-height:1.6;color:var(--ink-2)}
+  .pwait b{display:block;color:var(--ink);font-size:1.02rem;margin:0 0 .35rem}
+  /* Block, or the button flows into the end of the sentence — "…pay Claire
+     directly. [Pay them directly instead]" on one line, which is how it first
+     came up. .pwait centres its text, and a centred inline run swallows
+     anything inline that follows it. */
+  .pwait span{display:block}
+  .pdemo{margin:1.2rem auto;max-width:22rem;padding:2.2rem 1.2rem;text-align:center;
+    border:2px dashed var(--line);border-radius:.9rem;background:var(--raise)}
+  .pdemo b{display:block;font-size:1.05rem;margin:0 0 .5rem}
+  .pdemo span{display:block;font-size:.88rem;line-height:1.6;color:var(--ink-2)}
+  .pdemo em{display:block;margin:.9rem 0 0;font-size:.78rem;font-style:normal;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .pwait button{display:block;margin:.9rem auto 0;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);font:inherit;font-size:.85rem;padding:.55rem 1.1rem;border-radius:99px}
   @media print{
     body > *:not(.rsheet){display:none !important}
     .rsheet{position:static;background:none;padding:0}
@@ -688,6 +725,21 @@ let PICKED = [], PICKING = false;
  * moved on from. */
 const WITH = new URLSearchParams(location.search).get("with") || "";
 let usedWith = false;
+/* BACK FROM A PAYMENT.
+ *
+ * Stripe sends the payer here when the frame finishes, with the session id on
+ * the query string. It is not proof of anything — anybody can type it — and
+ * nothing here reads it as proof. What tells the board a payment landed is the
+ * webhook, signed, arriving on its own.
+ *
+ * But the webhook and the payer race, and the payer usually wins: they come
+ * back a second after paying and the row still says Due, which reads as "it
+ * did not work" and gets paid twice. So the room quietly asks again, twice,
+ * and the row flips under them without anybody pressing refresh.
+ *
+ * The parameter is then wiped from the address, so a reload later is not
+ * mistaken for another payment. */
+const CAME_BACK = new URLSearchParams(location.search).get("paid") || "";
 /* ADDING SOMEBODY IS ITS OWN SCREEN, NOT A BLOCK UNDER THE CONVERSATION.
  *
  * It lived at the bottom of the room, after the composer, which meant two
@@ -1456,6 +1508,119 @@ function payoutSetup(g) {
   return wrap;
 }
 
+/* Stripe's script, fetched the first time somebody presses a payment method
+   and never before. A board that loads it on every room view is a board
+   telling js.stripe.com who is reading which room, all day, for nothing.
+   The promise is dropped on failure so a second press can try again — on a
+   phone that changed network between the two presses, it will work. */
+let stripeJs = null;
+function loadStripeJs() {
+  if (window.Stripe) return Promise.resolve(window.Stripe);
+  if (stripeJs) return stripeJs;
+  stripeJs = new Promise((ok, no) => {
+    const tag = document.createElement("script");
+    tag.src = "https://js.stripe.com/v3/";
+    tag.async = true;
+    tag.onload = () => (window.Stripe ? ok(window.Stripe) : no(new Error("no Stripe")));
+    tag.onerror = () => no(new Error("blocked"));
+    document.head.append(tag);
+  });
+  stripeJs.catch(() => { stripeJs = null; });
+  return stripeJs;
+}
+
+/* THE PAYMENT, IN THE ROOM.
+ *
+ * What this replaces: location.href = session.url, which sent the payer to
+ * checkout.stripe.com. For a payer in mainland China that is a foreign domain
+ * appearing in the middle of a deal — unrecognised at best, unreachable at
+ * worst — and it is the single thing Tom asked not to happen: the payment has
+ * to be in the app.
+ *
+ * What is still Stripe's: the form inside the frame. WeChat Pay is a QR code
+ * on a desktop and a handoff into the WeChat app on a phone; Alipay is a third
+ * flow again. Reimplementing that with our own fields would be three untested
+ * flows on three platforms handling other people's money.
+ *
+ * IF THE FRAME CANNOT LOAD the payer is not stranded. js.stripe.com blocked,
+ * an ad blocker, a dead network — all land in the same place, which offers the
+ * payee's own page instead. That is what the board did before Connect existed
+ * and it still works.
+ */
+async function payFrame({ secret, pk, row, d, to, how, demo }) {
+  const frame = el("div", "pframe");
+
+  const head = el("div", "phead");
+  head.append(el("b", null, (row && row.label) || d.title || ""));
+  if (row && row.amount) head.append(el("span", "psub", row.amount));
+  const back = el("button", "pback", T("pay.frameBack"));
+  back.type = "button";
+  head.append(back);
+
+  const slot = el("div", "pslot");
+  const wait = el("p", "pwait", T("pay.frameWait"));
+  slot.append(wait);
+
+  const note = el("p", "pnote", T("pay.frameNote", { who: d.provides }));
+  frame.append(head, slot, note);
+  document.body.append(frame);
+
+  let mounted = null;
+  const shut = () => {
+    /* destroy() before the node goes, or Stripe keeps a listener on an iframe
+       that is no longer in the document and warns on the next mount. */
+    try { if (mounted) mounted.destroy(); } catch { /* already gone */ }
+    frame.remove();
+    /* Came back from a payment: ask the server what it thinks rather than
+       trusting the screen. The webhook may have landed while the frame was up. */
+    load();
+  };
+  back.addEventListener("click", shut);
+
+  /* Offered when the frame cannot come up. Not a dead end and not an apology —
+     one button that pays the same person the old way. */
+  const stuck = () => {
+    slot.textContent = "";
+    const box = el("div", "pwait");
+    box.append(el("b", null, T("pay.frameBlocked")));
+    box.append(el("span", null, T("pay.frameWhy", { who: d.provides })));
+    if (to) {
+      const go = el("button", "", T("pay.frameGo"));
+      go.type = "button";
+      go.addEventListener("click", () => {
+        window.open(to, "_blank", "noopener,noreferrer");
+        shut();
+      });
+      box.append(go);
+    }
+    slot.append(box);
+  };
+
+  if (demo) {
+    /* THE STAND-IN, AND IT SAYS SO. Not a payment screen pretending to be
+       one: it names the method, says what Stripe draws in this space, and
+       says in the same breath that nothing here takes money. The point is to
+       be able to judge the frame — the heading, the amount, the way out, the
+       line at the bottom — which is the part that is ours. */
+    wait.remove();
+    const box = el("div", "pdemo");
+    box.append(el("b", null, T("pay." + (how || "card"))));
+    box.append(el("span", null, T("pay.demoHere")));
+    box.append(el("em", null, T("pay.demoNot")));
+    slot.append(box);
+    return;
+  }
+
+  try {
+    const Stripe = await loadStripeJs();
+    mounted = await Stripe(pk).initEmbeddedCheckout({ clientSecret: secret });
+    wait.remove();
+    mounted.mount(slot);
+  } catch (err) {
+    stuck();
+  }
+}
+
 function payHow(g, d, row, to) {
   const back = el("div", "rsheet");
   const card = el("div", "rcard");
@@ -1482,7 +1647,18 @@ function payHow(g, d, row, to) {
             body: JSON.stringify({ device, group: g.id, i: row.i, method: key }),
           });
           const j = r.ok ? await r.json() : null;
-          if (j?.url) { location.href = j.url; return; }
+          if (j?.secret && j?.pk) {
+            back.remove();
+            payFrame({ secret: j.secret, pk: j.pk, row, d, to, how: key });
+            return;
+          }
+          /* A board stood up for a look, with no Stripe behind it. Every
+             guard on the route still ran to get here. */
+          if (j?.demo) {
+            back.remove();
+            payFrame({ demo: true, row, d, to, how: key });
+            return;
+          }
         } catch { /* fall through to the link */ }
         b.disabled = false;
       }
@@ -1607,10 +1783,17 @@ function payPart(g, d) {
     wrap.append(r);
   });
 
-  /* WHERE IT IS SENT. Shown to everybody in the room, editable only by the
-     person being paid — and if it has been changed, the payer is told so
-     before they are anywhere near the link. */
-  if (d.payTo) {
+  /* WHERE IT IS SENT.
+     Only when the payment does NOT happen here. Once Connect is behind the
+     Pay button the money goes through the app, and a line underneath saying
+     "pay them at wise.com — paying happens on their page, not here" is the
+     opposite of what the button above it does. Two instructions, contradicting
+     each other, on the screen where somebody is about to send ¥30,000.
+     The payee's own field is further down and stays either way: it is their
+     fallback, and for a payee in the mainland it is still the only route. */
+  if (g.pay === "stripe") {
+    wrap.append(el("p", "phint", T("pay.inApp", { who: d.provides })));
+  } else if (d.payTo) {
     const line = el("p", "plink");
     line.append(document.createTextNode(T("pay.payVia", { who: d.provides, where: new URL(d.payTo).hostname }) + " "));
     const a = el("a", null, T("pay.open"));
@@ -2358,6 +2541,19 @@ $("back").addEventListener("click", () => {
 setLang(pickLang());
 $("langslot").append(langButton(paint));
 load();
+
+if (CAME_BACK) {
+  /* Two looks, then stop. Stripe's webhook is normally in before the first;
+     the second is for a slow one. Polling past that would be a room that
+     never settles, and the row is one pull-to-refresh away anyway. */
+  setTimeout(load, 2000);
+  setTimeout(load, 6000);
+  try {
+    const u = new URL(location.href);
+    u.searchParams.delete("paid");
+    history.replaceState(null, "", u.pathname + u.search + u.hash);
+  } catch { /* an address we cannot rewrite is one we can leave alone */ }
+}
 </script>
 </body>
 </html>
