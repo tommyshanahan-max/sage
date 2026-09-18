@@ -567,6 +567,8 @@
   .rsaid p{margin:0 0 .2rem}
   .rlaw{margin:.8rem 0 0;padding-top:.7rem;border-top:1px solid var(--line);
     font-size:.72rem;line-height:1.5;color:var(--muted)}
+  .wmore{display:block;width:100%;margin:.6rem 0 0;padding:.6rem;border:1px dashed var(--line);
+    background:none;color:var(--ink-2);font:inherit;font-size:.85rem;border-radius:.7rem}
   .racts{display:flex;gap:.5rem;margin-top:.9rem}
   .racts button{flex:1;border:1px solid var(--line);background:var(--raise);color:var(--ink);
     font:inherit;font-size:.85rem;padding:.55rem;border-radius:99px}
@@ -1306,7 +1308,23 @@ function dealWriter(g, box) {
     one("payerIs", T("deal.payerIs"), [["person", T("deal.payerPerson")], ["company", T("deal.payerCompany")]])));
   form.append(el("p", "whint", T("deal.doneWhy")));
 
-  form.append(el("p", "wlab", T("pay.plan")));
+  /* NINE BOXES NOBODY FILLS, OUT OF THE WAY.
+     Most deals are one payment, and a fee on its own now becomes one — so the
+     instalment table was nine empty inputs standing between the fee and the
+     button, on a phone, every time. It is behind one line for the deals that
+     are genuinely split. Opened, it stays open while the form does. */
+  const more = el("button", "wmore", T("deal.split"));
+  more.type = "button";
+  const plan = el("div", "wplan");
+  plan.hidden = true;
+  more.addEventListener("click", () => {
+    plan.hidden = !plan.hidden;
+    more.textContent = plan.hidden ? T("deal.split") : T("deal.splitNo");
+    if (!plan.hidden) plan.querySelector("input")?.focus();
+  });
+  form.append(more, plan);
+
+  plan.append(el("p", "wlab", T("pay.plan")));
   const rows = [];
   for (let i = 0; i < 3; i++) {
     const r = el("div", "prowset");
@@ -1315,7 +1333,7 @@ function dealWriter(g, box) {
     const due = el("input"); due.placeholder = T("pay.rowDue");
     r.append(lab, amt, due);
     rows.push([lab, amt, due]);
-    form.append(r);
+    plan.append(r);
   }
 
   const go = el("button", "wgo", T("deal.write"));
@@ -1329,13 +1347,31 @@ function dealWriter(g, box) {
       plan: rows.map(([l, a, d]) => ({ label: l.value.trim(), amount: a.value.trim(), due: d.value.trim() }))
         .filter((r) => r.amount),
     };
+    /* A FEE AND NO ROWS IS STILL A THING TO PAY.
+       Somebody writes "Fee ¥30,000", leaves the three payment rows empty
+       because the job is one payment, and pins it — and the memo came back
+       with no Pay button at all, because Pay is drawn per row. The deal read
+       as agreed and unpayable. One row for the whole fee, which is what they
+       said, and they can split it later by editing the terms. */
+    if (!deal.plan.length && deal.fee) {
+      deal.plan = [{ label: T("pay.whole"), amount: deal.fee, due: deal.deposit || "" }];
+    }
     if (deal.hires === deal.provides) { go.textContent = T("deal.sides"); return; }
     go.disabled = true;
     const res = await fetch("/api/group/deal", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ device, group: g.id, deal }),
     });
-    if (res.ok) load(); else { go.disabled = false; go.textContent = T("deal.sides"); }
+    if (res.ok) {
+      /* Back to the memo, not left staring at the form they just sent. The
+         room redraws in place, so without this the only thing that changes on
+         a phone is somewhere above the fold and it reads as nothing having
+         happened. */
+      await load();
+      setTimeout(() => {
+        document.querySelector(".dealpin")?.scrollIntoView({ block: "start", behavior: "smooth" });
+      }, 0);
+    } else { go.disabled = false; go.textContent = T("deal.sides"); }
   });
   form.append(go);
   form.append(el("p", "whint", T("deal.clears")));

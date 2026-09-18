@@ -692,7 +692,7 @@
     display:grid;place-items:center;cursor:pointer}
   .addbtn svg{width:1.15rem;height:1.15rem;fill:none;stroke:currentColor;
     stroke-width:2;stroke-linecap:round}
-  .addbtn[aria-expanded="true"]{background:var(--accent-soft);color:var(--accent)}
+  .addbtn:disabled{background:var(--accent-soft);color:var(--accent);opacity:1}
   /* OPENS UPWARD, because downward is under the keyboard. Rows rather than a
      grid of icons: a label that can be read is worth more than a picture that
      has to be learned, and on this board more than most. */
@@ -819,14 +819,16 @@
     <div class="talk" id="talk"></div>
     <p class="left" id="tleft" hidden></p>
     <p class="shut" id="tshut" hidden></p>
-    <!-- WHAT ELSE YOU CAN DO HERE, behind a + beside the box — the place every
-         phone keeps it, so nobody has to be told. It opens upward because a
-         panel that opens downward is a panel under the keyboard. -->
+    <!-- THE + IS BESIDE THE BOX, the place every phone keeps it, so nobody has
+         to be told. It pins the terms directly; this panel held the one button
+         that used to stand between the + and the only thing behind it, and now
+         holds only the reason when it cannot. It opens upward because a panel
+         that opens downward is a panel under the keyboard. -->
     <div class="addsheet" id="tadd" hidden>
       <button id="tterms" type="button"></button>
     </div>
     <div class="write" id="twrite" hidden>
-      <button class="addbtn" id="taddbtn" type="button" aria-expanded="false">
+      <button class="addbtn" id="taddbtn" type="button">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       </button>
       <textarea id="tbox" rows="1" maxlength="600"></textarea>
@@ -2666,64 +2668,43 @@ function drawThread(t) {
   const addSheet = $("tadd");
   const terms = $("tterms");
   if (addBtn && addSheet) {
-    /* THE LABELS ARE SET HERE AND NOT IN THE MARKUP. The button arrived with
+    /* THE + DOES THE THING. It used to open a panel with one button in it,
+       and that button said the same words the + is for — a tap, a screen and
+       a second decision to reach the only thing behind it. If a second thing
+       is ever added here the panel comes back; with one, it is a toll.
+
+       THE LABEL IS SET HERE AND NOT IN THE MARKUP. The button arrived with
        data-t="deal.write" on it, which nothing in this repo reads — so it said
        "Pin the terms" in English on a board half of whose members read
        Chinese, and said it silently. */
-    addBtn.setAttribute("aria-label", T("note.more"));
-    if (terms) terms.textContent = T("deal.write");
+    addBtn.setAttribute("aria-label", T("deal.write"));
+    if (terms) terms.hidden = true;
+    addSheet.hidden = true;
+
     /* NOT ON A THREAD WITH SOMEBODY WHO IS NOT ON THE BOARD YET.
        A waiting-room thread's `who` is "w:<id>", not a person id, and the
-       route takes twenty hex characters — so the + appeared, Pin the terms
-       came back "no", and the button did nothing at all. There is nothing to
-       fix on the route: two people cannot pin terms before one of them has
-       been let in. The + simply does not belong on that thread. */
+       route takes twenty hex characters — so the + appeared, the press came
+       back "no", and nothing happened. There is nothing to fix on the route:
+       two people cannot pin terms before one of them has been let in. */
     const realPerson = /^[a-f0-9]{20}$/.test(String(t.who || ""));
-    const canTerms = Boolean((last.canAnswer || last.open) && realPerson);
-    addBtn.hidden = !canTerms;
-    if (!canTerms) addSheet.hidden = true;
-    addBtn.onclick = () => {
-      const open = addSheet.hidden;
-      addSheet.hidden = !open;
-      addBtn.setAttribute("aria-expanded", open ? "true" : "false");
-    };
-    /* Escape and a tap anywhere else close it, because a panel that can only
-       be closed by the button that opened it is a panel people leave open. */
-    document.addEventListener("click", (e) => {
-      if (addSheet.hidden) return;
-      if (addSheet.contains(e.target) || addBtn.contains(e.target)) return;
-      addSheet.hidden = true;
-      addBtn.setAttribute("aria-expanded", "false");
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key !== "Escape" || addSheet.hidden) return;
-      addSheet.hidden = true;
-      addBtn.setAttribute("aria-expanded", "false");
-      addBtn.focus();
-    });
-  }
-  if (terms) {
+    addBtn.hidden = !((last.canAnswer || last.open) && realPerson);
+
     /* IT HAS TO SAY WHEN IT CANNOT.
      *
-     * This caught every failure, re-enabled the button and said nothing. On
-     * screen that is a button that does not work: you press Pin the terms, the
-     * panel sits there, and there is no way to find out that the board wanted
-     * a finished profile first, or that this thread is one you cannot write
-     * in. Reported as "it doesn't do anything", which is exactly what it did.
-     *
-     * The reason goes under the button rather than in an alert, because an
-     * alert on a phone is a thing to dismiss before you can read what is
-     * behind it. */
+     * This caught every failure and said nothing, so pressing it looked like
+     * a button that does not work — which is how it was reported. The panel
+     * that used to hold the button now holds the reason, and only appears
+     * when there is one. Under the +, not in an alert: an alert on a phone is
+     * a thing to dismiss before you can read what is behind it. */
     const say = (key) => {
-      let line = addSheet && addSheet.querySelector(".addwhy");
-      if (!line && addSheet) {
-        line = el("p", "addwhy");
-        addSheet.append(line);
-      }
-      if (line) line.textContent = T(key);
+      addSheet.hidden = false;
+      let line = addSheet.querySelector(".addwhy");
+      if (!line) { line = el("p", "addwhy"); addSheet.append(line); }
+      line.textContent = T(key);
     };
-    terms.onclick = async () => {
-      terms.disabled = true;
+
+    addBtn.onclick = async () => {
+      addBtn.disabled = true;
       say("deal.trying");
       try {
         const r = await fetch("/api/note/terms", {
@@ -2731,10 +2712,9 @@ function drawThread(t) {
           body: JSON.stringify({ device, id: t.who }),
         });
         const d = await r.json().catch(() => null);
-        /* ?g= is how that page opens one room; a #hash would land on the list. */
-        /* &terms=1 opens the form on arrival. Without it the room greets them
-           with a button saying "Pin the terms" — the same words they just
-           pressed to get there, which reads as the first press having failed. */
+        /* ?g= is how that page opens one room; a #hash would land on the list.
+           &terms=1 opens the form on arrival, so the room does not greet them
+           with a button saying the words they just pressed. */
         if (r.ok && d?.id) {
           location.href = "/groups?g=" + encodeURIComponent(d.id) + "&terms=1";
           return;
@@ -2745,7 +2725,7 @@ function drawThread(t) {
       } catch {
         say("deal.offline");
       }
-      terms.disabled = false;
+      addBtn.disabled = false;
     };
   }
 

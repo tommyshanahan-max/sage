@@ -5016,6 +5016,8 @@ export const STRINGS = {
   "pay.sideHires":     ["Paying", "出钱方"],
   "pay.sideProvides":  ["Doing the work", "干活方"],
   "pay.rowLabel":      ["What for", "名目"],
+  /* The one row a fee with no payment plan becomes. */
+  "pay.whole":         ["The fee", "全款"],
   "pay.rowAmount":     ["How much", "金额"],
   "pay.rowDue":        ["When", "什么时候"],
   "pay.none":          ["No payment plan on this one.", "这单没有分期安排。"],
@@ -5062,6 +5064,8 @@ export const STRINGS = {
   /* What the + says when it cannot. It used to say nothing at all. */
   "deal.trying":       ["Opening a room…", "正在开房间…"],
   "deal.notNow":       ["Not now", "先不写"],
+  "deal.split":        ["Paid in instalments", "分期付"],
+  "deal.splitNo":      ["Paid in one", "一次付清"],
   "deal.needProfile":  ["Finish your profile first — the terms need your name on them.",
                         "先把资料填完，条件上要有你的名字。"],
   "deal.shut":         ["You cannot write in this thread.", "这个对话你发不了消息。"],
