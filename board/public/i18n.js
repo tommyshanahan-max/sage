@@ -4963,9 +4963,8 @@ export const STRINGS = {
                         "可能是网络挡住了。问一下 {who} 还能怎么付。"],
   /* Minting one, in the room. */
   "memo.send":         ["Send these terms", "把条件发出去"],
-  "memo.sendWhy":      ["A link {who} can open in WeChat, and pay from.",
-                        "{who} 在微信里就能打开、直接付款的链接。"],
-  "memo.sendGo":       ["Make the link", "生成链接"],
+  "memo.sendTo":       ["To {who}, to open in WeChat", "发给 {who}，在微信里打开"],
+  "memo.making":       ["Making it…", "正在生成…"],
   "memo.sendAgain":    ["Make a new one", "重新生成"],
   "memo.sendOff":      ["Withdraw it", "撤回"],
   "memo.sendFailed":   ["That did not work — try again", "没成功，再试一次"],

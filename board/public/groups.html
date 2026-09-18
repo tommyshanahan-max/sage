@@ -583,10 +583,21 @@
     font-size:.72rem;line-height:1.5;color:var(--muted)}
   .wmore{display:block;width:100%;margin:.6rem 0 0;padding:.6rem;border:1px dashed var(--line);
     background:none;color:var(--ink-2);font:inherit;font-size:.85rem;border-radius:.7rem}
-  .racts{display:flex;gap:.5rem;margin-top:.9rem}
-  .racts button{flex:1;border:1px solid var(--line);background:var(--raise);color:var(--ink);
+  /* THIS IS THE BUG THAT MADE A BUTTON READ "P a y" DOWN THE SCREEN.
+     `flex:1` is `flex:1 1 0%` — a basis of nothing — so with enough siblings
+     in a narrow row every button shrinks below the width of its own text and
+     the text breaks one character per line. Two buttons never showed it;
+     four did, and so did a row on a 390px phone. `1 1 auto` measures the
+     words first, a floor stops the squeeze, and the row wraps rather than
+     crushing. */
+  .racts{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.9rem}
+  .racts button{flex:1 1 auto;min-width:6.5rem;
+    border:1px solid var(--line);background:var(--raise);color:var(--ink);
     font:inherit;font-size:.85rem;padding:.55rem;border-radius:99px}
   .racts button.go{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+  /* The one anybody presses gets its own line above the rest. */
+  .racts button.go:first-child{flex:1 1 100%}
+  .pblock + .racts button.go{flex:1 1 100%}
   /* THE PAYMENT, INSIDE THE ROOM.
      Stripe's form is mounted here as a frame rather than a page the payer is
      sent to. The old flow redirected to checkout.stripe.com — a foreign
@@ -608,25 +619,16 @@
   .pslot{flex:1 1 auto;overflow:auto;padding:.7rem}
   .pnote{flex:0 0 auto;margin:0;padding:.6rem .95rem;border-top:1px solid var(--line);
     font-size:.72rem;line-height:1.5;color:var(--muted)}
-  /* THE MEMO LINK, IN THE ROOM. Set apart with a rule above it rather than in
-     a card of its own: it is a thing you do with the deal, not a second
-     subject, and another bordered box on this screen would read as one. */
-  .pshare{margin:1.1rem 0 0;padding:.95rem 0 0;border-top:1px solid var(--hair)}
-  .psh{margin:0 0 .3rem;font-size:.72rem;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--muted)}
+  /* SEND THESE TERMS, beside Change the terms and under the card. Solid
+     where that one is dashed: sending a memo is an ordinary thing to do and
+     changing agreed terms is not. */
+  .dsend{display:block;width:100%;margin:0 0 .55rem;padding:.7rem;
+    border:1px solid var(--line);border-radius:99px;background:var(--raise);
+    color:var(--ink);font:inherit;font-size:.95rem}
   .pblock{display:block;width:100%;margin:.55rem 0 0;font:inherit;
     font-size:.85rem;line-height:1.6;padding:.7rem .8rem;border-radius:.7rem;
     border:1px solid var(--line);background:var(--paper);color:var(--ink);
     resize:vertical}
-  /* .pacts is scoped to .prow, so the share block's row of buttons had no
-     layout at all and sat as three unspaced boxes. Its own row instead, with
-     Copy first and full width: it is the one of the three anybody presses. */
-  .pshare .pacts{display:flex;gap:.45rem;margin:.6rem 0 0;flex-wrap:wrap}
-  .pshare .pacts button{border:1px solid var(--line);background:var(--raise);
-    color:var(--ink-2);font:inherit;font-size:.88rem;padding:.55rem 1rem;
-    border-radius:99px}
-  .pshare .pacts button.go{flex:1 1 100%;border:0;background:var(--accent);
-    color:var(--accent-ink);padding:.7rem 1.2rem}
   /* Above the note and darker than it, because it is the instruction and the
      note is only reassurance. Sits with the code, not with the small print. */
   .pscan{flex:0 0 auto;margin:0;padding:.55rem .95rem;border-top:1px solid var(--line);
@@ -1804,58 +1806,79 @@ function payNowhere(g, d, why) {
 }
 
 
-/* ===========================================================================
- * SENDING THE TERMS INTO A CHAT
- * ===========================================================================
+/* ONE PRESS, AND THE MESSAGE IS IN YOUR HAND.
  *
- * WHAT THIS SOLVES. The payer is in WeChat and is not going to install an app
- * to settle a bill. Half the time they are not on this board at all. So the
- * memo goes to them instead of them coming to it — a link they open where
- * they already are, with Pay on the row that is due.
+ * It used to be a block sitting open in the deal card: a heading, a line of
+ * explanation, a button, and once the link existed a text area and three more
+ * buttons — permanent furniture in the middle of the payment plan for a thing
+ * done once.
  *
- * WHY A MESSAGE TO PASTE AND NOT A SHARE SHEET. Inside WeChat's own browser a
- * page may not open one, and outside it a share sheet on a desktop is a menu
- * of things nobody wants. A block of text between two rules works everywhere
- * and is what the door's invite already does — see scripts/invite.mjs. That
- * shape is settled and this follows it rather than inventing a second one.
+ * Now it is one button beside Change the terms, and pressing it does the whole
+ * job: mints the link if there is not a live one, and opens the message ready
+ * to copy. Nobody presses Make the link and then looks for what to do next.
  *
- * THE LINK AND THE CODE ARE ON SEPARATE LINES AND BOTH ARE NEEDED. A memo
- * says who is dealing with whom and for how much. Forwarded by accident it
- * must not be a way in, which is the invite's first rule and the reason the
- * code is typed rather than carried in the address.
- * ------------------------------------------------------------------------ */
-function shareBlock(g, d) {
-  const box = el("div", "pshare");
-  const live = d.share && new Date(d.share.until) > new Date();
+ * "The entire page can just be shared" — Tom, and he is right about what this
+ * is. It is this page, sent. What it cannot be is the room's own address:
+ * that is behind the door, and a memo naming two people and a fee is not a
+ * thing to hand to whoever a link reaches. So the link is the memo and only
+ * the memo, and the code beside it is what stops a forward being a way in.
+ */
+function shareOpen(g, d) {
+  const b = el("button", "dsend", T("memo.send"));
+  b.type = "button";
+  b.addEventListener("click", async () => {
+    const live = d.share && new Date(d.share.until) > new Date();
+    if (live) { shareSheet(g, d.share, d); return; }
+    b.disabled = true;
+    b.textContent = T("memo.making");
+    try {
+      const r = await fetch("/api/group/deal/share", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, group: g.id }),
+      });
+      const j = r.ok ? await r.json() : null;
+      if (j?.ok) {
+        /* The sheet opens off the answer rather than off a redraw: load() is
+           a round trip and this is the one moment somebody is waiting. */
+        shareSheet(g, { t: j.url.split("/d/")[1], code: j.code, to: j.to, until: j.until }, d);
+        b.disabled = false;
+        b.textContent = T("memo.send");
+        load();
+        return;
+      }
+    } catch { /* below */ }
+    b.disabled = false;
+    b.textContent = T("memo.sendFailed");
+  });
+  return b;
+}
 
-  if (!live) {
-    box.append(el("p", "psh", T("memo.send")));
-    /* No why-line. "Send these terms" above it and "Make the link" below it
-       are two thirds of the same sentence already. */
-    const b = el("button", "", T(d.share ? "memo.sendAgain" : "memo.sendGo"));
-    b.type = "button";
-    b.addEventListener("click", () => mintShare(g, b));
-    box.append(b);
-    return box;
-  }
+function shareSheet(g, share, d) {
+  const back = el("div", "rsheet");
+  const card = el("div", "rcard");
+  card.append(el("p", "rlab", T("memo.send")));
+  card.append(el("h3", "rtitle", T("memo.sendTo", { who: share.to })));
 
-  box.append(el("p", "psh", T("memo.send")));
   /* THE WHOLE MESSAGE, READY TO GO, and not three fields to assemble. The
      rule this board is held to is that a thing needing two steps is a thing
      not finished — so the link, the code and the deadline arrive as one
-     paste. */
+     paste. The shape is the door's invite: a block between two rules, the
+     link and the code on separate lines. That is settled and this follows it
+     rather than inventing a second one. */
   const text = T("memo.block", {
-    to: d.share.to, title: d.title || "", url: shareUrl(d.share.t),
-    code: d.share.code,
+    to: share.to, title: d.title || "", url: shareUrl(share.t), code: share.code,
   });
   const pre = el("textarea", "pblock");
   pre.readOnly = true;
-  pre.rows = 9;
+  /* Eleven, not nine: the block is eight lines but the link and the first
+     sentence both wrap on a phone, and the last line — the one that says how
+     long it is good for — was cut off. */
+  pre.rows = 11;
   pre.value = text;
   pre.setAttribute("aria-label", T("memo.send"));
-  box.append(pre);
+  card.append(pre);
 
-  const acts = el("div", "pacts");
+  const acts = el("div", "racts");
   const cp = el("button", "go", T("memo.copy"));
   cp.type = "button";
   cp.addEventListener("click", () => {
@@ -1872,13 +1895,21 @@ function shareBlock(g, d) {
   off.type = "button";
   off.addEventListener("click", () => mintShare(g, off, true));
   acts.append(off);
-  box.append(acts);
+
+  const no = el("button", "", T("pay.cancel"));
+  no.type = "button";
+  no.addEventListener("click", () => back.remove());
+  acts.append(no);
+  card.append(acts);
 
   /* HOW LONG IS LEFT, not when it ends. when() formats a time in the past —
      it printed "Live until now" for a deadline a day away — and "23h 59m" is
      the number somebody decides on anyway. */
-  box.append(el("p", "phint", closesIn(d.share.until)));
-  return box;
+  card.append(el("p", "rnote", closesIn(share.until)));
+
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
 }
 
 /* Shared with memo.html, which says the same thing to the person holding the
@@ -1903,7 +1934,13 @@ async function mintShare(g, btn, off) {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ device, group: g.id, ...(off ? { off: true } : {}) }),
     });
-    if (r.ok) { load(); return; }
+    if (r.ok) {
+      const j = await r.json().catch(() => null);
+      btn.closest(".rsheet")?.remove();
+      if (j?.ok && !j.off) shareSheet(g, { t: j.url.split("/d/")[1], code: j.code, to: j.to, until: j.until }, g.deal);
+      load();
+      return;
+    }
   } catch { /* below */ }
   btn.disabled = false;
   btn.textContent = T("memo.sendFailed");
@@ -2156,12 +2193,6 @@ function payPart(g, d) {
     wrap.append(el("p", "phint", T("pay.noLink", { who: d.provides })));
   }
 
-  /* SENDING THE TERMS OUT OF THE ROOM. Either party, because either of them
-     might be the one who says "here, it's all written down" in the chat they
-     are already in. Never a witness — the server does not send them a share
-     to draw (see dealOut) and would refuse the mint anyway. */
-  if (meHires || mePaid) wrap.append(shareBlock(g, d));
-
   if (mePaid) {
     /* HOW YOU ARE USED TO BEING PAID, asked of the person being paid and
        nobody else. The link box only appears for the one route that needs a
@@ -2253,6 +2284,14 @@ function paintRoom(g) {
   if (g.deal) {
     box.append(dealPin(g));
     if (g.meHandle === g.deal.hires || g.meHandle === g.deal.provides) {
+      /* SENDING IT AND CHANGING IT ARE THE SAME KIND OF THING and now sit
+         together, under the card rather than inside it.
+         It was a titled block in the middle of the payment plan — between
+         what has been paid and what the board charges — which is where Tom
+         found it and said it was in the wrong place. It was: sending the
+         memo is something you do to the whole deal, like changing it, not a
+         step in the plan. */
+      box.append(shareOpen(g, g.deal));
       box.append(dealWriter(g, box, g.deal));
     }
   } else if (g.who.filter((w) => !w.bot).length >= 2) box.append(dealWriter(g, box));
