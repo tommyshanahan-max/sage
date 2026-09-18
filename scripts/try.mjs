@@ -88,7 +88,7 @@ const board = {
       what: "One named artist, one appearance, 90 minutes on stage",
       where: "Macau",
       when: "14 March, doors 8pm",
-      fee: "HK$450,000",
+      fee: "¥60,000",
       deposit: "50% on agreeing, balance on the night",
       covers: "Claire pays flights, hotel and ground transport for the artist and one assistant",
       cancel: "Called off inside 14 days, the deposit is kept",
@@ -97,7 +97,12 @@ const board = {
          suggested. */
       doneIn: "cn",
       payerIs: "company",
-      /* One row settled and one still due, so both halves of every state are
+      /* THE NUMBERS ADD UP, and the first version's did not: a HK$450,000
+         booking paid in two ¥30,000 instalments. Nobody would say so out
+         loud, and anybody looking at the screen would quietly stop trusting
+         every other number on it.
+
+         One row settled and one still due, so both halves of every state are
          on screen at once: a receipt to open and a payment to claim. Written
          in yuan so the ¥50,000 rule has something to decide on — in another
          currency the card gives both rules, which is also worth seeing but is
