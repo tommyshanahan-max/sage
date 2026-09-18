@@ -84,17 +84,28 @@ export function form(obj, prefix = "", out = new URLSearchParams()) {
  * and the shape of every call is fixed until somebody changes that line. */
 const VERSION = (process.env.BOARD_STRIPE_VERSION || "").trim();
 
-async function call(path, body, extra = {}) {
+/* A CEILING ON EVERY CALL. Without one, a request that stalls is a Pay press
+   that never answers: in the sandbox run one request from node sat for more
+   than two minutes while the same request by curl came back in three seconds,
+   and Stripe had created the session all along. Twenty seconds is far past
+   any honest answer and short enough that the room can say something. */
+const PATIENCE = 20_000;
+
+async function call(path, body, extra = {}, { json: asJson = false } = {}) {
   if (!KEY) throw new Error("stripe is not configured");
-  const res = await fetch(API + path, {
+  /* A path that names its own API version ("/v2/...") is taken as written;
+     everything else is v1, which is still where most of Stripe lives. */
+  const url = path.startsWith("/v2/") ? "https://api.stripe.com" + path : API + path;
+  const res = await fetch(url, {
     method: body ? "POST" : "GET",
     headers: {
       Authorization: "Bearer " + KEY,
       ...(VERSION ? { "Stripe-Version": VERSION } : {}),
-      ...(body ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+      ...(body ? { "Content-Type": asJson ? "application/json" : "application/x-www-form-urlencoded" } : {}),
       ...extra,
     },
-    body: body ? form(body).toString() : undefined,
+    body: body ? (asJson ? JSON.stringify(body) : form(body).toString()) : undefined,
+    signal: AbortSignal.timeout(PATIENCE),
   });
   const text = await res.text();
   let json = null;
@@ -108,15 +119,39 @@ async function call(path, body, extra = {}) {
 }
 
 /** A connected account for somebody being paid. Express, so Stripe collects
- *  and holds their bank details and identity rather than this board. */
+ *  and holds their bank details and identity rather than this board.
+ *
+ *  THROUGH ACCOUNTS V2, BECAUSE V1 IS SHUT. This was POST /v1/accounts, and on
+ *  an account opened in 2026 Stripe refuses it under every API version tried
+ *  (dahlia, clover, 2024-06-20): "Stripe no longer recommends Accounts v1 for
+ *  new Connect integrations." It is an account setting, not a version, so the
+ *  pin above does not bring it back. The v2 id is an ordinary acct_ id and
+ *  every v1 call below — account links, GET /v1/accounts — still takes it.
+ *
+ *  v2 is JSON, not a form, and it refuses any request without a Stripe-Version
+ *  ("You need to provide an API version header"), so BOARD_STRIPE_VERSION is
+ *  required here rather than optional.
+ *
+ *  `recipient` is v2's name for the transfers capability — the only thing a
+ *  destination charge needs from a payee. Fees and losses sit with the
+ *  application because that is where a destination charge puts them anyway
+ *  (see the risk note at the top); saying otherwise here would be the same
+ *  wrong sentence in a new place.
+ *
+ *  AU when no country is given: an AU platform can transfer to AU accounts
+ *  only (country_specs/AU, supported_transfer_countries), so any other
+ *  country is an account that can never be paid from here. */
 export async function makePayee({ country, email }) {
-  return call("/accounts", {
-    type: "express",
-    country: country || undefined,
-    email: email || undefined,
-    capabilities: { transfers: { requested: true } },
-    business_type: "individual",
-  });
+  if (!VERSION) throw new Error("BOARD_STRIPE_VERSION is not set; Accounts v2 requires it");
+  return call("/v2/core/accounts", {
+    contact_email: email || undefined,
+    dashboard: "express",
+    identity: { country: (country || "au").toLowerCase(), entity_type: "individual" },
+    configuration: {
+      recipient: { capabilities: { stripe_balance: { stripe_transfers: { requested: true } } } },
+    },
+    defaults: { responsibilities: { fees_collector: "application", losses_collector: "application" } },
+  }, {}, { json: true });
 }
 
 /** Where the payee goes to finish setting up, and where they come back to.
@@ -172,8 +207,12 @@ export async function checkout({ amount, currency, fee, destination, method, ref
        Why Stripe's own form and not our fields: WeChat Pay is not one flow. On
        a desktop it is a QR code, on a phone it is a handoff into the WeChat app
        and back, and Alipay is a third thing again. That is Stripe's code to get
-       right on three platforms, not ours to reimplement untested. */
-    ui_mode: "embedded",
+       right on three platforms, not ours to reimplement untested.
+
+       "embedded_page", not "embedded": the old name is refused from dahlia
+       on ("no longer supported. Use `embedded_page` instead"). The page has
+       to mount it with createEmbeddedCheckoutPage — see payFrame. */
+    ui_mode: "embedded_page",
     client_reference_id: ref,
     /* Embedded takes one return_url in place of success and cancel. Stripe
        fills in the session id; the room reads it only to know it should look

@@ -1610,7 +1610,11 @@ function loadStripeJs() {
   if (stripeJs) return stripeJs;
   stripeJs = new Promise((ok, no) => {
     const tag = document.createElement("script");
-    tag.src = "https://js.stripe.com/v3/";
+    /* THE DAHLIA BUILD, NOT v3. Same file, but Stripe.js reads its version
+       from this path: under v3 initEmbeddedCheckout refuses any session that
+       is not ui_mode=embedded, and the server can no longer make one of those.
+       Under dahlia it takes embedded_page — the version the server pins. */
+    tag.src = "https://js.stripe.com/dahlia/stripe.js";
     tag.async = true;
     tag.onload = () => (window.Stripe ? ok(window.Stripe) : no(new Error("no Stripe")));
     tag.onerror = () => no(new Error("blocked"));
@@ -1704,7 +1708,9 @@ async function payFrame({ secret, pk, row, d, to, how, demo }) {
 
   try {
     const Stripe = await loadStripeJs();
-    mounted = await Stripe(pk).initEmbeddedCheckout({ clientSecret: secret });
+    /* createEmbeddedCheckoutPage, because under dahlia initEmbeddedCheckout
+       throws "has been removed" before it draws anything. */
+    mounted = await Stripe(pk).createEmbeddedCheckoutPage({ clientSecret: secret });
     wait.remove();
     mounted.mount(slot);
   } catch (err) {
