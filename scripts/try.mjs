@@ -50,18 +50,22 @@ const ago = (mins) => new Date(now.getTime() - mins * 60000).toISOString();
    5a5ha... for Sasha — and 's' and 'h' are not hex digits, so those two rows
    were dropped on load while Claire's survived. The room opened with one
    person in it and no error anywhere. */
-const person = (name, id, me, want) => ({
+const person = (name, id, me, want, where) => ({
   id, at: ago(600), state: "published", handle: name,
   level: "Just starting", campus: "", goal: "",
-  looking: true, say: [{ me, want }], rooms: [], where: "hk", wants: "any",
+  looking: true, say: [{ me, want }], rooms: [], where, wants: "any",
   by: by(name),
 });
 
 const board = {
   people: [
-    person("Claire", "c1a19e00000000000001", "producer", "agent"),
-    person("Sasha", "5a54a000000000000002", "agent", "performer"),
-    person("Tom", "70b00000000000000003", "founder", "anybody"),
+    /* CLAIRE IS OUTSIDE AND SASHA IS IN THE MAINLAND, which is the whole
+       point of this room: it is the case the payment route exists for. Two
+       people in the same place show no route at all, and the screen then
+       looks like the feature is missing rather than not applicable. */
+    person("Claire", "c1a19e00000000000001", "producer", "agent", "out"),
+    person("Sasha", "5a54a000000000000002", "agent", "performer", "cn"),
+    person("Tom", "70b00000000000000003", "founder", "anybody", "out"),
   ],
   groups: [{
     /* Twenty hex characters, which is what cleanGroup insists on. A shorter
@@ -88,6 +92,26 @@ const board = {
       deposit: "50% on agreeing, balance on the night",
       covers: "Claire pays flights, hotel and ground transport for the artist and one assistant",
       cancel: "Called off inside 14 days, the deposit is kept",
+      /* Read by code rather than by a person: doneIn decides whether Chinese
+         tax is mentioned, payerIs decides which way out of the mainland is
+         suggested. */
+      doneIn: "cn",
+      payerIs: "company",
+      /* One row settled and one still due, so both halves of every state are
+         on screen at once: a receipt to open and a payment to claim. Written
+         in yuan so the ¥50,000 rule has something to decide on — in another
+         currency the card gives both rules, which is also worth seeing but is
+         not the interesting one. */
+      plan: [
+        { label: "Deposit", amount: "¥30,000", due: "on signing" },
+        { label: "Balance", amount: "¥30,000", due: "on the night" },
+      ],
+      payTo: "https://wise.com/pay/sasha",
+      payToAt: ago(4320),
+      paid: [
+        { i: 0, kind: "claimed", who: "Claire", at: ago(120) },
+        { i: 0, kind: "confirmed", who: "Sasha", at: ago(90) },
+      ],
     },
   }],
 };

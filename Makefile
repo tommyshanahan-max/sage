@@ -1546,9 +1546,22 @@ try: ## Open the board on THIS machine, with a room in it, before deploying: mak
 	@command -v node >/dev/null || { \
 	  echo "No node on this machine, and the board is a node program."; \
 	  echo "Run it where you run 'make listing'."; exit 1; }
+	@# IT WILL NOT RESET OVER UNCOMMITTED WORK, and that is not caution: the
+	@# first version did, and ate an hour of edits to this very file the first
+	@# time it was run on a machine that had any. A look at a page is never
+	@# worth somebody's working tree.
+	@#
+	@# A FAILED FETCH MUST NOT STOP THE LOOK either, the same as app-state.
+	@# GitHub over TLS times out from where Tom works, and a bad minute on that
+	@# network is not a reason to be unable to open a page on this machine.
 	@branch=$$(git rev-parse --abbrev-ref HEAD); \
-	  echo "  fetching origin/$$branch"; \
-	  git fetch origin "$$branch" -q && git reset --hard -q "origin/$$branch"
+	  if [ -n "$$(git status --porcelain)" ]; then \
+	    echo "  (uncommitted changes here — showing them rather than fetching)"; \
+	  elif git fetch origin "$$branch" -q 2>/dev/null; then \
+	    git reset --hard -q "origin/$$branch"; echo "  fetched origin/$$branch"; \
+	  else \
+	    echo "  (could not reach GitHub — showing what is on this disk)"; \
+	  fi
 	@test -d board/node_modules || { \
 	  echo "  installing what the board needs (once on this machine)"; \
 	  npm install --prefix board --silent --no-audit --no-fund; }
@@ -1560,7 +1573,9 @@ try: ## Open the board on THIS machine, with a room in it, before deploying: mak
 	  trap 'exit 0' INT TERM; \
 	  node scripts/try.mjs "$$dir" "$$salt"; \
 	  ( cd board && exec env BOARD_DIR="$$dir" BOARD_SALT="$$salt" BOARD_INVITE=off PORT="$$port" \
-	      BOARD_DEMO_DEVICE=clairedevice0001 node server.nosec.mjs > "$$dir/board.log" 2>&1 ) & pid=$$!; \
+	      BOARD_DEMO_DEVICE=clairedevice0001 \
+	      BOARD_DEAL_FEE_TO="$${FEE_TO:-https://buy.stripe.com/example}" \
+	      node server.nosec.mjs > "$$dir/board.log" 2>&1 ) & pid=$$!; \
 	  for i in $$(seq 1 60); do \
 	    curl -fsS -o /dev/null "http://127.0.0.1:$$port/groups" 2>/dev/null && break; \
 	    sleep 0.25; \
