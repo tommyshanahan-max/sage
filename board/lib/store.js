@@ -2462,6 +2462,27 @@ export function cleanPayLink(raw) {
  * ------------------------------------------------------------------------ */
 export const FEE_PCT = 2;
 
+/* WHAT THE PAYER IS ACTUALLY CHARGED, AND WHY IT IS NOT 2%.
+ *
+ * Surcharging is finished: Australia removes card surcharging on 1 October
+ * 2026, Stripe switches it off the same day, and WeChat Pay and Alipay never
+ * allowed it. So the processing cost cannot be added at the till — it has to
+ * be inside the price, or it comes out of the 2%.
+ *
+ * Grossed up at the WeChat Pay / Alipay rate through Stripe Australia, which
+ * is 2.9% plus 2% for the currency conversion: charge = net / 0.951. Two per
+ * cent net is therefore 2.103% charged, which is the "about 2.1%" this is
+ * quoted at.
+ *
+ * THE FIXED THIRTY CENTS IS LEFT OUT, deliberately. Stripe's fee is 4.9% plus
+ * A$0.30, and this board does not know what currency the fee will settle in —
+ * adding thirty of something to an amount written in Hong Kong dollars would
+ * be arithmetic that looks right and is not. It costs about thirty cents a
+ * payment, which is the cheapest wrong number available.
+ *
+ * See docs/cross-border-payments.md for where these rates come from. */
+export const FEE_KEEP = 0.951;
+
 /** An amount, if the whole string is one and nothing else.
  *
  *  Deliberately strict. A mark in front or a code behind, digits, optional
@@ -2502,7 +2523,8 @@ export function feeOf(deal, to) {
   const shape = readMoney(deal.fee);
   return {
     pct: FEE_PCT,
-    amount: shape ? money(shape, shape.n * FEE_PCT / 100) : "",
+    /* The figure charged, not the figure kept — see FEE_KEEP. */
+    amount: shape ? money(shape, shape.n * FEE_PCT / 100 / FEE_KEEP) : "",
     to: link,
     /* Append-only, like everything else two people say to each other here.
        The payer says they paid it; whoever runs the board says it arrived. */

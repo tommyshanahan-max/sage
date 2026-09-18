@@ -4856,16 +4856,22 @@ export const STRINGS = {
      it is not one of the rows the two of them wrote and must not read like
      one. */
   "fee.lab":           ["The board's fee", "平台费"],
-  "fee.row":           ["Platform fee · {pct}%", "平台费 · {pct}%"],
-  "fee.ofFee":         ["{pct}% of the fee", "报酬的 {pct}%"],
+  /* {pct}% is what the board keeps. The figure beside it is what the payer is
+     charged — see FEE_KEEP in lib/store.js: surcharging is gone, so the
+     processing cost lives inside the price or it comes out of the fee. The row
+     says so rather than showing 2% beside a number that is not 2%. */
+  "fee.row":           ["Platform fee · {pct}% + processing",
+                        "平台费 · {pct}% 加手续费"],
+  "fee.ofFee":         ["{pct}% of the fee, plus processing",
+                        "报酬的 {pct}%，另加手续费"],
   "fee.payAt":         ["Paid at {where}", "在 {where} 支付"],
   /* Not pay.open — that one says "their payment page", and the board is not a
      them. A missing key renders as the key, in the middle of a sentence about
      money, and says nothing about being missing. */
   "fee.open":          ["Open the payment page", "打开收款页面"],
   "fee.what": [
-    "{pct}% of the fee, for the introduction and the record kept here. Paid to whoever runs this board, not to either of you, and not held here either.",
-    "报酬的 {pct}%，是牵线和这份记录的费用。付给这个平台的运营者，不付给你们任何一方，平台也不经手这笔钱。",
+    "{pct}% of the fee, for the introduction and the record kept here, plus what the payment page charges to process it. Paid to whoever runs this board, not to either of you, and not held here either.",
+    "报酬的 {pct}%，是牵线和这份记录的费用，另加收款页面的手续费。付给这个平台的运营者，不付给你们任何一方，平台也不经手这笔钱。",
   ],
   "fee.confirmed":     ["{who} confirmed it arrived, {when}", "{who} 确认已收到，{when}"],
   "fee.denied":        ["{who} says it has not arrived, {when}", "{who} 说还没收到，{when}"],
