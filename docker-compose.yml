@@ -903,6 +903,28 @@ services:
       # without anybody refreshing — the same webhook Study Pal posts to.
       BOARD_HOOK_URL: ${TOMSCODING_BOARD_HOOK_URL:-}
       BOARD_HOOK_SECRET: ${TOMSCODING_STUDYPAL_WEBHOOK_SECRET:-}
+      # PAYING IN THE APP. Four variables, all optional, and the board is
+      # correct without any of them: no key means the Pay button falls back to
+      # the payee's own page, which is what everybody had before Connect and is
+      # still the only route for a payee in the mainland.
+      #
+      # THESE WERE MISSING FOR A WHILE AND THE SYMPTOM WAS SILENCE. The code
+      # read them, .env could hold them, and nothing here passed them in — so
+      # the board came up with payments switched off and looked, from a phone,
+      # exactly like a feature that had not been built. Anything read by
+      # server.js has to be named here or it does not exist in the container.
+      #
+      # The secret key charges cards; the publishable one is public by design
+      # and is only sent to somebody who has pressed Pay.
+      BOARD_STRIPE_KEY: ${TOMSCODING_BOARD_STRIPE_KEY:-}
+      BOARD_STRIPE_PK: ${TOMSCODING_BOARD_STRIPE_PK:-}
+      # Stripe's webhook signing secret. Without it the hook route refuses
+      # everything, which is the safe failure: an unsigned route that writes
+      # "this was paid" is a route anybody on the internet can write to.
+      BOARD_DEAL_FEE_SECRET: ${TOMSCODING_BOARD_DEAL_FEE_SECRET:-}
+      # Where the board's own 2% is paid, for deals that cannot go through
+      # Connect. A payment link, not an account.
+      BOARD_DEAL_FEE_TO: ${TOMSCODING_BOARD_DEAL_FEE_TO:-}
       # Tap anything on the board and find out what it says. The one thing here
       # that costs money per use, so it is capped three ways in lib/translate.js
       # — per browser, per day, and per request — and the button does not appear
