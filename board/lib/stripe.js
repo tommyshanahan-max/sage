@@ -16,8 +16,24 @@
  * docs/cross-border-payments.md.
  *
  * SO THE PAYEE HAS AN ACCOUNT OF THEIR OWN. Express: Stripe collects their
- * name, bank and identity on their own pages, holds the risk, and hands back
- * an id. This board never sees a bank number.
+ * name, bank and identity on their own pages and hands back an id. This board
+ * never sees a bank number.
+ *
+ * THIS LINE USED TO SAY STRIPE "HOLDS THE RISK". It does not, and that was a
+ * misleading thing to have written next to the code that moves the money.
+ * What Stripe holds is the identity work — collecting documents, verifying
+ * who somebody is, deciding whether to onboard them at all. The FINANCIAL
+ * risk on a destination charge sits with the platform: this board is the
+ * merchant of record, so a refund or a chargeback is taken from the platform,
+ * and if a connected account goes negative and cannot be recovered from,
+ * Stripe takes that from the platform too. Accepting Connect means accepting
+ * exactly that, in writing, and it is why those acknowledgements are read and
+ * ticked by a person rather than by anything automated.
+ *
+ * WHICH IS SMALLER THAN IT SOUNDS FOR THIS CORRIDOR, and worth knowing rather
+ * than worth fearing: WeChat Pay and Alipay are push payments authorised by
+ * the payer in their own app, with no chargeback mechanism of the kind cards
+ * have. The exposure is essentially the card path.
  *
  * OFF UNLESS BOARD_STRIPE_KEY IS SET. Unset, every function here returns null
  * and the card falls back to the payee's own payment link, which is what the
