@@ -5018,6 +5018,21 @@ export const STRINGS = {
   "pay.rowLabel":      ["What for", "名目"],
   /* The one row a fee with no payment plan becomes. */
   "pay.whole":         ["The fee", "全款"],
+
+  /* EARNED HERE. Only ever on your own profile — see /api/earned, which has
+     no way to ask about anybody else. Never a balance, and the card says so
+     in the same breath as the number. */
+  "earn.lab":          ["Earned here", "在这里赚到的"],
+  "earn.n":            ["{n} paid", "{n} 笔已付"],
+  "earn.inApp":        ["Paid in the app", "在应用里付的"],
+  "earn.other":        ["Paid another way", "在别处付的"],
+  "earn.said":         ["Where you both said it was paid and arrived. Not a bank statement.",
+                        "双方都确认已付、已到账的。这不是银行流水。"],
+  "earn.see":          ["See them", "看明细"],
+  "earn.only":         ["Only you see this", "只有你看得到"],
+  "earn.waiting":      ["Still to come", "还没到的"],
+  "earn.notYet":       ["Not counted above. It counts when you both say it arrived.",
+                        "上面没算这些。等双方都确认到账才算。"],
   /* Pay is always on the payer's row. Pressed before the other side has
      anywhere to be paid, this is what it says. */
   "pay.noWhere":       ["{who} has not said where to be paid.",

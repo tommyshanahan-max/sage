@@ -597,10 +597,12 @@ app.post("/api/hook/fee", express.raw({ type: "application/json", limit: "64kb" 
            webhook it believes was not received. */
         if (d.paid.some((r) => r.i === row && r.kind === "confirmed")) return { ok: true };
         const at = new Date().toISOString();
+        /* `auto` on both: this is Stripe's word, not theirs, and the wallet
+           has to be able to say so rather than counting it as two taps. */
         if (!d.paid.some((r) => r.i === row && r.kind === "claimed")) {
-          d.paid.push({ i: row, kind: "claimed", who: d.hires, at });
+          d.paid.push({ i: row, kind: "claimed", who: d.hires, at, auto: true });
         }
-        d.paid.push({ i: row, kind: "confirmed", who: d.provides, at });
+        d.paid.push({ i: row, kind: "confirmed", who: d.provides, at, auto: true });
         Object.assign(g, store.cleanGroup(g));
         return { ok: true, tell: (board.people.find((x) =>
           g.members.includes(x.by) && x.handle === d.provides) || {}).by || "" };
@@ -10768,6 +10770,102 @@ app.get("/api/stake", async (req, res) => {
   const mine = shareOf(board, me);
   if (!mine) return res.status(404).json({ error: "off" });
   res.json(mine);
+});
+
+/** WHAT YOU HAVE EARNED HERE — AND ONLY EVER TO YOU.
+ *
+ *  THE NUMBER IS NOT ON ANYBODY'S PAGE AND NEVER WILL BE. A board that prints
+ *  what somebody earned on their profile is a board people decline to join,
+ *  and doubly so for the half of this one that reads Chinese. This route
+ *  answers for the reader and for nobody else: there is no handle parameter to
+ *  ask about somebody else with, deliberately.
+ *
+ *  AND IT IS NOT A BALANCE. The board never holds the money, never sees a bank
+ *  and cannot see a Wise transfer. What it has is two kinds of record, and
+ *  they are different kinds of truth:
+ *
+ *    - `seen`: rows the payment page wrote, where Stripe watched the money
+ *      arrive. These the board knows.
+ *    - `said`: rows where the payer tapped "I paid this" and the payee tapped
+ *      "it arrived". These are two people's word, which is worth a great deal
+ *      and is not a bank statement.
+ *
+ *  The screen keeps them apart because calling the sum a balance is the kind
+ *  of quiet lie somebody takes to an accountant.
+ *
+ *  CURRENCIES ARE NOT ADDED UP. ¥30,000 and A$2,000 are two totals, not one:
+ *  summing them needs a rate this board would have to invent, and an invented
+ *  total is worse than two true ones.
+ */
+app.get("/api/earned", notesOff, async (req, res) => {
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  res.set("Cache-Control", "no-store");
+  if (!me) return res.json({ rows: [], totals: [], waiting: [] });
+
+  const board = await store.load(FILE);
+  const mine = board.people.find((q) => q.by === me);
+  if (!mine?.handle) return res.json({ rows: [], totals: [], waiting: [] });
+
+  const rows = [], waiting = [];
+  for (const g of board.groups) {
+    const d = g.deal;
+    if (!d || !g.members.includes(me)) continue;
+    /* ONLY WHAT YOU WERE PAID. The other side of the same row is money you
+       spent, and a page called Earned that quietly includes it is wrong in
+       the direction that flatters. */
+    if (d.provides !== mine.handle) continue;
+    const plan = Array.isArray(d.plan) ? d.plan : [];
+    plan.forEach((row, i) => {
+      const said = (d.paid || []).filter((r) => r.i === i);
+      const claim = said.find((r) => r.kind === "claimed");
+      const okd = said.find((r) => r.kind === "confirmed");
+      const it = {
+        group: g.id, i,
+        title: d.title || g.name || "",
+        label: row.label || "",
+        amount: row.amount || "",
+        cur: d.cur || "",
+        from: d.hires || "",
+      };
+      if (claim && okd) {
+        rows.push({ ...it, at: okd.at, seen: Boolean(claim.auto && okd.auto) });
+      } else {
+        /* NOT COUNTED, AND SAID SO ON THE SCREEN. A total that includes money
+           somebody has not got is the one that gets them hurt. */
+        waiting.push({ ...it, due: row.due || "" });
+      }
+    });
+  }
+  rows.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+
+  /* Per currency, and in the currency's own smallest unit so the arithmetic is
+     integer — a float total of money is a rounding error waiting for somebody
+     to notice it. Rows whose amount is words rather than a number are counted
+     nowhere and said separately; see readMoney. */
+  const pot = new Map();
+  let unreadable = 0;
+  for (const r of rows) {
+    const minor = store.toMinor(r.amount, r.cur);
+    if (!minor) { unreadable += 1; continue; }
+    const k = r.cur || "?";
+    const was = pot.get(k) || { cur: k, minor: 0, seen: 0, n: 0 };
+    was.minor += minor;
+    if (r.seen) was.seen += minor;
+    was.n += 1;
+    pot.set(k, was);
+  }
+  const totals = [...pot.values()]
+    .sort((a, b) => b.minor - a.minor)
+    .map((t) => ({
+      cur: t.cur, n: t.n,
+      /* Rendered here rather than at the screen. A page that divides by a
+         hundred itself will one day do it to yen and be twenty times out. */
+      all: store.fromMinor(t.minor, t.cur),
+      seen: t.seen ? store.fromMinor(t.seen, t.cur) : "",
+      said: t.minor - t.seen ? store.fromMinor(t.minor - t.seen, t.cur) : "",
+    }));
+
+  res.json({ rows, totals, waiting, unreadable });
 });
 
 app.get("/api/me", async (req, res) => {

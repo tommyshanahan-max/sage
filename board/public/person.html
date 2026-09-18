@@ -334,6 +334,45 @@
   .acts .primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   .acts .warn{color:var(--t5)}
 
+  /* EARNED HERE. One colour of its own, and nothing else on this page uses
+     it, so the number is never mistaken for a control. One rule only, above
+     the sentence saying what the number is not — three hairlines in a card
+     this small cut it into strips. */
+  .earned{margin:1.4rem 1.15rem 0;padding:1.05rem 1.1rem;border-radius:1rem;
+    background:var(--raise);border:1px solid var(--line)}
+  .earned .elab{margin:0 0 .55rem;font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .ebig{font-family:var(--serif);font-size:2.15rem;line-height:1.05;margin:0;
+    color:#B8661A;font-variant-numeric:tabular-nums}
+  .esecond{font-family:var(--serif);font-size:1.25rem;margin:.3rem 0 0;
+    color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .esplit{display:flex;gap:.9rem;margin:.85rem 0 0}
+  .esplit div{flex:1;min-width:0}
+  .esplit dt{margin:0 0 .12rem;font-size:.72rem;color:var(--muted)}
+  .esplit dd{margin:0;font-size:.95rem;font-variant-numeric:tabular-nums}
+  .esaid{margin:.8rem 0 0;padding-top:.7rem;border-top:1px solid var(--line);
+    font-size:.82rem;line-height:1.55;color:var(--ink-2)}
+  .eacts{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:.85rem 0 0}
+  .eacts button{border:1px solid var(--line);background:var(--raise);color:var(--ink);
+    font:inherit;font-size:.85rem;padding:.5rem 1rem;border-radius:99px}
+  .eonly{padding:.22rem .6rem;border-radius:99px;background:#FBEBD9;color:#B8661A;
+    font-size:.72rem}
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]) .ebig{color:#E89A4A}
+    :root:not([data-theme="light"]) .eonly{background:#2B2014;color:#E89A4A}
+  }
+  :root[data-theme="dark"] .ebig{color:#E89A4A}
+  :root[data-theme="dark"] .eonly{background:#2B2014;color:#E89A4A}
+  .esheet{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;
+    place-items:center;padding:1rem;z-index:60}
+  .ecard{background:var(--raise);border:1px solid var(--line);border-radius:1rem;
+    padding:1.1rem 1.15rem;max-width:26rem;width:100%;max-height:88vh;overflow:auto}
+  .erow{display:flex;gap:.8rem;align-items:baseline;padding:.75rem 0;
+    border-top:1px solid var(--hair);color:inherit;text-decoration:none}
+  .ewho{flex:1;min-width:0}
+  .ewho b{display:block;font-weight:600;font-size:.97rem}
+  .ewho small{display:block;color:var(--muted);font-size:.8rem;margin-top:.1rem}
+  .eamt{font-variant-numeric:tabular-nums;font-size:.97rem;white-space:nowrap}
   .keybox{margin:1.6rem 1.15rem 0;padding-top:1.1rem;border-top:1px solid var(--hair)}
   .keybox h3{margin:0;font-family:var(--serif);font-weight:400;font-size:1.05rem}
   .keybox p{margin:.4rem 0 0;font-size:.85rem;line-height:1.55;color:var(--ink-2)}
@@ -903,6 +942,103 @@ async function loadCard() {
   } catch { MYCARD = null; }
 }
 
+/* Drawn into the page after it, because it is one fetch behind: nothing else
+   on this screen should wait on a number, and a page that renders in two
+   stages beats one that renders late. */
+async function drawEarned(box) {
+  const slot = el("section", "earned");
+  slot.hidden = true;
+  box.append(slot);
+  let d = null;
+  try {
+    const r = await fetch("/api/earned", {
+      cache: "no-store",
+      headers: device ? { "x-board-device": device } : {},
+    });
+    d = r.ok ? await r.json() : null;
+  } catch { /* a page that cannot reach the board shows no card, not an error */ }
+  if (!d || !(d.totals || []).length) { slot.remove(); return; }
+
+  const top = el("p", "elab", T("earn.lab"));
+  if (d.rows.length) top.append(el("span", null, " \u00b7 " + T("earn.n", { n: d.rows.length })));
+  slot.append(top);
+
+  /* One total per currency, never added together: ¥30,000 and A$2,000 are two
+     numbers, and one of them needs a rate this board would have to invent. */
+  d.totals.forEach((t, i) => {
+    slot.append(el("p", i ? "esecond" : "ebig", (i ? "+ " : "") + t.all));
+  });
+
+  /* Only when both kinds are there. "All of it was seen" on a card where all
+     of it was seen is a line that says nothing. */
+  const seen = d.totals.filter((t) => t.seen), said = d.totals.filter((t) => t.said);
+  if (seen.length && said.length) {
+    const sp = el("div", "esplit");
+    const cell = (label, list, pick) => {
+      const c = el("div");
+      c.append(el("dt", null, T(label)));
+      c.append(el("dd", null, list.map(pick).join(" \u00b7 ")));
+      return c;
+    };
+    sp.append(cell("earn.inApp", seen, (t) => t.seen),
+              cell("earn.other", said, (t) => t.said));
+    slot.append(sp);
+  }
+
+  slot.append(el("p", "esaid", T("earn.said")));
+
+  const acts = el("div", "eacts");
+  const go = el("button", "", T("earn.see"));
+  go.type = "button";
+  go.addEventListener("click", () => earnedList(d));
+  acts.append(go, el("span", "eonly", T("earn.only")));
+  slot.append(acts);
+  slot.hidden = false;
+}
+
+/** Every settled row, newest first, each one a tap from the room it was in. */
+function earnedList(d) {
+  const day = (at) => {
+    try {
+      return new Date(at).toLocaleDateString(lang() === "zh" ? "zh-CN" : undefined,
+        { day: "numeric", month: "short" });
+    } catch { return ""; }
+  };
+  const back = el("div", "esheet");
+  const card = el("div", "ecard");
+  card.append(el("p", "elab", T("earn.lab")));
+  for (const r of d.rows) {
+    const line = el("a", "erow");
+    line.href = "/groups?g=" + encodeURIComponent(r.group);
+    const who = el("div", "ewho");
+    who.append(el("b", null, r.title || r.label || T("earn.lab")));
+    who.append(el("small", null, [r.from, r.label, day(r.at)].filter(Boolean).join(" \u00b7 ")));
+    line.append(who, el("span", "eamt", r.amount));
+    card.append(line);
+  }
+  if ((d.waiting || []).length) {
+    card.append(el("p", "elab", T("earn.waiting")));
+    for (const r of d.waiting) {
+      const line = el("div", "erow");
+      const who = el("div", "ewho");
+      who.append(el("b", null, r.title || r.label));
+      who.append(el("small", null, [r.from, r.due].filter(Boolean).join(" \u00b7 ")));
+      line.append(who, el("span", "eamt", r.amount));
+      card.append(line);
+    }
+    card.append(el("p", "esaid", T("earn.notYet")));
+  }
+  const acts = el("div", "eacts");
+  const shut = el("button", "", T("pay.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => back.remove());
+  acts.append(shut);
+  card.append(acts);
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+}
+
 function paint() {
   $("invite").textContent = T("site.invite");
   const box = $("body");
@@ -1402,6 +1538,26 @@ function paint() {
    * find it in the editor means telling them a different route depending on
    * whether they have a page yet, and an instruction with an "if" in it is one
    * people get wrong. */
+  /* WHAT YOU HAVE EARNED HERE, AND ONLY EVER ON YOUR OWN PAGE.
+   *
+   * Never on anybody else's — /api/earned has no way to ask about somebody
+   * else, deliberately, and this block is inside q.mine. A board that prints
+   * what a person earned on their page is a board people decline to join, and
+   * doubly so for the half of this one that reads Chinese.
+   *
+   * NOT A BALANCE, and the card says so under the number. The board never
+   * holds the money and cannot see a bank. What it has is two kinds of record:
+   * rows the payment page wrote, where Stripe watched the money arrive, and
+   * rows where the two of them each tapped. The second is worth a great deal
+   * and is still two people's word. Calling the sum a balance is the sort of
+   * quiet lie somebody takes to an accountant.
+   *
+   * NOTHING IS DRAWN UNTIL THERE IS SOMETHING. A card reading ¥0 on every page
+   * for the first six months teaches everybody that nobody earns here, which
+   * is the opposite of the reason to have it.
+   */
+  if (q.mine) drawEarned(box);
+
   if (q.mine) {
     const kb = el("div", "keybox");
     kb.append(el("h3", null, T("key.title")), el("p", null, T("key.body")));

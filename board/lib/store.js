@@ -2434,7 +2434,13 @@ function cleanPaidRow(raw, s) {
   const kind = ["claimed", "confirmed", "denied"].includes(raw.kind) ? raw.kind : "";
   const who = s(raw.who, 64), at = s(raw.at, 40);
   if (!Number.isInteger(i) || i < 0 || i >= PLAN_MAX || !kind || !who || !at) return null;
-  return { i, kind, who, at };
+  /* WHO SAW THE MONEY. A row written by the payment page rather than tapped by
+     a person — the same flag feePaid already carries, for the same reason.
+     Without it the board cannot tell a payment it watched happen from one the
+     two of them said happened, and those are different kinds of truth: one
+     Stripe witnessed, the other is two people's word. Anything that reports a
+     total has to be able to say which it is looking at. */
+  return { i, kind, who, at, ...(raw.auto ? { auto: true } : {}) };
 }
 
 /** A payment page belonging to the person being paid. Http(s) only, and never
@@ -2549,6 +2555,26 @@ export function toMinor(amount, cur) {
   if (!m || !CURRENCIES.includes(cur)) return null;
   const n = WHOLE.has(cur) ? Math.round(m.n) : Math.round(m.n * 100);
   return n > 0 ? n : null;
+}
+
+/** A total back out again, in the currency's own sign.
+ *
+ *  The counterpart to toMinor, and it has to exist rather than be done at the
+ *  screen: a total is added up in the smallest unit so the arithmetic is
+ *  integer, and a page that divides by a hundred itself will one day do it to
+ *  yen and be twenty times out. The sign is the one this board writes that
+ *  currency with, and the grouping is the reader's — a Chinese member and an
+ *  Australian one are shown the same number the way each of them writes it.
+ */
+const SIGN = { cny: "\u00a5", aud: "A$", hkd: "HK$", usd: "$", eur: "\u20ac", gbp: "\u00a3", jpy: "\u00a5" };
+export function fromMinor(minor, cur) {
+  if (!Number.isFinite(minor) || !CURRENCIES.includes(cur)) return "";
+  const n = WHOLE.has(cur) ? Math.round(minor) : minor / 100;
+  const body = n.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: WHOLE.has(cur) ? 0 : 2,
+  });
+  return (SIGN[cur] || "") + body;
 }
 
 /** What the fee row says, or null when there is nowhere to pay it.
