@@ -4914,7 +4914,6 @@ export const STRINGS = {
      do. Nothing here reassures.
      --------------------------------------------------------------------- */
   "memo.brand":        ["The Exchange", "交换"],
-  "memo.terms":        ["The terms of this deal", "这单的条件"],
   "memo.untitled":     ["The terms", "这单的条件"],
   "memo.between":      ["{a} hired {b} for this", "{a} 找 {b} 办这件事"],
   "memo.plan":         ["Payments", "付款安排"],
@@ -4923,6 +4922,12 @@ export const STRINGS = {
   "memo.chip.waiting": ["Waiting", "待确认"],
   "memo.chip.due":     ["Due", "待付"],
   "memo.pay":          ["Pay {amount}", "去付 {amount}"],
+  /* Over the number, so the figure is attributed before it is read. "¥30,000"
+     alone on a page is an amount; "Claire is asking for ¥30,000" is a fact
+     about a person, which is what somebody about to send it wants to know. */
+  "memo.asking":       ["{who} is asking for", "{who} 要收"],
+  "memo.whatWasAgreed":["What was agreed", "谈定的内容"],
+  "memo.allPaid":      ["Nothing left to pay on this one.", "这单已经付清了。"],
   "memo.payFailed":    ["That did not open — try again", "没打开，再试一次"],
   "memo.straight":     ["The money goes straight to {who}. The board never holds it.",
                         "钱直接到 {who} 账上，平台不经手。"],

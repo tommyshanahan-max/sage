@@ -35,6 +35,7 @@
     --t2:#2A9D63; --t5:#D4485C;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
       "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
     --shadow:0 2px 6px rgba(21,27,40,.07),0 10px 28px rgba(21,27,40,.09);
   }
   @media (prefers-color-scheme:dark){
@@ -48,9 +49,13 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--paper);color:var(--ink)}
-  body{font-family:var(--sans);font-size:15px;line-height:1.55;
+  /* 16px and not 15. Everything about this page is read one-handed on a phone
+     by somebody who did not choose to be here, and 16 is also the size below
+     which iOS zooms the page when a field takes focus — which throws the
+     layout sideways on the one screen that has a field. */
+  body{font-family:var(--sans);font-size:16px;line-height:1.55;
     padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
-  main{max-width:34rem;margin:0 auto;padding:1.4rem 1.15rem 3rem}
+  main{max-width:34rem;margin:0 auto;padding:1.2rem 1rem 3rem}
   .brand{display:flex;align-items:center;gap:.55rem;margin:0 0 1rem}
   .brand img{width:1.4rem;height:1.4rem}
   .brand span{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
@@ -59,32 +64,69 @@
     color:var(--ink-2);font:inherit;font-size:.8rem;padding:.25rem .7rem;
     border-radius:99px}
   .card{background:var(--raise);border:1px solid var(--line);border-radius:1.1rem;
-    padding:1.2rem 1.15rem;box-shadow:var(--shadow)}
-  .lab{margin:0 0 .35rem;font-size:.72rem;letter-spacing:.14em;
+    padding:1.15rem 1rem;box-shadow:var(--shadow);margin:0 0 .85rem}
+  .lab{margin:0 0 .45rem;font-size:.72rem;letter-spacing:.14em;
     text-transform:uppercase;color:var(--muted)}
-  h1{margin:0 0 .2rem;font-size:1.2rem;line-height:1.35}
-  .who{margin:0 0 .9rem;color:var(--muted);font-size:.93rem}
-  .clock{display:inline-block;margin:0 0 .2rem;padding:.3rem .7rem;
-    border-radius:99px;background:var(--accent-soft);color:var(--accent);
-    font-size:.78rem}
+  h1{margin:0 0 .2rem;font-size:1.25rem;line-height:1.3}
+  .who{margin:0;color:var(--muted);font-size:.92rem}
+  .clock{display:inline-block;padding:.3rem .7rem;border-radius:99px;
+    background:var(--accent-soft);color:var(--accent);font-size:.78rem}
   .clock.soon{background:rgba(212,72,92,.12);color:var(--t5)}
   hr{border:0;border-top:1px solid var(--hair);margin:.95rem 0}
-  dl{display:grid;grid-template-columns:auto 1fr;gap:.4rem .9rem;margin:0}
-  dt{color:var(--muted);font-size:.86rem}
-  dd{margin:0;font-size:.95rem;white-space:pre-wrap}
+  /* THE BILL, ABOVE EVERYTHING IT IS A BILL FOR.
+     The terms used to come first and ran to seven rows, so on a phone the Pay
+     button sat below the fold behind a wall of prose. Somebody who opened this
+     from a chat message came to settle an amount; the amount and the button
+     are what the first screen is for, and the terms are what they scroll to
+     when they want to check it. */
+  .due{margin:1rem 0 0}
+  /* THE NUMBER, IN THE SERIF AND BIG. It is the one thing on this page
+     somebody is deciding about, and at 1.9rem in the body face it sat level
+     with the title above it — two things asking to be read first. */
+  .dueLab{margin:0 0 .1rem;font-size:.72rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .dueRow{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;
+    margin:0 0 .15rem}
+  .dueRow .n{font-family:var(--serif);font-size:2.6rem;font-weight:400;
+    line-height:1.1;font-variant-numeric:tabular-nums}
+  .dueRow .k{font-size:.9rem;color:var(--muted)}
+  .dueWhen{margin:0 0 1rem;font-size:.88rem;color:var(--muted)}
+  /* A TABLE WITH RULES, NOT A STACK OF PARAGRAPHS.
+     Two columns, but the label column is a fixed 5.5rem rather than sized to
+     the longest label. Auto-sizing it to "If it is called off" left the values
+     about 210px wide on a 390px phone and every sentence over six words broke
+     across three lines. Fixed, the long labels wrap instead — a label is two
+     words and can afford to — and the values get the room.
+     The hairline between rows is what makes it scan: the eye follows a rule
+     down the page and stops at the row it wants, which whitespace alone does
+     not do. */
+  .term{display:grid;grid-template-columns:5.5rem 1fr;gap:0 .9rem;
+    padding:.7rem 0;border-top:1px solid var(--hair)}
+  .term:first-of-type{border-top:0;padding-top:.15rem}
+  .term dt{margin:0;font-size:.78rem;line-height:1.35;color:var(--muted)}
+  .term dd{margin:0;font-size:.95rem;line-height:1.45;white-space:pre-wrap}
+  dl{margin:0}
   .prow{display:grid;grid-template-columns:1fr auto;gap:.15rem .7rem;
-    padding:.9rem 0;border-top:1px solid var(--hair)}
+    padding:.75rem 0;border-top:1px solid var(--hair)}
+  .prow:first-of-type{border-top:0;padding-top:.2rem}
   .pwhat{font-weight:600}
   .pamt{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
   .pwhen{color:var(--muted);font-size:.84rem}
-  .pchip{justify-self:end;font-size:.72rem;letter-spacing:.06em;
+  .pchip{justify-self:end;align-self:center;font-size:.72rem;letter-spacing:.06em;
     text-transform:uppercase;padding:.16rem .6rem;border-radius:99px;
     background:var(--line);color:var(--ink-2)}
   .pchip.on{background:rgba(42,157,99,.14);color:var(--t2)}
+  /* 3.25rem tall and the amount is written on it. A button that says only
+     "Pay now" makes somebody look back up the page to check what they are
+     about to send; the amount on the button is the last thing they read
+     before they press it. */
   .go{border:0;border-radius:99px;background:var(--accent);color:var(--accent-ink);
-    font:inherit;font-size:1rem;padding:.8rem 1.4rem}
-  .prow .go{grid-column:1/-1;margin:.7rem 0 0;width:100%}
-  .foot{margin:1rem 0 0;font-size:.78rem;line-height:1.5;color:var(--muted)}
+    font:inherit;font-size:.95rem;font-weight:600;letter-spacing:.06em;
+    text-transform:uppercase;padding:.9rem 1.4rem;min-height:3.25rem;width:100%}
+  .prow .go{grid-column:1/-1;margin:.6rem 0 0}
+  .foot{margin:.9rem 0 0;font-size:.82rem;line-height:1.5;color:var(--muted)}
+  .small{margin:.8rem 0 0;font-size:.78rem;line-height:1.5;color:var(--muted);
+    text-align:center}
   /* THE CODE GATE. Big field, because it is typed from a chat message by
      somebody holding the phone in one hand. */
   .gate{text-align:center;padding:2rem 1.15rem}
@@ -314,40 +356,78 @@ function draw() {
   root.textContent = "";
   root.append(head());
 
-  const card = el("div", "card");
-  card.append(el("p", "lab", T("memo.terms")));
-  card.append(el("h1", null, m.title || T("memo.untitled")));
-  card.append(el("p", "who", T("memo.between", { a: m.hires, b: m.provides })));
-  const clock = clockLine(STATE.until);
-  if (clock) card.append(clock);
+  /* THE BILL FIRST. Whoever opened this came from a chat message to settle an
+     amount, so the amount and the button are the first screen. The terms are
+     what they scroll to when they want to check it — which is the opposite of
+     how this was built, and the reason the Pay button was under a wall. */
+  const next = m.plan.find((r) => r.state === "due");
+
+  const top = el("div", "card");
+  /* No eyebrow. It read "THE TERMS OF THIS DEAL" over an amount and a Pay
+     button, which is a label for the card below this one. */
+  top.append(el("h1", null, m.title || T("memo.untitled")));
+  top.append(el("p", "who", T("memo.between", { a: m.hires, b: m.provides })));
+
+  if (next) {
+    const due = el("div", "due");
+    due.append(el("p", "dueLab", T("memo.asking", { who: m.provides })));
+    const line = el("div", "dueRow");
+    line.append(el("span", "n", next.amount), el("span", "k", next.label || ""));
+    due.append(line);
+    if (next.due) due.append(el("p", "dueWhen", T("memo.due", { when: next.due })));
+    if (m.payeeReady) {
+      const b = el("button", "go", T("memo.pay", { amount: next.amount }));
+      b.type = "button";
+      b.addEventListener("click", () => payHow(m, next));
+      due.append(b);
+    } else {
+      due.append(el("p", "foot", T("memo.notReady", { who: m.provides })));
+    }
+    top.append(due);
+  } else {
+    /* NOTHING LEFT TO PAY, and said rather than left as an absence — a page
+       with no button on it reads as broken, not as finished. */
+    top.append(el("p", "foot", T("memo.allPaid")));
+  }
+  root.append(top);
 
   if (m.terms.length) {
-    card.append(el("hr"));
+    const card = el("div", "card");
+    card.append(el("p", "lab", T("memo.whatWasAgreed")));
     const dl = el("dl");
     for (const [k, v] of m.terms) {
-      dl.append(el("dt", null, T("deal." + k)), el("dd", null, v));
+      const box = el("div", "term");
+      box.append(el("dt", null, T("deal." + k)), el("dd", null, v));
+      dl.append(box);
     }
     card.append(dl);
+    root.append(card);
   }
 
-  if (m.plan.length) {
-    card.append(el("hr"));
+  /* The plan, only when it is more than the one row already at the top —
+     a card repeating "Balance ¥30,000 DUE" under the button that pays it is
+     a second thing to read that says nothing new. */
+  if (m.plan.length > 1) {
+    const card = el("div", "card");
     card.append(el("p", "lab", T("memo.plan")));
-    for (const row of m.plan) card.append(planRow(m, row));
+    for (const row of m.plan) card.append(planRow(m, row, next));
+    root.append(card);
   }
 
-  /* THE TWO SENTENCES AT THE FOOT, and they are the only two. Where the money
-     goes, and what this page is not for. */
-  const foot = el("p", "foot");
-  foot.append(document.createTextNode(T("memo.straight", { who: m.provides })));
-  foot.append(el("br"));
-  foot.append(document.createTextNode(T("memo.appOnly")));
-  card.append(foot);
+  /* ONE LINE, and it is where the money goes. What this page cannot do used
+     to be a second sentence here; it now sits under the button that would
+     have been the place to look for it. */
+  root.append(el("p", "small", T("memo.straight", { who: m.provides })));
 
-  root.append(card);
+  const clock = clockLine(STATE.until);
+  if (clock) {
+    const wrap = el("p", "small");
+    wrap.append(clock);
+    root.append(wrap);
+  }
 }
 
-function planRow(m, row) {
+function planRow(m, row, next) {
   const r = el("div", "prow");
   r.append(el("span", "pwhat", row.label || T("memo.plan")),
            el("span", "pamt", row.amount));
@@ -355,20 +435,13 @@ function planRow(m, row) {
   r.append(el("span", "pchip" + (row.state === "paid" ? " on" : ""),
     T("memo.chip." + row.state)));
 
-  /* Drawn only where it can do something: a settled row has nothing to pay,
-     and a payee with nowhere for the money to land gets a line instead of a
-     button that opens a refusal. */
-  if (row.state === "due") {
-    if (m.payeeReady) {
-      const b = el("button", "go", T("memo.pay", { amount: row.amount }));
-      b.type = "button";
-      b.addEventListener("click", () => payHow(m, row));
-      r.append(b);
-    } else {
-      const p = el("p", "foot", T("memo.notReady", { who: m.provides }));
-      p.style.gridColumn = "1/-1";
-      r.append(p);
-    }
+  /* A second due row gets its own button. The first one's is at the top, and
+     drawing it twice would be two buttons doing the same thing on one screen. */
+  if (row.state === "due" && m.payeeReady && next && row.i !== next.i) {
+    const b = el("button", "go", T("memo.pay", { amount: row.amount }));
+    b.type = "button";
+    b.addEventListener("click", () => payHow(m, row));
+    r.append(b);
   }
   return r;
 }
