@@ -4895,7 +4895,10 @@ export const STRINGS = {
      contract, not the app. */
   "deal.doneIn":       ["Work done in", "工作地点"],
   "deal.doneCn":       ["Mainland China", "中国大陆"],
-  "deal.doneOut":      ["Outside mainland China", "中国大陆以外"],
+  /* "Elsewhere" and not "Outside mainland China": this sits in a select in a
+     two-column row on a phone, where the longer phrase came out as "Outside
+     mainland C". The label above it already says Work done in. */
+  "deal.doneOut":      ["Elsewhere", "中国大陆以外"],
   "deal.doneWhy": [
     "Chinese tax applies to work performed in the mainland, so the terms have to say which it is.",
     "在中国大陆完成的工作要按中国的规定纳税，所以条件里必须写清楚是哪一种。",
