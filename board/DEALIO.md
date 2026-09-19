@@ -76,28 +76,27 @@ A door has one handle. Nothing else on the screen.
   ● DEALIO                                    [EN/中]
 
                       Dealio
-              Ask somebody to pay you.
+        Ask anyone to pay you. They need no
+        account, no app and no card on file.
                       ────
-              This phone is not signed in
-        Dealio remembers you on the phone you
-        signed in on. This one has not.
+              This phone is not signed in.
+        Dealio uses your Exchange sign-in.
 
-            [      SIGN IN      ]
+            [ CONTINUE WITH GOOGLE ]
+
+             I have an invite code          ← a link, not a button
 ```
 
-**Not finished.** `signIn` goes to `/enter`, which is the *board's* invite
-door and asks for six characters. Tom hit it and asked "what 6 digits" —
-correctly, because nothing on the Dealio screen had mentioned a code.
+It used to be a single `SIGN IN` button to `/enter`, the board's invite door,
+which asks for six characters — and Tom, who had never been told about a
+code, asked "what 6 digits". The code is for somebody arriving for the first
+time. Everybody meeting this screen is already a member on a phone that has
+forgotten them, and for *them* the Google account is what finds the person
+again: the callback moves their row onto whatever browser pressed it.
 
-The honest design for step one: Dealio's sign-in **is** the board's, and the
-screen should say so in one line — *"Dealio uses your Exchange sign-in."* —
-and offer Continue with Google, which already exists and needs no code.
-Only at step two (its own domain) does it need its own door.
-
-> To build: swap the single `SIGN IN` button for **Continue with Google**
-> (the board's existing path, `back=dealio`), with the invite-code door
-> underneath as a quiet text link, not a button. One line above it saying
-> which sign-in this is.
+Dealio also mints its own device id now if there is none. Without one there
+is nothing to hand to the sign-in, and the sign-in refuses a browser it
+cannot name — which is why the home-screen app could not get back in.
 
 ### Home — nothing yet  `dealio.html · empty()` — **built**
 
@@ -294,9 +293,9 @@ and `toWho` never leave the server.
 
 ---
 
-## Not built
+## The screens, continued
 
-### 1. Dealio's own sign-in — **the blocker for standalone**
+### Sign-in — what it is and is not
 
 Browser storage is per-origin and iOS gives a home-screen app its own, so
 saving Dealio to the home screen makes it a stranger: `board:device` is
@@ -309,11 +308,11 @@ For step two it needs its own door, and that is a decision about who Dealio
 is for — the board is invite-only and Dealio, on its own domain, probably
 is not. **Do not build step two without asking.**
 
-### 2. Paid — the history  **design below, not built**
+### Paid — the history  `dealio.html · paid()` — **built**
 
-The list shows live requests. What is missing is the answer to "has this
-person ever paid me" — which is the question that decides whether you say
-yes to the next job.
+The list shows what is still open. Paid answers "has this person ever
+actually paid me" — the question that decides whether you say yes to the
+next job.
 
 ```
   ● DEALIO                                    [EN/中]
@@ -336,12 +335,20 @@ yes to the next job.
 Both directions, grouped by month, newest first, no chips — everything here
 is paid, so a chip saying so on every row is noise. One line per row, month
 rules instead of cards. Reached from the list header, not a tab bar: two
-screens do not earn a tab bar.
+screens do not earn a tab bar, and a bar across the bottom would sit exactly
+where the two buttons are.
 
-> Server: `/api/requests` already returns everything; filter `state === "paid"`
-> in the page. No new route.
+No new route: `/api/requests` already carries every request in both
+directions with its state on it.
 
-### 3. The Cards line  **design below, not built**
+**Settled rows came off the live list when this was built.** They were on it
+under a green chip, so the home screen grew by one line for every job ever
+done and never shrank — the thing still owed sat further down the page each
+month.
+
+## Not built
+
+### The Cards line  **design below, not built**
 
 On the board's Cards page, under each contact:
 
@@ -391,22 +398,9 @@ Ctrl-C.
 
 ## For whoever builds this
 
-Branch: `claude/coding-platform-vpn-alternative-i06xoc`. Build the three
-things under **Not built**, in this order.
-
-**1. The sign-in screen.** Dealio uses the Exchange sign-in for now. Lead
-with Continue with Google (`back=dealio`) so there is no code to type; the
-invite-code door goes underneath as a quiet text link, not a button. One
-line above it saying which sign-in this is. Tom hit the current version and
-asked "what 6 digits" — nothing on the screen had mentioned a code.
-
-**2. Paid — the history.** Filter `state === "paid"` from `/api/requests` in
-the page; no new route. Both directions, grouped by month, newest first, one
-line per row, no chips. Reached from the list header, not a tab bar.
-
-**3. The Cards line.** `¥4,200 paid · 2 jobs` under each contact on the
-board's Cards page, in the board's own type, not Dealio's palette. Never
-show a total to anyone but the two people in it.
+Branch: `claude/coding-platform-vpn-alternative-i06xoc`. One screen is left
+under **Not built** — the Cards line. Everything else on this page is
+standing and has been looked at in both languages.
 
 Strings go in `board/public/i18n.js` in **both** languages, the Chinese
 written rather than translated, then:

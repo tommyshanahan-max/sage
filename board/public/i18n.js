@@ -4928,8 +4928,9 @@ export const STRINGS = {
      here borrows the board's vocabulary.
      --------------------------------------------------------------------- */
   "dl.head":           ["Money", "钱"],
-  "dl.sub":            ["What you have asked for, and what you have offered to send.",
-                        "你要收的，和你要付的。"],
+  /* The list holds what is still open, both directions. It used to hold the
+     settled ones too, and said so; they live on Paid now. */
+  "dl.sub":            ["Still to settle.", "还没结清的。"],
   "dl.rowIn":          ["You asked", "你要收"],
   "dl.rowOut":         ["You are sending", "你要付"],
   "dl.make":           ["Ask for money", "发起收款"],
@@ -4995,6 +4996,21 @@ export const STRINGS = {
   "dl.notYou":         ["This phone is not signed in.", "这台手机还没登录。"],
   "dl.notYouWhy":      ["Open your sign-in link on this phone once and it will stay signed in.",
                         "在这台手机上打开一次你的登录链接，之后就一直记得了。"],
+  /* ONE LINE SAYING WHICH SIGN-IN THIS IS. Dealio is a separate face on the
+     same board, and a door that does not say whose it is gets a code typed
+     into it that was never issued. */
+  "dl.useExchange":    ["Dealio uses your Exchange sign-in.", "Dealio 用的是 Exchange 的登录。"],
+  "dl.haveCode":       ["I have an invite code", "我有邀请码"],
+  "dl.gOff":           ["Google sign-in is off on this board.", "这个板子没开 Google 登录。"],
+  /* WHAT SETTLED. "Paid" and not "History": the question being asked is
+     whether the money came, not what happened. */
+  "dl.paidHead":       ["Paid", "已付"],
+  "dl.paidSub":        ["Everything that settled.", "已经结清的。"],
+  "dl.paidNone":       ["Nothing has settled yet.", "还没有结清的。"],
+  "dl.back":           ["Back", "返回"],
+  /* Everything asked for has been paid. Worth its own sentence: an empty
+     space under a heading reads as a page that failed to load. */
+  "dl.allSettled":     ["Nothing outstanding.", "没有待付的。"],
   "dl.notReady":       ["Nobody can pay you yet.", "现在还收不到钱。"],
   "dl.notReadyWhy":    ["You have not said where the money should land. Requests can be written and sent, but not paid.",
                         "你还没填钱打到哪里。可以先写、先发，只是暂时付不了。"],

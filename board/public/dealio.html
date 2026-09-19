@@ -31,7 +31,7 @@
   html,body{margin:0;background:var(--bg);color:var(--ink)}
   body{font-family:var(--sans);font-size:16px;line-height:1.5;
     padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
-  main{max-width:34rem;margin:0 auto;padding:1.1rem .9rem 6rem}
+  main{max-width:34rem;margin:0 auto;padding:1.1rem .9rem 10rem}
   .top{display:flex;align-items:center;gap:.5rem;margin:0 0 1.2rem}
   .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--acc);
     flex:0 0 auto}
@@ -40,6 +40,31 @@
     color:var(--ink2);font:inherit;font-size:.78rem;padding:.25rem .7rem;
     border-radius:99px}
   h1{margin:0 0 .15rem;font-size:1.35rem;line-height:1.25}
+  /* THE HEADING AND THE WAY OUT OF IT, on one line. A back arrow in the
+     corner is a place on a screen; a word beside the heading is a word. */
+  .hrow{display:flex;align-items:baseline;gap:.9rem}
+  .hrow h1{flex:1 1 auto;min-width:0}
+  .hlink{flex:0 0 auto;border:0;background:none;color:var(--acc);font:inherit;
+    font-size:.88rem;padding:.25rem 0;cursor:pointer}
+  /* The invite code, under Continue with Google. A link, not a second button:
+     almost nobody meeting that screen has a code, and two buttons of equal
+     weight would make it look like a choice worth stopping over. */
+  .quietlink{display:inline-block;margin:.9rem 0 0;color:var(--ink2);
+    font-size:.88rem}
+  /* A MONTH, AS A RULE ACROSS THE LIST. */
+  .mo{margin:1.6rem 0 .5rem;padding:0 0 .5rem;border-bottom:1px solid var(--line);
+    font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+  .mo:first-of-type{margin-top:1.1rem}
+  /* A SETTLED ROW IS A LINE, NOT A CARD. Everything here is paid, so nothing
+     on it needs lifting off the page. */
+  .prow{display:grid;grid-template-columns:1fr auto;gap:.1rem .8rem;
+    align-items:baseline;width:100%;text-align:left;border:0;background:none;
+    color:var(--ink);font:inherit;padding:.75rem 0;cursor:pointer}
+  .prow .w{font-weight:600}
+  .prow .n{font-family:var(--serif);font-size:1.2rem;text-align:right;
+    font-variant-numeric:tabular-nums}
+  .prow .t{grid-column:1/-1;color:var(--mut);font-size:.82rem}
+  .none{margin:2rem 0;color:var(--mut);text-align:center}
   .sub{margin:0 0 1.3rem;color:var(--mut);font-size:.92rem}
   /* A ROW IS A REQUEST. Amount on the right and in the serif, because that is
      what the eye runs down the list looking for. */
@@ -191,7 +216,7 @@
  * and it is WeChat. Building a fourth one would mean asking two people to
  * move a conversation they are already having, which nobody does.
  */
-import { T, when, setLang, pickLang, langButton } from "/i18n.js";
+import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -202,10 +227,39 @@ const el = (tag, cls, text) => {
 const root = document.getElementById("root");
 const bar = document.getElementById("makebar");
 
+/* MINTED HERE IF IT IS NOT THERE, and that is not tidiness.
+ *
+ * iOS gives a home-screen app its own storage, separate from Safari. Tom
+ * saved Dealio to his home screen, opened it, and the ASK FOR MONEY button
+ * was gone — the app was a stranger, because board:device was empty there
+ * and every other page on this board is behind a door that already minted
+ * one. Without an id of its own there is nothing to hand to the sign-in, and
+ * the sign-in refuses a browser it cannot name: it moves an existing person
+ * onto this device, so it needs to know which device that is.
+ */
 let device = "";
-try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
+try {
+  device = localStorage.getItem("board:device") || "";
+  if (!device) {
+    device = (crypto.randomUUID ? crypto.randomUUID()
+      : String(Date.now()) + Math.random().toString(16).slice(2));
+    localStorage.setItem("board:device", device);
+  }
+} catch { /* private window: it still works, it just forgets */ }
+
+/* HOW THE LAST SIGN-IN WENT, read once off the address the callback sent us
+   back to and then wiped, so a reload does not repeat a month-old verdict. */
+let SIGNIN = "";
+try {
+  const u = new URL(location.href);
+  SIGNIN = String(u.searchParams.get("signin") || "").slice(0, 20);
+  if (SIGNIN) { u.searchParams.delete("signin"); history.replaceState(null, "", u); }
+} catch { /* nothing to read */ }
 
 let STATE = null;
+/* WHICH OF THE TWO SCREENS. Not a tab bar: two screens do not earn one, and
+   a bar across the bottom would sit exactly where the two buttons are. */
+let VIEW = "list";
 
 /* Copy without the async clipboard, which a phone refuses outside a gesture
    and WeChat's browser refuses entirely. The old trick still works there. */
@@ -254,6 +308,7 @@ function draw() {
   bar.hidden = true;
 
   if (STATE && !STATE.you) signedOut();
+  else if (VIEW === "paid") paid();
   else if (!(STATE?.requests || []).length) empty();
   else list();
 
@@ -290,10 +345,52 @@ function signedOut() {
   box.append(el("p", "line", T("dl.what")));
   box.append(el("hr"));
   box.append(el("p", "mhead", T("dl.notYou")));
-  box.append(el("p", "msub", T("dl.notYouWhy")));
-  const a = el("a", "go", T("dl.signIn"));
-  a.href = "/enter";
-  box.append(a);
+  box.append(el("p", "msub", T("dl.useExchange")));
+
+  /* CONTINUE WITH GOOGLE IS THE HANDLE, and the invite code is a link under
+     it rather than a second button.
+
+     It sent people to /enter, which asks for six characters — and Tom, who
+     had never been told about a code, asked "what 6 digits". The code is for
+     somebody arriving for the first time. Everybody meeting this screen is
+     already a member on a phone that has forgotten them, and for them the
+     Google account is the thing that finds the person again: the callback
+     moves the row onto whatever browser pressed it. That is the whole cure
+     for a home-screen app with empty storage. */
+  const g = el("button", "go", T("g.in"));
+  g.type = "button";
+  g.addEventListener("click", async () => {
+    g.disabled = true;
+    try {
+      const r = await fetch("/api/signin/google", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, next: "/dealio" }),
+      });
+      const j = await r.json().catch(() => null);
+      if (r.ok && j?.url) { location.href = j.url; return; }
+      /* Google is not set up on this board at all. Saying so beats a button
+         that does nothing twice before anybody thinks to look. */
+      say.textContent = T(j?.error === "unconfigured" ? "dl.gOff" : "g.failed");
+    } catch { say.textContent = T("g.failed"); }
+    g.disabled = false;
+  });
+  box.append(g);
+
+  const code = el("a", "quietlink", T("dl.haveCode"));
+  code.href = "/enter";
+  box.append(code);
+
+  /* WHAT THE LAST ATTEMPT SAID, in its own words. Every one of these means
+     something different to do next, and "that did not work" three times over
+     is how somebody decides the product is broken. */
+  const say = el("p", "why");
+  /* A LIST RATHER THAN T("g." + whatever): a missing key renders as the key
+     itself, by design, so an unknown word in the address would print
+     "g.nonsense" on the one screen that has to look trustworthy. */
+  if (["again", "unknown", "here", "other", "failed"].includes(SIGNIN)) {
+    say.textContent = T("g." + SIGNIN);
+  }
+  box.append(say);
   root.append(box);
 }
 
@@ -348,13 +445,104 @@ function payoutLine() {
 function list() {
   /* THE LIST HOLDS BOTH DIRECTIONS NOW, so it cannot be headed "money you
      have asked somebody to pay" — half of it is money going the other way. */
-  root.append(el("h1", null, T("dl.head")));
+  const h = el("div", "hrow");
+  h.append(el("h1", null, T("dl.head")));
+  /* THE ONLY WAY TO THE OTHER SCREEN, and only once there is something on it.
+     "Has this person ever actually paid me" is the question that decides
+     whether you say yes to the next job, and the live list cannot answer it —
+     it empties as things settle. */
+  if (STATE.requests.some((q) => q.state === "paid")) {
+    const a = el("button", "hlink", T("dl.paidHead"));
+    a.type = "button";
+    a.addEventListener("click", () => { VIEW = "paid"; draw(); });
+    h.append(a);
+  }
+  root.append(h);
   root.append(el("p", "sub", T("dl.sub")));
   /* Nowhere for the money to land, said above the list rather than found out
      by the person who was sent a link and met a dead button. */
   if (STATE && !STATE.ready) root.append(payoutLine());
-  for (const q of STATE.requests) root.append(row(q));
+  /* SETTLED ROWS COME OFF THIS SCREEN. They were on it, under a green chip,
+     and the home screen grew by one line for every job ever done and never
+     shrank — so the thing still owed sat further down the page each month.
+     Paid is where they went, and the link above is how you get there. */
+  const open = STATE.requests.filter((q) => q.state !== "paid");
+  if (!open.length) root.append(el("p", "none", T("dl.allSettled")));
+  for (const q of open) root.append(row(q));
   makeButtons("bar");
+}
+
+/* ===========================================================================
+ * PAID — WHAT SETTLED
+ * ===========================================================================
+ *
+ * Both directions, newest first, grouped by the month it was asked. No chips:
+ * everything on this screen is paid, and a badge saying so on every row is a
+ * word repeated forty times. One line per row rather than a card — a card
+ * says "separate object" and these are entries in a ledger.
+ *
+ * No new route. /api/requests already carries every request this person has,
+ * in both directions, with its state on it.
+ */
+function paid() {
+  const h = el("div", "hrow");
+  h.append(el("h1", null, T("dl.paidHead")));
+  const back = el("button", "hlink", T("dl.back"));
+  back.type = "button";
+  back.addEventListener("click", () => { VIEW = "list"; draw(); });
+  h.append(back);
+  root.append(h);
+  root.append(el("p", "sub", T("dl.paidSub")));
+
+  /* Sorted here rather than trusting the order it arrived in. /api/requests
+     hands them over newest first, which is the same thing right up until a
+     row is written out of order — and a ledger in almost-date order is worse
+     than one in none, because nobody checks it. */
+  const done = (STATE?.requests || []).filter((q) => q.state === "paid")
+    .slice().sort((a, b) => String(b.at || "").localeCompare(String(a.at || "")));
+  if (!done.length) {
+    /* Reachable by pressing back on a phone after the last one was refunded
+       or taken back. Empty is a sentence, not a blank screen. */
+    root.append(el("p", "none", T("dl.paidNone")));
+    return;
+  }
+
+  let seen = "";
+  for (const q of done) {
+    const d = new Date(q.at || Date.now());
+    /* MONTH RULES INSTEAD OF A DATE ON EVERY ROW. The month is the thing
+       being looked for — "did that August job ever land" — and repeating it
+       down forty rows buries it. */
+    const key = d.getFullYear() + "-" + d.getMonth();
+    if (key !== seen) {
+      seen = key;
+      root.append(el("p", "mo", monthName(d)));
+    }
+    root.append(paidRow(q, d));
+  }
+}
+
+/* The month as each language says it, and the year only when it is not this
+   one — "September 2024" earns the year, "September" this year does not. */
+function monthName(d) {
+  const now = new Date();
+  const opts = d.getFullYear() === now.getFullYear()
+    ? { month: "long" } : { month: "long", year: "numeric" };
+  try { return d.toLocaleDateString(lang() === "zh" ? "zh-CN" : "en-AU", opts); }
+  catch { return String(d.getFullYear()); }
+}
+
+function paidRow(q, d) {
+  const b = el("button", "prow");
+  b.type = "button";
+  b.append(el("span", "w", q.to || T("dl.someone")), el("span", "n", q.amount));
+  let day = "";
+  try { day = d.toLocaleDateString(lang() === "zh" ? "zh-CN" : "en-AU",
+    { day: "numeric", month: "short" }); } catch { /* leave it out */ }
+  b.append(el("span", "t", [q.what, day,
+    T(q.way === "out" ? "dl.rowOut" : "dl.rowIn")].filter(Boolean).join(" · ")));
+  b.addEventListener("click", () => one(q));
+  return b;
 }
 
 function row(q) {
