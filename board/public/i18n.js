@@ -5105,6 +5105,10 @@ export const STRINGS = {
   "dl.demoWhat":       ["12 lessons", "12 节课"],
   "dl.demoPay":        ["Pay {amount}", "付 {amount}"],
   "dl.demoWays":       ["WeChat Pay · Alipay · Card", "微信支付 · 支付宝 · 银行卡"],
+  /* Each one on its own, because they are now three marks and not a list. */
+  "dl.way.wechat":     ["WeChat Pay", "微信支付"],
+  "dl.way.alipay":     ["Alipay", "支付宝"],
+  "dl.way.card":       ["Card", "银行卡"],
   /* The claim under the picture, and the picture is the proof of it. */
   "dl.signInHead":     ["Two ways back in", "两种进来的方式"],
   "dl.wechatIn":       ["Continue with WeChat", "用微信继续"],

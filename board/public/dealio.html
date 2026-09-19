@@ -66,8 +66,16 @@
   .demo .dbtn{margin:1.1rem 0 0;padding:.95rem 1rem;border-radius:99px;
     background:#2F49A6;color:#fff;text-align:center;font-weight:600;
     letter-spacing:.02em}
-  .demo .dways{margin:.8rem 0 0;font-size:.82rem;color:#6F7D92;
-    text-align:center}
+  /* THE THREE WAYS TO PAY, as marks rather than a footnote. Wrapping, so
+     three long Chinese names do not squeeze into unreadable columns. */
+  .front .ways{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0 0}
+  .front .way{display:inline-flex;align-items:center;gap:.45rem;
+    padding:.5rem .85rem;border:1px solid var(--line);border-radius:99px;
+    font-size:.88rem;color:var(--ink)}
+  .front .wdot{width:.55rem;height:.55rem;border-radius:50%;flex:0 0 auto}
+  .front .wx .wdot{background:#07C160}
+  .front .ali .wdot{background:#1677FF}
+  .front .cd .wdot{background:var(--mut)}
   /* THREE FACTS ON THREE LINES, hairline-separated. A spec row, not prose:
      it is read by glancing down the left edge, which is the only way
      anything on a first screen gets read at all. */
@@ -734,8 +742,21 @@ function signedOut() {
   demo.append(el("p", "damt", "¥2,400"));
   demo.append(el("p", "dwhat", T("dl.demoWhat")));
   demo.append(el("div", "dbtn", T("dl.demoPay", { amount: "¥2,400" })));
-  demo.append(el("p", "dways", T("dl.demoWays")));
   box.append(demo);
+
+  /* HOW THEY PAY, SAID PROPERLY. It was a line of grey eight-point type
+     along the bottom of the card, which is where a footnote goes — and this
+     is not a footnote, it is the reason somebody in China can use this at
+     all. Three marks, named, in the colours people already know them by. No
+     logos: a hand-drawn WeChat or Alipay mark is a worse version of a thing
+     everybody can recognise from its colour and its name. */
+  const ways = el("div", "ways");
+  for (const [k, cls] of [["wechat", "wx"], ["alipay", "ali"], ["card", "cd"]]) {
+    const w = el("span", "way " + cls);
+    w.append(el("i", "wdot"), el("span", null, T("dl.way." + k)));
+    ways.append(w);
+  }
+  box.append(ways);
 
   /* THREE FACTS, AND THE PARAGRAPHS ONE TAP BEHIND THEM. Coarse first, finer
      when asked: the line names the thing and the sheet explains it, for the
