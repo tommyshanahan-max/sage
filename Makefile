@@ -660,6 +660,18 @@ ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [FOR
 	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)" \
 	  $(if $(TRY),--try,)
 
+stripe-names: ## Repair .env after an old go-live wrote the wrong names: make stripe-names
+	@# ONE-OFF, AND SAFE TO RUN TWICE. An earlier go-live wrote the
+	@# container-internal names into .env — BOARD_STRIPE_KEY rather than
+	@# TOMSCODING_BOARD_STRIPE_KEY — and compose reads the second. So the live
+	@# key sat in the file under a name nothing looks at while the old sandbox
+	@# key kept the name that matters, and .env, go-live and pay-check each
+	@# told the truth about something different.
+	@#
+	@# go-live writes the right names now. This is for a box that already has
+	@# the wrong ones. Nothing to move means it says so and changes nothing.
+	@bash scripts/stripe-names.sh
+
 go-live: ## Put the real Stripe keys on: make go-live
 	@# REAL MONEY AFTER THIS. Every charge has this platform as merchant of
 	@# record, so it is a thing to run once you have read Stripe's terms and
