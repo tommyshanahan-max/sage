@@ -140,6 +140,24 @@ If it is more than one, the work is not finished.
   are all things to leave out; if a screen needs them, the screen is wrong.
   Three sentences where one does is the commonest fault here and it is worth
   re-reading every new string for it.
+- **The Chinese payer already knows how to pay.** They use WeChat Pay and
+  Alipay every day, for everything, and they have been doing it longer than
+  anybody reading this. So a string that explains their own wallet back to
+  them is both wrong and slightly insulting: lead with the gesture they
+  already make, and leave the fallback to a second clause.
+
+  The line under a QR code said *"Can't scan your own screen? Screenshot the
+  code, then long-press it."* Long-pressing a code to identify it is an
+  everyday gesture in both wallets — it is how anybody opens a code sent to
+  them in a chat — so that sentence opened with a problem they do not have
+  and buried the answer under a step they do not need. It now reads
+  `长按二维码识别` first. Tom has said this more than once, and it is the
+  actual selling point of the product: Stripe's own page assumes an American
+  reading English; this one assumes somebody who is already in WeChat.
+
+  The general rule, for anything that touches the payer: write for fluency,
+  not for instruction. If a string is teaching a Chinese user about China, it
+  is the wrong string.
 - Strings go in `board/public/i18n.js`, in **both** languages, and the Chinese
   is written rather than translated. After every edit:
   `grep -o '^  "[a-zA-Z0-9._]*":' board/public/i18n.js | sort | uniq -d`
