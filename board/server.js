@@ -9748,10 +9748,15 @@ app.get("/api/admin/pay", admin, async (req, res) => {
     : KEY ? "unrecognised" : "";
 
   const board = await store.load(FILE);
-  /* Who could be paid through Connect at all: a row with an account id on it.
-     Counted, never named — this answers "is anybody set up", and who is set
-     up is a different question with a different audience. */
-  const payees = board.people.filter((q) => q.payee).length;
+  /* WHO COULD BE PAID THROUGH CONNECT AT ALL, by name.
+     It was a count, on the principle that this command names nobody. That
+     principle was about the people on the board and it does not apply here:
+     the one reader of this is whoever runs it, who holds the admin key and
+     can already see everything — and "1" left them with the next command
+     half-typed and no idea whose name goes in it. Handles only, which are
+     the names the operator types at every other target here. Never an
+     account id. */
+  const payees = board.people.filter((q) => q.payee).map((q) => q.handle).filter(Boolean);
   const deals = board.groups.filter((g) => g.deal?.plan?.length).length;
   /* Requests made and requests settled, because "did the one I just made
      actually land" is the question somebody testing this asks first, and the
@@ -9768,11 +9773,11 @@ app.get("/api/admin/pay", admin, async (req, res) => {
     why.push("BOARD_STRIPE_VERSION is not set — Accounts v2 refuses without it");
   }
   if (!FEE_SECRET) why.push("BOARD_DEAL_FEE_SECRET is not set — nothing flips a row to PAID");
-  if (KEY && !payees) why.push("nobody has a payee account yet — Pay lands on \"not finished setting up\"");
+  if (KEY && !payees.length) why.push("nobody has a payee account yet — Pay lands on \"not finished setting up\"");
 
   res.json({
     ok: true,
-    takesPayments: Boolean(KEY && STRIPE_PK && FEE_SECRET && payees),
+    takesPayments: Boolean(KEY && STRIPE_PK && FEE_SECRET && payees.length),
     mode,
     key: Boolean(KEY),
     publishable: Boolean(STRIPE_PK),

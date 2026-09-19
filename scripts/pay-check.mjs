@@ -39,11 +39,21 @@ line("Publishable key", yes(j.publishable));
 line("Webhook secret", yes(j.webhook));
 line("API version", j.apiVersion || "not pinned");
 line("Fee", j.feePct + "%" + (j.feePage ? ", with a page to pay it on" : ", no page to pay it on"));
-line("People set up to be paid", String(j.payees));
+/* By name, because the next thing to type is `make ask WHO="…"` and a count
+   leaves that command half-written. */
+const paid = Array.isArray(j.payees) ? j.payees : [];
+line("Can be paid", paid.length ? paid.join(", ") : "nobody yet");
 line("Deals with a plan", String(j.deals));
 line("Requests made", String(j.asks) + (j.asks ? " · " + j.asksPaid + " paid" : ""));
 if (j.demo) line("Demo stand-in", "ON — the payment screen is a drawing");
 console.log("");
+/* THE NEXT COMMAND, WRITTEN OUT. The whole point of this page is to answer
+   "what now", and the answer is almost always one line somebody can paste. */
+if (paid.length) {
+  console.log("  To see the paying screens on a phone:");
+  console.log("    make ask WHO=\"" + paid[0] + "\" AMOUNT=\"¥1\" FOR=\"a test\"");
+  console.log("");
+}
 if (j.why.length) {
   console.log("  Why not:");
   for (const w of j.why) console.log("    · " + w);
