@@ -5076,19 +5076,29 @@ export const STRINGS = {
    * the order they actually arrive: what is it, what does the other person
    * have to do, how does it work, what does it cost, can I get in.
    */
-  "dl.heroHead":       ["Get paid by anyone.", "谁都能给你付钱。"],
-  "dl.heroSub":        ["They need no account and no app.", "对方不用注册，也不用装 App。"],
+  /* THE SPECIFIC CLAIM, NOT THE GENERIC ONE. "Get paid by anyone" is what
+     every payments app on earth says. The one thing that is actually ours is
+     China — which is precisely where Venmo, PayPal and Wise do not reach —
+     so that is the headline. Specific beats clever, and it beats broad.
+
+     The Chinese side says it from the other end: a Chinese reader is not
+     impressed that you can be paid from China, they are standing in it. For
+     them the news is that paying somebody abroad takes WeChat and nothing
+     else. */
+  "dl.heroHead":       ["Get paid from China.", "给国外的人付钱。"],
+  "dl.heroSub":        ["WeChat Pay or Alipay. They need no account and no app.",
+                        "用微信或支付宝就行。对方不用注册，也不用装 App。"],
   /* THREE FACTS, FOUR WORDS EACH. They replace a heading and a paragraph
      apiece. What it costs, where the money ends up, whether you can get in —
      which is everything somebody had to read four hundred words to learn. */
   "dl.spec1":          ["2% when you get paid", "收到钱时收 2%"],
-  "dl.spec2":          ["Money goes straight to your bank", "钱直接进你的银行卡"],
+  "dl.spec2":          ["Lands in your bank abroad", "直接进国外的银行卡"],
   "dl.spec3":          ["Invitation only, for now", "现在要有人邀请"],
   /* The paragraph each one replaced, one tap behind it. */
   "dl.spec1.p":        ["Stripe takes 2% out of a payment on its way to you, and hands it to us. Nothing to join, nothing monthly, and nothing at all if nobody pays you.",
                         "有人付钱的时候，Stripe 从中扣 2% 给我们。不收入会费，不收月费，没人付你就一分不收。"],
-  "dl.spec2.p":        ["The person paying pays Stripe, and Stripe pays your bank. This board never holds it, never moves it, and has no balance of anybody's money.",
-                        "付款人付给 Stripe，Stripe 打到你的银行卡。这个板子不代收、不代转，也没有任何人的资金池。"],
+  "dl.spec2.p":        ["They pay in yuan from WeChat or Alipay; it arrives in your own bank account abroad. This board never holds it, never moves it, and has no balance of anybody's money.",
+                        "对方用微信或支付宝付人民币，钱到你在国外的银行账户。这个板子不代收、不代转，也没有任何人的资金池。"],
   "dl.spec3.p":        ["Somebody already here has to let you in. Paying is different — if somebody sent you a link, open it and pay. You need no account for that, ever.",
                         "要进来得有人邀请你。付钱是另一回事：别人发了链接给你，打开付就行，永远不需要账号。"],
   "dl.demoWho":        ["{who} is asking for", "{who} 请你付"],
