@@ -616,6 +616,19 @@ handroom: ## A room you keep by hand: make handroom [WHO="Ray Chen"] [OFF=1] [NA
 	  /seed/handroom.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --name "$(NAME)" --who "$(WHO)" $(if $(OFF),--off,)
 
+door-in: ## Door opens with a button instead of a code: make door-in [OFF=1]
+	@# The landing page stays exactly as it is. What goes is the six boxes —
+	@# the part that kept breaking: typed wrong, spent, landed on the wrong
+	@# page, or simply six characters read off a screen.
+	@#
+	@# WHILE IT IS ON, ANYBODY WHO OPENS THE DOOR CAN TAP IT and be whoever
+	@# the standing code names. Not guess a code — tap a button. It is for
+	@# showing somebody the product, not for leaving on.
+	@#
+	@# Needs make sign-in-code first, so it cannot be switched on by accident
+	@# on a box that never had a standing code.
+	@bash scripts/door-in.sh
+
 payout: ## The link that sets where somebody's money lands: make payout WHO="Tom"
 	@# Setting up payouts is the one thing a payee does themselves — the app
 	@# gives them a button and Stripe takes the bank details on its own pages.

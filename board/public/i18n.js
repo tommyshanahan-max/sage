@@ -458,6 +458,18 @@ export const STRINGS = {
      changes, and the sign is written in the words of the person who followed
      that link. The "under" line is the same promise on all four: this is one
      room in one building, and the rest of the building is the point. */
+  /* THE DOOR WITH THE TYPING TAKEN OUT — see DOOR_IN in server.js, which is
+     off unless switched on. The button says where it goes rather than what
+     it is: "Go in" is the whole of what somebody pressing it wants. */
+  "door.in":           ["Go in", "进去"],
+  "door.inGoing":      ["Opening…", "正在打开…"],
+  "door.inNo":         ["That did not open — try again", "没打开，再试一次"],
+  /* Two people's rows on one browser is not a state this board has, so the
+     button refuses rather than quietly swallowing whoever was here first —
+     the same answer the typed way back gives. */
+  "door.inTaken":      ["Somebody else is already signed in on this browser.",
+                        "这个浏览器上已经有人登录了。"],
+
   "door.film.head": [
     "Who do I get to shoot in Beijing in November?",
     "十一月要在北京拍，找谁？",

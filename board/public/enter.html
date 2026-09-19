@@ -416,7 +416,15 @@
       <b id="clockleft"></b>
     </p>
 
-    <div class="codewrap">
+    <!-- THE DOOR WITH THE TYPING TAKEN OUT — see DOOR_IN in server.js.
+         Hidden unless the box says so, and when it is shown the boxes and
+         their button are hidden instead: two ways in on one screen is a
+         screen asking a question nobody came here to answer. -->
+    <div id="doorinwrap" hidden>
+      <button class="go wide" type="button" id="doorin"></button>
+    </div>
+
+    <div class="codewrap" id="codewrap">
       <div class="boxes" id="boxes" aria-hidden="true"></div>
       <input id="code" inputmode="text" autocomplete="one-time-code"
              autocapitalize="characters" autocorrect="off" spellcheck="false"
@@ -1400,6 +1408,36 @@ fetch("/api/hello", { cache: "no-store" })
   .then((r) => r.json())
   .then((d) => {
     if (d && d.hostess) { $("hostess").hidden = false; drawHostess(); }
+    /* THE BUTTON INSTEAD OF THE BOXES — see DOOR_IN in server.js. The boxes
+       and their button go when it is drawn: two ways in on one screen is a
+       question nobody came here to answer. Everything above stays, because
+       the landing page is not the part that was breaking. */
+    if (d && d.doorIn) {
+      $("codewrap").hidden = true;
+      $("go").hidden = true;
+      $("doorinwrap").hidden = false;
+      /* "No account, no password — the code is the whole of it" under a
+         button and no boxes reads as a page that half-loaded. */
+      $("doornote").hidden = true;
+      const b = $("doorin");
+      b.textContent = T("door.in");
+      b.addEventListener("click", async () => {
+        b.disabled = true;
+        b.textContent = T("door.inGoing");
+        try {
+          const r = await fetch("/api/enter/in", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device }),
+          });
+          const j = await r.json().catch(() => null);
+          if (r.ok && j?.ok) { location.assign(nextPath() || "/browse"); return; }
+          /* Somebody else is already on this browser — the same refusal the
+             typed way back gives, and for the same reason. */
+          b.textContent = T(j?.error === "taken" ? "door.inTaken" : "door.inNo");
+        } catch { b.textContent = T("door.inNo"); }
+        b.disabled = false;
+      });
+    }
     /* NOT IN THE APP — see the note over the same gate in person.html.
        Google refuses to sign anybody in inside an embedded webview, and
        Capacitor sends accounts.google.com out to Safari, where the cookies

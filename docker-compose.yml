@@ -988,6 +988,12 @@ services:
       # hour wall because the first guess is inside the five.
       BOARD_BACK_CODE: ${TOMSCODING_BOARD_BACK_CODE:-}
       BOARD_BACK_WHO: ${TOMSCODING_BOARD_BACK_WHO:-}
+      # THE DOOR WITH THE TYPING TAKEN OUT. Set to 1 and the door draws a
+      # button instead of six boxes — the landing page is unchanged, the code
+      # step goes. While it is on, anybody who opens the door can tap it and
+      # be BOARD_BACK_WHO, so it is a thing to switch on for a demo and off
+      # afterwards. See the note over DOOR_IN in board/server.js.
+      BOARD_DOOR_IN: ${TOMSCODING_BOARD_DOOR_IN:-}
       # Private messages and groups, and the switch that kills them. Default on
       # — "off" turns every message and group route in the app into a 404
       # without a deploy, which is the thing you want within reach on the one

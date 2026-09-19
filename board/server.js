@@ -320,6 +320,23 @@ const DEMO_CODE = store.cleanCode(process.env.BOARD_DEMO_CODE || "");
  * leaked copy is worth one page rather than the board. */
 const BACK_CODE = store.cleanCode(process.env.BOARD_BACK_CODE || "");
 const BACK_WHO = String(process.env.BOARD_BACK_WHO || "").trim();
+
+/* THE DOOR WITH THE TYPING TAKEN OUT.
+ *
+ * Set BOARD_DOOR_IN=1 and the door draws a button that opens it instead of
+ * six boxes that have to be typed into. Same landing page, same everything
+ * above it — what goes is the part that kept breaking.
+ *
+ * WHAT IT IS WORTH TO A STRANGER, said plainly because there is no version
+ * of this that is worth something only to the person it was meant for: while
+ * it is on, ANYBODY who opens the door can tap it and be BACK_WHO. Not guess
+ * a code — tap a button. It is a way in with no wall at all.
+ *
+ * So: off unless switched on, and it needs the standing code configured
+ * first so it cannot be turned on by accident on a box that never had one.
+ * It is a thing to put on while showing somebody the product and take off
+ * afterwards — BOARD_DOOR_IN= and a make up. */
+const DOOR_IN = process.env.BOARD_DOOR_IN === "1" && Boolean(BACK_CODE && BACK_WHO);
 /* An origin and nothing else — no path, no query. It is handed straight to
    location.assign() on the door page, so anything that is not a bare host is a
    redirect somebody could have chosen. http and a port are allowed so the pair
@@ -4378,6 +4395,10 @@ app.get("/api/hello", async (req, res) => {
        configured — like push, mail and the hostess above — because a button
        that cannot work is worse than one screen fewer. */
     google: google.configured(),
+    /* Whether to draw the button instead of the boxes — see DOOR_IN. The
+       flag and not the code: a page that held the code would put it in every
+       browser that opened the door. */
+    doorIn: DOOR_IN,
     // The room this number is about, or "" when it is about the whole board.
     // Echoed so the page never holds its own copy of the four names.
     room: enough ? only : "",
@@ -9460,6 +9481,33 @@ app.post("/api/pay/onboard", notesOff, express.json({ limit: "1kb" }), async (re
     }
     res.status(502).json({ error: "stripe" });
   }
+});
+
+/** THE BUTTON ON THE DOOR — the standing code without the typing.
+ *
+ *  Everything the standing-code branch of /api/enter does, minus the code:
+ *  the same one named person, the same rebind, the same refusal when this
+ *  browser is already somebody else. Off unless BOARD_DOOR_IN is set — see
+ *  the note over DOOR_IN for what it is worth to whoever finds it. */
+app.post("/api/enter/in", express.json({ limit: "1kb" }), async (req, res) => {
+  if (!DOOR_IN) return res.status(404).json({ error: "off" });
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no device" });
+
+  let why = "";
+  const got = await change((board) => {
+    const q = board.people.find(
+      (p) => String(p.handle || "").toLowerCase() === BACK_WHO.toLowerCase());
+    if (!q) { why = "nobody"; return null; }
+    if (q.by === me) return { handle: q.handle || "" };
+    if (board.people.some((p) => p.by === me)) { why = "taken"; return null; }
+    store.rebind(board, q.by, me);
+    return { handle: q.handle || "" };
+  });
+  if (why === "taken") return res.status(409).json({ error: "taken" });
+  if (!got) return res.status(404).json({ error: "nobody" });
+  setCookie(res, me);
+  res.json({ ok: true, handle: got.handle });
 });
 
 /** THE SAME THING FROM THE BOX — see the note over /api/admin/back, which
