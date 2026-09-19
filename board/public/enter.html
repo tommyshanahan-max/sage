@@ -750,6 +750,22 @@ async function enter() {
        the link `make back TO=...` prints. nextPath rather than the raw value:
        a code link is a thing people forward, and an open redirect on the end
        of one is a genuine way to take somebody somewhere. */
+    /* ALREADY IN, AND THE LINK SAID WHERE TO GO.
+     *
+     * A browser that is already a member short-circuits at the top of
+     * /api/enter and never reaches a code at all — which is right, and it
+     * meant the one thing the link was for got dropped. Somebody who opens
+     * `?next=/dealio` is not arriving; they are being sent somewhere, and
+     * they typed a code to get there. The "you are in" screen is written for
+     * a stranger and is a stop on the way to a page they already named.
+     *
+     * Found by the operator, twice: signed in on a browser, typed the
+     * standing code, landed on the board. The first time it was the old
+     * image on the box; the second time it was this. */
+    if (r.ok && d.already) {
+      const to = nextPath();
+      if (to) { location.assign(to); return; }
+    }
     if (r.ok && d.back) { location.assign(nextPath() || "/browse"); return; }
     if (r.ok) return showIn(d.by || "", Boolean(d.agent));
     /* THE RIGHT CODE AT THE WRONG DOOR. Somebody who was sent a piece of work
@@ -828,6 +844,10 @@ function showIn(by, agent) {
   try {
     const back = new URLSearchParams(location.search).get("back") || "";
     if (/^\/[A-Za-z0-9/_-]{0,60}$/.test(back)) $("ingo").href = back;
+    /* And `next`, for the same reason one level up: a link that says where
+       it is going should still say so on the button, in the cases that do
+       land here. nextPath rather than the raw value — see its note. */
+    else { const to = nextPath(); if (to) $("ingo").href = to; }
   } catch { /* the default is /browse */ }
   /* AN AGENT IS NOT HERE TO BROWSE. They came in holding nine people and a
      folder for each, and the first screen that is any use to them is the one
