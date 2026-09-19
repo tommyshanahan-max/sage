@@ -9753,6 +9753,12 @@ app.get("/api/admin/pay", admin, async (req, res) => {
      up is a different question with a different audience. */
   const payees = board.people.filter((q) => q.payee).length;
   const deals = board.groups.filter((g) => g.deal?.plan?.length).length;
+  /* Requests made and requests settled, because "did the one I just made
+     actually land" is the question somebody testing this asks first, and the
+     only place to see it was a page on a phone. */
+  const asks = board.requests.length;
+  const asksPaid = board.requests.filter(
+    (q) => (q.said || []).some((x) => x.kind === "confirmed")).length;
 
   const why = [];
   if (!KEY) why.push("BOARD_STRIPE_KEY is not set");
@@ -9778,6 +9784,8 @@ app.get("/api/admin/pay", admin, async (req, res) => {
     feePct: store.FEE_PCT,
     payees,
     deals,
+    asks,
+    asksPaid,
     demo: PAY_DEMO,
     why,
   });

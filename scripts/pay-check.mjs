@@ -41,6 +41,7 @@ line("API version", j.apiVersion || "not pinned");
 line("Fee", j.feePct + "%" + (j.feePage ? ", with a page to pay it on" : ", no page to pay it on"));
 line("People set up to be paid", String(j.payees));
 line("Deals with a plan", String(j.deals));
+line("Requests made", String(j.asks) + (j.asks ? " · " + j.asksPaid + " paid" : ""));
 if (j.demo) line("Demo stand-in", "ON — the payment screen is a drawing");
 console.log("");
 if (j.why.length) {
