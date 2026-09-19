@@ -1193,8 +1193,14 @@ export const STRINGS = {
   "land.alsoLine":     ["Your client in China pays by WeChat Pay or Alipay. You get the money in your own currency. 2%.",
                         "国内的客户用微信或支付宝付，你收到的是自己国家的钱。手续费 2%。"],
   "land.alsoGo":       ["What it is", "这是什么"],
+  /* "people connecting in China, and with China" — "connecting" was the only
+     word in the line doing no work, and it is the vaguest kind of product
+     word: it names no act anybody performs. The Chinese half never had the
+     problem. 打交道 is having dealings with somebody, so the line already
+     said "people in China, and people who deal with China", and the English
+     is now the same sentence rather than a softer one beside it. */
   "land.foot": [
-    "A private board for people connecting in China, and with China.",
+    "A private board for people in China, and people doing business with it.",
     "一个私密板子，给在中国、以及跟中国打交道的人。",
   ],
   "land.rules":        ["House rules", "这里的规矩"],
