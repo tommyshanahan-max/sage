@@ -56,9 +56,28 @@
     background:var(--line);color:var(--ink2)}
   .q .c.ok{background:rgba(63,190,125,.14);color:var(--ok)}
   .q .c.off{opacity:.55}
-  .none{padding:2.5rem 0;text-align:center;color:var(--mut)}
-  .none b{display:block;color:var(--ink);font-size:1.05rem;margin:0 0 .35rem;
-    font-weight:400;font-family:var(--serif)}
+  /* THE WHOLE SCREEN, WHEN THE SCREEN HAS ONE THING TO SAY.
+     Centred and vertically placed rather than stacked at the top of a tall
+     black nothing: a page with one message on it should look composed, not
+     abandoned. min-height fills the viewport less the header. */
+  .mid{min-height:calc(100dvh - 9rem);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;
+    padding:1rem 0 3rem}
+  .mid .big{margin:0;font-family:var(--serif);font-size:2.7rem;line-height:1;
+    letter-spacing:-.01em}
+  .mid .line{margin:.6rem 0 0;max-width:19rem;color:var(--ink2);font-size:1rem;
+    line-height:1.5}
+  .mid hr{width:2.5rem;border:0;border-top:1px solid var(--line);margin:1.8rem 0}
+  .mid .mhead{margin:0;font-size:1.05rem;color:var(--ink)}
+  .mid .msub{margin:.4rem 0 1.6rem;max-width:19rem;color:var(--mut);
+    font-size:.92rem;line-height:1.5}
+  .mid .go,.mid button{display:block;width:100%;max-width:19rem;border:0;
+    border-radius:99px;background:var(--acc);color:var(--accink);
+    font:inherit;font-size:.95rem;font-weight:600;letter-spacing:.08em;
+    text-transform:uppercase;padding:1rem 1.2rem;min-height:3.4rem;
+    text-decoration:none;cursor:pointer}
+  .mid .warnline{margin:1.4rem 0 0;max-width:19rem;font-size:.84rem;
+    line-height:1.5;color:var(--acc)}
   /* THE ONE BUTTON, PINNED. It is the only thing this page is for, so it does
      not scroll away under a list. */
   .make{position:fixed;left:0;right:0;bottom:0;padding:.8rem .9rem
@@ -176,55 +195,87 @@ function top() {
   return { bar: b, slot };
 }
 
+/* THREE SCREENS, NOT ONE SCREEN WITH THREE WARNINGS ON IT.
+ *
+ * It drew the same list every time and pushed whatever was wrong into a red
+ * box above it. On a phone that had never signed in that meant a heading, a
+ * warning, an empty-list message and no button — three things all saying
+ * there is nothing here, floating in a tall black nothing, with not one
+ * thing to tap. Tom looked at it and asked why it looked like that.
+ *
+ * So the state picks the screen. Signed out is a door and nothing else.
+ * Empty is an invitation and nothing else. With requests in it, it is a list
+ * — and only then is there a list to draw.
+ */
 function draw() {
   const { bar: head, slot } = top();
   root.textContent = "";
   root.append(head);
+  bar.textContent = "";
+  bar.hidden = true;
+
+  if (STATE && !STATE.you) signedOut();
+  else if (!(STATE?.requests || []).length) empty();
+  else list();
+
+  slot.replaceWith(langButton(draw));
+}
+
+/** A BIG BUTTON IS AN ANSWER TO A QUESTION THE SCREEN HAS ALREADY ASKED.
+ *  Middle of the page when there is nothing else on it, pinned to the bottom
+ *  once there is a list to scroll. */
+function makeButton(where) {
+  const b = el("button", null, T("dl.make"));
+  b.type = "button";
+  b.addEventListener("click", () => form());
+  if (where === "bar") { bar.append(b); bar.hidden = false; return null; }
+  return b;
+}
+
+/* SIGNED OUT IS A DOOR, and a door has one handle.
+   It said "open your sign-in link on this phone" and gave nothing to open —
+   an instruction about a thing that was not on the screen, which is the
+   worst kind. The button goes to the door. */
+function signedOut() {
+  const box = el("div", "mid");
+  box.append(el("p", "big", "Dealio"));
+  box.append(el("p", "line", T("dl.what")));
+  box.append(el("hr"));
+  box.append(el("p", "mhead", T("dl.notYou")));
+  box.append(el("p", "msub", T("dl.notYouWhy")));
+  const a = el("a", "go", T("dl.signIn"));
+  a.href = "/enter";
+  box.append(a);
+  root.append(box);
+}
+
+/* NOTHING YET IS AN INVITATION, not an apology. One line saying what will
+   happen, and the button in the middle where the eye already is. */
+function empty() {
+  const box = el("div", "mid");
+  box.append(el("p", "big", "Dealio"));
+  box.append(el("p", "line", T("dl.what")));
+  box.append(el("hr"));
+  box.append(el("p", "mhead", T("dl.noneHead")));
+  box.append(el("p", "msub", T("dl.noneWhy")));
+  box.append(makeButton());
+  if (STATE && !STATE.ready) box.append(el("p", "warnline", T("dl.notReadyWhy")));
+  root.append(box);
+}
+
+function list() {
   root.append(el("h1", null, T("dl.head")));
   root.append(el("p", "sub", T("dl.sub")));
-
-  /* THIS BROWSER IS NOBODY YET.
-   *
-   * The page opens for anybody — it is outside the board's door on purpose —
-   * but making a request needs a person, and a person is a browser this
-   * server has met. A phone that has never been signed in sees an empty list
-   * and a button that would fail, which reads as broken software.
-   *
-   * ONCE PER PHONE, NOT EVERY TIME. Whatever put the identity on this browser
-   * did it permanently; there is nothing to repeat. That is worth saying,
-   * because the thing it replaces — a password box on every visit — is what
-   * everybody assumes is coming. */
-  if (STATE && !STATE.you) {
-    const w = el("div", "warn");
-    w.append(el("b", null, T("dl.notYou")));
-    w.append(document.createTextNode(T("dl.notYouWhy")));
-    root.append(w);
-  } else if (STATE && !STATE.ready) {
+  /* Nowhere for the money to land, said above the list rather than found out
+     by the person who was sent a link and met a dead button. */
+  if (STATE && !STATE.ready) {
     const w = el("div", "warn");
     w.append(el("b", null, T("dl.notReady")));
     w.append(document.createTextNode(T("dl.notReadyWhy")));
     root.append(w);
   }
-
-  const rows = (STATE?.requests || []);
-  if (!rows.length) {
-    const none = el("div", "none");
-    none.append(el("b", null, T("dl.noneHead")));
-    none.append(el("p", null, T("dl.noneWhy")));
-    root.append(none);
-  } else {
-    for (const q of rows) root.append(row(q));
-  }
-
-  bar.textContent = "";
-  if (STATE && !STATE.you) { bar.hidden = true; slot.replaceWith(langButton(draw)); return; }
-  const mk = el("button", null, T("dl.make"));
-  mk.type = "button";
-  mk.addEventListener("click", () => form());
-  bar.append(mk);
-  bar.hidden = false;
-
-  slot.replaceWith(langButton(draw));
+  for (const q of STATE.requests) root.append(row(q));
+  makeButton("bar");
 }
 
 function row(q) {

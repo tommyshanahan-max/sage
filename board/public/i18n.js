@@ -4940,8 +4940,13 @@ export const STRINGS = {
   "dl.st.waiting":     ["Says they paid", "对方说已付"],
   "dl.st.paid":        ["Paid", "已付"],
   "dl.st.off":         ["Taken back", "已撤回"],
+  /* The one line under the name, on the two screens that have room for it.
+     What it does and what it costs the other person, which is nothing. */
+  "dl.what":           ["Ask anyone to pay you. They need no account, no app and no card on file.",
+                        "让任何人付钱给你。对方不用注册、不用装 App、也不用先绑卡。"],
+  "dl.signIn":         ["Sign in", "登录"],
   "dl.noneHead":       ["Nothing asked for yet.", "还没发起过收款。"],
-  "dl.noneWhy":        ["Ask somebody to pay and paste the message wherever you are already talking.",
+  "dl.noneWhy":        ["Ask somebody to pay, then paste the message wherever you are already talking.",
                         "发起一笔，把那段话粘到你们平时聊天的地方。"],
   /* Said at the top rather than discovered by the person who was sent a link
      and found a dead button. */
