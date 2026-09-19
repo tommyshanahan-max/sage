@@ -342,6 +342,7 @@
   .askline{margin:.9rem 0 0;font-size:.95rem;color:var(--acc)}
   .saidraw{margin:1rem 0 0;padding-top:.8rem;border-top:1px solid var(--line);
     font-size:.82rem;line-height:1.5;color:var(--mut)}
+  .zhnote{margin:.5rem 0 0;font-size:.78rem;color:var(--dim);text-align:center}
   .msg{display:block;width:100%;margin:.5rem 0 0;font:inherit;font-size:.88rem;
     line-height:1.65;padding:.75rem .85rem;border-radius:.7rem;
     border:1px solid var(--line);background:var(--bg);color:var(--ink2);
@@ -380,7 +381,7 @@
  * and it is WeChat. Building a fourth one would mean asking two people to
  * move a conversation they are already having, which nobody does.
  */
-import { T, when, lang, setLang, pickLang, langButton } from "/i18n.js";
+import { T, TZh, when, lang, setLang, pickLang, langButton } from "/i18n.js";
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -1342,7 +1343,9 @@ function sent(q) {
   card.append(el("p", "lab", T("ask.ready")));
   card.append(el("h2", null, T("ask.to", { who: q.to || T("dl.someone") })));
 
-  const text = T(q.way === "out" ? "dl.sendBlock" : "ask.block",
+  /* TZh, not T — see the note over it. This block is read by the person in
+     China, not the person sending it. */
+  const text = TZh(q.way === "out" ? "dl.sendBlock" : "ask.block",
     { to: q.to || "", amount: q.amount, what: q.what || "", url: q.url });
   const box = el("textarea", "msg");
   box.readOnly = true;
@@ -1350,6 +1353,9 @@ function sent(q) {
   box.value = text;
   box.setAttribute("aria-label", T("ask.ready"));
   card.append(box);
+  /* A person who cannot read the thing they are about to send needs to be
+     told it is deliberate, once, in their own language. */
+  card.append(el("p", "zhnote", T("ask.inZh")));
 
   const acts = el("div", "acts");
   /* The solid one is Send, not Copy. The request exists; the only thing left
@@ -1392,7 +1398,7 @@ function one(q) {
        do. It was Copy, which is the same six steps as before: copy, leave,
        find the chat, hold, paste, send — at the moment you are trying to
        nudge somebody, which is already an awkward thing to be doing. */
-    const text = T(q.way === "out" ? "dl.sendBlock" : "ask.block",
+    const text = TZh(q.way === "out" ? "dl.sendBlock" : "ask.block",
       { to: q.to || "", amount: shown(q), what: q.what || "", url: q.url });
     const go = el("button", "go",
       T(navigator.share ? "dl.sendAgain" : "memo.copy"));

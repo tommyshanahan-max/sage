@@ -5188,6 +5188,10 @@ export const STRINGS = {
   "ask.block":         ["{to} — {amount} for {what}.\n\n{url}\n\nWeChat Pay, Alipay or card.",
                         "{to} —— {what}，{amount}。\n\n{url}\n\n微信支付、支付宝或银行卡都行。"],
 
+  /* Said to the sender, in their language, about a message they cannot read.
+     Without it the box looks like a bug. */
+  "ask.inZh":          ["Written in Chinese, for them.", "这段是中文的，给对方看的。"],
+
   "rq.asking":         ["{who} is asking for", "{who} 要收"],
   "rq.sending":        ["{who} wants to send you", "{who} 要付给你"],
   "rq.when":           ["When", "什么时候"],
@@ -6268,6 +6272,29 @@ export function setLang(next) {
 }
 
 /** A string, in the language now in force, with {placeholders} filled. */
+/** THE SAME STRING, IN THE LANGUAGE THE OTHER PERSON READS.
+ *
+ *  Everything else on this app is written for whoever is holding it. The
+ *  block that gets shared is the one thing that is not: it goes into a WeChat
+ *  chat with somebody in China, and the person tapping Send never reads it.
+ *
+ *  It went out in English, because the app was in English, because an
+ *  Australian sole trader is not going to switch their whole app to 中文 to
+ *  send an invoice. So the one artefact that actually reaches the payer —
+ *  their first contact, the thing the whole product claims to get right —
+ *  arrived in the language this product exists not to use.
+ *
+ *  The Chinese was already written. It simply never fired. */
+export function TZh(key, vars) {
+  const pair = STRINGS[key];
+  if (!pair) return key;
+  let out = pair[1] || pair[0];
+  if (vars) {
+    for (const k of Object.keys(vars)) out = out.split("{" + k + "}").join(String(vars[k]));
+  }
+  return out;
+}
+
 export function T(key, vars) {
   const pair = STRINGS[key];
   // A missing key is a bug, and showing the key is how it gets noticed. Silent
