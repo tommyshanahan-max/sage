@@ -912,6 +912,8 @@ function payoutLine() {
          from a payment failing — and it is the first thing a brand new live
          account hits. Named, with the page that fixes it. */
       b.textContent = T(j?.error === "unactivated" ? "dl.notLive"
+        /* Refused rather than unfinished — see the note over dl.rejected. */
+        : j?.error === "rejected" ? "dl.rejected"
         : j?.error === "off" ? "dl.setUpOff" : "pay.setUpNo");
     } catch { b.textContent = T("pay.setUpNo"); }
     b.disabled = false;

@@ -5157,6 +5157,13 @@ export const STRINGS = {
      can fix it and nothing here should pretend otherwise. */
   "dl.notLive":        ["This board is not activated with Stripe yet",
                         "这个板子在 Stripe 那边还没激活"],
+  /* A DECISION, NOT A QUEUE. dl.notLive says "not yet", which is the right
+     thing to say about a form nobody has finished and the wrong thing to say
+     about an application somebody has refused — it leaves the reader waiting
+     for something that is not coming. Stripe's own words are "your account
+     has been rejected", and this is the only screen anybody sees them on. */
+  "dl.rejected":       ["Stripe has turned this board down. Nothing can be paid until that is sorted.",
+                        "Stripe 把这个板子拒了。这事解决之前，收不了款。"],
   "dl.notReadyWhy":    ["You have not said where the money should land. Requests can be written and sent, but not paid.",
                         "你还没填钱打到哪里。可以先写、先发，只是暂时付不了。"],
 

@@ -9446,6 +9446,18 @@ app.post("/api/pay/onboard", notesOff, express.json({ limit: "1kb" }), async (re
     if (/must be activated/i.test(err.message)) {
       return res.status(400).json({ error: "unactivated" });
     }
+    /* REJECTED IS NOT THE SAME AS NOT-YET-ACTIVATED, and it arrived here as
+       the generic refusal because only the first wording was matched:
+
+         You cannot create new accounts because your account has been
+         rejected.
+
+       One is a form nobody has finished and the other is a decision somebody
+       made. Told the first when it is the second, whoever reads it waits for
+       something that is not coming. */
+    if (/has been rejected/i.test(err.message)) {
+      return res.status(400).json({ error: "rejected" });
+    }
     res.status(502).json({ error: "stripe" });
   }
 });
@@ -9517,6 +9529,10 @@ app.post("/api/admin/payout", admin, express.json({ limit: "1kb" }), async (req,
        likely thing to come back, and "stripe" tells nobody anything. */
     if (/must be activated/i.test(err.message)) {
       return res.status(400).json({ error: "unactivated", detail: err.message });
+    }
+    /* And the decision, said as itself — see the note one route up. */
+    if (/has been rejected/i.test(err.message)) {
+      return res.status(400).json({ error: "rejected", detail: err.message });
     }
     res.status(502).json({ error: "stripe", detail: err.message });
   }

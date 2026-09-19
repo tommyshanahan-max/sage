@@ -76,6 +76,21 @@ if (d.error === "unactivated") {
       "Stripe said: " + String(d.detail || "").slice(0, 160));
   process.exit(1);
 }
+/* AND THE ONE THAT IS A DECISION. Stripe reviewed this platform for Connect
+   and said no, so no payout account can be made for anybody — including the
+   operator, which is how this is usually found. It came back as the generic
+   refusal the first time it happened, which sends somebody looking for a bug
+   in the wrong place: it is not a bug and there is nothing here to fix. */
+if (d.error === "rejected") {
+  say("Stripe has turned this platform down for Connect.",
+      "",
+      "Not a queue and not a setting — a decision. No payout account can be",
+      "made for anybody until it is appealed, so nothing on this board can",
+      "take a payment.",
+      "",
+      "Stripe said: " + String(d.detail || "").slice(0, 160));
+  process.exit(1);
+}
 if (!r.ok || !d.url) {
   say("Refused: " + (d.error || r.status),
       ...(d.detail ? ["", String(d.detail).slice(0, 200)] : []));
