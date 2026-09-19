@@ -49,8 +49,18 @@
   /* The invite code, under Continue with Google. A link, not a second button:
      almost nobody meeting that screen has a code, and two buttons of equal
      weight would make it look like a choice worth stopping over. */
+  /* A LINK, EVEN WHEN IT IS A BUTTON. In the pinned bar it inherited the
+     solid accent style off `.make button` and came out looking like a third
+     thing to press — louder than Send money, for something looked for once.
+     Declared after those rules and at the same specificity, so it wins. */
   .quietlink{display:inline-block;margin:.9rem 0 0;color:var(--ink2);
     font-size:.88rem}
+  .mid .two button.quietlink,.make .two button.quietlink,button.quietlink{
+    display:block;width:auto;max-width:none;margin:.6rem auto 0;border:0;
+    background:none;color:var(--ink2);font:inherit;font-size:.85rem;
+    font-weight:400;letter-spacing:normal;text-transform:none;
+    padding:.5rem .6rem;min-height:0;text-decoration:underline;
+    text-underline-offset:3px;cursor:pointer}
   /* A MONTH, AS A RULE ACROSS THE LIST. */
   .mo{margin:1.6rem 0 .5rem;padding:0 0 .5rem;border-bottom:1px solid var(--line);
     font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
@@ -113,6 +123,9 @@
   .fix{margin:1.4rem 0 0;max-width:20rem;padding:.95rem 1rem;border-radius:.9rem;
     background:rgba(214,72,59,.12);text-align:center}
   main > .fix{margin:0 auto 1rem}
+  /* Nothing wrong with it: same box, no alarm colour. */
+  .fix.okfix{background:var(--card)}
+  .fix.okfix .ghost{border-color:var(--line)}
   .fixhead{margin:0;font-size:.95rem;color:var(--ink)}
   .fixwhy{margin:.3rem 0 .9rem;font-size:.85rem;line-height:1.5;color:var(--ink2)}
   .fix .ghost{display:block;width:100%;border:1px solid var(--acc);
@@ -276,6 +289,26 @@ try {
 } catch { /* nothing to read */ }
 
 let STATE = null;
+
+/* THE SIGN, PUT BACK ON FOR EVERY SCREEN THAT SHOWS AN AMOUNT.
+ *
+ * The currency picker made the field take bare digits — nobody hunts for ¥ on
+ * a phone keyboard — and the list went on printing whatever was typed. So a
+ * row read "1" and another read "100", which is not an amount, it is a
+ * number. The currency is on the row; using it is the whole point of asking
+ * for it.
+ *
+ * An amount that already carries a sign is left alone: everything made before
+ * the picker existed has one, and "¥¥1" would be a worse bug than the one
+ * being fixed. */
+const CUR_SIGN = { cny: "¥", usd: "$", aud: "A$", hkd: "HK$", eur: "€",
+                   gbp: "£", jpy: "¥" };
+const shown = (q) => {
+  const amount = String(q?.amount ?? "");
+  if (!amount) return "";
+  if (/^[^0-9]/.test(amount)) return amount;
+  return (CUR_SIGN[q.cur] || "") + amount;
+};
 /* WHICH OF THE TWO SCREENS. Not a tab bar: two screens do not earn one, and
    a bar across the bottom would sit exactly where the two buttons are. */
 let VIEW = "list";
@@ -350,6 +383,30 @@ function makeButtons(where) {
   send.type = "button";
   send.addEventListener("click", () => form("out"));
   wrap.append(ask, send);
+  /* A WAY IN THAT IS ALWAYS THERE. The payout box only drew when something
+     was wrong with it, so somebody who wanted to check where their money
+     goes — or fix it before it bit them — had nowhere to press and said so:
+     "I can't see anywhere for where the money lands."
+     Quiet and last, because it is looked for once and then never again. */
+  const pay = el("button", "quietlink");
+  pay.type = "button";
+  pay.textContent = T("dl.whereMoney");
+  pay.addEventListener("click", () => {
+    const sheet = el("div", "sh");
+    const card = el("div", "shc");
+    card.append(el("p", "lab", T("dl.whereMoney")));
+    card.append(payoutLine());
+    const shut = el("button", null, T("pay.close"));
+    shut.type = "button";
+    shut.addEventListener("click", () => sheet.remove());
+    const acts = el("div", "acts");
+    acts.append(shut);
+    card.append(acts);
+    sheet.append(card);
+    sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.remove(); });
+    document.body.append(sheet);
+  });
+  wrap.append(pay);
   if (where === "bar") { bar.append(wrap); bar.hidden = false; return null; }
   return wrap;
 }
@@ -442,10 +499,17 @@ function payoutLine() {
      who stopped at the bank page that they have not said where the money
      should land is a sentence they know is wrong, and the button under it
      then looks like it will make them start again. */
-  const half = Boolean(STATE?.started);
-  box.append(el("p", "fixhead", T(half ? "dl.halfHead" : "dl.notReady")));
-  box.append(el("p", "fixwhy", T(half ? "dl.halfWhy" : "dl.notReadyWhy")));
-  const b = el("button", "ghost", T(half ? "dl.halfGo" : "dl.setUp"));
+  /* THREE STATES NOW, because this is reachable on purpose and not only when
+     something is broken: all set, started and not finished, never started. */
+  const done = Boolean(STATE?.ready);
+  const half = !done && Boolean(STATE?.started);
+  if (done) box.classList.add("okfix");
+  box.append(el("p", "fixhead",
+    T(done ? "dl.payOk" : half ? "dl.halfHead" : "dl.notReady")));
+  box.append(el("p", "fixwhy",
+    T(done ? "dl.payOkWhy" : half ? "dl.halfWhy" : "dl.notReadyWhy")));
+  const b = el("button", "ghost",
+    T(done ? "dl.payOkGo" : half ? "dl.halfGo" : "dl.setUp"));
   b.type = "button";
   b.addEventListener("click", async () => {
     b.disabled = true;
@@ -561,7 +625,7 @@ function monthName(d) {
 function paidRow(q, d) {
   const b = el("button", "prow");
   b.type = "button";
-  b.append(el("span", "w", q.to || T("dl.someone")), el("span", "n", q.amount));
+  b.append(el("span", "w", q.to || T("dl.someone")), el("span", "n", shown(q)));
   let day = "";
   try { day = d.toLocaleDateString(lang() === "zh" ? "zh-CN" : "en-AU",
     { day: "numeric", month: "short" }); } catch { /* leave it out */ }
@@ -574,7 +638,7 @@ function paidRow(q, d) {
 function row(q) {
   const b = el("button", "q");
   b.type = "button";
-  b.append(el("span", "w", q.to || T("dl.someone")), el("span", "n", q.amount));
+  b.append(el("span", "w", q.to || T("dl.someone")), el("span", "n", shown(q)));
   /* Which way, first, because a list of both needs it before anything else:
      "→ Mei" is money leaving and "← Sasha" is money coming. */
   b.append(el("span", "t", [T(q.way === "out" ? "dl.rowOut" : "dl.rowIn"),
@@ -864,7 +928,7 @@ function one(q) {
   const back = el("div", "sh");
   const card = el("div", "shc");
   card.append(el("p", "lab", T("dl.st." + (q.off ? "off" : q.state))));
-  card.append(el("h2", null, q.amount + " · " + (q.to || T("dl.someone"))));
+  card.append(el("h2", null, shown(q) + " · " + (q.to || T("dl.someone"))));
 
   const dl = el("dl");
   for (const [k, v] of [[T("ask.what"), q.what], [T("rq.when"), q.when],
@@ -878,7 +942,7 @@ function one(q) {
 
   const acts = el("div", "acts");
   if (!q.off && q.state !== "paid") {
-    const text = T("ask.block", { to: q.to || "", amount: q.amount, what: q.what || "", url: q.url });
+    const text = T("ask.block", { to: q.to || "", amount: shown(q), what: q.what || "", url: q.url });
     const cp = el("button", "go", T("memo.copy"));
     cp.type = "button";
     cp.addEventListener("click", () => {

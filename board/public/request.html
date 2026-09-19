@@ -219,6 +219,23 @@
 import { T, when, setLang, pickLang, langButton } from "/i18n.js";
 import { mountCheckout } from "/pay.js";
 
+/* THE SIGN, PUT BACK ON. The amount field takes bare digits since the
+   currency picker landed — nobody hunts for ¥ on a phone keyboard — so the
+   currency lives on the row instead and every screen that prints an amount
+   has to use it. "Tom is asking for 1" is not an amount, it is a number, and
+   this is the screen where getting that wrong costs the most.
+
+   An amount that already carries a sign is left alone: everything made
+   before the picker has one, and "¥¥1" is a worse bug than the one fixed. */
+const CUR_SIGN = { cny: "\u00a5", usd: "$", aud: "A$", hkd: "HK$",
+                   eur: "\u20ac", gbp: "\u00a3", jpy: "\u00a5" };
+const shown = (q) => {
+  const amount = String(q?.amount ?? "");
+  if (!amount) return "";
+  if (/^[^0-9]/.test(amount)) return amount;
+  return (CUR_SIGN[q.cur] || "") + amount;
+};
+
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -291,7 +308,7 @@ function draw() {
      name and the number are the ones they expect. */
   body.append(el("p", "dueLab", T(q.way === "out" ? "rq.sending" : "rq.asking", { who: q.from })));
   const line = el("div", "dueRow");
-  line.append(el("span", "n", q.amount));
+  line.append(el("span", "n", shown(q)));
   body.append(line);
   if (q.what) body.append(el("p", "dueWhen", q.what));
 
@@ -323,7 +340,7 @@ function draw() {
   } else if (!q.payeeReady) {
     body.append(el("p", "foot", T("rq.notReady", { who: q.from })));
   } else {
-    const b = el("button", "go", T("memo.pay", { amount: q.amount }));
+    const b = el("button", "go", T("memo.pay", { amount: shown(q) }));
     b.type = "button";
     b.addEventListener("click", () => payHow(q));
     body.append(b);
@@ -360,7 +377,7 @@ function payHow(q) {
   const back = el("div", "rsheet");
   const card = el("div", "rcard");
   card.append(el("p", "lab", T("pay.how")));
-  card.append(el("h3", "rtitle", (q.what || "") + " · " + q.amount));
+  card.append(el("h3", "rtitle", (q.what || "") + " · " + shown(q)));
 
   const ways = el("div", "ways");
   const way = (key, name, why) => {
@@ -415,7 +432,7 @@ async function payFrame({ secret, pk, q, how, demo }) {
   const frame = el("div", "pframe");
   const bar = el("div", "phead");
   bar.append(el("b", null, q.what || q.from));
-  bar.append(el("span", "psub", q.amount));
+  bar.append(el("span", "psub", shown(q)));
   const back = el("button", "pback", T("pay.frameBack"));
   back.type = "button";
   bar.append(back);

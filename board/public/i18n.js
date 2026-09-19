@@ -5025,6 +5025,13 @@ export const STRINGS = {
   "dl.halfWhy":        ["It needs your ID and your bank before it will pay you. Until it has them, payments to you are refused.",
                         "要先给它证件和银行卡，不然付给你的钱会被拒。"],
   "dl.halfGo":         ["Finish with Stripe", "去 Stripe 补完"],
+  /* Reached on purpose rather than met after a failure, so it has to have
+     something to say when nothing is wrong. */
+  "dl.whereMoney":     ["Where your money lands", "钱打到哪里"],
+  "dl.payOk":          ["You can be paid.", "可以收钱了。"],
+  "dl.payOkWhy":       ["Stripe has your bank and pays you directly. This board never holds it.",
+                        "Stripe 有你的银行卡，直接打给你。这个板子不经手。"],
+  "dl.payOkGo":        ["Change it with Stripe", "去 Stripe 改"],
   "dl.notReadyWhy":    ["You have not said where the money should land. Requests can be written and sent, but not paid.",
                         "你还没填钱打到哪里。可以先写、先发，只是暂时付不了。"],
 
