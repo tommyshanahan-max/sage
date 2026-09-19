@@ -4918,6 +4918,31 @@ export const STRINGS = {
      this board, and is holding a phone in one hand in a chat app. Every line
      is a fact or a thing to do. Nothing here reassures.
      --------------------------------------------------------------------- */
+  /* ---------------------------------------------------------------------
+     ASKING SOMEBODY TO PAY, from inside a conversation. Written for the
+     person typing it, who has just agreed something and wants the money.
+     --------------------------------------------------------------------- */
+  "ask.go":            ["Ask them to pay", "让对方付款"],
+  "ask.lab":           ["Ask for money", "收款"],
+  "ask.to":            ["To {who}", "发给 {who}"],
+  "ask.amount":        ["How much", "多少钱"],
+  "ask.what":          ["What for", "什么款项"],
+  "ask.whatEg":        ["12 lessons, 60 minutes each", "12 节课，每节 60 分钟"],
+  "ask.when":          ["When (optional)", "什么时候付（可不填）"],
+  "ask.whenEg":        ["Before the first lesson", "第一节课之前"],
+  "ask.make":          ["Make the request", "生成收款"],
+  "ask.needAmount":    ["How much?", "多少钱？"],
+  "ask.failed":        ["That did not work — try again", "没成功，再试一次"],
+  "ask.ready":         ["Ready to send", "可以发出去了"],
+  "ask.shut":          ["Done", "好了"],
+  "ask.nothingOwed":   ["Nothing is owed until they pay it. You will see when they do.",
+                        "他们付了才算数。付了你会看到。"],
+  /* What gets pasted. The link and nothing beside it: a request carries a
+     name, an amount and one line, so there is no code to travel with it —
+     see the header of lib/request.js. */
+  "ask.block":         ["{to} — {amount} for {what}.\n\n{url}\n\nWeChat Pay, Alipay or card.",
+                        "{to} —— {what}，{amount}。\n\n{url}\n\n微信支付、支付宝或银行卡都行。"],
+
   "rq.asking":         ["{who} is asking for", "{who} 要收"],
   "rq.sending":        ["{who} wants to send you", "{who} 要付给你"],
   "rq.when":           ["When", "什么时候"],

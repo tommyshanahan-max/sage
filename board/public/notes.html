@@ -706,6 +706,42 @@
   /* The same shape as .menu above, with bigger rows. .menu is a rare thing
      reached from a ⋯; this one is reached from the bar somebody's thumb is
      already on, and its rows have to be findable without aiming. */
+  /* ASK FOR MONEY, above Write down what we agreed and solid where that one
+     is dashed. A request has a number on the end of it; terms are the thing
+     you write for a deal big enough to need them. */
+  .askbtn{position:sticky;bottom:10.6rem;z-index:2;display:block;width:100%;
+    margin:0 0 .35rem;padding:.75rem 1rem;border:0;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);font:inherit;
+    font-size:.95rem;font-weight:600;cursor:pointer}
+  .askbtn:disabled{opacity:.6}
+  /* THE FORM, IN A SHEET OVER THE CONVERSATION. Three fields and one of them
+     is optional: an amount, a line saying what it is for, and when. Anything
+     more belongs on a deal memo, which is the other button. */
+  .qsheet{position:fixed;inset:0;z-index:70;background:rgba(21,27,40,.5);
+    display:flex;align-items:flex-end;justify-content:center}
+  .qcard{width:100%;max-width:34rem;background:var(--raise);
+    border-radius:1.1rem 1.1rem 0 0;padding:1.1rem 1.05rem
+    calc(1.1rem + env(safe-area-inset-bottom,0));max-height:92vh;overflow:auto}
+  .qlab{margin:0 0 .5rem;font-size:.72rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .qcard label{display:block;margin:0 0 .75rem}
+  .qcard label span{display:block;margin:0 0 .2rem;font-size:.78rem;
+    color:var(--muted)}
+  .qcard input{width:100%;font:inherit;font-size:1rem;padding:.7rem .8rem;
+    border:1px solid var(--line);border-radius:.7rem;background:var(--paper);
+    color:var(--ink)}
+  .qcard input.amt{font-family:var(--serif);font-size:2rem;padding:.5rem .8rem}
+  .qacts{display:flex;flex-wrap:wrap;gap:.5rem;margin:.9rem 0 0}
+  .qacts button{flex:1 1 auto;min-width:6.5rem;border:1px solid var(--line);
+    background:var(--paper);color:var(--ink);font:inherit;padding:.8rem 1rem;
+    border-radius:99px}
+  .qacts button.go{flex:1 1 100%;border:0;background:var(--accent);
+    color:var(--accent-ink);font-weight:600}
+  .qmsg{display:block;width:100%;margin:.6rem 0 0;font:inherit;font-size:.86rem;
+    line-height:1.6;padding:.7rem .8rem;border-radius:.7rem;
+    border:1px solid var(--line);background:var(--paper);color:var(--ink);
+    resize:vertical}
+  .qwhy{margin:.5rem 0 0;font-size:.82rem;line-height:1.5;color:var(--t5)}
   .addsheet{margin:0 0 .5rem;padding:.35rem;border:1px solid var(--line);
     border-radius:.9rem;background:var(--raise);box-shadow:var(--shadow)}
   .addsheet button{display:block;width:100%;text-align:left;padding:.85rem .9rem;
@@ -841,6 +877,13 @@
     <div class="addsheet" id="tadd" hidden>
       <button id="tterms" type="button"></button>
     </div>
+    <!-- TWO THINGS YOU CAN DO WITH A CONVERSATION THAT HAS GOT SOMEWHERE.
+         Ask for money is first and solid, because it is the one with a
+         number on the end of it; writing down what you agreed is the one
+         you do for a deal big enough to need terms. -->
+    <button class="askbtn" id="taskbtn" type="button" hidden>
+      <span id="tasksay"></span>
+    </button>
     <button class="addbtn" id="taddbtn" type="button" hidden>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       <span id="taddsay"></span>
@@ -2707,6 +2750,26 @@ function drawThread(t) {
        two people cannot pin terms before one of them has been let in. */
     const realPerson = /^[a-f0-9]{20}$/.test(String(t.who || ""));
     addBtn.hidden = !((last.canAnswer || last.open) && realPerson);
+  /* ASK THEM TO PAY — the whole product in one button.
+   *
+   * "Two people are chatting, then someone sends them a request to pay."
+   * This is the sending half. It makes a request, which belongs to nothing —
+   * no room, no memo, no agreeing — and hands back a message to paste into
+   * whatever the two of them are already using.
+   *
+   * SAME GATE AS THE OTHER BUTTON: a thread you can still write on, and
+   * somebody who is actually on this board. `to` is their handle, so the
+   * page they open greets them by name.
+   */
+  const askBtn = $("taskbtn");
+  const askSay = $("tasksay");
+  if (askBtn) {
+    if (askSay) askSay.textContent = T("ask.go");
+    askBtn.setAttribute("aria-label", T("ask.go"));
+    askBtn.hidden = !((last.canAnswer || last.open) && realPerson);
+    askBtn.onclick = () => askSheet(t, last);
+  }
+
 
     /* IT HAS TO SAY WHEN IT CANNOT.
      *
@@ -3185,6 +3248,121 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => { /* not fatal */ });
   });
 }
+
+/* ===========================================================================
+ * ASKING SOMEBODY TO PAY
+ * ===========================================================================
+ *
+ * Three fields, one of them optional. How much, what it is for, and when.
+ *
+ * WHY NOT MORE. Everything else — what is covered, what happens if it is
+ * called off, who pays the flights — is a deal memo, and that is the other
+ * button. Most money between two people who have just agreed something in a
+ * chat does not need seven fields; it needs a number and a sentence.
+ *
+ * WHAT COMES BACK IS A MESSAGE, NOT A SENT THING. This board does not know
+ * their WeChat and is not going to. It writes the words and puts them on the
+ * clipboard; the person pastes them where the two of them are already
+ * talking. Same shape as the door's invite, which is settled.
+ */
+function askSheet(t, last) {
+  const back = el("div", "qsheet");
+  const card = el("div", "qcard");
+  card.append(el("p", "qlab", T("ask.lab")));
+  card.append(el("h3", "rtitle", T("ask.to", { who: t.handle || "" })));
+
+  const field = (name, label, cls, ph) => {
+    const l = el("label");
+    l.append(el("span", null, label));
+    const i = el("input", cls || "");
+    i.name = name;
+    i.id = "ask-" + name;
+    if (ph) i.placeholder = ph;
+    l.append(i);
+    card.append(l);
+    return i;
+  };
+  /* The amount first and in the serif, because it is the whole point of the
+     screen and the one thing somebody came here to type. */
+  const amount = field("amount", T("ask.amount"), "amt", "¥2,400");
+  const what = field("what", T("ask.what"), "", T("ask.whatEg"));
+  const when = field("when", T("ask.when"), "", T("ask.whenEg"));
+
+  const why = el("p", "qwhy");
+  const acts = el("div", "qacts");
+  const go = el("button", "go", T("ask.make"));
+  go.type = "button";
+  const no = el("button", "", T("pay.cancel"));
+  no.type = "button";
+  no.addEventListener("click", () => back.remove());
+
+  go.addEventListener("click", async () => {
+    const amt = amount.value.trim();
+    if (!amt) { why.textContent = T("ask.needAmount"); amount.focus(); return; }
+    go.disabled = true;
+    why.textContent = "";
+    try {
+      const r = await fetch("/api/request", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          device, toWho: t.who, to: t.handle || "",
+          amount: amt, what: what.value.trim(), when: when.value.trim(),
+        }),
+      });
+      const j = r.ok ? await r.json() : await r.json().catch(() => null);
+      if (r.ok && j?.ok) { back.remove(); askDone(t, j, amt, what.value.trim()); return; }
+      /* Each refusal says which. "no" caught everything once and the button
+         re-enabled itself in silence, which is how a working button gets
+         reported as broken. */
+      why.textContent = T(j?.error === "profile" ? "deal.needProfile" : "ask.failed");
+    } catch { why.textContent = T("ask.failed"); }
+    go.disabled = false;
+  });
+
+  acts.append(go, no);
+  card.append(why, acts);
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+  amount.focus();
+}
+
+/** The message, ready to paste. One press made it; this is the other half of
+ *  that press and not a second step — nobody makes a request and then goes
+ *  looking for what to do next. */
+function askDone(t, j, amount, what) {
+  const back = el("div", "qsheet");
+  const card = el("div", "qcard");
+  card.append(el("p", "qlab", T("ask.ready")));
+  card.append(el("h3", "rtitle", T("ask.to", { who: t.handle || "" })));
+
+  const text = T("ask.block", {
+    to: t.handle || "", amount, what: what || "", url: j.url,
+  });
+  const box = el("textarea", "qmsg");
+  box.readOnly = true;
+  box.rows = 7;
+  box.value = text;
+  box.setAttribute("aria-label", T("ask.ready"));
+  card.append(box);
+
+  const acts = el("div", "qacts");
+  const cp = el("button", "go", T("memo.copy"));
+  cp.type = "button";
+  cp.addEventListener("click", () => {
+    cp.textContent = copyText(text) ? T("memo.copied") : T("ask.failed");
+  });
+  const done = el("button", "", T("ask.shut"));
+  done.type = "button";
+  done.addEventListener("click", () => back.remove());
+  acts.append(cp, done);
+  card.append(acts);
+  card.append(el("p", "addwhy", T("ask.nothingOwed")));
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+}
+
 </script>
 </body>
 </html>
