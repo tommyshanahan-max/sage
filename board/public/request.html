@@ -230,10 +230,21 @@ import { mountCheckout } from "/pay.js";
 const CUR_SIGN = { cny: "\u00a5", usd: "$", aud: "A$", hkd: "HK$",
                    eur: "\u20ac", gbp: "\u00a3", jpy: "\u00a5" };
 const shown = (q) => {
-  const amount = String(q?.amount ?? "");
+  const amount = String(q?.amount ?? "").trim();
   if (!amount) return "";
   if (/^[^0-9]/.test(amount)) return amount;
-  return (CUR_SIGN[q.cur] || "") + amount;
+  /* THOUSANDS SEPARATORS BACK ON. "¥2400" is a number somebody has to count
+     the digits of; "¥2,400" is a price. The field takes bare digits since
+     the currency picker — a phone keyboard has no comma on the number pad —
+     and whatever was typed went straight onto every screen.
+
+     Only a run of digits and nothing else. Anything already carrying a comma
+     or a decimal point is left exactly as it was: re-grouping somebody's
+     "1.5" or "2,400" is how an amount quietly becomes a different amount. */
+  const body = /^\d+$/.test(amount)
+    ? amount.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    : amount;
+  return (CUR_SIGN[q.cur] || "") + body;
 };
 
 const el = (tag, cls, text) => {

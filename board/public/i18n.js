@@ -5015,7 +5015,10 @@ export const STRINGS = {
   "dl.whoEg":          ["Their name", "对方的名字"],
   "dl.someone":        ["Somebody", "某人"],
   "dl.off":            ["Take it back", "撤回"],
-  "dl.st.due":         ["Waiting", "待付"],
+  /* "Waiting" under a heading that already says "Still to settle" says the
+     same thing twice and answers nothing. The question somebody opens this
+     list with is whether the money came. */
+  "dl.st.due":         ["Unpaid", "待付"],
   /* Sending money has a state the other direction does not: waiting on the
      person being paid to say where. Until they have there is nothing for the
      sender to press. */
@@ -5072,6 +5075,13 @@ export const STRINGS = {
   "dl.paidNone":       ["Nothing has settled yet.", "还没有结清的。"],
   "dl.back":           ["Back", "返回"],
   "dl.cur":            ["Currency", "币种"],
+  /* HANDED TO THE PHONE'S OWN SHARE SHEET, where WeChat already is. Copy was
+     the only way out of that screen, and copy means: leave Dealio, open
+     WeChat, find the person, hold, paste. Five steps at the moment the thing
+     is finished and wants to be sent. */
+  "dl.sendIt":         ["Send it", "发出去"],
+  "dl.sendAgain":      ["Send again", "再发一次"],
+  "dl.sent":           ["Sent", "已发出"],
   /* Everything asked for has been paid. Worth its own sentence: an empty
      space under a heading reads as a page that failed to load. */
   "dl.allSettled":     ["Nothing outstanding.", "没有待付的。"],

@@ -304,10 +304,21 @@ let STATE = null;
 const CUR_SIGN = { cny: "¥", usd: "$", aud: "A$", hkd: "HK$", eur: "€",
                    gbp: "£", jpy: "¥" };
 const shown = (q) => {
-  const amount = String(q?.amount ?? "");
+  const amount = String(q?.amount ?? "").trim();
   if (!amount) return "";
   if (/^[^0-9]/.test(amount)) return amount;
-  return (CUR_SIGN[q.cur] || "") + amount;
+  /* THOUSANDS SEPARATORS BACK ON. "¥2400" is a number somebody has to count
+     the digits of; "¥2,400" is a price. The field takes bare digits since
+     the currency picker — a phone keyboard has no comma on the number pad —
+     and whatever was typed went straight onto every screen.
+
+     Only a run of digits and nothing else. Anything already carrying a comma
+     or a decimal point is left exactly as it was: re-grouping somebody's
+     "1.5" or "2,400" is how an amount quietly becomes a different amount. */
+  const body = /^\d+$/.test(amount)
+    ? amount.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    : amount;
+  return (CUR_SIGN[q.cur] || "") + body;
 };
 /* WHICH OF THE TWO SCREENS. Not a tab bar: two screens do not earn one, and
    a bar across the bottom would sit exactly where the two buttons are. */
@@ -330,6 +341,37 @@ function copyText(text) {
   } catch { /* fall through */ }
   if (navigator.clipboard) { navigator.clipboard.writeText(text).catch(() => {}); return true; }
   return false;
+}
+
+/* SEND IT, RATHER THAN COPY IT AND GO AND FIND THE CHAT.
+ *
+ * Copy was the only way out of the sheet, which meant: press Copy, leave
+ * Dealio, open WeChat, find the person, hold, paste, send. Six steps at the
+ * exact moment the thing is finished and wants to be sent.
+ *
+ * The share sheet is one press and WeChat is in it, on both phones, along
+ * with WhatsApp and Messages and everything else somebody might actually be
+ * talking in. This board does not know anybody's WeChat and is never going
+ * to; handing the message to the phone is the whole of what it can do, and
+ * it turns out to be the right thing anyway.
+ *
+ * Falls back to copy, silently, everywhere it does not exist — desktop
+ * browsers mostly, and WeChat's own in-app browser. A cancelled share is not
+ * a failure and must not say so: AbortError is somebody changing their mind.
+ */
+async function shareOrCopy(text, btn, okKey) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ text });
+      btn.textContent = T(okKey || "dl.sent");
+      return;
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      /* Anything else — a browser that lists share and refuses it — falls
+         through to copy rather than leaving the person with nothing. */
+    }
+  }
+  btn.textContent = copyText(text) ? T("memo.copied") : T("ask.failed");
 }
 
 function top() {
@@ -643,11 +685,17 @@ function paidRow(q, d) {
 function row(q) {
   const b = el("button", "q");
   b.type = "button";
-  b.append(el("span", "w", q.to || T("dl.someone")), el("span", "n", shown(q)));
+  /* WHATEVER ACTUALLY NAMES IT, FIRST. Who it is for, and when nobody was
+     named, what it is for — most requests go to somebody not on this board
+     and the name is optional, so rows read "Somebody" in bold with the one
+     useful word ("a test", "12 lessons") buried in the quiet line under it.
+     The line below drops what it has already said. */
+  const title = q.to || q.what || T("dl.someone");
+  b.append(el("span", "w", title), el("span", "n", shown(q)));
   /* Which way, first, because a list of both needs it before anything else:
      "→ Mei" is money leaving and "← Sasha" is money coming. */
   b.append(el("span", "t", [T(q.way === "out" ? "dl.rowOut" : "dl.rowIn"),
-    q.what, when(q.at)].filter(Boolean).join(" · ")));
+    q.what === title ? "" : q.what, when(q.at)].filter(Boolean).join(" · ")));
   const state = q.off ? "off" : q.state;
   b.append(el("span", "c" + (state === "paid" ? " ok" : state === "off" ? " off" : ""),
     T("dl.st." + state)));
@@ -911,15 +959,15 @@ function sent(q) {
   card.append(box);
 
   const acts = el("div", "acts");
-  const cp = el("button", "go", T("memo.copy"));
-  cp.type = "button";
-  cp.addEventListener("click", () => {
-    cp.textContent = copyText(text) ? T("memo.copied") : T("ask.failed");
-  });
+  /* The solid one is Send, not Copy. The request exists; the only thing left
+     is getting it to the person, and that is one press now. */
+  const go = el("button", "go", T(navigator.share ? "dl.sendIt" : "memo.copy"));
+  go.type = "button";
+  go.addEventListener("click", () => shareOrCopy(text, go));
   const done = el("button", null, T("ask.shut"));
   done.type = "button";
   done.addEventListener("click", () => back.remove());
-  acts.append(cp, done);
+  acts.append(go, done);
   card.append(acts);
   card.append(el("p", "hint", T(q.way === "out" ? "dl.sendHint" : "ask.nothingOwed")));
   back.append(card);
@@ -947,13 +995,17 @@ function one(q) {
 
   const acts = el("div", "acts");
   if (!q.off && q.state !== "paid") {
-    const text = T("ask.block", { to: q.to || "", amount: shown(q), what: q.what || "", url: q.url });
-    const cp = el("button", "go", T("memo.copy"));
-    cp.type = "button";
-    cp.addEventListener("click", () => {
-      cp.textContent = copyText(text) ? T("memo.copied") : T("ask.failed");
-    });
-    acts.append(cp);
+    /* SEND AGAIN, because that is what somebody opens an unpaid request to
+       do. It was Copy, which is the same six steps as before: copy, leave,
+       find the chat, hold, paste, send — at the moment you are trying to
+       nudge somebody, which is already an awkward thing to be doing. */
+    const text = T(q.way === "out" ? "dl.sendBlock" : "ask.block",
+      { to: q.to || "", amount: shown(q), what: q.what || "", url: q.url });
+    const go = el("button", "go",
+      T(navigator.share ? "dl.sendAgain" : "memo.copy"));
+    go.type = "button";
+    go.addEventListener("click", () => shareOrCopy(text, go));
+    acts.append(go);
     const off = el("button", null, T("dl.off"));
     off.type = "button";
     off.addEventListener("click", async () => {
