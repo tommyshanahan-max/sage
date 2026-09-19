@@ -646,7 +646,12 @@ ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [TO=
 	@# the board. It prints one address. Open it on any phone.
 	@test -n "$(WHO)" || { echo 'make ask WHO="their name" AMOUNT="¥1"'; exit 1; }
 	@test -n "$(AMOUNT)" || { echo 'make ask WHO="$(WHO)" AMOUNT="¥1"'; exit 1; }
-	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	@# BOARD_PUBLIC_URL, or it prints http://board:8080/pay/... — a real page
+	@# that only exists inside the compose network. The same arrangement
+	@# `make back` has always had.
+	$(COMPOSE) run --rm --no-deps -T \
+	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
+	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/ask.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)"
 

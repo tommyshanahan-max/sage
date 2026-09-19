@@ -11,6 +11,13 @@
  *
  *   node scripts/ask.mjs <base> <admin-key> --who Claire --amount "¥1" \
  *     [--to Tom] [--for "a test"] [--when "now"] [--cur cny]
+ *
+ * THE ADDRESS IS BUILT HERE, NOT TAKEN FROM THE ANSWER. The server works out
+ * its own address from the Host header of the request, and the request came
+ * from inside the compose network — so it printed http://board:8080/pay/...,
+ * which is a real page nobody outside that container can open. Tom opened it
+ * on his phone and got nothing. BOARD_PUBLIC_URL comes in from the Makefile,
+ * the same way `make back` has always done it.
  */
 const [base, key, ...rest] = process.argv.slice(2);
 if (!base || !key) { console.error("ask.mjs <base> <admin-key> --who NAME --amount N"); process.exit(1); }
@@ -34,8 +41,11 @@ if (!r.ok || !j?.ok) {
   process.exit(1);
 }
 
+/* The public name of this board, or a sensible guess. Never the answer's own
+   url — see the note at the top. */
+const PUBLIC = (process.env.BOARD_PUBLIC_URL || "https://thexchange.app").replace(/\/+$/, "");
 console.log("");
-console.log("  " + j.url);
+console.log("  " + PUBLIC + "/pay/" + j.id);
 console.log("");
 /* SAID HERE RATHER THAN FOUND OUT ON THE PHONE. A request from somebody with
    no payout set up opens fine and cannot be paid, and the page says so — but
