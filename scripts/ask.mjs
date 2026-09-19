@@ -55,3 +55,33 @@ if (!j.ready) {
   console.log("  make payee WHO=\"" + arg("who") + "\" ACCT=acct_…");
   console.log("");
 }
+
+/* --try: ASK STRIPE, HERE, RATHER THAN HAND OVER AN ID TO PASTE INTO A SECOND
+   COMMAND. The id is twenty characters at the end of a link, and copying it
+   out of a terminal to type into the next line is the kind of step that gets
+   done wrong once and then blamed on the product. Same report as
+   `make pay-try`, on the request that was just made. */
+if (rest.includes("--try")) {
+  const t = await fetch(base.replace(/\/$/, "") + "/api/admin/pay-try", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-admin-secret": key },
+    body: JSON.stringify({ id: j.id }),
+  });
+  const p = await t.json().catch(() => null);
+  if (!t.ok || !p?.ok) {
+    console.log("  Could not ask Stripe: " + (p?.error || t.status));
+    console.log("");
+  } else {
+    const names = { wechat: "WeChat Pay", alipay: "Alipay", card: "Card" };
+    for (const one of p.tried) {
+      console.log("  " + (names[one.method] || one.method).padEnd(12)
+        + (one.ok ? "opens" : "REFUSED"));
+      if (one.ok) continue;
+      const why = one.detail || one.error || "no reason given";
+      for (const line of String(why).match(/.{1,62}(\s|$)/g) || [why]) {
+        console.log("                " + line.trim());
+      }
+    }
+    console.log("");
+  }
+}

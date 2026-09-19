@@ -636,7 +636,7 @@ hear: ## What it makes of what somebody said: make hear TEXT="twelve lessons at 
 	  /seed/hear.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --said "$(TEXT)"
 
-ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [TO="Tom"] [FOR="a test"]
+ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [FOR="a test"] [TRY=1]
 	@# TO TEST THE PAYING HALF WITHOUT SIGNING ANYTHING IN. The person paying
 	@# needs no account — that is the design — but the person asking does, and
 	@# putting an identity on a particular phone is a sign-in and a code typed
@@ -644,6 +644,10 @@ ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [TO=
 	@#
 	@# WHO is a first name: whoever is asking for the money, as they appear on
 	@# the board. It prints one address. Open it on any phone.
+	@#
+	@# TRY=1 also asks Stripe to open a checkout in each of the three methods
+	@# and prints opens or REFUSED with the reason — without anybody copying a
+	@# twenty-character id out of a terminal into a second command.
 	@test -n "$(WHO)" || { echo 'make ask WHO="their name" AMOUNT="¥1"'; exit 1; }
 	@test -n "$(AMOUNT)" || { echo 'make ask WHO="$(WHO)" AMOUNT="¥1"'; exit 1; }
 	@# BOARD_PUBLIC_URL, or it prints http://board:8080/pay/... — a real page
@@ -653,7 +657,8 @@ ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [TO=
 	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
 	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/ask.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)"
+	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)" \
+	  $(if $(TRY),--try,)
 
 go-live: ## Put the real Stripe keys on: make go-live
 	@# REAL MONEY AFTER THIS. Every charge has this platform as merchant of
