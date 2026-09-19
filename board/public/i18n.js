@@ -5076,30 +5076,26 @@ export const STRINGS = {
    * the order they actually arrive: what is it, what does the other person
    * have to do, how does it work, what does it cost, can I get in.
    */
-  "dl.heroHead":       ["Get paid by anyone, anywhere.", "谁都能给你付钱。"],
+  "dl.heroHead":       ["Get paid by anyone.", "谁都能给你付钱。"],
+  "dl.heroSub":        ["They need no account and no app.", "对方不用注册，也不用装 App。"],
+  /* THREE FACTS, FOUR WORDS EACH. They replace a heading and a paragraph
+     apiece. What it costs, where the money ends up, whether you can get in —
+     which is everything somebody had to read four hundred words to learn. */
+  "dl.spec1":          ["2% when you get paid", "收到钱时收 2%"],
+  "dl.spec2":          ["Money goes straight to your bank", "钱直接进你的银行卡"],
+  "dl.spec3":          ["Invitation only, for now", "现在要有人邀请"],
+  /* The paragraph each one replaced, one tap behind it. */
+  "dl.spec1.p":        ["Stripe takes 2% out of a payment on its way to you, and hands it to us. Nothing to join, nothing monthly, and nothing at all if nobody pays you.",
+                        "有人付钱的时候，Stripe 从中扣 2% 给我们。不收入会费，不收月费，没人付你就一分不收。"],
+  "dl.spec2.p":        ["The person paying pays Stripe, and Stripe pays your bank. This board never holds it, never moves it, and has no balance of anybody's money.",
+                        "付款人付给 Stripe，Stripe 打到你的银行卡。这个板子不代收、不代转，也没有任何人的资金池。"],
+  "dl.spec3.p":        ["Somebody already here has to let you in. Paying is different — if somebody sent you a link, open it and pay. You need no account for that, ever.",
+                        "要进来得有人邀请你。付钱是另一回事：别人发了链接给你，打开付就行，永远不需要账号。"],
   "dl.demoWho":        ["{who} is asking for", "{who} 请你付"],
   "dl.demoWhat":       ["12 lessons", "12 节课"],
   "dl.demoPay":        ["Pay {amount}", "付 {amount}"],
   "dl.demoWays":       ["WeChat Pay · Alipay · Card", "微信支付 · 支付宝 · 银行卡"],
   /* The claim under the picture, and the picture is the proof of it. */
-  "dl.demoNote":       ["That is their whole screen. No account, no app, nothing to install.",
-                        "对方看到的就这一屏。不用注册，不用装 App。"],
-
-  "dl.howHead":        ["How it works", "怎么用"],
-  "dl.how1":           ["Say who it is for and how much.", "写清楚给谁、多少钱。"],
-  "dl.how2":           ["Send the link into WeChat, or anywhere else you are already talking.",
-                        "把链接发到微信，或者你们本来就在聊的任何地方。"],
-  "dl.how3":           ["They pay. The money goes straight to your bank — this board never holds it.",
-                        "对方付款，钱直接进你的银行账户——不经过这个板子。"],
-
-  "dl.priceHead":      ["What it costs", "多少钱"],
-  "dl.priceP":         ["2% when somebody pays you. Nothing else: nothing to join, nothing monthly, nothing to pay if nobody pays you.",
-                        "有人付你钱时收 2%。其他一分不收：不收入会费，不收月费，没人付你就不收。"],
-
-  "dl.joinHead":       ["Getting in", "怎么进来"],
-  "dl.joinP":          ["Dealio is invitation only for now — somebody already here has to let you in. If somebody has sent you a link to pay, you do not need any of this: just open it.",
-                        "现在要有人邀请才能进来。如果是别人发了付款链接给你，那你什么都不用弄，直接打开就行。"],
-
   "dl.signInHead":     ["Two ways back in", "两种进来的方式"],
   "dl.wechatIn":       ["Continue with WeChat", "用微信继续"],
   /* SAID OUT LOUD, because it decides which button somebody presses.
@@ -5107,8 +5103,7 @@ export const STRINGS = {
      who this is for. */
   "dl.cnNote":         ["Google does not open in mainland China. If you are there, use the invite code.",
                         "在中国大陆打不开 Google。在国内的话用邀请码。"],
-  "dl.payerNote":      ["Paying somebody? You do not need to sign in at all — just open the link they sent.",
-                        "只是要付钱？不用登录，打开对方发的链接就行。"],
+  "dl.payerNote":      ["Paying somebody? Just open their link.", "要付钱？打开对方发的链接就行。"],
   "dl.gOff":           ["Google sign-in is off on this board.", "这个板子没开 Google 登录。"],
   /* WHAT SETTLED. "Paid" and not "History": the question being asked is
      whether the money came, not what happened. */

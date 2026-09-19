@@ -117,6 +117,22 @@ If it is more than one, the work is not finished.
 ## Writing
 
 - Answers short. Screens and bullets over paragraphs.
+- **Design for somebody who does not want to read.** Not somebody who reads
+  fast — somebody who will not read at all. A screen gets four seconds and one
+  glance. So: a headline, the thing itself, and the button. Facts belong in a
+  row of four-word lines somebody can run their eye down, never in a
+  paragraph, and a heading above a paragraph is two things to read instead of
+  one. Apple sells a two-thousand-dollar phone with nine words and a picture
+  of it. Every time this has been got wrong here it has been got wrong the
+  same way, and Tom has said so four times: "very text heavy", "info
+  overload", "too much text", "design this for people that dont want to read
+  much". If a screen needs a paragraph to make sense, the screen is wrong.
+- **Coarse first, finer on a tap.** A screen carries the concepts, not the
+  detail: a short line that names a thing, and the explanation behind it for
+  whoever wants it. Nothing is lost by moving a paragraph one tap deeper —
+  it was not being read where it was. This is the shape of the whole product:
+  a list of rows, a row opens, the row's detail opens. Every screen should be
+  a level of that tree and never two levels at once.
 - **Write for somebody doing something else.** Everybody reading this product
   is half-looking at a phone — in a taxi, in a queue, between two other
   things. They read the bold line and maybe one more. So: the fact first, one

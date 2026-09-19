@@ -48,15 +48,15 @@
      A page to read, so it is narrower than the app screens and everything on
      it is ranged left. The app is centred because it is a set of controls;
      prose centred down a phone is prose nobody finishes. */
-  .front{padding:.6rem 0 3rem}
+  .front{padding:1.6rem 0 3rem}
   .front .hero{margin:0;font-family:var(--serif);font-weight:400;
-    font-size:clamp(2rem,9vw,2.7rem);line-height:1.08;letter-spacing:-.01em}
-  .front .herosub{margin:.8rem 0 0;font-size:1.02rem;line-height:1.55;
-    color:var(--ink2);max-width:22rem}
+    font-size:clamp(2.3rem,11vw,3.2rem);line-height:1.02;letter-spacing:-.02em}
+  .front .herosub{margin:1rem 0 0;font-size:1.05rem;line-height:1.5;
+    color:var(--ink2);max-width:20rem}
   /* THE PAYER'S SCREEN, DRAWN. Light on this dark page on purpose: it is a
      different screen belonging to a different person, and it should look
      like something being held up rather than part of what you are reading. */
-  .demo{margin:1.8rem 0 0;padding:1.3rem 1.2rem 1.4rem;border-radius:1rem;
+  .demo{margin:2.2rem 0 0;padding:1.3rem 1.2rem 1.4rem;border-radius:1rem;
     background:#F3F4F7;color:#0B0E15}
   .demo .dlab{margin:0;font-size:.68rem;letter-spacing:.14em;
     text-transform:uppercase;color:#6F7D92}
@@ -68,17 +68,22 @@
     letter-spacing:.02em}
   .demo .dways{margin:.8rem 0 0;font-size:.82rem;color:#6F7D92;
     text-align:center}
-  .front .demonote{margin:.7rem 0 0;font-size:.85rem;color:var(--mut)}
-  .front .fh{margin:2.4rem 0 0;font-size:1.02rem;font-weight:600}
-  .front .fp{margin:.5rem 0 0;font-size:.95rem;line-height:1.65;
-    color:var(--ink2)}
-  .front .steps{margin:.7rem 0 0;padding:0 0 0 1.2rem}
-  .front .steps li{margin:.5rem 0 0;font-size:.95rem;line-height:1.55;
-    color:var(--ink2)}
-  .front .steps li::marker{color:var(--acc);font-weight:600}
+  /* THREE FACTS ON THREE LINES, hairline-separated. A spec row, not prose:
+     it is read by glancing down the left edge, which is the only way
+     anything on a first screen gets read at all. */
+  .front .specs{margin:2rem 0 0;border-top:1px solid var(--hair)}
+  /* A row, not a line of text: it opens, so it has to look like it opens. */
+  .front .specs .spec{display:flex;align-items:center;gap:.8rem;width:100%;
+    margin:0;padding:.95rem 0;border:0;border-bottom:1px solid var(--hair);
+    background:none;color:var(--ink);font:inherit;font-size:.95rem;
+    line-height:1.4;text-align:left;cursor:pointer}
+  .front .specs .spec span{flex:1 1 auto}
+  .front .specs .chev{flex:0 0 auto;color:var(--mut);font-style:normal;
+    font-size:1.15rem;line-height:1}
+  .notep{margin:.6rem 0 0;font-size:.97rem;line-height:1.65;color:var(--ink2)}
   .front .hint{text-align:center}
   /* A button that is a block rather than a thing in a row of things. */
-  .go.wide,.ghost2.wide{display:block;width:100%;margin:2.4rem 0 0;border:0;
+  .go.wide,.ghost2.wide{display:block;width:100%;margin:2rem 0 0;border:0;
     border-radius:99px;background:var(--acc);color:var(--accink);font:inherit;
     font-size:.95rem;font-weight:600;letter-spacing:.08em;
     text-transform:uppercase;padding:1rem 1.2rem;min-height:3.4rem;
@@ -453,6 +458,25 @@ function top() {
  * rather than the page drawing a button that cannot work, which is the same
  * rule the microphone runs on.
  */
+/* ONE FACT, EXPLAINED. The bottom of the tree: a heading, a couple of
+   sentences, and a way out. Deliberately the same sheet for all three — a
+   thing that opens should always open the same way. */
+function note(head, body) {
+  const back = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("h2", null, head));
+  card.append(el("p", "notep", body));
+  const acts = el("div", "acts");
+  const shut = el("button", null, T("pay.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => back.remove());
+  acts.append(shut);
+  card.append(acts);
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+}
+
 function signInSheet() {
   const back = el("div", "sh");
   const card = el("div", "shc");
@@ -579,63 +603,57 @@ function makeButtons(where) {
 }
 
 /* ===========================================================================
- * THE FRONT PAGE, WHICH USED TO BE A DOOR
+ * THE FRONT PAGE
  * ===========================================================================
  *
- * A stranger opening this met a sign-in wall carrying another product's name
- * — "Dealio uses your Exchange sign-in" — pressed the one button, was told
- * "no one here has that Google account yet", and had nowhere to go. They
- * never saw a request, never learned what it cost, and could not tell
- * whether it was a payments app or a club. The best screen in this product
- * is the one a payer sees; the worst was the only one a stranger reached.
+ * FIRST IT WAS A DOOR. A stranger met a sign-in wall carrying another
+ * product's name, pressed the one button, was refused, and had nowhere to
+ * go — never having seen a request or learned what it cost.
  *
- * So the page shows the thing. The example is the payer's screen, drawn
- * rather than described, because "they need no account" is a claim and a
- * picture of the screen is the proof. Then the three steps, the price, and
- * who can get in — in that order, because that is the order the questions
- * arrive in.
+ * THEN IT WAS A BROCHURE, which was worse in a different way: a hundred and
+ * fifty words, three headings and two paragraphs of prose on the screen
+ * somebody gives four seconds to. "Too much text" — said about this product
+ * four times now, and right every time.
  *
- * SIGNING IN MOVED TO THE BANNER. It is what somebody who already belongs
- * here wants, and they know where to look. Everybody else wants to know what
- * this is.
+ * So: a headline, the payer's screen, three facts of four words each, and
+ * the button. About thirty words. Everything a paragraph was doing is either
+ * on the card, in the spec row, or it was not worth a paragraph.
+ *
+ * The card is drawn rather than screenshotted: a screenshot of a dark app on
+ * a dark page is a grey rectangle, and it goes stale the first time that
+ * screen changes. It carries the whole argument — "they need no account" is
+ * a claim, and a picture of their entire screen is the proof.
  */
 function signedOut() {
   const box = el("div", "front");
 
   box.append(el("h1", "hero", T("dl.heroHead")));
-  box.append(el("p", "herosub", T("dl.what")));
+  box.append(el("p", "herosub", T("dl.heroSub")));
 
-  /* THE PAYER'S SCREEN, DRAWN. Not a screenshot — a screenshot of a dark app
-     on a dark page is a grey rectangle, and it would go stale the first time
-     that screen changed. This is the same four facts in the same order. */
   const demo = el("div", "demo");
   demo.append(el("p", "dlab", T("dl.demoWho", { who: "Tom" })));
   demo.append(el("p", "damt", "¥2,400"));
   demo.append(el("p", "dwhat", T("dl.demoWhat")));
-  const dbtn = el("div", "dbtn", T("dl.demoPay", { amount: "¥2,400" }));
-  demo.append(dbtn);
+  demo.append(el("div", "dbtn", T("dl.demoPay", { amount: "¥2,400" })));
   demo.append(el("p", "dways", T("dl.demoWays")));
   box.append(demo);
-  box.append(el("p", "demonote", T("dl.demoNote")));
 
-  /* Three steps, numbered, because they are a sequence and the order is the
-     information. */
-  box.append(el("h2", "fh", T("dl.howHead")));
-  const steps = el("ol", "steps");
-  for (const k of ["how1", "how2", "how3"]) {
-    steps.append(el("li", null, T("dl." + k)));
+  /* THREE FACTS, AND THE PARAGRAPHS ONE TAP BEHIND THEM.
+     Coarse first, finer when asked: the line names the thing and the sheet
+     explains it, for the one person in ten who wants to know. Nothing was
+     lost moving those paragraphs a tap deeper — they were not being read
+     where they were. */
+  const specs = el("div", "specs");
+  for (const k of ["spec1", "spec2", "spec3"]) {
+    const row = el("button", "spec");
+    row.type = "button";
+    row.append(el("span", null, T("dl." + k)));
+    row.append(el("i", "chev", "\u203a"));
+    row.addEventListener("click", () => note(T("dl." + k), T("dl." + k + ".p")));
+    specs.append(row);
   }
-  box.append(steps);
+  box.append(specs);
 
-  box.append(el("h2", "fh", T("dl.priceHead")));
-  box.append(el("p", "fp", T("dl.priceP")));
-
-  box.append(el("h2", "fh", T("dl.joinHead")));
-  box.append(el("p", "fp", T("dl.joinP")));
-
-  /* The way in, at the bottom as well as in the banner: somebody who has
-     read the page is at the bottom of it, and sending them back up to a
-     corner is a scroll for nothing. */
   const go = el("button", "go wide", T("dl.signIn"));
   go.type = "button";
   go.addEventListener("click", signInSheet);
