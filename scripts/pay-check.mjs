@@ -14,8 +14,14 @@
  *
  *   node scripts/pay-check.mjs <base> <admin-key>
  */
-const [base, key] = process.argv.slice(2);
-if (!base || !key) { console.error("pay-check.mjs <base> <admin-key>"); process.exit(1); }
+const [base, key, ...rest] = process.argv.slice(2);
+if (!base || !key) { console.error("pay-check.mjs <base> <admin-key> [--names]"); process.exit(1); }
+/* --names prints the payee handles, one per line, and nothing else. For a
+   script rather than a person: `make go-live` has to clear every payout
+   account when the keys change mode, and a connected account made under a
+   test key does not exist under a live one. Grepping this command's pretty
+   output for them would be a parser that breaks the next time a line moves. */
+const NAMES = rest.includes("--names");
 
 const r = await fetch(base.replace(/\/$/, "") + "/api/admin/pay", {
   headers: { "x-admin-secret": key },
@@ -25,6 +31,11 @@ if (!r.ok) {
   process.exit(1);
 }
 const j = await r.json();
+
+if (NAMES) {
+  for (const h of (Array.isArray(j.payees) ? j.payees : [])) console.log(h);
+  process.exit(0);
+}
 
 const yes = (b) => (b ? "yes" : "no");
 const line = (k, v) => console.log("  " + k.padEnd(26) + v);

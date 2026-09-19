@@ -655,6 +655,33 @@ ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [TO=
 	  /seed/ask.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)"
 
+go-live: ## Put the real Stripe keys on: make go-live
+	@# REAL MONEY AFTER THIS. Every charge has this platform as merchant of
+	@# record, so it is a thing to run once you have read Stripe's terms and
+	@# not before.
+	@#
+	@# It asks for the three values, shows none of them, writes them into
+	@# .env, brings the box up, and clears every payout account on the board —
+	@# which is the step nobody would know to take. A connected account minted
+	@# under a test key does not exist under a live one: left in place, the
+	@# payment opens and Stripe refuses an account it has never heard of,
+	@# and the screen blames the payer.
+	@#
+	@# The old .env is kept beside it as .env.before-stripe-keys.
+	@bash scripts/stripe-keys.sh live
+
+go-test: ## Put the sandbox Stripe keys back: make go-test
+	@# The same thing the other way. Payout accounts are cleared again — they
+	@# do not cross between modes in either direction.
+	@bash scripts/stripe-keys.sh test
+
+payee-names: ## Who has a payout account, one per line: make payee-names
+	@# For `make go-live` rather than for reading. `make pay-check` says the
+	@# same thing in a sentence.
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/pay-check.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --names
+
 pay-check: ## Can this board take a payment, and if not why: make pay-check
 	@# "Can the app do payments" is a question about the running box, and the
 	@# answer turns on five variables in .env and one setting inside Stripe.
