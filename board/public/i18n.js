@@ -4963,6 +4963,24 @@ export const STRINGS = {
   "dl.what":           ["Ask anyone to pay you. They need no account, no app and no card on file.",
                         "让任何人付钱给你。对方不用注册、不用装 App、也不用先绑卡。"],
   "dl.signIn":         ["Sign in", "登录"],
+  /* SAYING IT INSTEAD OF TYPING IT. Either language, or both in one sentence,
+     which is what actually gets said around here — so nothing here tells
+     anybody which to speak. */
+  "dl.say":            ["Say what you agreed", "说一下你们谈好的"],
+  "dl.sayStop":        ["Stop", "说完了"],
+  "dl.hearing":        ["Listening…", "正在识别…"],
+  "dl.orType":         ["or type it", "或者手动填"],
+  "dl.sayQuiet":       ["Nothing came through — try again", "没听到，再说一次"],
+  "dl.sayLong":        ["That was too long — try again", "太长了，说短一点"],
+  "dl.sayOff":         ["Not switched on here", "这台服务器没开这个"],
+  "dl.sayNo":          ["That did not work — try again", "没成功，再说一次"],
+  "dl.sayNoMic":       ["No microphone", "没有麦克风"],
+  /* NOTHING IS WRITTEN UNTIL THEY SAY YES. The sentence contains every fact
+     that was extracted and no fact that was not, and the person who spoke
+     reads their own words back before anything exists. */
+  "dl.right":          ["Have I got this right", "我理解对了吗"],
+  "dl.yes":            ["Yes, that's it", "对，就是这样"],
+  "dl.no":             ["No — let me say it again", "不对，我再说一次"],
   "dl.setUp":          ["Say where the money lands", "填写收款方式"],
   "dl.setUpGoing":     ["Opening…", "正在打开…"],
   "dl.setUpCn":        ["Not for a mainland account yet", "暂时不支持大陆账户"],

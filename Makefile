@@ -623,6 +623,19 @@ payee: ## Where somebody's money goes: make payee WHO="Claire" ACCT=acct_… [OF
 	  /seed/payee.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" --acct "$(ACCT)" $(if $(OFF),--off,)
 
+hear: ## What it makes of what somebody said: make hear TEXT="twelve lessons at 200, Tuesdays at seven"
+	@# THE HARD HALF OF THE VOICE STEP, WITHOUT A MICROPHONE. What can be wrong
+	@# is the reading, not the recording — and the reading is the part that
+	@# would quietly write a number nobody said. Type the sentence and see what
+	@# it understood, including the question it would ask back.
+	@#
+	@# It creates nothing. Nothing is ever written from a guess: the person who
+	@# spoke reads the sentence back and confirms it first.
+	@test -n "$(TEXT)" || { echo 'make hear TEXT="what they said"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/hear.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --said "$(TEXT)"
+
 ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [TO="Tom"] [FOR="a test"]
 	@# TO TEST THE PAYING HALF WITHOUT SIGNING ANYTHING IN. The person paying
 	@# needs no account — that is the design — but the person asking does, and

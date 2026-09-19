@@ -131,6 +131,28 @@
     border-radius:99px;cursor:pointer}
   .acts button.go{flex:1 1 100%;border:0;background:var(--acc);
     color:var(--accink);font-weight:600}
+  /* SAYING IT INSTEAD OF TYPING IT. Above the fields and full width, because
+     it fills all of them — a microphone inside the first field would say it
+     fills that one. */
+  .mic{display:flex;align-items:center;justify-content:center;gap:.6rem;
+    width:100%;margin:0 0 .5rem;padding:.9rem 1rem;border:1px solid var(--line);
+    border-radius:99px;background:var(--bg);color:var(--ink);font:inherit;
+    font-size:.95rem;cursor:pointer}
+  .mic .dotrec{width:.7rem;height:.7rem;border-radius:50%;background:var(--acc);
+    flex:0 0 auto}
+  .mic.on{border-color:var(--acc);background:rgba(214,72,59,.12)}
+  .mic.on .dotrec{animation:beat 1.1s ease-in-out infinite}
+  .mic:disabled{opacity:.6}
+  @keyframes beat{50%{opacity:.25}}
+  @media (prefers-reduced-motion:reduce){.mic.on .dotrec{animation:none}}
+  .micor{margin:0 0 1rem;text-align:center;font-size:.78rem;color:var(--mut)}
+  /* The sentence they confirm. Serif and large: it is the only thing on that
+     sheet that has to be right, and it is read aloud in the head. */
+  .heard{margin:.2rem 0 0;font-family:var(--serif);font-size:1.35rem;
+    line-height:1.4}
+  .askline{margin:.9rem 0 0;font-size:.95rem;color:var(--acc)}
+  .saidraw{margin:1rem 0 0;padding-top:.8rem;border-top:1px solid var(--line);
+    font-size:.82rem;line-height:1.5;color:var(--mut)}
   .msg{display:block;width:100%;margin:.5rem 0 0;font:inherit;font-size:.88rem;
     line-height:1.65;padding:.75rem .85rem;border-radius:.7rem;
     border:1px solid var(--line);background:var(--bg);color:var(--ink2);
@@ -354,6 +376,119 @@ function row(q) {
    covered, what happens if it is called off — is a deal memo, and that lives
    on the board. Most money between two people who have just agreed something
    needs a number and a sentence. */
+/* ===========================================================================
+ * SAYING IT INSTEAD OF TYPING IT
+ * ===========================================================================
+ *
+ * Press, talk, and the form fills itself. Either language, or both in one
+ * sentence, which is what actually gets said around here.
+ *
+ * NOTHING IS WRITTEN UNTIL THEY SAY YES, and that is not a nicety to be
+ * dropped when the extraction gets good — it is the whole safety of the
+ * feature. A model pulling money terms out of speech will be wrong
+ * eventually and it is money, so what comes back is a guess and a plain
+ * sentence, and the person who spoke reads their own words back and confirms
+ * them before anything exists.
+ *
+ * WHY THE SERVER TRANSCRIBES AND NOT THE BROWSER. The same reason lib/hear.js
+ * gives: in a standalone iPhone app webkitSpeechRecognition is defined and
+ * does nothing, and Chrome's recogniser is Google's, which is not reachable
+ * from inside China. Both are exactly the people this is for. getUserMedia
+ * and MediaRecorder work in both places; it is only the recogniser that does
+ * not.
+ */
+let recording = null;
+
+function micButton(onHeard) {
+  const b = el("button", "mic");
+  b.type = "button";
+  b.append(el("span", "dotrec"), el("span", "micsay", T("dl.say")));
+  b.addEventListener("click", async () => {
+    if (recording) { stopRecording(); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const bits = [];
+      const rec = new MediaRecorder(stream);
+      rec.ondataavailable = (e) => { if (e.data && e.data.size) bits.push(e.data); };
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        recording = null;
+        b.classList.remove("on");
+        b.querySelector(".micsay").textContent = T("dl.hearing");
+        b.disabled = true;
+        try {
+          const blob = new Blob(bits, { type: rec.mimeType || "audio/webm" });
+          const r = await fetch("/api/request/hear", {
+            method: "POST",
+            headers: { "Content-Type": blob.type, "x-board-device": device },
+            body: blob,
+          });
+          const j = await r.json().catch(() => null);
+          if (r.ok && j?.ok) { onHeard(j); b.disabled = false;
+            b.querySelector(".micsay").textContent = T("dl.say"); return; }
+          /* Each refusal says which, rather than one grey "that did not
+             work". "Quiet" and "a key is missing" are different problems and
+             only one of them is worth pressing again for. */
+          b.querySelector(".micsay").textContent = T(
+            j?.error === "quiet" ? "dl.sayQuiet"
+            : j?.error === "off" ? "dl.sayOff"
+            : j?.error === "long" ? "dl.sayLong" : "dl.sayNo");
+        } catch { b.querySelector(".micsay").textContent = T("dl.sayNo"); }
+        b.disabled = false;
+      };
+      rec.start();
+      recording = rec;
+      b.classList.add("on");
+      b.querySelector(".micsay").textContent = T("dl.sayStop");
+    } catch {
+      /* No microphone, or permission refused. Not an error to shout about —
+         the fields are right there and typing them always worked. */
+      b.querySelector(".micsay").textContent = T("dl.sayNoMic");
+      b.disabled = true;
+    }
+  });
+  return b;
+}
+
+function stopRecording() {
+  try { if (recording) recording.stop(); } catch { recording = null; }
+}
+
+/** HAVE I GOT THIS RIGHT.
+ *
+ *  The sentence they will confirm, in their own language, containing every
+ *  fact that was extracted and no fact that was not. Yes fills the form.
+ *  No throws it away and leaves them exactly where they were, with the
+ *  fields empty and the microphone ready.
+ *
+ *  THE ONE QUESTION. When something important is missing — most often the
+ *  amount — it asks, once, under the sentence. A form with a blank in it
+ *  tells nobody what is missing; a question does.
+ */
+function heardSheet(j, fill) {
+  const back = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("p", "lab", T("dl.right")));
+  card.append(el("p", "heard", j.terms.say));
+  if (j.terms.ask) card.append(el("p", "askline", j.terms.ask));
+  /* Their own words underneath, quieter. What the machine heard is worth
+     seeing when what it made of it looks wrong. */
+  card.append(el("p", "saidraw", j.said));
+
+  const acts = el("div", "acts");
+  const yes = el("button", "go", T("dl.yes"));
+  yes.type = "button";
+  yes.addEventListener("click", () => { back.remove(); fill(j.terms); });
+  const no = el("button", null, T("dl.no"));
+  no.type = "button";
+  no.addEventListener("click", () => back.remove());
+  acts.append(yes, no);
+  card.append(acts);
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+}
+
 function form(way) {
   const out = way === "out";
   const back = el("div", "sh");
@@ -371,6 +506,25 @@ function form(way) {
     card.append(l);
     return i;
   };
+  /* THE MICROPHONE ABOVE THE FIELDS, not beside one of them: it fills all of
+     them, and a button inside the first field would say it fills that one.
+     Only when the server has both keys behind it — the page asks rather than
+     drawing a microphone that cannot work. */
+  let mic = null;
+  if (STATE?.canHear) {
+    mic = micButton((j) => heardSheet(j, (t) => {
+      if (t.amount) amount.value = t.amount;
+      if (t.what) what.value = t.what;
+      if (t.when) whn.value = t.when;
+      if (t.to && !who.value.trim()) who.value = t.to;
+      /* Straight to whatever is still empty. The commonest miss is the
+         amount, and it is the one field that cannot be left blank. */
+      (!amount.value.trim() ? amount : !what.value.trim() ? what : whn).focus();
+    }));
+    card.append(mic);
+    card.append(el("p", "micor", T("dl.orType")));
+  }
+
   const amount = field("amount", T("ask.amount"), "amt", "¥2,400");
   const who = field("to", T(out ? "dl.whoOut" : "dl.who"), "", T("dl.whoEg"));
   const what = field("what", T("ask.what"), "", T("ask.whatEg"));
@@ -382,7 +536,7 @@ function form(way) {
   go.type = "button";
   const no = el("button", null, T("pay.cancel"));
   no.type = "button";
-  no.addEventListener("click", () => back.remove());
+  no.addEventListener("click", () => { stopRecording(); back.remove(); });
 
   go.addEventListener("click", async () => {
     const amt = amount.value.trim();

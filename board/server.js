@@ -33,6 +33,7 @@ import path from "node:path";
 import * as store from "./lib/store.js";
 import * as memo from "./lib/memo.js";
 import * as request from "./lib/request.js";
+import * as terms from "./lib/terms.js";
 import { translate, configured as translateReady } from "./lib/translate.js";
 import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js";
 import { send as sendMail, configured as mailReady } from "./lib/mail.js";
@@ -9544,6 +9545,40 @@ app.post("/api/request", notesOff, express.json({ limit: "2kb" }), async (req, r
   res.json({ ok: true, id: out.id, url: backHere(req, "/pay/" + out.id) });
 });
 
+/** SAYING IT INSTEAD OF TYPING IT.
+ *
+ *  Audio in, a guess and a sentence back. NOTHING IS CREATED HERE — that is
+ *  the whole safety of the feature and it is worth saying twice. A model
+ *  pulling money terms out of speech will be wrong eventually and it is
+ *  money, so this returns what it heard and the plain sentence describing
+ *  it, and the screen makes the person who spoke confirm their own words
+ *  before anything exists.
+ *
+ *  Two keys and two bills: transcription on one, reading on the other. Both
+ *  are capped in their own module and both are off unless configured, so the
+ *  page asks before it draws a microphone.
+ */
+app.post("/api/request/hear", notesOff,
+  express.raw({ type: ["audio/*", "application/octet-stream"], limit: "2mb" }),
+  async (req, res) => {
+    const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+    if (!me) return res.status(400).json({ error: "no" });
+    if (!hear.configured() || !terms.configured()) {
+      return res.status(503).json({ error: "off" });
+    }
+    const board = await store.load(FILE);
+    const mine = board.people.find((q) => q.by === me);
+    if (!mine?.handle) return res.status(400).json({ error: "profile" });
+
+    const heard = await hear.hear(req.body, req.get("content-type") || "",
+      String(req.query.lang || ""), me);
+    if (heard.error) return res.status(400).json({ error: heard.error });
+
+    const out = await terms.read(heard.text);
+    if (out.error) return res.status(502).json({ error: out.error });
+    res.json({ ok: true, said: heard.text, terms: out.terms });
+  });
+
 /* The page, outside the door — see OPEN_PATHS. It carries no request in its
    HTML: the id is the address, and everything on the page arrives by fetch.
 
@@ -9755,6 +9790,9 @@ app.get("/api/requests", notesOff, async (req, res) => {
        say so. */
     ready: Boolean(me_?.payee) && (stripe.configured() || PAY_DEMO),
     you: me_?.handle || "",
+    /* Whether the page may draw a microphone. Two keys and two bills behind
+       it; asking beats drawing one that cannot work. */
+    canHear: hear.configured() && terms.configured(),
     requests: mine.map((q) => ({
       ...request.requestView(q),
       /* The asker's own view carries what the payer's must not: whether it
@@ -9763,6 +9801,22 @@ app.get("/api/requests", notesOff, async (req, res) => {
       url: backHere(req, "/pay/" + q.id),
     })),
   });
+});
+
+/** WHAT THEY JUST SAID, TURNED INTO A REQUEST — the hard half, on its own.
+ *
+ *  Testable without a microphone, a phone, or a deploy in between. The thing
+ *  that can be wrong here is the reading, not the recording, and the reading
+ *  is the part that will quietly write a number nobody said.
+ *
+ *    make hear TEXT="twelve lessons at two hundred, Tuesdays at seven"
+ */
+app.post("/api/admin/terms", admin, express.json({ limit: "4kb" }), async (req, res) => {
+  const said = String(req.body?.said || "").trim();
+  if (!said) return res.status(400).json({ error: "empty" });
+  const out = await terms.read(said);
+  if (out.error) return res.status(out.error === "unconfigured" ? 503 : 502).json(out);
+  res.json({ ok: true, ...out });
 });
 
 /** ONE REQUEST, MADE FROM A TERMINAL.
