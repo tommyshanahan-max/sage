@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+{{DEMO}}
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>A payment request</title>
+<!-- WHAT THE PREVIEW CARD MAY SAY, WHICH IS ALMOST NOTHING.
+     This link is pasted into a chat, and WeChat renders the card before
+     anybody taps. Whatever is written here is read by every person in that
+     chat, including the eleven who were not meant to see a fee. So: no names,
+     no amounts, no deal title, and a description that does not even say which
+     two people are dealing. The page behind it asks for a code; the card in
+     front of it must not be a way round that. -->
+<meta name="description" content="Somebody is asking you to pay for something.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="交换 · The Exchange">
+<meta property="og:description" content="Somebody has asked you to pay for something.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="robots" content="noindex">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --paper:#EEF0F4; --raise:#F7F8FB; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t2:#2A9D63; --t5:#D4485C;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --shadow:0 2px 6px rgba(21,27,40,.07),0 10px 28px rgba(21,27,40,.09);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t2:#3FBE7D; --t5:#F06A7C;
+      --shadow:0 2px 6px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink)}
+  /* 16px and not 15. Everything about this page is read one-handed on a phone
+     by somebody who did not choose to be here, and 16 is also the size below
+     which iOS zooms the page when a field takes focus — which throws the
+     layout sideways on the one screen that has a field. */
+  body{font-family:var(--sans);font-size:16px;line-height:1.55;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+  main{max-width:34rem;margin:0 auto;padding:1rem .75rem 2.5rem}
+  /* Used by the gate and the four dead-link screens, which have no sheet to
+     hang a strip on. The memo itself carries its brand inside the sheet. */
+  .brand{display:flex;align-items:center;gap:.55rem;margin:0 0 1rem}
+  .brand img{width:1.4rem;height:1.4rem}
+  .brand span{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted)}
+  .brand .lang{margin-left:auto}
+  /* ONE SHEET. Rules divide it, not gaps: three bordered cards with their own
+     shadows were three boxes to cross for one piece of paper. */
+  .sheet{background:var(--raise);border:1px solid var(--line);
+    border-radius:1.1rem;box-shadow:var(--shadow);overflow:hidden}
+  .strip{display:flex;align-items:center;gap:.5rem;padding:.7rem .95rem;
+    border-bottom:1px solid var(--line)}
+  .strip img{width:1.1rem;height:1.1rem;flex:0 0 auto}
+  .sname{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted)}
+  .sstate{margin-left:auto;font-size:.68rem;letter-spacing:.12em;
+    text-transform:uppercase;padding:.2rem .6rem;border-radius:99px;
+    background:var(--line);color:var(--ink-2)}
+  .sstate.on{background:rgba(42,157,99,.14);color:var(--t2)}
+  .lang{border:1px solid var(--line);background:var(--paper);color:var(--ink-2);
+    font:inherit;font-size:.78rem;padding:.2rem .6rem;border-radius:99px}
+  .body{padding:1.05rem .95rem 1.15rem}
+  h1{margin:0 0 .15rem;font-size:1.22rem;line-height:1.3}
+  .who{margin:0;color:var(--muted);font-size:.9rem}
+  .lab{margin:0 0 .45rem;font-size:.7rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  /* THE NUMBER, IN THE SERIF AND BIG. It is the one thing on this page
+     somebody is deciding about. */
+  .dueLab{margin:1rem 0 .05rem;font-size:.7rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .dueRow{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin:0}
+  .dueRow .n{font-family:var(--serif);font-size:2.7rem;font-weight:400;
+    line-height:1.08;font-variant-numeric:tabular-nums}
+  .dueRow .k{font-size:.88rem;color:var(--muted)}
+  .dueWhen{margin:.15rem 0 0;font-size:.86rem;color:var(--muted)}
+  .done{margin:1rem 0 0;font-size:1rem;color:var(--ink-2)}
+  /* 3.25rem tall and the amount is written on it. A button that says only
+     "Pay now" makes somebody look back up the page to check what they are
+     about to send. */
+  .go{margin:1.1rem 0 0;border:0;border-radius:99px;background:var(--accent);
+    color:var(--accent-ink);font:inherit;font-size:.95rem;font-weight:600;
+    letter-spacing:.06em;text-transform:uppercase;padding:.9rem 1.4rem;
+    min-height:3.25rem;width:100%}
+  /* A TABLE WITH RULES. The label column is a fixed 5.5rem rather than sized
+     to the longest label: auto-sizing it to "If it is called off" left the
+     values about 210px wide on a 390px phone and every sentence over six
+     words broke across three lines. Fixed, the long labels wrap instead — a
+     label is two words and can afford to — and the values get the room. */
+  .terms{margin:0;border-top:1px solid var(--line)}
+  .term{display:grid;grid-template-columns:5.5rem 1fr;gap:0 .9rem;
+    padding:.62rem .95rem;border-top:1px solid var(--hair)}
+  .term:first-child{border-top:0}
+  .term dt{margin:0;font-size:.76rem;line-height:1.4;color:var(--muted)}
+  .term dd{margin:0;font-size:.93rem;line-height:1.45;white-space:pre-wrap}
+  .plan{padding:.9rem .95rem 1rem;border-top:1px solid var(--line)}
+  .prow{display:grid;grid-template-columns:1fr auto;gap:.1rem .7rem;
+    padding:.55rem 0;border-top:1px solid var(--hair)}
+  .prow:first-of-type{border-top:0;padding-top:0}
+  .pwhat{font-weight:600;font-size:.95rem}
+  .pamt{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+  .pwhen{color:var(--muted);font-size:.82rem}
+  .pchip{justify-self:end;align-self:center;font-size:.68rem;letter-spacing:.1em;
+    text-transform:uppercase;padding:.14rem .55rem;border-radius:99px;
+    background:var(--line);color:var(--ink-2)}
+  .pchip.on{background:rgba(42,157,99,.14);color:var(--t2)}
+  .prow .go{grid-column:1/-1;margin:.55rem 0 .15rem}
+  .sfoot{padding:.8rem .95rem 1rem;border-top:1px solid var(--line);
+    text-align:center}
+  .sfoot p{margin:0 0 .5rem;font-size:.78rem;line-height:1.45;color:var(--muted)}
+  .clock{display:inline-block;padding:.28rem .7rem;border-radius:99px;
+    background:var(--accent-soft);color:var(--accent);font-size:.75rem}
+  .clock.soon{background:rgba(212,72,92,.12);color:var(--t5)}
+  .foot{margin:1rem 0 0;font-size:.82rem;line-height:1.5;color:var(--muted)}
+
+  /* THE CODE GATE. Big field, because it is typed from a chat message by
+     somebody holding the phone in one hand. */
+  .gate{text-align:center;padding:2rem 1.15rem}
+  .gate h2{margin:0 0 .35rem;font-size:1.15rem}
+  .gate p{margin:0 0 1.3rem;color:var(--ink-2);font-size:.92rem}
+  .gate input{width:100%;max-width:13rem;margin:0 auto;display:block;
+    font:inherit;font-size:1.5rem;letter-spacing:.25em;text-align:center;
+    text-transform:uppercase;padding:.7rem .5rem;border-radius:.7rem;
+    border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+  .gate input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;
+    border-color:var(--accent)}
+  .gate .go{margin:1rem 0 0;width:100%;max-width:13rem}
+  button:focus-visible,a:focus-visible{outline:2px solid var(--accent);
+    outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;
+    transition:none!important}}
+  .bad{margin:.9rem 0 0;color:var(--t5);font-size:.88rem;min-height:1.2em}
+  .none{text-align:center;padding:3rem 1.15rem;color:var(--ink-2)}
+  .none b{display:block;color:var(--ink);font-size:1.1rem;margin:0 0 .4rem}
+  /* The payment panel. Same shape as the room's, because it is the same
+     thing: a full-height sheet with a way out at the top. */
+  .pframe{position:fixed;inset:0;z-index:40;background:var(--paper);
+    display:flex;flex-direction:column;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+  .phead{display:flex;align-items:baseline;gap:.55rem;padding:.75rem .95rem;
+    border-bottom:1px solid var(--line);flex:0 0 auto}
+  .phead b{font-size:.95rem;font-weight:600}
+  .phead .psub{font-size:.8rem;color:var(--muted)}
+  .pback{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);
+    background:var(--raise);color:var(--ink-2);font:inherit;font-size:.85rem;
+    padding:.4rem .85rem;border-radius:99px}
+  .pslot{flex:1 1 auto;overflow:auto;padding:.7rem}
+  .pscan{flex:0 0 auto;margin:0;padding:.55rem .95rem;
+    border-top:1px solid var(--line);font-size:.8rem;line-height:1.5;
+    color:var(--ink-2)}
+  .pnote{flex:0 0 auto;margin:0;padding:.6rem .95rem;
+    border-top:1px solid var(--line);font-size:.72rem;line-height:1.5;
+    color:var(--muted)}
+  .pwait{margin:2.5rem auto;max-width:22rem;text-align:center;font-size:.88rem;
+    line-height:1.6;color:var(--ink-2)}
+  .pwait b{display:block;color:var(--ink);font-size:1.02rem;margin:0 0 .35rem}
+  .pwait button{display:block;margin:1rem auto 0}
+  .pdemo{margin:1.2rem auto;max-width:22rem;padding:2.2rem 1.2rem;
+    text-align:center;border:1px dashed var(--line);border-radius:1rem}
+  .pdemo b{display:block;font-size:1.05rem;margin:0 0 .5rem}
+  .pdemo span{display:block;font-size:.88rem;line-height:1.6;color:var(--ink-2)}
+  .pdemo em{display:block;margin:.9rem 0 0;font-size:.78rem;font-style:normal;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  /* The method sheet. */
+  .rsheet{position:fixed;inset:0;z-index:50;background:rgba(21,27,40,.45);
+    display:flex;align-items:flex-end;justify-content:center}
+  .rcard{width:100%;max-width:34rem;background:var(--raise);
+    border-radius:1.1rem 1.1rem 0 0;padding:1.1rem 1.15rem
+    calc(1.1rem + env(safe-area-inset-bottom,0));max-height:88vh;overflow:auto}
+  .rtitle{margin:0 0 .9rem;font-size:1.05rem}
+  .ways{display:grid;gap:.6rem;margin:0 0 .9rem}
+  .way{text-align:left;border:1px solid var(--line);background:var(--paper);
+    color:var(--ink);font:inherit;padding:.8rem .9rem;border-radius:.8rem}
+  .way b{display:block;font-size:1rem;margin:0 0 .15rem}
+  .way span{display:block;font-size:.85rem;color:var(--ink-2)}
+  .racts{display:grid;gap:.5rem;margin:.9rem 0 0}
+  .racts button{border:1px solid var(--line);background:var(--paper);
+    color:var(--ink-2);font:inherit;padding:.75rem 1rem;border-radius:99px}
+</style></head>
+<body>
+<main id="root"></main>
+<script type="module">
+/* A PAYMENT REQUEST, OPENED BY WHOEVER HAS THE LINK
+ * ===========================================================================
+ *
+ * "Two people are chatting, then someone sends them a request to pay."
+ *
+ * NO CODE, and that is a deliberate difference from the deal memo beside it.
+ * The memo carries the full terms of a deal — what is covered, what happens
+ * if it is called off — and a code beside the link is worth the friction. A
+ * request carries a name, an amount and one line. There is less to protect,
+ * and a code standing between a person and paying you costs money.
+ *
+ * NOTHING IS ASKED OF THE READER. No account, no app, no login, no card on
+ * file. That is the whole reason this can live in somebody else's chat.
+ *
+ * BUILT TO LEAVE, like the page beside it: two fetches and a view that has
+ * already been through an allowlist on the server. A standalone version keeps
+ * this page and swaps the URLs.
+ */
+import { T, when, setLang, pickLang, langButton } from "/i18n.js";
+import { mountCheckout } from "/pay.js";
+
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+const root = document.getElementById("root");
+const ID = (location.pathname.match(/^\/pay\/([a-f0-9]{20})/) || [])[1] || "";
+
+/* BACK FROM A PAYMENT — the same race as everywhere else. Stripe returns the
+   payer here a second after they pay and the webhook has usually, but not
+   always, landed first. Two quiet re-reads rather than a page that still says
+   Pay under somebody who just did. */
+const CAME_BACK = new URLSearchParams(location.search).get("paid") || "";
+
+let STATE = null;
+let repaint = () => {};
+
+function head() {
+  const bar = el("div", "brand");
+  const mark = el("img");
+  mark.src = "/mark.svg";
+  mark.alt = "";
+  bar.append(mark, el("span", null, T("memo.brand")));
+  const slot = el("span", "langslot");
+  bar.append(slot);
+  slot.replaceWith(langButton(() => repaint()));
+  return bar;
+}
+
+function gone() {
+  repaint = gone;
+  root.textContent = "";
+  root.append(head());
+  const box = el("div", "none");
+  box.append(el("b", null, T("rq.gone")));
+  box.append(el("p", null, T("rq.goneWhy")));
+  root.append(box);
+}
+
+function draw() {
+  if (!STATE) return;
+  repaint = draw;
+  const q = STATE.request;
+  root.textContent = "";
+
+  const sheet = el("div", "sheet");
+  const strip = el("div", "strip");
+  const mark = el("img");
+  mark.src = "/mark.svg";
+  mark.alt = "";
+  strip.append(mark, el("span", "sname", T("memo.brand")));
+  strip.append(el("span", "sstate" + (q.state === "paid" ? " on" : ""),
+    T("memo.chip." + (q.state === "paid" ? "paid" : q.state === "waiting" ? "waiting" : "due"))));
+  const slot = el("span", "langslot");
+  strip.append(slot);
+  sheet.append(strip);
+
+  const body = el("div", "body");
+  /* WHO AND HOW MUCH, in that order, and nothing above them. Somebody opened
+     this from a chat message and the only question they have is whether the
+     name and the number are the ones they expect. */
+  body.append(el("p", "dueLab", T(q.way === "out" ? "rq.sending" : "rq.asking", { who: q.from })));
+  const line = el("div", "dueRow");
+  line.append(el("span", "n", q.amount));
+  body.append(line);
+  if (q.what) body.append(el("p", "dueWhen", q.what));
+
+  if (q.state === "paid") {
+    body.append(el("p", "done", T("rq.done", { who: q.from })));
+  } else if (q.way === "out") {
+    /* SENDING MONEY IS A PROMISE UNTIL THERE IS SOMEWHERE FOR IT TO LAND.
+       This board is never allowed to hold it in the meantime, so the reader
+       is told what has to happen rather than shown a button that cannot
+       work. */
+    body.append(el("p", "foot", T("rq.outWhy", { who: q.from })));
+  } else if (!q.payeeReady) {
+    body.append(el("p", "foot", T("rq.notReady", { who: q.from })));
+  } else {
+    const b = el("button", "go", T("memo.pay", { amount: q.amount }));
+    b.type = "button";
+    b.addEventListener("click", () => payHow(q));
+    body.append(b);
+  }
+  sheet.append(body);
+
+  /* NOT "For", which is already the line under the amount. It was printed
+     twice on one card, three inches apart. */
+  const rows = [["rq.when", q.when], ["rq.asked", when(q.at)]].filter(([, v]) => v);
+  if (rows.length) {
+    const dl = el("dl", "terms");
+    for (const [k, v] of rows) {
+      const row = el("div", "term");
+      row.append(el("dt", null, T(k)), el("dd", null, v));
+      dl.append(row);
+    }
+    sheet.append(dl);
+  }
+
+  const foot = el("div", "sfoot");
+  foot.append(el("p", null, T("rq.straight", { who: q.from })));
+  sheet.append(foot);
+
+  root.append(sheet);
+  slot.replaceWith(langButton(() => repaint()));
+}
+
+function payHow(q) {
+  const back = el("div", "rsheet");
+  const card = el("div", "rcard");
+  card.append(el("p", "lab", T("pay.how")));
+  card.append(el("h3", "rtitle", (q.what || "") + " · " + q.amount));
+
+  const ways = el("div", "ways");
+  const way = (key, name, why) => {
+    const b = el("button", "way");
+    b.type = "button";
+    b.append(el("b", null, name), el("span", null, why));
+    b.addEventListener("click", async () => {
+      b.disabled = true;
+      try {
+        const r = await fetch("/api/request/" + ID + "/pay", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ method: key }),
+        });
+        const j = r.ok ? await r.json() : null;
+        if (j?.secret && j?.pk) { back.remove(); payFrame({ secret: j.secret, pk: j.pk, q, how: key }); return; }
+        if (j?.demo) { back.remove(); payFrame({ q, how: key, demo: true }); return; }
+      } catch { /* below */ }
+      b.disabled = false;
+      b.querySelector("span").textContent = T("memo.payFailed");
+    });
+    ways.append(b);
+  };
+  way("wechat", T("pay.wechat"), T("pay.wechatWhy"));
+  way("alipay", T("pay.alipay"), T("pay.alipayWhy"));
+  way("card", T("pay.card"), T("pay.cardWhy"));
+  card.append(ways);
+  card.append(el("p", "foot", T("pay.howNote", { who: q.from })));
+
+  const acts = el("div", "racts");
+  const no = el("button", "", T("pay.cancel"));
+  no.type = "button";
+  no.addEventListener("click", () => back.remove());
+  acts.append(no);
+  card.append(acts);
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+}
+
+async function payFrame({ secret, pk, q, how, demo }) {
+  const frame = el("div", "pframe");
+  const bar = el("div", "phead");
+  bar.append(el("b", null, q.what || q.from));
+  bar.append(el("span", "psub", q.amount));
+  const back = el("button", "pback", T("pay.frameBack"));
+  back.type = "button";
+  bar.append(back);
+
+  const slot = el("div", "pslot");
+  const wait = el("p", "pwait", T("pay.frameWait"));
+  slot.append(wait);
+  /* The same line the room draws, for the same reason: on a phone whose
+     handoff into the wallet does not fire, the payer is holding a code on the
+     screen they would have to scan it with. */
+  const scan = (how === "wechat" || how === "alipay")
+    ? el("p", "pscan", T("pay.scanSelf." + how)) : null;
+  const note = el("p", "pnote", T("rq.straight", { who: q.from }));
+  frame.append(bar, slot, ...(scan ? [scan] : []), note);
+  document.body.append(frame);
+
+  let mounted = null;
+  back.addEventListener("click", () => {
+    try { if (mounted) mounted.destroy(); } catch { /* already gone */ }
+    frame.remove();
+    load();
+  });
+
+  if (demo) {
+    wait.remove();
+    const box = el("div", "pdemo");
+    box.append(el("b", null, T("pay." + (how || "card"))));
+    box.append(el("span", null, T("pay.demoHere")));
+    box.append(el("em", null, T("pay.demoNot")));
+    slot.append(box);
+    return;
+  }
+  try {
+    mounted = await mountCheckout(slot, { secret, pk });
+    wait.remove();
+  } catch {
+    slot.textContent = "";
+    const box = el("div", "pwait");
+    box.append(el("b", null, T("pay.frameBlocked")));
+    box.append(el("span", null, T("memo.blockedWhy", { who: q.from })));
+    slot.append(box);
+  }
+}
+
+async function load() {
+  try {
+    const r = await fetch("/api/request/" + ID, { cache: "no-store" });
+    const j = await r.json().catch(() => null);
+    if (r.ok && j?.ok) { STATE = j; draw(); return; }
+  } catch { /* below */ }
+  gone();
+}
+
+setLang(pickLang());
+if (!ID) gone();
+else {
+  load().then(() => {
+    if (CAME_BACK) { setTimeout(load, 2000); setTimeout(load, 6000); }
+  });
+}
+
+/* Wiped once read, so a reload an hour later is not mistaken for a payment. */
+try {
+  const u = new URL(location.href);
+  if (u.searchParams.has("paid")) {
+    u.searchParams.delete("paid");
+    history.replaceState(null, "", u.pathname + u.search + u.hash);
+  }
+} catch { /* an address bar that will not be rewritten is not worth failing on */ }
+</script>
+</body>
+</html>

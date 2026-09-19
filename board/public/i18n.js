@@ -4913,6 +4913,28 @@ export const STRINGS = {
      the rest of the product, and every line is either a fact or a thing to
      do. Nothing here reassures.
      --------------------------------------------------------------------- */
+  /* ---------------------------------------------------------------------
+     A PAYMENT REQUEST. Read by somebody who is not a member, has never seen
+     this board, and is holding a phone in one hand in a chat app. Every line
+     is a fact or a thing to do. Nothing here reassures.
+     --------------------------------------------------------------------- */
+  "rq.asking":         ["{who} is asking for", "{who} 要收"],
+  "rq.sending":        ["{who} wants to send you", "{who} 要付给你"],
+  "rq.when":           ["When", "什么时候"],
+  "rq.asked":          ["Asked", "发起时间"],
+  "rq.straight":       ["The money goes straight to {who}. We never hold it.",
+                        "钱直接到 {who} 账上，平台不经手。"],
+  "rq.done":           ["Paid. {who} has been told.", "已付。{who} 那边已经知道了。"],
+  "rq.notReady":       ["{who} has not said where the money should land, so this cannot be paid yet.",
+                        "{who} 还没填收款方式，暂时付不了。"],
+  /* Sending money is a promise until the other end has somewhere for it to
+     land, because this board is never allowed to hold it in the meantime. */
+  "rq.outWhy":         ["{who} wants to pay you. Tell them where the money should land and they can send it.",
+                        "{who} 想把钱付给你。告诉他们打到哪里，就能付了。"],
+  "rq.gone":           ["This link does not open anything.", "这个链接打不开东西。"],
+  "rq.goneWhy":        ["It may have been taken back, or the address is wrong. Ask whoever sent it.",
+                        "可能已经撤回，或者地址不对。找发给你的人问一下。"],
+
   "memo.brand":        ["The Exchange", "交换"],
   "memo.untitled":     ["The terms", "这单的条件"],
   "memo.between":      ["{a} hired {b}", "{a} 找 {b} 办的事"],

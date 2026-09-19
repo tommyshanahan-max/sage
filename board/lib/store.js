@@ -17,6 +17,7 @@ import { mkdir, readFile, writeFile, rename, readdir, unlink, access } from "nod
 import { randomUUID, createHash, randomBytes } from "node:crypto";
 import path from "node:path";
 import { cleanShare, MEMO_ALPHABET } from "./memo.js";
+import { cleanRequest, CURRENCIES as REQUEST_CURRENCIES, REQUEST_MAX } from "./request.js";
 
 /** Where a post can be. Four, and each is a different fact:
  *
@@ -2549,6 +2550,14 @@ export function money(shape, n) {
  * ------------------------------------------------------------------------ */
 export const CURRENCIES = ["cny", "aud", "hkd", "usd", "eur", "gbp", "jpy"];
 
+/* request.js carries its own copy so it can leave this repo whole — the same
+   arrangement as memo.js and the code alphabet. Diverging would let a request
+   be written in a currency the rest of the board cannot price, or drop one it
+   can. */
+if (REQUEST_CURRENCIES.join(",") !== CURRENCIES.join(",")) {
+  throw new Error("request.js and store.js disagree about the currencies");
+}
+
 /* THE WAYS PEOPLE ACTUALLY GET PAID, in the order they are offered.
  *
  * Five, and no more, because every one of them has to be a thing the screen
@@ -3231,8 +3240,22 @@ export function cleanBoard(raw) {
     pushes.push(x);
   }
 
+  /* PAYMENT REQUESTS, which belong to nothing.
+     Not to a room, not to a thread, not to a deal — see the header of
+     lib/request.js. Deduplicated on id like everything else, newest last, and
+     capped so a file edited by hand cannot produce forty thousand. */
+  const requests = [];
+  const rqids = new Set();
+  for (const r of (Array.isArray(raw?.requests) ? raw.requests : [])) {
+    const q = cleanRequest(r);
+    if (!q || rqids.has(q.id)) continue;
+    rqids.add(q.id);
+    requests.push(q);
+  }
+
   return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
     offers, shuts, hides, groups, says, signins, writes, pushes, blocks, announces,
+    requests: requests.slice(-REQUEST_MAX),
     counts: cleanCounts(raw?.counts) };
 }
 

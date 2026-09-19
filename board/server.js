@@ -32,6 +32,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
 import * as store from "./lib/store.js";
 import * as memo from "./lib/memo.js";
+import * as request from "./lib/request.js";
 import { translate, configured as translateReady } from "./lib/translate.js";
 import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js";
 import { send as sendMail, configured as mailReady } from "./lib/mail.js";
@@ -418,7 +419,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|api\/memo\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|api\/memo\/|api\/request\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -9464,6 +9465,178 @@ app.post("/api/group/deal/share", notesOff, express.json({ limit: "2kb" }), asyn
    its HTML: the token is in the address and the address is forwardable, so
    everything on it arrives after a code has been given. */
 app.get("/d/:t", (req, res, next) => page("memo.html", req, res, next));
+
+/* ===========================================================================
+ * A PAYMENT REQUEST
+ * ===========================================================================
+ *
+ * "Two people are chatting, then someone sends them a request to pay." That
+ * is the whole product in Tom's own sentence, and these four routes are it.
+ *
+ * WHAT IS DIFFERENT FROM THE DEAL MEMO, which lives above this:
+ *
+ *   NO ROOM IS MADE. A request belongs to nothing. The memo hangs off a
+ *   group, so writing terms made a two-person room and you ended up with a
+ *   second place to talk to somebody you already talk to — and, worse, one
+ *   memo per pair, so a second job with the same person overwrote the first.
+ *   Three requests to one person are three rows.
+ *
+ *   NO CODE. The memo's link carries the full terms of a deal and is worth a
+ *   code beside it. A request carries a name, an amount and one line. A code
+ *   standing between a person and paying you costs money.
+ *
+ *   NO AGREEING. Sending it is the offer and paying it is the acceptance.
+ *
+ * THE LIFT-OUT. lib/request.js imports nothing from this board. Everything
+ * board-shaped is here: who is asking, and which Stripe account the money
+ * lands in. A standalone version replaces these four and keeps that file.
+ * ------------------------------------------------------------------------ */
+
+/** MAKING ONE.
+ *
+ *  Anybody on the board with a finished profile. Not gated on having set up
+ *  payouts: you can write the request before you have said where the money
+ *  goes, and the page the other person opens says plainly that it cannot be
+ *  paid yet. A wall in front of the first screen loses people who would have
+ *  finished; a sentence at the moment it matters does not.
+ */
+app.post("/api/request", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const amount = String(req.body?.amount || "").trim();
+  if (!amount) return res.status(400).json({ error: "amount" });
+
+  const out = await change((board) => {
+    const mine = board.people.find((q) => q.by === me);
+    /* The name on it is theirs, so there has to be one. Split from "no" so
+       the screen can say which — see the note over /api/note/terms. */
+    if (!mine?.handle) return { error: "profile" };
+    /* THE PERSON PAYING, WHEN THEY ARE ON THE BOARD. Optional: most of the
+       time they are not, which is the point of the thing. */
+    const toWho = String(req.body?.toWho || "");
+    const them = board.people.find((q) => q.id === toWho);
+    const q = request.cleanRequest({
+      id: request.newRequestId(),
+      by: me,
+      from: mine.handle,
+      to: String(req.body?.to || them?.handle || ""),
+      toWho: them ? them.id : "",
+      amount,
+      cur: String(req.body?.cur || ""),
+      what: String(req.body?.what || ""),
+      when: String(req.body?.when || ""),
+      at: new Date().toISOString(),
+    });
+    if (!q) return { error: "bad" };
+    board.requests.push(q);
+    return { ok: true, id: q.id };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true, id: out.id, url: backHere(req, "/pay/" + out.id) });
+});
+
+/* The page, outside the door — see OPEN_PATHS. It carries no request in its
+   HTML: the id is the address, and everything on the page arrives by fetch.
+
+   /pay/ AND NOT /q/. The first draft used /q/, which has belonged to the
+   waiting-room person page since long before this — so express matched that
+   one, every request link served the door, and curl said 200 the whole time
+   because 200 is what a wrong page is. /pay/ is also the better word: it is
+   read by somebody in a chat deciding whether to tap. */
+app.get("/pay/:id", (req, res, next) => page("request.html", req, res, next));
+
+/** READING ONE. No code, no device, no membership — the link is the whole of
+ *  it. What comes back is requestView, which is an allowlist. */
+app.get("/api/request/:id", async (req, res) => {
+  const id = request.cleanId(req.params.id);
+  res.set("Cache-Control", "no-store");
+  if (!id) return res.status(404).json({ error: "gone" });
+  const board = await store.load(FILE);
+  const q = board.requests.find((x) => x.id === id);
+  if (!q || q.off) return res.status(404).json({ error: "gone" });
+  const asker = board.people.find((p) => p.by === q.by);
+  res.json({
+    ok: true,
+    request: request.requestView(q, {
+      payeeReady: Boolean(asker?.payee) && (stripe.configured() || PAY_DEMO),
+    }),
+  });
+});
+
+/** PAYING ONE.
+ *
+ *  The same checkout the room asks for, authorised by nothing but the link —
+ *  which is what a payment request is. Nothing about the money differs, which
+ *  is why this goes through startCheckout like the other two.
+ */
+app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res) => {
+  if (!stripe.configured() && !PAY_DEMO) return res.status(400).json({ error: "off" });
+  const id = request.cleanId(req.params.id);
+  const method = String(req.body?.method || "card");
+  if (!id) return res.status(404).json({ error: "gone" });
+  if (!["wechat", "alipay", "card"].includes(method)) return res.status(400).json({ error: "no" });
+
+  const board = await store.load(FILE);
+  const q = board.requests.find((x) => x.id === id);
+  if (!q || q.off) return res.status(404).json({ error: "gone" });
+  /* Already settled. A link somebody scrolled back to a month later must not
+     take the money a second time. */
+  if (request.requestState(q) === "paid") return res.status(400).json({ error: "already" });
+
+  const asker = board.people.find((p) => p.by === q.by);
+  if (!asker?.payee) return res.status(400).json({ error: "payee" });
+  if (!stripe.configured()) return res.json({ ok: true, demo: true, method });
+
+  /* startCheckout reads a plan row, so the request is handed to it as one.
+     The shape is the same — a label, an amount, a currency — and keeping one
+     function is the point: the cut, the rounding and the destination are the
+     three things that must never quietly differ between routes. */
+  const out = await startCheckout({
+    d: { plan: [{ label: q.what || q.from, amount: q.amount }], cur: q.cur, title: q.what },
+    i: 0, method, payeeAcct: asker.payee,
+    /* `q:` so the webhook can tell a request from a room's plan row: the
+       other two refs are a twenty-hex group id and a row number. */
+    ref: "q:" + q.id,
+    done: backHere(req, "/pay/" + q.id + "?paid={CHECKOUT_SESSION_ID}"),
+  });
+  if (out.error) return res.status(out.error === "amount" ? 400 : 502).json(out);
+  res.json({ ok: true, ...out });
+});
+
+/** TAKING ONE BACK, by whoever asked. Kept rather than deleted: somebody was
+ *  sent a link and is owed an answer about why it stopped working. */
+app.post("/api/request/:id/off", notesOff, express.json({ limit: "1kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = request.cleanId(req.params.id);
+  if (!me || !id) return res.status(400).json({ error: "no" });
+  const out = await change((board) => {
+    const q = board.requests.find((x) => x.id === id);
+    if (!q || q.by !== me) return { error: "no" };
+    if (request.requestState(q) === "paid") return { error: "paid" };
+    q.off = true;
+    return { ok: true };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true });
+});
+
+/** THE ONES YOU HAVE SENT. Yours only, newest first. */
+app.get("/api/requests", notesOff, async (req, res) => {
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  res.set("Cache-Control", "no-store");
+  if (!me) return res.json({ requests: [] });
+  const board = await store.load(FILE);
+  const mine = board.requests.filter((q) => q.by === me).reverse();
+  res.json({
+    requests: mine.map((q) => ({
+      ...request.requestView(q),
+      /* The asker's own view carries what the payer's must not: whether it
+         was taken back, and the address to send again. */
+      off: Boolean(q.off),
+      url: backHere(req, "/pay/" + q.id),
+    })),
+  });
+});
 
 /** CAN THIS BOARD TAKE A PAYMENT, AND SAY WHY NOT.
  *
