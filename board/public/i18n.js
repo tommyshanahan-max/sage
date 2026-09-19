@@ -5194,6 +5194,11 @@ export const STRINGS = {
   "pay.print":         ["Print or save as PDF", "打印或保存为 PDF"],
   "pay.close":         ["Close", "关闭"],
   "deal.none":         ["Nothing written down yet.", "还没有定下条件。"],
+  /* The block at the top of a deal with money outstanding. Said to the payer
+     and to nobody else — see dueTop. */
+  "deal.dueNow":       ["To pay", "该付的"],
+  "deal.dueWaiting":   ["You said you paid this. Waiting for {who} to confirm it arrived.",
+                        "你说已经付了，等 {who} 确认收到。"],
   /* NAME THE ACT, NOT THE FEATURE.
    *
    * It said "Pin the terms" / "把条件钉上去", which is this product's own

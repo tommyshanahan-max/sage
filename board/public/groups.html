@@ -455,6 +455,23 @@
     text-transform:uppercase;color:var(--muted)}
   .dealpin .dtitle{margin:0 0 .15rem;font-size:1.05rem;font-weight:700;line-height:1.25}
   .dealpin .dwho{margin:0 0 .8rem;font-size:.85rem;color:var(--muted)}
+  /* WHAT NEEDS DOING, AT THE TOP. The accent ground rather than a bordered
+     box: this card already has a border and a box inside a box reads as two
+     subjects. See dueTop — the reason it is here at all. */
+  .ddue{margin:.9rem 0 1rem;padding:.9rem .95rem 1rem;border-radius:.9rem;
+    background:var(--accent-soft)}
+  .ddlab{margin:0 0 .1rem;font-size:.7rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent)}
+  .ddrow{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin:0}
+  .ddn{font-family:var(--serif);font-size:2.1rem;line-height:1.1;
+    font-variant-numeric:tabular-nums}
+  .ddk{font-size:.88rem;color:var(--ink-2)}
+  .ddwhen{margin:.15rem 0 0;font-size:.85rem;color:var(--ink-2)}
+  .ddwait{margin:.5rem 0 0;font-size:.88rem;color:var(--ink-2)}
+  .ddue .go{display:block;width:100%;margin:.85rem 0 0;border:0;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);font:inherit;font-size:.95rem;
+    font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    padding:.85rem 1.2rem;min-height:3.25rem}
   .drows{display:grid;grid-template-columns:auto 1fr;gap:.35rem .9rem;margin:0 0 .85rem;
     padding-top:.75rem;border-top:1px solid var(--line)}
   .drows dt{font-size:.78rem;color:var(--muted);white-space:nowrap}
@@ -1146,6 +1163,64 @@ function ledger(g) {
   return box;
 }
 
+/* WHAT NEEDS DOING, AT THE TOP, WITH THE BUTTON IN IT.
+ *
+ * Tom put an Ads Manager screen next to this one and said Facebook is easy to
+ * understand. It is, and the reason is the first inch of it: a box at the top
+ * with the problem in three words, one sentence of why, and the button that
+ * fixes it. Nothing is hunted for.
+ *
+ * This card opened with a contract. Seven rows of terms, then who agreed and
+ * when, then the plan, and somewhere down there the thing to press. The memo
+ * page learned this lesson last night and the room never did.
+ *
+ * SO: the amount due, the row it is for, and Pay — above the terms, in the
+ * accent, sized to be seen. The terms have not moved; they are simply no
+ * longer what the screen opens with, because a person who opened the room to
+ * settle a bill did not come to re-read the contract.
+ *
+ * DRAWN FOR THE PAYER ONLY, and only when there is something to pay. For the
+ * person being paid this would be a large reminder of money they are owed,
+ * which is a different feeling and not one to put at the top of anything. For
+ * a witness it is none of their business.
+ *
+ * NOT DRAWN WHEN NOBODY HAS AGREED. A bill above terms neither side has
+ * signed is the software asking for money before the deal exists.
+ */
+function dueTop(g, d) {
+  if (!g.meHandle || g.meHandle !== d.hires) return null;
+  if (!Array.isArray(d.plan) || !d.plan.length) return null;
+  if ((d.agreed || []).length < 2) return null;
+  const next = d.plan.findIndex((row, i) =>
+    !(d.paid || []).some((r) => r.i === i && r.kind === "confirmed"));
+  if (next < 0) return null;
+  const row = d.plan[next];
+
+  const wrap = el("div", "ddue");
+  wrap.append(el("p", "ddlab", T("deal.dueNow")));
+  const line = el("div", "ddrow");
+  line.append(el("span", "ddn", row.amount || ""),
+              el("span", "ddk", row.label || ""));
+  wrap.append(line);
+  if (row.due) wrap.append(el("p", "ddwhen", T("pay.due", { when: row.due })));
+
+  /* Already said they paid it and waiting on the other side: no button, and
+     the line says what is happening rather than leaving a gap where one was. */
+  const claimed = (d.paid || []).some((r) => r.i === next && r.kind === "claimed");
+  if (claimed) {
+    wrap.append(el("p", "ddwait", T("deal.dueWaiting", { who: d.provides })));
+    return wrap;
+  }
+  const b = el("button", "go", T("memo.pay", { amount: row.amount || "" }));
+  b.type = "button";
+  const ready = g.pay === "stripe" || Boolean(d.payTo);
+  b.addEventListener("click", () => (ready
+    ? payHow(g, d, { ...row, i: next }, d.payTo)
+    : payNowhere(g, d)));
+  wrap.append(b);
+  return wrap;
+}
+
 /* The pinned memo.
  *
  *  READ-ONLY UNTIL IT IS YOURS TO SIGN. Everybody in the room sees the same
@@ -1159,6 +1234,10 @@ function dealPin(g) {
   box.append(el("p", "dlab", T("deal.pin")));
   if (d.title) box.append(el("h3", "dtitle", d.title));
   box.append(el("p", "dwho", T("deal.hires", { a: d.hires, b: d.provides })));
+  /* Above the terms, because the person who opened this room to settle a bill
+     did not come to re-read the contract. See dueTop. */
+  const due = dueTop(g, d);
+  if (due) box.append(due);
 
   const rows = el("dl", "drows");
   for (const f of ["what", "where", "when", "fee", "deposit", "covers", "cancel"]) {
