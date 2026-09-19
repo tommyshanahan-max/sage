@@ -703,6 +703,64 @@ function pad() {
   return box;
 }
 
+/* ===========================================================================
+ * THE FRONT PAGE
+ * ===========================================================================
+ *
+ * FIRST IT WAS A DOOR. A stranger met a sign-in wall carrying another
+ * product's name, pressed the one button, was refused, and had nowhere to
+ * go — never having seen a request or learned what it cost.
+ *
+ * THEN IT WAS A BROCHURE, which was worse in a different way: a hundred and
+ * fifty words, three headings and two paragraphs of prose on the screen
+ * somebody gives four seconds to.
+ *
+ * So: a headline, the payer's screen, three facts of four words each, and
+ * the button. The paragraphs are one tap behind the lines that name them.
+ *
+ * The card is drawn rather than screenshotted: a screenshot of a dark app on
+ * a dark page is a grey rectangle, and it goes stale the first time that
+ * screen changes. It carries the whole argument — "they need no account" is
+ * a claim, and a picture of their entire screen is the proof.
+ */
+function signedOut() {
+  const box = el("div", "front");
+
+  box.append(el("h1", "hero", T("dl.heroHead")));
+  box.append(el("p", "herosub", T("dl.heroSub")));
+
+  const demo = el("div", "demo");
+  demo.append(el("p", "dlab", T("dl.demoWho", { who: "Tom" })));
+  demo.append(el("p", "damt", "¥2,400"));
+  demo.append(el("p", "dwhat", T("dl.demoWhat")));
+  demo.append(el("div", "dbtn", T("dl.demoPay", { amount: "¥2,400" })));
+  demo.append(el("p", "dways", T("dl.demoWays")));
+  box.append(demo);
+
+  /* THREE FACTS, AND THE PARAGRAPHS ONE TAP BEHIND THEM. Coarse first, finer
+     when asked: the line names the thing and the sheet explains it, for the
+     one person in ten who wants to know. Nothing was lost moving those
+     paragraphs a tap deeper — they were not being read where they were. */
+  const specs = el("div", "specs");
+  for (const k of ["spec1", "spec2", "spec3"]) {
+    const r = el("button", "spec");
+    r.type = "button";
+    r.append(el("span", null, T("dl." + k)));
+    r.append(el("i", "chev", "\u203a"));
+    r.addEventListener("click", () => note(T("dl." + k), T("dl." + k + ".p")));
+    specs.append(r);
+  }
+  box.append(specs);
+
+  const go = el("button", "go wide", T("dl.signIn"));
+  go.type = "button";
+  go.addEventListener("click", signInSheet);
+  box.append(go);
+  box.append(el("p", "hint", T("dl.payerNote")));
+
+  root.append(box);
+}
+
 /* NOTHING YET IS THE SAME SCREEN WITH NOTHING UNDER IT. It used to be its
    own centred arrangement with its own heading, which meant the first thing
    somebody learned moved the moment they made a request. One screen. */
