@@ -48,8 +48,11 @@ else
   echo "  Sandbox keys. No real money will move."
 fi
 echo ""
-echo "  Three values, from the Stripe dashboard in ${MODE} mode. Nothing is shown"
-echo "  as you paste, and nothing is written until all three look right."
+echo "  Two values, from the Stripe dashboard in ${MODE} mode. The webhook and"
+echo "  its signing secret are made here, so that is not a third thing to find."
+echo ""
+echo "  Nothing is shown as you paste, and nothing is written until it all"
+echo "  looks right."
 echo ""
 
 # Read one secret, check its prefix, and say what arrived without showing it.
@@ -73,7 +76,53 @@ ask() {
 
 SK="$(ask "Secret key" "sk_${MODE}_")"
 PK="$(ask "Publishable key" "pk_${MODE}_")"
-WH="$(ask "Webhook signing secret" "whsec_")"
+
+# THE THIRD VALUE IS MADE, NOT FETCHED.
+#
+# It was a third thing to go and get, and unlike the other two it does not
+# exist until you have built the webhook by hand: find the page, type the URL,
+# tick the one event, copy the string it shows once. Four things on a screen,
+# which is the exact shape of instruction this box is not allowed to hand
+# anybody. Stripe returns the signing secret in the reply to the create call,
+# so a webhook made from here is the only kind whose secret a command can know.
+#
+# Made before anything is written: if Stripe refuses, .env is untouched.
+# `|| true` on both, and it is not belt and braces: under `set -e` with
+# pipefail a grep that matches nothing fails the assignment and kills the
+# script — silently, right after the last thing it printed. A .env without a
+# pinned version is ordinary and must not end the command.
+DOMAIN="$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '"' | tr -d "'" || true)"
+VER="$(grep -E '^BOARD_STRIPE_VERSION=' .env | tail -1 | cut -d= -f2- | tr -d '"' || true)"
+[ -n "$VER" ] || VER="2026-08-26.dahlia"
+WH=""
+if [ -n "$DOMAIN" ]; then
+  echo ""
+  echo "  Making the webhook, so there is no third thing to go and find…"
+  echo ""
+  export BOARD_STRIPE_KEY="$SK"
+  # Stripe's own sentence is the useful one when this fails; make's
+  # "*** [hook-make] Error 1" under it is noise that reads like the reason.
+  ERR="$(mktemp)"
+  WH="$(make -s hook-make URL="https://$DOMAIN/api/hook/fee" VERSION="$VER" 2>"$ERR" || true)"
+  grep -v '^make\[\?[0-9]*\]\?:' "$ERR" >&2 || true
+  rm -f "$ERR"
+  unset BOARD_STRIPE_KEY
+else
+  echo ""
+  echo "  TOMSCODING_BOARD_DOMAIN is not in .env, so the webhook's address"
+  echo "  cannot be worked out here."
+  echo ""
+fi
+
+# Asked for by hand only when making it did not work — a wrong key, no network
+# out of the box, or a Stripe account that has not been activated yet.
+if [ -z "$WH" ]; then
+  echo ""
+  echo "  The webhook was not made. Paste its signing secret instead, from"
+  echo "  Stripe's dashboard — or stop here, fix it, and run this again."
+  echo ""
+  WH="$(ask "Webhook signing secret" "whsec_")"
+fi
 
 # The old .env kept beside the new one, once. Not a timestamped pile: the only
 # version anybody ever wants back is the one from before this command.
@@ -110,7 +159,9 @@ make up
 # screen says "that did not open" about something that has nothing to do with
 # the payer.
 NAMES="$(make -s payee-names 2>/dev/null || true)"
+CLEARED=""
 if [ -n "$NAMES" ]; then
+  CLEARED=yes
   echo ""
   echo "  Clearing payout accounts — they were made in the other mode and"
   echo "  Stripe does not know them here. Each person sets theirs up again."
@@ -125,14 +176,10 @@ echo ""
 make -s pay-check
 
 if [ "$MODE" = live ]; then
-  cat <<'NOTE'
-  One thing this cannot do for you: the webhook has to exist in Stripe's
-  LIVE dashboard as well, pointing at
-
-    https://thexchange.app/api/hook/fee
-
-  listening for checkout.session.completed. Without it the money moves and
-  the row still says DUE.
-
-NOTE
+  echo "  This board now takes real money."
+  if [ -n "$CLEARED" ]; then
+    echo "  Every payout account was cleared, so the first thing anybody who is"
+    echo "  owed money has to do is set theirs up again — with their real bank."
+  fi
+  echo ""
 fi

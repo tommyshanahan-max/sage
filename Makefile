@@ -675,6 +675,17 @@ go-test: ## Put the sandbox Stripe keys back: make go-test
 	@# do not cross between modes in either direction.
 	@bash scripts/stripe-keys.sh test
 
+hook-make: ## Make the Stripe webhook and print its secret: used by make go-live
+	@# NOT FOR TYPING. `make go-live` calls it and catches the secret in a
+	@# variable; run by hand it prints a live signing secret onto a screen and
+	@# into a scrollback, which is the one place it must never be.
+	@#
+	@# The key comes through the environment and not as an argument: argv is
+	@# visible in `ps` to anybody on the box for as long as the call lasts.
+	@$(COMPOSE) run --rm --no-deps -T -e BOARD_STRIPE_KEY \
+	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/stripe-hook.mjs "$(URL)" "$(VERSION)"
+
 payee-names: ## Who has a payout account, one per line: make payee-names
 	@# For `make go-live` rather than for reading. `make pay-check` says the
 	@# same thing in a sentence.
