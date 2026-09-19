@@ -386,3 +386,48 @@ CVC.
 
 Locally, `make try` stands the whole thing up and takes it away again on
 Ctrl-C.
+
+---
+
+## For whoever builds this
+
+Branch: `claude/coding-platform-vpn-alternative-i06xoc`. Build the three
+things under **Not built**, in this order.
+
+**1. The sign-in screen.** Dealio uses the Exchange sign-in for now. Lead
+with Continue with Google (`back=dealio`) so there is no code to type; the
+invite-code door goes underneath as a quiet text link, not a button. One
+line above it saying which sign-in this is. Tom hit the current version and
+asked "what 6 digits" — nothing on the screen had mentioned a code.
+
+**2. Paid — the history.** Filter `state === "paid"` from `/api/requests` in
+the page; no new route. Both directions, grouped by month, newest first, one
+line per row, no chips. Reached from the list header, not a tab bar.
+
+**3. The Cards line.** `¥4,200 paid · 2 jobs` under each contact on the
+board's Cards page, in the board's own type, not Dealio's palette. Never
+show a total to anyone but the two people in it.
+
+Strings go in `board/public/i18n.js` in **both** languages, the Chinese
+written rather than translated, then:
+
+```
+grep -o '^  "[a-zA-Z0-9._]*":' board/public/i18n.js | sort | uniq -d
+```
+
+Then deploy and prove the one step nobody has watched finish — a ¥1 payment
+going all the way to PAID:
+
+```
+cd ~/tc && git fetch origin && git reset --hard origin/<branch> && make deploy
+```
+
+`git reset --hard`, never `git pull` — a pull once left a merge commit on
+the box and `make deploy` refused with "Diverging branches". Then
+`make pay-check`, then `make ask WHO="Christopher" AMOUNT="¥1" FOR="a test"`,
+open the link, pay with `4242 4242 4242 4242`, and watch the row flip.
+
+**Rules.** Never paste an API key or a Stripe account id into chat — they
+live in `.env` on the box. `WHO` is a first name everywhere. Tom is
+visually impaired: hand him one line at a time to run, never a numbered
+list, and never "click the button top right".
