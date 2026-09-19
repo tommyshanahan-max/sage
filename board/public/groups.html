@@ -694,7 +694,7 @@
 </main>
 
 <script type="module">
-import { T, when, setLang, pickLang, langButton, lang, moWelcome, pick } from "/i18n.js";
+import { T, TFor, forZh, when, setLang, pickLang, langButton, lang, moWelcome, pick } from "/i18n.js";
 
 /* THE PIN IS LOADED SEPARATELY AND ITS FAILURE IS NOT THIS PAGE'S.
  *
@@ -2648,13 +2648,20 @@ function enterUrl(nm, d) {
  *  rather than a name substituted with an empty string, because "\u00a0— come into
  *  this" is what that comes out as in a chat window. */
 function inviteWords(nm, d, url) {
-  return T("grp.shared" + (IN_WECHAT ? "Wx" : "") + (nm ? "" : "No"),
-    { name: nm, room: d.name || T("grp.roomPlain"),
+  /* IN THE LANGUAGE OF WHOEVER IT NAMES, not of whoever is sending it.
+     This went out in English whenever the app was in English, which is the
+     normal case for the person doing the inviting and the wrong one for the
+     person being invited. A name in characters is the only evidence there is
+     and it is enough. See TFor in i18n.js. */
+  const zh = forZh(nm);
+  return TFor("grp.shared" + (IN_WECHAT ? "Wx" : "") + (nm ? "" : "No"),
+    { name: nm, room: d.name || (zh ? TFor("grp.roomPlain", null, nm) : T("grp.roomPlain")),
       /* THE SEPARATOR IS A WORD OF THE LANGUAGE, not punctuation that
          travels. \u3001 between two English names reads as a typo in the
-         middle of a message somebody is about to send a stranger. */
-      who: (d.who || []).join(lang() === "zh" ? "\u3001" : ", "),
-      url, code: d.code });
+         middle of a message somebody is about to send a stranger — and now
+         the language is the message's, not the app's. */
+      who: (d.who || []).join(zh ? "\u3001" : ", "),
+      url, code: d.code }, nm);
 }
 
 /** Minting the code for somebody who is nobody on this board yet. `nm` is

@@ -6332,6 +6332,38 @@ export function setLang(next) {
  *  arrived in the language this product exists not to use.
  *
  *  The Chinese was already written. It simply never fired. */
+/** THE SAME STRING, IN THE LANGUAGE THE PERSON IT NAMES READS.
+ *
+ *  TZh above is for the payer, who is always in China. An invite off the
+ *  board is not: the room, the group, the code may be going to anybody. So
+ *  this one reads the only evidence there is — the name typed into the
+ *  invite. A name written in characters gets the Chinese; anything else gets
+ *  the app's own language.
+ *
+ *  THAT IS scripts/back.mjs's RULE, narrowed. back.mjs sends both halves with
+ *  a rule between them when the name is not Chinese, because it is printing
+ *  five lines into a terminal and doubling them costs nothing. These messages
+ *  are already a screenful — doubling one makes a chat window somebody has to
+ *  scroll, and the second half would be read by nobody. So: one language,
+ *  chosen by the name.
+ *
+ *  WHERE THERE IS NO NAME — the personal invite, the offer, the level
+ *  challenge — this cannot help, and nothing here guesses. Those still go in
+ *  the sender's language and are still wrong when the sender is English and
+ *  the reader is not. That is a decision about who the board is for, not a
+ *  bug with an obvious fix, and it is Tom's to make.
+ */
+export function TFor(key, vars, who) {
+  return /[\u4e00-\u9fff]/.test(String(who ?? "")) ? TZh(key, vars) : T(key, vars);
+}
+
+/** Whether the message built for this name will come out in Chinese — so the
+ *  separator between names in it can match. A comma between two names inside
+ *  a Chinese sentence reads as a typo. */
+export function forZh(who) {
+  return /[\u4e00-\u9fff]/.test(String(who ?? ""));
+}
+
 export function TZh(key, vars) {
   const pair = STRINGS[key];
   if (!pair) return key;
