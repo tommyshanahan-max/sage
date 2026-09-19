@@ -1,0 +1,282 @@
+<title>Dealio</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  /* THE DECK FAMILY'S BONES, IN DEALIO'S COLOURS.
+     The Exchange decks are jade and gold on near-black — a private room. This
+     is a payments product and borrows the app's own palette instead, so
+     somebody who has seen the screens recognises the page: the blue off the
+     pay button, the warm red off the sign-in, and the two wallet marks in the
+     colours everybody already knows them by. Same structure, different
+     product; a deck that looked like the board would be selling the board. */
+  :root{
+    --ground:#080A0F;
+    --raise:#10141D;
+    --ink:#ECEDF2;
+    --dim:#8F95A6;
+    --hair:#1F2533;
+    --blue:#5570E8;
+    --gold:#D9A94A;
+    --wx:#2ECC5E;
+    --ali:#1678FF;
+    --serif:"Instrument Serif",Georgia,"Songti SC",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);color:var(--ink);
+    font:16px/1.6 var(--sans);
+    -webkit-font-smoothing:antialiased;
+    scroll-snap-type:y proximity;
+  }
+  .deck{max-width:30rem;margin:0 auto;padding:0 1.4rem}
+  section{
+    scroll-snap-align:start;
+    min-height:86svh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:3rem 0;
+    border-bottom:1px solid var(--hair);
+  }
+  section:last-of-type{border-bottom:0}
+  .eyebrow{
+    font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--blue);margin:0 0 1.1rem;
+  }
+  .eyebrow.gold{color:var(--gold)}
+  h1{font:400 clamp(2.9rem,12vw,4rem)/1.01 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  h2{font:400 clamp(2.4rem,9.6vw,3.2rem)/1.08 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  p{margin:0 0 1rem;color:var(--dim);font-size:1.02rem}
+  p.lead{color:var(--ink);font-size:1.08rem}
+  p:last-child{margin-bottom:0}
+  em{font-style:italic;font-family:var(--serif);font-size:1.15em;color:var(--blue)}
+  b{color:var(--ink);font-weight:650}
+
+  .mark{display:flex;align-items:center;gap:.7rem;margin:0 0 2rem}
+  .mark i{width:2.6rem;height:2.6rem;border-radius:.7rem;background:var(--raise);
+    border:1px solid var(--hair);display:grid;place-items:center;font-style:normal;
+    font:400 1.3rem/1 var(--serif);color:var(--blue)}
+  .mark span{font:400 1.25rem/1 var(--serif);color:var(--ink)}
+
+  /* THE NUMBERED SHAPE THE OTHER DECKS USE, for anything a reader wants to
+     take at their own pace rather than in a paragraph. */
+  ol.how{list-style:none;margin:0 0 1.5rem;padding:0;counter-reset:how}
+  ol.how li{position:relative;padding:0 0 1.1rem 2.5rem;counter-increment:how}
+  ol.how li:last-child{padding-bottom:.4rem}
+  ol.how li::before{content:counter(how);position:absolute;left:0;top:-.1rem;
+    font:400 1.5rem/1 var(--serif);color:var(--gold)}
+  ol.how b{display:block;color:var(--ink);font-weight:650;font-size:1.02rem;margin-bottom:.15rem}
+  ol.how span{display:block;color:var(--dim);font-size:.95rem;line-height:1.5}
+
+  /* WHO IS ALREADY HERE, AND WHO THEY PAY. The argument on that slide is a
+     column of names with the same answer beside each one, which is a thing to
+     run an eye down rather than a paragraph to read. */
+  .field{margin:1.2rem 0 0}
+  .field div{display:flex;justify-content:space-between;align-items:baseline;
+    gap:1rem;padding:.75rem 0;border-bottom:1px solid var(--hair)}
+  .field div:last-child{border-bottom:0}
+  .field .w{color:var(--ink);font-size:.98rem;font-weight:650}
+  .field .v{color:var(--dim);font-size:.88rem;text-align:right;white-space:nowrap}
+  .field .v.out{color:var(--gold)}
+
+  /* THE SCREENS, DRAWN RATHER THAN SCREENSHOTTED — same reason as the other
+     decks: a screenshot of the app dropped into a dark deck reads as a picture
+     of something else. Small on purpose. They make one sentence concrete. */
+  .screens{display:flex;gap:.8rem;margin:1.5rem 0 0}
+  .sc{flex:1;min-width:0;background:var(--raise);border:1px solid var(--hair);
+    border-radius:.9rem;padding:.65rem;display:flex;flex-direction:column;gap:.5rem}
+  .sc .tag{font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;
+    font-weight:700;color:var(--dim)}
+  .sc .amt{font:400 1.5rem/1 var(--serif);color:var(--ink)}
+  .sc .what{font-size:.55rem;color:var(--dim)}
+  .sc .btn{border-radius:99px;text-align:center;font-size:.55rem;font-weight:700;
+    padding:.36rem;background:var(--blue);color:#05070D;margin-top:auto}
+  .sc .btn.q{background:transparent;border:1px solid var(--hair);color:var(--dim)}
+  /* The QR, drawn as a grid of squares. Nothing is fetched — see the note in
+     deck-build.mjs about what a page sent into China may load. */
+  .sc .qr{aspect-ratio:1;border-radius:.35rem;background:#fff;padding:.3rem;
+    display:grid;grid-template:repeat(7,1fr)/repeat(7,1fr);gap:.06rem}
+  .sc .qr i{background:#05070D;border-radius:.03rem}
+  .sc .qr i.o{background:transparent}
+  .ways{display:flex;gap:.45rem;margin:.1rem 0 0;flex-wrap:wrap}
+  .ways span{display:flex;align-items:center;gap:.25rem;font-size:.5rem;color:var(--dim)}
+  .ways i{width:.36rem;height:.36rem;border-radius:50%;background:var(--dim)}
+  .ways .wx i{background:var(--wx)}
+  .ways .ali i{background:var(--ali)}
+  .caption{font-size:.82rem;color:var(--dim);margin:.9rem 0 0;text-align:center}
+
+  /* THE LINE A CHINESE PAYER READS, shown in the type it is actually set in.
+     It is the product's whole argument in eight characters and quoting it in
+     English would be quoting the wrong thing. */
+  .zh{margin:1.4rem 0 0;padding:1.1rem 1.2rem;background:var(--raise);
+    border:1px solid var(--hair);border-radius:.9rem}
+  .zh b{display:block;font:400 1.5rem/1.35 var(--serif);color:var(--ink)}
+  .zh span{display:block;margin-top:.5rem;font-size:.86rem;color:var(--dim);font-style:italic}
+
+  .terms{margin:1.4rem 0 0}
+  .terms div{display:flex;justify-content:space-between;gap:1rem;
+    padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
+  .terms div:last-child{border-bottom:0}
+  .terms .w{color:var(--dim)}
+  .terms .v{color:var(--ink);font-weight:650;text-align:right}
+
+  .go{display:block;margin:1.6rem 0 0;padding:1.05rem 1.2rem;
+    background:var(--blue);color:#05070D;border-radius:99px;text-align:center;
+    text-decoration:none;font-weight:700;font-size:1.02rem}
+  .fine{color:var(--dim);font-size:.85rem;margin-top:1rem;text-align:center}
+  .on{display:block;margin:1.1rem 0 0;color:var(--dim);font-size:.9rem;
+    line-height:1.5;text-align:center;text-decoration:none}
+  .on:hover{color:var(--ink)}
+  #what{scroll-margin-top:1rem}
+
+  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="deck">
+
+  <!-- SEVEN SLIDES, AND THE LAST ONE SAYS WHAT IS NOT DONE.
+       This is a product deck, not a share offer — the decks that carry a
+       percentage are the other files in this folder. So there are no
+       projections on it and no traction on it, for the plain reason that
+       there is none: no payment has completed end to end yet. A deck that
+       implied otherwise would be found out by the first question.
+
+       WHAT IT ARGUES INSTEAD is that the corridor is real, that everybody
+       serving it serves companies, and that the payer's experience is the
+       thing nobody has bothered with. All three are checkable by the reader,
+       which is the only kind of claim worth making before there is revenue. -->
+
+  <section>
+    <div class="mark"><i>汇</i><span>Dealio</span></div>
+    <p class="eyebrow gold">Cross-border</p>
+    <h1>Get paid from China.</h1>
+    <p class="lead">Send a link. They pay with WeChat Pay or Alipay. It lands
+      in your bank abroad.</p>
+    <a class="on" href="#what">how it works ↓</a>
+  </section>
+
+  <section>
+    <p class="eyebrow">The problem</p>
+    <h2>The paying is easy. The getting is not.</h2>
+    <p class="lead">Your client is in China. They can pay anybody in the
+      country in four seconds without leaving a chat.</p>
+    <p>They cannot pay you. You are a tutor in Sydney, an agent in Auckland, a
+      consultant in London — and between their wallet and your bank is a border
+      built to be difficult.</p>
+    <p>So it gets done by asking a friend with an overseas account, or not at
+      all.</p>
+  </section>
+
+  <section id="what">
+    <p class="eyebrow">What it is</p>
+    <h2>A link, and then the money.</h2>
+    <p class="lead">You say what you are owed and who it is from. They get one
+      screen and a button.</p>
+
+    <div class="screens">
+      <div class="sc">
+        <span class="tag">You</span>
+        <span class="amt">¥2,400</span>
+        <span class="what">12 lessons · Ray</span>
+        <div class="btn">Ask for money</div>
+      </div>
+      <div class="sc">
+        <span class="tag">Them</span>
+        <div class="qr" aria-hidden="true"><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i></div>
+        <div class="ways">
+          <span class="wx"><i></i>WeChat Pay</span>
+          <span class="ali"><i></i>Alipay</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="caption">No account, no app, nothing to install — on either side
+      of it.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Why it is empty</p>
+    <h2>Everybody serves companies.</h2>
+    <p class="lead">This corridor is well served and always has been. Just
+      never for a person.</p>
+
+    <div class="field">
+      <div><span class="w">PingPong</span><span class="v">Needs a seller account</span></div>
+      <div><span class="w">LianLian</span><span class="v">Needs a seller account</span></div>
+      <div><span class="w">XTransfer</span><span class="v">Needs a trade contract</span></div>
+      <div><span class="w">Airwallex</span><span class="v">Needs an entity</span></div>
+      <div><span class="w">Flywire</span><span class="v">Pays a university</span></div>
+      <div><span class="w">EasyTransfer</span><span class="v">Pays a university</span></div>
+      <div><span class="w">Dealio</span><span class="v out">Pays a person</span></div>
+    </div>
+
+    <p style="margin-top:1.3rem">EasyTransfer moves three billion dollars a
+      year on exactly these rails. It just never had a receiver who was not an
+      institution.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">The difference</p>
+    <h2>Built for the one paying.</h2>
+    <p class="lead">Every other product in this corridor is built for the
+      merchant. The payer gets whatever is left.</p>
+    <p>A Stripe checkout assumes an American reading English. This one assumes
+      somebody already inside WeChat, in a taxi, who has been paying by phone
+      for a decade and does not need any of it explained.</p>
+
+    <div class="zh">
+      <b>长按二维码识别。</b>
+      <span>Long-press the code to scan it. — the gesture they already make,
+        said first, in their own language.</span>
+    </div>
+
+    <p style="margin-top:1.3rem">It is a small thing and it is the whole
+      product. Nobody else will do it, because it means caring about one
+      corridor.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">The money</p>
+    <h2>It never touches us.</h2>
+    <p class="lead">Stripe charges the payer and pays you. We are never in the
+      middle of it, and we could not be if we wanted to.</p>
+
+    <div class="terms">
+      <div><span class="w">Payer needs</span><span class="v">Nothing</span></div>
+      <div><span class="w">You need</span><span class="v">A bank account</span></div>
+      <div><span class="w">Paid in</span><span class="v">RMB</span></div>
+      <div><span class="w">Lands as</span><span class="v">Your own currency</span></div>
+      <div><span class="w">Our cut</span><span class="v">2% when you get paid</span></div>
+    </div>
+
+    <!-- 二清. The reason this is a design constraint and not a policy is
+         State Council Order 768: a platform that holds or forwards other
+         people's money in the mainland is doing something with a name and a
+         penalty. So the sentence above is load-bearing. -->
+    <p class="fine" style="text-align:left;margin-top:1.2rem">Holding other
+      people's money across this border is a licensed activity. Not doing it is
+      the design, not a promise.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">Where it is</p>
+    <h2>Built. Not yet proven.</h2>
+    <p class="lead">Every screen exists and is deployed. What has never
+      happened is a payment reaching the end.</p>
+
+    <ol class="how">
+      <li><b>Done.</b>
+        <span>Both directions, three payment methods, two languages, live on
+          thexchange.app.</span></li>
+      <li><b>Waiting.</b>
+        <span>Stripe has not yet approved the platform account for Connect.
+          Until it does, no payment can complete.</span></li>
+      <li><b>Then.</b>
+        <span>One real payment, from a Chinese wallet to an Australian bank.
+          That is the only number worth quoting and there isn't one yet.</span></li>
+    </ol>
+
+    <a class="go" href="https://thexchange.app/about">What this is →</a>
+    <p class="fine">No traction on this page because there is none. Ask again
+      after the first payment.</p>
+  </section>
+
+</div>
