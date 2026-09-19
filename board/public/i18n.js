@@ -4922,6 +4922,33 @@ export const STRINGS = {
      ASKING SOMEBODY TO PAY, from inside a conversation. Written for the
      person typing it, who has just agreed something and wants the money.
      --------------------------------------------------------------------- */
+  /* ---------------------------------------------------------------------
+     DEALIO, the asking half on its own page. Step one of three — a page
+     here, then its own domain, then an app if it earns one — so nothing in
+     here borrows the board's vocabulary.
+     --------------------------------------------------------------------- */
+  "dl.head":           ["Asked for", "已发出的收款"],
+  "dl.sub":            ["Money you have asked somebody to pay.",
+                        "你让别人付的钱。"],
+  "dl.make":           ["Ask for money", "发起收款"],
+  "dl.formHead":       ["What are they paying for?", "这笔钱是什么款项？"],
+  "dl.who":            ["Who", "付给谁的人"],
+  "dl.whoEg":          ["Their name", "对方的名字"],
+  "dl.someone":        ["Somebody", "某人"],
+  "dl.off":            ["Take it back", "撤回"],
+  "dl.st.due":         ["Waiting", "待付"],
+  "dl.st.waiting":     ["Says they paid", "对方说已付"],
+  "dl.st.paid":        ["Paid", "已付"],
+  "dl.st.off":         ["Taken back", "已撤回"],
+  "dl.noneHead":       ["Nothing asked for yet.", "还没发起过收款。"],
+  "dl.noneWhy":        ["Ask somebody to pay and paste the message wherever you are already talking.",
+                        "发起一笔，把那段话粘到你们平时聊天的地方。"],
+  /* Said at the top rather than discovered by the person who was sent a link
+     and found a dead button. */
+  "dl.notReady":       ["Nobody can pay you yet.", "现在还收不到钱。"],
+  "dl.notReadyWhy":    ["You have not said where the money should land. Requests can be written and sent, but not paid.",
+                        "你还没填钱打到哪里。可以先写、先发，只是暂时付不了。"],
+
   "ask.go":            ["Ask them to pay", "让对方付款"],
   "ask.lab":           ["Ask for money", "收款"],
   "ask.to":            ["To {who}", "发给 {who}"],

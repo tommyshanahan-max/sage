@@ -9545,6 +9545,18 @@ app.post("/api/request", notesOff, express.json({ limit: "2kb" }), async (req, r
    read by somebody in a chat deciding whether to tap. */
 app.get("/pay/:id", (req, res, next) => page("request.html", req, res, next));
 
+/* DEALIO — the asking half, on its own page.
+ *
+ * Behind the door, because asking for money needs somewhere for it to land
+ * and that is an account. The paying half at /pay/ is outside the door and
+ * always will be: the whole design is that the person paying needs nothing.
+ *
+ * ITS OWN LAYOUT AND NONE OF THE BOARD'S CHROME. This is step one of three —
+ * a page here, then its own domain, then an app if it ever earns one — and a
+ * page wearing the board's tab bar is a page that cannot leave. */
+app.get(["/dealio", "/dealio/"], notesOff,
+  (req, res, next) => page("dealio.html", req, res, next));
+
 /** READING ONE. No code, no device, no membership — the link is the whole of
  *  it. What comes back is requestView, which is an allowlist. */
 app.get("/api/request/:id", async (req, res) => {
@@ -9626,8 +9638,15 @@ app.get("/api/requests", notesOff, async (req, res) => {
   res.set("Cache-Control", "no-store");
   if (!me) return res.json({ requests: [] });
   const board = await store.load(FILE);
+  const me_ = board.people.find((p) => p.by === me);
   const mine = board.requests.filter((q) => q.by === me).reverse();
   res.json({
+    /* WHETHER THERE IS ANYWHERE FOR THE MONEY TO LAND, said at the top of the
+       list rather than discovered by the person who was sent a link. Without
+       it every request here is unpayable and nothing on this screen would
+       say so. */
+    ready: Boolean(me_?.payee) && (stripe.configured() || PAY_DEMO),
+    you: me_?.handle || "",
     requests: mine.map((q) => ({
       ...request.requestView(q),
       /* The asker's own view carries what the payer's must not: whether it

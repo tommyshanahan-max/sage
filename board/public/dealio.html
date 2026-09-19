@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+{{DEMO}}
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#0B0E15">
+<title>Dealio</title>
+<meta name="description" content="Ask somebody to pay you.">
+<meta name="robots" content="noindex">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="color-scheme" content="dark">
+<style>
+  /* ITS OWN LOOK, AND ON PURPOSE.
+     This is step one of three — a page here, then its own domain, then an app
+     if it ever earns one — and a page wearing the board's chrome and the
+     board's palette is a page that cannot leave. Dark, one accent, a serif
+     for the numbers, rules instead of boxes. Single-theme by choice: it is
+     one product with one face rather than a page that borrows whichever the
+     phone is set to. */
+  :root{
+    --bg:#0B0E15; --card:#141924; --ink:#E9EDF5; --ink2:#A3B0C4; --mut:#6F7D92;
+    --line:#232B39; --hair:#1C2330; --acc:#D6483B; --accink:#fff; --ok:#3FBE7D;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink)}
+  body{font-family:var(--sans);font-size:16px;line-height:1.5;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+  main{max-width:34rem;margin:0 auto;padding:1.1rem .9rem 6rem}
+  .top{display:flex;align-items:center;gap:.5rem;margin:0 0 1.2rem}
+  .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--acc);
+    flex:0 0 auto}
+  .wm{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+  .lang{margin-left:auto;border:1px solid var(--line);background:none;
+    color:var(--ink2);font:inherit;font-size:.78rem;padding:.25rem .7rem;
+    border-radius:99px}
+  h1{margin:0 0 .15rem;font-size:1.35rem;line-height:1.25}
+  .sub{margin:0 0 1.3rem;color:var(--mut);font-size:.92rem}
+  /* A ROW IS A REQUEST. Amount on the right and in the serif, because that is
+     what the eye runs down the list looking for. */
+  .q{display:grid;grid-template-columns:1fr auto;gap:.1rem .8rem;
+    align-items:baseline;width:100%;text-align:left;border:0;
+    background:var(--card);color:var(--ink);font:inherit;
+    padding:.9rem .95rem;border-radius:.9rem;margin:0 0 .55rem;cursor:pointer}
+  .q .w{font-weight:600}
+  .q .n{font-family:var(--serif);font-size:1.45rem;text-align:right;
+    font-variant-numeric:tabular-nums}
+  .q .t{grid-column:1;color:var(--mut);font-size:.84rem}
+  .q .c{grid-column:2;justify-self:end;font-size:.66rem;letter-spacing:.12em;
+    text-transform:uppercase;padding:.14rem .55rem;border-radius:99px;
+    background:var(--line);color:var(--ink2)}
+  .q .c.ok{background:rgba(63,190,125,.14);color:var(--ok)}
+  .q .c.off{opacity:.55}
+  .none{padding:2.5rem 0;text-align:center;color:var(--mut)}
+  .none b{display:block;color:var(--ink);font-size:1.05rem;margin:0 0 .35rem;
+    font-weight:400;font-family:var(--serif)}
+  /* THE ONE BUTTON, PINNED. It is the only thing this page is for, so it does
+     not scroll away under a list. */
+  .make{position:fixed;left:0;right:0;bottom:0;padding:.8rem .9rem
+    calc(.8rem + env(safe-area-inset-bottom,0));background:linear-gradient(
+      to top, var(--bg) 60%, rgba(11,14,21,0));}
+  .make button{display:block;width:100%;max-width:33rem;margin:0 auto;border:0;
+    border-radius:99px;background:var(--acc);color:var(--accink);font:inherit;
+    font-size:.95rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    padding:1rem 1.2rem;min-height:3.4rem;cursor:pointer}
+  .warn{margin:0 0 1rem;padding:.8rem .9rem;border-radius:.8rem;
+    background:rgba(214,72,59,.12);color:var(--ink2);font-size:.88rem;
+    line-height:1.5}
+  .warn b{display:block;color:var(--ink);margin:0 0 .2rem}
+  /* The sheets. */
+  .sh{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);
+    display:flex;align-items:flex-end;justify-content:center}
+  .shc{width:100%;max-width:34rem;background:var(--card);
+    border-radius:1.1rem 1.1rem 0 0;padding:1.1rem 1rem
+    calc(1.1rem + env(safe-area-inset-bottom,0));max-height:92vh;overflow:auto}
+  .lab{margin:0 0 .4rem;font-size:.7rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--mut)}
+  .shc h2{margin:0 0 1rem;font-family:var(--serif);font-weight:400;
+    font-size:1.35rem}
+  label{display:block;margin:0 0 .8rem}
+  label span{display:block;margin:0 0 .25rem;font-size:.76rem;color:var(--mut)}
+  input{width:100%;font:inherit;font-size:1rem;padding:.75rem .85rem;
+    border:1px solid var(--line);border-radius:.7rem;background:var(--bg);
+    color:var(--ink)}
+  input.amt{font-family:var(--serif);font-size:2.1rem;padding:.45rem .85rem}
+  input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .acts{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0 0}
+  .acts button{flex:1 1 auto;min-width:7rem;border:1px solid var(--line);
+    background:none;color:var(--ink);font:inherit;padding:.85rem 1rem;
+    border-radius:99px;cursor:pointer}
+  .acts button.go{flex:1 1 100%;border:0;background:var(--acc);
+    color:var(--accink);font-weight:600}
+  .msg{display:block;width:100%;margin:.5rem 0 0;font:inherit;font-size:.88rem;
+    line-height:1.65;padding:.75rem .85rem;border-radius:.7rem;
+    border:1px solid var(--line);background:var(--bg);color:var(--ink2);
+    resize:vertical}
+  .why{margin:.6rem 0 0;font-size:.85rem;line-height:1.45;color:var(--acc)}
+  .hint{margin:.8rem 0 0;font-size:.8rem;line-height:1.45;color:var(--mut)}
+  dl{margin:0}
+  .dr{display:grid;grid-template-columns:5.5rem 1fr;gap:0 .9rem;
+    padding:.7rem 0;border-top:1px solid var(--hair)}
+  .dr:first-child{border-top:0}
+  .dr dt{margin:0;font-size:.76rem;color:var(--mut)}
+  .dr dd{margin:0;font-size:.95rem}
+  button:focus-visible,a:focus-visible{outline:2px solid var(--acc);
+    outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;
+    transition:none!important}}
+</style>
+</head>
+<body>
+<main id="root"></main>
+<div class="make" id="makebar" hidden></div>
+<script type="module">
+/* DEALIO — ASKING SOMEBODY TO PAY YOU
+ * ===========================================================================
+ *
+ * "Two people are chatting, then someone sends them a request to pay." This
+ * page is the asking half. The paying half is /pay/<id> and needs no account,
+ * no app and no code — which is the whole design.
+ *
+ * WHY IT IS A SEPARATE PAGE AND NOT A TAB. Step one of three: a page here,
+ * then its own domain, then an app if it ever earns one. A page wearing the
+ * board's chrome is a page that cannot leave, so this one carries its own
+ * layout, its own palette and its own name.
+ *
+ * WHAT IS DELIBERATELY NOT HERE: any chat. The conversation already exists
+ * and it is WeChat. Building a fourth one would mean asking two people to
+ * move a conversation they are already having, which nobody does.
+ */
+import { T, when, setLang, pickLang, langButton } from "/i18n.js";
+
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+const root = document.getElementById("root");
+const bar = document.getElementById("makebar");
+
+let device = "";
+try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
+
+let STATE = null;
+
+/* Copy without the async clipboard, which a phone refuses outside a gesture
+   and WeChat's browser refuses entirely. The old trick still works there. */
+function copyText(text) {
+  try {
+    const t = document.createElement("textarea");
+    t.value = text;
+    t.setAttribute("readonly", "");
+    t.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+    document.body.append(t);
+    t.select();
+    t.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    t.remove();
+    if (ok) return true;
+  } catch { /* fall through */ }
+  if (navigator.clipboard) { navigator.clipboard.writeText(text).catch(() => {}); return true; }
+  return false;
+}
+
+function top() {
+  const b = el("div", "top");
+  b.append(el("span", "dot"), el("span", "wm", "Dealio"));
+  const slot = el("span", "langslot");
+  b.append(slot);
+  return { bar: b, slot };
+}
+
+function draw() {
+  const { bar: head, slot } = top();
+  root.textContent = "";
+  root.append(head);
+  root.append(el("h1", null, T("dl.head")));
+  root.append(el("p", "sub", T("dl.sub")));
+
+  /* NOWHERE FOR THE MONEY TO LAND, said at the top rather than discovered by
+     the person who was sent a link and found a dead button. */
+  if (STATE && !STATE.ready) {
+    const w = el("div", "warn");
+    w.append(el("b", null, T("dl.notReady")));
+    w.append(document.createTextNode(T("dl.notReadyWhy")));
+    root.append(w);
+  }
+
+  const rows = (STATE?.requests || []);
+  if (!rows.length) {
+    const none = el("div", "none");
+    none.append(el("b", null, T("dl.noneHead")));
+    none.append(el("p", null, T("dl.noneWhy")));
+    root.append(none);
+  } else {
+    for (const q of rows) root.append(row(q));
+  }
+
+  bar.textContent = "";
+  const mk = el("button", null, T("dl.make"));
+  mk.type = "button";
+  mk.addEventListener("click", () => form());
+  bar.append(mk);
+  bar.hidden = false;
+
+  slot.replaceWith(langButton(draw));
+}
+
+function row(q) {
+  const b = el("button", "q");
+  b.type = "button";
+  b.append(el("span", "w", q.to || T("dl.someone")), el("span", "n", q.amount));
+  b.append(el("span", "t", [q.what, when(q.at)].filter(Boolean).join(" · ")));
+  const state = q.off ? "off" : q.state;
+  b.append(el("span", "c" + (state === "paid" ? " ok" : state === "off" ? " off" : ""),
+    T("dl.st." + state)));
+  b.addEventListener("click", () => one(q));
+  return b;
+}
+
+/* MAKING ONE. Three fields and one is optional. Everything else — what is
+   covered, what happens if it is called off — is a deal memo, and that lives
+   on the board. Most money between two people who have just agreed something
+   needs a number and a sentence. */
+function form() {
+  const back = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("p", "lab", T("dl.make")));
+  card.append(el("h2", null, T("dl.formHead")));
+
+  const field = (name, label, cls, ph) => {
+    const l = el("label");
+    l.append(el("span", null, label));
+    const i = el("input", cls || "");
+    i.id = "f-" + name;
+    if (ph) i.placeholder = ph;
+    l.append(i);
+    card.append(l);
+    return i;
+  };
+  const amount = field("amount", T("ask.amount"), "amt", "¥2,400");
+  const who = field("to", T("dl.who"), "", T("dl.whoEg"));
+  const what = field("what", T("ask.what"), "", T("ask.whatEg"));
+  const whn = field("when", T("ask.when"), "", T("ask.whenEg"));
+
+  const why = el("p", "why");
+  const acts = el("div", "acts");
+  const go = el("button", "go", T("ask.make"));
+  go.type = "button";
+  const no = el("button", null, T("pay.cancel"));
+  no.type = "button";
+  no.addEventListener("click", () => back.remove());
+
+  go.addEventListener("click", async () => {
+    const amt = amount.value.trim();
+    if (!amt) { why.textContent = T("ask.needAmount"); amount.focus(); return; }
+    go.disabled = true;
+    why.textContent = "";
+    try {
+      const r = await fetch("/api/request", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, to: who.value.trim(), amount: amt,
+          what: what.value.trim(), when: whn.value.trim() }),
+      });
+      const j = await r.json().catch(() => null);
+      if (r.ok && j?.ok) {
+        back.remove();
+        sent({ to: who.value.trim(), amount: amt, what: what.value.trim(), url: j.url });
+        load();
+        return;
+      }
+      why.textContent = T(j?.error === "profile" ? "deal.needProfile" : "ask.failed");
+    } catch { why.textContent = T("ask.failed"); }
+    go.disabled = false;
+  });
+
+  acts.append(go, no);
+  card.append(why, acts);
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+  amount.focus();
+}
+
+/** The message, written. One press made the request and this is the other
+ *  half of that press — nobody makes one and then goes looking for what to do
+ *  next. This page does not know their WeChat and is not going to: it writes
+ *  the words and the person pastes them where they are already talking. */
+function sent(q) {
+  const back = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("p", "lab", T("ask.ready")));
+  card.append(el("h2", null, T("ask.to", { who: q.to || T("dl.someone") })));
+
+  const text = T("ask.block", { to: q.to || "", amount: q.amount, what: q.what || "", url: q.url });
+  const box = el("textarea", "msg");
+  box.readOnly = true;
+  box.rows = 7;
+  box.value = text;
+  box.setAttribute("aria-label", T("ask.ready"));
+  card.append(box);
+
+  const acts = el("div", "acts");
+  const cp = el("button", "go", T("memo.copy"));
+  cp.type = "button";
+  cp.addEventListener("click", () => {
+    cp.textContent = copyText(text) ? T("memo.copied") : T("ask.failed");
+  });
+  const done = el("button", null, T("ask.shut"));
+  done.type = "button";
+  done.addEventListener("click", () => back.remove());
+  acts.append(cp, done);
+  card.append(acts);
+  card.append(el("p", "hint", T("ask.nothingOwed")));
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+}
+
+/** One request, opened from the list: what it says, the message again, and a
+ *  way to take it back. Settled ones cannot be withdrawn — the money moved. */
+function one(q) {
+  const back = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("p", "lab", T("dl.st." + (q.off ? "off" : q.state))));
+  card.append(el("h2", null, q.amount + " · " + (q.to || T("dl.someone"))));
+
+  const dl = el("dl");
+  for (const [k, v] of [[T("ask.what"), q.what], [T("rq.when"), q.when],
+                        [T("rq.asked"), when(q.at)]]) {
+    if (!v) continue;
+    const d = el("div", "dr");
+    d.append(el("dt", null, k), el("dd", null, v));
+    dl.append(d);
+  }
+  card.append(dl);
+
+  const acts = el("div", "acts");
+  if (!q.off && q.state !== "paid") {
+    const text = T("ask.block", { to: q.to || "", amount: q.amount, what: q.what || "", url: q.url });
+    const cp = el("button", "go", T("memo.copy"));
+    cp.type = "button";
+    cp.addEventListener("click", () => {
+      cp.textContent = copyText(text) ? T("memo.copied") : T("ask.failed");
+    });
+    acts.append(cp);
+    const off = el("button", null, T("dl.off"));
+    off.type = "button";
+    off.addEventListener("click", async () => {
+      off.disabled = true;
+      try {
+        const r = await fetch("/api/request/" + q.id + "/off", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device }),
+        });
+        if (r.ok) { back.remove(); load(); return; }
+      } catch { /* below */ }
+      off.disabled = false;
+      off.textContent = T("ask.failed");
+    });
+    acts.append(off);
+  }
+  const shut = el("button", null, T("pay.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => back.remove());
+  acts.append(shut);
+  card.append(acts);
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+}
+
+async function load() {
+  try {
+    const r = await fetch("/api/requests", {
+      cache: "no-store", headers: { "x-board-device": device },
+    });
+    STATE = r.ok ? await r.json() : { requests: [], ready: false };
+  } catch { STATE = STATE || { requests: [], ready: false }; }
+  draw();
+}
+
+setLang(pickLang());
+load();
+</script>
+</body>
+</html>
