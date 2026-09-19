@@ -24,7 +24,7 @@ export function createWallet({ dir, env = process.env, loadPeople, hashOf }) {
     ? createAirwallexProvider({
       clientId: env.BOARD_WALLET_AIRWALLEX_CLIENT_ID, apiKey: env.BOARD_WALLET_AIRWALLEX_API_KEY,
       webhookSecret: env.BOARD_WALLET_AIRWALLEX_WEBHOOK_SECRET, sandbox: env.BOARD_WALLET_AIRWALLEX_SANDBOX !== "0",
-      publicOrigin: env.BOARD_WALLET_PUBLIC_ORIGIN,
+      publicOrigin: env.BOARD_WALLET_PUBLIC_ORIGIN, base: env.BOARD_WALLET_AIRWALLEX_BASE,
     })
     : createMockProvider({ speed: Number(env.BOARD_WALLET_TEST_SPEED || 1) });
 

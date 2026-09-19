@@ -1008,6 +1008,9 @@ services:
       BOARD_WALLET_AIRWALLEX_API_KEY: ${TOMSCODING_BOARD_WALLET_AIRWALLEX_API_KEY:-}
       BOARD_WALLET_AIRWALLEX_WEBHOOK_SECRET: ${TOMSCODING_BOARD_WALLET_AIRWALLEX_WEBHOOK_SECRET:-}
       BOARD_WALLET_AIRWALLEX_SANDBOX: ${TOMSCODING_BOARD_WALLET_AIRWALLEX_SANDBOX:-1}
+      # Empty means the host SANDBOX picks. Set it when that host turns out
+      # to be the wrong one — see airwallexBase in providers/airwallex.js.
+      BOARD_WALLET_AIRWALLEX_BASE: ${TOMSCODING_BOARD_WALLET_AIRWALLEX_BASE:-}
       BOARD_WALLET_PUBLIC_ORIGIN: ${TOMSCODING_BOARD_WALLET_PUBLIC_ORIGIN:-}
       # SIX DIGITS TO AN ADDRESS, so somebody who never saved their key can get
       # back in. All three unset means the board says so and offers the key

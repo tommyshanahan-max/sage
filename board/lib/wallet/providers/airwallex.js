@@ -31,8 +31,19 @@ class NotYet extends Error {
   constructor(message) { super(message); this.code = "provider_not_ready"; this.status = 501; }
 }
 
-export function createAirwallexProvider({ clientId, apiKey, webhookSecret, sandbox = true, publicOrigin = "" }) {
-  const base = sandbox ? "https://api.sandbox.airwallex.com" : "https://api.airwallex.com";
+/* WHERE THE CALLS GO, OVERRIDABLE. The sandbox host was written from docs that
+   could not be reached from here, and two names are in circulation for it —
+   api.sandbox.airwallex.com and api-demo.airwallex.com. Both resolve, to the
+   same address, and both answer. A wrong guess should be a line in .env
+   (BOARD_WALLET_AIRWALLEX_BASE), not a code change and a redeploy. */
+export function airwallexBase({ base = "", sandbox = true } = {}) {
+  const b = String(base || "").trim().replace(/\/+$/, "");
+  if (b) return b;
+  return sandbox ? "https://api.sandbox.airwallex.com" : "https://api.airwallex.com";
+}
+
+export function createAirwallexProvider({ clientId, apiKey, webhookSecret, sandbox = true, publicOrigin = "", base: baseOverride = "" }) {
+  const base = airwallexBase({ base: baseOverride, sandbox });
   const events = new EventEmitter();
   let token = null, tokenExp = 0;
 

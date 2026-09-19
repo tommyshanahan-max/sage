@@ -7,7 +7,12 @@
 // Every call the adapter makes was written from the docs and never run. This
 // is where that stops being true, one call at a time.
 
-import { createAirwallexProvider } from "./airwallex.js";
+import { airwallexBase, createAirwallexProvider } from "./airwallex.js";
+
+/* WHERE IT IS POINTED, FIRST. A failure that does not say which host it went
+   to cannot be read — and the sandbox host is the thing most likely wrong. */
+const base = airwallexBase({ base: process.env.BOARD_WALLET_AIRWALLEX_BASE, sandbox: true });
+console.log("base:", base);
 
 const clientId = process.env.BOARD_WALLET_AIRWALLEX_CLIENT_ID;
 const apiKey = process.env.BOARD_WALLET_AIRWALLEX_API_KEY;
@@ -15,7 +20,7 @@ if (!clientId || !apiKey) {
   console.error("Set BOARD_WALLET_AIRWALLEX_CLIENT_ID and BOARD_WALLET_AIRWALLEX_API_KEY (sandbox keys) first.");
   process.exit(1);
 }
-const p = createAirwallexProvider({ clientId, apiKey, sandbox: true });
+const p = createAirwallexProvider({ clientId, apiKey, sandbox: true, base });
 
 try {
   const q = await p.quote({ sell: "EUR", buy: "AUD", sellAmount: 12000 });
