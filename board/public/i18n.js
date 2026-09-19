@@ -5287,10 +5287,23 @@ export const STRINGS = {
   "memo.block":        ["{to} — here are the terms for {title}. You can pay from the same page.\n\n{url}\n\nOpen it and enter:\n{code}\n\nGood for 24 hours.",
                         "{to} —— {title} 的条件在这里，尾款也可以直接在里面付。\n\n{url}\n\n打开后输入：\n{code}\n\n24 小时内有效。"],
 
-  "pay.scanSelf.wechat": ["Can't scan your own screen? Screenshot the code, then long-press it in WeChat.",
-                        "扫不了自己的屏幕？截屏，然后在微信里长按那张图。"],
-  "pay.scanSelf.alipay": ["Can't scan your own screen? Screenshot the code, then long-press it in Alipay.",
-                        "扫不了自己的屏幕？截屏，然后在支付宝里长按那张图。"],
+  /* LONG-PRESS FIRST, BECAUSE THAT IS WHAT THE GESTURE IS.
+   *
+   * This line used to open "Can't scan your own screen?" and send people to
+   * screenshot the code before long-pressing the picture. Both halves were
+   * wrong about who is reading it. Long-pressing a QR code to identify it is
+   * an everyday gesture in WeChat and Alipay — it is how people open a code
+   * somebody sent them in a chat — so leading with the problem and burying
+   * the gesture under a screenshot is telling a Chinese payer to take two
+   * extra steps to do a thing they already know how to do.
+   *
+   * The screenshot stays as the second sentence: Stripe draws this code
+   * inside its own frame, and whether WeChat's menu appears over it is not
+   * something this board controls. */
+  "pay.scanSelf.wechat": ["Long-press the code to scan it. Or screenshot it and long-press that.",
+                        "长按二维码识别。或者截屏，再长按那张图。"],
+  "pay.scanSelf.alipay": ["Long-press the code to scan it. Or screenshot it and long-press that.",
+                        "长按二维码识别。或者截屏，再长按那张图。"],
   "pay.inApp":         ["You pay here. The money goes straight to {who} — the board never holds it.",
                         "就在这里付。钱直接到 {who} 账上，平台不经手。"],
   /* Only ever on a board stood up for a look. Says what it is, twice. */

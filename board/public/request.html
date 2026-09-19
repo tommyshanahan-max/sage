@@ -464,8 +464,11 @@ async function payFrame({ secret, pk, q, how, demo }) {
   const wait = el("p", "pwait", T("pay.frameWait"));
   slot.append(wait);
   /* The same line the room draws, for the same reason: on a phone whose
-     handoff into the wallet does not fire, the payer is holding a code on the
-     screen they would have to scan it with. */
+     handoff into the wallet does not fire, the payer is left holding a code
+     on the screen they would otherwise scan it with. Long-pressing it is the
+     answer and is an everyday gesture in both wallets — see the note over
+     pay.scanSelf in i18n.js for why the line leads with that rather than
+     with the screenshot it used to ask for. */
   const scan = (how === "wechat" || how === "alipay")
     ? el("p", "pscan", T("pay.scanSelf." + how)) : null;
   const note = el("p", "pnote", q.way === "out"
