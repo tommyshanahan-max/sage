@@ -9935,6 +9935,21 @@ app.get("/pay/:id", (req, res, next) => page("request.html", req, res, next));
 app.get(["/dealio", "/dealio/"], notesOff,
   (req, res, next) => page("dealio.html", req, res, next));
 
+/** THE PUBLIC PAGE ABOUT THE PAYMENTS PRODUCT, and the one page about it that
+ *  is not behind a door.
+ *
+ *  It sat in site/ for an hour, which serves nothing: TOMSCODING_SITE_DOMAIN
+ *  is deliberately empty on this box (see app/README.md) because both names
+ *  serve the board, so a file there is a file nobody can open. On the board,
+ *  at an address somebody can be given.
+ *
+ *  /dealio/about and not /pay.html: /pay/<id> is where a payer lands and the
+ *  two should not look like halves of the same thing. This one is read by a
+ *  payment provider assessing an application, by a customer deciding whether
+ *  to trust a link, and by anybody who asks what this is. */
+app.get(["/dealio/about", "/dealio/about/"], notesOff,
+  (req, res, next) => page("pay.html", req, res, next));
+
 /** READING ONE. No code, no device, no membership — the link is the whole of
  *  it. What comes back is requestView, which is an allowlist. */
 app.get("/api/request/:id", async (req, res) => {

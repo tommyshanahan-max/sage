@@ -277,6 +277,15 @@
     margin-top:.1rem}
   .doors i{font-style:normal;color:var(--muted);font-size:1.2rem}
   .quiet{background:var(--raise)}
+  /* Small on purpose — a name, a line, a way through. The red dot is Dealio's
+     own mark and the one thing on this page that is not the board's colour,
+     which is how a reader knows it is a different thing. */
+  .also .alsoname{margin:.2rem 0 .3rem;font-size:1.35rem;font-weight:500}
+  .also .alsodot{display:inline-block;width:.5rem;height:.5rem;border-radius:50%;
+    background:#D9534F;margin-right:.55rem;vertical-align:middle}
+  .also .alsoline{margin:0;max-width:32rem}
+  .also .alsogo{display:inline-block;margin-top:.9rem;text-decoration:none}
+  .also .alsogo:hover{text-decoration:underline}
   /* The footer columns stack, and their contents are lines rather than a
      paragraph run together. */
   .foot .col{display:flex;flex-direction:column;gap:.35rem}
@@ -656,6 +665,17 @@
   </div>
 </section>
 
+<!-- THE OTHER PRODUCT, AS A SIBLING AND NOT A SECOND PITCH. See the note on
+     land.alsoHead for why it is here and why it is this small. -->
+<section class="quiet also">
+  <div class="wrap">
+    <div class="eyebrow"><span id="alsoHead"></span><i></i></div>
+    <p class="alsoname"><span class="alsodot"></span><span id="alsoName"></span></p>
+    <p class="alsoline" id="alsoLine"></p>
+    <a class="alsogo" href="/dealio/about"><span id="alsoGo"></span> &rsaquo;</a>
+  </div>
+</section>
+
 <div class="foot">
   <div class="wrap">
     <div class="col">
@@ -771,6 +791,10 @@ function paint() {
      puts translated text through innerHTML. */
   drawSay();
   $("doorsEyebrow").textContent = T("land.doors");
+  $("alsoHead").textContent = T("land.alsoHead");
+  $("alsoName").textContent = T("land.alsoName");
+  $("alsoLine").textContent = T("land.alsoLine");
+  $("alsoGo").textContent = T("land.alsoGo");
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");
   $("footTerms").textContent = T("tm.link");

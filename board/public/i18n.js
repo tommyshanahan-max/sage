@@ -986,13 +986,21 @@ export const STRINGS = {
      them. This says the only thing the picture does not: that it goes both
      ways, and that nothing happens until it does.
      中文写的不是翻的：「对上眼」就是这个意思，比「匹配」这种词实在。 */
-  /* WHAT IT IS, IN FOUR WORDS. It was an eyebrow for a while and it scrolled
-     past; it is the headline now, because everybody already knows what both of
-     those are and the shape of the thing lands before the sentence is
-     finished. Not translated — both names are read in English in Chinese tech
-     and entertainment circles, and 领英×探探 would name two products that are
-     not these and are not what anybody means. */
-  "land.big":          ["LinkedIn \u00d7 Tinder.", "LinkedIn \u00d7 Tinder\u3002"],
+  /* WHAT IT IS, IN FOUR WORDS, AND NOT BY BORROWING TWO NAMES.
+     It read "LinkedIn × Tinder." — good across a table with an investor,
+     wrong printed at the top of a page. Tinder is a dating app, and a board
+     where strangers are introduced to each other cannot afford to be read as
+     one for even a second. Worse where it matters most: Tinder is not used in
+     the mainland, so to half the readers the line named one product they know
+     and one they do not, and the half they knew was the wrong half.
+     The border is the thing. Everybody on this board is on one side of it
+     looking at the other, and that is true whichever side they are standing
+     on — which the two borrowed names never said at all.
+     The Chinese is written rather than translated, and it names the person
+     instead of the place: 「你要找的人，在另一边。」 is how somebody would
+     actually say it, and it sets up the line underneath — one sentence, and
+     it finds whoever said the other half. */
+  "land.big":          ["The other side of the border.", "你要找的人，在另一边。"],
   "land.say1":         ["You say one line \u2014", "你说一句话 \u2014\u2014"],
   "land.say2":         ["I am a ___ looking for a ___", "我是 ___，在找 ___"],
   "land.say3":         ["\u2014 and it finds the people who said the other half.",
@@ -1170,6 +1178,21 @@ export const STRINGS = {
   "land.inside":       ["Go to the board", "回到板子"],
   "land.invite":       ["Invite only — a member has to bring you.", "邀请制——得有成员带你进来。"],
   "land.doors":        ["Which one are you here for", "你是为哪一件来的"],
+  /* THE OTHER PRODUCT ON THIS DOMAIN, ADMITTED AT THE FOOT.
+     A payment provider assessing a platform application types the domain on
+     the form, arrives here, and finds an invite-only board for doing business
+     in China — a different product, with nothing to connect it to what was
+     applied for. Three true stories about one person and nothing joining them
+     up reads as an unclear file.
+     A rule, a name, one line and a link, and no more: this page sells the
+     board, and two products competing for one screen means neither lands.
+     支付宝/微信 named rather than "Chinese payment methods", because naming
+     the two things somebody already has open is the whole claim. */
+  "land.alsoHead":     ["Also from here", "这里还有"],
+  "land.alsoName":     ["Dealio", "Dealio"],
+  "land.alsoLine":     ["Your client in China pays by WeChat Pay or Alipay. You get the money in your own currency. 2%.",
+                        "国内的客户用微信或支付宝付，你收到的是自己国家的钱。手续费 2%。"],
+  "land.alsoGo":       ["What it is", "这是什么"],
   "land.foot": [
     "A private board for people connecting in China, and with China.",
     "一个私密板子，给在中国、以及跟中国打交道的人。",
