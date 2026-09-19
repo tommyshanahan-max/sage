@@ -9527,6 +9527,9 @@ app.post("/api/request", notesOff, express.json({ limit: "2kb" }), async (req, r
       from: mine.handle,
       to: String(req.body?.to || them?.handle || ""),
       toWho: them ? them.id : "",
+      /* "in" asks them to pay; "out" offers to pay them. The same row and
+         the same link — see the note over `way` in lib/request.js. */
+      way: String(req.body?.way || "in"),
       amount,
       cur: String(req.body?.cur || ""),
       what: String(req.body?.what || ""),
@@ -9587,12 +9590,93 @@ app.get("/api/request/:id", async (req, res) => {
   const q = board.requests.find((x) => x.id === id);
   if (!q || q.off) return res.status(404).json({ error: "gone" });
   const asker = board.people.find((p) => p.by === q.by);
+  /* WHOSE ACCOUNT THE MONEY LANDS IN DEPENDS ON WHICH WAY IT IS GOING.
+     Asking: the person who made the row, and their account is on their
+     member row. Sending: the person reading this page, who is usually not on
+     this board at all, so the account is minted against the request. */
+  const ready = (q.way || "in") === "out"
+    ? Boolean(q.acct && q.landed)
+    : Boolean(asker?.payee);
   res.json({
     ok: true,
     request: request.requestView(q, {
-      payeeReady: Boolean(asker?.payee) && (stripe.configured() || PAY_DEMO),
+      payeeReady: ready && (stripe.configured() || PAY_DEMO),
     }),
   });
+});
+
+/** SAYING WHERE THE MONEY SHOULD LAND, by somebody who is not on this board.
+ *
+ *  The other half of sending money. Somebody opens a link that says Tom wants
+ *  to pay them ¥2,400 and presses one button; an account is minted for them
+ *  and Stripe takes the bank and the identity on its own pages.
+ *
+ *  NO ACCOUNT HERE AND NONE WANTED. They never become a member, never get a
+ *  password and never see this board. The only thing stored about them is
+ *  Stripe's own identifier for the account, on the request, which is useless
+ *  to anybody who is not this platform.
+ *
+ *  MINTED ONCE AND REUSED. Somebody who abandons Stripe halfway and comes
+ *  back gets the same account and carries on where they were, rather than a
+ *  second one with half their details in it.
+ */
+app.post("/api/request/:id/land", express.json({ limit: "1kb" }), async (req, res) => {
+  if (!stripe.configured()) return res.status(400).json({ error: "off" });
+  const id = request.cleanId(req.params.id);
+  if (!id) return res.status(404).json({ error: "gone" });
+
+  const board = await store.load(FILE);
+  const q = board.requests.find((x) => x.id === id);
+  if (!q || q.off) return res.status(404).json({ error: "gone" });
+  if ((q.way || "in") !== "out") return res.status(400).json({ error: "no" });
+
+  try {
+    let acct = q.acct;
+    if (!acct) {
+      const made = await stripe.makePayee({ email: "" });
+      acct = String(made?.id || "");
+      if (!acct) return res.status(502).json({ error: "stripe" });
+      await change((b) => {
+        const row = b.requests.find((x) => x.id === id);
+        if (row) row.acct = acct;
+        return { ok: true };
+      });
+    }
+    const link = await stripe.onboardLink({
+      account: acct,
+      refresh: backHere(req, "/pay/" + id),
+      done: backHere(req, "/pay/" + id + "?landed=1"),
+    });
+    if (!link?.url) return res.status(502).json({ error: "stripe" });
+    res.json({ ok: true, url: link.url });
+  } catch (err) {
+    console.error("request/land:", err.message);
+    res.status(502).json({ error: "stripe" });
+  }
+});
+
+/** DID THEY FINISH. Stripe sends them back here and the answer is not on the
+ *  query string — ?landed=1 is something anybody can type. Asked of Stripe. */
+app.post("/api/request/:id/landed", express.json({ limit: "1kb" }), async (req, res) => {
+  if (!stripe.configured()) return res.status(400).json({ error: "off" });
+  const id = request.cleanId(req.params.id);
+  if (!id) return res.status(404).json({ error: "gone" });
+  const board = await store.load(FILE);
+  const q = board.requests.find((x) => x.id === id);
+  if (!q || !q.acct) return res.status(400).json({ error: "no" });
+  if (q.landed) return res.json({ ok: true, landed: true });
+
+  let ready = false;
+  try { ready = await stripe.payeeReady(q.acct); }
+  catch (err) { console.error("request/landed:", err.message); return res.status(502).json({ error: "stripe" }); }
+  if (ready) {
+    await change((b) => {
+      const row = b.requests.find((x) => x.id === id);
+      if (row) row.landed = true;
+      return { ok: true };
+    });
+  }
+  res.json({ ok: true, landed: ready });
 });
 
 /** PAYING ONE.
@@ -9615,8 +9699,12 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
      take the money a second time. */
   if (request.requestState(q) === "paid") return res.status(400).json({ error: "already" });
 
+  /* WHOSE ACCOUNT, BY DIRECTION — see the note in the read route above. */
   const asker = board.people.find((p) => p.by === q.by);
-  if (!asker?.payee) return res.status(400).json({ error: "payee" });
+  const dest = (q.way || "in") === "out"
+    ? (q.landed ? q.acct : "")
+    : asker?.payee;
+  if (!dest) return res.status(400).json({ error: "payee" });
   if (!stripe.configured()) return res.json({ ok: true, demo: true, method });
 
   /* startCheckout reads a plan row, so the request is handed to it as one.
@@ -9625,7 +9713,7 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
      three things that must never quietly differ between routes. */
   const out = await startCheckout({
     d: { plan: [{ label: q.what || q.from, amount: q.amount }], cur: q.cur, title: q.what },
-    i: 0, method, payeeAcct: asker.payee,
+    i: 0, method, payeeAcct: dest,
     /* `q:` so the webhook can tell a request from a room's plan row: the
        other two refs are a twenty-hex group id and a row number. */
     ref: "q:" + q.id,

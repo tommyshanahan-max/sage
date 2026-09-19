@@ -233,6 +233,10 @@ const ID = (location.pathname.match(/^\/pay\/([a-f0-9]{20})/) || [])[1] || "";
    always, landed first. Two quiet re-reads rather than a page that still says
    Pay under somebody who just did. */
 const CAME_BACK = new URLSearchParams(location.search).get("paid") || "";
+/* BACK FROM SAYING WHERE THE MONEY LANDS. ?landed=1 is on the address Stripe
+   returns to and is not proof of anything — anybody can type it. It only
+   prompts the question; the answer comes from Stripe. */
+const CAME_LANDED = new URLSearchParams(location.search).get("landed") === "1";
 
 let STATE = null;
 let repaint = () => {};
@@ -271,8 +275,12 @@ function draw() {
   mark.src = "/mark.svg";
   mark.alt = "";
   strip.append(mark, el("span", "sname", T("memo.brand")));
+  /* THE CHIP IS READ FROM THIS SIDE OF THE LINK. "Waiting on them" is what
+     the sender's list says and it is exactly wrong here, where the reader IS
+     them. Same state, different sentence. */
   strip.append(el("span", "sstate" + (q.state === "paid" ? " on" : ""),
-    T("memo.chip." + (q.state === "paid" ? "paid" : q.state === "waiting" ? "waiting" : "due"))));
+    T(q.state === "asking" ? "rq.needsYou"
+      : "dl.st." + (["paid", "waiting"].includes(q.state) ? q.state : "due"))));
   const slot = el("span", "langslot");
   strip.append(slot);
   sheet.append(strip);
@@ -289,12 +297,29 @@ function draw() {
 
   if (q.state === "paid") {
     body.append(el("p", "done", T("rq.done", { who: q.from })));
-  } else if (q.way === "out") {
-    /* SENDING MONEY IS A PROMISE UNTIL THERE IS SOMEWHERE FOR IT TO LAND.
-       This board is never allowed to hold it in the meantime, so the reader
-       is told what has to happen rather than shown a button that cannot
-       work. */
+  } else if (q.way === "out" && !q.landed) {
+    /* SENDING MONEY IS A PROMISE UNTIL THERE IS SOMEWHERE FOR IT TO LAND,
+       because this board may never hold it in the meantime. So the reader is
+       given the one thing that makes it real: a button that mints an account
+       for them and hands them to Stripe, which takes the bank and the
+       identity on its own pages.
+       THEY NEVER BECOME A MEMBER. No password, no board, no profile — the
+       only thing kept about them is Stripe's own id for that account. */
     body.append(el("p", "foot", T("rq.outWhy", { who: q.from })));
+    const b = el("button", "go", T("rq.land"));
+    b.type = "button";
+    b.addEventListener("click", async () => {
+      b.disabled = true;
+      b.textContent = T("rq.landGoing");
+      try {
+        const r = await fetch("/api/request/" + ID + "/land", { method: "POST" });
+        const j = await r.json().catch(() => null);
+        if (r.ok && j?.url) { location.href = j.url; return; }
+        b.textContent = T(j?.error === "off" ? "dl.setUpOff" : "ask.failed");
+      } catch { b.textContent = T("ask.failed"); }
+      b.disabled = false;
+    });
+    body.append(b);
   } else if (!q.payeeReady) {
     body.append(el("p", "foot", T("rq.notReady", { who: q.from })));
   } else {
@@ -319,7 +344,12 @@ function draw() {
   }
 
   const foot = el("div", "sfoot");
-  foot.append(el("p", null, T("rq.straight", { who: q.from })));
+  /* WHO THE MONEY GOES TO DEPENDS WHICH WAY IT IS GOING, and this said "the
+     money goes straight to Claire" on a page telling somebody Claire wants
+     to pay THEM. The sentence is about the person receiving it. */
+  foot.append(el("p", null, q.way === "out"
+    ? T("rq.straightOut", { who: q.from })
+    : T("rq.straight", { who: q.from })));
   sheet.append(foot);
 
   root.append(sheet);
@@ -387,7 +417,8 @@ async function payFrame({ secret, pk, q, how, demo }) {
      screen they would have to scan it with. */
   const scan = (how === "wechat" || how === "alipay")
     ? el("p", "pscan", T("pay.scanSelf." + how)) : null;
-  const note = el("p", "pnote", T("rq.straight", { who: q.from }));
+  const note = el("p", "pnote", q.way === "out"
+    ? T("rq.straightOut", { who: q.from }) : T("rq.straight", { who: q.from }));
   frame.append(bar, slot, ...(scan ? [scan] : []), note);
   document.body.append(frame);
 
@@ -428,8 +459,19 @@ async function load() {
   gone();
 }
 
+/* Ask Stripe whether they finished, then draw. Onboarding is not one screen
+   and somebody who abandoned it halfway comes back to this page with the
+   same query string as somebody who finished. */
+async function checkLanded() {
+  try {
+    const r = await fetch("/api/request/" + ID + "/landed", { method: "POST" });
+    await r.json().catch(() => null);
+  } catch { /* the page still draws from whatever the server knows */ }
+}
+
 setLang(pickLang());
 if (!ID) gone();
+else if (CAME_LANDED) checkLanded().then(load);
 else {
   load().then(() => {
     if (CAME_BACK) { setTimeout(load, 2000); setTimeout(load, 6000); }
@@ -439,8 +481,9 @@ else {
 /* Wiped once read, so a reload an hour later is not mistaken for a payment. */
 try {
   const u = new URL(location.href);
-  if (u.searchParams.has("paid")) {
+  if (u.searchParams.has("paid") || u.searchParams.has("landed")) {
     u.searchParams.delete("paid");
+    u.searchParams.delete("landed");
     history.replaceState(null, "", u.pathname + u.search + u.hash);
   }
 } catch { /* an address bar that will not be rewritten is not worth failing on */ }

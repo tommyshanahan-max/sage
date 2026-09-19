@@ -4927,16 +4927,34 @@ export const STRINGS = {
      here, then its own domain, then an app if it earns one — so nothing in
      here borrows the board's vocabulary.
      --------------------------------------------------------------------- */
-  "dl.head":           ["Asked for", "已发出的收款"],
-  "dl.sub":            ["Money you have asked somebody to pay.",
-                        "你让别人付的钱。"],
+  "dl.head":           ["Money", "钱"],
+  "dl.sub":            ["What you have asked for, and what you have offered to send.",
+                        "你要收的，和你要付的。"],
+  "dl.rowIn":          ["You asked", "你要收"],
+  "dl.rowOut":         ["You are sending", "你要付"],
   "dl.make":           ["Ask for money", "发起收款"],
+  /* The other half. The same row underneath — who pressed the button decides
+     which end the link opens on, and nothing else. */
+  "dl.send":           ["Send money", "付钱给别人"],
+  "dl.sendMake":       ["Make the link", "生成链接"],
   "dl.formHead":       ["What are they paying for?", "这笔钱是什么款项？"],
+  "dl.formSend":       ["What are you paying for?", "你付的是什么款项？"],
   "dl.who":            ["Who", "付给谁的人"],
+  "dl.whoOut":         ["Who are you paying", "付给谁"],
+  /* Sending money is a promise until the other end says where it should
+     land, because this board may never hold it in the meantime. */
+  "dl.sendBlock":      ["{to} — I owe you {amount} for {what}. Open this and say where it should land, and I will send it.\n\n{url}\n\nYou do not need an account here.",
+                        "{to} —— {what} 的 {amount}，我付给你。打开这个填一下收款方式，我就能转过去。\n\n{url}\n\n你不用在这边注册。"],
+  "dl.sendHint":       ["Nothing moves until they say where it should land. You will see when they have.",
+                        "他们填好收款方式之前，钱不会动。填好了你会看到。"],
   "dl.whoEg":          ["Their name", "对方的名字"],
   "dl.someone":        ["Somebody", "某人"],
   "dl.off":            ["Take it back", "撤回"],
   "dl.st.due":         ["Waiting", "待付"],
+  /* Sending money has a state the other direction does not: waiting on the
+     person being paid to say where. Until they have there is nothing for the
+     sender to press. */
+  "dl.st.asking":      ["Waiting on them", "等对方填"],
   "dl.st.waiting":     ["Says they paid", "对方说已付"],
   "dl.st.paid":        ["Paid", "已付"],
   "dl.st.off":         ["Taken back", "已撤回"],
@@ -4990,13 +5008,20 @@ export const STRINGS = {
   "rq.asked":          ["Asked", "发起时间"],
   "rq.straight":       ["The money goes straight to {who}. We never hold it.",
                         "钱直接到 {who} 账上，平台不经手。"],
+  /* Said on a page telling somebody that {who} wants to pay THEM. It used to
+     read "the money goes straight to Claire" to the person receiving it. */
+  "rq.straightOut":    ["The money goes straight to your account. We never hold it.",
+                        "钱直接到你账上，平台不经手。"],
   "rq.done":           ["Paid. {who} has been told.", "已付。{who} 那边已经知道了。"],
   "rq.notReady":       ["{who} has not said where the money should land, so this cannot be paid yet.",
                         "{who} 还没填收款方式，暂时付不了。"],
   /* Sending money is a promise until the other end has somewhere for it to
      land, because this board is never allowed to hold it in the meantime. */
-  "rq.outWhy":         ["{who} wants to pay you. Tell them where the money should land and they can send it.",
-                        "{who} 想把钱付给你。告诉他们打到哪里，就能付了。"],
+  "rq.outWhy":         ["Say where the money should land and {who} can send it. No account here, and nothing to install.",
+                        "填一下钱打到哪里，{who} 就能转过来。不用在这边注册，也不用装什么。"],
+  "rq.needsYou":       ["Needs you", "待你填写"],
+  "rq.land":           ["Say where it should land", "填写收款方式"],
+  "rq.landGoing":      ["Opening…", "正在打开…"],
   "rq.gone":           ["This link does not open anything.", "这个链接打不开东西。"],
   "rq.goneWhy":        ["It may have been taken back, or the address is wrong. Ask whoever sent it.",
                         "可能已经撤回，或者地址不对。找发给你的人问一下。"],

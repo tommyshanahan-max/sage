@@ -96,6 +96,23 @@ export function cleanRequest(raw) {
   const toWho = /^[a-f0-9]{20}$/.test(String(raw.toWho || "")) ? String(raw.toWho) : "";
   if (toWho) out.toWho = toWho;
 
+  /* WHERE THE MONEY LANDS WHEN IT IS NOT A MEMBER'S.
+   *
+   * Sending money to somebody needs an account for them, and they may have
+   * nothing to do with this board — that is the normal case. So the account
+   * is minted against the request itself when they press the button on the
+   * page, and lives here. A member's own account stays on their row where it
+   * belongs; this is only for the other kind.
+   *
+   * Stripe's own identifier, useless to anybody who is not this platform.
+   * Never a bank number, and never sent to the page. */
+  const acct = s(raw.acct, 64);
+  if (/^acct_[A-Za-z0-9]+$/.test(acct)) out.acct = acct;
+  /* Set once Stripe says the account can actually take a transfer. Onboarding
+     is not one screen, and somebody who abandoned it halfway has an id and no
+     ability to be paid. */
+  if (raw.landed) out.landed = true;
+
   const said = (Array.isArray(raw.said) ? raw.said : [])
     .map(cleanSaid).filter(Boolean).slice(0, 8);
   if (said.length) out.said = said;
@@ -121,6 +138,11 @@ export function requestState(r) {
   const said = (k) => (r.said || []).some((x) => x.kind === k);
   if (said("confirmed")) return "paid";
   if (said("claimed")) return "waiting";
+  /* SENDING MONEY HAS A STATE THE OTHER DIRECTION DOES NOT: waiting on the
+     person being paid to say where it should land. Until they have, there is
+     nothing for the sender to press, and a row that said "due" would be
+     telling them to do a thing they cannot do. */
+  if ((r.way || "in") === "out" && !r.landed) return "asking";
   return "due";
 }
 
@@ -143,6 +165,9 @@ export function requestView(r, { payeeReady = false } = {}) {
     when: r.when,
     at: r.at,
     state: requestState(r),
+    /* Whether the person being paid has finished saying where. Only ever a
+       yes or no — the account id never leaves the server. */
+    landed: Boolean(r.landed),
     /* False and the page says so rather than drawing a Pay button that opens
        a refusal. */
     payeeReady: Boolean(payeeReady),

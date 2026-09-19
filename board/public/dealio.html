@@ -71,11 +71,18 @@
   .mid .mhead{margin:0;font-size:1.05rem;color:var(--ink)}
   .mid .msub{margin:.4rem 0 1.6rem;max-width:19rem;color:var(--mut);
     font-size:.92rem;line-height:1.5}
-  .mid .go,.mid button{display:block;width:100%;max-width:19rem;border:0;
-    border-radius:99px;background:var(--acc);color:var(--accink);
+  .mid .go,.mid button,.mid a.go{display:block;width:100%;max-width:19rem;
+    border:0;border-radius:99px;background:var(--acc);color:var(--accink);
     font:inherit;font-size:.95rem;font-weight:600;letter-spacing:.08em;
     text-transform:uppercase;padding:1rem 1.2rem;min-height:3.4rem;
     text-decoration:none;cursor:pointer}
+  /* TWO THINGS A PERSON CAN DO, and the second is not hidden behind a menu:
+     sending money is half the cases. Stacked rather than side by side —
+     at 390px two uppercase labels in one row crush to two lines each. */
+  .two{display:flex;flex-direction:column;gap:.5rem;width:100%;
+    max-width:19rem;margin:0 auto}
+  .mid .two button,.make .two button{max-width:none}
+  .two .ghost2{background:none;border:1px solid var(--line);color:var(--ink)}
   /* The one thing standing between somebody and being paid, said with the
      button that fixes it rather than as a line of red text. */
   .fix{margin:1.4rem 0 0;max-width:20rem;padding:.95rem 1rem;border-radius:.9rem;
@@ -92,6 +99,7 @@
   .make{position:fixed;left:0;right:0;bottom:0;padding:.8rem .9rem
     calc(.8rem + env(safe-area-inset-bottom,0));background:linear-gradient(
       to top, var(--bg) 60%, rgba(11,14,21,0));}
+  .make .two{max-width:33rem}
   .make button{display:block;width:100%;max-width:33rem;margin:0 auto;border:0;
     border-radius:99px;background:var(--acc);color:var(--accink);font:inherit;
     font-size:.95rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
@@ -230,15 +238,24 @@ function draw() {
   slot.replaceWith(langButton(draw));
 }
 
-/** A BIG BUTTON IS AN ANSWER TO A QUESTION THE SCREEN HAS ALREADY ASKED.
- *  Middle of the page when there is nothing else on it, pinned to the bottom
- *  once there is a list to scroll. */
-function makeButton(where) {
-  const b = el("button", null, T("dl.make"));
-  b.type = "button";
-  b.addEventListener("click", () => form());
-  if (where === "bar") { bar.append(b); bar.hidden = false; return null; }
-  return b;
+/* TWO THINGS A PERSON CAN DO WITH MONEY AND SOMEBODY ELSE, and they are the
+ * same row underneath — see `way` in lib/request.js. Asking is the solid one
+ * because it is what most people open this for; sending is outlined beside
+ * it, not hidden behind a menu, because it is half the cases.
+ *
+ * Middle of the page when there is nothing else on it, pinned to the bottom
+ * once there is a list to scroll past. */
+function makeButtons(where) {
+  const wrap = el("div", "two");
+  const ask = el("button", "go", T("dl.make"));
+  ask.type = "button";
+  ask.addEventListener("click", () => form("in"));
+  const send = el("button", "ghost2", T("dl.send"));
+  send.type = "button";
+  send.addEventListener("click", () => form("out"));
+  wrap.append(ask, send);
+  if (where === "bar") { bar.append(wrap); bar.hidden = false; return null; }
+  return wrap;
 }
 
 /* SIGNED OUT IS A DOOR, and a door has one handle.
@@ -267,7 +284,7 @@ function empty() {
   box.append(el("hr"));
   box.append(el("p", "mhead", T("dl.noneHead")));
   box.append(el("p", "msub", T("dl.noneWhy")));
-  box.append(makeButton());
+  box.append(makeButtons());
   if (STATE && !STATE.ready) box.append(payoutLine());
   root.append(box);
 }
@@ -307,20 +324,25 @@ function payoutLine() {
 }
 
 function list() {
+  /* THE LIST HOLDS BOTH DIRECTIONS NOW, so it cannot be headed "money you
+     have asked somebody to pay" — half of it is money going the other way. */
   root.append(el("h1", null, T("dl.head")));
   root.append(el("p", "sub", T("dl.sub")));
   /* Nowhere for the money to land, said above the list rather than found out
      by the person who was sent a link and met a dead button. */
   if (STATE && !STATE.ready) root.append(payoutLine());
   for (const q of STATE.requests) root.append(row(q));
-  makeButton("bar");
+  makeButtons("bar");
 }
 
 function row(q) {
   const b = el("button", "q");
   b.type = "button";
   b.append(el("span", "w", q.to || T("dl.someone")), el("span", "n", q.amount));
-  b.append(el("span", "t", [q.what, when(q.at)].filter(Boolean).join(" · ")));
+  /* Which way, first, because a list of both needs it before anything else:
+     "→ Mei" is money leaving and "← Sasha" is money coming. */
+  b.append(el("span", "t", [T(q.way === "out" ? "dl.rowOut" : "dl.rowIn"),
+    q.what, when(q.at)].filter(Boolean).join(" · ")));
   const state = q.off ? "off" : q.state;
   b.append(el("span", "c" + (state === "paid" ? " ok" : state === "off" ? " off" : ""),
     T("dl.st." + state)));
@@ -332,11 +354,12 @@ function row(q) {
    covered, what happens if it is called off — is a deal memo, and that lives
    on the board. Most money between two people who have just agreed something
    needs a number and a sentence. */
-function form() {
+function form(way) {
+  const out = way === "out";
   const back = el("div", "sh");
   const card = el("div", "shc");
-  card.append(el("p", "lab", T("dl.make")));
-  card.append(el("h2", null, T("dl.formHead")));
+  card.append(el("p", "lab", T(out ? "dl.send" : "dl.make")));
+  card.append(el("h2", null, T(out ? "dl.formSend" : "dl.formHead")));
 
   const field = (name, label, cls, ph) => {
     const l = el("label");
@@ -349,13 +372,13 @@ function form() {
     return i;
   };
   const amount = field("amount", T("ask.amount"), "amt", "¥2,400");
-  const who = field("to", T("dl.who"), "", T("dl.whoEg"));
+  const who = field("to", T(out ? "dl.whoOut" : "dl.who"), "", T("dl.whoEg"));
   const what = field("what", T("ask.what"), "", T("ask.whatEg"));
   const whn = field("when", T("ask.when"), "", T("ask.whenEg"));
 
   const why = el("p", "why");
   const acts = el("div", "acts");
-  const go = el("button", "go", T("ask.make"));
+  const go = el("button", "go", T(out ? "dl.sendMake" : "ask.make"));
   go.type = "button";
   const no = el("button", null, T("pay.cancel"));
   no.type = "button";
@@ -369,13 +392,15 @@ function form() {
     try {
       const r = await fetch("/api/request", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ device, to: who.value.trim(), amount: amt,
+        body: JSON.stringify({ device, way: out ? "out" : "in",
+          to: who.value.trim(), amount: amt,
           what: what.value.trim(), when: whn.value.trim() }),
       });
       const j = await r.json().catch(() => null);
       if (r.ok && j?.ok) {
         back.remove();
-        sent({ to: who.value.trim(), amount: amt, what: what.value.trim(), url: j.url });
+        sent({ to: who.value.trim(), amount: amt, what: what.value.trim(),
+               url: j.url, way: out ? "out" : "in" });
         load();
         return;
       }
@@ -402,7 +427,8 @@ function sent(q) {
   card.append(el("p", "lab", T("ask.ready")));
   card.append(el("h2", null, T("ask.to", { who: q.to || T("dl.someone") })));
 
-  const text = T("ask.block", { to: q.to || "", amount: q.amount, what: q.what || "", url: q.url });
+  const text = T(q.way === "out" ? "dl.sendBlock" : "ask.block",
+    { to: q.to || "", amount: q.amount, what: q.what || "", url: q.url });
   const box = el("textarea", "msg");
   box.readOnly = true;
   box.rows = 7;
@@ -421,7 +447,7 @@ function sent(q) {
   done.addEventListener("click", () => back.remove());
   acts.append(cp, done);
   card.append(acts);
-  card.append(el("p", "hint", T("ask.nothingOwed")));
+  card.append(el("p", "hint", T(q.way === "out" ? "dl.sendHint" : "ask.nothingOwed")));
   back.append(card);
   back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
   document.body.append(back);
