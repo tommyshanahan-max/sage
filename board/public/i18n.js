@@ -5193,10 +5193,30 @@ export const STRINGS = {
                         "这是本平台保存的双方确认记录，不是税务发票，本平台亦非交易一方。"],
   "pay.print":         ["Print or save as PDF", "打印或保存为 PDF"],
   "pay.close":         ["Close", "关闭"],
-  "deal.none":         ["No terms pinned yet.", "还没有定下条件。"],
-  "deal.write":        ["Pin the terms", "把条件钉上去"],
-  /* What the + says when it cannot. It used to say nothing at all. */
-  "deal.trying":       ["Opening a room…", "正在开房间…"],
+  "deal.none":         ["Nothing written down yet.", "还没有定下条件。"],
+  /* NAME THE ACT, NOT THE FEATURE.
+   *
+   * It said "Pin the terms" / "把条件钉上去", which is this product's own
+   * vocabulary and nobody else's. Pinning in WeChat is 置顶 — sticking a chat
+   * to the top of a list — so "钉上去" reads as "stick the conditions to the
+   * top", which is not what the button does. In English "the terms" is the
+   * language of somebody who has already been told there is such a thing.
+   *
+   * What actually just happened is that two people agreed something in a
+   * chat. So the button says that: write it down. It is the same words
+   * either of them would use to each other, and it is also the ＋'s label
+   * for a screen reader. */
+  "deal.write":        ["Write down what we agreed", "把谈好的写下来"],
+  /* What the + says while it works. It used to say nothing at all.
+   *
+   * AND THEN IT SAID SOMETHING WORSE. "Opening a room…" went into Chinese as
+   * "正在开房间…", and 开房 is what you call taking a hotel room for the
+   * afternoon. On a board where strangers are introduced to strangers, the
+   * button that starts a deal was telling half the members something else
+   * entirely. Nothing here names a room now: the person pressed ＋ to write
+   * down what they agreed, and what the software calls the thing it makes to
+   * hold it is not their business. */
+  "deal.trying":       ["One moment…", "稍等…"],
   "deal.notNow":       ["Not now", "先不写"],
   "deal.split":        ["Paid in instalments", "分期付"],
   "deal.change":       ["Change the terms", "改条件"],
