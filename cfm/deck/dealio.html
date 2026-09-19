@@ -43,7 +43,7 @@
   }
   .eyebrow.gold{color:var(--gold)}
   h1{font:400 clamp(2.9rem,12vw,4rem)/1.01 var(--serif);margin:0 0 1rem;text-wrap:balance}
-  h2{font:400 clamp(2.4rem,9.6vw,3.2rem)/1.08 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  h2{font:400 clamp(2.6rem,10.4vw,3.5rem)/1.05 var(--serif);margin:0 0 1rem;text-wrap:balance}
   p{margin:0 0 1rem;color:var(--dim);font-size:1.02rem}
   p.lead{color:var(--ink);font-size:1.08rem}
   p:last-child{margin-bottom:0}
@@ -75,7 +75,9 @@
   .field div:last-child{border-bottom:0}
   .field .w{color:var(--ink);font-size:.98rem;font-weight:650}
   .field .v{color:var(--dim);font-size:.88rem;text-align:right;white-space:nowrap}
-  .field .v.out{color:var(--gold)}
+  .field div:last-child{padding-top:1rem}
+  .field div:last-child .w{font-size:1.15rem}
+  .field .v.out{color:var(--gold);font-size:1.15rem;font-weight:650}
 
   /* THE SCREENS, DRAWN RATHER THAN SCREENSHOTTED — same reason as the other
      decks: a screenshot of the app dropped into a dark deck reads as a picture
@@ -115,7 +117,8 @@
      somebody else's and both are checkable — see the note on that slide for
      why there is no TAM on this deck. */
   .pair{display:flex;gap:2.4rem;flex-wrap:wrap;margin:0 0 1.6rem}
-  .pair .n{font:400 clamp(2.8rem,14vw,3.9rem)/.9 var(--serif);color:var(--gold)}
+  .pair .n{font:400 clamp(3.6rem,19vw,5.4rem)/.85 var(--serif);color:var(--gold);
+    letter-spacing:-.02em}
   .pair .l{color:var(--dim);font-size:.86rem;margin-top:.55rem;max-width:9rem}
 
   .terms{margin:1.4rem 0 0}
@@ -157,7 +160,7 @@
     <div class="mark"><i>汇</i><span>Dealio</span></div>
     <p class="eyebrow gold">Cross-border</p>
     <h1>Get paid from China.</h1>
-    <p class="lead">WeChat Pay or Alipay. Straight to your bank.</p>
+    <p class="lead">They tap WeChat. You are paid.</p>
     <a class="on" href="#what">how it works ↓</a>
   </section>
 
@@ -175,7 +178,7 @@
       <div class="sc">
         <span class="tag">You</span>
         <span class="amt">¥2,400</span>
-        <span class="what">12 lessons · Ray</span>
+        <span class="what">Second draft · Ray</span>
         <div class="btn">Ask for money</div>
       </div>
       <div class="sc">
@@ -188,7 +191,7 @@
       </div>
     </div>
 
-    <p class="caption">No account. No app. Either side.</p>
+    <p class="caption">Nothing to install. Nobody signs up.</p>
   </section>
 
   <section>
@@ -207,12 +210,12 @@
     </div>
 
     <p class="lead">They serve students paying universities.</p>
-    <p>Nobody serves the tutor, the agent, the coach.</p>
+    <p>Nobody serves everyone else.</p>
   </section>
 
   <section>
     <p class="eyebrow">Why it is empty</p>
-    <h2>Everybody serves companies.</h2>
+    <h2>Everybody serves companies.<br>Nobody serves people.</h2>
 
     <div class="field">
       <div><span class="w">PingPong</span><span class="v">Seller account</span></div>
@@ -253,12 +256,12 @@
 
   <section>
     <p class="eyebrow">Where it is</p>
-    <h2>Built. Not yet proven.</h2>
+    <h2>One approval away.</h2>
 
     <ol class="how">
-      <li><b>Built.</b><span>Live, both directions, two languages.</span></li>
+      <li><b>Built.</b><span>Live. Both directions, two languages.</span></li>
       <li><b>Waiting.</b><span>Stripe has not approved Connect.</span></li>
-      <li><b>Missing.</b><span>One payment, end to end.</span></li>
+      <li><b>Missing.</b><span>One payment, end to end. Then we know.</span></li>
     </ol>
   </section>
 
@@ -269,7 +272,7 @@
 
   <section>
     <p class="eyebrow gold">The ask</p>
-    <h2>Enough for the first hundred payments.</h2>
+    <h2>Fund the first hundred payments.</h2>
 
     <div class="terms">
       <div><span class="w">Stage</span><span class="v">Pre-revenue</span></div>
