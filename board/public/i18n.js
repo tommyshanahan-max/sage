@@ -2997,6 +2997,12 @@ export const STRINGS = {
   "cards.what": [
     "Swap details. Yours goes first.",
     "互换联系方式。你先发。"],
+  /* Under a name on the shelf, when there is money between the two of you.
+     "jobs" rather than "payments": the thing being counted is work that was
+     done and settled, which is what somebody deciding about the next one is
+     actually asking about. */
+  "cards.paid1":       ["{amount} paid · 1 job", "已付 {amount} · 1 单"],
+  "cards.paid":        ["{amount} paid · {n} jobs", "已付 {amount} · {n} 单"],
   "cards.none":        ["No cards yet.", "还没有名片。"],
   "cards.noneWhy": [
     "A card lands here when you and somebody else follow each other and want the same kind of thing. Nothing arrives on its own — go and look at who is here.",

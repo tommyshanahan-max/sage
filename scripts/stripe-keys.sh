@@ -102,7 +102,7 @@ PK="$(ask "Publishable key" "pk_${MODE}_")"
 # script — silently, right after the last thing it printed. A .env without a
 # pinned version is ordinary and must not end the command.
 DOMAIN="$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '"' | tr -d "'" || true)"
-VER="$(grep -E '^BOARD_STRIPE_VERSION=' .env | tail -1 | cut -d= -f2- | tr -d '"' || true)"
+VER="$(grep -E '^TOMSCODING_BOARD_STRIPE_VERSION=' .env | tail -1 | cut -d= -f2- | tr -d '"' || true)"
 [ -n "$VER" ] || VER="2026-08-26.dahlia"
 WH=""
 if [ -n "$DOMAIN" ]; then
@@ -138,23 +138,46 @@ fi
 # version anybody ever wants back is the one from before this command.
 cp .env .env.before-stripe-keys
 
+# THE NAMES IN .env ARE NOT THE NAMES THE BOARD READS, and this cost an
+# afternoon. docker-compose.yml maps
+#   BOARD_STRIPE_KEY: ${TOMSCODING_BOARD_STRIPE_KEY:-}
+# so the name on the container is BOARD_STRIPE_KEY and the name in .env is
+# TOMSCODING_BOARD_STRIPE_KEY. This script wrote the container name. Compose
+# never looked at it, the old sandbox key under the real name stayed in force,
+# and every screen agreed: go-live said "this board now takes real money",
+# .env plainly contained sk_live_, and pay-check said test. All three were
+# telling the truth about different things.
+#
+# `:-` in that mapping is why it failed silently rather than loudly: an unset
+# variable is an empty string, not an error.
 put() {
   local name="$1" val="$2"
   grep -v "^${name}=" .env > .env.next || true
   printf '%s=%s\n' "$name" "$val" >> .env.next
   mv .env.next .env
 }
-put BOARD_STRIPE_KEY "$SK"
-put BOARD_STRIPE_PK "$PK"
-put BOARD_DEAL_FEE_SECRET "$WH"
+put TOMSCODING_BOARD_STRIPE_KEY "$SK"
+put TOMSCODING_BOARD_STRIPE_PK "$PK"
+put TOMSCODING_BOARD_DEAL_FEE_SECRET "$WH"
+
+# The wrong names, if an earlier run of this script left them. They are dead
+# lines that nothing reads — and a live secret key sitting in a file under a
+# name nobody will ever grep for is the worst kind of dead line.
+for dead in BOARD_STRIPE_KEY BOARD_STRIPE_PK BOARD_DEAL_FEE_SECRET BOARD_STRIPE_VERSION; do
+  if grep -q "^${dead}=" .env; then
+    grep -v "^${dead}=" .env > .env.next || true
+    mv .env.next .env
+    echo "  Removed ${dead} from .env — nothing reads that name."
+  fi
+done
 
 # Accounts v2 refuses without a pinned version, and it is the same string in
 # both modes — so it is left alone if it is already there rather than asked for
 # a fourth time.
-if ! grep -q "^BOARD_STRIPE_VERSION=" .env; then
-  printf 'BOARD_STRIPE_VERSION=%s\n' "2026-08-26.dahlia" >> .env
+if ! grep -q "^TOMSCODING_BOARD_STRIPE_VERSION=" .env; then
+  printf 'TOMSCODING_BOARD_STRIPE_VERSION=%s\n' "2026-08-26.dahlia" >> .env
   echo ""
-  echo "  BOARD_STRIPE_VERSION was not set. Pinned to 2026-08-26.dahlia."
+  echo "  TOMSCODING_BOARD_STRIPE_VERSION was not set. Pinned to 2026-08-26.dahlia."
 fi
 
 echo ""
@@ -180,6 +203,20 @@ if [ -n "$NAMES" ]; then
     echo "    $who"
     make -s payee WHO="$who" OFF=1 >/dev/null || echo "      could not clear $who"
   done <<< "$NAMES"
+fi
+
+# READ BACK WHAT IS ACTUALLY THERE, under the name compose actually reads,
+# and print the prefix. The failure this is here to prevent was not a wrong
+# key — it was three screens each truthfully reporting a different thing, and
+# no single line anywhere saying what the board would use.
+echo ""
+LANDED="$(grep -E '^TOMSCODING_BOARD_STRIPE_KEY=sk_[a-z]+' .env | tail -1 \
+  | sed 's/^TOMSCODING_BOARD_STRIPE_KEY=\(sk_[a-z]*\).*/\1/' || true)"
+if [ "$LANDED" = "sk_${MODE}_" ] || [ "$LANDED" = "sk_${MODE}" ]; then
+  echo "  .env now holds a ${MODE} key under the name compose reads."
+else
+  echo "  WARNING: .env does not hold a ${MODE} key under the name compose"
+  echo "  reads. Nothing below can be trusted."
 fi
 
 echo ""

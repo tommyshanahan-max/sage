@@ -7038,6 +7038,46 @@ app.post("/api/card/give", express.json({ limit: "4kb" }), gate, async (req, res
  *  request for the whole screen, because the alternative is a page that asks
  *  for a card per person and an access log that reads as a list of who holds
  *  whose. */
+/** WHAT HAS ACTUALLY BEEN PAID BETWEEN TWO PEOPLE, both directions.
+ *
+ *  WHY IT IS ON THE CARD. Money is the only fact on a contact that is not
+ *  somebody's opinion. "Has this person ever actually paid me" is the
+ *  question that decides whether you say yes to the next job, and until now
+ *  the only place it could be answered was a list that empties as things
+ *  settle.
+ *
+ *  SUMMED PER CURRENCY AND NEVER ACROSS THEM. Adding ¥ to A$ produces a
+ *  number that is wrong in both, and a wrong number about money is worse than
+ *  no number. Two currencies between two people print as two totals.
+ *
+ *  MATCHED ON `toWho`, THE PERSON ID, AND NOT ON THE NAME. `to` is whatever
+ *  was typed — most requests go to somebody who is not on this board at all,
+ *  and two members could reasonably both be "Mei".
+ *
+ *  ONLY EVER BETWEEN THE TWO OF THEM. There is no route that gives anybody a
+ *  third party's total, and this one is computed per pair for one reader.
+ */
+function paidWith(board, me, mineId, theirBy, theirId) {
+  const sums = new Map();
+  let jobs = 0;
+  for (const q of board.requests) {
+    const ours = (q.by === me && q.toWho === theirId)
+      || (q.by === theirBy && q.toWho === mineId);
+    if (!ours || request.requestState(q) !== "paid") continue;
+    const minor = store.toMinor(q.amount, q.cur);
+    if (!minor) continue;
+    jobs += 1;
+    sums.set(q.cur, (sums.get(q.cur) || 0) + minor);
+  }
+  return {
+    jobs,
+    paid: [...sums.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([cur, minor]) => store.fromMinor(minor, cur))
+      .filter(Boolean),
+  };
+}
+
 app.get("/api/matches", async (req, res) => {
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   const board = await store.load(FILE);
@@ -7065,6 +7105,10 @@ app.get("/api/matches", async (req, res) => {
       given: st.given,
       card: st.card,
       note: st.note,
+      /* Money between the two of them, both directions. Empty for almost
+         everybody, which is why it is a line that appears rather than a row
+         that is always there saying nothing. */
+      ...paidWith(board, me, mine.id, q.by, q.id),
     });
   }
   /* MY OWN CARD, not just whether I have one. The screen that offers to hand

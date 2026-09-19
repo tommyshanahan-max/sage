@@ -502,6 +502,10 @@
      pair, because there is no photograph under them here. */
   .bcard .who .psay{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;
     margin:.2rem 0 0}
+  /* The money line under a name. Quiet and tabular — it is read as a figure,
+     not as a sentence, and a column of them should line up. */
+  .bcard .who .pmoney{display:block;margin:.3rem 0 0;font-size:.82rem;
+    color:var(--ink-2);font-variant-numeric:tabular-nums}
   .bcard .who .psay .pchip{border:1px solid var(--line);background:var(--paper);
     color:var(--ink-2);border-radius:99px;padding:.12rem .5rem;font-size:.76rem;
     font-weight:600;font-style:normal}
@@ -7003,6 +7007,26 @@ function drawCards() {
     } else {
       const why = matchLine(m);
       if (why) t.append(el("span", null, why));
+    }
+    /* WHAT HAS ACTUALLY BEEN PAID BETWEEN THE TWO OF YOU.
+     *
+     * Money is the only fact on a contact that is not somebody's opinion, and
+     * "has this person ever actually paid me" is what decides whether you say
+     * yes to the next job. It sits under the name, quiet, in the board's own
+     * type — this is the board's screen and it does not get Dealio's palette.
+     *
+     * A line that appears rather than a row that is always there: for almost
+     * everybody it is empty, and an empty "¥0 paid · 0 jobs" under every name
+     * would be forty rows of nothing.
+     *
+     * Two currencies print as two totals. Adding ¥ to A$ gives a number that
+     * is wrong in both, and a wrong number about money is worse than none.
+     */
+    if (m.jobs) {
+      const money = el("span", "pmoney");
+      money.textContent = T(m.jobs === 1 ? "cards.paid1" : "cards.paid",
+        { amount: (m.paid || []).join(" · "), n: m.jobs });
+      t.append(money);
     }
     who.append(t);
     card.append(who);
