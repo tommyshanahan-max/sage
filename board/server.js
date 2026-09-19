@@ -419,7 +419,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|dealio|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|dealio|api\/pay\/onboard$|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -9266,10 +9266,16 @@ app.post("/api/pay/onboard", notesOff, express.json({ limit: "1kb" }), async (re
         return { ok: true };
       });
     }
+    /* WHERE STRIPE PUTS THEM DOWN AFTERWARDS, chosen by whoever sent them.
+       Hard-coded to /groups, somebody who started this from Dealio came back
+       to a different product and had to find their way home. An allowlist
+       and not the raw value: this is handed to Stripe as a redirect, and a
+       redirect somebody else can set is a redirect somebody else can aim. */
+    const backTo = req.body?.back === "dealio" ? "/dealio" : "/groups";
     const link = await stripe.onboardLink({
       account: acct,
-      refresh: backHere(req, "/groups"),
-      done: backHere(req, "/groups"),
+      refresh: backHere(req, backTo),
+      done: backHere(req, backTo),
     });
     if (!link?.url) return res.status(502).json({ error: "stripe" });
     res.json({ ok: true, url: link.url });

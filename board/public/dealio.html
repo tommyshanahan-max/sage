@@ -76,8 +76,17 @@
     font:inherit;font-size:.95rem;font-weight:600;letter-spacing:.08em;
     text-transform:uppercase;padding:1rem 1.2rem;min-height:3.4rem;
     text-decoration:none;cursor:pointer}
-  .mid .warnline{margin:1.4rem 0 0;max-width:19rem;font-size:.84rem;
-    line-height:1.5;color:var(--acc)}
+  /* The one thing standing between somebody and being paid, said with the
+     button that fixes it rather than as a line of red text. */
+  .fix{margin:1.4rem 0 0;max-width:20rem;padding:.95rem 1rem;border-radius:.9rem;
+    background:rgba(214,72,59,.12);text-align:center}
+  main > .fix{margin:0 auto 1rem}
+  .fixhead{margin:0;font-size:.95rem;color:var(--ink)}
+  .fixwhy{margin:.3rem 0 .9rem;font-size:.85rem;line-height:1.5;color:var(--ink2)}
+  .fix .ghost{display:block;width:100%;border:1px solid var(--acc);
+    background:none;color:var(--ink);font:inherit;font-size:.9rem;
+    font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    padding:.8rem 1rem;border-radius:99px;min-height:3rem;cursor:pointer}
   /* THE ONE BUTTON, PINNED. It is the only thing this page is for, so it does
      not scroll away under a list. */
   .make{position:fixed;left:0;right:0;bottom:0;padding:.8rem .9rem
@@ -259,8 +268,42 @@ function empty() {
   box.append(el("p", "mhead", T("dl.noneHead")));
   box.append(el("p", "msub", T("dl.noneWhy")));
   box.append(makeButton());
-  if (STATE && !STATE.ready) box.append(el("p", "warnline", T("dl.notReadyWhy")));
+  if (STATE && !STATE.ready) box.append(payoutLine());
   root.append(box);
+}
+
+/* NOWHERE FOR THE MONEY TO LAND, AND A WAY TO FIX IT.
+ *
+ * It said "you have not said where the money should land" and gave nothing
+ * to press — an instruction about a thing that is not on the screen, which
+ * is the same dead end the signed-out state had an hour ago. Stripe takes
+ * the bank and the identity on its own pages; this is the door to them, and
+ * it comes back here rather than to the board. */
+function payoutLine() {
+  const box = el("div", "fix");
+  box.append(el("p", "fixhead", T("dl.notReady")));
+  box.append(el("p", "fixwhy", T("dl.notReadyWhy")));
+  const b = el("button", "ghost", T("dl.setUp"));
+  b.type = "button";
+  b.addEventListener("click", async () => {
+    b.disabled = true;
+    b.textContent = T("dl.setUpGoing");
+    try {
+      const r = await fetch("/api/pay/onboard", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, back: "dealio" }),
+      });
+      const j = await r.json().catch(() => null);
+      if (r.ok && j?.url) { location.href = j.url; return; }
+      /* Each refusal says which. A mainland payee cannot be onboarded at all
+         and being told so beats four Stripe screens ending in no. */
+      b.textContent = T(j?.error === "mainland" ? "dl.setUpCn"
+        : j?.error === "off" ? "dl.setUpOff" : "pay.setUpNo");
+    } catch { b.textContent = T("pay.setUpNo"); }
+    b.disabled = false;
+  });
+  box.append(b);
+  return box;
 }
 
 function list() {
@@ -268,12 +311,7 @@ function list() {
   root.append(el("p", "sub", T("dl.sub")));
   /* Nowhere for the money to land, said above the list rather than found out
      by the person who was sent a link and met a dead button. */
-  if (STATE && !STATE.ready) {
-    const w = el("div", "warn");
-    w.append(el("b", null, T("dl.notReady")));
-    w.append(document.createTextNode(T("dl.notReadyWhy")));
-    root.append(w);
-  }
+  if (STATE && !STATE.ready) root.append(payoutLine());
   for (const q of STATE.requests) root.append(row(q));
   makeButton("bar");
 }
