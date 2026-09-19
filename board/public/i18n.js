@@ -5007,6 +5007,7 @@ export const STRINGS = {
   "dl.paidSub":        ["Everything that settled.", "已经结清的。"],
   "dl.paidNone":       ["Nothing has settled yet.", "还没有结清的。"],
   "dl.back":           ["Back", "返回"],
+  "dl.cur":            ["Currency", "币种"],
   /* Everything asked for has been paid. Worth its own sentence: an empty
      space under a heading reads as a page that failed to load. */
   "dl.allSettled":     ["Nothing outstanding.", "没有待付的。"],

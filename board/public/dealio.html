@@ -149,6 +149,25 @@
     border:1px solid var(--line);border-radius:.7rem;background:var(--bg);
     color:var(--ink)}
   input.amt{font-family:var(--serif);font-size:2.1rem;padding:.45rem .85rem}
+  /* THE AMOUNT AND WHAT IT IS IN, ON ONE LINE. Not a separate field below:
+     they are one fact, and a currency sitting under the number is a currency
+     that gets scrolled past. It used to be read off whatever sign was typed,
+     which worked and was invisible — nobody types ¥ on a phone keyboard
+     without hunting for it, and getting it wrong made a request nothing
+     could price. */
+  .amtrow{display:flex;gap:.5rem;align-items:stretch}
+  .amtrow input{flex:1 1 auto;min-width:0}
+  /* A CARET, DRAWN, because appearance:none takes the platform one away and
+     a box with a word in it does not look like a thing you can open. Inline
+     SVG rather than a character: ▾ renders at a different size and baseline
+     in every font on the list. */
+  .amtrow select{flex:0 0 auto;width:7.5rem;font:inherit;font-size:1rem;
+    padding:.75rem 1.6rem .75rem .7rem;border:1px solid var(--line);
+    border-radius:.7rem;background:var(--bg);color:var(--ink);
+    -webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23A3B0C4' stroke-width='1.5' stroke-linecap='round'/></svg>");
+    background-repeat:no-repeat;background-position:right .7rem center}
+  .amtrow select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
   input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
   .acts{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0 0}
   .acts button{flex:1 1 auto;min-width:7rem;border:1px solid var(--line);
@@ -713,7 +732,41 @@ function form(way) {
     card.append(el("p", "micor", T("dl.orType")));
   }
 
-  const amount = field("amount", T("ask.amount"), "amt", "¥2,400");
+  /* CNY AND USD FIRST, because those are the two this is for — somebody in
+     China being paid by somebody abroad, or the other way. The rest are
+     under them rather than behind an "other" that costs a second press. */
+  const MONEY = [["cny", "¥ RMB"], ["usd", "$ USD"], ["aud", "A$ AUD"],
+                 ["hkd", "HK$ HKD"], ["eur", "€ EUR"], ["gbp", "£ GBP"],
+                 ["jpy", "¥ JPY"]];
+  const SIGN = { cny: "¥", usd: "$", aud: "A$", hkd: "HK$", eur: "€",
+                 gbp: "£", jpy: "¥" };
+
+  const amtWrap = el("label");
+  amtWrap.append(el("span", null, T("ask.amount")));
+  const amtRow = el("div", "amtrow");
+  const amount = el("input", "amt");
+  amount.id = "f-amount";
+  amount.placeholder = "2,400";
+  amount.inputMode = "decimal";
+  const cur = el("select");
+  cur.id = "f-cur";
+  cur.setAttribute("aria-label", T("dl.cur"));
+  for (const [code, label] of MONEY) {
+    const o = el("option", null, label);
+    o.value = code;
+    cur.append(o);
+  }
+  /* Remembered per phone: somebody asking in RMB today is asking in RMB next
+     week, and picking it again every time is a step that is only ever needed
+     once. Wrapped because a private window throws on read. */
+  try { const last = localStorage.getItem("dealio:cur"); if (last) cur.value = last; }
+  catch { /* leave it on RMB */ }
+  cur.addEventListener("change", () => {
+    try { localStorage.setItem("dealio:cur", cur.value); } catch { /* fine */ }
+  });
+  amtRow.append(amount, cur);
+  amtWrap.append(amtRow);
+  card.append(amtWrap);
   const who = field("to", T(out ? "dl.whoOut" : "dl.who"), "", T("dl.whoEg"));
   const what = field("what", T("ask.what"), "", T("ask.whatEg"));
   const whn = field("when", T("ask.when"), "", T("ask.whenEg"));
@@ -735,14 +788,17 @@ function form(way) {
       const r = await fetch("/api/request", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ device, way: out ? "out" : "in",
-          to: who.value.trim(), amount: amt,
+          to: who.value.trim(), amount: amt, cur: cur.value,
           what: what.value.trim(), when: whn.value.trim() }),
       });
       const j = await r.json().catch(() => null);
       if (r.ok && j?.ok) {
         back.remove();
-        sent({ to: who.value.trim(), amount: amt, what: what.value.trim(),
-               url: j.url, way: out ? "out" : "in" });
+        /* THE SIGN GOES BACK ON FOR THE MESSAGE. The field takes bare
+           digits now, and "Mei — 2,400 for 12 lessons" pasted into WeChat is
+           an amount in no particular currency. */
+        sent({ to: who.value.trim(), amount: SIGN[cur.value] + amt,
+               what: what.value.trim(), url: j.url, way: out ? "out" : "in" });
         load();
         return;
       }
