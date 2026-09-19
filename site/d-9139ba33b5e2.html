@@ -147,6 +147,21 @@
     letter-spacing:-.02em}
   .pair .l{color:var(--dim);font-size:.86rem;margin-top:.55rem;max-width:9rem}
 
+  /* THE ARITHMETIC. Three columns, and the third is the one being read — so
+     it is gold and the other two are quiet. Tabular figures because the whole
+     point of the block is that the eye runs down one column. */
+  .sums{width:100%;border-collapse:collapse;margin:1.2rem 0 0;
+    font-variant-numeric:tabular-nums}
+  .sums th{text-align:left;font-size:.66rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--dim);font-weight:700;
+    padding:0 0 .7rem;border-bottom:1px solid var(--hair)}
+  .sums th:last-child,.sums td:last-child{text-align:right}
+  .sums td{padding:.85rem 0;border-bottom:1px solid var(--hair);
+    color:var(--dim);font-size:1rem}
+  .sums tr:last-child td{border-bottom:0}
+  .sums td:first-child{color:var(--ink);font-weight:650}
+  .sums td:last-child{color:var(--gold);font:400 1.5rem/1 var(--serif)}
+
   .terms{margin:1.4rem 0 0}
   .terms div{display:flex;justify-content:space-between;gap:1rem;
     padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
@@ -168,7 +183,7 @@
 
 <div class="deck">
 
-  <!-- NINE SLIDES, AND A SLIDE IS ONE GLANCE.
+  <!-- TEN SLIDES, AND A SLIDE IS ONE GLANCE.
        The first version of this deck had a paragraph under every heading and
        was told so: "way too much text". It is the fault this whole product
        keeps making — see the Writing section of CLAUDE.md, where it has now
@@ -278,6 +293,33 @@
       <div><span class="w">Lands as</span><span class="v">Your own currency</span></div>
       <div><span class="w">Our cut</span><span class="v">2%</span></div>
     </div>
+  </section>
+
+  <!-- ARITHMETIC, NOT A FORECAST, and the difference is the whole reason this
+       slide is allowed on a deck that refuses a TAM. A market size is a claim
+       about the world and can be disproved in an afternoon. This is 2% of a
+       number that is stated on the slide: the reader disagrees with the
+       assumption rather than catching us out, which is what a number on a
+       pre-revenue deck should invite. The line under it says so, because
+       otherwise the gold column reads as a projection. -->
+
+  <section>
+    <p class="eyebrow gold">The arithmetic</p>
+    <h2>Two percent of what moves.</h2>
+
+    <table class="sums">
+      <thead>
+        <tr><th>Users</th><th>Each moves</th><th>We earn</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>500</td><td>¥50k a year</td><td>A$50k</td></tr>
+        <tr><td>2,000</td><td>¥50k a year</td><td>A$210k</td></tr>
+        <tr><td>10,000</td><td>¥50k a year</td><td>A$1m</td></tr>
+      </tbody>
+    </table>
+
+    <p style="margin-top:1.4rem">Not a forecast. Arithmetic, on one
+      assumption you can argue with.</p>
   </section>
 
   <section>
