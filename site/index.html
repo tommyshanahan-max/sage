@@ -195,6 +195,26 @@
   .btns .p{background:var(--accent);color:var(--accent-ink);font-weight:500}
   .btns .p:hover{background:var(--accent-2)}
   .btns .q{border:1px solid var(--rule-2);color:var(--ink)}
+  /* THE OTHER PRODUCT, AS A SIBLING AND NOT A SECOND PITCH.
+     This page sells the board and two products competing on one page means
+     neither lands — the note at the top of docker/sites/exchange.caddy makes
+     the same point about two audiences. So it is a rule, a name, one line and
+     a link: enough that somebody who typed this domain looking for a payments
+     company finds it, and little enough that nobody reading about the board
+     is interrupted. The reason it is here at all is that a provider assessing
+     a platform application types this domain, and until now the word Dealio
+     appeared on the public web exactly nowhere. */
+  .also{border-top:1px solid var(--rule);padding:2.4rem 0 2.6rem}
+  .also .name{font-family:var(--serif);font-size:1.35rem;color:var(--ink);
+    margin:0 0 .3rem}
+  .also .name .dot{display:inline-block;width:.5rem;height:.5rem;
+    border-radius:50%;background:#D9534F;margin-right:.55rem;
+    vertical-align:middle}
+  .also p{margin:0;color:var(--ink-2);font-size:1rem;max-width:30rem}
+  .also a.go{display:inline-block;margin-top:.9rem;color:var(--accent);
+    text-decoration:none;font-size:.95rem}
+  .also a.go:hover{text-decoration:underline}
+
   .foot{background:var(--disc);color:var(--muted);padding:2.2rem 0 2.6rem;
     font-size:.85rem}
   .foot a{color:var(--ink-2)}
@@ -341,18 +361,18 @@
   </div>
 </div></div>
 
+<div class="also"><div class="wrap">
+  <p class="eyebrow">Also from here</p>
+  <p class="name"><span class="dot"></span>Dealio</p>
+  <p>Your client in China pays by WeChat Pay or Alipay. You get the money in
+    your own currency. 2%.</p>
+  <a class="go" href="/pay.html">What it is &rsaquo;</a>
+</div></div>
+
 <div class="foot"><div class="wrap">
   <span class="mark">The Exchange · 交换</span> &nbsp;·&nbsp;
   <a href="https://liuxuesheng.io/rules">House rules</a> &nbsp;·&nbsp;
-  <a href="https://liuxuesheng.io/privacy">What is kept</a> &nbsp;·&nbsp;
-  <!-- THE OTHER PRODUCT ON THIS DOMAIN, ADMITTED. One line at the foot and
-       not a second hero: this page sells the board and should go on doing
-       only that. It is here because a payment provider assessing a platform
-       application types this domain on the form, and until tonight the word
-       Dealio did not appear on the public web once — three true stories
-       (this page, the application, the ticket) and no way to tell they were
-       about one person. -->
-  <a href="/pay.html">Dealio · payments</a>
+  <a href="https://liuxuesheng.io/privacy">What is kept</a>
   <!-- The way in for whoever runs it. A short path rather than the seat's
        hostname: Caddy fills that in from the environment (see
        docker/sites/exchange.caddy), so moving the seat is a .env change and
