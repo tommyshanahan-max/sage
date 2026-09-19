@@ -687,12 +687,19 @@
   /* addbtn and addsheet, not plus and more: .more is already the header's ⋯
      and .plus is already inside .sendlink, and a second rule with either name
      silently restyles the first. This file has had that once. */
-  .addbtn{flex:0 0 auto;width:2.4rem;height:2.4rem;border:1px solid var(--line);
-    border-radius:50%;background:var(--raise);color:var(--ink-2);
-    display:grid;place-items:center;cursor:pointer}
-  .addbtn svg{width:1.15rem;height:1.15rem;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round}
-  .addbtn:disabled{background:var(--accent-soft);color:var(--accent);opacity:1}
+  /* ITS OWN ROW ABOVE THE BOX, with the words on it. A 2.4rem circle holding
+     a + told a sighted reader nothing at all — only a screen reader ever
+     heard what it was for. Sticky with the composer, so it does not scroll
+     away up the conversation from the person looking for it. */
+  .addbtn{position:sticky;bottom:7.6rem;z-index:2;display:flex;
+    align-items:center;justify-content:center;gap:.5rem;width:100%;
+    margin:0 0 .35rem;padding:.7rem 1rem;border:1px dashed var(--line);
+    border-radius:99px;background:var(--paper);color:var(--ink);font:inherit;
+    font-size:.95rem;cursor:pointer}
+  .addbtn svg{width:1.05rem;height:1.05rem;flex:0 0 auto;fill:none;
+    stroke:currentColor;stroke-width:2;stroke-linecap:round}
+  .addbtn:disabled{border-style:solid;background:var(--accent-soft);
+    color:var(--accent);opacity:1}
   /* OPENS UPWARD, because downward is under the keyboard. Rows rather than a
      grid of icons: a label that can be read is worth more than a picture that
      has to be learned, and on this board more than most. */
@@ -819,18 +826,26 @@
     <div class="talk" id="talk"></div>
     <p class="left" id="tleft" hidden></p>
     <p class="shut" id="tshut" hidden></p>
-    <!-- THE + IS BESIDE THE BOX, the place every phone keeps it, so nobody has
-         to be told. It pins the terms directly; this panel held the one button
-         that used to stand between the + and the only thing behind it, and now
-         holds only the reason when it cannot. It opens upward because a panel
-         that opens downward is a panel under the keyboard. -->
+    <!-- IT SAYS WHAT IT DOES NOW, AND IT USED TO BE A + AND NOTHING ELSE.
+         The comment that stood here said the + is beside the box, "the place
+         every phone keeps it, so nobody has to be told". That is true of
+         WeChat's +, which opens a tray of eight labelled things. This one
+         opened no tray: it made a room and threw you into a form, which is a
+         command, and a command wearing a tray-opener's clothes is a thing
+         people press once to find out what it was.
+         So it wears its own words. It is the only thing this product is
+         actually for, and a board whose purpose is writing down what two
+         people agreed can afford to say so above the message box.
+         The panel below it holds the reason when it cannot, and opens
+         upward, because a panel that opens downward is under the keyboard. -->
     <div class="addsheet" id="tadd" hidden>
       <button id="tterms" type="button"></button>
     </div>
+    <button class="addbtn" id="taddbtn" type="button" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      <span id="taddsay"></span>
+    </button>
     <div class="write" id="twrite" hidden>
-      <button class="addbtn" id="taddbtn" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-      </button>
       <textarea id="tbox" rows="1" maxlength="600"></textarea>
       <button class="send" id="tsend" aria-label="Send">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 8-16 8 3-8z"/></svg>
@@ -2677,6 +2692,10 @@ function drawThread(t) {
        data-t="deal.write" on it, which nothing in this repo reads — so it said
        "Pin the terms" in English on a board half of whose members read
        Chinese, and said it silently. */
+    /* The words, on the button and not only in the aria-label — see the
+       comment over it in the markup. */
+    const addSay = $("taddsay");
+    if (addSay) addSay.textContent = T("deal.write");
     addBtn.setAttribute("aria-label", T("deal.write"));
     if (terms) terms.hidden = true;
     addSheet.hidden = true;
