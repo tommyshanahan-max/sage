@@ -183,6 +183,56 @@
   .worth b{display:block;font:400 2.4rem/1 var(--serif);color:var(--gold)}
   .worth span{display:block;margin-top:.5rem;font-size:.86rem;color:var(--dim)}
 
+  /* SIDE BY SIDE. Three columns: what is being compared, what a payment
+     link does today, and what this does. The middle column is deliberately
+     the quietest thing on the slide — it is the status quo and it should
+     read as grey. No drawing of anybody else's product: the comparison is
+     factual and written, because a mocked-up screenshot of a competitor is
+     a claim about their software that we cannot stand behind. */
+  /* THE TWO SCREENS, BOTH DRAWN. The left is a standard card checkout — a
+     white page, an amount, a card number, a Pay button, all in English —
+     and the right is this one. Drawn rather than screenshotted on purpose:
+     a pixel copy of somebody else's product presented as evidence is a
+     claim about their software, and a fair sketch of the shape everybody
+     has seen is not. It is accurate and it is not a caricature; the left
+     is what a Chinese payer actually meets today, and the point is that
+     nothing on it is wrong except who it was written for. */
+  .two{display:flex;gap:.9rem;margin:1.3rem 0 0;align-items:stretch}
+  .ph{flex:1;min-width:0;border:1px solid var(--hair);border-radius:1rem;
+    padding:.3rem;background:var(--raise)}
+  .ph .in{border-radius:.8rem;padding:.6rem;height:100%;
+    display:flex;flex-direction:column;gap:.4rem}
+  .ph.old .in{background:#FFF;color:#1A1F2B}
+  .ph.new .in{background:#F4F6FA;color:#10141D}
+  .ph .top{font-size:.46rem;letter-spacing:.09em;text-transform:uppercase;
+    color:#8A92A3;font-weight:700}
+  .ph .amt{font:400 1.25rem/1 var(--serif)}
+  .ph .sub{font-size:.5rem;color:#8A92A3}
+  .ph .box{border:1px solid #D9DEE7;border-radius:.3rem;padding:.3rem .35rem;
+    font-size:.47rem;color:#9AA2B1;background:#FBFCFE}
+  .ph .row{display:flex;gap:.3rem}
+  .ph .row .box{flex:1}
+  .ph .pay{margin-top:auto;border-radius:99px;text-align:center;
+    font-size:.5rem;font-weight:700;padding:.34rem;background:#5570E8;color:#FFF}
+  .ph .wx{border:1px solid #D9DEE7;border-radius:.4rem;padding:.3rem .35rem;
+    font-size:.5rem;font-weight:650;display:flex;align-items:center;gap:.3rem}
+  .ph .wx i{width:.34rem;height:.34rem;border-radius:50%;background:var(--wx)}
+  .ph .wx.a i{background:var(--ali)}
+  .cap2{display:flex;gap:.9rem;margin:.6rem 0 0}
+  .cap2 span{flex:1;font-size:.72rem;color:var(--dim);text-align:center}
+  .cap2 span:last-child{color:var(--gold)}
+
+  .vs{width:100%;border-collapse:collapse;margin:1.2rem 0 0}
+  .vs th{text-align:left;font-size:.64rem;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--dim);font-weight:700;
+    padding:0 0 .7rem;border-bottom:1px solid var(--hair)}
+  .vs th:last-child{color:var(--gold)}
+  .vs td{padding:.8rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
+  .vs tr:last-child td{border-bottom:0}
+  .vs td:first-child{color:var(--ink);font-weight:650;width:38%}
+  .vs td:nth-child(2){color:#5C6375}
+  .vs td:last-child{color:var(--gold)}
+
   .terms{margin:1.4rem 0 0}
   .terms div{display:flex;justify-content:space-between;gap:1rem;
     padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
@@ -359,7 +409,60 @@
 
   <section>
     <p class="eyebrow">The difference</p>
-    <h2>Built for the one paying.</h2>
+    <h2>Stripe built the rails. Nobody built the door.</h2>
+
+    <!-- THE SAME RAILS, SAID OUT LOUD. A reader who knows payments works
+         out within a minute that this runs on Stripe, and a deck that
+         avoided saying so would look like it was hoping they would not.
+         Saying it first turns the weak version of the question — "so why
+         can't Stripe do this?" — into the answer: they can, and they will
+         not, because caring about one corridor in one language is not worth
+         their afternoon. That is a real defence and not a technical one,
+         which is also true and better said than dodged. -->
+    <div class="two">
+      <div class="ph old">
+        <div class="in">
+          <span class="top">Pay Tom Shanahan</span>
+          <span class="amt">¥2,400.00</span>
+          <span class="sub">Card information</span>
+          <div class="box">1234 1234 1234 1234</div>
+          <div class="row">
+            <div class="box">MM / YY</div>
+            <div class="box">CVC</div>
+          </div>
+          <div class="box">Name on card</div>
+          <div class="pay">Pay ¥2,400.00</div>
+        </div>
+      </div>
+      <div class="ph new">
+        <div class="in">
+          <span class="top">Tom 要收</span>
+          <span class="amt">¥2,400</span>
+          <span class="sub">第二稿</span>
+          <div class="wx"><i></i>微信支付</div>
+          <div class="wx a"><i></i>支付宝</div>
+          <div class="pay">付 ¥2,400</div>
+        </div>
+      </div>
+    </div>
+    <div class="cap2"><span>Today</span><span>Ours</span></div>
+
+    <table class="vs">
+      <thead>
+        <tr><th></th><th>A payment link</th><th>Dealio</th></tr>
+      </thead>
+      <tbody>
+        <!-- Only what the drawing cannot say. Language and what the payer
+             meets are both visible above; repeating them in a row is two
+             things to read where the picture already did it once. -->
+        <tr><td>To set up</td><td>A dashboard</td><td>A link</td></tr>
+        <tr><td>Written for</td><td>A merchant</td><td>A person</td></tr>
+        <tr><td>Directions</td><td>One</td><td>Both</td></tr>
+      </tbody>
+    </table>
+
+    <p class="lead" style="margin-top:1.4rem">Same rails underneath. Nobody in
+      China would guess.</p>
 
     <div class="zh">
       <b>长按二维码识别。</b>
