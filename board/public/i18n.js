@@ -4994,7 +4994,7 @@ export const STRINGS = {
   "dl.head":           ["Money", "钱"],
   /* The list holds what is still open, both directions. It used to hold the
      settled ones too, and said so; they live on Paid now. */
-  "dl.sub":            ["Still to settle.", "还没结清的。"],
+  "dl.sub":            ["Still to settle", "还没结清"],
   "dl.rowIn":          ["You asked", "你要收"],
   "dl.rowOut":         ["You are sending", "你要付"],
   "dl.make":           ["Ask for money", "发起收款"],

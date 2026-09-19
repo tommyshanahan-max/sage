@@ -31,7 +31,7 @@
   html,body{margin:0;background:var(--bg);color:var(--ink)}
   body{font-family:var(--sans);font-size:16px;line-height:1.5;
     padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
-  main{max-width:34rem;margin:0 auto;padding:1.1rem .9rem 10rem}
+  main{max-width:34rem;margin:0 auto;padding:1.1rem .9rem 4rem}
   .top{display:flex;align-items:center;gap:.5rem;margin:0 0 1.2rem}
   .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--acc);
     flex:0 0 auto}
@@ -130,6 +130,59 @@
   .prow .t{grid-column:1/-1;color:var(--mut);font-size:.82rem}
   .none{margin:2rem 0;color:var(--mut);text-align:center}
   .sub{margin:0 0 1.3rem;color:var(--mut);font-size:.92rem}
+  /* ---- THE PAD: the home screen is the amount --------------------------
+     Big enough that it is obviously the point of the screen, and the sign
+     sits beside the number rather than inside the field so the field holds
+     only what somebody typed. */
+  /* CENTRED BY THE TEXT FLOW, not by the flex box. A flex row of a sign and
+     a self-sizing input does not centre reliably: the input's width comes
+     from its `size` attribute, the browser rounds that to its own idea of a
+     character, and the pair lands left of the middle. An inline-flex inside
+     a centred block is centred by the same rule that centres a word. */
+  .pad{padding:1.4rem 0 0;text-align:center}
+  .padrow{display:inline-flex;align-items:baseline;justify-content:center;
+    gap:.15rem;max-width:100%}
+  .padsign{font-family:var(--serif);font-size:2.6rem;line-height:1;
+    color:var(--mut)}
+  .padamt{flex:0 0 auto;min-width:1ch;max-width:8ch;border:0;background:none;
+    color:var(--ink);font-family:var(--serif);font-size:clamp(3rem,16vw,4.4rem);
+    line-height:1;padding:0;text-align:left;
+    font-variant-numeric:tabular-nums}
+  .padamt::placeholder{color:var(--line)}
+  .padamt:focus{outline:none}
+  .padamt:focus-visible{outline:none}
+  .padcur{display:block;margin:.9rem auto 0;width:auto;font:inherit;
+    font-size:.85rem;padding:.35rem 1.9rem .35rem .9rem;
+    border:1px solid var(--line);border-radius:99px;background:var(--bg);
+    color:var(--ink2);-webkit-appearance:none;appearance:none;
+    text-align:center;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%236F7D92' stroke-width='1.5' stroke-linecap='round'/></svg>");
+    background-repeat:no-repeat;background-position:right .8rem center}
+  /* THE TWO BUTTONS, which lost their rules when the pinned bar went: every
+     style they had was scoped under .mid or .make. They are their own thing
+     now and are styled as one. */
+  .two .go,.two .ghost2{display:block;width:100%;border:0;border-radius:99px;
+    background:var(--acc);color:var(--accink);font:inherit;font-size:.95rem;
+    font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    padding:1rem 1.2rem;min-height:3.4rem;text-align:center;cursor:pointer}
+  .two .ghost2{background:none;border:1px solid var(--line);color:var(--ink)}
+  .padtwo{margin:1.6rem auto 0;max-width:none;text-align:left}
+  .padwhy{text-align:center}
+  /* The heading over the list is a label now, not a title: the title of this
+     screen is the number. */
+  .lhead{margin:2.4rem 0 .2rem;font-size:.72rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--mut);font-weight:600}
+  .hrow .lhead{flex:1 1 auto}
+  .warnrow{color:var(--acc)}
+  .warnrow .chev{color:var(--acc)}
+  /* Outside .front the spec row still wants its shape. */
+  .spec{display:flex;align-items:center;gap:.8rem;width:100%;margin:0;
+    padding:.95rem 0;border:0;border-bottom:1px solid var(--hair);
+    background:none;color:var(--ink);font:inherit;font-size:.95rem;
+    line-height:1.4;text-align:left;cursor:pointer}
+  .spec span{flex:1 1 auto}
+  .chev{flex:0 0 auto;color:var(--mut);font-style:normal;font-size:1.15rem;
+    line-height:1}
   /* A ROW IS A REQUEST. Amount on the right and in the serif, because that is
      what the eye runs down the list looking for. */
   .q{display:grid;grid-template-columns:1fr auto;gap:.1rem .8rem;
@@ -357,6 +410,16 @@ let STATE = null;
  * being fixed. */
 const CUR_SIGN = { cny: "¥", usd: "$", aud: "A$", hkd: "HK$", eur: "€",
                    gbp: "£", jpy: "¥" };
+/* CNY and USD first — the two this is for. The rest under them rather than
+   behind an "other" that costs a second press. */
+const MONEY = [["cny", "¥ RMB"], ["usd", "$ USD"], ["aud", "A$ AUD"],
+               ["hkd", "HK$ HKD"], ["eur", "€ EUR"], ["gbp", "£ GBP"],
+               ["jpy", "¥ JPY"]];
+/* Remembered per phone: somebody asking in RMB today asks in RMB next week. */
+const curNow = () => {
+  try { return localStorage.getItem("dealio:cur") || "cny"; } catch { return "cny"; }
+};
+const curKeep = (v) => { try { localStorage.setItem("dealio:cur", v); } catch { /* fine */ } };
 const shown = (q) => {
   const amount = String(q?.amount ?? "").trim();
   if (!amount) return "";
@@ -558,123 +621,138 @@ function draw() {
   slot.replaceWith(langButton(draw));
 }
 
-/* TWO THINGS A PERSON CAN DO WITH MONEY AND SOMEBODY ELSE, and they are the
- * same row underneath — see `way` in lib/request.js. Asking is the solid one
- * because it is what most people open this for; sending is outlined beside
- * it, not hidden behind a menu, because it is half the cases.
- *
- * Middle of the page when there is nothing else on it, pinned to the bottom
- * once there is a list to scroll past. */
-function makeButtons(where) {
-  const wrap = el("div", "two");
-  const ask = el("button", "go", T("dl.make"));
-  ask.type = "button";
-  ask.addEventListener("click", () => form("in"));
-  const send = el("button", "ghost2", T("dl.send"));
-  send.type = "button";
-  send.addEventListener("click", () => form("out"));
-  wrap.append(ask, send);
-  /* A WAY IN THAT IS ALWAYS THERE. The payout box only drew when something
-     was wrong with it, so somebody who wanted to check where their money
-     goes — or fix it before it bit them — had nowhere to press and said so:
-     "I can't see anywhere for where the money lands."
-     Quiet and last, because it is looked for once and then never again. */
-  const pay = el("button", "quietlink");
-  pay.type = "button";
-  pay.textContent = T("dl.whereMoney");
-  pay.addEventListener("click", () => {
-    const sheet = el("div", "sh");
-    const card = el("div", "shc");
-    card.append(el("p", "lab", T("dl.whereMoney")));
-    card.append(payoutLine());
-    const shut = el("button", null, T("pay.close"));
-    shut.type = "button";
-    shut.addEventListener("click", () => sheet.remove());
-    const acts = el("div", "acts");
-    acts.append(shut);
-    card.append(acts);
-    sheet.append(card);
-    sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.remove(); });
-    document.body.append(sheet);
-  });
-  wrap.append(pay);
-  if (where === "bar") { bar.append(wrap); bar.hidden = false; return null; }
-  return wrap;
-}
-
 /* ===========================================================================
- * THE FRONT PAGE
+ * THE HOME SCREEN IS THE AMOUNT
  * ===========================================================================
  *
- * FIRST IT WAS A DOOR. A stranger met a sign-in wall carrying another
- * product's name, pressed the one button, was refused, and had nowhere to
- * go — never having seen a request or learned what it cost.
+ * It was two buttons over a list — a menu of destinations. Cash App's home
+ * is a number with Request and Pay under it, and that arrangement is the
+ * benchmark for this kind of app for a reason: the verb comes after the
+ * number, because the number is the thing you already know. Nobody opens
+ * this app wondering whether they want to ask or send. They open it knowing
+ * "she owes me 2,400".
  *
- * THEN IT WAS A BROCHURE, which was worse in a different way: a hundred and
- * fifty words, three headings and two paragraphs of prose on the screen
- * somebody gives four seconds to. "Too much text" — said about this product
- * four times now, and right every time.
+ * So the amount is typed here, on the way in, and the sheet that follows
+ * asks only who and what for. One screen, one thing, and the form lost its
+ * biggest field.
  *
- * So: a headline, the payer's screen, three facts of four words each, and
- * the button. About thirty words. Everything a paragraph was doing is either
- * on the card, in the spec row, or it was not worth a paragraph.
- *
- * The card is drawn rather than screenshotted: a screenshot of a dark app on
- * a dark page is a grey rectangle, and it goes stale the first time that
- * screen changes. It carries the whole argument — "they need no account" is
- * a claim, and a picture of their entire screen is the proof.
+ * A NATIVE FIELD, NOT A DRAWN KEYPAD. Cash App draws its own; on the web
+ * that means reimplementing a number pad, its backspace, its decimal rules
+ * and its accessibility, to arrive back where inputmode="decimal" already
+ * is. The phone's pad is also the one the person has used ten thousand
+ * times.
  */
-function signedOut() {
-  const box = el("div", "front");
+function pad() {
+  const box = el("div", "pad");
 
-  box.append(el("h1", "hero", T("dl.heroHead")));
-  box.append(el("p", "herosub", T("dl.heroSub")));
+  const row = el("div", "padrow");
+  const sign = el("span", "padsign");
+  const amount = el("input", "padamt");
+  amount.id = "pad-amount";
+  amount.type = "text";
+  amount.inputMode = "decimal";
+  amount.placeholder = "0";
+  amount.setAttribute("aria-label", T("ask.amount"));
+  /* THE FIELD IS AS WIDE AS THE NUMBER. Fixed width leaves a gap to the
+     right of a short amount and drags the sign off centre, so ¥1 sits
+     visibly left of the middle of the screen while ¥12,000 sits in it. */
+  const fit = () => { amount.size = Math.max(1, (amount.value || "0").length); };
+  fit();
+  amount.addEventListener("input", fit);
+  /* GROUPED WHEN THEY STOP, not as they type: putting separators in under a
+     moving caret is how a caret ends up somewhere nobody asked for. */
+  amount.addEventListener("blur", () => {
+    const raw = amount.value.replace(/,/g, "").trim();
+    if (/^\d+$/.test(raw)) amount.value = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    fit();
+  });
+  row.append(sign, amount);
+  box.append(row);
 
-  const demo = el("div", "demo");
-  demo.append(el("p", "dlab", T("dl.demoWho", { who: "Tom" })));
-  demo.append(el("p", "damt", "¥2,400"));
-  demo.append(el("p", "dwhat", T("dl.demoWhat")));
-  demo.append(el("div", "dbtn", T("dl.demoPay", { amount: "¥2,400" })));
-  demo.append(el("p", "dways", T("dl.demoWays")));
-  box.append(demo);
-
-  /* THREE FACTS, AND THE PARAGRAPHS ONE TAP BEHIND THEM.
-     Coarse first, finer when asked: the line names the thing and the sheet
-     explains it, for the one person in ten who wants to know. Nothing was
-     lost moving those paragraphs a tap deeper — they were not being read
-     where they were. */
-  const specs = el("div", "specs");
-  for (const k of ["spec1", "spec2", "spec3"]) {
-    const row = el("button", "spec");
-    row.type = "button";
-    row.append(el("span", null, T("dl." + k)));
-    row.append(el("i", "chev", "\u203a"));
-    row.addEventListener("click", () => note(T("dl." + k), T("dl." + k + ".p")));
-    specs.append(row);
+  const cur = el("select", "padcur");
+  cur.id = "pad-cur";
+  cur.setAttribute("aria-label", T("dl.cur"));
+  for (const [code, label] of MONEY) {
+    const o = el("option", null, label);
+    o.value = code;
+    cur.append(o);
   }
-  box.append(specs);
+  cur.value = curNow();
+  const paintSign = () => { sign.textContent = CUR_SIGN[cur.value] || ""; };
+  paintSign();
+  cur.addEventListener("change", () => { curKeep(cur.value); paintSign(); });
+  box.append(cur);
 
-  const go = el("button", "go wide", T("dl.signIn"));
-  go.type = "button";
-  go.addEventListener("click", signInSheet);
-  box.append(go);
-  box.append(el("p", "hint", T("dl.payerNote")));
+  const why = el("p", "why padwhy");
+  const open = (way) => {
+    const amt = amount.value.trim();
+    /* An empty pad is not an error — it is somebody who came to look at the
+       list. The sheet opens with the amount blank and asks for it there. */
+    form(way, { amount: amt });
+  };
 
-  root.append(box);
+  const two = el("div", "two padtwo");
+  const ask = el("button", "go", T("dl.make"));
+  ask.type = "button";
+  ask.addEventListener("click", () => open("in"));
+  const send = el("button", "ghost2", T("dl.send"));
+  send.type = "button";
+  send.addEventListener("click", () => open("out"));
+  two.append(ask, send);
+  box.append(two, why);
+  return box;
 }
 
-/* NOTHING YET IS AN INVITATION, not an apology. One line saying what will
-   happen, and the button in the middle where the eye already is. */
+/* NOTHING YET IS THE SAME SCREEN WITH NOTHING UNDER IT. It used to be its
+   own centred arrangement with its own heading, which meant the first thing
+   somebody learned moved the moment they made a request. One screen. */
 function empty() {
-  const box = el("div", "mid");
-  box.append(el("p", "big", "Dealio"));
-  box.append(el("p", "line", T("dl.what")));
-  box.append(el("hr"));
-  box.append(el("p", "mhead", T("dl.noneHead")));
-  box.append(el("p", "msub", T("dl.noneWhy")));
-  box.append(makeButtons());
-  if (STATE && !STATE.ready) box.append(payoutLine());
-  root.append(box);
+  root.append(pad());
+  if (STATE && !STATE.ready) root.append(payoutRow());
+  root.append(el("p", "none", T("dl.noneHead")));
+  root.append(whereLink());
+}
+
+/* THE PAYOUT PROBLEM AS A ROW, not a red box across the top of the screen.
+   It is a thing to go and fix, and a thing to go and fix is a row with a
+   chevron; the explanation is one tap behind it like everything else here.
+   The box shouted the same sentence at somebody every time they opened the
+   app, which is how a warning becomes furniture. */
+function payoutRow() {
+  const b = el("button", "spec warnrow");
+  b.type = "button";
+  const done = Boolean(STATE?.ready);
+  const half = !done && Boolean(STATE?.started);
+  b.append(el("span", null, T(half ? "dl.halfHead" : "dl.notReady")));
+  b.append(el("i", "chev", "\u203a"));
+  b.addEventListener("click", whereSheet);
+  return b;
+}
+
+/* The way to your payout settings when nothing is wrong with them — quiet,
+   at the foot, looked for once and then never again. */
+function whereLink() {
+  const a = el("button", "quietlink");
+  a.type = "button";
+  a.textContent = T("dl.whereMoney");
+  a.addEventListener("click", whereSheet);
+  return a;
+}
+
+function whereSheet() {
+  const sheet = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("p", "lab", T("dl.whereMoney")));
+  card.append(payoutLine());
+  const shut = el("button", null, T("pay.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => sheet.remove());
+  const acts = el("div", "acts");
+  acts.append(shut);
+  card.append(acts);
+  sheet.append(card);
+  sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.remove(); });
+  document.body.append(sheet);
 }
 
 /* NOWHERE FOR THE MONEY TO LAND, AND A WAY TO FIX IT.
@@ -731,14 +809,17 @@ function payoutLine() {
 }
 
 function list() {
-  /* THE LIST HOLDS BOTH DIRECTIONS NOW, so it cannot be headed "money you
-     have asked somebody to pay" — half of it is money going the other way. */
+  /* THE PAD FIRST, then what is still owed. The two buttons used to be
+     pinned at the bottom under a list; the action belongs at the top, which
+     is the one thing Facebook's own screens get right and this did not. */
+  root.append(pad());
+
   const h = el("div", "hrow");
-  h.append(el("h1", null, T("dl.head")));
-  /* THE ONLY WAY TO THE OTHER SCREEN, and only once there is something on it.
-     "Has this person ever actually paid me" is the question that decides
-     whether you say yes to the next job, and the live list cannot answer it —
-     it empties as things settle. */
+  h.append(el("h2", "lhead", T("dl.sub")));
+  /* THE OTHER SCREEN, and only once there is something on it. "Has this
+     person ever actually paid me" is the question that decides whether you
+     say yes to the next job, and the live list cannot answer it — it empties
+     as things settle. */
   if (STATE.requests.some((q) => q.state === "paid")) {
     const a = el("button", "hlink", T("dl.paidHead"));
     a.type = "button";
@@ -746,18 +827,17 @@ function list() {
     h.append(a);
   }
   root.append(h);
-  root.append(el("p", "sub", T("dl.sub")));
-  /* Nowhere for the money to land, said above the list rather than found out
-     by the person who was sent a link and met a dead button. */
-  if (STATE && !STATE.ready) root.append(payoutLine());
-  /* SETTLED ROWS COME OFF THIS SCREEN. They were on it, under a green chip,
-     and the home screen grew by one line for every job ever done and never
-     shrank — so the thing still owed sat further down the page each month.
-     Paid is where they went, and the link above is how you get there. */
+
+  /* Nowhere for the money to land — one row now, not a red box. It is a
+     thing to go and fix, which is a row with a chevron on it, and the
+     detail is one tap behind it like everything else. */
+  if (STATE && !STATE.ready) root.append(payoutRow());
+
   const open = STATE.requests.filter((q) => q.state !== "paid");
   if (!open.length) root.append(el("p", "none", T("dl.allSettled")));
   for (const q of open) root.append(row(q));
-  makeButtons("bar");
+
+  root.append(whereLink());
 }
 
 /* ===========================================================================
@@ -971,7 +1051,7 @@ function heardSheet(j, fill) {
   document.body.append(back);
 }
 
-function form(way) {
+function form(way, prefill) {
   const out = way === "out";
   const back = el("div", "sh");
   const card = el("div", "shc");
@@ -1007,15 +1087,6 @@ function form(way) {
     card.append(el("p", "micor", T("dl.orType")));
   }
 
-  /* CNY AND USD FIRST, because those are the two this is for — somebody in
-     China being paid by somebody abroad, or the other way. The rest are
-     under them rather than behind an "other" that costs a second press. */
-  const MONEY = [["cny", "¥ RMB"], ["usd", "$ USD"], ["aud", "A$ AUD"],
-                 ["hkd", "HK$ HKD"], ["eur", "€ EUR"], ["gbp", "£ GBP"],
-                 ["jpy", "¥ JPY"]];
-  const SIGN = { cny: "¥", usd: "$", aud: "A$", hkd: "HK$", eur: "€",
-                 gbp: "£", jpy: "¥" };
-
   const amtWrap = el("label");
   amtWrap.append(el("span", null, T("ask.amount")));
   const amtRow = el("div", "amtrow");
@@ -1023,6 +1094,11 @@ function form(way) {
   amount.id = "f-amount";
   amount.placeholder = "2,400";
   amount.inputMode = "decimal";
+  /* THE NUMBER CAME FROM THE HOME SCREEN. Cash App's home is the amount and
+     the verb comes after it, which is right for this too: you always know
+     the number — "she owes me 2,400" — and who it is for is the easy part.
+     So the field arrives full and the cursor goes to the name instead. */
+  if (prefill && prefill.amount) amount.value = prefill.amount;
   const cur = el("select");
   cur.id = "f-cur";
   cur.setAttribute("aria-label", T("dl.cur"));
@@ -1034,11 +1110,8 @@ function form(way) {
   /* Remembered per phone: somebody asking in RMB today is asking in RMB next
      week, and picking it again every time is a step that is only ever needed
      once. Wrapped because a private window throws on read. */
-  try { const last = localStorage.getItem("dealio:cur"); if (last) cur.value = last; }
-  catch { /* leave it on RMB */ }
-  cur.addEventListener("change", () => {
-    try { localStorage.setItem("dealio:cur", cur.value); } catch { /* fine */ }
-  });
+  cur.value = curNow();
+  cur.addEventListener("change", () => curKeep(cur.value));
   amtRow.append(amount, cur);
   amtWrap.append(amtRow);
   card.append(amtWrap);
@@ -1072,7 +1145,7 @@ function form(way) {
         /* THE SIGN GOES BACK ON FOR THE MESSAGE. The field takes bare
            digits now, and "Mei — 2,400 for 12 lessons" pasted into WeChat is
            an amount in no particular currency. */
-        sent({ to: who.value.trim(), amount: SIGN[cur.value] + amt,
+        sent({ to: who.value.trim(), amount: CUR_SIGN[cur.value] + amt,
                what: what.value.trim(), url: j.url, way: out ? "out" : "in" });
         load();
         return;
@@ -1087,7 +1160,7 @@ function form(way) {
   back.append(card);
   back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
   document.body.append(back);
-  amount.focus();
+  (amount.value.trim() ? who : amount).focus();
 }
 
 /** The message, written. One press made the request and this is the other
