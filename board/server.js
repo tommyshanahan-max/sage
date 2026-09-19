@@ -9337,7 +9337,14 @@ async function startCheckout({ d, i, method, payeeAcct, ref, done }) {
     return { secret: session.client_secret, pk: STRIPE_PK };
   } catch (err) {
     console.error("checkout:", err.message);
-    return { error: "stripe" };
+    /* STRIPE'S OWN SENTENCE, CARRIED BUT NOT SHOWN. Every route that answers a
+       member drops it and says one plain word; the admin route that exists to
+       answer "why was this refused" returns it, because the whole point of
+       that command is the sentence. It names the method or the account that
+       was the problem, and without it "that did not open" is the only thing
+       anybody has to go on — which is how WeChat Pay failing looked exactly
+       like all three failing for a day. */
+    return { error: "stripe", detail: err.message };
   }
 }
 
@@ -9900,6 +9907,53 @@ app.post("/api/admin/request", admin, express.json({ limit: "2kb" }), async (req
  *  account id belonging to a person. That rule is why this prints words
  *  rather than a dump of process.env.
  */
+/** WHY WAS THAT REFUSED — asked of Stripe, for one request, in each method.
+ *
+ *  WHY THIS EXISTS. WeChat Pay was refused and the other two were never
+ *  pressed, so the screen read as "none of the payments work" and the only
+ *  record of the reason was one line in a container log. Three methods, three
+ *  possible answers, and no way to see them without a phone and a guess.
+ *
+ *  It creates real checkout sessions and abandons them. That is deliberate:
+ *  anything less is a different call from the one that fails. Nothing is
+ *  charged — a session nobody completes expires — and nothing is written to
+ *  the board.
+ *
+ *  STRIPE'S OWN SENTENCE COMES BACK HERE and nowhere else. The one reader is
+ *  whoever holds the admin key, who can already see everything; a member gets
+ *  a plain word, because Stripe's text names fields and accounts.
+ */
+app.post("/api/admin/pay-try", admin, express.json({ limit: "1kb" }), async (req, res) => {
+  if (!stripe.configured()) return res.status(400).json({ error: "off" });
+  const id = request.cleanId(String(req.body?.id || ""));
+  if (!id) return res.status(400).json({ error: "id" });
+
+  const board = await store.load(FILE);
+  const q = board.requests.find((x) => x.id === id);
+  if (!q) return res.status(404).json({ error: "gone" });
+  if (!q.cur) return res.status(400).json({ error: "currency" });
+
+  const asker = board.people.find((p) => p.by === q.by);
+  const dest = (q.way || "in") === "out" ? (q.landed ? q.acct : "") : asker?.payee;
+  if (!dest) return res.status(400).json({ error: "payee" });
+
+  const want = String(req.body?.method || "");
+  const methods = ["wechat", "alipay", "card"].includes(want)
+    ? [want] : ["wechat", "alipay", "card"];
+
+  const tried = [];
+  for (const method of methods) {
+    const out = await startCheckout({
+      d: { plan: [{ label: q.what || q.from, amount: q.amount }], cur: q.cur, title: q.what },
+      i: 0, method, payeeAcct: dest,
+      ref: "q:" + q.id,
+      done: backHere(req, "/pay/" + q.id),
+    });
+    tried.push({ method, ok: !out.error, error: out.error || "", detail: out.detail || "" });
+  }
+  res.json({ ok: true, amount: q.amount, cur: q.cur, to: q.to || "", tried });
+});
+
 app.get("/api/admin/pay", admin, async (req, res) => {
   const KEY = (process.env.BOARD_STRIPE_KEY || "").trim();
   /* The prefix, and only the prefix. sk_live_ and sk_test_ are the one thing

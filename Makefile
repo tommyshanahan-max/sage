@@ -675,6 +675,21 @@ go-test: ## Put the sandbox Stripe keys back: make go-test
 	@# do not cross between modes in either direction.
 	@bash scripts/stripe-keys.sh test
 
+pay-try: ## Why a payment was refused, in Stripe's words: make pay-try ID=... [METHOD=wechat]
+	@# THE THREE METHODS, ASKED OF STRIPE, WITH THE REASON UNDER EACH.
+	@#
+	@# WeChat Pay was refused and the other two were never pressed, so the
+	@# phone read as "none of the payments work" — and the reason existed in
+	@# one line of a container log that nobody would know to go and read.
+	@#
+	@# ID is the end of the request's address: thexchange.app/pay/<this bit>.
+	@# It opens real checkout sessions and abandons them. Nothing is charged —
+	@# a session nobody completes expires — and nothing is written down.
+	@test -n "$(ID)" || { echo 'make pay-try ID=... — the bit after /pay/ in the link'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/pay-try.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --id "$(ID)" --method "$(METHOD)"
+
 hook-make: ## Make the Stripe webhook and print its secret: used by make go-live
 	@# NOT FOR TYPING. `make go-live` calls it and catches the secret in a
 	@# variable; run by hand it prints a live signing secret onto a screen and
