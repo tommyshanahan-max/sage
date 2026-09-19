@@ -4945,6 +4945,11 @@ export const STRINGS = {
                         "发起一笔，把那段话粘到你们平时聊天的地方。"],
   /* Said at the top rather than discovered by the person who was sent a link
      and found a dead button. */
+  /* Said once, on a browser this server has never met. Not a password box:
+     whatever puts the identity here does it permanently. */
+  "dl.notYou":         ["This phone is not signed in.", "这台手机还没登录。"],
+  "dl.notYouWhy":      ["Open your sign-in link on this phone once and it will stay signed in.",
+                        "在这台手机上打开一次你的登录链接，之后就一直记得了。"],
   "dl.notReady":       ["Nobody can pay you yet.", "现在还收不到钱。"],
   "dl.notReadyWhy":    ["You have not said where the money should land. Requests can be written and sent, but not paid.",
                         "你还没填钱打到哪里。可以先写、先发，只是暂时付不了。"],

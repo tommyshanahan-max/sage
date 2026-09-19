@@ -183,9 +183,23 @@ function draw() {
   root.append(el("h1", null, T("dl.head")));
   root.append(el("p", "sub", T("dl.sub")));
 
-  /* NOWHERE FOR THE MONEY TO LAND, said at the top rather than discovered by
-     the person who was sent a link and found a dead button. */
-  if (STATE && !STATE.ready) {
+  /* THIS BROWSER IS NOBODY YET.
+   *
+   * The page opens for anybody — it is outside the board's door on purpose —
+   * but making a request needs a person, and a person is a browser this
+   * server has met. A phone that has never been signed in sees an empty list
+   * and a button that would fail, which reads as broken software.
+   *
+   * ONCE PER PHONE, NOT EVERY TIME. Whatever put the identity on this browser
+   * did it permanently; there is nothing to repeat. That is worth saying,
+   * because the thing it replaces — a password box on every visit — is what
+   * everybody assumes is coming. */
+  if (STATE && !STATE.you) {
+    const w = el("div", "warn");
+    w.append(el("b", null, T("dl.notYou")));
+    w.append(document.createTextNode(T("dl.notYouWhy")));
+    root.append(w);
+  } else if (STATE && !STATE.ready) {
     const w = el("div", "warn");
     w.append(el("b", null, T("dl.notReady")));
     w.append(document.createTextNode(T("dl.notReadyWhy")));
@@ -203,6 +217,7 @@ function draw() {
   }
 
   bar.textContent = "";
+  if (STATE && !STATE.you) { bar.hidden = true; slot.replaceWith(langButton(draw)); return; }
   const mk = el("button", null, T("dl.make"));
   mk.type = "button";
   mk.addEventListener("click", () => form());

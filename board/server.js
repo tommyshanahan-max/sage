@@ -419,7 +419,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|api\/memo\/|api\/request\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|dealio|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -9547,13 +9547,27 @@ app.get("/pay/:id", (req, res, next) => page("request.html", req, res, next));
 
 /* DEALIO — the asking half, on its own page.
  *
- * Behind the door, because asking for money needs somewhere for it to land
- * and that is an account. The paying half at /pay/ is outside the door and
- * always will be: the whole design is that the person paying needs nothing.
+ * OUTSIDE THE BOARD'S DOOR, and the reasoning is worth writing down because
+ * it looks like a hole and is not one.
  *
- * ITS OWN LAYOUT AND NONE OF THE BOARD'S CHROME. This is step one of three —
- * a page here, then its own domain, then an app if it ever earns one — and a
- * page wearing the board's tab bar is a page that cannot leave. */
+ * It was behind it, and that was wrong in two ways. Practically: Tom could
+ * not open it on the phone he was testing with, because that browser had
+ * never been let through the board's door, and the answer "go and sign in to
+ * the other product first" is not a thing to say to somebody testing this
+ * one. Structurally: the door belongs to The Exchange, and this page is step
+ * one of leaving. A page that only works behind another product's password
+ * is a page that cannot be lifted out.
+ *
+ * WHAT ACTUALLY GATES IT is on the route, where it belongs: making a request
+ * needs a person row with a handle on it, and only a member has one. A
+ * stranger who finds this address gets an empty list and a button that
+ * refuses — which is the correct amount of nothing.
+ *
+ * WHAT IS NOT OPENED: the board. Its own door is untouched, and every route
+ * that reads people, rooms or messages is still behind it.
+ *
+ * The paying half at /pay/ is outside the door and always will be: the whole
+ * design is that the person paying needs nothing at all. */
 app.get(["/dealio", "/dealio/"], notesOff,
   (req, res, next) => page("dealio.html", req, res, next));
 
