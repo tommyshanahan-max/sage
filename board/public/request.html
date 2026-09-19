@@ -390,7 +390,7 @@ function payHow(q) {
         /* Stripe refused the destination because its transfers capability is
            not active yet. Nothing the payer can do, and the old text asked
            them to try again — twice more, on the other two buttons. */
-        : why === "notready" ? "rq.notReady" : "memo.payFailed");
+        : why === "notready" ? "rq.halfSet" : "memo.payFailed");
     });
     ways.append(b);
   };

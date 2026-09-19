@@ -5064,8 +5064,11 @@ export const STRINGS = {
   "rq.noPayee":        ["Nowhere for it to land yet", "还没有收款方式"],
   /* The payee has an account but Stripe has not turned transfers on for it
      yet — identity and bank both have to be accepted first. Named for the
-     person who cannot fix it, so they stop pressing. */
-  "rq.notReady":       ["They have not finished setting up yet",
+     person who cannot fix it, so they stop pressing.
+     `rq.notReady` was already taken, by the line for a payee who has not
+     started at all. Two different states and two different sentences: one is
+     nothing begun, this one is begun and not finished. */
+  "rq.halfSet":        ["They have not finished setting up yet",
                         "对方的收款还没设置好"],
   "rq.needsYou":       ["Needs you", "待你填写"],
   "rq.land":           ["Say where it should land", "填写收款方式"],
