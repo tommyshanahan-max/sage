@@ -311,16 +311,31 @@
     <p class="eyebrow gold">Today, and with us</p>
     <h2>Three hours, or thirty seconds.</h2>
 
-    <div class="field">
-      <div><span class="w">Get to a branch</span><span class="v">An hour, with the queue</span></div>
-      <div><span class="w">The form</span><span class="v">Purpose, documents, ID</span></div>
-      <div><span class="w">Then wait</span><span class="v">Two to five days</span></div>
-      <div><span class="w">Or: open the link</span><span class="v out">30 seconds</span></div>
-    </div>
+    <!-- BOTH ENDS, BECAUSE BOTH ENDS LOSE TIME TODAY. The slide used to
+         count only the payer's morning at the bank, which is the bigger
+         number and half the story: the person being paid loses an afternoon
+         applying to Stripe, verifying a business and building a link, and
+         most of them never find out it was possible at all.
 
-    <p class="lead" style="margin-top:1.5rem">Tap the link. Tap WeChat. It is
-      done.</p>
-    <p>And it is the payer's morning we are giving back, not yours.</p>
+         AND THE LAST ROW IS THE PACKAGING ARGUMENT. Neither side learns
+         anything. The payer pays the way they have paid for a decade; the
+         payee gives a bank account the way they would to an employer. We
+         did not invent a new behaviour, we wrapped the two that already
+         exist — which is also why it can work on a first try, in a taxi,
+         with nobody to ask. -->
+    <table class="vs">
+      <thead>
+        <tr><th></th><th>Today</th><th>With us</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>The payer</td><td>A branch, a form, three days</td><td>Tap WeChat</td></tr>
+        <tr><td>The payee</td><td>Apply, verify, build a link</td><td>Open a link</td></tr>
+        <tr><td>Either of them</td><td>Learns a new system</td><td>Learns nothing</td></tr>
+      </tbody>
+    </table>
+
+    <p class="lead" style="margin-top:1.4rem">Nobody changes how they already
+      pay, or how they already bank.</p>
   </section>
 
   <section id="what">
@@ -435,9 +450,21 @@
         <!-- Only what the drawing cannot say. Language and what the payer
              meets are both visible above; repeating them in a row is two
              things to read where the picture already did it once. -->
-        <tr><td>To set up</td><td>A dashboard</td><td>A link</td></tr>
+        <!-- Only what the drawing cannot say. Language and what the payer
+             meets are both visible above; repeating them in a row is two
+             things to read where the picture already did it once.
+
+             THE LAST ROW IS THE BIGGEST ONE AND IT IS NOT ABOUT CLICKS.
+             On their own Stripe account the payee is the merchant of
+             record: disputes, chargebacks, compliance and tax reporting
+             all land on them. Through this they are a connected account
+             and we carry that. Saving somebody an afternoon of setup is a
+             convenience; taking the merchant obligations off a sole trader
+             is a different kind of offer. -->
+        <tr><td>To get paid</td><td>Apply. Verify. Build a link.</td><td>Open a link</td></tr>
         <tr><td>Written for</td><td>A merchant</td><td>A person</td></tr>
         <tr><td>Directions</td><td>One</td><td>Both</td></tr>
+        <tr><td>Disputes and tax</td><td>Theirs</td><td>Ours</td></tr>
       </tbody>
     </table>
 
