@@ -5196,8 +5196,8 @@ export const STRINGS = {
                         "{who} 还没填收款方式，暂时付不了。"],
   /* Sending money is a promise until the other end has somewhere for it to
      land, because this board is never allowed to hold it in the meantime. */
-  "rq.outWhy":         ["Say where the money should land and {who} can send it. No account here, and nothing to install.",
-                        "填一下钱打到哪里，{who} 就能转过来。不用在这边注册，也不用装什么。"],
+  "rq.outWhy":         ["Stripe will ask where to send it. No account here, and nothing to install.",
+                        "Stripe 会问你钱打到哪里。不用在这边注册，也不用装什么。"],
   "rq.noCur":          ["No currency on this one", "这笔没写币种"],
   "rq.alreadyPaid":    ["Already paid", "已经付过了"],
   "rq.noPayee":        ["Nowhere for it to land yet", "还没有收款方式"],
@@ -5210,8 +5210,16 @@ export const STRINGS = {
   "rq.halfSet":        ["They have not finished setting up yet",
                         "对方的收款还没设置好"],
   "rq.needsYou":       ["Needs you", "待你填写"],
-  "rq.land":           ["Say where it should land", "填写收款方式"],
+  /* ACCEPT, NOT "SAY WHERE IT SHOULD LAND". The second is accurate and reads
+     like a form to fill in; the first is what somebody is actually doing.
+     Giving a bank account is what accepting money means here — the line
+     under the button says so, so the word promises nothing it cannot keep. */
+  "rq.land":           ["Accept {amount}", "收下 {amount}"],
   "rq.landGoing":      ["Opening…", "正在打开…"],
+  /* Done their half and waiting on the other. Nothing for them to do, and
+     the screen should say that rather than offer them a button. */
+  "rq.landedWait":     ["That is your side done. {who} sends it from here.",
+                        "你这边好了，等 {who} 发出来。"],
   "rq.gone":           ["This link does not open anything.", "这个链接打不开东西。"],
   "rq.goneWhy":        ["It may have been taken back, or the address is wrong. Ask whoever sent it.",
                         "可能已经撤回，或者地址不对。找发给你的人问一下。"],

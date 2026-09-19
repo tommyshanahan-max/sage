@@ -9747,8 +9747,22 @@ app.get("/api/request/:id", async (req, res) => {
   const ready = (q.way || "in") === "out"
     ? Boolean(q.acct && q.landed)
     : Boolean(asker?.payee);
+  /* WHICH SIDE OF THE LINK IS READING IT.
+   *
+   * The page could not tell, and on a request going out that is the whole
+   * question. The receiver says where the money should land, comes back from
+   * Stripe onto this same address, and was handed a PAY button for the money
+   * they are owed — under a line reading "the money goes straight to your
+   * account". Both true of somebody, neither true of them.
+   *
+   * The sender is the one browser that can prove who it is: the device that
+   * made the row. The receiver has no account here and never gets one, so
+   * "not the sender" is the only thing that can be known about them, and it
+   * is enough — every screen on this page is written for one of those two. */
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.json({
     ok: true,
+    yours: Boolean(me && me === q.by),
     request: request.requestView(q, {
       payeeReady: ready && (stripe.configured() || PAY_DEMO),
     }),

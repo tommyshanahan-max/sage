@@ -334,7 +334,7 @@ function draw() {
        THEY NEVER BECOME A MEMBER. No password, no board, no profile — the
        only thing kept about them is Stripe's own id for that account. */
     body.append(el("p", "foot", T("rq.outWhy", { who: q.from })));
-    const b = el("button", "go", T("rq.land"));
+    const b = el("button", "go", T("rq.land", { amount: shown(q) }));
     b.type = "button";
     b.addEventListener("click", async () => {
       b.disabled = true;
@@ -350,6 +350,13 @@ function draw() {
     body.append(b);
   } else if (!q.payeeReady) {
     body.append(el("p", "foot", T("rq.notReady", { who: q.from })));
+  } else if (q.way === "out" && !STATE.yours) {
+    /* SENDING, AND THE READER IS THE ONE BEING SENT TO.
+       They said where the money should land, came back from Stripe onto this
+       same address, and were handed a PAY button for the money they are
+       owed. Nothing for them to do now but wait for it, and saying so is the
+       whole of what this screen is for. */
+    body.append(el("p", "foot", T("rq.landedWait", { who: q.from })));
   } else {
     const b = el("button", "go", T("memo.pay", { amount: shown(q) }));
     b.type = "button";
@@ -375,9 +382,14 @@ function draw() {
   /* WHO THE MONEY GOES TO DEPENDS WHICH WAY IT IS GOING, and this said "the
      money goes straight to Claire" on a page telling somebody Claire wants
      to pay THEM. The sentence is about the person receiving it. */
-  foot.append(el("p", null, q.way === "out"
-    ? T("rq.straightOut", { who: q.from })
-    : T("rq.straight", { who: q.from })));
+  /* AND WHICH SIDE IS READING IT. "Straight to your account" is true of the
+     receiver and false of the sender, who is looking at the same address —
+     the same mistake one line up, one person further along. */
+  foot.append(el("p", null,
+    q.way === "out"
+      ? (STATE.yours ? T("rq.straight", { who: q.to || T("dl.someone") })
+                     : T("rq.straightOut"))
+      : T("rq.straight", { who: q.from })));
   sheet.append(foot);
 
   root.append(sheet);
@@ -457,7 +469,9 @@ async function payFrame({ secret, pk, q, how, demo }) {
   const scan = (how === "wechat" || how === "alipay")
     ? el("p", "pscan", T("pay.scanSelf." + how)) : null;
   const note = el("p", "pnote", q.way === "out"
-    ? T("rq.straightOut", { who: q.from }) : T("rq.straight", { who: q.from }));
+    ? (STATE.yours ? T("rq.straight", { who: q.to || T("dl.someone") })
+                   : T("rq.straightOut"))
+    : T("rq.straight", { who: q.from }));
   frame.append(bar, slot, ...(scan ? [scan] : []), note);
   document.body.append(frame);
 
@@ -491,7 +505,15 @@ async function payFrame({ secret, pk, q, how, demo }) {
 
 async function load() {
   try {
-    const r = await fetch("/api/request/" + ID, { cache: "no-store" });
+    /* THE DEVICE GOES UP, so the server can say which side of this link is
+       reading it. A browser that has never been here sends an empty header
+       and is told it is not the sender, which is the right answer for
+       everybody the link was actually sent to. */
+    let device = "";
+    try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
+    const r = await fetch("/api/request/" + ID, {
+      cache: "no-store", headers: { "x-board-device": device },
+    });
     const j = await r.json().catch(() => null);
     if (r.ok && j?.ok) { STATE = j; draw(); return; }
   } catch { /* below */ }
