@@ -9734,6 +9734,11 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
      take the money a second time. */
   if (request.requestState(q) === "paid") return res.status(400).json({ error: "already" });
 
+  /* A REQUEST WITH NO CURRENCY CANNOT BE PRICED, and this came back as
+     "amount" — so the page said "that did not open" for all three methods
+     while the amount on the screen was perfectly fine. Said as itself. */
+  if (!q.cur) return res.status(400).json({ error: "currency" });
+
   /* WHOSE ACCOUNT, BY DIRECTION — see the note in the read route above. */
   const asker = board.people.find((p) => p.by === q.by);
   const dest = (q.way || "in") === "out"
@@ -9754,7 +9759,7 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
     ref: "q:" + q.id,
     done: backHere(req, "/pay/" + q.id + "?paid={CHECKOUT_SESSION_ID}"),
   });
-  if (out.error) return res.status(out.error === "amount" ? 400 : 502).json(out);
+  if (out.error) return res.status(out.error === "stripe" ? 502 : 400).json(out);
   res.json({ ok: true, ...out });
 });
 

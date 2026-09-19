@@ -369,17 +369,24 @@ function payHow(q) {
     b.append(el("b", null, name), el("span", null, why));
     b.addEventListener("click", async () => {
       b.disabled = true;
+      let why = "";
       try {
         const r = await fetch("/api/request/" + ID + "/pay", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ method: key }),
         });
-        const j = r.ok ? await r.json() : null;
-        if (j?.secret && j?.pk) { back.remove(); payFrame({ secret: j.secret, pk: j.pk, q, how: key }); return; }
-        if (j?.demo) { back.remove(); payFrame({ q, how: key, demo: true }); return; }
+        const j = await r.json().catch(() => null);
+        if (r.ok && j?.secret && j?.pk) { back.remove(); payFrame({ secret: j.secret, pk: j.pk, q, how: key }); return; }
+        if (r.ok && j?.demo) { back.remove(); payFrame({ q, how: key, demo: true }); return; }
+        why = j?.error || "";
       } catch { /* below */ }
       b.disabled = false;
-      b.querySelector("span").textContent = T("memo.payFailed");
+      /* Each refusal says which. "That did not open" for all three methods,
+         on a page showing a perfectly good amount, tells nobody anything. */
+      b.querySelector("span").textContent = T(
+        why === "currency" ? "rq.noCur"
+        : why === "already" ? "rq.alreadyPaid"
+        : why === "payee" ? "rq.noPayee" : "memo.payFailed");
     });
     ways.append(b);
   };

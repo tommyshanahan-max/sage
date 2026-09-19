@@ -88,7 +88,23 @@ export function cleanRequest(raw) {
        and a date the software guessed at is one it will be wrong about. */
     when: s(raw.when, 60),
   };
-  if (CURRENCIES.includes(raw.cur)) out.cur = raw.cur;
+  /* THE CURRENCY, FROM THE SIGN THEY WROTE IT WITH.
+   *
+   * This took a request with no `cur` on it, and every payment on it failed:
+   * toMinor refuses an amount it cannot price, the route answered "amount",
+   * and the screen said "that did not open" for all three methods. The amount
+   * said ¥1 the whole time.
+   *
+   * So the sign decides when nothing else does. It is on the front of every
+   * amount anybody types, and a request whose currency has to be supplied
+   * separately is a request that will one day be sent without one.
+   *
+   * ¥ IS BOTH YUAN AND YEN and this picks yuan. On a board built for money
+   * crossing the Chinese border that is right far more often than not; a yen
+   * request passes cur explicitly. Guessing wrong here is a visible wrong
+   * number on a page, not a silent one. */
+  out.cur = CURRENCIES.includes(raw.cur) ? raw.cur : curOf(out.amount);
+  if (!out.cur) delete out.cur;
   /* THE PERSON PAYING, WHEN THEY ARE ON THE BOARD. Optional, and only so the
      request can appear on their side too — on their card, and in what they
      have paid. A request to somebody who has never heard of this board is
@@ -126,6 +142,21 @@ export function cleanRequest(raw) {
    carries its own code alphabet: this file leaves whole or it does not leave.
    store.js asserts the two lists match at load. */
 export const CURRENCIES = ["cny", "aud", "hkd", "usd", "eur", "gbp", "jpy"];
+
+/** Which currency an amount is written in, from its sign. Longest first, so
+ *  A$ and HK$ are read before the $ inside them. "" when it cannot be told —
+ *  which is a request that cannot be paid, said as such rather than guessed
+ *  at. */
+const SIGNS = [
+  ["HK$", "hkd"], ["A$", "aud"], ["US$", "usd"],
+  ["\u00a5", "cny"], ["\uffe5", "cny"], ["\u5143", "cny"],
+  ["\u20ac", "eur"], ["\u00a3", "gbp"], ["$", "usd"],
+];
+export function curOf(amount) {
+  const t = String(amount || "");
+  for (const [sign, cur] of SIGNS) if (t.includes(sign)) return cur;
+  return "";
+}
 
 export const REQUEST_MAX = 400;
 

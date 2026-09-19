@@ -5037,6 +5037,9 @@ export const STRINGS = {
      land, because this board is never allowed to hold it in the meantime. */
   "rq.outWhy":         ["Say where the money should land and {who} can send it. No account here, and nothing to install.",
                         "填一下钱打到哪里，{who} 就能转过来。不用在这边注册，也不用装什么。"],
+  "rq.noCur":          ["No currency on this one", "这笔没写币种"],
+  "rq.alreadyPaid":    ["Already paid", "已经付过了"],
+  "rq.noPayee":        ["Nowhere for it to land yet", "还没有收款方式"],
   "rq.needsYou":       ["Needs you", "待你填写"],
   "rq.land":           ["Say where it should land", "填写收款方式"],
   "rq.landGoing":      ["Opening…", "正在打开…"],
