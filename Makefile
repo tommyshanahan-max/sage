@@ -678,6 +678,25 @@ stripe-names: ## Repair .env after an old go-live wrote the wrong names: make st
 	@# the wrong ones. Nothing to move means it says so and changes nothing.
 	@bash scripts/stripe-names.sh
 
+sign-in-code: ## One sign-in code that keeps working: make sign-in-code CODE="XXXXXX" WHO="Tom"
+	@# WHY IT IS NOT make back. That one mints six random characters and
+	@# spends them on use — right for a member who lost their phone, because
+	@# a code that keeps working is a code that ends up in a group chat, and
+	@# wrong for the person who runs the board, for whom it is a weekly chore
+	@# of running a command and reading six random characters off a screen.
+	@#
+	@# This is one code, chosen, that never spends. Six characters, no I O 0
+	@# or 1. WHO is the handle on the board — make who, if it is not obvious.
+	@#
+	@# IT IS A PASSWORD ON A PUBLIC DOOR. Whoever types it becomes that
+	@# person: their requests, the account their money lands in, and every
+	@# member they can see. Five wrong answers an hour per browser is the
+	@# whole wall, so six characters somebody would try first — a name, a
+	@# word, the same letter six times — are not behind it at all.
+	@#
+	@# Take it away with: make sign-in-code OFF=1
+	@bash scripts/sign-in-code.sh
+
 go-live: ## Put the real Stripe keys on: make go-live
 	@# REAL MONEY AFTER THIS. Every charge has this platform as merchant of
 	@# record, so it is a thing to run once you have read Stripe's terms and

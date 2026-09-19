@@ -290,6 +290,36 @@ const PAGES = new Map();
  *
  * Unset, none of this is reachable and the door behaves as it always has. */
 const DEMO_CODE = store.cleanCode(process.env.BOARD_DEMO_CODE || "");
+
+/* A STANDING WAY BACK IN, FOR THE PERSON WHO RUNS THIS BOARD.
+ *
+ * `make back` mints six random characters, prints them, and spends them the
+ * moment they are used. That is right for a member who lost their phone and
+ * wrong for the operator, who signs in on a fresh browser often enough that
+ * "run a command, read six random characters off a terminal, type them" is a
+ * weekly chore — and on a screen that is hard to read, the reading is the
+ * expensive part, not the running.
+ *
+ * So: one code, chosen rather than minted, that never spends and never
+ * expires. Both settings or it does not exist.
+ *
+ * WHAT IT IS WORTH TO SOMEBODY WHO GUESSES IT. Everything the named person's
+ * page can do — their requests, the account their money lands in, and every
+ * member they can see. Five wrong answers an hour per browser is the only
+ * thing between that and a stranger, and it is the same wall every other code
+ * on this door stands behind. The difference is that the others are random,
+ * so the wall is the last line; this one is six characters a person chose, so
+ * the wall is the whole of it. Six characters somebody would try first — a
+ * name, a word, the same letter six times — is not protected by the wall at
+ * all, because the first guess is inside the five.
+ *
+ * It lives in .env for that reason and never in the repo: a standing password
+ * committed to a public history is not a password.
+ *
+ * IT OPENS EXACTLY ONE PERSON. The handle named here and nobody else, so a
+ * leaked copy is worth one page rather than the board. */
+const BACK_CODE = store.cleanCode(process.env.BOARD_BACK_CODE || "");
+const BACK_WHO = String(process.env.BOARD_BACK_WHO || "").trim();
 /* An origin and nothing else — no path, no query. It is handed straight to
    location.assign() on the door page, so anything that is not a bare host is a
    redirect somebody could have chosen. http and a port are allowed so the pair
@@ -1365,6 +1395,12 @@ const codesTaken = (board) => new Set([
   ...board.people.map((q) => q.rep),
   // And a note written to somebody who is not here yet — see /api/write.
   ...board.writes.map((w) => w.code),
+  // And the standing code, when one is set. It is not on any row — it is a
+  // setting — so nothing else would ever know it was spoken for, and an
+  // invite minted with the same six characters would be dead on arrival: the
+  // door reads the standing code first and would sign that stranger in as the
+  // operator instead of admitting them as themselves.
+  BACK_CODE,
 ].filter(Boolean));
 
 /* ---------------------------------------------------------------------------
@@ -1483,6 +1519,39 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
     setWaitCookie(res, me);
     tries.delete(me);
     return res.json({ ok: true, waiting: true, room: backTo.room });
+  }
+
+  /* THE STANDING CODE, read before the minted ones.
+   *
+   * Before, because a code that never spends must not be shadowed by a one-use
+   * code that happens to match it — codesTaken stops that being minted, but
+   * the order is what makes it true rather than likely.
+   *
+   * REFUSED IF THIS BROWSER IS ALREADY SOMEBODY, exactly as the block below
+   * is: two people's rows on one device hash is not a state this board has.
+   *
+   * NOT SPENT. That is the whole point of it, and it is why this opens one
+   * named person and not whoever typed it. */
+  if (BACK_CODE && BACK_WHO && safeEqual(code, BACK_CODE)) {
+    let standWhy = "";
+    const stand = await change((board) => {
+      const q = board.people.find((p) => (p.handle || "") === BACK_WHO);
+      /* Named a handle nobody on this board has — a setting typed wrong, not
+         a stranger guessing. Fall through and let it be answered as a wrong
+         code: a public door that says "right code, no such person" is a door
+         that has just confirmed the code. */
+      if (!q) { standWhy = "nobody"; return null; }
+      if (q.by === me) return { handle: q.handle || "" };
+      if (board.people.some((p) => p.by === me)) { standWhy = "taken"; return null; }
+      store.rebind(board, q.by, me);
+      return { handle: q.handle || "" };
+    });
+    if (standWhy === "taken") return res.status(409).json({ error: "taken" });
+    if (stand) {
+      setCookie(res, me);
+      tries.delete(me);
+      return res.json({ ok: true, back: true, handle: stand.handle });
+    }
   }
 
   /* A MEMBER'S WAY BACK, on the same box and for the same reason.

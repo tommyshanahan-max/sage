@@ -979,6 +979,15 @@ services:
       # existed. "read" is what people mean by invite only; "post" lets anybody
       # read and only members write.
       BOARD_INVITE: ${TOMSCODING_BOARD_INVITE:-}
+      # THE STANDING WAY BACK IN — one code, chosen, never spent, that puts
+      # one named person's page onto whatever browser types it. Set both or
+      # there is no such code. See the note over BACK_CODE in server.js for
+      # what it is worth to somebody who guesses it; the short version is that
+      # it is a password, so it belongs in .env and nowhere else, and six
+      # characters anybody would try first are not protected by the five-an-
+      # hour wall because the first guess is inside the five.
+      BOARD_BACK_CODE: ${TOMSCODING_BOARD_BACK_CODE:-}
+      BOARD_BACK_WHO: ${TOMSCODING_BOARD_BACK_WHO:-}
       # Private messages and groups, and the switch that kills them. Default on
       # — "off" turns every message and group route in the app into a 404
       # without a deploy, which is the thing you want within reach on the one
