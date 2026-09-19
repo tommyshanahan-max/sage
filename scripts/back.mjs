@@ -19,7 +19,13 @@
  * person replaces the first, so there is never a drawer of live codes behind
  * somebody's name.
  *
- *   make back WHO="Tom"
+ *   make back WHO="Tom" [TO=dealio]
+ *
+ * TO IS WHERE THE CODE LANDS THEM. Without it the door drops everybody on the
+ * board, which is right for somebody who lost their phone and wrong for
+ * everybody else: a way-back code is almost always minted for somebody
+ * standing in front of one particular screen, and "now find Dealio again"
+ * is the step this whole file exists to remove.
  */
 
 const [, , base, key, ...rest] = process.argv;
@@ -36,6 +42,17 @@ const arg = (name) => {
  * off .env — the board answers on its own hostname inside the compose network
  * and that is not a name anybody can type. */
 const PUBLIC = (process.env.BOARD_PUBLIC_URL || "https://thexchange.app").replace(/\/+$/, "");
+
+/* A path on this board and nothing else. It goes on a link people forward,
+   and an open redirect on the end of one is a real way to take somebody
+   somewhere — the same rule nextPath runs on in server.js. */
+const rawTo = arg("to").trim().replace(/^\/+/, "");
+const to = /^[A-Za-z0-9._~\-\/]{0,80}$/.test(rawTo) && !rawTo.includes("..")
+  ? rawTo : "";
+if (rawTo && !to) {
+  console.error('TO is a path on this board, like TO=dealio');
+  process.exit(2);
+}
 
 const who = arg("who").trim();
 if (!who) {
@@ -67,11 +84,13 @@ if (!r.ok || !d.code) {
  * reason they do on an invite: the link on its own opens nothing, so a link
  * forwarded by accident is not a way into somebody's account. */
 const line = "─".repeat(60);
+/* The door, with where they are going on the end of it. */
+const DOOR = `${PUBLIC}/enter` + (to ? `?next=/${to}` : "");
 const en = [
   `${d.handle} — this puts your page back on the phone or browser you are`,
   `holding. Open the link, type the code.`,
   "",
-  `${PUBLIC}/enter`,
+  DOOR,
   d.code,
   "",
   "Open it in Safari or Chrome rather than inside WeChat — WeChat keeps its",
@@ -82,7 +101,7 @@ const zh = [
   `${d.handle} —— 这个能把你的主页放回你手上这台手机或浏览器。`,
   `打开链接，输入口令就行。`,
   "",
-  `${PUBLIC}/enter`,
+  DOOR,
   d.code,
   "",
   "请用 Safari 或 Chrome 打开，别在微信里打开——微信的浏览器自己存一份，",

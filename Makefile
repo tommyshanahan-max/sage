@@ -540,7 +540,7 @@ ferry-keys: ## Make the keypair Ferry needs to send notifications
 	      console.log('TOMSCODING_FERRY_VAPID_PUBLIC='+k.publicKey);\
 	      console.log('TOMSCODING_FERRY_VAPID_PRIVATE='+k.privateKey);"
 
-back: ## Somebody locked out of their own page:  make back WHO="Tom"
+back: ## Somebody locked out of their own page: make back WHO="Tom" [TO=dealio]
 	@# For a member who has lost their key and cannot be reached by email —
 	@# a new phone, cleared storage, or the night the domain moved and every
 	@# browser on the old one became a stranger.
@@ -552,12 +552,18 @@ back: ## Somebody locked out of their own page:  make back WHO="Tom"
 	@# It opens nothing new — there is no new person at the end of it — and it
 	@# is spent the moment it is used. A second one for the same person
 	@# replaces the first, so a code sent last week stops working tonight.
+	@#
+	@# TO IS WHERE IT LANDS THEM: make back WHO="Tom" TO=dealio. Without it
+	@# the door drops everybody on the board, which is right for somebody who
+	@# lost their phone and wrong for everybody else — a way-back code is
+	@# almost always minted for somebody standing in front of one particular
+	@# screen, and "now go and find Dealio again" is a second step.
 	@test -n "$(WHO)" || { echo 'make back WHO="their name"'; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T \
 	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
 	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/back.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  --who "$(WHO)"
+	  --who "$(WHO)" --to "$(TO)"
 
 post-numbers: ## Say where the whole board has got to, as The Professor
 	@# Safe every morning: it works out what the totals were when it last spoke

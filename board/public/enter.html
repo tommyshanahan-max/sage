@@ -596,6 +596,18 @@ const PREVIEW = new URLSearchParams(location.search).get("new") === "1";
 /* The same browser identity the rest of the app uses. Made here if this is the
    first page somebody has opened, because admission is recorded against it —
    and it is what the recovery key carries. */
+/* OUR OWN PATHS ONLY. One leading slash and not two — "//evil.example" is
+   protocol-relative and a browser reads it as another host — and no
+   backslash, which some browsers normalise into one. Same rule the Google
+   callback runs on; see nextPath in server.js. */
+function nextPath() {
+  let raw = "";
+  try { raw = new URL(location.href).searchParams.get("next") || ""; }
+  catch { return ""; }
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return "";
+  return raw.slice(0, 200);
+}
+
 function uuid() {
   try {
     if (crypto && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -729,8 +741,16 @@ async function enter() {
     if (r.ok && d.waiting) { location.assign("/room"); return; }
     /* A MEMBER'S WAY BACK, and the same reasoning: they are already in, their
        rows are already on this browser, and the "you are in" screen is written
-       for somebody arriving for the first time. Straight to the board. */
-    if (r.ok && d.back) { location.assign("/browse"); return; }
+       for somebody arriving for the first time. Straight through.
+
+       WHERE THEY WERE GOING, if the link said. A way-back code is minted for
+       somebody standing in front of a particular screen — usually the one
+       they are testing or the one they were locked out of — and landing them
+       on /browse means finding their way back to it by hand. `?next=` is on
+       the link `make back TO=...` prints. nextPath rather than the raw value:
+       a code link is a thing people forward, and an open redirect on the end
+       of one is a genuine way to take somebody somewhere. */
+    if (r.ok && d.back) { location.assign(nextPath() || "/browse"); return; }
     if (r.ok) return showIn(d.by || "", Boolean(d.agent));
     /* THE RIGHT CODE AT THE WRONG DOOR. Somebody who was sent a piece of work
        and landed here types the only code they have. Take them to it rather
