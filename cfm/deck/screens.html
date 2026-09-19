@@ -1,0 +1,196 @@
+<title>Four screens</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  /* AIRWALLEX'S SCREENS AND OURS, AT BOTH ENDS, ON ONE PAGE.
+     Dealio's palette and Dealio's bones — this is the same argument as the
+     deck, one level closer in, and a page that looked like a different
+     product would read as one.
+
+     DRAWN, NOT SCREENSHOTTED, and for a harder reason than usual: nobody
+     here has opened Airwallex's checkout. What is drawn on the left of each
+     pair is what their public documentation describes — the QR element with
+     its Refresh button, the merchant's own page around it, the account
+     application before any of it. It is an honest reading of their docs and
+     it is not a photograph. The last screen says so rather than letting the
+     page imply otherwise. */
+  :root{
+    --ground:#080A0F; --raise:#10141D; --ink:#ECEDF2; --dim:#8F95A6;
+    --hair:#1F2533; --blue:#5570E8; --gold:#D9A94A; --wx:#2ECC5E; --ali:#1678FF;
+    --serif:"Instrument Serif",Georgia,"Songti SC",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--ink);font:16px/1.6 var(--sans);
+    -webkit-font-smoothing:antialiased;scroll-snap-type:y proximity}
+  .deck{max-width:30rem;margin:0 auto;padding:0 1.4rem}
+  section{scroll-snap-align:start;min-height:86svh;display:flex;flex-direction:column;
+    justify-content:center;padding:3rem 0;border-bottom:1px solid var(--hair)}
+  section:last-of-type{border-bottom:0}
+  .eyebrow{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--blue);margin:0 0 1.1rem}
+  .eyebrow.gold{color:var(--gold)}
+  h1{font:400 clamp(2.9rem,12vw,4rem)/1.01 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  h2{font:400 clamp(2rem,8vw,2.7rem)/1.06 var(--serif);margin:0 0 .4rem;text-wrap:balance}
+  .lead{font-size:1.05rem;color:var(--dim);margin:.6rem 0 0}
+  .caption{font-size:.82rem;color:var(--dim);margin:1rem 0 0;text-align:center}
+
+  /* TWO PHONES, LABELLED, AND THE LABEL IS THE WHOLE POINT. Theirs on the
+     left because that is the order the eye reads a comparison in, and the
+     one worth remembering goes second. */
+  .screens{display:flex;gap:.8rem;margin:1.4rem 0 0}
+  .sc{flex:1;min-width:0;background:var(--raise);border:1px solid var(--hair);
+    border-radius:.9rem;padding:.7rem;display:flex;flex-direction:column;gap:.45rem;
+    min-height:15rem}
+  .sc.ours{border-color:#2A3350}
+  .sc .tag{font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;
+    font-weight:700;color:var(--dim)}
+  .sc.ours .tag{color:var(--blue)}
+  .sc .amt{font:400 1.5rem/1 var(--serif);color:var(--ink)}
+  .sc .what{font-size:.55rem;color:var(--dim)}
+  .sc .zhline{font-size:.58rem;color:var(--ink);text-align:center}
+  .sc .btn{border-radius:99px;text-align:center;font-size:.55rem;font-weight:700;
+    padding:.38rem;background:var(--blue);color:#05070D;margin-top:auto}
+  .sc .btn.q{background:transparent;border:1px solid var(--hair);color:var(--dim);
+    font-weight:600}
+  /* The QR, drawn as a grid of squares. Nothing is fetched — a page sent into
+     China loads nothing off the box. */
+  .sc .qr{aspect-ratio:1;border-radius:.35rem;background:#fff;padding:.3rem;
+    display:grid;grid-template:repeat(7,1fr)/repeat(7,1fr);gap:.06rem}
+  .sc .qr i{background:#05070D;border-radius:.03rem}
+  .sc .qr i.o{background:transparent}
+  .sc .qr.pale{opacity:.55}
+  /* The application, drawn as the rows it actually is. */
+  .sc .rows{display:flex;flex-direction:column;gap:.3rem;margin:.15rem 0 0}
+  .sc .rows span{font-size:.5rem;color:var(--dim);border-bottom:1px solid var(--hair);
+    padding:0 0 .26rem}
+  .ways{display:flex;gap:.45rem;margin:.1rem 0 0;flex-wrap:wrap}
+  .ways span{display:flex;align-items:center;gap:.25rem;font-size:.5rem;color:var(--dim)}
+  .ways i{width:.36rem;height:.36rem;border-radius:50%;background:var(--dim)}
+  .ways .wx i{background:var(--wx)}
+  .ways .ali i{background:var(--ali)}
+
+  .vs{width:100%;border-collapse:collapse;margin:1.2rem 0 0}
+  .vs th{text-align:left;font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--dim);font-weight:700;padding:0 0 .7rem;border-bottom:1px solid var(--hair)}
+  .vs th:last-child{color:var(--gold)}
+  .vs td{padding:.8rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
+  .vs tr:last-child td{border-bottom:0}
+  .vs td:first-child{color:var(--ink);font-weight:650;width:34%}
+  .vs td:nth-child(2){color:#5C6375}
+  .vs td:last-child{color:var(--gold)}
+
+  .note{margin:1.2rem 0 0;padding:1rem 1.1rem;background:var(--raise);
+    border:1px solid var(--hair);border-radius:.9rem;font-size:.88rem;color:var(--dim)}
+  .note b{color:var(--ink);display:block;margin:0 0 .35rem}
+</style>
+
+<div class="deck">
+
+  <section>
+    <p class="eyebrow">Airwallex, and us</p>
+    <h1>Four screens.</h1>
+    <p class="lead">Both ends of the same payment.</p>
+  </section>
+
+  <!-- THE PAYER. Their QR has a Refresh button because their QR expires —
+       that is in their own docs for the QR Code Element, and it is the tell:
+       it belongs to a checkout that assumes somebody is sitting at a desktop
+       finishing an order. -->
+  <section>
+    <p class="eyebrow">One</p>
+    <h2>The payer.</h2>
+    <p class="lead">Same wallet. Different page.</p>
+
+    <div class="screens">
+      <div class="sc">
+        <span class="tag">Theirs · a checkout</span>
+        <span class="what">ACME STORE · Order #4471</span>
+        <span class="amt">AUD 502.00</span>
+        <div class="qr pale" aria-hidden="true"><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i></div>
+        <div class="btn q">Refresh code</div>
+      </div>
+      <div class="sc ours">
+        <span class="tag">Ours · a person</span>
+        <span class="what">Tom · 12 lessons</span>
+        <span class="amt">¥2,400</span>
+        <div class="qr" aria-hidden="true"><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i></div>
+        <div class="zhline">长按二维码识别</div>
+        <div class="ways">
+          <span class="wx"><i></i>微信</span>
+          <span class="ali"><i></i>支付宝</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="caption">An order number, or a name.</p>
+  </section>
+
+  <!-- THE PAYEE. This is the pair that matters. Their left-hand screen is not
+       a payment screen at all — it is the application that has to be approved
+       before any payment screen exists, and it is where the tutor stops. -->
+  <section>
+    <p class="eyebrow">Two</p>
+    <h2>The payee.</h2>
+    <p class="lead">This is the one that decides it.</p>
+
+    <div class="screens">
+      <div class="sc">
+        <span class="tag">Theirs · an application</span>
+        <div class="rows">
+          <span>Registered business name</span>
+          <span>ABN</span>
+          <span>Photo ID</span>
+          <span>Proof of business address</span>
+          <span>Settlement account</span>
+          <span>Expected monthly volume</span>
+        </div>
+        <div class="btn q">Submit for review</div>
+      </div>
+      <div class="sc ours">
+        <span class="tag">Ours · a screen</span>
+        <span class="amt">¥2,400</span>
+        <span class="what">12 lessons · Ray</span>
+        <div class="btn">Ask for money</div>
+      </div>
+    </div>
+
+    <p class="caption">Days, then a dashboard. Or thirty seconds.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">What changes</p>
+    <h2>Same rails. Different door.</h2>
+
+    <table class="vs">
+      <tr><th>&nbsp;</th><th>Airwallex</th><th>Dealio</th></tr>
+      <tr><td>Payee applies</td><td>Yes, approved first</td><td>No</td></tr>
+      <tr><td>Payee needs</td><td>A business, a site</td><td>A phone</td></tr>
+      <tr><td>Payer sees</td><td>A shop's checkout</td><td>A person's name</td></tr>
+      <tr><td>Language</td><td>The seller's</td><td>Theirs</td></tr>
+      <tr><td>The QR</td><td>Expires, refresh</td><td>Long-press, done</td></tr>
+    </table>
+
+    <p class="caption">We are not cheaper than them. We are open to people they turn away.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Before this is shown to anybody</p>
+    <h2>Drawn from their docs.</h2>
+
+    <div class="note">
+      <b>Nobody here has opened Airwallex's checkout.</b>
+      The left-hand screens are an honest reading of their public
+      documentation — the QR element with its Refresh button, the merchant's
+      own page around it, the account application before any of it. They are
+      not photographs, and Airwallex also sells a hosted page that has not
+      been read.
+    </div>
+
+    <div class="note">
+      <b>One job before this goes in a deck.</b>
+      Open a real Airwallex checkout, photograph it, and put the photograph
+      where the drawing is. If the drawing is wrong, the drawing changes.
+    </div>
+  </section>
+
+</div>
