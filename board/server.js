@@ -9465,6 +9465,68 @@ app.post("/api/group/deal/share", notesOff, express.json({ limit: "2kb" }), asyn
    everything on it arrives after a code has been given. */
 app.get("/d/:t", (req, res, next) => page("memo.html", req, res, next));
 
+/** CAN THIS BOARD TAKE A PAYMENT, AND SAY WHY NOT.
+ *
+ *  Tom asked "can the app do payments" and there was no way to answer it
+ *  except by guessing: the code is built, the box is deployed, and whether it
+ *  actually works turns on five environment variables and one Stripe setting
+ *  that live where nobody can see them. A question about the running system
+ *  that can only be answered by reading a commit is a question that will be
+ *  answered wrong.
+ *
+ *  So it answers itself. Every line is a fact about this process or about the
+ *  board file, and the last one is a verdict.
+ *
+ *  NO SECRETS COME OUT OF HERE. Whether a key is set, and which mode its
+ *  prefix says it is in — never the key, never a fragment of one, never an
+ *  account id belonging to a person. That rule is why this prints words
+ *  rather than a dump of process.env.
+ */
+app.get("/api/admin/pay", admin, async (req, res) => {
+  const KEY = (process.env.BOARD_STRIPE_KEY || "").trim();
+  /* The prefix, and only the prefix. sk_live_ and sk_test_ are the one thing
+     worth knowing and the one thing that is not a secret. */
+  const mode = KEY.startsWith("sk_live_") ? "live"
+    : KEY.startsWith("sk_test_") ? "test"
+    : KEY ? "unrecognised" : "";
+
+  const board = await store.load(FILE);
+  /* Who could be paid through Connect at all: a row with an account id on it.
+     Counted, never named — this answers "is anybody set up", and who is set
+     up is a different question with a different audience. */
+  const payees = board.people.filter((q) => q.payee).length;
+  const deals = board.groups.filter((g) => g.deal?.plan?.length).length;
+
+  const why = [];
+  if (!KEY) why.push("BOARD_STRIPE_KEY is not set");
+  else if (mode === "unrecognised") why.push("BOARD_STRIPE_KEY is not an sk_ key");
+  if (!STRIPE_PK) why.push("BOARD_STRIPE_PK is not set — the form cannot mount");
+  if (!process.env.BOARD_STRIPE_VERSION) {
+    why.push("BOARD_STRIPE_VERSION is not set — Accounts v2 refuses without it");
+  }
+  if (!FEE_SECRET) why.push("BOARD_DEAL_FEE_SECRET is not set — nothing flips a row to PAID");
+  if (KEY && !payees) why.push("nobody has a payee account yet — Pay lands on \"not finished setting up\"");
+
+  res.json({
+    ok: true,
+    takesPayments: Boolean(KEY && STRIPE_PK && FEE_SECRET && payees),
+    mode,
+    key: Boolean(KEY),
+    publishable: Boolean(STRIPE_PK),
+    /* The webhook's signing secret. Without it the board never hears that a
+       payment landed, so the money moves and the row still says DUE. */
+    webhook: Boolean(FEE_SECRET),
+    apiVersion: (process.env.BOARD_STRIPE_VERSION || "").trim(),
+    feePage: Boolean(DEAL_FEE_TO),
+    feePct: store.FEE_PCT,
+    payees,
+    deals,
+    demo: PAY_DEMO,
+    why,
+  });
+});
+
+
 /** OPENING ONE.
  *
  *  Throttled on the same map and the same numbers as the front door: five

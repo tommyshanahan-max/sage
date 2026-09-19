@@ -623,6 +623,17 @@ payee: ## Where somebody's money goes: make payee WHO="Claire" ACCT=acct_… [OF
 	  /seed/payee.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" --acct "$(ACCT)" $(if $(OFF),--off,)
 
+pay-check: ## Can this board take a payment, and if not why: make pay-check
+	@# "Can the app do payments" is a question about the running box, and the
+	@# answer turns on five variables in .env and one setting inside Stripe.
+	@# Answering it by reading a commit is answering it by guessing.
+	@#
+	@# NOTHING SECRET IS PRINTED. Whether each key is set, and whether the
+	@# Stripe key's prefix says test or live. Never a key and never an
+	@# account id.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/pay-check.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+
 dealsheet: ## An example deal in a real room: make dealsheet WHO="Tom" WITH="Christopher" [OFF=1]
 	@# TO SEE ONE ON A PHONE. `make try` shows every screen on a laptop, except
 	@# the only thing that matters about a deal: what it feels like arriving in
