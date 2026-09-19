@@ -6273,6 +6273,22 @@ export const STRINGS = {
  * is aimed at is right far more often than not. English is the fallback rather
  * than the default. */
 export function pickLang(fallback = "en") {
+  /* ?lang=zh, ABOVE EVERYTHING INCLUDING A SAVED CHOICE.
+   *
+   * A page whose language depends on the reader's phone is a page nobody can
+   * send. The Chinese front of Dealio — 给国外的人付钱 — is the whole
+   * argument of the product and it cannot be shown to anybody on an English
+   * phone, including the person who has to demonstrate it.
+   *
+   * Above the saved choice on purpose: the parameter is somebody asking for
+   * this page in this language now, which is a stronger statement than a
+   * preference set last week. It is not written to storage, so it lasts
+   * exactly as long as the address that carried it and the switch still
+   * sticks for everybody who used the switch. */
+  try {
+    const want = new URL(location.href).searchParams.get("lang");
+    if (want === "en" || want === "zh") return want;
+  } catch { /* no URL, or a browser that dislikes it */ }
   try {
     const saved = localStorage.getItem("board:lang");
     if (saved === "en" || saved === "zh") return saved;

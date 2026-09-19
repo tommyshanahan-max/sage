@@ -643,7 +643,24 @@ function draw() {
   bar.textContent = "";
   bar.hidden = true;
 
-  if (STATE && !STATE.you) signedOut();
+  /* THE LANDING PAGE, ON PURPOSE, WHILE BEING A MEMBER.
+   *
+   * signedOut() is the front page and the only people who ever see it are
+   * strangers — which means the person who has to show it to somebody
+   * cannot. Opening /dealio as a member goes straight to the pad, and there
+   * is no way from there back to the page being demonstrated.
+   *
+   * ?out=1 draws it anyway. It changes nothing about who anybody is: no
+   * signing out, no cookie touched, no row altered — it is which of two
+   * functions paints, and a reload without the parameter is the app again.
+   * The buttons on it lead to the door, which for a member opens straight
+   * through, so nobody can get stuck behind their own front page. */
+  const SHOWOUT = (() => {
+    try { return new URL(location.href).searchParams.get("out") === "1"; }
+    catch { return false; }
+  })();
+
+  if (SHOWOUT || (STATE && !STATE.you)) signedOut();
   else if (VIEW === "paid") paid();
   else if (!(STATE?.requests || []).length) empty();
   else list();
