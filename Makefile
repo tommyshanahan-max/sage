@@ -616,6 +616,26 @@ handroom: ## A room you keep by hand: make handroom [WHO="Ray Chen"] [OFF=1] [NA
 	  /seed/handroom.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --name "$(NAME)" --who "$(WHO)" $(if $(OFF),--off,)
 
+payout: ## The link that sets where somebody's money lands: make payout WHO="Tom"
+	@# Setting up payouts is the one thing a payee does themselves — the app
+	@# gives them a button and Stripe takes the bank details on its own pages.
+	@# This mints the same link from here.
+	@#
+	@# WHY AN OPERATOR NEEDS IT. make go-live clears every payout account on
+	@# the board, because an account minted under a test key does not exist
+	@# under a live one. The first person it clears is whoever is testing, who
+	@# then has a real request on a real phone saying "has not said where the
+	@# money should land" and a button three taps into a page he has to find.
+	@#
+	@# One use, and it expires. Run it again rather than keeping one. Nothing
+	@# secret is printed — not the account id, and never a bank number.
+	@test -n "$(WHO)" || { echo 'make payout WHO="their name"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T \
+	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
+	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/payout.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)"
+
 payee: ## Where somebody's money goes: make payee WHO="Claire" ACCT=acct_… [OFF=1]
 	@# A payee normally sets this themselves — the room gives them a button and
 	@# Stripe takes their bank and identity on its own pages. This is for the

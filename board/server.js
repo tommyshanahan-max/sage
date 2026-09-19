@@ -9450,6 +9450,78 @@ app.post("/api/pay/onboard", notesOff, express.json({ limit: "1kb" }), async (re
   }
 });
 
+/** THE SAME THING FROM THE BOX — see the note over /api/admin/back, which
+ *  exists for the same reason and takes the same shape.
+ *
+ *  The route above needs the payee's own device hash, which lives in one
+ *  browser's localStorage and which nobody at a terminal can type. So the
+ *  operator's version takes a handle and looks the member up.
+ *
+ *  WHY AN OPERATOR NEEDS THIS AT ALL, given that setting up payouts is the
+ *  one thing a payee is supposed to do themselves. `make go-live` clears
+ *  every payout account on the board — it has to, because an account minted
+ *  under a test key does not exist under a live one — and the person it
+ *  clears first is the operator, who then has a request on screen saying it
+ *  cannot be paid and a button three taps away on a page he has to find.
+ *  That is a place on a screen where there should be a line to paste.
+ *
+ *  IT MINTS NOTHING SECRET. An Express account id the first time, which is
+ *  Stripe's own identifier and useless to anybody who is not this platform,
+ *  and a single-use onboarding link that expires. The bank details are typed
+ *  on Stripe's pages and this board never sees them.
+ *
+ *  The link opens as whoever holds it, so it goes to the person it names and
+ *  nowhere else. */
+app.post("/api/admin/payout", admin, express.json({ limit: "1kb" }), async (req, res) => {
+  if (!stripe.configured()) return res.status(400).json({ error: "off" });
+  const who = String(req.body?.who || "").trim().toLowerCase();
+  if (!who) return res.status(400).json({ error: "who" });
+
+  /* WHERE STRIPE PUTS THEM DOWN AFTERWARDS. backHere reads the Host header,
+     which inside the compose network is "board:8080" — a name no phone can
+     resolve — so the caller hands in the public address the Makefile already
+     reads out of .env for `make back`. Validated rather than trusted even
+     behind the admin key: it is handed to Stripe as a redirect, and a
+     redirect is worth checking wherever it came from. */
+  const raw = String(req.body?.base || "").trim().replace(/\/+$/, "");
+  if (!/^https:\/\/[A-Za-z0-9.-]{1,253}(:\d{1,5})?$/.test(raw)) {
+    return res.status(400).json({ error: "base" });
+  }
+  const done = raw + "/dealio";
+
+  const board = await store.load(FILE);
+  const mine = board.people.find(
+    (q) => String(q.handle || "").toLowerCase() === who);
+  if (!mine?.handle) return res.status(404).json({ error: "nobody" });
+
+  try {
+    let acct = mine.payee;
+    const made = !acct;
+    if (!acct) {
+      const got = await stripe.makePayee({ email: mine.mail || "" });
+      acct = String(got?.id || "");
+      if (!acct) return res.status(502).json({ error: "stripe" });
+      await change((b) => {
+        const row = b.people.find((q) => q.id === mine.id);
+        if (row) row.payee = acct;
+        return { ok: true };
+      });
+    }
+    const link = await stripe.onboardLink({ account: acct, refresh: done, done });
+    if (!link?.url) return res.status(502).json({ error: "stripe" });
+    res.json({ ok: true, url: link.url, handle: mine.handle, made });
+  } catch (err) {
+    console.error("admin/payout:", err.message);
+    /* The platform itself is not activated — said as itself, for the same
+       reason as one route up. On a brand new live account this is the most
+       likely thing to come back, and "stripe" tells nobody anything. */
+    if (/must be activated/i.test(err.message)) {
+      return res.status(400).json({ error: "unactivated", detail: err.message });
+    }
+    res.status(502).json({ error: "stripe", detail: err.message });
+  }
+});
+
 /** THE CHARGE. Created per press, for one row of one plan, in the method the
  *  payer already chose on the card. */
 /* ONE CHECKOUT, ASKED FOR FROM TWO PLACES.
