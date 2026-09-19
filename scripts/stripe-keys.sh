@@ -61,7 +61,17 @@ echo ""
 ask() {
   local label="$1" want="$2" val=""
   while :; do
-    printf '  %s: ' "$label" >&2
+    # UNMISSABLE, because the one mistake this makes is pasting a key before
+    # anything is asking for it. A key pasted at a shell prompt is a key in
+    # the shell's history in plain text, and the prompt it was meant for
+    # looked like every other line on a busy screen. So it is a banner, and
+    # it names the thing wanted.
+    echo "" >&2
+    echo "  ────────────────────────────────────────────────" >&2
+    printf '  PASTE THE %s NOW, then press Enter\n' "$(printf '%s' "$label" | tr '[:lower:]' '[:upper:]')" >&2
+    echo "  Nothing will appear as you paste. That is normal." >&2
+    echo "  ────────────────────────────────────────────────" >&2
+    printf '  %s' "$want" >&2
     read -rs val < /dev/tty || { echo ""; echo "  Nothing read."; exit 1; }
     echo "" >&2
     val="$(printf '%s' "$val" | tr -d '[:space:]')"
