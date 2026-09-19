@@ -8868,9 +8868,12 @@ app.get("/api/groups", notesOff, async (req, res) => {
       })() : "",
       /* Whether the reader is the one who needs to set payouts up, and has
          not. Only ever true for the payee themselves. */
+      /* `where` is deliberately not consulted — see the note over
+         /api/pay/onboard. It says which half of the world somebody is in, not
+         where their bank is, and reading it as the second refused a payee in
+         the mainland holding an Australian account. */
       needsPayout: Boolean(g.deal && stripe.configured()
         && (board.people.find((q) => q.by === me) || {}).handle === g.deal.provides
-        && (board.people.find((q) => q.by === me) || {}).where !== "cn"
         && !(board.people.find((q) => q.by === me) || {}).payee),
       /* Computed here rather than stored, so it is right when the terms are
          edited and cannot be deleted by either side. Null when the board
@@ -9251,9 +9254,20 @@ app.post("/api/pay/onboard", notesOff, express.json({ limit: "1kb" }), async (re
   const board = await store.load(FILE);
   const mine = board.people.find((q) => q.by === me);
   if (!mine?.handle) return res.status(400).json({ error: "profile" });
-  /* A MAINLAND PAYEE CANNOT BE ONBOARDED AT ALL, and being told so here beats
-     being walked through four Stripe screens that end in a refusal. */
-  if (mine.where === "cn") return res.status(400).json({ error: "mainland" });
+  /* NO GUESS ABOUT WHERE THE MONEY LANDS. This used to refuse anybody whose
+     `where` was "cn" — and `where` is which half of the world the person is
+     in, for matching. It is not where their bank is, and it defaults to "cn"
+     for everybody who never said.
+
+     So it refused the one person who had to test it: Tom lives in the
+     mainland and his account is Australian. "Not for a mainland account yet"
+     to somebody whose money lands in Sydney is simply wrong, and it stopped
+     him at the first screen.
+
+     What cannot work is a mainland *bank account* as the destination. Stripe
+     asks for the country and the bank itself, on its own pages, and refuses
+     in its own words — a better refusal than ours, because it is about the
+     thing that is actually disqualifying. */
 
   try {
     let acct = mine.payee;

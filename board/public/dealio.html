@@ -431,10 +431,10 @@ function payoutLine() {
       });
       const j = await r.json().catch(() => null);
       if (r.ok && j?.url) { location.href = j.url; return; }
-      /* Each refusal says which. A mainland payee cannot be onboarded at all
-         and being told so beats four Stripe screens ending in no. */
-      b.textContent = T(j?.error === "mainland" ? "dl.setUpCn"
-        : j?.error === "off" ? "dl.setUpOff" : "pay.setUpNo");
+      /* The board no longer guesses that somebody in the mainland cannot be
+         paid — see the note over /api/pay/onboard. What is left is whether
+         payments are on at all, and anything else Stripe said. */
+      b.textContent = T(j?.error === "off" ? "dl.setUpOff" : "pay.setUpNo");
     } catch { b.textContent = T("pay.setUpNo"); }
     b.disabled = false;
   });

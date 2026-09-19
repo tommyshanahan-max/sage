@@ -4984,7 +4984,6 @@ export const STRINGS = {
   "dl.no":             ["No — let me say it again", "不对，我再说一次"],
   "dl.setUp":          ["Say where the money lands", "填写收款方式"],
   "dl.setUpGoing":     ["Opening…", "正在打开…"],
-  "dl.setUpCn":        ["Not for a mainland account yet", "暂时不支持大陆账户"],
   "dl.setUpOff":       ["Payments are switched off here", "这台服务器没开付款"],
   "dl.noneHead":       ["Nothing asked for yet.", "还没发起过收款。"],
   "dl.noneWhy":        ["Ask somebody to pay, then paste the message wherever you are already talking.",

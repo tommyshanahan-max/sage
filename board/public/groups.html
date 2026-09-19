@@ -1314,9 +1314,10 @@ function dealPin(g) {
 
   /* THE PAYEE SETS UP THEIR OWN PAYOUTS, and nobody can do it for them:
      Stripe wants their name, their bank and their identity, and this board
-     should never be the thing holding any of it. Shown only to them, only
-     when they have not, and never to somebody in the mainland, whom Stripe
-     cannot pay at all. */
+     should never be the thing holding any of it. Shown only to them and only
+     when they have not — including to somebody in the mainland, who may well
+     bank somewhere Stripe pays out to. Whether the bank itself works is
+     Stripe's question and it asks it, on its own pages. */
   if (g.needsPayout) box.append(payoutSetup(g));
   if (d.plan && d.plan.length) box.append(payPart(g, d));
   /* The route, between the plan and the board's own row: it is about the
