@@ -960,6 +960,14 @@ function list() {
      is the one thing Facebook's own screens get right and this did not. */
   root.append(pad());
 
+  /* NOWHERE FOR THE MONEY TO LAND, ABOVE THE HEADING AND NOT UNDER IT.
+     It used to be appended after "Still to settle", which filed it as the
+     first row of that list — and it is not a row of that list. It is a fault
+     with the account, it is answered from the pad above it, and on a screen
+     whose only open request was money going OUT it read as a remark about
+     that request, which it is not. */
+  if (STATE && !STATE.ready) root.append(payoutRow());
+
   const h = el("div", "hrow");
   h.append(el("h2", "lhead", T("dl.sub")));
   /* THE OTHER SCREEN, and only once there is something on it. "Has this
@@ -973,11 +981,6 @@ function list() {
     h.append(a);
   }
   root.append(h);
-
-  /* Nowhere for the money to land — one row now, not a red box. It is a
-     thing to go and fix, which is a row with a chevron on it, and the
-     detail is one tap behind it like everything else. */
-  if (STATE && !STATE.ready) root.append(payoutRow());
 
   const open = STATE.requests.filter((q) => q.state !== "paid");
   if (!open.length) root.append(el("p", "none", T("dl.allSettled")));
