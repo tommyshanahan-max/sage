@@ -9343,6 +9343,21 @@ app.post("/api/pay/onboard", notesOff, express.json({ limit: "1kb" }), async (re
        screen: Stripe's text names the field it disliked and is exactly what is
        needed here, and is exactly what should not be shown to a member. */
     console.error("pay/onboard:", err.message);
+    /* THE PLATFORM ITSELF IS NOT ACTIVATED, said as itself.
+     *
+     *   Your account must be activated in order to create accounts.
+     *
+     * Nothing on this board can fix that — it is a form on Stripe about the
+     * business — and it arrived on the screen as "That did not open — try
+     * again", which invites the one thing that cannot work. It is also the
+     * first thing anybody hits on a brand new live account, so it is the
+     * failure this button is most likely to produce in its whole life.
+     *
+     * Matched on Stripe's wording because there is no code for it; a reword
+     * falls back to the generic refusal, which is what we had. */
+    if (/must be activated/i.test(err.message)) {
+      return res.status(400).json({ error: "unactivated" });
+    }
     res.status(502).json({ error: "stripe" });
   }
 });

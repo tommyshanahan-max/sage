@@ -5032,6 +5032,11 @@ export const STRINGS = {
   "dl.payOkWhy":       ["Stripe has your bank and pays you directly. This board never holds it.",
                         "Stripe 有你的银行卡，直接打给你。这个板子不经手。"],
   "dl.payOkGo":        ["Change it with Stripe", "去 Stripe 改"],
+  /* The platform has live keys but has not finished Stripe's own activation,
+     so Stripe will not make connected accounts for it. Nothing on this board
+     can fix it and nothing here should pretend otherwise. */
+  "dl.notLive":        ["This board is not activated with Stripe yet",
+                        "这个板子在 Stripe 那边还没激活"],
   "dl.notReadyWhy":    ["You have not said where the money should land. Requests can be written and sent, but not paid.",
                         "你还没填钱打到哪里。可以先写、先发，只是暂时付不了。"],
 

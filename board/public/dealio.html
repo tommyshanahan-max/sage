@@ -524,7 +524,12 @@ function payoutLine() {
       /* The board no longer guesses that somebody in the mainland cannot be
          paid — see the note over /api/pay/onboard. What is left is whether
          payments are on at all, and anything else Stripe said. */
-      b.textContent = T(j?.error === "off" ? "dl.setUpOff" : "pay.setUpNo");
+      /* Stripe refusing to make accounts at all, because the platform behind
+         this board has not finished its own activation, is a different thing
+         from a payment failing — and it is the first thing a brand new live
+         account hits. Named, with the page that fixes it. */
+      b.textContent = T(j?.error === "unactivated" ? "dl.notLive"
+        : j?.error === "off" ? "dl.setUpOff" : "pay.setUpNo");
     } catch { b.textContent = T("pay.setUpNo"); }
     b.disabled = false;
   });
