@@ -9862,6 +9862,32 @@ app.post("/api/request/:id/off", notesOff, express.json({ limit: "1kb" }), async
 });
 
 /** THE ONES YOU HAVE SENT. Yours only, newest first. */
+/** CAN STRIPE ACTUALLY PAY THIS ACCOUNT — cached for a minute.
+ *
+ *  Asked on every load of Dealio's home screen, and the answer changes at
+ *  most once in a person's life, so a minute of memory saves a round trip to
+ *  Stripe on every refresh without ever being stale enough to matter.
+ *
+ *  A failure to reach Stripe answers "no". The alternative is a screen that
+ *  says somebody is set up because we could not check, which is precisely
+ *  the false yes this whole change exists to stop.
+ */
+const payeeSeen = new Map();
+async function canBePaid(acct) {
+  if (!acct) return false;
+  const now = Date.now();
+  const had = payeeSeen.get(acct);
+  if (had && now - had.at < 60_000) return had.ok;
+  let ok = false;
+  try { ok = await stripe.payeeReady(acct); }
+  catch (err) { console.error("payeeReady:", err.message); }
+  payeeSeen.set(acct, { ok, at: now });
+  /* Never allowed to grow: one entry per payee is small, but a map that only
+     ever gains keys is a leak with a slow fuse. */
+  if (payeeSeen.size > 500) payeeSeen.clear();
+  return ok;
+}
+
 app.get("/api/requests", notesOff, async (req, res) => {
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
@@ -9874,7 +9900,22 @@ app.get("/api/requests", notesOff, async (req, res) => {
        list rather than discovered by the person who was sent a link. Without
        it every request here is unpayable and nothing on this screen would
        say so. */
-    ready: Boolean(me_?.payee) && (stripe.configured() || PAY_DEMO),
+    /* READY MEANS STRIPE WILL ACTUALLY TAKE THE MONEY, not that a row has an
+       account id on it. Having an id was the whole test, and an id is minted
+       the instant somebody presses the button — before any identity, before
+       any bank. So Dealio drew a clean home screen with no warning on it for
+       a person Stripe was refusing every payment to, and the only place that
+       disagreement surfaced was on the payer's phone, as "that did not open".
+
+       One call to Stripe per load of this screen. It is the screen that
+       exists to tell somebody whether they can be paid; asking is the job. */
+    ready: Boolean(me_?.payee) && (stripe.configured() || PAY_DEMO)
+      && (!stripe.configured() || await canBePaid(me_.payee)),
+    /* STARTED BUT NOT FINISHED IS ITS OWN STATE, and it is the commonest one:
+       Stripe's onboarding is several screens and people leave in the middle
+       of it. "You have not said where the money should land" is untrue to
+       somebody who said it twenty minutes ago and stopped at the bank page. */
+    started: Boolean(me_?.payee),
     you: me_?.handle || "",
     /* Whether the page may draw a microphone. Two keys and two bills behind
        it; asking beats drawing one that cannot work. */

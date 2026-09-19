@@ -5018,6 +5018,13 @@ export const STRINGS = {
      space under a heading reads as a page that failed to load. */
   "dl.allSettled":     ["Nothing outstanding.", "没有待付的。"],
   "dl.notReady":       ["Nobody can pay you yet.", "现在还收不到钱。"],
+  /* Started and not finished. Named for what it is rather than for what is
+     missing: Stripe asks for identity and a bank across several screens and
+     most people who stop, stop in the middle of them. */
+  "dl.halfHead":       ["Stripe has not finished checking you.", "Stripe 还没核完你的资料。"],
+  "dl.halfWhy":        ["It needs your ID and your bank before it will pay you. Until it has them, payments to you are refused.",
+                        "要先给它证件和银行卡，不然付给你的钱会被拒。"],
+  "dl.halfGo":         ["Finish with Stripe", "去 Stripe 补完"],
   "dl.notReadyWhy":    ["You have not said where the money should land. Requests can be written and sent, but not paid.",
                         "你还没填钱打到哪里。可以先写、先发，只是暂时付不了。"],
 

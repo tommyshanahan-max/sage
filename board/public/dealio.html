@@ -436,9 +436,16 @@ function empty() {
  * it comes back here rather than to the board. */
 function payoutLine() {
   const box = el("div", "fix");
-  box.append(el("p", "fixhead", T("dl.notReady")));
-  box.append(el("p", "fixwhy", T("dl.notReadyWhy")));
-  const b = el("button", "ghost", T("dl.setUp"));
+  /* TWO STATES, NOT ONE. Never started, and started but not finished — and
+     the second is the commoner of the two, because Stripe's onboarding is
+     several screens and people leave in the middle of it. Telling somebody
+     who stopped at the bank page that they have not said where the money
+     should land is a sentence they know is wrong, and the button under it
+     then looks like it will make them start again. */
+  const half = Boolean(STATE?.started);
+  box.append(el("p", "fixhead", T(half ? "dl.halfHead" : "dl.notReady")));
+  box.append(el("p", "fixwhy", T(half ? "dl.halfWhy" : "dl.notReadyWhy")));
+  const b = el("button", "ghost", T(half ? "dl.halfGo" : "dl.setUp"));
   b.type = "button";
   b.addEventListener("click", async () => {
     b.disabled = true;

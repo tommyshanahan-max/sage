@@ -166,6 +166,40 @@ export async function onboardLink({ account, refresh, done }) {
 /** Can this account actually be paid yet? Onboarding is not one screen and
  *  somebody who abandoned it halfway has an id and no ability to take money. */
 export async function payeeReady(account) {
+  /* ASK V2 FIRST, BECAUSE THE ACCOUNT IS A V2 ACCOUNT.
+   *
+   * makePayee opens these through /v2/core/accounts and asks for
+   * configuration.recipient.capabilities.stripe_balance.stripe_transfers.
+   * That is the capability a destination charge actually needs, and it is
+   * the one Stripe names when it refuses:
+   *
+   *   Your destination account needs to have at least one of the following
+   *   capabilities enabled: transfers, crypto_transfers, or legacy_payments.
+   *
+   * The v1 read below does not see it. So this said a payee was ready on the
+   * strength of payouts_enabled alone, Dealio drew a home screen with no
+   * warning on it, and every payment to that person was refused before the
+   * payer saw a card form — three methods, one cause, and nothing on any
+   * screen naming it.
+   *
+   * REQUESTED IS NOT ACTIVE. The capability is requested the moment the
+   * account is created and only becomes active once Stripe has accepted the
+   * identity and the bank. Reading "requested" as "ready" is exactly the
+   * mistake that made the board disagree with Stripe.
+   *
+   * Falls through to v1 rather than failing: an account opened before this,
+   * or by some other route, still answers there. */
+  if (VERSION) {
+    try {
+      const v2 = await call(
+        "/v2/core/accounts/" + encodeURIComponent(account)
+          + "?include=configuration.recipient",
+        null, {}, { json: true });
+      const st = v2?.configuration?.recipient?.capabilities
+        ?.stripe_balance?.stripe_transfers?.status;
+      if (st) return st === "active";
+    } catch { /* not a v2 account, or v2 is unhappy — ask v1 below */ }
+  }
   const a = await call("/accounts/" + encodeURIComponent(account));
   /* TRANSFERS AND PAYOUTS, NOT CHARGES.
    *
