@@ -9954,6 +9954,18 @@ app.get("/api/requests", notesOff, async (req, res) => {
     /* Whether the page may draw a microphone. Two keys and two bills behind
        it; asking beats drawing one that cannot work. */
     canHear: hear.configured() && terms.configured(),
+    /* WHETHER THERE IS A WECHAT WAY IN. There is not yet: it needs a WeChat
+       Open Platform account, which needs a registered company and a review,
+       and neither exists. The page asks rather than drawing a button that
+       cannot work — the same rule the microphone runs on — so the day the
+       credentials land the button appears and nothing else changes.
+
+       It matters more than it looks: accounts.google.com does not answer in
+       the mainland, and the mainland is who this is for. Until WeChat is
+       here, the invite code is the only road that works for most of them,
+       which is why the sign-in sheet draws it the same size as Google. */
+    canWeChat: Boolean((process.env.BOARD_WECHAT_APPID || "").trim()
+      && (process.env.BOARD_WECHAT_SECRET || "").trim()),
     requests: mine.map((q) => ({
       ...request.requestView(q),
       /* The asker's own view carries what the payer's must not: whether it

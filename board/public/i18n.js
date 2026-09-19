@@ -5067,6 +5067,48 @@ export const STRINGS = {
      into it that was never issued. */
   "dl.useExchange":    ["Dealio uses your Exchange sign-in.", "Dealio 用的是 Exchange 的登录。"],
   "dl.haveCode":       ["I have an invite code", "我有邀请码"],
+  /* ===========================================================================
+   * THE FRONT PAGE
+   * ===========================================================================
+   * It was a door. A stranger met a sign-in wall carrying another product's
+   * name, pressed the one button, was refused, and had nowhere to go — never
+   * having seen a request or learned what it cost. These are the questions in
+   * the order they actually arrive: what is it, what does the other person
+   * have to do, how does it work, what does it cost, can I get in.
+   */
+  "dl.heroHead":       ["Get paid by anyone, anywhere.", "谁都能给你付钱。"],
+  "dl.demoWho":        ["{who} is asking for", "{who} 请你付"],
+  "dl.demoWhat":       ["12 lessons", "12 节课"],
+  "dl.demoPay":        ["Pay {amount}", "付 {amount}"],
+  "dl.demoWays":       ["WeChat Pay · Alipay · Card", "微信支付 · 支付宝 · 银行卡"],
+  /* The claim under the picture, and the picture is the proof of it. */
+  "dl.demoNote":       ["That is their whole screen. No account, no app, nothing to install.",
+                        "对方看到的就这一屏。不用注册，不用装 App。"],
+
+  "dl.howHead":        ["How it works", "怎么用"],
+  "dl.how1":           ["Say who it is for and how much.", "写清楚给谁、多少钱。"],
+  "dl.how2":           ["Send the link into WeChat, or anywhere else you are already talking.",
+                        "把链接发到微信，或者你们本来就在聊的任何地方。"],
+  "dl.how3":           ["They pay. The money goes straight to your bank — this board never holds it.",
+                        "对方付款，钱直接进你的银行账户——不经过这个板子。"],
+
+  "dl.priceHead":      ["What it costs", "多少钱"],
+  "dl.priceP":         ["2% when somebody pays you. Nothing else: nothing to join, nothing monthly, nothing to pay if nobody pays you.",
+                        "有人付你钱时收 2%。其他一分不收：不收入会费，不收月费，没人付你就不收。"],
+
+  "dl.joinHead":       ["Getting in", "怎么进来"],
+  "dl.joinP":          ["Dealio is invitation only for now — somebody already here has to let you in. If somebody has sent you a link to pay, you do not need any of this: just open it.",
+                        "现在要有人邀请才能进来。如果是别人发了付款链接给你，那你什么都不用弄，直接打开就行。"],
+
+  "dl.signInHead":     ["Two ways back in", "两种进来的方式"],
+  "dl.wechatIn":       ["Continue with WeChat", "用微信继续"],
+  /* SAID OUT LOUD, because it decides which button somebody presses.
+     accounts.google.com does not answer in the mainland and the mainland is
+     who this is for. */
+  "dl.cnNote":         ["Google does not open in mainland China. If you are there, use the invite code.",
+                        "在中国大陆打不开 Google。在国内的话用邀请码。"],
+  "dl.payerNote":      ["Paying somebody? You do not need to sign in at all — just open the link they sent.",
+                        "只是要付钱？不用登录，打开对方发的链接就行。"],
   "dl.gOff":           ["Google sign-in is off on this board.", "这个板子没开 Google 登录。"],
   /* WHAT SETTLED. "Paid" and not "History": the question being asked is
      whether the money came, not what happened. */

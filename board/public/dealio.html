@@ -39,6 +39,55 @@
   .lang{margin-left:auto;border:1px solid var(--line);background:none;
     color:var(--ink2);font:inherit;font-size:.78rem;padding:.25rem .7rem;
     border-radius:99px}
+  /* SIGN IN, IN THE BANNER. Ordered after the language button in the source
+     so `margin-left:auto` on that one still pushes the pair to the right. */
+  .signin{border:1px solid var(--line);background:none;color:var(--ink);
+    font:inherit;font-size:.78rem;padding:.25rem .8rem;border-radius:99px;
+    cursor:pointer}
+  /* ---- the front page ---------------------------------------------------
+     A page to read, so it is narrower than the app screens and everything on
+     it is ranged left. The app is centred because it is a set of controls;
+     prose centred down a phone is prose nobody finishes. */
+  .front{padding:.6rem 0 3rem}
+  .front .hero{margin:0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(2rem,9vw,2.7rem);line-height:1.08;letter-spacing:-.01em}
+  .front .herosub{margin:.8rem 0 0;font-size:1.02rem;line-height:1.55;
+    color:var(--ink2);max-width:22rem}
+  /* THE PAYER'S SCREEN, DRAWN. Light on this dark page on purpose: it is a
+     different screen belonging to a different person, and it should look
+     like something being held up rather than part of what you are reading. */
+  .demo{margin:1.8rem 0 0;padding:1.3rem 1.2rem 1.4rem;border-radius:1rem;
+    background:#F3F4F7;color:#0B0E15}
+  .demo .dlab{margin:0;font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:#6F7D92}
+  .demo .damt{margin:.35rem 0 0;font-family:var(--serif);font-size:2.6rem;
+    line-height:1}
+  .demo .dwhat{margin:.3rem 0 0;font-size:.95rem;color:#44506A}
+  .demo .dbtn{margin:1.1rem 0 0;padding:.95rem 1rem;border-radius:99px;
+    background:#2F49A6;color:#fff;text-align:center;font-weight:600;
+    letter-spacing:.02em}
+  .demo .dways{margin:.8rem 0 0;font-size:.82rem;color:#6F7D92;
+    text-align:center}
+  .front .demonote{margin:.7rem 0 0;font-size:.85rem;color:var(--mut)}
+  .front .fh{margin:2.4rem 0 0;font-size:1.02rem;font-weight:600}
+  .front .fp{margin:.5rem 0 0;font-size:.95rem;line-height:1.65;
+    color:var(--ink2)}
+  .front .steps{margin:.7rem 0 0;padding:0 0 0 1.2rem}
+  .front .steps li{margin:.5rem 0 0;font-size:.95rem;line-height:1.55;
+    color:var(--ink2)}
+  .front .steps li::marker{color:var(--acc);font-weight:600}
+  .front .hint{text-align:center}
+  /* A button that is a block rather than a thing in a row of things. */
+  .go.wide,.ghost2.wide{display:block;width:100%;margin:2.4rem 0 0;border:0;
+    border-radius:99px;background:var(--acc);color:var(--accink);font:inherit;
+    font-size:.95rem;font-weight:600;letter-spacing:.08em;
+    text-transform:uppercase;padding:1rem 1.2rem;min-height:3.4rem;
+    text-align:center;text-decoration:none;cursor:pointer}
+  .ghost2.wide{margin:.5rem 0 0;background:none;border:1px solid var(--line);
+    color:var(--ink)}
+  /* In a sheet these sit under a heading rather than at the end of a page of
+     prose, so they do not want the page's breathing room above them. */
+  .shc .go.wide{margin-top:.2rem}
   h1{margin:0 0 .15rem;font-size:1.35rem;line-height:1.25}
   /* THE HEADING AND THE WAY OUT OF IT, on one line. A back arrow in the
      corner is a place on a screen; a word beside the heading is a word. */
@@ -379,7 +428,83 @@ function top() {
   b.append(el("span", "dot"), el("span", "wm", "Dealio"));
   const slot = el("span", "langslot");
   b.append(slot);
+  /* SIGN IN LIVES IN THE BANNER, not across the whole first screen.
+     The front page used to be the door: a stranger met a sign-in wall with
+     another product's name on it and never saw what the thing was. Signing
+     in is what somebody who already belongs here wants, and they know where
+     to look for it. Everybody else wants to know what this is. */
+  if (STATE && !STATE.you) {
+    const go = el("button", "signin", T("dl.signIn"));
+    go.type = "button";
+    go.addEventListener("click", signInSheet);
+    b.append(go);
+  }
   return { bar: b, slot };
+}
+
+/* THE WAYS IN, IN A SHEET, so the front page can be about the product.
+ *
+ * GOOGLE IS NOT ENOUGH ON ITS OWN AND THAT IS NOT A DETAIL: accounts.google
+ * .com does not answer in the mainland, and the mainland is who this is for.
+ * So the invite code is not a footnote under it — it is the road that works
+ * for the people most likely to be standing here, and it is drawn the same
+ * size. WeChat sign-in belongs beside them and needs a WeChat Open Platform
+ * account this board does not have yet; the server says whether it exists
+ * rather than the page drawing a button that cannot work, which is the same
+ * rule the microphone runs on.
+ */
+function signInSheet() {
+  const back = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("p", "lab", T("dl.signIn")));
+  card.append(el("h2", null, T("dl.signInHead")));
+
+  const say = el("p", "why");
+
+  const g = el("button", "go wide", T("g.in"));
+  g.type = "button";
+  g.addEventListener("click", async () => {
+    g.disabled = true;
+    try {
+      const r = await fetch("/api/signin/google", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, next: "/dealio" }),
+      });
+      const j = await r.json().catch(() => null);
+      if (r.ok && j?.url) { location.href = j.url; return; }
+      say.textContent = T(j?.error === "unconfigured" ? "dl.gOff" : "g.failed");
+    } catch { say.textContent = T("g.failed"); }
+    g.disabled = false;
+  });
+  card.append(g);
+
+  /* Drawn only where it can work. Until then its absence is honest. */
+  if (STATE?.canWeChat) {
+    const w = el("button", "ghost2 wide", T("dl.wechatIn"));
+    w.type = "button";
+    w.addEventListener("click", () => { location.href = "/api/signin/wechat?next=/dealio"; });
+    card.append(w);
+  }
+
+  const code = el("a", "ghost2 wide", T("dl.haveCode"));
+  code.href = "/enter";
+  card.append(code);
+  card.append(el("p", "hint", T("dl.cnNote")));
+
+  if (["again", "unknown", "here", "other", "failed"].includes(SIGNIN)) {
+    say.textContent = T("g." + SIGNIN);
+  }
+  card.append(say);
+
+  const acts = el("div", "acts");
+  const shut = el("button", null, T("pay.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => back.remove());
+  acts.append(shut);
+  card.append(acts);
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
 }
 
 /* THREE SCREENS, NOT ONE SCREEN WITH THREE WARNINGS ON IT.
@@ -453,62 +578,70 @@ function makeButtons(where) {
   return wrap;
 }
 
-/* SIGNED OUT IS A DOOR, and a door has one handle.
-   It said "open your sign-in link on this phone" and gave nothing to open —
-   an instruction about a thing that was not on the screen, which is the
-   worst kind. The button goes to the door. */
+/* ===========================================================================
+ * THE FRONT PAGE, WHICH USED TO BE A DOOR
+ * ===========================================================================
+ *
+ * A stranger opening this met a sign-in wall carrying another product's name
+ * — "Dealio uses your Exchange sign-in" — pressed the one button, was told
+ * "no one here has that Google account yet", and had nowhere to go. They
+ * never saw a request, never learned what it cost, and could not tell
+ * whether it was a payments app or a club. The best screen in this product
+ * is the one a payer sees; the worst was the only one a stranger reached.
+ *
+ * So the page shows the thing. The example is the payer's screen, drawn
+ * rather than described, because "they need no account" is a claim and a
+ * picture of the screen is the proof. Then the three steps, the price, and
+ * who can get in — in that order, because that is the order the questions
+ * arrive in.
+ *
+ * SIGNING IN MOVED TO THE BANNER. It is what somebody who already belongs
+ * here wants, and they know where to look. Everybody else wants to know what
+ * this is.
+ */
 function signedOut() {
-  const box = el("div", "mid");
-  box.append(el("p", "big", "Dealio"));
-  box.append(el("p", "line", T("dl.what")));
-  box.append(el("hr"));
-  box.append(el("p", "mhead", T("dl.notYou")));
-  box.append(el("p", "msub", T("dl.useExchange")));
+  const box = el("div", "front");
 
-  /* CONTINUE WITH GOOGLE IS THE HANDLE, and the invite code is a link under
-     it rather than a second button.
+  box.append(el("h1", "hero", T("dl.heroHead")));
+  box.append(el("p", "herosub", T("dl.what")));
 
-     It sent people to /enter, which asks for six characters — and Tom, who
-     had never been told about a code, asked "what 6 digits". The code is for
-     somebody arriving for the first time. Everybody meeting this screen is
-     already a member on a phone that has forgotten them, and for them the
-     Google account is the thing that finds the person again: the callback
-     moves the row onto whatever browser pressed it. That is the whole cure
-     for a home-screen app with empty storage. */
-  const g = el("button", "go", T("g.in"));
-  g.type = "button";
-  g.addEventListener("click", async () => {
-    g.disabled = true;
-    try {
-      const r = await fetch("/api/signin/google", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ device, next: "/dealio" }),
-      });
-      const j = await r.json().catch(() => null);
-      if (r.ok && j?.url) { location.href = j.url; return; }
-      /* Google is not set up on this board at all. Saying so beats a button
-         that does nothing twice before anybody thinks to look. */
-      say.textContent = T(j?.error === "unconfigured" ? "dl.gOff" : "g.failed");
-    } catch { say.textContent = T("g.failed"); }
-    g.disabled = false;
-  });
-  box.append(g);
+  /* THE PAYER'S SCREEN, DRAWN. Not a screenshot — a screenshot of a dark app
+     on a dark page is a grey rectangle, and it would go stale the first time
+     that screen changed. This is the same four facts in the same order. */
+  const demo = el("div", "demo");
+  demo.append(el("p", "dlab", T("dl.demoWho", { who: "Tom" })));
+  demo.append(el("p", "damt", "¥2,400"));
+  demo.append(el("p", "dwhat", T("dl.demoWhat")));
+  const dbtn = el("div", "dbtn", T("dl.demoPay", { amount: "¥2,400" }));
+  demo.append(dbtn);
+  demo.append(el("p", "dways", T("dl.demoWays")));
+  box.append(demo);
+  box.append(el("p", "demonote", T("dl.demoNote")));
 
-  const code = el("a", "quietlink", T("dl.haveCode"));
-  code.href = "/enter";
-  box.append(code);
-
-  /* WHAT THE LAST ATTEMPT SAID, in its own words. Every one of these means
-     something different to do next, and "that did not work" three times over
-     is how somebody decides the product is broken. */
-  const say = el("p", "why");
-  /* A LIST RATHER THAN T("g." + whatever): a missing key renders as the key
-     itself, by design, so an unknown word in the address would print
-     "g.nonsense" on the one screen that has to look trustworthy. */
-  if (["again", "unknown", "here", "other", "failed"].includes(SIGNIN)) {
-    say.textContent = T("g." + SIGNIN);
+  /* Three steps, numbered, because they are a sequence and the order is the
+     information. */
+  box.append(el("h2", "fh", T("dl.howHead")));
+  const steps = el("ol", "steps");
+  for (const k of ["how1", "how2", "how3"]) {
+    steps.append(el("li", null, T("dl." + k)));
   }
-  box.append(say);
+  box.append(steps);
+
+  box.append(el("h2", "fh", T("dl.priceHead")));
+  box.append(el("p", "fp", T("dl.priceP")));
+
+  box.append(el("h2", "fh", T("dl.joinHead")));
+  box.append(el("p", "fp", T("dl.joinP")));
+
+  /* The way in, at the bottom as well as in the banner: somebody who has
+     read the page is at the bottom of it, and sending them back up to a
+     corner is a scroll for nothing. */
+  const go = el("button", "go wide", T("dl.signIn"));
+  go.type = "button";
+  go.addEventListener("click", signInSheet);
+  box.append(go);
+  box.append(el("p", "hint", T("dl.payerNote")));
+
   root.append(box);
 }
 
