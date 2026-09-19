@@ -887,11 +887,16 @@ app.get(["/feed", "/feed/", "/index.html"], (req, res, next) => page("index.html
    address somebody may still have; it used to land on the feed, which is the
    quiet half. */
 app.get(["/board", "/board/"], (req, res) => res.redirect(301, "/browse" + (req.url.split("?")[1] ? "?" + req.url.split("?")[1] : "")));
-app.get(["/about", "/landing.html"], (req, res, next) => page("landing.html", req, res, next));
+/* /about USED TO BE THIS PAGE and is now the plain one — see the note over
+   its route below. The landing keeps /, /landing.html and every /r/<room>
+   address, which is where every link ever sent actually points. "About" is
+   what a stranger types when they want to know what a business is, and they
+   should get the facts rather than the pitch. */
+app.get(["/landing.html"], (req, res, next) => page("landing.html", req, res, next));
 
 /* ONE DOOR, DIFFERENT SIGNS.
  *
- * /r/film is the same page as /about with the room written into it: the same
+ * /r/film is the same page as the landing with the room written into it: the same
  * board, the same members, the same graph behind it — and a heading somebody
  * in that world recognises as being for them.
  *
@@ -982,6 +987,20 @@ app.get(["/rules", "/rules/"], (req, res, next) => page("rules.html", req, res, 
 app.get(["/mo", "/mo/"], (req, res, next) => page("mo-page.html", req, res, next));
 app.get(["/terms", "/terms/"], (req, res, next) =>
   page("terms.html", req, res, next,
+    { "{{CONTACT}}": CONTACT.replace(/["\\<>]/g, "").slice(0, 120) }));
+
+/** WHAT THIS PLACE IS, ON A PAGE ANYBODY CAN OPEN.
+ *
+ *  OPEN ON PURPOSE, like the terms and the rules. Everything else here is
+ *  behind an invite, which is the point of it — and it meant there was no
+ *  address in the world that said what the business does. Somebody following
+ *  the link from our payments profile met a sign-in door, and a door is not a
+ *  business. It cost the application.
+ *
+ *  It reads nothing from the board and takes nothing from whoever opens it.
+ */
+app.get(["/about", "/about/"], (req, res, next) =>
+  page("about.html", req, res, next,
     { "{{CONTACT}}": CONTACT.replace(/["\\<>]/g, "").slice(0, 120) }));
 
 /** THE REWARDS ROOM, AS A PAGE RATHER THAN A ROOM.

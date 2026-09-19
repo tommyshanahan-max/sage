@@ -2015,6 +2015,64 @@ export const STRINGS = {
 
      WRITTEN THE WAY EVERYTHING HERE IS WRITTEN. A wall of grey nobody reads is
      not consent, it is a scroll bar. Short sentences, said once. */
+  /* ===========================================================================
+   * ABOUT — the page anybody can open
+   * ===========================================================================
+   *
+   * Everything else here is behind an invite, which is the point of it, and it
+   * meant there was no address in the world that said what the business does.
+   * A payments reviewer following the link from the Stripe profile met a
+   * sign-in door, and a door is not a business.
+   *
+   * So every line is a checkable fact, in the order somebody deciding whether
+   * this is real needs them — which turned out to be the same order somebody
+   * deciding whether to join needs them. No marketing. The Chinese is written
+   * rather than translated: a Chinese reader deciding whether to trust this
+   * with money is not reading an English sentence in Chinese words.
+   *
+   * `abt.` and not `ab.`: abroad.html already owns `ab.`, and a duplicate key
+   * is a silent overwrite — one page would have quietly started showing the
+   * other page's heading. The check in CLAUDE.md caught it.
+   */
+  "abt.title":          ["What this is", "这是什么"],
+  "abt.lede":           ["The Exchange is a small private board where people who need work done find the person to do it, agree what it costs, and pay them here.",
+                        "交换是一个小范围的板子：需要找人做事的人，在这里找到做事的人，谈好价钱，然后在这里付款。"],
+
+  "abt.what":           ["What gets sold", "卖的是什么"],
+  "abt.what.p":         ["Work between two people. Language lessons, design, translation, editing, consulting, a job done once. The two of them agree what it is and what it costs; this board is where they write it down and where the money goes through.",
+                        "两个人之间的活儿。语言课、设计、翻译、校对、咨询，或者一次性的活儿。做什么、多少钱，由他们两个谈定；板子只是把它写下来，钱从这里走。"],
+
+  "abt.who":            ["Who uses it", "谁在用"],
+  "abt.who.p":          ["Chinese students and businesses who need something done, and freelancers abroad — mostly in Australia — who do it. Membership is by invitation from somebody already here.",
+                        "需要找人做事的中国学生和公司，以及在海外（主要是澳洲）接活儿的人。进来要有人邀请。"],
+
+  "abt.cost":           ["What it costs", "多少钱"],
+  "abt.cost.p":         ["Joining costs nothing. The work is priced by the two people doing the deal — most are between a hundred and a few thousand dollars. The Exchange takes 2% of a payment, and nothing else: no listing fee, no subscription, no charge for being here.",
+                        "进来不要钱。价钱由做这笔生意的两个人自己定，多数在一百到几千块之间。付款时交换收 2%，除此之外不收任何费用：不收挂牌费，不收会员费。"],
+
+  "abt.how":            ["How the money moves", "钱怎么走"],
+  "abt.how.p":          ["The person paying opens a link and pays by WeChat Pay, Alipay or card. Stripe takes the payment and sends it straight to the bank account of the person being paid. The 2% is taken by Stripe on the way past and paid to us.",
+                        "付钱的人打开一个链接，用微信支付、支付宝或者银行卡付。Stripe 收款，直接打到收款人的银行账户。那 2% 由 Stripe 在中途扣下，给我们。"],
+  /* THE SENTENCE THE WHOLE PAGE IS FOR. Said plainly because it is the thing a
+     payments reviewer is looking for and the thing a member is trusting. */
+  "abt.never":          ["The Exchange never holds, routes or forwards anybody's money. It does not have a balance. Payments go from the payer to the payee's own account, and nothing passes through an account we control.",
+                        "交换不碰任何人的钱：不代收、不代转、不代付，也没有资金池。钱从付款人直接到收款人自己的账户，不经过我们控制的任何账户。"],
+
+  "abt.safe":           ["If something goes wrong", "出了问题怎么办"],
+  "abt.safe.p":         ["Refunds and cancellations are arranged between the two people, and a card payment can be disputed with the payer's bank in the ordinary way. A member who behaves badly is removed — see the terms.",
+                        "退款和取消由两个人自己商量；刷卡付的可以照常向银行发起争议。行为不当的会被请出去——见使用条款。"],
+
+  "abt.reach":          ["Who to write to", "找谁"],
+  "abt.reach.p":        ["{mail}", "{mail}"],
+  "abt.reachNone":      ["Ask in a room — every member can reach the people who run this board.",
+                        "在房间里问一声就行，每个成员都能找到管事的人。"],
+
+  "abt.end":            ["The Exchange is run from Sydney, Australia.",
+                        "交换由澳大利亚悉尼运营。"],
+  "abt.lterms":         ["Terms", "使用条款"],
+  "abt.lprivacy":       ["Privacy", "隐私"],
+  "abt.ljoin":          ["Ask to join", "申请加入"],
+
   "tm.title":          ["Terms", "使用条款"],
   "tm.lede": [
     "What you agree to by using The Exchange, and what happens when somebody behaves badly. The house rules are the part worth remembering; this is the part that has to be written down.",

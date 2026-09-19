@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+{{DEMO}}
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>About — The Exchange</title>
+<meta name="description" content="What The Exchange is, what it costs, and how the money moves.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="/site.css">
+<script>window.BOARD_CONTACT = "{{CONTACT}}";</script>
+<style>
+  /* THE SAME SHAPE AS THE TERMS AND THE HOUSE RULES. Three documents that
+     answer three different questions about one product should look like
+     three pages of one product. */
+  .doc{max-width:34rem;margin:0 auto;padding:2.6rem 1.25rem 5rem}
+  .doc h1{margin:0;font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.9rem,4.5vw,2.6rem);line-height:1.12;letter-spacing:-.015em}
+  .doc .lede{margin:1.3rem 0 0;font-size:1.05rem;line-height:1.7;color:var(--ink-2)}
+  .doc h2{margin:2.6rem 0 0;font-size:1.05rem;font-weight:600;line-height:1.4}
+  .doc p{margin:.6rem 0 0;font-size:.98rem;line-height:1.7;color:var(--ink-2)}
+  /* HOW THE MONEY MOVES, IN ITS OWN BOX. It is the paragraph this page exists
+     for — the one a payments reviewer opens the link to find, and the one a
+     member wants before they agree to anything. It should not be a paragraph
+     among paragraphs. */
+  .doc .hard{margin:1.4rem 0 0;padding:1rem 1.1rem;border:1px solid var(--accent);
+    border-radius:.8rem}
+  .doc .hard p:first-child{margin:0}
+  .doc .end{margin:2.6rem 0 0;font-size:.9rem;line-height:1.6;color:var(--ink-3)}
+  .doc .more{display:flex;flex-wrap:wrap;gap:1rem;margin:1.6rem 0 0}
+  .doc .more a{font-size:.92rem}
+  .doc .back{display:inline-block;margin:2.2rem 0 0;font-size:.92rem}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="wrap">
+    <a class="brand" href="/join">
+      <i><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" style="width:1em;height:1em;display:block" aria-hidden="true"><circle cx="38" cy="50" r="24"/><circle cx="62" cy="50" r="24"/></svg></i>
+      <span><b>The Exchange</b><small>交换</small></span>
+    </a>
+    <span id="langslot" style="margin-left:auto;display:flex;gap:.6rem;align-items:center"></span>
+  </div>
+</div>
+<div class="doc">
+  <h1 id="title"></h1>
+  <p class="lede" id="lede"></p>
+  <div id="body"></div>
+  <p class="end" id="end"></p>
+  <div class="more">
+    <a href="/terms" id="lterms"></a>
+    <a href="/privacy" id="lprivacy"></a>
+    <a href="/join" id="ljoin"></a>
+  </div>
+</div>
+<script type="module">
+/* WHAT THIS PLACE IS, ON A PAGE ANYBODY CAN OPEN.
+ *
+ * WHY IT EXISTS. Everything on this board is behind an invite, which is the
+ * point of it — but it meant there was no address in the world that said what
+ * the business does. A payments reviewer following the link from the Stripe
+ * profile met a sign-in door and nothing else, and a door is not a business.
+ * Neither is a landing page that only says how good the thing is.
+ *
+ * So: what is sold, who sells it, what it costs, how the money moves, and who
+ * to write to. In that order, because that is the order somebody deciding
+ * whether this is a real business needs them — and, as it turns out, the same
+ * order somebody deciding whether to join needs them.
+ *
+ * NOTHING HERE IS MARKETING. Every line is a fact that can be checked against
+ * the product, and the money paragraph is the one the whole page is for.
+ */
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+const $ = (id) => document.getElementById(id);
+
+const PARTS = ["what", "who", "cost", "how", "safe"];
+
+function paint() {
+  $("title").textContent = T("abt.title");
+  $("lede").textContent = T("abt.lede");
+  $("end").textContent = T("abt.end");
+  $("lterms").textContent = T("abt.lterms");
+  $("lprivacy").textContent = T("abt.lprivacy");
+  $("ljoin").textContent = T("abt.ljoin");
+  document.title = T("abt.title") + " — " + T("site.title");
+
+  const box = $("body");
+  while (box.firstChild) box.removeChild(box.firstChild);
+  for (const key of PARTS) {
+    const h = document.createElement("h2");
+    h.textContent = T("abt." + key);
+    box.append(h);
+    const p = document.createElement("p");
+    p.textContent = T("abt." + key + ".p");
+    box.append(p);
+    /* The money paragraph gets the box, directly under its own heading, so it
+       reads as the statement it is rather than as more prose. */
+    if (key === "how") {
+      const hard = document.createElement("div");
+      hard.className = "hard";
+      const line = document.createElement("p");
+      line.textContent = T("abt.never");
+      hard.append(line);
+      box.append(hard);
+    }
+  }
+
+  /* WHERE TO WRITE, from BOARD_CONTACT on the box rather than from i18n.js —
+     it is an address the operator owns. Unset, the page says so rather than
+     printing "write to " with nothing after it. */
+  const mail = String(window.BOARD_CONTACT || "").trim();
+  const h = document.createElement("h2");
+  h.textContent = T("abt.reach");
+  box.append(h);
+  const p = document.createElement("p");
+  p.textContent = mail ? T("abt.reach.p", { mail }) : T("abt.reachNone");
+  box.append(p);
+}
+setLang(pickLang());
+$("langslot").append(langButton(paint));
+paint();
+</script>
+</body>
+</html>
