@@ -272,6 +272,11 @@
   .shc h2{margin:0 0 1rem;font-family:var(--serif);font-weight:400;
     font-size:1.35rem}
   label{display:block;margin:0 0 .8rem}
+  /* AN AUTHOR RULE BEATS THE BROWSER'S. `hidden` is only display:none in the
+     user-agent stylesheet, so `label{display:block}` above quietly un-hides
+     every hidden label — the folded-away When field was on the screen the
+     whole time, under the link offering to add it. */
+  label[hidden],[hidden]{display:none}
   label span{display:block;margin:0 0 .25rem;font-size:.76rem;color:var(--mut)}
   input{width:100%;font:inherit;font-size:1rem;padding:.75rem .85rem;
     border:1px solid var(--line);border-radius:.7rem;background:var(--bg);
@@ -297,6 +302,18 @@
     background-repeat:no-repeat;background-position:right .7rem center}
   .amtrow select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
   input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  /* THE PEOPLE YOU ALREADY ASK. A wrapping row of taps, not a list: the
+     point is that the name is one press away, and a list is a screen. */
+  .whos{display:flex;flex-wrap:wrap;gap:.4rem;margin:-.4rem 0 .9rem}
+  .whochip{border:1px solid var(--line);background:var(--bg);color:var(--ink);
+    font:inherit;font-size:.85rem;padding:.4rem .8rem;border-radius:99px;
+    cursor:pointer}
+  .whochip:active{background:var(--card)}
+  /* The optional field, folded away. A link and not a button: pressing it
+     adds a field, it does not do anything. */
+  .addwhen{display:inline-block;margin:0 0 .9rem;border:0;background:none;
+    color:var(--ink2);font:inherit;font-size:.88rem;padding:.3rem 0;
+    text-decoration:underline;text-underline-offset:3px;cursor:pointer}
   .acts{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0 0}
   .acts button{flex:1 1 auto;min-width:7rem;border:1px solid var(--line);
     background:none;color:var(--ink);font:inherit;padding:.85rem 1rem;
@@ -448,6 +465,10 @@ const shown = (q) => {
 /* WHICH OF THE TWO SCREENS. Not a tab bar: two screens do not earn one, and
    a bar across the bottom would sit exactly where the two buttons are. */
 let VIEW = "list";
+/* Once per load. draw() runs again on every language change, every reload of
+   the list and every sheet that closes, and re-focusing the amount each time
+   would throw the keyboard up over whatever somebody was reading. */
+let SEEN_PAD = false;
 
 /* Copy without the async clipboard, which a phone refuses outside a gesture
    and WeChat's browser refuses entirely. The old trick still works there. */
@@ -690,6 +711,18 @@ function pad() {
   paintSign();
   cur.addEventListener("change", () => { curKeep(cur.value); paintSign(); });
   box.append(cur);
+
+  /* THE KEYPAD IS ALREADY UP. Cash App lands with the amount focused and you
+     simply type; here it was a tap on the number first, every time, and the
+     number is the only reason anybody opened the screen.
+
+     Not on a phone that has just come back from somewhere, though: focusing
+     a field throws the keyboard over the list somebody was returning to
+     read. Only on a first arrival, and only when there is nothing typed. */
+  if (!SEEN_PAD) {
+    SEEN_PAD = true;
+    queueMicrotask(() => { try { amount.focus({ preventScroll: true }); } catch { /* fine */ } });
+  }
 
   const why = el("p", "why padwhy");
   const open = (way) => {
@@ -1156,7 +1189,9 @@ function form(way, prefill) {
     mic = micButton((j) => heardSheet(j, (t) => {
       if (t.amount) amount.value = t.amount;
       if (t.what) what.value = t.what;
-      if (t.when) whn.value = t.when;
+      /* Said out loud, so it exists — reveal the field rather than filling
+         one nobody can see. */
+      if (t.when) { whn.value = t.when; whenWrap.hidden = false; whenAdd.hidden = true; }
       if (t.to && !who.value.trim()) who.value = t.to;
       /* Straight to whatever is still empty. The commonest miss is the
          amount, and it is the one field that cannot be left blank. */
@@ -1195,8 +1230,61 @@ function form(way, prefill) {
   amtWrap.append(amtRow);
   card.append(amtWrap);
   const who = field("to", T(out ? "dl.whoOut" : "dl.who"), "", T("dl.whoEg"));
+  /* SAFARI OFFERED HIM HIS OWN NAME. With no autocomplete hint an iOS text
+     field next to the word "Who" is taken for a contact field, so the
+     keyboard grew an AutoFill Contact bar over the button and suggested
+     "Tom Shanahan" — the one person this can never be for. */
+  who.autocomplete = "off";
+  who.setAttribute("autocapitalize", "words");
+  who.spellcheck = false;
+
+  /* THE PEOPLE YOU ALREADY ASK, as chips under the field. Venmo and Cash App
+     both put recent people one tap away, and for good reason: it is the same
+     five people over and over, and typing a name into a phone keyboard is
+     the longest thing on this screen. Newest first, deduplicated, six at
+     most — a row that wraps to three lines is a list, and a list belongs
+     somewhere else. */
+  const seen = [];
+  for (const q of (STATE?.requests || [])) {
+    const n = String(q.to || "").trim();
+    if (n && !seen.includes(n)) seen.push(n);
+    if (seen.length >= 6) break;
+  }
+  if (seen.length) {
+    const chips = el("div", "whos");
+    for (const n of seen) {
+      const c = el("button", "whochip", n);
+      c.type = "button";
+      c.addEventListener("click", () => {
+        who.value = n;
+        /* Straight on to the thing still missing rather than leaving the
+           cursor on a field that is now full. */
+        (what.value.trim() ? go : what).focus();
+      });
+      chips.append(c);
+    }
+    card.append(chips);
+  }
+
   const what = field("what", T("ask.what"), "", T("ask.whatEg"));
-  const whn = field("when", T("ask.when"), "", T("ask.whenEg"));
+
+  /* WHEN, BEHIND A TAP. It is optional, and an optional field on the screen
+     is still a field to read past — four of them on one sheet is what "too
+     much" looks like on a form. Most requests do not have a date on them. */
+  const whn = el("input");
+  whn.id = "f-when";
+  whn.placeholder = T("ask.whenEg");
+  const whenWrap = el("label");
+  whenWrap.hidden = true;
+  whenWrap.append(el("span", null, T("ask.when")), whn);
+  const whenAdd = el("button", "addwhen", T("dl.addWhen"));
+  whenAdd.type = "button";
+  whenAdd.addEventListener("click", () => {
+    whenWrap.hidden = false;
+    whenAdd.hidden = true;
+    whn.focus();
+  });
+  card.append(whenAdd, whenWrap);
 
   const why = el("p", "why");
   const acts = el("div", "acts");

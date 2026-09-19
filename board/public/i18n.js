@@ -5126,6 +5126,7 @@ export const STRINGS = {
   "dl.paidNone":       ["Nothing has settled yet.", "还没有结清的。"],
   "dl.back":           ["Back", "返回"],
   "dl.cur":            ["Currency", "币种"],
+  "dl.addWhen":        ["+ Add when", "+ 加上时间"],
   /* HANDED TO THE PHONE'S OWN SHARE SHEET, where WeChat already is. Copy was
      the only way out of that screen, and copy means: leave Dealio, open
      WeChat, find the person, hold, paste. Five steps at the moment the thing
