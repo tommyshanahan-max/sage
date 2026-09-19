@@ -111,6 +111,13 @@
   .zh b{display:block;font:400 1.5rem/1.35 var(--serif);color:var(--ink)}
   .zh span{display:block;margin-top:.5rem;font-size:.86rem;color:var(--dim);font-style:italic}
 
+  /* TWO NUMBERS SIDE BY SIDE, for the one slide that carries any. Both are
+     somebody else's and both are checkable — see the note on that slide for
+     why there is no TAM on this deck. */
+  .pair{display:flex;gap:2.4rem;flex-wrap:wrap;margin:0 0 1.6rem}
+  .pair .n{font:400 clamp(2.8rem,14vw,3.9rem)/.9 var(--serif);color:var(--gold)}
+  .pair .l{color:var(--dim);font-size:.86rem;margin-top:.55rem;max-width:9rem}
+
   .terms{margin:1.4rem 0 0}
   .terms div{display:flex;justify-content:space-between;gap:1rem;
     padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
@@ -132,17 +139,24 @@
 
 <div class="deck">
 
-  <!-- SEVEN SLIDES, AND THE LAST ONE SAYS WHAT IS NOT DONE.
-       This is a product deck, not a share offer — the decks that carry a
-       percentage are the other files in this folder. So there are no
-       projections on it and no traction on it, for the plain reason that
-       there is none: no payment has completed end to end yet. A deck that
-       implied otherwise would be found out by the first question.
+  <!-- NINE SLIDES, FOR AN INVESTOR, BEFORE THERE IS REVENUE.
+       No payment has completed end to end yet. That fact decides the shape of
+       the whole deck: a pre-revenue page that gestures at momentum is found
+       out by the first question, and the person asking it is the person whose
+       money is on the table. So there is no traction slide, no hockey stick
+       and no TAM — a number invented for a market nobody measures is the one
+       thing on a deck that can be checked and disproved in an afternoon.
 
-       WHAT IT ARGUES INSTEAD is that the corridor is real, that everybody
-       serving it serves companies, and that the payer's experience is the
-       thing nobody has bothered with. All three are checkable by the reader,
-       which is the only kind of claim worth making before there is revenue. -->
+       WHAT IT ARGUES INSTEAD is four things a reader can verify without
+       taking anybody's word: the corridor is real, it is worth billions to
+       the one company serving its institutional half, everybody in it serves
+       companies rather than people, and the payer's experience is the part
+       nobody has bothered with. Then it says exactly where the thing is.
+
+       THE TWO NUMBERS ON IT ARE SOMEBODY ELSE'S — students a year, and
+       EasyTransfer's volume. Borrowed on purpose: they size the corridor
+       without claiming a share of it. -->
+
 
   <section>
     <div class="mark"><i>汇</i><span>Dealio</span></div>
@@ -190,6 +204,38 @@
 
     <p class="caption">No account, no app, nothing to install — on either side
       of it.</p>
+  </section>
+
+  <!-- THE ONLY SLIDE WITH NUMBERS ON IT, AND NEITHER IS OURS.
+       An invented TAM is the one claim on a pre-revenue deck that a reader
+       can disprove in an afternoon, and nobody measures "individuals abroad
+       being paid by Chinese clients" because until now nobody could serve
+       them. So the slide borrows the two figures that are published, says
+       plainly that the third is unmeasured, and lets the reader do the
+       arithmetic they were going to do anyway. -->
+
+  <section>
+    <p class="eyebrow gold">The size of it</p>
+    <h2>One company, one slice, three billion.</h2>
+
+    <div class="pair">
+      <div>
+        <div class="n">700k</div>
+        <div class="l">Chinese students go abroad each year</div>
+      </div>
+      <div>
+        <div class="n">$3bn</div>
+        <div class="l">EasyTransfer moves a year, on these rails</div>
+      </div>
+    </div>
+
+    <p class="lead">EasyTransfer serves one slice of this corridor — students
+      paying universities — and moves three billion dollars a year doing it.</p>
+    <p>Around that slice sit the people the same families already pay: the
+      tutor, the agent, the coach, the consultant, the translator. Nobody has
+      counted them, because until now nobody could take their money.</p>
+    <p style="margin-top:1.2rem">There is no market size on this page for that
+      reason. The number would be invented and you would know it.</p>
   </section>
 
   <section>
@@ -257,7 +303,7 @@
   </section>
 
   <section>
-    <p class="eyebrow gold">Where it is</p>
+    <p class="eyebrow">Where it is</p>
     <h2>Built. Not yet proven.</h2>
     <p class="lead">Every screen exists and is deployed. What has never
       happened is a payment reaching the end.</p>
@@ -265,18 +311,45 @@
     <ol class="how">
       <li><b>Done.</b>
         <span>Both directions, three payment methods, two languages, live on
-          thexchange.app.</span></li>
+          thexchange.app. Built by one person.</span></li>
       <li><b>Waiting.</b>
-        <span>Stripe has not yet approved the platform account for Connect.
+        <span>Stripe has not approved the platform account for Connect yet.
           Until it does, no payment can complete.</span></li>
       <li><b>Then.</b>
         <span>One real payment, from a Chinese wallet to an Australian bank.
           That is the only number worth quoting and there isn't one yet.</span></li>
     </ol>
+  </section>
 
-    <a class="go" href="https://thexchange.app/about">What this is →</a>
-    <p class="fine">No traction on this page because there is none. Ask again
-      after the first payment.</p>
+  <!-- THE SHAPE, AND NOT THE NUMBER — the same call the Hong Kong deck makes
+       and for the same reason. A figure printed on a page somebody reads
+       alone is a figure they have already accepted or already refused before
+       either of us has spoken, and it anchors the conversation at whatever is
+       on the card. The amount and the terms are the first meeting, not the
+       deck.
+
+       WHAT THE MONEY IS FOR IS ON IT, because that is the part a reader
+       cannot guess and the part that says whether the ask is serious. Three
+       items, all of them things that cost money rather than things that
+       sound like progress. -->
+
+  <section>
+    <p class="eyebrow gold">The ask</p>
+    <h2>Enough to get to the first hundred payments.</h2>
+    <p class="lead">Not a round. The smallest amount that turns a built thing
+      into a working one, and buys the evidence to raise properly on.</p>
+
+    <div class="terms">
+      <div><span class="w">Stage</span><span class="v">Pre-revenue, pre-approval</span></div>
+      <div><span class="w">Built by</span><span class="v">One person, already</span></div>
+      <div><span class="w">Buys</span><span class="v">Licensing, compliance, first users</span></div>
+      <div><span class="w">Proves</span><span class="v">Money moves, end to end</span></div>
+      <div><span class="w">Terms</span><span class="v">The first conversation</span></div>
+    </div>
+
+    <a class="go" href="https://thexchange.app/about">How the money moves →</a>
+    <p class="fine">No traction on this page because there is none. That is
+      what the money is for.</p>
   </section>
 
 </div>
