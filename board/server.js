@@ -9381,6 +9381,22 @@ async function startCheckout({ d, i, method, payeeAcct, ref, done }) {
     return { secret: session.client_secret, pk: STRIPE_PK };
   } catch (err) {
     console.error("checkout:", err.message);
+    /* THE PAYEE HAS NOT FINISHED, SAID AS ITSELF.
+     *
+     * Stripe refuses a destination whose transfers capability is not yet
+     * active — requested at account creation is not the same as active, which
+     * only happens once identity and bank have both been accepted. That is
+     * one particular, fixable thing, and it arrived on the payer's screen as
+     * "That did not open — try again" on all three methods: a sentence that
+     * blames the payer for something only the payee can fix, and sends them
+     * to press the same dead button twice more.
+     *
+     * Matched on Stripe's wording because the API gives no code for it. If
+     * they reword it this falls back to the generic refusal, which is the
+     * behaviour we had anyway — never worse than before. */
+    if (/capabilit(y|ies)/i.test(err.message) && /destination/i.test(err.message)) {
+      return { error: "notready", detail: err.message };
+    }
     /* STRIPE'S OWN SENTENCE, CARRIED BUT NOT SHOWN. Every route that answers a
        member drops it and says one plain word; the admin route that exists to
        answer "why was this refused" returns it, because the whole point of

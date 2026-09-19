@@ -5062,6 +5062,11 @@ export const STRINGS = {
   "rq.noCur":          ["No currency on this one", "这笔没写币种"],
   "rq.alreadyPaid":    ["Already paid", "已经付过了"],
   "rq.noPayee":        ["Nowhere for it to land yet", "还没有收款方式"],
+  /* The payee has an account but Stripe has not turned transfers on for it
+     yet — identity and bank both have to be accepted first. Named for the
+     person who cannot fix it, so they stop pressing. */
+  "rq.notReady":       ["They have not finished setting up yet",
+                        "对方的收款还没设置好"],
   "rq.needsYou":       ["Needs you", "待你填写"],
   "rq.land":           ["Say where it should land", "填写收款方式"],
   "rq.landGoing":      ["Opening…", "正在打开…"],
