@@ -286,6 +286,30 @@
   .also .alsoline{margin:0;max-width:32rem}
   .also .alsogo{display:inline-block;margin-top:.9rem;text-decoration:none}
   .also .alsogo:hover{text-decoration:underline}
+  /* SHOW IT, DON'T DESCRIBE IT. The block was three lines about a payment
+     screen sitting next to no payment screen. One small drawing of the page
+     the payer opens does the same work without another sentence, which is the
+     rule this page runs on everywhere else.
+     THE PAYER'S SCREEN IS IN CHINESE IN BOTH LANGUAGES, and the drawing is
+     too. It is not a caption to translate — it is a picture of what the
+     person in Shanghai actually sees, and 长按二维码识别 is the line that
+     makes the product work. Showing an English one to an English reader would
+     be drawing a screen this app does not have. */
+  .also .wrap{display:flex;gap:1.6rem;align-items:flex-start;flex-wrap:wrap}
+  .also .words{flex:1 1 15rem;min-width:0}
+  .also .eyebrow{width:100%}
+  .alsoscreen{flex:0 0 8.4rem;background:var(--card);border:1px solid var(--line);
+    border-radius:.8rem;padding:.6rem;display:flex;flex-direction:column;gap:.35rem}
+  .alsoscreen .who{font-size:.52rem;color:var(--muted)}
+  .alsoscreen .amt{font-family:var(--serif);font-size:1.25rem;line-height:1;
+    color:var(--ink)}
+  /* A QR is white with dark modules whatever the page is doing — a themed one
+     is a code that does not scan. Drawn as a grid; nothing is fetched. */
+  .alsoscreen .qr{aspect-ratio:1;border-radius:.25rem;background:#fff;padding:.22rem;
+    display:grid;grid-template:repeat(7,1fr)/repeat(7,1fr);gap:.05rem}
+  .alsoscreen .qr i{background:#0B0E15;border-radius:.02rem}
+  .alsoscreen .qr i.o{background:transparent}
+  .alsoscreen .zh{font-size:.5rem;color:var(--ink-2);text-align:center}
   /* The footer columns stack, and their contents are lines rather than a
      paragraph run together. */
   .foot .col{display:flex;flex-direction:column;gap:.35rem}
@@ -670,9 +694,17 @@
 <section class="quiet also">
   <div class="wrap">
     <div class="eyebrow"><span id="alsoHead"></span><i></i></div>
-    <p class="alsoname"><span class="alsodot"></span><span id="alsoName"></span></p>
-    <p class="alsoline" id="alsoLine"></p>
-    <a class="alsogo" href="/dealio/about"><span id="alsoGo"></span> &rsaquo;</a>
+    <div class="words">
+      <p class="alsoname"><span class="alsodot"></span><span id="alsoName"></span></p>
+      <p class="alsoline" id="alsoLine"></p>
+      <a class="alsogo" href="/dealio/about"><span id="alsoGo"></span> &rsaquo;</a>
+    </div>
+    <div class="alsoscreen" aria-hidden="true">
+      <span class="who">Tom · 12 lessons</span>
+      <span class="amt">¥2,400</span>
+      <div class="qr"><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i></div>
+      <span class="zh">长按二维码识别</span>
+    </div>
   </div>
 </section>
 
