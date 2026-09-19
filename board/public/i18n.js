@@ -5043,6 +5043,7 @@ export const STRINGS = {
   "dl.what":           ["Ask anyone to pay you. They need no account, no app and no card on file.",
                         "让任何人付钱给你。对方不用注册、不用装 App、也不用先绑卡。"],
   "dl.signIn":         ["Sign in", "登录"],
+  "dl.enterApp":       ["Open Dealio", "进入 Dealio"],
   /* SAYING IT INSTEAD OF TYPING IT. Either language, or both in one sentence,
      which is what actually gets said around here — so nothing here tells
      anybody which to speak. */

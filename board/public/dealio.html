@@ -636,6 +636,31 @@ function signInSheet() {
  * Empty is an invitation and nothing else. With requests in it, it is a list
  * — and only then is there a list to draw.
  */
+/* THE FRONT PAGE IS WHAT /dealio OPENS ON, MEMBER OR NOT.
+ *
+ * It used to open straight on the pad once you were signed in, and the
+ * landing page — the one thing there is to show somebody — became
+ * unreachable for the only person who ever has to show it. ?out=1 drew it
+ * back, but a parameter is a thing to remember and type, and typing is the
+ * expensive part here; it was typed into a shell once and the shell said
+ * "no matches found".
+ *
+ * So the plain address paints the front page and the button on it opens the
+ * app. That is the product's own shape — coarse first, the detail one tap
+ * in — and it costs a member one tap they take without thinking.
+ *
+ * Nothing here signs anybody out: it is which of two functions paints. FRONT
+ * goes false the moment the button is tapped and stays false for the rest of
+ * the visit, so nothing inside the app bounces back out. ?in=1 skips it
+ * entirely, and ?out=1 is kept because links have been sent with it. */
+let FRONT = (() => {
+  try {
+    const q = new URL(location.href).searchParams;
+    if (q.get("in") === "1") return false;
+  } catch { }
+  return true;
+})();
+
 function draw() {
   const { bar: head, slot } = top();
   root.textContent = "";
@@ -643,24 +668,7 @@ function draw() {
   bar.textContent = "";
   bar.hidden = true;
 
-  /* THE LANDING PAGE, ON PURPOSE, WHILE BEING A MEMBER.
-   *
-   * signedOut() is the front page and the only people who ever see it are
-   * strangers — which means the person who has to show it to somebody
-   * cannot. Opening /dealio as a member goes straight to the pad, and there
-   * is no way from there back to the page being demonstrated.
-   *
-   * ?out=1 draws it anyway. It changes nothing about who anybody is: no
-   * signing out, no cookie touched, no row altered — it is which of two
-   * functions paints, and a reload without the parameter is the app again.
-   * The buttons on it lead to the door, which for a member opens straight
-   * through, so nobody can get stuck behind their own front page. */
-  const SHOWOUT = (() => {
-    try { return new URL(location.href).searchParams.get("out") === "1"; }
-    catch { return false; }
-  })();
-
-  if (SHOWOUT || (STATE && !STATE.you)) signedOut();
+  if (FRONT || (STATE && !STATE.you)) signedOut();
   else if (VIEW === "paid") paid();
   else if (!(STATE?.requests || []).length) empty();
   else list();
@@ -824,9 +832,15 @@ function signedOut() {
   }
   box.append(specs);
 
-  const go = el("button", "go wide", T("dl.signIn"));
+  /* ONE BUTTON, TWO MEANINGS, AND THE PERSON DECIDES WHICH. A stranger has
+     to get through the door, so it says Sign in. A member is already in and
+     is only looking at their own front page, so it says Open Dealio and
+     paints the app — anything else would sit them in front of a sign-in
+     sheet for an account they are already using. */
+  const inAlready = Boolean(STATE && STATE.you);
+  const go = el("button", "go wide", T(inAlready ? "dl.enterApp" : "dl.signIn"));
   go.type = "button";
-  go.addEventListener("click", signInSheet);
+  go.addEventListener("click", inAlready ? () => { FRONT = false; draw(); } : signInSheet);
   box.append(go);
   box.append(el("p", "hint", T("dl.payerNote")));
 
