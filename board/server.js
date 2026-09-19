@@ -9671,6 +9671,51 @@ app.get("/api/requests", notesOff, async (req, res) => {
   });
 });
 
+/** ONE REQUEST, MADE FROM A TERMINAL.
+ *
+ *  WHAT THIS IS FOR. Testing the half that matters without signing anything
+ *  in. The person paying needs no account — that is the whole design — but
+ *  the person asking does, and getting an identity onto a particular phone is
+ *  three steps and a code typed by hand. For a ¥1 test of the paying screens
+ *  that is three steps too many.
+ *
+ *  So: whoever runs the board makes the request as somebody, and gets back
+ *  the link. Opened on any phone, signed in or not, it is exactly what the
+ *  person being asked would see.
+ *
+ *  WHO is a first name — the handle as it appears on the board. Everything
+ *  else is what the request says.
+ */
+app.post("/api/admin/request", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").trim();
+  const amount = String(req.body?.amount || "").trim();
+  if (!who || !amount) return res.status(400).json({ error: "who and amount" });
+
+  const out = await change((board) => {
+    const mine = board.people.find((q) => q.handle === who);
+    if (!mine) return { error: "not on this board: " + who };
+    const q = request.cleanRequest({
+      id: request.newRequestId(),
+      by: mine.by,
+      from: mine.handle,
+      to: String(req.body?.to || ""),
+      amount,
+      cur: String(req.body?.cur || ""),
+      what: String(req.body?.what || ""),
+      when: String(req.body?.when || ""),
+      at: new Date().toISOString(),
+    });
+    if (!q) return { error: "bad" };
+    board.requests.push(q);
+    /* Whether anybody can actually pay it, said back rather than discovered
+       on the phone. */
+    return { ok: true, id: q.id, ready: Boolean(mine.payee) };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true, id: out.id, ready: out.ready,
+    url: backHere(req, "/pay/" + out.id) });
+});
+
 /** CAN THIS BOARD TAKE A PAYMENT, AND SAY WHY NOT.
  *
  *  Tom asked "can the app do payments" and there was no way to answer it

@@ -623,6 +623,20 @@ payee: ## Where somebody's money goes: make payee WHO="Claire" ACCT=acct_… [OF
 	  /seed/payee.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" --acct "$(ACCT)" $(if $(OFF),--off,)
 
+ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [TO="Tom"] [FOR="a test"]
+	@# TO TEST THE PAYING HALF WITHOUT SIGNING ANYTHING IN. The person paying
+	@# needs no account — that is the design — but the person asking does, and
+	@# putting an identity on a particular phone is a sign-in and a code typed
+	@# by hand. For a one-yuan test that is three steps too many.
+	@#
+	@# WHO is a first name: whoever is asking for the money, as they appear on
+	@# the board. It prints one address. Open it on any phone.
+	@test -n "$(WHO)" || { echo 'make ask WHO="their name" AMOUNT="¥1"'; exit 1; }
+	@test -n "$(AMOUNT)" || { echo 'make ask WHO="$(WHO)" AMOUNT="¥1"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/ask.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)"
+
 pay-check: ## Can this board take a payment, and if not why: make pay-check
 	@# "Can the app do payments" is a question about the running box, and the
 	@# answer turns on five variables in .env and one setting inside Stripe.
