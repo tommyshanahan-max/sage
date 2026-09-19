@@ -5192,6 +5192,24 @@ export const STRINGS = {
      Without it the box looks like a bug. */
   "ask.inZh":          ["Written in Chinese, for them.", "这段是中文的，给对方看的。"],
 
+  /* WHERE TO TAKE A DOUBT, and it is not here.
+   *
+   * The question a payer has on this page is "is this really from {who}" —
+   * and a message box on our own page is the worst possible answer to it,
+   * because a page pretending to be us would have one too. The trustworthy
+   * answer is the chat they are already standing in.
+   *
+   * TWO WORDINGS, BECAUSE THERE ARE TWO PLACES THEY CAN BE. Opened from
+   * WeChat they are inside its browser and closing the page puts them back
+   * in the conversation; opened anywhere else they have to go to WeChat
+   * themselves. There is no third option worth offering: weixin:// opens the
+   * app but cannot target a conversation, so a tappable version would strand
+   * them on WeChat's home screen, which is worse than a sentence. */
+  "rq.askBack":        ["Not sure? Go back and ask {who}.",
+                        "有疑问？返回微信问 {who}。"],
+  "rq.askThem":        ["Not sure? Ask {who} in WeChat.",
+                        "有疑问？在微信里问 {who}。"],
+
   "rq.asking":         ["{who} is asking for", "{who} 要收"],
   "rq.sending":        ["{who} wants to send you", "{who} 要付给你"],
   "rq.when":           ["When", "什么时候"],

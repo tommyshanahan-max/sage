@@ -130,6 +130,9 @@
     background:var(--accent-soft);color:var(--accent);font-size:.75rem}
   .clock.soon{background:rgba(212,72,92,.12);color:var(--t5)}
   .foot{margin:1rem 0 0;font-size:.82rem;line-height:1.5;color:var(--muted)}
+  /* A touch larger than the note above it and in the reading colour: this is
+     an instruction somebody may need to act on, not fine print. */
+  .askwx{margin:.55rem 0 0;font-size:.92rem;color:var(--ink-2)}
 
   /* THE CODE GATE. Big field, because it is typed from a chat message by
      somebody holding the phone in one hand. */
@@ -390,6 +393,17 @@ function draw() {
       ? (STATE.yours ? T("rq.straight", { who: q.to || T("dl.someone") })
                      : T("rq.straightOut"))
       : T("rq.straight", { who: q.from })));
+  /* AND WHERE TO TAKE A DOUBT — see the note over rq.askThem. Only while
+     there is still something to do: on a paid or withdrawn request there is
+     no question left to ask, and a line telling somebody to go and ask one
+     is noise. MicroMessenger in the agent string is WeChat's own browser. */
+  if (q.state !== "paid" && !q.off) {
+    const inWx = /MicroMessenger/i.test(navigator.userAgent || "");
+    const them = q.way === "out"
+      ? (STATE.yours ? (q.to || T("dl.someone")) : q.from)
+      : q.from;
+    foot.append(el("p", "askwx", T(inWx ? "rq.askBack" : "rq.askThem", { who: them })));
+  }
   sheet.append(foot);
 
   root.append(sheet);
