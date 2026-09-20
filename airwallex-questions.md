@@ -70,3 +70,44 @@ Two things that are still unknown and both matter:
 **Still open from the list above:** everything about paying a person *inside*
 mainland China (4, 5, 6). Support has not been asked. The refusal in the code
 stands.
+
+---
+
+## What the sandbox actually charged, 20 September 2026, 10:04
+
+**The first numbers on this page that nobody was told — they were measured.**
+Sandbox keys, a real login, real quotes against `api.sandbox.airwallex.com`.
+
+| | Client rate | Mid | Cost |
+|---|---|---|---|
+| AUD→CNY | 4.724763 | 4.76687 | **0.88%** |
+| CNY→AUD | 4.809117 | 4.76687 | **0.88%** |
+
+**0.88%, not the 0.50% support quoted**, and the same both ways. These were
+conversions through the FX API — exactly the case their fee table puts at
+0.50%. So one of three things is true and only a person at Airwallex can say
+which: sandbox rates do not reflect production, 0.50% is a tier this account
+does not get, or the published figure has conditions nobody has read yet.
+
+**What it does to the stack.** With acceptance still unknown and guessed at
+1.8%: 1.8 + 0.88 + 2 (ours) ≈ **4.7%**, against roughly 6% on Stripe today.
+The saving is about 1.3 points, not the 1.7 the 0.50% figure implied. Still
+worth having. No longer transformative on its own — which makes the
+acceptance rate, still the one missing number, matter more rather than less.
+
+**Settle-CNY-then-convert survives this.** 0.88% is still well under the
+2.00% charged when a payment is accepted in one currency and settled in
+another. The design does not change; only the size of the prize does.
+
+**A bug came out of it.** CNY→AUD was being reported as −0.89% — a discount
+nobody was getting. Both directions of the pair are quoted as CNY per AUD, so
+selling CNY puts the client rate above mid and the old subtraction flipped
+sign. It now measures distance from mid either way. That is the first thing
+this code has been wrong about that a real endpoint could catch, and it was
+wrong in the flattering direction, which is the direction to be suspicious of.
+
+**Question to put to a human, ahead of the others:**
+
+> Your published FX margin for AUD⇄CNY is 0.50%. Quotes through the FX API in
+> sandbox come back at 0.88% in both directions. Which applies to a live
+> Explore-plan account, and what determines it?
