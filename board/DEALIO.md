@@ -317,6 +317,10 @@ wallet and may never return to this page.
 | `/api/requests` asks about its own unsettled codes | when the asker opens their list |
 | Airwallex posts to `/api/wallet/webhooks/provider` | always, once registered |
 
+Registered and watched working on 20 September 2026: a code drawn, the page
+closed, the payment made on Airwallex's side, and the row green with nothing
+of ours looking at it.
+
 The first two were built first because they need nothing set up. Both need
 somebody to be looking, and the commonest shape of a payment is nobody
 looking at all: the payer closes the tab and the person owed the money is
