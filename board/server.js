@@ -8468,7 +8468,18 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
     });
     if (!note) return { error: "no" };
     board.notes.push(note);
-    return { note, answering: Boolean(state.answering) };
+    /* WHO TO SAY WROTE, in the email: the row carries device hashes and an
+       inbox cannot be addressed with one. `mine` is the writer when they are
+       a member — but the person this whole idea is about is not one. A buyer
+       in Shanghai who answered a listing has a name on the waiting row and
+       nothing else, and hers is exactly the message that must not arrive
+       anonymously. */
+    const waiting = mine?.handle ? null : board.waits.find((w) => w.by === me && w.name);
+    return {
+      note,
+      from: mine?.handle || waiting?.name || "",
+      answering: Boolean(state.answering),
+    };
   });
 
   if (out.error) {
@@ -8489,7 +8500,69 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
    * Nothing is sent WITH it — see lib/push.js. The buzz says a message
    * arrived; who and what are behind the door, where they belong. */
   tellThem(out.note.to).catch(() => { /* a push that failed is a push that did not arrive */ });
+  /* And the inbox, which is the one most of them will actually see. The
+     link is built here because this runs after the response, when the
+     request is gone. */
+  mailThem(out.note.to, out.from, backHere(req, "/notes#" + encodeURIComponent(out.from)))
+    .catch((err) => console.error("note mail:", err.message));
 });
+
+/* AND THE EMAIL, BECAUSE THE BUZZ REACHES ALMOST NOBODY.
+ *
+ * A push needs the app installed and notifications allowed, which is a
+ * fraction of any board and close to none of the people this product is
+ * about to list — a photographer in Melbourne who was sent a link once. So
+ * somebody writes from Shanghai, the phone does not buzz, and she concludes
+ * Australia ignored her. That is the whole product failing on a step nobody
+ * built.
+ *
+ * WHAT IT CARRIES, AND WHAT IT DOES NOT. Who wrote, and a link into the
+ * thread. Not the message: a push deliberately carries nothing because the
+ * words belong behind the door, and an inbox is not behind it. The name is
+ * the part that makes somebody open the app, and it is already the part they
+ * would see on a lock screen.
+ *
+ * ONE AN HOUR PER CONVERSATION. A chatty buyer writes forty messages in an
+ * afternoon and forty emails is how somebody unsubscribes from their own
+ * business. In memory, so a restart may allow one extra — which is the right
+ * way round for a thing whose failure mode is silence.
+ *
+ * NEVER AWAITED AND NEVER THROWN. The sender is watching their own message
+ * appear; whether a mail server is slow is not theirs to wait for, and a
+ * bounce is not theirs to know about.
+ */
+const mailedAt = new Map();
+
+async function mailThem(to, from, link) {
+  if (!mailReady() || !to || !from) return;
+  const board = await store.load(FILE);
+  const them = board.people.find((p) => p.by === to);
+  /* No address, no email. Which is why asking for one is part of listing
+     somebody, not an optional line at the end of their page. */
+  const addr = String(them?.mail || "").trim();
+  if (!addr) return;
+
+  const key = to + ":" + from;
+  const now = Date.now();
+  if (now - (mailedAt.get(key) || 0) < 60 * 60_000) return;
+  mailedAt.set(key, now);
+
+  /* In their language, by the same rule the rest of the board uses: a name
+     written in Chinese characters is a person who reads Chinese. It guesses
+     wrong for a Chinese speaker with an English handle, which is the
+     direction that costs the least. */
+  const zh = /[\u4e00-\u9fff]/.test(String(them.handle || ""));
+  const site = process.env.BOARD_SITE_NAME || "The Exchange";
+  await sendMail({
+    to: addr,
+    subject: zh ? `${from} 给你留言了` : `${from} wrote to you`,
+    text: zh
+      ? `${from} 在${site}上给你留言了。\n\n看看并回复：\n${link}\n\n`
+        + "你收到这封邮件，是因为你在这里留过邮箱。别人看不到它。\n"
+      : `${from} wrote to you on ${site}.\n\nRead it and answer:\n${link}\n\n`
+        + "You are getting this because you left an address here. Nobody else sees it.\n",
+  });
+}
 
 /** Buzz every device a member has turned this on for, and drop the ones the
  *  browser has thrown away. Never throws. */

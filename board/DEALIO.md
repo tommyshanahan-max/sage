@@ -413,6 +413,28 @@ under a green chip, so the home screen grew by one line for every job ever
 done and never shrank — the thing still owed sat further down the page each
 month.
 
+## A message that reaches somebody — **built**
+
+A push needs the app installed and notifications allowed, which is close to
+nobody on the list this product wants: a photographer in Melbourne who was
+sent a link once. So a message now sends an email too, when that person left
+an address — who wrote, and a link into the thread. Not the words: a push
+carries nothing because they belong behind the door, and an inbox is not
+behind it.
+
+One an hour per conversation, in memory. A restart may allow one extra,
+which is the right way round for something whose failure is silence.
+
+**No address, no email** — so asking for one is part of listing somebody,
+not a line at the end of their page.
+
+**And the gap this found.** A stranger cannot message a member at all: the
+board answers `profile`, because an introduction from a name that does not
+exist is what that rule exists to refuse. For a listing a Chinese buyer
+opens in WeChat, that is the whole flow. The way in that exists today is the
+waiting row — she leaves a name and a line, and the member writes first.
+Whether the listing should use that, or a rule of its own, is not decided.
+
 ## Not built
 
 ### The Cards line  **design below, not built**
