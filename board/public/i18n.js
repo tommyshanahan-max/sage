@@ -1190,8 +1190,8 @@ export const STRINGS = {
      the two things somebody already has open is the whole claim. */
   "land.alsoHead":     ["Also from here", "这里还有"],
   "land.alsoName":     ["Dealio", "Dealio"],
-  "land.alsoLine":     ["Your client in China pays by WeChat Pay or Alipay. You get the money in your own currency. 2%.",
-                        "国内的客户用微信或支付宝付，你收到的是自己国家的钱。手续费 2%。"],
+  "land.alsoLine":     ["Your client in China pays by WeChat Pay or Alipay. You get the money in your own currency. 3.5%, all in.",
+                        "国内的客户用微信或支付宝付，你收到的是自己国家的钱。手续费 3.5%，就这一项。"],
   "land.alsoGo":       ["What it is", "这是什么"],
   /* "people connecting in China, and with China" — "connecting" was the only
      word in the line doing no work, and it is the vaguest kind of product
@@ -5153,7 +5153,7 @@ export const STRINGS = {
                         "Ray，12 节课一共 2,400 元，点这里付："],
   "try.paid":          ["Paid", "已付款"],
   "try.landed":        ["A$502 in your account", "到账 502 澳元"],
-  "try.fee":           ["2% taken. Nothing else.", "扣 2%，没别的。"],
+  "try.fee":           ["3.5% taken. Nothing else.", "扣 3.5%，没别的。"],
   "dl.signIn":         ["Sign in", "登录"],
   "dl.enterApp":       ["Open Dealio", "进入 Dealio"],
   /* SAYING IT INSTEAD OF TYPING IT. Either language, or both in one sentence,
@@ -5216,12 +5216,18 @@ export const STRINGS = {
   /* THREE FACTS, FOUR WORDS EACH. They replace a heading and a paragraph
      apiece. What it costs, where the money ends up, whether you can get in —
      which is everything somebody had to read four hundred words to learn. */
-  "dl.spec1":          ["2% when you get paid", "收到钱时收 2%"],
+  "dl.spec1":          ["3.5% when you get paid, all in", "收到钱时收 3.5%，就这一项"],
   "dl.spec2":          ["Lands in your bank abroad", "直接进国外的银行卡"],
   "dl.spec3":          ["Invitation only, for now", "现在要有人邀请"],
   /* The paragraph each one replaced, one tap behind it. */
-  "dl.spec1.p":        ["Stripe takes 2% out of a payment on its way to you, and hands it to us. Nothing to join, nothing monthly, and nothing at all if nobody pays you.",
-                        "有人付钱的时候，Stripe 从中扣 2% 给我们。不收入会费，不收月费，没人付你就一分不收。"],
+  /* ONE NUMBER, AND NOTHING UNDER IT. It said 2% and named Stripe, and both
+     have changed: the money comes in through a wallet now, and 2% was the
+     platform's cut sitting on top of charges nobody had added up. 3.5% is
+     the whole of what leaves the payment — the wallet's fee for taking it,
+     the conversion out of yuan, and ours. A payer told "2%" and charged
+     more than that is a payer who never comes back. */
+  "dl.spec1.p":        ["3.5% comes out of the payment and that is the whole of it — taking the money, converting it, and us. Nothing to join, nothing monthly, and nothing at all if nobody pays you.",
+                        "从款里扣 3.5%，就这一项——收款、换汇、加上我们的，都在里面。不收入会费，不收月费，没人付你就一分不收。"],
   "dl.spec2.p":        ["They pay in yuan from WeChat or Alipay; it arrives in your own bank account abroad. This board never holds it, never moves it, and has no balance of anybody's money.",
                         "对方用微信或支付宝付人民币，钱到你在国外的银行账户。这个板子不代收、不代转，也没有任何人的资金池。"],
   "dl.spec3.p":        ["Somebody already here has to let you in. Paying is different — if somebody sent you a link, open it and pay. You need no account for that, ever.",
