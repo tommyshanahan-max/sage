@@ -71,9 +71,17 @@ console.log("");
 line("Provider", c.provider || "none");
 line("Whose requests", c.owner ? (c.ownerOnBoard ? c.owner : c.owner + " — NOT ON THIS BOARD") : "nobody named");
 line("Codes drawn so far", String(c.drawn ?? 0));
+/* The difference between a row that settles on its own and one that settles
+   when somebody remembers to look. */
+line("Airwallex tells us", c.told ? "yes" : "no — a page has to ask");
 console.log("");
 if (Array.isArray(c.why) && c.why.length) {
   for (const w of c.why) console.log("    · " + w);
+  console.log("");
+}
+if (c.on && !c.told) {
+  console.log("  To have a row settle with nobody looking:");
+  console.log("    make dealio-webhook");
   console.log("");
 }
 if (c.on) {

@@ -704,6 +704,17 @@ ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [FOR
 	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)" \
 	  $(if $(TRY),--try,)
 
+dealio-webhook: ## Airwallex tells us a code was paid: make dealio-webhook [SECRET="…"] [OFF=1]
+	@# Without it a row still goes green — but only once somebody opens a
+	@# page, because asking is the only witness. The commonest shape of a
+	@# payment is nobody looking at all: the payer closes the tab and the
+	@# person owed the money is asleep.
+	@#
+	@# Run it with no arguments and it prints the address to paste into
+	@# Airwallex's dashboard, which is the one step that cannot be a command
+	@# — they register endpoints there and show the signing secret once.
+	@bash scripts/dealio-webhook.sh
+
 dealio-me: ## Dealio's codes, for one person's own requests: make dealio-me WHO="Tom" [OFF=1]
 	@# WHAT IT TURNS ON. A request in yuan by that person, paid by WeChat Pay
 	@# or Alipay, draws a real Airwallex code on the payer's page instead of

@@ -587,6 +587,31 @@ const WALLET = createWallet({
 });
 app.use(WALLET.webhooks);
 
+/* AND WHEN AIRWALLEX SAYS A CODE WAS PAID.
+ *
+ * Asking works and needed nothing set up, which is why it was built first:
+ * the payer's page asks every three seconds while the code is on the screen,
+ * and the asker's list asks when they open it. But both of those need
+ * somebody to be looking, and the commonest shape of this is nobody looking
+ * at all — the payer pays on a phone and closes the tab, the person owed the
+ * money is asleep.
+ *
+ * So the provider tells us too. The signature is checked in the adapter
+ * before the body is parsed, and this only ever moves a row the provider
+ * itself then confirms — settleIfPaid asks again rather than trusting the
+ * event, which costs one call and means a forged webhook settles nothing.
+ *
+ * Off until the notification endpoint is registered with Airwallex and its
+ * secret is in .env: make dealio-webhook. Until then, asking is the whole of
+ * it, and nothing here fires. */
+if (WALLET.on && typeof WALLET.provider.onEvent === "function") {
+  WALLET.provider.onEvent((e) => {
+    if (e?.type !== "payment.status" || e.status !== "SUCCEEDED" || !e.intentId) return;
+    settleByIntent(String(e.intentId))
+      .catch((err) => console.error("dealio webhook:", err.message));
+  });
+}
+
 /* ---------------------------------------------------------------------------
  * STRIPE SAYS THE FEE CLEARED
  *
@@ -10240,6 +10265,21 @@ function dealioWays(board, q) {
    rest are answered from here. */
 const payChecked = new Map();
 
+/** The request a payment intent belongs to, settled. Called by the webhook,
+ *  which knows the provider's id for the payment and nothing about us.
+ *
+ *  An intent this board has never heard of is one of the wallet's own, or
+ *  another product's on the same account: not ours, and silence is the right
+ *  answer. The cached status is dropped first — a page that asked two
+ *  seconds ago holds a "not yet" that would make this event a no-op. */
+async function settleByIntent(intentId) {
+  const board = await store.load(FILE);
+  const q = board.requests.find((x) => x.pay?.ref === intentId);
+  if (!q) return false;
+  payChecked.delete(q.id);
+  return settleIfPaid(q);
+}
+
 /** Ask whether the code on this request has been paid, and write it down if
  *  it has. True only when this call is the one that moved the row.
  *
@@ -10725,6 +10765,10 @@ app.get("/api/admin/pay", admin, async (req, res) => {
     owner: codeOwner?.handle || DEALIO_OWNER,
     ownerOnBoard: Boolean(codeOwner),
     drawn: board.requests.filter((q) => q.pay?.ref).length,
+    /* Whether a row can settle with nobody looking. Without it the money
+       still arrives and the row still goes green — but only once somebody
+       opens a page, which is the bottleneck a webhook exists to remove. */
+    told: Boolean(String(process.env.BOARD_WALLET_AIRWALLEX_WEBHOOK_SECRET || "").trim()),
     /* Kept apart from Stripe's reasons. They are two different answers to
        two different questions and one list of them reads as one fault. */
     why: [],

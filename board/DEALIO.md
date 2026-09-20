@@ -308,14 +308,26 @@ server.js is the whole gate:
 | `way: "in"` | money coming in, not a promise to send |
 | `cur: "cny"` | what these two wallets take |
 
-**Nobody comes back, so both sides ask.** The payer leaves for their wallet
-and may never return to this page. `GET /api/request/:id/check` asks the
-provider and writes both halves of `said` with `auto: true` — the payer's
-page polls it every three seconds while the code is up, and `/api/requests`
-asks about up to three of the asker's own unsettled codes when they open
-their list. One live call per request per four seconds, whoever is asking.
-A webhook would be better and is next: it needs a public address registered
-in Airwallex's dashboard and its secret in `.env`, and asking needs neither.
+**Nobody comes back, so three things watch.** The payer leaves for their
+wallet and may never return to this page.
+
+| Witness | When it works |
+|---|---|
+| The payer's page polls `/api/request/:id/check` | while the code is on the screen |
+| `/api/requests` asks about its own unsettled codes | when the asker opens their list |
+| Airwallex posts to `/api/wallet/webhooks/provider` | always, once registered |
+
+The first two were built first because they need nothing set up. Both need
+somebody to be looking, and the commonest shape of a payment is nobody
+looking at all: the payer closes the tab and the person owed the money is
+asleep. So the provider tells us too — `make dealio-webhook` prints the
+address to register and takes back the signing secret.
+
+All three end in `settleIfPaid`, which asks the provider before writing, so
+a forged webhook settles nothing and two witnesses cannot double-write. One
+live call per request per four seconds, whoever is asking; the webhook drops
+that cache first, so an event is never answered from a two-second-old "not
+yet".
 
 **`ready` is not about Stripe here.** A code needs nowhere for the money to
 land, and that was the whole of why this page said "{who} has not said where
