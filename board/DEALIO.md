@@ -284,6 +284,12 @@ On the box with Airwallex keys, WeChat Pay and Alipay draw a **QR on this
 page** rather than handing the payer to anybody. They long-press it, pay in
 the wallet they already had open, and the row settles itself.
 
+**It has to be an <img>.** The code was drawn as a grid of divs and looked
+perfect; WeChat's 长按二维码识别 reads a QR out of an image and offered
+nothing at all. Found by screenshotting the screen and long-pressing the
+picture in a chat, which works and is three steps nobody takes. The server
+sends a PNG data URI; the drawn grid is only for the fakes.
+
 ```
   12 lessons  ¥2,400              [ Back ]
 
