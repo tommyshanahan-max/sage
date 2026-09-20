@@ -375,7 +375,12 @@ function draw() {
   }
 
   root.append(topBoard());
-  root.append(aiRow());
+  /* THE ASSISTANT SWITCH IS NOT SHOWN, because there is no assistant yet.
+     A control that turns on nothing is worse than a missing one: she flips
+     it, believes her buyers are being answered, and finds out from a buyer
+     who was not. The row and its route are built and tested — put this
+     back the day something answers. */
+  if (D.ai) root.append(aiRow());
   root.append(msgs());
 
   if (!D.orders.length) {
