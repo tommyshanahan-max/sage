@@ -15,8 +15,8 @@ it twice does not post twice.
 | ✅ | YouTube | Data API v3, on the box | built, needs keys |
 | ✅ | LinkedIn | Versioned API, on the box | built, needs keys |
 | ✅ | X | v1.1 upload + v2 post, on the box | built, needs keys |
-| | 抖音 Douyin | browser | after that |
-| | 小红书 Xiaohongshu | browser | after that |
+| ✅ | 抖音 Douyin | browser, on the box | built, needs a login |
+| ✅ | 小红书 Xiaohongshu | browser, on the box | built, needs a login |
 | | 视频号 Channels | browser | after that |
 | | 公众号 | browser — the account has no publish rights | after that |
 | | 快手 Kuaishou | browser | later |
@@ -128,6 +128,44 @@ OAuth 1.0a, by hand.
   media id that does not exist, which sounds like the upload failed when it did
   not — so this waits for processing to finish.
 
+## 抖音 and 小红书 — the browser half
+
+```
+make post-login WHO=douyin PHONE=13800138000
+make post-code  WHO=douyin CODE=123456
+make post-run
+make post-logins
+```
+
+`make post` queues these rather than doing them; `make post-run` is what opens
+Chromium and posts them.
+
+**The login is by SMS, not by QR code.** Every automation write-up uses the QR,
+and a QR is no use to somebody who cannot see the screen — it means pointing a
+phone at a monitor. Both platforms also offer phone-and-code, so that is what
+this uses: one command sends the code to the phone, a second types it back in.
+Two commands rather than one because a command that sits waiting for an SMS is
+a command that looks hung.
+
+**The login is kept as a whole Chromium profile**, in the `post_profiles`
+volume, not as a cookie jar. These sites fingerprint the browser, and cookies
+replayed in a fresh browser look like a stolen session — which is the thing
+they are built to catch.
+
+**A session lasts a few weeks and nothing warns you.** When one expires,
+`make post-run` says which platform needs a login and leaves the job queued, so
+finishing the login and running again picks it up. `make post-logins` answers
+the same question before a trip rather than during one.
+
+**A slider puzzle cannot be solved from a terminal.** If one appears during
+login, the command says so and stops. That is a real limit, not a bug to work
+around, and pretending otherwise would waste an afternoon.
+
+**When a selector misses, the page is kept.** A screenshot and the page's
+visible text go into `/data/evidence/`, because "it did not work" with nothing
+to read is not something anybody can fix — least of all somebody who cannot
+look at the screen.
+
 ## What has and has not been tried
 
 Checked against the real endpoints with deliberately wrong keys, which proves
@@ -142,6 +180,22 @@ the request shape is parsed rather than the credentials work:
   finalize, the post itself — is a reading of the documentation and has never
   run. Expect to fix something on the first real post, and expect the error to
   be specific enough to fix.
+
+The browser half is further from proven than that:
+
+- **Every decision path was tested** without a browser — nothing queued, a job
+  waiting with no login, an unknown platform, a missing phone number, a code
+  with no login in progress. All of them say the right thing and exit the right
+  way.
+- **No page has ever been opened.** The selectors in `browser/platforms/` are
+  written from Douyin's and Xiaohongshu's creator pages as documented, and both
+  sites change them. The first real login will find something wrong; the
+  evidence files are there so that finding it takes minutes rather than a
+  session of guessing.
+- **The image has never been built.** There is no Docker on Tom's Mac, so
+  `browser.Dockerfile` — node:22-slim plus `npx playwright install --with-deps
+  chromium` — is first built on the box, and that build is the first thing to
+  watch when it deploys.
 
 ## Files
 

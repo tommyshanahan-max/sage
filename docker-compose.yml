@@ -1418,6 +1418,52 @@ services:
           memory: ${TOMSCODING_POST_MEMORY:-256m}
     cpu_shares: ${TOMSCODING_POST_CPU_SHARES:-128}
 
+  # ---------------------------------------------------------------------------
+  # POST-BROWSER — 抖音 and 小红书, in a real browser with a kept login.
+  #
+  # A SECOND IMAGE, NOT A SECOND SERVICE'S WORTH OF STATE. It shares post_data
+  # with the API half — one record of what went where, or the promise not to
+  # double-post is two promises that can disagree — and adds post_profiles,
+  # which is the login itself: a Chromium profile per platform, because these
+  # sites fingerprint the browser and a cookie jar in a fresh browser looks
+  # like a stolen session.
+  #
+  # MEMORY IS HIGHER THAN THE REST OF THE ESTATE ON PURPOSE. Chromium with a
+  # video open is not a 256MB process, and the failure when it is starved is a
+  # tab that dies mid-upload — which looks like the platform refusing.
+  # ---------------------------------------------------------------------------
+  post-browser:
+    profiles: ["post"]
+    build:
+      context: ./post
+      dockerfile: browser.Dockerfile
+    image: tomscoding-post-browser:latest
+    container_name: tomscoding-post-browser
+    restart: unless-stopped
+    user: "1000:1000"
+    # Chromium's renderer wants more shared memory than Docker's 64MB default,
+    # and starved it crashes the tab rather than saying so.
+    shm_size: 1gb
+    environment:
+      POST_DIR: /data
+      POST_PROFILES: /profiles
+      POST_LANG: ${TOMSCODING_POST_LANG:-en}
+      # Set to open a real window instead of a headless one. Only useful where
+      # there is a screen, which is not this box — it is here for the day a
+      # platform has to move to Tom's Mac.
+      POST_HEADFUL: ${TOMSCODING_POST_HEADFUL:-}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - post_data:/data
+      - post_profiles:/profiles
+    networks:
+      - tomscoding
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_POST_BROWSER_MEMORY:-2g}
+    cpu_shares: ${TOMSCODING_POST_CPU_SHARES:-128}
+
 networks:
   tomscoding:
     driver: bridge
@@ -1485,6 +1531,10 @@ volumes:
   # under something else's: whatever happens to the rest of the estate, this
   # record survives it.
   post_data:
+  # The logins themselves: one Chromium profile per platform. A login costs Tom
+  # an SMS and a minute, and it has to survive a deploy — that is this volume's
+  # whole job.
+  post_profiles:
   browser_config:
   caddy_data:
   caddy_config:

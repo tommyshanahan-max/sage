@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status
+.PHONY: try china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1218,6 +1218,34 @@ post: ## Post one video everywhere: make post FILE=~/video.mp4 SAY="caption" [ZH
 	  $(COMPOSE) --profile post run --rm --no-deps -T -v "$$d:/in:ro" post \
 	    node cli.mjs post --file "/in/$$f" --say "$(SAY)" \
 	    $(if $(ZH),--zh "$(ZH)",) $(if $(ONLY),--only "$(ONLY)",)
+
+post-run: ## Do the queued 抖音/小红书 posts in a real browser: make post-run [ONLY=douyin]
+	@# The browser half. `make post` queues these rather than doing them, so
+	@# this is the command that actually opens Chromium, and it says which
+	@# platform needs a login rather than failing quietly.
+	@$(COMPOSE) --profile post run --rm --no-deps -T post-browser \
+	  node browser/run.mjs run --where box $(if $(ONLY),--only "$(ONLY)",)
+
+post-login: ## Log in to a Chinese platform by SMS: make post-login WHO=douyin PHONE=13800138000
+	@# BY SMS, NOT BY QR. Every automation guide uses the QR code, and a QR is
+	@# no use to somebody who cannot see the screen. This sends a code to the
+	@# phone; `make post-code` types it back in.
+	@test -n "$(WHO)" || { echo 'which one? make post-login WHO=douyin PHONE=13800138000'; exit 1; }
+	@test -n "$(PHONE)" || { echo 'which number? make post-login WHO=$(WHO) PHONE=13800138000'; exit 1; }
+	@$(COMPOSE) --profile post run --rm --no-deps -T post-browser \
+	  node browser/run.mjs login --who "$(WHO)" --phone "$(PHONE)"
+
+post-code: ## Finish the login with the six digits: make post-code WHO=douyin CODE=123456
+	@test -n "$(WHO)" || { echo 'which one? make post-code WHO=douyin CODE=123456'; exit 1; }
+	@test -n "$(CODE)" || { echo 'which code? make post-code WHO=$(WHO) CODE=123456'; exit 1; }
+	@$(COMPOSE) --profile post run --rm --no-deps -T post-browser \
+	  node browser/run.mjs code --who "$(WHO)" --code "$(CODE)"
+
+post-logins: ## Which platforms are still logged in: make post-logins
+	@# Worth running before a trip rather than finding out mid-post: these
+	@# sessions expire every few weeks and nothing warns you.
+	@$(COMPOSE) --profile post run --rm --no-deps -T post-browser \
+	  node browser/run.mjs check
 
 post-status: ## What went where: make post-status [ID=...] [N=10]
 	@$(COMPOSE) --profile post run --rm --no-deps -T post \
