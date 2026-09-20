@@ -58,6 +58,29 @@ line("Deals with a plan", String(j.deals));
 line("Requests made", String(j.asks) + (j.asks ? " · " + j.asksPaid + " paid" : ""));
 if (j.demo) line("Demo stand-in", "ON — the payment screen is a drawing");
 console.log("");
+
+/* THE CODES, WHICH ARE A SEPARATE ANSWER FROM STRIPE'S.
+   "Payments are off" was the whole verdict, and on the box that draws WeChat
+   codes and has no Stripe it was both true and useless: the thing that
+   actually works did not appear anywhere on this screen. */
+const c = j.codes || {};
+console.log(c.on
+  ? "  WECHAT AND ALIPAY CODES ARE ON" + (c.sandbox ? " — sandbox keys, so the money is test money" : " — LIVE keys, real money")
+  : "  WECHAT AND ALIPAY CODES ARE OFF");
+console.log("");
+line("Provider", c.provider || "none");
+line("Whose requests", c.owner ? (c.ownerOnBoard ? c.owner : c.owner + " — NOT ON THIS BOARD") : "nobody named");
+line("Codes drawn so far", String(c.drawn ?? 0));
+console.log("");
+if (Array.isArray(c.why) && c.why.length) {
+  for (const w of c.why) console.log("    · " + w);
+  console.log("");
+}
+if (c.on) {
+  console.log("  To see a code on a phone:");
+  console.log("    make ask WHO=\"" + c.owner + "\" AMOUNT=\"¥1\" FOR=\"a test\"");
+  console.log("");
+}
 /* THE NEXT COMMAND, WRITTEN OUT. The whole point of this page is to answer
    "what now", and the answer is almost always one line somebody can paste. */
 if (paid.length) {
@@ -66,7 +89,7 @@ if (paid.length) {
   console.log("");
 }
 if (j.why.length) {
-  console.log("  Why not:");
+  console.log("  Why Stripe is off:");
   for (const w of j.why) console.log("    · " + w);
   console.log("");
 }

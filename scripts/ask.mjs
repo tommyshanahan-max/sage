@@ -50,9 +50,16 @@ console.log("");
 /* SAID HERE RATHER THAN FOUND OUT ON THE PHONE. A request from somebody with
    no payout set up opens fine and cannot be paid, and the page says so — but
    by then somebody has walked to another device to find out. */
-if (!j.ready) {
+/* WHICH RAILS THIS ONE IS ON, because "no payout set up, cannot be paid" was
+   printed about a request that draws a WeChat code and can be paid perfectly
+   well — the payout account belongs to the other path. */
+if (j.code) {
+  console.log("  It opens with a WeChat Pay or Alipay code. No payout account needed.");
+  console.log("");
+} else if (!j.ready) {
   console.log("  " + arg("who") + " has no payout set up, so this opens but cannot be paid.");
   console.log("  make payee WHO=\"" + arg("who") + "\" ACCT=acct_…");
+  console.log("  Or, for a code instead: make dealio-me WHO=\"" + arg("who") + "\"");
   console.log("");
 }
 

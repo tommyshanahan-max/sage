@@ -10581,12 +10581,16 @@ app.post("/api/admin/request", admin, express.json({ limit: "2kb" }), async (req
     });
     if (!q) return { error: "bad" };
     board.requests.push(q);
-    /* Whether anybody can actually pay it, said back rather than discovered
-       on the phone. */
-    return { ok: true, id: q.id, ready: Boolean(mine.payee) };
+    /* HOW IT CAN BE PAID, said back rather than discovered on the phone.
+       A payout account is no longer the only answer: a request that draws a
+       WeChat or Alipay code needs nowhere for the money to land, and this
+       said "cannot be paid" about one that could. */
+    const ways = dealioWays(board, q);
+    return { ok: true, id: q.id, ready: ways.length > 0 || Boolean(mine.payee),
+      code: ways.length > 0 };
   });
   if (out?.error) return res.status(400).json(out);
-  res.json({ ok: true, id: out.id, ready: out.ready,
+  res.json({ ok: true, id: out.id, ready: out.ready, code: out.code,
     url: payLink(req, "/pay/" + out.id) });
 });
 
@@ -10690,9 +10694,43 @@ app.get("/api/admin/pay", admin, async (req, res) => {
   if (!FEE_SECRET) why.push("BOARD_DEAL_FEE_SECRET is not set — nothing flips a row to PAID");
   if (KEY && !payees.length) why.push("nobody has a payee account yet — Pay lands on \"not finished setting up\"");
 
+  /* THE CODE RAILS, WHICH ARE A DIFFERENT QUESTION FROM STRIPE'S.
+     Whether a WeChat or Alipay code can be drawn turns on three things that
+     live where nobody can look: which provider is configured, whether a
+     handle is named in BOARD_DEALIO_OWNER, and whether that handle is a
+     person on this board. Half-set looks exactly like off from a phone —
+     which is a morning already spent — so each half says so by name. */
+  const codeOwner = DEALIO_OWNER
+    ? board.people.find((q) => String(q.handle || "").trim().toLowerCase() === DEALIO_OWNER)
+    : null;
+  const codes = {
+    on: Boolean(dealioQr() && codeOwner),
+    provider: WALLET.on ? WALLET.provider.name : "",
+    /* Sandbox or not, which decides whether the money is real. */
+    sandbox: WALLET.on && WALLET.provider.name === "airwallex"
+      ? process.env.BOARD_WALLET_AIRWALLEX_SANDBOX !== "0" : true,
+    /* THE HANDLE AS THE BOARD SPELLS IT, not as it was typed into .env. The
+       next thing anybody does with this line is paste it into `make ask`,
+       which matches the handle exactly — so printing the lower-cased copy
+       hands over a command that fails. */
+    owner: codeOwner?.handle || DEALIO_OWNER,
+    ownerOnBoard: Boolean(codeOwner),
+    drawn: board.requests.filter((q) => q.pay?.ref).length,
+    /* Kept apart from Stripe's reasons. They are two different answers to
+       two different questions and one list of them reads as one fault. */
+    why: [],
+  };
+  if (!codes.on) {
+    if (!WALLET.on) codes.why.push("BOARD_WALLET is not set — no provider, so no code can be drawn");
+    else if (!dealioQr()) codes.why.push("the " + codes.provider + " provider cannot draw a code — it is not the one that does");
+    else if (!DEALIO_OWNER) codes.why.push("BOARD_DEALIO_OWNER is not set — run: make dealio-me WHO=\"Tom\"");
+    else codes.why.push("BOARD_DEALIO_OWNER is \"" + DEALIO_OWNER + "\" and nobody on this board has that handle");
+  }
+
   res.json({
     ok: true,
     takesPayments: Boolean(KEY && STRIPE_PK && FEE_SECRET && payees.length),
+    codes,
     mode,
     key: Boolean(KEY),
     publishable: Boolean(STRIPE_PK),
