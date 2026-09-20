@@ -713,7 +713,15 @@ dealio-webhook: ## Airwallex tells us a code was paid: make dealio-webhook [SECR
 	@# Run it with no arguments and it prints the address to paste into
 	@# Airwallex's dashboard, which is the one step that cannot be a command
 	@# — they register endpoints there and show the signing secret once.
-	@bash scripts/dealio-webhook.sh
+	@#
+	@# ONLY FROM THE COMMAND LINE. make imports the environment as its own
+	@# variables, and this box has a SECRET in its environment: the script
+	@# read it, stored it, and said "Listening" about a webhook that could
+	@# never have verified a signature. $(origin) is how make tells the two
+	@# apart, and what is not passed is not read.
+	@bash scripts/dealio-webhook.sh \
+	  $(if $(filter command line,$(origin SECRET)),--secret "$(SECRET)",) \
+	  $(if $(filter command line,$(origin OFF)),--off,)
 
 dealio-me: ## Dealio's codes, for one person's own requests: make dealio-me WHO="Tom" [OFF=1]
 	@# WHAT IT TURNS ON. A request in yuan by that person, paid by WeChat Pay
