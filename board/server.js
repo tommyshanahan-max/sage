@@ -11286,6 +11286,51 @@ app.post("/api/admin/shop-brand", admin, express.json({ limit: "2kb" }), async (
   res.json({ ok: true, ...out });
 });
 
+/** WHAT KIND OF PICTURE THIS IS, READ OFF THE FIRST FEW BYTES.
+ *
+ *  A file arriving down a pipe has no content-type and the name it had on
+ *  somebody's desktop is not evidence — .jpg on a screenshot that is really
+ *  a PNG is the commonest thing in the world. So the bytes say. */
+function sniffImage(buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < 12) return "";
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return "image/png";
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
+  if (buf.subarray(0, 4).toString("latin1") === "GIF8") return "image/gif";
+  if (buf.subarray(0, 4).toString("latin1") === "RIFF"
+    && buf.subarray(8, 12).toString("latin1") === "WEBP") return "image/webp";
+  return "";
+}
+
+/** THE SAME PICTURE, HANDED OVER AS A FILE RATHER THAN A LINK.
+ *
+ *  The picture worth putting across the top of a shop is the one already on
+ *  his machine — the artwork from the old WeChat store, a photograph taken
+ *  this morning. Sending him off to upload it somewhere first, for an
+ *  address to paste back, is a step done by hand with an account and a
+ *  screen in the middle of it. So the bytes come up the same pipe as the
+ *  command:  make shop-banner WHO="Tom" < dad.png
+ *
+ *  The name is untouched — a new picture is not a rename. */
+app.post("/api/admin/shop-banner", admin,
+  express.raw({ type: () => true, limit: MEDIA_MAX }), async (req, res) => {
+  const who = String(req.query?.who || "").trim();
+  if (!who) return res.status(400).json({ error: "who" });
+  const buf = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  if (!buf.length) return res.status(400).json({ error: "empty" });
+  const type = sniffImage(buf);
+  if (!type) return res.status(400).json({ error: "kind" });
+  const id = await putMedia(buf, type);
+  if (!id) return res.status(500).json({ error: "store" });
+  const out = await change((b) => {
+    const p = b.people.find((x) => x.handle === who);
+    if (!p) return { error: "gone" };
+    p.shop = { name: p.shop?.name || "", banner: "/api/public-media?id=" + id };
+    return { ok: true, name: p.shop.name, bytes: buf.length, kind: type };
+  });
+  if (out?.error) return res.status(404).json({ error: "not on this board: " + who });
+  res.json({ ok: true, ...out });
+});
+
 /** THE CATALOGUE, NUMBERED — so a photograph can be attached to row 2
  *  rather than to twenty characters copied out of a terminal. */
 app.get("/api/admin/products", admin, async (req, res) => {

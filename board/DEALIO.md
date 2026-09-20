@@ -450,6 +450,7 @@ make orders                          # what is waiting to be sent
 make ship N=1 TRACKING="XD91260039AU" COURIER="迅达速递"
 make owed [PAY=1]                    # earned, and the sweep for what could not go
 make shop-brand WHO="Tom" NAME="澳洲爸爸汤姆" BANNER="https://…/aussiedad.jpg"
+make shop-banner WHO="Tom" < dad.png   # the same picture, from a file
 ```
 
 **A handle and a grey circle is not a shop.** Tom ran 澳洲爸爸汤姆 to nine
@@ -462,6 +463,13 @@ Nothing else goes on it — **no badges, no "official partner"**. Those are
 claims about somebody else's relationship, the ones that were true are not
 true today, and a shop that says something it cannot back is the one thing
 this trade punishes hardest.
+
+**The picture comes up the pipe.** It is already on his machine; uploading it
+somewhere to get a link, so the link can be pasted into another command, is
+two accounts and a screen in the middle of a one-line job. So from the Mac:
+`ssh root@… 'cd ~/tc && make shop-banner WHO="Tom"' < ~/Desktop/dad.png`. The
+kind is read off the first bytes rather than the file's name, because a
+screenshot called .jpg is usually a PNG.
 
 **A picture is fetched, never linked.** Her whole scan of a shop page is
 photographs and prices, in that order — and a page whose images come from an

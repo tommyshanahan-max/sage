@@ -784,6 +784,21 @@ shop-brand: ## Dress a storefront: make shop-brand WHO="Tom" NAME="澳洲爸爸�
 	  /seed/shop-brand.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" $(if $(NAME),--name "$(NAME)",) --banner "$(BANNER)"
 
+shop-banner: ## The picture, from a file: make shop-banner WHO="Tom" < dad.png
+	@# THE PICTURE IS ALREADY ON HIS MACHINE. Uploading it somewhere to get
+	@# a link, so the link can be pasted into another command, is two
+	@# accounts and a screen in the middle of a one-line job — so the file
+	@# goes up the pipe with the command.
+	@#
+	@# From the Mac, in one line:
+	@#   ssh root@… 'cd ~/tc && make shop-banner WHO="Tom"' < ~/Desktop/dad.png
+	@#
+	@# It does not touch the name — a new picture is not a rename.
+	@test -n "$(WHO)" || { echo 'make shop-banner WHO="Tom" < dad.png'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/shop-banner.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)"
+
 payout-try: ## Can this Airwallex account pay anybody: make payout-try
 	@# THE QUESTION THE SUBCONTRACTOR HALF RESTS ON, asked before a day is
 	@# spent building on it. Transfers and beneficiaries are activated
