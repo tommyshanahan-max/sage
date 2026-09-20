@@ -128,6 +128,19 @@ export function createWalletRouter({ service, passkeys, provider, identify, test
 export function createWebhookRouter({ provider }) {
   const r = express.Router();
   if (typeof provider.handleWebhook !== "function") return r;
+  /* A HUMAN, OR A DASHBOARD, LOOKING AT THE ADDRESS.
+     Only POST was handled, so anything else fell past this router and into
+     the board's invite door, which answered {"error":"invite"} — the right
+     answer to a stranger asking for a page, and a frightening one to whoever
+     has just pasted this address into Airwallex and opened it to check. A
+     provider that pings an endpoint before accepting it would read the same
+     thing. So the address says what it is. Nothing about the board, nothing
+     about the account: one line, and 405 because POST is the only method
+     that does anything here. */
+  r.get("/api/wallet/webhooks/provider", (req, res) => {
+    res.status(405).json({ ok: true, post: "This address accepts signed POSTs from the payment provider." });
+  });
+
   r.post("/api/wallet/webhooks/provider", express.raw({ type: "*/*", limit: "256kb" }), async (req, res) => {
     try {
       const ok = await provider.handleWebhook({ raw: req.body, headers: req.headers });
