@@ -5086,6 +5086,9 @@ export const STRINGS = {
   "try.head":          ["See it work.", "看看是怎么用的。"],
   "try.sub":           ["No account. Four screens.", "不用注册，四个画面。"],
   "try.note":          ["A walkthrough. No money moves.", "只是演示，不会真的扣钱。"],
+  /* Said only under a code that really came back from the provider. The
+     other note would be a lie in front of something scannable. */
+  "try.noteLive":      ["A real code, on test money.", "这是真的二维码，用的是测试钱。"],
   "try.next":          ["Next", "下一个"],
   "try.again":         ["Start again", "再看一遍"],
   "try.open":          ["Open Dealio", "打开 Dealio"],

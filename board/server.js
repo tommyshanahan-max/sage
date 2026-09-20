@@ -63,6 +63,7 @@ import * as stripe from "./lib/stripe.js";
  * says it to both halves. */
 import { OFF } from "./public/off.js";
 import { createWallet } from "./lib/wallet/index.js";
+import { qrBits } from "./lib/qr.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -9956,6 +9957,42 @@ app.get(["/dealio/about", "/dealio/about/"], notesOff,
  *  see it move. Four screens, no account, nothing created. */
 app.get(["/dealio/try", "/dealio/try/"], notesOff,
   (req, res, next) => page("try.html", req, res, next));
+
+/** A REAL WECHAT CODE ON THE WALKTHROUGH, when there is a provider to ask.
+ *
+ *  Screen three draws an invented code by default, and says so. With
+ *  Airwallex configured it asks for a real one instead: a payment intent in
+ *  yuan, confirmed in qrcode flow, and what comes back is a string this
+ *  server turns into a grid of bits for the page to draw. Nothing is fetched
+ *  by the phone and no image is served — same bits, same divs, real content.
+ *
+ *  ONE CODE AT A TIME, CACHED. This is a public page and an intent is a real
+ *  object at Airwallex even in sandbox; a visitor should not be able to mint
+ *  one per reload. So the last code is kept for ten minutes and everybody
+ *  gets that one, which is also true to life — a code on a page is a code,
+ *  not a code per reader.
+ *
+ *  It answers 404 when there is no provider, and the page keeps its drawn
+ *  one. A walkthrough that claims a live code it does not have would be the
+ *  one dishonest screen in the whole product. */
+const tryQr = { at: 0, body: null };
+app.get("/api/dealio/try/qr", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const p = WALLET.on ? WALLET.provider : null;
+  if (!p || typeof p.wechatQr !== "function") return res.status(404).json({ error: "no provider" });
+  if (tryQr.body && Date.now() - tryQr.at < 10 * 60_000) return res.json(tryQr.body);
+  try {
+    const r = await p.wechatQr({ amount: "240000", currency: "CNY", reference: "12 lessons" });
+    if (!r.qr) return res.status(502).json({ error: "no code" });
+    const { size, bits } = qrBits(r.qr);
+    tryQr.body = { live: true, size, bits };
+    tryQr.at = Date.now();
+    res.json(tryQr.body);
+  } catch (err) {
+    console.error("try qr", err.message);
+    res.status(502).json({ error: "upstream" });
+  }
+});
 
 /** READING ONE. No code, no device, no membership — the link is the whole of
  *  it. What comes back is requestView, which is an allowlist. */

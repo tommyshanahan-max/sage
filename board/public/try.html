@@ -142,15 +142,43 @@ const el = (tag, cls, text) => {
   return n;
 };
 
-/* The code, drawn. Fixed pattern: it is a picture of a code, not a code, and
-   a page that generated a scannable one would be offering a payment that does
-   not exist. */
-const QR = "1101011" + "0100010" + "0110110" + "1011010" + "0011101" + "1010011" + "1101001";
+/* THE CODE, AND WHETHER IT IS A REAL ONE.
+ *
+ * By default this is seven rows of invented bits — a picture of a code, and
+ * the line under the phone says the whole thing is a walkthrough.
+ *
+ * But if this board has a payment provider configured, the server will hand
+ * back a genuine WeChat Pay code: a real payment intent, in yuan, waiting to
+ * be scanned. Then the picture becomes the thing, and the page says THAT
+ * instead. One fetch, on screen three only, and a failure leaves the drawn
+ * one exactly where it was — a walkthrough that claimed a live code it did
+ * not have would be the one dishonest screen here. */
+const FAKE = "1101011" + "0100010" + "0110110" + "1011010" + "0011101" + "1010011" + "1101001";
+let LIVE = null;      // { size, bits } once the server has given us one
+let ASKED = false;
+
 function qr() {
   const g = el("div", "qr");
   g.setAttribute("aria-hidden", "true");
-  for (const c of QR) g.append(el("i", c === "1" ? "" : "o"));
+  const bits = LIVE ? LIVE.bits.join("") : FAKE;
+  const n = LIVE ? LIVE.size : 7;
+  g.style.gridTemplate = `repeat(${n},1fr)/repeat(${n},1fr)`;
+  g.style.gap = LIVE ? "0" : "";
+  for (const c of bits) g.append(el("i", c === "1" ? "" : "o"));
   return g;
+}
+
+async function askForReal() {
+  if (ASKED) return;
+  ASKED = true;
+  try {
+    const r = await fetch("/api/dealio/try/qr", { cache: "no-store" });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d || !Array.isArray(d.bits) || !d.size) return;
+    LIVE = { size: d.size, bits: d.bits };
+    if (step === 2) draw();
+  } catch { /* the drawn one stays, which is the honest default */ }
 }
 
 let step = 0;
@@ -176,6 +204,7 @@ const SCREENS = [
   },
   // 3 — the payer's page. Chinese in both languages: it is what they see.
   (p) => {
+    askForReal();
     p.append(el("span", "lab", "thexchange.app/pay"));
     p.append(el("span", "what", "Tom · " + TZh("try.what")));
     p.append(el("span", "amt small", "¥2,400"));
@@ -238,7 +267,10 @@ function draw() {
     root.append(again);
   }
 
-  root.append(el("p", "note", T("try.note")));
+  /* THE NOTE CHANGES WHEN THE CODE DOES. "No money moves" is true of the
+     walkthrough and would be a lie under a live sandbox code somebody could
+     actually scan — so it says which one they are looking at. */
+  root.append(el("p", "note", LIVE && step === 2 ? T("try.noteLive") : T("try.note")));
 }
 
 document.querySelector(".langslot").replaceWith(langButton(draw));
