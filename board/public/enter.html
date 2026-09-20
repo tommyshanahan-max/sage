@@ -187,6 +187,12 @@
   .mark{width:3.2rem;height:3.2rem;border-radius:50%;background:var(--accent);
     color:var(--accent-ink);display:grid;place-items:center;font-size:1.6rem;
     line-height:1;-webkit-font-smoothing:antialiased}
+  /* AND ON DEALIO IT IS DEALIO'S MARK. The two rings are The Exchange, and a
+     person who pressed a button on a red-dotted page about getting paid was
+     meeting a blue logo they had never seen at the one moment they were being
+     asked to trust a code. Dealio's mark is a plain red dot — see pay.html —
+     so the circle keeps its size and loses the glyph. */
+  .mark.dl{background:#D9534F;color:#D9534F}
   .top{display:flex;align-items:center;gap:.8rem;margin:1.4rem 0 0}
   .top h1{margin:0;font-size:1.5rem}
   .top p{margin:.15rem 0 0;font-size:.86rem;color:var(--muted)}
@@ -622,6 +628,36 @@ const PREVIEW = new URLSearchParams(location.search).get("new") === "1";
  * needs the answer before it can fetch anything. */
 const ON_DEALIO = "{{DEALIO}}" === "1";
 
+/* AND IT SPEAKS THAT PRODUCT'S WORDS.
+ *
+ * The destination was only half of it. The door still said "This board is
+ * private", "I have used this board before", and, once the code was in, "a
+ * photo, a name, and a line about you — Have a look around", to somebody
+ * who had arrived on a page about getting paid from China. Same six boxes,
+ * wrong product, and it read as the code having sent them somewhere else.
+ *
+ * So every string on this screen is fetched through here. A key with a ".dl"
+ * twin in i18n.js is said in Dealio's words on Dealio's hostname; a key
+ * without one is said the same on both, which is right for everything that
+ * is about the code rather than about the product — the clock, the
+ * refusals, the waiting list. T returns the key itself when it does not know
+ * it, which is how a missing twin is detected without exporting STRINGS. */
+function D(key, vars) {
+  if (ON_DEALIO) {
+    const k = key + ".dl";
+    if (T(k) !== k) return T(k, vars);
+  }
+  return T(key, vars);
+}
+
+/* The tab, which is what a saved link and a shared screenshot say. Static in
+   the markup because it has to be there before the module runs. */
+if (ON_DEALIO) document.title = "Dealio";
+if (ON_DEALIO) for (const m of document.querySelectorAll(".mark")) {
+  m.classList.add("dl");
+  m.replaceChildren();
+}
+
 function nextPath() {
   let raw = "";
   try { raw = new URL(location.href).searchParams.get("next") || ""; }
@@ -1030,13 +1066,13 @@ function words() {
      hearing it in English should not be reading English underneath. */
   if (!$("hellospoke").hidden) $("hellospoke").textContent = message();
 
-  $("doortitle").textContent = T("door.title");
-  $("doorsub").textContent = T("door.sub");
-  $("doorsay").textContent = T("door.say");
+  $("doortitle").textContent = D("door.title");
+  $("doorsub").textContent = D("door.sub");
+  $("doorsay").textContent = D("door.say");
   $("doorzh").textContent = T("door.zh");
   $("go").textContent = T("door.go");
   $("doornote").textContent = T("door.note");
-  $("code").setAttribute("aria-label", T("door.title"));
+  $("code").setAttribute("aria-label", D("door.title"));
 
   // The clock carries two words of its own and they are in both languages.
   if (UNTIL) tick();
@@ -1057,22 +1093,39 @@ function words() {
     siSaid(T(GSAID[0]), GSAID[1]);
   }
 
-  $("keyopen").textContent = T("door.keyOpen");
+  $("keyopen").textContent = D("door.keyOpen");
   $("listopen").textContent = T("door.noCode");
   drawQueue();
   $("keywhere").textContent = T("door.keyWhere");
   $("keytitle").textContent = T("door.keyTitle");
-  $("keysay").textContent = T("door.keySay");
+  $("keysay").textContent = D("door.keySay");
   $("key").placeholder = T("door.keyHint");
   $("keygo").textContent = T("door.keyGo");
 
   $("intitle").textContent = T("door.inTitle");
   $("insub").textContent = T("door.inSub");
-  $("insay").textContent = T("door.inSay");
+  $("insay").textContent = D("door.inSay");
   $("inzh").textContent = T("door.inZh");
-  $("ingo").textContent = T("door.inGo");
+  $("ingo").textContent = D("door.inGo");
+  /* AND WHERE IT GOES, for the same reason the words changed. The button is
+     marked /browse in the markup and the entry path rewrites it; this is the
+     one line that makes the default right on Dealio's hostname, so no path
+     through this screen can end at the board. */
+  if (ON_DEALIO && $("ingo").getAttribute("href") === "/browse") $("ingo").href = "/dealio";
   $("innote").textContent = T("door.inNote");
   $("inkey").textContent = T("door.inKey");
+  /* BOTH NOTES ARE BOARD ERRANDS AND NEITHER HAS ANYWHERE TO SEND A DEALIO
+     READER. One says the address box is "the first thing on Browse" and the
+     other says the key is under Profile — two screens that are not part of
+     this product. Rather than rewrite them into instructions that point at
+     nothing, the screen loses them: "You are in" and a button that asks for
+     money is the whole of what this person came for.
+     What they cost is real and is a gap in Dealio, not in this door: a
+     Dealio member has no way to leave an address and no page showing their
+     key, so a new phone loses their requests and nothing warns them. That
+     belongs on /dealio. */
+  $("innote").hidden = ON_DEALIO;
+  $("inkey").hidden = ON_DEALIO;
   drawBoxes();
 }
 

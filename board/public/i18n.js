@@ -4423,6 +4423,39 @@ export const STRINGS = {
     "这个浏览器上已经有一个人的主页了。请在你自己的手机上打开，或者用无痕窗口。"],
   "door.inKey":        ["Or save your key: Profile \u2192 Show my key.",
                         "或者把钥匙存下来：「我的」→「显示我的钥匙」。"],
+
+  /* THE SAME DOOR, ON THE OTHER PRODUCT.
+     paydealio.com and thexchange.app are one container and one door, and the
+     door was speaking the board's words on both of them: "This board is
+     private", "I have used this board before", "a photo, a name and a line
+     about you". Somebody who came to get paid has never heard of the board,
+     is not about to fill in a profile, and has just been told twice that
+     this is about money.
+     So every string the door says goes through D() in enter.html, and
+     anything with a ".dl" twin below is said in Dealio's words instead. No
+     twin, no change — the clock, the refusals and the waiting list are about
+     the code itself and read the same on both. */
+  "door.title.dl":     ["Dealio", "Dealio"],
+  "door.sub.dl":       ["Getting paid from China", "从中国收款"],
+  /* Two sentences where the board has three. What the board's third sentence
+     protects — a forwarded link opens nothing — is still true here and is
+     said by the code box itself: there is nothing to read behind it. */
+  "door.say.dl": [
+    "Type the code you were sent. It lets one person in, once, on this browser.",
+    "输入发给你的那串口令。只能进一个人，只能用一次，只在这个浏览器上。"],
+  "door.keyOpen.dl":   ["I have used Dealio before", "我以前用过 Dealio"],
+  "door.keySay.dl": [
+    "When you joined, Dealio gave you a key — one long line of letters and numbers. There is no account to sign back into, so the key is how you stay the same person on a second phone or browser. Paste it here and you are in.",
+    "你当初进来的时候，Dealio 给过你一把「钥匙」——很长的一串字母和数字。这里没有账号可以登录，换手机、换浏览器还想是同一个人，靠的就是它。贴在这儿就能进。"],
+  /* AND THE SCREEN AFTER THE CODE, which was the one Tom kept landing on:
+     "You are in — a photo, a name, and a line about you — Have a look
+     around". Three instructions belonging to a board he did not come to. The
+     person who just typed a Dealio code came to do one thing, so the screen
+     says the one thing and the button does it. */
+  "door.inSay.dl": [
+    "Ask for money, send the link, and it lands in your account.",
+    "发起一笔收款，把链接发过去，钱进你的账户。"],
+  "door.inGo.dl":      ["Ask for money", "去收款"],
   /* THE TRAY. Everything addressed to this person, in one place — follows and
      the card of the day. The report card below it is what they are; this is
      what has arrived. */
