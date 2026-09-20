@@ -1361,6 +1361,48 @@ services:
     networks:
       - ferry_net
 
+  # ---------------------------------------------------------------------------
+  # POST — one video, one caption, every platform.
+  #
+  # NOTHING LISTENS HERE. There is no server and no `expose`: every entry point
+  # is `docker compose run --rm` from the Makefile. A posting tool has no
+  # visitors, so a port would be a door with nobody expected at it.
+  #
+  # THE KEYS ARE PER PLATFORM AND ABSENT BY DEFAULT. A platform whose keys are
+  # not set is reported as "not connected" and skipped, which is why every one
+  # of these is `:-` and none is `:?` — the tool has to run, and say what it
+  # cannot do, long before all six APIs have been approved.
+  # ---------------------------------------------------------------------------
+  post:
+    profiles: ["post"]
+    build:
+      context: ./post
+    image: tomscoding-post:latest
+    container_name: tomscoding-post
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      POST_DIR: /data
+      # Which language the command speaks. zh for Chinese; anything else is
+      # English, which is what Tom reads.
+      POST_LANG: ${TOMSCODING_POST_LANG:-en}
+      # YouTube. The refresh token is Tom's own consent, taken once in a
+      # browser — a service account cannot own a channel, so there is no way to
+      # do this without a human logging in that one time.
+      POST_YOUTUBE_CLIENT_ID: ${TOMSCODING_POST_YOUTUBE_CLIENT_ID:-}
+      POST_YOUTUBE_SECRET: ${TOMSCODING_POST_YOUTUBE_SECRET:-}
+      POST_YOUTUBE_REFRESH: ${TOMSCODING_POST_YOUTUBE_REFRESH:-}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - post_data:/data
+    networks:
+      - tomscoding
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_POST_MEMORY:-256m}
+    cpu_shares: ${TOMSCODING_POST_CPU_SHARES:-128}
+
 networks:
   tomscoding:
     driver: bridge
@@ -1423,6 +1465,11 @@ volumes:
   partner2_home:
   feed_mockups:
   feed_home:
+  # What has gone out, and where. The one thing standing between Tom and the
+  # same video posted twice, so it is a volume of its own rather than a file
+  # under something else's: whatever happens to the rest of the estate, this
+  # record survives it.
+  post_data:
   browser_config:
   caddy_data:
   caddy_config:

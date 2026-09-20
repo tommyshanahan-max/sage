@@ -1,0 +1,6 @@
+{
+  "name": "post",
+  "private": true,
+  "type": "module",
+  "main": "cli.mjs"
+}

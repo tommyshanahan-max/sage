@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check
+.PHONY: try china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1175,6 +1175,29 @@ gram-post: ## Post one: make gram-post NAME=agent-producer [DRY=1]
 	@# GRAM_USER_ID and GRAM_TOKEN come from .env and never from the repo.
 	set -a; . ./.env; set +a; \
 	  node scripts/gram/post.mjs "$(NAME)" $(if $(DRY),--dry,)
+
+post: ## Post one video everywhere: make post FILE=~/video.mp4 SAY="caption" [ZH="中文文案"] [ONLY=youtube,douyin]
+	@# ONE COMMAND, ONE LINE PER PLATFORM. Running it twice does not post
+	@# twice: the record in post_data is per platform, so a second run retries
+	@# only what has not gone out. See post/README.md.
+	@#
+	@# NO ZH MEANS THE CHINESE PLATFORMS DO NOT GO OUT, and the command says so
+	@# on their line. A machine-translated caption reads as foreign and costs
+	@# the audience this whole thing is for.
+	@test -n "$(FILE)" || { echo 'which file? make post FILE=~/video.mp4 SAY="caption"'; exit 1; }
+	@test -n "$(SAY)" || { echo 'what does it say? make post FILE=~/video.mp4 SAY="caption"'; exit 1; }
+	@test -f "$(FILE)" || { echo 'no such file: $(FILE)'; exit 1; }
+	@# The video is mounted read-only from wherever it already is, rather than
+	@# copied into the repo or into a volume: one video is 300MB and a copy
+	@# nobody deletes is a disk that fills up in a month.
+	@d=$$(cd "$$(dirname "$(FILE)")" && pwd); f=$$(basename "$(FILE)"); \
+	  $(COMPOSE) --profile post run --rm --no-deps -T -v "$$d:/in:ro" post \
+	    node cli.mjs post --file "/in/$$f" --say "$(SAY)" \
+	    $(if $(ZH),--zh "$(ZH)",) $(if $(ONLY),--only "$(ONLY)",)
+
+post-status: ## What went where: make post-status [ID=...] [N=10]
+	@$(COMPOSE) --profile post run --rm --no-deps -T post \
+	  node cli.mjs status $(if $(ID),--id "$(ID)",) $(if $(N),--n "$(N)",)
 
 demo-board: ## Fill the demo board — the one a reviewer sees: make demo-board
 	@# THE OTHER BOARD. `make demo` puts two invented neighbours beside a real
