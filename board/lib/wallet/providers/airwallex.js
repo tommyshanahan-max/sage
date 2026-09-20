@@ -171,7 +171,11 @@ export function createAirwallexProvider({ clientId, apiKey, webhookSecret, sandb
       });
       const c = await call("POST", `/api/v1/pa/payment_intents/${pi.id}/confirm`, {
         request_id: randomUUID(),
-        payment_method: { type: "wechatpay", wechatpay: { flow: "webqr", os_type: "web" } },
+        /* "qrcode", not "webqr". The sandbox names the whole set when it
+           refuses: qrcode, official_account, mini_program, mobile_app,
+           mobile_web. A code on a screen that somebody long-presses is
+           qrcode; the rest are handoffs inside WeChat itself. */
+        payment_method: { type: "wechatpay", wechatpay: { flow: "qrcode", os_type: "web" } },
       });
       /* next_action.qrcode is what the docs name. Kept alongside the raw
          action so a caller that finds it somewhere else can say so. */
