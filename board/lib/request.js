@@ -145,6 +145,12 @@ export function cleanRequest(raw) {
     ref: s(raw.pay.ref, 64),
     how: ["wechat", "alipay"].includes(raw.pay.how) ? raw.pay.how : "",
     at: s(raw.pay.at, 40),
+    /* WHAT THE PAYER WAS ACTUALLY ASKED FOR, in the smallest unit of yuan.
+       A request written in Australian dollars is paid in yuan at the rate
+       when the code was drawn, and the row has to remember which number was
+       on the screen — the amount above it is the asker's currency and is no
+       longer the whole story. Empty when the request was in yuan already. */
+    cny: /^[0-9]{1,15}$/.test(String(raw.pay.cny ?? "")) ? String(raw.pay.cny) : "",
   } : null;
   if (pay && pay.ref && pay.how) out.pay = pay;
 

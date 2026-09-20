@@ -187,6 +187,7 @@
   .codeWith{margin:0;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;
     color:var(--muted)}
   .codeAmt{margin:.15rem 0 0;font-size:2rem;line-height:1.1;font-weight:600}
+  .codeOrig{margin:.05rem 0 0;font-size:.82rem;color:var(--muted)}
   .codeTo{margin:.1rem 0 0;font-size:.9rem;color:var(--ink-2)}
   .codeDo{margin:.9rem 0 0;font-size:1rem;font-weight:600;color:var(--ink)}
   .codeElse{margin:.3rem 0 0;font-size:.82rem;color:var(--muted)}
@@ -509,7 +510,11 @@ function payHow(q) {
         const j = await r.json().catch(() => null);
         /* A CODE, WHICH IS THE WHOLE PRODUCT ON THE PAYER'S SIDE. No frame
            to mount, nothing to load from anybody else, and no card. */
-        if (r.ok && j?.qr) { back.remove(); payFrame({ q, how: key, qr: j.qr }); return; }
+        if (r.ok && j?.qr) {
+          back.remove();
+          payFrame({ q, how: key, qr: j.qr, amount: j.amount, orig: j.orig });
+          return;
+        }
         if (r.ok && j?.secret && j?.pk) { back.remove(); payFrame({ secret: j.secret, pk: j.pk, q, how: key }); return; }
         if (r.ok && j?.demo) { back.remove(); payFrame({ q, how: key, demo: true }); return; }
         why = j?.error || "";
@@ -589,7 +594,7 @@ function watchPaid(frame) {
   setTimeout(tick, 3000);
 }
 
-async function payFrame({ secret, pk, q, how, demo, qr }) {
+async function payFrame({ secret, pk, q, how, demo, qr, amount, orig }) {
   const frame = el("div", "pframe");
   const bar = el("div", "phead");
   bar.append(el("b", null, q.what || q.from));
@@ -637,7 +642,14 @@ async function payFrame({ secret, pk, q, how, demo, qr }) {
     slot.classList.add("code");
     const box = el("div", "codebox");
     box.append(el("p", "codeWith", T("pay." + how)));
-    box.append(el("p", "codeAmt", shown(q)));
+    /* YUAN, BECAUSE THAT IS WHAT SHE IS SENDING. The asker quotes in the
+       only money he knows a price in and the payer pays in the only money
+       she has; the number above the code is hers. His price goes under it,
+       small, so the two can be checked against each other — and so nobody
+       thinks they are being shown a different deal from the one on the
+       page they arrived at. */
+    box.append(el("p", "codeAmt", amount || shown(q)));
+    if (orig) box.append(el("p", "codeOrig", orig));
     /* WHOSE MONEY THIS BECOMES, at the moment it leaves. The wallet's own
        sheet names a merchant account, not a person, so this is the last
        place anybody says it. */

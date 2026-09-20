@@ -10130,7 +10130,8 @@ app.get("/api/request/:id", async (req, res) => {
      asker to go and set up a payout account that would not have helped.
      Only the two reasons the reader can do something about. */
   const why = ready ? ""
-    : (dealioQr() && dealioOwns(board, q) && (q.way || "in") === "in" && q.cur !== "cny")
+    : (dealioQr() && dealioOwns(board, q) && (q.way || "in") === "in"
+       && q.cur && q.cur !== "cny" && !CNY_PAIRS.has(q.cur))
       ? "cny" : "";
   /* WHICH SIDE OF THE LINK IS READING IT.
    *
@@ -10265,10 +10266,22 @@ function dealioOwns(board, q) {
  *  account the money lands in, the money is coming IN rather than being
  *  promised out, and it is in yuan — which is what these two wallets take. */
 function dealioWays(board, q) {
-  if (!q || !dealioQr() || q.cur !== "cny") return [];
+  const p = dealioQr();
+  if (!q || !p || !q.cur) return [];
   if ((q.way || "in") !== "in" || !dealioOwns(board, q)) return [];
+  /* THE PAYER ALWAYS SENDS YUAN. An Australian quotes in Australian
+     dollars, because that is the only price he knows, and the woman in
+     Beijing pays in the only money she has. Anything the provider can price
+     against yuan is payable; what it cannot price is not. */
+  if (q.cur !== "cny" && (typeof p.quote !== "function" || !CNY_PAIRS.has(q.cur))) return [];
   return ["wechat", "alipay"];
 }
+
+/* The currencies the provider will quote against yuan. Its own table, and
+   shorter than the board's — a request in pounds is a request nobody here
+   can price, and saying so beats a refusal from the provider on the payer's
+   phone. */
+const CNY_PAIRS = new Set(["aud", "usd", "eur", "hkd"]);
 
 /* ASKING THE PROVIDER, WITHOUT ASKING IT TWICE A SECOND. Both pages poll
    this while a code is on the screen, and the answer does not change between
@@ -10393,8 +10406,29 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
     const minor = store.toMinor(q.amount, q.cur);
     if (!minor) return res.status(400).json({ error: "amount" });
     try {
+      /* HIS PRICE, HER MONEY.
+       *
+       * A request in Australian dollars is turned into yuan here, at the
+       * rate the moment the code is drawn, and the code is for that many
+       * yuan. Asked as a buy: how much yuan must be sold to produce exactly
+       * A$1,000, so the number on the asker's row is the number that lands
+       * and the rounding is not his problem.
+       *
+       * THE RATE IS FIXED WHEN THE CODE IS. Between drawing and paying the
+       * market moves, and whoever asked wears it — a few points either way
+       * over the eight minutes a code lasts. Settling in yuan and
+       * converting separately is 0.88%; letting the wallet convert would be
+       * 2.00%, which is the whole reason this is done here. */
+      let cny = minor;
+      if (q.cur !== "cny") {
+        const quote = await qrProvider.quote({
+          sell: "CNY", buy: q.cur.toUpperCase(), buyAmount: minor, validSeconds: 900,
+        });
+        cny = Number(quote?.sellAmount);
+        if (!Number.isInteger(cny) || cny <= 0) return res.status(502).json({ error: "qr" });
+      }
       const r = await qrProvider.qrPay({
-        amount: minor, currency: "CNY", method,
+        amount: cny, currency: "CNY", method,
         /* What the payer sees beside the amount in their own wallet. Their
            own line about the job, not our name for it. */
         reference: q.what || q.from,
@@ -10406,10 +10440,19 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
          drawn without it is a payment nobody can see. */
       await change((b) => {
         const row = b.requests.find((x) => x.id === id);
-        if (row) row.pay = { ref: r.id, how: method, at: new Date().toISOString() };
+        if (row) {
+          row.pay = { ref: r.id, how: method, at: new Date().toISOString(),
+            cny: q.cur === "cny" ? "" : String(cny) };
+        }
         return { ok: true };
       });
-      return res.json({ ok: true, how: method, qr: { size: drawn.size, bits: drawn.bits } });
+      return res.json({
+        ok: true, how: method, qr: { size: drawn.size, bits: drawn.bits },
+        /* What to put above the code, and the asker's own price under it
+           when the two are different money. */
+        amount: store.fromMinor(cny, "cny"),
+        orig: q.cur === "cny" ? "" : store.fromMinor(minor, q.cur),
+      });
     } catch (err) {
       console.error("dealio qr:", err.message);
       return res.status(502).json({ error: "qr" });
