@@ -10277,6 +10277,13 @@ function dealioWays(board, q) {
   return ["wechat", "alipay"];
 }
 
+/** Whether this person's own requests draw codes — the list screen's
+ *  version of dealioWays, which needs a request and this does not. */
+function dealioIsOwner(person) {
+  return Boolean(dealioQr()) && Boolean(DEALIO_OWNER)
+    && String(person?.handle || "").trim().toLowerCase() === DEALIO_OWNER;
+}
+
 /* The currencies the provider will quote against yuan. Its own table, and
    shorter than the board's — a request in pounds is a request nobody here
    can price, and saying so beats a refusal from the provider on the payer's
@@ -10601,8 +10608,20 @@ app.get("/api/requests", notesOff, async (req, res) => {
 
        One call to Stripe per load of this screen. It is the screen that
        exists to tell somebody whether they can be paid; asking is the job. */
-    ready: Boolean(me_?.payee) && (stripe.configured() || PAY_DEMO)
-      && (!stripe.configured() || await canBePaid(me_.payee)),
+    /* CAN ANYBODY PAY YOU. It asked Stripe and only Stripe, so the home
+       screen of the box whose codes work said "Nobody can pay you yet" to
+       the one person they work for — every time he opened it, under a list
+       of requests people could have paid. A warning that is false is worse
+       than no warning: it is the app telling its owner his own product is
+       broken. */
+    ready: dealioIsOwner(me_) || (Boolean(me_?.payee) && (stripe.configured() || PAY_DEMO)
+      && (!stripe.configured() || await canBePaid(me_.payee))),
+    /* AND WHICH MONEY CAN ACTUALLY BE ASKED FOR. The picker offers seven
+       currencies; the codes can price four of them against yuan. Asking in
+       pounds made a request that could only be refused on somebody else's
+       phone, an hour after it was sent. Empty means no restriction — every
+       board that is not this one. */
+    curs: dealioIsOwner(me_) ? ["cny", ...CNY_PAIRS] : [],
     /* STARTED BUT NOT FINISHED IS ITS OWN STATE, and it is the commonest one:
        Stripe's onboarding is several screens and people leave in the middle
        of it. "You have not said where the money should land" is untrue to

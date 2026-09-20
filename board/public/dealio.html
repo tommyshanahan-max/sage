@@ -441,6 +441,26 @@ const CUR_SIGN = { cny: "¥", usd: "$", aud: "A$", hkd: "HK$", eur: "€",
 const MONEY = [["cny", "¥ RMB"], ["usd", "$ USD"], ["aud", "A$ AUD"],
                ["hkd", "HK$ HKD"], ["eur", "€ EUR"], ["gbp", "£ GBP"],
                ["jpy", "¥ JPY"]];
+
+/* AND THE ONES THAT CAN ACTUALLY BE PAID TODAY. The server says which money
+   its rails can price against yuan; the rest are offered nowhere rather
+   than made into a request that can only be refused on somebody else's
+   phone an hour after it was sent. No answer from the server means no
+   restriction, which is every board but this one. */
+const money = () => {
+  const ok = Array.isArray(STATE?.curs) ? STATE.curs : [];
+  return ok.length ? MONEY.filter(([c]) => ok.includes(c)) : MONEY;
+};
+
+/* And what the picker opens on, which must be one of them: a phone that
+   remembers pounds from last week would otherwise start on a currency that
+   is no longer in the list, and a select with no matching option shows its
+   first one while the code still thinks it is pounds. */
+const curPick = () => {
+  const list = money().map(([c]) => c);
+  const want = curNow();
+  return list.includes(want) ? want : (list[0] || "cny");
+};
 /* Remembered per phone: somebody asking in RMB today asks in RMB next week. */
 const curNow = () => {
   try { return localStorage.getItem("dealio:cur") || "cny"; } catch { return "cny"; }
@@ -727,12 +747,12 @@ function pad() {
   const cur = el("select", "padcur");
   cur.id = "pad-cur";
   cur.setAttribute("aria-label", T("dl.cur"));
-  for (const [code, label] of MONEY) {
+  for (const [code, label] of money()) {
     const o = el("option", null, label);
     o.value = code;
     cur.append(o);
   }
-  cur.value = curNow();
+  cur.value = curPick();
   const paintSign = () => { sign.textContent = CUR_SIGN[cur.value] || ""; };
   paintSign();
   cur.addEventListener("change", () => { curKeep(cur.value); paintSign(); });
@@ -1253,7 +1273,7 @@ function form(way, prefill) {
   const cur = el("select");
   cur.id = "f-cur";
   cur.setAttribute("aria-label", T("dl.cur"));
-  for (const [code, label] of MONEY) {
+  for (const [code, label] of money()) {
     const o = el("option", null, label);
     o.value = code;
     cur.append(o);
@@ -1261,7 +1281,7 @@ function form(way, prefill) {
   /* Remembered per phone: somebody asking in RMB today is asking in RMB next
      week, and picking it again every time is a step that is only ever needed
      once. Wrapped because a private window throws on read. */
-  cur.value = curNow();
+  cur.value = curPick();
   cur.addEventListener("change", () => curKeep(cur.value));
   amtRow.append(amount, cur);
   amtWrap.append(amtRow);
