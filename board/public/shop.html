@@ -35,13 +35,14 @@
      padding rather than sitting inside it, because a banner with a margin
      down each side reads as a picture in a document, not as a shopfront.
      A fixed aspect keeps the page from jumping as it loads. */
-  .ban{display:block;width:calc(100% + 1.6rem);aspect-ratio:2.4/1;object-fit:cover;
+  /* Two to one, because the pictures people actually have are of a family
+     standing up, and 2.4:1 took the top of somebody's head off. */
+  .ban{display:block;width:calc(100% + 1.6rem);aspect-ratio:2/1;object-fit:cover;
     margin:-.9rem -.8rem .9rem;background:var(--line)}
 
   .who{display:flex;align-items:center;gap:.7rem;padding:.2rem .3rem 1rem}
   .who img{width:3rem;height:3rem;border-radius:50%;object-fit:cover;flex:0 0 auto;
     background:var(--line)}
-  .who .noimg{width:3rem;height:3rem;border-radius:50%;background:var(--line);flex:0 0 auto}
   /* min-width:0, or the nowrap line below pushes the flex row wider than the
      page and the ellipsis never fires — which is how a one-line bio ran off
      the right-hand edge of the screen. */
@@ -172,11 +173,12 @@ function draw() {
     const img = el("img");
     img.src = SHOP.photo;
     img.alt = "";
-    img.addEventListener("error", () => img.replaceWith(el("div", "noimg")));
+    img.addEventListener("error", () => img.remove());
     who.append(img);
-  } else {
-    who.append(el("div", "noimg"));
   }
+  /* NO GREY DISC WHERE A FACE ISN'T. An empty circle is not information —
+     it is a hole in the row that reads as something still loading. The
+     name simply starts at the left instead. */
   const box = el("div");
   /* The shop's name when it has one, and the handle only when it does not.
      Whoever is behind it is named once more at the foot of the page —

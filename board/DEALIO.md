@@ -471,6 +471,14 @@ two accounts and a screen in the middle of a one-line job. So from the Mac:
 kind is read off the first bytes rather than the file's name, because a
 screenshot called .jpg is usually a PNG.
 
+**Two to one, and the picture is prepared before it goes up.** The photographs
+people actually have are of a family standing up, so a letterbox crop takes
+the top of somebody's head off. The two in `scripts/brand/` were made by
+cropping to the faces and widening the canvas on the photo's own backdrop,
+feathered at the seam — the pad is invisible and nobody is cut. They are in
+the repo, not under `public/`, so they are never served over HTTP; the make
+target reads them off the disk on the box.
+
 **A picture is fetched, never linked.** Her whole scan of a shop page is
 photographs and prices, in that order — and a page whose images come from an
 Australian host loads slowly in Shanghai and sometimes not at all, while a
