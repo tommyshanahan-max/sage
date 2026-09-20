@@ -187,6 +187,7 @@
   .codeWith{margin:0;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;
     color:var(--muted)}
   .codeAmt{margin:.15rem 0 0;font-size:2rem;line-height:1.1;font-weight:600}
+  .codeTo{margin:.1rem 0 0;font-size:.9rem;color:var(--ink-2)}
   .codeDo{margin:.9rem 0 0;font-size:1rem;font-weight:600;color:var(--ink)}
   .codeElse{margin:.3rem 0 0;font-size:.82rem;color:var(--muted)}
   .qr{width:min(15rem,72vw);aspect-ratio:1;margin:1.4rem auto .6rem;
@@ -358,7 +359,15 @@ function draw() {
   /* WHO AND HOW MUCH, in that order, and nothing above them. Somebody opened
      this from a chat message and the only question they have is whether the
      name and the number are the ones they expect. */
-  body.append(el("p", "dueLab", T(q.way === "out" ? "rq.sending" : "rq.asking", { who: q.from })));
+  /* THEIR OWN NAME FIRST, when the asker typed one — the same thing the
+     invite does, for the same reason. A payment link opened in WeChat is
+     read in about three seconds and the question being answered is "was
+     this meant for me". Only on a request coming in: on one going out the
+     reader is being paid, and the line already names them as the sender. */
+  body.append(el("p", "dueLab",
+    q.way !== "out" && q.to
+      ? T("rq.askingYou", { you: q.to, who: q.from })
+      : T(q.way === "out" ? "rq.sending" : "rq.asking", { who: q.from })));
   const line = el("div", "dueRow");
   line.append(el("span", "n", shown(q)));
   body.append(line);
@@ -607,6 +616,10 @@ async function payFrame({ secret, pk, q, how, demo, qr }) {
     const box = el("div", "codebox");
     box.append(el("p", "codeWith", T("pay." + how)));
     box.append(el("p", "codeAmt", shown(q)));
+    /* WHOSE MONEY THIS BECOMES, at the moment it leaves. The wallet's own
+       sheet names a merchant account, not a person, so this is the last
+       place anybody says it. */
+    box.append(el("p", "codeTo", T("rq.toWho", { who: q.from })));
     box.append(qrGrid(qr));
     box.append(el("p", "codeDo", T("pay.scanDo")));
     box.append(el("p", "codeElse", T("pay.scanElse")));

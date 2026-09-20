@@ -5324,6 +5324,19 @@ export const STRINGS = {
                         "有疑问？在微信里问 {who}。"],
 
   "rq.asking":         ["{who} is asking for", "{who} 要收"],
+  /* AND BY NAME WHEN THE ASKER TYPED ONE.
+     The invite works because it says "Ray — this is the board I mentioned"
+     rather than "You have been invited", and a page about money is where
+     that matters most: somebody opening a payment link in WeChat is
+     deciding, in about three seconds, whether this was meant for them or is
+     going round to everybody. Their own name at the top is the cheapest
+     answer there is, and the asker already typed it.
+     Nothing is guessed — no name, and the line stays as it was. */
+  "rq.askingYou":      ["{you} — {who} is asking for", "{you}，{who} 要收"],
+  /* ON THE CODE SCREEN, WHERE THE MONEY ACTUALLY LEAVES. The wallet's own
+     sheet will name a merchant account rather than a person, so this is the
+     last place the payer is told whose money this becomes. */
+  "rq.toWho":          ["to {who}", "付给 {who}"],
   "rq.sending":        ["{who} wants to send you", "{who} 要付给你"],
   "rq.when":           ["When", "什么时候"],
   "rq.asked":          ["Asked", "发起时间"],
