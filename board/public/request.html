@@ -70,6 +70,9 @@
   .strip{display:flex;align-items:center;gap:.5rem;padding:.7rem .95rem;
     border-bottom:1px solid var(--line)}
   .strip img{width:1.1rem;height:1.1rem;flex:0 0 auto}
+  /* Dealio's mark, the size of the one it replaces in each row. */
+  .brand .dot{width:.7rem;height:.7rem;border-radius:50%;background:#D9534F;flex:0 0 auto}
+  .strip .dot{width:.55rem;height:.55rem;border-radius:50%;background:#D9534F;flex:0 0 auto}
   .sname{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
     color:var(--muted)}
   .sstate{margin-left:auto;font-size:.68rem;letter-spacing:.12em;
@@ -267,6 +270,29 @@ const el = (tag, cls, text) => {
   if (text != null) n.textContent = text;
   return n;
 };
+/* WHOSE PAGE THIS IS, WHICH IS NOT ALWAYS THE BOARD'S.
+ *
+ * One container serves thexchange.app and paydealio.com, and this page —
+ * the one the payer actually opens — was signed THE EXCHANGE on both. A
+ * stranger in WeChat, sent a link about money, met the name of a private
+ * networking board they had never heard of at the top of the screen where
+ * they decide whether this is a scam. The server knows the hostname and
+ * substitutes it; see isDealioHost in server.js. */
+const ON_DEALIO = "{{DEALIO}}" === "1";
+
+/** The mark and the name, in whichever product's clothes. Dealio's mark is a
+ *  plain red dot — see pay.html — and the board's is the two rings. */
+function brandInto(box, nameClass) {
+  if (ON_DEALIO) {
+    box.append(el("i", "dot"), el("span", nameClass, "Dealio"));
+    return;
+  }
+  const mark = el("img");
+  mark.src = "/mark.svg";
+  mark.alt = "";
+  box.append(mark, el("span", nameClass, T("memo.brand")));
+}
+
 const root = document.getElementById("root");
 const ID = (location.pathname.match(/^\/pay\/([a-f0-9]{20})/) || [])[1] || "";
 
@@ -285,10 +311,7 @@ let repaint = () => {};
 
 function head() {
   const bar = el("div", "brand");
-  const mark = el("img");
-  mark.src = "/mark.svg";
-  mark.alt = "";
-  bar.append(mark, el("span", null, T("memo.brand")));
+  brandInto(bar, null);
   const slot = el("span", "langslot");
   bar.append(slot);
   slot.replaceWith(langButton(() => repaint()));
@@ -313,10 +336,7 @@ function draw() {
 
   const sheet = el("div", "sheet");
   const strip = el("div", "strip");
-  const mark = el("img");
-  mark.src = "/mark.svg";
-  mark.alt = "";
-  strip.append(mark, el("span", "sname", T("memo.brand")));
+  brandInto(strip, "sname");
   /* THE CHIP IS READ FROM THIS SIDE OF THE LINK. "Waiting on them" is what
      the sender's list says and it is exactly wrong here, where the reader IS
      them. Same state, different sentence. */
