@@ -5378,6 +5378,18 @@ export const STRINGS = {
      land, because this board is never allowed to hold it in the meantime. */
   "rq.outWhy":         ["Stripe will ask where to send it. No account here, and nothing to install.",
                         "Stripe 会问你钱打到哪里。不用在这边注册，也不用装什么。"],
+  /* THE SAME SENTENCE WITHOUT A COMPANY THE READER HAS NO RELATIONSHIP WITH.
+     On Dealio the payer has been told about Dealio and nothing else, and a
+     name they did not expect, on a screen about their bank details, is the
+     moment somebody closes the tab. */
+  "rq.outWhy.dl":      ["You will be asked where to send it. No account here, and nothing to install.",
+                        "会问你钱打到哪里。不用在这边注册，也不用装什么。"],
+  /* AND WHEN IT CANNOT BE DONE AT ALL. "That did not work — try again" was
+     an invitation to press a dead button twice more: the rails behind this
+     half are not on, which is nothing the reader can fix and not their
+     fault. Says whose problem it is and what happens next. */
+  "rq.outNo":          ["This cannot be accepted here yet. {who} has been told, and can send it another way.",
+                        "这笔暂时在这里收不了。{who} 那边已经知道了，可以换个方式给你。"],
   "rq.noCur":          ["No currency on this one", "这笔没写币种"],
   "rq.alreadyPaid":    ["Already paid", "已经付过了"],
   "rq.noPayee":        ["Nowhere for it to land yet", "还没有收款方式"],

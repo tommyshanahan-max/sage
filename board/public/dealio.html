@@ -782,10 +782,18 @@ function pad() {
   const ask = el("button", "go", T("dl.make"));
   ask.type = "button";
   ask.addEventListener("click", () => open("in"));
-  const send = el("button", "ghost2", T("dl.send"));
-  send.type = "button";
-  send.addEventListener("click", () => open("out"));
-  two.append(ask, send);
+  /* SENDING MONEY IS THE OTHER HALF AND IT IS STRIPE'S. On a box whose
+     Connect is not on, it takes a stranger to a button that can only fail,
+     about their own bank details — so it is not offered at all there. The
+     server says; no answer means yes, which is every board that had this
+     before. See canSend in server.js. */
+  const canSend = STATE?.canSend !== false;
+  const send = canSend ? el("button", "ghost2", T("dl.send")) : null;
+  if (send) {
+    send.type = "button";
+    send.addEventListener("click", () => open("out"));
+  }
+  two.append(ask, ...(send ? [send] : []));
   box.append(two, why);
   return box;
 }

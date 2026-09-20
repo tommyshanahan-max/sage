@@ -10173,6 +10173,20 @@ app.get("/api/request/:id", async (req, res) => {
  *  back gets the same account and carries on where they were, rather than a
  *  second one with half their details in it.
  */
+/* THE SEND HALF NEEDS STRIPE CONNECT, AND FINDS OUT ON A STRANGER'S PHONE.
+ *
+ * Accepting money that is being sent to you means minting an account for
+ * somebody who is not a member and handing them to Stripe's own onboarding.
+ * On a box whose live keys have no Connect that fails at the moment a
+ * stranger presses the button, and the screen said "That did not work — try
+ * again", which is an invitation to press it twice more.
+ *
+ * Nothing here can test Connect without creating an account, so it is
+ * remembered instead: the first failure switches the offer off for the rest
+ * of this process, and a restart tries again. The app stops offering a
+ * button whose only outcome is that sentence. */
+let sendBroken = "";
+
 app.post("/api/request/:id/land", express.json({ limit: "1kb" }), async (req, res) => {
   if (!stripe.configured()) return res.status(400).json({ error: "off" });
   const id = request.cleanId(req.params.id);
@@ -10188,7 +10202,7 @@ app.post("/api/request/:id/land", express.json({ limit: "1kb" }), async (req, re
     if (!acct) {
       const made = await stripe.makePayee({ email: "" });
       acct = String(made?.id || "");
-      if (!acct) return res.status(502).json({ error: "stripe" });
+      if (!acct) { sendBroken = "no account"; return res.status(502).json({ error: "connect" }); }
       await change((b) => {
         const row = b.requests.find((x) => x.id === id);
         if (row) row.acct = acct;
@@ -10200,11 +10214,14 @@ app.post("/api/request/:id/land", express.json({ limit: "1kb" }), async (req, re
       refresh: backHere(req, "/pay/" + id),
       done: backHere(req, "/pay/" + id + "?landed=1"),
     });
-    if (!link?.url) return res.status(502).json({ error: "stripe" });
+    if (!link?.url) { sendBroken = "no onboarding link"; return res.status(502).json({ error: "connect" }); }
     res.json({ ok: true, url: link.url });
   } catch (err) {
+    /* Stripe's own sentence to the log, one plain word to the page, and the
+       offer withdrawn until this process restarts. */
     console.error("request/land:", err.message);
-    res.status(502).json({ error: "stripe" });
+    sendBroken = err.message || "connect";
+    res.status(502).json({ error: "connect" });
   }
 });
 
@@ -10622,6 +10639,11 @@ app.get("/api/requests", notesOff, async (req, res) => {
        phone, an hour after it was sent. Empty means no restriction — every
        board that is not this one. */
     curs: dealioIsOwner(me_) ? ["cny", ...CNY_PAIRS] : [],
+    /* WHETHER SENDING MONEY CAN WORK AT ALL. It is the Stripe half, and on
+       a box whose Connect is not on, the button leads to a dead end on
+       somebody else's phone. Off until this process is restarted — see
+       sendBroken. */
+    canSend: stripe.configured() && !sendBroken,
     /* STARTED BUT NOT FINISHED IS ITS OWN STATE, and it is the commonest one:
        Stripe's onboarding is several screens and people leave in the middle
        of it. "You have not said where the money should land" is untrue to

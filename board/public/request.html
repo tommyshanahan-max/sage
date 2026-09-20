@@ -404,7 +404,7 @@ function draw() {
        identity on its own pages.
        THEY NEVER BECOME A MEMBER. No password, no board, no profile — the
        only thing kept about them is Stripe's own id for that account. */
-    body.append(el("p", "foot", T("rq.outWhy", { who: q.from })));
+    body.append(el("p", "foot", D("rq.outWhy", { who: q.from })));
     const b = el("button", "go", T("rq.land", { amount: shown(q) }));
     b.type = "button";
     b.addEventListener("click", async () => {
@@ -414,7 +414,16 @@ function draw() {
         const r = await fetch("/api/request/" + ID + "/land", { method: "POST" });
         const j = await r.json().catch(() => null);
         if (r.ok && j?.url) { location.href = j.url; return; }
-        b.textContent = T(j?.error === "off" ? "dl.setUpOff" : "ask.failed");
+        /* A DEAD END IS NOT A RETRY. "That did not work — try again" on a
+           button whose rails are off is an invitation to press it twice
+           more, on a stranger's phone, about their own money. */
+        if (j?.error === "connect" || j?.error === "off") {
+          b.remove();
+          body.append(el("p", "foot",
+            T(j.error === "off" ? "dl.setUpOff" : "rq.outNo", { who: q.from })));
+          return;
+        }
+        b.textContent = T("ask.failed");
       } catch { b.textContent = T("ask.failed"); }
       b.disabled = false;
     });
