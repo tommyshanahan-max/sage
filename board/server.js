@@ -495,7 +495,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -2763,6 +2763,46 @@ async function findMedia(id) {
 // can guess, so an unpublished one is not browsable.
 app.get("/api/public-media", async (req, res) => {
   const found = await findMedia(req.query.id);
+  if (!found) return res.status(404).json({ error: "no such file" });
+  res.set("Content-Type", found.type);
+  res.set("X-Content-Type-Options", "nosniff");
+  res.set("Cache-Control", "public, max-age=86400, immutable");
+  res.sendFile(found.file);
+});
+
+/* A SHOP'S PICTURES, AND ONLY A SHOP'S.
+ *
+ * Every photograph on a shopfront came back a broken square for the person
+ * it is for. /api/public-media is behind the door on purpose — the long
+ * note above OPEN_PATHS says why, and it is right: opening it would make
+ * every member's face fetchable by anybody holding its id. But a buyer has
+ * no account by design, so she was being refused the tins she is looking
+ * at, the banner, and the shopkeeper's contact code, and the seller could
+ * not see it because he is signed in.
+ *
+ * SO THIS SERVES SHOP PICTURES AND NOTHING ELSE. The id is looked up in the
+ * catalogue, the shop rows and the reviews before a byte is read, exactly
+ * the way the waiting-room route below looks its ids up in board.waits. A
+ * member's photograph cannot be fetched here whatever id is presented, and
+ * the rule this board already made stands as it was.
+ *
+ * The rows keep storing /api/public-media addresses; the shop's own
+ * responses rewrite the prefix on the way out (see shopPic). One route, one
+ * answer, and no migration of anything already written.
+ */
+const SHOP_PIC = "/api/shop-media?id=";
+const shopPic = (u) => String(u || "").replace("/api/public-media?id=", SHOP_PIC);
+
+app.get("/api/shop-media", async (req, res) => {
+  const id = String(req.query.id || "");
+  if (!/^[a-f0-9]{20}$/.test(id)) return res.status(404).json({ error: "no" });
+  const board = await store.load(FILE);
+  const mine = (u) => String(u || "").includes(id);
+  const ours = board.products.some((p) => mine(p.photo))
+    || board.people.some((p) => mine(p.shop?.banner) || mine(p.shop?.qr))
+    || board.reviews.some((r) => mine(r.photo));
+  if (!ours) return res.status(404).json({ error: "no" });
+  const found = await findMedia(id);
   if (!found) return res.status(404).json({ error: "no such file" });
   res.set("Content-Type", found.type);
   res.set("X-Content-Type-Options", "nosniff");
@@ -10834,11 +10874,11 @@ app.get("/api/shop/:handle", async (req, res) => {
       /* The shop's own name and banner, when it has been given one. A
          handle and a grey circle is not a shop — see `shop` in store.js. */
       name: who.shop?.name || "",
-      banner: who.shop?.banner || "",
+      banner: shopPic(who.shop?.banner),
       /* 联系店家 — see the note on `shop` in store.js. The id is public by
          the act of putting it on a shopfront; nothing else about her is. */
       wechat: who.shop?.wechat || "",
-      qr: who.shop?.qr || "",
+      qr: shopPic(who.shop?.qr),
       ai: Boolean(who.shop?.ai),
       /* Their own line, in whichever language they wrote it and its render
          into the other — the same pair every card on this board shows, and
@@ -10855,8 +10895,7 @@ app.get("/api/shop/:handle", async (req, res) => {
          this page in English is whoever runs the shop, and a picking-list
          name is more use to him than a Chinese one he is checking. */
       .map((p) => ({ id: p.id, name: p.name, en: p.en, unit: p.unit, kind: p.kind,
-        price: p.price,
-        photo: p.photo, out: Boolean(p.out) })),
+        price: p.price, photo: shopPic(p.photo), out: Boolean(p.out) })),
     /* One postage per order, the way every parcel out of Australia is
        actually charged. */
     post: POST_FEN,
@@ -11237,8 +11276,8 @@ app.get("/api/product/:id/reviews", async (req, res) => {
     .sort((a, b) => (Boolean(b.text) - Boolean(a.text))
       || String(b.at || "").localeCompare(String(a.at || "")))
     .slice(0, 50)
-    .map((r) => ({ who: r.who, stars: r.stars, text: r.text, photo: r.photo,
-      at: r.at, back: r.back, src: r.src }));
+    .map((r) => ({ who: r.who, stars: r.stars, text: r.text,
+      photo: shopPic(r.photo), at: r.at, back: r.back, src: r.src }));
   res.json({
     ok: true, rows, n: all.length,
     stars: all.length
