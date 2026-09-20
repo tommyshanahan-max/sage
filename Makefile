@@ -704,6 +704,17 @@ ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [FOR
 	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)" \
 	  $(if $(TRY),--try,)
 
+payout-try: ## Can this Airwallex account pay anybody: make payout-try
+	@# THE QUESTION THE SUBCONTRACTOR HALF RESTS ON, asked before a day is
+	@# spent building on it. Transfers and beneficiaries are activated
+	@# separately from taking payments, and an account still in review may
+	@# have neither.
+	@#
+	@# Sandbox money and fake bank details. It prints whatever Airwallex
+	@# says, including the refusal, which is the part worth having.
+	$(COMPOSE) run --rm --no-deps -T --entrypoint node board \
+	  lib/wallet/providers/airwallex.payout.mjs
+
 dealio-webhook: ## Airwallex tells us a code was paid: make dealio-webhook [SECRET="…"] [OFF=1]
 	@# Without it a row still goes green — but only once somebody opens a
 	@# page, because asking is the only witness. The commonest shape of a
