@@ -1886,6 +1886,26 @@ export function cleanPerson(raw) {
      * cannot lose them, and does not have to explain how it protects them.
      * The ABN is kept because the tax return needs it and it is a public
      * number anybody can look up. */
+    /* THEIR SHOP'S OWN NAME AND BANNER.
+     *
+     * A handle and a grey circle is not a shop. Tom ran 澳洲爸爸汤姆 to nine
+     * hundred people with a drawing of himself and his daughter on it, and
+     * that picture is worth more to a buyer in Hangzhou than anything we
+     * would write. So a storefront can carry a name in Chinese and one
+     * image across the top.
+     *
+     * NOTHING ELSE. No badges, no "official partner" — those are claims
+     * about somebody else's relationship, and the ones that were true are
+     * not true today. A shop that says something it cannot back is the one
+     * thing this trade punishes hardest. */
+    shop: (() => {
+      const r = raw.shop;
+      if (!r || typeof r !== "object") return undefined;
+      const name = s(r.name, 40);
+      const banner = s(r.banner, 300);
+      if (!name && !banner) return undefined;
+      return { name, banner };
+    })(),
     payout: (() => {
       const r = raw.payout;
       if (!r || typeof r !== "object") return undefined;

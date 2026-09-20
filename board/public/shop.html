@@ -31,6 +31,13 @@
     padding:env(safe-area-inset-top,0) 0 calc(5.6rem + env(safe-area-inset-bottom,0))}
   main{max-width:34rem;margin:0 auto;padding:.9rem .8rem 1rem}
 
+  /* THE PICTURE ACROSS THE TOP. Full bleed — it cancels main's own side
+     padding rather than sitting inside it, because a banner with a margin
+     down each side reads as a picture in a document, not as a shopfront.
+     A fixed aspect keeps the page from jumping as it loads. */
+  .ban{display:block;width:calc(100% + 1.6rem);aspect-ratio:2.4/1;object-fit:cover;
+    margin:-.9rem -.8rem .9rem;background:var(--line)}
+
   .who{display:flex;align-items:center;gap:.7rem;padding:.2rem .3rem 1rem}
   .who img{width:3rem;height:3rem;border-radius:50%;object-fit:cover;flex:0 0 auto;
     background:var(--line)}
@@ -150,6 +157,16 @@ function draw() {
   const root = $("root");
   root.textContent = "";
 
+  /* The banner first, when there is one, then who it is. An <img> that
+     fails is removed outright — see the note over the product pictures. */
+  if (SHOP.banner) {
+    const b = el("img", "ban");
+    b.src = SHOP.banner;
+    b.alt = "";
+    b.addEventListener("error", () => b.remove());
+    root.append(b);
+  }
+
   const who = el("div", "who");
   if (SHOP.photo) {
     const img = el("img");
@@ -161,7 +178,10 @@ function draw() {
     who.append(el("div", "noimg"));
   }
   const box = el("div");
-  box.append(el("b", null, SHOP.handle));
+  /* The shop's name when it has one, and the handle only when it does not.
+     Whoever is behind it is named once more at the foot of the page —
+     twice on one screen is one line she has to read for nothing. */
+  box.append(el("b", null, SHOP.name || SHOP.handle));
   box.append(el("span", null, SHOP.sayZh || SHOP.say || "澳洲直邮"));
   who.append(box);
   root.append(who);
@@ -215,7 +235,7 @@ $("go").addEventListener("click", () => {
     const j = await r.json();
     if (!r.ok || !j?.ok) throw new Error("gone");
     SHOP = j.shop; ITEMS = j.products || []; POST = j.post ?? 3000;
-    document.title = SHOP.handle + " 的小店";
+    document.title = SHOP.name || (SHOP.handle + " 的小店");
     draw();
     paint();
   } catch {

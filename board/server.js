@@ -10830,6 +10830,10 @@ app.get("/api/shop/:handle", async (req, res) => {
     ok: true,
     shop: {
       handle: who.handle,
+      /* The shop's own name and banner, when it has been given one. A
+         handle and a grey circle is not a shop — see `shop` in store.js. */
+      name: who.shop?.name || "",
+      banner: who.shop?.banner || "",
       /* Their own line, in whichever language they wrote it and its render
          into the other — the same pair every card on this board shows, and
          only when the page it came from is public. */
@@ -11256,6 +11260,31 @@ async function fetchPhoto(raw) {
   const id = await putMedia(buf, type);
   return id ? "/api/public-media?id=" + id : "";
 }
+
+/** A SHOP'S NAME AND THE PICTURE ACROSS THE TOP OF IT. */
+app.post("/api/admin/shop-brand", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").trim();
+  if (!who) return res.status(400).json({ error: "who" });
+  let banner = "";
+  if (req.body?.banner) {
+    try { banner = await fetchPhoto(req.body.banner); } catch (err) {
+      console.error("banner:", err.message);
+    }
+    if (!banner) return res.status(400).json({ error: "photo" });
+  }
+  const out = await change((b) => {
+    const p = b.people.find((x) => x.handle === who);
+    if (!p) return { error: "gone" };
+    const now = p.shop || {};
+    p.shop = {
+      name: req.body?.name !== undefined ? String(req.body.name).trim().slice(0, 40) : (now.name || ""),
+      banner: banner || now.banner || "",
+    };
+    return { ok: true, name: p.shop.name, banner: Boolean(p.shop.banner) };
+  });
+  if (out?.error) return res.status(404).json({ error: "not on this board: " + who });
+  res.json({ ok: true, ...out });
+});
 
 /** THE CATALOGUE, NUMBERED — so a photograph can be attached to row 2
  *  rather than to twenty characters copied out of a terminal. */

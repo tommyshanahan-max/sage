@@ -449,7 +449,19 @@ make sold-out N=1 [BACK=1]
 make orders                          # what is waiting to be sent
 make ship N=1 TRACKING="XD91260039AU" COURIER="迅达速递"
 make owed [PAY=1]                    # earned, and the sweep for what could not go
+make shop-brand WHO="Tom" NAME="澳洲爸爸汤姆" BANNER="https://…/aussiedad.jpg"
 ```
+
+**A handle and a grey circle is not a shop.** Tom ran 澳洲爸爸汤姆 to nine
+hundred people with a drawing of himself and his daughter across the top, and
+that picture is worth more to a buyer in Hangzhou than anything we would
+write. So a storefront carries a name in Chinese and one image, full bleed,
+and the person behind it is named once more at the foot of the page.
+
+Nothing else goes on it — **no badges, no "official partner"**. Those are
+claims about somebody else's relationship, the ones that were true are not
+true today, and a shop that says something it cannot back is the one thing
+this trade punishes hardest.
 
 **A picture is fetched, never linked.** Her whole scan of a shop page is
 photographs and prices, in that order — and a page whose images come from an

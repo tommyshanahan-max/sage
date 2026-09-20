@@ -770,6 +770,20 @@ product: ## Put something in the catalogue: make product NAME="…" PRICE="¥648
 	  /seed/product.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --name "$(NAME)" --price "$(PRICE)" --unit "$(UNIT)" --en "$(EN)" --photo "$(PHOTO)"
 
+shop-brand: ## Dress a storefront: make shop-brand WHO="Tom" NAME="澳洲爸爸汤姆" [BANNER=url]
+	@# A HANDLE AND A GREY CIRCLE IS NOT A SHOP. The name is the one she
+	@# reads, so it is Chinese; the banner is fetched onto this board
+	@# rather than linked, for the same reason the product pictures are.
+	@#
+	@# WHO is the handle on the board — `make who` has them.
+	@# Either one alone is fine: NAME does not wipe the banner, and
+	@# BANNER does not wipe the name.
+	@test -n "$(WHO)" || { echo 'make shop-brand WHO="Tom" NAME="澳洲爸爸汤姆"'; exit 1; }
+	@test -n "$(NAME)$(BANNER)" || { echo 'make shop-brand WHO="$(WHO)" NAME="澳洲爸爸汤姆" [BANNER=url]'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/shop-brand.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)" $(if $(NAME),--name "$(NAME)",) --banner "$(BANNER)"
+
 payout-try: ## Can this Airwallex account pay anybody: make payout-try
 	@# THE QUESTION THE SUBCONTRACTOR HALF RESTS ON, asked before a day is
 	@# spent building on it. Transfers and beneficiaries are activated
