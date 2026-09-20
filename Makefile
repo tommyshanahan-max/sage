@@ -704,6 +704,43 @@ ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [FOR
 	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)" \
 	  $(if $(TRY),--try,)
 
+orders: ## What is waiting to be sent: make orders [ALL=1]
+	@# THE SELLER'S WHOLE SCREEN, and it is this. The address as the courier
+	@# needs it, the English names because a warehouse in Melbourne cannot
+	@# pick from Chinese ones, and a number per row so nothing has to be
+	@# copied out of a terminal.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/orders.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  $(if $(ALL),--all,)
+
+ship: ## It has gone: make ship N=1 TRACKING="XD91260039AU" [COURIER="迅达速递"]
+	@# N is the number beside it in `make orders`, not an id — twenty
+	@# characters copied out of a terminal is the step that goes wrong. The
+	@# list is re-read inside this command, so the number means what it just
+	@# printed.
+	@test -n "$(N)" || { echo 'make ship N=1 TRACKING="XD91260039AU"'; exit 1; }
+	@test -n "$(TRACKING)" || { echo 'make ship N=$(N) TRACKING="XD91260039AU"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/orders.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --ship "$(N)" --tracking "$(TRACKING)" --courier "$(COURIER)"
+
+owed: ## What each shopfront has earned: make owed
+	@# A commission becomes owed when the money arrives, not when the order
+	@# is made — nobody is paid out of a cart. This pays nobody: until
+	@# `make payout-try` says this account can send a transfer, it is a list.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/owed.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+
+product: ## Put something in the catalogue: make product NAME="…" PRICE="¥648" [UNIT="900g *3" EN="…" PHOTO=url]
+	@# One seller, one catalogue, and he does not need a screen to type a
+	@# price into. NAME is what she reads, so it is Chinese; EN is what the
+	@# warehouse picks from.
+	@test -n "$(NAME)" || { echo 'make product NAME="Bellamy 贝拉米3段 900g" PRICE="¥648"'; exit 1; }
+	@test -n "$(PRICE)" || { echo 'make product NAME="$(NAME)" PRICE="¥648"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/product.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --name "$(NAME)" --price "$(PRICE)" --unit "$(UNIT)" --en "$(EN)" --photo "$(PHOTO)"
+
 payout-try: ## Can this Airwallex account pay anybody: make payout-try
 	@# THE QUESTION THE SUBCONTRACTOR HALF RESTS ON, asked before a day is
 	@# spent building on it. Transfers and beneficiaries are activated

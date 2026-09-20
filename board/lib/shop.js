@@ -167,6 +167,10 @@ export function cleanOrder(raw) {
      that changes must not reach back into what somebody has already sold. */
   const cut = fen(raw.cut);
   if (cut) out.cut = cut;
+  /* And whether that commission has been sent on. Kept beside the amount
+     rather than in a ledger of its own: one row, one answer, and no way for
+     two places to disagree about whether somebody has been paid. */
+  if (raw.cutPaid) out.cutPaid = true;
   return out;
 }
 

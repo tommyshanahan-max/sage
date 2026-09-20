@@ -435,6 +435,38 @@ opens in WeChat, that is the whole flow. The way in that exists today is the
 waiting row — she leaves a name and a line, and the member writes first.
 Whether the listing should use that, or a rule of its own, is not decided.
 
+## The shop — **built, bar the payout**
+
+One catalogue (his, because he holds the stock and the distributor) and a
+storefront per member. `/shop/<handle>` → cart → `/shop/<handle>/checkout` →
+`/order/<id>`, all open, no account at any point.
+
+```
+make product NAME="Bellamy 贝拉米3段 900g" PRICE="¥648" UNIT="900g *3罐" EN="Bellamy Step 3"
+make orders                          # what is waiting to be sent
+make ship N=1 TRACKING="XD91260039AU" COURIER="迅达速递"
+make owed                            # what each shopfront has earned
+```
+
+**A row number, never an id.** `make ship N=1` takes the number `make orders`
+just printed. Twenty characters copied out of a terminal is the step that
+goes wrong.
+
+**Both names on the picking list.** The warehouse reads the English one, the
+buyer asked for the Chinese one, and the list prints them one above the
+other.
+
+**The commission** is a percentage of the goods and never the postage —
+`BOARD_SHOP_CUT`, 15 by default — fixed on the order when it is made, and
+owed when the money arrives rather than when the cart is filled. `cutPaid`
+sits beside it on the same row, so two places can never disagree about
+whether somebody has been paid.
+
+**Nothing pays anybody yet**, and `make owed` says so rather than offering a
+button. Until `make payout-try` shows this Airwallex account can send a
+transfer at all, a list that is honest about being a list beats a button
+that fails on somebody else's phone.
+
 ## Not built
 
 ### The Cards line  **design below, not built**

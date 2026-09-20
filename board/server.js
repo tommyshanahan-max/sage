@@ -10985,6 +10985,72 @@ app.get("/api/order/:id/check", async (req, res) => {
   res.json({ ok: true, state: "toShip" });
 });
 
+/** WHAT IS WAITING TO BE SENT, oldest first.
+ *
+ *  The seller's whole screen, and it is a terminal: the address as the
+ *  courier needs it, the English names because a warehouse in Melbourne
+ *  cannot pick from Chinese ones, and a number per row so nothing has to be
+ *  copied. */
+app.get("/api/admin/orders", admin, async (req, res) => {
+  const want = String(req.query.state || "toShip");
+  const board = await store.load(FILE);
+  const names = new Map(board.products.map((p) => [p.id, p.en || p.name]));
+  const rows = board.orders
+    .filter((o) => !o.off && (want === "all" || shop.orderState(o) === want))
+    .map((o) => ({
+      id: o.id, at: o.at, shop: o.shop, state: shop.orderState(o),
+      total: store.fromMinor(shop.orderTotal(o), "cny"),
+      cut: o.cut ? store.fromMinor(o.cut, "cny") : "",
+      ship: o.ship || null,
+      tracking: o.sent?.tracking || "",
+      lines: o.lines.map((l) => ({ n: l.n, name: l.name, en: names.get(l.id) || "" })),
+    }));
+  res.json({ ok: true, orders: rows });
+});
+
+/** IT HAS GONE. A courier and a number, and the buyer's page stops asking
+ *  her to wait and starts telling her where it is. */
+app.post("/api/admin/ship", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const id = shop.cleanId(String(req.body?.id || ""));
+  const tracking = String(req.body?.tracking || "").trim().slice(0, 40);
+  if (!id || !tracking) return res.status(400).json({ error: "no" });
+  const out = await change((b) => {
+    const o = b.orders.find((x) => x.id === id);
+    if (!o) return { error: "gone" };
+    if (!o.paid) return { error: "unpaid" };
+    o.sent = { tracking, courier: String(req.body?.courier || "").trim().slice(0, 40),
+      at: new Date().toISOString() };
+    return { ok: true, to: o.ship?.name || "", by: o.by };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true, to: out.to });
+});
+
+/** WHAT EACH STOREFRONT HAS EARNED, and what is still owed.
+ *
+ *  A commission becomes owed when the money arrives, not when the order is
+ *  made — nobody is paid out of a cart. Nothing here pays anybody: until
+ *  Airwallex confirms this account can send a transfer at all (make
+ *  payout-try) this is a list, and a list that is honest about being one is
+ *  better than a button that fails on somebody's phone. */
+app.get("/api/admin/owed", admin, async (req, res) => {
+  const board = await store.load(FILE);
+  const by = new Map();
+  for (const o of board.orders) {
+    if (o.off || !o.paid || !o.cut || !o.shop) continue;
+    const row = by.get(o.shop) || { shop: o.shop, owed: 0, paidOut: 0, orders: 0 };
+    row.orders += 1;
+    if (o.cutPaid) row.paidOut += o.cut; else row.owed += o.cut;
+    by.set(o.shop, row);
+  }
+  const rows = [...by.values()]
+    .sort((a, b) => b.owed - a.owed)
+    .map((r) => ({ shop: r.shop, orders: r.orders,
+      owed: store.fromMinor(r.owed, "cny"), owedFen: r.owed,
+      paidOut: r.paidOut ? store.fromMinor(r.paidOut, "cny") : "" }));
+  res.json({ ok: true, pct: SHOP_CUT_PCT, rows });
+});
+
 /** ADDING SOMETHING TO THE CATALOGUE, from a terminal. The shop has one
  *  seller and he does not need a screen to type a price into. */
 app.post("/api/admin/product", admin, express.json({ limit: "4kb" }), async (req, res) => {
