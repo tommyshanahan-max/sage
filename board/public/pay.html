@@ -70,9 +70,17 @@
   .trade{font-family:var(--mono);font-size:.74rem;letter-spacing:.04em;
     color:var(--dim);margin:-1.2rem 0 2rem;max-width:30rem;line-height:1.7}
 
-  .seeit{margin:0 0 2rem}
-  .seeit a{color:var(--blue);text-decoration:none;font-size:1rem}
-  .seeit a:hover{text-decoration:underline}
+  /* THE WAY IN, AND A WAY TO LOOK FIRST. Two things somebody might want and
+     they are not the same size: one is the product and one is a demo of it.
+     A page that gives them equal weight is a page that has not decided. */
+  .acts{display:flex;flex-direction:column;align-items:flex-start;gap:.9rem;
+    margin:0 0 2.6rem}
+  .acts .go{display:inline-block;background:var(--blue);color:#05070D;
+    text-decoration:none;font-weight:700;font-size:1rem;padding:.85rem 1.8rem;
+    border-radius:99px}
+  .acts .go:hover{background:#4762d4}
+  .acts .quiet{color:var(--dim);text-decoration:none;font-size:.94rem}
+  .acts .quiet:hover{color:var(--ink)}
 
   .ways{display:flex;gap:1.1rem;flex-wrap:wrap;margin:0 0 3.4rem}
   .ways span{display:flex;align-items:center;gap:.4rem;font-size:.86rem;color:var(--dim)}
@@ -136,7 +144,10 @@
 
   <!-- THE ONE LINK ON THIS PAGE THAT SHOWS RATHER THAN TELLS. Everything
        above it is a claim; this is four screens of the thing happening. -->
-  <p class="seeit"><a href="/dealio/try">See it work &rsaquo;</a></p>
+  <div class="acts">
+    <a class="go" href="/dealio">Ask for money</a>
+    <a class="quiet" href="/dealio/try">See it work first &rsaquo;</a>
+  </div>
 
   <div class="ways">
     <span class="wx"><i></i>WeChat Pay 微信支付</span>
