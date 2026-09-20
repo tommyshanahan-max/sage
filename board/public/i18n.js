@@ -5361,6 +5361,13 @@ export const STRINGS = {
   "rq.done":           ["Paid. {who} has been told.", "已付。{who} 那边已经知道了。"],
   "rq.notReady":       ["{who} has not said where the money should land, so this cannot be paid yet.",
                         "{who} 还没填收款方式，暂时付不了。"],
+  /* THE OTHER REASON A REQUEST CANNOT BE PAID, and it was wearing the one
+     above. WeChat Pay and Alipay take yuan; a request written in Australian
+     dollars has no rails on this box at all. Said to the payer as the fact,
+     not as a fault of theirs — and the person who can fix it is the one who
+     wrote the amount. */
+  "rq.onlyYuan":       ["{who} asked in the wrong money. WeChat Pay and Alipay can only pay a request in yuan.",
+                        "{who} 写错了币种。微信支付和支付宝只能付人民币的单。"],
   /* Sending money is a promise until the other end has somewhere for it to
      land, because this board is never allowed to hold it in the meantime. */
   "rq.outWhy":         ["Stripe will ask where to send it. No account here, and nothing to install.",

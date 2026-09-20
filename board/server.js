@@ -10122,6 +10122,16 @@ app.get("/api/request/:id", async (req, res) => {
     ? ["wechat", "alipay", "card"]
     : [...new Set([...qrWays, ...(stripeOk ? ["wechat", "alipay", "card"] : [])])];
   const ready = ways.length > 0;
+
+  /* AND WHY NOT, WHEN THERE IS NOTHING. "{who} has not said where the money
+     should land" is one reason out of two, and it was being printed for the
+     other one: a request in Australian dollars on a box whose only rails are
+     the yuan codes. True of the Stripe path, false here, and it sends the
+     asker to go and set up a payout account that would not have helped.
+     Only the two reasons the reader can do something about. */
+  const why = ready ? ""
+    : (dealioQr() && dealioOwns(board, q) && (q.way || "in") === "in" && q.cur !== "cny")
+      ? "cny" : "";
   /* WHICH SIDE OF THE LINK IS READING IT.
    *
    * The page could not tell, and on a request going out that is the whole
@@ -10142,6 +10152,7 @@ app.get("/api/request/:id", async (req, res) => {
        A refused button is worse than no button: it is read as the whole page
        being broken, and the payer presses the other two to find out. */
     ways,
+    why,
     request: request.requestView(q, { payeeReady: ready }),
   });
 });

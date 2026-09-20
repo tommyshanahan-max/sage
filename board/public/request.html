@@ -415,7 +415,8 @@ function draw() {
     });
     body.append(b);
   } else if (!q.payeeReady) {
-    body.append(el("p", "foot", T("rq.notReady", { who: q.from })));
+    body.append(el("p", "foot",
+      T(STATE?.why === "cny" ? "rq.onlyYuan" : "rq.notReady", { who: q.from })));
   } else if (q.way === "out" && !STATE.yours) {
     /* SENDING, AND THE READER IS THE ONE BEING SENT TO.
        They said where the money should land, came back from Stripe onto this
