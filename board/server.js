@@ -10076,15 +10076,27 @@ app.get("/api/request/:id", async (req, res) => {
      Asking: the person who made the row, and their account is on their
      member row. Sending: the person reading this page, who is usually not on
      this board at all, so the account is minted against the request. */
-  /* A CODE NEEDS NOWHERE FOR THE MONEY TO LAND, because it lands in the one
-     account the keys belong to. This was the whole of why the page showed no
-     way to pay on the box that has Airwallex and no Stripe: `ready` asked
-     about a payout account, there was none, and the payer was told the person
-     had not finished setting up payments — under a perfectly good amount. */
-  const ways = dealioWays(board, q);
-  const ready = ways.length > 0 || ((q.way || "in") === "out"
+  /* WHAT CAN ACTUALLY TAKE THIS MONEY, WHICH IS TWO QUESTIONS NOW.
+   *
+   * A code needs nowhere for the money to land — it lands in the one account
+   * the keys belong to — and that was the whole of why this page offered no
+   * way to pay at all on the box with Airwallex: `ready` asked about a Stripe
+   * payout account, there was none, and the payer was told the person had not
+   * finished setting up payments, under a perfectly good amount.
+   *
+   * And the two rails are not the same three buttons. Tom's box has live
+   * Stripe keys and nobody with a payout account, so Card was drawn and could
+   * only ever be refused. Each rail contributes the methods it can really
+   * take; nothing else is offered. */
+  const qrWays = dealioWays(board, q);
+  const stripeOk = stripe.configured() && ((q.way || "in") === "out"
     ? Boolean(q.acct && q.landed)
     : Boolean(asker?.payee));
+  /* The stand-in, which draws all three because none of them is real. */
+  const ways = (!qrWays.length && !stripeOk && PAY_DEMO)
+    ? ["wechat", "alipay", "card"]
+    : [...new Set([...qrWays, ...(stripeOk ? ["wechat", "alipay", "card"] : [])])];
+  const ready = ways.length > 0;
   /* WHICH SIDE OF THE LINK IS READING IT.
    *
    * The page could not tell, and on a request going out that is the whole
@@ -10101,14 +10113,11 @@ app.get("/api/request/:id", async (req, res) => {
   res.json({
     ok: true,
     yours: Boolean(me && me === q.by),
-    /* WHICH WALLETS TO DRAW, so the sheet does not offer one that cannot
-       work. On a box with the codes and no Stripe, Card is a button whose
-       only possible outcome is a refusal — and a refused button is worse
-       than no button, because it is read as the whole page being broken. */
-    ways: ways.length && !stripe.configured() ? ways : ["wechat", "alipay", "card"],
-    request: request.requestView(q, {
-      payeeReady: ready && (stripe.configured() || PAY_DEMO || ways.length > 0),
-    }),
+    /* WHICH WALLETS TO DRAW, so the sheet never offers one that cannot work.
+       A refused button is worse than no button: it is read as the whole page
+       being broken, and the payer presses the other two to find out. */
+    ways,
+    request: request.requestView(q, { payeeReady: ready }),
   });
 });
 
