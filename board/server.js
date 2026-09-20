@@ -404,6 +404,26 @@ async function page(file, req, res, next, extra = null) {
  * feed is the better front door.
  */
 const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
+
+/* WHICH PRODUCT THE READER ASKED FOR, BY THE NAME THEY TYPED.
+ *
+ * One container answers two hostnames. On the board's names, "/" is the
+ * board. On Dealio's own name it is the payments product — because a payer
+ * opening a link should not meet a private networking board at the moment
+ * they are deciding whether to trust a stranger with ten thousand yuan, and
+ * a payment provider assessing the application should not type the domain on
+ * the form and find a different company.
+ *
+ * Nothing else changes. Every route below serves both names exactly as it
+ * did; this decides one page. www is included because somebody will type it
+ * and Caddy's redirect only catches the apex-bound ones. */
+const DEALIO_HOSTS = (() => {
+  const d = String(process.env.BOARD_DEALIO_DOMAIN || "").trim().toLowerCase();
+  return d ? new Set([d, "www." + d]) : new Set();
+})();
+const isDealioHost = (req) =>
+  DEALIO_HOSTS.size > 0
+  && DEALIO_HOSTS.has(String(req.get("host") || "").toLowerCase().split(":")[0]);
 /* THE DOOR, IN FRONT OF EVERYTHING. Only in "read" mode.
  *
  * A page request gets the door itself rather than a redirect, so the address
@@ -889,7 +909,13 @@ app.use(async (req, res, next) => {
   return page("enter.html", req, res, next);
 });
 
-app.get("/", (req, res, next) => page(ROOT_IS_BOARD ? "index.html" : "landing.html", req, res, next));
+app.get("/", (req, res, next) => {
+  /* Dealio's own name opens on Dealio. Its front page is the one written for
+     somebody who has never heard of it — what it is, what it costs, who runs
+     it — and the app itself is a tap away at /dealio. */
+  if (isDealioHost(req)) return page("pay.html", req, res, next);
+  return page(ROOT_IS_BOARD ? "index.html" : "landing.html", req, res, next);
+});
 /* THE NUMBERS, ON A PHONE.
  *
  * make doors is the same figures and needs a terminal, which means they get

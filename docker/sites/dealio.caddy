@@ -1,0 +1,53 @@
+# DEALIO — the payments product, on its own name at last.
+#
+# WHY A SECOND HOSTNAME RATHER THAN A PATH. Everything about this product sat
+# under thexchange.app, which is a private board for doing business in China:
+# a payer opening a link saw a networking board's name at the moment they were
+# deciding whether to trust a stranger with ten thousand yuan, and a payment
+# provider assessing the application typed that same name and found the wrong
+# product. One name, one thing.
+#
+# It is the same board container behind it. Nothing is duplicated and no
+# member moves — Dealio has no members to move, which is exactly why now is
+# the cheap moment to do this and later would not be.
+#
+# Inert until TOMSCODING_DEALIO_DOMAIN is set: unset it binds an internal
+# .localhost name and asks for no certificate. That fallback must stay
+# distinct from every other one on this box — two site blocks sharing an
+# address is not a warning, it is a startup failure that takes every other
+# site down with it.
+#
+# A copy of board-also.caddy's shape on purpose. The note there says the two
+# stay in step by hand; this is a third. Change one, look at the others.
+{$TOMSCODING_DEALIO_DOMAIN:dealio.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		# A payment link is meant to be forwarded — into WeChat, into a chat,
+		# into an email. Same reasoning as the board's own block.
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# The counter's two public paths, same arrangement as every other site
+	# here: same origin as the page, so reporting a visit needs no preflight
+	# and no third-party request on a connection that may be slow and lossy.
+	@count path /a/e /a/lx.js
+	handle @count {
+		uri strip_prefix /a
+		reverse_proxy analytics:3000
+	}
+
+	handle {
+		reverse_proxy board:8080
+	}
+}
+
+# www redirects to the apex. Somebody will type it, and a certificate warning
+# on the front door of a payments product reads as the company being broken.
+# Its own block because Caddy substitutes one variable per address.
+{$TOMSCODING_DEALIO_WWW:www.dealio.localhost} {
+	redir https://{$TOMSCODING_DEALIO_DOMAIN}{uri} permanent
+}

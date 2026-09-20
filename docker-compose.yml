@@ -699,6 +699,10 @@ services:
       # everybody out. Never equal to _OLD_DOMAIN: one host, one mechanism,
       # and check-sites.py fails `make up` if they collide.
       TOMSCODING_BOARD_ALSO: ${TOMSCODING_BOARD_ALSO:-boardalso.localhost}
+      # Dealio's own hostname. The board serves it; see docker/sites/dealio.caddy
+      # and the DEALIO_HOSTS note in board/server.js.
+      TOMSCODING_DEALIO_DOMAIN: ${TOMSCODING_DEALIO_DOMAIN:-dealio.localhost}
+      TOMSCODING_DEALIO_WWW: ${TOMSCODING_DEALIO_WWW:-www.dealio.localhost}
       TOMSCODING_BOARD_OLD_DOMAIN: ${TOMSCODING_BOARD_OLD_DOMAIN:-oldboard.localhost}
       TOMSCODING_BOARD_OLD_WWW: ${TOMSCODING_BOARD_OLD_WWW:-oldboardwww.localhost}
       TOMSCODING_BOARD_WWW: ${TOMSCODING_BOARD_WWW:-www.board.localhost}
@@ -882,6 +886,10 @@ services:
     user: "1000:1000"
     environment:
       BOARD_DIR: /data
+      # DEALIO'S OWN HOSTNAME, so the server knows which product a reader
+      # asked for. The same container answers both names; only what "/" means
+      # differs. See docker/sites/dealio.caddy.
+      BOARD_DEALIO_DOMAIN: ${TOMSCODING_DEALIO_DOMAIN:-}
       # Without this the admin routes refuse everything, which is the safe
       # failure: a board nobody can moderate is worse than one nobody can post
       # to.
