@@ -9420,6 +9420,30 @@ const backHere = (req, path) => {
   return proto + "://" + host + path;
 };
 
+/** A LINK SOMEBODY SENDS, WHICH IS A DIFFERENT THING FROM A LINK THEY COME
+ *  BACK ON.
+ *
+ *  backHere uses the hostname the request arrived on, which is right for
+ *  every return URL here: a payee finishing their payout setup, or a payer
+ *  coming back from a checkout, should land where they started, with the
+ *  cookies they already have.
+ *
+ *  A payment link is not that. It is written into a WeChat message and opened
+ *  by a stranger who has no cookies and no history, and the name on it is the
+ *  first thing they read while deciding whether to trust it. Sent from the
+ *  app on the board's hostname it said thexchange.app — a private networking
+ *  board's name, in front of somebody about to send ten thousand yuan, which
+ *  is the exact problem Dealio's own domain was bought to fix.
+ *
+ *  So a shared link uses Dealio's name whenever there is one, whichever door
+ *  the person asking happened to walk in through. Falls back to backHere when
+ *  no Dealio domain is set, which is every deployment that has not got one. */
+const payLink = (req, path) => {
+  const d = String(process.env.BOARD_DEALIO_DOMAIN || "").trim().toLowerCase();
+  if (!/^[a-z0-9.-]{3,253}$/.test(d)) return backHere(req, path);
+  return "https://" + d + path;
+};
+
 /** SETTING UP PAYOUTS, which only the payee themselves can do.
  *
  *  Mints an Express account the first time and an onboarding link every time:
@@ -9889,7 +9913,7 @@ app.post("/api/request", notesOff, express.json({ limit: "2kb" }), async (req, r
     return { ok: true, id: q.id };
   });
   if (out?.error) return res.status(400).json(out);
-  res.json({ ok: true, id: out.id, url: backHere(req, "/pay/" + out.id) });
+  res.json({ ok: true, id: out.id, url: payLink(req, "/pay/" + out.id) });
 });
 
 /** SAYING IT INSTEAD OF TYPING IT.
@@ -10281,7 +10305,7 @@ app.get("/api/requests", notesOff, async (req, res) => {
       /* The asker's own view carries what the payer's must not: whether it
          was taken back, and the address to send again. */
       off: Boolean(q.off),
-      url: backHere(req, "/pay/" + q.id),
+      url: payLink(req, "/pay/" + q.id),
     })),
   });
 });
@@ -10344,7 +10368,7 @@ app.post("/api/admin/request", admin, express.json({ limit: "2kb" }), async (req
   });
   if (out?.error) return res.status(400).json(out);
   res.json({ ok: true, id: out.id, ready: out.ready,
-    url: backHere(req, "/pay/" + out.id) });
+    url: payLink(req, "/pay/" + out.id) });
 });
 
 /** CAN THIS BOARD TAKE A PAYMENT, AND SAY WHY NOT.
