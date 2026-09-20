@@ -18,7 +18,7 @@ import { randomUUID, createHash, randomBytes } from "node:crypto";
 import path from "node:path";
 import { cleanShare, MEMO_ALPHABET } from "./memo.js";
 import { cleanRequest, CURRENCIES as REQUEST_CURRENCIES, REQUEST_MAX } from "./request.js";
-import { cleanProduct, cleanOrder, PRODUCT_MAX, ORDER_MAX } from "./shop.js";
+import { cleanProduct, cleanOrder, cleanChat, PRODUCT_MAX, ORDER_MAX, CHAT_MAX } from "./shop.js";
 
 /** Where a post can be. Four, and each is a different fact:
  *
@@ -3348,12 +3348,23 @@ export function cleanBoard(raw) {
     oids.add(q.id);
     orders.push(q);
   }
+  /* 联系店家 — one thread per buyer per shop. See cleanChat in shop.js for
+     why this is not `notes`. */
+  const chats = [];
+  const cids = new Set();
+  for (const r of (Array.isArray(raw?.chats) ? raw.chats : [])) {
+    const q = cleanChat(r);
+    if (!q || cids.has(q.id)) continue;
+    cids.add(q.id);
+    chats.push(q);
+  }
 
   return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
     offers, shuts, hides, groups, says, signins, writes, pushes, blocks, announces,
     requests: requests.slice(-REQUEST_MAX),
     products: products.slice(-PRODUCT_MAX),
     orders: orders.slice(-ORDER_MAX),
+    chats: chats.slice(-CHAT_MAX),
     counts: cleanCounts(raw?.counts) };
 }
 

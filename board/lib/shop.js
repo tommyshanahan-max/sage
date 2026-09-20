@@ -214,5 +214,69 @@ export function orderView(o) {
   };
 }
 
+/** A THREAD BETWEEN A BUYER AND THE SHOP SHE IS BUYING FROM.
+ *
+ *  WHY THIS IS NOT `notes`. That is member to member, keyed on two person
+ *  rows, and it says of itself that it is an introduction rather than a chat
+ *  — the conversation is meant to leave the board. This is the opposite: a
+ *  buyer with no account at all, asking the question she would ask in any
+ *  shop, and the conversation must NOT leave, because the alternative is
+ *  asking a stranger to add her on WeChat before she has bought anything.
+ *  That is a bigger ask than the purchase.
+ *
+ *  ONE THREAD PER BUYER PER SHOP, not per order. She asks before she buys,
+ *  she asks again about the parcel, and two threads with the same person
+ *  about the same shop is a filing system nobody wanted. The order she was
+ *  looking at when she opened it rides along on the line instead.
+ *
+ *  SHE IS A DEVICE, which is the whole of her identity here and the same
+ *  bargain as everywhere else: no account, and nothing to recover on a new
+ *  phone. A thread is therefore not a mailbox and must never hold anything
+ *  she would be sorry to lose.
+ */
+const WHOS = new Set(["buyer", "shop", "ai"]);
+
+export function cleanLine(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const who = WHOS.has(raw.who) ? raw.who : "";
+  const text = s(raw.text, 600);
+  if (!who || !text) return null;
+  return {
+    who, text,
+    at: s(raw.at, 40) || new Date().toISOString(),
+    /* Which order she was looking at, when she opened it from one. The rep
+       then answers "where is it" without asking which it is. */
+    order: cleanId(raw.order),
+  };
+}
+
+export function cleanChat(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = cleanId(raw.id);
+  const shop = s(raw.shop, 40);
+  const by = /^[a-f0-9]{32}$/.test(String(raw.by || "")) ? String(raw.by) : "";
+  if (!id || !shop || !by) return null;
+  const lines = (Array.isArray(raw.lines) ? raw.lines : [])
+    .map(cleanLine)
+    .filter(Boolean)
+    /* The last hundred. A thread that grows without bound is a file that
+       grows without bound, and nobody is reading message nine hundred. */
+    .slice(-100);
+  if (!lines.length) return null;
+  return {
+    id, shop, by, lines,
+    at: s(raw.at, 40) || lines[0].at,
+    /* The last line's time, kept beside rather than derived, so an inbox
+       sorts without walking every thread. */
+    last: s(raw.last, 40) || lines[lines.length - 1].at,
+    /* How far each side has read. Two numbers because a badge that is right
+       for one of them is wrong for the other. */
+    seenShop: Math.max(0, Math.min(Number(raw.seenShop) || 0, lines.length)),
+    seenBuyer: Math.max(0, Math.min(Number(raw.seenBuyer) || 0, lines.length)),
+  };
+}
+
+export const CHAT_MAX = 2000;
+
 export const PRODUCT_MAX = 400;
 export const ORDER_MAX = 4000;

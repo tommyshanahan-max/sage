@@ -6470,6 +6470,38 @@ export const STRINGS = {
   "sh.wechatHow":      ["Search for it in WeChat to add them.", "在微信里搜这个号加好友。"],
   "sh.qrHow":          ["Press and hold the code to add them.", "长按二维码加好友。"],
   "sh.askNone":        ["This shop has not left a contact yet.", "这家店还没留联系方式。"],
+  /* The thread itself. Both shops this was taken from open a message
+     thread on 联系店家 — a QR code asking a stranger to add you as a friend
+     before she has bought anything is a bigger ask than the purchase, and
+     it is the step where she leaves. WeChat stays underneath. */
+  "sh.say":            ["Type your question", "有什么想问的"],
+  "sh.send":           ["Send", "发送"],
+  "sh.sending":        ["Sending…", "发送中…"],
+  "sh.sendNo":         ["That did not send. Try again.", "没发出去，再试一次。"],
+  "sh.first":          ["Ask anything — {who} usually answers within a few hours.",
+                        "有问题随时问，{who} 一般几小时内回。"],
+  "sh.alsoWx":         ["Or add on WeChat", "也可以加微信"],
+  "sh.me":             ["You", "我"],
+  "sh.them":           ["{who}", "{who}"],
+  "sh.robot":          ["Assistant", "小助手"],
+  "sh.aboutOrder":     ["About this order", "关于这个订单"],
+  /* Her side of it is a device and nothing else. Said once, at the top of
+     the thread, rather than discovered on a new phone. */
+  "sh.chatPhone":      ["This conversation lives on this phone.", "这个对话只在这台手机上。"],
+
+  /* The shopkeeper's side. */
+  "mn.chats":          ["Messages", "消息"],
+  "mn.chatNone":       ["Nobody has asked anything yet.", "还没有人来问。"],
+  "mn.buyer":          ["A buyer", "买家"],
+  "mn.reply":          ["Reply", "回复"],
+  "mn.unread":         ["{n} new", "{n} 条新消息"],
+  /* Hers to flip, at the moment she decides it. A switch somebody has to be
+     messaged about is a switch that stays wherever it was left. */
+  "mn.ai":             ["Assistant answers first", "小助手先回"],
+  "mn.aiOn":           ["On", "开"],
+  "mn.aiOff":          ["Off", "关"],
+  "mn.aiWhy":          ["It answers about the things, the postage and where a parcel is. Anything else, it waits for you.",
+                        "它只答商品、运费和包裹到哪了。别的都留给你。"],
   "sh.close":          ["Close", "关闭"],
   "sh.foot":           ["Straight from Australia · WeChat Pay or Alipay · {who} follows your order up",
                         "澳洲直邮 · 微信支付或支付宝 · 下单后由 {who} 跟进"],

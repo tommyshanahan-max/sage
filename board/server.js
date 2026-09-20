@@ -10951,6 +10951,12 @@ app.get("/api/mine", async (req, res) => {
     owed: store.fromMinor(rows.filter((o) => o.paid && !o.cutPaid).reduce((n, o) => n + (o.cut || 0), 0), "cny"),
     owedFen: rows.filter((o) => o.paid && !o.cutPaid).reduce((n, o) => n + (o.cut || 0), 0),
     paid: Boolean(mine.payout),
+    ai: Boolean(mine.shop?.ai),
+    /* Unread across every thread, for the one badge that decides whether
+       she opens the list at all. */
+    unread: board.chats
+      .filter((c) => c.shop === mine.handle)
+      .reduce((n, c) => n + Math.max(0, c.lines.length - c.seenShop), 0),
     orders: rows.map((o) => ({
       id: o.id, at: o.at,
       state: shop.orderState(o),
@@ -10975,6 +10981,148 @@ app.get("/api/order/:id", async (req, res) => {
   const o = board.orders.find((x) => x.id === id);
   if (!o) return res.status(404).json({ error: "gone" });
   res.json({ ok: true, order: shop.orderView(o) });
+});
+
+/* ---- 联系店家 -------------------------------------------------------------
+ *
+ * The first version of this showed a WeChat id and a QR code, which is what
+ * a shopfront carries — and it is the wrong thing to put behind this button.
+ * Both shops the design was taken from open a MESSAGE THREAD on 联系店家.
+ * Asking a stranger to add you as a WeChat friend before she has bought
+ * anything is a bigger ask than the purchase, and it is the step where she
+ * leaves. The WeChat details stay, underneath, for whoever wants them.
+ *
+ * She has no account. See cleanChat in lib/shop.js for what that costs and
+ * what is done about it.
+ */
+app.get("/api/shop/:handle/chat", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const handle = String(req.params.handle || "").slice(0, 40);
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!me) return res.json({ ok: true, lines: [] });
+  const board = await store.load(FILE);
+  const c = board.chats.find((x) => x.shop === handle && x.by === me);
+  if (!c) return res.json({ ok: true, lines: [] });
+  /* Reading it is what marks it read, and only for her side. */
+  if (c.seenBuyer < c.lines.length) {
+    change((b) => {
+      const row = b.chats.find((x) => x.id === c.id);
+      if (row) row.seenBuyer = row.lines.length;
+      return { ok: true };
+    }).catch(() => {});
+  }
+  res.json({ ok: true, id: c.id, lines: c.lines });
+});
+
+app.post("/api/shop/:handle/chat", express.json({ limit: "2kb" }), async (req, res) => {
+  const handle = String(req.params.handle || "").slice(0, 40);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const text = String(req.body?.text || "").replace(/\r\n?/g, "\n").trim().slice(0, 600);
+  const order = shop.cleanId(req.body?.order);
+  if (!me || !text) return res.status(400).json({ error: "no" });
+
+  const out = await change((b) => {
+    const who = b.people.find((p) => p.handle === handle);
+    if (!who) return { error: "gone" };
+    let c = b.chats.find((x) => x.shop === handle && x.by === me);
+    const line = { who: "buyer", text, at: new Date().toISOString(), order };
+    if (!c) {
+      c = { id: shop.newId(), shop: handle, by: me, at: line.at, last: line.at,
+        lines: [line], seenShop: 0, seenBuyer: 1 };
+      b.chats.push(c);
+    } else {
+      c.lines.push(line);
+      if (c.lines.length > 100) c.lines = c.lines.slice(-100);
+      c.last = line.at;
+      c.seenBuyer = c.lines.length;
+    }
+    return { ok: true, id: c.id, lines: c.lines, tell: who.by };
+  });
+  if (out?.error) return res.status(404).json({ error: out.error });
+  res.status(201).json({ ok: true, id: out.id, lines: out.lines });
+  /* The shopkeeper, told somebody is asking. Same channel an order uses. */
+  if (out.tell) tellThem(out.tell).catch(() => {});
+});
+
+/** THE SHOPKEEPER'S SIDE. Every thread on her shop, newest first, with the
+ *  count of what she has not read. */
+app.get("/api/mine/chats", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!me) return res.json({ ok: true, chats: [] });
+  const board = await store.load(FILE);
+  const mine = board.people.find((p) => p.by === me);
+  if (!mine) return res.json({ ok: true, chats: [] });
+  const rows = board.chats
+    .filter((c) => c.shop === mine.handle)
+    .sort((a, b) => String(b.last || "").localeCompare(String(a.last || "")))
+    .slice(0, 100)
+    .map((c) => ({
+      id: c.id, last: c.last,
+      unread: Math.max(0, c.lines.length - c.seenShop),
+      /* The last thing said, which is how anybody picks a thread out of a
+         list — not an id and not a name she does not have. */
+      tail: c.lines[c.lines.length - 1]?.text || "",
+      who: c.lines[c.lines.length - 1]?.who || "",
+    }));
+  res.json({ ok: true, chats: rows });
+});
+
+app.get("/api/mine/chat/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const id = shop.cleanId(req.params.id);
+  if (!me || !id) return res.status(404).json({ error: "gone" });
+  const board = await store.load(FILE);
+  const mine = board.people.find((p) => p.by === me);
+  const c = board.chats.find((x) => x.id === id);
+  if (!mine || !c || c.shop !== mine.handle) return res.status(404).json({ error: "gone" });
+  if (c.seenShop < c.lines.length) {
+    change((b) => {
+      const row = b.chats.find((x) => x.id === id);
+      if (row) row.seenShop = row.lines.length;
+      return { ok: true };
+    }).catch(() => {});
+  }
+  res.json({ ok: true, id: c.id, lines: c.lines });
+});
+
+app.post("/api/mine/chat/:id", express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = shop.cleanId(req.params.id);
+  const text = String(req.body?.text || "").replace(/\r\n?/g, "\n").trim().slice(0, 600);
+  if (!me || !id || !text) return res.status(400).json({ error: "no" });
+  const out = await change((b) => {
+    const mine = b.people.find((p) => p.by === me);
+    const c = b.chats.find((x) => x.id === id);
+    if (!mine || !c || c.shop !== mine.handle) return { error: "gone" };
+    c.lines.push({ who: "shop", text, at: new Date().toISOString(), order: "" });
+    if (c.lines.length > 100) c.lines = c.lines.slice(-100);
+    c.last = c.lines[c.lines.length - 1].at;
+    c.seenShop = c.lines.length;
+    return { ok: true, lines: c.lines };
+  });
+  if (out?.error) return res.status(404).json({ error: out.error });
+  res.json({ ok: true, lines: out.lines });
+});
+
+/** THE ASSISTANT, ON OR OFF, BY THE PERSON WHOSE SHOP IT IS.
+ *
+ *  Not an admin target. Whether a machine answers her buyers in her name is
+ *  hers to decide at the moment she decides it — a switch she has to message
+ *  somebody to flip is a switch that stays wherever it was left. */
+app.post("/api/mine/ai", express.json({ limit: "1kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const on = Boolean(req.body?.on);
+  const out = await change((b) => {
+    const mine = b.people.find((p) => p.by === me);
+    if (!mine) return { error: "gone" };
+    mine.shop = { ...(mine.shop || {}), ai: on };
+    return { ok: true, ai: on };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.json({ ok: true, ai: out.ai });
 });
 
 /** HER OWN ORDERS, AND STILL NO ACCOUNT.

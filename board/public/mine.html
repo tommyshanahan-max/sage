@@ -69,6 +69,60 @@
   .bot .cut.wait{color:var(--mut)}
   .bot b{font-size:1rem}
   .track{margin:.4rem 0 0;font-size:.78rem;color:var(--ink2)}
+  /* The assistant switch. A row with a state on it, not a checkbox — she
+     has to be able to see which way it is set at a glance. */
+  .ai{display:flex;align-items:center;gap:.8rem;background:var(--card);
+    border-radius:.9rem;padding:.9rem 1rem;margin:0 0 .7rem}
+  .ai>div{flex:1 1 auto;min-width:0}
+  .ai b{display:block;font-size:.95rem}
+  .ai span{display:block;font-size:.75rem;color:var(--mut);line-height:1.5}
+  .ai button{flex:0 0 auto;border:1px solid var(--line);background:var(--bg);
+    color:var(--ink2);font:inherit;font-size:.85rem;border-radius:999px;
+    padding:.35rem 1rem}
+  .ai button.on{background:var(--ok);border-color:var(--ok);color:#fff}
+
+  /* Messages. The tail of the last line is how anybody picks a thread out
+     of a list — she has no name for the buyer and does not need one. */
+  .msgs{margin:0 0 .7rem}
+  .msgs>.lab{margin:1.2rem .3rem .5rem;font-size:.8rem;color:var(--mut);
+    display:flex;align-items:center;gap:.5rem}
+  .msgs>.lab i{font-style:normal;background:var(--acc);color:#fff;font-size:.7rem;
+    border-radius:999px;padding:.05rem .45rem}
+  .chat{display:flex;align-items:center;gap:.8rem;width:100%;text-align:left;
+    background:var(--card);border:0;border-radius:.9rem;padding:.85rem .9rem;
+    margin:0 0 .6rem;font:inherit;color:inherit}
+  .chat .tail{flex:1 1 auto;min-width:0;font-size:.92rem;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .chat .dot{flex:0 0 auto;width:.5rem;height:.5rem;border-radius:50%;
+    background:var(--acc)}
+
+  /* The thread, in a sheet. The same shape as the buyer's side of it, and
+     mirrored: hers is on the left here because she is the other person. */
+  .sh{position:fixed;inset:0;background:rgba(17,18,20,.45);z-index:9;
+    display:flex;align-items:flex-end}
+  .shc{background:var(--card);width:100%;border-radius:1.1rem 1.1rem 0 0;
+    padding:1.2rem 1rem calc(1.2rem + env(safe-area-inset-bottom,0));
+    max-height:88vh;overflow:auto;text-align:center}
+  .shc h2{margin:0 0 1rem;font-size:1.05rem;font-weight:600}
+  .thread{text-align:left;max-height:46vh;overflow:auto;margin:0 0 .8rem;
+    display:flex;flex-direction:column;gap:.5rem}
+  .msg{max-width:82%;padding:.55rem .75rem;border-radius:.9rem;font-size:.92rem;
+    line-height:1.5;white-space:pre-wrap;word-break:break-word}
+  .msg.them{align-self:flex-start;background:var(--bg)}
+  .msg.me{align-self:flex-end;background:var(--acc);color:#fff}
+  .msg.bot{align-self:flex-start;background:var(--bg);border:1px dashed var(--line)}
+  .msg .who{display:block;font-size:.68rem;opacity:.65;margin:0 0 .15rem}
+  .say{display:flex;gap:.5rem;align-items:flex-end}
+  .say textarea{flex:1 1 auto;min-width:0;font:inherit;font-size:1rem;
+    padding:.6rem .7rem;border-radius:.7rem;border:1px solid var(--line);
+    background:var(--bg);color:var(--ink);resize:none;height:2.7rem;
+    max-height:7rem;line-height:1.4}
+  .say button{flex:0 0 auto;border:0;border-radius:999px;background:var(--acc);
+    color:#fff;font:inherit;font-size:.95rem;padding:.65rem 1.1rem}
+  .say button:disabled{background:var(--line);color:var(--mut)}
+  .shc .shut{margin:1rem 0 0;border:0;background:none;color:var(--mut);
+    font:inherit;font-size:.9rem}
+
   .none{padding:2.5rem 1rem;text-align:center;color:var(--mut)}
   .foot{padding:1.2rem .4rem 0;font-size:.75rem;line-height:1.7;color:var(--mut);
     text-align:center}
@@ -92,7 +146,7 @@ const el = (t, cls, text) => {
 };
 const device = () => { try { return localStorage.getItem("board:device") || ""; } catch { return ""; } };
 
-let D = null;
+let D = null, CHATS = [];
 
 function linkBox() {
   const box = el("div", "box");
@@ -121,6 +175,117 @@ function linkBox() {
   box.append(b);
   box.append(el("p", "why", T("mn.share")));
   return box;
+}
+
+/* AI 客服, on or off, by her, now. */
+function aiRow() {
+  const box = el("div", "ai");
+  const words = el("div");
+  words.append(el("b", null, T("mn.ai")));
+  words.append(el("span", null, T("mn.aiWhy")));
+  box.append(words);
+  const b = el("button", D.ai ? "on" : null, T(D.ai ? "mn.aiOn" : "mn.aiOff"));
+  b.type = "button";
+  b.addEventListener("click", async () => {
+    const want = !D.ai;
+    b.disabled = true;
+    try {
+      const r = await fetch("/api/mine/ai", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device: device(), on: want }),
+      });
+      const j = await r.json().catch(() => null);
+      if (r.ok && j?.ok) {
+        D.ai = j.ai;
+        b.textContent = T(D.ai ? "mn.aiOn" : "mn.aiOff");
+        b.classList.toggle("on", D.ai);
+      }
+    } catch { /* leave it as it was; the state on screen is still true */ }
+    b.disabled = false;
+  });
+  box.append(b);
+  return box;
+}
+
+/* Her messages. A thread opens in place — a second page for a list of two
+   lines is a page nobody needed. */
+function msgs() {
+  const wrap = el("div", "msgs");
+  const lab = el("div", "lab");
+  lab.append(el("span", null, T("mn.chats")));
+  if (D.unread) lab.append(el("i", null, String(D.unread)));
+  wrap.append(lab);
+
+  if (!CHATS.length) {
+    wrap.append(el("p", "none", T("mn.chatNone")));
+    return wrap;
+  }
+  for (const c of CHATS) {
+    const b = el("button", "chat");
+    b.type = "button";
+    if (c.unread) b.append(el("span", "dot"));
+    b.append(el("span", "tail", c.tail));
+    b.addEventListener("click", () => openChat(c.id));
+    wrap.append(b);
+  }
+  return wrap;
+}
+
+function openChat(id) {
+  const sheet = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("h2", null, T("mn.buyer")));
+  const thread = el("div", "thread");
+  card.append(thread);
+
+  const paint = (lines) => {
+    thread.textContent = "";
+    for (const l of lines) {
+      const m = el("div", l.who === "buyer" ? "msg them" : l.who === "ai" ? "msg bot" : "msg me");
+      m.append(el("span", "who",
+        l.who === "buyer" ? T("mn.buyer") : l.who === "ai" ? T("sh.robot") : T("sh.me")));
+      m.append(document.createTextNode(l.text));
+      thread.append(m);
+    }
+    thread.scrollTop = thread.scrollHeight;
+  };
+
+  const row = el("div", "say");
+  const box = document.createElement("textarea");
+  box.rows = 1;
+  box.placeholder = T("mn.reply");
+  const send = el("button", null, T("sh.send"));
+  send.type = "button";
+  send.addEventListener("click", async () => {
+    const text = box.value.trim();
+    if (!text) return;
+    send.disabled = true;
+    try {
+      const r = await fetch("/api/mine/chat/" + encodeURIComponent(id), {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device: device(), text }),
+      });
+      const j = await r.json().catch(() => null);
+      if (r.ok && j?.ok) { box.value = ""; paint(j.lines); }
+    } catch { /* the line stays in the box, which is the right place for it */ }
+    send.disabled = false;
+  });
+  row.append(box, send);
+  card.append(row);
+
+  const shut = el("button", "shut", T("sh.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => { sheet.remove(); load(); });
+  card.append(shut);
+  sheet.append(card);
+  sheet.addEventListener("click", (e) => { if (e.target === sheet) { sheet.remove(); load(); } });
+  document.body.append(sheet);
+
+  fetch("/api/mine/chat/" + encodeURIComponent(id),
+    { cache: "no-store", headers: { "x-board-device": device() } })
+    .then((r) => r.json())
+    .then((j) => paint(j?.lines || []))
+    .catch(() => {});
 }
 
 function draw() {
@@ -157,6 +322,9 @@ function draw() {
     root.append(s);
   }
 
+  root.append(aiRow());
+  root.append(msgs());
+
   if (!D.orders.length) {
     root.append(el("p", "none", T("mn.none")));
     return;
@@ -188,12 +356,18 @@ function draw() {
   root.append(el("p", "foot", T("mn.privacy")));
 }
 
-(async () => {
+async function load() {
   try {
     const r = await fetch("/api/mine", { cache: "no-store",
       headers: { "x-board-device": device() } });
     D = await r.json();
   } catch { D = null; }
+  try {
+    const r = await fetch("/api/mine/chats", { cache: "no-store",
+      headers: { "x-board-device": device() } });
+    CHATS = (await r.json())?.chats || [];
+  } catch { CHATS = []; }
   draw();
-})();
+}
+load();
 </script>

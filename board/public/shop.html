@@ -120,6 +120,29 @@
   .shc .shut{margin:1rem 0 0;border:0;background:none;color:var(--mut);
     font:inherit;font-size:.9rem}
 
+  /* The thread. Hers on the right, the shop's on the left, which is the
+     shape of every message app she has. */
+  .thread{text-align:left;max-height:46vh;overflow:auto;margin:0 0 .8rem;
+    display:flex;flex-direction:column;gap:.5rem}
+  .msg{max-width:82%;padding:.55rem .75rem;border-radius:.9rem;font-size:.92rem;
+    line-height:1.5;white-space:pre-wrap;word-break:break-word}
+  .msg.them{align-self:flex-start;background:var(--bg)}
+  .msg.me{align-self:flex-end;background:var(--acc);color:#fff}
+  .msg.bot{align-self:flex-start;background:var(--bg);border:1px dashed var(--line)}
+  .msg .who{display:block;font-size:.68rem;opacity:.65;margin:0 0 .15rem}
+  .hint{text-align:left;font-size:.82rem;color:var(--mut);margin:0 0 .8rem}
+  .say{display:flex;gap:.5rem;align-items:flex-end}
+  .say textarea{flex:1 1 auto;min-width:0;font:inherit;font-size:1rem;
+    padding:.6rem .7rem;border-radius:.7rem;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);resize:none;height:2.7rem;
+    max-height:7rem;line-height:1.4}
+  .say button{flex:0 0 auto;border:0;border-radius:999px;background:var(--acc);
+    color:#fff;font:inherit;font-size:.95rem;padding:.65rem 1.1rem}
+  .say button:disabled{background:var(--line);color:var(--mut)}
+  .wxmore{margin:1rem 0 0;padding:.9rem 0 0;border-top:1px solid var(--line)}
+  .wxmore>summary{list-style:none;cursor:pointer;font-size:.85rem;color:var(--ink2)}
+  .wxmore>summary::-webkit-details-marker{display:none}
+
   .none{padding:3rem 1rem;text-align:center;color:var(--mut)}
   .foot{padding:1.4rem .4rem 0;font-size:.75rem;line-height:1.7;color:var(--mut)}
 </style>
@@ -148,6 +171,21 @@ const el = (t, cls, text) => {
   return n;
 };
 const HANDLE = decodeURIComponent((location.pathname.match(/^\/shop\/([^/]+)/) || [])[1] || "");
+
+/* THE WHOLE OF WHO SHE IS. Minted here rather than at checkout, because the
+   thread can be opened before anything is bought — and it has to be the same
+   string both times or her question and her order belong to two strangers.
+   Same key as everywhere else on this board. */
+function device() {
+  try {
+    let d = localStorage.getItem("board:device");
+    if (!d) {
+      d = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+      localStorage.setItem("board:device", d);
+    }
+    return d;
+  } catch { return ""; }
+}
 
 /* Fen to ¥, once, at the edge — the arithmetic upstream is all integers.
    See the note over `fen` in lib/shop.js. */
@@ -198,18 +236,101 @@ function stepper(it) {
   return wrap;
 }
 
-/* 联系店家. Everything in it is a gesture she already makes: search a WeChat
-   id, or long press a code. WeChat only reads a QR out of an <img>, which is
-   why the code is a picture and not a drawn grid — see lib/qr.js. */
-function askSheet() {
+/* 联系店家 — A MESSAGE THREAD, NOT A QR CODE.
+ *
+ * The first version of this opened a WeChat id and a code, and that is the
+ * wrong thing behind this button: asking a stranger to add you as a friend
+ * before she has bought anything is a bigger ask than the purchase. Both
+ * shops this design was taken from open a thread, so this opens a thread.
+ * WeChat stays underneath, one tap down, for whoever wants it. */
+function askSheet(order = "") {
   const sheet = el("div", "sh");
   const card = el("div", "shc");
-  card.append(el("h2", null, T("sh.askWho", { who: SHOP.name || SHOP.handle })));
+  const who = SHOP.name || SHOP.handle;
+  card.append(el("h2", null, T("sh.askWho", { who })));
 
-  if (!SHOP.wechat && !SHOP.qr) {
-    card.append(el("p", "how", T("sh.askNone")));
+  const thread = el("div", "thread");
+  const hint = el("p", "hint", T("sh.first", { who }));
+  card.append(hint, thread);
+
+  const paint = (lines) => {
+    thread.textContent = "";
+    for (const l of lines) {
+      const m = el("div", l.who === "buyer" ? "msg me" : l.who === "ai" ? "msg bot" : "msg them");
+      m.append(el("span", "who",
+        l.who === "buyer" ? T("sh.me") : l.who === "ai" ? T("sh.robot") : who));
+      m.append(document.createTextNode(l.text));
+      thread.append(m);
+    }
+    hint.hidden = lines.length > 0;
+    thread.hidden = !lines.length;
+    thread.scrollTop = thread.scrollHeight;
+  };
+  paint([]);
+
+  const row = el("div", "say");
+  const box = document.createElement("textarea");
+  box.rows = 1;
+  box.placeholder = T("sh.say");
+  box.addEventListener("input", () => {
+    box.style.height = "2.7rem";
+    box.style.height = Math.min(box.scrollHeight, 112) + "px";
+  });
+  const send = el("button", null, T("sh.send"));
+  send.type = "button";
+  send.addEventListener("click", async () => {
+    const text = box.value.trim();
+    if (!text) return;
+    send.disabled = true;
+    send.textContent = T("sh.sending");
+    try {
+      const r = await fetch("/api/shop/" + encodeURIComponent(HANDLE) + "/chat", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device: device(), text, order }),
+      });
+      const j = await r.json().catch(() => null);
+      if (r.ok && j?.ok) { box.value = ""; box.style.height = "2.7rem"; paint(j.lines); }
+      else hint.textContent = T("sh.sendNo"), hint.hidden = false;
+    } catch { hint.textContent = T("sh.sendNo"); hint.hidden = false; }
+    send.disabled = false;
+    send.textContent = T("sh.send");
+  });
+  row.append(box, send);
+  card.append(row);
+  card.append(el("p", "how", T("sh.chatPhone")));
+
+  /* What is already there, fetched after the box is drawn so the sheet
+     opens now rather than when the network says so. */
+  fetch("/api/shop/" + encodeURIComponent(HANDLE) + "/chat",
+    { cache: "no-store", headers: { "x-board-device": device() } })
+    .then((r) => r.json())
+    .then((j) => { if (j?.lines?.length) paint(j.lines); })
+    .catch(() => {});
+
+  /* WeChat, one tap down. Still the thing some people want, and no longer
+     the thing everybody is asked for. */
+  if (SHOP.wechat || SHOP.qr) {
+    const more = document.createElement("details");
+    more.className = "wxmore";
+    const sum = document.createElement("summary");
+    sum.textContent = T("sh.alsoWx");
+    more.append(sum);
+    wxInto(more);
+    card.append(more);
   }
 
+  const shut = el("button", "shut", T("sh.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => sheet.remove());
+  card.append(shut);
+  sheet.append(card);
+  sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.remove(); });
+  document.body.append(sheet);
+  box.focus();
+}
+
+/* The WeChat half, which used to be the whole sheet. */
+function wxInto(card) {
   if (SHOP.wechat) {
     const row = el("div", "wx");
     row.append(el("b", null, SHOP.wechat));
@@ -245,14 +366,6 @@ function askSheet() {
     card.append(img);
     card.append(el("p", "how", T("sh.qrHow")));
   }
-
-  const shut = el("button", "shut", T("sh.close"));
-  shut.type = "button";
-  shut.addEventListener("click", () => sheet.remove());
-  card.append(shut);
-  sheet.append(card);
-  sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.remove(); });
-  document.body.append(sheet);
 }
 
 function draw() {
@@ -347,9 +460,9 @@ $("go").addEventListener("click", () => {
     const j = await r.json();
     if (!r.ok || !j?.ok) throw new Error("gone");
     SHOP = j.shop; ITEMS = j.products || []; POST = j.post ?? 3000;
-    /* Hidden rather than dead when there is nobody to contact — a button
-       that opens a sheet saying "no contact" is worse than no button. */
-    $("ask").hidden = !(SHOP.wechat || SHOP.qr);
+    /* Always there now. The thread exists whether or not the shop left a
+       WeChat id, which is the point of having built it. */
+    $("ask").hidden = false;
     document.title = SHOP.name || T("sh.here", { who: SHOP.handle });
     draw();
     paint();
