@@ -413,11 +413,17 @@ not Dealio's, and it does not get Dealio's palette.
 
 ## What has never been watched finish
 
-**Real money.** The QR path has been walked end to end against the
-stand-in provider — code drawn, code paid, row green — and the sandbox has
-drawn a real WeChat code for a real amount. What nobody has watched is money
-actually leaving a Chinese wallet and arriving. Until somebody has, the last
-step of this product is theory. That is the one test that matters.
+**Real money.** On 20 September 2026 the whole chain ran on the live box on
+sandbox keys, on a phone, for ¥1: request made from a terminal, link opened
+in WeChat, PAY, WeChat Pay, a real Airwallex code long-pressed, Airwallex's
+own page, paid — and the row went green with nobody pressing anything on
+this side. `make pay-check` counted it. That is the step that had never been
+watched finish, and it has now.
+
+What is still theory is the money. Sandbox keys mean Airwallex simulated the
+wallet; no yuan left anybody's phone. The live account is still in review,
+and until it is out, `BOARD_WALLET_AIRWALLEX_SANDBOX=0` is the one line
+between this and a real payment.
 
 **A card.** On the Airwallex box there is no card path at all: Stripe is not
 configured and Airwallex's card component is a browser hand-off nobody has
