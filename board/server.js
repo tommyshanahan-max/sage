@@ -10854,7 +10854,8 @@ app.get("/api/shop/:handle", async (req, res) => {
       /* The English name goes with it, because the one person who reads
          this page in English is whoever runs the shop, and a picking-list
          name is more use to him than a Chinese one he is checking. */
-      .map((p) => ({ id: p.id, name: p.name, en: p.en, unit: p.unit, price: p.price,
+      .map((p) => ({ id: p.id, name: p.name, en: p.en, unit: p.unit, kind: p.kind,
+        price: p.price,
         photo: p.photo, out: Boolean(p.out) })),
     /* One postage per order, the way every parcel out of Australia is
        actually charged. */
@@ -11998,6 +11999,37 @@ app.post("/api/admin/shop-contact", admin, express.json({ limit: "2kb" }), async
   res.json({ ok: true, ...out });
 });
 
+/** WHAT A SHOP ROW ACTUALLY HOLDS, said plainly.
+ *
+ *  The banner went missing and nothing in the writes could have dropped it
+ *  — every one of them spreads the row. Which leaves the picture itself,
+ *  and there was no way to ask. Now there is: this says what is stored and
+ *  whether the file behind it is still on disk, which are two different
+ *  questions and were being answered as one. */
+app.get("/api/admin/shop-check", admin, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const who = String(req.query?.who || "").trim();
+  const board = await store.load(FILE);
+  const p = board.people.find((x) => x.handle === who);
+  if (!p) return res.status(404).json({ error: "not on this board: " + who });
+  /* findMedia, because the file on disk carries an extension the address
+     does not — looking for the bare id finds nothing and would have
+     reported every picture on this board as missing. */
+  const media = async (url) => {
+    const id = String(url || "").split("id=")[1] || "";
+    if (!id) return url ? "not one of ours" : "";
+    return (await findMedia(id)) ? "on disk" : "MISSING FROM DISK";
+  };
+  res.json({
+    ok: true, handle: p.handle,
+    name: p.shop?.name || "", wechat: p.shop?.wechat || "",
+    banner: p.shop?.banner || "", bannerFile: await media(p.shop?.banner),
+    photo: p.photo || "", photoFile: await media(p.photo),
+    qr: p.shop?.qr || "", qrFile: await media(p.shop?.qr),
+    ai: Boolean(p.shop?.ai), payout: Boolean(p.payout),
+  });
+});
+
 /** A SHOP'S NAME AND THE PICTURE ACROSS THE TOP OF IT. */
 app.post("/api/admin/shop-brand", admin, express.json({ limit: "2kb" }), async (req, res) => {
   const who = String(req.body?.who || "").trim();
@@ -12079,7 +12111,7 @@ app.get("/api/admin/products", admin, async (req, res) => {
   res.json({
     ok: true,
     products: board.products.map((p) => ({
-      id: p.id, name: p.name, en: p.en, unit: p.unit,
+      id: p.id, name: p.name, en: p.en, unit: p.unit, kind: p.kind,
       price: store.fromMinor(p.price, "cny"),
       photo: Boolean(p.photo), out: Boolean(p.out), off: Boolean(p.off),
     })),
@@ -12104,6 +12136,7 @@ app.post("/api/admin/product/:id", admin, express.json({ limit: "2kb" }), async 
     if (photo) p.photo = photo;
     if (req.body?.out !== undefined) p.out = Boolean(req.body.out);
     if (req.body?.off !== undefined) p.off = Boolean(req.body.off);
+    if (req.body?.kind !== undefined) p.kind = String(req.body.kind).trim().slice(0, 20);
     return { ok: true, name: p.name };
   });
   if (out?.error) return res.status(404).json(out);
@@ -12157,6 +12190,7 @@ app.post("/api/admin/product", admin, express.json({ limit: "4kb" }), async (req
     const p = shop.cleanProduct({
       id: shop.newId(), at: new Date().toISOString(),
       name: req.body?.name, en: req.body?.en, unit: req.body?.unit,
+      kind: req.body?.kind,
       photo, price,
     });
     if (!p) return { error: "bad" };

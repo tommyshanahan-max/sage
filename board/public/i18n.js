@@ -6449,6 +6449,7 @@ export const STRINGS = {
 
   // The shopfront.
   "sh.here":           ["{who}'s shop", "{who} 的小店"],
+  "sh.all":            ["All", "全部"],
   "sh.direct":         ["Straight from Australia", "澳洲直邮"],
   "sh.empty":          ["Nothing in this shop yet.", "这家店还没有上架东西。"],
   "sh.gone":           ["This shop would not open.", "这家店打不开了。"],

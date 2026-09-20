@@ -16,7 +16,7 @@ const r = await fetch(base.replace(/\/$/, "") + "/api/admin/product", {
   headers: { "Content-Type": "application/json", "x-admin-secret": key },
   body: JSON.stringify({
     name: arg("name"), price: arg("price"), unit: arg("unit"),
-    en: arg("en"), photo: arg("photo"),
+    en: arg("en"), photo: arg("photo"), kind: arg("kind"),
   }),
 });
 const j = await r.json().catch(() => null);

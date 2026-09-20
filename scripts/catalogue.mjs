@@ -27,6 +27,7 @@ if (n) {
   if (arg("url")) body.photo = arg("url");
   if (rest.includes("--out")) body.out = arg("out") !== "0";
   if (rest.includes("--off")) body.off = arg("off") !== "0";
+  if (arg("kind")) body.kind = arg("kind");
   if (!Object.keys(body).length) {
     console.error('\n  … --n ' + n + ' --url "https://…"\n');
     process.exit(1);

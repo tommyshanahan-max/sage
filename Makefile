@@ -782,7 +782,25 @@ sold-out: ## Hide the buy button on one: make sold-out N=1 [BACK=1]
 	  /seed/catalogue.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --n "$(N)" --out "$(if $(BACK),0,1)"
 
-product: ## Put something in the catalogue: make product NAME="…" PRICE="¥648" [UNIT="900g *3" EN="…" PHOTO=url]
+shelves: ## Put what is already there onto shelves: make shelves
+	@# A one-off for rows added before shelves existed. It guesses from the
+	@# name, prints what it decided, and leaves anything it is unsure about
+	@# alone — a wrong shelf is worse than none, because she taps 奶粉 and
+	@# does not find the milk powder.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/shelf-kinds.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+
+product-kind: ## Which shelf it sits on: make product-kind N=1 KIND="奶粉"
+	@# Eight things in one column is a list; eight under three headings is
+	@# a shop. Written rather than guessed from the name — no amount of
+	@# string matching knows that 爱他美 is milk powder.
+	@test -n "$(N)" || { echo 'make product-kind N=1 KIND="奶粉"'; exit 1; }
+	@test -n "$(KIND)" || { echo 'make product-kind N=$(N) KIND="奶粉"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/catalogue.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --n "$(N)" --kind "$(KIND)"
+
+product: ## Put something in the catalogue: make product NAME="…" PRICE="¥648" [UNIT="900g *3" EN="…" PHOTO=url KIND="奶粉"]
 	@# One seller, one catalogue, and he does not need a screen to type a
 	@# price into. NAME is what she reads, so it is Chinese; EN is what the
 	@# warehouse picks from.
@@ -790,7 +808,8 @@ product: ## Put something in the catalogue: make product NAME="…" PRICE="¥648
 	@test -n "$(PRICE)" || { echo 'make product NAME="$(NAME)" PRICE="¥648"'; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/product.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  --name "$(NAME)" --price "$(PRICE)" --unit "$(UNIT)" --en "$(EN)" --photo "$(PHOTO)"
+	  --name "$(NAME)" --price "$(PRICE)" --unit "$(UNIT)" --en "$(EN)" --photo "$(PHOTO)" \
+	  --kind "$(KIND)"
 
 pay-list: ## The transfers to send by hand: make pay-list
 	@# EVERY STOREFRONT IS RUN FROM CHINA, and Airwallex will not take a
@@ -844,6 +863,14 @@ shop-contact: ## How her buyers reach her: make shop-contact WHO="Mei" WECHAT="m
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/shop-contact.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" $(if $(WECHAT),--wechat "$(WECHAT)",) --qr "$(QR)" $(if $(AI),--ai "$(AI)",)
+
+shop-check: ## What a shop row holds: make shop-check WHO="Tom"
+	@# What is stored, and whether the picture behind it is still on disk
+	@# — two questions that were being answered as one.
+	@test -n "$(WHO)" || { echo 'make shop-check WHO="Tom"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/shop-check.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)"
 
 shop-brand: ## Dress a storefront: make shop-brand WHO="Tom" NAME="澳洲爸爸汤姆" [BANNER=url]
 	@# A HANDLE AND A GREY CIRCLE IS NOT A SHOP. The name is the one she

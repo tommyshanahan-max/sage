@@ -75,6 +75,13 @@ export function cleanProduct(raw) {
        a warehouse in Melbourne. */
     en: s(raw.en, 80),
     photo: s(raw.photo, 300),
+    /* WHAT KIND OF THING IT IS — 奶粉, 保健品, 益生菌. Eight things in one
+       column is a list; eight things under three headings is a shop, and
+       she is looking for a kind rather than reading the lot. Written by
+       whoever adds it rather than guessed from the name: "Life Space 婴儿
+       益生菌" is a probiotic, and no amount of string matching knows that
+       "爱他美" is milk powder. */
+    kind: s(raw.kind, 20),
   };
   /* Out of stock is not deleted. A storefront that linked to it has to be
      able to say "sold out" rather than show a page that is gone. */
