@@ -782,6 +782,16 @@ sold-out: ## Hide the buy button on one: make sold-out N=1 [BACK=1]
 	  /seed/catalogue.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --n "$(N)" --out "$(if $(BACK),0,1)"
 
+catalogue-tidy: ## The same thing twice? make catalogue-tidy [PLEASE=1]
+	@# A shopfront with the same tin on it three times does not read as a
+	@# big shop, it reads as a broken one. Prints what it would take off;
+	@# PLEASE=1 does it. It keeps the copy with a picture on it, and it
+	@# takes rows off the shopfront rather than deleting them, so an order
+	@# that already points at one still reads.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/catalogue-tidy.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  $(if $(PLEASE),--go,)
+
 shelves: ## Put what is already there onto shelves: make shelves
 	@# A one-off for rows added before shelves existed. It guesses from the
 	@# name, prints what it decided, and leaves anything it is unsure about

@@ -12,6 +12,17 @@
 set -e
 cd "$(dirname "$0")/.."
 
+# RUN ONCE. It was run three times and the shop ended up with every tin on
+# it three times, which does not read as a big shop — it reads as a broken
+# one. `make catalogue-tidy` cleans that up; this stops it happening again.
+if make -s catalogue | grep -q "爱他美金装 1段"; then
+  echo
+  echo "  That shelf is already up — make catalogue to see it."
+  echo "  If something is on it twice: make catalogue-tidy"
+  echo
+  exit 0
+fi
+
 # KIND is the shelf it sits under on the shopfront. Three of them, which
 # is what eight products wants — one heading over everything is a word she
 # reads for nothing, and eight headings is the list again.
