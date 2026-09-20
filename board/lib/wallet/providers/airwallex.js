@@ -110,7 +110,16 @@ export function createAirwallexProvider({ clientId, apiKey, webhookSecret, sandb
       return {
         quoteId: d.quote_id, sell, buy,
         sellAmount: toMinor(String(d.sell_amount), sell), buyAmount: toMinor(String(d.buy_amount), buy),
-        rate: Number(d.client_rate), mid: Number(d.mid_rate), marginBps: d.mid_rate ? Math.round((1 - Number(d.client_rate) / Number(d.mid_rate)) * 10000) : 0,
+        rate: Number(d.client_rate), mid: Number(d.mid_rate),
+        /* HOW FAR OFF MID, ALWAYS AS A COST. Both directions of a pair come
+           back quoted the same way round — AUD/CNY is CNY per AUD whether you
+           are selling AUD or selling CNY — so on one of them the client rate
+           is ABOVE mid and the old subtraction reported a negative margin,
+           i.e. a discount the customer was not getting. Sandbox, 2026-09-20:
+           AUD->CNY 4.724763 against mid 4.76687 read as 0.88%, and CNY->AUD
+           4.809117 against the same mid read as -0.89%. Both are 0.88% of the
+           customer's money; the distance is what matters, not the sign. */
+        marginBps: d.mid_rate ? Math.round(Math.abs(1 - Number(d.client_rate) / Number(d.mid_rate)) * 10000) : 0,
         expiresAt: d.valid_to_at,
       };
     },
