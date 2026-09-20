@@ -1,0 +1,199 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>我的小店</title>
+<meta name="robots" content="noindex">
+<!--
+  THE REPRESENTATIVE'S OWN SHOP.
+
+  She sold it, so she is the one asked where it is — and until now she had a
+  number on /paid and nothing else.
+
+  THE LINK IS FIRST, because sharing it is the only thing she does here that
+  makes money. The orders are the record; the link is the job.
+
+  NO ADDRESS AND NO PHONE. She is not shipping anything — the stock and the
+  distributor are his — so an address in her hands is a liability she was
+  never asked whether she wanted. A first name so she knows which friend it
+  was, a tracking number so she can answer the question, and nothing further.
+  The page says so at the bottom, because a thing not shown looks like a
+  thing missing unless somebody says it was a decision.
+-->
+<style>
+  :root{
+    --bg:#F5F5F7; --card:#FFFFFF; --ink:#111214; --ink2:#5B6170; --mut:#8A8F9C;
+    --line:#E7E8EC; --acc:#D6483B; --ok:#1FA463;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink)}
+  body{font-family:var(--sans);font-size:16px;line-height:1.55;
+    padding:env(safe-area-inset-top,0) 0 calc(1rem + env(safe-area-inset-bottom,0))}
+  main{max-width:34rem;margin:0 auto;padding:.9rem .8rem 1rem}
+  .head{display:flex;align-items:center;gap:.8rem;padding:.2rem .3rem 1rem}
+  .head b{font-size:1.15rem}
+  .lang{margin-left:auto;border:1px solid var(--line);background:var(--card);
+    color:var(--ink2);font:inherit;font-size:.75rem;border-radius:999px;
+    padding:.25rem .65rem}
+
+  /* The link, and the button that is the whole job. */
+  .box{background:var(--card);border-radius:.9rem;padding:1rem;margin:0 0 .7rem}
+  .box .lab{margin:0 0 .4rem;font-size:.78rem;color:var(--mut)}
+  .url{font-size:.95rem;word-break:break-all;margin:0 0 .8rem}
+  .copy{width:100%;border:0;border-radius:999px;background:var(--acc);color:#fff;
+    font:inherit;font-size:1rem;font-weight:600;padding:.85rem}
+  .copy.done{background:var(--ok)}
+  .why{margin:.7rem 0 0;font-size:.78rem;color:var(--mut);text-align:center}
+
+  /* Two numbers, because "you have earned X" with X in somebody else's
+     account is the sentence that loses somebody. */
+  .money{display:flex;gap:.7rem;margin:0 0 .7rem}
+  .money>div{flex:1 1 0;background:var(--card);border-radius:.9rem;padding:.9rem}
+  .money span{display:block;font-size:.75rem;color:var(--mut)}
+  .money b{display:block;font-size:1.35rem;margin:.15rem 0 0}
+  .money .owe b{color:var(--acc)}
+  a.setup{display:block;background:var(--card);border-radius:.9rem;padding:.9rem;
+    margin:0 0 .7rem;text-align:center;text-decoration:none;color:var(--acc);
+    font-size:.95rem}
+
+  .row{background:var(--card);border-radius:.9rem;padding:.85rem .9rem;margin:0 0 .6rem}
+  .top{display:flex;align-items:baseline;justify-content:space-between;gap:.8rem}
+  .top .who{font-size:.8rem;color:var(--mut)}
+  .top .st{font-size:.82rem;color:var(--acc);flex:0 0 auto}
+  .top .st.ok{color:var(--ok)}
+  .nm{margin:.3rem 0 0;font-size:.95rem;display:-webkit-box;-webkit-line-clamp:1;
+    -webkit-box-orient:vertical;overflow:hidden}
+  .bot{display:flex;align-items:baseline;justify-content:space-between;
+    gap:.8rem;margin:.35rem 0 0}
+  .bot .cut{font-size:.8rem;color:var(--ok)}
+  .bot .cut.wait{color:var(--mut)}
+  .bot b{font-size:1rem}
+  .track{margin:.4rem 0 0;font-size:.78rem;color:var(--ink2)}
+  .none{padding:2.5rem 1rem;text-align:center;color:var(--mut)}
+  .foot{padding:1.2rem .4rem 0;font-size:.75rem;line-height:1.7;color:var(--mut);
+    text-align:center}
+</style>
+
+<main id="root"></main>
+
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+
+/* Chinese unless the reader has said otherwise — every representative is in
+   mainland China. See pickLang. */
+setLang(pickLang("zh"));
+
+const $ = (id) => document.getElementById(id);
+const el = (t, cls, text) => {
+  const n = document.createElement(t);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+const device = () => { try { return localStorage.getItem("board:device") || ""; } catch { return ""; } };
+
+let D = null;
+
+function linkBox() {
+  const box = el("div", "box");
+  box.append(el("p", "lab", T("mn.link")));
+  const url = location.origin + "/shop/" + encodeURIComponent(D.handle);
+  box.append(el("p", "url", url));
+  const b = el("button", "copy", T("mn.copy"));
+  b.type = "button";
+  b.addEventListener("click", async () => {
+    /* The old execCommand trick first: the async clipboard is refused inside
+       WeChat's browser, which is where she is. */
+    let done = false;
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.append(ta);
+      ta.select();
+      done = document.execCommand("copy");
+      ta.remove();
+    } catch { done = false; }
+    if (!done) { try { await navigator.clipboard.writeText(url); done = true; } catch { } }
+    if (done) { b.textContent = T("mn.copied"); b.classList.add("done"); }
+  });
+  box.append(b);
+  box.append(el("p", "why", T("mn.share")));
+  return box;
+}
+
+function draw() {
+  const root = $("root");
+  root.textContent = "";
+  document.title = T("mn.title");
+
+  const head = el("div", "head");
+  head.append(el("b", null, D?.name || T("mn.title")));
+  head.append(langButton(() => draw()));
+  root.append(head);
+
+  if (!D?.handle) {
+    root.append(el("h1", null, T("mn.nobody.h")));
+    root.append(el("p", "none", T("mn.nobody.p")));
+    return;
+  }
+
+  root.append(linkBox());
+
+  const money = el("div", "money");
+  const a = el("div");
+  a.append(el("span", null, T("mn.earned")), el("b", null, D.earned));
+  const c = el("div", "owe");
+  c.append(el("span", null, T("mn.owed")), el("b", null, D.owed));
+  money.append(a, c);
+  root.append(money);
+
+  /* Only when there is money to land and nowhere for it to go — a standing
+     row telling somebody to do a thing they have done is noise. */
+  if (!D.paid) {
+    const s = el("a", "setup", T("mn.setUp"));
+    s.href = "/paid";
+    root.append(s);
+  }
+
+  if (!D.orders.length) {
+    root.append(el("p", "none", T("mn.none")));
+    return;
+  }
+
+  for (const o of D.orders) {
+    const row = el("div", "row");
+    const top = el("div", "top");
+    top.append(el("span", "who", o.who));
+    top.append(el("span", o.state === "done" ? "st ok" : "st", T("od." + o.state)));
+    row.append(top);
+    row.append(el("p", "nm", o.first));
+    const bot = el("div", "bot");
+    if (o.cut) {
+      bot.append(el("span", o.cutPaid ? "cut" : "cut wait",
+        T(o.cutPaid ? "mn.cutPaid" : "mn.cut", { amount: o.cut })));
+    } else {
+      bot.append(el("span", "cut wait", ""));
+    }
+    bot.append(el("b", null, o.total));
+    row.append(bot);
+    if (o.tracking) {
+      row.append(el("p", "track",
+        T("mn.track", { courier: o.courier || "", number: o.tracking })));
+    }
+    root.append(row);
+  }
+
+  root.append(el("p", "foot", T("mn.privacy")));
+}
+
+(async () => {
+  try {
+    const r = await fetch("/api/mine", { cache: "no-store",
+      headers: { "x-board-device": device() } });
+    D = await r.json();
+  } catch { D = null; }
+  draw();
+})();
+</script>

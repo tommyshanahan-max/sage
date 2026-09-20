@@ -6618,6 +6618,35 @@ export const STRINGS = {
   "front.foot":          ["Dealio is a trading name of Thomas Joseph Kidd Shanahan.",
                         "Dealio 是 Thomas Joseph Kidd Shanahan 的经营名称。"],
 
+  /* ---- HER OWN SHOP -----------------------------------------------------
+   *
+   * She sold it, so she is the one asked where it is. One screen: her link,
+   * what has been ordered through it, and what she has earned.
+   *
+   * NO ADDRESS AND NO PHONE, which is the whole design of the screen — she
+   * is not shipping anything, so an address in her hands is a liability she
+   * was never asked whether she wanted. A first name and a tracking number
+   * answer the question she actually gets. */
+  "mn.title":          ["My shop", "我的小店"],
+  "mn.nobody.h":       ["This page is for shopkeepers", "这个页面是给店主的"],
+  "mn.nobody.p":       ["Open a shop first, then come back.", "先开店，再回来看。"],
+  "mn.link":           ["Your shop", "你的店铺链接"],
+  "mn.copy":           ["Copy link", "复制链接"],
+  "mn.copied":         ["Copied", "已复制"],
+  "mn.share":          ["Send it to anybody. They need no account to buy.",
+                        "发给谁都行，对方不用注册就能买。"],
+  "mn.earned":         ["Earned", "累计佣金"],
+  "mn.owed":           ["Not paid out yet", "待结"],
+  "mn.setUp":          ["Say where your money lands", "填收款方式"],
+  "mn.none":           ["Nothing ordered yet.", "还没有人下单。"],
+  "mn.cut":            ["Your share {amount}", "佣金 {amount}"],
+  "mn.cutPaid":        ["Your share {amount} · paid", "佣金 {amount} · 已结"],
+  /* What she is asked, and what she can now answer. */
+  "mn.track":          ["{courier} {number}", "{courier} {number}"],
+  "mn.back":           ["My shop", "我的小店"],
+  "mn.privacy":        ["Addresses stay with the seller. You see who ordered and where the parcel is, and nothing else.",
+                        "收货地址在卖家那里，你只看到谁下的单和包裹到哪了。"],
+
   // Where the commission lands.
   "pd.title":          ["Where your commission lands", "佣金打到哪里"],
   "pd.off.h":          ["Not yet", "还没开"],

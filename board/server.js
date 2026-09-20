@@ -10907,6 +10907,61 @@ app.post("/api/shop/:handle/order", express.json({ limit: "8kb" }), async (req, 
  *  here: what comes back is an allowlist and carries nobody's device hash. */
 app.get(["/orders", "/orders/"], (req, res, next) => page("orders.html", req, res, next));
 
+/* ---- THE REPRESENTATIVE'S OWN SHOP ---------------------------------------
+ *
+ * She sold it, so she is the one asked where it is — and she had a number on
+ * /paid and nothing else. One screen: her link, what has been ordered
+ * through it, and what she has earned.
+ *
+ * WHAT SHE IS NOT SHOWN, AND THIS IS THE WHOLE DESIGN OF IT: the buyer's
+ * address and phone. She is not shipping anything — the stock and the
+ * distributor are his — so an address in her hands is a liability she was
+ * never asked whether she wanted. A first name so she knows which of her
+ * friends it was, the tracking number so she can answer the question, and
+ * nothing further.
+ */
+app.get(["/mine", "/mine/"], (req, res, next) => page("mine.html", req, res, next));
+
+app.get("/api/mine", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!me) return res.json({ ok: true, handle: "" });
+  const board = await store.load(FILE);
+  const mine = board.people.find((p) => p.by === me);
+  if (!mine) return res.json({ ok: true, handle: "" });
+
+  const rows = board.orders
+    .filter((o) => !o.off && o.shop === mine.handle)
+    .sort((a, b) => String(b.at || "").localeCompare(String(a.at || "")))
+    .slice(0, 100);
+
+  res.json({
+    ok: true,
+    handle: mine.handle,
+    name: mine.shop?.name || "",
+    /* Earned is every commission on a paid order; owed is the part that has
+       not reached her yet. Two numbers because "you have earned X" with X
+       sitting in somebody else's account is the sentence that loses trust. */
+    earned: store.fromMinor(rows.filter((o) => o.paid).reduce((n, o) => n + (o.cut || 0), 0), "cny"),
+    owed: store.fromMinor(rows.filter((o) => o.paid && !o.cutPaid).reduce((n, o) => n + (o.cut || 0), 0), "cny"),
+    owedFen: rows.filter((o) => o.paid && !o.cutPaid).reduce((n, o) => n + (o.cut || 0), 0),
+    paid: Boolean(mine.payout),
+    orders: rows.map((o) => ({
+      id: o.id, at: o.at,
+      state: shop.orderState(o),
+      total: store.fromMinor(shop.orderTotal(o), "cny"),
+      cut: o.cut ? store.fromMinor(o.cut, "cny") : "",
+      cutPaid: Boolean(o.cutPaid),
+      first: o.lines[0]?.name || "",
+      n: o.lines.reduce((n, l) => n + l.n, 0),
+      /* A first name and nothing else — see the note above. */
+      who: String(o.ship?.name || "").slice(0, 1) ? o.ship.name : "",
+      tracking: o.sent?.tracking || "",
+      courier: o.sent?.courier || "",
+    })),
+  });
+});
+
 app.get("/api/order/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const id = shop.cleanId(req.params.id);
