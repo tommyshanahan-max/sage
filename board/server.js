@@ -10817,18 +10817,25 @@ app.get("/api/shop/:handle", async (req, res) => {
   const handle = String(req.params.handle || "").slice(0, 40);
   if (!handle) return res.status(404).json({ error: "gone" });
   const board = await store.load(FILE);
-  const who = board.people.find(
-    (p) => p.state === "published" && p.handle && p.handle === handle);
+  /* A HANDLE IS ENOUGH FOR A SHOP, AND A PUBLISHED PROFILE IS NOT REQUIRED.
+     It was, and the first shopfront anybody opened — Tom's own — answered
+     "gone", because a member who never filled in a profile page is not
+     "published" and has no business being told his shop does not exist. A
+     storefront sells things; the profile is a different object, and what
+     comes off it here is only shown when it was published. */
+  const who = board.people.find((p) => p.handle && p.handle === handle);
   if (!who) return res.status(404).json({ error: "gone" });
+  const live = who.state === "published";
   res.json({
     ok: true,
     shop: {
       handle: who.handle,
       /* Their own line, in whichever language they wrote it and its render
-         into the other — the same pair every card on this board shows. */
-      say: who.goal || "",
-      sayZh: who.goalZh || "",
-      photo: who.photoState === "published" ? who.photo || "" : "",
+         into the other — the same pair every card on this board shows, and
+         only when the page it came from is public. */
+      say: live ? who.goal || "" : "",
+      sayZh: live ? who.goalZh || "" : "",
+      photo: live && who.photoState === "published" ? who.photo || "" : "",
     },
     /* Sold-out rows stay, marked: a shopfront that linked to something has
        to be able to say 已售完 rather than go quiet. */
@@ -10857,8 +10864,7 @@ app.post("/api/shop/:handle/order", express.json({ limit: "8kb" }), async (req, 
   if (!ship) return res.status(400).json({ error: "address" });
 
   const out = await change((board) => {
-    const who = board.people.find(
-      (p) => p.state === "published" && p.handle === handle);
+    const who = board.people.find((p) => p.handle === handle);
     if (!who) return { error: "gone" };
 
     const lines = [];
