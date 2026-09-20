@@ -123,6 +123,25 @@
   .shc .shut{margin:1rem 0 0;border:0;background:none;color:var(--mut);
     font:inherit;font-size:.9rem}
 
+  /* This month's board. A rank, a name, and the one number it is ranked on
+     — the money sits under it because she will look for it, not because it
+     decides the order. */
+  /* NOT .top — that is already the order row's header on this page, and two
+     rules over one name quietly turned the whole board into one wide row. */
+  .rank{background:var(--card);border-radius:.9rem;padding:.3rem .2rem;margin:0 0 .7rem}
+  .rank .r{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem}
+  .rank .r+.r{border-top:1px solid var(--line)}
+  .rank .n{flex:0 0 1.6rem;text-align:center;font-size:.95rem;color:var(--mut)}
+  .rank .r.win .n{color:var(--acc);font-weight:700}
+  .rank .r.me{background:var(--bg);border-radius:.6rem}
+  .rank .who{flex:1 1 auto;min-width:0;font-size:.95rem;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .rank .who i{font-style:normal;font-size:.7rem;color:#fff;background:var(--ink2);
+    border-radius:999px;padding:.05rem .4rem;margin-left:.4rem}
+  .rank .num{flex:0 0 auto;text-align:right}
+  .rank .num b{display:block;font-size:.95rem}
+  .rank .num span{display:block;font-size:.72rem;color:var(--mut)}
+
   .none{padding:2.5rem 1rem;text-align:center;color:var(--mut)}
   .foot{padding:1.2rem .4rem 0;font-size:.75rem;line-height:1.7;color:var(--mut);
     text-align:center}
@@ -146,7 +165,7 @@ const el = (t, cls, text) => {
 };
 const device = () => { try { return localStorage.getItem("board:device") || ""; } catch { return ""; } };
 
-let D = null, CHATS = [];
+let D = null, CHATS = [], TOP = [];
 
 function linkBox() {
   const box = el("div", "box");
@@ -175,6 +194,38 @@ function linkBox() {
   box.append(b);
   box.append(el("p", "why", T("mn.share")));
   return box;
+}
+
+/* This month's board. Top three marked, hers highlighted wherever it is —
+   a leaderboard that does not show you your own line is a leaderboard you
+   scroll past. */
+function topBoard() {
+  const wrap = el("div", "msgs");
+  const lab = el("div", "lab");
+  lab.append(el("span", null, T("mn.top")));
+  wrap.append(lab);
+
+  if (!TOP.length) {
+    wrap.append(el("p", "none", T("mn.topNone")));
+    return wrap;
+  }
+
+  const box = el("div", "rank");
+  for (const r of TOP.slice(0, 10)) {
+    const row = el("div", "r" + (r.rank <= 3 ? " win" : "") + (r.you ? " me" : ""));
+    row.append(el("span", "n", String(r.rank)));
+    const who = el("span", "who", r.name);
+    if (r.you) who.append(el("i", null, T("mn.you")));
+    row.append(who);
+    const num = el("span", "num");
+    num.append(el("b", null, T("mn.buyers", { n: r.buyers })));
+    num.append(el("span", null, r.sold));
+    row.append(num);
+    box.append(row);
+  }
+  wrap.append(box);
+  wrap.append(el("p", "foot", T("mn.topWhy")));
+  return wrap;
 }
 
 /* AI 客服, on or off, by her, now. */
@@ -322,6 +373,7 @@ function draw() {
     root.append(s);
   }
 
+  root.append(topBoard());
   root.append(aiRow());
   root.append(msgs());
 
@@ -367,6 +419,11 @@ async function load() {
       headers: { "x-board-device": device() } });
     CHATS = (await r.json())?.chats || [];
   } catch { CHATS = []; }
+  try {
+    const r = await fetch("/api/mine/top", { cache: "no-store",
+      headers: { "x-board-device": device() } });
+    TOP = (await r.json())?.rows || [];
+  } catch { TOP = []; }
   draw();
 }
 load();

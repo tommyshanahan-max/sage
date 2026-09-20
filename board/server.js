@@ -11106,6 +11106,75 @@ app.post("/api/mine/chat/:id", express.json({ limit: "2kb" }), async (req, res) 
   res.json({ ok: true, lines: out.lines });
 });
 
+/** THIS MONTH'S BOARD, AND WHO IS ON TOP OF IT.
+ *
+ *  RANKED ON NEW BUYERS, not on money. Money rewards whoever already had
+ *  the biggest friends list; a new buyer is the thing a representative can
+ *  actually do something about this afternoon, and it is the thing the shop
+ *  wants done. Sales sit beside it because she will look for them, not
+ *  because they decide the order.
+ *
+ *  THE MONTH IS CHINA'S. Every representative is in mainland China, so a
+ *  month that turns over at midnight UTC ends in the middle of their
+ *  afternoon and a sale made on the 1st lands in the wrong month. +08:00.
+ *
+ *  A buyer is new to a SHOP, not to the board: two representatives selling
+ *  to the same person have each done the work of persuading her.
+ */
+function monthCN(at) {
+  /* Shifted into +08:00 before the year and month are read off it. */
+  const t = new Date(at);
+  if (Number.isNaN(t.getTime())) return "";
+  const cn = new Date(t.getTime() + 8 * 3600 * 1000);
+  return cn.toISOString().slice(0, 7);
+}
+
+app.get("/api/mine/top", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const board = await store.load(FILE);
+  const mine = me ? board.people.find((p) => p.by === me) : null;
+  const now = monthCN(new Date().toISOString());
+
+  /* Who had already bought from this shop before this month started. */
+  const before = new Map();
+  for (const o of board.orders) {
+    if (o.off || !o.paid || !o.shop || !o.by) continue;
+    if (monthCN(o.at) >= now) continue;
+    if (!before.has(o.shop)) before.set(o.shop, new Set());
+    before.get(o.shop).add(o.by);
+  }
+
+  const by = new Map();
+  for (const o of board.orders) {
+    if (o.off || !o.paid || !o.shop || monthCN(o.at) !== now) continue;
+    const row = by.get(o.shop)
+      || { shop: o.shop, orders: 0, sold: 0, fresh: new Set(), seen: new Set() };
+    row.orders += 1;
+    row.sold += shop.orderTotal(o);
+    if (o.by) {
+      row.seen.add(o.by);
+      if (!before.get(o.shop)?.has(o.by)) row.fresh.add(o.by);
+    }
+    by.set(o.shop, row);
+  }
+
+  const rows = [...by.values()]
+    .map((r) => ({ shop: r.shop, orders: r.orders, buyers: r.fresh.size,
+      soldFen: r.sold, sold: store.fromMinor(r.sold, "cny") }))
+    /* New buyers, then money, then orders — a tie broken by nothing looks
+       to the person below it like the board cannot count. */
+    .sort((a, b) => b.buyers - a.buyers || b.soldFen - a.soldFen || b.orders - a.orders)
+    .slice(0, 20)
+    .map((r, i) => ({ ...r, rank: i + 1, soldFen: undefined,
+      /* Their own shop's name where they have set one, because a handle is
+         not what anybody calls anybody. */
+      name: board.people.find((p) => p.handle === r.shop)?.shop?.name || r.shop,
+      you: Boolean(mine && r.shop === mine.handle) }));
+
+  res.json({ ok: true, month: now, rows });
+});
+
 /** THE ASSISTANT, ON OR OFF, BY THE PERSON WHOSE SHOP IT IS.
  *
  *  Not an admin target. Whether a machine answers her buyers in her name is

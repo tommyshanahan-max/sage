@@ -6500,6 +6500,15 @@ export const STRINGS = {
   "mn.ai":             ["Assistant answers first", "小助手先回"],
   "mn.aiOn":           ["On", "开"],
   "mn.aiOff":          ["Off", "关"],
+  /* This month's board. Ranked on new buyers rather than on money: money
+     rewards whoever already had the biggest friends list, and a new buyer
+     is the thing she can do something about this afternoon. */
+  "mn.top":            ["This month", "本月排行"],
+  "mn.topWhy":         ["Ranked on new buyers. Top three get a bonus at the end of the month.",
+                        "按新客户数排。月底前三名有奖金。"],
+  "mn.topNone":        ["Nobody has sold anything this month.", "本月还没有人卖出东西。"],
+  "mn.buyers":         ["{n} new", "新客 {n}"],
+  "mn.you":            ["You", "你"],
   "mn.aiWhy":          ["It answers about the things, the postage and where a parcel is. Anything else, it waits for you.",
                         "它只答商品、运费和包裹到哪了。别的都留给你。"],
   "sh.close":          ["Close", "关闭"],
