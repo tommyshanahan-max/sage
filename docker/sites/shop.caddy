@@ -1,0 +1,60 @@
+# THE SHOP'S OWN NAME — aozhoubaba.com, serving the board's storefront.
+#
+# 澳洲爸爸 in pinyin, which a Chinese buyer reads instantly and which says
+# "Australian" without a word of English. A shop on thexchange.app/shop/Tom
+# is a link somebody has to be given; a shop on its own name is one somebody
+# can be told.
+#
+# IT SERVES, IT DOES NOT REDIRECT. The same rule as board-also.caddy: the
+# board builds every absolute address it prints from the Host header, so a
+# link made here stays here, and a buyer who bookmarked it is not bounced to
+# a name she has never heard of in the middle of paying.
+#
+# THE ROOT IS REWRITTEN, NOT REDIRECTED. aozhoubaba.com shows the shopfront
+# with aozhoubaba.com still in the bar — a buyer who lands on
+# aozhoubaba.com/shop/Tom is being shown somebody else's filing system. Every
+# other path passes through untouched, so /shop/<handle>/checkout, /order/…
+# and /orders all work as they do on the main name, and a representative's
+# own link is a name she is happy to send: aozhoubaba.com/shop/<her handle>.
+#
+# WHOSE SHOP THE ROOT SHOWS is TOMSCODING_SHOP_HANDLE — the handle on the
+# board, not a first name, because that is what /shop/ matches on. `make who`
+# is the only place that knows it.
+#
+# Inert until TOMSCODING_SHOP_DOMAIN is set: unset it binds an internal
+# .localhost name and asks for no certificate. That fallback has to stay
+# distinct from every other one on this box — two site blocks sharing an
+# address is a startup failure that takes every other site down with it, and
+# `make caddy-check` is what catches it before a reload can.
+#
+# THE BLOCK IS A COPY of board.caddy's, deliberately, for the reason written
+# out at length in board-also.caddy: a snippet is the right tool and is also
+# syntax this config has never used, on a file where a mistake stops Caddy
+# rather than degrading one page. Change one, change the others.
+{$TOMSCODING_SHOP_DOMAIN:shop.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	@admin path /admin /admin/
+	redir @admin https://{$TOMSCODING_FEED_DOMAIN}/
+
+	@count path /a/e /a/lx.js
+	handle @count {
+		uri strip_prefix /a
+		reverse_proxy analytics:3000
+	}
+
+	# The front door is the shopfront itself.
+	@root path /
+	rewrite @root /shop/{$TOMSCODING_SHOP_HANDLE:Tom}
+
+	handle {
+		reverse_proxy board:8080
+	}
+}
