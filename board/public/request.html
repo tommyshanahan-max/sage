@@ -288,6 +288,18 @@ const el = (tag, cls, text) => {
  * substitutes it; see isDealioHost in server.js. */
 const ON_DEALIO = "{{DEALIO}}" === "1";
 
+/** A string in this product's words. The same helper the door has: a key
+ *  with a ".dl" twin is said Dealio's way on Dealio's hostname, and one
+ *  without is said the same on both. T returns the key itself when it does
+ *  not know it, which is how a missing twin is found. */
+function D(key, vars) {
+  if (ON_DEALIO) {
+    const k = key + ".dl";
+    if (T(k) !== k) return T(k, vars);
+  }
+  return T(key, vars);
+}
+
 /** The mark and the name, in whichever product's clothes. Dealio's mark is a
  *  plain red dot — see pay.html — and the board's is the two rings. */
 function brandInto(box, nameClass) {
@@ -364,8 +376,12 @@ function draw() {
      read in about three seconds and the question being answered is "was
      this meant for me". Only on a request coming in: on one going out the
      reader is being paid, and the line already names them as the sender. */
+  /* ONE NAME, NOT THE SAME ONE TWICE. A request made to yourself — which is
+     every test anybody runs — read "Tom — Tom is asking for". */
+  const named = q.way !== "out" && q.to
+    && q.to.trim().toLowerCase() !== String(q.from || "").trim().toLowerCase();
   body.append(el("p", "dueLab",
-    q.way !== "out" && q.to
+    named
       ? T("rq.askingYou", { you: q.to, who: q.from })
       : T(q.way === "out" ? "rq.sending" : "rq.asking", { who: q.from })));
   const line = el("div", "dueRow");
@@ -473,7 +489,8 @@ function payHow(q) {
   const back = el("div", "rsheet");
   const card = el("div", "rcard");
   card.append(el("p", "lab", T("pay.how")));
-  card.append(el("h3", "rtitle", (q.what || "") + " · " + shown(q)));
+  /* No line about the job, no separator hanging in front of the amount. */
+  card.append(el("h3", "rtitle", q.what ? q.what + " · " + shown(q) : shown(q)));
 
   const ways = el("div", "ways");
   const way = (key, name, why) => {
@@ -506,6 +523,10 @@ function payHow(q) {
         /* Stripe refused the destination because its transfers capability is
            not active yet. Nothing the payer can do, and the old text asked
            them to try again — twice more, on the other two buttons. */
+        /* The wallet said no to this payment. Not the page failing to
+           open, which is what it used to say — and which sent people to
+           press the other buttons to find out. */
+        : why === "qr" ? T("rq.wayNo", { way: name })
         : why === "notready" ? "rq.halfSet" : "memo.payFailed");
     });
     ways.append(b);
@@ -523,7 +544,7 @@ function payHow(q) {
   };
   for (const k of ways_) if (names[k]) way(k, T(names[k][0]), T(names[k][1]));
   card.append(ways);
-  card.append(el("p", "foot", T("pay.howNote", { who: q.from })));
+  card.append(el("p", "foot", D("pay.howNote", { who: q.from })));
 
   const acts = el("div", "racts");
   const no = el("button", "", T("pay.cancel"));

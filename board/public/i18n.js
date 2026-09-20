@@ -5029,6 +5029,18 @@ export const STRINGS = {
     "You pay {who} directly. This board never holds your money.",
     "钱直接付给 {who}，平台不经手。",
   ],
+  /* THE SAME SENTENCE WITHOUT THE BOARD IN IT. On paydealio.com the payer
+     has never heard of a board, and being told what it does not do with
+     their money is one more thing to wonder about. */
+  "pay.howNote.dl": [
+    "You pay {who} directly. Dealio never holds your money.",
+    "钱直接付给 {who}，Dealio 不经手。",
+  ],
+  /* A WALLET REFUSING ONE PAYMENT IS NOT THE PAGE FAILING TO OPEN.
+     ¥40,000,000 came back as "That did not open — try again", which sent
+     somebody to press the same dead button twice more. The wallet said no;
+     say so, and name which one. */
+  "rq.wayNo":          ["{way} would not take this one.", "{way} 没能接这一笔。"],
   "pay.cancel":        ["Not now", "先不付"],
   "pay.go":            ["Pay", "去付款"],
 
