@@ -10022,11 +10022,18 @@ app.get(["/dealio/try", "/dealio/try/"], notesOff,
  *  server turns into a grid of bits for the page to draw. Nothing is fetched
  *  by the phone and no image is served — same bits, same divs, real content.
  *
- *  ONE CODE AT A TIME, CACHED. This is a public page and an intent is a real
- *  object at Airwallex even in sandbox; a visitor should not be able to mint
- *  one per reload. So the last code is kept for ten minutes and everybody
- *  gets that one, which is also true to life — a code on a page is a code,
- *  not a code per reader.
+ *  ONE CODE AT A TIME, CACHED FOR LESS TIME THAN THE CODE LASTS. This is a
+ *  public page and an intent is a real object at Airwallex even in sandbox,
+ *  so a visitor should not mint one per reload; the last one is kept and
+ *  everybody gets it, which is also true to life — a code on a page is a
+ *  code, not a code per reader.
+ *
+ *  It was held for ten minutes, and the code does not live that long: the
+ *  sandbox checkout that opens from it counts down from about eight. So for
+ *  the last couple of minutes of every window the page would have shown a
+ *  dead code under a line promising a real one, which is worse than showing
+ *  the drawn one. Four minutes, comfortably inside whatever the real expiry
+ *  turns out to be.
  *
  *  It answers 404 when there is no provider, and the page keeps its drawn
  *  one. A walkthrough that claims a live code it does not have would be the
@@ -10036,7 +10043,7 @@ app.get("/api/dealio/try/qr", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const p = WALLET.on ? WALLET.provider : null;
   if (!p || typeof p.wechatQr !== "function") return res.status(404).json({ error: "no provider" });
-  if (tryQr.body && Date.now() - tryQr.at < 10 * 60_000) return res.json(tryQr.body);
+  if (tryQr.body && Date.now() - tryQr.at < 4 * 60_000) return res.json(tryQr.body);
   try {
     const r = await p.wechatQr({ amount: "240000", currency: "CNY", reference: "12 lessons" });
     if (!r.qr) return res.status(502).json({ error: "no code" });
