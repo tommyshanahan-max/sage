@@ -53,6 +53,15 @@
   :focus-visible{outline:2px solid var(--blue);outline-offset:3px}
 
   .top{display:flex;align-items:center;gap:.7rem;padding:1.6rem 0}
+  .lang{margin-left:auto;border:1px solid var(--hair);background:transparent;
+    color:var(--dim);font:inherit;font-size:.8rem;border-radius:999px;
+    padding:.3rem .8rem;cursor:pointer}
+  /* Tracked-out capitals and a serif are English shapes. Chinese falls back
+     mid-sentence in one and reads as broken in the other, which is the
+     single most obvious tell of a bolted-on translation. */
+  :root[data-lang="zh"] .eyebrow{letter-spacing:.06em}
+  :root[data-lang="zh"] h1,:root[data-lang="zh"] h2{letter-spacing:0}
+  :root[data-lang="zh"] p,:root[data-lang="zh"] li{line-height:1.85}
   .dot{width:.6rem;height:.6rem;border-radius:50%;background:var(--red)}
   .wm{font-family:var(--mono);font-size:.78rem;letter-spacing:.24em;
     text-transform:uppercase;color:var(--dim)}
@@ -134,61 +143,65 @@
 
 <div class="wrap">
 
-  <div class="top"><span class="dot"></span><span class="wm">Dealio</span></div>
+  <div class="top"><span class="dot"></span><span class="wm">Dealio</span>
+    <span id="langslot"></span></div>
 
-  <h1>Get paid from China.</h1>
-  <p class="lead">Your client pays the way they already pay for everything.
-    You get the money in your own currency.</p>
-  <p class="trade">Cross-border payments for services — mainland China to
-    Australia.</p>
+  <h1 data-t="front.h1">Get paid from China.</h1>
+  <p class="lead" data-t="front.lead">Your client pays the way they already pay
+    for everything. You get the money in your own currency.</p>
+  <p class="trade" data-t="front.trade">Cross-border payments for services —
+    mainland China to Australia.</p>
 
   <!-- THE ONE LINK ON THIS PAGE THAT SHOWS RATHER THAN TELLS. Everything
        above it is a claim; this is four screens of the thing happening. -->
   <div class="acts">
-    <a class="go" href="/enter?next=/dealio">Ask for money</a>
-    <a class="quiet" href="/dealio/try">See it work first &rsaquo;</a>
+    <a class="go" href="/enter?next=/dealio" data-t="front.ask">Ask for money</a>
+    <a class="quiet" href="/dealio/try" data-t="front.see">See it work first &rsaquo;</a>
   </div>
 
   <div class="ways">
     <span class="wx"><i></i>WeChat Pay 微信支付</span>
     <span class="ali"><i></i>Alipay 支付宝</span>
-    <span><i></i>Card</span>
+    <span><i></i><span data-t="front.card">Card</span></span>
   </div>
 
   <section>
-    <p class="eyebrow">How it works</p>
-    <h2>Three steps, and two of them are one tap.</h2>
+    <p class="eyebrow" data-t="front.how">How it works</p>
+    <h2 data-t="front.how.h">Three steps, and two of them are one tap.</h2>
     <ol class="steps">
-      <li><b>You ask.</b><span>Type the amount and what it is for. You get a
-        link.</span></li>
-      <li><b>They pay.</b><span>They open the link, long-press the code, and
-        pay in WeChat or Alipay. No account, no app, no sign-up.</span></li>
-      <li><b>You are paid.</b><span>The money settles to your own bank account
-        in your own currency.</span></li>
+      <li data-th="front.s1"><b>You ask.</b><span>Type the amount and what it
+        is for. You get a link.</span></li>
+      <li data-th="front.s2"><b>They pay.</b><span>They open the link,
+        long-press the code, and pay in WeChat or Alipay. No account, no app,
+        no sign-up.</span></li>
+      <li data-th="front.s3"><b>You are paid.</b><span>The money settles to
+        your own bank account in your own currency.</span></li>
     </ol>
   </section>
 
   <section>
-    <p class="eyebrow">What it costs</p>
+    <p class="eyebrow" data-t="front.cost">What it costs</p>
     <p class="fee">3.5%</p>
-    <h2>All in, taken from the amount received.</h2>
-    <p>One number and nothing under it: the wallet's charge for taking the
-      payment, the conversion out of yuan, and ours. The person paying is
-      charged the amount they owe and nothing more. Nothing to join, nothing
-      monthly, and nothing at all if nobody pays you.</p>
-    <p>A bank does the same job with its own spread, a wire fee at each end,
-      a form about why the money is leaving, and a week.</p>
+    <h2 data-t="front.cost.h">All in, taken from the amount received.</h2>
+    <p data-t="front.cost.p1">One number and nothing under it: the wallet's
+      charge for taking the payment, the conversion out of yuan, and ours. The
+      person paying is charged the amount they owe and nothing more. Nothing to
+      join, nothing monthly, and nothing at all if nobody pays you.</p>
+    <p data-t="front.cost.p2">A bank does the same job with its own spread, a
+      wire fee at each end, a form about why the money is leaving, and a
+      week.</p>
   </section>
 
   <section>
-    <p class="eyebrow">Who it is for</p>
-    <h2>People, not companies.</h2>
-    <p>Tutors, translators, consultants, designers, writers, agents, small
-      studios and sole traders outside China with clients inside it.</p>
-    <p>Ordinary payment services are built for registered businesses with a
-      website and a merchant account. Most of the people doing this work have
-      neither, and their alternative is a bank branch, a form, and several
-      days of not knowing.</p>
+    <p class="eyebrow" data-t="front.who">Who it is for</p>
+    <h2 data-t="front.who.h">People, not companies.</h2>
+    <p data-t="front.who.p1">Tutors, translators, consultants, designers,
+      writers, agents, small studios and sole traders outside China with
+      clients inside it.</p>
+    <p data-t="front.who.p2">Ordinary payment services are built for registered
+      businesses with a website and a merchant account. Most of the people
+      doing this work have neither, and their alternative is a bank branch, a
+      form, and several days of not knowing.</p>
   </section>
 
   <!-- THE SECTION THE PAGE WAS WRITTEN FOR. A reviewer is not looking for what
@@ -196,20 +209,25 @@
        wearing a different name. So it is said plainly, in their words, before
        they have to ask. -->
   <section>
-    <p class="eyebrow">What Dealio does not do</p>
-    <h2>It never holds your money.</h2>
+    <p class="eyebrow" data-t="front.not">What Dealio does not do</p>
+    <h2 data-t="front.not.h">It never holds your money.</h2>
     <ul class="nots">
-      <li>Payments are processed and funds are held by a licensed payment
-        provider. Dealio is not a bank and is not a money transmitter.</li>
-      <li>Each recipient is identity-checked by that provider, and the money
-        settles to their own account. It does not pass through a Dealio
-        balance.</li>
-      <li>No cash. No cryptocurrency. No bearer instruments.</li>
-      <li>No goods trade, no marketplace, no escrow. Payment for services
-        between two people who already know each other.</li>
-      <li>It is not a way around anybody's reporting requirements or limits.
-        The provider's own limits and checks apply to every payment.</li>
-      <li>The service is not encrypted end to end and does not claim to be.</li>
+      <li data-t="front.not1">Payments are processed and funds are held by a
+        licensed payment provider. Dealio is not a bank and is not a money
+        transmitter.</li>
+      <li data-t="front.not2">Each recipient is identity-checked by that
+        provider, and the money settles to their own account. It does not pass
+        through a Dealio balance.</li>
+      <li data-t="front.not3">No cash. No cryptocurrency. No bearer
+        instruments.</li>
+      <li data-t="front.not4">No goods trade, no marketplace, no escrow.
+        Payment for services between two people who already know each
+        other.</li>
+      <li data-t="front.not5">It is not a way around anybody's reporting
+        requirements or limits. The provider's own limits and checks apply to
+        every payment.</li>
+      <li data-t="front.not6">The service is not encrypted end to end and does
+        not claim to be.</li>
     </ul>
   </section>
 
@@ -237,29 +255,25 @@
        reviewer checks and then remembers. The facts in it stand on their
        own and are used without it. -->
   <section>
-    <p class="eyebrow">Who built it</p>
-    <h2>Tom Shanahan.</h2>
-    <p>He presented <i>Rediscovering China</i> on CCTV's English channel, and
-      has worked between Australia and China since. He has raised over
-      US$20 million for start-ups.</p>
-    <p>He built Dealio because he kept watching the same thing happen: the
-      work done, both sides happy, and the money stuck at a bank counter.</p>
-    <p lang="zh" class="zh">前央视英语频道《Rediscovering China》主持人，采访过科比、
-      比利时王室、卢森堡大公。后来做电影制作人，也为初创公司融资超过两千万美元。
-      澳大利亚《Today》节目也请他去聊在中国做事的经历。</p>
-    <p lang="zh" class="zh">做这个，是因为同样的事看了太多次：活干完了，两边都满意，
-      钱卡在银行柜台。</p>
+    <p class="eyebrow" data-t="front.built">Who built it</p>
+    <h2 data-t="front.built.h">Tom Shanahan.</h2>
+    <p data-th="front.bio1">He presented <i>Rediscovering China</i> on CCTV's
+      English channel, and has worked between Australia and China since. He has
+      raised over US$20 million for start-ups.</p>
+    <p data-t="front.bio2">He built Dealio because he kept watching the same
+      thing happen: the work done, both sides happy, and the money stuck at a
+      bank counter.</p>
   </section>
 
   <section>
-    <p class="eyebrow">Who runs it</p>
-    <h2>One person, in Australia.</h2>
+    <p class="eyebrow" data-t="front.runs">Who runs it</p>
+    <h2 data-t="front.runs.h">One person, in Australia.</h2>
     <dl class="facts">
-      <dt>Legal entity</dt><dd>Thomas Joseph Kidd Shanahan</dd>
-      <dt>Entity form</dt><dd>Individual / sole trader</dd>
-      <dt>Registered in</dt><dd>Australia</dd>
+      <dt data-t="front.entity">Legal entity</dt><dd>Thomas Joseph Kidd Shanahan</dd>
+      <dt data-t="front.form">Entity form</dt><dd data-t="front.formIs">Individual / sole trader</dd>
+      <dt data-t="front.where">Registered in</dt><dd data-t="front.whereIs">Australia</dd>
       <dt>ABN</dt><dd>97 922 742 244</dd>
-      <dt>Contact</dt><dd><a href="mailto:mo@thexchange.app">mo@thexchange.app</a></dd>
+      <dt data-t="front.contact">Contact</dt><dd><a href="mailto:mo@thexchange.app">mo@thexchange.app</a></dd>
     </dl>
   </section>
 
@@ -270,13 +284,29 @@
          Privacy still goes to the board's page, absolute, because that is
          where it lives and it is the same operator. -->
     <div class="links">
-      <a href="/dealio/terms">Terms</a>
-      <a href="https://liuxuesheng.io/privacy">What is kept</a>
+      <a href="/dealio/terms" data-t="front.terms">Terms</a>
+      <a href="https://liuxuesheng.io/privacy" data-t="front.kept">What is kept</a>
     </div>
-    <p>Dealio is a trading name of Thomas Joseph Kidd Shanahan.</p>
+    <p data-t="front.foot">Dealio is a trading name of Thomas Joseph Kidd Shanahan.</p>
   </footer>
 
 </div>
+
+<script type="module">
+  /* THE ENGLISH IS IN THE FILE, NOT FETCHED. This page is read by software
+     that does not run scripts — a risk team's crawler, a link preview, a
+     search engine — so what is served is a whole English page, and the marks
+     beside each line swap it for whoever asks. See paint() in i18n.js.
+
+     Chinese is not the default here, unlike the shop: this page argues to
+     the person being paid, who is outside China. It opens in whatever they
+     have already chosen, or their phone's language. */
+  import { T, paint, setLang, pickLang, langButton } from "/i18n.js";
+  const draw = () => { paint(); document.title = T("front.title"); };
+  setLang(pickLang("en"));
+  document.getElementById("langslot").replaceWith(langButton(draw));
+  draw();
+</script>
 
 </body>
 </html>

@@ -6515,6 +6515,98 @@ export const STRINGS = {
   "od.track":          ["Tracking", "快递单号"],
   "od.gone":           ["That order would not open.", "这个订单打不开了。"],
 
+  /* ---- DEALIO'S FRONT PAGE ----------------------------------------------
+   *
+   * Two readers wanting opposite things — a tutor giving it four seconds and
+   * a compliance reviewer reading every line — and now in two languages,
+   * because a great many of the people doing this work are Chinese speakers
+   * living in Australia. They are the ones with the clients.
+   *
+   * THE CHINESE IS NOT SHORTER OR LONGER BY ACCIDENT. The bio is longer in
+   * Chinese and that is not an inconsistency: 前央视主持人 plus 采访过科比
+   * is proof that the first claim is real, and to somebody deciding whether
+   * a stranger's payment link is safe that proof is the whole point.
+   * Different norms, different job, same facts. */
+  "front.title":         ["Dealio — get paid from China", "Dealio — 收中国客户的钱"],
+  "front.h1":            ["Get paid from China.", "收中国客户的钱。"],
+  "front.lead":          ["Your client pays the way they already pay for everything. You get the money in your own currency.",
+                        "客户用微信或支付宝付，跟他平时买东西一样。钱进你自己的账户，你自己的货币。"],
+  "front.trade":         ["Cross-border payments for services — mainland China to Australia.",
+                        "服务类跨境收款：中国大陆到澳大利亚。"],
+  "front.ask":           ["Ask for money", "去收款"],
+  "front.see":           ["See it work first \u203a", "先看看怎么用 \u203a"],
+  "front.card":          ["Card", "银行卡"],
+
+  "front.how":           ["How it works", "怎么用"],
+  "front.how.h":         ["Three steps, and two of them are one tap.", "三步，其中两步只是点一下。"],
+  "front.s1":            ["<b>You ask.</b><span>Type the amount and what it is for. You get a link.</span>",
+                        "<b>你开单。</b><span>填金额和事由，拿到一个链接。</span>"],
+  "front.s2":            ["<b>They pay.</b><span>They open the link, long-press the code, and pay in WeChat or Alipay. No account, no app, no sign-up.</span>",
+                        "<b>对方付。</b><span>打开链接，长按二维码，用微信或支付宝付。不用注册，不用下载，不用开户。</span>"],
+  "front.s3":            ["<b>You are paid.</b><span>The money settles to your own bank account in your own currency.</span>",
+                        "<b>钱到账。</b><span>结算到你自己的银行账户，你自己的货币。</span>"],
+
+  "front.cost":          ["What it costs", "费用"],
+  "front.cost.h":        ["All in, taken from the amount received.", "一口价，从收到的金额里扣。"],
+  "front.cost.p1":       ["One number and nothing under it: the wallet's charge for taking the payment, the conversion out of yuan, and ours. The person paying is charged the amount they owe and nothing more. Nothing to join, nothing monthly, and nothing at all if nobody pays you.",
+                        "就这一个数，下面没有别的：钱包的收单费、人民币换汇、还有我们的。付款的人只付他该付的金额，不多一分。没有入会费，没有月费，没人付你钱就一分不收。"],
+  "front.cost.p2":       ["A bank does the same job with its own spread, a wire fee at each end, a form about why the money is leaving, and a week.",
+                        "银行做同样的事：自己的汇率差价、两头各一笔电汇费、一张解释钱为什么出境的表格，再加一个星期。"],
+
+  "front.who":           ["Who it is for", "谁在用"],
+  "front.who.h":         ["People, not companies.", "个人，不是公司。"],
+  "front.who.p1":        ["Tutors, translators, consultants, designers, writers, agents, small studios and sole traders outside China with clients inside it.",
+                        "家教、翻译、顾问、设计师、写手、经纪人、小工作室，人在中国境外，客户在境内。"],
+  "front.who.p2":        ["Ordinary payment services are built for registered businesses with a website and a merchant account. Most of the people doing this work have neither, and their alternative is a bank branch, a form, and several days of not knowing.",
+                        "一般的支付服务是给注册公司做的，要有网站，要有商户号。做这行的人多半两样都没有，剩下的路就是去银行柜台、填表，然后等上几天不知道结果。"],
+
+  /* The section the page was written for. Said plainly, in a reviewer's own
+     words, before they have to ask — in both languages, because the person
+     deciding whether to send a stranger a payment link is reading the same
+     list for the same reason. */
+  "front.not":           ["What Dealio does not do", "Dealio 不做什么"],
+  "front.not.h":         ["It never holds your money.", "我们不碰你的钱。"],
+  "front.not1":          ["Payments are processed and funds are held by a licensed payment provider. Dealio is not a bank and is not a money transmitter.",
+                        "收单和资金保管都由持牌支付机构完成。Dealio 不是银行，也不是汇款机构。"],
+  "front.not2":          ["Each recipient is identity-checked by that provider, and the money settles to their own account. It does not pass through a Dealio balance.",
+                        "每个收款人都由该机构做身份核验，钱直接结算到他本人的账户，不经过 Dealio 的账户。"],
+  "front.not3":          ["No cash. No cryptocurrency. No bearer instruments.",
+                        "不收现金，不碰加密货币，不做无记名票据。"],
+  "front.not4":          ["No goods trade, no marketplace, no escrow. Payment for services between two people who already know each other.",
+                        "不做商品交易，不是电商平台，不做资金托管。付的是两个本来就认识的人之间的服务费用。"],
+  "front.not5":          ["It is not a way around anybody's reporting requirements or limits. The provider's own limits and checks apply to every payment.",
+                        "这不是绕开申报或额度的办法。支付机构自己的额度和风控对每一笔都适用。"],
+  "front.not6":          ["The service is not encrypted end to end and does not claim to be.",
+                        "本服务没有端到端加密，也从不这样宣称。"],
+
+  "front.built":         ["Who built it", "谁做的"],
+  "front.built.h":       ["Tom Shanahan.", "Tom Shanahan 汤姆。"],
+  /* THE ENGLISH IS SHORTER THAN THE TRUTH, ON PURPOSE. It listed Kobe
+     Bryant, the Belgian royal family and the King of Luxembourg, all of it
+     true and all of it turning a page about money into a page about a
+     person. Two things earn a place on a payments page: that he knows China,
+     and that he has handled money.
+     NO BADGE, ONLY FACTS. There is a Forbes Scotland piece and Forbes
+     Scotland is not Forbes; "as featured in Forbes" is the kind of claim a
+     reviewer checks and then remembers. */
+  "front.bio1":          ["He presented <i>Rediscovering China</i> on CCTV's English channel, and has worked between Australia and China since. He has raised over US$20 million for start-ups.",
+                        "前央视英语频道《Rediscovering China》主持人，采访过科比、比利时王室、卢森堡大公。后来做电影制作人，也为初创公司融资超过两千万美元。澳大利亚《Today》节目也请他去聊在中国做事的经历。"],
+  "front.bio2":          ["He built Dealio because he kept watching the same thing happen: the work done, both sides happy, and the money stuck at a bank counter.",
+                        "做这个，是因为同样的事看了太多次：活干完了，两边都满意，钱卡在银行柜台。"],
+
+  "front.runs":          ["Who runs it", "谁在运营"],
+  "front.runs.h":        ["One person, in Australia.", "一个人，在澳大利亚。"],
+  "front.entity":        ["Legal entity", "法律主体"],
+  "front.form":          ["Entity form", "主体类型"],
+  "front.formIs":        ["Individual / sole trader", "个人 / 个体经营者"],
+  "front.where":         ["Registered in", "注册地"],
+  "front.whereIs":       ["Australia", "澳大利亚"],
+  "front.contact":       ["Contact", "联系方式"],
+  "front.terms":         ["Terms", "条款"],
+  "front.kept":          ["What is kept", "我们保存什么"],
+  "front.foot":          ["Dealio is a trading name of Thomas Joseph Kidd Shanahan.",
+                        "Dealio 是 Thomas Joseph Kidd Shanahan 的经营名称。"],
+
   // Where the commission lands.
   "pd.title":          ["Where your commission lands", "佣金打到哪里"],
   "pd.off.h":          ["Not yet", "还没开"],
@@ -6757,6 +6849,33 @@ export function when(iso) {
 /** The toggle. One control, in the corner, showing the language it switches
  *  TO rather than the one you are in — a button that says "English" while you
  *  are reading English is a button nobody presses. */
+/** EVERY MARKED NODE ON A PAGE THAT IS MOSTLY HTML.
+ *
+ *  The pages behind the door are drawn in JavaScript and take their words
+ *  from T() as they are built. Dealio's front page is not: it is flat HTML
+ *  on purpose, because it is read by people with no account and by software
+ *  that does not run scripts — a risk team's crawler, a link preview, a
+ *  search engine. So the English stays in the file and the marks sit beside
+ *  it: data-t swaps the text, data-th the markup where a line has a <b> in
+ *  the middle of it.
+ *
+ *  innerHTML is safe here and only here: every string it writes comes out of
+ *  this file, never off the network and never off a form.
+ *
+ *  A node marked data-only shows in one language and hides in the other —
+ *  for the one paragraph that has no counterpart rather than a translation. */
+export function paint(root = document) {
+  for (const n of root.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+  for (const n of root.querySelectorAll("[data-th]")) n.innerHTML = T(n.dataset.th);
+  for (const n of root.querySelectorAll("[data-only]")) n.hidden = n.dataset.only !== LANG;
+  /* The tag matters to a browser choosing a font mid-sentence, and a page
+     whose <html lang> says one thing while its text says another is the
+     tell of a bolted-on translation. */
+  for (const n of root.querySelectorAll("[data-t],[data-th]")) {
+    n.setAttribute("lang", LANG === "zh" ? "zh-Hans" : "en");
+  }
+}
+
 export function langButton(onChange) {
   const b = document.createElement("button");
   b.type = "button";
