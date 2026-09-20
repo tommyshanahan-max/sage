@@ -707,6 +707,12 @@ services:
       TOMSCODING_BOARD_OLD_WWW: ${TOMSCODING_BOARD_OLD_WWW:-oldboardwww.localhost}
       TOMSCODING_BOARD_WWW: ${TOMSCODING_BOARD_WWW:-www.board.localhost}
       TOMSCODING_STATS_DOMAIN: ${TOMSCODING_STATS_DOMAIN:-stats.localhost}
+      # The shop's own name — aozhoubaba.com. The board serves it and the
+      # root is rewritten to one storefront; see docker/sites/shop.caddy.
+      # The handle is read by Caddy, not by the board, which is why it is
+      # here rather than in the board's environment.
+      TOMSCODING_SHOP_DOMAIN: ${TOMSCODING_SHOP_DOMAIN:-shop.localhost}
+      TOMSCODING_SHOP_HANDLE: ${TOMSCODING_SHOP_HANDLE:-Tom}
       # The Exchange's page on the open web — see docker/sites/exchange.caddy.
       # Distinct .localhost fallbacks, same reason as every other pair here.
       TOMSCODING_SITE_DOMAIN: ${TOMSCODING_SITE_DOMAIN:-exchange.localhost}
