@@ -192,7 +192,11 @@
   .codeDo{margin:.9rem 0 0;font-size:1rem;font-weight:600;color:var(--ink)}
   .codeElse{margin:.3rem 0 0;font-size:.82rem;color:var(--muted)}
   .qr{width:min(15rem,72vw);aspect-ratio:1;margin:1.4rem auto .6rem;
-    background:#fff;padding:.5rem;border-radius:.5rem;display:grid;gap:0}
+    background:#fff;padding:.5rem;border-radius:.5rem;display:grid;gap:0;
+    /* The long-press menu is the whole point: nothing here may take the
+       touch away from it. */
+    -webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+  img.qr{display:block;object-fit:contain}
   .qr i{background:#05070D}
   .qr i.o{background:transparent}
   .pwait{margin:2.5rem auto;max-width:22rem;text-align:center;font-size:.88rem;
@@ -566,7 +570,25 @@ function payHow(q) {
 /* THE CODE, DRAWN. White with dark squares whatever the page is doing —
    a themed QR is a QR that does not scan. Nothing is fetched to draw it: the
    server sends the modules as rows of ones and zeros. */
-function qrGrid({ size, bits }) {
+function qrGrid({ size, bits, png }) {
+  /* AN IMAGE, BECAUSE A FINGER CAN DO SOMETHING WITH AN IMAGE.
+   *
+   * This drew the code as a grid of divs and it looked perfect — and WeChat
+   * offered nothing at all when you held a finger on it, because 识别图中二维码
+   * reads a QR out of an <img>, not out of a page. The way it was found is
+   * the way a real payer would have found it: screenshot the screen, open
+   * the picture in a chat, long-press that. Three steps nobody will take.
+   *
+   * The drawn grid stays as the fallback for a server that sent no picture,
+   * and it is what the walkthrough and the deck use, where nothing is ever
+   * actually scanned. */
+  if (png) {
+    const i = el("img", "qr");
+    i.src = png;
+    i.alt = "";
+    i.decoding = "async";
+    return i;
+  }
   const g = el("div", "qr");
   g.setAttribute("aria-hidden", "true");
   g.style.gridTemplate = `repeat(${size},1fr)/repeat(${size},1fr)`;

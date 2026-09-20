@@ -63,7 +63,7 @@ import * as stripe from "./lib/stripe.js";
  * says it to both halves. */
 import { OFF } from "./public/off.js";
 import { createWallet } from "./lib/wallet/index.js";
-import { qrBits } from "./lib/qr.js";
+import { qrBits, qrPng } from "./lib/qr.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -10078,7 +10078,7 @@ app.get("/api/dealio/try/qr", async (req, res) => {
     const r = await p.wechatQr({ amount: "240000", currency: "CNY", reference: "12 lessons" });
     if (!r.qr) return res.status(502).json({ error: "no code" });
     const { size, bits } = qrBits(r.qr);
-    tryQr.body = { live: true, size, bits };
+    tryQr.body = { live: true, size, bits, png: await qrPng(r.qr) };
     tryQr.at = Date.now();
     res.json(tryQr.body);
   } catch (err) {
@@ -10435,6 +10435,8 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
       });
       if (!r.qr) return res.status(502).json({ error: "qr" });
       const drawn = qrBits(r.qr);
+      /* The one a finger can do anything with — see the note in lib/qr.js. */
+      const png = await qrPng(r.qr);
       /* THE INTENT ID ON THE ROW, BEFORE THE CODE IS ON THE SCREEN. It is
          the only way to ask later whether the money arrived, and a code
          drawn without it is a payment nobody can see. */
@@ -10447,7 +10449,7 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
         return { ok: true };
       });
       return res.json({
-        ok: true, how: method, qr: { size: drawn.size, bits: drawn.bits },
+        ok: true, how: method, qr: { size: drawn.size, bits: drawn.bits, png },
         /* What to put above the code, and the asker's own price under it
            when the two are different money. */
         amount: store.fromMinor(cny, "cny"),

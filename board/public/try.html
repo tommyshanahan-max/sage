@@ -158,6 +158,17 @@ let LIVE = null;      // { size, bits } once the server has given us one
 let ASKED = false;
 
 function qr() {
+  /* THE LIVE ONE IS A PICTURE, for the reason in lib/qr.js: a QR drawn as
+     divs cannot be long-pressed in WeChat, and this screen is the one a
+     stranger is invited to try. The fake stays drawn — nothing is scanned
+     off it, and fetching nothing is the point of it. */
+  if (LIVE && LIVE.png) {
+    const i = el("img", "qr");
+    i.src = LIVE.png;
+    i.alt = "";
+    i.style.padding = "0";
+    return i;
+  }
   const g = el("div", "qr");
   g.setAttribute("aria-hidden", "true");
   const bits = LIVE ? LIVE.bits.join("") : FAKE;
@@ -176,7 +187,7 @@ async function askForReal() {
     if (!r.ok) return;
     const d = await r.json();
     if (!d || !Array.isArray(d.bits) || !d.size) return;
-    LIVE = { size: d.size, bits: d.bits };
+    LIVE = { size: d.size, bits: d.bits, png: d.png || "" };
     if (step === 2) draw();
   } catch { /* the drawn one stays, which is the honest default */ }
 }
