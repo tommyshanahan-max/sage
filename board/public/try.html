@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dealio — see it work</title>
+<meta name="description" content="Four screens: you ask, you send one line, they pay in WeChat, it lands in your own currency. No account.">
+<meta name="color-scheme" content="dark">
+<meta property="og:title" content="Dealio">
+<meta property="og:description" content="Get paid from China. WeChat Pay or Alipay. They need no account.">
+<style>
+  /* THE ONE PLACE A STRANGER CAN SEE THIS PRODUCT DO ANYTHING.
+   *
+   * Everything else is behind a door. The app asks for a sign-in; the payer's
+   * page needs a real request to exist before it can be opened. So an
+   * investor, a payment provider assessing an application, or a tutor
+   * deciding whether to bother could read every word about Dealio and never
+   * watch it work.
+   *
+   * A WALKTHROUGH, NOT A SANDBOX, and the difference is stated on the page.
+   * Nothing is created, nothing is charged, no request exists afterwards.
+   * The wallet demo on crowdfundme runs a real engine on play money because
+   * it is a tool somebody explores; this is four screens somebody watches in
+   * twenty seconds, and pretending otherwise would be building a second
+   * product to explain the first.
+   *
+   * ONE PHONE, FOUR SCREENS, and the phone never moves. The eye should be on
+   * what changes inside it — which is the argument — not on the page around
+   * it rearranging itself.
+   */
+  :root{
+    --ground:#080A0F;
+    --raise:#10141D;
+    --ink:#ECEDF2;
+    --dim:#8F95A6;
+    --hair:#1F2533;
+    --blue:#5570E8;
+    --red:#D9534F;
+    --wx:#2ECC5E;
+    --ali:#1678FF;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC","Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+    font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:26rem;margin:0 auto;padding:0 1.4rem 3rem;
+    min-height:100%;display:flex;flex-direction:column}
+
+  .top{display:flex;align-items:center;gap:.7rem;padding:1.4rem 0}
+  .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--red)}
+  .wm{font-family:var(--mono);font-size:.74rem;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--dim)}
+  .langslot{margin-left:auto}
+
+  h1{font-family:var(--serif);font-weight:400;font-size:2.2rem;line-height:1.05;
+    margin:.6rem 0 .3rem;text-wrap:balance}
+  .sub{color:var(--dim);margin:0 0 1.5rem;font-size:.98rem}
+
+  /* THE PHONE. Drawn, not photographed — a screenshot of a dark app dropped
+     into a dark page reads as a picture of something else. */
+  .phone{background:var(--raise);border:1px solid var(--hair);border-radius:1.5rem;
+    padding:1.1rem;min-height:23rem;display:flex;flex-direction:column;gap:.7rem}
+  .phone .pbar{display:flex;align-items:center;gap:.5rem;padding:0 0 .3rem}
+  .phone .pbar i{width:.4rem;height:.4rem;border-radius:50%;background:var(--red)}
+  .phone .pbar span{font-family:var(--mono);font-size:.55rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--dim)}
+
+  .lab{font-family:var(--mono);font-size:.55rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--dim)}
+  .amt{font-family:var(--serif);font-size:3rem;line-height:1;color:var(--ink)}
+  .amt.small{font-size:2.1rem}
+  .what{font-size:.9rem;color:var(--dim)}
+  .btn{border-radius:99px;text-align:center;font-size:.86rem;font-weight:700;
+    padding:.75rem;background:var(--red);color:#fff;margin-top:auto}
+  .btn.blue{background:var(--blue);color:#05070D}
+
+  /* The message as it arrives in a chat, because that is where it arrives. */
+  .msg{background:#1C2230;border-radius:.8rem;padding:.8rem .9rem;font-size:.86rem;
+    line-height:1.55}
+  .msg .link{color:var(--blue);word-break:break-all;display:block;margin-top:.4rem;
+    font-size:.8rem}
+
+  /* A QR is white with dark modules whatever the page is doing — a themed one
+     is a code that does not scan. Drawn as a grid; nothing is fetched. */
+  .qr{width:11rem;aspect-ratio:1;align-self:center;border-radius:.4rem;background:#fff;
+    padding:.4rem;display:grid;grid-template:repeat(7,1fr)/repeat(7,1fr);gap:.07rem}
+  .qr i{background:#05070D;border-radius:.03rem}
+  .qr i.o{background:transparent}
+  .zh{text-align:center;font-size:.9rem;color:var(--ink)}
+  .ways{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap}
+  .ways span{display:flex;align-items:center;gap:.3rem;font-size:.72rem;color:var(--dim)}
+  .ways i{width:.4rem;height:.4rem;border-radius:50%;background:var(--dim)}
+  .ways .wx i{background:var(--wx)}
+  .ways .ali i{background:var(--ali)}
+
+  .tick{width:2.6rem;height:2.6rem;border-radius:50%;background:var(--wx);
+    display:flex;align-items:center;justify-content:center;margin:.4rem auto .2rem;
+    color:#05070D;font-size:1.3rem;font-weight:700}
+
+  /* THE CAPTION UNDER THE PHONE, not inside it. The screen is the thing; the
+     sentence is what somebody says while pointing at it. */
+  .cap{margin:1.3rem 0 0;text-align:center}
+  .cap b{display:block;font-family:var(--serif);font-weight:400;font-size:1.5rem;
+    line-height:1.15}
+  .cap span{display:block;color:var(--dim);font-size:.92rem;margin-top:.2rem}
+
+  .steps{display:flex;gap:.4rem;justify-content:center;margin:1.2rem 0 0}
+  .steps i{width:1.6rem;height:2px;border-radius:2px;background:var(--hair)}
+  .steps i.on{background:var(--blue)}
+
+  .go{display:block;width:100%;margin:1.3rem 0 0;border:0;border-radius:99px;
+    padding:.9rem;background:var(--blue);color:#05070D;font:700 .95rem var(--sans);
+    cursor:pointer}
+  .go.quiet{background:transparent;border:1px solid var(--hair);color:var(--ink)}
+  .go+.go{margin-top:.6rem}
+  .note{text-align:center;color:var(--dim);font-size:.78rem;margin:1.2rem 0 0}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <span class="dot"></span><span class="wm">Dealio</span>
+    <span class="langslot"></span>
+  </div>
+  <div id="root"></div>
+</div>
+
+<script type="module">
+import { T, TZh, setLang, pickLang, langButton } from "/i18n.js";
+setLang(pickLang());
+
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+
+/* The code, drawn. Fixed pattern: it is a picture of a code, not a code, and
+   a page that generated a scannable one would be offering a payment that does
+   not exist. */
+const QR = "1101011" + "0100010" + "0110110" + "1011010" + "0011101" + "1010011" + "1101001";
+function qr() {
+  const g = el("div", "qr");
+  g.setAttribute("aria-hidden", "true");
+  for (const c of QR) g.append(el("i", c === "1" ? "" : "o"));
+  return g;
+}
+
+let step = 0;
+
+/* FOUR SCREENS, AND EACH ONE IS A SCREEN THIS APP REALLY HAS. The pad, the
+   block that goes into WeChat, the page the payer opens, and the row that
+   says it settled. Nothing invented to make the story flow. */
+const SCREENS = [
+  // 1 — the pad
+  (p) => {
+    p.append(el("span", "lab", "Dealio"));
+    p.append(el("span", "amt", "¥2,400"));
+    p.append(el("span", "what", T("try.what")));
+    p.append(el("div", "btn", T("try.askbtn")));
+  },
+  // 2 — the message, in the language the reader of it reads
+  (p) => {
+    p.append(el("span", "lab", "WeChat"));
+    const m = el("div", "msg", TZh("try.msg"));
+    m.append(el("span", "link", "thexchange.app/pay/9f3c…"));
+    p.append(m);
+    p.append(el("div", "btn blue", "发送"));
+  },
+  // 3 — the payer's page. Chinese in both languages: it is what they see.
+  (p) => {
+    p.append(el("span", "lab", "thexchange.app/pay"));
+    p.append(el("span", "what", "Tom · " + TZh("try.what")));
+    p.append(el("span", "amt small", "¥2,400"));
+    p.append(qr());
+    p.append(el("div", "zh", "长按二维码识别"));
+    const w = el("div", "ways");
+    for (const [k, c] of [["微信支付", "wx"], ["支付宝", "ali"]]) {
+      const s = el("span", c);
+      s.append(el("i"), el("span", null, k));
+      w.append(s);
+    }
+    p.append(w);
+  },
+  // 4 — settled
+  (p) => {
+    p.append(el("span", "lab", "Dealio"));
+    p.append(el("div", "tick", "✓"));
+    p.append(el("span", "amt small", T("try.landed")));
+    p.append(el("span", "what", T("try.paid") + " · " + T("try.fee")));
+  },
+];
+
+function draw() {
+  const root = $("root");
+  root.textContent = "";
+
+  root.append(el("h1", null, T("try.head")));
+  root.append(el("p", "sub", T("try.sub")));
+
+  const phone = el("div", "phone");
+  const bar = el("div", "pbar");
+  bar.append(el("i"), el("span", null, String(step + 1) + " / 4"));
+  phone.append(bar);
+  SCREENS[step](phone);
+  root.append(phone);
+
+  const cap = el("div", "cap");
+  cap.append(el("b", null, T("try.s" + (step + 1))));
+  cap.append(el("span", null, T("try.s" + (step + 1) + "p")));
+  root.append(cap);
+
+  const dots = el("div", "steps");
+  for (let i = 0; i < 4; i++) dots.append(el("i", i <= step ? "on" : ""));
+  root.append(dots);
+
+  if (step < 3) {
+    const next = el("button", "go", T("try.next"));
+    next.type = "button";
+    next.addEventListener("click", () => { step += 1; draw(); });
+    root.append(next);
+  } else {
+    const open = el("a", "go", T("try.open"));
+    open.href = "/dealio";
+    open.style.textDecoration = "none";
+    open.style.textAlign = "center";
+    root.append(open);
+    const again = el("button", "go quiet", T("try.again"));
+    again.type = "button";
+    again.addEventListener("click", () => { step = 0; draw(); });
+    root.append(again);
+  }
+
+  root.append(el("p", "note", T("try.note")));
+}
+
+document.querySelector(".langslot").replaceWith(langButton(draw));
+draw();
+</script>
+
+</body>
+</html>

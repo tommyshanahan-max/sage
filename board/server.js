@@ -9950,6 +9950,13 @@ app.get(["/dealio", "/dealio/"], notesOff,
 app.get(["/dealio/about", "/dealio/about/"], notesOff,
   (req, res, next) => page("pay.html", req, res, next));
 
+/** THE WALKTHROUGH, for the one thing nobody outside could do: watch it work.
+ *  The app is behind a sign-in and the payer's page needs a real request to
+ *  exist, so a stranger could read every word about this product and never
+ *  see it move. Four screens, no account, nothing created. */
+app.get(["/dealio/try", "/dealio/try/"], notesOff,
+  (req, res, next) => page("try.html", req, res, next));
+
 /** READING ONE. No code, no device, no membership — the link is the whole of
  *  it. What comes back is requestView, which is an allowlist. */
 app.get("/api/request/:id", async (req, res) => {

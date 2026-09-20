@@ -5071,6 +5071,41 @@ export const STRINGS = {
      What it does and what it costs the other person, which is nothing. */
   "dl.what":           ["Ask anyone to pay you. They need no account, no app and no card on file.",
                         "让任何人付钱给你。对方不用注册、不用装 App、也不用先绑卡。"],
+  /* THE WALKTHROUGH ANYBODY CAN OPEN, at /dealio/try.
+     Everything else about this product is behind a door: the app wants a
+     sign-in, and the payer's page needs a real request to exist. So a
+     stranger — an investor, a payment provider assessing an application, a
+     tutor deciding whether to bother — could read about Dealio and never see
+     it do anything.
+     Four screens, no account, and it is a walkthrough rather than a sandbox:
+     nothing is created, no money is touched, and the page says so rather
+     than letting anybody think they made a payment.
+     THE PAYER'S SCREEN STAYS CHINESE IN BOTH LANGUAGES. It is not a caption
+     to translate — it is what the person in Shanghai sees, and 长按二维码识别
+     is the line the whole product turns on. */
+  "try.head":          ["See it work.", "看看是怎么用的。"],
+  "try.sub":           ["No account. Four screens.", "不用注册，四个画面。"],
+  "try.note":          ["A walkthrough. No money moves.", "只是演示，不会真的扣钱。"],
+  "try.next":          ["Next", "下一个"],
+  "try.again":         ["Start again", "再看一遍"],
+  "try.open":          ["Open Dealio", "打开 Dealio"],
+
+  "try.s1":            ["You ask.", "你开口要。"],
+  "try.s1p":           ["Type the amount and what it is for.", "输入金额，写清楚是什么钱。"],
+  "try.s2":            ["You send one line.", "你发一句话过去。"],
+  "try.s2p":           ["Into WeChat, like anything else.", "发到微信里，跟平时一样。"],
+  "try.s3":            ["They pay.", "对方付款。"],
+  "try.s3p":           ["No account, no app, no sign-up.", "不用注册，不用下载，不用登录。"],
+  "try.s4":            ["It lands.", "钱到账。"],
+  "try.s4p":           ["In your own currency, in your own bank.", "到你自己的银行，换成你自己的钱。"],
+
+  "try.what":          ["12 lessons", "12 节课"],
+  "try.askbtn":        ["Ask for money", "要钱"],
+  "try.msg":           ["Ray — ¥2,400 for the 12 lessons. Tap to pay:",
+                        "Ray，12 节课一共 2,400 元，点这里付："],
+  "try.paid":          ["Paid", "已付款"],
+  "try.landed":        ["A$502 in your account", "到账 502 澳元"],
+  "try.fee":           ["2% taken. Nothing else.", "扣 2%，没别的。"],
   "dl.signIn":         ["Sign in", "登录"],
   "dl.enterApp":       ["Open Dealio", "进入 Dealio"],
   /* SAYING IT INSTEAD OF TYPING IT. Either language, or both in one sentence,
