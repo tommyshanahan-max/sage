@@ -54,39 +54,44 @@
     font:inherit;font-size:1rem;font-weight:600;padding:.85rem 1.7rem}
   .bar .go:disabled{background:var(--line);color:var(--mut)}
   .said{margin:.6rem .3rem 0;font-size:.85rem;color:var(--acc)}
+  .hrow{display:flex;align-items:center;gap:.8rem}
+  .hrow h1{flex:1 1 auto;min-width:0}
+  .lang{flex:0 0 auto;border:1px solid var(--line);background:var(--card);
+    color:var(--ink2);font:inherit;font-size:.75rem;border-radius:999px;
+    padding:.25rem .65rem}
 </style>
 
 <main>
-  <h1>填写收货信息</h1>
+  <div class="hrow"><h1 id="h"></h1><span id="langslot"></span></div>
 
   <div class="box">
     <div class="fld two">
       <div>
-        <label for="nm">收货人</label>
+        <label for="nm" id="l-nm"></label>
         <input id="nm" autocomplete="name" enterkeyhint="next">
       </div>
       <div>
-        <label for="ph">手机号</label>
+        <label for="ph" id="l-ph"></label>
         <input id="ph" inputmode="numeric" autocomplete="tel" enterkeyhint="next">
       </div>
     </div>
     <div class="fld two">
       <div>
-        <label for="pv">省</label>
+        <label for="pv" id="l-pv"></label>
         <input id="pv" autocomplete="address-level1">
       </div>
       <div>
-        <label for="ct">市</label>
+        <label for="ct" id="l-ct"></label>
         <input id="ct" autocomplete="address-level2">
       </div>
       <div>
-        <label for="dt">区/县</label>
+        <label for="dt" id="l-dt"></label>
         <input id="dt" autocomplete="address-level3">
       </div>
     </div>
     <div class="fld">
-      <label for="ad">详细地址</label>
-      <input id="ad" autocomplete="street-address" placeholder="街道、门牌、小区、楼栋房号">
+      <label for="ad" id="l-ad"></label>
+      <input id="ad" autocomplete="street-address">
     </div>
   </div>
 
@@ -96,10 +101,15 @@
 
 <div class="bar">
   <div class="sum"><b id="bartot">¥0</b></div>
-  <button class="go" type="button" id="go">提交订单</button>
+  <button class="go" type="button" id="go"></button>
 </div>
 
 <script type="module">
+import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
+
+/* Chinese unless the reader has said otherwise — see pickLang. */
+setLang(pickLang("zh"));
+
 const $ = (id) => document.getElementById(id);
 const el = (t, cls, text) => {
   const n = document.createElement(t);
@@ -129,6 +139,21 @@ function device() {
   } catch { return ""; }
 }
 
+/* Every word that is not a product name or a price. Called on load and
+   again on a flip, because half of them are in the HTML rather than drawn. */
+function words() {
+  document.title = T("co.title");
+  $("h").textContent = T("co.h");
+  $("l-nm").textContent = T("co.name");
+  $("l-ph").textContent = T("co.phone");
+  $("l-pv").textContent = T("co.prov");
+  $("l-ct").textContent = T("co.city");
+  $("l-dt").textContent = T("co.area");
+  $("l-ad").textContent = T("co.detail");
+  $("ad").placeholder = T("co.detailEg");
+  $("go").textContent = T("co.go");
+}
+
 function paint() {
   const box = $("sumbox");
   box.textContent = "";
@@ -139,17 +164,19 @@ function paint() {
     if (!it) continue;
     goods += it.price * c.n;
     const row = el("div", "ln");
-    row.append(el("span", null, it.name + " ×" + c.n));
+    /* The same rule as the shopfront: her name for it, or the warehouse's
+       when somebody is reading the page in English. */
+    row.append(el("span", null, ((lang() === "en" && it.en) ? it.en : it.name) + " ×" + c.n));
     row.append(el("b", null, yuan(it.price * c.n)));
     lines.append(row);
   }
   const post = el("div", "ln");
-  post.append(el("span", null, "运费"));
+  post.append(el("span", null, T("co.post")));
   post.append(el("b", null, yuan(POST)));
   lines.append(post);
   box.append(lines);
   const tot = el("div", "tot");
-  tot.append(el("span", null, "合计"));
+  tot.append(el("span", null, T("co.total")));
   tot.append(el("b", null, yuan(goods + POST)));
   box.append(tot);
   $("bartot").textContent = yuan(goods + POST);
@@ -163,15 +190,16 @@ $("go").addEventListener("click", async () => {
   };
   /* Said as itself, and not one sentence for six fields: the commonest way
      an address form is wrong is one box left empty. */
-  const missing = !ship.name ? "收货人" : !ship.phone ? "手机号"
-    : !ship.province ? "省" : !ship.city ? "市" : !ship.detail ? "详细地址" : "";
+  const missing = !ship.name ? T("co.name") : !ship.phone ? T("co.phone")
+    : !ship.province ? T("co.prov") : !ship.city ? T("co.city")
+    : !ship.detail ? T("co.detail") : "";
   if (missing) {
-    $("said").textContent = "还差" + missing + "。";
+    $("said").textContent = T("co.need", { what: missing });
     $("said").hidden = false;
     return;
   }
   $("go").disabled = true;
-  $("go").textContent = "提交中…";
+  $("go").textContent = T("co.going");
   try {
     const r = await fetch("/api/shop/" + encodeURIComponent(HANDLE) + "/order", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -183,13 +211,13 @@ $("go").addEventListener("click", async () => {
       location.href = "/order/" + j.id;
       return;
     }
-    $("said").textContent = j?.error === "address" ? "地址填得不全。" : "没提交成功，再试一次。";
+    $("said").textContent = T(j?.error === "address" ? "co.badAddr" : "co.failed");
   } catch {
-    $("said").textContent = "网络没通，再试一次。";
+    $("said").textContent = T("co.noNet");
   }
   $("said").hidden = false;
   $("go").disabled = false;
-  $("go").textContent = "提交订单";
+  $("go").textContent = T("co.go");
 });
 
 (async () => {
@@ -197,6 +225,8 @@ $("go").addEventListener("click", async () => {
   const j = await r.json().catch(() => null);
   if (j?.ok) { ITEMS = j.products || []; POST = j.post ?? 3000; }
   if (!CART.length) { location.href = "/shop/" + encodeURIComponent(HANDLE); return; }
+  $("langslot").replaceWith(langButton(() => { words(); paint(); }));
+  words();
   paint();
 })();
 </script>

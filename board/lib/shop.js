@@ -124,7 +124,13 @@ export function cleanOrder(raw) {
     .slice(0, 40);
   if (!lines.length) return null;
 
+  /* AN ORDER WITH NOWHERE TO SEND IT IS NOT AN ORDER. The route already
+     refuses one (error: "address"), so a row without a good address got here
+     by being edited or restored by hand — and every screen downstream reads
+     ship.name without asking, which is a page that renders as a crash rather
+     than as a missing address. */
   const ship = cleanShip(raw.ship);
+  if (!ship) return null;
   const out = {
     id, lines,
     at: s(raw.at, 40) || new Date().toISOString(),

@@ -14,9 +14,11 @@
   加入购物车, 去结算, 运费, 合计. A translation of our words would be the
   tell that this was built somewhere else.
 
-  CHINESE FIRST AND NOT AS A TOGGLE. The payment pages have a language
-  button because the person owed the money reads them too. Nobody but a
-  Chinese buyer ever opens this one.
+  CHINESE FIRST, WITH THE SWITCH. Nobody but a Chinese buyer ever opens
+  this to buy from it — so it opens in Chinese whatever the phone is set
+  to, and the English is there for the one other person who looks at it,
+  which is whoever runs the shop. Strings live in i18n.js under sh., both
+  halves on one line.
 -->
 <style>
   :root{
@@ -47,6 +49,9 @@
      page and the ellipsis never fires — which is how a one-line bio ran off
      the right-hand edge of the screen. */
   .who>div{min-width:0}
+  .who .lang{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);
+    background:var(--card);color:var(--ink2);font:inherit;font-size:.75rem;
+    border-radius:999px;padding:.25rem .65rem}
   .who b{display:block;font-size:1.05rem}
   .who span{display:block;font-size:.82rem;color:var(--ink2);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -93,11 +98,16 @@
 
 <main id="root"></main>
 <div class="bar" id="bar" hidden>
-  <div class="sum"><b id="sum">¥0</b><span id="note">运费 ¥30</span></div>
-  <button class="go" type="button" id="go" disabled>去结算</button>
+  <div class="sum"><b id="sum">¥0</b><span id="note"></span></div>
+  <button class="go" type="button" id="go" disabled></button>
 </div>
 
 <script type="module">
+import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
+
+/* Chinese unless the reader has said otherwise — see pickLang. */
+setLang(pickLang("zh"));
+
 const $ = (id) => document.getElementById(id);
 const el = (t, cls, text) => {
   const n = document.createElement(t);
@@ -128,7 +138,8 @@ function total() {
 function paint() {
   const goods = total();
   $("sum").textContent = yuan(goods + (goods ? POST : 0));
-  $("note").textContent = goods ? "含运费 " + yuan(POST) : "运费 " + yuan(POST);
+  $("note").textContent = T(goods ? "sh.postIn" : "sh.post", { amount: yuan(POST) });
+  $("go").textContent = T("sh.go");
   $("go").disabled = !goods;
   $("bar").hidden = false;
 }
@@ -139,8 +150,8 @@ function stepper(it) {
   const n = el("b", null, String(CART.get(it.id) || 0));
   const more = el("button", null, "+");
   less.type = more.type = "button";
-  less.setAttribute("aria-label", "少一个");
-  more.setAttribute("aria-label", "多一个");
+  less.setAttribute("aria-label", T("sh.less"));
+  more.setAttribute("aria-label", T("sh.more"));
   const set = (q) => {
     if (q <= 0) CART.delete(it.id); else CART.set(it.id, Math.min(q, 99));
     n.textContent = String(CART.get(it.id) || 0);
@@ -184,12 +195,18 @@ function draw() {
      Whoever is behind it is named once more at the foot of the page —
      twice on one screen is one line she has to read for nothing. */
   box.append(el("b", null, SHOP.name || SHOP.handle));
-  box.append(el("span", null, SHOP.sayZh || SHOP.say || "澳洲直邮"));
+  box.append(el("span", null, SHOP.sayZh || SHOP.say || T("sh.direct")));
   who.append(box);
+  /* The switch sits on the shopkeeper's row rather than in a corner: it is
+     the one line on the page that is already about who you are dealing
+     with. Flipping it redraws the list and the bar together, because the
+     total and the button are outside <main> and would otherwise be left
+     behind in the other language. */
+  who.append(langButton(() => { draw(); paint(); }));
   root.append(who);
 
   if (!ITEMS.length) {
-    root.append(el("p", "none", "这家店还没有上架东西。"));
+    root.append(el("p", "none", T("sh.empty")));
     return;
   }
 
@@ -209,20 +226,21 @@ function draw() {
     }
 
     const mid = el("div", "mid");
-    mid.append(el("div", "nm", it.name));
+    /* Her name for it, or the warehouse's when the page is being read in
+       English — the same row, said to whoever is looking at it. */
+    mid.append(el("div", "nm", (lang() === "en" && it.en) ? it.en : it.name));
     if (it.unit) mid.append(el("div", "un", it.unit));
     const row = el("div", "row");
     const pr = el("div", "pr");
     pr.append(el("i", null, "¥"), document.createTextNode((it.price / 100).toLocaleString("zh-CN")));
     row.append(pr);
-    row.append(it.out ? el("span", "gone", "已售完") : stepper(it));
+    row.append(it.out ? el("span", "gone", T("sh.out")) : stepper(it));
     mid.append(row);
     card.append(mid);
     root.append(card);
   }
 
-  root.append(el("p", "foot",
-    "澳洲直邮 · 微信支付或支付宝 · 下单后由 " + SHOP.handle + " 跟进"));
+  root.append(el("p", "foot", T("sh.foot", { who: SHOP.handle })));
 }
 
 $("go").addEventListener("click", () => {
@@ -237,11 +255,11 @@ $("go").addEventListener("click", () => {
     const j = await r.json();
     if (!r.ok || !j?.ok) throw new Error("gone");
     SHOP = j.shop; ITEMS = j.products || []; POST = j.post ?? 3000;
-    document.title = SHOP.name || (SHOP.handle + " 的小店");
+    document.title = SHOP.name || T("sh.here", { who: SHOP.handle });
     draw();
     paint();
   } catch {
-    $("root").append(el("p", "none", "这家店打不开了。"));
+    $("root").append(el("p", "none", T("sh.gone")));
   }
 })();
 </script>

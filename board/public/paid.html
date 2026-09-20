@@ -5,10 +5,12 @@
 <!--
   WHERE A STOREFRONT'S COMMISSION LANDS. One form, once, ever.
 
-  CHINESE, AND NOT AS A TOGGLE. Everybody who runs a storefront is in
-  mainland China — that is the whole model — so a language button here is a
-  decision offered to somebody who has no use for it. The seller's own
-  screens are in English and stay that way.
+  CHINESE FIRST, WITH THE SWITCH. Everybody who runs a storefront is in
+  mainland China — that is the whole model — so the page opens in Chinese
+  whatever the phone is set to. The button is there because the seller has
+  to be able to read what he is asking somebody to fill in, and because a
+  page that cannot be shown in English is a page he cannot demonstrate.
+  Strings live in i18n.js under pd., both halves on one line.
 
   THREE BOXES. A name, a bank, a card number, which is what a transfer in
   China needs and all it needs. The earlier version of this page asked for
@@ -37,6 +39,12 @@
   .top{display:flex;align-items:center;gap:.5rem;margin:0 0 1.6rem}
   .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--acc)}
   .top span{font-size:.7rem;letter-spacing:.18em;color:var(--mut)}
+  /* Tracked-out capitals are an English shape; Chinese reads as broken in
+     them, so the mark keeps its spacing and nothing else does. */
+  :root[data-lang="zh"] .top span{letter-spacing:.06em}
+  .lang{margin-left:auto;border:1px solid var(--line);background:transparent;
+    color:var(--ink2);font:inherit;font-size:.78rem;border-radius:999px;
+    padding:.25rem .7rem}
   h1{font-size:1.5rem;margin:0 0 .35rem;letter-spacing:.01em}
   .sub{margin:0 0 1.5rem;font-size:.95rem;color:var(--ink2)}
   .owed{background:var(--card);border:1px solid var(--line);border-radius:1rem;
@@ -67,6 +75,11 @@
 <main id="root"></main>
 
 <script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+
+/* Chinese unless the reader has said otherwise — see pickLang. */
+setLang(pickLang("zh"));
+
 const $ = (id) => document.getElementById(id);
 const el = (t, cls, text) => {
   const n = document.createElement(t);
@@ -79,7 +92,9 @@ const device = () => { try { return localStorage.getItem("board:device") || ""; 
 function head(root) {
   const top = el("div", "top");
   top.append(el("span", "dot"), el("span", null, "DEALIO"));
+  top.append(langButton(() => load()));
   root.append(top);
+  document.title = T("pd.title");
 }
 
 function draw(d) {
@@ -88,44 +103,44 @@ function draw(d) {
   head(root);
 
   if (!d.on) {
-    root.append(el("h1", null, "还没开"));
-    root.append(el("p", "off", "这里暂时还不能收款，填了也没用，所以先不放表格。"));
+    root.append(el("h1", null, T("pd.off.h")));
+    root.append(el("p", "off", T("pd.off.p")));
     return;
   }
 
   /* Not a member: the door is somewhere else and this page cannot send them
      there, because a storefront comes with an invitation. */
   if (!d.handle) {
-    root.append(el("h1", null, "这个页面是给店主的"));
-    root.append(el("p", "off", "先开店，再来填卡。"));
+    root.append(el("h1", null, T("pd.nobody.h")));
+    root.append(el("p", "off", T("pd.nobody.p")));
     return;
   }
 
   if (d.payout) {
-    root.append(el("h1", null, "好了"));
-    root.append(el("p", "sub", "店里卖出一单，佣金就结到这张卡。"));
+    root.append(el("h1", null, T("pd.done.h")));
+    root.append(el("p", "sub", T("pd.done.p")));
     const box = el("div", "done");
-    box.append(el("b", null, (d.payout.label || "银行卡")
+    box.append(el("b", null, (d.payout.label || T("pd.card"))
       + (d.payout.last4 ? "  ···· " + d.payout.last4 : "")));
     box.append(el("span", null, d.payout.name));
     root.append(box);
     if (d.owedFen) {
       const owed = el("div", "owed");
       owed.style.margin = "1.4rem 0 0";
-      owed.append(el("span", null, "待结佣金"));
+      owed.append(el("span", null, T("pd.owed")));
       owed.append(el("b", null, d.owed));
       root.append(owed);
     }
-    root.append(el("p", "note", "要换卡，再填一次就好。"));
+    root.append(el("p", "note", T("pd.again")));
     return;
   }
 
-  root.append(el("h1", null, "佣金打到哪里"));
-  root.append(el("p", "sub", "填一次，以后都按这张卡结。"));
+  root.append(el("h1", null, T("pd.h")));
+  root.append(el("p", "sub", T("pd.sub")));
 
   if (d.owedFen) {
     const owed = el("div", "owed");
-    owed.append(el("span", null, "待结佣金"));
+    owed.append(el("span", null, T("pd.owed")));
     owed.append(el("b", null, d.owed));
     root.append(owed);
   }
@@ -143,26 +158,26 @@ function draw(d) {
     return wrap;
   };
 
-  root.append(f("nm", "持卡人姓名", { auto: "name" }));
-  root.append(f("bank", "开户银行", { hint: "招商银行" }));
-  root.append(f("card", "银行卡号", { mode: "numeric" }));
+  root.append(f("nm", T("pd.name"), { auto: "name" }));
+  root.append(f("bank", T("pd.bank"), { hint: T("pd.bankEg") }));
+  root.append(f("card", T("pd.no"), { mode: "numeric" }));
 
   const agree = el("div", "agree");
   const box = el("input");
   box.type = "checkbox";
   box.id = "agree";
-  const lab = el("label", null, "这张卡是我本人的。");
+  const lab = el("label", null, T("pd.isMine"));
   lab.htmlFor = "agree";
   agree.append(box, lab);
   root.append(agree);
 
-  const go = el("button", "go", "保存");
+  const go = el("button", "go", T("pd.save"));
   go.type = "button";
   root.append(go);
   const said = el("p", "said");
   said.hidden = true;
   root.append(said);
-  root.append(el("p", "note", "卡号加密保存，只用来给你打款。"));
+  root.append(el("p", "note", T("pd.safe")));
 
   go.addEventListener("click", async () => {
     const body = {
@@ -173,14 +188,14 @@ function draw(d) {
     };
     /* One at a time, and each one names its own box. "请检查您的信息" is
        the sentence that makes somebody close the page. */
-    const miss = !box.checked ? "先勾选上面那行。"
-      : !body.name ? "请填持卡人姓名。"
-      : !body.bank ? "请填开户银行。"
-      : body.card.replace(/\D/g, "").length < 12 ? "卡号位数不太对。"
+    const miss = !box.checked ? T("pd.tick")
+      : !body.name ? T("pd.needName")
+      : !body.bank ? T("pd.needBank")
+      : body.card.replace(/\D/g, "").length < 12 ? T("pd.badNo")
       : "";
     if (miss) { said.textContent = miss; said.hidden = false; return; }
     go.disabled = true;
-    go.textContent = "保存中…";
+    go.textContent = T("pd.saving");
     said.hidden = true;
     try {
       const r = await fetch("/api/paid", {
@@ -190,17 +205,17 @@ function draw(d) {
       const j = await r.json().catch(() => null);
       if (r.ok && j?.ok) { load(); return; }
       said.textContent = {
-        name: "请填持卡人姓名。",
-        bank: "请填开户银行。",
-        card: "卡号位数不太对。",
-        gone: "这个账号不在店里了。",
-      }[j?.error] || "没保存上，再试一次。";
+        name: T("pd.needName"),
+        bank: T("pd.needBank"),
+        card: T("pd.badNo"),
+        gone: T("pd.gone"),
+      }[j?.error] || T("pd.noSave");
     } catch {
-      said.textContent = "没发出去，再试一次。";
+      said.textContent = T("pd.noSend");
     }
     said.hidden = false;
     go.disabled = false;
-    go.textContent = "保存";
+    go.textContent = T("pd.save");
   });
 }
 
@@ -210,7 +225,7 @@ async function load() {
     const j = await r.json();
     draw(j);
   } catch {
-    $("root").append(el("p", "off", "没打开，刷新一下。"));
+    $("root").append(el("p", "off", T("pd.noLoad")));
   }
 }
 load();

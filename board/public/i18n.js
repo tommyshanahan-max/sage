@@ -6431,6 +6431,122 @@ export const STRINGS = {
   "led.open":          ["Filling now", "正在排"],
   "led.what":          ["A record of who was early. Not money, and not a share of anything.",
                         "只是记录谁来得早。不是钱，也不是股份。"],
+
+  /* ---- THE SHOP ---------------------------------------------------------
+   *
+   * These four screens open in Chinese and not in English — pickLang("zh")
+   * rather than the usual fallback — because the person holding the phone is
+   * a buyer in China every single time. The switch is there because the
+   * seller has to be able to read his own shopfront, and because a page
+   * nobody can show in the other language is a page nobody can demonstrate.
+   *
+   * THE WORDS ARE NOT OURS. 加入购物车, 去结算, 运费, 合计 and the four
+   * states — 待付款 · 待发货 · 待收货 · 完成 — are the vocabulary she
+   * already has from every shop she has ever bought from. The English half
+   * is the translation here, which is the opposite of everywhere else in
+   * this file, and it is written to be read by one person: the seller,
+   * checking what his buyer sees. */
+
+  // The shopfront.
+  "sh.here":           ["{who}'s shop", "{who} 的小店"],
+  "sh.direct":         ["Straight from Australia", "澳洲直邮"],
+  "sh.empty":          ["Nothing in this shop yet.", "这家店还没有上架东西。"],
+  "sh.gone":           ["This shop would not open.", "这家店打不开了。"],
+  "sh.out":            ["Sold out", "已售完"],
+  "sh.less":           ["one fewer", "少一个"],
+  "sh.more":           ["one more", "多一个"],
+  "sh.go":             ["Checkout", "去结算"],
+  "sh.post":           ["Postage {amount}", "运费 {amount}"],
+  "sh.postIn":         ["Postage {amount} included", "含运费 {amount}"],
+  "sh.foot":           ["Straight from Australia · WeChat Pay or Alipay · {who} follows your order up",
+                        "澳洲直邮 · 微信支付或支付宝 · 下单后由 {who} 跟进"],
+
+  /* The address. 省 · 市 · 区 then the detail, in that order, because that
+     is the order it is written and said in — see cleanShip in lib/shop.js. */
+  "co.title":          ["Your address", "填写地址"],
+  "co.h":              ["Where is it going?", "填写收货信息"],
+  "co.name":           ["Name", "收货人"],
+  "co.phone":          ["Phone", "手机号"],
+  "co.prov":           ["Province", "省"],
+  "co.city":           ["City", "市"],
+  "co.area":           ["District", "区/县"],
+  "co.detail":         ["Address", "详细地址"],
+  "co.detailEg":       ["Street, number, estate, building and flat",
+                        "街道、门牌、小区、楼栋房号"],
+  "co.post":           ["Postage", "运费"],
+  "co.total":          ["Total", "合计"],
+  "co.go":             ["Place the order", "提交订单"],
+  "co.going":          ["One moment…", "提交中…"],
+  /* Named as its own box rather than "check your details", which is the
+     sentence that makes somebody close the page. */
+  "co.need":           ["Still needed: {what}.", "还差{what}。"],
+  "co.badAddr":        ["That address is not complete.", "地址填得不全。"],
+  "co.failed":         ["That did not go through. Try again.", "没提交成功，再试一次。"],
+  "co.noNet":          ["No connection. Try again.", "网络没通，再试一次。"],
+
+  /* The order. THE FOUR WORDS ARE NOT OURS: 待付款 · 待发货 · 待收货 · 完成
+     is what every Chinese buyer already has from every shop they have used,
+     in that order. The English is a translation of them and nothing more. */
+  "od.title":          ["Order", "订单"],
+  "od.due":            ["Waiting for payment", "待付款"],
+  "od.toShip":         ["Waiting to be sent", "待发货"],
+  "od.shipped":        ["On its way", "待收货"],
+  "od.done":           ["Finished", "完成"],
+  "od.off":            ["Cancelled", "已取消"],
+  "od.addr":           ["Delivery", "收货信息"],
+  "od.goods":          ["Items", "商品"],
+  "od.post":           ["Postage", "运费"],
+  "od.total":          ["Total", "合计"],
+  "od.foot":           ["Straight from Australia · ordered from {who}'s shop",
+                        "澳洲直邮 · 由 {who} 的小店下单"],
+  "od.pay":            ["To pay", "需支付"],
+  "od.to":             ["Straight from Australia · {who}", "澳洲直邮 · {who}"],
+  "od.wechat":         ["WeChat Pay", "微信支付"],
+  "od.alipay":         ["Alipay", "支付宝"],
+  "od.making":         ["One moment…", "正在生成…"],
+  /* Press and hold is how anybody opens a code sent to them in a chat. It
+     leads, because a line that opens with a problem they do not have is a
+     line written for the wrong reader. */
+  "od.scan":           ["Press and hold the code", "长按二维码识别"],
+  "od.orShot":         ["Or screenshot it, then press and hold the picture",
+                        "或者截屏，再长按那张图"],
+  "od.already":        ["This one is already paid.", "这笔已经付过了。"],
+  "od.noQr":           ["No code came back. Try again.", "没生成出来，再试一次。"],
+  "od.track":          ["Tracking", "快递单号"],
+  "od.gone":           ["That order would not open.", "这个订单打不开了。"],
+
+  // Where the commission lands.
+  "pd.title":          ["Where your commission lands", "佣金打到哪里"],
+  "pd.off.h":          ["Not yet", "还没开"],
+  "pd.off.p":          ["This board cannot take money yet. Nothing you typed would go anywhere, so the form is not shown.",
+                        "这里暂时还不能收款，填了也没用，所以先不放表格。"],
+  "pd.nobody.h":       ["This page is for shopkeepers", "这个页面是给店主的"],
+  "pd.nobody.p":       ["Open a shop first, then come back.", "先开店，再来填卡。"],
+  "pd.done.h":         ["Done.", "好了"],
+  "pd.done.p":         ["Sell one, and your share goes to this card.", "店里卖出一单，佣金就结到这张卡。"],
+  "pd.card":           ["Your card", "银行卡"],
+  "pd.owed":           ["Owed to you", "待结佣金"],
+  "pd.again":          ["To change it, fill it in again.", "要换卡，再填一次就好。"],
+  "pd.h":              ["Where should your commission land?", "佣金打到哪里"],
+  "pd.sub":            ["Once, and never again.", "填一次，以后都按这张卡结。"],
+  "pd.name":           ["Name on the card", "持卡人姓名"],
+  "pd.bank":           ["Bank", "开户银行"],
+  "pd.bankEg":         ["China Merchants Bank", "招商银行"],
+  "pd.no":             ["Card number", "银行卡号"],
+  "pd.isMine":         ["This card is mine.", "这张卡是我本人的。"],
+  "pd.save":           ["SAVE", "保存"],
+  "pd.saving":         ["SAVING…", "保存中…"],
+  /* The whole promise of the page, and it is true — see lib/sealed.js. */
+  "pd.safe":           ["The number is encrypted here, and used only to pay you.",
+                        "卡号加密保存，只用来给你打款。"],
+  "pd.tick":           ["Tick the line above first.", "先勾选上面那行。"],
+  "pd.needName":       ["Your name, as the bank has it.", "请填持卡人姓名。"],
+  "pd.needBank":       ["Which bank?", "请填开户银行。"],
+  "pd.badNo":          ["That card number looks wrong.", "卡号位数不太对。"],
+  "pd.gone":           ["That account is not on this board.", "这个账号不在店里了。"],
+  "pd.noSave":         ["That did not save — try again.", "没保存上，再试一次。"],
+  "pd.noSend":         ["That did not go through. Try again.", "没发出去，再试一次。"],
+  "pd.noLoad":         ["That did not load. Refresh.", "没打开，刷新一下。"],
 };
 
 /* Which language, and where it comes from.

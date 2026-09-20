@@ -25,11 +25,16 @@
   body{font-family:var(--sans);font-size:16px;line-height:1.5;
     padding:env(safe-area-inset-top,0) 0 calc(2rem + env(safe-area-inset-bottom,0))}
   main{max-width:34rem;margin:0 auto;padding:1rem .8rem}
-  .head{display:flex;align-items:baseline;justify-content:space-between;
+  .head{display:flex;align-items:baseline;gap:.8rem;
     padding:.2rem .3rem 1rem}
   .head b{font-size:1.15rem}
   .head span{font-size:.85rem;color:var(--acc)}
   .head span.ok{color:var(--ok)}
+  /* Pushed to the far end so the state sits beside the word it qualifies
+     rather than drifting to the middle of the row. */
+  .head .lang{margin-left:auto;border:1px solid var(--line);background:var(--card);
+    color:var(--mut);font:inherit;font-size:.75rem;border-radius:999px;
+    padding:.2rem .6rem;align-self:center}
   .box{background:var(--card);border-radius:.9rem;padding:.9rem;margin:0 0 .7rem}
   .lab{font-size:.75rem;color:var(--mut);margin:0 0 .35rem}
   .addr{font-size:.95rem;line-height:1.6}
@@ -61,6 +66,11 @@
 <main id="root"></main>
 
 <script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+
+/* Chinese unless the reader has said otherwise — see pickLang. */
+setLang(pickLang("zh"));
+
 const $ = (id) => document.getElementById(id);
 const el = (t, cls, text) => {
   const n = document.createElement(t);
@@ -72,7 +82,9 @@ const ID = (location.pathname.match(/^\/order\/([a-f0-9]{20})/) || [])[1] || "";
 const yuan = (n) => "¥" + (n / 100).toLocaleString("zh-CN", {
   minimumFractionDigits: (n % 100) ? 2 : 0, maximumFractionDigits: 2,
 });
-const WORD = { due: "待付款", toShip: "待发货", shipped: "待收货", done: "完成", off: "已取消" };
+/* THE FOUR WORDS ARE NOT OURS — see the note in lib/shop.js. Looked up
+   rather than held, so a flip moves them with everything else. */
+const WORD = (state) => T("od." + state);
 
 let O = null;
 
@@ -81,17 +93,20 @@ function draw() {
   root.textContent = "";
 
   const head = el("div", "head");
-  head.append(el("b", null, "订单"));
-  const st = el("span", O.state === "done" ? "ok" : null, WORD[O.state] || "");
+  head.append(el("b", null, T("od.title")));
+  const st = el("span", O.state === "done" ? "ok" : null, WORD(O.state));
   head.append(st);
+  /* The switch goes on the one row that is on every state of this page. */
+  head.append(langButton(() => draw()));
   root.append(head);
+  document.title = T("od.title");
 
   /* WHAT TO DO, FIRST AND ONLY. Everything below it is the receipt. */
   if (O.state === "due") root.append(payBox());
   if (O.state === "shipped" || O.state === "done") root.append(trackBox());
 
   const addr = el("div", "box");
-  addr.append(el("p", "lab", "收货信息"));
+  addr.append(el("p", "lab", T("od.addr")));
   const a = el("div", "addr");
   a.append(el("b", null, O.ship.name + "  " + O.ship.phone));
   a.append(document.createElement("br"));
@@ -101,7 +116,7 @@ function draw() {
   root.append(addr);
 
   const box = el("div", "box");
-  box.append(el("p", "lab", "商品"));
+  box.append(el("p", "lab", T("od.goods")));
   for (const l of O.lines) {
     const row = el("div", "ln");
     row.append(el("span", null, l.name + " ×" + l.n));
@@ -109,26 +124,26 @@ function draw() {
     box.append(row);
   }
   const post = el("div", "ln");
-  post.append(el("span", null, "运费"));
+  post.append(el("span", null, T("od.post")));
   post.append(el("b", null, yuan(O.post)));
   box.append(post);
   const tot = el("div", "tot");
-  tot.append(el("span", null, "合计"));
+  tot.append(el("span", null, T("od.total")));
   tot.append(el("b", null, yuan(O.total)));
   box.append(tot);
   root.append(box);
 
-  root.append(el("p", "foot", "澳洲直邮 · 由 " + O.shop + " 的小店下单"));
+  root.append(el("p", "foot", T("od.foot", { who: O.shop })));
 }
 
 function payBox() {
   const box = el("div", "box pay");
-  box.append(el("p", "lab", "需支付"));
+  box.append(el("p", "lab", T("od.pay")));
   box.append(el("div", "amt", yuan(O.total)));
-  box.append(el("p", "to", "澳洲直邮 · " + O.shop));
+  box.append(el("p", "to", T("od.to", { who: O.shop })));
   const ways = el("div", "ways");
-  const wx = el("button", null, "微信支付");
-  const ali = el("button", "alt", "支付宝");
+  const wx = el("button", null, T("od.wechat"));
+  const ali = el("button", "alt", T("od.alipay"));
   wx.type = ali.type = "button";
   wx.addEventListener("click", () => code("wechat", box, wx, ali));
   ali.addEventListener("click", () => code("alipay", box, wx, ali));
@@ -139,8 +154,8 @@ function payBox() {
 
 async function code(how, box, wx, ali) {
   wx.disabled = ali.disabled = true;
-  wx.textContent = how === "wechat" ? "正在生成…" : wx.textContent;
-  ali.textContent = how === "alipay" ? "正在生成…" : ali.textContent;
+  wx.textContent = how === "wechat" ? T("od.making") : wx.textContent;
+  ali.textContent = how === "alipay" ? T("od.making") : ali.textContent;
   try {
     const r = await fetch("/api/order/" + ID + "/pay", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -153,16 +168,16 @@ async function code(how, box, wx, ali) {
       img.src = j.qr.png;
       img.alt = "";
       box.append(img);
-      box.append(el("p", "do", "长按二维码识别"));
-      box.append(el("p", "else", "或者截屏，再长按那张图"));
+      box.append(el("p", "do", T("od.scan")));
+      box.append(el("p", "else", T("od.orShot")));
       watch();
       return;
     }
-    wx.textContent = "微信支付"; ali.textContent = "支付宝";
+    wx.textContent = T("od.wechat"); ali.textContent = T("od.alipay");
     wx.disabled = ali.disabled = false;
-    box.append(el("p", "else", j?.error === "already" ? "这笔已经付过了。" : "没生成出来，再试一次。"));
+    box.append(el("p", "else", T(j?.error === "already" ? "od.already" : "od.noQr")));
   } catch {
-    wx.textContent = "微信支付"; ali.textContent = "支付宝";
+    wx.textContent = T("od.wechat"); ali.textContent = T("od.alipay");
     wx.disabled = ali.disabled = false;
   }
 }
@@ -185,7 +200,7 @@ function watch() {
 
 function trackBox() {
   const box = el("div", "box");
-  box.append(el("p", "lab", "快递单号"));
+  box.append(el("p", "lab", T("od.track")));
   box.append(el("div", "track", (O.sent?.courier ? O.sent.courier + " " : "") + (O.sent?.tracking || "")));
   return box;
 }
@@ -196,9 +211,9 @@ async function load() {
     const j = await r.json().catch(() => null);
     if (r.ok && j?.ok) { O = j.order; draw(); return; }
   } catch { }
-  $("root").append(el("p", "foot", "这个订单打不开了。"));
+  $("root").append(el("p", "foot", T("od.gone")));
 }
 
-if (!ID) $("root").append(el("p", "foot", "这个订单打不开了。"));
+if (!ID) $("root").append(el("p", "foot", T("od.gone")));
 else load();
 </script>

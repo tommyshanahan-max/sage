@@ -10846,7 +10846,10 @@ app.get("/api/shop/:handle", async (req, res) => {
        to be able to say 已售完 rather than go quiet. */
     products: board.products
       .filter((p) => !p.off)
-      .map((p) => ({ id: p.id, name: p.name, unit: p.unit, price: p.price,
+      /* The English name goes with it, because the one person who reads
+         this page in English is whoever runs the shop, and a picking-list
+         name is more use to him than a Chinese one he is checking. */
+      .map((p) => ({ id: p.id, name: p.name, en: p.en, unit: p.unit, price: p.price,
         photo: p.photo, out: Boolean(p.out) })),
     /* One postage per order, the way every parcel out of Australia is
        actually charged. */
