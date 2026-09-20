@@ -43,7 +43,14 @@ if (!r.ok || !j?.ok) {
 
 /* The public name of this board, or a sensible guess. Never the answer's own
    url — see the note at the top. */
-const PUBLIC = (process.env.BOARD_PUBLIC_URL || "https://thexchange.app").replace(/\/+$/, "");
+/* DEALIO'S NAME FIRST, when the box has one. This link is pasted into WeChat
+   and opened by somebody who has never heard of the board; both names serve
+   the same page, and only one of them is the product they were told about. */
+const DEALIO = String(process.env.BOARD_DEALIO_URL || "").trim()
+  .replace(/^https?:\/\//, "").replace(/\/+$/, "");
+const PUBLIC = DEALIO
+  ? "https://" + DEALIO
+  : (process.env.BOARD_PUBLIC_URL || "https://thexchange.app").replace(/\/+$/, "");
 console.log("");
 console.log("  " + PUBLIC + "/pay/" + j.id);
 console.log("");

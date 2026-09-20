@@ -692,8 +692,13 @@ ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [FOR
 	@# BOARD_PUBLIC_URL, or it prints http://board:8080/pay/... — a real page
 	@# that only exists inside the compose network. The same arrangement
 	@# `make back` has always had.
+	@# AND ON DEALIO'S OWN NAME WHEN THERE IS ONE. The link printed here is
+	@# the link that gets pasted into WeChat, and it was carrying the board's
+	@# domain — so the payer opened a page about money under the name of a
+	@# private networking board. ask.mjs prefers the second when it is set.
 	$(COMPOSE) run --rm --no-deps -T \
 	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
+	  -e BOARD_DEALIO_URL="$$(grep -E '^TOMSCODING_DEALIO_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
 	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/ask.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)" \
