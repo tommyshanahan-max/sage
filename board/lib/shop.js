@@ -276,6 +276,55 @@ export function cleanChat(raw) {
   };
 }
 
+/** WHAT SOMEBODY SAID ABOUT A THING SHE ACTUALLY BOUGHT.
+ *
+ *  TIED TO AN ORDER, NOT TO A PRODUCT. That is the whole value of it: a
+ *  review here cannot be written by somebody who did not buy, cannot be
+ *  bought, and cannot be left twice on the same line. Taobao's 评价 is the
+ *  thing that sells the second unit, and it only works because of exactly
+ *  that constraint.
+ *
+ *  AND NOT UNTIL IT ARRIVED. A review of a parcel in transit is a review of
+ *  the waiting, which is the shop's slowest part and the thing she has least
+ *  to say about — see orderState: it hangs off 确认收货.
+ *
+ *  THE NAME IS MASKED, 李***娜, the way every Chinese shop shows it. The
+ *  board has no name for her anyway; whoever the parcel went to does. */
+export function cleanReview(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = cleanId(raw.id);
+  const order = cleanId(raw.order);
+  const product = cleanId(raw.product);
+  const by = /^[a-f0-9]{32}$/.test(String(raw.by || "")) ? String(raw.by) : "";
+  const stars = Math.min(Math.max(Math.round(Number(raw.stars) || 0), 1), 5);
+  if (!id || !order || !product || !by) return null;
+  return {
+    id, order, product, by, stars,
+    at: s(raw.at, 40) || new Date().toISOString(),
+    /* Short. A review nobody reads to the end is a review that did not
+       work, and the ones that sell are one sentence about one thing. */
+    text: s(raw.text, 300),
+    /* Hers, fetched onto this board like every other picture here. */
+    photo: s(raw.photo, 300),
+    /* Masked at rest rather than at render, so the full name is never in a
+       response waiting for somebody to forget to mask it. */
+    who: s(raw.who, 20),
+    /* The shopkeeper's answer, where there is one. */
+    back: s(raw.back, 300),
+  };
+}
+
+/** 李娜 → 李**娜, 王芳 → 王*芳, Ann → A**n. What every Chinese shop shows,
+ *  and the most this board should ever hold about a buyer. */
+export function maskName(name) {
+  const n = String(name || "").trim();
+  if (n.length <= 1) return n || "*";
+  if (n.length === 2) return n[0] + "*" + n[1];
+  return n[0] + "*".repeat(Math.min(n.length - 2, 3)) + n[n.length - 1];
+}
+
+export const REVIEW_MAX = 4000;
+
 export const CHAT_MAX = 2000;
 
 export const PRODUCT_MAX = 400;

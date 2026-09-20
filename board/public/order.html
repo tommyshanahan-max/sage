@@ -38,6 +38,22 @@
     color:var(--mut);font:inherit;font-size:.75rem;border-radius:999px;
     padding:.2rem .6rem;align-self:center}
   .box{background:var(--card);border-radius:.9rem;padding:.9rem;margin:0 0 .7rem}
+  /* 确认收货, and the review that hangs off it. One button, full width,
+     because it is the only thing to do on the screen when it is there. */
+  .did{width:100%;border:0;border-radius:999px;background:var(--acc);color:#fff;
+    font:inherit;font-size:1rem;font-weight:600;padding:.9rem;margin:.2rem 0 .7rem}
+  .did.quiet{background:var(--card);color:var(--acc)}
+  .did:disabled{background:var(--line);color:var(--mut)}
+  .stars{display:flex;gap:.35rem;justify-content:center;margin:.2rem 0 .8rem}
+  .stars button{border:0;background:none;font-size:1.9rem;line-height:1;
+    padding:0;color:var(--line)}
+  .stars button.on{color:#F5A623}
+  .rev textarea{width:100%;font:inherit;font-size:1rem;padding:.7rem;
+    border-radius:.7rem;border:1px solid var(--line);background:var(--bg);
+    color:var(--ink);resize:none;height:4.5rem;line-height:1.5}
+  .rev .lab{margin:0 0 .5rem;font-size:.9rem;text-align:center}
+  .said{margin:.6rem 0 0;font-size:.85rem;color:var(--acc);text-align:center}
+  .thanks{text-align:center;color:var(--ok);font-size:.95rem;padding:.6rem 0}
   .lab{font-size:.75rem;color:var(--mut);margin:0 0 .35rem}
   .addr{font-size:.95rem;line-height:1.6}
   .addr b{font-weight:600}
@@ -88,6 +104,11 @@ const yuan = (n) => "¥" + (n / 100).toLocaleString("zh-CN", {
    rather than held, so a flip moves them with everything else. */
 const WORD = (state) => T("od." + state);
 
+/* The same string the shopfront minted — see device() in shop.html. */
+function device() {
+  try { return localStorage.getItem("board:device") || ""; } catch { return ""; }
+}
+
 let O = null;
 
 function draw() {
@@ -111,6 +132,10 @@ function draw() {
   /* WHAT TO DO, FIRST AND ONLY. Everything below it is the receipt. */
   if (O.state === "due") root.append(payBox());
   if (O.state === "shipped" || O.state === "done") root.append(trackBox());
+  /* 确认收货 while it is on its way, and the review once it has arrived —
+     in that order, because one leads to the other. */
+  if (O.state === "shipped") root.append(gotButton());
+  if (O.state === "done") root.append(reviewBox());
 
   const addr = el("div", "box");
   addr.append(el("p", "lab", T("od.addr")));
@@ -203,6 +228,107 @@ function watch() {
     setTimeout(tick, 3000);
   };
   setTimeout(tick, 3000);
+}
+
+/* THE ONE CLICK THAT SAYS SHE WAS LOOKED AFTER, and only she can make it.
+   The seller marking somebody else's parcel as arrived is the thing this
+   route refuses — see /api/order/:id/got. */
+function gotButton() {
+  const b = el("button", "did", T("od.got"));
+  b.type = "button";
+  b.addEventListener("click", async () => {
+    b.disabled = true;
+    b.textContent = T("od.gotting");
+    try {
+      const r = await fetch("/api/order/" + encodeURIComponent(ID) + "/got", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device: device() }),
+      });
+      if (r.ok) { load(); return; }
+    } catch { /* fall through to the sentence below */ }
+    b.textContent = T("od.gotNo");
+    b.disabled = false;
+  });
+  return b;
+}
+
+/* 评价, one line per thing she bought. Opened from a button rather than
+   shown open: a form waiting on the screen is a chore, and the same form
+   behind one tap is a thing she chose to do. */
+function reviewBox() {
+  const box = el("div", "box rev");
+  const open = el("button", "did quiet", T("od.rate"));
+  open.type = "button";
+  box.append(open);
+  open.addEventListener("click", () => { open.remove(); box.append(form()); });
+
+  function form() {
+    const wrap = el("div");
+    /* One line at a time. Most orders are one thing, and a page of forms
+       for the rare three-line order is a page nobody finishes. */
+    let which = O.lines[0]?.id || "";
+    if (O.lines.length > 1) {
+      const pick = document.createElement("select");
+      for (const l of O.lines) {
+        const o = document.createElement("option");
+        o.value = l.id;
+        o.textContent = l.name;
+        pick.append(o);
+      }
+      pick.addEventListener("change", () => { which = pick.value; });
+      wrap.append(pick);
+    }
+    wrap.append(el("p", "lab", T("od.stars")));
+
+    let stars = 5;
+    const row = el("div", "stars");
+    const btns = [];
+    for (let i = 1; i <= 5; i += 1) {
+      const b = el("button", i <= stars ? "on" : null, "★");
+      b.type = "button";
+      b.addEventListener("click", () => {
+        stars = i;
+        btns.forEach((x, n) => x.classList.toggle("on", n < stars));
+      });
+      btns.push(b);
+      row.append(b);
+    }
+    wrap.append(row);
+
+    const say = document.createElement("textarea");
+    say.placeholder = T("od.saySome");
+    wrap.append(say);
+
+    const go = el("button", "did", T("od.send"));
+    go.type = "button";
+    const said = el("p", "said");
+    said.hidden = true;
+    go.addEventListener("click", async () => {
+      go.disabled = true;
+      go.textContent = T("od.posting");
+      said.hidden = true;
+      try {
+        const r = await fetch("/api/order/" + encodeURIComponent(ID) + "/review", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device: device(), product: which,
+            stars, text: say.value.trim() }),
+        });
+        const j = await r.json().catch(() => null);
+        if (r.ok && j?.ok) {
+          wrap.textContent = "";
+          wrap.append(el("p", "thanks", T("od.rateDone")));
+          return;
+        }
+        said.textContent = T(j?.error === "already" ? "od.rated" : "od.rateNo");
+      } catch { said.textContent = T("od.rateNo"); }
+      said.hidden = false;
+      go.disabled = false;
+      go.textContent = T("od.send");
+    });
+    wrap.append(go, said);
+    return wrap;
+  }
+  return box;
 }
 
 function trackBox() {

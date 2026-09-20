@@ -6500,12 +6500,12 @@ export const STRINGS = {
   "mn.ai":             ["Assistant answers first", "小助手先回"],
   "mn.aiOn":           ["On", "开"],
   "mn.aiOff":          ["Off", "关"],
-  /* This month's board. Ranked on new buyers rather than on money: money
-     rewards whoever already had the biggest friends list, and a new buyer
-     is the thing she can do something about this afternoon. */
+  /* This month's board, ranked on what she sold — new buyers sit beside it
+     so a month spent selling more to the same four people is visible for
+     what it is. */
   "mn.top":            ["This month", "本月排行"],
-  "mn.topWhy":         ["Ranked on new buyers. Top three get a bonus at the end of the month.",
-                        "按新客户数排。月底前三名有奖金。"],
+  "mn.topWhy":         ["Ranked on sales. Top three get a bonus at the end of the month.",
+                        "按销售额排。月底前三名有奖金。"],
   "mn.topNone":        ["Nobody has sold anything this month.", "本月还没有人卖出东西。"],
   "mn.buyers":         ["{n} new", "新客 {n}"],
   "mn.you":            ["You", "你"],
@@ -6568,6 +6568,30 @@ export const STRINGS = {
   "od.noQr":           ["No code came back. Try again.", "没生成出来，再试一次。"],
   "od.track":          ["Tracking", "快递单号"],
   "od.gone":           ["That order would not open.", "这个订单打不开了。"],
+  /* 确认收货 — the state nothing could reach until now, and the one click
+     in this shop that says whether she was looked after. Only she presses
+     it. */
+  "od.got":            ["It arrived", "确认收货"],
+  "od.gotting":        ["One moment…", "请稍等…"],
+  "od.gotNo":          ["That did not go through. Try again.", "没成功，再试一次。"],
+  /* 评价. One sentence about one thing is the review that sells the next
+     one; nobody reads to the end of a paragraph. */
+  "od.rate":           ["Leave a review", "评价一下"],
+  "od.rateDone":       ["Thank you.", "谢谢你的评价。"],
+  "od.stars":          ["How was it?", "觉得怎么样？"],
+  "od.saySome":        ["A sentence, if you like", "想说两句（可不写）"],
+  "od.send":           ["Post", "发布"],
+  "od.posting":        ["Posting…", "发布中…"],
+  "od.rateNo":         ["That did not post. Try again.", "没发出去，再试一次。"],
+  "od.rated":          ["You have reviewed this one.", "这件你已经评价过了。"],
+
+  /* On the shopfront. The section does not exist until it has something in
+     it: an empty 评论 sheet says nobody bought this, which is worse than
+     not asking the question. */
+  "sh.stars":          ["{stars} · {n} reviews", "{stars} 分 · {n} 条评价"],
+  "sh.stars1":         ["{stars} · 1 review", "{stars} 分 · 1 条评价"],
+  "sh.reviews":        ["Reviews", "评价"],
+  "sh.shopSaid":       ["Shop", "店家回复"],
   /* Her own list. She has no account, so the browser is the whole of her
      identity — said on the page rather than discovered on a new phone. */
   "od.mine":           ["My orders", "我的订单"],

@@ -217,9 +217,10 @@ function topBoard() {
     const who = el("span", "who", r.name);
     if (r.you) who.append(el("i", null, T("mn.you")));
     row.append(who);
+    /* What it is ranked on is the big number; the other is underneath. */
     const num = el("span", "num");
-    num.append(el("b", null, T("mn.buyers", { n: r.buyers })));
-    num.append(el("span", null, r.sold));
+    num.append(el("b", null, r.sold));
+    num.append(el("span", null, T("mn.buyers", { n: r.buyers })));
     row.append(num);
     box.append(row);
   }

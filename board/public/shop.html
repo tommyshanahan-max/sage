@@ -64,6 +64,22 @@
   .item .nm{font-size:.95rem;line-height:1.4;display:-webkit-box;
     -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .item .un{font-size:.78rem;color:var(--mut)}
+  /* 评价, on the row. It only appears when there is one — an empty reviews
+     line says nobody bought this, which is worse than not asking. */
+  .item .rv{border:0;background:none;padding:0;font:inherit;font-size:.76rem;
+    color:var(--mut);text-align:left}
+  .item .rv b{color:#F5A623;font-weight:600}
+  .revs{text-align:left;max-height:52vh;overflow:auto}
+  .rev1{padding:.7rem 0;border-top:1px solid var(--line)}
+  .rev1:first-child{border-top:0}
+  .rev1 .top{display:flex;align-items:baseline;gap:.6rem}
+  .rev1 .top b{font-size:.85rem;color:var(--ink2);font-weight:500}
+  .rev1 .top span{font-size:.85rem;color:#F5A623}
+  .rev1 p{margin:.3rem 0 0;font-size:.92rem;line-height:1.55}
+  .rev1 img{width:5.5rem;height:5.5rem;object-fit:cover;border-radius:.5rem;
+    margin:.45rem 0 0;display:block}
+  .rev1 .back{margin:.45rem 0 0;padding:.5rem .65rem;background:var(--bg);
+    border-radius:.5rem;font-size:.86rem;color:var(--ink2)}
   .item .row{margin-top:auto;display:flex;align-items:center;justify-content:space-between}
   .item .pr{font-size:1.05rem;color:var(--acc)}
   .item .pr i{font-style:normal;font-size:.78rem}
@@ -329,6 +345,45 @@ function askSheet(order = "") {
   box.focus();
 }
 
+/* What people said about one thing. Ones with words first — a wall of bare
+   five-star rows reads as bought, which is the opposite of the point. */
+function revSheet(it, j) {
+  const sheet = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("h2", null, T("sh.reviews")));
+  const list = el("div", "revs");
+  for (const r of j.rows) {
+    const box = el("div", "rev1");
+    const top = el("div", "top");
+    top.append(el("b", null, r.who || "***"));
+    top.append(el("span", null, "★".repeat(r.stars)));
+    box.append(top);
+    if (r.text) box.append(el("p", null, r.text));
+    if (r.photo) {
+      const img = el("img");
+      img.src = r.photo;
+      img.alt = "";
+      img.loading = "lazy";
+      img.addEventListener("error", () => img.remove());
+      box.append(img);
+    }
+    if (r.back) {
+      const b = el("p", "back");
+      b.append(el("b", null, T("sh.shopSaid") + " "), document.createTextNode(r.back));
+      box.append(b);
+    }
+    list.append(box);
+  }
+  card.append(list);
+  const shut = el("button", "shut", T("sh.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => sheet.remove());
+  card.append(shut);
+  sheet.append(card);
+  sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.remove(); });
+  document.body.append(sheet);
+}
+
 /* The WeChat half, which used to be the whole sheet. */
 function wxInto(card) {
   if (SHOP.wechat) {
@@ -429,9 +484,28 @@ function draw() {
     }
 
     const mid = el("div", "mid");
+    /* Asked per row, once, after the list is on screen. A shop with no
+       reviews makes no extra request and shows no extra line. */
+    const rv = el("button", "rv");
+    rv.type = "button";
+    rv.hidden = true;
     /* Her name for it, or the warehouse's when the page is being read in
        English — the same row, said to whoever is looking at it. */
     mid.append(el("div", "nm", (lang() === "en" && it.en) ? it.en : it.name));
+    mid.append(rv);
+    fetch("/api/product/" + encodeURIComponent(it.id) + "/reviews", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j?.n) return;
+        rv.textContent = "";
+        rv.append(el("b", null, "★ " + j.stars.toFixed(1)));
+        rv.append(document.createTextNode("  "
+          + T(j.n === 1 ? "sh.stars1" : "sh.stars", { stars: j.stars.toFixed(1), n: j.n })
+            .replace(/^[^·]*· /, "")));
+        rv.hidden = false;
+        rv.addEventListener("click", () => revSheet(it, j));
+      })
+      .catch(() => {});
     if (it.unit) mid.append(el("div", "un", it.unit));
     const row = el("div", "row");
     const pr = el("div", "pr");

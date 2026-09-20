@@ -495,7 +495,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/order\/|api\/orders$|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -10983,6 +10983,98 @@ app.get("/api/order/:id", async (req, res) => {
   res.json({ ok: true, order: shop.orderView(o) });
 });
 
+/** 确认收货 — THE STATE NOBODY COULD REACH.
+ *
+ *  orderState returns 完成 on `got`, and nothing ever set it: every order
+ *  stopped at 待收货 forever. That is the state the review hangs off, and
+ *  confirming receipt is a button every Chinese buyer expects to press.
+ *
+ *  Only she can press it, and only once it has been sent. The seller must
+ *  never be able to mark somebody else's parcel as arrived — that is the
+ *  one click in this whole shop that decides whether she was looked after.
+ */
+app.post("/api/order/:id/got", express.json({ limit: "1kb" }), async (req, res) => {
+  const id = shop.cleanId(req.params.id);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!id || !me) return res.status(400).json({ error: "no" });
+  const out = await change((b) => {
+    const o = b.orders.find((x) => x.id === id);
+    if (!o || o.off || o.by !== me) return { error: "gone" };
+    if (!o.sent?.tracking) return { error: "notyet" };
+    o.got = true;
+    return { ok: true };
+  });
+  if (out?.error) return res.status(out.error === "notyet" ? 400 : 404).json(out);
+  res.json({ ok: true });
+});
+
+/** 评价 — WHAT SHE SAID, ON A LINE SHE ACTUALLY BOUGHT.
+ *
+ *  Every guard here is what makes a review worth reading: her device owns
+ *  the order, the order arrived, the product was on it, and there is not
+ *  one already. See cleanReview in lib/shop.js. */
+app.post("/api/order/:id/review", express.json({ limit: "4kb" }), async (req, res) => {
+  const id = shop.cleanId(req.params.id);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const product = shop.cleanId(req.body?.product);
+  const stars = Math.min(Math.max(Math.round(Number(req.body?.stars) || 0), 1), 5);
+  const text = String(req.body?.text || "").replace(/\r\n?/g, "\n").trim().slice(0, 300);
+  if (!id || !me || !product || !stars) return res.status(400).json({ error: "no" });
+
+  let photo = "";
+  if (req.body?.photo) {
+    try { photo = await fetchPhoto(req.body.photo); } catch (err) {
+      console.error("review photo:", err.message);
+    }
+  }
+
+  const out = await change((b) => {
+    const o = b.orders.find((x) => x.id === id);
+    if (!o || o.off || o.by !== me) return { error: "gone" };
+    if (!o.got) return { error: "notyet" };
+    if (!o.lines.some((l) => l.id === product)) return { error: "notyours" };
+    if (b.reviews.some((r) => r.order === id && r.product === product)) {
+      return { error: "already" };
+    }
+    b.reviews.push({
+      id: shop.newId(), order: id, product, by: me, stars, text, photo,
+      at: new Date().toISOString(),
+      /* Masked here, once, rather than at every render — the full name is
+         then never in a response waiting for somebody to forget. */
+      who: shop.maskName(o.ship?.name || ""),
+      back: "",
+    });
+    return { ok: true };
+  });
+  if (out?.error) {
+    return res.status(out.error === "gone" ? 404 : 400).json(out);
+  }
+  res.status(201).json({ ok: true });
+});
+
+/** WHAT PEOPLE SAID ABOUT ONE THING. Newest first, and the ones with words
+ *  in them before the ones without — a wall of bare five-star rows reads as
+ *  bought, which is the opposite of what a review is for. */
+app.get("/api/product/:id/reviews", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const id = shop.cleanId(req.params.id);
+  if (!id) return res.json({ ok: true, rows: [], n: 0, stars: 0 });
+  const board = await store.load(FILE);
+  const all = board.reviews.filter((r) => r.product === id);
+  const rows = [...all]
+    .sort((a, b) => (Boolean(b.text) - Boolean(a.text))
+      || String(b.at || "").localeCompare(String(a.at || "")))
+    .slice(0, 50)
+    .map((r) => ({ who: r.who, stars: r.stars, text: r.text, photo: r.photo,
+      at: r.at, back: r.back }));
+  res.json({
+    ok: true, rows, n: all.length,
+    stars: all.length
+      ? Math.round((all.reduce((n, r) => n + r.stars, 0) / all.length) * 10) / 10
+      : 0,
+  });
+});
+
 /* ---- 联系店家 -------------------------------------------------------------
  *
  * The first version of this showed a WeChat id and a QR code, which is what
@@ -11108,11 +11200,12 @@ app.post("/api/mine/chat/:id", express.json({ limit: "2kb" }), async (req, res) 
 
 /** THIS MONTH'S BOARD, AND WHO IS ON TOP OF IT.
  *
- *  RANKED ON NEW BUYERS, not on money. Money rewards whoever already had
- *  the biggest friends list; a new buyer is the thing a representative can
- *  actually do something about this afternoon, and it is the thing the shop
- *  wants done. Sales sit beside it because she will look for them, not
- *  because they decide the order.
+ *  RANKED ON WHAT SHE SOLD. It was new buyers first, on the argument that
+ *  money rewards whoever already had the biggest friends list — Tom's call
+ *  is revenue, and it is the simpler promise: the bonus goes to whoever
+ *  brought in the most. New buyers stay beside it, because a month spent
+ *  selling more to the same four people is a month that looks good on this
+ *  board and is not growth.
  *
  *  THE MONTH IS CHINA'S. Every representative is in mainland China, so a
  *  month that turns over at midnight UTC ends in the middle of their
@@ -11162,9 +11255,9 @@ app.get("/api/mine/top", async (req, res) => {
   const rows = [...by.values()]
     .map((r) => ({ shop: r.shop, orders: r.orders, buyers: r.fresh.size,
       soldFen: r.sold, sold: store.fromMinor(r.sold, "cny") }))
-    /* New buyers, then money, then orders — a tie broken by nothing looks
+    /* Money, then new buyers, then orders — a tie broken by nothing looks
        to the person below it like the board cannot count. */
-    .sort((a, b) => b.buyers - a.buyers || b.soldFen - a.soldFen || b.orders - a.orders)
+    .sort((a, b) => b.soldFen - a.soldFen || b.buyers - a.buyers || b.orders - a.orders)
     .slice(0, 20)
     .map((r, i) => ({ ...r, rank: i + 1, soldFen: undefined,
       /* Their own shop's name where they have set one, because a handle is
