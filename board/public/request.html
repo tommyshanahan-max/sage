@@ -181,6 +181,7 @@
      max-width collapses to a dot, which is exactly what it did. */
   /* The code block sits in the middle of the sheet, not at the top of a
      screen of nothing: it is the only thing on it. */
+  .wallets{margin:.6rem 0 0;text-align:center;font-size:.8rem;color:var(--muted)}
   .pslot.code{display:flex;align-items:center;justify-content:center}
   .codebox{display:flex;flex-direction:column;align-items:center;text-align:center;gap:0}
   .codeWith{margin:0;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;
@@ -402,12 +403,24 @@ function draw() {
     b.type = "button";
     b.addEventListener("click", () => payHow(q));
     body.append(b);
+    /* THE WALLETS, NAMED BEFORE THE TAP. Somebody who has never heard of
+       this page is deciding whether it can take the money they actually
+       have, and the answer was two taps inside a sheet. Their own wallet's
+       name under the button answers it in the glance they give this
+       screen — and it is the one thing on it they already trust. */
+    const names = { wechat: "pay.wechat", alipay: "pay.alipay", card: "pay.card" };
+    const has = (Array.isArray(STATE?.ways) ? STATE.ways : []).filter((k) => names[k]);
+    if (has.length) body.append(el("p", "wallets", has.map((k) => T(names[k])).join(" · ")));
   }
   sheet.append(body);
 
   /* NOT "For", which is already the line under the amount. It was printed
-     twice on one card, three inches apart. */
-  const rows = [["rq.when", q.when], ["rq.asked", when(q.at)]].filter(([, v]) => v);
+     twice on one card, three inches apart.
+     AND NOT "ASKED · NOW" EITHER. A table with one row in it, telling the
+     payer a thing they watched happen — the message they are answering
+     arrived in the chat they came from. When it is due is real and stays;
+     when it was asked is furniture. */
+  const rows = [["rq.when", q.when]].filter(([, v]) => v);
   if (rows.length) {
     const dl = el("dl", "terms");
     for (const [k, v] of rows) {
