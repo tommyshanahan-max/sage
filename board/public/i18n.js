@@ -6733,6 +6733,18 @@ export const STRINGS = {
   "mn.earned":         ["Earned", "累计佣金"],
   "mn.owed":           ["Not paid out yet", "待结"],
   "mn.setUp":          ["Say where your money lands", "填收款方式"],
+  /* 提现. The transfer is by hand until Airwallex takes a yuan
+     beneficiary, but the asking is real: it is recorded and it comes out
+     at the top of the list the money is sent from. Nothing here promises
+     a date nobody can keep. */
+  "mn.out":            ["Withdraw", "提现"],
+  "mn.outGoing":       ["One moment…", "请稍等…"],
+  "mn.outAsked":       ["{amount} — being handled", "{amount} 处理中"],
+  "mn.outHow":         ["It goes to the card you gave, usually within a few days. You will not need to ask twice.",
+                        "会打到你填的那张卡，一般几天内到。不用再点第二次。"],
+  "mn.outNoCard":      ["Say where your money lands first.", "先填收款方式。"],
+  "mn.outNothing":     ["Nothing owed yet.", "现在没有待结的。"],
+  "mn.outNo":          ["That did not go through. Try again.", "没成功，再试一次。"],
   "mn.none":           ["Nothing ordered yet.", "还没有人下单。"],
   "mn.cut":            ["Your share {amount}", "佣金 {amount}"],
   "mn.cutPaid":        ["Your share {amount} · paid", "佣金 {amount} · 已结"],

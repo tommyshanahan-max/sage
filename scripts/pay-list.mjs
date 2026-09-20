@@ -28,7 +28,9 @@ if (!j.rows.length) {
 /* Grouped in fours down the screen rather than across it: a card number and
    an amount side by side on one line is the thing that gets misread. */
 for (const row of j.rows) {
-  console.log("  " + row.amount);
+  /* SHE PRESSED 提现 AND HER SCREEN SAYS 处理中. Marked, because somebody
+     waiting on a screen comes before somebody who has not asked. */
+  console.log("  " + row.amount + (row.asked ? "   ← asked for it" : ""));
   if (row.ready) {
     console.log("    " + (row.name || row.shop));
     console.log("    " + (row.bank || "—"));

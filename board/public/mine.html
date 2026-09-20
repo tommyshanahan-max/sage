@@ -52,6 +52,13 @@
   .money span{display:block;font-size:.75rem;color:var(--mut)}
   .money b{display:block;font-size:1.35rem;margin:.15rem 0 0}
   .money .owe b{color:var(--acc)}
+  /* 提现 sits on the owed tile, because that is the number it is about. */
+  .money .owe button{margin:.5rem 0 0;width:100%;border:0;border-radius:999px;
+    background:var(--acc);color:#fff;font:inherit;font-size:.85rem;padding:.45rem}
+  .money .owe button:disabled{background:var(--line);color:var(--mut)}
+  .money .owe .wait{display:block;margin:.5rem 0 0;font-size:.75rem;color:var(--ok)}
+  .outwhy{margin:0 0 .7rem;padding:0 .3rem;font-size:.75rem;line-height:1.6;
+    color:var(--mut)}
   a.setup{display:block;background:var(--card);border-radius:.9rem;padding:.9rem;
     margin:0 0 .7rem;text-align:center;text-decoration:none;color:var(--acc);
     font-size:.95rem}
@@ -363,8 +370,35 @@ function draw() {
   a.append(el("span", null, T("mn.earned")), el("b", null, D.earned));
   const c = el("div", "owe");
   c.append(el("span", null, T("mn.owed")), el("b", null, D.owed));
+  /* Asked for and not yet sent: say so instead of offering the button
+     again. The same money asked for twice is how somebody gets paid twice
+     or not at all. */
+  if (D.asked) {
+    c.append(el("span", "wait", T("mn.outAsked", { amount: D.asked.amount })));
+  } else if (D.owedFen) {
+    const b = el("button", null, T("mn.out"));
+    b.type = "button";
+    b.addEventListener("click", async () => {
+      b.disabled = true;
+      b.textContent = T("mn.outGoing");
+      try {
+        const r = await fetch("/api/mine/cashout", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device: device() }),
+        });
+        const j = await r.json().catch(() => null);
+        if (r.ok && j?.ok) { load(); return; }
+        /* Nowhere to send it is the next screen, not a refusal. */
+        if (j?.error === "nocard") { location.href = "/paid"; return; }
+        b.textContent = T(j?.error === "nothing" ? "mn.outNothing" : "mn.outNo");
+      } catch { b.textContent = T("mn.outNo"); }
+      b.disabled = false;
+    });
+    c.append(b);
+  }
   money.append(a, c);
   root.append(money);
+  if (D.asked || D.owedFen) root.append(el("p", "outwhy", T("mn.outHow")));
 
   /* Only when there is money to land and nowhere for it to go — a standing
      row telling somebody to do a thing they have done is noise. */

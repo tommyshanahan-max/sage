@@ -378,6 +378,36 @@ export function cleanAsk(raw) {
   return out;
 }
 
+/** 提现 — SHE ASKS FOR HER MONEY.
+ *
+ *  A wallet she cannot withdraw from is not a wallet, and a button that
+ *  does nothing is worse than no button. So the request is real even while
+ *  the rail is not: she taps it, the board records what she asked for and
+ *  when, and it appears in the list the money is actually sent from. The
+ *  only thing that is by hand is the transfer.
+ *
+ *  THE AMOUNT IS FIXED AT THE ASKING. She asks for what she is owed today;
+ *  a sale tomorrow is tomorrow's withdrawal. A figure that moves between
+ *  the asking and the paying is the thing nobody can reconcile afterwards.
+ */
+export function cleanCashout(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = cleanId(raw.id);
+  const who = s(raw.who, 40);
+  const fen = Math.round(Number(raw.fen) || 0);
+  if (!id || !who || !Number.isSafeInteger(fen) || fen <= 0) return null;
+  const out = {
+    id, who, fen,
+    at: s(raw.at, 40) || new Date().toISOString(),
+  };
+  /* When it was actually sent. Until then she is told it is being handled,
+     which is true, rather than a date nobody can keep. */
+  if (raw.paid) out.paid = s(raw.paid, 40) || new Date().toISOString();
+  return out;
+}
+
+export const CASHOUT_MAX = 2000;
+
 export const ASK_MAX = 4000;
 
 export const REVIEW_MAX = 4000;

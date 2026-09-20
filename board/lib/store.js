@@ -18,7 +18,7 @@ import { randomUUID, createHash, randomBytes } from "node:crypto";
 import path from "node:path";
 import { cleanShare, MEMO_ALPHABET } from "./memo.js";
 import { cleanRequest, CURRENCIES as REQUEST_CURRENCIES, REQUEST_MAX } from "./request.js";
-import { cleanProduct, cleanOrder, cleanChat, cleanReview, cleanAsk, PRODUCT_MAX, ORDER_MAX, CHAT_MAX, REVIEW_MAX, ASK_MAX } from "./shop.js";
+import { cleanProduct, cleanOrder, cleanChat, cleanReview, cleanAsk, cleanCashout, PRODUCT_MAX, ORDER_MAX, CHAT_MAX, REVIEW_MAX, ASK_MAX, CASHOUT_MAX } from "./shop.js";
 
 /** Where a post can be. Four, and each is a different fact:
  *
@@ -3358,6 +3358,15 @@ export function cleanBoard(raw) {
     rvids.add(q.id);
     reviews.push(q);
   }
+  /* 提现 — what a representative asked for, and whether it has gone. */
+  const cashouts = [];
+  const coids = new Set();
+  for (const r of (Array.isArray(raw?.cashouts) ? raw.cashouts : [])) {
+    const q = cleanCashout(r);
+    if (!q || coids.has(q.id)) continue;
+    coids.add(q.id);
+    cashouts.push(q);
+  }
   /* 问大家 — a question about a thing, answered by people who have it. */
   const asks = [];
   const akids = new Set();
@@ -3386,6 +3395,7 @@ export function cleanBoard(raw) {
     chats: chats.slice(-CHAT_MAX),
     reviews: reviews.slice(-REVIEW_MAX),
     asks: asks.slice(-ASK_MAX),
+    cashouts: cashouts.slice(-CASHOUT_MAX),
     counts: cleanCounts(raw?.counts) };
 }
 

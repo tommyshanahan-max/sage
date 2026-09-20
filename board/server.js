@@ -10952,6 +10952,12 @@ app.get("/api/mine", async (req, res) => {
     owedFen: rows.filter((o) => o.paid && !o.cutPaid).reduce((n, o) => n + (o.cut || 0), 0),
     paid: Boolean(mine.payout),
     ai: Boolean(mine.shop?.ai),
+    /* What she has asked for and not yet been sent. The screen says
+       处理中 rather than offering the button again. */
+    asked: (() => {
+      const c = board.cashouts.find((x) => x.who === mine.handle && !x.paid);
+      return c ? { amount: store.fromMinor(c.fen, "cny"), at: c.at } : null;
+    })(),
     /* Unread across every thread, for the one badge that decides whether
        she opens the list at all. */
     unread: board.chats
@@ -11433,6 +11439,44 @@ app.get("/api/mine/top", async (req, res) => {
   res.json({ ok: true, month: now, rows });
 });
 
+/** 提现 — SHE ASKS FOR HER MONEY, AND THE ASK IS REAL.
+ *
+ *  The transfer is still made by hand (see /api/admin/pay-list: Airwallex
+ *  will not take a yuan beneficiary yet), but nothing about this button is
+ *  pretend. She taps it, the board records what she asked for and when, and
+ *  it comes out at the top of the list the money is sent from. A button
+ *  that does nothing would be worse than no button; this one does the only
+ *  part a board can do.
+ *
+ *  ONE AT A TIME. A second request while the first is unpaid is the same
+ *  money asked for twice, and two rows for one transfer is how somebody
+ *  gets paid twice or not at all.
+ */
+app.post("/api/mine/cashout", express.json({ limit: "1kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const out = await change((b) => {
+    const mine = b.people.find((p) => p.by === me);
+    if (!mine) return { error: "gone" };
+    /* Nowhere to send it is not a refusal, it is the next screen. */
+    if (!mine.payout) return { error: "nocard" };
+    if (b.cashouts.some((c) => c.who === mine.handle && !c.paid)) {
+      return { error: "already" };
+    }
+    const fen = b.orders
+      .filter((o) => !o.off && o.paid && o.cut && !o.cutPaid && o.shop === mine.handle)
+      .reduce((n, o) => n + o.cut, 0);
+    if (!fen) return { error: "nothing" };
+    b.cashouts.push({ id: shop.newId(), who: mine.handle, fen,
+      at: new Date().toISOString() });
+    return { ok: true, amount: store.fromMinor(fen, "cny") };
+  });
+  if (out?.error) {
+    return res.status(out.error === "gone" ? 404 : 400).json(out);
+  }
+  res.status(201).json({ ok: true, amount: out.amount });
+});
+
 /** THE ASSISTANT, ON OR OFF, BY THE PERSON WHOSE SHOP IT IS.
  *
  *  Not an admin target. Whether a machine answers her buyers in her name is
@@ -11802,8 +11846,12 @@ app.get("/api/admin/pay-list", admin, async (req, res) => {
     if (o.off || !o.paid || !o.cut || o.cutPaid || !o.shop) continue;
     owed.set(o.shop, (owed.get(o.shop) || 0) + o.cut);
   }
+  /* WHOEVER ASKED COMES FIRST. Somebody who pressed 提现 is waiting on a
+     screen that says it is being handled; somebody who has not is not
+     waiting at all. */
+  const asked = new Map(board.cashouts.filter((c) => !c.paid).map((c) => [c.who, c]));
   const rows = [...owed]
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => (asked.has(b[0]) - asked.has(a[0])) || b[1] - a[1])
     .map(([handle, fen]) => {
       const who = board.people.find((x) => x.handle === handle);
       const card = who?.payout?.cn ? sealed.unseal(DIR, who.payout.sealed) : "";
@@ -11816,6 +11864,7 @@ app.get("/api/admin/pay-list", admin, async (req, res) => {
         /* No card and no id means they have not filled the form in. That is
            a message to send, not a payment to make. */
         ready: Boolean(card || who?.payout?.id),
+        asked: asked.get(handle)?.at || "",
       };
     });
   res.json({ ok: true, rows });
@@ -11831,6 +11880,11 @@ app.post("/api/admin/paid-out", admin, express.json({ limit: "1kb" }), async (re
   if (!who) return res.status(400).json({ error: "who" });
   const out = await change((b) => {
     if (!b.people.some((p) => p.handle === who)) return { error: "gone" };
+    /* Her request is answered by the same act that pays it — a row left
+       open after the money went is a screen still saying 处理中. */
+    for (const c of b.cashouts) {
+      if (c.who === who && !c.paid) c.paid = new Date().toISOString();
+    }
     let n = 0, fen = 0;
     for (const o of b.orders) {
       if (o.off || !o.paid || !o.cut || o.cutPaid || o.shop !== who) continue;
