@@ -1392,6 +1392,21 @@ services:
       POST_YOUTUBE_CLIENT_ID: ${TOMSCODING_POST_YOUTUBE_CLIENT_ID:-}
       POST_YOUTUBE_SECRET: ${TOMSCODING_POST_YOUTUBE_SECRET:-}
       POST_YOUTUBE_REFRESH: ${TOMSCODING_POST_YOUTUBE_REFRESH:-}
+      # LinkedIn. AUTHOR is a URN and decides whose feed this is:
+      # urn:li:person:xxxx for Tom's own, urn:li:organization:123 for a page.
+      # VERSION is LinkedIn's YYYYMM versioning — a stale one answers 426,
+      # which reads like a protocol error rather than an out-of-date header,
+      # so it is a line here rather than a constant in the code.
+      POST_LINKEDIN_TOKEN: ${TOMSCODING_POST_LINKEDIN_TOKEN:-}
+      POST_LINKEDIN_AUTHOR: ${TOMSCODING_POST_LINKEDIN_AUTHOR:-}
+      POST_LINKEDIN_VERSION: ${TOMSCODING_POST_LINKEDIN_VERSION:-202601}
+      # X. Four values, all from the one screen where the app is created:
+      # posting needs a user context, and app-only bearer auth has no user to
+      # post as.
+      POST_X_KEY: ${TOMSCODING_POST_X_KEY:-}
+      POST_X_SECRET: ${TOMSCODING_POST_X_SECRET:-}
+      POST_X_TOKEN: ${TOMSCODING_POST_X_TOKEN:-}
+      POST_X_TOKEN_SECRET: ${TOMSCODING_POST_X_TOKEN_SECRET:-}
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - post_data:/data

@@ -13,8 +13,8 @@ it twice does not post twice.
 | | Platform | How | State |
 |---|---|---|---|
 | ✅ | YouTube | Data API v3, on the box | built, needs keys |
-| | LinkedIn | API, on the box | next |
-| | X | API, on the box | next |
+| ✅ | LinkedIn | Versioned API, on the box | built, needs keys |
+| ✅ | X | v1.1 upload + v2 post, on the box | built, needs keys |
 | | 抖音 Douyin | browser | after that |
 | | 小红书 Xiaohongshu | browser | after that |
 | | 视频号 Channels | browser | after that |
@@ -82,6 +82,66 @@ Two things that will otherwise waste an afternoon:
 - **The default quota is 10,000 units a day and an upload costs 1,600**, so six
   uploads is the ceiling. The seventh says the quota is used up, and tomorrow it
   works again.
+
+## LinkedIn
+
+```
+TOMSCODING_POST_LINKEDIN_TOKEN=
+TOMSCODING_POST_LINKEDIN_AUTHOR=urn:li:person:xxxxxxxx
+TOMSCODING_POST_LINKEDIN_VERSION=202601
+```
+
+Needs a LinkedIn app with **w_member_social** granted, and the author URN of
+whoever is posting — `urn:li:person:…` for Tom's own feed,
+`urn:li:organization:…` for a company page, which needs
+`w_organization_social` instead.
+
+- **The token lasts 60 days.** Refreshing it without a human needs LinkedIn's
+  approval for your app, so until that exists this is a line to re-paste every
+  couple of months. The command says "linkedin token is dead or expired" rather
+  than retrying, which is the difference between a five-minute fix and an
+  afternoon.
+- A missing or stale `LINKEDIN_VERSION` answers **426**, which reads like a
+  protocol error rather than an out-of-date header. That is why it is a setting.
+- A video is four calls, not one: ask for an upload slot, PUT each part,
+  finalize with the ETags in order, then create the post. Out-of-order ETags
+  are accepted and produce a corrupt video — the worst kind of success.
+
+## X
+
+```
+TOMSCODING_POST_X_KEY=
+TOMSCODING_POST_X_SECRET=
+TOMSCODING_POST_X_TOKEN=
+TOMSCODING_POST_X_TOKEN_SECRET=
+```
+
+All four come from the screen where the app is created. Posting needs a user
+context, so there is no bearer-token shortcut: this signs every request with
+OAuth 1.0a, by hand.
+
+- **Media upload is not on X's free tier.** If the upload answers 403 about
+  access level, that is a subscription decision, not a bug, and the command
+  says exactly that.
+- The upload is chunked because the simple one caps at 5MB, and X transcodes
+  before a video can be posted. Posting too early fails with an error about a
+  media id that does not exist, which sounds like the upload failed when it did
+  not — so this waits for processing to finish.
+
+## What has and has not been tried
+
+Checked against the real endpoints with deliberately wrong keys, which proves
+the request shape is parsed rather than the credentials work:
+
+- **X** answers 401 to a signed request — the signature is computed, sent and
+  read. The percent-encoding rules are unit-checked (`! * ' ( )` escaped,
+  `- _ . ~` not), since one wrong character there is a 401 with no hint.
+- **LinkedIn** answers `INVALID_ACCESS_TOKEN` in about a second, and the
+  command turns that into "token is dead or expired".
+- **Neither has posted anything.** Every call past the first — the uploads, the
+  finalize, the post itself — is a reading of the documentation and has never
+  run. Expect to fix something on the first real post, and expect the error to
+  be specific enough to fix.
 
 ## Files
 

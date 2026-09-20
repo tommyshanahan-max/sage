@@ -15,6 +15,8 @@ import { promises as fs } from "node:fs";
 import { say } from "./lib/say.js";
 import { ALL, PLATFORMS, get, mark, recent, submit, waiting } from "./lib/jobs.js";
 import * as youtube from "./lib/youtube.js";
+import * as linkedin from "./lib/linkedin.js";
+import * as x from "./lib/x.js";
 
 const args = process.argv.slice(2);
 const cmd = args[0] || "help";
@@ -39,6 +41,14 @@ const POSTERS = {
   youtube: {
     ready: youtube.configured,
     async run(job) { return youtube.upload({ file: job.file, say: job.say }); },
+  },
+  linkedin: {
+    ready: linkedin.configured,
+    async run(job) { return linkedin.upload({ file: job.file, say: job.say }); },
+  },
+  x: {
+    ready: x.configured,
+    async run(job) { return x.upload({ file: job.file, say: job.say }); },
   },
 };
 
