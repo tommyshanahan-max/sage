@@ -10835,6 +10835,11 @@ app.get("/api/shop/:handle", async (req, res) => {
          handle and a grey circle is not a shop — see `shop` in store.js. */
       name: who.shop?.name || "",
       banner: who.shop?.banner || "",
+      /* 联系店家 — see the note on `shop` in store.js. The id is public by
+         the act of putting it on a shopfront; nothing else about her is. */
+      wechat: who.shop?.wechat || "",
+      qr: who.shop?.qr || "",
+      ai: Boolean(who.shop?.ai),
       /* Their own line, in whichever language they wrote it and its render
          into the other — the same pair every card on this board shows, and
          only when the page it came from is public. */
@@ -11431,6 +11436,39 @@ async function fetchPhoto(raw) {
   return id ? "/api/public-media?id=" + id : "";
 }
 
+/** HOW A BUYER REACHES THE PERSON WHO SOLD IT TO HER.
+ *
+ *  A WeChat id she can search for, a code she can long press, or both. The
+ *  code is fetched onto this board like every other picture here — a link to
+ *  somebody's own host is slow in Shanghai and rots without warning, and a
+ *  contact code that has rotted is a shop nobody can reach. */
+app.post("/api/admin/shop-contact", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").trim();
+  if (!who) return res.status(400).json({ error: "who" });
+  let qr = "";
+  if (req.body?.qr) {
+    try { qr = await fetchPhoto(req.body.qr); } catch (err) {
+      console.error("contact qr:", err.message);
+    }
+    if (!qr) return res.status(400).json({ error: "photo" });
+  }
+  const out = await change((b) => {
+    const p = b.people.find((x) => x.handle === who);
+    if (!p) return { error: "gone" };
+    const now = p.shop || {};
+    p.shop = {
+      ...now,
+      wechat: req.body?.wechat !== undefined
+        ? String(req.body.wechat).trim().slice(0, 40) : (now.wechat || ""),
+      qr: qr || now.qr || "",
+      ai: req.body?.ai !== undefined ? Boolean(req.body.ai) : Boolean(now.ai),
+    };
+    return { ok: true, wechat: p.shop.wechat, qr: Boolean(p.shop.qr), ai: p.shop.ai };
+  });
+  if (out?.error) return res.status(404).json({ error: "not on this board: " + who });
+  res.json({ ok: true, ...out });
+});
+
 /** A SHOP'S NAME AND THE PICTURE ACROSS THE TOP OF IT. */
 app.post("/api/admin/shop-brand", admin, express.json({ limit: "2kb" }), async (req, res) => {
   const who = String(req.body?.who || "").trim();
@@ -11446,7 +11484,11 @@ app.post("/api/admin/shop-brand", admin, express.json({ limit: "2kb" }), async (
     const p = b.people.find((x) => x.handle === who);
     if (!p) return { error: "gone" };
     const now = p.shop || {};
+    /* Spread first: `shop` holds the contact and the assistant switch too,
+       and a rename that silently dropped somebody's WeChat code would be
+       found by a buyer rather than by us. */
     p.shop = {
+      ...now,
       name: req.body?.name !== undefined ? String(req.body.name).trim().slice(0, 40) : (now.name || ""),
       banner: banner || now.banner || "",
     };
@@ -11494,7 +11536,7 @@ app.post("/api/admin/shop-banner", admin,
   const out = await change((b) => {
     const p = b.people.find((x) => x.handle === who);
     if (!p) return { error: "gone" };
-    p.shop = { name: p.shop?.name || "", banner: "/api/public-media?id=" + id };
+    p.shop = { ...(p.shop || {}), banner: "/api/public-media?id=" + id };
     return { ok: true, name: p.shop.name, bytes: buf.length, kind: type };
   });
   if (out?.error) return res.status(404).json({ error: "not on this board: " + who });

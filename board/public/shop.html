@@ -91,6 +91,34 @@
   .bar .go{flex:0 0 auto;border:0;border-radius:999px;background:var(--acc);color:#fff;
     font:inherit;font-size:1rem;font-weight:600;padding:.85rem 1.7rem}
   .bar .go:disabled{background:var(--line);color:var(--mut)}
+  /* Bottom left, beside the buy button, with a speech bubble over it —
+     where 联系店家 is on every shop she has ever used. Copying the place is
+     the point: she finds it without looking for it. */
+  .bar .ask{flex:0 0 auto;border:0;background:none;color:var(--ink2);font:inherit;
+    font-size:.68rem;display:flex;flex-direction:column;align-items:center;
+    gap:.1rem;padding:0 .3rem 0 0}
+  .bar .ask svg{width:1.45rem;height:1.45rem;fill:none;stroke:currentColor;
+    stroke-width:1.6;stroke-linejoin:round}
+
+  /* The sheet it opens. A name, a number she can copy, a code she can long
+     press — and nothing that looks like a form. */
+  .sh{position:fixed;inset:0;background:rgba(17,18,20,.45);z-index:9;
+    display:flex;align-items:flex-end}
+  .shc{background:var(--card);width:100%;border-radius:1.1rem 1.1rem 0 0;
+    padding:1.2rem 1rem calc(1.2rem + env(safe-area-inset-bottom,0));
+    max-height:88vh;overflow:auto;text-align:center}
+  .shc h2{margin:0 0 1rem;font-size:1.05rem;font-weight:600}
+  .shc .wx{display:flex;align-items:center;justify-content:center;gap:.6rem;
+    margin:0 0 .4rem}
+  .shc .wx b{font-size:1.15rem;letter-spacing:.02em}
+  .shc .wx button{border:1px solid var(--line);background:var(--card);
+    color:var(--ink2);font:inherit;font-size:.78rem;border-radius:999px;
+    padding:.25rem .7rem}
+  .shc .how{margin:0 0 1.1rem;font-size:.82rem;color:var(--mut)}
+  .shc img{width:min(15rem,62vw);height:auto;border-radius:.6rem;display:block;
+    margin:0 auto .5rem}
+  .shc .shut{margin:1rem 0 0;border:0;background:none;color:var(--mut);
+    font:inherit;font-size:.9rem}
 
   .none{padding:3rem 1rem;text-align:center;color:var(--mut)}
   .foot{padding:1.4rem .4rem 0;font-size:.75rem;line-height:1.7;color:var(--mut)}
@@ -98,6 +126,10 @@
 
 <main id="root"></main>
 <div class="bar" id="bar" hidden>
+  <button class="ask" type="button" id="ask" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 20.5l1.5-5.2A8.5 8.5 0 1 1 21 11.5z"/></svg>
+    <span id="askword"></span>
+  </button>
   <div class="sum"><b id="sum">¥0</b><span id="note"></span></div>
   <button class="go" type="button" id="go" disabled></button>
 </div>
@@ -140,6 +172,7 @@ function paint() {
   $("sum").textContent = yuan(goods + (goods ? POST : 0));
   $("note").textContent = T(goods ? "sh.postIn" : "sh.post", { amount: yuan(POST) });
   $("go").textContent = T("sh.go");
+  $("askword").textContent = T("sh.ask");
   $("go").disabled = !goods;
   $("bar").hidden = false;
 }
@@ -163,6 +196,63 @@ function stepper(it) {
   more.addEventListener("click", () => set((CART.get(it.id) || 0) + 1));
   wrap.append(less, n, more);
   return wrap;
+}
+
+/* 联系店家. Everything in it is a gesture she already makes: search a WeChat
+   id, or long press a code. WeChat only reads a QR out of an <img>, which is
+   why the code is a picture and not a drawn grid — see lib/qr.js. */
+function askSheet() {
+  const sheet = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("h2", null, T("sh.askWho", { who: SHOP.name || SHOP.handle })));
+
+  if (!SHOP.wechat && !SHOP.qr) {
+    card.append(el("p", "how", T("sh.askNone")));
+  }
+
+  if (SHOP.wechat) {
+    const row = el("div", "wx");
+    row.append(el("b", null, SHOP.wechat));
+    const c = el("button", null, T("sh.wechatCopy"));
+    c.type = "button";
+    c.addEventListener("click", async () => {
+      /* execCommand first: the async clipboard is refused inside WeChat's
+         own browser, which is where she is. */
+      let done = false;
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = SHOP.wechat;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.append(ta);
+        ta.select();
+        done = document.execCommand("copy");
+        ta.remove();
+      } catch { done = false; }
+      if (!done) { try { await navigator.clipboard.writeText(SHOP.wechat); done = true; } catch { } }
+      if (done) c.textContent = T("sh.wechatDone");
+    });
+    row.append(c);
+    card.append(row);
+    card.append(el("p", "how", T("sh.wechatHow")));
+  }
+
+  if (SHOP.qr) {
+    const img = el("img");
+    img.src = SHOP.qr;
+    img.alt = "";
+    img.addEventListener("error", () => img.remove());
+    card.append(img);
+    card.append(el("p", "how", T("sh.qrHow")));
+  }
+
+  const shut = el("button", "shut", T("sh.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => sheet.remove());
+  card.append(shut);
+  sheet.append(card);
+  sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.remove(); });
+  document.body.append(sheet);
 }
 
 function draw() {
@@ -243,6 +333,8 @@ function draw() {
   root.append(el("p", "foot", T("sh.foot", { who: SHOP.handle })));
 }
 
+$("ask").addEventListener("click", askSheet);
+
 $("go").addEventListener("click", () => {
   const lines = [...CART].map(([id, n]) => ({ id, n }));
   try { sessionStorage.setItem("shop:cart", JSON.stringify({ handle: HANDLE, lines })); } catch { }
@@ -255,6 +347,9 @@ $("go").addEventListener("click", () => {
     const j = await r.json();
     if (!r.ok || !j?.ok) throw new Error("gone");
     SHOP = j.shop; ITEMS = j.products || []; POST = j.post ?? 3000;
+    /* Hidden rather than dead when there is nobody to contact — a button
+       that opens a sheet saying "no contact" is worse than no button. */
+    $("ask").hidden = !(SHOP.wechat || SHOP.qr);
     document.title = SHOP.name || T("sh.here", { who: SHOP.handle });
     draw();
     paint();

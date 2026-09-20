@@ -1903,8 +1903,20 @@ export function cleanPerson(raw) {
       if (!r || typeof r !== "object") return undefined;
       const name = s(r.name, 40);
       const banner = s(r.banner, 300);
-      if (!name && !banner) return undefined;
-      return { name, banner };
+      /* HOW A BUYER REACHES THE PERSON WHO SOLD IT TO HER. 联系店家 is on
+         every Chinese shop she has used, bottom left beside the buy button,
+         and it is WeChat — an id she can search for, or a code she can long
+         press. Not a chat system: adding somebody on WeChat is the gesture
+         she already makes, and a message box on a web page is one she does
+         not trust with a question about her money. */
+      const wechat = s(r.wechat, 40);
+      const qr = s(r.qr, 300);
+      /* Whether an assistant answers the常见 questions before she has to
+         wait for a person. Off unless somebody turned it on — see
+         lib/shopkeep.js for what it is allowed to know. */
+      const ai = Boolean(r.ai);
+      if (!name && !banner && !wechat && !qr && !ai) return undefined;
+      return { name, banner, wechat, qr, ai };
     })(),
     /* TWO SHAPES, BECAUSE THERE ARE TWO PLACES A PERSON CAN BE.
      *

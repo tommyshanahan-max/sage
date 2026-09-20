@@ -787,6 +787,18 @@ paid-out: ## That one is sent: make paid-out WHO="Mei"
 	  /seed/paid-out.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)"
 
+shop-contact: ## How her buyers reach her: make shop-contact WHO="Mei" WECHAT="meimei_au" [QR=url] [AI=1]
+	@# 联系店家 sits bottom left on the shopfront, beside the buy button,
+	@# because that is where it is on every Chinese shop she has used.
+	@# WECHAT is an id she can search for, QR a code she can long press;
+	@# either alone is fine and neither wipes the other.
+	@#
+	@# AI=1 turns the assistant on for this shop, AI=0 off.
+	@test -n "$(WHO)" || { echo 'make shop-contact WHO="Mei" WECHAT="meimei_au"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/shop-contact.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)" $(if $(WECHAT),--wechat "$(WECHAT)",) --qr "$(QR)" $(if $(AI),--ai "$(AI)",)
+
 shop-brand: ## Dress a storefront: make shop-brand WHO="Tom" NAME="澳洲爸爸汤姆" [BANNER=url]
 	@# A HANDLE AND A GREY CIRCLE IS NOT A SHOP. The name is the one she
 	@# reads, so it is Chinese; the banner is fetched onto this board

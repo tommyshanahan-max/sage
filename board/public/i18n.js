@@ -6458,6 +6458,19 @@ export const STRINGS = {
   "sh.go":             ["Checkout", "去结算"],
   "sh.post":           ["Postage {amount}", "运费 {amount}"],
   "sh.postIn":         ["Postage {amount} included", "含运费 {amount}"],
+  /* 联系店家 — bottom left, beside the buy button, which is where it is on
+     every Chinese shop she has ever used. Not a chat box on a web page: she
+     adds the person on WeChat, which is the gesture she already makes and
+     the one she trusts with a question about her money. */
+  "sh.ask":            ["Contact", "联系店家"],
+  "sh.askWho":         ["Any question, ask {who}", "有问题问 {who}"],
+  "sh.wechat":         ["WeChat", "微信号"],
+  "sh.wechatCopy":     ["Copy", "复制"],
+  "sh.wechatDone":     ["Copied", "已复制"],
+  "sh.wechatHow":      ["Search for it in WeChat to add them.", "在微信里搜这个号加好友。"],
+  "sh.qrHow":          ["Press and hold the code to add them.", "长按二维码加好友。"],
+  "sh.askNone":        ["This shop has not left a contact yet.", "这家店还没留联系方式。"],
+  "sh.close":          ["Close", "关闭"],
   "sh.foot":           ["Straight from Australia · WeChat Pay or Alipay · {who} follows your order up",
                         "澳洲直邮 · 微信支付或支付宝 · 下单后由 {who} 跟进"],
 
