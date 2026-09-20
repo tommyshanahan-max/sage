@@ -770,6 +770,23 @@ product: ## Put something in the catalogue: make product NAME="…" PRICE="¥648
 	  /seed/product.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --name "$(NAME)" --price "$(PRICE)" --unit "$(UNIT)" --en "$(EN)" --photo "$(PHOTO)"
 
+pay-list: ## The transfers to send by hand: make pay-list
+	@# EVERY STOREFRONT IS RUN FROM CHINA, and Airwallex will not take a
+	@# yuan beneficiary yet, so a representative is paid by one transfer
+	@# each. This prints who, which bank, the card number and how much —
+	@# largest first, one per screen — and it prints card numbers, which
+	@# is the point of it. Then cross it off with `make paid-out`.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/pay-list.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+
+paid-out: ## That one is sent: make paid-out WHO="Mei"
+	@# A list that cannot be crossed off prints the same payment next week,
+	@# and the week after somebody sends it twice.
+	@test -n "$(WHO)" || { echo 'make paid-out WHO="Mei"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/paid-out.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)"
+
 shop-brand: ## Dress a storefront: make shop-brand WHO="Tom" NAME="澳洲爸爸汤姆" [BANNER=url]
 	@# A HANDLE AND A GREY CIRCLE IS NOT A SHOP. The name is the one she
 	@# reads, so it is Chinese; the banner is fetched onto this board

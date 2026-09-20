@@ -34,6 +34,7 @@ import * as store from "./lib/store.js";
 import * as memo from "./lib/memo.js";
 import * as request from "./lib/request.js";
 import * as shop from "./lib/shop.js";
+import * as sealed from "./lib/sealed.js";
 import * as terms from "./lib/terms.js";
 import { translate, configured as translateReady } from "./lib/translate.js";
 import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js";
@@ -11019,60 +11020,76 @@ app.get("/api/paid", async (req, res) => {
   const rows = board.orders.filter((o) => o.paid && !o.off && o.shop && o.shop === mine?.handle);
   res.json({
     ok: true,
-    /* Whether this board can pay anybody at all — the same question
-       make payout-try answers, asked of the running process. */
-    on: Boolean(dealioQr() && typeof WALLET.provider.createBeneficiary === "function"),
+    /* Whether there is a shop behind this at all. NOT whether the money can
+       be sent by itself: a representative in China gives their card so they
+       can be paid, and whether that happens on a schedule or by hand at the
+       end of the month is this board's problem, not theirs. */
+    on: Boolean(dealioQr()),
     handle: mine?.handle || "",
-    payout: mine?.payout ? { label: mine.payout.label, name: mine.payout.name } : null,
+    payout: mine?.payout
+      ? { label: mine.payout.label || (mine.payout.bank || ""), name: mine.payout.name,
+          last4: mine.payout.last4 || "" }
+      : null,
     owed: store.fromMinor(rows.filter((o) => !o.cutPaid).reduce((n, o) => n + (o.cut || 0), 0), "cny"),
+    /* The fen as well as the ¥, because "¥0" is a true sentence and a box
+       that says it is a box nobody needed to read. */
+    owedFen: rows.filter((o) => !o.cutPaid).reduce((n, o) => n + (o.cut || 0), 0),
     sold: rows.length,
   });
 });
 
-/** THE FORM. Name, ABN, BSB, account — sent to Airwallex and forgotten.
+/** THE FORM: A NAME, A BANK, A CARD NUMBER.
  *
- *  NO ABN, NO PAYMENT. Paying a business without one means withholding
- *  nearly half of it and sending that to the tax office, which is not a
- *  thing to discover after the fact — so the form refuses instead. */
+ *  Everybody running a storefront is in mainland China, so this is a
+ *  Chinese bank card and not an Australian account — see the two shapes on
+ *  `payout` in lib/store.js, and note 2 in providers/airwallex.js for why
+ *  there is no beneficiary to make out of it yet.
+ *
+ *  It tries anyway, every time. The day Airwallex takes a yuan beneficiary
+ *  this route starts keeping an id instead of a sealed number, with nobody
+ *  filling anything in again. */
 app.post("/api/paid", express.json({ limit: "2kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no" });
-  const p = WALLET.on ? WALLET.provider : null;
-  if (!p || typeof p.createBeneficiary !== "function") return res.status(400).json({ error: "off" });
 
   const name = String(req.body?.name || "").trim().slice(0, 60);
-  const abn = String(req.body?.abn || "").replace(/\D/g, "");
-  const bsb = String(req.body?.bsb || "").replace(/\D/g, "");
-  const account = String(req.body?.account || "").replace(/\D/g, "");
-  if (!name || name.split(/\s+/).length < 2) return res.status(400).json({ error: "name" });
-  if (abn.length !== 11) return res.status(400).json({ error: "abn" });
-  if (bsb.length !== 6) return res.status(400).json({ error: "bsb" });
-  if (account.length < 5 || account.length > 12) return res.status(400).json({ error: "account" });
+  const bank = String(req.body?.bank || "").trim().slice(0, 40);
+  const card = String(req.body?.card || "").replace(/\D/g, "");
+  if (!name) return res.status(400).json({ error: "name" });
+  if (!bank) return res.status(400).json({ error: "bank" });
+  /* A UnionPay card is 16 to 19 digits; some older savings books are 12.
+     Wider than that and it is a typed-in phone number. */
+  if (card.length < 12 || card.length > 19) return res.status(400).json({ error: "card" });
 
+  /* If the provider will take it, the number leaves and never comes back —
+     an id and a label instead, which is the shape the rule in store.js
+     wants. It refuses today, and that is not an error to show anybody. */
   let made = null;
-  try {
-    made = await p.createBeneficiary({
-      currency: "AUD", country: "AU",
-      details: { accountName: name, accountNumber: account, bsb },
-    });
-  } catch (err) {
-    /* Airwallex's own sentence to the log; one plain word to the screen. It
-       names the field it disliked, which is exactly what is needed here and
-       exactly what should not be shown to somebody else's member. */
-    console.error("beneficiary:", err.message);
-    return res.status(502).json({ error: "refused" });
+  const p = WALLET.on ? WALLET.provider : null;
+  if (p && typeof p.createBeneficiary === "function") {
+    try {
+      made = await p.createBeneficiary({
+        currency: "CNY", country: "CN",
+        details: { accountName: name, accountNumber: card, bankName: bank },
+      });
+    } catch (err) {
+      if (err?.code !== "provider_not_ready") console.error("beneficiary:", err.message);
+    }
   }
-  if (!made?.beneficiaryId) return res.status(502).json({ error: "refused" });
+
+  const row = made?.beneficiaryId
+    ? { id: made.beneficiaryId, label: made.label || bank, name, at: new Date().toISOString() }
+    : { cn: true, name, bank, last4: card.slice(-4),
+        sealed: sealed.seal(DIR, card), at: new Date().toISOString() };
 
   const out = await change((b) => {
     const mine = b.people.find((x) => x.by === me);
     if (!mine) return { error: "gone" };
-    mine.payout = { id: made.beneficiaryId, label: made.label || "", name, abn,
-      at: new Date().toISOString() };
-    return { ok: true, label: mine.payout.label, name };
+    mine.payout = row;
+    return { ok: true, bank: row.label || row.bank, last4: row.last4 || "", name };
   });
   if (out?.error) return res.status(400).json(out);
-  res.json({ ok: true, label: out.label, name: out.name });
+  res.json({ ok: true, ...out });
 });
 
 /* ---- THE COMMISSION, ACTUALLY SENT ---------------------------------------
@@ -11102,6 +11119,10 @@ async function payCut(orderId) {
   const o = board.orders.find((x) => x.id === orderId);
   if (!o || o.off || !o.paid || !o.cut || o.cutPaid) return "";
   const who = board.people.find((x) => x.handle === o.shop);
+  /* A Chinese card is not a beneficiary yet, so there is nothing to send to
+     and nothing has gone wrong — it is a row for `make pay-list`, said as
+     its own word so the sweep does not report it as a failure. */
+  if (who?.payout?.cn) return "byhand";
   if (!who?.payout?.id) return "nowhere";
 
   try {
@@ -11192,6 +11213,63 @@ app.post("/api/admin/pay-owed", admin, express.json({ limit: "1kb" }), async (re
     out.push({ shop: o.shop, amount: store.fromMinor(o.cut, "cny"), ok: !why, why });
   }
   res.json({ ok: true, tried: out });
+});
+
+/** THE PAYMENTS TO MAKE BY HAND, WITH THE CARD NUMBERS IN THEM.
+ *
+ *  Until Airwallex takes a yuan beneficiary this is how a representative is
+ *  actually paid: one transfer each, off a list the board keeps straight.
+ *  The numbers are unsealed here and nowhere else — this answers to the
+ *  admin key, on the box, into his own terminal, and the page that collects
+ *  them says the card is used for paying them and nothing else. */
+app.get("/api/admin/pay-list", admin, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const board = await store.load(FILE);
+  const owed = new Map();
+  for (const o of board.orders) {
+    if (o.off || !o.paid || !o.cut || o.cutPaid || !o.shop) continue;
+    owed.set(o.shop, (owed.get(o.shop) || 0) + o.cut);
+  }
+  const rows = [...owed]
+    .sort((a, b) => b[1] - a[1])
+    .map(([handle, fen]) => {
+      const who = board.people.find((x) => x.handle === handle);
+      const card = who?.payout?.cn ? sealed.unseal(DIR, who.payout.sealed) : "";
+      return {
+        shop: handle,
+        amount: store.fromMinor(fen, "cny"),
+        name: who?.payout?.name || "",
+        bank: who?.payout?.bank || who?.payout?.label || "",
+        card,
+        /* No card and no id means they have not filled the form in. That is
+           a message to send, not a payment to make. */
+        ready: Boolean(card || who?.payout?.id),
+      };
+    });
+  res.json({ ok: true, rows });
+});
+
+/** THAT ONE IS SENT.
+ *
+ *  A list that cannot be crossed off prints the same transfer every week
+ *  until somebody sends it twice. So the hand-made payment is marked here,
+ *  against every order the cut was owed on, in one go. */
+app.post("/api/admin/paid-out", admin, express.json({ limit: "1kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").trim();
+  if (!who) return res.status(400).json({ error: "who" });
+  const out = await change((b) => {
+    if (!b.people.some((p) => p.handle === who)) return { error: "gone" };
+    let n = 0, fen = 0;
+    for (const o of b.orders) {
+      if (o.off || !o.paid || !o.cut || o.cutPaid || o.shop !== who) continue;
+      o.cutPaid = true;
+      n += 1;
+      fen += o.cut;
+    }
+    return { ok: true, n, fen };
+  });
+  if (out?.error) return res.status(404).json({ error: "not on this board: " + who });
+  res.json({ ok: true, n: out.n, amount: store.fromMinor(out.fen, "cny") });
 });
 
 /** WHAT EACH STOREFRONT HAS EARNED, and what is still owed.
@@ -15311,6 +15389,10 @@ await mkdir(DIR, { recursive: true });
 
 app.listen(PORT, () => {
   console.log(`board on :${PORT}, data in ${DIR}`);
+  /* Made here rather than on the first form, so two people filling one in at
+     the same moment cannot race for the file and leave one of them with a
+     sealed card nothing can open. */
+  try { sealed.ready(DIR); } catch (err) { console.error("payout key:", err.message); }
   if (!KEY) console.error("BOARD_ADMIN_KEY is not set — the admin routes will refuse everything.");
   if (!SALT) console.error("BOARD_SALT is not set — device hashes are unsalted.");
 });

@@ -24,6 +24,7 @@ if (rest.includes("--pay")) {
   for (const t of j0.tried) {
     const why = {
       nowhere: "they have not said where their money goes",
+      byhand: "a Chinese card — make pay-list, and send it yourself",
       failed: "the transfer would not go — usually the money has not settled yet",
       refused: "the bank refused it",
       quote: "no rate came back",

@@ -1906,18 +1906,36 @@ export function cleanPerson(raw) {
       if (!name && !banner) return undefined;
       return { name, banner };
     })(),
+    /* TWO SHAPES, BECAUSE THERE ARE TWO PLACES A PERSON CAN BE.
+     *
+     * An Australian is an Airwallex beneficiary: an id, a label, and no
+     * number here at all. Everybody running a storefront is in mainland
+     * China, and Airwallex will not take a yuan beneficiary yet, so there is
+     * no id to hold instead — the card number is sealed (lib/sealed.js) and
+     * the last four kept in the clear so a screen can say which card it is.
+     * The day a CNY beneficiary can be made, that row becomes the first
+     * shape and the sealed field goes. */
     payout: (() => {
       const r = raw.payout;
       if (!r || typeof r !== "object") return undefined;
+      const name = s(r.name, 60);
+      const at = s(r.at, 40) || new Date().toISOString();
       const id = s(r.id, 64);
-      if (!id) return undefined;
-      return {
-        id,
-        label: s(r.label, 60),
-        name: s(r.name, 60),
-        abn: String(r.abn || "").replace(/\D/g, "").slice(0, 11),
-        at: s(r.at, 40) || new Date().toISOString(),
-      };
+      if (id) {
+        return {
+          id,
+          label: s(r.label, 60),
+          name,
+          abn: String(r.abn || "").replace(/\D/g, "").slice(0, 11),
+          at,
+        };
+      }
+      const sealed = s(r.sealed, 400);
+      const last4 = String(r.last4 || "").replace(/\D/g, "").slice(0, 4);
+      if (sealed && last4) {
+        return { cn: true, name, bank: s(r.bank, 40), last4, sealed, at };
+      }
+      return undefined;
     })(),
     wants: WANTS.includes(raw.wants) ? raw.wants : "any",
     why: (raw.state === "published") ? "" : s(raw.why, 400),

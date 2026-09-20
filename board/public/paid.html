@@ -1,64 +1,67 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Where your money lands</title>
+<title>佣金打到哪里</title>
 <meta name="robots" content="noindex">
 <!--
   WHERE A STOREFRONT'S COMMISSION LANDS. One form, once, ever.
 
-  The details go straight to Airwallex and what comes back is an id and
-  "Bank account ···· 3333". Nothing of the account is kept here — see the
-  note on `payout` in lib/store.js — and this page says so, because a form
-  asking for a bank account without saying where it goes is a form people
-  close.
+  CHINESE, AND NOT AS A TOGGLE. Everybody who runs a storefront is in
+  mainland China — that is the whole model — so a language button here is a
+  decision offered to somebody who has no use for it. The seller's own
+  screens are in English and stay that way.
 
-  NO ABN, NO PAYMENT: paying a business without one means withholding nearly
-  half and sending that to the tax office. Refused here rather than
-  discovered afterwards.
+  THREE BOXES. A name, a bank, a card number, which is what a transfer in
+  China needs and all it needs. The earlier version of this page asked for
+  an ABN and a BSB, which nobody here has.
+
+  The number is sealed on this board rather than sent away, because
+  Airwallex will not take a yuan beneficiary yet — see lib/sealed.js for
+  what that buys and what it does not, and note 2 in the provider. The page
+  says the card is used for paying them and says nothing about how, because
+  whether that happens on a schedule or at the end of the month is this
+  board's problem and not theirs.
 -->
 <style>
   :root{
     --bg:#0B0E15; --card:#141924; --ink:#E9EDF5; --ink2:#A3B0C4; --mut:#6F7D92;
     --line:#232B39; --acc:#D6483B; --ok:#3FBE7D;
-    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
-      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC",sans-serif;
     --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink)}
-  body{font-family:var(--sans);font-size:16px;line-height:1.5;
+  body{font-family:var(--sans);font-size:16px;line-height:1.6;
     padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
   main{max-width:30rem;margin:0 auto;padding:1.2rem .95rem 3rem}
   .top{display:flex;align-items:center;gap:.5rem;margin:0 0 1.6rem}
   .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--acc)}
   .top span{font-size:.7rem;letter-spacing:.18em;color:var(--mut)}
-  h1{font-size:1.45rem;margin:0 0 .3rem}
-  .sub{margin:0 0 1.5rem;font-size:.95rem;line-height:1.6;color:var(--ink2)}
+  h1{font-size:1.5rem;margin:0 0 .35rem;letter-spacing:.01em}
+  .sub{margin:0 0 1.5rem;font-size:.95rem;color:var(--ink2)}
   .owed{background:var(--card);border:1px solid var(--line);border-radius:1rem;
     padding:1rem 1.1rem;margin:0 0 1.4rem;display:flex;align-items:baseline;
     justify-content:space-between;gap:1rem}
-  .owed span{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+  .owed span{font-size:.78rem;color:var(--mut)}
   .owed b{font-family:var(--serif);font-size:1.7rem;font-weight:400}
-  label{display:block;font-size:.78rem;color:var(--ink2);margin:0 0 .35rem}
+  label{display:block;font-size:.8rem;color:var(--ink2);margin:0 0 .35rem}
   .fld{margin:0 0 .9rem}
   input{width:100%;font:inherit;font-size:1rem;padding:.8rem .85rem;border-radius:.75rem;
     border:1px solid var(--line);background:var(--card);color:var(--ink)}
-  .two{display:flex;gap:.6rem}
-  .two>div{flex:1 1 0;min-width:0}
-  .two>div.bsb{flex:0 0 7.5rem}
   .agree{display:flex;gap:.7rem;align-items:flex-start;margin:.3rem 0 1.3rem}
-  .agree input{width:1.25rem;height:1.25rem;flex:0 0 auto;margin:.15rem 0 0;
+  .agree input{width:1.25rem;height:1.25rem;flex:0 0 auto;margin:.2rem 0 0;
     accent-color:var(--acc)}
-  .agree label{font-size:.85rem;line-height:1.55;color:var(--ink2);margin:0}
+  .agree label{font-size:.88rem;line-height:1.55;color:var(--ink2);margin:0}
   .go{width:100%;border:0;border-radius:999px;background:var(--acc);color:#fff;
-    font:inherit;font-size:1rem;font-weight:600;letter-spacing:.04em;padding:1.05rem}
+    font:inherit;font-size:1.05rem;font-weight:600;padding:1.05rem}
   .go:disabled{background:var(--line);color:var(--mut)}
-  .said{margin:.9rem 0 0;font-size:.9rem;color:var(--acc);text-align:center}
-  .note{margin:1.1rem 0 0;font-size:.78rem;line-height:1.6;color:var(--mut);text-align:center}
+  .said{margin:.9rem 0 0;font-size:.92rem;color:var(--acc);text-align:center}
+  .note{margin:1.1rem 0 0;font-size:.8rem;line-height:1.7;color:var(--mut);text-align:center}
   .done{background:var(--card);border:1px solid var(--line);border-radius:1rem;
-    padding:1.2rem;display:flex;flex-direction:column;gap:.5rem}
+    padding:1.2rem;display:flex;flex-direction:column;gap:.4rem}
   .done b{font-size:1.05rem}
-  .done span{font-size:.9rem;color:var(--ink2)}
-  .off{color:var(--mut);font-size:.95rem;line-height:1.7}
+  .done span{font-size:.92rem;color:var(--ink2)}
+  .off{color:var(--mut);font-size:.95rem;line-height:1.8}
 </style>
 
 <main id="root"></main>
@@ -85,42 +88,50 @@ function draw(d) {
   head(root);
 
   if (!d.on) {
-    root.append(el("h1", null, "Not yet"));
-    root.append(el("p", "off",
-      "Paying people out is not switched on here yet. Nothing you type would go anywhere, so the form is not shown."));
+    root.append(el("h1", null, "还没开"));
+    root.append(el("p", "off", "这里暂时还不能收款，填了也没用，所以先不放表格。"));
+    return;
+  }
+
+  /* Not a member: the door is somewhere else and this page cannot send them
+     there, because a storefront comes with an invitation. */
+  if (!d.handle) {
+    root.append(el("h1", null, "这个页面是给店主的"));
+    root.append(el("p", "off", "先开店，再来填卡。"));
     return;
   }
 
   if (d.payout) {
-    root.append(el("h1", null, "That is the last form."));
-    root.append(el("p", "sub", "Your share goes straight there when somebody buys from your shop."));
+    root.append(el("h1", null, "好了"));
+    root.append(el("p", "sub", "店里卖出一单，佣金就结到这张卡。"));
     const box = el("div", "done");
-    box.append(el("b", null, d.payout.label || "Your bank account"));
+    box.append(el("b", null, (d.payout.label || "银行卡")
+      + (d.payout.last4 ? "  ···· " + d.payout.last4 : "")));
     box.append(el("span", null, d.payout.name));
     root.append(box);
-    if (d.owed) {
+    if (d.owedFen) {
       const owed = el("div", "owed");
-      owed.append(el("span", null, "Owed to you"));
+      owed.style.margin = "1.4rem 0 0";
+      owed.append(el("span", null, "待结佣金"));
       owed.append(el("b", null, d.owed));
       root.append(owed);
     }
-    root.append(el("p", "note", "Change it by filling it in again."));
+    root.append(el("p", "note", "要换卡，再填一次就好。"));
     return;
   }
 
-  root.append(el("h1", null, "Where should your money land?"));
-  root.append(el("p", "sub",
-    "Your share of anything sold from your shop. Once, and never again."));
+  root.append(el("h1", null, "佣金打到哪里"));
+  root.append(el("p", "sub", "填一次，以后都按这张卡结。"));
 
-  if (d.owed && d.sold) {
+  if (d.owedFen) {
     const owed = el("div", "owed");
-    owed.append(el("span", null, "Waiting for this"));
+    owed.append(el("span", null, "待结佣金"));
     owed.append(el("b", null, d.owed));
     root.append(owed);
   }
 
   const f = (id, label, opts = {}) => {
-    const wrap = el("div", opts.bare ? null : "fld");
+    const wrap = el("div", "fld");
     const l = el("label", null, label);
     l.htmlFor = id;
     const i = el("input");
@@ -132,51 +143,44 @@ function draw(d) {
     return wrap;
   };
 
-  root.append(f("nm", "Name on the account", { auto: "name" }));
-  root.append(f("abn", "ABN", { mode: "numeric", hint: "11 digits" }));
-  const two = el("div", "fld two");
-  const bsb = f("bsb", "BSB", { mode: "numeric", hint: "083-004", bare: true });
-  bsb.className = "bsb";
-  const acct = f("acct", "Account number", { mode: "numeric", bare: true });
-  two.append(bsb, acct);
-  root.append(two);
+  root.append(f("nm", "持卡人姓名", { auto: "name" }));
+  root.append(f("bank", "开户银行", { hint: "招商银行" }));
+  root.append(f("card", "银行卡号", { mode: "numeric" }));
 
   const agree = el("div", "agree");
   const box = el("input");
   box.type = "checkbox";
   box.id = "agree";
-  const lab = el("label", null,
-    "I am doing this work as my own business, and I will invoice for it.");
+  const lab = el("label", null, "这张卡是我本人的。");
   lab.htmlFor = "agree";
   agree.append(box, lab);
   root.append(agree);
 
-  const go = el("button", "go", "SAVE AND GET PAID");
+  const go = el("button", "go", "保存");
   go.type = "button";
   root.append(go);
   const said = el("p", "said");
   said.hidden = true;
   root.append(said);
-  root.append(el("p", "note",
-    "Your bank details go to Airwallex, not to us. We keep the last four digits and nothing else."));
+  root.append(el("p", "note", "卡号加密保存，只用来给你打款。"));
 
   go.addEventListener("click", async () => {
     const body = {
       device: device(),
-      name: $("nm").value.trim(), abn: $("abn").value.trim(),
-      bsb: $("bsb").value.trim(), account: $("acct").value.trim(),
+      name: $("nm").value.trim(),
+      bank: $("bank").value.trim(),
+      card: $("card").value.trim(),
     };
-    /* Said as itself and one at a time: the commonest way this form is
-       wrong is one box, and "check your details" is no help at all. */
-    const miss = !box.checked ? "Tick the line above first."
-      : body.name.split(/\s+/).filter(Boolean).length < 2 ? "Both names, as the bank has them."
-      : body.abn.replace(/\D/g, "").length !== 11 ? "An ABN is eleven digits."
-      : body.bsb.replace(/\D/g, "").length !== 6 ? "A BSB is six digits."
-      : body.account.replace(/\D/g, "").length < 5 ? "That account number looks short."
+    /* One at a time, and each one names its own box. "请检查您的信息" is
+       the sentence that makes somebody close the page. */
+    const miss = !box.checked ? "先勾选上面那行。"
+      : !body.name ? "请填持卡人姓名。"
+      : !body.bank ? "请填开户银行。"
+      : body.card.replace(/\D/g, "").length < 12 ? "卡号位数不太对。"
       : "";
     if (miss) { said.textContent = miss; said.hidden = false; return; }
     go.disabled = true;
-    go.textContent = "SAVING…";
+    go.textContent = "保存中…";
     said.hidden = true;
     try {
       const r = await fetch("/api/paid", {
@@ -186,16 +190,17 @@ function draw(d) {
       const j = await r.json().catch(() => null);
       if (r.ok && j?.ok) { load(); return; }
       said.textContent = {
-        refused: "The bank would not take those details. Check the BSB and the number.",
-        abn: "An ABN is eleven digits.",
-        off: "Paying out is not switched on here yet.",
-      }[j?.error] || "That did not save — try again.";
+        name: "请填持卡人姓名。",
+        bank: "请填开户银行。",
+        card: "卡号位数不太对。",
+        gone: "这个账号不在店里了。",
+      }[j?.error] || "没保存上，再试一次。";
     } catch {
-      said.textContent = "That did not go through. Try again.";
+      said.textContent = "没发出去，再试一次。";
     }
     said.hidden = false;
     go.disabled = false;
-    go.textContent = "SAVE AND GET PAID";
+    go.textContent = "保存";
   });
 }
 
@@ -205,7 +210,7 @@ async function load() {
     const j = await r.json();
     draw(j);
   } catch {
-    $("root").append(el("p", "off", "That did not load. Try again."));
+    $("root").append(el("p", "off", "没打开，刷新一下。"));
   }
 }
 load();

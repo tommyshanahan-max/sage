@@ -501,10 +501,34 @@ owed when the money arrives rather than when the cart is filled. `cutPaid`
 sits beside it on the same row, so two places can never disagree about
 whether somebody has been paid.
 
-**And it pays them.** `make payout-try` came back OK on the live box — a
-beneficiary made, a transfer SCHEDULED — so the commission goes by itself
-the moment an order settles: a quote for the yuan, the conversion, and a
-local AUD transfer to the beneficiary they made on `/paid`.
+**Every representative is in China**, which is the whole model and which
+decides how they are paid. `/paid` asks for three things — 持卡人姓名, 开户
+银行, 银行卡号 — and not for an ABN or a BSB, which nobody running one of
+these shops has.
+
+**The card is sealed, not sent.** Airwallex will not take a yuan beneficiary
+yet (note 2 in `providers/airwallex.js`: local CNY payouts are documented
+for goods trade backed by declarant and order data, and a commission is not
+on that list), so there is nowhere to send the number and no id to keep
+instead. It is encrypted at rest under a key that makes itself in the board
+directory — `lib/sealed.js` says what that buys and what it does not — and
+the route tries `createBeneficiary` every single time, so the day Airwallex
+says yes the board starts keeping an id and drops the number with nobody
+filling anything in again.
+
+```
+make pay-list                        # who, which bank, the card, how much
+make paid-out WHO="Mei"              # that one is sent
+```
+
+`make owed PAY=1` still sweeps, and reports a Chinese card as `by hand`
+rather than as a failure, because nothing failed.
+
+**For an Australian** the old shape survives on the person row: a
+beneficiary id, a label, no number. `make payout-try` came back OK on the
+live box — a beneficiary made, a transfer SCHEDULED — so where there is one,
+the commission still goes by itself the moment an order settles: a quote for
+the yuan, the conversion, and a local AUD transfer.
 
 Immediately, which Tom chose knowing the cost: holding a payout until the
 buyer confirms delivery is the strongest protection against a storefront
