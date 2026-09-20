@@ -18,6 +18,7 @@ import { randomUUID, createHash, randomBytes } from "node:crypto";
 import path from "node:path";
 import { cleanShare, MEMO_ALPHABET } from "./memo.js";
 import { cleanRequest, CURRENCIES as REQUEST_CURRENCIES, REQUEST_MAX } from "./request.js";
+import { cleanProduct, cleanOrder, PRODUCT_MAX, ORDER_MAX } from "./shop.js";
 
 /** Where a post can be. Four, and each is a different fact:
  *
@@ -3253,9 +3254,31 @@ export function cleanBoard(raw) {
     requests.push(q);
   }
 
+  /* THE SHOP: one catalogue, many storefronts, and the orders that came off
+     them. Same rules as everything else here — deduplicated on id, newest
+     last, capped so a hand-edited file cannot produce forty thousand. */
+  const products = [];
+  const pids = new Set();
+  for (const r of (Array.isArray(raw?.products) ? raw.products : [])) {
+    const q = cleanProduct(r);
+    if (!q || pids.has(q.id)) continue;
+    pids.add(q.id);
+    products.push(q);
+  }
+  const orders = [];
+  const oids = new Set();
+  for (const r of (Array.isArray(raw?.orders) ? raw.orders : [])) {
+    const q = cleanOrder(r);
+    if (!q || oids.has(q.id)) continue;
+    oids.add(q.id);
+    orders.push(q);
+  }
+
   return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
     offers, shuts, hides, groups, says, signins, writes, pushes, blocks, announces,
     requests: requests.slice(-REQUEST_MAX),
+    products: products.slice(-PRODUCT_MAX),
+    orders: orders.slice(-ORDER_MAX),
     counts: cleanCounts(raw?.counts) };
 }
 

@@ -1,0 +1,204 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>订单</title>
+<meta name="robots" content="noindex">
+<!--
+  ONE ORDER, IN THE FOUR WORDS SHE ALREADY KNOWS.
+
+  待付款 · 待发货 · 待收货 · 完成 — see lib/shop.js. The screen is one state
+  and what to do about it: a code to long-press while it is 待付款, a
+  tracking number once it has gone, and nothing at all in between, because
+  in between there is nothing for her to do.
+
+  The code is a PNG, not a drawn grid — WeChat's 长按二维码识别 reads a QR
+  out of an image and nothing out of a page. See lib/qr.js.
+-->
+<style>
+  :root{
+    --bg:#F5F5F7; --card:#FFFFFF; --ink:#111214; --ink2:#5B6170; --mut:#8A8F9C;
+    --line:#E7E8EC; --acc:#D6483B; --ok:#1FA463;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink)}
+  body{font-family:var(--sans);font-size:16px;line-height:1.5;
+    padding:env(safe-area-inset-top,0) 0 calc(2rem + env(safe-area-inset-bottom,0))}
+  main{max-width:34rem;margin:0 auto;padding:1rem .8rem}
+  .head{display:flex;align-items:baseline;justify-content:space-between;
+    padding:.2rem .3rem 1rem}
+  .head b{font-size:1.15rem}
+  .head span{font-size:.85rem;color:var(--acc)}
+  .head span.ok{color:var(--ok)}
+  .box{background:var(--card);border-radius:.9rem;padding:.9rem;margin:0 0 .7rem}
+  .lab{font-size:.75rem;color:var(--mut);margin:0 0 .35rem}
+  .addr{font-size:.95rem;line-height:1.6}
+  .addr b{font-weight:600}
+  .ln{display:flex;justify-content:space-between;gap:.8rem;font-size:.9rem;
+    padding:.25rem 0}
+  .ln span{color:var(--ink2);min-width:0;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .tot{display:flex;justify-content:space-between;border-top:1px solid var(--line);
+    margin-top:.6rem;padding-top:.6rem}
+  .tot b{color:var(--acc);font-size:1.2rem}
+
+  .pay{text-align:center;padding:1.2rem .9rem 1.4rem}
+  .pay .amt{font-size:2rem;line-height:1.1;margin:.2rem 0 .1rem}
+  .pay .to{font-size:.9rem;color:var(--ink2)}
+  .qr{width:min(15rem,70vw);aspect-ratio:1;display:block;margin:1.1rem auto .7rem;
+    background:#fff;border-radius:.5rem;
+    -webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+  .do{font-size:1rem;font-weight:600}
+  .else{font-size:.82rem;color:var(--mut);margin:.25rem 0 0}
+  .ways{display:flex;gap:.6rem;justify-content:center;margin:.2rem 0 0}
+  .ways button{flex:1 1 0;max-width:10rem;border:0;border-radius:999px;font:inherit;
+    font-size:1rem;font-weight:600;padding:.85rem 1rem;background:var(--acc);color:#fff}
+  .ways button.alt{background:#1677FF}
+  .track{font-size:1.05rem;letter-spacing:.04em}
+  .foot{padding:1rem .4rem 0;font-size:.75rem;line-height:1.7;color:var(--mut)}
+</style>
+
+<main id="root"></main>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+const el = (t, cls, text) => {
+  const n = document.createElement(t);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+const ID = (location.pathname.match(/^\/order\/([a-f0-9]{20})/) || [])[1] || "";
+const yuan = (n) => "¥" + (n / 100).toLocaleString("zh-CN", {
+  minimumFractionDigits: (n % 100) ? 2 : 0, maximumFractionDigits: 2,
+});
+const WORD = { due: "待付款", toShip: "待发货", shipped: "待收货", done: "完成", off: "已取消" };
+
+let O = null;
+
+function draw() {
+  const root = $("root");
+  root.textContent = "";
+
+  const head = el("div", "head");
+  head.append(el("b", null, "订单"));
+  const st = el("span", O.state === "done" ? "ok" : null, WORD[O.state] || "");
+  head.append(st);
+  root.append(head);
+
+  /* WHAT TO DO, FIRST AND ONLY. Everything below it is the receipt. */
+  if (O.state === "due") root.append(payBox());
+  if (O.state === "shipped" || O.state === "done") root.append(trackBox());
+
+  const addr = el("div", "box");
+  addr.append(el("p", "lab", "收货信息"));
+  const a = el("div", "addr");
+  a.append(el("b", null, O.ship.name + "  " + O.ship.phone));
+  a.append(document.createElement("br"));
+  a.append(document.createTextNode(
+    [O.ship.province, O.ship.city, O.ship.district, O.ship.detail].filter(Boolean).join(" ")));
+  addr.append(a);
+  root.append(addr);
+
+  const box = el("div", "box");
+  box.append(el("p", "lab", "商品"));
+  for (const l of O.lines) {
+    const row = el("div", "ln");
+    row.append(el("span", null, l.name + " ×" + l.n));
+    row.append(el("b", null, yuan(l.price * l.n)));
+    box.append(row);
+  }
+  const post = el("div", "ln");
+  post.append(el("span", null, "运费"));
+  post.append(el("b", null, yuan(O.post)));
+  box.append(post);
+  const tot = el("div", "tot");
+  tot.append(el("span", null, "合计"));
+  tot.append(el("b", null, yuan(O.total)));
+  box.append(tot);
+  root.append(box);
+
+  root.append(el("p", "foot", "澳洲直邮 · 由 " + O.shop + " 的小店下单"));
+}
+
+function payBox() {
+  const box = el("div", "box pay");
+  box.append(el("p", "lab", "需支付"));
+  box.append(el("div", "amt", yuan(O.total)));
+  box.append(el("p", "to", "澳洲直邮 · " + O.shop));
+  const ways = el("div", "ways");
+  const wx = el("button", null, "微信支付");
+  const ali = el("button", "alt", "支付宝");
+  wx.type = ali.type = "button";
+  wx.addEventListener("click", () => code("wechat", box, wx, ali));
+  ali.addEventListener("click", () => code("alipay", box, wx, ali));
+  ways.append(wx, ali);
+  box.append(ways);
+  return box;
+}
+
+async function code(how, box, wx, ali) {
+  wx.disabled = ali.disabled = true;
+  wx.textContent = how === "wechat" ? "正在生成…" : wx.textContent;
+  ali.textContent = how === "alipay" ? "正在生成…" : ali.textContent;
+  try {
+    const r = await fetch("/api/order/" + ID + "/pay", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ method: how }),
+    });
+    const j = await r.json().catch(() => null);
+    if (r.ok && j?.qr) {
+      box.querySelector(".ways").remove();
+      const img = el("img", "qr");
+      img.src = j.qr.png;
+      img.alt = "";
+      box.append(img);
+      box.append(el("p", "do", "长按二维码识别"));
+      box.append(el("p", "else", "或者截屏，再长按那张图"));
+      watch();
+      return;
+    }
+    wx.textContent = "微信支付"; ali.textContent = "支付宝";
+    wx.disabled = ali.disabled = false;
+    box.append(el("p", "else", j?.error === "already" ? "这笔已经付过了。" : "没生成出来，再试一次。"));
+  } catch {
+    wx.textContent = "微信支付"; ali.textContent = "支付宝";
+    wx.disabled = ali.disabled = false;
+  }
+}
+
+/* Asking, while the code is on the screen — she pays inside her wallet and
+   nothing comes back to this page. Ten minutes is longer than a code lasts. */
+function watch() {
+  let left = 200;
+  const tick = async () => {
+    if (left-- <= 0) return;
+    try {
+      const r = await fetch("/api/order/" + ID + "/check", { cache: "no-store" });
+      const j = await r.json().catch(() => null);
+      if (j?.state && j.state !== "due") { load(); return; }
+    } catch { }
+    setTimeout(tick, 3000);
+  };
+  setTimeout(tick, 3000);
+}
+
+function trackBox() {
+  const box = el("div", "box");
+  box.append(el("p", "lab", "快递单号"));
+  box.append(el("div", "track", (O.sent?.courier ? O.sent.courier + " " : "") + (O.sent?.tracking || "")));
+  return box;
+}
+
+async function load() {
+  try {
+    const r = await fetch("/api/order/" + ID, { cache: "no-store" });
+    const j = await r.json().catch(() => null);
+    if (r.ok && j?.ok) { O = j.order; draw(); return; }
+  } catch { }
+  $("root").append(el("p", "foot", "这个订单打不开了。"));
+}
+
+if (!ID) $("root").append(el("p", "foot", "这个订单打不开了。"));
+else load();
+</script>

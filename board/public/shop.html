@@ -1,0 +1,213 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>小店</title>
+<meta name="robots" content="noindex">
+<!--
+  A STOREFRONT, OPENED IN WECHAT BY SOMEBODY WITH NO ACCOUNT.
+
+  The whole screen is written for a woman holding a phone in a queue who was
+  sent this by somebody she knows. So: whose shop it is, the things, a
+  number that grows as she taps, and one button. Nothing to read.
+
+  THE FOUR WORDS ARE NOT OURS — see lib/shop.js. Everything here uses the
+  vocabulary she already has from every shop she has ever bought from:
+  加入购物车, 去结算, 运费, 合计. A translation of our words would be the
+  tell that this was built somewhere else.
+
+  CHINESE FIRST AND NOT AS A TOGGLE. The payment pages have a language
+  button because the person owed the money reads them too. Nobody but a
+  Chinese buyer ever opens this one.
+-->
+<style>
+  :root{
+    --bg:#F5F5F7; --card:#FFFFFF; --ink:#111214; --ink2:#5B6170; --mut:#8A8F9C;
+    --line:#E7E8EC; --acc:#D6483B; --ok:#1FA463;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink)}
+  body{font-family:var(--sans);font-size:16px;line-height:1.5;
+    padding:env(safe-area-inset-top,0) 0 calc(5.6rem + env(safe-area-inset-bottom,0))}
+  main{max-width:34rem;margin:0 auto;padding:.9rem .8rem 1rem}
+
+  .who{display:flex;align-items:center;gap:.7rem;padding:.2rem .3rem 1rem}
+  .who img{width:3rem;height:3rem;border-radius:50%;object-fit:cover;flex:0 0 auto;
+    background:var(--line)}
+  .who .noimg{width:3rem;height:3rem;border-radius:50%;background:var(--line);flex:0 0 auto}
+  .who b{display:block;font-size:1.05rem}
+  .who span{display:block;font-size:.82rem;color:var(--ink2);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  .item{display:flex;gap:.75rem;background:var(--card);border-radius:.9rem;
+    padding:.7rem;margin:0 0 .6rem}
+  .item .pic{width:5.2rem;height:5.2rem;border-radius:.6rem;flex:0 0 auto;
+    background:var(--line);object-fit:cover}
+  .item .mid{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:.15rem}
+  .item .nm{font-size:.95rem;line-height:1.4;display:-webkit-box;
+    -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .item .un{font-size:.78rem;color:var(--mut)}
+  .item .row{margin-top:auto;display:flex;align-items:center;justify-content:space-between}
+  .item .pr{font-size:1.05rem;color:var(--acc)}
+  .item .pr i{font-style:normal;font-size:.78rem}
+
+  /* The stepper everybody in China already knows: − 2 +, nothing else. */
+  .qty{display:flex;align-items:center;gap:.55rem}
+  .qty button{width:1.9rem;height:1.9rem;border-radius:50%;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);font:inherit;font-size:1.05rem;line-height:1;
+    display:grid;place-items:center;padding:0}
+  .qty button:disabled{color:var(--line)}
+  .qty b{min-width:1.2rem;text-align:center;font-weight:600}
+  .add{border:0;border-radius:999px;background:var(--acc);color:#fff;font:inherit;
+    font-size:.85rem;padding:.42rem .9rem}
+  .gone{font-size:.85rem;color:var(--mut)}
+
+  /* The bar that follows her down the page, because the total is the thing
+     she is actually watching. */
+  .bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);
+    border-top:1px solid var(--line);padding:.7rem .9rem;
+    padding-bottom:calc(.7rem + env(safe-area-inset-bottom,0));
+    display:flex;align-items:center;gap:.8rem;z-index:5}
+  .bar .sum{flex:1 1 auto;min-width:0}
+  .bar .sum b{display:block;font-size:1.25rem;color:var(--acc)}
+  .bar .sum span{display:block;font-size:.75rem;color:var(--mut)}
+  .bar .go{flex:0 0 auto;border:0;border-radius:999px;background:var(--acc);color:#fff;
+    font:inherit;font-size:1rem;font-weight:600;padding:.85rem 1.7rem}
+  .bar .go:disabled{background:var(--line);color:var(--mut)}
+
+  .none{padding:3rem 1rem;text-align:center;color:var(--mut)}
+  .foot{padding:1.4rem .4rem 0;font-size:.75rem;line-height:1.7;color:var(--mut)}
+</style>
+
+<main id="root"></main>
+<div class="bar" id="bar" hidden>
+  <div class="sum"><b id="sum">¥0</b><span id="note">运费 ¥30</span></div>
+  <button class="go" type="button" id="go" disabled>去结算</button>
+</div>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+const el = (t, cls, text) => {
+  const n = document.createElement(t);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+const HANDLE = decodeURIComponent((location.pathname.match(/^\/shop\/([^/]+)/) || [])[1] || "");
+
+/* Fen to ¥, once, at the edge — the arithmetic upstream is all integers.
+   See the note over `fen` in lib/shop.js. */
+const yuan = (n) => "¥" + (n / 100).toLocaleString("zh-CN", {
+  minimumFractionDigits: (n % 100) ? 2 : 0, maximumFractionDigits: 2,
+});
+
+let SHOP = null, ITEMS = [], POST = 3000;
+const CART = new Map();
+
+function total() {
+  let n = 0;
+  for (const [id, q] of CART) {
+    const it = ITEMS.find((x) => x.id === id);
+    if (it) n += it.price * q;
+  }
+  return n;
+}
+
+function paint() {
+  const goods = total();
+  $("sum").textContent = yuan(goods + (goods ? POST : 0));
+  $("note").textContent = goods ? "含运费 " + yuan(POST) : "运费 " + yuan(POST);
+  $("go").disabled = !goods;
+  $("bar").hidden = false;
+}
+
+function stepper(it) {
+  const wrap = el("div", "qty");
+  const less = el("button", null, "−");
+  const n = el("b", null, String(CART.get(it.id) || 0));
+  const more = el("button", null, "+");
+  less.type = more.type = "button";
+  less.setAttribute("aria-label", "少一个");
+  more.setAttribute("aria-label", "多一个");
+  const set = (q) => {
+    if (q <= 0) CART.delete(it.id); else CART.set(it.id, Math.min(q, 99));
+    n.textContent = String(CART.get(it.id) || 0);
+    less.disabled = !CART.get(it.id);
+    paint();
+  };
+  less.disabled = !CART.get(it.id);
+  less.addEventListener("click", () => set((CART.get(it.id) || 0) - 1));
+  more.addEventListener("click", () => set((CART.get(it.id) || 0) + 1));
+  wrap.append(less, n, more);
+  return wrap;
+}
+
+function draw() {
+  const root = $("root");
+  root.textContent = "";
+
+  const who = el("div", "who");
+  if (SHOP.photo) {
+    const img = el("img");
+    img.src = SHOP.photo;
+    img.alt = "";
+    who.append(img);
+  } else {
+    who.append(el("div", "noimg"));
+  }
+  const box = el("div");
+  box.append(el("b", null, SHOP.handle));
+  box.append(el("span", null, SHOP.sayZh || SHOP.say || "澳洲直邮"));
+  who.append(box);
+  root.append(who);
+
+  if (!ITEMS.length) {
+    root.append(el("p", "none", "这家店还没有上架东西。"));
+    return;
+  }
+
+  for (const it of ITEMS) {
+    const card = el("div", "item");
+    const pic = el("img", "pic");
+    pic.src = it.photo || "";
+    pic.alt = "";
+    pic.loading = "lazy";
+    card.append(pic);
+
+    const mid = el("div", "mid");
+    mid.append(el("div", "nm", it.name));
+    if (it.unit) mid.append(el("div", "un", it.unit));
+    const row = el("div", "row");
+    const pr = el("div", "pr");
+    pr.append(el("i", null, "¥"), document.createTextNode((it.price / 100).toLocaleString("zh-CN")));
+    row.append(pr);
+    row.append(it.out ? el("span", "gone", "已售完") : stepper(it));
+    mid.append(row);
+    card.append(mid);
+    root.append(card);
+  }
+
+  root.append(el("p", "foot",
+    "澳洲直邮 · 微信支付或支付宝 · 下单后由 " + SHOP.handle + " 跟进"));
+}
+
+$("go").addEventListener("click", () => {
+  const lines = [...CART].map(([id, n]) => ({ id, n }));
+  try { sessionStorage.setItem("shop:cart", JSON.stringify({ handle: HANDLE, lines })); } catch { }
+  location.href = "/shop/" + encodeURIComponent(HANDLE) + "/checkout";
+});
+
+(async () => {
+  try {
+    const r = await fetch("/api/shop/" + encodeURIComponent(HANDLE), { cache: "no-store" });
+    const j = await r.json();
+    if (!r.ok || !j?.ok) throw new Error("gone");
+    SHOP = j.shop; ITEMS = j.products || []; POST = j.post ?? 3000;
+    document.title = SHOP.handle + " 的小店";
+    draw();
+    paint();
+  } catch {
+    $("root").append(el("p", "none", "这家店打不开了。"));
+  }
+})();
+</script>

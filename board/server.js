@@ -33,6 +33,7 @@ import path from "node:path";
 import * as store from "./lib/store.js";
 import * as memo from "./lib/memo.js";
 import * as request from "./lib/request.js";
+import * as shop from "./lib/shop.js";
 import * as terms from "./lib/terms.js";
 import { translate, configured as translateReady } from "./lib/translate.js";
 import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js";
@@ -493,7 +494,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|api\/shop\/|api\/order\/|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -9947,6 +9948,14 @@ app.post("/api/group/deal/share", notesOff, express.json({ limit: "2kb" }), asyn
    everything on it arrives after a code has been given. */
 app.get("/d/:t", (req, res, next) => page("memo.html", req, res, next));
 
+/* A STOREFRONT AND AN ORDER, both open and both meant to be pasted into a
+   chat. /shop/<handle> is somebody's shop; /order/<id> is one order, and
+   the id is the whole of its address — twenty hex, unguessable, the same
+   rule as a payment request. */
+app.get("/shop/:handle/checkout", (req, res, next) => page("checkout.html", req, res, next));
+app.get("/shop/:handle", (req, res, next) => page("shop.html", req, res, next));
+app.get("/order/:id", (req, res, next) => page("order.html", req, res, next));
+
 /* ===========================================================================
  * A PAYMENT REQUEST
  * ===========================================================================
@@ -10329,6 +10338,14 @@ app.post("/api/request/:id/landed", express.json({ limit: "1kb" }), async (req, 
  * Empty — the normal state of every other box that ever runs this code —
  * means no request anywhere reaches the QR branch at all. */
 const DEALIO_OWNER = String(process.env.BOARD_DEALIO_OWNER || "").trim().toLowerCase();
+
+/* WHAT POSTAGE COSTS AND WHAT A STOREFRONT EARNS. One flat postage per
+   order, because that is how a parcel to China is actually charged and a
+   calculated one is a promise about a courier's pricing nobody here can
+   keep. The cut is a percentage of the goods, never of the postage —
+   nobody earns commission on freight. */
+const POST_FEN = Math.max(0, Math.round(Number(process.env.BOARD_SHOP_POST || 3000)));
+const SHOP_CUT_PCT = Math.min(Math.max(Number(process.env.BOARD_SHOP_CUT || 15), 0), 60);
 
 /** The provider, only if it can do both halves: draw a code and later say
  *  whether that code was paid. A provider that can only do the first would
@@ -10779,6 +10796,214 @@ app.post("/api/admin/terms", admin, express.json({ limit: "4kb" }), async (req, 
  *  WHO is a first name — the handle as it appears on the board. Everything
  *  else is what the request says.
  */
+/* ---- THE SHOP ------------------------------------------------------------
+ *
+ * One catalogue, many storefronts — see the header of lib/shop.js. These
+ * three routes are the buyer's whole world: the shop she opened from a
+ * WeChat message, the order she makes on it, and the state of that order
+ * afterwards. No account at any point.
+ *
+ * OPEN, like the payment pages. A storefront that needs a code is a
+ * storefront nobody outside the board can buy from, which is all of them.
+ */
+
+/** A STOREFRONT: whose it is, and what is on it.
+ *
+ *  Every published member has one, and today every storefront shows the
+ *  whole catalogue. Letting somebody pick the twelve things they will stand
+ *  behind is the next thing and is a field on this route, not a new one. */
+app.get("/api/shop/:handle", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const handle = String(req.params.handle || "").slice(0, 40);
+  if (!handle) return res.status(404).json({ error: "gone" });
+  const board = await store.load(FILE);
+  const who = board.people.find(
+    (p) => p.state === "published" && p.handle && p.handle === handle);
+  if (!who) return res.status(404).json({ error: "gone" });
+  res.json({
+    ok: true,
+    shop: {
+      handle: who.handle,
+      /* Their own line, in whichever language they wrote it and its render
+         into the other — the same pair every card on this board shows. */
+      say: who.goal || "",
+      sayZh: who.goalZh || "",
+      photo: who.photoState === "published" ? who.photo || "" : "",
+    },
+    /* Sold-out rows stay, marked: a shopfront that linked to something has
+       to be able to say 已售完 rather than go quiet. */
+    products: board.products
+      .filter((p) => !p.off)
+      .map((p) => ({ id: p.id, name: p.name, unit: p.unit, price: p.price,
+        photo: p.photo, out: Boolean(p.out) })),
+    /* One postage per order, the way every parcel out of Australia is
+       actually charged. */
+    post: POST_FEN,
+  });
+});
+
+/** ONE ORDER, MADE BY SOMEBODY WITH NO ACCOUNT.
+ *
+ *  The lines are re-priced from the catalogue here and never trusted from
+ *  the page: a browser that says a tin of formula costs one fen is a browser
+ *  saying it, not a price. */
+app.post("/api/shop/:handle/order", express.json({ limit: "8kb" }), async (req, res) => {
+  const handle = String(req.params.handle || "").slice(0, 40);
+  const want = Array.isArray(req.body?.lines) ? req.body.lines.slice(0, 40) : [];
+  const by = hashDevice(String(req.body?.device || ""), SALT);
+  if (!handle || !want.length) return res.status(400).json({ error: "no" });
+
+  const ship = shop.cleanShip(req.body?.ship);
+  if (!ship) return res.status(400).json({ error: "address" });
+
+  const out = await change((board) => {
+    const who = board.people.find(
+      (p) => p.state === "published" && p.handle === handle);
+    if (!who) return { error: "gone" };
+
+    const lines = [];
+    for (const l of want) {
+      const found = board.products.find((p) => p.id === shop.cleanId(l?.id));
+      if (!found || found.off || found.out) continue;
+      const n = Math.min(Math.max(Math.round(Number(l?.n) || 0), 1), 99);
+      lines.push({ id: found.id, name: found.name, price: found.price, n });
+    }
+    if (!lines.length) return { error: "empty" };
+
+    const order = shop.cleanOrder({
+      id: shop.newId(), at: new Date().toISOString(),
+      shop: who.handle, by, lines, ship, post: POST_FEN,
+      /* WHAT THE STOREFRONT EARNS, fixed now. A rate that changes next month
+         must not reach back into what somebody has already sold. */
+      cut: Math.floor(lines.reduce((n, l) => n + l.price * l.n, 0) * SHOP_CUT_PCT / 100),
+    });
+    if (!order) return { error: "bad" };
+    board.orders.push(order);
+    return { ok: true, id: order.id, tell: who.by };
+  });
+  if (out?.error) {
+    return res.status(out.error === "gone" ? 404 : 400).json({ error: out.error });
+  }
+  res.status(201).json({ ok: true, id: out.id });
+  /* The person whose shop it is, told an order came in. */
+  if (out.tell) tellThem(out.tell).catch(() => {});
+});
+
+/** READING ONE. The link is the whole of the authority, as everywhere else
+ *  here: what comes back is an allowlist and carries nobody's device hash. */
+app.get("/api/order/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const id = shop.cleanId(req.params.id);
+  if (!id) return res.status(404).json({ error: "gone" });
+  const board = await store.load(FILE);
+  const o = board.orders.find((x) => x.id === id);
+  if (!o) return res.status(404).json({ error: "gone" });
+  res.json({ ok: true, order: shop.orderView(o) });
+});
+
+/** PAYING FOR ONE, with the code — the same rails as a payment request and
+ *  the same four things that have to be true (see dealioWays): a provider
+ *  that can draw a code and ask about it later, the shop's own account, yuan,
+ *  and one of the two wallets. An order is always in yuan, so the currency
+ *  question does not arise.
+ *
+ *  THE MONEY GOES TO THE ONE ACCOUNT, as everywhere else here: the seller is
+ *  whoever holds the keys, the storefront earns a commission out of it, and
+ *  nobody else's money passes through. That is what makes this an ordinary
+ *  shop rather than a payment business.
+ */
+app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) => {
+  const id = shop.cleanId(req.params.id);
+  const method = String(req.body?.method || "wechat");
+  if (!id || !["wechat", "alipay"].includes(method)) return res.status(400).json({ error: "no" });
+  const p = dealioQr();
+  if (!p) return res.status(400).json({ error: "off" });
+
+  const board = await store.load(FILE);
+  const o = board.orders.find((x) => x.id === id);
+  if (!o || o.off) return res.status(404).json({ error: "gone" });
+  if (o.paid) return res.status(400).json({ error: "already" });
+
+  const total = shop.orderTotal(o);
+  if (!total) return res.status(400).json({ error: "amount" });
+  try {
+    const r = await p.qrPay({
+      amount: total, currency: "CNY", method,
+      /* What she sees beside the amount in her own wallet: the first thing
+         in the order, which is what she remembers ordering. */
+      reference: o.lines[0]?.name || "",
+    });
+    if (!r.qr) return res.status(502).json({ error: "qr" });
+    const drawn = qrBits(r.qr);
+    const png = await qrPng(r.qr);
+    await change((b) => {
+      const row = b.orders.find((x) => x.id === id);
+      if (row) row.pay = { ref: r.id, how: method, at: new Date().toISOString() };
+      return { ok: true };
+    });
+    res.json({ ok: true, how: method, amount: store.fromMinor(total, "cny"),
+      qr: { size: drawn.size, bits: drawn.bits, png } });
+  } catch (err) {
+    console.error("order qr:", err.message);
+    res.status(502).json({ error: "qr" });
+  }
+});
+
+/** DID SHE PAY? The same witness a request has, for the same reason: she
+ *  pays inside a wallet and may never come back to this page. */
+app.get("/api/order/:id/check", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const id = shop.cleanId(req.params.id);
+  if (!id) return res.status(404).json({ error: "gone" });
+  const board = await store.load(FILE);
+  const o = board.orders.find((x) => x.id === id);
+  if (!o) return res.status(404).json({ error: "gone" });
+  if (o.paid) return res.json({ ok: true, state: shop.orderState(o) });
+
+  const p = dealioQr();
+  if (!p || !o.pay?.ref) return res.json({ ok: true, state: shop.orderState(o) });
+  let status = "";
+  try {
+    const r = await p.intentStatus(o.pay.ref);
+    status = String(r.status || "");
+  } catch (err) {
+    console.error("order check:", err.message);
+    return res.json({ ok: true, state: shop.orderState(o) });
+  }
+  if (status !== "SUCCEEDED") return res.json({ ok: true, state: shop.orderState(o) });
+
+  const out = await change((b) => {
+    const row = b.orders.find((x) => x.id === id);
+    if (!row || row.paid) return { ok: true };
+    row.paid = true;
+    /* The storefront, told they have a sale to follow up, and the seller,
+       told there is a parcel to send. */
+    const seller = b.people.find((x) => x.handle === row.shop);
+    return { ok: true, tell: seller?.by || "" };
+  });
+  if (out?.tell) tellThem(out.tell).catch(() => {});
+  res.json({ ok: true, state: "toShip" });
+});
+
+/** ADDING SOMETHING TO THE CATALOGUE, from a terminal. The shop has one
+ *  seller and he does not need a screen to type a price into. */
+app.post("/api/admin/product", admin, express.json({ limit: "4kb" }), async (req, res) => {
+  const price = store.toMinor(String(req.body?.price || ""), "cny");
+  if (!price) return res.status(400).json({ error: "price" });
+  const out = await change((board) => {
+    const p = shop.cleanProduct({
+      id: shop.newId(), at: new Date().toISOString(),
+      name: req.body?.name, en: req.body?.en, unit: req.body?.unit,
+      photo: req.body?.photo, price,
+    });
+    if (!p) return { error: "bad" };
+    board.products.push(p);
+    return { ok: true, id: p.id, n: board.products.length };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true, id: out.id, n: out.n });
+});
+
 app.post("/api/admin/request", admin, express.json({ limit: "2kb" }), async (req, res) => {
   const who = String(req.body?.who || "").trim();
   const amount = String(req.body?.amount || "").trim();

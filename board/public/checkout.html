@@ -1,0 +1,202 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>填写地址</title>
+<meta name="robots" content="noindex">
+<!--
+  THE ADDRESS, IN THE SHAPE CHINESE ADDRESSES ARE WRITTEN.
+
+  省 · 市 · 区 on one line and the rest underneath, because that is how every
+  parcel in China is addressed and how every shop she uses asks for it. A
+  Western two-line box with "Address line 2" in it is the clearest possible
+  signal that a shop was not built for her.
+
+  NO ID NUMBER HERE. These clear as personal articles and customs matches the
+  recipient's identity card to the parcel — but the courier collects that
+  themselves, off the QR on their own label. A shop that does not hold
+  identity documents never has to explain how it protects them.
+-->
+<style>
+  :root{
+    --bg:#F5F5F7; --card:#FFFFFF; --ink:#111214; --ink2:#5B6170; --mut:#8A8F9C;
+    --line:#E7E8EC; --acc:#D6483B;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink)}
+  body{font-family:var(--sans);font-size:16px;line-height:1.5;
+    padding:env(safe-area-inset-top,0) 0 calc(5.6rem + env(safe-area-inset-bottom,0))}
+  main{max-width:34rem;margin:0 auto;padding:1rem .8rem}
+  h1{font-size:1.1rem;margin:.2rem .3rem 1rem}
+  .box{background:var(--card);border-radius:.9rem;padding:.9rem;margin:0 0 .7rem}
+  label{display:block;font-size:.78rem;color:var(--ink2);margin:0 0 .3rem}
+  input{width:100%;font:inherit;font-size:1rem;padding:.7rem .75rem;border-radius:.6rem;
+    border:1px solid var(--line);background:#fff;color:var(--ink)}
+  .two{display:flex;gap:.55rem}
+  .two>div{flex:1 1 0;min-width:0}
+  .fld{margin:0 0 .7rem}
+  .fld:last-child{margin:0}
+  .lines{display:flex;flex-direction:column;gap:.55rem}
+  .ln{display:flex;justify-content:space-between;gap:.8rem;font-size:.9rem}
+  .ln span{color:var(--ink2);min-width:0;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .ln b{font-weight:400;flex:0 0 auto}
+  .tot{display:flex;justify-content:space-between;border-top:1px solid var(--line);
+    margin-top:.7rem;padding-top:.7rem;font-size:1rem}
+  .tot b{color:var(--acc);font-size:1.15rem}
+  .bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);
+    border-top:1px solid var(--line);padding:.7rem .9rem;
+    padding-bottom:calc(.7rem + env(safe-area-inset-bottom,0));display:flex;gap:.8rem;
+    align-items:center}
+  .bar .sum{flex:1 1 auto}
+  .bar .sum b{display:block;font-size:1.25rem;color:var(--acc)}
+  .bar .go{flex:0 0 auto;border:0;border-radius:999px;background:var(--acc);color:#fff;
+    font:inherit;font-size:1rem;font-weight:600;padding:.85rem 1.7rem}
+  .bar .go:disabled{background:var(--line);color:var(--mut)}
+  .said{margin:.6rem .3rem 0;font-size:.85rem;color:var(--acc)}
+</style>
+
+<main>
+  <h1>填写收货信息</h1>
+
+  <div class="box">
+    <div class="fld two">
+      <div>
+        <label for="nm">收货人</label>
+        <input id="nm" autocomplete="name" enterkeyhint="next">
+      </div>
+      <div>
+        <label for="ph">手机号</label>
+        <input id="ph" inputmode="numeric" autocomplete="tel" enterkeyhint="next">
+      </div>
+    </div>
+    <div class="fld two">
+      <div>
+        <label for="pv">省</label>
+        <input id="pv" autocomplete="address-level1">
+      </div>
+      <div>
+        <label for="ct">市</label>
+        <input id="ct" autocomplete="address-level2">
+      </div>
+      <div>
+        <label for="dt">区/县</label>
+        <input id="dt" autocomplete="address-level3">
+      </div>
+    </div>
+    <div class="fld">
+      <label for="ad">详细地址</label>
+      <input id="ad" autocomplete="street-address" placeholder="街道、门牌、小区、楼栋房号">
+    </div>
+  </div>
+
+  <div class="box" id="sumbox"></div>
+  <p class="said" id="said" hidden></p>
+</main>
+
+<div class="bar">
+  <div class="sum"><b id="bartot">¥0</b></div>
+  <button class="go" type="button" id="go">提交订单</button>
+</div>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+const el = (t, cls, text) => {
+  const n = document.createElement(t);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+const HANDLE = decodeURIComponent((location.pathname.match(/^\/shop\/([^/]+)/) || [])[1] || "");
+const yuan = (n) => "¥" + (n / 100).toLocaleString("zh-CN", {
+  minimumFractionDigits: (n % 100) ? 2 : 0, maximumFractionDigits: 2,
+});
+
+let CART = [], ITEMS = [], POST = 3000;
+try {
+  const raw = JSON.parse(sessionStorage.getItem("shop:cart") || "{}");
+  if (raw.handle === HANDLE) CART = Array.isArray(raw.lines) ? raw.lines : [];
+} catch { }
+
+function device() {
+  try {
+    let d = localStorage.getItem("board:device");
+    if (!d) {
+      d = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+      localStorage.setItem("board:device", d);
+    }
+    return d;
+  } catch { return ""; }
+}
+
+function paint() {
+  const box = $("sumbox");
+  box.textContent = "";
+  const lines = el("div", "lines");
+  let goods = 0;
+  for (const c of CART) {
+    const it = ITEMS.find((x) => x.id === c.id);
+    if (!it) continue;
+    goods += it.price * c.n;
+    const row = el("div", "ln");
+    row.append(el("span", null, it.name + " ×" + c.n));
+    row.append(el("b", null, yuan(it.price * c.n)));
+    lines.append(row);
+  }
+  const post = el("div", "ln");
+  post.append(el("span", null, "运费"));
+  post.append(el("b", null, yuan(POST)));
+  lines.append(post);
+  box.append(lines);
+  const tot = el("div", "tot");
+  tot.append(el("span", null, "合计"));
+  tot.append(el("b", null, yuan(goods + POST)));
+  box.append(tot);
+  $("bartot").textContent = yuan(goods + POST);
+}
+
+$("go").addEventListener("click", async () => {
+  const ship = {
+    name: $("nm").value.trim(), phone: $("ph").value.trim(),
+    province: $("pv").value.trim(), city: $("ct").value.trim(),
+    district: $("dt").value.trim(), detail: $("ad").value.trim(),
+  };
+  /* Said as itself, and not one sentence for six fields: the commonest way
+     an address form is wrong is one box left empty. */
+  const missing = !ship.name ? "收货人" : !ship.phone ? "手机号"
+    : !ship.province ? "省" : !ship.city ? "市" : !ship.detail ? "详细地址" : "";
+  if (missing) {
+    $("said").textContent = "还差" + missing + "。";
+    $("said").hidden = false;
+    return;
+  }
+  $("go").disabled = true;
+  $("go").textContent = "提交中…";
+  try {
+    const r = await fetch("/api/shop/" + encodeURIComponent(HANDLE) + "/order", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lines: CART, ship, device: device() }),
+    });
+    const j = await r.json().catch(() => null);
+    if (r.ok && j?.id) {
+      try { sessionStorage.removeItem("shop:cart"); } catch { }
+      location.href = "/order/" + j.id;
+      return;
+    }
+    $("said").textContent = j?.error === "address" ? "地址填得不全。" : "没提交成功，再试一次。";
+  } catch {
+    $("said").textContent = "网络没通，再试一次。";
+  }
+  $("said").hidden = false;
+  $("go").disabled = false;
+  $("go").textContent = "提交订单";
+});
+
+(async () => {
+  const r = await fetch("/api/shop/" + encodeURIComponent(HANDLE), { cache: "no-store" });
+  const j = await r.json().catch(() => null);
+  if (j?.ok) { ITEMS = j.products || []; POST = j.post ?? 3000; }
+  if (!CART.length) { location.href = "/shop/" + encodeURIComponent(HANDLE); return; }
+  paint();
+})();
+</script>
