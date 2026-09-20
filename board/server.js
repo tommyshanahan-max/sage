@@ -12056,6 +12056,35 @@ app.post("/api/admin/product/:id", admin, express.json({ limit: "2kb" }), async 
   res.json({ ok: true, name: out.name, photo: Boolean(photo) });
 });
 
+/** A PRODUCT'S PICTURE, FROM A FILE RATHER THAN A LINK.
+ *
+ *  Same reason as the shop banner: the photograph of the tin is on his
+ *  machine, or it is a screenshot out of the old store, and sending him off
+ *  to upload it somewhere for an address to paste back is two accounts in
+ *  the middle of a one-line job. `make product-photo N=1 < tin.jpg`.
+ *
+ *  Her whole scan of a shop page is photographs and prices, in that order,
+ *  so this is the difference between a catalogue and a list. */
+app.post("/api/admin/product-photo", admin,
+  express.raw({ type: () => true, limit: MEDIA_MAX }), async (req, res) => {
+  const id = shop.cleanId(req.query?.id);
+  if (!id) return res.status(400).json({ error: "id" });
+  const buf = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  if (!buf.length) return res.status(400).json({ error: "empty" });
+  const type = sniffImage(buf);
+  if (!type) return res.status(400).json({ error: "kind" });
+  const mid = await putMedia(buf, type);
+  if (!mid) return res.status(500).json({ error: "store" });
+  const out = await change((b) => {
+    const p = b.products.find((x) => x.id === id);
+    if (!p) return { error: "gone" };
+    p.photo = "/api/public-media?id=" + mid;
+    return { ok: true, name: p.name, bytes: buf.length, kind: type };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.json({ ok: true, ...out });
+});
+
 /** ADDING SOMETHING TO THE CATALOGUE, from a terminal. The shop has one
  *  seller and he does not need a screen to type a price into. */
 app.post("/api/admin/product", admin, express.json({ limit: "4kb" }), async (req, res) => {

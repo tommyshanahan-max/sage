@@ -754,6 +754,28 @@ photo: ## A picture on one of them: make photo N=1 URL="https://…/tin.jpg"
 	  /seed/catalogue.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --n "$(N)" --url "$(URL)"
 
+product-photo: ## A picture from a file: make product-photo N=1 < ~/Desktop/tin.jpg
+	@# THE PHOTOGRAPH IS ALREADY ON THE MACHINE — a screenshot out of the
+	@# old store, or the picture taken in the aisle. Uploading it somewhere
+	@# to get a link, so the link can be pasted into `make photo`, is two
+	@# accounts in the middle of a one-line job, so the file goes up the
+	@# pipe with the command.
+	@#
+	@# From the Mac:
+	@#   ssh root@… 'cd ~/tc && make product-photo N=1' < ~/Desktop/tin.jpg
+	@test -n "$(N)" || { echo 'make product-photo N=1 < tin.jpg'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/product-photo.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --n "$(N)"
+
+product-off: ## Take one off the shop entirely: make product-off N=2 [BACK=1]
+	@# Not sold out — gone. For the ¥1 test row, and for anything that
+	@# should not be on a shopfront a customer is looking at.
+	@test -n "$(N)" || { echo 'make product-off N=2'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/catalogue.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --n "$(N)" --off "$(if $(BACK),0,1)"
+
 sold-out: ## Hide the buy button on one: make sold-out N=1 [BACK=1]
 	@test -n "$(N)" || { echo 'make sold-out N=1'; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
