@@ -736,6 +736,30 @@ owed: ## What each shopfront has earned: make owed [PAY=1]
 	  /seed/owed.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  $(if $(PAY),--pay,)
 
+catalogue: ## Everything in the shop, numbered: make catalogue
+	@# Which things have a picture and which do not, because a product with
+	@# a grey square where a tin should be does not sell in China.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/catalogue.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+
+photo: ## A picture on one of them: make photo N=1 URL="https://…/tin.jpg"
+	@# THE PICTURE IS FETCHED ONTO THIS BOARD, not linked to. A page whose
+	@# images come from an Australian host loads slowly in Shanghai and
+	@# sometimes not at all, and a link that rots takes the shop with it.
+	@#
+	@# N is the number beside it in `make catalogue`.
+	@test -n "$(N)" || { echo 'make photo N=1 URL="https://…/tin.jpg"'; exit 1; }
+	@test -n "$(URL)" || { echo 'make photo N=$(N) URL="https://…/tin.jpg"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/catalogue.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --n "$(N)" --url "$(URL)"
+
+sold-out: ## Hide the buy button on one: make sold-out N=1 [BACK=1]
+	@test -n "$(N)" || { echo 'make sold-out N=1'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/catalogue.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --n "$(N)" --out "$(if $(BACK),0,1)"
+
 product: ## Put something in the catalogue: make product NAME="…" PRICE="¥648" [UNIT="900g *3" EN="…" PHOTO=url]
 	@# One seller, one catalogue, and he does not need a screen to type a
 	@# price into. NAME is what she reads, so it is Chinese; EN is what the

@@ -443,10 +443,21 @@ storefront per member. `/shop/<handle>` → cart → `/shop/<handle>/checkout` �
 
 ```
 make product NAME="Bellamy 贝拉米3段 900g" PRICE="¥648" UNIT="900g *3罐" EN="Bellamy Step 3"
+make catalogue                       # everything, numbered, and what has no picture
+make photo N=1 URL="https://…/tin.jpg"
+make sold-out N=1 [BACK=1]
 make orders                          # what is waiting to be sent
 make ship N=1 TRACKING="XD91260039AU" COURIER="迅达速递"
-make owed                            # what each shopfront has earned
+make owed [PAY=1]                    # earned, and the sweep for what could not go
 ```
+
+**A picture is fetched, never linked.** Her whole scan of a shop page is
+photographs and prices, in that order — and a page whose images come from an
+Australian host loads slowly in Shanghai and sometimes not at all, while a
+link that rots takes the shop down with it. So the bytes are pulled once and
+served off this board by an id nobody can guess, like every other photograph
+here. It refuses anything that is not http(s), anything on this machine's own
+network, anything that is not an image, and anything over 25MB.
 
 **A row number, never an id.** `make ship N=1` takes the number `make orders`
 just printed. Twenty characters copied out of a terminal is the step that

@@ -11215,16 +11215,105 @@ app.get("/api/admin/owed", admin, async (req, res) => {
   res.json({ ok: true, pct: SHOP_CUT_PCT, rows });
 });
 
+/* A PICTURE, FETCHED ONTO THIS BOARD RATHER THAN LINKED.
+ *
+ * Nothing sells in China off a grey square — her whole scan of a shop page
+ * is photographs and prices, in that order. The pictures exist already, on
+ * a brand's site or a supplier's, so the cheapest way to get them is a URL.
+ *
+ * BUT NOT AS A URL. A page whose images come from an Australian host is a
+ * page that loads slowly in Shanghai and sometimes not at all, and a link
+ * that rots takes the shop down with it. So the bytes are fetched once,
+ * stored here like every other photograph on this board, and served off our
+ * own domain by an id nobody can guess.
+ *
+ * WHAT IT REFUSES: anything that is not http(s), anything on this machine's
+ * own network — an admin-only route is still a route that fetches what it is
+ * told to — anything that is not an image, and anything over the same
+ * ceiling every other upload has. Ten seconds and it gives up.
+ */
+const PRIVATE_HOST = /^(localhost$|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|\[?::1\]?$|.*\.internal$|.*\.local$)/i;
+
+async function fetchPhoto(raw) {
+  const url = String(raw || "").trim();
+  if (!url) return "";
+  /* Already one of ours — a re-run of the same command should not fetch the
+     same picture twice. */
+  if (url.startsWith("/api/public-media?id=")) return url;
+  let u;
+  try { u = new URL(url); } catch { return ""; }
+  if (!/^https?:$/.test(u.protocol)) return "";
+  if (PRIVATE_HOST.test(u.hostname)) return "";
+  const res = await fetch(u, {
+    redirect: "follow",
+    signal: AbortSignal.timeout ? AbortSignal.timeout(10_000) : undefined,
+  });
+  if (!res.ok) return "";
+  const type = String(res.headers.get("content-type") || "").split(";")[0].trim();
+  if (!KINDS.has(type) || !type.startsWith("image/")) return "";
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (!buf.length || buf.length > MEDIA_MAX) return "";
+  const id = await putMedia(buf, type);
+  return id ? "/api/public-media?id=" + id : "";
+}
+
+/** THE CATALOGUE, NUMBERED — so a photograph can be attached to row 2
+ *  rather than to twenty characters copied out of a terminal. */
+app.get("/api/admin/products", admin, async (req, res) => {
+  const board = await store.load(FILE);
+  res.json({
+    ok: true,
+    products: board.products.map((p) => ({
+      id: p.id, name: p.name, en: p.en, unit: p.unit,
+      price: store.fromMinor(p.price, "cny"),
+      photo: Boolean(p.photo), out: Boolean(p.out), off: Boolean(p.off),
+    })),
+  });
+});
+
+/** A PICTURE ON ONE OF THEM, or taking it out of the shop. */
+app.post("/api/admin/product/:id", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const id = shop.cleanId(req.params.id);
+  if (!id) return res.status(400).json({ error: "no" });
+  let photo = "";
+  if (req.body?.photo) {
+    try { photo = await fetchPhoto(req.body.photo); } catch (err) {
+      console.error("product photo:", err.message);
+      return res.status(400).json({ error: "photo" });
+    }
+    if (!photo) return res.status(400).json({ error: "photo" });
+  }
+  const out = await change((b) => {
+    const p = b.products.find((x) => x.id === id);
+    if (!p) return { error: "gone" };
+    if (photo) p.photo = photo;
+    if (req.body?.out !== undefined) p.out = Boolean(req.body.out);
+    if (req.body?.off !== undefined) p.off = Boolean(req.body.off);
+    return { ok: true, name: p.name };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.json({ ok: true, name: out.name, photo: Boolean(photo) });
+});
+
 /** ADDING SOMETHING TO THE CATALOGUE, from a terminal. The shop has one
  *  seller and he does not need a screen to type a price into. */
 app.post("/api/admin/product", admin, express.json({ limit: "4kb" }), async (req, res) => {
   const price = store.toMinor(String(req.body?.price || ""), "cny");
   if (!price) return res.status(400).json({ error: "price" });
+  /* Fetched before the row is written, so a picture that cannot be had is a
+     refusal rather than a product with a broken square on it. */
+  let photo = "";
+  if (req.body?.photo) {
+    try { photo = await fetchPhoto(req.body.photo); } catch (err) {
+      console.error("product photo:", err.message);
+    }
+    if (!photo) return res.status(400).json({ error: "photo" });
+  }
   const out = await change((board) => {
     const p = shop.cleanProduct({
       id: shop.newId(), at: new Date().toISOString(),
       name: req.body?.name, en: req.body?.en, unit: req.body?.unit,
-      photo: req.body?.photo, price,
+      photo, price,
     });
     if (!p) return { error: "bad" };
     board.products.push(p);
