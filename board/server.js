@@ -9951,6 +9951,12 @@ app.get(["/dealio", "/dealio/"], notesOff,
 app.get(["/dealio/about", "/dealio/about/"], notesOff,
   (req, res, next) => page("pay.html", req, res, next));
 
+/** Dealio's own terms. The board's /terms are the board's — a networking
+ *  board's house rules in front of somebody about to send money would be the
+ *  wrong document in the one place it matters. */
+app.get(["/dealio/terms", "/dealio/terms/"], notesOff,
+  (req, res, next) => page("dealio-terms.html", req, res, next));
+
 /** THE WALKTHROUGH, for the one thing nobody outside could do: watch it work.
  *  The app is behind a sign-in and the payer's page needs a real request to
  *  exist, so a stranger could read every word about this product and never
