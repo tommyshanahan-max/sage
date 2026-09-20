@@ -35,6 +35,10 @@
   .who img{width:3rem;height:3rem;border-radius:50%;object-fit:cover;flex:0 0 auto;
     background:var(--line)}
   .who .noimg{width:3rem;height:3rem;border-radius:50%;background:var(--line);flex:0 0 auto}
+  /* min-width:0, or the nowrap line below pushes the flex row wider than the
+     page and the ellipsis never fires — which is how a one-line bio ran off
+     the right-hand edge of the screen. */
+  .who>div{min-width:0}
   .who b{display:block;font-size:1.05rem}
   .who span{display:block;font-size:.82rem;color:var(--ink2);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -151,6 +155,7 @@ function draw() {
     const img = el("img");
     img.src = SHOP.photo;
     img.alt = "";
+    img.addEventListener("error", () => img.replaceWith(el("div", "noimg")));
     who.append(img);
   } else {
     who.append(el("div", "noimg"));
@@ -168,11 +173,18 @@ function draw() {
 
   for (const it of ITEMS) {
     const card = el("div", "item");
-    const pic = el("img", "pic");
-    pic.src = it.photo || "";
-    pic.alt = "";
-    pic.loading = "lazy";
-    card.append(pic);
+    /* NO PICTURE IS A BOX, NOT A BROKEN ONE. An <img> with an empty src
+       draws the browser's torn-page icon, which reads as something failing
+       rather than something missing. */
+    if (it.photo) {
+      const pic = el("img", "pic");
+      pic.src = it.photo;
+      pic.alt = "";
+      pic.loading = "lazy";
+      card.append(pic);
+    } else {
+      card.append(el("div", "pic"));
+    }
 
     const mid = el("div", "mid");
     mid.append(el("div", "nm", it.name));
