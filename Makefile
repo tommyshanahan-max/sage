@@ -787,6 +787,17 @@ paid-out: ## That one is sent: make paid-out WHO="Mei"
 	  /seed/paid-out.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)"
 
+review-import: ## All the old reviews at once: make review-import N=1 FILE=scripts/reviews-1.json
+	@# The file is a JSON array: [{"who":"李娜","stars":5,"text":"…","at":"2024-11-02"}, …]
+	@# Safe to run twice — the same words on the same thing are dropped.
+	@# Every one is labelled 来自老店 on the page.
+	@test -n "$(N)" || { echo 'make review-import N=1 FILE=scripts/reviews-1.json'; exit 1; }
+	@test -n "$(FILE)" || { echo 'make review-import N=$(N) FILE=scripts/reviews-1.json'; exit 1; }
+	@test -f "$(FILE)" || { echo "No such file: $(FILE)"; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR):/seed:ro" --entrypoint node board \
+	  /seed/scripts/review-import.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --n "$(N)" --file "/seed/$(FILE)"
+
 review-add: ## An old review from the WeChat store: make review-add N=1 WHO="李娜" TEXT="…" [STARS=5 PHOTO=url AT=2024-03-11]
 	@# N is the number beside the thing in `make catalogue`.
 	@#

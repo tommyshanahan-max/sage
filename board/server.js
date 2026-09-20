@@ -11140,7 +11140,40 @@ app.get("/api/product/:id/asks", async (req, res) => {
  *  written here are worth reading because an order nobody can fake stands
  *  behind them; one imported by hand has nothing behind it but Tom's word,
  *  and saying so is what keeps the others worth anything. */
-app.post("/api/admin/review-add", admin, express.json({ limit: "4kb" }), async (req, res) => {
+app.post("/api/admin/review-add", admin, express.json({ limit: "512kb" }), async (req, res) => {
+  /* A LIST, OR ONE. Six hundred reviews typed in one at a time is six
+     hundred commands, and the WeChat store has that many. The single form
+     below is the same path with an array of one. */
+  if (Array.isArray(req.body?.rows)) {
+    const product = shop.cleanId(req.body?.product);
+    if (!product) return res.status(400).json({ error: "bad" });
+    const rows = req.body.rows.slice(0, 500);
+    const out = await change((b) => {
+      if (!b.products.some((p) => p.id === product)) return { error: "gone" };
+      let n = 0;
+      for (const r of rows) {
+        const text = String(r?.text || "").replace(/\r\n?/g, "\n").trim().slice(0, 300);
+        if (!text) continue;
+        /* THE SAME WORDS TWICE IS THE SAME REVIEW. Imports get run again —
+           a second page, a retry, a file pasted over itself — and six
+           hundred of somebody else's words are impossible to eyeball for
+           duplicates afterwards. */
+        if (b.reviews.some((x) => x.product === product && x.text === text)) continue;
+        b.reviews.push({
+          id: shop.newId(), order: shop.newId(), product, by: "0".repeat(32),
+          stars: Math.min(Math.max(Math.round(Number(r?.stars) || 5), 1), 5),
+          text, photo: "", who: shop.maskName(String(r?.who || "")), back: "",
+          at: String(r?.at || "").trim().slice(0, 40) || new Date().toISOString(),
+          src: "wechat",
+        });
+        n += 1;
+      }
+      return { ok: true, added: n, n: b.reviews.filter((r) => r.product === product).length };
+    });
+    if (out?.error) return res.status(404).json(out);
+    return res.status(201).json({ ok: true, added: out.added, n: out.n });
+  }
+
   const product = shop.cleanId(req.body?.product);
   const stars = Math.min(Math.max(Math.round(Number(req.body?.stars) || 5), 1), 5);
   const text = String(req.body?.text || "").replace(/\r\n?/g, "\n").trim().slice(0, 300);
