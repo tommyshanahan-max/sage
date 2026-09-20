@@ -179,9 +179,15 @@
      drawn in the page's colours is a QR that will not scan. Sized in rem and
      centred with an explicit width: a grid inside a flex column with only
      max-width collapses to a dot, which is exactly what it did. */
-  /* The code sits in the middle of the sheet, not at the top of a screen of
-     nothing: it is the only thing on it. */
+  /* The code block sits in the middle of the sheet, not at the top of a
+     screen of nothing: it is the only thing on it. */
   .pslot.code{display:flex;align-items:center;justify-content:center}
+  .codebox{display:flex;flex-direction:column;align-items:center;text-align:center;gap:0}
+  .codeWith{margin:0;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted)}
+  .codeAmt{margin:.15rem 0 0;font-size:2rem;line-height:1.1;font-weight:600}
+  .codeDo{margin:.9rem 0 0;font-size:1rem;font-weight:600;color:var(--ink)}
+  .codeElse{margin:.3rem 0 0;font-size:.82rem;color:var(--muted)}
   .qr{width:min(15rem,72vw);aspect-ratio:1;margin:1.4rem auto .6rem;
     background:#fff;padding:.5rem;border-radius:.5rem;display:grid;gap:0}
   .qr i{background:#05070D}
@@ -574,9 +580,24 @@ async function payFrame({ secret, pk, q, how, demo, qr }) {
   });
 
   if (qr) {
+    /* WHICH WALLET, HOW MUCH, THE CODE, WHAT TO DO — in that order, because
+       that is the order the questions arrive in. It was a bare square with
+       one sentence at the bottom of the screen, and "what is this" is not a
+       question a payment page should leave anybody holding. */
     wait.remove();
+    if (scan) scan.remove();
+    /* The amount moves down beside the code, so it is not on the screen
+       twice three inches apart. The bar keeps the line about the job and
+       the way back. */
+    bar.querySelector(".psub")?.remove();
     slot.classList.add("code");
-    slot.append(qrGrid(qr));
+    const box = el("div", "codebox");
+    box.append(el("p", "codeWith", T("pay." + how)));
+    box.append(el("p", "codeAmt", shown(q)));
+    box.append(qrGrid(qr));
+    box.append(el("p", "codeDo", T("pay.scanDo")));
+    box.append(el("p", "codeElse", T("pay.scanElse")));
+    slot.append(box);
     watchPaid(frame);
     return;
   }

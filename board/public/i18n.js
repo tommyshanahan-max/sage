@@ -5446,6 +5446,22 @@ export const STRINGS = {
                         "长按二维码识别。或者截屏，再长按那张图。"],
   "pay.scanSelf.alipay": ["Long-press the code to scan it. Or screenshot it and long-press that.",
                         "长按二维码识别。或者截屏，再长按那张图。"],
+  /* THE CODE SCREEN, WHICH HAD A CODE ON IT AND NOTHING ELSE.
+   *
+   * A square appeared and the only words were a sentence at the bottom of
+   * the screen. Somebody who has just tapped WeChat Pay wants three things
+   * in one glance: which wallet this is for, how much, and what to do with
+   * the square. So: the wallet's own name, the amount, the code, the
+   * gesture.
+   *
+   * THE GESTURE FIRST AND THE FALLBACK SECOND — the rule for everything the
+   * payer reads. 长按二维码识别 is how anybody in China opens a code sent to
+   * them in a chat; it is not an instruction, it is the thing they already
+   * do. The screenshot is for the phone whose menu does not appear, and it
+   * is quieter because almost nobody needs it. */
+  "pay.scanDo":        ["Long-press the code", "\u957f\u6309\u4e8c\u7ef4\u7801\u8bc6\u522b"],
+  "pay.scanElse":      ["Or screenshot it and long-press that",
+                        "\u6216\u8005\u622a\u5c4f\uff0c\u518d\u957f\u6309\u90a3\u5f20\u56fe"],
   "pay.inApp":         ["You pay here. The money goes straight to {who} — the board never holds it.",
                         "就在这里付。钱直接到 {who} 账上，平台不经手。"],
   /* Only ever on a board stood up for a look. Says what it is, twice. */
