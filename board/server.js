@@ -10076,9 +10076,15 @@ app.get("/api/request/:id", async (req, res) => {
      Asking: the person who made the row, and their account is on their
      member row. Sending: the person reading this page, who is usually not on
      this board at all, so the account is minted against the request. */
-  const ready = (q.way || "in") === "out"
+  /* A CODE NEEDS NOWHERE FOR THE MONEY TO LAND, because it lands in the one
+     account the keys belong to. This was the whole of why the page showed no
+     way to pay on the box that has Airwallex and no Stripe: `ready` asked
+     about a payout account, there was none, and the payer was told the person
+     had not finished setting up payments — under a perfectly good amount. */
+  const ways = dealioWays(board, q);
+  const ready = ways.length > 0 || ((q.way || "in") === "out"
     ? Boolean(q.acct && q.landed)
-    : Boolean(asker?.payee);
+    : Boolean(asker?.payee));
   /* WHICH SIDE OF THE LINK IS READING IT.
    *
    * The page could not tell, and on a request going out that is the whole
@@ -10095,8 +10101,13 @@ app.get("/api/request/:id", async (req, res) => {
   res.json({
     ok: true,
     yours: Boolean(me && me === q.by),
+    /* WHICH WALLETS TO DRAW, so the sheet does not offer one that cannot
+       work. On a box with the codes and no Stripe, Card is a button whose
+       only possible outcome is a refusal — and a refused button is worse
+       than no button, because it is read as the whole page being broken. */
+    ways: ways.length && !stripe.configured() ? ways : ["wechat", "alipay", "card"],
     request: request.requestView(q, {
-      payeeReady: ready && (stripe.configured() || PAY_DEMO),
+      payeeReady: ready && (stripe.configured() || PAY_DEMO || ways.length > 0),
     }),
   });
 });
@@ -10175,6 +10186,98 @@ app.post("/api/request/:id/landed", express.json({ limit: "1kb" }), async (req, 
   res.json({ ok: true, landed: ready });
 });
 
+/* WHOSE REQUESTS SETTLE THROUGH THE ACCOUNT THESE KEYS BELONG TO.
+ *
+ * One handle, from the environment, lower-cased on both sides so what Tom
+ * types in .env does not have to match the capitals he chose on the board.
+ * Empty — the normal state of every other box that ever runs this code —
+ * means no request anywhere reaches the QR branch at all. */
+const DEALIO_OWNER = String(process.env.BOARD_DEALIO_OWNER || "").trim().toLowerCase();
+
+/** The provider, only if it can do both halves: draw a code and later say
+ *  whether that code was paid. A provider that can only do the first would
+ *  leave money arriving with nothing to notice it. */
+function dealioQr() {
+  const p = WALLET.on ? WALLET.provider : null;
+  if (!p || typeof p.qrPay !== "function" || typeof p.intentStatus !== "function") return null;
+  return p;
+}
+
+/** Whether this request was made by the person whose account the money goes
+ *  to. The handle is read from the board rather than trusted from anywhere
+ *  else, and an asker with no published row is nobody. */
+function dealioOwns(board, q) {
+  if (!DEALIO_OWNER) return false;
+  const asker = board.people.find((p) => p.by === q.by);
+  return Boolean(asker?.handle && String(asker.handle).trim().toLowerCase() === DEALIO_OWNER);
+}
+
+/** The wallets that can pay this request with a code, which is either both of
+ *  them or neither.
+ *
+ *  Four things at once, and they are the whole gate: the provider can draw a
+ *  code and ask about it, the request was made by the one person whose
+ *  account the money lands in, the money is coming IN rather than being
+ *  promised out, and it is in yuan — which is what these two wallets take. */
+function dealioWays(board, q) {
+  if (!q || !dealioQr() || q.cur !== "cny") return [];
+  if ((q.way || "in") !== "in" || !dealioOwns(board, q)) return [];
+  return ["wechat", "alipay"];
+}
+
+/* ASKING THE PROVIDER, WITHOUT ASKING IT TWICE A SECOND. Both pages poll
+   this while a code is on the screen, and the answer does not change between
+   two taps of a phone. One live call per request every four seconds; the
+   rest are answered from here. */
+const payChecked = new Map();
+
+/** Ask whether the code on this request has been paid, and write it down if
+ *  it has. True only when this call is the one that moved the row.
+ *
+ *  Safe to call about anything: a request with no code, a board with no
+ *  provider, a row already settled and a provider that cannot be reached all
+ *  answer false without writing. */
+async function settleIfPaid(q) {
+  const p = dealioQr();
+  if (!p || !q?.pay?.ref || request.requestState(q) === "paid") return false;
+  const seen = payChecked.get(q.id);
+  let status = seen && Date.now() - seen.at < 4000 ? seen.status : "";
+  if (!status) {
+    try {
+      const r = await p.intentStatus(q.pay.ref);
+      status = String(r.status || "");
+      payChecked.set(q.id, { at: Date.now(), status });
+    } catch (err) {
+      /* THE PROVIDER BEING UNREACHABLE IS NOT THE MONEY NOT ARRIVING, and
+         neither page may be told it was refused. */
+      console.error("dealio check:", err.message);
+      return false;
+    }
+  }
+  if (status !== "SUCCEEDED") return false;
+
+  const out = await change((b) => {
+    const row = b.requests.find((x) => x.id === q.id);
+    if (!row || request.requestState(row) === "paid") return { ok: true };
+    row.said = Array.isArray(row.said) ? row.said : [];
+    const at = new Date().toISOString();
+    /* BOTH HALVES AT ONCE, AND NEITHER OF THEM IS A PERSON. The provider saw
+       the money arrive, which is a better witness than either side tapping a
+       button, so this writes the claim and the confirmation together and
+       marks both `auto` — the same shape the Stripe webhook writes on a
+       deal's plan row, and for the same reason. A handle in `who` would
+       credit somebody with having said something they never said. */
+    if (!row.said.some((x) => x.kind === "claimed")) {
+      row.said.push({ kind: "claimed", who: "", at, auto: true });
+    }
+    row.said.push({ kind: "confirmed", who: "", at, auto: true });
+    return { ok: true, tell: row.by };
+  });
+  /* The person owed it, told, whether or not any page is open. */
+  if (out?.tell) tellThem(out.tell).catch(() => {});
+  return true;
+}
+
 /** PAYING ONE.
  *
  *  The same checkout the room asks for, authorised by nothing but the link —
@@ -10182,7 +10285,9 @@ app.post("/api/request/:id/landed", express.json({ limit: "1kb" }), async (req, 
  *  is why this goes through startCheckout like the other two.
  */
 app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res) => {
-  if (!stripe.configured() && !PAY_DEMO) return res.status(400).json({ error: "off" });
+  /* The QR rails are a third way to be configured, and on the box that has
+     Airwallex keys and no Stripe they are the only one. */
+  if (!stripe.configured() && !PAY_DEMO && !dealioQr()) return res.status(400).json({ error: "off" });
   const id = request.cleanId(req.params.id);
   const method = String(req.body?.method || "card");
   if (!id) return res.status(404).json({ error: "gone" });
@@ -10199,6 +10304,57 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
      "amount" — so the page said "that did not open" for all three methods
      while the amount on the screen was perfectly fine. Said as itself. */
   if (!q.cur) return res.status(400).json({ error: "currency" });
+
+  /* A CODE ON THE SCREEN, WHEN THE MONEY IS GOING WHERE THE KEYS POINT.
+   *
+   * This is the whole of Dealio's first real payment and it is deliberately
+   * the narrowest thing that works. Airwallex will onboard other people as
+   * connected accounts and take the money straight to them — that is the
+   * product — but it is not approved yet, and until it is, every payment
+   * these keys confirm lands in ONE account: the account holder's.
+   *
+   * So the gate is four things at once, and the first of them is who asked.
+   * BOARD_DEALIO_OWNER names the handle whose requests may use these rails,
+   * and nobody else's request can reach this branch. A member's client
+   * paying through it would be paying the account holder for work they did
+   * not do, which is not a bug to be found later.
+   *
+   * The other three: the money is coming IN (a request, not a promise to
+   * send), it is in yuan, which is what WeChat Pay and Alipay take, and the
+   * payer chose one of those two wallets. Anything else falls through to
+   * Stripe below, unchanged.
+   *
+   * What comes back is a string, and the page draws it. Nothing about the
+   * payer reaches this server: they long-press a code and pay inside the
+   * wallet they already had open, which is the one gesture this whole
+   * product is built around. */
+  const qrProvider = dealioWays(board, q).includes(method) ? dealioQr() : null;
+  if (qrProvider) {
+    const minor = store.toMinor(q.amount, q.cur);
+    if (!minor) return res.status(400).json({ error: "amount" });
+    try {
+      const r = await qrProvider.qrPay({
+        amount: minor, currency: "CNY", method,
+        /* What the payer sees beside the amount in their own wallet. Their
+           own line about the job, not our name for it. */
+        reference: q.what || q.from,
+      });
+      if (!r.qr) return res.status(502).json({ error: "qr" });
+      const drawn = qrBits(r.qr);
+      /* THE INTENT ID ON THE ROW, BEFORE THE CODE IS ON THE SCREEN. It is
+         the only way to ask later whether the money arrived, and a code
+         drawn without it is a payment nobody can see. */
+      await change((b) => {
+        const row = b.requests.find((x) => x.id === id);
+        if (row) row.pay = { ref: r.id, how: method, at: new Date().toISOString() };
+        return { ok: true };
+      });
+      return res.json({ ok: true, how: method, qr: { size: drawn.size, bits: drawn.bits } });
+    } catch (err) {
+      console.error("dealio qr:", err.message);
+      return res.status(502).json({ error: "qr" });
+    }
+  }
 
   /* WHOSE ACCOUNT, BY DIRECTION — see the note in the read route above. */
   const asker = board.people.find((p) => p.by === q.by);
@@ -10222,6 +10378,41 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
   });
   if (out.error) return res.status(out.error === "stripe" ? 502 : 400).json(out);
   res.json({ ok: true, ...out });
+});
+
+/** DID THE MONEY ARRIVE?
+ *
+ *  THE ONE WITNESS A CODE ON A WALL HAS. A card payment comes back through
+ *  the payer's own browser and a webhook behind it; a wallet payment does
+ *  neither. The payer long-presses a code, leaves for WeChat, pays, and that
+ *  is the last this server hears of them — the page they left may be closed
+ *  before the money moves, and on a phone it usually is.
+ *
+ *  So both sides ask instead. The payer's page polls this while the code is
+ *  up, and the person owed the money asks it when they open the request an
+ *  hour later. Whoever asks first is the one who turns the row green; the
+ *  answer is the same either way because it comes from the provider and not
+ *  from either of them.
+ *
+ *  A WEBHOOK WOULD BE BETTER and is the next thing: it needs a public address
+ *  registered in Airwallex's dashboard and its secret in .env, neither of
+ *  which exists yet, and asking needs nothing set up at all.
+ *
+ *  Open, like every other route on a request: the link is the whole of the
+ *  authority here, and this says only what the page already shows.
+ */
+app.get("/api/request/:id/check", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const id = request.cleanId(req.params.id);
+  if (!id) return res.status(404).json({ error: "gone" });
+  const board = await store.load(FILE);
+  const q = board.requests.find((x) => x.id === id);
+  if (!q || q.off) return res.status(404).json({ error: "gone" });
+  const now = () => request.requestState(q);
+  if (now() === "paid") return res.json({ ok: true, state: "paid" });
+
+  const paid = await settleIfPaid(q);
+  res.json({ ok: true, state: paid ? "paid" : now() });
 });
 
 /** TAKING ONE BACK, by whoever asked. Kept rather than deleted: somebody was
@@ -10272,9 +10463,25 @@ app.get("/api/requests", notesOff, async (req, res) => {
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
   if (!me) return res.json({ requests: [] });
-  const board = await store.load(FILE);
+  let board = await store.load(FILE);
   const me_ = board.people.find((p) => p.by === me);
-  const mine = board.requests.filter((q) => q.by === me).reverse();
+  let mine = board.requests.filter((q) => q.by === me).reverse();
+  /* A CODE PAID WHILE NOBODY WAS LOOKING.
+     The payer long-presses a code, pays in their wallet and closes the tab;
+     nothing comes back here. So this screen — the one the person owed the
+     money opens to find out — asks about its own unsettled codes. Three at
+     most, newest first, and each one answered from the last four seconds
+     when it was asked that recently, so opening this page twice is not two
+     calls to Airwallex. */
+  const coded = mine.filter((q) => q.pay?.ref && request.requestState(q) === "due").slice(0, 3);
+  if (coded.length) {
+    let moved = false;
+    for (const q of coded) { if (await settleIfPaid(q)) moved = true; }
+    if (moved) {
+      board = await store.load(FILE);
+      mine = board.requests.filter((q) => q.by === me).reverse();
+    }
+  }
   res.json({
     /* WHETHER THERE IS ANYWHERE FOR THE MONEY TO LAND, said at the top of the
        list rather than discovered by the person who was sent a link. Without

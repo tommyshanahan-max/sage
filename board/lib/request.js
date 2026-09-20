@@ -129,6 +129,25 @@ export function cleanRequest(raw) {
      ability to be paid. */
   if (raw.landed) out.landed = true;
 
+  /* THE CODE ON THE WALL, AND HOW TO ASK ABOUT IT LATER.
+   *
+   * A WeChat or Alipay payment on this request is one payment intent at the
+   * provider, and its id is the only way to find out whether the money
+   * arrived. It has to live on the row rather than in the payer's browser,
+   * because the payer is not a witness: they long-press a code, pay inside
+   * their wallet, and may never come back to this page at all. The person
+   * owed the money opens their list an hour later and that is where the
+   * answer has to be waiting.
+   *
+   * The provider's own identifier, useless to anybody who is not this
+   * platform, and never sent to either page. */
+  const pay = raw.pay && typeof raw.pay === "object" ? {
+    ref: s(raw.pay.ref, 64),
+    how: ["wechat", "alipay"].includes(raw.pay.how) ? raw.pay.how : "",
+    at: s(raw.pay.at, 40),
+  } : null;
+  if (pay && pay.ref && pay.how) out.pay = pay;
+
   const said = (Array.isArray(raw.said) ? raw.said : [])
     .map(cleanSaid).filter(Boolean).slice(0, 8);
   if (said.length) out.said = said;
@@ -202,5 +221,10 @@ export function requestView(r, { payeeReady = false } = {}) {
     /* False and the page says so rather than drawing a Pay button that opens
        a refusal. */
     payeeReady: Boolean(payeeReady),
+    /* WHETHER A CODE WAS EVER PUT ON THE SCREEN FOR THIS ONE. Not the code
+       and not the provider's id for it — only that there is something to ask
+       about, so a page that opens on an unpaid request knows whether asking
+       is worth a call. */
+    coded: Boolean(r.pay && r.pay.ref),
   };
 }

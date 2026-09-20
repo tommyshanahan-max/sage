@@ -141,6 +141,29 @@ export function createMockProvider({ speed = 1, marginBps = 50 } = {}) {
       return { id: pi.id, status: pi.status };
     },
 
+    /* A CODE ON A WALL, WITHOUT A WALL. The real one comes back from
+       Airwallex as a string to draw a QR from; this returns a string of the
+       same shape so every screen after it — the grid, the long-press line,
+       the polling, the row turning Paid — can be built and looked at on a
+       laptop with no keys and no money.
+       It pays itself after a few seconds, which is what a person standing
+       there with a phone does. */
+    async qrPay({ amount, currency = "CNY", reference = "", method = "wechat" }) {
+      const pi = { id: id("int"), amount, currency, status: "REQUIRES_PAYMENT_METHOD", refunded: 0 };
+      intents.set(pi.id, pi);
+      later(6000, () => { pi.status = "SUCCEEDED"; emit({ type: "payment.status", intentId: pi.id, status: "SUCCEEDED" }); });
+      const tag = method === "alipay" ? "https://qr.alipay.com/" : "weixin://wxpay/bizpayurl?pr=";
+      return { id: pi.id, status: pi.status, qr: tag + pi.id + (reference ? "_" + encodeURIComponent(reference).slice(0, 16) : ""), raw: null };
+    },
+
+    async wechatQr(opts) { return this.qrPay({ ...opts, method: "wechat" }); },
+
+    async intentStatus(intentId) {
+      const pi = intents.get(intentId);
+      if (!pi) throw new Error("unknown payment");
+      return { id: pi.id, status: pi.status, amount: pi.amount, currency: pi.currency };
+    },
+
     async refund({ intentId, amount }) {
       const pi = intents.get(intentId);
       if (!pi) throw new Error("unknown payment");

@@ -172,6 +172,17 @@
   .pnote{flex:0 0 auto;margin:0;padding:.6rem .95rem;
     border-top:1px solid var(--line);font-size:.72rem;line-height:1.5;
     color:var(--muted)}
+  /* THE CODE ITSELF. White ground and dark squares in both themes — a QR
+     drawn in the page's colours is a QR that will not scan. Sized in rem and
+     centred with an explicit width: a grid inside a flex column with only
+     max-width collapses to a dot, which is exactly what it did. */
+  /* The code sits in the middle of the sheet, not at the top of a screen of
+     nothing: it is the only thing on it. */
+  .pslot.code{display:flex;align-items:center;justify-content:center}
+  .qr{width:min(15rem,72vw);aspect-ratio:1;margin:1.4rem auto .6rem;
+    background:#fff;padding:.5rem;border-radius:.5rem;display:grid;gap:0}
+  .qr i{background:#05070D}
+  .qr i.o{background:transparent}
   .pwait{margin:2.5rem auto;max-width:22rem;text-align:center;font-size:.88rem;
     line-height:1.6;color:var(--ink-2)}
   .pwait b{display:block;color:var(--ink);font-size:1.02rem;margin:0 0 .35rem}
@@ -430,6 +441,9 @@ function payHow(q) {
           body: JSON.stringify({ method: key }),
         });
         const j = await r.json().catch(() => null);
+        /* A CODE, WHICH IS THE WHOLE PRODUCT ON THE PAYER'S SIDE. No frame
+           to mount, nothing to load from anybody else, and no card. */
+        if (r.ok && j?.qr) { back.remove(); payFrame({ q, how: key, qr: j.qr }); return; }
         if (r.ok && j?.secret && j?.pk) { back.remove(); payFrame({ secret: j.secret, pk: j.pk, q, how: key }); return; }
         if (r.ok && j?.demo) { back.remove(); payFrame({ q, how: key, demo: true }); return; }
         why = j?.error || "";
@@ -448,9 +462,18 @@ function payHow(q) {
     });
     ways.append(b);
   };
-  way("wechat", T("pay.wechat"), T("pay.wechatWhy"));
-  way("alipay", T("pay.alipay"), T("pay.alipayWhy"));
-  way("card", T("pay.card"), T("pay.cardWhy"));
+  /* THE WAYS THE SERVER SAYS IT CAN TAKE, in the order they are used here.
+     A board with the codes and no card rails draws two buttons, not three
+     with a dead one on the end. The default is all three, which is what
+     every board that has ever run this page had. */
+  const ways_ = Array.isArray(STATE?.ways) && STATE.ways.length
+    ? STATE.ways : ["wechat", "alipay", "card"];
+  const names = {
+    wechat: ["pay.wechat", "pay.wechatWhy"],
+    alipay: ["pay.alipay", "pay.alipayWhy"],
+    card: ["pay.card", "pay.cardWhy"],
+  };
+  for (const k of ways_) if (names[k]) way(k, T(names[k][0]), T(names[k][1]));
   card.append(ways);
   card.append(el("p", "foot", T("pay.howNote", { who: q.from })));
 
@@ -465,7 +488,38 @@ function payHow(q) {
   document.body.append(back);
 }
 
-async function payFrame({ secret, pk, q, how, demo }) {
+/* THE CODE, DRAWN. White with dark squares whatever the page is doing —
+   a themed QR is a QR that does not scan. Nothing is fetched to draw it: the
+   server sends the modules as rows of ones and zeros. */
+function qrGrid({ size, bits }) {
+  const g = el("div", "qr");
+  g.setAttribute("aria-hidden", "true");
+  g.style.gridTemplate = `repeat(${size},1fr)/repeat(${size},1fr)`;
+  for (const row of bits) for (const c of row) g.append(el("i", c === "1" ? "" : "o"));
+  return g;
+}
+
+/* AND ASKING, WHILE IT IS UP.
+ *
+ * The payer leaves for their wallet and the money moves somewhere this page
+ * cannot see. So it asks — every three seconds while the code is on the
+ * screen, and never once it is not. Ten minutes is longer than the code
+ * lasts; after that the page is stale and a reload is the honest answer. */
+function watchPaid(frame) {
+  let left = 200;
+  const tick = async () => {
+    if (!frame.isConnected || left-- <= 0) return;
+    try {
+      const r = await fetch("/api/request/" + ID + "/check", { cache: "no-store" });
+      const j = await r.json().catch(() => null);
+      if (j?.state === "paid") { frame.remove(); load(); return; }
+    } catch { /* offline for a moment; ask again */ }
+    setTimeout(tick, 3000);
+  };
+  setTimeout(tick, 3000);
+}
+
+async function payFrame({ secret, pk, q, how, demo, qr }) {
   const frame = el("div", "pframe");
   const bar = el("div", "phead");
   bar.append(el("b", null, q.what || q.from));
@@ -499,6 +553,13 @@ async function payFrame({ secret, pk, q, how, demo }) {
     load();
   });
 
+  if (qr) {
+    wait.remove();
+    slot.classList.add("code");
+    slot.append(qrGrid(qr));
+    watchPaid(frame);
+    return;
+  }
   if (demo) {
     wait.remove();
     const box = el("div", "pdemo");
@@ -532,7 +593,22 @@ async function load() {
       cache: "no-store", headers: { "x-board-device": device },
     });
     const j = await r.json().catch(() => null);
-    if (r.ok && j?.ok) { STATE = j; draw(); return; }
+    if (r.ok && j?.ok) {
+      STATE = j; draw();
+      /* A CODE WAS PUT UP AND THE ROW IS STILL UNPAID. Somebody may have
+         paid it on a phone that never came back here — the asker opening
+         their own link is one of the two places that finds out. One call,
+         and only when there is something to ask about. */
+      const rq = j.request || {};
+      if (rq.coded && rq.state === "due") {
+        try {
+          const c = await fetch("/api/request/" + ID + "/check", { cache: "no-store" });
+          const cj = await c.json().catch(() => null);
+          if (cj?.state === "paid") load();
+        } catch { /* the page already drew what the server knew */ }
+      }
+      return;
+    }
   } catch { /* below */ }
   gone();
 }

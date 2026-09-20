@@ -1,10 +1,16 @@
 // Airwallex, behind the same eight calls as the stand-in.
 //
-// UNTESTED AGAINST AIRWALLEX. Written from Airwallex's API reference (version
-// 2026-08-21, read 2026-09-15) before any account or key existed. Every path
-// and field below is from those docs; none has been exercised. The first job
-// once the sandbox keys are in .env is `node lib/wallet/providers/airwallex.check.mjs`
-// and fixing whatever it finds.
+// WRITTEN FROM THE DOCS (version 2026-08-21, read 2026-09-15) before any
+// account or key existed, and since then partly exercised. Against the
+// sandbox, 2026-09-20: login works, FX quotes work in both directions —
+// and cost 0.88%, not the 0.50% support quoted — and the WeChat Pay call
+// below returns a real code, once "webqr" was corrected to "qrcode". The
+// payouts, the beneficiaries and the card path are still only a reading of
+// the docs, and say so where they are.
+//
+// `node lib/wallet/providers/airwallex.check.mjs` is the script that asks,
+// and airwallex.wechat.mjs prints the whole of what comes back rather than
+// the field this file expects — which is how the flow name was found.
 //
 // THREE THINGS THE DOCS SAY THAT CHANGE THE PLAN, and this file refuses rather
 // than pretending:
@@ -161,7 +167,11 @@ export function createAirwallexProvider({ clientId, apiKey, webhookSecret, sandb
      * nothing it could not check. So the script beside it prints the whole
      * response rather than the field this expects — one real call teaches
      * more than another careful reading. */
-    async wechatQr({ amount, currency = "CNY", reference = "" }) {
+    async qrPay({ amount, currency = "CNY", reference = "", method = "wechat" }) {
+      /* WHAT EACH WALLET IS CALLED HERE. Mainland Alipay is "alipaycn" and
+         not "alipay", which is the international one and refuses a CNY
+         intent from an Australian merchant. */
+      const kind = method === "alipay" ? "alipaycn" : "wechatpay";
       const pi = await call("POST", "/api/v1/pa/payment_intents/create", {
         request_id: randomUUID(),
         amount: Number(toMajor(amount, currency)),
@@ -175,7 +185,7 @@ export function createAirwallexProvider({ clientId, apiKey, webhookSecret, sandb
            refuses: qrcode, official_account, mini_program, mobile_app,
            mobile_web. A code on a screen that somebody long-presses is
            qrcode; the rest are handoffs inside WeChat itself. */
-        payment_method: { type: "wechatpay", wechatpay: { flow: "qrcode", os_type: "web" } },
+        payment_method: { type: kind, [kind]: { flow: "qrcode", os_type: "web" } },
       });
       /* next_action.qrcode is what the docs name. Kept alongside the raw
          action so a caller that finds it somewhere else can say so. */
@@ -185,6 +195,21 @@ export function createAirwallexProvider({ clientId, apiKey, webhookSecret, sandb
         qr: c.next_action?.qrcode || c.next_action?.url || "",
         raw: c.next_action || null,
       };
+    },
+
+    /** The same call the walkthrough makes, kept by its old name. */
+    async wechatQr(opts) { return this.qrPay({ ...opts, method: "wechat" }); },
+
+    /* GET /api/v1/pa/payment_intents/{id} — the only witness there is.
+     *
+     * A code on a wall is paid inside somebody else's wallet app. Nothing
+     * comes back to this server on the payer's browser, and a webhook needs a
+     * public address registered in Airwallex's dashboard and a secret in
+     * .env — both worth doing and neither done yet. Asking is one call and
+     * needs nothing set up, so asking is what the pages do. */
+    async intentStatus(intentId) {
+      const d = await call("GET", `/api/v1/pa/payment_intents/${encodeURIComponent(intentId)}`);
+      return { id: d.id, status: String(d.status || ""), amount: d.amount, currency: d.currency };
     },
 
     /* POST /api/v1/pa/refunds/create */

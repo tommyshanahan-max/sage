@@ -699,6 +699,20 @@ ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [FOR
 	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)" \
 	  $(if $(TRY),--try,)
 
+dealio-me: ## Dealio's codes, for one person's own requests: make dealio-me WHO="Tom" [OFF=1]
+	@# WHAT IT TURNS ON. A request in yuan by that person, paid by WeChat Pay
+	@# or Alipay, draws a real Airwallex code on the payer's page instead of
+	@# the demo box. They long-press it, pay in the wallet they already have
+	@# open, and the row settles on its own.
+	@#
+	@# ONE PERSON, BECAUSE THE MONEY HAS ONE DESTINATION. Every payment these
+	@# keys confirm lands in the account they belong to. Paying anybody else
+	@# needs connected accounts, which Airwallex has not approved yet.
+	@#
+	@# It prints a one-yuan request at the end, so the handle is checked here
+	@# rather than on somebody's phone.
+	@bash scripts/dealio-me.sh
+
 stripe-names: ## Repair .env after an old go-live wrote the wrong names: make stripe-names
 	@# ONE-OFF, AND SAFE TO RUN TWICE. An earlier go-live wrote the
 	@# container-internal names into .env — BOARD_STRIPE_KEY rather than

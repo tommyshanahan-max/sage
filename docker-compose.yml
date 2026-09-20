@@ -1020,6 +1020,12 @@ services:
       # to be the wrong one — see airwallexBase in providers/airwallex.js.
       BOARD_WALLET_AIRWALLEX_BASE: ${TOMSCODING_BOARD_WALLET_AIRWALLEX_BASE:-}
       BOARD_WALLET_PUBLIC_ORIGIN: ${TOMSCODING_BOARD_WALLET_PUBLIC_ORIGIN:-}
+      # WHOSE REQUESTS MAY BE PAID BY WECHAT OR ALIPAY CODE, as a board handle.
+      # Every payment those keys confirm lands in the one Airwallex account
+      # they belong to, so this names the one person whose own requests may
+      # use them. Empty — every other box — means no request anywhere draws a
+      # code. Set it with `make dealio-me WHO="Tom"`.
+      BOARD_DEALIO_OWNER: ${TOMSCODING_BOARD_DEALIO_OWNER:-}
       # SIX DIGITS TO AN ADDRESS, so somebody who never saved their key can get
       # back in. All three unset means the board says so and offers the key
       # instead — see lib/mail.js, and the warning there about 163 and QQ.

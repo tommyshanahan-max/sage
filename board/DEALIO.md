@@ -278,6 +278,51 @@ three times in a row is what a missing currency looked like for a day:
 | Already paid | It went through |
 | Nowhere for it to land yet | The receiving side has no Stripe account |
 
+### A code instead of a checkout — **built, sandbox only**
+
+On the box with Airwallex keys, WeChat Pay and Alipay draw a **QR on this
+page** rather than handing the payer to anybody. They long-press it, pay in
+the wallet they already had open, and the row settles itself.
+
+```
+  12 lessons  ¥2,400              [ Back ]
+
+        ███ ▄▄ █ ▀▄ ███
+        █ █ ▀█▄▀▄▀▄ █ █          ← drawn from rows of 1s and 0s
+        ███ ▄ ▀█ ▀▄ ███            the server sends. Nothing fetched.
+
+  长按二维码识别。或者截屏，再长按那张图。
+```
+
+**One person, because the money has one destination.** Every payment those
+keys confirm lands in the single Airwallex account they belong to. Paying
+anybody else that way needs connected accounts, which Airwallex has not
+approved. So `BOARD_DEALIO_OWNER` names the one board handle whose own
+requests may use it — `make dealio-me WHO="Tom"` — and `dealioWays()` in
+server.js is the whole gate:
+
+| Must be true | Or the page falls through to Stripe, unchanged |
+|---|---|
+| The provider can draw a code **and** ask about it later | no `qrPay`/`intentStatus`, no code |
+| The asker's handle is `BOARD_DEALIO_OWNER` | somebody else's client would be paying the wrong person |
+| `way: "in"` | money coming in, not a promise to send |
+| `cur: "cny"` | what these two wallets take |
+
+**Nobody comes back, so both sides ask.** The payer leaves for their wallet
+and may never return to this page. `GET /api/request/:id/check` asks the
+provider and writes both halves of `said` with `auto: true` — the payer's
+page polls it every three seconds while the code is up, and `/api/requests`
+asks about up to three of the asker's own unsettled codes when they open
+their list. One live call per request per four seconds, whoever is asking.
+A webhook would be better and is next: it needs a public address registered
+in Airwallex's dashboard and its secret in `.env`, and asking needs neither.
+
+**`ready` is not about Stripe here.** A code needs nowhere for the money to
+land, and that was the whole of why this page said "{who} has not said where
+the money should land" under a perfectly good amount on the box that has
+Airwallex and no Stripe. `ways` comes back with the read now, and the sheet
+draws only the buttons that can work — two, not three with a dead one.
+
 ### States  `lib/request.js · requestState()`
 
 | State | Chip | Means |
@@ -368,9 +413,16 @@ not Dealio's, and it does not get Dealio's palette.
 
 ## What has never been watched finish
 
-**The webhook.** A payment has been started and the sheet has opened, but
-nobody has yet watched the row flip to PAID. Until somebody has, the last
+**Real money.** The QR path has been walked end to end against the
+stand-in provider — code drawn, code paid, row green — and the sandbox has
+drawn a real WeChat code for a real amount. What nobody has watched is money
+actually leaving a Chinese wallet and arriving. Until somebody has, the last
 step of this product is theory. That is the one test that matters.
+
+**A card.** On the Airwallex box there is no card path at all: Stripe is not
+configured and Airwallex's card component is a browser hand-off nobody has
+wired. The sheet draws two buttons and says nothing about a third, which is
+right, but "Card" is a thing people ask for.
 
 ---
 
@@ -382,6 +434,7 @@ Three commands, no phone needed for the first two:
 make pay-check                                      # can this box take a payment
 make ask WHO="Christopher" AMOUNT="¥1" FOR="a test" # mint one, print the link
 make hear TEXT="twelve lessons at 200, Tuesdays at seven"   # what it makes of speech
+make dealio-me WHO="Tom"                            # codes on, and a ¥1 link
 ```
 
 `make ask` must print `https://thexchange.app/pay/…`. If it prints
