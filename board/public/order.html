@@ -32,7 +32,9 @@
   .head span.ok{color:var(--ok)}
   /* Pushed to the far end so the state sits beside the word it qualifies
      rather than drifting to the middle of the row. */
-  .head .lang{margin-left:auto;border:1px solid var(--line);background:var(--card);
+  .head .mine{margin-left:auto;font-size:.8rem;color:var(--mut);
+    text-decoration:none;align-self:center}
+  .head .lang{border:1px solid var(--line);background:var(--card);
     color:var(--mut);font:inherit;font-size:.75rem;border-radius:999px;
     padding:.2rem .6rem;align-self:center}
   .box{background:var(--card);border-radius:.9rem;padding:.9rem;margin:0 0 .7rem}
@@ -96,6 +98,11 @@ function draw() {
   head.append(el("b", null, T("od.title")));
   const st = el("span", O.state === "done" ? "ok" : null, WORD(O.state));
   head.append(st);
+  /* THE WAY BACK TO THE LIST, on the page she actually lands on. A list
+     nobody can find is a list nobody has. */
+  const mine = el("a", "mine", T("od.back"));
+  mine.href = "/orders";
+  head.append(mine);
   /* The switch goes on the one row that is on every state of this page. */
   head.append(langButton(() => draw()));
   root.append(head);

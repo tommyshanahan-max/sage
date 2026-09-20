@@ -495,7 +495,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|api\/shop\/|api\/order\/|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/order\/|api\/orders$|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -10905,6 +10905,8 @@ app.post("/api/shop/:handle/order", express.json({ limit: "8kb" }), async (req, 
 
 /** READING ONE. The link is the whole of the authority, as everywhere else
  *  here: what comes back is an allowlist and carries nobody's device hash. */
+app.get(["/orders", "/orders/"], (req, res, next) => page("orders.html", req, res, next));
+
 app.get("/api/order/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const id = shop.cleanId(req.params.id);
@@ -10913,6 +10915,38 @@ app.get("/api/order/:id", async (req, res) => {
   const o = board.orders.find((x) => x.id === id);
   if (!o) return res.status(404).json({ error: "gone" });
   res.json({ ok: true, order: shop.orderView(o) });
+});
+
+/** HER OWN ORDERS, AND STILL NO ACCOUNT.
+ *
+ *  One order was one link, and a link lost in a WeChat chat took the order
+ *  with it — so she asks the person who sold it to her, who has no more idea
+ *  than she does. Every shop she has ever used has 我的订单 and she will
+ *  look for it here.
+ *
+ *  The browser is the whole of her identity (see `by` on an order), which is
+ *  the same bargain as the rest of this: no account, and therefore nothing to
+ *  recover on a new phone. Said on the page rather than discovered.
+ */
+app.get("/api/orders", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!me) return res.json({ ok: true, orders: [] });
+  const board = await store.load(FILE);
+  const mine = board.orders
+    .filter((o) => o.by && o.by === me && !o.off)
+    .sort((a, b) => String(b.at || "").localeCompare(String(a.at || "")))
+    .slice(0, 50)
+    .map((o) => ({
+      id: o.id, at: o.at, shop: o.shop,
+      state: shop.orderState(o),
+      total: store.fromMinor(shop.orderTotal(o), "cny"),
+      /* The first thing in it and how many things there are — which is how
+         she recognises an order, not by twenty characters of id. */
+      first: o.lines[0]?.name || "",
+      n: o.lines.reduce((n, l) => n + l.n, 0),
+    }));
+  res.json({ ok: true, orders: mine });
 });
 
 /** PAYING FOR ONE, with the code — the same rails as a payment request and

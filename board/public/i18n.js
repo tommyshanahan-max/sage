@@ -6514,6 +6514,17 @@ export const STRINGS = {
   "od.noQr":           ["No code came back. Try again.", "没生成出来，再试一次。"],
   "od.track":          ["Tracking", "快递单号"],
   "od.gone":           ["That order would not open.", "这个订单打不开了。"],
+  /* Her own list. She has no account, so the browser is the whole of her
+     identity — said on the page rather than discovered on a new phone. */
+  "od.mine":           ["My orders", "我的订单"],
+  "od.none":           ["No orders yet.", "还没有订单。"],
+  "od.count":          ["{n} items", "共 {n} 件"],
+  /* English pluralises and Chinese does not, which is why this is a second
+     string rather than an "(s)" — "1 items" is the tell that nobody read it. */
+  "od.count1":         ["1 item", "共 1 件"],
+  "od.thisPhone":      ["These are the orders from this phone. There is no account, so a new phone starts empty.",
+                        "这里是这台手机下的单。没有账号，换手机就看不到了。"],
+  "od.back":           ["My orders", "我的订单"],
 
   /* ---- DEALIO'S FRONT PAGE ----------------------------------------------
    *
