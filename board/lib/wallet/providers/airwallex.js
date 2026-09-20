@@ -147,6 +147,42 @@ export function createAirwallexProvider({ clientId, apiKey, webhookSecret, sandb
       return { id: pi.id, status: c.status === "SUCCEEDED" ? "SUCCEEDED" : c.status };
     },
 
+    /* THE ONE CALL THIS WHOLE PRODUCT IS ABOUT: a code somebody long-presses.
+     *
+     * Not the card path above. A Chinese payer does not have a saved payment
+     * method here and is not going to make one — they open a link, see a
+     * code, and pay in the wallet they already have open. So: create the
+     * intent in CNY, confirm it with wechatpay in "webqr" flow, and what
+     * comes back in next_action is a string to draw a QR from.
+     *
+     * WRITTEN FROM THE DOCS AND NOT YET RUN. The request shape here is a
+     * reading of Airwallex's WeChat Pay reference, and the last time this
+     * file was written that way it was wrong about a sign and right about
+     * nothing it could not check. So the script beside it prints the whole
+     * response rather than the field this expects — one real call teaches
+     * more than another careful reading. */
+    async wechatQr({ amount, currency = "CNY", reference = "" }) {
+      const pi = await call("POST", "/api/v1/pa/payment_intents/create", {
+        request_id: randomUUID(),
+        amount: Number(toMajor(amount, currency)),
+        currency,
+        merchant_order_id: `ex_${randomUUID().slice(0, 24)}`,
+        ...(reference ? { descriptor: String(reference).slice(0, 32) } : {}),
+      });
+      const c = await call("POST", `/api/v1/pa/payment_intents/${pi.id}/confirm`, {
+        request_id: randomUUID(),
+        payment_method: { type: "wechatpay", wechatpay: { flow: "webqr", os_type: "web" } },
+      });
+      /* next_action.qrcode is what the docs name. Kept alongside the raw
+         action so a caller that finds it somewhere else can say so. */
+      return {
+        id: pi.id,
+        status: c.status,
+        qr: c.next_action?.qrcode || c.next_action?.url || "",
+        raw: c.next_action || null,
+      };
+    },
+
     /* POST /api/v1/pa/refunds/create */
     async refund({ intentId, amount, currency }) {
       const d = await call("POST", "/api/v1/pa/refunds/create", { request_id: randomUUID(), payment_intent_id: intentId, ...(amount && currency ? { amount: Number(toMajor(amount, currency)) } : {}) });
