@@ -78,8 +78,29 @@
   .rev1 p{margin:.3rem 0 0;font-size:.92rem;line-height:1.55}
   .rev1 img{width:5.5rem;height:5.5rem;object-fit:cover;border-radius:.5rem;
     margin:.45rem 0 0;display:block}
+  .rev1 .src{margin:.3rem 0 0;font-size:.74rem;color:var(--mut)}
   .rev1 .back{margin:.45rem 0 0;padding:.5rem .65rem;background:var(--bg);
     border-radius:.5rem;font-size:.86rem;color:var(--ink2)}
+  /* 问大家, above the reviews in the same sheet — the shape Taobao uses,
+     and the right order: a question she is about to ask beats somebody
+     else's verdict. */
+  .sect{margin:0 0 1rem;text-align:left}
+  .sect>h3,.shc>h3{margin:0 0 .5rem;font-size:.85rem;color:var(--mut);
+    font-weight:500;text-align:left}
+  .q{padding:.6rem 0;border-top:1px solid var(--line)}
+  .q:first-of-type{border-top:0}
+  .q>b{display:block;font-size:.95rem;font-weight:500}
+  .q .a{margin:.35rem 0 0;font-size:.9rem;color:var(--ink2);line-height:1.5}
+  .q .a i{font-style:normal;color:var(--acc);margin-right:.35rem}
+  .q .none{padding:.25rem 0;font-size:.82rem;color:var(--mut);text-align:left}
+  .q .reply{border:0;background:none;padding:.3rem 0 0;font:inherit;
+    font-size:.82rem;color:var(--acc)}
+  .askrow{display:flex;gap:.5rem;margin:.7rem 0 0}
+  .askrow input{flex:1 1 auto;min-width:0;font:inherit;font-size:.95rem;
+    padding:.55rem .7rem;border-radius:.7rem;border:1px solid var(--line);
+    background:var(--card);color:var(--ink)}
+  .askrow button{flex:0 0 auto;border:0;border-radius:999px;background:var(--acc);
+    color:#fff;font:inherit;font-size:.9rem;padding:.55rem 1rem}
   .item .row{margin-top:auto;display:flex;align-items:center;justify-content:space-between}
   .item .pr{font-size:1.05rem;color:var(--acc)}
   .item .pr i{font-style:normal;font-size:.78rem}
@@ -347,10 +368,16 @@ function askSheet(order = "") {
 
 /* What people said about one thing. Ones with words first — a wall of bare
    five-star rows reads as bought, which is the opposite of the point. */
-function revSheet(it, j) {
+function revSheet(it, j, asks) {
   const sheet = el("div", "sh");
   const card = el("div", "shc");
-  card.append(el("h2", null, T("sh.reviews")));
+  card.append(el("h2", null, it.name));
+
+  /* 问大家 first: a question she is about to ask beats somebody else's
+     verdict on a thing she has not bought. */
+  card.append(askSection(it, asks));
+
+  if (j?.n) card.append(el("h3", null, T("sh.reviews")));
   const list = el("div", "revs");
   for (const r of j.rows) {
     const box = el("div", "rev1");
@@ -359,6 +386,11 @@ function revSheet(it, j) {
     top.append(el("span", null, "★".repeat(r.stars)));
     box.append(top);
     if (r.text) box.append(el("p", null, r.text));
+    /* Where it came from, when it did not come from an order here. Said
+       rather than hidden: the whole value of the others is that they are
+       tied to a purchase, and quietly mixing in ones that are not would
+       spend that on nothing. */
+    if (r.src) box.append(el("p", "src", T("sh.fromOld")));
     if (r.photo) {
       const img = el("img");
       img.src = r.photo;
@@ -382,6 +414,99 @@ function revSheet(it, j) {
   sheet.append(card);
   sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.remove(); });
   document.body.append(sheet);
+}
+
+/* 问大家 — the questions, whoever may answer them, and the box to add one.
+   Answering is offered only to somebody the server says may: the page
+   cannot see the orders and must not guess. */
+function askSection(it, asks) {
+  const sect = el("div", "sect");
+  sect.append(el("h3", null, T("sh.asks")));
+
+  for (const q of (asks?.rows || [])) {
+    const box = el("div", "q");
+    box.append(el("b", null, q.text));
+    if (!q.answers.length) {
+      box.append(el("p", "none", T("sh.noAnswer")));
+    }
+    for (const a of q.answers) {
+      const p = el("p", "a");
+      p.append(el("i", null, a.shop ? T("sh.shopSaid") : (a.who || T("sh.someone"))));
+      p.append(document.createTextNode(a.text));
+      box.append(p);
+    }
+    if (asks?.canAnswer) {
+      const b = el("button", "reply", T("sh.answer"));
+      b.type = "button";
+      b.addEventListener("click", () => {
+        b.remove();
+        const row = el("div", "askrow");
+        const i = document.createElement("input");
+        i.placeholder = T("sh.answer");
+        const go = el("button", null, T("sh.askGo"));
+        go.type = "button";
+        go.addEventListener("click", async () => {
+          const text = i.value.trim();
+          if (!text) return;
+          go.disabled = true;
+          try {
+            const r = await fetch("/api/ask/" + encodeURIComponent(q.id) + "/answer", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ device: device(), text }),
+            });
+            if (r.ok) {
+              row.remove();
+              box.querySelector(".none")?.remove();
+              const p = el("p", "a");
+              p.append(el("i", null, T("sh.shopSaid")));
+              p.append(document.createTextNode(text));
+              box.append(p);
+              return;
+            }
+          } catch { /* the words stay in the box */ }
+          go.disabled = false;
+        });
+        row.append(i, go);
+        box.append(row);
+      });
+      box.append(b);
+    }
+    sect.append(box);
+  }
+
+  /* Asking is open to anybody: she has not bought anything yet, and that
+     is precisely why she is asking. */
+  const row = el("div", "askrow");
+  const i = document.createElement("input");
+  i.placeholder = T("sh.askSay");
+  const go = el("button", null, T("sh.askGo"));
+  go.type = "button";
+  const said = el("p", "none");
+  said.hidden = true;
+  go.addEventListener("click", async () => {
+    const text = i.value.trim();
+    if (!text) return;
+    go.disabled = true;
+    said.hidden = true;
+    try {
+      const r = await fetch("/api/product/" + encodeURIComponent(it.id) + "/ask", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device: device(), text }),
+      });
+      const jj = await r.json().catch(() => null);
+      if (r.ok && jj?.ok) {
+        i.value = "";
+        said.textContent = T("sh.askSent");
+      } else {
+        said.textContent = T(jj?.error === "waiting" ? "sh.askWait" : "sh.askNo");
+      }
+    } catch { said.textContent = T("sh.askNo"); }
+    said.hidden = false;
+    go.disabled = false;
+  });
+  row.append(i, go);
+  sect.append(row, said);
+  return sect;
 }
 
 /* The WeChat half, which used to be the whole sheet. */
@@ -495,15 +620,29 @@ function draw() {
     mid.append(rv);
     fetch("/api/product/" + encodeURIComponent(it.id) + "/reviews", { cache: "no-store" })
       .then((r) => r.json())
-      .then((j) => {
-        if (!j?.n) return;
+      .then(async (j) => {
+        let asks = { rows: [], n: 0, canAnswer: false };
+        try {
+          const a = await fetch("/api/product/" + encodeURIComponent(it.id) + "/asks",
+            { cache: "no-store", headers: { "x-board-device": device() } });
+          asks = await a.json();
+        } catch { /* questions are the optional half */ }
+        /* Nothing to say yet? Then no line. An empty 评价 says nobody
+           bought this, which is worse than not asking the question. */
+        if (!j?.n && !asks.n) return;
         rv.textContent = "";
-        rv.append(el("b", null, "★ " + j.stars.toFixed(1)));
-        rv.append(document.createTextNode("  "
-          + T(j.n === 1 ? "sh.stars1" : "sh.stars", { stars: j.stars.toFixed(1), n: j.n })
-            .replace(/^[^·]*· /, "")));
+        if (j?.n) {
+          rv.append(el("b", null, "★ " + j.stars.toFixed(1)));
+          rv.append(document.createTextNode("  "
+            + T(j.n === 1 ? "sh.stars1" : "sh.stars", { stars: j.stars.toFixed(1), n: j.n })
+              .replace(/^[^·]*· /, "")));
+        }
+        if (asks.n) {
+          rv.append(document.createTextNode((j?.n ? "  ·  " : "")
+            + T(asks.n === 1 ? "sh.nAsks1" : "sh.nAsks", { n: asks.n })));
+        }
         rv.hidden = false;
-        rv.addEventListener("click", () => revSheet(it, j));
+        rv.addEventListener("click", () => revSheet(it, j, asks));
       })
       .catch(() => {});
     if (it.unit) mid.append(el("div", "un", it.unit));

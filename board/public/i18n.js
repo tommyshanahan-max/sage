@@ -6592,6 +6592,23 @@ export const STRINGS = {
   "sh.stars1":         ["{stars} · 1 review", "{stars} 分 · 1 条评价"],
   "sh.reviews":        ["Reviews", "评价"],
   "sh.shopSaid":       ["Shop", "店家回复"],
+  /* An imported one says so. The others are worth reading because an order
+     stands behind them, and quietly mixing these in would spend that. */
+  "sh.fromOld":        ["From the WeChat store", "来自老店（微信店）"],
+  /* 问大家. A review is one person's verdict; a question is the thing the
+     next forty buyers were also about to ask, answered once. */
+  "sh.asks":           ["Questions", "问大家"],
+  "sh.askOne":         ["Ask about this", "问一下"],
+  "sh.askSay":         ["What would you like to know?", "想问什么？"],
+  "sh.askGo":          ["Ask", "提问"],
+  "sh.askSent":        ["Asked. Somebody who has it will answer.", "问出去了，买过的人会来答。"],
+  "sh.askWait":        ["You have a question waiting on this one.", "你有一个问题还没人答。"],
+  "sh.askNo":          ["That did not send. Try again.", "没发出去，再试一次。"],
+  "sh.answer":         ["Answer", "回答"],
+  "sh.noAnswer":       ["No answer yet", "还没人答"],
+  "sh.someone":        ["A buyer", "买家"],
+  "sh.nAsks":          ["{n} questions", "{n} 条问答"],
+  "sh.nAsks1":         ["1 question", "1 条问答"],
   /* Her own list. She has no account, so the browser is the whole of her
      identity — said on the page rather than discovered on a new phone. */
   "od.mine":           ["My orders", "我的订单"],

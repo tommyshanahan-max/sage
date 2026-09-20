@@ -787,6 +787,19 @@ paid-out: ## That one is sent: make paid-out WHO="Mei"
 	  /seed/paid-out.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)"
 
+review-add: ## An old review from the WeChat store: make review-add N=1 WHO="李娜" TEXT="…" [STARS=5 PHOTO=url AT=2024-03-11]
+	@# N is the number beside the thing in `make catalogue`.
+	@#
+	@# IT IS LABELLED 来自老店 ON THE PAGE. The reviews written here are
+	@# worth reading because an order nobody can fake stands behind them;
+	@# one typed in has nothing behind it but your word. Saying so is what
+	@# keeps the others worth anything.
+	@test -n "$(N)" || { echo 'make review-add N=1 TEXT="孩子很爱喝"'; exit 1; }
+	@test -n "$(TEXT)" || { echo 'make review-add N=$(N) TEXT="孩子很爱喝"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/review-add.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --n "$(N)" --text "$(TEXT)" --who "$(WHO)" --stars "$(STARS)" --photo "$(PHOTO)" --at "$(AT)"
+
 shop-contact: ## How her buyers reach her: make shop-contact WHO="Mei" WECHAT="meimei_au" [QR=url] [AI=1]
 	@# 联系店家 sits bottom left on the shopfront, beside the buy button,
 	@# because that is where it is on every Chinese shop she has used.

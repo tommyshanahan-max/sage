@@ -11052,6 +11052,138 @@ app.post("/api/order/:id/review", express.json({ limit: "4kb" }), async (req, re
   res.status(201).json({ ok: true });
 });
 
+/** 问大家 — ASK. Open to anybody, because the person asking has not bought
+ *  anything yet and that is the whole point of her asking.
+ *
+ *  One unanswered question per device per product. Somebody who has asked
+ *  and been answered can ask again; somebody who has asked and is waiting
+ *  cannot fill a page with the same question. */
+app.post("/api/product/:id/ask", express.json({ limit: "2kb" }), async (req, res) => {
+  const product = shop.cleanId(req.params.id);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const text = String(req.body?.text || "").replace(/\s+/g, " ").trim().slice(0, 200);
+  if (!product || !me || !text) return res.status(400).json({ error: "no" });
+  const out = await change((b) => {
+    if (!b.products.some((p) => p.id === product)) return { error: "gone" };
+    const waiting = b.asks.some((a) => !a.off && a.product === product
+      && a.by === me && !a.answers.length);
+    if (waiting) return { error: "waiting" };
+    b.asks.push({ id: shop.newId(), product, by: me, text,
+      at: new Date().toISOString(), who: "", answers: [] });
+    return { ok: true };
+  });
+  if (out?.error) {
+    return res.status(out.error === "gone" ? 404 : 400).json(out);
+  }
+  res.status(201).json({ ok: true });
+});
+
+/** 问大家 — ANSWER, from the shop or from somebody who bought the thing.
+ *
+ *  Not from anybody with a browser: an open answer box on a product page is
+ *  a billboard, and the first thing it carries is a link to a cheaper shop.
+ *  The check is against the orders, the same way a review's is. */
+app.post("/api/ask/:id/answer", express.json({ limit: "2kb" }), async (req, res) => {
+  const id = shop.cleanId(req.params.id);
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const text = String(req.body?.text || "").replace(/\r\n?/g, "\n").trim().slice(0, 300);
+  if (!id || !me || !text) return res.status(400).json({ error: "no" });
+  const out = await change((b) => {
+    const a = b.asks.find((x) => x.id === id && !x.off);
+    if (!a) return { error: "gone" };
+    /* Somebody who runs a storefront speaks as 店家. */
+    const keeper = b.people.find((p) => p.by === me);
+    const isShop = Boolean(keeper);
+    /* Or somebody who bought this exact thing and has it in her hands. */
+    const bought = b.orders.find((o) => !o.off && o.paid && o.by === me
+      && o.lines.some((l) => l.id === a.product));
+    if (!isShop && !bought) return { error: "notyours" };
+    a.answers.push({
+      text, at: new Date().toISOString(), shop: isShop,
+      who: isShop ? "" : shop.maskName(bought.ship?.name || ""),
+    });
+    if (a.answers.length > 20) a.answers = a.answers.slice(-20);
+    return { ok: true };
+  });
+  if (out?.error) {
+    return res.status(out.error === "gone" ? 404 : 403).json(out);
+  }
+  res.status(201).json({ ok: true });
+});
+
+/** THE QUESTIONS ON ONE THING. Answered first, because an unanswered
+ *  question at the top of a page is a shop that does not reply. */
+app.get("/api/product/:id/asks", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const id = shop.cleanId(req.params.id);
+  if (!id) return res.json({ ok: true, rows: [], n: 0 });
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  const board = await store.load(FILE);
+  const all = board.asks.filter((a) => !a.off && a.product === id);
+  /* Whether whoever is reading may answer — asked once here rather than
+     guessed at by the page, which cannot see the orders. */
+  const canAnswer = Boolean(me) && (
+    board.people.some((p) => p.by === me)
+    || board.orders.some((o) => !o.off && o.paid && o.by === me
+      && o.lines.some((l) => l.id === id)));
+  const rows = [...all]
+    .sort((a, b) => (b.answers.length > 0) - (a.answers.length > 0)
+      || String(b.at || "").localeCompare(String(a.at || "")))
+    .slice(0, 50)
+    .map((a) => ({ id: a.id, text: a.text, at: a.at, answers: a.answers }));
+  res.json({ ok: true, rows, n: all.length, canAnswer });
+});
+
+/** A REVIEW FROM SOMEWHERE ELSE — the WeChat store, years of them.
+ *
+ *  It carries `src`, which the shopfront shows as 来自老店. The reviews
+ *  written here are worth reading because an order nobody can fake stands
+ *  behind them; one imported by hand has nothing behind it but Tom's word,
+ *  and saying so is what keeps the others worth anything. */
+app.post("/api/admin/review-add", admin, express.json({ limit: "4kb" }), async (req, res) => {
+  const product = shop.cleanId(req.body?.product);
+  const stars = Math.min(Math.max(Math.round(Number(req.body?.stars) || 5), 1), 5);
+  const text = String(req.body?.text || "").replace(/\r\n?/g, "\n").trim().slice(0, 300);
+  const who = String(req.body?.who || "").trim().slice(0, 20);
+  if (!product || !text) return res.status(400).json({ error: "bad" });
+  let photo = "";
+  if (req.body?.photo) {
+    try { photo = await fetchPhoto(req.body.photo); } catch (err) {
+      console.error("old review photo:", err.message);
+    }
+  }
+  const out = await change((b) => {
+    if (!b.products.some((p) => p.id === product)) return { error: "gone" };
+    b.reviews.push({
+      id: shop.newId(), order: shop.newId(), product,
+      /* No device owns it, and the id below is not an order anybody can
+         find — it is there because the row shape wants one. `src` is what
+         tells the page, and the reader, the truth about it. */
+      by: "0".repeat(32),
+      stars, text, photo, who: shop.maskName(who), back: "",
+      at: String(req.body?.at || "").trim().slice(0, 40) || new Date().toISOString(),
+      src: "wechat",
+    });
+    return { ok: true, n: b.reviews.filter((r) => r.product === product).length };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.status(201).json({ ok: true, n: out.n });
+});
+
+/** ONE TAKEN DOWN. The catalogue is his, so this is his. */
+app.post("/api/admin/ask-off", admin, express.json({ limit: "1kb" }), async (req, res) => {
+  const id = shop.cleanId(req.body?.id);
+  if (!id) return res.status(400).json({ error: "id" });
+  const out = await change((b) => {
+    const a = b.asks.find((x) => x.id === id);
+    if (!a) return { error: "gone" };
+    a.off = true;
+    return { ok: true };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.json({ ok: true });
+});
+
 /** WHAT PEOPLE SAID ABOUT ONE THING. Newest first, and the ones with words
  *  in them before the ones without — a wall of bare five-star rows reads as
  *  bought, which is the opposite of what a review is for. */
@@ -11066,7 +11198,7 @@ app.get("/api/product/:id/reviews", async (req, res) => {
       || String(b.at || "").localeCompare(String(a.at || "")))
     .slice(0, 50)
     .map((r) => ({ who: r.who, stars: r.stars, text: r.text, photo: r.photo,
-      at: r.at, back: r.back }));
+      at: r.at, back: r.back, src: r.src }));
   res.json({
     ok: true, rows, n: all.length,
     stars: all.length

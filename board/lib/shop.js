@@ -311,6 +311,13 @@ export function cleanReview(raw) {
     who: s(raw.who, 20),
     /* The shopkeeper's answer, where there is one. */
     back: s(raw.back, 300),
+    /* WHERE IT CAME FROM, when it did not come from an order here. Tom ran
+       a WeChat store for years and those reviews are real — but the thing
+       that makes a review on this board worth reading is that it is tied to
+       a purchase nobody can fake, and quietly mixing in ones that are not
+       spends that for nothing. So they are carried, and they are labelled.
+       Empty means an order on this board vouches for it. */
+    src: s(raw.src, 20),
   };
 }
 
@@ -322,6 +329,56 @@ export function maskName(name) {
   if (n.length === 2) return n[0] + "*" + n[1];
   return n[0] + "*".repeat(Math.min(n.length - 2, 3)) + n[n.length - 1];
 }
+
+/** 问大家 — A QUESTION ABOUT A THING, ANSWERED BY PEOPLE WHO HAVE IT.
+ *
+ *  The other half of what Taobao shows behind that button, and the half that
+ *  keeps working while nobody is awake: a review is one person's verdict, a
+ *  question is the thing the next forty buyers were also about to ask. Every
+ *  answer is written once and read by everybody after her.
+ *
+ *  ANSWERS COME FROM THE SHOP OR FROM SOMEBODY WHO BOUGHT IT. Not from
+ *  anybody with a browser — an open answer box on a product page is a
+ *  billboard, and the first thing it carries is a link to a cheaper shop.
+ *  The check is against the orders, the same way a review's is.
+ *
+ *  THE QUESTION ITSELF IS OPEN, because the person asking has not bought
+ *  anything yet — that is the whole point of her asking. It is capped, one
+ *  unanswered question per device per product, and `off` takes one down.
+ */
+export function cleanAnswer(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const text = s(raw.text, 300);
+  if (!text) return null;
+  return {
+    text,
+    at: s(raw.at, 40) || new Date().toISOString(),
+    who: s(raw.who, 20),
+    /* Whether the shop said it. Shown as 店家, because an answer from the
+       seller and an answer from a stranger are worth different amounts. */
+    shop: Boolean(raw.shop),
+  };
+}
+
+export function cleanAsk(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = cleanId(raw.id);
+  const product = cleanId(raw.product);
+  const by = /^[a-f0-9]{32}$/.test(String(raw.by || "")) ? String(raw.by) : "";
+  const text = s(raw.text, 200);
+  if (!id || !product || !by || !text) return null;
+  const out = {
+    id, product, by, text,
+    at: s(raw.at, 40) || new Date().toISOString(),
+    who: s(raw.who, 20),
+    answers: (Array.isArray(raw.answers) ? raw.answers : [])
+      .map(cleanAnswer).filter(Boolean).slice(0, 20),
+  };
+  if (raw.off) out.off = true;
+  return out;
+}
+
+export const ASK_MAX = 4000;
 
 export const REVIEW_MAX = 4000;
 
