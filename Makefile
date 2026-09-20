@@ -724,12 +724,17 @@ ship: ## It has gone: make ship N=1 TRACKING="XD91260039AU" [COURIER="迅达速�
 	  /seed/orders.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --ship "$(N)" --tracking "$(TRACKING)" --courier "$(COURIER)"
 
-owed: ## What each shopfront has earned: make owed
+owed: ## What each shopfront has earned: make owed [PAY=1]
 	@# A commission becomes owed when the money arrives, not when the order
-	@# is made — nobody is paid out of a cart. This pays nobody: until
-	@# `make payout-try` says this account can send a transfer, it is a list.
+	@# is made — nobody is paid out of a cart.
+	@#
+	@# It goes by itself the moment an order settles. PAY=1 is the sweep for
+	@# the ones that could not go at the time — almost always money that had
+	@# not landed in the account yet. Safe to run twice: a row already paid
+	@# is skipped.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
-	  /seed/owed.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+	  /seed/owed.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  $(if $(PAY),--pay,)
 
 product: ## Put something in the catalogue: make product NAME="…" PRICE="¥648" [UNIT="900g *3" EN="…" PHOTO=url]
 	@# One seller, one catalogue, and he does not need a screen to type a

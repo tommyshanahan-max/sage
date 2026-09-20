@@ -10989,6 +10989,10 @@ app.get("/api/order/:id/check", async (req, res) => {
   });
   if (out?.tell) tellThem(out.tell).catch(() => {});
   res.json({ ok: true, state: "toShip" });
+  /* And the storefront's share, on its way before she has put her phone
+     down. Not awaited: she is watching her own order turn 待发货, and a
+     bank's afternoon is not something she should wait for. */
+  payCut(id).catch((err) => console.error("cut:", err.message));
 });
 
 /* ---- WHERE A STOREFRONT'S COMMISSION LANDS -------------------------------
@@ -11067,6 +11071,66 @@ app.post("/api/paid", express.json({ limit: "2kb" }), async (req, res) => {
   res.json({ ok: true, label: out.label, name: out.name });
 });
 
+/* ---- THE COMMISSION, ACTUALLY SENT ---------------------------------------
+ *
+ * The money arrives as yuan in one Airwallex account. A storefront in
+ * Australia is owed a share of it in dollars. So three calls, in this
+ * order: a quote for the yuan, the conversion, and a local transfer to the
+ * beneficiary they made on /paid.
+ *
+ * IMMEDIATELY, WHICH TOM CHOSE KNOWING THE COST. Holding the payout until a
+ * buyer confirms delivery is the strongest protection there is against a
+ * storefront that takes a commission on something never sent — and he asked
+ * for immediate anyway, because the people selling are people he knows.
+ * Said here because the next person reading this will wonder.
+ *
+ * A FAILURE LEAVES THE ROW ALONE. The commonest one is money that has not
+ * settled into the account yet: the payment reads SUCCEEDED before the funds
+ * are there to send on. Nothing is marked paid unless the transfer was
+ * accepted, so `make pay-owed` sweeps the rest later and a row can never be
+ * paid twice.
+ */
+async function payCut(orderId) {
+  const p = WALLET.on ? WALLET.provider : null;
+  if (!p || typeof p.payout !== "function" || typeof p.quote !== "function") return "";
+
+  const board = await store.load(FILE);
+  const o = board.orders.find((x) => x.id === orderId);
+  if (!o || o.off || !o.paid || !o.cut || o.cutPaid) return "";
+  const who = board.people.find((x) => x.handle === o.shop);
+  if (!who?.payout?.id) return "nowhere";
+
+  try {
+    /* Sold as yuan, bought as dollars: how many dollars this many yuan
+       makes, at the rate right now. The cut is in fen and comes back in
+       cents, both integers, because money here is never a float. */
+    const quote = await p.quote({ sell: "CNY", buy: "AUD", sellAmount: o.cut, validSeconds: 900 });
+    const aud = Number(quote?.buyAmount);
+    if (!Number.isInteger(aud) || aud <= 0) return "quote";
+    await p.convert({ quoteId: quote.quoteId, sell: "CNY", buy: "AUD" });
+
+    const sent = await p.payout({
+      amount: aud, currency: "AUD", beneficiaryId: who.payout.id,
+      /* What lands on their bank statement. Their own shop's name and the
+         order, so a line on a statement can be matched to a sale. */
+      reference: (o.shop || "Dealio") + " " + o.id.slice(0, 8),
+    });
+    if (!sent?.payoutId) return "refused";
+
+    await change((b) => {
+      const row = b.orders.find((x) => x.id === orderId);
+      if (row && !row.cutPaid) row.cutPaid = true;
+      return { ok: true };
+    });
+    return "";
+  } catch (err) {
+    /* Airwallex's own sentence into the log — usually "insufficient funds",
+       which is a wait rather than a fault. */
+    console.error("cut payout:", err.message);
+    return "failed";
+  }
+}
+
 /** WHAT IS WAITING TO BE SENT, oldest first.
  *
  *  The seller's whole screen, and it is a terminal: the address as the
@@ -11106,6 +11170,24 @@ app.post("/api/admin/ship", admin, express.json({ limit: "2kb" }), async (req, r
   });
   if (out?.error) return res.status(400).json(out);
   res.json({ ok: true, to: out.to });
+});
+
+/** SEND WHAT IS OWED, or say why it could not go.
+ *
+ *  Everything a payout could not manage at the time — almost always money
+ *  that had not settled into the account yet — swept in one command. Safe
+ *  to run twice: a row that has been paid is skipped. */
+app.post("/api/admin/pay-owed", admin, express.json({ limit: "1kb" }), async (req, res) => {
+  const board = await store.load(FILE);
+  const todo = board.orders
+    .filter((o) => o.paid && !o.off && o.cut && !o.cutPaid && o.shop)
+    .slice(0, 50);
+  const out = [];
+  for (const o of todo) {
+    const why = await payCut(o.id);
+    out.push({ shop: o.shop, amount: store.fromMinor(o.cut, "cny"), ok: !why, why });
+  }
+  res.json({ ok: true, tried: out });
 });
 
 /** WHAT EACH STOREFRONT HAS EARNED, and what is still owed.

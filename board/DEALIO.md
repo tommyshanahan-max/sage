@@ -462,10 +462,20 @@ owed when the money arrives rather than when the cart is filled. `cutPaid`
 sits beside it on the same row, so two places can never disagree about
 whether somebody has been paid.
 
-**Nothing pays anybody yet**, and `make owed` says so rather than offering a
-button. Until `make payout-try` shows this Airwallex account can send a
-transfer at all, a list that is honest about being a list beats a button
-that fails on somebody else's phone.
+**And it pays them.** `make payout-try` came back OK on the live box — a
+beneficiary made, a transfer SCHEDULED — so the commission goes by itself
+the moment an order settles: a quote for the yuan, the conversion, and a
+local AUD transfer to the beneficiary they made on `/paid`.
+
+Immediately, which Tom chose knowing the cost: holding a payout until the
+buyer confirms delivery is the strongest protection against a storefront
+taking a commission on something never sent, and the people selling are
+people he knows.
+
+A failure leaves the row alone. The commonest one is money that has not
+settled into the account yet — a payment reads SUCCEEDED before the funds
+are there to send on — so nothing is marked paid unless the transfer was
+accepted, and `make owed PAY=1` sweeps the rest. Safe to run twice.
 
 ## Not built
 
