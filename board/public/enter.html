@@ -608,11 +608,26 @@ const PREVIEW = new URLSearchParams(location.search).get("new") === "1";
    protocol-relative and a browser reads it as another host — and no
    backslash, which some browsers normalise into one. Same rule the Google
    callback runs on; see nextPath in server.js. */
+/* THE DOOR BELONGS TO WHICHEVER PRODUCT IT WAS OPENED ON.
+ *
+ * Without a ?next this sent everybody to the board, on every hostname. On
+ * Dealio's own domain that is the wrong place by definition: somebody who
+ * typed paydealio.com, pressed a button about getting paid, and put a code in
+ * does not then want a private networking board — and this went wrong often
+ * enough, in demos, that it is worth fixing at the door rather than by
+ * remembering to attach ?next every time a link is written. A forgotten
+ * parameter should not be able to send somebody to the wrong product.
+ *
+ * {{DEALIO}} is substituted by the server, which knows the hostname; the page
+ * needs the answer before it can fetch anything. */
+const ON_DEALIO = "{{DEALIO}}" === "1";
+
 function nextPath() {
   let raw = "";
   try { raw = new URL(location.href).searchParams.get("next") || ""; }
-  catch { return ""; }
-  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return "";
+  catch { raw = ""; }
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) raw = "";
+  if (!raw && ON_DEALIO) return "/dealio";
   return raw.slice(0, 200);
 }
 

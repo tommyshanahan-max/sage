@@ -360,6 +360,26 @@ const DEMO_TAG = DEMO_DEVICE
  * an announcement carries its own title and its own picture into a chat, so
  * those have to be written per request or WeChat draws the board's default
  * card over somebody's news. Values are escaped by the caller. */
+/* WHICH PRODUCT THE READER ASKED FOR, BY THE NAME THEY TYPED.
+ *
+ * One container answers two hostnames. On the board's names, "/" is the
+ * board. On Dealio's own name it is the payments product — because a payer
+ * opening a link should not meet a private networking board at the moment
+ * they are deciding whether to trust a stranger with ten thousand yuan, and
+ * a payment provider assessing the application should not type the domain on
+ * the form and find a different company.
+ *
+ * Nothing else changes. Every route below serves both names exactly as it
+ * did; this decides one page. www is included because somebody will type it
+ * and Caddy's redirect only catches the apex-bound ones. */
+const DEALIO_HOSTS = (() => {
+  const d = String(process.env.BOARD_DEALIO_DOMAIN || "").trim().toLowerCase();
+  return d ? new Set([d, "www." + d]) : new Set();
+})();
+const isDealioHost = (req) =>
+  DEALIO_HOSTS.size > 0
+  && DEALIO_HOSTS.has(String(req.get("host") || "").toLowerCase().split(":")[0]);
+
 async function page(file, req, res, next, extra = null) {
   try {
     if (!PAGES.has(file)) PAGES.set(file, await readFile("public/" + file, "utf8"));
@@ -383,7 +403,11 @@ async function page(file, req, res, next, extra = null) {
     let out = PAGES.get(file)
       .split("{{HERE}}").join(here)
       .split("{{ORIGIN}}").join(origin)
-      .split("{{DEMO}}").join(DEMO_TAG);
+      .split("{{DEMO}}").join(DEMO_TAG)
+      /* WHICH PRODUCT'S DOOR THIS IS. The page needs it before it can decide
+         where somebody is going, which is before any fetch could answer — so
+         it is substituted here rather than asked for. */
+      .split("{{DEALIO}}").join(isDealioHost(req) ? "1" : "");
     for (const [k, v] of Object.entries(extra || {})) out = out.split(k).join(v);
     res.send(out);
   } catch (e) { next(e); }
@@ -405,25 +429,6 @@ async function page(file, req, res, next, extra = null) {
  */
 const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
 
-/* WHICH PRODUCT THE READER ASKED FOR, BY THE NAME THEY TYPED.
- *
- * One container answers two hostnames. On the board's names, "/" is the
- * board. On Dealio's own name it is the payments product — because a payer
- * opening a link should not meet a private networking board at the moment
- * they are deciding whether to trust a stranger with ten thousand yuan, and
- * a payment provider assessing the application should not type the domain on
- * the form and find a different company.
- *
- * Nothing else changes. Every route below serves both names exactly as it
- * did; this decides one page. www is included because somebody will type it
- * and Caddy's redirect only catches the apex-bound ones. */
-const DEALIO_HOSTS = (() => {
-  const d = String(process.env.BOARD_DEALIO_DOMAIN || "").trim().toLowerCase();
-  return d ? new Set([d, "www." + d]) : new Set();
-})();
-const isDealioHost = (req) =>
-  DEALIO_HOSTS.size > 0
-  && DEALIO_HOSTS.has(String(req.get("host") || "").toLowerCase().split(":")[0]);
 /* THE DOOR, IN FRONT OF EVERYTHING. Only in "read" mode.
  *
  * A page request gets the door itself rather than a redirect, so the address
