@@ -10985,6 +10985,82 @@ app.get("/api/order/:id/check", async (req, res) => {
   res.json({ ok: true, state: "toShip" });
 });
 
+/* ---- WHERE A STOREFRONT'S COMMISSION LANDS -------------------------------
+ *
+ * One form, once, by the person themselves — behind the door, because a
+ * storefront belongs to a member and a member is signed in. Their bank
+ * details go straight to Airwallex and what comes back is an id and a
+ * label; nothing of the account is kept here. See the note on `payout` in
+ * lib/store.js.
+ */
+app.get(["/paid", "/paid/"], (req, res, next) => page("paid.html", req, res, next));
+
+/** What this person has said so far, which is either a label or nothing. */
+app.get("/api/paid", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!me) return res.json({ ok: true, on: false });
+  const board = await store.load(FILE);
+  const mine = board.people.find((p) => p.by === me);
+  const rows = board.orders.filter((o) => o.paid && !o.off && o.shop && o.shop === mine?.handle);
+  res.json({
+    ok: true,
+    /* Whether this board can pay anybody at all — the same question
+       make payout-try answers, asked of the running process. */
+    on: Boolean(dealioQr() && typeof WALLET.provider.createBeneficiary === "function"),
+    handle: mine?.handle || "",
+    payout: mine?.payout ? { label: mine.payout.label, name: mine.payout.name } : null,
+    owed: store.fromMinor(rows.filter((o) => !o.cutPaid).reduce((n, o) => n + (o.cut || 0), 0), "cny"),
+    sold: rows.length,
+  });
+});
+
+/** THE FORM. Name, ABN, BSB, account — sent to Airwallex and forgotten.
+ *
+ *  NO ABN, NO PAYMENT. Paying a business without one means withholding
+ *  nearly half of it and sending that to the tax office, which is not a
+ *  thing to discover after the fact — so the form refuses instead. */
+app.post("/api/paid", express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  const p = WALLET.on ? WALLET.provider : null;
+  if (!p || typeof p.createBeneficiary !== "function") return res.status(400).json({ error: "off" });
+
+  const name = String(req.body?.name || "").trim().slice(0, 60);
+  const abn = String(req.body?.abn || "").replace(/\D/g, "");
+  const bsb = String(req.body?.bsb || "").replace(/\D/g, "");
+  const account = String(req.body?.account || "").replace(/\D/g, "");
+  if (!name || name.split(/\s+/).length < 2) return res.status(400).json({ error: "name" });
+  if (abn.length !== 11) return res.status(400).json({ error: "abn" });
+  if (bsb.length !== 6) return res.status(400).json({ error: "bsb" });
+  if (account.length < 5 || account.length > 12) return res.status(400).json({ error: "account" });
+
+  let made = null;
+  try {
+    made = await p.createBeneficiary({
+      currency: "AUD", country: "AU",
+      details: { accountName: name, accountNumber: account, bsb },
+    });
+  } catch (err) {
+    /* Airwallex's own sentence to the log; one plain word to the screen. It
+       names the field it disliked, which is exactly what is needed here and
+       exactly what should not be shown to somebody else's member. */
+    console.error("beneficiary:", err.message);
+    return res.status(502).json({ error: "refused" });
+  }
+  if (!made?.beneficiaryId) return res.status(502).json({ error: "refused" });
+
+  const out = await change((b) => {
+    const mine = b.people.find((x) => x.by === me);
+    if (!mine) return { error: "gone" };
+    mine.payout = { id: made.beneficiaryId, label: made.label || "", name, abn,
+      at: new Date().toISOString() };
+    return { ok: true, label: mine.payout.label, name };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true, label: out.label, name: out.name });
+});
+
 /** WHAT IS WAITING TO BE SENT, oldest first.
  *
  *  The seller's whole screen, and it is a terminal: the address as the

@@ -1874,6 +1874,31 @@ export function cleanPerson(raw) {
        everybody in the mainland — Stripe does not support recipients there,
        and they are paid on their own link instead. */
     payee: /^acct_[A-Za-z0-9]{6,32}$/.test(String(raw.payee || "")) ? String(raw.payee) : "",
+    /* WHERE THEIR COMMISSION GOES, and nothing of their bank in it.
+     *
+     * A storefront earns a cut of what it sells and that has to land in an
+     * Australian bank account. The details go to Airwallex, once, on their
+     * own form, and what comes back is an id and a label — "Bank account
+     * ···· 3333". That id is useless to anybody who is not this platform,
+     * which is exactly why it is the only part kept.
+     *
+     * NO BSB, NO ACCOUNT NUMBER, EVER. A board that does not hold them
+     * cannot lose them, and does not have to explain how it protects them.
+     * The ABN is kept because the tax return needs it and it is a public
+     * number anybody can look up. */
+    payout: (() => {
+      const r = raw.payout;
+      if (!r || typeof r !== "object") return undefined;
+      const id = s(r.id, 64);
+      if (!id) return undefined;
+      return {
+        id,
+        label: s(r.label, 60),
+        name: s(r.name, 60),
+        abn: String(r.abn || "").replace(/\D/g, "").slice(0, 11),
+        at: s(r.at, 40) || new Date().toISOString(),
+      };
+    })(),
     wants: WANTS.includes(raw.wants) ? raw.wants : "any",
     why: (raw.state === "published") ? "" : s(raw.why, 400),
     by: s(raw.by, 64),
