@@ -896,6 +896,26 @@ shop-brand: ## Dress a storefront: make shop-brand WHO="Tom" NAME="澳洲爸爸�
 	  /seed/shop-brand.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" $(if $(NAME),--name "$(NAME)",) --banner "$(BANNER)"
 
+shop-open: ## Open the shop on its own name: make shop-open WHO="Tom" NAME="澳洲爸爸汤姆" [WECHAT="…"] [DOMAIN=aozhoubaba.com]
+	@# EVERY PIECE OF THIS EXISTED AND NONE OF IT WAS ONE COMMAND. Opening the
+	@# shop front was: edit two lines in .env over SSH, bring the stack up,
+	@# hope the hostname did not collide with another site block, run
+	@# shop-brand, remember shop-contact, then find out from a browser whether
+	@# DNS had ever been pointed at this box. Six steps, four of which fail
+	@# without saying anything.
+	@#
+	@# It checks the handle, the DNS and the site blocks before it writes, so
+	@# a wrong one costs nothing — the lesson off airwallex-keys, which used to
+	@# overwrite working keys with a pair it had not tested yet.
+	@#
+	@# WHO is the handle on the board, not a first name: /shop/ matches on it
+	@# and `make who` is the only place that knows it.
+	@bash scripts/shop-open.sh \
+	  $(if $(WHO),--who "$(WHO)",) \
+	  $(if $(NAME),--name "$(NAME)",) \
+	  $(if $(DOMAIN),--domain "$(DOMAIN)",) \
+	  $(if $(WECHAT),--wechat "$(WECHAT)",)
+
 shop-banner: ## The picture, from a file: make shop-banner WHO="Tom" < dad.png
 	@# THE PICTURE IS ALREADY ON HIS MACHINE. Uploading it somewhere to get
 	@# a link, so the link can be pasted into another command, is two
