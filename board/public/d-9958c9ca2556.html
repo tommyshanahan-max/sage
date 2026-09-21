@@ -130,9 +130,13 @@
   .facts div{display:flex;align-items:baseline;gap:1.1rem;padding:1rem 0;
     border-bottom:1px solid var(--line)}
   .facts div:last-child{border-bottom:0}
-  .facts b{font:400 2.4rem/1 var(--serif);color:var(--money);min-width:5.6rem;
+  .facts b{font:400 2.4rem/1 var(--serif);color:var(--money);min-width:6.6rem;
     font-variant-numeric:tabular-nums}
   .facts span{color:var(--ink-2);font-size:1rem}
+  /* WHERE EACH NUMBER CAME FROM. A FIGURE NOBODY CAN CHECK IS A FIGURE THE
+     READER GETS TO DISBELIEVE, SO EVERY LINE SAYS COUNTED OR OURS. */
+  .facts span i{display:block;font-style:normal;font-size:.74rem;color:var(--dim);
+    letter-spacing:.05em;text-transform:uppercase;margin-top:.2rem}
 
   /* ONE FIGURE, WHEN THE FIGURE IS THE SLIDE. */
   .huge{font:400 clamp(4rem,21vw,6.5rem)/.88 var(--serif);color:var(--money);
@@ -259,6 +263,39 @@
   .bank .w{color:var(--dim);font-size:.88rem}
   .bank .v{font-weight:650;font-size:.98rem}
   .bank .v.in{color:var(--wx);font:400 1.6rem/1 var(--serif)}
+
+  /* LEFT AND RIGHT ON THIS SLIDE, STACKED ON THE ONE BEFORE, AND THAT IS NOT
+     AN INCONSISTENCY. The demand slide carries sixteen field names a side —
+     in half a column at phone width they wrap to nothing, so it stacks. This
+     slide carries two objects, a code and a bank line, and a payment between
+     two countries is a thing that goes ACROSS. Stacked it read as one card
+     with a badge on it; side by side it reads as two places and a direction,
+     which is the sentence.
+     The arrow column is the conversion: yuan at the top, the arrow, dollars
+     at the bottom. One glance says it left China as one currency and landed
+     as another. */
+  .xrow{display:flex;align-items:stretch;gap:.45rem;margin:1.7rem 0 0}
+  .xside{flex:1;min-width:0;border-radius:.95rem;padding:.85rem .6rem .9rem;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.4rem;text-align:center}
+  .xside.cn{background:#D9E2EF}
+  .xside.au{background:#FFFFFF;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .xcur{font:400 1.7rem/1 var(--serif)}
+  .xside.cn .xcur{color:#7E96B8}
+  .xside.au .xcur{color:#AEBACB}
+  .xlab{font-size:.62rem;letter-spacing:.11em;text-transform:uppercase;
+    font-weight:700;color:var(--dim)}
+  .xside .code{width:100%;max-width:8.2rem;margin:.1rem 0;
+    grid-template:repeat(21,1fr)/repeat(21,1fr);gap:.02rem;padding:.3rem}
+  .xnote{font-size:.72rem;color:var(--ink-2);font-weight:650;line-height:1.3}
+  .xnote small{display:block;font-weight:400;color:var(--dim);font-size:.64rem;margin-top:.15rem}
+  .xbank{font-size:.78rem;font-weight:650;line-height:1.3}
+  .xin{font:400 1.5rem/1 var(--serif);color:var(--wx);margin-top:.15rem}
+  .xarrow{flex:none;width:4.2rem;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:.1rem}
+  .xarrow .f{font-size:.82rem;font-weight:700;color:var(--money);white-space:nowrap}
+  .xarrow .t{font-size:.82rem;font-weight:700;color:var(--ink);white-space:nowrap}
+  .xarrow .tip{font:400 1.9rem/1 var(--serif);color:var(--money)}
   .join .work{color:var(--ink-2);font-weight:500}
 
   /* EVERY SCREEN, EIGHT AT ONCE.
@@ -346,75 +383,34 @@
     <p class="eyebrow">The demand</p>
     <h2>China is already buying this.</h2>
 
-    <div class="band cn">
-      <div class="bandrow">
-        <span class="cur" aria-hidden="true">¥</span>
-        <div>
-      <p class="terr">中国 <em>· the buyer</em></p>
-      <p class="buyers"><b>Parents</b> <i>·</i> <b>Families</b> <i>·</i> <b>Students</b> <i>·</i> <b>Studios</b> <i>·</i> <b>Property buyers</b> <i>·</i> <b>Small firms</b></p>
-        </div>
+    <div class="xrow">
+      <div class="xside cn">
+        <span class="xcur" aria-hidden="true">¥</span>
+        <div class="xlab">微信支付</div>
+        <div class="code" aria-hidden="true"><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i></div>
+        <div class="xnote">长按二维码识别<small>或者截屏</small></div>
       </div>
-    </div>
 
-    <div class="join" aria-hidden="true">
-      <span class="pay">¥ &darr;</span>
-      <span class="work">&uarr; the work</span>
-    </div>
-
-    <div class="band au">
-      <div class="bandrow">
-        <span class="cur" aria-hidden="true">A$</span>
-        <div>
-      <p class="terr">Australia <em>· the sole trader</em></p>
-      <p class="fields"><b>Tutoring</b> <i>·</i> <b>Exam coaching</b> <i>·</i> <b>University placement</b> <i>·</i> <b>Migration advice</b> <i>·</i> <b>Translation</b> <i>·</i> <b>Academic editing</b> <i>·</i> <b>Graphic design</b> <i>·</i> <b>Photography</b> <i>·</i> <b>Video and post</b> <i>·</i> <b>Architecture</b> <i>·</i> <b>Interior design</b> <i>·</i> <b>Buyers' advocacy</b> <i>·</i> <b>Wine and food</b> <i>·</i> <b>Sports coaching</b> <i>·</i> <b>Music tuition</b> <i>·</i> <b>Export advice</b></p>
-        </div>
+      <div class="xarrow" aria-hidden="true">
+        <span class="f">¥2,400</span>
+        <span class="tip">&rarr;</span>
+        <span class="t">A$500</span>
       </div>
-    </div>
 
-    <div class="but">
-      <p class="sub" style="margin:0">There is no easy way to pay for it.</p>
-      <p class="note" style="margin-top:.7rem">Australian sole traders, Chinese
-        clients, work delivered and invoiced — and then a morning at a bank.</p>
-    </div>
-  </section>
-
-  <section>
-    <p class="eyebrow">The current headache trying to pay</p>
-    <h2>A morning at the bank.</h2>
-    <div class="facts">
-      <div><b>62%</b><span>hold no credit card</span></div>
-      <div><b>2 hrs</b><span>at a counter, in person, with ID</span></div>
-      <div><b>1</b><span>letter wrong in the name and it fails</span></div>
-    </div>
-    <p class="sub" style="margin-top:2rem">And nothing tells you.</p>
-    <p class="note" style="margin-top:.6rem">The money leaves. A week later it comes back.</p>
-  </section>
-
-  <section>
-    <p class="eyebrow">Instead</p>
-    <h2>One long press.</h2>
-    <div class="band cn">
-      <div class="wxbar"><b>微信支付</b><span>¥2,400</span></div>
-      <div class="code" aria-hidden="true"><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i></div>
-      <p class="press">长按二维码识别<small>或者截屏，再长按那张图</small></p>
-    </div>
-
-    <div class="join" aria-hidden="true">
-      <span class="conv"><b>¥2,400</b><i>&rarr;</i>A$500</span>
-    </div>
-
-    <div class="band au">
-      <div class="bank"><span class="w">Your bank</span><span class="v">Westpac ···· 4417</span></div>
-      <div class="bank"><span class="w">Today</span><span class="v in">+ A$500.00</span></div>
+      <div class="xside au">
+        <span class="xcur" aria-hidden="true">A$</span>
+        <div class="xlab">Your bank</div>
+        <div class="xbank">Westpac<br>···· 4417</div>
+        <div class="xin">+500.00</div>
+        <div class="xnote"><small>Today</small></div>
+      </div>
     </div>
 
     <div class="why">
       <b>9 in 10</b>
-      <span>people online in China pay this way — about a billion of them,
-        every day. It is not a payment method there. It is how money works.</span>
+      <span>people online in China pay this way. Every day.</span>
     </div>
-    <p class="note" style="margin-top:1.3rem">No account. No app. No card
-      number. The gesture they already make.</p>
+    <p class="note" style="margin-top:1.3rem">No account. No app. No card number.</p>
   </section>
 
   <section>
@@ -501,14 +497,21 @@
       This needs a name and a phone.</p>
   </section>
 
+  <!-- THE LADDER, NOT THE FIGURE. A$1.8bn ON ITS OWN IS A NUMBER JERRY CAN
+       DISBELIEVE IN ONE SECOND AND NEVER TRUST AGAIN. THE FOUR ROWS LET HIM
+       DISAGREE WITH ONE LINE INSTEAD OF THE WHOLE SLIDE, AND ONLY THE FIRST
+       IS COUNTED — SAYING SO IS WHAT MAKES THE OTHER THREE CREDIBLE. -->
   <section>
     <p class="eyebrow q">Australia</p>
-    <p class="huge">A$1.8bn</p>
-    <p>moving every year between Australian sole traders and clients in China —
-      tutors, agents, editors, designers, consultants.</p>
-    <p class="note" style="margin-top:1.4rem">19,000 do it today. We think
-      70,000 would, if getting paid were easy. That second number is an
-      estimate, not a count.</p>
+    <h2>Where A$1.8bn comes from.</h2>
+    <div class="facts" style="margin-top:1.4rem">
+      <div><b>1.8m</b><span>one-person businesses<i>ABS, June 2026</i></span></div>
+      <div><b>5%</b><span>have a client in China<i>our estimate</i></span></div>
+      <div><b>A$20k</b><span>each, a year<i>our estimate</i></span></div>
+    </div>
+    <p class="sub" style="margin-top:1.5rem">A$1.8bn a year.</p>
+    <p class="note" style="margin-top:.6rem">19,000 of those 90,000 get paid
+      direct today. The other 71,000 are the product.</p>
   </section>
 
   <section>
