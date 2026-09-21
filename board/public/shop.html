@@ -73,7 +73,12 @@
 
   /* The shelves, and the row of them across the top. 全部 first because
      most of the time she wants the lot. */
-  .shelf{margin:1.2rem .3rem .5rem;font-size:.85rem;color:var(--ink2)}
+  /* THE SHELVES ARE THE STRUCTURE OF THE PAGE and were its quietest ink —
+     .85rem grey over a wall of white cards, which is a caption, not a
+     heading. She navigates this page by them. */
+  .shelf{margin:1.4rem .3rem .55rem;font-size:1rem;font-weight:600;
+    color:var(--ink);display:flex;align-items:center;gap:.55rem}
+  .shelf::after{content:"";flex:1;height:1px;background:var(--line)}
   .tabs{display:flex;gap:.45rem;overflow-x:auto;padding:0 .3rem .8rem;
     scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
@@ -120,8 +125,11 @@
     color:#fff;font:inherit;font-size:.9rem;padding:.55rem 1rem}
   .item .row{margin-top:auto;display:flex;align-items:center;
     justify-content:space-between;gap:.3rem;padding-top:.3rem}
-  .item .pr{font-size:1rem;color:var(--acc)}
-  .item .pr i{font-style:normal;font-size:.78rem}
+  /* THE PRICE IS THE LOUDEST THING ON THE CARD, because it is what she is
+     actually comparing. It was set at 1rem against a .85rem name, which is
+     near enough the same size to read as another line of text. */
+  .item .pr{font-size:1.15rem;font-weight:600;color:var(--acc);line-height:1.1}
+  .item .pr i{font-style:normal;font-size:.78rem;font-weight:400}
 
   /* The stepper everybody in China already knows: − 2 +, nothing else. */
   .qty{display:flex;align-items:center;gap:.35rem}
@@ -129,6 +137,10 @@
     background:var(--card);color:var(--ink);font:inherit;font-size:1.05rem;line-height:1;
     display:grid;place-items:center;padding:0}
   .qty button:disabled{color:var(--line)}
+  /* The lone + before anything is in the cart: filled, so it reads as the
+     button on the card rather than as one of a pair she has half-used. */
+  .qty button.add{background:var(--acc);border-color:var(--acc);color:#fff;
+    width:1.8rem;height:1.8rem;font-size:1.15rem}
   .qty b{min-width:1.2rem;text-align:center;font-weight:600}
   .add{border:0;border-radius:999px;background:var(--acc);color:#fff;font:inherit;
     font-size:.85rem;padding:.42rem .9rem}
@@ -272,24 +284,38 @@ function paint() {
   $("bar").hidden = false;
 }
 
+/* ONE PLUS UNTIL SHE HAS TAPPED IT.
+ *
+ * This drew − 0 + on every card, so a shelf of six goods carried eighteen
+ * controls and six zeros, none of which were telling her anything. It is
+ * also not the shape she knows: every Chinese shop shows a single round +
+ * and grows the stepper out of it on the first tap, so the minus exists
+ * only once there is something to take away.
+ *
+ * The count is the only thing on the card that changes, so the wrap is
+ * rebuilt rather than toggled — three nodes, on a tap she is watching. */
 function stepper(it) {
   const wrap = el("div", "qty");
-  const less = el("button", null, "−");
-  const n = el("b", null, String(CART.get(it.id) || 0));
-  const more = el("button", null, "+");
-  less.type = more.type = "button";
-  less.setAttribute("aria-label", T("sh.less"));
-  more.setAttribute("aria-label", T("sh.more"));
   const set = (q) => {
     if (q <= 0) CART.delete(it.id); else CART.set(it.id, Math.min(q, 99));
-    n.textContent = String(CART.get(it.id) || 0);
-    less.disabled = !CART.get(it.id);
+    fill();
     paint();
   };
-  less.disabled = !CART.get(it.id);
-  less.addEventListener("click", () => set((CART.get(it.id) || 0) - 1));
-  more.addEventListener("click", () => set((CART.get(it.id) || 0) + 1));
-  wrap.append(less, n, more);
+  function fill() {
+    wrap.textContent = "";
+    const q = CART.get(it.id) || 0;
+    const more = el("button", q ? null : "add", "+");
+    more.type = "button";
+    more.setAttribute("aria-label", T("sh.more"));
+    more.addEventListener("click", () => set(q + 1));
+    if (!q) { wrap.append(more); return; }
+    const less = el("button", null, "−");
+    less.type = "button";
+    less.setAttribute("aria-label", T("sh.less"));
+    less.addEventListener("click", () => set(q - 1));
+    wrap.append(less, el("b", null, String(q)), more);
+  }
+  fill();
   return wrap;
 }
 
@@ -598,7 +624,15 @@ function draw() {
      Whoever is behind it is named once more at the foot of the page —
      twice on one screen is one line she has to read for nothing. */
   box.append(el("b", null, SHOP.name || SHOP.handle));
-  box.append(el("span", null, SHOP.sayZh || SHOP.say || T("sh.direct")));
+  /* NOT THE BOARD GOAL. This line used to fall back through SHOP.say, which
+     is who.goal — the sentence a member writes about themselves on the
+     board, "I am a ___ looking for a ___". Under a shop selling formula it
+     read "Spanish, learning Chinese from zero. I can help with English
+     essays", which is the wrong person talking about the wrong thing in the
+     one line a buyer reads before deciding whether this is a real shop.
+     The shop line says what she needs: where it ships from and how she
+     pays. */
+  box.append(el("span", null, T("sh.direct")));
   who.append(box);
   /* The switch sits on the shopkeeper's row rather than in a corner: it is
      the one line on the page that is already about who you are dealing
