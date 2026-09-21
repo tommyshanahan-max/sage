@@ -133,6 +133,42 @@
     border-radius:99px;text-align:center;text-decoration:none;font-weight:700;font-size:1.05rem;
     box-shadow:0 10px 26px -10px rgba(63,104,216,.7)}
 
+
+  /* THE FIELDS, AS A TEXTURE RATHER THAN A LIST.
+     The point of this block is not any one line of work — it is how many
+     there are. A column of twelve bullet points is read as twelve things to
+     get through; the same twelve set small and flowing are taken in at a
+     glance as breadth, which is the argument. Set under the headline, in the
+     quiet ink, so the eye lands on the sentence first and the list second. */
+  .fields{font-size:.88rem;line-height:2.05;color:var(--ink-2);margin:.5rem 0 0;
+    max-width:27rem}
+  /* NOWRAP PER FIELD. "University placement" broke across two lines and read
+     as two fields — the list is counted at a glance, so a name split in half
+     is a name invented. Lines break between fields, never inside one. */
+  .fields b{font-weight:500;color:var(--ink-2);white-space:nowrap}
+  .fields i{font-style:normal;color:var(--dim);padding:0 .3rem;opacity:.5}
+  .but{margin-top:2.2rem;padding-top:1.6rem;border-top:1px solid var(--line)}
+
+  /* EVERY SCREEN, EIGHT AT ONCE.
+     "It already works" is a claim; four screens are a flow; eight are a
+     product. Two rows, and the rows mean something — the top one is what the
+     person paying sees, the bottom is what the person being paid sees, which
+     is the half nobody asks about and the half that makes this a business
+     rather than a checkout. Small on purpose: nobody reads these, they count
+     them. */
+  .grid8{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin:1.4rem 0 0}
+  .grid8 .mini{min-height:8.2rem;border-radius:.7rem;padding:.5rem .42rem}
+  .grid8 .mini .n{font-size:1.05rem}
+  .side8{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+    font-weight:700;color:var(--dim);margin:1.5rem 0 0}
+  .side8:first-of-type{margin-top:1.2rem}
+  .bars{display:flex;flex-direction:column;gap:.18rem;margin-top:auto}
+  .bars u{display:block;height:.28rem;border-radius:99px;background:var(--hair);text-decoration:none}
+  .bars u.g{background:#CFEBDA}
+  .row2{display:flex;gap:.3rem;align-items:center}
+  .row2 em{flex:1;height:.3rem;border-radius:99px;background:var(--hair)}
+  .row2 s{width:.42rem;height:.42rem;border-radius:50%;background:var(--wx);text-decoration:none}
+  .row2 s.b{background:var(--blue)}
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 <div class="deck">
@@ -142,6 +178,23 @@
        phone the height of the page, four across, a list, one figure, a
        ladder, the ask. The product appears four times and is the largest
        thing on the page every time it does. -->
+
+  <!-- THE SLIDE THAT WAS MISSING, AND IT OPENS THE DECK.
+       Every version so far began with the product, which answers a question
+       the reader has not been given yet. The demand comes first: the work is
+       already being bought, in a lot of fields at once, and the only broken
+       part is the payment. Read in that order the product is a relief; read
+       the other way round it is a solution looking for somebody. -->
+  <section>
+    <p class="eyebrow">The demand</p>
+    <h2>China is already buying this.</h2>
+    <p class="fields"><b>Tutoring</b> <i>·</i> <b>Exam coaching</b> <i>·</i> <b>University placement</b> <i>·</i> <b>Migration advice</b> <i>·</i> <b>Translation</b> <i>·</i> <b>Academic editing</b> <i>·</i> <b>Graphic design</b> <i>·</i> <b>Photography</b> <i>·</i> <b>Video and post</b> <i>·</i> <b>Architecture</b> <i>·</i> <b>Interior design</b> <i>·</i> <b>Buyers' advocacy</b> <i>·</i> <b>Wine and food</b> <i>·</i> <b>Sports coaching</b> <i>·</i> <b>Music tuition</b> <i>·</i> <b>Export advice</b></p>
+    <div class="but">
+      <p class="sub" style="margin:0">There is no easy way to pay for it.</p>
+      <p class="note" style="margin-top:.7rem">Australian sole traders, Chinese
+        clients, work delivered and invoiced — and then a morning at a bank.</p>
+    </div>
+  </section>
 
   <section>
     <div class="mark"><i>汇</i><span>Dealio</span></div>
@@ -241,6 +294,64 @@
     <p class="sub" style="margin-top:2rem">A$36m a year.</p>
     <p class="note" style="margin-top:.6rem">Three to four years. Same product,
       same code, nothing new to build.</p>
+  </section>
+
+  <!-- THE WHOLE PRODUCT, NOT THE HAPPY PATH. Four screens show a flow;
+       eight show that somebody built a thing. The two rows are the argument:
+       the payer's side is the half people expect, the payee's side is the
+       half that makes this a business rather than a checkout button. -->
+  <section>
+    <p class="eyebrow q">The product</p>
+    <h2>Every screen exists.</h2>
+
+    <p class="side8">The person paying</p>
+    <div class="grid8">
+      <div class="mini">
+        <span class="t">Link</span><span class="n">¥2,400</span><span class="s">Tom 要收</span>
+        <div class="b">去付</div>
+      </div>
+      <div class="mini">
+        <span class="t">How</span>
+        <div class="row2" style="margin-top:.4rem"><s></s><em></em></div>
+        <div class="row2" style="margin-top:.3rem"><s class="b"></s><em></em></div>
+        <div class="b">微信支付</div>
+      </div>
+      <div class="mini">
+        <span class="t">Code</span>
+        <div class="code" aria-hidden="true"><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i></div>
+      </div>
+      <div class="mini">
+        <span class="t">已付</span><span class="n">¥2,400</span><span class="s">Tom 已知道</span>
+        <div class="tick" aria-hidden="true">&check;</div>
+      </div>
+    </div>
+
+    <p class="side8">The person being paid</p>
+    <div class="grid8">
+      <div class="mini">
+        <span class="t">Ask</span><span class="n">¥240</span><span class="s">Second draft</span>
+        <div class="b">Ask for money</div>
+      </div>
+      <div class="mini">
+        <span class="t">Wallet</span><span class="n">A$1,840</span><span class="s">Balance</span>
+        <div class="row2" style="margin-top:auto"><s class="b"></s><em></em><s></s></div>
+      </div>
+      <div class="mini">
+        <span class="t">Activity</span>
+        <div class="bars" style="margin-top:.45rem">
+          <u class="g"></u><u></u><u class="g"></u><u></u><u></u><u class="g"></u><u></u>
+        </div>
+      </div>
+      <div class="mini">
+        <span class="t">Paid out</span><span class="s">Your own bank</span>
+        <div class="row2" style="margin-top:.5rem"><em></em></div>
+        <div class="row2" style="margin-top:.3rem"><em></em></div>
+        <div class="b">Save</div>
+      </div>
+    </div>
+
+    <p class="note" style="margin-top:1.5rem">Both directions, two languages,
+      passkey on every payment. Live today at paydealio.com.</p>
   </section>
 
   <section>
