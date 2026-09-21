@@ -420,7 +420,32 @@
      The source card is the solution slide's own ¥ card, reused rather than
      redrawn, so the two slides are visibly the same object. */
   .fan{display:flex;gap:.7rem;align-items:center;margin:1.5rem 0 0}
-  .fan .src{flex:none;width:9.6rem;max-width:45%}
+  .fan .src{flex:none;width:11.4rem;max-width:46%;gap:.25rem;padding:1.1rem .6rem}
+  /* THE SOURCE IS A COUNTRY, NOT OUR PRODUCT.
+     This card held the ¥ code — which is the solution's object, and it was
+     sitting two slides before the slide that reveals it. A reader shown the
+     answer while being told about the problem has nothing left to be shown.
+     So the buyer's side is now the buyer: the currency, the country, and who
+     is doing the buying. The code waits for its own slide. */
+  .fan .src .xcur{font-size:4.2rem;line-height:.9;color:#5E7BA3}
+  .fan .src .xlab{font-size:.82rem;letter-spacing:.14em;color:var(--ink-2)}
+  /* BOTH SIDES ARE BANKS. The money starts in one and ends in one — drawing
+     the source as anything else makes it a different kind of object from the
+     three it points at, and the eye reads that difference as meaning. Same
+     glyph, bigger, with the currency it holds. */
+  .bnk.big{width:3.4rem;height:2.85rem;stroke-width:1.2;color:#6E88AD}
+  /* A BANK, DRAWN. The destination of this money is an account, and a roof on
+     four columns says that in one glyph where the word "bank" is a word to
+     read. currentColor so it takes the row's ink and needs no dark variant. */
+  /* Sized to the glyph's own 24x20, not to a square — a square box letterboxes
+     it down to a hairline that reads as a dash. And in the row's own ink, not
+     --dim: at this size a pale outline is a smudge. */
+  /* .bnk, NOT .bank — the deck already had a .bank, a row on the old
+     Australian band with display:flex and a border-bottom. Applied to an
+     <svg> that border is the only thing that draws, so three bank glyphs
+     rendered as three pale dashes and the drawing inside never appeared. */
+  .bnk{flex:none;width:1.5rem;height:1.25rem;fill:none;stroke:currentColor;
+    stroke-width:1.8;stroke-linecap:round;color:var(--ink-2)}
   .fan .outs{flex:1;min-width:0;display:flex;flex-direction:column;gap:.45rem}
   .out{display:flex;align-items:center;gap:.5rem;padding:.6rem .7rem;
     background:var(--card);border:1px solid var(--line);border-radius:.7rem;
@@ -434,7 +459,7 @@
      pointing the one way the money goes. */
   @media (max-width:27rem){
     .fan{flex-direction:column;align-items:stretch;gap:.6rem}
-    .fan .src{width:11rem;max-width:none;align-self:center}
+    .fan .src{width:12.5rem;max-width:none;align-self:center}
     .out .ar{transform:rotate(90deg)}
   }
 
@@ -494,22 +519,21 @@
 
     <div class="fan">
       <div class="xside cn src">
+        <svg class="bnk big" viewBox="0 0 24 20" aria-hidden="true"><path d="M1.6 7.4 12 1.6l10.4 5.8"/><path d="M4.6 9.6v6.8M9.5 9.6v6.8M14.5 9.6v6.8M19.4 9.6v6.8"/><path d="M2.2 18.4h19.6"/></svg>
         <span class="xcur" aria-hidden="true">¥</span>
-        <div class="xlab">微信支付</div>
-        <div class="code" aria-hidden="true"><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i></div>
-        <div class="xnote">长按二维码识别</div>
+        <div class="xlab">中国</div>
       </div>
       <div class="outs">
-        <div class="out"><span class="ar" aria-hidden="true">&rarr;</span><span class="c">A$</span><span class="p">Australia</span></div>
-        <div class="out"><span class="ar" aria-hidden="true">&rarr;</span><span class="c">US$</span><span class="p">United States</span></div>
-        <div class="out"><span class="ar" aria-hidden="true">&rarr;</span><span class="c">C$</span><span class="p">Canada</span></div>
+        <div class="out"><span class="ar" aria-hidden="true">&rarr;</span><svg class="bnk" viewBox="0 0 24 20" aria-hidden="true"><path d="M1.6 7.4 12 1.6l10.4 5.8"/><path d="M4.6 9.6v6.8M9.5 9.6v6.8M14.5 9.6v6.8M19.4 9.6v6.8"/><path d="M2.2 18.4h19.6"/></svg><span class="c">A$</span><span class="p">Australia</span></div>
+        <div class="out"><span class="ar" aria-hidden="true">&rarr;</span><svg class="bnk" viewBox="0 0 24 20" aria-hidden="true"><path d="M1.6 7.4 12 1.6l10.4 5.8"/><path d="M4.6 9.6v6.8M9.5 9.6v6.8M14.5 9.6v6.8M19.4 9.6v6.8"/><path d="M2.2 18.4h19.6"/></svg><span class="c">US$</span><span class="p">United States</span></div>
+        <div class="out"><span class="ar" aria-hidden="true">&rarr;</span><svg class="bnk" viewBox="0 0 24 20" aria-hidden="true"><path d="M1.6 7.4 12 1.6l10.4 5.8"/><path d="M4.6 9.6v6.8M9.5 9.6v6.8M14.5 9.6v6.8M19.4 9.6v6.8"/><path d="M2.2 18.4h19.6"/></svg><span class="c">C$</span><span class="p">Canada</span></div>
       </div>
     </div>
 
     <div class="but">
-      <p class="sub" style="margin:0">One code. Three currencies.</p>
-      <p class="note" style="margin-top:.7rem">The payer never leaves WeChat.
-        Nothing about the code changes with the country it is paid into.</p>
+      <p class="sub" style="margin:0">Three countries. One buyer.</p>
+      <p class="note" style="margin-top:.7rem">Work delivered, invoiced,
+        and then a morning at a bank. In all three.</p>
     </div>
   </section>
 
