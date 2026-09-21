@@ -114,8 +114,15 @@ if docker compose run --rm --no-deps -T --entrypoint node board \
 else
   echo ""
   echo "  The keys are in .env, but Airwallex refused the call above."
-  echo "  Nothing else on the board changed. Run it again with the right"
+  echo "  Nothing else on the board changed. Run it again with another"
   echo "  pair and it overwrites them."
+  echo ""
+  echo "  A 403 on login is one of four things:"
+  echo ""
+  echo "    · live keys, and this box is pointed at the sandbox — add LIVE=1"
+  echo "    · the key was regenerated after it was copied"
+  echo "    · the client id and the key are from different accounts"
+  echo "    · the key has an IP allowlist that this box is not in"
   echo ""
   exit 1
 fi

@@ -57,7 +57,21 @@ export function createAirwallexProvider({ clientId, apiKey, webhookSecret, sandb
     if (token && Date.now() < tokenExp - 60_000) return token;
     if (!clientId || !apiKey) throw new NotYet("Airwallex keys are not set (BOARD_WALLET_AIRWALLEX_CLIENT_ID / _API_KEY).");
     const res = await fetch(`${base}/api/v1/authentication/login`, { method: "POST", headers: { "x-client-id": clientId, "x-api-key": apiKey } });
-    if (!res.ok) throw new Error(`airwallex login ${res.status}`);
+    if (!res.ok) {
+      /* WHAT AIRWALLEX SAID, NOT JUST THE NUMBER. This threw `airwallex login
+         403` and nothing else, and a bare 403 is the one failure here with
+         several unrelated causes — a live key against the sandbox host, a key
+         regenerated since it was copied, a client id from the other account,
+         an IP allowlist on the key that the box's address is not in. Their
+         body names which. It carries a code and a message and never the key,
+         so there is nothing here to keep out of a terminal. */
+      const why = await res.text().catch(() => "");
+      let d; try { d = why ? JSON.parse(why) : {}; } catch { d = {}; }
+      const said = [d.code, d.message].filter(Boolean).join(" ") || why.slice(0, 200);
+      const err = new Error(`airwallex login ${res.status}${said ? `: ${said}` : ""} (host ${base})`);
+      err.status = res.status;
+      throw err;
+    }
     const d = await res.json();
     token = d.token;
     tokenExp = Date.parse(d.expires_at) || Date.now() + 25 * 60_000; // tokens last 30 minutes
