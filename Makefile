@@ -2129,6 +2129,25 @@ try: ## Open the board on THIS machine, with a room in it, before deploying: mak
 	  echo; \
 	  wait $$pid
 
+app-ship: ## Build the app and hand it to Apple, from your Mac: make app-ship
+	@# THE STEP THAT WAS STILL A SCREEN. Everything either side of it is one
+	@# command already — the listing through the API, the reviewer's board,
+	@# asking Apple where the app is — and the archive in the middle was seven
+	@# steps in Xcode. Seven steps is the shape of thing that does not happen.
+	@#
+	@# It makes the iOS project the first time, syncs it every time after,
+	@# archives, exports and uploads. The key is the same .p8 in
+	@# ~/.appstoreconnect that app-state reads; nothing signs in to anything.
+	@#
+	@# OPEN=1 stops once the project exists and opens Xcode, for the first run
+	@# or any run where something needs looking at. BUILD= and VERSION=
+	@# override the numbers, TEAM= the team read off the keychain.
+	@#
+	@# It cannot do the age rating, two App Information sections or the
+	@# screenshots — those are a web form, and app/store/FILL-IN.md lists them
+	@# in the order the site asks.
+	@bash scripts/app-ship.sh
+
 app-state: ## Is the app submitted? Ask Apple, from your Mac:  make app-state
 	@# THE ANSWER TO A QUESTION THAT OTHERWISE LIVES ON A SCREEN. App Store
 	@# Connect knows whether the app is submitted; a screen is the one place
