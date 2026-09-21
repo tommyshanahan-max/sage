@@ -81,19 +81,8 @@ put() {
 }
 get() { grep -E "^${1}=" .env | tail -1 | cut -d= -f2- | tr -d '"' || true; }
 
-put TOMSCODING_BOARD_WALLET_AIRWALLEX_CLIENT_ID "$CLIENT_ID"
-put TOMSCODING_BOARD_WALLET_AIRWALLEX_API_KEY "$API_KEY"
-put TOMSCODING_BOARD_WALLET_AIRWALLEX_SANDBOX "$([ -n "$LIVE" ] && echo 0 || echo 1)"
-# The provider switch, only if it is not already saying something — a box
-# deliberately left on the stand-in is left on the stand-in.
-[ -n "$(get TOMSCODING_BOARD_WALLET)" ] || put TOMSCODING_BOARD_WALLET airwallex
+SANDBOX="$([ -n "$LIVE" ] && echo 0 || echo 1)"
 
-echo ""
-echo "  Written. Bringing the board up so it reads them…"
-make up >/dev/null
-
-echo ""
-echo "────────────────────────────────────────────────────────────"
 echo ""
 if [ -n "$LIVE" ]; then
   echo "  LIVE KEYS. Anything paid against a code from here is real money."
@@ -101,21 +90,26 @@ else
   echo "  Sandbox keys. The codes are real; the money is test money."
 fi
 echo ""
-echo "  Asking Airwallex for a quote with them:"
+echo "  Asking Airwallex for a quote with them, before writing anything:"
 echo ""
 
-# THE PROOF, AND IT RUNS EVEN IF IT FAILS. A refusal printed here — wrong key,
-# wrong host, account not approved for FX yet — is the answer to "is it
-# working now", and it is worth more than a silent success.
-if docker compose run --rm --no-deps -T --entrypoint node board \
-     lib/wallet/providers/airwallex.check.mjs; then
+# PROVED FIRST, WRITTEN SECOND, and it is not a matter of taste. This wrote
+# the pair into .env and tested it afterwards, so a pair that came back 403
+# had already overwritten the working keys underneath it — which is exactly
+# what happened on 21 September: a live pair pasted against the sandbox host
+# took out the sandbox keys that had settled a real ¥1 the day before.
+#
+# So the keys go in on the command line of a throwaway container and nothing
+# on the box changes until Airwallex has said yes to them. A wrong pair now
+# costs the thirty seconds it took to paste it and nothing else.
+if ! docker compose run --rm --no-deps -T \
+     -e BOARD_WALLET_AIRWALLEX_CLIENT_ID="$CLIENT_ID" \
+     -e BOARD_WALLET_AIRWALLEX_API_KEY="$API_KEY" \
+     -e BOARD_WALLET_AIRWALLEX_SANDBOX="$SANDBOX" \
+     --entrypoint node board lib/wallet/providers/airwallex.check.mjs; then
   echo ""
-  echo "  The keys work."
-else
-  echo ""
-  echo "  The keys are in .env, but Airwallex refused the call above."
-  echo "  Nothing else on the board changed. Run it again with another"
-  echo "  pair and it overwrites them."
+  echo "  Airwallex refused that pair, so NOTHING was written."
+  echo "  Whatever keys this box had, it still has."
   echo ""
   echo "  A 403 on login is one of four things:"
   echo ""
@@ -126,6 +120,18 @@ else
   echo ""
   exit 1
 fi
+
+echo ""
+echo "  The keys work. Writing them and bringing the board up…"
+put TOMSCODING_BOARD_WALLET_AIRWALLEX_CLIENT_ID "$CLIENT_ID"
+put TOMSCODING_BOARD_WALLET_AIRWALLEX_API_KEY "$API_KEY"
+put TOMSCODING_BOARD_WALLET_AIRWALLEX_SANDBOX "$SANDBOX"
+# The provider switch, only if it is not already saying something — a box
+# deliberately left on the stand-in is left on the stand-in.
+[ -n "$(get TOMSCODING_BOARD_WALLET)" ] || put TOMSCODING_BOARD_WALLET airwallex
+make up >/dev/null
+echo ""
+echo "────────────────────────────────────────────────────────────"
 
 if [ -n "$WHO" ]; then
   echo ""
