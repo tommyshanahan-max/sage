@@ -269,6 +269,22 @@
   .pie .key b{color:var(--ink);font-weight:650;margin-left:auto;
     font-variant-numeric:tabular-nums;font-size:.82rem}
 
+  /* THE TWO SIDES, WITH THE ARROW BETWEEN THEM. The solution slide has to
+     answer the problem slide line for line, and the shape does half of that
+     before a word is read: one panel is China, one is Australia, and the
+     only thing between them is an arrow. Side by side rather than stacked
+     because the whole claim is that these are two ends of one payment, and
+     a vertical list reads as two separate steps somebody has to do. */
+  .flow{display:flex;align-items:stretch;gap:.65rem;margin:1.6rem 0 0}
+  .flow .side{flex:1;min-width:0;background:var(--raise);border:1px solid var(--hair);
+    border-radius:1rem;padding:1rem .9rem;display:flex;flex-direction:column}
+  .flow .arr{flex:none;align-self:center;font:400 1.7rem/1 var(--serif);color:var(--gold)}
+  .flow .who{font-size:.58rem;letter-spacing:.11em;text-transform:uppercase;
+    font-weight:700;color:var(--dim);margin-bottom:.55rem}
+  .flow .big{font:400 1.3rem/1.15 var(--serif);color:var(--ink);margin-bottom:.45rem}
+  .flow .sub{font-size:.72rem;color:var(--dim);line-height:1.45}
+  .flow .ways{margin-top:auto;padding-top:.6rem}
+
   @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
 <div class="deck">
@@ -327,6 +343,56 @@
       <div><b>They tap WeChat.</b>No account, no app.</div>
       <div><b>You send a link.</b>No merchant sign-up.</div>
       <div><b>Paid in AUD.</b>Into your own bank.</div>
+    </div>
+  </section>
+
+  <!-- THE PROBLEM SLIDE IS BACK, AND IT IS NOT THE ONE THAT WAS CUT.
+       The cut one said people in China pay by phone, which is explaining
+       Jerry's own country back to him — the same fault as a payer screen
+       that teaches somebody their own wallet. This one prices the pain
+       instead: no card, a morning at a counter, and a spelling rule that
+       fails silently. An investor needs that quantified whether or not he
+       has lived it, and a reader who HAS lived it recognises every line.
+
+       THE LAST RUNG IS THE ONE THAT SELLS IT. The name on an outbound
+       Chinese remittance must match the ID exactly, Pinyin, surname first —
+       docs/cross-border-payments.md, line 36. Get it wrong and nothing tells
+       you. The money leaves, the transfer bounces somewhere in the
+       correspondent chain, and the first anybody hears is days later. That
+       silent failure is worth more on this slide than the fee is. -->
+  <section>
+    <p class="eyebrow">The problem</p>
+    <h2>The way it works now.</h2>
+    <div class="step">
+      <div><span class="n">62%</span><span class="l">hold no credit card — about 700 million adults</span></div>
+      <div><span class="n">2 hours</span><span class="l">at a branch counter, in person, with ID</span></div>
+      <div><span class="n">1 letter</span><span class="l">wrong in the name and the payment bounces</span></div>
+    </div>
+    <div class="worth">
+      <b>A week later.</b>
+      <span>That is when you find out.</span>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">The solution</p>
+    <h2>They pay. You are paid.</h2>
+    <div class="flow">
+      <div class="side">
+        <div class="who">In China</div>
+        <div class="big">They tap their wallet.</div>
+        <div class="sub">A code, long-pressed. No account, no app, no counter.</div>
+        <div class="ways">
+          <span class="wx"><i></i>WeChat Pay</span>
+          <span class="ali"><i></i>Alipay</span>
+        </div>
+      </div>
+      <div class="arr" aria-hidden="true">&rarr;</div>
+      <div class="side">
+        <div class="who">In Australia</div>
+        <div class="big">You get AUD.</div>
+        <div class="sub">Into your own bank. Same day. No merchant sign-up, no name to spell.</div>
+      </div>
     </div>
   </section>
 
