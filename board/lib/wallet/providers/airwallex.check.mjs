@@ -44,5 +44,32 @@ try {
   console.log("OK: login and FX quotes work against the sandbox.");
 } catch (err) {
   console.error("FAILED:", err.message, err.body || "");
+  /* A REFUSAL THAT DOES NOT NAME ITSELF IS A MORNING SPENT FINDING OUT WHICH
+     THING WAS WRONG, and this one has two readings that call for opposite
+     actions.
+     Airwallex's API answers bad credentials with JSON — a code and a
+     message. An HTML page with <title>403</title> never reached the API at
+     all: it is the edge turning the request away before anything looks at
+     who is asking. On 21 September 2026 the box got exactly that against
+     api.sandbox.airwallex.com, hours after they refused the live account.
+     THE DIFFERENCE IS WHETHER FRESH KEYS ARE WORTH CHASING. A JSON 401 says
+     the door is open and these particular keys are not; a served 403 page
+     says the door is shut to this caller, and a new pair will meet the same
+     page. Printed here because nobody should have to know that an HTML tag
+     in an error body means "stop looking for keys". */
+  const body = String(err.body || err.message || "");
+  if (/<html|<!doctype/i.test(body) && /\b403\b/.test(body)) {
+    console.error("");
+    console.error("  That is an HTML page, not an API error — the request was");
+    console.error("  turned away at the edge before it reached Airwallex's API.");
+    console.error("  Fresh keys will meet the same page. Either the account");
+    console.error("  termination took sandbox access with it, or this box's IP");
+    console.error("  is blocked. Check with no keys at all:");
+    console.error("");
+    console.error("    curl -sS -o /tmp/aw.txt -w 'HTTP %{http_code}\\n' -X POST \\");
+    console.error("      https://api.sandbox.airwallex.com/api/v1/authentication/login");
+    console.error("");
+    console.error("  HTML 403 again means blocked. JSON 401 means it is the keys.");
+  }
   process.exitCode = 1;
 }

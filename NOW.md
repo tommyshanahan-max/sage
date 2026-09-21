@@ -38,11 +38,38 @@ So the only untested thing is **real money**, and it is one line:
 `BOARD_WALLET_AIRWALLEX_SANDBOX=0`, which `make airwallex-keys … LIVE=1`
 writes when the live pair exists.
 
-**Broken right now (21 Sep):** the box holds a rejected key pair. An earlier
-version of `airwallex-keys` wrote before it tested, and a live pair pasted
-against the sandbox host overwrote the working sandbox keys. The script now
-proves first and writes second, but the good keys are gone — a fresh sandbox
-pair through the same command restores it. Until then no request draws a code.
+**Airwallex is gone, sandbox included (21 Sep, evening).** `make wallet-why`
+on the box:
+
+```
+provider: airwallex
+base: https://api.sandbox.airwallex.com (sandbox)
+FAILED: airwallex login 403: <!doctype html>…<title>403</title>
+```
+
+An **HTML** 403, not a JSON one. Their API answers bad credentials with JSON;
+a served 403 page means the request never reached the API — the edge turned
+it away. So this is not the missing-keys problem it was this morning, and
+**a fresh sandbox pair will meet the same page.** Either the termination took
+sandbox access with it or the box's IP is blocked. `airwallex.check.mjs` now
+says so itself rather than leaving an HTML tag to be interpreted.
+
+Not yet run, and it is the one thing that would tell the two apart — it needs
+no keys:
+
+```
+curl -sS -o /tmp/aw.txt -w 'HTTP %{http_code}\n' -X POST \
+  https://api.sandbox.airwallex.com/api/v1/authentication/login
+```
+
+HTML 403 again = blocked, nothing to recover. JSON 401 = the door is open and
+it really is just the keys.
+
+**So no request draws a code**, and the next real one comes from QFPay,
+Pockyt or Adyen rather than from Airwallex. Adyen does self-serve test
+accounts (adyen.com/signup, Test Mode, Developers → API Credentials) — but
+the lesson of `airwallex.js` is to ask whether they will onboard a payment
+facilitator *before* writing the adapter, not after.
 
 Money **out** to other people is not built and refuses on purpose: local CNY
 payouts are documented only for goods trade with declarant and order data. See
