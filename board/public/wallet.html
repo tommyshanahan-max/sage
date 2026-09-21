@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-lang="en">
 <head>
 <meta charset="utf-8">
 <!-- Empty on every deployment but the demo board. See BOARD_DEMO_DEVICE in server.js. -->
@@ -53,6 +53,11 @@
   .ib{width:2.75rem;height:2.75rem;border:0;background:transparent;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--ink-2)}
   .ib svg{width:1.3rem;height:1.3rem;stroke:currentColor;fill:none;stroke-width:2}
   .ib.hide{visibility:hidden}
+  /* The language switch. site.css styles .lang for the board's pages; this
+     page loads no stylesheet at all, so it carries its own copy. */
+  .lang{border:1px solid var(--line);background:var(--raise);color:var(--ink-2);
+    border-radius:99px;padding:.3rem .6rem;font-size:.8rem;cursor:pointer;line-height:1}
+  .lang:hover{color:var(--ink);border-color:var(--muted)}
   .dev{margin:.6rem 1rem 0;border-radius:10px;padding:.5rem .7rem;font-size:.86rem;background:var(--warn-soft);border:1px solid var(--line)}
   .screen{flex:1;padding:1rem 1rem calc(2rem + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:.9rem}
   p{margin:0}
@@ -138,8 +143,9 @@
 <body>
 <main>
   <div class="top">
-    <button class="ib hide" type="button" id="back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg></button>
-    <h1 id="title" tabindex="-1">Wallet</h1>
+    <button class="ib hide" type="button" id="back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg></button>
+    <h1 id="title" tabindex="-1"></h1>
+    <span id="langslot"></span>
     <button class="ib hide" type="button" id="act"><svg viewBox="0 0 24 24" aria-hidden="true" id="acticon"></svg></button>
   </div>
   <p class="dev" id="dev" role="note" hidden></p>
@@ -153,6 +159,14 @@
 /* The wallet's screens, over the wallet API (board/lib/wallet/routes.js).
    A screen is a function returning { title, body, back?, action? }; the hash
    is the address; the server is the only thing that decides anything. */
+
+/* BOTH LANGUAGES, AND THE SAME ONE THE REST OF THE BOARD IS IN.
+   pickLang reads the choice this reader already made on /notes or the door
+   before falling back to the browser, so arriving at the wallet does not
+   silently put somebody back into English. Set before the first paint,
+   because every screen below reads T at draw time. */
+import { T, STRINGS, lang, setLang, pickLang, langButton } from "/i18n.js";
+setLang(pickLang());
 
 const $ = (id) => document.getElementById(id);
 let device = "";
@@ -227,11 +241,11 @@ async function addPasskey() {
 async function confirmFor(action, ref) {
   if (W.testConfirm && (!canPasskey() || !W.wallet?.passkeys)) return { test: true };
   if (!W.wallet?.passkeys) {
-    if (!canPasskey()) throw new ApiError(400, { message: "This browser can't use Face ID. Open the Exchange in Safari or Chrome to pay." });
+    if (!canPasskey()) throw new ApiError(400, { message: T("wl.noPasskey") });
     await addPasskey(); await load();
   }
   const { challengeId, options: o, needsPasskey } = await api("/api/wallet/confirm/options", { action, ref });
-  if (needsPasskey) throw new ApiError(400, { message: "Set up Face ID for the wallet first." });
+  if (needsPasskey) throw new ApiError(400, { message: T("wl.setFaceFirst") });
   let a;
   try {
     a = await navigator.credentials.get({ publicKey: { ...o, challenge: b64u.dec(o.challenge), allowCredentials: (o.allowCredentials || []).map((c) => ({ ...c, id: b64u.dec(c.id) })) } });
@@ -241,12 +255,12 @@ async function confirmFor(action, ref) {
     response: { clientDataJSON: b64u.enc(r.clientDataJSON), authenticatorData: b64u.enc(r.authenticatorData), signature: b64u.enc(r.signature), userHandle: r.userHandle ? b64u.enc(r.userHandle) : undefined } } };
 }
 function confirmButton(label, cls, action, ref, run) {
-  const words = W.testConfirm && (!canPasskey() || !W.wallet?.passkeys) ? "Confirm (test mode)" : "Confirm with Face ID";
+  const words = W.testConfirm && (!canPasskey() || !W.wallet?.passkeys) ? T("wl.confirmTest") : T("wl.confirmFace");
   const b = btn(words, cls, async () => {
-    b.disabled = true; const was = b.textContent; b.textContent = "Confirming…"; say("Confirming.");
+    b.disabled = true; const was = b.textContent; b.textContent = T("wl.confirming"); say(T("wl.confirmingSay"));
     try {
       const c = await confirmFor(action, ref);
-      if (!c) { b.disabled = false; b.textContent = was; say("Not confirmed."); return; }
+      if (!c) { b.disabled = false; b.textContent = was; say(T("wl.notConfirmedSay")); return; }
       await run(c);
     } catch (err) { b.disabled = false; b.textContent = was; showError(err); }
   });
@@ -257,17 +271,17 @@ function confirmButton(label, cls, action, ref, run) {
 /* ---- errors, said where they happened ---- */
 let errBox = null;
 function showError(err) {
-  const msg = err instanceof ApiError ? err.message : "Couldn't reach the Exchange. Check your connection and try again.";
+  const msg = err instanceof ApiError ? err.message : T("wl.cantReach");
   if (errBox && document.contains(errBox)) errBox.remove();
   errBox = note("bad", msg);
   errBox.setAttribute("role", "alert");
   $("screen").prepend(errBox);
   $("screen").scrollTop = 0; window.scrollTo(0, 0);
   // Some refusals are a step to take, not a dead end.
-  if (err.code === "not_verified") errBox.append(" ", h("button", { type: "button", class: "chip", onclick: () => go("verify"), text: "Confirm identity" }));
-  if (err.code === "no_payout") errBox.append(" ", h("button", { type: "button", class: "chip", onclick: () => go("payout"), text: "Add bank account" }));
-  if (err.code === "no_wallet") errBox.append(" ", h("button", { type: "button", class: "chip", onclick: () => go("setup"), text: "Set up wallet" }));
-  if (["quote_expired", "quote_used", "quote_unknown"].includes(err.code)) errBox.append(" ", h("button", { type: "button", class: "chip", onclick: () => history.back(), text: "Check the amount again" }));
+  if (err.code === "not_verified") errBox.append(" ", h("button", { type: "button", class: "chip", onclick: () => go("verify"), text: T("wl.confirmIdentity") }));
+  if (err.code === "no_payout") errBox.append(" ", h("button", { type: "button", class: "chip", onclick: () => go("payout"), text: T("wl.addBankAccount") }));
+  if (err.code === "no_wallet") errBox.append(" ", h("button", { type: "button", class: "chip", onclick: () => go("setup"), text: T("wl.setUp") }));
+  if (["quote_expired", "quote_used", "quote_unknown"].includes(err.code)) errBox.append(" ", h("button", { type: "button", class: "chip", onclick: () => history.back(), text: T("wl.checkAmountAgain") }));
 }
 
 /* ---- router ---- */
@@ -297,18 +311,18 @@ async function paint() {
   const name = parts[0];
   const scr = SCREENS[name] || SCREENS.home;
   $("screen").textContent = "";
-  $("screen").append(spinner("Loading"));
+  $("screen").append(spinner(T("wl.loading")));
   let out;
   try {
     if (!W || back || scr.fresh !== false) await load();
     out = await scr(parts.slice(1), q);
   } catch (err) {
-    if (err instanceof ApiError && err.status === 401) out = { title: "Wallet", body: frag(note("info", "The wallet is for members. Once your page is up on the board, it's here."), h("a", { class: "btn ghost", href: "/notes", text: "Back to Messages" })) };
-    else if (err instanceof ApiError && err.status === 404) out = { title: "Wallet", body: frag(note("info", "The wallet isn't switched on here yet.")) };
-    else { out = { title: "Wallet", body: frag() }; setTimeout(() => showError(err)); }
+    if (err instanceof ApiError && err.status === 401) out = { title: T("wl.title"), body: frag(note("info", T("wl.membersOnly")), h("a", { class: "btn ghost", href: "/notes", text: T("wl.backToMessages") })) };
+    else if (err instanceof ApiError && err.status === 404) out = { title: T("wl.title"), body: frag(note("info", T("wl.notOnHere"))) };
+    else { out = { title: T("wl.title"), body: frag() }; setTimeout(() => showError(err)); }
   }
   $("title").textContent = out.title;
-  document.title = `${out.title} · The Exchange`;
+  document.title = `${out.title} · ${T("wl.suffix")}`;
   $("back").classList.toggle("hide", name === "home" || out.noBack);
   const act = $("act");
   if (out.action) { act.classList.remove("hide"); act.setAttribute("aria-label", out.action.label); $("acticon").innerHTML = ICON[out.action.icon]; act.onclick = out.action.run; }
@@ -318,8 +332,8 @@ async function paint() {
   const dev = $("dev");
   dev.hidden = !W || W.provider !== "test";
   dev.textContent = W?.demo
-    ? "In development · a working demo on test money. No real money moves and nothing is really connected."
-    : "In development · test provider: no real money moves and nothing is really connected.";
+    ? T("wl.devDemo")
+    : T("wl.devTest");
   /* THE PUBLIC DEMO: who you're trying it as, and a way to be somebody else.
      Only when the server says this is the demo (lib/wallet/demo.js). */
   const bar = $("demobar");
@@ -327,24 +341,38 @@ async function paint() {
   if (W?.demo) {
     const me = W.demo.personas.find((p) => p.key === W.demo.as);
     bar.textContent = "";
-    bar.append(`You're trying it as ${me.handle} · ${me.role}. `, h("button", { type: "button", class: "chip", onclick: () => go("who"), text: "Switch person" }));
+    bar.append(T("wl.tryingAs", { who: me.handle, role: me.role }), h("button", { type: "button", class: "chip", onclick: () => go("who"), text: T("wl.switchPerson") }));
   }
   $("title").focus({ preventScroll: true });
   window.scrollTo(0, 0);
 }
 
 /* ---- words for states ---- */
-const STEP = {
-  sent: "Sent", charged: "Paid", accepted: "Accepted", in_review: "Being checked", paying_out: "On its way to the bank",
-  completed: "Done", declined: "Declined — money returned", cancelled: "Cancelled — money returned", returned: "Not accepted in 24 hours — money returned",
-  failed: "Payment didn't go through", payout_failed: "The bank payment failed — we'll be in touch", started: "Started",
+/* THE WORDS FOR A STATE, LOOKED UP RATHER THAN HELD.
+   These were two objects of English built once at load. Read through T they
+   have to be read at the moment of drawing, because the language can change
+   under a rendered page — see paint(), which redraws on the switch. A frozen
+   map would leave a Chinese screen with English state words on it, which is
+   exactly the bolted-on-translation tell this file is trying not to have. */
+const STEPS = ["sent", "charged", "accepted", "in_review", "paying_out", "completed",
+  "declined", "cancelled", "returned", "failed", "payout_failed", "started"];
+const step = (k) => (STEPS.includes(k) ? T("wl.st." + k) : k);
+const TONE = {
+  charging: "wait", waiting: "wait", paying_out: "wait", processing: "wait",
+  completed: "", declined: "bad", cancelled: "bad", returned: "bad", failed: "bad",
+  payout_failed: "bad", open: "wait", paid: "",
 };
-const STATUS = {
-  charging: ["Waiting for the bank's approval", "wait"], waiting: ["Waiting to be accepted", "wait"], paying_out: ["On its way", "wait"], processing: ["On its way", "wait"],
-  completed: ["Done", ""], declined: ["Declined", "bad"], cancelled: ["Cancelled", "bad"], returned: ["Returned", "bad"], failed: ["Failed", "bad"], payout_failed: ["Needs attention", "bad"],
-  open: ["Open", "wait"], paid: ["Paid", ""],
-};
-const when = (iso) => { const d = new Date(iso); const today = new Date().toDateString() === d.toDateString(); return today ? d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : d.toLocaleDateString(undefined, { day: "numeric", month: "short" }); };
+const status = (k) => (k in TONE ? [T("wl.stat." + k), TONE[k]] : [k, ""]);
+/* A TIME, IN THE LANGUAGE THE PAGE IS IN — not the language the phone is in.
+   This passed undefined, which means the browser's locale, and an English
+   phone switched to 中文 kept "21 Sep" under every Chinese row. Dates in the
+   other language are the tell that a translation was added rather than
+   written. */
+const when = (iso) => { const d = new Date(iso); const L = lang() === "zh" ? "zh-CN" : undefined; const today = new Date().toDateString() === d.toDateString(); return today ? d.toLocaleTimeString(L, { hour: "2-digit", minute: "2-digit" }) : d.toLocaleDateString(L, { day: "numeric", month: "short" }); };
+/* The server names a region in English; this says it in the reader's
+   language, and falls back to the server's word for anything it has not
+   heard of. */
+const regionName = (id, fallback) => (STRINGS["wl.rg." + id] ? T("wl.rg." + id) : fallback || id);
 const sym = () => ({ EUR: "€", AUD: "A$", CNY: "¥", HKD: "HK$", USD: "US$" }[W.wallet?.currency] || "");
 
 function amountEntry(initial, onChange, label) {
@@ -352,10 +380,10 @@ function amountEntry(initial, onChange, label) {
   const clean = (s) => { s = String(s).replace(/[^\d.]/g, ""); const i = s.indexOf("."); if (i >= 0) s = s.slice(0, i + 1) + s.slice(i + 1).replace(/\./g, "").slice(0, 2); if (s.length > 1 && s[0] === "0" && s[1] !== ".") s = s.replace(/^0+/, ""); return s.slice(0, 9); };
   const inp = h("input", { id: "amt", inputmode: "decimal", autocomplete: "off", placeholder: "0", "aria-label": label });
   inp.value = v;
-  const set = (nv, speak) => { v = clean(nv); inp.value = v; onChange(v); if (speak) say(v || "zero"); };
+  const set = (nv, speak) => { v = clean(nv); inp.value = v; onChange(v); if (speak) say(v || T("wl.zero")); };
   inp.addEventListener("input", () => set(inp.value));
   const keys = h("div", { class: "keys" });
-  for (const k of ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"]) keys.append(h("button", { type: "button", text: k, "aria-label": k === "⌫" ? "Delete" : k === "." ? "Point" : k, onclick: () => set(k === "⌫" ? v.slice(0, -1) : v + k, true) }));
+  for (const k of ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"]) keys.append(h("button", { type: "button", text: k, "aria-label": k === "⌫" ? T("wl.delete") : k === "." ? T("wl.point") : k, onclick: () => set(k === "⌫" ? v.slice(0, -1) : v + k, true) }));
   setTimeout(() => onChange(v));
   return frag(h("div", { class: "amountbox" }, h("label", { for: "amt", text: sym() }), inp), keys);
 }
@@ -367,129 +395,129 @@ SCREENS.home = async () => {
   if (!W.wallet) return SCREENS.setup([]);
   const w = W.wallet;
   const acts = h("div", { class: "acts" },
-    h("button", { class: "act", type: "button", onclick: () => go("send") }, svg("send"), "Send"),
-    h("button", { class: "act", type: "button", onclick: () => go("request") }, svg("req"), "Request"),
-    h("button", { class: "act", type: "button", onclick: () => go("add"), disabled: !w.holdsBalance }, svg("add"), "Add"),
-    h("button", { class: "act", type: "button", onclick: () => go("withdraw"), disabled: !w.holdsBalance }, svg("out"), "Withdraw"));
-  const needs = [...w.incoming.map((t) => row({ lead: face(t.with.handle), title: `${t.with.handle} sent you ${t.amount.text}`, sub: t.note || "Accept within 24 hours", onclick: () => go(`activity/transfer/${t.id}`) })),
-    ...w.requests.filter((r) => r.direction === "in").map((r) => row({ lead: face(r.with.handle), title: `${r.with.handle} requested ${r.amount.text}`, sub: r.note, onclick: () => go(`activity/request/${r.id}`) }))];
+    h("button", { class: "act", type: "button", onclick: () => go("send") }, svg("send"), T("wl.send")),
+    h("button", { class: "act", type: "button", onclick: () => go("request") }, svg("req"), T("wl.request")),
+    h("button", { class: "act", type: "button", onclick: () => go("add"), disabled: !w.holdsBalance }, svg("add"), T("wl.add")),
+    h("button", { class: "act", type: "button", onclick: () => go("withdraw"), disabled: !w.holdsBalance }, svg("out"), T("wl.withdraw")));
+  const needs = [...w.incoming.map((t) => row({ lead: face(t.with.handle), title: T("wl.sentYou", { who: t.with.handle, amt: t.amount.text }), sub: t.note || T("wl.acceptIn24"), onclick: () => go(`activity/transfer/${t.id}`) })),
+    ...w.requests.filter((r) => r.direction === "in").map((r) => row({ lead: face(r.with.handle), title: T("wl.requestedAmt", { who: r.with.handle, amt: r.amount.text }), sub: r.note, onclick: () => go(`activity/request/${r.id}`) }))];
   const { rows } = await api("/api/wallet/activity");
   const recent = rows.slice(0, 5).map((x) => activityRow(x));
-  return { title: "Wallet", action: { label: "Wallet settings", icon: "gear", run: () => go("settings") }, body: frag(
-    h("section", { class: "balance", "aria-label": "Balance" },
-      h("p", { text: w.holdsBalance ? "Balance" : "Money you receive goes straight to your bank" }),
-      w.holdsBalance ? h("p", { class: "v", text: w.balance.text }) : h("p", { class: "v", style: "font-size:1.3rem", text: w.payoutLabel || "No bank account yet" }),
-      h("p", { style: "font-size:.9rem;opacity:.9", text: `${w.regionName} · ${w.currency} · ${w.verified === "verified" ? "verified" : "identity not confirmed yet"}` })),
+  return { title: T("wl.title"), action: { label: T("wl.settings"), icon: "gear", run: () => go("settings") }, body: frag(
+    h("section", { class: "balance", "aria-label": T("wl.balance") },
+      h("p", { text: w.holdsBalance ? T("wl.balance") : T("wl.straightToBank") }),
+      w.holdsBalance ? h("p", { class: "v", text: w.balance.text }) : h("p", { class: "v", style: "font-size:1.3rem", text: w.payoutLabel || T("wl.noBankYet") }),
+      h("p", { style: "font-size:.9rem;opacity:.9", text: `${regionName(w.region, w.regionName)} · ${w.currency} · ${w.verified === "verified" ? T("wl.verified") : T("wl.notVerifiedYet")}` })),
     acts,
-    w.verified !== "verified" ? note("warn", "Confirm your identity to send, add or withdraw money. ", h("button", { type: "button", class: "chip", onclick: () => go("verify"), text: "Confirm now" })) : null,
-    needs.length ? h("p", { class: "k", text: "Needs you" }) : null,
+    w.verified !== "verified" ? note("warn", T("wl.confirmToMove"), h("button", { type: "button", class: "chip", onclick: () => go("verify"), text: T("wl.confirmNow") })) : null,
+    needs.length ? h("p", { class: "k", text: T("wl.needsYou") }) : null,
     needs.length ? h("div", { class: "list" }, ...needs) : null,
-    h("div", { style: "display:flex;justify-content:space-between;align-items:baseline" }, h("p", { class: "k", text: "Recent" }), h("button", { type: "button", class: "chip", onclick: () => go("activity"), text: "See all" })),
-    h("div", { class: "list" }, ...(recent.length ? recent : [row({ title: "Nothing yet", sub: "Payments you send and receive show here" })])),
+    h("div", { style: "display:flex;justify-content:space-between;align-items:baseline" }, h("p", { class: "k", text: T("wl.recent") }), h("button", { type: "button", class: "chip", onclick: () => go("activity"), text: T("wl.seeAll") })),
+    h("div", { class: "list" }, ...(recent.length ? recent : [row({ title: T("wl.nothingYet"), sub: T("wl.nothingYetSub") })])),
     h("div", { class: "list" },
-      row({ lead: badge("⇄"), title: "Payment methods", sub: w.sources.length ? w.sources.map((s) => s.label).join(" · ") : "Nothing connected", onclick: () => go("methods") }),
-      row({ lead: badge("⚑"), title: "Help and safety", sub: "Report a payment, spot a scam", onclick: () => go("help") })),
+      row({ lead: badge("⇄"), title: T("wl.methods"), sub: w.sources.length ? w.sources.map((s) => s.label).join(" · ") : T("wl.nothingConn"), onclick: () => go("methods") }),
+      row({ lead: badge("⚑"), title: T("wl.help"), sub: T("wl.helpSub"), onclick: () => go("help") })),
   ) };
 };
 
 function activityRow(x) {
-  const [status] = STATUS[x.state] || [x.state];
-  const title = x.kind === "transfer" ? (x.direction === "out" ? `To ${x.with.handle}` : `From ${x.with.handle}`)
-    : x.kind === "request" ? (x.direction === "out" ? `You asked ${x.with.handle}` : `${x.with.handle} asked you`)
-    : x.kind === "topup" ? "Added money" : "Withdrawn to bank";
+  const [state] = status(x.state);
+  const title = x.kind === "transfer" ? T(x.direction === "out" ? "wl.toWho" : "wl.fromWho", { who: x.with.handle })
+    : x.kind === "request" ? T(x.direction === "out" ? "wl.youAsked" : "wl.askedYou", { who: x.with.handle })
+    : x.kind === "topup" ? T("wl.addedMoney") : T("wl.withdrawnBank");
   const sign = x.kind === "request" ? "" : x.direction === "in" ? "+" : "−";
-  return row({ lead: x.with ? face(x.with.handle) : badge(x.kind === "topup" ? "+" : "↑", "money"), title, sub: `${status} · ${when(x.at)}`, end: sign + x.amount.text, in: sign === "+", onclick: () => go(`activity/${x.kind}/${x.id}`) });
+  return row({ lead: x.with ? face(x.with.handle) : badge(x.kind === "topup" ? "+" : "↑", "money"), title, sub: `${state} · ${when(x.at)}`, end: sign + x.amount.text, in: sign === "+", onclick: () => go(`activity/${x.kind}/${x.id}`) });
 }
 
 /* SETUP — region, terms, then identity, Face ID, a way to pay, where money goes. */
 SCREENS.setup = async () => {
-  if (W.wallet) { replace("home"); return { title: "Wallet", body: frag() }; }
+  if (W.wallet) { replace("home"); return { title: T("wl.title"), body: frag() }; }
   const waiting = W.waitingForYou || [];
   let region = "";
-  const list = h("div", { class: "list", role: "radiogroup", "aria-label": "Where you live" });
+  const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.whereYouLive") });
   const terms = h("input", { type: "checkbox", id: "terms" });
-  const start = btn("Set up wallet", "", async () => {
+  const start = btn(T("wl.setUp"), "", async () => {
     start.disabled = true;
-    try { await api("/api/wallet/setup", { region, acceptedTerms: true }); await load(); say("Wallet created."); go("verify"); }
+    try { await api("/api/wallet/setup", { region, acceptedTerms: true }); await load(); say(T("wl.walletCreated")); go("verify"); }
     catch (err) { start.disabled = false; showError(err); }
   }, { disabled: true });
   const upd = () => { start.disabled = !(region && terms.checked); };
   const draw = () => {
     list.textContent = "";
     for (const [id, r] of Object.entries(W.regions)) {
-      list.append(row({ radio: region === id, title: r.name, sub: r.balance ? `Wallet in ${r.currency}` : `${r.currency} · paid straight to your bank`, onclick: () => { region = id; draw(); upd(); list.querySelector('[aria-checked="true"]').focus(); } }));
+      list.append(row({ radio: region === id, title: regionName(id, r.name), sub: r.balance ? T("wl.walletIn", { cur: r.currency }) : T("wl.paidStraight", { cur: r.currency }), onclick: () => { region = id; draw(); upd(); list.querySelector('[aria-checked="true"]').focus(); } }));
     }
   };
   draw();
   terms.addEventListener("change", upd);
-  return { title: "Set up wallet", body: frag(
+  return { title: T("wl.setUp"), body: frag(
     steps(1, 5),
-    h("p", { class: "hero", text: "Send and receive money with people you've met here" }),
-    waiting.length ? note("warn", `${waiting[0].with.handle} sent you ${waiting[0].amount.text}. Set up to accept it.`) : null,
-    h("p", { class: "k", text: "Where you live" }), list,
+    h("p", { class: "hero", text: T("wl.setUpHero") }),
+    waiting.length ? note("warn", T("wl.setUpWaiting", { who: waiting[0].with.handle, amt: waiting[0].amount.text })) : null,
+    h("p", { class: "k", text: T("wl.whereYouLive") }), list,
     h("div", { class: "list" },
-      row({ title: "The provider holds and moves the money", sub: "The Exchange never has your bank login or card number." }),
-      row({ title: "Payments can't always be reversed", sub: "Once someone accepts your money, getting it back depends on them." }),
-      row({ title: "Only pay people you've dealt with", sub: "The Exchange will never ask you to send money to unlock anything." }),
-      row({ title: "Fees", sub: "None from your wallet or bank. 2.9% from a card, 3.4% from PayPal. Currency exchange includes about 0.5%." })),
-    h("label", { class: "check" }, terms, h("span", { text: "I've read and accept the wallet terms." })),
+      row({ title: T("wl.provHolds"), sub: T("wl.provHoldsSub") }),
+      row({ title: T("wl.noReverse"), sub: T("wl.noReverseSub") }),
+      row({ title: T("wl.knownOnly"), sub: T("wl.knownOnlySub") }),
+      row({ title: T("wl.fees"), sub: T("wl.feesSub") })),
+    h("label", { class: "check" }, terms, h("span", { text: T("wl.acceptTerms") })),
     h("div", { class: "push" }, start),
   ) };
 };
 
 SCREENS.verify = async () => {
   const w = W.wallet;
-  if (!w) { replace("setup"); return { title: "Wallet", body: frag() }; }
-  if (w.verified === "verified") return { title: "Confirmed", body: frag(h("div", { class: "done" }, svg("check")), h("p", { class: "hero center", text: "You're verified" }),
-    h("p", { class: "center lead", text: `You can send up to ${w.limits.sendDay.text} a day.` }), h("div", { class: "push" }, btn("Continue", "", () => go("security")))) };
-  const b = btn("Continue to the provider", "", async () => {
+  if (!w) { replace("setup"); return { title: T("wl.title"), body: frag() }; }
+  if (w.verified === "verified") return { title: T("wl.confirmed"), body: frag(h("div", { class: "done" }, svg("check")), h("p", { class: "hero center", text: T("wl.youreVerified") }),
+    h("p", { class: "center lead", text: T("wl.canSendUpTo", { amt: w.limits.sendDay.text }) }), h("div", { class: "push" }, btn(T("wl.continue"), "", () => go("security")))) };
+  const b = btn(T("wl.toProvider"), "", async () => {
     b.disabled = true;
     try { const { url } = await api("/api/wallet/verify", { returnUrl: "/wallet#verify" }); leaveFor(url, "verify"); }
     catch (err) { b.disabled = false; showError(err); }
   });
-  return { title: "Confirm it's you", body: frag(
+  return { title: T("wl.confirmIt"), body: frag(
     steps(2, 5),
-    w.verified === "pending" ? note("info", "Your check didn't finish. You can start it again.") : null,
-    h("p", { class: "lead", text: "Anyone who moves money has to check who they're dealing with. The provider does the check, on its own page." }),
-    h("div", { class: "list" }, row({ lead: badge("1"), title: "A photo of your ID card or passport" }), row({ lead: badge("2"), title: "A quick selfie to match it" })),
-    h("p", { class: "small", text: "The Exchange only learns whether you passed." }),
-    h("div", { class: "push" }, b, btn("Do this later", "ghost", () => go("security")))) };
+    w.verified === "pending" ? note("info", T("wl.checkUnfinished")) : null,
+    h("p", { class: "lead", text: T("wl.whyVerify") }),
+    h("div", { class: "list" }, row({ lead: badge("1"), title: T("wl.idPhoto") }), row({ lead: badge("2"), title: T("wl.selfie") })),
+    h("p", { class: "small", text: T("wl.onlyPassFail") }),
+    h("div", { class: "push" }, b, btn(T("wl.doLater"), "ghost", () => go("security")))) };
 };
 
 SCREENS.security = async () => {
   const w = W.wallet;
   const has = w?.passkeys > 0;
-  const add = btn("Turn on Face ID", "", async () => {
+  const add = btn(T("wl.faceOn"), "", async () => {
     add.disabled = true;
-    try { await addPasskey(); await load(); say("Face ID is on for payments."); go("sources"); }
-    catch (err) { add.disabled = false; showError(err instanceof ApiError ? err : new ApiError(400, { message: "Face ID wasn't set up. You can try again, or use test mode." })); }
+    try { await addPasskey(); await load(); say(T("wl.faceIsOn")); go("sources"); }
+    catch (err) { add.disabled = false; showError(err instanceof ApiError ? err : new ApiError(400, { message: T("wl.faceFailed") })); }
   });
-  return { title: "Keep it safe", body: frag(
+  return { title: T("wl.keepSafe"), body: frag(
     steps(3, 5),
-    h("p", { class: "lead", text: "Every payment is confirmed on this phone with Face ID or its passcode, so nobody else can send your money even if they open your account." }),
-    has ? note("good", "Face ID is on for payments.") : null,
-    !canPasskey() ? note("info", W.testConfirm ? "This browser can't use Face ID. In test mode, payments use a test confirmation instead." : "This browser can't use Face ID. Open the Exchange in Safari or Chrome to pay.") : null,
-    h("div", { class: "push" }, has || !canPasskey() ? btn("Continue", "", () => go("sources")) : add, !has && canPasskey() && W.testConfirm ? btn("Skip (test mode)", "ghost", () => go("sources")) : null)) };
+    h("p", { class: "lead", text: T("wl.faceWhy") }),
+    has ? note("good", T("wl.faceIsOn")) : null,
+    !canPasskey() ? note("info", W.testConfirm ? T("wl.noPasskeyTest") : T("wl.noPasskey")) : null,
+    h("div", { class: "push" }, has || !canPasskey() ? btn(T("wl.continue"), "", () => go("sources")) : add, !has && canPasskey() && W.testConfirm ? btn(T("wl.skipTest"), "ghost", () => go("sources")) : null)) };
 };
 
 SCREENS.sources = async () => {
   const w = W.wallet;
-  const kinds = w.region === "CN" ? [["card", "UnionPay card", "2.9% fee"], ["wechat", "WeChat Pay", "No fee"]] : [["card", "Debit or credit card", "2.9% fee"], ["bank", "Bank account", "No fee"], ["paypal", "PayPal", "3.4% fee"]];
+  const kinds = w.region === "CN" ? [["card", T("wl.unionpay"), T("wl.feePct", { p: "2.9" })], ["wechat", T("wl.wechatPay"), T("wl.noFee")]] : [["card", T("wl.cardKind"), T("wl.feePct", { p: "2.9" })], ["bank", T("wl.bankKind"), T("wl.noFee")], ["paypal", T("wl.paypal"), T("wl.feePct", { p: "3.4" })]];
   const connect = async (kind) => { try { const { url } = await api("/api/wallet/sources/connect", { kind, returnUrl: "/wallet#sources" }); leaveFor(url, "sources"); } catch (err) { showError(err); } };
-  return { title: "How you'll pay", body: frag(
+  return { title: T("wl.howPay"), body: frag(
     steps(4, 5),
-    h("p", { class: "lead", text: "Connect something to pay from. You finish on the provider's own page." }),
-    w.sources.length ? h("div", { class: "list" }, ...w.sources.map((s) => row({ lead: badge(s.kind === "card" ? "CARD" : s.kind === "bank" ? "BANK" : s.kind === "paypal" ? "PP" : "WX"), title: s.label, sub: "Connected" }))) : null,
+    h("p", { class: "lead", text: T("wl.connectSomething") }),
+    w.sources.length ? h("div", { class: "list" }, ...w.sources.map((s) => row({ lead: badge(s.kind === "card" ? "CARD" : s.kind === "bank" ? "BANK" : s.kind === "paypal" ? "PP" : "WX"), title: s.label, sub: T("wl.connected") }))) : null,
     h("div", { class: "list" }, ...kinds.map(([k, t, fee]) => row({ lead: badge(k === "card" ? "CARD" : k === "bank" ? "BANK" : k === "paypal" ? "PP" : "WX"), title: t, sub: fee, onclick: () => connect(k) }))),
-    h("div", { class: "push" }, btn(w.sources.length ? "Continue" : "Skip for now", w.sources.length ? "" : "ghost", () => go("payout?setup=1")))) };
+    h("div", { class: "push" }, btn(w.sources.length ? T("wl.continue") : T("wl.skipForNow"), w.sources.length ? "" : "ghost", () => go("payout?setup=1")))) };
 };
 
 SCREENS.payout = async (_, q) => {
   const w = W.wallet;
   const setup = q.get("setup") === "1";
-  const fields = w.region === "AU" ? [["accountName", "Name on the account", "text", ""], ["bsb", "BSB", "text", "Six digits"], ["accountNumber", "Account number", "text", ""]]
-    : w.region === "CN" ? [["accountName", "Name on the account", "text", "As on your ID"], ["bankName", "Bank", "text", "e.g. China Merchants Bank"], ["accountNumber", "Bank account or UnionPay card number", "text", ""]]
-    : [["accountName", "Name on the account", "text", ""], ["bankName", "Bank", "text", ""], ["iban", w.region === "FI" ? "IBAN" : "Account number or IBAN", "text", ""]];
+  const fields = w.region === "AU" ? [["accountName", T("wl.accountName"), "text", ""], ["bsb", T("wl.bsb"), "text", T("wl.sixDigits")], ["accountNumber", T("wl.accountNumber"), "text", ""]]
+    : w.region === "CN" ? [["accountName", T("wl.accountName"), "text", T("wl.asOnYourId")], ["bankName", T("wl.bankLabel"), "text", T("wl.bankEg")], ["accountNumber", T("wl.cnAccount"), "text", ""]]
+    : [["accountName", T("wl.accountName"), "text", ""], ["bankName", T("wl.bankLabel"), "text", ""], ["iban", w.region === "FI" ? "IBAN" : T("wl.ibanOr"), "text", ""]];
   let mode = w.holdsBalance ? (w.payout || "wallet") : "bank";
   const form = h("div", { class: "stack" });
   const inputs = {};
@@ -498,44 +526,44 @@ SCREENS.payout = async (_, q) => {
     inputs[key] = h("input", { id, type, autocomplete: key === "accountName" ? "name" : "off", inputmode: ["bsb", "accountNumber"].includes(key) ? "numeric" : null });
     form.append(h("div", { class: "field" }, h("label", { for: id, text: label }), inputs[key], hint ? h("span", { class: "hint", text: hint }) : null));
   }
-  const list = h("div", { class: "list", role: "radiogroup", "aria-label": "Where money you receive goes" });
+  const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.whereShouldGo") });
   const draw = () => {
     list.textContent = "";
-    if (w.holdsBalance) list.append(row({ radio: mode === "wallet", title: "Keep it in my wallet", sub: "Withdraw whenever you like", onclick: () => { mode = "wallet"; draw(); } }));
-    list.append(row({ radio: mode === "bank", title: w.payoutLabel ? `My bank account (${w.payoutLabel})` : "Straight to my bank account", sub: w.region === "CN" ? "Payments into China are checked first, usually 1–2 days" : "Usually the same or next working day", onclick: () => { mode = "bank"; draw(); } }));
+    if (w.holdsBalance) list.append(row({ radio: mode === "wallet", title: T("wl.keepInWallet"), sub: T("wl.withdrawWhenever"), onclick: () => { mode = "wallet"; draw(); } }));
+    list.append(row({ radio: mode === "bank", title: w.payoutLabel ? T("wl.myBankIs", { label: w.payoutLabel }) : T("wl.straightToMine"), sub: w.region === "CN" ? T("wl.cnChecked") : T("wl.usuallyNextDay"), onclick: () => { mode = "bank"; draw(); } }));
     form.hidden = mode !== "bank" || (Boolean(w.payoutLabel) && !showNew);
   };
   let showNew = !w.payoutLabel;
-  const change = w.payoutLabel ? h("button", { type: "button", class: "chip", text: "Use a different account", onclick: () => { showNew = true; draw(); } }) : null;
+  const change = w.payoutLabel ? h("button", { type: "button", class: "chip", text: T("wl.useDifferent"), onclick: () => { showNew = true; draw(); } }) : null;
   draw();
-  const save = btn(setup ? "Finish" : "Save", "", async () => {
+  const save = btn(setup ? T("wl.finish") : T("wl.save"), "", async () => {
     save.disabled = true;
     try {
       if (mode === "wallet") await api("/api/wallet/payout", { mode: "wallet" });
       else if (showNew) await api("/api/wallet/payout", { mode: "bank", details: Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value])) });
-      await load(); say("Saved.");
+      await load(); say(T("wl.saved"));
       if (setup) go("ready"); else history.back();
     } catch (err) { save.disabled = false; showError(err); }
   });
-  return { title: "Getting paid", body: frag(
+  return { title: T("wl.gettingPaid"), body: frag(
     setup ? steps(5, 5) : null,
-    h("p", { class: "lead", text: "When someone sends you money, where should it go?" }),
+    h("p", { class: "lead", text: T("wl.whereShouldGo") }),
     list, change, form,
-    h("p", { class: "small", text: "Your account details go to the provider. The Exchange keeps only the last four digits." }),
-    h("div", { class: "push" }, save, setup ? btn("Skip for now", "ghost", () => go("ready")) : null)) };
+    h("p", { class: "small", text: T("wl.detailsToProv") }),
+    h("div", { class: "push" }, save, setup ? btn(T("wl.skipForNow"), "ghost", () => go("ready")) : null)) };
 };
 
 SCREENS.ready = async () => {
   const w = W.wallet;
-  return { title: "All set", noBack: true, body: frag(
-    h("div", { class: "done" }, svg("check")), h("p", { class: "hero center", text: "Your wallet is ready" }),
+  return { title: T("wl.allSet"), noBack: true, body: frag(
+    h("div", { class: "done" }, svg("check")), h("p", { class: "hero center", text: T("wl.walletReady") }),
     h("div", { class: "sum" },
-      h("div", {}, h("span", { text: "Where you live" }), h("span", { text: `${w.regionName} · ${w.currency}` })),
-      h("div", {}, h("span", { text: "Identity" }), h("span", { text: w.verified === "verified" ? "Confirmed" : "Not yet — needed to send" })),
-      h("div", {}, h("span", { text: "Face ID" }), h("span", { text: w.passkeys ? "On" : "Not set up" })),
-      h("div", {}, h("span", { text: "Pay from" }), h("span", { text: w.sources.map((s) => s.label).join(", ") || "Nothing yet" })),
-      h("div", {}, h("span", { text: "Money you receive" }), h("span", { text: w.payout === "bank" ? (w.payoutLabel || "Your bank") : "Your wallet" }))),
-    h("div", { class: "push" }, btn("Open wallet", "money", () => replace("home")))) };
+      h("div", {}, h("span", { text: T("wl.whereYouLive") }), h("span", { text: `${regionName(w.region, w.regionName)} · ${w.currency}` })),
+      h("div", {}, h("span", { text: T("wl.identity") }), h("span", { text: w.verified === "verified" ? T("wl.confirmed") : T("wl.notYetNeeded") })),
+      h("div", {}, h("span", { text: T("wl.faceLabel") }), h("span", { text: w.passkeys ? T("wl.on") : T("wl.notSetUp") })),
+      h("div", {}, h("span", { text: T("wl.payFrom") }), h("span", { text: w.sources.map((s) => s.label).join(", ") || T("wl.nothingYetShort") })),
+      h("div", {}, h("span", { text: T("wl.moneyReceive") }), h("span", { text: w.payout === "bank" ? (w.payoutLabel || T("wl.yourBank")) : T("wl.yourWallet") }))),
+    h("div", { class: "push" }, btn(T("wl.openWallet"), "money", () => replace("home")))) };
 };
 
 /* SEND */
@@ -544,30 +572,30 @@ SCREENS.send = async (_, q) => {
   const { people } = await api("/api/wallet/people");
   const pre = q.get("to");
   if (pre) { const p = people.find((x) => x.id === pre); if (p) return SCREENS.amount([p.id], new URLSearchParams({ room }), people); }
-  const search = h("input", { id: "who", autocomplete: "off", placeholder: "Search members" });
+  const search = h("input", { id: "who", autocomplete: "off", placeholder: T("wl.searchMembers") });
   const list = h("div", { class: "list" });
   const draw = () => {
     list.textContent = "";
     const t = search.value.trim().toLowerCase();
     const found = people.filter((p) => !t || p.handle.toLowerCase().includes(t)).slice(0, 60);
-    for (const p of found) list.append(row({ lead: face(p.handle), title: p.handle, sub: [p.role, p.hasWallet ? "" : "hasn't set up a wallet"].filter(Boolean).join(" · "), onclick: () => go(`amount/${p.id}${room ? "?room=" + encodeURIComponent(room) : ""}`) }));
-    if (!found.length) list.append(row({ title: "Nobody by that name", sub: "You can pay members of the Exchange" }));
+    for (const p of found) list.append(row({ lead: face(p.handle), title: p.handle, sub: [p.role, p.hasWallet ? "" : T("wl.noWalletShort")].filter(Boolean).join(" · "), onclick: () => go(`amount/${p.id}${room ? "?room=" + encodeURIComponent(room) : ""}`) }));
+    if (!found.length) list.append(row({ title: T("wl.nobodyByName"), sub: T("wl.canPayMembers") }));
   };
   search.addEventListener("input", draw); draw();
-  return { title: "Send to", body: frag(h("div", { class: "field" }, h("label", { for: "who", text: "Who are you paying?" }), search), list) };
+  return { title: T("wl.sendTo"), body: frag(h("div", { class: "field" }, h("label", { for: "who", text: T("wl.whoPaying") }), search), list) };
 };
 
 SCREENS.amount = async ([to], q, known) => {
   const w = W.wallet;
-  if (!w) { replace("setup"); return { title: "Wallet", body: frag() }; }
+  if (!w) { replace("setup"); return { title: T("wl.title"), body: frag() }; }
   const people = known || (await api("/api/wallet/people")).people;
   const p = people.find((x) => x.id === to);
-  if (!p) return { title: "Send", body: note("bad", "That member isn't here any more.") };
-  if (!p.hasWallet) return { title: `Pay ${p.handle}`, body: frag(note("info", `${p.handle} hasn't set up a wallet yet, so there's nowhere for the money to go. Ask them to set one up — it's under their Profile.`), h("div", { class: "push" }, btn("Back", "ghost", () => history.back()))) };
+  if (!p) return { title: T("wl.send"), body: note("bad", T("wl.memberGone")) };
+  if (!p.hasWallet) return { title: T("wl.payWho", { who: p.handle }), body: frag(note("info", T("wl.theyHaveNoWallet", { who: p.handle })), h("div", { class: "push" }, btn(T("wl.back"), "ghost", () => history.back()))) };
   const draft = JSON.parse(sessionStorage.getItem("wallet:draft") || "{}");
   const d = draft.to === to ? draft : { to, amount: "", note: "", reason: "", source: (w.sources.find((s) => s.default) || {}).id || (w.holdsBalance ? "wallet" : "") };
   const chinese = p.region === "CN";
-  const cont = btn("Continue", "", async () => {
+  const cont = btn(T("wl.continue"), "", async () => {
     cont.disabled = true;
     sessionStorage.setItem("wallet:draft", JSON.stringify(d));
     try {
@@ -576,56 +604,56 @@ SCREENS.amount = async ([to], q, known) => {
       go("review");
     } catch (err) { cont.disabled = false; showError(err); }
   }, { disabled: true });
-  const reasonIn = h("input", { id: "reason", maxlength: "80", placeholder: "e.g. Consulting fee" });
-  const noteIn = h("input", { id: "note", maxlength: "60", placeholder: "e.g. Script read-through" });
+  const reasonIn = h("input", { id: "reason", maxlength: "80", placeholder: T("wl.egConsulting") });
+  const noteIn = h("input", { id: "note", maxlength: "60", placeholder: T("wl.egRead") });
   noteIn.value = d.note; reasonIn.value = d.reason;
   const check = () => { cont.disabled = !(Number(d.amount) > 0) || !d.source || (chinese && d.reason.trim().length < 3); };
   noteIn.addEventListener("input", () => { d.note = noteIn.value; });
   reasonIn.addEventListener("input", () => { d.reason = reasonIn.value; check(); });
-  const sources = [...(w.holdsBalance ? [{ id: "wallet", label: "Wallet balance", kind: "wallet", sub: `${w.balance.text} · no fee` }] : []), ...w.sources.map((s) => ({ ...s, sub: s.fee ? `${s.fee / 100}% fee` : "No fee" }))];
-  const srcList = h("div", { class: "list", role: "radiogroup", "aria-label": "Pay from" });
+  const sources = [...(w.holdsBalance ? [{ id: "wallet", label: T("wl.walletBalance"), kind: "wallet", sub: T("wl.balNoFee", { amt: w.balance.text }) }] : []), ...w.sources.map((s) => ({ ...s, sub: s.fee ? T("wl.feePct", { p: s.fee / 100 }) : T("wl.noFee") }))];
+  const srcList = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.payFrom") });
   const drawSrc = () => { srcList.textContent = ""; for (const s of sources) srcList.append(row({ radio: d.source === s.id, title: s.label, sub: s.sub, onclick: () => { d.source = s.id; drawSrc(); check(); srcList.querySelector('[aria-checked="true"]').focus(); } })); };
   drawSrc();
-  return { title: `Pay ${p.handle}`, body: frag(
-    w.verified !== "verified" ? note("warn", "Confirm your identity before you can send. ", h("button", { type: "button", class: "chip", onclick: () => go("verify"), text: "Confirm now" })) : null,
-    amountEntry(d.amount, (v) => { d.amount = v; check(); }, `Amount to send to ${p.handle}, in ${w.currency}`),
-    h("div", { class: "field" }, h("label", { for: "note", text: "What's it for?" }), noteIn),
-    chinese ? h("div", { class: "field" }, h("label", { for: "reason", text: "Reason for the payment (required for China)" }), reasonIn, h("span", { class: "hint", text: "Payments into mainland China are checked, and need a stated reason." })) : null,
-    h("p", { class: "k", text: "Pay from" }),
-    sources.length ? srcList : note("warn", "Connect a card or bank to pay from. ", h("button", { type: "button", class: "chip", onclick: () => go("sources"), text: "Connect" })),
+  return { title: T("wl.payWho", { who: p.handle }), body: frag(
+    w.verified !== "verified" ? note("warn", T("wl.confirmBeforeSend"), h("button", { type: "button", class: "chip", onclick: () => go("verify"), text: T("wl.confirmNow") })) : null,
+    amountEntry(d.amount, (v) => { d.amount = v; check(); }, T("wl.amountToSend", { who: p.handle, cur: w.currency })),
+    h("div", { class: "field" }, h("label", { for: "note", text: T("wl.whatFor") }), noteIn),
+    chinese ? h("div", { class: "field" }, h("label", { for: "reason", text: T("wl.reasonCn") }), reasonIn, h("span", { class: "hint", text: T("wl.reasonCnHint") })) : null,
+    h("p", { class: "k", text: T("wl.payFrom") }),
+    sources.length ? srcList : note("warn", T("wl.connectToPay"), h("button", { type: "button", class: "chip", onclick: () => go("sources"), text: T("wl.connect") })),
     h("div", { class: "push" }, cont)) };
 };
 
 SCREENS.review = async () => {
   const qt = JSON.parse(sessionStorage.getItem("wallet:quote") || "null");
-  if (!qt) { replace("home"); return { title: "Wallet", body: frag() }; }
+  if (!qt) { replace("home"); return { title: T("wl.title"), body: frag() }; }
   const expires = Date.parse(qt.expiresAt);
   const left = h("span", { text: "" });
-  const tick = setInterval(() => { const s = Math.max(0, Math.round((expires - Date.now()) / 1000)); left.textContent = s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : "expired"; if (!document.contains(left)) clearInterval(tick); }, 1000);
-  const sendIt = confirmButton(`Send ${qt.total.text} to ${qt.to.handle}`, "money", "send", qt.quoteId, async (confirmation) => {
+  const tick = setInterval(() => { const s = Math.max(0, Math.round((expires - Date.now()) / 1000)); left.textContent = s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : T("wl.expired"); if (!document.contains(left)) clearInterval(tick); }, 1000);
+  const sendIt = confirmButton(T("wl.sendAmtTo", { amt: qt.total.text, who: qt.to.handle }), "money", "send", qt.quoteId, async (confirmation) => {
     const r = await api("/api/wallet/send", { quoteId: qt.quoteId, note: qt.note, reason: qt.reason, room: qt.room, confirmation, returnUrl: "/wallet#sent" });
     sessionStorage.removeItem("wallet:quote"); sessionStorage.removeItem("wallet:draft");
     sessionStorage.setItem("wallet:last", r.id);
-    if (r.next) { say("Your bank needs to approve this."); leaveFor(r.next, `activity/transfer/${r.id}`); return; }
-    say(`Sent ${qt.send.text} to ${qt.to.handle}.`);
+    if (r.next) { say(T("wl.bankMustApprove")); leaveFor(r.next, `activity/transfer/${r.id}`); return; }
+    say(T("wl.sentAmtTo", { amt: qt.send.text, who: qt.to.handle }));
     go(`activity/transfer/${r.id}?just=1`);
   });
-  return { title: "Check and send", body: frag(
+  return { title: T("wl.checkAndSend"), body: frag(
     h("p", { class: "big", text: qt.send.text }),
-    h("p", { class: "center lead", text: `to ${qt.to.handle}${qt.note ? " · " + qt.note : ""}` }),
+    h("p", { class: "center lead", text: T("wl.toWhoNote", { who: qt.to.handle }) + (qt.note ? " · " + qt.note : "") }),
     h("div", { class: "sum" },
-      h("div", {}, h("span", { text: "Fee" }), h("span", { text: qt.fee.text })),
-      h("div", { class: "tot" }, h("span", { text: "You pay" }), h("span", { text: qt.total.text })),
-      h("div", { class: "tot" }, h("span", { text: `${qt.to.handle} receives` }), h("span", { text: qt.receive.text })),
-      qt.rateText ? h("div", {}, h("span", { text: "Exchange rate" }), h("span", { text: qt.rateText })) : null,
-      qt.rateText ? h("div", {}, h("span", { text: "Rate held for" }), left) : null,
-      h("div", {}, h("span", { text: "Arrives" }), h("span", { text: qt.arrives })),
-      h("div", {}, h("span", { text: "If not accepted" }), h("span", { text: "Back to you in 24 hours" }))),
-    qt.overBalance ? note("bad", "That's more than your balance. Go back and pay from a card or bank.") : null,
-    qt.overLimit ? note("bad", "That's over your daily sending limit.") : null,
-    qt.firstTime ? note("warn", `You haven't paid ${qt.to.handle} before. Only send money to someone you've actually dealt with. Once they accept, it can't be reversed.`) : null,
-    qt.reasonRequired ? h("p", { class: "small", text: `Reason given: ${qt.reason}` }) : null,
-    h("div", { class: "push" }, qt.overBalance || qt.overLimit ? btn("Back", "ghost", () => history.back()) : sendIt)) };
+      h("div", {}, h("span", { text: T("wl.fee") }), h("span", { text: qt.fee.text })),
+      h("div", { class: "tot" }, h("span", { text: T("wl.youPay") }), h("span", { text: qt.total.text })),
+      h("div", { class: "tot" }, h("span", { text: T("wl.theyReceive", { who: qt.to.handle }) }), h("span", { text: qt.receive.text })),
+      qt.rateText ? h("div", {}, h("span", { text: T("wl.rate") }), h("span", { text: qt.rateText })) : null,
+      qt.rateText ? h("div", {}, h("span", { text: T("wl.rateHeld") }), left) : null,
+      h("div", {}, h("span", { text: T("wl.arrives") }), h("span", { text: qt.arrives })),
+      h("div", {}, h("span", { text: T("wl.ifNotAccepted") }), h("span", { text: T("wl.backIn24") }))),
+    qt.overBalance ? note("bad", T("wl.overBalance")) : null,
+    qt.overLimit ? note("bad", T("wl.overLimit")) : null,
+    qt.firstTime ? note("warn", T("wl.firstTime", { who: qt.to.handle })) : null,
+    qt.reasonRequired ? h("p", { class: "small", text: T("wl.reasonGiven", { why: qt.reason }) }) : null,
+    h("div", { class: "push" }, qt.overBalance || qt.overLimit ? btn(T("wl.back"), "ghost", () => history.back()) : sendIt)) };
 };
 
 /* REQUESTS */
@@ -635,22 +663,22 @@ SCREENS.request = async (_, q) => {
   const room = q.get("room") || "";
   if (!to) {
     const list = h("div", { class: "list" }, ...people.map((p) => row({ lead: face(p.handle), title: p.handle, sub: p.role, onclick: () => go(`request?to=${p.id}${room ? "&room=" + encodeURIComponent(room) : ""}`) })));
-    return { title: "Request from", body: frag(h("p", { class: "lead", text: "They'll see what you're asking for, and can pay it in one tap." }), list) };
+    return { title: T("wl.requestFrom"), body: frag(h("p", { class: "lead", text: T("wl.theySeeOneTap") }), list) };
   }
   const p = people.find((x) => x.id === to);
   const d = { amount: "", note: "" };
-  const noteIn = h("input", { id: "note", maxlength: "60", placeholder: "e.g. Script coverage" });
-  const post = btn("Send request", "", async () => {
+  const noteIn = h("input", { id: "note", maxlength: "60", placeholder: T("wl.egCoverage") });
+  const post = btn(T("wl.sendRequest"), "", async () => {
     post.disabled = true;
-    try { await api("/api/wallet/requests", { to, amount: d.amount, note: d.note, room }); say("Request sent."); await load(); replace("home"); }
+    try { await api("/api/wallet/requests", { to, amount: d.amount, note: d.note, room }); say(T("wl.requestSent")); await load(); replace("home"); }
     catch (err) { post.disabled = false; showError(err); }
   }, { disabled: true });
   const check = () => { post.disabled = !(Number(d.amount) > 0) || d.note.trim().length < 2; };
   noteIn.addEventListener("input", () => { d.note = noteIn.value; check(); });
-  return { title: `Request from ${p?.handle || "member"}`, body: frag(
-    amountEntry("", (v) => { d.amount = v; check(); }, `Amount to request, in ${W.wallet?.currency || ""}`),
-    h("div", { class: "field" }, h("label", { for: "note", text: "What's it for?" }), noteIn),
-    h("p", { class: "small", text: "A request can't take money on its own. It only shows what you're asking for." }),
+  return { title: T("wl.requestFromWho", { who: p?.handle || T("wl.member") }), body: frag(
+    amountEntry("", (v) => { d.amount = v; check(); }, T("wl.amountToRequest", { cur: W.wallet?.currency || "" })),
+    h("div", { class: "field" }, h("label", { for: "note", text: T("wl.whatFor") }), noteIn),
+    h("p", { class: "small", text: T("wl.requestCantTake") }),
     h("div", { class: "push" }, post)) };
 };
 
@@ -659,40 +687,40 @@ SCREENS.activity = async ([kind, id], q) => {
   if (kind && id) return detailScreen(kind, id, q);
   const { rows } = await api("/api/wallet/activity");
   let f = q.get("f") || "all";
-  const seg = h("div", { class: "seg", role: "group", "aria-label": "Show" }, ...[["all", "All"], ["in", "In"], ["out", "Out"]].map(([k, t]) =>
+  const seg = h("div", { class: "seg", role: "group", "aria-label": T("wl.show") }, ...[["all", T("wl.all")], ["in", T("wl.in")], ["out", T("wl.out")]].map(([k, t]) =>
     h("button", { class: "chip", type: "button", "aria-pressed": String(f === k), text: t, onclick: () => replace(`activity?f=${k}`) })));
   const shown = rows.filter((r) => f === "all" || r.direction === f);
-  return { title: "Activity", body: frag(seg, h("div", { class: "list" }, ...(shown.length ? shown.map(activityRow) : [row({ title: "Nothing here yet" })]))) };
+  return { title: T("wl.activity"), body: frag(seg, h("div", { class: "list" }, ...(shown.length ? shown.map(activityRow) : [row({ title: T("wl.nothingHereYet") })]))) };
 };
 
 async function detailScreen(kind, id, q) {
   const x = await api(`/api/wallet/activity/${kind}/${id}`);
-  const [status, tone] = STATUS[x.state] || [x.state, ""];
-  const tl = h("ol", { class: "timeline" }, ...(x.timeline || []).map((s) => h("li", { class: /declined|cancelled|returned|failed/.test(s.state) ? "bad" : "" }, h("b", { text: STEP[s.state] || s.state }), h("span", { text: new Date(s.at).toLocaleString() }))));
+  const [state, tone] = status(x.state);
+  const tl = h("ol", { class: "timeline" }, ...(x.timeline || []).map((s) => h("li", { class: /declined|cancelled|returned|failed/.test(s.state) ? "bad" : "" }, h("b", { text: step(s.state) }), h("span", { text: new Date(s.at).toLocaleString(lang() === "zh" ? "zh-CN" : undefined) }))));
   const refresh = () => paint();
   const body = frag(
-    q.get("just") === "1" ? note("good", x.direction === "out" ? `Sent. ${x.with.handle} has 24 hours to accept.` : "Done.") : null,
+    q.get("just") === "1" ? note("good", x.direction === "out" ? T("wl.sentHas24", { who: x.with.handle }) : T("wl.done")) : null,
     h("p", { class: "big", text: x.amount.text }),
-    h("p", { class: "center" }, h("span", { class: "pill " + tone, text: status })),
-    x.with ? h("p", { class: "center lead", text: (x.direction === "out" ? "to " : "from ") + x.with.handle + (x.note ? " · " + x.note : "") }) : null,
+    h("p", { class: "center" }, h("span", { class: "pill " + tone, text: state })),
+    x.with ? h("p", { class: "center lead", text: T(x.direction === "out" ? "wl.toWho" : "wl.fromWho", { who: x.with.handle }) + (x.note ? " · " + x.note : "") }) : null,
     tl.children.length ? tl : null,
     kind === "transfer" ? h("div", { class: "sum" },
-      x.direction === "out" ? h("div", {}, h("span", { text: "They receive" }), h("span", { text: x.received.text })) : h("div", {}, h("span", { text: "They sent" }), h("span", { text: x.sent.text })),
-      x.fee.text && x.direction === "out" ? h("div", {}, h("span", { text: "Fee" }), h("span", { text: x.fee.text })) : null,
-      x.rateText ? h("div", {}, h("span", { text: "Exchange rate" }), h("span", { text: x.rateText })) : null,
-      x.sourceLabel ? h("div", {}, h("span", { text: "Paid from" }), h("span", { text: x.sourceLabel })) : null,
-      x.payoutTo ? h("div", {}, h("span", { text: "Paid to" }), h("span", { text: x.payoutTo })) : null,
-      x.reason ? h("div", {}, h("span", { text: "Reason" }), h("span", { text: x.reason })) : null,
-      h("div", {}, h("span", { text: "Reference" }), h("span", { text: x.id }))) : null,
-    kind === "topup" ? h("div", { class: "sum" }, h("div", {}, h("span", { text: "From" }), h("span", { text: x.sourceLabel })), x.fee.text ? h("div", {}, h("span", { text: "Fee" }), h("span", { text: x.fee.text })) : null) : null,
-    kind === "withdrawal" ? h("div", { class: "sum" }, h("div", {}, h("span", { text: "To" }), h("span", { text: x.payoutTo }))) : null,
+      x.direction === "out" ? h("div", {}, h("span", { text: T("wl.theyReceived") }), h("span", { text: x.received.text })) : h("div", {}, h("span", { text: T("wl.theySent") }), h("span", { text: x.sent.text })),
+      x.fee.text && x.direction === "out" ? h("div", {}, h("span", { text: T("wl.fee") }), h("span", { text: x.fee.text })) : null,
+      x.rateText ? h("div", {}, h("span", { text: T("wl.rate") }), h("span", { text: x.rateText })) : null,
+      x.sourceLabel ? h("div", {}, h("span", { text: T("wl.paidFrom") }), h("span", { text: x.sourceLabel })) : null,
+      x.payoutTo ? h("div", {}, h("span", { text: T("wl.paidTo") }), h("span", { text: x.payoutTo })) : null,
+      x.reason ? h("div", {}, h("span", { text: T("wl.reason") }), h("span", { text: x.reason })) : null,
+      h("div", {}, h("span", { text: T("wl.reference") }), h("span", { text: x.id }))) : null,
+    kind === "topup" ? h("div", { class: "sum" }, h("div", {}, h("span", { text: T("wl.from") }), h("span", { text: x.sourceLabel })), x.fee.text ? h("div", {}, h("span", { text: T("wl.fee") }), h("span", { text: x.fee.text })) : null) : null,
+    kind === "withdrawal" ? h("div", { class: "sum" }, h("div", {}, h("span", { text: T("wl.to") }), h("span", { text: x.payoutTo }))) : null,
   );
   const acts = h("div", { class: "push" });
   const doIt = (label, cls, path, doneMsg) => btn(label, cls, async (e) => { e.target.disabled = true; try { await api(path, {}); say(doneMsg); await refresh(); } catch (err) { e.target.disabled = false; showError(err); } });
-  if (kind === "transfer" && x.canAccept) acts.append(doIt(`Accept ${x.amount.text}`, "money", `/api/wallet/transfers/${id}/accept`, "Accepted."), doIt("Decline and send it back", "ghost", `/api/wallet/transfers/${id}/decline`, "Declined. The money went back."));
-  if (kind === "transfer" && x.canCancel) acts.append(doIt("Cancel payment", "danger", `/api/wallet/transfers/${id}/cancel`, "Cancelled. The money is back with you."));
+  if (kind === "transfer" && x.canAccept) acts.append(doIt(T("wl.acceptAmt", { amt: x.amount.text }), "money", `/api/wallet/transfers/${id}/accept`, T("wl.accepted")), doIt(T("wl.declineSendBack"), "ghost", `/api/wallet/transfers/${id}/decline`, T("wl.declinedBack")));
+  if (kind === "transfer" && x.canCancel) acts.append(doIt(T("wl.cancelPayment"), "danger", `/api/wallet/transfers/${id}/cancel`, T("wl.cancelledBack")));
   if (kind === "request" && x.state === "open" && x.direction === "in") {
-    acts.append(btn(`Pay ${x.amount.text}`, "money", async (e) => {
+    acts.append(btn(T("wl.payAmt", { amt: x.amount.text }), "money", async (e) => {
       e.target.disabled = true;
       try {
         const w = W.wallet;
@@ -701,75 +729,75 @@ async function detailScreen(kind, id, q) {
         sessionStorage.setItem("wallet:quote", JSON.stringify({ ...qt, note: x.note, reason: qt.reasonRequired ? x.note : "", room: x.room }));
         go("review");
       } catch (err) { e.target.disabled = false; showError(err); }
-    }), doIt("Decline", "ghost", `/api/wallet/requests/${id}/decline`, "Request declined."));
+    }), doIt(T("wl.decline"), "ghost", `/api/wallet/requests/${id}/decline`, T("wl.requestDeclined")));
   }
-  if (kind === "request" && x.state === "open" && x.direction === "out") acts.append(doIt("Cancel request", "danger", `/api/wallet/requests/${id}/cancel`, "Request cancelled."));
-  if (kind === "transfer") acts.append(btn("Report a problem", "ghost", () => go(`report/${id}`)));
+  if (kind === "request" && x.state === "open" && x.direction === "out") acts.append(doIt(T("wl.cancelRequest"), "danger", `/api/wallet/requests/${id}/cancel`, T("wl.requestCancelled")));
+  if (kind === "transfer") acts.append(btn(T("wl.reportProblem"), "ghost", () => go(`report/${id}`)));
   body.append(acts);
   // Keep a payment that is still moving up to date while it's on screen.
   if (["charging", "paying_out", "processing"].includes(x.state)) setTimeout(() => { if (location.hash.includes(id)) paint(); }, 2500);
-  const title = kind === "transfer" ? (x.direction === "out" ? `To ${x.with.handle}` : `From ${x.with.handle}`) : kind === "request" ? "Request" : kind === "topup" ? "Added money" : "Withdrawal";
+  const title = kind === "transfer" ? T(x.direction === "out" ? "wl.toWho" : "wl.fromWho", { who: x.with.handle }) : kind === "request" ? T("wl.request1") : kind === "topup" ? T("wl.addedMoney") : T("wl.withdrawal");
   return { title, body };
 }
 
 SCREENS.report = async ([id]) => {
-  const reasons = ["I didn't make this payment", "I was asked to pay to unlock something", "I paid but didn't get what was agreed", "Something else"];
+  const reasons = [T("wl.rNotMine"), T("wl.rUnlock"), T("wl.rNotDelivered"), T("wl.rOther")];
   let pick = "";
-  const list = h("div", { class: "list", role: "radiogroup", "aria-label": "What happened" });
+  const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.whatHappened") });
   const text = h("input", { id: "more", maxlength: "600" });
-  const send = btn("Send report", "", async () => {
+  const send = btn(T("wl.sendReport"), "", async () => {
     send.disabled = true;
-    try { await api("/api/wallet/report", { ref: id, reason: pick, text: text.value }); say("Report sent."); replace(`reported`); }
+    try { await api("/api/wallet/report", { ref: id, reason: pick, text: text.value }); say(T("wl.reportSent")); replace(`reported`); }
     catch (err) { send.disabled = false; showError(err); }
   }, { disabled: true });
   const draw = () => { list.textContent = ""; for (const r of reasons) list.append(row({ radio: pick === r, title: r, onclick: () => { pick = r; send.disabled = false; draw(); list.querySelector('[aria-checked="true"]').focus(); } })); };
   draw();
-  return { title: "Report a problem", body: frag(h("p", { class: "lead", text: "What happened?" }), list,
-    h("div", { class: "field" }, h("label", { for: "more", text: "Anything else we should know (optional)" }), text),
-    note("warn", "If you think it's a scam, don't send any more money, and don't move the conversation to another app."), h("div", { class: "push" }, send)) };
+  return { title: T("wl.reportProblem"), body: frag(h("p", { class: "lead", text: T("wl.whatHappened") }), list,
+    h("div", { class: "field" }, h("label", { for: "more", text: T("wl.anythingElse") }), text),
+    note("warn", T("wl.scamWarn")), h("div", { class: "push" }, send)) };
 };
-SCREENS.reported = async () => ({ title: "Reported", noBack: true, body: frag(h("div", { class: "done" }, svg("check")), h("p", { class: "hero center", text: "Thanks, we've got it" }),
-  h("p", { class: "center lead", text: "Someone from the Exchange will reply in Messages within one working day." }), h("div", { class: "push" }, btn("Back to wallet", "", () => replace("home")))) });
+SCREENS.reported = async () => ({ title: T("wl.reported"), noBack: true, body: frag(h("div", { class: "done" }, svg("check")), h("p", { class: "hero center", text: T("wl.gotIt") }),
+  h("p", { class: "center lead", text: T("wl.replyOneDay") }), h("div", { class: "push" }, btn(T("wl.backToWallet"), "", () => replace("home")))) });
 
 /* ADD AND WITHDRAW */
 SCREENS.add = async () => {
   const w = W.wallet;
   const cards = w.sources.filter((s) => s.kind !== "wallet");
   const d = { amount: "", source: (cards.find((s) => s.default) || cards[0] || {}).id || "" };
-  if (!cards.length) return { title: "Add money", body: frag(note("info", "Connect a card or bank to add money from."), h("div", { class: "push" }, btn("Connect", "", () => go("sources")))) };
-  const list = h("div", { class: "list", role: "radiogroup", "aria-label": "From" });
-  const drawSrc = () => { list.textContent = ""; for (const s of cards) list.append(row({ radio: d.source === s.id, title: s.label, sub: s.fee ? `${s.fee / 100}% fee` : "No fee", onclick: () => { d.source = s.id; drawSrc(); } })); };
+  if (!cards.length) return { title: T("wl.addMoney"), body: frag(note("info", T("wl.connectToAdd")), h("div", { class: "push" }, btn(T("wl.connect"), "", () => go("sources")))) };
+  const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.from") });
+  const drawSrc = () => { list.textContent = ""; for (const s of cards) list.append(row({ radio: d.source === s.id, title: s.label, sub: s.fee ? T("wl.feePct", { p: s.fee / 100 }) : T("wl.noFee"), onclick: () => { d.source = s.id; drawSrc(); } })); };
   drawSrc();
   const holder = h("div");
   const drawConfirm = () => {
     holder.textContent = "";
-    if (!(Number(d.amount) > 0)) { holder.append(btn("Enter an amount", "", null, { disabled: true })); return; }
-    holder.append(confirmButton(`Add ${sym()}${d.amount}`, "money", "topup", `${d.source}:${d.amount}`, async (confirmation) => {
+    if (!(Number(d.amount) > 0)) { holder.append(btn(T("wl.enterAmount"), "", null, { disabled: true })); return; }
+    holder.append(confirmButton(T("wl.addAmt", { amt: sym() + d.amount }), "money", "topup", `${d.source}:${d.amount}`, async (confirmation) => {
       const r = await api("/api/wallet/topup", { amount: d.amount, source: d.source, confirmation, returnUrl: "/wallet#home" });
       if (r.next) { leaveFor(r.next, `activity/topup/${r.id}`); return; }
-      say("Money added."); go(`activity/topup/${r.id}`);
+      say(T("wl.moneyAdded")); go(`activity/topup/${r.id}`);
     }));
   };
-  return { title: "Add money", body: frag(amountEntry("", (v) => { d.amount = v; drawConfirm(); }, `Amount to add, in ${w.currency}`), h("p", { class: "k", text: "From" }), list, h("div", { class: "push" }, holder)) };
+  return { title: T("wl.addMoney"), body: frag(amountEntry("", (v) => { d.amount = v; drawConfirm(); }, T("wl.amountToAdd", { cur: w.currency })), h("p", { class: "k", text: T("wl.from") }), list, h("div", { class: "push" }, holder)) };
 };
 
 SCREENS.withdraw = async () => {
   const w = W.wallet;
-  if (!w.payoutLabel) return { title: "Withdraw", body: frag(note("info", "Add the bank account to withdraw to."), h("div", { class: "push" }, btn("Add bank account", "", () => go("payout")))) };
+  if (!w.payoutLabel) return { title: T("wl.withdraw"), body: frag(note("info", T("wl.addBankFirst")), h("div", { class: "push" }, btn(T("wl.addBankAccount"), "", () => go("payout")))) };
   const d = { amount: "" };
   const holder = h("div");
   const drawConfirm = () => {
     holder.textContent = "";
     const n = Number(d.amount);
-    if (!(n > 0)) { holder.append(btn("Enter an amount", "", null, { disabled: true })); return; }
-    if (n * 100 > w.balance.minor) { holder.append(note("bad", "That's more than your balance.")); return; }
-    holder.append(confirmButton(`Withdraw ${sym()}${d.amount} to ${w.payoutLabel}`, "", "withdraw", d.amount, async (confirmation) => {
+    if (!(n > 0)) { holder.append(btn(T("wl.enterAmount"), "", null, { disabled: true })); return; }
+    if (n * 100 > w.balance.minor) { holder.append(note("bad", T("wl.moreThanBalance"))); return; }
+    holder.append(confirmButton(T("wl.withdrawAmtTo", { amt: sym() + d.amount, label: w.payoutLabel }), "", "withdraw", d.amount, async (confirmation) => {
       const r = await api("/api/wallet/withdraw", { amount: d.amount, confirmation });
-      say("Withdrawal started."); go(`activity/withdrawal/${r.id}`);
+      say(T("wl.withdrawStarted")); go(`activity/withdrawal/${r.id}`);
     }));
   };
-  return { title: "Withdraw", body: frag(h("p", { class: "center lead", text: `Available ${w.balance.text}` }), amountEntry("", (v) => { d.amount = v; drawConfirm(); }, `Amount to withdraw, in ${w.currency}`),
-    h("div", { class: "list" }, row({ lead: badge("BANK"), title: `To ${w.payoutLabel}`, sub: "No fee · usually the next working day" })), h("div", { class: "push" }, holder)) };
+  return { title: T("wl.withdraw"), body: frag(h("p", { class: "center lead", text: T("wl.available", { amt: w.balance.text }) }), amountEntry("", (v) => { d.amount = v; drawConfirm(); }, T("wl.amountToWithdraw", { cur: w.currency })),
+    h("div", { class: "list" }, row({ lead: badge("BANK"), title: T("wl.toLabel", { label: w.payoutLabel }), sub: T("wl.noFeeNextDay") })), h("div", { class: "push" }, holder)) };
 };
 
 /* PAYMENT METHODS AND SETTINGS */
@@ -777,82 +805,82 @@ SCREENS.methods = async ([id]) => {
   const w = W.wallet;
   if (id) {
     const s = w.sources.find((x) => x.id === id);
-    if (!s) { replace("methods"); return { title: "Payment methods", body: frag() }; }
-    return { title: s.label, body: frag(h("div", { class: "sum" }, h("div", {}, h("span", { text: "Fee when you pay" }), h("span", { text: s.fee ? `${s.fee / 100}%` : "No fee" })), h("div", {}, h("span", { text: "Default" }), h("span", { text: s.default ? "Yes" : "No" }))),
+    if (!s) { replace("methods"); return { title: T("wl.methods"), body: frag() }; }
+    return { title: s.label, body: frag(h("div", { class: "sum" }, h("div", {}, h("span", { text: T("wl.feeWhenPay") }), h("span", { text: s.fee ? `${s.fee / 100}%` : T("wl.noFee") })), h("div", {}, h("span", { text: T("wl.default") }), h("span", { text: s.default ? T("wl.yes") : T("wl.no") }))),
       h("div", { class: "push" },
-        !s.default ? btn("Make default", "ghost", async () => { await api(`/api/wallet/sources/${id}/default`, {}); say("Default changed."); paint(); }) : null,
-        btn("Remove", "danger", () => sheet(`Remove ${s.label}?`, "You can connect it again later.", "Remove", async () => { await api(`/api/wallet/sources/${id}/remove`, {}); say("Removed."); replace("methods"); })))) };
+        !s.default ? btn(T("wl.makeDefault"), "ghost", async () => { await api(`/api/wallet/sources/${id}/default`, {}); say(T("wl.defaultChanged")); paint(); }) : null,
+        btn(T("wl.remove"), "danger", () => sheet(T("wl.removeWhat", { label: s.label }), T("wl.canConnectAgain"), T("wl.remove"), async () => { await api(`/api/wallet/sources/${id}/remove`, {}); say(T("wl.removed")); replace("methods"); })))) };
   }
-  return { title: "Payment methods", body: frag(
-    h("div", { class: "list" }, ...(w.sources.length ? w.sources.map((s) => row({ lead: badge(s.kind === "card" ? "CARD" : s.kind === "bank" ? "BANK" : s.kind === "paypal" ? "PP" : "WX"), title: s.label, sub: s.default ? "Default" : "", onclick: () => go(`methods/${s.id}`) })) : [row({ title: "Nothing connected" })])),
-    h("div", { class: "list" }, row({ lead: badge("+"), title: "Connect a card, bank or PayPal", sub: "On the provider's own page", onclick: () => go("sources") })),
-    h("p", { class: "small", text: "The Exchange keeps a reference to each account and its last four digits. Never a login, password or full card number." })) };
+  return { title: T("wl.methods"), body: frag(
+    h("div", { class: "list" }, ...(w.sources.length ? w.sources.map((s) => row({ lead: badge(s.kind === "card" ? "CARD" : s.kind === "bank" ? "BANK" : s.kind === "paypal" ? "PP" : "WX"), title: s.label, sub: s.default ? T("wl.default") : "", onclick: () => go(`methods/${s.id}`) })) : [row({ title: T("wl.nothingConn") })])),
+    h("div", { class: "list" }, row({ lead: badge("+"), title: T("wl.connectCardEtc"), sub: T("wl.onProviderPage"), onclick: () => go("sources") })),
+    h("p", { class: "small", text: T("wl.keepsRefOnly") })) };
 };
 
 SCREENS.settings = async () => {
   const w = W.wallet;
-  return { title: "Wallet settings", body: frag(
+  return { title: T("wl.settings"), body: frag(
     h("div", { class: "list" },
-      row({ title: "Face ID for payments", sub: w.passkeys ? `On · ${w.passkeys} device${w.passkeys > 1 ? "s" : ""}` : "Not set up", onclick: () => go("security") }),
-      row({ title: "Identity", sub: w.verified === "verified" ? "Confirmed" : "Not confirmed", onclick: () => go("verify") }),
-      row({ title: "Limits", sub: `Send up to ${w.limits.sendDay.text} a day · ${w.limits.sentToday.text} sent today`, onclick: () => go("limits") }),
-      row({ title: "Money you receive", sub: w.payout === "bank" ? (w.payoutLabel || "Your bank") : "Stays in your wallet", onclick: () => go("payout") }),
-      row({ title: "Payment methods", sub: `${w.sources.length} connected`, onclick: () => go("methods") })),
+      row({ title: T("wl.faceForPay"), sub: w.passkeys ? T(w.passkeys > 1 ? "wl.onNDevices2" : "wl.onNDevices", { n: w.passkeys }) : T("wl.notSetUp"), onclick: () => go("security") }),
+      row({ title: T("wl.identity"), sub: w.verified === "verified" ? T("wl.confirmed") : T("wl.notConfirmed"), onclick: () => go("verify") }),
+      row({ title: T("wl.limits"), sub: T("wl.limitsSub", { day: w.limits.sendDay.text, today: w.limits.sentToday.text }), onclick: () => go("limits") }),
+      row({ title: T("wl.moneyReceive"), sub: w.payout === "bank" ? (w.payoutLabel || T("wl.yourBank")) : T("wl.staysInWallet"), onclick: () => go("payout") }),
+      row({ title: T("wl.methods"), sub: T("wl.nConnected", { n: w.sources.length }), onclick: () => go("methods") })),
     h("div", { class: "list" },
-      row({ title: "Help and safety", sub: "Report a payment, spot a scam", onclick: () => go("help") }),
-      row({ title: "Close wallet", sub: "Withdraw your balance first", onclick: () => go("close") }))) };
+      row({ title: T("wl.help"), sub: T("wl.helpSub"), onclick: () => go("help") }),
+      row({ title: T("wl.closeWallet"), sub: T("wl.withdrawFirst"), onclick: () => go("close") }))) };
 };
 SCREENS.limits = async () => {
   const w = W.wallet;
-  return { title: "Limits", body: frag(h("div", { class: "sum" },
-    h("div", {}, h("span", { text: "Send per day" }), h("span", { text: w.verified === "verified" ? w.limits.sendDay.text : "After confirming identity" })),
-    h("div", {}, h("span", { text: "Sent in the last 24 hours" }), h("span", { text: w.limits.sentToday.text })),
-    h("div", {}, h("span", { text: "Receive per month" }), h("span", { text: w.limits.receiveMonth.text }))),
-    h("p", { class: "small", text: "Test limits. The real ones depend on the provider and its licence." })) };
+  return { title: T("wl.limits"), body: frag(h("div", { class: "sum" },
+    h("div", {}, h("span", { text: T("wl.sendPerDay") }), h("span", { text: w.verified === "verified" ? w.limits.sendDay.text : T("wl.afterConfirm") })),
+    h("div", {}, h("span", { text: T("wl.sentLast24") }), h("span", { text: w.limits.sentToday.text })),
+    h("div", {}, h("span", { text: T("wl.receivePerMonth") }), h("span", { text: w.limits.receiveMonth.text }))),
+    h("p", { class: "small", text: T("wl.testLimits") })) };
 };
-SCREENS.help = async () => ({ title: "Help and safety", body: frag(
-  note("warn", h("b", { text: "The Exchange will never ask you to send money " }), "to unlock an introduction, a seat, or a feature. Anyone who does is not us."),
+SCREENS.help = async () => ({ title: T("wl.help"), body: frag(
+  note("warn", h("b", { text: T("wl.neverAsk") }), T("wl.neverAskRest")),
   h("div", { class: "list" },
-    row({ title: "Report a payment", sub: "Open it from Activity, then Report a problem", onclick: () => go("activity") }),
-    row({ title: "Someone asked to move to another app to pay", sub: "That's the most common start of a scam" }),
-    row({ title: "Sent to the wrong person", sub: "If they haven't accepted, cancel it from the payment" }))) });
+    row({ title: T("wl.reportPayment"), sub: T("wl.reportPaymentSub"), onclick: () => go("activity") }),
+    row({ title: T("wl.moveApp"), sub: T("wl.moveAppSub") }),
+    row({ title: T("wl.wrongPerson"), sub: T("wl.wrongPersonSub") }))) });
 SCREENS.close = async () => {
   const w = W.wallet;
   const has = w.balance.minor > 0;
-  return { title: "Close wallet", body: frag(
-    h("p", { class: "lead", text: "Closing removes your payment methods and stops payments to and from you. Your payment history is kept, as the law requires." }),
-    has ? note("warn", `You still have ${w.balance.text}. Withdraw it first.`) : null,
-    h("div", { class: "push" }, has ? btn("Withdraw balance", "", () => go("withdraw")) : null,
-      confirmButton("Close wallet", "danger", "close", "wallet", async (confirmation) => { await api("/api/wallet/close", { confirmation }); await load(); say("Wallet closed."); replace("home"); }))) };
+  return { title: T("wl.closeWallet"), body: frag(
+    h("p", { class: "lead", text: T("wl.closeWhat") }),
+    has ? note("warn", T("wl.stillHave", { amt: w.balance.text })) : null,
+    h("div", { class: "push" }, has ? btn(T("wl.withdrawBalance"), "", () => go("withdraw")) : null,
+      confirmButton(T("wl.closeWallet"), "danger", "close", "wallet", async (confirmation) => { await api("/api/wallet/close", { confirmation }); await load(); say(T("wl.walletClosed")); replace("home"); }))) };
 };
 
 /* THE DEMO'S PEOPLE. Pick who to be; pay as one, accept as another. */
 SCREENS.who = async () => {
-  if (!W.demo) { replace("home"); return { title: "Wallet", body: frag() }; }
-  const list = h("div", { class: "list", role: "radiogroup", "aria-label": "Who you're trying it as" });
+  if (!W.demo) { replace("home"); return { title: T("wl.title"), body: frag() }; }
+  const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.tryItAs") });
   for (const p of W.demo.personas) {
     list.append(row({ radio: p.key === W.demo.as, lead: face(p.handle), title: p.handle, sub: p.role, onclick: () => {
       try { localStorage.setItem("board:device", p.key === "you" ? "" : p.key); } catch { /* private window */ }
       device = p.key === "you" ? "" : p.key;
       sessionStorage.removeItem("wallet:quote"); sessionStorage.removeItem("wallet:draft");
-      say(`You're now ${p.handle}.`);
+      say(T("wl.nowYouAre", { who: p.handle }));
       replace("home");
     } }));
   }
-  return { title: "Try it as", body: frag(
-    h("p", { class: "lead", text: "Four invented people, each with their own wallet. Send money as one, then switch and accept it as the other." }),
+  return { title: T("wl.tryItAs"), body: frag(
+    h("p", { class: "lead", text: T("wl.demoFour") }),
     list,
     h("div", { class: "list" },
-      row({ title: "You", sub: "Starts with no wallet — try setting one up" }),
-      row({ title: "Mikko in Helsinki", sub: "Pays in euros by card. His bank asks him to approve card payments." }),
-      row({ title: "Mia in Sydney", sub: "Has Australian dollars, and has asked Mikko for A$80" }),
-      row({ title: "Wei in Shanghai", sub: "Paid straight to his bank in yuan, after a check" })),
-    h("div", { class: "push" }, btn("Start the demo again", "ghost", async () => {
+      row({ title: T("wl.pYou"), sub: T("wl.pYouSub") }),
+      row({ title: T("wl.pMikko"), sub: T("wl.pMikkoSub") }),
+      row({ title: T("wl.pMia"), sub: T("wl.pMiaSub") }),
+      row({ title: T("wl.pWei"), sub: T("wl.pWeiSub") })),
+    h("div", { class: "push" }, btn(T("wl.demoReset"), "ghost", async () => {
       await api("/api/wallet/demo/reset", {});
       sessionStorage.clear();
       try { localStorage.setItem("board:device", ""); } catch { /* private window */ }
       device = "";
-      say("The demo has started again.");
+      say(T("wl.demoRestarted"));
       replace("home");
     }))) };
 };
@@ -862,11 +890,21 @@ function sheet(title, text, confirmText, run) {
   const ov = $("overlay"); ov.textContent = "";
   const close = () => { ov.textContent = ""; document.querySelector("main").removeAttribute("inert"); };
   const ok = btn(confirmText, "danger", async () => { ok.disabled = true; try { await run(); close(); } catch (err) { close(); showError(err); } });
-  ov.append(h("div", { class: "scrim", onclick: close }), h("div", { class: "sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": "sh" }, h("h2", { id: "sh", tabindex: "-1", text: title }), h("p", { class: "center lead", text }), ok, btn("Cancel", "ghost", close)));
+  ov.append(h("div", { class: "scrim", onclick: close }), h("div", { class: "sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": "sh" }, h("h2", { id: "sh", tabindex: "-1", text: title }), h("p", { class: "center lead", text }), ok, btn(T("wl.cancel"), "ghost", close)));
   document.querySelector("main").setAttribute("inert", "");
   $("sh").focus();
   document.addEventListener("keydown", function esc(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", esc); } });
 }
+
+$("back").setAttribute("aria-label", T("wl.back"));
+$("title").textContent = T("wl.title");
+/* A REPAINT, NOT A RELOAD. Every screen reads T at draw time, so the whole
+   page can change language in place — including a half-filled form, which a
+   reload would empty. */
+$("langslot").append(langButton(() => {
+  $("back").setAttribute("aria-label", T("wl.back"));
+  paint();
+}));
 
 paint();
 </script>
