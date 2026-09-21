@@ -42,6 +42,33 @@
   .ban{display:block;width:calc(100% + 1.6rem);aspect-ratio:2/1;object-fit:cover;
     margin:-.9rem -.8rem .9rem;background:var(--line)}
 
+  /* THE TOP OF THE PAGE HAD NOTHING ON IT.
+     A small dark name, a grey line and then the chips — which is a document
+     header, and the first screen is the one that decides whether she scrolls
+     at all. Most shops here have no banner photograph and never will, so the
+     header has to hold on its own: a coloured band that runs the full width,
+     her name large on it, and the three things she checks before buying from
+     a stranger she was introduced to in a chat.
+     Full bleed by cancelling main's padding, the same trick .ban uses — a
+     band with a margin down each side is a card, not a shopfront. */
+  .hero{margin:-.9rem -.8rem .9rem;padding:1.5rem 1.1rem 1.1rem;
+    background:linear-gradient(160deg,#20303F 0%,#33495E 58%,#3C5871 100%);
+    color:#fff;width:calc(100% + 1.6rem)}
+  .ban + .hero{margin-top:-.9rem}
+  .hero .top{display:flex;align-items:center;gap:.7rem}
+  .hero .top>div{min-width:0;flex:1 1 auto}
+  .hero img{width:2.9rem;height:2.9rem;border-radius:50%;object-fit:cover;
+    flex:0 0 auto;border:2px solid rgba(255,255,255,.75)}
+  .hero b{display:block;font-size:1.35rem;line-height:1.25;letter-spacing:.01em}
+  .hero .lang{flex:0 0 auto;border:1px solid rgba(255,255,255,.45);
+    background:transparent;color:#fff;font:inherit;font-size:.74rem;
+    border-radius:999px;padding:.25rem .65rem}
+  /* THREE, AND THEY WRAP RATHER THAN SCROLL. A row she has to swipe is a row
+     with something hidden in it, and the third one is the one about money. */
+  .trust{display:flex;flex-wrap:wrap;gap:.4rem;margin:.85rem 0 0}
+  .trust span{font-size:.72rem;line-height:1;padding:.4rem .6rem;border-radius:999px;
+    background:rgba(255,255,255,.14);color:rgba(255,255,255,.94)}
+
   .who{display:flex;align-items:center;gap:.7rem;padding:.2rem .3rem 1rem}
   .who img{width:3rem;height:3rem;border-radius:50%;object-fit:cover;flex:0 0 auto;
     background:var(--line)}
@@ -65,6 +92,17 @@
     border-radius:.9rem;overflow:hidden}
   .item .pic{width:100%;aspect-ratio:1/1;background:var(--line);object-fit:cover;
     display:block}
+  /* A SHELF WITH ONE THING ON IT left half a row empty, which reads as a
+     picture that failed to load rather than as a short shelf. It goes wide
+     instead, picture left and the rest beside it — the shape a shop uses for
+     the one thing it wants looked at, so a short shelf gains something
+     instead of showing a hole. */
+  .grid.one{grid-template-columns:1fr}
+  .grid.one .item{flex-direction:row;align-items:stretch}
+  .grid.one .item .pic{width:9.5rem;flex:0 0 auto;aspect-ratio:1/1}
+  .grid.one .item .mid{padding:.8rem .9rem}
+  .grid.one .item .nm{font-size:1rem;-webkit-line-clamp:2}
+  .grid.one .item .row{padding-top:.6rem}
   .item .mid{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;
     gap:.15rem;padding:.55rem .6rem .6rem}
   .item .nm{font-size:.85rem;line-height:1.4;display:-webkit-box;
@@ -608,39 +646,47 @@ function draw() {
     root.append(b);
   }
 
-  const who = el("div", "who");
+  /* THE BAND, AND WHAT IS ON IT.
+     The name used to sit as small dark text over the page's own grey with
+     one line under it, which is a document header — and the first screen is
+     the one that decides whether she scrolls at all. Most of these shops
+     have no banner photograph and never will, so this has to hold without
+     one.
+     The line under the name used to fall back through SHOP.say, which is
+     who.goal — the sentence a member writes about themselves on the board,
+     "I am a ___ looking for a ___". Under a shop selling infant formula it
+     read "Spanish, learning Chinese from zero. I can help with English
+     essays": the wrong person talking about the wrong thing, in the one
+     line a buyer reads before deciding whether this is a real shop. The
+     three chips answer what she is actually asking instead — is it real,
+     how do I pay, where does it come from. */
+  const hero = el("div", "hero");
+  const top = el("div", "top");
   if (SHOP.photo) {
     const img = el("img");
     img.src = SHOP.photo;
     img.alt = "";
+    /* NO EMPTY DISC WHERE A FACE ISN'T: a grey circle is not information,
+       it is a hole that reads as something still loading. */
     img.addEventListener("error", () => img.remove());
-    who.append(img);
+    top.append(img);
   }
-  /* NO GREY DISC WHERE A FACE ISN'T. An empty circle is not information —
-     it is a hole in the row that reads as something still loading. The
-     name simply starts at the left instead. */
   const box = el("div");
-  /* The shop's name when it has one, and the handle only when it does not.
-     Whoever is behind it is named once more at the foot of the page —
-     twice on one screen is one line she has to read for nothing. */
+  /* The shop's name when it has one, the handle only when it does not.
+     Whoever is behind it is named once more at the foot of the page, and
+     twice on one screen is a line she reads for nothing. */
   box.append(el("b", null, SHOP.name || SHOP.handle));
-  /* NOT THE BOARD GOAL. This line used to fall back through SHOP.say, which
-     is who.goal — the sentence a member writes about themselves on the
-     board, "I am a ___ looking for a ___". Under a shop selling formula it
-     read "Spanish, learning Chinese from zero. I can help with English
-     essays", which is the wrong person talking about the wrong thing in the
-     one line a buyer reads before deciding whether this is a real shop.
-     The shop line says what she needs: where it ships from and how she
-     pays. */
-  box.append(el("span", null, T("sh.direct")));
-  who.append(box);
-  /* The switch sits on the shopkeeper's row rather than in a corner: it is
-     the one line on the page that is already about who you are dealing
-     with. Flipping it redraws the list and the bar together, because the
-     total and the button are outside <main> and would otherwise be left
-     behind in the other language. */
-  who.append(langButton(() => { draw(); paint(); }));
-  root.append(who);
+  top.append(box);
+  /* The switch rides the band rather than sitting in a corner of the page:
+     it belongs with who you are dealing with. Flipping it redraws the list
+     and the bar together, because the total and the button live outside
+     <main> and would otherwise be left behind in the other language. */
+  top.append(langButton(() => { draw(); paint(); }));
+  hero.append(top);
+  const trust = el("div", "trust");
+  for (const k of ["sh.tReal", "sh.tPay", "sh.tPost"]) trust.append(el("span", null, T(k)));
+  hero.append(trust);
+  root.append(hero);
 
   if (!ITEMS.length) {
     root.append(el("p", "none", T("sh.empty")));
@@ -684,7 +730,9 @@ function draw() {
 }
 
 function grid(items) {
-  const wrap = el("div", "grid");
+  /* A shelf of one gets the wide row rather than half an empty grid — see
+     .grid.one. */
+  const wrap = el("div", items.length === 1 ? "grid one" : "grid");
   for (const it of items) {
     const card = el("div", "item");
     /* NO PICTURE IS A BOX, NOT A BROKEN ONE. An <img> with an empty src
