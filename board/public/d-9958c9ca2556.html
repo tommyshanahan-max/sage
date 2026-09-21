@@ -311,42 +311,50 @@
   .flow .sub{font-size:.72rem;color:var(--dim);line-height:1.45}
   .flow .ways{margin-top:auto;padding-top:.6rem}
 
+  /* THE CHAIN, DRAWN SMALL, FOUR ACROSS.
+     The one slide that shows rather than describes. Drawn rather than
+     screenshotted for the reason the other decks give: a screenshot of the
+     app dropped into a dark deck reads as a picture of something else, and
+     four of them read as a press release. Drawn, at this size, they read as
+     the thing itself — you take in the shape of the flow before you read a
+     word, which is the whole point of the slide. */
+  .strip{display:flex;gap:.5rem;margin:1.6rem 0 0;align-items:stretch}
+  .ph4{flex:1;min-width:0;background:var(--raise);border:1px solid var(--hair);
+    border-radius:.7rem;padding:.5rem .45rem;display:flex;flex-direction:column;
+    gap:.3rem;min-height:9.5rem}
+  .ph4 .t{font-size:.42rem;letter-spacing:.09em;text-transform:uppercase;
+    font-weight:700;color:var(--dim)}
+  .ph4 .big{font:400 1.05rem/1 var(--serif);color:var(--ink)}
+  .ph4 .sm{font-size:.44rem;color:var(--dim);line-height:1.35}
+  .ph4 .b{margin-top:auto;border-radius:99px;text-align:center;font-size:.42rem;
+    font-weight:700;padding:.28rem;background:var(--blue);color:#05070D}
+  .ph4 .b.g{background:var(--wx);color:#04120A}
+  .ph4 .q{aspect-ratio:1;border-radius:.25rem;background:#fff;padding:.18rem;
+    display:grid;grid-template:repeat(6,1fr)/repeat(6,1fr);gap:.04rem;margin-top:auto}
+  .ph4 .q i{background:#05070D;border-radius:.02rem}
+  .ph4 .q i.o{background:transparent}
+  .ph4 .tick{margin-top:auto;text-align:center;font:400 1.5rem/1 var(--serif);color:var(--wx)}
+  .steps4{display:flex;gap:.5rem;margin:.55rem 0 0}
+  .steps4 span{flex:1;min-width:0;font-size:.66rem;color:var(--dim);text-align:center;line-height:1.3}
+
   @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
 <div class="deck">
 
-  <!-- EIGHT SCREENS, ONE IDEA EACH, BUILT FROM THE BEST OF SIX GOES AT IT.
-       What each earlier version got right and what it cost:
+  <!-- NINE SCREENS, ONE THING ON EACH.
+       "Don't cram info on pages, show don't tell." So every slide here is a
+       headline and one object — a drawing, a column of numbers, or a single
+       figure. Where the old version had a table AND a box AND a footnote on
+       one slide, that is now two slides. More screens with less on each is
+       cheaper to read than fewer screens with everything on them, and this
+       deck is read on a phone by somebody half paying attention.
 
-       dealio.html (16)        The richest and the most honest — it carried
-                               the ¥35,000 ceiling, the "students are just
-                               the ones we can count" humility, and an ask.
-                               Far too long to read on a phone.
-       dealio-short.html (5)   The cleanest UI of the lot. One idea a screen,
-                               nothing to decode. No market, no ask worth
-                               acting on.
-       potential v1 (12)       "The wall is the moat" is the best argument
-                               anybody made today, but four slides on
-                               licensing and the product never shown.
-       potential v2 (7)        Flow right, arithmetic backwards: Australia at
-                               10% beat three countries at 2%, so the slide
-                               that should grow shrank.
-       potential v3/v4 (6)     Sole traders instead of students — a real
-                               market rather than a niche — but it invented
-                               the TAM dealio.html refused to, and dropped
-                               the problem entirely.
-       potential v5 (8)        Best flow so far. No ask, and it ended on a
-                               competitor table with nothing to do.
-
-       SO: v5's flow, v1's market framing, dealio.html's headline for the
-       problem slide and its ask at the end, dealio-short's discipline
-       throughout — one thing to look at per screen, and never a paragraph
-       where a column of numbers does.
-
-       TWO THINGS DELIBERATELY CUT. The cover's three facts, because the
-       solution slide says the same thing better and a cover should be four
-       seconds. And the separate global-market and projection slides, which
-       were the same ladder twice — merged, they are one screen. -->
+       THE SLIDE THAT EARNS THE DECK IS THE FOURTH. Every other page here
+       makes a claim; that one shows the thing doing it, four screens across,
+       left to right, no sentence needed. It went in because the chain now
+       runs end to end — ask, code, pay, green — and a deck that describes a
+       working product while refusing to show it is a deck that sounds like
+       it has nothing to show. -->
 
   <section class="cover">
     <div class="mark"><i>汇</i><span>Dealio</span></div>
@@ -361,7 +369,7 @@
       </div>
       <div class="sc">
         <span class="tag">Them</span>
-        <div class="qr" aria-hidden="true"><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i></div>
+        <div class="qr" aria-hidden="true"><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i></div>
         <div class="ways">
           <span class="wx"><i></i>WeChat Pay</span>
           <span class="ali"><i></i>Alipay</span>
@@ -370,26 +378,13 @@
     </div>
   </section>
 
-  <!-- THE HEADLINE IS dealio.html's, BECAUSE IT WAS BETTER THAN MINE.
-       "The way it works now" is a label. "Three hours. Then it bounces."
-       is the slide. And the last rung is what sells it: the name on an
-       outbound Chinese remittance must match the ID exactly, Pinyin,
-       surname first (docs/cross-border-payments.md, line 36). Get it wrong
-       and nothing tells you — the money leaves, it fails somewhere in the
-       correspondent chain, and the first anybody hears is days later. A
-       silent failure is worth more here than any fee.
-
-       IT IS NOT THE PROBLEM SLIDE THAT WAS CUT EARLIER. That one said
-       people in China pay by phone, which is explaining Jerry's own country
-       back to him. This one prices the pain, which he has lived and an
-       investor needs quantified. -->
   <section>
     <p class="eyebrow">The problem</p>
     <h2>Three hours. Then it bounces.</h2>
     <div class="step">
-      <div><span class="n">62%</span><span class="l">hold no credit card — about 700 million adults</span></div>
-      <div><span class="n">2 hours</span><span class="l">at a branch counter, in person, with ID</span></div>
-      <div><span class="n">1 letter</span><span class="l">wrong in the name and the payment fails</span></div>
+      <div><span class="n">62%</span><span class="l">hold no credit card</span></div>
+      <div><span class="n">2 hours</span><span class="l">at a branch counter, with ID</span></div>
+      <div><span class="n">1 letter</span><span class="l">wrong in the name and it fails</span></div>
     </div>
     <div class="worth">
       <b>A week later.</b>
@@ -397,12 +392,6 @@
     </div>
   </section>
 
-  <!-- AND IT ANSWERS THE SLIDE ABOVE LINE FOR LINE. No card, so their own
-       wallet. A morning at a counter, so a code they long-press. A name
-       that must be spelled exactly, so a bank account that is already
-       theirs. Side by side rather than stacked, because the claim is that
-       these are two ends of one payment — stacked, it reads as two separate
-       things somebody has to do. -->
   <section>
     <p class="eyebrow">The solution</p>
     <h2>They pay. You are paid.</h2>
@@ -410,7 +399,7 @@
       <div class="side">
         <div class="who">In China</div>
         <div class="big">They tap their wallet.</div>
-        <div class="sub">A code, long-pressed. No account, no app, no counter.</div>
+        <div class="sub">A code, long-pressed.</div>
         <div class="ways">
           <span class="wx"><i></i>WeChat Pay</span>
           <span class="ali"><i></i>Alipay</span>
@@ -420,77 +409,44 @@
       <div class="side">
         <div class="who">In Australia</div>
         <div class="big">You get AUD.</div>
-        <div class="sub">Into your own bank. Same day. No sign-up, no name to spell.</div>
+        <div class="sub">Your own bank. Same day.</div>
       </div>
     </div>
   </section>
 
-  <!-- THE SLICES ARE AN ESTIMATE AND THE SLIDE SAYS SO. Nobody publishes
-       what an Australian sole trader trading with China does for a living,
-       and dealio.html's note about an invented number being the one claim a
-       reader can disprove applies to a pie as much as to a TAM. It is here
-       because a reader wants to picture who these people are, and six named
-       trades do that where one number does not.
-
-       THE 70,000 IS THE RUNG TO ARGUE WITH, so it is labelled rather than
-       buried. It is the whole bet: that the corridor is thin because paying
-       across it is hard, not because the work is not there. -->
+  <!-- THE ONE THAT SHOWS. Four screens, left to right, and the reader has
+       the whole product before reading a word. -->
   <section>
-    <p class="eyebrow gold">The market — Australia</p>
-    <h2>19,000 today.</h2>
-    <div class="pie">
-      <div class="disc" aria-hidden="true" style="background:conic-gradient(#D9A94A 0% 26%, #5570E8 26% 44%, #2ECC5E 44% 60%, #E8705A 60% 75%, #4FC3D9 75% 89%, #B57FD9 89% 100%)"></div>
-      <div class="key">
-        <div><i style="background:#D9A94A"></i>Tutoring<b>4,900</b></div>
-        <div><i style="background:#5570E8"></i>Agents, migration<b>3,400</b></div>
-        <div><i style="background:#2ECC5E"></i>Design, media<b>3,000</b></div>
-        <div><i style="background:#E8705A"></i>Trade, sourcing<b>2,900</b></div>
-        <div><i style="background:#4FC3D9"></i>Consulting<b>2,700</b></div>
-        <div><i style="background:#B57FD9"></i>Translation<b>2,100</b></div>
+    <p class="eyebrow gold">Built</p>
+    <h2>It already works.</h2>
+    <div class="strip">
+      <div class="ph4">
+        <span class="t">You</span>
+        <span class="big">¥240</span>
+        <span class="sm">Second draft</span>
+        <div class="b">Ask</div>
+      </div>
+      <div class="ph4">
+        <span class="t">Them</span>
+        <span class="sm">长按二维码识别</span>
+        <div class="q" aria-hidden="true"><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i></div>
+      </div>
+      <div class="ph4">
+        <span class="t">微信支付</span>
+        <span class="big">¥240</span>
+        <span class="sm">付给 Mia</span>
+        <div class="b g">确认付款</div>
+      </div>
+      <div class="ph4">
+        <span class="t">已付</span>
+        <span class="big">¥240</span>
+        <span class="sm">Mia 那边已经知道了</span>
+        <div class="tick" aria-hidden="true">&check;</div>
       </div>
     </div>
-    <div class="worth">
-      <b>70,000</b>
-      <span>who would, if getting paid were easy</span>
+    <div class="steps4">
+      <span>Ask</span><span>Scan</span><span>Pay</span><span>Done</span>
     </div>
-    <p class="fine">Sole traders already doing business with China. The
-      70,000 and the split between trades are our estimate, not a count.</p>
-  </section>
-
-  <section>
-    <p class="eyebrow">The plan — Australia</p>
-    <h2>Ten percent of it.</h2>
-    <div class="step">
-      <div><span class="n">A$1.8bn</span><span class="l">moving, a year</span></div>
-      <div><span class="n">10%</span><span class="l">our share</span></div>
-      <div><span class="n">A$178m</span><span class="l">through us, a year</span></div>
-    </div>
-    <div class="worth">
-      <b>A$3.6m</b>
-      <span>a year, at our fee of 2%</span>
-    </div>
-  </section>
-
-  <!-- ONE SCREEN, NOT TWO. The global market and the projection were the
-       same ladder twice — a country table, then a second block that did
-       nothing the worth box does. Merged, and 1,593,000 is rounded to 1.6m
-       on purpose: a figure given to the thousand implies a source, and that
-       one is two estimates multiplied. -->
-  <section>
-    <p class="eyebrow gold">Then everywhere</p>
-    <h2>1.8m sole traders.</h2>
-    <table class="sums">
-      <tr><th>Country</th><th>Traders</th><th>Moving</th></tr>
-      <tr><td>Australia</td><td>89,000</td><td>A$1.8bn</td></tr>
-      <tr><td>United States</td><td>1.6m</td><td>A$32bn</td></tr>
-      <tr><td>Canada</td><td>112,000</td><td>A$2.2bn</td></tr>
-    </table>
-    <div class="worth">
-      <b>A$36m</b>
-      <span>a year at five percent of it, in three to four years</span>
-    </div>
-    <p class="fine">A$36bn moving. Same product, same code, nothing new to
-      build.</p>
   </section>
 
   <section>
@@ -506,23 +462,59 @@
     </div>
   </section>
 
-  <!-- THE DECK USED TO END ON THE COMPETITOR TABLE, which left a reader who
-       agreed with all of it holding nothing to do. Jerry holds licences —
-       he will skip the market pages and ask what we want from him, and the
-       deck has to have already said. Five rows, run the eye down, and the
-       last one is an invitation rather than a number. -->
+  <!-- THE MARKET, ACROSS THREE SLIDES INSTEAD OF TWO CROWDED ONES. The pie
+       had a legend, a box and a footnote on it; the count, the estimate and
+       the money are three different thoughts and get three screens. -->
+  <section>
+    <p class="eyebrow gold">The market — Australia</p>
+    <h2>19,000 today.</h2>
+    <div class="pie">
+      <div class="disc" aria-hidden="true" style="background:conic-gradient(#D9A94A 0% 26%, #5570E8 26% 44%, #2ECC5E 44% 60%, #E8705A 60% 75%, #4FC3D9 75% 89%, #B57FD9 89% 100%)"></div>
+      <div class="key">
+        <div><i style="background:#D9A94A"></i>Tutoring<b>4,900</b></div>
+        <div><i style="background:#5570E8"></i>Agents<b>3,400</b></div>
+        <div><i style="background:#2ECC5E"></i>Design<b>3,000</b></div>
+        <div><i style="background:#E8705A"></i>Trade<b>2,900</b></div>
+        <div><i style="background:#4FC3D9"></i>Consulting<b>2,700</b></div>
+        <div><i style="background:#B57FD9"></i>Translation<b>2,100</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">And if it were easy</p>
+    <h2>70,000 more.</h2>
+    <div class="worth">
+      <b>A$1.8bn</b>
+      <span>moving between them and China, a year</span>
+    </div>
+    <p class="fine">Our estimate, not a count.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">The arithmetic</p>
+    <h2>Two percent of it.</h2>
+    <div class="step">
+      <div><span class="n">A$1.8bn</span><span class="l">Australia</span></div>
+      <div><span class="n">A$36bn</span><span class="l">add the US and Canada</span></div>
+      <div><span class="n">5%</span><span class="l">our share of it</span></div>
+    </div>
+    <div class="worth">
+      <b>A$36m</b>
+      <span>a year, in three to four years</span>
+    </div>
+  </section>
+
   <section>
     <p class="eyebrow gold">The ask</p>
     <h2>One licence away.</h2>
     <div class="terms">
-      <div><span class="w">Stage</span><span class="v">Pre-revenue</span></div>
-      <div><span class="w">Built</span><span class="v">Already, both directions</span></div>
+      <div><span class="w">Built</span><span class="v">Already</span></div>
       <div><span class="w">Waiting on</span><span class="v">A payments licence</span></div>
-      <div><span class="w">Buys</span><span class="v">Licensing and first users</span></div>
-      <div><span class="w">Proves</span><span class="v">Money moves</span></div>
+      <div><span class="w">Stage</span><span class="v">Pre-revenue</span></div>
       <div><span class="w">Terms</span><span class="v">Let us talk</span></div>
     </div>
-    <a class="go" href="https://thexchange.app/about">How the money moves →</a>
+    <a class="go" href="https://paydealio.com/demo">Try it &rarr;</a>
   </section>
 
 </div>
