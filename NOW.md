@@ -48,6 +48,21 @@ Money **out** to other people is not built and refuses on purpose: local CNY
 payouts are documented only for goods trade with declarant and order data. See
 note 2 at the top of `board/lib/wallet/providers/airwallex.js`.
 
+## The app
+
+**A build is with Apple, 21 Sep.** The first one ever for The Exchange —
+archived, exported and uploaded from Tom's Mac with `make app-ship`, which
+turned the seven Xcode steps into one line. Delivery accepted with no errors.
+
+Not submitted yet: a build is not a submission. What is left is `make listing`
+for the words, and then the age rating, two App Information sections and the
+screenshots, which are a web form — `app/store/FILL-IN.md` lists them in the
+order the site asks. `make app-state` says where Apple thinks it is.
+
+The Laonei app in the same Apple account is the other product, in another
+repo, and is the one that had shipped before this. Do not read its emails as
+this one's.
+
 ## The shop
 
 Built and live: catalogue with shelves, cart, checkout, orders, 我的订单,
