@@ -50,18 +50,24 @@ note 2 at the top of `board/lib/wallet/providers/airwallex.js`.
 
 ## The app
 
-**A build is with Apple, 21 Sep.** The first one ever for The Exchange —
-archived, exported and uploaded from Tom's Mac with `make app-ship`, which
-turned the seven Xcode steps into one line. Delivery accepted with no errors.
+**Submitted and in Apple's queue, 21 Sep.** `make app-state` reads
+`1.0 · WAITING_FOR_REVIEW · build 1 VALID` — submitted before today, nobody
+has looked at it yet. Nothing to do but wait.
 
-Not submitted yet: a build is not a submission. What is left is `make listing`
-for the words, and then the age rating, two App Information sections and the
-screenshots, which are a web form — `app/store/FILL-IN.md` lists them in the
-order the site asks. `make app-state` says where Apple thinks it is.
+A second build went up on 21 Sep from `make app-ship`, which turned the seven
+Xcode steps into one line. It is not the build under review — build 1 is — and
+uploading it changed nothing in flight. It is there if a rejection needs a fix.
 
-The Laonei app in the same Apple account is the other product, in another
-repo, and is the one that had shipped before this. Do not read its emails as
-this one's.
+**A WARNING ABOUT HOW THIS WAS GOT WRONG.** A session concluded the app had
+never been submitted because there were no Apple emails about it in Tom's
+Gmail. There are none, and it is submitted anyway: the Apple mail in that
+inbox is mostly Laonei's, the other product, in another repo. Absence of
+email proves nothing about App Store Connect. `make app-state` asks Apple and
+is the only answer worth having.
+
+Web-form only and invisible to the API: App Privacy (the nutrition labels) and
+EU trader status. `app/store/FILL-IN.md` lists every field in the order the
+site asks.
 
 ## The shop
 
