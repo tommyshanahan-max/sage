@@ -14,8 +14,8 @@ through, and add the date to anything that changes.
 
 | | |
 |---|---|
-| **Airwallex — the account** | Application **pending review**, 21 Sep. Business verification complete, nothing marked action-required, named contact **Ian Cheah** (Growth Executive, Melbourne). Nothing owed by us. |
-| **Airwallex — Connected Accounts** | Raised in their chat, routed to Ian, then **parked on purpose**: it is the reps-with-storefronts product, and describing it means describing the goods business. Revisit once the base account is live and has volume. |
+| **Airwallex — the account** | **REJECTED, 21 Sep.** "Unable to support your account at this time. After careful review, this decision is final." No reason given. Business verification had passed; this is the activation decision, and it came four hours after Ian was told the timing was tight. Stripe closed the same door on 20 Sep. |
+| **Airwallex — Connected Accounts** | Moot now. Raised in their chat, routed to Ian, then **parked on purpose**: it is the reps-with-storefronts product, and describing it means describing the goods business. Revisit once the base account is live and has volume. |
 | **Airwallex — the goods business** | Not disclosed yet. Deliberate. To be raised with Ian **before** anything from the shop runs through the account. |
 | **Stripe** | Closed the account, September 2026. A hard no. Not a route back. |
 
