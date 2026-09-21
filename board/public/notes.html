@@ -706,12 +706,25 @@
   /* The same shape as .menu above, with bigger rows. .menu is a rare thing
      reached from a ⋯; this one is reached from the bar somebody's thumb is
      already on, and its rows have to be findable without aiming. */
-  /* ASK FOR MONEY, above Write down what we agreed and solid where that one
-     is dashed. A request has a number on the end of it; terms are the thing
-     you write for a deal big enough to need them. */
+  /* ASK FOR MONEY, above Write down what we agreed — and quiet, where it used
+     to be solid accent.
+   *
+   * WHY IT STOPPED SHOUTING. The thread opens the moment two people choose
+   * each other: a match on Browse, a follow back in a room, an introduction
+   * answered. So two people saying hello for the first time got a full-width
+   * blue "Ask them to pay" under the conversation, which reads as the board
+   * suggesting it — three lines under a screen that says money comes only
+   * after terms are agreed in writing. It is also the shape of every
+   * advance-fee scam, and the first one on a board like this poisons the rest.
+   *
+   * Taking it away is worse: it pushes the same request into WeChat, where
+   * nothing is recorded and nobody can settle a row. So it stays exactly where
+   * it was, findable, one tap — it simply no longer asks to be pressed. The
+   * outline is solid where the terms button's is dashed, so the two are still
+   * told apart at a glance and money is still the firmer of the two. */
   .askbtn{position:sticky;bottom:10.6rem;z-index:2;display:block;width:100%;
-    margin:0 0 .35rem;padding:.75rem 1rem;border:0;border-radius:99px;
-    background:var(--accent);color:var(--accent-ink);font:inherit;
+    margin:0 0 .35rem;padding:.75rem 1rem;border:1px solid var(--line);
+    border-radius:99px;background:var(--paper);color:var(--ink);font:inherit;
     font-size:.95rem;font-weight:600;cursor:pointer}
   .askbtn:disabled{opacity:.6}
   /* THE FORM, IN A SHEET OVER THE CONVERSATION. Three fields and one of them
