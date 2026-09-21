@@ -275,3 +275,39 @@ from the picture to the thing:
   had a folder per performer for years, and retyping nine of them is the real
   competition. Grouped locally by folder name, read locally, and only the text
   of one person's own files goes anywhere. Everything lands held.
+
+## into-china.html, into-china-payout.html
+
+**Get paid INTO China** — Dealio pointed the other way. Dealio is a client in
+China paying somebody abroad; this is a client abroad paying somebody in China,
+and it is the direction every provider makes hard.
+
+Same widget as paydealio's front page on purpose — headline, one card carrying
+the fact and the button, three tappable rows, the action — because that page
+works and a second product that looks like a different company is a second
+company to trust. Green rather than red is the whole of the difference, so the
+two are told apart at a glance and nothing else has to be.
+
+**The card shows both currencies.** She asks ¥2,400, he pays US$340. Neither of
+them should have to work out the other's money, and the number each of them
+cares about is the one they are being asked to act on.
+
+**THE PROMISE THIS PAGE RESTS ON IS NOT CONFIRMED.** "No account, no app" is
+true on Dealio because the payer opens the wallet already on their phone. The
+other way round it is true only if a provider will push to a Chinese bank card.
+If instead the recipient has to register with Payoneer or PingPong and withdraw
+from a balance — which is how Payoneer usually works — then this page is wrong
+on its main line and the flow gains a step before anybody sees a cent. That
+question went to PingPong on 21 Sep and is question 3 of four. Nothing here is
+built until it comes back.
+
+`into-china-payout.html` is the screen behind "开始收款": name, bank, card
+number, and after that only ever the last four. Both states are in the one
+file. The fields are not invented — they are the shape `cleanPayout` already
+stores for the shop's reps, sealed with `lib/sealed.js`, so the hand-paid path
+and this one keep one set of data rather than two.
+
+The row that matters most is `有营业执照？用公司账户到账更快`. A freelancer who
+registers as a 个体户 stops being the hard case and becomes an ordinary
+business payment — the difference between the wall and no wall — and that row
+is where they find out.
