@@ -911,6 +911,30 @@ shop-banner: ## The picture, from a file: make shop-banner WHO="Tom" < dad.png
 	  /seed/shop-banner.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)"
 
+airwallex-keys: ## Keys in and proved, in one line: make airwallex-keys CLIENT_ID="…" API_KEY="…" [WHO="Tom"] [LIVE=1]
+	@# THE STEP THAT WAS NEVER A COMMAND. Every other instruction here ended
+	@# with "put the client id and the API key in .env first", which means
+	@# editing a file on a server over SSH to place two long strings on two
+	@# exact lines. So they come in as arguments, and the command that writes
+	@# them is the same command that proves they work.
+	@#
+	@# Developer → API keys in the Airwallex dashboard has both. The sandbox
+	@# and the live account have different pairs; LIVE=1 says which you hold,
+	@# and without it the box stays pointed at the sandbox.
+	@#
+	@# WHO is optional and is the handle on the board. Give it and the run
+	@# ends with that person's requests drawing a real code and a one-yuan
+	@# request to open on a phone — keys to a scannable code in one line.
+	@#
+	@# ONLY FROM THE COMMAND LINE, the same as dealio-webhook below: this box
+	@# has an API_KEY in its environment, and make would otherwise hand that
+	@# to a command that named no key at all.
+	@bash scripts/airwallex-keys.sh \
+	  $(if $(filter command line,$(origin CLIENT_ID)),--client-id "$(CLIENT_ID)",) \
+	  $(if $(filter command line,$(origin API_KEY)),--api-key "$(API_KEY)",) \
+	  $(if $(filter command line,$(origin WHO)),--who "$(WHO)",) \
+	  $(if $(filter command line,$(origin LIVE)),--live,)
+
 payout-try: ## Can this Airwallex account pay anybody: make payout-try
 	@# THE QUESTION THE SUBCONTRACTOR HALF RESTS ON, asked before a day is
 	@# spent building on it. Transfers and beneficiaries are activated

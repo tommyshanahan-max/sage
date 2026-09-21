@@ -16,11 +16,16 @@
 
 ---
 
-Once sandbox keys exist, put them in `.env` on the box as `TOMSCODING_BOARD_WALLET_AIRWALLEX_CLIENT_ID` and `TOMSCODING_BOARD_WALLET_AIRWALLEX_API_KEY`, then run:
+Once keys exist — sandbox now, live when the account is approved — one line
+from the Mac puts them in `.env` and proves them in the same breath. They come
+in as arguments because the alternative was editing `.env` over SSH:
 
 ```
-ssh root@45.77.8.166 'cd ~/tc && make deploy && docker compose exec board node lib/wallet/providers/airwallex.check.mjs'
+ssh root@45.77.8.166 'cd ~/tc && make airwallex-keys CLIENT_ID="…" API_KEY="…"'
 ```
+
+Add `LIVE=1` when the pair is the production one, and `WHO="Tom"` to finish by
+turning Dealio's codes on for that person and printing a one-yuan request.
 
 ---
 

@@ -29,7 +29,7 @@ Off unless `BOARD_WALLET` is set.
 | `BOARD_WALLET=test` | The stand-in provider. Pages say "In development · test money". |
 | `BOARD_WALLET_TEST_CONFIRM=1` | With `test` only: allow a test confirmation where a browser can't make passkeys. Ignored with a real provider. |
 | `BOARD_WALLET=airwallex` | Airwallex. Needs the three keys below. Not ready — see "What's not done". |
-| `BOARD_WALLET_AIRWALLEX_CLIENT_ID`, `_API_KEY` | From Airwallex. Secrets: `.env` on the box only. |
+| `BOARD_WALLET_AIRWALLEX_CLIENT_ID`, `_API_KEY` | From Airwallex. Secrets: `.env` on the box only, and `make airwallex-keys` puts them there without a text editor. |
 | `BOARD_WALLET_AIRWALLEX_WEBHOOK_SECRET` | The notification URL's secret. Webhook URL: `/api/wallet/webhooks/provider`. |
 | `BOARD_WALLET_AIRWALLEX_SANDBOX` | `0` for production. Anything else is the sandbox. |
 | `BOARD_WALLET_PUBLIC_ORIGIN` | e.g. `https://the-board-domain` — where the provider sends people back. |
