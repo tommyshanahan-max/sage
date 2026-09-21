@@ -166,12 +166,22 @@
   .buyers{font-size:.88rem;line-height:1.9;color:var(--ink-2);margin:0}
   .buyers b{font-weight:500;white-space:nowrap}
   .buyers i{font-style:normal;color:var(--dim);padding:0 .3rem;opacity:.5}
-  .edge{border-top:1px dashed #C9D2E0;margin:1.9rem 0;display:flex;
-    justify-content:space-around;padding:0 1.5rem}
-  .edge span{transform:translateY(-50%);background:var(--paper);padding:0 .65rem;
-    font-size:.8rem;white-space:nowrap;display:inline-flex;align-items:center;gap:.3rem}
-  .edge .pay{color:var(--money);font-weight:650}
-  .edge .work{color:var(--dim)}
+  /* A DASHED HAIRLINE IS NOT A BORDER, IT IS DECORATION. The first version
+     drew one and Tom found it only because he went looking — which means
+     every reader who does not go looking sees one continuous list of
+     twenty-two words and no border at all.
+     So the two sides are two surfaces. Different ground, different edge, a
+     real channel between them with the traffic in it. You cannot read this
+     slide without noticing there are two places, which was the entire point
+     of drawing it. */
+  .terrbox{border-radius:1rem;padding:1.15rem 1.15rem 1.3rem}
+  .terrbox.cn{background:#E4E9F2;border:1px solid #D2DAE7}
+  .terrbox.au{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+  .terrbox .terr{margin-bottom:.7rem}
+  .gap{display:flex;justify-content:center;gap:2.6rem;padding:1.05rem 0;
+    font-size:.86rem;white-space:nowrap}
+  .gap .pay{color:var(--money);font-weight:700}
+  .gap .work{color:var(--dim);font-weight:500}
 
   /* EVERY SCREEN, EIGHT AT ONCE.
      "It already works" is a claim; four screens are a flow; eight are a
@@ -241,28 +251,6 @@
        part is the payment. Read in that order the product is a relief; read
        the other way round it is a solution looking for somebody. -->
   <section>
-    <p class="eyebrow">The demand</p>
-    <h2>China is already buying this.</h2>
-
-    <p class="terr">中国 <em>· the buyer</em></p>
-    <p class="buyers"><b>Parents</b> <i>·</i> <b>Families</b> <i>·</i> <b>Students</b> <i>·</i> <b>Studios</b> <i>·</i> <b>Property buyers</b> <i>·</i> <b>Small firms</b></p>
-
-    <div class="edge" aria-hidden="true">
-      <span class="pay">¥ &darr;</span>
-      <span class="work">the work &uarr;</span>
-    </div>
-
-    <p class="terr">Australia <em>· the sole trader</em></p>
-    <p class="fields"><b>Tutoring</b> <i>·</i> <b>Exam coaching</b> <i>·</i> <b>University placement</b> <i>·</i> <b>Migration advice</b> <i>·</i> <b>Translation</b> <i>·</i> <b>Academic editing</b> <i>·</i> <b>Graphic design</b> <i>·</i> <b>Photography</b> <i>·</i> <b>Video and post</b> <i>·</i> <b>Architecture</b> <i>·</i> <b>Interior design</b> <i>·</i> <b>Buyers' advocacy</b> <i>·</i> <b>Wine and food</b> <i>·</i> <b>Sports coaching</b> <i>·</i> <b>Music tuition</b> <i>·</i> <b>Export advice</b></p>
-
-    <div class="but">
-      <p class="sub" style="margin:0">There is no easy way to pay for it.</p>
-      <p class="note" style="margin-top:.7rem">Australian sole traders, Chinese
-        clients, work delivered and invoiced — and then a morning at a bank.</p>
-    </div>
-  </section>
-
-  <section>
     <div class="mark"><i>汇</i><span>Dealio</span></div>
     <h1>Get paid<br>from China.</h1>
     <p class="sub">Same day.</p>
@@ -273,6 +261,32 @@
       <p class="for">Second draft</p>
       <div class="go">去付 ¥2,400</div>
       <div class="ways"><span><i></i>微信支付</span><span class="a"><i></i>支付宝</span></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">The demand</p>
+    <h2>China is already buying this.</h2>
+
+    <div class="terrbox cn">
+      <p class="terr">中国 <em>· the buyer</em></p>
+      <p class="buyers"><b>Parents</b> <i>·</i> <b>Families</b> <i>·</i> <b>Students</b> <i>·</i> <b>Studios</b> <i>·</i> <b>Property buyers</b> <i>·</i> <b>Small firms</b></p>
+    </div>
+
+    <div class="gap" aria-hidden="true">
+      <span class="pay">¥ &darr;</span>
+      <span class="work">&uarr; the work</span>
+    </div>
+
+    <div class="terrbox au">
+      <p class="terr">Australia <em>· the sole trader</em></p>
+      <p class="fields"><b>Tutoring</b> <i>·</i> <b>Exam coaching</b> <i>·</i> <b>University placement</b> <i>·</i> <b>Migration advice</b> <i>·</i> <b>Translation</b> <i>·</i> <b>Academic editing</b> <i>·</i> <b>Graphic design</b> <i>·</i> <b>Photography</b> <i>·</i> <b>Video and post</b> <i>·</i> <b>Architecture</b> <i>·</i> <b>Interior design</b> <i>·</i> <b>Buyers' advocacy</b> <i>·</i> <b>Wine and food</b> <i>·</i> <b>Sports coaching</b> <i>·</i> <b>Music tuition</b> <i>·</i> <b>Export advice</b></p>
+    </div>
+
+    <div class="but">
+      <p class="sub" style="margin:0">There is no easy way to pay for it.</p>
+      <p class="note" style="margin-top:.7rem">Australian sole traders, Chinese
+        clients, work delivered and invoiced — and then a morning at a bank.</p>
     </div>
   </section>
 
@@ -374,8 +388,8 @@
   </section>
 
   <section>
-    <p class="eyebrow">Who else is here</p>
-    <h2>They all serve companies.</h2>
+    <p class="eyebrow">The gap</p>
+    <h2>Nobody serves one person.</h2>
     <div class="who">
       <div><span class="n">PingPong</span><span class="v">Seller account</span></div>
       <div><span class="n">LianLian</span><span class="v">Seller account</span></div>
@@ -384,6 +398,9 @@
       <div><span class="n">Flywire</span><span class="v">A university</span></div>
       <div><span class="n">Dealio</span><span class="v">One person</span></div>
     </div>
+    <p class="note" style="margin-top:1.6rem">Every one of them needs an
+      entity, a trade contract or a university standing behind the payment.
+      This needs a name and a phone.</p>
   </section>
 
   <section>
