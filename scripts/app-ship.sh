@@ -79,8 +79,25 @@ if [ -n "${OPEN:-}" ]; then
   exit 0
 fi
 
-WORK="ios/App"
-[ -f "$WORK/App.xcworkspace/contents.xcworkspacedata" ] || die "No workspace at $WORK/App.xcworkspace — the project did not generate. Run again with OPEN=1 and look at what Xcode says."
+# WORKSPACE OR PROJECT, AND CAPACITOR 8 HAS NO WORKSPACE.
+#
+# This looked for App.xcworkspace and died saying the project had not
+# generated — on a machine where it had generated perfectly. A workspace is
+# what CocoaPods needs, and Capacitor 8 does not use CocoaPods: its own log
+# says so, one line above the failure ("All Capacitor plugins have a
+# Package.swift file"). Swift Package Manager builds the .xcodeproj directly.
+#
+# Both are still possible — an older shell, or somebody who added a pod — so
+# it takes whichever is there rather than believing either.
+if [ -f "ios/App/App.xcworkspace/contents.xcworkspacedata" ]; then
+  TARGET=(-workspace "ios/App/App.xcworkspace")
+  say "Building the workspace."
+elif [ -d "ios/App/App.xcodeproj" ]; then
+  TARGET=(-project "ios/App/App.xcodeproj")
+  say "Building the project — Capacitor 8, so Swift Package Manager and no workspace."
+else
+  die "Nothing to build in ios/App. Run again with OPEN=1 and look at what Xcode says."
+fi
 
 # THE BUILD NUMBER HAS TO CLIMB. Apple refuses a build whose number it has
 # seen before, with an error that arrives ten minutes into an upload. Minutes
@@ -95,7 +112,7 @@ OUT="$PWD/build/export"
 rm -rf "$ARCH" "$OUT"
 
 say "Archiving. This is the slow part — a few minutes, and it is silent."
-xcodebuild -workspace "$WORK/App.xcworkspace" -scheme App \
+xcodebuild "${TARGET[@]}" -scheme App \
   -configuration Release -destination "generic/platform=iOS" \
   -archivePath "$ARCH" \
   -allowProvisioningUpdates \
