@@ -60,6 +60,20 @@ case "$CLIENT_ID$API_KEY" in
   *$'\n'*|*$'\r'*) echo "  That key has a line break in it. Copy it again without the newline."; exit 1 ;;
 esac
 
+# THE PLACEHOLDER THAT GOT PASTED. A command handed over with "…" in it comes
+# back run exactly as written more often than not, and a placeholder written
+# into .env is worse than no key at all: the file looks configured and the
+# failure arrives later, somewhere else. Refuse it here, before anything is
+# written, and say what to go and get.
+case "$CLIENT_ID$API_KEY" in
+  *…*|*"your-"*|*"…"*|*"CLIENT_ID"*|*"API_KEY"*|*"xxx"*|*"XXX"*)
+    echo ""
+    echo "  That is the placeholder, not a key."
+    echo "  Airwallex dashboard → Developer → API keys has the real pair."
+    echo ""
+    exit 1 ;;
+esac
+
 put() {
   grep -v "^${1}=" .env > .env.next || true
   [ -n "${2:-}" ] && printf '%s=%s\n' "$1" "$2" >> .env.next
