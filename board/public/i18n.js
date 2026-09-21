@@ -5054,6 +5054,14 @@ export const STRINGS = {
      ¥40,000,000 came back as "That did not open — try again", which sent
      somebody to press the same dead button twice more. The wallet said no;
      say so, and name which one. */
+  /* WHEN EVERY WAY IS REFUSED. One line above the list, because the payer
+     otherwise finds out by pressing each button in turn and getting the same
+     grey sentence — which is what happened: WeChat refused, the Alipay button
+     beside it looked perfectly healthy, and the only way to learn otherwise
+     was to press it. Names the person who asked, because they are the only
+     one who can do anything about it. */
+  "rq.noneWork":       ["No way to pay is working right now. Tell {who} — it is their side, not yours.",
+                        "目前没有可用的付款方式。告诉 {who} 一声，是他们那边的问题，不是你的。"],
   "rq.wayNo":          ["{way} would not take this one.", "{way} 没能接这一笔。"],
   "pay.cancel":        ["Not now", "先不付"],
   "pay.go":            ["Pay", "去付款"],

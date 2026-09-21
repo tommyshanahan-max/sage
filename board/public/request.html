@@ -221,6 +221,16 @@
     color:var(--ink);font:inherit;padding:.8rem .9rem;border-radius:.8rem}
   .way b{display:block;font-size:1rem;margin:0 0 .15rem}
   .way span{display:block;font-size:.85rem;color:var(--ink-2)}
+  /* A REFUSED WAY HAS TO LOOK REFUSED. It used to change one grey sub-line
+     to another grey sub-line of the same size in the same place, with the
+     button still live and the untried one beside it looking perfectly well —
+     so pressing PAY and getting a refusal was indistinguishable from
+     pressing PAY and nothing happening. That is what was reported, and on a
+     phone held by somebody who cannot read 0.85rem grey it is not a
+     near miss. */
+  .way.no{opacity:.55;border-style:dashed}
+  .way.no span{color:var(--t5)}
+  .waysbad{margin:0 0 .7rem;color:var(--t5);font-size:.9rem;font-weight:650}
   .racts{display:grid;gap:.5rem;margin:.9rem 0 0}
   .racts button{border:1px solid var(--line);background:var(--paper);
     color:var(--ink-2);font:inherit;padding:.75rem 1rem;border-radius:99px}
@@ -532,7 +542,13 @@ function payHow(q) {
         if (r.ok && j?.demo) { back.remove(); payFrame({ q, how: key, demo: true }); return; }
         why = j?.error || "";
       } catch { /* below */ }
-      b.disabled = false;
+      /* NOT RE-ENABLED FOR A REFUSAL THAT WILL NOT CHANGE. Pressing WeChat
+         again gets the same 502 from the same dead provider; leaving it live
+         invites exactly that. A network blip is the one case worth another
+         go, and it is the only one that re-enables. */
+      const settled = ["qr", "currency", "already", "payee", "notready"].includes(why);
+      b.disabled = settled;
+      b.classList.toggle("no", settled);
       /* Each refusal says which. "That did not open" for all three methods,
          on a page showing a perfectly good amount, tells nobody anything. */
       b.querySelector("span").textContent = T(
@@ -547,6 +563,14 @@ function payHow(q) {
            press the other buttons to find out. */
         : why === "qr" ? T("rq.wayNo", { way: name })
         : why === "notready" ? "rq.halfSet" : "memo.payFailed");
+      /* WHEN THE LAST ONE GOES. Told once, at the top, rather than left for
+         the payer to discover by pressing every button — and it names the
+         asker, who is the only person who can fix it. */
+      if (settled && ![...ways.querySelectorAll(".way")].some((w) => !w.disabled)) {
+        if (!ways.previousElementSibling?.classList?.contains("waysbad")) {
+          ways.before(el("p", "waysbad", T("rq.noneWork", { who: q.from })));
+        }
+      }
     });
     ways.append(b);
   };
