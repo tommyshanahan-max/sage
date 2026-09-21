@@ -274,6 +274,27 @@
   .facts b{display:block;color:var(--ink);font-weight:650;font-size:.86rem;
     margin-bottom:.2rem}
 
+  /* THE ONE ROW THAT DOES NOT FIT. The .vs table paints its last column
+     gold because that column is normally the answer in our favour. On the
+     trades slide one row is a No, and a gold No reads as a boast. */
+  .vs td.no{color:#5C6375}
+
+  /* THE PIE, DRAWN AS A CONIC GRADIENT. No chart library: deck-build.mjs
+     refuses anything loaded from off the box, and a six-slice pie is one
+     CSS declaration. The legend carries the label and the count beside each
+     colour, so nothing on this slide is identified by colour alone — which
+     matters on a page somebody may read on a phone in daylight, and on the
+     printed version somebody's office makes in greyscale. */
+  .pie{display:flex;gap:1.3rem;align-items:center;margin:1.5rem 0 0}
+  .pie .disc{width:9.2rem;height:9.2rem;flex:none;border-radius:50%;
+    border:1px solid var(--hair)}
+  .pie .key{flex:1;min-width:0;display:flex;flex-direction:column;gap:.55rem}
+  .pie .key div{display:flex;align-items:center;gap:.5rem;font-size:.79rem;
+    color:var(--dim);line-height:1.25}
+  .pie .key i{width:.62rem;height:.62rem;border-radius:.16rem;flex:none}
+  .pie .key b{color:var(--ink);font-weight:650;margin-left:auto;
+    font-variant-numeric:tabular-nums;font-size:.82rem}
+
   @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
 <div class="deck">
@@ -335,19 +356,41 @@
     </div>
   </section>
 
+  <!-- THE INDUSTRY SPLIT, AND WHAT IT IS.
+       The count is built the same way the rest of the deck's Australian
+       numbers are: 1.5m sole traders, 5% selling overseas, a quarter of
+       those into China. THE SLICES ARE AN ESTIMATE AND THE SLIDE SAYS SO —
+       nobody publishes what an Australian sole trader trading with China
+       does for a living, and dealio.html's note about an invented number
+       being the one claim a reader can disprove applies to a pie as much as
+       to a TAM. It is on the page because a reader wants to picture who
+       these people are, and six named trades do that where one number does
+       not.
+
+       THE 70,000 IS THE ONE TO ARGUE WITH and it is labelled, not buried.
+       It is the whole bet: that the corridor is thin because paying across
+       it is hard, and not because the work is not there. -->
   <section>
     <p class="eyebrow gold">The market — Australia</p>
-    <h2>89,000 sole traders.</h2>
-    <div class="pair">
-      <div><div class="n">19k</div><div class="l">doing business with China today</div></div>
-      <div><div class="n">70k</div><div class="l">who would, with a better payment path</div></div>
+    <h2>19,000 today.</h2>
+    <div class="pie">
+      <div class="disc" aria-hidden="true" style="background:conic-gradient(#D9A94A 0% 26%, #5570E8 26% 44%, #2ECC5E 44% 60%, #E8705A 60% 75%, #4FC3D9 75% 89%, #B57FD9 89% 100%)"></div>
+      <div class="key">
+        <div><i style="background:#D9A94A"></i>Tutoring<b>4,900</b></div>
+        <div><i style="background:#5570E8"></i>Agents, migration<b>3,400</b></div>
+        <div><i style="background:#2ECC5E"></i>Design, media<b>3,000</b></div>
+        <div><i style="background:#E8705A"></i>Trade, sourcing<b>2,900</b></div>
+        <div><i style="background:#4FC3D9"></i>Consulting<b>2,700</b></div>
+        <div><i style="background:#B57FD9"></i>Translation<b>2,100</b></div>
+      </div>
     </div>
     <div class="worth">
-      <b>A$1.8bn</b>
-      <span>moving between them and China, a year — A$20,000 each</span>
+      <b>70,000</b>
+      <span>who would, if getting paid were easy</span>
     </div>
-    <p class="fine">1.5m sole traders in Australia. 5% sell overseas, a
-      quarter of those into China. The 70,000 is an estimate, not a count.</p>
+    <p class="fine">Sole traders in Australia already doing business with
+      China. The 70,000 and the split between trades are both our estimate,
+      not a count.</p>
   </section>
 
   <section>
