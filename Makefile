@@ -896,6 +896,31 @@ shop-brand: ## Dress a storefront: make shop-brand WHO="Tom" NAME="澳洲爸爸�
 	  /seed/shop-brand.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" $(if $(NAME),--name "$(NAME)",) --banner "$(BANNER)"
 
+dns-point: ## Point a domain at this box: make dns-point DOMAIN=aozhoubaba.com [KEY="pk1_…" SECRET="sk1_…"]
+	@# THIS BLOCKED TWO THINGS IN ONE DAY. A domain bought at Porkbun arrives
+	@# with an ALIAS and a wildcard CNAME aimed at their parking page, and
+	@# until both are gone the name answers from a holding server whatever
+	@# else is deployed. Finding that out by hand means reading a table of
+	@# seven records on a screen that is hard to read, working out which two
+	@# are the problem, deleting them in the right order — the apex ALIAS has
+	@# to go before an A record can take its place — and adding two more.
+	@#
+	@# It keeps the MX rows and the SPF line. Taking those out stops mail
+	@# arriving and nobody ever connects the two.
+	@#
+	@# The keys go in once and are remembered. Porkbun → Account → API
+	@# Access: switch it on FOR THE DOMAIN, which is a per-domain toggle and
+	@# the usual reason a correct key is still refused, then make a pair.
+	@#
+	@# ONLY FROM THE COMMAND LINE, like airwallex-keys: this box may have KEY
+	@# in its environment and make would otherwise hand it to a command that
+	@# named no key at all.
+	@bash scripts/dns-point.sh \
+	  $(if $(DOMAIN),--domain "$(DOMAIN)",) \
+	  $(if $(IP),--ip "$(IP)",) \
+	  $(if $(filter command line,$(origin KEY)),--key "$(KEY)",) \
+	  $(if $(filter command line,$(origin SECRET)),--secret "$(SECRET)",)
+
 shop-open: ## Open the shop on its own name: make shop-open WHO="Tom" NAME="澳洲爸爸汤姆" [WECHAT="…"] [DOMAIN=aozhoubaba.com]
 	@# EVERY PIECE OF THIS EXISTED AND NONE OF IT WAS ONE COMMAND. Opening the
 	@# shop front was: edit two lines in .env over SSH, bring the stack up,
