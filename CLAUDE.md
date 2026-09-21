@@ -1,5 +1,12 @@
 # Working on this box
 
+**`NOW.md` first, every session.** It says what is already true and who is
+being waited on — which account is in review, what has already been watched
+working, what is broken today. It exists because a session proposed rehearsing
+a payment flow that had run end to end on a phone the day before. Reading it
+costs a screen; not reading it costs an hour of somebody's morning. Update it
+when something in it stops being true.
+
 Two products live in one repo and on one server (`~/tc`, Vultr Tokyo,
 `45.77.8.166`):
 
