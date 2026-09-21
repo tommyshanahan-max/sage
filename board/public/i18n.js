@@ -2092,8 +2092,17 @@ export const STRINGS = {
                         "进来不要钱。价钱由做这笔生意的两个人自己定，多数在一百到几千块之间。付款时交换收 2%，除此之外不收任何费用：不收挂牌费，不收会员费。"],
 
   "abt.how":            ["How the money moves", "钱怎么走"],
-  "abt.how.p":          ["The person paying opens a link and pays by WeChat Pay, Alipay or card. Stripe takes the payment and sends it straight to the bank account of the person being paid. The 2% is taken by Stripe on the way past and paid to us.",
-                        "付钱的人打开一个链接，用微信支付、支付宝或者银行卡付。Stripe 收款，直接打到收款人的银行账户。那 2% 由 Stripe 在中途扣下，给我们。"],
+  /* WHOSE 2% IT IS. This read "the 2% is taken by Stripe on the way past and
+     paid to us", which describes the money moving the wrong way: 2% is the
+     Exchange's own cut, the line above says so, and the provider's charges are
+     a separate thing on top that this sentence never mentioned. A payments
+     reviewer reads this page to find out exactly who takes what, so a sentence
+     that hands our fee to the provider is the worst line on it to get wrong.
+     It also no longer names the company — see the note over dl.rejected. The
+     fact a reviewer needs is that nothing passes through an account we
+     control, and that is abt.never below, unchanged. */
+  "abt.how.p":          ["The person paying opens a link and pays by WeChat Pay, Alipay or card. The payment provider takes the payment and sends it straight to the bank account of the person being paid. Our 2% is deducted on the way past and settled to us by the provider, along with its own charges for taking the payment and converting it.",
+                        "付钱的人打开一个链接，用微信支付、支付宝或者银行卡付。支付机构收款，直接打到收款人的银行账户。我们的 2% 在中途扣下，由支付机构结给我们；支付机构自己的收款和换汇费用另算。"],
   /* THE SENTENCE THE WHOLE PAGE IS FOR. Said plainly because it is the thing a
      payments reviewer is looking for and the thing a member is trusting. */
   "abt.never":          ["The Exchange never holds, routes or forwards anybody's money. It does not have a balance. Payments go from the payer to the payee's own account, and nothing passes through an account we control.",
