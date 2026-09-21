@@ -477,6 +477,17 @@ function draw() {
      ONLY ON THEIR OWN REQUEST, AND ONLY WHILE IT IS UNPAID. The payer is
      already looking at this page and a code pointing at it would be furniture;
      a paid row has nothing left to scan for. */
+  /* ONLY THE ASKER, AND ONLY ON THE HOST THAT KNOWS THEM.
+     `yours` is hashDevice(x-board-device) === q.by, and board:device lives in
+     localStorage, which is per origin — so this is true on thexchange.app,
+     where the asker is signed in, and never on paydealio.com, where the link
+     they send goes. That is correct rather than a bug, and it took a wrong
+     fix to see why: ungating it puts a QR on a payment page, and a payer who
+     sees a QR on a payment page scans it, because that is what the product
+     has trained them to do. It would take them back to the page they are
+     already on.
+     So the asker reaches the code the way they reach everything else here —
+     from the terminal. `make ask` prints its address. */
   if (STATE?.yours && q.state !== "paid") {
     const box = el("div", "qrbox");
     const img = el("img");

@@ -53,6 +53,11 @@ const PUBLIC = DEALIO
   : (process.env.BOARD_PUBLIC_URL || "https://thexchange.app").replace(/\/+$/, "");
 console.log("");
 console.log("  " + PUBLIC + "/pay/" + j.id);
+/* THE SAME REQUEST AS A THING TO HOLD UP. The link goes in a chat; the code
+   goes on a screen, a printout or an invoice. Printed here because the only
+   other way to reach it was to know the .png suffix existed, and a feature
+   nobody can find is a feature nobody has. */
+console.log("  " + PUBLIC + "/pay/" + j.id + ".png   (a code — open it and show it)");
 console.log("");
 /* SAID HERE RATHER THAN FOUND OUT ON THE PHONE. A request from somebody with
    no payout set up opens fine and cannot be paid, and the page says so — but
