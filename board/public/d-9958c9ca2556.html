@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#080C0A">
-<title>Dealio · the potential</title>
+<title>Dealio</title>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Exchange">
 <meta property="og:title" content="交换 · The Exchange">
@@ -27,486 +27,250 @@
 </head>
 <body style="margin:0">
 <style>
-  /* THE DECK FAMILY'S BONES, IN DEALIO'S COLOURS.
-     The Exchange decks are jade and gold on near-black — a private room. This
-     is a payments product and borrows the app's own palette instead, so
-     somebody who has seen the screens recognises the page: the blue off the
-     pay button, the warm red off the sign-in, and the two wallet marks in the
-     colours everybody already knows them by. Same structure, different
-     product; a deck that looked like the board would be selling the board. */
+  /* LIGHT, AND FOR ONE REASON: THE PRODUCT IS LIGHT.
+     The last version of this deck was near-black, and the four screens that
+     are the whole argument sat on it as small grey rectangles — the most
+     important object in the deck was the least visible thing in it. A phone
+     screen drawn in its own colours on a page its own colour reads as the
+     thing; the same drawing on black reads as a diagram of the thing.
+
+     THE PALETTE IS THE PRODUCT'S OWN, lifted from board/public/wallet.html
+     rather than chosen: the same paper, the same ink, the same blue off the
+     pay button, and the two wallet marks in the colours everybody already
+     knows them by. A deck in colours the app does not use is a deck about
+     some other company.
+
+     AND THE RHYTHM CHANGES. Nine identical slides — eyebrow, headline,
+     block — is monotony wearing restraint's clothes; by the fourth you know
+     what the fifth looks like. So: a phone, then three numbers, then one
+     phone the height of the page, then four across, then a list, then a
+     figure on its own. No two consecutive screens are the same shape. */
   :root{
-    --ground:#080A0F;
-    --raise:#10141D;
-    --ink:#ECEDF2;
-    --dim:#8F95A6;
-    --hair:#1F2533;
-    --blue:#5570E8;
-    --gold:#D9A94A;
-    --wx:#2ECC5E;
-    --ali:#1678FF;
+    --paper:#F4F6FA; --card:#FFFFFF; --ink:#12161F; --ink-2:#414B5C;
+    --dim:#8993A4; --line:#E3E7EE; --hair:#EDF0F5;
+    --blue:#3F68D8; --wx:#07C160; --ali:#1677FF; --money:#B0621A;
     --serif:"Instrument Serif",Georgia,"Songti SC",serif;
-    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",Helvetica,Arial,sans-serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB",Helvetica,Arial,sans-serif;
+    --shadow:0 1px 2px rgba(18,22,31,.04), 0 12px 32px -8px rgba(18,22,31,.14);
   }
   *{box-sizing:border-box}
-  body{
-    background:var(--ground);color:var(--ink);
-    font:16px/1.6 var(--sans);
-    -webkit-font-smoothing:antialiased;
-    scroll-snap-type:y proximity;
-  }
-  .deck{max-width:30rem;margin:0 auto;padding:0 1.4rem}
-  section{
-    scroll-snap-align:start;
-    min-height:86svh;
-    display:flex;flex-direction:column;justify-content:center;
-    padding:3rem 0;
-    border-bottom:1px solid var(--hair);
-  }
-  section:last-of-type{border-bottom:0}
-  .eyebrow{
-    font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
-    font-weight:700;color:var(--blue);margin:0 0 1.1rem;
-  }
-  .eyebrow.gold{color:var(--gold)}
-  h1{font:400 clamp(2.9rem,12vw,4rem)/1.01 var(--serif);margin:0 0 1rem;text-wrap:balance}
-  h2{font:400 clamp(2.6rem,10.4vw,3.5rem)/1.05 var(--serif);margin:0 0 1rem;text-wrap:balance}
-  p{margin:0 0 1rem;color:var(--dim);font-size:1.02rem}
-  p.lead{color:var(--ink);font-size:1.08rem}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:17px/1.55 var(--sans);-webkit-font-smoothing:antialiased;
+    scroll-snap-type:y proximity}
+  .deck{max-width:32rem;margin:0 auto;padding:0 1.5rem}
+  section{scroll-snap-align:start;min-height:100svh;display:flex;
+    flex-direction:column;justify-content:center;padding:3.5rem 0}
+  .eyebrow{font-size:.7rem;letter-spacing:.17em;text-transform:uppercase;
+    font-weight:700;color:var(--blue);margin:0 0 1rem}
+  .eyebrow.q{color:var(--money)}
+  h1{font:400 clamp(3rem,13vw,4.4rem)/.98 var(--serif);margin:0;letter-spacing:-.01em}
+  h2{font:400 clamp(2.4rem,10vw,3.4rem)/1.04 var(--serif);margin:0 0 1.2rem;
+    text-wrap:balance;letter-spacing:-.01em}
+  p{margin:0 0 1rem;color:var(--ink-2)}
   p:last-child{margin-bottom:0}
-  em{font-style:italic;font-family:var(--serif);font-size:1.15em;color:var(--blue)}
-  b{color:var(--ink);font-weight:650}
+  .sub{font:400 clamp(1.6rem,7vw,2.2rem)/1.1 var(--serif);color:var(--money);margin:.4rem 0 0}
+  .note{font-size:.88rem;color:var(--dim);line-height:1.5}
 
-  .mark{display:flex;align-items:center;gap:.7rem;margin:0 0 2rem}
-  .mark i{width:2.6rem;height:2.6rem;border-radius:.7rem;background:var(--raise);
-    border:1px solid var(--hair);display:grid;place-items:center;font-style:normal;
-    font:400 1.3rem/1 var(--serif);color:var(--blue)}
-  .mark span{font:400 1.25rem/1 var(--serif);color:var(--ink)}
+  /* THE MARK. Small, once, on the cover — a logo repeated on nine slides is
+     nine reminders that somebody is being sold to. */
+  .mark{display:flex;align-items:center;gap:.6rem;margin:0 0 2rem}
+  .mark i{width:2.4rem;height:2.4rem;border-radius:.7rem;background:var(--card);
+    border:1px solid var(--line);display:grid;place-items:center;font-style:normal;
+    font:400 1.25rem/1 var(--serif);color:var(--blue);box-shadow:var(--shadow)}
+  .mark span{font:400 1.3rem/1 var(--serif)}
 
-  /* THE NUMBERED SHAPE THE OTHER DECKS USE, for anything a reader wants to
-     take at their own pace rather than in a paragraph. */
-  ol.how{list-style:none;margin:0 0 1.5rem;padding:0;counter-reset:how}
-  ol.how li{position:relative;padding:0 0 1.1rem 2.5rem;counter-increment:how}
-  ol.how li:last-child{padding-bottom:.4rem}
-  ol.how li::before{content:counter(how);position:absolute;left:0;top:-.1rem;
-    font:400 1.5rem/1 var(--serif);color:var(--gold)}
-  ol.how b{display:block;color:var(--ink);font-weight:650;font-size:1.02rem;margin-bottom:.15rem}
-  ol.how span{display:block;color:var(--dim);font-size:.95rem;line-height:1.5}
+  /* A PHONE, DRAWN AT A SIZE SOMEBODY CAN ACTUALLY READ. */
+  .phone{background:var(--card);border:1px solid var(--line);border-radius:1.5rem;
+    box-shadow:var(--shadow);padding:1.1rem 1rem;display:flex;flex-direction:column;gap:.5rem}
+  .phone .bar{display:flex;justify-content:space-between;align-items:center;
+    font-size:.6rem;letter-spacing:.11em;text-transform:uppercase;font-weight:700;color:var(--dim)}
+  .phone .chip{background:var(--hair);border-radius:99px;padding:.2rem .5rem;
+    letter-spacing:.09em;color:var(--ink-2)}
+  .phone .chip.ok{background:#E3F4EA;color:#12794E}
+  .phone .lab{font-size:.78rem;color:var(--dim);margin:.5rem 0 0}
+  .phone .amt{font:400 2.6rem/1 var(--serif);letter-spacing:-.01em}
+  .phone .for{font-size:.86rem;color:var(--dim)}
+  .phone .go{margin-top:.7rem;border-radius:99px;text-align:center;font-weight:700;
+    font-size:.95rem;padding:.85rem;background:var(--blue);color:#fff}
+  .phone .go.wx{background:var(--wx);color:#04140B}
+  .phone .ways{display:flex;gap:.7rem;justify-content:center;font-size:.72rem;color:var(--dim)}
+  .phone .ways span{display:flex;align-items:center;gap:.3rem}
+  .phone .ways i{width:.42rem;height:.42rem;border-radius:50%;background:var(--wx)}
+  .phone .ways .a i{background:var(--ali)}
+  .phone .done{text-align:center;font:400 2.2rem/1 var(--serif);color:var(--wx);padding:.5rem 0}
+  /* The code, as a grid. Nothing is ever scanned off a deck, so bits are
+     enough here — the real one is a PNG, for the reason in lib/qr.js. */
+  .code{aspect-ratio:1;background:#fff;border:1px solid var(--line);border-radius:.5rem;
+    padding:.5rem;display:grid;grid-template:repeat(21,1fr)/repeat(21,1fr);gap:.03rem;margin:.3rem 0}
+  .code i{background:#12161F;border-radius:.04rem}
+  .code i.o{background:transparent}
+  .zh{text-align:center;font-size:.95rem;font-weight:650}
+  .zh small{display:block;font-weight:400;font-size:.76rem;color:var(--dim);margin-top:.2rem}
 
-  /* WHO IS ALREADY HERE, AND WHO THEY PAY. The argument on that slide is a
-     column of names with the same answer beside each one, which is a thing to
-     run an eye down rather than a paragraph to read. */
-  .field{margin:1.2rem 0 0}
-  .field div{display:flex;justify-content:space-between;align-items:baseline;
-    gap:1rem;padding:.75rem 0;border-bottom:1px solid var(--hair)}
-  .field div:last-child{border-bottom:0}
-  .field .w{color:var(--ink);font-size:.98rem;font-weight:650}
-  .field .v{color:var(--dim);font-size:.88rem;text-align:right;white-space:nowrap}
-  .field div:last-child{padding-top:1rem}
-  .field div:last-child .w{font-size:1.15rem}
-  .field .v.out{color:var(--gold);font-size:1.15rem;font-weight:650}
+  /* FOUR ACROSS. Small enough to sit side by side, big enough that the
+     amount and the button are legible — which is the whole test. */
+  .four{display:flex;gap:.55rem;margin:1.8rem 0 0;align-items:stretch}
+  .mini{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);
+    border-radius:.85rem;box-shadow:var(--shadow);padding:.6rem .5rem;
+    display:flex;flex-direction:column;gap:.25rem;min-height:11rem}
+  .mini .t{font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--dim)}
+  .mini .n{font:400 1.25rem/1 var(--serif)}
+  .mini .s{font-size:.5rem;color:var(--dim);line-height:1.3}
+  .mini .b{margin-top:auto;border-radius:99px;text-align:center;font-size:.46rem;
+    font-weight:700;padding:.32rem;background:var(--blue);color:#fff}
+  .mini .b.wx{background:var(--wx);color:#04140B}
+  .mini .tick{margin-top:auto;text-align:center;font:400 1.6rem/1 var(--serif);color:var(--wx)}
+  .mini .code{grid-template:repeat(13,1fr)/repeat(13,1fr);padding:.18rem;margin:auto 0 0;gap:.02rem}
+  .capt{display:flex;gap:.55rem;margin:.7rem 0 0}
+  .capt span{flex:1;min-width:0;text-align:center;font-size:.8rem;color:var(--dim)}
 
-  /* THE SCREENS, DRAWN RATHER THAN SCREENSHOTTED — same reason as the other
-     decks: a screenshot of the app dropped into a dark deck reads as a picture
-     of something else. Small on purpose. They make one sentence concrete. */
-  .screens{display:flex;gap:.8rem;margin:1.5rem 0 0}
-  .sc{flex:1;min-width:0;background:var(--raise);border:1px solid var(--hair);
-    border-radius:.9rem;padding:.65rem;display:flex;flex-direction:column;gap:.5rem}
-  .sc .tag{font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;
-    font-weight:700;color:var(--dim)}
-  .sc .amt{font:400 1.5rem/1 var(--serif);color:var(--ink)}
-  .sc .what{font-size:.55rem;color:var(--dim)}
-  .sc .btn{border-radius:99px;text-align:center;font-size:.55rem;font-weight:700;
-    padding:.36rem;background:var(--blue);color:#05070D;margin-top:auto}
-  .sc .btn.q{background:transparent;border:1px solid var(--hair);color:var(--dim)}
-  /* The QR, drawn as a grid of squares. Nothing is fetched — see the note in
-     deck-build.mjs about what a page sent into China may load. */
-  .sc .qr{aspect-ratio:1;border-radius:.35rem;background:#fff;padding:.3rem;
-    display:grid;grid-template:repeat(7,1fr)/repeat(7,1fr);gap:.06rem}
-  .sc .qr i{background:#05070D;border-radius:.03rem}
-  .sc .qr i.o{background:transparent}
-  .ways{display:flex;gap:.45rem;margin:.1rem 0 0;flex-wrap:wrap}
-  .ways span{display:flex;align-items:center;gap:.25rem;font-size:.5rem;color:var(--dim)}
-  .ways i{width:.36rem;height:.36rem;border-radius:50%;background:var(--dim)}
-  .ways .wx i{background:var(--wx)}
-  .ways .ali i{background:var(--ali)}
-  .caption{font-size:.82rem;color:var(--dim);margin:.9rem 0 0;text-align:center}
-
-  /* THE LINE A CHINESE PAYER READS, shown in the type it is actually set in.
-     It is the product's whole argument in eight characters and quoting it in
-     English would be quoting the wrong thing. */
-  .zh{margin:1.4rem 0 0;padding:1.1rem 1.2rem;background:var(--raise);
-    border:1px solid var(--hair);border-radius:.9rem}
-  .zh b{display:block;font:400 1.5rem/1.35 var(--serif);color:var(--ink)}
-  .zh span{display:block;margin-top:.5rem;font-size:.86rem;color:var(--dim);font-style:italic}
-
-  /* TWO NUMBERS SIDE BY SIDE, for the one slide that carries any. Both are
-     somebody else's and both are checkable — see the note on that slide for
-     why there is no TAM on this deck. */
-  .pair{display:flex;gap:2.4rem;flex-wrap:wrap;margin:0 0 1.6rem}
-  .pair .n{font:400 clamp(3.6rem,19vw,5.4rem)/.85 var(--serif);color:var(--gold);
-    letter-spacing:-.02em}
-  .pair .l{color:var(--dim);font-size:.86rem;margin-top:.55rem;max-width:9rem}
-
-  /* THE ARITHMETIC. Three columns, and the third is the one being read — so
-     it is gold and the other two are quiet. Tabular figures because the whole
-     point of the block is that the eye runs down one column. */
-  .sums{width:100%;border-collapse:collapse;margin:1.2rem 0 0;
+  /* THREE NUMBERS, EACH ONE ITS OWN LINE AND BIG ENOUGH TO BE THE POINT. */
+  .facts{margin:0}
+  .facts div{display:flex;align-items:baseline;gap:1.1rem;padding:1rem 0;
+    border-bottom:1px solid var(--line)}
+  .facts div:last-child{border-bottom:0}
+  .facts b{font:400 2.4rem/1 var(--serif);color:var(--money);min-width:5.6rem;
     font-variant-numeric:tabular-nums}
-  .sums th{text-align:left;font-size:.66rem;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--dim);font-weight:700;
-    padding:0 0 .7rem;border-bottom:1px solid var(--hair)}
-  .sums th:last-child,.sums td:last-child{text-align:right}
-  .sums td{padding:.85rem 0;border-bottom:1px solid var(--hair);
-    color:var(--dim);font-size:1rem}
-  .sums tr:last-child td{border-bottom:0}
-  .sums td:first-child{color:var(--ink);font-weight:650}
-  .sums td:last-child{color:var(--gold);font:400 1.5rem/1 var(--serif)}
+  .facts span{color:var(--ink-2);font-size:1rem}
 
-  /* THE BOTTOM-UP, AS A LADDER. Four steps, each one a number and what it
-     counts, because the argument is that the reader can follow the
-     arithmetic down and disagree at whichever rung they like. A paragraph
-     would hide which number is the shaky one. */
-  .step{margin:1.2rem 0 0}
-  .step div{display:flex;align-items:baseline;gap:1rem;padding:.8rem 0;
-    border-bottom:1px solid var(--hair)}
-  .step div:last-child{border-bottom:0}
-  .step .n{font:400 1.9rem/1 var(--serif);color:var(--gold);
-    min-width:7.2rem;font-variant-numeric:tabular-nums}
-  .step .l{color:var(--dim);font-size:.95rem}
+  /* ONE FIGURE, WHEN THE FIGURE IS THE SLIDE. */
+  .huge{font:400 clamp(4rem,21vw,6.5rem)/.88 var(--serif);color:var(--money);
+    letter-spacing:-.02em;margin:0}
+  .huge + p{margin-top:1rem;font-size:1.05rem;color:var(--ink-2)}
 
-  /* WHAT THE WHOLE SEGMENT IS WORTH, at the foot of the slide that sized it.
-     Set apart and labelled "the whole of it" because it is the ceiling and
-     not a target — a figure that size, unlabelled, reads as a forecast, and
-     the two slides above it exist precisely to stop that. */
-  .worth{margin:1.6rem 0 0;padding:1.1rem 1.2rem;background:var(--raise);
-    border:1px solid var(--hair);border-radius:.9rem;text-align:center}
-  .worth b{display:block;font:400 2.4rem/1 var(--serif);color:var(--gold)}
-  .worth span{display:block;margin-top:.5rem;font-size:.86rem;color:var(--dim)}
-
-  /* SIDE BY SIDE. Three columns: what is being compared, what a payment
-     link does today, and what this does. The middle column is deliberately
-     the quietest thing on the slide — it is the status quo and it should
-     read as grey. No drawing of anybody else's product: the comparison is
-     factual and written, because a mocked-up screenshot of a competitor is
-     a claim about their software that we cannot stand behind. */
-  /* THE TWO SCREENS, BOTH DRAWN. The left is a standard card checkout — a
-     white page, an amount, a card number, a Pay button, all in English —
-     and the right is this one. Drawn rather than screenshotted on purpose:
-     a pixel copy of somebody else's product presented as evidence is a
-     claim about their software, and a fair sketch of the shape everybody
-     has seen is not. It is accurate and it is not a caricature; the left
-     is what a Chinese payer actually meets today, and the point is that
-     nothing on it is wrong except who it was written for. */
-  .two{display:flex;gap:.9rem;margin:1.3rem 0 0;align-items:stretch}
-  .ph{flex:1;min-width:0;border:1px solid var(--hair);border-radius:1rem;
-    padding:.3rem;background:var(--raise)}
-  .ph .in{border-radius:.8rem;padding:.6rem;height:100%;
-    display:flex;flex-direction:column;gap:.4rem}
-  .ph.old .in{background:#FFF;color:#1A1F2B}
-  .ph.new .in{background:#F4F6FA;color:#10141D}
-  .ph .top{font-size:.46rem;letter-spacing:.09em;text-transform:uppercase;
-    color:#8A92A3;font-weight:700}
-  .ph .amt{font:400 1.25rem/1 var(--serif)}
-  .ph .sub{font-size:.5rem;color:#8A92A3}
-  .ph .box{border:1px solid #D9DEE7;border-radius:.3rem;padding:.3rem .35rem;
-    font-size:.47rem;color:#9AA2B1;background:#FBFCFE}
-  .ph .row{display:flex;gap:.3rem}
-  .ph .row .box{flex:1}
-  .ph .pay{margin-top:auto;border-radius:99px;text-align:center;
-    font-size:.5rem;font-weight:700;padding:.34rem;background:#5570E8;color:#FFF}
-  .ph .wx{border:1px solid #D9DEE7;border-radius:.4rem;padding:.3rem .35rem;
-    font-size:.5rem;font-weight:650;display:flex;align-items:center;gap:.3rem}
-  .ph .wx i{width:.34rem;height:.34rem;border-radius:50%;background:var(--wx)}
-  .ph .wx.a i{background:var(--ali)}
-  .cap2{display:flex;gap:.9rem;margin:.6rem 0 0}
-  .cap2 span{flex:1;font-size:.72rem;color:var(--dim);text-align:center}
-  .cap2 span:last-child{color:var(--gold)}
-
-  .vs{width:100%;border-collapse:collapse;margin:1.2rem 0 0}
-  .vs th{text-align:left;font-size:.64rem;letter-spacing:.13em;
-    text-transform:uppercase;color:var(--dim);font-weight:700;
-    padding:0 0 .7rem;border-bottom:1px solid var(--hair)}
-  .vs th:last-child{color:var(--gold)}
-  .vs td{padding:.8rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
-  .vs tr:last-child td{border-bottom:0}
-  .vs td:first-child{color:var(--ink);font-weight:650;width:38%}
-  .vs td:nth-child(2){color:#5C6375}
-  .vs td:last-child{color:var(--gold)}
+  /* WHO ELSE IS HERE. */
+  .who{margin:.5rem 0 0}
+  .who div{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+    padding:.95rem 0;border-bottom:1px solid var(--line)}
+  .who div:last-child{border-bottom:0;padding-top:1.3rem}
+  .who .n{font-weight:650;font-size:1.05rem}
+  .who .v{color:var(--dim);font-size:.9rem;text-align:right}
+  .who div:last-child .n{font-size:1.35rem}
+  .who div:last-child .v{color:var(--blue);font-weight:700;font-size:1.15rem}
 
   .terms{margin:1.4rem 0 0}
-  .terms div{display:flex;justify-content:space-between;gap:1rem;
-    padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
+  .terms div{display:flex;justify-content:space-between;gap:1rem;padding:.85rem 0;
+    border-bottom:1px solid var(--line);font-size:1rem}
   .terms div:last-child{border-bottom:0}
   .terms .w{color:var(--dim)}
-  .terms .v{color:var(--ink);font-weight:650;text-align:right}
+  .terms .v{font-weight:650;text-align:right}
+  .cta{display:block;margin:2rem 0 0;padding:1.15rem;background:var(--blue);color:#fff;
+    border-radius:99px;text-align:center;text-decoration:none;font-weight:700;font-size:1.05rem;
+    box-shadow:0 10px 26px -10px rgba(63,104,216,.7)}
 
-  .go{display:block;margin:1.6rem 0 0;padding:1.05rem 1.2rem;
-    background:var(--blue);color:#05070D;border-radius:99px;text-align:center;
-    text-decoration:none;font-weight:700;font-size:1.02rem}
-  .fine{color:var(--dim);font-size:.85rem;margin-top:1rem;text-align:center}
-  .on{display:block;margin:1.1rem 0 0;color:var(--dim);font-size:.9rem;
-    line-height:1.5;text-align:center;text-decoration:none}
-  .on:hover{color:var(--ink)}
-  #what{scroll-margin-top:1rem}
-
-  /* THE COVER IS THE PRODUCT PAGE. One mark, one claim, the thing itself,
-     and three facts nobody has to read a sentence to get. The screens are
-     bigger here than anywhere else in the deck because on this page they
-     are the argument rather than an illustration of one. */
-  section.cover .mark i{width:3.2rem;height:3.2rem;font-size:1.7rem;border-radius:.85rem}
-  section.cover .mark span{font-size:1.6rem;letter-spacing:.01em}
-  section.cover .screens{margin-top:1.9rem;gap:1rem}
-  section.cover .sc{padding:.95rem;border-radius:1.1rem}
-  section.cover .sc .tag{font-size:.56rem}
-  section.cover .sc .amt{font-size:2rem}
-  section.cover .sc .what{font-size:.66rem}
-  section.cover .sc .btn{font-size:.66rem;padding:.52rem}
-  section.cover .ways span{font-size:.6rem}
-  section.cover .ways i{width:.42rem;height:.42rem}
-  p.same{font:400 clamp(2.1rem,8.6vw,2.8rem)/1 var(--serif);color:var(--gold);
-    margin:-.3rem 0 0}
-
-  /* THREE FACTS, SIDE BY SIDE, because they are a row to run an eye down
-     rather than a sentence to read. Each is a bold half and a quiet half:
-     what it is, then what it means, and the second half is optional. */
-  .facts{display:flex;gap:1rem;margin:1.7rem 0 0}
-  .facts div{flex:1;min-width:0;font-size:.76rem;color:var(--dim);line-height:1.4}
-  .facts b{display:block;color:var(--ink);font-weight:650;font-size:.86rem;
-    margin-bottom:.2rem}
-
-  /* THE ONE ROW THAT DOES NOT FIT. The .vs table paints its last column
-     gold because that column is normally the answer in our favour. On the
-     trades slide one row is a No, and a gold No reads as a boast. */
-  .vs td.no{color:#5C6375}
-
-  /* THE PIE, DRAWN AS A CONIC GRADIENT. No chart library: deck-build.mjs
-     refuses anything loaded from off the box, and a six-slice pie is one
-     CSS declaration. The legend carries the label and the count beside each
-     colour, so nothing on this slide is identified by colour alone — which
-     matters on a page somebody may read on a phone in daylight, and on the
-     printed version somebody's office makes in greyscale. */
-  .pie{display:flex;gap:1.3rem;align-items:center;margin:1.5rem 0 0}
-  .pie .disc{width:9.2rem;height:9.2rem;flex:none;border-radius:50%;
-    border:1px solid var(--hair)}
-  .pie .key{flex:1;min-width:0;display:flex;flex-direction:column;gap:.55rem}
-  .pie .key div{display:flex;align-items:center;gap:.5rem;font-size:.79rem;
-    color:var(--dim);line-height:1.25}
-  .pie .key i{width:.62rem;height:.62rem;border-radius:.16rem;flex:none}
-  .pie .key b{color:var(--ink);font-weight:650;margin-left:auto;
-    font-variant-numeric:tabular-nums;font-size:.82rem}
-
-  /* THE TWO SIDES, WITH THE ARROW BETWEEN THEM. The solution slide has to
-     answer the problem slide line for line, and the shape does half of that
-     before a word is read: one panel is China, one is Australia, and the
-     only thing between them is an arrow. Side by side rather than stacked
-     because the whole claim is that these are two ends of one payment, and
-     a vertical list reads as two separate steps somebody has to do. */
-  .flow{display:flex;align-items:stretch;gap:.65rem;margin:1.6rem 0 0}
-  .flow .side{flex:1;min-width:0;background:var(--raise);border:1px solid var(--hair);
-    border-radius:1rem;padding:1rem .9rem;display:flex;flex-direction:column}
-  .flow .arr{flex:none;align-self:center;font:400 1.7rem/1 var(--serif);color:var(--gold)}
-  .flow .who{font-size:.58rem;letter-spacing:.11em;text-transform:uppercase;
-    font-weight:700;color:var(--dim);margin-bottom:.55rem}
-  .flow .big{font:400 1.3rem/1.15 var(--serif);color:var(--ink);margin-bottom:.45rem}
-  .flow .sub{font-size:.72rem;color:var(--dim);line-height:1.45}
-  .flow .ways{margin-top:auto;padding-top:.6rem}
-
-  /* THE CHAIN, DRAWN SMALL, FOUR ACROSS.
-     The one slide that shows rather than describes. Drawn rather than
-     screenshotted for the reason the other decks give: a screenshot of the
-     app dropped into a dark deck reads as a picture of something else, and
-     four of them read as a press release. Drawn, at this size, they read as
-     the thing itself — you take in the shape of the flow before you read a
-     word, which is the whole point of the slide. */
-  .strip{display:flex;gap:.5rem;margin:1.6rem 0 0;align-items:stretch}
-  .ph4{flex:1;min-width:0;background:var(--raise);border:1px solid var(--hair);
-    border-radius:.7rem;padding:.5rem .45rem;display:flex;flex-direction:column;
-    gap:.3rem;min-height:9.5rem}
-  .ph4 .t{font-size:.42rem;letter-spacing:.09em;text-transform:uppercase;
-    font-weight:700;color:var(--dim)}
-  .ph4 .big{font:400 1.05rem/1 var(--serif);color:var(--ink)}
-  .ph4 .sm{font-size:.44rem;color:var(--dim);line-height:1.35}
-  .ph4 .b{margin-top:auto;border-radius:99px;text-align:center;font-size:.42rem;
-    font-weight:700;padding:.28rem;background:var(--blue);color:#05070D}
-  .ph4 .b.g{background:var(--wx);color:#04120A}
-  .ph4 .q{aspect-ratio:1;border-radius:.25rem;background:#fff;padding:.18rem;
-    display:grid;grid-template:repeat(6,1fr)/repeat(6,1fr);gap:.04rem;margin-top:auto}
-  .ph4 .q i{background:#05070D;border-radius:.02rem}
-  .ph4 .q i.o{background:transparent}
-  .ph4 .tick{margin-top:auto;text-align:center;font:400 1.5rem/1 var(--serif);color:var(--wx)}
-  .steps4{display:flex;gap:.5rem;margin:.55rem 0 0}
-  .steps4 span{flex:1;min-width:0;font-size:.66rem;color:var(--dim);text-align:center;line-height:1.3}
-
-  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 <div class="deck">
 
-  <!-- NINE SCREENS, ONE THING ON EACH.
-       "Don't cram info on pages, show don't tell." So every slide here is a
-       headline and one object — a drawing, a column of numbers, or a single
-       figure. Where the old version had a table AND a box AND a footnote on
-       one slide, that is now two slides. More screens with less on each is
-       cheaper to read than fewer screens with everything on them, and this
-       deck is read on a phone by somebody half paying attention.
+  <!-- EIGHT SCREENS. Each one is a headline and a single object, and no two
+       consecutive screens are the same shape — a phone, three numbers, a
+       phone the height of the page, four across, a list, one figure, a
+       ladder, the ask. The product appears four times and is the largest
+       thing on the page every time it does. -->
 
-       THE SLIDE THAT EARNS THE DECK IS THE FOURTH. Every other page here
-       makes a claim; that one shows the thing doing it, four screens across,
-       left to right, no sentence needed. It went in because the chain now
-       runs end to end — ask, code, pay, green — and a deck that describes a
-       working product while refusing to show it is a deck that sounds like
-       it has nothing to show. -->
-
-  <section class="cover">
+  <section>
     <div class="mark"><i>汇</i><span>Dealio</span></div>
     <h1>Get paid<br>from China.</h1>
-    <p class="same">Same day.</p>
-    <div class="screens">
-      <div class="sc">
-        <span class="tag">You</span>
-        <span class="amt">¥2,400</span>
-        <span class="what">Second draft · Ray</span>
-        <div class="btn">Ask for money</div>
-      </div>
-      <div class="sc">
-        <span class="tag">Them</span>
-        <div class="qr" aria-hidden="true"><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i></div>
-        <div class="ways">
-          <span class="wx"><i></i>WeChat Pay</span>
-          <span class="ali"><i></i>Alipay</span>
-        </div>
-      </div>
+    <p class="sub">Same day.</p>
+    <div class="phone" style="margin-top:2.2rem">
+      <div class="bar"><span>paydealio.com</span><span class="chip">Unpaid</span></div>
+      <p class="lab">Tom is asking for</p>
+      <p class="amt">¥2,400</p>
+      <p class="for">Second draft</p>
+      <div class="go">去付 ¥2,400</div>
+      <div class="ways"><span><i></i>微信支付</span><span class="a"><i></i>支付宝</span></div>
     </div>
   </section>
 
   <section>
-    <p class="eyebrow">The problem</p>
-    <h2>Three hours. Then it bounces.</h2>
-    <div class="step">
-      <div><span class="n">62%</span><span class="l">hold no credit card</span></div>
-      <div><span class="n">2 hours</span><span class="l">at a branch counter, with ID</span></div>
-      <div><span class="n">1 letter</span><span class="l">wrong in the name and it fails</span></div>
+    <p class="eyebrow">Today</p>
+    <h2>A morning at the bank.</h2>
+    <div class="facts">
+      <div><b>62%</b><span>hold no credit card</span></div>
+      <div><b>2 hrs</b><span>at a counter, in person, with ID</span></div>
+      <div><b>1</b><span>letter wrong in the name and it fails</span></div>
     </div>
-    <div class="worth">
-      <b>A week later.</b>
-      <span>That is when you find out.</span>
-    </div>
+    <p class="sub" style="margin-top:2rem">And nothing tells you.</p>
+    <p class="note" style="margin-top:.6rem">The money leaves. A week later it comes back.</p>
   </section>
 
   <section>
-    <p class="eyebrow">The solution</p>
-    <h2>They pay. You are paid.</h2>
-    <div class="flow">
-      <div class="side">
-        <div class="who">In China</div>
-        <div class="big">They tap their wallet.</div>
-        <div class="sub">A code, long-pressed.</div>
-        <div class="ways">
-          <span class="wx"><i></i>WeChat Pay</span>
-          <span class="ali"><i></i>Alipay</span>
-        </div>
-      </div>
-      <div class="arr" aria-hidden="true">&rarr;</div>
-      <div class="side">
-        <div class="who">In Australia</div>
-        <div class="big">You get AUD.</div>
-        <div class="sub">Your own bank. Same day.</div>
-      </div>
+    <p class="eyebrow">Instead</p>
+    <h2>One long press.</h2>
+    <div class="phone">
+      <div class="bar"><span>微信支付</span><span class="chip">¥2,400</span></div>
+      <div class="code" aria-hidden="true"><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i></div>
+      <p class="zh">长按二维码识别<small>或者截屏，再长按那张图</small></p>
     </div>
+    <p class="note" style="margin-top:1.4rem">No account. No app. No card number.
+      The gesture they already make every day.</p>
   </section>
 
-  <!-- THE ONE THAT SHOWS. Four screens, left to right, and the reader has
-       the whole product before reading a word. -->
   <section>
-    <p class="eyebrow gold">Built</p>
+    <p class="eyebrow q">Built</p>
     <h2>It already works.</h2>
-    <div class="strip">
-      <div class="ph4">
-        <span class="t">You</span>
-        <span class="big">¥240</span>
-        <span class="sm">Second draft</span>
+    <div class="four">
+      <div class="mini">
+        <span class="t">You</span><span class="n">¥240</span><span class="s">Second draft</span>
         <div class="b">Ask</div>
       </div>
-      <div class="ph4">
-        <span class="t">Them</span>
-        <span class="sm">长按二维码识别</span>
-        <div class="q" aria-hidden="true"><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i></div>
+      <div class="mini">
+        <span class="t">Them</span><span class="s">长按识别</span>
+        <div class="code" aria-hidden="true"><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i></div>
       </div>
-      <div class="ph4">
-        <span class="t">微信支付</span>
-        <span class="big">¥240</span>
-        <span class="sm">付给 Mia</span>
-        <div class="b g">确认付款</div>
+      <div class="mini">
+        <span class="t">微信支付</span><span class="n">¥240</span><span class="s">付给 Mia</span>
+        <div class="b wx">确认付款</div>
       </div>
-      <div class="ph4">
-        <span class="t">已付</span>
-        <span class="big">¥240</span>
-        <span class="sm">Mia 那边已经知道了</span>
+      <div class="mini">
+        <span class="t">已付</span><span class="n">¥240</span><span class="s">Mia 已知道</span>
         <div class="tick" aria-hidden="true">&check;</div>
       </div>
     </div>
-    <div class="steps4">
-      <span>Ask</span><span>Scan</span><span>Pay</span><span>Done</span>
-    </div>
+    <div class="capt"><span>Ask</span><span>Scan</span><span>Pay</span><span>Done</span></div>
+    <p class="note" style="margin-top:1.6rem">Watched finish on a phone, both
+      directions, two languages.</p>
   </section>
 
   <section>
     <p class="eyebrow">Who else is here</p>
-    <h2>Everybody serves companies.</h2>
-    <div class="field">
-      <div><span class="w">PingPong</span><span class="v">Seller account</span></div>
-      <div><span class="w">LianLian</span><span class="v">Seller account</span></div>
-      <div><span class="w">XTransfer</span><span class="v">Trade contract</span></div>
-      <div><span class="w">Airwallex</span><span class="v">An entity</span></div>
-      <div><span class="w">Flywire</span><span class="v">A university</span></div>
-      <div><span class="w">Dealio</span><span class="v out">A sole trader</span></div>
-    </div>
-  </section>
-
-  <!-- THE MARKET, ACROSS THREE SLIDES INSTEAD OF TWO CROWDED ONES. The pie
-       had a legend, a box and a footnote on it; the count, the estimate and
-       the money are three different thoughts and get three screens. -->
-  <section>
-    <p class="eyebrow gold">The market — Australia</p>
-    <h2>19,000 today.</h2>
-    <div class="pie">
-      <div class="disc" aria-hidden="true" style="background:conic-gradient(#D9A94A 0% 26%, #5570E8 26% 44%, #2ECC5E 44% 60%, #E8705A 60% 75%, #4FC3D9 75% 89%, #B57FD9 89% 100%)"></div>
-      <div class="key">
-        <div><i style="background:#D9A94A"></i>Tutoring<b>4,900</b></div>
-        <div><i style="background:#5570E8"></i>Agents<b>3,400</b></div>
-        <div><i style="background:#2ECC5E"></i>Design<b>3,000</b></div>
-        <div><i style="background:#E8705A"></i>Trade<b>2,900</b></div>
-        <div><i style="background:#4FC3D9"></i>Consulting<b>2,700</b></div>
-        <div><i style="background:#B57FD9"></i>Translation<b>2,100</b></div>
-      </div>
+    <h2>They all serve companies.</h2>
+    <div class="who">
+      <div><span class="n">PingPong</span><span class="v">Seller account</span></div>
+      <div><span class="n">LianLian</span><span class="v">Seller account</span></div>
+      <div><span class="n">XTransfer</span><span class="v">Trade contract</span></div>
+      <div><span class="n">Airwallex</span><span class="v">A company</span></div>
+      <div><span class="n">Flywire</span><span class="v">A university</span></div>
+      <div><span class="n">Dealio</span><span class="v">One person</span></div>
     </div>
   </section>
 
   <section>
-    <p class="eyebrow gold">And if it were easy</p>
-    <h2>70,000 more.</h2>
-    <div class="worth">
-      <b>A$1.8bn</b>
-      <span>moving between them and China, a year</span>
-    </div>
-    <p class="fine">Our estimate, not a count.</p>
+    <p class="eyebrow q">Australia</p>
+    <p class="huge">A$1.8bn</p>
+    <p>moving every year between Australian sole traders and clients in China —
+      tutors, agents, editors, designers, consultants.</p>
+    <p class="note" style="margin-top:1.4rem">19,000 do it today. We think
+      70,000 would, if getting paid were easy. That second number is an
+      estimate, not a count.</p>
   </section>
 
   <section>
-    <p class="eyebrow">The arithmetic</p>
-    <h2>Two percent of it.</h2>
-    <div class="step">
-      <div><span class="n">A$1.8bn</span><span class="l">Australia</span></div>
-      <div><span class="n">A$36bn</span><span class="l">add the US and Canada</span></div>
-      <div><span class="n">5%</span><span class="l">our share of it</span></div>
+    <p class="eyebrow">Then everywhere</p>
+    <h2>Two percent of what moves.</h2>
+    <div class="facts">
+      <div><b>A$36bn</b><span>Australia, the US and Canada</span></div>
+      <div><b>5%</b><span>our share of it</span></div>
+      <div><b>2%</b><span>our fee on that</span></div>
     </div>
-    <div class="worth">
-      <b>A$36m</b>
-      <span>a year, in three to four years</span>
-    </div>
+    <p class="sub" style="margin-top:2rem">A$36m a year.</p>
+    <p class="note" style="margin-top:.6rem">Three to four years. Same product,
+      same code, nothing new to build.</p>
   </section>
 
   <section>
-    <p class="eyebrow gold">The ask</p>
+    <p class="eyebrow q">The ask</p>
     <h2>One licence away.</h2>
     <div class="terms">
       <div><span class="w">Built</span><span class="v">Already</span></div>
@@ -514,7 +278,9 @@
       <div><span class="w">Stage</span><span class="v">Pre-revenue</span></div>
       <div><span class="w">Terms</span><span class="v">Let us talk</span></div>
     </div>
-    <a class="go" href="https://paydealio.com/demo">Try it &rarr;</a>
+    <a class="cta" href="https://paydealio.com/demo">Try it on your phone &rarr;</a>
+    <p class="note" style="margin-top:1.2rem;text-align:center">A real request,
+      every time you open it.</p>
   </section>
 
 </div>
