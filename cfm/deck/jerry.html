@@ -1,0 +1,409 @@
+<title>Dealio · for Jerry</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  /* THE DECK FAMILY'S BONES, IN DEALIO'S COLOURS.
+     The Exchange decks are jade and gold on near-black — a private room. This
+     is a payments product and borrows the app's own palette instead, so
+     somebody who has seen the screens recognises the page: the blue off the
+     pay button, the warm red off the sign-in, and the two wallet marks in the
+     colours everybody already knows them by. Same structure, different
+     product; a deck that looked like the board would be selling the board. */
+  :root{
+    --ground:#080A0F;
+    --raise:#10141D;
+    --ink:#ECEDF2;
+    --dim:#8F95A6;
+    --hair:#1F2533;
+    --blue:#5570E8;
+    --gold:#D9A94A;
+    --wx:#2ECC5E;
+    --ali:#1678FF;
+    --serif:"Instrument Serif",Georgia,"Songti SC",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);color:var(--ink);
+    font:16px/1.6 var(--sans);
+    -webkit-font-smoothing:antialiased;
+    scroll-snap-type:y proximity;
+  }
+  .deck{max-width:30rem;margin:0 auto;padding:0 1.4rem}
+  section{
+    scroll-snap-align:start;
+    min-height:86svh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:3rem 0;
+    border-bottom:1px solid var(--hair);
+  }
+  section:last-of-type{border-bottom:0}
+  .eyebrow{
+    font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--blue);margin:0 0 1.1rem;
+  }
+  .eyebrow.gold{color:var(--gold)}
+  h1{font:400 clamp(2.9rem,12vw,4rem)/1.01 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  h2{font:400 clamp(2.6rem,10.4vw,3.5rem)/1.05 var(--serif);margin:0 0 1rem;text-wrap:balance}
+  p{margin:0 0 1rem;color:var(--dim);font-size:1.02rem}
+  p.lead{color:var(--ink);font-size:1.08rem}
+  p:last-child{margin-bottom:0}
+  em{font-style:italic;font-family:var(--serif);font-size:1.15em;color:var(--blue)}
+  b{color:var(--ink);font-weight:650}
+
+  .mark{display:flex;align-items:center;gap:.7rem;margin:0 0 2rem}
+  .mark i{width:2.6rem;height:2.6rem;border-radius:.7rem;background:var(--raise);
+    border:1px solid var(--hair);display:grid;place-items:center;font-style:normal;
+    font:400 1.3rem/1 var(--serif);color:var(--blue)}
+  .mark span{font:400 1.25rem/1 var(--serif);color:var(--ink)}
+
+  /* THE NUMBERED SHAPE THE OTHER DECKS USE, for anything a reader wants to
+     take at their own pace rather than in a paragraph. */
+  ol.how{list-style:none;margin:0 0 1.5rem;padding:0;counter-reset:how}
+  ol.how li{position:relative;padding:0 0 1.1rem 2.5rem;counter-increment:how}
+  ol.how li:last-child{padding-bottom:.4rem}
+  ol.how li::before{content:counter(how);position:absolute;left:0;top:-.1rem;
+    font:400 1.5rem/1 var(--serif);color:var(--gold)}
+  ol.how b{display:block;color:var(--ink);font-weight:650;font-size:1.02rem;margin-bottom:.15rem}
+  ol.how span{display:block;color:var(--dim);font-size:.95rem;line-height:1.5}
+
+  /* WHO IS ALREADY HERE, AND WHO THEY PAY. The argument on that slide is a
+     column of names with the same answer beside each one, which is a thing to
+     run an eye down rather than a paragraph to read. */
+  .field{margin:1.2rem 0 0}
+  .field div{display:flex;justify-content:space-between;align-items:baseline;
+    gap:1rem;padding:.75rem 0;border-bottom:1px solid var(--hair)}
+  .field div:last-child{border-bottom:0}
+  .field .w{color:var(--ink);font-size:.98rem;font-weight:650}
+  .field .v{color:var(--dim);font-size:.88rem;text-align:right;white-space:nowrap}
+  .field div:last-child{padding-top:1rem}
+  .field div:last-child .w{font-size:1.15rem}
+  .field .v.out{color:var(--gold);font-size:1.15rem;font-weight:650}
+
+  /* THE SCREENS, DRAWN RATHER THAN SCREENSHOTTED — same reason as the other
+     decks: a screenshot of the app dropped into a dark deck reads as a picture
+     of something else. Small on purpose. They make one sentence concrete. */
+  .screens{display:flex;gap:.8rem;margin:1.5rem 0 0}
+  .sc{flex:1;min-width:0;background:var(--raise);border:1px solid var(--hair);
+    border-radius:.9rem;padding:.65rem;display:flex;flex-direction:column;gap:.5rem}
+  .sc .tag{font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;
+    font-weight:700;color:var(--dim)}
+  .sc .amt{font:400 1.5rem/1 var(--serif);color:var(--ink)}
+  .sc .what{font-size:.55rem;color:var(--dim)}
+  .sc .btn{border-radius:99px;text-align:center;font-size:.55rem;font-weight:700;
+    padding:.36rem;background:var(--blue);color:#05070D;margin-top:auto}
+  .sc .btn.q{background:transparent;border:1px solid var(--hair);color:var(--dim)}
+  /* The QR, drawn as a grid of squares. Nothing is fetched — see the note in
+     deck-build.mjs about what a page sent into China may load. */
+  .sc .qr{aspect-ratio:1;border-radius:.35rem;background:#fff;padding:.3rem;
+    display:grid;grid-template:repeat(7,1fr)/repeat(7,1fr);gap:.06rem}
+  .sc .qr i{background:#05070D;border-radius:.03rem}
+  .sc .qr i.o{background:transparent}
+  .ways{display:flex;gap:.45rem;margin:.1rem 0 0;flex-wrap:wrap}
+  .ways span{display:flex;align-items:center;gap:.25rem;font-size:.5rem;color:var(--dim)}
+  .ways i{width:.36rem;height:.36rem;border-radius:50%;background:var(--dim)}
+  .ways .wx i{background:var(--wx)}
+  .ways .ali i{background:var(--ali)}
+  .caption{font-size:.82rem;color:var(--dim);margin:.9rem 0 0;text-align:center}
+
+  /* THE LINE A CHINESE PAYER READS, shown in the type it is actually set in.
+     It is the product's whole argument in eight characters and quoting it in
+     English would be quoting the wrong thing. */
+  .zh{margin:1.4rem 0 0;padding:1.1rem 1.2rem;background:var(--raise);
+    border:1px solid var(--hair);border-radius:.9rem}
+  .zh b{display:block;font:400 1.5rem/1.35 var(--serif);color:var(--ink)}
+  .zh span{display:block;margin-top:.5rem;font-size:.86rem;color:var(--dim);font-style:italic}
+
+  /* TWO NUMBERS SIDE BY SIDE, for the one slide that carries any. Both are
+     somebody else's and both are checkable — see the note on that slide for
+     why there is no TAM on this deck. */
+  .pair{display:flex;gap:2.4rem;flex-wrap:wrap;margin:0 0 1.6rem}
+  .pair .n{font:400 clamp(3.6rem,19vw,5.4rem)/.85 var(--serif);color:var(--gold);
+    letter-spacing:-.02em}
+  .pair .l{color:var(--dim);font-size:.86rem;margin-top:.55rem;max-width:9rem}
+
+  /* THE ARITHMETIC. Three columns, and the third is the one being read — so
+     it is gold and the other two are quiet. Tabular figures because the whole
+     point of the block is that the eye runs down one column. */
+  .sums{width:100%;border-collapse:collapse;margin:1.2rem 0 0;
+    font-variant-numeric:tabular-nums}
+  .sums th{text-align:left;font-size:.66rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--dim);font-weight:700;
+    padding:0 0 .7rem;border-bottom:1px solid var(--hair)}
+  .sums th:last-child,.sums td:last-child{text-align:right}
+  .sums td{padding:.85rem 0;border-bottom:1px solid var(--hair);
+    color:var(--dim);font-size:1rem}
+  .sums tr:last-child td{border-bottom:0}
+  .sums td:first-child{color:var(--ink);font-weight:650}
+  .sums td:last-child{color:var(--gold);font:400 1.5rem/1 var(--serif)}
+
+  /* THE BOTTOM-UP, AS A LADDER. Four steps, each one a number and what it
+     counts, because the argument is that the reader can follow the
+     arithmetic down and disagree at whichever rung they like. A paragraph
+     would hide which number is the shaky one. */
+  .step{margin:1.2rem 0 0}
+  .step div{display:flex;align-items:baseline;gap:1rem;padding:.8rem 0;
+    border-bottom:1px solid var(--hair)}
+  .step div:last-child{border-bottom:0}
+  .step .n{font:400 1.9rem/1 var(--serif);color:var(--gold);
+    min-width:7.2rem;font-variant-numeric:tabular-nums}
+  .step .l{color:var(--dim);font-size:.95rem}
+
+  /* WHAT THE WHOLE SEGMENT IS WORTH, at the foot of the slide that sized it.
+     Set apart and labelled "the whole of it" because it is the ceiling and
+     not a target — a figure that size, unlabelled, reads as a forecast, and
+     the two slides above it exist precisely to stop that. */
+  .worth{margin:1.6rem 0 0;padding:1.1rem 1.2rem;background:var(--raise);
+    border:1px solid var(--hair);border-radius:.9rem;text-align:center}
+  .worth b{display:block;font:400 2.4rem/1 var(--serif);color:var(--gold)}
+  .worth span{display:block;margin-top:.5rem;font-size:.86rem;color:var(--dim)}
+
+  /* SIDE BY SIDE. Three columns: what is being compared, what a payment
+     link does today, and what this does. The middle column is deliberately
+     the quietest thing on the slide — it is the status quo and it should
+     read as grey. No drawing of anybody else's product: the comparison is
+     factual and written, because a mocked-up screenshot of a competitor is
+     a claim about their software that we cannot stand behind. */
+  /* THE TWO SCREENS, BOTH DRAWN. The left is a standard card checkout — a
+     white page, an amount, a card number, a Pay button, all in English —
+     and the right is this one. Drawn rather than screenshotted on purpose:
+     a pixel copy of somebody else's product presented as evidence is a
+     claim about their software, and a fair sketch of the shape everybody
+     has seen is not. It is accurate and it is not a caricature; the left
+     is what a Chinese payer actually meets today, and the point is that
+     nothing on it is wrong except who it was written for. */
+  .two{display:flex;gap:.9rem;margin:1.3rem 0 0;align-items:stretch}
+  .ph{flex:1;min-width:0;border:1px solid var(--hair);border-radius:1rem;
+    padding:.3rem;background:var(--raise)}
+  .ph .in{border-radius:.8rem;padding:.6rem;height:100%;
+    display:flex;flex-direction:column;gap:.4rem}
+  .ph.old .in{background:#FFF;color:#1A1F2B}
+  .ph.new .in{background:#F4F6FA;color:#10141D}
+  .ph .top{font-size:.46rem;letter-spacing:.09em;text-transform:uppercase;
+    color:#8A92A3;font-weight:700}
+  .ph .amt{font:400 1.25rem/1 var(--serif)}
+  .ph .sub{font-size:.5rem;color:#8A92A3}
+  .ph .box{border:1px solid #D9DEE7;border-radius:.3rem;padding:.3rem .35rem;
+    font-size:.47rem;color:#9AA2B1;background:#FBFCFE}
+  .ph .row{display:flex;gap:.3rem}
+  .ph .row .box{flex:1}
+  .ph .pay{margin-top:auto;border-radius:99px;text-align:center;
+    font-size:.5rem;font-weight:700;padding:.34rem;background:#5570E8;color:#FFF}
+  .ph .wx{border:1px solid #D9DEE7;border-radius:.4rem;padding:.3rem .35rem;
+    font-size:.5rem;font-weight:650;display:flex;align-items:center;gap:.3rem}
+  .ph .wx i{width:.34rem;height:.34rem;border-radius:50%;background:var(--wx)}
+  .ph .wx.a i{background:var(--ali)}
+  .cap2{display:flex;gap:.9rem;margin:.6rem 0 0}
+  .cap2 span{flex:1;font-size:.72rem;color:var(--dim);text-align:center}
+  .cap2 span:last-child{color:var(--gold)}
+
+  .vs{width:100%;border-collapse:collapse;margin:1.2rem 0 0}
+  .vs th{text-align:left;font-size:.64rem;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--dim);font-weight:700;
+    padding:0 0 .7rem;border-bottom:1px solid var(--hair)}
+  .vs th:last-child{color:var(--gold)}
+  .vs td{padding:.8rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
+  .vs tr:last-child td{border-bottom:0}
+  .vs td:first-child{color:var(--ink);font-weight:650;width:38%}
+  .vs td:nth-child(2){color:#5C6375}
+  .vs td:last-child{color:var(--gold)}
+
+  .terms{margin:1.4rem 0 0}
+  .terms div{display:flex;justify-content:space-between;gap:1rem;
+    padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.95rem}
+  .terms div:last-child{border-bottom:0}
+  .terms .w{color:var(--dim)}
+  .terms .v{color:var(--ink);font-weight:650;text-align:right}
+
+  .go{display:block;margin:1.6rem 0 0;padding:1.05rem 1.2rem;
+    background:var(--blue);color:#05070D;border-radius:99px;text-align:center;
+    text-decoration:none;font-weight:700;font-size:1.02rem}
+  .fine{color:var(--dim);font-size:.85rem;margin-top:1rem;text-align:center}
+  .on{display:block;margin:1.1rem 0 0;color:var(--dim);font-size:.9rem;
+    line-height:1.5;text-align:center;text-decoration:none}
+  .on:hover{color:var(--ink)}
+  #what{scroll-margin-top:1rem}
+
+  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+<div class="deck">
+
+  <!-- THIS DECK IS NOT THE DEALIO DECK WITH A NAME ON IT.
+       That one argues a market to somebody deciding whether to put money in.
+       This one is for the person who already holds the thing that is missing,
+       so the market is the short half and the fit is the long one. Every
+       slide answers the same question from his side: what do I bring, what do
+       I get, and what does it cost me if it does not work.
+
+       AND THE REFUSALS ARE THE ARGUMENT. Stripe closed the account on 20
+       September and Airwallex refused activation on the 21st, both for being
+       an unlicensed party moving other people's money. Said plainly that is
+       not a setback to explain away — it is the moat, and he owns the only
+       bridge across it. -->
+
+  <section>
+    <div class="mark"><i>汇</i><span>Dealio</span></div>
+    <p class="eyebrow gold">For Jerry</p>
+    <h1>You have the licence.<br>We have the product.</h1>
+    <p class="lead">Neither one works alone. Together it is live this quarter.</p>
+    <p class="fine" style="text-align:left">Built, in two languages, both
+      directions. One payment already watched through end to end.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">The problem</p>
+    <h2>They cannot pay you.</h2>
+    <div class="pair">
+      <div><div class="n">38%</div><div class="l">of people in China hold a credit card</div></div>
+      <div><div class="n">96%</div><div class="l">pay by phone, every day</div></div>
+    </div>
+    <p>Everyone in China pays by phone. Almost nobody holds the card you would
+      invoice. So it gets done by asking a friend with an overseas account, or
+      it does not get done.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">What exists</p>
+    <h2>The door is built.</h2>
+    <ol class="how">
+      <li><b>The payer taps WeChat.</b><span>A code on the page, long-pressed. No account, no app, nothing to learn.</span></li>
+      <li><b>The payee opens a link.</b><span>No dashboard, no application, no merchant onboarding.</span></li>
+      <li><b>The row settles itself.</b><span>Three witnesses. Nobody has to be watching.</span></li>
+    </ol>
+    <p class="caption">Watched finish on a phone, on real rails, in September.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">What is missing</p>
+    <h2>One thing. Not code.</h2>
+
+    <!-- THE SLIDE THE WHOLE DECK EXISTS FOR, and it is two dates. A reader
+         who has been refused himself knows what these mean; a reader who has
+         not is being told why his registration is worth something here. -->
+    <div class="field">
+      <div><span class="w">Stripe</span><span class="v">Closed the account, 20 Sep</span></div>
+      <div><span class="w">Airwallex</span><span class="v">Refused activation, 21 Sep</span></div>
+      <div><span class="w">Both, for</span><span class="v out">Being unlicensed</span></div>
+    </div>
+    <p style="margin-top:1.3rem">Not the product, not the code, not the market.
+      An unlicensed party may not move other people's money — so every platform
+      that could carry this says no to us, and will say no to the next ten.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">What you bring</p>
+    <h2>The one thing nobody can code around.</h2>
+    <div class="terms">
+      <div><span class="w">Registration</span><span class="v">AUSTRAC remittance</span></div>
+      <div><span class="w">Banking</span><span class="v">Already yours</span></div>
+      <div><span class="w">Compliance</span><span class="v">Already running</span></div>
+      <div><span class="w">Years to replace</span><span class="v">One, and $50k</span></div>
+    </div>
+    <p style="margin-top:1.3rem">Everything on that list is a year and a
+      lawyer for anybody starting today. You have it now.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">What we bring</p>
+    <h2>The part nobody has built.</h2>
+    <table class="vs">
+      <thead><tr><th></th><th>Today</th><th>With this</th></tr></thead>
+      <tbody>
+        <tr><td>To get paid</td><td>Apply. Verify. Build a link.</td><td>Open a link</td></tr>
+        <tr><td>Written for</td><td>A merchant</td><td>A person</td></tr>
+        <tr><td>Language</td><td>English</td><td>Theirs</td></tr>
+        <tr><td>The payer learns</td><td>A new system</td><td>Nothing</td></tr>
+      </tbody>
+    </table>
+    <p class="caption">Built, deployed, in both languages. Not a prototype.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Why it is empty</p>
+    <h2>Everybody serves companies.</h2>
+    <div class="field">
+      <div><span class="w">PingPong</span><span class="v">Seller account</span></div>
+      <div><span class="w">LianLian</span><span class="v">Seller account</span></div>
+      <div><span class="w">XTransfer</span><span class="v">Trade contract</span></div>
+      <div><span class="w">Airwallex</span><span class="v">An entity</span></div>
+      <div><span class="w">Flywire</span><span class="v">A university</span></div>
+      <div><span class="w">Dealio</span><span class="v out">A person</span></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">The plan — first</p>
+    <h2>Australia.</h2>
+    <div class="step">
+      <div><span class="n">168,000</span><span class="l">Chinese students here</span></div>
+      <div><span class="n">6,800</span><span class="l">people they pay directly</span></div>
+      <div><span class="n">680</span><span class="l">ten percent of them</span></div>
+    </div>
+    <p style="margin-top:1.2rem">A$142k a year, at a tenth of one country.
+      Students only — writers, studios and consultants are not counted,
+      because nobody counts them.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">The plan — then</p>
+    <h2>Everywhere else.</h2>
+    <div class="step">
+      <div><span class="n">1.2m</span><span class="l">Chinese students abroad</span></div>
+      <div><span class="n">48,000</span><span class="l">people they pay directly</span></div>
+      <div><span class="n">4,800</span><span class="l">ten percent of them</span></div>
+    </div>
+    <p style="margin-top:1.2rem">Same product. Same code. Nothing new to build,
+      and the licence travels further than the code does.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">The arithmetic</p>
+    <h2>Two percent of what moves.</h2>
+    <table class="sums">
+      <thead><tr><th>Users</th><th>Each moves</th><th>A year</th></tr></thead>
+      <tbody>
+        <tr><td>500</td><td>¥50k a year</td><td>A$105k</td></tr>
+        <tr><td>2,000</td><td>¥50k a year</td><td>A$420k</td></tr>
+        <tr><td>10,000</td><td>¥50k a year</td><td>A$2.1m</td></tr>
+      </tbody>
+    </table>
+    <p class="caption">Not a forecast. Two percent, at 4.8 RMB to the dollar.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">The shape of it</p>
+    <h2>You carry the licence. We carry the product.</h2>
+    <div class="terms">
+      <div><span class="w">Licence and compliance</span><span class="v">You</span></div>
+      <div><span class="w">Banking and settlement</span><span class="v">You</span></div>
+      <div><span class="w">Product, code, support</span><span class="v">Us</span></div>
+      <div><span class="w">Members and growth</span><span class="v">Us</span></div>
+      <div><span class="w">The split</span><span class="v">Let us talk</span></div>
+    </div>
+    <p style="margin-top:1.3rem">Whether we operate as an affiliate under your
+      registration or another way is your call — you know that regime better
+      than we do.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">What it costs you</p>
+    <h2>Nothing that is not already sunk.</h2>
+    <p>No build. No headcount. No capital. The registration, the banking and
+      the compliance programme exist and are being paid for whatever happens
+      next.</p>
+    <p>What is being asked for is permission and a rail — and the downside is
+      a product that does not find its users, on somebody else's time.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">Next</p>
+    <h2>One payment, end to end.</h2>
+    <ol class="how">
+      <li><b>You confirm the registration covers it.</b><span>Category, and whether we can operate under it.</span></li>
+      <li><b>We connect to your rail.</b><span>One adapter. A day, not a quarter.</span></li>
+      <li><b>One real payment.</b><span>Then we both know, and nobody is guessing.</span></li>
+    </ol>
+    <a class="go" href="https://thexchange.app/d-9139ba33b5e2.html">The full deck →</a>
+    <p class="fine">Built and live. Pre-revenue. The licence is the only gap.</p>
+  </section>
+
+</div>
