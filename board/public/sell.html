@@ -1,0 +1,201 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sell into China</title>
+<meta name="robots" content="noindex">
+<!--
+  THE OTHER SIDE OF THE SAME SHOP.
+
+  /shop/<handle> faces China and sells the person: his face, his words, and
+  three numbers he can back. This faces Australia and sells the route: you
+  make something, he already has the buyers, and you never touch China.
+
+  TWO PAGES BECAUSE THERE ARE TWO PEOPLE. A Chinese buyer wants to know who
+  is standing in the aisle in Melbourne. An Australian maker wants to know
+  how the money gets back. Neither question is answered by the other's page,
+  and one page trying to do both would be a page that asks an Australian to
+  scroll past 假一赔十 to find out how they get paid.
+
+  ENGLISH FIRST HERE, Chinese behind the switch — the mirror of the shop,
+  which opens Chinese and keeps English for whoever runs it. Strings live in
+  i18n.js under se., both halves on one line.
+-->
+<style>
+  :root{
+    --paper:#FBFAF8; --card:#FFFFFF; --ink:#14161A; --ink2:#4B525E;
+    --mut:#878D99; --line:#E6E4E0; --acc:#1B5E4B; --gold:#B7791F;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+      "PingFang SC","Hiragino Sans GB",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink)}
+  body{font-family:var(--sans);font-size:17px;line-height:1.6;
+    padding:env(safe-area-inset-top,0) 0 calc(2rem + env(safe-area-inset-bottom,0))}
+  main{max-width:34rem;margin:0 auto;padding:0 1.15rem}
+
+  /* THE BAND IS THE SHOP'S, in the other colour. Somebody who has seen the
+     storefront should recognise this as the same company and not mistake it
+     for it — same shape, Australian green rather than the night blue. */
+  .top{background:linear-gradient(160deg,#123D31 0%,#1B5E4B 62%,#237056 100%);
+    color:#fff;margin:0 -1.15rem;padding:1.4rem 1.15rem 1.5rem;
+    width:calc(100% + 2.3rem)}
+  .top .bar{display:flex;align-items:center;gap:.6rem}
+  .top .mk{font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:rgba(255,255,255,.72);flex:1 1 auto}
+  .lang{flex:0 0 auto;border:1px solid rgba(255,255,255,.45);background:transparent;
+    color:#fff;font:inherit;font-size:.74rem;border-radius:999px;padding:.25rem .65rem}
+  h1{margin:.9rem 0 0;font-size:2.35rem;line-height:1.08;letter-spacing:-.015em;
+    font-weight:700}
+  .top p{margin:.7rem 0 0;font-size:1.02rem;line-height:1.55;
+    color:rgba(255,255,255,.88);max-width:26rem}
+
+  /* COUNTED, LIKE THE SHOP'S. A row of round numbers on a page asking
+     somebody to trust you with stock is the fastest way to lose them, so
+     these come off the same orders and reviews the storefront counts, and a
+     figure that is zero is not drawn. */
+  .nums{display:flex;gap:.5rem;margin:1.2rem 0 0}
+  .nums div{flex:1;min-width:0;background:rgba(255,255,255,.12);
+    border-radius:.7rem;padding:.7rem .6rem;text-align:center}
+  .nums b{display:block;font-size:1.3rem;font-weight:700;line-height:1.2}
+  .nums span{display:block;font-size:.68rem;color:rgba(255,255,255,.78);margin-top:.1rem}
+
+  h2{margin:2.4rem 0 .9rem;font-size:1.35rem;font-weight:700;letter-spacing:-.01em}
+
+  /* THE SPLIT, AND IT IS THE WHOLE PITCH. Two columns, his long and theirs
+     short, because the length of the two lists is the argument. */
+  /* Top-aligned, not stretched. Stretching made YOU a tall white box with
+     one line at the top of it and an empty half-page under — the asymmetry
+     is the argument, an empty box is just an empty box. */
+  .split{display:flex;gap:.6rem;align-items:flex-start}
+  .split>div{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);
+    border-radius:.9rem;padding:.95rem .9rem 1.05rem}
+  .split h3{margin:0 0 .6rem;font-size:.7rem;letter-spacing:.1em;
+    text-transform:uppercase;font-weight:700;color:var(--mut)}
+  .split ul{margin:0;padding:0;list-style:none}
+  .split li{font-size:.92rem;line-height:1.45;padding:.4rem 0;
+    border-top:1px solid var(--line)}
+  .split li:first-child{border-top:0}
+  .split .you li{color:var(--ink)}
+  .split .me li{color:var(--ink2)}
+
+  /* THE LINE THEY CAME FOR. Money, in their own currency, into their own
+     bank — set as the one large sentence on the page. */
+  .paid{margin:1.6rem 0 0;padding:1.2rem 1.1rem;border-radius:.9rem;
+    background:var(--card);border:1px solid var(--line)}
+  .paid b{display:block;font-size:1.5rem;line-height:1.25;letter-spacing:-.01em}
+  .paid span{display:block;margin-top:.45rem;font-size:.95rem;color:var(--ink2)}
+
+  /* WHAT THEY DO NOT HAVE TO DO, which is the objection they arrived with. */
+  .nots{display:flex;flex-wrap:wrap;gap:.4rem;margin:1rem 0 0}
+  .nots span{font-size:.8rem;padding:.4rem .7rem;border-radius:999px;
+    background:#EFEDE8;color:var(--ink2)}
+
+  .cta{display:block;margin:2.2rem 0 0;padding:1.1rem;border-radius:999px;
+    background:var(--acc);color:#fff;text-align:center;text-decoration:none;
+    font-weight:700;font-size:1.05rem}
+  .foot{margin:1rem 0 0;font-size:.8rem;color:var(--mut);text-align:center;
+    line-height:1.7}
+  .foot a{color:var(--ink2)}
+</style>
+
+<main id="root"></main>
+
+<script type="module">
+import { T, lang, pickLang, langButton } from "/i18n.js";
+
+const el = (t, c, x) => {
+  const n = document.createElement(t);
+  if (c) n.className = c;
+  if (x !== undefined && x !== null) n.textContent = x;
+  return n;
+};
+
+let PROOF = null, SHOP = null;
+
+function draw() {
+  const root = document.getElementById("root");
+  root.textContent = "";
+  document.documentElement.lang = lang() === "zh" ? "zh-CN" : "en";
+  document.title = T("se.title");
+
+  const top = el("div", "top");
+  const bar = el("div", "bar");
+  bar.append(el("span", "mk", T("se.mark")));
+  bar.append(langButton(draw));
+  top.append(bar);
+  top.append(el("h1", null, T("se.h1")));
+  top.append(el("p", null, T("se.sub")));
+
+  /* Zeros are not drawn — a page asking somebody to trust you with stock
+     cannot afford a row of noughts, and cannot afford an invented figure
+     either. Nothing is the honest third option. */
+  const pf = PROOF || {};
+  const rows = [
+    pf.sent ? [String(pf.sent), T("se.nSent")] : null,
+    pf.reviews ? [String(pf.reviews), T("se.nRev")] : null,
+    pf.since ? [pf.since.replace("-", "."), T("se.nSince")] : null,
+  ].filter(Boolean);
+  if (rows.length) {
+    const nums = el("div", "nums");
+    for (const [n, lab] of rows) {
+      const d = el("div");
+      d.append(el("b", null, n), el("span", null, lab));
+      nums.append(d);
+    }
+    top.append(nums);
+  }
+  root.append(top);
+
+  root.append(el("h2", null, T("se.how")));
+  const split = el("div", "split");
+  const mk = (cls, head, keys) => {
+    const box = el("div", cls);
+    box.append(el("h3", null, head));
+    const ul = el("ul");
+    for (const k of keys) ul.append(el("li", null, T(k)));
+    box.append(ul);
+    return box;
+  };
+  split.append(mk("you", T("se.youDo"), ["se.you1"]));
+  split.append(mk("me", T("se.iDo"),
+    ["se.me1", "se.me2", "se.me3", "se.me4", "se.me5"]));
+  root.append(split);
+
+  const paid = el("div", "paid");
+  paid.append(el("b", null, T("se.paid")));
+  paid.append(el("span", null, T("se.paidSub")));
+  root.append(paid);
+
+  const nots = el("div", "nots");
+  for (const k of ["se.no1", "se.no2", "se.no3"]) nots.append(el("span", null, T(k)));
+  root.append(nots);
+
+  /* THE BUTTON IS AN EMAIL, not a form. A form on a page this small is a
+     database, a spam problem and a thing to check; a mailto is a reply in
+     the sender's own outbox, which is where they would rather it was. */
+  const cta = el("a", "cta", T("se.cta"));
+  cta.href = "mailto:" + T("se.mail") + "?subject=" + encodeURIComponent(T("se.subject"));
+  root.append(cta);
+
+  const foot = el("p", "foot");
+  /* The storefront is the proof, so it is linked rather than described —
+     whoever is weighing this up should go and look at it. */
+  const a = el("a", null, T("se.seeShop"));
+  a.href = SHOP ? "/shop/" + encodeURIComponent(SHOP) : "/";
+  foot.append(a);
+  root.append(foot);
+}
+
+(async () => {
+  pickLang("en");
+  /* One fetch, and the page renders without it. The numbers are the best
+     thing on the screen and they are also the thing most likely to be
+     missing — a board with no orders yet, a request that failed. Neither is
+     a reason to show an Australian maker a broken page. */
+  try {
+    const r = await fetch("/api/sell");
+    const j = await r.json();
+    if (j?.ok) { PROOF = j.proof || null; SHOP = j.shop || null; }
+  } catch { /* nothing: the page stands up without it */ }
+  draw();
+})();
+</script>

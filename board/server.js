@@ -495,7 +495,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -10001,6 +10001,30 @@ app.get("/d/:t", (req, res, next) => page("memo.html", req, res, next));
    rule as a payment request. */
 app.get("/shop/:handle/checkout", (req, res, next) => page("checkout.html", req, res, next));
 app.get("/shop/:handle", (req, res, next) => page("shop.html", req, res, next));
+/* THE OTHER SIDE OF THE SAME SHOP. /shop/<handle> faces China and sells the
+   person; /sell faces Australia and sells the route. Two pages because there
+   are two people asking different questions, and one page trying to answer
+   both would ask an Australian maker to scroll past 假一赔十 to find out how
+   they get paid. */
+app.get("/sell", (req, res, next) => page("sell.html", req, res, next));
+app.get("/api/sell", async (req, res) => {
+  const board = await store.load(FILE);
+  /* Whose shop the numbers are. The same handle the shop hostname's root
+     shows — one shop, counted once, so the two pages can never disagree
+     about how many parcels went out. */
+  const handle = String(process.env.BOARD_SHOP_HANDLE || "").trim();
+  const mine = board.orders.filter((o) => (!handle || o.shop === handle) && !o.off);
+  const ids = new Set(mine.map((o) => o.id));
+  const revs = board.reviews.filter((r) => ids.has(r.order) || r.src);
+  const first = mine.map((o) => o.at).sort()[0] || "";
+  res.set("Cache-Control", "no-cache");
+  res.json({
+    ok: true,
+    shop: handle || (board.people.find((p) => p.shop?.name)?.handle || ""),
+    proof: { sent: mine.filter((o) => o.got).length, reviews: revs.length,
+      since: first.slice(0, 7) },
+  });
+});
 app.get("/order/:id", (req, res, next) => page("order.html", req, res, next));
 
 /* ===========================================================================
