@@ -935,6 +935,38 @@ airwallex-keys: ## Keys in and proved, in one line: make airwallex-keys CLIENT_I
 	  $(if $(filter command line,$(origin WHO)),--who "$(WHO)",) \
 	  $(if $(filter command line,$(origin LIVE)),--live,)
 
+wallet-why: ## Why a code will not draw, in the provider's own words: make wallet-why
+	@# THE QUESTION A DEAD PAY BUTTON ASKS, ANSWERED BY THE THING THAT KNOWS.
+	@# A payer pressing WeChat Pay and being told "WeChat Pay would not take
+	@# this one" is being told the truth and nothing useful: the page only
+	@# knows the server said no. The reason is one layer down, in the
+	@# provider's own answer, and until now reading it meant sshing in,
+	@# finding the right env var names and running a check script by hand —
+	@# four steps to answer "why is it broken".
+	@#
+	@# NO KEYS ARE PASSED. That is the point: it runs against whatever is in
+	@# .env on this box right now, which is the only configuration whose
+	@# health is worth knowing. Read-only — it logs in and reads a rate.
+	@# Nothing it does moves money or changes a setting.
+	@W=$$(grep -E '^TOMSCODING_BOARD_WALLET=' .env | tail -1 | cut -d= -f2- | tr -d '"'); \
+	  if [ -z "$$W" ]; then \
+	    echo "The wallet is switched off on this box (TOMSCODING_BOARD_WALLET is empty)."; \
+	    echo "Nothing will draw a code until it names a provider: test, airwallex or qfpay."; \
+	    exit 0; \
+	  fi; \
+	  echo "provider: $$W"; echo; \
+	  case "$$W" in \
+	    airwallex) $(COMPOSE) run --rm --no-deps -T --entrypoint node board \
+	        lib/wallet/providers/airwallex.check.mjs ;; \
+	    qfpay) $(COMPOSE) run --rm --no-deps -T --entrypoint node board \
+	        lib/wallet/providers/qfpay.check.mjs ;; \
+	    test) echo "The stand-in provider. It draws a code, but it is not a real one:"; \
+	        echo "WeChat will scan it and find no payment behind it, and the row goes"; \
+	        echo "green after six seconds on its own. Fine for showing the screens."; \
+	        echo "Real keys through: make airwallex-keys CLIENT_ID=... API_KEY=..." ;; \
+	    *) echo "TOMSCODING_BOARD_WALLET is \"$$W\", which is not a provider this board has." ;; \
+	  esac
+
 payout-try: ## Can this Airwallex account pay anybody: make payout-try
 	@# THE QUESTION THE SUBCONTRACTOR HALF RESTS ON, asked before a day is
 	@# spent building on it. Transfers and beneficiaries are activated
