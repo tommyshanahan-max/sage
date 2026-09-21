@@ -104,6 +104,14 @@ hidden until it exists), and the 微店 review import.
 Its payments are **not** on Airwallex and must not be until the conversation
 above has happened. `aozhoubaba.com` is its domain.
 
+**The shop front is not on that name yet (21 Sep).** `aozhoubaba.com` resolves
+to `207.207.210.23/36/50` — not to `45.77.8.166`, where `thexchange.app` and
+`crowdfundme.app` point. Until the A record moves, Caddy will ask Let's Encrypt
+for a certificate it cannot get, silently and for ever. One line does the rest
+once it has: `make shop-open WHO="Tom" NAME="澳洲爸爸汤姆"` checks the handle,
+the DNS and the site blocks before it writes anything, then names the shop and
+prints the address.
+
 ## Mail
 
 | | |
