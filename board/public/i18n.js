@@ -5064,6 +5064,28 @@ export const STRINGS = {
      the payer is already on the page and has no use for a code pointing at
      it. Two short lines, because this is a thing to hold up rather than a
      thing to read. */
+  /* THE MOCK WALLET, at /pay/<id>/wallet, behind BOARD_DEALIO_DEMO=1.
+     IT SAYS WHAT IT IS AND IT SAYS IT FIRST. A screen that looks like paying
+     and does not take money has to announce that at the top, where the eye
+     lands, and again on the button — not in a footnote somebody scrolls
+     past. Same rule as the line in CLAUDE.md about never claiming to be
+     encrypted: the product does not say untrue things about money.
+     The Chinese leads, because the payer is in China. */
+  "wd.flag":           ["DEMO · no money moves", "演示 · 不会真实扣款"],
+  "wd.wallet.wechat":  ["WeChat Pay", "微信支付"],
+  "wd.wallet.alipay":  ["Alipay", "支付宝"],
+  "wd.paying":         ["Paying", "付款金额"],
+  "wd.to":             ["to {who}", "付给 {who}"],
+  "wd.merchant":       ["Merchant", "收款方"],
+  "wd.method":         ["Pay with", "付款方式"],
+  "wd.balance":        ["Balance", "零钱"],
+  "wd.pay":            ["Pay (demo)", "确认付款（演示）"],
+  "wd.paying2":        ["Paying…", "付款中…"],
+  "wd.fine":           ["A demonstration of the payer's screen. Nothing is charged and no money moves.",
+                        "这是付款流程的演示页面，不会扣款，也没有真实资金。"],
+  "wd.done":           ["Paid", "付款成功"],
+  "wd.doneWhy":        ["{who} has been told. Nothing was charged.", "已通知 {who}。没有真实扣款。"],
+  "wd.gone":           ["That request is no longer here.", "这笔收款已经不在了。"],
   "rq.showCode":       ["Show this", "把这个给对方扫"],
   "rq.showCodeWhy":    ["Scanning it opens this page. Long-press to save or send it.",
                         "扫一扫就会打开这个页面。长按可保存或转发。"],

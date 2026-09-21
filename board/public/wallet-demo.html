@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#EDEDED">
+<title>Dealio</title>
+<style>
+  /* A WALLET CHECKOUT, DRAWN RATHER THAN BORROWED.
+     Deliberately NOT a copy of WeChat's or Alipay's own screen. A pixel copy
+     of somebody else's payment sheet, on a page that takes no money, is a
+     forgery whatever it is labelled — the same rule the decks follow about
+     not screenshotting a competitor's product. So this is the shape everyone
+     recognises (amount, who, one button) in our own colours, with the
+     wallet named rather than impersonated.
+     AND IT SAYS DEMO TWICE, at the top where the eye lands and on the button
+     itself, in both languages. */
+  :root{
+    --paper:#EDEDED; --card:#FFFFFF; --ink:#15181D; --dim:#8A8F98; --line:#E3E5E9;
+    --wx:#07C160; --ali:#1677FF; --warn:#B8661A; --warn-soft:#FFF4DB;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 var(--sans);
+    -webkit-font-smoothing:antialiased;min-height:100dvh;display:flex;flex-direction:column}
+  .flag{background:var(--warn-soft);color:var(--warn);font-size:.82rem;font-weight:650;
+    text-align:center;padding:calc(.6rem + env(safe-area-inset-top,0)) 1rem .6rem;
+    border-bottom:1px solid #EFDFC2}
+  main{flex:1;display:flex;flex-direction:column;align-items:center;
+    padding:2.2rem 1.2rem calc(1.4rem + env(safe-area-inset-bottom,0))}
+  .who{display:flex;align-items:center;gap:.55rem;color:var(--dim);font-size:.9rem;margin:0 0 1.9rem}
+  .who i{width:.7rem;height:.7rem;border-radius:50%;background:var(--wx)}
+  body[data-w="alipay"] .who i{background:var(--ali)}
+  .lab{color:var(--dim);font-size:.9rem;margin:0 0 .4rem}
+  .amt{font:600 3rem/1 var(--sans);letter-spacing:-.02em;margin:0 0 .3rem;
+    font-variant-numeric:tabular-nums}
+  .to{color:var(--dim);font-size:.95rem;margin:0 0 2.4rem;text-align:center}
+  .card{width:100%;max-width:26rem;background:var(--card);border:1px solid var(--line);
+    border-radius:1rem;padding:.2rem .95rem;margin:0 0 1.6rem}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:1rem;
+    padding:.85rem 0;border-bottom:1px solid var(--line);font-size:.95rem}
+  .row:last-child{border-bottom:0}
+  .row span:first-child{color:var(--dim)}
+  .go{width:100%;max-width:26rem;border:0;border-radius:.6rem;padding:1rem;
+    background:var(--wx);color:#fff;font:650 1.05rem/1 var(--sans);cursor:pointer}
+  body[data-w="alipay"] .go{background:var(--ali)}
+  .go:disabled{opacity:.5}
+  .fine{color:var(--dim);font-size:.82rem;margin:1.1rem 0 0;text-align:center;max-width:22rem}
+  .done{text-align:center;padding:2rem 0}
+  .done b{display:block;font-size:1.5rem;margin:0 0 .5rem}
+  .done span{color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="flag" id="flag"></div>
+<main id="main"></main>
+<script type="module">
+import { T, lang, setLang, pickLang } from "/i18n.js";
+setLang(pickLang("zh"));   /* the payer is in China; default to their language */
+
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; };
+const ID = (location.pathname.match(/\/pay\/([A-Za-z0-9]+)\/wallet/) || [])[1] || "";
+const WAY = new URL(location.href).searchParams.get("w") === "alipay" ? "alipay" : "wechat";
+document.body.dataset.w = WAY;
+
+const r = await fetch("/api/request/" + ID, { headers: { "Accept": "application/json" } });
+const j = await r.json().catch(() => null);
+const q = j?.request || null;
+
+$("flag").textContent = T("wd.flag");
+document.title = T("wd.wallet." + WAY);
+
+function draw() {
+  const m = $("main");
+  m.textContent = "";
+  const who = el("p", "who");
+  who.append(el("i"), el("span", null, T("wd.wallet." + WAY)));
+  m.append(who);
+  m.append(el("p", "lab", T("wd.paying")));
+  /* `amount` ALREADY CARRIES ITS SYMBOL — "¥240", not 240. The first draft
+     prefixed one anyway and drew ¥¥240, which is the kind of thing a payer
+     reads as a broken page rather than a typo. */
+  m.append(el("p", "amt", String(q?.amount ?? "")));
+  m.append(el("p", "to", T("wd.to", { who: q?.from || "" }) + (q?.what ? " · " + q.what : "")));
+  const card = el("div", "card");
+  const row = (a, b) => { const d = el("div", "row"); d.append(el("span", null, a), el("span", null, b)); return d; };
+  card.append(row(T("wd.merchant"), "Dealio"));
+  card.append(row(T("wd.method"), T("wd.balance")));
+  m.append(card);
+  const b = el("button", "go", T("wd.pay"));
+  b.type = "button";
+  b.addEventListener("click", async () => {
+    b.disabled = true;
+    b.textContent = T("wd.paying2");
+    try {
+      const res = await fetch("/api/request/" + ID + "/wallet-paid", { method: "POST" });
+      if (!res.ok) throw new Error("no");
+      paid();
+    } catch { b.disabled = false; b.textContent = T("wd.pay"); }
+  });
+  m.append(b);
+  m.append(el("p", "fine", T("wd.fine")));
+}
+
+function paid() {
+  const m = $("main");
+  m.textContent = "";
+  const d = el("div", "done");
+  d.append(el("b", null, T("wd.done")), el("span", null, T("wd.doneWhy", { who: q?.from || "" })));
+  m.append(d);
+}
+
+if (!q || j?.error) {
+  $("main").append(el("p", "fine", T("wd.gone")));
+} else if (q.state === "paid") {
+  paid();
+} else {
+  draw();
+}
+</script>
+</body>
+</html>

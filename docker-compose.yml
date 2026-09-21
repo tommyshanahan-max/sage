@@ -896,6 +896,9 @@ services:
       # asked for. The same container answers both names; only what "/" means
       # differs. See docker/sites/dealio.caddy.
       BOARD_DEALIO_DOMAIN: ${TOMSCODING_DEALIO_DOMAIN:-}
+      # A code drawn by us, pointing at our own checkout. No provider needed.
+      # NEVER set on a box taking real money — see the note in server.js.
+      BOARD_DEALIO_DEMO: ${TOMSCODING_DEALIO_DEMO:-}
       # Without this the admin routes refuse everything, which is the safe
       # failure: a board nobody can moderate is worse than one nobody can post
       # to.

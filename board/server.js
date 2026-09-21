@@ -10135,6 +10135,44 @@ app.post("/api/request/hear", notesOff,
  * whole secret — anybody holding it can open /pay/<id> and see the same
  * thing. A 404 for an unknown or switched-off request, because a code that
  * scans to a dead page is worse than no code. */
+/* THE MOCK WALLET, WHICH IS WHERE OUR OWN CODE GOES.
+   A page that looks like paying, because the point is to show somebody the
+   shape of it — the amount, who is being paid, one button. It says DEMO on
+   it in both languages and it says so where the payer looks, not in a
+   footnote. Off unless BOARD_DEALIO_DEMO=1. */
+app.get("/pay/:id/wallet", (req, res, next) => {
+  if (!DEALIO_DEMO) return next();
+  return page("wallet-demo.html", req, res, next);
+});
+
+/* AND THE BUTTON ON IT. Marks the request paid the same way settleIfPaid
+   does, so the asker's list and the payer's own page both turn green from
+   the ordinary /check poll with nothing knowing this was not a provider.
+   GUARDED THREE WAYS: the demo has to be on, the row has to have been sent
+   down the demo rail (pay.ref starts "demo:"), and an already-paid row is
+   left alone — a link scrolled back to must not settle twice. */
+app.post("/api/request/:id/wallet-paid", express.json({ limit: "1kb" }), async (req, res) => {
+  if (!DEALIO_DEMO) return res.status(404).json({ error: "off" });
+  const id = request.cleanId(req.params.id);
+  if (!id) return res.status(404).json({ error: "gone" });
+  const out = await change((b) => {
+    const row = b.requests.find((x) => x.id === id);
+    if (!row || row.off) return { error: "gone" };
+    if (!String(row?.pay?.ref || "").startsWith("demo:")) return { error: "no" };
+    if (request.requestState(row) === "paid") return { ok: true, state: "paid" };
+    row.said = Array.isArray(row.said) ? row.said : [];
+    const at = new Date().toISOString();
+    /* The same two halves settleIfPaid writes, and `auto` for the same
+       reason: nobody typed a handle, so nobody is credited with saying
+       anything they did not say. */
+    if (!row.said.some((x) => x.kind === "claimed")) row.said.push({ kind: "claimed", at, auto: true });
+    if (!row.said.some((x) => x.kind === "confirmed")) row.said.push({ kind: "confirmed", at, auto: true });
+    return { ok: true, state: "paid" };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true, state: "paid" });
+});
+
 app.get("/pay/:file", async (req, res, next) => {
   const m = /^([A-Za-z0-9]{1,64})\.png$/.exec(String(req.params.file || ""));
   if (!m) return next();
@@ -10422,6 +10460,26 @@ app.post("/api/request/:id/landed", express.json({ limit: "1kb" }), async (req, 
  * means no request anywhere reaches the QR branch at all. */
 const DEALIO_OWNER = String(process.env.BOARD_DEALIO_OWNER || "").trim().toLowerCase();
 
+/* A CODE THAT GOES SOMEWHERE, WITH NO PROVIDER BEHIND IT.
+ *
+ * Stripe closed on 20 September and Airwallex blocked this box at their edge
+ * on the 21st — not a key problem, a door problem: the same request with no
+ * credentials at all comes back 403 and an HTML page. So nothing can draw a
+ * real payment code here, and the whole chain after it — scan, pay, the row
+ * going green — cannot be shown to anybody.
+ *
+ * This draws the code ourselves, with our own encoder, pointing at our own
+ * checkout. The payer scans, lands on a page that looks like paying, taps,
+ * and the request settles exactly as it would have. Everything except the
+ * money is real.
+ *
+ * IT IS OFF UNLESS ASKED FOR, and it says what it is on every screen it
+ * touches. A fake payment that does not announce itself is a lie told to
+ * somebody about their own money, and the same rule applies here as to the
+ * line in CLAUDE.md about not claiming to be encrypted. Never set on a box
+ * taking real money. */
+const DEALIO_DEMO = process.env.BOARD_DEALIO_DEMO === "1";
+
 /* WHAT POSTAGE COSTS AND WHAT A STOREFRONT EARNS. One flat postage per
    order, because that is how a parcel to China is actually charged and a
    calculated one is a promise about a courier's pricing nobody here can
@@ -10457,6 +10515,10 @@ function dealioOwns(board, q) {
  *  promised out, and it is in yuan — which is what these two wallets take. */
 function dealioWays(board, q) {
   const p = dealioQr();
+  /* THE DEMO RAIL NEEDS NO PROVIDER, which is the point of it — it is for the
+     board that has none. Same two wallets, same screens, and a code drawn
+     here rather than fetched from anybody. */
+  if (DEALIO_DEMO && q && (q.way || "in") === "in" && dealioOwns(board, q)) return ["wechat", "alipay"];
   if (!q || !p || !q.cur) return [];
   if ((q.way || "in") !== "in" || !dealioOwns(board, q)) return [];
   /* THE PAYER ALWAYS SENDS YUAN. An Australian quotes in Australian
@@ -10557,7 +10619,10 @@ async function settleIfPaid(q) {
 app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res) => {
   /* The QR rails are a third way to be configured, and on the box that has
      Airwallex keys and no Stripe they are the only one. */
-  if (!stripe.configured() && !PAY_DEMO && !dealioQr()) return res.status(400).json({ error: "off" });
+  /* FOUR WAYS TO BE CONFIGURED NOW. The demo rail is the one that needs
+     nothing at all, which is exactly the board this is for — no Stripe, no
+     wallet provider, and a chain that still has to be showable. */
+  if (!stripe.configured() && !PAY_DEMO && !dealioQr() && !DEALIO_DEMO) return res.status(400).json({ error: "off" });
   const id = request.cleanId(req.params.id);
   const method = String(req.body?.method || "card");
   if (!id) return res.status(404).json({ error: "gone" });
@@ -10598,6 +10663,27 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
    * payer reaches this server: they long-press a code and pay inside the
    * wallet they already had open, which is the one gesture this whole
    * product is built around. */
+  /* OUR OWN CODE, WHEN THERE IS NOBODY ELSE'S TO DRAW. Encodes an ordinary
+     https address on this board — the mock wallet at /pay/<id>/wallet — so a
+     phone scanning it lands on a page instead of on nothing. Ahead of the
+     provider branch because when the demo is on it is the whole rail. */
+  if (DEALIO_DEMO && dealioWays(board, q).includes(method)) {
+    const url = payLink(req, "/pay/" + q.id + "/wallet?w=" + method);
+    const drawn = qrBits(url);
+    const png = await qrPng(url);
+    await change((b) => {
+      const row = b.requests.find((x) => x.id === id);
+      if (row) row.pay = { ref: "demo:" + method, how: method, at: new Date().toISOString(), cny: "" };
+      return { ok: true };
+    });
+    return res.json({
+      ok: true, how: method, demoRail: true,
+      qr: { size: drawn.size, bits: drawn.bits, png },
+      amount: store.fromMinor(store.toMinor(q.amount, q.cur), q.cur),
+      orig: "",
+    });
+  }
+
   const qrProvider = dealioWays(board, q).includes(method) ? dealioQr() : null;
   if (qrProvider) {
     const minor = store.toMinor(q.amount, q.cur);
