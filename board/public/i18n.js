@@ -5071,6 +5071,26 @@ export const STRINGS = {
      past. Same rule as the line in CLAUDE.md about never claiming to be
      encrypted: the product does not say untrue things about money.
      The Chinese leads, because the payer is in China. */
+  /* THE DEMO'S ASKING PAGE at /demo, behind BOARD_DEALIO_DEMO=1. Says what
+     it is at the top, like the mock wallet does, for the same reason. */
+  "da.flag":           ["DEMO · no money moves", "演示 · 不会真实扣款"],
+  "da.head":           ["Ask to be paid", "发起收款"],
+  "da.lead":           ["Type an amount. Send the link. That is the whole thing.",
+                        "输入金额，把链接发过去。就这么简单。"],
+  "da.amount":         ["Amount in yuan", "收款金额（人民币）"],
+  "da.forEg":          ["What is it for? e.g. Second draft", "款项说明，例如：第二稿"],
+  "da.go":             ["Make the link", "生成链接"],
+  "da.going":          ["Making…", "生成中…"],
+  "da.hint":           ["They need no account and no app.", "对方不用注册，也不用装任何软件。"],
+  "da.ready":          ["Send this", "把这个发过去"],
+  "da.readyWhy":       ["Paste it into WeChat, or let them scan the code.",
+                        "粘贴到微信里，或者让对方扫码。"],
+  "da.code":           ["The code for this request", "这笔收款的二维码"],
+  "da.copy":           ["Copy the link", "复制链接"],
+  "da.copied":         ["Copied", "已复制"],
+  "da.copyNo":         ["Select it above", "请手动选择上面的链接"],
+  "da.open":           ["Open it", "打开看看"],
+  "da.again":          ["Ask for another", "再发一笔"],
   "wd.flag":           ["DEMO · no money moves", "演示 · 不会真实扣款"],
   "wd.wallet.wechat":  ["WeChat Pay", "微信支付"],
   "wd.wallet.alipay":  ["Alipay", "支付宝"],

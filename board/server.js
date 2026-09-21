@@ -495,7 +495,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
  * OPEN_PATHS is a prefix match and one loose letter would open every path on
  * this board beginning with it.
  */
-const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.html|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -10154,10 +10154,30 @@ app.post("/api/request/hear", notesOff,
  * OFF WITH THE REST OF IT. No BOARD_DEALIO_DEMO, no route — it falls through
  * to whatever else claims the path, which today is a 404. */
 const DEMO_SEEN = [];
-app.get("/demo", async (req, res, next) => {
+
+/* THE DEMO OPENS ON THE ASKING SIDE, WHICH IS THE SIDE WE SELL TO.
+   It used to mint a request and drop the visitor straight onto the payer's
+   page — which shows the wrong half. Whoever is being shown this is a sole
+   trader, or somebody deciding whether sole traders would use it, and what
+   they need to see is: type an amount, get a link, send it. The payer's
+   screen is what happens next, and it is one tap away from here. */
+app.get("/demo", (req, res, next) => {
   if (!DEALIO_DEMO || !DEALIO_OWNER) return next();
-  const amount = String(req.query.amount || "¥240").trim().slice(0, 24);
-  const what = String(req.query.for || req.query.what || "Second draft").trim().slice(0, 60);
+  res.set("Cache-Control", "no-store");
+  return page("demo-ask.html", req, res, next);
+});
+
+/* WHAT THE PAD POSTS TO. Mints under the demo owner server-side, so nothing
+   about anybody's identity is handed to a browser — the alternative was
+   giving every visitor a device string that acts as a real member, which is
+   not a demo, it is an account.
+   Swept at twenty, same as before: a page shown a hundred times must not
+   leave a hundred rows behind it. */
+app.post("/api/demo/ask", express.json({ limit: "1kb" }), async (req, res) => {
+  if (!DEALIO_DEMO || !DEALIO_OWNER) return res.status(404).json({ error: "off" });
+  const amount = String(req.body?.amount || "").trim().slice(0, 24);
+  const what = String(req.body?.what || "").trim().slice(0, 60);
+  if (!amount) return res.status(400).json({ error: "amount" });
   const out = await change((board) => {
     const mine = board.people.find((q) => String(q.handle || "").trim().toLowerCase() === DEALIO_OWNER);
     if (!mine) return { error: "owner" };
@@ -10168,22 +10188,17 @@ app.get("/demo", async (req, res, next) => {
     if (!q) return { error: "bad" };
     q.demo = true;
     board.requests.push(q);
-    /* SWEPT, SO A DEMO LINK SHOWN A HUNDRED TIMES DOES NOT LEAVE A HUNDRED
-       ROWS IN THE ASKER'S LIST FOREVER. The last twenty are kept — enough to
-       still be looking at one from ten minutes ago, few enough that the list
-       is the real requests plus a handful. */
     DEMO_SEEN.push(q.id);
     while (DEMO_SEEN.length > 20) {
       const old = DEMO_SEEN.shift();
       const at = board.requests.findIndex((x) => x.id === old);
       if (at >= 0) board.requests.splice(at, 1);
     }
-    return { ok: true, id: q.id };
+    return { ok: true, id: q.id, from: mine.handle };
   });
-  if (out?.error) return res.status(500).send(out.error === "owner"
-    ? "BOARD_DEALIO_OWNER names nobody on this board." : "Could not make a demo request.");
-  res.set("Cache-Control", "no-store");
-  res.redirect(302, "/pay/" + out.id + (req.query.lang ? "?lang=" + encodeURIComponent(String(req.query.lang)) : ""));
+  if (out?.error) return res.status(400).json(out);
+  const url = payLink(req, "/pay/" + out.id);
+  res.json({ ok: true, id: out.id, from: out.from, url, png: await qrPng(url) });
 });
 
 /* AND THE SAME ADDRESS AS A CODE, which is the one to print or put in a
