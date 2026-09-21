@@ -9,6 +9,7 @@
 import { openLedger } from "./ledger.js";
 import { createMockProvider } from "./providers/mock.js";
 import { createAirwallexProvider } from "./providers/airwallex.js";
+import { createQfpayProvider } from "./providers/qfpay.js";
 import { createWalletService } from "./service.js";
 import { createPasskeys } from "./passkeys.js";
 import { createWalletRouter, createWebhookRouter } from "./routes.js";
@@ -18,9 +19,18 @@ export function createWallet({ dir, env = process.env, loadPeople, hashOf }) {
   const mode = String(env.BOARD_WALLET || "").toLowerCase();
   const off = express.Router();
   off.use(/^\/(api\/)?wallet(\/|$)/, (req, res) => res.status(404).json({ error: "wallet_off" }));
-  if (!["test", "airwallex"].includes(mode)) return { on: false, routes: off, webhooks: express.Router(), mode: "off" };
+  if (!["test", "airwallex", "qfpay"].includes(mode)) return { on: false, routes: off, webhooks: express.Router(), mode: "off" };
 
-  const provider = mode === "airwallex"
+  /* THREE NAMES NOW. `qfpay` acquires the two wallets and settles to the
+     merchant's own bank; it cannot pay anybody else and says so on every call
+     that would. See the header of providers/qfpay.js for why it exists. */
+  const provider = mode === "qfpay"
+    ? createQfpayProvider({
+      appCode: env.BOARD_WALLET_QFPAY_APP_CODE, appKey: env.BOARD_WALLET_QFPAY_APP_KEY,
+      webhookSecret: env.BOARD_WALLET_QFPAY_WEBHOOK_SECRET,
+      sandbox: env.BOARD_WALLET_QFPAY_SANDBOX !== "0", base: env.BOARD_WALLET_QFPAY_BASE,
+    })
+    : mode === "airwallex"
     ? createAirwallexProvider({
       clientId: env.BOARD_WALLET_AIRWALLEX_CLIENT_ID, apiKey: env.BOARD_WALLET_AIRWALLEX_API_KEY,
       webhookSecret: env.BOARD_WALLET_AIRWALLEX_WEBHOOK_SECRET, sandbox: env.BOARD_WALLET_AIRWALLEX_SANDBOX !== "0",

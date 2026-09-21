@@ -15,7 +15,8 @@ Profile page, a money button and payment cards in rooms, and a full wallet at
 | `board/lib/wallet/passkeys.js` | Face ID / phone passcode on every money-moving action, bound to that action |
 | `board/lib/wallet/routes.js` | The HTTP API; members only; money routes need a passkey signature |
 | `board/lib/wallet/providers/mock.js` | The stand-in: hand-off pages, bank approval, CNY review, test rates |
-| `board/lib/wallet/providers/airwallex.js` | Airwallex, written from the docs, **untested** |
+| `board/lib/wallet/providers/airwallex.js` | Airwallex. Exercised against their sandbox; the live account was refused 21 Sep 2026 |
+| `board/lib/wallet/providers/qfpay.js` | QFPay. Acquiring only — WeChat Pay and Alipay in, settled to the merchant's own bank |
 | `board/lib/wallet/index.js` | Assembly; mounted from `server.js` |
 | `board/public/wallet.html` | Every wallet screen |
 | `board/public/wallet-card.js` | The Profile card, and money in rooms (`person.html`, `notes.html`) |
@@ -28,7 +29,10 @@ Off unless `BOARD_WALLET` is set.
 |---|---|
 | `BOARD_WALLET=test` | The stand-in provider. Pages say "In development · test money". |
 | `BOARD_WALLET_TEST_CONFIRM=1` | With `test` only: allow a test confirmation where a browser can't make passkeys. Ignored with a real provider. |
-| `BOARD_WALLET=airwallex` | Airwallex. Needs the three keys below. Not ready — see "What's not done". |
+| `BOARD_WALLET=airwallex` | Airwallex. Needs the three keys below. **Dead: activation refused 21 Sep 2026.** |
+| `BOARD_WALLET=qfpay` | QFPay. WeChat Pay and Alipay in, settled to the merchant's own bank. Acquiring only — it refuses every payout call by name. |
+| `BOARD_WALLET_QFPAY_APP_CODE`, `_APP_KEY` | From QFPay. Secrets: `.env` on the box only. |
+| `BOARD_WALLET_QFPAY_SANDBOX` | `0` for production. Anything else is the test host. |
 | `BOARD_WALLET_AIRWALLEX_CLIENT_ID`, `_API_KEY` | From Airwallex. Secrets: `.env` on the box only, and `make airwallex-keys` puts them there without a text editor. |
 | `BOARD_WALLET_AIRWALLEX_WEBHOOK_SECRET` | The notification URL's secret. Webhook URL: `/api/wallet/webhooks/provider`. |
 | `BOARD_WALLET_AIRWALLEX_SANDBOX` | `0` for production. Anything else is the sandbox. |
@@ -82,8 +86,12 @@ copy and re-run the sync; the copies say so at the top. Check it with
 
 ## What's not done, and what needs Tom
 
-1. **Airwallex account and sandbox keys.** Then run
-   `node lib/wallet/providers/airwallex.check.mjs` and fix what it finds.
+0. **A merchant account that exists.** Stripe closed on 20 Sep 2026 and
+   Airwallex refused activation on the 21st. QFPay is the adapter written
+   against that gap: `node lib/wallet/providers/qfpay.check.mjs` signs their
+   own worked example before it needs a key, so the half that can be wrong on
+   this machine is checked on this machine.
+1. ~~Airwallex account and sandbox keys.~~ Done, and then undone by them.
 2. **Individual identity checks.** Airwallex's hosted and embedded checks are for
    businesses only. Choose: submit individual identity through Airwallex's
    Accounts API, or use a separate identity provider (Stripe Identity, Sumsub).

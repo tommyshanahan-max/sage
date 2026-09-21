@@ -1025,6 +1025,16 @@ services:
       # Empty means the host SANDBOX picks. Set it when that host turns out
       # to be the wrong one — see airwallexBase in providers/airwallex.js.
       BOARD_WALLET_AIRWALLEX_BASE: ${TOMSCODING_BOARD_WALLET_AIRWALLEX_BASE:-}
+      # QFPay — the acquirer after Stripe closed and Airwallex refused. It
+      # takes WeChat Pay and Alipay and settles to the merchant's own bank;
+      # it cannot pay a third party and every call that would says so.
+      BOARD_WALLET_QFPAY_APP_CODE: ${TOMSCODING_BOARD_WALLET_QFPAY_APP_CODE:-}
+      BOARD_WALLET_QFPAY_APP_KEY: ${TOMSCODING_BOARD_WALLET_QFPAY_APP_KEY:-}
+      BOARD_WALLET_QFPAY_WEBHOOK_SECRET: ${TOMSCODING_BOARD_WALLET_QFPAY_WEBHOOK_SECRET:-}
+      BOARD_WALLET_QFPAY_SANDBOX: ${TOMSCODING_BOARD_WALLET_QFPAY_SANDBOX:-1}
+      # Empty means the host SANDBOX picks. Set it when that turns out to be
+      # the wrong name — see qfpayBase in providers/qfpay.js.
+      BOARD_WALLET_QFPAY_BASE: ${TOMSCODING_BOARD_WALLET_QFPAY_BASE:-}
       BOARD_WALLET_PUBLIC_ORIGIN: ${TOMSCODING_BOARD_WALLET_PUBLIC_ORIGIN:-}
       # WHOSE REQUESTS MAY BE PAID BY WECHAT OR ALIPAY CODE, as a board handle.
       # Every payment those keys confirm lands in the one Airwallex account
