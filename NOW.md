@@ -71,6 +71,41 @@ Money **out** to other people is not built and refuses on purpose: local CNY
 payouts are documented only for goods trade with declarant and order data. See
 note 2 at the top of `board/lib/wallet/providers/airwallex.js`.
 
+## The way through, found 21 Sep, and it is Stripe
+
+**Stripe does WeChat Pay and Alipay for Australian merchants**, switched on
+from the dashboard, settling AUD to an Australian bank. The collection
+problem this box spent a week on was never a technology problem.
+
+**Dealio was already built for Stripe Connect.** `board/DEALIO.md`: Stripe is
+merchant of record on a destination charge, `application_fee_amount`, and the
+receiving side needs a Stripe account. Airwallex was the workaround after the
+decline, not the plan.
+
+**In Connect, Stripe is the regulated party.** So a sponsor does not need a
+payment licence at all — the thing a sponsor has to have is a company with a
+Stripe account and trading history. That is a far easier yes than the
+licensing question, and it is the question to ask.
+
+**One platform, many connected accounts, no entity per country.** A tutor in
+Melbourne gets AUD, an agent in Denver gets USD, a designer in Berlin gets
+EUR, each into their own bank, each onboarding themselves. The A$36bn slide
+is this, not aspiration. Confirm Stripe's cross-border payout country pairs
+before committing.
+
+A NEW COMPANY DOES NOT SOLVE IT. Trading history cannot be transferred,
+bought or borrowed — it belongs to the account that earned it. A fresh
+Luxembourg SARL is a fresh applicant in a high-risk category and gets the
+same decline, €12,000 later. Either use a sponsor's existing account, or
+trade the shop as ordinary retail for six to twelve months and build a record
+of our own.
+
+**Waiting on:** Daniel and Lee at AGT (Luxembourg) — emailed 21 Sep. The
+question that matters is not "do you hold a licence" but "does your company
+have a Stripe account with trading history, and would you run a Connect
+platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
+and contains no payments authorisation.
+
 ## The app
 
 **Submitted and in Apple's queue, 21 Sep.** `make app-state` reads
