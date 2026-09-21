@@ -19,7 +19,15 @@ through, and add the date to anything that changes.
 | **Airwallex — the goods business** | Not disclosed yet. Deliberate. To be raised with Ian **before** anything from the shop runs through the account. |
 | **Stripe** | Closed the account, September 2026. A hard no. Not a route back. |
 
-## Dealio — the payment half
+## Dealio — the payment half, on `paydealio.com`
+
+Its own hostname, same board container behind it (`docker/sites/dealio.caddy`),
+and its own words on the door — a payer arriving to get paid has never heard of
+the board. Payment links are `paydealio.com/pay/…`. Inert unless
+`TOMSCODING_DEALIO_DOMAIN` is set in `.env` on the box.
+
+
+### The chain
 
 The whole chain was **watched finish on 20 September 2026**: request minted
 from a terminal, link opened in WeChat on a phone, PAY, WeChat Pay, a real
