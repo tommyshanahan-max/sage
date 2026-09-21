@@ -26,10 +26,17 @@
     --serif:"Instrument Serif",Georgia,"Songti SC",serif;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB",Helvetica,Arial,sans-serif;
     --shadow:0 1px 2px rgba(18,22,31,.04), 0 12px 32px -8px rgba(18,22,31,.14);
+    /* THE NIGHT SIDE. Two slides wear it — the cover and the solution —
+       and that is the whole point of it: the deck turns black exactly
+       twice, on the product and on the answer, so the second one is read
+       as a return to the first. --gold is --money lifted off black, where
+       #B0621A goes muddy. */
+    --night:#0C1017; --night-ink:#F7F9FC; --night-2:#AEB9C9;
+    --night-dim:#78849A; --night-line:#242D3B; --gold:#E3963F; --azure:#6E90F5;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{margin:0;background:var(--paper);color:var(--ink);
+  body{margin:0;background:var(--paper);color:var(--ink);overflow-x:hidden;
     font:17px/1.55 var(--sans);-webkit-font-smoothing:antialiased;
     scroll-snap-type:y proximity}
   .deck{max-width:32rem;margin:0 auto;padding:0 1.5rem}
@@ -323,6 +330,60 @@
   .today b{display:block;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;
     color:var(--dim);font-weight:700;margin-bottom:.4rem}
   .today span{color:var(--ink-2);font-size:.98rem}
+
+  /* A DARK SLIDE, FULL BLEED.
+     Tom read the solution slide and did not know it was the solution — it
+     looked like every other slide, because it was. A heading cannot fix
+     that; the eye sorts by ground colour long before it reads a word. So
+     the ground changes, and it changes on exactly two slides.
+     WIDTH:100VW AND NOT NEGATIVE MARGINS. The deck is a 32rem column with
+     its own padding; margin:0 -1.5rem bleeds to the column's edge, not the
+     screen's, which on a laptop is a black stripe down the middle of a
+     grey page. This escapes the column entirely and then pads itself back
+     to the same measure, so the text stays in line with every other slide
+     and only the ground is wider. body has overflow-x:hidden because 100vw
+     counts the scrollbar and would otherwise buy a sideways scroll. */
+  section.dark{width:100vw;margin-left:calc(50% - 50vw);
+    background:var(--night);color:var(--night-ink);
+    padding-left:max(1.5rem,calc(50vw - 16rem + 1.5rem));
+    padding-right:max(1.5rem,calc(50vw - 16rem + 1.5rem))}
+  section.dark h1,section.dark h2{color:var(--night-ink)}
+  section.dark p{color:var(--night-2)}
+  section.dark .sub{color:var(--gold)}
+  section.dark .note{color:var(--night-dim)}
+  section.dark .mark i{background:#161D28;border-color:var(--night-line);color:var(--azure)}
+  section.dark .mark span{color:var(--night-ink)}
+  section.dark .why{border-top-color:var(--night-line)}
+  section.dark .why b{color:var(--gold)}
+  section.dark .why span{color:var(--night-2)}
+  section.dark .xarrow .f,section.dark .xarrow .tip{color:var(--gold)}
+  section.dark .xarrow .t{color:var(--night-ink)}
+  /* THE CARDS ARE STILL LIGHT OBJECTS ON A DARK PAGE, so they have to take
+     their ink back. Without this the bank card inherits the night ink and
+     "···· 4417" is white on white — invisible, and invisible in exactly the
+     way nobody notices until it is printed. */
+  section.dark .xside,section.dark .phone{color:var(--ink)}
+  /* .amt is a <p>, and `section.dark p` matches it directly, which beats the
+     ink inherited from .phone however specific that rule is — a rule that
+     hits the element always wins over one that hits its parent. So the
+     amount, the one number on the cover, went pale grey. */
+  section.dark .phone .amt{color:var(--ink)}
+  section.dark .xside.au{border-color:transparent;
+    box-shadow:0 1px 2px rgba(0,0,0,.4), 0 18px 40px -12px rgba(0,0,0,.7)}
+  section.dark .phone{border-color:transparent;
+    box-shadow:0 1px 2px rgba(0,0,0,.4), 0 22px 50px -14px rgba(0,0,0,.75)}
+
+  /* THE LABEL, NOT THE EYEBROW.
+     "Instead" set in 11px letterspaced caps is a house style, and house
+     style is exactly what the eye skips. A filled pill is an object, and
+     an object gets looked at. align-self because the section is a flex
+     column — without it the pill stretches the full measure and stops
+     being a pill. */
+  .tag{align-self:flex-start;background:var(--blue);color:#fff;
+    border-radius:99px;padding:.5rem 1.05rem;margin:0 0 1.2rem;
+    font-size:.82rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+  section.dark .tag{background:var(--azure);color:#0A0E14}
+
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 <div class="deck">
@@ -339,7 +400,7 @@
        already being bought, in a lot of fields at once, and the only broken
        part is the payment. Read in that order the product is a relief; read
        the other way round it is a solution looking for somebody. -->
-  <section>
+  <section class="dark">
     <div class="mark"><i>汇</i><span>Dealio</span></div>
     <h1>Get paid<br>from China.</h1>
     <p class="sub">Same day.</p>
@@ -406,8 +467,8 @@
        this", which is the demand. A reader who sees the answer while being
        told it is the problem stops trusting the headings. The demand slide
        gets its two territories back; this one keeps the picture. -->
-  <section>
-    <p class="eyebrow">Instead</p>
+  <section class="dark">
+    <p class="tag">The solution</p>
     <h2>One long press.</h2>
 
     <div class="xrow">
