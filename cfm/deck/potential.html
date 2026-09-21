@@ -169,6 +169,26 @@
   .row2 em{flex:1;height:.3rem;border-radius:99px;background:var(--hair)}
   .row2 s{width:.42rem;height:.42rem;border-radius:50%;background:var(--wx);text-decoration:none}
   .row2 s.b{background:var(--blue)}
+
+  /* A USE CASE, AS A SCENE RATHER THAN A SENTENCE.
+     Three slides that are deliberately parallel — same shape, same rhythm —
+     because they are variations on one theme and the reader should feel them
+     as a set. Everywhere else in this deck no two consecutive screens match;
+     here they must.
+     Each is: who pays whom, the actual request as it would look, and one
+     line about what happens instead today. The phone is smaller than the
+     hero's on the brand page so the two do not compete. */
+  .pair{display:flex;align-items:center;gap:.7rem;margin:0 0 1rem;font-size:.9rem}
+  .pair span{color:var(--ink-2)}
+  .pair b{font-weight:650;color:var(--ink)}
+  .pair i{font-style:normal;color:var(--blue);font-size:1.1rem;line-height:1}
+  .phone.small{padding:.9rem .85rem;border-radius:1.2rem;max-width:20rem}
+  .phone.small .amt{font-size:2rem}
+  .phone.small .go{padding:.7rem;font-size:.88rem}
+  .today{margin-top:1.6rem;padding-top:1.2rem;border-top:1px solid var(--line)}
+  .today b{display:block;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--dim);font-weight:700;margin-bottom:.4rem}
+  .today span{color:var(--ink-2);font-size:.98rem}
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 <div class="deck">
@@ -232,6 +252,48 @@
     </div>
     <p class="note" style="margin-top:1.4rem">No account. No app. No card number.
       The gesture they already make every day.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Every week</p>
+    <h2>A mother in Shanghai pays a tutor in Melbourne.</h2>
+    <div class="pair"><b>上海 · 母亲</b><i>&rarr;</i><span>Melbourne · Tutor</span></div>
+    <div class="phone small">
+      <div class="bar"><span>paydealio.com</span><span class="chip">Unpaid</span></div>
+      <p class="amt">¥1,200</p>
+      <p class="for">Four sessions · October</p>
+      <div class="go">去付 ¥1,200</div>
+      <div class="ways"><span><i></i>微信支付</span><span class="a"><i></i>支付宝</span></div>
+    </div>
+    <div class="today"><b>Today</b><span>She asks her daughter to pay it and sends her the money somehow. Or the tutor waives it, because chasing it costs more than it is worth.</span></div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Once</p>
+    <h2>A family in Beijing hires a buyer's agent in Melbourne.</h2>
+    <div class="pair"><b>北京 · 买家</b><i>&rarr;</i><span>Melbourne · Buyer's agent</span></div>
+    <div class="phone small">
+      <div class="bar"><span>paydealio.com</span><span class="chip">Unpaid</span></div>
+      <p class="amt">¥18,000</p>
+      <p class="for">Search fee · 3 suburbs</p>
+      <div class="go">去付 ¥18,000</div>
+      <div class="ways"><span><i></i>微信支付</span><span class="a"><i></i>支付宝</span></div>
+    </div>
+    <div class="today"><b>Today</b><span>A bank transfer that needs the agent's name spelled exactly as the bank has it. It bounced once already.</span></div>
+  </section>
+
+  <section>
+    <p class="eyebrow">On the spot</p>
+    <h2>A visitor buys from a maker she just met.</h2>
+    <div class="pair"><b>Queen Victoria Market</b><i>&rarr;</i><span>A sole trader, no card machine</span></div>
+    <div class="phone small">
+      <div class="bar"><span>paydealio.com</span><span class="chip">Unpaid</span></div>
+      <p class="amt">¥640</p>
+      <p class="for">Two pieces</p>
+      <div class="go">去付 ¥640</div>
+      <div class="ways"><span><i></i>微信支付</span><span class="a"><i></i>支付宝</span></div>
+    </div>
+    <div class="today"><b>Today</b><span>She has WeChat Pay and A$0 in cash. He has no way to take either, so the sale does not happen.</span></div>
   </section>
 
   <section>
