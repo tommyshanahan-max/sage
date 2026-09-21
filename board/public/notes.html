@@ -937,6 +937,12 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
     <span id="tabme"></span>
   </a>
+  <!-- The fifth tab — see the note on the same one in index.html. Last, so
+       none of the four that were here move. -->
+  <a href="/dealio?in=1" id="tabmoneygo">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3z"/><circle cx="12" cy="12" r="2.4"/></svg>
+    <span id="tabmoney"></span>
+  </a>
   <!-- In place of the three tabs, for somebody on the list.
        /room AND NOT /waiting. /waiting is the operator's screen — it asks for
        an admin key — so the one bar a person at the door is given led them to
@@ -1275,13 +1281,14 @@ function paint() {
   $("tabcards").textContent = T("nav.cards");
   $("tabbrowse").textContent = T("nav.browse");
   $("tabme").textContent = T("nav.profile");
+  $("tabmoney").textContent = T("nav.money");
   /* THE BAR IS FOR MEMBERS. Somebody on the list has one conversation and
      three tabs that would bounce them off a door, so they get the one line
      that is true for them instead: where they stand, and how to get in. */
   /* THE ANCHORS, NOT THE LABELS INSIDE THEM. tabcards and tabbrowse are the
      <span>s that hold the words — hiding those left two tabs that were still
      there, still tappable, and now wordless. */
-  for (const id of ["tabcardsgo", "tabbrowsego", "tabmego"]) $(id).hidden = WAITING;
+  for (const id of ["tabcardsgo", "tabbrowsego", "tabmego", "tabmoneygo"]) $(id).hidden = WAITING;
   $("waitbar").hidden = !WAITING;
   /* Not for the waiting list and not for an invited arrival: both are being
      asked to get in, and two asks at once is neither. */
@@ -1662,6 +1669,7 @@ function drawInvitedTabs() {
   $("tabcards").textContent = T("nav.cards");
   $("tabbrowse").textContent = T("nav.browse");
   $("tabme").textContent = T("nav.profile");
+  $("tabmoney").textContent = T("nav.money");
   for (const id of ["tabcardsgo", "tabbrowsego", "tabmego"]) $(id).hidden = false;
   $("waitbar").hidden = true;
   $("tabmego").href = "/waiting";

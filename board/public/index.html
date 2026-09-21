@@ -2067,6 +2067,25 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
         <span id="navmelabel">Profile</span>
       </a>
+      <!-- A FIFTH TAB, AND THE NOTE ABOVE SAYS FOUR. That note is right about
+           WeChat and was overruled on purpose: the payments half had no way in
+           from the board at all. Somebody who had made a request could only
+           find it again by typing /dealio, and the wallet page nothing links to
+           is the same bug one door further along.
+           Last rather than in the middle, so none of the four moves — a thumb
+           that has learned where Messages and Profile live still finds them in
+           the same place, and the new thing is the one you have to look for.
+           If it proves to be the crowding the note warns about, it comes out
+           and the money lives under Profile instead.
+           ?in=1 BECAUSE THE PLAIN ADDRESS IS THE PITCH. /dealio paints the
+           landing page on purpose, so a member who pressed a tab called Money
+           got "Get paid from China" and a button — the sales page, every time,
+           to the person who already bought. ?in=1 is the page's own way past
+           it and has been there since it was written. -->
+      <a href="/dealio?in=1" id="navmoney">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3z"/><circle cx="12" cy="12" r="2.4"/></svg>
+        <span id="navmoneylabel">Money</span>
+      </a>
     </nav>
     <!-- THE BAR FOR SOMEBODY STILL OUTSIDE, and a second element rather than
          the one above with its contents replaced. paintNav() writes into the
@@ -5119,6 +5138,12 @@ function paintNav() {
   $("fab").title = T("inv.sheetTitle");
   $("navnewlabel").textContent = T("inv.sheetTitle");
   $("navmelabel").textContent = T("nav.profile");
+  /* THE MONEY TAB, AND ONLY FOR A MEMBER. /dealio needs a person row with a
+     handle on it, so somebody still at the door who pressed this would get an
+     empty list and a button that refuses. Hidden until they are in, the same
+     rule the tab beside it follows. */
+  $("navmoneylabel").textContent = T("nav.money");
+  $("navmoney").hidden = !(ME && ME.handle);
   // Profile goes to your own page once you have one, and before that it opens
   // the editor. There is nothing on this page to scroll to any more: this tab
   // and the Tutor's first offer are now the only two ways in, which is the

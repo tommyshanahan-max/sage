@@ -2588,6 +2588,11 @@ export const STRINGS = {
   "nav.feed":          ["Feed", "动态"],
   "nav.cards":         ["Cards", "名片"],
   "nav.profile":       ["Profile", "我的"],
+  /* THE FIFTH TAB. 收款 rather than 钱包: nothing is held here, and a wallet
+     that holds nothing is a promise the product does not keep. It is the same
+     word as the button in a conversation and the same word on every merchant's
+     code in China, so the tab and the thing it opens agree. */
+  "nav.money":         ["Money", "收款"],
   "nav.new":           ["Post", "发布"],
   "bud.speaks":        ["Languages", "会说的语言"],
   "bud.type":          ["Type sort", "性格测试"],
@@ -5298,7 +5303,15 @@ export const STRINGS = {
   "dl.notReadyWhy":    ["You have not said where the money should land. Requests can be written and sent, but not paid.",
                         "你还没填钱打到哪里。可以先写、先发，只是暂时付不了。"],
 
-  "ask.go":            ["Ask them to pay", "让对方付款"],
+  /* THE BUTTON IN A CONVERSATION, and it points at the money rather than at
+     the person. It said "Ask them to pay" / "让对方付款" — 让 is make, and
+     "make the other party pay" is a thing you say about a debtor, not to
+     somebody you were introduced to yesterday. The English pointed the same
+     way: "them" puts a finger on the person you are chatting to.
+     收款 is the word on every merchant's code in China and carries none of
+     that; 发起 is what you do with one. The sheet behind this button already
+     said 收款 — now the button agrees with it. */
+  "ask.go":            ["Ask for payment", "发起收款"],
   "ask.lab":           ["Ask for money", "收款"],
   "ask.to":            ["To {who}", "发给 {who}"],
   "ask.amount":        ["How much", "多少钱"],
