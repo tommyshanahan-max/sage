@@ -223,37 +223,69 @@
   .on:hover{color:var(--ink)}
   #what{scroll-margin-top:1rem}
 
+  /* THE COVER IS THE PRODUCT PAGE. One mark, one claim, the thing itself,
+     and three facts nobody has to read a sentence to get. The screens are
+     bigger here than anywhere else in the deck because on this page they
+     are the argument rather than an illustration of one. */
+  section.cover .mark i{width:3.2rem;height:3.2rem;font-size:1.7rem;border-radius:.85rem}
+  section.cover .mark span{font-size:1.6rem;letter-spacing:.01em}
+  section.cover .screens{margin-top:1.9rem;gap:1rem}
+  section.cover .sc{padding:.95rem;border-radius:1.1rem}
+  section.cover .sc .tag{font-size:.56rem}
+  section.cover .sc .amt{font-size:2rem}
+  section.cover .sc .what{font-size:.66rem}
+  section.cover .sc .btn{font-size:.66rem;padding:.52rem}
+  section.cover .ways span{font-size:.6rem}
+  section.cover .ways i{width:.42rem;height:.42rem}
+  p.same{font:400 clamp(2.1rem,8.6vw,2.8rem)/1 var(--serif);color:var(--gold);
+    margin:-.3rem 0 0}
+
+  /* THREE FACTS, SIDE BY SIDE, because they are a row to run an eye down
+     rather than a sentence to read. Each is a bold half and a quiet half:
+     what it is, then what it means, and the second half is optional. */
+  .facts{display:flex;gap:1rem;margin:1.7rem 0 0}
+  .facts div{flex:1;min-width:0;font-size:.76rem;color:var(--dim);line-height:1.4}
+  .facts b{display:block;color:var(--ink);font-weight:650;font-size:.86rem;
+    margin-bottom:.2rem}
+
   @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
 <div class="deck">
 
-  <!-- SEVEN PAGES, AND THE ORDER IS THE ARGUMENT.
-       The last version of this deck ran to twelve and spent four of them on
-       licensing. A reader who is being asked for money wants to know what
-       the thing is, who cannot use what exists, what this does instead, who
-       else is in the field, and what the field is worth — in that order, and
-       once each. So: the product before the problem, on purpose. Showing the
-       thing first buys the attention that the problem slide then spends.
+  <!-- SIX PAGES, FOR A READER WHO ALREADY KNOWS THE PROBLEM.
+       Jerry is Chinese. A slide explaining that people in China pay by phone
+       is a slide explaining his own country back to him, and the same fault
+       as a payer screen that teaches somebody their own wallet. So there is
+       no problem slide. The product, the arithmetic, and who else is in the
+       field — in that order, and the field last because it is the answer to
+       a question he will ask once he wants the thing.
 
-       THE MARKET SLIDES ARE BOTTOM-UP AND THE ASSUMPTIONS ARE PRINTED.
-       Every figure on them is one multiplication away from the one above it,
-       and the three inputs — students, what one person is paid in a year,
-       and our fee — are stated on the slide rather than buried. A reader who
-       thinks ¥50,000 is wrong can divide. A TAM nobody can take apart is a
-       number nobody believes. -->
+       THE MARKET IS SOLE TRADERS, NOT STUDENTS. The earlier version sized
+       this on Chinese students in Australia and came to A$142k, which is a
+       true number about the wrong market: students are who the money comes
+       *from*, and the customer is the person being paid. An Australian sole
+       trader invoicing China is the customer, there are 1.5 million sole
+       traders, and that is a market rather than a niche.
 
-  <section>
+       EVERY RUNG DIVIDES BACK OUT and the assumptions are printed on the
+       slide, because the two soft ones are soft in different ways. The
+       19,000 trading with China today is built from published shares. The
+       70,000 who would is an estimate and says so — it is the number a
+       reader should argue with, and it should be easy to find. A projection
+       nobody can take apart is a projection nobody believes. -->
+
+  <!-- "INSTANTLY" IS THE WORD THIS PAGE CANNOT USE. The confirmation is
+       instant — the payer taps, the row goes green, both people see it in
+       seconds — but the money reaching an Australian bank account is
+       settlement, and with any acquirer that is same day at best. Putting
+       "instantly" on the cover would be a claim about somebody else's
+       settlement clock that we cannot stand behind, and it is the kind of
+       line a first user catches on their first payment. Same day is true
+       and it is still the fastest thing in this market. -->
+  <section class="cover">
     <div class="mark"><i>汇</i><span>Dealio</span></div>
-    <p class="eyebrow gold">Cross-border</p>
     <h1>Get paid<br>from China.</h1>
-    <p class="lead">They tap WeChat. You are paid.</p>
-    <p class="fine" style="text-align:left">Built, deployed, both directions,
-      two languages. One payment watched end to end on a phone.</p>
-  </section>
-
-  <section>
-    <p class="eyebrow">The product</p>
-    <h2>A link. A code.</h2>
+    <p class="same">Same day.</p>
     <div class="screens">
       <div class="sc">
         <span class="tag">You</span>
@@ -270,35 +302,71 @@
         </div>
       </div>
     </div>
-    <div class="zh">
-      <b>长按二维码识别</b>
-      <span>The only instruction on the payer's page. It is a gesture they
-        already make every day.</span>
+    <div class="facts">
+      <div><b>They tap WeChat.</b>No account, no app.</div>
+      <div><b>You send a link.</b>No merchant sign-up.</div>
+      <div><b>Paid in AUD.</b>Into your own bank.</div>
     </div>
   </section>
 
   <section>
-    <p class="eyebrow">The problem</p>
-    <h2>They cannot pay you.</h2>
+    <p class="eyebrow gold">The market — Australia</p>
+    <h2>89,000 sole traders.</h2>
     <div class="pair">
-      <div><div class="n">38%</div><div class="l">of people in China hold a credit card</div></div>
-      <div><div class="n">96%</div><div class="l">pay by phone, every day</div></div>
+      <div><div class="n">19k</div><div class="l">doing business with China today</div></div>
+      <div><div class="n">70k</div><div class="l">who would, with a better payment path</div></div>
     </div>
-    <p>Everyone in China pays by phone. Almost nobody holds the card you would
-      invoice. So it gets done by asking a friend with an overseas account, or
-      it does not get done.</p>
+    <div class="worth">
+      <b>A$1.8bn</b>
+      <span>moving between them and China, a year — A$20,000 each</span>
+    </div>
+    <p class="fine">1.5m sole traders in Australia. 5% sell overseas, a
+      quarter of those into China. The 70,000 is an estimate, not a count.</p>
   </section>
 
   <section>
-    <p class="eyebrow">The solution</p>
-    <h2>Nobody signs up.</h2>
-    <ol class="how">
-      <li><b>The payer taps WeChat.</b><span>A code on the page, long-pressed. No account, no app, nothing to learn.</span></li>
-      <li><b>The payee opens a link.</b><span>No dashboard, no application, no merchant onboarding.</span></li>
-      <li><b>The row settles itself.</b><span>Three witnesses. Nobody has to be watching.</span></li>
-    </ol>
-    <p class="fine" style="text-align:left">Watched finish on a phone, on real
-      rails, in September.</p>
+    <p class="eyebrow">The plan — Australia</p>
+    <h2>Ten percent of it.</h2>
+    <div class="step">
+      <div><span class="n">A$1.8bn</span><span class="l">moving, a year</span></div>
+      <div><span class="n">10%</span><span class="l">our share</span></div>
+      <div><span class="n">A$178m</span><span class="l">through us, a year</span></div>
+    </div>
+    <div class="worth">
+      <b>A$3.6m</b>
+      <span>a year, at our fee of 2%</span>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow gold">Then everywhere</p>
+    <h2>1.8m sole traders.</h2>
+    <table class="sums">
+      <tr><th>Country</th><th>Traders</th><th>Moving</th></tr>
+      <tr><td>Australia</td><td>89,000</td><td>A$1.8bn</td></tr>
+      <tr><td>United States</td><td>1,593,000</td><td>A$32bn</td></tr>
+      <tr><td>Canada</td><td>112,000</td><td>A$2.2bn</td></tr>
+    </table>
+    <div class="worth">
+      <b>A$36bn</b>
+      <span>moving, a year. Same product, same code, nothing new to build.</span>
+    </div>
+    <p class="fine">27m sole traders in the United States, 1.9m in Canada,
+      at the same share as Australia.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">The projection</p>
+    <h2>Five percent of it.</h2>
+    <div class="step">
+      <div><span class="n">A$36bn</span><span class="l">moving, a year</span></div>
+      <div><span class="n">5%</span><span class="l">our share</span></div>
+      <div><span class="n">A$1.8bn</span><span class="l">through us, a year</span></div>
+    </div>
+    <div class="worth">
+      <b>A$36m</b>
+      <span>total annual revenue, three to four years</span>
+    </div>
   </section>
 
   <section>
@@ -310,42 +378,8 @@
       <div><span class="w">XTransfer</span><span class="v">Trade contract</span></div>
       <div><span class="w">Airwallex</span><span class="v">An entity</span></div>
       <div><span class="w">Flywire</span><span class="v">A university</span></div>
-      <div><span class="w">Dealio</span><span class="v out">A person</span></div>
+      <div><span class="w">Dealio</span><span class="v out">A sole trader</span></div>
     </div>
-  </section>
-
-  <section>
-    <p class="eyebrow gold">The market — Australia</p>
-    <h2>A$71m a year.</h2>
-    <div class="step">
-      <div><span class="n">168,000</span><span class="l">Chinese students in Australia</span></div>
-      <div><span class="n">6,800</span><span class="l">people they pay directly — tutors, agents, editors, studios</span></div>
-      <div><span class="n">A$10.4k</span><span class="l">each, a year — ¥50,000</span></div>
-      <div><span class="n">A$71m</span><span class="l">moving, a year. That is the market.</span></div>
-    </div>
-    <div class="worth">
-      <b>A$142k</b>
-      <span>our revenue at a tenth of it — A$7.1m through us, our fee 2%</span>
-    </div>
-    <p class="fine">Students only. Writers, consultants and small studios who
-      are paid from China are not counted, because nobody counts them.</p>
-  </section>
-
-  <section>
-    <p class="eyebrow gold">Then North America</p>
-    <h2>A$230m a year.</h2>
-    <table class="sums">
-      <tr><th>Country</th><th>Moving</th><th>Ours at 2%</th></tr>
-      <tr><td>Australia</td><td>A$71m</td><td>A$28k</td></tr>
-      <tr><td>United States</td><td>A$117m</td><td>A$47k</td></tr>
-      <tr><td>Canada</td><td>A$42m</td><td>A$17k</td></tr>
-    </table>
-    <div class="worth">
-      <b>A$92k</b>
-      <span>our revenue at a fiftieth of it — A$4.6m through us, our fee 2%</span>
-    </div>
-    <p class="fine">545,000 students, 22,000 people paid from China, the same
-      ¥50,000 each. Same product, same code, nothing new to build.</p>
   </section>
 
 </div>
