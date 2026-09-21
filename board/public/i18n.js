@@ -5060,6 +5060,13 @@ export const STRINGS = {
      beside it looked perfectly healthy, and the only way to learn otherwise
      was to press it. Names the person who asked, because they are the only
      one who can do anything about it. */
+  /* THE ASKER'S OWN CODE. Only ever shown to whoever made the request —
+     the payer is already on the page and has no use for a code pointing at
+     it. Two short lines, because this is a thing to hold up rather than a
+     thing to read. */
+  "rq.showCode":       ["Show this", "把这个给对方扫"],
+  "rq.showCodeWhy":    ["Scanning it opens this page. Long-press to save or send it.",
+                        "扫一扫就会打开这个页面。长按可保存或转发。"],
   "rq.noneWork":       ["No way to pay is working right now. Tell {who} — it is their side, not yours.",
                         "目前没有可用的付款方式。告诉 {who} 一声，是他们那边的问题，不是你的。"],
   "rq.wayNo":          ["{way} would not take this one.", "{way} 没能接这一笔。"],

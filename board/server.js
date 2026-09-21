@@ -10111,6 +10111,48 @@ app.post("/api/request/hear", notesOff,
    one, every request link served the door, and curl said 200 the whole time
    because 200 is what a wrong page is. /pay/ is also the better word: it is
    read by somebody in a chat deciding whether to tap. */
+/* THE SAME PAGE, AS SOMETHING A PHONE CAN SCAN.
+ *
+ * WHY THIS EXISTS AND WHAT IT IS NOT. The code a payer long-presses inside
+ * their wallet is the provider's — weixin://wxpay/bizpayurl?pr=… — and it
+ * needs an acquirer behind it. This is not that, and it does not pretend to
+ * be: it encodes this request's ordinary https address, so scanning it opens
+ * the Dealio checkout in WeChat's browser exactly as tapping the link would.
+ * No acquirer, no keys, no account. It works on a board that cannot take a
+ * payment at all, because getting the payer to the page and taking their
+ * money are two different problems and only the second one is blocked.
+ *
+ * WHAT IT BUYS. Until now the only way to reach a request was a link pasted
+ * into a chat. A link cannot be held up at a desk, printed on an invoice,
+ * put at the end of a deck or shown across a table. A code can.
+ *
+ * A PNG AND NOT A GRID OF DIVS, for the reason written at the top of
+ * lib/qr.js: WeChat's long-press reads a QR out of an <img> and out of
+ * nothing else. Served as a real image file rather than a data URI so it can
+ * be saved, forwarded, and dropped into anything that takes a picture.
+ *
+ * NO AUTH, DELIBERATELY, and it adds no exposure: the id is already the
+ * whole secret — anybody holding it can open /pay/<id> and see the same
+ * thing. A 404 for an unknown or switched-off request, because a code that
+ * scans to a dead page is worse than no code. */
+app.get("/pay/:file", async (req, res, next) => {
+  const m = /^([A-Za-z0-9]{1,64})\.png$/.exec(String(req.params.file || ""));
+  if (!m) return next();
+  const id = request.cleanId(m[1]);
+  if (!id) return res.status(404).end();
+  const board = await store.load(FILE);
+  const q = board.requests.find((x) => x.id === id);
+  if (!q || q.off) return res.status(404).end();
+  const png = await qrPng(payLink(req, "/pay/" + id));
+  const body = Buffer.from(String(png).split(",").pop(), "base64");
+  /* A code for a request that has not changed is the same code forever, so
+     it is worth caching — but not for long: a request can be switched off,
+     and a scannable code for a dead row should stop working within a day
+     rather than whenever a phone decides to look again. */
+  res.set("Cache-Control", "public, max-age=3600");
+  res.type("png").send(body);
+});
+
 app.get("/pay/:id", (req, res, next) => page("request.html", req, res, next));
 
 /* DEALIO — the asking half, on its own page.

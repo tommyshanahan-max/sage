@@ -231,6 +231,13 @@
   .way.no{opacity:.55;border-style:dashed}
   .way.no span{color:var(--t5)}
   .waysbad{margin:0 0 .7rem;color:var(--t5);font-size:.9rem;font-weight:650}
+  /* THE ASKER'S CODE. Sized to be read across a desk rather than to fit
+     neatly — it is the one thing on that screen somebody is holding up. */
+  .qrbox{margin:1.1rem 0 0;text-align:center}
+  .qrbox img{width:min(14rem,62vw);height:auto;display:block;margin:0 auto;
+    border-radius:.7rem;background:#fff;padding:.5rem}
+  .qrbox b{display:block;margin:.7rem 0 .2rem;font-size:1rem}
+  .qrbox span{display:block;font-size:.85rem;color:var(--t3,#6E7789)}
   .racts{display:grid;gap:.5rem;margin:.9rem 0 0}
   .racts button{border:1px solid var(--line);background:var(--paper);
     color:var(--ink-2);font:inherit;padding:.75rem 1rem;border-radius:99px}
@@ -462,6 +469,24 @@ function draw() {
     const has = (Array.isArray(STATE?.ways) ? STATE.ways : []).filter((k) => names[k]);
     if (has.length) body.append(el("p", "wallets", has.map((k) => T(names[k])).join(" · ")));
   }
+  /* THE CODE, FOR WHOEVER MADE THIS REQUEST.
+     Not a payment code — it encodes this page's own address, so scanning it
+     opens exactly what tapping the link opens. It is here because a link can
+     only be pasted into a chat, and the asker is often sitting across a desk
+     from the person who owes them.
+     ONLY ON THEIR OWN REQUEST, AND ONLY WHILE IT IS UNPAID. The payer is
+     already looking at this page and a code pointing at it would be furniture;
+     a paid row has nothing left to scan for. */
+  if (STATE?.yours && q.state !== "paid") {
+    const box = el("div", "qrbox");
+    const img = el("img");
+    img.src = "/pay/" + ID + ".png";
+    img.alt = T("rq.showCode");
+    img.loading = "lazy";
+    box.append(img, el("b", null, T("rq.showCode")), el("span", null, T("rq.showCodeWhy")));
+    body.append(box);
+  }
+
   sheet.append(body);
 
   /* NOT "For", which is already the line under the amount. It was printed
