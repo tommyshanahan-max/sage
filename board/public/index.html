@@ -3211,6 +3211,61 @@ setVH();
 window.addEventListener("resize", setVH);
 window.addEventListener("orientationchange", setVH);
 
+/* THE CARD PAYS FOR WHATEVER IS ACTUALLY ABOVE IT.
+ *
+ * Its height was three CSS rules, each subtracting a guess at what sits over
+ * it: 21rem plain, 26rem with the "add your photo" row, 30rem with no
+ * photograph. Every one of those is a number that was right on the day it was
+ * written. The sentence filter was added above the deck and appears in none of
+ * them, so on a 844px phone Follow and Next sat 26px under the nav bar — the
+ * two things the screen is for, behind the thing you press by accident.
+ *
+ * Worse, each rule also carries a proportional cap (62vh, 52vh, 34vh) inside
+ * the same min(), and on a short screen the proportion wins and the budget
+ * never applies at all. The comment above those rules says height is a budget
+ * and not a proportion; the rules said both.
+ *
+ * So it is measured. What is above is wherever the deck starts; what is below
+ * is the Follow row, the count under it and the bar, asked for their own
+ * heights rather than told. Nothing here needs updating when a row is added
+ * above the card, which is the whole point — the last three times one was,
+ * nobody remembered to.
+ *
+ * The cap stays, in pixels: on a desktop the card would otherwise become a
+ * poster. The floor stays too — a short screen shows less of a face, not none. */
+function fitDeck() {
+  const deck = document.getElementById("deck");
+  if (!deck || deck.hidden || !deck.offsetParent) return;
+  const above = deck.getBoundingClientRect().top + window.scrollY;
+  let below = 0;
+  for (const id of ["pacts", "pcount", "bar"]) {
+    const el = document.getElementById(id);
+    if (el && !el.hidden) below += el.offsetHeight;
+  }
+  below += 28; // the gaps around those three, which margins own and offsetHeight does not
+  const room = window.innerHeight - above - below;
+  const cap = deck.classList.contains("short") ? 304 : 544;
+  deck.style.height = Math.round(Math.max(144, Math.min(cap, room))) + "px";
+}
+window.addEventListener("resize", fitDeck);
+window.addEventListener("orientationchange", fitDeck);
+
+/* AND AGAIN WHEN THE ROWS ABOVE HAVE FINISHED ARRIVING. Measuring at the end
+   of the card's own draw measured a page that was not built yet: the sentence
+   filter is drawn after it, so the first answer was 188px too generous and the
+   buttons stayed under the bar. The observer asks again whenever anything
+   changes height. It cannot loop — a second run on an unchanged page computes
+   the same number and writes the same string. */
+if (window.ResizeObserver) {
+  const ro = new ResizeObserver(() => fitDeck());
+  const watch = () => {
+    const box = document.getElementById("vbrowse");
+    if (box) ro.observe(box);
+  };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watch);
+  else watch();
+}
+
 /** The line icons on each post. Drawn here rather than pulled from anywhere:
  *  four paths are cheaper than a request that would not answer in the mainland. */
 const ICON = {
@@ -8291,6 +8346,7 @@ function drawDeck() {
    * card's whole content. */
   const shot = Boolean(PEOPLE[AT] && PEOPLE[AT].photo) || (needsFace() && AT === people);
   deck.classList.toggle("short", !shot);
+  fitDeck();
 
   // The one behind, so moving on reveals a card rather than a hole.
   if (n > 1) {
