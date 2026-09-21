@@ -463,22 +463,72 @@
     .out .ar{transform:rotate(90deg)}
   }
 
+
+  /* THE PROBLEM WEARS THE SOLUTION'S PILL, IN THE OTHER COLOUR.
+     The two slides are one sentence with a turn in the middle, so they are
+     drawn as one object twice. Red then blue, and the reader knows which
+     half they are on before reading a word. */
+  .tag.bad{background:#C0392F}
+
+  /* THE PROBLEM AS FOUR STEPS, NOT THREE STATISTICS.
+     "62% hold no credit card, 2 hours at a counter, one letter wrong" is
+     three true facts that never become a story — the reader has to assemble
+     the morning themselves and mostly does not bother. Numbered, it is the
+     morning: each row is a thing that happens, the last row is the thing
+     that happens a week later, and the ✕ is where it ends up. The numbers
+     are a real sequence, which is the only thing that earns numbering. */
+  /* .fail, not .out — .out is the fan's destination row, a white card with
+     a border and a shadow, and the failing step quietly inherited all three.
+     Second time in one afternoon; the deck's class names are short and the
+     collisions are silent. */
+  .steps{margin:1.4rem 0 0}
+  .steps div{display:flex;align-items:flex-start;gap:1rem;padding:.95rem 0;
+    border-bottom:1px solid var(--line)}
+  .steps div:last-child{border-bottom:0}
+  .steps b{flex:none;width:1.9rem;height:1.9rem;border-radius:50%;
+    display:grid;place-items:center;background:var(--hair);color:var(--ink-2);
+    font:700 .86rem/1 var(--sans);font-variant-numeric:tabular-nums}
+  .steps .fail b{background:#F6E2E0;color:#A6332A}
+  .steps span{flex:1;min-width:0;font-size:1.02rem;color:var(--ink);
+    font-weight:600;line-height:1.35}
+  .steps i{display:block;font-style:normal;font-weight:400;font-size:.85rem;
+    color:var(--dim);margin-top:.15rem}
+  .steps .fail span{color:#A6332A}
+  .steps .fail i{color:#B3685F}
+
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 <div class="deck">
 
-  <!-- EIGHT SCREENS. Each one is a headline and a single object, and no two
-       consecutive screens are the same shape — a phone, three numbers, a
-       phone the height of the page, four across, a list, one figure, a
-       ladder, the ask. The product appears four times and is the largest
-       thing on the page every time it does. -->
+  <section class="dark">
+    <div class="mark"><i>汇</i><span>Dealio</span></div>
+    <h1>Get paid<br>from China.</h1>
+    <p class="sub">Same day.</p>
+    <div class="phone" style="margin-top:2.2rem">
+      <div class="bar"><span>paydealio.com</span><span class="chip">Unpaid</span></div>
+      <p class="lab">Tom is asking for</p>
+      <p class="amt">¥2,400</p>
+      <p class="for">Second draft</p>
+      <div class="go">去付 ¥2,400</div>
+      <div class="ways"><span><i></i>微信支付</span><span class="a"><i></i>支付宝</span></div>
+    </div>
+  </section>
 
-  <!-- THE SLIDE THAT WAS MISSING, AND IT OPENS THE DECK.
-       Every version so far began with the product, which answers a question
-       the reader has not been given yet. The demand comes first: the work is
-       already being bought, in a lot of fields at once, and the only broken
-       part is the payment. Read in that order the product is a relief; read
-       the other way round it is a solution looking for somebody. -->
+  <!-- WHO IT IS FOR, ON ITS OWN SCREEN.
+       The deck said "one-person businesses" in a figure's subtitle and
+       nowhere else, which leaves the reader to work out on slide nine that
+       this is not an enterprise product. It is the second screen now, and
+       the sixteen fields are the argument — a column of bullets is sixteen
+       things to get through, the same sixteen set flowing are taken in at a
+       glance as breadth. -->
+  <section>
+    <p class="eyebrow">Who this is for</p>
+    <h2>Sole traders and small business.</h2>
+    <p class="fields"><b>Tutoring</b> <i>·</i> <b>Exam coaching</b> <i>·</i> <b>University placement</b> <i>·</i> <b>Migration advice</b> <i>·</i> <b>Translation</b> <i>·</i> <b>Academic editing</b> <i>·</i> <b>Graphic design</b> <i>·</i> <b>Photography</b> <i>·</i> <b>Video and post</b> <i>·</i> <b>Architecture</b> <i>·</i> <b>Interior design</b> <i>·</i> <b>Buyers' advocacy</b> <i>·</i> <b>Wine and food</b> <i>·</i> <b>Sports coaching</b> <i>·</i> <b>Music tuition</b> <i>·</i> <b>Export advice</b></p>
+    <p class="note" style="margin-top:2rem">One person, or two. No finance
+      department, no entity in China, no trade contract.</p>
+  </section>
+
   <!-- THE FIGURE FIRST, AND THEN THE PRODUCT.
        The deck opened on the product, which answers a question the reader
        has not been given. A number opens it instead: this is the size of
@@ -498,24 +548,10 @@
       the whole of it.</p>
   </section>
 
-  <section class="dark">
-    <div class="mark"><i>汇</i><span>Dealio</span></div>
-    <h1>Get paid<br>from China.</h1>
-    <p class="sub">Same day.</p>
-    <div class="phone" style="margin-top:2.2rem">
-      <div class="bar"><span>paydealio.com</span><span class="chip">Unpaid</span></div>
-      <p class="lab">Tom is asking for</p>
-      <p class="amt">¥2,400</p>
-      <p class="for">Second draft</p>
-      <div class="go">去付 ¥2,400</div>
-      <div class="ways"><span><i></i>微信支付</span><span class="a"><i></i>支付宝</span></div>
-    </div>
-  </section>
-
   <!-- CHINA ON ONE SIDE, THREE MARKETS ON THE OTHER. -->
   <section>
     <p class="eyebrow">The demand</p>
-    <h2>China buys from all of them.</h2>
+    <h2>China buys from small business.</h2>
 
     <div class="fan">
       <div class="xside cn src">
@@ -531,24 +567,40 @@
     </div>
 
     <div class="but">
-      <p class="sub" style="margin:0">Three countries. One buyer.</p>
-      <p class="note" style="margin-top:.7rem">Work delivered, invoiced,
-        and then a morning at a bank. In all three.</p>
+      <p class="sub" style="margin:0">In every one of these markets.</p>
+      <p class="note" style="margin-top:.7rem">Sole traders, one-person
+        firms, two-person studios — invoicing clients in China, and paid by
+        whatever their client can manage.</p>
     </div>
   </section>
 
+  <!-- THE PROBLEM, AS THE MORNING IT ACTUALLY IS. -->
   <section>
-    <p class="eyebrow">The current headache trying to pay</p>
-    <h2>A morning at the bank.</h2>
-    <div class="facts">
-      <div><b>62%</b><span>hold no credit card</span></div>
-      <div><b>2 hrs</b><span>at a counter, in person, with ID</span></div>
-      <div><b>1</b><span>letter wrong in the name and it fails</span></div>
+    <p class="tag bad">The problem</p>
+    <h2>There is no way to pay you.</h2>
+    <div class="steps">
+      <div><b>1</b><span>Their bank, in person, with ID<i>Two hours, and a queue</i></span></div>
+      <div><b>2</b><span>Your name, exactly as your bank holds it<i>One letter wrong and it fails</i></span></div>
+      <div><b>3</b><span>The money leaves<i>Nothing tells them anything</i></span></div>
+      <div class="fail"><b>&times;</b><span>A week later it comes back<i>Start again</i></span></div>
     </div>
-    <p class="sub" style="margin-top:2rem">And nothing tells you.</p>
-    <p class="note" style="margin-top:.6rem">The money leaves. A week later it comes back.</p>
+    <p class="note" style="margin-top:1.6rem">62% of them hold no credit card.
+      A card was never the way out of this.</p>
   </section>
 
+
+  <!-- EIGHT SCREENS. Each one is a headline and a single object, and no two
+       consecutive screens are the same shape — a phone, three numbers, a
+       phone the height of the page, four across, a list, one figure, a
+       ladder, the ask. The product appears four times and is the largest
+       thing on the page every time it does. -->
+
+  <!-- THE SLIDE THAT WAS MISSING, AND IT OPENS THE DECK.
+       Every version so far began with the product, which answers a question
+       the reader has not been given yet. The demand comes first: the work is
+       already being bought, in a lot of fields at once, and the only broken
+       part is the payment. Read in that order the product is a relief; read
+       the other way round it is a solution looking for somebody. -->
   <!-- THE SOLUTION, AND IT SAYS SO. This picture — a code on one side, a
        bank credit on the other — was sitting under "China is already buying
        this", which is the demand. A reader who sees the answer while being
