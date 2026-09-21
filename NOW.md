@@ -54,16 +54,12 @@ it away. So this is not the missing-keys problem it was this morning, and
 sandbox access with it or the box's IP is blocked. `airwallex.check.mjs` now
 says so itself rather than leaving an HTML tag to be interpreted.
 
-Not yet run, and it is the one thing that would tell the two apart — it needs
-no keys:
-
-```
-curl -sS -o /tmp/aw.txt -w 'HTTP %{http_code}\n' -X POST \
-  https://api.sandbox.airwallex.com/api/v1/authentication/login
-```
-
-HTML 403 again = blocked, nothing to recover. JSON 401 = the door is open and
-it really is just the keys.
+**Run, and it settles it.** The same POST from the box with **no credentials
+at all** comes back `HTTP 403` and the same HTML page. A request carrying no
+keys cannot be refused *for its keys* — so the box is blocked at Airwallex's
+edge, and no pair of keys will ever get through from this machine. Airwallex
+is finished here in every sense: live, sandbox, and any future application
+from this IP.
 
 **So no request draws a code**, and the next real one comes from QFPay,
 Pockyt or Adyen rather than from Airwallex. Adyen does self-serve test
