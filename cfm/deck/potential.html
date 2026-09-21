@@ -384,6 +384,34 @@
     font-size:.82rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
   section.dark .tag{background:var(--azure);color:#0A0E14}
 
+
+  /* ONE SOURCE, SEVERAL DESTINATIONS.
+     The demand slide drew China above Australia, which is true and is half
+     the business — the same code, unchanged, is worth the same to a sole
+     trader in Denver or Vancouver. Drawn as one pair that reads as a
+     bilateral deal; drawn as a fan it reads as a market, which is what the
+     A$36bn on the slide before it actually refers to.
+     The source card is the solution slide's own ¥ card, reused rather than
+     redrawn, so the two slides are visibly the same object. */
+  .fan{display:flex;gap:.7rem;align-items:center;margin:1.5rem 0 0}
+  .fan .src{flex:none;width:9.6rem;max-width:45%}
+  .fan .outs{flex:1;min-width:0;display:flex;flex-direction:column;gap:.45rem}
+  .out{display:flex;align-items:center;gap:.5rem;padding:.6rem .7rem;
+    background:var(--card);border:1px solid var(--line);border-radius:.7rem;
+    box-shadow:var(--shadow);min-width:0}
+  .out .ar{flex:none;color:var(--money);font:400 1.25rem/1 var(--serif)}
+  .out .c{flex:none;font:400 1.2rem/1 var(--serif);min-width:2.3rem;
+    letter-spacing:-.02em}
+  .out .p{flex:1;min-width:0;font-size:.84rem;font-weight:600;color:var(--ink-2)}
+  /* Under about 26rem the card and four rows both lose their measure, so the
+     fan turns a corner: source on top, destinations beneath, arrows still
+     pointing the one way the money goes. */
+  @media (max-width:27rem){
+    .fan{flex-direction:column;align-items:stretch;gap:.6rem}
+    .fan .src{width:11rem;max-width:none;align-self:center}
+    .out .ar{transform:rotate(90deg)}
+  }
+
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 <div class="deck">
@@ -400,6 +428,25 @@
        already being bought, in a lot of fields at once, and the only broken
        part is the payment. Read in that order the product is a relief; read
        the other way round it is a solution looking for somebody. -->
+  <!-- THE FIGURE FIRST, AND THEN THE PRODUCT.
+       The deck opened on the product, which answers a question the reader
+       has not been given. A number opens it instead: this is the size of
+       the thing, and the next nine screens are how it gets taken. The
+       derivation stays on the Australia slide — a reader who wants to check
+       it goes looking, and a reader who does not is not detained here. -->
+  <section>
+    <p class="eyebrow q">The opportunity</p>
+    <p class="huge">A$36bn</p>
+    <p>a year, between one-person businesses and their clients in China.</p>
+    <div class="facts" style="margin-top:1.8rem">
+      <div><b>A$</b><span>Australia</span></div>
+      <div><b>US$</b><span>United States</span></div>
+      <div><b>C$</b><span>Canada</span></div>
+    </div>
+    <p class="note" style="margin-top:1.4rem">Nobody is serving them. That is
+      the whole of it.</p>
+  </section>
+
   <section class="dark">
     <div class="mark"><i>汇</i><span>Dealio</span></div>
     <h1>Get paid<br>from China.</h1>
@@ -414,39 +461,29 @@
     </div>
   </section>
 
+  <!-- CHINA ON ONE SIDE, THREE MARKETS ON THE OTHER. -->
   <section>
     <p class="eyebrow">The demand</p>
-    <h2>China is already buying this.</h2>
+    <h2>China buys from all of them.</h2>
 
-    <div class="band cn">
-      <div class="bandrow">
-        <span class="cur" aria-hidden="true">¥</span>
-        <div>
-      <p class="terr">中国 <em>· the buyer</em></p>
-      <p class="buyers"><b>Parents</b> <i>·</i> <b>Families</b> <i>·</i> <b>Students</b> <i>·</i> <b>Studios</b> <i>·</i> <b>Property buyers</b> <i>·</i> <b>Small firms</b></p>
-        </div>
+    <div class="fan">
+      <div class="xside cn src">
+        <span class="xcur" aria-hidden="true">¥</span>
+        <div class="xlab">微信支付</div>
+        <div class="code" aria-hidden="true"><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i></div>
+        <div class="xnote">长按二维码识别</div>
       </div>
-    </div>
-
-    <div class="join" aria-hidden="true">
-      <span class="pay">¥ &darr;</span>
-      <span class="work">&uarr; the work</span>
-    </div>
-
-    <div class="band au">
-      <div class="bandrow">
-        <span class="cur" aria-hidden="true">A$</span>
-        <div>
-      <p class="terr">Australia <em>· the sole trader</em></p>
-      <p class="fields"><b>Tutoring</b> <i>·</i> <b>Exam coaching</b> <i>·</i> <b>University placement</b> <i>·</i> <b>Migration advice</b> <i>·</i> <b>Translation</b> <i>·</i> <b>Academic editing</b> <i>·</i> <b>Graphic design</b> <i>·</i> <b>Photography</b> <i>·</i> <b>Video and post</b> <i>·</i> <b>Architecture</b> <i>·</i> <b>Interior design</b> <i>·</i> <b>Buyers' advocacy</b> <i>·</i> <b>Wine and food</b> <i>·</i> <b>Sports coaching</b> <i>·</i> <b>Music tuition</b> <i>·</i> <b>Export advice</b></p>
-        </div>
+      <div class="outs">
+        <div class="out"><span class="ar" aria-hidden="true">&rarr;</span><span class="c">A$</span><span class="p">Australia</span></div>
+        <div class="out"><span class="ar" aria-hidden="true">&rarr;</span><span class="c">US$</span><span class="p">United States</span></div>
+        <div class="out"><span class="ar" aria-hidden="true">&rarr;</span><span class="c">C$</span><span class="p">Canada</span></div>
       </div>
     </div>
 
     <div class="but">
-      <p class="sub" style="margin:0">There is no easy way to pay for it.</p>
-      <p class="note" style="margin-top:.7rem">Australian sole traders, Chinese
-        clients, work delivered and invoiced — and then a morning at a bank.</p>
+      <p class="sub" style="margin:0">One code. Three currencies.</p>
+      <p class="note" style="margin-top:.7rem">The payer never leaves WeChat.
+        Nothing about the code changes with the country it is paid into.</p>
     </div>
   </section>
 
