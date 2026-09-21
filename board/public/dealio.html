@@ -1,5 +1,10 @@
 <!doctype html>
-<html lang="en">
+<!-- WHOSE HOUSE THIS PAGE IS IN, decided by the hostname and known before a
+     byte of script runs — the same {{DEALIO}} the door has used since it had
+     two products to greet people for. On paydealio.com it is 1 and this page
+     wears its own face. Reached from the board's Money tab it is empty, and
+     the palette below turns into the board's. -->
+<html lang="en" data-dealio="{{DEALIO}}">
 <head>
 <meta charset="utf-8">
 {{DEMO}}
@@ -27,6 +32,42 @@
       "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
     --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
   }
+  /* THE SAME PAGE IN THE BOARD'S HOUSE.
+   *
+   * The note above is still right about paydealio.com: a product that will
+   * one day be its own app cannot wear somebody else's chrome. It was wrong
+   * about the other address. Reached from the Money tab, this is a screen
+   * inside The Exchange — and it arrived dark, red and serif in the middle of
+   * a light blue app, with no bar at the bottom, so the only way back was the
+   * browser's own button. That does not read as a second product. It reads as
+   * having been thrown out of the first one.
+   *
+   * Ten variables, because the palette was written as ten variables. Nothing
+   * else in this file knows which skin it is wearing. The values are the
+   * board's own, copied from index.html rather than matched by eye — two
+   * greys that are nearly the same grey is worse than one that is plainly
+   * different. */
+  html:not([data-dealio="1"]){
+    --bg:#EEF0F4; --card:#F7F8FB; --ink:#151B28; --ink2:#4E5968; --mut:#8A939F;
+    --line:#E3E6EC; --hair:#EAECF1; --acc:#3F68D8; --accink:#FFFFFF; --ok:#2A9D63;
+  }
+  /* The bar itself, in whichever palette is in force — it is drawn from the
+     same ten variables, so it is dark on one host and light on the other
+     without a second rule. Hidden entirely on Dealio's own domain. */
+  .boardbar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;
+    z-index:35;display:flex;width:100%;max-width:34rem;
+    background:var(--card);border-top:1px solid var(--line);
+    padding:.35rem .5rem calc(.35rem + env(safe-area-inset-bottom,0))}
+  .boardbar a{flex:1;display:flex;flex-direction:column;align-items:center;
+    gap:.15rem;padding:.4rem 0;color:var(--mut);text-decoration:none;
+    font-size:.7rem}
+  .boardbar a.on{color:var(--acc)}
+  .boardbar svg{width:1.35rem;height:1.35rem;fill:none;stroke:currentColor;
+    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  html[data-dealio="1"] .boardbar{display:none}
+  /* And the page pays for it, or the last row sits under it — the same
+     mistake the board's own deck made and had measured out of it today. */
+  html:not([data-dealio="1"]) body{padding-bottom:5.5rem}
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink)}
   body{font-family:var(--sans);font-size:16px;line-height:1.5;
@@ -364,6 +405,20 @@
 <body>
 <main id="root"></main>
 <div class="make" id="makebar" hidden></div>
+<!-- THE WAY BACK, and only in the board's house.
+     This page had no navigation at all. On paydealio.com that is right — a
+     payer has nowhere to go and a bar would only offer them somebody else's
+     app. Reached from the Money tab it was a dead end: the five tabs a member
+     had a second ago were gone, and only the browser's back button returned
+     them. Hidden on the Dealio host by the same attribute that picks the
+     palette, so neither address grows the other one's furniture. -->
+<nav class="boardbar" id="boardbar">
+  <a href="/notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg><span id="bbnotes"></span></a>
+  <a href="/cards"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M3 10h18"/></svg><span id="bbcards"></span></a>
+  <a href="/browse"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z M9 15c1.5-2 4.5-2 6 0"/><circle cx="12" cy="10" r="2.2"/></svg><span id="bbbrowse"></span></a>
+  <a href="/browse"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg><span id="bbme"></span></a>
+  <a href="/dealio?in=1" aria-current="page" class="on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3z"/><circle cx="12" cy="12" r="2.4"/></svg><span id="bbmoney"></span></a>
+</nav>
 <script type="module">
 /* DEALIO — ASKING SOMEBODY TO PAY YOU
  * ===========================================================================
@@ -681,7 +736,26 @@ let FRONT = (() => {
   return true;
 })();
 
+/* THE BAR'S WORDS, painted from the same keys the board's own bar uses, so
+   the five tabs read the same on both sides of the door and a language change
+   moves them together. Called from draw(), which is what runs again when the
+   language button is pressed. */
+function paintBoardBar() {
+  /* NOT offsetParent. It is null for anything position:fixed, which this bar
+     is, so the first version of this guard hid the words from the one skin
+     that shows them. The attribute is what decides the bar either way. */
+  const bar = document.getElementById("boardbar");
+  if (!bar || document.documentElement.getAttribute("data-dealio") === "1") return;
+  const say = (id, key) => { const e = document.getElementById(id); if (e) e.textContent = T(key); };
+  say("bbnotes", "note.inbox");
+  say("bbcards", "nav.cards");
+  say("bbbrowse", "nav.browse");
+  say("bbme", "nav.profile");
+  say("bbmoney", "nav.money");
+}
+
 function draw() {
+  paintBoardBar();
   const { bar: head, slot } = top();
   root.textContent = "";
   root.append(head);
