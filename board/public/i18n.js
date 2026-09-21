@@ -5277,29 +5277,34 @@ export const STRINGS = {
   /* Started and not finished. Named for what it is rather than for what is
      missing: Stripe asks for identity and a bank across several screens and
      most people who stop, stop in the middle of them. */
-  "dl.halfHead":       ["Stripe has not finished checking you.", "Stripe 还没核完你的资料。"],
+  "dl.halfHead":       ["Your details are still being checked.", "你的资料还在核。"],
   "dl.halfWhy":        ["It needs your ID and your bank before it will pay you. Until it has them, payments to you are refused.",
                         "要先给它证件和银行卡，不然付给你的钱会被拒。"],
-  "dl.halfGo":         ["Finish with Stripe", "去 Stripe 补完"],
+  "dl.halfGo":         ["Finish the checks", "去补完资料"],
   /* Reached on purpose rather than met after a failure, so it has to have
      something to say when nothing is wrong. */
   "dl.whereMoney":     ["Where your money lands", "钱打到哪里"],
   "dl.payOk":          ["You can be paid.", "可以收钱了。"],
-  "dl.payOkWhy":       ["Stripe has your bank and pays you directly. This board never holds it.",
-                        "Stripe 有你的银行卡，直接打给你。这个板子不经手。"],
-  "dl.payOkGo":        ["Change it with Stripe", "去 Stripe 改"],
+  "dl.payOkWhy":       ["The money goes straight to your bank. This board never holds it.",
+                        "钱直接打到你的银行账户。这个板子不经手。"],
+  "dl.payOkGo":        ["Change where it lands", "改收款账户"],
   /* The platform has live keys but has not finished Stripe's own activation,
      so Stripe will not make connected accounts for it. Nothing on this board
      can fix it and nothing here should pretend otherwise. */
-  "dl.notLive":        ["This board is not activated with Stripe yet",
-                        "这个板子在 Stripe 那边还没激活"],
+  "dl.notLive":        ["Payments are not switched on for this board yet",
+                        "这个板子的收款还没开通"],
   /* A DECISION, NOT A QUEUE. dl.notLive says "not yet", which is the right
      thing to say about a form nobody has finished and the wrong thing to say
      about an application somebody has refused — it leaves the reader waiting
-     for something that is not coming. Stripe's own words are "your account
-     has been rejected", and this is the only screen anybody sees them on. */
-  "dl.rejected":       ["Stripe has turned this board down. Nothing can be paid until that is sorted.",
-                        "Stripe 把这个板子拒了。这事解决之前，收不了款。"],
+     for something that is not coming.
+     IT NO LONGER NAMES THE COMPANY. It said "Stripe has turned this board
+     down", which was true in September and stopped being the useful half of
+     the truth the moment the payments moved: a member reading it now is told
+     the name of a provider this board is leaving, and told nothing about
+     whether they can be paid. The same rule as dl.payWhere above — say what
+     it means for them, not who did it. */
+  "dl.rejected":       ["Payments are not switched on yet. Requests can be written and sent, but not paid.",
+                        "收款还没开通。可以先写、先发，只是暂时付不了。"],
   "dl.notReadyWhy":    ["You have not said where the money should land. Requests can be written and sent, but not paid.",
                         "你还没填钱打到哪里。可以先写、先发，只是暂时付不了。"],
 
@@ -5389,7 +5394,7 @@ export const STRINGS = {
                         "{who} 写错了币种。微信支付和支付宝只能付人民币的单。"],
   /* Sending money is a promise until the other end has somewhere for it to
      land, because this board is never allowed to hold it in the meantime. */
-  "rq.outWhy":         ["Stripe will ask where to send it. No account here, and nothing to install.",
+  "rq.outWhy":         ["You will be asked where to send it. No account here, and nothing to install.",
                         "Stripe 会问你钱打到哪里。不用在这边注册，也不用装什么。"],
   /* THE SAME SENTENCE WITHOUT A COMPANY THE READER HAS NO RELATIONSHIP WITH.
      On Dealio the payer has been told about Dealio and nothing else, and a
