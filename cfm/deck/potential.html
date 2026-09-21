@@ -149,6 +149,30 @@
   .fields i{font-style:normal;color:var(--dim);padding:0 .3rem;opacity:.5}
   .but{margin-top:2.2rem;padding-top:1.6rem;border-top:1px solid var(--line)}
 
+  /* THE BORDER, DRAWN, BECAUSE THE LIST ALONE DID NOT SAY CROSS-BORDER.
+     Sixteen fields under a headline read as "things Australians do" — the one
+     fact that makes it a business, that the buyer is on the other side of a
+     border, was carried entirely by the word "China" in the headline and by
+     nothing the eye could see. So the slide is now two territories with a
+     line between them and two arrows through it: money down, work up.
+     HORIZONTAL AND NOT VERTICAL. Two columns is the obvious way to draw a
+     border and it is wrong here — at phone width sixteen field names in a
+     half-width column wrap to nothing readable. Stacked, each side gets the
+     full measure, and the line still reads as a border because the arrows
+     cross it. */
+  .terr{font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;
+    font-weight:700;color:var(--ink);margin:0 0 .55rem}
+  .terr em{font-style:normal;color:var(--dim);font-weight:600;letter-spacing:.1em}
+  .buyers{font-size:.88rem;line-height:1.9;color:var(--ink-2);margin:0}
+  .buyers b{font-weight:500;white-space:nowrap}
+  .buyers i{font-style:normal;color:var(--dim);padding:0 .3rem;opacity:.5}
+  .edge{border-top:1px dashed #C9D2E0;margin:1.9rem 0;display:flex;
+    justify-content:space-around;padding:0 1.5rem}
+  .edge span{transform:translateY(-50%);background:var(--paper);padding:0 .65rem;
+    font-size:.8rem;white-space:nowrap;display:inline-flex;align-items:center;gap:.3rem}
+  .edge .pay{color:var(--money);font-weight:650}
+  .edge .work{color:var(--dim)}
+
   /* EVERY SCREEN, EIGHT AT ONCE.
      "It already works" is a claim; four screens are a flow; eight are a
      product. Two rows, and the rows mean something — the top one is what the
@@ -185,6 +209,17 @@
   .phone.small{padding:.9rem .85rem;border-radius:1.2rem;max-width:20rem}
   .phone.small .amt{font-size:2rem}
   .phone.small .go{padding:.7rem;font-size:.88rem}
+  /* ONE FIGURE UNDER THE PHONE, BECAUSE THE PHONE ALONE ARGUES NOTHING.
+     "One long press" shows what the payer does; it does not say why that is
+     easy. The number is the why: this is not a payment method in China, it
+     is how money works, and a reader outside China does not know that. Set
+     beside the sentence rather than above it, so it is read as the reason
+     for the screen above and not as a slide of its own. */
+  .why{display:flex;align-items:baseline;gap:1.1rem;margin:1.5rem 0 0;
+    padding-top:1.3rem;border-top:1px solid var(--line)}
+  .why b{font:400 2.8rem/.9 var(--serif);color:var(--money);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .why span{color:var(--ink-2);font-size:.98rem;line-height:1.5}
   .today{margin-top:1.6rem;padding-top:1.2rem;border-top:1px solid var(--line)}
   .today b{display:block;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;
     color:var(--dim);font-weight:700;margin-bottom:.4rem}
@@ -208,7 +243,18 @@
   <section>
     <p class="eyebrow">The demand</p>
     <h2>China is already buying this.</h2>
+
+    <p class="terr">中国 <em>· the buyer</em></p>
+    <p class="buyers"><b>Parents</b> <i>·</i> <b>Families</b> <i>·</i> <b>Students</b> <i>·</i> <b>Studios</b> <i>·</i> <b>Property buyers</b> <i>·</i> <b>Small firms</b></p>
+
+    <div class="edge" aria-hidden="true">
+      <span class="pay">¥ &darr;</span>
+      <span class="work">the work &uarr;</span>
+    </div>
+
+    <p class="terr">Australia <em>· the sole trader</em></p>
     <p class="fields"><b>Tutoring</b> <i>·</i> <b>Exam coaching</b> <i>·</i> <b>University placement</b> <i>·</i> <b>Migration advice</b> <i>·</i> <b>Translation</b> <i>·</i> <b>Academic editing</b> <i>·</i> <b>Graphic design</b> <i>·</i> <b>Photography</b> <i>·</i> <b>Video and post</b> <i>·</i> <b>Architecture</b> <i>·</i> <b>Interior design</b> <i>·</i> <b>Buyers' advocacy</b> <i>·</i> <b>Wine and food</b> <i>·</i> <b>Sports coaching</b> <i>·</i> <b>Music tuition</b> <i>·</i> <b>Export advice</b></p>
+
     <div class="but">
       <p class="sub" style="margin:0">There is no easy way to pay for it.</p>
       <p class="note" style="margin-top:.7rem">Australian sole traders, Chinese
@@ -231,7 +277,7 @@
   </section>
 
   <section>
-    <p class="eyebrow">As it stands</p>
+    <p class="eyebrow">The current headache trying to pay</p>
     <h2>A morning at the bank.</h2>
     <div class="facts">
       <div><b>62%</b><span>hold no credit card</span></div>
@@ -250,8 +296,13 @@
       <div class="code" aria-hidden="true"><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i></i></div>
       <p class="zh">长按二维码识别<small>或者截屏，再长按那张图</small></p>
     </div>
-    <p class="note" style="margin-top:1.4rem">No account. No app. No card number.
-      The gesture they already make every day.</p>
+    <div class="why">
+      <b>9 in 10</b>
+      <span>people online in China pay this way — about a billion of them,
+        every day. It is not a payment method there. It is how money works.</span>
+    </div>
+    <p class="note" style="margin-top:1.3rem">No account. No app. No card
+      number. The gesture they already make.</p>
   </section>
 
   <section>
