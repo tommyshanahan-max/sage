@@ -69,6 +69,34 @@
   .trust span{font-size:.72rem;line-height:1;padding:.4rem .6rem;border-radius:999px;
     background:rgba(255,255,255,.14);color:rgba(255,255,255,.94)}
 
+  /* THE PART THAT IS NOT THE CATALOGUE.
+     This page was a vending machine — a band, some chips and a grid — and a
+     vending machine run by a stranger on the other side of the world is the
+     least trustworthy object in this trade. Nobody in China buys formula
+     from a storefront because the storefront had formula. They buy it from
+     小美, whose 朋友圈 they have followed for a year, because she is
+     standing in the aisle in Melbourne and they are not.
+     So: his face, his own words, and three numbers that were counted rather
+     than typed. It sits above the goods because that is the order she reads
+     it in — who is this, then what has he got. */
+  .said{background:var(--card);border-radius:.9rem;padding:1rem 1.05rem;
+    margin:0 0 1rem}
+  .said h3{margin:0 0 .6rem;font-size:.72rem;letter-spacing:.09em;
+    font-weight:600;color:var(--mut)}
+  .said .me{display:flex;gap:.8rem;align-items:flex-start}
+  .said .me img{width:3.6rem;height:3.6rem;border-radius:50%;object-fit:cover;
+    flex:0 0 auto;background:var(--line)}
+  .said p{margin:0;font-size:.95rem;line-height:1.75;color:var(--ink);
+    white-space:pre-line;flex:1 1 auto;min-width:0}
+  /* Counted, so they are allowed to be the biggest thing in the block. A
+     shop with no history sends zeros and the row is not drawn at all —
+     "0 parcels delivered" is worse than saying nothing. */
+  .proof{display:flex;gap:.5rem;margin:.95rem 0 0;padding:.9rem 0 0;
+    border-top:1px solid var(--line)}
+  .proof div{flex:1;min-width:0;text-align:center}
+  .proof b{display:block;font-size:1.25rem;font-weight:600;line-height:1.2}
+  .proof span{display:block;font-size:.7rem;color:var(--mut);margin-top:.15rem}
+
   .who{display:flex;align-items:center;gap:.7rem;padding:.2rem .3rem 1rem}
   .who img{width:3rem;height:3rem;border-radius:50%;object-fit:cover;flex:0 0 auto;
     background:var(--line)}
@@ -298,7 +326,7 @@ const yuan = (n) => "¥" + (n / 100).toLocaleString("zh-CN", {
   minimumFractionDigits: (n % 100) ? 2 : 0, maximumFractionDigits: 2,
 });
 
-let SHOP = null, ITEMS = [], POST = 3000;
+let SHOP = null, ITEMS = [], POST = 3000, PROOF = null;
 /* Which shelf she is looking at. "" is 全部. */
 let SHELF = "";
 const CART = new Map();
@@ -688,6 +716,41 @@ function draw() {
   hero.append(trust);
   root.append(hero);
 
+  /* HIM, BEFORE THE GOODS. Drawn only when he has written something — an
+     empty card headed 店主的话 is a shop admitting it has nothing to say. */
+  if (SHOP.story) {
+    const said = el("div", "said");
+    said.append(el("h3", null, T("sh.said")));
+    const me = el("div", "me");
+    if (SHOP.photo) {
+      const img = el("img");
+      img.src = SHOP.photo;
+      img.alt = "";
+      img.addEventListener("error", () => img.remove());
+      me.append(img);
+    }
+    me.append(el("p", null, SHOP.story));
+    said.append(me);
+    /* Nothing where there is nothing. A brand-new shop showing three zeros
+       has told her the one thing it wanted to hide. */
+    const pf = PROOF || {};
+    const rows = [
+      pf.sent ? [String(pf.sent), T("sh.pSent")] : null,
+      pf.reviews ? [String(pf.reviews), T("sh.pRev")] : null,
+      pf.since ? [pf.since.replace("-", "."), T("sh.pSince")] : null,
+    ].filter(Boolean);
+    if (rows.length) {
+      const pr = el("div", "proof");
+      for (const [n, lab] of rows) {
+        const d = el("div");
+        d.append(el("b", null, n), el("span", null, lab));
+        pr.append(d);
+      }
+      said.append(pr);
+    }
+    root.append(said);
+  }
+
   if (!ITEMS.length) {
     root.append(el("p", "none", T("sh.empty")));
     return;
@@ -811,7 +874,7 @@ $("go").addEventListener("click", () => {
     const r = await fetch("/api/shop/" + encodeURIComponent(HANDLE), { cache: "no-store" });
     const j = await r.json();
     if (!r.ok || !j?.ok) throw new Error("gone");
-    SHOP = j.shop; ITEMS = j.products || []; POST = j.post ?? 3000;
+    SHOP = j.shop; ITEMS = j.products || []; POST = j.post ?? 3000; PROOF = j.proof || null;
     /* Always there now. The thread exists whether or not the shop left a
        WeChat id, which is the point of having built it. */
     $("ask").hidden = false;

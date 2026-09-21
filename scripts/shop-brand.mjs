@@ -20,6 +20,7 @@ const body = { who };
 /* Sent only when given, so setting a banner does not wipe a name, and
    setting a name does not wipe the banner. */
 if (rest.includes("--name")) body.name = arg("name");
+if (rest.includes("--story")) body.story = arg("story");
 if (arg("banner")) body.banner = arg("banner");
 
 const r = await fetch(base.replace(/\/$/, "") + "/api/admin/shop-brand", {

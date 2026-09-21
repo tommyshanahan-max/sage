@@ -1903,6 +1903,20 @@ export function cleanPerson(raw) {
       if (!r || typeof r !== "object") return undefined;
       const name = s(r.name, 40);
       const banner = s(r.banner, 300);
+      /* HIS OWN WORDS, AND THE REASON THE SHOP HAS ANY.
+         This trade is not a catalogue. Nobody in China buys formula from a
+         storefront because the storefront had formula — they buy it from
+         小美, whose 朋友圈 they have watched for a year, because she is
+         standing in the aisle in Melbourne and they are not. A shop page
+         with only products on it is a vending machine, and a vending
+         machine run by a stranger abroad is the least trustworthy object
+         in the trade.
+         Long enough for three or four sentences and no longer: this is the
+         paragraph under his face, not an About page. Stored as written, in
+         whatever language he wrote it — a machine rendering of somebody's
+         own voice is the one thing on this page that must not be
+         automatic. */
+      const story = s(r.story, 400);
       /* HOW A BUYER REACHES THE PERSON WHO SOLD IT TO HER. 联系店家 is on
          every Chinese shop she has used, bottom left beside the buy button,
          and it is WeChat — an id she can search for, or a code she can long
@@ -1915,8 +1929,8 @@ export function cleanPerson(raw) {
          wait for a person. Off unless somebody turned it on — see
          lib/shopkeep.js for what it is allowed to know. */
       const ai = Boolean(r.ai);
-      if (!name && !banner && !wechat && !qr && !ai) return undefined;
-      return { name, banner, wechat, qr, ai };
+      if (!name && !banner && !story && !wechat && !qr && !ai) return undefined;
+      return { name, banner, story, wechat, qr, ai };
     })(),
     /* TWO SHAPES, BECAUSE THERE ARE TWO PLACES A PERSON CAN BE.
      *

@@ -2798,8 +2798,14 @@ app.get("/api/shop-media", async (req, res) => {
   if (!/^[a-f0-9]{20}$/.test(id)) return res.status(404).json({ error: "no" });
   const board = await store.load(FILE);
   const mine = (u) => String(u || "").includes(id);
+  /* THE SHOPKEEPER'S OWN FACE WAS NOT ON THIS LIST, so it 404'd and the
+     <img> removed itself, and the one page whose whole job is "a person is
+     behind this" had nobody on it. Published only — the same gate
+     /api/shop/:who uses, and the same one /p/:handle uses — so a face
+     waiting in the queue stays in the queue. */
   const ours = board.products.some((p) => mine(p.photo))
-    || board.people.some((p) => mine(p.shop?.banner) || mine(p.shop?.qr))
+    || board.people.some((p) => mine(p.shop?.banner) || mine(p.shop?.qr)
+      || (p.photoState === "published" && mine(p.photo)))
     || board.reviews.some((r) => mine(r.photo));
   if (!ours) return res.status(404).json({ error: "no" });
   const found = await findMedia(id);
@@ -11084,13 +11090,39 @@ app.get("/api/shop/:handle", async (req, res) => {
       wechat: who.shop?.wechat || "",
       qr: shopPic(who.shop?.qr),
       ai: Boolean(who.shop?.ai),
+      /* HIS OWN WORDS, unrendered. Every other pair on this board carries a
+         machine version into the other language; this one does not, because
+         the whole value of the paragraph is that a person wrote it. */
+      story: who.shop?.story || "",
       /* Their own line, in whichever language they wrote it and its render
          into the other — the same pair every card on this board shows, and
          only when the page it came from is public. */
       say: live ? who.goal || "" : "",
       sayZh: live ? who.goalZh || "" : "",
-      photo: live && who.photoState === "published" ? who.photo || "" : "",
+      /* AN ADDRESS, NOT AN ID. This handed the raw media id to the page,
+         which set it as a src, which resolved against the shop's own path
+         and 404'd — so every shopfront quietly dropped its shopkeeper's
+         face and nobody noticed, because the <img> removes itself on
+         error and an absent face looks like a shop that never had one. */
+      photo: live && who.photoState === "published" && who.photo
+        ? SHOP_PIC + encodeURIComponent(who.photo) : "",
     },
+    /* WHAT THE SHOP CAN ACTUALLY BACK, and nothing it cannot.
+       Three numbers under his words, each one counted here rather than
+       typed into a field: parcels that a buyer confirmed arrived, reviews
+       written against a real order, and the month the first order came in.
+       A shop that says something it cannot back is the thing this trade
+       punishes hardest — see the note on `shop` in store.js — so a shop
+       with no history sends zeros and the page shows nothing rather than
+       a flattering round number nobody earned. */
+    proof: (() => {
+      const mine = board.orders.filter((o) => o.shop === who.handle && !o.off);
+      const done = mine.filter((o) => o.got);
+      const ids = new Set(mine.map((o) => o.id));
+      const revs = board.reviews.filter((r) => ids.has(r.order) || r.src);
+      const first = mine.map((o) => o.at).sort()[0] || "";
+      return { sent: done.length, reviews: revs.length, since: first.slice(0, 7) };
+    })(),
     /* Sold-out rows stay, marked: a shopfront that linked to something has
        to be able to say 已售完 rather than go quiet. */
     products: board.products
@@ -12295,8 +12327,9 @@ app.post("/api/admin/shop-brand", admin, express.json({ limit: "2kb" }), async (
       ...now,
       name: req.body?.name !== undefined ? String(req.body.name).trim().slice(0, 40) : (now.name || ""),
       banner: banner || now.banner || "",
+      story: req.body?.story !== undefined ? String(req.body.story).trim().slice(0, 400) : (now.story || ""),
     };
-    return { ok: true, name: p.shop.name, banner: Boolean(p.shop.banner) };
+    return { ok: true, name: p.shop.name, banner: Boolean(p.shop.banner), story: Boolean(p.shop.story) };
   });
   if (out?.error) return res.status(404).json({ error: "not on this board: " + who });
   res.json({ ok: true, ...out });

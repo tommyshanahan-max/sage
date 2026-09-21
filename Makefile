@@ -916,6 +916,24 @@ shop-open: ## Open the shop on its own name: make shop-open WHO="Tom" NAME="澳�
 	  $(if $(DOMAIN),--domain "$(DOMAIN)",) \
 	  $(if $(WECHAT),--wechat "$(WECHAT)",)
 
+shop-story: ## His own words on the shopfront: make shop-story WHO="Tom" TEXT="我在墨尔本…"
+	@# THE PART THAT IS NOT THE CATALOGUE. Nobody in China buys formula from
+	@# a storefront because the storefront had formula — they buy it from
+	@# 小美, whose 朋友圈 they have followed for a year, because she is
+	@# standing in the aisle in Melbourne and they are not. Three or four
+	@# sentences under his face: who he is, where he is, why he started.
+	@#
+	@# WRITE IT IN CHINESE. It is stored exactly as typed and never rendered
+	@# into the other language — a machine version of somebody's own voice
+	@# is the one thing on this page that must not be automatic.
+	@#
+	@# TEXT="" clears it.
+	@test -n "$(WHO)" || { echo 'make shop-story WHO="Tom" TEXT="我在墨尔本，女儿两岁…"'; exit 1; }
+	@test -n "$(filter command line,$(origin TEXT))" || { echo 'make shop-story WHO="$(WHO)" TEXT="我在墨尔本…"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/shop-brand.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)" --story "$(TEXT)"
+
 shop-banner: ## The picture, from a file: make shop-banner WHO="Tom" < dad.png
 	@# THE PICTURE IS ALREADY ON HIS MACHINE. Uploading it somewhere to get
 	@# a link, so the link can be pasted into another command, is two
