@@ -527,11 +527,16 @@
     border-bottom:1px solid var(--line)}
   .vs div:last-child{border-bottom:0}
   .vs .j{flex:1;min-width:0;font-size:1rem;color:var(--ink);font-weight:600}
-  .vs .a,.vs .b{flex:none;width:6.2rem;text-align:right;font-size:1.05rem;
+  .vs .a,.vs .b,.vs .c{flex:none;width:5rem;text-align:right;font-size:1.02rem;
     font-weight:600;font-variant-numeric:tabular-nums}
   .vs .a{color:var(--ink-2)}
-  .vs .b{color:var(--blue)}
-  .vs .hd .j,.vs .hd .a,.vs .hd .b{font-weight:700}
+  /* Both provider columns are blue: the merchant brings whichever account
+     they have and we acquire through it, so neither is "ours" in a way the
+     other is not. The gap between these two columns is the slide's second
+     argument — it is larger than our entire fee. */
+  .vs .b,.vs .c{color:var(--blue)}
+  .vs .hd .j,.vs .hd .a,.vs .hd .b,.vs .hd .c{font-weight:700}
+  .vs .hd span{font-size:.72rem;line-height:1.25}
 
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
@@ -780,11 +785,19 @@
 
   <!-- THE COMPARISON, INCLUDING THE TWO ROWS WE LOSE.
        A reader who does this arithmetic themselves finds that a wire is
-       cheaper above about A$2,000, and if the deck has not said so first
+       cheaper above about A$4,000, and if the deck has not said so first
        every other number on it becomes suspect. So it is said first, at the
        same weight as the row we win. What turns it is not price: it is that
        a personal FX quota cannot carry a business payment, which is the real
        reason the cheap route is often not on the table at all.
+       TWO PROVIDER COLUMNS, BECAUSE THE PROVIDER IS THE REAL LEVER. The
+       first draft priced Stripe alone and made the product look dearer
+       than it has to be: Airwallex converts at a fraction of Stripe's 2%
+       and moves the crossover from A$2,000 to about A$4,000. The gap
+       between those two columns is wider than our whole fee, which is the
+       argument for staying provider-agnostic — lib/wallet/providers holds
+       airwallex, qfpay and mock behind one interface already. "Their"
+       in each heading carries the rest: the merchant brings the account.
        Placed after "Nobody serves one person" rather than beside the problem
        slide — an investor reads an admission as confidence once the product
        has landed, and as a weakness before it has. -->
@@ -793,13 +806,13 @@
     <h2>Cheaper is not the pitch.</h2>
 
     <div class="vs">
-      <div class="hd"><span class="j">&nbsp;</span><span class="a">Bank wire</span><span class="b">Dealio</span></div>
-      <div><span class="j">Migration advice</span><span class="a">A$89</span><span class="b">A$47</span></div>
-      <div><span class="j">University placement</span><span class="a">A$120</span><span class="b">A$132</span></div>
-      <div><span class="j">Interior design</span><span class="a">A$302</span><span class="b">A$632</span></div>
+      <div class="hd"><span class="j">&nbsp;</span><span class="a">Bank wire</span><span class="b">Their Stripe</span><span class="c">Their Airwallex</span></div>
+      <div><span class="j">Migration advice</span><span class="a">A$89</span><span class="b">A$47</span><span class="c">A$31</span></div>
+      <div><span class="j">University placement</span><span class="a">A$120</span><span class="b">A$132</span><span class="c">A$89</span></div>
+      <div><span class="j">Interior design</span><span class="a">A$302</span><span class="b">A$632</span><span class="c">A$426</span></div>
     </div>
 
-    <p class="sub" style="margin-top:1.8rem">Above A$2,000 a wire costs less.</p>
+    <p class="sub" style="margin-top:1.8rem">Above A$4,000 a wire still costs less.</p>
     <p class="note" style="margin-top:.7rem">US$50,000 a year is her personal
       quota. A bank will not release it for a business payment.</p>
   </section>
