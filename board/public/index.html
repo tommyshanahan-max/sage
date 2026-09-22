@@ -1710,7 +1710,9 @@
    * would have if the browser's own chrome were not there. */
   .deck{position:relative;width:100%;
     height:max(13rem, min(62vh, 34rem, calc(var(--vh, 1vh) * 100 - 21rem - env(safe-area-inset-bottom))));
-    margin:0 0 .9rem;touch-action:pan-y;overflow:hidden;border-radius:1.3rem}
+    /* margin-inline:auto because fitDeck can now make it narrower than the
+       column — see the note there. It is a no-op at full width. */
+    margin:0 auto .9rem;touch-action:pan-y;overflow:hidden;border-radius:1.3rem}
   /* The row above it is always there now, so the deck always pays for it. */
   #mine:not([hidden]) + .deck{
     height:max(11rem, min(52vh, 30rem, calc(var(--vh, 1vh) * 100 - 26rem - env(safe-area-inset-bottom))))}
@@ -3269,8 +3271,74 @@ function fitDeck() {
   }
   below += 28; // the gaps around those three, which margins own and offsetHeight does not
   const room = window.innerHeight - above - below;
-  const cap = deck.classList.contains("short") ? 304 : 544;
-  deck.style.height = Math.round(Math.max(144, Math.min(cap, room))) + "px";
+  const short = deck.classList.contains("short");
+  const cap = short ? 304 : 544;
+  const h = Math.round(Math.max(144, Math.min(cap, room)));
+  deck.style.height = h + "px";
+
+  /* AND THE SHAPE IS THE PHOTOGRAPH'S, NOT THE SCREEN'S.
+   *
+   * The height above is a budget — what is left after the masthead, the
+   * filter, the buttons and the bar. Taking the full width of the page as
+   * well made the card whatever rectangle the leftovers happened to be, and
+   * measured on three phones the leftovers were never the shape anybody
+   * framed their face in:
+   *
+   *   the crop people drag   4:5   — 0.80, fixed, a portrait
+   *   Pro Max  391x468       0.84  — near enough
+   *   iPhone 15  354x379     0.93  — a sixth gone off the top and bottom
+   *   iPhone SE  336x194     1.73  — WIDER THAN IT IS TALL: a band across
+   *                                  the eyes, no forehead and no chin
+   *
+   * object-fit:cover then cut whatever did not fit, so the thing a person
+   * carefully positioned came out as a strip. The editor's own comment said
+   * the drag box is "shown at the card's own shape, so what is dragged here
+   * is exactly what everybody else will see" — true on the largest phone
+   * sold and false on the rest.
+   *
+   * So the width comes off the height instead. The card is 4:5 or it is
+   * nothing: on a short screen it gets SMALLER rather than squatter, which
+   * was the choice made when this was found. A smaller photograph is still a
+   * face; a letterbox is a chin.
+   *
+   * NOT WHEN THERE IS NO PHOTOGRAPH. The `short` card is a letter and a
+   * sentence, and the whole reason that class exists is to stop the sentence
+   * being pushed under the fold — making it a portrait too would undo it.
+   * The rule protects faces, so it applies where there is one. */
+  if (short) { deck.style.width = ""; return; }
+  const full = deck.parentElement
+    ? deck.parentElement.getBoundingClientRect().width : deck.offsetWidth;
+  /* THE WIDTH HAS A FLOOR, and the shape wins over the budget.
+   *
+   * Taking the width straight off the budgeted height gave an exact 4:5 and,
+   * on a small phone belonging to somebody who has not put a photograph up
+   * yet, a card 155px wide: the "Add your photo" row costs about 150px of
+   * the screen, the budget gets what is left, and the words inside — the
+   * name, the two badges, the sentence — spilled out over the edges. A card
+   * too narrow to hold its own contents is not an improvement on a squat one.
+   *
+   * So the width is floored at 15rem and capped at the column, and the height
+   * then follows it at 4:5 whatever the budget said. On every phone with a
+   * member who has a photograph that lands inside the budget anyway. Where it
+   * does not, the card runs past the fold and the page scrolls, which is the
+   * trade that was chosen over a face cropped to a band.
+   *
+   * MEASURED, SO THE ONE CASE THAT IS NOT CLEAN IS WRITTEN DOWN. A 667px
+   * phone belonging to somebody who has not put a photograph up yet — the
+   * only combination where the prompt row and the card both want the screen —
+   * puts Follow and Next about 70px behind the bar, one short scroll away.
+   * Every other case measured clears it:
+   *
+   *   SE 375x667   no photo yet   240x300   buttons behind the bar
+   *   SE 375x667   member         240x300   clear
+   *   15 393x852   no photo yet   303x379   clear
+   *   15 393x852   member         354x442   clear
+   *
+   * It fixes itself the moment that person uploads, which is what the prompt
+   * above the card is asking them to do. */
+  const w = Math.min(full, Math.max(Math.min(full, 240), h * 0.8));
+  deck.style.width = Math.round(w) + "px";
+  deck.style.height = Math.round(w * 1.25) + "px";
 }
 window.addEventListener("resize", fitDeck);
 window.addEventListener("orientationchange", fitDeck);
