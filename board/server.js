@@ -10405,9 +10405,17 @@ const webOnly = (req, res, next) =>
  * bucket — is copying that folder. Nothing in it imports from the board, and
  * the one host name it prints is an attribute on <body>.
  *
+ * WHY IT SITS UNDER board/ AND NOT AT THE ROOT. It was ../china/public for an
+ * hour and the deployed page was blank: the board's image is built with
+ * `context: ./board`, so anything above that directory is not in the build at
+ * all and the path resolved to nothing inside the container. A folder that
+ * only works on the machine it was written on is not portable, it is
+ * untested. So it lives where the image can see it, and moving it out later
+ * is a git mv and this one line.
+ *
  * `extensions` so /china/connect works as well as /china/connect.html: the
  * short form is what goes in a message to somebody. */
-app.use("/china", express.static("../china/public", { extensions: ["html"] }));
+app.use("/china", express.static("china", { extensions: ["html"] }));
 
 /* THE CONNECT BUTTON, FOR REAL.
  *

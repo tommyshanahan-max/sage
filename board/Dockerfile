@@ -13,6 +13,9 @@ RUN npm install --omit=dev --no-audit --no-fund
 COPY server.js ./
 COPY lib ./lib
 COPY public ./public
+# China Business Solutions: six static pages served at /china, kept as their
+# own folder so the whole thing can be lifted out. See the note in server.js.
+COPY china ./china
 
 # The data directory, owned by the user the container runs as.
 #
