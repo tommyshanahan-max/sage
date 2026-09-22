@@ -123,8 +123,17 @@
   .foot .note.bad{color:var(--t5)}
   /* Quieter than the note above it, and never hidden: a rule shown only
      sometimes is a rule nobody agreed to. */
-  .agree{margin:.75rem 0 0;font-size:.74rem;line-height:1.6;color:var(--muted)}
-  .agree a{color:inherit;text-decoration:underline;text-underline-offset:.15em}
+  /* BIG ENOUGH TO BE READ, AND THE LINK LOOKS LIKE A LINK.
+     It was .74rem of --muted with the link set to `color:inherit`, which is
+     twelve and a half pixels of grey on grey with the only difference between
+     the sentence and the tappable half being an underline. It was invisible
+     on a phone — reported by somebody holding one — and this is the line App
+     Review asked for under guideline 1.2, so a reviewer skimming the door has
+     to see it too. Nearly body size, in --ink-2 rather than --muted, and the
+     word Terms in the accent with a tap target around it. */
+  .agree{margin:.9rem 0 0;font-size:.95rem;line-height:1.55;color:var(--ink-2)}
+  .agree a{color:var(--accent);font-weight:600;text-decoration:underline;
+    text-underline-offset:.18em;padding:.25rem .1rem}
   .foot .lang{margin-left:auto}
   .ins{margin:.6rem 0 0}
   /* The pin's own slot. ledger-pin.js draws everything inside it and clears
