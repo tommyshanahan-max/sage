@@ -46,14 +46,37 @@ Playwright is already on the box. See `CLAUDE.md` for where Chromium lives and
 the flags it needs. If the page renders its products from JSON in the HTML,
 read the JSON — it is more stable than the markup around it.
 
-### 2. One new field
+### 2. Two new fields, and the second is the one that matters
 
 `cleanProduct` in `board/lib/shop.js` currently holds:
 
     id, name, price, at, unit, en, photo, kind, out, off
 
-Add **`wd`** — the Weidian item id, digits only, 32 characters maximum. Absent
-means this product has no Weidian item and must not offer checkout.
+Add:
+
+- **`wd`** — the Weidian item id, digits only, 32 characters maximum.
+- **`sku`** — the id of the *variant* within that item, same rules.
+
+**THE SKU IS THE POINT, NOT THE ITEM.** One Weidian item is usually several
+things: 900g and 1.2kg, a single tin and a pack of three, a flavour. The
+product row already knows which one it is — that is what `unit` is for, and
+its comment says so: "120粒 x2, 900g *3". Matching a product to an item and
+stopping there hands the buyer a page with four buttons on it and hopes she
+presses the one we charged her for. She will sometimes press another, and the
+first anybody knows is a parcel with the wrong thing in it.
+
+So the scrape reads the variant list under each item, and the join is
+product -> variant, not product -> item. A product that cannot be matched to a
+single variant is left unmatched and reported. Absent `wd` or absent `sku`
+means no checkout for that product — a "ask us about this one" is a worse shop
+and a better outcome than a wrong parcel.
+
+**Find out whether a variant can be deep-linked** before designing around it.
+If `item.html?itemID=<id>&skuId=<sku>` opens on the right variant, use it. If
+it does not, the buy button still carries the buyer to the item page, but the
+storefront must show the exact variant wording she has to choose, in the
+Chinese Weidian uses, beside the button — not our English, not our paraphrase.
+Say which of the two it turned out to be, in a comment, with what was tried.
 
 Follow the file's house style: the comment says *why*, including what was
 tried and what broke.
@@ -62,11 +85,11 @@ tried and what broke.
 
 `scripts/weidian-sync.mjs`, wrapped in `make weidian-sync`:
 
-- Every scraped item matched to an existing product, by `wd` first, then by an
-  exact Chinese name match.
-- Unmatched items become new products — `name`, `price`, `photo`, `wd` filled,
-  `en` and `kind` left blank.
-- Products whose Weidian item has gone get `out: true`. **Never delete one.**
+- Every scraped **variant** matched to an existing product, by `wd`+`sku`
+  first, then by an exact Chinese name plus an exact `unit` match.
+- Unmatched variants become new products — `name`, `price`, `photo`, `wd`,
+  `sku` and `unit` filled, `en` and `kind` left blank.
+- Products whose Weidian variant has gone get `out: true`. **Never delete one.**
   The comment on `out` says why: a storefront that linked to it has to be able
   to say sold out rather than serve a page that is gone.
 - Prices that have moved are reported, not silently written. A price changing
@@ -86,8 +109,9 @@ guesses into the ledger.
 ### 5. Checkout goes to Weidian
 
 `board/public/shop.html:1043` sends the buyer to `/shop/<handle>/checkout`.
-For a product with a `wd`, the buy button goes to
-`weidian.com/item.html?itemID=<wd>` instead.
+For a product with both `wd` and `sku`, the buy button goes to Weidian on
+that variant — see the deep-link question above. Without both, there is no buy
+button for that product.
 
 Read `board/DEALIO.md` rule 6 before touching this. And read the QR note in
 `board/lib/qr.js` — **the Chinese payer already knows how to pay**. Do not
