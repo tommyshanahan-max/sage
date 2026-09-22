@@ -9999,8 +9999,25 @@ app.get("/d/:t", (req, res, next) => page("memo.html", req, res, next));
    chat. /shop/<handle> is somebody's shop; /order/<id> is one order, and
    the id is the whole of its address — twenty hex, unguessable, the same
    rule as a payment request. */
-app.get("/shop/:handle/checkout", (req, res, next) => page("checkout.html", req, res, next));
-app.get("/shop/:handle", (req, res, next) => page("shop.html", req, res, next));
+/* WHOSE SHOP, SUBSTITUTED RATHER THAN READ OFF THE ADDRESS.
+ *
+ * THE SHOPFRONT HAS NEVER WORKED ON ITS OWN DOMAIN AND THIS IS WHY.
+ * shop.html took its handle from location.pathname, which is right on
+ * thexchange.app/shop/Tom and empty on aozhoubaba.com — because the shop's
+ * Caddy block REWRITES / to /shop/<handle> rather than redirecting, on
+ * purpose, so the buyer keeps the name she was given in the bar. A rewrite
+ * is invisible to the browser: express sees /shop/Tom, the page sees "/",
+ * and it fetched /api/shop/ and drew "这家店打不开了" on the front door of
+ * the shop. The API was answering ok:true the whole time.
+ *
+ * So the server says who it is. It is the one that knows — it has the
+ * matched route parameter — and it has to be in the HTML before any fetch
+ * could ask, exactly like {{DEALIO}} above. */
+const shopPage = (file) => (req, res, next) =>
+  page(file, req, res, next, { "{{HANDLE}}": encodeURIComponent(String(req.params.handle || "")) });
+
+app.get("/shop/:handle/checkout", shopPage("checkout.html"));
+app.get("/shop/:handle", shopPage("shop.html"));
 /* THE OTHER SIDE OF THE SAME SHOP. /shop/<handle> faces China and sells the
    person; /sell faces Australia and sells the route. Two pages because there
    are two people asking different questions, and one page trying to answer
@@ -10009,7 +10026,7 @@ app.get("/shop/:handle", (req, res, next) => page("shop.html", req, res, next));
 /* HOW IT GOT HERE. The level below 店主的话 — a WeChat store on a phone, a
    shop in Beijing, the year it closed, and now this. Its own address so it
    can be sent on its own, which is what somebody does with a story. */
-app.get("/shop/:handle/story", (req, res, next) => page("story.html", req, res, next));
+app.get("/shop/:handle/story", shopPage("story.html"));
 
 app.get("/sell", (req, res, next) => page("sell.html", req, res, next));
 app.get("/api/sell", async (req, res) => {

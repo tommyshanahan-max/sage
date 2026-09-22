@@ -501,7 +501,7 @@
     border-bottom:1px solid var(--line)}
   .vs div:last-child{border-bottom:0}
   .vs .j{flex:1;min-width:0;font-size:1rem;color:var(--ink);font-weight:600}
-  .vs .a,.vs .b,.vs .c{flex:none;width:5rem;text-align:right;font-size:1.02rem;
+  .vs .a,.vs .b,.vs .c{flex:none;width:8.5rem;text-align:right;font-size:1.05rem;
     font-weight:600;font-variant-numeric:tabular-nums}
   .vs .a{color:var(--ink-2)}
   /* Both provider columns are blue: the merchant brings whichever account
@@ -757,38 +757,36 @@
       This needs a name and a phone.</p>
   </section>
 
-  <!-- THE COMPARISON, INCLUDING THE TWO ROWS WE LOSE.
-       A reader who does this arithmetic themselves finds that a wire is
-       cheaper above about A$4,000, and if the deck has not said so first
-       every other number on it becomes suspect. So it is said first, at the
-       same weight as the row we win. What turns it is not price: it is that
-       a personal FX quota cannot carry a business payment, which is the real
-       reason the cheap route is often not on the table at all.
-       TWO PROVIDER COLUMNS, BECAUSE THE PROVIDER IS THE REAL LEVER. The
-       first draft priced Stripe alone and made the product look dearer
-       than it has to be: Airwallex converts at a fraction of Stripe's 2%
-       and moves the crossover from A$2,000 to about A$4,000. The gap
-       between those two columns is wider than our whole fee, which is the
-       argument for staying provider-agnostic — lib/wallet/providers holds
-       airwallex, qfpay and mock behind one interface already. "Their"
-       in each heading carries the rest: the merchant brings the account.
-       Placed after "Nobody serves one person" rather than beside the problem
-       slide — an investor reads an admission as confidence once the product
-       has landed, and as a weakness before it has. -->
+  <!-- WHY NOT A BANK TRANSFER — REBUILT ON A BANKER'S OWN NUMBERS.
+       This slide priced a wire at 2% FX and then at 1.25%, and both were
+       guesses. Tom asked his relationship manager at a Chinese bank and the
+       answer came back in writing: the send fee is 0.001 of the amount, the
+       market was 6.70 and they quote 6.72, and there is no separate FX
+       charge. That is 0.1% plus 0.30%. A wire is CHEAP, and the crossover
+       this slide claimed at A$4,000 is nearer A$1,600 — we lose the cost
+       argument on almost every job worth having.
+       So the cost table is gone. What replaces it is the part that is
+       actually true and actually ours: cheap is not the same as available.
+       Every figure here was said by a Chinese bank to a customer asking a
+       plain question, which is the only reason any of them is on a slide.
+       NOT ON HERE, deliberately: any claim that our route leaves her
+       allowance alone. A cross-border wallet payment converts RMB and is
+       reported like anything else, and nobody has checked it. -->
   <section>
-    <p class="eyebrow">The honest comparison</p>
-    <h2>Cheaper is not the pitch.</h2>
+    <p class="eyebrow">Why not a bank transfer</p>
+    <h2>A wire is cheap. It is also rationed.</h2>
 
     <div class="vs">
-      <div class="hd"><span class="j">&nbsp;</span><span class="a">Bank wire</span><span class="b">Their Stripe</span><span class="c">Their Airwallex</span></div>
-      <div><span class="j">Migration advice</span><span class="a">A$89</span><span class="b">A$47</span><span class="c">A$31</span></div>
-      <div><span class="j">University placement</span><span class="a">A$120</span><span class="b">A$132</span><span class="c">A$89</span></div>
-      <div><span class="j">Interior design</span><span class="a">A$302</span><span class="b">A$632</span><span class="c">A$426</span></div>
+      <div><span class="j">Bank fee to send</span><span class="a">0.1%</span></div>
+      <div><span class="j">On the rate</span><span class="a">0.30%</span></div>
+      <div><span class="j">Her allowance, a year</span><span class="a">US$50,000</span></div>
     </div>
 
-    <p class="sub" style="margin-top:1.8rem">Above A$4,000 a wire still costs less.</p>
-    <p class="note" style="margin-top:.7rem">US$50,000 a year is her personal
-      quota. A bank will not release it for a business payment.</p>
+    <p class="sub" style="margin-top:1.8rem">One allowance, for everything.</p>
+    <p class="note" style="margin-top:.7rem">Her daughter's tuition, the family
+      trip, a deposit — and this invoice. A$11,500 is fifteen per cent of her
+      year, gone on one payment that also takes a week and fails on a
+      misspelt name.</p>
   </section>
 
   <!-- THE LADDER, NOT THE FIGURE. A$1.8bn ON ITS OWN IS A NUMBER JERRY CAN

@@ -88,7 +88,14 @@
 import { T, lang, pickLang } from "/i18n.js";
 pickLang();
 
-const HANDLE = decodeURIComponent((location.pathname.match(/^\/shop\/([^/]+)/) || [])[1] || "");
+/* THE SERVER SAYS WHOSE SHOP THIS IS — see shopPage() in server.js.
+   Read off location.pathname this was empty on the shop's own domain,
+   where Caddy rewrites / to /shop/<handle> without the browser ever
+   seeing it, and the front door drew "这家店打不开了" while the API
+   answered ok:true. The path is still the fallback, for a page opened
+   from a file or served some way nobody has thought of yet. */
+const HANDLE = decodeURIComponent("{{HANDLE}}".replace(/^\{\{HANDLE\}\}$/, ""))
+  || decodeURIComponent((location.pathname.match(/^\/shop\/([^/]+)/) || [])[1] || "");
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => {
   const n = document.createElement(t);
