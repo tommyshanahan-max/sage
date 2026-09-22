@@ -29,6 +29,39 @@
 //
 // So the server sends a PNG as well, and the payer's page draws that. The
 // bits stay for the drawn ones, where nothing is ever scanned.
+//
+// THREE WAYS A CODE GETS READ, AND ALL THREE ARE INSIDE WECHAT.
+//
+// Written down because a session claimed a QR on a phone was a dead end —
+// "you cannot scan the screen you are holding" — and started designing
+// around a problem WeChat solved years ago. Tom corrected it. The payer
+// leaves the app for none of these:
+//
+//   长按识别      Hold a finger on the code and WeChat offers to open it.
+//                 Works on an image in a chat, in Moments, and on an <img>
+//                 in WeChat's own browser — which is the whole reason this
+//                 file sends a PNG and not the grid of divs above.
+//
+//   扫一扫        The scanner, in the + menu. Camera pointed at another
+//                 screen or at something printed: across a table, off a
+//                 carton, off a shelf card. This is the one that lets a
+//                 code live where a link cannot go at all.
+//
+//   从相册选取    Inside 扫一扫, "choose from album". Screenshot the code,
+//                 open the scanner, pick the picture. The same-device
+//                 route, using the scanner rather than the long press.
+//
+// SO THE CODE IS NOT A FALLBACK FOR A LINK, IT IS THE BETTER OBJECT.
+// WeChat interstitials and blocks external URLs, hardest in group chats and
+// hardest of all on anything payment-shaped; an image is not treated that
+// way. One picture serves everyone in the group. And a code can be printed,
+// which is how a carton of formula carries its own reorder button.
+//
+// None of that is true of the QR an offshore checkout draws AFTER Pay is
+// pressed — that one is a foreign flow showing through, and the fix there
+// is the app handoff, not a better code. Two different objects doing two
+// different jobs; do not let a note about one become a rule about the other.
+
 import QRCode from "qrcode";
 
 /** @returns {{size:number, bits:string[]}} rows of "1"/"0", top to bottom. */
