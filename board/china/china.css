@@ -21,6 +21,12 @@
   --serif:'Instrument Serif',Georgia,'Songti SC',serif;
 }
 *{box-sizing:border-box}
+/* BEFORE ANYTHING ELSE, because .go and .door set display and a bare
+   [hidden] loses to them. A button marked hidden that is still on the screen
+   is the worst kind of wrong: the code believes one thing and the person
+   reading sees another. Caught by a screenshot showing two primary buttons
+   where the DOM said one. */
+[hidden]{display:none!important}
 html,body{height:100%}
 body{margin:0;background:var(--paper);color:var(--ink);
   font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",Helvetica,sans-serif;

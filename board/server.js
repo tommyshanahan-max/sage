@@ -10526,6 +10526,59 @@ app.post("/china/api/connect", express.json(), async (req, res) => {
   }
 });
 
+/* CONNECTING THE ACCOUNT THEY ALREADY HAVE.
+ *
+ * Two hops. This one hands them to Stripe with a state we minted; the return
+ * below takes the code back and swaps it for the id of THEIR account. See the
+ * long note over linkUrl in lib/stripe.js for why this exists at all — the
+ * short version is that the button used to open a second account and tell
+ * them it was their own.
+ *
+ * A REDIRECT AND NOT JSON, because the answer is "go here" and a fetch that
+ * gets a URL and sets location.href is two round trips to do one thing. The
+ * page is an ordinary link.
+ */
+app.get("/china/api/link", async (req, res) => {
+  if (!stripe.canLink()) return res.redirect(302, "/china/connect?e=nolink");
+  try {
+    const state = await CHINA.beginLink();
+    res.redirect(302, stripe.linkUrl({
+      redirect: backHere(req, "/china/linked"),
+      state,
+    }));
+  } catch (err) {
+    console.error("china link:", err.message);
+    res.redirect(302, "/china/connect?e=stripe");
+  }
+});
+
+/** Back from Stripe, with a code or with a refusal. */
+app.get("/china/linked", async (req, res) => {
+  /* THE STATE IS CHECKED BEFORE THE CODE IS LOOKED AT. A code is useless
+     without it and acting on one first is how an attacker's code gets
+     attached to somebody else's browser. */
+  const ok = await CHINA.spendLink(req.query.state);
+  if (!ok) return res.redirect(302, "/china/connect?e=state");
+  /* They pressed cancel on Stripe's screen, which is not an error and has
+     its own page — the same one an abandoned Express onboarding lands on. */
+  if (req.query.error || !req.query.code) return res.redirect(302, "/china/stopped");
+  try {
+    const account = await stripe.linkFinish(String(req.query.code));
+    const token = await CHINA.remember({ account, email: "" });
+    res.cookie(CHINA_COOKIE, token, {
+      httpOnly: true, sameSite: "Lax", secure: true, maxAge: 180 * 24 * 3600 * 1000, path: "/china",
+    });
+    /* Straight to the WeChat Pay screen rather than to "connected": their
+       account is linked, and whether it can actually take a WeChat payment
+       is the next thing anybody wants to know. That screen asks Stripe and
+       moves itself on when the answer is yes. */
+    res.redirect(302, "/china/switch");
+  } catch (err) {
+    console.error("china linked:", err.message);
+    res.redirect(302, "/china/connect?e=stripe");
+  }
+});
+
 /** Where this merchant has got to, for the Check again button. */
 app.get("/china/api/state", async (req, res) => {
   res.set("Cache-Control", "no-store");

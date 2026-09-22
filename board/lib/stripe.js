@@ -276,3 +276,75 @@ export async function checkout({ amount, currency, fee, destination, method, ref
   }
   return call("/checkout/sessions", body);
 }
+
+/* ---------------------------------------------------------------------------
+ * CONNECTING AN ACCOUNT SOMEBODY ALREADY HAS, which is a different thing
+ * from makePayee and was missing entirely.
+ *
+ * THE BUG THIS FIXES. Door one of /china says "I have a Stripe or Airwallex
+ * account" and under it "One button. Money lands in your own account, same as
+ * it does today." Pressed, it called makePayee — which OPENS A NEW ACCOUNT.
+ * Somebody with a working Stripe account, WeChat Pay already switched on and
+ * two years of history, would have been handed a second empty one to onboard
+ * from scratch, with the screen telling him it was his own. Not a cosmetic
+ * gap: the person it was written for is the one it would have misled.
+ *
+ * TWO MECHANISMS, AND THE SCREEN NOW ASKS WHICH.
+ *   OAuth    they log in to THEIR Stripe and authorise us. Nothing is
+ *            created; we are given the id of the account they already have.
+ *   Express  we open one for them and Stripe collects the identity and the
+ *            bank. Right only for somebody who has none.
+ *
+ * `scope=read_write` because a destination charge is created BY the platform
+ * against the connected account; read_only can see an account and cannot be
+ * charged on. `stripe_landing=login` because these people have an account —
+ * showing them a sign-up form is asking them to make the second account this
+ * whole change exists to prevent.
+ *
+ * THE TOKEN EXCHANGE GOES THROUGH call() like everything else. Stripe answers
+ * it at api.stripe.com/v1/oauth/token as well as the older
+ * connect.stripe.com/oauth/token; the first keeps one code path, one place
+ * that knows how this file encodes a form, and one place that turns a refusal
+ * into Stripe's own sentence.
+ * ------------------------------------------------------------------------ */
+const CLIENT_ID = (process.env.BOARD_STRIPE_CLIENT_ID || "").trim();
+
+/** Whether the "connect the one I have" half can work at all. Its own check,
+ *  because a board with a key but no client id can open accounts and cannot
+ *  link them, and a screen that offers both should say which is off. */
+export const canLink = () => Boolean(KEY && CLIENT_ID);
+
+/** Where to send somebody to authorise us on the account they already have.
+ *  `state` is minted and checked by the caller — it is the only thing
+ *  standing between this and somebody being walked onto a stranger's
+ *  account by a link in a message. */
+export function linkUrl({ redirect, state, email }) {
+  if (!CLIENT_ID) throw new Error("BOARD_STRIPE_CLIENT_ID is not set");
+  const q = new URLSearchParams({
+    response_type: "code",
+    client_id: CLIENT_ID,
+    scope: "read_write",
+    redirect_uri: redirect,
+    state,
+    stripe_landing: "login",
+  });
+  if (email) q.set("stripe_user[email]", email);
+  return "https://connect.stripe.com/oauth/authorize?" + q.toString();
+}
+
+/** The code Stripe hands back, exchanged for the id of THEIR account.
+ *  Returns acct_… — the same shape makePayee returns, so everything
+ *  downstream (payeeReady, checkout's destination) is unchanged. */
+export async function linkFinish(code) {
+  const out = await call("/oauth/token", {
+    grant_type: "authorization_code",
+    code,
+    /* The secret key doubles as the OAuth client secret. Sent in the body
+       because that is what this endpoint reads; the Authorization header
+       call() also sets is ignored here and harmless. */
+    client_secret: KEY,
+  });
+  const id = String(out?.stripe_user_id || "");
+  if (!id) throw new Error("/oauth/token gave no stripe_user_id");
+  return id;
+}

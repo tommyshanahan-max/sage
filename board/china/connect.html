@@ -43,7 +43,7 @@
          for on its own page; just somewhere to say "your account is ready".
          Labelled, not placeheld: a placeholder vanishes the moment somebody
          types and the field stops saying what it wanted. -->
-    <div class="card">
+    <div class="card" id="newbox" hidden>
       <label for="email" class="label" style="display:block">Where we reach you</label>
       <input id="email" name="email" type="email" inputmode="email" autocomplete="email"
              autocapitalize="off" spellcheck="false"
@@ -55,19 +55,31 @@
            press connect". Something did happen; it said so quietly. A refusal
            is the most important text on the screen at the moment it appears,
            so it is body size, dark, and on its own ground. -->
-      <p id="say" hidden style="margin:.7rem 0 0;font-size:.95rem;line-height:1.5;
-        font-weight:500;color:#7C3220;background:#F7ECE8;border-radius:.5rem;padding:.7rem .8rem"></p>
     </div>
+
+    <!-- OUTSIDE THE BOX ABOVE, which is hidden until somebody says they have
+         no account. It was inside it, so every refusal that arrives on a
+         fresh page — a stale OAuth link, a Stripe that would not finish —
+         was written into an element nobody could see. -->
+    <p id="say" hidden style="margin:0;font-size:.95rem;line-height:1.5;
+      font-weight:500;color:#7C3220;background:#F7ECE8;border-radius:.6rem;padding:.8rem .9rem"></p>
 
     <p class="note">Revoke us from your Stripe dashboard whenever you like. Nothing here holds a key.</p>
     <div class="grow"></div>
   </div>
 
   <footer class="foot">
-    <button class="go" id="go" type="button">Connect Stripe
+    <!-- THE ACCOUNT THEY ALREADY HAVE IS THE DEFAULT, because the door they
+         came through said they have one. This is an ordinary link: the
+         server's only answer is "go to Stripe", and a fetch that reads a URL
+         and sets location.href is two round trips to do one thing. -->
+    <a class="go" id="link" href="api/link">Connect my Stripe
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+    </a>
+    <button class="go" id="go" type="button" hidden>Set one up
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
     </button>
-    <p class="under">Opens Stripe. Takes about a minute.</p>
+    <p class="under" id="alt"><a href="#" id="none">I don&rsquo;t have a Stripe account</a></p>
   </footer>
 </main>
 <script>
@@ -83,6 +95,15 @@
  * an address that is not an address. Both are fixable by the person reading.
  */
 (function () {
+  /* TWO WAYS IN, AND THE SCREEN ASKS WHICH RATHER THAN GUESSING.
+     Connecting an account somebody has and opening one they do not are
+     different Stripe mechanisms, and the version of this screen that offered
+     one button ran the second for everybody — so a person with a working
+     Stripe account was handed an empty new one. */
+  var link = document.getElementById("link");
+  var none = document.getElementById("none");
+  var newbox = document.getElementById("newbox");
+  var alt = document.getElementById("alt");
   var go = document.getElementById("go");
   var box = document.getElementById("email");
   var say = document.getElementById("say");
@@ -92,6 +113,24 @@
     say.hidden = !t;
     if (t) try { say.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {}
   }
+
+  none.addEventListener("click", function (e) {
+    e.preventDefault();
+    link.hidden = true;
+    alt.hidden = true;
+    newbox.hidden = false;
+    go.hidden = false;
+    document.getElementById("email").focus();
+  });
+
+  /* A refusal the server could only say by redirecting — it had nowhere to
+     put a sentence on a page it was sending somebody away from. */
+  var why = new URLSearchParams(location.search).get("e");
+  if (why) tell(why === "nolink"
+    ? "Connecting an existing account is not switched on here yet. Set a new one up instead."
+    : why === "state"
+    ? "That link had expired. Press the button again."
+    : "Stripe would not finish just now. Try again in a minute.");
 
   go.addEventListener("click", async function () {
     var email = (box.value || "").trim();

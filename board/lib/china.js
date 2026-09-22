@@ -54,6 +54,41 @@ export function openChina(dir) {
       await write(d);
       return token;
     },
+    /* ONE TRIP TO STRIPE AND BACK, REMEMBERED.
+     *
+     * OAuth hands somebody to Stripe and takes them back on a URL anybody
+     * could construct. `state` is the only thing between that and a link in
+     * a message walking a merchant onto a stranger's account: minted here,
+     * checked on return, and spent — a state that worked twice is a replay.
+     *
+     * Kept beside the accounts rather than in a signed cookie because it has
+     * to survive the round trip in Safari, where a cookie set before leaving
+     * for a third-party domain is exactly the thing ITP is suspicious of. */
+    async beginLink() {
+      const state = randomBytes(16).toString("hex");
+      const d = await read();
+      d.states = d.states && typeof d.states === "object" ? d.states : {};
+      /* Anything older than an hour is somebody who wandered off mid-flow.
+         Swept here so the file cannot grow for ever on abandoned attempts. */
+      const cut = Date.now() - 3600 * 1000;
+      for (const [k, v] of Object.entries(d.states)) {
+        if (!v || Number(v.at) < cut) delete d.states[k];
+      }
+      d.states[state] = { at: Date.now() };
+      await write(d);
+      return state;
+    },
+    /** True once, for a state minted here within the hour. */
+    async spendLink(state) {
+      const t = String(state || "");
+      if (!/^[0-9a-f]{32}$/.test(t)) return false;
+      const d = await read();
+      const row = d.states && d.states[t];
+      if (!row) return false;
+      delete d.states[t];
+      await write(d);
+      return Number(row.at) > Date.now() - 3600 * 1000;
+    },
     /** The account behind a cookie, or null. Never throws on a bad value. */
     async find(token) {
       const t = String(token || "");
