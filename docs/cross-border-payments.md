@@ -114,6 +114,56 @@ name. The commercial ICP licence is capped at 50% foreign ownership outside the
 registered capital paid in within five years; bookkeeping from ¥1,600 a month
 plus a statutory audit of ¥5,000–50,000 a year.
 
+### Why a service agreement does not bridge the gap
+
+Asked twice now, and it is the same question both times: the WFOE has WeChat
+Pay, so why not send the QR to the Chinese customer, collect into the WFOE,
+and have the Australian company pay the money out to the person who did the
+work — with a service agreement between the two to paper it?
+
+**It turns entirely on whether the WFOE is the SELLER or the COLLECTOR.**
+
+*Seller* is the model two paragraphs above and it is legal: the WFOE contracts
+with the Chinese client, issues the fapiao, and buys delivery from the
+overseas provider under its own contract. *Collector* is taking money from a
+payer and passing it to an unrelated third party, which is 二清 under Order 768
+whatever paperwork sits beside it.
+
+**The agreement cannot help, and the reason is structural.** A contract
+between the WFOE and the Australian company binds those two. The money in the
+collector case belongs to neither of them — it is the payer's until the
+provider has earned it. Two parties cannot contract away a rule that exists to
+protect the third, and the rule exists precisely because the third party is
+the one who loses when an unlicensed collector fails.
+
+Three separate checks catch it, and they do not depend on each other:
+
+- **Tencent's merchant terms** forbid collecting for third parties, and many
+  inbound payments matched by outbound remittances is a pattern they look for
+  rather than one they might miss. The account freezes with the balance in it.
+- **SAFE and the WFOE's own Chinese bank** want a genuine underlying
+  transaction behind every outbound payment, with the contract and the invoice
+  to read. "I collected their customers' money" does not document.
+- **Transfer pricing.** A related-party outbound service fee has to be arm's
+  length for a service actually rendered, and outbound related-party payments
+  are looked at closely.
+
+**And the legal version carries a liability that is not optional.** Being the
+seller means being on the hook: if the provider does not deliver, the WFOE
+owes the client. That exposure is what makes it a sale rather than
+settlement — there is no version that keeps the legality and sheds the risk.
+Which in turn means, per customer, a contract with every provider, Chinese CIT
+and VAT on the *full* revenue rather than on a fee, a fapiao per sale,
+documentation for each remittance, and a bank that grows more interested as
+volume does.
+
+**So it fits one business and not a platform.** Tom's own goods through
+aozhoubaba are the good case — the WFOE buys from the Australian supplier,
+sells in China, keeps a margin, and pays the supplier as an ordinary
+goods-trade payment. Dealio is the bad case by construction: its first rule is
+that the money is never ours, and this route requires it to be ours. They are
+opposite structures. Both can be run; not from the same entity.
+
 ## What the board should build from this
 
 When terms are pinned, suggest the route, from who pays whom and how much:
