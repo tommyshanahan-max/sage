@@ -262,6 +262,14 @@
   .rev1 img{width:5.5rem;height:5.5rem;object-fit:cover;border-radius:.5rem;
     margin:.45rem 0 0;display:block}
   .rev1 .src{margin:.3rem 0 0;font-size:.74rem;color:var(--mut)}
+  /* 全部评价 — a text link under the credentials line, not a fourth button
+     on a band that already has three things on it. */
+  .allrev{display:block;margin:.35rem 0 0;padding:0;border:0;background:none;
+    font:inherit;font-size:.78rem;color:var(--ink2);text-decoration:underline;
+    text-underline-offset:.2em;cursor:pointer}
+  /* Which thing the review is about. Small, above the words: a wall of
+     sentences about nothing in particular is worse than no page. */
+  .rev1 .item{margin:.15rem 0 0;font-size:.76rem;color:var(--mut)}
   .rev1 .back{margin:.45rem 0 0;padding:.5rem .65rem;background:var(--bg);
     border-radius:.5rem;font-size:.86rem;color:var(--ink2)}
   /* 问大家, above the reviews in the same sheet — the shape Taobao uses,
@@ -630,6 +638,78 @@ function revSheet(it, j, asks) {
   document.body.append(sheet);
 }
 
+/* EVERY REVIEW IN THE SHOP, NEWEST FIRST.
+ *
+ * One request, made when the button is pressed and never on load: a shop
+ * page that fetches three hundred reviews nobody asked for is a slow shop
+ * page on a phone on a train.
+ *
+ * Each row says which thing it is about, because a wall of sentences about
+ * nothing in particular is worse than no page at all. The 来自老店 label
+ * rides along for the same reason it does everywhere else — the value of
+ * the others is that an order stands behind them.
+ */
+async function allRevSheet() {
+  const sheet = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("h2", null, T("sh.allRev")));
+
+  const wait = el("p", "hint", T("sh.loading"));
+  card.append(wait);
+  const shut = el("button", "shut", T("sh.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => sheet.remove());
+  card.append(shut);
+  sheet.append(card);
+  sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.remove(); });
+  document.body.append(sheet);
+
+  let j = null;
+  try {
+    const r = await fetch("/api/shop/" + encodeURIComponent(HANDLE) + "/reviews", { cache: "no-store" });
+    j = await r.json();
+  } catch { /* handled below — an offline phone is not an error worth a stack */ }
+  wait.remove();
+  if (!j?.ok || !j.rows?.length) {
+    card.insertBefore(el("p", "hint", T("sh.noRev")), shut);
+    return;
+  }
+
+  /* The count and the average, said once at the top. Counted by the server
+     from what is actually there; the page never works out a number about
+     itself. */
+  const head = el("p", "hint");
+  head.textContent = T("sh.revCount", { n: String(j.n), stars: String(j.stars) });
+  card.insertBefore(head, shut);
+
+  const list = el("div", "revs");
+  for (const r of j.rows) {
+    const box = el("div", "rev1");
+    const top = el("div", "top");
+    top.append(el("b", null, r.who || "***"));
+    top.append(el("span", null, "★".repeat(r.stars)));
+    box.append(top);
+    if (r.item) box.append(el("p", "item", r.item));
+    if (r.text) box.append(el("p", null, r.text));
+    if (r.src) box.append(el("p", "src", T("sh.fromOld")));
+    if (r.photo) {
+      const img = el("img");
+      img.src = r.photo;
+      img.alt = "";
+      img.loading = "lazy";
+      img.addEventListener("error", () => img.remove());
+      box.append(img);
+    }
+    if (r.back) {
+      const b = el("p", "back");
+      b.append(el("b", null, T("sh.shopSaid") + " "), document.createTextNode(r.back));
+      box.append(b);
+    }
+    list.append(box);
+  }
+  card.insertBefore(list, shut);
+}
+
 /* 问大家 — the questions, whoever may answer them, and the box to add one.
    Answering is offered only to somebody the server says may: the page
    cannot see the orders and must not guess. */
@@ -819,6 +899,20 @@ function draw() {
     sub.append(document.createTextNode(lab));
   });
   box.append(sub);
+  /* EVERY REVIEW, ON ONE SCREEN \u2014 and it is the number she is already
+     reading that opens it, rather than a fourth button on a band that has
+     three things on it. The per-product list answers "what did people say
+     about this tin"; this answers "what do people say about this shop",
+     which is the question somebody asks before their first order and the
+     only way to read six hundred imported rows without opening sixty
+     products one at a time. Hidden when there are none: a button that
+     opens an empty sheet is a shop saying nobody has bought anything. */
+  if (pf.reviews) {
+    const all = el("button", "allrev", T("sh.allRev"));
+    all.type = "button";
+    all.addEventListener("click", allRevSheet);
+    box.append(all);
+  }
   top.append(box);
   /* The switch rides the band rather than sitting in a corner of the page:
      it belongs with whose shop this is. Flipping it redraws the list and

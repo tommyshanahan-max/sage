@@ -11762,6 +11762,56 @@ app.get("/api/product/:id/reviews", async (req, res) => {
   });
 });
 
+/** EVERY REVIEW IN THE SHOP, ON ONE SCREEN.
+ *
+ *  The per-product list above answers "what did people say about this tin".
+ *  This answers "what do people say about this shop", which is a different
+ *  question and the one somebody asks before their first order — and, for
+ *  Tom, the only way to read six hundred imported rows without opening
+ *  sixty products one at a time.
+ *
+ *  SCOPED TO THIS SHOP'S OWN PRODUCTS. The catalogue is shared, so a review
+ *  belongs here when its product is in the catalogue this shopfront sells;
+ *  an imported row carries `src` and no order behind it, and it is labelled
+ *  on the page rather than filtered out — see /api/admin/review-add.
+ */
+app.get("/api/shop/:handle/reviews", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const handle = String(req.params.handle || "").slice(0, 40);
+  if (!handle) return res.status(404).json({ error: "gone" });
+  const board = await store.load(FILE);
+  const who = board.people.find((p) => p.handle && p.handle === handle);
+  if (!who) return res.status(404).json({ error: "gone" });
+
+  /* The product's name travels with the review. Without it the page is a
+     wall of sentences about nothing in particular, which is worse than no
+     page: a review is only worth reading when you know what it is about. */
+  const named = new Map(board.products.filter((p) => !p.off).map((p) => [p.id, p]));
+  const all = board.reviews.filter((r) => named.has(r.product));
+
+  /* Newest first, and the ones with words above the ones without. A page
+     that opens on three bare five-star rows looks like a shop that bought
+     them. */
+  const rows = [...all]
+    .sort((a, b) => (Boolean(b.text) - Boolean(a.text))
+      || String(b.at || "").localeCompare(String(a.at || "")))
+    .slice(0, 300)
+    .map((r) => ({
+      who: r.who, stars: r.stars, text: r.text, photo: shopPic(r.photo),
+      at: r.at, back: r.back, src: r.src,
+      item: named.get(r.product)?.name || "", itemId: r.product,
+    }));
+
+  res.json({
+    ok: true, rows, n: all.length,
+    /* Counted, never typed. Same rule as `proof` on the shopfront. */
+    stars: all.length
+      ? Math.round((all.reduce((n, r) => n + r.stars, 0) / all.length) * 10) / 10
+      : 0,
+    old: all.filter((r) => r.src).length,
+  });
+});
+
 /* ---- 联系店家 -------------------------------------------------------------
  *
  * The first version of this showed a WeChat id and a QR code, which is what

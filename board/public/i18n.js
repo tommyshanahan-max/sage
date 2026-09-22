@@ -6738,6 +6738,14 @@ export const STRINGS = {
   /* An imported one says so. The others are worth reading because an order
      stands behind them, and quietly mixing these in would spend that. */
   "sh.fromOld":        ["From the WeChat store", "来自老店（微信店）"],
+  /* EVERY REVIEW IN THE SHOP, behind the number she is already reading.
+     The per-thing list answers "what did people say about this tin"; this
+     answers "what do people say about this shop", which is the question
+     asked before a first order. */
+  "sh.allRev":         ["All reviews", "全部评价"],
+  "sh.revCount":       ["{n} reviews · {stars} average", "{n} 条评价 · 平均 {stars} 分"],
+  "sh.noRev":          ["No reviews yet.", "还没有评价。"],
+  "sh.loading":        ["Loading…", "加载中…"],
   /* 问大家. A review is one person's verdict; a question is the thing the
      next forty buyers were also about to ask, answered once. */
   "sh.asks":           ["Questions", "问大家"],
