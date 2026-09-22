@@ -22,8 +22,18 @@
 -->
 <style>
   :root{
-    --bg:#F5F5F7; --card:#FFFFFF; --ink:#111214; --ink2:#5B6170; --mut:#8A8F9C;
-    --line:#E7E8EC; --acc:#D6483B; --ok:#1FA463;
+    /* WARM, BECAUSE THE SHOP IS CALLED AUSTRALIAN DAD.
+       This was #F5F5F7 on #20303F — iOS grey under a corporate navy, which
+       is the default of every marketplace template she has ever scrolled
+       past and says nothing about whose shop it is. Paper rather than
+       screen-grey, and eucalyptus rather than navy: green reads as safe and
+       natural to somebody buying infant formula, and it is the one colour
+       that is honestly Australian. The red stays, because red is the price
+       in China and always will be, but warmer — #D6483B is the Taobao
+       default and sits badly on paper. */
+    --bg:#FAF7F1; --card:#FFFFFF; --ink:#1B1815; --ink2:#5A5449; --mut:#8C857A;
+    --line:#EAE4D9; --acc:#C33C28; --ok:#1F7A4D;
+    --deep:#1E3A2E; --deep2:#2C5443; --sun:#D9A62E;
     --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
       "Microsoft YaHei","Noto Sans SC",sans-serif;
   }
@@ -51,23 +61,50 @@
      a stranger she was introduced to in a chat.
      Full bleed by cancelling main's padding, the same trick .ban uses — a
      band with a margin down each side is a card, not a shopfront. */
-  .hero{margin:-.9rem -.8rem .9rem;padding:1.5rem 1.1rem 1.1rem;
-    background:linear-gradient(160deg,#20303F 0%,#33495E 58%,#3C5871 100%);
+  /* THE PERSON, AT THE SIZE THE PRODUCT IS ACTUALLY SOLD AT.
+     The face was a 2.9rem disc in the corner of a band, under three claim
+     chips — which is the wrong way round. The whole of this trade is that a
+     real man in Melbourne walks into the shop and she cannot; his face is
+     the most valuable object on the page and it was the smallest.
+     So it leads, at 4.4rem, with his name beside it, and THE COUNTED
+     NUMBERS COME UP HERE TOO. 正品保障·假一赔十 is what every fake shop on
+     the internet says; 31 已送达 is a thing that either happened or did
+     not. Facts take the first screen and claims drop below it. */
+  .hero{margin:-.9rem -.8rem .9rem;padding:1.6rem 1.1rem 1.25rem;
+    background:linear-gradient(158deg,var(--deep) 0%,var(--deep2) 72%,#35624E 100%);
     color:#fff;width:calc(100% + 1.6rem)}
   .ban + .hero{margin-top:-.9rem}
-  .hero .top{display:flex;align-items:center;gap:.7rem}
+  .hero .top{display:flex;align-items:center;gap:.95rem}
   .hero .top>div{min-width:0;flex:1 1 auto}
-  .hero img{width:2.9rem;height:2.9rem;border-radius:50%;object-fit:cover;
-    flex:0 0 auto;border:2px solid rgba(255,255,255,.75)}
-  .hero b{display:block;font-size:1.35rem;line-height:1.25;letter-spacing:.01em}
-  .hero .lang{flex:0 0 auto;border:1px solid rgba(255,255,255,.45);
+  .hero img{width:4.4rem;height:4.4rem;border-radius:50%;object-fit:cover;
+    flex:0 0 auto;border:2px solid rgba(255,255,255,.55);
+    box-shadow:0 6px 18px rgba(0,0,0,.22)}
+  .hero b{display:block;font-size:1.6rem;line-height:1.2;letter-spacing:.02em;
+    font-weight:600}
+  .hero .sub{display:block;font-size:.84rem;line-height:1.4;margin-top:.25rem;
+    color:rgba(255,255,255,.66)}
+  .hero .lang{flex:0 0 auto;align-self:flex-start;
+    border:1px solid rgba(255,255,255,.4);
     background:transparent;color:#fff;font:inherit;font-size:.74rem;
     border-radius:999px;padding:.25rem .65rem}
-  /* THREE, AND THEY WRAP RATHER THAN SCROLL. A row she has to swipe is a row
-     with something hidden in it, and the third one is the one about money. */
-  .trust{display:flex;flex-wrap:wrap;gap:.4rem;margin:.85rem 0 0}
-  .trust span{font-size:.72rem;line-height:1;padding:.4rem .6rem;border-radius:999px;
-    background:rgba(255,255,255,.14);color:rgba(255,255,255,.94)}
+  /* Counted, on the dark, with the figure in sun. The same three numbers
+     the story card used to end on — they belong with who he is, not with
+     what he wrote. */
+  .hero .proof{display:flex;gap:.5rem;margin:1.15rem 0 0;padding:1rem 0 0;
+    border-top:1px solid rgba(255,255,255,.16)}
+  .hero .proof div{flex:1;min-width:0;text-align:center}
+  .hero .proof b{display:block;font-size:1.4rem;font-weight:600;line-height:1.15;
+    color:var(--sun);letter-spacing:.01em}
+  .hero .proof span{display:block;font-size:.7rem;margin-top:.2rem;
+    color:rgba(255,255,255,.6)}
+
+  /* THE CLAIMS, BELOW THE FACTS AND QUIETER THAN THEM. They were white
+     pills on the band, competing with his name for the first glance. On the
+     page ground, in ink, they read as the small print they are. */
+  .trust{display:flex;flex-wrap:wrap;gap:.4rem;margin:0 .3rem 1rem}
+  .trust span{font-size:.72rem;line-height:1;padding:.42rem .65rem;
+    border-radius:999px;background:var(--card);border:1px solid var(--line);
+    color:var(--ink2)}
 
   /* THE PART THAT IS NOT THE CATALOGUE.
      This page was a vending machine — a band, some chips and a grid — and a
@@ -79,8 +116,9 @@
      So: his face, his own words, and three numbers that were counted rather
      than typed. It sits above the goods because that is the order she reads
      it in — who is this, then what has he got. */
-  .said{background:var(--card);border-radius:.9rem;padding:1.1rem 1.05rem 1rem;
-    margin:0 0 1rem}
+  .said{background:var(--card);border:1px solid var(--line);border-radius:.85rem;
+    padding:1.15rem 1.1rem 1.05rem;margin:0 0 1rem;
+    box-shadow:0 1px 2px rgba(27,24,21,.04)}
   .said h3{margin:0 0 .75rem;font-size:.72rem;letter-spacing:.09em;
     font-weight:600;color:var(--mut)}
 
@@ -107,14 +145,6 @@
   .said .open{border:0;background:none;padding:.5rem 0 0;font:inherit;
     font-size:.86rem;color:var(--ink2);text-decoration:underline;
     text-underline-offset:.2em}
-  /* Counted, so they are allowed to be the biggest thing in the block. A
-     shop with no history sends zeros and the row is not drawn at all —
-     "0 parcels delivered" is worse than saying nothing. */
-  .proof{display:flex;gap:.5rem;margin:.95rem 0 0;padding:.9rem 0 0;
-    border-top:1px solid var(--line)}
-  .proof div{flex:1;min-width:0;text-align:center}
-  .proof b{display:block;font-size:1.25rem;font-weight:600;line-height:1.2}
-  .proof span{display:block;font-size:.7rem;color:var(--mut);margin-top:.15rem}
 
   /* HOW SHE REACHES HIM, AT THE BOTTOM WHERE SHE DECIDES.
      The page ended on a grey footer line. 联系店家 was only ever in the
@@ -123,8 +153,9 @@
      fresh", "can you post to my mother's address") arrives after she has
      looked at everything, not before. So it is said once more, in full, at
      the end: his WeChat id, and who answers. */
-  .reach{background:var(--card);border-radius:.9rem;padding:1.1rem 1.05rem;
-    margin:1.2rem 0 .4rem;text-align:center}
+  .reach{background:var(--card);border:1px solid var(--line);border-radius:.85rem;
+    padding:1.2rem 1.05rem;margin:1.4rem 0 .4rem;text-align:center;
+    box-shadow:0 1px 2px rgba(27,24,21,.04)}
   .reach b{display:block;font-size:1.02rem}
   .reach span{display:block;font-size:.84rem;color:var(--mut);margin-top:.2rem}
   .reach code{display:inline-block;margin:.75rem 0 0;padding:.5rem .9rem;
@@ -150,8 +181,13 @@
      her whole scan is photographs and prices in that order. The picture
      leads because it is the only part she reads at speed. */
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:0 0 .6rem}
+  /* A HAIRLINE AND A LIFT, RATHER THAN A FLOATING WHITE RECTANGLE. On the
+     old cold grey a plain white block read as a card; on warm paper it just
+     dissolves. The border gives it an edge and the shadow gives the shelf
+     some depth, which is the difference between a catalogue and a shop. */
   .item{display:flex;flex-direction:column;background:var(--card);
-    border-radius:.9rem;overflow:hidden}
+    border:1px solid var(--line);border-radius:.85rem;overflow:hidden;
+    box-shadow:0 1px 2px rgba(27,24,21,.04)}
   .item .pic{width:100%;aspect-ratio:1/1;background:var(--line);object-fit:cover;
     display:block}
   /* A CARD WITH NO PHOTOGRAPH, WHICH IS MOST OF THEM ON DAY ONE.
@@ -163,8 +199,8 @@
      like a decision rather than a failure. */
   .item .noimg{width:100%;aspect-ratio:1/1;display:flex;align-items:center;
     justify-content:center;padding:.9rem;text-align:center;
-    background:linear-gradient(160deg,#EEF0F4 0%,#E4E7ED 100%);
-    font-size:.78rem;line-height:1.45;color:#9AA1AF;overflow:hidden}
+    background:linear-gradient(160deg,#F4EFE6 0%,#EAE3D6 100%);
+    font-size:.78rem;line-height:1.45;color:#A79E8F;overflow:hidden}
   .grid.one .item .noimg,.item.wide .noimg{width:9.5rem;flex:0 0 auto}
   /* A SHELF WITH ONE THING ON IT left half a row empty, which reads as a
      picture that failed to load rather than as a short shelf. It goes wide
@@ -192,7 +228,7 @@
   /* THE SHELVES ARE THE STRUCTURE OF THE PAGE and were its quietest ink —
      .85rem grey over a wall of white cards, which is a caption, not a
      heading. She navigates this page by them. */
-  .shelf{margin:1.4rem .3rem .55rem;font-size:1rem;font-weight:600;
+  .shelf{margin:1.6rem .3rem .6rem;font-size:1.02rem;font-weight:600;
     color:var(--ink);display:flex;align-items:center;gap:.55rem}
   .shelf::after{content:"";flex:1;height:1px;background:var(--line)}
   .tabs{display:flex;gap:.45rem;overflow-x:auto;padding:0 .3rem .8rem;
@@ -754,6 +790,11 @@ function draw() {
      Whoever is behind it is named once more at the foot of the page, and
      twice on one screen is a line she reads for nothing. */
   box.append(el("b", null, SHOP.name || SHOP.handle));
+  /* One line under the name, and it is the promise rather than a claim:
+     where it comes from and who sends it. NOT who.goal — that is the
+     board's "I am a ___ looking for a ___", and under a shop selling
+     formula it once read "Spanish, learning Chinese from zero". */
+  box.append(el("span", "sub", T("sh.tPost")));
   top.append(box);
   /* The switch rides the band rather than sitting in a corner of the page:
      it belongs with who you are dealing with. Flipping it redraws the list
@@ -761,10 +802,35 @@ function draw() {
      <main> and would otherwise be left behind in the other language. */
   top.append(langButton(() => { draw(); paint(); }));
   hero.append(top);
-  const trust = el("div", "trust");
-  for (const k of ["sh.tReal", "sh.tPay", "sh.tPost"]) trust.append(el("span", null, T(k)));
-  hero.append(trust);
+  /* THE COUNTED NUMBERS, ON THE BAND. They ended the story card, which put
+     them below a paragraph and behind a tap's worth of scrolling; they are
+     the answer to the only question she has on the first screen, which is
+     whether anybody has ever actually bought from this man.
+     Nothing where there is nothing: a new shop drawing three zeros has told
+     her the one thing it wanted to hide, so the row is simply absent and
+     the band closes on his name. */
+  const pf = PROOF || {};
+  const rows = [
+    pf.sent ? [String(pf.sent), T("sh.pSent")] : null,
+    pf.reviews ? [String(pf.reviews), T("sh.pRev")] : null,
+    pf.since ? [pf.since.replace("-", "."), T("sh.pSince")] : null,
+  ].filter(Boolean);
+  if (rows.length) {
+    const pr = el("div", "proof");
+    for (const [n, lab] of rows) {
+      const d = el("div");
+      d.append(el("b", null, n), el("span", null, lab));
+      pr.append(d);
+    }
+    hero.append(pr);
+  }
   root.append(hero);
+
+  /* The two claims, under the band and in ink. 墨尔本直发 is not repeated —
+     it is the line under his name now. */
+  const trust = el("div", "trust");
+  for (const k of ["sh.tReal", "sh.tPay"]) trust.append(el("span", null, T(k)));
+  root.append(trust);
 
   /* HIM, BEFORE THE GOODS. Drawn only when he has written something — an
      empty card headed 店主的话 is a shop admitting it has nothing to say. */
@@ -798,23 +864,9 @@ function draw() {
     }
     me.append(txt);
     said.append(me);
-    /* Nothing where there is nothing. A brand-new shop showing three zeros
-       has told her the one thing it wanted to hide. */
-    const pf = PROOF || {};
-    const rows = [
-      pf.sent ? [String(pf.sent), T("sh.pSent")] : null,
-      pf.reviews ? [String(pf.reviews), T("sh.pRev")] : null,
-      pf.since ? [pf.since.replace("-", "."), T("sh.pSince")] : null,
-    ].filter(Boolean);
-    if (rows.length) {
-      const pr = el("div", "proof");
-      for (const [n, lab] of rows) {
-        const d = el("div");
-        d.append(el("b", null, n), el("span", null, lab));
-        pr.append(d);
-      }
-      said.append(pr);
-    }
+    /* The counted numbers used to close this card. They are on the band now:
+       proof belongs with who he is, not with what he wrote, and it was the
+       one thing on the first screen she could not see. */
     root.append(said);
   }
 
