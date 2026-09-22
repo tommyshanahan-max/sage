@@ -470,6 +470,23 @@
   .steps .fail span{color:#A6332A}
   .steps .fail i{color:#B3685F}
 
+  /* .jobs — three jobs, three unrelated numbers. The whole argument of that
+     slide is the gap between 850 and 11,500, so the figures are right-hung
+     and tabular and nothing else on the row competes with them.
+     Its own class rather than a .steps modifier: .steps hangs a numbered
+     circle off the left, this hangs a figure off the right, and they share
+     only the border. Checked for a collision before naming it — `jobs`
+     appeared nowhere in this file — because .bank and .out were both taken
+     and both failed silently. */
+  .jobs{margin:1.5rem 0 0}
+  .jobs div{display:flex;align-items:baseline;gap:1.2rem;padding:.95rem 0;
+    border-bottom:1px solid var(--line)}
+  .jobs div:last-child{border-bottom:0}
+  .jobs span{flex:1;min-width:0;font-size:1.05rem;color:var(--ink);
+    font-weight:600}
+  .jobs b{flex:none;font-size:1.05rem;font-weight:600;color:var(--ink-2);
+    font-variant-numeric:tabular-nums}
+
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 <div class="deck">
@@ -495,12 +512,29 @@
        the sixteen fields are the argument — a column of bullets is sixteen
        things to get through, the same sixteen set flowing are taken in at a
        glance as breadth. -->
+  <!-- WHO THIS IS FOR, REBUILT AROUND WHY NOBODY ELSE CAN SERVE THEM.
+       It used to say "Sole traders and small business" over a run of
+       sixteen trades, which tells a reader who they are and leaves the
+       obvious objection standing: so let them use a checkout. The answer is
+       that a checkout needs a catalogue and these people do not have one —
+       every number is agreed in the conversation. Three jobs three orders
+       of magnitude apart make that in one glance where a sentence could
+       not. The trades stay, underneath, as the evidence that the shape
+       repeats; they are the detail, not the point. DEALIO.md rule 6. -->
   <section>
     <p class="eyebrow">Who this is for</p>
-    <h2>Sole traders and small business.</h2>
-    <p class="fields"><b>Tutoring</b> <i>·</i> <b>Exam coaching</b> <i>·</i> <b>University placement</b> <i>·</i> <b>Migration advice</b> <i>·</i> <b>Translation</b> <i>·</i> <b>Academic editing</b> <i>·</i> <b>Graphic design</b> <i>·</i> <b>Photography</b> <i>·</i> <b>Video and post</b> <i>·</i> <b>Architecture</b> <i>·</i> <b>Interior design</b> <i>·</i> <b>Buyers' advocacy</b> <i>·</i> <b>Wine and food</b> <i>·</i> <b>Sports coaching</b> <i>·</i> <b>Music tuition</b> <i>·</i> <b>Export advice</b></p>
-    <p class="note" style="margin-top:2rem">One person, or two. No finance
-      department, no entity in China, no trade contract.</p>
+    <h2>Every price is a conversation.</h2>
+
+    <div class="jobs">
+      <div><span>Migration advice</span><b>A$850</b></div>
+      <div><span>University placement</span><b>A$2,400</b></div>
+      <div><span>Interior design</span><b>A$11,500</b></div>
+    </div>
+
+    <p class="note" style="margin-top:1.6rem">A checkout needs a price list.
+      Nobody here has one.</p>
+
+    <p class="fields" style="margin-top:2rem"><b>Tutoring</b> <i>·</i> <b>Exam coaching</b> <i>·</i> <b>University placement</b> <i>·</i> <b>Migration advice</b> <i>·</i> <b>Translation</b> <i>·</i> <b>Academic editing</b> <i>·</i> <b>Graphic design</b> <i>·</i> <b>Photography</b> <i>·</i> <b>Video and post</b> <i>·</i> <b>Architecture</b> <i>·</i> <b>Interior design</b> <i>·</i> <b>Buyers' advocacy</b> <i>·</i> <b>Wine and food</b> <i>·</i> <b>Sports coaching</b> <i>·</i> <b>Music tuition</b> <i>·</i> <b>Export advice</b></p>
   </section>
 
   <!-- THE FIGURE FIRST, AND THEN THE PRODUCT.
