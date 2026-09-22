@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins
+.PHONY: try china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -837,6 +837,23 @@ paid-out: ## That one is sent: make paid-out WHO="Mei"
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/paid-out.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)"
+
+weidian-pull: ## Read the old 微店 shop: make weidian-pull SHOP=https://weidian.com/s/1202970134 [MAX=40]
+	@# NOT LOGGED IN. Everything it reads is what any customer sees — a seller
+	@# login driven from this box is the thing that gets an account looked at,
+	@# and the reviews are public. It runs in the post-browser image because
+	@# weidian.com draws itself with JavaScript: a plain fetch gets the shop's
+	@# name and nothing else.
+	@#
+	@# Writes /data/weidian.json inside post_data. `make weidian-json` prints
+	@# it, and the reviews go in per item with `make review-import`.
+	@test -n "$(SHOP)" || { echo 'which shop? make weidian-pull SHOP=https://weidian.com/s/1202970134'; exit 1; }
+	@$(COMPOSE) --profile post run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" post-browser \
+	  node /seed/weidian-pull.mjs --shop "$(SHOP)" --out /data/weidian.json --max "$(or $(MAX),40)"
+
+weidian-json: ## Print what weidian-pull read: make weidian-json
+	@$(COMPOSE) --profile post run --rm --no-deps -T post-browser \
+	  node -e 'const d=require("fs").readFileSync("/data/weidian.json","utf8");process.stdout.write(d)'
 
 review-import: ## All the old reviews at once: make review-import N=1 FILE=scripts/reviews-1.json
 	@# The file is a JSON array: [{"who":"李娜","stars":5,"text":"…","at":"2024-11-02"}, …]
