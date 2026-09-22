@@ -10396,9 +10396,18 @@ const webOnly = (req, res, next) =>
  * or into whatever this turns out to be. Nothing in cbs*.html imports from
  * index.html, i18n.js or the store, so lifting it is copying seven files.
  *
- * NOT web-only. /dealio is off in the app because the App Store asked what the
- * payments business is; these are the pages that ANSWER that question, and a
- * merchant reading them is not a member being sold a wallet. They stay.
+ * AND NOT IN THE APP, on the same reasoning as /dealio.
+ *
+ * This said the opposite for an hour: "these are the pages that ANSWER the
+ * App Store's question, so they stay". That was wrong and it contradicted
+ * the change made four hours earlier. The app is a webview of this domain.
+ * Apple asked what the payments business is and the Money tab came out; a
+ * merchant signing up to take payment is MORE of what they asked about, not
+ * an answer to it. The reviewer does not read a page and conclude the app is
+ * single-purpose — they find another payment flow.
+ *
+ * Off for every app user, not hidden from reviewers. Same rule, same reason,
+ * written out over webOnly below.
  */
 /* MOUNTED AS A FOLDER, NOT WIRED IN AS SIX ROUTES.
  *
@@ -10436,7 +10445,7 @@ const webOnly = (req, res, next) =>
  * WeChat on iOS caches hard against the URL, and a screen must never be a day
  * old. ETag still does the work — a page that has not changed comes back 304
  * and costs one round trip, not a download. */
-app.use("/china", express.static("china", {
+app.use("/china", webOnly, express.static("china", {
   extensions: ["html"],
   setHeaders: (res) => res.set("Cache-Control", "no-cache"),
 }));
