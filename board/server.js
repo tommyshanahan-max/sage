@@ -10006,6 +10006,11 @@ app.get("/shop/:handle", (req, res, next) => page("shop.html", req, res, next));
    are two people asking different questions, and one page trying to answer
    both would ask an Australian maker to scroll past 假一赔十 to find out how
    they get paid. */
+/* HOW IT GOT HERE. The level below 店主的话 — a WeChat store on a phone, a
+   shop in Beijing, the year it closed, and now this. Its own address so it
+   can be sent on its own, which is what somebody does with a story. */
+app.get("/shop/:handle/story", (req, res, next) => page("story.html", req, res, next));
+
 app.get("/sell", (req, res, next) => page("sell.html", req, res, next));
 app.get("/api/sell", async (req, res) => {
   const board = await store.load(FILE);
@@ -11118,6 +11123,11 @@ app.get("/api/shop/:handle", async (req, res) => {
          machine version into the other language; this one does not, because
          the whole value of the paragraph is that a person wrote it. */
       story: who.shop?.story || "",
+      /* The moments, for the page below this one. Photographs are rewritten
+         to the shop route like every other picture here. */
+      chapters: (who.shop?.chapters || []).map((c) => ({
+        when: c.when, text: c.text, photo: shopPic(c.photo),
+      })),
       /* Their own line, in whichever language they wrote it and its render
          into the other — the same pair every card on this board shows, and
          only when the page it came from is public. */

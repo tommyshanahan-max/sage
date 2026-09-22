@@ -146,6 +146,14 @@
   .said .open{border:0;background:none;padding:.5rem 0 0;font:inherit;
     font-size:.86rem;color:var(--ink2);text-decoration:underline;
     text-underline-offset:.2em}
+  /* The way down to the arc. A quiet row under his words with a chevron,
+     which is how every row that opens something on this board looks. */
+  .said .arc{display:flex;align-items:center;justify-content:space-between;
+    margin:.95rem -1.1rem -1.05rem;padding:.85rem 1.1rem;
+    border-top:1px solid var(--line);font-size:.92rem;font-weight:500;
+    color:var(--ink);text-decoration:none}
+  .said .arc::after{content:"\203a";color:var(--mut);font-size:1.2rem;
+    line-height:1}
 
   /* HOW SHE REACHES HIM, AT THE BOTTOM WHERE SHE DECIDES.
      The page ended on a grey footer line. 联系店家 was only ever in the
@@ -870,6 +878,16 @@ function draw() {
     }
     me.append(txt);
     said.append(me);
+    /* THE LEVEL BELOW THIS ONE. His paragraph is what she reads in the shop;
+       how it got here — a WeChat store on a phone, a shop in Beijing, the
+       year it closed — is a page of its own, and the link only exists when
+       somebody has written it. Nothing is lost by it being a tap away: the
+       arc is for whoever has decided they are interested. */
+    if ((SHOP.chapters || []).length) {
+      const arc = el("a", "arc", T("sh.arcLink"));
+      arc.href = "/shop/" + encodeURIComponent(HANDLE) + "/story";
+      said.append(arc);
+    }
     /* Not appended yet — it goes in below the last shelf. */
   }
 

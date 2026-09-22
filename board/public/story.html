@@ -1,0 +1,151 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>店主的故事</title>
+<meta name="robots" content="noindex">
+<!--
+  HOW IT GOT HERE — the level below 店主的话.
+
+  The shopfront carries three or four sentences under his photograph. This
+  is what is behind them, and it exists because the most valuable sentence
+  a shop like this can say is not a claim: it is "we had a store in Beijing
+  and it closed in 2023". Nobody making it up writes that down.
+
+  SO IT IS A FEW MOMENTS, NOT AN ESSAY. A year and one line each, down a
+  rule, photographs where there are any. Somebody who reads four words per
+  screen gets the arc from the years alone; somebody who wants the whole
+  thing reads the lines. Nothing needs a paragraph to make sense.
+
+  Its own address, /shop/<handle>/story, because a story is a thing people
+  forward on its own.
+-->
+<style>
+  :root{
+    --bg:#FAF7F1; --card:#FFFFFF; --ink:#1B1815; --ink2:#5A5449; --mut:#8C857A;
+    --line:#EAE4D9; --acc:#C33C28;
+    --deep:#1E3A2E; --deep2:#2C5443; --sun:#D9A62E;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink)}
+  body{font-family:var(--sans);font-size:16px;line-height:1.5;
+    padding:env(safe-area-inset-top,0) 0 calc(4.5rem + env(safe-area-inset-bottom,0))}
+  main{max-width:34rem;margin:0 auto;padding:0 .8rem 1rem}
+
+  /* The same sign as the shopfront, so she knows she has not left it. */
+  .hero{margin:0 -.8rem 1.1rem;padding:1.5rem 1.1rem 1.4rem;
+    background:linear-gradient(158deg,var(--deep) 0%,var(--deep2) 72%,#35624E 100%);
+    color:#fff;width:calc(100% + 1.6rem)}
+  .hero a.back{display:inline-flex;align-items:center;gap:.4rem;
+    font-size:.82rem;color:rgba(255,255,255,.72);text-decoration:none;
+    margin:0 0 .9rem}
+  .hero h1{margin:0;font-size:1.7rem;line-height:1.2;letter-spacing:.04em;
+    font-weight:600}
+  .hero p{margin:.5rem 0 0;font-size:.86rem;line-height:1.6;
+    color:rgba(255,255,255,.7)}
+
+  /* THE MOMENTS, DOWN A RULE.
+     A left-hand line with the years hung off it, which is the shape of a
+     timeline everywhere and needs no heading to explain it. The year is
+     type, not a dot in a circle: 2019 said plainly is a fact, and a
+     decorated one reads as a design. */
+  .arc{position:relative;margin:0;padding:0 0 0 4.6rem;list-style:none}
+  .arc::before{content:"";position:absolute;left:3.55rem;top:.55rem;bottom:1.2rem;
+    width:1px;background:var(--line)}
+  .arc li{position:relative;padding:0 0 1.65rem}
+  .arc li:last-child{padding-bottom:.4rem}
+  .arc .yr{position:absolute;left:-4.6rem;top:0;width:3.1rem;text-align:right;
+    font-size:.86rem;font-weight:600;color:var(--mut);
+    font-variant-numeric:tabular-nums;letter-spacing:.01em}
+  /* The mark on the rule. Small and in ink, except the last one, which is
+     now — the only chapter she can still walk into. */
+  .arc .dot{position:absolute;left:-1.3rem;top:.42rem;width:.5rem;height:.5rem;
+    border-radius:50%;background:var(--line);box-shadow:0 0 0 3px var(--bg)}
+  .arc li:last-child .dot{background:var(--sun)}
+  .arc p{margin:0;font-size:1rem;line-height:1.75;color:var(--ink)}
+  .arc img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;
+    border-radius:.6rem;margin:.75rem 0 0;background:var(--line);
+    border:1px solid var(--line)}
+
+  /* Back to the shelves, because a story read to the end is somebody who
+     has decided to trust him and now wants the thing. */
+  .go{display:block;text-align:center;text-decoration:none;font-size:1rem;
+    font-weight:600;padding:1rem;border-radius:999px;background:var(--deep);
+    color:#fff;margin:1.9rem 0 0}
+  .none{padding:2.5rem .3rem;text-align:center;color:var(--mut);font-size:.95rem}
+</style>
+
+<main>
+  <div class="hero">
+    <a class="back" id="back" href="#">&larr; <span id="backw">店铺</span></a>
+    <h1 id="ttl">&nbsp;</h1>
+    <p id="sub"></p>
+  </div>
+  <div id="root"></div>
+</main>
+
+<script type="module">
+import { T, lang, pickLang } from "/i18n.js";
+pickLang();
+
+const HANDLE = decodeURIComponent((location.pathname.match(/^\/shop\/([^/]+)/) || [])[1] || "");
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => {
+  const n = document.createElement(t);
+  if (c) n.className = c;
+  if (x != null) n.textContent = x;
+  return n;
+};
+
+const SHOPHREF = "/shop/" + encodeURIComponent(HANDLE);
+$("back").href = SHOPHREF;
+
+(async () => {
+  try {
+    const r = await fetch("/api/shop/" + encodeURIComponent(HANDLE), { cache: "no-store" });
+    const j = await r.json();
+    if (!r.ok || !j?.ok) throw new Error("gone");
+    const shop = j.shop || {};
+    const arc = shop.chapters || [];
+
+    document.title = T("sh.arcTtl");
+    $("ttl").textContent = T("sh.arcTtl");
+    $("sub").textContent = shop.name || shop.handle || "";
+    $("backw").textContent = shop.name || T("sh.back");
+
+    /* A story page with no story on it is a page that should not have been
+       linked to. It is reachable by typing the address, so it says so
+       rather than showing an empty rule. */
+    if (!arc.length) {
+      $("root").append(el("p", "none", T("sh.arcNone")));
+      return;
+    }
+
+    const ul = el("ul", "arc");
+    for (const c of arc) {
+      const li = el("li");
+      li.append(el("span", "yr", c.when || ""), el("span", "dot"));
+      if (c.text) li.append(el("p", null, c.text));
+      if (c.photo) {
+        const img = el("img");
+        img.src = c.photo;
+        img.alt = "";
+        img.loading = "lazy";
+        /* No empty frame where a picture is not — see the same note on the
+           shopfront's cards. */
+        img.addEventListener("error", () => img.remove());
+        li.append(img);
+      }
+      ul.append(li);
+    }
+    $("root").append(ul);
+
+    const go = el("a", "go", T("sh.arcGo"));
+    go.href = SHOPHREF;
+    $("root").append(go);
+  } catch {
+    $("ttl").textContent = T("sh.arcTtl");
+    $("root").append(el("p", "none", T("sh.gone")));
+  }
+})();
+</script>

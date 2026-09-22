@@ -6544,6 +6544,11 @@ export const STRINGS = {
   "sh.pSince":         ["open since", "开店"],
   "sh.open":           ["More", "展开"],
   "sh.shut":           ["Less", "收起"],
+  "sh.arcTtl":         ["How it got here", "一路走来"],
+  "sh.arcLink":        ["How it got here", "一路走来"],
+  "sh.arcGo":          ["See what is in the shop", "去看看店里的东西"],
+  "sh.arcNone":        ["Nothing written here yet.", "还没有写。"],
+  "sh.back":           ["the shop", "店铺"],
   "sh.reach":          ["Any question, message me", "有问题，微信找我"],
   "sh.reachSub":       ["I answer every one myself", "每条都是我本人回"],
 

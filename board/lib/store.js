@@ -1929,8 +1929,35 @@ export function cleanPerson(raw) {
          wait for a person. Off unless somebody turned it on — see
          lib/shopkeep.js for what it is allowed to know. */
       const ai = Boolean(r.ai);
-      if (!name && !banner && !story && !wechat && !qr && !ai) return undefined;
-      return { name, banner, story, wechat, qr, ai };
+      /* HOW IT GOT HERE, AS A FEW MOMENTS RATHER THAN AN ESSAY.
+       *
+       * `story` is the paragraph under his photograph and it stays that —
+       * three or four sentences, the thing she reads in the shop. This is
+       * the level below it: a WeChat store run out of a phone, a shop in
+       * Beijing, the year that shop closed, and now this.
+       *
+       * THE ONE THAT CLOSED IS THE POINT. A shopfront that lists only its
+       * wins is a shopfront making claims; one that says "we had a store in
+       * Beijing and it shut in 2023" is a person talking. Nothing here
+       * filters a chapter for being bad news — the cleaner would be the
+       * wrong place to have an opinion about that, and it is the chapter
+       * most worth reading.
+       *
+       * A year and a line. The year is whatever he types, because 2019 and
+       * 2019年 and "the year my daughter was born" are all how people say
+       * when, and a date field would refuse the true one. */
+      const chapters = (Array.isArray(r.chapters) ? r.chapters : [])
+        .map((c) => {
+          if (!c || typeof c !== "object") return null;
+          const when = s(c.when, 24);
+          const text = s(c.text, 220);
+          if (!when && !text) return null;
+          return { when, text, photo: s(c.photo, 300) };
+        })
+        .filter(Boolean)
+        .slice(0, 12);
+      if (!name && !banner && !story && !wechat && !qr && !ai && !chapters.length) return undefined;
+      return { name, banner, story, wechat, qr, ai, ...(chapters.length ? { chapters } : {}) };
     })(),
     /* TWO SHAPES, BECAUSE THERE ARE TWO PLACES A PERSON CAN BE.
      *
