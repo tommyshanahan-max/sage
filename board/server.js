@@ -49,6 +49,7 @@ import * as google from "./lib/google.js";
    which picks the half by the row. See the note at the top of apns.js. */
 import * as pushApns from "./lib/apns.js";
 import * as stripe from "./lib/stripe.js";
+import { openChina } from "./lib/china.js";
 /* THE SWITCH FILE, READ BY THE SERVER TOO.
  *
  * public/off.js is a client module and this is the one thing on the server
@@ -10391,13 +10392,101 @@ const webOnly = (req, res, next) =>
  * payments business is; these are the pages that ANSWER that question, and a
  * merchant reading them is not a member being sold a wallet. They stay.
  */
-const cbs = (file) => (req, res, next) => page(file, req, res, next);
-app.get(["/china", "/china/"], cbs("cbs.html"));
-app.get("/china/connect", cbs("cbs-connect.html"));
-app.get("/china/switch", cbs("cbs-switch.html"));
-app.get("/china/live", cbs("cbs-live.html"));
-app.get("/china/stopped", cbs("cbs-stopped.html"));
-app.get("/china/beijing", cbs("cbs-beijing.html"));
+/* MOUNTED AS A FOLDER, NOT WIRED IN AS SIX ROUTES.
+ *
+ * The first version of this was six app.get lines naming six files in
+ * board/public, which is the shape of thing that quietly becomes part of the
+ * board: a shared stylesheet here, a string from i18n.js there, and a year
+ * later it cannot be lifted out. So it lives in ../china/public, every link
+ * inside it is relative, and this server's only knowledge of it is the line
+ * below. Adding a screen to it needs no change here at all.
+ *
+ * Serving it from somewhere else — its own container, a static host, an S3
+ * bucket — is copying that folder. Nothing in it imports from the board, and
+ * the one host name it prints is an attribute on <body>.
+ *
+ * `extensions` so /china/connect works as well as /china/connect.html: the
+ * short form is what goes in a message to somebody. */
+app.use("/china", express.static("../china/public", { extensions: ["html"] }));
+
+/* THE CONNECT BUTTON, FOR REAL.
+ *
+ * Stripe Connect and not a pasted key, for the reason written on the screen
+ * itself: collecting somebody's API key is the pattern Stripe steers
+ * platforms away from, and it is the MERCHANT's account that gets flagged
+ * for it. Here they press a button, finish on Stripe's own pages, and come
+ * back. This board never sees a bank number.
+ *
+ * WHERE STRIPE PUTS THEM DOWN AFTERWARDS is the whole reason the "stopped"
+ * screen exists. An account link takes two URLs and only two:
+ *
+ *   return_url   they finished, or think they did  ->  /china/switch
+ *   refresh_url  the link expired or they backed out  ->  /china/stopped
+ *
+ * So "they closed Stripe halfway" is not a state invented for the mockup; it
+ * is the one Stripe actually sends people to, and before this it was a page
+ * nothing pointed at.
+ *
+ * NOT AIRWALLEX, and the fork says "Stripe or Airwallex" out loud. Airwallex
+ * terminated the account on 21 Sep and the box is blocked at their edge — a
+ * POST from here with no credentials at all comes back with the same HTML
+ * 403, so no pair of keys will ever get through. See NOW.md. A second button
+ * wired to them would be a button that fails on every press, which is worse
+ * than one that is not there yet.
+ */
+const CHINA = openChina(DIR);
+const CHINA_COOKIE = "china";
+
+app.post("/china/api/connect", express.json(), async (req, res) => {
+  if (!stripe.configured()) return res.status(503).json({ error: "off" });
+  /* An address, because an account with no owner is an account nobody can be
+     told anything about. Stripe wants it too and asks again on its own page —
+     this one is so the row here means something. */
+  const email = String(req.body?.email || "").trim().slice(0, 120);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: "email" });
+  try {
+    const made = await stripe.makePayee({ country: "au", email });
+    const account = String(made?.id || "");
+    if (!account) return res.status(502).json({ error: "stripe" });
+    const token = await CHINA.remember({ account, email });
+    /* Host-only and SameSite=Lax: this cookie is read by one folder on one
+       name, and it is not a session — losing it costs a merchant the status
+       page, not the account. */
+    res.cookie(CHINA_COOKIE, token, {
+      httpOnly: true, sameSite: "Lax", secure: true, maxAge: 180 * 24 * 3600 * 1000, path: "/china",
+    });
+    const origin = backHere(req, "");
+    const link = await stripe.onboardLink({
+      account,
+      refresh: origin + "/china/stopped",
+      done: origin + "/china/switch",
+    });
+    if (!link?.url) return res.status(502).json({ error: "stripe" });
+    res.json({ ok: true, url: link.url });
+  } catch (err) {
+    /* Stripe's own sentence into the log, one plain word to the screen. Its
+       text names the field it disliked and is exactly what is needed here,
+       and exactly what should not be shown to somebody signing up. */
+    console.error("china connect:", err.message);
+    res.status(502).json({ error: /not.*activat|platform/i.test(err.message) ? "unactivated" : "stripe" });
+  }
+});
+
+/** Where this merchant has got to, for the Check again button. */
+app.get("/china/api/state", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  /* Read off the header rather than through cookie-parser: this box does not
+     use it, and one regexp is a smaller thing than a dependency. */
+  const m = new RegExp("(?:^|;\\s*)" + CHINA_COOKIE + "=([0-9a-f]{32})")
+    .exec(String(req.headers.cookie || ""));
+  const row = await CHINA.find(m && m[1]);
+  if (!row) return res.json({ started: false, ready: false });
+  if (!stripe.configured()) return res.json({ started: true, ready: false });
+  let ready = false;
+  try { ready = await stripe.payeeReady(row.account); }
+  catch (err) { console.error("china state:", err.message); }
+  res.json({ started: true, ready, email: row.email });
+});
 
 app.get(["/dealio", "/dealio/"], webOnly, notesOff,
   (req, res, next) => page("dealio.html", req, res, next));

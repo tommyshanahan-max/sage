@@ -9,11 +9,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>You can take payment — China Business Solutions</title>
-<link rel="icon" href="/favicon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap">
-<link rel="stylesheet" href="/gp.css">
+<link rel="stylesheet" href="./china.css">
 </head>
-<body>
+<body data-host="in.thexchange.app">
 <main class="sheet">
   <div class="body" style="padding-top:calc(2.4rem + env(safe-area-inset-top,0px))">
     <div class="mid">
@@ -21,7 +20,12 @@
         <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
       </div>
       <h1>You can take payment</h1>
-      <p>Sinclair &amp; Wu &mdash; Stripe, AUD</p>
+      <!-- The merchant's own address, asked for on the screen before and read
+           back here, because "you can take payment" with somebody else's name
+           under it is the moment a person checks they are in the right
+           account. Left as it is when there is no row yet — the screen is
+           also a drawing somebody is shown before they sign up. -->
+      <p id="who">Sinclair &amp; Wu &mdash; Stripe, AUD</p>
     </div>
 
     <div class="card" style="margin-top:.8rem;padding:.2rem 1.15rem">
@@ -33,16 +37,35 @@
     <div class="card">
       <b>Use your own address</b>
       <p>Optional. Add one record at your registrar and your clients see your name, not ours.</p>
-      <code class="block">pay&nbsp;&nbsp;CNAME&nbsp;&nbsp;in.thexchange.app</code>
+      <!-- THE ONE HOST NAME IN THE WHOLE WIDGET, and it is written once here
+           rather than hard-coded across the pages. Whoever mounts this sets
+           data-host on <body> and the line below follows it; left unset it
+           says what it says. Nothing else in these six files knows or cares
+           which platform is serving them. -->
+      <code class="block" id="cname">pay&nbsp;&nbsp;CNAME&nbsp;&nbsp;<span id="host">in.example.com</span></code>
       <p style="color:var(--muted);font-size:.8rem">The certificate issues itself. Nothing else to do.</p>
     </div>
     <div class="grow"></div>
   </div>
 
   <footer class="foot">
-    <a class="go" href="/china">Ask someone to pay</a>
-    <p class="under"><a href="/china">Skip the address for now</a></p>
+    <a class="go" href="index.html">Ask someone to pay</a>
+    <p class="under"><a href="index.html">Skip the address for now</a></p>
   </footer>
 </main>
+<script>
+  (async function () {
+    try {
+      const r = await fetch("api/state", { headers: { Accept: "application/json" } });
+      const j = await r.json();
+      if (j && j.email) document.getElementById("who").textContent = j.email + " \u2014 Stripe, AUD";
+    } catch (e) { /* the drawn name stands */ }
+  })();
+  /* See the note by the CNAME line. One attribute, one element, no build. */
+  try {
+    const h = document.body.getAttribute("data-host");
+    if (h) document.getElementById("host").textContent = h;
+  } catch (e) { /* the line reads correctly without this */ }
+</script>
 </body>
 </html>

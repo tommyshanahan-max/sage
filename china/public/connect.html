@@ -1,0 +1,119 @@
+<!doctype html>
+<!-- DOOR ONE. ONE BUTTON, NOT A PASTED KEY.
+     It was drawn as "paste a restricted key", with two steps of Stripe
+     dashboard navigation above the box. That is Stripe Connect done by hand:
+     harder for the merchant, and collecting somebody's API key is the pattern
+     Stripe steers platforms away from — it is THEIR account that gets flagged
+     for it, not ours.
+     So the screen's job is not the mechanism, it is the reassurance. The
+     can/cannot panel is the whole point of the page. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Connect your account — China Business Solutions</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap">
+<link rel="stylesheet" href="./china.css">
+</head>
+<body>
+<main class="sheet">
+  <header class="top">
+    <a class="back" href="index.html">&larr; Back</a>
+    <h1>Connect your account</h1>
+    <p>You log in to Stripe and come back. Nothing to copy.</p>
+  </header>
+
+  <div class="body">
+    <div class="panel">
+      <p class="label">We can</p>
+      <div class="list">Raise a charge on your account<br>See whether it cleared</div>
+      <p class="label">We cannot</p>
+      <div class="list no">Move or refund your money<br>See your balance or payouts<br>Change anything in your account</div>
+    </div>
+
+    <div class="card flag">
+      <b>One thing to switch on</b>
+      <p>WeChat Pay and Alipay are off by default. In Stripe: <b>Settings &rarr; Payment methods</b>.</p>
+    </div>
+
+    <!-- ONE FIELD, AND IT IS NOT A FORM.
+         The screen is meant to be a button, and it nearly is. The address is
+         here because an account with nobody's name on it is an account nobody
+         can be told anything about — not the payout email, which Stripe asks
+         for on its own page; just somewhere to say "your account is ready".
+         Labelled, not placeheld: a placeholder vanishes the moment somebody
+         types and the field stops saying what it wanted. -->
+    <div class="card">
+      <label for="email" class="label" style="display:block">Where we reach you</label>
+      <input id="email" name="email" type="email" inputmode="email" autocomplete="email"
+             autocapitalize="off" spellcheck="false"
+             style="width:100%;font-size:1rem;padding:.8rem .85rem;border:1px solid #DAD6CC;
+                    border-radius:.55rem;background:#fff;color:var(--ink);font-family:inherit">
+      <p id="say" hidden style="margin:.55rem 0 0;font-size:.85rem;color:var(--other-dot)"></p>
+    </div>
+
+    <p class="note">Revoke us from your Stripe dashboard whenever you like. Nothing here holds a key.</p>
+    <div class="grow"></div>
+  </div>
+
+  <footer class="foot">
+    <button class="go" id="go" type="button">Connect Stripe
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+    </button>
+    <p class="under">Opens Stripe. Takes about a minute.</p>
+  </footer>
+</main>
+<script>
+/* THE BUTTON MINTS A REAL CONNECTED ACCOUNT AND HANDS OVER.
+ *
+ * Stripe decides where they land afterwards, not us: the account link carries
+ * a return_url (switch.html) and a refresh_url (stopped.html), which is why
+ * "they closed Stripe halfway" is a real screen and not a drawing.
+ *
+ * EVERY FAILURE SAYS WHICH ONE IT IS. "Something went wrong" under a payment
+ * button is the sentence that makes somebody close the tab: the two that
+ * actually happen are a platform whose own Connect setup is not finished, and
+ * an address that is not an address. Both are fixable by the person reading.
+ */
+(function () {
+  var go = document.getElementById("go");
+  var box = document.getElementById("email");
+  var say = document.getElementById("say");
+  function tell(t) { say.textContent = t; say.hidden = !t; }
+
+  go.addEventListener("click", async function () {
+    var email = (box.value || "").trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      tell("That does not look like an email address.");
+      box.focus();
+      return;
+    }
+    tell("");
+    go.disabled = true;
+    /* innerHTML and not textContent: the button holds an arrow as well as a
+       word, and restoring the text alone put the label back without it. */
+    var was = go.innerHTML;
+    go.textContent = "Opening Stripe\u2026";
+    try {
+      var r = await fetch("api/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email }),
+      });
+      var j = await r.json().catch(function () { return null; });
+      if (r.ok && j && j.url) { location.href = j.url; return; }
+      tell(j && j.error === "unactivated"
+        ? "Stripe will not open accounts for us yet \u2014 our own setup is still being reviewed."
+        : j && j.error === "email" ? "That does not look like an email address."
+        : j && j.error === "off" ? "Payments are not switched on here yet."
+        : "Stripe would not open an account just now. Try again in a minute.");
+    } catch (e) {
+      tell("No answer. Check your connection and try again.");
+    }
+    go.disabled = false;
+    go.innerHTML = was;
+  });
+})();
+</script>
+</body>
+</html>

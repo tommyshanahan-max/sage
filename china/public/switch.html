@@ -1,0 +1,81 @@
+<!doctype html>
+<!-- WHAT ACTUALLY HAPPENS ON CONNECT, and it is not the success screen.
+     WeChat Pay and Alipay are off by default on every new Stripe account, so
+     this is the ordinary outcome and the success screen is the exception. It
+     leads with the green chip because the part that worked has to be said
+     first: somebody who reads "WeChat Pay is off" under a red heading thinks
+     the connection failed and starts again. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>One switch left — China Business Solutions</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap">
+<link rel="stylesheet" href="./china.css">
+</head>
+<body>
+<main class="sheet">
+  <header class="top">
+    <span class="chip">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#E0B95C" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+      Stripe connected
+    </span>
+    <h1>One switch left.</h1>
+    <p>WeChat Pay is off on your account, so nobody can pay you yet.</p>
+  </header>
+
+  <div class="body">
+    <div class="card tight">
+      <div class="step"><span class="n">1</span><span>In Stripe: <b>Settings &rarr; Payment methods</b></span></div>
+      <div class="step"><span class="n">2</span><span>Turn on <b>WeChat Pay</b> and <b>Alipay</b></span></div>
+    </div>
+    <p class="note">Off by default on every account. Stripe switches them on straight away &mdash; there is nothing to apply for.</p>
+    <div class="grow"></div>
+  </div>
+
+  <footer class="foot">
+    <button class="go" id="again" type="button">Check again</button>
+    <p class="under" id="under">We check again by ourselves every few seconds.</p>
+  </footer>
+</main>
+<script>
+/* ASKS STRIPE, AND ASKS AGAIN WITHOUT BEING TOLD.
+ *
+ * Switching WeChat Pay on happens in another tab, and the moment it is done
+ * this screen is wrong. A button alone would leave somebody staring at a
+ * stale page wondering whether it took. So it polls while the tab is in
+ * front, and the button is for the impatient.
+ *
+ * IT STOPS. Ten minutes of five-second polls is eighty pointless requests to
+ * Stripe from a tab somebody left open, so after that it waits to be asked.
+ */
+(function () {
+  var btn = document.getElementById("again");
+  var under = document.getElementById("under");
+  var tries = 0, timer = null;
+
+  async function look(byHand) {
+    if (byHand) { btn.disabled = true; btn.textContent = "Checking\u2026"; }
+    try {
+      var r = await fetch("api/state", { headers: { Accept: "application/json" } });
+      var j = await r.json();
+      if (j && j.ready) { location.href = "live.html"; return true; }
+      if (byHand) under.textContent = "Still off. Stripe can take a moment to catch up.";
+    } catch (e) {
+      if (byHand) under.textContent = "No answer just now. Try again in a moment.";
+    }
+    if (byHand) { btn.disabled = false; btn.textContent = "Check again"; }
+    return false;
+  }
+
+  btn.addEventListener("click", function () { look(true); });
+
+  timer = setInterval(function () {
+    if (document.hidden) return;          // not while the tab is in the background
+    if (++tries > 120) { clearInterval(timer); return; }   // ten minutes, then stop
+    look(false);
+  }, 5000);
+})();
+</script>
+</body>
+</html>
