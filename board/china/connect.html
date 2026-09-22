@@ -49,7 +49,14 @@
              autocapitalize="off" spellcheck="false"
              style="width:100%;font-size:1rem;padding:.8rem .85rem;border:1px solid #DAD6CC;
                     border-radius:.55rem;background:#fff;color:var(--ink);font-family:inherit">
-      <p id="say" hidden style="margin:.55rem 0 0;font-size:.85rem;color:var(--other-dot)"></p>
+      <!-- LOUD, BECAUSE THE FIRST VERSION WAS NOT.
+           It was .85rem of red under the field, which is the size of thing a
+           person misses entirely — and the report was "nothing happens when I
+           press connect". Something did happen; it said so quietly. A refusal
+           is the most important text on the screen at the moment it appears,
+           so it is body size, dark, and on its own ground. -->
+      <p id="say" hidden style="margin:.7rem 0 0;font-size:.95rem;line-height:1.5;
+        font-weight:500;color:#7C3220;background:#F7ECE8;border-radius:.5rem;padding:.7rem .8rem"></p>
     </div>
 
     <p class="note">Revoke us from your Stripe dashboard whenever you like. Nothing here holds a key.</p>
@@ -79,10 +86,17 @@
   var go = document.getElementById("go");
   var box = document.getElementById("email");
   var say = document.getElementById("say");
-  function tell(t) { say.textContent = t; say.hidden = !t; }
+  function tell(t) {
+    say.textContent = t;
+    say.hidden = !t;
+    if (t) try { say.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {}
+  }
 
   go.addEventListener("click", async function () {
     var email = (box.value || "").trim();
+    /* Scroll the message into view as well as writing it. On a short screen
+       the field and the button are a screen apart, and a refusal nobody
+       scrolls to is a refusal nobody reads. */
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       tell("That does not look like an email address.");
       box.focus();
