@@ -71,6 +71,53 @@ Money **out** to other people is not built and refuses on purpose: local CNY
 payouts are documented only for goods trade with declarant and order data. See
 note 2 at the top of `board/lib/wallet/providers/airwallex.js`.
 
+## And a second way through, found 22 Sep, which is domestic
+
+**A WFOE can take a WeChat Pay collection code without an ICP.** Confirmed by
+Tom's Beijing agent (胡, 公司注册 / 代理记账), in writing, in the group chat:
+
+> 如果就是只是做一个那个二维码儿收款码儿完了想收款的话，这个是不需要 ICP 的，
+> 这个您直接联系一下银行或者是微信、支付宝，那商户完了看看是怎么申请。
+
+That matters because two things had been conflated, here and by every session
+that touched this:
+
+- **Taking payment from strangers on a website** — ICP备案, a verified 服务号
+  or 小程序, then 微信支付商户号. Months. This is the one that is hard.
+- **A 经营收款码 / 线下场所 merchant number** — business licence, corporate
+  bank account, legal rep's ID, photographs of the premises. Days. No ICP,
+  no website, no 服务号.
+
+The three-employees-with-社保 and ¥1,000,000 registered capital Tom was quoted
+belong to the **ICP经营许可证** — the commercial licence, which is for running
+a platform other people sell through. Not needed for a company collecting for
+its own goods.
+
+**Which makes Dealio work domestically, today, with no acquirer.** Both ends in
+China, RMB, a code the payer long-presses: that is the whole product, and the
+cross-border licence that Stripe and Airwallex both refused is not in the path
+at all. `lib/wallet/providers/` already holds the abstraction; qfpay.js is
+written and unrun; a wechat.js is one more branch on `createWallet()`.
+
+**The shape it serves.** Reps in China each take their own end-customer money
+(their own Weidian, or their own code). They restock from the WFOE by
+long-pressing its code — domestic RMB, no US$50,000 quota, no internet
+banking for a part-time seller. The WFOE pays Australia once a month as an
+ordinary goods-trade payment. Nobody settles for anybody: every link is a
+sale with title passing.
+
+**The line not to cross.** The 经营场景 on that merchant number is 线下场所,
+and it is what the number is licensed for. Collecting from a dozen known
+wholesale reps is that scene. A public consumer checkout on aozhoubaba.com is
+not, whoever forwards the code, and using an offline number for it is how
+accounts get frozen. Consumers keep going through Weidian until there is a
+服务号 or 小程序 with an ICP behind it.
+
+**Next, and in this order:** apply for the merchant number (the WFOE's own
+bank is likely the easiest door — banks act as 服务商 and hold the KYC
+already), then the adapter. Not before — the lesson from airwallex.js is
+three paragraphs down and cost a week.
+
 ## The way through, found 21 Sep, and it is Stripe
 
 **Stripe does WeChat Pay and Alipay for Australian merchants**, switched on
