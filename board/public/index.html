@@ -3159,6 +3159,12 @@ const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
   if (x !== undefined) n.textContent = x; return n; };
 
+/* IS THIS THE APP. Written by the server into the HTML — see the note over
+   {{INAPP}} in page() — because the nav bar is drawn before any fetch could
+   answer, and a tab that appears a moment later is a tab that moves under a
+   thumb. The only thing it turns off is the Money tab. */
+const IN_APP = "{{INAPP}}" === "1";
+
 /* WHY THIS BLOCK EXISTS
  *
  * This board is meant to be forwarded into a WeChat chat and read where it
@@ -5142,8 +5148,13 @@ function paintNav() {
      handle on it, so somebody still at the door who pressed this would get an
      empty list and a button that refuses. Hidden until they are in, the same
      rule the tab beside it follows. */
+  /* AND NOT IN THE APP AT ALL. See the note over webOnly in server.js: the
+     payments product is a separate product with a separate answer to give
+     Apple, and it is off for every app user rather than hidden from a
+     reviewer. {{INAPP}} is written by the server, so there is nothing here
+     for a redraw to get wrong and nothing to wait for a fetch to learn. */
   $("navmoneylabel").textContent = T("nav.money");
-  $("navmoney").hidden = !(ME && ME.handle);
+  $("navmoney").hidden = IN_APP || !(ME && ME.handle);
   // Profile goes to your own page once you have one, and before that it opens
   // the editor. There is nothing on this page to scroll to any more: this tab
   // and the Tutor's first offer are now the only two ways in, which is the

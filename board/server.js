@@ -409,7 +409,12 @@ async function page(file, req, res, next, extra = null) {
       /* WHICH PRODUCT'S DOOR THIS IS. The page needs it before it can decide
          where somebody is going, which is before any fetch could answer — so
          it is substituted here rather than asked for. */
-      .split("{{DEALIO}}").join(isDealioHost(req) ? "1" : "");
+      .split("{{DEALIO}}").join(isDealioHost(req) ? "1" : "")
+      /* WHETHER THIS IS THE APP, for the pages that have to draw a nav bar
+         before any fetch could answer. Same reasoning as {{DEALIO}} above,
+         and the same detection as inApp() further down — see the long note
+         there for why a forgeable user agent is safe for this. */
+      .split("{{INAPP}}").join(inApp(req) ? "1" : "");
     for (const [k, v] of Object.entries(extra || {})) out = out.split(k).join(v);
     res.send(out);
   } catch (e) { next(e); }
@@ -10344,7 +10349,34 @@ app.get("/pay/:id", (req, res, next) => page("request.html", req, res, next));
  *
  * The paying half at /pay/ is outside the door and always will be: the whole
  * design is that the person paying needs nothing at all. */
-app.get(["/dealio", "/dealio/"], notesOff,
+/* THE MONEY SCREENS ARE NOT IN THE APP, and this is the whole of how.
+ *
+ * 22 Sep 2026. The App Store rejected build 1 and asked five questions about
+ * the payments product — who the merchants are, who takes the money, what is
+ * being sold. All five are questions about Dealio, which is a separate
+ * product that happens to be reachable from the board because the same people
+ * use both. The board is a place to meet people; that is one purpose and it
+ * is what the listing describes. Answering five payment-facilitator questions
+ * to keep a tab the app did not need is the wrong trade.
+ *
+ * SO IT IS OFF FOR EVERY APP USER, not hidden from reviewers. That distinction
+ * is the only thing here worth being careful about: a feature turned off for
+ * everybody on a platform is a product decision Apple has no view on, and a
+ * feature hidden from reviewers alone is guideline 2.3.1 and the account.
+ * Nothing in here looks at who is asking — only at what is asking.
+ *
+ * WHY A REDIRECT AND NOT A 404. Somebody in the app may have a /dealio link
+ * from a message, and a dead end is a worse answer than the board. The web is
+ * untouched: same URL, same page, on a phone browser or a desktop.
+ *
+ * The three entry points that used to point here — the Money tab in
+ * index.html and notes.html, and the sibling-product panel on the landing
+ * page — read {{INAPP}} and are not drawn. This route is the floor under
+ * them, for a link that arrives some other way. */
+const webOnly = (req, res, next) =>
+  inApp(req) ? res.redirect(302, "/board") : next();
+
+app.get(["/dealio", "/dealio/"], webOnly, notesOff,
   (req, res, next) => page("dealio.html", req, res, next));
 
 /** THE PUBLIC PAGE ABOUT THE PAYMENTS PRODUCT, and the one page about it that
@@ -10359,20 +10391,20 @@ app.get(["/dealio", "/dealio/"], notesOff,
  *  two should not look like halves of the same thing. This one is read by a
  *  payment provider assessing an application, by a customer deciding whether
  *  to trust a link, and by anybody who asks what this is. */
-app.get(["/dealio/about", "/dealio/about/"], notesOff,
+app.get(["/dealio/about", "/dealio/about/"], webOnly, notesOff,
   (req, res, next) => page("pay.html", req, res, next));
 
 /** Dealio's own terms. The board's /terms are the board's — a networking
  *  board's house rules in front of somebody about to send money would be the
  *  wrong document in the one place it matters. */
-app.get(["/dealio/terms", "/dealio/terms/"], notesOff,
+app.get(["/dealio/terms", "/dealio/terms/"], webOnly, notesOff,
   (req, res, next) => page("dealio-terms.html", req, res, next));
 
 /** THE WALKTHROUGH, for the one thing nobody outside could do: watch it work.
  *  The app is behind a sign-in and the payer's page needs a real request to
  *  exist, so a stranger could read every word about this product and never
  *  see it move. Four screens, no account, nothing created. */
-app.get(["/dealio/try", "/dealio/try/"], notesOff,
+app.get(["/dealio/try", "/dealio/try/"], webOnly, notesOff,
   (req, res, next) => page("try.html", req, res, next));
 
 /** A REAL WECHAT CODE ON THE WALKTHROUGH, when there is a provider to ask.

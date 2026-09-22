@@ -989,6 +989,8 @@ import { sheet } from "/share.js";
 import { mountRoomMoney } from "/wallet-card.js";
 
 const $ = (id) => document.getElementById(id);
+/* Written by the server — see {{INAPP}} in page(). */
+const IN_APP = "{{INAPP}}" === "1";
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
   if (x !== undefined) n.textContent = x; return n; };
 const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
@@ -1289,6 +1291,9 @@ function paint() {
      <span>s that hold the words — hiding those left two tabs that were still
      there, still tappable, and now wordless. */
   for (const id of ["tabcardsgo", "tabbrowsego", "tabmego", "tabmoneygo"]) $(id).hidden = WAITING;
+  /* AND THE MONEY TAB IS NOT IN THE APP, for anybody, waiting or not. The
+     note lives over webOnly in server.js. */
+  if (IN_APP) $("tabmoneygo").hidden = true;
   $("waitbar").hidden = !WAITING;
   /* Not for the waiting list and not for an invited arrival: both are being
      asked to get in, and two asks at once is neither. */

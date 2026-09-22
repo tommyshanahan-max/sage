@@ -691,7 +691,7 @@
 
 <!-- THE OTHER PRODUCT, AS A SIBLING AND NOT A SECOND PITCH. See the note on
      land.alsoHead for why it is here and why it is this small. -->
-<section class="quiet also">
+<section class="quiet also" id="alsoSec">
   <div class="wrap">
     <div class="eyebrow"><span id="alsoHead"></span><i></i></div>
     <div class="words">
@@ -756,6 +756,8 @@ if (new URLSearchParams(location.search).get("gone") === "1") {
 admitted().then((yes) => { if (!yes) tally("door"); }).catch(() => tally("door"));
 
 const $ = (id) => document.getElementById(id);
+/* Written by the server — see {{INAPP}} in page(). */
+const IN_APP = "{{INAPP}}" === "1";
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
   if (x !== undefined) n.textContent = x; return n; };
 const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
@@ -827,6 +829,10 @@ function paint() {
   $("alsoName").textContent = T("land.alsoName");
   $("alsoLine").textContent = T("land.alsoLine");
   $("alsoGo").textContent = T("land.alsoGo");
+  /* NOT IN THE APP. The sibling-product panel is the third and last way into
+     the payments product from the board — see the note over webOnly in
+     server.js. Off for every app user, not hidden from a reviewer. */
+  $("alsoSec").hidden = IN_APP;
   $("footAbout").textContent = T("land.foot");
   $("footRules").textContent = T("land.rules");
   $("footTerms").textContent = T("tm.link");

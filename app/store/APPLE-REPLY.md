@@ -15,16 +15,15 @@ this reply without them however true it is.
 **1. Who are the users that will use the paid content, subscriptions, features
 and services in the app?**
 
-Nobody buys anything from us inside the app, and the app has no paid tier. The
-users are small businesses and sole traders — a tutor, a migration agent, a
-production company — who use the app to ask a client to pay them for work done
-in the real world. The person paying is that client, usually in mainland China.
+There are none. The app has no paid content, no subscription and no paid tier.
+Its users are people who want to meet people — a tutor, a migration agent, a
+production company, a student — who write one sentence about themselves and
+are shown the people that sentence matches.
 
 **2. Where can users purchase the content, subscriptions, features and services
 that can be accessed in the app?**
 
-Nowhere. There is nothing to purchase. Every feature in the app is available to
-every member at no charge.
+Nowhere. There is nothing to purchase, inside the app or outside it.
 
 **3. What specific types of previously purchased content, subscriptions,
 features and services can a user access in the app?**
@@ -34,14 +33,16 @@ None. There are no purchases, so there is nothing previously purchased.
 **4. What paid content, subscriptions or features are unlocked within the app
 that do not use In-App Purchase?**
 
-None are unlocked. No feature of the app is gated behind a payment.
+None. No feature of the app is gated behind a payment.
 
-The app does carry payment requests between two businesses — one member asks
-another person to pay them for professional services or physical goods
-delivered outside the app. Under guideline 3.1.3(e) and 3.1.5(a), payment for
-physical goods and for services consumed outside the app does not use In-App
-Purchase, and we do not take a commission inside the app. The money goes
-directly to the member's own payment account; we are not a party to it.
+We think this question came from a screen the app no longer has. Our website at
+thexchange.app also carries a separate payments product for businesses, and a
+tab in the app linked through to it. That tab and every route to it have been
+removed from the app for all users, on every device — it is not hidden, gated
+or conditionally shown, and there is no setting that brings it back. The app is
+now a single-purpose app: an introductions board and the messages that follow
+from it. The payments product remains a website feature for desktop and mobile
+web only.
 
 **5. How do users obtain an account? Do users have to pay a fee to create an
 account?**
@@ -134,6 +135,15 @@ device.
 **Nothing is retained** beyond what is described on the privacy page.
 
 The screen recording listed below shows the flow end to end.
+
+---
+
+## What changed in the build
+
+1. The three usage strings in `Info.plist`, which is the crash under 2.1(a).
+2. The agreement line at both doors, under 1.2.
+3. The payments tab removed from the app entirely, for every user — see
+   question 4 above.
 
 ---
 
