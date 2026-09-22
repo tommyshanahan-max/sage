@@ -6542,6 +6542,10 @@ export const STRINGS = {
   "sh.pSent":          ["parcels delivered", "已送达"],
   "sh.pRev":           ["reviews", "买家评价"],
   "sh.pSince":         ["open since", "开店"],
+  "sh.open":           ["More", "展开"],
+  "sh.shut":           ["Less", "收起"],
+  "sh.reach":          ["Any question, message me", "有问题，微信找我"],
+  "sh.reachSub":       ["I answer every one myself", "每条都是我本人回"],
 
   /* ── /sell — the Australian-facing half. English first, because the
         reader is a maker in Melbourne and not a buyer in Shanghai. ── */

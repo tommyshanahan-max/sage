@@ -79,15 +79,34 @@
      So: his face, his own words, and three numbers that were counted rather
      than typed. It sits above the goods because that is the order she reads
      it in — who is this, then what has he got. */
-  .said{background:var(--card);border-radius:.9rem;padding:1rem 1.05rem;
+  .said{background:var(--card);border-radius:.9rem;padding:1.1rem 1.05rem 1rem;
     margin:0 0 1rem}
-  .said h3{margin:0 0 .6rem;font-size:.72rem;letter-spacing:.09em;
+  .said h3{margin:0 0 .75rem;font-size:.72rem;letter-spacing:.09em;
     font-weight:600;color:var(--mut)}
-  .said .me{display:flex;gap:.8rem;align-items:flex-start}
-  .said .me img{width:3.6rem;height:3.6rem;border-radius:50%;object-fit:cover;
+
+  /* THE FIRST PARAGRAPH, THEN THE REST ON A TAP.
+     It rendered the whole story as one pre-line paragraph and on a real
+     shop that is five dense lines of Chinese above the goods — the exact
+     wall this page exists not to be. Whoever writes it writes it in
+     paragraphs, so the first one stands as the thing she reads in four
+     seconds and the remainder waits behind 展开. Nothing is lost by moving
+     it a tap deeper; it was not being read where it was.
+     Bigger and looser than body copy, because it is the one thing on the
+     page written by a person, and it should look like it. */
+  .said .me{display:flex;gap:.85rem;align-items:flex-start}
+  .said .me img{width:3.4rem;height:3.4rem;border-radius:50%;object-fit:cover;
     flex:0 0 auto;background:var(--line)}
-  .said p{margin:0;font-size:.95rem;line-height:1.75;color:var(--ink);
-    white-space:pre-line;flex:1 1 auto;min-width:0}
+  .said .txt{flex:1 1 auto;min-width:0}
+  .said p{margin:0;font-size:1.02rem;line-height:1.8;color:var(--ink);
+    white-space:pre-line}
+  .said p + p{margin-top:.55rem}
+  .said .rest{margin-top:.55rem}
+  .said .rest[hidden]{display:none}
+  /* A LINK, NOT A BUTTON. A pill here competes with the one that adds to
+     the cart, and nothing on this page should compete with that. */
+  .said .open{border:0;background:none;padding:.5rem 0 0;font:inherit;
+    font-size:.86rem;color:var(--ink2);text-decoration:underline;
+    text-underline-offset:.2em}
   /* Counted, so they are allowed to be the biggest thing in the block. A
      shop with no history sends zeros and the row is not drawn at all —
      "0 parcels delivered" is worse than saying nothing. */
@@ -96,6 +115,21 @@
   .proof div{flex:1;min-width:0;text-align:center}
   .proof b{display:block;font-size:1.25rem;font-weight:600;line-height:1.2}
   .proof span{display:block;font-size:.7rem;color:var(--mut);margin-top:.15rem}
+
+  /* HOW SHE REACHES HIM, AT THE BOTTOM WHERE SHE DECIDES.
+     The page ended on a grey footer line. 联系店家 was only ever in the
+     fixed bar, which she reads as part of the cart rather than as a way to
+     reach a person — and the question she actually has ("is the date
+     fresh", "can you post to my mother's address") arrives after she has
+     looked at everything, not before. So it is said once more, in full, at
+     the end: his WeChat id, and who answers. */
+  .reach{background:var(--card);border-radius:.9rem;padding:1.1rem 1.05rem;
+    margin:1.2rem 0 .4rem;text-align:center}
+  .reach b{display:block;font-size:1.02rem}
+  .reach span{display:block;font-size:.84rem;color:var(--mut);margin-top:.2rem}
+  .reach code{display:inline-block;margin:.75rem 0 0;padding:.5rem .9rem;
+    border-radius:999px;background:var(--bg);font-family:inherit;
+    font-size:.95rem;letter-spacing:.02em;color:var(--ink)}
 
   .who{display:flex;align-items:center;gap:.7rem;padding:.2rem .3rem 1rem}
   .who img{width:3rem;height:3rem;border-radius:50%;object-fit:cover;flex:0 0 auto;
@@ -120,17 +154,33 @@
     border-radius:.9rem;overflow:hidden}
   .item .pic{width:100%;aspect-ratio:1/1;background:var(--line);object-fit:cover;
     display:block}
+  /* A CARD WITH NO PHOTOGRAPH, WHICH IS MOST OF THEM ON DAY ONE.
+     A flat grey square reads as something still loading, and eight of them
+     down a page reads as a broken shop — the one impression this page
+     cannot afford from a stranger abroad. So the hole is given something to
+     be: the product's English name, quiet, centred, on a tint. It is the
+     name on the tin she is looking for anyway, and a shelf of them looks
+     like a decision rather than a failure. */
+  .item .noimg{width:100%;aspect-ratio:1/1;display:flex;align-items:center;
+    justify-content:center;padding:.9rem;text-align:center;
+    background:linear-gradient(160deg,#EEF0F4 0%,#E4E7ED 100%);
+    font-size:.78rem;line-height:1.45;color:#9AA1AF;overflow:hidden}
+  .grid.one .item .noimg,.item.wide .noimg{width:9.5rem;flex:0 0 auto}
   /* A SHELF WITH ONE THING ON IT left half a row empty, which reads as a
      picture that failed to load rather than as a short shelf. It goes wide
      instead, picture left and the rest beside it — the shape a shop uses for
      the one thing it wants looked at, so a short shelf gains something
      instead of showing a hole. */
   .grid.one{grid-template-columns:1fr}
-  .grid.one .item{flex-direction:row;align-items:stretch}
-  .grid.one .item .pic{width:9.5rem;flex:0 0 auto;aspect-ratio:1/1}
-  .grid.one .item .mid{padding:.8rem .9rem}
-  .grid.one .item .nm{font-size:1rem;-webkit-line-clamp:2}
-  .grid.one .item .row{padding-top:.6rem}
+  /* The odd card at the end of a shelf takes the same side-on shape, so a
+     shelf of three ends on a full-width row rather than on a hole. One set
+     of rules for both cases — see the note in grid(). */
+  .item.wide{grid-column:1/-1}
+  .grid.one .item,.item.wide{flex-direction:row;align-items:stretch}
+  .grid.one .item .pic,.item.wide .pic{width:9.5rem;flex:0 0 auto;aspect-ratio:1/1}
+  .grid.one .item .mid,.item.wide .mid{padding:.8rem .9rem}
+  .grid.one .item .nm,.item.wide .nm{font-size:1rem;-webkit-line-clamp:2}
+  .grid.one .item .row,.item.wide .row{padding-top:.6rem}
   .item .mid{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;
     gap:.15rem;padding:.55rem .6rem .6rem}
   .item .nm{font-size:.85rem;line-height:1.4;display:-webkit-box;
@@ -721,15 +771,32 @@ function draw() {
   if (SHOP.story) {
     const said = el("div", "said");
     said.append(el("h3", null, T("sh.said")));
+    /* NO SECOND FACE. It was drawn here as well as on the band, which sits
+       directly above it — the same photograph twice on one screen, and the
+       cost was not only the repetition: the avatar took a fifth of the
+       width and pushed his first paragraph from three lines to four. The
+       band keeps the face, this keeps the voice. */
     const me = el("div", "me");
-    if (SHOP.photo) {
-      const img = el("img");
-      img.src = SHOP.photo;
-      img.alt = "";
-      img.addEventListener("error", () => img.remove());
-      me.append(img);
+    /* Paragraph one, then the rest on a tap. Split on blank-or-single
+       newlines because that is how somebody typing into a box breaks a
+       thought; a story written as one long line simply has no rest and no
+       button is drawn. */
+    const parts = String(SHOP.story).split(/\n+/).map((x) => x.trim()).filter(Boolean);
+    const txt = el("div", "txt");
+    txt.append(el("p", null, parts[0] || SHOP.story));
+    if (parts.length > 1) {
+      const rest = el("div", "rest");
+      rest.hidden = true;
+      for (const line of parts.slice(1)) rest.append(el("p", null, line));
+      const more = el("button", "open", T("sh.open"));
+      more.type = "button";
+      more.addEventListener("click", () => {
+        rest.hidden = !rest.hidden;
+        more.textContent = T(rest.hidden ? "sh.open" : "sh.shut");
+      });
+      txt.append(rest, more);
     }
-    me.append(el("p", null, SHOP.story));
+    me.append(txt);
     said.append(me);
     /* Nothing where there is nothing. A brand-new shop showing three zeros
        has told her the one thing it wanted to hide. */
@@ -789,6 +856,17 @@ function draw() {
     root.append(grid(mine));
   }
 
+  /* Said once more at the end, where the question she has actually formed
+     while scrolling can be asked. Only when there is a WeChat id to give —
+     a block inviting her to get in touch with nothing under it is worse
+     than no block. */
+  if (SHOP.wechat) {
+    const re = el("div", "reach");
+    re.append(el("b", null, T("sh.reach")), el("span", null, T("sh.reachSub")),
+      el("code", null, SHOP.wechat));
+    root.append(re);
+  }
+
   root.append(el("p", "foot", T("sh.foot", { who: SHOP.handle })));
 }
 
@@ -796,8 +874,14 @@ function grid(items) {
   /* A shelf of one gets the wide row rather than half an empty grid — see
      .grid.one. */
   const wrap = el("div", items.length === 1 ? "grid one" : "grid");
-  for (const it of items) {
-    const card = el("div", "item");
+  /* AN ODD SHELF LEFT ITS LAST CARD ALONE BESIDE A HOLE. Three tins of
+     formula drew two across and then one, with half a row of page showing
+     through — which reads as something that failed to load rather than as
+     the end of a shelf. The odd one out takes the whole width instead, in
+     the same side-on shape a shelf of one already uses. */
+  const odd = items.length > 1 && items.length % 2 === 1;
+  items.forEach((it, i) => {
+    const card = el("div", odd && i === items.length - 1 ? "item wide" : "item");
     /* NO PICTURE IS A BOX, NOT A BROKEN ONE. An <img> with an empty src
        draws the browser's torn-page icon, which reads as something failing
        rather than something missing. */
@@ -808,7 +892,11 @@ function grid(items) {
       pic.loading = "lazy";
       card.append(pic);
     } else {
-      card.append(el("div", "pic"));
+      /* Given something to be rather than left as a grey square — see
+         .noimg. The English name is what is printed on the tin she is
+         looking for, so it is the honest thing to put there; her own name
+         for it is already two lines below. */
+      card.append(el("div", "noimg", it.en || it.name));
     }
 
     const mid = el("div", "mid");
@@ -857,7 +945,7 @@ function grid(items) {
     mid.append(row);
     card.append(mid);
     wrap.append(card);
-  }
+  });
   return wrap;
 }
 
