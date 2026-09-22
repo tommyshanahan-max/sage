@@ -905,14 +905,19 @@ function draw() {
      about this tin"; this answers "what do people say about this shop",
      which is the question somebody asks before their first order and the
      only way to read six hundred imported rows without opening sixty
-     products one at a time. Hidden when there are none: a button that
-     opens an empty sheet is a shop saying nobody has bought anything. */
-  if (pf.reviews) {
-    const all = el("button", "allrev", T("sh.allRev"));
-    all.type = "button";
-    all.addEventListener("click", allRevSheet);
-    box.append(all);
-  }
+     products one at a time.
+
+     IT SHOWS AT ZERO TOO, which was the other way round first. The argument
+     for hiding it was that a button opening an empty sheet tells a buyer
+     nobody has bought anything — and that is true of a shop with no history.
+     It is not true of this one: the history is six hundred rows sitting in a
+     微店 shop waiting to be imported, and a door that appears only once the
+     room behind it is furnished cannot be checked by the person furnishing
+     it. So the door stays, and the empty room says so politely. */
+  const all = el("button", "allrev", T("sh.allRev"));
+  all.type = "button";
+  all.addEventListener("click", allRevSheet);
+  box.append(all);
   top.append(box);
   /* The switch rides the band rather than sitting in a corner of the page:
      it belongs with whose shop this is. Flipping it redraws the list and
