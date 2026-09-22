@@ -57,10 +57,19 @@
 // way. One picture serves everyone in the group. And a code can be printed,
 // which is how a carton of formula carries its own reorder button.
 //
-// None of that is true of the QR an offshore checkout draws AFTER Pay is
-// pressed — that one is a foreign flow showing through, and the fix there
-// is the app handoff, not a better code. Two different objects doing two
-// different jobs; do not let a note about one become a rule about the other.
+// AND THAT INCLUDES THE CODE ON THE PAYMENT PAGE ITSELF.
+//
+// The payer is in the WeChat browser, on their own phone, looking at the
+// code this file drew. They long-press it. No second device, no handoff,
+// nothing to point a camera at. That is the entire reason the PNG above
+// exists — the long-press menu reads an <img> and nothing else — so a note
+// treating that code as a problem contradicts the code four lines above it.
+//
+// This has been got wrong twice now and both times the same way: reasoning
+// from an American checkout, where a QR means "go and fetch your phone".
+// CLAUDE.md has the rule — the line under a code reads 长按二维码识别 and
+// nothing before it, because a string that opens with "can't scan your own
+// screen?" is teaching a Chinese user about China.
 
 import QRCode from "qrcode";
 
