@@ -48,6 +48,28 @@ impossible. The *paying* side can be anywhere. So:
 `way: "out"` is built and the screens are right, but it lands only where a
 Stripe account exists. The page says so rather than failing at the end.
 
+**6. It is not a checkout, and that is the whole point.** A checkout assumes
+a catalogue: fixed things at fixed prices, a buyer who arrives at a site and
+fills a cart. Tailored work has none of that. The number is agreed in the
+conversation — this job, this client, this week — so there is nothing to put
+in a cart and no page for anybody to arrive at. The payee mints a code
+against the deal that was just done, and it travels back into the chat where
+it was done.
+
+That is also the answer to "why not Weidian, why not Shopify, why not just
+switch the wallets on at an existing checkout". Those are catalogues. An
+entity setup at €6,000, a trademark filing at €3,200 and a retainer at
+€8,000 are three conversations, not three products, and a platform that
+wants a SKU cannot hold any of them. Switching WeChat Pay on at a checkout
+serves the money that was already going to arrive through the checkout; it
+does nothing for the money that is agreed in a chat and has nowhere to land.
+
+**And a code forwards, which a session does not.** The person negotiating is
+usually not the person paying — in a Chinese company 财务 pays. A code goes
+to finance in one forward, with the amount and the name on it, and it is
+still a code when it gets there. A live checkout session handed to somebody
+else is a page that may well have expired before they open it.
+
 ---
 
 ## The vocabulary
