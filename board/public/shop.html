@@ -61,42 +61,35 @@
      a stranger she was introduced to in a chat.
      Full bleed by cancelling main's padding, the same trick .ban uses — a
      band with a margin down each side is a card, not a shopfront. */
-  /* THE PERSON, AT THE SIZE THE PRODUCT IS ACTUALLY SOLD AT.
-     The face was a 2.9rem disc in the corner of a band, under three claim
-     chips — which is the wrong way round. The whole of this trade is that a
-     real man in Melbourne walks into the shop and she cannot; his face is
-     the most valuable object on the page and it was the smallest.
-     So it leads, at 4.4rem, with his name beside it, and THE COUNTED
-     NUMBERS COME UP HERE TOO. 正品保障·假一赔十 is what every fake shop on
-     the internet says; 31 已送达 is a thing that either happened or did
-     not. Facts take the first screen and claims drop below it. */
-  .hero{margin:-.9rem -.8rem .9rem;padding:1.6rem 1.1rem 1.25rem;
+  /* A SIGN OVER A DOOR, NOT A PROFILE.
+     The last pass put a big round portrait at the top with the name beside
+     it and three stat columns under it, and that is the Instagram profile
+     layout exactly: avatar, handle, posts/followers/following, bio, grid.
+     A shop is not a profile. Nobody's face is painted four inches high over
+     the door of a shop — the NAME is, and the goods are what is inside.
+     So the band is signage now: the name set as a mark, one quiet line of
+     credentials under it, and then the shelves. He is still here, further
+     down, by the counter, which is where the owner's photograph hangs. */
+  .hero{margin:-.9rem -.8rem .9rem;padding:1.75rem 1.1rem 1.4rem;
     background:linear-gradient(158deg,var(--deep) 0%,var(--deep2) 72%,#35624E 100%);
     color:#fff;width:calc(100% + 1.6rem)}
   .ban + .hero{margin-top:-.9rem}
-  .hero .top{display:flex;align-items:center;gap:.95rem}
+  .hero .top{display:flex;align-items:flex-start;gap:.9rem}
   .hero .top>div{min-width:0;flex:1 1 auto}
-  .hero img{width:4.4rem;height:4.4rem;border-radius:50%;object-fit:cover;
-    flex:0 0 auto;border:2px solid rgba(255,255,255,.55);
-    box-shadow:0 6px 18px rgba(0,0,0,.22)}
-  .hero b{display:block;font-size:1.6rem;line-height:1.2;letter-spacing:.02em;
+  .hero b{display:block;font-size:2rem;line-height:1.15;letter-spacing:.06em;
     font-weight:600}
-  .hero .sub{display:block;font-size:.84rem;line-height:1.4;margin-top:.25rem;
-    color:rgba(255,255,255,.66)}
-  .hero .lang{flex:0 0 auto;align-self:flex-start;
-    border:1px solid rgba(255,255,255,.4);
+  /* THE COUNTED NUMBERS AS A LINE OF TYPE, NOT THREE STAT COLUMNS. Three
+     figures side by side under a name is the followers row off a profile,
+     and it was reading as one. The same facts said as a sentence are
+     credentials over a door instead; the figures keep the sun so the eye
+     still finds them without the layout claiming to be something else. */
+  .hero .sub{display:block;font-size:.84rem;line-height:1.6;margin-top:.55rem;
+    color:rgba(255,255,255,.72)}
+  .hero .sub i{font-style:normal;color:var(--sun);font-weight:600}
+  .hero .sub em{font-style:normal;opacity:.38;padding:0 .4rem}
+  .hero .lang{flex:0 0 auto;border:1px solid rgba(255,255,255,.4);
     background:transparent;color:#fff;font:inherit;font-size:.74rem;
     border-radius:999px;padding:.25rem .65rem}
-  /* Counted, on the dark, with the figure in sun. The same three numbers
-     the story card used to end on — they belong with who he is, not with
-     what he wrote. */
-  .hero .proof{display:flex;gap:.5rem;margin:1.15rem 0 0;padding:1rem 0 0;
-    border-top:1px solid rgba(255,255,255,.16)}
-  .hero .proof div{flex:1;min-width:0;text-align:center}
-  .hero .proof b{display:block;font-size:1.4rem;font-weight:600;line-height:1.15;
-    color:var(--sun);letter-spacing:.01em}
-  .hero .proof span{display:block;font-size:.7rem;margin-top:.2rem;
-    color:rgba(255,255,255,.6)}
 
   /* THE CLAIMS, BELOW THE FACTS AND QUIETER THAN THEM. They were white
      pills on the band, competing with his name for the first glance. On the
@@ -131,9 +124,17 @@
      it a tap deeper; it was not being read where it was.
      Bigger and looser than body copy, because it is the one thing on the
      page written by a person, and it should look like it. */
-  .said .me{display:flex;gap:.85rem;align-items:flex-start}
-  .said .me img{width:3.4rem;height:3.4rem;border-radius:50%;object-fit:cover;
+  /* HIS PHOTOGRAPH, AND A RECTANGLE RATHER THAN A DISC. A circular crop is
+     an avatar, and an avatar is an account; the picture by the counter of a
+     shop is a photograph in a frame. Small, beside the heading, so his
+     words keep the full width. */
+  .said .hd{display:flex;align-items:center;gap:.75rem;margin:0 0 .9rem}
+  .said .hd img{width:3rem;height:3rem;border-radius:.5rem;object-fit:cover;
     flex:0 0 auto;background:var(--line)}
+  .said .hd h3{margin:0}
+  .said .hd .since{display:block;font-size:.74rem;color:var(--mut);
+    margin-top:.15rem}
+  .said .me{display:flex;gap:.85rem;align-items:flex-start}
   .said .txt{flex:1 1 auto;min-width:0}
   .said p{margin:0;font-size:1.02rem;line-height:1.8;color:var(--ink);
     white-space:pre-line}
@@ -776,72 +777,77 @@ function draw() {
      how do I pay, where does it come from. */
   const hero = el("div", "hero");
   const top = el("div", "top");
-  if (SHOP.photo) {
-    const img = el("img");
-    img.src = SHOP.photo;
-    img.alt = "";
-    /* NO EMPTY DISC WHERE A FACE ISN'T: a grey circle is not information,
-       it is a hole that reads as something still loading. */
-    img.addEventListener("error", () => img.remove());
-    top.append(img);
-  }
   const box = el("div");
   /* The shop's name when it has one, the handle only when it does not.
-     Whoever is behind it is named once more at the foot of the page, and
-     twice on one screen is a line she reads for nothing. */
+     No portrait beside it: see the note over .hero. */
   box.append(el("b", null, SHOP.name || SHOP.handle));
-  /* One line under the name, and it is the promise rather than a claim:
-     where it comes from and who sends it. NOT who.goal — that is the
-     board's "I am a ___ looking for a ___", and under a shop selling
-     formula it once read "Spanish, learning Chinese from zero". */
-  box.append(el("span", "sub", T("sh.tPost")));
+
+  /* ONE LINE OF CREDENTIALS, in the order she cares about them: where it
+     comes from, then what has actually happened. Counted here rather than
+     typed into a field, and a shop that has done nothing yet simply says
+     the first part — three zeros would tell her the one thing it wanted to
+     hide. */
+  const sub = el("span", "sub");
+  const bits = [];
+  bits.push([null, T("sh.tPost")]);
+  const pf = PROOF || {};
+  if (pf.sent) bits.push([String(pf.sent), T("sh.pSent")]);
+  if (pf.reviews) bits.push([String(pf.reviews), T("sh.pRev")]);
+  /* 开店 is NOT on this line. Four facts wrapped to two, and the fourth
+     came down alone behind a leading separator, which looks like something
+     broke. It is the weakest of the four anyway — how long he has been
+     going is provenance, so it hangs by the counter with his photograph
+     instead, where it is read at the moment it is wanted. */
+  bits.forEach(([n, lab], i) => {
+    if (i) sub.append(el("em", null, "\u00b7"));
+    if (n) sub.append(el("i", null, n), document.createTextNode(" "));
+    sub.append(document.createTextNode(lab));
+  });
+  box.append(sub);
   top.append(box);
   /* The switch rides the band rather than sitting in a corner of the page:
-     it belongs with who you are dealing with. Flipping it redraws the list
-     and the bar together, because the total and the button live outside
-     <main> and would otherwise be left behind in the other language. */
+     it belongs with whose shop this is. Flipping it redraws the list and
+     the bar together, because the total and the button live outside <main>
+     and would otherwise be left behind in the other language. */
   top.append(langButton(() => { draw(); paint(); }));
   hero.append(top);
-  /* THE COUNTED NUMBERS, ON THE BAND. They ended the story card, which put
-     them below a paragraph and behind a tap's worth of scrolling; they are
-     the answer to the only question she has on the first screen, which is
-     whether anybody has ever actually bought from this man.
-     Nothing where there is nothing: a new shop drawing three zeros has told
-     her the one thing it wanted to hide, so the row is simply absent and
-     the band closes on his name. */
-  const pf = PROOF || {};
-  const rows = [
-    pf.sent ? [String(pf.sent), T("sh.pSent")] : null,
-    pf.reviews ? [String(pf.reviews), T("sh.pRev")] : null,
-    pf.since ? [pf.since.replace("-", "."), T("sh.pSince")] : null,
-  ].filter(Boolean);
-  if (rows.length) {
-    const pr = el("div", "proof");
-    for (const [n, lab] of rows) {
-      const d = el("div");
-      d.append(el("b", null, n), el("span", null, lab));
-      pr.append(d);
-    }
-    hero.append(pr);
-  }
   root.append(hero);
 
   /* The two claims, under the band and in ink. 墨尔本直发 is not repeated —
-     it is the line under his name now. */
+     it opens the credential line above. */
   const trust = el("div", "trust");
   for (const k of ["sh.tReal", "sh.tPay"]) trust.append(el("span", null, T(k)));
   root.append(trust);
 
-  /* HIM, BEFORE THE GOODS. Drawn only when he has written something — an
-     empty card headed 店主的话 is a shop admitting it has nothing to say. */
+  /* HIM, AFTER THE GOODS — BUILT HERE, HUNG BELOW THE SHELVES.
+     It used to sit above them, which made the page open on a portrait, a
+     name and a paragraph: a profile with a catalogue attached rather than a
+     shop. A shop opens on its shelves. His photograph and his words are
+     what is by the counter, and she reaches them having already seen what
+     is for sale — which is also when "who is actually sending this" becomes
+     the question she has. */
+  let said = null;
   if (SHOP.story) {
-    const said = el("div", "said");
-    said.append(el("h3", null, T("sh.said")));
-    /* NO SECOND FACE. It was drawn here as well as on the band, which sits
-       directly above it — the same photograph twice on one screen, and the
-       cost was not only the repetition: the avatar took a fifth of the
-       width and pushed his first paragraph from three lines to four. The
-       band keeps the face, this keeps the voice. */
+    said = el("div", "said");
+    /* The heading wears his photograph, because 店主的话 on its own is a
+       label above a paragraph — two things to read where one would do. */
+    const hd = el("div", "hd");
+    if (SHOP.photo) {
+      const img = el("img");
+      img.src = SHOP.photo;
+      img.alt = "";
+      /* No empty frame where a face is not: a grey rectangle is a hole
+         that reads as something still loading. */
+      img.addEventListener("error", () => img.remove());
+      hd.append(img);
+    }
+    const ttl = el("div");
+    ttl.append(el("h3", null, T("sh.said")));
+    /* Trading since — off the band's line, where it was the fourth fact and
+       one too many. Here it is the caption to his photograph. */
+    if (pf.since) ttl.append(el("span", "since", pf.since.replace("-", ".") + " " + T("sh.pSince")));
+    hd.append(ttl);
+    said.append(hd);
     const me = el("div", "me");
     /* Paragraph one, then the rest on a tap. Split on blank-or-single
        newlines because that is how somebody typing into a box breaks a
@@ -864,14 +870,14 @@ function draw() {
     }
     me.append(txt);
     said.append(me);
-    /* The counted numbers used to close this card. They are on the band now:
-       proof belongs with who he is, not with what he wrote, and it was the
-       one thing on the first screen she could not see. */
-    root.append(said);
+    /* Not appended yet — it goes in below the last shelf. */
   }
 
+  /* A shop with nothing in it yet still has a shopkeeper, and this returned
+     before he was ever appended — an empty shop that also had nobody in it. */
   if (!ITEMS.length) {
     root.append(el("p", "none", T("sh.empty")));
+    if (said) root.append(said);
     return;
   }
 
@@ -907,6 +913,9 @@ function draw() {
     if (k && show.length > 1) root.append(el("p", "shelf", k));
     root.append(grid(mine));
   }
+
+  /* The shopkeeper, by the counter — see the note where it is built. */
+  if (said) root.append(said);
 
   /* Said once more at the end, where the question she has actually formed
      while scrolling can be asked. Only when there is a WeChat id to give —
