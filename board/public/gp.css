@@ -1,0 +1,117 @@
+/* THE MERCHANT ONBOARDING SCREENS, ONE STYLESHEET.
+ *
+ * Drawn on the design canvas first ("Merchant onboarding") and built here as
+ * its own set rather than inside the board, because it is meant to move: the
+ * whole flow is six pages, one stylesheet and no dependency on being a member
+ * of anything. Lifting it into the Exchange later is copying seven files.
+ *
+ * ENGLISH ONLY, ON PURPOSE. Every other string on this box is bilingual
+ * because the reader is the Chinese payer. Nobody Chinese sees these screens:
+ * they face an Australian or a British professional deciding how to take
+ * money, and the payer never meets any of it. A Chinese column here would be
+ * a translation nobody reads, which is the thing i18n.js exists to prevent.
+ */
+:root{
+  --paper:#FAFAF7; --card:#FFFFFF; --panel:#F2F0EA;
+  --ink:#15171B; --body:#55544E; --muted:#6E6C66;
+  --line:#E6E3DC; --hair:#F0EEE8;
+  --go:#1F5D52; --go-dark:#16453D;
+  --warn:#C08A1E; --warn-ink:#E0B95C;
+  --other:#7C3220; --other-dot:#A8432E;
+  --serif:'Instrument Serif',Georgia,'Songti SC',serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",Helvetica,sans-serif;
+  font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--go)}a:hover{color:var(--go-dark)}
+
+/* The phone, and the same thing centred on anything wider. 26rem because the
+   screens were drawn at 390px and a line of body text should not get longer
+   than it was drawn. */
+.sheet{max-width:26rem;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+
+/* The dark bar at the top of every screen but the fork. */
+.top{flex-shrink:0;background:var(--ink);color:#fff;
+  padding:calc(1.5rem + env(safe-area-inset-top,0px)) 1.3rem 1.6rem}
+.top.other{background:var(--other)}
+.top a.back{display:inline-block;padding:.5rem .2rem .4rem 0;font-size:.85rem;
+  color:rgba(255,255,255,.78);text-decoration:none}
+.top h1{margin:.6rem 0 0;font-family:var(--serif);font-size:1.75rem;line-height:1.15;font-weight:400}
+.top p{margin:.5rem 0 0;font-size:.9rem;line-height:1.55;color:rgba(255,255,255,.76)}
+.chip{display:inline-flex;align-items:center;gap:.4rem;font-size:.74rem;font-weight:600;
+  padding:.3rem .65rem;border-radius:999px;background:rgba(224,185,92,.18);color:var(--warn-ink)}
+
+.body{flex-grow:1;min-height:0;padding:1.1rem 1.1rem 0;display:flex;flex-direction:column;gap:.8rem}
+.foot{flex-shrink:0;padding:1rem 1.1rem calc(1.3rem + env(safe-area-inset-bottom,0px))}
+.grow{flex-grow:1}
+
+/* A pressable block: the two doors on the fork, the two ways out of Stopped. */
+.door{display:block;text-decoration:none;color:inherit;background:var(--card);
+  border:1px solid var(--line);border-radius:.9rem;padding:1.15rem 1.2rem}
+.door:hover{border-color:#D8D3C8}
+.door .head{display:flex;align-items:center;gap:.6rem}
+.door b{font-size:1.05rem}
+.door p{margin:.55rem 0 0;font-size:.9rem;line-height:1.6;color:var(--body)}
+.dot{flex:none;width:.5rem;height:.5rem;border-radius:50%;background:var(--go)}
+.dot.other{background:var(--other-dot)}
+.door .when{margin-top:.85rem;font-size:.8rem;font-weight:600;color:var(--go)}
+.door .when.other{color:var(--other-dot)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:.85rem;padding:1.05rem 1.15rem}
+.card.tight{padding:.3rem 1.15rem}
+.card b{font-size:.95rem}
+.card p{margin:.4rem 0 0;font-size:.88rem;line-height:1.6;color:var(--body)}
+.card.flag{border-left:3px solid var(--warn);border-radius:.6rem}
+.card.flag.other{border-left-color:var(--other-dot)}
+
+/* Numbered steps, hairline between. */
+.step{display:flex;gap:.85rem;padding:.95rem 0;border-bottom:1px solid var(--hair)}
+.step:last-child{border-bottom:0}
+.step .n{flex:none;width:1.4rem;height:1.4rem;border-radius:50%;background:var(--ink);
+  color:#fff;font-size:.74rem;font-weight:700;display:grid;place-items:center}
+.step span{font-size:.92rem;line-height:1.5}
+
+/* What we can and cannot do. Two lists, the second in a quieter ink so the
+   shape of the panel says "more of what we cannot" before it is read. */
+.panel{background:var(--panel);border-radius:.85rem;padding:1rem 1.15rem}
+.label{margin:0 0 .55rem;font-size:.72rem;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted)}
+/* The second heading follows a list, not another label — so the selector
+   that was here (.label+.label) never matched and "WE CANNOT" sat on the
+   line above it. */
+.list+.label{margin-top:1rem}
+.list{font-size:.9rem;line-height:1.9}
+.list.no{color:var(--body)}
+
+.note{margin:.3rem .4rem;font-size:.85rem;line-height:1.65;color:var(--muted)}
+
+/* 44px minimum, so it is a target and not a decoration. */
+.go{display:flex;align-items:center;justify-content:center;gap:.55rem;
+  text-decoration:none;font-size:1rem;font-weight:600;padding:1.05rem;
+  border-radius:999px;background:var(--go);color:#fff;border:0;width:100%;cursor:pointer;
+  font-family:inherit}
+.go.other{background:var(--other)}
+.go:hover{background:var(--go-dark)}
+.go.other:hover{background:#6A2A1B}
+.under{margin:.7rem 0 0;text-align:center;font-size:.8rem;color:var(--muted)}
+.under a{color:var(--muted)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--go);outline-offset:3px}
+
+.rows{display:flex;flex-direction:column;gap:.75rem}
+.kv{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+  padding:.85rem 0;border-bottom:1px solid var(--hair)}
+.kv:last-child{border-bottom:0}
+.kv .k{font-size:.86rem;color:var(--muted)}
+.kv .v{font-size:.9rem;text-align:right}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:.84rem}
+code.block{display:block;font-family:ui-monospace,Menlo,monospace;font-size:.82rem;
+  padding:.7rem .75rem;background:var(--panel);border-radius:.5rem;color:#3B3A35;
+  overflow-x:auto;white-space:nowrap}
+
+.tick{width:3.8rem;height:3.8rem;border-radius:50%;background:var(--go);
+  display:grid;place-items:center;flex:none;margin:0 auto}
+.mid{text-align:center}
+.mid h1{margin:1.1rem 0 0;font-family:var(--serif);font-size:1.85rem;font-weight:400}
+.mid p{margin:.45rem 0 0;font-size:.95rem;color:var(--body)}

@@ -10376,6 +10376,29 @@ app.get("/pay/:id", (req, res, next) => page("request.html", req, res, next));
 const webOnly = (req, res, next) =>
   inApp(req) ? res.redirect(302, "/board") : next();
 
+/* CHINA BUSINESS SOLUTIONS — the merchant's way in, and its own set.
+ *
+ * Six pages and one stylesheet, outside the board's door on purpose: somebody
+ * deciding whether they can take money from China is not a member of anything
+ * yet, and a door in front of the pitch is a door in front of the decision.
+ *
+ * ITS OWN FILES RATHER THAN A BRANCH OF THE BOARD. The flow was drawn on a
+ * canvas first and is meant to move — into the Exchange, onto its own domain,
+ * or into whatever this turns out to be. Nothing in cbs*.html imports from
+ * index.html, i18n.js or the store, so lifting it is copying seven files.
+ *
+ * NOT web-only. /dealio is off in the app because the App Store asked what the
+ * payments business is; these are the pages that ANSWER that question, and a
+ * merchant reading them is not a member being sold a wallet. They stay.
+ */
+const cbs = (file) => (req, res, next) => page(file, req, res, next);
+app.get(["/china", "/china/"], cbs("cbs.html"));
+app.get("/china/connect", cbs("cbs-connect.html"));
+app.get("/china/switch", cbs("cbs-switch.html"));
+app.get("/china/live", cbs("cbs-live.html"));
+app.get("/china/stopped", cbs("cbs-stopped.html"));
+app.get("/china/beijing", cbs("cbs-beijing.html"));
+
 app.get(["/dealio", "/dealio/"], webOnly, notesOff,
   (req, res, next) => page("dealio.html", req, res, next));
 
