@@ -2180,6 +2180,16 @@ export const STRINGS = {
     "These terms change when the board changes. The version you are reading is the one that applies.",
     "板子变了，条款就会变。你现在看到的这版就是现在有效的那版。"],
   "tm.link":           ["Terms", "使用条款"],
+  /* SHOWN AT THE DOOR, BEFORE ANYBODY IS IN. The terms have said since they
+     were written that nothing objectionable stays up and that reports are
+     acted on within a day — but they were linked from the landing footer and
+     the about page, which is not the same as being put in front of somebody
+     as they join. App Review asked for exactly that, 22 Sep, guideline 1.2,
+     and they were right to: a rule nobody was shown is not a rule they
+     agreed to. */
+  "tm.agree": [
+    "By continuing you agree to the {terms}. No abuse, nothing objectionable, and reports are acted on within a day.",
+    "继续即表示你同意{terms}。不得骚扰，不得发不像话的内容，举报 24 小时内处理。"],
 
   "pv.back":           ["Back to the feed", "回到动态"],
 

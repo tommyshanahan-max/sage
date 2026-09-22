@@ -219,6 +219,10 @@
     box-shadow:0 0 0 3px var(--accent-soft)}
 
   .said{margin:1rem 0 0;font-size:.92rem;line-height:1.6;color:var(--ink-2)}
+  /* Quieter than the note below it, and never hidden: a rule shown only
+     sometimes is a rule nobody agreed to. */
+  .agree{margin:.9rem 0 0;font-size:.76rem;line-height:1.6;color:var(--ink-3,#8B8A85)}
+  .agree a{color:inherit;text-decoration:underline;text-underline-offset:.15em}
   .said.bad{color:var(--t3)}
   .said.ok{color:var(--accent)}
 
@@ -438,6 +442,8 @@
     </div>
     <button class="go wide" type="button" id="go"></button>
     <p class="said" id="said" hidden></p>
+    <!-- The rules, at the door itself. See tm.agree. -->
+    <p class="agree" id="agree"></p>
     <p class="note" id="doornote"></p>
 
     <!-- SOMEBODY WITH NO CODE AT ALL, which is most of the people who arrive
@@ -1072,6 +1078,24 @@ function words() {
   $("doorzh").textContent = T("door.zh");
   $("go").textContent = T("door.go");
   $("doornote").textContent = T("door.note");
+
+  /* THE RULES, BEFORE THE CODE IS TYPED. Built as nodes rather than set as
+     text because the sentence carries a link, and a string with markup in it
+     is a string somebody eventually renders with innerHTML. Split on the
+     {terms} the translation already holds, so the link sits where each
+     language puts it. */
+  {
+    const box = $("agree");
+    while (box.firstChild) box.removeChild(box.firstChild);
+    const [before, after] = T("tm.agree").split("{terms}");
+    const link = document.createElement("a");
+    link.href = "/terms";
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = T("tm.link");
+    box.append(document.createTextNode(before || ""), link,
+      document.createTextNode(after || ""));
+  }
   $("code").setAttribute("aria-label", D("door.title"));
 
   // The clock carries two words of its own and they are in both languages.
