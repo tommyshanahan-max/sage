@@ -10414,8 +10414,24 @@ const webOnly = (req, res, next) =>
  * is a git mv and this one line.
  *
  * `extensions` so /china/connect works as well as /china/connect.html: the
- * short form is what goes in a message to somebody. */
-app.use("/china", express.static("china", { extensions: ["html"] }));
+ * short form is what goes in a message to somebody.
+ *
+ * AND NO-CACHE, WHICH page() HAS DONE SINCE THE BOARD HAD A PHONE ON IT.
+ * express.static sends its own ETag and Last-Modified and nothing else, so a
+ * phone that had loaded a screen once kept serving it: a deploy went out, the
+ * button on the box changed, and the device in the hand still had the old
+ * file. That reads as "nothing happens when I press it", which is the hardest
+ * kind of bug to be told about because the person reporting it is looking at
+ * something that no longer exists.
+ *
+ * Same rule as the board's own pages, for the same reason written there:
+ * WeChat on iOS caches hard against the URL, and a screen must never be a day
+ * old. ETag still does the work — a page that has not changed comes back 304
+ * and costs one round trip, not a download. */
+app.use("/china", express.static("china", {
+  extensions: ["html"],
+  setHeaders: (res) => res.set("Cache-Control", "no-cache"),
+}));
 
 /* THE CONNECT BUTTON, FOR REAL.
  *
