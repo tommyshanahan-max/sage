@@ -66,6 +66,44 @@ else
   npx --no-install cap add ios
 fi
 
+# WHY THE APP CRASHED IN REVIEW, AND WHY IT IS DONE HERE.
+#
+# 22 Sep 2026, guideline 2.1(a). The reviewer tapped Profile -> Edit your page
+# -> + -> Take Photo and the app died on the spot. Nothing was wrong with the
+# board: iOS TERMINATES a process that touches the camera with no usage string
+# in Info.plist. Not an error, not a prompt — the app is killed, and the crash
+# log points at the system, which is why it reads as a mystery.
+#
+# Three surfaces need one each. The board asks for all three:
+#   NSCameraUsageDescription       <input type="file" accept="image/*">
+#   NSPhotoLibraryUsageDescription the same input, choosing an existing photo
+#   NSMicrophoneUsageDescription   getUserMedia({audio:true}) — dealio.html,
+#                                  speak.js, mo.js
+#
+# WRITTEN HERE RATHER THAN EDITED IN XCODE, because ios/ is generated and is
+# not in the repository (see the note above). A key typed into Xcode once
+# survives `cap sync` and does NOT survive `cap add ios` on another machine or
+# after a clean — which is exactly the kind of step that is wrong the second
+# time. PlistBuddy is on every Mac, the keys are idempotent, and a build that
+# cannot write them stops rather than shipping another crash.
+#
+# THE WORDS MATTER TOO. Apple rejects a usage string that does not say what the
+# app does with the thing. "Camera access" is refused; naming the screen is not.
+PLIST="ios/App/App/Info.plist"
+[ -f "$PLIST" ] || die "No $PLIST after sync. Run again with OPEN=1 and look at what Xcode says."
+say "Writing the camera, photo and microphone reasons into Info.plist…"
+plist_set() {
+  /usr/libexec/PlistBuddy -c "Set :$1 $2" "$PLIST" 2>/dev/null \
+    || /usr/libexec/PlistBuddy -c "Add :$1 string $2" "$PLIST" \
+    || die "Could not write $1 into $PLIST."
+}
+plist_set NSCameraUsageDescription \
+  "The Exchange uses the camera so you can take a photograph for your page, a post or a product."
+plist_set NSPhotoLibraryUsageDescription \
+  "The Exchange opens your photo library so you can choose a picture for your page, a post or a product."
+plist_set NSMicrophoneUsageDescription \
+  "The Exchange uses the microphone when you record a spoken message instead of typing one."
+
 # The icon and the launch screen, from app/resources. Skipped rather than
 # fatal: a missing icon is Apple's rejection to give, not this script's.
 if [ -f resources/icon.png ]; then
