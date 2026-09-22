@@ -1809,6 +1809,12 @@ bells: ## Which phones the board can reach, browser and app: make bells
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/bells.mjs
 
+weidian-check: ## Does Weidian answer, and what does it actually say
+	@# Run once, with real keys, before anything is built on top. It prints
+	@# what comes back rather than a verdict, because the field names are in
+	@# a wiki the build box cannot reach — see the head of lib/weidian.js.
+	$(COMPOSE) run --rm --no-deps -T --entrypoint node board /app/scripts/weidian.check.mjs
+
 who: ## Who has a page, and who is actually in Browse
 	@# For "she added herself but I cannot see her". The public list holds only
 	@# the people who ARE in Browse, so the answer to that question was never in
