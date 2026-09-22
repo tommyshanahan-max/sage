@@ -86,6 +86,7 @@
   var go = document.getElementById("go");
   var box = document.getElementById("email");
   var say = document.getElementById("say");
+  var dead = false;   // set once Stripe says the platform account is rejected
   function tell(t) {
     say.textContent = t;
     say.hidden = !t;
@@ -116,16 +117,36 @@
       });
       var j = await r.json().catch(function () { return null; });
       if (r.ok && j && j.url) { location.href = j.url; return; }
-      tell(j && j.error === "unactivated"
+      /* "Try again in a minute" was the only sentence here for every kind of
+         refusal, and for a rejected platform account it is a lie the screen
+         would repeat for ever. Each case says what is actually true and
+         whether waiting helps. */
+      tell(j && j.error === "rejected"
+        ? "We cannot open Stripe accounts at the moment \u2014 this is at our end, not yours, and waiting will not fix it. Take the other door and we will invoice your client ourselves."
+        : j && j.error === "unactivated"
         ? "Stripe will not open accounts for us yet \u2014 our own setup is still being reviewed."
         : j && j.error === "email" ? "That does not look like an email address."
         : j && j.error === "off" ? "Payments are not switched on here yet."
         : "Stripe would not open an account just now. Try again in a minute.");
+      /* And when the answer is "never", put the way forward on the screen
+         rather than leaving somebody on a dead page. */
+      if (j && j.error === "rejected") {
+        var out = document.createElement("a");
+        out.className = "go other";
+        out.href = "beijing.html";
+        out.textContent = "See the other way";
+        out.style.marginTop = ".8rem";
+        say.parentNode.appendChild(out);
+        dead = true;   // and the tail below must not undo it
+      }
     } catch (e) {
       tell("No answer. Check your connection and try again.");
     }
-    go.disabled = false;
-    go.innerHTML = was;
+    /* A rejected platform account is not a thing to press again, so the
+       button stays down and the way out stays up. Everything else is worth
+       another go. */
+    go.disabled = dead;
+    go.innerHTML = dead ? "Stripe is not available" : was;
   });
 })();
 </script>

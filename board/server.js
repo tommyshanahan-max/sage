@@ -10500,7 +10500,20 @@ app.post("/china/api/connect", express.json(), async (req, res) => {
        text names the field it disliked and is exactly what is needed here,
        and exactly what should not be shown to somebody signing up. */
     console.error("china connect:", err.message);
-    res.status(502).json({ error: /not.*activat|platform/i.test(err.message) ? "unactivated" : "stripe" });
+    /* THREE REFUSALS, AND ONLY ONE OF THEM IS WORTH TRYING AGAIN.
+     *
+     * "rejected" is the platform account itself, and it is final: Stripe
+     * refused this one on 20 Sep and answers every /v2/core/accounts with
+     * "You cannot create new accounts because your account has been
+     * rejected" — in TEST MODE TOO, because the rejection is on the account
+     * and not on a mode. Telling somebody to try again in a minute in the
+     * face of that is a lie the screen repeats for ever. */
+    const m = String(err.message || "");
+    res.status(502).json({
+      error: /has been rejected|account.*rejected/i.test(m) ? "rejected"
+        : /not.*activat|platform.*profile|complete.*onboarding/i.test(m) ? "unactivated"
+        : "stripe",
+    });
   }
 });
 

@@ -38,6 +38,28 @@ So the only untested thing is **real money**, and it is one line:
 `BOARD_WALLET_AIRWALLEX_SANDBOX=0`, which `make airwallex-keys … LIVE=1`
 writes when the live pair exists.
 
+**Stripe Connect is gone too, test mode included (22 Sep, night).** The
+rejection of 20 Sep is on the platform account, not on a mode, so it answers
+every attempt to open a connected account — under `sk_test_` keys as readily
+as live:
+
+```
+china connect: /v2/core/accounts -> 400:
+You cannot create new accounts because your account has been rejected.
+```
+
+Found by pressing the button on `/china/connect` with sandbox keys loaded.
+`make go-test` worked, `make pay-check` read `Stripe key: set · test`, and
+the refusal was identical. So "switch Connect on in the dashboard" is not the
+blocker and never was: there is nothing to switch on. **No connected account
+can be opened from this Stripe account in either mode.**
+
+What that leaves: door two of `/china` — the Beijing WFOE, where we are the
+merchant of record and no connected account exists to be refused. Door one
+needs a different platform account or a different provider, and the lesson
+from `airwallex.js` applies to both: ask whether they will onboard a payment
+facilitator *before* writing the adapter.
+
 **Airwallex is gone, sandbox included (21 Sep, evening).** `make wallet-why`
 on the box:
 
